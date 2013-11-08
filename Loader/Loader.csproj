@@ -43,9 +43,6 @@
     <Reference Include="Microsoft.Web.XmlTransform">
       <HintPath>..\packages\Microsoft.Web.Xdt.1.0.0\lib\net40\Microsoft.Web.XmlTransform.dll</HintPath>
     </Reference>
-    <Reference Include="Mono.CSharp">
-      <HintPath>..\packages\Mono.CSharp.3.0.6\Lib\net40\Mono.CSharp.dll</HintPath>
-    </Reference>
     <Reference Include="Newtonsoft.Json">
       <HintPath>..\packages\Newtonsoft.Json.5.0.8\lib\net45\Newtonsoft.Json.dll</HintPath>
     </Reference>
@@ -64,7 +61,6 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AssemblyLoader.cs" />
-    <Compile Include="MonoChsarpLoader.cs" />
     <Compile Include="RoslynLoader.cs" />
     <Compile Include="DirectoryLoader.cs" />
     <Compile Include="IAssemblyLoader.cs" />
