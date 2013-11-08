@@ -16,20 +16,15 @@ namespace OwinHost2
         {
             _path = path;
             _watcher = new FileSystemWatcher(path);
+            _watcher.EnableRaisingEvents = true;
+            _watcher.IncludeSubdirectories = true;
+
+            _watcher.Changed += OnWatcherChanged;
         }
 
         public void Watch(string path)
         {
             _paths.Add(path);    
-        }
-
-
-        private void Suicide(string path)
-        {
-            _watcher.EnableRaisingEvents = true;
-            _watcher.IncludeSubdirectories = true;
-
-            _watcher.Changed += OnWatcherChanged;
         }
 
         private void OnWatcherChanged(object sender, FileSystemEventArgs e)
