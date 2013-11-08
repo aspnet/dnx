@@ -1,0 +1,34 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2013
+VisualStudioVersion = 12.0.21005.1
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WatchDog", "WatchDog\WatchDog.csproj", "{D02B8440-E49A-4D49-A42F-92C41ABB1945}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Loader", "Loader\Loader.csproj", "{8FAF6303-4AD0-4468-8DBC-B8D32B1A9F9D}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OwinHost2", "OwinHost2\OwinHost2.csproj", "{9218547E-DEA4-42B1-8869-94B2C4865C61}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{D02B8440-E49A-4D49-A42F-92C41ABB1945}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D02B8440-E49A-4D49-A42F-92C41ABB1945}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D02B8440-E49A-4D49-A42F-92C41ABB1945}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D02B8440-E49A-4D49-A42F-92C41ABB1945}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8FAF6303-4AD0-4468-8DBC-B8D32B1A9F9D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8FAF6303-4AD0-4468-8DBC-B8D32B1A9F9D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8FAF6303-4AD0-4468-8DBC-B8D32B1A9F9D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8FAF6303-4AD0-4468-8DBC-B8D32B1A9F9D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9218547E-DEA4-42B1-8869-94B2C4865C61}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9218547E-DEA4-42B1-8869-94B2C4865C61}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9218547E-DEA4-42B1-8869-94B2C4865C61}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9218547E-DEA4-42B1-8869-94B2C4865C61}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
