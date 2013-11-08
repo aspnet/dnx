@@ -82,6 +82,7 @@ namespace Microsoft.Owin.Hosting.Starter
             var loader = new AssemblyLoader();
             string solutionDir = Path.GetDirectoryName(path);
             string packagesDir = Path.Combine(solutionDir, "packages");
+            string libDir = Path.Combine(solutionDir, "lib");
 
             Suicide(path);
 
@@ -95,6 +96,12 @@ namespace Microsoft.Owin.Hosting.Starter
             loader.Add(new NuGetAssemblyLoader(packagesDir));
             loader.Add(new MSBuildProjectAssemblyLoader(solutionDir));
 
+            if (Directory.Exists(libDir))
+            {
+                loader.Add(new DirectoryLoader(libDir));
+            }
+
+
             IServiceProvider services = ServicesFactory.Create(context.Options.Settings, sp =>
             {
                 sp.AddInstance<IAppLoader>(new MyAppLoader(settings.Name));
@@ -104,7 +111,11 @@ namespace Microsoft.Owin.Hosting.Starter
 
             try
             {
+                var sw = Stopwatch.StartNew();
                 _runningApp = engine.Start(context);
+                sw.Stop();
+
+                Trace.TraceInformation("Total load time {0}ms", sw.ElapsedMilliseconds);
             }
             catch (Exception ex)
             {
@@ -141,9 +152,9 @@ namespace Microsoft.Owin.Hosting.Starter
         {
             var extension = Path.GetExtension(e.FullPath).ToLowerInvariant();
 
-            if (extension == ".pdb" || 
-                extension == ".dll" || 
-                extension == ".cshtml" || 
+            if (extension == ".pdb" ||
+                extension == ".dll" ||
+                extension == ".cshtml" ||
                 extension == ".cache" ||
                 extension == ".suo" ||
                 extension == ".user" ||
