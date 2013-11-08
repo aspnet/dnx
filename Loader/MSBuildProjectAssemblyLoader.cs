@@ -13,10 +13,12 @@ namespace Loader
     public class MSBuildProjectAssemblyLoader : IAssemblyLoader
     {
         private readonly string _solutionDir;
+        private readonly IFileWatcher _watcher;
 
-        public MSBuildProjectAssemblyLoader(string solutionDir)
+        public MSBuildProjectAssemblyLoader(string solutionDir, IFileWatcher watcher)
         {
             _solutionDir = solutionDir;
+            _watcher = watcher;
         }
 
         public Assembly Load(string name)
@@ -26,19 +28,26 @@ namespace Loader
             ProjectSettings settings;
 
             // Bail if there's a project settings file
-            if (!File.Exists(projectFile) || 
+            if (!File.Exists(projectFile) ||
                 ProjectSettings.TryGetSettings(projectFile, out settings))
             {
                 return null;
             }
 
+            _watcher.Watch(projectFile);
 
             var projectCollection = new ProjectCollection();
             var properties = new Dictionary<string, string>();
             properties.Add("Configuration", "Debug");
             properties.Add("Platform", "AnyCPU");
 
-            projectCollection.LoadProject(projectFile);
+            var project = projectCollection.LoadProject(projectFile);
+
+            // TODO: We need to also look at project references
+            foreach (var contentItem in project.GetItems("Compile"))
+            {
+                _watcher.Watch(Path.Combine(projectDir, contentItem.EvaluatedInclude));
+            }
 
             var buildRequest = new BuildRequestData(projectFile,
                                                     properties, null, new string[] { "Build" }, null);

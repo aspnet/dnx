@@ -84,17 +84,17 @@ namespace Microsoft.Owin.Hosting.Starter
             string packagesDir = Path.Combine(solutionDir, "packages");
             string libDir = Path.Combine(solutionDir, "lib");
 
-            Suicide(path);
-
             AppDomain.CurrentDomain.AssemblyResolve += (a, b) =>
             {
                 string name = new AssemblyName(b.Name).Name;
                 return loader.Load(name);
             };
 
-            loader.Add(new RoslynLoader(solutionDir));
+            var watcher = new Watcher(solutionDir);
+
+            loader.Add(new RoslynLoader(solutionDir, watcher));
             loader.Add(new NuGetAssemblyLoader(packagesDir));
-            loader.Add(new MSBuildProjectAssemblyLoader(solutionDir));
+            loader.Add(new MSBuildProjectAssemblyLoader(solutionDir, watcher));
 
             if (Directory.Exists(libDir))
             {
@@ -137,38 +137,6 @@ namespace Microsoft.Owin.Hosting.Starter
             }
 
             yield return ex.Message;
-        }
-
-        private void Suicide(string path)
-        {
-            _watcher = new FileSystemWatcher(path);
-            _watcher.EnableRaisingEvents = true;
-            _watcher.IncludeSubdirectories = true;
-
-            _watcher.Changed += OnWatcherChanged;
-        }
-
-        void OnWatcherChanged(object sender, FileSystemEventArgs e)
-        {
-            var extension = Path.GetExtension(e.FullPath).ToLowerInvariant();
-
-            if (extension == ".pdb" ||
-                extension == ".dll" ||
-                extension == ".cshtml" ||
-                extension == ".cache" ||
-                extension == ".suo" ||
-                extension == ".user" ||
-                IsUnder(e.FullPath, ".git") ||
-                IsUnder(e.FullPath, "bin") ||
-                IsUnder(e.FullPath, "obj") ||
-                IsUnder(e.FullPath, "app_data"))
-            {
-                return;
-            }
-
-            Trace.TraceInformation("Change detected in {0}", e.Name);
-
-            Environment.Exit(250);
         }
 
         private bool IsUnder(string path, string folder)

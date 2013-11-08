@@ -16,10 +16,12 @@ namespace Loader
     {
         private readonly Dictionary<string, Tuple<Assembly, MetadataReference>> _compiledAssemblies = new Dictionary<string, Tuple<Assembly, MetadataReference>>(StringComparer.OrdinalIgnoreCase);
         private readonly string _solutionPath;
+        private readonly IFileWatcher _watcher;
 
-        public RoslynLoader(string solutionPath)
+        public RoslynLoader(string solutionPath, IFileWatcher watcher)
         {
             _solutionPath = solutionPath;
+            _watcher = watcher;
 
             // HACK: We're making this available to other parts of the app domain
             // so they can get a reference to in memory compiled assemblies. 
@@ -65,8 +67,15 @@ namespace Loader
                 }
             }
 
+            _watcher.Watch(settings.ProjectFilePath);
+
             // Get all the cs files in this directory
             var sources = Directory.GetFiles(path, "*.cs", SearchOption.AllDirectories);
+
+            foreach (var sourcePath in sources)
+            {
+                _watcher.Watch(sourcePath);
+            }
 
             var trees = sources.Select(p => SyntaxTree.ParseFile(p))
                                .ToList();
@@ -140,7 +149,7 @@ namespace Loader
         }
 
         // The "framework" is always implicitly referenced
-        public IEnumerable<MetadataReference> GetFrameworkAssemblies()
+        private IEnumerable<MetadataReference> GetFrameworkAssemblies()
         {
             yield return new MetadataFileReference(typeof(object).Assembly.Location);
             yield return new MetadataFileReference(typeof(File).Assembly.Location);
