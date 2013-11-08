@@ -139,9 +139,9 @@ namespace Microsoft.Owin.Hosting.Starter
             yield return ex.Message;
         }
 
-        private void Suicide(string solutionDir)
+        private void Suicide(string path)
         {
-            _watcher = new FileSystemWatcher(solutionDir);
+            _watcher = new FileSystemWatcher(path);
             _watcher.EnableRaisingEvents = true;
             _watcher.IncludeSubdirectories = true;
 
