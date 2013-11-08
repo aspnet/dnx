@@ -1,9 +1,12 @@
 ﻿using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
 using Microsoft.Build.Evaluation;
 using Microsoft.Build.Execution;
+using Microsoft.Build.Framework;
+using Microsoft.Build.Logging;
 
 namespace Loader
 {
@@ -18,12 +21,17 @@ namespace Loader
 
         public Assembly Load(string name)
         {
-            string projectFile = Path.Combine(_solutionDir, name, name + ".csproj");
+            string projectDir = Path.Combine(_solutionDir, name);
+            string projectFile = Path.Combine(projectDir, name + ".csproj");
+            ProjectSettings settings;
 
-            if (!File.Exists(projectFile))
+            // Bail if there's a project settings file
+            if (!File.Exists(projectFile) || 
+                ProjectSettings.TryGetSettings(projectFile, out settings))
             {
                 return null;
             }
+
 
             var projectCollection = new ProjectCollection();
             var properties = new Dictionary<string, string>();
@@ -37,10 +45,11 @@ namespace Loader
 
             var parameters = new BuildParameters(projectCollection)
             {
-                // Loggers = new List<ILogger> { new ConsoleLogger() }
+                Loggers = new List<ILogger> { new ConsoleLogger(LoggerVerbosity.Quiet) }
             };
 
             BuildResult buildResult = BuildManager.DefaultBuildManager.Build(parameters, buildRequest);
+
 
             if (buildResult.OverallResult == BuildResultCode.Success)
             {

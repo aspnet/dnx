@@ -83,7 +83,7 @@ namespace Microsoft.Owin.Hosting.Starter
             string solutionDir = Path.GetDirectoryName(path);
             string packagesDir = Path.Combine(solutionDir, "packages");
 
-            Suicide(solutionDir);
+            Suicide(path);
 
             AppDomain.CurrentDomain.AssemblyResolve += (a, b) =>
             {
@@ -141,17 +141,21 @@ namespace Microsoft.Owin.Hosting.Starter
         {
             var extension = Path.GetExtension(e.FullPath).ToLowerInvariant();
 
-            Trace.TraceInformation("Change detected in {0}", e.Name);
-
             if (extension == ".pdb" || 
                 extension == ".dll" || 
                 extension == ".cshtml" || 
                 extension == ".cache" ||
+                extension == ".suo" ||
+                extension == ".user" ||
                 IsUnder(e.FullPath, ".git") ||
-                IsUnder(e.FullPath, "bin"))
+                IsUnder(e.FullPath, "bin") ||
+                IsUnder(e.FullPath, "obj") ||
+                IsUnder(e.FullPath, "app_data"))
             {
                 return;
             }
+
+            Trace.TraceInformation("Change detected in {0}", e.Name);
 
             Environment.Exit(250);
         }

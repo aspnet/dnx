@@ -34,7 +34,7 @@ namespace Loader
             var dependencies = settings["dependencies"] as JArray;
             if (dependencies != null)
             {
-                foreach (JObject dependency in dependencies)
+                foreach (JObject dependency in (IEnumerable<JToken>)dependencies)
                 {
                     foreach (var prop in dependency)
                     {

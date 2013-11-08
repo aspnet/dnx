@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
@@ -9,6 +10,7 @@ namespace Loader
     public class NuGetAssemblyLoader : IAssemblyLoader
     {
         private readonly LocalPackageRepository _repository;
+        private readonly Dictionary<string, Assembly> _cache = new Dictionary<string, Assembly>(StringComparer.OrdinalIgnoreCase);
 
         public NuGetAssemblyLoader(string packagesDirectory)
         {
@@ -17,6 +19,12 @@ namespace Loader
 
         public Assembly Load(string name)
         {
+            Assembly assembly;
+            if (_cache.TryGetValue(name, out assembly))
+            {
+                return assembly;
+            }
+
             var package = _repository.FindPackage(name);
 
             if (package == null)
@@ -26,8 +34,9 @@ namespace Loader
 
             var path = _repository.PathResolver.GetInstallPath(package);
 
-            // REVIEW: How do we get the project framework?
+            var results = new List<Assembly>();
 
+            // REVIEW: How do we get the project framework?
             var framework = VersionUtility.ParseFrameworkName("net45");
             IEnumerable<IPackageAssemblyReference> references;
             if (VersionUtility.TryGetCompatibleItems(framework, package.AssemblyReferences, out references))
@@ -37,12 +46,19 @@ namespace Loader
                     string fileName = Path.Combine(path, reference.Path);
                     if (File.Exists(fileName))
                     {
-                        return Assembly.LoadFile(fileName);
+                        results.Add(Assembly.LoadFile(fileName));
                     }
                 }
             }
 
-            return null;
+            foreach (var a in results)
+            {
+                _cache[a.GetName().Name] = a;
+                _cache[a.FullName] = a;
+            }
+            
+            return results.FirstOrDefault();
+;
         }
     }
 }

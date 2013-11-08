@@ -37,7 +37,7 @@ namespace WatchDog
 
         public TimeSpan IdleTimeout { get; private set; }
 
-        public int Execute(Func<string, bool> onWriteOutput, Func<string, bool> onWriteError, Encoding encoding, string arguments, params object[] args)
+        public Process Execute(Func<string, bool> onWriteOutput, Func<string, bool> onWriteError, Encoding encoding, string arguments, params object[] args)
         {
             Process process = CreateProcess(arguments, args);
             process.EnableRaisingEvents = true;
@@ -72,10 +72,7 @@ namespace WatchDog
             process.BeginErrorReadLine();
             process.BeginOutputReadLine();
 
-
-            process.WaitForExit();
-
-            return process.ExitCode;
+            return process;
         }
 
         internal Process CreateProcess(string arguments, object[] args)

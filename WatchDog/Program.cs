@@ -1,8 +1,10 @@
 ﻿using System;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace WatchDog
 {
@@ -24,6 +26,8 @@ namespace WatchDog
 
             while (true)
             {
+                var tcs = new TaskCompletionSource<object>();
+
                 Console.Write("Starting process '" + Path.GetFileName(childProcess) + "'");
                 if (!String.IsNullOrEmpty(childArgs))
                 {
@@ -35,7 +39,7 @@ namespace WatchDog
                 }
 
                 var exe = new Executable(childProcess, Environment.CurrentDirectory, TimeSpan.FromHours(1));
-                var exitCode = exe.Execute(s =>
+                var process = exe.Execute(s =>
                 {
                     Console.WriteLine(s);
                     return false;
@@ -47,13 +51,50 @@ namespace WatchDog
                 },
                 Encoding.UTF8, childArgs);
 
-                if (exitCode != 250)
+                var inputThread = new Thread(() => HandleInput(process, tcs));
+
+                process.Exited += (sender, e) =>
                 {
-                    Console.WriteLine("Exit code unknown {0}, quitting", exitCode);
+                    if (inputThread.IsAlive)
+                    {
+                        inputThread.Abort();
+                    }
+
+                    if (process.ExitCode != 250)
+                    {
+                        tcs.TrySetException(new Exception(String.Format("Exit code unknown {0}, quitting", process.ExitCode)));
+                    }
+                    else
+                    {
+                        tcs.TrySetResult(null);
+                    }
+                };
+
+                inputThread.Start();
+
+                try
+                {
+                    tcs.Task.Wait();
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine(ex.GetBaseException().Message);
                     break;
                 }
 
                 Thread.Sleep(100);
+            }
+        }
+
+        private static void HandleInput(Process process, TaskCompletionSource<object> tcs)
+        {
+            var ki = Console.ReadKey(false);
+
+            if (ki.Key == ConsoleKey.B)
+            {
+                tcs.TrySetResult(null);
+
+                process.Kill();
             }
         }
     }

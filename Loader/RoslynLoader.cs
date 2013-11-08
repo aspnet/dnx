@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
+using System.ComponentModel.DataAnnotations;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -12,20 +14,26 @@ namespace Loader
 {
     public class RoslynLoader : IAssemblyLoader
     {
-        private readonly Dictionary<string, CompiledAssembly> _compiledAssemblies = new Dictionary<string, CompiledAssembly>();
+        private readonly Dictionary<string, Tuple<Assembly, MetadataReference>> _compiledAssemblies = new Dictionary<string, Tuple<Assembly, MetadataReference>>(StringComparer.OrdinalIgnoreCase);
         private readonly string _solutionPath;
 
         public RoslynLoader(string solutionPath)
         {
             _solutionPath = solutionPath;
+
+            // HACK: We're making this available to other parts of the app domain
+            // so they can get a reference to in memory compiled assemblies. 
+
+            // TODO: Formalize a better way of doing this. Maybe DI?
+            AppDomain.CurrentDomain.SetData("_compiledAssemblies", _compiledAssemblies);
         }
 
         public Assembly Load(string name)
         {
-            CompiledAssembly compiledAssembly;
+            Tuple<Assembly, MetadataReference> compiledAssembly;
             if (_compiledAssemblies.TryGetValue(name, out compiledAssembly))
             {
-                return compiledAssembly.Assembly;
+                return compiledAssembly.Item1;
             }
 
             string path = Path.Combine(_solutionPath, name);
@@ -34,7 +42,27 @@ namespace Loader
             // Can't find a project file with the name so bail
             if (!ProjectSettings.TryGetSettings(path, out settings))
             {
-                return null;
+                // Fall back to checking for any direct subdirectory that has
+                // a project.json that matches this name
+                foreach (var subDir in Directory.EnumerateDirectories(_solutionPath))
+                {
+                    if (ProjectSettings.TryGetSettings(subDir, out settings) &&
+                        settings.Name == name)
+                    {
+                        path = subDir;
+                        break;
+                    }
+                    else
+                    {
+                        settings = null;
+                    }
+                }
+
+                // Couldn't find anything
+                if (settings == null)
+                {
+                    return null;
+                }
             }
 
             // Get all the cs files in this directory
@@ -43,6 +71,8 @@ namespace Loader
             var trees = sources.Select(p => SyntaxTree.ParseFile(p))
                                .ToList();
 
+            Trace.TraceInformation("Loading dependencies for '{0}'", settings.Name);
+
             var references = settings.Dependencies
                             .Select(d =>
                             {
@@ -50,16 +80,18 @@ namespace Loader
                                 // that are in memory
                                 var loadedAssembly = Assembly.Load(d.Name);
 
-                                CompiledAssembly compiledDependency;
+                                Tuple<Assembly, MetadataReference> compiledDependency;
                                 if (_compiledAssemblies.TryGetValue(d.Name, out compiledDependency))
                                 {
-                                    return compiledDependency.Reference;
+                                    return compiledDependency.Item2;
                                 }
 
                                 return new MetadataFileReference(loadedAssembly.Location);
                             })
                             .Concat(GetFrameworkAssemblies())
                             .ToList();
+
+            Trace.TraceInformation("Completed loading dependencies for '{0}'", settings.Name);
 
             string generatedAssemblyName = GetAssemblyName(path);
 
@@ -88,12 +120,8 @@ namespace Loader
 
                 var assembly = Assembly.Load(bytes);
 
-                var compiled = new CompiledAssembly
-                {
-                    Assembly = assembly,
-                    Reference = new MetadataImageReference(bytes)
-                };
-
+                var compiled = Tuple.Create(assembly, (MetadataReference)new MetadataImageReference(bytes));
+                
                 _compiledAssemblies[generatedAssemblyName] = compiled;
                 _compiledAssemblies[name] = compiled;
 
@@ -119,12 +147,8 @@ namespace Loader
             yield return new MetadataFileReference(typeof(System.Linq.Enumerable).Assembly.Location);
             yield return new MetadataFileReference(typeof(System.Dynamic.DynamicObject).Assembly.Location);
             yield return new MetadataFileReference(typeof(Microsoft.CSharp.RuntimeBinder.RuntimeBinderException).Assembly.Location);
-        }
-
-        private class CompiledAssembly
-        {
-            public Assembly Assembly { get; set; }
-            public MetadataReference Reference { get; set; }
+            yield return new MetadataFileReference(typeof(IListSource).Assembly.Location);
+            yield return new MetadataFileReference(typeof(RequiredAttribute).Assembly.Location);
         }
     }
 

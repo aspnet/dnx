@@ -1,4 +1,5 @@
-﻿using System.Collections.Concurrent;
+﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Reflection;
@@ -8,7 +9,7 @@ namespace Loader
     public class AssemblyLoader
     {
         private List<IAssemblyLoader> _loaders = new List<IAssemblyLoader>();
-        private readonly ConcurrentDictionary<string, Assembly> _cache = new ConcurrentDictionary<string, Assembly>();
+        private readonly ConcurrentDictionary<string, Assembly> _cache = new ConcurrentDictionary<string, Assembly>(StringComparer.OrdinalIgnoreCase);
 
         public void Add(IAssemblyLoader loader)
         {
