@@ -102,8 +102,6 @@ namespace Loader
 
             Trace.TraceInformation("Completed loading dependencies for '{0}'", settings.Name);
 
-            string generatedAssemblyName = GetAssemblyName(path);
-
             // Create a compilation
             var compilation = Compilation.Create(
                 name,
@@ -131,21 +129,10 @@ namespace Loader
 
                 var compiled = Tuple.Create(assembly, (MetadataReference)new MetadataImageReference(bytes));
                 
-                _compiledAssemblies[generatedAssemblyName] = compiled;
                 _compiledAssemblies[name] = compiled;
 
                 return assembly;
             }
-        }
-
-        private string GetAssemblyName(string path)
-        {
-            return "COMPILED_" + Normalize(path);
-        }
-
-        private static string Normalize(string path)
-        {
-            return path.Replace(':', '_').Replace(Path.DirectorySeparatorChar, '_');
         }
 
         // The "framework" is always implicitly referenced

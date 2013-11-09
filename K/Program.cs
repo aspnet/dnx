@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Reflection;
 using Loader;
@@ -23,6 +24,10 @@ namespace K
             listener.Filter = new ErrorFilter();
             Trace.Listeners.Add(listener);
             Trace.AutoFlush = true;
+
+            string exePath = Assembly.GetExecutingAssembly().Location;
+
+            Environment.SetEnvironmentVariable("HOST_PROCESS", exePath);
 
             var host = new DefaultHost(path);
             host.Execute(name => ExecuteMain(path, name, args.Skip(1).ToArray()));

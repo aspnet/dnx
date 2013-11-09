@@ -21,8 +21,19 @@ namespace WatchDog
                 return;
             }
 
-            string childProcess = path;
-            string childArgs = String.Join(" ", args.Skip(1));
+            string childProcess = "";
+            string childArgs = "";
+
+            if(File.Exists(path))
+            {
+                childProcess = path;
+                childArgs = String.Join(" ", args.Skip(1));
+            }
+            else
+            {
+                childProcess = Environment.GetEnvironmentVariable("HOST_PROCESS");
+                childArgs = String.Join(" ", args);
+            }
 
             while (true)
             {

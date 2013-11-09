@@ -18,7 +18,7 @@ namespace Microsoft.Owin.Hosting.Starter
         /// <param name="options"></param>
         /// <returns></returns>
         [SuppressMessage("Microsoft.Reliability", "CA2000:Dispose objects before losing scope", Justification = "Disposed by caller")]
-        public virtual IDisposable Start(StartOptions options)
+        public IDisposable Start(StartOptions options)
         {
             if (options == null)
             {
@@ -42,7 +42,7 @@ namespace Microsoft.Owin.Hosting.Starter
                 }
             }
 
-            var info = new AppDomainSetup
+            /*var info = new AppDomainSetup
             {
                 ApplicationBase = directory,
                 PrivateBinPath = "bin",
@@ -53,6 +53,12 @@ namespace Microsoft.Owin.Hosting.Starter
 
             AppDomain domain = AppDomain.CreateDomain("OWIN", null, info);
 
+            domain.AssemblyResolve += (sender, e) => 
+            {
+                System.Diagnostics.Debugger.Launch();
+                return null;
+            };
+
             DomainHostingStarterAgent2 agent = CreateAgent(domain);
 
             agent.ResolveAssembliesFromDirectory(AppDomain.CurrentDomain.SetupInformation.ApplicationBase);
@@ -60,9 +66,17 @@ namespace Microsoft.Owin.Hosting.Starter
             agent.Start(options);
 
             return agent;
+            return null;
+            */
+
+            var agent = new DomainHostingStarterAgent2();
+
+            agent.Start(options);
+
+            return agent;
         }
 
-        [SuppressMessage("Microsoft.Design", "CA1031:DoNotCatchGeneralExceptionTypes", Justification = "Fallback code")]
+        /*[SuppressMessage("Microsoft.Design", "CA1031:DoNotCatchGeneralExceptionTypes", Justification = "Fallback code")]
         private static DomainHostingStarterAgent2 CreateAgent(AppDomain domain)
         {
             try
@@ -77,6 +91,6 @@ namespace Microsoft.Owin.Hosting.Starter
                     typeof(DomainHostingStarterAgent2).Assembly.Location,
                     typeof(DomainHostingStarterAgent2).FullName);
             }
-        }
+        }*/
     }
 }

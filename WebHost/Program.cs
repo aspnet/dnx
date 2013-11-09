@@ -4,30 +4,27 @@ using System.Linq;
 using Microsoft.Owin.Hosting;
 using Microsoft.Owin.Hosting.Starter;
 
-namespace OwinHost2
+namespace WebHost
 {
-    class Program
+    public class Program
     {
-        [LoaderOptimization(LoaderOptimization.MultiDomainHost)]
         static void Main(string[] args)
         {
-            string path = args.FirstOrDefault();
-
-            if (String.IsNullOrEmpty(path))
+            if (args.Length < 2)
             {
-                Console.WriteLine("owinhost2.exe [path]");
+                Console.WriteLine("webhost.exe [path] [url]");
 
                 Environment.Exit(-1);
                 return;
             }
 
+            string path = args[0];
+            string url = args[1];
+
             var host = new DomainHostingStarter2();
             var options = new StartOptions();
             options.Settings["directory"] = path;
-            options.Urls.Add("http://localhost:8081");
-
-            Trace.Listeners.Add(new ConsoleTraceListener());
-            Trace.AutoFlush = true;
+            options.Urls.Add(url);
 
             host.Start(options);
 

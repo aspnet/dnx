@@ -5,7 +5,7 @@ using System.Reflection;
 using Microsoft.Owin.Hosting.Loader;
 using Owin;
 
-namespace OwinHost2
+namespace WebHost
 {
     public class MyAppLoader : IAppLoader
     {
