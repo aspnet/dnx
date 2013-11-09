@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using System.Diagnostics;
 using System.Linq;
 using Microsoft.Owin.Hosting;
@@ -18,7 +19,7 @@ namespace WebHost
                 return;
             }
 
-            string path = args[0];
+            string path = Path.GetFullPath(args[0]);
             string url = args[1];
 
             var host = new DomainHostingStarter2();

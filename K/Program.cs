@@ -20,14 +20,19 @@ namespace K
                 Console.WriteLine("K.exe [path]");
                 return;
             }
-            var listener = new ConsoleTraceListener();
-            listener.Filter = new ErrorFilter();
-            Trace.Listeners.Add(listener);
-            Trace.AutoFlush = true;
+
+            if (Environment.GetEnvironmentVariable("HOST_TRACE_LEVEL") != "1")
+            {
+                var listener = new ConsoleTraceListener();
+                listener.Filter = new ErrorFilter();
+                Trace.Listeners.Add(listener);
+                Trace.AutoFlush = true;
+            }
 
             string exePath = Assembly.GetExecutingAssembly().Location;
-
             Environment.SetEnvironmentVariable("HOST_PROCESS", exePath);
+            Environment.SetEnvironmentVariable("HOST_TRACE_LEVEL", "1");
+
 
             var host = new DefaultHost(path);
             host.Execute(name => ExecuteMain(path, name, args.Skip(1).ToArray()));

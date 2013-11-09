@@ -20,6 +20,12 @@ namespace WebHost
         {
             var asm = Assembly.Load(_assemblyName);
             var type = asm.GetType("Startup") ?? asm.GetTypes().FirstOrDefault(t => t.Name == "Startup");
+
+            if(type == null)
+            {
+                throw new InvalidOperationException("Unable to locate Startup class");
+            }
+
             var config = type.GetMethod("Configuration");
             var obj = Activator.CreateInstance(type);
 

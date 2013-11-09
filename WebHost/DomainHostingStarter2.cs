@@ -41,7 +41,9 @@ namespace Microsoft.Owin.Hosting.Starter
                     directory = directoryInfo.Parent.FullName;
                 }
             }
-
+            
+            Environment.SetEnvironmentVariable("WEB_ROOT", directory);
+            
             /*var info = new AppDomainSetup
             {
                 ApplicationBase = directory,
