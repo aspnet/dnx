@@ -58,7 +58,7 @@ namespace Microsoft.Owin.Hosting.Starter
             agent.ResolveAssembliesFromDirectory(AppDomain.CurrentDomain.SetupInformation.ApplicationBase);
 
             agent.Start(options);
-            
+
             return agent;
         }
 

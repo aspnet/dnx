@@ -24,7 +24,6 @@ namespace Microsoft.Owin.Hosting.Starter
         private ILease _lease;
         private bool _disposed;
         private IDisposable _runningApp;
-        private FileSystemWatcher _watcher;
 
         /// <summary>
         /// Registers a fallback assembly resolver that looks in the given directory.

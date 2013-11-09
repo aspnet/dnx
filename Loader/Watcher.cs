@@ -2,9 +2,8 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using Loader;
 
-namespace OwinHost2
+namespace Loader
 {
     public class Watcher : IFileWatcher
     {
