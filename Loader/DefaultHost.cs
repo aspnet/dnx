@@ -49,7 +49,7 @@ namespace Loader
             }
             catch (FileNotFoundException)
             {
-                // Swallow those load errors
+
             }
             catch (Exception ex)
             {
@@ -83,9 +83,8 @@ namespace Loader
             _watcher.OnChanged += OnWatcherChanged;
 
             _loader.Add(new RoslynLoader(solutionDir, _watcher));
-            _loader.Add(new NuGetAssemblyLoader(packagesDir));
             _loader.Add(new MSBuildProjectAssemblyLoader(solutionDir, _watcher));
-
+            _loader.Add(new NuGetAssemblyLoader(packagesDir));
             if (Directory.Exists(libDir))
             {
                 _loader.Add(new DirectoryLoader(libDir));
