@@ -13,7 +13,7 @@ Write-Host "Downloading NuGet.exe"
 
 
 # List of reference names to exclude from nuget restore
-$exclude = @{}
+$exclude = @{"Loader" = "";}
 
 if(Test-Path lib)
 {
