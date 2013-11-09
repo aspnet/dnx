@@ -21,7 +21,7 @@ namespace WatchDog
                 return;
             }
 
-            string childProcess = Path.GetFullPath(path);
+            string childProcess = path;
             string childArgs = String.Join(" ", args.Skip(1));
 
             while (true)
