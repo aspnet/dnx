@@ -47,6 +47,10 @@ namespace Loader
 
                 Trace.TraceInformation("Total load time {0}ms", sw.ElapsedMilliseconds);
             }
+            catch (FileNotFoundException)
+            {
+                // Swallow those load errors
+            }
             catch (Exception ex)
             {
                 Trace.TraceError(String.Join("\n", GetExceptions(ex)));
