@@ -84,14 +84,7 @@ namespace Microsoft.Owin.Hosting.Starter
             string packagesDir = Path.Combine(solutionDir, "packages");
             string libDir = Path.Combine(solutionDir, "lib");
 
-            AppDomain.CurrentDomain.AssemblyResolve += (a, b) =>
-            {
-                string name = new AssemblyName(b.Name).Name;
-                return loader.Load(name);
-            };
-
             var watcher = new Watcher(solutionDir);
-
             loader.Add(new RoslynLoader(solutionDir, watcher));
             loader.Add(new NuGetAssemblyLoader(packagesDir));
             loader.Add(new MSBuildProjectAssemblyLoader(solutionDir, watcher));
@@ -101,6 +94,7 @@ namespace Microsoft.Owin.Hosting.Starter
                 loader.Add(new DirectoryLoader(libDir));
             }
 
+            loader.Attach(AppDomain.CurrentDomain);
 
             IServiceProvider services = ServicesFactory.Create(context.Options.Settings, sp =>
             {

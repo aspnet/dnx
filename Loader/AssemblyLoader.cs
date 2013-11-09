@@ -6,7 +6,7 @@ using System.Reflection;
 
 namespace Loader
 {
-    public class AssemblyLoader
+    public class AssemblyLoader : IAssemblyLoader
     {
         private List<IAssemblyLoader> _loaders = new List<IAssemblyLoader>();
         private readonly ConcurrentDictionary<string, Assembly> _cache = new ConcurrentDictionary<string, Assembly>(StringComparer.OrdinalIgnoreCase);
@@ -43,6 +43,16 @@ namespace Loader
             }
 
             return asm;
+        }
+
+        public void Attach(AppDomain appDomain)
+        {
+            appDomain.AssemblyResolve += OnAssemblyResolve;
+        }
+
+        private Assembly OnAssemblyResolve(object sender, ResolveEventArgs args)
+        {
+            return Load(new AssemblyName(args.Name).Name);
         }
 
         private Assembly LoadImpl(string name)
