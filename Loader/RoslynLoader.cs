@@ -67,6 +67,7 @@ namespace Loader
                 }
             }
 
+            _watcher.Watch(path);
             _watcher.Watch(settings.ProjectFilePath);
 
             // Get all the cs files in this directory
@@ -74,6 +75,7 @@ namespace Loader
 
             foreach (var sourcePath in sources)
             {
+                _watcher.Watch(Path.GetDirectoryName(sourcePath));
                 _watcher.Watch(sourcePath);
             }
 
@@ -111,6 +113,7 @@ namespace Loader
 
             using (var ms = new MemoryStream())
             {
+                // TODO: Handle pdbs
                 EmitResult result = compilation.Emit(ms);
 
                 if (!result.Success)
