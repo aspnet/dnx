@@ -13,9 +13,9 @@ namespace Loader
 
         public DefaultHost(string path)
         {
-            _path = path;
+            _path = path.TrimEnd(Path.DirectorySeparatorChar);
 
-            CreateDefaultLoader(path);
+            CreateDefaultLoader();
         }
 
         public event Action OnChanged;
@@ -63,15 +63,15 @@ namespace Loader
                 }
             }
 
-            yield return ex.Message;
+            yield return ex.ToString();
         }
 
-        private void CreateDefaultLoader(string path)
+        private void CreateDefaultLoader()
         {
             _loader = new AssemblyLoader();
             _loader.Attach(AppDomain.CurrentDomain);
 
-            string solutionDir = Path.GetDirectoryName(path);
+            string solutionDir = Path.GetDirectoryName(_path);
             string packagesDir = Path.Combine(solutionDir, "packages");
             string libDir = Path.Combine(solutionDir, "lib");
 

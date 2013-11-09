@@ -25,14 +25,14 @@ namespace K
             Trace.AutoFlush = true;
 
             var host = new DefaultHost(path);
-            host.Execute(name => ExecuteMain(path, name, args.Skip(1)));
+            host.Execute(name => ExecuteMain(path, name, args.Skip(1).ToArray()));
         }
 
-        private static void ExecuteMain(string path, string name, IEnumerable<string> args)
+        private static void ExecuteMain(string path, string name, string[] args)
         {
             var assembly = Assembly.Load(name);
 
-            var program = assembly.GetType("Program");
+            var program = assembly.GetType("Program") ?? assembly.GetTypes().FirstOrDefault(t => t.Name == "Program");
 
             if (program == null)
             {
@@ -55,7 +55,7 @@ namespace K
             }
             else if (parameters.Length == 1)
             {
-                main.Invoke(null, new object[] { args.ToArray() });
+                main.Invoke(null, new object[] { args });
             }
         }
 
