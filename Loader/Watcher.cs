@@ -30,10 +30,10 @@ namespace Loader
 
         private void OnWatcherChanged(object sender, FileSystemEventArgs e)
         {
-            Trace.TraceInformation("{0} detected in {1}", e.ChangeType, e.FullPath);
-
             if (_paths.Contains(e.FullPath))
             {
+                Trace.TraceInformation("{0} in {1}", e.ChangeType, e.FullPath);
+
                 if (OnChanged != null)
                 {
                     OnChanged();
