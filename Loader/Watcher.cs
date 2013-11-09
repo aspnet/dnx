@@ -21,6 +21,8 @@ namespace Loader
             _watcher.Changed += OnWatcherChanged;
         }
 
+        public event Action OnChanged;
+
         public bool Watch(string path)
         {
             return _paths.Add(path);
@@ -32,7 +34,10 @@ namespace Loader
             {
                 Trace.TraceInformation("Change detected in {0}", e.Name);
 
-                Environment.Exit(250);
+                if (OnChanged != null)
+                {
+                    OnChanged();
+                }
             }
         }
     }

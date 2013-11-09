@@ -50,6 +50,11 @@ namespace Loader
             appDomain.AssemblyResolve += OnAssemblyResolve;
         }
 
+        public void Detach(AppDomain appDomain)
+        {
+            appDomain.AssemblyResolve -= OnAssemblyResolve;
+        }
+
         private Assembly OnAssemblyResolve(object sender, ResolveEventArgs args)
         {
             return Load(new AssemblyName(args.Name).Name);

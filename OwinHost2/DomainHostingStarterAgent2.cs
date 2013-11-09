@@ -2,7 +2,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Reflection;
@@ -24,6 +23,7 @@ namespace Microsoft.Owin.Hosting.Starter
         private ILease _lease;
         private bool _disposed;
         private IDisposable _runningApp;
+        private DefaultHost _host;
 
         /// <summary>
         /// Registers a fallback assembly resolver that looks in the given directory.
@@ -71,49 +71,23 @@ namespace Microsoft.Owin.Hosting.Starter
             // Project directory
             string path = options.Settings["directory"];
 
-            ProjectSettings settings;
-            if (!ProjectSettings.TryGetSettings(path, out settings))
+            _host = new DefaultHost(path);
+            _host.OnChanged += () =>
             {
-                Trace.TraceError("Unable to find packages.json");
-                return;
-            }
+                Environment.Exit(250);
+            };
 
-            var loader = new AssemblyLoader();
-            string solutionDir = Path.GetDirectoryName(path);
-            string packagesDir = Path.Combine(solutionDir, "packages");
-            string libDir = Path.Combine(solutionDir, "lib");
-
-            var watcher = new Watcher(solutionDir);
-            loader.Add(new RoslynLoader(solutionDir, watcher));
-            loader.Add(new NuGetAssemblyLoader(packagesDir));
-            loader.Add(new MSBuildProjectAssemblyLoader(solutionDir, watcher));
-
-            if (Directory.Exists(libDir))
+            _host.Execute(name =>
             {
-                loader.Add(new DirectoryLoader(libDir));
-            }
+                IServiceProvider services = ServicesFactory.Create(context.Options.Settings, sp =>
+                {
+                    sp.AddInstance<IAppLoader>(new MyAppLoader(name));
+                });
 
-            loader.Attach(AppDomain.CurrentDomain);
+                var engine = services.GetService<IHostingEngine>();
 
-            IServiceProvider services = ServicesFactory.Create(context.Options.Settings, sp =>
-            {
-                sp.AddInstance<IAppLoader>(new MyAppLoader(settings.Name));
-            });
-
-            var engine = services.GetService<IHostingEngine>();
-
-            try
-            {
-                var sw = Stopwatch.StartNew();
                 _runningApp = engine.Start(context);
-                sw.Stop();
-
-                Trace.TraceInformation("Total load time {0}ms", sw.ElapsedMilliseconds);
-            }
-            catch (Exception ex)
-            {
-                Trace.TraceError(String.Join("\n", GetExceptions(ex)));
-            }
+            });
 
             _lease = (ILease)RemotingServices.GetLifetimeService(this);
             _lease.Register(this);
@@ -130,19 +104,6 @@ namespace Microsoft.Owin.Hosting.Starter
             }
 
             yield return ex.Message;
-        }
-
-        private bool IsUnder(string path, string folder)
-        {
-            // Not good enough
-            var index = path.IndexOf(folder, StringComparison.OrdinalIgnoreCase);
-
-            if (index >= 0)
-            {
-                return true;
-            }
-
-            return false;
         }
 
         /// <summary>
@@ -163,6 +124,7 @@ namespace Microsoft.Owin.Hosting.Starter
             if (disposing && !_disposed)
             {
                 _disposed = true;
+                _host.Dispose();
                 _lease.Unregister(this);
                 _runningApp.Dispose();
             }
