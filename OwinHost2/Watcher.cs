@@ -22,9 +22,9 @@ namespace OwinHost2
             _watcher.Changed += OnWatcherChanged;
         }
 
-        public void Watch(string path)
+        public bool Watch(string path)
         {
-            _paths.Add(path);    
+            return _paths.Add(path);
         }
 
         private void OnWatcherChanged(object sender, FileSystemEventArgs e)

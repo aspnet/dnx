@@ -1,5 +1,4 @@
 ﻿using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -34,20 +33,12 @@ namespace Loader
                 return null;
             }
 
-            _watcher.Watch(projectFile);
-
             var projectCollection = new ProjectCollection();
             var properties = new Dictionary<string, string>();
             properties.Add("Configuration", "Debug");
             properties.Add("Platform", "AnyCPU");
 
-            var project = projectCollection.LoadProject(projectFile);
-
-            // TODO: We need to also look at project references
-            foreach (var contentItem in project.GetItems("Compile"))
-            {
-                _watcher.Watch(Path.Combine(projectDir, contentItem.EvaluatedInclude));
-            }
+            WatchProject(projectDir, projectFile, projectCollection);
 
             var buildRequest = new BuildRequestData(projectFile,
                                                     properties, null, new string[] { "Build" }, null);
@@ -78,6 +69,30 @@ namespace Loader
             }
 
             return null;
+        }
+
+        private void WatchProject(string projectDir, string projectFile, ProjectCollection projectCollection)
+        {
+            // We're already watching this file
+            if (!_watcher.Watch(projectFile))
+            {
+                return;
+            }
+
+            var project = projectCollection.LoadProject(projectFile);
+
+            foreach (var contentItem in project.GetItems("Compile"))
+            {
+                var path = Path.Combine(projectDir, contentItem.EvaluatedInclude);
+                _watcher.Watch(Path.GetFullPath(path));
+            }
+
+            // Watch project references
+            foreach (var item in project.GetItems("ProjectReference"))
+            {
+                string path = Path.GetFullPath(Path.Combine(projectDir, item.EvaluatedInclude));
+                WatchProject(projectDir, path, projectCollection); 
+            }
         }
     }
 }

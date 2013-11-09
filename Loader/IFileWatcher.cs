@@ -3,6 +3,6 @@ namespace Loader
 {
     public interface IFileWatcher
     {
-        void Watch(string path);
+        bool Watch(string path);
     }
 }
