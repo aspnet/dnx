@@ -36,4 +36,4 @@ ls -r project.json | %{ $json = cat $_.FullName -raw | ConvertFrom-Json;
 }
 
 # Build the solution
-msbuild ProjectSystem.sln
+msbuild ProjectSystem.sln /m /v:quiet /nologo
