@@ -23,16 +23,12 @@ namespace K
             string command = args[0];
             string path = args[1];
 
-            if (Environment.GetEnvironmentVariable("HOST_TRACE_LEVEL") != "1")
-            {
-                var listener = new ConsoleTraceListener();
-                Trace.Listeners.Add(listener);
-                Trace.AutoFlush = true;
-            }
+            var listener = new ConsoleTraceListener();
+            Trace.Listeners.Add(listener);
+            Trace.AutoFlush = true;
 
             string exePath = Assembly.GetExecutingAssembly().Location;
             Environment.SetEnvironmentVariable("HOST_PROCESS", exePath);
-            Environment.SetEnvironmentVariable("HOST_TRACE_LEVEL", "1");
 
             try
             {

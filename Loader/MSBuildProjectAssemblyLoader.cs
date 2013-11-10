@@ -27,10 +27,9 @@ namespace Loader
             string name = options.AssemblyName;
 
             string projectDir = Path.Combine(_solutionDir, name);
-            RoslynProject project;
 
             // Bail if there's a project settings file
-            if (RoslynProject.TryGetProject(projectDir, out project))
+            if (RoslynProject.HasProjectFile(projectDir))
             {
                 return null;
             }
@@ -39,10 +38,13 @@ namespace Loader
             string projectFile = Path.Combine(projectDir, name + ".csproj");
             if (!File.Exists(projectFile))
             {
+                // This is pretty slow
                 if (!TryGetProjectFile(name, projectCollection, out projectFile))
                 {
                     return null;
                 }
+
+                return null;
             }
 
             var properties = new Dictionary<string, string>();

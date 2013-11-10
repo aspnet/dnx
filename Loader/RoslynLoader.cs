@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.ExceptionServices;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Emit;
@@ -43,7 +44,7 @@ namespace Loader
             RoslynProject project;
 
             // Can't find a project file with the name so bail
-            if (!TryGetProject(path, name, out project))
+            if (!RoslynProject.TryGetProject(path, out project))
             {
                 return null;
             }
@@ -51,14 +52,16 @@ namespace Loader
             _watcher.Watch(path);
             _watcher.Watch(project.ProjectFilePath);
 
-            foreach (var sourcePath in project.SourceFiles)
+            var sourceFiles = project.SourceFiles.ToList();
+            var trees = new List<SyntaxTree>();
+
+            foreach (var sourcePath in sourceFiles)
             {
                 _watcher.Watch(Path.GetDirectoryName(sourcePath));
                 _watcher.Watch(sourcePath);
-            }
 
-            var trees = project.SourceFiles.Select(p => SyntaxTree.ParseFile(p))
-                                           .ToList();
+                trees.Add(SyntaxTree.ParseFile(sourcePath));
+            }
 
             List<MetadataReference> references = null;
 
@@ -69,6 +72,8 @@ namespace Loader
                 references = project.Dependencies
                                 .Select(d =>
                                 {
+                                    ExceptionDispatchInfo info = null;
+
                                     try
                                     {
                                         var loadedAssembly = Assembly.Load(d.Name);
@@ -81,9 +86,20 @@ namespace Loader
 
                                         return new MetadataFileReference(loadedAssembly.Location);
                                     }
-                                    catch (FileNotFoundException)
+                                    catch (FileNotFoundException ex)
                                     {
-                                        return MetadataFileReference.CreateAssemblyReference(d.Name);
+                                        info = ExceptionDispatchInfo.Capture(ex);
+
+                                        try
+                                        {
+                                            return MetadataFileReference.CreateAssemblyReference(d.Name);
+                                        }
+                                        catch
+                                        {
+                                            info.Throw();
+
+                                            return null;
+                                        }
                                     }
                                 })
                                 .Concat(GetFrameworkAssemblies())
@@ -129,10 +145,15 @@ namespace Loader
 
         private Assembly CompileToMemoryStream(string name, Compilation compilation)
         {
+            // Put symbols in a .symbols path
+            var pdbPath = Path.Combine(_solutionPath, ".symbols", name + ".pdb");
+
+            Directory.CreateDirectory(Path.GetDirectoryName(pdbPath));
+
+            using (var fs = File.Create(pdbPath))
             using (var ms = new MemoryStream())
             {
-                // TODO: Handle pdbs
-                EmitResult result = compilation.Emit(ms);
+                EmitResult result = compilation.Emit(ms, pdbStream: fs);
 
                 if (!result.Success)
                 {
@@ -162,33 +183,11 @@ namespace Loader
         private IEnumerable<MetadataReference> GetFrameworkAssemblies()
         {
             return new[] { 
-                new MetadataFileReference(typeof(object).Assembly.Location) 
+                new MetadataFileReference(typeof(object).Assembly.Location),
+                MetadataFileReference.CreateAssemblyReference("System"),
+                MetadataFileReference.CreateAssemblyReference("System.Core"),
+                MetadataFileReference.CreateAssemblyReference("Microsoft.CSharp")
             };
-        }
-
-        private bool TryGetProject(string path, string name, out RoslynProject project)
-        {
-            // Can't find a project file with the name so bail
-            if (!RoslynProject.TryGetProject(path, out project))
-            {
-                // Fall back to checking for any direct subdirectory that has
-                // a settings file that matches this name
-                foreach (var subDir in Directory.EnumerateDirectories(_solutionPath))
-                {
-                    if (RoslynProject.TryGetProject(subDir, out project) &&
-                        String.Equals(project.Name, name, StringComparison.OrdinalIgnoreCase))
-                    {
-                        path = subDir;
-                        break;
-                    }
-                    else
-                    {
-                        project = null;
-                    }
-                }
-            }
-
-            return project != null;
         }
     }
 

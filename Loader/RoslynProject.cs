@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Runtime.Versioning;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using NuGet;
 
@@ -19,18 +21,54 @@ namespace Loader
 
         public IList<Dependency> Dependencies { get; private set; }
 
-        public IEnumerable<string> SourceFiles { get; private set; }
+        public IEnumerable<string> SourceFiles
+        {
+            get
+            {
+                string path = Path.GetDirectoryName(ProjectFilePath);
+                return Directory.EnumerateFiles(path, "*.cs", SearchOption.AllDirectories);
+            }
+        }
+
+        public static bool HasProjectFile(string path)
+        {
+            string projectPath = Path.Combine(path, ProjectFileName);
+
+            return File.Exists(projectPath);
+        }
+
+        public static bool TryGetProjectName(string path, out string projectName)
+        {
+            projectName = null;
+
+            if (!HasProjectFile(path))
+            {
+                return false;
+            }
+
+            string projectPath = Path.Combine(path, ProjectFileName);
+            string json = File.ReadAllText(projectPath);
+            var settings = JObject.Parse(json);
+            projectName = settings["name"].Value<string>();
+
+            if (String.IsNullOrEmpty(projectName))
+            {
+                throw new InvalidDataException("A project name is required.");
+            }
+
+            return true;
+        }
 
         public static bool TryGetProject(string path, out RoslynProject project)
         {
             project = null;
 
-            string projectPath = Path.Combine(path, ProjectFileName);
-
-            if (!File.Exists(projectPath))
+            if (!HasProjectFile(path))
             {
                 return false;
             }
+
+            string projectPath = Path.Combine(path, ProjectFileName);
 
             project = new RoslynProject();
 
@@ -50,7 +88,6 @@ namespace Loader
             project.TargetFramework = VersionUtility.ParseFrameworkName(framework);
             project.Dependencies = new List<Dependency>();
             project.ProjectFilePath = projectPath;
-            project.SourceFiles = Directory.GetFiles(path, "*.cs", SearchOption.AllDirectories);
 
             var dependencies = settings["dependencies"] as JArray;
             if (dependencies != null)

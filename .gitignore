@@ -16,3 +16,4 @@ artifacts/*
 *.ncrunchsolution
 *.log
 *.vspx
+/.symbols
