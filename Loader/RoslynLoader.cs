@@ -96,7 +96,9 @@ namespace Loader
                 Directory.CreateDirectory(options.OutputPath);
 
                 string assemblyPath = Path.Combine(options.OutputPath, name + ".dll");
-                var result = compilation.Emit(assemblyPath);
+                string pdbPath = Path.Combine(options.OutputPath, name + ".pdb");
+
+                var result = compilation.Emit(assemblyPath, pdbPath);
 
                 if (!result.Success)
                 {

@@ -7,12 +7,12 @@ function Web {
     $watchDog = Join-Path $env:K1Dir "WatchDog"
     $webHost = Join-Path $env:K1Dir "WebHost"
     
-    K $watchDog $webHost $Path $Url
+    K run $watchDog $webHost $Path $Url
 }
 
 function K {
-    if($args.count -eq 0) {
-        $args = @($pwd)
+    if($args.count -eq 1) {
+        $args += $pwd
     }
     
     $bootstrapper = Join-Path $env:K1Dir "K\bin\Debug\K.exe"

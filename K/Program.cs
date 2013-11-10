@@ -37,7 +37,7 @@ namespace K
 
             if (command.Equals("run", StringComparison.OrdinalIgnoreCase))
             {
-                ExecuteMain(host, path, args.Skip(1).ToArray());
+                ExecuteMain(host, path, args.Skip(2).ToArray());
             }
             else if (command.Equals("compile", StringComparison.OrdinalIgnoreCase))
             {

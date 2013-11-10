@@ -20,7 +20,7 @@ namespace Loader
         {
             var sw = new Stopwatch();
             sw.Start();
-            Trace.TraceInformation("Loading {0}", options);
+            Trace.TraceInformation("Loading {0}", options.AssemblyName);
 
             Assembly asm;
 

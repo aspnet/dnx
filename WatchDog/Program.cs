@@ -32,7 +32,7 @@ namespace WatchDog
             else
             {
                 childProcess = Environment.GetEnvironmentVariable("HOST_PROCESS");
-                childArgs = String.Join(" ", args);
+                childArgs = String.Join(" ", new[] { "run" }.Concat(args));
             }
 
             while (true)

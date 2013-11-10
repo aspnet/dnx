@@ -30,7 +30,7 @@ namespace WebHost
 
             return app =>
             {
-                app.Properties["host.AppName"] = _assemblyName;
+                app.Properties["host.AppName"] = _assembly.GetName().Name;
 
                 config.Invoke(obj, new[] { app });
             };
