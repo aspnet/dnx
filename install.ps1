@@ -22,3 +22,5 @@ git clone https://github.com/Katana/ProjectSystem.git
 cd .\ProjectSystem
 
 . .\setupenv.ps1
+
+pwd
