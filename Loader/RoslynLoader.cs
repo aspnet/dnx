@@ -30,8 +30,10 @@ namespace Loader
             AppDomain.CurrentDomain.SetData("_compiledAssemblies", _compiledAssemblies);
         }
 
-        public Assembly Load(string name)
+        public Assembly Load(LoadOptions options)
         {
+            string name = options.AssemblyName;
+
             Tuple<Assembly, MetadataReference> compiledAssembly;
             if (_compiledAssemblies.TryGetValue(name, out compiledAssembly))
             {
@@ -89,6 +91,28 @@ namespace Loader
                 syntaxTrees: trees,
                 references: references);
 
+            if (options.OutputPath != null)
+            {
+                Directory.CreateDirectory(options.OutputPath);
+
+                string assemblyPath = Path.Combine(options.OutputPath, name + ".dll");
+                var result = compilation.Emit(assemblyPath);
+
+                if (!result.Success)
+                {
+                    ReportCompilationError(result);
+
+                    return null;
+                }
+
+                return Assembly.LoadFile(assemblyPath);
+            }
+
+            return CompileToMemoryStream(name, compilation);
+        }
+
+        private Assembly CompileToMemoryStream(string name, Compilation compilation)
+        {
             using (var ms = new MemoryStream())
             {
                 // TODO: Handle pdbs
@@ -96,10 +120,7 @@ namespace Loader
 
                 if (!result.Success)
                 {
-                    Trace.TraceError("COMPILATION ERROR: " +
-                        Environment.NewLine +
-                        String.Join(Environment.NewLine,
-                        result.Diagnostics.Select(d => d.GetMessage())));
+                    ReportCompilationError(result);
 
                     return null;
                 }
@@ -114,6 +135,14 @@ namespace Loader
 
                 return assembly;
             }
+        }
+
+        private static void ReportCompilationError(EmitResult result)
+        {
+            Trace.TraceError("COMPILATION ERROR: " +
+                Environment.NewLine +
+                String.Join(Environment.NewLine,
+                result.Diagnostics.Select(d => d.GetMessage())));
         }
 
         // The "framework" is always implicitly referenced

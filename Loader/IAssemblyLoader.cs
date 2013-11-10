@@ -5,7 +5,7 @@ namespace Loader
 
     public interface IAssemblyLoader
     {
-        Assembly Load(string name);
+        Assembly Load(LoadOptions options);
     }
 
 }

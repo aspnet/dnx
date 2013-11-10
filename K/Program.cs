@@ -1,7 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.IO;
 using System.Linq;
 using System.Reflection;
 using Loader;
@@ -32,7 +30,6 @@ namespace K
             string exePath = Assembly.GetExecutingAssembly().Location;
             Environment.SetEnvironmentVariable("HOST_PROCESS", exePath);
             Environment.SetEnvironmentVariable("HOST_TRACE_LEVEL", "1");
-
 
             var host = new DefaultHost(path);
             host.Execute(name => ExecuteMain(path, name, args.Skip(1).ToArray()));

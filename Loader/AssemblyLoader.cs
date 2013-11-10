@@ -16,30 +16,30 @@ namespace Loader
             _loaders.Add(loader);
         }
 
-        public Assembly Load(string name)
+        public Assembly Load(LoadOptions options)
         {
             var sw = new Stopwatch();
             sw.Start();
-            Trace.TraceInformation("Loading {0}", name);
+            Trace.TraceInformation("Loading {0}", options);
 
             Assembly asm;
 
-            if (!_cache.TryGetValue(name, out asm))
+            if (!_cache.TryGetValue(options.AssemblyName, out asm))
             {
-                asm = LoadImpl(name);
+                asm = LoadImpl(options);
 
                 sw.Stop();
-                Trace.TraceInformation("Finished loading {0} in {1}ms", name, sw.ElapsedMilliseconds);
+                Trace.TraceInformation("Finished loading {0} in {1}ms", options, sw.ElapsedMilliseconds);
 
                 if (asm != null)
                 {
-                    _cache.TryAdd(name, asm);
+                    _cache.TryAdd(options.AssemblyName, asm);
                 }
             }
             else
             {
                 sw.Stop();
-                Trace.TraceInformation("Retrieved {0} from cache in {1}ms", name, sw.ElapsedMilliseconds);
+                Trace.TraceInformation("Retrieved {0} from cache in {1}ms", options, sw.ElapsedMilliseconds);
             }
 
             return asm;
@@ -57,14 +57,20 @@ namespace Loader
 
         private Assembly OnAssemblyResolve(object sender, ResolveEventArgs args)
         {
-            return Load(new AssemblyName(args.Name).Name);
+            var an = new AssemblyName(args.Name);
+            var options = new LoadOptions
+            {
+                AssemblyName = an.Name
+            };
+             
+            return Load(options);
         }
 
-        private Assembly LoadImpl(string name)
+        private Assembly LoadImpl(LoadOptions options)
         {
             foreach (var loader in _loaders)
             {
-                var assembly = loader.Load(name);
+                var assembly = loader.Load(options);
 
                 if (assembly != null)
                 {

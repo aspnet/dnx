@@ -57,6 +57,39 @@ namespace Loader
             }
         }
 
+        public void Compile(string outputPath)
+        {
+            ProjectSettings settings;
+            if (!ProjectSettings.TryGetSettings(_path, out settings))
+            {
+                Trace.TraceError("Unable to find " + ProjectSettings.ProjectFileName);
+                return;
+            }
+
+            try
+            {
+                var sw = Stopwatch.StartNew();
+
+                _loader.Load(new LoadOptions
+                {
+                    AssemblyName = settings.Name,
+                    OutputPath = Path.Combine(_path, "bin")
+                });
+
+                sw.Stop();
+
+                Trace.TraceInformation("Total load time {0}ms", sw.ElapsedMilliseconds);
+            }
+            catch (FileNotFoundException)
+            {
+
+            }
+            catch (Exception ex)
+            {
+                Trace.TraceError(String.Join("\n", GetExceptions(ex)));
+            }
+        }
+
         private IEnumerable<string> GetExceptions(Exception ex)
         {
             if (ex.InnerException != null)

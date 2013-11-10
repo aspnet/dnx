@@ -22,8 +22,10 @@ namespace Loader
             _watcher = watcher;
         }
 
-        public Assembly Load(string name)
+        public Assembly Load(LoadOptions options)
         {
+            string name = options.AssemblyName;
+
             string projectDir = Path.Combine(_solutionDir, name);
             ProjectSettings settings;
 

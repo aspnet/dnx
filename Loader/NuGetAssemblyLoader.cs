@@ -17,8 +17,10 @@ namespace Loader
             _repository = new LocalPackageRepository(packagesDirectory);
         }
 
-        public Assembly Load(string name)
+        public Assembly Load(LoadOptions options)
         {
+            string name = options.AssemblyName;
+
             Assembly assembly;
             if (_cache.TryGetValue(name, out assembly))
             {

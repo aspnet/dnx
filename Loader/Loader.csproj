@@ -65,6 +65,7 @@
     <Compile Include="AssemblyLoader.cs" />
     <Compile Include="DefaultHost.cs" />
     <Compile Include="IFileWatcher.cs" />
+    <Compile Include="LoadOptions.cs" />
     <Compile Include="RoslynLoader.cs" />
     <Compile Include="DirectoryLoader.cs" />
     <Compile Include="IAssemblyLoader.cs" />
