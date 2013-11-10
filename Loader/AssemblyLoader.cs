@@ -29,7 +29,7 @@ namespace Loader
                 asm = LoadImpl(options);
 
                 sw.Stop();
-                Trace.TraceInformation("Finished loading {0} in {1}ms", options, sw.ElapsedMilliseconds);
+                Trace.TraceInformation("Finished loading {0} in {1}ms", options.AssemblyName, sw.ElapsedMilliseconds);
 
                 if (asm != null)
                 {
@@ -39,7 +39,7 @@ namespace Loader
             else
             {
                 sw.Stop();
-                Trace.TraceInformation("Retrieved {0} from cache in {1}ms", options, sw.ElapsedMilliseconds);
+                Trace.TraceInformation("Retrieved {0} from cache in {1}ms", options.AssemblyName, sw.ElapsedMilliseconds);
             }
 
             return asm;
