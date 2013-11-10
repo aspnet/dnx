@@ -27,10 +27,10 @@ namespace Loader
             string name = options.AssemblyName;
 
             string projectDir = Path.Combine(_solutionDir, name);
-            ProjectSettings settings;
+            RoslynProject project;
 
             // Bail if there's a project settings file
-            if (ProjectSettings.TryGetSettings(projectDir, out settings))
+            if (RoslynProject.TryGetProject(projectDir, out project))
             {
                 return null;
             }

@@ -58,11 +58,12 @@ namespace Loader
         private Assembly OnAssemblyResolve(object sender, ResolveEventArgs args)
         {
             var an = new AssemblyName(args.Name);
+
             var options = new LoadOptions
             {
                 AssemblyName = an.Name
             };
-             
+
             return Load(options);
         }
 

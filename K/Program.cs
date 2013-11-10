@@ -69,9 +69,7 @@ namespace K
                 }
             }
 
-            if (!(ex is FileNotFoundException) && 
-                !(ex is FileLoadException) &&
-                !(ex is TargetInvocationException))
+            if (!(ex is TargetInvocationException))
             {
                 yield return ex.Message;
             }

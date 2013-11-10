@@ -7,38 +7,50 @@ using NuGet;
 
 namespace Loader
 {
-    public class ProjectSettings
+    public class RoslynProject
     {
         public const string ProjectFileName = "project.json";
 
-        public static bool TryGetSettings(string path, out ProjectSettings projectSettings)
+        public string ProjectFilePath { get; private set; }
+
+        public string Name { get; private set; }
+
+        public FrameworkName TargetFramework { get; private set; }
+
+        public IList<Dependency> Dependencies { get; private set; }
+
+        public IEnumerable<string> SourceFiles { get; private set; }
+
+        public static bool TryGetProject(string path, out RoslynProject project)
         {
-            projectSettings = null;
+            project = null;
 
-            string projectSettingsPath = Path.Combine(path, ProjectFileName);
+            string projectPath = Path.Combine(path, ProjectFileName);
 
-            if (!File.Exists(projectSettingsPath))
+            if (!File.Exists(projectPath))
             {
                 return false;
             }
 
-            projectSettings = new ProjectSettings();
+            project = new RoslynProject();
 
-            string json = File.ReadAllText(projectSettingsPath);
+            string json = File.ReadAllText(projectPath);
             var settings = JObject.Parse(json);
             var targetFramework = settings["targetFramework"];
 
             string framework = targetFramework == null ? "net40" : targetFramework.Value<string>();
 
-            projectSettings.Name = settings["name"].Value<string>();
-            projectSettings.TargetFramework = VersionUtility.ParseFrameworkName(framework);
-            projectSettings.Dependencies = new List<Dependency>();
-            projectSettings.ProjectFilePath = projectSettingsPath;
+            project.Name = settings["name"].Value<string>();
 
-            if (String.IsNullOrEmpty(projectSettings.Name))
+            if (String.IsNullOrEmpty(project.Name))
             {
                 throw new InvalidDataException("A project name is required.");
             }
+
+            project.TargetFramework = VersionUtility.ParseFrameworkName(framework);
+            project.Dependencies = new List<Dependency>();
+            project.ProjectFilePath = projectPath;
+            project.SourceFiles = Directory.GetFiles(path, "*.cs", SearchOption.AllDirectories);
 
             var dependencies = settings["dependencies"] as JArray;
             if (dependencies != null)
@@ -56,7 +68,7 @@ namespace Loader
                             throw new InvalidDataException("Unable to resolve dependency ''.");
                         }
 
-                        projectSettings.Dependencies.Add(new Dependency
+                        project.Dependencies.Add(new Dependency
                         {
                             Name = prop.Key,
                             Version = version != null ? version.Value<string>() : null
@@ -67,14 +79,6 @@ namespace Loader
 
             return true;
         }
-
-        public string ProjectFilePath { get; private set; }
-
-        public string Name { get; private set; }
-
-        public FrameworkName TargetFramework { get; private set; }
-
-        public IList<Dependency> Dependencies { get; private set; }
     }
 
     public class Dependency

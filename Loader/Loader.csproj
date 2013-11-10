@@ -70,7 +70,7 @@
     <Compile Include="IAssemblyLoader.cs" />
     <Compile Include="MSBuildProjectAssemblyLoader.cs" />
     <Compile Include="NuGetAssemblyLoader.cs" />
-    <Compile Include="ProjectSettings.cs" />
+    <Compile Include="RoslynProject.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Watcher.cs" />
   </ItemGroup>

@@ -40,36 +40,33 @@ namespace Loader
             }
 
             string path = Path.Combine(_solutionPath, name);
-            ProjectSettings settings;
+            RoslynProject project;
 
             // Can't find a project file with the name so bail
-            if (!TryGetProjectSettings(path, name, out settings))
+            if (!TryGetProject(path, name, out project))
             {
                 return null;
             }
 
             _watcher.Watch(path);
-            _watcher.Watch(settings.ProjectFilePath);
+            _watcher.Watch(project.ProjectFilePath);
 
-            // Get all the cs files in this directory
-            var sources = Directory.GetFiles(path, "*.cs", SearchOption.AllDirectories);
-
-            foreach (var sourcePath in sources)
+            foreach (var sourcePath in project.SourceFiles)
             {
                 _watcher.Watch(Path.GetDirectoryName(sourcePath));
                 _watcher.Watch(sourcePath);
             }
 
-            var trees = sources.Select(p => SyntaxTree.ParseFile(p))
-                               .ToList();
+            var trees = project.SourceFiles.Select(p => SyntaxTree.ParseFile(p))
+                                           .ToList();
 
             List<MetadataReference> references = null;
 
-            if (settings.Dependencies.Count > 0)
+            if (project.Dependencies.Count > 0)
             {
-                Trace.TraceInformation("Loading dependencies for '{0}'", settings.Name);
+                Trace.TraceInformation("Loading dependencies for '{0}'", project.Name);
 
-                references = settings.Dependencies
+                references = project.Dependencies
                                 .Select(d =>
                                 {
                                     try
@@ -92,7 +89,7 @@ namespace Loader
                                 .Concat(GetFrameworkAssemblies())
                                 .ToList();
 
-                Trace.TraceInformation("Completed loading dependencies for '{0}'", settings.Name);
+                Trace.TraceInformation("Completed loading dependencies for '{0}'", project.Name);
             }
             else
             {
@@ -169,29 +166,29 @@ namespace Loader
             };
         }
 
-        private bool TryGetProjectSettings(string path, string name, out ProjectSettings settings)
+        private bool TryGetProject(string path, string name, out RoslynProject project)
         {
             // Can't find a project file with the name so bail
-            if (!ProjectSettings.TryGetSettings(path, out settings))
+            if (!RoslynProject.TryGetProject(path, out project))
             {
                 // Fall back to checking for any direct subdirectory that has
                 // a settings file that matches this name
                 foreach (var subDir in Directory.EnumerateDirectories(_solutionPath))
                 {
-                    if (ProjectSettings.TryGetSettings(subDir, out settings) &&
-                        String.Equals(settings.Name, name, StringComparison.OrdinalIgnoreCase))
+                    if (RoslynProject.TryGetProject(subDir, out project) &&
+                        String.Equals(project.Name, name, StringComparison.OrdinalIgnoreCase))
                     {
                         path = subDir;
                         break;
                     }
                     else
                     {
-                        settings = null;
+                        project = null;
                     }
                 }
             }
 
-            return settings != null;
+            return project != null;
         }
     }
 

@@ -64,10 +64,10 @@ namespace Loader
 
         private string GetProjectName()
         {
-            ProjectSettings settings;
-            if (ProjectSettings.TryGetSettings(_path, out settings))
+            RoslynProject project;
+            if (RoslynProject.TryGetProject(_path, out project))
             {
-                return settings.Name;
+                return project.Name;
             }
 
             return _path.Substring(Path.GetDirectoryName(_path).Length)
