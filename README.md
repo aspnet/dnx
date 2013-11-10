@@ -1,10 +1,5 @@
 ## Getting started
 
-Run build.ps1
+Run setupenv.ps1
 
-Add the following to your powershell profile
-
-```
-$env:ProjectSystemDir = PATH WHERE YOU CLONED THE REPOSITORY
-. PATH WHERE YOU CLONED THE REPOSITORY\scripts\K.ps1
-```
+This will build the project and modify your current PowerShell session and profile to support running K1.
