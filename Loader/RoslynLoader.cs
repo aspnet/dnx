@@ -1,14 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.ComponentModel.DataAnnotations;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-using System.Runtime.Caching;
-using System.Xml;
-using System.Xml.Linq;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Emit;
@@ -76,15 +71,22 @@ namespace Loader
                 references = settings.Dependencies
                                 .Select(d =>
                                 {
-                                    var loadedAssembly = Assembly.Load(d.Name);
-
-                                    Tuple<Assembly, MetadataReference> compiledDependency;
-                                    if (_compiledAssemblies.TryGetValue(d.Name, out compiledDependency))
+                                    try
                                     {
-                                        return compiledDependency.Item2;
-                                    }
+                                        var loadedAssembly = Assembly.Load(d.Name);
 
-                                    return new MetadataFileReference(loadedAssembly.Location);
+                                        Tuple<Assembly, MetadataReference> compiledDependency;
+                                        if (_compiledAssemblies.TryGetValue(d.Name, out compiledDependency))
+                                        {
+                                            return compiledDependency.Item2;
+                                        }
+
+                                        return new MetadataFileReference(loadedAssembly.Location);
+                                    }
+                                    catch (FileNotFoundException)
+                                    {
+                                        return MetadataFileReference.CreateAssemblyReference(d.Name);
+                                    }
                                 })
                                 .Concat(GetFrameworkAssemblies())
                                 .ToList();
@@ -159,17 +161,9 @@ namespace Loader
         // The "framework" is always implicitly referenced
         private IEnumerable<MetadataReference> GetFrameworkAssemblies()
         {
-            yield return new MetadataFileReference(typeof(object).Assembly.Location);
-            yield return new MetadataFileReference(typeof(File).Assembly.Location);
-            yield return new MetadataFileReference(typeof(System.Linq.Enumerable).Assembly.Location);
-            yield return new MetadataFileReference(typeof(System.Dynamic.DynamicObject).Assembly.Location);
-            yield return new MetadataFileReference(typeof(Microsoft.CSharp.RuntimeBinder.RuntimeBinderException).Assembly.Location);
-            yield return new MetadataFileReference(typeof(IListSource).Assembly.Location);
-            yield return new MetadataFileReference(typeof(RequiredAttribute).Assembly.Location);
-            yield return new MetadataFileReference(typeof(XmlElement).Assembly.Location);
-            yield return new MetadataFileReference(typeof(ObjectCache).Assembly.Location);
-            yield return new MetadataFileReference(typeof(XElement).Assembly.Location);
-            yield return new MetadataFileReference(typeof(System.Net.Http.HttpMessageHandler).Assembly.Location);
+            return new[] { 
+                new MetadataFileReference(typeof(object).Assembly.Location) 
+            };
         }
 
         private bool TryGetProjectSettings(string path, string name, out ProjectSettings settings)

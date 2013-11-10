@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Runtime.Versioning;
 using Newtonsoft.Json.Linq;
@@ -34,6 +35,11 @@ namespace Loader
             projectSettings.Dependencies = new List<Dependency>();
             projectSettings.ProjectFilePath = projectSettingsPath;
 
+            if (String.IsNullOrEmpty(projectSettings.Name))
+            {
+                throw new InvalidDataException("A project name is required.");
+            }
+
             var dependencies = settings["dependencies"] as JArray;
             if (dependencies != null)
             {
@@ -44,6 +50,11 @@ namespace Loader
                         var properties = prop.Value.Value<JObject>();
 
                         var version = properties["version"];
+
+                        if (String.IsNullOrEmpty(prop.Key))
+                        {
+                            throw new InvalidDataException("Unable to resolve dependency ''.");
+                        }
 
                         projectSettings.Dependencies.Add(new Dependency
                         {
