@@ -4,8 +4,8 @@ function Web {
     [string]$Url = "http://localhost:8080"
     )
     
-    $watchDog = Join-Path $env:ProjectSystemDir "WatchDog"
-    $webHost = Join-Path $env:ProjectSystemDir "WebHost"
+    $watchDog = Join-Path $env:K1Dir "WatchDog"
+    $webHost = Join-Path $env:K1Dir "WebHost"
     
     K $watchDog $webHost $Path $Url
 }
@@ -15,7 +15,7 @@ function K {
         $args = @($pwd)
     }
     
-    $bootstrapper = Join-Path $env:ProjectSystemDir "K\bin\Debug\K.exe"
+    $bootstrapper = Join-Path $env:K1Dir "K\bin\Debug\K.exe"
     
     & $bootstrapper @args
 }
