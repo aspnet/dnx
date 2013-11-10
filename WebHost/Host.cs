@@ -3,6 +3,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
+using System.Diagnostics;
 using System.IO;
 using System.Reflection;
 using System.Runtime.Remoting;
@@ -18,7 +19,7 @@ namespace Microsoft.Owin.Hosting.Starter
     /// <summary>
     /// Used for executing the IHostingEngine in a new AppDomain.
     /// </summary>
-    public class DomainHostingStarterAgent2 : IDisposable
+    public class Host : IDisposable
     {
         private bool _disposed;
         private IDisposable _runningApp;
@@ -35,6 +36,8 @@ namespace Microsoft.Owin.Hosting.Starter
 
             // Project directory
             string path = options.Settings["directory"];
+
+            Environment.SetEnvironmentVariable("WEB_ROOT", path);
 
             _host = new DefaultHost(path);
             _host.OnChanged += () =>
@@ -65,7 +68,7 @@ namespace Microsoft.Owin.Hosting.Starter
                     throw;
                 }
 
-                Console.Error.WriteLine(inner.Message);
+                Trace.TraceError(inner.Message);
             }
         }
 

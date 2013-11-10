@@ -22,7 +22,7 @@ namespace WebHost
             string path = Path.GetFullPath(args[0]);
             string url = args[1];
 
-            var host = new DomainHostingStarter2();
+            var host = new Host();
             var options = new StartOptions();
             options.Settings["directory"] = path;
             options.Urls.Add(url);

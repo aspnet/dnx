@@ -43,8 +43,6 @@ namespace Loader
                 {
                     return null;
                 }
-
-                return null;
             }
 
             var properties = new Dictionary<string, string>();
