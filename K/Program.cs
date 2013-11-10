@@ -44,7 +44,7 @@ namespace K
                 }
                 else if (command.Equals("compile", StringComparison.OrdinalIgnoreCase))
                 {
-                    host.Compile(path);
+                    host.Compile();
                 }
                 else
                 {

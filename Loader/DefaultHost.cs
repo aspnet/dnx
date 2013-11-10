@@ -31,16 +31,11 @@ namespace Loader
 
         public Assembly Run()
         {
-            ProjectSettings settings;
-            if (!ProjectSettings.TryGetSettings(_path, out settings))
-            {
-                Trace.TraceError("Unable to find " + ProjectSettings.ProjectFileName);
-                return null;
-            }
+            string name = GetProjectName();
 
             var sw = Stopwatch.StartNew();
 
-            var assembly = Assembly.Load(settings.Name);
+            var assembly = Assembly.Load(name);
 
             sw.Stop();
 
@@ -49,26 +44,34 @@ namespace Loader
             return assembly;
         }
 
-        public void Compile(string outputPath)
+        public void Compile()
         {
-            ProjectSettings settings;
-            if (!ProjectSettings.TryGetSettings(_path, out settings))
-            {
-                Trace.TraceError("Unable to find " + ProjectSettings.ProjectFileName);
-                return;
-            }
+            string name = GetProjectName();
+            string outputPath = Path.Combine(_path, "bin");
 
             var sw = Stopwatch.StartNew();
 
             _loader.Load(new LoadOptions
             {
-                AssemblyName = settings.Name,
-                OutputPath = Path.Combine(_path, "bin")
+                AssemblyName = name,
+                OutputPath = outputPath
             });
 
             sw.Stop();
 
             Trace.TraceInformation("Total load time {0}ms", sw.ElapsedMilliseconds);
+        }
+
+        private string GetProjectName()
+        {
+            ProjectSettings settings;
+            if (ProjectSettings.TryGetSettings(_path, out settings))
+            {
+                return settings.Name;
+            }
+
+            return _path.Substring(Path.GetDirectoryName(_path).Length)
+                        .Trim(Path.DirectorySeparatorChar);
         }
 
         private void CreateDefaultLoader()

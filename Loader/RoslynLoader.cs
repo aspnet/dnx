@@ -6,6 +6,9 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.Caching;
+using System.Xml;
+using System.Xml.Linq;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Emit;
@@ -64,25 +67,34 @@ namespace Loader
             var trees = sources.Select(p => SyntaxTree.ParseFile(p))
                                .ToList();
 
-            Trace.TraceInformation("Loading dependencies for '{0}'", settings.Name);
+            List<MetadataReference> references = null;
 
-            var references = settings.Dependencies
-                            .Select(d =>
-                            {
-                                var loadedAssembly = Assembly.Load(d.Name);
+            if (settings.Dependencies.Count > 0)
+            {
+                Trace.TraceInformation("Loading dependencies for '{0}'", settings.Name);
 
-                                Tuple<Assembly, MetadataReference> compiledDependency;
-                                if (_compiledAssemblies.TryGetValue(d.Name, out compiledDependency))
+                references = settings.Dependencies
+                                .Select(d =>
                                 {
-                                    return compiledDependency.Item2;
-                                }
+                                    var loadedAssembly = Assembly.Load(d.Name);
 
-                                return new MetadataFileReference(loadedAssembly.Location);
-                            })
-                            .Concat(GetFrameworkAssemblies())
-                            .ToList();
+                                    Tuple<Assembly, MetadataReference> compiledDependency;
+                                    if (_compiledAssemblies.TryGetValue(d.Name, out compiledDependency))
+                                    {
+                                        return compiledDependency.Item2;
+                                    }
 
-            Trace.TraceInformation("Completed loading dependencies for '{0}'", settings.Name);
+                                    return new MetadataFileReference(loadedAssembly.Location);
+                                })
+                                .Concat(GetFrameworkAssemblies())
+                                .ToList();
+
+                Trace.TraceInformation("Completed loading dependencies for '{0}'", settings.Name);
+            }
+            else
+            {
+                references = GetFrameworkAssemblies().ToList();
+            }
 
             // Create a compilation
             var compilation = Compilation.Create(
@@ -154,6 +166,10 @@ namespace Loader
             yield return new MetadataFileReference(typeof(Microsoft.CSharp.RuntimeBinder.RuntimeBinderException).Assembly.Location);
             yield return new MetadataFileReference(typeof(IListSource).Assembly.Location);
             yield return new MetadataFileReference(typeof(RequiredAttribute).Assembly.Location);
+            yield return new MetadataFileReference(typeof(XmlElement).Assembly.Location);
+            yield return new MetadataFileReference(typeof(ObjectCache).Assembly.Location);
+            yield return new MetadataFileReference(typeof(XElement).Assembly.Location);
+            yield return new MetadataFileReference(typeof(System.Net.Http.HttpMessageHandler).Assembly.Location);
         }
 
         private bool TryGetProjectSettings(string path, string name, out ProjectSettings settings)
