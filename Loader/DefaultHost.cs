@@ -59,7 +59,9 @@ namespace Loader
 
             sw.Stop();
 
-            Trace.TraceInformation("Total load time {0}ms", sw.ElapsedMilliseconds);
+            Trace.TraceInformation("Output saved to '{0}'.", outputPath);
+
+            Trace.TraceInformation("Total compile time {0}ms", sw.ElapsedMilliseconds);
         }
 
         private string GetProjectName()
