@@ -1,5 +1,5 @@
 # Build the project
-#.\build.ps1
+.\build.ps1
 
 # Configure this session for K1
 $env:K1Dir = $pwd
