@@ -1,16 +1,13 @@
 function Web { 
-    if($args.count -eq 0) {
-        $args = @($pwd, "http://localhost:8081")
-    }
-    
-    if($args.count -eq 1) {
-        $args += "http://localhost:8081"
-    }
+    param(
+    [string]$Path = $pwd,
+    [string]$Url = "http://localhost:8080"
+    )
     
     $watchDog = Join-Path $env:ProjectSystemDir "WatchDog"
     $webHost = Join-Path $env:ProjectSystemDir "WebHost"
     
-    K $watchDog $webHost @args
+    K $watchDog $webHost $Path $Url
 }
 
 function K {
