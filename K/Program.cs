@@ -34,16 +34,16 @@ namespace K
             Environment.SetEnvironmentVariable("HOST_PROCESS", exePath);
             Environment.SetEnvironmentVariable("HOST_TRACE_LEVEL", "1");
 
-            var host = new DefaultHost(path);
-
             try
             {
                 if (command.Equals("run", StringComparison.OrdinalIgnoreCase))
                 {
+                    var host = new DefaultHost(path);
                     ExecuteMain(host, path, args.Skip(2).ToArray());
                 }
                 else if (command.Equals("compile", StringComparison.OrdinalIgnoreCase))
                 {
+                    var host = new DefaultHost(path, watchFiles: false);
                     host.Compile();
                 }
                 else

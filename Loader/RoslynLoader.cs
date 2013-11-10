@@ -16,6 +16,7 @@ namespace Loader
         private readonly string _solutionPath;
         private readonly IFileWatcher _watcher;
 
+
         public RoslynLoader(string solutionPath, IFileWatcher watcher)
         {
             _solutionPath = solutionPath;
@@ -120,6 +121,8 @@ namespace Loader
 
                     return null;
                 }
+
+                Trace.TraceInformation("{0} -> {1}", name, assemblyPath);
 
                 return Assembly.LoadFile(assemblyPath);
             }

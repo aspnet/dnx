@@ -9,14 +9,14 @@ namespace Loader
     public class DefaultHost : IDisposable
     {
         private AssemblyLoader _loader;
-        private Watcher _watcher;
+        private IFileWatcher _watcher;
         private readonly string _path;
 
-        public DefaultHost(string path)
+        public DefaultHost(string path, bool watchFiles = true)
         {
             _path = path.TrimEnd(Path.DirectorySeparatorChar);
 
-            CreateDefaultLoader();
+            CreateDefaultLoader(watchFiles);
         }
 
         public event Action OnChanged;
@@ -59,8 +59,6 @@ namespace Loader
 
             sw.Stop();
 
-            Trace.TraceInformation("Output saved to '{0}'.", outputPath);
-
             Trace.TraceInformation("Total compile time {0}ms", sw.ElapsedMilliseconds);
         }
 
@@ -76,7 +74,7 @@ namespace Loader
                         .Trim(Path.DirectorySeparatorChar);
         }
 
-        private void CreateDefaultLoader()
+        private void CreateDefaultLoader(bool watchFiles)
         {
             _loader = new AssemblyLoader();
             _loader.Attach(AppDomain.CurrentDomain);
@@ -85,8 +83,15 @@ namespace Loader
             string packagesDir = Path.Combine(solutionDir, "packages");
             string libDir = Path.Combine(solutionDir, "lib");
 
-            _watcher = new Watcher(solutionDir);
-            _watcher.OnChanged += OnWatcherChanged;
+            if (watchFiles)
+            {
+                _watcher = new Watcher(solutionDir);
+                _watcher.OnChanged += OnWatcherChanged;
+            }
+            else
+            {
+                _watcher = Watcher.Noop;
+            }
 
             _loader.Add(new RoslynLoader(solutionDir, _watcher));
             _loader.Add(new MSBuildProjectAssemblyLoader(solutionDir, _watcher));

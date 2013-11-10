@@ -11,6 +11,8 @@ namespace Loader
         private readonly HashSet<string> _paths = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         private readonly FileSystemWatcher _watcher;
 
+        public static readonly IFileWatcher Noop = new NoopWatcher();
+
         public Watcher(string path)
         {
             _path = path;
@@ -39,6 +41,16 @@ namespace Loader
                     OnChanged();
                 }
             }
+        }
+
+        private class NoopWatcher : IFileWatcher
+        {
+            public bool Watch(string path)
+            {
+                return true;
+            }
+
+            public event Action OnChanged;
         }
     }
 }
