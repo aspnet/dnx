@@ -42,29 +42,9 @@ namespace Loader
             ProjectSettings settings;
 
             // Can't find a project file with the name so bail
-            if (!ProjectSettings.TryGetSettings(path, out settings))
+            if (!TryGetProjectSettings(path, name, out settings))
             {
-                // Fall back to checking for any direct subdirectory that has
-                // a project.json that matches this name
-                foreach (var subDir in Directory.EnumerateDirectories(_solutionPath))
-                {
-                    if (ProjectSettings.TryGetSettings(subDir, out settings) &&
-                        settings.Name == name)
-                    {
-                        path = subDir;
-                        break;
-                    }
-                    else
-                    {
-                        settings = null;
-                    }
-                }
-
-                // Couldn't find anything
-                if (settings == null)
-                {
-                    return null;
-                }
+                return null;
             }
 
             _watcher.Watch(path);
@@ -87,8 +67,6 @@ namespace Loader
             var references = settings.Dependencies
                             .Select(d =>
                             {
-                                // Load the assembly so we run the "system" but grab the bytes for those assemblies
-                                // that are in memory
                                 var loadedAssembly = Assembly.Load(d.Name);
 
                                 Tuple<Assembly, MetadataReference> compiledDependency;
@@ -131,7 +109,7 @@ namespace Loader
                 var assembly = Assembly.Load(bytes);
 
                 var compiled = Tuple.Create(assembly, (MetadataReference)new MetadataImageReference(bytes));
-                
+
                 _compiledAssemblies[name] = compiled;
 
                 return assembly;
@@ -148,6 +126,31 @@ namespace Loader
             yield return new MetadataFileReference(typeof(Microsoft.CSharp.RuntimeBinder.RuntimeBinderException).Assembly.Location);
             yield return new MetadataFileReference(typeof(IListSource).Assembly.Location);
             yield return new MetadataFileReference(typeof(RequiredAttribute).Assembly.Location);
+        }
+
+        private bool TryGetProjectSettings(string path, string name, out ProjectSettings settings)
+        {
+            // Can't find a project file with the name so bail
+            if (!ProjectSettings.TryGetSettings(path, out settings))
+            {
+                // Fall back to checking for any direct subdirectory that has
+                // a settings file that matches this name
+                foreach (var subDir in Directory.EnumerateDirectories(_solutionPath))
+                {
+                    if (ProjectSettings.TryGetSettings(subDir, out settings) &&
+                        String.Equals(settings.Name, name, StringComparison.OrdinalIgnoreCase))
+                    {
+                        path = subDir;
+                        break;
+                    }
+                    else
+                    {
+                        settings = null;
+                    }
+                }
+            }
+
+            return settings != null;
         }
     }
 
