@@ -1,5 +1,11 @@
+$ErrorActionPreference = "Stop"
+
 # Build the project
 .\build.ps1
+
+if (-not $LASTEXITCODE -eq 0) {
+    Exit
+}
 
 # Configure this session for K1
 $env:K1Dir = $pwd
