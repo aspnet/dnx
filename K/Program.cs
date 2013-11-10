@@ -11,13 +11,15 @@ namespace K
         [LoaderOptimization(LoaderOptimization.MultiDomainHost)]
         static void Main(string[] args)
         {
-            string path = args.FirstOrDefault();
-
-            if (String.IsNullOrEmpty(path))
+            if (args.Length < 2)
             {
-                Console.WriteLine("K.exe [path]");
+                Console.WriteLine("K.exe [command] [path]");
+                Environment.Exit(-1);
                 return;
             }
+
+            string command = args[0];
+            string path = args[1];
 
             if (Environment.GetEnvironmentVariable("HOST_TRACE_LEVEL") != "1")
             {
@@ -32,12 +34,32 @@ namespace K
             Environment.SetEnvironmentVariable("HOST_TRACE_LEVEL", "1");
 
             var host = new DefaultHost(path);
-            host.Execute(name => ExecuteMain(path, name, args.Skip(1).ToArray()));
+
+            if (command.Equals("run", StringComparison.OrdinalIgnoreCase))
+            {
+                ExecuteMain(host, path, args.Skip(1).ToArray());
+            }
+            else if (command.Equals("compile", StringComparison.OrdinalIgnoreCase))
+            {
+                host.Compile(path);
+            }
+            else
+            {
+                Console.WriteLine("unknown command '{0}'", command);
+                Environment.Exit(-1);
+            }
         }
 
-        private static void ExecuteMain(string path, string name, string[] args)
+        private static void ExecuteMain(DefaultHost host, string path, string[] args)
         {
-            var assembly = Assembly.Load(name);
+            var assembly = host.Run();
+
+            if (assembly == null)
+            {
+                return;
+            }
+
+            string name = assembly.GetName().Name;
 
             var program = assembly.GetType("Program") ?? assembly.GetTypes().FirstOrDefault(t => t.Name == "Program");
 

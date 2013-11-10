@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Reflection;
 
 namespace Loader
 {
@@ -28,24 +29,26 @@ namespace Loader
             }
         }
 
-        public void Execute(Action<string> execute)
+        public Assembly Run()
         {
             ProjectSettings settings;
             if (!ProjectSettings.TryGetSettings(_path, out settings))
             {
                 Trace.TraceError("Unable to find " + ProjectSettings.ProjectFileName);
-                return;
+                return null;
             }
 
             try
             {
                 var sw = Stopwatch.StartNew();
 
-                execute(settings.Name);
+                var assembly = Assembly.Load(settings.Name);
 
                 sw.Stop();
 
                 Trace.TraceInformation("Total load time {0}ms", sw.ElapsedMilliseconds);
+
+                return assembly;
             }
             catch (FileNotFoundException)
             {
@@ -55,6 +58,8 @@ namespace Loader
             {
                 Trace.TraceError(String.Join("\n", GetExceptions(ex)));
             }
+
+            return null;
         }
 
         public void Compile(string outputPath)

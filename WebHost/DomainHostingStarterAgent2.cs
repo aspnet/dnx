@@ -42,17 +42,16 @@ namespace Microsoft.Owin.Hosting.Starter
                 Environment.Exit(250);
             };
 
-            _host.Execute(name =>
+            var assembly = _host.Run();
+            
+            IServiceProvider services = ServicesFactory.Create(context.Options.Settings, sp =>
             {
-                IServiceProvider services = ServicesFactory.Create(context.Options.Settings, sp =>
-                {
-                    sp.AddInstance<IAppLoader>(new MyAppLoader(name));
-                });
-
-                var engine = services.GetService<IHostingEngine>();
-
-                _runningApp = engine.Start(context);
+                sp.AddInstance<IAppLoader>(new MyAppLoader(assembly));
             });
+
+            var engine = services.GetService<IHostingEngine>();
+
+            _runningApp = engine.Start(context);
         }
 
         /// <summary>

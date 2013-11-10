@@ -9,17 +9,16 @@ namespace WebHost
 {
     public class MyAppLoader : IAppLoader
     {
-        private string _assemblyName;
+        private Assembly _assembly;
 
-        public MyAppLoader(string assemblyName)
+        public MyAppLoader(Assembly assembly)
         {
-            _assemblyName = assemblyName;
+            _assembly = assembly;
         }
 
         public Action<IAppBuilder> Load(string appName, IList<string> errors)
         {
-            var asm = Assembly.Load(_assemblyName);
-            var type = asm.GetType("Startup") ?? asm.GetTypes().FirstOrDefault(t => t.Name == "Startup");
+            var type = _assembly.GetType("Startup") ?? _assembly.GetTypes().FirstOrDefault(t => t.Name == "Startup");
 
             if(type == null)
             {
