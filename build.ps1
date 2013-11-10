@@ -11,7 +11,6 @@ Write-Host "Downloading NuGet.exe"
 
 & .nuget\nuget.exe restore
 
-
 # List of reference names to exclude from nuget restore
 $exclude = @{"Loader" = "";}
 
@@ -35,3 +34,6 @@ ls -r project.json | %{ $json = cat $_.FullName -raw | ConvertFrom-Json;
 } | %{ $_.Name } | unique | Where-Object { !$exclude.Contains($_) } | %{ 
     .nuget\nuget.exe install $_ -o packages -prerelease -configFile .nuget\nuget.config 
 }
+
+# Build the solution
+msbuild ProjectSystem.sln
