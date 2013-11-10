@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Reflection;
 using Loader;
@@ -24,7 +26,6 @@ namespace K
             if (Environment.GetEnvironmentVariable("HOST_TRACE_LEVEL") != "1")
             {
                 var listener = new ConsoleTraceListener();
-                listener.Filter = new ErrorFilter();
                 Trace.Listeners.Add(listener);
                 Trace.AutoFlush = true;
             }
@@ -35,18 +36,44 @@ namespace K
 
             var host = new DefaultHost(path);
 
-            if (command.Equals("run", StringComparison.OrdinalIgnoreCase))
+            try
             {
-                ExecuteMain(host, path, args.Skip(2).ToArray());
+                if (command.Equals("run", StringComparison.OrdinalIgnoreCase))
+                {
+                    ExecuteMain(host, path, args.Skip(2).ToArray());
+                }
+                else if (command.Equals("compile", StringComparison.OrdinalIgnoreCase))
+                {
+                    host.Compile(path);
+                }
+                else
+                {
+                    Console.WriteLine("unknown command '{0}'", command);
+                    Environment.Exit(-1);
+                }
             }
-            else if (command.Equals("compile", StringComparison.OrdinalIgnoreCase))
+            catch (Exception ex)
             {
-                host.Compile(path);
+                Console.Error.WriteLine(String.Join(Environment.NewLine, GetExceptions(ex)));
+                Environment.Exit(-2);
             }
-            else
+        }
+
+        private static IEnumerable<string> GetExceptions(Exception ex)
+        {
+            if (ex.InnerException != null)
             {
-                Console.WriteLine("unknown command '{0}'", command);
-                Environment.Exit(-1);
+                foreach (var e in GetExceptions(ex.InnerException))
+                {
+                    yield return e;
+                }
+            }
+
+            if (!(ex is FileNotFoundException) && 
+                !(ex is FileLoadException) &&
+                !(ex is TargetInvocationException))
+            {
+                yield return ex.Message;
             }
         }
 
@@ -85,14 +112,6 @@ namespace K
             else if (parameters.Length == 1)
             {
                 main.Invoke(null, new object[] { args });
-            }
-        }
-
-        private class ErrorFilter : TraceFilter
-        {
-            public override bool ShouldTrace(TraceEventCache cache, string source, TraceEventType eventType, int id, string formatOrMessage, object[] args, object data1, object[] data)
-            {
-                return eventType == TraceEventType.Error;
             }
         }
     }

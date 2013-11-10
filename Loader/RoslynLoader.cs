@@ -141,10 +141,7 @@ namespace Loader
 
         private static void ReportCompilationError(EmitResult result)
         {
-            Trace.TraceError("COMPILATION ERROR: " +
-                Environment.NewLine +
-                String.Join(Environment.NewLine,
-                result.Diagnostics.Select(d => d.GetMessage())));
+            throw new InvalidDataException(String.Join(Environment.NewLine, result.Diagnostics.Select(d => d.GetMessage())));
         }
 
         // The "framework" is always implicitly referenced

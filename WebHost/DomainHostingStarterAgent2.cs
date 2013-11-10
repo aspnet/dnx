@@ -42,16 +42,42 @@ namespace Microsoft.Owin.Hosting.Starter
                 Environment.Exit(250);
             };
 
-            var assembly = _host.Run();
-            
-            IServiceProvider services = ServicesFactory.Create(context.Options.Settings, sp =>
+            try
             {
-                sp.AddInstance<IAppLoader>(new MyAppLoader(assembly));
-            });
+                var assembly = _host.Run();
 
-            var engine = services.GetService<IHostingEngine>();
+                IServiceProvider services = ServicesFactory.Create(context.Options.Settings, sp =>
+                {
+                    sp.AddInstance<IAppLoader>(new MyAppLoader(assembly));
+                });
 
-            _runningApp = engine.Start(context);
+                var engine = services.GetService<IHostingEngine>();
+
+                _runningApp = engine.Start(context);
+            }
+            catch (Exception ex)
+            {
+                var inner = GetInnerException(ex);
+
+                // Hacky: We need to have specific loader exceptions
+                if(!(inner is InvalidDataException))
+                {
+                    throw;
+                }
+
+                Console.Error.WriteLine(inner.Message);
+            }
+        }
+
+        private Exception GetInnerException(Exception ex)
+        {
+            // If the most inner is recoverable then
+            while(ex.InnerException != null)
+            {
+                ex = ex.InnerException;
+            }
+
+            return ex;
         }
 
         /// <summary>

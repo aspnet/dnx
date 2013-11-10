@@ -38,28 +38,15 @@ namespace Loader
                 return null;
             }
 
-            try
-            {
-                var sw = Stopwatch.StartNew();
+            var sw = Stopwatch.StartNew();
 
-                var assembly = Assembly.Load(settings.Name);
+            var assembly = Assembly.Load(settings.Name);
 
-                sw.Stop();
+            sw.Stop();
 
-                Trace.TraceInformation("Total load time {0}ms", sw.ElapsedMilliseconds);
+            Trace.TraceInformation("Total load time {0}ms", sw.ElapsedMilliseconds);
 
-                return assembly;
-            }
-            catch (FileNotFoundException)
-            {
-
-            }
-            catch (Exception ex)
-            {
-                Trace.TraceError(String.Join("\n", GetExceptions(ex)));
-            }
-
-            return null;
+            return assembly;
         }
 
         public void Compile(string outputPath)
@@ -71,41 +58,17 @@ namespace Loader
                 return;
             }
 
-            try
+            var sw = Stopwatch.StartNew();
+
+            _loader.Load(new LoadOptions
             {
-                var sw = Stopwatch.StartNew();
+                AssemblyName = settings.Name,
+                OutputPath = Path.Combine(_path, "bin")
+            });
 
-                _loader.Load(new LoadOptions
-                {
-                    AssemblyName = settings.Name,
-                    OutputPath = Path.Combine(_path, "bin")
-                });
+            sw.Stop();
 
-                sw.Stop();
-
-                Trace.TraceInformation("Total load time {0}ms", sw.ElapsedMilliseconds);
-            }
-            catch (FileNotFoundException)
-            {
-
-            }
-            catch (Exception ex)
-            {
-                Trace.TraceError(String.Join("\n", GetExceptions(ex)));
-            }
-        }
-
-        private IEnumerable<string> GetExceptions(Exception ex)
-        {
-            if (ex.InnerException != null)
-            {
-                foreach (var e in GetExceptions(ex.InnerException))
-                {
-                    yield return e;
-                }
-            }
-
-            yield return ex.ToString();
+            Trace.TraceInformation("Total load time {0}ms", sw.ElapsedMilliseconds);
         }
 
         private void CreateDefaultLoader()
