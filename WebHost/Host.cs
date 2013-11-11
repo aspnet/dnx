@@ -2,12 +2,10 @@
 
 using System;
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Reflection;
-using System.Runtime.Remoting;
-using System.Runtime.Remoting.Lifetime;
 using Loader;
 using Microsoft.Owin.Hosting.Engine;
 using Microsoft.Owin.Hosting.Loader;
@@ -19,25 +17,52 @@ namespace Microsoft.Owin.Hosting.Starter
     /// <summary>
     /// Used for executing the IHostingEngine in a new AppDomain.
     /// </summary>
-    public class Host : IDisposable
+    public class Host : MarshalByRefObject, IDisposable
     {
         private bool _disposed;
         private IDisposable _runningApp;
         private DefaultHost _host;
+
+        [SuppressMessage("Microsoft.Reliability", "CA2001:AvoidCallingProblematicMethods", MessageId = "System.Reflection.Assembly.LoadFile", Justification = "By design")]
+        [SuppressMessage("Microsoft.Performance", "CA1822:MarkMembersAsStatic", Justification = "Invoked cross domain")]
+        public void ResolveAssembliesFromDirectory(string directory)
+        {
+            var cache = new Dictionary<string, Assembly>();
+            AppDomain.CurrentDomain.AssemblyResolve +=
+                (a, b) =>
+                {
+                    Assembly assembly;
+                    if (cache.TryGetValue(b.Name, out assembly))
+                    {
+                        return assembly;
+                    }
+
+                    string shortName = new AssemblyName(b.Name).Name;
+                    string path = Path.Combine(directory, shortName + ".dll");
+                    if (File.Exists(path))
+                    {
+                        assembly = Assembly.LoadFile(path);
+                    }
+                    cache[b.Name] = assembly;
+                    if (assembly != null)
+                    {
+                        cache[assembly.FullName] = assembly;
+                    }
+                    return assembly;
+                };
+        }
 
         /// <summary>
         /// Executes the IHostingEngine in a new AppDomain.
         /// </summary>
         /// <param name="options"></param>
         [SuppressMessage("Microsoft.Performance", "CA1822:MarkMembersAsStatic", Justification = "Non-static needed for calling across AppDomain")]
-        public void Start(StartOptions options)
+        public void Start(string path, string url)
         {
+            var options = new StartOptions();
+            options.Urls.Add(url);
+
             var context = new StartContext(options);
-
-            // Project directory
-            string path = options.Settings["directory"];
-
-            Environment.SetEnvironmentVariable("WEB_ROOT", path);
 
             _host = new DefaultHost(path);
             _host.OnChanged += () =>
@@ -63,7 +88,7 @@ namespace Microsoft.Owin.Hosting.Starter
                 var inner = GetInnerException(ex);
 
                 // Hacky: We need to have specific loader exceptions
-                if(!(inner is InvalidDataException))
+                if (!(inner is InvalidDataException))
                 {
                     throw;
                 }
@@ -75,7 +100,7 @@ namespace Microsoft.Owin.Hosting.Starter
         private Exception GetInnerException(Exception ex)
         {
             // If the most inner is recoverable then
-            while(ex.InnerException != null)
+            while (ex.InnerException != null)
             {
                 ex = ex.InnerException;
             }

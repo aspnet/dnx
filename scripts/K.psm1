@@ -5,7 +5,7 @@ function Web {
     )
     
     $watchDog = Join-Path $env:K1Dir "WatchDog"
-    $webHost = Join-Path $env:K1Dir "WebHost"
+    $webHost = Join-Path $env:K1Dir "WebHost\bin\Debug\WebHost.exe"
     
     K run $watchDog $webHost $Path $Url
 }
