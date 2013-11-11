@@ -67,7 +67,7 @@ namespace K
 
             if (!(ex is TargetInvocationException))
             {
-                yield return ex.Message;
+                yield return ex.ToString();
             }
         }
 

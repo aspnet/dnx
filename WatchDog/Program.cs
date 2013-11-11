@@ -101,13 +101,20 @@ namespace WatchDog
 
         private static void HandleInput(Process process, TaskCompletionSource<object> tcs)
         {
-            var ki = Console.ReadKey(false);
-
-            if (ki.Key == ConsoleKey.B)
+            try
             {
-                tcs.TrySetResult(null);
+                var ki = Console.ReadKey(false);
 
-                process.Kill();
+                if (ki.Key == ConsoleKey.B)
+                {
+                    tcs.TrySetResult(null);
+
+                    process.Kill();
+                }
+            }
+            catch (Exception ex)
+            {
+                // The console might not be supported
             }
         }
     }
