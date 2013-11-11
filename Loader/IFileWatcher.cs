@@ -5,7 +5,9 @@ namespace Loader
 {
     public interface IFileWatcher
     {
-        bool Watch(string path);
+        void WatchDirectory(string path, string extension);
+
+        bool WatchFile(string path);
 
         event Action OnChanged;
     }

@@ -145,7 +145,7 @@ namespace Loader
         private void WatchProject(string projectDir, string projectFile, ProjectCollection projectCollection)
         {
             // We're already watching this file
-            if (!_watcher.Watch(projectFile))
+            if (!_watcher.WatchFile(projectFile))
             {
                 return;
             }
@@ -155,7 +155,7 @@ namespace Loader
             foreach (var contentItem in project.GetItems("Compile"))
             {
                 var path = Path.Combine(projectDir, contentItem.EvaluatedInclude);
-                _watcher.Watch(Path.GetFullPath(path));
+                _watcher.WatchFile(Path.GetFullPath(path));
             }
 
             // Watch project references

@@ -49,16 +49,16 @@ namespace Loader
                 return null;
             }
 
-            _watcher.Watch(path);
-            _watcher.Watch(project.ProjectFilePath);
+            _watcher.WatchDirectory(path, ".cs");
+            _watcher.WatchFile(project.ProjectFilePath);
 
             var sourceFiles = project.SourceFiles.ToList();
             var trees = new List<SyntaxTree>();
 
             foreach (var sourcePath in sourceFiles)
             {
-                _watcher.Watch(Path.GetDirectoryName(sourcePath));
-                _watcher.Watch(sourcePath);
+                _watcher.WatchDirectory(Path.GetDirectoryName(sourcePath), ".cs");
+                _watcher.WatchFile(sourcePath);
 
                 trees.Add(SyntaxTree.ParseFile(sourcePath));
             }
