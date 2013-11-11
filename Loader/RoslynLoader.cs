@@ -70,6 +70,7 @@ namespace Loader
                 Trace.TraceInformation("Loading dependencies for '{0}'", project.Name);
 
                 references = project.Dependencies
+                                .AsParallel()
                                 .Select(d =>
                                 {
                                     ExceptionDispatchInfo info = null;
@@ -101,16 +102,16 @@ namespace Loader
                                             return null;
                                         }
                                     }
-                                })
-                                .Concat(GetFrameworkAssemblies())
-                                .ToList();
+                                }).ToList();
 
                 Trace.TraceInformation("Completed loading dependencies for '{0}'", project.Name);
             }
             else
             {
-                references = GetFrameworkAssemblies().ToList();
+                references = new List<MetadataReference>();
             }
+            
+            references.AddRange(GetFrameworkAssemblies());
 
             // Create a compilation
             var compilation = Compilation.Create(
