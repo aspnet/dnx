@@ -93,7 +93,7 @@ namespace Microsoft.Owin.Hosting.Starter
                     throw;
                 }
 
-                Trace.TraceError(inner.Message);
+                Console.Error.WriteLine(inner.Message);
             }
         }
 
