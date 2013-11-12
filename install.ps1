@@ -16,11 +16,16 @@ catch {
     Exit 1
 }
 
-# Clone https://github.com/Katana/ProjectSystem to current folder
-git clone https://github.com/Katana/ProjectSystem.git
-
-cd .\ProjectSystem
+if (-not (Test-Path "$pwd\.git" -pathType container)) {
+    # Clone https://github.com/Katana/ProjectSystem to current folder
+    Write-Host "Cloning the repository for you..."
+    git clone https://github.com/Katana/ProjectSystem.git
+    cd .\ProjectSystem
+}
 
 . .\build.ps1
 
-[Environment]::SetEnvironmentVariable("PATH", "$env:PATH;$pwd\scripts", "User")
+if (-not $env:PATH -like "*$pwd\scripts*") {
+    # Update the PATH
+    [Environment]::SetEnvironmentVariable("PATH", "$env:PATH;$pwd\scripts", "User")
+}
