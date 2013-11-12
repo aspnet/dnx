@@ -54,16 +54,17 @@ namespace Loader
 
             var trees = new List<SyntaxTree>();
 
-            foreach (var g in project.SourceFiles.GroupBy(Path.GetDirectoryName))
+            foreach (var sourcePath in project.SourceFiles)
             {
-                _watcher.WatchDirectory(g.Key, ".cs");
-
-                foreach (var sourcePath in g)
-                {
-                    _watcher.WatchFile(sourcePath);
-                    trees.Add(SyntaxTree.ParseFile(sourcePath));                    
-                }
+                _watcher.WatchFile(sourcePath);
+                trees.Add(SyntaxTree.ParseFile(sourcePath));
             }
+
+            foreach (var directory in Directory.EnumerateDirectories(path, "*.*", SearchOption.AllDirectories))
+            {
+                _watcher.WatchDirectory(directory, ".cs");
+            }
+
 
             List<MetadataReference> references = null;
 
@@ -112,7 +113,7 @@ namespace Loader
             {
                 references = new List<MetadataReference>();
             }
-            
+
             references.AddRange(GetFrameworkAssemblies());
 
             // Create a compilation

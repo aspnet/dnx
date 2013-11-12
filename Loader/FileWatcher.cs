@@ -8,7 +8,6 @@ namespace Loader
 {
     public class FileWatcher : IFileWatcher
     {
-        private readonly string _path;
         private readonly HashSet<string> _files = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         private readonly ConcurrentDictionary<string, HashSet<string>> _directories = new ConcurrentDictionary<string, HashSet<string>>(StringComparer.OrdinalIgnoreCase);
 
@@ -16,9 +15,13 @@ namespace Loader
 
         public static readonly IFileWatcher Noop = new NoopWatcher();
 
+        internal FileWatcher()
+        {
+
+        }
+
         public FileWatcher(string path)
         {
-            _path = path;
             _watcher = new FileSystemWatcher(path);
             _watcher.IncludeSubdirectories = true;
             _watcher.EnableRaisingEvents = true;
@@ -45,40 +48,79 @@ namespace Loader
 
         private void OnRenamed(object sender, RenamedEventArgs e)
         {
-            ReportPathChanged(e.OldFullPath, e.ChangeType);
-            ReportPathChanged(e.FullPath, e.ChangeType);
+            ReportChange(e.OldFullPath, e.FullPath, e.ChangeType);
         }
 
         private void OnWatcherChanged(object sender, FileSystemEventArgs e)
         {
-            ReportPathChanged(e.FullPath, e.ChangeType);
+            ReportChange(e.FullPath, e.ChangeType);
         }
 
-        private void ReportPathChanged(string path, WatcherChangeTypes changeType)
+        public bool ReportChange(string newPath, WatcherChangeTypes changeType)
         {
-            if (HasChanged(path))
+            return ReportChange(oldPath: null, newPath: newPath, changeType: changeType);
+        }
+
+        public bool ReportChange(string oldPath, string newPath, WatcherChangeTypes changeType)
+        {
+            if (HasChanged(oldPath, newPath, changeType))
             {
-                Trace.TraceInformation("{0} -> {1}", changeType, path);
+                if (oldPath != null)
+                {
+                    Trace.TraceInformation("{0} -> {1}", oldPath, newPath);
+                }
+                else
+                {
+                    Trace.TraceInformation("{0} -> {1}", changeType, newPath);
+                }
 
                 if (OnChanged != null)
                 {
                     OnChanged();
                 }
+
+                return true;
             }
+
+            return false;
         }
 
-        private bool HasChanged(string path)
+        private bool HasChanged(string oldPath, string newPath, WatcherChangeTypes changeType)
         {
-            if (_files.Contains(path))
+            // File changes
+            if (_files.Contains(newPath) || 
+                (oldPath != null && _files.Contains(oldPath)))
             {
                 return true;
             }
 
             HashSet<string> extensions;
-            if (_directories.TryGetValue(path, out extensions) ||
-                _directories.TryGetValue(Path.GetDirectoryName(path), out extensions))
+            if (_directories.TryGetValue(newPath, out extensions) ||
+                _directories.TryGetValue(Path.GetDirectoryName(newPath), out extensions))
             {
-                return extensions.Contains(Path.GetExtension(path));
+                string extension = Path.GetExtension(newPath);
+
+                if (String.IsNullOrEmpty(extension))
+                {
+                    // Assume it's a directory
+                    if (changeType == WatcherChangeTypes.Created || 
+                        changeType == WatcherChangeTypes.Renamed)
+                    {
+                        foreach (var e in extensions)
+                        {
+                            WatchDirectory(newPath, e);
+                        }
+                    }
+                    else if(changeType == WatcherChangeTypes.Deleted)
+                    {
+                        return true;
+                    }
+
+                    // Ignore anything else
+                    return false;
+                }
+
+                return extensions.Contains(extension);
             }
 
             return false;

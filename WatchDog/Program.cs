@@ -66,8 +66,6 @@ namespace WatchDog
 
                 process.Exited += (sender, e) =>
                 {
-                    Console.WriteLine("Process '{0}' excited with '{1}'", childProcess, process.ExitCode);
-
                     if (inputThread.IsAlive)
                     {
                         inputThread.Abort();
