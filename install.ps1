@@ -21,4 +21,6 @@ git clone https://github.com/Katana/ProjectSystem.git
 
 cd .\ProjectSystem
 
-. .\setupenv.ps1
+. .\build.ps1
+
+$env:K1Dir = "$env:K1Dir;$pwd\scripts"
