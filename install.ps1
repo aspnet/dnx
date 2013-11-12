@@ -20,19 +20,45 @@ $scripts = "$pwd\scripts"
 
 if (-not (Test-Path "$pwd\.git" -pathType container)) {
     # Clone https://github.com/Katana/ProjectSystem to current folder
-    Write-Host "Cloning the repository for you..." -ForegroundColor Yellow
+    Write-Host "Cloning the repository for you..." -ForegroundColor Cyan
     git clone https://github.com/Katana/ProjectSystem.git
     $scripts = "$pwd\ProjectSystem\scripts"
-    pushd .\ProjectSystem
+    cd .\ProjectSystem
 }
 
 . .\build.ps1
 
-Write-Host "scripts folder at $scripts"
+# Prompt to GAC & ngen Roslyn
+$gacngen = ""
+while ($gacngen -notmatch "[y|n]"){
+    Write-Host ""
+    Write-Host "GAC & NGen Roslyn? (makes app startup much faster, requires admin)" -ForegroundColor Cyan
+    $gacngen = Read-Host "[Y/N]"
+    Write-Host ""
+}
 
-if (-not ($env:PATH -like "*$scripts*")) {
+if ($gacngen -eq "y"){
+    cd .\roslyn
+    Get-ChildItem | % {
+        Write-Host "Installing $_.Name in the GAC"
+        gacutil /i $_.Name /f /silent
+
+        Write-Host "Generating native images for $_.Name"
+        ngen install $_.Name /silent > $null
+    }
+    Write-Host "Roslyn files installed into GAC & native images generated" -ForegroundColor Cyan
+    Write-Host ""
+    cd ..
+}
+
+$envPath = [Environment]::GetEnvironmentVariable("PATH", "User")
+
+if (-not ($envPath -like "*$scripts*")) {
     # Update the PATH
-    [Environment]::SetEnvironmentVariable("PATH", "$env:PATH;$scripts", "User")
+    [Environment]::SetEnvironmentVariable("PATH", "$envPath;$scripts", "User")
 
-    Write-Host "Environment configured for K1, remember to restart your prompt!" -ForegroundColor Yellow
+    Write-Host "Environment configured for K1, remember to restart your prompt!" -ForegroundColor Green
+}
+else {
+    Write-Host "Done!" -ForegroundColor Green
 }
