@@ -23,4 +23,4 @@ IF "%WebPath%"=="" SET WebPath=%CD%
 
 ::Echo K run %WatchDog% %WebHost% %WebPath% %WebUrl%
 
-K run %WatchDog% %WebHost% %WebPath% %WebUrl%
+Call %~dp0\K run %WatchDog% %WebHost% %WebPath% %WebUrl% < Nul
