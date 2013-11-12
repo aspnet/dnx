@@ -85,12 +85,12 @@ namespace Loader
 
             if (watchFiles)
             {
-                _watcher = new Watcher(solutionDir);
+                _watcher = new FileWatcher(solutionDir);
                 _watcher.OnChanged += OnWatcherChanged;
             }
             else
             {
-                _watcher = Watcher.Noop;
+                _watcher = FileWatcher.Noop;
             }
 
             _loader.Add(new RoslynLoader(solutionDir, _watcher));

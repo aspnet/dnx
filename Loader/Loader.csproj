@@ -71,7 +71,7 @@
     <Compile Include="NuGetAssemblyLoader.cs" />
     <Compile Include="RoslynProject.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Watcher.cs" />
+    <Compile Include="FileWatcher.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

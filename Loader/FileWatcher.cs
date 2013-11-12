@@ -6,16 +6,17 @@ using System.IO;
 
 namespace Loader
 {
-    public class Watcher : IFileWatcher
+    public class FileWatcher : IFileWatcher
     {
         private readonly string _path;
         private readonly HashSet<string> _files = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-        private readonly ConcurrentDictionary<string, HashSet<string>> _dirs = new ConcurrentDictionary<string, HashSet<string>>(StringComparer.OrdinalIgnoreCase);
+        private readonly ConcurrentDictionary<string, HashSet<string>> _directories = new ConcurrentDictionary<string, HashSet<string>>(StringComparer.OrdinalIgnoreCase);
+
         private readonly FileSystemWatcher _watcher;
 
         public static readonly IFileWatcher Noop = new NoopWatcher();
 
-        public Watcher(string path)
+        public FileWatcher(string path)
         {
             _path = path;
             _watcher = new FileSystemWatcher(path);
@@ -32,7 +33,7 @@ namespace Loader
 
         public void WatchDirectory(string path, string extension)
         {
-            var extensions = _dirs.GetOrAdd(path, _ => new HashSet<string>(StringComparer.OrdinalIgnoreCase));
+            var extensions = _directories.GetOrAdd(path, _ => new HashSet<string>(StringComparer.OrdinalIgnoreCase));
 
             extensions.Add(extension);
         }
@@ -73,11 +74,11 @@ namespace Loader
                 return true;
             }
 
-            HashSet<string> extension;
-            if (_dirs.TryGetValue(path, out extension) ||
-                _dirs.TryGetValue(Path.GetDirectoryName(path), out extension))
+            HashSet<string> extensions;
+            if (_directories.TryGetValue(path, out extensions) ||
+                _directories.TryGetValue(Path.GetDirectoryName(path), out extensions))
             {
-                return extension.Contains(Path.GetExtension(path));
+                return extensions.Contains(Path.GetExtension(path));
             }
 
             return false;
