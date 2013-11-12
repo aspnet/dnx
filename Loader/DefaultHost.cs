@@ -70,8 +70,7 @@ namespace Loader
                 return projectName;
             }
 
-            return _path.Substring(Path.GetDirectoryName(_path).Length)
-                        .Trim(Path.DirectorySeparatorChar);
+            return RoslynProject.GetDirectoryName(_path);
         }
 
         private void CreateDefaultLoader(bool watchFiles)

@@ -1,9 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.Runtime.Versioning;
-using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using NuGet;
 
@@ -49,14 +47,21 @@ namespace Loader
             string projectPath = Path.Combine(path, ProjectFileName);
             string json = File.ReadAllText(projectPath);
             var settings = JObject.Parse(json);
-            projectName = settings["name"].Value<string>();
+            var name = settings["name"];
+            projectName = name == null ? null : name.Value<string>();
 
             if (String.IsNullOrEmpty(projectName))
             {
-                throw new InvalidDataException("A project name is required.");
+                // Assume the directory name is the project name
+                projectName = GetDirectoryName(path);
             }
 
             return true;
+        }
+
+        public static string GetDirectoryName(string path)
+        {
+            return path.Substring(Path.GetDirectoryName(path).Length).Trim(Path.DirectorySeparatorChar);
         }
 
         public static bool TryGetProject(string path, out RoslynProject project)
@@ -75,14 +80,16 @@ namespace Loader
             string json = File.ReadAllText(projectPath);
             var settings = JObject.Parse(json);
             var targetFramework = settings["targetFramework"];
+            var name = settings["name"];
 
-            string framework = targetFramework == null ? "net40" : targetFramework.Value<string>();
+            string framework = targetFramework == null ? "net45" : targetFramework.Value<string>();
 
-            project.Name = settings["name"].Value<string>();
+            project.Name = name == null ? null : name.Value<string>();
 
             if (String.IsNullOrEmpty(project.Name))
             {
-                throw new InvalidDataException("A project name is required.");
+                // Assume the directory name is the project name
+                project.Name = GetDirectoryName(path);
             }
 
             project.TargetFramework = VersionUtility.ParseFrameworkName(framework);
