@@ -15,4 +15,10 @@
 
 ::Echo %~dp0..\K\bin\Debug\K.exe %*
 
-%~dp0..\K\bin\Debug\K.exe %*
+SET KCmd=%~1
+IF "%KCmd%"=="" SET KCmd=run
+
+SET KPath=%~2
+IF "%KPath%"=="" SET KPath=%CD%
+
+%~dp0..\K\bin\Debug\K.exe %KCmd% %KPath% %3 %4 %5 %6 %7 %8 %9
