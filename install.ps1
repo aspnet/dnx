@@ -23,4 +23,4 @@ cd .\ProjectSystem
 
 . .\build.ps1
 
-$env:K1Dir = "$env:K1Dir;$pwd\scripts"
+$env:PATH = "$env:PATH;$pwd\scripts"

@@ -1,0 +1,1 @@
+powershell.exe -NoProfile -ExecutionPolicy unrestricted .\build.ps1

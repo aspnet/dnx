@@ -17,3 +17,4 @@ artifacts/*
 *.log
 *.vspx
 /.symbols
+README.html
