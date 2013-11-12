@@ -23,4 +23,4 @@ cd .\ProjectSystem
 
 . .\build.ps1
 
-$env:PATH = "$env:PATH;$pwd\scripts"
+[Environment]::SetEnvironmentVariable("PATH", "$env:PATH;$pwd\scripts", "User")

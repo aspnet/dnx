@@ -18,7 +18,7 @@ This approach will build the project and configure your environment so you can r
 2. Navigate to the folder where you cloned the project, e.g. ```C:\src\ProjectSystem```
 3. Run build.cmd
 4. Modify the PATH to include the scripts folder:
-    - In PowerShell, type ```$env:PATH = "$env:PATH;$pwd\scripts"``` and hit Enter
+    - In PowerShell, type ```[Environment]::SetEnvironmentVariable("PATH", "$env:PATH;$pwd\scripts", "User")``` and hit Enter
     - In cmd prompt, type ```SET PATH=%PATH%;%CD%\scripts``` and hit Enter
 
 ## Writing your first K1 web application
