@@ -13,12 +13,10 @@
 :: e.g. To compile the app in the current folder:
 ::      C:\src\MyApp\>K compile
 
-::Echo %~dp0..\K\bin\Debug\K.exe %*
+SET _cmd=%~1
+IF "%_cmd%"=="" SET _cmd=run
 
-SET KCmd=%~1
-IF "%KCmd%"=="" SET KCmd=run
+SET _path=%~f2
+IF "%_path%"=="" SET _path=%CD%
 
-SET KPath=%~2
-IF "%KPath%"=="" SET KPath=%CD%
-
-%~dp0..\K\bin\Debug\K.exe %KCmd% %KPath% %3 %4 %5 %6 %7 %8 %9
+%~dp0..\K\bin\Debug\K.exe %_cmd% %_path% %3 %4 %5 %6 %7 %8 %9
