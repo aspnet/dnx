@@ -28,7 +28,9 @@ if (-not (Test-Path "$pwd\.git" -pathType container)) {
 
 . .\build.ps1
 
-if (-not $env:PATH -like "*$scripts*") {
+Write-Host "scripts folder at $scripts"
+
+if (-not ($env:PATH -like "*$scripts*")) {
     # Update the PATH
     [Environment]::SetEnvironmentVariable("PATH", "$env:PATH;$scripts", "User")
 
