@@ -3,7 +3,7 @@ using System;
 
 namespace Loader
 {
-    public interface IFileWatcher
+    public interface IFileWatcher : IDisposable
     {
         void WatchDirectory(string path, string extension);
 

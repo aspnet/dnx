@@ -34,13 +34,17 @@ namespace K
             {
                 if (command.Equals("run", StringComparison.OrdinalIgnoreCase))
                 {
-                    var host = new DefaultHost(path);
-                    ExecuteMain(host, path, args.Skip(2).ToArray());
+                    using (var host = new DefaultHost(path))
+                    {
+                        ExecuteMain(host, path, args.Skip(2).ToArray());
+                    }
                 }
                 else if (command.Equals("compile", StringComparison.OrdinalIgnoreCase))
                 {
-                    var host = new DefaultHost(path, watchFiles: false);
-                    host.Compile();
+                    using (var host = new DefaultHost(path, watchFiles: false))
+                    {
+                        host.Compile();
+                    }
                 }
                 else
                 {

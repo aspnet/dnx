@@ -17,17 +17,10 @@ namespace Loader
         private readonly string _solutionPath;
         private readonly IFileWatcher _watcher;
 
-
         public RoslynLoader(string solutionPath, IFileWatcher watcher)
         {
             _solutionPath = solutionPath;
             _watcher = watcher;
-
-            // HACK: We're making this available to other parts of the app domain
-            // so they can get a reference to in memory compiled assemblies. 
-
-            // TODO: Formalize a better way of doing this. Maybe DI?
-            AppDomain.CurrentDomain.SetData("_compiledAssemblies", _compiledAssemblies);
         }
 
         public Assembly Load(LoadOptions options)
@@ -169,8 +162,9 @@ namespace Loader
                 var bytes = ms.ToArray();
 
                 var assembly = Assembly.Load(bytes);
+                MetadataReference reference = new MetadataImageReference(bytes);
 
-                var compiled = Tuple.Create(assembly, (MetadataReference)new MetadataImageReference(bytes));
+                var compiled = Tuple.Create(assembly, reference);
 
                 _compiledAssemblies[name] = compiled;
 

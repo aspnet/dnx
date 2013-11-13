@@ -45,15 +45,9 @@ namespace Loader
         {
             return _files.Add(path);
         }
-
-        private void OnRenamed(object sender, RenamedEventArgs e)
+        public void Dispose()
         {
-            ReportChange(e.OldFullPath, e.FullPath, e.ChangeType);
-        }
-
-        private void OnWatcherChanged(object sender, FileSystemEventArgs e)
-        {
-            ReportChange(e.FullPath, e.ChangeType);
+            _watcher.Dispose();
         }
 
         public bool ReportChange(string newPath, WatcherChangeTypes changeType)
@@ -83,6 +77,16 @@ namespace Loader
             }
 
             return false;
+        }
+
+        private void OnRenamed(object sender, RenamedEventArgs e)
+        {
+            ReportChange(e.OldFullPath, e.FullPath, e.ChangeType);
+        }
+
+        private void OnWatcherChanged(object sender, FileSystemEventArgs e)
+        {
+            ReportChange(e.FullPath, e.ChangeType);
         }
 
         private bool HasChanged(string oldPath, string newPath, WatcherChangeTypes changeType)
@@ -136,6 +140,10 @@ namespace Loader
             public event Action OnChanged;
 
             public void WatchDirectory(string path, string extension)
+            {
+            }
+
+            public void Dispose()
             {
             }
         }

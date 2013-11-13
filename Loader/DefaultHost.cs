@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Reflection;
@@ -16,7 +15,7 @@ namespace Loader
         {
             _path = path.TrimEnd(Path.DirectorySeparatorChar);
 
-            CreateDefaultLoader(watchFiles);
+            Initialize(watchFiles);
         }
 
         public event Action OnChanged;
@@ -73,7 +72,7 @@ namespace Loader
             return RoslynProject.GetDirectoryName(_path);
         }
 
-        private void CreateDefaultLoader(bool watchFiles)
+        private void Initialize(bool watchFiles)
         {
             _loader = new AssemblyLoader();
             _loader.Attach(AppDomain.CurrentDomain);
@@ -105,6 +104,7 @@ namespace Loader
         {
             _loader.Detach(AppDomain.CurrentDomain);
             _watcher.OnChanged -= OnWatcherChanged;
+            _watcher.Dispose();
         }
     }
 }
