@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.ExceptionServices;
+using System.Runtime.Versioning;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Emit;
@@ -16,11 +17,13 @@ namespace Loader
         private readonly Dictionary<string, Tuple<Assembly, MetadataReference>> _compiledAssemblies = new Dictionary<string, Tuple<Assembly, MetadataReference>>(StringComparer.OrdinalIgnoreCase);
         private readonly string _solutionPath;
         private readonly IFileWatcher _watcher;
+        private readonly IFrameworkReferenceResolver _resolver;
 
-        public RoslynLoader(string solutionPath, IFileWatcher watcher)
+        public RoslynLoader(string solutionPath, IFileWatcher watcher, IFrameworkReferenceResolver resolver)
         {
             _solutionPath = solutionPath;
             _watcher = watcher;
+            _resolver = resolver;
         }
 
         public Assembly Load(LoadOptions options)
@@ -107,7 +110,7 @@ namespace Loader
                 references = new List<MetadataReference>();
             }
 
-            references.AddRange(GetFrameworkAssemblies());
+            references.AddRange(_resolver.GetFrameworkReferences(project.TargetFramework));
 
             // Create a compilation
             var compilation = Compilation.Create(
@@ -175,17 +178,6 @@ namespace Loader
         private static void ReportCompilationError(EmitResult result)
         {
             throw new InvalidDataException(String.Join(Environment.NewLine, result.Diagnostics.Select(d => d.GetMessage())));
-        }
-
-        // The "framework" is always implicitly referenced
-        private IEnumerable<MetadataReference> GetFrameworkAssemblies()
-        {
-            return new[] { 
-                new MetadataFileReference(typeof(object).Assembly.Location),
-                MetadataFileReference.CreateAssemblyReference("System"),
-                MetadataFileReference.CreateAssemblyReference("System.Core"),
-                MetadataFileReference.CreateAssemblyReference("Microsoft.CSharp")
-            };
         }
     }
 

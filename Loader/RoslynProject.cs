@@ -15,7 +15,7 @@ namespace Loader
 
         public string Name { get; private set; }
 
-        public FrameworkName TargetFramework { get; private set; }
+        public string TargetFramework { get; private set; }
 
         public IList<Dependency> Dependencies { get; private set; }
 
@@ -92,7 +92,7 @@ namespace Loader
                 project.Name = GetDirectoryName(path);
             }
 
-            project.TargetFramework = VersionUtility.ParseFrameworkName(framework);
+            project.TargetFramework = framework;
             project.Dependencies = new List<Dependency>();
             project.ProjectFilePath = projectPath;
 

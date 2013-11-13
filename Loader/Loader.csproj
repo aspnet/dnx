@@ -62,7 +62,9 @@
   <ItemGroup>
     <Compile Include="AssemblyLoader.cs" />
     <Compile Include="DefaultHost.cs" />
+    <Compile Include="FrameworkReferenceResolver.cs" />
     <Compile Include="IFileWatcher.cs" />
+    <Compile Include="IFrameworkReferenceResolver.cs" />
     <Compile Include="LoadOptions.cs" />
     <Compile Include="RoslynLoader.cs" />
     <Compile Include="DirectoryLoader.cs" />

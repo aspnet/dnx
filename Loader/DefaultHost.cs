@@ -91,7 +91,7 @@ namespace Loader
                 _watcher = FileWatcher.Noop;
             }
 
-            _loader.Add(new RoslynLoader(solutionDir, _watcher));
+            _loader.Add(new RoslynLoader(solutionDir, _watcher, new FrameworkReferenceResolver()));
             _loader.Add(new MSBuildProjectAssemblyLoader(solutionDir, _watcher));
             _loader.Add(new NuGetAssemblyLoader(packagesDir));
             if (Directory.Exists(libDir))
