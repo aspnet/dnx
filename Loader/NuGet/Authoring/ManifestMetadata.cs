@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.IO;
@@ -12,7 +11,7 @@ using NuGet.Resources;
 namespace NuGet
 {
     [XmlType("metadata")]
-    public class ManifestMetadata : IPackageMetadata, IValidatableObject
+    public class ManifestMetadata : IPackageMetadata
     {
         private string _owners;
         private string _minClientVersionString;
@@ -38,18 +37,15 @@ namespace NuGet
         [XmlIgnore]
         public Version MinClientVersion { get; private set; }
 
-        [Required(ErrorMessageResourceType = typeof(NuGetResources), ErrorMessageResourceName = "Manifest_RequiredMetadataMissing")]
         [XmlElement("id")]
         public string Id { get; set; }
 
-        [Required(ErrorMessageResourceType = typeof(NuGetResources), ErrorMessageResourceName = "Manifest_RequiredMetadataMissing")]
         [XmlElement("version")]
         public string Version { get; set; }
 
         [XmlElement("title")]
         public string Title { get; set; }
 
-        [Required(ErrorMessageResourceType = typeof(NuGetResources), ErrorMessageResourceName = "Manifest_RequiredMetadataMissing")]
         [XmlElement("authors")]
         public string Authors { get; set; }
 
@@ -85,7 +81,6 @@ namespace NuGet
         [XmlElement("developmentDependency")]
         public bool DevelopmentDependency { get; set; }
 
-        [Required(ErrorMessageResourceType = typeof(NuGetResources), ErrorMessageResourceName = "Manifest_RequiredMetadataMissing")]
         [XmlElement("description")]
         public string Description { get; set; }
 
@@ -329,44 +324,6 @@ namespace NuGet
 
                 return from frameworkReference in FrameworkAssemblies
                        select new FrameworkAssemblyReference(frameworkReference.AssemblyName, ParseFrameworkNames(frameworkReference.TargetFramework));
-            }
-        }
-
-        public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
-        {
-            if (!String.IsNullOrEmpty(Id))
-            {
-                if (Id.Length > PackageIdValidator.MaxPackageIdLength)
-                {
-                    yield return new ValidationResult(String.Format(CultureInfo.CurrentCulture, NuGetResources.Manifest_IdMaxLengthExceeded));
-                }
-                else if(!PackageIdValidator.IsValidPackageId(Id))
-                {
-                    yield return new ValidationResult(String.Format(CultureInfo.CurrentCulture, NuGetResources.InvalidPackageId, Id));
-                }
-            }
-
-            if (LicenseUrl == String.Empty)
-            {
-                yield return new ValidationResult(
-                    String.Format(CultureInfo.CurrentCulture, NuGetResources.Manifest_UriCannotBeEmpty, "LicenseUrl"));
-            }
-
-            if (IconUrl == String.Empty)
-            {
-                yield return new ValidationResult(
-                    String.Format(CultureInfo.CurrentCulture, NuGetResources.Manifest_UriCannotBeEmpty, "IconUrl"));
-            }
-
-            if (ProjectUrl == String.Empty)
-            {
-                yield return new ValidationResult(
-                    String.Format(CultureInfo.CurrentCulture, NuGetResources.Manifest_UriCannotBeEmpty, "ProjectUrl"));
-            }
-
-            if (RequireLicenseAcceptance && String.IsNullOrWhiteSpace(LicenseUrl))
-            {
-                yield return new ValidationResult(NuGetResources.Manifest_RequireLicenseAcceptanceRequiresLicenseUrl);
             }
         }
 

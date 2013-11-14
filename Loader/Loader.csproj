@@ -49,7 +49,6 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\roslyn\System.Collections.Immutable.dll</HintPath>
     </Reference>
-    <Reference Include="System.ComponentModel.DataAnnotations" />
     <Reference Include="System.Core" />
     <Reference Include="System.XML" />
     <Reference Include="System.Xml.Linq" />

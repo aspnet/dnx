@@ -58,12 +58,6 @@ namespace NuGet
 
         public void Save(Stream stream, bool validate, int minimumManifestVersion)
         {
-            if (validate)
-            {
-                // Validate before saving
-                Validate(this);
-            }
-
             int version = Math.Max(minimumManifestVersion, ManifestVersionUtility.GetManifestVersion(Metadata));
             string schemaNamespace = ManifestSchemaUtility.GetSchemaNamespace(version);
 
@@ -115,9 +109,6 @@ namespace NuGet
 
             // Deserialize it
             var manifest = ManifestReader.ReadManifest(document);
-
-            // Validate before returning
-            Validate(manifest);
 
             return manifest;
         }
@@ -180,10 +171,10 @@ namespace NuGet
         private static List<ManifestReferenceSet> CreateReferenceSets(IPackageMetadata metadata)
         {
             return (from referenceSet in metadata.PackageAssemblyReferences
-                    select new ManifestReferenceSet 
+                    select new ManifestReferenceSet
                     {
                         TargetFramework = referenceSet.TargetFramework != null ? VersionUtility.GetFrameworkString(referenceSet.TargetFramework) : null,
-                        References = CreateReferences(referenceSet) 
+                        References = CreateReferences(referenceSet)
                     }).ToList();
         }
 
@@ -314,111 +305,6 @@ namespace NuGet
             XName metadataName = XName.Get("metadata", document.Root.Name.Namespace.NamespaceName);
 
             return document.Root.Element(metadataName);
-        }
-
-        internal static void Validate(Manifest manifest)
-        {
-            var results = new List<ValidationResult>();
-
-            // Run all data annotations validations
-            TryValidate(manifest.Metadata, results);
-            TryValidate(manifest.Files, results);
-            if (manifest.Metadata.DependencySets != null)
-            {
-                TryValidate(manifest.Metadata.DependencySets.SelectMany(d => d.Dependencies), results);
-            }
-            TryValidate(manifest.Metadata.ReferenceSets, results);
-
-            if (results.Any())
-            {
-                string message = String.Join(Environment.NewLine, results.Select(r => r.ErrorMessage));
-                throw new ValidationException(message);
-            }
-
-            // Validate additional dependency rules dependencies
-            ValidateDependencySets(manifest.Metadata);
-        }
-
-        private static void ValidateDependencySets(IPackageMetadata metadata)
-        {
-            foreach (var dependencySet in metadata.DependencySets)
-            {
-                var dependencyHash = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-                foreach (var dependency in dependencySet.Dependencies)
-                {
-                    // Throw an error if this dependency has been defined more than once
-                    if (!dependencyHash.Add(dependency.Id))
-                    {
-                        throw new InvalidOperationException(String.Format(CultureInfo.CurrentCulture, NuGetResources.DuplicateDependenciesDefined, metadata.Id, dependency.Id));
-                    }
-
-                    // Validate the dependency version
-                    ValidateDependencyVersion(dependency);
-                }
-            }
-        }
-
-        private static void ValidateDependencyVersion(PackageDependency dependency)
-        {
-            if (dependency.VersionSpec != null)
-            {
-                if (dependency.VersionSpec.MinVersion != null &&
-                    dependency.VersionSpec.MaxVersion != null)
-                {
-
-                    if ((!dependency.VersionSpec.IsMaxInclusive ||
-                         !dependency.VersionSpec.IsMinInclusive) &&
-                        dependency.VersionSpec.MaxVersion == dependency.VersionSpec.MinVersion)
-                    {
-                        throw new InvalidOperationException(String.Format(CultureInfo.CurrentCulture, NuGetResources.DependencyHasInvalidVersion, dependency.Id));
-                    }
-
-                    if (dependency.VersionSpec.MaxVersion < dependency.VersionSpec.MinVersion)
-                    {
-                        throw new InvalidOperationException(String.Format(CultureInfo.CurrentCulture, NuGetResources.DependencyHasInvalidVersion, dependency.Id));
-                    }
-                }
-            }
-        }
-
-        private static bool TryValidate(object value, ICollection<ValidationResult> results)
-        {
-            if (value != null)
-            {
-                var enumerable = value as IEnumerable;
-                if (enumerable != null)
-                {
-                    foreach (var item in enumerable)
-                    {
-                        Validator.TryValidateObject(item, CreateValidationContext(item), results);
-                    }
-                }
-                return Validator.TryValidateObject(value, CreateValidationContext(value), results);
-            }
-            return true;
-        }
-
-        private static ValidationContext CreateValidationContext(object value)
-        {
-            return new ValidationContext(value, NullServiceProvider.Instance, new Dictionary<object, object>());
-        }
-
-        private class NullServiceProvider : IServiceProvider
-        {
-            private static readonly IServiceProvider _instance = new NullServiceProvider();
-
-            public static IServiceProvider Instance
-            {
-                get
-                {
-                    return _instance;
-                }
-            }
-
-            public object GetService(Type serviceType)
-            {
-                return null;
-            }
         }
     }
 }
