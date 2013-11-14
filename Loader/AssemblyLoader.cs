@@ -61,7 +61,8 @@ namespace Loader
 
             var options = new LoadOptions
             {
-                AssemblyName = an.Name
+                AssemblyName = an.Name,
+                Version = an.Version != null ? an.Version.ToString() : null
             };
 
             return Load(options);
