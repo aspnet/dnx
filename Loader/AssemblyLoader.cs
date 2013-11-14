@@ -26,10 +26,7 @@ namespace Loader
 
             if (!_cache.TryGetValue(options.AssemblyName, out asm))
             {
-                asm = LoadImpl(options);
-
-                sw.Stop();
-                Trace.TraceInformation("Finished loading {0} in {1}ms", options.AssemblyName, sw.ElapsedMilliseconds);
+                asm = LoadImpl(options, sw);
 
                 if (asm != null)
                 {
@@ -39,7 +36,7 @@ namespace Loader
             else
             {
                 sw.Stop();
-                Trace.TraceInformation("Retrieved {0} from cache in {1}ms", options.AssemblyName, sw.ElapsedMilliseconds);
+                Trace.TraceInformation("[Cache]: Loaded {0} in {1}ms", options.AssemblyName, sw.ElapsedMilliseconds);
             }
 
             return asm;
@@ -68,7 +65,7 @@ namespace Loader
             return Load(options);
         }
 
-        private Assembly LoadImpl(LoadOptions options)
+        private Assembly LoadImpl(LoadOptions options, Stopwatch sw)
         {
             foreach (var loader in _loaders)
             {
@@ -76,6 +73,10 @@ namespace Loader
 
                 if (assembly != null)
                 {
+                    sw.Stop();
+
+                    Trace.TraceInformation("[{0}]: Finished loading {1} in {2}ms", loader.GetType().Name, options.AssemblyName, sw.ElapsedMilliseconds);
+
                     return assembly;
                 }
             }
