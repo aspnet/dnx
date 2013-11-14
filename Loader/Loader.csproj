@@ -17,7 +17,7 @@
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
     <OutputPath>bin\Debug\</OutputPath>
-    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <DefineConstants>TRACE;DEBUG;LOADER</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
@@ -25,7 +25,7 @@
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
     <OutputPath>bin\Release\</OutputPath>
-    <DefineConstants>TRACE</DefineConstants>
+    <DefineConstants>TRACE;LOADER</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
@@ -41,23 +41,19 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\roslyn\Microsoft.CodeAnalysis.CSharp.dll</HintPath>
     </Reference>
-    <Reference Include="Microsoft.Web.XmlTransform">
-      <HintPath>..\packages\Microsoft.Web.Xdt.1.0.0\lib\net40\Microsoft.Web.XmlTransform.dll</HintPath>
-    </Reference>
     <Reference Include="Newtonsoft.Json">
       <HintPath>..\packages\Newtonsoft.Json.5.0.8\lib\net45\Newtonsoft.Json.dll</HintPath>
-    </Reference>
-    <Reference Include="NuGet.Core, Version=2.7.41101.299, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\packages\NuGet.Core.2.7.2\lib\net40-Client\NuGet.Core.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Collections.Immutable, Version=1.0.15.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\roslyn\System.Collections.Immutable.dll</HintPath>
     </Reference>
+    <Reference Include="System.ComponentModel.DataAnnotations" />
     <Reference Include="System.Core" />
     <Reference Include="System.XML" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="WindowsBase" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AssemblyLoader.cs" />
@@ -66,6 +62,137 @@
     <Compile Include="IFileWatcher.cs" />
     <Compile Include="IFrameworkReferenceResolver.cs" />
     <Compile Include="LoadOptions.cs" />
+    <Compile Include="NuGet\Authoring\EmptyFrameworkFolderFile.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="NuGet\Authoring\IPackageBuilder.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="NuGet\Authoring\IPropertyProvider.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="NuGet\Authoring\Manifest.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="NuGet\Authoring\ManifestDependency.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="NuGet\Authoring\ManifestDependencySet.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="NuGet\Authoring\ManifestFile.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="NuGet\Authoring\ManifestFrameworkAssembly.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="NuGet\Authoring\ManifestMetadata.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="NuGet\Authoring\ManifestReader.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="NuGet\Authoring\ManifestReference.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="NuGet\Authoring\ManifestReferenceSet.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="NuGet\Authoring\ManifestSchemaUtility.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="NuGet\Authoring\ManifestVersionAttribute.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="NuGet\Authoring\ManifestVersionUtility.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="NuGet\Authoring\NullPropertyProvider.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="NuGet\Authoring\PackageBuilder.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="NuGet\Authoring\PackageDependencySet.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="NuGet\Authoring\PackageReferenceSet.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="NuGet\Authoring\PathResolver.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="NuGet\Authoring\PhysicalPackageAssemblyReference.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="NuGet\Authoring\PhysicalPackageFile.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="NuGet\Extensions\CollectionExtensions.cs" />
+    <Compile Include="NuGet\Extensions\EnumerableExtensions.cs" />
+    <Compile Include="NuGet\Extensions\FileSystemExtensions.cs" />
+    <Compile Include="NuGet\Extensions\ObjectExtensions.cs" />
+    <Compile Include="NuGet\Extensions\PackageExtensions.cs" />
+    <Compile Include="NuGet\Extensions\StreamExtensions.cs" />
+    <Compile Include="NuGet\Extensions\StringExtensions.cs" />
+    <Compile Include="NuGet\Extensions\VersionExtensions.cs" />
+    <Compile Include="NuGet\Extensions\XElementExtensions.cs" />
+    <Compile Include="NuGet\Logging\ILogger.cs" />
+    <Compile Include="NuGet\Logging\MessageLevel.cs" />
+    <Compile Include="NuGet\Logging\NullLogger.cs" />
+    <Compile Include="NuGet\NETPortable\NetPortableProfile.cs" />
+    <Compile Include="NuGet\NETPortable\NetPortableProfileCollection.cs" />
+    <Compile Include="NuGet\NETPortable\NetPortableProfileTable.cs" />
+    <Compile Include="NuGet\Packages\Constants.cs" />
+    <Compile Include="NuGet\Packages\DefaultPackagePathResolver.cs" />
+    <Compile Include="NuGet\Packages\FrameworkAssemblyReference.cs" />
+    <Compile Include="NuGet\Packages\IFrameworkTargetable.cs" />
+    <Compile Include="NuGet\Packages\IPackage.cs" />
+    <Compile Include="NuGet\Packages\IPackageAssemblyReference.cs" />
+    <Compile Include="NuGet\Packages\IPackageFile.cs" />
+    <Compile Include="NuGet\Packages\IPackageMetadata.cs" />
+    <Compile Include="NuGet\Packages\IPackagePathResolver.cs" />
+    <Compile Include="NuGet\Packages\IServerPackageMetadata.cs" />
+    <Compile Include="NuGet\Packages\LocalPackage.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="NuGet\Packages\OptimizedZipPackage.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="NuGet\Packages\PackageDependency.cs" />
+    <Compile Include="NuGet\Packages\UnzippedPackage.cs" />
+    <Compile Include="NuGet\Packages\ZipPackage.cs" />
+    <Compile Include="NuGet\Packages\ZipPackageAssemblyReference.cs" />
+    <Compile Include="NuGet\Packages\ZipPackageFile.cs" />
+    <Compile Include="NuGet\ProjectSystem\IFileSystem.cs" />
+    <Compile Include="NuGet\ProjectSystem\PhysicalFileSystem.cs" />
+    <Compile Include="NuGet\Repositories\IPackageName.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="NuGet\Repositories\IPackageRepository.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="NuGet\Repositories\LocalPackageRepository.cs" />
+    <Compile Include="NuGet\Repositories\PackageName.cs" />
+    <Compile Include="NuGet\Resources\NuGetResources.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>NuGetResources.resx</DependentUpon>
+    </Compile>
+    <Compile Include="NuGet\SemanticVersion.cs" />
+    <Compile Include="NuGet\SemanticVersionTypeConverter.cs" />
+    <Compile Include="NuGet\Utility\FrameworkNameEqualityComparer.cs" />
+    <Compile Include="NuGet\Utility\IVersionSpec.cs" />
+    <Compile Include="NuGet\Utility\PackageEqualityComparer.cs" />
+    <Compile Include="NuGet\Utility\PackageHelper.cs" />
+    <Compile Include="NuGet\Utility\PackageIdValidator.cs" />
+    <Compile Include="NuGet\Utility\PathUtility.cs" />
+    <Compile Include="NuGet\Utility\PathValidator.cs" />
+    <Compile Include="NuGet\Utility\ReadOnlyHashSet.cs" />
+    <Compile Include="NuGet\Utility\UriUtility.cs" />
+    <Compile Include="NuGet\Utility\VersionSpec.cs" />
+    <Compile Include="NuGet\Utility\VersionUtility.cs" />
+    <Compile Include="NuGet\Utility\XmlUtility.cs" />
     <Compile Include="RoslynLoader.cs" />
     <Compile Include="DirectoryLoader.cs" />
     <Compile Include="IAssemblyLoader.cs" />
@@ -76,7 +203,19 @@
     <Compile Include="FileWatcher.cs" />
   </ItemGroup>
   <ItemGroup>
+    <EmbeddedResource Include="NuGet\Authoring\nuspec.xsd">
+      <SubType>Designer</SubType>
+      <LogicalName>NuGet.Authoring.nuspec.xsd</LogicalName>
+    </EmbeddedResource>
     <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="NuGet\Resources\NuGetResources.resx">
+      <Generator>PublicResXFileCodeGenerator</Generator>
+      <SubType>Designer</SubType>
+      <LogicalName>NuGet.Resources.NuGetResources.resources</LogicalName>
+      <LastGenOutput>NuGetResources.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

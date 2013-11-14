@@ -27,7 +27,7 @@ namespace Loader
                 return assembly;
             }
 
-            var package = _repository.FindPackage(name);
+            var package = FindPackage(name);
 
             if (package == null)
             {
@@ -58,9 +58,18 @@ namespace Loader
                 _cache[a.GetName().Name] = a;
                 _cache[a.FullName] = a;
             }
-            
+
             return results.FirstOrDefault();
-;
+        }
+
+        private IPackage FindPackage(string name)
+        {
+            name = name.ToLowerInvariant();
+
+            return (from p in _repository.GetPackages()
+                    where p.Id.ToLower() == name
+                    orderby p.Id
+                    select p).FirstOrDefault();
         }
     }
 }
