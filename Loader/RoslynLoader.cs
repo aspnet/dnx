@@ -177,7 +177,8 @@ namespace Loader
 
         private static void ReportCompilationError(EmitResult result)
         {
-            throw new InvalidDataException(String.Join(Environment.NewLine, result.Diagnostics.Select(d => d.GetMessage())));
+            throw new InvalidDataException(String.Join(Environment.NewLine,
+                result.Diagnostics.Select(d => DiagnosticFormatter.Instance.Format(d))));
         }
     }
 
