@@ -46,6 +46,13 @@ namespace K
                         host.Compile();
                     }
                 }
+                else if (command.Equals("clean", StringComparison.OrdinalIgnoreCase))
+                {
+                    using (var host = new DefaultHost(path, watchFiles: false))
+                    {
+                        host.Clean();
+                    }
+                }
                 else
                 {
                     Console.WriteLine("unknown command '{0}'", command);

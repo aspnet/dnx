@@ -38,7 +38,7 @@ namespace Loader
 
             sw.Stop();
 
-            Trace.TraceInformation("Total load time {0}ms", sw.ElapsedMilliseconds);
+            Trace.TraceInformation("Load took {0}ms", sw.ElapsedMilliseconds);
 
             return assembly;
         }
@@ -50,7 +50,7 @@ namespace Loader
 
             var sw = Stopwatch.StartNew();
 
-            _loader.Load(new LoadOptions
+            var asm = _loader.Load(new LoadOptions
             {
                 AssemblyName = name,
                 OutputPath = outputPath
@@ -58,7 +58,22 @@ namespace Loader
 
             sw.Stop();
 
-            Trace.TraceInformation("Total compile time {0}ms", sw.ElapsedMilliseconds);
+            if (asm == null)
+            {
+                Trace.TraceInformation("Unable to compile '{0}'. Try placing a project.json file in the directory.", name);
+                return;
+            }
+
+            Trace.TraceInformation("Compile took {0}ms", sw.ElapsedMilliseconds);
+        }
+
+        public void Clean()
+        {
+            string name = GetProjectName();
+            string outputPath = Path.Combine(_path, "bin");
+
+            File.Delete(Path.Combine(outputPath, name + ".dll"));
+            File.Delete(Path.Combine(outputPath, name + ".pdb"));
         }
 
         private string GetProjectName()
