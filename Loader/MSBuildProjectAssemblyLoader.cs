@@ -3,11 +3,9 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-using System.Xml;
-using Microsoft.Build.Evaluation;
-using Microsoft.Build.Execution;
-using Microsoft.Build.Framework;
-using Microsoft.Build.Logging;
+using System.Text;
+using System.Xml.Linq;
+using WatchDog;
 
 namespace Loader
 {
@@ -15,6 +13,11 @@ namespace Loader
     {
         private readonly string _solutionDir;
         private readonly IFileWatcher _watcher;
+
+        private readonly static string[] _msBuildPaths = new[] {
+            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86), @"MSBuild\12.0\Bin\MSBuild.exe"),
+            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Windows), @"Microsoft.NET\Framework\v4.0.30319\MSBuild.exe")
+        };
 
         public MSBuildProjectAssemblyLoader(string solutionDir, IFileWatcher watcher)
         {
@@ -26,123 +29,84 @@ namespace Loader
         {
             string name = options.AssemblyName;
 
-            string projectDir = Path.Combine(_solutionDir, name);
+            string targetDir = Path.Combine(_solutionDir, name);
 
             // Bail if there's a project settings file
-            if (RoslynProject.HasProjectFile(projectDir))
+            if (RoslynProject.HasProjectFile(targetDir))
             {
                 return null;
             }
 
-            var projectCollection = new ProjectCollection();
-            string projectFile = Path.Combine(projectDir, name + ".csproj");
+            string projectFile = Path.Combine(targetDir, name + ".csproj");
+            
             if (!File.Exists(projectFile))
             {
-                // This is pretty slow
-                if (!TryGetProjectFile(name, projectCollection, out projectFile))
+                // There's a solution so check for a project one deeper
+                if (File.Exists(Path.Combine(targetDir, name + ".sln")))
+                {
+                    // Is there a project file here?
+                    projectFile = Path.Combine(targetDir, name, name + ".csproj");
+
+                    if (!File.Exists(projectFile))
+                    {
+                        return null;
+                    }
+                }
+                else
                 {
                     return null;
                 }
             }
 
-            var properties = new Dictionary<string, string>();
-            properties.Add("Configuration", "Debug");
-            properties.Add("Platform", "AnyCPU");
+            WatchProject(projectFile);
 
-            WatchProject(projectDir, projectFile, projectCollection);
+            string projectDir = Path.GetDirectoryName(projectFile);
 
-            var buildRequest = new BuildRequestData(projectFile,
-                                                    properties, null, new string[] { "Build" }, null);
-
-            var parameters = new BuildParameters(projectCollection)
+            foreach (var exePath in _msBuildPaths)
             {
-                Loggers = new List<ILogger> { new ConsoleLogger(LoggerVerbosity.Quiet) }
-            };
-
-            BuildResult buildResult = BuildManager.DefaultBuildManager.Build(parameters, buildRequest);
-
-
-            if (buildResult.OverallResult == BuildResultCode.Success)
-            {
-                // REVIEW: This needs hardening
-                TargetResult result;
-                if (buildResult.ResultsByTarget.TryGetValue("Build", out result))
+                if (!File.Exists(exePath))
                 {
-                    var item = result.Items.FirstOrDefault();
+                    continue;
+                }
 
-                    if (item == null)
+                var executable = new Executable(exePath, projectDir);
+
+                string outputFile = null;
+                var process = executable.Execute(line =>
+                {
+                    // Look for {project} -> {outputPath}
+                    int index = line.IndexOf('-');
+
+                    if (index != -1 && index + 1 < line.Length && line[index + 1] == '>')
                     {
-                        return null;
+                        string projectName = line.Substring(0, index).Trim();
+                        if (projectName.Equals(name, StringComparison.OrdinalIgnoreCase))
+                        {
+                            outputFile = line.Substring(index + 2).Trim();
+                        }
                     }
 
-                    return Assembly.LoadFile(item.ItemSpec);
+                    return true;
+                },
+                _ => true,
+                Encoding.UTF8,
+                projectFile + " /m");
+
+                process.WaitForExit();
+
+                if (process.ExitCode != 0)
+                {
+                    // REVIEW: Should this throw?
+                    return null;
                 }
+
+                return Assembly.LoadFile(outputFile);
             }
 
             return null;
         }
 
-        private bool TryGetProjectFile(string name, ProjectCollection projectCollection, out string projectFile)
-        {
-            string[] candidates = new string[] { 
-                Path.Combine(_solutionDir, name + ".sln"),
-                Path.Combine(_solutionDir, name, name + ".sln"),
-            };
-
-            foreach (var solutionFile in candidates)
-            {
-                if (File.Exists(solutionFile))
-                {
-                    return TryFindProjectInSolution(solutionFile, name, projectCollection, out projectFile);
-                }
-            }
-
-            projectFile = null;
-            return false;
-        }
-
-        private bool TryFindProjectInSolution(string solutionFile, string name, ProjectCollection projectCollection, out string projectFile)
-        {
-            string wrapperContent = Microsoft.Build.BuildEngine.SolutionWrapperProject.Generate(solutionFile, toolsVersionOverride: null, projectBuildEventContext: null);
-            using (XmlTextReader xmlReader = new XmlTextReader(new StringReader(wrapperContent)))
-            {
-                Project sln = projectCollection.LoadProject(xmlReader);
-
-                var projects = GetOrderedProjectReferencesFromWrapper(sln).ToList();
-
-                foreach (var p in projects)
-                {
-                    if (Path.GetFileNameWithoutExtension(p.EvaluatedInclude).Equals(name, StringComparison.OrdinalIgnoreCase))
-                    {
-                        projectFile = Path.GetFullPath(Path.Combine(Path.GetDirectoryName(solutionFile), p.EvaluatedInclude));
-                        return true;
-                    }
-                }
-            }
-
-            projectFile = null;
-            return false;
-        }
-        private static IEnumerable<ProjectItem> GetOrderedProjectReferencesFromWrapper(Project solutionWrapperProject)
-        {
-            int buildLevel = 0;
-            while (true)
-            {
-                var items = solutionWrapperProject.GetItems(String.Format("BuildLevel{0}", buildLevel));
-                if (items.Count == 0)
-                {
-                    yield break;
-                }
-                foreach (var item in items)
-                {
-                    yield return item;
-                }
-
-                buildLevel++;
-            }
-        }
-
-        private void WatchProject(string projectDir, string projectFile, ProjectCollection projectCollection)
+        private void WatchProject(string projectFile)
         {
             // We're already watching this file
             if (!_watcher.WatchFile(projectFile))
@@ -150,20 +114,62 @@ namespace Loader
                 return;
             }
 
-            var project = projectCollection.LoadProject(projectFile);
+            string projectDir = Path.GetDirectoryName(projectFile);
 
-            foreach (var contentItem in project.GetItems("Compile"))
+            XDocument document = null;
+            using (var stream = File.OpenRead(projectFile))
             {
-                var path = Path.Combine(projectDir, contentItem.EvaluatedInclude);
+                document = XDocument.Load(stream);
+            }
+
+            foreach (var contentItem in GetSourceFilenames(document))
+            {
+                var path = Path.Combine(projectDir, contentItem);
                 _watcher.WatchFile(Path.GetFullPath(path));
             }
 
             // Watch project references
-            foreach (var item in project.GetItems("ProjectReference"))
+            foreach (var projectReferencePath in GetProjectReferences(document))
             {
-                string path = Path.GetFullPath(Path.Combine(projectDir, item.EvaluatedInclude));
-                WatchProject(projectDir, path, projectCollection);
+                string path = Path.GetFullPath(Path.Combine(projectDir, projectReferencePath));
+
+                WatchProject(path);
             }
+        }
+
+        private static string GetAssemblyName(XDocument document)
+        {
+            return document
+                .Elements(ns("Project"))
+                .Elements(ns("PropertyGroup"))
+                .Elements(ns("AssemblyName"))
+                .Single()
+                .Value;
+        }
+
+        private static IEnumerable<string> GetSourceFilenames(XDocument document)
+        {
+            return document
+                .Elements(ns("Project"))
+                .Elements(ns("ItemGroup"))
+                .Elements(ns("Compile"))
+                .Attributes("Include")
+                .Select(c => c.Value);
+        }
+
+        private static IEnumerable<string> GetProjectReferences(XDocument document)
+        {
+            return document
+                .Elements(ns("Project"))
+                .Elements(ns("ItemGroup"))
+                .Elements(ns("ProjectReference"))
+                .Attributes("Include")
+                .Select(c => c.Value);
+        }
+
+        private static XName ns(string name)
+        {
+            return XName.Get(name, "http://schemas.microsoft.com/developer/msbuild/2003");
         }
     }
 }

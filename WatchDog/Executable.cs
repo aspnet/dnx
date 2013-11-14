@@ -10,13 +10,12 @@ namespace WatchDog
 {
     public class Executable
     {
-        public Executable(string path, string workingDirectory, TimeSpan idleTimeout)
+        public Executable(string path, string workingDirectory)
         {
             Path = path;
             WorkingDirectory = workingDirectory;
             EnvironmentVariables = new Dictionary<string, string>();
             Encoding = Encoding.UTF8;
-            IdleTimeout = idleTimeout;
         }
 
         public bool IsAvailable

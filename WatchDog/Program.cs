@@ -49,7 +49,7 @@ namespace WatchDog
                     Console.WriteLine();
                 }
 
-                var exe = new Executable(childProcess, Environment.CurrentDirectory, TimeSpan.FromHours(1));
+                var exe = new Executable(childProcess, Environment.CurrentDirectory);
                 var process = exe.Execute(s =>
                 {
                     Console.WriteLine(s);
