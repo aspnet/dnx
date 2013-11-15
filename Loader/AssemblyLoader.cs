@@ -21,6 +21,12 @@ namespace Loader
 
         public Assembly Load(LoadOptions options)
         {
+            // REVIEW: Can we skip resource assemblies?
+            if (options.AssemblyName.EndsWith("resources"))
+            {
+                return null;
+            }
+
             var sw = new Stopwatch();
             sw.Start();
             Trace.TraceInformation("Loading {0}", options.AssemblyName);
