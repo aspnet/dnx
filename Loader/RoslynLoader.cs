@@ -113,35 +113,45 @@ namespace Loader
 
             references.AddRange(_resolver.GetFrameworkReferences(project.TargetFramework));
 
-            // Create a compilation
-            var compilation = Compilation.Create(
-                name,
-                new CompilationOptions(OutputKind.DynamicallyLinkedLibrary),
-                syntaxTrees: trees,
-                references: references);
+            Trace.TraceInformation("[{0}]: Compiling '{1}'", GetType().Name, name);
+            var sw = Stopwatch.StartNew();
 
-            if (options.OutputPath != null)
+            try
             {
-                Directory.CreateDirectory(options.OutputPath);
+                // Create a compilation
+                var compilation = Compilation.Create(
+                    name,
+                    new CompilationOptions(OutputKind.DynamicallyLinkedLibrary),
+                    syntaxTrees: trees,
+                    references: references);
 
-                string assemblyPath = Path.Combine(options.OutputPath, name + ".dll");
-                string pdbPath = Path.Combine(options.OutputPath, name + ".pdb");
-
-                var result = compilation.Emit(assemblyPath, pdbPath);
-
-                if (!result.Success)
+                if (options.OutputPath != null)
                 {
-                    ReportCompilationError(result);
+                    Directory.CreateDirectory(options.OutputPath);
 
-                    return null;
+                    string assemblyPath = Path.Combine(options.OutputPath, name + ".dll");
+                    string pdbPath = Path.Combine(options.OutputPath, name + ".pdb");
+
+                    var result = compilation.Emit(assemblyPath, pdbPath);
+
+                    if (!result.Success)
+                    {
+                        ReportCompilationError(result);
+
+                        return null;
+                    }
+
+                    Trace.TraceInformation("{0} -> {1}", name, assemblyPath);
+
+                    return Assembly.LoadFile(assemblyPath);
                 }
 
-                Trace.TraceInformation("{0} -> {1}", name, assemblyPath);
-
-                return Assembly.LoadFile(assemblyPath);
+                return CompileToMemoryStream(name, compilation);
             }
-
-            return CompileToMemoryStream(name, compilation);
+            finally
+            {
+                Trace.TraceInformation("[{0}]: Compiled '{1}' in {2}ms", GetType().Name, name, sw.ElapsedMilliseconds);
+            }
         }
 
         private Assembly CompileToMemoryStream(string name, Compilation compilation)
