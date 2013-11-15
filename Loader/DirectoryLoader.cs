@@ -48,23 +48,10 @@ namespace Loader
 
             if (File.Exists(path))
             {
-                var assembly = Assembly.LoadFile(path);
-
-                return assembly.GetReferencedAssemblies()
-                               .Where(an => !IsFrameworkAssembly(an))
-                               .Select(an => new Dependency
-                               {
-                                   Name = an.Name,
-                                   Version = new SemanticVersion(an.Version)
-                               });
+                return Enumerable.Empty<Dependency>();
             }
 
             return null;
-        }
-
-        private bool IsFrameworkAssembly(AssemblyName an)
-        {
-            return an.FullName.EndsWith("b77a5c561934e089", StringComparison.Ordinal);
         }
 
         public void Initialize(IEnumerable<Dependency> dependencies)

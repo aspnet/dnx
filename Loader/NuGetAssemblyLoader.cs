@@ -41,29 +41,11 @@ namespace Loader
 
         public IEnumerable<Dependency> GetDependencies(string name, SemanticVersion version)
         {
-            foreach (var p in FindCandidates(name, version))
-            {
-                if (version == null)
-                {
-                    return GetDependencies(p);
-                }
-                else if (p.Version == version)
-                {
-                    return GetDependencies(p);
-                }
-                else
-                {
-                    // Find matching assemblies in the package and select that package
-                    foreach (var fileName in GetAssemblies(p))
-                    {
-                        var an = AssemblyName.GetAssemblyName(fileName);
+            var package = FindCandidate(name, version);
 
-                        if (new SemanticVersion(an.Version) == version)
-                        {
-                            return GetDependencies(p);
-                        }
-                    }
-                }
+            if (package != null)
+            {
+                return GetDependencies(package);
             }
 
             return null;
@@ -97,21 +79,25 @@ namespace Loader
 
         public void Initialize(IEnumerable<Dependency> dependencies)
         {
-            foreach (var d in dependencies)
+            foreach (var dependency in dependencies)
             {
-                foreach (var package in FindCandidates(d.Name, d.Version))
+                var package = FindCandidate(dependency.Name, dependency.Version);
+
+                if (package == null)
                 {
-                    foreach (var fileName in GetAssemblies(package))
+                    continue;
+                }
+
+                foreach (var fileName in GetAssemblies(package))
+                {
+                    var an = AssemblyName.GetAssemblyName(fileName);
+
+                    _paths[an.FullName] = fileName;
+                    _paths[an.Name] = fileName;
+
+                    if (!_paths.ContainsKey(package.Id))
                     {
-                        var an = AssemblyName.GetAssemblyName(fileName);
-
-                        _paths[an.FullName] = fileName;
-                        _paths[an.Name] = fileName;
-
-                        if (!_paths.ContainsKey(package.Id))
-                        {
-                            _paths[package.Id] = fileName;
-                        }
+                        _paths[package.Id] = fileName;
                     }
                 }
             }
@@ -136,21 +122,14 @@ namespace Loader
             }
         }
 
-        private IEnumerable<IPackage> FindCandidates(string name, SemanticVersion version)
+        private IPackage FindCandidate(string name, SemanticVersion version)
         {
             if (version == null)
             {
-                return _repository.FindPackagesById(name);
+                return _repository.FindPackagesById(name).FirstOrDefault();
             }
 
-            var package = _repository.FindPackage(name, version);
-
-            if (package == null)
-            {
-                return _repository.FindPackagesById(name);
-            }
-
-            return new[] { package };
+            return _repository.FindPackage(name, version);
         }
     }
 }
