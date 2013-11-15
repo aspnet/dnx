@@ -115,7 +115,7 @@ namespace Loader
                         project.Dependencies.Add(new Dependency
                         {
                             Name = prop.Key,
-                            Version = version != null ? version.Value<string>() : null
+                            Version = version != null ? new SemanticVersion(version.Value<string>()) : null
                         });
                     }
                 }
@@ -129,7 +129,7 @@ namespace Loader
     {
         public string Name { get; set; }
 
-        public string Version { get; set; }
+        public SemanticVersion Version { get; set; }
 
         public override string ToString()
         {
