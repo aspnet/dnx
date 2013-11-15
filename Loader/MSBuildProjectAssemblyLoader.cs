@@ -32,7 +32,7 @@ namespace Loader
             string targetDir = Path.Combine(_solutionDir, name);
 
             // Bail if there's a project settings file
-            if (RoslynProject.HasProjectFile(targetDir))
+            if (Project.HasProjectFile(targetDir))
             {
                 return null;
             }

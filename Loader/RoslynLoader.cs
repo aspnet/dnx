@@ -9,10 +9,11 @@ using System.Runtime.Versioning;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Emit;
+using NuGet;
 
 namespace Loader
 {
-    public class RoslynLoader : IAssemblyLoader
+    public class RoslynLoader : IAssemblyLoader, IDependencyResolver
     {
         private readonly Dictionary<string, Tuple<Assembly, MetadataReference>> _compiledAssemblies = new Dictionary<string, Tuple<Assembly, MetadataReference>>(StringComparer.OrdinalIgnoreCase);
         private readonly string _solutionPath;
@@ -37,10 +38,10 @@ namespace Loader
             }
 
             string path = Path.Combine(_solutionPath, name);
-            RoslynProject project;
+            Project project;
 
             // Can't find a project file with the name so bail
-            if (!RoslynProject.TryGetProject(path, out project))
+            if (!Project.TryGetProject(path, out project))
             {
                 return null;
             }
@@ -179,6 +180,25 @@ namespace Loader
         {
             throw new InvalidDataException(String.Join(Environment.NewLine,
                 result.Diagnostics.Select(d => DiagnosticFormatter.Instance.Format(d))));
+        }
+
+        public IEnumerable<Dependency> GetDependencies(string name, SemanticVersion version)
+        {
+            string path = Path.Combine(_solutionPath, name);
+            Project project;
+
+            // Can't find a project file with the name so bail
+            if (!Project.TryGetProject(path, out project) || (version != null && project.Version != version))
+            {
+                return null;
+            }
+
+            return project.Dependencies;
+        }
+
+        public void Initialize(IEnumerable<Dependency> dependencies)
+        {
+
         }
     }
 

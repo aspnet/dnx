@@ -1,19 +1,20 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Runtime.Versioning;
 using Newtonsoft.Json.Linq;
 using NuGet;
 
 namespace Loader
 {
-    public class RoslynProject
+    public class Project
     {
         public const string ProjectFileName = "project.json";
 
         public string ProjectFilePath { get; private set; }
 
         public string Name { get; private set; }
+
+        public SemanticVersion Version { get; private set; }
 
         public string TargetFramework { get; private set; }
 
@@ -64,7 +65,7 @@ namespace Loader
             return path.Substring(Path.GetDirectoryName(path).Length).Trim(Path.DirectorySeparatorChar);
         }
 
-        public static bool TryGetProject(string path, out RoslynProject project)
+        public static bool TryGetProject(string path, out Project project)
         {
             project = null;
 
@@ -75,12 +76,13 @@ namespace Loader
 
             string projectPath = Path.Combine(path, ProjectFileName);
 
-            project = new RoslynProject();
+            project = new Project();
 
             string json = File.ReadAllText(projectPath);
             var settings = JObject.Parse(json);
             var targetFramework = settings["targetFramework"];
             var name = settings["name"];
+            var version = settings["version"];
 
             string framework = targetFramework == null ? "net45" : targetFramework.Value<string>();
 
@@ -92,6 +94,7 @@ namespace Loader
                 project.Name = GetDirectoryName(path);
             }
 
+            project.Version = version == null ? new SemanticVersion("1.0.0") : new SemanticVersion(version.Value<string>());
             project.TargetFramework = framework;
             project.Dependencies = new List<Dependency>();
             project.ProjectFilePath = projectPath;
@@ -103,19 +106,24 @@ namespace Loader
                 {
                     foreach (var prop in dependency)
                     {
-                        var properties = prop.Value.Value<JObject>();
-
-                        var version = properties["version"];
-
                         if (String.IsNullOrEmpty(prop.Key))
                         {
                             throw new InvalidDataException("Unable to resolve dependency ''.");
                         }
 
+                        var properties = prop.Value.Value<JObject>();
+                        var dependencyVersion = properties["version"];
+                        SemanticVersion semVer = null;
+
+                        if (dependencyVersion != null)
+                        {
+                            SemanticVersion.TryParse(dependencyVersion.Value<string>(), out semVer);
+                        }
+
                         project.Dependencies.Add(new Dependency
                         {
                             Name = prop.Key,
-                            Version = version != null ? new SemanticVersion(version.Value<string>()) : null
+                            Version = semVer
                         });
                     }
                 }

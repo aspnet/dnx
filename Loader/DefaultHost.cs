@@ -30,11 +30,18 @@ namespace Loader
 
         public Assembly Run()
         {
-            string name = GetProjectName();
+            Project project;
+            if (!Project.TryGetProject(_path, out project))
+            {
+                Trace.TraceInformation("Unable to locate {0}.'", Project.ProjectFileName);
+                return null;
+            }
 
             var sw = Stopwatch.StartNew();
 
-            var assembly = Assembly.Load(name);
+            _loader.Walk(project.Name, project.Version);
+
+            var assembly = Assembly.Load(project.Name);
 
             sw.Stop();
 
@@ -45,14 +52,22 @@ namespace Loader
 
         public void Compile()
         {
-            string name = GetProjectName();
+            Project project;
+            if (!Project.TryGetProject(_path, out project))
+            {
+                Trace.TraceInformation("Unable to locate {0}.'", Project.ProjectFileName);
+                return;
+            }
+
             string outputPath = Path.Combine(_path, "bin");
 
             var sw = Stopwatch.StartNew();
 
+            _loader.Walk(project.Name, project.Version);
+
             var asm = _loader.Load(new LoadOptions
             {
-                AssemblyName = name,
+                AssemblyName = project.Name,
                 OutputPath = outputPath
             });
 
@@ -60,7 +75,7 @@ namespace Loader
 
             if (asm == null)
             {
-                Trace.TraceInformation("Unable to compile '{0}'. Try placing a project.json file in the directory.", name);
+                Trace.TraceInformation("Unable to compile '{0}'. Try placing a {1} file in the directory.", project.Name, Project.ProjectFileName);
                 return;
             }
 
@@ -69,22 +84,17 @@ namespace Loader
 
         public void Clean()
         {
-            string name = GetProjectName();
-            string outputPath = Path.Combine(_path, "bin");
-
-            File.Delete(Path.Combine(outputPath, name + ".dll"));
-            File.Delete(Path.Combine(outputPath, name + ".pdb"));
-        }
-
-        private string GetProjectName()
-        {
-            string projectName;
-            if (RoslynProject.TryGetProjectName(_path, out projectName))
+            Project project;
+            if (!Project.TryGetProject(_path, out project))
             {
-                return projectName;
+                Trace.TraceInformation("Unable to locate {0}.'", Project.ProjectFileName);
+                return;
             }
 
-            return RoslynProject.GetDirectoryName(_path);
+            string outputPath = Path.Combine(_path, "bin");
+
+            File.Delete(Path.Combine(outputPath, project.Name + ".dll"));
+            File.Delete(Path.Combine(outputPath, project.Name + ".pdb"));
         }
 
         private void Initialize(bool watchFiles)

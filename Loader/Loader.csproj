@@ -57,6 +57,7 @@
     </Compile>
     <Compile Include="AssemblyLoader.cs" />
     <Compile Include="DefaultHost.cs" />
+    <Compile Include="IDependencyResolver.cs" />
     <Compile Include="MSBuildProjectAssemblyLoader.cs" />
     <Compile Include="FrameworkReferenceResolver.cs" />
     <Compile Include="IFileWatcher.cs" />
@@ -197,7 +198,7 @@
     <Compile Include="DirectoryLoader.cs" />
     <Compile Include="IAssemblyLoader.cs" />
     <Compile Include="NuGetAssemblyLoader.cs" />
-    <Compile Include="RoslynProject.cs" />
+    <Compile Include="Project.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="FileWatcher.cs" />
   </ItemGroup>
