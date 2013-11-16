@@ -144,6 +144,7 @@ namespace Loader
 
                     string assemblyPath = Path.Combine(options.OutputPath, name + ".dll");
                     string pdbPath = Path.Combine(options.OutputPath, name + ".pdb");
+                    string nupkg = Path.Combine(options.OutputPath, project.Name + "." + project.Version + ".nupkg");
 
                     var result = compilation.Emit(assemblyPath, pdbPath);
 
@@ -154,7 +155,13 @@ namespace Loader
                         return null;
                     }
 
+                    // Build packages
+                    BuildPackage(project, assemblyPath, nupkg);
+
+                    // TODO: Do we want to build symbol packages as well
+
                     Trace.TraceInformation("{0} -> {1}", name, assemblyPath);
+                    Trace.TraceInformation("{0} -> {1}", name, nupkg);
 
                     return Assembly.LoadFile(assemblyPath);
                 }
@@ -164,6 +171,71 @@ namespace Loader
             finally
             {
                 Trace.TraceInformation("[{0}]: Compiled '{1}' in {2}ms", GetType().Name, name, sw.ElapsedMilliseconds);
+            }
+        }
+
+        private static void BuildPackage(Project project, string assemblyPath, string nupkg)
+        {
+            var builder = new PackageBuilder();
+            builder.Authors.AddRange(project.Authors);
+
+            if (builder.Authors.Count == 0)
+            {
+                // Temporary
+                builder.Authors.Add("K");
+            }
+
+            builder.Description = project.Description ?? project.Name;
+            builder.Id = project.Name;
+            builder.Version = project.Version;
+            builder.Title = project.Name;
+            var framework = project.TargetFramework;
+            var dependencies = new List<PackageDependency>();
+
+            var resolver = new FrameworkReferenceResolver();
+            var frameworkReferences = new HashSet<string>(resolver.GetFrameworkReferences(framework));
+            var frameworkAssemblies = new List<string>();
+
+            if (project.Dependencies.Count > 0)
+            {
+                foreach (var dependency in project.Dependencies)
+                {
+                    if (frameworkReferences.Contains(dependency.Name))
+                    {
+                        frameworkAssemblies.Add(dependency.Name);
+                    }
+                    else
+                    {
+                        var dependencyVersion = new VersionSpec()
+                        {
+                            IsMinInclusive = true,
+                            MinVersion = dependency.Version
+                        };
+
+                        dependencies.Add(new PackageDependency(dependency.Name, dependencyVersion));
+                    }
+                }
+
+                if (dependencies.Count > 0)
+                {
+                    builder.DependencySets.Add(new PackageDependencySet(framework, dependencies));
+                }
+            }
+
+            foreach (var a in frameworkAssemblies)
+            {
+                builder.FrameworkReferences.Add(new FrameworkAssemblyReference(a));
+            }
+
+            var file = new PhysicalPackageFile();
+            file.SourcePath = assemblyPath;
+            var folder = VersionUtility.GetShortFrameworkName(project.TargetFramework);
+            file.TargetPath = "lib\\" + folder + "\\" + project.Name + ".dll";
+            builder.Files.Add(file);
+
+            using (var pkg = File.Create(nupkg))
+            {
+                builder.Save(pkg);
             }
         }
 
