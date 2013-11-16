@@ -74,12 +74,20 @@ namespace Loader
         {
             project = null;
 
-            if (!HasProjectFile(path))
+            string projectPath = null;
+
+            if (Path.GetFileName(path) == ProjectFileName)
+            {
+                projectPath = path;
+            }
+            else if (!HasProjectFile(path))
             {
                 return false;
             }
-
-            string projectPath = Path.Combine(path, ProjectFileName);
+            else
+            {
+                projectPath = Path.Combine(path, ProjectFileName);
+            }
 
             project = new Project();
 

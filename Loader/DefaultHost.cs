@@ -15,6 +15,11 @@ namespace Loader
 
         public DefaultHost(string path, bool watchFiles = true)
         {
+            if (File.Exists(path))
+            {
+                path = Path.GetDirectoryName(path);
+            }
+
             _path = path.TrimEnd(Path.DirectorySeparatorChar);
 
             Initialize(watchFiles);

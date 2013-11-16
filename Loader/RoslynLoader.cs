@@ -284,7 +284,11 @@ namespace Loader
             Project project;
 
             // Can't find a project file with the name so bail
-            if (!Project.TryGetProject(path, out project) || (version != null && project.Version != version))
+            if (!Project.TryGetProject(path, out project))
+            {
+                return null;
+            }
+            else if (version != null && project.Version != version)
             {
                 return null;
             }
