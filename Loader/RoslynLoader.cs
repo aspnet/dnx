@@ -296,7 +296,7 @@ namespace Loader
             return project.Dependencies;
         }
 
-        public void Initialize(IEnumerable<Dependency> dependencies)
+        public void Initialize(IEnumerable<Dependency> dependencies, FrameworkName frameworkName)
         {
 
         }

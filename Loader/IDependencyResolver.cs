@@ -8,7 +8,7 @@ namespace Loader
     public interface IDependencyResolver
     {
         IEnumerable<Dependency> GetDependencies(string name, SemanticVersion version, FrameworkName frameworkName);
-        void Initialize(IEnumerable<Dependency> dependencies);
+        void Initialize(IEnumerable<Dependency> dependencies, FrameworkName frameworkName);
     }
 
 }

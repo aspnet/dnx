@@ -55,7 +55,7 @@ namespace Loader
             return null;
         }
 
-        public void Initialize(IEnumerable<Dependency> dependencies)
+        public void Initialize(IEnumerable<Dependency> dependencies, FrameworkName frameworkName)
         {
 
         }

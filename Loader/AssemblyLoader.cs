@@ -59,7 +59,7 @@ namespace Loader
 
             var context = new WalkContext();
             WalkRecursive(context, name, version, frameworkName);
-            context.Populate();
+            context.Populate(frameworkName);
 
             sw.Stop();
             Trace.TraceInformation("Resolved dependencies for {0} in {1}ms", name, sw.ElapsedMilliseconds);
@@ -186,7 +186,7 @@ namespace Loader
             }
         }
 
-        public void Populate()
+        public void Populate(FrameworkName frameworkName)
         {
             foreach (var groupByResolver in _dependencies.GroupBy(x => x.Value.Resolver))
             {
@@ -195,7 +195,7 @@ namespace Loader
 
                 Trace.TraceInformation("[{0}]: " + String.Join(", ", dependencies), dependencyResolver.GetType().Name);
 
-                dependencyResolver.Initialize(dependencies);
+                dependencyResolver.Initialize(dependencies, frameworkName);
             }
         }
 

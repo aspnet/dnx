@@ -343,15 +343,15 @@ namespace NuGet
                 PackageIdValidator.ValidatePackageId(dep.Id);
             }
 
-            if (String.IsNullOrEmpty(version.SpecialVersion))
-            {
-                // If we are creating a production package, do not allow any of the dependencies to be a prerelease version.
-                var prereleaseDependency = dependencies.SelectMany(set => set.Dependencies).FirstOrDefault(IsPrereleaseDependency);
-                if (prereleaseDependency != null)
-                {
-                    throw new InvalidDataException(String.Format(CultureInfo.CurrentCulture, NuGetResources.Manifest_InvalidPrereleaseDependency, prereleaseDependency.ToString()));
-                }
-            }
+            //if (String.IsNullOrEmpty(version.SpecialVersion))
+            //{
+            //    // If we are creating a production package, do not allow any of the dependencies to be a prerelease version.
+            //    var prereleaseDependency = dependencies.SelectMany(set => set.Dependencies).FirstOrDefault(IsPrereleaseDependency);
+            //    if (prereleaseDependency != null)
+            //    {
+            //        throw new InvalidDataException(String.Format(CultureInfo.CurrentCulture, NuGetResources.Manifest_InvalidPrereleaseDependency, prereleaseDependency.ToString()));
+            //    }
+            //}
         }
 
         internal static void ValidateReferenceAssemblies(IEnumerable<IPackageFile> files, IEnumerable<PackageReferenceSet> packageAssemblyReferences)

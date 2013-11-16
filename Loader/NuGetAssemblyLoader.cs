@@ -77,7 +77,7 @@ namespace Loader
             }
         }
 
-        public void Initialize(IEnumerable<Dependency> dependencies)
+        public void Initialize(IEnumerable<Dependency> dependencies, FrameworkName frameworkName)
         {
             foreach (var dependency in dependencies)
             {
@@ -88,7 +88,7 @@ namespace Loader
                     continue;
                 }
 
-                foreach (var fileName in GetAssemblies(package))
+                foreach (var fileName in GetAssemblies(package, frameworkName))
                 {
                     var an = AssemblyName.GetAssemblyName(fileName);
 
@@ -103,21 +103,29 @@ namespace Loader
             }
         }
 
-        private IEnumerable<string> GetAssemblies(IPackage package)
+        private IEnumerable<string> GetAssemblies(IPackage package, FrameworkName frameworkName)
         {
             var path = _repository.PathResolver.GetInstallPath(package);
 
-            var framework = VersionUtility.ParseFrameworkName("net45");
+            var directory = Path.Combine(path, "lib", VersionUtility.GetShortFrameworkName(frameworkName));
+
+            if (!Directory.Exists(directory))
+            {
+                return GetAssembliesFromPackage(package, frameworkName, path);
+            }
+
+            return Directory.EnumerateFiles(directory, "*.dll");
+        }
+
+        private static IEnumerable<string> GetAssembliesFromPackage(IPackage package, FrameworkName frameworkName, string path)
+        {
             IEnumerable<IPackageAssemblyReference> references;
-            if (VersionUtility.TryGetCompatibleItems(framework, package.AssemblyReferences, out references))
+            if (VersionUtility.TryGetCompatibleItems(frameworkName, package.AssemblyReferences, out references))
             {
                 foreach (var reference in references)
                 {
                     string fileName = Path.Combine(path, reference.Path);
-                    if (File.Exists(fileName))
-                    {
-                        yield return fileName;
-                    }
+                    yield return fileName;
                 }
             }
         }
