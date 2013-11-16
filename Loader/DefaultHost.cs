@@ -100,7 +100,10 @@ namespace Loader
                     }
                 }
 
-                builder.DependencySets.Add(new PackageDependencySet(framework, dependencies));
+                if (dependencies.Count > 0)
+                {
+                    builder.DependencySets.Add(new PackageDependencySet(framework, dependencies));
+                }
             }
 
             foreach (var a in frameworkAssemblies)
@@ -113,7 +116,7 @@ namespace Loader
             file.TargetPath = "lib\\net45\\" + project.Name + ".dll";
             builder.Files.Add(file);
 
-            string nupkg = Path.Combine(outputPath, project.Name + ".nupkg");
+            string nupkg = Path.Combine(outputPath, project.Name + "." + project.Version + ".nupkg");
 
             using (var pkg = File.Create(nupkg))
             {
@@ -144,6 +147,7 @@ namespace Loader
 
             File.Delete(Path.Combine(outputPath, project.Name + ".dll"));
             File.Delete(Path.Combine(outputPath, project.Name + ".pdb"));
+            File.Delete(Path.Combine(outputPath, project.Name + "." + project.Version + ".nupkg"));
         }
 
         private void Initialize(bool watchFiles)
