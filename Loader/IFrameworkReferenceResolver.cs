@@ -6,6 +6,8 @@ namespace Loader
 {
     public interface IFrameworkReferenceResolver
     {
-        IEnumerable<MetadataReference> GetFrameworkReferences(string frameworkName);
+        IEnumerable<string> GetFrameworkReferences(FrameworkName frameworkName);
+
+        IEnumerable<MetadataReference> GetDefaultReferences(FrameworkName frameworkName);
     }
 }

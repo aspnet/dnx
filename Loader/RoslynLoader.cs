@@ -70,7 +70,7 @@ namespace Loader
                 Trace.TraceInformation("Loading dependencies for '{0}'", project.Name);
 
                 references = project.Dependencies
-                                .AsParallel()
+                                // .AsParallel() // TODO: Add this when we're threadsafe
                                 .Select(d =>
                                 {
                                     ExceptionDispatchInfo info = null;
@@ -111,7 +111,7 @@ namespace Loader
                 references = new List<MetadataReference>();
             }
 
-            references.AddRange(_resolver.GetFrameworkReferences(project.TargetFramework));
+            references.AddRange(_resolver.GetDefaultReferences(project.TargetFramework));
 
             Trace.TraceInformation("[{0}]: Compiling '{1}'", GetType().Name, name);
             var sw = Stopwatch.StartNew();

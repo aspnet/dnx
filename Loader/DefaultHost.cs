@@ -1,7 +1,9 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Reflection;
+using NuGet;
 
 namespace Loader
 {
@@ -70,6 +72,53 @@ namespace Loader
                 AssemblyName = project.Name,
                 OutputPath = outputPath
             });
+
+            var builder = new PackageBuilder();
+            builder.Authors.Add("K");
+            builder.Description = project.Name;
+            builder.Id = project.Name;
+            builder.Version = project.Version;
+            builder.Title = project.Name;
+            var framework = project.TargetFramework;
+            var dependencies = new List<PackageDependency>();
+
+            var resolver = new FrameworkReferenceResolver();
+            var frameworkReferences = new HashSet<string>(resolver.GetFrameworkReferences(framework));
+            var frameworkAssemblies = new List<string>();
+
+            if (project.Dependencies.Count > 0)
+            {
+                foreach (var dependency in project.Dependencies)
+                {
+                    if (frameworkReferences.Contains(dependency.Name))
+                    {
+                        frameworkAssemblies.Add(dependency.Name);
+                    }
+                    else
+                    {
+                        dependencies.Add(new PackageDependency(dependency.Name, new VersionSpec(dependency.Version)));
+                    }
+                }
+
+                builder.DependencySets.Add(new PackageDependencySet(framework, dependencies));
+            }
+
+            foreach (var a in frameworkAssemblies)
+            {
+                builder.FrameworkReferences.Add(new FrameworkAssemblyReference(a));
+            }
+
+            var file = new PhysicalPackageFile();
+            file.SourcePath = asm.Location;
+            file.TargetPath = "lib\\net45\\" + project.Name + ".dll";
+            builder.Files.Add(file);
+
+            string nupkg = Path.Combine(outputPath, project.Name + ".nupkg");
+
+            using (var pkg = File.Create(nupkg))
+            {
+                builder.Save(pkg);
+            }
 
             sw.Stop();
 

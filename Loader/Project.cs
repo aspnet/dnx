@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Runtime.Versioning;
 using Newtonsoft.Json.Linq;
 using NuGet;
 
@@ -16,7 +17,7 @@ namespace Loader
 
         public SemanticVersion Version { get; private set; }
 
-        public string TargetFramework { get; private set; }
+        public FrameworkName TargetFramework { get; private set; }
 
         public IList<Dependency> Dependencies { get; private set; }
 
@@ -95,7 +96,7 @@ namespace Loader
             }
 
             project.Version = version == null ? new SemanticVersion("1.0.0") : new SemanticVersion(version.Value<string>());
-            project.TargetFramework = framework;
+            project.TargetFramework = VersionUtility.ParseFrameworkName(framework);
             project.Dependencies = new List<Dependency>();
             project.ProjectFilePath = projectPath;
 

@@ -78,8 +78,8 @@ namespace NuGet
         [XmlElement("requireLicenseAcceptance")]
         public bool RequireLicenseAcceptance { get; set; }
 
-        [XmlElement("developmentDependency")]
-        public bool DevelopmentDependency { get; set; }
+        //[XmlElement("developmentDependency")]
+        //public bool DevelopmentDependency { get; set; }
 
         [XmlElement("description")]
         public string Description { get; set; }

@@ -405,7 +405,7 @@ namespace NuGet
             LicenseUrl = metadata.LicenseUrl;
             ProjectUrl = metadata.ProjectUrl;
             RequireLicenseAcceptance = metadata.RequireLicenseAcceptance;
-            DevelopmentDependency = metadata.DevelopmentDependency;
+            // DevelopmentDependency = metadata.DevelopmentDependency;
             Description = metadata.Description;
             Summary = metadata.Summary;
             ReleaseNotes = metadata.ReleaseNotes;
