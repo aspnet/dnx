@@ -15,6 +15,10 @@ namespace Loader
 
         public string Name { get; private set; }
 
+        public string Description { get; private set; }
+
+        public string[] Authors { get; private set; }
+
         public SemanticVersion Version { get; private set; }
 
         public FrameworkName TargetFramework { get; private set; }
@@ -84,6 +88,8 @@ namespace Loader
             var targetFramework = settings["targetFramework"];
             var name = settings["name"];
             var version = settings["version"];
+            var description = settings["description"];
+            var authors = settings["authors"];
 
             string framework = targetFramework == null ? "net45" : targetFramework.Value<string>();
 
@@ -97,6 +103,8 @@ namespace Loader
 
             project.Version = version == null ? new SemanticVersion("1.0.0") : new SemanticVersion(version.Value<string>());
             project.TargetFramework = VersionUtility.ParseFrameworkName(framework);
+            project.Description = description == null ? null : description.Value<string>();
+            project.Authors = authors == null ? new string[] { } : authors.ToObject<string[]>();
             project.Dependencies = new List<Dependency>();
             project.ProjectFilePath = projectPath;
 

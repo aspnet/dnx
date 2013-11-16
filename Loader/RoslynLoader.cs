@@ -51,10 +51,23 @@ namespace Loader
 
             var trees = new List<SyntaxTree>();
 
+            bool hasAssemblyInfo = false;
+
             foreach (var sourcePath in project.SourceFiles)
             {
+                if (!hasAssemblyInfo && Path.GetFileNameWithoutExtension(sourcePath).Equals("AssemblyInfo"))
+                {
+                    hasAssemblyInfo = true;
+                }
+
                 _watcher.WatchFile(sourcePath);
                 trees.Add(SyntaxTree.ParseFile(sourcePath));
+            }
+
+            if (!hasAssemblyInfo)
+            {
+                trees.Add(SyntaxTree.ParseText("[assembly: System.Reflection.AssemblyVersion(\"" + project.Version.Version + "\")]"));
+                trees.Add(SyntaxTree.ParseText("[assembly: System.Reflection.AssemblyInformationalVersion(\"" + project.Version + "\")]"));
             }
 
             foreach (var directory in Directory.EnumerateDirectories(path, "*.*", SearchOption.AllDirectories))
@@ -70,7 +83,7 @@ namespace Loader
                 Trace.TraceInformation("Loading dependencies for '{0}'", project.Name);
 
                 references = project.Dependencies
-                                // .AsParallel() // TODO: Add this when we're threadsafe
+                             // .AsParallel() // TODO: Add this when we're threadsafe
                                 .Select(d =>
                                 {
                                     ExceptionDispatchInfo info = null;

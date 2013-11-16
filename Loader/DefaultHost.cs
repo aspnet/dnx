@@ -74,8 +74,15 @@ namespace Loader
             });
 
             var builder = new PackageBuilder();
-            builder.Authors.Add("K");
-            builder.Description = project.Name;
+            builder.Authors.AddRange(project.Authors);
+
+            if (builder.Authors.Count == 0)
+            {
+                // Temporary
+                builder.Authors.Add("K");
+            }
+
+            builder.Description = project.Description ?? project.Name;
             builder.Id = project.Name;
             builder.Version = project.Version;
             builder.Title = project.Name;
@@ -96,7 +103,13 @@ namespace Loader
                     }
                     else
                     {
-                        dependencies.Add(new PackageDependency(dependency.Name, new VersionSpec(dependency.Version)));
+                        var dependencyVersion = new VersionSpec()
+                        {
+                            IsMinInclusive = true,
+                            MinVersion = dependency.Version
+                        };
+
+                        dependencies.Add(new PackageDependency(dependency.Name, dependencyVersion));
                     }
                 }
 
