@@ -174,8 +174,10 @@ namespace Loader
             }
         }
 
-        private static void BuildPackage(Project project, string assemblyPath, string nupkg)
+        private void BuildPackage(Project project, string assemblyPath, string nupkg)
         {
+            // TODO: Support nuspecs in the project folder
+
             var builder = new PackageBuilder();
             builder.Authors.AddRange(project.Authors);
 
@@ -192,8 +194,7 @@ namespace Loader
             var framework = project.TargetFramework;
             var dependencies = new List<PackageDependency>();
 
-            var resolver = new FrameworkReferenceResolver();
-            var frameworkReferences = new HashSet<string>(resolver.GetFrameworkReferences(framework));
+            var frameworkReferences = new HashSet<string>(_resolver.GetFrameworkReferences(framework), StringComparer.OrdinalIgnoreCase);
             var frameworkAssemblies = new List<string>();
 
             if (project.Dependencies.Count > 0)
