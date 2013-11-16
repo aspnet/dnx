@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.Versioning;
 using NuGet;
 
 namespace Loader
@@ -51,27 +52,27 @@ namespace Loader
             return asm;
         }
 
-        public void Walk(string name, SemanticVersion version)
+        public void Walk(string name, SemanticVersion version, FrameworkName frameworkName)
         {
             var sw = Stopwatch.StartNew();
             Trace.TraceInformation("Walking dependency graph for '{0}'.", name);
 
             var context = new WalkContext();
-            WalkRecursive(context, name, version);
+            WalkRecursive(context, name, version, frameworkName);
             context.Populate();
 
             sw.Stop();
             Trace.TraceInformation("Resolved dependencies for {0} in {1}ms", name, sw.ElapsedMilliseconds);
         }
 
-        private void WalkRecursive(WalkContext context, string name, SemanticVersion version)
+        private void WalkRecursive(WalkContext context, string name, SemanticVersion version, FrameworkName frameworkName)
         {
             var hit = _loaders
                 .OfType<IDependencyResolver>()
                 .Select(x => new
                 {
                     Resolver = x,
-                    Dependencies = x.GetDependencies(name, version)
+                    Dependencies = x.GetDependencies(name, version, frameworkName)
                 })
                 .FirstOrDefault(x => x.Dependencies != null);
 
@@ -90,7 +91,7 @@ namespace Loader
             {
                 foreach (var dependency in hit.Dependencies)
                 {
-                    WalkRecursive(context, dependency.Name, dependency.Version);
+                    WalkRecursive(context, dependency.Name, dependency.Version, frameworkName);
                 }
 
                 context.Pop(d);

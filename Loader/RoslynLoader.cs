@@ -192,7 +192,7 @@ namespace Loader
                 result.Diagnostics.Select(d => DiagnosticFormatter.Instance.Format(d))));
         }
 
-        public IEnumerable<Dependency> GetDependencies(string name, SemanticVersion version)
+        public IEnumerable<Dependency> GetDependencies(string name, SemanticVersion version, FrameworkName frameworkName)
         {
             string path = Path.Combine(_solutionPath, name);
             Project project;

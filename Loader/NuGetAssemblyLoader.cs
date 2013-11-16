@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.Versioning;
 using NuGet;
 
 namespace Loader
@@ -39,23 +40,22 @@ namespace Loader
             return assembly;
         }
 
-        public IEnumerable<Dependency> GetDependencies(string name, SemanticVersion version)
+        public IEnumerable<Dependency> GetDependencies(string name, SemanticVersion version, FrameworkName frameworkName)
         {
             var package = FindCandidate(name, version);
 
             if (package != null)
             {
-                return GetDependencies(package);
+                return GetDependencies(package, frameworkName);
             }
 
             return null;
         }
 
-        private IEnumerable<Dependency> GetDependencies(IPackage package)
+        private IEnumerable<Dependency> GetDependencies(IPackage package, FrameworkName frameworkName)
         {
-            var framework = VersionUtility.ParseFrameworkName("net45");
             IEnumerable<PackageDependencySet> dependencySet;
-            if (VersionUtility.TryGetCompatibleItems(framework, package.DependencySets, out dependencySet))
+            if (VersionUtility.TryGetCompatibleItems(frameworkName, package.DependencySets, out dependencySet))
             {
                 foreach (var set in dependencySet)
                 {

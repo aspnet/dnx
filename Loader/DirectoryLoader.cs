@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.Versioning;
 using NuGet;
 
 namespace Loader
@@ -42,7 +43,7 @@ namespace Loader
             return assembly;
         }
 
-        public IEnumerable<Dependency> GetDependencies(string name, SemanticVersion version)
+        public IEnumerable<Dependency> GetDependencies(string name, SemanticVersion version, FrameworkName frameworkName)
         {
             string path = Path.Combine(_path, name + ".dll");
 

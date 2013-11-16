@@ -41,7 +41,7 @@ namespace Loader
 
             var sw = Stopwatch.StartNew();
 
-            _loader.Walk(project.Name, project.Version);
+            _loader.Walk(project.Name, project.Version, project.TargetFramework);
 
             var assembly = Assembly.Load(project.Name);
 
@@ -65,7 +65,7 @@ namespace Loader
 
             var sw = Stopwatch.StartNew();
 
-            _loader.Walk(project.Name, project.Version);
+            _loader.Walk(project.Name, project.Version, project.TargetFramework);
 
             var asm = _loader.Load(new LoadOptions
             {
@@ -113,7 +113,8 @@ namespace Loader
 
             var file = new PhysicalPackageFile();
             file.SourcePath = asm.Location;
-            file.TargetPath = "lib\\net45\\" + project.Name + ".dll";
+            var folder = VersionUtility.GetShortFrameworkName(project.TargetFramework);
+            file.TargetPath = "lib\\" + folder + "\\" + project.Name + ".dll";
             builder.Files.Add(file);
 
             string nupkg = Path.Combine(outputPath, project.Name + "." + project.Version + ".nupkg");
@@ -122,6 +123,8 @@ namespace Loader
             {
                 builder.Save(pkg);
             }
+
+            Trace.TraceInformation("{0} -> {1}", project.Name, nupkg);
 
             sw.Stop();
 
