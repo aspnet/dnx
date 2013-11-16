@@ -22,12 +22,6 @@ namespace Loader
 
         public Assembly Load(LoadOptions options)
         {
-            // REVIEW: Can we skip resource assemblies?
-            if (options.AssemblyName.EndsWith("resources"))
-            {
-                return null;
-            }
-
             var sw = new Stopwatch();
             sw.Start();
             Trace.TraceInformation("Loading {0}", options.AssemblyName);
@@ -85,6 +79,13 @@ namespace Loader
         private Assembly OnAssemblyResolve(object sender, ResolveEventArgs args)
         {
             var an = new AssemblyName(args.Name);
+
+            // REVIEW: Can we skip resource assemblies?
+            if (an.Name.EndsWith("resources") ||
+                an.Name.Contains("XmlSerializers"))
+            {
+                return null;
+            }
 
             var options = new LoadOptions
             {

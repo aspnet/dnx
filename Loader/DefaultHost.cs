@@ -112,7 +112,6 @@ namespace Loader
 
             string solutionDir = Path.GetDirectoryName(_path);
             string packagesDir = Path.Combine(solutionDir, "packages");
-            string libDir = Path.Combine(solutionDir, "lib");
 
             if (watchFiles)
             {
@@ -127,10 +126,6 @@ namespace Loader
             _loader.Add(new RoslynLoader(solutionDir, _watcher, new FrameworkReferenceResolver()));
             _loader.Add(new MSBuildProjectAssemblyLoader(solutionDir, _watcher));
             _loader.Add(new NuGetAssemblyLoader(packagesDir));
-            if (Directory.Exists(libDir))
-            {
-                _loader.Add(new DirectoryLoader(libDir));
-            }
         }
 
         public void Dispose()

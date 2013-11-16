@@ -83,7 +83,7 @@ namespace Loader
                 Trace.TraceInformation("Loading dependencies for '{0}'", project.Name);
 
                 references = project.Dependencies
-                             // .AsParallel() // TODO: Add this when we're threadsafe
+                    // .AsParallel() // TODO: Add this when we're threadsafe
                                 .Select(d =>
                                 {
                                     ExceptionDispatchInfo info = null;
