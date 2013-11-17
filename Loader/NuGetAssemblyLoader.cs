@@ -92,7 +92,6 @@ namespace Loader
                 {
                     var an = AssemblyName.GetAssemblyName(fileName);
 
-                    _paths[an.FullName] = fileName;
                     _paths[an.Name] = fileName;
 
                     if (!_paths.ContainsKey(package.Id))
