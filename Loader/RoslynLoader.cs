@@ -272,7 +272,7 @@ namespace Loader
                 var bytes = ms.ToArray();
 
                 var assembly = Assembly.Load(bytes);
-                MetadataReference reference = new MetadataImageReference(bytes);
+                MetadataReference reference = compilation.ToMetadataReference();
 
                 var compiled = Tuple.Create(assembly, reference);
 
