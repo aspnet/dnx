@@ -6,7 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace WatchDog
+namespace Loader
 {
     public class Executable
     {
@@ -34,7 +34,14 @@ namespace WatchDog
 
         public Encoding Encoding { get; set; }
 
-        public TimeSpan IdleTimeout { get; private set; }
+        public Process Execute(string arguments, params object[] args)
+        {
+            return Execute(s => { Console.WriteLine(s); return true; },
+                           s => { Console.Error.WriteLine(s); return true; },
+                           Encoding.UTF8,
+                           arguments,
+                           args);
+        }
 
         public Process Execute(Func<string, bool> onWriteOutput, Func<string, bool> onWriteError, Encoding encoding, string arguments, params object[] args)
         {

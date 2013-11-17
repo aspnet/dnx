@@ -76,7 +76,7 @@ namespace Microsoft.Owin.Hosting.Starter
 
             try
             {
-                var assembly = _host.Run();
+                var assembly = _host.GetEntryPoint();
 
                 IServiceProvider services = ServicesFactory.Create(context.Options.Settings, sp =>
                 {

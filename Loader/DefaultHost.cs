@@ -1,9 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Reflection;
-using NuGet;
 
 namespace Loader
 {
@@ -35,7 +33,7 @@ namespace Loader
             }
         }
 
-        public Assembly Run()
+        public Assembly GetEntryPoint()
         {
             Project project;
             if (!Project.TryGetProject(_path, out project))

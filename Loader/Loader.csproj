@@ -52,11 +52,9 @@
     <Reference Include="WindowsBase" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="..\WatchDog\Executable.cs">
-      <Link>Executable.cs</Link>
-    </Compile>
     <Compile Include="AssemblyLoader.cs" />
     <Compile Include="DefaultHost.cs" />
+    <Compile Include="Executable.cs" />
     <Compile Include="IDependencyResolver.cs" />
     <Compile Include="MSBuildProjectAssemblyLoader.cs" />
     <Compile Include="FrameworkReferenceResolver.cs" />

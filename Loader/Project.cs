@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Runtime.Versioning;
 using Newtonsoft.Json.Linq;
 using NuGet;
@@ -30,7 +31,18 @@ namespace Loader
             get
             {
                 string path = Path.GetDirectoryName(ProjectFilePath);
-                return Directory.EnumerateFiles(path, "*.cs", SearchOption.AllDirectories);
+
+                string linkedFilePath = Path.Combine(path, ".include");
+
+                var files = Enumerable.Empty<string>();
+                if (File.Exists(linkedFilePath))
+                {
+                    files = File.ReadAllLines(linkedFilePath)
+                                .Select(file => Path.Combine(path, file))
+                                .Select(p => Path.GetFullPath(p));
+                }
+
+                return files.Concat(Directory.EnumerateFiles(path, "*.cs", SearchOption.AllDirectories));
             }
         }
 

@@ -84,7 +84,7 @@ namespace K
 
         private static void ExecuteMain(DefaultHost host, string path, string[] args)
         {
-            var assembly = host.Run();
+            var assembly = host.GetEntryPoint();
 
             if (assembly == null)
             {
