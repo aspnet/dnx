@@ -17,6 +17,7 @@ namespace Loader
     {
         private readonly Dictionary<string, Tuple<Assembly, MetadataReference>> _compiledAssemblies = new Dictionary<string, Tuple<Assembly, MetadataReference>>(StringComparer.OrdinalIgnoreCase);
         private readonly string _solutionPath;
+        private readonly string _symbolsPath;
         private readonly IFileWatcher _watcher;
         private readonly IFrameworkReferenceResolver _resolver;
 
@@ -25,6 +26,7 @@ namespace Loader
             _solutionPath = solutionPath;
             _watcher = watcher;
             _resolver = resolver;
+            _symbolsPath = Path.Combine(_solutionPath, ".symbols");
         }
 
         public Assembly Load(LoadOptions options)
@@ -53,7 +55,9 @@ namespace Loader
 
             bool hasAssemblyInfo = false;
 
-            foreach (var sourcePath in project.SourceFiles)
+            var sourceFiles = project.SourceFiles.ToList();
+
+            foreach (var sourcePath in sourceFiles)
             {
                 if (!hasAssemblyInfo && Path.GetFileNameWithoutExtension(sourcePath).Equals("AssemblyInfo"))
                 {
@@ -83,39 +87,38 @@ namespace Loader
                 Trace.TraceInformation("Loading dependencies for '{0}'", project.Name);
 
                 references = project.Dependencies
-                    // .AsParallel() // TODO: Add this when we're threadsafe
-                                .Select(d =>
-                                {
-                                    ExceptionDispatchInfo info = null;
-
-                                    try
+                                    .Select(d =>
                                     {
-                                        var loadedAssembly = Assembly.Load(d.Name);
-
-                                        Tuple<Assembly, MetadataReference> compiledDependency;
-                                        if (_compiledAssemblies.TryGetValue(d.Name, out compiledDependency))
-                                        {
-                                            return compiledDependency.Item2;
-                                        }
-
-                                        return new MetadataFileReference(loadedAssembly.Location);
-                                    }
-                                    catch (FileNotFoundException ex)
-                                    {
-                                        info = ExceptionDispatchInfo.Capture(ex);
+                                        ExceptionDispatchInfo info = null;
 
                                         try
                                         {
-                                            return MetadataFileReference.CreateAssemblyReference(d.Name);
-                                        }
-                                        catch
-                                        {
-                                            info.Throw();
+                                            var loadedAssembly = Assembly.Load(d.Name);
 
-                                            return null;
+                                            Tuple<Assembly, MetadataReference> compiledDependency;
+                                            if (_compiledAssemblies.TryGetValue(d.Name, out compiledDependency))
+                                            {
+                                                return compiledDependency.Item2;
+                                            }
+
+                                            return new MetadataFileReference(loadedAssembly.Location);
                                         }
-                                    }
-                                }).ToList();
+                                        catch (FileNotFoundException ex)
+                                        {
+                                            info = ExceptionDispatchInfo.Capture(ex);
+
+                                            try
+                                            {
+                                                return MetadataFileReference.CreateAssemblyReference(d.Name);
+                                            }
+                                            catch
+                                            {
+                                                info.Throw();
+
+                                                return null;
+                                            }
+                                        }
+                                    }).ToList();
 
                 Trace.TraceInformation("Completed loading dependencies for '{0}'", project.Name);
             }
@@ -145,6 +148,7 @@ namespace Loader
                     string assemblyPath = Path.Combine(options.OutputPath, name + ".dll");
                     string pdbPath = Path.Combine(options.OutputPath, name + ".pdb");
                     string nupkg = Path.Combine(options.OutputPath, project.Name + "." + project.Version + ".nupkg");
+                    string symbolsNupkg = Path.Combine(options.OutputPath, project.Name + "." + project.Version + ".symbols.nupkg");
 
                     var result = compilation.Emit(assemblyPath, pdbPath);
 
@@ -157,6 +161,7 @@ namespace Loader
 
                     // Build packages
                     BuildPackage(project, assemblyPath, nupkg);
+                    BuildSymbolsPackage(project, assemblyPath, pdbPath, symbolsNupkg, sourceFiles);
 
                     // TODO: Do we want to build symbol packages as well
 
@@ -172,6 +177,11 @@ namespace Loader
             {
                 Trace.TraceInformation("[{0}]: Compiled '{1}' in {2}ms", GetType().Name, name, sw.ElapsedMilliseconds);
             }
+        }
+
+        private void BuildSymbolsPackage(Project project, string assemblyPath, string pdbPath, string symbolsNupkg, List<string> sourceFiles)
+        {
+            // TODO: Build symbols packages
         }
 
         private void BuildPackage(Project project, string assemblyPath, string nupkg)
@@ -243,9 +253,9 @@ namespace Loader
         private Assembly CompileToMemoryStream(string name, Compilation compilation)
         {
             // Put symbols in a .symbols path
-            var pdbPath = Path.Combine(_solutionPath, ".symbols", name + ".pdb");
+            var pdbPath = Path.Combine(_symbolsPath, name + ".pdb");
 
-            Directory.CreateDirectory(Path.GetDirectoryName(pdbPath));
+            Directory.CreateDirectory(_symbolsPath);
 
             using (var fs = File.Create(pdbPath))
             using (var ms = new MemoryStream())
