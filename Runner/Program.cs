@@ -8,13 +8,14 @@ public class Program
 {
     public static void Main(string[] args)
     {
-        if(args.Length == 0)
+        if(args.Length < 2)
         {
-            Console.WriteLine("Runner [path]");
+            Console.WriteLine("runner [workingDir] [path]");
             return;
         }
 
-        string path = args[0];
+        string workingDir = args[0];
+        string path = args[1];
 
         string projectFilePath = Path.Combine(path, "project.json");
 
@@ -31,7 +32,7 @@ public class Program
         if(exec != null) 
         {
             var arguments = exec.ToObject<string[]>();
-            var executable = new Executable(arguments[0], Directory.GetCurrentDirectory());
+            var executable = new Executable(arguments[0], workingDir);
 
             for(var i = 0; i < arguments.Length; ++i)
             {

@@ -17,7 +17,7 @@ namespace WatchDog
 
             if (String.IsNullOrEmpty(path))
             {
-                Console.WriteLine("watchdog.exe [path] [args]");
+                Console.WriteLine("WatchDog [path] [args]");
                 Environment.Exit(-1);
                 return;
             }
