@@ -87,38 +87,8 @@ namespace Loader
                 Trace.TraceInformation("Loading dependencies for '{0}'", project.Name);
 
                 references = project.Dependencies
-                                    .Select(d =>
-                                    {
-                                        ExceptionDispatchInfo info = null;
-
-                                        try
-                                        {
-                                            var loadedAssembly = Assembly.Load(d.Name);
-
-                                            Tuple<Assembly, MetadataReference> compiledDependency;
-                                            if (_compiledAssemblies.TryGetValue(d.Name, out compiledDependency))
-                                            {
-                                                return compiledDependency.Item2;
-                                            }
-
-                                            return new MetadataFileReference(loadedAssembly.Location);
-                                        }
-                                        catch (FileNotFoundException ex)
-                                        {
-                                            info = ExceptionDispatchInfo.Capture(ex);
-
-                                            try
-                                            {
-                                                return MetadataFileReference.CreateAssemblyReference(d.Name);
-                                            }
-                                            catch
-                                            {
-                                                info.Throw();
-
-                                                return null;
-                                            }
-                                        }
-                                    }).ToList();
+                                    .Select(ResolveDependency)
+                                    .ToList();
 
                 Trace.TraceInformation("Completed loading dependencies for '{0}'", project.Name);
             }
@@ -176,6 +146,39 @@ namespace Loader
             finally
             {
                 Trace.TraceInformation("[{0}]: Compiled '{1}' in {2}ms", GetType().Name, name, sw.ElapsedMilliseconds);
+            }
+        }
+
+        private MetadataReference ResolveDependency(Dependency dependency)
+        {
+            ExceptionDispatchInfo info = null;
+
+            try
+            {
+                var loadedAssembly = Assembly.Load(dependency.Name);
+
+                Tuple<Assembly, MetadataReference> cached;
+                if (_compiledAssemblies.TryGetValue(dependency.Name, out cached))
+                {
+                    return cached.Item2;
+                }
+
+                return new MetadataFileReference(loadedAssembly.Location);
+            }
+            catch (FileNotFoundException ex)
+            {
+                info = ExceptionDispatchInfo.Capture(ex);
+
+                try
+                {
+                    return MetadataFileReference.CreateAssemblyReference(dependency.Name);
+                }
+                catch
+                {
+                    info.Throw();
+
+                    return null;
+                }
             }
         }
 
