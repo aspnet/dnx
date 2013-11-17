@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Runtime.Versioning;
+using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp;
 using Newtonsoft.Json.Linq;
 using NuGet;
 
@@ -25,6 +27,8 @@ namespace Loader
         public FrameworkName TargetFramework { get; private set; }
 
         public IList<Dependency> Dependencies { get; private set; }
+
+        public CompilationOptions CompilationOptions { get; private set; }
 
         public IEnumerable<string> SourceFiles
         {
@@ -66,7 +70,7 @@ namespace Loader
             string json = File.ReadAllText(projectPath);
             var settings = JObject.Parse(json);
             var name = settings["name"];
-            projectName = name == null ? null : name.Value<string>();
+            projectName = GetValue<string>(settings, "name");
 
             if (String.IsNullOrEmpty(projectName))
             {
@@ -75,11 +79,6 @@ namespace Loader
             }
 
             return true;
-        }
-
-        public static string GetDirectoryName(string path)
-        {
-            return path.Substring(Path.GetDirectoryName(path).Length).Trim(Path.DirectorySeparatorChar);
         }
 
         public static bool TryGetProject(string path, out Project project)
@@ -105,15 +104,11 @@ namespace Loader
 
             string json = File.ReadAllText(projectPath);
             var settings = JObject.Parse(json);
-            var targetFramework = settings["targetFramework"];
-            var name = settings["name"];
             var version = settings["version"];
-            var description = settings["description"];
             var authors = settings["authors"];
-
-            string framework = targetFramework == null ? "net45" : targetFramework.Value<string>();
-
-            project.Name = name == null ? null : name.Value<string>();
+            var compilationOptions = settings["compilationOptions"];
+            string framework = GetValue<string>(settings, "targetFramework") ?? "net45";
+            project.Name = GetValue<string>(settings, "name");
 
             if (String.IsNullOrEmpty(project.Name))
             {
@@ -123,10 +118,11 @@ namespace Loader
 
             project.Version = version == null ? new SemanticVersion("1.0.0") : new SemanticVersion(version.Value<string>());
             project.TargetFramework = VersionUtility.ParseFrameworkName(framework);
-            project.Description = description == null ? null : description.Value<string>();
+            project.Description = GetValue<string>(settings, "description");
             project.Authors = authors == null ? new string[] { } : authors.ToObject<string[]>();
             project.Dependencies = new List<Dependency>();
             project.ProjectFilePath = projectPath;
+            project.CompilationOptions = GetCompilationOptions(compilationOptions);
 
             var dependencies = settings["dependencies"] as JArray;
             if (dependencies != null)
@@ -160,50 +156,47 @@ namespace Loader
 
             return true;
         }
-    }
 
-    public class Dependency : IEquatable<Dependency>
-    {
-        public string Name { get; set; }
-
-        public SemanticVersion Version { get; set; }
-
-        public override string ToString()
+        private static CompilationOptions GetCompilationOptions(JToken compilationOptions)
         {
-            return Name + " " + Version;
-        }
+            var options = new CompilationOptions(OutputKind.DynamicallyLinkedLibrary);
 
-        public bool Equals(Dependency other)
-        {
-            if (ReferenceEquals(null, other)) return false;
-            if (ReferenceEquals(this, other)) return true;
-            return string.Equals(Name, other.Name) && Equals(Version, other.Version);
-        }
-
-        public override bool Equals(object obj)
-        {
-            if (ReferenceEquals(null, obj)) return false;
-            if (ReferenceEquals(this, obj)) return true;
-            if (obj.GetType() != this.GetType()) return false;
-            return Equals((Dependency) obj);
-        }
-
-        public override int GetHashCode()
-        {
-            unchecked
+            if (compilationOptions == null)
             {
-                return ((Name != null ? Name.GetHashCode() : 0)*397) ^ (Version != null ? Version.GetHashCode() : 0);
+                return options;
             }
+
+            bool allowUnsafe = GetValue<bool>(compilationOptions, "allowUnsafe");
+            string platformValue = GetValue<string>(compilationOptions, "platform");
+            bool warningsAsErrors = GetValue<bool>(compilationOptions, "warningsAsErrors");
+
+            Platform platform;
+            if (!Enum.TryParse<Platform>(platformValue, out platform))
+            {
+                platform = Platform.AnyCPU;
+            }
+
+            ReportWarning warningOption = warningsAsErrors ? ReportWarning.Error : ReportWarning.Default;
+
+            return options.WithAllowUnsafe(allowUnsafe)
+                          .WithPlatform(platform)
+                          .WithGeneralWarningOption(warningOption);
         }
 
-        public static bool operator ==(Dependency left, Dependency right)
+        private static T GetValue<T>(JToken token, string name)
         {
-            return Equals(left, right);
-        }
+            var obj = token[name];
 
-        public static bool operator !=(Dependency left, Dependency right)
+            if (obj == null)
+            {
+                return default(T);
+            }
+
+            return obj.Value<T>();
+        }
+        private static string GetDirectoryName(string path)
         {
-            return !Equals(left, right);
+            return path.Substring(Path.GetDirectoryName(path).Length).Trim(Path.DirectorySeparatorChar);
         }
     }
 }

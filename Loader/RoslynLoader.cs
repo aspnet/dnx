@@ -79,7 +79,6 @@ namespace Loader
                 _watcher.WatchDirectory(directory, ".cs");
             }
 
-
             List<MetadataReference> references = null;
 
             if (project.Dependencies.Count > 0)
@@ -105,9 +104,9 @@ namespace Loader
             try
             {
                 // Create a compilation
-                var compilation = Compilation.Create(
+                Compilation compilation = Compilation.Create(
                     name,
-                    new CompilationOptions(OutputKind.DynamicallyLinkedLibrary),
+                    project.CompilationOptions,
                     syntaxTrees: trees,
                     references: references);
 
