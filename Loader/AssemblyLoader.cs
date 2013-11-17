@@ -58,45 +58,19 @@ namespace Loader
             Trace.TraceInformation("Walking dependency graph for '{0}'.", name);
 
             var context = new WalkContext();
-            WalkRecursive(context, name, version, frameworkName);
+
+            context.Walk(
+                _loaders.OfType<IDependencyResolver>(),
+                name,
+                version,
+                frameworkName);
+
             context.Populate(frameworkName);
 
             sw.Stop();
             Trace.TraceInformation("Resolved dependencies for {0} in {1}ms", name, sw.ElapsedMilliseconds);
         }
 
-        private void WalkRecursive(WalkContext context, string name, SemanticVersion version, FrameworkName frameworkName)
-        {
-            var hit = _loaders
-                .OfType<IDependencyResolver>()
-                .Select(x => new
-                {
-                    Resolver = x,
-                    Dependencies = x.GetDependencies(name, version, frameworkName)
-                })
-                .FirstOrDefault(x => x.Dependencies != null);
-
-            if (hit == null)
-            {
-                return;
-            }
-
-            var d = new Dependency
-            {
-                Name = name,
-                Version = version
-            };
-
-            if (context.TryPush(d, hit.Resolver))
-            {
-                foreach (var dependency in hit.Dependencies)
-                {
-                    WalkRecursive(context, dependency.Name, dependency.Version, frameworkName);
-                }
-
-                context.Pop(d);
-            }
-        }
 
         public void Attach(AppDomain appDomain)
         {
@@ -137,72 +111,6 @@ namespace Loader
             }
 
             return null;
-        }
-    }
-
-    public class WalkContext
-    {
-        private readonly IDictionary<string, Node> _dependencies = new Dictionary<string, Node>();
-        private readonly Stack<Dependency> _stack = new Stack<Dependency>();
-
-        public bool TryPush(Dependency dependency, IDependencyResolver resolver)
-        {
-            Node existingNode;
-            if (_dependencies.TryGetValue(dependency.Name, out existingNode))
-            {
-                // First visit to D: A -> B -> D[1.0] -> E[1.0] -> Q[1.0]
-                // Second visit to D: A -> C -> D[2.0] -> F[1.0]
-                // any knowledge of E[1.0] and below is not applicable
-
-                //TODO: maintain graph of walk to ignore all prior knowledge
-                if (dependency.Version != null && existingNode.Dependency.Version != null && existingNode.Dependency.Version > dependency.Version)
-                {
-                    return false;
-                }
-            }
-
-            _dependencies[dependency.Name] = new Node
-            {
-                Dependency = dependency,
-                Resolver = resolver
-            };
-
-            if (_stack.Any(s => s.Name == dependency.Name))
-            {
-                return false;
-            }
-
-            _stack.Push(dependency);
-            return true;
-        }
-
-        public void Pop(Dependency dependency)
-        {
-            var popped = _stack.Pop();
-
-            if (popped != dependency)
-            {
-                throw new Exception("Unequal calls. AssemblyLoader busted.");
-            }
-        }
-
-        public void Populate(FrameworkName frameworkName)
-        {
-            foreach (var groupByResolver in _dependencies.GroupBy(x => x.Value.Resolver))
-            {
-                var dependencyResolver = groupByResolver.Key;
-                var dependencies = groupByResolver.Select(x => x.Value.Dependency).ToList();
-
-                Trace.TraceInformation("[{0}]: " + String.Join(", ", dependencies), dependencyResolver.GetType().Name);
-
-                dependencyResolver.Initialize(dependencies, frameworkName);
-            }
-        }
-
-        private class Node
-        {
-            public Dependency Dependency;
-            public IDependencyResolver Resolver;
         }
     }
 }

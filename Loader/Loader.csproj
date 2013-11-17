@@ -201,6 +201,7 @@
     <Compile Include="Project.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="FileWatcher.cs" />
+    <Compile Include="WalkContext.cs" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="NuGet\Authoring\nuspec.xsd">
