@@ -92,6 +92,7 @@ namespace Loader
             if (Path.GetFileName(path) == ProjectFileName)
             {
                 projectPath = path;
+                path = Path.GetDirectoryName(path);
             }
             else if (!HasProjectFile(path))
             {
