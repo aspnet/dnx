@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -60,6 +61,8 @@ namespace Loader
 
             var sourceFiles = project.SourceFiles.ToList();
 
+            var parseOptions = new ParseOptions(preprocessorSymbols: project.Defines.AsImmutable());
+
             foreach (var sourcePath in sourceFiles)
             {
                 if (!hasAssemblyInfo && Path.GetFileNameWithoutExtension(sourcePath).Equals("AssemblyInfo"))
@@ -68,7 +71,7 @@ namespace Loader
                 }
 
                 _watcher.WatchFile(sourcePath);
-                trees.Add(SyntaxTree.ParseFile(sourcePath));
+                trees.Add(SyntaxTree.ParseFile(sourcePath, parseOptions));
             }
 
             if (!hasAssemblyInfo)

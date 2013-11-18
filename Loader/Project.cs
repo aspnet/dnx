@@ -30,6 +30,8 @@ namespace Loader
 
         public CompilationOptions CompilationOptions { get; private set; }
 
+        public IEnumerable<string> Defines { get; private set; }
+
         public IEnumerable<string> SourceFiles
         {
             get
@@ -123,6 +125,7 @@ namespace Loader
             project.Dependencies = new List<Dependency>();
             project.ProjectFilePath = projectPath;
             project.CompilationOptions = GetCompilationOptions(compilationOptions);
+            project.Defines = ConvertValue<string[]>(compilationOptions, "define") ?? new string[] { };
 
             var dependencies = settings["dependencies"] as JArray;
             if (dependencies != null)
@@ -183,8 +186,30 @@ namespace Loader
                           .WithGeneralWarningOption(warningOption);
         }
 
+        private static T ConvertValue<T>(JToken token, string name)
+        {
+            if (token == null)
+            {
+                return default(T);
+            }
+
+            var obj = token[name];
+
+            if (obj == null)
+            {
+                return default(T);
+            }
+
+            return obj.ToObject<T>();
+        }
+
         private static T GetValue<T>(JToken token, string name)
         {
+            if (token == null)
+            {
+                return default(T);
+            }
+
             var obj = token[name];
 
             if (obj == null)
@@ -194,6 +219,7 @@ namespace Loader
 
             return obj.Value<T>();
         }
+
         private static string GetDirectoryName(string path)
         {
             return path.Substring(Path.GetDirectoryName(path).Length).Trim(Path.DirectorySeparatorChar);
