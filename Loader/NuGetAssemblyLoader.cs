@@ -4,11 +4,12 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.Versioning;
+using Microsoft.CodeAnalysis;
 using NuGet;
 
 namespace Loader
 {
-    public class NuGetAssemblyLoader : IAssemblyLoader, IDependencyResolver
+    public class NuGetAssemblyLoader : IAssemblyLoader, IDependencyResolver, IAssemblyReferenceResolver
     {
         private readonly LocalPackageRepository _repository;
         private readonly Dictionary<string, Assembly> _cache = new Dictionary<string, Assembly>(StringComparer.OrdinalIgnoreCase);
@@ -114,6 +115,17 @@ namespace Loader
             }
 
             return Directory.EnumerateFiles(directory, "*.dll");
+        }
+
+        public MetadataReference ResolveReference(string name)
+        {
+            string path;
+            if (_paths.TryGetValue(name, out path))
+            {
+                return new MetadataFileReference(path);
+            }
+
+            return null;
         }
 
         private static IEnumerable<string> GetAssembliesFromPackage(IPackage package, FrameworkName frameworkName, string path)

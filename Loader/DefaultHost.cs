@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Reflection;
@@ -10,6 +11,7 @@ namespace Loader
         private AssemblyLoader _loader;
         private IFileWatcher _watcher;
         private readonly string _path;
+        private readonly Dictionary<string, object> _hostServices = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
 
         public DefaultHost(string path, bool watchFiles = true)
         {
@@ -24,6 +26,18 @@ namespace Loader
         }
 
         public event Action OnChanged;
+
+        // REVIEW: The DI design
+        public T GetService<T>(string serviceName)
+        {
+            object value;
+            if (_hostServices.TryGetValue(serviceName, out value))
+            {
+                return (T)value;
+            }
+
+            return default(T);
+        }
 
         private void OnWatcherChanged()
         {
@@ -124,6 +138,13 @@ namespace Loader
             _loader.Add(new RoslynLoader(solutionDir, _watcher, new FrameworkReferenceResolver()));
             _loader.Add(new MSBuildProjectAssemblyLoader(solutionDir, _watcher));
             _loader.Add(new NuGetAssemblyLoader(packagesDir));
+
+            _hostServices[HostServices.ResolveAssemblyReference] = new Func<string, object>(name =>
+            {
+                var an = new AssemblyName(name);
+
+                return _loader.ResolveReference(an.Name);
+            });
         }
 
         public void Dispose()

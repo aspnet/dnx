@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
+using Loader;
 using Microsoft.Owin.Hosting.Loader;
 using Owin;
 
@@ -9,16 +9,18 @@ namespace WebHost
 {
     public class MyAppLoader : IAppLoader
     {
-        private Assembly _assembly;
+        private readonly DefaultHost _host;
 
-        public MyAppLoader(Assembly assembly)
+        public MyAppLoader(DefaultHost host)
         {
-            _assembly = assembly;
+            _host = host;
         }
 
         public Action<IAppBuilder> Load(string appName, IList<string> errors)
         {
-            var type = _assembly.GetType("Startup") ?? _assembly.GetTypes().FirstOrDefault(t => t.Name == "Startup");
+            var assembly = _host.GetEntryPoint();
+
+            var type = assembly.GetType("Startup") ?? assembly.GetTypes().FirstOrDefault(t => t.Name == "Startup");
 
             if(type == null)
             {
@@ -30,7 +32,11 @@ namespace WebHost
 
             return app =>
             {
-                app.Properties["host.AppName"] = _assembly.GetName().Name;
+                app.Properties["host.AppName"] = assembly.GetName().Name;
+
+                var resolver = _host.GetService<Func<string, object>>(HostServices.ResolveAssemblyReference);
+
+                app.Properties[HostServices.ResolveAssemblyReference] = resolver;
 
                 config.Invoke(obj, new[] { app });
             };

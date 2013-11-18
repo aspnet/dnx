@@ -76,11 +76,9 @@ namespace Microsoft.Owin.Hosting.Starter
 
             try
             {
-                var assembly = _host.GetEntryPoint();
-
                 IServiceProvider services = ServicesFactory.Create(context.Options.Settings, sp =>
                 {
-                    sp.AddInstance<IAppLoader>(new MyAppLoader(assembly));
+                    sp.AddInstance<IAppLoader>(new MyAppLoader(_host));
                 });
 
                 var engine = services.GetService<IHostingEngine>();

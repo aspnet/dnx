@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Collections.Immutable;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -8,7 +7,6 @@ using System.Reflection;
 using System.Resources;
 using System.Runtime.ExceptionServices;
 using System.Runtime.Versioning;
-using System.Text;
 using System.Xml.Linq;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
@@ -17,7 +15,7 @@ using NuGet;
 
 namespace Loader
 {
-    public class RoslynLoader : IAssemblyLoader, IDependencyResolver
+    public class RoslynLoader : IAssemblyLoader, IDependencyResolver, IAssemblyReferenceResolver
     {
         private readonly Dictionary<string, Tuple<Assembly, MetadataReference>> _compiledAssemblies = new Dictionary<string, Tuple<Assembly, MetadataReference>>(StringComparer.OrdinalIgnoreCase);
         private readonly string _solutionPath;
@@ -153,6 +151,24 @@ namespace Loader
             finally
             {
                 Trace.TraceInformation("[{0}]: Compiled '{1}' in {2}ms", GetType().Name, name, sw.ElapsedMilliseconds);
+            }
+        }
+
+        public MetadataReference ResolveReference(string name)
+        {
+            Tuple<Assembly, MetadataReference> cached;
+            if (_compiledAssemblies.TryGetValue(name, out cached))
+            {
+                return cached.Item2;
+            }
+
+            try
+            {
+                return MetadataReference.CreateAssemblyReference(name);
+            }
+            catch
+            {
+                return null;
             }
         }
 

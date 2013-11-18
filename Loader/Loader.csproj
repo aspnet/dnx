@@ -54,8 +54,10 @@
   <ItemGroup>
     <Compile Include="AssemblyLoader.cs" />
     <Compile Include="DefaultHost.cs" />
+    <Compile Include="HostServices.cs" />
     <Compile Include="Dependency.cs" />
     <Compile Include="Executable.cs" />
+    <Compile Include="IAssemblyReferenceResolver.cs" />
     <Compile Include="IDependencyResolver.cs" />
     <Compile Include="MSBuildProjectAssemblyLoader.cs" />
     <Compile Include="FrameworkReferenceResolver.cs" />

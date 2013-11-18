@@ -5,6 +5,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.Versioning;
+using Microsoft.CodeAnalysis;
 using NuGet;
 
 namespace Loader
@@ -65,6 +66,12 @@ namespace Loader
             Trace.TraceInformation("Resolved dependencies for {0} in {1}ms", name, sw.ElapsedMilliseconds);
         }
 
+        public MetadataReference ResolveReference(string name)
+        {
+            return _loaders.OfType<IAssemblyReferenceResolver>()
+                           .Select(resolver => resolver.ResolveReference(name))
+                           .FirstOrDefault(reference => reference != null);
+        }
 
         public void Attach(AppDomain appDomain)
         {
