@@ -90,13 +90,31 @@ namespace Loader
                 OutputPath = outputPath
             });
 
-            sw.Stop();
-
             if (asm == null)
             {
                 Trace.TraceInformation("Unable to compile '{0}'. Try placing a {1} file in the directory.", project.Name, Project.ProjectFileName);
                 return;
             }
+
+            Trace.TraceInformation("Looking for compilers in application assemblies...");
+
+            // Look for a top level compiler class in the application assemblies
+            foreach (var a in AppDomain.CurrentDomain.GetAssemblies())
+            {
+                var compiler = a.GetType("Compiler");
+
+                if (compiler != null)
+                {
+                    var compile = compiler.GetMethod("Compile", BindingFlags.Static | BindingFlags.NonPublic | BindingFlags.Public);
+
+                    if (compile != null)
+                    {
+                        compile.Invoke(null, new[] { outputPath });
+                    }
+                }
+            }
+
+            sw.Stop();
 
             Trace.TraceInformation("Compile took {0}ms", sw.ElapsedMilliseconds);
         }
