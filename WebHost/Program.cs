@@ -20,10 +20,6 @@ namespace WebHost
                 return;
             }
 
-            var listener = new ConsoleTraceListener();
-            Trace.Listeners.Add(listener);
-            Trace.AutoFlush = true;
-
             string path = Path.GetFullPath(args[0]);
             string url = args[1];
 

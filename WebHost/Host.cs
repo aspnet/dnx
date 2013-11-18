@@ -70,10 +70,6 @@ namespace Microsoft.Owin.Hosting.Starter
                 Environment.Exit(250);
             };
 
-            var listener = new ConsoleTraceListener();
-            Trace.Listeners.Add(listener);
-            Trace.AutoFlush = true;
-
             try
             {
                 IServiceProvider services = ServicesFactory.Create(context.Options.Settings, sp =>
