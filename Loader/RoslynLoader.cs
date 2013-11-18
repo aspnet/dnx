@@ -114,7 +114,7 @@ namespace Loader
                     syntaxTrees: trees,
                     references: references);
 
-                IEnumerable<ResourceDescription> resources = GetResources(path);
+                List<ResourceDescription> resources = GetResources(path);
 
                 if (options.OutputPath != null)
                 {
@@ -172,19 +172,26 @@ namespace Loader
             }
         }
 
-        private static IEnumerable<ResourceDescription> GetResources(string projectPath)
+        private static List<ResourceDescription> GetResources(string projectPath)
         {
             // HACK to make resource files work.
             // TODO: This factor this into a system to do file processing based on the current
             // compilation
             return Directory.EnumerateFiles(projectPath, "*.resx", SearchOption.AllDirectories)
-                                     .Select(resxFilePath =>
-                                         new ResourceDescription(
-                                             Path.GetFileNameWithoutExtension(resxFilePath) + ".resources",
-                                             () => GetResourceStream(resxFilePath),
-                                             isPublic: true));
+                            .Select(resxFilePath =>
+                                new ResourceDescription(GetResourceName(resxFilePath),
+                                                        () => GetResourceStream(resxFilePath),
+                                                        isPublic: true)).ToList();
         }
 
+        private static string GetResourceName(string resxFilePath)
+        {
+            Trace.TraceInformation("Found resource {0}", resxFilePath);
+
+            string fileNameWithoutExtension = Path.GetFileNameWithoutExtension(resxFilePath);
+
+            return fileNameWithoutExtension + ".resources";
+        }
 
         private static Stream GetResourceStream(string resxFilePath)
         {
@@ -375,5 +382,4 @@ namespace Loader
 
         }
     }
-
 }

@@ -1,0 +1,17 @@
+{
+    "compilationOptions" : { "define" : ["LOADER"] },
+    "dependencies": [
+    {
+      "Newtonsoft.Json": {
+        "version": "5.0.8"
+      }
+    },
+    { "System.Runtime" : { "version" :"" } },
+    { "System.Xml" : { "version" : "" } },
+    { "System.Xml.Linq" : { "version" : "" } },
+    { "System.Collections.Immutable" : { "version" : "" } },
+    { "WindowsBase" : { "version" : "" } },
+    { "Microsoft.CodeAnalysis" : { "version" : "" } },
+    { "Microsoft.CodeAnalysis.CSharp" : { "version" : "" } }
+    ]
+}
