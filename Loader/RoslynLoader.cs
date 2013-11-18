@@ -4,8 +4,11 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Resources;
 using System.Runtime.ExceptionServices;
 using System.Runtime.Versioning;
+using System.Text;
+using System.Xml.Linq;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Emit;
@@ -110,6 +113,8 @@ namespace Loader
                     syntaxTrees: trees,
                     references: references);
 
+                IEnumerable<ResourceDescription> resources = GetResources(path);
+
                 if (options.OutputPath != null)
                 {
                     Directory.CreateDirectory(options.OutputPath);
@@ -119,7 +124,7 @@ namespace Loader
                     string nupkg = Path.Combine(options.OutputPath, project.Name + "." + project.Version + ".nupkg");
                     string symbolsNupkg = Path.Combine(options.OutputPath, project.Name + "." + project.Version + ".symbols.nupkg");
 
-                    var result = compilation.Emit(assemblyPath, pdbPath);
+                    var result = compilation.Emit(assemblyPath, pdbPath, manifestResources: resources);
 
                     if (!result.Success)
                     {
@@ -140,11 +145,49 @@ namespace Loader
                     return Assembly.LoadFile(assemblyPath);
                 }
 
-                return CompileToMemoryStream(name, compilation);
+                return CompileToMemoryStream(name, compilation, resources);
             }
             finally
             {
                 Trace.TraceInformation("[{0}]: Compiled '{1}' in {2}ms", GetType().Name, name, sw.ElapsedMilliseconds);
+            }
+        }
+
+        private static IEnumerable<ResourceDescription> GetResources(string projectPath)
+        {
+            // HACK to make resource files work.
+            // TODO: This factor this into a system to do file processing based on the current
+            // compilation
+            return Directory.EnumerateFiles(projectPath, "*.resx", SearchOption.AllDirectories)
+                                     .Select(resxFilePath =>
+                                         new ResourceDescription(
+                                             Path.GetFileNameWithoutExtension(resxFilePath) + ".resources",
+                                             () => GetResourceStream(resxFilePath),
+                                             isPublic: true));
+        }
+
+
+        private static Stream GetResourceStream(string resxFilePath)
+        {
+            using (var fs = File.OpenRead(resxFilePath))
+            {
+                var document = XDocument.Load(fs);
+
+                var ms = new MemoryStream();
+                var rw = new ResourceWriter(ms);
+
+                foreach (var e in document.Root.Elements("data"))
+                {
+                    string name = e.Attribute("name").Value;
+                    string value = e.Element("value").Value;
+
+                    rw.AddResource(name, value);
+                }
+
+                rw.Generate();
+                ms.Seek(0, SeekOrigin.Begin);
+
+                return ms;
             }
         }
 
@@ -252,7 +295,7 @@ namespace Loader
             }
         }
 
-        private Assembly CompileToMemoryStream(string name, Compilation compilation)
+        private Assembly CompileToMemoryStream(string name, Compilation compilation, IEnumerable<ResourceDescription> resources)
         {
             // Put symbols in a .symbols path
             var pdbPath = Path.Combine(_symbolsPath, name + ".pdb");
@@ -262,7 +305,7 @@ namespace Loader
             using (var fs = File.Create(pdbPath))
             using (var ms = new MemoryStream())
             {
-                EmitResult result = compilation.Emit(ms, pdbStream: fs);
+                EmitResult result = compilation.Emit(ms, pdbStream: fs, manifestResources: resources);
 
                 if (!result.Success)
                 {
