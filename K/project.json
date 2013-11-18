@@ -1,0 +1,6 @@
+{
+    "name" : "K",
+    "dependencies": [
+        { "Loader" : { "version" : "1.0.0" } }
+    ]
+}
