@@ -96,28 +96,13 @@ namespace Loader
                 return;
             }
 
-            Trace.TraceInformation("Looking for compilers in application assemblies...");
-
-            // Look for a top level compiler class in the application assemblies
-            foreach (var a in AppDomain.CurrentDomain.GetAssemblies())
-            {
-                var compiler = a.GetType("Compiler");
-
-                if (compiler != null)
-                {
-                    var compile = compiler.GetMethod("Compile", BindingFlags.Static | BindingFlags.NonPublic | BindingFlags.Public);
-
-                    if (compile != null)
-                    {
-                        compile.Invoke(null, new[] { outputPath });
-                    }
-                }
-            }
+            RunStaticMethod("Compiler", "Compile", outputPath);
 
             sw.Stop();
 
             Trace.TraceInformation("Compile took {0}ms", sw.ElapsedMilliseconds);
         }
+
 
         public void Clean()
         {
@@ -130,9 +115,48 @@ namespace Loader
 
             string outputPath = Path.Combine(_path, "bin");
 
-            File.Delete(Path.Combine(outputPath, project.Name + ".dll"));
-            File.Delete(Path.Combine(outputPath, project.Name + ".pdb"));
-            File.Delete(Path.Combine(outputPath, project.Name + "." + project.Version + ".nupkg"));
+            _loader.Walk(project.Name, project.Version, project.TargetFramework);
+
+            var options = new LoadOptions
+            {
+                AssemblyName = project.Name,
+                OutputPath = outputPath,
+                CleanArtifacts = new List<string>()
+            };
+
+            _loader.Load(options);
+
+            Trace.TraceInformation("Cleaning generated artifacts");
+
+            foreach (var path in options.CleanArtifacts)
+            {
+                Trace.TraceInformation("Cleaning {0}", path);
+
+                File.Delete(path);
+            }
+
+            RunStaticMethod("Compiler", "Clean", outputPath);
+        }
+
+        private static void RunStaticMethod(string typeName, string methodName, params object[] args)
+        {
+            // Invoke a static method on a class with the specified args
+            foreach (var a in AppDomain.CurrentDomain.GetAssemblies())
+            {
+                var type = a.GetType(typeName);
+
+                if (type != null)
+                {
+                    Trace.TraceInformation("Found {0} in {1}", typeName, a.GetName().Name);
+
+                    var method = type.GetMethod(methodName, BindingFlags.Static | BindingFlags.NonPublic | BindingFlags.Public);
+
+                    if (method != null)
+                    {
+                        method.Invoke(null, args);
+                    }
+                }
+            }
         }
 
         private void Initialize(bool watchFiles)

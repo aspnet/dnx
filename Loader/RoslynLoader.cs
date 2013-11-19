@@ -144,6 +144,17 @@ namespace Loader
                     string nupkg = Path.Combine(options.OutputPath, project.Name + "." + project.Version + ".nupkg");
                     string symbolsNupkg = Path.Combine(options.OutputPath, project.Name + "." + project.Version + ".symbols.nupkg");
 
+                    if (options.CleanArtifacts != null)
+                    {
+                        options.CleanArtifacts.Add(assemblyPath);
+                        options.CleanArtifacts.Add(pdbPath);
+                        options.CleanArtifacts.Add(nupkg);
+                        options.CleanArtifacts.Add(symbolsNupkg);
+
+                        // Compile in memory to avoid locking the file
+                        return CompileToMemoryStream(name, compilation, resources);
+                    }
+
                     var result = compilation.Emit(assemblyPath, pdbPath, manifestResources: resources);
 
                     if (!result.Success)
