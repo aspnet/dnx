@@ -79,8 +79,9 @@ namespace NuGet
 
                 string effectivePath;
                 fileFrameworks = from part in package.Entries
+                                 let path = part.FullName.Replace('/', '\\')
                                  where IsPackageFile(part)
-                                 select VersionUtility.ParseFrameworkNameFromFilePath(part.FullName, out effectivePath);
+                                 select VersionUtility.ParseFrameworkNameFromFilePath(path, out effectivePath);
 
             }
 #else
@@ -143,7 +144,7 @@ namespace NuGet
         {
             using (Stream stream = _streamFactory())
             {
-                ZipArchive package = new ZipArchive(stream);
+                var package = new ZipArchive(stream);
 
                 return (from part in package.Entries
                         where IsPackageFile(part)
@@ -155,7 +156,7 @@ namespace NuGet
         {
             using (Stream stream = _streamFactory())
             {
-                ZipArchive package = new ZipArchive(stream);
+                var package = new ZipArchive(stream);
 
                 ZipArchiveEntry manifestPart = package.GetManifest();
 

@@ -192,7 +192,7 @@ namespace NuGet
         {
             using (Stream stream = _fileSystem.OpenFile(_packagePath))
             {
-                ZipArchive package = new ZipArchive(stream);
+                var package = new ZipArchive(stream);
 
                 ZipArchiveEntry manifestPart = package.GetManifest();
 
@@ -247,7 +247,7 @@ namespace NuGet
 
             using (Stream stream = GetStream())
             {
-                ZipArchive package = new ZipArchive(stream);
+                var package = new ZipArchive(stream);
                 // unzip files inside package
                 var files = from part in package.Entries
                             where ZipPackage.IsPackageFile(part)

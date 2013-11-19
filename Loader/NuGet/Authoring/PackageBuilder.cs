@@ -244,7 +244,7 @@ namespace NuGet
             ValidateDependencySets(Version, DependencySets);
             ValidateReferenceAssemblies(Files, PackageAssemblyReferences);
 
-            using (ZipArchive package = new ZipArchive(stream, ZipArchiveMode.Update))
+            using (var package = new ZipArchive(stream, ZipArchiveMode.Update))
             {
                 // Validate and write the manifest
                 WriteManifest(package, DetermineMinimumSchemaVersion(Files));
