@@ -56,17 +56,29 @@ namespace Loader
 
             if (project.Dependencies.Count > 0)
             {
-                Trace.TraceInformation("Loading dependencies for '{0}'", project.Name);
+                Trace.TraceInformation("[{0}]: Loading dependencies for '{1}'", GetType().Name, project.Name);
+                var dependencyStopWatch = Stopwatch.StartNew();
 
                 references = project.Dependencies
                                     .Select(ResolveDependency)
                                     .ToList();
 
-                Trace.TraceInformation("Completed loading dependencies for '{0}'", project.Name);
+                dependencyStopWatch.Stop();
+                Trace.TraceInformation("[{0}]: Completed loading dependencies for '{1}' in {2}ms", GetType().Name, project.Name, dependencyStopWatch.ElapsedMilliseconds);
             }
             else
             {
                 references = new List<MetadataReference>();
+            }
+
+            // Always use the dll in the bin directory if it exists (unless we're doing a new compilation)
+            string cachedFile = Path.Combine(path, "bin", name + ".dll");
+
+            if (File.Exists(cachedFile) && options.OutputPath == null)
+            {
+                Trace.TraceInformation("[{0}]: Found cached copy of '{1}' in {2}.", GetType().Name, name, cachedFile);
+
+                return Assembly.LoadFile(cachedFile);
             }
 
             references.AddRange(_resolver.GetDefaultReferences(project.TargetFramework));
@@ -76,16 +88,6 @@ namespace Loader
 
             try
             {
-                // Always use the dll in the bin directory if it exists
-                string cachedFile = Path.Combine(path, "bin", name + ".dll");
-
-                if (File.Exists(cachedFile))
-                {
-                    Trace.TraceInformation("Found cached copy of '{0}' in {1}.", name, cachedFile);
-
-                    return Assembly.LoadFile(cachedFile);
-                }
-
                 _watcher.WatchDirectory(path, ".cs");
 
                 var trees = new List<SyntaxTree>();
