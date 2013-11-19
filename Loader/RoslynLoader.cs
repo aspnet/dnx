@@ -50,38 +50,7 @@ namespace Loader
                 return null;
             }
 
-            _watcher.WatchDirectory(path, ".cs");
             _watcher.WatchFile(project.ProjectFilePath);
-
-            var trees = new List<SyntaxTree>();
-
-            bool hasAssemblyInfo = false;
-
-            var sourceFiles = project.SourceFiles.ToList();
-
-            var parseOptions = new ParseOptions(preprocessorSymbols: project.Defines.AsImmutable());
-
-            foreach (var sourcePath in sourceFiles)
-            {
-                if (!hasAssemblyInfo && Path.GetFileNameWithoutExtension(sourcePath).Equals("AssemblyInfo"))
-                {
-                    hasAssemblyInfo = true;
-                }
-
-                _watcher.WatchFile(sourcePath);
-                trees.Add(SyntaxTree.ParseFile(sourcePath, parseOptions));
-            }
-
-            if (!hasAssemblyInfo)
-            {
-                trees.Add(SyntaxTree.ParseText("[assembly: System.Reflection.AssemblyVersion(\"" + project.Version.Version + "\")]"));
-                trees.Add(SyntaxTree.ParseText("[assembly: System.Reflection.AssemblyInformationalVersion(\"" + project.Version + "\")]"));
-            }
-
-            foreach (var directory in Directory.EnumerateDirectories(path, "*.*", SearchOption.AllDirectories))
-            {
-                _watcher.WatchDirectory(directory, ".cs");
-            }
 
             List<MetadataReference> references = null;
 
@@ -115,6 +84,38 @@ namespace Loader
                     Trace.TraceInformation("Found cached copy of '{0}' in {1}.", name, cachedFile);
 
                     return Assembly.LoadFile(cachedFile);
+                }
+
+                _watcher.WatchDirectory(path, ".cs");
+
+                var trees = new List<SyntaxTree>();
+
+                bool hasAssemblyInfo = false;
+
+                var sourceFiles = project.SourceFiles.ToList();
+
+                var parseOptions = new ParseOptions(preprocessorSymbols: project.Defines.AsImmutable());
+
+                foreach (var sourcePath in sourceFiles)
+                {
+                    if (!hasAssemblyInfo && Path.GetFileNameWithoutExtension(sourcePath).Equals("AssemblyInfo"))
+                    {
+                        hasAssemblyInfo = true;
+                    }
+
+                    _watcher.WatchFile(sourcePath);
+                    trees.Add(SyntaxTree.ParseFile(sourcePath, parseOptions));
+                }
+
+                if (!hasAssemblyInfo)
+                {
+                    trees.Add(SyntaxTree.ParseText("[assembly: System.Reflection.AssemblyVersion(\"" + project.Version.Version + "\")]"));
+                    trees.Add(SyntaxTree.ParseText("[assembly: System.Reflection.AssemblyInformationalVersion(\"" + project.Version + "\")]"));
+                }
+
+                foreach (var directory in Directory.EnumerateDirectories(path, "*.*", SearchOption.AllDirectories))
+                {
+                    _watcher.WatchDirectory(directory, ".cs");
                 }
 
                 // Create a compilation
