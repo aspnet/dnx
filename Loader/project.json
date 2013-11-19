@@ -6,11 +6,12 @@
         "version": "5.0.8"
       }
     },
+    { "System.Collections.Immutable" : { "version" : "" } },
+    { "System.IO.Compression" : { "version" : "" } },
+    { "System.IO.Compression.FileSystem" : { "version" : "" } },
     { "System.Runtime" : { "version" :"" } },
     { "System.Xml" : { "version" : "" } },
     { "System.Xml.Linq" : { "version" : "" } },
-    { "System.Collections.Immutable" : { "version" : "" } },
-    { "WindowsBase" : { "version" : "" } },
     { "Microsoft.CodeAnalysis" : { "version" : "" } },
     { "Microsoft.CodeAnalysis.CSharp" : { "version" : "" } }
     ]

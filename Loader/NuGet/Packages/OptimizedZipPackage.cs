@@ -5,7 +5,7 @@ using System.Collections.ObjectModel;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.IO;
-using System.IO.Packaging;
+using System.IO.Compression;
 using System.Linq;
 using System.Runtime.Versioning;
 using NuGet.Resources;
@@ -24,7 +24,7 @@ namespace NuGet
         // The DateTimeOffset entry stores the LastModifiedTime of the original .nupkg file that
         // is passed to this class. This is so that we can invalidate the cache when the original
         // file has changed.
-        private static readonly ConcurrentDictionary<PackageName, Tuple<string, DateTimeOffset>> _cachedExpandedFolder 
+        private static readonly ConcurrentDictionary<PackageName, Tuple<string, DateTimeOffset>> _cachedExpandedFolder
             = new ConcurrentDictionary<PackageName, Tuple<string, DateTimeOffset>>();
         private static readonly IFileSystem _tempFileSystem = new PhysicalFileSystem(Path.Combine(Path.GetTempPath(), "nuget"));
 
@@ -45,7 +45,7 @@ namespace NuGet
         {
             if (String.IsNullOrEmpty(fullPackagePath))
             {
-                throw new ArgumentNullException( "fullPackagePath");
+                throw new ArgumentNullException("fullPackagePath");
             }
 
             if (!File.Exists(fullPackagePath))
@@ -77,7 +77,7 @@ namespace NuGet
 
             if (String.IsNullOrEmpty(packagePath))
             {
-                throw new ArgumentNullException( "packagePath");
+                throw new ArgumentNullException("packagePath");
             }
 
             _fileSystem = fileSystem;
@@ -109,7 +109,7 @@ namespace NuGet
 
             if (String.IsNullOrEmpty(packagePath))
             {
-                throw new ArgumentNullException( "packagePath");
+                throw new ArgumentNullException("packagePath");
             }
 
             _fileSystem = fileSystem;
@@ -192,22 +192,16 @@ namespace NuGet
         {
             using (Stream stream = _fileSystem.OpenFile(_packagePath))
             {
-                Package package = Package.Open(stream);
-                PackageRelationship relationshipType = package.GetRelationshipsByType(Constants.PackageRelationshipNamespace + PackageBuilder.ManifestRelationType).SingleOrDefault();
+                ZipArchive package = new ZipArchive(stream);
 
-                if (relationshipType == null)
-                {
-                    throw new InvalidOperationException(NuGetResources.PackageDoesNotContainManifest);
-                }
-
-                PackagePart manifestPart = package.GetPart(relationshipType.TargetUri);
+                ZipArchiveEntry manifestPart = package.GetManifest();
 
                 if (manifestPart == null)
                 {
                     throw new InvalidOperationException(NuGetResources.PackageDoesNotContainManifest);
                 }
 
-                using (Stream manifestStream = manifestPart.GetStream())
+                using (Stream manifestStream = manifestPart.Open())
                 {
                     ReadManifest(manifestStream);
                 }
@@ -253,22 +247,22 @@ namespace NuGet
 
             using (Stream stream = GetStream())
             {
-                Package package = Package.Open(stream);
+                ZipArchive package = new ZipArchive(stream);
                 // unzip files inside package
-                var files = from part in package.GetParts()
+                var files = from part in package.Entries
                             where ZipPackage.IsPackageFile(part)
                             select part;
 
                 // now copy all package's files to disk
-                foreach (PackagePart file in files)
+                foreach (ZipArchiveEntry file in files)
                 {
-                    string path = UriUtility.GetPath(file.Uri);
+                    string path = file.FullName.Replace('/', '\\');
                     string filePath = Path.Combine(_expandedFolderPath, path);
 
                     bool copyFile = true;
                     if (_expandedFileSystem.FileExists(filePath))
                     {
-                        using (Stream partStream = file.GetStream(),
+                        using (Stream partStream = file.Open(),
                                       targetStream = _expandedFileSystem.OpenFile(filePath))
                         {
                             // if the target file already exists, 
@@ -279,7 +273,7 @@ namespace NuGet
 
                     if (copyFile)
                     {
-                        using (Stream partStream = file.GetStream())
+                        using (Stream partStream = file.Open())
                         {
                             try
                             {

@@ -316,7 +316,7 @@ namespace NuGet
                 {
                     package = new OptimizedZipPackage(FileSystem, path);
                 }
-                catch (FileFormatException ex)
+                catch (InvalidDataException ex)
                 {
                     throw new InvalidDataException(String.Format(CultureInfo.CurrentCulture, NuGetResources.ErrorReadingPackage, path), ex);
                 }

@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.IO.Packaging;
+using System.IO.Compression;
 using System.Runtime.Versioning;
 
 namespace NuGet
@@ -11,8 +11,8 @@ namespace NuGet
         private readonly Func<Stream> _streamFactory;
         private readonly FrameworkName _targetFramework;
 
-        public ZipPackageFile(PackagePart part)
-            : this(UriUtility.GetPath(part.Uri), part.GetStream().ToStreamFactory())
+        public ZipPackageFile(ZipArchiveEntry part)
+            : this(part.FullName.Replace('/', '\\'), part.Open().ToStreamFactory())
         {
         }
 

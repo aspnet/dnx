@@ -1,6 +1,5 @@
 using System;
 using System.IO;
-using System.IO.Packaging;
 using System.Linq;
 
 namespace NuGet
@@ -21,15 +20,6 @@ namespace NuGet
             // Bug 483: We need the unescaped uri string to ensure that all characters are valid for a path.
             // Change the direction of the slashes to match the filesystem.
             return Uri.UnescapeDataString(path.Replace('/', Path.DirectorySeparatorChar));
-        }
-
-        internal static Uri CreatePartUri(string path)
-        {
-            // Only the segments between the path separators should be escaped
-            var segments = path.Split( new[] { '/', Path.DirectorySeparatorChar }, StringSplitOptions.None)
-                               .Select(Uri.EscapeDataString);
-            var escapedPath = String.Join("/", segments);
-            return PackUriHelper.CreatePartUri(new Uri(escapedPath, UriKind.Relative));
         }
 
         // Bug 2379: SettingsCredentialProvider does not work

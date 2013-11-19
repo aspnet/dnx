@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
-using System.IO.Packaging;
+using System.IO.Compression;
 using System.Linq;
 using System.Runtime.Versioning;
 using NuGet.Resources;
@@ -75,12 +75,12 @@ namespace NuGet
 #if LOADER
             using (Stream stream = _streamFactory())
             {
-                var package = Package.Open(stream);
+                var package = new ZipArchive(stream);
 
                 string effectivePath;
-                fileFrameworks = from part in package.GetParts()
+                fileFrameworks = from part in package.Entries
                                  where IsPackageFile(part)
-                                 select VersionUtility.ParseFrameworkNameFromFilePath(UriUtility.GetPath(part.Uri), out effectivePath);
+                                 select VersionUtility.ParseFrameworkNameFromFilePath(part.FullName, out effectivePath);
 
             }
 #else
@@ -143,9 +143,9 @@ namespace NuGet
         {
             using (Stream stream = _streamFactory())
             {
-                Package package = Package.Open(stream);
+                ZipArchive package = new ZipArchive(stream);
 
-                return (from part in package.GetParts()
+                return (from part in package.Entries
                         where IsPackageFile(part)
                         select (IPackageFile)new ZipPackageFile(part)).ToList();
             }
@@ -155,23 +155,16 @@ namespace NuGet
         {
             using (Stream stream = _streamFactory())
             {
-                Package package = Package.Open(stream);
+                ZipArchive package = new ZipArchive(stream);
 
-                PackageRelationship relationshipType = package.GetRelationshipsByType(Constants.PackageRelationshipNamespace + PackageBuilder.ManifestRelationType).SingleOrDefault();
-
-                if (relationshipType == null)
-                {
-                    throw new InvalidOperationException(NuGetResources.PackageDoesNotContainManifest);
-                }
-
-                PackagePart manifestPart = package.GetPart(relationshipType.TargetUri);
+                ZipArchiveEntry manifestPart = package.GetManifest();
 
                 if (manifestPart == null)
                 {
                     throw new InvalidOperationException(NuGetResources.PackageDoesNotContainManifest);
                 }
 
-                using (Stream manifestStream = manifestPart.GetStream())
+                using (Stream manifestStream = manifestPart.Open())
                 {
                     ReadManifest(manifestStream);
                 }
@@ -188,12 +181,14 @@ namespace NuGet
             return String.Format(CultureInfo.InvariantCulture, CacheKeyFormat, AssembliesCacheKey, Id, Version);
         }
 
-        internal static bool IsPackageFile(PackagePart part)
+        internal static bool IsPackageFile(ZipArchiveEntry part)
         {
-            string path = UriUtility.GetPath(part.Uri);
+            string path = part.FullName;
+
             // We exclude any opc files and the manifest file (.nuspec)
             return !ExcludePaths.Any(p => path.StartsWith(p, StringComparison.OrdinalIgnoreCase)) &&
-                   !PackageHelper.IsManifest(path);
+                   !PackageHelper.IsManifest(path) &&
+                   !path.StartsWith("[Content_Types]", StringComparison.OrdinalIgnoreCase);
         }
 
         internal static void ClearCache(IPackage package)
