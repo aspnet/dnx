@@ -78,7 +78,13 @@ namespace Loader
             {
                 Trace.TraceInformation("[{0}]: Found cached copy of '{1}' in {2}.", GetType().Name, name, cachedFile);
 
-                return Assembly.LoadFile(cachedFile);
+                var cachedAssembly = Assembly.LoadFile(cachedFile);
+
+                MetadataReference cachedReference = new MetadataFileReference(cachedFile);
+
+                _compiledAssemblies[name] = Tuple.Create(cachedAssembly, cachedReference);
+
+                return cachedAssembly;
             }
 
             references.AddRange(_resolver.GetDefaultReferences(project.TargetFramework));
