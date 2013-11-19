@@ -5,7 +5,7 @@
 - Have the ability to create a cached version of your applicaiton's dependencies ("compilation")
 - Expose metadata about the runtime for others to query
 
-### Principles:
+### Principles
 - There is no such thing as "design time" (blur the lines between compilation and loading)
 - Dependencies are always described as what not where (there's no such thing as a project/nuget/assembly reference)
 
