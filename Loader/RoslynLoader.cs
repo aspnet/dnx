@@ -107,6 +107,16 @@ namespace Loader
 
             try
             {
+                // Always use the dll in the bin directory if it exists
+                string cachedFile = Path.Combine(path, "bin", name + ".dll");
+
+                if (File.Exists(cachedFile))
+                {
+                    Trace.TraceInformation("Found cached copy of '{0}' in {1}.", name, cachedFile);
+
+                    return Assembly.LoadFile(cachedFile);
+                }
+
                 // Create a compilation
                 Compilation compilation = Compilation.Create(
                     name,
