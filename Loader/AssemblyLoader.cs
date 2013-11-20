@@ -73,35 +73,6 @@ namespace Loader
                            .FirstOrDefault(reference => reference != null);
         }
 
-        public void Attach(AppDomain appDomain)
-        {
-            appDomain.AssemblyResolve += OnAssemblyResolve;
-        }
-
-        public void Detach(AppDomain appDomain)
-        {
-            appDomain.AssemblyResolve -= OnAssemblyResolve;
-        }
-
-        private Assembly OnAssemblyResolve(object sender, ResolveEventArgs args)
-        {
-            var an = new AssemblyName(args.Name);
-
-            // REVIEW: Can we skip resource assemblies?
-            if (an.Name.EndsWith("resources") ||
-                an.Name.Contains("XmlSerializers"))
-            {
-                return null;
-            }
-
-            var options = new LoadOptions
-            {
-                AssemblyName = an.Name,
-            };
-
-            return Load(options);
-        }
-
         private Assembly LoadImpl(LoadOptions options, Stopwatch sw)
         {
             foreach (var loader in _loaders)

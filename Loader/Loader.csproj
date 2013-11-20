@@ -55,11 +55,14 @@
   <ItemGroup>
     <Compile Include="AssemblyLoader.cs" />
     <Compile Include="DefaultHost.cs" />
+    <Compile Include="HostContainer.cs" />
     <Compile Include="HostServices.cs" />
     <Compile Include="Dependency.cs" />
     <Compile Include="Executable.cs" />
     <Compile Include="IAssemblyReferenceResolver.cs" />
     <Compile Include="IDependencyResolver.cs" />
+    <Compile Include="IHost.cs" />
+    <Compile Include="IHostContainer.cs" />
     <Compile Include="MSBuildProjectAssemblyLoader.cs" />
     <Compile Include="FrameworkReferenceResolver.cs" />
     <Compile Include="IFileWatcher.cs" />

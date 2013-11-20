@@ -16,53 +16,53 @@ struct ApplicationMainInfo
 class __declspec(uuid("7E9C5238-60DC-49D3-94AA-53C91FA79F7C")) IKatanaManager : public IUnknown
 {
 public:
-	virtual HRESULT InitializeRuntime() = 0;
+    virtual HRESULT InitializeRuntime() = 0;
 
-	virtual HRESULT BindApplicationMain(ApplicationMainInfo* pInfo) = 0;
+    virtual HRESULT BindApplicationMain(ApplicationMainInfo* pInfo) = 0;
 
-	virtual HRESULT CallApplicationMain(int argc, PCWSTR* argv) = 0;
+    virtual HRESULT CallApplicationMain(int argc, PCWSTR* argv) = 0;
 };
 
 _COM_SMARTPTR_TYPEDEF(IKatanaManager, __uuidof(IKatanaManager));
 
 class KatanaManager : 
-	public IKatanaManager,
-	public IHostControl
+    public IKatanaManager,
+    public IHostControl
 {
-	CriticalSection _crit;
-	bool _calledInitializeRuntime;
-	HRESULT _hrInitializeRuntime;
+    CriticalSection _crit;
+    bool _calledInitializeRuntime;
+    HRESULT _hrInitializeRuntime;
 
-	ICLRMetaHostPtr _MetaHost;
+    ICLRMetaHostPtr _MetaHost;
     ICLRMetaHostPolicyPtr _MetaHostPolicy;
     ICLRRuntimeHostPtr _RuntimeHost;
 
-	_bstr_t _clrVersion;
+    _bstr_t _clrVersion;
     _bstr_t _appPoolName;
     _bstr_t _appHostFileName;
     _bstr_t _rootWebConfigFileName;
-    _bstr_t _clrConfigFileName;
+    _bstr_t _clrConfigFilePath;
 
-	ApplicationMainInfo _applicationMainInfo;
+    ApplicationMainInfo _applicationMainInfo;
 
 public:
-	KatanaManager()
-	{
-		_calledInitializeRuntime = false;
-		_hrInitializeRuntime = E_PENDING;
-		_clrConfigFileName = L"klr.net45.config";
-	}
+    KatanaManager()
+    {
+        _calledInitializeRuntime = false;
+        _hrInitializeRuntime = E_PENDING;
+        _clrConfigFilePath = L"klr.net45.config";
+    }
 
     IUnknown* CastInterface(REFIID riid)
     {
-		if (riid == __uuidof(IKatanaManager))
+        if (riid == __uuidof(IKatanaManager))
             return static_cast<IKatanaManager*>(this);
         if (riid == __uuidof(IHostControl))
             return static_cast<IHostControl*>(this);
         return NULL;
     }
-	
-	HRESULT InitializeRuntime()
+    
+    HRESULT InitializeRuntime()
     {
         Lock lock(&_crit);
         if (_calledInitializeRuntime)
@@ -74,7 +74,7 @@ public:
         _HR(CLRCreateInstance(CLSID_CLRMetaHostPolicy, PPV(&_MetaHostPolicy))); 
 
         IStreamPtr cfgStream = new ComObject<FileStream>();
-        _HR(static_cast<FileStream*>(cfgStream.GetInterfacePtr())->Open(_clrConfigFileName));
+        _HR(static_cast<FileStream*>(cfgStream.GetInterfacePtr())->Open(_clrConfigFilePath));
 
         WCHAR wzVersion[130] = {0};
         DWORD cchVersion = 129;
@@ -97,7 +97,7 @@ public:
         _HR(runtimeInfo->SetDefaultStartupFlags(
             STARTUP_LOADER_OPTIMIZATION_MULTI_DOMAIN_HOST |
             STARTUP_SERVER_GC,
-            _clrConfigFileName));
+            _clrConfigFilePath));
 
         ICLRRuntimeHostPtr runtimeHost;
         _HR(runtimeInfo->GetInterface(CLSID_CLRRuntimeHost, PPV(&runtimeHost)));
@@ -116,18 +116,18 @@ public:
         return hr;
     }
 
-	HRESULT BindApplicationMain(ApplicationMainInfo* pInfo)
-	{
-		_applicationMainInfo = *pInfo;
-		return S_OK;
-	}
+    HRESULT BindApplicationMain(ApplicationMainInfo* pInfo)
+    {
+        _applicationMainInfo = *pInfo;
+        return S_OK;
+    }
 
-	HRESULT CallApplicationMain(int argc, PCWSTR* argv) 
-	{
-		return _applicationMainInfo.ApplicationMain(argc, argv);
-	}
+    HRESULT CallApplicationMain(int argc, PCWSTR* argv) 
+    {
+        return _applicationMainInfo.ApplicationMain(argc, argv);
+    }
 
-	//////////////////////////
+    //////////////////////////
     // IHostControl
 
     STDMETHODIMP GetHostManager( 
@@ -135,7 +135,7 @@ public:
         /* [out] */ void **ppObject)
     {
         HRESULT hr = S_OK;
-		_HR(static_cast<IKatanaManager*>(this)->QueryInterface(riid, ppObject));
+        _HR(static_cast<IKatanaManager*>(this)->QueryInterface(riid, ppObject));
         return hr;
     }
         

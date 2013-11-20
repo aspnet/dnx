@@ -8,14 +8,20 @@ using Loader;
 
 namespace K
 {
-    class Program
+    public class Program
     {
-        [LoaderOptimization(LoaderOptimization.MultiDomainHost)]
-        static void Main(string[] args)
+        private readonly IHostContainer _container;
+
+        public Program(IHostContainer container)
+        {
+            _container = container;
+        }
+
+        public void Main(string[] args)
         {
             if (args.Length < 2)
             {
-                Console.WriteLine("K.exe [command] [path]");
+                Console.WriteLine("K [command] [path]");
                 Environment.Exit(-1);
                 return;
             }
@@ -23,35 +29,28 @@ namespace K
             string command = args[0];
             string path = args[1];
 
-            if (Environment.GetEnvironmentVariable("HOST_PROCESS") == null)
-            {
-                var listener = new ConsoleTraceListener();
-                Trace.Listeners.Add(listener);
-                Trace.AutoFlush = true;
-
-                string exePath = Assembly.GetExecutingAssembly().Location;
-                Environment.SetEnvironmentVariable("HOST_PROCESS", exePath);
-            }
+            var host = new DefaultHost(path);
+            IDisposable scope = _container.AddHost(host);
 
             try
             {
                 if (command.Equals("run", StringComparison.OrdinalIgnoreCase))
                 {
-                    using (var host = new DefaultHost(path))
+                    using (scope)
                     {
                         ExecuteMain(host, path, args.Skip(2).ToArray());
                     }
                 }
                 else if (command.Equals("compile", StringComparison.OrdinalIgnoreCase))
                 {
-                    using (var host = new DefaultHost(path, watchFiles: false))
+                    using (scope)
                     {
                         host.Compile();
                     }
                 }
                 else if (command.Equals("clean", StringComparison.OrdinalIgnoreCase))
                 {
-                    using (var host = new DefaultHost(path, watchFiles: false))
+                    using (scope)
                     {
                         host.Clean();
                     }

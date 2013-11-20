@@ -13,7 +13,7 @@ extern "C" __declspec(dllexport) bool __stdcall CallApplicationMain(int argc, PC
     HRESULT hr = S_OK;
     
     IKatanaManagerPtr manager = new ComObject<KatanaManager, IKatanaManager>();
-    
+
     g_katanaManager = manager;
     _HR(manager->InitializeRuntime());
     g_katanaManager = NULL;

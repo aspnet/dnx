@@ -6,7 +6,7 @@ using System.Reflection;
 
 namespace Loader
 {
-    public class DefaultHost : IDisposable
+    public class DefaultHost : IHost
     {
         private AssemblyLoader _loader;
         private IFileWatcher _watcher;
@@ -162,7 +162,6 @@ namespace Loader
         private void Initialize(bool watchFiles)
         {
             _loader = new AssemblyLoader();
-            _loader.Attach(AppDomain.CurrentDomain);
 
             string solutionDir = Path.GetDirectoryName(_path);
             string packagesDir = Path.Combine(solutionDir, "packages");
@@ -188,10 +187,16 @@ namespace Loader
                 return _loader.ResolveReference(an.Name);
             });
         }
+        public Assembly Load(string name)
+        {
+            return _loader.Load(new LoadOptions
+            {
+                AssemblyName = name
+            });
+        }
 
         public void Dispose()
         {
-            _loader.Detach(AppDomain.CurrentDomain);
             _watcher.OnChanged -= OnWatcherChanged;
             _watcher.Dispose();
         }
