@@ -12,6 +12,8 @@ public class DomainManager : AppDomainManager
         BindApplicationMain(ref _info);
 
         // TODO: edit appdomain startup info
+
+        appDomainInfo.PrivateBinPath = "bin";
     }
 
     private int Main(int argc, string[] argv)

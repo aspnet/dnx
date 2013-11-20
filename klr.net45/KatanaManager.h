@@ -8,7 +8,7 @@
 
 struct ApplicationMainInfo
 {
-    typedef int (*ApplicationMainDelegate)(int argc, PCWSTR* argv);
+    typedef int(*ApplicationMainDelegate)(int argc, PCWSTR* argv);
 
     /* in */ ApplicationMainDelegate ApplicationMain;
 };
@@ -25,7 +25,7 @@ public:
 
 _COM_SMARTPTR_TYPEDEF(IKatanaManager, __uuidof(IKatanaManager));
 
-class KatanaManager : 
+class KatanaManager :
     public IKatanaManager,
     public IHostControl
 {
@@ -43,14 +43,42 @@ class KatanaManager :
     _bstr_t _rootWebConfigFileName;
     _bstr_t _clrConfigFilePath;
 
+    LPWSTR _configFileName = L"klr.net45.config";
+
     ApplicationMainInfo _applicationMainInfo;
 
 public:
     KatanaManager()
     {
+        LPWSTR configFileName = _configFileName;
+        TCHAR szPath[MAX_PATH];
+        DWORD length = GetModuleFileName(NULL, szPath, MAX_PATH);
+
         _calledInitializeRuntime = false;
         _hrInitializeRuntime = E_PENDING;
-        _clrConfigFilePath = L"klr.net45.config";
+
+        // TODO: Replace this with proper string functions
+        int lastSlash = length - 1;
+        while (lastSlash >= 0)
+        {
+            if (szPath[lastSlash] == '\\')
+            {
+                lastSlash++;
+                break;
+            }
+
+            lastSlash--;
+        }
+
+        // Yoda conditions
+        while (NULL != *configFileName && lastSlash < MAX_PATH)
+        {
+            // Overwrite the file name
+            szPath[lastSlash++] = *(configFileName++);
+        }
+        szPath[lastSlash] = NULL;
+
+        _clrConfigFilePath = szPath;
     }
 
     IUnknown* CastInterface(REFIID riid)
@@ -61,7 +89,7 @@ public:
             return static_cast<IHostControl*>(this);
         return NULL;
     }
-    
+
     HRESULT InitializeRuntime()
     {
         Lock lock(&_crit);
@@ -69,14 +97,14 @@ public:
             return _hrInitializeRuntime;
 
         HRESULT hr = S_OK;
-        
-        _HR(CLRCreateInstance(CLSID_CLRMetaHost, PPV(&_MetaHost))); 
-        _HR(CLRCreateInstance(CLSID_CLRMetaHostPolicy, PPV(&_MetaHostPolicy))); 
+
+        _HR(CLRCreateInstance(CLSID_CLRMetaHost, PPV(&_MetaHost)));
+        _HR(CLRCreateInstance(CLSID_CLRMetaHostPolicy, PPV(&_MetaHostPolicy)));
 
         IStreamPtr cfgStream = new ComObject<FileStream>();
         _HR(static_cast<FileStream*>(cfgStream.GetInterfacePtr())->Open(_clrConfigFilePath));
 
-        WCHAR wzVersion[130] = {0};
+        WCHAR wzVersion[130] = { 0 };
         DWORD cchVersion = 129;
         DWORD dwConfigFlags = 0;
 
@@ -108,7 +136,7 @@ public:
 
         DWORD dwAppDomainId = 0;
         _HR(runtimeHost->GetCurrentAppDomainId(&dwAppDomainId));
-        
+
         _RuntimeHost = runtimeHost;
 
         _hrInitializeRuntime = hr;
@@ -122,7 +150,7 @@ public:
         return S_OK;
     }
 
-    HRESULT CallApplicationMain(int argc, PCWSTR* argv) 
+    HRESULT CallApplicationMain(int argc, PCWSTR* argv)
     {
         return _applicationMainInfo.ApplicationMain(argc, argv);
     }
@@ -130,7 +158,7 @@ public:
     //////////////////////////
     // IHostControl
 
-    STDMETHODIMP GetHostManager( 
+    STDMETHODIMP GetHostManager(
         /* [in] */ REFIID riid,
         /* [out] */ void **ppObject)
     {
@@ -138,8 +166,8 @@ public:
         _HR(static_cast<IKatanaManager*>(this)->QueryInterface(riid, ppObject));
         return hr;
     }
-        
-    STDMETHODIMP SetAppDomainManager( 
+
+    STDMETHODIMP SetAppDomainManager(
         /* [in] */ DWORD dwAppDomainID,
         /* [in] */ IUnknown *pUnkAppDomainManager)
     {
