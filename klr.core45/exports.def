@@ -1,0 +1,9 @@
+LIBRARY   KSYS
+EXPORTS
+   FirmwareProcessMain   @1
+   FirmwareInit          @2
+   FirmwareSetNamedValue @3
+   FirmwareGetNamedValue @4
+   FirmwareStartup       @5
+   FirmwareExecute       @6
+   FirmwareShutdown      @7

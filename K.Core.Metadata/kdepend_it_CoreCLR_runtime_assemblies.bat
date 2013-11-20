@@ -1,0 +1,1 @@
+kdepend /i @CoreCLR_runtime_assemblies.rsp
