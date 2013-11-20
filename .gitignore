@@ -18,3 +18,7 @@ artifacts/*
 *.vspx
 /.symbols
 README.html
+*.sdf
+*.ipch
+*.opensdf
+/Debug

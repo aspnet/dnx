@@ -8,19 +8,19 @@
 IKatanaManagerPtr g_katanaManager;
 
 
-extern "C" __declspec(dllexport) bool CallApplicationMain(int argc, PCWSTR* argv, int& retval)
+extern "C" __declspec(dllexport) bool __stdcall CallApplicationMain(int argc, PCWSTR* argv, int& retval)
 {
-	HRESULT hr = S_OK;
-	
-	IKatanaManagerPtr manager = new ComObject<KatanaManager, IKatanaManager>();
-	
-	g_katanaManager = manager;
-	_HR(manager->InitializeRuntime());
-	g_katanaManager = NULL;
+    HRESULT hr = S_OK;
+    
+    IKatanaManagerPtr manager = new ComObject<KatanaManager, IKatanaManager>();
+    
+    g_katanaManager = manager;
+    _HR(manager->InitializeRuntime());
+    g_katanaManager = NULL;
 
-	_HR(manager->CallApplicationMain(argc, argv));
+    _HR(manager->CallApplicationMain(argc, argv));
 
-	return hr;
+    return hr;
 }
 
 extern "C" __declspec(dllexport) HRESULT __stdcall BindApplicationMain(ApplicationMainInfo* pInfo)
