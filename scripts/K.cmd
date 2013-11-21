@@ -19,4 +19,4 @@ IF "%_cmd%"=="" SET _cmd=run
 SET _path=%~f2
 IF "%_path%"=="" SET _path=%CD%
 
-%~dp0..\bin\Debug\klr.exe %~dp0..\K %_cmd% %_path% %3 %4 %5 %6 %7 %8 %9
+%~dp0..\bin\Debug\klr.exe %~dp0..\K\bin\Debug\K.dll %_cmd% %_path% %3 %4 %5 %6 %7 %8 %9

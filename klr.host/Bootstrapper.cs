@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using Loader;
+using klr.host;
 
 public class Bootstrapper
 {
@@ -28,7 +29,7 @@ public class Bootstrapper
 
         AppDomain.CurrentDomain.AssemblyResolve += OnAssemblyResolve;
 
-        var host = new DefaultHost(path);
+        var host = new RootHost(path);
 
         using (_container.AddHost(host))
         {

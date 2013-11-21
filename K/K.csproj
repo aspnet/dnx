@@ -31,6 +31,9 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
+  <PropertyGroup>
+    <StartupObject />
+  </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
   </ItemGroup>
@@ -42,6 +45,10 @@
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\Loader.Interfaces\Loader.Interfaces.csproj">
+      <Project>{499736F5-6277-4FDA-BEA8-4D6400510FAC}</Project>
+      <Name>Loader.Interfaces</Name>
+    </ProjectReference>
     <ProjectReference Include="..\Loader\Loader.csproj">
       <Project>{8faf6303-4ad0-4468-8dbc-b8d32b1a9f9d}</Project>
       <Name>Loader</Name>

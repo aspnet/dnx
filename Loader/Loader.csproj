@@ -61,8 +61,6 @@
     <Compile Include="Executable.cs" />
     <Compile Include="IAssemblyReferenceResolver.cs" />
     <Compile Include="IDependencyResolver.cs" />
-    <Compile Include="IHost.cs" />
-    <Compile Include="IHostContainer.cs" />
     <Compile Include="MSBuildProjectAssemblyLoader.cs" />
     <Compile Include="FrameworkReferenceResolver.cs" />
     <Compile Include="IFileWatcher.cs" />
@@ -223,6 +221,12 @@
       <LogicalName>NuGet.Resources.NuGetResources.resources</LogicalName>
       <LastGenOutput>NuGetResources.Designer.cs</LastGenOutput>
     </EmbeddedResource>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Loader.Interfaces\Loader.Interfaces.csproj">
+      <Project>{499736F5-6277-4FDA-BEA8-4D6400510FAC}</Project>
+      <Name>Loader.Interfaces</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
