@@ -24,8 +24,4 @@ SET _path=%~f2
 IF "%_path%"=="" SET _path=%CD%
 
 ::Echo K run %_watchDog% %_webHost% %_path% %_url%
-Start %_klr% %_k% run %_watchDog% %_klr% %_webHost% %_path% %_url% < Nul
-
-:: Launch the browser
-Start %_url%
-
+Call %_klr% %_k% run %_watchDog% %_klr% %_webHost% %_path% %_url% < Nul
