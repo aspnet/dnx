@@ -5,7 +5,7 @@
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProjectGuid>{C7C8D3B5-A75F-4D25-9225-2FF8C79E99CD}</ProjectGuid>
-    <OutputType>Exe</OutputType>
+    <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>WebHost</RootNamespace>
     <AssemblyName>WebHost</AssemblyName>
@@ -55,6 +55,12 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="..\klr.host\HostContainer.cs">
+      <Link>HostContainer.cs</Link>
+    </Compile>
+    <Compile Include="..\klr.host\RootHost.cs">
+      <Link>RootHost.cs</Link>
+    </Compile>
     <Compile Include="Host.cs" />
     <Compile Include="HostStarter.cs" />
     <Compile Include="MyAppLoader.cs" />

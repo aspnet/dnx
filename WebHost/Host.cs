@@ -6,6 +6,7 @@ using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Reflection;
+using klr.host;
 using Loader;
 using Microsoft.Owin.Hosting.Engine;
 using Microsoft.Owin.Hosting.Loader;
@@ -57,14 +58,26 @@ namespace Microsoft.Owin.Hosting.Starter
         /// </summary>
         /// <param name="options"></param>
         [SuppressMessage("Microsoft.Performance", "CA1822:MarkMembersAsStatic", Justification = "Non-static needed for calling across AppDomain")]
-        public void Start(string path, string url)
+        public void Start(string hostPath, string path, string url)
         {
             var options = new StartOptions();
             options.Urls.Add(url);
 
             var context = new StartContext(options);
 
+            var container = new HostContainer();
+
+            AppDomain.CurrentDomain.AssemblyResolve += (sender, e) =>
+            {
+                return container.Load(new AssemblyName(e.Name).Name);
+            };
+
+            container.AddHost(new RootHost(hostPath));
+
             _host = new DefaultHost(path);
+
+            container.AddHost(_host);
+
             _host.OnChanged += () =>
             {
                 Environment.Exit(250);

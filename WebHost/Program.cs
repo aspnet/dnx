@@ -14,7 +14,7 @@ namespace WebHost
         {
             if (args.Length < 2)
             {
-                Console.WriteLine("webhost.exe [path] [url]");
+                Console.WriteLine("webhost [path] [url]");
 
                 Environment.Exit(-1);
                 return;

@@ -30,11 +30,6 @@ namespace WatchDog
                 childProcess = path;
                 childArgs = String.Join(" ", args.Skip(1));
             }
-            else
-            {
-                childProcess = Environment.GetEnvironmentVariable("HOST_PROCESS");
-                childArgs = String.Join(" ", new[] { "run" }.Concat(args));
-            }
 
             while (true)
             {

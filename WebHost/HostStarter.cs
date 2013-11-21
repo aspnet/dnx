@@ -3,6 +3,7 @@
 using System;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
+using System.Reflection;
 
 namespace Microsoft.Owin.Hosting.Starter
 {
@@ -25,16 +26,16 @@ namespace Microsoft.Owin.Hosting.Starter
                 PrivateBinPath = "bin",
                 PrivateBinPathProbe = "*",
                 LoaderOptimization = LoaderOptimization.MultiDomainHost,
-                ConfigurationFile = Path.Combine(path, "web.config")
+                ConfigurationFile = Path.Combine(path, "web.config"),
+                AppDomainManagerType = "",
+                AppDomainManagerAssembly = ""
             };
 
             AppDomain domain = AppDomain.CreateDomain("OWIN", null, info);
 
             Host agent = CreateAgent(domain);
 
-            agent.ResolveAssembliesFromDirectory(AppDomain.CurrentDomain.SetupInformation.ApplicationBase);
-
-            agent.Start(path, url);
+            agent.Start(Assembly.GetExecutingAssembly().Location, path, url);
 
             return agent;
         }
