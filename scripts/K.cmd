@@ -1,6 +1,6 @@
 @Echo OFF
 :: K [command] [path]
-::   command :  Required - Either 'run' or 'compile'.
+::   command :  Required - Either 'run' or 'build'.
 ::   path : Optional - The path to the app folder. Defaults to PWD.
 ::   args : Optional - Any further args will be passed directly to the app.
 

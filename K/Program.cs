@@ -41,11 +41,11 @@ namespace K
                         ExecuteMain(host, path, args.Skip(2).ToArray());
                     }
                 }
-                else if (command.Equals("compile", StringComparison.OrdinalIgnoreCase))
+                else if (command.Equals("build", StringComparison.OrdinalIgnoreCase))
                 {
                     using (scope)
                     {
-                        host.Compile();
+                        host.Build();
                     }
                 }
                 else if (command.Equals("clean", StringComparison.OrdinalIgnoreCase))

@@ -69,7 +69,7 @@ namespace Loader
             return assembly;
         }
 
-        public void Compile()
+        public void Build()
         {
             Project project;
             if (!Project.TryGetProject(_path, out project))
