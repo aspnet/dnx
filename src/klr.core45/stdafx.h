@@ -28,7 +28,7 @@ using namespace std;
 #include <strsafe.h>
 
 // CLR Headers
-#include <mscoree.h>
+#include "mscoree.h"
 
 // Defines
 #define MAX_STR MAX_PATH

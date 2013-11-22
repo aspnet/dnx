@@ -14,7 +14,7 @@
 ::      C:\src\MyApp\>K compile
 
 SET _klr=%~dp0..\bin\Debug\klr.exe
-SET _k=%~dp0..\K\bin\Debug\K.dll
+SET _k=%~dp0..\src\K\bin\Debug\K.dll
 
 SET _cmd=%~1
 IF "%_cmd%"=="" SET _cmd=run

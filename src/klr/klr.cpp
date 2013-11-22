@@ -6,7 +6,7 @@
 int CallFirmwareProcessMain(int argc, wchar_t* argv[])
 {
     bool fSuccess = true;
-    bool m_fVerboseTrace = false;
+    bool m_fVerboseTrace = true;
     HMODULE m_hHostModule = nullptr;
     LPCWSTR pwzHostModuleName = L"klr.net45.dll";
     //Note: need to keep as ASCII as GetProcAddress function takes ASCII params

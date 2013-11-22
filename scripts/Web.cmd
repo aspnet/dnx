@@ -13,9 +13,9 @@
 ::      C:\>Web "http://localhost:9001" C:\src\MyWebApp
 
 SET _klr=%~dp0..\bin\Debug\klr.exe
-SET _k=%~dp0..\K\bin\Debug\K.dll
-SET _watchDog=%~dp0..\WatchDog
-SET _webHost=%~dp0..\WebHost\bin\Debug\WebHost.dll
+SET _k=%~dp0..\src\K\bin\Debug\K.dll
+SET _watchDog=%~dp0..\src\WatchDog
+SET _webHost=%~dp0..\src\WebHost\bin\Debug\WebHost.dll
 
 SET _url=%~1
 IF "%_url%"=="" SET _url=http://localhost:8080

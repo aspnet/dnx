@@ -22,3 +22,5 @@ README.html
 *.ipch
 *.opensdf
 /Debug
+/.nuget/nuget.exe
+/src/.symbols
