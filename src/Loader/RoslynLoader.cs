@@ -31,6 +31,8 @@ namespace Loader
             _symbolsPath = Path.Combine(_solutionPath, ".symbols");
         }
 
+        public Action<FrameworkName> OnResolveTargetFramework;
+
         public Assembly Load(LoadOptions options)
         {
             string name = options.AssemblyName;
@@ -48,6 +50,13 @@ namespace Loader
             if (!Project.TryGetProject(path, out project))
             {
                 return null;
+            }
+
+            Trace.TraceInformation("[{0}]: Found project '{1}' framework={2}", GetType().Name, project.Name, project.TargetFramework);
+
+            if (OnResolveTargetFramework != null)
+            {
+                OnResolveTargetFramework(project.TargetFramework);
             }
 
             _watcher.WatchFile(project.ProjectFilePath);

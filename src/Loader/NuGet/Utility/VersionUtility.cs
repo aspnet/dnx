@@ -62,8 +62,8 @@ namespace NuGet
             { "MonoTouch", "MonoTouch" },
             { "MonoMac", "MonoMac" },
             { "native", "native"},
-            { "k", "ProjectK" },
-            { "ProjectK", "ProjectK" }
+            { "ProjectK.CoreClr", "ProjectK.CoreClr" },
+            { "ProjectK.Desktop", "ProjectK.Desktop" },
         };
 
         private static readonly Dictionary<string, string> _knownProfiles = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase) {
@@ -81,8 +81,7 @@ namespace NuGet
             { ".NETCore", "win"},
             { "Windows", "win"},
             { ".NETPortable", "portable" },
-            { "WindowsPhone", "wp"},
-            { "ProjectK",  "k" }
+            { "WindowsPhone", "wp"}
         };
 
         private static readonly Dictionary<string, string> _identifierToProfileFolder = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase) {

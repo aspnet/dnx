@@ -8,6 +8,8 @@ namespace Loader
     {
         IEnumerable<string> GetFrameworkReferences(FrameworkName frameworkName);
 
+        string GetRuntimeFacadePath(FrameworkName frameworkName);
+
         IEnumerable<MetadataReference> GetDefaultReferences(FrameworkName frameworkName);
     }
 }

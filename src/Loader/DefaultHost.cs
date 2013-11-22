@@ -176,7 +176,22 @@ namespace Loader
                 _watcher = FileWatcher.Noop;
             }
 
-            _loader.Add(new RoslynLoader(solutionDir, _watcher, new FrameworkReferenceResolver()));
+            var resolver = new FrameworkReferenceResolver();
+            var roslynLoader = new RoslynLoader(solutionDir, _watcher, resolver);
+
+            var resolved = new HashSet<string>();
+
+            roslynLoader.OnResolveTargetFramework = frameworkName =>
+            {
+                var path = resolver.GetRuntimeFacadePath(frameworkName);
+
+                if (path != null && resolved.Add(path))
+                {
+                    _loader.Add(new DirectoryLoader(path));
+                }
+            };
+
+            _loader.Add(roslynLoader);
             _loader.Add(new MSBuildProjectAssemblyLoader(solutionDir, _watcher));
             _loader.Add(new NuGetAssemblyLoader(packagesDir));
 

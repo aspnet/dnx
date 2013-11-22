@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Reflection;
 using System.Runtime.Versioning;
 using System.Xml.Linq;
 using Microsoft.CodeAnalysis;
@@ -12,11 +11,17 @@ namespace Loader
 {
     public class FrameworkReferenceResolver : IFrameworkReferenceResolver
     {
-        private static readonly ILookup<FrameworkName, AssemblyInfo> _cache = PopulateCache();
+        private static IDictionary<FrameworkName, FrameworkInformation> _cache = PopulateCache();
 
         public IEnumerable<string> GetFrameworkReferences(FrameworkName frameworkName)
         {
-            return _cache[frameworkName].Select(a => a.Name);
+            FrameworkInformation frameworkInfo;
+            if (_cache.TryGetValue(frameworkName, out frameworkInfo))
+            {
+                return frameworkInfo.Assemblies.Select(a => a.Name);
+            }
+
+            return Enumerable.Empty<string>();
         }
 
         public IEnumerable<MetadataReference> GetDefaultReferences(FrameworkName frameworkName)
@@ -32,62 +37,77 @@ namespace Loader
                 };
             }
 
-            return _cache[frameworkName].Select(a => GetMetadataReference(a));
-        }
-
-        private MetadataReference GetMetadataReference(AssemblyInfo a)
-        {
-            if (a.Path != null)
+            FrameworkInformation frameworkInfo;
+            if (_cache.TryGetValue(frameworkName, out frameworkInfo))
             {
-                return new MetadataFileReference(a.Path);
+                return frameworkInfo.Assemblies.Select(a => new MetadataFileReference(a.Path));
             }
 
-            return MetadataReference.CreateAssemblyReference(a.Name);
+            return Enumerable.Empty<MetadataReference>();
         }
 
-        private static ILookup<FrameworkName, AssemblyInfo> PopulateCache()
+        public string GetRuntimeFacadePath(FrameworkName frameworkName)
         {
-            IEnumerable<Tuple<FrameworkName, string, string>> referenceAssemblies = GetDefaultReferenceAssemblies();
+            FrameworkInformation frameworkInfo;
+            if (_cache.TryGetValue(frameworkName, out frameworkInfo))
+            {
+                return frameworkInfo.FacadePath;
+            }
+
+            return null;
+        }
+
+        private static IDictionary<FrameworkName, FrameworkInformation> PopulateCache()
+        {
+            var info = new Dictionary<FrameworkName, FrameworkInformation>();
+
+            string defaultPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86), @"Reference Assemblies\Microsoft\Framework\");
+
+            PopulateReferenceAssemblies(defaultPath, info);
 
             // Additional profile paths
             var profilePaths = Environment.GetEnvironmentVariable("PROFILE_PATHS");
 
             if (profilePaths != null)
             {
-                referenceAssemblies = referenceAssemblies.Concat(
-                    profilePaths.Split(';')
-                                .SelectMany(profilePath => GetReferenceAssembliesFromCustomPath(profilePath)));
+                foreach (var profilePath in profilePaths.Split(';'))
+                {
+                    PopulateReferenceAssemblies(profilePath, info);
+                }
             }
 
-            return referenceAssemblies.ToLookup(t => t.Item1, t => new AssemblyInfo(t.Item2, t.Item3));
+            return info;
         }
 
-        private static IEnumerable<Tuple<FrameworkName, string, string>> GetReferenceAssembliesFromCustomPath(string profilePath)
+        private static void PopulateReferenceAssemblies(string path, IDictionary<FrameworkName, FrameworkInformation> cache)
         {
-            var di = new DirectoryInfo(profilePath);
-            return di.EnumerateDirectories()
-                     .SelectMany(d => d.EnumerateDirectories()
-                                       .SelectMany(v => v.EnumerateFiles("*.dll")
-                                           .Select(fi => Tuple.Create(new FrameworkName(d.Name, new Version(v.Name.TrimStart('v'))), AssemblyName.GetAssemblyName(fi.FullName).Name, fi.FullName))));
-
-        }
-
-        private static IEnumerable<Tuple<FrameworkName, string, string>> GetDefaultReferenceAssemblies()
-        {
-            string path = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86), @"Reference Assemblies\Microsoft\Framework\");
-
             var di = new DirectoryInfo(path);
 
-            // { 
-            //    Name = .NETFramework,
-            //    Versions = [ { Version = 4.5, Assemblies = [...] } ] 
-            // }
+            foreach (var d in di.EnumerateDirectories())
+            {
+                if (d.Name.StartsWith("v"))
+                {
+                    continue;
+                }
 
-            return di.EnumerateDirectories()
-                     .SelectMany(d => d.EnumerateDirectories()
-                                       .SelectMany(v => GetFrameworkAssemblies(Path.Combine(v.FullName, "RedistList", "FrameworkList.xml"))
-                                           .Select(a => Tuple.Create(new FrameworkName(d.Name, new Version(v.Name.TrimStart('v'))), a, (string)null))));
+                foreach (var v in d.EnumerateDirectories())
+                {
+                    var frameworkInfo = new FrameworkInformation();
+                    var frameworkName = new FrameworkName(d.Name, new Version(v.Name.TrimStart('v')));
+                    var facadePath = Path.Combine(v.FullName, "RuntimeFacades");
+                    string redistList = Path.Combine(v.FullName, "RedistList", "FrameworkList.xml");
 
+                    frameworkInfo.FacadePath = Directory.Exists(facadePath) ? facadePath : null;
+
+                    foreach (var a in GetFrameworkAssemblies(redistList))
+                    {
+                        var assemblyPath = Path.Combine(v.FullName, a + ".dll");
+                        frameworkInfo.Assemblies.Add(new AssemblyInfo(a, assemblyPath));
+                    }
+
+                    cache[frameworkName] = frameworkInfo;
+                }
+            }
         }
 
         private static IEnumerable<string> GetFrameworkAssemblies(string path)
@@ -108,6 +128,18 @@ namespace Loader
             }
         }
 
+        private class FrameworkInformation
+        {
+            public FrameworkInformation()
+            {
+                Assemblies = new List<AssemblyInfo>();
+            }
+
+            public IList<AssemblyInfo> Assemblies { get; private set; }
+
+            public string FacadePath { get; set; }
+        }
+
         private class AssemblyInfo
         {
             public AssemblyInfo(string name, string path)
@@ -118,7 +150,7 @@ namespace Loader
 
             public string Name { get; private set; }
 
-            public string Path { get; set; }
+            public string Path { get; private set; }
         }
     }
 }
