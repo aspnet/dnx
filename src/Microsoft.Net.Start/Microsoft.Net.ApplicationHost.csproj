@@ -7,8 +7,8 @@
     <ProjectGuid>{EB9971E1-8BBA-478C-9AB3-C7327B6DA006}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>Microsoft.Net.Start</RootNamespace>
-    <AssemblyName>Microsoft.Net.Start</AssemblyName>
+    <RootNamespace>Microsoft.Net.ApplicationHost</RootNamespace>
+    <AssemblyName>Microsoft.Net.ApplicationHost</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
   </PropertyGroup>

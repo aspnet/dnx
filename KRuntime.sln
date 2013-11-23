@@ -5,6 +5,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "scripts", "scripts", "{1899
 	ProjectSection(SolutionItems) = preProject
 		scripts\k.cmd = scripts\k.cmd
 		scripts\kk.cmd = scripts\kk.cmd
+		scripts\klr.cmd = scripts\klr.cmd
 		scripts\kuget.cmd = scripts\kuget.cmd
 		scripts\Web.cmd = scripts\Web.cmd
 	EndProjectSection
@@ -37,7 +38,9 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Microsoft.Net.Runtime.Tests
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Microsoft.Net.Project", "src\Microsoft.Net.Project\Microsoft.Net.Project.csproj", "{F4F33DA0-0671-4FC1-A136-CC94C6887A10}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Microsoft.Net.Start", "src\Microsoft.Net.Start\Microsoft.Net.Start.csproj", "{EB9971E1-8BBA-478C-9AB3-C7327B6DA006}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Microsoft.Net.ApplicationHost", "src\Microsoft.Net.Start\Microsoft.Net.ApplicationHost.csproj", "{EB9971E1-8BBA-478C-9AB3-C7327B6DA006}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WebHost", "src\Microsoft.Net.Web\WebHost.csproj", "{C7C8D3B5-A75F-4D25-9225-2FF8C79E99CD}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -159,6 +162,16 @@ Global
 		{EB9971E1-8BBA-478C-9AB3-C7327B6DA006}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
 		{EB9971E1-8BBA-478C-9AB3-C7327B6DA006}.Release|Mixed Platforms.Build.0 = Release|Any CPU
 		{EB9971E1-8BBA-478C-9AB3-C7327B6DA006}.Release|Win32.ActiveCfg = Release|Any CPU
+		{C7C8D3B5-A75F-4D25-9225-2FF8C79E99CD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C7C8D3B5-A75F-4D25-9225-2FF8C79E99CD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C7C8D3B5-A75F-4D25-9225-2FF8C79E99CD}.Debug|Mixed Platforms.ActiveCfg = Debug|Any CPU
+		{C7C8D3B5-A75F-4D25-9225-2FF8C79E99CD}.Debug|Mixed Platforms.Build.0 = Debug|Any CPU
+		{C7C8D3B5-A75F-4D25-9225-2FF8C79E99CD}.Debug|Win32.ActiveCfg = Debug|Any CPU
+		{C7C8D3B5-A75F-4D25-9225-2FF8C79E99CD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C7C8D3B5-A75F-4D25-9225-2FF8C79E99CD}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C7C8D3B5-A75F-4D25-9225-2FF8C79E99CD}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
+		{C7C8D3B5-A75F-4D25-9225-2FF8C79E99CD}.Release|Mixed Platforms.Build.0 = Release|Any CPU
+		{C7C8D3B5-A75F-4D25-9225-2FF8C79E99CD}.Release|Win32.ActiveCfg = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -177,5 +190,6 @@ Global
 		{FB272D58-D5FD-41D1-9E02-BCE17FD97F0E} = {C43EE429-DE10-4906-BB09-54E6A080948A}
 		{F4F33DA0-0671-4FC1-A136-CC94C6887A10} = {947E7359-D0E9-4B09-80C1-B063F0170140}
 		{EB9971E1-8BBA-478C-9AB3-C7327B6DA006} = {947E7359-D0E9-4B09-80C1-B063F0170140}
+		{C7C8D3B5-A75F-4D25-9225-2FF8C79E99CD} = {947E7359-D0E9-4B09-80C1-B063F0170140}
 	EndGlobalSection
 EndGlobal

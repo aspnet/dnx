@@ -12,4 +12,4 @@
 :: e.g. To compile the app in the current folder:
 ::      C:\src\MyApp\>K compile
 
-%~dp0..\bin\Debug\klr.exe %~dp0..\src\Microsoft.Net.Start\bin\Debug\Microsoft.Net.Start.dll %*
+%~dp0..\bin\Debug\klr.exe %~dp0..\src\Microsoft.Net.ApplicationHost\bin\Debug\Microsoft.Net.ApplicationHost.dll %*
