@@ -2,8 +2,9 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using Loader;
 
-namespace Loader
+namespace klr.host
 {
     public class HostContainer : IHostContainer
     {
