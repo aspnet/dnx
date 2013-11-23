@@ -115,13 +115,13 @@
     </ProjectReference>
     <ProjectReference Include="..\klr.net45\klr.net45.vcxproj">
       <Project>{0e4cb542-5e58-4d24-9cae-dac83d932dbe}</Project>
-      <Private>false</Private>
+      <Private>true</Private>
       <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
       <CopyLocalSatelliteAssemblies>false</CopyLocalSatelliteAssemblies>
       <LinkLibraryDependencies>false</LinkLibraryDependencies>
       <UseLibraryDependencyInputs>false</UseLibraryDependencyInputs>
     </ProjectReference>
-    <ProjectReference Include="..\Loader.Interfaces\Loader.Interfaces.csproj">
+    <ProjectReference Include="..\Microsoft.Net.Runtime.Interfaces\Microsoft.Net.Runtime.Interfaces.csproj">
       <Project>{499736f5-6277-4fda-bea8-4d6400510fac}</Project>
     </ProjectReference>
   </ItemGroup>

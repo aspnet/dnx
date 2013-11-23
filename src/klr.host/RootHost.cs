@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Reflection;
-using Loader;
+using Microsoft.Net.Runtime;
 
 namespace klr.host
 {

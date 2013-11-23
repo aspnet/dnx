@@ -43,14 +43,12 @@ class KatanaManager :
     _bstr_t _rootWebConfigFileName;
     _bstr_t _clrConfigFilePath;
 
-    LPWSTR _configFileName = L"klr.net45.config";
-
     ApplicationMainInfo _applicationMainInfo;
 
 public:
     KatanaManager()
     {
-        LPWSTR configFileName = _configFileName;
+        LPWSTR configFileName = L"klr.net45.config";
         TCHAR szPath[MAX_PATH];
         DWORD length = GetModuleFileName(NULL, szPath, MAX_PATH);
 

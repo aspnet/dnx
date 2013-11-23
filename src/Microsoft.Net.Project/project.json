@@ -1,0 +1,7 @@
+{
+    "name" : "Microsoft.Net.Project",
+    "dependencies": [
+        { "Microsoft.Net.Runtime" : { } },
+        { "Microsoft.Net.Runtime.Interfaces" : { } }
+    ]
+}

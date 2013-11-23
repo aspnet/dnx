@@ -1,15 +1,16 @@
 @Echo OFF
-:: K [path]
+:: K [command] [path]
+::   command :  Required - Either 'run' or 'build'.
 ::   path : Optional - The path to the app folder. Defaults to PWD.
 ::   args : Optional - Any further args will be passed directly to the app.
 
 :: e.g. To run the app in current folder:
-::      C:\src\MyApp\>K run
+::      C:\src\MyApp\>K
 
 :: e.g. To run the app in a specified folder:
-::      C:\>K run C:\src\MyApp
+::      C:\>K C:\src\MyApp
 
 :: e.g. To compile the app in the current folder:
-::      C:\src\MyApp\>K compile
+::      C:\src\MyApp\>KP build
 
-%~dp0..\bin\Debug\klr.exe %~dp0..\src\Microsoft.Net.Start\bin\Debug\Microsoft.Net.Start.dll %*
+call K %~dp0..\src\Microsoft.Net.Project %*
