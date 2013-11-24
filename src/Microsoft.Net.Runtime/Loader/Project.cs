@@ -163,7 +163,7 @@ namespace Microsoft.Net.Runtime.Loader
 
         private static CompilationOptions GetCompilationOptions(JToken compilationOptions)
         {
-            var options = new CompilationOptions(OutputKind.DynamicallyLinkedLibrary);
+            var options = new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary);
 
             if (compilationOptions == null)
             {

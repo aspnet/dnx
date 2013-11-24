@@ -11,6 +11,7 @@ using System.Xml.Linq;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Emit;
+using Microsoft.CodeAnalysis.Emit;
 using Microsoft.Net.Runtime.FileSystem;
 using NuGet;
 
@@ -112,7 +113,7 @@ namespace Microsoft.Net.Runtime.Loader.Roslyn
 
                 var sourceFiles = project.SourceFiles.ToList();
 
-                var parseOptions = new ParseOptions(preprocessorSymbols: project.Defines.AsImmutable());
+                var parseOptions = new CSharpParseOptions(preprocessorSymbols: project.Defines.AsImmutable());
 
                 foreach (var sourcePath in sourceFiles)
                 {
@@ -122,13 +123,13 @@ namespace Microsoft.Net.Runtime.Loader.Roslyn
                     }
 
                     _watcher.WatchFile(sourcePath);
-                    trees.Add(SyntaxTree.ParseFile(sourcePath, parseOptions));
+                    trees.Add(CSharpSyntaxTree.ParseFile(sourcePath, parseOptions));
                 }
 
                 if (!hasAssemblyInfo)
                 {
-                    trees.Add(SyntaxTree.ParseText("[assembly: System.Reflection.AssemblyVersion(\"" + project.Version.Version + "\")]"));
-                    trees.Add(SyntaxTree.ParseText("[assembly: System.Reflection.AssemblyInformationalVersion(\"" + project.Version + "\")]"));
+                    trees.Add(CSharpSyntaxTree.ParseText("[assembly: System.Reflection.AssemblyVersion(\"" + project.Version.Version + "\")]"));
+                    trees.Add(CSharpSyntaxTree.ParseText("[assembly: System.Reflection.AssemblyInformationalVersion(\"" + project.Version + "\")]"));
                 }
 
                 foreach (var directory in System.IO.Directory.EnumerateDirectories(path, "*.*", SearchOption.AllDirectories))
@@ -137,7 +138,7 @@ namespace Microsoft.Net.Runtime.Loader.Roslyn
                 }
 
                 // Create a compilation
-                Compilation compilation = Compilation.Create(
+                Compilation compilation = CSharpCompilation.Create(
                     name,
                     project.CompilationOptions,
                     syntaxTrees: trees,
@@ -164,6 +165,7 @@ namespace Microsoft.Net.Runtime.Loader.Roslyn
                         // Compile in memory to avoid locking the file
                         return CompileToMemoryStream(name, compilation, resources);
                     }
+
                     var result = compilation.Emit(assemblyPath, pdbPath, manifestResources: resources);
 
                     if (!result.Success)
@@ -201,14 +203,13 @@ namespace Microsoft.Net.Runtime.Loader.Roslyn
                 return cached.Item2;
             }
 
-            try
+            string assemblyLocation;
+            if (GlobalAssemblyCache.ResolvePartialName(name, out assemblyLocation) != null)
             {
-                return MetadataReference.CreateAssemblyReference(name);
+                return new MetadataFileReference(assemblyLocation);
             }
-            catch
-            {
-                return null;
-            }
+
+            return null;
         }
 
         private static List<ResourceDescription> GetResources(string projectPath)
@@ -258,35 +259,21 @@ namespace Microsoft.Net.Runtime.Loader.Roslyn
 
         private MetadataReference ResolveDependency(PackageReference dependency)
         {
-            ExceptionDispatchInfo info = null;
-
-            try
+            string assemblyLocation;
+            if (GlobalAssemblyCache.ResolvePartialName(dependency.Name, out assemblyLocation) != null)
             {
-                var loadedAssembly = Assembly.Load(dependency.Name);
-
-                Tuple<Assembly, MetadataReference> cached;
-                if (_compiledAssemblies.TryGetValue(dependency.Name, out cached))
-                {
-                    return cached.Item2;
-                }
-
-                return new MetadataFileReference(loadedAssembly.Location);
+                return new MetadataFileReference(assemblyLocation);
             }
-            catch (FileNotFoundException ex)
+
+            var loadedAssembly = Assembly.Load(dependency.Name);
+
+            Tuple<Assembly, MetadataReference> cached;
+            if (_compiledAssemblies.TryGetValue(dependency.Name, out cached))
             {
-                info = ExceptionDispatchInfo.Capture(ex);
-
-                try
-                {
-                    return MetadataFileReference.CreateAssemblyReference(dependency.Name);
-                }
-                catch
-                {
-                    info.Throw();
-
-                    return null;
-                }
+                return cached.Item2;
             }
+
+            return new MetadataFileReference(loadedAssembly.Location);
         }
 
         private void BuildSymbolsPackage(Project project, string assemblyPath, string pdbPath, string symbolsNupkg, List<string> sourceFiles)
@@ -370,7 +357,7 @@ namespace Microsoft.Net.Runtime.Loader.Roslyn
             using (var fs = File.Create(pdbPath))
             using (var ms = new MemoryStream())
             {
-                EmitResult result = compilation.Emit(ms, pdbStream: fs, manifestResources: resources);
+                CommonEmitResult result = compilation.Emit(ms, pdbStream: fs, manifestResources: resources);
 
                 if (!result.Success)
                 {
@@ -392,7 +379,7 @@ namespace Microsoft.Net.Runtime.Loader.Roslyn
             }
         }
 
-        private static void ReportCompilationError(EmitResult result)
+        private static void ReportCompilationError(CommonEmitResult result)
         {
             throw new InvalidDataException(String.Join(Environment.NewLine,
                 result.Diagnostics.Select(d => DiagnosticFormatter.Instance.Format(d))));

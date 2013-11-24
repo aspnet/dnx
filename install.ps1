@@ -38,12 +38,12 @@ while ($gacngen -notmatch "[y|n]"){
 }
 
 if ($gacngen -eq "y"){
-    cd .\roslyn
+    cd .\lib
     Get-ChildItem | % {
-        Write-Host "Installing $_.Name in the GAC"
+        Write-Host "Installing $($_.Name) in the GAC"
         gacutil /i $_.Name /f /silent
 
-        Write-Host "Generating native images for $_.Name"
+        Write-Host "Generating native images for $($_.Name)"
         ngen install $_.Name /silent > $null
     }
     Write-Host "Roslyn files installed into GAC & native images generated" -ForegroundColor Cyan

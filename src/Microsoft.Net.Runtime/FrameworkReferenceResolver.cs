@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Runtime.Versioning;
 using System.Xml.Linq;
 using Microsoft.CodeAnalysis;
@@ -26,14 +28,14 @@ namespace Microsoft.Net.Runtime
 
         public IEnumerable<MetadataReference> GetDefaultReferences(FrameworkName frameworkName)
         {
-            // Don't do anything special for desktop
             if (frameworkName.Identifier == VersionUtility.DefaultTargetFramework.Identifier)
             {
+                // Do not reference the entire desktop .NET framework by default
                 return new[] {
-                    MetadataReference.CreateAssemblyReference("mscorlib"),
-                    MetadataReference.CreateAssemblyReference("System"),
-                    MetadataReference.CreateAssemblyReference("System.Core"),
-                    MetadataReference.CreateAssemblyReference("Microsoft.CSharp")
+                    ResolveGacAssembly("mscorlib"),
+                    ResolveGacAssembly("System"),
+                    ResolveGacAssembly("System.Core"),
+                    ResolveGacAssembly("Microsoft.CSharp")
                 };
             }
 
@@ -79,6 +81,17 @@ namespace Microsoft.Net.Runtime
             return info;
         }
 
+        private static MetadataReference ResolveGacAssembly(string name)
+        {
+            string assemblyLocation;
+            if (GlobalAssemblyCache.ResolvePartialName(name, out assemblyLocation) != null)
+            {
+                return new MetadataFileReference(assemblyLocation);
+            }
+
+            throw new InvalidOperationException("Unable to resolve GAC reference");
+        }
+
         private static void PopulateReferenceAssemblies(string path, IDictionary<FrameworkName, FrameworkInformation> cache)
         {
             var di = new DirectoryInfo(path);
@@ -109,6 +122,23 @@ namespace Microsoft.Net.Runtime
                         foreach (var assemblyName in GetFrameworkAssemblies(redistList))
                         {
                             var assemblyPath = Path.Combine(v.FullName, assemblyName + ".dll");
+
+                            if (!File.Exists(assemblyPath))
+                            {
+                                // Check the gac fror full framework only
+                                if (frameworkName.Identifier == VersionUtility.DefaultTargetFramework.Identifier)
+                                {
+                                    if (GlobalAssemblyCache.ResolvePartialName(assemblyName, out assemblyPath) == null)
+                                    {
+                                        continue;
+                                    }
+                                }
+                                else
+                                {
+                                    continue;
+                                }
+                            }
+
                             frameworkInfo.Assemblies.Add(new AssemblyInfo(assemblyName, assemblyPath));
                         }
                     }
@@ -116,7 +146,16 @@ namespace Microsoft.Net.Runtime
                     {
                         foreach (var assemblyFileInfo in v.EnumerateFiles("*.dll"))
                         {
-                            frameworkInfo.Assemblies.Add(new AssemblyInfo(assemblyFileInfo.Name, assemblyFileInfo.FullName));
+                            try
+                            {
+                                var an = AssemblyName.GetAssemblyName(assemblyFileInfo.FullName);
+                                frameworkInfo.Assemblies.Add(new AssemblyInfo(an.Name, assemblyFileInfo.FullName));
+                            }
+                            catch (Exception ex)
+                            {
+                                // Probably not a valid assembly
+                                Trace.TraceError(ex.Message);
+                            }
                         }
                     }
 
