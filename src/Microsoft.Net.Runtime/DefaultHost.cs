@@ -133,13 +133,19 @@ namespace Microsoft.Net.Runtime
 
             _loader.Load(options);
 
-            Trace.TraceInformation("Cleaning generated artifacts");
-
-            foreach (var path in options.CleanArtifacts)
+            if (options.CleanArtifacts.Count > 0)
             {
-                Trace.TraceInformation("Cleaning {0}", path);
+                Trace.TraceInformation("Cleaning generated artifacts");
 
-                File.Delete(path);
+                foreach (var path in options.CleanArtifacts)
+                {
+                    if (File.Exists(path))
+                    {
+                        Trace.TraceInformation("Cleaning {0}", path);
+
+                        File.Delete(path);
+                    }
+                }
             }
 
             RunStaticMethod("Compiler", "Clean", outputPath);
