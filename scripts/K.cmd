@@ -1,7 +1,7 @@
 @Echo OFF
 :: K [command] [args]
-::   command :  Required - Either 'build' or 'clean'.
-::   args : Optional - Any further args will be passed directly to the app.
+::   command :  Required - Name of the command to execute
+::   args : Optional - Any further args will be passed directly to the command.
 
 :: e.g. To compile the app in the current folder:
 ::      C:\src\MyApp\>K build
