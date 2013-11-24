@@ -62,6 +62,7 @@ namespace NuGet
             { "MonoTouch", "MonoTouch" },
             { "MonoMac", "MonoMac" },
             { "native", "native"},
+            { "CoreClr", "CoreClr" },
             { "ProjectK.CoreClr", "ProjectK.CoreClr" },
             { "ProjectK.Desktop", "ProjectK.Desktop" },
         };
