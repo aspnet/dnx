@@ -1,7 +1,6 @@
 @Echo OFF
-:: K [command] [path]
+:: K [command] [args]
 ::   command :  Required - Either 'build' or 'clean'.
-::   path : Optional - The path to the app folder. Defaults to PWD.
 ::   args : Optional - Any further args will be passed directly to the app.
 
 :: e.g. To compile the app in the current folder:
