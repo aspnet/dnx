@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using Loader;
+using Microsoft.Net.Runtime;
 using Microsoft.Owin.Hosting.Loader;
 using Owin;
 

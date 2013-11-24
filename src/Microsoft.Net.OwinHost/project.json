@@ -1,0 +1,9 @@
+{
+    "name" : "Microsoft.Net.OwinHost",
+    "dependencies": [
+        { "Microsoft.Net.Runtime" : { } },
+        { "Microsoft.Net.Runtime.Interfaces" : { } },
+        { "Microsoft.Owin.Hosting" : {"version" : "2.1.0-rc1-21110-697-dev" } },
+        { "Microsoft.Owin.Host.HttpListener" : {"version" : "2.1.0-rc1-21110-697-dev" } }
+    ]
+}

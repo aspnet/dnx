@@ -7,8 +7,8 @@
     <ProjectGuid>{C7C8D3B5-A75F-4D25-9225-2FF8C79E99CD}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>WebHost</RootNamespace>
-    <AssemblyName>WebHost</AssemblyName>
+    <RootNamespace>Microsoft.Net.OwinHost</RootNamespace>
+    <AssemblyName>Microsoft.Net.OwinHost</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
   </PropertyGroup>
@@ -46,10 +46,6 @@
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
-    <Reference Include="System.Xml.Linq" />
-    <Reference Include="Microsoft.CSharp" />
-    <Reference Include="System.Data" />
-    <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="..\klr.host\HostContainer.cs">
@@ -65,17 +61,17 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="App.config" />
     <None Include="packages.config" />
+    <None Include="project.json" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Loader.Interfaces\Loader.Interfaces.csproj">
+    <ProjectReference Include="..\Microsoft.Net.Runtime.Interfaces\Microsoft.Net.Runtime.Interfaces.csproj">
       <Project>{499736F5-6277-4FDA-BEA8-4D6400510FAC}</Project>
-      <Name>Loader.Interfaces</Name>
+      <Name>Microsoft.Net.Runtime.Interfaces</Name>
     </ProjectReference>
-    <ProjectReference Include="..\Loader\Loader.csproj">
+    <ProjectReference Include="..\Microsoft.Net.Runtime\Microsoft.Net.Runtime.csproj">
       <Project>{8faf6303-4ad0-4468-8dbc-b8d32b1a9f9d}</Project>
-      <Name>Loader</Name>
+      <Name>Microsoft.Net.Runtime</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
