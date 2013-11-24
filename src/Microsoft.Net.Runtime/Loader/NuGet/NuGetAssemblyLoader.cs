@@ -155,18 +155,23 @@ namespace Microsoft.Net.Runtime.Loader.NuGet
         {
             var di = new DirectoryInfo(projectPath);
 
+            string rootPath = null;
+
             while (di.Parent != null)
             {
                 if (di.EnumerateDirectories("packages").Any() ||
                     di.EnumerateFiles("*.sln").Any())
                 {
-                    return di.FullName;
+                    rootPath = di.FullName;
+                    break;
                 }
 
                 di = di.Parent;
             }
 
-            return Path.Combine(Path.GetDirectoryName(projectPath), "packages");
+            rootPath = rootPath ?? Path.GetDirectoryName(projectPath);
+
+            return Path.Combine(rootPath, "packages");
         }
     }
 }
