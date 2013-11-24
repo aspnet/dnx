@@ -20,7 +20,7 @@ namespace K
         {
             if (args.Length < 1)
             {
-                Console.WriteLine("kk [command] [application]");
+                Console.WriteLine("k [command] [application]");
                 Environment.Exit(-1);
                 return;
             }
@@ -33,14 +33,7 @@ namespace K
 
             try
             {
-                if (command.Equals("run", StringComparison.OrdinalIgnoreCase))
-                {
-                    using (scope)
-                    {
-                        ExecuteMain(host, application, args.Skip(2).ToArray());
-                    }
-                }
-                else if (command.Equals("build", StringComparison.OrdinalIgnoreCase))
+                if (command.Equals("build", StringComparison.OrdinalIgnoreCase))
                 {
                     using (scope)
                     {

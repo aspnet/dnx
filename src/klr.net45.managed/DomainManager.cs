@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Reflection;
 using System.Runtime.InteropServices;
 
@@ -27,8 +28,24 @@ public class DomainManager : AppDomainManager
         }
         catch (Exception ex)
         {
-            Console.WriteLine(ex.Message);
+            Console.Error.WriteLine(String.Join(Environment.NewLine, GetExceptions(ex)));
             return 1;
+        }
+    }
+
+    private static IEnumerable<string> GetExceptions(Exception ex)
+    {
+        if (ex.InnerException != null)
+        {
+            foreach (var e in GetExceptions(ex.InnerException))
+            {
+                yield return e;
+            }
+        }
+
+        if (!(ex is TargetInvocationException))
+        {
+            yield return ex.Message;
         }
     }
 
