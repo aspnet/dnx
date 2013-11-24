@@ -83,6 +83,11 @@ namespace Microsoft.Net.Runtime
         {
             var di = new DirectoryInfo(path);
 
+            if (!di.Exists)
+            {
+                return;
+            }
+
             foreach (var d in di.EnumerateDirectories())
             {
                 if (d.Name.StartsWith("v"))
@@ -99,10 +104,20 @@ namespace Microsoft.Net.Runtime
 
                     frameworkInfo.FacadePath = Directory.Exists(facadePath) ? facadePath : null;
 
-                    foreach (var a in GetFrameworkAssemblies(redistList))
+                    if (File.Exists(redistList))
                     {
-                        var assemblyPath = Path.Combine(v.FullName, a + ".dll");
-                        frameworkInfo.Assemblies.Add(new AssemblyInfo(a, assemblyPath));
+                        foreach (var assemblyName in GetFrameworkAssemblies(redistList))
+                        {
+                            var assemblyPath = Path.Combine(v.FullName, assemblyName + ".dll");
+                            frameworkInfo.Assemblies.Add(new AssemblyInfo(assemblyName, assemblyPath));
+                        }
+                    }
+                    else
+                    {
+                        foreach (var assemblyFileInfo in v.EnumerateFiles("*.dll"))
+                        {
+                            frameworkInfo.Assemblies.Add(new AssemblyInfo(assemblyFileInfo.Name, assemblyFileInfo.FullName));
+                        }
                     }
 
                     cache[frameworkName] = frameworkInfo;

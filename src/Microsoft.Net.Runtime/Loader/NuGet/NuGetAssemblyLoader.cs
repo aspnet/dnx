@@ -15,9 +15,9 @@ namespace Microsoft.Net.Runtime.Loader.NuGet
         private readonly Dictionary<string, Assembly> _cache = new Dictionary<string, Assembly>(StringComparer.OrdinalIgnoreCase);
         private readonly Dictionary<string, string> _paths = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
-        public NuGetAssemblyLoader(string packagesDirectory)
+        public NuGetAssemblyLoader(string projectPath)
         {
-            _repository = new LocalPackageRepository(packagesDirectory);
+            _repository = new LocalPackageRepository(ResolveRepositoryPath(projectPath));
         }
 
         public Assembly Load(LoadOptions options)
@@ -149,6 +149,24 @@ namespace Microsoft.Net.Runtime.Loader.NuGet
             }
 
             return _repository.FindPackage(name, version);
+        }
+
+        private string ResolveRepositoryPath(string projectPath)
+        {
+            var di = new DirectoryInfo(projectPath);
+
+            while (di.Parent != null)
+            {
+                if (di.EnumerateDirectories("packages").Any() ||
+                    di.EnumerateFiles("*.sln").Any())
+                {
+                    return di.FullName;
+                }
+
+                di = di.Parent;
+            }
+
+            return Path.Combine(Path.GetDirectoryName(projectPath), "packages");
         }
     }
 }

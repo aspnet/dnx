@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Reflection;
 using Microsoft.Net.Runtime.FileSystem;
 using Microsoft.Net.Runtime.Loader;
@@ -16,17 +17,17 @@ namespace Microsoft.Net.Runtime
     {
         private AssemblyLoader _loader;
         private IFileWatcher _watcher;
-        private readonly string _path;
+        private readonly string _projectDir;
         private readonly Dictionary<string, object> _hostServices = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
 
-        public DefaultHost(string path, bool watchFiles = true)
+        public DefaultHost(string projectDir, bool watchFiles = true)
         {
-            if (File.Exists(path))
+            if (File.Exists(projectDir))
             {
-                path = Path.GetDirectoryName(path);
+                projectDir = Path.GetDirectoryName(projectDir);
             }
 
-            _path = path.TrimEnd(Path.DirectorySeparatorChar);
+            _projectDir = projectDir.TrimEnd(Path.DirectorySeparatorChar);
 
             Initialize(watchFiles);
         }
@@ -56,7 +57,7 @@ namespace Microsoft.Net.Runtime
         public Assembly GetEntryPoint()
         {
             Project project;
-            if (!Project.TryGetProject(_path, out project))
+            if (!Project.TryGetProject(_projectDir, out project))
             {
                 Trace.TraceInformation("Unable to locate {0}.'", Project.ProjectFileName);
                 return null;
@@ -78,13 +79,13 @@ namespace Microsoft.Net.Runtime
         public void Build()
         {
             Project project;
-            if (!Project.TryGetProject(_path, out project))
+            if (!Project.TryGetProject(_projectDir, out project))
             {
                 Trace.TraceInformation("Unable to locate {0}.'", Project.ProjectFileName);
                 return;
             }
 
-            string outputPath = Path.Combine(_path, "bin");
+            string outputPath = Path.Combine(_projectDir, "bin");
 
             var sw = Stopwatch.StartNew();
 
@@ -113,13 +114,13 @@ namespace Microsoft.Net.Runtime
         public void Clean()
         {
             Project project;
-            if (!Project.TryGetProject(_path, out project))
+            if (!Project.TryGetProject(_projectDir, out project))
             {
                 Trace.TraceInformation("Unable to locate {0}.'", Project.ProjectFileName);
                 return;
             }
 
-            string outputPath = Path.Combine(_path, "bin");
+            string outputPath = Path.Combine(_projectDir, "bin");
 
             _loader.Walk(project.Name, project.Version, project.TargetFramework);
 
@@ -168,13 +169,11 @@ namespace Microsoft.Net.Runtime
         private void Initialize(bool watchFiles)
         {
             _loader = new AssemblyLoader();
-
-            string solutionDir = Path.GetDirectoryName(_path);
-            string packagesDir = Path.Combine(solutionDir, "packages");
+            string rootDirectory = ResolveRootDirectory();
 
             if (watchFiles)
             {
-                _watcher = new FileWatcher(solutionDir);
+                _watcher = new FileWatcher(rootDirectory);
                 _watcher.OnChanged += OnWatcherChanged;
             }
             else
@@ -183,7 +182,7 @@ namespace Microsoft.Net.Runtime
             }
 
             var resolver = new FrameworkReferenceResolver();
-            var roslynLoader = new RoslynAssemblyLoader(solutionDir, _watcher, resolver);
+            var roslynLoader = new RoslynAssemblyLoader(rootDirectory, _watcher, resolver);
 
             var resolved = new HashSet<string>();
 
@@ -198,8 +197,8 @@ namespace Microsoft.Net.Runtime
             };
 
             _loader.Add(roslynLoader);
-            _loader.Add(new MSBuildProjectAssemblyLoader(solutionDir, _watcher));
-            _loader.Add(new NuGetAssemblyLoader(packagesDir));
+            _loader.Add(new MSBuildProjectAssemblyLoader(rootDirectory, _watcher));
+            _loader.Add(new NuGetAssemblyLoader(_projectDir));
 
             _hostServices[HostServices.ResolveAssemblyReference] = new Func<string, object>(name =>
             {
@@ -208,6 +207,7 @@ namespace Microsoft.Net.Runtime
                 return _loader.ResolveReference(an.Name);
             });
         }
+
         public Assembly Load(string name)
         {
             return _loader.Load(new LoadOptions
@@ -220,6 +220,25 @@ namespace Microsoft.Net.Runtime
         {
             _watcher.OnChanged -= OnWatcherChanged;
             _watcher.Dispose();
+        }
+
+        private string ResolveRootDirectory()
+        {
+            var di = new DirectoryInfo(_projectDir);
+
+            if (di.Parent != null)
+            {
+                if(di.EnumerateFiles("*.sln").Any() ||
+                   di.EnumerateDirectories("packages").Any() ||
+                   di.EnumerateDirectories(".git").Any())
+                {
+                    return di.FullName;
+                }
+
+                di = di.Parent;
+            }
+
+            return Path.GetDirectoryName(_projectDir);
         }
     }
 }
