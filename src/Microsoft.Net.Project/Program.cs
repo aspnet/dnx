@@ -75,43 +75,5 @@ namespace K
                 yield return ex.Message;
             }
         }
-
-        private static void ExecuteMain(DefaultHost host, string path, string[] args)
-        {
-            var assembly = host.GetEntryPoint();
-
-            if (assembly == null)
-            {
-                return;
-            }
-
-            string name = assembly.GetName().Name;
-
-            var program = assembly.GetType("Program") ?? assembly.GetTypes().FirstOrDefault(t => t.Name == "Program");
-
-            if (program == null)
-            {
-                Console.WriteLine("'{0}' does not contain a static 'Main' method suitable for an entry point", name);
-                return;
-            }
-
-            var main = program.GetMethod("Main", BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic);
-
-            if (main == null)
-            {
-                Console.WriteLine("'{0}' does not contain a static 'Main' method suitable for an entry point", name);
-                return;
-            }
-
-            var parameters = main.GetParameters();
-            if (parameters.Length == 0)
-            {
-                main.Invoke(null, null);
-            }
-            else if (parameters.Length == 1)
-            {
-                main.Invoke(null, new object[] { args });
-            }
-        }
     }
 }
