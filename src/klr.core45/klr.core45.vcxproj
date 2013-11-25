@@ -97,6 +97,7 @@
     <ClInclude Include="targetver.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="klr.core45.cpp" />
     <ClCompile Include="trace.cpp" />
     <ClCompile Include="PackageLoader.cpp" />
     <ClCompile Include="ClrDomainInstance.cpp" />

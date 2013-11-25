@@ -9,6 +9,7 @@
     <ClCompile Include="Firmware.cpp" />
     <ClCompile Include="module.cpp" />
     <ClCompile Include="stdafx.cpp" />
+    <ClCompile Include="klr.core45.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="PackageLoader.h" />

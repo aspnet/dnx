@@ -7,3 +7,4 @@ EXPORTS
    FirmwareStartup       @5
    FirmwareExecute       @6
    FirmwareShutdown      @7
+   CallApplicationMain   @8
