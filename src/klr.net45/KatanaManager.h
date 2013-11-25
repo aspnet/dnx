@@ -11,12 +11,14 @@ struct ApplicationMainInfo
     typedef int(*ApplicationMainDelegate)(int argc, PCWSTR* argv);
 
     /* in */ ApplicationMainDelegate ApplicationMain;
+
+    /* out */ BSTR ApplicationBase;
 };
 
 class __declspec(uuid("7E9C5238-60DC-49D3-94AA-53C91FA79F7C")) IKatanaManager : public IUnknown
 {
 public:
-    virtual HRESULT InitializeRuntime() = 0;
+    virtual HRESULT InitializeRuntime(LPCWSTR applicationBase) = 0;
 
     virtual HRESULT BindApplicationMain(ApplicationMainInfo* pInfo) = 0;
 
@@ -42,6 +44,8 @@ class KatanaManager :
     _bstr_t _appHostFileName;
     _bstr_t _rootWebConfigFileName;
     _bstr_t _clrConfigFilePath;
+
+    _bstr_t _applicationBase;
 
     ApplicationMainInfo _applicationMainInfo;
 
@@ -88,13 +92,15 @@ public:
         return NULL;
     }
 
-    HRESULT InitializeRuntime()
+    HRESULT InitializeRuntime(LPCWSTR applicationBase)
     {
         Lock lock(&_crit);
         if (_calledInitializeRuntime)
             return _hrInitializeRuntime;
 
         HRESULT hr = S_OK;
+
+        _applicationBase = applicationBase;
 
         _HR(CLRCreateInstance(CLSID_CLRMetaHost, PPV(&_MetaHost)));
         _HR(CLRCreateInstance(CLSID_CLRMetaHostPolicy, PPV(&_MetaHostPolicy)));
@@ -145,6 +151,7 @@ public:
     HRESULT BindApplicationMain(ApplicationMainInfo* pInfo)
     {
         _applicationMainInfo = *pInfo;
+        pInfo->ApplicationBase = _applicationBase.copy();
         return S_OK;
     }
 

@@ -1,11 +1,7 @@
 {
     "compilationOptions" : { "define" : ["LOADER"] },
     "dependencies": [
-    {
-      "Newtonsoft.Json": {
-        "version": "5.0.8"
-      }
-    },
+    { "Newtonsoft.Json": { "version": "5.0.8" } },
     { "System.Collections.Immutable" : { "version" : "" } },
     { "System.IO.Compression" : { "version" : "" } },
     { "System.IO.Compression.FileSystem" : { "version" : "" } },

@@ -4,21 +4,24 @@
 #include "stdafx.h"
 
 #include "KatanaManager.h"
+#include "..\klr\klr.h"
 
 IKatanaManagerPtr g_katanaManager;
 
 
-extern "C" __declspec(dllexport) bool __stdcall CallApplicationMain(int argc, PCWSTR* argv, int& retval)
+extern "C" __declspec(dllexport) HRESULT __stdcall CallApplicationMain(PCALL_APPLICATION_MAIN_DATA data)
 {
     HRESULT hr = S_OK;
     
     IKatanaManagerPtr manager = new ComObject<KatanaManager, IKatanaManager>();
 
     g_katanaManager = manager;
-    _HR(manager->InitializeRuntime());
+    _HR(manager->InitializeRuntime(data->applicationBase));
     g_katanaManager = NULL;
 
-    _HR(manager->CallApplicationMain(argc, argv));
+    _HR(manager->CallApplicationMain(data->argc, data->argv));
+
+    data->exitcode = hr;
 
     return hr;
 }

@@ -13,9 +13,9 @@ public class Bootstrapper
 
     public int Main(int argc, string[] argv)
     {
-        if (argc < 2)
+        if (argc < 1)
         {
-            Console.WriteLine("[path] [args]");
+            Console.WriteLine("{app} [args]");
             return -1;
         }
 
@@ -23,7 +23,7 @@ public class Bootstrapper
         Trace.Listeners.Add(listener);
         Trace.AutoFlush = true;
 
-        string path = Path.GetFullPath(argv[1]);
+        string path = Path.GetFullPath(argv[0]);
 
         _container = new HostContainer();
 
@@ -33,7 +33,7 @@ public class Bootstrapper
 
         using (_container.AddHost(host))
         {
-            ExecuteMain(path, argv.Skip(2).ToArray());
+            ExecuteMain(path, argv.Skip(1).ToArray());
         }
 
         AppDomain.CurrentDomain.AssemblyResolve -= OnAssemblyResolve;

@@ -14,6 +14,43 @@ int CallFirmwareProcessMain(int argc, wchar_t* argv[])
     FnCallApplicationMain pfnCallApplicationMain = nullptr;
     int exitCode = 0;
 
+
+    CALL_APPLICATION_MAIN_DATA data = {0};
+    data.argc = argc - 1;
+    data.argv = const_cast<LPCWSTR*>(&argv[1]);
+
+    auto stringsEqual = [](const wchar_t*  const a, const wchar_t*  const b) -> bool 
+    {
+        return ::_wcsicmp(a, b) == 0;
+    };
+
+    bool processing = true;
+    while (processing)
+    {
+        if (data.argc >= 2 && stringsEqual(data.argv[0], L"--appbase"))
+        {
+            data.applicationBase = data.argv[1];
+            data.argc -= 2;
+            data.argv += 2;
+        }
+        else if (data.argc >= 1 && stringsEqual(data.argv[0], L"--net45"))
+        {
+            pwzHostModuleName = L"klr.net45.dll";
+            data.argc -= 1;
+            data.argv += 1;
+        }
+        else if (data.argc >= 1 && stringsEqual(data.argv[0], L"--core45"))
+        {
+            pwzHostModuleName = L"klr.core45.dll";
+            data.argc -= 1;
+            data.argv += 1;
+        }
+        else
+        {
+            processing = false;
+        }
+    }
+
     m_hHostModule = ::LoadLibraryExW(pwzHostModuleName, NULL, LOAD_LIBRARY_SEARCH_DEFAULT_DIRS);
     if (!m_hHostModule) 
     {
@@ -36,7 +73,17 @@ int CallFirmwareProcessMain(int argc, wchar_t* argv[])
     if (m_fVerboseTrace)
         printf_s("Found DLL Export: %s\r\n", pszCallApplicationMainName);
 
-    fSuccess = pfnCallApplicationMain(argc, (const wchar_t**)argv, exitCode);
+    HRESULT hr = pfnCallApplicationMain(&data);
+    if (SUCCEEDED(hr))
+    {
+        fSuccess = true;
+        exitCode = data.exitcode;
+    }
+    else
+    {
+        fSuccess = false;
+        exitCode = hr;
+    }
 
 Finished:
     if (pfnCallApplicationMain) 

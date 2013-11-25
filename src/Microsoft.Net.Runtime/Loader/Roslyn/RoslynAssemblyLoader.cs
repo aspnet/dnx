@@ -89,7 +89,7 @@ namespace Microsoft.Net.Runtime.Loader.Roslyn
             {
                 Trace.TraceInformation("[{0}]: Found cached copy of '{1}' in {2}.", GetType().Name, name, cachedFile);
 
-                var cachedAssembly = Assembly.LoadFile(cachedFile);
+                var cachedAssembly = Assembly.LoadFile(Path.GetFullPath(cachedFile));
 
                 MetadataReference cachedReference = new MetadataFileReference(cachedFile);
 
@@ -144,7 +144,7 @@ namespace Microsoft.Net.Runtime.Loader.Roslyn
                     syntaxTrees: trees,
                     references: references);
 
-                List<ResourceDescription> resources = GetResources(path);
+                List<ResourceDescription> resources = GetResources(project.Name, path);
 
                 if (options.OutputPath != null)
                 {
@@ -212,25 +212,25 @@ namespace Microsoft.Net.Runtime.Loader.Roslyn
             return null;
         }
 
-        private static List<ResourceDescription> GetResources(string projectPath)
+        private static List<ResourceDescription> GetResources(string projectName, string projectPath)
         {
             // HACK to make resource files work.
             // TODO: This factor this into a system to do file processing based on the current
             // compilation
             return System.IO.Directory.EnumerateFiles(projectPath, "*.resx", SearchOption.AllDirectories)
                             .Select(resxFilePath =>
-                                new ResourceDescription(GetResourceName(resxFilePath),
+                                new ResourceDescription(GetResourceName(projectName, resxFilePath),
                                                         () => GetResourceStream(resxFilePath),
                                                         isPublic: true)).ToList();
         }
 
-        private static string GetResourceName(string resxFilePath)
+        private static string GetResourceName(string projectName, string resxFilePath)
         {
             Trace.TraceInformation("Found resource {0}", resxFilePath);
 
             string fileNameWithoutExtension = Path.GetFileNameWithoutExtension(resxFilePath);
 
-            return fileNameWithoutExtension + ".resources";
+            return projectName + "." + fileNameWithoutExtension + ".resources";
         }
 
         private static Stream GetResourceStream(string resxFilePath)

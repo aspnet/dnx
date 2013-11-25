@@ -6,12 +6,12 @@ using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Reflection;
+using Microsoft.Net.OwinHost;
 using Microsoft.Net.Runtime;
 using klr.host;
 using Microsoft.Owin.Hosting.Engine;
 using Microsoft.Owin.Hosting.Loader;
 using Microsoft.Owin.Hosting.Services;
-using WebHost;
 
 namespace Microsoft.Owin.Hosting.Starter
 {
