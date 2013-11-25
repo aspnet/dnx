@@ -19,6 +19,7 @@ namespace Microsoft.Net.Runtime
         private IFileWatcher _watcher;
         private readonly string _projectDir;
         private readonly Dictionary<string, object> _hostServices = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
+        private Assembly _entryPoint;
 
         public DefaultHost(string projectDir, bool watchFiles = true)
         {
@@ -56,6 +57,11 @@ namespace Microsoft.Net.Runtime
 
         public Assembly GetEntryPoint()
         {
+            if (_entryPoint != null)
+            {
+                return _entryPoint;
+            }
+
             Project project;
             if (!Project.TryGetProject(_projectDir, out project))
             {
@@ -67,13 +73,13 @@ namespace Microsoft.Net.Runtime
 
             _loader.Walk(project.Name, project.Version, project.TargetFramework);
 
-            var assembly = Assembly.Load(project.Name);
+            _entryPoint = Assembly.Load(project.Name);
 
             sw.Stop();
 
             Trace.TraceInformation("Load took {0}ms", sw.ElapsedMilliseconds);
 
-            return assembly;
+            return _entryPoint;
         }
 
         public void Build()

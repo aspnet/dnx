@@ -50,7 +50,7 @@
   <ItemGroup>
     <Compile Include="Host.cs" />
     <Compile Include="HostStarter.cs" />
-    <Compile Include="MyAppLoader.cs" />
+    <Compile Include="AppLoaderWrapper.cs" />
     <Compile Include="Options\Command.cs" />
     <Compile Include="Options\CommandException.cs" />
     <Compile Include="Options\CommandExecutor.cs" />

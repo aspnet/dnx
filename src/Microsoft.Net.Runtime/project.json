@@ -9,6 +9,8 @@
     { "System.Xml" : { "version" : "" } },
     { "System.Xml.Linq" : { "version" : "" } },
     { "Microsoft.CodeAnalysis" : { "version" : "" } },
-    { "Microsoft.CodeAnalysis.CSharp" : { "version" : "" } }
+    { "Microsoft.CodeAnalysis.CSharp" : { "version" : "" } },
+    { "System.Collections" : { "version" : "" } },
+    { "Microsoft.Net.Runtime.Interfaces" : { "version" : "" } }
     ]
 }

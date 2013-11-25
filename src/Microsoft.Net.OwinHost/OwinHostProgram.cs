@@ -5,6 +5,7 @@ using System.Globalization;
 using System.Reflection;
 using Microsoft.Net.Runtime;
 using Microsoft.Owin.Hosting;
+using Microsoft.Owin.Hosting.Loader;
 using Microsoft.Owin.Hosting.Services;
 using Microsoft.Owin.Hosting.Starter;
 using Microsoft.Owin.Hosting.Utilities;
@@ -151,28 +152,32 @@ namespace Microsoft.Net.OwinHost
                 return;
             }
 
-            //string boot;
-            //if (!options.Settings.TryGetValue("boot", out boot)
-            //    || string.IsNullOrWhiteSpace(boot))
-            //{
-            //    options.Settings["boot"] = "Domain";
-            //}
+            // get existing loader factory services
+            string appLoaderFactories;
+            if (!options.Settings.TryGetValue(typeof (IAppLoaderFactory).FullName, out appLoaderFactories) ||
+                !string.IsNullOrEmpty(appLoaderFactories))
+            {
+                // use the built-in AppLoaderFactory as the default
+                appLoaderFactories = typeof(AppLoaderFactory).AssemblyQualifiedName;
+            }
 
-            WriteLine("Starting with " + GetDisplayUrl(options));
+            // prepend with our app loader factory 
+            options.Settings[typeof(IAppLoaderFactory).FullName] =
+                typeof(AppLoaderWrapper).AssemblyQualifiedName + ";" + appLoaderFactories;
 
             var host = new DefaultHost(AppDomain.CurrentDomain.SetupInformation.ApplicationBase);
             using (_hostContainer.AddHost(host))
             {
-                var assembly = host.GetEntryPoint();
-                if (string.IsNullOrEmpty(options.AppStartup))
-                {
-                    options.AppStartup = assembly.GetName().Name + ".Startup," + assembly.FullName;
-                }
+                WriteLine("Starting with " + GetDisplayUrl(options));
 
-                IServiceProvider services = ServicesFactory.Create(options.Settings);
-                var starter = services.GetService<IHostingStarter>();
-                IDisposable server = starter.Start(options);
-                try
+                // Ensure the DefaultHost is available to the AppLoaderWrapper
+                IServiceProvider container = ServicesFactory.Create(options.Settings, services =>
+                {
+                    services.Add(typeof(DefaultHost), () => host);
+                });
+
+                IHostingStarter starter = container.GetService<IHostingStarter>();
+                using (starter.Start(options))
                 {
                     WriteLine("Started successfully");
 
@@ -180,10 +185,6 @@ namespace Microsoft.Net.OwinHost
                     Console.ReadLine();
 
                     WriteLine("Terminating.");
-                }
-                finally
-                {
-                    server.Dispose();
                 }
             }
         }
