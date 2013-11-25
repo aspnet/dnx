@@ -186,4 +186,7 @@
   <data name="ProgramOutput_ParametersHeader" xml:space="preserve">
     <value>Parameters:</value>
   </data>
+  <data name="ProgramOutput_DevModeOption" xml:space="preserve">
+    <value>This mode will kill the server if any changes are made to the application.</value>
+  </data>
 </root>

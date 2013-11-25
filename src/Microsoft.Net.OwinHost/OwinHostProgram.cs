@@ -113,6 +113,11 @@ namespace Microsoft.Net.OwinHost
             model.Option<StartOptions, string>(
                 "boot", "b", Resources.ProgramOutput_BootOption,
                 (options, value) => options.Settings["boot"] = value);
+
+            model.Option<StartOptions, int>(
+                "devMode", "dev", Resources.ProgramOutput_DevModeOption,
+                (options, value) => options.Settings["devMode"] = value.ToString());
+
             /* Disabled until we need to consume it anywhere.
             model.Option<StartOptions, string>(
                 "verbosity", "v", "Set output verbosity level.",
@@ -154,7 +159,7 @@ namespace Microsoft.Net.OwinHost
 
             // get existing loader factory services
             string appLoaderFactories;
-            if (!options.Settings.TryGetValue(typeof (IAppLoaderFactory).FullName, out appLoaderFactories) ||
+            if (!options.Settings.TryGetValue(typeof(IAppLoaderFactory).FullName, out appLoaderFactories) ||
                 !string.IsNullOrEmpty(appLoaderFactories))
             {
                 // use the built-in AppLoaderFactory as the default
@@ -166,6 +171,15 @@ namespace Microsoft.Net.OwinHost
                 typeof(AppLoaderWrapper).AssemblyQualifiedName + ";" + appLoaderFactories;
 
             var host = new DefaultHost(AppDomain.CurrentDomain.SetupInformation.ApplicationBase);
+
+            if (options.Settings.ContainsKey("devMode"))
+            {
+                host.OnChanged += () =>
+                {
+                    Environment.Exit(250);
+                };
+            }
+
             using (_hostContainer.AddHost(host))
             {
                 WriteLine("Starting with " + GetDisplayUrl(options));
