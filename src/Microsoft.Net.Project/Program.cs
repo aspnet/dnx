@@ -5,7 +5,7 @@ using System.Linq;
 using System.Reflection;
 using Microsoft.Net.Runtime;
 
-namespace K
+namespace Microsoft.Net.Project
 {
     public class Program
     {
