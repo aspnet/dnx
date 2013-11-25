@@ -48,8 +48,6 @@
     <Reference Include="System.Core" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Host.cs" />
-    <Compile Include="HostStarter.cs" />
     <Compile Include="AppLoaderWrapper.cs" />
     <Compile Include="Options\Command.cs" />
     <Compile Include="Options\CommandException.cs" />
