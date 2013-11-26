@@ -38,13 +38,13 @@ namespace klr.host
 
         public Assembly GetEntryPoint()
         {
-            Trace.TraceInformation("RootHost.GetEntryPoint GetEntryPoint {0}", _applicationName);
+            TraceInformation("RootHost.GetEntryPoint GetEntryPoint {0}", _applicationName);
             return Assembly.Load(_applicationName);
         }
 
         public Assembly Load(string name)
         {
-            Trace.TraceInformation("RootHost.Load name={0}", name);
+            TraceInformation("RootHost.Load name={0}", name);
 
             Assembly assembly;
             if (_cache.TryGetValue(name, out assembly))
@@ -57,17 +57,31 @@ namespace klr.host
             {
                 try
                 {
-                    Trace.TraceInformation("RootHost Assembly.LoadFile({0})", filePath);
+                    TraceInformation("RootHost Assembly.LoadFile({0})", filePath);
                     assembly = Assembly.LoadFile(filePath);
                 }
                 catch (Exception ex)
                 {
-                    Trace.TraceWarning("Exception {0} loading {1}", ex.Message, filePath);
+                    TraceWarning("Exception {0} loading {1}", ex.Message, filePath);
                 }
             }
 
             _cache[name] = assembly;
             return assembly;
+        }
+
+        private void TraceWarning(string format, params object[] args)
+        {
+#if DESKTOP
+            Trace.TraceWarning(format, args);
+#endif
+        }
+
+        private void TraceInformation(string format, params object[] args)
+        {
+#if DESKTOP
+            Trace.TraceInformation(format, args);
+#endif
         }
     }
 }

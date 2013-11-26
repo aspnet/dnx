@@ -1,0 +1,7 @@
+{
+    "name" : "klr.host",
+    "targetFramework" : "CoreClr1.0",
+    "dependencies": [
+        { "Microsoft.Net.Runtime.Interfaces" : { } }
+    ]
+}

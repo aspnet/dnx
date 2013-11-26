@@ -19,9 +19,11 @@ public class Bootstrapper
             return -1;
         }
 
+#if DESKTOP
         var listener = new ConsoleTraceListener();
         Trace.Listeners.Add(listener);
         Trace.AutoFlush = true;
+#endif
 
         string path = Path.GetFullPath(argv[0]);
 

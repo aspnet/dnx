@@ -1,0 +1,5 @@
+{
+    "name" : "Microsoft.Net.Runtime.Interfaces",
+    "targetFramework" : "CoreClr1.0",
+    "dependencies": []
+}
