@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Reflection;
+using System.Runtime.ExceptionServices;
 using System.Security;
 
 [SecurityCritical]
@@ -20,7 +21,8 @@ sealed class DomainManager : AppDomainManager
         base.InitializeNewDomain(appDomainInfo);
     }
 
-    static int Main(int argc, string[] argv)
+    [HandleProcessCorruptedStateExceptions, SecurityCritical]
+    unsafe static int Main(int argc, char** argv)
     {
         try
         {
@@ -38,10 +40,17 @@ sealed class DomainManager : AppDomainManager
             //    AppDomain.CurrentDomain.AssemblyResolve -= CurrentDomainOnAssemblyResolve;
             //}
 
+            //Pack arguments
+            var arguments = new string[argc];
+            for (var i = 0; i < arguments.Length; i++)
+            {
+                arguments[i] = new string(argv[i]);
+            }
+
             var bootstrapperType = assembly.GetType("Bootstrapper");
             var mainMethod = bootstrapperType.GetMethod("Main");
             var bootstrapper = Activator.CreateInstance(bootstrapperType);
-            var result = mainMethod.Invoke(bootstrapper, new object[] { argc, argv });
+            var result = mainMethod.Invoke(bootstrapper, new object[] { argc, arguments });
             return (int)result;
         }
         catch (Exception ex)
