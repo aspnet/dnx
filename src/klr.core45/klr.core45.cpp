@@ -71,6 +71,10 @@ static const wchar_t *trustedAssemblies[] =
     L"system.xml.xmlserializer",
 };
 
+typedef int (STDMETHODCALLTYPE *HostMain)(
+    const int argc,
+    const wchar_t** argv
+);
 
 void GetModuleDirectory(HMODULE module, LPWSTR szPath)
 {
@@ -209,25 +213,33 @@ extern "C" __declspec(dllexport) bool __stdcall CallApplicationMain(PCALL_APPLIC
     trustedPlatformAssemblies += szCurrentDirectory;
     trustedPlatformAssemblies += L"klr.core45.managed.dll";
 
+    wstring appPaths(szCurrentDirectory);
+
+    appPaths += L";";
+    appPaths += szCoreClrDirectory;
+
     const wchar_t* property_values[] = {
         // APPBASE
-        szCurrentDirectory,
+        szCurrentDirectory, // TODO: Allow overriding this
         // TRUSTED_PLATFORM_ASSEMBLIES
         trustedPlatformAssemblies.c_str(),
         // APP_PATHS
-        szCurrentDirectory
+        appPaths.c_str(),
     };
 
     DWORD domainId;
     DWORD dwFlagsAppDomain = APPDOMAIN_ENABLE_PLATFORM_SPECIFIC_APPS | APPDOMAIN_ENABLE_PINVOKE_AND_CLASSIC_COMINTEROP;
+    LPCWSTR szAssemblyName = L"klr.core45.managed, Version=1.0.0.0";
+    LPCWSTR szDomainManagerTypeName = L"DomainManager";
+    LPCWSTR szMainMethodName = L"Main";
 
     int nprops = sizeof(property_keys) / sizeof(wchar_t*);
 
     hr = pCLRRuntimeHost->CreateAppDomainWithManager(
         L"klr.core45.managed",
         dwFlagsAppDomain,
-        L"klr.core45.managed, Version=1.0.0.0",
-        L"klr.core45.managed.DomainManager",
+        szAssemblyName,
+        szDomainManagerTypeName,
         nprops,
         property_keys,
         property_values,
@@ -238,6 +250,26 @@ extern "C" __declspec(dllexport) bool __stdcall CallApplicationMain(PCALL_APPLIC
         printf_s("Failed to create app domain (%d).\n", hr);
         return false;
     }
+
+    HostMain pHostMain;
+
+    hr = pCLRRuntimeHost->CreateDelegate(
+        domainId,
+        szAssemblyName,
+        szDomainManagerTypeName,
+        szMainMethodName,
+        (INT_PTR*)&pHostMain);
+
+    if (FAILED(hr))
+    {
+        printf_s("Failed to create main delegate (%d).\n", hr);
+        return false;
+    }
+
+    // Call main
+    data->exitcode = pHostMain(data->argc, data->argv);
+
+    pCLRRuntimeHost->Stop();
 
     return hr;
 }

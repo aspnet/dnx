@@ -1,4 +1,74 @@
-﻿// From: Jan Kotas (CLR)
+﻿using System;
+using System.Collections.Generic;
+using System.Reflection;
+using System.Security;
+
+[SecurityCritical]
+sealed class DomainManager : AppDomainManager
+{
+    public DomainManager()
+    {
+    }
+
+    public override bool CheckSecuritySettings(SecurityState state)
+    {
+        return true;
+    }
+
+    public override void InitializeNewDomain(AppDomainSetup appDomainInfo)
+    {
+        base.InitializeNewDomain(appDomainInfo);
+    }
+
+    static int Main(int argc, string[] argv)
+    {
+        try
+        {
+            //if (_originalApplicationBase != null)
+            //{
+            //    AppDomain.CurrentDomain.AssemblyResolve += CurrentDomainOnAssemblyResolve;
+            //}
+
+            //Assembly.Load("Microsoft.Net.Runtime.Interfaces, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null");
+            
+            var assembly = Assembly.Load("klr.host");
+
+            //if (_originalApplicationBase != null)
+            //{
+            //    AppDomain.CurrentDomain.AssemblyResolve -= CurrentDomainOnAssemblyResolve;
+            //}
+
+            var bootstrapperType = assembly.GetType("Bootstrapper");
+            var mainMethod = bootstrapperType.GetMethod("Main");
+            var bootstrapper = Activator.CreateInstance(bootstrapperType);
+            var result = mainMethod.Invoke(bootstrapper, new object[] { argc, argv });
+            return (int)result;
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine(String.Join(Environment.NewLine, GetExceptions(ex)));
+            return 1;
+        }
+    }
+    private static IEnumerable<string> GetExceptions(Exception ex)
+    {
+        if (ex.InnerException != null)
+        {
+            foreach (var e in GetExceptions(ex.InnerException))
+            {
+                yield return e;
+            }
+        }
+
+        if (!(ex is TargetInvocationException))
+        {
+            yield return ex.Message;
+        }
+    }
+}
+
+#region OLD
+// From: Jan Kotas (CLR)
 // Updates: jhawk
 
 //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -18,30 +88,7 @@
 //
 //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-#define ENABLE_HOSTDATA_LOGGING
-
-using System;
-using System.Security;
-
-[SecurityCritical]
-public sealed class DomainManager : AppDomainManager
-{
-    public DomainManager()
-    {
-
-    }
-
-    public override bool CheckSecuritySettings(SecurityState state)
-    {
-        // Allow anything
-        return true;
-    }
-
-    public override void InitializeNewDomain(AppDomainSetup appDomainInfo)
-    {
-        base.InitializeNewDomain(appDomainInfo);
-    }
-}
+// #define ENABLE_HOSTDATA_LOGGING
 
 //using System;
 //using System.Diagnostics;
@@ -522,3 +569,4 @@ public sealed class DomainManager : AppDomainManager
 //    [DllImport("kernel32.dll", ExactSpelling = true, EntryPoint = "OutputDebugStringW", CharSet = CharSet.Unicode)]
 //    public static extern void OutputDebugStringW(String outputString);
 //}
+#endregion
