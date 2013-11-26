@@ -27,7 +27,7 @@ namespace klr.host
             else
             {
                 throw new ArgumentException(
-                    "application argument format is not understood",
+                    String.Format("application '{0}' is not understood", application),
                     "application");
             }
         }
