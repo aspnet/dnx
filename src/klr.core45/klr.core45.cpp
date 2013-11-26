@@ -6,6 +6,7 @@
 
 #include "..\klr\klr.h"
 
+// TODO: Don't hardcode the list of assemblies
 static const wchar_t *trustedAssemblies[] =
 {
     L"microsoft.csharp",
@@ -268,6 +269,8 @@ extern "C" __declspec(dllexport) bool __stdcall CallApplicationMain(PCALL_APPLIC
 
     // Call main
     data->exitcode = pHostMain(data->argc, data->argv);
+
+    pCLRRuntimeHost->UnloadAppDomain(domainId, true);
 
     pCLRRuntimeHost->Stop();
 
