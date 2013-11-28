@@ -49,6 +49,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AppLoaderWrapper.cs" />
+    <Compile Include="NoopTraceOutputFactory.cs" />
     <Compile Include="Options\Command.cs" />
     <Compile Include="Options\CommandException.cs" />
     <Compile Include="Options\CommandExecutor.cs" />

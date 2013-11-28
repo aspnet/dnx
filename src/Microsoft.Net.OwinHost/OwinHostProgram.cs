@@ -1,13 +1,14 @@
 ﻿using System;
-using System.Linq;
 using System.Collections.Generic;
 using System.Globalization;
+using System.Linq;
 using System.Reflection;
 using Microsoft.Net.Runtime;
 using Microsoft.Owin.Hosting;
 using Microsoft.Owin.Hosting.Loader;
 using Microsoft.Owin.Hosting.Services;
 using Microsoft.Owin.Hosting.Starter;
+using Microsoft.Owin.Hosting.Tracing;
 using Microsoft.Owin.Hosting.Utilities;
 using OwinHost.Options;
 
@@ -187,6 +188,7 @@ namespace Microsoft.Net.OwinHost
                 // Ensure the DefaultHost is available to the AppLoaderWrapper
                 IServiceProvider container = ServicesFactory.Create(options.Settings, services =>
                 {
+                    services.Add(typeof(ITraceOutputFactory), () => new NoopTraceOutputFactory());
                     services.Add(typeof(DefaultHost), () => host);
                 });
 
