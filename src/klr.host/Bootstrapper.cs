@@ -104,6 +104,14 @@ public class Bootstrapper
 
     private Assembly OnAssemblyResolve(object sender, ResolveEventArgs args)
     {
-        return _container.Load(new AssemblyName(args.Name).Name);
+        // REVIEW: Do we need to support resources?
+        if(args.Name.Contains(".resources"))
+        {
+            return null;
+        }
+
+        var name = new AssemblyName(args.Name).Name;
+
+        return _container.Load(name);
     }
 }
