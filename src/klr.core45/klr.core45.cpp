@@ -105,6 +105,15 @@ HMODULE LoadCoreClr()
 
     if (hCoreCLRModule == nullptr)
     {
+        // Try the relative location based in install dir
+        // ..\..\Runtime\x86
+        hCoreCLRModule = ::LoadLibraryExW(L"..\\..\\Runtime\\x86\\coreclr.dll", NULL, 0);
+    }
+
+    if (hCoreCLRModule == nullptr)
+    {
+        // Try the relative location based in install
+
         hCoreCLRModule = ::LoadLibraryExW(L"coreclr.dll", NULL, 0);
     }
 

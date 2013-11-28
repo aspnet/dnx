@@ -78,6 +78,20 @@ namespace Microsoft.Net.Runtime
                 }
             }
 
+            string klrPath = Environment.GetEnvironmentVariable("KLR_PATH");
+
+            if (!String.IsNullOrEmpty(klrPath))
+            {
+                // Convention based on install directory
+                // ..\..\TargetingPacks
+                var targetingPacks = Path.GetFullPath(Path.Combine(Path.GetDirectoryName(klrPath), @"..\..\TargetingPacks"));
+
+                if (Directory.Exists(targetingPacks))
+                {
+                    PopulateReferenceAssemblies(targetingPacks, info);
+                }
+            }
+
             return info;
         }
 
