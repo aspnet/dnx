@@ -78,20 +78,21 @@ namespace Microsoft.Net.Runtime.Loader.Roslyn
             }
 
             // Always use the dll in the bin directory if it exists (unless we're doing a new compilation)
-            //string cachedFile = Path.Combine(path, "bin", name + ".dll");
+            var targetFrameworkFolder = VersionUtility.GetShortFrameworkName(options.TargetFramework);
+            string cachedFile = Path.Combine(path, "bin", targetFrameworkFolder, name + ".dll");
 
-            //if (File.Exists(cachedFile) && options.OutputPath == null)
-            //{
-            //    Trace.TraceInformation("[{0}]: Found cached copy of '{1}' in {2}.", GetType().Name, name, cachedFile);
+            if (File.Exists(cachedFile) && options.OutputPath == null)
+            {
+                Trace.TraceInformation("[{0}]: Found cached copy of '{1}' in {2}.", GetType().Name, name, cachedFile);
 
-            //    var cachedAssembly = Assembly.LoadFile(Path.GetFullPath(cachedFile));
+                var cachedAssembly = Assembly.LoadFile(Path.GetFullPath(cachedFile));
 
-            //    MetadataReference cachedReference = new MetadataFileReference(cachedFile);
+                MetadataReference cachedReference = new MetadataFileReference(cachedFile);
 
-            //    _compiledAssemblies[name] = Tuple.Create(cachedAssembly, cachedReference);
+                _compiledAssemblies[name] = Tuple.Create(cachedAssembly, cachedReference);
 
-            //    return cachedAssembly;
-            //}
+                return cachedAssembly;
+            }
 
             references.AddRange(_resolver.GetDefaultReferences(options.TargetFramework));
 
@@ -143,7 +144,6 @@ namespace Microsoft.Net.Runtime.Loader.Roslyn
 
                 if (options.OutputPath != null)
                 {
-                    var targetFrameworkFolder = VersionUtility.GetShortFrameworkName(options.TargetFramework);
                     string outputPath = Path.Combine(options.OutputPath, targetFrameworkFolder);
                     System.IO.Directory.CreateDirectory(outputPath);
 
