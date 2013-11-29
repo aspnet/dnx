@@ -24,16 +24,16 @@ namespace Microsoft.Net.Runtime.Loader.Roslyn
         private readonly string _symbolsPath;
         private readonly IFileWatcher _watcher;
         private readonly IFrameworkReferenceResolver _resolver;
+        private readonly IAssemblyLoader _dependencyLoader;
 
-        public RoslynAssemblyLoader(string solutionPath, IFileWatcher watcher, IFrameworkReferenceResolver resolver)
+        public RoslynAssemblyLoader(string solutionPath, IFileWatcher watcher, IFrameworkReferenceResolver resolver, IAssemblyLoader dependencyLoader)
         {
             _solutionPath = solutionPath;
             _watcher = watcher;
             _resolver = resolver;
+            _dependencyLoader = dependencyLoader;
             _symbolsPath = Path.Combine(_solutionPath, ".symbols");
         }
-
-        public Action<FrameworkName> OnResolveTargetFramework;
 
         public Assembly Load(LoadOptions options)
         {
@@ -54,12 +54,7 @@ namespace Microsoft.Net.Runtime.Loader.Roslyn
                 return null;
             }
 
-            Trace.TraceInformation("[{0}]: Found project '{1}' framework={2}", GetType().Name, project.Name, project.TargetFramework);
-
-            if (OnResolveTargetFramework != null)
-            {
-                OnResolveTargetFramework(project.TargetFramework);
-            }
+            Trace.TraceInformation("[{0}]: Found project '{1}' framework={2}", GetType().Name, project.Name, options.TargetFramework);
 
             _watcher.WatchFile(project.ProjectFilePath);
 
@@ -71,7 +66,7 @@ namespace Microsoft.Net.Runtime.Loader.Roslyn
                 var dependencyStopWatch = Stopwatch.StartNew();
 
                 references = project.Dependencies
-                                    .Select(ResolveDependency)
+                                    .Select(r => ResolveDependency(r, options))
                                     .ToList();
 
                 dependencyStopWatch.Stop();
@@ -83,22 +78,22 @@ namespace Microsoft.Net.Runtime.Loader.Roslyn
             }
 
             // Always use the dll in the bin directory if it exists (unless we're doing a new compilation)
-            string cachedFile = Path.Combine(path, "bin", name + ".dll");
+            //string cachedFile = Path.Combine(path, "bin", name + ".dll");
 
-            if (File.Exists(cachedFile) && options.OutputPath == null)
-            {
-                Trace.TraceInformation("[{0}]: Found cached copy of '{1}' in {2}.", GetType().Name, name, cachedFile);
+            //if (File.Exists(cachedFile) && options.OutputPath == null)
+            //{
+            //    Trace.TraceInformation("[{0}]: Found cached copy of '{1}' in {2}.", GetType().Name, name, cachedFile);
 
-                var cachedAssembly = Assembly.LoadFile(Path.GetFullPath(cachedFile));
+            //    var cachedAssembly = Assembly.LoadFile(Path.GetFullPath(cachedFile));
 
-                MetadataReference cachedReference = new MetadataFileReference(cachedFile);
+            //    MetadataReference cachedReference = new MetadataFileReference(cachedFile);
 
-                _compiledAssemblies[name] = Tuple.Create(cachedAssembly, cachedReference);
+            //    _compiledAssemblies[name] = Tuple.Create(cachedAssembly, cachedReference);
 
-                return cachedAssembly;
-            }
+            //    return cachedAssembly;
+            //}
 
-            references.AddRange(_resolver.GetDefaultReferences(project.TargetFramework));
+            references.AddRange(_resolver.GetDefaultReferences(options.TargetFramework));
 
             Trace.TraceInformation("[{0}]: Compiling '{1}'", GetType().Name, name);
             var sw = Stopwatch.StartNew();
@@ -148,12 +143,14 @@ namespace Microsoft.Net.Runtime.Loader.Roslyn
 
                 if (options.OutputPath != null)
                 {
-                    System.IO.Directory.CreateDirectory(options.OutputPath);
+                    var targetFrameworkFolder = VersionUtility.GetShortFrameworkName(options.TargetFramework);
+                    string outputPath = Path.Combine(options.OutputPath, targetFrameworkFolder);
+                    System.IO.Directory.CreateDirectory(outputPath);
 
-                    string assemblyPath = Path.Combine(options.OutputPath, name + ".dll");
-                    string pdbPath = Path.Combine(options.OutputPath, name + ".pdb");
-                    string nupkg = Path.Combine(options.OutputPath, project.Name + "." + project.Version + ".nupkg");
-                    string symbolsNupkg = Path.Combine(options.OutputPath, project.Name + "." + project.Version + ".symbols.nupkg");
+                    string assemblyPath = Path.Combine(outputPath, name + ".dll");
+                    string pdbPath = Path.Combine(outputPath, name + ".pdb");
+                    string nupkg = Path.Combine(outputPath, project.Name + "." + project.Version + ".nupkg");
+                    string symbolsNupkg = Path.Combine(outputPath, project.Name + "." + project.Version + ".symbols.nupkg");
 
                     if (options.CleanArtifacts != null)
                     {
@@ -176,8 +173,8 @@ namespace Microsoft.Net.Runtime.Loader.Roslyn
                     }
 
                     // Build packages
-                    BuildPackage(project, assemblyPath, nupkg);
-                    BuildSymbolsPackage(project, assemblyPath, pdbPath, symbolsNupkg, sourceFiles);
+                    BuildPackage(project, assemblyPath, nupkg, options.TargetFramework);
+                    BuildSymbolsPackage(project, assemblyPath, pdbPath, symbolsNupkg, sourceFiles, options.TargetFramework);
 
                     // TODO: Do we want to build symbol packages as well
 
@@ -257,7 +254,7 @@ namespace Microsoft.Net.Runtime.Loader.Roslyn
             }
         }
 
-        private MetadataReference ResolveDependency(PackageReference dependency)
+        private MetadataReference ResolveDependency(PackageReference dependency, LoadOptions options)
         {
             string assemblyLocation;
             if (GlobalAssemblyCache.ResolvePartialName(dependency.Name, out assemblyLocation) != null)
@@ -265,7 +262,11 @@ namespace Microsoft.Net.Runtime.Loader.Roslyn
                 return new MetadataFileReference(assemblyLocation);
             }
 
-            var loadedAssembly = Assembly.Load(dependency.Name);
+            var loadedAssembly = _dependencyLoader.Load(new LoadOptions
+            {
+                AssemblyName = dependency.Name,
+                TargetFramework = options.TargetFramework
+            });
 
             Tuple<Assembly, MetadataReference> cached;
             if (_compiledAssemblies.TryGetValue(dependency.Name, out cached))
@@ -276,12 +277,12 @@ namespace Microsoft.Net.Runtime.Loader.Roslyn
             return new MetadataFileReference(loadedAssembly.Location);
         }
 
-        private void BuildSymbolsPackage(Project project, string assemblyPath, string pdbPath, string symbolsNupkg, List<string> sourceFiles)
+        private void BuildSymbolsPackage(Project project, string assemblyPath, string pdbPath, string symbolsNupkg, List<string> sourceFiles, FrameworkName targetFramework)
         {
             // TODO: Build symbols packages
         }
 
-        private void BuildPackage(Project project, string assemblyPath, string nupkg)
+        private void BuildPackage(Project project, string assemblyPath, string nupkg, FrameworkName targetFramework)
         {
             // TODO: Support nuspecs in the project folder
 
@@ -298,7 +299,7 @@ namespace Microsoft.Net.Runtime.Loader.Roslyn
             builder.Id = project.Name;
             builder.Version = project.Version;
             builder.Title = project.Name;
-            var framework = project.TargetFramework;
+            var framework = targetFramework;
             var dependencies = new List<PackageDependency>();
 
             var frameworkReferences = new HashSet<string>(_resolver.GetFrameworkReferences(framework), StringComparer.OrdinalIgnoreCase);
@@ -337,7 +338,7 @@ namespace Microsoft.Net.Runtime.Loader.Roslyn
 
             var file = new PhysicalPackageFile();
             file.SourcePath = assemblyPath;
-            var folder = VersionUtility.GetShortFrameworkName(project.TargetFramework);
+            var folder = VersionUtility.GetShortFrameworkName(framework);
             file.TargetPath = "lib\\" + folder + "\\" + project.Name + ".dll";
             builder.Files.Add(file);
 

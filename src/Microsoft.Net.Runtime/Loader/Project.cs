@@ -24,8 +24,6 @@ namespace Microsoft.Net.Runtime.Loader
 
         public SemanticVersion Version { get; private set; }
 
-        public FrameworkName TargetFramework { get; private set; }
-
         public IList<PackageReference> Dependencies { get; private set; }
 
         public CompilationOptions CompilationOptions { get; private set; }
@@ -110,7 +108,6 @@ namespace Microsoft.Net.Runtime.Loader
             var version = settings["version"];
             var authors = settings["authors"];
             var compilationOptions = settings["compilationOptions"];
-            string framework = GetValue<string>(settings, "targetFramework") ?? "net45";
             project.Name = GetValue<string>(settings, "name");
 
             if (String.IsNullOrEmpty(project.Name))
@@ -120,7 +117,6 @@ namespace Microsoft.Net.Runtime.Loader
             }
 
             project.Version = version == null ? new SemanticVersion("1.0.0") : new SemanticVersion(version.Value<string>());
-            project.TargetFramework = VersionUtility.ParseFrameworkName(framework);
             project.Description = GetValue<string>(settings, "description");
             project.Authors = authors == null ? new string[] { } : authors.ToObject<string[]>();
             project.Dependencies = new List<PackageReference>();

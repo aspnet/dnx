@@ -4,12 +4,13 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.Versioning;
 using Microsoft.Net.Runtime.FileSystem;
 using Microsoft.Net.Runtime.Loader;
-using Microsoft.Net.Runtime.Loader.Directory;
 using Microsoft.Net.Runtime.Loader.MSBuildProject;
 using Microsoft.Net.Runtime.Loader.NuGet;
 using Microsoft.Net.Runtime.Loader.Roslyn;
+using NuGet;
 
 namespace Microsoft.Net.Runtime
 {
@@ -20,8 +21,9 @@ namespace Microsoft.Net.Runtime
         private readonly string _projectDir;
         private readonly Dictionary<string, object> _hostServices = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
         private Assembly _entryPoint;
+        private readonly FrameworkName _targetFramework;
 
-        public DefaultHost(string projectDir, bool watchFiles = true)
+        public DefaultHost(string projectDir, string targetFramework = "net45", bool watchFiles = true)
         {
             if (File.Exists(projectDir))
             {
@@ -29,6 +31,8 @@ namespace Microsoft.Net.Runtime
             }
 
             _projectDir = projectDir.TrimEnd(Path.DirectorySeparatorChar);
+
+            _targetFramework = VersionUtility.ParseFrameworkName(targetFramework);
 
             Initialize(watchFiles);
         }
@@ -71,9 +75,13 @@ namespace Microsoft.Net.Runtime
 
             var sw = Stopwatch.StartNew();
 
-            _loader.Walk(project.Name, project.Version, project.TargetFramework);
+            _loader.Walk(project.Name, project.Version, _targetFramework);
 
-            _entryPoint = Assembly.Load(project.Name);
+            _entryPoint = _loader.Load(new LoadOptions
+            {
+                AssemblyName = project.Name,
+                TargetFramework = _targetFramework
+            });
 
             sw.Stop();
 
@@ -95,12 +103,13 @@ namespace Microsoft.Net.Runtime
 
             var sw = Stopwatch.StartNew();
 
-            _loader.Walk(project.Name, project.Version, project.TargetFramework);
+            _loader.Walk(project.Name, project.Version, _targetFramework);
 
             var asm = _loader.Load(new LoadOptions
             {
                 AssemblyName = project.Name,
-                OutputPath = outputPath
+                OutputPath = outputPath,
+                TargetFramework = _targetFramework
             });
 
             if (asm == null)
@@ -128,13 +137,14 @@ namespace Microsoft.Net.Runtime
 
             string outputPath = Path.Combine(_projectDir, "bin");
 
-            _loader.Walk(project.Name, project.Version, project.TargetFramework);
+            _loader.Walk(project.Name, project.Version, _targetFramework);
 
             var options = new LoadOptions
             {
                 AssemblyName = project.Name,
                 OutputPath = outputPath,
-                CleanArtifacts = new List<string>()
+                CleanArtifacts = new List<string>(),
+                TargetFramework = _targetFramework
             };
 
             _loader.Load(options);
@@ -194,20 +204,7 @@ namespace Microsoft.Net.Runtime
             }
 
             var resolver = new FrameworkReferenceResolver();
-            var roslynLoader = new RoslynAssemblyLoader(rootDirectory, _watcher, resolver);
-
-            var resolved = new HashSet<string>();
-
-            roslynLoader.OnResolveTargetFramework = frameworkName =>
-            {
-                var path = resolver.GetRuntimeFacadePath(frameworkName);
-
-                if (path != null && resolved.Add(path))
-                {
-                    _loader.Add(new DirectoryAssemblyLoader(path));
-                }
-            };
-
+            var roslynLoader = new RoslynAssemblyLoader(rootDirectory, _watcher, resolver, _loader);
             _loader.Add(roslynLoader);
             _loader.Add(new MSBuildProjectAssemblyLoader(rootDirectory, _watcher));
             _loader.Add(new NuGetAssemblyLoader(_projectDir));
@@ -240,7 +237,7 @@ namespace Microsoft.Net.Runtime
 
             if (di.Parent != null)
             {
-                if(di.EnumerateFiles("*.sln").Any() ||
+                if (di.EnumerateFiles("*.sln").Any() ||
                    di.EnumerateDirectories("packages").Any() ||
                    di.EnumerateDirectories(".git").Any())
                 {
