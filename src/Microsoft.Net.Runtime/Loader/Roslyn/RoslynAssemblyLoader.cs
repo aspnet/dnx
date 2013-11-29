@@ -147,7 +147,11 @@ namespace Microsoft.Net.Runtime.Loader.Roslyn
                 if (options.OutputPath != null)
                 {
                     string outputPath = options.OutputPath;
-                    System.IO.Directory.CreateDirectory(outputPath);
+
+                    if (!options.Clean)
+                    {
+                        System.IO.Directory.CreateDirectory(outputPath);
+                    }
 
                     string assemblyPath = Path.Combine(outputPath, name + ".dll");
                     string pdbPath = Path.Combine(outputPath, name + ".pdb");

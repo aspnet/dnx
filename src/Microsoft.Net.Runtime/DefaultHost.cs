@@ -170,6 +170,27 @@ namespace Microsoft.Net.Runtime
                 Trace.TraceInformation("Cleaning {0}", nupkg);
                 File.Delete(nupkg);
             }
+
+            var di = new DirectoryInfo(outputPath);
+            DeleteEmptyFolders(di);
+        }
+
+        private static void DeleteEmptyFolders(DirectoryInfo di)
+        {
+            if (!di.Exists)
+            {
+                return;
+            }
+
+            foreach (var d in di.EnumerateDirectories())
+            {
+                DeleteEmptyFolders(d);
+            }
+
+            if (!di.EnumerateFiles().Any())
+            {
+                di.Delete();
+            }
         }
 
         public Assembly Load(string name)
