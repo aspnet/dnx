@@ -99,30 +99,42 @@ namespace Microsoft.Net.Runtime
                 return;
             }
 
-            string outputPath = Path.Combine(_projectDir, "bin");
-
             var sw = Stopwatch.StartNew();
 
-            _loader.Walk(project.Name, project.Version, _targetFramework);
+            string outputPath = Path.Combine(_projectDir, "bin");
 
-            var asm = _loader.Load(new LoadOptions
-            {
-                AssemblyName = project.Name,
-                OutputPath = outputPath,
-                TargetFramework = _targetFramework
-            });
+            var configurations = new HashSet<FrameworkName>(
+                project.GetTargetFrameworkConfigurations()
+                       .Select(c => c.FrameworkName));
+            configurations.Add(_targetFramework);
 
-            if (asm == null)
+            // Build all target frameworks a project supports
+            foreach (var targetFramework in configurations)
             {
-                Trace.TraceInformation("Unable to compile '{0}'. Try placing a {1} file in the directory.", project.Name, Project.ProjectFileName);
-                return;
+                Build(project, outputPath, targetFramework);
             }
-
-            RunStaticMethod("Compiler", "Compile", outputPath);
 
             sw.Stop();
 
             Trace.TraceInformation("Compile took {0}ms", sw.ElapsedMilliseconds);
+        }
+
+        private void Build(Project project, string outputPath, FrameworkName targetFramework)
+        {
+            _loader.Walk(project.Name, project.Version, targetFramework);
+
+            var targetFrameworkFolder = VersionUtility.GetShortFrameworkName(targetFramework);
+            string targetPath = Path.Combine(outputPath, targetFrameworkFolder);
+
+            var asm = _loader.Load(new LoadOptions
+            {
+                AssemblyName = project.Name,
+                OutputPath = targetPath,
+                TargetFramework = targetFramework
+            });
+
+            // REVIEW: This might not work so well when building for multiple frameworks
+            RunStaticMethod("Compiler", "Compile", targetPath);
         }
 
 
@@ -137,21 +149,37 @@ namespace Microsoft.Net.Runtime
 
             string outputPath = Path.Combine(_projectDir, "bin");
 
-            _loader.Walk(project.Name, project.Version, _targetFramework);
+            var configurations = new HashSet<FrameworkName>(
+                project.GetTargetFrameworkConfigurations()
+                       .Select(c => c.FrameworkName));
+            configurations.Add(_targetFramework);
+
+            foreach (var targetFramework in configurations)
+            {
+                Clean(project, outputPath, targetFramework);
+            }
+        }
+
+        private void Clean(Project project, string outputPath, FrameworkName targetFramework)
+        {
+            _loader.Walk(project.Name, project.Version, targetFramework);
+            
+            var targetFrameworkFolder = VersionUtility.GetShortFrameworkName(targetFramework);
+            string targetPath = Path.Combine(outputPath, targetFrameworkFolder);
 
             var options = new LoadOptions
             {
                 AssemblyName = project.Name,
-                OutputPath = outputPath,
+                OutputPath = targetPath,
                 CleanArtifacts = new List<string>(),
-                TargetFramework = _targetFramework
+                TargetFramework = targetFramework
             };
 
             _loader.Load(options);
 
             if (options.CleanArtifacts.Count > 0)
             {
-                Trace.TraceInformation("Cleaning generated artifacts");
+                Trace.TraceInformation("Cleaning generated artifacts for {0}", targetFramework);
 
                 foreach (var path in options.CleanArtifacts)
                 {
@@ -164,7 +192,8 @@ namespace Microsoft.Net.Runtime
                 }
             }
 
-            RunStaticMethod("Compiler", "Clean", outputPath);
+            // REVIEW: This might not work so well when building for multiple frameworks
+            RunStaticMethod("Compiler", "Clean", targetPath);
         }
 
         private static void RunStaticMethod(string typeName, string methodName, params object[] args)

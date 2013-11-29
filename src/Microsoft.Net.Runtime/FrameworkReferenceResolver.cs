@@ -45,7 +45,7 @@ namespace Microsoft.Net.Runtime
                 return frameworkInfo.Assemblies.Select(a => new MetadataFileReference(a.Path));
             }
 
-            return Enumerable.Empty<MetadataReference>();
+            throw new InvalidOperationException(String.Format("Unknown target framework '{0}'.", frameworkName));
         }
 
         public string GetRuntimeFacadePath(FrameworkName frameworkName)

@@ -14,6 +14,12 @@ namespace Microsoft.Net.Runtime.Loader
     {
         public const string ProjectFileName = "project.json";
 
+        private Dictionary<FrameworkName, TargetFrameworkConfiguration> _configurations = new Dictionary<FrameworkName, TargetFrameworkConfiguration>();
+
+        private TargetFrameworkConfiguration _defaultTargetFrameworkConfiguration;
+
+        private CompilationOptions _defaultCompilationOptions;
+
         public string ProjectFilePath { get; private set; }
 
         public string Name { get; private set; }
@@ -25,10 +31,6 @@ namespace Microsoft.Net.Runtime.Loader
         public SemanticVersion Version { get; private set; }
 
         public IList<PackageReference> Dependencies { get; private set; }
-
-        public CompilationOptions CompilationOptions { get; private set; }
-
-        public IEnumerable<string> Defines { get; private set; }
 
         public IEnumerable<string> SourceFiles
         {
@@ -48,6 +50,11 @@ namespace Microsoft.Net.Runtime.Loader
 
                 return files.Concat(System.IO.Directory.EnumerateFiles(path, "*.cs", SearchOption.AllDirectories));
             }
+        }
+
+        public IEnumerable<TargetFrameworkConfiguration> GetTargetFrameworkConfigurations()
+        {
+            return _configurations.Values;
         }
 
         public static bool HasProjectFile(string path)
@@ -107,7 +114,6 @@ namespace Microsoft.Net.Runtime.Loader
             var settings = JObject.Parse(json);
             var version = settings["version"];
             var authors = settings["authors"];
-            var compilationOptions = settings["compilationOptions"];
             project.Name = GetValue<string>(settings, "name");
 
             if (String.IsNullOrEmpty(project.Name))
@@ -121,8 +127,8 @@ namespace Microsoft.Net.Runtime.Loader
             project.Authors = authors == null ? new string[] { } : authors.ToObject<string[]>();
             project.Dependencies = new List<PackageReference>();
             project.ProjectFilePath = projectPath;
-            project.CompilationOptions = GetCompilationOptions(compilationOptions);
-            project.Defines = ConvertValue<string[]>(compilationOptions, "define") ?? new string[] { };
+
+            project.BuildTargetFrameworkConfigurations(settings);
 
             var dependencies = settings["dependencies"] as JArray;
             if (dependencies != null)
@@ -155,6 +161,41 @@ namespace Microsoft.Net.Runtime.Loader
             }
 
             return true;
+        }
+
+        private void BuildTargetFrameworkConfigurations(JObject settings)
+        {
+            // Get the base configuration
+            var compilationOptions = settings["compilationOptions"];
+
+            var options = GetCompilationOptions(compilationOptions);
+
+            _defaultTargetFrameworkConfiguration = new TargetFrameworkConfiguration
+            {
+                CompilationOptions = options,
+                Defines = ConvertValue<string[]>(compilationOptions, "define") ?? new string[] { }
+            };
+
+            // Parse the specific configuration section
+            var configurations = settings["configurations"] as JArray;
+            if (configurations != null)
+            {
+                foreach (JObject configuration in (IEnumerable<JToken>)configurations)
+                {
+                    var config = new TargetFrameworkConfiguration();
+
+                    foreach (var prop in configuration)
+                    {
+                        config.FrameworkName = VersionUtility.ParseFrameworkName(prop.Key);
+                        var specificCompilationOptions = settings["compilationOptions"];
+
+                        config.CompilationOptions = GetCompilationOptions(specificCompilationOptions);
+                        config.Defines = ConvertValue<string[]>(specificCompilationOptions, "define") ?? new string[] { };
+
+                        _configurations[config.FrameworkName] = config;
+                    }
+                }
+            }
         }
 
         private static CompilationOptions GetCompilationOptions(JToken compilationOptions)
@@ -221,5 +262,25 @@ namespace Microsoft.Net.Runtime.Loader
         {
             return path.Substring(Path.GetDirectoryName(path).Length).Trim(Path.DirectorySeparatorChar);
         }
+
+        public TargetFrameworkConfiguration GetTargetFrameworkConfiguration(FrameworkName frameworkName)
+        {
+            TargetFrameworkConfiguration config;
+            if (_configurations.TryGetValue(frameworkName, out config))
+            {
+                return config;
+            }
+
+            return _defaultTargetFrameworkConfiguration;
+        }
+    }
+
+    public class TargetFrameworkConfiguration
+    {
+        public FrameworkName FrameworkName { get; set; }
+
+        public CompilationOptions CompilationOptions { get; set; }
+
+        public IEnumerable<string> Defines { get; set; }
     }
 }

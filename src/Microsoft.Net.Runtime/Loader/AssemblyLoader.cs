@@ -26,17 +26,18 @@ namespace Microsoft.Net.Runtime.Loader
         {
             var sw = new Stopwatch();
             sw.Start();
-            Trace.TraceInformation("Loading {0}", options.AssemblyName);
+            Trace.TraceInformation("Loading {0} for '{1}'.", options.AssemblyName, options.TargetFramework);
+            var key = options.AssemblyName + options.TargetFramework;
 
             Assembly asm;
 
-            if (!_cache.TryGetValue(options.AssemblyName, out asm))
+            if (!_cache.TryGetValue(key, out asm))
             {
                 asm = LoadImpl(options, sw);
 
                 if (asm != null)
                 {
-                    _cache.TryAdd(options.AssemblyName, asm);
+                    _cache.TryAdd(key, asm);
                 }
             }
             else

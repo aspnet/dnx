@@ -54,6 +54,8 @@ namespace Microsoft.Net.Runtime.Loader.Roslyn
                 return null;
             }
 
+            TargetFrameworkConfiguration configurationSettings = project.GetTargetFrameworkConfiguration(options.TargetFramework);
+
             Trace.TraceInformation("[{0}]: Found project '{1}' framework={2}", GetType().Name, project.Name, options.TargetFramework);
 
             _watcher.WatchFile(project.ProjectFilePath);
@@ -109,7 +111,7 @@ namespace Microsoft.Net.Runtime.Loader.Roslyn
 
                 var sourceFiles = project.SourceFiles.ToList();
 
-                var parseOptions = new CSharpParseOptions(preprocessorSymbols: project.Defines.AsImmutable());
+                var parseOptions = new CSharpParseOptions(preprocessorSymbols: configurationSettings.Defines.AsImmutable());
 
                 foreach (var sourcePath in sourceFiles)
                 {
@@ -136,7 +138,7 @@ namespace Microsoft.Net.Runtime.Loader.Roslyn
                 // Create a compilation
                 Compilation compilation = CSharpCompilation.Create(
                     name,
-                    project.CompilationOptions,
+                    configurationSettings.CompilationOptions,
                     syntaxTrees: trees,
                     references: references);
 
@@ -144,7 +146,7 @@ namespace Microsoft.Net.Runtime.Loader.Roslyn
 
                 if (options.OutputPath != null)
                 {
-                    string outputPath = Path.Combine(options.OutputPath, targetFrameworkFolder);
+                    string outputPath = options.OutputPath;
                     System.IO.Directory.CreateDirectory(outputPath);
 
                     string assemblyPath = Path.Combine(outputPath, name + ".dll");
