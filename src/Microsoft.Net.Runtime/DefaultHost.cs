@@ -102,41 +102,46 @@ namespace Microsoft.Net.Runtime
             var sw = Stopwatch.StartNew();
 
             string outputPath = Path.Combine(_projectDir, "bin");
+            string nupkg = GetPackagePath(project, outputPath);
 
             var configurations = new HashSet<FrameworkName>(
                 project.GetTargetFrameworkConfigurations()
                        .Select(c => c.FrameworkName));
             configurations.Add(_targetFramework);
 
+            var builder = new PackageBuilder();
+
+            // TODO: Support nuspecs in the project folder
+            builder.Authors.AddRange(project.Authors);
+
+            if (builder.Authors.Count == 0)
+            {
+                // Temporary
+                builder.Authors.Add("K");
+            }
+
+            builder.Description = project.Description ?? project.Name;
+            builder.Id = project.Name;
+            builder.Version = project.Version;
+            builder.Title = project.Name;
+
             // Build all target frameworks a project supports
             foreach (var targetFramework in configurations)
             {
-                Build(project, outputPath, targetFramework);
+                Build(project, outputPath, targetFramework, builder);
             }
+
+            using (var fs = File.Create(nupkg))
+            {
+                builder.Save(fs);
+            }
+
+            Trace.TraceInformation("{0} -> {1}", project.Name, nupkg);
 
             sw.Stop();
 
             Trace.TraceInformation("Compile took {0}ms", sw.ElapsedMilliseconds);
         }
-
-        private void Build(Project project, string outputPath, FrameworkName targetFramework)
-        {
-            _loader.Walk(project.Name, project.Version, targetFramework);
-
-            var targetFrameworkFolder = VersionUtility.GetShortFrameworkName(targetFramework);
-            string targetPath = Path.Combine(outputPath, targetFrameworkFolder);
-
-            var asm = _loader.Load(new LoadOptions
-            {
-                AssemblyName = project.Name,
-                OutputPath = targetPath,
-                TargetFramework = targetFramework
-            });
-
-            // REVIEW: This might not work so well when building for multiple frameworks
-            RunStaticMethod("Compiler", "Compile", targetPath);
-        }
-
 
         public void Clean()
         {
@@ -148,6 +153,7 @@ namespace Microsoft.Net.Runtime
             }
 
             string outputPath = Path.Combine(_projectDir, "bin");
+            string nupkg = GetPackagePath(project, outputPath);
 
             var configurations = new HashSet<FrameworkName>(
                 project.GetTargetFrameworkConfigurations()
@@ -158,12 +164,32 @@ namespace Microsoft.Net.Runtime
             {
                 Clean(project, outputPath, targetFramework);
             }
+
+            if (File.Exists(nupkg))
+            {
+                Trace.TraceInformation("Cleaning {0}", nupkg);
+                File.Delete(nupkg);
+            }
         }
 
-        private void Clean(Project project, string outputPath, FrameworkName targetFramework)
+        public Assembly Load(string name)
+        {
+            return _loader.Load(new LoadOptions
+            {
+                AssemblyName = name
+            });
+        }
+
+        public void Dispose()
+        {
+            _watcher.OnChanged -= OnWatcherChanged;
+            _watcher.Dispose();
+        }
+
+        private void Build(Project project, string outputPath, FrameworkName targetFramework, PackageBuilder builder)
         {
             _loader.Walk(project.Name, project.Version, targetFramework);
-            
+
             var targetFrameworkFolder = VersionUtility.GetShortFrameworkName(targetFramework);
             string targetPath = Path.Combine(outputPath, targetFrameworkFolder);
 
@@ -171,17 +197,40 @@ namespace Microsoft.Net.Runtime
             {
                 AssemblyName = project.Name,
                 OutputPath = targetPath,
-                CleanArtifacts = new List<string>(),
-                TargetFramework = targetFramework
+                Artifacts = new List<string>(),
+                TargetFramework = targetFramework,
+                PackageBuilder = builder,
+            };
+
+            var asm = _loader.Load(options);
+
+            // REVIEW: This might not work so well when building for multiple frameworks
+            RunStaticMethod("Compiler", "Compile", targetPath);
+        }
+
+        private void Clean(Project project, string outputPath, FrameworkName targetFramework)
+        {
+            _loader.Walk(project.Name, project.Version, targetFramework);
+
+            var targetFrameworkFolder = VersionUtility.GetShortFrameworkName(targetFramework);
+            string targetPath = Path.Combine(outputPath, targetFrameworkFolder);
+
+            var options = new LoadOptions
+            {
+                AssemblyName = project.Name,
+                OutputPath = targetPath,
+                Artifacts = new List<string>(),
+                TargetFramework = targetFramework,
+                Clean = true
             };
 
             _loader.Load(options);
 
-            if (options.CleanArtifacts.Count > 0)
+            if (options.Artifacts.Count > 0)
             {
                 Trace.TraceInformation("Cleaning generated artifacts for {0}", targetFramework);
 
-                foreach (var path in options.CleanArtifacts)
+                foreach (var path in options.Artifacts)
                 {
                     if (File.Exists(path))
                     {
@@ -246,20 +295,6 @@ namespace Microsoft.Net.Runtime
             });
         }
 
-        public Assembly Load(string name)
-        {
-            return _loader.Load(new LoadOptions
-            {
-                AssemblyName = name
-            });
-        }
-
-        public void Dispose()
-        {
-            _watcher.OnChanged -= OnWatcherChanged;
-            _watcher.Dispose();
-        }
-
         private string ResolveRootDirectory()
         {
             var di = new DirectoryInfo(_projectDir);
@@ -277,6 +312,11 @@ namespace Microsoft.Net.Runtime
             }
 
             return Path.GetDirectoryName(_projectDir);
+        }
+
+        private static string GetPackagePath(Project project, string outputPath)
+        {
+            return Path.Combine(outputPath, project.Name + "." + project.Version + ".nupkg");
         }
     }
 }

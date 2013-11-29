@@ -52,7 +52,7 @@ namespace Microsoft.Net.Runtime.Loader
         public void Walk(string name, SemanticVersion version, FrameworkName frameworkName)
         {
             var sw = Stopwatch.StartNew();
-            Trace.TraceInformation("Walking dependency graph for '{0}'.", name);
+            Trace.TraceInformation("Walking dependency graph for '{0} {1}'.", name, frameworkName);
 
             var context = new WalkContext();
 

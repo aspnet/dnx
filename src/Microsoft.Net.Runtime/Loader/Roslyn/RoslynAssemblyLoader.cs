@@ -151,18 +151,17 @@ namespace Microsoft.Net.Runtime.Loader.Roslyn
 
                     string assemblyPath = Path.Combine(outputPath, name + ".dll");
                     string pdbPath = Path.Combine(outputPath, name + ".pdb");
-                    string nupkg = Path.Combine(outputPath, project.Name + "." + project.Version + ".nupkg");
-                    string symbolsNupkg = Path.Combine(outputPath, project.Name + "." + project.Version + ".symbols.nupkg");
 
-                    if (options.CleanArtifacts != null)
+                    if (options.Artifacts != null)
                     {
-                        options.CleanArtifacts.Add(assemblyPath);
-                        options.CleanArtifacts.Add(pdbPath);
-                        options.CleanArtifacts.Add(nupkg);
-                        options.CleanArtifacts.Add(symbolsNupkg);
+                        options.Artifacts.Add(assemblyPath);
+                        options.Artifacts.Add(pdbPath);
 
-                        // Compile in memory to avoid locking the file
-                        return CompileToMemoryStream(name, compilation, resources);
+                        if (options.Clean)
+                        {
+                            // Compile in memory to avoid locking the file
+                            return CompileToMemoryStream(name, compilation, resources, cache: false);
+                        }
                     }
 
                     var result = compilation.Emit(assemblyPath, pdbPath, manifestResources: resources);
@@ -175,13 +174,10 @@ namespace Microsoft.Net.Runtime.Loader.Roslyn
                     }
 
                     // Build packages
-                    BuildPackage(project, assemblyPath, nupkg, options.TargetFramework);
-                    BuildSymbolsPackage(project, assemblyPath, pdbPath, symbolsNupkg, sourceFiles, options.TargetFramework);
-
-                    // TODO: Do we want to build symbol packages as well
+                    BuildPackage(project, assemblyPath, options.PackageBuilder, options.TargetFramework);
+                    BuildSymbolsPackage(project, assemblyPath, pdbPath, options.SymbolPackageBuilder, sourceFiles, options.TargetFramework);
 
                     Trace.TraceInformation("{0} -> {1}", name, assemblyPath);
-                    Trace.TraceInformation("{0} -> {1}", name, nupkg);
 
                     return Assembly.LoadFile(assemblyPath);
                 }
@@ -279,28 +275,13 @@ namespace Microsoft.Net.Runtime.Loader.Roslyn
             return new MetadataFileReference(loadedAssembly.Location);
         }
 
-        private void BuildSymbolsPackage(Project project, string assemblyPath, string pdbPath, string symbolsNupkg, List<string> sourceFiles, FrameworkName targetFramework)
+        private void BuildSymbolsPackage(Project project, string assemblyPath, string pdbPath, PackageBuilder builder, List<string> sourceFiles, FrameworkName targetFramework)
         {
             // TODO: Build symbols packages
         }
 
-        private void BuildPackage(Project project, string assemblyPath, string nupkg, FrameworkName targetFramework)
+        private void BuildPackage(Project project, string assemblyPath, PackageBuilder builder, FrameworkName targetFramework)
         {
-            // TODO: Support nuspecs in the project folder
-
-            var builder = new PackageBuilder();
-            builder.Authors.AddRange(project.Authors);
-
-            if (builder.Authors.Count == 0)
-            {
-                // Temporary
-                builder.Authors.Add("K");
-            }
-
-            builder.Description = project.Description ?? project.Name;
-            builder.Id = project.Name;
-            builder.Version = project.Version;
-            builder.Title = project.Name;
             var framework = targetFramework;
             var dependencies = new List<PackageDependency>();
 
@@ -333,9 +314,13 @@ namespace Microsoft.Net.Runtime.Loader.Roslyn
                 }
             }
 
-            foreach (var a in frameworkAssemblies)
+            // Only do this on full desktop
+            if (targetFramework.Identifier == VersionUtility.DefaultTargetFramework.Identifier)
             {
-                builder.FrameworkReferences.Add(new FrameworkAssemblyReference(a));
+                foreach (var a in frameworkAssemblies)
+                {
+                    builder.FrameworkReferences.Add(new FrameworkAssemblyReference(a));
+                }
             }
 
             var file = new PhysicalPackageFile();
@@ -343,14 +328,9 @@ namespace Microsoft.Net.Runtime.Loader.Roslyn
             var folder = VersionUtility.GetShortFrameworkName(framework);
             file.TargetPath = "lib\\" + folder + "\\" + project.Name + ".dll";
             builder.Files.Add(file);
-
-            using (var pkg = File.Create(nupkg))
-            {
-                builder.Save(pkg);
-            }
         }
 
-        private Assembly CompileToMemoryStream(string name, Compilation compilation, IEnumerable<ResourceDescription> resources)
+        private Assembly CompileToMemoryStream(string name, Compilation compilation, IEnumerable<ResourceDescription> resources, bool cache = true)
         {
             // Put symbols in a .symbols path
             var pdbPath = Path.Combine(_symbolsPath, name + ".pdb");
@@ -376,7 +356,10 @@ namespace Microsoft.Net.Runtime.Loader.Roslyn
 
                 var compiled = Tuple.Create(assembly, reference);
 
-                _compiledAssemblies[name] = compiled;
+                if (cache)
+                {
+                    _compiledAssemblies[name] = compiled;
+                }
 
                 return assembly;
             }
