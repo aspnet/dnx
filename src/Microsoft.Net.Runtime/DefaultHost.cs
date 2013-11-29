@@ -197,7 +197,8 @@ namespace Microsoft.Net.Runtime
         {
             return _loader.Load(new LoadOptions
             {
-                AssemblyName = name
+                AssemblyName = name,
+                TargetFramework = _targetFramework
             });
         }
 

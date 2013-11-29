@@ -18,8 +18,6 @@ namespace Microsoft.Net.Runtime.Loader
 
         private TargetFrameworkConfiguration _defaultTargetFrameworkConfiguration;
 
-        private CompilationOptions _defaultCompilationOptions;
-
         public string ProjectFilePath { get; private set; }
 
         public string Name { get; private set; }
