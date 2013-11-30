@@ -276,6 +276,11 @@ namespace Microsoft.Net.Runtime.Loader.Roslyn
                 return cached.Item2;
             }
 
+            if(loadedAssembly == null)
+            {
+                throw new InvalidOperationException(String.Format("Unable to resolve dependency '{0}'.", dependency));
+            }
+
             return new MetadataFileReference(loadedAssembly.Location);
         }
 
