@@ -1,4 +1,4 @@
-param($configuration = "Debug", $includeSymbols = $false)
+param($configuration = "Debug", $includeSymbols = $false, $runtimePath)
 
 $sdkRoot = "artifacts\sdk"
 
@@ -45,6 +45,12 @@ if(!$includeSymbols)
     # Remove the stuff we don't need
     ls -r $sdkRoot\tools\*obj | rm -r
     ls -r $sdkRoot\tools\*\bin\*\*.xml | rm
+}
+
+# Copy the runtime
+if($runtimePath) 
+{
+    cp -r $runtimePath\* $sdkRoot
 }
 
 # NuGet pack
