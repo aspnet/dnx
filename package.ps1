@@ -1,3 +1,5 @@
+param($raw)
+
 .\build.ps1
 
 mkdir artifacts -force | Out-Null
@@ -24,6 +26,15 @@ Set-Content artifacts\tools\k.cmd $content
 mkdir artifacts\tools\bin -force | Out-Null
 cp bin\Debug\* artifacts\tools\bin\
 
+if(!$raw)
+{
+    # Remove the stuff we don't need
+    ls artifacts\tools\bin\*.pdb | rm
+    ls artifacts\tools\bin\*.ilk | rm
+    ls artifacts\tools\bin\*.lib | rm
+    ls artifacts\tools\bin\*.exp | rm
+}
+
 # Now copy source
 cp -r src\Microsoft.Net.ApplicationHost artifacts\tools -Force
 cp -r src\Microsoft.Net.Project artifacts\tools -Force
@@ -31,6 +42,9 @@ cp -r src\Microsoft.Net.OwinHost artifacts\tools -Force
 cp -r src\Microsoft.Net.Launch artifacts\tools -Force
 cp -r src\Microsoft.Net.Runtime artifacts\tools -Force
 
-# Remove the stuff we don't need
-ls -r artifacts\tools\*obj | rm -r
-ls -r artifacts\tools\*\bin\*\*.xml | rm
+if(!$raw)
+{
+    # Remove the stuff we don't need
+    ls -r artifacts\tools\*obj | rm -r
+    ls -r artifacts\tools\*\bin\*\*.xml | rm
+}
