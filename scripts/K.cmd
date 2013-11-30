@@ -9,5 +9,5 @@
 IF EXIST %~dp0k-%1.cmd (
   %~dp0k-%1.cmd %2 %3 %4 %5 %6 %7 %8 %9 
 ) ELSE (
-  %~dp0k-run %~dp0..\src\Microsoft.Net.Project %*
+  CALL %~dp0KLR %~dp0..\src\Microsoft.Net.Project\bin\Debug\Microsoft.Net.Project.dll %*
 )

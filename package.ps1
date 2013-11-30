@@ -20,10 +20,6 @@ foreach($file in $scripts)
    Set-Content $file.FullName $content
 }
 
-# Manually fixup k.cmd to use compiled version of MS.Net.Project
-$content = cat $sdkRoot\tools\k.cmd | %{ $_.Replace("%~dp0k-run %~dp0Microsoft.Net.Project %*", "CALL %~dp0KLR %~dp0Microsoft.Net.Project\bin\$configuration\Microsoft.Net.Project.dll %*") }
-Set-Content $sdkRoot\tools\k.cmd $content
-
 # Move the bin folder in here
 mkdir $sdkRoot\tools\bin -force | Out-Null
 cp bin\$configuration\* $sdkRoot\tools\bin\
