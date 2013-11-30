@@ -30,7 +30,7 @@ namespace Microsoft.Net.Runtime
                 projectDir = Path.GetDirectoryName(projectDir);
             }
 
-            _projectDir = projectDir.TrimEnd(Path.DirectorySeparatorChar);
+            _projectDir = Path.GetFullPath(projectDir.TrimEnd(Path.DirectorySeparatorChar));
 
             _targetFramework = VersionUtility.ParseFrameworkName(targetFramework);
 
@@ -201,7 +201,7 @@ namespace Microsoft.Net.Runtime
                 DeleteEmptyFolders(d);
             }
 
-            if (!di.EnumerateFiles().Any())
+            if (!di.EnumerateFileSystemInfos().Any())
             {
                 di.Delete();
             }
