@@ -1,9 +1,9 @@
 {
     "name" : "Microsoft.Net.Runtime.Interfaces",
+    "dependencies": [],
     "configurations" : [
         { "net45" : { "compilationOptions": { "define": ["DESKTOP"] } } },
-        { "CoreClr10" : { "compilationOptions" : { } } },
-        { "ProjectK.CoreClr10" : { "compilationOptions" : { } } },
-    ],
-    "dependencies": []
+        { "coreclr10" : { "compilationOptions" : { } } },
+        { "k10" : { "compilationOptions" : { } } },
+    ]
 }

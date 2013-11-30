@@ -62,9 +62,8 @@ namespace NuGet
             { "MonoTouch", "MonoTouch" },
             { "MonoMac", "MonoMac" },
             { "native", "native"},
-            { "CoreClr", "CoreClr" },
-            { "ProjectK.CoreClr", "ProjectK.CoreClr" },
-            { "ProjectK.Desktop", "ProjectK.Desktop" },
+            { "coreclr", "coreclr" },
+            { "k", "k" },
         };
 
         private static readonly Dictionary<string, string> _knownProfiles = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase) {

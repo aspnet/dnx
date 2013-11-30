@@ -1,7 +1,11 @@
 {
     "name" : "klr.host",
-    "targetFramework" : "CoreClr1.0",
     "dependencies": [
         { "Microsoft.Net.Runtime.Interfaces" : { } }
+    ],
+    "configurations" : [
+        { "net45" : { "compilationOptions": { "define": ["DESKTOP"] } } },
+        { "coreclr10" : { "compilationOptions" : { } } },
+        { "k10" : { "compilationOptions" : { } } },
     ]
 }

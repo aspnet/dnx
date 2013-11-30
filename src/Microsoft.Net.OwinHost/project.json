@@ -1,7 +1,7 @@
 {
     "name" : "Microsoft.Net.OwinHost",
     "dependencies": [
-		{ "klr.host" : { } },
+        { "klr.host" : { } },
         { "Microsoft.Net.Runtime" : { } },
         { "Microsoft.Net.Runtime.Interfaces" : { } },
         { "Microsoft.Owin.Hosting" : {"version" : "2.1.0-rc1-21110-697-dev" } },
