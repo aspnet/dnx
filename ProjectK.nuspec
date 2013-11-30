@@ -1,0 +1,10 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<package>
+    <metadata>
+        <id>ProjectK</id>
+        <version>0.0.1</version>
+        <authors>Microsoft</authors>
+        <requireLicenseAcceptance>false</requireLicenseAcceptance>
+        <description>Lean mean webstack for .NET.</description>
+    </metadata>
+</package>
