@@ -83,8 +83,8 @@ namespace Microsoft.Net.Runtime
             if (!String.IsNullOrEmpty(klrPath))
             {
                 // Convention based on install directory
-                // ..\..\TargetingPacks
-                var targetingPacks = Path.GetFullPath(Path.Combine(Path.GetDirectoryName(klrPath), @"..\..\TargetingPacks"));
+                // ..\..\Framework
+                var targetingPacks = Path.GetFullPath(Path.Combine(Path.GetDirectoryName(klrPath), @"..\..\Framework"));
 
                 if (Directory.Exists(targetingPacks))
                 {
