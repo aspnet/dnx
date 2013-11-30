@@ -128,7 +128,14 @@ namespace Microsoft.Net.Runtime
             // Build all target frameworks a project supports
             foreach (var targetFramework in configurations)
             {
-                Build(project, outputPath, targetFramework, builder);
+                try
+                {
+                    Build(project, outputPath, targetFramework, builder);
+                }
+                catch (Exception ex)
+                {
+                    Trace.TraceError(ex.Message);
+                }
             }
 
             using (var fs = File.Create(nupkg))
@@ -162,7 +169,14 @@ namespace Microsoft.Net.Runtime
 
             foreach (var targetFramework in configurations)
             {
-                Clean(project, outputPath, targetFramework);
+                try
+                {
+                    Clean(project, outputPath, targetFramework);
+                }
+                catch (Exception ex)
+                {
+                    Trace.TraceError(ex.Message);
+                }
             }
 
             if (File.Exists(nupkg))
