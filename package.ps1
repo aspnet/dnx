@@ -1,6 +1,6 @@
-param($raw)
+param($configuration = "Debug", $includeSymbols = $false)
 
-.\build.ps1
+.\build.ps1 $configuration
 
 mkdir artifacts -force | Out-Null
 
@@ -14,19 +14,19 @@ $scripts = ls artifacts\tools -filter *.cmd
 foreach($file in $scripts)
 {
    $content = cat $file.FullName
-   $content = $content | %{ $_.Replace("..\bin\Debug", "bin").Replace("..\src\", "") }
+   $content = $content | %{ $_.Replace("..\bin\Debug", "bin").Replace("..\src\", "").Replace("bin\Debug", "bin\$configuration") }
    Set-Content $file.FullName $content
 }
 
 # Manually fixup k.cmd to use compiled version of MS.Net.Project
-$content = cat artifacts\tools\k.cmd | %{ $_.Replace("%~dp0k-run %~dp0Microsoft.Net.Project %*", "CALL %~dp0KLR %~dp0Microsoft.Net.Project\bin\Debug\Microsoft.Net.Project.dll %*") }
+$content = cat artifacts\tools\k.cmd | %{ $_.Replace("%~dp0k-run %~dp0Microsoft.Net.Project %*", "CALL %~dp0KLR %~dp0Microsoft.Net.Project\bin\$configuration\Microsoft.Net.Project.dll %*") }
 Set-Content artifacts\tools\k.cmd $content
 
 # Move the bin folder in here
 mkdir artifacts\tools\bin -force | Out-Null
-cp bin\Debug\* artifacts\tools\bin\
+cp bin\$configuration\* artifacts\tools\bin\
 
-if(!$raw)
+if(!$includeSymbols)
 {
     # Remove the stuff we don't need
     ls artifacts\tools\bin\*.pdb | rm
@@ -42,7 +42,7 @@ cp -r src\Microsoft.Net.OwinHost artifacts\tools -Force
 cp -r src\Microsoft.Net.Launch artifacts\tools -Force
 cp -r src\Microsoft.Net.Runtime artifacts\tools -Force
 
-if(!$raw)
+if(!$includeSymbols)
 {
     # Remove the stuff we don't need
     ls -r artifacts\tools\*obj | rm -r

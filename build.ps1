@@ -1,3 +1,5 @@
+param($configuration = "Debug")
+
 # Check for msbuild
 try {
     msbuild > $null
@@ -22,4 +24,4 @@ if(!(Test-Path .nuget\nuget.exe))
 scripts/NuGet.exe restore
 
 # Build the solution
-msbuild KRuntime.sln /m /v:quiet /nologo
+msbuild KRuntime.sln /m /p:Configuration=$configuration /v:quiet /nologo
