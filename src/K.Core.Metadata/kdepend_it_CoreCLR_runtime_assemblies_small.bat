@@ -1,1 +1,0 @@
- kdepend.bat /gni /i "%KITE_ROOT%\package_caches\packages_k\CoreCLR.1.0.0.0\lib\kite\mscorlib.dll;%KITE_ROOT%\package_caches\packages_k\CoreCLR.1.0.0.0\lib\kite\System.Xml.XmlSerializer.dll;%KITE_ROOT%\package_caches\packages_k\CoreCLR.1.0.0.0\lib\kite\system.xml.dll"

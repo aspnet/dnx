@@ -1,1 +1,0 @@
-kdepend.bat /gni /i "d:\dev\kite\package_caches\packages_k\CoreCLR.1.0.0.0\lib\kite\managedtestlib.dll;d:\dev\kite\package_caches\packages_k\CoreCLR.1.0.0.0\lib\kite\ConcurrentDictionary.dll;d:\dev\kite\package_caches\packages_k\CoreCLR.1.0.0.0\lib\kite\CoreSystemStubs.dll;d:\dev\kite\package_caches\packages_k\CoreCLR.1.0.0.0\lib\kite\Stubs.dll"
