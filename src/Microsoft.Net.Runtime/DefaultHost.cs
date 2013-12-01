@@ -125,6 +125,8 @@ namespace Microsoft.Net.Runtime
             builder.Version = project.Version;
             builder.Title = project.Name;
 
+            bool createPackage = false;
+
             // Build all target frameworks a project supports
             foreach (var targetFramework in configurations)
             {
@@ -136,6 +138,10 @@ namespace Microsoft.Net.Runtime
                     {
                         Trace.TraceError(String.Join(Environment.NewLine, result.Errors));
                     }
+                    else
+                    {
+                        createPackage = true;
+                    }
                 }
                 catch (Exception ex)
                 {
@@ -143,12 +149,15 @@ namespace Microsoft.Net.Runtime
                 }
             }
 
-            using (var fs = File.Create(nupkg))
+            if (createPackage)
             {
-                builder.Save(fs);
-            }
+                using (var fs = File.Create(nupkg))
+                {
+                    builder.Save(fs);
+                }
 
-            Trace.TraceInformation("{0} -> {1}", project.Name, nupkg);
+                Trace.TraceInformation("{0} -> {1}", project.Name, nupkg);
+            }
 
             sw.Stop();
 
