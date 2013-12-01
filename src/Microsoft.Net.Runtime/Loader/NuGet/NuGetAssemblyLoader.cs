@@ -20,14 +20,14 @@ namespace Microsoft.Net.Runtime.Loader.NuGet
             _repository = new LocalPackageRepository(ResolveRepositoryPath(projectPath));
         }
 
-        public Assembly Load(LoadOptions options)
+        public AssemblyLoadResult Load(LoadContext loadContext)
         {
-            string name = options.AssemblyName;
+            string name = loadContext.AssemblyName;
 
             Assembly assembly;
             if (_cache.TryGetValue(name, out assembly))
             {
-                return assembly;
+                return new AssemblyLoadResult(assembly);
             }
 
             string path;
@@ -38,7 +38,12 @@ namespace Microsoft.Net.Runtime.Loader.NuGet
                 _cache[name] = assembly;
             }
 
-            return assembly;
+            if (assembly == null)
+            {
+                return null;
+            }
+
+            return new AssemblyLoadResult(assembly);
         }
 
         public IEnumerable<PackageReference> GetDependencies(string name, SemanticVersion version, FrameworkName frameworkName)

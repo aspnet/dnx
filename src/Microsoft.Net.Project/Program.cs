@@ -72,7 +72,7 @@ namespace Microsoft.Net.Project
 
             if (!(ex is TargetInvocationException))
             {
-                yield return ex.Message;
+                yield return ex.ToString();
             }
         }
     }

@@ -182,7 +182,7 @@ namespace Loader.Tests
         public IEnumerable<PackageReference> Dependencies { get; set; }
         public FrameworkName FrameworkName { get; set; }
 
-        public Assembly Load(LoadOptions options)
+        public AssemblyLoadResult Load(LoadContext options)
         {
             return null;
         }

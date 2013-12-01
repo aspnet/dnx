@@ -18,18 +18,18 @@ namespace Microsoft.Net.Runtime.Loader.Directory
             _path = path;
         }
 
-        public Assembly Load(LoadOptions options)
+        public AssemblyLoadResult Load(LoadContext loadContext)
         {
-            string name = options.AssemblyName;
+            string name = loadContext.AssemblyName;
 
             Assembly assembly;
             if (_cache.TryGetValue(name, out assembly))
             {
-                return assembly;
+                return new AssemblyLoadResult(assembly);
             }
 
             string path = Path.Combine(_path, name + ".dll");
-            if (System.IO.File.Exists(path))
+            if (File.Exists(path))
             {
                 assembly = Assembly.LoadFile(path);
             }
@@ -37,16 +37,18 @@ namespace Microsoft.Net.Runtime.Loader.Directory
             if (assembly != null)
             {
                 _cache[name] = assembly;
+
+                return new AssemblyLoadResult(assembly);
             }
 
-            return assembly;
+            return null;
         }
 
         public IEnumerable<PackageReference> GetDependencies(string name, SemanticVersion version, FrameworkName frameworkName)
         {
             string path = Path.Combine(_path, name + ".dll");
 
-            if (System.IO.File.Exists(path))
+            if (File.Exists(path))
             {
                 return Enumerable.Empty<PackageReference>();
             }

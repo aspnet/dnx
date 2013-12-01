@@ -56,6 +56,7 @@
     <Compile Include="Loader\AssemblyLoader.cs" />
     <Compile Include="DefaultHost.cs" />
     <Compile Include="HostServices.cs" />
+    <Compile Include="Loader\AssemblyLoadResult.cs" />
     <Compile Include="Loader\PackageReference.cs" />
     <Compile Include="Executable.cs" />
     <Compile Include="Loader\IMetadataLoader.cs" />
@@ -64,7 +65,9 @@
     <Compile Include="FrameworkReferenceResolver.cs" />
     <Compile Include="FileSystem\IFileWatcher.cs" />
     <Compile Include="IFrameworkReferenceResolver.cs" />
-    <Compile Include="Loader\LoadOptions.cs" />
+    <Compile Include="Loader\LoadContext.cs" />
+    <Compile Include="Loader\Roslyn\IResourceProvider.cs" />
+    <Compile Include="Loader\Roslyn\ResxResourceProvider.cs" />
     <Compile Include="NuGet\Authoring\EmptyFrameworkFolderFile.cs">
       <SubType>Code</SubType>
     </Compile>

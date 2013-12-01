@@ -4,13 +4,14 @@ using NuGet;
 
 namespace Microsoft.Net.Runtime
 {
-    public class LoadOptions
+    public class LoadContext
     {
         public string OutputPath { get; set; }
 
         public string AssemblyName { get; set; }
 
-        public bool Clean { get; set; }
+        // REVIEW: Does this mean we need a new method?
+        public bool SkipAssemblyLoad { get; set; }
 
         public PackageBuilder PackageBuilder { get; set; }
 
@@ -18,6 +19,6 @@ namespace Microsoft.Net.Runtime
 
         public FrameworkName TargetFramework { get; set; }
 
-        public IList<string> Artifacts { get; set; }
+        public IList<string> ArtifactPaths { get; set; }
     }
 }

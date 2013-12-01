@@ -71,7 +71,7 @@ sealed class DomainManager : AppDomainManager
 
         if (!(ex is TargetInvocationException))
         {
-            yield return ex.Message;
+            yield return ex.ToString();
         }
     }
 }

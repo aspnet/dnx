@@ -25,9 +25,9 @@ namespace Microsoft.Net.Runtime.Loader.MSBuildProject
             _watcher = watcher;
         }
 
-        public Assembly Load(LoadOptions options)
+        public AssemblyLoadResult Load(LoadContext loadContext)
         {
-            string name = options.AssemblyName;
+            string name = loadContext.AssemblyName;
 
             string targetDir = Path.Combine(_solutionDir, name);
 
@@ -100,7 +100,7 @@ namespace Microsoft.Net.Runtime.Loader.MSBuildProject
                     return null;
                 }
 
-                return Assembly.LoadFile(outputFile);
+                return new AssemblyLoadResult(Assembly.LoadFile(outputFile));
             }
 
             return null;

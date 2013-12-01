@@ -77,7 +77,7 @@ namespace Microsoft.Net.Runtime
 
             _loader.Walk(project.Name, project.Version, _targetFramework);
 
-            _entryPoint = _loader.Load(new LoadOptions
+            _entryPoint = _loader.LoadAssembly(new LoadContext
             {
                 AssemblyName = project.Name,
                 TargetFramework = _targetFramework
@@ -134,7 +134,7 @@ namespace Microsoft.Net.Runtime
                 }
                 catch (Exception ex)
                 {
-                    Trace.TraceError(ex.Message);
+                    Trace.TraceError(ex.ToString());
                 }
             }
 
@@ -175,7 +175,7 @@ namespace Microsoft.Net.Runtime
                 }
                 catch (Exception ex)
                 {
-                    Trace.TraceError(ex.Message);
+                    Trace.TraceError(ex.ToString());
                 }
             }
 
@@ -209,7 +209,7 @@ namespace Microsoft.Net.Runtime
 
         public Assembly Load(string name)
         {
-            return _loader.Load(new LoadOptions
+            return _loader.LoadAssembly(new LoadContext
             {
                 AssemblyName = name,
                 TargetFramework = _targetFramework
@@ -229,16 +229,16 @@ namespace Microsoft.Net.Runtime
             var targetFrameworkFolder = VersionUtility.GetShortFrameworkName(targetFramework);
             string targetPath = Path.Combine(outputPath, targetFrameworkFolder);
 
-            var options = new LoadOptions
+            var loadContext = new LoadContext
             {
                 AssemblyName = project.Name,
                 OutputPath = targetPath,
-                Artifacts = new List<string>(),
+                ArtifactPaths = new List<string>(),
                 TargetFramework = targetFramework,
                 PackageBuilder = builder,
             };
 
-            var asm = _loader.Load(options);
+            _loader.Load(loadContext);
 
             // REVIEW: This might not work so well when building for multiple frameworks
             RunStaticMethod("Compiler", "Compile", targetPath);
@@ -251,22 +251,22 @@ namespace Microsoft.Net.Runtime
             var targetFrameworkFolder = VersionUtility.GetShortFrameworkName(targetFramework);
             string targetPath = Path.Combine(outputPath, targetFrameworkFolder);
 
-            var options = new LoadOptions
+            var loadContext = new LoadContext
             {
                 AssemblyName = project.Name,
                 OutputPath = targetPath,
-                Artifacts = new List<string>(),
+                ArtifactPaths = new List<string>(),
                 TargetFramework = targetFramework,
-                Clean = true
+                SkipAssemblyLoad = true
             };
 
-            _loader.Load(options);
+            _loader.Load(loadContext);
 
-            if (options.Artifacts.Count > 0)
+            if (loadContext.ArtifactPaths.Count > 0)
             {
                 Trace.TraceInformation("Cleaning generated artifacts for {0}", targetFramework);
 
-                foreach (var path in options.Artifacts)
+                foreach (var path in loadContext.ArtifactPaths)
                 {
                     if (File.Exists(path))
                     {
@@ -318,7 +318,8 @@ namespace Microsoft.Net.Runtime
             }
 
             var resolver = new FrameworkReferenceResolver();
-            var roslynLoader = new RoslynAssemblyLoader(rootDirectory, _watcher, resolver, _loader);
+            var resourceProvider = new ResxResourceProvider();
+            var roslynLoader = new RoslynAssemblyLoader(rootDirectory, _watcher, resolver, _loader, resourceProvider);
             _loader.Add(roslynLoader);
             _loader.Add(new MSBuildProjectAssemblyLoader(rootDirectory, _watcher));
             _loader.Add(new NuGetAssemblyLoader(_projectDir));

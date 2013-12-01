@@ -22,31 +22,52 @@ namespace Microsoft.Net.Runtime.Loader
             _loaders.Add(loader);
         }
 
-        public Assembly Load(LoadOptions options)
+        public Assembly LoadAssembly(LoadContext loadContext)
+        {
+            var result = Load(loadContext);
+
+            if (result == null)
+            {
+                return null;
+            }
+
+            return result.Assembly;
+        }
+
+        public AssemblyLoadResult Load(LoadContext loadContext)
         {
             var sw = new Stopwatch();
             sw.Start();
-            Trace.TraceInformation("Loading {0} for '{1}'.", options.AssemblyName, options.TargetFramework);
-            var key = options.AssemblyName + options.TargetFramework;
+            Trace.TraceInformation("Loading {0} for '{1}'.", loadContext.AssemblyName, loadContext.TargetFramework);
+            var key = loadContext.AssemblyName + loadContext.TargetFramework;
 
             Assembly asm;
 
             if (!_cache.TryGetValue(key, out asm))
             {
-                asm = LoadImpl(options, sw);
+                var loadResult = LoadImpl(loadContext, sw);
 
-                if (asm != null)
+                if (loadResult == null)
                 {
-                    _cache.TryAdd(key, asm);
+                    return null;
+                }
+                else
+                {
+                    asm = loadResult.Assembly;
+
+                    if (asm != null)
+                    {
+                        _cache.TryAdd(key, asm);
+                    }
                 }
             }
             else
             {
                 sw.Stop();
-                Trace.TraceInformation("[Cache]: Loaded {0} in {1}ms", options.AssemblyName, sw.ElapsedMilliseconds);
+                Trace.TraceInformation("[Cache]: Loaded {0} in {1}ms", loadContext.AssemblyName, sw.ElapsedMilliseconds);
             }
 
-            return asm;
+            return new AssemblyLoadResult(asm);
         }
 
         public void Walk(string name, SemanticVersion version, FrameworkName frameworkName)
@@ -75,19 +96,19 @@ namespace Microsoft.Net.Runtime.Loader
                            .FirstOrDefault(reference => reference != null);
         }
 
-        private Assembly LoadImpl(LoadOptions options, Stopwatch sw)
+        private AssemblyLoadResult LoadImpl(LoadContext loadContext, Stopwatch sw)
         {
             foreach (var loader in _loaders)
             {
-                var assembly = loader.Load(options);
+                var loadResult = loader.Load(loadContext);
 
-                if (assembly != null)
+                if (loadResult != null)
                 {
                     sw.Stop();
 
-                    Trace.TraceInformation("[{0}]: Finished loading {1} in {2}ms", loader.GetType().Name, options.AssemblyName, sw.ElapsedMilliseconds);
+                    Trace.TraceInformation("[{0}]: Finished loading {1} in {2}ms", loader.GetType().Name, loadContext.AssemblyName, sw.ElapsedMilliseconds);
 
-                    return assembly;
+                    return loadResult;
                 }
             }
 
