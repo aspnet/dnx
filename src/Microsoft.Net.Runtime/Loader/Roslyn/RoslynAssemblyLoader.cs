@@ -71,7 +71,6 @@ namespace Microsoft.Net.Runtime.Loader.Roslyn
 
                 references = project.Dependencies
                                     .Select(r => ResolveDependency(r, loadContext))
-                                    .Where(r => r != null)
                                     .ToList();
 
                 dependencyStopWatch.Stop();
@@ -80,28 +79,6 @@ namespace Microsoft.Net.Runtime.Loader.Roslyn
             else
             {
                 references = new List<MetadataReference>();
-            }
-
-            string assemblyPath = null;
-            string pdbPath = null;
-
-            if (loadContext.OutputPath != null)
-            {
-                assemblyPath = Path.Combine(loadContext.OutputPath, name + ".dll");
-                pdbPath = Path.Combine(loadContext.OutputPath, name + ".pdb");
-
-                // Add the artifacts to the path
-                if (loadContext.ArtifactPaths != null)
-                {
-                    loadContext.ArtifactPaths.Add(assemblyPath);
-                    loadContext.ArtifactPaths.Add(pdbPath);
-                }
-            }
-
-            if (loadContext.SkipAssemblyLoad)
-            {
-                // Skip everything else
-                return new AssemblyLoadResult();
             }
 
             _watcher.WatchFile(project.ProjectFilePath);
@@ -153,6 +130,7 @@ namespace Microsoft.Net.Runtime.Loader.Roslyn
 
                 IList<ResourceDescription> resources = _resourceProvider.GetResources(project.Name, path);
 
+                // If the output path is null then load the assembly from memory
                 if (loadContext.OutputPath == null)
                 {
                     return CompileInMemory(name, compilation, resources);
@@ -160,6 +138,22 @@ namespace Microsoft.Net.Runtime.Loader.Roslyn
 
                 // Ensure there's an output directory
                 System.IO.Directory.CreateDirectory(loadContext.OutputPath);
+
+                string assemblyPath = Path.Combine(loadContext.OutputPath, name + ".dll");
+                string pdbPath = Path.Combine(loadContext.OutputPath, name + ".pdb");
+
+                // Add to the list of generated artifacts
+                if (loadContext.ArtifactPaths != null)
+                {
+                    loadContext.ArtifactPaths.Add(assemblyPath);
+                    loadContext.ArtifactPaths.Add(pdbPath);
+                }
+
+                // If we're not loading from the output path then compile in memory
+                if (!loadContext.CreateArtifacts)
+                {
+                    return CompileInMemory(name, compilation, resources, cacheResults: false);
+                }
 
                 AssemblyLoadResult loadResult = CompileToDisk(assemblyPath, pdbPath, compilation, resources);
 
@@ -223,30 +217,16 @@ namespace Microsoft.Net.Runtime.Loader.Roslyn
             string assemblyLocation;
             if (GlobalAssemblyCache.ResolvePartialName(dependency.Name, out assemblyLocation) != null)
             {
-                if (loadContext.SkipAssemblyLoad)
-                {
-                    return null;
-                }
-
                 return new MetadataFileReference(assemblyLocation);
             }
 
-            var childContext = new LoadContext(dependency.Name, loadContext.TargetFramework)
-            {
-                SkipAssemblyLoad = loadContext.SkipAssemblyLoad
-            };
+            var childContext = new LoadContext(dependency.Name, loadContext.TargetFramework);
 
             var loadResult = _dependencyLoader.Load(childContext);
 
             if (loadResult == null)
             {
                 throw new InvalidOperationException(String.Format("Unable to resolve dependency '{0}'.", dependency));
-            }
-
-            // If we're not loading assemblies then do nothing
-            if (loadContext.SkipAssemblyLoad)
-            {
-                return null;
             }
 
             CompiledAssembly compiledAssembly;
@@ -260,7 +240,7 @@ namespace Microsoft.Net.Runtime.Loader.Roslyn
 
         private AssemblyLoadResult CompileToDisk(string assemblyPath, string pdbPath, Compilation compilation, IList<ResourceDescription> resources)
         {
-            var result = compilation.Emit(assemblyPath, pdbPath, manifestResources: resources);
+            CommonEmitResult result = compilation.Emit(assemblyPath, pdbPath, manifestResources: resources);
 
             if (!result.Success)
             {
@@ -272,15 +252,21 @@ namespace Microsoft.Net.Runtime.Loader.Roslyn
 
         private AssemblyLoadResult CompileInMemory(string name, Compilation compilation, IEnumerable<ResourceDescription> resources)
         {
-            // Put symbols in a .symbols path
             var pdbPath = Path.Combine(_symbolsPath, name + ".pdb");
 
             System.IO.Directory.CreateDirectory(_symbolsPath);
 
             using (var fs = File.Create(pdbPath))
+            {
+                return CompileInMemory(name, compilation, resources, pdbStream: fs);
+            }
+        }
+
+        private AssemblyLoadResult CompileInMemory(string name, Compilation compilation, IEnumerable<ResourceDescription> resources, bool cacheResults = true, Stream pdbStream = null)
+        {
             using (var ms = new MemoryStream())
             {
-                CommonEmitResult result = compilation.Emit(ms, pdbStream: fs, manifestResources: resources);
+                CommonEmitResult result = compilation.Emit(ms, pdbStream: pdbStream, manifestResources: resources);
 
                 if (!result.Success)
                 {
@@ -295,7 +281,10 @@ namespace Microsoft.Net.Runtime.Loader.Roslyn
                     MetadataReference = compilation.ToMetadataReference()
                 };
 
-                _compiledAssemblies[name] = compiled;
+                if (cacheResults)
+                {
+                    _compiledAssemblies[name] = compiled;
+                }
 
                 return new AssemblyLoadResult(compiled.Assembly);
             }
@@ -319,10 +308,7 @@ namespace Microsoft.Net.Runtime.Loader.Roslyn
         {
             var errors = new List<string>(result.Diagnostics.Select(d => DiagnosticFormatter.Instance.Format(d)));
 
-            return new AssemblyLoadResult()
-            {
-                Errors = errors
-            };
+            return new AssemblyLoadResult(errors);
         }
 
         private void BuildSymbolsPackage(Project project, string assemblyPath, string pdbPath, PackageBuilder builder, List<string> sourceFiles, FrameworkName targetFramework)

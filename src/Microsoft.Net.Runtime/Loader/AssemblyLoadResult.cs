@@ -8,10 +8,11 @@ namespace Microsoft.Net.Runtime.Loader
     {
         public Assembly Assembly { get; private set; }
 
-        public IList<string> Errors { get; set; }
+        public IList<string> Errors { get; private set; }
 
-        public AssemblyLoadResult()
+        public AssemblyLoadResult(IList<string> errors)
         {
+            Errors = errors;
         }
 
         public AssemblyLoadResult(Assembly assembly)

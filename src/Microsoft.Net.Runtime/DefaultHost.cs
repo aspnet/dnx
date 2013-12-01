@@ -243,7 +243,6 @@ namespace Microsoft.Net.Runtime
             var loadContext = new LoadContext(project.Name, targetFramework)
             {
                 OutputPath = targetPath,
-                ArtifactPaths = new List<string>(),
                 PackageBuilder = builder,
             };
 
@@ -271,7 +270,7 @@ namespace Microsoft.Net.Runtime
             {
                 OutputPath = targetPath,
                 ArtifactPaths = new List<string>(),
-                SkipAssemblyLoad = true
+                CreateArtifacts = false
             };
 
             var result = _loader.Load(loadContext);
@@ -280,6 +279,9 @@ namespace Microsoft.Net.Runtime
             {
                 return result;
             }
+
+            // REVIEW: This might not work so well when building for multiple frameworks
+            RunStaticMethod("Compiler", "Clean", targetPath, loadContext.ArtifactPaths);
 
             if (loadContext.ArtifactPaths.Count > 0)
             {
@@ -295,9 +297,6 @@ namespace Microsoft.Net.Runtime
                     }
                 }
             }
-
-            // REVIEW: This might not work so well when building for multiple frameworks
-            RunStaticMethod("Compiler", "Clean", targetPath);
 
             return result;
         }

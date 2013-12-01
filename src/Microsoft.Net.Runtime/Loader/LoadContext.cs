@@ -10,6 +10,7 @@ namespace Microsoft.Net.Runtime
         {
             AssemblyName = assemblyName;
             TargetFramework = targetFramework;
+            CreateArtifacts = true;
         }
 
         public string AssemblyName { get; private set; }
@@ -18,8 +19,7 @@ namespace Microsoft.Net.Runtime
 
         public string OutputPath { get; set; }
 
-        // REVIEW: Does this mean we need a new method?
-        public bool SkipAssemblyLoad { get; set; }
+        public bool CreateArtifacts { get; set; }
 
         public PackageBuilder PackageBuilder { get; set; }
 

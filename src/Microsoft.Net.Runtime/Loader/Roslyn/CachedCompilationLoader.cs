@@ -19,7 +19,7 @@ namespace Microsoft.Net.Runtime.Loader.Roslyn
             // If there's an output path then skip all loading of cached compilations
             // This is to avoid using the cached version when trying to produce a new one.
             // Also skip if we're not loading assemblies
-            if (loadContext.OutputPath != null || loadContext.SkipAssemblyLoad)
+            if (loadContext.OutputPath != null)
             {
                 return null;
             }
