@@ -1,4 +1,5 @@
-﻿using System.Reflection;
+﻿using System.Collections.Generic;
+using System.Reflection;
 
 namespace Microsoft.Net.Runtime.Loader
 {
@@ -6,6 +7,8 @@ namespace Microsoft.Net.Runtime.Loader
     public class AssemblyLoadResult
     {
         public Assembly Assembly { get; private set; }
+
+        public IList<string> Errors { get; set; }
 
         public AssemblyLoadResult()
         {

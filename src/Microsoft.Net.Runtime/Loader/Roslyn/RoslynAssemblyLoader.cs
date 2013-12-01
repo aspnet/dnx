@@ -266,9 +266,7 @@ namespace Microsoft.Net.Runtime.Loader.Roslyn
 
             if (!result.Success)
             {
-                ReportCompilationError(result);
-
-                return null;
+                return ReportCompilationError(result);
             }
 
             return new AssemblyLoadResult(Assembly.LoadFile(assemblyPath));
@@ -288,9 +286,7 @@ namespace Microsoft.Net.Runtime.Loader.Roslyn
 
                 if (!result.Success)
                 {
-                    ReportCompilationError(result);
-
-                    return null;
+                    return ReportCompilationError(result);
                 }
 
                 var bytes = ms.ToArray();
@@ -321,10 +317,14 @@ namespace Microsoft.Net.Runtime.Loader.Roslyn
             }
         }
 
-        private static void ReportCompilationError(CommonEmitResult result)
+        private static AssemblyLoadResult ReportCompilationError(CommonEmitResult result)
         {
-            throw new InvalidDataException(String.Join(Environment.NewLine,
-                result.Diagnostics.Select(d => DiagnosticFormatter.Instance.Format(d))));
+            var errors = new List<string>(result.Diagnostics.Select(d => DiagnosticFormatter.Instance.Format(d)));
+
+            return new AssemblyLoadResult()
+            {
+                Errors = errors
+            };
         }
 
         private void BuildSymbolsPackage(Project project, string assemblyPath, string pdbPath, PackageBuilder builder, List<string> sourceFiles, FrameworkName targetFramework)

@@ -130,7 +130,12 @@ namespace Microsoft.Net.Runtime
             {
                 try
                 {
-                    Build(project, outputPath, targetFramework, builder);
+                    var result = Build(project, outputPath, targetFramework, builder);
+
+                    if (result != null && result.Errors != null)
+                    {
+                        Trace.TraceError(String.Join(Environment.NewLine, result.Errors));
+                    }
                 }
                 catch (Exception ex)
                 {
@@ -171,7 +176,12 @@ namespace Microsoft.Net.Runtime
             {
                 try
                 {
-                    Clean(project, outputPath, targetFramework);
+                    var result = Clean(project, outputPath, targetFramework);
+
+                    if (result != null && result.Errors != null)
+                    {
+                        Trace.TraceError(String.Join(Environment.NewLine, result.Errors));
+                    }
                 }
                 catch (Exception ex)
                 {
@@ -222,7 +232,7 @@ namespace Microsoft.Net.Runtime
             _watcher.Dispose();
         }
 
-        private void Build(Project project, string outputPath, FrameworkName targetFramework, PackageBuilder builder)
+        private AssemblyLoadResult Build(Project project, string outputPath, FrameworkName targetFramework, PackageBuilder builder)
         {
             _loader.Walk(project.Name, project.Version, targetFramework);
 
@@ -238,13 +248,20 @@ namespace Microsoft.Net.Runtime
                 PackageBuilder = builder,
             };
 
-            _loader.Load(loadContext);
+            var result = _loader.Load(loadContext);
+
+            if (result == null || result.Errors != null)
+            {
+                return result;
+            }
 
             // REVIEW: This might not work so well when building for multiple frameworks
             RunStaticMethod("Compiler", "Compile", targetPath);
+
+            return result;
         }
 
-        private void Clean(Project project, string outputPath, FrameworkName targetFramework)
+        private AssemblyLoadResult Clean(Project project, string outputPath, FrameworkName targetFramework)
         {
             _loader.Walk(project.Name, project.Version, targetFramework);
 
@@ -260,7 +277,12 @@ namespace Microsoft.Net.Runtime
                 SkipAssemblyLoad = true
             };
 
-            _loader.Load(loadContext);
+            var result = _loader.Load(loadContext);
+
+            if (result == null || result.Errors != null)
+            {
+                return result;
+            }
 
             if (loadContext.ArtifactPaths.Count > 0)
             {
@@ -279,6 +301,8 @@ namespace Microsoft.Net.Runtime
 
             // REVIEW: This might not work so well when building for multiple frameworks
             RunStaticMethod("Compiler", "Clean", targetPath);
+
+            return result;
         }
 
         private static void RunStaticMethod(string typeName, string methodName, params object[] args)

@@ -31,6 +31,11 @@ namespace Microsoft.Net.Runtime.Loader
                 return null;
             }
 
+            if (result.Errors != null)
+            {
+                throw new Exception(String.Join(Environment.NewLine, result.Errors));
+            }
+
             return result.Assembly;
         }
 
@@ -59,6 +64,8 @@ namespace Microsoft.Net.Runtime.Loader
                     {
                         _cache.TryAdd(key, asm);
                     }
+
+                    return loadResult;
                 }
             }
             else
