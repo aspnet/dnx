@@ -17,7 +17,7 @@ namespace Microsoft.Net.Runtime.Loader.Roslyn
     {
         private readonly Dictionary<string, CompiledAssembly> _compiledAssemblies = new Dictionary<string, CompiledAssembly>(StringComparer.OrdinalIgnoreCase);
 
-        private readonly string _solutionPath;
+        private readonly string _rootPath;
         private readonly string _symbolsPath;
 
         private readonly IFileWatcher _watcher;
@@ -25,18 +25,18 @@ namespace Microsoft.Net.Runtime.Loader.Roslyn
         private readonly IAssemblyLoader _dependencyLoader;
         private readonly IResourceProvider _resourceProvider;
 
-        public RoslynAssemblyLoader(string solutionPath,
+        public RoslynAssemblyLoader(string rootPath,
                                     IFileWatcher watcher,
                                     IFrameworkReferenceResolver resolver,
                                     IAssemblyLoader dependencyLoader,
                                     IResourceProvider resourceProvider)
         {
-            _solutionPath = solutionPath;
+            _rootPath = rootPath;
             _watcher = watcher;
             _resolver = resolver;
             _dependencyLoader = dependencyLoader;
             _resourceProvider = resourceProvider;
-            _symbolsPath = Path.Combine(_solutionPath, ".symbols");
+            _symbolsPath = Path.Combine(_rootPath, ".symbols");
         }
 
         public AssemblyLoadResult Load(LoadContext loadContext)
@@ -49,7 +49,7 @@ namespace Microsoft.Net.Runtime.Loader.Roslyn
                 return new AssemblyLoadResult(compiledAssembly.Assembly);
             }
 
-            string path = Path.Combine(_solutionPath, name);
+            string path = Path.Combine(_rootPath, name);
             Project project;
 
             // Can't find a project file with the name so bail
@@ -197,7 +197,7 @@ namespace Microsoft.Net.Runtime.Loader.Roslyn
 
         public IEnumerable<PackageReference> GetDependencies(string name, SemanticVersion version, FrameworkName frameworkName)
         {
-            string path = Path.Combine(_solutionPath, name);
+            string path = Path.Combine(_rootPath, name);
             Project project;
 
             // Can't find a project file with the name so bail
@@ -231,10 +231,8 @@ namespace Microsoft.Net.Runtime.Loader.Roslyn
                 return new MetadataFileReference(assemblyLocation);
             }
 
-            var childContext = new LoadContext
+            var childContext = new LoadContext(dependency.Name, loadContext.TargetFramework)
             {
-                AssemblyName = dependency.Name,
-                TargetFramework = loadContext.TargetFramework,
                 SkipAssemblyLoad = loadContext.SkipAssemblyLoad
             };
 

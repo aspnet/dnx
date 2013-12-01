@@ -4,6 +4,6 @@ namespace Microsoft.Net.Runtime.Loader
 {
     public interface IAssemblyLoader
     {
-        AssemblyLoadResult Load(LoadContext options);
+        AssemblyLoadResult Load(LoadContext loadContext);
     }
 }

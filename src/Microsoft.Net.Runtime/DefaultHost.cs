@@ -77,11 +77,7 @@ namespace Microsoft.Net.Runtime
 
             _loader.Walk(project.Name, project.Version, _targetFramework);
 
-            _entryPoint = _loader.LoadAssembly(new LoadContext
-            {
-                AssemblyName = project.Name,
-                TargetFramework = _targetFramework
-            });
+            _entryPoint = _loader.LoadAssembly(new LoadContext(project.Name, _targetFramework));
 
             sw.Stop();
 
@@ -228,11 +224,7 @@ namespace Microsoft.Net.Runtime
 
         public Assembly Load(string name)
         {
-            return _loader.LoadAssembly(new LoadContext
-            {
-                AssemblyName = name,
-                TargetFramework = _targetFramework
-            });
+            return _loader.LoadAssembly(new LoadContext(name, _targetFramework));
         }
 
         public void Dispose()
@@ -248,12 +240,10 @@ namespace Microsoft.Net.Runtime
             var targetFrameworkFolder = VersionUtility.GetShortFrameworkName(targetFramework);
             string targetPath = Path.Combine(outputPath, targetFrameworkFolder);
 
-            var loadContext = new LoadContext
+            var loadContext = new LoadContext(project.Name, targetFramework)
             {
-                AssemblyName = project.Name,
                 OutputPath = targetPath,
                 ArtifactPaths = new List<string>(),
-                TargetFramework = targetFramework,
                 PackageBuilder = builder,
             };
 
@@ -277,12 +267,10 @@ namespace Microsoft.Net.Runtime
             var targetFrameworkFolder = VersionUtility.GetShortFrameworkName(targetFramework);
             string targetPath = Path.Combine(outputPath, targetFrameworkFolder);
 
-            var loadContext = new LoadContext
+            var loadContext = new LoadContext(project.Name, targetFramework)
             {
-                AssemblyName = project.Name,
                 OutputPath = targetPath,
                 ArtifactPaths = new List<string>(),
-                TargetFramework = targetFramework,
                 SkipAssemblyLoad = true
             };
 
@@ -350,6 +338,8 @@ namespace Microsoft.Net.Runtime
                 _watcher = FileWatcher.Noop;
             }
 
+            var cachedLoader = new CachedCompilationLoader(rootDirectory);
+            _loader.Add(cachedLoader);
             var resolver = new FrameworkReferenceResolver();
             var resourceProvider = new ResxResourceProvider();
             var roslynLoader = new RoslynAssemblyLoader(rootDirectory, _watcher, resolver, _loader, resourceProvider);

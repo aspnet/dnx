@@ -66,6 +66,7 @@
     <Compile Include="FileSystem\IFileWatcher.cs" />
     <Compile Include="IFrameworkReferenceResolver.cs" />
     <Compile Include="Loader\LoadContext.cs" />
+    <Compile Include="Loader\Roslyn\CachedCompilationLoader.cs" />
     <Compile Include="Loader\Roslyn\IResourceProvider.cs" />
     <Compile Include="Loader\Roslyn\ResxResourceProvider.cs" />
     <Compile Include="NuGet\Authoring\EmptyFrameworkFolderFile.cs">
