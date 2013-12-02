@@ -34,11 +34,12 @@ if(!$includeSymbols)
 }
 
 # Now copy source
-cp -r src\Microsoft.Net.ApplicationHost $sdkRoot\tools -Force
-cp -r src\Microsoft.Net.Project $sdkRoot\tools -Force
-cp -r src\Microsoft.Net.OwinHost $sdkRoot\tools -Force
+cp -r src\Microsoft.Net.ApplicationHost -filter *.dll $sdkRoot\tools -Force
+cp -r src\Microsoft.Net.Project -filter *.dll $sdkRoot\tools -Force
+cp -r src\Microsoft.Net.OwinHost -filter *.dll $sdkRoot\tools -Force
 cp -r src\Microsoft.Net.Launch $sdkRoot\tools -Force
-cp -r src\Microsoft.Net.Runtime $sdkRoot\tools -Force
+cp src\Microsoft.Net.Runtime\Executable.cs $sdkRoot\tools\Microsoft.Net.Launch -Force
+rm $sdkRoot\tools\Microsoft.Net.Launch\.include
 
 if(!$includeSymbols)
 {
@@ -50,7 +51,7 @@ if(!$includeSymbols)
 # Copy the runtime
 if($runtimePath) 
 {
-    cp -r $runtimePath\* $sdkRoot
+    cp -r $runtimePath\* $sdkRoot -force
 }
 
 # NuGet pack
