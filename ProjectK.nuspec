@@ -2,7 +2,7 @@
 <package>
     <metadata>
         <id>ProjectK</id>
-        <version>0.0.1</version>
+        <version>0.0.1-pre</version>
         <authors>Microsoft</authors>
         <requireLicenseAcceptance>false</requireLicenseAcceptance>
         <description>Lean mean webstack for .NET.</description>
