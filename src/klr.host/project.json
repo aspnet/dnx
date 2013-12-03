@@ -5,7 +5,7 @@
     ],
     "configurations" : [
         { "net45" : { "compilationOptions": { "define": ["DESKTOP"] } } },
-        { "coreclr10" : { "compilationOptions" : { } } },
-        { "k10" : { "compilationOptions" : { } } },
+        { "coreclr10" : { } },
+        { "k10" : { } }
     ]
 }
