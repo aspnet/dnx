@@ -144,9 +144,6 @@ namespace Microsoft.Net.Runtime.Loader.Roslyn
                     return CompileInMemory(name, compilation, resources);
                 }
 
-                // Ensure there's an output directory
-                System.IO.Directory.CreateDirectory(loadContext.OutputPath);
-
                 string assemblyPath = Path.Combine(loadContext.OutputPath, name + ".dll");
                 string pdbPath = Path.Combine(loadContext.OutputPath, name + ".pdb");
 
@@ -162,6 +159,9 @@ namespace Microsoft.Net.Runtime.Loader.Roslyn
                 {
                     return CompileInMemory(name, compilation, resources, cacheResults: false);
                 }
+
+                // Ensure there's an output directory
+                System.IO.Directory.CreateDirectory(loadContext.OutputPath);
 
                 AssemblyLoadResult loadResult = CompileToDisk(assemblyPath, pdbPath, compilation, resources);
 
