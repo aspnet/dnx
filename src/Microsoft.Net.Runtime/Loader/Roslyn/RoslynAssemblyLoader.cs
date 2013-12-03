@@ -62,23 +62,31 @@ namespace Microsoft.Net.Runtime.Loader.Roslyn
 
             Trace.TraceInformation("[{0}]: Found project '{1}' framework={2}", GetType().Name, project.Name, loadContext.TargetFramework);
 
-            List<MetadataReference> references = null;
+            var references = new List<MetadataReference>();
 
             if (project.Dependencies.Count > 0)
             {
                 Trace.TraceInformation("[{0}]: Loading dependencies for '{1}'", GetType().Name, project.Name);
                 var dependencyStopWatch = Stopwatch.StartNew();
 
-                references = project.Dependencies
-                                    .Select(r => ResolveDependency(r, loadContext))
-                                    .ToList();
+                var errors = new List<string>();
+
+                foreach (var dependency in project.Dependencies)
+                {
+                    MetadataReference reference;
+                    if (TryResolveDependency(dependency, loadContext, errors, out reference))
+                    {
+                        references.Add(reference);
+                    }
+                }
+
+                if (errors.Count > 0)
+                {
+                    return new AssemblyLoadResult(errors);
+                }
 
                 dependencyStopWatch.Stop();
                 Trace.TraceInformation("[{0}]: Completed loading dependencies for '{1}' in {2}ms", GetType().Name, project.Name, dependencyStopWatch.ElapsedMilliseconds);
-            }
-            else
-            {
-                references = new List<MetadataReference>();
             }
 
             _watcher.WatchFile(project.ProjectFilePath);
@@ -212,12 +220,15 @@ namespace Microsoft.Net.Runtime.Loader.Roslyn
 
         }
 
-        private MetadataReference ResolveDependency(PackageReference dependency, LoadContext loadContext)
+        private bool TryResolveDependency(PackageReference dependency, LoadContext loadContext, List<string> errors, out MetadataReference resolved)
         {
+            resolved = null;
+
             string assemblyLocation;
             if (GlobalAssemblyCache.ResolvePartialName(dependency.Name, out assemblyLocation) != null)
             {
-                return new MetadataFileReference(assemblyLocation);
+                resolved = new MetadataFileReference(assemblyLocation);
+                return true;
             }
 
             var childContext = new LoadContext(dependency.Name, loadContext.TargetFramework);
@@ -226,16 +237,25 @@ namespace Microsoft.Net.Runtime.Loader.Roslyn
 
             if (loadResult == null)
             {
-                throw new InvalidOperationException(String.Format("Unable to resolve dependency '{0}'.", dependency));
+                errors.Add(String.Format("Unable to resolve dependency '{0}'.", dependency));
+                return false;
+            }
+
+            if (loadResult.Errors != null)
+            {
+                errors.AddRange(loadResult.Errors);
+                return false;
             }
 
             CompiledAssembly compiledAssembly;
             if (_compiledAssemblies.TryGetValue(dependency.Name, out compiledAssembly))
             {
-                return compiledAssembly.MetadataReference;
+                resolved = compiledAssembly.MetadataReference;
+                return true;
             }
 
-            return new MetadataFileReference(loadResult.Assembly.Location);
+            resolved = new MetadataFileReference(loadResult.Assembly.Location);
+            return true;
         }
 
         private AssemblyLoadResult CompileToDisk(string assemblyPath, string pdbPath, Compilation compilation, IList<ResourceDescription> resources)
