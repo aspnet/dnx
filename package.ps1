@@ -25,7 +25,7 @@ mkdir $sdkRoot\tools\bin -force | Out-Null
 cp bin\$configuration\* $sdkRoot\tools\bin\
 
 # if the framework is local then build it against the frameworks
-if(Test-Path $sdkRoot\Framework)
+if((Test-Path $sdkRoot\Framework) -and (Test-Path $sdkRoot\tools\Microsoft.Net.Project))
 {
     & $sdkRoot\tools\k.cmd build src\Microsoft.Net.Runtime.Interfaces
     & $sdkRoot\tools\k.cmd build src\klr.host
@@ -35,6 +35,9 @@ if(Test-Path $sdkRoot\Framework)
     
     rm $sdkRoot\tools\bin\klr.host.dll
     rm $sdkRoot\tools\bin\Microsoft.Net.Runtime.Interfaces.dll
+    rm -r -force $sdkRoot\tools\bin\*\bin\Debug
+    rm -r -force $sdkRoot\tools\bin\*\Properties
+    rm -r -force $sdkRoot\tools\bin\*\obj
 }
 
 if(!$includeSymbols)
@@ -54,12 +57,11 @@ cp -r src\Microsoft.Net.Launch $sdkRoot\tools -Force
 cp src\Microsoft.Net.Runtime\Executable.cs $sdkRoot\tools\Microsoft.Net.Launch -Force
 rm $sdkRoot\tools\Microsoft.Net.Launch\.include
 
-if(!$includeSymbols)
-{
-    # Remove the stuff we don't need
-    ls -r $sdkRoot\tools\*obj | rm -r
-    ls -r $sdkRoot\tools\*\bin\*\*.xml | rm
-}
+
+# Remove the stuff we don't need
+rm -r $sdkRoot\tools\*\obj 
+rm -r -force $sdkRoot\tools\*\properties
+
 
 # Copy the runtime
 if($runtimePath) 
