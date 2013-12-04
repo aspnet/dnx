@@ -39,32 +39,7 @@ namespace NuGet
         public static readonly FrameworkName UnsupportedFrameworkName = new FrameworkName("Unsupported", new Version());
         private static readonly Version _emptyVersion = new Version();
 
-        private static readonly Dictionary<string, string> _knownIdentifiers = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase) {
-            { "NET", NetFrameworkIdentifier },
-            { ".NET", NetFrameworkIdentifier },
-            { "NETFramework", NetFrameworkIdentifier },
-            { ".NETFramework", NetFrameworkIdentifier },
-            { "NETCore", NetCoreFrameworkIdentifier},
-            { ".NETCore", NetCoreFrameworkIdentifier},
-            { "WinRT", NetCoreFrameworkIdentifier},     // 'WinRT' is now deprecated. Use 'Windows' or 'win' instead.
-            { ".NETMicroFramework", ".NETMicroFramework" },
-            { "netmf", ".NETMicroFramework" },
-            { "SL", "Silverlight" },
-            { "Silverlight", "Silverlight" },
-            { ".NETPortable", PortableFrameworkIdentifier },
-            { "NETPortable", PortableFrameworkIdentifier },
-            { "portable", PortableFrameworkIdentifier },
-            { "wp", "WindowsPhone" },
-            { "WindowsPhone", "WindowsPhone" },
-            { "Windows", "Windows" },
-            { "win", "Windows" },
-            { "MonoAndroid", "MonoAndroid" },
-            { "MonoTouch", "MonoTouch" },
-            { "MonoMac", "MonoMac" },
-            { "native", "native"},
-            { "coreclr", "CoreClr" },
-            { "k", "K" },
-        };
+        private static readonly IDictionary<string, string> _knownIdentifiers = PopulateKnownFrameworks();
 
         private static readonly Dictionary<string, string> _knownProfiles = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase) {
             { "Client", "Client" },
@@ -699,7 +674,7 @@ namespace NuGet
             return hasItems;
         }
 
-        
+
 
         internal static Version NormalizeVersion(Version verison)
         {
@@ -1038,6 +1013,55 @@ namespace NuGet
             // By the time it is called here, it's guaranteed to be valid.
             // Thus we can ignore the profile part here
             return framework != null && PortableFrameworkIdentifier.Equals(framework.Identifier, StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static IDictionary<string, string> PopulateKnownFrameworks()
+        {
+            var frameworks = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase) {
+                { "NET", NetFrameworkIdentifier },
+                { ".NET", NetFrameworkIdentifier },
+                { "NETFramework", NetFrameworkIdentifier },
+                { ".NETFramework", NetFrameworkIdentifier },
+                { "NETCore", NetCoreFrameworkIdentifier},
+                { ".NETCore", NetCoreFrameworkIdentifier},
+                { "WinRT", NetCoreFrameworkIdentifier},     // 'WinRT' is now deprecated. Use 'Windows' or 'win' instead.
+                { ".NETMicroFramework", ".NETMicroFramework" },
+                { "netmf", ".NETMicroFramework" },
+                { "SL", "Silverlight" },
+                { "Silverlight", "Silverlight" },
+                { ".NETPortable", PortableFrameworkIdentifier },
+                { "NETPortable", PortableFrameworkIdentifier },
+                { "portable", PortableFrameworkIdentifier },
+                { "wp", "WindowsPhone" },
+                { "WindowsPhone", "WindowsPhone" },
+                { "Windows", "Windows" },
+                { "win", "Windows" },
+                { "MonoAndroid", "MonoAndroid" },
+                { "MonoTouch", "MonoTouch" },
+                { "MonoMac", "MonoMac" },
+                { "native", "native"}
+            };
+
+            string klrPath = Environment.GetEnvironmentVariable("KLR_PATH");
+
+            if (!String.IsNullOrEmpty(klrPath))
+            {
+                // Convention based on install directory
+                // ..\..\Framework
+                var targetingPacks = Path.GetFullPath(Path.Combine(Path.GetDirectoryName(klrPath), @"..\..\Framework"));
+
+                if (Directory.Exists(targetingPacks))
+                {
+                    var di = new DirectoryInfo(targetingPacks);
+
+                    foreach (var d in di.EnumerateDirectories())
+                    {
+                        frameworks[d.Name] = d.Name;
+                    }
+                }
+            }
+
+            return frameworks;
         }
     }
 }
