@@ -165,7 +165,7 @@ namespace Microsoft.Net.Runtime.Loader.Roslyn
 
                 AssemblyLoadResult loadResult = CompileToDisk(assemblyPath, pdbPath, compilation, resources);
 
-                if (loadResult != null)
+                if (loadResult != null && loadResult.Errors == null)
                 {
                     // Attempt to build packages for this project
                     BuildPackages(loadContext, project, assemblyPath, pdbPath, sourceFiles);
@@ -264,6 +264,13 @@ namespace Microsoft.Net.Runtime.Loader.Roslyn
 
             if (!result.Success)
             {
+                // REVIEW: Emit seems to create the output assembly even if the build fails
+                // follow up to see why this happens
+                if (File.Exists(assemblyPath))
+                {
+                    File.Delete(assemblyPath);
+                }
+
                 return ReportCompilationError(result);
             }
 

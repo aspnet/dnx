@@ -39,7 +39,11 @@ namespace klr.host
         public Assembly GetEntryPoint()
         {
             TraceInformation("RootHost.GetEntryPoint GetEntryPoint {0}", _applicationName);
+#if DESKTOP
             return Assembly.Load(_applicationName);
+#else
+            return Assembly.Load(new AssemblyName(_applicationName));
+#endif
         }
 
         public Assembly Load(string name)

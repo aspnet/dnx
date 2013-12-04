@@ -24,6 +24,19 @@ foreach($file in $scripts)
 mkdir $sdkRoot\tools\bin -force | Out-Null
 cp bin\$configuration\* $sdkRoot\tools\bin\
 
+# if the framework is local then build it against the frameworks
+if(Test-Path $sdkRoot\Framework)
+{
+    & $sdkRoot\tools\k.cmd build src\Microsoft.Net.Runtime.Interfaces
+    & $sdkRoot\tools\k.cmd build src\klr.host
+    
+    cp -r src\Microsoft.Net.Runtime.Interfaces -filter *.dll $sdkRoot\tools\bin\ -force
+    cp -r src\klr.host -filter *.dll $sdkRoot\tools\bin\ -force
+    
+    rm $sdkRoot\tools\bin\klr.host.dll
+    rm $sdkRoot\tools\bin\Microsoft.Net.Runtime.Interfaces.dll
+}
+
 if(!$includeSymbols)
 {
     # Remove the stuff we don't need

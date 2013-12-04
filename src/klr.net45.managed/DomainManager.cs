@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Reflection;
 using System.Runtime.InteropServices;
 
@@ -12,7 +13,7 @@ public class DomainManager : AppDomainManager
     {
         _info.Main = Main;
         BindApplicationMain(ref _info);
-        
+
         if (!string.IsNullOrEmpty(_info.ApplicationBase))
         {
             _originalApplicationBase = appDomainInfo.ApplicationBase;
@@ -24,16 +25,13 @@ public class DomainManager : AppDomainManager
     {
         try
         {
-            if (_originalApplicationBase != null)
-            {
-                AppDomain.CurrentDomain.AssemblyResolve += CurrentDomainOnAssemblyResolve;
-            }
+            AppDomain.CurrentDomain.AssemblyResolve += CurrentDomainOnAssemblyResolve;
+
             Assembly.Load("Microsoft.Net.Runtime.Interfaces, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null");
+
             var assembly = Assembly.Load("klr.host");
-            if (_originalApplicationBase != null)
-            {
-                AppDomain.CurrentDomain.AssemblyResolve -= CurrentDomainOnAssemblyResolve;
-            }
+
+            AppDomain.CurrentDomain.AssemblyResolve -= CurrentDomainOnAssemblyResolve;
 
             var bootstrapperType = assembly.GetType("Bootstrapper");
             var mainMethod = bootstrapperType.GetMethod("Main");
@@ -51,9 +49,27 @@ public class DomainManager : AppDomainManager
     private Assembly CurrentDomainOnAssemblyResolve(object sender, ResolveEventArgs args)
     {
         var name = new AssemblyName(args.Name).Name;
-        var path = System.IO.Path.Combine(_originalApplicationBase, name + ".dll");
-        Assembly assembly = Assembly.LoadFile(path);
-        return assembly;
+
+        var searchPaths = new[] { 
+            "", 
+            Path.Combine(name, "bin", "net45")
+        };
+
+        var basePath = _originalApplicationBase ?? AppDomain.CurrentDomain.SetupInformation.ApplicationBase;
+
+        foreach (var searchPath in searchPaths)
+        {
+            var path = Path.Combine(basePath,
+                                    searchPath,
+                                    name + ".dll");
+
+            if (File.Exists(path))
+            {
+                return Assembly.LoadFile(path);
+            }
+        }
+
+        return null;
     }
 
     private static IEnumerable<string> GetExceptions(Exception ex)

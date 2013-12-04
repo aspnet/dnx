@@ -185,7 +185,9 @@ namespace Microsoft.Net.Runtime.Loader
                     foreach (var prop in configuration)
                     {
                         config.FrameworkName = VersionUtility.ParseFrameworkName(prop.Key);
-                        var specificCompilationOptions = settings["compilationOptions"];
+                        var properties = prop.Value.Value<JObject>();
+
+                        var specificCompilationOptions = properties["compilationOptions"];
 
                         config.CompilationOptions = GetCompilationOptions(specificCompilationOptions);
                         config.Defines = ConvertValue<string[]>(specificCompilationOptions, "define") ?? new string[] { };

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Reflection;
 using System.Runtime.ExceptionServices;
 using System.Security;
@@ -7,6 +8,7 @@ using System.Security;
 [SecurityCritical]
 sealed class DomainManager : AppDomainManager
 {
+
     public DomainManager()
     {
     }
@@ -22,23 +24,25 @@ sealed class DomainManager : AppDomainManager
     }
 
     [HandleProcessCorruptedStateExceptions, SecurityCritical]
-    unsafe static int Main(int argc, char** argv)
+    unsafe static int Main(char* appBase, int argc, char** argv)
     {
         try
         {
-            //if (_originalApplicationBase != null)
-            //{
-            //    AppDomain.CurrentDomain.AssemblyResolve += CurrentDomainOnAssemblyResolve;
-            //}
+            var applicationBase = new string(appBase);
 
-            //Assembly.Load("Microsoft.Net.Runtime.Interfaces, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null");
-            
+            ResolveEventHandler handler = (sender, args) =>
+            {
+                var name = new AssemblyName(args.Name).Name;
+                return ResolveAssembly(applicationBase, name);
+            };
+
+            AppDomain.CurrentDomain.AssemblyResolve += handler;
+
+            Assembly.Load("Microsoft.Net.Runtime.Interfaces, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null");
+
             var assembly = Assembly.Load("klr.host");
 
-            //if (_originalApplicationBase != null)
-            //{
-            //    AppDomain.CurrentDomain.AssemblyResolve -= CurrentDomainOnAssemblyResolve;
-            //}
+            AppDomain.CurrentDomain.AssemblyResolve -= handler;
 
             //Pack arguments
             var arguments = new string[argc];
@@ -59,6 +63,30 @@ sealed class DomainManager : AppDomainManager
             return 1;
         }
     }
+
+    private static Assembly ResolveAssembly(string appBase, string name)
+    {
+        var searchPaths = new[] { 
+            "", 
+            Path.Combine(name, "bin", "k10"), 
+            Path.Combine(name, "bin", "coreclr10") 
+        };
+
+        foreach (var searchPath in searchPaths)
+        {
+            var path = Path.Combine(appBase,
+                                    searchPath,
+                                    name + ".dll");
+
+            if (File.Exists(path))
+            {
+                return Assembly.LoadFile(path);
+            }
+        }
+
+        return null;
+    }
+
     private static IEnumerable<string> GetExceptions(Exception ex)
     {
         if (ex.InnerException != null)

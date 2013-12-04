@@ -73,6 +73,7 @@ static const wchar_t *trustedAssemblies[] =
 };
 
 typedef int (STDMETHODCALLTYPE *HostMain)(
+    const wchar_t* appBase,
     const int argc,
     const wchar_t** argv
 );
@@ -238,7 +239,10 @@ extern "C" __declspec(dllexport) bool __stdcall CallApplicationMain(PCALL_APPLIC
     };
 
     DWORD domainId;
-    DWORD dwFlagsAppDomain = APPDOMAIN_ENABLE_PLATFORM_SPECIFIC_APPS | APPDOMAIN_ENABLE_PINVOKE_AND_CLASSIC_COMINTEROP;
+    DWORD dwFlagsAppDomain =
+        APPDOMAIN_ENABLE_PLATFORM_SPECIFIC_APPS |
+        APPDOMAIN_ENABLE_PINVOKE_AND_CLASSIC_COMINTEROP;
+
     LPCWSTR szAssemblyName = L"klr.core45.managed, Version=1.0.0.0";
     LPCWSTR szDomainManagerTypeName = L"DomainManager";
     LPCWSTR szMainMethodName = L"Main";
@@ -277,7 +281,7 @@ extern "C" __declspec(dllexport) bool __stdcall CallApplicationMain(PCALL_APPLIC
     }
 
     // Call main
-    data->exitcode = pHostMain(data->argc, data->argv);
+    data->exitcode = pHostMain(szCurrentDirectory, data->argc, data->argv);
 
     pCLRRuntimeHost->UnloadAppDomain(domainId, true);
 
