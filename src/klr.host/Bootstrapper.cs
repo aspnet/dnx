@@ -54,7 +54,7 @@ public class Bootstrapper
 
         string name = assembly.GetName().Name;
 
-        var programType = assembly.GetType("Program") ?? assembly.GetTypes().FirstOrDefault(t => t.Name == "Program");
+        var programType = assembly.GetType("Program") ?? assembly.DefinedTypes.Where(t => t.Name == "Program").Select(t => t.AsType()).FirstOrDefault();
 
         if (programType == null)
         {
@@ -63,7 +63,8 @@ public class Bootstrapper
         }
 
         // Invoke the constructor with the most arguments
-        var ctor = programType.GetConstructors()
+        var ctor = programType.GetTypeInfo()
+                              .DeclaredConstructors
                               .OrderByDescending(p => p.GetParameters().Length)
                               .FirstOrDefault();
 
@@ -73,7 +74,7 @@ public class Bootstrapper
 
         object programInstance = ctor.Invoke(parameterValues);
 
-        var main = programType.GetMethod("Main", BindingFlags.Static | BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+        var main = programType.GetTypeInfo().GetDeclaredMethods("Main").FirstOrDefault();
 
         if (main == null)
         {
