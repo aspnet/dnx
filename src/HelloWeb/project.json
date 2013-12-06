@@ -1,15 +1,7 @@
 {
   "name": "HelloWeb",
   "dependencies": [
-    {
-      "Owin": {
-        "Version": "1.0"
-      }
-    },
-    {
-      "Microsoft.Owin.Diagnostics": {
-        "version": "2.0.2"
-      }
-    }
+    { "Owin": { "version": "1.0" } },
+    { "Microsoft.Owin.Diagnostics": { "version": "2.0.2" } }
   ]
 }
