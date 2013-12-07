@@ -122,7 +122,7 @@ namespace Microsoft.Net.Runtime.Loader.Infrastructure
                     return true;
                 });
 
-                // Inform tracker of ambiguity beneith nodes that are not resolved yet
+                // Inform tracker of ambiguity beneath nodes that are not resolved yet
                 // between:
                 // a1->b1->d1->x1
                 // a1->c1->d2->z1
