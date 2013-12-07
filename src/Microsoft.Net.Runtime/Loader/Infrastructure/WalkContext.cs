@@ -53,7 +53,7 @@ namespace Microsoft.Net.Runtime.Loader.Infrastructure
             var resolvers = dependencyResolvers as IPackageLoader[] ?? dependencyResolvers.ToArray();
             var resolvedItems = new Dictionary<PackageReference, Item>();
 
-            // Recurse through dependencies optomistically, asking resolvers for dependencies
+            // Recurse through dependencies optimistically, asking resolvers for dependencies
             // based on best match of each encountered dependency
             ForEach(root, node =>
             {
