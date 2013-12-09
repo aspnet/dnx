@@ -9,13 +9,6 @@ namespace Microsoft.Net.Project
 {
     public class Program
     {
-        private readonly IHostContainer _container;
-
-        public Program(IHostContainer container)
-        {
-            _container = container;
-        }
-
         public void Main(string[] args)
         {
             if (args.Length < 1)
@@ -28,24 +21,15 @@ namespace Microsoft.Net.Project
             string command = args[0];
             string application = args.Length >= 2 ? args[1] : Directory.GetCurrentDirectory();
 
-            var host = new DefaultHost(application);
-            IDisposable scope = _container.AddHost(host);
-
             try
             {
                 if (command.Equals("build", StringComparison.OrdinalIgnoreCase))
                 {
-                    using (scope)
-                    {
-                        host.Build();
-                    }
+                    DefaultHost.Build(application);
                 }
                 else if (command.Equals("clean", StringComparison.OrdinalIgnoreCase))
                 {
-                    using (scope)
-                    {
-                        host.Clean();
-                    }
+                    DefaultHost.Clean(application);
                 }
                 else
                 {

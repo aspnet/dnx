@@ -157,7 +157,7 @@ namespace Microsoft.Net.Runtime.Loader.Roslyn
                 // If we're not loading from the output path then compile in memory
                 if (!loadContext.CreateArtifacts)
                 {
-                    return CompileInMemory(name, compilation, resources, cacheResults: false);
+                    return CompileInMemory(name, compilation, resources);
                 }
 
                 // Ensure there's an output directory
@@ -273,7 +273,7 @@ namespace Microsoft.Net.Runtime.Loader.Roslyn
 
                 return ReportCompilationError(result);
             }
-
+            
             return new AssemblyLoadResult(Assembly.LoadFile(assemblyPath));
         }
 
@@ -289,7 +289,7 @@ namespace Microsoft.Net.Runtime.Loader.Roslyn
             }
         }
 
-        private AssemblyLoadResult CompileInMemory(string name, Compilation compilation, IEnumerable<ResourceDescription> resources, bool cacheResults = true, Stream pdbStream = null)
+        private AssemblyLoadResult CompileInMemory(string name, Compilation compilation, IEnumerable<ResourceDescription> resources, Stream pdbStream = null)
         {
             using (var ms = new MemoryStream())
             {
@@ -308,10 +308,7 @@ namespace Microsoft.Net.Runtime.Loader.Roslyn
                     MetadataReference = compilation.ToMetadataReference()
                 };
 
-                if (cacheResults)
-                {
-                    _compiledAssemblies[name] = compiled;
-                }
+                _compiledAssemblies[name] = compiled;
 
                 return new AssemblyLoadResult(compiled.Assembly);
             }

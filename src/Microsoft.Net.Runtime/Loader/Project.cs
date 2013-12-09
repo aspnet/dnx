@@ -190,7 +190,7 @@ namespace Microsoft.Net.Runtime.Loader
                         var specificCompilationOptions = properties["compilationOptions"];
 
                         config.CompilationOptions = GetCompilationOptions(specificCompilationOptions);
-                        config.Defines = ConvertValue<string[]>(specificCompilationOptions, "define") ?? new string[] { };
+                        config.Defines = ConvertValue<string[]>(specificCompilationOptions, "define") ?? new string[] { prop.Key.ToUpperInvariant() };
 
                         _configurations[config.FrameworkName] = config;
                     }

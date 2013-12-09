@@ -25,12 +25,7 @@ namespace Microsoft.Net.Runtime
 
         public DefaultHost(string projectDir, string targetFramework = "net45", bool watchFiles = true)
         {
-            if (File.Exists(projectDir))
-            {
-                projectDir = Path.GetDirectoryName(projectDir);
-            }
-
-            _projectDir = Path.GetFullPath(projectDir.TrimEnd(Path.DirectorySeparatorChar));
+            _projectDir = Normalize(projectDir);
 
             _targetFramework = VersionUtility.ParseFrameworkName(targetFramework);
 
@@ -86,10 +81,12 @@ namespace Microsoft.Net.Runtime
             return _entryPoint;
         }
 
-        public void Build()
+        public static void Build(string projectDir, string defaultTargetFramework = "net45")
         {
+            projectDir = Normalize(projectDir);
+
             Project project;
-            if (!Project.TryGetProject(_projectDir, out project))
+            if (!Project.TryGetProject(projectDir, out project))
             {
                 Trace.TraceInformation("Unable to locate {0}.'", Project.ProjectFileName);
                 return;
@@ -97,13 +94,17 @@ namespace Microsoft.Net.Runtime
 
             var sw = Stopwatch.StartNew();
 
-            string outputPath = Path.Combine(_projectDir, "bin");
+            string outputPath = Path.Combine(projectDir, "bin");
             string nupkg = GetPackagePath(project, outputPath);
 
             var configurations = new HashSet<FrameworkName>(
                 project.GetTargetFrameworkConfigurations()
                        .Select(c => c.FrameworkName));
-            configurations.Add(_targetFramework);
+
+            if (configurations.Count == 0)
+            {
+                configurations.Add(VersionUtility.ParseFrameworkName(defaultTargetFramework));
+            }
 
             var builder = new PackageBuilder();
 
@@ -160,22 +161,28 @@ namespace Microsoft.Net.Runtime
             Trace.TraceInformation("Compile took {0}ms", sw.ElapsedMilliseconds);
         }
 
-        public void Clean()
+        public static void Clean(string projectDir, string defaultTargetFramework = "net45")
         {
+            projectDir = Normalize(projectDir);
+
             Project project;
-            if (!Project.TryGetProject(_projectDir, out project))
+            if (!Project.TryGetProject(projectDir, out project))
             {
                 Trace.TraceInformation("Unable to locate {0}.'", Project.ProjectFileName);
                 return;
             }
 
-            string outputPath = Path.Combine(_projectDir, "bin");
+            string outputPath = Path.Combine(projectDir, "bin");
             string nupkg = GetPackagePath(project, outputPath);
 
             var configurations = new HashSet<FrameworkName>(
                 project.GetTargetFrameworkConfigurations()
                        .Select(c => c.FrameworkName));
-            configurations.Add(_targetFramework);
+            
+            if (configurations.Count == 0)
+            {
+                configurations.Add(VersionUtility.ParseFrameworkName(defaultTargetFramework));
+            }
 
             foreach (var targetFramework in configurations)
             {
@@ -233,9 +240,11 @@ namespace Microsoft.Net.Runtime
             _watcher.Dispose();
         }
 
-        private AssemblyLoadResult Build(Project project, string outputPath, FrameworkName targetFramework, PackageBuilder builder)
+        private static AssemblyLoadResult Build(Project project, string outputPath, FrameworkName targetFramework, PackageBuilder builder)
         {
-            _loader.Walk(project.Name, project.Version, targetFramework);
+            var loader = CreateLoader(Path.GetDirectoryName(project.ProjectFilePath));
+
+            loader.Walk(project.Name, project.Version, targetFramework);
 
             var targetFrameworkFolder = VersionUtility.GetShortFrameworkName(targetFramework);
             string targetPath = Path.Combine(outputPath, targetFrameworkFolder);
@@ -246,7 +255,7 @@ namespace Microsoft.Net.Runtime
                 PackageBuilder = builder,
             };
 
-            var result = _loader.Load(loadContext);
+            var result = loader.Load(loadContext);
 
             if (result == null || result.Errors != null)
             {
@@ -259,9 +268,10 @@ namespace Microsoft.Net.Runtime
             return result;
         }
 
-        private AssemblyLoadResult Clean(Project project, string outputPath, FrameworkName targetFramework)
+        private static AssemblyLoadResult Clean(Project project, string outputPath, FrameworkName targetFramework)
         {
-            _loader.Walk(project.Name, project.Version, targetFramework);
+            var loader = CreateLoader(Path.GetDirectoryName(project.ProjectFilePath));
+            loader.Walk(project.Name, project.Version, targetFramework);
 
             var targetFrameworkFolder = VersionUtility.GetShortFrameworkName(targetFramework);
             string targetPath = Path.Combine(outputPath, targetFrameworkFolder);
@@ -273,7 +283,7 @@ namespace Microsoft.Net.Runtime
                 CreateArtifacts = false
             };
 
-            var result = _loader.Load(loadContext);
+            var result = loader.Load(loadContext);
 
             if (result == null || result.Errors != null)
             {
@@ -325,7 +335,7 @@ namespace Microsoft.Net.Runtime
         private void Initialize(bool watchFiles)
         {
             _loader = new AssemblyLoader();
-            string rootDirectory = ResolveRootDirectory();
+            string rootDirectory = ResolveRootDirectory(_projectDir);
 
             if (watchFiles)
             {
@@ -354,9 +364,23 @@ namespace Microsoft.Net.Runtime
             });
         }
 
-        private string ResolveRootDirectory()
+        private static AssemblyLoader CreateLoader(string projectDir)
         {
-            var di = new DirectoryInfo(_projectDir);
+            var loader = new AssemblyLoader();
+            string rootDirectory = ResolveRootDirectory(projectDir);
+            var resolver = new FrameworkReferenceResolver();
+            var resourceProvider = new ResxResourceProvider();
+            var roslynLoader = new RoslynAssemblyLoader(rootDirectory, FileWatcher.Noop, resolver, loader, resourceProvider);
+            loader.Add(roslynLoader);
+            loader.Add(new MSBuildProjectAssemblyLoader(rootDirectory, FileWatcher.Noop));
+            loader.Add(new NuGetAssemblyLoader(projectDir));
+
+            return loader;
+        }
+
+        private static string ResolveRootDirectory(string projectDir)
+        {
+            var di = new DirectoryInfo(projectDir);
 
             if (di.Parent != null)
             {
@@ -370,12 +394,22 @@ namespace Microsoft.Net.Runtime
                 di = di.Parent;
             }
 
-            return Path.GetDirectoryName(_projectDir);
+            return Path.GetDirectoryName(projectDir);
         }
 
         private static string GetPackagePath(Project project, string outputPath)
         {
             return Path.Combine(outputPath, project.Name + "." + project.Version + ".nupkg");
+        }
+
+        private static string Normalize(string projectDir)
+        {
+            if (File.Exists(projectDir))
+            {
+                projectDir = Path.GetDirectoryName(projectDir);
+            }
+
+            return Path.GetFullPath(projectDir.TrimEnd(Path.DirectorySeparatorChar));
         }
     }
 }
