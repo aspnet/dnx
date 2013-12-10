@@ -1,4 +1,4 @@
-param($configuration = "Debug", $includeSymbols = $false, $runtimePath)
+param($configuration = "Debug", $includeSymbols = $false, $runtimePath, $nightly = $false)
 
 $sdkRoot = "artifacts\sdk"
 
@@ -71,4 +71,14 @@ if($runtimePath)
 
 # NuGet pack
 cp ProjectK.nuspec $sdkRoot
-.nuget\NuGet.exe pack $sdkRoot\ProjectK.nuspec -o $sdkRoot -NoPackageAnalysis
+
+$spec = [xml](cat $sdkRoot\ProjectK.nuspec)
+$version = $spec.package.metadata.version
+
+if($nightly)
+{
+    $now = [DateTime]::Now;
+    $version += "-" + ($now.Year - 2011) + [DateTime]::Now.ToString("MMdd");
+}
+
+.nuget\NuGet.exe pack $sdkRoot\ProjectK.nuspec -o $sdkRoot -NoPackageAnalysis -version $version
