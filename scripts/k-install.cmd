@@ -1,3 +1,3 @@
 @Echo OFF
 
-%~dp0\NuGet.exe install %*
+"%~dp0\NuGet.exe" install %*

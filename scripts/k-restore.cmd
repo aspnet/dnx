@@ -1,3 +1,3 @@
 @Echo OFF
 
-%~dp0\NuGet.exe restore %*
+"%~dp0\NuGet.exe" restore %*

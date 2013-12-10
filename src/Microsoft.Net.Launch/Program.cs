@@ -28,7 +28,7 @@ namespace WatchDog
             if(File.Exists(path))
             {
                 childProcess = path;
-                childArgs = String.Join(" ", args.Skip(1));
+                childArgs = String.Join(" ", args.Skip(1).Select(Quote));
             }
 
             while (true)
@@ -110,6 +110,11 @@ namespace WatchDog
             {
                 // The console might not be supported
             }
+        }
+
+        private static string Quote(string arg)
+        {
+            return "\"" + arg + "\"";
         }
     }
 }
