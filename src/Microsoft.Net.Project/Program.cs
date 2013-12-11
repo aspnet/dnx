@@ -21,15 +21,17 @@ namespace Microsoft.Net.Project
             string command = args[0];
             string application = args.Length >= 2 ? args[1] : Directory.GetCurrentDirectory();
 
+            var projectManager = new ProjectManager(application);
+
             try
             {
                 if (command.Equals("build", StringComparison.OrdinalIgnoreCase))
                 {
-                    DefaultHost.Build(application);
+                    projectManager.Build();
                 }
                 else if (command.Equals("clean", StringComparison.OrdinalIgnoreCase))
                 {
-                    DefaultHost.Clean(application);
+                    projectManager.Clean();
                 }
                 else
                 {
