@@ -171,14 +171,20 @@ namespace Microsoft.Net.OwinHost
             options.Settings[typeof(IAppLoaderFactory).FullName] =
                 typeof(AppLoaderWrapper).AssemblyQualifiedName + ";" + appLoaderFactories;
 
-            var host = new DefaultHost(AppDomain.CurrentDomain.SetupInformation.ApplicationBase);
+            DefaultHost host = null;
 
             if (options.Settings.ContainsKey("devMode"))
             {
+                host = new DefaultHost(AppDomain.CurrentDomain.SetupInformation.ApplicationBase, watchFiles: true);
+
                 host.OnChanged += () =>
                 {
                     Environment.Exit(250);
                 };
+            }
+            else
+            {
+                host = new DefaultHost(AppDomain.CurrentDomain.SetupInformation.ApplicationBase);
             }
 
             using (_hostContainer.AddHost(host))

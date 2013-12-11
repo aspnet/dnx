@@ -23,7 +23,7 @@ namespace Microsoft.Net.Runtime
         private Assembly _entryPoint;
         private readonly FrameworkName _targetFramework;
 
-        public DefaultHost(string projectDir, string targetFramework = "net45", bool watchFiles = true)
+        public DefaultHost(string projectDir, string targetFramework = "net45", bool watchFiles = false)
         {
             _projectDir = Normalize(projectDir);
 
