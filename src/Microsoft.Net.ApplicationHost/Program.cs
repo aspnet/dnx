@@ -76,7 +76,7 @@ namespace Microsoft.Net.ApplicationHost
 
             string name = assembly.GetName().Name;
 
-            var program = assembly.GetType("Program") ?? assembly.GetTypes().FirstOrDefault(t => t.Name == "Program");
+            var program = assembly.GetType("Program") ?? assembly.DefinedTypes.FirstOrDefault(t => t.Name == "Program").AsType();
 
             if (program == null)
             {
@@ -84,7 +84,7 @@ namespace Microsoft.Net.ApplicationHost
                 return;
             }
 
-            var main = program.GetMethod("Main", BindingFlags.Instance | BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic);
+            var main = program.GetTypeInfo().GetDeclaredMethods("Main").FirstOrDefault();
 
             if (main == null)
             {
@@ -95,15 +95,23 @@ namespace Microsoft.Net.ApplicationHost
             object instance = null;
             if ((main.Attributes & MethodAttributes.Static) != MethodAttributes.Static)
             {
-                var constructorInfos = program.GetConstructors();
-                if (constructorInfos == null || constructorInfos.Length == 0)
+                var constructors = program.GetTypeInfo().DeclaredConstructors.Where(c => c.IsPublic).ToList();
+
+                switch (constructors.Count)
                 {
-                    instance = Activator.CreateInstance(program);
-                }
-                else if (constructorInfos.Length == 1)
-                {
-                    var services = constructorInfos[0].GetParameters().Select(pi => _container);
-                    instance = constructorInfos[0].Invoke(services.ToArray());
+                    case 0:
+                        Console.WriteLine("'{0}' does not contain a public constructor.", name);
+                        return;
+
+                    case 1:
+                        var constructor = constructors[0];
+                        var services = constructor.GetParameters().Select(pi => _container);
+                        instance = constructor.Invoke(services.ToArray());
+                        break;
+
+                    default:
+                        Console.WriteLine("'{0}' has too many public constructors for an entry point.", name);
+                        return;
                 }
             }
 

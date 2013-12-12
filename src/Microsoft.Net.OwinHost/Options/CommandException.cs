@@ -5,7 +5,9 @@ using System.Runtime.Serialization;
 
 namespace OwinHost.Options
 {
+#if DESKTOP
     [Serializable]
+#endif
     public class CommandException : Exception
     {
         /// <summary>
@@ -24,6 +26,7 @@ namespace OwinHost.Options
         {
         }
 
+#if DESKTOP
         /// <summary>
         /// Initializes a new instance of the <see cref="T:OwinHost.Options.CommandException"/> class with serialized data.
         /// </summary>
@@ -31,6 +34,7 @@ namespace OwinHost.Options
         protected CommandException(SerializationInfo info, StreamingContext context) : base(info, context)
         {
         }
+#endif
 
         /// <summary>
         /// Initializes a new instance of the <see cref="T:OwinHost.Options.CommandException"/> class.
