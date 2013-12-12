@@ -66,6 +66,8 @@ namespace NuGet
         private static NetPortableProfileCollection BuildPortableProfileCollection()
         {
             var profileCollection = new NetPortableProfileCollection();
+
+#if DESKTOP // CORECLR_TODO: Environment.GetFolderPath
             string portableRootDirectory =
                     Path.Combine(
                         Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86, Environment.SpecialFolderOption.DoNotVerify),
@@ -79,6 +81,7 @@ namespace NuGet
                     profileCollection.AddRange(LoadProfilesFromFramework(versionDir, profileFilesPath));
                 }
             }
+#endif
 
             return profileCollection;
         }

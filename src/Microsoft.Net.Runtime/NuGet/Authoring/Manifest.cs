@@ -243,6 +243,7 @@ namespace NuGet
 
         private static void ValidateManifestSchema(XDocument document, string schemaNamespace)
         {
+#if DESKTOP // CORECLR_TODO: XmlSchema
             var schemaSet = ManifestSchemaUtility.GetManifestSchemaSet(schemaNamespace);
 
             document.Validate(schemaSet, (sender, e) =>
@@ -253,10 +254,12 @@ namespace NuGet
                     throw new InvalidOperationException(e.Message);
                 }
             });
+#endif
         }
 
         private static void CheckSchemaVersion(XDocument document)
         {
+#if DESKTOP // CORECLR_TODO: XmlSchema
             // Get the metadata node and look for the schemaVersion attribute
             XElement metadata = GetMetadataElement(document);
 
@@ -283,6 +286,7 @@ namespace NuGet
                                           typeof(Manifest).Assembly.GetName().Version));
                 }
             }
+#endif
         }
 
         private static string GetPackageId(XElement metadataElement)

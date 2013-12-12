@@ -6,14 +6,13 @@ using System.IO;
 
 namespace Microsoft.Net.Runtime.FileSystem
 {
+#if DESKTOP // CORECLR_TODO: FileWatcher
     public class FileWatcher : IFileWatcher
     {
         private readonly HashSet<string> _files = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         private readonly ConcurrentDictionary<string, HashSet<string>> _directories = new ConcurrentDictionary<string, HashSet<string>>(StringComparer.OrdinalIgnoreCase);
 
         private readonly FileSystemWatcher _watcher;
-
-        public static readonly IFileWatcher Noop = new NoopWatcher();
 
         internal FileWatcher()
         {
@@ -129,23 +128,31 @@ namespace Microsoft.Net.Runtime.FileSystem
 
             return false;
         }
+    }
+#endif
 
-        private class NoopWatcher : IFileWatcher
+    public sealed class NoopWatcher : IFileWatcher
+    {
+        public static readonly NoopWatcher Instance = new NoopWatcher();
+
+        private NoopWatcher()
         {
-            public bool WatchFile(string path)
-            {
-                return true;
-            }
 
-            public event Action OnChanged;
+        }
 
-            public void WatchDirectory(string path, string extension)
-            {
-            }
+        public bool WatchFile(string path)
+        {
+            return true;
+        }
 
-            public void Dispose()
-            {
-            }
+        public event Action OnChanged;
+
+        public void WatchDirectory(string path, string extension)
+        {
+        }
+
+        public void Dispose()
+        {
         }
     }
 }

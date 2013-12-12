@@ -11,6 +11,10 @@ using Microsoft.CodeAnalysis.Emit;
 using Microsoft.Net.Runtime.FileSystem;
 using NuGet;
 
+#if DESKTOP // TODO: Temporary due to CoreCLR and Desktop Roslyn being out of sync
+using EmitResult = Microsoft.CodeAnalysis.Emit.CommonEmitResult;
+#endif
+
 namespace Microsoft.Net.Runtime.Loader.Roslyn
 {
     public class RoslynAssemblyLoader : IAssemblyLoader, IPackageLoader, IMetadataLoader
@@ -187,12 +191,13 @@ namespace Microsoft.Net.Runtime.Loader.Roslyn
             {
                 return compiledAssembly.MetadataReference;
             }
-
+#if DESKTOP
             string assemblyLocation;
             if (GlobalAssemblyCache.ResolvePartialName(name, out assemblyLocation) != null)
             {
                 return new MetadataFileReference(assemblyLocation);
             }
+#endif
 
             return null;
         }
@@ -223,14 +228,14 @@ namespace Microsoft.Net.Runtime.Loader.Roslyn
         private bool TryResolveDependency(PackageReference dependency, LoadContext loadContext, List<string> errors, out MetadataReference resolved)
         {
             resolved = null;
-
+#if DESKTOP
             string assemblyLocation;
             if (GlobalAssemblyCache.ResolvePartialName(dependency.Name, out assemblyLocation) != null)
             {
                 resolved = new MetadataFileReference(assemblyLocation);
                 return true;
             }
-
+#endif
             var childContext = new LoadContext(dependency.Name, loadContext.TargetFramework);
 
             var loadResult = _dependencyLoader.Load(childContext);
@@ -260,7 +265,7 @@ namespace Microsoft.Net.Runtime.Loader.Roslyn
 
         private AssemblyLoadResult CompileToDisk(string assemblyPath, string pdbPath, Compilation compilation, IList<ResourceDescription> resources)
         {
-            CommonEmitResult result = compilation.Emit(assemblyPath, pdbPath, manifestResources: resources);
+            EmitResult result = compilation.Emit(assemblyPath, pdbPath, manifestResources: resources);
 
             if (!result.Success)
             {
@@ -293,7 +298,7 @@ namespace Microsoft.Net.Runtime.Loader.Roslyn
         {
             using (var ms = new MemoryStream())
             {
-                CommonEmitResult result = compilation.Emit(ms, pdbStream: pdbStream, manifestResources: resources);
+                EmitResult result = compilation.Emit(ms, pdbStream: pdbStream, manifestResources: resources);
 
                 if (!result.Success)
                 {
@@ -328,9 +333,14 @@ namespace Microsoft.Net.Runtime.Loader.Roslyn
             }
         }
 
-        private static AssemblyLoadResult ReportCompilationError(CommonEmitResult result)
+        private static AssemblyLoadResult ReportCompilationError(EmitResult result)
         {
-            var errors = new List<string>(result.Diagnostics.Select(d => DiagnosticFormatter.Instance.Format(d)));
+#if DESKTOP // TODO: Temporary due to CoreCLR and Desktop Roslyn being out of sync
+            var formatter = DiagnosticFormatter.Instance;
+#else
+            var formatter = new DiagnosticFormatter();
+#endif
+            var errors = new List<string>(result.Diagnostics.Select(d => formatter.Format(d)));
 
             return new AssemblyLoadResult(errors);
         }

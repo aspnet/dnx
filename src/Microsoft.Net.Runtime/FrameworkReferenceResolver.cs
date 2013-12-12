@@ -28,6 +28,7 @@ namespace Microsoft.Net.Runtime
 
         public IEnumerable<MetadataReference> GetDefaultReferences(FrameworkName frameworkName)
         {
+#if DESKTOP
             if (frameworkName.Identifier == VersionUtility.DefaultTargetFramework.Identifier)
             {
                 // Do not reference the entire desktop .NET framework by default
@@ -38,6 +39,7 @@ namespace Microsoft.Net.Runtime
                     ResolveGacAssembly("Microsoft.CSharp")
                 };
             }
+#endif
 
             FrameworkInformation frameworkInfo;
             if (_cache.TryGetValue(frameworkName, out frameworkInfo))
@@ -48,21 +50,10 @@ namespace Microsoft.Net.Runtime
             throw new InvalidOperationException(String.Format("Unknown target framework '{0}'.", frameworkName));
         }
 
-        public string GetRuntimeFacadePath(FrameworkName frameworkName)
-        {
-            FrameworkInformation frameworkInfo;
-            if (_cache.TryGetValue(frameworkName, out frameworkInfo))
-            {
-                return frameworkInfo.FacadePath;
-            }
-
-            return null;
-        }
-
         private static IDictionary<FrameworkName, FrameworkInformation> PopulateCache()
         {
             var info = new Dictionary<FrameworkName, FrameworkInformation>();
-
+#if DESKTOP
             string defaultPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86), @"Reference Assemblies\Microsoft\Framework\");
 
             PopulateReferenceAssemblies(defaultPath, info);
@@ -77,7 +68,7 @@ namespace Microsoft.Net.Runtime
                     PopulateReferenceAssemblies(profilePath, info);
                 }
             }
-
+#endif
             string klrPath = Environment.GetEnvironmentVariable("KLR_PATH");
 
             if (!String.IsNullOrEmpty(klrPath))
@@ -95,6 +86,7 @@ namespace Microsoft.Net.Runtime
             return info;
         }
 
+#if DESKTOP
         private static MetadataReference ResolveGacAssembly(string name)
         {
             string assemblyLocation;
@@ -105,6 +97,7 @@ namespace Microsoft.Net.Runtime
 
             throw new InvalidOperationException("Unable to resolve GAC reference");
         }
+#endif
 
         private static void PopulateReferenceAssemblies(string path, IDictionary<FrameworkName, FrameworkInformation> cache)
         {
@@ -129,8 +122,6 @@ namespace Microsoft.Net.Runtime
                     var facadePath = Path.Combine(v.FullName, "RuntimeFacades");
                     string redistList = Path.Combine(v.FullName, "RedistList", "FrameworkList.xml");
 
-                    frameworkInfo.FacadePath = Directory.Exists(facadePath) ? facadePath : null;
-
                     if (File.Exists(redistList))
                     {
                         foreach (var assemblyName in GetFrameworkAssemblies(redistList))
@@ -139,6 +130,7 @@ namespace Microsoft.Net.Runtime
 
                             if (!File.Exists(assemblyPath))
                             {
+#if DESKTOP
                                 // Check the gac fror full framework only
                                 if (frameworkName.Identifier == VersionUtility.DefaultTargetFramework.Identifier)
                                 {
@@ -148,6 +140,7 @@ namespace Microsoft.Net.Runtime
                                     }
                                 }
                                 else
+#endif
                                 {
                                     continue;
                                 }
@@ -158,6 +151,7 @@ namespace Microsoft.Net.Runtime
                     }
                     else
                     {
+#if DESKTOP // CORECLR_TODO: AssemblyName.GetAssemblyName
                         foreach (var assemblyFileInfo in v.EnumerateFiles("*.dll"))
                         {
                             try
@@ -171,6 +165,7 @@ namespace Microsoft.Net.Runtime
                                 Trace.TraceError(ex.Message);
                             }
                         }
+#endif
                     }
 
                     cache[frameworkName] = frameworkInfo;
@@ -204,8 +199,6 @@ namespace Microsoft.Net.Runtime
             }
 
             public IList<AssemblyInfo> Assemblies { get; private set; }
-
-            public string FacadePath { get; set; }
         }
 
         private class AssemblyInfo

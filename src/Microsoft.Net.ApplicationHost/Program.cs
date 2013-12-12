@@ -16,7 +16,7 @@ namespace Microsoft.Net.ApplicationHost
             _container = container;
         }
 
-        public void Main(string[] args)
+        public int Main(string[] args)
         {
             string application;
             string[] arguments;
@@ -43,8 +43,10 @@ namespace Microsoft.Net.ApplicationHost
             catch (Exception ex)
             {
                 Console.Error.WriteLine(String.Join(Environment.NewLine, GetExceptions(ex)));
-                Environment.Exit(-2);
+                return -2;
             }
+
+            return 0;
         }
 
         private static IEnumerable<string> GetExceptions(Exception ex)

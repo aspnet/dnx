@@ -246,9 +246,8 @@ namespace NuGet
                    .ToList()
                    .Remove();
 
-            element.Descendants()
-                   .ToList()
-                   .ForEach(e => RemoveAttributes(e, condition));
+            foreach (var e in element.Descendants().ToList())
+                RemoveAttributes(e, condition);
         }
 
         public static void AddIndented(this XContainer container, XContainer content)

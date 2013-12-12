@@ -7,6 +7,7 @@ using System.Linq;
 using System.Runtime.Versioning;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Reflection;
 using NuGet.Resources;
 using CompatibilityMapping = System.Collections.Generic.Dictionary<string, string[]>;
 
@@ -24,20 +25,20 @@ namespace NuGet
             "Microsoft.Security",
             "CA2104:DoNotDeclareReadOnlyMutableReferenceTypes",
             Justification = "The type FrameworkName is immutable.")]
-        public static readonly FrameworkName EmptyFramework = new FrameworkName("NoFramework", new Version());
+        public static readonly FrameworkName EmptyFramework = new FrameworkName("NoFramework", new Version(0, 0));
 
         [System.Diagnostics.CodeAnalysis.SuppressMessage(
             "Microsoft.Security",
             "CA2104:DoNotDeclareReadOnlyMutableReferenceTypes",
             Justification = "The type FrameworkName is immutable.")]
-        public static readonly FrameworkName NativeProjectFramework = new FrameworkName("Native", new Version());
+        public static readonly FrameworkName NativeProjectFramework = new FrameworkName("Native", new Version(0, 0));
 
         [System.Diagnostics.CodeAnalysis.SuppressMessage(
             "Microsoft.Security",
             "CA2104:DoNotDeclareReadOnlyMutableReferenceTypes",
             Justification = "The type FrameworkName is immutable.")]
-        public static readonly FrameworkName UnsupportedFrameworkName = new FrameworkName("Unsupported", new Version());
-        private static readonly Version _emptyVersion = new Version();
+        public static readonly FrameworkName UnsupportedFrameworkName = new FrameworkName("Unsupported", new Version(0, 0));
+        private static readonly Version _emptyVersion = new Version(0, 0);
 
         private static readonly IDictionary<string, string> _knownIdentifiers = PopulateKnownFrameworks();
 
@@ -100,7 +101,7 @@ namespace NuGet
             {
                 // We need to parse the version name out from the mscorlib's assembly name since
                 // we can't call GetName() in medium trust
-                return typeof(string).Assembly.GetName().Version;
+                return typeof(string).GetTypeInfo().Assembly.GetName().Version;
             }
         }
 
@@ -519,7 +520,7 @@ namespace NuGet
             else
             {
                 // only show version part if it's > 0.0.0.0
-                if (frameworkName.Version > new Version())
+                if (frameworkName.Version > new Version(0, 0))
                 {
                     // Remove the . from versions
                     name += frameworkName.Version.ToString().Replace(".", String.Empty);
@@ -970,7 +971,7 @@ namespace NuGet
             if (profile == null)
             {
                 // defensive coding, this should never happen
-                Debug.Fail("'portableFramework' is not a valid portable framework.");
+                Debug.Assert(false, "'portableFramework' is not a valid portable framework.");
                 return 0;
             }
 

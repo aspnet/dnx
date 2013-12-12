@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Reflection;
 
 namespace NuGet
 {
@@ -59,6 +60,6 @@ namespace NuGet
         public static readonly ICollection<string> AssemblyReferencesExtensions 
             = new ReadOnlyCollection<string>(new string[] { ".dll", ".exe", ".winmd" });
 
-        public static readonly Version NuGetVersion = typeof(IPackage).Assembly.GetName().Version;
+        public static readonly Version NuGetVersion = typeof(IPackage).GetTypeInfo().Assembly.GetName().Version;
     }
 }

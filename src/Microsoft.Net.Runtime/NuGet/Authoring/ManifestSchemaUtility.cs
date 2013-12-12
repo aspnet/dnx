@@ -51,9 +51,9 @@ namespace NuGet
             SchemaVersionV5,
             SchemaVersionV6
         };
-
+#if DESKTOP
         private static ConcurrentDictionary<string, XmlSchemaSet> _manifestSchemaSetCache = new ConcurrentDictionary<string, XmlSchemaSet>(StringComparer.OrdinalIgnoreCase);
-        
+#endif        
         public static int GetVersionFromNamespace(string @namespace)
         {
             int index = Math.Max(0, Array.IndexOf(VersionToSchemaMappings, @namespace));
@@ -71,7 +71,7 @@ namespace NuGet
             }
             return VersionToSchemaMappings[version - 1];
         }
-
+#if DESKTOP
         public static XmlSchemaSet GetManifestSchemaSet(string schemaNamespace)
         {
             return _manifestSchemaSetCache.GetOrAdd(schemaNamespace, schema =>
@@ -103,7 +103,7 @@ namespace NuGet
                     }
                 });
         }
-
+#endif
         public static bool IsKnownSchema(string schemaNamespace)
         {
             return VersionToSchemaMappings.Contains(schemaNamespace, StringComparer.OrdinalIgnoreCase);

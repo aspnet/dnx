@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 
 namespace Microsoft.Net.Runtime
 {
+#if DESKTOP // CORECLR_TODO: Process
     public class Executable
     {
         public Executable(string path, string workingDirectory)
@@ -121,4 +122,5 @@ namespace Microsoft.Net.Runtime
             return process;
         }
     }
+#endif
 }

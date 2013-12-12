@@ -32,7 +32,7 @@ namespace Microsoft.Net.OwinHost
                 // determine actual startup class to load
                 if (string.IsNullOrEmpty(name))
                 {
-                    Type startupType = assembly.GetTypes().SingleOrDefault(t => string.Equals(t.Name, "Startup", StringComparison.OrdinalIgnoreCase));
+                    var startupType = assembly.DefinedTypes.SingleOrDefault(t => string.Equals(t.Name, "Startup", StringComparison.OrdinalIgnoreCase));
                     if (startupType != null)
                     {
                         name = startupType.AssemblyQualifiedName;

@@ -42,7 +42,7 @@ namespace NuGet
                 }
                 finally 
                 {
-                    stream.Close();
+                    stream.Dispose();
                 }
             }
 
