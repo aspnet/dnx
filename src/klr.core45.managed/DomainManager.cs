@@ -26,23 +26,21 @@ sealed class DomainManager : AppDomainManager
     [HandleProcessCorruptedStateExceptions, SecurityCritical]
     unsafe static int Main(char* appBase, int argc, char** argv)
     {
+        var applicationBase = new string(appBase);
+
+        ResolveEventHandler handler = (sender, args) =>
+        {
+            var name = new AssemblyName(args.Name).Name;
+            return ResolveAssembly(applicationBase, name);
+        };
+
         try
         {
-            var applicationBase = new string(appBase);
-
-            ResolveEventHandler handler = (sender, args) =>
-            {
-                var name = new AssemblyName(args.Name).Name;
-                return ResolveAssembly(applicationBase, name);
-            };
-
             AppDomain.CurrentDomain.AssemblyResolve += handler;
 
             Assembly.Load("Microsoft.Net.Runtime.Interfaces, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null");
 
             var assembly = Assembly.Load("klr.host");
-
-            AppDomain.CurrentDomain.AssemblyResolve -= handler;
 
             //Pack arguments
             var arguments = new string[argc];
@@ -62,13 +60,17 @@ sealed class DomainManager : AppDomainManager
             Console.Error.WriteLine(String.Join(Environment.NewLine, GetExceptions(ex)));
             return 1;
         }
+        finally
+        {
+            AppDomain.CurrentDomain.AssemblyResolve -= handler;
+        }
     }
 
     private static Assembly ResolveAssembly(string appBase, string name)
     {
         var searchPaths = new[] { 
             "", 
-            Path.Combine(name, "bin", "k10"), 
+            // Path.Combine(name, "bin", "k10"), 
             Path.Combine(name, "bin", "coreclr10") 
         };
 

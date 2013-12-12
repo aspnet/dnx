@@ -241,7 +241,8 @@ extern "C" __declspec(dllexport) bool __stdcall CallApplicationMain(PCALL_APPLIC
     DWORD domainId;
     DWORD dwFlagsAppDomain =
         APPDOMAIN_ENABLE_PLATFORM_SPECIFIC_APPS |
-        APPDOMAIN_ENABLE_PINVOKE_AND_CLASSIC_COMINTEROP;
+        APPDOMAIN_ENABLE_PINVOKE_AND_CLASSIC_COMINTEROP |
+        APPDOMAIN_ENABLE_ASSEMBLY_LOADFILE;
 
     LPCWSTR szAssemblyName = L"klr.core45.managed, Version=1.0.0.0";
     LPCWSTR szDomainManagerTypeName = L"DomainManager";
