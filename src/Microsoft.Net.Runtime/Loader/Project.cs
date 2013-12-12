@@ -41,7 +41,7 @@ namespace Microsoft.Net.Runtime.Loader
                 var files = Enumerable.Empty<string>();
                 if (File.Exists(linkedFilePath))
                 {
-                    files = File.ReadAllLines(linkedFilePath)
+                    files = File.ReadLines(linkedFilePath)
                                 .Select(file => Path.Combine(path, file))
                                 .Select(p => Path.GetFullPath(p));
                 }
@@ -198,7 +198,7 @@ namespace Microsoft.Net.Runtime.Loader
             }
         }
 
-        private static CompilationOptions GetCompilationOptions(JToken compilationOptions)
+        private static CSharpCompilationOptions GetCompilationOptions(JToken compilationOptions)
         {
             var options = new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary);
 
@@ -279,7 +279,7 @@ namespace Microsoft.Net.Runtime.Loader
     {
         public FrameworkName FrameworkName { get; set; }
 
-        public CompilationOptions CompilationOptions { get; set; }
+        public CSharpCompilationOptions CompilationOptions { get; set; }
 
         public IEnumerable<string> Defines { get; set; }
     }

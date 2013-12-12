@@ -85,6 +85,7 @@ namespace Microsoft.Net.Runtime.Loader.NuGet
 
         public void Initialize(IEnumerable<PackageReference> packages, FrameworkName frameworkName)
         {
+#if DESKTOP // CORECLR_TODO: AssemblyName.GetAssemblyName
             foreach (var dependency in packages)
             {
                 var package = FindCandidate(dependency.Name, dependency.Version);
@@ -106,6 +107,7 @@ namespace Microsoft.Net.Runtime.Loader.NuGet
                     }
                 }
             }
+#endif
         }
 
         private IEnumerable<string> GetAssemblies(IPackage package, FrameworkName frameworkName)

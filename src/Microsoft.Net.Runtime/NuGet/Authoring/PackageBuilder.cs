@@ -7,6 +7,7 @@ using System.IO;
 using System.IO.Compression;
 using System.Linq;
 using System.Text.RegularExpressions;
+using System.Reflection;
 using NuGet.Resources;
 
 namespace NuGet
@@ -261,14 +262,15 @@ namespace NuGet
         private static string CreatorInfo()
         {
             List<string> creatorInfo = new List<string>();
-            var assembly = typeof(PackageBuilder).Assembly;
+            var assembly = typeof(PackageBuilder).GetTypeInfo().Assembly;
             creatorInfo.Add(assembly.FullName);
+#if DESKTOP // CORECLR_TODO: Environment.OSVersion
             creatorInfo.Add(Environment.OSVersion.ToString());
+#endif
 
-            var attributes = assembly.GetCustomAttributes(typeof(System.Runtime.Versioning.TargetFrameworkAttribute), true);
-            if (attributes.Length > 0)
+            var attribute = assembly.GetCustomAttributes<System.Runtime.Versioning.TargetFrameworkAttribute>().FirstOrDefault();
+            if (attribute != null)
             {
-                var attribute = (System.Runtime.Versioning.TargetFrameworkAttribute)attributes[0];
                 creatorInfo.Add(attribute.FrameworkDisplayName);
             }
 

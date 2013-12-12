@@ -19,7 +19,7 @@ public class Bootstrapper
             return -1;
         }
 
-#if DESKTOP
+#if DESKTOP // CORECLR_TODO: Classic tracing
         var listener = new ConsoleTraceListener();
         Trace.Listeners.Add(listener);
         Trace.AutoFlush = true;
@@ -54,11 +54,7 @@ public class Bootstrapper
 
         string name = assembly.GetName().Name;
 
-#if DESKTOP
-        var programType = assembly.GetType("Program") ?? assembly.GetTypes().FirstOrDefault(t => t.Name == "Program");
-#else
         var programType = assembly.GetType("Program") ?? assembly.DefinedTypes.Where(t => t.Name == "Program").Select(t => t.AsType()).FirstOrDefault();
-#endif
 
         if (programType == null)
         {
@@ -67,12 +63,8 @@ public class Bootstrapper
         }
 
         // Invoke the constructor with the most arguments
-#if DESKTOP
-        var ctor = programType.GetConstructors()
-#else
         var ctor = programType.GetTypeInfo()
                               .DeclaredConstructors
-#endif
                               .OrderByDescending(p => p.GetParameters().Length)
                               .FirstOrDefault();
 
@@ -82,11 +74,7 @@ public class Bootstrapper
 
         object programInstance = ctor.Invoke(parameterValues);
 
-#if DESKTOP
-        var main = programType.GetMethod("Main", BindingFlags.Static | BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
-#else
         var main = programType.GetTypeInfo().GetDeclaredMethods("Main").FirstOrDefault();
-#endif
 
         if (main == null)
         {

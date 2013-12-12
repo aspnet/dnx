@@ -218,9 +218,9 @@ namespace NuGet
             path = GetFullPath(path);
             if (File.Exists(path))
             {
-                return File.GetLastWriteTimeUtc(path);
+                return File.GetLastWriteTime(path).ToUniversalTime();
             }
-            return Directory.GetLastWriteTimeUtc(path);
+            return Directory.GetLastWriteTime(path).ToUniversalTime();
         }
 
         public DateTimeOffset GetCreated(string path)
@@ -228,9 +228,9 @@ namespace NuGet
             path = GetFullPath(path);
             if (File.Exists(path))
             {
-                return File.GetCreationTimeUtc(path);
+                return File.GetCreationTime(path).ToUniversalTime();
             }
-            return Directory.GetCreationTimeUtc(path);
+            return Directory.GetCreationTime(path).ToUniversalTime();
         }
 
         public DateTimeOffset GetLastAccessed(string path)
@@ -238,9 +238,9 @@ namespace NuGet
             path = GetFullPath(path);
             if (File.Exists(path))
             {
-                return File.GetLastAccessTimeUtc(path);
+                return File.GetLastAccessTime(path).ToUniversalTime();
             }
-            return Directory.GetLastAccessTimeUtc(path);
+            return Directory.GetLastAccessTime(path).ToUniversalTime();
         }
 
         public virtual bool FileExists(string path)

@@ -40,7 +40,6 @@ namespace NuGet
         {
             var safeSettings = new XmlReaderSettings
             {
-                XmlResolver = null,
                 DtdProcessing = DtdProcessing.Prohibit,
                 IgnoreWhitespace = ignoreWhiteSpace
             };

@@ -9,13 +9,12 @@ namespace Microsoft.Net.Project
 {
     public class Program
     {
-        public void Main(string[] args)
+        public int Main(string[] args)
         {
             if (args.Length < 1)
             {
                 Console.WriteLine("k [command] [application]");
-                Environment.Exit(-1);
-                return;
+                return -1;
             }
 
             string command = args[0];
@@ -36,14 +35,16 @@ namespace Microsoft.Net.Project
                 else
                 {
                     Console.WriteLine("unknown command '{0}'", command);
-                    Environment.Exit(-1);
+                    return -1;
                 }
             }
             catch (Exception ex)
             {
                 Console.Error.WriteLine(String.Join(Environment.NewLine, GetExceptions(ex)));
-                Environment.Exit(-2);
+                return -2;
             }
+
+            return 0;
         }
 
         private static IEnumerable<string> GetExceptions(Exception ex)

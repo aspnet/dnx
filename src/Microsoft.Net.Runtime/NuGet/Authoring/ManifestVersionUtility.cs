@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections;
+using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Xml.Serialization;
@@ -57,8 +58,9 @@ namespace NuGet
             {
                 return DefaultVersion;
             }
-            var properties = obj.GetType().GetProperties(BindingFlags.Instance | BindingFlags.Public);
+            var properties = obj.GetType().GetRuntimeProperties();
             return (from property in properties
+                    where property.GetMethod != null && property.GetMethod.IsPublic && !property.GetMethod.IsStatic
                     select VisitProperty(obj, property)).Max();
         }
 

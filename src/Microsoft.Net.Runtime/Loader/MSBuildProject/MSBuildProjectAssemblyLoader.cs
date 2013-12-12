@@ -9,6 +9,7 @@ using Microsoft.Net.Runtime.FileSystem;
 
 namespace Microsoft.Net.Runtime.Loader.MSBuildProject
 {
+#if DESKTOP
     public class MSBuildProjectAssemblyLoader : IAssemblyLoader
     {
         private readonly string _solutionDir;
@@ -172,4 +173,5 @@ namespace Microsoft.Net.Runtime.Loader.MSBuildProject
             return XName.Get(name, "http://schemas.microsoft.com/developer/msbuild/2003");
         }
     }
+#endif
 }

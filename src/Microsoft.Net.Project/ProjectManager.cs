@@ -266,9 +266,9 @@ namespace Microsoft.Net.Project
             string rootDirectory = ResolveRootDirectory(projectDir);
             var resolver = new FrameworkReferenceResolver();
             var resourceProvider = new ResxResourceProvider();
-            var roslynLoader = new RoslynAssemblyLoader(rootDirectory, FileWatcher.Noop, resolver, loader, resourceProvider);
+            var roslynLoader = new RoslynAssemblyLoader(rootDirectory, NoopWatcher.Instance, resolver, loader, resourceProvider);
             loader.Add(roslynLoader);
-            loader.Add(new MSBuildProjectAssemblyLoader(rootDirectory, FileWatcher.Noop));
+            loader.Add(new MSBuildProjectAssemblyLoader(rootDirectory, NoopWatcher.Instance));
             loader.Add(new NuGetAssemblyLoader(projectDir));
 
             return loader;

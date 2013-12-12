@@ -23,7 +23,10 @@ sealed class DomainManager : AppDomainManager
         base.InitializeNewDomain(appDomainInfo);
     }
 
-    [HandleProcessCorruptedStateExceptions, SecurityCritical]
+#if DESKTOP
+    [HandleProcessCorruptedStateExceptions]
+#endif
+    [SecurityCritical]
     unsafe static int Main(char* appBase, int argc, char** argv)
     {
         var applicationBase = new string(appBase);
@@ -38,9 +41,9 @@ sealed class DomainManager : AppDomainManager
         {
             AppDomain.CurrentDomain.AssemblyResolve += handler;
 
-            Assembly.Load("Microsoft.Net.Runtime.Interfaces, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null");
+            Assembly.Load(new AssemblyName("Microsoft.Net.Runtime.Interfaces, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null"));
 
-            var assembly = Assembly.Load("klr.host");
+            var assembly = Assembly.Load(new AssemblyName("klr.host"));
 
             //Pack arguments
             var arguments = new string[argc];
@@ -50,7 +53,7 @@ sealed class DomainManager : AppDomainManager
             }
 
             var bootstrapperType = assembly.GetType("Bootstrapper");
-            var mainMethod = bootstrapperType.GetMethod("Main");
+            var mainMethod = bootstrapperType.GetTypeInfo().GetDeclaredMethod("Main");
             var bootstrapper = Activator.CreateInstance(bootstrapperType);
             var result = mainMethod.Invoke(bootstrapper, new object[] { argc, arguments });
             return (int)result;
