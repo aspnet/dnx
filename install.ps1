@@ -38,7 +38,7 @@ while ($gacngen -notmatch "[y|n]"){
 }
 
 if ($gacngen -eq "y"){
-    cd .\lib
+    cd .\lib\roslyn\net45
     Get-ChildItem | % {
         Write-Host "Installing $($_.Name) in the GAC"
         gacutil /i $_.Name /f /silent
