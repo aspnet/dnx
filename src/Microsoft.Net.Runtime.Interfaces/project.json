@@ -3,7 +3,6 @@
     "dependencies": [],
     "configurations" : [
         { "net45" : { "compilationOptions": { "define": ["DESKTOP"] } } },
-        { "coreclr10" : { } },
         { "k10" : { } },
     ]
 }

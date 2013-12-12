@@ -1,5 +1,5 @@
 {
-    "name" : "Microsoft.Net.Project",
+    "name" : "Microsoft.Net.ApplicationHost",
     "dependencies": [
         { "Microsoft.Net.Runtime" : { } },
         { "Microsoft.Net.Runtime.Interfaces" : { } }
