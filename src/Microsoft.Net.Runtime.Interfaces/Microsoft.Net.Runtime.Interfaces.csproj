@@ -30,7 +30,6 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="TempCoreClrStubs.cs" />
     <Compile Include="IHost.cs" />
     <Compile Include="IHostContainer.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

@@ -19,6 +19,6 @@
                 { "System.Collections" : { "version" : "" } }
             ]
         } },
-        { "k10" : { } },
+        { "k10" : { "dependencies": [ { "Stubs": { } } ] } }
     ]
 }

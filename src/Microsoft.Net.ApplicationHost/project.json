@@ -8,6 +8,6 @@
         { "net45" : { 
             "compilationOptions": { "define": ["DESKTOP"] },
         } },
-        { "k10" : { } },
+        { "k10" : { "dependencies": [ { "Stubs": { } } ] } }
     ]
 }

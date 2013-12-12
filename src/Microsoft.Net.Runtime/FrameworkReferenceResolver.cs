@@ -151,13 +151,16 @@ namespace Microsoft.Net.Runtime
                     }
                     else
                     {
-#if DESKTOP // CORECLR_TODO: AssemblyName.GetAssemblyName
                         foreach (var assemblyFileInfo in v.EnumerateFiles("*.dll"))
                         {
                             try
                             {
+#if DESKTOP // CORECLR_TODO: AssemblyName.GetAssemblyName
                                 var an = AssemblyName.GetAssemblyName(assemblyFileInfo.FullName);
                                 frameworkInfo.Assemblies.Add(new AssemblyInfo(an.Name, assemblyFileInfo.FullName));
+#else
+                                frameworkInfo.Assemblies.Add(new AssemblyInfo(assemblyFileInfo.Name, assemblyFileInfo.FullName));
+#endif
                             }
                             catch (Exception ex)
                             {
@@ -165,7 +168,6 @@ namespace Microsoft.Net.Runtime
                                 Trace.TraceError(ex.Message);
                             }
                         }
-#endif
                     }
 
                     cache[frameworkName] = frameworkInfo;
