@@ -68,14 +68,15 @@ namespace Microsoft.Net.Runtime.Loader.Roslyn
 
             var references = new List<MetadataReference>();
 
-            if (project.Dependencies.Count > 0)
+            if (project.Dependencies.Count > 0 ||
+                targetFrameworkConfig.Dependencies.Count > 0)
             {
                 Trace.TraceInformation("[{0}]: Loading dependencies for '{1}'", GetType().Name, project.Name);
                 var dependencyStopWatch = Stopwatch.StartNew();
 
                 var errors = new List<string>();
 
-                foreach (var dependency in project.Dependencies)
+                foreach (var dependency in project.Dependencies.Concat(targetFrameworkConfig.Dependencies))
                 {
                     MetadataReference reference;
                     if (TryResolveDependency(dependency, loadContext, errors, out reference))
@@ -191,6 +192,7 @@ namespace Microsoft.Net.Runtime.Loader.Roslyn
             {
                 return compiledAssembly.MetadataReference;
             }
+
 #if DESKTOP
             string assemblyLocation;
             if (GlobalAssemblyCache.ResolvePartialName(name, out assemblyLocation) != null)
@@ -217,7 +219,9 @@ namespace Microsoft.Net.Runtime.Loader.Roslyn
                 return null;
             }
 
-            return project.Dependencies;
+            var config = project.GetTargetFrameworkConfiguration(frameworkName);
+
+            return project.Dependencies.Concat(config.Dependencies);
         }
 
         public void Initialize(IEnumerable<PackageReference> packages, FrameworkName frameworkName)
@@ -278,7 +282,7 @@ namespace Microsoft.Net.Runtime.Loader.Roslyn
 
                 return ReportCompilationError(result);
             }
-            
+
             return new AssemblyLoadResult(Assembly.LoadFile(assemblyPath));
         }
 

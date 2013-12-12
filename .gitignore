@@ -24,3 +24,5 @@ README.html
 /Debug
 /.nuget/nuget.exe
 /src/.symbols
+
+/lib/roslyn/*.nupkg

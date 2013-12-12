@@ -1,0 +1,14 @@
+<?xml version="1.0"?>
+<package >
+  <metadata>
+    <id>System.Collections.Immutable</id>
+    <version>1.1.15.0</version>
+    <authors>Microsoft Corporation</authors>
+    <owners>Microsoft Corporation</owners>
+    <description>System.Collections.Immutable</description>
+  </metadata>
+  <files>
+    <file src="net45\System.Collections.Immutable.dll" target="lib\net45\System.Collections.Immutable.dll" />
+    <file src="coreclr\System.Collections.Immutable.dll" target="lib\k10\System.Collections.Immutable.dll" />
+  </files>
+</package>

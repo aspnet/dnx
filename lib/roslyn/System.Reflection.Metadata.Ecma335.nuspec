@@ -1,0 +1,14 @@
+<?xml version="1.0"?>
+<package >
+  <metadata>
+    <id>System.Reflection.Metadata.Ecma335</id>
+    <version>0.6.31123.2</version>
+    <authors>Microsoft Corporation</authors>
+    <owners>Microsoft Corporation</owners>
+    <description>System.Reflection.Metadata.Ecma335</description>
+  </metadata>
+  <files>
+    <file src="net45\System.Reflection.Metadata.Ecma335.dll" target="lib\net45\System.Reflection.Metadata.Ecma335.dll" />
+    <file src="coreclr\System.Reflection.Metadata.Ecma335.dll" target="lib\k10\System.Reflection.Metadata.Ecma335.dll" />
+  </files>
+</package>

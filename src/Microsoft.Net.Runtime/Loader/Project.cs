@@ -128,6 +128,13 @@ namespace Microsoft.Net.Runtime.Loader
 
             project.BuildTargetFrameworkConfigurations(settings);
 
+            PopulateDependencies(project.Dependencies, settings);
+
+            return true;
+        }
+
+        private static void PopulateDependencies(IList<PackageReference> results, JObject settings)
+        {
             var dependencies = settings["dependencies"] as JArray;
             if (dependencies != null)
             {
@@ -149,7 +156,7 @@ namespace Microsoft.Net.Runtime.Loader
                             SemanticVersion.TryParse(dependencyVersion.Value<string>(), out semVer);
                         }
 
-                        project.Dependencies.Add(new PackageReference
+                        results.Add(new PackageReference
                         {
                             Name = prop.Key,
                             Version = semVer
@@ -157,8 +164,6 @@ namespace Microsoft.Net.Runtime.Loader
                     }
                 }
             }
-
-            return true;
         }
 
         private void BuildTargetFrameworkConfigurations(JObject settings)
@@ -171,7 +176,8 @@ namespace Microsoft.Net.Runtime.Loader
             _defaultTargetFrameworkConfiguration = new TargetFrameworkConfiguration
             {
                 CompilationOptions = options,
-                Defines = ConvertValue<string[]>(compilationOptions, "define") ?? new string[] { }
+                Defines = ConvertValue<string[]>(compilationOptions, "define") ?? new string[] { },
+                Dependencies = new List<PackageReference>()
             };
 
             // Parse the specific configuration section
@@ -188,9 +194,16 @@ namespace Microsoft.Net.Runtime.Loader
                         var properties = prop.Value.Value<JObject>();
 
                         var specificCompilationOptions = properties["compilationOptions"];
+                        var specificDefines = ConvertValue<string[]>(specificCompilationOptions, "define") ?? new string[] { prop.Key.ToUpperInvariant() };
+
+                        var defines = new HashSet<string>(specificDefines);
+                        defines.AddRange(_defaultTargetFrameworkConfiguration.Defines);
 
                         config.CompilationOptions = GetCompilationOptions(specificCompilationOptions);
-                        config.Defines = ConvertValue<string[]>(specificCompilationOptions, "define") ?? new string[] { prop.Key.ToUpperInvariant() };
+                        config.Defines = defines;
+                        config.Dependencies = new List<PackageReference>();
+
+                        PopulateDependencies(config.Dependencies, properties);
 
                         _configurations[config.FrameworkName] = config;
                     }
@@ -282,5 +295,7 @@ namespace Microsoft.Net.Runtime.Loader
         public CSharpCompilationOptions CompilationOptions { get; set; }
 
         public IEnumerable<string> Defines { get; set; }
+
+        public IList<PackageReference> Dependencies { get; set; }
     }
 }
