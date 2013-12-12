@@ -8,7 +8,9 @@ using System.Runtime.Versioning;
 using Microsoft.Net.Runtime;
 using Microsoft.Net.Runtime.FileSystem;
 using Microsoft.Net.Runtime.Loader;
+#if DESKTOP
 using Microsoft.Net.Runtime.Loader.MSBuildProject;
+#endif
 using Microsoft.Net.Runtime.Loader.NuGet;
 using Microsoft.Net.Runtime.Loader.Roslyn;
 using NuGet;
@@ -251,7 +253,7 @@ namespace Microsoft.Net.Project
                 {
                     Trace.TraceInformation("Found {0} in {1}", typeName, a.GetName().Name);
 
-                    var method = type.GetMethod(methodName, BindingFlags.Static | BindingFlags.NonPublic | BindingFlags.Public);
+                    var method = type.GetTypeInfo().GetDeclaredMethods(methodName).Where(m => m.IsStatic).SingleOrDefault();
 
                     if (method != null)
                     {
@@ -268,7 +270,9 @@ namespace Microsoft.Net.Project
             var resourceProvider = new ResxResourceProvider();
             var roslynLoader = new RoslynAssemblyLoader(rootDirectory, NoopWatcher.Instance, resolver, loader, resourceProvider);
             loader.Add(roslynLoader);
+#if DESKTOP
             loader.Add(new MSBuildProjectAssemblyLoader(rootDirectory, NoopWatcher.Instance));
+#endif
             loader.Add(new NuGetAssemblyLoader(projectDir));
 
             return loader;
