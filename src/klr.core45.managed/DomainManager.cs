@@ -41,9 +41,13 @@ sealed class DomainManager : AppDomainManager
         {
             AppDomain.CurrentDomain.AssemblyResolve += handler;
 
+            Assembly.Load(new AssemblyName("Stubs, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null"));
+
             Assembly.Load(new AssemblyName("Microsoft.Net.Runtime.Interfaces, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null"));
 
             var assembly = Assembly.Load(new AssemblyName("klr.host"));
+
+            AppDomain.CurrentDomain.AssemblyResolve -= handler;
 
             //Pack arguments
             var arguments = new string[argc];
@@ -62,10 +66,6 @@ sealed class DomainManager : AppDomainManager
         {
             Console.Error.WriteLine(String.Join(Environment.NewLine, GetExceptions(ex)));
             return 1;
-        }
-        finally
-        {
-            AppDomain.CurrentDomain.AssemblyResolve -= handler;
         }
     }
 

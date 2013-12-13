@@ -29,9 +29,11 @@ if((Test-Path $sdkRoot\Framework) -and (Test-Path $sdkRoot\tools\Microsoft.Net.P
 {
     & $sdkRoot\tools\k.cmd build src\Microsoft.Net.Runtime.Interfaces
     & $sdkRoot\tools\k.cmd build src\klr.host
+    & $sdkRoot\tools\k.cmd build src\Stubs
     
     cp -r src\Microsoft.Net.Runtime.Interfaces -filter *.dll $sdkRoot\tools\bin\ -force
     cp -r src\klr.host -filter *.dll $sdkRoot\tools\bin\ -force
+    cp -r src\Stubs -filter *.dll $sdkRoot\tools\bin\ -force
     
     rm $sdkRoot\tools\bin\klr.host.dll
     rm $sdkRoot\tools\bin\Microsoft.Net.Runtime.Interfaces.dll
