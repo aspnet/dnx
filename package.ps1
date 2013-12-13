@@ -31,15 +31,22 @@ if((Test-Path $sdkRoot\Framework) -and (Test-Path $sdkRoot\tools\Microsoft.Net.P
     & $sdkRoot\tools\k.cmd build src\klr.host
     & $sdkRoot\tools\k.cmd build src\Stubs
     
+    # Stuff in the bin folder
     cp -r src\Microsoft.Net.Runtime.Interfaces -filter *.dll $sdkRoot\tools\bin\ -force
     cp -r src\klr.host -filter *.dll $sdkRoot\tools\bin\ -force
     cp -r src\Stubs -filter *.dll $sdkRoot\tools\bin\ -force
+    
+    # Stuff one level up (TODO: OwinHost)
+    & $sdkRoot\tools\k.cmd build src\Microsoft.Net.Runtime
+    & $sdkRoot\tools\k.cmd build src\Microsoft.Net.Project
+    & $sdkRoot\tools\k.cmd build src\Microsoft.Net.ApplicationHost
     
     rm $sdkRoot\tools\bin\klr.host.dll
     rm $sdkRoot\tools\bin\Microsoft.Net.Runtime.Interfaces.dll
     rm -r -force $sdkRoot\tools\bin\*\bin\Debug
     rm -r -force $sdkRoot\tools\bin\*\Properties
     rm -r -force $sdkRoot\tools\bin\*\obj
+    
 }
 
 if(!$includeSymbols)

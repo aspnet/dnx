@@ -232,20 +232,23 @@ namespace Microsoft.Net.Runtime.Loader.Roslyn
         private bool TryResolveDependency(PackageReference dependency, LoadContext loadContext, List<string> errors, out MetadataReference resolved)
         {
             resolved = null;
-#if DESKTOP
-            string assemblyLocation;
-            if (GlobalAssemblyCache.ResolvePartialName(dependency.Name, out assemblyLocation) != null)
-            {
-                resolved = new MetadataFileReference(assemblyLocation);
-                return true;
-            }
-#endif
+
             var childContext = new LoadContext(dependency.Name, loadContext.TargetFramework);
 
             var loadResult = _dependencyLoader.Load(childContext);
 
             if (loadResult == null)
             {
+
+#if DESKTOP
+                string assemblyLocation;
+                if (GlobalAssemblyCache.ResolvePartialName(dependency.Name, out assemblyLocation) != null)
+                {
+                    resolved = new MetadataFileReference(assemblyLocation);
+                    return true;
+                }
+#endif
+
                 errors.Add(String.Format("Unable to resolve dependency '{0}'.", dependency));
                 return false;
             }
