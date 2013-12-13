@@ -1,13 +1,4 @@
-param($configuration = "Debug")
-
-# Check for msbuild
-try {
-    msbuild > $null
-}
-catch {
-    Write-Host "msbuild not found. Please ensure you're running in a Visual Studio developer command prompt." -ForegroundColor Yellow
-    Exit 1
-}
+param($configuration = "Debug", $buildSolution = $true)
 
 # Restores nuget packages based on project.json file
 
@@ -29,5 +20,18 @@ scripts/NuGet.exe restore
 # Add the k10 profile for JSON.NET (copy of the portable profile)
 ls .\packages\Newtonsoft.Json.*\lib\netcore45\Newtonsoft.Json.dll | %{ $dir = (Join-Path $_.Directory.Parent.FullName "k10"); mkdir $dir -force > $null; cp $_.FullName $dir }
 
-# Build the solution
-msbuild KRuntime.sln /m /p:Configuration=$configuration /v:quiet /nologo
+
+if($buildSolution)
+{
+    # Check for msbuild
+    try {
+        msbuild > $null
+    }
+    catch {
+        Write-Host "msbuild not found. Please ensure you're running in a Visual Studio developer command prompt." -ForegroundColor Yellow
+        Exit 1
+    }
+
+    # Build the solution
+    msbuild KRuntime.sln /m /p:Configuration=$configuration /v:quiet /nologo
+}

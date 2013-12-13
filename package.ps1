@@ -2,8 +2,6 @@ param($configuration = "Debug", $includeSymbols = $false, $runtimePath, $nightly
 
 $sdkRoot = "artifacts\sdk"
 
-.\build.ps1 $configuration
-
 mkdir $sdkRoot -force | Out-Null
 
 mkdir $sdkRoot\tools -force | Out-Null
