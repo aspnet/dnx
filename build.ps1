@@ -9,7 +9,8 @@ if(!(Test-Path .nuget\nuget.exe))
 }
 
 # Package and install roslyn locally
-ls lib\roslyn -filter *.nuspec | %{ & .nuget\nuget.exe pack $_.FullName -NoPackageAnalysis -o $_.Directory.FullName; & .nuget\nuget.exe install $_.BaseName -o packages -source $_.Directory.FullName }
+ls lib\roslyn -filter *.nuspec | %{ & .nuget\nuget.exe pack $_.FullName -NoPackageAnalysis -o $_.Directory.FullName }
+ls lib\roslyn -filter *.nuspec | %{ & .nuget\nuget.exe install $_.BaseName -o packages -source $_.Directory.FullName }
 
 # Normal nuget restore
 & .nuget\nuget.exe restore
