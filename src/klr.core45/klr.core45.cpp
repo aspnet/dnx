@@ -6,77 +6,11 @@
 
 #include "..\klr\klr.h"
 
-// TODO: Don't hardcode the list of assemblies
-static const wchar_t *trustedAssemblies[] =
-{
-    L"microsoft.csharp",
-    L"mscorlib.extensions",
-    L"mscorlib",
-    L"system.collections.concurrent",
-    L"system.collections",
-    L"system.componentmodel.eventbasedasync",
-    L"system.componentmodel",
-    L"system.console.dll",
-    L"system.core",
-    L"system.diagnostics.contracts",
-    L"system.diagnostics.debug",
-    L"system.diagnostics.tools",
-    L"system.diagnostics.tracing",
-    L"system.dynamic.runtime",
-    L"system.globalization",
-    L"system.io.compression",
-    L"system.io",
-    L"system.linq.expressions",
-    L"system.linq",
-    L"system.linq.parallel",
-    L"system.linq.queryable",
-    L"system.net.http",
-    L"system.net.networkinformation",
-    L"system.net",
-    L"system.net.primitives",
-    L"system.net.requests",
-    L"system",
-    L"system.objectmodel",
-    L"system.observable",
-    L"system.reflection.emit.ilgeneration",
-    L"system.reflection.emit.lightweight",
-    L"system.reflection.emit",
-    L"system.reflection.extensions",
-    L"system.reflection",
-    L"system.reflection.primitives",
-    L"system.resources.resourcemanager",
-    L"system.runtime.extensions",
-    L"system.runtime.interopservices",
-    L"system.runtime.interopservices.windowsruntime",
-    L"system.runtime",
-    L"system.runtime.numerics",
-    L"system.runtime.serialization.json",
-    L"system.runtime.serialization",
-    L"system.runtime.serialization.primitives",
-    L"system.runtime.serialization.xml",
-    L"system.runtime.windowsruntime",
-    L"system.security.principal",
-    L"system.servicemodel.web",
-    L"system.text.encoding.extensions",
-    L"system.text.encoding",
-    L"system.text.regularexpressions",
-    L"system.threading",
-    L"system.threading.tasks",
-    L"system.threading.tasks.parallel",
-    L"system.threading.timer",
-    L"system.xml.linq",
-    L"system.xml",
-    L"system.xml.readerwriter",
-    L"system.xml.serialization",
-    L"system.xml.xdocument",
-    L"system.xml.xmlserializer",
-};
-
 typedef int (STDMETHODCALLTYPE *HostMain)(
     const wchar_t* appBase,
     const int argc,
     const wchar_t** argv
-);
+    );
 
 void GetModuleDirectory(HMODULE module, LPWSTR szPath)
 {
@@ -215,12 +149,35 @@ extern "C" __declspec(dllexport) bool __stdcall CallApplicationMain(PCALL_APPLIC
 
     wstring trustedPlatformAssemblies(L"");
 
-    for (const wchar_t * &assembly : trustedAssemblies) {
-        trustedPlatformAssemblies += szCoreClrDirectory;
-        trustedPlatformAssemblies += assembly;
-        trustedPlatformAssemblies += L".dll;";
+    // Enumerate the core clr directory and add each .dll or .ni.dll to the list of trusted assemblies
+    wstring pattern(szCoreClrDirectory);
+    pattern += L"*.dll";
+
+    WIN32_FIND_DATA ffd;
+    HANDLE findHandle = FindFirstFile(pattern.c_str(), &ffd);
+
+    if (INVALID_HANDLE_VALUE == findHandle)
+    {
+        printf_s("Failed to find files in the coreclr directory\n");
+        return -1;
     }
 
+    do
+    {
+        if (ffd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
+        {
+            // Skip directories
+        }
+        else
+        {
+            trustedPlatformAssemblies += szCoreClrDirectory;
+            trustedPlatformAssemblies += ffd.cFileName;
+            trustedPlatformAssemblies += L";";
+        }
+
+    } while (FindNextFile(findHandle, &ffd) != 0);
+
+    // Add the assembly containing the app domain manager to the trusted list
     trustedPlatformAssemblies += szCurrentDirectory;
     trustedPlatformAssemblies += L"klr.core45.managed.dll";
 
