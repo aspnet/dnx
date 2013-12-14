@@ -5,5 +5,11 @@ IF "%1"=="" (
 ) ELSE (
   SET K_APPBASE=%1
 )
-CALL "%~dp0KLR" "%~dp0..\src\Microsoft.Net.ApplicationHost\bin\Debug\Microsoft.Net.ApplicationHost.dll" %*
+
+SET TARGET=%TARGET_FRAMEWORK%
+if "%TARGET%" == "" (
+   SET TARGET=Debug
+)
+
+CALL "%~dp0KLR" "%~dp0..\src\Microsoft.Net.ApplicationHost\bin\%TARGET%\Microsoft.Net.ApplicationHost.dll" %*
 ENDLOCAL

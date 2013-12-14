@@ -6,8 +6,16 @@
 :: e.g. To compile the app in the current folder:
 ::      C:\src\MyApp\>K build
 
+SETLOCAL
+
+SET TARGET=%TARGET_FRAMEWORK%
+if "%TARGET%" == "" (
+   SET TARGET=Debug
+)
+
 IF EXIST "%~dp0k-%1.cmd" (
   "%~dp0k-%1.cmd" %2 %3 %4 %5 %6 %7 %8 %9 
 ) ELSE (
-  CALL "%~dp0KLR" "%~dp0..\src\Microsoft.Net.Project\bin\Debug\Microsoft.Net.Project.dll" %*
+  CALL "%~dp0KLR" "%~dp0..\src\Microsoft.Net.Project\bin\%TARGET%\Microsoft.Net.Project.dll" %*
 )
+ENDLOCAL
