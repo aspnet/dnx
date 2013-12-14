@@ -1,12 +1,14 @@
 param($configuration = "Debug", $includeSymbols = $false, $runtimePath, $nightly = $false)
 
-$sdkRoot = "artifacts\sdk"
+$path = Split-Path $MyInvocation.MyCommand.Path
+
+$sdkRoot = "$path\artifacts\sdk"
 
 mkdir $sdkRoot -force | Out-Null
 
 mkdir $sdkRoot\tools -force | Out-Null
 
-cp scripts\* $sdkRoot\tools
+cp $path\scripts\* $sdkRoot\tools
 
 # Fixup scripts
 $scripts = ls $sdkRoot\tools -filter *.cmd
@@ -20,24 +22,24 @@ foreach($file in $scripts)
 
 # Move the bin folder in here
 mkdir $sdkRoot\tools\bin -force | Out-Null
-cp bin\$configuration\* $sdkRoot\tools\bin\
+cp $path\bin\$configuration\* $sdkRoot\tools\bin\
 
 # if the framework is local then build it against the frameworks
 if((Test-Path $sdkRoot\Framework) -and (Test-Path $sdkRoot\tools\Microsoft.Net.Project))
 {
-    & $sdkRoot\tools\k.cmd build src\Microsoft.Net.Runtime.Interfaces
-    & $sdkRoot\tools\k.cmd build src\klr.host
-    & $sdkRoot\tools\k.cmd build src\Stubs
+    & $sdkRoot\tools\k.cmd build $path\src\Microsoft.Net.Runtime.Interfaces
+    & $sdkRoot\tools\k.cmd build $path\src\klr.host
+    & $sdkRoot\tools\k.cmd build $path\src\Stubs
     
     # Stuff in the bin folder
-    cp -r src\Microsoft.Net.Runtime.Interfaces -filter *.dll $sdkRoot\tools\bin\ -force
-    cp -r src\klr.host -filter *.dll $sdkRoot\tools\bin\ -force
-    cp -r src\Stubs -filter *.dll $sdkRoot\tools\bin\ -force
+    cp -r $path\src\Microsoft.Net.Runtime.Interfaces -filter *.dll $sdkRoot\tools\bin\ -force
+    cp -r $path\src\klr.host -filter *.dll $sdkRoot\tools\bin\ -force
+    cp -r $path\src\Stubs -filter *.dll $sdkRoot\tools\bin\ -force
     
     # Stuff one level up (TODO: OwinHost)
-    & $sdkRoot\tools\k.cmd build src\Microsoft.Net.Runtime
-    & $sdkRoot\tools\k.cmd build src\Microsoft.Net.Project
-    & $sdkRoot\tools\k.cmd build src\Microsoft.Net.ApplicationHost
+    & $sdkRoot\tools\k.cmd build $path\src\Microsoft.Net.Runtime
+    & $sdkRoot\tools\k.cmd build $path\src\Microsoft.Net.Project
+    & $sdkRoot\tools\k.cmd build $path\src\Microsoft.Net.ApplicationHost
     
     rm $sdkRoot\tools\bin\klr.host.dll
     rm $sdkRoot\tools\bin\Microsoft.Net.Runtime.Interfaces.dll
@@ -57,11 +59,11 @@ if(!$includeSymbols)
 }
 
 # Now copy source
-cp -r src\Microsoft.Net.ApplicationHost -filter *.dll $sdkRoot\tools -Force
-cp -r src\Microsoft.Net.Project -filter *.dll $sdkRoot\tools -Force
-cp -r src\Microsoft.Net.OwinHost -filter *.dll $sdkRoot\tools -Force
-cp -r src\Microsoft.Net.Launch $sdkRoot\tools -Force
-cp src\Microsoft.Net.Runtime\Executable.cs $sdkRoot\tools\Microsoft.Net.Launch -Force
+cp -r $path\src\Microsoft.Net.ApplicationHost -filter *.dll $sdkRoot\tools -Force
+cp -r $path\src\Microsoft.Net.Project -filter *.dll $sdkRoot\tools -Force
+cp -r $path\src\Microsoft.Net.OwinHost -filter *.dll $sdkRoot\tools -Force
+cp -r $path\src\Microsoft.Net.Launch $sdkRoot\tools -Force
+cp $path\src\Microsoft.Net.Runtime\Executable.cs $sdkRoot\tools\Microsoft.Net.Launch -Force
 rm $sdkRoot\tools\Microsoft.Net.Launch\.include
 
 
@@ -77,7 +79,7 @@ if($runtimePath)
 }
 
 # NuGet pack
-cp ProjectK.nuspec $sdkRoot
+cp $path\ProjectK.nuspec $sdkRoot
 
 $spec = [xml](cat $sdkRoot\ProjectK.nuspec)
 $version = $spec.package.metadata.version
@@ -88,4 +90,4 @@ if($nightly)
     $version += "-" + ($now.Year - 2011) + [DateTime]::Now.ToString("MMdd");
 }
 
-.nuget\NuGet.exe pack $sdkRoot\ProjectK.nuspec -o $sdkRoot -NoPackageAnalysis -version $version
+& $path\.nuget\NuGet.exe pack $sdkRoot\ProjectK.nuspec -o $sdkRoot -NoPackageAnalysis -version $version
