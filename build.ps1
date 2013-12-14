@@ -21,18 +21,14 @@ scripts/NuGet.exe restore
 # Add the k10 profile for JSON.NET (copy of the portable profile)
 ls .\packages\Newtonsoft.Json.*\lib\netcore45\Newtonsoft.Json.dll | %{ $dir = (Join-Path $_.Directory.Parent.FullName "k10"); mkdir $dir -force > $null; cp $_.FullName $dir }
 
+# Requires dev 12
+$msb = Join-Path ${env:ProgramFiles(x86)} "MSBuild\12.0\Bin\MSBuild.exe"
 
-if($buildSolution)
+if(!(Test-Path $msb))
 {
-    # Check for msbuild
-    try {
-        msbuild > $null
-    }
-    catch {
-        Write-Host "msbuild not found. Please ensure you're running in a Visual Studio developer command prompt." -ForegroundColor Yellow
-        Exit 1
-    }
-
-    # Build the solution
-    msbuild KRuntime.sln /m /p:Configuration=$configuration /v:quiet /nologo
+    Write-Host "msbuild not found. Please ensure youhave VS2013 installed." -ForegroundColor Yellow
 }
+
+# Build the solution
+& $msb KRuntime.sln /m /p:Configuration=$configuration /v:quiet /nologo
+
