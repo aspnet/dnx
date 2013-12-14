@@ -65,14 +65,23 @@ cp -r $path\src\Microsoft.Net.ApplicationHost -filter *.dll $sdkRoot\tools -Forc
 cp -r $path\src\Microsoft.Net.Project -filter *.dll $sdkRoot\tools -Force
 cp -r $path\src\Microsoft.Net.OwinHost -filter *.dll $sdkRoot\tools -Force
 cp -r $path\src\Microsoft.Net.Launch $sdkRoot\tools -Force
+cp -r $path\src\Microsoft.Net.Runtime -filter *.dll $sdkRoot\tools -Force
 cp $path\src\Microsoft.Net.Runtime\Executable.cs $sdkRoot\tools\Microsoft.Net.Launch -Force
 rm $sdkRoot\tools\Microsoft.Net.Launch\.include
 
+# Copy dependencies to app host an family
+@("Microsoft.Net.Project", "Microsoft.Net.ApplicationHost") | %{
+    $project = $_
+    @("k10", "net45") | %{
+     $framework = $_
+     cp $sdkRoot\tools\Microsoft.Net.Runtime\bin\$framework\Microsoft.Net.Runtime.dll $sdkRoot\tools\$project\bin\$framework
+     ls $path\packages\Newtonsoft.Json.*\lib\$framework\Newtonsoft.Json.dll | %{ cp $_.FullName $sdkRoot\tools\$project\bin\$framework }
+    }
+}
 
 # Remove the stuff we don't need
 rm -r $sdkRoot\tools\*\obj 
 rm -r -force $sdkRoot\tools\*\properties
-
 
 # Copy the runtime
 if($runtimePath) 
