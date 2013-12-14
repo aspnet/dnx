@@ -1,5 +1,7 @@
 param($configuration = "Debug", $buildSolution = $true)
 
+$ErrorActionPreference = "Stop"
+
 $path = Split-Path $MyInvocation.MyCommand.Path
 
 # Restores nuget packages based on project.json file

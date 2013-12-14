@@ -1,5 +1,7 @@
 param($configuration = "Debug", $includeSymbols = $false, $runtimePath, $nightly = $false)
 
+$ErrorActionPreference = "Stop"
+
 $path = Split-Path $MyInvocation.MyCommand.Path
 
 $sdkRoot = "$path\artifacts\sdk"
