@@ -105,9 +105,8 @@ cp $path\ProjectK.nuspec $sdkRoot
 $spec = [xml](cat $sdkRoot\ProjectK.nuspec)
 $version = $spec.package.metadata.version
 
-if($nightly)
+if($nightly -or $env:Nightly -eq "1")
 {
-    
     $buildNumber = "000" + $env:BUILD_NUMBER;
     $buildNumber = $buildNumber.Substring($buildNumber.Length - 3);
     

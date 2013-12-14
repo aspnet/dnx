@@ -1,4 +1,4 @@
-param($configuration = "Debug", $buildSolution = $true)
+param($configuration = "Debug")
 
 $ErrorActionPreference = "Stop"
 
