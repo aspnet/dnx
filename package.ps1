@@ -107,8 +107,12 @@ $version = $spec.package.metadata.version
 
 if($nightly)
 {
+    $buildNumber = "000" + $env:BUILD_NUMBER;
+    $buildNumber = buildNumber.Substring(buildNumber.Length - 3);
+    
     $now = [DateTime]::Now;
     $version += "-" + ($now.Year - 2011) + [DateTime]::Now.ToString("MMdd");
+    $version += "-" + $buildNumber;
 }
 
 & $path\.nuget\NuGet.exe pack $sdkRoot\ProjectK.nuspec -o $sdkRoot -NoPackageAnalysis -version $version
