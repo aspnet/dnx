@@ -73,9 +73,12 @@ rm $sdkRoot\tools\Microsoft.Net.Launch\.include
 @("Microsoft.Net.Project", "Microsoft.Net.ApplicationHost") | %{
     $project = $_
     @("k10", "net45") | %{
-     $framework = $_
-     cp $sdkRoot\tools\Microsoft.Net.Runtime\bin\$framework\Microsoft.Net.Runtime.dll $sdkRoot\tools\$project\bin\$framework
-     ls $path\packages\Newtonsoft.Json.*\lib\$framework\Newtonsoft.Json.dll | %{ cp $_.FullName $sdkRoot\tools\$project\bin\$framework }
+        $framework = $_
+        cp $sdkRoot\tools\Microsoft.Net.Runtime\bin\$framework\Microsoft.Net.Runtime.dll $sdkRoot\tools\$project\bin\$framework
+        @("Microsoft.CodeAnalysis", "Microsoft.CodeAnalysis.CSharp", "System.Collections.Immutable", "System.Reflection.Metadata.Ecma335") | %{
+            $package = $_
+            ls $path\packages\$package.*\lib\$framework\$package.dll | %{ cp $_.FullName $sdkRoot\tools\$project\bin\$framework }
+        }
     }
 }
 
