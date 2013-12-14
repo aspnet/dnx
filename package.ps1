@@ -1,4 +1,4 @@
-param($configuration = "Debug", $includeSymbols = $false, $runtimePath, $nightly = $false)
+param($configuration = "Debug", $includeSymbols = $false, $runtimePath = $env:RuntimePath, $nightly = $false)
 
 $ErrorActionPreference = "Stop"
 
