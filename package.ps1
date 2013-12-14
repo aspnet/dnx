@@ -26,6 +26,8 @@ foreach($file in $scripts)
 mkdir $sdkRoot\tools\bin -force | Out-Null
 cp $path\bin\$configuration\* $sdkRoot\tools\bin\
 
+$bootstrapping = $false
+
 # if the framework is local then build it against the frameworks
 if((Test-Path $sdkRoot\Framework) -and (Test-Path $sdkRoot\tools\Microsoft.Net.Project))
 {
@@ -49,6 +51,7 @@ if((Test-Path $sdkRoot\Framework) -and (Test-Path $sdkRoot\tools\Microsoft.Net.P
     rm -r -force $sdkRoot\tools\bin\*\Properties
     rm -r -force $sdkRoot\tools\bin\*\obj
     
+    $bootstrapping = $true
 }
 
 if(!$includeSymbols)
@@ -69,15 +72,19 @@ cp -r $path\src\Microsoft.Net.Runtime -filter *.dll $sdkRoot\tools -Force
 cp $path\src\Microsoft.Net.Runtime\Executable.cs $sdkRoot\tools\Microsoft.Net.Launch -Force
 rm $sdkRoot\tools\Microsoft.Net.Launch\.include
 
-# Copy dependencies to app host an family
-@("Microsoft.Net.Project", "Microsoft.Net.ApplicationHost") | %{
-    $project = $_
-    @("k10", "net45") | %{
-        $framework = $_
-        cp $sdkRoot\tools\Microsoft.Net.Runtime\bin\$framework\Microsoft.Net.Runtime.dll $sdkRoot\tools\$project\bin\$framework
-        @("Microsoft.CodeAnalysis", "Microsoft.CodeAnalysis.CSharp", "System.Collections.Immutable", "System.Reflection.Metadata.Ecma335") | %{
-            $package = $_
-            ls $path\packages\$package.*\lib\$framework\$package.dll | %{ cp $_.FullName $sdkRoot\tools\$project\bin\$framework }
+# If we're bootstrapping then do some extra steps
+if($bootstrapping)
+{
+    # Copy dependencies to app host an family
+    @("Microsoft.Net.Project", "Microsoft.Net.ApplicationHost") | %{
+        $project = $_
+        @("k10", "net45") | %{
+            $framework = $_
+            cp $sdkRoot\tools\Microsoft.Net.Runtime\bin\$framework\Microsoft.Net.Runtime.dll $sdkRoot\tools\$project\bin\$framework
+            @("Microsoft.CodeAnalysis", "Microsoft.CodeAnalysis.CSharp", "System.Collections.Immutable", "System.Reflection.Metadata.Ecma335") | %{
+                $package = $_
+                ls $path\packages\$package.*\lib\$framework\$package.dll | %{ cp $_.FullName $sdkRoot\tools\$project\bin\$framework }
+            }
         }
     }
 }
