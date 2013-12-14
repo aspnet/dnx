@@ -107,8 +107,9 @@ $version = $spec.package.metadata.version
 
 if($nightly)
 {
+    
     $buildNumber = "000" + $env:BUILD_NUMBER;
-    $buildNumber = buildNumber.Substring(buildNumber.Length - 3);
+    $buildNumber = $buildNumber.Substring($buildNumber.Length - 3);
     
     $now = [DateTime]::Now;
     $version += "-" + ($now.Year - 2011) + [DateTime]::Now.ToString("MMdd");
