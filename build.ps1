@@ -1,11 +1,17 @@
 param($configuration = "Debug", $buildSolution = $true)
 
+$path = Split-Path $MyInvocation.MyCommand.Path
+
 # Restores nuget packages based on project.json file
 
 if(!(Test-Path .nuget\nuget.exe))
 {
-    Write-Host "Downloading NuGet.exe"
-    curl http://nuget.org/nuget.exe -outfile .nuget\nuget.exe
+    if(!(Test-Path .nuget))
+    {
+        mkdir .nuget -Force | Out-Null
+    }
+    Write-Host "Downloading NuGet.exe" 
+    (new-object net.webclient).DownloadFile("https://nuget.org/nuget.exe", "$path\.nuget\NuGet.exe")
 }
 
 # Package and install roslyn locally
