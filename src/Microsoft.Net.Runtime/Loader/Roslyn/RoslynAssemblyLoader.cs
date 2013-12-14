@@ -272,7 +272,11 @@ namespace Microsoft.Net.Runtime.Loader.Roslyn
 
         private AssemblyLoadResult CompileToDisk(string assemblyPath, string pdbPath, Compilation compilation, IList<ResourceDescription> resources)
         {
+#if DESKTOP
             EmitResult result = compilation.Emit(assemblyPath, pdbPath, manifestResources: resources);
+#else
+            EmitResult result = compilation.Emit(assemblyPath);
+#endif
 
             if (!result.Success)
             {
