@@ -29,6 +29,8 @@ namespace Microsoft.Net.Project
 
         public void Build(string defaultTargetFramework = "net45")
         {
+            defaultTargetFramework = Environment.GetEnvironmentVariable("TARGET_FRAMEWORK") ?? defaultTargetFramework;
+
             KProject project;
             if (!KProject.TryGetProject(_projectDir, out project))
             {
@@ -107,6 +109,8 @@ namespace Microsoft.Net.Project
 
         public void Clean(string defaultTargetFramework = "net45")
         {
+            defaultTargetFramework = Environment.GetEnvironmentVariable("TARGET_FRAMEWORK") ?? defaultTargetFramework;
+
             KProject project;
             if (!KProject.TryGetProject(_projectDir, out project))
             {

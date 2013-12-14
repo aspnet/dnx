@@ -305,7 +305,11 @@ namespace Microsoft.Net.Runtime.Loader.Roslyn
         {
             using (var ms = new MemoryStream())
             {
+#if DESKTOP
                 EmitResult result = compilation.Emit(ms, pdbStream: pdbStream, manifestResources: resources);
+#else
+                EmitResult result = compilation.Emit(ms);
+#endif
 
                 if (!result.Success)
                 {

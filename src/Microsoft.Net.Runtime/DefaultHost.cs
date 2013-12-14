@@ -27,7 +27,7 @@ namespace Microsoft.Net.Runtime
         {
             _projectDir = Normalize(projectDir);
 
-            _targetFramework = VersionUtility.ParseFrameworkName(targetFramework);
+            _targetFramework = VersionUtility.ParseFrameworkName(Environment.GetEnvironmentVariable("TARGET_FRAMEWORK") ?? targetFramework);
 
             Initialize(watchFiles);
         }

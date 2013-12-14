@@ -44,6 +44,9 @@ int CallFirmwareProcessMain(int argc, wchar_t* argv[])
             pwzHostModuleName = L"klr.core45.dll";
             data.argc -= 1;
             data.argv += 1;
+
+            // HACK
+            SetEnvironmentVariable(L"TARGET_FRAMEWORK", L"k10");
         }
         else
         {
