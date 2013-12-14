@@ -69,21 +69,34 @@ namespace Microsoft.Net.Runtime
                 }
             }
 #endif
-            string klrPath = Environment.GetEnvironmentVariable("KLR_PATH");
-
-            if (!String.IsNullOrEmpty(klrPath))
+            foreach (var frameworkDirectory in GetFrameworkDirectories())
             {
-                // Convention based on install directory
-                // ..\..\Framework
-                var targetingPacks = Path.GetFullPath(Path.Combine(Path.GetDirectoryName(klrPath), @"..\..\Framework"));
-
-                if (Directory.Exists(targetingPacks))
+                if (Directory.Exists(frameworkDirectory))
                 {
-                    PopulateReferenceAssemblies(targetingPacks, info);
+                    PopulateReferenceAssemblies(frameworkDirectory, info);
                 }
             }
 
             return info;
+        }
+
+        internal static IEnumerable<string> GetFrameworkDirectories()
+        {
+            string klrPath = Environment.GetEnvironmentVariable("KLR_PATH");
+
+            if (!String.IsNullOrEmpty(klrPath))
+            {
+                klrPath = Path.GetDirectoryName(klrPath);
+
+                return new[] {
+                    Path.GetFullPath(Path.Combine(klrPath, @"..\..\Framework")),
+#if DEBUG
+                    Path.GetFullPath(Path.Combine(klrPath, @"..\..\artifacts\sdk\Framework"))
+#endif
+                };
+            }
+
+            return new string[0];
         }
 
 #if DESKTOP

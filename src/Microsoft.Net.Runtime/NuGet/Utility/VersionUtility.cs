@@ -4,10 +4,11 @@ using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Runtime.Versioning;
 using System.Text;
 using System.Text.RegularExpressions;
-using System.Reflection;
+using Microsoft.Net.Runtime;
 using NuGet.Resources;
 using CompatibilityMapping = System.Collections.Generic.Dictionary<string, string[]>;
 
@@ -1043,23 +1044,18 @@ namespace NuGet
                 { "native", "native"}
             };
 
-            string klrPath = Environment.GetEnvironmentVariable("KLR_PATH");
-
-            if (!String.IsNullOrEmpty(klrPath))
+            foreach (var frameworkDirectory in FrameworkReferenceResolver.GetFrameworkDirectories())
             {
-                // Convention based on install directory
-                // ..\..\Framework
-                var targetingPacks = Path.GetFullPath(Path.Combine(Path.GetDirectoryName(klrPath), @"..\..\Framework"));
-
-                if (Directory.Exists(targetingPacks))
+                if (Directory.Exists(frameworkDirectory))
                 {
-                    var di = new DirectoryInfo(targetingPacks);
+                    var di = new DirectoryInfo(frameworkDirectory);
 
                     foreach (var d in di.EnumerateDirectories())
                     {
                         frameworks[d.Name] = d.Name;
                     }
                 }
+
             }
 
             return frameworks;
