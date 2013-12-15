@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
+using System.Reflection;
 using Microsoft.Net.Runtime;
 using Microsoft.Owin.Hosting.Loader;
 using Owin;
@@ -27,7 +29,35 @@ namespace Microsoft.Net.OwinHost
         {
             return (name, errors) =>
             {
-                var assembly = _host.GetEntryPoint();
+                Assembly assembly = null;
+
+                string error = null;
+
+                try
+                {
+                    assembly = _host.GetEntryPoint();
+
+                    if (assembly == null)
+                    {
+                        error = "Unable to resolve the application entry point.";
+                    }
+                }
+                catch (Exception ex)
+                {
+                    error = ex.Message;
+                }
+
+                if (assembly == null)
+                {
+                    return app =>
+                    {
+                        app.Run(async context =>
+                        {
+                            context.Response.ContentType = "text/plain";
+                            await context.Response.WriteAsync(error);
+                        });
+                    };
+                }
 
                 // determine actual startup class to load
                 if (string.IsNullOrEmpty(name))
