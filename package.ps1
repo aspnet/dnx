@@ -2,6 +2,11 @@ param($configuration = "Debug", $runtimePath = $env:RuntimePath, $nightly = $fal
 
 $ErrorActionPreference = "Stop"
 
+trap
+{
+    exit 1
+}
+
 # Get the executing script path
 $path = Split-Path $MyInvocation.MyCommand.Path
 

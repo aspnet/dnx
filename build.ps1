@@ -2,6 +2,11 @@ param($configuration = "Debug")
 
 $ErrorActionPreference = "Stop"
 
+trap
+{
+    exit 1
+}
+
 $path = Split-Path $MyInvocation.MyCommand.Path
 
 # Restores nuget packages based on project.json file

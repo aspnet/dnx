@@ -2,6 +2,11 @@ param($packageSource)
 
 $ErrorActionPreference = "Stop"
 
+trap
+{
+    exit 1
+}
+
 $path = Split-Path $MyInvocation.MyCommand.Path
 
 if(!$packageSource)
