@@ -4,6 +4,7 @@ $ErrorActionPreference = "Stop"
 
 trap
 {
+    Write-Error $_
     exit 1
 }
 
@@ -30,7 +31,13 @@ $scripts = ls $sdkRoot\tools -filter *.cmd
 foreach($file in $scripts)
 {
    $content = cat $file.FullName
-   $content = $content | %{ $_.Replace("..\bin\Debug", "bin").Replace("..\src\", "").Replace("bin\Debug", "bin\$configuration") }
+   $content = $content | %{ 
+        $s = $_.Replace("..\bin\Debug", "bin")
+        $s = $s.Replace("..\src\", "")
+        $s = $s.Replace("bin\Debug", "bin\$configuration")
+        $s = $s.Replace("=Debug", "=$configuration")
+        $s
+   }
    Set-Content $file.FullName $content
 }
 
@@ -93,6 +100,9 @@ if($bootstrapping)
         }
     }
 }
+
+# Nuke the Microsoft.Net.Runtime folder
+rm -r -Force $sdkRoot\tools\Microsoft.Net.Runtime -ErrorAction SilentlyContinue
 
 # Remove files we don't care about
 $foldersToRemove = @("bin\$configuration", "obj", "properties")

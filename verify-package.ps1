@@ -4,6 +4,7 @@ $ErrorActionPreference = "Stop"
 
 trap
 {
+    Write-Error $_
     exit 1
 }
 
