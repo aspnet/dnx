@@ -14,7 +14,7 @@ if(!$packageSource)
     $packageSource = "$path\artifacts\sdk"
 }
 
-$testPath = "$path\artifacts\test"
+$testPath = "$path\TestResults"
 
 # Remove the test folder (if it exists)
 if(Test-Path $testPath)
@@ -23,7 +23,7 @@ if(Test-Path $testPath)
 }
 
 # Install the package into the artifacts\test folder
-& $path\.nuget\nuget.exe install ProjectK -pre -Source $packageSource -output $testPath
+& $path\.nuget\nuget.exe install ProjectK -pre -Source $packageSource -output $testPath -NoCache
 
 $projectKFolder = @(ls $testPath\ProjectK*)[0].FullName
 
