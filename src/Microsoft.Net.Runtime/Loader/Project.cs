@@ -186,10 +186,10 @@ namespace Microsoft.Net.Runtime.Loader
             {
                 foreach (JObject configuration in (IEnumerable<JToken>)configurations)
                 {
-                    var config = new TargetFrameworkConfiguration();
-
                     foreach (var prop in configuration)
                     {
+                        var config = new TargetFrameworkConfiguration();
+
                         config.FrameworkName = VersionUtility.ParseFrameworkName(prop.Key);
                         var properties = prop.Value.Value<JObject>();
 

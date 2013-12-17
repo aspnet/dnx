@@ -76,12 +76,19 @@ namespace Microsoft.Net.ApplicationHost
 
             string name = assembly.GetName().Name;
 
-            var program = assembly.GetType("Program") ?? assembly.DefinedTypes.FirstOrDefault(t => t.Name == "Program").AsType();
+            var program = assembly.GetType("Program");
 
             if (program == null)
             {
-                Console.WriteLine("'{0}' does not contain a static 'Main' method suitable for an entry point", name);
-                return;
+                var programTypeInfo = assembly.DefinedTypes.FirstOrDefault(t => t.Name == "Program");
+
+                if (programTypeInfo == null)
+                {
+                    Console.WriteLine("'{0}' does not contain a static 'Main' method suitable for an entry point", name);
+                    return;
+                }
+
+                program = programTypeInfo.AsType();
             }
 
             var main = program.GetTypeInfo().GetDeclaredMethods("Main").FirstOrDefault();

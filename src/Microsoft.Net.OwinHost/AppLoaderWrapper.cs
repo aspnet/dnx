@@ -49,6 +49,8 @@ namespace Microsoft.Net.OwinHost
 
                 if (assembly == null)
                 {
+                    Trace.TraceError(error);
+
                     return app =>
                     {
                         app.Run(async context =>

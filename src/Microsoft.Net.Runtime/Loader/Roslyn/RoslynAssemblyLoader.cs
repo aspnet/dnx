@@ -62,6 +62,8 @@ namespace Microsoft.Net.Runtime.Loader.Roslyn
                 return null;
             }
 
+            _watcher.WatchFile(project.ProjectFilePath);
+
             TargetFrameworkConfiguration targetFrameworkConfig = project.GetTargetFrameworkConfiguration(loadContext.TargetFramework);
 
             Trace.TraceInformation("[{0}]: Found project '{1}' framework={2}", GetType().Name, project.Name, loadContext.TargetFramework);
@@ -93,8 +95,6 @@ namespace Microsoft.Net.Runtime.Loader.Roslyn
                 dependencyStopWatch.Stop();
                 Trace.TraceInformation("[{0}]: Completed loading dependencies for '{1}' in {2}ms", GetType().Name, project.Name, dependencyStopWatch.ElapsedMilliseconds);
             }
-
-            _watcher.WatchFile(project.ProjectFilePath);
 
             references.AddRange(_resolver.GetDefaultReferences(loadContext.TargetFramework));
 
@@ -249,7 +249,7 @@ namespace Microsoft.Net.Runtime.Loader.Roslyn
                 }
 #endif
 
-                errors.Add(String.Format("Unable to resolve dependency '{0}'.", dependency));
+                errors.Add(String.Format("Unable to resolve dependency '{0}' for target framework '{1}'.", dependency, loadContext.TargetFramework));
                 return false;
             }
 
