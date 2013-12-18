@@ -47,6 +47,12 @@ HMODULE LoadCoreClr()
 
     if (hCoreCLRModule == nullptr)
     {
+        // This is used when developing
+        hCoreCLRModule = ::LoadLibraryExW(L"..\\artifacts\\sdk\\Runtime\\x86\\coreclr.dll", NULL, 0);
+    }
+
+    if (hCoreCLRModule == nullptr)
+    {
         // Try the relative location based in install
 
         hCoreCLRModule = ::LoadLibraryExW(L"coreclr.dll", NULL, 0);
