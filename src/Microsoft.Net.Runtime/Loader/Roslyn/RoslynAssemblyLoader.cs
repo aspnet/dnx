@@ -301,16 +301,16 @@ namespace Microsoft.Net.Runtime.Loader.Roslyn
 
             using (var fs = File.Create(pdbPath))
             {
-                return CompileInMemory(name, compilation, resources, pdbStream: fs);
+                return CompileInMemory(name, compilation, resources, pdbStream: fs, pdbFilePath: pdbPath);
             }
         }
 
-        private AssemblyLoadResult CompileInMemory(string name, Compilation compilation, IEnumerable<ResourceDescription> resources, Stream pdbStream = null)
+        private AssemblyLoadResult CompileInMemory(string name, Compilation compilation, IEnumerable<ResourceDescription> resources, Stream pdbStream = null, string pdbFilePath = null)
         {
             using (var ms = new MemoryStream())
             {
 #if DESKTOP
-                EmitResult result = compilation.Emit(ms, pdbStream: pdbStream, manifestResources: resources);
+                EmitResult result = compilation.Emit(ms, pdbStream: pdbStream, pdbFilePath: pdbFilePath, manifestResources: resources);
 #else
                 EmitResult result = compilation.Emit(ms);
 #endif
