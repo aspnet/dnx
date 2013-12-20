@@ -22,7 +22,6 @@ namespace Microsoft.Net.Runtime.Loader.Roslyn
         private readonly Dictionary<string, CompiledAssembly> _compiledAssemblies = new Dictionary<string, CompiledAssembly>(StringComparer.OrdinalIgnoreCase);
 
         private readonly string _rootPath;
-        private readonly string _symbolsPath;
 
         private readonly IFileWatcher _watcher;
         private readonly IFrameworkReferenceResolver _resolver;
@@ -40,7 +39,6 @@ namespace Microsoft.Net.Runtime.Loader.Roslyn
             _resolver = resolver;
             _dependencyLoader = dependencyLoader;
             _resourceProvider = resourceProvider;
-            _symbolsPath = Path.Combine(_rootPath, ".symbols");
         }
 
         public AssemblyLoadResult Load(LoadContext loadContext)
@@ -295,24 +293,13 @@ namespace Microsoft.Net.Runtime.Loader.Roslyn
 
         private AssemblyLoadResult CompileInMemory(string name, Compilation compilation, IEnumerable<ResourceDescription> resources)
         {
-            var pdbPath = Path.Combine(_symbolsPath, name + ".pdb");
-
-            System.IO.Directory.CreateDirectory(_symbolsPath);
-
-            using (var fs = File.Create(pdbPath))
-            {
-                return CompileInMemory(name, compilation, resources, pdbStream: fs, pdbFilePath: pdbPath);
-            }
-        }
-
-        private AssemblyLoadResult CompileInMemory(string name, Compilation compilation, IEnumerable<ResourceDescription> resources, Stream pdbStream = null, string pdbFilePath = null)
-        {
-            using (var ms = new MemoryStream())
+            using (var pdbStream = new MemoryStream())
+            using (var assemblyStream = new MemoryStream())
             {
 #if DESKTOP
-                EmitResult result = compilation.Emit(ms, pdbStream: pdbStream, pdbFilePath: pdbFilePath, manifestResources: resources);
+                EmitResult result = compilation.Emit(assemblyStream, pdbStream: pdbStream, manifestResources: resources);
 #else
-                EmitResult result = compilation.Emit(ms);
+                EmitResult result = compilation.Emit(assemblyStream);
 #endif
 
                 if (!result.Success)
@@ -320,11 +307,19 @@ namespace Microsoft.Net.Runtime.Loader.Roslyn
                     return ReportCompilationError(result);
                 }
 
-                var bytes = ms.ToArray();
+                var assemblyBytes = assemblyStream.ToArray();
+
+#if DESKTOP
+                var pdbBytes = pdbStream.ToArray();
+#endif
 
                 var compiled = new CompiledAssembly
                 {
-                    Assembly = Assembly.Load(bytes),
+#if DESKTOP
+                    Assembly = Assembly.Load(assemblyBytes, pdbBytes),
+#else
+                    Assembly = Assembly.Load(assemblyBytes),
+#endif
                     MetadataReference = compilation.ToMetadataReference()
                 };
 
