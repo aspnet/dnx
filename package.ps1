@@ -43,7 +43,7 @@ foreach($file in $scripts)
 
 # Move the bin folder in here
 mkdir $sdkRoot\tools\bin -force | Out-Null
-cp $path\bin\$configuration\* $sdkRoot\tools\bin\
+cp $path\bin\$configuration\* $sdkRoot\tools\bin\ -force
 
 # If we're building ourselves this will be true
 $bootstrapping = $false
