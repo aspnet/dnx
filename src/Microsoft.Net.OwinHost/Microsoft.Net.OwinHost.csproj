@@ -68,10 +68,6 @@
     <None Include="project.json" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\klr.host\klr.host.csproj">
-      <Project>{AB05D4F0-3A27-4475-93FA-2BB23064A69A}</Project>
-      <Name>klr.host</Name>
-    </ProjectReference>
     <ProjectReference Include="..\Microsoft.Net.Runtime.Interfaces\Microsoft.Net.Runtime.Interfaces.csproj">
       <Project>{499736F5-6277-4FDA-BEA8-4D6400510FAC}</Project>
       <Name>Microsoft.Net.Runtime.Interfaces</Name>
