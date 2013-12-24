@@ -284,7 +284,7 @@ namespace Microsoft.Net.Project
 
         private static string ResolveRootDirectory(string projectDir)
         {
-            var di = new DirectoryInfo(projectDir);
+            var di = new DirectoryInfo(Path.GetDirectoryName(projectDir));
 
             if (di.Parent != null)
             {
