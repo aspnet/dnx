@@ -25,18 +25,21 @@ namespace Microsoft.Net.Runtime.Loader.Roslyn
 
         private readonly IFileWatcher _watcher;
         private readonly IFrameworkReferenceResolver _resolver;
+        private readonly IGlobalAssemblyCache _globalAssemblyCache;
         private readonly IAssemblyLoader _dependencyLoader;
         private readonly IResourceProvider _resourceProvider;
 
         public RoslynAssemblyLoader(string rootPath,
                                     IFileWatcher watcher,
                                     IFrameworkReferenceResolver resolver,
+                                    IGlobalAssemblyCache globalAssemblyCache,
                                     IAssemblyLoader dependencyLoader,
                                     IResourceProvider resourceProvider)
         {
             _rootPath = rootPath;
             _watcher = watcher;
             _resolver = resolver;
+            _globalAssemblyCache = globalAssemblyCache;
             _dependencyLoader = dependencyLoader;
             _resourceProvider = resourceProvider;
         }
@@ -191,13 +194,11 @@ namespace Microsoft.Net.Runtime.Loader.Roslyn
                 return compiledAssembly.MetadataReference;
             }
 
-#if DESKTOP
             string assemblyLocation;
-            if (GlobalAssemblyCache.ResolvePartialName(name, out assemblyLocation) != null)
+            if (_globalAssemblyCache.TryResolvePartialName(name, out assemblyLocation))
             {
                 return new MetadataFileReference(assemblyLocation);
             }
-#endif
 
             return null;
         }
@@ -237,15 +238,12 @@ namespace Microsoft.Net.Runtime.Loader.Roslyn
 
             if (loadResult == null)
             {
-
-#if DESKTOP
                 string assemblyLocation;
-                if (GlobalAssemblyCache.ResolvePartialName(dependency.Name, out assemblyLocation) != null)
+                if (_globalAssemblyCache.TryResolvePartialName(dependency.Name, out assemblyLocation))
                 {
                     resolved = new MetadataFileReference(assemblyLocation);
                     return true;
                 }
-#endif
 
                 errors.Add(String.Format("Unable to resolve dependency '{0}' for target framework '{1}'.", dependency, loadContext.TargetFramework));
                 return false;

@@ -109,11 +109,13 @@ namespace Microsoft.Net.Runtime
                 _watcher = NoopWatcher.Instance;
             }
 
+            var globalAssemblyCache = new DefaultGlobalAssemblyCache();
+
             var cachedLoader = new CachedCompilationLoader(rootDirectory);
             _loader.Add(cachedLoader);
-            var resolver = new FrameworkReferenceResolver();
+            var resolver = new FrameworkReferenceResolver(globalAssemblyCache);
             var resourceProvider = new ResxResourceProvider();
-            var roslynLoader = new RoslynAssemblyLoader(rootDirectory, _watcher, resolver, _loader, resourceProvider);
+            var roslynLoader = new RoslynAssemblyLoader(rootDirectory, _watcher, resolver, globalAssemblyCache, _loader, resourceProvider);
             _loader.Add(roslynLoader);
 #if DESKTOP // CORECLR_TODO: Process
             _loader.Add(new MSBuildProjectAssemblyLoader(rootDirectory, _watcher));

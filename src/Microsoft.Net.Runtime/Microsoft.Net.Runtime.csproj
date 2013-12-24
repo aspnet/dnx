@@ -50,6 +50,8 @@
     <Reference Include="System.Xml.Linq" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="DefaultGlobalAssemblyCache.cs" />
+    <Compile Include="IGlobalAssemblyCache.cs" />
     <Compile Include="Loader\AssemblyLoader.cs" />
     <Compile Include="DefaultHost.cs" />
     <Compile Include="HostServices.cs" />

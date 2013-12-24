@@ -174,7 +174,7 @@ namespace Microsoft.Net.Project
                 di.Delete();
             }
         }
- 
+
         private static AssemblyLoadResult Build(KProject project, string outputPath, FrameworkName targetFramework, PackageBuilder builder)
         {
             var loader = CreateLoader(Path.GetDirectoryName(project.ProjectFilePath));
@@ -268,11 +268,13 @@ namespace Microsoft.Net.Project
         }
         private static AssemblyLoader CreateLoader(string projectDir)
         {
+            var globalAssemblyCache = new DefaultGlobalAssemblyCache();
+
             var loader = new AssemblyLoader();
             string rootDirectory = ResolveRootDirectory(projectDir);
-            var resolver = new FrameworkReferenceResolver();
+            var resolver = new FrameworkReferenceResolver(globalAssemblyCache);
             var resourceProvider = new ResxResourceProvider();
-            var roslynLoader = new RoslynAssemblyLoader(rootDirectory, NoopWatcher.Instance, resolver, loader, resourceProvider);
+            var roslynLoader = new RoslynAssemblyLoader(rootDirectory, NoopWatcher.Instance, resolver, globalAssemblyCache, loader, resourceProvider);
             loader.Add(roslynLoader);
 #if DESKTOP
             loader.Add(new MSBuildProjectAssemblyLoader(rootDirectory, NoopWatcher.Instance));

@@ -13,7 +13,14 @@ namespace Microsoft.Net.Runtime
 {
     public class FrameworkReferenceResolver : IFrameworkReferenceResolver
     {
-        private static IDictionary<FrameworkName, FrameworkInformation> _cache = PopulateCache();
+        private readonly IDictionary<FrameworkName, FrameworkInformation> _cache;
+        private readonly IGlobalAssemblyCache _globalAssemblyCache;
+
+        public FrameworkReferenceResolver(IGlobalAssemblyCache globalAssemblyCache)
+        {
+            _globalAssemblyCache = globalAssemblyCache;
+            _cache = PopulateCache(globalAssemblyCache);
+        }
 
         public IEnumerable<string> GetFrameworkReferences(FrameworkName frameworkName)
         {
@@ -28,7 +35,6 @@ namespace Microsoft.Net.Runtime
 
         public IEnumerable<MetadataReference> GetDefaultReferences(FrameworkName frameworkName)
         {
-#if DESKTOP
             if (frameworkName.Identifier == VersionUtility.DefaultTargetFramework.Identifier)
             {
                 // Do not reference the entire desktop .NET framework by default
@@ -39,7 +45,6 @@ namespace Microsoft.Net.Runtime
                     ResolveGacAssembly("Microsoft.CSharp")
                 };
             }
-#endif
 
             FrameworkInformation frameworkInfo;
             if (_cache.TryGetValue(frameworkName, out frameworkInfo))
@@ -50,13 +55,13 @@ namespace Microsoft.Net.Runtime
             throw new InvalidOperationException(String.Format("Unknown target framework '{0}'.", frameworkName));
         }
 
-        private static IDictionary<FrameworkName, FrameworkInformation> PopulateCache()
+        private static IDictionary<FrameworkName, FrameworkInformation> PopulateCache(IGlobalAssemblyCache globalAssemblyCache)
         {
             var info = new Dictionary<FrameworkName, FrameworkInformation>();
 #if DESKTOP
             string defaultPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86), @"Reference Assemblies\Microsoft\Framework\");
 
-            PopulateReferenceAssemblies(defaultPath, info);
+            PopulateReferenceAssemblies(defaultPath, globalAssemblyCache, info);
 
             // Additional profile paths
             var profilePaths = Environment.GetEnvironmentVariable("PROFILE_PATHS");
@@ -65,7 +70,7 @@ namespace Microsoft.Net.Runtime
             {
                 foreach (var profilePath in profilePaths.Split(';'))
                 {
-                    PopulateReferenceAssemblies(profilePath, info);
+                    PopulateReferenceAssemblies(profilePath, globalAssemblyCache, info);
                 }
             }
 #endif
@@ -73,7 +78,7 @@ namespace Microsoft.Net.Runtime
             {
                 if (Directory.Exists(frameworkDirectory))
                 {
-                    PopulateReferenceAssemblies(frameworkDirectory, info);
+                    PopulateReferenceAssemblies(frameworkDirectory, globalAssemblyCache, info);
                 }
             }
 
@@ -99,20 +104,18 @@ namespace Microsoft.Net.Runtime
             return new string[0];
         }
 
-#if DESKTOP
-        private static MetadataReference ResolveGacAssembly(string name)
+        private MetadataReference ResolveGacAssembly(string name)
         {
             string assemblyLocation;
-            if (GlobalAssemblyCache.ResolvePartialName(name, out assemblyLocation) != null)
+            if (_globalAssemblyCache.TryResolvePartialName(name, out assemblyLocation))
             {
                 return new MetadataFileReference(assemblyLocation);
             }
 
             throw new InvalidOperationException("Unable to resolve GAC reference");
         }
-#endif
 
-        private static void PopulateReferenceAssemblies(string path, IDictionary<FrameworkName, FrameworkInformation> cache)
+        private static void PopulateReferenceAssemblies(string path, IGlobalAssemblyCache globalAssemblyCache, IDictionary<FrameworkName, FrameworkInformation> cache)
         {
             var di = new DirectoryInfo(path);
 
@@ -143,17 +146,15 @@ namespace Microsoft.Net.Runtime
 
                             if (!File.Exists(assemblyPath))
                             {
-#if DESKTOP
                                 // Check the gac fror full framework only
                                 if (frameworkName.Identifier == VersionUtility.DefaultTargetFramework.Identifier)
                                 {
-                                    if (GlobalAssemblyCache.ResolvePartialName(assemblyName, out assemblyPath) == null)
+                                    if (!globalAssemblyCache.TryResolvePartialName(assemblyName, out assemblyPath))
                                     {
                                         continue;
                                     }
                                 }
                                 else
-#endif
                                 {
                                     continue;
                                 }
