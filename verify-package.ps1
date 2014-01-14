@@ -58,7 +58,7 @@ function Run-Tests($targetFramework)
         @("run", "build", "clean") | %{
             $file = $_
             cat $testResults\$file.txt | %{
-                if($_.Contains("Error")) { throw "Error detected in $file.txt; $_"; }
+                if($_.Contains("Error") -or $_.Contains("Failed")) { throw "Error detected in $file.txt; $_"; }
             }
         }
 
