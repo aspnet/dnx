@@ -187,7 +187,7 @@ namespace Loader.Tests
             return null;
         }
 
-        public IEnumerable<PackageReference> GetDependencies(string name, SemanticVersion version, FrameworkName frameworkName)
+        public IEnumerable<PackageReference> GetDetails(string name, SemanticVersion version, FrameworkName frameworkName)
         {
             Trace.WriteLine(string.Format("StubAssemblyLoader.GetDependencies {0} {1} {2}", name, version, frameworkName));
             Entry entry;

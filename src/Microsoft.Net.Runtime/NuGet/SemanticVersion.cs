@@ -16,11 +16,11 @@ namespace NuGet
 #endif
     public sealed class SemanticVersion : IComparable, IComparable<SemanticVersion>, IEquatable<SemanticVersion>
     {
-        private const RegexOptions _flags = 
+        private const RegexOptions _flags =
 #if DESKTOP
-            RegexOptions.Compiled |
+ RegexOptions.Compiled |
 #endif
-            RegexOptions.IgnoreCase | RegexOptions.ExplicitCapture;
+ RegexOptions.IgnoreCase | RegexOptions.ExplicitCapture;
         private static readonly Regex _semanticVersionRegex = new Regex(@"^(?<Version>\d+(\s*\.\s*\d+){0,3})(?<Release>-[a-z][0-9a-z-]*)?$", _flags);
         private static readonly Regex _strictSemanticVersionRegex = new Regex(@"^(?<Version>\d+(\.\d+){2})(?<Release>-[a-z][0-9a-z-]*)?$", _flags);
         private readonly string _originalString;
@@ -49,11 +49,11 @@ namespace NuGet
         }
 
         public SemanticVersion(Version version, string specialVersion)
-            : this(version, specialVersion, null)
+            : this(version, specialVersion, null, false)
         {
         }
 
-        private SemanticVersion(Version version, string specialVersion, string originalString)
+        private SemanticVersion(Version version, string specialVersion, string originalString, bool isSnapshot)
         {
             if (version == null)
             {
@@ -61,6 +61,7 @@ namespace NuGet
             }
             Version = NormalizeVersionValue(version);
             SpecialVersion = specialVersion ?? String.Empty;
+            IsSnapshot = isSnapshot;
             _originalString = String.IsNullOrEmpty(originalString) ? version.ToString() + (!String.IsNullOrEmpty(specialVersion) ? '-' + specialVersion : null) : originalString;
         }
 
@@ -84,6 +85,15 @@ namespace NuGet
         /// Gets the optional special version.
         /// </summary>
         public string SpecialVersion
+        {
+            get;
+            private set;
+        }
+
+        /// <summary>
+        /// Determines if the original string contained a snapshot wildcard
+        /// </summary>
+        public bool IsSnapshot
         {
             get;
             private set;
@@ -126,7 +136,7 @@ namespace NuGet
             {
                 // if 'a' has less than 4 elements, we pad the '0' at the end 
                 // to make it 4.
-                var b = new string[4] { "0", "0", "0", "0"};
+                var b = new string[4] { "0", "0", "0", "0" };
                 Array.Copy(a, 0, b, 0, a.Length);
                 return b;
             }
@@ -139,7 +149,7 @@ namespace NuGet
         {
             if (String.IsNullOrEmpty(version))
             {
-                throw new ArgumentNullException( "version");
+                throw new ArgumentNullException("version");
             }
 
             SemanticVersion semVer;
@@ -174,6 +184,13 @@ namespace NuGet
                 return false;
             }
 
+            var isSnapshot = false;
+            if (version.Trim().EndsWith("-*"))
+            {
+                isSnapshot = true;
+                version = version.Substring(0, version.Length - 2);
+            }
+
             var match = regex.Match(version.Trim());
             Version versionValue;
             if (!match.Success || !Version.TryParse(match.Groups["Version"].Value, out versionValue))
@@ -181,7 +198,7 @@ namespace NuGet
                 return false;
             }
 
-            semVer = new SemanticVersion(NormalizeVersionValue(versionValue), match.Groups["Release"].Value.TrimStart('-'), version.Replace(" ", ""));
+            semVer = new SemanticVersion(NormalizeVersionValue(versionValue), match.Groups["Release"].Value.TrimStart('-'), version.Replace(" ", ""), isSnapshot);
             return true;
         }
 
@@ -300,7 +317,8 @@ namespace NuGet
         {
             return !Object.ReferenceEquals(null, other) &&
                    Version.Equals(other.Version) &&
-                   SpecialVersion.Equals(other.SpecialVersion, StringComparison.OrdinalIgnoreCase);
+                   SpecialVersion.Equals(other.SpecialVersion, StringComparison.OrdinalIgnoreCase) &&
+                   IsSnapshot == other.IsSnapshot;
         }
 
         public override bool Equals(object obj)

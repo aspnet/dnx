@@ -6,7 +6,7 @@ namespace Microsoft.Net.Runtime.Loader
 {
     public interface IPackageLoader : IAssemblyLoader
     {
-        IEnumerable<PackageReference> GetDependencies(string name, SemanticVersion version, FrameworkName frameworkName);
+        PackageDetails GetDetails(string name, SemanticVersion version, FrameworkName frameworkName);
         void Initialize(IEnumerable<PackageReference> packages, FrameworkName frameworkName);
     }
 }

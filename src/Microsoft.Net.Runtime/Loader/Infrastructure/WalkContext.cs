@@ -214,9 +214,9 @@ namespace Microsoft.Net.Runtime.Loader.Infrastructure
                 .Select(x => new
                 {
                     Resolver = x,
-                    Dependencies = x.GetDependencies(packageKey.Name, packageKey.Version, frameworkName)
+                    Details = x.GetDetails(packageKey.Name, packageKey.Version, frameworkName)
                 })
-                .FirstOrDefault(x => x.Dependencies != null);
+                .FirstOrDefault(x => x.Details != null);
 
             if (hit == null)
             {
@@ -226,8 +226,8 @@ namespace Microsoft.Net.Runtime.Loader.Infrastructure
 
             return resolvedItems[packageKey] = new Item()
             {
-                Key = packageKey,
-                Dependencies = hit.Dependencies,
+                Key = hit.Details.Identity,
+                Dependencies = hit.Details.Dependencies,
                 Resolver = hit.Resolver,
             };
         }

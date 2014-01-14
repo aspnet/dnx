@@ -1,8 +1,15 @@
 ﻿using System;
 using NuGet;
+using System.Collections.Generic;
 
 namespace Microsoft.Net.Runtime.Loader
 {
+    public class PackageDetails
+    {
+        public PackageReference Identity { get; set; }
+        public IEnumerable<PackageReference> Dependencies { get; set; }
+    }
+
     public class PackageReference : IEquatable<PackageReference>
     {
         public string Name { get; set; }

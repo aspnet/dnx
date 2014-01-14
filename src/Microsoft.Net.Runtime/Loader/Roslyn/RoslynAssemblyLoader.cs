@@ -203,7 +203,7 @@ namespace Microsoft.Net.Runtime.Loader.Roslyn
             return null;
         }
 
-        public IEnumerable<PackageReference> GetDependencies(string name, SemanticVersion version, FrameworkName frameworkName)
+        public PackageDetails GetDetails(string name, SemanticVersion version, FrameworkName frameworkName)
         {
             string path = Path.Combine(_rootPath, name);
             Project project;
@@ -220,7 +220,11 @@ namespace Microsoft.Net.Runtime.Loader.Roslyn
 
             var config = project.GetTargetFrameworkConfiguration(frameworkName);
 
-            return project.Dependencies.Concat(config.Dependencies);
+            return new PackageDetails
+            {
+                Identity = new PackageReference { Name = project.Name, Version = project.Version },
+                Dependencies = project.Dependencies.Concat(config.Dependencies),
+            };
         }
 
         public void Initialize(IEnumerable<PackageReference> packages, FrameworkName frameworkName)

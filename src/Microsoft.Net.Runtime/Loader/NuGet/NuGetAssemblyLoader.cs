@@ -46,13 +46,17 @@ namespace Microsoft.Net.Runtime.Loader.NuGet
             return new AssemblyLoadResult(assembly);
         }
 
-        public IEnumerable<PackageReference> GetDependencies(string name, SemanticVersion version, FrameworkName frameworkName)
+        public PackageDetails GetDetails(string name, SemanticVersion version, FrameworkName frameworkName)
         {
             var package = FindCandidate(name, version);
 
             if (package != null)
             {
-                return GetDependencies(package, frameworkName);
+                return new PackageDetails
+                {
+                    Identity = new PackageReference { Name = package.Id, Version = package.Version },
+                    Dependencies = GetDependencies(package, frameworkName)
+                };
             }
 
             return null;

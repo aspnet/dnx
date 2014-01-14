@@ -44,13 +44,17 @@ namespace Microsoft.Net.Runtime.Loader.Directory
             return null;
         }
 
-        public IEnumerable<PackageReference> GetDependencies(string name, SemanticVersion version, FrameworkName frameworkName)
+        public PackageDetails GetDetails(string name, SemanticVersion version, FrameworkName frameworkName)
         {
             string path = Path.Combine(_path, name + ".dll");
 
             if (File.Exists(path))
             {
-                return Enumerable.Empty<PackageReference>();
+                return new PackageDetails
+                {
+                    Identity = new PackageReference { Name = name, Version = version },
+                    Dependencies = Enumerable.Empty<PackageReference>()
+                };
             }
 
             return null;
