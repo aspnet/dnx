@@ -222,6 +222,19 @@ namespace NuGet
                                Math.Max(version.Revision, 0));
         }
 
+        public bool EqualsSnapshot(SemanticVersion seekingVersion)
+        {
+            if (seekingVersion.IsSnapshot)
+            {
+                return Version == seekingVersion.Version &&
+                    SpecialVersion.StartsWith(seekingVersion.SpecialVersion, StringComparison.OrdinalIgnoreCase);
+            }
+            else
+            {
+                return Equals(this, seekingVersion);
+            }
+        }
+
         public int CompareTo(object obj)
         {
             if (Object.ReferenceEquals(obj, null))

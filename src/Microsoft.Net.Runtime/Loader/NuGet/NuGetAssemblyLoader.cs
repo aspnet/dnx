@@ -163,22 +163,9 @@ namespace Microsoft.Net.Runtime.Loader.NuGet
             {
                 return _repository.FindPackagesById(name)
                     .OrderByDescending(pk => pk.Version.SpecialVersion, StringComparer.OrdinalIgnoreCase)
-                    .FirstOrDefault(pk => SuitableVersion(pk.Version, version));
+                    .FirstOrDefault(pk => pk.Version.EqualsSnapshot(version));
             }
             return _repository.FindPackage(name, version);
-        }
-
-        private bool SuitableVersion(SemanticVersion projectVersion, SemanticVersion seekingVersion)
-        {
-            if (seekingVersion.IsSnapshot)
-            {
-                return projectVersion.Version == seekingVersion.Version &&
-                    projectVersion.SpecialVersion.StartsWith(seekingVersion.SpecialVersion, StringComparison.OrdinalIgnoreCase);
-            }
-            else
-            {
-                return projectVersion == seekingVersion;
-            }
         }
 
         private string ResolveRepositoryPath(string projectPath)

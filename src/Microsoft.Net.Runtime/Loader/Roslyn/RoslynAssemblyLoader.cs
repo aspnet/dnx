@@ -215,7 +215,7 @@ namespace Microsoft.Net.Runtime.Loader.Roslyn
             {
                 return null;
             }
-            else if (version != null && !SuitableVersion(project.Version, version))
+            else if (version != null && !project.Version.EqualsSnapshot(version))
             {
                 return null;
             }
@@ -227,19 +227,6 @@ namespace Microsoft.Net.Runtime.Loader.Roslyn
                 Identity = new PackageReference { Name = project.Name, Version = project.Version },
                 Dependencies = project.Dependencies.Concat(config.Dependencies),
             };
-        }
-
-        private bool SuitableVersion(SemanticVersion projectVersion, SemanticVersion seekingVersion)
-        {
-            if (seekingVersion.IsSnapshot)
-            {
-                return projectVersion.Version == seekingVersion.Version &&
-                    projectVersion.SpecialVersion.StartsWith(seekingVersion.SpecialVersion, StringComparison.OrdinalIgnoreCase);
-            }
-            else
-            {
-                return projectVersion == seekingVersion;
-            }
         }
 
         public void Initialize(IEnumerable<PackageDescription> packages, FrameworkName frameworkName)
