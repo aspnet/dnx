@@ -56,6 +56,7 @@
     <Compile Include="DefaultHost.cs" />
     <Compile Include="HostServices.cs" />
     <Compile Include="Loader\AssemblyLoadResult.cs" />
+    <Compile Include="Loader\PackageDescription.cs" />
     <Compile Include="Loader\PackageReference.cs" />
     <Compile Include="Executable.cs" />
     <Compile Include="Loader\IMetadataLoader.cs" />

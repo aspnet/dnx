@@ -29,6 +29,8 @@ namespace Microsoft.Net.Runtime.Loader.Roslyn
         private readonly IAssemblyLoader _dependencyLoader;
         private readonly IResourceProvider _resourceProvider;
 
+        private IEnumerable<PackageDescription> _packages;
+
         public RoslynAssemblyLoader(string rootPath,
                                     IFileWatcher watcher,
                                     IFrameworkReferenceResolver resolver,
@@ -203,7 +205,7 @@ namespace Microsoft.Net.Runtime.Loader.Roslyn
             return null;
         }
 
-        public PackageDetails GetDetails(string name, SemanticVersion version, FrameworkName frameworkName)
+        public PackageDescription GetDescription(string name, SemanticVersion version, FrameworkName frameworkName)
         {
             string path = Path.Combine(_rootPath, name);
             Project project;
@@ -213,23 +215,36 @@ namespace Microsoft.Net.Runtime.Loader.Roslyn
             {
                 return null;
             }
-            else if (version != null && project.Version != version)
+            else if (version != null && !SuitableVersion(project.Version, version))
             {
                 return null;
             }
 
             var config = project.GetTargetFrameworkConfiguration(frameworkName);
 
-            return new PackageDetails
+            return new PackageDescription
             {
                 Identity = new PackageReference { Name = project.Name, Version = project.Version },
                 Dependencies = project.Dependencies.Concat(config.Dependencies),
             };
         }
 
-        public void Initialize(IEnumerable<PackageReference> packages, FrameworkName frameworkName)
+        private bool SuitableVersion(SemanticVersion projectVersion, SemanticVersion seekingVersion)
         {
+            if (seekingVersion.IsSnapshot)
+            {
+                return projectVersion.Version == seekingVersion.Version &&
+                    projectVersion.SpecialVersion.StartsWith(seekingVersion.SpecialVersion, StringComparison.OrdinalIgnoreCase);
+            }
+            else
+            {
+                return projectVersion == seekingVersion;
+            }
+        }
 
+        public void Initialize(IEnumerable<PackageDescription> packages, FrameworkName frameworkName)
+        {
+            _packages = packages;
         }
 
         private bool TryResolveDependency(PackageReference dependency, LoadContext loadContext, List<string> errors, out MetadataReference resolved)
@@ -385,6 +400,17 @@ namespace Microsoft.Net.Runtime.Loader.Roslyn
                             IsMinInclusive = true,
                             MinVersion = dependency.Version
                         };
+                        if (dependencyVersion.MinVersion == null || dependencyVersion.MinVersion.IsSnapshot)
+                        {
+                            var actual = _packages
+                                .Where(pkg => string.Equals(pkg.Identity.Name, project.Name, StringComparison.OrdinalIgnoreCase))
+                                .SelectMany(pkg => pkg.Dependencies)
+                                .SingleOrDefault(dep => string.Equals(dep.Name, dependency.Name, StringComparison.OrdinalIgnoreCase));
+                            if (actual != null)
+                            {
+                                dependencyVersion.MinVersion = actual.Version;
+                            }
+                        }
 
                         dependencies.Add(new PackageDependency(dependency.Name, dependencyVersion));
                     }

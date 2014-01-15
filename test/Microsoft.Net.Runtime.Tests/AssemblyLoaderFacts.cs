@@ -187,7 +187,7 @@ namespace Loader.Tests
             return null;
         }
 
-        public IEnumerable<PackageReference> GetDetails(string name, SemanticVersion version, FrameworkName frameworkName)
+        public PackageDescription GetDescription(string name, SemanticVersion version, FrameworkName frameworkName)
         {
             Trace.WriteLine(string.Format("StubAssemblyLoader.GetDependencies {0} {1} {2}", name, version, frameworkName));
             Entry entry;
@@ -199,12 +199,16 @@ namespace Loader.Tests
             var d = entry.Dependencies as PackageReference[] ?? entry.Dependencies.ToArray();
             Trace.WriteLine(string.Format("StubAssemblyLoader.GetDependencies {0} {1}", d.Aggregate("", (a, b) => a + " " + b), frameworkName));
 
-            return entry.Dependencies;
+            return new PackageDescription
+            {
+                Identity = new PackageReference { Name = name, Version = version },
+                Dependencies = entry.Dependencies
+            };
         }
 
-        public void Initialize(IEnumerable<PackageReference> dependencies, FrameworkName frameworkName)
+        public void Initialize(IEnumerable<PackageDescription> packages, FrameworkName frameworkName)
         {
-            var d = dependencies as PackageReference[] ?? dependencies.ToArray();
+            var d = packages.Select(package => package.Identity).ToArray();
 
             Trace.WriteLine(string.Format("StubAssemblyLoader.Initialize {0} {1}", d.Aggregate("", (a, b) => a + " " + b), frameworkName));
 

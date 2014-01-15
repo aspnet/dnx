@@ -1,4 +1,8 @@
 {
     "name": "HelloWorld",
-    "dependencies": []
+    "version": "0.1-*",
+    "dependencies": [{
+        "HelloCommon": {"version": "0.2-*"},
+        "Microsoft.Owin.Hosting":{"version":"2.1.0-rc1-*"}
+    }]
 }

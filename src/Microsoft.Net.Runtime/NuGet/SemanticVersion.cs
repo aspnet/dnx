@@ -70,6 +70,7 @@ namespace NuGet
             _originalString = semVer.ToString();
             Version = semVer.Version;
             SpecialVersion = semVer.SpecialVersion;
+            IsSnapshot = semVer.IsSnapshot;
         }
 
         /// <summary>
@@ -336,6 +337,21 @@ namespace NuGet
             }
 
             return hashCode;
+        }
+
+        public SemanticVersion SpecifySnapshot(string snapshotValue)
+        {
+            if (!IsSnapshot)
+            {
+                return new SemanticVersion(this);
+            }
+            var specificString = _originalString.Trim();
+            specificString = specificString.Substring(0, specificString.Length - 2);
+            if (!string.IsNullOrEmpty(snapshotValue))
+            {
+                specificString += "-" + snapshotValue;
+            }
+            return new SemanticVersion(specificString);
         }
     }
 }

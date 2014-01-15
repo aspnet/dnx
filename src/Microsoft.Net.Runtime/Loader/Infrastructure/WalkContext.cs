@@ -214,7 +214,7 @@ namespace Microsoft.Net.Runtime.Loader.Infrastructure
                 .Select(x => new
                 {
                     Resolver = x,
-                    Details = x.GetDetails(packageKey.Name, packageKey.Version, frameworkName)
+                    Details = x.GetDescription(packageKey.Name, packageKey.Version, frameworkName)
                 })
                 .FirstOrDefault(x => x.Details != null);
 
@@ -241,7 +241,16 @@ namespace Microsoft.Net.Runtime.Loader.Infrastructure
 
                 Trace.TraceInformation("[{0}]: " + String.Join(", ", packageKeys), resolver.GetType().Name);
 
-                resolver.Initialize(packageKeys, frameworkName);
+                var descriptions = groupByResolver.Select(entry =>
+                {
+                    return new PackageDescription
+                    {
+                        Identity = entry.Value.Key,
+                        Dependencies = entry.Value.Dependencies.Select(name => _usedItems[name.Name].Key).ToList()
+                    };
+                }).ToList();
+
+                resolver.Initialize(descriptions, frameworkName);
             }
         }
 

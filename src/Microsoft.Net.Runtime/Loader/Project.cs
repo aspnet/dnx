@@ -126,6 +126,12 @@ namespace Microsoft.Net.Runtime.Loader
             project.Dependencies = new List<PackageReference>();
             project.ProjectFilePath = projectPath;
 
+            if (project.Version.IsSnapshot)
+            {
+                var buildVersion = Environment.GetEnvironmentVariable("K_BUILD_VERSION") ?? "";
+                project.Version = project.Version.SpecifySnapshot(buildVersion);
+            }
+
             project.BuildTargetFrameworkConfigurations(settings);
 
             PopulateDependencies(project.Dependencies, settings);

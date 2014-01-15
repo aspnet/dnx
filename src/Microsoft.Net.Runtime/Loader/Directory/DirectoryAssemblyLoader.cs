@@ -44,13 +44,13 @@ namespace Microsoft.Net.Runtime.Loader.Directory
             return null;
         }
 
-        public PackageDetails GetDetails(string name, SemanticVersion version, FrameworkName frameworkName)
+        public PackageDescription GetDescription(string name, SemanticVersion version, FrameworkName frameworkName)
         {
             string path = Path.Combine(_path, name + ".dll");
 
             if (File.Exists(path))
             {
-                return new PackageDetails
+                return new PackageDescription
                 {
                     Identity = new PackageReference { Name = name, Version = version },
                     Dependencies = Enumerable.Empty<PackageReference>()
@@ -60,7 +60,7 @@ namespace Microsoft.Net.Runtime.Loader.Directory
             return null;
         }
 
-        public void Initialize(IEnumerable<PackageReference> packages, FrameworkName frameworkName)
+        public void Initialize(IEnumerable<PackageDescription> packages, FrameworkName frameworkName)
         {
 
         }

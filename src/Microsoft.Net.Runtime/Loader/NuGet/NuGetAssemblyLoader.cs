@@ -46,13 +46,13 @@ namespace Microsoft.Net.Runtime.Loader.NuGet
             return new AssemblyLoadResult(assembly);
         }
 
-        public PackageDetails GetDetails(string name, SemanticVersion version, FrameworkName frameworkName)
+        public PackageDescription GetDescription(string name, SemanticVersion version, FrameworkName frameworkName)
         {
             var package = FindCandidate(name, version);
 
             if (package != null)
             {
-                return new PackageDetails
+                return new PackageDescription
                 {
                     Identity = new PackageReference { Name = package.Id, Version = package.Version },
                     Dependencies = GetDependencies(package, frameworkName)
@@ -87,11 +87,11 @@ namespace Microsoft.Net.Runtime.Loader.NuGet
             }
         }
 
-        public void Initialize(IEnumerable<PackageReference> packages, FrameworkName frameworkName)
+        public void Initialize(IEnumerable<PackageDescription> packages, FrameworkName frameworkName)
         {
             foreach (var dependency in packages)
             {
-                var package = FindCandidate(dependency.Name, dependency.Version);
+                var package = FindCandidate(dependency.Identity.Name, dependency.Identity.Version);
 
                 if (package == null)
                 {
@@ -159,8 +159,26 @@ namespace Microsoft.Net.Runtime.Loader.NuGet
             {
                 return _repository.FindPackagesById(name).FirstOrDefault();
             }
-
+            else if (version.IsSnapshot)
+            {
+                return _repository.FindPackagesById(name)
+                    .OrderByDescending(pk => pk.Version.SpecialVersion, StringComparer.OrdinalIgnoreCase)
+                    .FirstOrDefault(pk => SuitableVersion(pk.Version, version));
+            }
             return _repository.FindPackage(name, version);
+        }
+
+        private bool SuitableVersion(SemanticVersion projectVersion, SemanticVersion seekingVersion)
+        {
+            if (seekingVersion.IsSnapshot)
+            {
+                return projectVersion.Version == seekingVersion.Version &&
+                    projectVersion.SpecialVersion.StartsWith(seekingVersion.SpecialVersion, StringComparison.OrdinalIgnoreCase);
+            }
+            else
+            {
+                return projectVersion == seekingVersion;
+            }
         }
 
         private string ResolveRepositoryPath(string projectPath)
