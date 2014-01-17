@@ -8,6 +8,8 @@
 
 SETLOCAL
 
+SET ERRORLEVEL=
+
 SET TARGET=%TARGET_FRAMEWORK%
 if "%TARGET%" == "" (
    SET TARGET=Debug
@@ -18,4 +20,7 @@ IF EXIST "%~dp0k-%1.cmd" (
 ) ELSE (
   CALL "%~dp0KLR" "%~dp0..\src\Microsoft.Net.Project\bin\%TARGET%\Microsoft.Net.Project.dll" %*
 )
+
+exit /b %ERRORLEVEL%
+
 ENDLOCAL

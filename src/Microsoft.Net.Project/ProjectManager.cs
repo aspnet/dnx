@@ -27,7 +27,7 @@ namespace Microsoft.Net.Project
             _projectDir = Normalize(projectDir);
         }
 
-        public void Build(string defaultTargetFramework = "net45")
+        public bool Build(string defaultTargetFramework = "net45")
         {
             defaultTargetFramework = Environment.GetEnvironmentVariable("TARGET_FRAMEWORK") ?? defaultTargetFramework;
 
@@ -35,7 +35,7 @@ namespace Microsoft.Net.Project
             if (!KProject.TryGetProject(_projectDir, out project))
             {
                 Trace.TraceInformation("Unable to locate {0}.'", KProject.ProjectFileName);
-                return;
+                return false;
             }
 
             var sw = Stopwatch.StartNew();
@@ -68,6 +68,7 @@ namespace Microsoft.Net.Project
             builder.Version = project.Version;
             builder.Title = project.Name;
 
+            bool success = true;
             bool createPackage = false;
 
             // Build all target frameworks a project supports
@@ -79,6 +80,7 @@ namespace Microsoft.Net.Project
 
                     if (result != null && result.Errors != null)
                     {
+                        success = false;
                         Trace.TraceError(String.Join(Environment.NewLine, result.Errors));
                     }
                     else
@@ -88,6 +90,7 @@ namespace Microsoft.Net.Project
                 }
                 catch (Exception ex)
                 {
+                    success = false;
                     Trace.TraceError(ex.ToString());
                 }
             }
@@ -105,9 +108,10 @@ namespace Microsoft.Net.Project
             sw.Stop();
 
             Trace.TraceInformation("Compile took {0}ms", sw.ElapsedMilliseconds);
+            return success;
         }
 
-        public void Clean(string defaultTargetFramework = "net45")
+        public bool Clean(string defaultTargetFramework = "net45")
         {
             defaultTargetFramework = Environment.GetEnvironmentVariable("TARGET_FRAMEWORK") ?? defaultTargetFramework;
 
@@ -115,7 +119,7 @@ namespace Microsoft.Net.Project
             if (!KProject.TryGetProject(_projectDir, out project))
             {
                 Trace.TraceInformation("Unable to locate {0}.'", KProject.ProjectFileName);
-                return;
+                return false;
             }
 
             string outputPath = Path.Combine(_projectDir, "bin");
@@ -130,6 +134,8 @@ namespace Microsoft.Net.Project
                 configurations.Add(VersionUtility.ParseFrameworkName(defaultTargetFramework));
             }
 
+            bool success = true;
+
             foreach (var targetFramework in configurations)
             {
                 try
@@ -138,11 +144,14 @@ namespace Microsoft.Net.Project
 
                     if (result != null && result.Errors != null)
                     {
+                        success = false;
+
                         Trace.TraceError(String.Join(Environment.NewLine, result.Errors));
                     }
                 }
                 catch (Exception ex)
                 {
+                    success = false;
                     Trace.TraceError(ex.ToString());
                 }
             }
@@ -155,6 +164,8 @@ namespace Microsoft.Net.Project
 
             var di = new DirectoryInfo(outputPath);
             DeleteEmptyFolders(di);
+
+            return success;
         }
 
         private static void DeleteEmptyFolders(DirectoryInfo di)

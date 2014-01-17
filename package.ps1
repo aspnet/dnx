@@ -8,6 +8,14 @@ trap
     exit 1
 }
 
+function Verify-ExitCode($message)
+{
+    if ($LASTEXITCODE -ne 0) 
+    {
+        throw $message
+    }
+}
+
 # Get the executing script path
 $path = Split-Path $MyInvocation.MyCommand.Path
 
@@ -54,6 +62,7 @@ if((Test-Path $sdkRoot\Framework) -and (Test-Path $sdkRoot\tools\Microsoft.Net.P
     # tools\bin\*
     $hostProjects | %{
         & $sdkRoot\tools\k.cmd build $path\src\$_
+        Verify-ExitCode "Building $_ failed"
         cp -r $path\src\$_ -filter *.dll $sdkRoot\tools\bin\ -force
 
         # Remove this file from the root if it exists there
@@ -65,6 +74,7 @@ if((Test-Path $sdkRoot\Framework) -and (Test-Path $sdkRoot\tools\Microsoft.Net.P
     # tools\* Skip OwinHost since it isn't buildable yet
     $runtimeProjects | Select -Skip 1 | %{
         & $sdkRoot\tools\k.cmd build $path\src\$_
+        Verify-ExitCode "Building $_ failed"
     }
 
     $bootstrapping = $true
@@ -141,3 +151,4 @@ if($nightly -or $env:Nightly -eq "1")
 }
 
 & $path\.nuget\NuGet.exe pack $sdkRoot\ProjectK.nuspec -o $sdkRoot -NoPackageAnalysis -version $version
+Verify-ExitCode "NuGet pack failed"

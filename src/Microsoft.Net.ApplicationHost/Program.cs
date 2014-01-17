@@ -37,7 +37,7 @@ namespace Microsoft.Net.ApplicationHost
                 var host = new DefaultHost(application);
                 using (_container.AddHost(host))
                 {
-                    ExecuteMain(host, arguments);
+                    return ExecuteMain(host, arguments);
                 }
             }
             catch (Exception ex)
@@ -45,8 +45,6 @@ namespace Microsoft.Net.ApplicationHost
                 Console.Error.WriteLine(String.Join(Environment.NewLine, GetExceptions(ex)));
                 return -2;
             }
-
-            return 0;
         }
 
         private static IEnumerable<string> GetExceptions(Exception ex)
@@ -65,13 +63,13 @@ namespace Microsoft.Net.ApplicationHost
             }
         }
 
-        private void ExecuteMain(DefaultHost host, string[] args)
+        private int ExecuteMain(DefaultHost host, string[] args)
         {
             var assembly = host.GetEntryPoint();
 
             if (assembly == null)
             {
-                return;
+                return -1;
             }
 
             string name = assembly.GetName().Name;
@@ -85,7 +83,7 @@ namespace Microsoft.Net.ApplicationHost
                 if (programTypeInfo == null)
                 {
                     Console.WriteLine("'{0}' does not contain a static 'Main' method suitable for an entry point", name);
-                    return;
+                    return -1;
                 }
 
                 program = programTypeInfo.AsType();
@@ -96,7 +94,7 @@ namespace Microsoft.Net.ApplicationHost
             if (main == null)
             {
                 Console.WriteLine("'{0}' does not contain a 'Main' method suitable for an entry point", name);
-                return;
+                return -1;
             }
 
             object instance = null;
@@ -108,7 +106,7 @@ namespace Microsoft.Net.ApplicationHost
                 {
                     case 0:
                         Console.WriteLine("'{0}' does not contain a public constructor.", name);
-                        return;
+                        return -1;
 
                     case 1:
                         var constructor = constructors[0];
@@ -118,19 +116,28 @@ namespace Microsoft.Net.ApplicationHost
 
                     default:
                         Console.WriteLine("'{0}' has too many public constructors for an entry point.", name);
-                        return;
+                        return -1;
                 }
             }
 
+            object result = null;
             var parameters = main.GetParameters();
+
             if (parameters.Length == 0)
             {
-                main.Invoke(instance, null);
+                result = main.Invoke(instance, null);
             }
             else if (parameters.Length == 1)
             {
-                main.Invoke(instance, new object[] { args });
+                result = main.Invoke(instance, new object[] { args });
             }
+
+            if (result is int)
+            {
+                return (int)result;
+            }
+
+            return 0;
         }
     }
 }

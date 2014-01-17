@@ -26,11 +26,17 @@ namespace Microsoft.Net.Project
             {
                 if (command.Equals("build", StringComparison.OrdinalIgnoreCase))
                 {
-                    projectManager.Build();
+                    if (!projectManager.Build())
+                    {
+                        return -1;
+                    }
                 }
                 else if (command.Equals("clean", StringComparison.OrdinalIgnoreCase))
                 {
-                    projectManager.Clean();
+                    if (!projectManager.Clean())
+                    {
+                        return -1;
+                    }
                 }
                 else
                 {
