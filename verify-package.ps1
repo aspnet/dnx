@@ -8,6 +8,14 @@ trap
     exit 1
 }
 
+function Verify-ExitCode
+{
+    if ($LASTEXITCODE -ne 0) 
+    {
+        exit 1
+    }
+}
+
 $path = Split-Path $MyInvocation.MyCommand.Path
 
 if(!$packageSource)
@@ -25,6 +33,7 @@ if(Test-Path $testPath)
 
 # Install the package into the artifacts\test folder
 & $path\.nuget\nuget.exe install ProjectK -pre -Source $packageSource -output $testPath -NoCache
+Verify-ExitCode
 
 $projectKFolder = @(ls $testPath\ProjectK*)[0].FullName
 
@@ -49,10 +58,15 @@ function Run-Tests($targetFramework)
 
         Write-Host "Running Hello World"
         & $projectKFolder\tools\k run $path\src\HelloWorld > $testResults\run.txt
+        Verify-ExitCode
+        
         Write-Host "Running Building World"
         & $projectKFolder\tools\k build $path\src\HelloWorld > $testResults\build.txt
+        Verify-ExitCode
+        
         Write-Host "Running Cleaning World"
         & $projectKFolder\tools\k clean $path\src\HelloWorld > $testResults\clean.txt
+        Verify-ExitCode
 
         Write-Host "Checking output"
         @("run", "build", "clean") | %{
