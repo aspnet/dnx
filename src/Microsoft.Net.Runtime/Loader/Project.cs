@@ -141,33 +141,35 @@ namespace Microsoft.Net.Runtime.Loader
 
         private static void PopulateDependencies(IList<PackageReference> results, JObject settings)
         {
-            var dependencies = settings["dependencies"] as JArray;
+            var dependencies = settings["dependencies"] as JObject;
             if (dependencies != null)
             {
-                foreach (JObject dependency in (IEnumerable<JToken>)dependencies)
+                foreach (var dependency in dependencies)
                 {
-                    foreach (var prop in dependency)
+                    if (String.IsNullOrEmpty(dependency.Key))
                     {
-                        if (String.IsNullOrEmpty(prop.Key))
-                        {
-                            throw new InvalidDataException("Unable to resolve dependency ''.");
-                        }
-
-                        var properties = prop.Value.Value<JObject>();
-                        var dependencyVersion = properties["version"];
-                        SemanticVersion semVer = null;
-
-                        if (dependencyVersion != null)
-                        {
-                            SemanticVersion.TryParse(dependencyVersion.Value<string>(), out semVer);
-                        }
-
-                        results.Add(new PackageReference
-                        {
-                            Name = prop.Key,
-                            Version = semVer
-                        });
+                        throw new InvalidDataException("Unable to resolve dependency ''.");
                     }
+
+                    // Support 
+                    // "dependencies" : {
+                    //    "Name" : "1.0"
+                    // }
+
+                    string dependencyVersionValue = dependency.Value.Value<string>();
+
+                    SemanticVersion dependencyVersion = null;
+
+                    if (!String.IsNullOrEmpty(dependencyVersionValue))
+                    {
+                        dependencyVersion = SemanticVersion.Parse(dependencyVersionValue);
+                    }
+
+                    results.Add(new PackageReference
+                    {
+                        Name = dependency.Key,
+                        Version = dependencyVersion
+                    });
                 }
             }
         }
@@ -187,32 +189,29 @@ namespace Microsoft.Net.Runtime.Loader
             };
 
             // Parse the specific configuration section
-            var configurations = settings["configurations"] as JArray;
+            var configurations = settings["configurations"] as JObject;
             if (configurations != null)
             {
-                foreach (JObject configuration in (IEnumerable<JToken>)configurations)
+                foreach (var configuration in configurations)
                 {
-                    foreach (var prop in configuration)
-                    {
-                        var config = new TargetFrameworkConfiguration();
+                    var config = new TargetFrameworkConfiguration();
 
-                        config.FrameworkName = VersionUtility.ParseFrameworkName(prop.Key);
-                        var properties = prop.Value.Value<JObject>();
+                    config.FrameworkName = VersionUtility.ParseFrameworkName(configuration.Key);
+                    var properties = configuration.Value.Value<JObject>();
 
-                        var specificCompilationOptions = properties["compilationOptions"];
-                        var specificDefines = ConvertValue<string[]>(specificCompilationOptions, "define") ?? new string[] { prop.Key.ToUpperInvariant() };
+                    var specificCompilationOptions = properties["compilationOptions"];
+                    var specificDefines = ConvertValue<string[]>(specificCompilationOptions, "define") ?? new string[] { configuration.Key.ToUpperInvariant() };
 
-                        var defines = new HashSet<string>(specificDefines);
-                        defines.AddRange(_defaultTargetFrameworkConfiguration.Defines);
+                    var defines = new HashSet<string>(specificDefines);
+                    defines.AddRange(_defaultTargetFrameworkConfiguration.Defines);
 
-                        config.CompilationOptions = GetCompilationOptions(specificCompilationOptions);
-                        config.Defines = defines;
-                        config.Dependencies = new List<PackageReference>();
+                    config.CompilationOptions = GetCompilationOptions(specificCompilationOptions);
+                    config.Defines = defines;
+                    config.Dependencies = new List<PackageReference>();
 
-                        PopulateDependencies(config.Dependencies, properties);
+                    PopulateDependencies(config.Dependencies, properties);
 
-                        _configurations[config.FrameworkName] = config;
-                    }
+                    _configurations[config.FrameworkName] = config;
                 }
             }
         }

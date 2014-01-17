@@ -1,24 +1,26 @@
 {
     "compilationOptions" : { "define" : ["LOADER"] },
-    "dependencies": [
-        { "Newtonsoft.Json": { "version": "5.0.8" } },
-        { "Microsoft.Net.Runtime.Interfaces" : { "version" : "" } },
-        { "Microsoft.CodeAnalysis" : { "version" : "" } },
-        { "Microsoft.CodeAnalysis.CSharp" : { "version" : "" } },
-        { "System.Collections.Immutable" : { "version" : "" } }
-    ],
-    "configurations" : [
-        { "net45" : { 
+    "dependencies": {
+        "Newtonsoft.Json": "5.0.8",
+        "Microsoft.Net.Runtime.Interfaces" : "",
+        "Microsoft.CodeAnalysis" : "",
+        "Microsoft.CodeAnalysis.CSharp" : "",
+        "System.Collections.Immutable" : ""
+    },
+    "configurations" : {
+        "net45" : { 
             "compilationOptions": { "define": ["DESKTOP"] },
-            "dependencies": [
-                { "System.IO.Compression" : { "version" : "" } },
-                { "System.IO.Compression.FileSystem" : { "version" : "" } },
-                { "System.Runtime" : { "version" :"" } },
-                { "System.Xml" : { "version" : "" } },
-                { "System.Xml.Linq" : { "version" : "" } },
-                { "System.Collections" : { "version" : "" } }
-            ]
-        } },
-        { "k10" : { "dependencies": [ { "Stubs": { } } ] } }
-    ]
+            "dependencies": {
+                "System.IO.Compression" : "",
+                "System.IO.Compression.FileSystem" : "",
+                "System.Runtime" : "",
+                "System.Xml" : "",
+                "System.Xml.Linq" : "",
+                "System.Collections" : ""
+            }
+        },
+        "k10" : {
+            "dependencies": { "Stubs": "" }
+        }
+    }
 }

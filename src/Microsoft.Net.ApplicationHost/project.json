@@ -1,13 +1,12 @@
 {
-    "name" : "Microsoft.Net.ApplicationHost",
-    "dependencies": [
-        { "Microsoft.Net.Runtime" : { } },
-        { "Microsoft.Net.Runtime.Interfaces" : { } }
-    ],
-    "configurations" : [
-        { "net45" : { 
+    "dependencies": {
+        "Microsoft.Net.Runtime" : "",
+        "Microsoft.Net.Runtime.Interfaces" : ""
+    },
+    "configurations" : {
+        "net45" : { 
             "compilationOptions": { "define": ["DESKTOP"] },
-        } },
-        { "k10" : { "dependencies": [ { "Stubs": { } } ] } }
-    ]
+        },
+        "k10" : { "dependencies": { "Stubs": "" } }
+    }
 }

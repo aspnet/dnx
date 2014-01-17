@@ -1,10 +1,9 @@
 {
-    "name" : "klr.host",
-    "dependencies": [
-        { "Microsoft.Net.Runtime.Interfaces" : { } }
-    ],
-    "configurations" : [
-        { "net45" : { "compilationOptions": { "define": ["DESKTOP"] } } },
-        { "k10" : { "dependencies": [ { "Stubs": { } } ] } }
-    ]
+    "dependencies": {
+        "Microsoft.Net.Runtime.Interfaces" : ""
+    },
+    "configurations" : {
+        "net45" : { "compilationOptions": { "define": ["DESKTOP"] } },
+        "k10" : { "dependencies": { "Stubs": "" } }
+    }
 }

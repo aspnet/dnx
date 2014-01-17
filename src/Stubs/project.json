@@ -1,3 +1,5 @@
 {
-    "configurations" : [ { "k10" : { } } ]
+    "configurations" : { 
+        "k10" : { } 
+    }
 }
