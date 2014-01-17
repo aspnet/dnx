@@ -246,7 +246,9 @@ namespace Microsoft.Net.Runtime.Loader.Infrastructure
                     return new PackageDescription
                     {
                         Identity = entry.Value.Key,
-                        Dependencies = entry.Value.Dependencies.Select(name => _usedItems[name.Name].Key).ToList()
+                        Dependencies = entry.Value.Dependencies.Where(p => _usedItems.ContainsKey(p.Name))
+                                                               .Select(p => _usedItems[p.Name].Key)
+                                                               .ToList()
                     };
                 }).ToList();
 
