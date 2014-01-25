@@ -1,6 +1,8 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 2012
+# Visual Studio 2013
+VisualStudioVersion = 12.0.21005.1
+MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "scripts", "scripts", "{189961D1-DFF4-406A-9D42-39B61221A73A}"
 	ProjectSection(SolutionItems) = preProject
 		scripts\k-install.cmd = scripts\k-install.cmd
@@ -38,8 +40,6 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Microsoft.Net.Project", "src\Microsoft.Net.Project\Microsoft.Net.Project.csproj", "{F4F33DA0-0671-4FC1-A136-CC94C6887A10}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Microsoft.Net.ApplicationHost", "src\Microsoft.Net.ApplicationHost\Microsoft.Net.ApplicationHost.csproj", "{EB9971E1-8BBA-478C-9AB3-C7327B6DA006}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Microsoft.Net.OwinHost", "src\Microsoft.Net.OwinHost\Microsoft.Net.OwinHost.csproj", "{C7C8D3B5-A75F-4D25-9225-2FF8C79E99CD}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -161,16 +161,6 @@ Global
 		{EB9971E1-8BBA-478C-9AB3-C7327B6DA006}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
 		{EB9971E1-8BBA-478C-9AB3-C7327B6DA006}.Release|Mixed Platforms.Build.0 = Release|Any CPU
 		{EB9971E1-8BBA-478C-9AB3-C7327B6DA006}.Release|Win32.ActiveCfg = Release|Any CPU
-		{C7C8D3B5-A75F-4D25-9225-2FF8C79E99CD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{C7C8D3B5-A75F-4D25-9225-2FF8C79E99CD}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{C7C8D3B5-A75F-4D25-9225-2FF8C79E99CD}.Debug|Mixed Platforms.ActiveCfg = Debug|Any CPU
-		{C7C8D3B5-A75F-4D25-9225-2FF8C79E99CD}.Debug|Mixed Platforms.Build.0 = Debug|Any CPU
-		{C7C8D3B5-A75F-4D25-9225-2FF8C79E99CD}.Debug|Win32.ActiveCfg = Debug|Any CPU
-		{C7C8D3B5-A75F-4D25-9225-2FF8C79E99CD}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{C7C8D3B5-A75F-4D25-9225-2FF8C79E99CD}.Release|Any CPU.Build.0 = Release|Any CPU
-		{C7C8D3B5-A75F-4D25-9225-2FF8C79E99CD}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
-		{C7C8D3B5-A75F-4D25-9225-2FF8C79E99CD}.Release|Mixed Platforms.Build.0 = Release|Any CPU
-		{C7C8D3B5-A75F-4D25-9225-2FF8C79E99CD}.Release|Win32.ActiveCfg = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -181,7 +171,6 @@ Global
 		{499736F5-6277-4FDA-BEA8-4D6400510FAC} = {AF391791-F4B7-41AC-8F08-9485DAC543C5}
 		{F4F33DA0-0671-4FC1-A136-CC94C6887A10} = {AF391791-F4B7-41AC-8F08-9485DAC543C5}
 		{EB9971E1-8BBA-478C-9AB3-C7327B6DA006} = {AF391791-F4B7-41AC-8F08-9485DAC543C5}
-		{C7C8D3B5-A75F-4D25-9225-2FF8C79E99CD} = {AF391791-F4B7-41AC-8F08-9485DAC543C5}
 		{98244D18-FB16-45B6-806C-2766A40DF810} = {13ED5001-B871-4BC3-8499-29607F596C7C}
 		{AB05D4F0-3A27-4475-93FA-2BB23064A69A} = {13ED5001-B871-4BC3-8499-29607F596C7C}
 		{0E4CB542-5E58-4D24-9CAE-DAC83D932DBE} = {13ED5001-B871-4BC3-8499-29607F596C7C}

@@ -243,7 +243,7 @@ namespace NuGet
 
         private static void ValidateManifestSchema(XDocument document, string schemaNamespace)
         {
-#if DESKTOP // CORECLR_TODO: XmlSchema
+#if NET45 // CORECLR_TODO: XmlSchema
             var schemaSet = ManifestSchemaUtility.GetManifestSchemaSet(schemaNamespace);
 
             document.Validate(schemaSet, (sender, e) =>
@@ -259,7 +259,7 @@ namespace NuGet
 
         private static void CheckSchemaVersion(XDocument document)
         {
-#if DESKTOP // CORECLR_TODO: XmlSchema
+#if NET45 // CORECLR_TODO: XmlSchema
             // Get the metadata node and look for the schemaVersion attribute
             XElement metadata = GetMetadataElement(document);
 

@@ -6,7 +6,7 @@ namespace Microsoft.Net.Runtime
     {
         public bool TryResolvePartialName(string name, out string assemblyLocation)
         {
-#if DESKTOP
+#if NET45
             return GlobalAssemblyCache.ResolvePartialName(name, out assemblyLocation) != null;
 #else
             assemblyLocation = null;

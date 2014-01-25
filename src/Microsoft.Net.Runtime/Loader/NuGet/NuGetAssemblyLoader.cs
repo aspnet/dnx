@@ -100,7 +100,7 @@ namespace Microsoft.Net.Runtime.Loader.NuGet
 
                 foreach (var fileName in GetAssemblies(package, frameworkName))
                 {
-#if DESKTOP // CORECLR_TODO: AssemblyName.GetAssemblyName
+#if NET45 // CORECLR_TODO: AssemblyName.GetAssemblyName
                     var an = AssemblyName.GetAssemblyName(fileName);
                     _paths[an.Name] = fileName;
 #else

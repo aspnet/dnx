@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace Microsoft.Net.Runtime
 {
-#if DESKTOP // CORECLR_TODO: Process
+#if NET45 // CORECLR_TODO: Process
     public class Executable
     {
         public Executable(string path, string workingDirectory)

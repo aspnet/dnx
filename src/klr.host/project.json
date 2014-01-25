@@ -3,7 +3,7 @@
         "Microsoft.Net.Runtime.Interfaces" : ""
     },
     "configurations" : {
-        "net45" : { "compilationOptions": { "define": ["DESKTOP"] } },
+        "net45" : { },
         "k10" : { "dependencies": { "Stubs": "" } }
     }
 }

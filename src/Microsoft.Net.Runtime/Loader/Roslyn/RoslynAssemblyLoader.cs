@@ -11,7 +11,7 @@ using Microsoft.CodeAnalysis.Emit;
 using Microsoft.Net.Runtime.FileSystem;
 using NuGet;
 
-#if DESKTOP // TODO: Temporary due to CoreCLR and Desktop Roslyn being out of sync
+#if NET45 // TODO: Temporary due to CoreCLR and Desktop Roslyn being out of sync
 using EmitResult = Microsoft.CodeAnalysis.Emit.CommonEmitResult;
 #endif
 
@@ -274,7 +274,7 @@ namespace Microsoft.Net.Runtime.Loader.Roslyn
 
         private AssemblyLoadResult CompileToDisk(string assemblyPath, string pdbPath, Compilation compilation, IList<ResourceDescription> resources)
         {
-#if DESKTOP
+#if NET45
             EmitResult result = compilation.Emit(assemblyPath, pdbPath, manifestResources: resources);
 #else
             EmitResult result = compilation.Emit(assemblyPath);
@@ -300,7 +300,7 @@ namespace Microsoft.Net.Runtime.Loader.Roslyn
             using (var pdbStream = new MemoryStream())
             using (var assemblyStream = new MemoryStream())
             {
-#if DESKTOP
+#if NET45
                 EmitResult result = compilation.Emit(assemblyStream, pdbStream: pdbStream, manifestResources: resources);
 #else
                 EmitResult result = compilation.Emit(assemblyStream);
@@ -313,13 +313,13 @@ namespace Microsoft.Net.Runtime.Loader.Roslyn
 
                 var assemblyBytes = assemblyStream.ToArray();
 
-#if DESKTOP
+#if NET45
                 var pdbBytes = pdbStream.ToArray();
 #endif
 
                 var compiled = new CompiledAssembly
                 {
-#if DESKTOP
+#if NET45
                     Assembly = Assembly.Load(assemblyBytes, pdbBytes),
 #else
                     Assembly = Assembly.Load(assemblyBytes),
@@ -349,7 +349,7 @@ namespace Microsoft.Net.Runtime.Loader.Roslyn
 
         private static AssemblyLoadResult ReportCompilationError(EmitResult result)
         {
-#if DESKTOP // TODO: Temporary due to CoreCLR and Desktop Roslyn being out of sync
+#if NET45 // TODO: Temporary due to CoreCLR and Desktop Roslyn being out of sync
             var formatter = DiagnosticFormatter.Instance;
 #else
             var formatter = new DiagnosticFormatter();

@@ -97,7 +97,7 @@ namespace Microsoft.Net.Runtime
             _loader = new AssemblyLoader();
             string rootDirectory = ResolveRootDirectory(_projectDir);
 
-#if DESKTOP // CORECLR_TODO: FileSystemWatcher
+#if NET45 // CORECLR_TODO: FileSystemWatcher
             if (watchFiles)
             {
                 _watcher = new FileWatcher(rootDirectory);
@@ -117,7 +117,7 @@ namespace Microsoft.Net.Runtime
             var resourceProvider = new ResxResourceProvider();
             var roslynLoader = new RoslynAssemblyLoader(rootDirectory, _watcher, resolver, globalAssemblyCache, _loader, resourceProvider);
             _loader.Add(roslynLoader);
-#if DESKTOP // CORECLR_TODO: Process
+#if NET45 // CORECLR_TODO: Process
             _loader.Add(new MSBuildProjectAssemblyLoader(rootDirectory, _watcher));
 #endif
             _loader.Add(new NuGetAssemblyLoader(_projectDir));

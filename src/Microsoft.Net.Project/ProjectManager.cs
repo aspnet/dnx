@@ -8,7 +8,7 @@ using System.Runtime.Versioning;
 using Microsoft.Net.Runtime;
 using Microsoft.Net.Runtime.FileSystem;
 using Microsoft.Net.Runtime.Loader;
-#if DESKTOP
+#if NET45
 using Microsoft.Net.Runtime.Loader.MSBuildProject;
 #endif
 using Microsoft.Net.Runtime.Loader.NuGet;
@@ -287,7 +287,7 @@ namespace Microsoft.Net.Project
             var resourceProvider = new ResxResourceProvider();
             var roslynLoader = new RoslynAssemblyLoader(rootDirectory, NoopWatcher.Instance, resolver, globalAssemblyCache, loader, resourceProvider);
             loader.Add(roslynLoader);
-#if DESKTOP
+#if NET45
             loader.Add(new MSBuildProjectAssemblyLoader(rootDirectory, NoopWatcher.Instance));
 #endif
             loader.Add(new NuGetAssemblyLoader(projectDir));

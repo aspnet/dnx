@@ -13,7 +13,7 @@ namespace Microsoft.Net.Runtime.Loader.Roslyn
     {
         public IList<ResourceDescription> GetResources(string projectName, string projectPath)
         {
-#if DESKTOP // CORECLR_TODO: ResourceWriter
+#if NET45 // CORECLR_TODO: ResourceWriter
             return System.IO.Directory.EnumerateFiles(projectPath, "*.resx", SearchOption.AllDirectories)
                             .Select(resxFilePath =>
                                 new ResourceDescription(GetResourceName(projectName, resxFilePath),
@@ -23,7 +23,7 @@ namespace Microsoft.Net.Runtime.Loader.Roslyn
             return new ResourceDescription[0];
 #endif
         }
-#if DESKTOP // CORECLR_TODO: ResourceWriter
+#if NET45 // CORECLR_TODO: ResourceWriter
         private static string GetResourceName(string projectName, string resxFilePath)
         {
             Trace.TraceInformation("Found resource {0}", resxFilePath);

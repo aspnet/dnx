@@ -58,7 +58,7 @@ namespace Microsoft.Net.Runtime
         private static IDictionary<FrameworkName, FrameworkInformation> PopulateCache(IGlobalAssemblyCache globalAssemblyCache)
         {
             var info = new Dictionary<FrameworkName, FrameworkInformation>();
-#if DESKTOP
+#if NET45
             string defaultPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86), @"Reference Assemblies\Microsoft\Framework\");
 
             PopulateReferenceAssemblies(defaultPath, globalAssemblyCache, info);
@@ -169,7 +169,7 @@ namespace Microsoft.Net.Runtime
                         {
                             try
                             {
-#if DESKTOP // CORECLR_TODO: AssemblyName.GetAssemblyName
+#if NET45 // CORECLR_TODO: AssemblyName.GetAssemblyName
                                 var an = AssemblyName.GetAssemblyName(assemblyFileInfo.FullName);
                                 frameworkInfo.Assemblies.Add(new AssemblyInfo(an.Name, assemblyFileInfo.FullName));
 #else

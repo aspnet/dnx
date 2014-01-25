@@ -10,14 +10,14 @@ namespace NuGet
     /// A hybrid implementation of SemVer that supports semantic versioning as described at http://semver.org while not strictly enforcing it to 
     /// allow older 4-digit versioning schemes to continue working.
     /// </summary>
-#if DESKTOP
+#if NET45
     [Serializable]
     [TypeConverter(typeof(SemanticVersionTypeConverter))]
 #endif
     public sealed class SemanticVersion : IComparable, IComparable<SemanticVersion>, IEquatable<SemanticVersion>
     {
         private const RegexOptions _flags =
-#if DESKTOP
+#if NET45
  RegexOptions.Compiled |
 #endif
  RegexOptions.IgnoreCase | RegexOptions.ExplicitCapture;

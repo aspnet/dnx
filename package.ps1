@@ -25,7 +25,7 @@ $sdkRoot = "$path\artifacts\sdk"
 
 # The list of projects we're interested in harvesting
 $hostProjects = @("Microsoft.Net.Runtime.Interfaces", "klr.host", "Stubs")
-$runtimeProjects = @("Microsoft.Net.OwinHost", "Microsoft.Net.Runtime", "Microsoft.Net.Project", "Microsoft.Net.ApplicationHost")
+$runtimeProjects = @("Microsoft.Net.Runtime", "Microsoft.Net.Project", "Microsoft.Net.ApplicationHost")
 
 # Make the sdk and tools folders
 mkdir $sdkRoot -force | Out-Null
@@ -72,8 +72,8 @@ if((Test-Path $sdkRoot\Framework) -and (Test-Path $sdkRoot\tools\Microsoft.Net.P
         }
     }
     
-    # tools\* Skip OwinHost since it isn't buildable yet
-    $runtimeProjects | Select -Skip 1 | %{
+    # tools\* Skip since it isn't buildable yet
+    $runtimeProjects | %{
         & $sdkRoot\tools\k.cmd build $path\src\$_
         Verify-ExitCode
     }
@@ -85,11 +85,6 @@ if((Test-Path $sdkRoot\Framework) -and (Test-Path $sdkRoot\tools\Microsoft.Net.P
 $runtimeProjects | %{
     cp -r $path\src\$_ -filter *.dll $sdkRoot\tools -Force    
 }
-
-# Temporary special case for Microsoft.Net.Launch
-cp -r $path\src\Microsoft.Net.Launch $sdkRoot\tools -Force
-cp $path\src\Microsoft.Net.Runtime\Executable.cs $sdkRoot\tools\Microsoft.Net.Launch -Force
-rm $sdkRoot\tools\Microsoft.Net.Launch\.include
 
 # If we're bootstrapping then do some extra steps
 if($bootstrapping)

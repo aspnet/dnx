@@ -57,15 +57,15 @@ function Run-Tests($targetFramework)
         Write-Host "Running tests for $folder"
 
         Write-Host "Running Hello World"
-        & $projectKFolder\tools\k run $path\src\HelloWorld > $testResults\run.txt
+        & $projectKFolder\tools\k run $path\samples\HelloWorld > $testResults\run.txt
         Verify-ExitCode
         
         Write-Host "Running Building World"
-        & $projectKFolder\tools\k build $path\src\HelloWorld > $testResults\build.txt
+        & $projectKFolder\tools\k build $path\samples\HelloWorld > $testResults\build.txt
         Verify-ExitCode
         
         Write-Host "Running Cleaning World"
-        & $projectKFolder\tools\k clean $path\src\HelloWorld > $testResults\clean.txt
+        & $projectKFolder\tools\k clean $path\samples\HelloWorld > $testResults\clean.txt
         Verify-ExitCode
 
         Write-Host "Checking output"

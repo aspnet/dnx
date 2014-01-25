@@ -51,7 +51,7 @@ namespace NuGet
             SchemaVersionV5,
             SchemaVersionV6
         };
-#if DESKTOP
+#if NET45
         private static ConcurrentDictionary<string, XmlSchemaSet> _manifestSchemaSetCache = new ConcurrentDictionary<string, XmlSchemaSet>(StringComparer.OrdinalIgnoreCase);
 #endif        
         public static int GetVersionFromNamespace(string @namespace)
@@ -71,7 +71,7 @@ namespace NuGet
             }
             return VersionToSchemaMappings[version - 1];
         }
-#if DESKTOP
+#if NET45
         public static XmlSchemaSet GetManifestSchemaSet(string schemaNamespace)
         {
             return _manifestSchemaSetCache.GetOrAdd(schemaNamespace, schema =>

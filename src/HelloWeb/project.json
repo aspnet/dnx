@@ -1,6 +1,0 @@
-{
-  "dependencies": {
-      "Owin": "1.0",
-      "Microsoft.Owin.Diagnostics": "2.1.0-rc1-*"
-  }
-}

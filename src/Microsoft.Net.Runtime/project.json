@@ -8,8 +8,7 @@
         "System.Collections.Immutable" : ""
     },
     "configurations" : {
-        "net45" : { 
-            "compilationOptions": { "define": ["DESKTOP"] },
+        "net45" : {
             "dependencies": {
                 "System.IO.Compression" : "",
                 "System.IO.Compression.FileSystem" : "",

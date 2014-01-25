@@ -67,7 +67,7 @@ namespace NuGet
         {
             var profileCollection = new NetPortableProfileCollection();
 
-#if DESKTOP // CORECLR_TODO: Environment.GetFolderPath
+#if NET45 // CORECLR_TODO: Environment.GetFolderPath
             string portableRootDirectory =
                     Path.Combine(
                         Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86, Environment.SpecialFolderOption.DoNotVerify),

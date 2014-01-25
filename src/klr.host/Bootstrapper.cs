@@ -21,7 +21,7 @@ public class Bootstrapper
 
         int exitCode = 0;
 
-#if DESKTOP // CORECLR_TODO: Classic tracing
+#if NET45 // CORECLR_TODO: Classic tracing
         var listener = new ConsoleTraceListener();
         Trace.Listeners.Add(listener);
         Trace.AutoFlush = true;

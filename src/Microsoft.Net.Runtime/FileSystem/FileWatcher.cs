@@ -6,7 +6,7 @@ using System.IO;
 
 namespace Microsoft.Net.Runtime.FileSystem
 {
-#if DESKTOP // CORECLR_TODO: FileWatcher
+#if NET45 // CORECLR_TODO: FileWatcher
     public class FileWatcher : IFileWatcher
     {
         private readonly HashSet<string> _files = new HashSet<string>(StringComparer.OrdinalIgnoreCase);

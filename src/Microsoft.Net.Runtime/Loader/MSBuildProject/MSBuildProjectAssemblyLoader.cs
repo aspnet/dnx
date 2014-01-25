@@ -9,7 +9,7 @@ using Microsoft.Net.Runtime.FileSystem;
 
 namespace Microsoft.Net.Runtime.Loader.MSBuildProject
 {
-#if DESKTOP
+#if NET45
     public class MSBuildProjectAssemblyLoader : IAssemblyLoader
     {
         private readonly string _solutionDir;

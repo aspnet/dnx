@@ -23,7 +23,7 @@ sealed class DomainManager : AppDomainManager
         base.InitializeNewDomain(appDomainInfo);
     }
 
-#if DESKTOP
+#if NET45
     [HandleProcessCorruptedStateExceptions]
 #endif
     [SecurityCritical]
