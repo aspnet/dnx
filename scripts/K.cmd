@@ -12,7 +12,7 @@ SET ERRORLEVEL=
 
 SET TARGET=%TARGET_FRAMEWORK%
 if "%TARGET%" == "" (
-   SET TARGET=Debug
+   SET TARGET=Debug\net45
 )
 
 IF EXIST "%~dp0k-%1.cmd" (

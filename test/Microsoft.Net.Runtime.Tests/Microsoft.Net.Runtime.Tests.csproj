@@ -48,16 +48,18 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\src\Microsoft.Net.Runtime\Microsoft.Net.Runtime.csproj">
-      <Project>{8faf6303-4ad0-4468-8dbc-b8d32b1a9f9d}</Project>
-      <Name>Microsoft.Net.Runtime</Name>
-    </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="packages.config" />
+    <None Include="packages.config">
+      <SubType>Designer</SubType>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <Service Include="{82A7F48D-3B50-4B1E-B82E-3ADA8210C358}" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Microsoft.Net.Runtime\Microsoft.Net.Runtime.net45.csproj">
+      <Project>{0c49c30a-2eee-4194-8c04-a76898fbc9b4}</Project>
+      <Name>Microsoft.Net.Runtime.net45</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

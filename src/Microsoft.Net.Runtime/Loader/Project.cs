@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Runtime.Versioning;
@@ -179,11 +180,11 @@ namespace Microsoft.Net.Runtime.Loader
             // Get the base configuration
             var compilationOptions = settings["compilationOptions"];
 
-            var options = GetCompilationOptions(compilationOptions);
+            var defaultOptions = GetCompilationOptions(compilationOptions);
 
             _defaultTargetFrameworkConfiguration = new TargetFrameworkConfiguration
             {
-                CompilationOptions = options,
+                CompilationOptions = defaultOptions,
                 Defines = ConvertValue<string[]>(compilationOptions, "define") ?? new string[] { },
                 Dependencies = new List<PackageReference>()
             };
@@ -205,7 +206,7 @@ namespace Microsoft.Net.Runtime.Loader
                     var defines = new HashSet<string>(specificDefines);
                     defines.AddRange(_defaultTargetFrameworkConfiguration.Defines);
 
-                    config.CompilationOptions = GetCompilationOptions(specificCompilationOptions);
+                    config.CompilationOptions = GetCompilationOptions(specificCompilationOptions) ?? defaultOptions;
                     config.Defines = defines;
                     config.Dependencies = new List<PackageReference>();
 

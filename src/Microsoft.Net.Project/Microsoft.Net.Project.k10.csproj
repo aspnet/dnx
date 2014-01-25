@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Project ToolsVersion="12.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')"/>
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{47F74AF1-31F7-43D4-9248-FC9B2E7A024C}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>Microsoft.Net.Project</RootNamespace>
+    <AssemblyName>Microsoft.Net.Project</AssemblyName>
+    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+    <BaseIntermediateOutputPath>obj/K</BaseIntermediateOutputPath>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\K</OutputPath>
+    <DefineConstants>DEBUG;TRACE;K10;</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\K</OutputPath>
+    <DefineConstants>TRACE;K10;</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="Program.cs" />
+<Compile Include="ProjectManager.cs" />
+<Compile Include="Properties\AssemblyInfo.cs" />
+    <Content Include="project.json"/>
+  </ItemGroup>
+  <ItemGroup>
+    
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Microsoft.Net.Runtime\Microsoft.Net.Runtime.k10.csproj">
+          <Project>{348F4700-A941-4C22-88C7-7453397FE39C}</Project>
+          <Name>Microsoft.Net.Runtime</Name>
+        </ProjectReference><ProjectReference Include="..\..\src\Microsoft.Net.Runtime.Interfaces\Microsoft.Net.Runtime.Interfaces.k10.csproj">
+          <Project>{BE2A9418-6793-45AD-997D-D16939C124CF}</Project>
+          <Name>Microsoft.Net.Runtime.Interfaces</Name>
+        </ProjectReference><ProjectReference Include="..\..\src\Stubs\Stubs.k10.csproj">
+          <Project>{8C2D6556-8AE1-425A-9392-A1A068100A90}</Project>
+          <Name>Stubs</Name>
+        </ProjectReference>
+  </ItemGroup>
+  <Import Project="..\..\packages\ProjectK.0.0.1-pre-30124-097\Framework\K\v1.0\ProjectK.CSharp.targets"/>
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+</Project>

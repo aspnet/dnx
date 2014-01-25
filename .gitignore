@@ -26,3 +26,4 @@ README.html
 /src/.symbols
 /TestResults
 /lib/roslyn/*.nupkg
+build/

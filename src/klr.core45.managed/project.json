@@ -1,0 +1,6 @@
+{
+    "compilationOptions" : { "define" : ["LOADER"], "allowUnsafe": true },
+    "configurations": {
+        "k10" : { }
+    }
+}

@@ -96,14 +96,14 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\klr.core45.managed\klr.core45.managed.csproj">
-      <Project>{98244d18-fb16-45b6-806c-2766a40df810}</Project>
+    <ProjectReference Include="..\klr.core45.managed\klr.core45.managed.k10.csproj">
+      <Project>{4bc51937-6b28-450c-8a97-c2a01a2b4f28}</Project>
     </ProjectReference>
     <ProjectReference Include="..\klr.core45\klr.core45.vcxproj">
       <Project>{1f31d08e-de21-48f6-ade3-315ea6268dd1}</Project>
     </ProjectReference>
-    <ProjectReference Include="..\klr.host\klr.host.csproj">
-      <Project>{ab05d4f0-3a27-4475-93fa-2bb23064a69a}</Project>
+    <ProjectReference Include="..\klr.host\klr.host.net45.csproj">
+      <Project>{4de8da58-0db9-463d-a466-7dcaf5558d12}</Project>
     </ProjectReference>
     <ProjectReference Include="..\klr.net45.managed\klr.net45.managed.csproj">
       <Project>{48cc04a6-169e-4df5-ac70-11dd6c4f0143}</Project>
@@ -121,8 +121,8 @@
       <LinkLibraryDependencies>false</LinkLibraryDependencies>
       <UseLibraryDependencyInputs>false</UseLibraryDependencyInputs>
     </ProjectReference>
-    <ProjectReference Include="..\Microsoft.Net.Runtime.Interfaces\Microsoft.Net.Runtime.Interfaces.csproj">
-      <Project>{499736f5-6277-4fda-bea8-4d6400510fac}</Project>
+    <ProjectReference Include="..\Microsoft.Net.Runtime.Interfaces\Microsoft.Net.Runtime.Interfaces.net45.csproj">
+      <Project>{9a85b421-066f-4b82-8df7-608c91800e8a}</Project>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
