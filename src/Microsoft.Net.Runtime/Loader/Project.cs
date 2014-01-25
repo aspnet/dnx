@@ -205,7 +205,7 @@ namespace Microsoft.Net.Runtime.Loader
                     var defines = new HashSet<string>(specificDefines);
                     defines.AddRange(_defaultTargetFrameworkConfiguration.Defines);
 
-                    config.CompilationOptions = GetCompilationOptions(specificCompilationOptions);
+                    config.CompilationOptions = GetCompilationOptions(specificCompilationOptions) ?? options;
                     config.Defines = defines;
                     config.Dependencies = new List<PackageReference>();
 
