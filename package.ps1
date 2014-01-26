@@ -106,7 +106,14 @@ if($bootstrapping)
             cp $sdkRoot\tools\Microsoft.Net.Runtime\bin\$framework\Microsoft.Net.Runtime.dll $sdkRoot\tools\$project\bin\$framework
             $packages | %{
                 $package = $_
-                ls $path\packages\$package.*\lib\$framework\$package.dll | %{ cp $_.FullName $sdkRoot\tools\$project\bin\$framework }
+                if ($package -eq "Newtonsoft.Json")
+                {
+                    ls $path\packages\$package.*\lib\netcore45\$package.dll | %{ cp $_.FullName $sdkRoot\tools\$project\bin\$framework } 
+                }
+                else
+                {                
+                    ls $path\packages\$package.*\lib\$framework\$package.dll | %{ cp $_.FullName $sdkRoot\tools\$project\bin\$framework }
+                }
             }
         }
     }
