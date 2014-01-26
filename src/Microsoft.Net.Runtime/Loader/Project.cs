@@ -178,8 +178,9 @@ namespace Microsoft.Net.Runtime.Loader
         {
             // Get the base configuration
             var compilationOptions = settings["compilationOptions"];
+            var defaultOptions = new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary);
 
-            var options = GetCompilationOptions(compilationOptions);
+            var options = GetCompilationOptions(compilationOptions) ?? defaultOptions;
 
             _defaultTargetFrameworkConfiguration = new TargetFrameworkConfiguration
             {
@@ -218,12 +219,12 @@ namespace Microsoft.Net.Runtime.Loader
 
         private static CSharpCompilationOptions GetCompilationOptions(JToken compilationOptions)
         {
-            var options = new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary);
-
             if (compilationOptions == null)
             {
-                return options;
+                return null;
             }
+
+            var options = new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary);
 
             bool allowUnsafe = GetValue<bool>(compilationOptions, "allowUnsafe");
             string platformValue = GetValue<string>(compilationOptions, "platform");
