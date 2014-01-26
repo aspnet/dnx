@@ -33,9 +33,6 @@ ls $path\lib\roslyn -filter *.nuspec | %{ & $path\.nuget\nuget.exe install $_.Ba
 # Restore nuget from project.json with special version of nuget
 & $path\scripts\NuGet.exe restore
 
-# Add the k10 profile for JSON.NET (copy of the portable profile)
-ls $path\packages\Newtonsoft.Json.*\lib\netcore45\Newtonsoft.Json.dll | %{ $dir = (Join-Path $_.Directory.Parent.FullName "k10"); mkdir $dir -force > $null; cp $_.FullName $dir }
-
 # Requires dev 12
 $msb = Join-Path ${env:ProgramFiles(x86)} "MSBuild\12.0\Bin\MSBuild.exe"
 

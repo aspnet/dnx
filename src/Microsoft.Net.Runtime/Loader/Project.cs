@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Runtime.Versioning;
@@ -179,12 +178,13 @@ namespace Microsoft.Net.Runtime.Loader
         {
             // Get the base configuration
             var compilationOptions = settings["compilationOptions"];
+            var defaultOptions = new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary);
 
-            var defaultOptions = GetCompilationOptions(compilationOptions);
+            var options = GetCompilationOptions(compilationOptions) ?? defaultOptions;
 
             _defaultTargetFrameworkConfiguration = new TargetFrameworkConfiguration
             {
-                CompilationOptions = defaultOptions,
+                CompilationOptions = options,
                 Defines = ConvertValue<string[]>(compilationOptions, "define") ?? new string[] { },
                 Dependencies = new List<PackageReference>()
             };
@@ -206,7 +206,7 @@ namespace Microsoft.Net.Runtime.Loader
                     var defines = new HashSet<string>(specificDefines);
                     defines.AddRange(_defaultTargetFrameworkConfiguration.Defines);
 
-                    config.CompilationOptions = GetCompilationOptions(specificCompilationOptions) ?? defaultOptions;
+                    config.CompilationOptions = GetCompilationOptions(specificCompilationOptions) ?? options;
                     config.Defines = defines;
                     config.Dependencies = new List<PackageReference>();
 
@@ -219,12 +219,12 @@ namespace Microsoft.Net.Runtime.Loader
 
         private static CSharpCompilationOptions GetCompilationOptions(JToken compilationOptions)
         {
-            var options = new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary);
-
             if (compilationOptions == null)
             {
-                return options;
+                return null;
             }
+
+            var options = new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary);
 
             bool allowUnsafe = GetValue<bool>(compilationOptions, "allowUnsafe");
             string platformValue = GetValue<string>(compilationOptions, "platform");
