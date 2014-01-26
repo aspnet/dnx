@@ -27,3 +27,5 @@ README.html
 /TestResults
 /lib/roslyn/*.nupkg
 build/
+*net45.csproj
+*k10.csproj
