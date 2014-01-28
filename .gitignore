@@ -16,16 +16,15 @@ artifacts/*
 *.ncrunchsolution
 *.log
 *.vspx
-/.symbols
 README.html
 *.sdf
 *.ipch
 *.opensdf
 /Debug
-/.nuget/nuget.exe
 /src/.symbols
 /TestResults
 /lib/roslyn/*.nupkg
 build/
 *net45.csproj
 *k10.csproj
+.nuget/
