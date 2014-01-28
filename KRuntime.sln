@@ -8,7 +8,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "scripts", "scripts", "{1899
 		scripts\k-install.cmd = scripts\k-install.cmd
 		scripts\k-restore.cmd = scripts\k-restore.cmd
 		scripts\k-run.cmd = scripts\k-run.cmd
-		scripts\k-web.cmd = scripts\k-web.cmd
 		scripts\k.cmd = scripts\k.cmd
 		scripts\klr.cmd = scripts\klr.cmd
 	EndProjectSection

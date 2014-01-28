@@ -10,10 +10,10 @@ SET ERRORLEVEL=
 
 SET TARGET=%TARGET_FRAMEWORK%
 if "%TARGET%" == "" (
-   SET TARGET=Debug\net45
+   SET TARGET=bin\Debug\net45
 )
 
-CALL "%~dp0KLR" "%~dp0..\src\Microsoft.Net.ApplicationHost\bin\%TARGET%\Microsoft.Net.ApplicationHost.dll" %*
+CALL "%~dp0KLR" "%~dp0..\src\Microsoft.Net.ApplicationHost\%TARGET%\Microsoft.Net.ApplicationHost.dll" %*
 
 exit /b %ERRORLEVEL%
 

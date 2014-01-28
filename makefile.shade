@@ -3,5 +3,45 @@ var VERSION='0.1'
 var FULL_VERSION='0.1'
 var AUTHORS='Microsoft'
 
+default Configuration='Release'
+
 use-standard-lifecycle
 k-standard-goals
+
+var ROOT = '${Directory.GetCurrentDirectory()}'
+var SCRIPTS_DIR = '${Path.Combine(ROOT, "scripts")}'
+var BIN_DIR = '${Path.Combine(ROOT, "bin", Configuration)}'
+var SDK_ROOT = '${Path.Combine(ROOT, "artifacts", "sdk")}'
+var BUILD_DIR2 = '${Path.Combine(ROOT, "artifacts", "build")}'
+var TOOLS_DIR = '${Path.Combine(SDK_ROOT, "tools")}'
+var TOOLS_BIN_DIR = '${Path.Combine(TOOLS_DIR, "bin")}'
+
+#solution-compile target='compile'
+    build projectFile='KRuntime.sln' extra='/v:quiet'
+
+#k-package target='package'
+    directory delete="${SDK_ROOT}"
+    directory create="${SDK_ROOT}"
+    copy sourceDir='${SCRIPTS_DIR}' outputDir='${TOOLS_DIR}' include='*.cmd' overwrite='${true}'
+    @{
+        foreach(var file in Files.Include(Path.Combine(TOOLS_DIR, "*.cmd")))
+        {
+            var script = File.ReadAllText(file)
+                             .Replace(@"..\bin\Debug", "bin")
+                             .Replace(@"..\src\", "")
+                             .Replace(@"=bin\Debug\", "=")
+                             .Replace(@"bin\Debug", "");
+
+            File.WriteAllText(file, script);
+        }
+    }
+
+    copy sourceDir='${BIN_DIR}' outputDir='${TOOLS_BIN_DIR}' include='klr*net45*.dll' overwrite='${true}'
+    copy sourceDir='${BIN_DIR}' outputDir='${TOOLS_BIN_DIR}' include='klr*core*.dll' overwrite='${true}'
+    copy sourceDir='${BIN_DIR}' outputDir='${TOOLS_BIN_DIR}' include='klr.exe' overwrite='${true}'
+
+    copy sourceDir='${BUILD_DIR2}' outputDir='${TOOLS_BIN_DIR}' include='**/klr.host.dll' overwrite='${true}'
+    copy sourceDir='${BUILD_DIR2}' outputDir='${TOOLS_BIN_DIR}' include='**/Microsoft.Net.Runtime.Interfaces.dll' overwrite='${true}'
+    copy sourceDir='${BUILD_DIR2}' outputDir='${TOOLS_BIN_DIR}' include='**/Stubs.dll' overwrite='${true}'
+
+    copy sourceDir='${BUILD_DIR2}' outputDir='${TOOLS_DIR}' include='**/Microsoft*.dll' exclude='**/*Interfaces*' overwrite='${true}'
