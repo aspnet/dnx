@@ -224,7 +224,8 @@ namespace Microsoft.Net.Runtime.Loader
                 return null;
             }
 
-            var options = new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary);
+            var options = new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary)
+                                .WithHighEntropyVirtualAddressSpace(true);
 
             bool allowUnsafe = GetValue<bool>(compilationOptions, "allowUnsafe");
             string platformValue = GetValue<string>(compilationOptions, "platform");
