@@ -256,7 +256,7 @@ namespace NuGet
                 // now copy all package's files to disk
                 foreach (ZipArchiveEntry file in files)
                 {
-                    string path = file.FullName.Replace('/', '\\');
+                    string path = file.FullName.Replace('/', '\\').Replace("%2B", "+");
                     string filePath = Path.Combine(_expandedFolderPath, path);
 
                     bool copyFile = true;
