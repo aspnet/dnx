@@ -72,6 +72,8 @@ var FULL_VERSION = '${VERSION + "-" + BuildNumber}'
 
     copy sourceDir='${BUILD_DIR2}' outputDir='${TOOLS_DIR}' include='**/Microsoft*.dll' exclude='**/*Interfaces*' overwrite='${true}'
 
+    directory delete='${BUILD_DIR2}'
+
 #tweak-scripts
     @{
         foreach(var file in Files.Include(Path.Combine(TOOLS_DIR, "*.cmd")))
