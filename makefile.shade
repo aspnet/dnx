@@ -15,6 +15,7 @@ var SDK_ROOT = '${Path.Combine(ROOT, "artifacts", "sdk")}'
 var BUILD_DIR2 = '${Path.Combine(ROOT, "artifacts", "build")}'
 var TOOLS_DIR = '${Path.Combine(SDK_ROOT, "tools")}'
 var TOOLS_BIN_DIR = '${Path.Combine(TOOLS_DIR, "bin")}'
+var PACKAGES_DIR = '${Path.Combine(ROOT, "packages")}'
 
 #solution-compile target='compile'
     build projectFile='KRuntime.sln' extra='/v:quiet'
@@ -45,3 +46,52 @@ var TOOLS_BIN_DIR = '${Path.Combine(TOOLS_DIR, "bin")}'
     copy sourceDir='${BUILD_DIR2}' outputDir='${TOOLS_BIN_DIR}' include='**/Stubs.dll' overwrite='${true}'
 
     copy sourceDir='${BUILD_DIR2}' outputDir='${TOOLS_DIR}' include='**/Microsoft*.dll' exclude='**/*Interfaces*' overwrite='${true}'
+
+    @{    
+        var runners = new[] { "Microsoft.Net.Project", "Microsoft.Net.ApplicationHost" };
+        var targetFrameworks = new [] { "k10", "net45" };
+
+        var packages = new[] { "Newtonsoft.Json", 
+                               "Microsoft.CodeAnalysis", 
+                               "Microsoft.CodeAnalysis.CSharp", 
+                               "System.Collections.Immutable", 
+                               "System.Reflection.Metadata.Ecma335" };
+
+        foreach (var project in runners)
+        {
+            foreach (var framework in targetFrameworks)
+            {
+                string source = Path.Combine(SDK_ROOT, "tools", "Microsoft.Net.Runtime", framework, "Microsoft.Net.Runtime.dll");
+                string dest = Path.Combine(SDK_ROOT, "tools", project, framework, "Microsoft.Net.Runtime.dll");
+
+                File.Copy(source, dest, true);
+
+                foreach (var package in packages)
+                {
+                    var packageDir = Directory.GetDirectories(PACKAGES_DIR, package + "*").FirstOrDefault();
+
+                    if(packageDir == null)
+                    {
+                        Log.Warn("Unable to find resolve " + package);
+
+                        continue;
+                    }
+
+                    var di = new DirectoryInfo(Path.Combine(packageDir, "lib", framework));
+                    if(!di.Exists)
+                    {
+                        Log.Warn("Couldn't find version of " + package + " matching " + framework);
+                        continue;
+                    }
+
+                    foreach(var fi in di.GetFiles("*.dll"))
+                    {
+                        string packageFileDest = Path.Combine(SDK_ROOT, "tools", project, framework, fi.Name);
+                        File.Copy(fi.FullName, packageFileDest);
+                    }
+                }
+            }
+        }
+    }
+    
+    directory delete='${Path.Combine(SDK_ROOT, "tools", "Microsoft.Net.Runtime")}'
