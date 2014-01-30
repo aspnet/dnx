@@ -40,6 +40,7 @@ var PACKAGES_DIR = '${Path.Combine(ROOT, "packages")}'
     copy sourceDir='${BIN_DIR}' outputDir='${TOOLS_BIN_DIR}' include='klr*net45*.dll' overwrite='${true}'
     copy sourceDir='${BIN_DIR}' outputDir='${TOOLS_BIN_DIR}' include='klr*core*.dll' overwrite='${true}'
     copy sourceDir='${BIN_DIR}' outputDir='${TOOLS_BIN_DIR}' include='klr.exe' overwrite='${true}'
+    copy sourceDir='${BIN_DIR}' outputDir='${TOOLS_BIN_DIR}' include='klr*config' overwrite='${true}'
 
     copy sourceDir='${BUILD_DIR2}' outputDir='${TOOLS_BIN_DIR}' include='**/klr.host.dll' overwrite='${true}'
     copy sourceDir='${BUILD_DIR2}' outputDir='${TOOLS_BIN_DIR}' include='**/Microsoft.Net.Runtime.Interfaces.dll' overwrite='${true}'
