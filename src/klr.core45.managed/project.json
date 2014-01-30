@@ -1,5 +1,5 @@
 {
-    "compilationOptions" : { "define" : ["LOADER"], "allowUnsafe": true },
+    "compilationOptions" : { "define" : ["LOADER", "TRACE"], "allowUnsafe": true },
     "configurations": {
         "k10" : { }
     }

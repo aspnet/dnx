@@ -1,4 +1,5 @@
 {
+    "compilationOptions" : { "define" : ["TRACE"] },
     "dependencies": {
         "Microsoft.Net.Runtime.Interfaces" : ""
     },

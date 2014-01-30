@@ -1,5 +1,5 @@
 {
-    "compilationOptions" : { "define" : ["LOADER"] },
+    "compilationOptions" : { "define" : ["LOADER", "TRACE"] },
     "dependencies": {
         "Newtonsoft.Json": "5.0.8",
         "Microsoft.CodeAnalysis" : "0.6.31123.2",

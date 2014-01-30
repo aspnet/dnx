@@ -20,7 +20,6 @@ public class Bootstrapper
         }
 
         int exitCode = 0;
-
 #if NET45 // CORECLR_TODO: Classic tracing
         var listener = new ConsoleTraceListener();
         Trace.Listeners.Add(listener);
