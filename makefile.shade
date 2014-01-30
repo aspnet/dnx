@@ -28,7 +28,7 @@ var FULL_VERSION = '${VERSION + "-" + BuildNumber}'
         if(!File.Exists(msbuild))
         {
             Log.Warn("msbuild version 12 not found. Please ensure you have the VS 2013 C++ SDK installed.");
-            Environment.Exit(-1);
+            Environment.Exit(1);
         }
         else 
         {
@@ -174,7 +174,7 @@ var FULL_VERSION = '${VERSION + "-" + BuildNumber}'
         if (String.IsNullOrEmpty(coreClrPath))
         {
             Log.Warn("The environment variable CORECLR_PATH is not set. The core clr not will not be included in this build.");
-            Environment.Exit(-1);
+            Environment.Exit(1);
             return;
         }
     }
