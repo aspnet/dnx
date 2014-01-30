@@ -65,6 +65,7 @@ var PACKAGES_DIR = '${Path.Combine(ROOT, "packages")}'
                 string dest = Path.Combine(SDK_ROOT, "tools", project, framework, "Microsoft.Net.Runtime.dll");
 
                 File.Copy(source, dest, true);
+                Log.Info("Copying to " + dest);
 
                 foreach (var package in packages)
                 {
@@ -77,7 +78,20 @@ var PACKAGES_DIR = '${Path.Combine(ROOT, "packages")}'
                         continue;
                     }
 
-                    var di = new DirectoryInfo(Path.Combine(packageDir, "lib", framework));
+                    string[] candidates = null;
+
+                    if(framework == "k10")
+                    {
+                        candidates = new [] { framework, "netcore45" };
+                    }
+                    else
+                    {
+                        candidates = new [] { framework, "net40", "net35", "net20" };
+                    }
+
+                    var di = candidates.Select(fmk => new DirectoryInfo(Path.Combine(packageDir, "lib", fmk)))
+                                       .FirstOrDefault(d => d.Exists);
+
                     if(!di.Exists)
                     {
                         Log.Warn("Couldn't find version of " + package + " matching " + framework);
@@ -88,10 +102,12 @@ var PACKAGES_DIR = '${Path.Combine(ROOT, "packages")}'
                     {
                         string packageFileDest = Path.Combine(SDK_ROOT, "tools", project, framework, fi.Name);
                         File.Copy(fi.FullName, packageFileDest);
+
+                        Log.Info("Copying to " + packageFileDest);
                     }
                 }
             }
         }
     }
-    
+
     directory delete='${Path.Combine(SDK_ROOT, "tools", "Microsoft.Net.Runtime")}'
