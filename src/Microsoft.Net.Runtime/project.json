@@ -1,4 +1,5 @@
 {
+    "version": "0.1-alpha-*",
     "compilationOptions" : { "define" : ["LOADER", "TRACE"] },
     "dependencies": {
         "Newtonsoft.Json": "5.0.8",
