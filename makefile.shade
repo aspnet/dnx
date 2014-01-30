@@ -15,11 +15,44 @@ var BUILD_DIR2 = '${Path.Combine(ROOT, "artifacts", "build")}'
 var TOOLS_DIR = '${Path.Combine(SDK_ROOT, "tools")}'
 var TOOLS_BIN_DIR = '${Path.Combine(TOOLS_DIR, "bin")}'
 var PACKAGES_DIR = '${Path.Combine(ROOT, "packages")}'
+var TEST_RESULTS = '${Path.Combine(ROOT, "TestResults")}'
+var SAMPLES_DIR = '${Path.Combine(ROOT, "samples")}'
+
+var FULL_VERSION = '${VERSION + "-" + BuildNumber}'
 
 #solution-compile target='compile'
     build projectFile='KRuntime.sln' extra='/v:quiet'
 
 #package-runtime .clean-sdk-dir .copy-bits .tweak-scripts .copy-package-dependencies .copy-coreclr .nuget-pack-runtime target='package'
+
+#verify-package target='verify'
+    var helloWorld = '${Path.Combine(SAMPLES_DIR, "HelloWorld")}'
+    var kcmd = '${Path.Combine(TEST_RESULTS, "ProjectK", "tools", "k.cmd")}'
+
+    nuget-install package='ProjectK' outputDir='${TEST_RESULTS}' extra='-source ${SDK_ROOT} -ExcludeVersion -pre'
+
+    @{
+        Action<string> runWithFramework = framework => {
+            try
+            {
+                Environment.SetEnvironmentVariable("TARGET_FRAMEWORK", framework);
+
+                var commands = new [] { "run", "build", "clean" };
+                foreach(var cmd in commands)
+                {
+                    Exec(kcmd, cmd + " " + helloWorld);
+                }
+            }
+            finally
+            {
+                Environment.SetEnvironmentVariable("TARGET_FRAMEWORK", null);
+            }
+        };
+
+        // Default
+        runWithFramework(null);
+        runWithFramework("k10");
+    }
 
 #clean-sdk-dir
     directory delete="${SDK_ROOT}"
@@ -133,8 +166,9 @@ var PACKAGES_DIR = '${Path.Combine(ROOT, "packages")}'
     copy sourceDir='${coreClrPath}' outputDir='${SDK_ROOT}' overwrite='${true}'
 
 #nuget-pack-runtime
-    @{
-        var runtimeVersion = VERSION + "-" + BuildNumber;
-    }
     copy sourceDir='${ROOT}' outputDir='${SDK_ROOT}' include='ProjectK.nuspec' overwrite='${true}'
-    nuget-pack nuspecFile='${Path.Combine(SDK_ROOT, "ProjectK.nuspec")}' packageVersion='${runtimeVersion}' outputDir='${SDK_ROOT}' extra='-NoPackageAnalysis'
+    nuget-pack nuspecFile='${Path.Combine(SDK_ROOT, "ProjectK.nuspec")}' packageVersion='${FULL_VERSION}' outputDir='${SDK_ROOT}' extra='-NoPackageAnalysis'
+
+
+macro name='Exec' program='string' commandline='string'
+    exec
