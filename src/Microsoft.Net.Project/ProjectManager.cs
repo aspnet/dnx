@@ -282,7 +282,7 @@ namespace Microsoft.Net.Project
             var globalAssemblyCache = new DefaultGlobalAssemblyCache();
 
             var loader = new AssemblyLoader();
-            string rootDirectory = ResolveRootDirectory(projectDir);
+            string rootDirectory = DefaultHost.ResolveRootDirectory(projectDir);
             var resolver = new FrameworkReferenceResolver(globalAssemblyCache);
             var resourceProvider = new ResxResourceProvider();
             var projectResolver = new ProjectResolver(projectDir, rootDirectory);
@@ -294,26 +294,6 @@ namespace Microsoft.Net.Project
             loader.Add(new NuGetAssemblyLoader(projectDir));
 
             return loader;
-        }
-
-        private static string ResolveRootDirectory(string projectDir)
-        {
-            var di = new DirectoryInfo(Path.GetDirectoryName(projectDir));
-
-            while (di.Parent != null)
-            {
-                if (di.EnumerateFiles("*." + GlobalSettings.GlobalFileName).Any() ||
-                    di.EnumerateFiles("*.sln").Any() ||
-                    di.EnumerateDirectories("packages").Any() ||
-                    di.EnumerateDirectories(".git").Any())
-                {
-                    return di.FullName;
-                }
-
-                di = di.Parent;
-            }
-
-            return Path.GetDirectoryName(projectDir);
         }
 
         private static string Normalize(string projectDir)

@@ -121,12 +121,12 @@ namespace Microsoft.Net.Runtime.Loader.NuGet
 
             var directory = Path.Combine(path, "lib", VersionUtility.GetShortFrameworkName(frameworkName));
 
-            if (!System.IO.Directory.Exists(directory))
+            if (!Directory.Exists(directory))
             {
                 return GetAssembliesFromPackage(package, frameworkName, path);
             }
 
-            return System.IO.Directory.EnumerateFiles(directory, "*.dll");
+            return Directory.EnumerateFiles(directory, "*.dll");
         }
 
         public MetadataReference GetMetadata(string name)

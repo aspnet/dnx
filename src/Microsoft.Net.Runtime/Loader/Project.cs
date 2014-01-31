@@ -54,7 +54,7 @@ namespace Microsoft.Net.Runtime.Loader
                                 .Select(p => Path.GetFullPath(p));
                 }
 
-                return files.Concat(System.IO.Directory.EnumerateFiles(path, "*.cs", SearchOption.AllDirectories));
+                return files.Concat(Directory.EnumerateFiles(path, "*.cs", SearchOption.AllDirectories));
             }
         }
 

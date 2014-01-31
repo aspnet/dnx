@@ -132,7 +132,7 @@ namespace Microsoft.Net.Runtime.Loader.Roslyn
                     trees.Add(CSharpSyntaxTree.ParseText("[assembly: System.Reflection.AssemblyInformationalVersion(\"" + project.Version + "\")]"));
                 }
 
-                foreach (var directory in System.IO.Directory.EnumerateDirectories(path, "*.*", SearchOption.AllDirectories))
+                foreach (var directory in Directory.EnumerateDirectories(path, "*.*", SearchOption.AllDirectories))
                 {
                     _watcher.WatchDirectory(directory, ".cs");
                 }
@@ -168,7 +168,7 @@ namespace Microsoft.Net.Runtime.Loader.Roslyn
                 }
 
                 // Ensure there's an output directory
-                System.IO.Directory.CreateDirectory(loadContext.OutputPath);
+                Directory.CreateDirectory(loadContext.OutputPath);
 
                 AssemblyLoadResult loadResult = CompileToDisk(assemblyPath, pdbPath, compilation, resources);
 

@@ -131,15 +131,16 @@ namespace Microsoft.Net.Runtime
             });
         }
 
-        private static string ResolveRootDirectory(string projectDir)
+        public static string ResolveRootDirectory(string projectDir)
         {
             var di = new DirectoryInfo(Path.GetDirectoryName(projectDir));
 
             while (di.Parent != null)
             {
-                if (di.EnumerateFiles("*.sln").Any() ||
-                   di.EnumerateDirectories("packages").Any() ||
-                   di.EnumerateDirectories(".git").Any())
+                if (di.EnumerateFiles("*." + GlobalSettings.GlobalFileName).Any() ||
+                    di.EnumerateFiles("*.sln").Any() ||
+                    di.EnumerateDirectories("packages").Any() ||
+                    di.EnumerateDirectories(".git").Any())
                 {
                     return di.FullName;
                 }

@@ -14,7 +14,7 @@ namespace Microsoft.Net.Runtime.Loader.Roslyn
         public IList<ResourceDescription> GetResources(string projectName, string projectPath)
         {
 #if NET45 // CORECLR_TODO: ResourceWriter
-            return System.IO.Directory.EnumerateFiles(projectPath, "*.resx", SearchOption.AllDirectories)
+            return Directory.EnumerateFiles(projectPath, "*.resx", SearchOption.AllDirectories)
                             .Select(resxFilePath =>
                                 new ResourceDescription(GetResourceName(projectName, resxFilePath),
                                                         () => GetResourceStream(resxFilePath),
