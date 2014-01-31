@@ -20,6 +20,14 @@ namespace Microsoft.Net.Runtime.Loader
 
         public string ProjectFilePath { get; private set; }
 
+        public string ProjectDirectory
+        {
+            get
+            {
+                return Path.GetDirectoryName(ProjectFilePath);
+            }
+        }
+
         public string Name { get; private set; }
 
         public string Description { get; private set; }

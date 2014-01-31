@@ -21,8 +21,7 @@ namespace Microsoft.Net.Runtime.Loader.Roslyn
     {
         private readonly Dictionary<string, CompiledAssembly> _compiledAssemblies = new Dictionary<string, CompiledAssembly>(StringComparer.OrdinalIgnoreCase);
 
-        private readonly string _rootPath;
-
+        private readonly IProjectResolver _projectResolver;
         private readonly IFileWatcher _watcher;
         private readonly IFrameworkReferenceResolver _resolver;
         private readonly IGlobalAssemblyCache _globalAssemblyCache;
@@ -31,14 +30,14 @@ namespace Microsoft.Net.Runtime.Loader.Roslyn
 
         private IEnumerable<PackageDescription> _packages;
 
-        public RoslynAssemblyLoader(string rootPath,
+        public RoslynAssemblyLoader(IProjectResolver projectResolver,
                                     IFileWatcher watcher,
                                     IFrameworkReferenceResolver resolver,
                                     IGlobalAssemblyCache globalAssemblyCache,
                                     IAssemblyLoader dependencyLoader,
                                     IResourceProvider resourceProvider)
         {
-            _rootPath = rootPath;
+            _projectResolver = projectResolver;
             _watcher = watcher;
             _resolver = resolver;
             _globalAssemblyCache = globalAssemblyCache;
@@ -56,14 +55,14 @@ namespace Microsoft.Net.Runtime.Loader.Roslyn
                 return new AssemblyLoadResult(compiledAssembly.Assembly);
             }
 
-            string path = Path.Combine(_rootPath, name);
             Project project;
-
             // Can't find a project file with the name so bail
-            if (!Project.TryGetProject(path, out project))
+            if (!_projectResolver.TryResolveProject(name, out project))
             {
                 return null;
             }
+
+            string path = project.ProjectDirectory;
 
             _watcher.WatchFile(project.ProjectFilePath);
 
@@ -207,11 +206,10 @@ namespace Microsoft.Net.Runtime.Loader.Roslyn
 
         public PackageDescription GetDescription(string name, SemanticVersion version, FrameworkName frameworkName)
         {
-            string path = Path.Combine(_rootPath, name);
             Project project;
 
             // Can't find a project file with the name so bail
-            if (!Project.TryGetProject(path, out project))
+            if (!_projectResolver.TryResolveProject(name, out project))
             {
                 return null;
             }

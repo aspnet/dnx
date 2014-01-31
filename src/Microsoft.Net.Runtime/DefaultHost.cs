@@ -115,7 +115,8 @@ namespace Microsoft.Net.Runtime
             _loader.Add(cachedLoader);
             var resolver = new FrameworkReferenceResolver(globalAssemblyCache);
             var resourceProvider = new ResxResourceProvider();
-            var roslynLoader = new RoslynAssemblyLoader(rootDirectory, _watcher, resolver, globalAssemblyCache, _loader, resourceProvider);
+            var projectResolver = new ProjectResolver(_projectDir, rootDirectory);
+            var roslynLoader = new RoslynAssemblyLoader(projectResolver, _watcher, resolver, globalAssemblyCache, _loader, resourceProvider);
             _loader.Add(roslynLoader);
 #if NET45 // CORECLR_TODO: Process
             _loader.Add(new MSBuildProjectAssemblyLoader(rootDirectory, _watcher));
@@ -134,7 +135,7 @@ namespace Microsoft.Net.Runtime
         {
             var di = new DirectoryInfo(Path.GetDirectoryName(projectDir));
 
-            if (di.Parent != null)
+            while (di.Parent != null)
             {
                 if (di.EnumerateFiles("*.sln").Any() ||
                    di.EnumerateDirectories("packages").Any() ||

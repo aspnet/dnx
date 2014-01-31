@@ -285,7 +285,8 @@ namespace Microsoft.Net.Project
             string rootDirectory = ResolveRootDirectory(projectDir);
             var resolver = new FrameworkReferenceResolver(globalAssemblyCache);
             var resourceProvider = new ResxResourceProvider();
-            var roslynLoader = new RoslynAssemblyLoader(rootDirectory, NoopWatcher.Instance, resolver, globalAssemblyCache, loader, resourceProvider);
+            var projectResolver = new ProjectResolver(projectDir, rootDirectory);
+            var roslynLoader = new RoslynAssemblyLoader(projectResolver, NoopWatcher.Instance, resolver, globalAssemblyCache, loader, resourceProvider);
             loader.Add(roslynLoader);
 #if NET45
             loader.Add(new MSBuildProjectAssemblyLoader(rootDirectory, NoopWatcher.Instance));
@@ -299,11 +300,12 @@ namespace Microsoft.Net.Project
         {
             var di = new DirectoryInfo(Path.GetDirectoryName(projectDir));
 
-            if (di.Parent != null)
+            while (di.Parent != null)
             {
-                if (di.EnumerateFiles("*.sln").Any() ||
-                   di.EnumerateDirectories("packages").Any() ||
-                   di.EnumerateDirectories(".git").Any())
+                if (di.EnumerateFiles("*." + GlobalSettings.GlobalFileName).Any() ||
+                    di.EnumerateFiles("*.sln").Any() ||
+                    di.EnumerateDirectories("packages").Any() ||
+                    di.EnumerateDirectories(".git").Any())
                 {
                     return di.FullName;
                 }
