@@ -122,13 +122,6 @@ namespace Microsoft.Net.Runtime
             _loader.Add(new MSBuildProjectAssemblyLoader(rootDirectory, _watcher));
 #endif
             _loader.Add(new NuGetAssemblyLoader(_projectDir));
-
-            _hostServices[HostServices.ResolveAssemblyReference] = new Func<string, object>(name =>
-            {
-                var an = new AssemblyName(name);
-
-                return _loader.ResolveReference(an.Name);
-            });
         }
 
         public static string ResolveRootDirectory(string projectDir)
