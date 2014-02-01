@@ -21,3 +21,4 @@ nuget.exe
 *DS_Store
 *.ncrunchsolution
 *.*sdf
+*.ipch
