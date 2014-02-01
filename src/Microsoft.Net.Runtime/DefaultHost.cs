@@ -19,32 +19,19 @@ namespace Microsoft.Net.Runtime
         private AssemblyLoader _loader;
         private IFileWatcher _watcher;
         private readonly string _projectDir;
-        private readonly Dictionary<string, object> _hostServices = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
         private Assembly _entryPoint;
         private readonly FrameworkName _targetFramework;
 
-        public DefaultHost(string projectDir, string targetFramework = "net45", bool watchFiles = false)
+        public DefaultHost(DefaultHostOptions options)
         {
-            _projectDir = Normalize(projectDir);
+            _projectDir = Normalize(options.ProjectDir);
 
-            _targetFramework = VersionUtility.ParseFrameworkName(Environment.GetEnvironmentVariable("TARGET_FRAMEWORK") ?? targetFramework);
+            _targetFramework = VersionUtility.ParseFrameworkName(options.TargetFramework ?? "net45");
 
-            Initialize(watchFiles);
+            Initialize(options);
         }
 
         public event Action OnChanged;
-
-        // REVIEW: The DI design
-        public T GetService<T>(string serviceName)
-        {
-            object value;
-            if (_hostServices.TryGetValue(serviceName, out value))
-            {
-                return (T)value;
-            }
-
-            return default(T);
-        }
 
         private void OnWatcherChanged()
         {
@@ -92,13 +79,13 @@ namespace Microsoft.Net.Runtime
             _watcher.Dispose();
         }
 
-        private void Initialize(bool watchFiles)
+        private void Initialize(DefaultHostOptions options)
         {
             _loader = new AssemblyLoader();
             string rootDirectory = ResolveRootDirectory(_projectDir);
 
 #if NET45 // CORECLR_TODO: FileSystemWatcher
-            if (watchFiles)
+            if (options.WatchFiles)
             {
                 _watcher = new FileWatcher(rootDirectory);
                 _watcher.OnChanged += OnWatcherChanged;
@@ -111,8 +98,12 @@ namespace Microsoft.Net.Runtime
 
             var globalAssemblyCache = new DefaultGlobalAssemblyCache();
 
-            var cachedLoader = new CachedCompilationLoader(rootDirectory);
-            _loader.Add(cachedLoader);
+            if (options.UseCachedCompilations)
+            {
+                var cachedLoader = new CachedCompilationLoader(rootDirectory);
+                _loader.Add(cachedLoader);
+            }
+
             var resolver = new FrameworkReferenceResolver(globalAssemblyCache);
             var resourceProvider = new ResxResourceProvider();
             var projectResolver = new ProjectResolver(_projectDir, rootDirectory);

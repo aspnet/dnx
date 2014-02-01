@@ -18,32 +18,72 @@ namespace Microsoft.Net.ApplicationHost
 
         public int Main(string[] args)
         {
-            string application;
-            string[] arguments;
+            DefaultHostOptions options;
+            string[] programArgs;
 
-            if (args.Length >= 1)
-            {
-                application = args[0];
-                arguments = args.Skip(1).ToArray();
-            }
-            else
-            {
-                application = Directory.GetCurrentDirectory();
-                arguments = args;
-            }
+            ParseArgs(args, out options, out programArgs);
 
             try
             {
-                var host = new DefaultHost(application);
+                var host = new DefaultHost(options);
+
                 using (_container.AddHost(host))
                 {
-                    return ExecuteMain(host, arguments);
+                    return ExecuteMain(host, programArgs);
                 }
             }
             catch (Exception ex)
             {
                 Console.Error.WriteLine(String.Join(Environment.NewLine, GetExceptions(ex)));
                 return -2;
+            }
+        }
+
+        private void ParseArgs(string[] args, out DefaultHostOptions options, out string[] outArgs)
+        {
+            options = new DefaultHostOptions();
+            options.ProjectDir = Directory.GetCurrentDirectory();
+
+            // TODO: Just pass this as an argument from the caller
+            options.TargetFramework = Environment.GetEnvironmentVariable("TARGET_FRAMEWORK");
+
+            int index = 0;
+            for (index = 0; index < args.Length; index++)
+            {
+                string arg = args[index];
+                if (arg.StartsWith("--"))
+                {
+                    var option = arg.Substring(2);
+
+                    switch (option.ToLowerInvariant())
+                    {
+                        case "nobin":
+                            options.UseCachedCompilations = false;
+                            break;
+                        case "framework":
+                            options.TargetFramework = option;
+                            break;
+                        case "watch":
+                            options.WatchFiles = true;
+                            break;
+                        default:
+                            break;
+                    }
+                }
+                else
+                {
+                    options.ProjectDir = arg;
+                    break;
+                }
+            }
+
+            if (index == 0)
+            {
+                outArgs = args;
+            }
+            else
+            {
+                outArgs = args.Skip(index).ToArray();
             }
         }
 
