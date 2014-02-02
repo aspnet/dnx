@@ -7,11 +7,11 @@ namespace Microsoft.Net.Runtime.Loader.Roslyn
 {
     public class CachedCompilationLoader : IAssemblyLoader
     {
-        private readonly string _rootPath;
+        private readonly IProjectResolver _resolver;
 
-        public CachedCompilationLoader(string rootPath)
+        public CachedCompilationLoader(IProjectResolver resolver)
         {
-            _rootPath = rootPath;
+            _resolver = resolver;
         }
 
         public AssemblyLoadResult Load(LoadContext loadContext)
@@ -25,7 +25,14 @@ namespace Microsoft.Net.Runtime.Loader.Roslyn
             }
 
             string name = loadContext.AssemblyName;
-            string path = Path.Combine(_rootPath, name);
+
+            Project project;
+            if (!_resolver.TryResolveProject(name, out project))
+            {
+                return null;
+            }
+
+            string path = project.ProjectDirectory;
 
             var targetFrameworkFolder = VersionUtility.GetShortFrameworkName(loadContext.TargetFramework);
             string cachedFile = Path.Combine(path, "bin", targetFrameworkFolder, name + ".dll");

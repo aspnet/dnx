@@ -97,16 +97,16 @@ namespace Microsoft.Net.Runtime
             }
 
             var globalAssemblyCache = new DefaultGlobalAssemblyCache();
+            var projectResolver = new ProjectResolver(_projectDir, rootDirectory);
 
             if (options.UseCachedCompilations)
             {
-                var cachedLoader = new CachedCompilationLoader(rootDirectory);
+                var cachedLoader = new CachedCompilationLoader(projectResolver);
                 _loader.Add(cachedLoader);
             }
 
             var resolver = new FrameworkReferenceResolver(globalAssemblyCache);
             var resourceProvider = new ResxResourceProvider();
-            var projectResolver = new ProjectResolver(_projectDir, rootDirectory);
             var roslynLoader = new RoslynAssemblyLoader(projectResolver, _watcher, resolver, globalAssemblyCache, _loader, resourceProvider);
             _loader.Add(roslynLoader);
 #if NET45 // CORECLR_TODO: Process
