@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Reflection;
 using Microsoft.Net.Runtime;
 
@@ -8,6 +7,7 @@ namespace klr.host
 {
     public class HostContainer : IHostContainer
     {
+        private readonly Dictionary<string, Assembly> _cache = new Dictionary<string, Assembly>();
         private readonly Stack<IHost> _hosts = new Stack<IHost>();
 
         public IDisposable AddHost(IHost host)
@@ -41,11 +41,18 @@ namespace klr.host
 
         public Assembly Load(string name)
         {
-            foreach (var host in _hosts.Reverse())
+            Assembly assembly;
+            if (_cache.TryGetValue(name, out assembly))
             {
-                Assembly assembly = host.Load(name);
+                return assembly;
+            }
+
+            foreach (var host in _hosts)
+            {
+                assembly = host.Load(name);
                 if (assembly != null)
                 {
+                    _cache[name] = assembly;
                     return assembly;
                 }
             }
