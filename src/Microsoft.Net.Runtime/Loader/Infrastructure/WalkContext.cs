@@ -47,11 +47,11 @@ namespace Microsoft.Net.Runtime.Loader.Infrastructure
         {
             var root = new Node
             {
-                Key = new PackageReference { Name = name, Version = version }
+                Key = new Dependency { Name = name, Version = version }
             };
 
             var resolvers = dependencyResolvers as IPackageLoader[] ?? dependencyResolvers.ToArray();
-            var resolvedItems = new Dictionary<PackageReference, Item>();
+            var resolvedItems = new Dictionary<Dependency, Item>();
 
             // Recurse through dependencies optimistically, asking resolvers for dependencies
             // based on best match of each encountered dependency
@@ -199,9 +199,9 @@ namespace Microsoft.Net.Runtime.Loader.Infrastructure
         }
 
         private Item Resolve(
-            Dictionary<PackageReference, Item> resolvedItems,
+            Dictionary<Dependency, Item> resolvedItems,
             IEnumerable<IPackageLoader> resolvers,
-            PackageReference packageKey,
+            Dependency packageKey,
             FrameworkName frameworkName)
         {
             Item item;
@@ -243,7 +243,7 @@ namespace Microsoft.Net.Runtime.Loader.Infrastructure
 
                 var descriptions = groupByResolver.Select(entry =>
                 {
-                    return new PackageDescription
+                    return new DependencyDescription
                     {
                         Identity = entry.Value.Key,
                         Dependencies = entry.Value.Dependencies.Where(p => _usedItems.ContainsKey(p.Name))
@@ -265,7 +265,7 @@ namespace Microsoft.Net.Runtime.Loader.Infrastructure
                 Disposition = Disposition.Acceptable;
             }
 
-            public PackageReference Key { get; set; }
+            public Dependency Key { get; set; }
             public Item Item { get; set; }
             public Node OuterNode { get; set; }
             public IList<Node> InnerNodes { get; private set; }
@@ -275,9 +275,9 @@ namespace Microsoft.Net.Runtime.Loader.Infrastructure
 
         public class Item
         {
-            public PackageReference Key { get; set; }
+            public Dependency Key { get; set; }
             public IPackageLoader Resolver { get; set; }
-            public IEnumerable<PackageReference> Dependencies { get; set; }
+            public IEnumerable<Dependency> Dependencies { get; set; }
         }
 
         public class Tracker

@@ -3,10 +3,11 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Runtime.Versioning;
+using Microsoft.Net.Runtime.Loader;
 using Newtonsoft.Json.Linq;
 using NuGet;
 
-namespace Microsoft.Net.Runtime.Loader
+namespace Microsoft.Net.Runtime
 {
     public class Project
     {
@@ -36,7 +37,7 @@ namespace Microsoft.Net.Runtime.Loader
 
         public SemanticVersion Version { get; private set; }
 
-        public IList<PackageReference> Dependencies { get; private set; }
+        public IList<Dependency> Dependencies { get; private set; }
 
         public IEnumerable<string> SourceFiles
         {
@@ -68,30 +69,6 @@ namespace Microsoft.Net.Runtime.Loader
             string projectPath = Path.Combine(path, ProjectFileName);
 
             return File.Exists(projectPath);
-        }
-
-        public static bool TryGetProjectName(string path, out string projectName)
-        {
-            projectName = null;
-
-            if (!HasProjectFile(path))
-            {
-                return false;
-            }
-
-            string projectPath = Path.Combine(path, ProjectFileName);
-            string json = File.ReadAllText(projectPath);
-            var settings = JObject.Parse(json);
-            var name = settings["name"];
-            projectName = GetValue<string>(settings, "name");
-
-            if (String.IsNullOrEmpty(projectName))
-            {
-                // Assume the directory name is the project name
-                projectName = GetDirectoryName(path);
-            }
-
-            return true;
         }
 
         public static bool TryGetProject(string path, out Project project)
@@ -131,7 +108,7 @@ namespace Microsoft.Net.Runtime.Loader
             project.Version = version == null ? new SemanticVersion("1.0.0") : new SemanticVersion(version.Value<string>());
             project.Description = GetValue<string>(settings, "description");
             project.Authors = authors == null ? new string[] { } : authors.ToObject<string[]>();
-            project.Dependencies = new List<PackageReference>();
+            project.Dependencies = new List<Dependency>();
             project.ProjectFilePath = projectPath;
 
             if (project.Version.IsSnapshot)
@@ -147,7 +124,7 @@ namespace Microsoft.Net.Runtime.Loader
             return true;
         }
 
-        private static void PopulateDependencies(IList<PackageReference> results, JObject settings)
+        private static void PopulateDependencies(IList<Dependency> results, JObject settings)
         {
             var dependencies = settings["dependencies"] as JObject;
             if (dependencies != null)
@@ -173,7 +150,7 @@ namespace Microsoft.Net.Runtime.Loader
                         dependencyVersion = SemanticVersion.Parse(dependencyVersionValue);
                     }
 
-                    results.Add(new PackageReference
+                    results.Add(new Dependency
                     {
                         Name = dependency.Key,
                         Version = dependencyVersion
@@ -204,7 +181,7 @@ namespace Microsoft.Net.Runtime.Loader
 
             _defaultTargetFrameworkConfiguration = new TargetFrameworkConfiguration
             {
-                Dependencies = new List<PackageReference>()
+                Dependencies = new List<Dependency>()
             };
 
             // Parse the specific configuration section
@@ -218,7 +195,7 @@ namespace Microsoft.Net.Runtime.Loader
                     config.FrameworkName = VersionUtility.ParseFrameworkName(configuration.Key);
                     var properties = configuration.Value.Value<JObject>();
 
-                    config.Dependencies = new List<PackageReference>();
+                    config.Dependencies = new List<Dependency>();
 
                     PopulateDependencies(config.Dependencies, properties);
 
@@ -266,6 +243,6 @@ namespace Microsoft.Net.Runtime.Loader
     {
         public FrameworkName FrameworkName { get; set; }
 
-        public IList<PackageReference> Dependencies { get; set; }
+        public IList<Dependency> Dependencies { get; set; }
     }
 }

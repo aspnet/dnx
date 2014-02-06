@@ -14,7 +14,7 @@ using Microsoft.Net.Runtime.Loader.MSBuildProject;
 using Microsoft.Net.Runtime.Loader.NuGet;
 using Microsoft.Net.Runtime.Loader.Roslyn;
 using NuGet;
-using KProject = Microsoft.Net.Runtime.Loader.Project;
+using KProject = Microsoft.Net.Runtime.Project;
 using Microsoft.Net.Runtime.Roslyn;
 
 namespace Microsoft.Net.Project

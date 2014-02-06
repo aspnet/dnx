@@ -17,7 +17,7 @@ namespace Microsoft.Net.Runtime
         private IAssemblyLoader _roslynLoader;
         private bool _roslynInitializing;
 
-        private IEnumerable<PackageDescription> _packages;
+        private IEnumerable<DependencyDescription> _packages;
 
         public LazyRoslynAssemblyLoader(ProjectResolver projectResolver, IFileWatcher watcher, AssemblyLoader loader)
         {
@@ -26,7 +26,7 @@ namespace Microsoft.Net.Runtime
             _loader = loader;
         }
 
-        public PackageDescription GetDescription(string name, SemanticVersion version, FrameworkName frameworkName)
+        public DependencyDescription GetDescription(string name, SemanticVersion version, FrameworkName frameworkName)
         {
             Project project;
 
@@ -42,14 +42,14 @@ namespace Microsoft.Net.Runtime
 
             var config = project.GetTargetFrameworkConfiguration(frameworkName);
 
-            return new PackageDescription
+            return new DependencyDescription
             {
-                Identity = new PackageReference { Name = project.Name, Version = project.Version },
+                Identity = new Dependency { Name = project.Name, Version = project.Version },
                 Dependencies = project.Dependencies.Concat(config.Dependencies),
             };
         }
 
-        public void Initialize(IEnumerable<PackageDescription> packages, FrameworkName frameworkName)
+        public void Initialize(IEnumerable<DependencyDescription> packages, FrameworkName frameworkName)
         {
             _packages = packages;
         }

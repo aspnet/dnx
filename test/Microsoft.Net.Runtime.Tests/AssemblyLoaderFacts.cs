@@ -14,7 +14,7 @@ namespace Loader.Tests
 {
     public class AssemblyLoaderFacts
     {
-        PackageReference[] Dependencies(Action<TestAssemblyLoader.Entry> configure)
+        Dependency[] Dependencies(Action<TestAssemblyLoader.Entry> configure)
         {
             var entry = new TestAssemblyLoader.Entry();
             configure(entry);
@@ -178,8 +178,8 @@ namespace Loader.Tests
 
     public class TestAssemblyLoader : IPackageLoader
     {
-        private readonly IDictionary<PackageReference, Entry> _entries = new Dictionary<PackageReference, Entry>();
-        public IEnumerable<PackageReference> Dependencies { get; set; }
+        private readonly IDictionary<Dependency, Entry> _entries = new Dictionary<Dependency, Entry>();
+        public IEnumerable<Dependency> Dependencies { get; set; }
         public FrameworkName FrameworkName { get; set; }
 
         public AssemblyLoadResult Load(LoadContext options)
@@ -187,26 +187,26 @@ namespace Loader.Tests
             return null;
         }
 
-        public PackageDescription GetDescription(string name, SemanticVersion version, FrameworkName frameworkName)
+        public DependencyDescription GetDescription(string name, SemanticVersion version, FrameworkName frameworkName)
         {
             Trace.WriteLine(string.Format("StubAssemblyLoader.GetDependencies {0} {1} {2}", name, version, frameworkName));
             Entry entry;
-            if (!_entries.TryGetValue(new PackageReference { Name = name, Version = version }, out entry))
+            if (!_entries.TryGetValue(new Dependency { Name = name, Version = version }, out entry))
             {
                 return null;
             }
 
-            var d = entry.Dependencies as PackageReference[] ?? entry.Dependencies.ToArray();
+            var d = entry.Dependencies as Dependency[] ?? entry.Dependencies.ToArray();
             Trace.WriteLine(string.Format("StubAssemblyLoader.GetDependencies {0} {1}", d.Aggregate("", (a, b) => a + " " + b), frameworkName));
 
-            return new PackageDescription
+            return new DependencyDescription
             {
-                Identity = new PackageReference { Name = name, Version = version },
+                Identity = new Dependency { Name = name, Version = version },
                 Dependencies = entry.Dependencies
             };
         }
 
-        public void Initialize(IEnumerable<PackageDescription> packages, FrameworkName frameworkName)
+        public void Initialize(IEnumerable<DependencyDescription> packages, FrameworkName frameworkName)
         {
             var d = packages.Select(package => package.Identity).ToArray();
 
@@ -223,7 +223,7 @@ namespace Loader.Tests
 
         public TestAssemblyLoader Package(string name, string version, Action<Entry> configure)
         {
-            var entry = new Entry { Key = new PackageReference { Name = name, Version = new SemanticVersion(version) } };
+            var entry = new Entry { Key = new Dependency { Name = name, Version = new SemanticVersion(version) } };
             _entries[entry.Key] = entry;
             configure(entry);
             return this;
@@ -233,15 +233,15 @@ namespace Loader.Tests
         {
             public Entry()
             {
-                Dependencies = new List<PackageReference>();
+                Dependencies = new List<Dependency>();
             }
 
-            public PackageReference Key { get; set; }
-            public IList<PackageReference> Dependencies { get; private set; }
+            public Dependency Key { get; set; }
+            public IList<Dependency> Dependencies { get; private set; }
 
             public Entry Needs(string name, string version)
             {
-                Dependencies.Add(new PackageReference { Name = name, Version = new SemanticVersion(version) });
+                Dependencies.Add(new Dependency { Name = name, Version = new SemanticVersion(version) });
                 return this;
             }
         }

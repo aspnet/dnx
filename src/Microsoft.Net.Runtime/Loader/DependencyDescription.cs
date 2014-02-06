@@ -6,9 +6,9 @@ using System.Threading.Tasks;
 
 namespace Microsoft.Net.Runtime.Loader
 {
-    public class PackageDescription
+    public class DependencyDescription
     {
-        public PackageReference Identity { get; set; }
-        public IEnumerable<PackageReference> Dependencies { get; set; }
+        public Dependency Identity { get; set; }
+        public IEnumerable<Dependency> Dependencies { get; set; }
     }
 }

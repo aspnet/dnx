@@ -29,12 +29,12 @@ namespace Microsoft.Net.Runtime.Roslyn
         private readonly IAssemblyLoader _dependencyLoader;
         private readonly IResourceProvider _resourceProvider;
 
-        private IEnumerable<PackageDescription> _packages;
+        private IEnumerable<DependencyDescription> _packages;
 
         public RoslynAssemblyLoader(IProjectResolver projectResolver,
                                     IFileWatcher watcher,
                                     IAssemblyLoader dependencyLoader,
-                                    IEnumerable<PackageDescription> packages)
+                                    IEnumerable<DependencyDescription> packages)
         {
             _projectResolver = projectResolver;
             _watcher = watcher;
@@ -205,7 +205,7 @@ namespace Microsoft.Net.Runtime.Roslyn
             }
         }
 
-        public PackageDescription GetDescription(string name, SemanticVersion version, FrameworkName frameworkName)
+        public DependencyDescription GetDescription(string name, SemanticVersion version, FrameworkName frameworkName)
         {
             Project project;
 
@@ -221,14 +221,14 @@ namespace Microsoft.Net.Runtime.Roslyn
 
             var config = project.GetTargetFrameworkConfiguration(frameworkName);
 
-            return new PackageDescription
+            return new DependencyDescription
             {
-                Identity = new PackageReference { Name = project.Name, Version = project.Version },
+                Identity = new Dependency { Name = project.Name, Version = project.Version },
                 Dependencies = project.Dependencies.Concat(config.Dependencies),
             };
         }
 
-        public void Initialize(IEnumerable<PackageDescription> packages, FrameworkName frameworkName)
+        public void Initialize(IEnumerable<DependencyDescription> packages, FrameworkName frameworkName)
         {
             _packages = packages;
         }
@@ -250,7 +250,7 @@ namespace Microsoft.Net.Runtime.Roslyn
             return null;
         }
 
-        private bool TryResolveDependency(PackageReference dependency, LoadContext loadContext, List<string> errors, out MetadataReference resolved)
+        private bool TryResolveDependency(Dependency dependency, LoadContext loadContext, List<string> errors, out MetadataReference resolved)
         {
             resolved = null;
 

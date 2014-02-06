@@ -4,7 +4,7 @@ using System.Collections.Generic;
 
 namespace Microsoft.Net.Runtime.Loader
 {
-    public class PackageReference : IEquatable<PackageReference>
+    public class Dependency : IEquatable<Dependency>
     {
         public string Name { get; set; }
 
@@ -15,7 +15,7 @@ namespace Microsoft.Net.Runtime.Loader
             return Name + " " + Version;
         }
 
-        public bool Equals(PackageReference other)
+        public bool Equals(Dependency other)
         {
             if (ReferenceEquals(null, other)) return false;
             if (ReferenceEquals(this, other)) return true;
@@ -27,7 +27,7 @@ namespace Microsoft.Net.Runtime.Loader
             if (ReferenceEquals(null, obj)) return false;
             if (ReferenceEquals(this, obj)) return true;
             if (obj.GetType() != this.GetType()) return false;
-            return Equals((PackageReference)obj);
+            return Equals((Dependency)obj);
         }
 
         public override int GetHashCode()
@@ -38,12 +38,12 @@ namespace Microsoft.Net.Runtime.Loader
             }
         }
 
-        public static bool operator ==(PackageReference left, PackageReference right)
+        public static bool operator ==(Dependency left, Dependency right)
         {
             return Equals(left, right);
         }
 
-        public static bool operator !=(PackageReference left, PackageReference right)
+        public static bool operator !=(Dependency left, Dependency right)
         {
             return !Equals(left, right);
         }

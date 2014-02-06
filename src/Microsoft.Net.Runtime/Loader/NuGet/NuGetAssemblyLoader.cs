@@ -45,15 +45,15 @@ namespace Microsoft.Net.Runtime.Loader.NuGet
             return new AssemblyLoadResult(assembly);
         }
 
-        public PackageDescription GetDescription(string name, SemanticVersion version, FrameworkName frameworkName)
+        public DependencyDescription GetDescription(string name, SemanticVersion version, FrameworkName frameworkName)
         {
             var package = FindCandidate(name, version);
 
             if (package != null)
             {
-                return new PackageDescription
+                return new DependencyDescription
                 {
-                    Identity = new PackageReference { Name = package.Id, Version = package.Version },
+                    Identity = new Dependency { Name = package.Id, Version = package.Version },
                     Dependencies = GetDependencies(package, frameworkName)
                 };
             }
@@ -61,7 +61,7 @@ namespace Microsoft.Net.Runtime.Loader.NuGet
             return null;
         }
 
-        private IEnumerable<PackageReference> GetDependencies(IPackage package, FrameworkName frameworkName)
+        private IEnumerable<Dependency> GetDependencies(IPackage package, FrameworkName frameworkName)
         {
             IEnumerable<PackageDependencySet> dependencySet;
             if (VersionUtility.TryGetCompatibleItems(frameworkName, package.DependencySets, out dependencySet))
@@ -75,7 +75,7 @@ namespace Microsoft.Net.Runtime.Loader.NuGet
                                                     .FirstOrDefault();
                         if (dependency != null)
                         {
-                            yield return new PackageReference
+                            yield return new Dependency
                             {
                                 Name = dependency.Id,
                                 Version = dependency.Version
@@ -86,7 +86,7 @@ namespace Microsoft.Net.Runtime.Loader.NuGet
             }
         }
 
-        public void Initialize(IEnumerable<PackageDescription> packages, FrameworkName frameworkName)
+        public void Initialize(IEnumerable<DependencyDescription> packages, FrameworkName frameworkName)
         {
             foreach (var dependency in packages)
             {
