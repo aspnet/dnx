@@ -13,7 +13,7 @@ namespace Microsoft.Net.Runtime.Loader
         public const string ProjectFileName = "project.json";
 
         private Dictionary<FrameworkName, TargetFrameworkConfiguration> _configurations = new Dictionary<FrameworkName, TargetFrameworkConfiguration>();
-        private Dictionary<FrameworkName, JToken> _compilationOptions = new Dictionary<FrameworkName, JToken>();
+        private Dictionary<FrameworkName, KeyValuePair<string, JToken>> _compilationOptions = new Dictionary<FrameworkName, KeyValuePair<string, JToken>>();
         private JToken _defaultOptions;
 
         private TargetFrameworkConfiguration _defaultTargetFrameworkConfiguration;
@@ -187,14 +187,14 @@ namespace Microsoft.Net.Runtime.Loader
             return _defaultOptions;
         }
 
-        public JToken GetCompilationOptions(FrameworkName frameworkName)
+        public KeyValuePair<string, JToken> GetConfiguration(FrameworkName frameworkName)
         {
-            JToken optionsToken;
+            KeyValuePair<string, JToken> optionsToken;
             if (_compilationOptions.TryGetValue(frameworkName, out optionsToken))
             {
                 return optionsToken;
             }
-            return null;
+            return new KeyValuePair<string, JToken>();
         }
 
         private void BuildTargetFrameworkConfigurations(JObject settings)
@@ -223,7 +223,7 @@ namespace Microsoft.Net.Runtime.Loader
                     PopulateDependencies(config.Dependencies, properties);
 
                     _configurations[config.FrameworkName] = config;
-                    _compilationOptions[config.FrameworkName] = properties["compilationOptions"];
+                    _compilationOptions[config.FrameworkName] = configuration;
                 }
             }
         }

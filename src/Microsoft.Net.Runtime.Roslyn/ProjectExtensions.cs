@@ -8,7 +8,7 @@ using Newtonsoft.Json.Linq;
 
 namespace Microsoft.Net.Runtime.Roslyn
 {
-    public static class TargetFrameworkConfigurationExtensions
+    public static class ProjectExtensions
     {
         public static CompilationSettings GetCompilationSettings(this Project project, FrameworkName frameworkName)
         {
@@ -17,13 +17,14 @@ namespace Microsoft.Net.Runtime.Roslyn
             var rootOptions = project.GetCompilationOptions();
             var rootDefines = ConvertValue<string[]>(rootOptions, "define") ?? new string[] { };
 
-            var specificOptions = project.GetCompilationOptions(frameworkName);
-            var specificDefines = ConvertValue<string[]>(specificOptions, "define") ?? new string[] { };
+            var configuration = project.GetConfiguration(frameworkName);
+            var specificOptions = configuration.Value["compilationOptions"];
+            var specificDefines = ConvertValue<string[]>(specificOptions, "define") ?? new string[] { configuration.Key.ToUpperInvariant() };
 
             var defaultOptions = new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary);
 
-            var options = GetCompilationOptions(specificOptions) ?? 
-                          GetCompilationOptions(rootOptions) ?? 
+            var options = GetCompilationOptions(specificOptions) ??
+                          GetCompilationOptions(rootOptions) ??
                           defaultOptions;
 
             var settings = new CompilationSettings
