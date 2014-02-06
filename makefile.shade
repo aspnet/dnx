@@ -79,23 +79,35 @@ var FULL_VERSION = '${VERSION + "-" + BuildNumber}'
     copy sourceDir='${BIN_DIR}' outputDir='${TOOLS_BIN_DIR}' include='klr.exe' overwrite='${true}'
     copy sourceDir='${BIN_DIR}' outputDir='${TOOLS_BIN_DIR}' include='klr*config' overwrite='${true}'
 
-    copy sourceDir='${BUILD_DIR2}' outputDir='${TOOLS_BIN_DIR}' include='**/klr.host.dll' overwrite='${true}'
-    copy sourceDir='${BUILD_DIR2}' outputDir='${TOOLS_BIN_DIR}' include='**/Microsoft.Net.Runtime.Interfaces.dll' overwrite='${true}'
-    copy sourceDir='${BUILD_DIR2}' outputDir='${TOOLS_BIN_DIR}' include='**/Stubs.dll' overwrite='${true}'
-
-    copy sourceDir='${BUILD_DIR2}' outputDir='${TOOLS_DIR}' include='**/Microsoft*.dll' exclude='**/*Interfaces*' overwrite='${true}'
-
-    directory delete='${BUILD_DIR2}'
+    @{
+        var hostK10 = Path.Combine(BUILD_DIR2, "*", "k10", "**.dll");
+        var hostnet45 = Path.Combine(BUILD_DIR2, "*", "net45", "**.dll");
+        
+        Directory.CreateDirectory(Path.Combine(TOOLS_DIR, "k10"));
+        Directory.CreateDirectory(Path.Combine(TOOLS_DIR, "net45"));
+        
+        foreach(var file in Files.Include(hostK10))
+        {
+            string dest = Path.Combine(TOOLS_DIR, "k10", Path.GetFileName(file));
+            File.Copy(file, dest, true);
+        }
+        
+        foreach(var file in Files.Include(hostnet45))
+        {
+            string dest = Path.Combine(TOOLS_DIR, "net45", Path.GetFileName(file));
+            File.Copy(file, dest, true);
+        }
+    }
+    
 
 #tweak-scripts
     @{
         foreach(var file in Files.Include(Path.Combine(TOOLS_DIR, "*.cmd")))
         {
             var script = File.ReadAllText(file)
-                             .Replace(@"..\bin\Debug", "bin")
-                             .Replace(@"..\src\", "")
-                             .Replace(@"=bin\Debug\", "=")
-                             .Replace(@"bin\Debug", "");
+                             .Replace(@"..\bin\Debug", "bin");
+
+            script = Regex.Replace(script, @"TARGET=\.\.\\src(.*)", @"TARGET=net45");
 
             File.WriteAllText(file, script);
         }
@@ -103,8 +115,6 @@ var FULL_VERSION = '${VERSION + "-" + BuildNumber}'
 
 #copy-package-dependencies
     @{
-        var runners = new[] { "Microsoft.Net.Project", "Microsoft.Net.ApplicationHost" };
-        var dependentProjects = new [] { "Microsoft.Net.Runtime", "Microsoft.Net.Runtime.Roslyn" };
         var targetFrameworks = new [] { "k10", "net45" };
 
         var packages = new[] { "Newtonsoft.Json", 
@@ -113,64 +123,50 @@ var FULL_VERSION = '${VERSION + "-" + BuildNumber}'
                                "System.Collections.Immutable", 
                                "System.Reflection.Metadata.Ecma335" };
 
-        foreach (var project in runners)
+        
+        foreach (var framework in targetFrameworks)
         {
-            foreach (var framework in targetFrameworks)
+            foreach (var package in packages)
             {
-                foreach (var dependentProject in dependentProjects)
-                {
-                    string source = Path.Combine(TOOLS_DIR, dependentProject, framework, dependentProject + ".dll");
-                    string dest = Path.Combine(TOOLS_DIR, project, framework, dependentProject + ".dll");
+                var packageDir = Directory.GetDirectories(PACKAGES_DIR, package + "*").FirstOrDefault();
 
-                    File.Copy(source, dest, true);
-                    Log.Info("Copying to " + dest);
+                if(packageDir == null)
+                {
+                    Log.Warn("Unable to find resolve " + package);
+
+                    continue;
                 }
 
-                foreach (var package in packages)
+                string[] candidates = null;
+
+                if(framework == "k10")
                 {
-                    var packageDir = Directory.GetDirectories(PACKAGES_DIR, package + "*").FirstOrDefault();
+                    candidates = new [] { framework, "netcore45" };
+                }
+                else
+                {
+                    candidates = new [] { framework, "net40", "net35", "net20" };
+                }
 
-                    if(packageDir == null)
-                    {
-                        Log.Warn("Unable to find resolve " + package);
+                var di = candidates.Select(fmk => new DirectoryInfo(Path.Combine(packageDir, "lib", fmk)))
+                                   .FirstOrDefault(d => d.Exists);
 
-                        continue;
-                    }
+                if(!di.Exists)
+                {
+                    Log.Warn("Couldn't find version of " + package + " matching " + framework);
+                    continue;
+                }
 
-                    string[] candidates = null;
+                foreach(var fi in di.GetFiles("*.dll"))
+                {
+                    string packageFileDest = Path.Combine(TOOLS_DIR, framework, fi.Name);
+                    File.Copy(fi.FullName, packageFileDest);
 
-                    if(framework == "k10")
-                    {
-                        candidates = new [] { framework, "netcore45" };
-                    }
-                    else
-                    {
-                        candidates = new [] { framework, "net40", "net35", "net20" };
-                    }
-
-                    var di = candidates.Select(fmk => new DirectoryInfo(Path.Combine(packageDir, "lib", fmk)))
-                                       .FirstOrDefault(d => d.Exists);
-
-                    if(!di.Exists)
-                    {
-                        Log.Warn("Couldn't find version of " + package + " matching " + framework);
-                        continue;
-                    }
-
-                    foreach(var fi in di.GetFiles("*.dll"))
-                    {
-                        string packageFileDest = Path.Combine(TOOLS_DIR, project, framework, fi.Name);
-                        File.Copy(fi.FullName, packageFileDest);
-
-                        Log.Info("Copying to " + packageFileDest);
-                    }
+                    Log.Info("Copying to " + packageFileDest);
                 }
             }
         }
     }
-
-    directory delete='${Path.Combine(TOOLS_DIR, "Microsoft.Net.Runtime")}'
-    directory delete='${Path.Combine(TOOLS_DIR, "Microsoft.Net.Runtime.Roslyn")}'
 
 #copy-coreclr
     @{

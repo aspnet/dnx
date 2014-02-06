@@ -12,13 +12,13 @@ SET ERRORLEVEL=
 
 SET TARGET=%TARGET_FRAMEWORK%
 if "%TARGET%" == "" (
-   SET TARGET=bin\Debug\net45
+   SET TARGET=..\src\Microsoft.Net.Project\bin\Debug\net45
 )
 
 IF EXIST "%~dp0k-%1.cmd" (
   "%~dp0k-%1.cmd" %2 %3 %4 %5 %6 %7 %8 %9 
 ) ELSE (
-  CALL "%~dp0KLR" "%~dp0..\src\Microsoft.Net.Project\%TARGET%\Microsoft.Net.Project.dll" %*
+  CALL "%~dp0KLR" "%~dp0%TARGET%\Microsoft.Net.Project.dll" %*
 )
 
 exit /b %ERRORLEVEL%

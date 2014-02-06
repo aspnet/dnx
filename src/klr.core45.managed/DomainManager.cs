@@ -73,7 +73,7 @@ sealed class DomainManager : AppDomainManager
     {
         var searchPaths = new[] { 
             "", 
-            Path.Combine(name, "k10")
+            Path.Combine("..", "k10")
         };
 
         foreach (var searchPath in searchPaths)

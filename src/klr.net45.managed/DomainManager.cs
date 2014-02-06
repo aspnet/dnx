@@ -52,7 +52,7 @@ public class DomainManager : AppDomainManager
 
         var searchPaths = new[] { 
             "", 
-            Path.Combine(name, "net45")
+            Path.Combine("..", "net45")
         };
 
         var basePath = _originalApplicationBase ?? AppDomain.CurrentDomain.SetupInformation.ApplicationBase;
