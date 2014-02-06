@@ -3,7 +3,7 @@ using System.IO;
 using System.Reflection;
 using NuGet;
 
-namespace Microsoft.Net.Runtime.Loader.Roslyn
+namespace Microsoft.Net.Runtime.Loader
 {
     public class CachedCompilationLoader : IAssemblyLoader
     {
