@@ -104,6 +104,7 @@ var FULL_VERSION = '${VERSION + "-" + BuildNumber}'
 #copy-package-dependencies
     @{
         var runners = new[] { "Microsoft.Net.Project", "Microsoft.Net.ApplicationHost" };
+        var dependentProjects = new [] { "Microsoft.Net.Runtime", "Microsoft.Net.Runtime.Roslyn" };
         var targetFrameworks = new [] { "k10", "net45" };
 
         var packages = new[] { "Newtonsoft.Json", 
@@ -116,11 +117,14 @@ var FULL_VERSION = '${VERSION + "-" + BuildNumber}'
         {
             foreach (var framework in targetFrameworks)
             {
-                string source = Path.Combine(TOOLS_DIR, "Microsoft.Net.Runtime", framework, "Microsoft.Net.Runtime.dll");
-                string dest = Path.Combine(TOOLS_DIR, project, framework, "Microsoft.Net.Runtime.dll");
+                foreach (var dependentProject in dependentProjects)
+                {
+                    string source = Path.Combine(TOOLS_DIR, dependentProject, framework, dependentProject + ".dll");
+                    string dest = Path.Combine(TOOLS_DIR, project, framework, dependentProject + ".dll");
 
-                File.Copy(source, dest, true);
-                Log.Info("Copying to " + dest);
+                    File.Copy(source, dest, true);
+                    Log.Info("Copying to " + dest);
+                }
 
                 foreach (var package in packages)
                 {
@@ -166,6 +170,7 @@ var FULL_VERSION = '${VERSION + "-" + BuildNumber}'
     }
 
     directory delete='${Path.Combine(TOOLS_DIR, "Microsoft.Net.Runtime")}'
+    directory delete='${Path.Combine(TOOLS_DIR, "Microsoft.Net.Runtime.Roslyn")}'
 
 #copy-coreclr
     @{
