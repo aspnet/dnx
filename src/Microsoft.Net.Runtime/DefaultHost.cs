@@ -104,7 +104,7 @@ namespace Microsoft.Net.Runtime
                 _loader.Add(cachedLoader);
             }
 
-            var roslynLoader = new PartialRoslynAssemblyLoader(projectResolver, _watcher, _loader);
+            var roslynLoader = new LazyRoslynAssemblyLoader(projectResolver, _watcher, _loader);
             _loader.Add(roslynLoader);
 #if NET45 // CORECLR_TODO: Process
             _loader.Add(new MSBuildProjectAssemblyLoader(rootDirectory, _watcher));

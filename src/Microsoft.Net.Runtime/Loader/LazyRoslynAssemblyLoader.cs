@@ -9,7 +9,7 @@ using NuGet;
 
 namespace Microsoft.Net.Runtime
 {
-    internal class PartialRoslynAssemblyLoader : IAssemblyLoader, IPackageLoader
+    internal class LazyRoslynAssemblyLoader : IAssemblyLoader, IPackageLoader
     {
         private readonly ProjectResolver _projectResolver;
         private readonly IFileWatcher _watcher;
@@ -19,7 +19,7 @@ namespace Microsoft.Net.Runtime
 
         private IEnumerable<PackageDescription> _packages;
 
-        public PartialRoslynAssemblyLoader(ProjectResolver projectResolver, IFileWatcher watcher, AssemblyLoader loader)
+        public LazyRoslynAssemblyLoader(ProjectResolver projectResolver, IFileWatcher watcher, AssemblyLoader loader)
         {
             _projectResolver = projectResolver;
             _watcher = watcher;
