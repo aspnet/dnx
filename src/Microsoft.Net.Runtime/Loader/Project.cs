@@ -3,8 +3,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Runtime.Versioning;
-using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.CSharp;
 using Newtonsoft.Json.Linq;
 using NuGet;
 
@@ -15,6 +13,8 @@ namespace Microsoft.Net.Runtime.Loader
         public const string ProjectFileName = "project.json";
 
         private Dictionary<FrameworkName, TargetFrameworkConfiguration> _configurations = new Dictionary<FrameworkName, TargetFrameworkConfiguration>();
+        private Dictionary<FrameworkName, JToken> _compilationOptions = new Dictionary<FrameworkName, JToken>();
+        private JToken _defaultOptions;
 
         private TargetFrameworkConfiguration _defaultTargetFrameworkConfiguration;
 
@@ -182,18 +182,28 @@ namespace Microsoft.Net.Runtime.Loader
             }
         }
 
+        public JToken GetCompilationOptions()
+        {
+            return _defaultOptions;
+        }
+
+        public JToken GetCompilationOptions(FrameworkName frameworkName)
+        {
+            JToken optionsToken;
+            if (_compilationOptions.TryGetValue(frameworkName, out optionsToken))
+            {
+                return optionsToken;
+            }
+            return null;
+        }
+
         private void BuildTargetFrameworkConfigurations(JObject settings)
         {
             // Get the base configuration
-            var compilationOptions = settings["compilationOptions"];
-            var defaultOptions = new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary);
-
-            var options = GetCompilationOptions(compilationOptions) ?? defaultOptions;
+            _defaultOptions = settings["compilationOptions"];
 
             _defaultTargetFrameworkConfiguration = new TargetFrameworkConfiguration
             {
-                CompilationOptions = options,
-                Defines = ConvertValue<string[]>(compilationOptions, "define") ?? new string[] { },
                 Dependencies = new List<PackageReference>()
             };
 
@@ -208,65 +218,14 @@ namespace Microsoft.Net.Runtime.Loader
                     config.FrameworkName = VersionUtility.ParseFrameworkName(configuration.Key);
                     var properties = configuration.Value.Value<JObject>();
 
-                    var specificCompilationOptions = properties["compilationOptions"];
-                    var specificDefines = ConvertValue<string[]>(specificCompilationOptions, "define") ?? new string[] { configuration.Key.ToUpperInvariant() };
-
-                    var defines = new HashSet<string>(specificDefines);
-                    defines.AddRange(_defaultTargetFrameworkConfiguration.Defines);
-
-                    config.CompilationOptions = GetCompilationOptions(specificCompilationOptions) ?? options;
-                    config.Defines = defines;
                     config.Dependencies = new List<PackageReference>();
 
                     PopulateDependencies(config.Dependencies, properties);
 
                     _configurations[config.FrameworkName] = config;
+                    _compilationOptions[config.FrameworkName] = properties["compilationOptions"];
                 }
             }
-        }
-
-        private static CSharpCompilationOptions GetCompilationOptions(JToken compilationOptions)
-        {
-            if (compilationOptions == null)
-            {
-                return null;
-            }
-
-            var options = new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary)
-                                .WithHighEntropyVirtualAddressSpace(true);
-
-            bool allowUnsafe = GetValue<bool>(compilationOptions, "allowUnsafe");
-            string platformValue = GetValue<string>(compilationOptions, "platform");
-            bool warningsAsErrors = GetValue<bool>(compilationOptions, "warningsAsErrors");
-
-            Platform platform;
-            if (!Enum.TryParse<Platform>(platformValue, out platform))
-            {
-                platform = Platform.AnyCPU;
-            }
-
-            ReportWarning warningOption = warningsAsErrors ? ReportWarning.Error : ReportWarning.Default;
-
-            return options.WithAllowUnsafe(allowUnsafe)
-                          .WithPlatform(platform)
-                          .WithGeneralWarningOption(warningOption);
-        }
-
-        private static T ConvertValue<T>(JToken token, string name)
-        {
-            if (token == null)
-            {
-                return default(T);
-            }
-
-            var obj = token[name];
-
-            if (obj == null)
-            {
-                return default(T);
-            }
-
-            return obj.ToObject<T>();
         }
 
         private static T GetValue<T>(JToken token, string name)
@@ -306,10 +265,6 @@ namespace Microsoft.Net.Runtime.Loader
     public class TargetFrameworkConfiguration
     {
         public FrameworkName FrameworkName { get; set; }
-
-        public CSharpCompilationOptions CompilationOptions { get; set; }
-
-        public IEnumerable<string> Defines { get; set; }
 
         public IList<PackageReference> Dependencies { get; set; }
     }

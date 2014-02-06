@@ -96,7 +96,6 @@ namespace Microsoft.Net.Runtime
                 _watcher = NoopWatcher.Instance;
             }
 
-            var globalAssemblyCache = new DefaultGlobalAssemblyCache();
             var projectResolver = new ProjectResolver(_projectDir, rootDirectory);
 
             if (options.UseCachedCompilations)
@@ -105,9 +104,7 @@ namespace Microsoft.Net.Runtime
                 _loader.Add(cachedLoader);
             }
 
-            var resolver = new FrameworkReferenceResolver(globalAssemblyCache);
-            var resourceProvider = new ResxResourceProvider();
-            var roslynLoader = new RoslynAssemblyLoader(projectResolver, _watcher, resolver, globalAssemblyCache, _loader, resourceProvider);
+            var roslynLoader = new PartialRoslynAssemblyLoader(projectResolver, _watcher, _loader);
             _loader.Add(roslynLoader);
 #if NET45 // CORECLR_TODO: Process
             _loader.Add(new MSBuildProjectAssemblyLoader(rootDirectory, _watcher));

@@ -1,6 +1,6 @@
 ﻿using Microsoft.CodeAnalysis;
 
-namespace Microsoft.Net.Runtime
+namespace Microsoft.Net.Runtime.Roslyn
 {
     public class DefaultGlobalAssemblyCache : IGlobalAssemblyCache
     {

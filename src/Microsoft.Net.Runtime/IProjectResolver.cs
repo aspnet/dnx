@@ -1,5 +1,5 @@
 ﻿
-namespace Microsoft.Net.Runtime.Loader.Roslyn
+namespace Microsoft.Net.Runtime.Loader
 {
     public interface IProjectResolver
     {

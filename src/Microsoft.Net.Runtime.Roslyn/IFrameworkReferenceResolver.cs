@@ -2,7 +2,7 @@
 using System.Runtime.Versioning;
 using Microsoft.CodeAnalysis;
 
-namespace Microsoft.Net.Runtime
+namespace Microsoft.Net.Runtime.Roslyn
 {
     public interface IFrameworkReferenceResolver
     {

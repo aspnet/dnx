@@ -3,6 +3,7 @@
     "compilationOptions" : { "define" : ["TRACE"] },
     "dependencies": {
         "Microsoft.Net.Runtime" : "",
+        "Microsoft.Net.Runtime.Roslyn" : "",
         "Microsoft.Net.Runtime.Interfaces" : ""
     },
     "configurations" : {

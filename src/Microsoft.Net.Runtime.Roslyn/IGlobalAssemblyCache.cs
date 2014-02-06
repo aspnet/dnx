@@ -1,4 +1,4 @@
-﻿namespace Microsoft.Net.Runtime
+﻿namespace Microsoft.Net.Runtime.Roslyn
 {
     public interface IGlobalAssemblyCache
     {

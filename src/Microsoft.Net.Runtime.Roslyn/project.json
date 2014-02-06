@@ -2,17 +2,20 @@
     "version": "0.1-alpha-*",
     "compilationOptions" : { "define" : ["LOADER", "TRACE"] },
     "dependencies": {
-        "Newtonsoft.Json": "5.0.8",
+        "Newtonsoft.Json" : "5.0.8",
+        "Microsoft.Net.Runtime" :  "",
+        "Microsoft.CodeAnalysis" : "0.6.31123.2",
+        "Microsoft.CodeAnalysis.CSharp" : "0.6.31123.2",
+        "System.Reflection.Metadata.Ecma335": "0.6.31123.2",
+        "System.Collections.Immutable" : "1.1.15.0",
         "Microsoft.Net.Runtime.Interfaces" : ""
     },
     "configurations" : {
         "net45" : {
             "dependencies": {
-                "System.IO.Compression" : "",
-                "System.IO.Compression.FileSystem" : "",
+                "System.Xml.Linq": "",
+                "System.Xml": "",
                 "System.Runtime" : "",
-                "System.Xml" : "",
-                "System.Xml.Linq" : "",
                 "System.Collections" : ""
             }
         },

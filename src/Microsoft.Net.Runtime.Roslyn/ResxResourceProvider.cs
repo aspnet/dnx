@@ -7,7 +7,7 @@ using System.Resources;
 using System.Xml.Linq;
 using Microsoft.CodeAnalysis;
 
-namespace Microsoft.Net.Runtime.Loader.Roslyn
+namespace Microsoft.Net.Runtime.Roslyn
 {
     public class ResxResourceProvider : IResourceProvider
     {

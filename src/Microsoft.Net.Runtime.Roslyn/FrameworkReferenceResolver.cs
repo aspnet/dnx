@@ -9,7 +9,7 @@ using System.Xml.Linq;
 using Microsoft.CodeAnalysis;
 using NuGet;
 
-namespace Microsoft.Net.Runtime
+namespace Microsoft.Net.Runtime.Roslyn
 {
     public class FrameworkReferenceResolver : IFrameworkReferenceResolver
     {
@@ -74,7 +74,7 @@ namespace Microsoft.Net.Runtime
                 }
             }
 #endif
-            foreach (var frameworkDirectory in GetFrameworkDirectories())
+            foreach (var frameworkDirectory in FrameworkDirectoryResolver.GetFrameworkDirectories())
             {
                 if (Directory.Exists(frameworkDirectory))
                 {
@@ -83,25 +83,6 @@ namespace Microsoft.Net.Runtime
             }
 
             return info;
-        }
-
-        internal static IEnumerable<string> GetFrameworkDirectories()
-        {
-            string klrPath = Environment.GetEnvironmentVariable("KLR_PATH");
-
-            if (!String.IsNullOrEmpty(klrPath))
-            {
-                klrPath = Path.GetDirectoryName(klrPath);
-
-                return new[] {
-                    Path.GetFullPath(Path.Combine(klrPath, @"..\..\Framework")),
-#if DEBUG
-                    Path.GetFullPath(Path.Combine(klrPath, @"..\..\artifacts\sdk\Framework"))
-#endif
-                };
-            }
-
-            return new string[0];
         }
 
         private MetadataReference ResolveGacAssembly(string name)

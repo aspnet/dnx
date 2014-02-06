@@ -10,14 +10,15 @@ using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.Emit;
 using Microsoft.Net.Runtime.FileSystem;
 using NuGet;
+using Microsoft.Net.Runtime.Loader;
 
 #if NET45 // TODO: Temporary due to CoreCLR and Desktop Roslyn being out of sync
 using EmitResult = Microsoft.CodeAnalysis.Emit.CommonEmitResult;
 #endif
 
-namespace Microsoft.Net.Runtime.Loader.Roslyn
+namespace Microsoft.Net.Runtime.Roslyn
 {
-    public class RoslynAssemblyLoader : IAssemblyLoader, IPackageLoader, IMetadataLoader
+    public class RoslynAssemblyLoader : IAssemblyLoader, IPackageLoader
     {
         private readonly Dictionary<string, CompiledAssembly> _compiledAssemblies = new Dictionary<string, CompiledAssembly>(StringComparer.OrdinalIgnoreCase);
 
@@ -29,6 +30,20 @@ namespace Microsoft.Net.Runtime.Loader.Roslyn
         private readonly IResourceProvider _resourceProvider;
 
         private IEnumerable<PackageDescription> _packages;
+
+        public RoslynAssemblyLoader(IProjectResolver projectResolver,
+                                    IFileWatcher watcher,
+                                    IAssemblyLoader dependencyLoader,
+                                    IEnumerable<PackageDescription> packages)
+        {
+            _projectResolver = projectResolver;
+            _watcher = watcher;
+            _globalAssemblyCache = new DefaultGlobalAssemblyCache();
+            _resolver = new FrameworkReferenceResolver(_globalAssemblyCache);
+            _dependencyLoader = dependencyLoader;
+            _resourceProvider = new ResxResourceProvider();
+            _packages = packages;
+        }
 
         public RoslynAssemblyLoader(IProjectResolver projectResolver,
                                     IFileWatcher watcher,
@@ -67,6 +82,7 @@ namespace Microsoft.Net.Runtime.Loader.Roslyn
             _watcher.WatchFile(project.ProjectFilePath);
 
             TargetFrameworkConfiguration targetFrameworkConfig = project.GetTargetFrameworkConfiguration(loadContext.TargetFramework);
+
 
             Trace.TraceInformation("[{0}]: Found project '{1}' framework={2}", GetType().Name, project.Name, loadContext.TargetFramework);
 
@@ -113,7 +129,9 @@ namespace Microsoft.Net.Runtime.Loader.Roslyn
 
                 var sourceFiles = project.SourceFiles.ToList();
 
-                var parseOptions = new CSharpParseOptions(preprocessorSymbols: targetFrameworkConfig.Defines.AsImmutable());
+                var compilationSettings = project.GetCompilationSettings(loadContext.TargetFramework);
+
+                var parseOptions = new CSharpParseOptions(preprocessorSymbols: compilationSettings.Defines.AsImmutable());
 
                 foreach (var sourcePath in sourceFiles)
                 {
@@ -139,7 +157,7 @@ namespace Microsoft.Net.Runtime.Loader.Roslyn
 
                 Compilation compilation = CSharpCompilation.Create(
                     name,
-                    targetFrameworkConfig.CompilationOptions,
+                    compilationSettings.CompilationOptions,
                     syntaxTrees: trees,
                     references: references);
 
@@ -187,23 +205,6 @@ namespace Microsoft.Net.Runtime.Loader.Roslyn
             }
         }
 
-        public MetadataReference GetMetadata(string name)
-        {
-            CompiledAssembly compiledAssembly;
-            if (_compiledAssemblies.TryGetValue(name, out compiledAssembly))
-            {
-                return compiledAssembly.MetadataReference;
-            }
-
-            string assemblyLocation;
-            if (_globalAssemblyCache.TryResolvePartialName(name, out assemblyLocation))
-            {
-                return new MetadataFileReference(assemblyLocation);
-            }
-
-            return null;
-        }
-
         public PackageDescription GetDescription(string name, SemanticVersion version, FrameworkName frameworkName)
         {
             Project project;
@@ -230,6 +231,23 @@ namespace Microsoft.Net.Runtime.Loader.Roslyn
         public void Initialize(IEnumerable<PackageDescription> packages, FrameworkName frameworkName)
         {
             _packages = packages;
+        }
+
+        public MetadataReference GetMetadata(string name)
+        {
+            CompiledAssembly compiledAssembly;
+            if (_compiledAssemblies.TryGetValue(name, out compiledAssembly))
+            {
+                return compiledAssembly.MetadataReference;
+            }
+
+            string assemblyLocation;
+            if (_globalAssemblyCache.TryResolvePartialName(name, out assemblyLocation))
+            {
+                return new MetadataFileReference(assemblyLocation);
+            }
+
+            return null;
         }
 
         private bool TryResolveDependency(PackageReference dependency, LoadContext loadContext, List<string> errors, out MetadataReference resolved)

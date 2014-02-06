@@ -1047,7 +1047,7 @@ namespace NuGet
                 { "native", "native"}
             };
 
-            foreach (var frameworkDirectory in FrameworkReferenceResolver.GetFrameworkDirectories())
+            foreach (var frameworkDirectory in FrameworkDirectoryResolver.GetFrameworkDirectories())
             {
                 if (Directory.Exists(frameworkDirectory))
                 {

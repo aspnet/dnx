@@ -5,7 +5,6 @@ using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.Versioning;
-using Microsoft.CodeAnalysis;
 using Microsoft.Net.Runtime.Loader.Infrastructure;
 using NuGet;
 
@@ -94,13 +93,6 @@ namespace Microsoft.Net.Runtime.Loader
 
             sw.Stop();
             Trace.TraceInformation("Resolved dependencies for {0} in {1}ms", name, sw.ElapsedMilliseconds);
-        }
-
-        public MetadataReference ResolveReference(string name)
-        {
-            return _loaders.OfType<IMetadataLoader>()
-                           .Select(resolver => resolver.GetMetadata(name))
-                           .FirstOrDefault(reference => reference != null);
         }
 
         private AssemblyLoadResult LoadImpl(LoadContext loadContext, Stopwatch sw)
