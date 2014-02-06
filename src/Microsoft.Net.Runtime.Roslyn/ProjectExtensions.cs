@@ -18,8 +18,19 @@ namespace Microsoft.Net.Runtime.Roslyn
             var rootDefines = ConvertValue<string[]>(rootOptions, "define") ?? new string[] { };
 
             var configuration = project.GetConfiguration(frameworkName);
-            var specificOptions = configuration.Value["compilationOptions"];
-            var specificDefines = ConvertValue<string[]>(specificOptions, "define") ?? new string[] { configuration.Key.ToUpperInvariant() };
+
+            JToken specificOptions = null;
+            string[] specificDefines = null;
+
+            if (configuration.Value == null)
+            {
+                specificDefines = new string[] { };
+            }
+            else
+            {
+                specificOptions = configuration.Value["compilationOptions"];
+                specificDefines = ConvertValue<string[]>(specificOptions, "define") ?? new string[] { configuration.Key.ToUpperInvariant() };
+            }
 
             var defaultOptions = new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary);
 
