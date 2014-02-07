@@ -73,6 +73,7 @@ namespace Microsoft.Net.ApplicationHost
                 else
                 {
                     options.ProjectDir = arg;
+                    index++;
                     break;
                 }
             }
