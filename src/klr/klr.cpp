@@ -5,6 +5,10 @@
 
 int CallFirmwareProcessMain(int argc, wchar_t* argv[])
 {
+    // Example commandline
+    // klr.exe --core45 --appbase "c:\foo" "ApplicationHost" --watch --nobin
+    // klr.exe --net45 --appbase "c:\myapp" "ApplicationHost" --nobin
+
     bool fSuccess = true;
     bool m_fVerboseTrace = true;
     HMODULE m_hHostModule = nullptr;

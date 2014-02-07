@@ -19,7 +19,6 @@ namespace Microsoft.Net.Runtime
         private AssemblyLoader _loader;
         private IFileWatcher _watcher;
         private readonly string _projectDir;
-        private Assembly _entryPoint;
         private readonly FrameworkName _targetFramework;
 
         public DefaultHost(DefaultHostOptions options)
@@ -43,11 +42,6 @@ namespace Microsoft.Net.Runtime
 
         public Assembly GetEntryPoint()
         {
-            if (_entryPoint != null)
-            {
-                return _entryPoint;
-            }
-
             Project project;
             if (!Project.TryGetProject(_projectDir, out project))
             {
@@ -59,13 +53,13 @@ namespace Microsoft.Net.Runtime
 
             _loader.Walk(project.Name, project.Version, _targetFramework);
 
-            _entryPoint = _loader.LoadAssembly(new LoadContext(project.Name, _targetFramework));
+            var assembly = _loader.LoadAssembly(new LoadContext(project.Name, _targetFramework));
 
             sw.Stop();
 
             Trace.TraceInformation("Load took {0}ms", sw.ElapsedMilliseconds);
 
-            return _entryPoint;
+            return assembly;
         }
 
         public Assembly Load(string name)

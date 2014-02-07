@@ -33,8 +33,7 @@ namespace Microsoft.Net.Runtime.Roslyn
 
         public RoslynAssemblyLoader(IProjectResolver projectResolver,
                                     IFileWatcher watcher,
-                                    IAssemblyLoader dependencyLoader,
-                                    IEnumerable<DependencyDescription> packages)
+                                    IAssemblyLoader dependencyLoader)
         {
             _projectResolver = projectResolver;
             _watcher = watcher;
@@ -42,7 +41,6 @@ namespace Microsoft.Net.Runtime.Roslyn
             _resolver = new FrameworkReferenceResolver(_globalAssemblyCache);
             _dependencyLoader = dependencyLoader;
             _resourceProvider = new ResxResourceProvider();
-            _packages = packages;
         }
 
         public RoslynAssemblyLoader(IProjectResolver projectResolver,

@@ -7,7 +7,6 @@
 #include "..\klr\klr.h"
 
 typedef int (STDMETHODCALLTYPE *HostMain)(
-    const wchar_t* appBase,
     const int argc,
     const wchar_t** argv
     );
@@ -245,7 +244,7 @@ extern "C" __declspec(dllexport) bool __stdcall CallApplicationMain(PCALL_APPLIC
     }
 
     // Call main
-    data->exitcode = pHostMain(szCurrentDirectory, data->argc, data->argv);
+    data->exitcode = pHostMain(data->argc, data->argv);
 
     pCLRRuntimeHost->UnloadAppDomain(domainId, true);
 

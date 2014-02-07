@@ -25,20 +25,6 @@ namespace klr.host
             });
         }
 
-        public Assembly GetEntryPoint()
-        {
-            foreach (var host in _hosts)
-            {
-                Assembly assembly = host.GetEntryPoint();
-                if (assembly != null)
-                {
-                    return assembly;
-                }
-            }
-
-            return null;
-        }
-
         public Assembly Load(string name)
         {
             Assembly assembly;

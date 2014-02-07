@@ -11,6 +11,8 @@ SETLOCAL
 SET ERRORLEVEL=
 
 SET TARGET=%TARGET_FRAMEWORK%
+SET HOST_BIN=..\bin\Debug
+
 if "%TARGET%" == "" (
    SET TARGET=..\src\Microsoft.Net.Project\bin\Debug\net45
 )
@@ -18,7 +20,7 @@ if "%TARGET%" == "" (
 IF EXIST "%~dp0k-%1.cmd" (
   "%~dp0k-%1.cmd" %2 %3 %4 %5 %6 %7 %8 %9 
 ) ELSE (
-  CALL "%~dp0KLR" "%~dp0%TARGET%\Microsoft.Net.Project.dll" %*
+  CALL "%~dp0KLR" "%~dp0%TARGET%;%~dp0%HOST_BIN%" "Microsoft.Net.Project" %*
 )
 
 exit /b %ERRORLEVEL%

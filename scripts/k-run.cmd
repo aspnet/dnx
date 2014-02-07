@@ -9,11 +9,13 @@ IF "%1"=="" (
 SET ERRORLEVEL=
 
 SET TARGET=%TARGET_FRAMEWORK%
+SET HOST_BIN=..\bin\Debug
+
 if "%TARGET%" == "" (
    SET TARGET=..\src\Microsoft.Net.ApplicationHost\bin\Debug\net45
 )
 
-CALL "%~dp0KLR" "%~dp0%TARGET%\Microsoft.Net.ApplicationHost.dll" %*
+CALL "%~dp0KLR" "%~dp0%TARGET%;%~dp0%HOST_BIN%" "Microsoft.Net.ApplicationHost" %*
 
 exit /b %ERRORLEVEL%
 

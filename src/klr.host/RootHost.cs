@@ -9,37 +9,16 @@ namespace klr.host
 {
     public class RootHost : IHost
     {
-        private readonly string _application;
-        private readonly string _path;
-        private readonly string _applicationName;
-        readonly IDictionary<string, Assembly> _cache = new Dictionary<string, Assembly>();
+        private readonly IDictionary<string, Assembly> _cache = new Dictionary<string, Assembly>();
+        private readonly string[] _searchPaths;
 
-
-        public RootHost(string application)
+        public RootHost(string[] searchPaths)
         {
-            _application = application;
-
-            if (_application.EndsWith(".dll"))
-            {
-                _path = Path.GetDirectoryName(_application);
-                _applicationName = Path.GetFileNameWithoutExtension(application);
-            }
-            else
-            {
-                throw new ArgumentException(
-                    String.Format("application '{0}' is not understood", application),
-                    "application");
-            }
+            _searchPaths = searchPaths;
         }
 
         public void Dispose()
         {
-        }
-
-        public Assembly GetEntryPoint()
-        {
-            Trace.TraceInformation("RootHost.GetEntryPoint GetEntryPoint {0}", _applicationName);
-            return Assembly.Load(new AssemblyName(_applicationName));
         }
 
         public Assembly Load(string name)
@@ -52,17 +31,20 @@ namespace klr.host
                 return assembly;
             }
 
-            var filePath = Path.Combine(_path, name + ".dll");
-            if (File.Exists(filePath))
+            foreach (var path in _searchPaths)
             {
-                try
+                var filePath = Path.Combine(path, name + ".dll");
+                if (File.Exists(filePath))
                 {
-                    Trace.TraceInformation("RootHost Assembly.LoadFile({0})", filePath);
-                    assembly = Assembly.LoadFile(filePath);
-                }
-                catch (Exception ex)
-                {
-                    Trace.TraceWarning("Exception {0} loading {1}", ex.Message, filePath);
+                    try
+                    {
+                        Trace.TraceInformation("RootHost Assembly.LoadFile({0})", filePath);
+                        assembly = Assembly.LoadFile(filePath);
+                    }
+                    catch (Exception ex)
+                    {
+                        Trace.TraceWarning("Exception {0} loading {1}", ex.Message, filePath);
+                    }
                 }
             }
 

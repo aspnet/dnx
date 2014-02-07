@@ -17,9 +17,9 @@ namespace Microsoft.Net.Runtime
         private IAssemblyLoader _roslynLoader;
         private bool _roslynInitializing;
 
-        private IEnumerable<DependencyDescription> _packages;
-
-        public LazyRoslynAssemblyLoader(ProjectResolver projectResolver, IFileWatcher watcher, AssemblyLoader loader)
+        public LazyRoslynAssemblyLoader(ProjectResolver projectResolver,
+                                        IFileWatcher watcher,
+                                        AssemblyLoader loader)
         {
             _projectResolver = projectResolver;
             _watcher = watcher;
@@ -51,7 +51,6 @@ namespace Microsoft.Net.Runtime
 
         public void Initialize(IEnumerable<DependencyDescription> packages, FrameworkName frameworkName)
         {
-            _packages = packages;
         }
 
         public AssemblyLoadResult Load(LoadContext loadContext)
@@ -73,9 +72,9 @@ namespace Microsoft.Net.Runtime
 
                     var ctors = roslynAssemblyLoaderType.GetTypeInfo().DeclaredConstructors;
 
-                    var ctor = ctors.First(c => c.GetParameters().Length == 4);
+                    var ctor = ctors.First(c => c.GetParameters().Length == 3);
 
-                    _roslynLoader = (IAssemblyLoader)ctor.Invoke(new object[] { _projectResolver, _watcher, _loader, _packages });
+                    _roslynLoader = (IAssemblyLoader)ctor.Invoke(new object[] { _projectResolver, _watcher, _loader });
 
                     return _roslynLoader.Load(loadContext);
                 }
