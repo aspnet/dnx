@@ -8,6 +8,7 @@ using System.Security;
 [SecurityCritical]
 sealed class DomainManager : AppDomainManager
 {
+    private static Dictionary<string, Assembly> _hostAssemblies = new Dictionary<string, Assembly>();
 
     public DomainManager()
     {
@@ -45,32 +46,55 @@ sealed class DomainManager : AppDomainManager
         string rawSearchPaths = arguments[0];
         string[] searchPaths = rawSearchPaths.Split(';').Select(Path.GetFullPath).ToArray();
 
-        var resolver = new AssemblyResolver();
-
-        IDisposable bootstrapperRegistration = resolver.RegisterLoader(assemblyName => ResolveAssembly(searchPaths, assemblyName.Name));
-
-        Func<Func<AssemblyName, Assembly>, IDisposable> setAssemblyLoader = resolver.RegisterLoader;
+        Func<string, Assembly> loader = _ => null;
 
         ResolveEventHandler handler = (sender, args) =>
         {
-            return resolver.Load(new AssemblyName(args.Name));
+            var name = new AssemblyName(args.Name).Name;
+
+            // If host assembly was already loaded use it
+            Assembly assembly;
+            if (_hostAssemblies.TryGetValue(name, out assembly))
+            {
+                return assembly;
+            }
+
+            // Special case for host assemblies
+            return loader(name) ?? ResolveHostAssembly(searchPaths, name);
         };
 
         AppDomain.CurrentDomain.AssemblyResolve += handler;
 
         try
         {
-            // Eager load the dependencies of klr host then get out of the way
             Assembly.Load(new AssemblyName("Stubs, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null"));
-            Assembly.Load(new AssemblyName("Microsoft.Net.Runtime.Interfaces, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null"));
             var assembly = Assembly.Load(new AssemblyName("klr.host"));
-            bootstrapperRegistration.Dispose();
+
+            // The following code is doing:
+            // var hostContainer = new klr.host.HostContainer();
+            // var rootHost = new klr.host.RootHost(searchPaths);
+            // hostContainer.AddHost(rootHost);
+            // var bootstrapper = new klr.host.Bootstrapper();
+            // bootstrapper.Main(argv.Skip(1).ToArray());
+
+            var hostContainerType = assembly.GetType("klr.host.HostContainer");
+            var rootHostType = assembly.GetType("klr.host.RootHost");
+            var hostContainer = Activator.CreateInstance(hostContainerType);
+            var rootHost = Activator.CreateInstance(rootHostType, new object[] { searchPaths });
+            MethodInfo addHostMethodInfo = hostContainerType.GetTypeInfo().GetDeclaredMethod("AddHost");
+            var disposable = (IDisposable)addHostMethodInfo.Invoke(hostContainer, new[] { rootHost });
+            var hostContainerLoad = hostContainerType.GetTypeInfo().GetDeclaredMethod("Load");
+
+            loader = name => hostContainerLoad.Invoke(hostContainer, new[] { name }) as Assembly;
 
             var bootstrapperType = assembly.GetType("klr.host.Bootstrapper");
             var mainMethod = bootstrapperType.GetTypeInfo().GetDeclaredMethod("Main");
-            var bootstrapper = Activator.CreateInstance(bootstrapperType, setAssemblyLoader);
-            var result = mainMethod.Invoke(bootstrapper, new object[] { arguments });
-            return (int)result;
+            var bootstrapper = Activator.CreateInstance(bootstrapperType, hostContainer);
+
+            using (disposable)
+            {
+                return (int)mainMethod.Invoke(bootstrapper, new object[] { arguments.Skip(1).ToArray() });
+            }
         }
         catch (Exception ex)
         {
@@ -83,7 +107,7 @@ sealed class DomainManager : AppDomainManager
         }
     }
 
-    private static Assembly ResolveAssembly(string[] searchPaths, string name)
+    private static Assembly ResolveHostAssembly(string[] searchPaths, string name)
     {
         foreach (var searchPath in searchPaths)
         {
@@ -91,7 +115,10 @@ sealed class DomainManager : AppDomainManager
 
             if (File.Exists(path))
             {
-                return Assembly.LoadFile(path);
+                var assembly = Assembly.LoadFile(path);
+
+                _hostAssemblies[name] = assembly;
+                return assembly;
             }
         }
 
@@ -111,51 +138,6 @@ sealed class DomainManager : AppDomainManager
         if (!(ex is TargetInvocationException))
         {
             yield return ex.ToString();
-        }
-    }
-
-    private class AssemblyResolver
-    {
-        private List<Func<AssemblyName, Assembly>> _resolvers = new List<Func<AssemblyName, Assembly>>();
-
-        public IDisposable RegisterLoader(Func<AssemblyName, Assembly> next)
-        {
-            _resolvers.Add(next);
-
-            return new DisposableAction(() =>
-            {
-                _resolvers.Remove(next);
-            });
-        }
-
-        public Assembly Load(AssemblyName assemblyName)
-        {
-            foreach (var resolver in _resolvers)
-            {
-                Assembly assembly = resolver(assemblyName);
-
-                if (assembly != null)
-                {
-                    return assembly;
-                }
-            }
-
-            return null;
-        }
-
-        private class DisposableAction : IDisposable
-        {
-            private readonly Action _action;
-
-            public DisposableAction(Action action)
-            {
-                _action = action;
-            }
-
-            public void Dispose()
-            {
-                _action();
-            }
         }
     }
 }

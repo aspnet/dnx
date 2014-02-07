@@ -9,36 +9,24 @@ namespace klr.host
 {
     public class Bootstrapper
     {
-        private readonly HostContainer _container = new HostContainer();
-        private readonly IDisposable _loaderRegistration;
+        private readonly IHostContainer _container;
 
-        public Bootstrapper(Func<Func<AssemblyName, Assembly>, IDisposable> registerLoader)
+        public Bootstrapper(IHostContainer container)
         {
-            _loaderRegistration = registerLoader(name =>
-            {
-                return _container.Load(name.Name);
-            });
+            _container = container;
         }
 
         public int Main(string[] args)
         {
-            if (args.Length < 2)
+            if (args.Length < 1)
             {
-                Console.WriteLine("{searchPaths} {app} [args]");
+                Console.WriteLine("{app} [args]");
                 return -1;
             }
 
-            string[] searchPaths = args[0].Split(';').Select(Path.GetFullPath).ToArray();
-            string name = args[1];
+            string name = args[0];
 
-            using (_loaderRegistration)
-            {
-                var rootHost = new RootHost(searchPaths);
-                using (_container.AddHost(rootHost))
-                {
-                    return ExecuteMain(name, args.Skip(2).ToArray());
-                }
-            }
+            return ExecuteMain(name, args.Skip(1).ToArray());
         }
 
         private int ExecuteMain(string name, string[] args)
