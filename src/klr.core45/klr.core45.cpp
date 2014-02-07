@@ -207,16 +207,16 @@ extern "C" __declspec(dllexport) bool __stdcall CallApplicationMain(PCALL_APPLIC
         APPDOMAIN_ENABLE_ASSEMBLY_LOADFILE;
 
     LPCWSTR szAssemblyName = L"klr.core45.managed, Version=1.0.0.0";
-    LPCWSTR szDomainManagerTypeName = L"DomainManager";
-    LPCWSTR szMainMethodName = L"Main";
+    LPCWSTR szEntryPointTypeName = L"DomainManager";
+    LPCWSTR szMainMethodName = L"Execute";
 
     int nprops = sizeof(property_keys) / sizeof(wchar_t*);
 
     hr = pCLRRuntimeHost->CreateAppDomainWithManager(
         L"klr.core45.managed",
         dwFlagsAppDomain,
-        szAssemblyName,
-        szDomainManagerTypeName,
+        NULL,
+        NULL,
         nprops,
         property_keys,
         property_values,
@@ -233,7 +233,7 @@ extern "C" __declspec(dllexport) bool __stdcall CallApplicationMain(PCALL_APPLIC
     hr = pCLRRuntimeHost->CreateDelegate(
         domainId,
         szAssemblyName,
-        szDomainManagerTypeName,
+        szEntryPointTypeName,
         szMainMethodName,
         (INT_PTR*)&pHostMain);
 
