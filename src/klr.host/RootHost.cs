@@ -40,6 +40,7 @@ namespace klr.host
                     {
                         Trace.TraceInformation("RootHost Assembly.LoadFile({0})", filePath);
                         assembly = Assembly.LoadFile(filePath);
+                        break;
                     }
                     catch (Exception ex)
                     {
