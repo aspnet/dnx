@@ -24,7 +24,6 @@ public class DomainManager : AppDomainManager
         return RuntimeBootstrapper.Execute(argv);
     }
 
-
     [DllImport("klr.net45.dll")]
     private extern static void BindApplicationMain(ref ApplicationMainInfo info);
 
