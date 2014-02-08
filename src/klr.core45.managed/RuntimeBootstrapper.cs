@@ -49,9 +49,8 @@ namespace klr.hosting
 
             try
             {
-#if !NET45
-                Assembly.Load(new AssemblyName("Stubs, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null"));
-#endif
+                Assembly.Load(new AssemblyName("Microsoft.Net.Runtime.Common, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null"));
+
                 var assembly = Assembly.Load(new AssemblyName("klr.host"));
 
                 // The following code is doing:

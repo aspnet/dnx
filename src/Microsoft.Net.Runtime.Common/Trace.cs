@@ -1,4 +1,5 @@
-﻿using System;
+﻿#if K10
+using System;
 using System.Reflection;
 
 namespace System.Diagnostics
@@ -21,3 +22,4 @@ namespace System.Diagnostics
         }
     }
 }
+#endif

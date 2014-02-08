@@ -3,6 +3,7 @@
     "compilationOptions" : { "define" : ["LOADER", "TRACE"] },
     "dependencies": {
         "Newtonsoft.Json": "5.0.8",
+        "Microsoft.Net.Runtime.Common" : "",
         "Microsoft.Net.Runtime.Interfaces" : ""
     },
     "configurations" : {
@@ -16,8 +17,6 @@
                 "System.Collections" : ""
             }
         },
-        "k10" : {
-            "dependencies": { "Stubs": "" }
-        }
+        "k10" : { }
     }
 }

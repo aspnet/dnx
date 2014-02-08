@@ -2,7 +2,6 @@
     "version": "0.1-alpha-*",
     "compilationOptions" : { "define" : ["TRACE"] },
     "dependencies": {
-        "Microsoft.Net.Runtime.Common" : "",
         "Microsoft.Net.Runtime.Interfaces" : ""
     },
     "configurations" : {

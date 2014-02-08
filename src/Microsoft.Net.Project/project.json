@@ -3,13 +3,12 @@
     "compilationOptions" : { "define" : ["TRACE"] },
     "dependencies": {
         "Microsoft.Net.Runtime" : "",
+        "Microsoft.Net.Runtime.Common" : "",
         "Microsoft.Net.Runtime.Roslyn" : "",
         "Microsoft.Net.Runtime.Interfaces" : ""
     },
     "configurations" : {
         "net45" : { },
-        "k10" : { 
-            "dependencies": { "Stubs": "" }
-        }
+        "k10" : { }
     }
 }

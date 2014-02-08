@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using Microsoft.Net.Runtime;
+using Microsoft.Net.Runtime.Common;
 
 namespace Microsoft.Net.Project
 {
@@ -46,27 +47,11 @@ namespace Microsoft.Net.Project
             }
             catch (Exception ex)
             {
-                Console.Error.WriteLine(String.Join(Environment.NewLine, GetExceptions(ex)));
+                Console.Error.WriteLine(String.Join(Environment.NewLine, ExceptionHelper.GetExceptions(ex)));
                 return -2;
             }
 
             return 0;
-        }
-
-        private static IEnumerable<string> GetExceptions(Exception ex)
-        {
-            if (ex.InnerException != null)
-            {
-                foreach (var e in GetExceptions(ex.InnerException))
-                {
-                    yield return e;
-                }
-            }
-
-            if (!(ex is TargetInvocationException))
-            {
-                yield return ex.ToString();
-            }
         }
     }
 }
