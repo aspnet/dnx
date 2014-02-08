@@ -1,16 +1,22 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Reflection;
 using Microsoft.Net.Runtime;
 using Microsoft.Net.Runtime.Common;
+using Microsoft.Net.Runtime.Common.CommandLine;
 
 namespace Microsoft.Net.ApplicationHost
 {
     public class Program
     {
         private readonly IHostContainer _container;
+        private static readonly Dictionary<string, CommandOptionType> _options = new Dictionary<string, CommandOptionType>
+        {
+            { "framework", CommandOptionType.SingleValue },
+            { "nobin", CommandOptionType.NoValue },
+            { "watch", CommandOptionType.NoValue }
+        };
 
         public Program(IHostContainer container)
         {
@@ -40,57 +46,31 @@ namespace Microsoft.Net.ApplicationHost
             }
         }
 
-        private void ParseArgs(string[] args, out DefaultHostOptions options, out string[] outArgs)
+        private void ParseArgs(string[] args, out DefaultHostOptions defaultHostOptions, out string[] outArgs)
         {
-            options = new DefaultHostOptions();
+            var parser = new CommandLineParser();
+            CommandOptions options;
+            parser.ParseOptions(args, _options, out options);
+
+            defaultHostOptions = new DefaultHostOptions();
+            defaultHostOptions.UseCachedCompilations = !options.HasOption("nobin");
+            defaultHostOptions.WatchFiles = options.HasOption("watch");
+            defaultHostOptions.TargetFramework = Environment.GetEnvironmentVariable("TARGET_FRAMEWORK") ?? options.GetValue("framework");
 
 #if NET45
-            options.ProjectDir = AppDomain.CurrentDomain.SetupInformation.ApplicationBase;
+            defaultHostOptions.ProjectDir = AppDomain.CurrentDomain.SetupInformation.ApplicationBase;
 #else
-            options.ProjectDir = (string)typeof(AppDomain).GetRuntimeMethod("GetData", new[] { typeof(string) }).Invoke(AppDomain.CurrentDomain, new object[] { "APPBASE" });
+            defaultHostOptions.ProjectDir = (string)typeof(AppDomain).GetRuntimeMethod("GetData", new[] { typeof(string) }).Invoke(AppDomain.CurrentDomain, new object[] { "APPBASE" });
 #endif
-
-            // TODO: Just pass this as an argument from the caller
-            options.TargetFramework = Environment.GetEnvironmentVariable("TARGET_FRAMEWORK");
-
-            int index = 0;
-            for (index = 0; index < args.Length; index++)
+            if (options.RemainingArgs.Count > 0)
             {
-                string arg = args[index];
-                if (arg.StartsWith("--"))
-                {
-                    var option = arg.Substring(2);
+                defaultHostOptions.ApplicationName = options.RemainingArgs[0];
 
-                    switch (option.ToLowerInvariant())
-                    {
-                        case "nobin":
-                            options.UseCachedCompilations = false;
-                            break;
-                        case "framework":
-                            options.TargetFramework = option;
-                            break;
-                        case "watch":
-                            options.WatchFiles = true;
-                            break;
-                        default:
-                            break;
-                    }
-                }
-                else
-                {
-                    options.ApplicationName = arg;
-                    index++;
-                    break;
-                }
-            }
-
-            if (index == 0)
-            {
-                outArgs = args;
+                outArgs = options.RemainingArgs.Skip(1).ToArray();
             }
             else
             {
-                outArgs = args.Skip(index).ToArray();
+                outArgs = options.RemainingArgs.ToArray();
             }
         }
 

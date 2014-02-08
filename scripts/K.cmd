@@ -20,7 +20,7 @@ if "%TARGET%" == "" (
 IF EXIST "%~dp0k-%1.cmd" (
   "%~dp0k-%1.cmd" %2 %3 %4 %5 %6 %7 %8 %9 
 ) ELSE (
-  CALL "%~dp0KLR" "%~dp0%TARGET%;%~dp0%HOST_BIN%" "Microsoft.Net.Project" %*
+  CALL "%~dp0KLR" --lib "%~dp0%TARGET%" --lib "%~dp0%HOST_BIN%" "Microsoft.Net.Project" %*
 )
 
 exit /b %ERRORLEVEL%

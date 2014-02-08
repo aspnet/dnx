@@ -10,6 +10,11 @@ namespace klr.hosting
     public static class RuntimeBootstrapper
     {
         private static Dictionary<string, Assembly> _hostAssemblies = new Dictionary<string, Assembly>();
+        private static readonly Dictionary<string, CommandOptionType> _options = new Dictionary<string, CommandOptionType>
+        {
+            { "lib", CommandOptionType.MultipleValue },
+            { "verbosity", CommandOptionType.NoValue }
+        };
 
         public static int Execute(string[] args)
         {
@@ -24,9 +29,14 @@ namespace klr.hosting
             Trace.Listeners.Add(listener);
             Trace.AutoFlush = true;
 #endif
-            // First argument is the path(s) to search for dependencies
-            string rawSearchPaths = args[0];
-            string[] searchPaths = rawSearchPaths.Split(';').Select(Path.GetFullPath).ToArray();
+            var parser = new CommandLineParser();
+            CommandOptions options;
+            parser.ParseOptions(args, _options, out options);
+
+            var libs = options.GetValues("lib");
+
+            IList<string> searchPaths = libs == null ? new string[0] :
+                libs.SelectMany(lib => lib.Split(';').Select(Path.GetFullPath)).ToArray();
 
             Func<string, Assembly> loader = _ => null;
 
@@ -81,7 +91,7 @@ namespace klr.hosting
 
                 using (disposable)
                 {
-                    return (int)mainMethod.Invoke(bootstrapper, new object[] { args.Skip(1).ToArray() });
+                    return (int)mainMethod.Invoke(bootstrapper, new object[] { options.RemainingArgs.ToArray() });
                 }
             }
             catch (Exception ex)
@@ -99,7 +109,7 @@ namespace klr.hosting
             }
         }
 
-        private static Assembly ResolveHostAssembly(string[] searchPaths, string name)
+        private static Assembly ResolveHostAssembly(IList<string> searchPaths, string name)
         {
             foreach (var searchPath in searchPaths)
             {
