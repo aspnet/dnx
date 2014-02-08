@@ -46,7 +46,7 @@ namespace Microsoft.Net.ApplicationHost
 #if NET45
             options.ProjectDir = AppDomain.CurrentDomain.SetupInformation.ApplicationBase;
 #else
-            options.ProjectDir = Directory.GetCurrentDirectory();
+            options.ProjectDir = (string)typeof(AppDomain).GetRuntimeMethod("GetData", new[] { typeof(string) }).Invoke(AppDomain.CurrentDomain, new object[] { "APPBASE" });
 #endif
 
             // TODO: Just pass this as an argument from the caller

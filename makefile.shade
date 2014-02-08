@@ -49,8 +49,11 @@ var FULL_VERSION = '${VERSION + "-" + BuildNumber}'
             try
             {
                 Environment.SetEnvironmentVariable("TARGET_FRAMEWORK", framework);
+                Environment.SetEnvironmentVariable("K_APPBASE", helloWorld);
 
-                var commands = new [] { "run", "build", "clean" };
+                Exec(kcmd, "run");
+
+                var commands = new [] { "build", "clean" };
                 foreach(var cmd in commands)
                 {
                     Exec(kcmd, cmd + " " + helloWorld);
@@ -58,6 +61,7 @@ var FULL_VERSION = '${VERSION + "-" + BuildNumber}'
             }
             finally
             {
+                Environment.SetEnvironmentVariable("K_APPBASE", null);
                 Environment.SetEnvironmentVariable("TARGET_FRAMEWORK", null);
             }
         };

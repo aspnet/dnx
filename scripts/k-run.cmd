@@ -1,9 +1,8 @@
 @Echo OFF
 SETLOCAL
-IF "%1"=="" (
+
+IF "%K_APPBASE%"=="" (
   SET K_APPBASE=%CD%
-) ELSE (
-  SET K_APPBASE=%1
 )
 
 SET ERRORLEVEL=

@@ -17,7 +17,7 @@ namespace klr.net45.managed
     {
         public int Execute(uint argc, IntPtr argv)
         {
-            IntPtr* pBstrs = (IntPtr*)argv;
+            var pBstrs = (IntPtr*)argv;
             string[] args = new string[argc];
             for (uint i = 0; i < argc; i++)
             {

@@ -193,7 +193,7 @@ extern "C" __declspec(dllexport) bool __stdcall CallApplicationMain(PCALL_APPLIC
 
     const wchar_t* property_values[] = {
         // APPBASE
-        szCurrentDirectory, // TODO: Allow overriding this
+        data->applicationBase,
         // TRUSTED_PLATFORM_ASSEMBLIES
         trustedPlatformAssemblies.c_str(),
         // APP_PATHS
