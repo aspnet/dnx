@@ -20,10 +20,13 @@ namespace Microsoft.Net.Runtime
         private IFileWatcher _watcher;
         private readonly string _projectDir;
         private readonly FrameworkName _targetFramework;
+        private readonly string _name;
 
         public DefaultHost(DefaultHostOptions options)
         {
             _projectDir = Normalize(options.ProjectDir);
+
+            _name = options.ApplicationName;
 
             _targetFramework = VersionUtility.ParseFrameworkName(options.TargetFramework ?? "net45");
 
@@ -53,7 +56,9 @@ namespace Microsoft.Net.Runtime
 
             _loader.Walk(project.Name, project.Version, _targetFramework);
 
-            var assembly = _loader.LoadAssembly(new LoadContext(project.Name, _targetFramework));
+            string name = _name ?? project.Name;
+
+            var assembly = _loader.LoadAssembly(new LoadContext(name, _targetFramework));
 
             sw.Stop();
 

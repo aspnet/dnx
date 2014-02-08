@@ -3,6 +3,8 @@ namespace Microsoft.Net.Runtime
 {
     public class DefaultHostOptions
     {
+        public string ApplicationName { get; set; }
+
         public string ProjectDir { get; set; }
 
         public string TargetFramework { get; set; }

@@ -42,7 +42,12 @@ namespace Microsoft.Net.ApplicationHost
         private void ParseArgs(string[] args, out DefaultHostOptions options, out string[] outArgs)
         {
             options = new DefaultHostOptions();
+
+#if NET45
+            options.ProjectDir = AppDomain.CurrentDomain.SetupInformation.ApplicationBase;
+#else
             options.ProjectDir = Directory.GetCurrentDirectory();
+#endif
 
             // TODO: Just pass this as an argument from the caller
             options.TargetFramework = Environment.GetEnvironmentVariable("TARGET_FRAMEWORK");
@@ -72,7 +77,7 @@ namespace Microsoft.Net.ApplicationHost
                 }
                 else
                 {
-                    options.ProjectDir = arg;
+                    options.ApplicationName = arg;
                     index++;
                     break;
                 }
