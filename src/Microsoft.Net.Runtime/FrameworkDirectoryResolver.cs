@@ -1,9 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Microsoft.Net.Runtime
 {
@@ -20,7 +17,7 @@ namespace Microsoft.Net.Runtime
                 return new[] {
                     Path.GetFullPath(Path.Combine(klrPath, @"..\..\..\Framework")),
 #if DEBUG
-                    Path.GetFullPath(Path.Combine(klrPath, @"..\..\artifacts\sdk\Framework"))
+                    Path.GetFullPath(Path.Combine(klrPath, @"..\..\..\artifacts\sdk\Framework"))
 #endif
                 };
             }

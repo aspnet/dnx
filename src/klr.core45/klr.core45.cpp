@@ -47,7 +47,7 @@ HMODULE LoadCoreClr()
     if (hCoreCLRModule == nullptr)
     {
         // This is used when developing
-        hCoreCLRModule = ::LoadLibraryExW(L"..\\artifacts\\sdk\\Runtime\\x86\\coreclr.dll", NULL, 0);
+        hCoreCLRModule = ::LoadLibraryExW(L"..\\..\\..\\artifacts\\sdk\\Runtime\\x86\\coreclr.dll", NULL, 0);
     }
 
     if (hCoreCLRModule == nullptr)

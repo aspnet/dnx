@@ -156,9 +156,10 @@ var FULL_VERSION = '${VERSION + "-" + BuildNumber}'
         foreach(var file in Files.Include(Path.Combine(TOOLS_DIR, "*.cmd")))
         {
             var script = File.ReadAllText(file)
-                             .Replace(@"..\bin\Win32\Debug", @"bin\x86");
+                             .Replace(@"..\bin\Win32\Debug", @"bin\x86")
+                             .Replace(@"FRAMEWORK=K", @"FRAMEWORK=k10");
 
-            script = Regex.Replace(script, @"TARGET=\.\.\\src(.*)", @"TARGET=net45");
+            script = Regex.Replace(script, @"LIB_PATH=\.\.\\src(.*)", @"LIB_PATH=%FRAMEWORK%");
 
             File.WriteAllText(file, script);
         }
