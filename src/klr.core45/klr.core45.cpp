@@ -41,7 +41,7 @@ HMODULE LoadCoreClr()
     {
         // Try the relative location based in install dir
         // ..\..\Runtime\x86
-        hCoreCLRModule = ::LoadLibraryExW(L"..\\..\\Runtime\\x86\\coreclr.dll", NULL, 0);
+        hCoreCLRModule = ::LoadLibraryExW(L"..\\..\\..\\Runtime\\x86\\coreclr.dll", NULL, 0);
     }
 
     if (hCoreCLRModule == nullptr)

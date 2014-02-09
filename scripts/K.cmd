@@ -11,7 +11,7 @@ SETLOCAL
 SET ERRORLEVEL=
 
 SET TARGET=%TARGET_FRAMEWORK%
-SET HOST_BIN=..\bin\Debug
+SET HOST_BIN=..\bin\Win32\Debug
 
 if "%TARGET%" == "" (
    SET TARGET=..\src\Microsoft.Net.Project\bin\Debug\net45

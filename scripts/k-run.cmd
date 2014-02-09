@@ -8,7 +8,7 @@ IF "%K_APPBASE%"=="" (
 SET ERRORLEVEL=
 
 SET TARGET=%TARGET_FRAMEWORK%
-SET HOST_BIN=..\bin\Debug
+SET HOST_BIN=..\bin\Win32\Debug
 
 if "%TARGET%" == "" (
    SET TARGET=..\src\Microsoft.Net.ApplicationHost\bin\Debug\net45;%~dp0%..\src\Microsoft.Net.Runtime.Roslyn\bin\Debug\net45

@@ -18,7 +18,7 @@ namespace Microsoft.Net.Runtime
                 klrPath = Path.GetDirectoryName(klrPath);
 
                 return new[] {
-                    Path.GetFullPath(Path.Combine(klrPath, @"..\..\Framework")),
+                    Path.GetFullPath(Path.Combine(klrPath, @"..\..\..\Framework")),
 #if DEBUG
                     Path.GetFullPath(Path.Combine(klrPath, @"..\..\artifacts\sdk\Framework"))
 #endif
