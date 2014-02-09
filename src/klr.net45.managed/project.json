@@ -1,0 +1,7 @@
+{
+    "version": "0.1-alpha-*",
+    "compilationOptions" : { "define" : ["TRACE"], "allowUnsafe": true },
+    "configurations": {
+        "net45" : { }
+    }
+}
