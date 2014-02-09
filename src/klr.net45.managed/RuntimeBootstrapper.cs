@@ -17,7 +17,7 @@ namespace klr.hosting
             { "verbosity", CommandOptionType.NoValue }
         };
 
-        public static int Execute(string[] args)
+        public static async Task<int> Execute(string[] args)
         {
             if (args.Length == 0)
             {
@@ -97,10 +97,7 @@ namespace klr.hosting
                         options.RemainingArgs.ToArray()
                     };
 
-                    var result = (Task<int>)mainMethod.Invoke(bootstrapper, bootstrapperArgs);
-
-                    // TODO: Flow this back to the caller as a task
-                    return result.Result;
+                    return await (Task<int>)mainMethod.Invoke(bootstrapper, bootstrapperArgs);
                 }
             }
             catch (Exception ex)

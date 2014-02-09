@@ -33,7 +33,7 @@ namespace klr.net45.managed
 
         private static int Execute(string[] args)
         {
-            return RuntimeBootstrapper.Execute(args);
+            return RuntimeBootstrapper.Execute(args).Result;
         }
     }
 }

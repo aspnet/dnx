@@ -21,7 +21,7 @@ public class DomainManager : AppDomainManager
 
     private int Main(int argc, string[] argv)
     {
-        return RuntimeBootstrapper.Execute(argv);
+        return RuntimeBootstrapper.Execute(argv).Result;
     }
 
     [DllImport("klr.net45.dll")]
