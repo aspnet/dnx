@@ -1,12 +1,13 @@
 ﻿using System;
 using System.Linq;
 using System.Reflection;
+using System.Threading.Tasks;
 
 namespace Microsoft.Net.Runtime.Common
 {
     public static class EntryPointExecutor
     {
-        public static int Execute(Assembly assembly, string[] args, Func<ParameterInfo, object> parameterResolver)
+        public static async Task<int> Execute(Assembly assembly, string[] args, Func<ParameterInfo, object> parameterResolver)
         {
             string name = assembly.GetName().Name;
 
@@ -71,6 +72,17 @@ namespace Microsoft.Net.Runtime.Common
             if (result is int)
             {
                 return (int)result;
+            }
+
+            if (result is Task<int>)
+            {
+                return await (Task<int>)result;
+            }
+
+            if (result is Task)
+            {
+                await (Task)result;
+                return 0;
             }
 
             return 0;

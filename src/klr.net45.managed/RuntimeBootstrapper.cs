@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Threading.Tasks;
 
 namespace klr.hosting
 {
@@ -91,7 +92,15 @@ namespace klr.hosting
 
                 using (disposable)
                 {
-                    return (int)mainMethod.Invoke(bootstrapper, new object[] { options.RemainingArgs.ToArray() });
+                    var bootstrapperArgs = new object[] 
+                    {
+                        options.RemainingArgs.ToArray()
+                    };
+
+                    var result = (Task<int>)mainMethod.Invoke(bootstrapper, bootstrapperArgs);
+
+                    // TODO: Flow this back to the caller as a task
+                    return result.Result;
                 }
             }
             catch (Exception ex)

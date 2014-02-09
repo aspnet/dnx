@@ -2,6 +2,7 @@
 using System;
 using System.Linq;
 using System.Reflection;
+using System.Threading.Tasks;
 using Microsoft.Net.Runtime;
 using Microsoft.Net.Runtime.Common;
 
@@ -16,7 +17,7 @@ namespace klr.host
             _container = container;
         }
 
-        public int Main(string[] args)
+        public async Task<int> Main(string[] args)
         {
             if (args.Length < 1)
             {
@@ -34,7 +35,7 @@ namespace klr.host
                 return -1;
             }
 
-            return EntryPointExecutor.Execute(assembly, programArgs, Satisfy);
+            return await EntryPointExecutor.Execute(assembly, programArgs, Satisfy);
         }
 
         private object Satisfy(ParameterInfo arg)

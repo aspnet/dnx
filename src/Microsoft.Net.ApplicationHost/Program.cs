@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Threading.Tasks;
 using Microsoft.Net.Runtime;
 using Microsoft.Net.Runtime.Common;
 using Microsoft.Net.Runtime.Common.CommandLine;
@@ -24,7 +25,7 @@ namespace Microsoft.Net.ApplicationHost
             _container = container;
         }
 
-        public int Main(string[] args)
+        public async Task<int> Main(string[] args)
         {
             DefaultHostOptions options;
             string[] programArgs;
@@ -37,14 +38,15 @@ namespace Microsoft.Net.ApplicationHost
 
                 using (_container.AddHost(host))
                 {
-                    return ExecuteMain(host, programArgs);
+                    return await ExecuteMain(host, programArgs);
                 }
             }
             catch (Exception ex)
             {
                 Console.Error.WriteLine(String.Join(Environment.NewLine, ExceptionHelper.GetExceptions(ex)));
-                return -2;
             }
+
+            return -2;
         }
 
         private void ParseArgs(string[] args, out DefaultHostOptions defaultHostOptions, out string[] outArgs)
@@ -75,7 +77,7 @@ namespace Microsoft.Net.ApplicationHost
             }
         }
 
-        private int ExecuteMain(DefaultHost host, string[] args)
+        private async Task<int> ExecuteMain(DefaultHost host, string[] args)
         {
             var assembly = host.GetEntryPoint();
 
@@ -84,7 +86,7 @@ namespace Microsoft.Net.ApplicationHost
                 return -1;
             }
 
-            return EntryPointExecutor.Execute(assembly, args, pi => _container);
+            return await EntryPointExecutor.Execute(assembly, args, pi => _container);
         }
     }
 }
