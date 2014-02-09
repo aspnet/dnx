@@ -111,19 +111,22 @@ var FULL_VERSION = '${VERSION + "-" + BuildNumber}'
     directory create="${SDK_ROOT}"
 
 #copy-bits
+    var x86Target="x86"
+    var x64Target="amd64"
+    
     copy sourceDir='${SCRIPTS_DIR}' outputDir='${TOOLS_DIR}' overwrite='${true}'
 
-    copy sourceDir='${Path.Combine(BUILD_DIR2, "klr", "bin", "Win32", Configuration)}' outputDir='${Path.Combine(TOOLS_BIN_DIR, "x86")}' include='*.exe' overwrite='${true}'
-    copy sourceDir='${Path.Combine(BUILD_DIR2, "klr", "bin", "x64", Configuration)}' outputDir='${Path.Combine(TOOLS_BIN_DIR, "x64")}' include='*.exe' overwrite='${true}'
+    copy sourceDir='${Path.Combine(BUILD_DIR2, "klr", "bin", "Win32", Configuration)}' outputDir='${Path.Combine(TOOLS_BIN_DIR, x86Target)}' include='*.exe' overwrite='${true}'
+    copy sourceDir='${Path.Combine(BUILD_DIR2, "klr", "bin", "x64", Configuration)}' outputDir='${Path.Combine(TOOLS_BIN_DIR, x64Target)}' include='*.exe' overwrite='${true}'
 
-    copy sourceDir='${Path.Combine(BUILD_DIR2, "klr.core45", "bin", "Win32", Configuration)}' outputDir='${Path.Combine(TOOLS_BIN_DIR, "x86")}' include='*.dll' overwrite='${true}'
-    copy sourceDir='${Path.Combine(BUILD_DIR2, "klr.core45", "bin", "x64", Configuration)}' outputDir='${Path.Combine(TOOLS_BIN_DIR, "x64")}' include='*.dll' overwrite='${true}'
+    copy sourceDir='${Path.Combine(BUILD_DIR2, "klr.core45", "bin", "Win32", Configuration)}' outputDir='${Path.Combine(TOOLS_BIN_DIR, x86Target)}' include='*.dll' overwrite='${true}'
+    copy sourceDir='${Path.Combine(BUILD_DIR2, "klr.core45", "bin", "x64", Configuration)}' outputDir='${Path.Combine(TOOLS_BIN_DIR, x64Target)}' include='*.dll' overwrite='${true}'
 
-    copy sourceDir='${Path.Combine(BUILD_DIR2, "klr.net45", "bin", "Win32", Configuration)}' outputDir='${Path.Combine(TOOLS_BIN_DIR, "x86")}' include='*.dll' overwrite='${true}'
-    copy sourceDir='${Path.Combine(BUILD_DIR2, "klr.net45", "bin", "x64", Configuration)}' outputDir='${Path.Combine(TOOLS_BIN_DIR, "x64")}' include='*.dll' overwrite='${true}'
+    copy sourceDir='${Path.Combine(BUILD_DIR2, "klr.net45", "bin", "Win32", Configuration)}' outputDir='${Path.Combine(TOOLS_BIN_DIR, x86Target)}' include='*.dll' overwrite='${true}'
+    copy sourceDir='${Path.Combine(BUILD_DIR2, "klr.net45", "bin", "x64", Configuration)}' outputDir='${Path.Combine(TOOLS_BIN_DIR, x64Target)}' include='*.dll' overwrite='${true}'
 
-    copy sourceDir='${Path.Combine(ROOT, "src", "klr.net45.managed")}' outputDir='${Path.Combine(TOOLS_BIN_DIR, "x64")}' include='*.config' overwrite='${true}'
-    copy sourceDir='${Path.Combine(ROOT, "src", "klr.net45.managed")}' outputDir='${Path.Combine(TOOLS_BIN_DIR, "x86")}' include='*.config' overwrite='${true}'
+    copy sourceDir='${Path.Combine(ROOT, "src", "klr.net45.managed")}' outputDir='${Path.Combine(TOOLS_BIN_DIR, x86Target)}' include='*.config' overwrite='${true}'
+    copy sourceDir='${Path.Combine(ROOT, "src", "klr.net45.managed")}' outputDir='${Path.Combine(TOOLS_BIN_DIR, x64Target)}' include='*.config' overwrite='${true}'
 
     @{
         var hostK10 = Path.Combine(BUILD_DIR2, "*", "k10", "**.dll");
@@ -145,10 +148,10 @@ var FULL_VERSION = '${VERSION + "-" + BuildNumber}'
         }
     }
 
-    copy sourceDir='${Path.Combine(TOOLS_DIR, "net45")}' outputDir='${Path.Combine(TOOLS_BIN_DIR, "x86")}' include='*managed.dll' overwrite='${true}'
-    copy sourceDir='${Path.Combine(TOOLS_DIR, "net45")}' outputDir='${Path.Combine(TOOLS_BIN_DIR, "x64")}' include='*managed.dll' overwrite='${true}'
-    copy sourceDir='${Path.Combine(TOOLS_DIR, "k10")}' outputDir='${Path.Combine(TOOLS_BIN_DIR, "x86")}' include='*managed.dll' overwrite='${true}'
-    copy sourceDir='${Path.Combine(TOOLS_DIR, "k10")}' outputDir='${Path.Combine(TOOLS_BIN_DIR, "x64")}' include='*managed.dll' overwrite='${true}'
+    copy sourceDir='${Path.Combine(TOOLS_DIR, "net45")}' outputDir='${Path.Combine(TOOLS_BIN_DIR, x86Target)}' include='*managed.dll' overwrite='${true}'
+    copy sourceDir='${Path.Combine(TOOLS_DIR, "net45")}' outputDir='${Path.Combine(TOOLS_BIN_DIR, x64Target)}' include='*managed.dll' overwrite='${true}'
+    copy sourceDir='${Path.Combine(TOOLS_DIR, "k10")}' outputDir='${Path.Combine(TOOLS_BIN_DIR, x86Target)}' include='*managed.dll' overwrite='${true}'
+    copy sourceDir='${Path.Combine(TOOLS_DIR, "k10")}' outputDir='${Path.Combine(TOOLS_BIN_DIR, x64Target)}' include='*managed.dll' overwrite='${true}'
     
 
 #tweak-scripts
