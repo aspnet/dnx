@@ -37,14 +37,14 @@
     <Reference Include="Microsoft.CSharp" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="..\klr.core45.managed\CommandLineParser.cs">
-      <Link>CommandLineParser.cs</Link>
+    <Compile Include="..\klr.core45.managed\CommandLine\CommandLineParser.cs">
+      <Link>CommandLine\CommandLineParser.cs</Link>
     </Compile>
-    <Compile Include="..\klr.core45.managed\CommandOptions.cs">
-      <Link>CommandOptions.cs</Link>
+    <Compile Include="..\klr.core45.managed\CommandLine\CommandOptions.cs">
+      <Link>CommandLine\CommandOptions.cs</Link>
     </Compile>
-    <Compile Include="..\klr.core45.managed\CommandOptionType.cs">
-      <Link>CommandOptionType.cs</Link>
+    <Compile Include="..\klr.core45.managed\CommandLine\CommandOptionType.cs">
+      <Link>CommandLine\CommandOptionType.cs</Link>
     </Compile>
     <Compile Include="..\klr.core45.managed\RuntimeBootstrapper.cs">
       <Link>RuntimeBootstrapper.cs</Link>

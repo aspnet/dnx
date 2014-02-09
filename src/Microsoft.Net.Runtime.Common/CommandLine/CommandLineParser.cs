@@ -19,6 +19,11 @@ namespace Microsoft.Net.Runtime.Common.CommandLine
                 var arg = args[index];
                 if (arg.StartsWith("--"))
                 {
+                    if (!String.IsNullOrEmpty(currentOpt))
+                    {
+                        throw new ArgumentException("Expected value for " + arg);
+                    }
+
                     var option = arg.Substring(2);
 
                     CommandOptionType optType;
@@ -70,6 +75,11 @@ namespace Microsoft.Net.Runtime.Common.CommandLine
                     parsed[currentOpt].Add(arg);
                     currentOpt = null;
                 }
+            }
+
+            if (!String.IsNullOrEmpty(currentOpt))
+            {
+                throw new ArgumentException("Expected value for --" + currentOpt);
             }
 
             options = new CommandOptions(validOptions, parsed, new ArraySegment<string>(args, index, args.Length - index));

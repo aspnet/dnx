@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 
 namespace klr.hosting
@@ -6,7 +6,7 @@ namespace klr.hosting
     internal class CommandLineParser
     {
         // --opt1 --opt2 value --opt2 value {args}
-        public void ParseOptions(string[] args,
+        internal void ParseOptions(string[] args,
                                  Dictionary<string, CommandOptionType> validOptions,
                                  out CommandOptions options)
         {
@@ -19,6 +19,11 @@ namespace klr.hosting
                 var arg = args[index];
                 if (arg.StartsWith("--"))
                 {
+                    if (!String.IsNullOrEmpty(currentOpt))
+                    {
+                        throw new ArgumentException("Expected value for " + arg);
+                    }
+
                     var option = arg.Substring(2);
 
                     CommandOptionType optType;
@@ -70,6 +75,11 @@ namespace klr.hosting
                     parsed[currentOpt].Add(arg);
                     currentOpt = null;
                 }
+            }
+
+            if (!String.IsNullOrEmpty(currentOpt))
+            {
+                throw new ArgumentException("Expected value for --" + currentOpt);
             }
 
             options = new CommandOptions(validOptions, parsed, new ArraySegment<string>(args, index, args.Length - index));
