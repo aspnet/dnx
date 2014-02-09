@@ -10,13 +10,14 @@ namespace Microsoft.Net.ApplicationHost
 {
     public class Program
     {
-        private readonly IHostContainer _container;
         private static readonly Dictionary<string, CommandOptionType> _options = new Dictionary<string, CommandOptionType>
         {
             { "framework", CommandOptionType.SingleValue },
             { "nobin", CommandOptionType.NoValue },
             { "watch", CommandOptionType.NoValue }
         };
+
+        private readonly IHostContainer _container;
 
         public Program(IHostContainer container)
         {
@@ -58,9 +59,9 @@ namespace Microsoft.Net.ApplicationHost
             defaultHostOptions.TargetFramework = Environment.GetEnvironmentVariable("TARGET_FRAMEWORK") ?? options.GetValue("framework");
 
 #if NET45
-            defaultHostOptions.ProjectDir = AppDomain.CurrentDomain.SetupInformation.ApplicationBase;
+            defaultHostOptions.ApplicationBaseDirectory = AppDomain.CurrentDomain.SetupInformation.ApplicationBase;
 #else
-            defaultHostOptions.ProjectDir = (string)typeof(AppDomain).GetRuntimeMethod("GetData", new[] { typeof(string) }).Invoke(AppDomain.CurrentDomain, new object[] { "APPBASE" });
+            defaultHostOptions.ApplicationBaseDirectory = (string)typeof(AppDomain).GetRuntimeMethod("GetData", new[] { typeof(string) }).Invoke(AppDomain.CurrentDomain, new object[] { "APPBASE" });
 #endif
             if (options.RemainingArgs.Count > 0)
             {

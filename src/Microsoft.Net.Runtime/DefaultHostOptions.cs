@@ -5,7 +5,7 @@ namespace Microsoft.Net.Runtime
     {
         public string ApplicationName { get; set; }
 
-        public string ProjectDir { get; set; }
+        public string ApplicationBaseDirectory { get; set; }
 
         public string TargetFramework { get; set; }
 

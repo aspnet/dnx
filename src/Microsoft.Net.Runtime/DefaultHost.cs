@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -24,7 +23,7 @@ namespace Microsoft.Net.Runtime
 
         public DefaultHost(DefaultHostOptions options)
         {
-            _projectDir = Normalize(options.ProjectDir);
+            _projectDir = Normalize(options.ApplicationBaseDirectory);
 
             _name = options.ApplicationName;
 
@@ -58,7 +57,7 @@ namespace Microsoft.Net.Runtime
 
             string name = _name ?? project.Name;
 
-            var assembly = _loader.LoadAssembly(new LoadContext(name, _targetFramework));
+            var assembly = Assembly.Load(new AssemblyName(name));
 
             sw.Stop();
 

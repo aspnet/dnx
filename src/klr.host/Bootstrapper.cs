@@ -1,6 +1,5 @@
 ﻿
 using System;
-using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 using Microsoft.Net.Runtime;
@@ -27,7 +26,8 @@ namespace klr.host
 
             var name = args[0];
             var programArgs = args.Skip(1).ToArray();
-            var assembly = _container.Load(name);
+
+            var assembly = Assembly.Load(new AssemblyName(name));
 
             if (assembly == null)
             {
