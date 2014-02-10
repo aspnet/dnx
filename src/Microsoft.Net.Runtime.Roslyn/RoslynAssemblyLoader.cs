@@ -18,7 +18,7 @@ using EmitResult = Microsoft.CodeAnalysis.Emit.CommonEmitResult;
 
 namespace Microsoft.Net.Runtime.Roslyn
 {
-    public class RoslynAssemblyLoader : IAssemblyLoader, IPackageLoader, IDependencyImpactResolver
+    public class RoslynAssemblyLoader : IAssemblyLoader, IPackageLoader, IDependencyExportResolver
     {
         private readonly Dictionary<string, Compilation> _compilationCache = new Dictionary<string, Compilation>();
 
@@ -26,20 +26,20 @@ namespace Microsoft.Net.Runtime.Roslyn
         private readonly IFileWatcher _watcher;
         private readonly IFrameworkReferenceResolver _resolver;
         private readonly IGlobalAssemblyCache _globalAssemblyCache;
-        private readonly IDependencyImpactResolver _dependencyLoader;
+        private readonly IDependencyExportResolver _dependencyResolver;
         private readonly IResourceProvider _resourceProvider;
 
         private IEnumerable<DependencyDescription> _packages;
 
         public RoslynAssemblyLoader(IProjectResolver projectResolver,
                                     IFileWatcher watcher,
-                                    IDependencyImpactResolver dependencyLoader)
+                                    IDependencyExportResolver dependencyResolver)
         {
             _projectResolver = projectResolver;
             _watcher = watcher;
             _globalAssemblyCache = new DefaultGlobalAssemblyCache();
             _resolver = new FrameworkReferenceResolver(_globalAssemblyCache);
-            _dependencyLoader = dependencyLoader;
+            _dependencyResolver = dependencyResolver;
             _resourceProvider = new ResxResourceProvider();
         }
 
@@ -47,14 +47,14 @@ namespace Microsoft.Net.Runtime.Roslyn
                                     IFileWatcher watcher,
                                     IFrameworkReferenceResolver resolver,
                                     IGlobalAssemblyCache globalAssemblyCache,
-                                    IDependencyImpactResolver dependencyLoader,
+                                    IDependencyExportResolver dependencyLoader,
                                     IResourceProvider resourceProvider)
         {
             _projectResolver = projectResolver;
             _watcher = watcher;
             _resolver = resolver;
             _globalAssemblyCache = globalAssemblyCache;
-            _dependencyLoader = dependencyLoader;
+            _dependencyResolver = dependencyLoader;
             _resourceProvider = resourceProvider;
         }
 
@@ -143,7 +143,7 @@ namespace Microsoft.Net.Runtime.Roslyn
             Trace.TraceInformation("[{0}]: Found project '{1}' framework={2}", GetType().Name, project.Name, targetFramework);
 
             var references = new List<MetadataReference>();
-            var dependencyImpacts = new List<DependencyImpact>();
+            var exports = new List<DependencyExport>();
 
             errors = new List<string>();
 
@@ -155,11 +155,11 @@ namespace Microsoft.Net.Runtime.Roslyn
 
                 foreach (var dependency in project.Dependencies.Concat(targetFrameworkConfig.Dependencies))
                 {
-                    DependencyImpact impact = _dependencyLoader.GetDependencyImpact(dependency.Name, targetFramework);
+                    DependencyExport dependencyExport = _dependencyResolver.GetDependencyExport(dependency.Name, targetFramework);
 
-                    if (impact != null)
+                    if (dependencyExport != null)
                     {
-                        dependencyImpacts.Add(impact);
+                        exports.Add(dependencyExport);
                     }
                     else
                     {
@@ -176,7 +176,7 @@ namespace Microsoft.Net.Runtime.Roslyn
                 return null;
             }
 
-            references.AddRange(GetMetadataReferences(dependencyImpacts));
+            references.AddRange(GetMetadataReferences(exports));
 
             references.AddRange(_resolver.GetDefaultReferences(targetFramework));
 
@@ -229,14 +229,14 @@ namespace Microsoft.Net.Runtime.Roslyn
             return compilation;
         }
 
-        private IEnumerable<MetadataReference> GetMetadataReferences(List<DependencyImpact> dependencyImpacts)
+        private IEnumerable<MetadataReference> GetMetadataReferences(List<DependencyExport> dependencyExports)
         {
             var paths = new HashSet<string>();
             var references = new List<MetadataReference>();
 
-            foreach (var impact in dependencyImpacts)
+            foreach (var export in dependencyExports)
             {
-                foreach (var reference in impact.MetadataReferences)
+                foreach (var reference in export.MetadataReferences)
                 {
                     var fileMetadataReference = reference as IMetadataFileReference;
 
@@ -305,12 +305,12 @@ namespace Microsoft.Net.Runtime.Roslyn
             _packages = packages;
         }
 
-        public DependencyImpact GetDependencyImpact(string name, FrameworkName targetFramework)
+        public DependencyExport GetDependencyExport(string name, FrameworkName targetFramework)
         {
             string assemblyLocation;
             if (_globalAssemblyCache.TryResolvePartialName(name, out assemblyLocation))
             {
-                return CreateDependencyImpact(assemblyLocation);
+                return CreateDependencyExport(assemblyLocation);
             }
 
             IList<string> errors;
@@ -321,7 +321,7 @@ namespace Microsoft.Net.Runtime.Roslyn
                 return null;
             }
 
-            return CreateDependencyImpact(compilation.ToMetadataReference());
+            return CreateDependencyExport(compilation.ToMetadataReference());
         }
 
         private AssemblyLoadResult CompileToDisk(string assemblyPath, string pdbPath, Compilation compilation, IList<ResourceDescription> resources)
@@ -393,14 +393,14 @@ namespace Microsoft.Net.Runtime.Roslyn
             }
         }
 
-        private static DependencyImpact CreateDependencyImpact(MetadataReference metadataReference)
+        private static DependencyExport CreateDependencyExport(MetadataReference metadataReference)
         {
-            return new DependencyImpact(new MetadataReferenceWrapper(metadataReference));
+            return new DependencyExport(new MetadataReferenceWrapper(metadataReference));
         }
 
-        private static DependencyImpact CreateDependencyImpact(string assemblyLocation)
+        private static DependencyExport CreateDependencyExport(string assemblyLocation)
         {
-            return CreateDependencyImpact(new MetadataFileReference(assemblyLocation));
+            return CreateDependencyExport(new MetadataFileReference(assemblyLocation));
         }
 
         private static AssemblyLoadResult ReportCompilationError(EmitResult result)

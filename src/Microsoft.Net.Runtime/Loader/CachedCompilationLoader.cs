@@ -7,7 +7,7 @@ using NuGet;
 
 namespace Microsoft.Net.Runtime.Loader
 {
-    public class CachedCompilationLoader : IAssemblyLoader, IPackageLoader, IDependencyImpactResolver
+    public class CachedCompilationLoader : IAssemblyLoader, IPackageLoader, IDependencyExportResolver
     {
         private readonly IProjectResolver _resolver;
         private readonly Dictionary<string, string> _paths = new Dictionary<string, string>();
@@ -30,12 +30,12 @@ namespace Microsoft.Net.Runtime.Loader
             return null;
         }
 
-        public DependencyImpact GetDependencyImpact(string name, FrameworkName targetFramework)
+        public DependencyExport GetDependencyExport(string name, FrameworkName targetFramework)
         {
             string path;
             if (_paths.TryGetValue(name, out path))
             {
-                return new DependencyImpact(path);
+                return new DependencyExport(path);
             }
 
             return null;

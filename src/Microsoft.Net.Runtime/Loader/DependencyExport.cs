@@ -2,14 +2,14 @@
 
 namespace Microsoft.Net.Runtime.Loader
 {
-    public class DependencyImpact
+    public class DependencyExport
     {
-        public DependencyImpact(string path)
+        public DependencyExport(string path)
             : this(new MetadataFileReference(path))
         {
         }
 
-        public DependencyImpact(IMetadataReference metadataReference)
+        public DependencyExport(IMetadataReference metadataReference)
         {
             MetadataReferences = new List<IMetadataReference>
             {
@@ -17,7 +17,7 @@ namespace Microsoft.Net.Runtime.Loader
             };
         }
 
-        public DependencyImpact(IList<IMetadataReference> metadataReferences)
+        public DependencyExport(IList<IMetadataReference> metadataReferences)
         {
             MetadataReferences = metadataReferences;
         }

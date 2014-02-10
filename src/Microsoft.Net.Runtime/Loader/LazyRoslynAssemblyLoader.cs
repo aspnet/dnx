@@ -10,7 +10,7 @@ using NuGet;
 
 namespace Microsoft.Net.Runtime
 {
-    internal class LazyRoslynAssemblyLoader : IAssemblyLoader, IPackageLoader, IDependencyImpactResolver
+    internal class LazyRoslynAssemblyLoader : IAssemblyLoader, IPackageLoader, IDependencyExportResolver
     {
         private readonly ProjectResolver _projectResolver;
         private readonly IFileWatcher _watcher;
@@ -67,11 +67,11 @@ namespace Microsoft.Net.Runtime
             });
         }
 
-        public DependencyImpact GetDependencyImpact(string name, FrameworkName targetFramework)
+        public DependencyExport GetDependencyExport(string name, FrameworkName targetFramework)
         {
-            return ExecuteWith<IDependencyImpactResolver, DependencyImpact>(resolver =>
+            return ExecuteWith<IDependencyExportResolver, DependencyExport>(resolver =>
             {
-                return resolver.GetDependencyImpact(name, targetFramework);
+                return resolver.GetDependencyExport(name, targetFramework);
             });
         }
 

@@ -8,7 +8,7 @@ using NuGet;
 
 namespace Microsoft.Net.Runtime.Loader.NuGet
 {
-    public class NuGetAssemblyLoader : IPackageLoader, IDependencyImpactResolver
+    public class NuGetAssemblyLoader : IPackageLoader, IDependencyExportResolver
     {
         private readonly LocalPackageRepository _repository;
         private readonly Dictionary<string, Assembly> _cache = new Dictionary<string, Assembly>(StringComparer.OrdinalIgnoreCase);
@@ -117,7 +117,7 @@ namespace Microsoft.Net.Runtime.Loader.NuGet
             }
         }
 
-        public DependencyImpact GetDependencyImpact(string name, FrameworkName targetFramework)
+        public DependencyExport GetDependencyExport(string name, FrameworkName targetFramework)
         {
             if (!_dependencies.ContainsKey(name))
             {
@@ -131,7 +131,7 @@ namespace Microsoft.Net.Runtime.Loader.NuGet
             var metadataReferenes = paths.Select(path => (IMetadataReference)new MetadataFileReference(path))
                                          .ToList();
 
-            return new DependencyImpact(metadataReferenes);
+            return new DependencyExport(metadataReferenes);
         }
 
         private void PopulateDependenciesPaths(string name, FrameworkName targetFramework, ISet<string> paths)
