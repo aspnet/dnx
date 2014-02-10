@@ -19,8 +19,20 @@ namespace Microsoft.Net.Runtime.Roslyn.AssemblyNeutral
 {
     public class CompilationContext
     {
+        private readonly Dictionary<string, EmitResult> _failedTypeCompilations = new Dictionary<string, EmitResult>();
+        private readonly List<EmitResult> _failedCompilations = new List<EmitResult>();
+
         public CSharpCompilation OriginalCompilation { get; set; }
         public CSharpCompilation Compilation { get; set; }
+        public IList<EmitResult> FailedCompilations { get { return _failedCompilations; } }
+
+        public IEnumerable<TypeCompilationContext> SuccessfulTypeCompilationContexts
+        {
+            get
+            {
+                return TypeCompilationContexts.Where(t => !_failedTypeCompilations.ContainsKey(t.AssemblyName));
+            }
+        }
 
         public IList<TypeCompilationContext> TypeCompilationContexts = new List<TypeCompilationContext>();
 
@@ -58,10 +70,8 @@ namespace Microsoft.Net.Runtime.Roslyn.AssemblyNeutral
             TypeCompilationContexts = state.Ordered;
         }
 
-        public List<EmitResult> GenerateTypeCompilations()
+        public void GenerateTypeCompilations()
         {
-            var list = new List<EmitResult>();
-
             foreach (var t in TypeCompilationContexts)
             {
                 var result = t.Generate();
@@ -71,11 +81,10 @@ namespace Microsoft.Net.Runtime.Roslyn.AssemblyNeutral
                     continue;
                 }
 
-                list.Add(result);
+                _failedTypeCompilations[t.AssemblyName] = result;
 
+                FailedCompilations.Add(result);
             }
-
-            return list;
         }
 
         public void Generate(IDictionary<string, MetadataReference> references)
@@ -91,7 +100,10 @@ namespace Microsoft.Net.Runtime.Roslyn.AssemblyNeutral
                     neutralReference = neutralTypeContext.Reference;
                 }
 
-                Compilation = Compilation.AddReferences(neutralReference);
+                if (!_failedTypeCompilations.ContainsKey(neutralTypeContext.AssemblyName))
+                {
+                    Compilation = Compilation.AddReferences(neutralReference);
+                }
 
                 foreach (var syntaxReference in neutralTypeContext.TypeSymbol.DeclaringSyntaxReferences)
                 {

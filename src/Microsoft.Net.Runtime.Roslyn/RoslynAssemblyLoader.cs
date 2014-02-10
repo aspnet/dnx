@@ -61,7 +61,7 @@ namespace Microsoft.Net.Runtime.Roslyn
 
         public AssemblyLoadResult Load(LoadContext loadContext)
         {
-            string name = loadContext.AssemblyName;
+            var name = loadContext.AssemblyName;
 
             Project project;
             // Can't find a project file with the name so bail
@@ -70,19 +70,13 @@ namespace Microsoft.Net.Runtime.Roslyn
                 return null;
             }
 
-            string path = project.ProjectDirectory;
+            var path = project.ProjectDirectory;
 
-            IList<string> errors;
-            CompilationContext compilationContext = GetCompilationContext(loadContext.AssemblyName, loadContext.TargetFramework, out errors);
+            var compilationContext = GetCompilationContext(loadContext.AssemblyName, loadContext.TargetFramework);
 
-            if (errors != null && errors.Count > 0)
-            {
-                return new AssemblyLoadResult(errors);
-            }
+            var resources = _resourceProvider.GetResources(project.Name, path);
 
-            IList<ResourceDescription> resources = _resourceProvider.GetResources(project.Name, path);
-
-            foreach (var typeContext in compilationContext.TypeCompilationContexts)
+            foreach (var typeContext in compilationContext.SuccessfulTypeCompilationContexts)
             {
                 resources.Add(new ResourceDescription(typeContext.AssemblyName + ".dll",
                                                       () => typeContext.OutputStream,
@@ -92,11 +86,11 @@ namespace Microsoft.Net.Runtime.Roslyn
             // If the output path is null then load the assembly from memory
             if (loadContext.OutputPath == null)
             {
-                return CompileInMemory(name, compilationContext.Compilation, resources);
+                return CompileInMemory(name, compilationContext, resources);
             }
 
-            string assemblyPath = Path.Combine(loadContext.OutputPath, name + ".dll");
-            string pdbPath = Path.Combine(loadContext.OutputPath, name + ".pdb");
+            var assemblyPath = Path.Combine(loadContext.OutputPath, name + ".dll");
+            var pdbPath = Path.Combine(loadContext.OutputPath, name + ".pdb");
 
             // Add to the list of generated artifacts
             if (loadContext.ArtifactPaths != null)
@@ -105,10 +99,7 @@ namespace Microsoft.Net.Runtime.Roslyn
                 loadContext.ArtifactPaths.Add(pdbPath);
             }
 
-            // Ensure there's an output directory
-            Directory.CreateDirectory(loadContext.OutputPath);
-
-            AssemblyLoadResult loadResult = CompileToDisk(assemblyPath, pdbPath, compilationContext.Compilation, resources);
+            var loadResult = CompileToDisk(loadContext.OutputPath, assemblyPath, pdbPath, compilationContext, resources);
 
             if (loadResult != null && loadResult.Errors == null)
             {
@@ -125,12 +116,11 @@ namespace Microsoft.Net.Runtime.Roslyn
 
         }
 
-        private CompilationContext GetCompilationContext(string name, FrameworkName targetFramework, out IList<string> errors)
+        private CompilationContext GetCompilationContext(string name, FrameworkName targetFramework)
         {
             CompilationContext compilationContext;
             if (_compilationCache.TryGetValue(name, out compilationContext))
             {
-                errors = null;
                 return compilationContext;
             }
 
@@ -138,7 +128,6 @@ namespace Microsoft.Net.Runtime.Roslyn
             // Can't find a project file with the name so bail
             if (!_projectResolver.TryResolveProject(name, out project))
             {
-                errors = null;
                 return null;
             }
 
@@ -152,8 +141,7 @@ namespace Microsoft.Net.Runtime.Roslyn
 
             var references = new List<MetadataReference>();
             var exports = new List<DependencyExport>();
-
-            errors = new List<string>();
+            var failedCompilations = new List<EmitResult>();
 
             if (project.Dependencies.Count > 0 ||
                 targetFrameworkConfig.Dependencies.Count > 0)
@@ -165,23 +153,21 @@ namespace Microsoft.Net.Runtime.Roslyn
                 {
                     DependencyExport dependencyExport = _dependencyResolver.GetDependencyExport(dependency.Name, targetFramework);
 
+                    // Determine if this dependency has any failed compilations
+                    CompilationContext dependencyContext;
+                    if (_compilationCache.TryGetValue(dependency.Name, out dependencyContext))
+                    {
+                        failedCompilations.AddRange(dependencyContext.FailedCompilations);
+                    }
+
                     if (dependencyExport != null)
                     {
                         exports.Add(dependencyExport);
-                    }
-                    else
-                    {
-                        errors.Add(String.Format("Unable to resolve dependency '{0}' for target framework '{1}'.", dependency, targetFramework));
                     }
                 }
 
                 dependencyStopWatch.Stop();
                 Trace.TraceInformation("[{0}]: Completed loading dependencies for '{1}' in {2}ms", GetType().Name, project.Name, dependencyStopWatch.ElapsedMilliseconds);
-            }
-
-            if (errors.Count > 0)
-            {
-                return null;
             }
 
             IDictionary<string, MetadataReference> assemblyNeutralReferences;
@@ -199,7 +185,7 @@ namespace Microsoft.Net.Runtime.Roslyn
 
             var trees = new List<SyntaxTree>();
 
-            bool hasAssemblyInfo = false;
+            var hasAssemblyInfo = false;
 
             var sourceFiles = project.SourceFiles.ToList();
 
@@ -242,14 +228,10 @@ namespace Microsoft.Net.Runtime.Roslyn
 
             context.FindTypeCompilations(compilation.GlobalNamespace);
             context.OrderTypeCompilations();
-            var failed = context.GenerateTypeCompilations();
+            context.GenerateTypeCompilations();
 
-            errors.AddRange(GetErrors(failed));
-
-            if (errors.Count > 0)
-            {
-                return null;
-            }
+            // REVIEW: Is the order here correct?
+            context.FailedCompilations.AddRange(failedCompilations);
 
             context.Generate(assemblyNeutralReferences);
 
@@ -356,8 +338,7 @@ namespace Microsoft.Net.Runtime.Roslyn
                 return CreateDependencyExport(assemblyLocation);
             }
 
-            IList<string> errors;
-            var compilationContext = GetCompilationContext(name, targetFramework, out errors);
+            var compilationContext = GetCompilationContext(name, targetFramework);
 
             if (compilationContext == null)
             {
@@ -367,7 +348,7 @@ namespace Microsoft.Net.Runtime.Roslyn
             var references = new List<IMetadataReference>();
             references.Add(new MetadataReferenceWrapper(compilationContext.Compilation.ToMetadataReference()));
 
-            foreach (var typeContext in compilationContext.TypeCompilationContexts)
+            foreach (var typeContext in compilationContext.SuccessfulTypeCompilationContexts)
             {
                 references.Add(new AssemblyNeutralMetadataReference(typeContext.AssemblyName, typeContext.RealOrShallowReference()));
             }
@@ -375,44 +356,65 @@ namespace Microsoft.Net.Runtime.Roslyn
             return new DependencyExport(references);
         }
 
-        private AssemblyLoadResult CompileToDisk(string assemblyPath, string pdbPath, Compilation compilation, IList<ResourceDescription> resources)
+        private AssemblyLoadResult CompileToDisk(string outputPath, string assemblyPath, string pdbPath, CompilationContext compilationContext, IList<ResourceDescription> resources)
         {
+            // REVIEW: Memory bloat?
+            using (var pdbStream = new MemoryStream())
+            using (var assemblyStream = new MemoryStream())
+            {
 #if NET45
-            EmitResult result = compilation.Emit(assemblyPath, pdbPath, manifestResources: resources);
+                EmitResult result = compilationContext.Compilation.Emit(assemblyStream, outputName: Path.GetFileName(assemblyPath), pdbFileName: pdbPath, pdbStream: pdbStream, manifestResources: resources);
 #else
-            EmitResult result = compilation.Emit(assemblyPath);
+                EmitResult result = compilationContext.Compilation.Emit(assemblyStream);
 #endif
 
-            if (!result.Success)
-            {
-                // REVIEW: Emit seems to create the output assembly even if the build fails
-                // follow up to see why this happens
-                if (File.Exists(assemblyPath))
+                if (!result.Success)
                 {
-                    File.Delete(assemblyPath);
+                    return ReportCompilationError(compilationContext.FailedCompilations.Concat(new[] { result }));
                 }
 
-                return ReportCompilationError(result);
-            }
+                if (compilationContext.FailedCompilations.Count > 0)
+                {
+                    return ReportCompilationError(compilationContext.FailedCompilations);
+                }
 
-            // Valid result but we don't have to load it
-            return new AssemblyLoadResult();
+                // Ensure there's an output directory
+                Directory.CreateDirectory(outputPath);
+
+                assemblyStream.Position = 0;
+                pdbStream.Position = 0;
+
+                using (var pdbFileStream = File.Create(pdbPath))
+                using (var assemblyFileStream = File.Create(assemblyPath))
+                {
+                    assemblyStream.CopyTo(assemblyFileStream);
+                    pdbStream.CopyTo(pdbFileStream);
+                }
+
+                // Valid result but we don't have to load it
+                return new AssemblyLoadResult();
+            }
         }
 
-        private AssemblyLoadResult CompileInMemory(string name, Compilation compilation, IEnumerable<ResourceDescription> resources)
+        private AssemblyLoadResult CompileInMemory(string name, CompilationContext compilationContext, IEnumerable<ResourceDescription> resources)
         {
             using (var pdbStream = new MemoryStream())
             using (var assemblyStream = new MemoryStream())
             {
 #if NET45
-                EmitResult result = compilation.Emit(assemblyStream, pdbStream: pdbStream, manifestResources: resources);
+                EmitResult result = compilationContext.Compilation.Emit(assemblyStream, pdbStream: pdbStream, manifestResources: resources);
 #else
-                EmitResult result = compilation.Emit(assemblyStream);
+                EmitResult result = compilationContext.Compilation.Emit(assemblyStream);
 #endif
 
                 if (!result.Success)
                 {
-                    return ReportCompilationError(result);
+                    return ReportCompilationError(compilationContext.FailedCompilations.Concat(new[] { result }));
+                }
+
+                if (compilationContext.FailedCompilations.Count > 0)
+                {
+                    return ReportCompilationError(compilationContext.FailedCompilations);
                 }
 
                 var assemblyBytes = assemblyStream.ToArray();
@@ -454,11 +456,9 @@ namespace Microsoft.Net.Runtime.Roslyn
             return CreateDependencyExport(new MetadataFileReference(assemblyLocation));
         }
 
-        private static AssemblyLoadResult ReportCompilationError(EmitResult result)
+        private static AssemblyLoadResult ReportCompilationError(IEnumerable<EmitResult> results)
         {
-            var errors = GetErrors(new[] { result });
-
-            return new AssemblyLoadResult(errors);
+            return new AssemblyLoadResult(GetErrors(results));
         }
 
         private static List<string> GetErrors(IEnumerable<EmitResult> results)
