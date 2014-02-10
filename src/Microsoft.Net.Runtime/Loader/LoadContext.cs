@@ -10,7 +10,6 @@ namespace Microsoft.Net.Runtime
         {
             AssemblyName = assemblyName;
             TargetFramework = targetFramework;
-            CreateArtifacts = true;
         }
 
         public string AssemblyName { get; private set; }
@@ -18,8 +17,6 @@ namespace Microsoft.Net.Runtime
         public FrameworkName TargetFramework { get; private set; }
 
         public string OutputPath { get; set; }
-
-        public bool CreateArtifacts { get; set; }
 
         public PackageBuilder PackageBuilder { get; set; }
 

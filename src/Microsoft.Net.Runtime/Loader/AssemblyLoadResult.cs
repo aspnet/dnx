@@ -10,6 +10,10 @@ namespace Microsoft.Net.Runtime.Loader
 
         public IList<string> Errors { get; private set; }
 
+        public AssemblyLoadResult()
+        {
+        }
+
         public AssemblyLoadResult(IList<string> errors)
         {
             Errors = errors;

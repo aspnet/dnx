@@ -10,7 +10,7 @@ using NuGet;
 
 namespace Microsoft.Net.Runtime.Loader
 {
-    public class AssemblyLoader : IAssemblyLoader
+    public class AssemblyLoader : IAssemblyLoader, IDependencyImpactResolver
     {
         private List<IAssemblyLoader> _loaders = new List<IAssemblyLoader>();
 
@@ -93,6 +93,13 @@ namespace Microsoft.Net.Runtime.Loader
 
             sw.Stop();
             Trace.TraceInformation("Resolved dependencies for {0} in {1}ms", name, sw.ElapsedMilliseconds);
+        }
+
+        public DependencyImpact GetDependencyImpact(string name, FrameworkName targetFramework)
+        {
+            return _loaders.OfType<IDependencyImpactResolver>()
+                           .Select(r => r.GetDependencyImpact(name, targetFramework))
+                           .FirstOrDefault(i => i != null);
         }
 
         private AssemblyLoadResult LoadImpl(LoadContext loadContext, Stopwatch sw)

@@ -226,8 +226,7 @@ namespace Microsoft.Net.Project
             var loadContext = new LoadContext(project.Name, targetFramework)
             {
                 OutputPath = targetPath,
-                ArtifactPaths = new List<string>(),
-                CreateArtifacts = false
+                ArtifactPaths = new List<string>()
             };
 
             var result = loader.Load(loadContext);

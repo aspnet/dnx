@@ -8,11 +8,12 @@ using NuGet;
 
 namespace Microsoft.Net.Runtime.Loader.NuGet
 {
-    public class NuGetAssemblyLoader : IPackageLoader
+    public class NuGetAssemblyLoader : IPackageLoader, IDependencyImpactResolver
     {
         private readonly LocalPackageRepository _repository;
         private readonly Dictionary<string, Assembly> _cache = new Dictionary<string, Assembly>(StringComparer.OrdinalIgnoreCase);
         private readonly Dictionary<string, string> _paths = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        private readonly Dictionary<string, DependencyDescription> _dependencies = new Dictionary<string, DependencyDescription>();
 
         public NuGetAssemblyLoader(string projectPath)
         {
@@ -61,10 +62,10 @@ namespace Microsoft.Net.Runtime.Loader.NuGet
             return null;
         }
 
-        private IEnumerable<Dependency> GetDependencies(IPackage package, FrameworkName frameworkName)
+        private IEnumerable<Dependency> GetDependencies(IPackage package, FrameworkName targetFramework)
         {
             IEnumerable<PackageDependencySet> dependencySet;
-            if (VersionUtility.TryGetCompatibleItems(frameworkName, package.DependencySets, out dependencySet))
+            if (VersionUtility.TryGetCompatibleItems(targetFramework, package.DependencySets, out dependencySet))
             {
                 foreach (var set in dependencySet)
                 {
@@ -86,10 +87,12 @@ namespace Microsoft.Net.Runtime.Loader.NuGet
             }
         }
 
-        public void Initialize(IEnumerable<DependencyDescription> packages, FrameworkName frameworkName)
+        public void Initialize(IEnumerable<DependencyDescription> packages, FrameworkName targetFramework)
         {
             foreach (var dependency in packages)
             {
+                _dependencies[dependency.Identity.Name] = dependency;
+
                 var package = FindCandidate(dependency.Identity.Name, dependency.Identity.Version);
 
                 if (package == null)
@@ -97,13 +100,13 @@ namespace Microsoft.Net.Runtime.Loader.NuGet
                     continue;
                 }
 
-                foreach (var fileName in GetAssemblies(package, frameworkName))
+                foreach (var fileName in GetAssemblies(package, targetFramework))
                 {
 #if NET45 // CORECLR_TODO: AssemblyName.GetAssemblyName
                     var an = AssemblyName.GetAssemblyName(fileName);
                     _paths[an.Name] = fileName;
 #else
-                    _paths[Path.GetFileNameWithoutExtension(fileName)] = fileName;                
+                    _paths[Path.GetFileNameWithoutExtension(fileName)] = fileName;
 #endif
 
                     if (!_paths.ContainsKey(package.Id))
@@ -111,6 +114,43 @@ namespace Microsoft.Net.Runtime.Loader.NuGet
                         _paths[package.Id] = fileName;
                     }
                 }
+            }
+        }
+
+        public DependencyImpact GetDependencyImpact(string name, FrameworkName targetFramework)
+        {
+            if (!_dependencies.ContainsKey(name))
+            {
+                return null;
+            }
+
+            var paths = new HashSet<string>();
+
+            PopulateDependenciesPaths(name, targetFramework, paths);
+
+            var metadataReferenes = paths.Select(path => (IMetadataReference)new MetadataFileReference(path))
+                                         .ToList();
+
+            return new DependencyImpact(metadataReferenes);
+        }
+
+        private void PopulateDependenciesPaths(string name, FrameworkName targetFramework, ISet<string> paths)
+        {
+            DependencyDescription description;
+            if (!_dependencies.TryGetValue(name, out description))
+            {
+                return;
+            }
+
+            string path;
+            if (_paths.TryGetValue(name, out path))
+            {
+                paths.Add(path);
+            }
+
+            foreach (var dependency in description.Dependencies)
+            {
+                PopulateDependenciesPaths(dependency.Name, targetFramework, paths);
             }
         }
 

@@ -1,5 +1,4 @@
 ﻿using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -8,9 +7,10 @@ using NuGet;
 
 namespace Microsoft.Net.Runtime.Loader
 {
-    public class CachedCompilationLoader : IAssemblyLoader, IPackageLoader
+    public class CachedCompilationLoader : IAssemblyLoader, IPackageLoader, IDependencyImpactResolver
     {
         private readonly IProjectResolver _resolver;
+        private readonly Dictionary<string, string> _paths = new Dictionary<string, string>();
 
         public CachedCompilationLoader(IProjectResolver resolver)
         {
@@ -19,55 +19,43 @@ namespace Microsoft.Net.Runtime.Loader
 
         public AssemblyLoadResult Load(LoadContext loadContext)
         {
-            // If there's an output path then skip all loading of cached compilations
-            // This is to avoid using the cached version when trying to produce a new one.
-            // Also skip if we're not loading assemblies
-            if (loadContext.OutputPath != null)
-            {
-                return null;
-            }
-
             string name = loadContext.AssemblyName;
 
-            Project project;
-            if (!_resolver.TryResolveProject(name, out project))
+            string path;
+            if (_paths.TryGetValue(name, out path))
             {
-                return null;
-            }
-
-            string path = project.ProjectDirectory;
-
-            var targetFrameworkFolder = VersionUtility.GetShortFrameworkName(loadContext.TargetFramework);
-            string cachedFile = Path.Combine(path, "bin", targetFrameworkFolder, name + ".dll");
-
-            if (File.Exists(cachedFile))
-            {
-                Trace.TraceInformation("[{0}]: Loading '{1}' from {2}.", GetType().Name, name, cachedFile);
-
-                return new AssemblyLoadResult(Assembly.LoadFile(cachedFile));
+                return new AssemblyLoadResult(Assembly.LoadFile(path));
             }
 
             return null;
         }
 
-        public DependencyDescription GetDescription(string name, SemanticVersion version, FrameworkName frameworkName)
+        public DependencyImpact GetDependencyImpact(string name, FrameworkName targetFramework)
         {
+            string path;
+            if (_paths.TryGetValue(name, out path))
+            {
+                return new DependencyImpact(path);
+            }
+
+            return null;
+        }
+
+        public DependencyDescription GetDescription(string name, SemanticVersion version, FrameworkName targetFramework)
+        {
+            string cachedFile;
             Project project;
-            if (!_resolver.TryResolveProject(name, out project))
+
+            if (!TryGetCachedFileName(name, targetFramework, out cachedFile, out project))
             {
                 return null;
             }
 
-            string path = project.ProjectDirectory;
-
-            var targetFrameworkFolder = VersionUtility.GetShortFrameworkName(frameworkName);
-            string cachedFile = Path.Combine(path, "bin", targetFrameworkFolder, name + ".dll");
-
-            if (File.Exists(cachedFile) && 
-                version == project.Version || 
+            if (File.Exists(cachedFile) &&
+                version == project.Version ||
                 version == null)
             {
-                var config = project.GetTargetFrameworkConfiguration(frameworkName);
+                var config = project.GetTargetFrameworkConfiguration(targetFramework);
 
                 return new DependencyDescription
                 {
@@ -79,9 +67,39 @@ namespace Microsoft.Net.Runtime.Loader
             return null;
         }
 
-        public void Initialize(IEnumerable<DependencyDescription> packages, FrameworkName frameworkName)
+        public void Initialize(IEnumerable<DependencyDescription> packages, FrameworkName targetFramework)
         {
+            foreach (var package in packages)
+            {
+                string cachedFile;
+                TryGetCachedFileName(package.Identity.Name, targetFramework, out cachedFile);
 
+                if (File.Exists(cachedFile))
+                {
+                    _paths[package.Identity.Name] = cachedFile;
+                }
+            }
+        }
+
+        private bool TryGetCachedFileName(string name, FrameworkName targetFramework, out string cachedFile)
+        {
+            Project project;
+            return TryGetCachedFileName(name, targetFramework, out cachedFile, out project);
+        }
+
+        private bool TryGetCachedFileName(string name, FrameworkName targetFramework, out string cachedFile, out Project project)
+        {
+            cachedFile = null;
+            if (!_resolver.TryResolveProject(name, out project))
+            {
+                return false;
+            }
+
+            var path = project.ProjectDirectory;
+            var targetFrameworkFolder = VersionUtility.GetShortFrameworkName(targetFramework);
+
+            cachedFile = Path.Combine(path, "bin", targetFrameworkFolder, name + ".dll");
+            return true;
         }
     }
 }

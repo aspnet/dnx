@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.Versioning;
@@ -9,12 +10,12 @@ using NuGet;
 
 namespace Microsoft.Net.Runtime
 {
-    internal class LazyRoslynAssemblyLoader : IAssemblyLoader, IPackageLoader
+    internal class LazyRoslynAssemblyLoader : IAssemblyLoader, IPackageLoader, IDependencyImpactResolver
     {
         private readonly ProjectResolver _projectResolver;
         private readonly IFileWatcher _watcher;
         private readonly AssemblyLoader _loader;
-        private IAssemblyLoader _roslynLoader;
+        private object _roslynLoaderInstance;
         private bool _roslynInitializing;
 
         public LazyRoslynAssemblyLoader(ProjectResolver projectResolver,
@@ -26,7 +27,7 @@ namespace Microsoft.Net.Runtime
             _loader = loader;
         }
 
-        public DependencyDescription GetDescription(string name, SemanticVersion version, FrameworkName frameworkName)
+        public DependencyDescription GetDescription(string name, SemanticVersion version, FrameworkName targetFramework)
         {
             Project project;
 
@@ -40,7 +41,7 @@ namespace Microsoft.Net.Runtime
                 return null;
             }
 
-            var config = project.GetTargetFrameworkConfiguration(frameworkName);
+            var config = project.GetTargetFrameworkConfiguration(targetFramework);
 
             return new DependencyDescription
             {
@@ -49,7 +50,7 @@ namespace Microsoft.Net.Runtime
             };
         }
 
-        public void Initialize(IEnumerable<DependencyDescription> packages, FrameworkName frameworkName)
+        public void Initialize(IEnumerable<DependencyDescription> packages, FrameworkName targetFramework)
         {
         }
 
@@ -60,7 +61,23 @@ namespace Microsoft.Net.Runtime
                 return null;
             }
 
-            if (_roslynLoader == null)
+            return ExecuteWith<IAssemblyLoader, AssemblyLoadResult>(loader =>
+            {
+                return loader.Load(loadContext);
+            });
+        }
+
+        public DependencyImpact GetDependencyImpact(string name, FrameworkName targetFramework)
+        {
+            return ExecuteWith<IDependencyImpactResolver, DependencyImpact>(resolver =>
+            {
+                return resolver.GetDependencyImpact(name, targetFramework);
+            });
+        }
+
+        private TResult ExecuteWith<TInterface, TResult>(Func<TInterface, TResult> execute)
+        {
+            if (_roslynLoaderInstance == null)
             {
                 try
                 {
@@ -74,9 +91,9 @@ namespace Microsoft.Net.Runtime
 
                     var ctor = ctors.First(c => c.GetParameters().Length == 3);
 
-                    _roslynLoader = (IAssemblyLoader)ctor.Invoke(new object[] { _projectResolver, _watcher, _loader });
+                    _roslynLoaderInstance = ctor.Invoke(new object[] { _projectResolver, _watcher, _loader });
 
-                    return _roslynLoader.Load(loadContext);
+                    return execute((TInterface)_roslynLoaderInstance);
                 }
                 finally
                 {
@@ -84,7 +101,7 @@ namespace Microsoft.Net.Runtime
                 }
             }
 
-            return _roslynLoader.Load(loadContext);
+            return execute((TInterface)_roslynLoaderInstance);
         }
     }
 }
