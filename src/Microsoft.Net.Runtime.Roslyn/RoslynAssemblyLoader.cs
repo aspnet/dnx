@@ -11,6 +11,7 @@ using Microsoft.CodeAnalysis.Emit;
 using Microsoft.Net.Runtime.FileSystem;
 using NuGet;
 using Microsoft.Net.Runtime.Loader;
+using Microsoft.Net.Runtime.Roslyn.AssemblyNeutral;
 
 #if NET45 // TODO: Temporary due to CoreCLR and Desktop Roslyn being out of sync
 using EmitResult = Microsoft.CodeAnalysis.Emit.CommonEmitResult;
@@ -20,7 +21,7 @@ namespace Microsoft.Net.Runtime.Roslyn
 {
     public class RoslynAssemblyLoader : IAssemblyLoader, IPackageLoader, IDependencyExportResolver
     {
-        private readonly Dictionary<string, Compilation> _compilationCache = new Dictionary<string, Compilation>();
+        private readonly Dictionary<string, CompilationContext> _compilationCache = new Dictionary<string, CompilationContext>();
 
         private readonly IProjectResolver _projectResolver;
         private readonly IFileWatcher _watcher;
@@ -72,7 +73,7 @@ namespace Microsoft.Net.Runtime.Roslyn
             string path = project.ProjectDirectory;
 
             IList<string> errors;
-            Compilation compilation = GetCompilation(loadContext.AssemblyName, loadContext.TargetFramework, out errors);
+            CompilationContext compilationContext = GetCompilationContext(loadContext.AssemblyName, loadContext.TargetFramework, out errors);
 
             if (errors != null && errors.Count > 0)
             {
@@ -81,10 +82,17 @@ namespace Microsoft.Net.Runtime.Roslyn
 
             IList<ResourceDescription> resources = _resourceProvider.GetResources(project.Name, path);
 
+            foreach (var typeContext in compilationContext.TypeCompilationContexts)
+            {
+                resources.Add(new ResourceDescription(typeContext.AssemblyName + ".dll",
+                                                      () => typeContext.OutputStream,
+                                                      isPublic: true));
+            }
+
             // If the output path is null then load the assembly from memory
             if (loadContext.OutputPath == null)
             {
-                return CompileInMemory(name, compilation, resources);
+                return CompileInMemory(name, compilationContext.Compilation, resources);
             }
 
             string assemblyPath = Path.Combine(loadContext.OutputPath, name + ".dll");
@@ -100,7 +108,7 @@ namespace Microsoft.Net.Runtime.Roslyn
             // Ensure there's an output directory
             Directory.CreateDirectory(loadContext.OutputPath);
 
-            AssemblyLoadResult loadResult = CompileToDisk(assemblyPath, pdbPath, compilation, resources);
+            AssemblyLoadResult loadResult = CompileToDisk(assemblyPath, pdbPath, compilationContext.Compilation, resources);
 
             if (loadResult != null && loadResult.Errors == null)
             {
@@ -117,13 +125,13 @@ namespace Microsoft.Net.Runtime.Roslyn
 
         }
 
-        private Compilation GetCompilation(string name, FrameworkName targetFramework, out IList<string> errors)
+        private CompilationContext GetCompilationContext(string name, FrameworkName targetFramework, out IList<string> errors)
         {
-            Compilation compilation;
-            if (_compilationCache.TryGetValue(name, out compilation))
+            CompilationContext compilationContext;
+            if (_compilationCache.TryGetValue(name, out compilationContext))
             {
                 errors = null;
-                return compilation;
+                return compilationContext;
             }
 
             Project project;
@@ -176,8 +184,12 @@ namespace Microsoft.Net.Runtime.Roslyn
                 return null;
             }
 
-            references.AddRange(GetMetadataReferences(exports));
+            IDictionary<string, MetadataReference> assemblyNeutralReferences;
+            IList<MetadataReference> exportedReferences;
 
+            ExtractReferences(exports, out exportedReferences, out assemblyNeutralReferences);
+
+            references.AddRange(exportedReferences);
             references.AddRange(_resolver.GetDefaultReferences(targetFramework));
 
             Trace.TraceInformation("[{0}]: Compiling '{1}'", GetType().Name, name);
@@ -217,22 +229,46 @@ namespace Microsoft.Net.Runtime.Roslyn
                 _watcher.WatchDirectory(directory, ".cs");
             }
 
-            compilation = CSharpCompilation.Create(
+            var compilation = CSharpCompilation.Create(
                 name,
                 compilationSettings.CompilationOptions,
                 syntaxTrees: trees,
                 references: references);
 
-            // Cache the compilation
-            _compilationCache[name] = compilation;
+            var context = new CompilationContext
+            {
+                OriginalCompilation = compilation
+            };
 
-            return compilation;
+            context.FindTypeCompilations(compilation.GlobalNamespace);
+            context.OrderTypeCompilations();
+            var failed = context.GenerateTypeCompilations();
+
+            errors.AddRange(GetErrors(failed));
+
+            if (errors.Count > 0)
+            {
+                return null;
+            }
+
+            context.Generate(assemblyNeutralReferences);
+
+            context.Compilation = context.Compilation.WithReferences(
+                context.Compilation.References.Concat(assemblyNeutralReferences.Values));
+
+            // Cache the compilation
+            _compilationCache[name] = context;
+
+            return context;
         }
 
-        private IEnumerable<MetadataReference> GetMetadataReferences(List<DependencyExport> dependencyExports)
+        private void ExtractReferences(List<DependencyExport> dependencyExports,
+                                       out IList<MetadataReference> references,
+                                       out IDictionary<string, MetadataReference> assemblyNeutralReferences)
         {
             var paths = new HashSet<string>();
-            var references = new List<MetadataReference>();
+            references = new List<MetadataReference>();
+            assemblyNeutralReferences = new Dictionary<string, MetadataReference>();
 
             foreach (var export in dependencyExports)
             {
@@ -247,15 +283,22 @@ namespace Microsoft.Net.Runtime.Roslyn
                     }
                     else
                     {
-                        references.Add(ConvertMetadataReference(reference));
+                        var assemblyNeutralReference = reference as AssemblyNeutralMetadataReference;
+
+                        if (assemblyNeutralReference != null)
+                        {
+                            assemblyNeutralReferences[assemblyNeutralReference.Name] = assemblyNeutralReference.MetadataReference;
+                        }
+                        else
+                        {
+                            references.Add(ConvertMetadataReference(reference));
+                        }
                     }
                 }
             }
 
             // Now add the final set to the final set of references
             references.AddRange(paths.Select(path => new MetadataFileReference(path)));
-
-            return references;
         }
 
         private MetadataReference ConvertMetadataReference(IMetadataReference metadataReference)
@@ -314,14 +357,22 @@ namespace Microsoft.Net.Runtime.Roslyn
             }
 
             IList<string> errors;
-            var compilation = GetCompilation(name, targetFramework, out errors);
+            var compilationContext = GetCompilationContext(name, targetFramework, out errors);
 
-            if (compilation == null)
+            if (compilationContext == null)
             {
                 return null;
             }
 
-            return CreateDependencyExport(compilation.ToMetadataReference());
+            var references = new List<IMetadataReference>();
+            references.Add(new MetadataReferenceWrapper(compilationContext.Compilation.ToMetadataReference()));
+
+            foreach (var typeContext in compilationContext.TypeCompilationContexts)
+            {
+                references.Add(new AssemblyNeutralMetadataReference(typeContext.AssemblyName, typeContext.RealOrShallowReference()));
+            }
+
+            return new DependencyExport(references);
         }
 
         private AssemblyLoadResult CompileToDisk(string assemblyPath, string pdbPath, Compilation compilation, IList<ResourceDescription> resources)
@@ -405,14 +456,21 @@ namespace Microsoft.Net.Runtime.Roslyn
 
         private static AssemblyLoadResult ReportCompilationError(EmitResult result)
         {
+            var errors = GetErrors(new[] { result });
+
+            return new AssemblyLoadResult(errors);
+        }
+
+        private static List<string> GetErrors(IEnumerable<EmitResult> results)
+        {
 #if NET45 // TODO: Temporary due to CoreCLR and Desktop Roslyn being out of sync
             var formatter = DiagnosticFormatter.Instance;
 #else
             var formatter = new DiagnosticFormatter();
 #endif
-            var errors = new List<string>(result.Diagnostics.Select(d => formatter.Format(d)));
+            var errors = new List<string>(results.SelectMany(r => r.Diagnostics.Select(d => formatter.Format(d))));
 
-            return new AssemblyLoadResult(errors);
+            return errors;
         }
 
         private void BuildSymbolsPackage(Project project, string assemblyPath, string pdbPath, PackageBuilder builder, List<string> sourceFiles, FrameworkName targetFramework)
