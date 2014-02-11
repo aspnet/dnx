@@ -35,6 +35,8 @@ namespace Microsoft.Net.Runtime
 
         public string[] Authors { get; private set; }
 
+        public bool EmbedInteropTypes { get; set; }
+
         public SemanticVersion Version { get; private set; }
 
         public IList<Dependency> Dependencies { get; private set; }
@@ -110,6 +112,7 @@ namespace Microsoft.Net.Runtime
             project.Authors = authors == null ? new string[] { } : authors.ToObject<string[]>();
             project.Dependencies = new List<Dependency>();
             project.ProjectFilePath = projectPath;
+            project.EmbedInteropTypes = GetValue<bool>(settings, "embedInteropTypes");
 
             if (project.Version.IsSnapshot)
             {

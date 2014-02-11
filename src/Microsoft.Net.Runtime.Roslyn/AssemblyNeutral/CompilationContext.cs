@@ -22,6 +22,7 @@ namespace Microsoft.Net.Runtime.Roslyn.AssemblyNeutral
         private readonly Dictionary<string, EmitResult> _failedTypeCompilations = new Dictionary<string, EmitResult>();
         private readonly List<EmitResult> _failedCompilations = new List<EmitResult>();
 
+        public Project Project { get; set; }
         public CSharpCompilation OriginalCompilation { get; set; }
         public CSharpCompilation Compilation { get; set; }
         public IList<EmitResult> FailedCompilations { get { return _failedCompilations; } }

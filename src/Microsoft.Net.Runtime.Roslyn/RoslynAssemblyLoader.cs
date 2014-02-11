@@ -223,7 +223,8 @@ namespace Microsoft.Net.Runtime.Roslyn
 
             var context = new CompilationContext
             {
-                OriginalCompilation = compilation
+                OriginalCompilation = compilation,
+                Project = project
             };
 
             context.FindTypeCompilations(compilation.GlobalNamespace);
@@ -346,7 +347,8 @@ namespace Microsoft.Net.Runtime.Roslyn
             }
 
             var references = new List<IMetadataReference>();
-            references.Add(new MetadataReferenceWrapper(compilationContext.Compilation.ToMetadataReference()));
+            var metadataReference = compilationContext.Compilation.ToMetadataReference(embedInteropTypes: compilationContext.Project.EmbedInteropTypes);
+            references.Add(new MetadataReferenceWrapper(metadataReference));
 
             foreach (var typeContext in compilationContext.SuccessfulTypeCompilationContexts)
             {
@@ -490,6 +492,12 @@ namespace Microsoft.Net.Runtime.Roslyn
             {
                 foreach (var dependency in project.Dependencies)
                 {
+                    Project dependencyProject;
+                    if (_projectResolver.TryResolveProject(dependency.Name, out dependencyProject) && dependencyProject.EmbedInteropTypes)
+                    {
+                        continue;
+                    }
+
                     if (frameworkReferences.Contains(dependency.Name))
                     {
                         frameworkAssemblies.Add(dependency.Name);
