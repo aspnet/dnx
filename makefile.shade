@@ -152,6 +152,8 @@ var FULL_VERSION = '${VERSION + "-" + BuildNumber}'
     copy sourceDir='${Path.Combine(TOOLS_DIR, "net45")}' outputDir='${Path.Combine(TOOLS_BIN_DIR, x64Target)}' include='*managed.dll' overwrite='${true}'
     copy sourceDir='${Path.Combine(TOOLS_DIR, "k10")}' outputDir='${Path.Combine(TOOLS_BIN_DIR, x86Target)}' include='*managed.dll' overwrite='${true}'
     copy sourceDir='${Path.Combine(TOOLS_DIR, "k10")}' outputDir='${Path.Combine(TOOLS_BIN_DIR, x64Target)}' include='*managed.dll' overwrite='${true}'
+
+    directory delete='${BUILD_DIR2}'
     
 
 #tweak-scripts
