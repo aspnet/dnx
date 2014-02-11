@@ -44,6 +44,8 @@ namespace Microsoft.Net.Runtime
 
         public Assembly GetEntryPoint()
         {
+            Trace.TraceInformation("Project root is {0}", _projectDir);
+
             Project project;
             if (!Project.TryGetProject(_projectDir, out project))
             {
@@ -56,6 +58,8 @@ namespace Microsoft.Net.Runtime
             _loader.Walk(project.Name, project.Version, _targetFramework);
 
             string name = _name ?? project.Name;
+
+            Trace.TraceInformation("Loading entry point from {0}", name);
 
             var assembly = Assembly.Load(new AssemblyName(name));
 
