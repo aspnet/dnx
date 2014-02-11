@@ -77,7 +77,7 @@ var FULL_VERSION = '${VERSION + "-" + BuildNumber}'
     var helloWorld = '${Path.Combine(SAMPLES_DIR, "HelloWorld")}'
     var kcmd = '${Path.Combine(TEST_RESULTS, "ProjectK", "tools", "k.cmd")}'
 
-    nuget-install package='ProjectK' outputDir='${TEST_RESULTS}' extra='-source ${SDK_ROOT} -ExcludeVersion -pre'
+    nuget-install package='ProjectK' outputDir='${TEST_RESULTS}' extra='-source ${SDK_ROOT} -ExcludeVersion -pre -nocache'
 
     @{
         Action<string> runWithFramework = framework => {
