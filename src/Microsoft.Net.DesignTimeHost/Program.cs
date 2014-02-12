@@ -33,23 +33,28 @@ namespace Microsoft.Net.DesignTimeHost
 
         private async Task OpenChannel(int port)
         {
-            var listener = new TcpListener(IPAddress.Loopback, port);
-
-            listener.Start();
+            var socket = new Socket(SocketType.Stream, ProtocolType.Tcp);
+            socket.Bind(new IPEndPoint(IPAddress.Loopback, port));
+            socket.Listen(10);
 
             while (true)
             {
                 Console.WriteLine("Listening on port {0}", port);
 
-                var client = await listener.AcceptTcpClientAsync();
+                var client = await AcceptAsync(socket);
 
-                Console.WriteLine("Client accepted {0}", client.Client.LocalEndPoint);
+                Console.WriteLine("Client accepted {0}", client.LocalEndPoint);
 
                 // TODO: Cleanup the channel when the client goes away
-                var channel = new Channel(client.GetStream());
+                var channel = new Channel(new NetworkStream(client));
 
                 channel.Bind(this);
             }
+        }
+
+        private static Task<Socket> AcceptAsync(Socket socket)
+        {
+            return Task.Factory.FromAsync((cb, state) => socket.BeginAccept(cb, state), ar => socket.EndAccept(ar), null);
         }
 
         public IProjectMetadata GetProjectMetadata()
