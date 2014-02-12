@@ -1,21 +1,46 @@
 ﻿using System;
 using System.Runtime.InteropServices;
+using System.Threading.Tasks;
 using klr.hosting;
 
 namespace klr.net45.managed
 {
-    [ComImport, InterfaceType(ComInterfaceType.InterfaceIsIUnknown), Guid("00eb2481-87a8-4cde-8429-070794b42834")]
+    [ComImport]
+    [InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+    [Guid("00eb2481-87a8-4cde-8429-070794b42834")]
     public interface IEntryPoint
     {
-        [return: MarshalAs(UnmanagedType.I4)]
-        int Execute(
+        [return: MarshalAs(UnmanagedType.Interface)]
+        IAwaiter Execute(
             [In, MarshalAs(UnmanagedType.U4)] uint argc,
             [In, MarshalAs(UnmanagedType.SysInt)] IntPtr argv);
     }
 
+    public delegate void OnCompletedCallback(IntPtr state);
+
+    [ComImport]
+    [InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+    [Guid("39F2F3DC-656C-41D1-9CD8-41307924DFAC")]
+    public interface IAwaiter
+    {
+        bool IsCompleted
+        {
+            [return: MarshalAs(UnmanagedType.Bool)]
+            get;
+        }
+
+        [return: MarshalAs(UnmanagedType.I4)]
+        int GetResult();
+
+        void UnsafeOnCompleted(
+            [In, MarshalAs(UnmanagedType.FunctionPtr)] OnCompletedCallback callback,
+            [In, MarshalAs(UnmanagedType.SysInt)] IntPtr state);
+
+    }
+
     public unsafe sealed class EntryPoint : IEntryPoint
     {
-        public int Execute(uint argc, IntPtr argv)
+        public IAwaiter Execute(uint argc, IntPtr argv)
         {
             var pBstrs = (IntPtr*)argv;
             string[] args = new string[argc];
@@ -28,12 +53,33 @@ namespace klr.net45.managed
                 }
             }
 
-            return Execute(args);
+            return new Awaiter(RuntimeBootstrapper.Execute(args));
         }
 
-        private static int Execute(string[] args)
+        private sealed class Awaiter : IAwaiter
         {
-            return RuntimeBootstrapper.Execute(args).Result;
+            private readonly Task<int> _task;
+
+            public Awaiter(Task<int> task)
+            {
+                _task = task;
+            }
+
+            public bool IsCompleted
+            {
+                get { return _task.GetAwaiter().IsCompleted; }
+            }
+
+            public int GetResult()
+            {
+                return _task.GetAwaiter().GetResult();
+            }
+
+            public void UnsafeOnCompleted(OnCompletedCallback callback, IntPtr state)
+            {
+                _task.GetAwaiter().UnsafeOnCompleted(() => callback(state));
+            }
         }
     }
 }
+
