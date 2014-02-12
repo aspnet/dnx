@@ -6,11 +6,12 @@ using System.Linq;
 using System.Reflection;
 using System.Runtime.Versioning;
 using Microsoft.Net.Runtime.Loader.Infrastructure;
+using Microsoft.Net.Runtime.Services;
 using NuGet;
 
 namespace Microsoft.Net.Runtime.Loader
 {
-    public class AssemblyLoader : IAssemblyLoader, IDependencyExportResolver
+    public class AssemblyLoader : IAssemblyLoader, IDependencyExportResolver, IDependencyRefresher
     {
         private List<IAssemblyLoader> _loaders = new List<IAssemblyLoader>();
 
@@ -100,6 +101,11 @@ namespace Microsoft.Net.Runtime.Loader
             return _loaders.OfType<IDependencyExportResolver>()
                            .Select(r => r.GetDependencyExport(name, targetFramework))
                            .FirstOrDefault(i => i != null);
+        }
+
+        public void RefreshDependencies(string name, string version, FrameworkName targetFramework)
+        {
+            Walk(name, new SemanticVersion(version), targetFramework);
         }
 
         private AssemblyLoadResult LoadImpl(LoadContext loadContext, Stopwatch sw)

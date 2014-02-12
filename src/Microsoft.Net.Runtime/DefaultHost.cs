@@ -4,11 +4,13 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.Versioning;
+using Microsoft.Net.Runtime.Common.DependencyInjection;
 using Microsoft.Net.Runtime.FileSystem;
 using Microsoft.Net.Runtime.Loader;
 using Microsoft.Net.Runtime.Loader.MSBuildProject;
 using Microsoft.Net.Runtime.Loader.NuGet;
 using Microsoft.Net.Runtime.Loader.Roslyn;
+using Microsoft.Net.Runtime.Services;
 using NuGet;
 
 namespace Microsoft.Net.Runtime
@@ -20,6 +22,7 @@ namespace Microsoft.Net.Runtime
         private readonly string _projectDir;
         private readonly FrameworkName _targetFramework;
         private readonly string _name;
+        private readonly ServiceProvider _serviceProvider = new ServiceProvider();
 
         public DefaultHost(DefaultHostOptions options)
         {
@@ -32,14 +35,9 @@ namespace Microsoft.Net.Runtime
             Initialize(options);
         }
 
-        public event Action OnChanged;
-
-        private void OnWatcherChanged()
+        public IServiceProvider ServiceProvider
         {
-            if (OnChanged != null)
-            {
-                OnChanged();
-            }
+            get { return _serviceProvider; }
         }
 
         public Assembly GetEntryPoint()
@@ -59,6 +57,8 @@ namespace Microsoft.Net.Runtime
 
             string name = _name ?? project.Name;
 
+            _serviceProvider.Add(typeof(IApplicationEnvironment), new ApplicationEnvironment(project, _targetFramework));
+
             Trace.TraceInformation("Loading entry point from {0}", name);
 
             var assembly = Assembly.Load(new AssemblyName(name));
@@ -77,12 +77,13 @@ namespace Microsoft.Net.Runtime
 
         public void Dispose()
         {
-            _watcher.OnChanged -= OnWatcherChanged;
             _watcher.Dispose();
         }
 
         private void Initialize(DefaultHostOptions options)
         {
+            var sp = new ServiceProvider();
+
             _loader = new AssemblyLoader();
             string rootDirectory = ResolveRootDirectory(_projectDir);
 
@@ -90,7 +91,6 @@ namespace Microsoft.Net.Runtime
             if (options.WatchFiles)
             {
                 _watcher = new FileWatcher(rootDirectory);
-                _watcher.OnChanged += OnWatcherChanged;
             }
             else
 #endif
@@ -112,6 +112,10 @@ namespace Microsoft.Net.Runtime
             _loader.Add(new MSBuildProjectAssemblyLoader(rootDirectory, _watcher));
 #endif
             _loader.Add(new NuGetAssemblyLoader(_projectDir));
+
+            _serviceProvider.Add(typeof(IFileMonitor), _watcher);
+            _serviceProvider.Add(typeof(IProjectMetadataProvider), roslynLoader);
+            _serviceProvider.Add(typeof(IDependencyRefresher), _loader);
         }
 
         public static string ResolveRootDirectory(string projectDir)

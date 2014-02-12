@@ -5,6 +5,7 @@ using System.Reflection;
 using System.Threading.Tasks;
 using Microsoft.Net.Runtime;
 using Microsoft.Net.Runtime.Common;
+using Microsoft.Net.Runtime.Common.DependencyInjection;
 
 namespace klr.host
 {
@@ -35,17 +36,10 @@ namespace klr.host
                 return -1;
             }
 
-            return await EntryPointExecutor.Execute(assembly, programArgs, Satisfy);
-        }
+            var serviceProvider = new ServiceProvider();
+            serviceProvider.Add(typeof(IHostContainer), _container);
 
-        private object Satisfy(ParameterInfo arg)
-        {
-            if (arg.ParameterType == typeof(IHostContainer))
-            {
-                return _container;
-            }
-
-            return null;
+            return await EntryPointExecutor.Execute(assembly, programArgs, serviceProvider);
         }
     }
 }

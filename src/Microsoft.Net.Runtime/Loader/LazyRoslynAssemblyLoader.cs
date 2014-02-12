@@ -6,11 +6,12 @@ using System.Runtime.Versioning;
 using Microsoft.Net.Runtime.FileSystem;
 using Microsoft.Net.Runtime.Loader;
 using Microsoft.Net.Runtime.Loader.Roslyn;
+using Microsoft.Net.Runtime.Services;
 using NuGet;
 
 namespace Microsoft.Net.Runtime
 {
-    internal class LazyRoslynAssemblyLoader : IAssemblyLoader, IPackageLoader, IDependencyExportResolver
+    internal class LazyRoslynAssemblyLoader : IAssemblyLoader, IPackageLoader, IDependencyExportResolver, IProjectMetadataProvider
     {
         private readonly ProjectResolver _projectResolver;
         private readonly IFileWatcher _watcher;
@@ -72,6 +73,14 @@ namespace Microsoft.Net.Runtime
             return ExecuteWith<IDependencyExportResolver, DependencyExport>(resolver =>
             {
                 return resolver.GetDependencyExport(name, targetFramework);
+            });
+        }
+
+        public IProjectMetadata GetProjectMetadata(string name, FrameworkName targetFramework)
+        {
+            return ExecuteWith<IProjectMetadataProvider, IProjectMetadata>(provider =>
+            {
+                return provider.GetProjectMetadata(name, targetFramework);
             });
         }
 

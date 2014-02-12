@@ -22,8 +22,13 @@ namespace Microsoft.Net.Runtime.Roslyn.AssemblyNeutral
         private readonly Dictionary<string, EmitResult> _failedTypeCompilations = new Dictionary<string, EmitResult>();
         private readonly List<EmitResult> _failedCompilations = new List<EmitResult>();
 
+        public CompilationContext(CSharpCompilation compilation)
+        {
+            OriginalCompilation = compilation;
+        }
+
         public Project Project { get; set; }
-        public CSharpCompilation OriginalCompilation { get; set; }
+        public CSharpCompilation OriginalCompilation { get; private set; }
         public CSharpCompilation Compilation { get; set; }
         public IList<EmitResult> FailedCompilations { get { return _failedCompilations; } }
 
@@ -88,17 +93,19 @@ namespace Microsoft.Net.Runtime.Roslyn.AssemblyNeutral
             }
         }
 
-        public void Generate(IDictionary<string, MetadataReference> references)
+        public void Generate(IDictionary<string, AssemblyNeutralMetadataReference> references)
         {
             Compilation = OriginalCompilation;
 
             Dictionary<SyntaxTree, List<SyntaxNode>> treeRemoveNodes = new Dictionary<SyntaxTree, List<SyntaxNode>>();
             foreach (var neutralTypeContext in TypeCompilationContexts)
             {
-                MetadataReference neutralReference;
-                if (!references.TryGetValue(neutralTypeContext.AssemblyName, out neutralReference))
+                MetadataReference neutralReference = neutralTypeContext.Reference;
+
+                AssemblyNeutralMetadataReference assemblyNeutralReference;
+                if (references.TryGetValue(neutralTypeContext.AssemblyName, out assemblyNeutralReference))
                 {
-                    neutralReference = neutralTypeContext.Reference;
+                    neutralReference = assemblyNeutralReference.MetadataReference;
                 }
 
                 if (!_failedTypeCompilations.ContainsKey(neutralTypeContext.AssemblyName))

@@ -2,18 +2,19 @@
 using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
+using Microsoft.Net.Runtime.Common.DependencyInjection;
 
 namespace Microsoft.Net.Runtime.Common
 {
     public static class EntryPointExecutor
     {
-        public static async Task<int> Execute(Assembly assembly, string[] args, Func<ParameterInfo, object> parameterResolver)
+        public static async Task<int> Execute(Assembly assembly, string[] args, IServiceProvider serviceProvider)
         {
             string name = assembly.GetName().Name;
 
-            var program = assembly.GetType("Program") ?? assembly.GetType(name + ".Program");
+            var programType = assembly.GetType("Program") ?? assembly.GetType(name + ".Program");
 
-            if (program == null)
+            if (programType == null)
             {
                 var programTypeInfo = assembly.DefinedTypes.FirstOrDefault(t => t.Name == "Program");
 
@@ -23,10 +24,10 @@ namespace Microsoft.Net.Runtime.Common
                     return -1;
                 }
 
-                program = programTypeInfo.AsType();
+                programType = programTypeInfo.AsType();
             }
 
-            var main = program.GetTypeInfo().GetDeclaredMethods("Main").FirstOrDefault();
+            var main = programType.GetTypeInfo().GetDeclaredMethods("Main").FirstOrDefault();
 
             if (main == null)
             {
@@ -34,28 +35,7 @@ namespace Microsoft.Net.Runtime.Common
                 return -1;
             }
 
-            object instance = null;
-            if ((main.Attributes & MethodAttributes.Static) != MethodAttributes.Static)
-            {
-                var constructors = program.GetTypeInfo().DeclaredConstructors.Where(c => c.IsPublic).ToList();
-
-                switch (constructors.Count)
-                {
-                    case 0:
-                        Console.WriteLine("'{0}' does not contain a public constructor.", name);
-                        return -1;
-
-                    case 1:
-                        var constructor = constructors[0];
-                        var services = constructor.GetParameters().Select(parameterResolver);
-                        instance = constructor.Invoke(services.ToArray());
-                        break;
-
-                    default:
-                        Console.WriteLine("'{0}' has too many public constructors for an entry point.", name);
-                        return -1;
-                }
-            }
+            object instance = programType.GetTypeInfo().IsAbstract ? null : ActivatorUtilities.CreateInstance(serviceProvider, programType);
 
             object result = null;
             var parameters = main.GetParameters();

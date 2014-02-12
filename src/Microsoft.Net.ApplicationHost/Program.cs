@@ -86,7 +86,7 @@ namespace Microsoft.Net.ApplicationHost
                 return -1;
             }
 
-            return await EntryPointExecutor.Execute(assembly, args, pi => _container);
+            return await EntryPointExecutor.Execute(assembly, args, host.ServiceProvider);
         }
     }
 }

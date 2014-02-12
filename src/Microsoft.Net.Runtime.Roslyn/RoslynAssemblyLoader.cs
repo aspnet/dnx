@@ -12,6 +12,7 @@ using Microsoft.Net.Runtime.FileSystem;
 using NuGet;
 using Microsoft.Net.Runtime.Loader;
 using Microsoft.Net.Runtime.Roslyn.AssemblyNeutral;
+using Microsoft.Net.Runtime.Services;
 
 #if NET45 // TODO: Temporary due to CoreCLR and Desktop Roslyn being out of sync
 using EmitResult = Microsoft.CodeAnalysis.Emit.CommonEmitResult;
@@ -19,7 +20,7 @@ using EmitResult = Microsoft.CodeAnalysis.Emit.CommonEmitResult;
 
 namespace Microsoft.Net.Runtime.Roslyn
 {
-    public class RoslynAssemblyLoader : IAssemblyLoader, IPackageLoader, IDependencyExportResolver
+    public class RoslynAssemblyLoader : IAssemblyLoader, IPackageLoader, IDependencyExportResolver, IProjectMetadataProvider
     {
         private readonly Dictionary<string, CompilationContext> _compilationCache = new Dictionary<string, CompilationContext>();
 
@@ -135,7 +136,7 @@ namespace Microsoft.Net.Runtime.Roslyn
 
             _watcher.WatchFile(project.ProjectFilePath);
 
-            TargetFrameworkConfiguration targetFrameworkConfig = project.GetTargetFrameworkConfiguration(targetFramework);
+            var targetFrameworkConfig = project.GetTargetFrameworkConfiguration(targetFramework);
 
             Trace.TraceInformation("[{0}]: Found project '{1}' framework={2}", GetType().Name, project.Name, targetFramework);
 
@@ -151,7 +152,7 @@ namespace Microsoft.Net.Runtime.Roslyn
 
                 foreach (var dependency in project.Dependencies.Concat(targetFrameworkConfig.Dependencies))
                 {
-                    DependencyExport dependencyExport = _dependencyResolver.GetDependencyExport(dependency.Name, targetFramework);
+                    var dependencyExport = _dependencyResolver.GetDependencyExport(dependency.Name, targetFramework);
 
                     // Determine if this dependency has any failed compilations
                     CompilationContext dependencyContext;
@@ -170,7 +171,7 @@ namespace Microsoft.Net.Runtime.Roslyn
                 Trace.TraceInformation("[{0}]: Completed loading dependencies for '{1}' in {2}ms", GetType().Name, project.Name, dependencyStopWatch.ElapsedMilliseconds);
             }
 
-            IDictionary<string, MetadataReference> assemblyNeutralReferences;
+            IDictionary<string, AssemblyNeutralMetadataReference> assemblyNeutralReferences;
             IList<MetadataReference> exportedReferences;
 
             ExtractReferences(exports, out exportedReferences, out assemblyNeutralReferences);
@@ -221,9 +222,8 @@ namespace Microsoft.Net.Runtime.Roslyn
                 syntaxTrees: trees,
                 references: references);
 
-            var context = new CompilationContext
+            var context = new CompilationContext(compilation)
             {
-                OriginalCompilation = compilation,
                 Project = project
             };
 
@@ -237,7 +237,7 @@ namespace Microsoft.Net.Runtime.Roslyn
             context.Generate(assemblyNeutralReferences);
 
             context.Compilation = context.Compilation.WithReferences(
-                context.Compilation.References.Concat(assemblyNeutralReferences.Values));
+                context.Compilation.References.Concat(assemblyNeutralReferences.Values.Select(r => r.MetadataReference)));
 
             // Cache the compilation
             _compilationCache[name] = context;
@@ -247,11 +247,11 @@ namespace Microsoft.Net.Runtime.Roslyn
 
         private void ExtractReferences(List<DependencyExport> dependencyExports,
                                        out IList<MetadataReference> references,
-                                       out IDictionary<string, MetadataReference> assemblyNeutralReferences)
+                                       out IDictionary<string, AssemblyNeutralMetadataReference> assemblyNeutralReferences)
         {
             var paths = new HashSet<string>();
             references = new List<MetadataReference>();
-            assemblyNeutralReferences = new Dictionary<string, MetadataReference>();
+            assemblyNeutralReferences = new Dictionary<string, AssemblyNeutralMetadataReference>();
 
             foreach (var export in dependencyExports)
             {
@@ -270,7 +270,7 @@ namespace Microsoft.Net.Runtime.Roslyn
 
                         if (assemblyNeutralReference != null)
                         {
-                            assemblyNeutralReferences[assemblyNeutralReference.Name] = assemblyNeutralReference.MetadataReference;
+                            assemblyNeutralReferences[assemblyNeutralReference.Name] = assemblyNeutralReference;
                         }
                         else
                         {
@@ -331,6 +331,21 @@ namespace Microsoft.Net.Runtime.Roslyn
             _packages = packages;
         }
 
+        public IProjectMetadata GetProjectMetadata(string name, FrameworkName frameworkName)
+        {
+            // This is kinda hacky but we just clear this when we're querying for metadata
+            _compilationCache.Clear();
+
+            var compilationContext = GetCompilationContext(name, frameworkName);
+
+            if (compilationContext == null)
+            {
+                return null;
+            }
+
+            return new RoslynProjectMetadata(compilationContext);
+        }
+
         public DependencyExport GetDependencyExport(string name, FrameworkName targetFramework)
         {
             string assemblyLocation;
@@ -352,7 +367,7 @@ namespace Microsoft.Net.Runtime.Roslyn
 
             foreach (var typeContext in compilationContext.SuccessfulTypeCompilationContexts)
             {
-                references.Add(new AssemblyNeutralMetadataReference(typeContext.AssemblyName, typeContext.RealOrShallowReference()));
+                references.Add(new AssemblyNeutralMetadataReference(typeContext));
             }
 
             return new DependencyExport(references);
