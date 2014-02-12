@@ -53,18 +53,29 @@ namespace Microsoft.Net.Runtime.DesignTimeHost
             {
                 _invocations[id] = response =>
                 {
-                    // If there's no response then cancel the call
-                    if (response == null)
+                    try
                     {
-                        tcs.SetCanceled();
+                        // If there's no response then cancel the call
+                        if (response == null)
+                        {
+                            tcs.TrySetCanceled();
+                        }
+                        else if (response.Error != null)
+                        {
+                            tcs.TrySetException(new InvalidOperationException(response.Error));
+                        }
+                        else if (response.Result != null)
+                        {
+                            tcs.TrySetResult(response.Result.ToObject<T>());
+                        }
+                        else
+                        {
+                            tcs.TrySetResult(default(T));
+                        }
                     }
-                    else if (response.Error != null)
+                    catch (Exception ex)
                     {
-                        tcs.SetException(new InvalidOperationException(response.Error));
-                    }
-                    else
-                    {
-                        tcs.SetResult(response.Result.ToObject<T>());
+                        tcs.TrySetException(ex);
                     }
                 };
             }
