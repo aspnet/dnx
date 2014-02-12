@@ -9,6 +9,8 @@ namespace Microsoft.Net.Runtime.Services
 
         IList<string> References { get; }
 
+        IList<string> ProjectReferences { get; }
+
         IList<string> Errors { get; }
 
         IList<byte[]> RawReferences { get; }

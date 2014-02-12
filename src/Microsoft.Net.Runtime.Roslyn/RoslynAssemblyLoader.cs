@@ -343,7 +343,7 @@ namespace Microsoft.Net.Runtime.Roslyn
                 return null;
             }
 
-            return new RoslynProjectMetadata(compilationContext);
+            return new RoslynProjectMetadata(compilationContext, _projectResolver);
         }
 
         public DependencyExport GetDependencyExport(string name, FrameworkName targetFramework)

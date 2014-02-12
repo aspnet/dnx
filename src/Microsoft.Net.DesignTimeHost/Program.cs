@@ -1,81 +1,66 @@
-﻿using System;
-using System.IO;
+﻿#if NET45 // NETWORKING
+using System;
+using System.Net;
+using System.Net.Sockets;
 using System.Runtime.Versioning;
+using System.Threading.Tasks;
+using Microsoft.Net.Runtime.DesignTimeHost;
 using Microsoft.Net.Runtime.Services;
 
 namespace Microsoft.Net.DesignTimeHost
 {
     public class Program
     {
-        private readonly IServiceProvider _serviceProvider;
+        private readonly IProjectMetadataProvider _projectMetadataProvider;
+        private readonly IDependencyRefresher _refresher;
+        private readonly IApplicationEnvironment _appEnvironment;
 
-        public Program(IServiceProvider serviceProvider)
+        public Program(IProjectMetadataProvider projectMetadataProvider,
+                       IDependencyRefresher refresher,
+                       IApplicationEnvironment appEnvironment)
         {
-            _serviceProvider = serviceProvider;
+            _projectMetadataProvider = projectMetadataProvider;
+            _refresher = refresher;
+            _appEnvironment = appEnvironment;
         }
 
         public void Main(string[] args)
         {
-            var watcher = (IFileMonitor)_serviceProvider.GetService(typeof(IFileMonitor));
-            var mdProvider = (IProjectMetadataProvider)_serviceProvider.GetService(typeof(IProjectMetadataProvider));
-            var info = (IApplicationEnvironment)_serviceProvider.GetService(typeof(IApplicationEnvironment));
-            var refresher = (IDependencyRefresher)_serviceProvider.GetService(typeof(IDependencyRefresher));
+            int port = args.Length == 0 ? 1334 : Int32.Parse(args[0]);
 
-            watcher.OnChanged += path =>
-            {
-                Console.WriteLine("Change notification " + path);
-
-                if (Path.GetFileName(path).Equals("project.json", StringComparison.OrdinalIgnoreCase))
-                {
-                    try
-                    {
-                        Console.WriteLine("Refreshing dependencies");
-                        refresher.RefreshDependencies(info.ApplicationName, info.Version, info.TargetFramework);
-                    }
-                    catch (Exception ex)
-                    {
-                        Console.WriteLine(ex);
-                        return;
-                    }
-                }
-
-                PrintProjectData(info, mdProvider);
-            };
-
-            PrintProjectData(info, mdProvider);
-            Console.ReadLine();
+            OpenChannel(port).Wait();
         }
 
-        private static void PrintProjectData(IApplicationEnvironment info, IProjectMetadataProvider projectProvider)
+        private async Task OpenChannel(int port)
         {
-            try
+            var listener = new TcpListener(IPAddress.Loopback, port);
+
+            listener.Start();
+
+            while (true)
             {
-                var p = projectProvider.GetProjectMetadata(info.ApplicationName, new FrameworkName(".NETFramework", new Version(4, 5)));
+                Console.WriteLine("Listening on port {0}", port);
 
-                Console.WriteLine("Sources");
-                foreach (var s in p.SourceFiles)
-                {
-                    Console.WriteLine(s);
-                }
+                var client = await listener.AcceptTcpClientAsync();
 
-                Console.WriteLine("References");
-                foreach (var r in p.References)
-                {
-                    Console.WriteLine(r);
-                }
+                Console.WriteLine("Client accepted {0}", client.Client.LocalEndPoint);
 
-                Console.WriteLine("{0} RawReferences", p.RawReferences.Count);
+                // TODO: Cleanup the channel when the client goes away
+                var channel = new Channel(client.GetStream());
 
-                Console.WriteLine("Errors");
-                foreach (var e in p.Errors)
-                {
-                    Console.WriteLine(e);
-                }
+                channel.Bind(this);
             }
-            catch (Exception ex)
-            {
-                Console.WriteLine(ex);
-            }
+        }
+
+        public IProjectMetadata GetProjectMetadata()
+        {
+            return _projectMetadataProvider.GetProjectMetadata(_appEnvironment.ApplicationName, _appEnvironment.TargetFramework);
+        }
+
+        public void RefreshDependencies()
+        {
+            _refresher.RefreshDependencies(_appEnvironment.ApplicationName, _appEnvironment.Version, _appEnvironment.TargetFramework);
         }
     }
 }
+#endif
