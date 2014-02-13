@@ -2,9 +2,8 @@
 using System;
 using System.Net;
 using System.Net.Sockets;
-using System.Runtime.Versioning;
 using System.Threading.Tasks;
-using Microsoft.Net.Runtime.DesignTimeHost;
+using Communication;
 using Microsoft.Net.Runtime.Services;
 
 namespace Microsoft.Net.DesignTimeHost
@@ -37,19 +36,42 @@ namespace Microsoft.Net.DesignTimeHost
             socket.Bind(new IPEndPoint(IPAddress.Loopback, port));
             socket.Listen(10);
 
-            while (true)
+
+            Console.WriteLine("Listening on port {0}", port);
+
+            var client = await AcceptAsync(socket);
+
+            Console.WriteLine("Client accepted {0}", client.LocalEndPoint);
+
+            var ns = new NetworkStream(client);
+
+            var queue = new ProcessingQueue(ns);
+            queue.OnMessage += msg =>
             {
-                Console.WriteLine("Listening on port {0}", port);
+                if (msg.MessageType == 0)
+                {
+                    queue.Post(0, GetProjectMetadata());
+                }
+                else if (msg.MessageType == 1)
+                {
+                    RefreshDependencies();
+                    var p = GetProjectMetadata();
+                    queue.Post(1, new { p.Errors, p.ProjectReferences, p.References });
+                }
+            };
 
-                var client = await AcceptAsync(socket);
+            queue.Start();
 
-                Console.WriteLine("Client accepted {0}", client.LocalEndPoint);
-
-                // TODO: Cleanup the channel when the client goes away
-                var channel = new Channel(new NetworkStream(client));
-
-                channel.Bind(this);
+            try
+            {
+                queue.Post(0, GetProjectMetadata());
             }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex);
+            }
+
+            Console.ReadLine();
         }
 
         private static Task<Socket> AcceptAsync(Socket socket)
