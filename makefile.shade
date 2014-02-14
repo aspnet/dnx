@@ -49,10 +49,24 @@ var FULL_VERSION = '${VERSION + "-" + BuildNumber}'
     copy sourceDir='${core45Host}' include='RuntimeBootstrapper.cs' outputDir='${net45Host}' overwrite='${true}'
 
 #package-runtime .clean-sdk-dir .copy-bits .tweak-scripts .copy-package-dependencies .copy-coreclr .nuget-pack-runtime target='package'
+    
+#rebuild-package .build-compile .native-compile .package-runtime
 
 #verify-package target='verify'
     var helloWorld = '${Path.Combine(SAMPLES_DIR, "HelloWorld")}'
     var kcmd = '${Path.Combine(TEST_RESULTS, "ProjectK", "tools", "k.cmd")}'
+    
+   @{
+     // We need to re-run the build using the current output
+     // Delete the package directory
+     foreach (var dir in Directory.EnumerateDirectories(PACKAGES_DIR, "projectk*"))
+     {
+        Directory.Delete(dir, recursive: true); 
+     }
+     NuGetInstall("projectk", PACKAGES_DIR, "-source \"" + SDK_ROOT + "\" -pre -nocache");
+     Log.Info("Rebuilding target default");
+     Exec("build.cmd", "rebuild-package");
+   }
 
     nuget-install package='ProjectK' outputDir='${TEST_RESULTS}' extra='-source ${SDK_ROOT} -ExcludeVersion -pre -nocache'
 
@@ -219,3 +233,6 @@ var FULL_VERSION = '${VERSION + "-" + BuildNumber}'
 #nuget-pack-runtime
     copy sourceDir='${ROOT}' outputDir='${SDK_ROOT}' include='ProjectK.nuspec' overwrite='${true}'
     nuget-pack nuspecFile='${Path.Combine(SDK_ROOT, "ProjectK.nuspec")}' packageVersion='${FULL_VERSION}' outputDir='${SDK_ROOT}' extra='-NoPackageAnalysis'
+
+macro name='NuGetInstall' Package='string' OutputDir='string' Extra='string'
+    nuget-install package='${Package}' outputDir='${OutputDir}' extra='${Extra}'
