@@ -7,6 +7,14 @@ IF "%K_APPBASE%"=="" (
 
 SET ERRORLEVEL=
 
+if "%TARGET_PLATFORM%" == "" (
+    SET PLATFORM=x86
+)
+
+if "%TARGET_PLATFORM%" == "amd64" (
+    SET PLATFORM=amd64
+)
+
 if "%TARGET_FRAMEWORK%" == "" (
     SET FRAMEWORK=net45
 )

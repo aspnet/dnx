@@ -52,29 +52,18 @@ var FULL_VERSION = '${VERSION + "-" + BuildNumber}'
     
 #rebuild-package .build-compile .native-compile .package-runtime
 
-#verify-package target='verify'
+#test-package
     var helloWorld = '${Path.Combine(SAMPLES_DIR, "HelloWorld")}'
     var kcmd = '${Path.Combine(TEST_RESULTS, "ProjectK", "tools", "k.cmd")}'
     
-   @{
-     // We need to re-run the build using the current output
-     // Delete the package directory
-     foreach (var dir in Directory.EnumerateDirectories(PACKAGES_DIR, "projectk*"))
-     {
-        Directory.Delete(dir, recursive: true); 
-     }
-     NuGetInstall("projectk", PACKAGES_DIR, "-source \"" + SDK_ROOT + "\" -pre -nocache");
-     Log.Info("Rebuilding target default");
-     Exec("build.cmd", "rebuild-package");
-   }
-
     nuget-install package='ProjectK' outputDir='${TEST_RESULTS}' extra='-source ${SDK_ROOT} -ExcludeVersion -pre -nocache'
 
     @{
-        Action<string> runWithFramework = framework => {
+        Action<string, string> runWithFramework = (framework, platform) => {
             try
             {
                 Environment.SetEnvironmentVariable("TARGET_FRAMEWORK", framework);
+                Environment.SetEnvironmentVariable("TARGET_PLATFORM", platform);
                 Environment.SetEnvironmentVariable("K_APPBASE", helloWorld);
 
                 Exec(kcmd, "run");
@@ -89,13 +78,31 @@ var FULL_VERSION = '${VERSION + "-" + BuildNumber}'
             {
                 Environment.SetEnvironmentVariable("K_APPBASE", null);
                 Environment.SetEnvironmentVariable("TARGET_FRAMEWORK", null);
+                Environment.SetEnvironmentVariable("TARGET_PLATFORM", null);
             }
         };
 
-        // Default
-        runWithFramework(null);
-        runWithFramework("k10");
+        runWithFramework(null, "");
+        runWithFramework("k10", "");
+        runWithFramework(null, "amd64");
+        runWithFramework("k10", "amd64");
     }
+
+#ensure-latest-package
+    @{
+      // We need to re-run the build using the current output
+      // Delete the package directory
+      foreach (var dir in Directory.EnumerateDirectories(PACKAGES_DIR, "projectk*"))
+      {
+         Directory.Delete(dir, recursive: true); 
+      }
+      
+      NuGetInstall("projectk", PACKAGES_DIR, "-source \"" + SDK_ROOT + "\" -pre -nocache");
+      Log.Info("Rebuilding target default");
+      Exec("build.cmd", "rebuild-package");
+    }
+    
+#verify-package .ensure-latest-package .test-package target='verify'
 
 #clean-sdk-dir
     directory delete="${SDK_ROOT}"
@@ -152,7 +159,7 @@ var FULL_VERSION = '${VERSION + "-" + BuildNumber}'
         foreach(var file in Files.Include(Path.Combine(TOOLS_DIR, "*.cmd")))
         {
             var script = File.ReadAllText(file)
-                             .Replace(@"..\bin\Win32\Debug", @"bin\x86")
+                             .Replace(@"..\bin\Win32\Debug", @"bin\%PLATFORM%")
                              .Replace(@"FRAMEWORK=K", @"FRAMEWORK=k10");
 
             script = Regex.Replace(script, @"LIB_PATH=\.\.\\src(.*)", @"LIB_PATH=%FRAMEWORK%");
