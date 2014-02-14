@@ -6,6 +6,12 @@ using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
 
+#if K10
+using System.Runtime.Hosting.Loader;
+using klr.core45.managed;
+#endif
+
+
 namespace klr.hosting
 {
     public static class RuntimeBootstrapper
@@ -41,9 +47,10 @@ namespace klr.hosting
 
             Func<string, Assembly> loader = _ => null;
 
-            ResolveEventHandler handler = (sender, a) =>
+
+            Func<AssemblyName, Assembly> loaderCallback = assemblyName =>
             {
-                var name = new AssemblyName(a.Name).Name;
+                var name = assemblyName.Name;
 
                 // If host assembly was already loaded use it
                 Assembly assembly;
@@ -56,7 +63,18 @@ namespace klr.hosting
                 return loader(name) ?? ResolveHostAssembly(searchPaths, name);
             };
 
+#if NET45
+            ResolveEventHandler handler = (sender, a) =>
+            {
+                var assemblyName = new AssemblyName(a.Name);
+
+                return loaderCallback(assemblyName);
+            };
+
             AppDomain.CurrentDomain.AssemblyResolve += handler;
+#else
+            AssemblyLoadContext.Default = new DelegateAssemblyLoadContext(loaderCallback);
+#endif
 
             try
             {
@@ -111,7 +129,9 @@ namespace klr.hosting
             }
             finally
             {
+#if NET45
                 AppDomain.CurrentDomain.AssemblyResolve -= handler;
+#endif
             }
         }
 
