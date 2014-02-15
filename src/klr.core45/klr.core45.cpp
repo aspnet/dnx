@@ -77,7 +77,11 @@ extern "C" __declspec(dllexport) bool __stdcall CallApplicationMain(PCALL_APPLIC
     TCHAR szCoreClrDirectory[MAX_PATH];
     TCHAR lpCoreClrModulePath[MAX_PATH];
 
-    GetModuleDirectory(NULL, szCurrentDirectory);
+    if (data->klrDirectory) {
+        wcscpy_s(szCurrentDirectory, data->klrDirectory);
+    } else {
+        GetModuleDirectory(NULL, szCurrentDirectory);
+    }
 
     HMODULE hCoreCLRModule = LoadCoreClr();
     if (!hCoreCLRModule)
