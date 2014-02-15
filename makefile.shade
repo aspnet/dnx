@@ -16,8 +16,8 @@ var TOOLS_BIN_DIR = '${Path.Combine(TOOLS_DIR, "bin")}'
 var PACKAGES_DIR = '${Path.Combine(ROOT, "packages")}'
 var TEST_RESULTS = '${Path.Combine(ROOT, "TestResults")}'
 var SAMPLES_DIR = '${Path.Combine(ROOT, "samples")}'
-
 var FULL_VERSION = '${VERSION + "-" + BuildNumber}'
+var CORECLR_PATH = '${Environment.GetEnvironmentVariable("CORECLR_PATH")}'
 
 #copy-shared-sources target='initialize'
     var commandLineParser='${Path.Combine(ROOT, "src", "Microsoft.Net.Runtime.Common", "CommandLine")}'
@@ -90,16 +90,22 @@ var FULL_VERSION = '${VERSION + "-" + BuildNumber}'
 
 #ensure-latest-package
     @{
-      // We need to re-run the build using the current output
-      // Delete the package directory
-      foreach (var dir in Directory.EnumerateDirectories(PACKAGES_DIR, "projectk*"))
-      {
+        if (String.IsNullOrEmpty(CORECLR_PATH))
+        {
+            Log.Info("No need to rebuild package since core clr bits are up to date");
+            return;
+        }
+        
+        // We need to re-run the build using the current output
+        // Delete the package directory
+        foreach (var dir in Directory.EnumerateDirectories(PACKAGES_DIR, "projectk*"))
+        {
          Directory.Delete(dir, recursive: true); 
-      }
-      
-      NuGetInstall("projectk", PACKAGES_DIR, "-source \"" + SDK_ROOT + "\" -pre -nocache");
-      Log.Info("Rebuilding target default");
-      Exec("build.cmd", "rebuild-package");
+        }
+
+        NuGetInstall("projectk", PACKAGES_DIR, "-source \"" + SDK_ROOT + "\" -pre -nocache");
+        Log.Info("Rebuilding target default");
+        Exec("build.cmd", "rebuild-package");
     }
     
 #verify-package .ensure-latest-package .test-package target='verify'
@@ -224,18 +230,39 @@ var FULL_VERSION = '${VERSION + "-" + BuildNumber}'
     }
 
 #copy-coreclr
+    var PROJECTK_DIR='${""}'
     @{
-        var coreClrPath = Environment.GetEnvironmentVariable("CORECLR_PATH");
-
-        if (String.IsNullOrEmpty(coreClrPath))
+        if (String.IsNullOrEmpty(CORECLR_PATH))
         {
-            Log.Warn("The environment variable CORECLR_PATH is not set. The core clr not will not be included in this build.");
-            Environment.Exit(1);
-            return;
+            Func<string, long> getVersion = version => {
+            var dash = version.LastIndexOf('-');
+
+                if(dash != -1)
+                {
+                    var lastToken = version.Substring(dash + 1);
+
+                    if(lastToken.StartsWith("t"))
+                    {
+                        return Int64.Parse(lastToken.Substring(1));
+                    }
+
+                    return Int64.Parse(lastToken);
+                }
+                return Int64.MaxValue;
+            };
+
+            string packagesDir = Path.Combine(Directory.GetCurrentDirectory(), "packages");
+            PROJECTK_DIR = Directory.EnumerateDirectories(packagesDir, "ProjectK*")
+                                    .OrderByDescending(getVersion)
+                                    .First();
+                                          
+            Log.Warn("The environment variable CORECLR_PATH is not set, using " + PROJECTK_DIR);
         }
     }
 
-    copy sourceDir='${coreClrPath}' outputDir='${SDK_ROOT}' overwrite='${true}'
+    copy sourceDir='${CORECLR_PATH}' outputDir='${SDK_ROOT}' overwrite='${true}' if='!String.IsNullOrEmpty(CORECLR_PATH)'
+    copy sourceDir='${Path.Combine(PROJECTK_DIR, "Runtime")}' outputDir='${Path.Combine(SDK_ROOT, "Runtime")}' overwrite='${true}' if='!String.IsNullOrEmpty(PROJECTK_DIR)'
+    copy sourceDir='${Path.Combine(PROJECTK_DIR, "Framework")}' outputDir='${Path.Combine(SDK_ROOT, "Framework")}' overwrite='${true}' if='!String.IsNullOrEmpty(PROJECTK_DIR)'
 
 #nuget-pack-runtime
     copy sourceDir='${ROOT}' outputDir='${SDK_ROOT}' include='ProjectK.nuspec' overwrite='${true}'
