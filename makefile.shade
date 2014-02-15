@@ -104,7 +104,11 @@ var CORECLR_PATH = '${Environment.GetEnvironmentVariable("CORECLR_PATH")}'
         }
 
         NuGetInstall("projectk", PACKAGES_DIR, "-source \"" + BUILD_DIR2 + "\" -pre -nocache");
-        Log.Info("Rebuilding target default");
+        
+        // Nuke the build dir
+        Directory.Delete(BUILD_DIR2, recursive: true); 
+        
+        Log.Info("Rebuilding target default"); 
         Exec("build.cmd", "rebuild-package");
     }
     
