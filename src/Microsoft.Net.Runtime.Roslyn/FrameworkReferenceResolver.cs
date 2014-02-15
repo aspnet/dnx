@@ -58,11 +58,12 @@ namespace Microsoft.Net.Runtime.Roslyn
         private static IDictionary<FrameworkName, FrameworkInformation> PopulateCache(IGlobalAssemblyCache globalAssemblyCache)
         {
             var info = new Dictionary<FrameworkName, FrameworkInformation>();
+
 #if NET45
             string defaultPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86), @"Reference Assemblies\Microsoft\Framework\");
 
             PopulateReferenceAssemblies(defaultPath, globalAssemblyCache, info);
-
+#endif
             // Additional profile paths
             var profilePaths = Environment.GetEnvironmentVariable("PROFILE_PATHS");
 
@@ -73,7 +74,7 @@ namespace Microsoft.Net.Runtime.Roslyn
                     PopulateReferenceAssemblies(profilePath, globalAssemblyCache, info);
                 }
             }
-#endif
+
             foreach (var frameworkDirectory in FrameworkDirectoryResolver.GetFrameworkDirectories())
             {
                 if (Directory.Exists(frameworkDirectory))

@@ -8,9 +8,7 @@ using System.Runtime.Versioning;
 using Microsoft.Net.Runtime;
 using Microsoft.Net.Runtime.FileSystem;
 using Microsoft.Net.Runtime.Loader;
-#if NET45
 using Microsoft.Net.Runtime.Loader.MSBuildProject;
-#endif
 using Microsoft.Net.Runtime.Loader.NuGet;
 using Microsoft.Net.Runtime.Loader.Roslyn;
 using NuGet;
@@ -288,9 +286,7 @@ namespace Microsoft.Net.Project
             var projectResolver = new ProjectResolver(projectDir, rootDirectory);
             var roslynLoader = new RoslynAssemblyLoader(projectResolver, NoopWatcher.Instance, resolver, globalAssemblyCache, loader, resourceProvider);
             loader.Add(roslynLoader);
-#if NET45
             loader.Add(new MSBuildProjectAssemblyLoader(rootDirectory, NoopWatcher.Instance));
-#endif
             loader.Add(new NuGetAssemblyLoader(projectDir));
 
             return loader;
