@@ -19,7 +19,6 @@ namespace Microsoft.Net.Runtime.Roslyn.AssemblyNeutral
 {
     public class CompilationContext
     {
-        private readonly Dictionary<string, EmitResult> _failedTypeCompilations = new Dictionary<string, EmitResult>();
         private readonly List<EmitResult> _failedCompilations = new List<EmitResult>();
 
         public CompilationContext(CSharpCompilation compilation)
@@ -36,7 +35,7 @@ namespace Microsoft.Net.Runtime.Roslyn.AssemblyNeutral
         {
             get
             {
-                return TypeCompilationContexts.Where(t => !_failedTypeCompilations.ContainsKey(t.AssemblyName));
+                return TypeCompilationContexts.Where(t => t.EmitResult != null && t.EmitResult.Success);
             }
         }
 
@@ -87,8 +86,6 @@ namespace Microsoft.Net.Runtime.Roslyn.AssemblyNeutral
                     continue;
                 }
 
-                _failedTypeCompilations[t.AssemblyName] = result;
-
                 FailedCompilations.Add(result);
             }
         }
@@ -100,6 +97,12 @@ namespace Microsoft.Net.Runtime.Roslyn.AssemblyNeutral
             Dictionary<SyntaxTree, List<SyntaxNode>> treeRemoveNodes = new Dictionary<SyntaxTree, List<SyntaxNode>>();
             foreach (var neutralTypeContext in TypeCompilationContexts)
             {
+                if (neutralTypeContext.EmitResult == null || 
+                    !neutralTypeContext.EmitResult.Success)
+                {
+                    continue;
+                }
+
                 MetadataReference neutralReference = neutralTypeContext.Reference;
 
                 AssemblyNeutralMetadataReference assemblyNeutralReference;
@@ -108,10 +111,7 @@ namespace Microsoft.Net.Runtime.Roslyn.AssemblyNeutral
                     neutralReference = assemblyNeutralReference.MetadataReference;
                 }
 
-                if (!_failedTypeCompilations.ContainsKey(neutralTypeContext.AssemblyName))
-                {
-                    Compilation = Compilation.AddReferences(neutralReference);
-                }
+                Compilation = Compilation.AddReferences(neutralReference);
 
                 foreach (var syntaxReference in neutralTypeContext.TypeSymbol.DeclaringSyntaxReferences)
                 {
