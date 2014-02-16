@@ -62,18 +62,41 @@ namespace Microsoft.Net.Runtime.Roslyn
 
         public AssemblyLoadResult Load(LoadContext loadContext)
         {
-            var name = loadContext.AssemblyName;
+            var compilationContext = GetCompilationContext(loadContext.AssemblyName, loadContext.TargetFramework);
 
-            Project project;
-            // Can't find a project file with the name so bail
-            if (!_projectResolver.TryResolveProject(name, out project))
+            if (compilationContext == null)
             {
                 return null;
             }
 
+            var project = compilationContext.Project;
             var path = project.ProjectDirectory;
+            var name = project.Name;
 
-            var compilationContext = GetCompilationContext(loadContext.AssemblyName, loadContext.TargetFramework);
+            var resources = _resourceProvider.GetResources(project.Name, path);
+
+            foreach (var typeContext in compilationContext.SuccessfulTypeCompilationContexts)
+            {
+                resources.Add(new ResourceDescription(typeContext.AssemblyName + ".dll",
+                                                      () => typeContext.OutputStream,
+                                                      isPublic: true));
+            }
+
+            return CompileInMemory(name, compilationContext, resources);
+        }
+
+        public bool Build(BuildContext buildContext, List<string> errors)
+        {
+            var compilationContext = GetCompilationContext(buildContext.AssemblyName, buildContext.TargetFramework);
+
+            if (compilationContext == null)
+            {
+                return false;
+            }
+
+            var project = compilationContext.Project;
+            var path = project.ProjectDirectory;
+            var name = project.Name;
 
             var resources = _resourceProvider.GetResources(project.Name, path);
 
@@ -85,36 +108,17 @@ namespace Microsoft.Net.Runtime.Roslyn
             }
 
             // If the output path is null then load the assembly from memory
-            if (loadContext.OutputPath == null)
+            var assemblyPath = Path.Combine(buildContext.OutputPath, name + ".dll");
+            var pdbPath = Path.Combine(buildContext.OutputPath, name + ".pdb");
+
+            if (CompileToDisk(buildContext, assemblyPath, pdbPath, compilationContext, resources, errors))
             {
-                return CompileInMemory(name, compilationContext, resources);
+                // Build packages for this project
+                BuildPackages(buildContext, compilationContext, assemblyPath, pdbPath);
+                return true;
             }
 
-            var assemblyPath = Path.Combine(loadContext.OutputPath, name + ".dll");
-            var pdbPath = Path.Combine(loadContext.OutputPath, name + ".pdb");
-
-            // Add to the list of generated artifacts
-            if (loadContext.ArtifactPaths != null)
-            {
-                loadContext.ArtifactPaths.Add(assemblyPath);
-                loadContext.ArtifactPaths.Add(pdbPath);
-            }
-
-            var loadResult = CompileToDisk(loadContext.OutputPath, assemblyPath, pdbPath, compilationContext, resources);
-
-            if (loadResult != null && loadResult.Errors == null)
-            {
-                // Attempt to build packages for this project
-                // BuildPackages(loadContext, project, assemblyPath, pdbPath, sourceFiles);
-
-                if (loadContext.PackageBuilder != null)
-                {
-                    BuildPackage(project, assemblyPath, loadContext.PackageBuilder, loadContext.TargetFramework);
-                }
-            }
-
-            return loadResult;
-
+            return false;
         }
 
         private CompilationContext GetCompilationContext(string name, FrameworkName targetFramework)
@@ -373,7 +377,7 @@ namespace Microsoft.Net.Runtime.Roslyn
             return new DependencyExport(references);
         }
 
-        private AssemblyLoadResult CompileToDisk(string outputPath, string assemblyPath, string pdbPath, CompilationContext compilationContext, IList<ResourceDescription> resources)
+        private bool CompileToDisk(BuildContext buildContext, string assemblyPath, string pdbPath, CompilationContext compilationContext, IList<ResourceDescription> resources, List<string> errors)
         {
             // REVIEW: Memory bloat?
             using (var pdbStream = new MemoryStream())
@@ -387,16 +391,18 @@ namespace Microsoft.Net.Runtime.Roslyn
 
                 if (!result.Success)
                 {
-                    return ReportCompilationError(compilationContext.FailedCompilations.Concat(new[] { result }));
+                    errors.AddRange(GetErrors(compilationContext.FailedCompilations.Concat(new[] { result })));
+                    return false;
                 }
 
                 if (compilationContext.FailedCompilations.Count > 0)
                 {
-                    return ReportCompilationError(compilationContext.FailedCompilations);
+                    errors.AddRange(GetErrors(compilationContext.FailedCompilations));
+                    return false;
                 }
 
                 // Ensure there's an output directory
-                Directory.CreateDirectory(outputPath);
+                Directory.CreateDirectory(buildContext.OutputPath);
 
                 assemblyStream.Position = 0;
                 pdbStream.Position = 0;
@@ -408,8 +414,56 @@ namespace Microsoft.Net.Runtime.Roslyn
                     pdbStream.CopyTo(pdbFileStream);
                 }
 
-                // Valid result but we don't have to load it
-                return new AssemblyLoadResult();
+                if (buildContext.CopyDependencies)
+                {
+                    // Emit all dependencies to the output path
+                    EmitAll(buildContext, compilationContext.Compilation);
+                }
+
+                return true;
+            }
+        }
+
+        private void EmitAll(BuildContext buildContext, Compilation compilation)
+        {
+            var defaultReferences = new HashSet<string>(_resolver.GetDefaultReferences(buildContext.TargetFramework)
+                                                                 .OfType<MetadataFileReference>()
+                                                                 .Select(m => m.FullPath));
+
+            foreach (var reference in compilation.References)
+            {
+                var fileReference = reference as MetadataFileReference;
+                if (fileReference != null)
+                {
+                    if (_globalAssemblyCache.IsInGac(fileReference.FullPath) ||
+                        defaultReferences.Contains(fileReference.FullPath))
+                    {
+                        continue;
+                    }
+
+                    string target = Path.Combine(buildContext.OutputPath, Path.GetFileName(fileReference.FullPath));
+
+                    File.Copy(fileReference.FullPath, target, true);
+                }
+
+                var compilationReference = reference as CompilationReference;
+                if (compilationReference != null)
+                {
+                    CompilationContext newContext;
+                    if (_compilationCache.TryGetValue(compilationReference.Compilation.AssemblyName, out newContext))
+                    {
+                        // There shouldn't be any errors
+                        var errors = new List<string>();
+
+                        var dependencyBuildContext = new BuildContext(newContext.Project.Name, buildContext.TargetFramework)
+                        {
+                            CopyDependencies = buildContext.CopyDependencies,
+                            OutputPath = buildContext.OutputPath
+                        };
+
+                        Build(dependencyBuildContext, errors);
+                    }
+                }
             }
         }
 
@@ -449,17 +503,17 @@ namespace Microsoft.Net.Runtime.Roslyn
             }
         }
 
-        private void BuildPackages(LoadContext loadContext, Project project, string assemblyPath, string pdbPath, List<string> sourceFiles)
+        private void BuildPackages(BuildContext buildContext, CompilationContext compilationContext, string assemblyPath, string pdbPath)
         {
             // Build packages
-            if (loadContext.PackageBuilder != null)
+            if (buildContext.PackageBuilder != null)
             {
-                BuildPackage(project, assemblyPath, loadContext.PackageBuilder, loadContext.TargetFramework);
+                BuildPackage(buildContext, compilationContext, assemblyPath);
             }
 
-            if (loadContext.SymbolPackageBuilder != null)
+            if (buildContext.SymbolPackageBuilder != null)
             {
-                BuildSymbolsPackage(project, assemblyPath, pdbPath, loadContext.SymbolPackageBuilder, sourceFiles, loadContext.TargetFramework);
+                BuildSymbolsPackage(buildContext, compilationContext, assemblyPath, pdbPath);
             }
         }
 
@@ -490,15 +544,16 @@ namespace Microsoft.Net.Runtime.Roslyn
             return errors;
         }
 
-        private void BuildSymbolsPackage(Project project, string assemblyPath, string pdbPath, PackageBuilder builder, List<string> sourceFiles, FrameworkName targetFramework)
+        private void BuildSymbolsPackage(BuildContext buildContext, CompilationContext compilationContext, string assemblyPath, string pdbPath)
         {
             // TODO: Build symbols packages
         }
 
-        private void BuildPackage(Project project, string assemblyPath, PackageBuilder builder, FrameworkName targetFramework)
+        private void BuildPackage(BuildContext buildContext, CompilationContext compilationContext, string assemblyPath)
         {
-            var framework = targetFramework;
+            var framework = buildContext.TargetFramework;
             var dependencies = new List<PackageDependency>();
+            var project = compilationContext.Project;
 
             var frameworkReferences = new HashSet<string>(_resolver.GetFrameworkReferences(framework), StringComparer.OrdinalIgnoreCase);
             var frameworkAssemblies = new List<string>();
@@ -542,16 +597,16 @@ namespace Microsoft.Net.Runtime.Roslyn
 
                 if (dependencies.Count > 0)
                 {
-                    builder.DependencySets.Add(new PackageDependencySet(framework, dependencies));
+                    buildContext.PackageBuilder.DependencySets.Add(new PackageDependencySet(framework, dependencies));
                 }
             }
 
             // Only do this on full desktop
-            if (targetFramework.Identifier == VersionUtility.DefaultTargetFramework.Identifier)
+            if (buildContext.TargetFramework.Identifier == VersionUtility.DefaultTargetFramework.Identifier)
             {
                 foreach (var a in frameworkAssemblies)
                 {
-                    builder.FrameworkReferences.Add(new FrameworkAssemblyReference(a));
+                    buildContext.PackageBuilder.FrameworkReferences.Add(new FrameworkAssemblyReference(a));
                 }
             }
 
@@ -559,7 +614,7 @@ namespace Microsoft.Net.Runtime.Roslyn
             file.SourcePath = assemblyPath;
             var folder = VersionUtility.GetShortFrameworkName(framework);
             file.TargetPath = String.Format(@"lib\{0}\{1}.dll", folder, project.Name);
-            builder.Files.Add(file);
+            buildContext.PackageBuilder.Files.Add(file);
         }
     }
 }

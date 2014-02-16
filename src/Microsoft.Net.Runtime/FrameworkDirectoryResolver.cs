@@ -17,7 +17,7 @@ namespace Microsoft.Net.Runtime
                 return new[] {
                     Path.GetFullPath(Path.Combine(klrPath, @"..\..\..\Framework")),
 #if DEBUG
-                    Path.GetFullPath(Path.Combine(klrPath, @"..\..\..\artifacts\sdk\Framework"))
+                    Path.GetFullPath(Path.Combine(klrPath, @"..\..\..\artifacts\build\ProjectK\Framework"))
 #endif
                 };
             }
@@ -25,6 +25,5 @@ namespace Microsoft.Net.Runtime
             return new string[0];
         }
 
-        
     }
 }
