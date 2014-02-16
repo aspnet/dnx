@@ -37,7 +37,7 @@ namespace klr.hosting
             var libs = options.GetValues("lib");
 
             IList<string> searchPaths = libs == null ? new string[0] :
-                libs.SelectMany(lib => lib.Split(';').Select(Path.GetFullPath)).ToArray();
+                libs.SelectMany(lib => lib.Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries).Select(Path.GetFullPath)).ToArray();
 
             Func<string, Assembly> loader = _ => null;
 
