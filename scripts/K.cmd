@@ -30,13 +30,12 @@ if "%TARGET_FRAMEWORK%" == "k10" (
     SET FRAMEWORK=K
 )
 
-SET LIB_PATH=..\src\klr.host\bin\Debug\%FRAMEWORK%;%~dp0..\src\Microsoft.Net.Project\bin\Debug\%FRAMEWORK%
-SET HOST_BIN=..\bin\Win32\Debug
+SET LIB_PATH=%~dp0..\src\Microsoft.Net.Project\bin\Debug\%FRAMEWORK%
 
 IF EXIST "%~dp0k-%1.cmd" (
   "%~dp0k-%1.cmd" %2 %3 %4 %5 %6 %7 %8 %9 
 ) ELSE (
-  CALL "%~dp0KLR" --lib "%~dp0%LIB_PATH%" --lib "%~dp0%HOST_BIN%" "Microsoft.Net.Project" %*
+  CALL "%~dp0KLR" --lib "%LIB_PATH%" "Microsoft.Net.Project" %*
 )
 
 exit /b %ERRORLEVEL%

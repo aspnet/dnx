@@ -164,7 +164,7 @@ var CORECLR_PATH = '${Environment.GetEnvironmentVariable("CORECLR_PATH")}'
                              .Replace(@"..\bin\Win32\Debug", @"bin\%PLATFORM%")
                              .Replace(@"FRAMEWORK=K", @"FRAMEWORK=k10");
 
-            script = Regex.Replace(script, @"LIB_PATH=\.\.\\src(.*)", @"LIB_PATH=%FRAMEWORK%");
+            script = Regex.Replace(script, @"LIB_PATH=%~dp0\.\.\\src(.*)", @"LIB_PATH=%~dp0%FRAMEWORK%");
 
             File.WriteAllText(file, script);
         }
