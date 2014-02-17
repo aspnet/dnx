@@ -41,6 +41,15 @@ namespace Microsoft.Net.Runtime
 
         public IList<Dependency> Dependencies { get; private set; }
 
+        public string SourcePattern { get; private set; }
+
+        public string PreprocessPattern { get; private set; }
+
+        public string SharedPattern { get; set; }
+
+        public string ResourcesPattern { get; private set; }
+
+
         public IEnumerable<string> SourceFiles
         {
             get
@@ -57,7 +66,50 @@ namespace Microsoft.Net.Runtime
                                 .Select(p => Path.GetFullPath(p));
                 }
 
-                return files.Concat(Directory.EnumerateFiles(path, "*.cs", SearchOption.AllDirectories));
+                var includePatterns = SourcePattern.Split(new[] { ';' });
+                var includeFiles = includePatterns
+                    .SelectMany(pattern => PathResolver.PerformWildcardSearch(path, pattern))
+                    .ToArray();
+
+                var excludePatterns = (PreprocessPattern + ";" + SharedPattern + ";" + ResourcesPattern)
+                    .Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries)
+                    .Select(pattern => PathResolver.NormalizeWildcardForExcludedFiles(path, pattern))
+                    .ToArray();
+
+                var excludeFiles = PathResolver.GetMatches(includeFiles, x => x, excludePatterns)
+                    .ToArray();
+
+                return files.Concat(includeFiles.Except(excludeFiles)).Distinct().ToArray();
+            }
+        }
+
+        public IEnumerable<string> ResourceFiles
+        {
+            get
+            {
+                string path = Path.GetDirectoryName(ProjectFilePath);
+
+                var includePatterns = ResourcesPattern.Split(new[] { ';' });
+                var includeFiles = includePatterns
+                    .SelectMany(pattern => PathResolver.PerformWildcardSearch(path, pattern))
+                    .ToArray();
+
+                return includeFiles;
+            }
+        }
+
+        public IEnumerable<string> SharedFiles
+        {
+            get
+            {
+                string path = Path.GetDirectoryName(ProjectFilePath);
+
+                var includePatterns = SharedPattern.Split(new[] { ';' });
+                var includeFiles = includePatterns
+                    .SelectMany(pattern => PathResolver.PerformWildcardSearch(path, pattern))
+                    .ToArray();
+
+                return includeFiles;
             }
         }
 
@@ -95,6 +147,10 @@ namespace Microsoft.Net.Runtime
 
             project = new Project();
 
+            project.SourcePattern = @"**\*.cs";
+            project.PreprocessPattern = @"Compiler\Preprocess\**\*.cs";
+            project.ResourcesPattern = @"Compiler\Resources\**\*";
+
             string json = File.ReadAllText(projectPath);
             var settings = JObject.Parse(json);
             var version = settings["version"];
@@ -114,6 +170,11 @@ namespace Microsoft.Net.Runtime
             project.ProjectFilePath = projectPath;
             project.EmbedInteropTypes = GetValue<bool>(settings, "embedInteropTypes");
 
+            project.SourcePattern = GetSettingsValue(settings, "code", @"**\*.cs");
+            project.PreprocessPattern = GetSettingsValue(settings, "preprocess", @"Compiler\Preprocess\*.cs");
+            project.SharedPattern = GetSettingsValue(settings, "shared", @"Compiler\Shared\*.cs");
+            project.ResourcesPattern = GetSettingsValue(settings, "resources", @"Compiler\Resources\**\*");
+
             if (project.Version.IsSnapshot)
             {
                 var buildVersion = Environment.GetEnvironmentVariable("K_BUILD_VERSION") ?? "";
@@ -125,6 +186,12 @@ namespace Microsoft.Net.Runtime
             PopulateDependencies(project.Dependencies, settings);
 
             return true;
+        }
+
+        private static string GetSettingsValue(JObject settings, string propertyName, string defaultValue)
+        {
+            var token = settings[propertyName];
+            return token != null ? token.Value<string>() : defaultValue;
         }
 
         private static void PopulateDependencies(IList<Dependency> results, JObject settings)
