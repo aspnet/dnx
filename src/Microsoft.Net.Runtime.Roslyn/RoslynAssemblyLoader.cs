@@ -75,6 +75,11 @@ namespace Microsoft.Net.Runtime.Roslyn
 
             var resources = _resourceProvider.GetResources(project.Name, path);
 
+            resources.AddRange(project.ResourceFiles.Select(resourceFile => new ResourceDescription(
+                Path.GetFileName(resourceFile),                
+                () => new FileStream(resourceFile, FileMode.Open, FileAccess.Read, FileShare.Read), 
+                true)));
+
             foreach (var typeContext in compilationContext.SuccessfulTypeCompilationContexts)
             {
                 resources.Add(new ResourceDescription(typeContext.AssemblyName + ".dll",

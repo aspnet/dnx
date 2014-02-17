@@ -97,6 +97,14 @@ namespace Microsoft.Net.Project
                 }
             }
 
+            foreach (var sharedFile in project.SharedFiles)
+            {
+                var file = new PhysicalPackageFile();
+                file.SourcePath = sharedFile;
+                file.TargetPath = String.Format(@"shared\{0}", Path.GetFileName(sharedFile));
+                builder.Files.Add(file);
+            }
+
             if (createPackage)
             {
                 using (var fs = File.Create(nupkg))
