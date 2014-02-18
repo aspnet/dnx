@@ -113,8 +113,6 @@ namespace Microsoft.Net.Runtime
             _loader.Add(new NuGetAssemblyLoader(_loaderEngine, _projectDir));
 
             _serviceProvider.Add(typeof(IFileMonitor), _watcher);
-            _serviceProvider.Add(typeof(IProjectMetadataProvider), roslynLoader);
-            _serviceProvider.Add(typeof(IDependencyRefresher), _loader);
         }
 
         public static string ResolveRootDirectory(string projectDir)

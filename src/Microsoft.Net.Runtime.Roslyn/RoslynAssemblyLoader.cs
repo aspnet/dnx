@@ -20,7 +20,7 @@ using EmitResult = Microsoft.CodeAnalysis.Emit.CommonEmitResult;
 
 namespace Microsoft.Net.Runtime.Roslyn
 {
-    public class RoslynAssemblyLoader : IAssemblyLoader, IPackageLoader, IDependencyExportResolver, IProjectMetadataProvider
+    public class RoslynAssemblyLoader : IAssemblyLoader, IPackageLoader, IDependencyExportResolver
     {
         private readonly Dictionary<string, CompilationContext> _compilationCache = new Dictionary<string, CompilationContext>();
 
@@ -356,7 +356,7 @@ namespace Microsoft.Net.Runtime.Roslyn
             _packages = packages;
         }
 
-        public IProjectMetadata GetProjectMetadata(string name, FrameworkName frameworkName)
+        public RoslynProjectMetadata GetProjectMetadata(string name, FrameworkName frameworkName)
         {
             // This is kinda hacky but we just clear this when we're querying for metadata
             _compilationCache.Clear();

@@ -10,7 +10,7 @@ using Microsoft.Net.Runtime.Services;
 
 namespace Microsoft.Net.Runtime.Roslyn
 {
-    public class RoslynProjectMetadata : IProjectMetadata
+    public class RoslynProjectMetadata
     {
         private readonly CompilationContext _compilationContext;
 
@@ -41,6 +41,12 @@ namespace Microsoft.Net.Runtime.Roslyn
             Errors = _compilationContext.Compilation
                                         .GetDiagnostics()
                                         .Where(d => d.Severity == DiagnosticSeverity.Error)
+                                        .Select(d => formatter.Format(d))
+                                        .ToList();
+
+            Warnings = _compilationContext.Compilation
+                                        .GetDiagnostics()
+                                        .Where(d => d.Severity == DiagnosticSeverity.Warning)
                                         .Select(d => formatter.Format(d))
                                         .ToList();
         }
@@ -103,6 +109,11 @@ namespace Microsoft.Net.Runtime.Roslyn
             private set;
         }
 
+        public IList<string> Warnings
+        {
+            get;
+            private set;
+        }
 
         public IList<byte[]> RawReferences
         {

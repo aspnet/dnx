@@ -1,6 +1,9 @@
 {
     "dependencies" : {
-        "Newtonsoft.Json" : "5.0.8"
+        "Newtonsoft.Json" : "5.0.8",
+        "Microsoft.Net.Runtime" : "",
+        "Microsoft.Net.Runtime.Interfaces" : "",
+        "Microsoft.Net.Runtime.Roslyn" : ""
     },
     "configurations" : {
         "net45" : {

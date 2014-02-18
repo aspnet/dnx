@@ -13,7 +13,7 @@ namespace Communication
         private readonly BinaryReader _reader;
         private readonly BinaryWriter _writer;
 
-        public event Action<Message> OnMessage;
+        public event Action<List<Message>> OnMessage;
 
         public ProcessingQueue(Stream stream)
         {
@@ -27,10 +27,11 @@ namespace Communication
             new Thread(() => ProcessQueue()).Start();
         }
 
-        public void Post(int messageType, object value = null)
+        public void Post(int contextId, int messageType, object value = null)
         {
             _writer.Write(JsonConvert.SerializeObject(new Message
             {
+                ContextId = contextId,
                 MessageType = messageType,
                 Payload = value == null ? null : JToken.FromObject(value)
             }));
@@ -38,30 +39,37 @@ namespace Communication
 
         private void ProcessQueue()
         {
+            var latest = new Dictionary<int, Message>();
+            var seen = new HashSet<int>();
+
             while (true)
             {
-                Message message = null;
+                var messages = new List<Message>();
 
                 lock (_queue)
                 {
                     Monitor.Wait(_queue);
 
-                    // Look at the top of the processing queue for the message type
-                    var type = _queue[0].MessageType;
-
-                    // Remove all messages of this type and pick the last one to process
-                    for (int i = _queue.Count - 1; i >= 0; i--)
+                    foreach (var m in _queue)
                     {
-                        if (type == _queue[i].MessageType)
-                        {
-                            if (message == null)
-                            {
-                                message = _queue[i];
-                            }
-
-                            _queue.RemoveAt(i);
-                        }
+                        latest[m.MessageType] = m;
                     }
+
+                    foreach (var m in _queue)
+                    {
+                        if (seen.Contains(m.MessageType))
+                        {
+                            continue;
+                        }
+
+                        seen.Add(m.MessageType);
+
+                        messages.Add(latest[m.MessageType]);
+                    }
+
+                    latest.Clear();
+                    seen.Clear();
+                    _queue.Clear();
                 }
 
                 var h = OnMessage;
@@ -69,7 +77,7 @@ namespace Communication
                 {
                     try
                     {
-                        h(message);
+                        h(messages);
                     }
                     catch (Exception ex)
                     {
@@ -104,7 +112,12 @@ namespace Communication
     public class Message
     {
         public int MessageType { get; set; }
-        public int Priority { get; set; }
+        public int ContextId { get; set; }
         public JToken Payload { get; set; }
+
+        public override string ToString()
+        {
+            return "(" + MessageType + ", " + ContextId + ") -> " + (Payload == null ? "null" : Payload.ToString(Formatting.Indented));
+        }
     }
 }
