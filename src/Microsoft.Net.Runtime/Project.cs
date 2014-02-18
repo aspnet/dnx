@@ -171,8 +171,8 @@ namespace Microsoft.Net.Runtime
             project.EmbedInteropTypes = GetValue<bool>(settings, "embedInteropTypes");
 
             project.SourcePattern = GetSettingsValue(settings, "code", @"**\*.cs");
-            project.PreprocessPattern = GetSettingsValue(settings, "preprocess", @"Compiler\Preprocess\*.cs");
-            project.SharedPattern = GetSettingsValue(settings, "shared", @"Compiler\Shared\*.cs");
+            project.PreprocessPattern = GetSettingsValue(settings, "preprocess", @"Compiler\Preprocess\**\*.cs");
+            project.SharedPattern = GetSettingsValue(settings, "shared", @"Compiler\Shared\**\*.cs");
             project.ResourcesPattern = GetSettingsValue(settings, "resources", @"Compiler\Resources\**\*");
 
             if (project.Version.IsSnapshot)
