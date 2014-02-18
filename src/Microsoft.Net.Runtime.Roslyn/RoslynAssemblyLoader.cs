@@ -76,8 +76,8 @@ namespace Microsoft.Net.Runtime.Roslyn
             var resources = _resourceProvider.GetResources(project.Name, path);
 
             resources.AddRange(project.ResourceFiles.Select(resourceFile => new ResourceDescription(
-                Path.GetFileName(resourceFile),                
-                () => new FileStream(resourceFile, FileMode.Open, FileAccess.Read, FileShare.Read), 
+                Path.GetFileName(resourceFile),
+                () => new FileStream(resourceFile, FileMode.Open, FileAccess.Read, FileShare.Read),
                 true)));
 
             foreach (var typeContext in compilationContext.SuccessfulTypeCompilationContexts)
@@ -212,6 +212,17 @@ namespace Microsoft.Net.Runtime.Roslyn
 
                 _watcher.WatchFile(sourcePath);
                 trees.Add(CSharpSyntaxTree.ParseFile(sourcePath, parseOptions));
+            }
+
+            foreach (var sourceReference in exports.SelectMany(export => export.SourceReferences))
+            {
+                var sourceFileReference = sourceReference as ISourceFileReference;
+                if (sourceFileReference != null)
+                {
+                    var sourcePath = sourceFileReference.Path;
+                    _watcher.WatchFile(sourcePath);
+                    trees.Add(CSharpSyntaxTree.ParseFile(sourcePath, parseOptions));
+                }
             }
 
             if (!hasAssemblyInfo)
@@ -368,22 +379,35 @@ namespace Microsoft.Net.Runtime.Roslyn
             }
 
             var compilationContext = GetCompilationContext(name, targetFramework);
-
             if (compilationContext == null)
             {
                 return null;
             }
 
-            var references = new List<IMetadataReference>();
+            Project project;
+            if (!_projectResolver.TryResolveProject(name, out project))
+            {
+                // Can't find a project file with the name so bail
+                return null;
+            }
+
+            var metadataReferences = new List<IMetadataReference>();
+            var sourceReferences = new List<ISourceReference>();
+
             var metadataReference = compilationContext.Compilation.ToMetadataReference(embedInteropTypes: compilationContext.Project.EmbedInteropTypes);
-            references.Add(new MetadataReferenceWrapper(metadataReference));
+            metadataReferences.Add(new MetadataReferenceWrapper(metadataReference));
 
             foreach (var typeContext in compilationContext.SuccessfulTypeCompilationContexts)
             {
-                references.Add(new AssemblyNeutralMetadataReference(typeContext));
+                metadataReferences.Add(new AssemblyNeutralMetadataReference(typeContext));
             }
 
-            return new DependencyExport(references);
+            foreach (var sharedFile in project.SharedFiles)
+            {
+                sourceReferences.Add(new SourceFileReference(sharedFile));
+            }
+
+            return new DependencyExport(metadataReferences, sourceReferences);
         }
 
         private bool CompileToDisk(BuildContext buildContext, string assemblyPath, string pdbPath, CompilationContext compilationContext, IList<ResourceDescription> resources, List<string> errors)

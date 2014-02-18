@@ -4,9 +4,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace HelloWorld.Compiler.Shared
+namespace HelloWorld.Compiler.Preprocess
 {
-    class HelloCode
+    public class HelloMetaProgramming
     {
     }
 }

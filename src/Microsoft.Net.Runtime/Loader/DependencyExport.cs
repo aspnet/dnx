@@ -15,13 +15,19 @@ namespace Microsoft.Net.Runtime.Loader
             {
                 metadataReference
             };
+            SourceReferences = new List<ISourceReference>();
         }
 
-        public DependencyExport(IList<IMetadataReference> metadataReferences)
+        public DependencyExport(
+            IList<IMetadataReference> metadataReferences, 
+            IList<ISourceReference> sourceReferences)
         {
             MetadataReferences = metadataReferences;
+            SourceReferences = sourceReferences;
         }
 
         public IList<IMetadataReference> MetadataReferences { get; set; }
+
+        public IList<ISourceReference> SourceReferences { get; set; }
     }
 }
