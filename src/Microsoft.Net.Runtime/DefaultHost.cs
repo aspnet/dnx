@@ -87,13 +87,11 @@ namespace Microsoft.Net.Runtime
             _loader = new AssemblyLoader();
             string rootDirectory = ResolveRootDirectory(_projectDir);
 
-#if NET45 // CORECLR_TODO: FileSystemWatcher
             if (options.WatchFiles)
             {
                 _watcher = new FileWatcher(rootDirectory);
             }
             else
-#endif
             {
                 _watcher = NoopWatcher.Instance;
             }

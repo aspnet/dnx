@@ -7,7 +7,6 @@ using Microsoft.Net.Runtime.Services;
 
 namespace Microsoft.Net.Runtime.FileSystem
 {
-#if NET45 // CORECLR_TODO: FileWatcher
     public class FileWatcher : IFileWatcher, IFileMonitor
     {
         private readonly HashSet<string> _files = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
@@ -130,7 +129,6 @@ namespace Microsoft.Net.Runtime.FileSystem
             return false;
         }
     }
-#endif
 
     public sealed class NoopWatcher : IFileWatcher, IFileMonitor
     {
