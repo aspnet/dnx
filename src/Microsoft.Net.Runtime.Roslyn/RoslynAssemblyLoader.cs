@@ -352,10 +352,14 @@ namespace Microsoft.Net.Runtime.Roslyn
 
         public DependencyExport GetDependencyExport(string name, FrameworkName targetFramework)
         {
-            string assemblyLocation;
-            if (_globalAssemblyCache.TryResolvePartialName(name, out assemblyLocation))
+            // Only use the GAC on full .NET
+            if (targetFramework.Identifier == VersionUtility.DefaultTargetFramework.Identifier)
             {
-                return CreateDependencyExport(assemblyLocation);
+                string assemblyLocation;
+                if (_globalAssemblyCache.TryResolvePartialName(name, out assemblyLocation))
+                {
+                    return CreateDependencyExport(assemblyLocation);
+                }
             }
 
             var compilationContext = GetCompilationContext(name, targetFramework);
