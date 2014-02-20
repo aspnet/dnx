@@ -192,6 +192,10 @@ namespace Microsoft.Net.Runtime.Loader.NuGet
             var path = _repository.PathResolver.GetInstallPath(package);
 
             var directory = Path.Combine(path, "shared");
+            if (!Directory.Exists(directory))
+            {
+                return Enumerable.Empty<string>();
+            }
 
             return Directory.EnumerateFiles(directory, "*.*", SearchOption.AllDirectories);
         }

@@ -133,6 +133,12 @@ namespace NuGet
                 searchOption = SearchOption.TopDirectoryOnly;
             }
 
+            if (!Directory.Exists(normalizedBasePath))
+            {
+                // don't throw exceptions when searched location is entirely absent
+                return Enumerable.Empty<SearchPathResult>();
+            }
+
             // Starting from the base path, enumerate over all files and match it using the wildcard expression provided by the user.
             var matchedFiles = from file in Directory.EnumerateFiles(normalizedBasePath, "*.*", searchOption)
                                where searchRegex.IsMatch(file)

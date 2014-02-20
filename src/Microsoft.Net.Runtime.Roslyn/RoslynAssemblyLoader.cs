@@ -73,7 +73,7 @@ namespace Microsoft.Net.Runtime.Roslyn
             var path = project.ProjectDirectory;
             var name = project.Name;
 
-            var resources = _resourceProvider.GetResources(project.Name, path);
+            var resources = _resourceProvider.GetResources(project.Name, path).ToList();
 
             resources.AddRange(project.ResourceFiles.Select(resourceFile => new ResourceDescription(
                 Path.GetFileName(resourceFile),
