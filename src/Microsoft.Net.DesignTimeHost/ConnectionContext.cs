@@ -37,7 +37,11 @@ namespace Microsoft.Net.DesignTimeHost
                 applicationContext = new ApplicationContext(message.ContextId);
                 _contexts.Add(message.ContextId, applicationContext);
             }
+<<<<<<< HEAD
             applicationContext.OnMessage(message);
+=======
+            applicationContext.OnMessage(messsage);
+>>>>>>> a2d8d0d... Working on messaging model
         }
     }
 }

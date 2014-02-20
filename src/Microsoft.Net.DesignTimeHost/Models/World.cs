@@ -8,7 +8,10 @@ namespace Microsoft.Net.DesignTimeHost.Models
 {
     public class World
     {
+<<<<<<< HEAD
 
+=======
+>>>>>>> a2d8d0d... Working on messaging model
         IList<string> Warnings { get; set; }
         IList<string> Errors { get; set; }
     }
