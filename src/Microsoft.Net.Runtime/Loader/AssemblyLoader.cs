@@ -40,6 +40,7 @@ namespace Microsoft.Net.Runtime.Loader
         {
             var sw = new Stopwatch();
             sw.Start();
+            Trace.TraceInformation("Loading {0} for '{1}'.", loadContext.AssemblyName, loadContext.TargetFramework);
 
             try
             {
