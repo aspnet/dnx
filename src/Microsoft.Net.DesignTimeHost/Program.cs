@@ -5,16 +5,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
-using System.Runtime.Versioning;
 using System.Threading;
 using System.Threading.Tasks;
 using Communication;
-using Microsoft.Net.Runtime;
-using Microsoft.Net.Runtime.FileSystem;
-using Microsoft.Net.Runtime.Loader;
-using Microsoft.Net.Runtime.Loader.MSBuildProject;
-using Microsoft.Net.Runtime.Loader.NuGet;
-using Microsoft.Net.Runtime.Loader.Roslyn;
 using Microsoft.Net.Runtime.Roslyn;
 using NuGet;
 
@@ -47,6 +40,10 @@ namespace Microsoft.Net.DesignTimeHost
             var client = await AcceptAsync(socket);
 
             Console.WriteLine("Client accepted {0}", client.LocalEndPoint);
+
+            var connection = new ConnectionContext(client);
+
+            connection.Start();
 
             var ns = new NetworkStream(client);
 
@@ -243,7 +240,6 @@ namespace Microsoft.Net.DesignTimeHost
     {
         public class InitializeData
         {
-            public int Context { get; set; }
             public string TargetFramework { get; set; }
             public string ProjectFolder { get; set; }
         }
@@ -251,17 +247,6 @@ namespace Microsoft.Net.DesignTimeHost
         public class TargetFrameworkData
         {
             public string TargetFramework { get; set; }
-        }
-
-        public enum MessageType
-        {
-            Initialize = 0,
-            Teardown = 1,
-            ChangeTargetFramework = 2,
-            Heartbeat = 3,
-            References = 4,
-            CompilerSettings = 5,
-            WarningsAndErrors = 6
         }
     }
 
@@ -301,65 +286,6 @@ namespace Microsoft.Net.DesignTimeHost
         public int NeedReferences;
         public int NeedWarningsAndErrors;
         public int NeedHeartbeat;
-    }
-
-    public class ApplicationContext
-    {
-        private RoslynAssemblyLoader _compiler;
-        private AssemblyLoader _compositeLoader;
-        private FrameworkName _targetFramework;
-
-        public ApplicationContext(int id, string path)
-        {
-            Id = id;
-            Path = path;
-            CheckList = new CheckList();
-        }
-
-        public Project Project
-        {
-            get
-            {
-                Project project;
-                Project.TryGetProject(Path, out project);
-                return project;
-            }
-        }
-
-        public CheckList CheckList { get; private set; }
-        public int Id { get; private set; }
-        public string Path { get; private set; }
-
-        public RoslynProjectMetadata GetProjectMetadata()
-        {
-            return _compiler.GetProjectMetadata(Project.Name, _targetFramework);
-        }
-
-        public void Initialize(FrameworkName targetFramework)
-        {
-            _targetFramework = targetFramework;
-
-            string projectDir = Project.ProjectDirectory;
-
-            var globalAssemblyCache = new DefaultGlobalAssemblyCache();
-
-            _compositeLoader = new AssemblyLoader();
-            string rootDirectory = DefaultHost.ResolveRootDirectory(projectDir);
-            var resolver = new FrameworkReferenceResolver(globalAssemblyCache);
-            var resourceProvider = new ResxResourceProvider();
-            var projectResolver = new ProjectResolver(projectDir, rootDirectory);
-            _compiler = new RoslynAssemblyLoader(projectResolver, NoopWatcher.Instance, resolver, globalAssemblyCache, _compositeLoader, resourceProvider);
-            _compositeLoader.Add(_compiler);
-            _compositeLoader.Add(new MSBuildProjectAssemblyLoader(rootDirectory, NoopWatcher.Instance));
-            _compositeLoader.Add(new NuGetAssemblyLoader(projectDir));
-
-            _compositeLoader.Walk(Project.Name, Project.Version, _targetFramework);
-        }
-
-        public void RefreshDepedencies()
-        {
-            _compositeLoader.Walk(Project.Name, Project.Version, _targetFramework);
-        }
     }
 }
 #endif

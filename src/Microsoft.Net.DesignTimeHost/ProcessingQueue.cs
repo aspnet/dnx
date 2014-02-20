@@ -13,7 +13,7 @@ namespace Communication
         private readonly BinaryReader _reader;
         private readonly BinaryWriter _writer;
 
-        public event Action<List<Message>> OnMessage;
+        public event Action<Message> OnMessage;
 
         public ProcessingQueue(Stream stream)
         {
@@ -23,8 +23,7 @@ namespace Communication
 
         public void Start()
         {
-            new Thread(() => ReceiveMessages()).Start();
-            new Thread(() => ProcessQueue()).Start();
+            new Thread(ReceiveMessages).Start();
         }
 
         public void Post(int contextId, int messageType, object value = null)
@@ -37,56 +36,6 @@ namespace Communication
             }));
         }
 
-        private void ProcessQueue()
-        {
-            var latest = new Dictionary<int, Message>();
-            var seen = new HashSet<int>();
-
-            while (true)
-            {
-                var messages = new List<Message>();
-
-                lock (_queue)
-                {
-                    Monitor.Wait(_queue);
-
-                    foreach (var m in _queue)
-                    {
-                        latest[m.MessageType] = m;
-                    }
-
-                    foreach (var m in _queue)
-                    {
-                        if (seen.Contains(m.MessageType))
-                        {
-                            continue;
-                        }
-
-                        seen.Add(m.MessageType);
-
-                        messages.Add(latest[m.MessageType]);
-                    }
-
-                    latest.Clear();
-                    seen.Clear();
-                    _queue.Clear();
-                }
-
-                var h = OnMessage;
-                if (h != null)
-                {
-                    try
-                    {
-                        h(messages);
-                    }
-                    catch (Exception ex)
-                    {
-                        Console.WriteLine(ex.Message);
-                    }
-                }
-            }
-        }
-
         private void ReceiveMessages()
         {
             try
@@ -94,12 +43,7 @@ namespace Communication
                 while (true)
                 {
                     var message = JsonConvert.DeserializeObject<Message>(_reader.ReadString());
-
-                    lock (_queue)
-                    {
-                        _queue.Add(message);
-                        Monitor.Pulse(_queue);
-                    }
+                    OnMessage(message);
                 }
             }
             catch (Exception ex)
@@ -111,7 +55,7 @@ namespace Communication
 
     public class Message
     {
-        public int MessageType { get; set; }
+        public string MessageType { get; set; }
         public int ContextId { get; set; }
         public JToken Payload { get; set; }
 
