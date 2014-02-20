@@ -1,4 +1,5 @@
-﻿#if NET45 // NETWORKING
+﻿using Microsoft.Net.Runtime;
+#if NET45 // NETWORKING
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -15,7 +16,13 @@ namespace Microsoft.Net.DesignTimeHost
 {
     public class Program
     {
+        private IAssemblyLoaderEngine _loaderEngine;
         private readonly ConcurrentDictionary<int, ApplicationContext> _contexts = new ConcurrentDictionary<int, ApplicationContext>();
+
+        public Program(IAssemblyLoaderEngine loaderEngine)
+        {
+            _loaderEngine = loaderEngine;
+        }
 
         public void Main(string[] args)
         {
@@ -38,7 +45,7 @@ namespace Microsoft.Net.DesignTimeHost
 
                 Console.WriteLine("Client accepted {0}", acceptSocket.LocalEndPoint);
 
-                var connection = new ConnectionContext(new NetworkStream(acceptSocket));
+                var connection = new ConnectionContext(_loaderEngine, new NetworkStream(acceptSocket));
 
                 connection.Start();
             }

@@ -21,6 +21,7 @@ namespace Microsoft.Net.DesignTimeHost
 {
     public class ApplicationContext
     {
+        private readonly IAssemblyLoaderEngine _loaderEngine;
 
         public class State
         {
@@ -71,8 +72,9 @@ namespace Microsoft.Net.DesignTimeHost
         private World _remote = new World();
         private World _local = new World();
 
-        public ApplicationContext(int id)
+        public ApplicationContext(IAssemblyLoaderEngine loaderEngine, int id)
         {
+            _loaderEngine = loaderEngine;
             Id = id;
         }
 
@@ -279,10 +281,10 @@ namespace Microsoft.Net.DesignTimeHost
             var resolver = new FrameworkReferenceResolver(globalAssemblyCache);
             var resourceProvider = new ResxResourceProvider();
             var projectResolver = new ProjectResolver(state.Path, rootDirectory);
-            state.Compiler = new RoslynAssemblyLoader(projectResolver, NoopWatcher.Instance, resolver, globalAssemblyCache, state.CompositeLoader, resourceProvider);
+            state.Compiler = new RoslynAssemblyLoader(_loaderEngine, projectResolver, NoopWatcher.Instance, resolver, globalAssemblyCache, state.CompositeLoader, resourceProvider);
             state.CompositeLoader.Add(state.Compiler);
-            state.CompositeLoader.Add(new MSBuildProjectAssemblyLoader(rootDirectory, NoopWatcher.Instance));
-            state.CompositeLoader.Add(new NuGetAssemblyLoader(state.Path));
+            state.CompositeLoader.Add(new MSBuildProjectAssemblyLoader(_loaderEngine, rootDirectory, NoopWatcher.Instance));
+            state.CompositeLoader.Add(new NuGetAssemblyLoader(_loaderEngine, state.Path));
 
             state.CompositeLoader.Walk(state.Project.Name, state.Project.Version, state.TargetFramework);
             return state;

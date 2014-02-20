@@ -2,17 +2,20 @@
 using System.IO;
 using Communication;
 using Microsoft.Net.DesignTimeHost.Models;
+using Microsoft.Net.Runtime;
 
 namespace Microsoft.Net.DesignTimeHost
 {
     public class ConnectionContext
     {
         private readonly IDictionary<int, ApplicationContext> _contexts = new Dictionary<int, ApplicationContext>();
+        private readonly IAssemblyLoaderEngine _loaderEngine;
         private readonly Stream _stream;
         private ProcessingQueue _queue;
 
-        public ConnectionContext(Stream stream)
+        public ConnectionContext(IAssemblyLoaderEngine loaderEngine, Stream stream)
         {
+            _loaderEngine = loaderEngine;
             _stream = stream;
         }
 
@@ -28,7 +31,7 @@ namespace Microsoft.Net.DesignTimeHost
             ApplicationContext applicationContext;
             if (!_contexts.TryGetValue(message.ContextId, out applicationContext))
             {
-                applicationContext = new ApplicationContext(message.ContextId);
+                applicationContext = new ApplicationContext(_loaderEngine, message.ContextId);
                 applicationContext.OnTransmit += OnTransmit;
                 _contexts.Add(message.ContextId, applicationContext);
             }
