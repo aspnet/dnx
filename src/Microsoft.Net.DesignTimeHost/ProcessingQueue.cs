@@ -2,8 +2,8 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Threading;
+using Microsoft.Net.DesignTimeHost.Models;
 using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 
 namespace Communication
 {
@@ -13,7 +13,7 @@ namespace Communication
         private readonly BinaryReader _reader;
         private readonly BinaryWriter _writer;
 
-        public event Action<Message> OnMessage;
+        public event Action<Message> OnReceive;
 
         public ProcessingQueue(Stream stream)
         {
@@ -26,14 +26,9 @@ namespace Communication
             new Thread(ReceiveMessages).Start();
         }
 
-        public void Post(int contextId, int messageType, object value = null)
+        public void Post(Message message)
         {
-            _writer.Write(JsonConvert.SerializeObject(new Message
-            {
-                ContextId = contextId,
-                MessageType = messageType,
-                Payload = value == null ? null : JToken.FromObject(value)
-            }));
+            _writer.Write(JsonConvert.SerializeObject(message));
         }
 
         private void ReceiveMessages()
@@ -42,26 +37,13 @@ namespace Communication
             {
                 while (true)
                 {
-                    var message = JsonConvert.DeserializeObject<Message>(_reader.ReadString());
-                    OnMessage(message);
+                    OnReceive(JsonConvert.DeserializeObject<Message>(_reader.ReadString()));
                 }
             }
             catch (Exception ex)
             {
                 Console.WriteLine(ex.Message);
             }
-        }
-    }
-
-    public class Message
-    {
-        public string MessageType { get; set; }
-        public int ContextId { get; set; }
-        public JToken Payload { get; set; }
-
-        public override string ToString()
-        {
-            return "(" + MessageType + ", " + ContextId + ") -> " + (Payload == null ? "null" : Payload.ToString(Formatting.Indented));
         }
     }
 }

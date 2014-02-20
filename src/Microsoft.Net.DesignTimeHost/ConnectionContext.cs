@@ -1,47 +1,43 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Net.Sockets;
-using System.Text;
-using System.Threading.Tasks;
 using Communication;
+using Microsoft.Net.DesignTimeHost.Models;
 
 namespace Microsoft.Net.DesignTimeHost
 {
     public class ConnectionContext
     {
-        private readonly Socket _socket;
         private readonly IDictionary<int, ApplicationContext> _contexts = new Dictionary<int, ApplicationContext>();
-        private Stream _stream;
+        private readonly Stream _stream;
         private ProcessingQueue _queue;
 
-        public ConnectionContext(Socket socket)
+        public ConnectionContext(Stream stream)
         {
-            _socket = socket;
+            _stream = stream;
         }
 
         public void Start()
         {
-            _stream = new NetworkStream(_socket);
             _queue = new ProcessingQueue(_stream);
-            _queue.OnMessage += OnMessage;
+            _queue.OnReceive += OnReceive;
             _queue.Start();
         }
 
-        public void OnMessage(Message message)
+        public void OnReceive(Message message)
         {
             ApplicationContext applicationContext;
             if (!_contexts.TryGetValue(message.ContextId, out applicationContext))
             {
                 applicationContext = new ApplicationContext(message.ContextId);
+                applicationContext.OnTransmit += OnTransmit;
                 _contexts.Add(message.ContextId, applicationContext);
             }
-<<<<<<< HEAD
-            applicationContext.OnMessage(message);
-=======
-            applicationContext.OnMessage(messsage);
->>>>>>> a2d8d0d... Working on messaging model
+            applicationContext.OnReceive(message);
+        }
+
+        public void OnTransmit(Message message)
+        {
+            _queue.Post(message);
         }
     }
 }

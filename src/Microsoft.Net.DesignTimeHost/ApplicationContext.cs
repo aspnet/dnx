@@ -1,11 +1,12 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.Runtime.CompilerServices;
+using System.Linq;
 using System.Runtime.Versioning;
 using System.Threading;
 using Communication;
 using Microsoft.Net.DesignTimeHost.Models;
+using Microsoft.Net.DesignTimeHost.Models.IncomingMessages;
+using Microsoft.Net.DesignTimeHost.Models.OutgoingMessages;
 using Microsoft.Net.Runtime;
 using Microsoft.Net.Runtime.FileSystem;
 using Microsoft.Net.Runtime.Loader;
@@ -13,50 +14,73 @@ using Microsoft.Net.Runtime.Loader.MSBuildProject;
 using Microsoft.Net.Runtime.Loader.NuGet;
 using Microsoft.Net.Runtime.Loader.Roslyn;
 using Microsoft.Net.Runtime.Roslyn;
+using Newtonsoft.Json.Linq;
 using NuGet;
 
 namespace Microsoft.Net.DesignTimeHost
 {
     public class ApplicationContext
     {
-        private class State
+
+        public class State
         {
+            public string Path { get; set; }
+            public FrameworkName TargetFramework { get; set; }
+            public Project Project { get; set; }
+
             public RoslynAssemblyLoader Compiler { get; set; }
             public AssemblyLoader CompositeLoader { get; set; }
-            public FrameworkName TargetFramework { get; set; }
+        }
+
+        public class Trigger<TValue>
+        {
+            private TValue _value;
+
+            public bool WasAssigned { get; private set; }
+
+            public void ClearAssigned()
+            {
+                WasAssigned = false;
+            }
+
+            public TValue Value
+            {
+                get { return _value; }
+                set
+                {
+                    WasAssigned = true;
+                    _value = value;
+                }
+            }
+        }
+
+        public struct Nada
+        {
         }
 
         private readonly Queue<Message> _inbox = new Queue<Message>();
         private readonly object _processingLock = new object();
 
-        private FrameworkName _changeTargetFramework;
-        private DateTimeOffset _lastRemoteHeartbeat;
+        private readonly Trigger<string> _appPath = new Trigger<string>();
+        private readonly Trigger<FrameworkName> _targetFramework = new Trigger<FrameworkName>();
+        private readonly Trigger<DateTimeOffset> _remoteHeartbeat = new Trigger<DateTimeOffset>();
+        private readonly Trigger<Nada> _filesChanged = new Trigger<Nada>();
 
-        private State _state;
+        private readonly Trigger<State> _state = new Trigger<State>();
+
         private World _remote = new World();
         private World _local = new World();
 
         public ApplicationContext(int id)
         {
             Id = id;
-            CheckList = new CheckList();
         }
 
-        public Project Project
-        {
-            get
-            {
-                Project project;
-                Project.TryGetProject(Path, out project);
-                return project;
-            }
-        }
-
-        public CheckList CheckList { get; private set; }
         public int Id { get; private set; }
-        public string Path { get; private set; }
 
-        public void OnMessage(Message message)
+        public event Action<Message> OnTransmit;
+
+        public void OnReceive(Message message)
         {
             lock (_inbox)
             {
@@ -91,6 +115,8 @@ namespace Microsoft.Net.DesignTimeHost
         public void DoProcessLoop()
         {
             DrainInbox();
+            Calculate();
+            Reconcile();
         }
 
         private void DrainInbox()
@@ -108,87 +134,158 @@ namespace Microsoft.Net.DesignTimeHost
             {
                 case "Initialize":
                     {
-                        OnInitialize(message.Payload.ToObject<IncomingMessages.InitializeData>());
+                        var data = message.Payload.ToObject<InitializeMessage>();
+                        _appPath.Value = data.ProjectFolder;
+                        _targetFramework.Value = new FrameworkName(data.TargetFramework);
                     }
                     break;
                 case "Heartbeat":
                     {
-                        OnHeartbeat();
+                        _remoteHeartbeat.Value = DateTimeOffset.UtcNow;
                     }
                     break;
                 case "Teardown":
                     {
-                        OnTeardown();
                     }
                     break;
                 case "ChangeTargetFramework":
                     {
-                        OnChangeTargetFramework(message.Payload.ToObject<IncomingMessages.TargetFrameworkData>());
+                        var data = message.Payload.ToObject<ChangeTargetFrameworkMessage>();
+                        _targetFramework.Value = new FrameworkName(data.TargetFramework);
                     }
                     break;
                 case "FilesChanged":
                     {
-                        OnFilesChanged();
+                        _filesChanged.Value = default(Nada);
                     }
                     break;
             }
         }
 
-        private void OnInitialize(IncomingMessages.InitializeData message)
+        private void Calculate()
         {
-            Path = message.ProjectFolder;
-            _changeTargetFramework = new FrameworkName(message.TargetFramework);
+            if (_appPath.WasAssigned || _targetFramework.WasAssigned || _filesChanged.WasAssigned)
+            {
+                _appPath.ClearAssigned();
+                _targetFramework.ClearAssigned();
+                _filesChanged.ClearAssigned();
+
+                _state.Value = Initialize(_appPath.Value, _targetFramework.Value);
+            }
+
+            var state = _state.Value;
+            if (_state.WasAssigned && state != null)
+            {
+                _state.ClearAssigned();
+
+                _local.Configurations = new ConfigurationsMessage
+                {
+                    Configurations = state.Project.GetTargetFrameworkConfigurations().Select(c => new ConfigurationData
+                    {
+                        CompilationOptions = state.Project.GetConfiguration(c.FrameworkName).Value["compilationOptions"],
+                        FrameworkName = VersionUtility.GetShortFrameworkName(c.FrameworkName),
+                    }).ToList()
+                };
+
+                var metadata = state.Compiler.GetProjectMetadata(state.Project.Name, state.TargetFramework);
+
+                _local.References = new ReferencesMessage
+                {
+                    ProjectReferences = metadata.ProjectReferences,
+                    FileReferences = metadata.References
+                };
+
+                _local.Diagnostics = new DiagnosticsMessage
+                {
+                    Warnings = metadata.Warnings.ToList(),
+                    Errors = metadata.Errors.ToList(),
+                };
+            }
         }
 
-        private void OnHeartbeat()
+        private void Reconcile()
         {
-            _lastRemoteHeartbeat = DateTimeOffset.UtcNow;
+            if (IsDifferent(_local.Configurations, _remote.Configurations))
+            {
+                OnTransmit(new Message
+                {
+                    ContextId = Id,
+                    MessageType = "Configurations",
+                    Payload = JToken.FromObject(_local.Configurations)
+                });
+                _remote.Configurations = _local.Configurations;
+            }
+            if (IsDifferent(_local.References, _remote.References))
+            {
+                OnTransmit(new Message
+                {
+                    ContextId = Id,
+                    MessageType = "References",
+                    Payload = JToken.FromObject(_local.References)
+                });
+                _remote.References = _local.References;
+            }
+            if (IsDifferent(_local.Diagnostics, _remote.Diagnostics))
+            {
+                OnTransmit(new Message
+                {
+                    ContextId = Id,
+                    MessageType = "Diagnostics",
+                    Payload = JToken.FromObject(_local.Diagnostics)
+                });
+                _remote.Diagnostics = _local.Diagnostics;
+            }
+            OnTransmit(new Message
+            {
+                ContextId = Id,
+                MessageType = "Heartbeat"
+            });
         }
 
-        private void OnTeardown()
+        private bool IsDifferent(ConfigurationsMessage local, ConfigurationsMessage remote)
         {
+            return true;
         }
 
-        private void OnChangeTargetFramework(IncomingMessages.TargetFrameworkData message)
+        private bool IsDifferent(ReferencesMessage local, ReferencesMessage remote)
         {
-            _changeTargetFramework = new FrameworkName(message.TargetFramework);
+            return true;
         }
 
-        private void OnFilesChanged()
+        private bool IsDifferent(DiagnosticsMessage local, DiagnosticsMessage remote)
         {
+            return true;
         }
 
-
-
-        public RoslynProjectMetadata GetProjectMetadata()
+        public State Initialize(string appPath, FrameworkName targetFramework)
         {
-            return _compiler.GetProjectMetadata(Project.Name, _targetFramework);
-        }
+            var state = new State
+            {
+                Path = appPath,
+                TargetFramework = targetFramework
+            };
 
-        public void Initialize(FrameworkName targetFramework)
-        {
-            _targetFramework = targetFramework;
-
-            string projectDir = Project.ProjectDirectory;
+            Project project;
+            if (!Project.TryGetProject(appPath, out project))
+            {
+                // package.json sad
+                return state;
+            }
 
             var globalAssemblyCache = new DefaultGlobalAssemblyCache();
 
-            _compositeLoader = new AssemblyLoader();
-            string rootDirectory = DefaultHost.ResolveRootDirectory(projectDir);
+            state.CompositeLoader = new AssemblyLoader();
+            string rootDirectory = DefaultHost.ResolveRootDirectory(state.Path);
             var resolver = new FrameworkReferenceResolver(globalAssemblyCache);
             var resourceProvider = new ResxResourceProvider();
-            var projectResolver = new ProjectResolver(projectDir, rootDirectory);
-            _compiler = new RoslynAssemblyLoader(projectResolver, NoopWatcher.Instance, resolver, globalAssemblyCache, _compositeLoader, resourceProvider);
-            _compositeLoader.Add(_compiler);
-            _compositeLoader.Add(new MSBuildProjectAssemblyLoader(rootDirectory, NoopWatcher.Instance));
-            _compositeLoader.Add(new NuGetAssemblyLoader(projectDir));
+            var projectResolver = new ProjectResolver(state.Path, rootDirectory);
+            state.Compiler = new RoslynAssemblyLoader(projectResolver, NoopWatcher.Instance, resolver, globalAssemblyCache, state.CompositeLoader, resourceProvider);
+            state.CompositeLoader.Add(state.Compiler);
+            state.CompositeLoader.Add(new MSBuildProjectAssemblyLoader(rootDirectory, NoopWatcher.Instance));
+            state.CompositeLoader.Add(new NuGetAssemblyLoader(state.Path));
 
-            _compositeLoader.Walk(Project.Name, Project.Version, _targetFramework);
-        }
-
-        public void RefreshDepedencies()
-        {
-            _compositeLoader.Walk(Project.Name, Project.Version, _targetFramework);
+            state.CompositeLoader.Walk(state.Project.Name, state.Project.Version, state.TargetFramework);
+            return state;
         }
     }
 }
