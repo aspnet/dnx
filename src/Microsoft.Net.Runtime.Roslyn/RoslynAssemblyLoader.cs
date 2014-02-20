@@ -30,13 +30,16 @@ namespace Microsoft.Net.Runtime.Roslyn
         private readonly IGlobalAssemblyCache _globalAssemblyCache;
         private readonly IDependencyExportResolver _dependencyResolver;
         private readonly IResourceProvider _resourceProvider;
+        private readonly IAssemblyLoaderEngine _loaderEngine;
 
         private IEnumerable<DependencyDescription> _packages;
 
-        public RoslynAssemblyLoader(IProjectResolver projectResolver,
+        public RoslynAssemblyLoader(IAssemblyLoaderEngine loaderEngine,
+                                    IProjectResolver projectResolver,
                                     IFileWatcher watcher,
                                     IDependencyExportResolver dependencyResolver)
         {
+            _loaderEngine = loaderEngine;
             _projectResolver = projectResolver;
             _watcher = watcher;
             _globalAssemblyCache = new DefaultGlobalAssemblyCache();
@@ -45,13 +48,15 @@ namespace Microsoft.Net.Runtime.Roslyn
             _resourceProvider = new ResxResourceProvider();
         }
 
-        public RoslynAssemblyLoader(IProjectResolver projectResolver,
+        public RoslynAssemblyLoader(IAssemblyLoaderEngine loaderEngine,
+                                    IProjectResolver projectResolver,
                                     IFileWatcher watcher,
                                     IFrameworkReferenceResolver resolver,
                                     IGlobalAssemblyCache globalAssemblyCache,
                                     IDependencyExportResolver dependencyLoader,
                                     IResourceProvider resourceProvider)
         {
+            _loaderEngine = loaderEngine;
             _projectResolver = projectResolver;
             _watcher = watcher;
             _resolver = resolver;
@@ -522,16 +527,13 @@ namespace Microsoft.Net.Runtime.Roslyn
                 }
 
                 var assemblyBytes = assemblyStream.ToArray();
-
+                byte[] pdbBytes = null;
 #if NET45
-                var pdbBytes = pdbStream.ToArray();
+                pdbBytes = pdbStream.ToArray();
 #endif
 
-#if NET45
-                var assembly = Assembly.Load(assemblyBytes, pdbBytes);
-#else
-                var assembly = Assembly.Load(assemblyBytes);
-#endif
+                var assembly = _loaderEngine.LoadBytes(assemblyBytes, pdbBytes);
+
                 return new AssemblyLoadResult(assembly);
             }
         }

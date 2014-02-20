@@ -23,14 +23,17 @@ namespace Microsoft.Net.Runtime
         private readonly FrameworkName _targetFramework;
         private readonly string _name;
         private readonly ServiceProvider _serviceProvider = new ServiceProvider();
+        private readonly IAssemblyLoaderEngine _loaderEngine;
 
-        public DefaultHost(DefaultHostOptions options)
+        public DefaultHost(DefaultHostOptions options, IAssemblyLoaderEngine loaderEngine)
         {
             _projectDir = Normalize(options.ApplicationBaseDirectory);
 
             _name = options.ApplicationName;
 
             _targetFramework = VersionUtility.ParseFrameworkName(options.TargetFramework ?? "net45");
+
+            _loaderEngine = loaderEngine;
 
             Initialize(options);
         }
@@ -100,14 +103,14 @@ namespace Microsoft.Net.Runtime
 
             if (options.UseCachedCompilations)
             {
-                var cachedLoader = new CachedCompilationLoader(projectResolver);
+                var cachedLoader = new CachedCompilationLoader(_loaderEngine, projectResolver);
                 _loader.Add(cachedLoader);
             }
 
-            var roslynLoader = new LazyRoslynAssemblyLoader(projectResolver, _watcher, _loader);
+            var roslynLoader = new LazyRoslynAssemblyLoader(_loaderEngine, projectResolver, _watcher, _loader);
             _loader.Add(roslynLoader);
-            _loader.Add(new MSBuildProjectAssemblyLoader(rootDirectory, _watcher));
-            _loader.Add(new NuGetAssemblyLoader(_projectDir));
+            _loader.Add(new MSBuildProjectAssemblyLoader(_loaderEngine, rootDirectory, _watcher));
+            _loader.Add(new NuGetAssemblyLoader(_loaderEngine, _projectDir));
 
             _serviceProvider.Add(typeof(IFileMonitor), _watcher);
             _serviceProvider.Add(typeof(IProjectMetadataProvider), roslynLoader);

@@ -21,10 +21,13 @@ namespace Microsoft.Net.Runtime.Loader.MSBuildProject
 #endif
         };
 
-        public MSBuildProjectAssemblyLoader(string solutionDir, IFileWatcher watcher)
+        private readonly IAssemblyLoaderEngine _loaderEngine;
+
+        public MSBuildProjectAssemblyLoader(IAssemblyLoaderEngine loaderEngine, string solutionDir, IFileWatcher watcher)
         {
             _solutionDir = solutionDir;
             _watcher = watcher;
+            _loaderEngine = loaderEngine;
         }
 
         public AssemblyLoadResult Load(LoadContext loadContext)
@@ -102,7 +105,7 @@ namespace Microsoft.Net.Runtime.Loader.MSBuildProject
                     return null;
                 }
 
-                return new AssemblyLoadResult(Assembly.LoadFile(outputFile));
+                return new AssemblyLoadResult(_loaderEngine.LoadFile(outputFile));
             }
 
             return null;

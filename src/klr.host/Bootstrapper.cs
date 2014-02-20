@@ -12,10 +12,13 @@ namespace klr.host
     public class Bootstrapper
     {
         private readonly IHostContainer _container;
+        private readonly IAssemblyLoaderEngine _loaderEngine;
 
-        public Bootstrapper(IHostContainer container)
+        public Bootstrapper(IHostContainer container, 
+                            IAssemblyLoaderEngine loaderEngine)
         {
             _container = container;
+            _loaderEngine = loaderEngine;
         }
 
         public async Task<int> Main(string[] args)
@@ -38,6 +41,7 @@ namespace klr.host
 
             var serviceProvider = new ServiceProvider();
             serviceProvider.Add(typeof(IHostContainer), _container);
+            serviceProvider.Add(typeof(IAssemblyLoaderEngine), _loaderEngine);
 
             return await EntryPointExecutor.Execute(assembly, programArgs, serviceProvider);
         }

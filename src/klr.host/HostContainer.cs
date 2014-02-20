@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Reflection;
 using Microsoft.Net.Runtime;
 
@@ -28,46 +27,16 @@ namespace klr.host
 
         public Assembly Load(string name)
         {
-            Assembly assembly;
-            if (_cache.TryGetValue(name, out assembly))
-            {
-                return assembly;
-            }
-
             foreach (var host in _hosts)
             {
-                assembly = host.Load(name);
+                var assembly = host.Load(name);
                 if (assembly != null)
                 {
-                    ExtractAssemblyNeutralInterfaces(assembly);
-
-                    _cache[name] = assembly;
                     return assembly;
                 }
             }
 
             return null;
-        }
-
-        private void ExtractAssemblyNeutralInterfaces(Assembly assembly)
-        {
-            // Embedded assemblies end with .dll
-            foreach (var name in assembly.GetManifestResourceNames())
-            {
-                if (name.EndsWith(".dll"))
-                {
-                    var assemblyName = Path.GetFileNameWithoutExtension(name);
-
-                    if (_cache.ContainsKey(assemblyName))
-                    {
-                        continue;
-                    }
-
-                    var ms = new MemoryStream();
-                    assembly.GetManifestResourceStream(name).CopyTo(ms);
-                    _cache[assemblyName] = Assembly.Load(ms.ToArray());
-                }
-            }
         }
 
         private class DisposableAction : IDisposable

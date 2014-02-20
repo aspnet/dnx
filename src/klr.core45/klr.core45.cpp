@@ -52,9 +52,9 @@ HMODULE LoadCoreClr()
     {
         // This is used when developing
 #if AMD64
-        hCoreCLRModule = ::LoadLibraryExW(L"..\\..\\..\\artifacts\\sdk\\Runtime\\amd64\\coreclr.dll", NULL, 0);
+        hCoreCLRModule = ::LoadLibraryExW(L"..\\..\\..\\artifacts\\build\\ProjectK\\Runtime\\amd64\\coreclr.dll", NULL, 0);
 #else
-        hCoreCLRModule = ::LoadLibraryExW(L"..\\..\\..\\artifacts\\sdk\\Runtime\\x86\\coreclr.dll", NULL, 0);
+        hCoreCLRModule = ::LoadLibraryExW(L"..\\..\\..\\artifacts\\build\\ProjectK\\Runtime\\x86\\coreclr.dll", NULL, 0);
 #endif
     }
 

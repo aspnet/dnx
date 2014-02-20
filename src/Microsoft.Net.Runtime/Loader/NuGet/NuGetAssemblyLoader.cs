@@ -15,10 +15,12 @@ namespace Microsoft.Net.Runtime.Loader.NuGet
         private readonly Dictionary<string, string> _paths = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
         private readonly Dictionary<string, DependencyDescription> _dependencies = new Dictionary<string, DependencyDescription>();
         private readonly IDictionary<string, IList<string>> _sharedSources = new Dictionary<string, IList<string>>();
+        private readonly IAssemblyLoaderEngine _loaderEngine;
 
-        public NuGetAssemblyLoader(string projectPath)
+        public NuGetAssemblyLoader(IAssemblyLoaderEngine loaderEngine, string projectPath)
         {
             _repository = new LocalPackageRepository(ResolveRepositoryPath(projectPath));
+            _loaderEngine = loaderEngine;
         }
 
         public AssemblyLoadResult Load(LoadContext loadContext)
@@ -34,7 +36,7 @@ namespace Microsoft.Net.Runtime.Loader.NuGet
             string path;
             if (_paths.TryGetValue(name, out path))
             {
-                assembly = Assembly.LoadFile(path);
+                assembly = _loaderEngine.LoadFile(path);
 
                 _cache[name] = assembly;
             }

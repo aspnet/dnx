@@ -4,13 +4,19 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+#if K10
+using System.Runtime.Hosting.Loader;
+using klr.core45.managed;
+#else
+using klr.net45.managed;
+#endif
 using System.Threading.Tasks;
 
 namespace klr.hosting
 {
     public static class RuntimeBootstrapper
     {
-        private static Dictionary<string, Assembly> _hostAssemblies = new Dictionary<string, Assembly>();
+        private static Dictionary<string, Assembly> _assemblyCache = new Dictionary<string, Assembly>();
         private static readonly Dictionary<string, CommandOptionType> _options = new Dictionary<string, CommandOptionType>
         {
             { "lib", CommandOptionType.MultipleValue },
@@ -40,23 +46,46 @@ namespace klr.hosting
                 libs.SelectMany(lib => lib.Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries).Select(Path.GetFullPath)).ToArray();
 
             Func<string, Assembly> loader = _ => null;
+            Func<byte[], Assembly> loadBytes = _ => null;
 
-            ResolveEventHandler handler = (sender, a) =>
+            Func<AssemblyName, Assembly> loaderCallback = assemblyName =>
             {
-                var name = new AssemblyName(a.Name).Name;
+                string name = assemblyName.Name;
 
-                // If host assembly was already loaded use it
+                // If the assembly was already loaded use it
                 Assembly assembly;
-                if (_hostAssemblies.TryGetValue(name, out assembly))
+                if (_assemblyCache.TryGetValue(name, out assembly))
                 {
                     return assembly;
                 }
 
-                // Special case for host assemblies
-                return loader(name) ?? ResolveHostAssembly(searchPaths, name);
+                assembly = loader(name) ?? ResolveHostAssembly(searchPaths, name);
+
+                if (assembly != null)
+                {
+                    ExtractAssemblyNeutralInterfaces(assembly, loadBytes);
+
+                    _assemblyCache[name] = assembly;
+                }
+
+                return assembly;
+            };
+#if K10
+            var loaderImpl = new DelegateAssemblyLoadContext(loaderCallback);
+            loadBytes = bytes => loaderImpl.LoadBytes(bytes, null);
+
+            AssemblyLoadContext.Default = loaderImpl;
+#else
+            var loaderImpl = new LoaderEngine();
+            loadBytes = bytes => loaderImpl.LoadBytes(bytes, null);
+
+            ResolveEventHandler handler = (sender, a) =>
+            {
+                return loaderCallback(new AssemblyName(a.Name));
             };
 
-            AppDomain.CurrentDomain.AssemblyResolve += handler;
+            AppDomain.CurrentDomain.AssemblyResolve += handler;      
+#endif
 
             try
             {
@@ -64,17 +93,23 @@ namespace klr.hosting
 
                 var assembly = Assembly.Load(new AssemblyName("klr.host"));
 
+
+                // Loader impl
+                // var loaderEngine = new DefaultLoaderEngine(loaderImpl);
+                var loaderEngineType = assembly.GetType("klr.host.DefaultLoaderEngine");
+                var loaderEngine = Activator.CreateInstance(loaderEngineType, loaderImpl);
+
                 // The following code is doing:
                 // var hostContainer = new klr.host.HostContainer();
-                // var rootHost = new klr.host.RootHost(searchPaths);
+                // var rootHost = new klr.host.RootHost(loaderEngine, searchPaths);
                 // hostContainer.AddHost(rootHost);
                 // var bootstrapper = new klr.host.Bootstrapper();
-                // bootstrapper.Main(argv.Skip(1).ToArray());
+                // bootstrapper.Main(bootstrapperArgs);
 
                 var hostContainerType = assembly.GetType("klr.host.HostContainer");
                 var rootHostType = assembly.GetType("klr.host.RootHost");
                 var hostContainer = Activator.CreateInstance(hostContainerType);
-                var rootHost = Activator.CreateInstance(rootHostType, new object[] { searchPaths });
+                var rootHost = Activator.CreateInstance(rootHostType, new object[] { loaderEngine, searchPaths });
                 MethodInfo addHostMethodInfo = hostContainerType.GetTypeInfo().GetDeclaredMethod("AddHost");
                 var disposable = (IDisposable)addHostMethodInfo.Invoke(hostContainer, new[] { rootHost });
                 var hostContainerLoad = hostContainerType.GetTypeInfo().GetDeclaredMethod("Load");
@@ -85,10 +120,9 @@ namespace klr.hosting
                 // TODO: Remove this when we get delegate create delegate in the profile
                 loader = name => hostContainerLoad.Invoke(hostContainer, new[] { name }) as Assembly;
 #endif
-
                 var bootstrapperType = assembly.GetType("klr.host.Bootstrapper");
                 var mainMethod = bootstrapperType.GetTypeInfo().GetDeclaredMethod("Main");
-                var bootstrapper = Activator.CreateInstance(bootstrapperType, hostContainer);
+                var bootstrapper = Activator.CreateInstance(bootstrapperType, hostContainer, loaderEngine);
 
                 using (disposable)
                 {
@@ -111,7 +145,31 @@ namespace klr.hosting
             }
             finally
             {
+#if NET45
                 AppDomain.CurrentDomain.AssemblyResolve -= handler;
+#endif
+            }
+        }
+
+        private static void ExtractAssemblyNeutralInterfaces(Assembly assembly, Func<byte[], Assembly> loadBytes)
+        {
+            // Embedded assemblies end with .dll
+            foreach (var name in assembly.GetManifestResourceNames())
+            {
+                if (name.EndsWith(".dll"))
+                {
+                    var assemblyName = Path.GetFileNameWithoutExtension(name);
+
+                    if (_assemblyCache.ContainsKey(assemblyName))
+                    {
+                        continue;
+                    }
+
+                    // We're creating 2 streams under the covers on core clr
+                    var ms = new MemoryStream();
+                    assembly.GetManifestResourceStream(name).CopyTo(ms);
+                    _assemblyCache[assemblyName] = loadBytes(ms.ToArray());
+                }
             }
         }
 
@@ -123,10 +181,7 @@ namespace klr.hosting
 
                 if (File.Exists(path))
                 {
-                    var assembly = Assembly.LoadFile(path);
-
-                    _hostAssemblies[name] = assembly;
-                    return assembly;
+                    return Assembly.LoadFile(path);
                 }
             }
 

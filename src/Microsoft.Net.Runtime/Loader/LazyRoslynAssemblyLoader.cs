@@ -18,11 +18,14 @@ namespace Microsoft.Net.Runtime
         private readonly AssemblyLoader _loader;
         private object _roslynLoaderInstance;
         private bool _roslynInitializing;
+        private readonly IAssemblyLoaderEngine _loaderEngine;
 
-        public LazyRoslynAssemblyLoader(ProjectResolver projectResolver,
+        public LazyRoslynAssemblyLoader(IAssemblyLoaderEngine loaderEngine,
+                                        ProjectResolver projectResolver,
                                         IFileWatcher watcher,
                                         AssemblyLoader loader)
         {
+            _loaderEngine = loaderEngine;
             _projectResolver = projectResolver;
             _watcher = watcher;
             _loader = loader;
@@ -98,9 +101,11 @@ namespace Microsoft.Net.Runtime
 
                     var ctors = roslynAssemblyLoaderType.GetTypeInfo().DeclaredConstructors;
 
-                    var ctor = ctors.First(c => c.GetParameters().Length == 3);
+                    var args = new object[] { _loaderEngine, _projectResolver, _watcher, _loader };
 
-                    _roslynLoaderInstance = ctor.Invoke(new object[] { _projectResolver, _watcher, _loader });
+                    var ctor = ctors.First(c => c.GetParameters().Length == args.Length);
+
+                    _roslynLoaderInstance = ctor.Invoke(args);
 
                     return execute((TInterface)_roslynLoaderInstance);
                 }

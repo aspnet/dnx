@@ -143,16 +143,17 @@ namespace Microsoft.Net.Project
             string projectDir = project.ProjectDirectory;
 
             var globalAssemblyCache = new DefaultGlobalAssemblyCache();
+            var noopEngine = new NoopLoaderEngine();
 
             var loader = new AssemblyLoader();
             string rootDirectory = DefaultHost.ResolveRootDirectory(projectDir);
             var resolver = new FrameworkReferenceResolver(globalAssemblyCache);
             var resourceProvider = new ResxResourceProvider();
             var projectResolver = new ProjectResolver(projectDir, rootDirectory);
-            var roslynLoader = new RoslynAssemblyLoader(projectResolver, NoopWatcher.Instance, resolver, globalAssemblyCache, loader, resourceProvider);
+            var roslynLoader = new RoslynAssemblyLoader(noopEngine, projectResolver, NoopWatcher.Instance, resolver, globalAssemblyCache, loader, resourceProvider);
             loader.Add(roslynLoader);
-            loader.Add(new MSBuildProjectAssemblyLoader(rootDirectory, NoopWatcher.Instance));
-            loader.Add(new NuGetAssemblyLoader(projectDir));
+            loader.Add(new MSBuildProjectAssemblyLoader(noopEngine, rootDirectory, NoopWatcher.Instance));
+            loader.Add(new NuGetAssemblyLoader(noopEngine, projectDir));
 
             loader.Walk(project.Name, project.Version, frameworkName);
 

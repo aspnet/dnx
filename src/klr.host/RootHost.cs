@@ -11,9 +11,11 @@ namespace klr.host
     {
         private readonly IDictionary<string, Assembly> _cache = new Dictionary<string, Assembly>();
         private readonly string[] _searchPaths;
+        private readonly IAssemblyLoaderEngine _loaderEngine;
 
-        public RootHost(string[] searchPaths)
+        public RootHost(IAssemblyLoaderEngine loaderEngine, string[] searchPaths)
         {
+            _loaderEngine = loaderEngine;
             _searchPaths = searchPaths;
         }
 
@@ -25,12 +27,6 @@ namespace klr.host
         {
             Trace.TraceInformation("RootHost.Load name={0}", name);
 
-            Assembly assembly;
-            if (_cache.TryGetValue(name, out assembly))
-            {
-                return assembly;
-            }
-
             foreach (var path in _searchPaths)
             {
                 var filePath = Path.Combine(path, name + ".dll");
@@ -39,8 +35,8 @@ namespace klr.host
                     try
                     {
                         Trace.TraceInformation("RootHost Assembly.LoadFile({0})", filePath);
-                        assembly = Assembly.LoadFile(filePath);
-                        break;
+
+                        return _loaderEngine.LoadFile(filePath);
                     }
                     catch (Exception ex)
                     {
@@ -49,8 +45,7 @@ namespace klr.host
                 }
             }
 
-            _cache[name] = assembly;
-            return assembly;
+            return null;
         }
     }
 }

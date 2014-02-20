@@ -11,10 +11,12 @@ namespace Microsoft.Net.Runtime.Loader
     {
         private readonly IProjectResolver _resolver;
         private readonly Dictionary<string, string> _paths = new Dictionary<string, string>();
+        private readonly IAssemblyLoaderEngine _loaderEngine;
 
-        public CachedCompilationLoader(IProjectResolver resolver)
+        public CachedCompilationLoader(IAssemblyLoaderEngine loaderEngine, IProjectResolver resolver)
         {
             _resolver = resolver;
+            _loaderEngine = loaderEngine;
         }
 
         public AssemblyLoadResult Load(LoadContext loadContext)
@@ -24,7 +26,7 @@ namespace Microsoft.Net.Runtime.Loader
             string path;
             if (_paths.TryGetValue(name, out path))
             {
-                return new AssemblyLoadResult(Assembly.LoadFile(path));
+                return new AssemblyLoadResult(_loaderEngine.LoadFile(path));
             }
 
             return null;

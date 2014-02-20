@@ -19,10 +19,12 @@ namespace Microsoft.Net.ApplicationHost
         };
 
         private readonly IHostContainer _container;
+        private readonly IAssemblyLoaderEngine _loaderEngine;
 
-        public Program(IHostContainer container)
+        public Program(IHostContainer container, IAssemblyLoaderEngine loaderEngine)
         {
             _container = container;
+            _loaderEngine = loaderEngine;
         }
 
         public async Task<int> Main(string[] args)
@@ -34,7 +36,7 @@ namespace Microsoft.Net.ApplicationHost
 
             try
             {
-                var host = new DefaultHost(options);
+                var host = new DefaultHost(options, _loaderEngine);
 
                 using (_container.AddHost(host))
                 {
