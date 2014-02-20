@@ -1,5 +1,6 @@
 
-var VERSION='0.1-alpha'
+var PRODUCT_VERSION = '0.1'
+var VERSION='${PRODUCT_VERSION}-alpha'
 var AUTHORS='Microsoft'
 
 default Configuration='Release'
@@ -269,6 +270,12 @@ var CORECLR_PATH = '${Environment.GetEnvironmentVariable("CORECLR_PATH")}'
     }
     copy sourceDir='${ROOT}' outputDir='${SDK_ROOT}' include='ProjectK.nuspec' overwrite='${true}'
     nuget-pack nuspecFile='${Path.Combine(SDK_ROOT, "ProjectK.nuspec")}' packageVersion='${FULL_VERSION}' outputDir='${BUILD_DIR2}' extra='-NoPackageAnalysis'
+    
+#build-msi target='package'
+    var programFilesX86 = '${Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86)}'
+    var msbuild = '${Path.Combine(programFilesX86, "MSBuild", "12.0", "Bin", "MSBuild.exe")}'
+    var msiVersion = '${PRODUCT_VERSION}.${DateTime.UtcNow.ToString("MMdd")}.0'
+    exec program='${msbuild}' commandline='src\k.setup\KSetup.sln /p:KProductVersion=${msiVersion} /p:OutputPath="${BUILD_DIR2}" /p:Configuration=Release'
 
 macro name='NuGetInstall' Package='string' OutputDir='string' Extra='string'
     nuget-install package='${Package}' outputDir='${OutputDir}' extra='${Extra}'
