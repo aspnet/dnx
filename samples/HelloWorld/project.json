@@ -1,4 +1,6 @@
 {
     "version": "0.1-beta-*",
-    "dependencies": {}
+    "dependencies": {
+        "HelloShared": "0.1-beta-*"
+    }
 }

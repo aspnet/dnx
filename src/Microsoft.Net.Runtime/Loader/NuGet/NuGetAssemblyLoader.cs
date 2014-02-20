@@ -14,6 +14,7 @@ namespace Microsoft.Net.Runtime.Loader.NuGet
         private readonly Dictionary<string, Assembly> _cache = new Dictionary<string, Assembly>(StringComparer.OrdinalIgnoreCase);
         private readonly Dictionary<string, string> _paths = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
         private readonly Dictionary<string, DependencyDescription> _dependencies = new Dictionary<string, DependencyDescription>();
+        private readonly IDictionary<string, IList<string>> _sharedSources = new Dictionary<string, IList<string>>();
 
         public NuGetAssemblyLoader(string projectPath)
         {
@@ -114,6 +115,13 @@ namespace Microsoft.Net.Runtime.Loader.NuGet
                         _paths[package.Id] = fileName;
                     }
                 }
+
+
+                var sharedSources = GetSharedSources(package, targetFramework).ToList();
+                if (!sharedSources.IsEmpty())
+                {
+                    _sharedSources[dependency.Identity.Name] = sharedSources;
+                }
             }
         }
 
@@ -131,7 +139,18 @@ namespace Microsoft.Net.Runtime.Loader.NuGet
             var metadataReferenes = paths.Select(path => (IMetadataReference)new MetadataFileReference(path))
                                          .ToList();
 
-            return new DependencyExport(metadataReferenes);
+            var sourceReferences = new List<ISourceReference>();
+
+            IList<string> sharedSources;
+            if (_sharedSources.TryGetValue(name, out sharedSources))
+            {
+                foreach (var sharedSource in sharedSources)
+                {
+                    sourceReferences.Add(new SourceFileReference(sharedSource));
+                }
+            }
+
+            return new DependencyExport(metadataReferenes, sourceReferences);
         }
 
         private void PopulateDependenciesPaths(string name, FrameworkName targetFramework, ISet<string> paths)
@@ -166,6 +185,15 @@ namespace Microsoft.Net.Runtime.Loader.NuGet
             }
 
             return Directory.EnumerateFiles(directory, "*.dll");
+        }
+
+        private IEnumerable<string> GetSharedSources(IPackage package, FrameworkName targetFramework)
+        {
+            var path = _repository.PathResolver.GetInstallPath(package);
+
+            var directory = Path.Combine(path, "shared");
+
+            return Directory.EnumerateFiles(directory, "*.*", SearchOption.AllDirectories);
         }
 
         private static IEnumerable<string> GetAssembliesFromPackage(IPackage package, FrameworkName frameworkName, string path)
