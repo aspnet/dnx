@@ -285,7 +285,7 @@ namespace Microsoft.Net.DesignTimeHost
             state.CompositeLoader.Add(state.Compiler);
             state.CompositeLoader.Add(new MSBuildProjectAssemblyLoader(_loaderEngine, rootDirectory, NoopWatcher.Instance));
             state.CompositeLoader.Add(new NuGetAssemblyLoader(_loaderEngine, state.Path));
-
+            state.Project = project;
             state.CompositeLoader.Walk(state.Project.Name, state.Project.Version, state.TargetFramework);
             return state;
         }
