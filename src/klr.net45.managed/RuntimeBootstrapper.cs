@@ -130,12 +130,8 @@ namespace klr.hosting
                 var disposable = (IDisposable)addHostMethodInfo.Invoke(hostContainer, new[] { rootHost });
                 var hostContainerLoad = hostContainerType.GetTypeInfo().GetDeclaredMethod("Load");
 
-#if NET45
-                loader = (Func<string, Assembly>)Delegate.CreateDelegate(typeof(Func<string, Assembly>), hostContainer, hostContainerLoad);
-#else
-                // TODO: Remove this when we get delegate create delegate in the profile
-                loader = name => hostContainerLoad.Invoke(hostContainer, new[] { name }) as Assembly;
-#endif
+                loader = (Func<string, Assembly>)hostContainerLoad.CreateDelegate(typeof(Func<string, Assembly>), hostContainer);
+
                 var bootstrapperType = assembly.GetType("klr.host.Bootstrapper");
                 var mainMethod = bootstrapperType.GetTypeInfo().GetDeclaredMethod("Main");
                 var bootstrapper = Activator.CreateInstance(bootstrapperType, hostContainer, loaderEngine);
