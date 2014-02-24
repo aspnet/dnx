@@ -47,6 +47,7 @@ namespace klr.hosting
 
             Func<string, Assembly> loader = _ => null;
             Func<byte[], Assembly> loadBytes = _ => null;
+            Func<string, Assembly> loadFile = _ => null;
 
             Func<AssemblyName, Assembly> loaderCallback = assemblyName =>
             {
@@ -59,7 +60,7 @@ namespace klr.hosting
                     return assembly;
                 }
 
-                assembly = loader(name) ?? ResolveHostAssembly(searchPaths, name);
+                assembly = loader(name) ?? ResolveHostAssembly(loadFile, searchPaths, name);
 
                 if (assembly != null)
                 {
@@ -73,11 +74,13 @@ namespace klr.hosting
 #if K10
             var loaderImpl = new DelegateAssemblyLoadContext(loaderCallback);
             loadBytes = bytes => loaderImpl.LoadBytes(bytes, null);
+            loadFile = path => loaderImpl.LoadFile(path);
 
             AssemblyLoadContext.Default = loaderImpl;
 #else
             var loaderImpl = new LoaderEngine();
             loadBytes = bytes => loaderImpl.LoadBytes(bytes, null);
+            loadFile = path => loaderImpl.LoadFile(path);
 
             ResolveEventHandler handler = (sender, a) =>
             {
@@ -173,7 +176,7 @@ namespace klr.hosting
             }
         }
 
-        private static Assembly ResolveHostAssembly(IList<string> searchPaths, string name)
+        private static Assembly ResolveHostAssembly(Func<string, Assembly> loadFile, IList<string> searchPaths, string name)
         {
             foreach (var searchPath in searchPaths)
             {
@@ -181,7 +184,7 @@ namespace klr.hosting
 
                 if (File.Exists(path))
                 {
-                    return Assembly.LoadFile(path);
+                    return loadFile(path);
                 }
             }
 

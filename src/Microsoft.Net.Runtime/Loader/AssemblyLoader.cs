@@ -41,16 +41,9 @@ namespace Microsoft.Net.Runtime.Loader
             var sw = new Stopwatch();
             sw.Start();
             Trace.TraceInformation("Loading {0} for '{1}'.", loadContext.AssemblyName, loadContext.TargetFramework);
-
-            try
-            {
-                return LoadImpl(loadContext, sw);
-            }
-            finally
-            {
-                sw.Stop();
-                Trace.TraceInformation("Loaded {0} in {1}ms", loadContext.AssemblyName, sw.ElapsedMilliseconds);
-            }
+            var result = LoadImpl(loadContext, sw);
+            sw.Stop();
+            return result;
         }
 
         public void Walk(string name, SemanticVersion version, FrameworkName frameworkName)
@@ -87,14 +80,11 @@ namespace Microsoft.Net.Runtime.Loader
 
                 if (loadResult != null)
                 {
-                    sw.Stop();
-
                     Trace.TraceInformation("[{0}]: Finished loading {1} in {2}ms", loader.GetType().Name, loadContext.AssemblyName, sw.ElapsedMilliseconds);
 
                     return loadResult;
                 }
             }
-
             return null;
         }
     }
