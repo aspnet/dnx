@@ -51,25 +51,38 @@ namespace klr.hosting
 
             Func<AssemblyName, Assembly> loaderCallback = assemblyName =>
             {
-                string name = assemblyName.Name;
-
-                // If the assembly was already loaded use it
-                Assembly assembly;
-                if (_assemblyCache.TryGetValue(name, out assembly))
+                try
                 {
+                    string name = assemblyName.Name;
+
+                    // If the assembly was already loaded use it
+                    Assembly assembly;
+                    if (_assemblyCache.TryGetValue(name, out assembly))
+                    {
+                        return assembly;
+                    }
+
+                    assembly = loader(name) ?? ResolveHostAssembly(loadFile, searchPaths, name);
+
+                    if (assembly != null)
+                    {
+                        ExtractAssemblyNeutralInterfaces(assembly, loadBytes);
+
+                        _assemblyCache[name] = assembly;
+                    }
+
                     return assembly;
                 }
-
-                assembly = loader(name) ?? ResolveHostAssembly(loadFile, searchPaths, name);
-
-                if (assembly != null)
+                catch (Exception ex)
                 {
-                    ExtractAssemblyNeutralInterfaces(assembly, loadBytes);
-
-                    _assemblyCache[name] = assembly;
+                    // Trace load failures
+#if NET45
+                    Trace.TraceError(String.Join(Environment.NewLine, GetExceptions(ex)));
+#else
+                    Console.Error.WriteLine(String.Join(Environment.NewLine, GetExceptions(ex)));
+#endif
+                    throw;
                 }
-
-                return assembly;
             };
 #if K10
             var loaderImpl = new DelegateAssemblyLoadContext(loaderCallback);
@@ -193,17 +206,24 @@ namespace klr.hosting
 
         private static IEnumerable<string> GetExceptions(Exception ex)
         {
-            if (ex.InnerException != null)
+            while (ex != null)
             {
-                foreach (var e in GetExceptions(ex.InnerException))
+                if ((ex is TargetInvocationException))
                 {
-                    yield return e;
+                    ex = ex.InnerException;
+                    continue;
                 }
-            }
+                else if (ex.GetType().Name == "FileLoadException")
+                {
+                    if (ex.InnerException != null)
+                    {
+                        ex = ex.InnerException;
+                        continue;
+                    }
+                }
 
-            if (!(ex is TargetInvocationException))
-            {
                 yield return ex.ToString();
+                ex = ex.InnerException;
             }
         }
     }

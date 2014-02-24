@@ -34,21 +34,12 @@ namespace Microsoft.Net.ApplicationHost
 
             ParseArgs(args, out options, out programArgs);
 
-            try
-            {
-                var host = new DefaultHost(options, _loaderEngine);
+            var host = new DefaultHost(options, _loaderEngine);
 
-                using (_container.AddHost(host))
-                {
-                    return await ExecuteMain(host, programArgs);
-                }
-            }
-            catch (Exception ex)
+            using (_container.AddHost(host))
             {
-                Console.Error.WriteLine(String.Join(Environment.NewLine, ExceptionHelper.GetExceptions(ex)));
+                return await ExecuteMain(host, programArgs);
             }
-
-            return -2;
         }
 
         private void ParseArgs(string[] args, out DefaultHostOptions defaultHostOptions, out string[] outArgs)
