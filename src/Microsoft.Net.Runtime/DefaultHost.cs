@@ -24,6 +24,7 @@ namespace Microsoft.Net.Runtime
         private readonly string _name;
         private readonly ServiceProvider _serviceProvider = new ServiceProvider();
         private readonly IAssemblyLoaderEngine _loaderEngine;
+        private Project _project;
 
         public DefaultHost(DefaultHostOptions options, IAssemblyLoaderEngine loaderEngine)
         {
@@ -43,28 +44,24 @@ namespace Microsoft.Net.Runtime
             get { return _serviceProvider; }
         }
 
-        public Assembly GetEntryPoint()
+        public Project Project
+        {
+            get { return _project; }
+        }
+
+        public Assembly GetEntryPoint(string applicationName)
         {
             Trace.TraceInformation("Project root is {0}", _projectDir);
 
-            Project project;
-            if (!Project.TryGetProject(_projectDir, out project))
-            {
-                Trace.TraceInformation("Unable to locate {0}.'", Project.ProjectFileName);
-                return null;
-            }
-
             var sw = Stopwatch.StartNew();
 
-            _loader.Walk(project.Name, project.Version, _targetFramework);
+            _loader.Walk(Project.Name, Project.Version, _targetFramework);
 
-            string name = _name ?? project.Name;
+            _serviceProvider.Add(typeof(IApplicationEnvironment), new ApplicationEnvironment(Project, _targetFramework));
 
-            _serviceProvider.Add(typeof(IApplicationEnvironment), new ApplicationEnvironment(project, _targetFramework));
+            Trace.TraceInformation("Loading entry point from {0}", applicationName);
 
-            Trace.TraceInformation("Loading entry point from {0}", name);
-
-            var assembly = Assembly.Load(new AssemblyName(name));
+            var assembly = Assembly.Load(new AssemblyName(applicationName));
 
             sw.Stop();
 
@@ -97,6 +94,11 @@ namespace Microsoft.Net.Runtime
             else
             {
                 _watcher = NoopWatcher.Instance;
+            }
+
+            if (!Project.TryGetProject(_projectDir, out _project))
+            {
+                Trace.TraceInformation("Unable to locate {0}.'", Project.ProjectFileName);
             }
 
             var projectResolver = new ProjectResolver(_projectDir, rootDirectory);

@@ -1,10 +1,13 @@
 @ECHO OFF
 SETLOCAL
+SET ERRORLEVEL=
 
-set ERRORLEVEL=
+if "%TARGET_PLATFORM%" == "" (
+    SET PLATFORM=x86
+)
 
-IF "%K_APPBASE%" NEQ "" (
-  SET K_OPTIONS=%K_OPTIONS% --appbase "%K_APPBASE%"
+if "%TARGET_PLATFORM%" == "amd64" (
+    SET PLATFORM=amd64
 )
 
 if "%TARGET_FRAMEWORK%" == "" (
@@ -12,14 +15,15 @@ if "%TARGET_FRAMEWORK%" == "" (
 )
 
 if "%TARGET_FRAMEWORK%" == "k10" (
-    SET FRAMEWORK=K
-    SET K_OPTIONS=%K_OPTIONS% --core45
+    SET FRAMEWORK=k10
+    SET K_OPTIONS=--core45 %K_OPTIONS%
 )
 
-SET LIB_PATH=%~dp0..\src\klr.host\bin\Debug\%FRAMEWORK%
+IF "%K_APPBASE%"=="" (
+  SET K_APPBASE=%CD%
+)
 
-"%~dp0..\bin\Win32\Debug\klr.exe" %K_OPTIONS% --lib "%LIB_PATH%" %*
+"%~dp0bin\%PLATFORM%\klr.exe" --appbase "%K_APPBASE%" %K_OPTIONS% --lib "%~dp0%FRAMEWORK%" %*
 
 exit /b %ERRORLEVEL%
-
 ENDLOCAL

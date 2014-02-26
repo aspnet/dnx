@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
@@ -35,10 +36,32 @@ namespace Microsoft.Net.ApplicationHost
             ParseArgs(args, out options, out programArgs);
 
             var host = new DefaultHost(options, _loaderEngine);
-
             using (_container.AddHost(host))
             {
-                return await ExecuteMain(host, programArgs);
+                var lookupCommand = string.IsNullOrEmpty(options.ApplicationName) ? "run" : options.ApplicationName;
+                string replacementCommand;
+                if (host.Project.Commands.TryGetValue(lookupCommand, out replacementCommand))
+                {
+                    // TODO: command line parsing!!
+                    var replacementArgs = replacementCommand.Split(new[] { ' ' });
+                    options.ApplicationName = replacementArgs.First();
+                    programArgs = replacementArgs.Skip(1).Concat(programArgs).ToArray();
+                }
+
+                if (string.IsNullOrEmpty(options.ApplicationName) ||
+                    string.Equals(options.ApplicationName, "run", StringComparison.Ordinal))
+                {
+                    if (string.IsNullOrEmpty(host.Project.Name))
+                    {
+                        options.ApplicationName = Path.GetFileName(options.ApplicationBaseDirectory);
+                    }
+                    else
+                    {
+                        options.ApplicationName = host.Project.Name;
+                    }
+                }
+
+                return await ExecuteMain(host, options.ApplicationName, programArgs);
             }
         }
 
@@ -70,9 +93,9 @@ namespace Microsoft.Net.ApplicationHost
             }
         }
 
-        private async Task<int> ExecuteMain(DefaultHost host, string[] args)
+        private async Task<int> ExecuteMain(DefaultHost host, string applicationName, string[] args)
         {
-            var assembly = host.GetEntryPoint();
+            var assembly = host.GetEntryPoint(applicationName);
 
             if (assembly == null)
             {

@@ -1,5 +1,4 @@
 @Echo OFF
-
 SET ERRORLEVEL=
 
 "%~dp0\NuGet.exe" restore %*
