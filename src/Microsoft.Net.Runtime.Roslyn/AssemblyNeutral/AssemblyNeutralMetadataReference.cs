@@ -1,7 +1,7 @@
 ﻿using System.IO;
 using Microsoft.CodeAnalysis;
 
-namespace Microsoft.Net.Runtime.Roslyn.AssemblyNeutral
+namespace Microsoft.Net.Runtime.Roslyn
 {
     public class AssemblyNeutralMetadataReference : MetadataReferenceWrapper
     {

@@ -11,7 +11,6 @@ using Microsoft.CodeAnalysis.Emit;
 using Microsoft.Net.Runtime.FileSystem;
 using NuGet;
 using Microsoft.Net.Runtime.Loader;
-using Microsoft.Net.Runtime.Roslyn.AssemblyNeutral;
 using Microsoft.Net.Runtime.Services;
 
 #if NET45 // TODO: Temporary due to CoreCLR and Desktop Roslyn being out of sync
@@ -85,7 +84,7 @@ namespace Microsoft.Net.Runtime.Roslyn
                 () => new FileStream(resourceFile, FileMode.Open, FileAccess.Read, FileShare.Read),
                 true)));
 
-            foreach (var typeContext in compilationContext.SuccessfulTypeCompilationContexts)
+            foreach (var typeContext in compilationContext.AssemblyNeutralTypes)
             {
                 resources.Add(new ResourceDescription(typeContext.AssemblyName + ".dll",
                                                       () => typeContext.OutputStream,
@@ -110,7 +109,7 @@ namespace Microsoft.Net.Runtime.Roslyn
 
             var resources = _resourceProvider.GetResources(project.Name, path);
 
-            foreach (var typeContext in compilationContext.SuccessfulTypeCompilationContexts)
+            foreach (var typeContext in compilationContext.AssemblyNeutralTypes)
             {
                 resources.Add(new ResourceDescription(typeContext.AssemblyName + ".dll",
                                                       () => typeContext.OutputStream,
@@ -156,7 +155,7 @@ namespace Microsoft.Net.Runtime.Roslyn
 
             var references = new List<MetadataReference>();
             var exports = new List<DependencyExport>();
-            var failedCompilations = new List<EmitResult>();
+            var diagnostics = new List<Diagnostic>();
 
             if (project.Dependencies.Count > 0 ||
                 targetFrameworkConfig.Dependencies.Count > 0)
@@ -172,7 +171,7 @@ namespace Microsoft.Net.Runtime.Roslyn
                     CompilationContext dependencyContext;
                     if (_compilationCache.TryGetValue(dependency.Name, out dependencyContext))
                     {
-                        failedCompilations.AddRange(dependencyContext.FailedCompilations);
+                        diagnostics.AddRange(dependencyContext.Diagnostics);
                     }
 
                     if (dependencyExport != null)
@@ -247,22 +246,27 @@ namespace Microsoft.Net.Runtime.Roslyn
                 syntaxTrees: trees,
                 references: references);
 
-            var context = new CompilationContext(compilation)
+            var assemblyNeutralWorker = new AssemblyNeutralWorker(compilation);
+            assemblyNeutralWorker.FindTypeCompilations(compilation.GlobalNamespace);
+            assemblyNeutralWorker.OrderTypeCompilations();
+            var assemblyNeutralTypeDiagnostics = assemblyNeutralWorker.GenerateTypeCompilations();
+
+            assemblyNeutralWorker.Generate(assemblyNeutralReferences);
+
+            var oldCompilation = assemblyNeutralWorker.Compilation;
+            var newCompilation = oldCompilation.WithReferences(
+                oldCompilation.References.Concat(assemblyNeutralReferences.Values.Select(r => r.MetadataReference)));
+
+            var context = new CompilationContext
             {
-                Project = project
+                Compilation = newCompilation,
+                Project = project,
+                AssemblyNeutralTypes = assemblyNeutralWorker.TypeCompilations,
             };
 
-            context.FindTypeCompilations(compilation.GlobalNamespace);
-            context.OrderTypeCompilations();
-            context.GenerateTypeCompilations();
+            context.Diagnostics.AddRange(assemblyNeutralTypeDiagnostics);
 
-            // REVIEW: Is the order here correct?
-            context.FailedCompilations.AddRange(failedCompilations);
-
-            context.Generate(assemblyNeutralReferences);
-
-            context.Compilation = context.Compilation.WithReferences(
-                context.Compilation.References.Concat(assemblyNeutralReferences.Values.Select(r => r.MetadataReference)));
+            context.Diagnostics.AddRange(diagnostics);
 
             // Cache the compilation
             _compilationCache[name] = context;
@@ -402,7 +406,7 @@ namespace Microsoft.Net.Runtime.Roslyn
             var metadataReference = compilationContext.Compilation.ToMetadataReference(embedInteropTypes: compilationContext.Project.EmbedInteropTypes);
             metadataReferences.Add(new MetadataReferenceWrapper(metadataReference));
 
-            foreach (var typeContext in compilationContext.SuccessfulTypeCompilationContexts)
+            foreach (var typeContext in compilationContext.AssemblyNeutralTypes)
             {
                 metadataReferences.Add(new AssemblyNeutralMetadataReference(typeContext));
             }
@@ -429,13 +433,13 @@ namespace Microsoft.Net.Runtime.Roslyn
 
                 if (!result.Success)
                 {
-                    errors.AddRange(GetErrors(compilationContext.FailedCompilations.Concat(new[] { result })));
+                    errors.AddRange(GetErrors(compilationContext.Diagnostics.Concat(result.Diagnostics)));
                     return false;
                 }
 
-                if (compilationContext.FailedCompilations.Count > 0)
+                if (compilationContext.Diagnostics.Count > 0)
                 {
-                    errors.AddRange(GetErrors(compilationContext.FailedCompilations));
+                    errors.AddRange(GetErrors(compilationContext.Diagnostics));
                     return false;
                 }
 
@@ -518,12 +522,12 @@ namespace Microsoft.Net.Runtime.Roslyn
 
                 if (!result.Success)
                 {
-                    return ReportCompilationError(compilationContext.FailedCompilations.Concat(new[] { result }));
+                    return ReportCompilationError(compilationContext.Diagnostics.Concat(result.Diagnostics));
                 }
 
-                if (compilationContext.FailedCompilations.Count > 0)
+                if (compilationContext.Diagnostics.Count > 0)
                 {
-                    return ReportCompilationError(compilationContext.FailedCompilations);
+                    return ReportCompilationError(compilationContext.Diagnostics);
                 }
 
                 var assemblyBytes = assemblyStream.ToArray();
@@ -562,19 +566,19 @@ namespace Microsoft.Net.Runtime.Roslyn
             return CreateDependencyExport(new MetadataFileReference(assemblyLocation));
         }
 
-        private static AssemblyLoadResult ReportCompilationError(IEnumerable<EmitResult> results)
+        private static AssemblyLoadResult ReportCompilationError(IEnumerable<Diagnostic> results)
         {
             return new AssemblyLoadResult(GetErrors(results));
         }
 
-        private static List<string> GetErrors(IEnumerable<EmitResult> results)
+        private static List<string> GetErrors(IEnumerable<Diagnostic> diagnostis)
         {
 #if NET45 // TODO: Temporary due to CoreCLR and Desktop Roslyn being out of sync
             var formatter = DiagnosticFormatter.Instance;
 #else
             var formatter = new DiagnosticFormatter();
 #endif
-            var errors = new List<string>(results.SelectMany(r => r.Diagnostics.Select(d => formatter.Format(d))));
+            var errors = new List<string>(diagnostis.Select(d => formatter.Format(d)));
 
             return errors;
         }

@@ -5,7 +5,6 @@ using System.Linq;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.Net.Runtime.Loader;
-using Microsoft.Net.Runtime.Roslyn.AssemblyNeutral;
 using Microsoft.Net.Runtime.Services;
 
 namespace Microsoft.Net.Runtime.Roslyn
