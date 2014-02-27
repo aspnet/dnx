@@ -310,6 +310,7 @@ namespace Microsoft.Net.Runtime
 
         private static string GetDirectoryName(string path)
         {
+            path = path.TrimEnd(Path.DirectorySeparatorChar);
             return path.Substring(Path.GetDirectoryName(path).Length).Trim(Path.DirectorySeparatorChar);
         }
 

@@ -86,6 +86,7 @@ namespace Microsoft.Net.DesignTimeHost
             {
                 _inbox.Enqueue(message);
             }
+
             ThreadPool.QueueUserWorkItem(ProcessLoop);
         }
 
@@ -95,6 +96,7 @@ namespace Microsoft.Net.DesignTimeHost
             {
                 return;
             }
+
             try
             {
                 lock (_inbox)
@@ -104,6 +106,7 @@ namespace Microsoft.Net.DesignTimeHost
                         return;
                     }
                 }
+
                 DoProcessLoop();
             }
             finally
@@ -122,21 +125,25 @@ namespace Microsoft.Net.DesignTimeHost
         private void DrainInbox()
         {
             Message message;
+
             lock (_inbox)
             {
                 message = _inbox.Dequeue();
+
                 if (message == null)
                 {
                     return;
                 }
             }
+
             switch (message.MessageType)
             {
                 case "Initialize":
                     {
                         var data = message.Payload.ToObject<InitializeMessage>();
                         _appPath.Value = data.ProjectFolder;
-                        _targetFramework.Value = new FrameworkName(data.TargetFramework);
+                        var targetFramework = VersionUtility.ParseFrameworkName(data.TargetFramework ?? "net45");
+                        _targetFramework.Value = targetFramework == VersionUtility.UnsupportedFrameworkName ? new FrameworkName(data.TargetFramework) : targetFramework;
                     }
                     break;
                 case "Heartbeat":
