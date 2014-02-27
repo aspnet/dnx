@@ -33,7 +33,7 @@ namespace Microsoft.Net.Runtime.Roslyn
             _resolvedDependencies = resolvedDependencies;
         }
 
-        public bool Build(BuildContext buildContext, List<string> errors)
+        public bool Build(BuildContext buildContext, List<Diagnostic> diagnostics)
         {
             var compilationContext = _compiler.CompileProject(buildContext.AssemblyName, buildContext.TargetFramework);
 
@@ -54,11 +54,13 @@ namespace Microsoft.Net.Runtime.Roslyn
                                                       isPublic: true));
             }
 
+            diagnostics.AddRange(compilationContext.Diagnostics);
+
             // If the output path is null then load the assembly from memory
             var assemblyPath = Path.Combine(buildContext.OutputPath, name + ".dll");
             var pdbPath = Path.Combine(buildContext.OutputPath, name + ".pdb");
 
-            if (CompileToDisk(buildContext, assemblyPath, pdbPath, compilationContext, resources, errors))
+            if (CompileToDisk(buildContext, assemblyPath, pdbPath, compilationContext, resources, diagnostics))
             {
                 // Build packages for this project
                 BuildPackages(buildContext, compilationContext, assemblyPath, pdbPath);
@@ -156,7 +158,7 @@ namespace Microsoft.Net.Runtime.Roslyn
             buildContext.PackageBuilder.Files.Add(file);
         }
 
-        private bool CompileToDisk(BuildContext buildContext, string assemblyPath, string pdbPath, CompilationContext compilationContext, IList<ResourceDescription> resources, List<string> errors)
+        private bool CompileToDisk(BuildContext buildContext, string assemblyPath, string pdbPath, CompilationContext compilationContext, IList<ResourceDescription> resources, List<Diagnostic> diagnostics)
         {
             // REVIEW: Memory bloat?
             using (var pdbStream = new MemoryStream())
@@ -170,13 +172,13 @@ namespace Microsoft.Net.Runtime.Roslyn
 
                 if (!result.Success)
                 {
-                    errors.AddRange(GetErrors(compilationContext.Diagnostics.Concat(result.Diagnostics)));
+                    diagnostics.AddRange(result.Diagnostics);
                     return false;
                 }
 
-                if (compilationContext.Diagnostics.Count > 0)
+                if (compilationContext.Diagnostics.Any(d => d.IsWarningAsError || 
+                                                       d.Severity == DiagnosticSeverity.Error))
                 {
-                    errors.AddRange(GetErrors(compilationContext.Diagnostics));
                     return false;
                 }
 
@@ -195,18 +197,6 @@ namespace Microsoft.Net.Runtime.Roslyn
 
                 return true;
             }
-        }
-
-        private static List<string> GetErrors(IEnumerable<Diagnostic> diagnostis)
-        {
-#if NET45 // TODO: Temporary due to CoreCLR and Desktop Roslyn being out of sync
-            var formatter = DiagnosticFormatter.Instance;
-#else
-            var formatter = new DiagnosticFormatter();
-#endif
-            var errors = new List<string>(diagnostis.Select(d => formatter.Format(d)));
-
-            return errors;
         }
     }
 }

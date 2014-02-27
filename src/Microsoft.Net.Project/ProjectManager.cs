@@ -4,12 +4,12 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Runtime.Versioning;
+using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.Net.Runtime;
 using Microsoft.Net.Runtime.FileSystem;
 using Microsoft.Net.Runtime.Loader;
-using Microsoft.Net.Runtime.Loader.MSBuildProject;
 using Microsoft.Net.Runtime.Loader.NuGet;
-
 using Microsoft.Net.Runtime.Roslyn;
 using NuGet;
 using KProject = Microsoft.Net.Runtime.Project;
@@ -31,7 +31,7 @@ namespace Microsoft.Net.Project
             KProject project;
             if (!KProject.TryGetProject(_buildOptions.ProjectDir, out project))
             {
-                Trace.TraceInformation("Unable to locate {0}.'", KProject.ProjectFileName);
+                System.Console.WriteLine("Unable to locate {0}.'", KProject.ProjectFileName);
                 return false;
             }
 
@@ -68,22 +68,22 @@ namespace Microsoft.Net.Project
             bool success = true;
             bool createPackage = false;
 
-            var allErrors = new List<string>();
+            var allDiagnostics = new List<Diagnostic>();
 
             // Build all target frameworks a project supports
             foreach (var targetFramework in configurations)
             {
                 try
                 {
-                    var errors = new List<string>();
+                    var diagnostics = new List<Diagnostic>();
 
-                    success = success && Build(project, outputPath, targetFramework, builder, errors);
+                    success = success && Build(project, outputPath, targetFramework, builder, diagnostics);
 
-                    allErrors.AddRange(errors);
+                    allDiagnostics.AddRange(diagnostics);
 
-                    if (errors.Count > 0)
+                    if (diagnostics.Count > 0)
                     {
-                        Trace.TraceError(String.Join(Environment.NewLine, errors));
+                        WriteDiagnostics(diagnostics);
                     }
                     else
                     {
@@ -93,7 +93,7 @@ namespace Microsoft.Net.Project
                 catch (Exception ex)
                 {
                     success = false;
-                    Trace.TraceError(ex.ToString());
+                    WriteError(ex.ToString());
                 }
             }
 
@@ -105,6 +105,8 @@ namespace Microsoft.Net.Project
                 builder.Files.Add(file);
             }
 
+            WriteSummary(allDiagnostics);
+
             if (createPackage)
             {
                 using (var fs = File.Create(nupkg))
@@ -112,16 +114,75 @@ namespace Microsoft.Net.Project
                     builder.Save(fs);
                 }
 
-                Trace.TraceInformation("{0} -> {1}", project.Name, nupkg);
+                System.Console.WriteLine("{0} -> {1}", project.Name, nupkg);
             }
 
             sw.Stop();
 
-            Trace.TraceInformation("Compile took {0}ms", sw.ElapsedMilliseconds);
+            System.Console.WriteLine("Compile took {0}ms", sw.ElapsedMilliseconds);
             return success;
         }
 
-        private bool Build(KProject project, string outputPath, FrameworkName targetFramework, PackageBuilder builder, List<string> errors)
+        private void WriteSummary(List<Diagnostic> allDiagnostics)
+        {
+            System.Console.WriteLine("{0} Errors, {1} Warnings", 
+                allDiagnostics.Count(d => d.IsWarningAsError || d.Severity== DiagnosticSeverity.Error),
+                allDiagnostics.Count(d => d.Severity== DiagnosticSeverity.Warning));
+        }
+
+        private void WriteDiagnostics(List<Diagnostic> diagnostics)
+        {
+            foreach (var diagnostic in diagnostics)
+            {
+                string message = GetMessage(diagnostic);
+
+                if (diagnostic.IsWarningAsError || diagnostic.Severity == DiagnosticSeverity.Error)
+                {
+                    WriteError(message);
+                }
+                else if (diagnostic.Severity == DiagnosticSeverity.Warning)
+                {
+                    WriteWarning(message);
+                }
+            }
+        }
+
+        private void WriteError(string message)
+        {
+#if NET45
+            WriteColor(message, ConsoleColor.Red);
+#else
+            System.Console.WriteLine(message);
+#endif
+        }
+
+        private void WriteWarning(string message)
+        {
+#if NET45
+            WriteColor(message, ConsoleColor.Yellow);
+#else
+            System.Console.WriteLine(message);
+#endif
+        }
+
+#if NET45
+        private void WriteColor(string message, ConsoleColor color)
+        {
+            var old = System.Console.ForegroundColor;
+
+            try
+            {
+                System.Console.ForegroundColor = color;
+                System.Console.WriteLine(message);
+            }
+            finally
+            {
+                System.Console.ForegroundColor = old;
+            }
+        }
+#endif
+
+        private bool Build(KProject project, string outputPath, FrameworkName targetFramework, PackageBuilder builder, List<Diagnostic> diagnostics)
         {
             var roslynArtifactsProducer = PrepareCompiler(project, targetFramework);
 
@@ -135,7 +196,7 @@ namespace Microsoft.Net.Project
                 CopyDependencies = _buildOptions.CopyDependencies
             };
 
-            return roslynArtifactsProducer.Build(buildContext, errors);
+            return roslynArtifactsProducer.Build(buildContext, diagnostics);
         }
 
         private static RoslynArtifactsProducer PrepareCompiler(KProject project, FrameworkName targetFramework)
@@ -192,6 +253,16 @@ namespace Microsoft.Net.Project
         private static string GetPackagePath(KProject project, string outputPath)
         {
             return Path.Combine(outputPath, project.Name + "." + project.Version + ".nupkg");
+        }
+
+        private static string GetMessage(Diagnostic diagnostic)
+        {
+#if NET45 // TODO: Temporary due to CoreCLR and Desktop Roslyn being out of sync
+            var formatter = DiagnosticFormatter.Instance;
+#else
+            var formatter = new DiagnosticFormatter();
+#endif
+            return formatter.Format(diagnostic);
         }
     }
 }

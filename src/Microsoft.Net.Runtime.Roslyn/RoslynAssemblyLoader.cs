@@ -39,11 +39,11 @@ namespace Microsoft.Net.Runtime.Roslyn
             var embeddedResourceProvider = new EmbeddedResourceProvider();
 
             _resourceProvider = new CompositeResourceProvider(new IResourceProvider[] { resxProvider, embeddedResourceProvider });
-            _compiler = new RoslynCompiler(projectResolver, 
-                                           watcher, 
-                                           frameworkResolver, 
+            _compiler = new RoslynCompiler(projectResolver,
+                                           watcher,
+                                           frameworkResolver,
                                            dependencyExporter);
-            
+
         }
 
         public AssemblyLoadResult Load(LoadContext loadContext)
@@ -114,7 +114,14 @@ namespace Microsoft.Net.Runtime.Roslyn
 
                 if (!result.Success)
                 {
-                    return ReportCompilationError(compilationContext.Diagnostics.Concat(result.Diagnostics));
+                    return ReportCompilationError(
+                        compilationContext.Diagnostics.Where(IsError).Concat(result.Diagnostics));
+                }
+
+                var errors = compilationContext.Diagnostics.Where(IsError);
+                if (errors.Any())
+                {
+                    return ReportCompilationError(errors);
                 }
 
                 if (compilationContext.Diagnostics.Count > 0)
@@ -149,6 +156,11 @@ namespace Microsoft.Net.Runtime.Roslyn
             var errors = new List<string>(diagnostis.Select(d => formatter.Format(d)));
 
             return errors;
+        }
+
+        private static bool IsError(Diagnostic diagnostic)
+        {
+            return diagnostic.Severity == DiagnosticSeverity.Error || diagnostic.IsWarningAsError;
         }
     }
 }
