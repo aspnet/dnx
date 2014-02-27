@@ -105,8 +105,6 @@ namespace Microsoft.Net.Project
                 builder.Files.Add(file);
             }
 
-            WriteSummary(allDiagnostics);
-
             if (createPackage)
             {
                 using (var fs = File.Create(nupkg))
@@ -119,15 +117,40 @@ namespace Microsoft.Net.Project
 
             sw.Stop();
 
-            System.Console.WriteLine("Compile took {0}ms", sw.ElapsedMilliseconds);
+            WriteSummary(allDiagnostics);
+
+            System.Console.WriteLine("Time elapsed {0}", sw.Elapsed);
             return success;
         }
 
         private void WriteSummary(List<Diagnostic> allDiagnostics)
         {
-            System.Console.WriteLine("{0} Errors, {1} Warnings", 
-                allDiagnostics.Count(d => d.IsWarningAsError || d.Severity== DiagnosticSeverity.Error),
-                allDiagnostics.Count(d => d.Severity== DiagnosticSeverity.Warning));
+            var errors = allDiagnostics.Count(d => d.IsWarningAsError || d.Severity == DiagnosticSeverity.Error);
+            var warnings = allDiagnostics.Count(d => d.Severity == DiagnosticSeverity.Warning);
+
+            System.Console.WriteLine();
+
+            if (errors > 0 || warnings > 0)
+            {
+#if NET45
+                WriteColor("Build failed.", ConsoleColor.Red);
+#else
+                System.Console.WriteLine("Build succeeded.");
+#endif
+            }
+            else
+            {
+#if NET45
+                WriteColor("Build succeeded.", ConsoleColor.Green);
+#else
+                System.Console.WriteLine("Build succeeded.");
+#endif
+            }
+
+            System.Console.WriteLine("    {0} Warnings(s)", warnings);
+            System.Console.WriteLine("    {0} Error(s)", errors);
+
+            System.Console.WriteLine();
         }
 
         private void WriteDiagnostics(List<Diagnostic> diagnostics)
