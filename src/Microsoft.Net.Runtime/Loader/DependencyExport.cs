@@ -2,7 +2,7 @@
 
 namespace Microsoft.Net.Runtime.Loader
 {
-    public class DependencyExport
+    public class DependencyExport : IDependencyExport
     {
         public DependencyExport(string path)
             : this(new MetadataFileReference(path))

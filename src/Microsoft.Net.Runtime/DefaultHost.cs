@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -9,7 +10,6 @@ using Microsoft.Net.Runtime.FileSystem;
 using Microsoft.Net.Runtime.Loader;
 using Microsoft.Net.Runtime.Loader.MSBuildProject;
 using Microsoft.Net.Runtime.Loader.NuGet;
-using Microsoft.Net.Runtime.Loader.Roslyn;
 using Microsoft.Net.Runtime.Services;
 using NuGet;
 
@@ -18,6 +18,8 @@ namespace Microsoft.Net.Runtime
     public class DefaultHost : IHost
     {
         private AssemblyLoader _loader;
+        private DependencyWalker _dependencyWalker;
+
         private IFileWatcher _watcher;
         private readonly string _projectDir;
         private readonly FrameworkName _targetFramework;
@@ -63,6 +65,7 @@ namespace Microsoft.Net.Runtime
             _loader.Walk(Project.Name, Project.Version, _targetFramework);
 
             _serviceProvider.Add(typeof(IApplicationEnvironment), new ApplicationEnvironment(Project, _targetFramework));
+            _dependencyWalker.Walk(project.Name, project.Version, _targetFramework);
 
             Trace.TraceInformation("Loading entry point from {0}", applicationName);
 
@@ -89,7 +92,9 @@ namespace Microsoft.Net.Runtime
         {
             var sp = new ServiceProvider();
 
-            _loader = new AssemblyLoader();
+            var dependencyProviders = new List<IDependencyProvider>();
+            var loaders = new List<IAssemblyLoader>();
+
             string rootDirectory = ResolveRootDirectory(_projectDir);
 
             if (options.WatchFiles)
@@ -108,16 +113,45 @@ namespace Microsoft.Net.Runtime
 
             var projectResolver = new ProjectResolver(_projectDir, rootDirectory);
 
+            var nugetDependencyResolver = new NuGetDependencyResolver(_projectDir);
+            var nugetLoader = new NuGetAssemblyLoader(_loaderEngine, nugetDependencyResolver);
+            var cachedLoader = new CachedCompilationLoader(_loaderEngine, projectResolver);
+            var msbuildLoader = new MSBuildProjectAssemblyLoader(_loaderEngine, rootDirectory, _watcher);
+
+            // Roslyn needs to be able to resolve exported references and sources
+            var dependencyExporters = new List<IDependencyExporter>();
+
             if (options.UseCachedCompilations)
             {
-                var cachedLoader = new CachedCompilationLoader(_loaderEngine, projectResolver);
-                _loader.Add(cachedLoader);
+                dependencyExporters.Add(cachedLoader);
             }
 
-            var roslynLoader = new LazyRoslynAssemblyLoader(_loaderEngine, projectResolver, _watcher, _loader);
-            _loader.Add(roslynLoader);
-            _loader.Add(new MSBuildProjectAssemblyLoader(_loaderEngine, rootDirectory, _watcher));
-            _loader.Add(new NuGetAssemblyLoader(_loaderEngine, _projectDir));
+            dependencyExporters.Add(nugetDependencyResolver);
+            var dependencyExporter = new CompositeDependencyExporter(dependencyExporters);
+            var roslynLoader = new LazyRoslynAssemblyLoader(_loaderEngine, projectResolver, _watcher, dependencyExporter);
+
+            // Order is important
+            if (options.UseCachedCompilations)
+            {
+                // Cached compilations
+                loaders.Add(cachedLoader);
+                dependencyProviders.Add(cachedLoader);
+            }
+
+            // Project.json projects
+            loaders.Add(roslynLoader);
+            dependencyProviders.Add(new ProjectReferenceDependencyProvider(projectResolver));
+
+            // Msbuild project files
+            loaders.Add(msbuildLoader);
+            // TODO: Add dependency exporter for msbuid
+
+            // NuGet packages
+            loaders.Add(nugetLoader);
+            dependencyProviders.Add(nugetDependencyResolver);
+
+            _dependencyWalker = new DependencyWalker(dependencyProviders);
+            _loader = new AssemblyLoader(loaders);
 
             _serviceProvider.Add(typeof(IFileMonitor), _watcher);
         }

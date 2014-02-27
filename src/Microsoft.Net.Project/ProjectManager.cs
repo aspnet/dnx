@@ -9,7 +9,7 @@ using Microsoft.Net.Runtime.FileSystem;
 using Microsoft.Net.Runtime.Loader;
 using Microsoft.Net.Runtime.Loader.MSBuildProject;
 using Microsoft.Net.Runtime.Loader.NuGet;
-using Microsoft.Net.Runtime.Loader.Roslyn;
+
 using Microsoft.Net.Runtime.Roslyn;
 using NuGet;
 using KProject = Microsoft.Net.Runtime.Project;
@@ -123,7 +123,7 @@ namespace Microsoft.Net.Project
 
         private bool Build(KProject project, string outputPath, FrameworkName targetFramework, PackageBuilder builder, List<string> errors)
         {
-            var roslynLoader = PrepareCompiler(project, targetFramework);
+            var roslynArtifactsProducer = PrepareCompiler(project, targetFramework);
 
             var targetFrameworkFolder = VersionUtility.GetShortFrameworkName(targetFramework);
             string targetPath = Path.Combine(outputPath, targetFrameworkFolder);
@@ -135,29 +135,48 @@ namespace Microsoft.Net.Project
                 CopyDependencies = _buildOptions.CopyDependencies
             };
 
-            return roslynLoader.Build(buildContext, errors);
+            return roslynArtifactsProducer.Build(buildContext, errors);
         }
 
-        private static RoslynAssemblyLoader PrepareCompiler(KProject project, FrameworkName frameworkName)
+        private static RoslynArtifactsProducer PrepareCompiler(KProject project, FrameworkName targetFramework)
         {
-            string projectDir = project.ProjectDirectory;
-
+            var projectDir = project.ProjectDirectory;
+            var rootDirectory = DefaultHost.ResolveRootDirectory(projectDir);
             var globalAssemblyCache = new DefaultGlobalAssemblyCache();
-            var noopEngine = new NoopLoaderEngine();
-
-            var loader = new AssemblyLoader();
-            string rootDirectory = DefaultHost.ResolveRootDirectory(projectDir);
-            var resolver = new FrameworkReferenceResolver(globalAssemblyCache);
-            var resourceProvider = new ResxResourceProvider();
             var projectResolver = new ProjectResolver(projectDir, rootDirectory);
-            var roslynLoader = new RoslynAssemblyLoader(noopEngine, projectResolver, NoopWatcher.Instance, resolver, globalAssemblyCache, loader, resourceProvider);
-            loader.Add(roslynLoader);
-            loader.Add(new MSBuildProjectAssemblyLoader(noopEngine, rootDirectory, NoopWatcher.Instance));
-            loader.Add(new NuGetAssemblyLoader(noopEngine, projectDir));
 
-            loader.Walk(project.Name, project.Version, frameworkName);
+            var frameworkReferenceResolver = new FrameworkReferenceResolver(globalAssemblyCache);
+            var resxProvider = new ResxResourceProvider();
+            var embeddedResourceProvider = new EmbeddedResourceProvider();
+            var compositeResourceProvider = new CompositeResourceProvider(new IResourceProvider[] { resxProvider, embeddedResourceProvider });
 
-            return roslynLoader;
+            var nugetDependencyResolver = new NuGetDependencyResolver(projectDir);
+            var gacDependencyExporter = new GacDependencyExporter(globalAssemblyCache);
+            var compositeDependencyExporter = new CompositeDependencyExporter(new IDependencyExporter[] { 
+                gacDependencyExporter, 
+                nugetDependencyResolver 
+            });
+
+            var roslynCompiler = new RoslynCompiler(projectResolver,
+                                                    NoopWatcher.Instance,
+                                                    frameworkReferenceResolver,
+                                                    compositeDependencyExporter);
+
+            var projectReferenceResolver = new ProjectReferenceDependencyProvider(projectResolver);
+            var dependencyWalker = new DependencyWalker(new IDependencyProvider[] { 
+                projectReferenceResolver, 
+                nugetDependencyResolver 
+            });
+
+            dependencyWalker.Walk(project.Name, project.Version, targetFramework);
+
+            var roslynArtifactsProducer = new RoslynArtifactsProducer(roslynCompiler,
+                                                                      compositeResourceProvider,
+                                                                      frameworkReferenceResolver,
+                                                                      projectReferenceResolver.ResolvedDependencies);
+
+
+            return roslynArtifactsProducer;
         }
 
         private static string Normalize(string projectDir)

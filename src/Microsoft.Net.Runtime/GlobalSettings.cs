@@ -2,7 +2,7 @@
 using System.IO;
 using Newtonsoft.Json.Linq;
 
-namespace Microsoft.Net.Runtime.Loader
+namespace Microsoft.Net.Runtime
 {
     public class GlobalSettings
     {

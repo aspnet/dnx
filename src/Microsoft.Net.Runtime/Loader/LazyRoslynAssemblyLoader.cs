@@ -5,17 +5,16 @@ using System.Reflection;
 using System.Runtime.Versioning;
 using Microsoft.Net.Runtime.FileSystem;
 using Microsoft.Net.Runtime.Loader;
-using Microsoft.Net.Runtime.Loader.Roslyn;
 using Microsoft.Net.Runtime.Services;
 using NuGet;
 
 namespace Microsoft.Net.Runtime
 {
-    internal class LazyRoslynAssemblyLoader : IAssemblyLoader, IPackageLoader, IDependencyExportResolver
+    internal class LazyRoslynAssemblyLoader : IAssemblyLoader
     {
         private readonly ProjectResolver _projectResolver;
         private readonly IFileWatcher _watcher;
-        private readonly AssemblyLoader _loader;
+        private readonly IDependencyExporter _exportResolver;
         private object _roslynLoaderInstance;
         private bool _roslynInitializing;
         private readonly IAssemblyLoaderEngine _loaderEngine;
@@ -23,39 +22,12 @@ namespace Microsoft.Net.Runtime
         public LazyRoslynAssemblyLoader(IAssemblyLoaderEngine loaderEngine,
                                         ProjectResolver projectResolver,
                                         IFileWatcher watcher,
-                                        AssemblyLoader loader)
+                                        IDependencyExporter exportResolver)
         {
             _loaderEngine = loaderEngine;
             _projectResolver = projectResolver;
             _watcher = watcher;
-            _loader = loader;
-        }
-
-        public DependencyDescription GetDescription(string name, SemanticVersion version, FrameworkName targetFramework)
-        {
-            Project project;
-
-            // Can't find a project file with the name so bail
-            if (!_projectResolver.TryResolveProject(name, out project))
-            {
-                return null;
-            }
-            else if (version != null && !project.Version.EqualsSnapshot(version))
-            {
-                return null;
-            }
-
-            var config = project.GetTargetFrameworkConfiguration(targetFramework);
-
-            return new DependencyDescription
-            {
-                Identity = new Dependency { Name = project.Name, Version = project.Version },
-                Dependencies = project.Dependencies.Concat(config.Dependencies),
-            };
-        }
-
-        public void Initialize(IEnumerable<DependencyDescription> packages, FrameworkName targetFramework)
-        {
+            _exportResolver = exportResolver;
         }
 
         public AssemblyLoadResult Load(LoadContext loadContext)
@@ -68,14 +40,6 @@ namespace Microsoft.Net.Runtime
             return ExecuteWith<IAssemblyLoader, AssemblyLoadResult>(loader =>
             {
                 return loader.Load(loadContext);
-            });
-        }
-
-        public DependencyExport GetDependencyExport(string name, FrameworkName targetFramework)
-        {
-            return ExecuteWith<IDependencyExportResolver, DependencyExport>(resolver =>
-            {
-                return resolver.GetDependencyExport(name, targetFramework);
             });
         }
 
@@ -93,7 +57,7 @@ namespace Microsoft.Net.Runtime
 
                     var ctors = roslynAssemblyLoaderType.GetTypeInfo().DeclaredConstructors;
 
-                    var args = new object[] { _loaderEngine, _projectResolver, _watcher, _loader };
+                    var args = new object[] { _loaderEngine, _watcher, _projectResolver, _exportResolver };
 
                     var ctor = ctors.First(c => c.GetParameters().Length == args.Length);
 

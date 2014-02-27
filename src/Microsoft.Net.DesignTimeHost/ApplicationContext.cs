@@ -12,7 +12,6 @@ using Microsoft.Net.Runtime.FileSystem;
 using Microsoft.Net.Runtime.Loader;
 using Microsoft.Net.Runtime.Loader.MSBuildProject;
 using Microsoft.Net.Runtime.Loader.NuGet;
-using Microsoft.Net.Runtime.Loader.Roslyn;
 using Microsoft.Net.Runtime.Roslyn;
 using Newtonsoft.Json.Linq;
 using NuGet;
@@ -29,8 +28,7 @@ namespace Microsoft.Net.DesignTimeHost
             public FrameworkName TargetFramework { get; set; }
             public Project Project { get; set; }
 
-            public RoslynAssemblyLoader Compiler { get; set; }
-            public AssemblyLoader CompositeLoader { get; set; }
+            public RoslynMetadataProvider MetadataProvider { get; set; }
         }
 
         public class Trigger<TValue>
@@ -189,7 +187,7 @@ namespace Microsoft.Net.DesignTimeHost
                     }).ToList()
                 };
 
-                var metadata = state.Compiler.GetProjectMetadata(state.Project.Name, state.TargetFramework);
+                var metadata = state.MetadataProvider.GetMetadata(state.Project.Name, state.TargetFramework);
 
                 _local.References = new ReferencesMessage
                 {
@@ -274,19 +272,33 @@ namespace Microsoft.Net.DesignTimeHost
                 return state;
             }
 
+            var projectDir = project.ProjectDirectory;
+            var rootDirectory = DefaultHost.ResolveRootDirectory(projectDir);
             var globalAssemblyCache = new DefaultGlobalAssemblyCache();
+            var projectResolver = new ProjectResolver(projectDir, rootDirectory);
 
-            state.CompositeLoader = new AssemblyLoader();
-            string rootDirectory = DefaultHost.ResolveRootDirectory(state.Path);
-            var resolver = new FrameworkReferenceResolver(globalAssemblyCache);
-            var resourceProvider = new ResxResourceProvider();
-            var projectResolver = new ProjectResolver(state.Path, rootDirectory);
-            state.Compiler = new RoslynAssemblyLoader(_loaderEngine, projectResolver, NoopWatcher.Instance, resolver, globalAssemblyCache, state.CompositeLoader, resourceProvider);
-            state.CompositeLoader.Add(state.Compiler);
-            state.CompositeLoader.Add(new MSBuildProjectAssemblyLoader(_loaderEngine, rootDirectory, NoopWatcher.Instance));
-            state.CompositeLoader.Add(new NuGetAssemblyLoader(_loaderEngine, state.Path));
+            var frameworkReferenceResolver = new FrameworkReferenceResolver(globalAssemblyCache);
+            var nugetEngine = new NuGetDependencyResolver(projectDir);
+            var gacDependencyExporter = new GacDependencyExporter(globalAssemblyCache);
+            var compositeDependencyExporter = new CompositeDependencyExporter(new IDependencyExporter[] { 
+                gacDependencyExporter, 
+                nugetEngine 
+            });
+
+            var roslynCompiler = new RoslynCompiler(projectResolver,
+                                                    NoopWatcher.Instance,
+                                                    frameworkReferenceResolver,
+                                                    compositeDependencyExporter);
+
+            state.MetadataProvider = new RoslynMetadataProvider(roslynCompiler);
             state.Project = project;
-            state.CompositeLoader.Walk(state.Project.Name, state.Project.Version, state.TargetFramework);
+
+            var dependencyWalker = new DependencyWalker(new IDependencyProvider[] { 
+                nugetEngine, 
+                new ProjectReferenceDependencyProvider(projectResolver) 
+            });
+
+            dependencyWalker.Walk(state.Project.Name, state.Project.Version, targetFramework);
             return state;
         }
     }

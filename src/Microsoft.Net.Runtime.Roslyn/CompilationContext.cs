@@ -9,7 +9,8 @@ namespace Microsoft.Net.Runtime.Roslyn
         public Project Project { get; set; }
         public CSharpCompilation Compilation { get; set; }
         public IList<Diagnostic> Diagnostics { get; set; }
-        public IEnumerable<TypeCompilationContext> AssemblyNeutralTypes { get; set; }
+        public IList<CompilationContext> ProjectReferences { get; set; }
+        public IList<AssemblyNeutralMetadataReference> AssemblyNeutralReferences { get; set; }
 
         public CompilationContext()
         {

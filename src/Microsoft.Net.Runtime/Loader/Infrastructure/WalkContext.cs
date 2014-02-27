@@ -40,7 +40,7 @@ namespace Microsoft.Net.Runtime.Loader.Infrastructure
         }
 
         public void Walk(
-            IEnumerable<IPackageLoader> dependencyResolvers,
+            IEnumerable<IDependencyProvider> dependencyResolvers,
             string name,
             SemanticVersion version,
             FrameworkName frameworkName)
@@ -50,7 +50,7 @@ namespace Microsoft.Net.Runtime.Loader.Infrastructure
                 Key = new Dependency { Name = name, Version = version }
             };
 
-            var resolvers = dependencyResolvers as IPackageLoader[] ?? dependencyResolvers.ToArray();
+            var resolvers = dependencyResolvers as IDependencyProvider[] ?? dependencyResolvers.ToArray();
             var resolvedItems = new Dictionary<Dependency, Item>();
 
             // Recurse through dependencies optimistically, asking resolvers for dependencies
@@ -200,7 +200,7 @@ namespace Microsoft.Net.Runtime.Loader.Infrastructure
 
         private Item Resolve(
             Dictionary<Dependency, Item> resolvedItems,
-            IEnumerable<IPackageLoader> resolvers,
+            IEnumerable<IDependencyProvider> resolvers,
             Dependency packageKey,
             FrameworkName frameworkName)
         {
@@ -276,7 +276,7 @@ namespace Microsoft.Net.Runtime.Loader.Infrastructure
         public class Item
         {
             public Dependency Key { get; set; }
-            public IPackageLoader Resolver { get; set; }
+            public IDependencyProvider Resolver { get; set; }
             public IEnumerable<Dependency> Dependencies { get; set; }
         }
 

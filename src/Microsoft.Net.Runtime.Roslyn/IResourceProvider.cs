@@ -5,6 +5,6 @@ namespace Microsoft.Net.Runtime.Roslyn
 {
     public interface IResourceProvider
     {
-        IList<ResourceDescription> GetResources(string projectName, string projectPath);
+        IList<ResourceDescription> GetResources(Project project);
     }
 }

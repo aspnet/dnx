@@ -2,7 +2,7 @@
 using System.IO;
 using System.Linq;
 
-namespace Microsoft.Net.Runtime.Loader.Roslyn
+namespace Microsoft.Net.Runtime
 {
     public class ProjectResolver : IProjectResolver
     {

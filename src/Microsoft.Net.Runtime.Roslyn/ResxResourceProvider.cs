@@ -11,12 +11,12 @@ namespace Microsoft.Net.Runtime.Roslyn
 {
     public class ResxResourceProvider : IResourceProvider
     {
-        public IList<ResourceDescription> GetResources(string projectName, string projectPath)
+        public IList<ResourceDescription> GetResources(Project project)
         {
 #if NET45 // CORECLR_TODO: ResourceWriter
-            return Directory.EnumerateFiles(projectPath, "*.resx", SearchOption.AllDirectories)
+            return Directory.EnumerateFiles(project.ProjectDirectory, "*.resx", SearchOption.AllDirectories)
                             .Select(resxFilePath =>
-                                new ResourceDescription(GetResourceName(projectName, resxFilePath),
+                                new ResourceDescription(GetResourceName(project.Name, resxFilePath),
                                                         () => GetResourceStream(resxFilePath),
                                                         isPublic: true)).ToList();
 #else

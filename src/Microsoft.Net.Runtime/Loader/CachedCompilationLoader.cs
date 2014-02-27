@@ -7,7 +7,7 @@ using NuGet;
 
 namespace Microsoft.Net.Runtime.Loader
 {
-    public class CachedCompilationLoader : IAssemblyLoader, IPackageLoader, IDependencyExportResolver
+    public class CachedCompilationLoader : IAssemblyLoader, IDependencyProvider, IDependencyExporter
     {
         private readonly IProjectResolver _resolver;
         private readonly Dictionary<string, string> _paths = new Dictionary<string, string>();
@@ -32,7 +32,7 @@ namespace Microsoft.Net.Runtime.Loader
             return null;
         }
 
-        public DependencyExport GetDependencyExport(string name, FrameworkName targetFramework)
+        public IDependencyExport GetDependencyExport(string name, FrameworkName targetFramework)
         {
             string path;
             if (_paths.TryGetValue(name, out path))
@@ -54,8 +54,7 @@ namespace Microsoft.Net.Runtime.Loader
             }
 
             if (File.Exists(cachedFile) &&
-                version == project.Version ||
-                version == null)
+                (version == project.Version || version == null))
             {
                 var config = project.GetTargetFrameworkConfiguration(targetFramework);
 

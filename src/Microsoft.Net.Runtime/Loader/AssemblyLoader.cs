@@ -1,22 +1,17 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
 using System.Reflection;
-using System.Runtime.Versioning;
-using Microsoft.Net.Runtime.Loader.Infrastructure;
-using Microsoft.Net.Runtime.Services;
-using NuGet;
 
 namespace Microsoft.Net.Runtime.Loader
 {
-    public class AssemblyLoader : IAssemblyLoader, IDependencyExportResolver
+    public class AssemblyLoader : IAssemblyLoader
     {
-        private List<IAssemblyLoader> _loaders = new List<IAssemblyLoader>();
+        private readonly IList<IAssemblyLoader> _loaders;
 
-        public void Add(IAssemblyLoader loader)
+        public AssemblyLoader(IList<IAssemblyLoader> loaders)
         {
-            _loaders.Add(loader);
+            _loaders = loaders;
         }
 
         public Assembly LoadAssembly(LoadContext loadContext)
@@ -44,32 +39,6 @@ namespace Microsoft.Net.Runtime.Loader
             var result = LoadImpl(loadContext, sw);
             sw.Stop();
             return result;
-        }
-
-        public void Walk(string name, SemanticVersion version, FrameworkName frameworkName)
-        {
-            var sw = Stopwatch.StartNew();
-            Trace.TraceInformation("Walking dependency graph for '{0} {1}'.", name, frameworkName);
-
-            var context = new WalkContext();
-
-            context.Walk(
-                _loaders.OfType<IPackageLoader>(),
-                name,
-                version,
-                frameworkName);
-
-            context.Populate(frameworkName);
-
-            sw.Stop();
-            Trace.TraceInformation("Resolved dependencies for {0} in {1}ms", name, sw.ElapsedMilliseconds);
-        }
-
-        public DependencyExport GetDependencyExport(string name, FrameworkName targetFramework)
-        {
-            return _loaders.OfType<IDependencyExportResolver>()
-                           .Select(r => r.GetDependencyExport(name, targetFramework))
-                           .FirstOrDefault(i => i != null);
         }
 
         private AssemblyLoadResult LoadImpl(LoadContext loadContext, Stopwatch sw)
