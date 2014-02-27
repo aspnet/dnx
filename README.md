@@ -12,6 +12,6 @@
 ### Writing an application
 
 ### Running an application on CoreCLR (k10)
-- Append tools directory to PATH. SET PATH=%PATH%;<your_directory>\KRuntime\artifacts\build\ProjectK\tools
+- Append tools directory to PATH. SET PATH=%PATH%;your_directory\KRuntime\artifacts\build\ProjectK\tools
 - SET TARGET_FRAMEWORK=k10
 - k run
