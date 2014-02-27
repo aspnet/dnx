@@ -2,5 +2,9 @@
     "version": "0.1-beta-*",
     "dependencies": {
         "HelloShared": "0.1-beta-*"
+    },
+    "commands": {
+        "hi": "HelloWorld --mode amazing",
+        "run": "HelloWorld I can customize the default command"
     }
 }

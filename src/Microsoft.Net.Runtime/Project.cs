@@ -19,6 +19,11 @@ namespace Microsoft.Net.Runtime
 
         private TargetFrameworkConfiguration _defaultTargetFrameworkConfiguration;
 
+        public Project()
+        {
+            Commands = new Dictionary<string, string>();
+        }
+
         public string ProjectFilePath { get; private set; }
 
         public string ProjectDirectory
@@ -113,6 +118,8 @@ namespace Microsoft.Net.Runtime
             }
         }
 
+        public IDictionary<string, string> Commands { get; private set; }
+
         public IEnumerable<TargetFrameworkConfiguration> GetTargetFrameworkConfigurations()
         {
             return _configurations.Values;
@@ -174,6 +181,15 @@ namespace Microsoft.Net.Runtime
             project.PreprocessPattern = GetSettingsValue(settings, "preprocess", @"Compiler\Preprocess\**\*.cs");
             project.SharedPattern = GetSettingsValue(settings, "shared", @"Compiler\Shared\**\*.cs");
             project.ResourcesPattern = GetSettingsValue(settings, "resources", @"Compiler\Resources\**\*");
+
+            var commands = settings["commands"] as JObject;
+            if (commands != null)
+            {
+                foreach (var command in commands)
+                {
+                    project.Commands[command.Key] = command.Value.ToObject<string>();
+                }
+            }
 
             if (project.Version.IsSnapshot)
             {
