@@ -62,11 +62,10 @@ namespace Microsoft.Net.Runtime
                 return null;
             }
 
-            _loader.Walk(Project.Name, Project.Version, _targetFramework);
+            _dependencyWalker.Walk(Project.Name, Project.Version, _targetFramework);
 
             _serviceProvider.Add(typeof(IApplicationEnvironment), new ApplicationEnvironment(Project, _targetFramework));
-            _dependencyWalker.Walk(project.Name, project.Version, _targetFramework);
-
+            
             Trace.TraceInformation("Loading entry point from {0}", applicationName);
 
             var assembly = Assembly.Load(new AssemblyName(applicationName));
