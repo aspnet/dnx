@@ -278,11 +278,11 @@ namespace Microsoft.Net.DesignTimeHost
             var projectResolver = new ProjectResolver(projectDir, rootDirectory);
 
             var frameworkReferenceResolver = new FrameworkReferenceResolver(globalAssemblyCache);
-            var nugetEngine = new NuGetDependencyResolver(projectDir);
+            var nugetDependencyResolver = new NuGetDependencyResolver(projectDir);
             var gacDependencyExporter = new GacDependencyExporter(globalAssemblyCache);
             var compositeDependencyExporter = new CompositeDependencyExporter(new IDependencyExporter[] { 
                 gacDependencyExporter, 
-                nugetEngine 
+                nugetDependencyResolver 
             });
 
             var roslynCompiler = new RoslynCompiler(projectResolver,
@@ -294,8 +294,8 @@ namespace Microsoft.Net.DesignTimeHost
             state.Project = project;
 
             var dependencyWalker = new DependencyWalker(new IDependencyProvider[] { 
-                nugetEngine, 
-                new ProjectReferenceDependencyProvider(projectResolver) 
+                nugetDependencyResolver,
+                new ProjectReferenceDependencyProvider(projectResolver)
             });
 
             dependencyWalker.Walk(state.Project.Name, state.Project.Version, targetFramework);
