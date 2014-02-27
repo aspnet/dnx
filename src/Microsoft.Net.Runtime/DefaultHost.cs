@@ -55,6 +55,11 @@ namespace Microsoft.Net.Runtime
 
             var sw = Stopwatch.StartNew();
 
+            if (Project == null)
+            {
+                return null;
+            }
+
             _loader.Walk(Project.Name, Project.Version, _targetFramework);
 
             _serviceProvider.Add(typeof(IApplicationEnvironment), new ApplicationEnvironment(Project, _targetFramework));
