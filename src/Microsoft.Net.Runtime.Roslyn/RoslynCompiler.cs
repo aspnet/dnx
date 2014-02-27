@@ -12,13 +12,12 @@ using NuGet;
 
 namespace Microsoft.Net.Runtime.Roslyn
 {
-    public class RoslynCompiler : IRoslynCompiler, IDependencyExporter
+    public class RoslynCompiler : IRoslynCompiler
     {
         private readonly IDependencyExporter _dependencyResolver;
         private readonly IFrameworkReferenceResolver _resolver;
         private readonly IFileWatcher _watcher;
         private readonly IProjectResolver _projectResolver;
-        private readonly Dictionary<string, CompilationContext> _temporaryCache = new Dictionary<string, CompilationContext>();
 
         public RoslynCompiler(IProjectResolver projectResolver,
                               IFileWatcher watcher,
@@ -28,13 +27,24 @@ namespace Microsoft.Net.Runtime.Roslyn
             _projectResolver = projectResolver;
             _watcher = watcher;
             _resolver = resolver;
-            _dependencyResolver = new CompositeDependencyExporter(new[] { 
-                this, 
-                dependencyExportResolver });
+            _dependencyResolver = dependencyExportResolver;
         }
 
         public CompilationContext CompileProject(string name, FrameworkName targetFramework)
         {
+            var compilationCache = new Dictionary<string, CompilationContext>();
+
+            return Compile(name, targetFramework, compilationCache);
+        }
+
+        private CompilationContext Compile(string name, FrameworkName targetFramework, IDictionary<string, CompilationContext> compilationCache)
+        {
+            CompilationContext compilationContext;
+            if (compilationCache.TryGetValue(name, out compilationContext))
+            {
+                return compilationContext;
+            }
+
             Project project;
             // Can't find a project file with the name so bail
             if (!_projectResolver.TryResolveProject(name, out project))
@@ -62,7 +72,8 @@ namespace Microsoft.Net.Runtime.Roslyn
 
                 foreach (var dependency in project.Dependencies.Concat(targetFrameworkConfig.Dependencies))
                 {
-                    var dependencyExport = _dependencyResolver.GetDependencyExport(dependency.Name, targetFramework);
+                    var dependencyExport = GetDependencyExport(dependency.Name, targetFramework, compilationCache) ??
+                        _dependencyResolver.GetDependencyExport(dependency.Name, targetFramework);
 
                     if (dependencyExport == null)
                     {
@@ -129,7 +140,7 @@ namespace Microsoft.Net.Runtime.Roslyn
             var newCompilation = oldCompilation.WithReferences(
                 oldCompilation.References.Concat(assemblyNeutralReferences.Values.Select(r => r.MetadataReference)));
 
-            var context = new CompilationContext
+            compilationContext = new CompilationContext
             {
                 Compilation = newCompilation,
                 Project = project,
@@ -137,11 +148,13 @@ namespace Microsoft.Net.Runtime.Roslyn
                 ProjectReferences = projectReferences
             };
 
-            context.Diagnostics.AddRange(assemblyNeutralTypeDiagnostics);
+            compilationContext.Diagnostics.AddRange(assemblyNeutralTypeDiagnostics);
 
-            context.Diagnostics.AddRange(diagnostics);
+            compilationContext.Diagnostics.AddRange(diagnostics);
 
-            return context;
+            compilationCache[name] = compilationContext;
+
+            return compilationContext;
         }
 
         private IList<SyntaxTree> GetSyntaxTrees(Project project, CompilationSettings compilationSettings, List<IDependencyExport> exports)
@@ -185,9 +198,9 @@ namespace Microsoft.Net.Runtime.Roslyn
             return trees;
         }
 
-        public IDependencyExport GetDependencyExport(string name, FrameworkName targetFramework)
+        public RoslynDepenencyExport GetDependencyExport(string name, FrameworkName targetFramework, IDictionary<string, CompilationContext> compilationCache)
         {
-            var compilationContext = CompileProject(name, targetFramework);
+            var compilationContext = Compile(name, targetFramework, compilationCache);
 
             if (compilationContext == null)
             {
