@@ -1,3 +1,4 @@
 LIBRARY   KSYS
 EXPORTS
-   CallApplicationMain   @1
+    CallApplicationMain
+    CallApplicationMainAsync
