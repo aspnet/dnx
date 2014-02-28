@@ -9,6 +9,7 @@ namespace Communication
 {
     public class ProcessingQueue
     {
+        private readonly List<Message> _queue = new List<Message>();
         private readonly BinaryReader _reader;
         private readonly BinaryWriter _writer;
 
@@ -27,7 +28,7 @@ namespace Communication
 
         public void Post(Message message)
         {
-            lock (_writer)
+            lock(_writer)
             {
                 _writer.Write(JsonConvert.SerializeObject(message));
             }
