@@ -103,8 +103,6 @@ namespace klr.hosting
 
             try
             {
-                Assembly.Load(new AssemblyName("Microsoft.Net.Runtime.Common, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null"));
-
                 var assembly = Assembly.Load(new AssemblyName("klr.host"));
 
 

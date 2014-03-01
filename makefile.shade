@@ -105,17 +105,23 @@ var CORECLR_PATH = '${Environment.GetEnvironmentVariable("CORECLR_PATH")}'
     @{
         var hostK10 = Path.Combine(BUILD_DIR2, "*", "k10", "**.dll");
         var hostnet45 = Path.Combine(BUILD_DIR2, "*", "net45", "**.dll");
+
+        var sharedSourceAssemblies = new [] { 
+            Path.Combine(BUILD_DIR2, "klr.hosting.shared/**/*.dll"), 
+            Path.Combine(BUILD_DIR2, "Microsoft.Net.CommandLineUtils/**/*.dll"), 
+            Path.Combine(BUILD_DIR2, "Microsoft.Net.Runtime.Common/**/*.dll")
+        };
         
         Directory.CreateDirectory(Path.Combine(TOOLS_DIR, "k10"));
         Directory.CreateDirectory(Path.Combine(TOOLS_DIR, "net45"));
         
-        foreach(var file in Files.Include(hostK10))
+        foreach(var file in Files.Include(hostK10).Exclude(sharedSourceAssemblies))
         {
             string dest = Path.Combine(TOOLS_DIR, "k10", Path.GetFileName(file));
             File.Copy(file, dest, true);
         }
         
-        foreach(var file in Files.Include(hostnet45))
+        foreach(var file in Files.Include(hostnet45).Exclude(sharedSourceAssemblies))
         {
             string dest = Path.Combine(TOOLS_DIR, "net45", Path.GetFileName(file));
             File.Copy(file, dest, true);
