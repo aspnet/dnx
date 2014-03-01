@@ -2,7 +2,7 @@
 using System.IO;
 using System.Linq;
 
-namespace Microsoft.Net.Runtime.Roslyn
+namespace Microsoft.Net.Runtime
 {
     public class DefaultGlobalAssemblyCache : IGlobalAssemblyCache
     {

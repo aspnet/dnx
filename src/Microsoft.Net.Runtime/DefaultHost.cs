@@ -65,7 +65,7 @@ namespace Microsoft.Net.Runtime
             _dependencyWalker.Walk(Project.Name, Project.Version, _targetFramework);
 
             _serviceProvider.Add(typeof(IApplicationEnvironment), new ApplicationEnvironment(Project, _targetFramework));
-            
+
             Trace.TraceInformation("Loading entry point from {0}", applicationName);
 
             var assembly = Assembly.Load(new AssemblyName(applicationName));
@@ -117,18 +117,25 @@ namespace Microsoft.Net.Runtime
             var nugetLoader = new NuGetAssemblyLoader(_loaderEngine, nugetDependencyResolver);
             var cachedLoader = new CachedCompilationLoader(_loaderEngine, projectResolver);
             var msbuildLoader = new MSBuildProjectAssemblyLoader(_loaderEngine, rootDirectory, _watcher);
+            var globalAssemblyCache = new DefaultGlobalAssemblyCache();
 
             // Roslyn needs to be able to resolve exported references and sources
             var dependencyExporters = new List<IDependencyExporter>();
 
+            // Cached loader
             if (options.UseCachedCompilations)
             {
                 dependencyExporters.Add(cachedLoader);
             }
 
+            // NuGet exporter
             dependencyExporters.Add(nugetDependencyResolver);
+
+            // GAC
+            dependencyExporters.Add(new GacDependencyExporter(globalAssemblyCache));
+
             var dependencyExporter = new CompositeDependencyExporter(dependencyExporters);
-            var roslynLoader = new LazyRoslynAssemblyLoader(_loaderEngine, projectResolver, _watcher, dependencyExporter);
+            var roslynLoader = new LazyRoslynAssemblyLoader(_loaderEngine, projectResolver, _watcher, dependencyExporter, globalAssemblyCache);
 
             // Order is important
             if (options.UseCachedCompilations)

@@ -2,7 +2,7 @@
 using Microsoft.Net.Runtime.Loader;
 using NuGet;
 
-namespace Microsoft.Net.Runtime.Roslyn
+namespace Microsoft.Net.Runtime
 {
     public class GacDependencyExporter : IDependencyExporter
     {

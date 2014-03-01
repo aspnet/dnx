@@ -18,16 +18,19 @@ namespace Microsoft.Net.Runtime
         private object _roslynLoaderInstance;
         private bool _roslynInitializing;
         private readonly IAssemblyLoaderEngine _loaderEngine;
+        private readonly IGlobalAssemblyCache _globalAssemblyCache;
 
         public LazyRoslynAssemblyLoader(IAssemblyLoaderEngine loaderEngine,
                                         ProjectResolver projectResolver,
                                         IFileWatcher watcher,
-                                        IDependencyExporter exportResolver)
+                                        IDependencyExporter exportResolver,
+                                        IGlobalAssemblyCache globalAssemblyCache)
         {
             _loaderEngine = loaderEngine;
             _projectResolver = projectResolver;
             _watcher = watcher;
             _exportResolver = exportResolver;
+            _globalAssemblyCache = globalAssemblyCache;
         }
 
         public AssemblyLoadResult Load(LoadContext loadContext)
@@ -57,7 +60,7 @@ namespace Microsoft.Net.Runtime
 
                     var ctors = roslynAssemblyLoaderType.GetTypeInfo().DeclaredConstructors;
 
-                    var args = new object[] { _loaderEngine, _watcher, _projectResolver, _exportResolver };
+                    var args = new object[] { _loaderEngine, _watcher, _projectResolver, _exportResolver, _globalAssemblyCache };
 
                     var ctor = ctors.First(c => c.GetParameters().Length == args.Length);
 

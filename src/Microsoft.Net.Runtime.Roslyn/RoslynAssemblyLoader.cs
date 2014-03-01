@@ -27,12 +27,12 @@ namespace Microsoft.Net.Runtime.Roslyn
         public RoslynAssemblyLoader(IAssemblyLoaderEngine loaderEngine,
                                     IFileWatcher watcher,
                                     IProjectResolver projectResolver,
-                                    IDependencyExporter dependencyExporter)
+                                    IDependencyExporter dependencyExporter,
+                                    IGlobalAssemblyCache globalAssemblyCache)
         {
             _loaderEngine = loaderEngine;
             _projectResolver = projectResolver;
 
-            var globalAssemblyCache = new DefaultGlobalAssemblyCache();
             var frameworkResolver = new FrameworkReferenceResolver(globalAssemblyCache);
 
             var resxProvider = new ResxResourceProvider();
