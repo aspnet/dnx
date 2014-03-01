@@ -1,7 +1,7 @@
 ﻿
 namespace Microsoft.Net.Runtime.Common.CommandLine
 {
-    public enum CommandOptionType
+    internal enum CommandOptionType
     {
         MultipleValue,
         SingleValue,

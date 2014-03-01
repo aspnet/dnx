@@ -1,10 +1,10 @@
 {
     "version": "0.1-alpha-*",
     "compilationOptions" : { "define" : ["TRACE"] },
-    "shared": "**/*.cs",
     "dependencies": {
-        "Microsoft.Net.Runtime.Interfaces" : ""
+        "Microsoft.Net.CommandLineUtils" : ""
     },
+    "shared": "**/*.cs",
     "configurations" : {
         "net45" : { },
         "k10" : { }

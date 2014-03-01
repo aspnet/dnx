@@ -4,7 +4,7 @@ using System.Reflection;
 
 namespace Microsoft.Net.Runtime.Common
 {
-    public class ExceptionHelper
+    internal class ExceptionHelper
     {
         public static IEnumerable<string> GetExceptions(Exception ex)
         {

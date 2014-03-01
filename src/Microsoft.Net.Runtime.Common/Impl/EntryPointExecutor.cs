@@ -6,7 +6,7 @@ using Microsoft.Net.Runtime.Common.DependencyInjection;
 
 namespace Microsoft.Net.Runtime.Common
 {
-    public static class EntryPointExecutor
+    internal static class EntryPointExecutor
     {
         public static async Task<int> Execute(Assembly assembly, string[] args, IServiceProvider serviceProvider)
         {
@@ -20,7 +20,7 @@ namespace Microsoft.Net.Runtime.Common
 
                 if (programTypeInfo == null)
                 {
-                    Console.WriteLine("'{0}' does not contain a static 'Main' method suitable for an entry point", name);
+                    System.Console.WriteLine("'{0}' does not contain a static 'Main' method suitable for an entry point", name);
                     return -1;
                 }
 
@@ -31,7 +31,7 @@ namespace Microsoft.Net.Runtime.Common
 
             if (main == null)
             {
-                Console.WriteLine("'{0}' does not contain a 'Main' method suitable for an entry point", name);
+                System.Console.WriteLine("'{0}' does not contain a 'Main' method suitable for an entry point", name);
                 return -1;
             }
 

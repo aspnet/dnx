@@ -1,9 +1,10 @@
-﻿using System;
+﻿#if K10
+using System;
 using System.IO;
 using System.Reflection;
 using System.Runtime.Hosting.Loader;
 
-namespace klr.core45.managed
+namespace klr.hosting
 {
     public class DelegateAssemblyLoadContext : AssemblyLoadContext
     {
@@ -30,3 +31,4 @@ namespace klr.core45.managed
         }
     }
 }
+#endif

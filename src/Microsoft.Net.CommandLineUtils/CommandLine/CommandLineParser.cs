@@ -1,12 +1,12 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 
-namespace klr.hosting
+namespace Microsoft.Net.Runtime.Common.CommandLine
 {
     internal class CommandLineParser
     {
         // --opt1 --opt2 value --opt2 value {args}
-        internal void ParseOptions(string[] args,
+        public void ParseOptions(string[] args,
                                  Dictionary<string, CommandOptionType> validOptions,
                                  out CommandOptions options)
         {

@@ -1,14 +1,14 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 
-namespace klr.hosting
+namespace Microsoft.Net.Runtime.Common.CommandLine
 {
     internal class CommandOptions
     {
         private readonly Dictionary<string, List<string>> _parsedOptions;
         private readonly Dictionary<string, CommandOptionType> _validOptions;
 
-        internal CommandOptions(Dictionary<string, CommandOptionType> validOptions,
+        public CommandOptions(Dictionary<string, CommandOptionType> validOptions,
                               Dictionary<string, List<string>> parsedOptions,
                               IList<string> remainingArgs)
         {
@@ -17,14 +17,14 @@ namespace klr.hosting
             RemainingArgs = remainingArgs;
         }
 
-        internal IList<string> RemainingArgs { get; private set; }
+        public IList<string> RemainingArgs { get; private set; }
 
-        internal bool HasOption(string option)
+        public bool HasOption(string option)
         {
             return _parsedOptions.ContainsKey(option);
         }
 
-        internal string GetValue(string option)
+        public string GetValue(string option)
         {
             List<string> values;
             if (_parsedOptions.TryGetValue(option, out values))
@@ -42,7 +42,7 @@ namespace klr.hosting
             return null;
         }
 
-        internal IEnumerable<string> GetValues(string option)
+        public IEnumerable<string> GetValues(string option)
         {
             List<string> values;
             if (_parsedOptions.TryGetValue(option, out values))

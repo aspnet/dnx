@@ -20,35 +20,6 @@ var SAMPLES_DIR = '${Path.Combine(ROOT, "samples")}'
 var FULL_VERSION = '${VERSION + "-" + BuildNumber}'
 var CORECLR_PATH = '${Environment.GetEnvironmentVariable("CORECLR_PATH")}'
 
-#copy-shared-sources target='initialize'
-    var commandLineParser='${Path.Combine(ROOT, "src", "Microsoft.Net.Runtime.Common", "CommandLine")}'
-    var net45Host='${Path.Combine(ROOT, "src", "klr.net45.managed")}'
-    var core45Host='${Path.Combine(ROOT, "src", "klr.core45.managed")}'
-    
-    copy sourceDir='${commandLineParser}' outputDir='${Path.Combine(net45Host, "CommandLine")}' overwrite='${true}'
-    copy sourceDir='${commandLineParser}' outputDir='${Path.Combine(core45Host, "CommandLine")}' overwrite='${true}'
-
-    @{
-        Action<string> fixup = target => 
-        {
-            string path = Path.Combine(target, "CommandLine",  "*.cs");
-
-            foreach (var file in Files.Include(path)) 
-            {
-                var text = File.ReadAllText(file)
-                            .Replace("public", "internal")
-                            .Replace("Microsoft.Net.Runtime.Common.CommandLine", "klr.hosting");
-
-                File.WriteAllText(file, text);
-            }
-        };
-
-        fixup(net45Host);
-        fixup(core45Host);
-    }
-
-    copy sourceDir='${core45Host}' include='RuntimeBootstrapper.cs' outputDir='${net45Host}' overwrite='${true}'
-
 #package-runtime .clean-sdk-dir .copy-bits .tweak-scripts .copy-package-dependencies .copy-coreclr .nuget-pack-runtime target='package'
     
 #rebuild-package .build-compile .native-compile .package-runtime

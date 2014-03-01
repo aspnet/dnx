@@ -4,7 +4,7 @@ using System.Reflection;
 
 namespace System.Diagnostics
 {
-    public static class Trace
+    internal static class Trace
     {
         public static void TraceError(string message, params object[] args)
         {

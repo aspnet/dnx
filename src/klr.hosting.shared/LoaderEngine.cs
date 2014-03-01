@@ -1,6 +1,7 @@
-﻿using System.Reflection;
+﻿#if NET45
+using System.Reflection;
 
-namespace klr.net45.managed
+namespace klr.hosting
 {
     public class LoaderEngine
     {
@@ -15,3 +16,4 @@ namespace klr.net45.managed
         }
     }
 }
+#endif

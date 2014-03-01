@@ -6,15 +6,13 @@ using System.Linq;
 using System.Reflection;
 #if K10
 using System.Runtime.Hosting.Loader;
-using klr.core45.managed;
-#else
-using klr.net45.managed;
 #endif
 using System.Threading.Tasks;
+using Microsoft.Net.Runtime.Common.CommandLine;
 
 namespace klr.hosting
 {
-    public static class RuntimeBootstrapper
+    internal static class RuntimeBootstrapper
     {
         private static Dictionary<string, Assembly> _assemblyCache = new Dictionary<string, Assembly>();
         private static readonly Dictionary<string, CommandOptionType> _options = new Dictionary<string, CommandOptionType>

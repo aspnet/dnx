@@ -4,6 +4,7 @@
     "dependencies": {
         "Microsoft.Net.Runtime" : "",
         "Microsoft.Net.Runtime.Common" : "",
+        "Microsoft.Net.CommandLineUtils" : "",
         "Microsoft.Net.Runtime.Roslyn" : "",
         "Microsoft.Net.Runtime.Interfaces" : "",
         "Microsoft.CodeAnalysis" : "0.6.31123.2",

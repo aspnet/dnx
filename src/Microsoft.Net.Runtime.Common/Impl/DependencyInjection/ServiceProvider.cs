@@ -4,7 +4,7 @@ using System.Collections.Generic;
 
 namespace Microsoft.Net.Runtime.Common.DependencyInjection
 {
-    public class ServiceProvider : IServiceProvider
+    internal class ServiceProvider : IServiceProvider
     {
         private readonly Dictionary<Type, object> _instances = new Dictionary<Type, object>();
 
