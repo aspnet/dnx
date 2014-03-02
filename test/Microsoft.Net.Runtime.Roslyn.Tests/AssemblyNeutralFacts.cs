@@ -90,6 +90,45 @@ namespace Something
             Assert.Equal("Something.IHttpResponse", compilations[3].AssemblyName);
         }
 
+        [Fact(Skip = "Generics aren't supported as yet")]
+        public void GenericMembersWithAssemblyNeutralTypeParams()
+        {
+            var worker = DoAssemblyNeutralCompilation(
+@"
+namespace Something
+{
+    [AssemblyNeutral]
+    public interface IDataObject { }
+}",
+@"
+using System.Collections.Generic;
+
+namespace Something
+{
+    [AssemblyNeutral]
+    public interface IDataObjectProvider 
+    { 
+        IList<IDataObject> Data { get; }
+    }
+}",
+@"
+namespace Something
+{
+    [AssemblyNeutral]
+    public class AssemblyNeutralAttribute : System.Attribute { }
+}
+");
+
+            var diagnostics = worker.GenerateTypeCompilations();
+            var compilations = worker.TypeCompilations.OrderBy(c => c.AssemblyName).ToList();
+
+            Assert.Equal(0, diagnostics.Count);
+            Assert.Equal(3, compilations.Count());
+            Assert.Equal("Something.AssemblyNeutralAttribute", compilations[0].AssemblyName);
+            Assert.Equal("Something.IDataObject", compilations[1].AssemblyName);
+            Assert.Equal("Something.IDataObjectProvider", compilations[2].AssemblyName);
+        }
+
         private AssemblyNeutralWorker DoAssemblyNeutralCompilation(params string[] fileContents)
         {
             var compilation = CSharpCompilation.Create("test",
