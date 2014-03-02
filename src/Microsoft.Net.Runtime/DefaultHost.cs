@@ -89,8 +89,6 @@ namespace Microsoft.Net.Runtime
 
         private void Initialize(DefaultHostOptions options)
         {
-            var sp = new ServiceProvider();
-
             var dependencyProviders = new List<IDependencyProvider>();
             var loaders = new List<IAssemblyLoader>();
 
@@ -161,6 +159,7 @@ namespace Microsoft.Net.Runtime
             _loader = new AssemblyLoader(loaders);
 
             _serviceProvider.Add(typeof(IFileMonitor), _watcher);
+            _serviceProvider.Add(typeof(IMetadataReferenceProvider), roslynLoader);
         }
 
         public static string ResolveRootDirectory(string projectDir)

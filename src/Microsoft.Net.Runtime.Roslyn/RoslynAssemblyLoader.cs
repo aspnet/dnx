@@ -1,13 +1,14 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Runtime.Versioning;
 using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.Emit;
-using NuGet;
+using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.Net.Runtime.Loader;
 using Microsoft.Net.Runtime.FileSystem;
+using Microsoft.Net.Runtime.Services;
 
 #if NET45 // TODO: Temporary due to CoreCLR and Desktop Roslyn being out of sync
 using EmitResult = Microsoft.CodeAnalysis.Emit.CommonEmitResult;
@@ -15,7 +16,7 @@ using EmitResult = Microsoft.CodeAnalysis.Emit.CommonEmitResult;
 
 namespace Microsoft.Net.Runtime.Roslyn
 {
-    public class RoslynAssemblyLoader : IAssemblyLoader
+    public class RoslynAssemblyLoader : IAssemblyLoader, IMetadataReferenceProvider
     {
         private readonly Dictionary<string, CompilationContext> _compilationCache = new Dictionary<string, CompilationContext>();
 
@@ -43,7 +44,6 @@ namespace Microsoft.Net.Runtime.Roslyn
                                            watcher,
                                            frameworkResolver,
                                            dependencyExporter);
-
         }
 
         public AssemblyLoadResult Load(LoadContext loadContext)
@@ -69,6 +69,19 @@ namespace Microsoft.Net.Runtime.Roslyn
             }
 
             return CompileInMemory(name, compilationContext, resources);
+        }
+
+        public IEnumerable<object> GetReferences(string name, FrameworkName targetFramework)
+        {
+            var compilationContext = GetCompilationContext(name, targetFramework);
+
+            if (compilationContext == null)
+            {
+                return Enumerable.Empty<MetadataReference>();
+            }
+            var thisProject = compilationContext.Compilation.ToMetadataReference();
+
+            return new[] { thisProject }.Concat(compilationContext.Compilation.References);
         }
 
         private CompilationContext GetCompilationContext(string name, FrameworkName targetFramework)
@@ -124,11 +137,6 @@ namespace Microsoft.Net.Runtime.Roslyn
                     return ReportCompilationError(errors);
                 }
 
-                if (compilationContext.Diagnostics.Count > 0)
-                {
-                    return ReportCompilationError(compilationContext.Diagnostics);
-                }
-
                 var assemblyBytes = assemblyStream.ToArray();
                 byte[] pdbBytes = null;
 #if NET45
@@ -146,16 +154,14 @@ namespace Microsoft.Net.Runtime.Roslyn
             return new AssemblyLoadResult(GetErrors(results));
         }
 
-        private static List<string> GetErrors(IEnumerable<Diagnostic> diagnostis)
+        private static IList<string> GetErrors(IEnumerable<Diagnostic> diagnostis)
         {
 #if NET45 // TODO: Temporary due to CoreCLR and Desktop Roslyn being out of sync
             var formatter = DiagnosticFormatter.Instance;
 #else
             var formatter = new DiagnosticFormatter();
 #endif
-            var errors = new List<string>(diagnostis.Select(d => formatter.Format(d)));
-
-            return errors;
+            return diagnostis.Select(d => formatter.Format(d)).ToList();
         }
 
         private static bool IsError(Diagnostic diagnostic)

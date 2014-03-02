@@ -10,7 +10,7 @@ using NuGet;
 
 namespace Microsoft.Net.Runtime
 {
-    internal class LazyRoslynAssemblyLoader : IAssemblyLoader
+    internal class LazyRoslynAssemblyLoader : IAssemblyLoader, IMetadataReferenceProvider
     {
         private readonly ProjectResolver _projectResolver;
         private readonly IFileWatcher _watcher;
@@ -46,6 +46,14 @@ namespace Microsoft.Net.Runtime
             });
         }
 
+        public IEnumerable<object> GetReferences(string name, FrameworkName targetFramework)
+        {
+            return ExecuteWith<IMetadataReferenceProvider, IEnumerable<object>>(provider =>
+            {
+                return provider.GetReferences(name, targetFramework);
+            });
+        }
+
         private TResult ExecuteWith<TInterface, TResult>(Func<TInterface, TResult> execute)
         {
             if (_roslynLoaderInstance == null)
@@ -60,7 +68,13 @@ namespace Microsoft.Net.Runtime
 
                     var ctors = roslynAssemblyLoaderType.GetTypeInfo().DeclaredConstructors;
 
-                    var args = new object[] { _loaderEngine, _watcher, _projectResolver, _exportResolver, _globalAssemblyCache };
+                    var args = new object[] { 
+                        _loaderEngine, 
+                        _watcher, 
+                        _projectResolver, 
+                        _exportResolver, 
+                        _globalAssemblyCache
+                    };
 
                     var ctor = ctors.First(c => c.GetParameters().Length == args.Length);
 

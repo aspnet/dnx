@@ -3,7 +3,6 @@
     "compilationOptions" : { "define" : ["TRACE"] },
     "dependencies": {
         "Microsoft.Net.Runtime" :  "",
-        "Microsoft.Net.Runtime.Common" :  "",
         "Microsoft.Net.Runtime.Interfaces" : "",
         "Newtonsoft.Json" : "5.0.8",
         "Microsoft.CodeAnalysis" : "0.6.31123.2",
