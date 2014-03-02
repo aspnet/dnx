@@ -1,0 +1,21 @@
+{
+    "dependencies": {
+        "xunit" : "1.9.2",
+        "xunit.extensions": "1.9.2",
+        "Microsoft.Net.Runtime.Roslyn": "",
+        "Microsoft.CodeAnalysis" : "0.6.31123.2",
+        "Microsoft.CodeAnalysis.CSharp" : "0.6.31123.2",
+        "System.Reflection.Metadata.Ecma335": "0.6.31123.2",
+        "System.Collections.Immutable" : "1.1.15.0"
+    },
+    "configurations" : {
+        "net45" : {
+            "dependencies": {
+                "System.Xml.Linq": "",
+                "System.Xml": "",
+                "System.Runtime" : "",
+                "System.Collections" : ""
+            }
+        }
+    }
+}
