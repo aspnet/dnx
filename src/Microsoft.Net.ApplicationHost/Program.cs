@@ -36,6 +36,12 @@ namespace Microsoft.Net.ApplicationHost
             ParseArgs(args, out options, out programArgs);
 
             var host = new DefaultHost(options, _loaderEngine);
+
+            if (host.Project == null)
+            {
+                return -1;
+            }
+
             using (_container.AddHost(host))
             {
                 var lookupCommand = string.IsNullOrEmpty(options.ApplicationName) ? "run" : options.ApplicationName;
