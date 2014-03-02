@@ -122,7 +122,8 @@ namespace Microsoft.Net.Runtime.Roslyn
             {
                 if (other.EmitResult != null && !other.EmitResult.Success)
                 {
-                    return null;
+                    // Skip this reference if it hasn't beed emitted
+                    continue;
                 }
 
                 Compilation = Compilation.AddReferences(other.RealOrShallowReference());
