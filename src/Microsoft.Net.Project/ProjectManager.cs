@@ -66,7 +66,6 @@ namespace Microsoft.Net.Project
             builder.Title = project.Name;
 
             bool success = true;
-            bool createPackage = false;
 
             var allDiagnostics = new List<Diagnostic>();
 
@@ -81,14 +80,7 @@ namespace Microsoft.Net.Project
 
                     allDiagnostics.AddRange(diagnostics);
 
-                    if (diagnostics.Count > 0)
-                    {
-                        WriteDiagnostics(diagnostics);
-                    }
-                    else
-                    {
-                        createPackage = true;
-                    }
+                    WriteDiagnostics(diagnostics);
                 }
                 catch (Exception ex)
                 {
@@ -105,7 +97,8 @@ namespace Microsoft.Net.Project
                 builder.Files.Add(file);
             }
 
-            if (createPackage)
+            // If there were any errors then don't create the package
+            if (!allDiagnostics.Any(IsError))
             {
                 using (var fs = File.Create(nupkg))
                 {
@@ -125,12 +118,12 @@ namespace Microsoft.Net.Project
 
         private void WriteSummary(List<Diagnostic> allDiagnostics)
         {
-            var errors = allDiagnostics.Count(d => d.IsWarningAsError || d.Severity == DiagnosticSeverity.Error);
+            var errors = allDiagnostics.Count(IsError);
             var warnings = allDiagnostics.Count(d => d.Severity == DiagnosticSeverity.Warning);
 
             System.Console.WriteLine();
 
-            if (errors > 0 || warnings > 0)
+            if (errors > 0)
             {
 #if NET45
                 WriteColor("Build failed.", ConsoleColor.Red);
@@ -159,7 +152,7 @@ namespace Microsoft.Net.Project
             {
                 string message = GetMessage(diagnostic);
 
-                if (diagnostic.IsWarningAsError || diagnostic.Severity == DiagnosticSeverity.Error)
+                if (IsError(diagnostic))
                 {
                     WriteError(message);
                 }
@@ -286,6 +279,11 @@ namespace Microsoft.Net.Project
             var formatter = new DiagnosticFormatter();
 #endif
             return formatter.Format(diagnostic);
+        }
+
+        private static bool IsError(Diagnostic diagnostic)
+        {
+            return diagnostic.IsWarningAsError || diagnostic.Severity == DiagnosticSeverity.Error;
         }
     }
 }
