@@ -19,7 +19,7 @@ namespace Microsoft.Net.Runtime.Loader
         }
 
         public DependencyExport(
-            IList<IMetadataReference> metadataReferences, 
+            IList<IMetadataReference> metadataReferences,
             IList<ISourceReference> sourceReferences)
         {
             MetadataReferences = metadataReferences;

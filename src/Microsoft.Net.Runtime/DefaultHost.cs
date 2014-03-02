@@ -10,8 +10,6 @@ using Microsoft.Net.Runtime.FileSystem;
 using Microsoft.Net.Runtime.Loader;
 using Microsoft.Net.Runtime.Loader.MSBuildProject;
 using Microsoft.Net.Runtime.Loader.NuGet;
-using Microsoft.Net.Runtime.Services;
-using NuGet;
 
 namespace Microsoft.Net.Runtime
 {
@@ -26,17 +24,20 @@ namespace Microsoft.Net.Runtime
         private readonly string _name;
         private readonly ServiceProvider _serviceProvider = new ServiceProvider();
         private readonly IAssemblyLoaderEngine _loaderEngine;
+        private readonly IDependencyExporter _hostExporter;
+
         private Project _project;
 
-        public DefaultHost(DefaultHostOptions options, IAssemblyLoaderEngine loaderEngine)
+        public DefaultHost(DefaultHostOptions options, IServiceProvider hostProvider)
         {
             _projectDir = Normalize(options.ApplicationBaseDirectory);
 
             _name = options.ApplicationName;
 
-            _targetFramework = VersionUtility.ParseFrameworkName(options.TargetFramework ?? "net45");
+            _targetFramework = options.TargetFramework;
 
-            _loaderEngine = loaderEngine;
+            _loaderEngine = (IAssemblyLoaderEngine)hostProvider.GetService(typeof(IAssemblyLoaderEngine));
+            _hostExporter = (IDependencyExporter)hostProvider.GetService(typeof(IDependencyExporter));
 
             Initialize(options);
         }
@@ -120,6 +121,9 @@ namespace Microsoft.Net.Runtime
             // Roslyn needs to be able to resolve exported references and sources
             var dependencyExporters = new List<IDependencyExporter>();
 
+            // Add the host exporter
+            dependencyExporters.Add(_hostExporter);
+
             // Cached loader
             if (options.UseCachedCompilations)
             {
@@ -159,7 +163,9 @@ namespace Microsoft.Net.Runtime
             _loader = new AssemblyLoader(loaders);
 
             _serviceProvider.Add(typeof(IFileMonitor), _watcher);
-            _serviceProvider.Add(typeof(IMetadataReferenceProvider), roslynLoader);
+            _serviceProvider.Add(typeof(IDependencyExporter),
+                new CompositeDependencyExporter(
+                    dependencyExporters.Concat(new[] { roslynLoader })));
         }
 
         public static string ResolveRootDirectory(string projectDir)

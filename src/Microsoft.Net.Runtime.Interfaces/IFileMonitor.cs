@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Microsoft.Net.Runtime.Services
+namespace Microsoft.Net.Runtime
 {
     [AssemblyNeutral]
     public interface IFileMonitor

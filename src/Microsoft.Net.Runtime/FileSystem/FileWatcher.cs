@@ -3,7 +3,6 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using Microsoft.Net.Runtime.Services;
 
 namespace Microsoft.Net.Runtime.FileSystem
 {

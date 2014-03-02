@@ -1,5 +1,6 @@
-﻿namespace Microsoft.Net.Runtime.Loader
+﻿namespace Microsoft.Net.Runtime
 {
+    [AssemblyNeutral]
     public interface ISourceFileReference : ISourceReference
     {
         string Path { get; }

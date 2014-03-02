@@ -5,12 +5,11 @@ using System.Reflection;
 using System.Runtime.Versioning;
 using Microsoft.Net.Runtime.FileSystem;
 using Microsoft.Net.Runtime.Loader;
-using Microsoft.Net.Runtime.Services;
 using NuGet;
 
 namespace Microsoft.Net.Runtime
 {
-    internal class LazyRoslynAssemblyLoader : IAssemblyLoader, IMetadataReferenceProvider
+    internal class LazyRoslynAssemblyLoader : IAssemblyLoader, IDependencyExporter
     {
         private readonly ProjectResolver _projectResolver;
         private readonly IFileWatcher _watcher;
@@ -46,11 +45,11 @@ namespace Microsoft.Net.Runtime
             });
         }
 
-        public IEnumerable<object> GetReferences(string name, FrameworkName targetFramework)
+        public IDependencyExport GetDependencyExport(string name, FrameworkName targetFramework)
         {
-            return ExecuteWith<IMetadataReferenceProvider, IEnumerable<object>>(provider =>
+            return ExecuteWith<IDependencyExporter, IDependencyExport>(exporter =>
             {
-                return provider.GetReferences(name, targetFramework);
+                return exporter.GetDependencyExport(name, targetFramework);
             });
         }
 

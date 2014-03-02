@@ -198,6 +198,20 @@ namespace Microsoft.Net.Runtime.Roslyn
             return trees;
         }
 
+        public IEnumerable<IMetadataReference> GetReferences(string name, FrameworkName targetFramework)
+        {
+            var cache = new Dictionary<string, CompilationContext>();
+
+            var export = GetDependencyExport(name, targetFramework, cache);
+
+            if (export == null)
+            {
+                return null;
+            }
+
+            return export.MetadataReferences;
+        }
+
         public RoslynDepenencyExport GetDependencyExport(string name, FrameworkName targetFramework, IDictionary<string, CompilationContext> compilationCache)
         {
             var compilationContext = Compile(name, targetFramework, compilationCache);
@@ -207,6 +221,11 @@ namespace Microsoft.Net.Runtime.Roslyn
                 return null;
             }
 
+            return MakeDependencyExport(compilationContext);
+        }
+
+        internal static RoslynDepenencyExport MakeDependencyExport(CompilationContext compilationContext)
+        {
             var metadataReferences = new List<IMetadataReference>();
             var sourceReferences = new List<ISourceReference>();
 

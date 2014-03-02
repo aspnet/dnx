@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Runtime.Versioning;
@@ -8,7 +7,6 @@ using Microsoft.CodeAnalysis.Emit;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.Net.Runtime.Loader;
 using Microsoft.Net.Runtime.FileSystem;
-using Microsoft.Net.Runtime.Services;
 
 #if NET45 // TODO: Temporary due to CoreCLR and Desktop Roslyn being out of sync
 using EmitResult = Microsoft.CodeAnalysis.Emit.CommonEmitResult;
@@ -16,7 +14,7 @@ using EmitResult = Microsoft.CodeAnalysis.Emit.CommonEmitResult;
 
 namespace Microsoft.Net.Runtime.Roslyn
 {
-    public class RoslynAssemblyLoader : IAssemblyLoader, IMetadataReferenceProvider
+    public class RoslynAssemblyLoader : IAssemblyLoader, IDependencyExporter
     {
         private readonly Dictionary<string, CompilationContext> _compilationCache = new Dictionary<string, CompilationContext>();
 
@@ -71,17 +69,16 @@ namespace Microsoft.Net.Runtime.Roslyn
             return CompileInMemory(name, compilationContext, resources);
         }
 
-        public IEnumerable<object> GetReferences(string name, FrameworkName targetFramework)
+        public IDependencyExport GetDependencyExport(string name, FrameworkName targetFramework)
         {
-            var compilationContext = GetCompilationContext(name, targetFramework);
+            var compliationContext = GetCompilationContext(name, targetFramework);
 
-            if (compilationContext == null)
+            if (compliationContext == null)
             {
-                return Enumerable.Empty<MetadataReference>();
+                return null;
             }
-            var thisProject = compilationContext.Compilation.ToMetadataReference();
 
-            return new[] { thisProject }.Concat(compilationContext.Compilation.References);
+            return RoslynCompiler.MakeDependencyExport(compliationContext);
         }
 
         private CompilationContext GetCompilationContext(string name, FrameworkName targetFramework)

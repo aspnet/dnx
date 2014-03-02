@@ -1,6 +1,7 @@
 ﻿
-namespace Microsoft.Net.Runtime.Loader
+namespace Microsoft.Net.Runtime
 {
+    [AssemblyNeutral]
     public interface IMetadataReference
     {
     }

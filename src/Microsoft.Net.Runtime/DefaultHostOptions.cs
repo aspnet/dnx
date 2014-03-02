@@ -1,4 +1,5 @@
 ﻿
+using System.Runtime.Versioning;
 namespace Microsoft.Net.Runtime
 {
     public class DefaultHostOptions
@@ -7,7 +8,7 @@ namespace Microsoft.Net.Runtime
 
         public string ApplicationBaseDirectory { get; set; }
 
-        public string TargetFramework { get; set; }
+        public FrameworkName TargetFramework { get; set; }
 
         public bool WatchFiles { get; set; }
 

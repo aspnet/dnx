@@ -95,7 +95,7 @@ namespace NuGet
             { new FrameworkName("Windows, Version=v8.0"), new FrameworkName(".NETCore, Version=v4.5") },
             { new FrameworkName("Windows, Version=v8.1"), new FrameworkName(".NETCore, Version=v4.5.1") },
 
-            // Temporary hack to make K 1.0 is compatible with NetCore 4.5.1
+            // HACK: Temporary hack to make K 1.0 is compatible with NetCore 4.5.1
             { new FrameworkName("K, Version=v1.0"), new FrameworkName(".NETCore, Version=v4.5.1") }
         };
 

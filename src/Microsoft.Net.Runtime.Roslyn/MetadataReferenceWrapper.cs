@@ -3,14 +3,14 @@ using Microsoft.Net.Runtime.Loader;
 
 namespace Microsoft.Net.Runtime.Roslyn
 {
-    public class MetadataReferenceWrapper : IMetadataReference
+    public class MetadataReferenceWrapper : IRoslynMetadataReference
     {
         public MetadataReferenceWrapper(MetadataReference metadataReference)
         {
             MetadataReference = metadataReference;
         }
 
-        public MetadataReference MetadataReference { get; set; }
+        public MetadataReference MetadataReference { get; private set; }
 
         public override string ToString()
         {

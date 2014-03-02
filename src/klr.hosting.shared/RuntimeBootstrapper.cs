@@ -115,13 +115,18 @@ namespace klr.hosting
                 // var hostContainer = new klr.host.HostContainer();
                 // var rootHost = new klr.host.RootHost(loaderEngine, searchPaths);
                 // hostContainer.AddHost(rootHost);
-                // var bootstrapper = new klr.host.Bootstrapper();
+                // var exporter = new klr.host.DependencyExporter(searchPaths);
+                // var bootstrapper = new klr.host.Bootstrapper(hostContainer, loaderEngine, exporter);
                 // bootstrapper.Main(bootstrapperArgs);
 
                 var hostContainerType = assembly.GetType("klr.host.HostContainer");
                 var rootHostType = assembly.GetType("klr.host.RootHost");
+                var exporterType = assembly.GetType("klr.host.DependencyExporter");
+
                 var hostContainer = Activator.CreateInstance(hostContainerType);
                 var rootHost = Activator.CreateInstance(rootHostType, new object[] { loaderEngine, searchPaths });
+                var exporter = Activator.CreateInstance(exporterType, new object[] { searchPaths });
+
                 MethodInfo addHostMethodInfo = hostContainerType.GetTypeInfo().GetDeclaredMethod("AddHost");
                 var disposable = (IDisposable)addHostMethodInfo.Invoke(hostContainer, new[] { rootHost });
                 var hostContainerLoad = hostContainerType.GetTypeInfo().GetDeclaredMethod("Load");
@@ -130,7 +135,7 @@ namespace klr.hosting
 
                 var bootstrapperType = assembly.GetType("klr.host.Bootstrapper");
                 var mainMethod = bootstrapperType.GetTypeInfo().GetDeclaredMethod("Main");
-                var bootstrapper = Activator.CreateInstance(bootstrapperType, hostContainer, loaderEngine);
+                var bootstrapper = Activator.CreateInstance(bootstrapperType, hostContainer, loaderEngine, exporter);
 
                 using (disposable)
                 {

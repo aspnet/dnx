@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.Versioning;
 using System.Text;
-using Microsoft.Net.Runtime.Services;
 
 namespace Microsoft.Net.Runtime
 {

@@ -1,4 +1,5 @@
-﻿namespace Microsoft.Net.Runtime.Loader
+﻿
+namespace Microsoft.Net.Runtime.Loader
 {
     public class SourceFileReference : ISourceFileReference
     {

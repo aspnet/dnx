@@ -14,18 +14,19 @@ namespace Microsoft.Net.ApplicationHost
     {
         private static readonly Dictionary<string, CommandOptionType> _options = new Dictionary<string, CommandOptionType>
         {
-            { "framework", CommandOptionType.SingleValue },
             { "nobin", CommandOptionType.NoValue },
             { "watch", CommandOptionType.NoValue }
         };
 
         private readonly IHostContainer _container;
-        private readonly IAssemblyLoaderEngine _loaderEngine;
+        private readonly IApplicationEnvironment _environment;
+        private readonly IServiceProvider _serviceProvider;
 
-        public Program(IHostContainer container, IAssemblyLoaderEngine loaderEngine)
+        public Program(IHostContainer container, IApplicationEnvironment environment, IServiceProvider serviceProvider)
         {
             _container = container;
-            _loaderEngine = loaderEngine;
+            _environment = environment;
+            _serviceProvider = serviceProvider;
         }
 
         public async Task<int> Main(string[] args)
@@ -35,7 +36,7 @@ namespace Microsoft.Net.ApplicationHost
 
             ParseArgs(args, out options, out programArgs);
 
-            var host = new DefaultHost(options, _loaderEngine);
+            var host = new DefaultHost(options, _serviceProvider);
 
             if (host.Project == null)
             {
@@ -80,13 +81,9 @@ namespace Microsoft.Net.ApplicationHost
             defaultHostOptions = new DefaultHostOptions();
             defaultHostOptions.UseCachedCompilations = !options.HasOption("nobin");
             defaultHostOptions.WatchFiles = options.HasOption("watch");
-            defaultHostOptions.TargetFramework = Environment.GetEnvironmentVariable("TARGET_FRAMEWORK") ?? options.GetValue("framework");
+            defaultHostOptions.TargetFramework = _environment.TargetFramework;
+            defaultHostOptions.ApplicationBaseDirectory = _environment.ApplicationBasePath;
 
-#if NET45
-            defaultHostOptions.ApplicationBaseDirectory = AppDomain.CurrentDomain.SetupInformation.ApplicationBase;
-#else
-            defaultHostOptions.ApplicationBaseDirectory = (string)typeof(AppDomain).GetRuntimeMethod("GetData", new[] { typeof(string) }).Invoke(AppDomain.CurrentDomain, new object[] { "APPBASE" });
-#endif
             if (options.RemainingArgs.Count > 0)
             {
                 defaultHostOptions.ApplicationName = options.RemainingArgs[0];
