@@ -88,7 +88,7 @@ var CORECLR_PATH = '${Environment.GetEnvironmentVariable("CORECLR_PATH")}'
     var x86Target="x86"
     var x64Target="amd64"
     
-    copy sourceDir='${SCRIPTS_DIR}' outputDir='${TOOLS_DIR}' overwrite='${true}'
+    copy sourceDir='${SCRIPTS_DIR}' outputDir='${TOOLS_DIR}' include='*.cmd' overwrite='${true}'
 
     copy sourceDir='${Path.Combine(BUILD_DIR2, "klr", "bin", "Win32", Configuration)}' outputDir='${Path.Combine(TOOLS_BIN_DIR, x86Target)}' include='*.exe' overwrite='${true}'
     copy sourceDir='${Path.Combine(BUILD_DIR2, "klr", "bin", "x64", Configuration)}' outputDir='${Path.Combine(TOOLS_BIN_DIR, x64Target)}' include='*.exe' overwrite='${true}'
@@ -138,11 +138,9 @@ var CORECLR_PATH = '${Environment.GetEnvironmentVariable("CORECLR_PATH")}'
     @{
         foreach(var file in Files.Include(Path.Combine(TOOLS_DIR, "*.cmd")))
         {
-            var script = File.ReadAllText(file)
-                             .Replace(@"..\bin\Win32\Debug", @"bin\%PLATFORM%")
-                             .Replace(@"FRAMEWORK=K", @"FRAMEWORK=k10");
+            var script = File.ReadAllText(file);
 
-            script = Regex.Replace(script, @"LIB_PATH=%~dp0\.\.\\src(.*)", @"LIB_PATH=%~dp0%FRAMEWORK%");
+            script = Regex.Replace(script, @"REM \<dev\>(.*?)REM \<\/dev\>(\s*)", @"", RegexOptions.Singleline);
 
             File.WriteAllText(file, script);
         }
@@ -247,6 +245,6 @@ var CORECLR_PATH = '${Environment.GetEnvironmentVariable("CORECLR_PATH")}'
     }
     copy sourceDir='${ROOT}' outputDir='${SDK_ROOT}' include='ProjectK.nuspec' overwrite='${true}'
     nuget-pack nuspecFile='${Path.Combine(SDK_ROOT, "ProjectK.nuspec")}' packageVersion='${FULL_VERSION}' outputDir='${BUILD_DIR2}' extra='-NoPackageAnalysis'
-    
+
 macro name='NuGetInstall' Package='string' OutputDir='string' Extra='string'
     nuget-install package='${Package}' outputDir='${OutputDir}' extra='${Extra}'
