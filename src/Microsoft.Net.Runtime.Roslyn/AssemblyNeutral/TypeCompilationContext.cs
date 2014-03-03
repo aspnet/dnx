@@ -34,6 +34,7 @@ namespace Microsoft.Net.Runtime.Roslyn
         {
             get
             {
+                // TODO: Fix this to generate proper names (seems that the generic type's arity isn't captured here)
                 return TypeSymbol.ContainingNamespace + "." + TypeSymbol.Name;
             }
         }
@@ -52,11 +53,11 @@ namespace Microsoft.Net.Runtime.Roslyn
 
         public void SymbolUsage(Action<ISymbol> shallowUsage, Action<ISymbol> deepUsage)
         {
-            deepUsage(TypeSymbol.BaseType);
+            DoTypeSymbol(deepUsage, TypeSymbol.BaseType);
 
             foreach (var symbol in TypeSymbol.AllInterfaces)
             {
-                deepUsage(symbol);
+                DoTypeSymbol(deepUsage, symbol);
             }
 
             AttributeDataSymbolUsage(TypeSymbol.GetAttributes(), deepUsage);
@@ -71,21 +72,46 @@ namespace Microsoft.Net.Runtime.Roslyn
 
                 if (propertyMember != null)
                 {
-                    shallowUsage(propertyMember.Type);
+                    DoTypeSymbol(shallowUsage, propertyMember.Type);
                 }
+                
                 if (fieldMember != null)
                 {
-                    shallowUsage(fieldMember.Type);
+                    DoTypeSymbol(shallowUsage, fieldMember.Type);
                 }
+
                 if (methodMember != null)
                 {
-                    shallowUsage(methodMember.ReturnType);
+                    DoTypeSymbol(shallowUsage, methodMember.ReturnType);
                     AttributeDataSymbolUsage(methodMember.GetReturnTypeAttributes(), deepUsage);
                     foreach (var parameter in methodMember.Parameters)
                     {
-                        shallowUsage(parameter.Type);
+                        DoTypeSymbol(shallowUsage, parameter.Type);
                         AttributeDataSymbolUsage(parameter.GetAttributes(), deepUsage);
                     }
+                }
+            }
+        }
+
+        private void DoTypeSymbol(Action<ISymbol> usage, ITypeSymbol typeSymbol)
+        {
+            usage(typeSymbol);
+
+            var namedTypeSymbol = typeSymbol as INamedTypeSymbol;
+            if (namedTypeSymbol != null)
+            {
+                usage(namedTypeSymbol.OriginalDefinition);
+
+                foreach (var arg in namedTypeSymbol.TypeArguments)
+                {
+                    if (arg is ITypeParameterSymbol)
+                    {
+                        // Unspecified type paramters can be skipped
+                        continue;
+                    }
+
+                    // TODO: Stack guard (or just use a stack)
+                    DoTypeSymbol(usage, arg);
                 }
             }
         }
@@ -101,13 +127,15 @@ namespace Microsoft.Net.Runtime.Roslyn
         private void AttributeDataSymbolUsage(AttributeData attributeData, Action<ISymbol> deepUsage)
         {
             deepUsage(attributeData.AttributeClass);
+
             foreach (var argument in attributeData.ConstructorArguments)
             {
-                deepUsage(argument.Type);
+                DoTypeSymbol(deepUsage, argument.Type);
             }
+
             foreach (var argument in attributeData.NamedArguments)
             {
-                deepUsage(argument.Value.Type);
+                DoTypeSymbol(deepUsage, argument.Value.Type);
             }
         }
 
