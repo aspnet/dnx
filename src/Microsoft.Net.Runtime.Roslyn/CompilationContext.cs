@@ -2,6 +2,7 @@
 using System.IO;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
+using Microsoft.Net.Runtime.Loader;
 
 namespace Microsoft.Net.Runtime.Roslyn
 {
@@ -15,8 +16,11 @@ namespace Microsoft.Net.Runtime.Roslyn
         // Processed information
         public CSharpCompilation Compilation { get; set; }
         public IList<Diagnostic> Diagnostics { get; set; }
-        public IList<CompilationContext> ProjectReferences { get; set; }
         public IDictionary<string, AssemblyNeutralMetadataReference> AssemblyNeutralReferences { get; set; }
+
+        public IList<CompilationContext> ProjectReferences { get; set; }
+        public IList<IDependencyExport> Exports { get; set; }
+
 
         public CompilationContext()
         {

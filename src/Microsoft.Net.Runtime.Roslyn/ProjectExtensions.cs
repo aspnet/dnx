@@ -64,7 +64,7 @@ namespace Microsoft.Net.Runtime.Roslyn
             Platform platform;
             if (!Enum.TryParse<Platform>(platformValue, out platform))
             {
-                platform = Platform.AnyCPU;
+                platform = Platform.AnyCpu;
             }
 
             ReportWarning warningOption = warningsAsErrors ? ReportWarning.Error : ReportWarning.Default;

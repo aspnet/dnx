@@ -9,11 +9,6 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.CSharp.Symbols;
 using Microsoft.CodeAnalysis.Emit;
 
-#if NET45 // TODO: Temporary due to CoreCLR and Desktop Roslyn being out of sync
-using EmitResult = Microsoft.CodeAnalysis.Emit.CommonEmitResult;
-using AttributeData = Microsoft.CodeAnalysis.CommonAttributeData;
-#endif
-
 namespace Microsoft.Net.Runtime.Roslyn
 {
     public class TypeCompilationContext

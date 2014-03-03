@@ -153,6 +153,7 @@ var CORECLR_PATH = '${Environment.GetEnvironmentVariable("CORECLR_PATH")}'
 
         var packages = new[] { "Newtonsoft.Json", 
                                "Microsoft.CodeAnalysis", 
+                               "Microsoft.CodeAnalysis.Common", 
                                "Microsoft.CodeAnalysis.CSharp", 
                                "System.Collections.Immutable", 
                                "System.Reflection.Metadata.Ecma335" };
@@ -162,7 +163,7 @@ var CORECLR_PATH = '${Environment.GetEnvironmentVariable("CORECLR_PATH")}'
         {
             foreach (var package in packages)
             {
-                var packageDir = Directory.GetDirectories(PACKAGES_DIR, package + "*").FirstOrDefault();
+                var packageDir = Directory.GetDirectories(PACKAGES_DIR, package + "*").OrderByDescending(d => d).FirstOrDefault();
 
                 if(packageDir == null)
                 {
@@ -194,7 +195,7 @@ var CORECLR_PATH = '${Environment.GetEnvironmentVariable("CORECLR_PATH")}'
                 foreach(var fi in di.GetFiles("*.dll"))
                 {
                     string packageFileDest = Path.Combine(TOOLS_DIR, framework, fi.Name);
-                    File.Copy(fi.FullName, packageFileDest);
+                    File.Copy(fi.FullName, packageFileDest, true);
 
                     Log.Info("Copying to " + packageFileDest);
                 }

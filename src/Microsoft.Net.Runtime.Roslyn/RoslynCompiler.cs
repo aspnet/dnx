@@ -6,6 +6,7 @@ using System.Linq;
 using System.Runtime.Versioning;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
+using Microsoft.CodeAnalysis.Text;
 using Microsoft.Net.Runtime.FileSystem;
 using Microsoft.Net.Runtime.Loader;
 using NuGet;
@@ -137,7 +138,8 @@ namespace Microsoft.Net.Runtime.Roslyn
             {
                 Compilation = newCompilation,
                 Project = project,
-                ProjectReferences = projectReferences
+                ProjectReferences = projectReferences,
+                Exports = exports
             };
 
             foreach (var t in assemblyNeutralWorker.TypeCompilations)
@@ -176,7 +178,8 @@ namespace Microsoft.Net.Runtime.Roslyn
                 }
 
                 _watcher.WatchFile(sourcePath);
-                trees.Add(CSharpSyntaxTree.ParseFile(sourcePath, parseOptions));
+                var sourceText = SourceText.From(File.ReadAllText(sourcePath));
+                trees.Add(CSharpSyntaxTree.ParseText(sourceText, sourcePath, parseOptions));
             }
 
             foreach (var sourceReference in exports.SelectMany(export => export.SourceReferences))
@@ -186,7 +189,8 @@ namespace Microsoft.Net.Runtime.Roslyn
                 {
                     var sourcePath = sourceFileReference.Path;
                     _watcher.WatchFile(sourcePath);
-                    trees.Add(CSharpSyntaxTree.ParseFile(sourcePath, parseOptions));
+                    var sourceText = SourceText.From(File.ReadAllText(sourcePath));
+                    trees.Add(CSharpSyntaxTree.ParseText(sourceText, sourcePath, parseOptions));
                 }
             }
 
@@ -287,7 +291,7 @@ namespace Microsoft.Net.Runtime.Roslyn
             }
 
             // Now add the final set to the final set of references
-            references.AddRange(paths.Select(path => new MetadataFileReference(path)));
+            references.AddRange(paths.Select(path => MetadataFileReferenceFactory.CreateReference(path)));
         }
 
         private MetadataReference ConvertMetadataReference(IMetadataReference metadataReference)
@@ -296,7 +300,7 @@ namespace Microsoft.Net.Runtime.Roslyn
 
             if (fileMetadataReference != null)
             {
-                return new MetadataFileReference(fileMetadataReference.Path);
+                return MetadataFileReferenceFactory.CreateReference(fileMetadataReference.Path);
             }
 
             var metadataReferenceWrapper = metadataReference as MetadataReferenceWrapper;
@@ -316,7 +320,7 @@ namespace Microsoft.Net.Runtime.Roslyn
 
         private static DependencyExport CreateDependencyExport(string assemblyLocation)
         {
-            return CreateDependencyExport(new MetadataFileReference(assemblyLocation));
+            return CreateDependencyExport(MetadataFileReferenceFactory.CreateReference(assemblyLocation));
         }
     }
 }

@@ -49,7 +49,7 @@ namespace Microsoft.Net.Runtime.Roslyn
             FrameworkInformation frameworkInfo;
             if (_cache.TryGetValue(frameworkName, out frameworkInfo))
             {
-                return frameworkInfo.Assemblies.Select(a => new MetadataFileReference(a.Path));
+                return frameworkInfo.Assemblies.Select(a => MetadataFileReferenceFactory.CreateReference(a.Path));
             }
 
             throw new InvalidOperationException(String.Format("Unknown target framework '{0}'.", frameworkName));
@@ -91,7 +91,7 @@ namespace Microsoft.Net.Runtime.Roslyn
             string assemblyLocation;
             if (_globalAssemblyCache.TryResolvePartialName(name, out assemblyLocation))
             {
-                return new MetadataFileReference(assemblyLocation);
+                return MetadataFileReferenceFactory.CreateReference(assemblyLocation);
             }
 
             throw new InvalidOperationException("Unable to resolve GAC reference");

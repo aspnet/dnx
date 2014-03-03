@@ -9,10 +9,6 @@ using NuGet;
 using Microsoft.Net.Runtime.Loader;
 using System.Runtime.Versioning;
 
-#if NET45 // TODO: Temporary due to CoreCLR and Desktop Roslyn being out of sync
-using EmitResult = Microsoft.CodeAnalysis.Emit.CommonEmitResult;
-#endif
-
 namespace Microsoft.Net.Runtime.Roslyn
 {
     public class RoslynArtifactsProducer
@@ -171,7 +167,7 @@ namespace Microsoft.Net.Runtime.Roslyn
                     return false;
                 }
 
-                if (compilationContext.Diagnostics.Any(d => d.IsWarningAsError || 
+                if (compilationContext.Diagnostics.Any(d => d.IsWarningAsError ||
                                                        d.Severity == DiagnosticSeverity.Error))
                 {
                     return false;

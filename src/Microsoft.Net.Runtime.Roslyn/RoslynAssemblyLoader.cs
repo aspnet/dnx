@@ -8,10 +8,6 @@ using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.Net.Runtime.Loader;
 using Microsoft.Net.Runtime.FileSystem;
 
-#if NET45 // TODO: Temporary due to CoreCLR and Desktop Roslyn being out of sync
-using EmitResult = Microsoft.CodeAnalysis.Emit.CommonEmitResult;
-#endif
-
 namespace Microsoft.Net.Runtime.Roslyn
 {
     public class RoslynAssemblyLoader : IAssemblyLoader, IDependencyExporter
@@ -148,11 +144,8 @@ namespace Microsoft.Net.Runtime.Roslyn
 
         private static IList<string> GetErrors(IEnumerable<Diagnostic> diagnostis)
         {
-#if NET45 // TODO: Temporary due to CoreCLR and Desktop Roslyn being out of sync
-            var formatter = DiagnosticFormatter.Instance;
-#else
             var formatter = new DiagnosticFormatter();
-#endif
+
             return diagnostis.Select(d => formatter.Format(d)).ToList();
         }
 

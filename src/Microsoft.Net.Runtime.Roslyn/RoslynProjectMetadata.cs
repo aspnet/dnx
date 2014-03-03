@@ -26,17 +26,14 @@ namespace Microsoft.Net.Runtime.Roslyn
             })
             .ToList();
 
-            References = context.Compilation.References.OfType<MetadataFileReference>().Select(r => r.FullPath)
-                                                                  .ToList();
+            References = context.Exports.OfType<IMetadataFileReference>().Select(r => r.Path)
+                                                                         .ToList();
 
             ProjectReferences = context.ProjectReferences.Select(p => p.Project.ProjectFilePath)
                                                                     .ToList();
 
-#if NET45 // TODO: Temporary due to CoreCLR and Desktop Roslyn being out of sync
-            var formatter = DiagnosticFormatter.Instance;
-#else
             var formatter = new DiagnosticFormatter();
-#endif
+
             var diagnostics = context.Compilation.GetDiagnostics()
                 .Concat(context.Diagnostics)
                 .ToList();

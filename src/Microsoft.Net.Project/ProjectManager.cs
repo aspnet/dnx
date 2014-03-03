@@ -273,11 +273,8 @@ namespace Microsoft.Net.Project
 
         private static string GetMessage(Diagnostic diagnostic)
         {
-#if NET45 // TODO: Temporary due to CoreCLR and Desktop Roslyn being out of sync
-            var formatter = DiagnosticFormatter.Instance;
-#else
             var formatter = new DiagnosticFormatter();
-#endif
+
             return formatter.Format(diagnostic);
         }
 
