@@ -37,16 +37,16 @@ namespace Microsoft.Net.DesignTimeHost
             int hostPID = Int32.Parse(args[1]);
 
             // Add a watch to the host PID. If it goes away we will self terminate
-            Process hostProcess = Process.GetProcessById(hostPID);
+            var hostProcess = Process.GetProcessById(hostPID);
             hostProcess.EnableRaisingEvents = true;
-            hostProcess.Exited += new EventHandler((s, e) => {Process.GetCurrentProcess().Kill();});
+            hostProcess.Exited += new EventHandler((s, e) => {Environment.Exit(0);});
 
-            string hostID = args[2];
+            string hostId = args[2];
 
-            OpenChannel(port, hostID).Wait();
+            OpenChannel(port, hostId).Wait();
         }
 
-        private async Task OpenChannel(int port, string hostID)
+        private async Task OpenChannel(int port, string hostId)
         {
             var listenSocket = new Socket(SocketType.Stream, ProtocolType.Tcp);
             listenSocket.Bind(new IPEndPoint(IPAddress.Loopback, port));
@@ -60,7 +60,7 @@ namespace Microsoft.Net.DesignTimeHost
 
                 Console.WriteLine("Client accepted {0}", acceptSocket.LocalEndPoint);
 
-                var connection = new ConnectionContext(_loaderEngine, new NetworkStream(acceptSocket), hostID);
+                var connection = new ConnectionContext(_loaderEngine, new NetworkStream(acceptSocket), hostId);
 
                 connection.Start();
             }
