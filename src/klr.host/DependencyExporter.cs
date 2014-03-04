@@ -34,6 +34,7 @@ namespace klr.host
             public DependencyExport(string file)
             {
                 MetadataReferences = new List<IMetadataReference>();
+                SourceReferences = new List<ISourceReference>();
                 MetadataReferences.Add(new MetadataFileReference(file));
             }
 

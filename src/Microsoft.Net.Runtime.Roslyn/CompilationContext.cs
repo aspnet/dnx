@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.IO;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 
@@ -27,7 +28,16 @@ namespace Microsoft.Net.Runtime.Roslyn
         {
             foreach (var reference in AssemblyNeutralReferences.Values)
             {
-                resources.Add(new ResourceDescription(reference.Name + ".dll", () => reference.OutputStream, isPublic: true));
+                resources.Add(new ResourceDescription(reference.Name + ".dll", () =>
+                {
+                    // REVIEW: Performance?
+                    var ms = new MemoryStream();
+                    reference.OutputStream.Position = 0;
+                    reference.OutputStream.CopyTo(ms);
+                    ms.Position = 0;
+                    return ms;
+
+                }, isPublic: true));
             }
         }
     }
