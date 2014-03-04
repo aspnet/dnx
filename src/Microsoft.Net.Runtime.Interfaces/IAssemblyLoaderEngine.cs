@@ -2,6 +2,7 @@
 
 namespace Microsoft.Net.Runtime
 {
+    [AssemblyNeutral]
     public interface IAssemblyLoaderEngine
     {
         Assembly LoadFile(string path);

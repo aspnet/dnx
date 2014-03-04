@@ -109,7 +109,8 @@ var CORECLR_PATH = '${Environment.GetEnvironmentVariable("CORECLR_PATH")}'
         var sharedSourceAssemblies = new [] { 
             Path.Combine(BUILD_DIR2, "klr.hosting.shared/**/*.dll"), 
             Path.Combine(BUILD_DIR2, "Microsoft.Net.CommandLineUtils/**/*.dll"), 
-            Path.Combine(BUILD_DIR2, "Microsoft.Net.Runtime.Common/**/*.dll")
+            Path.Combine(BUILD_DIR2, "Microsoft.Net.Runtime.Common/**/*.dll"),
+            Path.Combine(BUILD_DIR2, "Microsoft.Net.Runtime.Interfaces/**/*.dll")
         };
         
         Directory.CreateDirectory(Path.Combine(TOOLS_DIR, "k10"));
