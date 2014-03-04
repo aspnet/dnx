@@ -2,8 +2,7 @@
 
 namespace Microsoft.Net.Runtime
 {
-    // TODO: Fix issues with tooling and neutral interfaces
-    // [AssemblyNeutral]
+    [AssemblyNeutral]
     public interface IRoslynMetadataReference : IMetadataReference
     {
         MetadataReference MetadataReference { get; }
