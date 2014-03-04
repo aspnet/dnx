@@ -20,10 +20,13 @@ namespace Microsoft.Net.Runtime.Roslyn
     public class AssemblyNeutralWorker
     {
         private IList<TypeCompilationContext> _typeCompilationContexts = new List<TypeCompilationContext>();
+        private readonly IDictionary<string, AssemblyNeutralMetadataReference> _existingReferences;
 
-        public AssemblyNeutralWorker(CSharpCompilation compilation)
+        public AssemblyNeutralWorker(CSharpCompilation compilation, 
+                                     IDictionary<string, AssemblyNeutralMetadataReference> existingReferences)
         {
             OriginalCompilation = compilation;
+            _existingReferences = existingReferences;
         }
 
         public CSharpCompilation OriginalCompilation { get; private set; }
@@ -74,6 +77,11 @@ namespace Microsoft.Net.Runtime.Roslyn
 
             foreach (var context in _typeCompilationContexts)
             {
+                if (_existingReferences.ContainsKey(context.AssemblyName))
+                {
+                    continue;
+                }
+
                 var result = context.Generate();
 
                 diagnostics.AddRange(result.Diagnostics);
@@ -82,23 +90,23 @@ namespace Microsoft.Net.Runtime.Roslyn
             return diagnostics;
         }
 
-        public void Generate(IDictionary<string, AssemblyNeutralMetadataReference> references)
+        public void Generate()
         {
             Compilation = OriginalCompilation;
 
-            Dictionary<SyntaxTree, List<SyntaxNode>> treeRemoveNodes = new Dictionary<SyntaxTree, List<SyntaxNode>>();
+            var treeRemoveNodes = new Dictionary<SyntaxTree, List<SyntaxNode>>();
             foreach (var neutralTypeContext in _typeCompilationContexts)
             {
-                if (neutralTypeContext.EmitResult == null ||
-                    !neutralTypeContext.EmitResult.Success)
+                if (neutralTypeContext.EmitResult != null && !neutralTypeContext.EmitResult.Success)
                 {
+                    // Only skip this reference if there was a failed emit
                     continue;
                 }
 
                 MetadataReference neutralReference = neutralTypeContext.Reference;
 
                 AssemblyNeutralMetadataReference assemblyNeutralReference;
-                if (references.TryGetValue(neutralTypeContext.AssemblyName, out assemblyNeutralReference))
+                if (_existingReferences.TryGetValue(neutralTypeContext.AssemblyName, out assemblyNeutralReference))
                 {
                     neutralReference = assemblyNeutralReference.MetadataReference;
                 }

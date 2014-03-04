@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
@@ -192,7 +193,8 @@ namespace Something
                 },
                 syntaxTrees: fileContents.Select(text => CSharpSyntaxTree.ParseText(text)));
 
-            var worker = new AssemblyNeutralWorker(compilation);
+            var worker = new AssemblyNeutralWorker(compilation, 
+                new Dictionary<string, AssemblyNeutralMetadataReference>());
             worker.FindTypeCompilations(compilation.GlobalNamespace);
             worker.OrderTypeCompilations();
             return worker;

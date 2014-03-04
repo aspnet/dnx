@@ -21,7 +21,7 @@ namespace Microsoft.Net.Runtime.Roslyn
             RawReferences = context.AssemblyNeutralReferences.Select(r =>
             {
                 var ms = new MemoryStream();
-                r.OutputStream.CopyTo(ms);
+                r.Value.OutputStream.CopyTo(ms);
                 return ms.ToArray();
             })
             .ToList();

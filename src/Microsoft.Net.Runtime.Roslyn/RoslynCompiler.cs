@@ -61,8 +61,6 @@ namespace Microsoft.Net.Runtime.Roslyn
             Trace.TraceInformation("[{0}]: Found project '{1}' framework={2}", GetType().Name, project.Name, targetFramework);
 
             var exports = new List<IDependencyExport>();
-            var diagnostics = new List<Diagnostic>();
-            var projectReferences = new List<CompilationContext>();
 
             if (project.Dependencies.Count > 0 ||
                 targetFrameworkConfig.Dependencies.Count > 0)
@@ -82,17 +80,6 @@ namespace Microsoft.Net.Runtime.Roslyn
                     else
                     {
                         exports.Add(dependencyExport);
-
-                        var roslynExport = dependencyExport as RoslynDepenencyExport;
-
-                        // Roslyn exports have more information that we might want to flow to the 
-                        // original compilation
-                        if (roslynExport != null)
-                        {
-                            projectReferences.Add(roslynExport.CompilationContext);
-
-                            diagnostics.AddRange(roslynExport.CompilationContext.Diagnostics);
-                        }
                     }
                 }
 
@@ -116,8 +103,15 @@ namespace Microsoft.Net.Runtime.Roslyn
 
             IDictionary<string, AssemblyNeutralMetadataReference> assemblyNeutralReferences;
             IList<MetadataReference> exportedReferences;
+            IList<CompilationContext> projectReferences;
 
-            ExtractReferences(exports, out exportedReferences, out assemblyNeutralReferences);
+            ExtractReferences(exports,
+                              out exportedReferences,
+                              out projectReferences,
+                              out assemblyNeutralReferences);
+
+            Trace.TraceInformation("[{0}]: Exported References {1}", GetType().Name, exportedReferences.Count);
+            Trace.TraceInformation("[{0}]: Assembly Neutral References {1}", GetType().Name, assemblyNeutralReferences.Count);
 
             var references = new List<MetadataReference>();
             references.AddRange(exportedReferences);
@@ -129,28 +123,35 @@ namespace Microsoft.Net.Runtime.Roslyn
                 syntaxTrees: trees,
                 references: references);
 
-            var assemblyNeutralWorker = new AssemblyNeutralWorker(compilation);
-            assemblyNeutralWorker.FindTypeCompilations(compilation.GlobalNamespace);
+            var assemblyNeutralWorker = new AssemblyNeutralWorker(compilation, assemblyNeutralReferences);
+            assemblyNeutralWorker.FindTypeCompilations(compilation.Assembly.GlobalNamespace);
+
             assemblyNeutralWorker.OrderTypeCompilations();
             var assemblyNeutralTypeDiagnostics = assemblyNeutralWorker.GenerateTypeCompilations();
 
-            assemblyNeutralWorker.Generate(assemblyNeutralReferences);
+            assemblyNeutralWorker.Generate();
 
-            var oldCompilation = assemblyNeutralWorker.Compilation;
-            var newCompilation = oldCompilation.WithReferences(
-                oldCompilation.References.Concat(assemblyNeutralReferences.Values.Select(r => r.MetadataReference)));
+            var newCompilation = assemblyNeutralWorker.Compilation;
 
             compilationContext = new CompilationContext
             {
                 Compilation = newCompilation,
                 Project = project,
-                AssemblyNeutralReferences = assemblyNeutralWorker.TypeCompilations.Select(t => new AssemblyNeutralMetadataReference(t)).ToList(),
                 ProjectReferences = projectReferences
             };
 
-            compilationContext.Diagnostics.AddRange(assemblyNeutralTypeDiagnostics);
+            foreach (var t in assemblyNeutralWorker.TypeCompilations)
+            {
+                compilationContext.AssemblyNeutralReferences[t.AssemblyName] = new AssemblyNeutralMetadataReference(t);
+            }
 
-            compilationContext.Diagnostics.AddRange(diagnostics);
+            // Add assembly neutral interfaces from 
+            foreach (var t in assemblyNeutralReferences.Values)
+            {
+                compilationContext.AssemblyNeutralReferences[t.Name] = t;
+            }
+
+            compilationContext.Diagnostics.AddRange(assemblyNeutralTypeDiagnostics);
 
             compilationCache[name] = compilationContext;
 
@@ -231,7 +232,7 @@ namespace Microsoft.Net.Runtime.Roslyn
 
             var metadataReference = compilationContext.Compilation.ToMetadataReference(embedInteropTypes: compilationContext.Project.EmbedInteropTypes);
             metadataReferences.Add(new MetadataReferenceWrapper(metadataReference));
-            metadataReferences.AddRange(compilationContext.AssemblyNeutralReferences);
+            metadataReferences.AddRange(compilationContext.AssemblyNeutralReferences.Values);
 
             foreach (var sharedFile in compilationContext.Project.SharedFiles)
             {
@@ -243,14 +244,25 @@ namespace Microsoft.Net.Runtime.Roslyn
 
         private void ExtractReferences(List<IDependencyExport> dependencyExports,
                                        out IList<MetadataReference> references,
+                                       out IList<CompilationContext> projectReferences,
                                        out IDictionary<string, AssemblyNeutralMetadataReference> assemblyNeutralReferences)
         {
             var paths = new HashSet<string>();
             references = new List<MetadataReference>();
+            projectReferences = new List<CompilationContext>();
             assemblyNeutralReferences = new Dictionary<string, AssemblyNeutralMetadataReference>();
 
             foreach (var export in dependencyExports)
             {
+                var roslynExport = export as RoslynDepenencyExport;
+
+                // Roslyn exports have more information that we might want to flow to the 
+                // original compilation
+                if (roslynExport != null)
+                {
+                    projectReferences.Add(roslynExport.CompilationContext);
+                }
+
                 foreach (var reference in export.MetadataReferences)
                 {
                     var fileMetadataReference = reference as IMetadataFileReference;
@@ -268,10 +280,8 @@ namespace Microsoft.Net.Runtime.Roslyn
                         {
                             assemblyNeutralReferences[assemblyNeutralReference.Name] = assemblyNeutralReference;
                         }
-                        else
-                        {
-                            references.Add(ConvertMetadataReference(reference));
-                        }
+
+                        references.Add(ConvertMetadataReference(reference));
                     }
                 }
             }

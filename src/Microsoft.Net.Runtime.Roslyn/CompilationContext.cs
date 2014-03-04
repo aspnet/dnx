@@ -14,37 +14,20 @@ namespace Microsoft.Net.Runtime.Roslyn
         // Processed information
         public CSharpCompilation Compilation { get; set; }
         public IList<Diagnostic> Diagnostics { get; set; }
-        public IList<AssemblyNeutralMetadataReference> AssemblyNeutralReferences { get; set; }
         public IList<CompilationContext> ProjectReferences { get; set; }
+        public IDictionary<string, AssemblyNeutralMetadataReference> AssemblyNeutralReferences { get; set; }
 
         public CompilationContext()
         {
             Diagnostics = new List<Diagnostic>();
+            AssemblyNeutralReferences = new Dictionary<string, AssemblyNeutralMetadataReference>();
         }
 
         internal void PopulateAllAssemblyNeutralResources(IList<ResourceDescription> resources)
         {
-            PopulateAllAssemblyNeutralResources(resources, new HashSet<string>());
-        }
-
-        internal void PopulateAllAssemblyNeutralResources(IList<ResourceDescription> resources, HashSet<string> used)
-        {
-            // TODO: Only embed things that are used (we need roslyn's help to know this)
-            // This will over embed right now since it's embedding transitively and we don't want that
-            foreach (var reference in AssemblyNeutralReferences)
+            foreach (var reference in AssemblyNeutralReferences.Values)
             {
-                if (used.Contains(reference.Name))
-                {
-                    continue;
-                }
-
                 resources.Add(new ResourceDescription(reference.Name + ".dll", () => reference.OutputStream, isPublic: true));
-                used.Add(reference.Name);
-            }
-
-            foreach (var projectContext in ProjectReferences)
-            {
-                projectContext.PopulateAllAssemblyNeutralResources(resources, used);
             }
         }
     }
