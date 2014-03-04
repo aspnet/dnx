@@ -239,7 +239,9 @@ var CORECLR_PATH = '${Environment.GetEnvironmentVariable("CORECLR_PATH")}'
 
 #nuget-pack-runtime
     @{
-        foreach(var packageFile in Files.Include(Path.Combine(BUILD_DIR2, "**", "*.nupkg")))
+        var allPackages = Path.Combine(BUILD_DIR2, "**", "*.nupkg");
+        var excludePackages = Path.Combine(BUILD_DIR2, "**", "Microsoft.Net.Runtime.Interfaces*.nupkg");
+        foreach(var packageFile in Files.Include(allPackages).Exclude(excludePackages))
         {
             File.Delete(packageFile);
         }
