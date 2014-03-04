@@ -59,12 +59,7 @@ namespace Microsoft.Net.Runtime.Roslyn
 
             var resources = _resourceProvider.GetResources(project);
 
-            foreach (var reference in compilationContext.AssemblyNeutralReferences)
-            {
-                resources.Add(new ResourceDescription(reference.Name + ".dll",
-                                                      () => reference.OutputStream,
-                                                      isPublic: true));
-            }
+            compilationContext.PopulateAllAssemblyNeutralResources(resources);
 
             return CompileInMemory(name, compilationContext, resources);
         }
