@@ -62,7 +62,6 @@ namespace Microsoft.Net.DesignTimeHost
 
         private readonly Trigger<string> _appPath = new Trigger<string>();
         private readonly Trigger<FrameworkName> _targetFramework = new Trigger<FrameworkName>();
-        private readonly Trigger<DateTimeOffset> _remoteHeartbeat = new Trigger<DateTimeOffset>();
         private readonly Trigger<Nada> _filesChanged = new Trigger<Nada>();
 
         private readonly Trigger<State> _state = new Trigger<State>();
@@ -144,11 +143,6 @@ namespace Microsoft.Net.DesignTimeHost
                         _appPath.Value = data.ProjectFolder;
                         var targetFramework = VersionUtility.ParseFrameworkName(data.TargetFramework ?? "net45");
                         _targetFramework.Value = targetFramework == VersionUtility.UnsupportedFrameworkName ? new FrameworkName(data.TargetFramework) : targetFramework;
-                    }
-                    break;
-                case "Heartbeat":
-                    {
-                        _remoteHeartbeat.Value = DateTimeOffset.UtcNow;
                     }
                     break;
                 case "Teardown":
@@ -242,11 +236,6 @@ namespace Microsoft.Net.DesignTimeHost
                 });
                 _remote.Diagnostics = _local.Diagnostics;
             }
-            OnTransmit(new Message
-            {
-                ContextId = Id,
-                MessageType = "Heartbeat"
-            });
         }
 
         private bool IsDifferent(ConfigurationsMessage local, ConfigurationsMessage remote)

@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using Communication;
 using Microsoft.Net.DesignTimeHost.Models;
@@ -12,11 +13,13 @@ namespace Microsoft.Net.DesignTimeHost
         private readonly IAssemblyLoaderEngine _loaderEngine;
         private readonly Stream _stream;
         private ProcessingQueue _queue;
+        private string _hostId;
 
-        public ConnectionContext(IAssemblyLoaderEngine loaderEngine, Stream stream)
+        public ConnectionContext(IAssemblyLoaderEngine loaderEngine, Stream stream,  string hostId)
         {
             _loaderEngine = loaderEngine;
             _stream = stream;
+            _hostId = hostId;
         }
 
         public void Start()
@@ -28,6 +31,11 @@ namespace Microsoft.Net.DesignTimeHost
 
         public void OnReceive(Message message)
         {
+            // Check the hostId to ensure it is from our host - throw it away if not
+            if(!message.HostId.Equals(_hostId, StringComparison.Ordinal))
+            {
+                return;
+            }
             ApplicationContext applicationContext;
             if (!_contexts.TryGetValue(message.ContextId, out applicationContext))
             {
@@ -40,6 +48,7 @@ namespace Microsoft.Net.DesignTimeHost
 
         public void OnTransmit(Message message)
         {
+            message.HostId = _hostId;
             _queue.Post(message);
         }
     }

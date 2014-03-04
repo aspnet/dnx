@@ -3,6 +3,7 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
@@ -26,12 +27,26 @@ namespace Microsoft.Net.DesignTimeHost
 
         public void Main(string[] args)
         {
-            int port = args.Length == 0 ? 1334 : Int32.Parse(args[0]);
+            // Expect: port, host processid, hostID string
+            if(args.Length < 3)
+            {
+                Console.WriteLine("Invalid command line arguments");
+                return;
+            }
+            int port = Int32.Parse(args[0]);
+            int hostPID = Int32.Parse(args[1]);
 
-            OpenChannel(port).Wait();
+            // Add a watch to the host PID. If it goes away we will self terminate
+            var hostProcess = Process.GetProcessById(hostPID);
+            hostProcess.EnableRaisingEvents = true;
+            hostProcess.Exited += new EventHandler((s, e) => {Environment.Exit(0);});
+
+            string hostId = args[2];
+
+            OpenChannel(port, hostId).Wait();
         }
 
-        private async Task OpenChannel(int port)
+        private async Task OpenChannel(int port, string hostId)
         {
             var listenSocket = new Socket(SocketType.Stream, ProtocolType.Tcp);
             listenSocket.Bind(new IPEndPoint(IPAddress.Loopback, port));
@@ -45,7 +60,7 @@ namespace Microsoft.Net.DesignTimeHost
 
                 Console.WriteLine("Client accepted {0}", acceptSocket.LocalEndPoint);
 
-                var connection = new ConnectionContext(_loaderEngine, new NetworkStream(acceptSocket));
+                var connection = new ConnectionContext(_loaderEngine, new NetworkStream(acceptSocket), hostId);
 
                 connection.Start();
             }
@@ -56,6 +71,7 @@ namespace Microsoft.Net.DesignTimeHost
         {
             return Task.Factory.FromAsync((cb, state) => socket.BeginAccept(cb, state), ar => socket.EndAccept(ar), null);
         }
+
     }
 }
 #endif
