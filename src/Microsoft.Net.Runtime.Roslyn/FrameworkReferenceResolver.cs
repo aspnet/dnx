@@ -35,7 +35,7 @@ namespace Microsoft.Net.Runtime.Roslyn
 
         public IEnumerable<MetadataReference> GetDefaultReferences(FrameworkName frameworkName)
         {
-            if (frameworkName.Identifier == VersionUtility.DefaultTargetFramework.Identifier)
+            if (VersionUtility.IsDesktop(frameworkName))
             {
                 // Do not reference the entire desktop .NET framework by default
                 return new[] {

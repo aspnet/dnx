@@ -117,6 +117,11 @@ namespace NuGet
             }
         }
 
+        public static bool IsDesktop(FrameworkName frameworkName)
+        {
+            return frameworkName.Identifier == DefaultTargetFramework.Identifier;
+        }
+
         /// <summary>
         /// This function tries to normalize a string that represents framework version names into
         /// something a framework name that the package manager understands.

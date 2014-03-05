@@ -118,11 +118,16 @@ namespace Microsoft.Net.Runtime.Roslyn
             references.AddRange(exportedReferences);
             references.AddRange(_resolver.GetDefaultReferences(targetFramework));
 
+            // If we're targeting desktop then use desktop comparer
+            var assemblyIdentityComparer = VersionUtility.IsDesktop(targetFramework) ?
+                DesktopAssemblyIdentityComparer.Default : null;
+
             var compilation = CSharpCompilation.Create(
                 name,
                 compilationSettings.CompilationOptions,
                 syntaxTrees: trees,
-                references: references);
+                references: references,
+                assemblyIdentityComparer: assemblyIdentityComparer);
 
             var assemblyNeutralWorker = new AssemblyNeutralWorker(compilation, assemblyNeutralReferences);
             assemblyNeutralWorker.FindTypeCompilations(compilation.Assembly.GlobalNamespace);

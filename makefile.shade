@@ -152,10 +152,9 @@ var CORECLR_PATH = '${Environment.GetEnvironmentVariable("CORECLR_PATH")}'
         var targetFrameworks = new [] { "k10", "net45" };
 
         var packages = new[] { "Newtonsoft.Json", 
-                               "Microsoft.CodeAnalysis", 
                                "Microsoft.CodeAnalysis.Common", 
                                "Microsoft.CodeAnalysis.CSharp", 
-                               "System.Collections.Immutable", 
+                               "Microsoft.Bcl.Immutable", 
                                "System.Reflection.Metadata.Ecma335" };
 
         
@@ -183,8 +182,11 @@ var CORECLR_PATH = '${Environment.GetEnvironmentVariable("CORECLR_PATH")}'
                     candidates = new [] { framework, "net40", "net35", "net20" };
                 }
 
-                var di = candidates.Select(fmk => new DirectoryInfo(Path.Combine(packageDir, "lib", fmk)))
-                                   .FirstOrDefault(d => d.Exists);
+                var lib = new DirectoryInfo(Path.Combine(packageDir, "lib"));
+                var di = candidates.Select(fmk => lib.EnumerateDirectories("*" + fmk+ "*")
+                                                     .OrderBy(d => d.Name.Length)
+                                                     .FirstOrDefault())
+                                   .FirstOrDefault(d => d != null);
 
                 if(!di.Exists)
                 {
