@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.Versioning;
 using Microsoft.CodeAnalysis;
@@ -55,7 +56,11 @@ namespace Microsoft.Net.Runtime.Roslyn
             }
 
             var options = new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary)
-                                .WithHighEntropyVirtualAddressSpace(true);
+                                .WithHighEntropyVirtualAddressSpace(true)
+                                .WithSpecificWarningOptions(new Dictionary<int, ReportWarning>
+                                {
+                                     { 1702, ReportWarning.Suppress }
+                                });
 
             bool allowUnsafe = GetValue<bool>(compilationOptions, "allowUnsafe");
             string platformValue = GetValue<string>(compilationOptions, "platform");
