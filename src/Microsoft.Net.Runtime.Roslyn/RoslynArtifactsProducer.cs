@@ -155,11 +155,7 @@ namespace Microsoft.Net.Runtime.Roslyn
             using (var pdbStream = new MemoryStream())
             using (var assemblyStream = new MemoryStream())
             {
-#if NET45
                 EmitResult result = compilationContext.Compilation.Emit(assemblyStream, outputName: Path.GetFileName(assemblyPath), pdbFileName: pdbPath, pdbStream: pdbStream, manifestResources: resources);
-#else
-                EmitResult result = compilationContext.Compilation.Emit(assemblyStream);
-#endif
 
                 if (!result.Success)
                 {

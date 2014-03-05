@@ -107,11 +107,7 @@ namespace Microsoft.Net.Runtime.Roslyn
             using (var pdbStream = new MemoryStream())
             using (var assemblyStream = new MemoryStream())
             {
-#if NET45
                 EmitResult result = compilationContext.Compilation.Emit(assemblyStream, pdbStream: pdbStream, manifestResources: resources);
-#else
-                EmitResult result = compilationContext.Compilation.Emit(assemblyStream);
-#endif
 
                 if (!result.Success)
                 {
@@ -126,10 +122,7 @@ namespace Microsoft.Net.Runtime.Roslyn
                 }
 
                 var assemblyBytes = assemblyStream.ToArray();
-                byte[] pdbBytes = null;
-#if NET45
-                pdbBytes = pdbStream.ToArray();
-#endif
+                byte[] pdbBytes = pdbStream.ToArray();
 
                 var assembly = _loaderEngine.LoadBytes(assemblyBytes, pdbBytes);
 
