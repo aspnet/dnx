@@ -4,10 +4,10 @@
         "xunit.extensions": "1.9.2",
         "Microsoft.Net.Runtime.Roslyn": "",
         "Microsoft.Net.Runtime.Interfaces": "",
-        "Microsoft.CodeAnalysis" : "0.6.31123.2",
-        "Microsoft.CodeAnalysis.CSharp" : "0.6.31123.2",
-        "System.Reflection.Metadata.Ecma335": "0.6.31123.2",
-        "System.Collections.Immutable" : "1.1.15.0"
+        "Microsoft.CodeAnalysis.Common" : "0.6.4021001-beta",
+        "Microsoft.CodeAnalysis.CSharp" : "0.6.4021001-beta",
+        "System.Reflection.Metadata.Ecma335": "0.6.4021001-beta",
+        "Microsoft.Bcl.Immutable" : "1.1.17-beta"
     },
     "configurations" : {
         "net45" : {
