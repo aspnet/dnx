@@ -1,16 +1,15 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Runtime.Versioning;
 using System.Threading;
-using Communication;
 using Microsoft.Net.DesignTimeHost.Models;
 using Microsoft.Net.DesignTimeHost.Models.IncomingMessages;
 using Microsoft.Net.DesignTimeHost.Models.OutgoingMessages;
 using Microsoft.Net.Runtime;
 using Microsoft.Net.Runtime.FileSystem;
 using Microsoft.Net.Runtime.Loader;
-using Microsoft.Net.Runtime.Loader.MSBuildProject;
 using Microsoft.Net.Runtime.Loader.NuGet;
 using Microsoft.Net.Runtime.Roslyn;
 using Newtonsoft.Json.Linq;
@@ -135,14 +134,16 @@ namespace Microsoft.Net.DesignTimeHost
                 }
             }
 
+            Trace.TraceInformation("[ApplicationContext]: Received {0}", message.MessageType);
+
             switch (message.MessageType)
             {
                 case "Initialize":
                     {
                         var data = message.Payload.ToObject<InitializeMessage>();
                         _appPath.Value = data.ProjectFolder;
-                        var targetFramework = VersionUtility.ParseFrameworkName(data.TargetFramework ?? "net45");
-                        _targetFramework.Value = targetFramework == VersionUtility.UnsupportedFrameworkName ? new FrameworkName(data.TargetFramework) : targetFramework;
+
+                        SetTargetFramework(data.TargetFramework);
                     }
                     break;
                 case "Teardown":
@@ -152,7 +153,7 @@ namespace Microsoft.Net.DesignTimeHost
                 case "ChangeTargetFramework":
                     {
                         var data = message.Payload.ToObject<ChangeTargetFrameworkMessage>();
-                        _targetFramework.Value = new FrameworkName(data.TargetFramework);
+                        SetTargetFramework(data.TargetFramework);
                     }
                     break;
                 case "FilesChanged":
@@ -161,6 +162,12 @@ namespace Microsoft.Net.DesignTimeHost
                     }
                     break;
             }
+        }
+
+        private void SetTargetFramework(string targetFrameworkValue)
+        {
+            var targetFramework = VersionUtility.ParseFrameworkName(targetFrameworkValue ?? "net45");
+            _targetFramework.Value = targetFramework == VersionUtility.UnsupportedFrameworkName ? new FrameworkName(targetFrameworkValue) : targetFramework;
         }
 
         private void Calculate()
@@ -184,6 +191,7 @@ namespace Microsoft.Net.DesignTimeHost
                     Configurations = state.Project.GetTargetFrameworkConfigurations().Select(c => new ConfigurationData
                     {
                         CompilationOptions = state.Project.GetConfiguration(c.FrameworkName).Value["compilationOptions"],
+                        CompilationSettings = state.Project.GetCompilationSettings(c.FrameworkName),
                         FrameworkName = VersionUtility.GetShortFrameworkName(c.FrameworkName),
                     }).ToList()
                 };
@@ -193,13 +201,19 @@ namespace Microsoft.Net.DesignTimeHost
                 _local.References = new ReferencesMessage
                 {
                     ProjectReferences = metadata.ProjectReferences,
-                    FileReferences = metadata.References
+                    FileReferences = metadata.References,
+                    RawReferences = metadata.RawReferences
                 };
 
                 _local.Diagnostics = new DiagnosticsMessage
                 {
                     Warnings = metadata.Warnings.ToList(),
                     Errors = metadata.Errors.ToList(),
+                };
+
+                _local.Sources = new SourcesMessage
+                {
+                    Files = metadata.SourceFiles
                 };
             }
         }
@@ -208,33 +222,58 @@ namespace Microsoft.Net.DesignTimeHost
         {
             if (IsDifferent(_local.Configurations, _remote.Configurations))
             {
+                Trace.TraceInformation("[ApplicationContext]: OnTransmit(Configurations)");
+
                 OnTransmit(new Message
                 {
                     ContextId = Id,
                     MessageType = "Configurations",
                     Payload = JToken.FromObject(_local.Configurations)
                 });
+
                 _remote.Configurations = _local.Configurations;
             }
+
             if (IsDifferent(_local.References, _remote.References))
             {
+                Trace.TraceInformation("[ApplicationContext]: OnTransmit(References)");
+
                 OnTransmit(new Message
                 {
                     ContextId = Id,
                     MessageType = "References",
                     Payload = JToken.FromObject(_local.References)
                 });
+
                 _remote.References = _local.References;
             }
+
             if (IsDifferent(_local.Diagnostics, _remote.Diagnostics))
             {
+                Trace.TraceInformation("[ApplicationContext]: OnTransmit(Diagnostics)");
+
                 OnTransmit(new Message
                 {
                     ContextId = Id,
                     MessageType = "Diagnostics",
                     Payload = JToken.FromObject(_local.Diagnostics)
                 });
+
                 _remote.Diagnostics = _local.Diagnostics;
+            }
+
+            if (IsDifferent(_local.Sources, _remote.Sources))
+            {
+                Trace.TraceInformation("[ApplicationContext]: OnTransmit(Sources)");
+
+                OnTransmit(new Message
+                {
+                    ContextId = Id,
+                    MessageType = "Sources",
+                    Payload = JToken.FromObject(_local.Sources)
+                });
+
+                _remote.Sources = _local.Sources;
             }
         }
 
@@ -249,6 +288,11 @@ namespace Microsoft.Net.DesignTimeHost
         }
 
         private bool IsDifferent(DiagnosticsMessage local, DiagnosticsMessage remote)
+        {
+            return true;
+        }
+
+        private bool IsDifferent(SourcesMessage local, SourcesMessage remote)
         {
             return true;
         }

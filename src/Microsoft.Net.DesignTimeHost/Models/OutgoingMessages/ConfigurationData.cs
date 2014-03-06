@@ -6,5 +6,6 @@ namespace Microsoft.Net.DesignTimeHost.Models.OutgoingMessages
     {
         public string FrameworkName { get; set; }
         public JToken CompilationOptions { get; set; }
+        public object CompilationSettings { get; set; }
     }
 }

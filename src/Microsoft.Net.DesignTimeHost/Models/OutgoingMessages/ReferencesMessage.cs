@@ -6,5 +6,6 @@ namespace Microsoft.Net.DesignTimeHost.Models.OutgoingMessages
     {
         public IList<string> ProjectReferences { get; set; }
         public IList<string> FileReferences { get; set; }
+        public IDictionary<string, byte[]> RawReferences { get; set; }
     }
 }

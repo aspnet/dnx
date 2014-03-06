@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Threading;
 using Microsoft.Net.DesignTimeHost.Models;
@@ -23,13 +24,15 @@ namespace Communication
 
         public void Start()
         {
+            Trace.TraceInformation("[ProcessingQueue]: Start()");
             new Thread(ReceiveMessages).Start();
         }
 
         public void Post(Message message)
         {
-            lock(_writer)
+            lock (_writer)
             {
+                Trace.TraceInformation("[ProcessingQueue]: Post({0})", message);
                 _writer.Write(JsonConvert.SerializeObject(message));
             }
         }
@@ -40,7 +43,9 @@ namespace Communication
             {
                 while (true)
                 {
-                    OnReceive(JsonConvert.DeserializeObject<Message>(_reader.ReadString()));
+                    var message = JsonConvert.DeserializeObject<Message>(_reader.ReadString());
+                    Trace.TraceInformation("[ProcessingQueue]: OnReceive({0})", message);
+                    OnReceive(message);
                 }
             }
             catch (Exception ex)

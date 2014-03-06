@@ -3,8 +3,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.CSharp;
-using Microsoft.Net.Runtime.Loader;
 
 namespace Microsoft.Net.Runtime.Roslyn
 {
@@ -22,15 +20,27 @@ namespace Microsoft.Net.Runtime.Roslyn
             {
                 var ms = new MemoryStream();
                 r.Value.OutputStream.CopyTo(ms);
-                return ms.ToArray();
-            })
-            .ToList();
 
-            References = context.Exports.OfType<IMetadataFileReference>().Select(r => r.Path)
-                                                                         .ToList();
+                return new
+                {
+                    Name = r.Key,
+                    Bytes = ms.ToArray()
+                };
+            })
+            .ToDictionary(a => a.Name, a => a.Bytes);
+
+#if NET45
+            References = context.Compilation.References.OfType<MetadataFileReference>()
+                                        .Select(r => r.FullPath)
+                                        .ToList();
+#else
+            References = context.Exports.SelectMany(export => export.MetadataReferences.OfType<IMetadataFileReference>())
+                                        .Select(r => r.Path)
+                                        .ToList();
+#endif
 
             ProjectReferences = context.ProjectReferences.Select(p => p.Project.ProjectFilePath)
-                                                                    .ToList();
+                                                         .ToList();
 
             var formatter = new DiagnosticFormatter();
 
@@ -38,7 +48,7 @@ namespace Microsoft.Net.Runtime.Roslyn
                 .Concat(context.Diagnostics)
                 .ToList();
 
-            Errors = diagnostics.Where(d => d.Severity == DiagnosticSeverity.Error)
+            Errors = diagnostics.Where(d => d.Severity == DiagnosticSeverity.Error || d.IsWarningAsError)
                                 .Select(d => formatter.Format(d))
                                 .ToList();
 
@@ -71,7 +81,7 @@ namespace Microsoft.Net.Runtime.Roslyn
             private set;
         }
 
-        public IList<byte[]> RawReferences
+        public IDictionary<string, byte[]> RawReferences
         {
             get;
             private set;

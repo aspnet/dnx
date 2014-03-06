@@ -7,5 +7,6 @@ namespace Microsoft.Net.DesignTimeHost.Models
         public ConfigurationsMessage Configurations { get; set; }
         public ReferencesMessage References { get; set; }
         public DiagnosticsMessage Diagnostics { get; set; }
+        public SourcesMessage Sources { get; set; }
     }
 }

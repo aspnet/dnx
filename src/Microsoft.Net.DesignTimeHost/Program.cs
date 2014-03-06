@@ -1,17 +1,11 @@
-﻿using Microsoft.Net.Runtime;
-#if NET45 // NETWORKING
+﻿#if NET45 // NETWORKING
 using System;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
 using System.Net;
 using System.Net.Sockets;
-using System.Threading;
 using System.Threading.Tasks;
-using Communication;
-using Microsoft.Net.Runtime.Roslyn;
-using NuGet;
+using Microsoft.Net.Runtime;
 
 namespace Microsoft.Net.DesignTimeHost
 {
@@ -28,7 +22,7 @@ namespace Microsoft.Net.DesignTimeHost
         public void Main(string[] args)
         {
             // Expect: port, host processid, hostID string
-            if(args.Length < 3)
+            if (args.Length < 3)
             {
                 Console.WriteLine("Invalid command line arguments");
                 return;
@@ -39,7 +33,10 @@ namespace Microsoft.Net.DesignTimeHost
             // Add a watch to the host PID. If it goes away we will self terminate
             var hostProcess = Process.GetProcessById(hostPID);
             hostProcess.EnableRaisingEvents = true;
-            hostProcess.Exited += new EventHandler((s, e) => {Environment.Exit(0);});
+            hostProcess.Exited += (s, e) =>
+            {
+                Environment.Exit(0);
+            };
 
             string hostId = args[2];
 
