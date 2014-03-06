@@ -183,8 +183,13 @@ namespace Microsoft.Net.Runtime.Roslyn
                 }
 
                 _watcher.WatchFile(sourcePath);
+#if NET45
+                var syntaxTree = CSharpSyntaxTree.ParseFile(sourcePath, parseOptions);
+#else
                 var sourceText = SourceText.From(File.ReadAllText(sourcePath));
-                trees.Add(CSharpSyntaxTree.ParseText(sourceText, sourcePath, parseOptions));
+                var syntaxTree = CSharpSyntaxTree.ParseText(sourceText, sourcePath, parseOptions);
+#endif
+                trees.Add(syntaxTree);
             }
 
             foreach (var sourceReference in exports.SelectMany(export => export.SourceReferences))
@@ -193,9 +198,15 @@ namespace Microsoft.Net.Runtime.Roslyn
                 if (sourceFileReference != null)
                 {
                     var sourcePath = sourceFileReference.Path;
+
                     _watcher.WatchFile(sourcePath);
+#if NET45
+                    var syntaxTree = CSharpSyntaxTree.ParseFile(sourcePath, parseOptions);
+#else
                     var sourceText = SourceText.From(File.ReadAllText(sourcePath));
-                    trees.Add(CSharpSyntaxTree.ParseText(sourceText, sourcePath, parseOptions));
+                    var syntaxTree = CSharpSyntaxTree.ParseText(sourceText, sourcePath, parseOptions);
+#endif
+                    trees.Add(syntaxTree);
                 }
             }
 
