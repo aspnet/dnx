@@ -130,11 +130,11 @@ namespace Microsoft.Net.Runtime
                 dependencyExporters.Add(cachedLoader);
             }
 
-            // NuGet exporter
-            dependencyExporters.Add(nugetDependencyResolver);
-
             // GAC
             dependencyExporters.Add(new GacDependencyExporter(globalAssemblyCache));
+
+            // NuGet exporter
+            dependencyExporters.Add(nugetDependencyResolver);
 
             var dependencyExporter = new CompositeDependencyExporter(dependencyExporters);
             var roslynLoader = new LazyRoslynAssemblyLoader(_loaderEngine, projectResolver, _watcher, dependencyExporter, globalAssemblyCache);
