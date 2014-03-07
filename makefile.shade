@@ -239,6 +239,15 @@ var CORECLR_PATH = '${Environment.GetEnvironmentVariable("CORECLR_PATH")}'
     copy sourceDir='${CORECLR_PATH}' outputDir='${SDK_ROOT}' overwrite='${true}' if='!String.IsNullOrEmpty(CORECLR_PATH)'
     copy sourceDir='${Path.Combine(PROJECTK_DIR, "Runtime")}' outputDir='${Path.Combine(SDK_ROOT, "Runtime")}' overwrite='${true}' if='!String.IsNullOrEmpty(PROJECTK_DIR)'
     copy sourceDir='${Path.Combine(PROJECTK_DIR, "Framework")}' outputDir='${Path.Combine(SDK_ROOT, "Framework")}' overwrite='${true}' if='!String.IsNullOrEmpty(PROJECTK_DIR)'
+    
+    @{
+        var files = Files.Include(Path.Combine(SDK_ROOT, "Framework", "**", "*.dll"));
+        foreach (var binary in files)
+        {
+            File.Delete(binary);
+            Log.Info("Deleted " + binary);
+        }
+    }
 
 #nuget-pack-runtime
     @{
