@@ -4,6 +4,11 @@
     "shared": "**/*.cs",
     "configurations" : {
         "net45" : { },
-        "k10" : { }
+        "k10" : { 
+            "dependencies": {
+                "System.Runtime" : "4.0.20.0",
+                "System.Collections" : "4.0.0.0"
+            }
+        }
     }
 }

@@ -11,6 +11,7 @@ namespace Microsoft.Net.Runtime.Loader.NuGet
     public class NuGetDependencyResolver : IDependencyProvider, IDependencyExporter
     {
         private readonly LocalPackageRepository _repository;
+        private readonly Dictionary<string, string> _contractPaths = new Dictionary<string, string>();
         private readonly Dictionary<string, string> _paths = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
         private readonly Dictionary<string, DependencyDescription> _dependencies = new Dictionary<string, DependencyDescription>();
         private readonly IDictionary<string, IList<string>> _sharedSources = new Dictionary<string, IList<string>>();
@@ -82,6 +83,17 @@ namespace Microsoft.Net.Runtime.Loader.NuGet
                     continue;
                 }
 
+                // Try to find a contract folder for this package and store that
+                // for compilation
+                string contractPath = Path.Combine(_repository.PathResolver.GetInstallPath(package),
+                                                   "lib",
+                                                   "contract");
+
+                if (File.Exists(contractPath))
+                {
+                    _contractPaths[package.Id] = contractPath;
+                }
+
                 foreach (var fileName in GetAssemblies(package, targetFramework))
                 {
 #if NET45 // CORECLR_TODO: AssemblyName.GetAssemblyName
@@ -142,11 +154,21 @@ namespace Microsoft.Net.Runtime.Loader.NuGet
                 return;
             }
 
+            // Use the contract for compilation if available
+
             string path;
-            if (_paths.TryGetValue(name, out path))
+            bool found = _contractPaths.TryGetValue(name, out path);
+
+            if (!found)
+            {
+                found = _paths.TryGetValue(name, out path);
+            }
+
+            if (found)
             {
                 paths.Add(path);
             }
+
 
             foreach (var dependency in description.Dependencies)
             {

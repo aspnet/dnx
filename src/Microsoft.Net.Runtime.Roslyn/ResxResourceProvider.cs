@@ -3,7 +3,9 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+#if NET45
 using System.Resources;
+#endif
 using System.Xml.Linq;
 using Microsoft.CodeAnalysis;
 

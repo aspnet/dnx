@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Reflection;
 
@@ -21,7 +20,6 @@ namespace Microsoft.Net.Runtime.Common.DependencyInjection
             return GetServiceNoExceptions(services, type) ?? CreateInstance(services, type);
         }
 
-        [SuppressMessage("Microsoft.Design", "CA1031:DoNotCatchGeneralExceptionTypes", Justification = "IServiceProvider may throw unknown exceptions")]
         private static object GetServiceNoExceptions(IServiceProvider services, Type type)
         {
             try
