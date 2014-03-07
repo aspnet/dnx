@@ -16,18 +16,15 @@ namespace Microsoft.Net.Runtime.Roslyn
     public class RoslynCompiler : IRoslynCompiler
     {
         private readonly IDependencyExporter _dependencyResolver;
-        private readonly IFrameworkReferenceResolver _resolver;
         private readonly IFileWatcher _watcher;
         private readonly IProjectResolver _projectResolver;
 
         public RoslynCompiler(IProjectResolver projectResolver,
                               IFileWatcher watcher,
-                              IFrameworkReferenceResolver resolver,
                               IDependencyExporter dependencyExportResolver)
         {
             _projectResolver = projectResolver;
             _watcher = watcher;
-            _resolver = resolver;
             _dependencyResolver = dependencyExportResolver;
         }
 
@@ -63,16 +60,31 @@ namespace Microsoft.Net.Runtime.Roslyn
 
             var exports = new List<IDependencyExport>();
 
-            if (project.Dependencies.Count > 0 ||
-                targetFrameworkConfig.Dependencies.Count > 0)
+            var dependencies = project.Dependencies.Concat(targetFrameworkConfig.Dependencies)
+                                                   .Select(d => d.Name)
+                                                   .ToList();
+
+            if (VersionUtility.IsDesktop(targetFramework))
+            {
+                // mscorlib is ok
+                dependencies.Add("mscorlib");
+
+                // TODO: Remove these references
+                dependencies.Add("System");
+                dependencies.Add("System.Core");
+                dependencies.Add("Microsoft.CSharp");
+            }
+
+
+            if (dependencies.Count > 0)
             {
                 Trace.TraceInformation("[{0}]: Loading dependencies for '{1}'", GetType().Name, project.Name);
                 var dependencyStopWatch = Stopwatch.StartNew();
 
-                foreach (var dependency in project.Dependencies.Concat(targetFrameworkConfig.Dependencies))
+                foreach (var dependency in dependencies)
                 {
-                    var dependencyExport = GetDependencyExport(dependency.Name, targetFramework, compilationCache) ??
-                        _dependencyResolver.GetDependencyExport(dependency.Name, targetFramework);
+                    var dependencyExport = GetDependencyExport(dependency, targetFramework, compilationCache) ??
+                        _dependencyResolver.GetDependencyExport(dependency, targetFramework);
 
                     if (dependencyExport == null)
                     {
@@ -116,7 +128,6 @@ namespace Microsoft.Net.Runtime.Roslyn
 
             var references = new List<MetadataReference>();
             references.AddRange(exportedReferences);
-            references.AddRange(_resolver.GetDefaultReferences(targetFramework));
 
             // If we're targeting desktop then use desktop comparer
             var assemblyIdentityComparer = VersionUtility.IsDesktop(targetFramework) ?

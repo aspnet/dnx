@@ -87,8 +87,8 @@ namespace Microsoft.Net.Runtime.Loader.NuGet
                 // for compilation
                 string contractPath = Path.Combine(_repository.PathResolver.GetInstallPath(package),
                                                    "lib",
-                                                   "contract");
-
+                                                   "contract",
+                                                   package.Id + ".dll");
                 if (File.Exists(contractPath))
                 {
                     _contractPaths[package.Id] = contractPath;

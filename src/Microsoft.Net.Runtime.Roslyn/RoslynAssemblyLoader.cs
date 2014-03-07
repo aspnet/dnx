@@ -28,15 +28,12 @@ namespace Microsoft.Net.Runtime.Roslyn
             _loaderEngine = loaderEngine;
             _projectResolver = projectResolver;
 
-            var frameworkResolver = new FrameworkReferenceResolver(globalAssemblyCache);
-
             var resxProvider = new ResxResourceProvider();
             var embeddedResourceProvider = new EmbeddedResourceProvider();
 
             _resourceProvider = new CompositeResourceProvider(new IResourceProvider[] { resxProvider, embeddedResourceProvider });
             _compiler = new RoslynCompiler(projectResolver,
                                            watcher,
-                                           frameworkResolver,
                                            dependencyExporter);
         }
 

@@ -15,17 +15,17 @@ namespace Microsoft.Net.Runtime.Roslyn
     {
         private readonly IRoslynCompiler _compiler;
         private readonly IResourceProvider _resourceProvider;
-        private readonly IFrameworkReferenceResolver _frameworkReferenceResolver;
-        private IEnumerable<DependencyDescription> _resolvedDependencies;
+        private readonly IGlobalAssemblyCache _globalAssemblyCache;
+        private readonly IEnumerable<DependencyDescription> _resolvedDependencies;
 
         public RoslynArtifactsProducer(IRoslynCompiler compiler,
                                        IResourceProvider resourceProvider,
-                                       IFrameworkReferenceResolver frameworkReferenceResolver,
+                                       IGlobalAssemblyCache globalAssemblyCache,
                                        IEnumerable<DependencyDescription> resolvedDependencies)
         {
             _compiler = compiler;
             _resourceProvider = resourceProvider;
-            _frameworkReferenceResolver = frameworkReferenceResolver;
+            _globalAssemblyCache = globalAssemblyCache;
             _resolvedDependencies = resolvedDependencies;
         }
 
@@ -82,12 +82,10 @@ namespace Microsoft.Net.Runtime.Roslyn
 
         private void BuildPackage(BuildContext buildContext, CompilationContext compilationContext, string assemblyPath)
         {
-            var framework = buildContext.TargetFramework;
+            var targetFramework = buildContext.TargetFramework;
             var dependencies = new List<PackageDependency>();
             var project = compilationContext.Project;
             var projectReferenceByName = compilationContext.ProjectReferences.ToDictionary(p => p.Project.Name, p => p.Project);
-
-            var frameworkReferences = new HashSet<string>(_frameworkReferenceResolver.GetFrameworkReferences(framework), StringComparer.OrdinalIgnoreCase);
             var frameworkAssemblies = new List<string>();
 
             if (project.Dependencies.Count > 0)
@@ -100,7 +98,8 @@ namespace Microsoft.Net.Runtime.Roslyn
                         continue;
                     }
 
-                    if (frameworkReferences.Contains(dependency.Name))
+                    if (VersionUtility.IsDesktop(targetFramework) && 
+                        _globalAssemblyCache.IsInGac(dependency.Name))
                     {
                         frameworkAssemblies.Add(dependency.Name);
                     }
@@ -129,7 +128,7 @@ namespace Microsoft.Net.Runtime.Roslyn
 
                 if (dependencies.Count > 0)
                 {
-                    buildContext.PackageBuilder.DependencySets.Add(new PackageDependencySet(framework, dependencies));
+                    buildContext.PackageBuilder.DependencySets.Add(new PackageDependencySet(targetFramework, dependencies));
                 }
             }
 
@@ -144,7 +143,7 @@ namespace Microsoft.Net.Runtime.Roslyn
 
             var file = new PhysicalPackageFile();
             file.SourcePath = assemblyPath;
-            var folder = VersionUtility.GetShortFrameworkName(framework);
+            var folder = VersionUtility.GetShortFrameworkName(targetFramework);
             file.TargetPath = String.Format(@"lib\{0}\{1}.dll", folder, project.Name);
             buildContext.PackageBuilder.Files.Add(file);
         }

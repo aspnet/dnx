@@ -222,7 +222,6 @@ namespace Microsoft.Net.Project
             var globalAssemblyCache = new DefaultGlobalAssemblyCache();
             var projectResolver = new ProjectResolver(projectDir, rootDirectory);
 
-            var frameworkReferenceResolver = new FrameworkReferenceResolver(globalAssemblyCache);
             var resxProvider = new ResxResourceProvider();
             var embeddedResourceProvider = new EmbeddedResourceProvider();
             var compositeResourceProvider = new CompositeResourceProvider(new IResourceProvider[] { resxProvider, embeddedResourceProvider });
@@ -236,7 +235,6 @@ namespace Microsoft.Net.Project
 
             var roslynCompiler = new RoslynCompiler(projectResolver,
                                                     NoopWatcher.Instance,
-                                                    frameworkReferenceResolver,
                                                     compositeDependencyExporter);
 
             var projectReferenceResolver = new ProjectReferenceDependencyProvider(projectResolver);
@@ -249,7 +247,7 @@ namespace Microsoft.Net.Project
 
             var roslynArtifactsProducer = new RoslynArtifactsProducer(roslynCompiler,
                                                                       compositeResourceProvider,
-                                                                      frameworkReferenceResolver,
+                                                                      globalAssemblyCache,
                                                                       projectReferenceResolver.ResolvedDependencies);
 
 

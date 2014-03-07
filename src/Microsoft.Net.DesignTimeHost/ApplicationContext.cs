@@ -317,7 +317,6 @@ namespace Microsoft.Net.DesignTimeHost
             var globalAssemblyCache = new DefaultGlobalAssemblyCache();
             var projectResolver = new ProjectResolver(projectDir, rootDirectory);
 
-            var frameworkReferenceResolver = new FrameworkReferenceResolver(globalAssemblyCache);
             var nugetDependencyResolver = new NuGetDependencyResolver(projectDir);
             var gacDependencyExporter = new GacDependencyExporter(globalAssemblyCache);
             var compositeDependencyExporter = new CompositeDependencyExporter(new IDependencyExporter[] { 
@@ -327,7 +326,6 @@ namespace Microsoft.Net.DesignTimeHost
 
             var roslynCompiler = new RoslynCompiler(projectResolver,
                                                     NoopWatcher.Instance,
-                                                    frameworkReferenceResolver,
                                                     compositeDependencyExporter);
 
             state.MetadataProvider = new RoslynMetadataProvider(roslynCompiler);
