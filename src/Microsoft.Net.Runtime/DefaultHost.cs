@@ -22,7 +22,7 @@ namespace Microsoft.Net.Runtime
         private readonly string _projectDir;
         private readonly FrameworkName _targetFramework;
         private readonly string _name;
-        private readonly ServiceProvider _serviceProvider = new ServiceProvider();
+        private readonly ServiceProvider _serviceProvider;
         private readonly IAssemblyLoaderEngine _loaderEngine;
         private readonly IDependencyExporter _hostExporter;
 
@@ -38,6 +38,8 @@ namespace Microsoft.Net.Runtime
 
             _loaderEngine = (IAssemblyLoaderEngine)hostProvider.GetService(typeof(IAssemblyLoaderEngine));
             _hostExporter = (IDependencyExporter)hostProvider.GetService(typeof(IDependencyExporter));
+
+            _serviceProvider = new ServiceProvider(hostProvider);
 
             Initialize(options);
         }
