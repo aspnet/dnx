@@ -95,10 +95,16 @@ namespace klr.hosting
 
             ResolveEventHandler handler = (sender, a) =>
             {
+                // Special case for retargetable assemblies on desktop
+                if (a.Name.EndsWith("Retargetable=Yes"))
+                {
+                    return Assembly.Load(a.Name);
+                }
+
                 return loaderCallback(new AssemblyName(a.Name));
             };
 
-            AppDomain.CurrentDomain.AssemblyResolve += handler;      
+            AppDomain.CurrentDomain.AssemblyResolve += handler;
 #endif
 
             try
