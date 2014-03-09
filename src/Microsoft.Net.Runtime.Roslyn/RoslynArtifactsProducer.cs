@@ -90,8 +90,8 @@ namespace Microsoft.Net.Runtime.Roslyn
 
             var targetFrameworkConfig = project.GetTargetFrameworkConfiguration(targetFramework);
 
-            var projectDependencies = project.Dependencies;/*.Concat(targetFrameworkConfig.Dependencies)
-                                                          .ToList();*/
+            var projectDependencies = project.Dependencies.Concat(targetFrameworkConfig.Dependencies)
+                                                          .ToList();
 
             if (projectDependencies.Count > 0)
             {
