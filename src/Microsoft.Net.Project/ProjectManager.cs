@@ -46,7 +46,7 @@ namespace Microsoft.Net.Project
 
             if (configurations.Count == 0)
             {
-                configurations.Add(VersionUtility.ParseFrameworkName(_buildOptions.RuntimeTargetFramework));
+                configurations.Add(_buildOptions.RuntimeTargetFramework);
             }
 
             var builder = new PackageBuilder();

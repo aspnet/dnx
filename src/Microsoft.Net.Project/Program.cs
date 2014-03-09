@@ -18,6 +18,13 @@ namespace Microsoft.Net.Project
             { "dependencies", CommandOptionType.NoValue }
         };
 
+        private readonly IApplicationEnvironment _environment;
+
+        public Program(IApplicationEnvironment environment)
+        {
+            _environment = environment;
+        }
+
         public int Main(string[] args)
         {
             if (args.Length < 1)
@@ -33,7 +40,7 @@ namespace Microsoft.Net.Project
             parser.ParseOptions(args.Skip(1).ToArray(), _options, out options);
 
             var buildOptions = new BuildOptions();
-            buildOptions.RuntimeTargetFramework = Environment.GetEnvironmentVariable("TARGET_FRAMEWORK") ?? "net45";
+            buildOptions.RuntimeTargetFramework = _environment.TargetFramework;
             buildOptions.OutputDir = options.GetValue("out");
             buildOptions.ProjectDir = options.RemainingArgs.Count > 0 ? options.RemainingArgs[0] : Directory.GetCurrentDirectory();
             buildOptions.CopyDependencies = options.HasOption("dependencies");
