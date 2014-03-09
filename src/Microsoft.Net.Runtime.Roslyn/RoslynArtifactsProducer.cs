@@ -88,9 +88,14 @@ namespace Microsoft.Net.Runtime.Roslyn
             var projectReferenceByName = compilationContext.ProjectReferences.ToDictionary(p => p.Project.Name, p => p.Project);
             var frameworkAssemblies = new List<string>();
 
-            if (project.Dependencies.Count > 0)
+            var targetFrameworkConfig = project.GetTargetFrameworkConfiguration(targetFramework);
+
+            var projectDependencies = project.Dependencies.Concat(targetFrameworkConfig.Dependencies)
+                                                          .ToList();
+
+            if (projectDependencies.Count > 0)
             {
-                foreach (var dependency in project.Dependencies)
+                foreach (var dependency in projectDependencies.OrderBy(d => d.Name))
                 {
                     Project dependencyProject;
                     if (projectReferenceByName.TryGetValue(dependency.Name, out dependencyProject) && dependencyProject.EmbedInteropTypes)
@@ -110,12 +115,14 @@ namespace Microsoft.Net.Runtime.Roslyn
                             IsMinInclusive = true,
                             MinVersion = dependency.Version
                         };
+
                         if (dependencyVersion.MinVersion == null || dependencyVersion.MinVersion.IsSnapshot)
                         {
                             var actual = _resolvedDependencies
                                 .Where(pkg => string.Equals(pkg.Identity.Name, project.Name, StringComparison.OrdinalIgnoreCase))
                                 .SelectMany(pkg => pkg.Dependencies)
                                 .SingleOrDefault(dep => string.Equals(dep.Name, dependency.Name, StringComparison.OrdinalIgnoreCase));
+
                             if (actual != null)
                             {
                                 dependencyVersion.MinVersion = actual.Version;
@@ -133,7 +140,7 @@ namespace Microsoft.Net.Runtime.Roslyn
             }
 
             // Only do this on full desktop
-            if (buildContext.TargetFramework.Identifier == VersionUtility.DefaultTargetFramework.Identifier)
+            if (VersionUtility.IsDesktop(buildContext.TargetFramework))
             {
                 foreach (var a in frameworkAssemblies)
                 {
