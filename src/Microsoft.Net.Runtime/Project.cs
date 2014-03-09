@@ -48,6 +48,8 @@ namespace Microsoft.Net.Runtime
 
         public string SourcePattern { get; private set; }
 
+        public string SourceExcludePattern { get; set; }
+
         public string PreprocessPattern { get; private set; }
 
         public string SharedPattern { get; set; }
@@ -59,24 +61,16 @@ namespace Microsoft.Net.Runtime
         {
             get
             {
-                string path = Path.GetDirectoryName(ProjectFilePath);
-
-                string linkedFilePath = Path.Combine(path, ".include");
+                string path = ProjectDirectory;
 
                 var files = Enumerable.Empty<string>();
-                if (File.Exists(linkedFilePath))
-                {
-                    files = File.ReadLines(linkedFilePath)
-                                .Select(file => Path.Combine(path, file))
-                                .Select(p => Path.GetFullPath(p));
-                }
 
                 var includePatterns = SourcePattern.Split(new[] { ';' });
                 var includeFiles = includePatterns
                     .SelectMany(pattern => PathResolver.PerformWildcardSearch(path, pattern))
                     .ToArray();
 
-                var excludePatterns = (PreprocessPattern + ";" + SharedPattern + ";" + ResourcesPattern)
+                var excludePatterns = (PreprocessPattern + ";" + SharedPattern + ";" + ResourcesPattern + ";" + SourceExcludePattern)
                     .Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries)
                     .Select(pattern => PathResolver.NormalizeWildcardForExcludedFiles(path, pattern))
                     .ToArray();
@@ -92,7 +86,7 @@ namespace Microsoft.Net.Runtime
         {
             get
             {
-                string path = Path.GetDirectoryName(ProjectFilePath);
+                string path = ProjectDirectory;
 
                 var includePatterns = ResourcesPattern.Split(new[] { ';' });
                 var includeFiles = includePatterns
@@ -107,7 +101,7 @@ namespace Microsoft.Net.Runtime
         {
             get
             {
-                string path = Path.GetDirectoryName(ProjectFilePath);
+                string path = ProjectDirectory;
 
                 var includePatterns = SharedPattern.Split(new[] { ';' });
                 var includeFiles = includePatterns
@@ -178,6 +172,7 @@ namespace Microsoft.Net.Runtime
             project.EmbedInteropTypes = GetValue<bool>(settings, "embedInteropTypes");
 
             project.SourcePattern = GetSettingsValue(settings, "code", @"**\*.cs");
+            project.SourceExcludePattern = GetSettingsValue(settings, "exclude", "");
             project.PreprocessPattern = GetSettingsValue(settings, "preprocess", @"Compiler\Preprocess\**\*.cs");
             project.SharedPattern = GetSettingsValue(settings, "shared", @"Compiler\Shared\**\*.cs");
             project.ResourcesPattern = GetSettingsValue(settings, "resources", @"Compiler\Resources\**\*");
