@@ -8,7 +8,6 @@ using System.Runtime.Versioning;
 using Microsoft.Net.Runtime.Common.DependencyInjection;
 using Microsoft.Net.Runtime.FileSystem;
 using Microsoft.Net.Runtime.Loader;
-using Microsoft.Net.Runtime.Loader.MSBuildProject;
 using Microsoft.Net.Runtime.Loader.NuGet;
 
 namespace Microsoft.Net.Runtime
@@ -117,7 +116,6 @@ namespace Microsoft.Net.Runtime
             var nugetDependencyResolver = new NuGetDependencyResolver(_projectDir);
             var nugetLoader = new NuGetAssemblyLoader(_loaderEngine, nugetDependencyResolver);
             var cachedLoader = new CachedCompilationLoader(_loaderEngine, projectResolver);
-            var msbuildLoader = new MSBuildProjectAssemblyLoader(_loaderEngine, rootDirectory, _watcher);
             var globalAssemblyCache = new DefaultGlobalAssemblyCache();
 
             // Roslyn needs to be able to resolve exported references and sources
@@ -152,10 +150,6 @@ namespace Microsoft.Net.Runtime
             // Project.json projects
             loaders.Add(roslynLoader);
             dependencyProviders.Add(new ProjectReferenceDependencyProvider(projectResolver));
-
-            // Msbuild project files
-            loaders.Add(msbuildLoader);
-            // TODO: Add dependency exporter for msbuid
 
             // NuGet packages
             loaders.Add(nugetLoader);

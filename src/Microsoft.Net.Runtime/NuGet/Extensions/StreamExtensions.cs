@@ -57,16 +57,6 @@ namespace NuGet
             }
         }
 
-        public static Stream AsStream(this string value)
-        {
-            return AsStream(value, Encoding.UTF8);
-        }
-
-        public static Stream AsStream(this string value, Encoding encoding)
-        {
-            return new MemoryStream(encoding.GetBytes(value));
-        }
-
         /// <summary>
         /// Compare the content of the two streams of data, ingoring the content within the
         /// NUGET: BEGIN LICENSE TEXT and NUGET: END LICENSE TEXCT markers.

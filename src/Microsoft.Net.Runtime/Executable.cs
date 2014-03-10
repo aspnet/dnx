@@ -1,4 +1,5 @@
-﻿using System;
+﻿#if MSBUILD
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -46,7 +47,7 @@ namespace Microsoft.Net.Runtime
         public Process Execute(Func<string, bool> onWriteOutput, Func<string, bool> onWriteError, Encoding encoding, string arguments, params object[] args)
         {
             Process process = CreateProcess(arguments, args);
-#if NET45
+
             process.EnableRaisingEvents = true;
 
             var errorBuffer = new StringBuilder();
@@ -80,7 +81,7 @@ namespace Microsoft.Net.Runtime
 
             process.BeginErrorReadLine();
             process.BeginOutputReadLine();
-#endif
+
             return process;
         }
 
@@ -99,15 +100,12 @@ namespace Microsoft.Net.Runtime
                 RedirectStandardOutput = true,
                 RedirectStandardError = true,
                 CreateNoWindow = true,
-#if NET45
                 WindowStyle = ProcessWindowStyle.Hidden,
                 UseShellExecute = false,
-#endif
                 ErrorDialog = false,
                 Arguments = arguments
             };
 
-#if NET45
             if (Encoding != null)
             {
                 psi.StandardOutputEncoding = Encoding;
@@ -118,7 +116,6 @@ namespace Microsoft.Net.Runtime
             {
                 psi.EnvironmentVariables[pair.Key] = pair.Value;
             }
-#endif
 
             var process = new Process()
             {
@@ -129,3 +126,4 @@ namespace Microsoft.Net.Runtime
         }
     }
 }
+#endif

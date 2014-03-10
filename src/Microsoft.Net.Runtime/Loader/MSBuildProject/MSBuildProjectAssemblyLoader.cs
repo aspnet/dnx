@@ -1,4 +1,5 @@
-﻿using System;
+﻿#if MSBUILD
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -15,10 +16,8 @@ namespace Microsoft.Net.Runtime.Loader.MSBuildProject
         private readonly IFileWatcher _watcher;
 
         private readonly static string[] _msBuildPaths = new string[] {
-#if NET45
             Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86), @"MSBuild\12.0\Bin\MSBuild.exe"),
             Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Windows), @"Microsoft.NET\Framework\v4.0.30319\MSBuild.exe")
-#endif
         };
 
         private readonly IAssemblyLoaderEngine _loaderEngine;
@@ -178,3 +177,4 @@ namespace Microsoft.Net.Runtime.Loader.MSBuildProject
         }
     }
 }
+#endif
