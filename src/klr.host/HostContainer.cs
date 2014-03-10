@@ -7,7 +7,6 @@ namespace klr.host
 {
     public class HostContainer : IHostContainer
     {
-        private readonly Dictionary<string, Assembly> _cache = new Dictionary<string, Assembly>();
         private readonly Stack<IHost> _hosts = new Stack<IHost>();
 
         public IDisposable AddHost(IHost host)

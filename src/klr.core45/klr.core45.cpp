@@ -254,6 +254,9 @@ extern "C" __declspec(dllexport) bool __stdcall CallApplicationMain(PCALL_APPLIC
         return false;
     }
 
+    // REVIEW: Versioning? k 1.0, 2.0?
+    SetEnvironmentVariable(L"TARGET_FRAMEWORK", L"k10");
+
     // Call main
     data->exitcode = pHostMain(data->argc, data->argv);
 

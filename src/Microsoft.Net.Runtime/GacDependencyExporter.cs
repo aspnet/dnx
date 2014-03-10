@@ -16,7 +16,7 @@ namespace Microsoft.Net.Runtime
         public IDependencyExport GetDependencyExport(string name, FrameworkName targetFramework)
         {
             // Only use the GAC on full .NET
-            if (targetFramework.Identifier == VersionUtility.DefaultTargetFramework.Identifier)
+            if (VersionUtility.IsDesktop(targetFramework))
             {
                 string assemblyLocation;
                 if (_globalAssemblyCache.TryResolvePartialName(name, out assemblyLocation))

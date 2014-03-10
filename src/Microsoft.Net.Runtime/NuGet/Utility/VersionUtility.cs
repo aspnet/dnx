@@ -1049,22 +1049,9 @@ namespace NuGet
                 { "MonoAndroid", "MonoAndroid" },
                 { "MonoTouch", "MonoTouch" },
                 { "MonoMac", "MonoMac" },
-                { "native", "native"}
+                { "native", "native"},
+                { "k", "K" }
             };
-
-            foreach (var frameworkDirectory in FrameworkDirectoryResolver.GetFrameworkDirectories())
-            {
-                if (Directory.Exists(frameworkDirectory))
-                {
-                    var di = new DirectoryInfo(frameworkDirectory);
-
-                    foreach (var d in di.EnumerateDirectories())
-                    {
-                        frameworks[d.Name] = d.Name;
-                    }
-                }
-
-            }
 
             return frameworks;
         }

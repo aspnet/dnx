@@ -44,9 +44,6 @@ int CallFirmwareProcessMain(int argc, wchar_t* argv[])
             pwzHostModuleName = L"klr.core45.dll";
             data.argc -= 1;
             data.argv += 1;
-
-            // HACK
-            SetEnvironmentVariable(L"TARGET_FRAMEWORK", L"k10");
         }
         else
         {
@@ -75,12 +72,6 @@ int CallFirmwareProcessMain(int argc, wchar_t* argv[])
     }
     if (m_fVerboseTrace)
         printf_s("Found DLL Export: %s\r\n", pszCallApplicationMainName);
-
-    // Set the klr path path
-    TCHAR szModulePath[MAX_PATH];
-    DWORD dwModulePathSize = GetModuleFileName(NULL, szModulePath, MAX_PATH);
-    szModulePath[dwModulePathSize] = '\0';
-    ::SetEnvironmentVariable(L"KLR_PATH", szModulePath);
 
     HRESULT hr = pfnCallApplicationMain(&data);
     if (SUCCEEDED(hr))
