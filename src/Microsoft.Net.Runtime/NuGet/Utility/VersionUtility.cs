@@ -8,7 +8,6 @@ using System.Reflection;
 using System.Runtime.Versioning;
 using System.Text;
 using System.Text.RegularExpressions;
-using Microsoft.Net.Runtime;
 using NuGet.Resources;
 using CompatibilityMapping = System.Collections.Generic.Dictionary<string, string[]>;
 
@@ -22,23 +21,9 @@ namespace NuGet
         private const string LessThanOrEqualTo = "\u2264";
         private const string GreaterThanOrEqualTo = "\u2265";
 
-        [System.Diagnostics.CodeAnalysis.SuppressMessage(
-            "Microsoft.Security",
-            "CA2104:DoNotDeclareReadOnlyMutableReferenceTypes",
-            Justification = "The type FrameworkName is immutable.")]
         public static readonly FrameworkName EmptyFramework = new FrameworkName("NoFramework", new Version(0, 0));
-
-        [System.Diagnostics.CodeAnalysis.SuppressMessage(
-            "Microsoft.Security",
-            "CA2104:DoNotDeclareReadOnlyMutableReferenceTypes",
-            Justification = "The type FrameworkName is immutable.")]
-        public static readonly FrameworkName NativeProjectFramework = new FrameworkName("Native", new Version(0, 0));
-
-        [System.Diagnostics.CodeAnalysis.SuppressMessage(
-            "Microsoft.Security",
-            "CA2104:DoNotDeclareReadOnlyMutableReferenceTypes",
-            Justification = "The type FrameworkName is immutable.")]
         public static readonly FrameworkName UnsupportedFrameworkName = new FrameworkName("Unsupported", new Version(0, 0));
+
         private static readonly Version _emptyVersion = new Version(0, 0);
 
         private static readonly IDictionary<string, string> _knownIdentifiers = PopulateKnownFrameworks();
@@ -549,7 +534,6 @@ namespace NuGet
             return name + "-" + profile;
         }
 
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1021:AvoidOutParameters", MessageId = "1#")]
         public static FrameworkName ParseFrameworkNameFromFilePath(string filePath, out string effectivePath)
         {
             var knownFolders = new string[] 
@@ -603,7 +587,6 @@ namespace NuGet
         /// <param name="strictParsing">if set to <c>true</c>, parse the first folder of path even if it is unrecognized framework.</param>
         /// <param name="effectivePath">returns the path after the parsed target framework</param>
         /// <returns></returns>
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1021:AvoidOutParameters", MessageId = "2#")]
         public static FrameworkName ParseFrameworkFolderName(string path, bool strictParsing, out string effectivePath)
         {
             // The path for a reference might look like this for assembly foo.dll:            

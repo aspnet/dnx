@@ -1,7 +1,5 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.IO;
 using System.Linq;
@@ -26,8 +24,6 @@ namespace NuGet
         [XmlElement("metadata", IsNullable = false)]
         public ManifestMetadata Metadata { get; set; }
 
-        [SuppressMessage("Microsoft.Design", "CA1002:DoNotExposeGenericLists", Justification = "It's easier to create a list")]
-        [SuppressMessage("Microsoft.Usage", "CA2227:CollectionPropertiesShouldBeReadOnly", Justification = "This is needed for xml serialization")]
         [XmlArray("files")]
         public List<ManifestFile> Files
         {
@@ -76,20 +72,8 @@ namespace NuGet
 
         public static Manifest ReadFrom(Stream stream, IPropertyProvider propertyProvider, bool validateSchema)
         {
-#if LOADER
             XDocument document = XmlUtility.LoadSafe(stream, ignoreWhiteSpace: true);
-#else
-            XDocument document;
-            if (propertyProvider == NullPropertyProvider.Instance)
-            {
-                document = XmlUtility.LoadSafe(stream, ignoreWhiteSpace: true);
-            }
-            else
-            {
-                string content = Preprocessor.Process(stream, propertyProvider);
-                document = XDocument.Parse(content);
-            }
-#endif
+
             string schemaNamespace = GetSchemaNamespace(document);
             foreach (var e in document.Descendants())
             {

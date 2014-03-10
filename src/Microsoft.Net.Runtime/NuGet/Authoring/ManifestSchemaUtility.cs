@@ -1,5 +1,5 @@
 ﻿using System;
-using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
@@ -52,7 +52,7 @@ namespace NuGet
             SchemaVersionV6
         };
 #if NET45
-        private static ConcurrentDictionary<string, XmlSchemaSet> _manifestSchemaSetCache = new ConcurrentDictionary<string, XmlSchemaSet>(StringComparer.OrdinalIgnoreCase);
+        private static Dictionary<string, XmlSchemaSet> _manifestSchemaSetCache = new Dictionary<string, XmlSchemaSet>(StringComparer.OrdinalIgnoreCase);
 #endif        
         public static int GetVersionFromNamespace(string @namespace)
         {

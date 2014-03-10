@@ -1,8 +1,6 @@
 ﻿using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.IO;
 using System.IO.Compression;
@@ -24,8 +22,8 @@ namespace NuGet
         // The DateTimeOffset entry stores the LastModifiedTime of the original .nupkg file that
         // is passed to this class. This is so that we can invalidate the cache when the original
         // file has changed.
-        private static readonly ConcurrentDictionary<PackageName, Tuple<string, DateTimeOffset>> _cachedExpandedFolder
-            = new ConcurrentDictionary<PackageName, Tuple<string, DateTimeOffset>>();
+        private static readonly Dictionary<PackageName, Tuple<string, DateTimeOffset>> _cachedExpandedFolder
+            = new Dictionary<PackageName, Tuple<string, DateTimeOffset>>();
         private static readonly IFileSystem _tempFileSystem = new PhysicalFileSystem(Path.Combine(Path.GetTempPath(), "nuget"));
 
         private Dictionary<string, PhysicalPackageFile> _files;
@@ -208,7 +206,6 @@ namespace NuGet
             }
         }
 
-        [SuppressMessage("Microsoft.Design", "CA1031:DoNotCatchGeneralExceptionTypes", Justification = "We want to catch all the exceptions for CreateFile")]
         private void EnsurePackageFiles()
         {
             if (_files != null &&
@@ -300,34 +297,9 @@ namespace NuGet
             }
         }
 
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1024:UsePropertiesWhereAppropriate")]
         protected virtual string GetExpandedFolderPath()
         {
             return Path.GetRandomFileName();
-        }
-
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1031:DoNotCatchGeneralExceptionTypes")]
-        public static void PurgeCache()
-        {
-            lock (_cachedExpandedFolder)
-            {
-                if (_cachedExpandedFolder.Count > 0)
-                {
-                    foreach (var valueTuple in _cachedExpandedFolder.Values)
-                    {
-                        try
-                        {
-                            string expandedFolder = valueTuple.Item1;
-                            _tempFileSystem.DeleteDirectory(expandedFolder, recursive: true);
-                        }
-                        catch (Exception)
-                        {
-                        }
-                    }
-
-                    _cachedExpandedFolder.Clear();
-                }
-            }
         }
     }
 }

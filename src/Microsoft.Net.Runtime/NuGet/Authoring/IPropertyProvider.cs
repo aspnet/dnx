@@ -2,6 +2,6 @@
 {
     public interface IPropertyProvider
     {
-        dynamic GetPropertyValue(string propertyName);
+        string GetPropertyValue(string propertyName);
     }
 }

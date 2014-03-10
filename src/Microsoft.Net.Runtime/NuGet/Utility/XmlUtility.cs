@@ -6,15 +6,6 @@ namespace NuGet
 {
     public static class XmlUtility
     {
-        public static XDocument LoadSafe(string filePath)
-        {
-            var settings = CreateSafeSettings();
-            using (var reader = XmlReader.Create(filePath, settings))
-            {
-                return XDocument.Load(reader);
-            }
-        }
-
         public static XDocument LoadSafe(Stream input)
         {
             var settings = CreateSafeSettings();

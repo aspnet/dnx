@@ -20,7 +20,6 @@
         "k10" : { 
             "dependencies": {
                 "System.Collections": "4.0.0.0",
-                "System.Collections.Concurrent": "4.0.0.0",
                 "System.ComponentModel": "4.0.0.0",
                 "System.Console": "4.0.0.0",
                 "System.Diagnostics.Debug": "4.0.10.0",
@@ -34,8 +33,6 @@
                 "System.IO.FileSystem.Primitives": "4.0.0.0",
                 "System.IO.FileSystem.Watcher": "4.0.0.0",
                 "System.Linq": "4.0.0.0",
-                "System.Linq.Expressions": "4.0.0.0",
-                "System.Linq.Queryable": "4.0.0.0",
                 "System.ObjectModel": "4.0.0.0",
                 "System.Reflection": "4.0.10.0",
                 "System.Reflection.Extensions": "4.0.0.0",
@@ -43,7 +40,6 @@
                 "System.Runtime": "4.0.20.0",
                 "System.Runtime.Extensions": "4.0.10.0",
                 "System.Runtime.InteropServices": "4.0.10.0",
-                "System.Text.Encoding": "4.0.10.0",
                 "System.Text.RegularExpressions": "4.0.0.0",
                 "System.Threading": "4.0.0.0",
                 "System.Threading.Tasks": "4.0.0.0",

@@ -15,7 +15,7 @@
             }
         }
 
-        public dynamic GetPropertyValue(string propertyName)
+        public string GetPropertyValue(string propertyName)
         {
             return null;
         }
