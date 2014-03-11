@@ -134,7 +134,7 @@ namespace Microsoft.Net.Runtime.Roslyn
             }
         }
 
-        public EmitResult Generate()
+        public EmitResult Generate(IDictionary<string, AssemblyNeutralMetadataReference> existingReferences)
         {
             Compilation = CSharpCompilation.Create(
                 assemblyName: AssemblyName,
@@ -146,6 +146,12 @@ namespace Microsoft.Net.Runtime.Roslyn
                 if (other.EmitResult != null && !other.EmitResult.Success)
                 {
                     // Skip this reference if it hasn't beed emitted
+                    continue;
+                }
+
+                // If we're already referencing this assembly then skip it
+                if (existingReferences.ContainsKey(other.AssemblyName))
+                {
                     continue;
                 }
 
