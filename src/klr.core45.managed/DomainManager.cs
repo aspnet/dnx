@@ -1,109 +1,25 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Reflection;
-using System.Runtime.ExceptionServices;
-using System.Security;
+﻿using System.Security;
+using klr.hosting;
 
 [SecurityCritical]
-sealed class DomainManager : AppDomainManager
+sealed class DomainManager
 {
-
-    public DomainManager()
-    {
-    }
-
-    public override bool CheckSecuritySettings(SecurityState state)
-    {
-        return true;
-    }
-
-    public override void InitializeNewDomain(AppDomainSetup appDomainInfo)
-    {
-        base.InitializeNewDomain(appDomainInfo);
-    }
-
-#if NET45
-    [HandleProcessCorruptedStateExceptions]
-#endif
     [SecurityCritical]
-    unsafe static int Main(char* appBase, int argc, char** argv)
+    unsafe static int Execute(int argc, char** argv)
     {
-        var applicationBase = new string(appBase);
-
-        ResolveEventHandler handler = (sender, args) =>
+        if (argc == 0)
         {
-            var name = new AssemblyName(args.Name).Name;
-            return ResolveAssembly(applicationBase, name);
-        };
-
-        try
-        {
-            AppDomain.CurrentDomain.AssemblyResolve += handler;
-
-            Assembly.Load(new AssemblyName("Stubs, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null"));
-
-            Assembly.Load(new AssemblyName("Microsoft.Net.Runtime.Interfaces, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null"));
-
-            var assembly = Assembly.Load(new AssemblyName("klr.host"));
-
-            AppDomain.CurrentDomain.AssemblyResolve -= handler;
-
-            //Pack arguments
-            var arguments = new string[argc];
-            for (var i = 0; i < arguments.Length; i++)
-            {
-                arguments[i] = new string(argv[i]);
-            }
-
-            var bootstrapperType = assembly.GetType("Bootstrapper");
-            var mainMethod = bootstrapperType.GetTypeInfo().GetDeclaredMethod("Main");
-            var bootstrapper = Activator.CreateInstance(bootstrapperType);
-            var result = mainMethod.Invoke(bootstrapper, new object[] { argc, arguments });
-            return (int)result;
-        }
-        catch (Exception ex)
-        {
-            Console.Error.WriteLine(String.Join(Environment.NewLine, GetExceptions(ex)));
             return 1;
         }
-    }
 
-    private static Assembly ResolveAssembly(string appBase, string name)
-    {
-        var searchPaths = new[] { 
-            "", 
-            Path.Combine(name, "k10")
-        };
-
-        foreach (var searchPath in searchPaths)
+        // Pack arguments
+        var arguments = new string[argc];
+        for (var i = 0; i < arguments.Length; i++)
         {
-            var path = Path.Combine(appBase,
-                                    searchPath,
-                                    name + ".dll");
-
-            if (File.Exists(path))
-            {
-                return Assembly.LoadFile(path);
-            }
+            arguments[i] = new string(argv[i]);
         }
 
-        return null;
-    }
-
-    private static IEnumerable<string> GetExceptions(Exception ex)
-    {
-        if (ex.InnerException != null)
-        {
-            foreach (var e in GetExceptions(ex.InnerException))
-            {
-                yield return e;
-            }
-        }
-
-        if (!(ex is TargetInvocationException))
-        {
-            yield return ex.ToString();
-        }
+        // TODO: Return a wait handle
+        return RuntimeBootstrapper.Execute(arguments).Result;
     }
 }

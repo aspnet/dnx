@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi"
+     xmlns:netfx="http://schemas.microsoft.com/wix/NetFxExtension">
+
+  <!-- Common definitions -->
+  <?define ProductName = "ProjectK" ?>
+
+  <Product Id="*"
+           Name="ProjectK"
+           Language="1033"
+           Version="$(var.KProductVersion)"
+           Manufacturer="Microsoft Open Technologies"
+           UpgradeCode="da1bb847-cbb1-41e6-9dba-fb38f731d0d3">
+
+    <Package InstallerVersion="300"
+             Compressed="yes"
+             InstallScope="perMachine"
+             Description="$(var.ProductName)" />
+
+    <MajorUpgrade
+      DowngradeErrorMessage="A later or current version of [ProductName] is already installed. To install this version, uninstall the installed version first."
+      Schedule="afterInstallInitialize" />
+
+    <Media Id="1"
+           Cabinet="ProjectK.cab"
+           CompressionLevel="high"
+           EmbedCab="yes" />
+
+    <!-- Prerequisite check -->
+    <Condition Message="You need administrator privilege to install this application.">
+      Privileged
+    </Condition>
+
+    <Directory Id="TARGETDIR" Name="SourceDir">
+      <Directory Id="ProgramFilesFolder">
+        <Directory Id="INSTALLDIR" Name="$(var.ProductName)">
+          <Component Id="PROJECTK_FILES" Guid="*">
+            <File Id="K_CMD" KeyPath="yes" Source="K.cmd" />
+          </Component>
+        </Directory>
+      </Directory>
+    </Directory>
+
+    <!-- Product files -->
+    <DirectoryRef Id="TARGETDIR">
+      <!-- Registry Key entry -->
+      <Component Id="RegistryComponent" Guid="{fd9d550c-a577-4845-be1e-072a11444a48}">
+        <RegistryKey Root="HKLM" Key="SOFTWARE\Microsoft Open Technologies\$(var.ProductName)">
+          <RegistryValue Name="Version" Value="$(var.KProductVersion)" Type="string" />
+        </RegistryKey>
+      </Component>
+
+      <!-- Add to path -->
+      <Component Id="EnvironmentComponent" Guid="{ef87bf5d-7a80-47ea-b363-8b710d2b81fa}">
+        <Environment Id="Environment"
+                         Name="PATH"
+                         Action="set"
+                         Part="last"
+                         Permanent="no"
+                         System="no"
+                         Value="[INSTALLDIR]" />
+      </Component>
+    </DirectoryRef>
+    
+    <Binary Id="CustomAction" SourceFile="CustomAction\bin\$(var.Configuration)\ForceEnvironmentRefresh.dll" />
+    
+    <CustomAction Id="ForceEnvironmentRefresh"
+                  BinaryKey="CustomAction"
+                  DllEntry="ForceEnvironmentRefresh"
+                  Return="check"
+                  Execute="immediate" />
+
+    <InstallExecuteSequence>
+        <Custom Action="ForceEnvironmentRefresh" 
+                After="InstallFinalize"/>
+    </InstallExecuteSequence>
+    
+    <Feature Id="RequiredComponents" Level="1">
+      <ComponentRef Id="RegistryComponent" />
+      <ComponentRef Id="EnvironmentComponent" />
+      <ComponentRef Id="PROJECTK_FILES" />
+    </Feature>
+  </Product>
+</Wix>

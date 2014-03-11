@@ -46,7 +46,7 @@ namespace NuGet
         {
             if (String.IsNullOrEmpty(filePath))
             {
-                throw new ArgumentNullException( "filePath");
+                throw new ArgumentNullException("filePath");
             }
             _enableCaching = enableCaching;
             _streamFactory = () => File.OpenRead(filePath);
@@ -72,7 +72,7 @@ namespace NuGet
         public override IEnumerable<FrameworkName> GetSupportedFrameworks()
         {
             IEnumerable<FrameworkName> fileFrameworks;
-#if LOADER
+
             using (Stream stream = _streamFactory())
             {
                 var package = new ZipArchive(stream);
@@ -84,26 +84,6 @@ namespace NuGet
                                  select VersionUtility.ParseFrameworkNameFromFilePath(path, out effectivePath);
 
             }
-#else
-            IEnumerable<IPackageFile> cachedFiles;
-            if (_enableCaching && MemoryCache.Instance.TryGetValue(GetFilesCacheKey(), out cachedFiles))
-            {
-                fileFrameworks = cachedFiles.Select(c => c.TargetFramework);
-            }
-            else
-            {
-                using (Stream stream = _streamFactory())
-                {
-                    var package = Package.Open(stream);
-
-                    string effectivePath;
-                    fileFrameworks = from part in package.GetParts()
-                                     where IsPackageFile(part)
-                                     select VersionUtility.ParseFrameworkNameFromFilePath(UriUtility.GetPath(part.Uri), out effectivePath);
-
-                }
-            }
-#endif
 
             return base.GetSupportedFrameworks()
                        .Concat(fileFrameworks)
@@ -113,23 +93,11 @@ namespace NuGet
 
         protected override IEnumerable<IPackageAssemblyReference> GetAssemblyReferencesCore()
         {
-#if !LOADER
-            if (_enableCaching)
-            {
-                return MemoryCache.Instance.GetOrAdd(GetAssembliesCacheKey(), GetAssembliesNoCache, CacheTimeout);
-            }
-#endif
             return GetAssembliesNoCache();
         }
 
         protected override IEnumerable<IPackageFile> GetFilesBase()
         {
-#if !LOADER
-            if (_enableCaching)
-            {
-                return MemoryCache.Instance.GetOrAdd(GetFilesCacheKey(), GetFilesNoCache, CacheTimeout);
-            }
-#endif
             return GetFilesNoCache();
         }
 
@@ -172,16 +140,6 @@ namespace NuGet
             }
         }
 
-        private string GetFilesCacheKey()
-        {
-            return String.Format(CultureInfo.InvariantCulture, CacheKeyFormat, FilesCacheKey, Id, Version);
-        }
-
-        private string GetAssembliesCacheKey()
-        {
-            return String.Format(CultureInfo.InvariantCulture, CacheKeyFormat, AssembliesCacheKey, Id, Version);
-        }
-
         internal static bool IsPackageFile(ZipArchiveEntry part)
         {
             string path = part.FullName;
@@ -190,20 +148,6 @@ namespace NuGet
             return !ExcludePaths.Any(p => path.StartsWith(p, StringComparison.OrdinalIgnoreCase)) &&
                    !PackageHelper.IsManifest(path) &&
                    !path.StartsWith("[Content_Types]", StringComparison.OrdinalIgnoreCase);
-        }
-
-        internal static void ClearCache(IPackage package)
-        {
-#if !LOADER
-            var zipPackage = package as ZipPackage;
-
-            // Remove the cache entries for files and assemblies
-            if (zipPackage != null)
-            {
-                MemoryCache.Instance.Remove(zipPackage.GetAssembliesCacheKey());
-                MemoryCache.Instance.Remove(zipPackage.GetFilesCacheKey());
-            }
-#endif
         }
     }
 }

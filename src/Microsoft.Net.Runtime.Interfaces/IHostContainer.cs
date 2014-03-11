@@ -1,13 +1,11 @@
 ﻿
 using System;
-using System.Reflection;
 
 namespace Microsoft.Net.Runtime
 {
+    [AssemblyNeutral]
     public interface IHostContainer
     {
         IDisposable AddHost(IHost host);
-
-        Assembly GetEntryPoint();
     }
 }

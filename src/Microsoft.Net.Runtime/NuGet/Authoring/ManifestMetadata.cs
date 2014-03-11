@@ -104,7 +104,7 @@ namespace NuGet
         /// <summary>
         /// This property should be used only by the XML serializer. Do not use it in code.
         /// </summary>
-        [SuppressMessage("Microsoft.Usage", "CA1801:ReviewUnusedParameters", MessageId = "value", Justification="The propert setter is not supported.")]
+        [SuppressMessage("Microsoft.Usage", "CA1801:ReviewUnusedParameters", MessageId = "value", Justification = "The propert setter is not supported.")]
         [SuppressMessage("Microsoft.Design", "CA1002:DoNotExposeGenericLists", Justification = "It's easier to create a list")]
         [SuppressMessage("Microsoft.Usage", "CA2227:CollectionPropertiesShouldBeReadOnly", Justification = "This is needed for xml serialization")]
         [XmlArray("dependencies", IsNullable = false)]
@@ -266,7 +266,7 @@ namespace NuGet
                 {
                     return Enumerable.Empty<PackageDependencySet>();
                 }
-                
+
                 var dependencySets = DependencySets.Select(CreatePackageDependencySet);
 
                 // group the dependency sets with the same target framework together.
@@ -338,10 +338,10 @@ namespace NuGet
                                  .Select(VersionUtility.ParseFrameworkName);
         }
 
-        private static PackageDependencySet CreatePackageDependencySet(ManifestDependencySet manifestDependencySet) 
+        private static PackageDependencySet CreatePackageDependencySet(ManifestDependencySet manifestDependencySet)
         {
             FrameworkName targetFramework = manifestDependencySet.TargetFramework == null
-                                            ? null 
+                                            ? null
                                             : VersionUtility.ParseFrameworkName(manifestDependencySet.TargetFramework);
 
             var dependencies = from d in manifestDependencySet.Dependencies

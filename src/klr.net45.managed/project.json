@@ -1,0 +1,11 @@
+{
+    "version": "0.1-alpha-*",
+    "compilationOptions" : { "define" : ["TRACE"], "allowUnsafe": true },
+    "dependencies": {
+        "klr.hosting.shared" : "",
+        "Microsoft.Net.CommandLineUtils" : ""
+    },
+    "configurations": {
+        "net45" : { }
+    }
+}

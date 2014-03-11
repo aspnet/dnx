@@ -1,5 +1,4 @@
 ﻿using System;
-using System.ComponentModel;
 using System.Globalization;
 using System.Text.RegularExpressions;
 using NuGet.Resources;
@@ -10,17 +9,9 @@ namespace NuGet
     /// A hybrid implementation of SemVer that supports semantic versioning as described at http://semver.org while not strictly enforcing it to 
     /// allow older 4-digit versioning schemes to continue working.
     /// </summary>
-#if NET45
-    [Serializable]
-    [TypeConverter(typeof(SemanticVersionTypeConverter))]
-#endif
     public sealed class SemanticVersion : IComparable, IComparable<SemanticVersion>, IEquatable<SemanticVersion>
     {
-        private const RegexOptions _flags =
-#if NET45
- RegexOptions.Compiled |
-#endif
- RegexOptions.IgnoreCase | RegexOptions.ExplicitCapture;
+        private const RegexOptions _flags = RegexOptions.IgnoreCase | RegexOptions.ExplicitCapture;
         private static readonly Regex _semanticVersionRegex = new Regex(@"^(?<Version>\d+(\s*\.\s*\d+){0,3})(?<Release>-[a-z][0-9a-z-]*)?$", _flags);
         private static readonly Regex _strictSemanticVersionRegex = new Regex(@"^(?<Version>\d+(\.\d+){2})(?<Release>-[a-z][0-9a-z-]*)?$", _flags);
         private readonly string _originalString;

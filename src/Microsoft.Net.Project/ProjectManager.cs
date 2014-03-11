@@ -3,44 +3,41 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Reflection;
 using System.Runtime.Versioning;
+using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.Net.Runtime;
 using Microsoft.Net.Runtime.FileSystem;
 using Microsoft.Net.Runtime.Loader;
-#if NET45
-using Microsoft.Net.Runtime.Loader.MSBuildProject;
-#endif
 using Microsoft.Net.Runtime.Loader.NuGet;
-using Microsoft.Net.Runtime.Loader.Roslyn;
+using Microsoft.Net.Runtime.Roslyn;
 using NuGet;
-using KProject = Microsoft.Net.Runtime.Loader.Project;
+using KProject = Microsoft.Net.Runtime.Project;
 
 namespace Microsoft.Net.Project
 {
     public class ProjectManager
     {
-        private readonly string _projectDir;
+        private readonly BuildOptions _buildOptions;
 
-        public ProjectManager(string projectDir)
+        public ProjectManager(BuildOptions buildOptions)
         {
-            _projectDir = Normalize(projectDir);
+            _buildOptions = buildOptions;
+            _buildOptions.ProjectDir = Normalize(buildOptions.ProjectDir);
         }
 
-        public bool Build(string defaultTargetFramework = "net45")
+        public bool Build()
         {
-            defaultTargetFramework = Environment.GetEnvironmentVariable("TARGET_FRAMEWORK") ?? defaultTargetFramework;
-
             KProject project;
-            if (!KProject.TryGetProject(_projectDir, out project))
+            if (!KProject.TryGetProject(_buildOptions.ProjectDir, out project))
             {
-                Trace.TraceInformation("Unable to locate {0}.'", KProject.ProjectFileName);
+                System.Console.WriteLine("Unable to locate {0}.'", KProject.ProjectFileName);
                 return false;
             }
 
             var sw = Stopwatch.StartNew();
 
-            string outputPath = Path.Combine(_projectDir, "bin");
+            string outputPath = _buildOptions.OutputDir ?? Path.Combine(_buildOptions.ProjectDir, "bin");
             string nupkg = GetPackagePath(project, outputPath);
 
             var configurations = new HashSet<FrameworkName>(
@@ -49,7 +46,7 @@ namespace Microsoft.Net.Project
 
             if (configurations.Count == 0)
             {
-                configurations.Add(VersionUtility.ParseFrameworkName(defaultTargetFramework));
+                configurations.Add(_buildOptions.RuntimeTargetFramework);
             }
 
             var builder = new PackageBuilder();
@@ -69,231 +66,192 @@ namespace Microsoft.Net.Project
             builder.Title = project.Name;
 
             bool success = true;
-            bool createPackage = false;
+
+            var allDiagnostics = new List<Diagnostic>();
 
             // Build all target frameworks a project supports
             foreach (var targetFramework in configurations)
             {
                 try
                 {
-                    var result = Build(project, outputPath, targetFramework, builder);
+                    var diagnostics = new List<Diagnostic>();
 
-                    if (result != null && result.Errors != null)
-                    {
-                        success = false;
-                        Trace.TraceError(String.Join(Environment.NewLine, result.Errors));
-                    }
-                    else
-                    {
-                        createPackage = true;
-                    }
+                    success = success && Build(project, outputPath, targetFramework, builder, diagnostics);
+
+                    allDiagnostics.AddRange(diagnostics);
+
+                    WriteDiagnostics(diagnostics);
                 }
                 catch (Exception ex)
                 {
                     success = false;
-                    Trace.TraceError(ex.ToString());
+                    WriteError(ex.ToString());
                 }
             }
 
-            if (createPackage)
+            foreach (var sharedFile in project.SharedFiles)
+            {
+                var file = new PhysicalPackageFile();
+                file.SourcePath = sharedFile;
+                file.TargetPath = String.Format(@"shared\{0}", Path.GetFileName(sharedFile));
+                builder.Files.Add(file);
+            }
+
+            // If there were any errors then don't create the package
+            if (!allDiagnostics.Any(IsError))
             {
                 using (var fs = File.Create(nupkg))
                 {
                     builder.Save(fs);
                 }
 
-                Trace.TraceInformation("{0} -> {1}", project.Name, nupkg);
+                System.Console.WriteLine("{0} -> {1}", project.Name, nupkg);
             }
 
             sw.Stop();
 
-            Trace.TraceInformation("Compile took {0}ms", sw.ElapsedMilliseconds);
+            WriteSummary(allDiagnostics);
+
+            System.Console.WriteLine("Time elapsed {0}", sw.Elapsed);
             return success;
         }
 
-        public bool Clean(string defaultTargetFramework = "net45")
+        private void WriteSummary(List<Diagnostic> allDiagnostics)
         {
-            defaultTargetFramework = Environment.GetEnvironmentVariable("TARGET_FRAMEWORK") ?? defaultTargetFramework;
+            var errors = allDiagnostics.Count(IsError);
+            var warnings = allDiagnostics.Count(d => d.Severity == DiagnosticSeverity.Warning);
 
-            KProject project;
-            if (!KProject.TryGetProject(_projectDir, out project))
+            System.Console.WriteLine();
+
+            if (errors > 0)
             {
-                Trace.TraceInformation("Unable to locate {0}.'", KProject.ProjectFileName);
-                return false;
+#if NET45
+                WriteColor("Build failed.", ConsoleColor.Red);
+#else
+                System.Console.WriteLine("Build succeeded.");
+#endif
+            }
+            else
+            {
+#if NET45
+                WriteColor("Build succeeded.", ConsoleColor.Green);
+#else
+                System.Console.WriteLine("Build succeeded.");
+#endif
             }
 
-            string outputPath = Path.Combine(_projectDir, "bin");
-            string nupkg = GetPackagePath(project, outputPath);
+            System.Console.WriteLine("    {0} Warnings(s)", warnings);
+            System.Console.WriteLine("    {0} Error(s)", errors);
 
-            var configurations = new HashSet<FrameworkName>(
-                project.GetTargetFrameworkConfigurations()
-                       .Select(c => c.FrameworkName));
-
-            if (configurations.Count == 0)
-            {
-                configurations.Add(VersionUtility.ParseFrameworkName(defaultTargetFramework));
-            }
-
-            bool success = true;
-
-            foreach (var targetFramework in configurations)
-            {
-                try
-                {
-                    var result = Clean(project, outputPath, targetFramework);
-
-                    if (result != null && result.Errors != null)
-                    {
-                        success = false;
-
-                        Trace.TraceError(String.Join(Environment.NewLine, result.Errors));
-                    }
-                }
-                catch (Exception ex)
-                {
-                    success = false;
-                    Trace.TraceError(ex.ToString());
-                }
-            }
-
-            if (File.Exists(nupkg))
-            {
-                Trace.TraceInformation("Cleaning {0}", nupkg);
-                File.Delete(nupkg);
-            }
-
-            var di = new DirectoryInfo(outputPath);
-            DeleteEmptyFolders(di);
-
-            return success;
+            System.Console.WriteLine();
         }
 
-        private static void DeleteEmptyFolders(DirectoryInfo di)
+        private void WriteDiagnostics(List<Diagnostic> diagnostics)
         {
-            if (!di.Exists)
+            foreach (var diagnostic in diagnostics)
             {
-                return;
-            }
+                string message = GetMessage(diagnostic);
 
-            foreach (var d in di.EnumerateDirectories())
-            {
-                DeleteEmptyFolders(d);
-            }
-
-            if (!di.EnumerateFileSystemInfos().Any())
-            {
-                di.Delete();
+                if (IsError(diagnostic))
+                {
+                    WriteError(message);
+                }
+                else if (diagnostic.Severity == DiagnosticSeverity.Warning)
+                {
+                    WriteWarning(message);
+                }
             }
         }
 
-        private static AssemblyLoadResult Build(KProject project, string outputPath, FrameworkName targetFramework, PackageBuilder builder)
+        private void WriteError(string message)
         {
-            var loader = CreateLoader(Path.GetDirectoryName(project.ProjectFilePath));
+#if NET45
+            WriteColor(message, ConsoleColor.Red);
+#else
+            System.Console.WriteLine(message);
+#endif
+        }
 
-            loader.Walk(project.Name, project.Version, targetFramework);
+        private void WriteWarning(string message)
+        {
+#if NET45
+            WriteColor(message, ConsoleColor.Yellow);
+#else
+            System.Console.WriteLine(message);
+#endif
+        }
+
+#if NET45
+        private void WriteColor(string message, ConsoleColor color)
+        {
+            var old = System.Console.ForegroundColor;
+
+            try
+            {
+                System.Console.ForegroundColor = color;
+                System.Console.WriteLine(message);
+            }
+            finally
+            {
+                System.Console.ForegroundColor = old;
+            }
+        }
+#endif
+
+        private bool Build(KProject project, string outputPath, FrameworkName targetFramework, PackageBuilder builder, List<Diagnostic> diagnostics)
+        {
+            var roslynArtifactsProducer = PrepareCompiler(project, targetFramework);
 
             var targetFrameworkFolder = VersionUtility.GetShortFrameworkName(targetFramework);
             string targetPath = Path.Combine(outputPath, targetFrameworkFolder);
 
-            var loadContext = new LoadContext(project.Name, targetFramework)
+            var buildContext = new BuildContext(project.Name, targetFramework)
             {
                 OutputPath = targetPath,
                 PackageBuilder = builder,
+                CopyDependencies = _buildOptions.CopyDependencies
             };
 
-            var result = loader.Load(loadContext);
-
-            if (result == null || result.Errors != null)
-            {
-                return result;
-            }
-
-            // REVIEW: This might not work so well when building for multiple frameworks
-            RunStaticMethod("Compiler", "Compile", targetPath);
-
-            return result;
+            return roslynArtifactsProducer.Build(buildContext, diagnostics);
         }
 
-        private static AssemblyLoadResult Clean(KProject project, string outputPath, FrameworkName targetFramework)
+        private static RoslynArtifactsProducer PrepareCompiler(KProject project, FrameworkName targetFramework)
         {
-            var loader = CreateLoader(Path.GetDirectoryName(project.ProjectFilePath));
-            loader.Walk(project.Name, project.Version, targetFramework);
-
-            var targetFrameworkFolder = VersionUtility.GetShortFrameworkName(targetFramework);
-            string targetPath = Path.Combine(outputPath, targetFrameworkFolder);
-
-            var loadContext = new LoadContext(project.Name, targetFramework)
-            {
-                OutputPath = targetPath,
-                ArtifactPaths = new List<string>(),
-                CreateArtifacts = false
-            };
-
-            var result = loader.Load(loadContext);
-
-            if (result == null || result.Errors != null)
-            {
-                return result;
-            }
-
-            // REVIEW: This might not work so well when building for multiple frameworks
-            RunStaticMethod("Compiler", "Clean", targetPath, loadContext.ArtifactPaths);
-
-            if (loadContext.ArtifactPaths.Count > 0)
-            {
-                Trace.TraceInformation("Cleaning generated artifacts for {0}", targetFramework);
-
-                foreach (var path in loadContext.ArtifactPaths)
-                {
-                    if (File.Exists(path))
-                    {
-                        Trace.TraceInformation("Cleaning {0}", path);
-
-                        File.Delete(path);
-                    }
-                }
-            }
-
-            return result;
-        }
-
-        private static void RunStaticMethod(string typeName, string methodName, params object[] args)
-        {
-            // Invoke a static method on a class with the specified args
-            foreach (var a in AppDomain.CurrentDomain.GetAssemblies())
-            {
-                var type = a.GetType(typeName);
-
-                if (type != null)
-                {
-                    Trace.TraceInformation("Found {0} in {1}", typeName, a.GetName().Name);
-
-                    var method = type.GetTypeInfo().GetDeclaredMethods(methodName).Where(m => m.IsStatic).SingleOrDefault();
-
-                    if (method != null)
-                    {
-                        method.Invoke(null, args);
-                    }
-                }
-            }
-        }
-        private static AssemblyLoader CreateLoader(string projectDir)
-        {
+            var projectDir = project.ProjectDirectory;
+            var rootDirectory = DefaultHost.ResolveRootDirectory(projectDir);
             var globalAssemblyCache = new DefaultGlobalAssemblyCache();
-
-            var loader = new AssemblyLoader();
-            string rootDirectory = DefaultHost.ResolveRootDirectory(projectDir);
-            var resolver = new FrameworkReferenceResolver(globalAssemblyCache);
-            var resourceProvider = new ResxResourceProvider();
             var projectResolver = new ProjectResolver(projectDir, rootDirectory);
-            var roslynLoader = new RoslynAssemblyLoader(projectResolver, NoopWatcher.Instance, resolver, globalAssemblyCache, loader, resourceProvider);
-            loader.Add(roslynLoader);
-#if NET45
-            loader.Add(new MSBuildProjectAssemblyLoader(rootDirectory, NoopWatcher.Instance));
-#endif
-            loader.Add(new NuGetAssemblyLoader(projectDir));
 
-            return loader;
+            var resxProvider = new ResxResourceProvider();
+            var embeddedResourceProvider = new EmbeddedResourceProvider();
+            var compositeResourceProvider = new CompositeResourceProvider(new IResourceProvider[] { resxProvider, embeddedResourceProvider });
+
+            var nugetDependencyResolver = new NuGetDependencyResolver(projectDir);
+            var gacDependencyExporter = new GacDependencyExporter(globalAssemblyCache);
+            var compositeDependencyExporter = new CompositeDependencyExporter(new IDependencyExporter[] { 
+                gacDependencyExporter, 
+                nugetDependencyResolver 
+            });
+
+            var roslynCompiler = new RoslynCompiler(projectResolver,
+                                                    NoopWatcher.Instance,
+                                                    compositeDependencyExporter);
+
+            var projectReferenceResolver = new ProjectReferenceDependencyProvider(projectResolver);
+            var dependencyWalker = new DependencyWalker(new IDependencyProvider[] { 
+                projectReferenceResolver, 
+                nugetDependencyResolver 
+            });
+
+            dependencyWalker.Walk(project.Name, project.Version, targetFramework);
+
+            var roslynArtifactsProducer = new RoslynArtifactsProducer(roslynCompiler,
+                                                                      compositeResourceProvider,
+                                                                      globalAssemblyCache,
+                                                                      projectReferenceResolver.ResolvedDependencies);
+
+
+            return roslynArtifactsProducer;
         }
 
         private static string Normalize(string projectDir)
@@ -309,6 +267,18 @@ namespace Microsoft.Net.Project
         private static string GetPackagePath(KProject project, string outputPath)
         {
             return Path.Combine(outputPath, project.Name + "." + project.Version + ".nupkg");
+        }
+
+        private static string GetMessage(Diagnostic diagnostic)
+        {
+            var formatter = new DiagnosticFormatter();
+
+            return formatter.Format(diagnostic);
+        }
+
+        private static bool IsError(Diagnostic diagnostic)
+        {
+            return diagnostic.IsWarningAsError || diagnostic.Severity == DiagnosticSeverity.Error;
         }
     }
 }

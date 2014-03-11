@@ -6,7 +6,7 @@ using System.Runtime.Versioning;
 
 namespace NuGet
 {
-    public interface IPackage : IPackageMetadata, IServerPackageMetadata
+    public interface IPackage : IPackageMetadata
     {
         bool IsAbsoluteLatestVersion { get; }
 

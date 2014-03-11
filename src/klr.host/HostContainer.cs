@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Reflection;
 using Microsoft.Net.Runtime;
 
@@ -25,25 +24,11 @@ namespace klr.host
             });
         }
 
-        public Assembly GetEntryPoint()
+        public Assembly Load(string name)
         {
             foreach (var host in _hosts)
             {
-                Assembly assembly = host.GetEntryPoint();
-                if (assembly != null)
-                {
-                    return assembly;
-                }
-            }
-
-            return null;
-        }
-
-        public Assembly Load(string name)
-        {
-            foreach (var host in _hosts.Reverse())
-            {
-                Assembly assembly = host.Load(name);
+                var assembly = host.Load(name);
                 if (assembly != null)
                 {
                     return assembly;

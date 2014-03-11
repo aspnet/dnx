@@ -1,16 +1,14 @@
 ﻿using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 
 namespace Microsoft.Net.Runtime.FileSystem
 {
-#if NET45 // CORECLR_TODO: FileWatcher
-    public class FileWatcher : IFileWatcher
+    public class FileWatcher : IFileWatcher, IFileMonitor
     {
         private readonly HashSet<string> _files = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-        private readonly ConcurrentDictionary<string, HashSet<string>> _directories = new ConcurrentDictionary<string, HashSet<string>>(StringComparer.OrdinalIgnoreCase);
+        private readonly Dictionary<string, HashSet<string>> _directories = new Dictionary<string, HashSet<string>>(StringComparer.OrdinalIgnoreCase);
 
         private readonly FileSystemWatcher _watcher;
 
@@ -31,7 +29,7 @@ namespace Microsoft.Net.Runtime.FileSystem
             _watcher.Created += OnWatcherChanged;
         }
 
-        public event Action OnChanged;
+        public event Action<string> OnChanged;
 
         public void WatchDirectory(string path, string extension)
         {
@@ -69,7 +67,7 @@ namespace Microsoft.Net.Runtime.FileSystem
 
                 if (OnChanged != null)
                 {
-                    OnChanged();
+                    OnChanged(oldPath ?? newPath);
                 }
 
                 return true;
@@ -91,7 +89,7 @@ namespace Microsoft.Net.Runtime.FileSystem
         private bool HasChanged(string oldPath, string newPath, WatcherChangeTypes changeType)
         {
             // File changes
-            if (_files.Contains(newPath) || 
+            if (_files.Contains(newPath) ||
                 (oldPath != null && _files.Contains(oldPath)))
             {
                 return true;
@@ -106,7 +104,7 @@ namespace Microsoft.Net.Runtime.FileSystem
                 if (String.IsNullOrEmpty(extension))
                 {
                     // Assume it's a directory
-                    if (changeType == WatcherChangeTypes.Created || 
+                    if (changeType == WatcherChangeTypes.Created ||
                         changeType == WatcherChangeTypes.Renamed)
                     {
                         foreach (var e in extensions)
@@ -114,7 +112,7 @@ namespace Microsoft.Net.Runtime.FileSystem
                             WatchDirectory(newPath, e);
                         }
                     }
-                    else if(changeType == WatcherChangeTypes.Deleted)
+                    else if (changeType == WatcherChangeTypes.Deleted)
                     {
                         return true;
                     }
@@ -129,9 +127,8 @@ namespace Microsoft.Net.Runtime.FileSystem
             return false;
         }
     }
-#endif
 
-    public sealed class NoopWatcher : IFileWatcher
+    public sealed class NoopWatcher : IFileWatcher, IFileMonitor
     {
         public static readonly NoopWatcher Instance = new NoopWatcher();
 
@@ -145,7 +142,7 @@ namespace Microsoft.Net.Runtime.FileSystem
             return true;
         }
 
-        public event Action OnChanged;
+        public event Action<string> OnChanged;
 
         public void WatchDirectory(string path, string extension)
         {

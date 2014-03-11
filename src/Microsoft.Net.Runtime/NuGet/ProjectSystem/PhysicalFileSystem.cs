@@ -15,7 +15,7 @@ namespace NuGet
         {
             if (String.IsNullOrEmpty(root))
             {
-                throw new ArgumentNullException( "root");
+                throw new ArgumentNullException("root");
             }
             _root = root;
         }
@@ -107,7 +107,7 @@ namespace NuGet
             try
             {
                 MakeFileWritable(path);
-                path = GetFullPath(path);                
+                path = GetFullPath(path);
                 File.Delete(path);
                 string folderPath = Path.GetDirectoryName(path);
                 if (!String.IsNullOrEmpty(folderPath))
@@ -267,7 +267,7 @@ namespace NuGet
 
             // before creating the file, ensure the parent directory exists first.
             string directory = Path.GetDirectoryName(fullPath);
-            if (!Directory.Exists(directory)) 
+            if (!Directory.Exists(directory))
             {
                 Directory.CreateDirectory(directory);
             }

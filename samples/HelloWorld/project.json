@@ -1,4 +1,22 @@
 {
     "version": "0.1-beta-*",
-    "dependencies": {}
+    "exclude": "more\\*.cs",
+    "dependencies": {
+        "HelloShared": "0.1-beta-*"
+    },
+    "commands": {
+        "hi": "HelloWorld --mode amazing",
+        "run": "HelloWorld I can customize the default command"
+    },
+    "configurations": {
+        "net45": {},
+        "k10": {
+            "dependencies": {
+                "System.Console": "4.0.0.0",
+                "System.Linq": "4.0.0.0",
+                "System.Runtime": "4.0.20.0",
+                "System.Threading.Tasks": "4.0.0.0"
+            }
+        }
+    }
 }

@@ -9,65 +9,43 @@ namespace klr.host
 {
     public class RootHost : IHost
     {
-        private readonly string _application;
-        private readonly string _path;
-        private readonly string _applicationName;
-        readonly IDictionary<string, Assembly> _cache = new Dictionary<string, Assembly>();
+        private readonly IDictionary<string, Assembly> _cache = new Dictionary<string, Assembly>();
+        private readonly string[] _searchPaths;
+        private readonly IAssemblyLoaderEngine _loaderEngine;
 
-
-        public RootHost(string application)
+        public RootHost(IAssemblyLoaderEngine loaderEngine, string[] searchPaths)
         {
-            _application = application;
-
-            if (_application.EndsWith(".dll"))
-            {
-                _path = Path.GetDirectoryName(_application);
-                _applicationName = Path.GetFileNameWithoutExtension(application);
-            }
-            else
-            {
-                throw new ArgumentException(
-                    String.Format("application '{0}' is not understood", application),
-                    "application");
-            }
+            _loaderEngine = loaderEngine;
+            _searchPaths = searchPaths;
         }
 
         public void Dispose()
         {
         }
 
-        public Assembly GetEntryPoint()
-        {
-            Trace.TraceInformation("RootHost.GetEntryPoint GetEntryPoint {0}", _applicationName);
-            return Assembly.Load(new AssemblyName(_applicationName));
-        }
-
         public Assembly Load(string name)
         {
             Trace.TraceInformation("RootHost.Load name={0}", name);
 
-            Assembly assembly;
-            if (_cache.TryGetValue(name, out assembly))
+            foreach (var path in _searchPaths)
             {
-                return assembly;
-            }
+                var filePath = Path.Combine(path, name + ".dll");
+                if (File.Exists(filePath))
+                {
+                    try
+                    {
+                        Trace.TraceInformation("RootHost Assembly.LoadFile({0})", filePath);
 
-            var filePath = Path.Combine(_path, name + ".dll");
-            if (File.Exists(filePath))
-            {
-                try
-                {
-                    Trace.TraceInformation("RootHost Assembly.LoadFile({0})", filePath);
-                    assembly = Assembly.LoadFile(filePath);
-                }
-                catch (Exception ex)
-                {
-                    Trace.TraceWarning("Exception {0} loading {1}", ex.Message, filePath);
+                        return _loaderEngine.LoadFile(filePath);
+                    }
+                    catch (Exception ex)
+                    {
+                        Trace.TraceWarning("Exception {0} loading {1}", ex.Message, filePath);
+                    }
                 }
             }
 
-            _cache[name] = assembly;
-            return assembly;
+            return null;
         }
     }
 }

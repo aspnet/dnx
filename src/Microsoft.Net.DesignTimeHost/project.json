@@ -1,0 +1,29 @@
+{
+    "dependencies" : {
+        "Newtonsoft.Json" : "5.0.8",
+        "Microsoft.Net.Runtime" : "",
+        "Microsoft.Net.Runtime.Interfaces" : "",
+        "Microsoft.Net.Runtime.Roslyn" : ""
+    },
+    "configurations" : {
+        "net45" : {
+            "dependencies" : {
+                "System.Net" : ""
+            }
+        },
+        "k10" : {
+            "dependencies": {
+                "System.Collections": "4.0.0.0",
+                "System.Console": "4.0.0.0",
+                "System.Dynamic.Runtime": "4.0.0.0",
+                "System.IO": "4.0.0.0",
+                "System.Linq": "4.0.0.0",
+                "System.Runtime": "4.0.20.0",
+                "System.Runtime.Extensions": "4.0.10.0",
+                "System.Threading": "4.0.0.0",
+                "System.Threading.Thread": "4.0.0.0",
+                "System.Threading.ThreadPool": "4.0.10.0"
+            }
+        }
+    }
+}

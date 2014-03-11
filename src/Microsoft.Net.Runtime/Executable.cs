@@ -1,4 +1,5 @@
-﻿using System;
+﻿#if MSBUILD
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -8,7 +9,6 @@ using System.Threading.Tasks;
 
 namespace Microsoft.Net.Runtime
 {
-#if NET45 // CORECLR_TODO: Process
     public class Executable
     {
         public Executable(string path, string workingDirectory)
@@ -47,6 +47,7 @@ namespace Microsoft.Net.Runtime
         public Process Execute(Func<string, bool> onWriteOutput, Func<string, bool> onWriteError, Encoding encoding, string arguments, params object[] args)
         {
             Process process = CreateProcess(arguments, args);
+
             process.EnableRaisingEvents = true;
 
             var errorBuffer = new StringBuilder();
@@ -58,7 +59,8 @@ namespace Microsoft.Net.Runtime
                 {
                     if (onWriteOutput(e.Data))
                     {
-                        outputBuffer.AppendLine(Encoding.UTF8.GetString(encoding.GetBytes(e.Data)));
+                        var data = encoding.GetBytes(e.Data);
+                        outputBuffer.AppendLine(Encoding.UTF8.GetString(data, 0, data.Length));
                     }
                 }
             };
@@ -69,7 +71,8 @@ namespace Microsoft.Net.Runtime
                 {
                     if (onWriteError(e.Data))
                     {
-                        errorBuffer.AppendLine(Encoding.UTF8.GetString(encoding.GetBytes(e.Data)));
+                        var data = encoding.GetBytes(e.Data);
+                        errorBuffer.AppendLine(Encoding.UTF8.GetString(data, 0, data.Length));
                     }
                 }
             };
@@ -122,5 +125,5 @@ namespace Microsoft.Net.Runtime
             return process;
         }
     }
-#endif
 }
+#endif

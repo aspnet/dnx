@@ -5,67 +5,78 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.Versioning;
+using Microsoft.Net.Runtime.Common.DependencyInjection;
 using Microsoft.Net.Runtime.FileSystem;
 using Microsoft.Net.Runtime.Loader;
-using Microsoft.Net.Runtime.Loader.MSBuildProject;
 using Microsoft.Net.Runtime.Loader.NuGet;
-using Microsoft.Net.Runtime.Loader.Roslyn;
-using NuGet;
 
 namespace Microsoft.Net.Runtime
 {
     public class DefaultHost : IHost
     {
         private AssemblyLoader _loader;
+        private DependencyWalker _dependencyWalker;
+
         private IFileWatcher _watcher;
         private readonly string _projectDir;
-        private Assembly _entryPoint;
         private readonly FrameworkName _targetFramework;
+        private readonly string _name;
+        private readonly ServiceProvider _serviceProvider;
+        private readonly IAssemblyLoaderEngine _loaderEngine;
+        private readonly IDependencyExporter _hostExporter;
 
-        public DefaultHost(DefaultHostOptions options)
+        private Project _project;
+
+        public DefaultHost(DefaultHostOptions options, IServiceProvider hostProvider)
         {
-            _projectDir = Normalize(options.ProjectDir);
+            _projectDir = Normalize(options.ApplicationBaseDirectory);
 
-            _targetFramework = VersionUtility.ParseFrameworkName(options.TargetFramework ?? "net45");
+            _name = options.ApplicationName;
+
+            _targetFramework = options.TargetFramework;
+
+            _loaderEngine = (IAssemblyLoaderEngine)hostProvider.GetService(typeof(IAssemblyLoaderEngine));
+            _hostExporter = (IDependencyExporter)hostProvider.GetService(typeof(IDependencyExporter));
+
+            _serviceProvider = new ServiceProvider(hostProvider);
 
             Initialize(options);
         }
 
-        public event Action OnChanged;
-
-        private void OnWatcherChanged()
+        public IServiceProvider ServiceProvider
         {
-            if (OnChanged != null)
-            {
-                OnChanged();
-            }
+            get { return _serviceProvider; }
         }
 
-        public Assembly GetEntryPoint()
+        public Project Project
         {
-            if (_entryPoint != null)
-            {
-                return _entryPoint;
-            }
+            get { return _project; }
+        }
 
-            Project project;
-            if (!Project.TryGetProject(_projectDir, out project))
-            {
-                Trace.TraceInformation("Unable to locate {0}.'", Project.ProjectFileName);
-                return null;
-            }
+        public Assembly GetEntryPoint(string applicationName)
+        {
+            Trace.TraceInformation("Project root is {0}", _projectDir);
 
             var sw = Stopwatch.StartNew();
 
-            _loader.Walk(project.Name, project.Version, _targetFramework);
+            if (Project == null)
+            {
+                return null;
+            }
 
-            _entryPoint = _loader.LoadAssembly(new LoadContext(project.Name, _targetFramework));
+            _dependencyWalker.Walk(Project.Name, Project.Version, _targetFramework);
+
+            _serviceProvider.Add(typeof(IApplicationEnvironment), new ApplicationEnvironment(Project, _targetFramework));
+
+            Trace.TraceInformation("Loading entry point from {0}", applicationName);
+
+            var assembly = Assembly.Load(new AssemblyName(applicationName));
 
             sw.Stop();
 
             Trace.TraceInformation("Load took {0}ms", sw.ElapsedMilliseconds);
 
-            return _entryPoint;
+            return assembly;
         }
 
         public Assembly Load(string name)
@@ -75,44 +86,82 @@ namespace Microsoft.Net.Runtime
 
         public void Dispose()
         {
-            _watcher.OnChanged -= OnWatcherChanged;
             _watcher.Dispose();
         }
 
         private void Initialize(DefaultHostOptions options)
         {
-            _loader = new AssemblyLoader();
+            var dependencyProviders = new List<IDependencyProvider>();
+            var loaders = new List<IAssemblyLoader>();
+
             string rootDirectory = ResolveRootDirectory(_projectDir);
 
-#if NET45 // CORECLR_TODO: FileSystemWatcher
             if (options.WatchFiles)
             {
                 _watcher = new FileWatcher(rootDirectory);
-                _watcher.OnChanged += OnWatcherChanged;
             }
             else
-#endif
             {
                 _watcher = NoopWatcher.Instance;
             }
 
-            var globalAssemblyCache = new DefaultGlobalAssemblyCache();
-            var projectResolver = new ProjectResolver(_projectDir, rootDirectory);
-
-            if (options.UseCachedCompilations)
+            if (!Project.TryGetProject(_projectDir, out _project))
             {
-                var cachedLoader = new CachedCompilationLoader(projectResolver);
-                _loader.Add(cachedLoader);
+                Trace.TraceInformation("Unable to locate {0}.'", Project.ProjectFileName);
+                return;
             }
 
-            var resolver = new FrameworkReferenceResolver(globalAssemblyCache);
-            var resourceProvider = new ResxResourceProvider();
-            var roslynLoader = new RoslynAssemblyLoader(projectResolver, _watcher, resolver, globalAssemblyCache, _loader, resourceProvider);
-            _loader.Add(roslynLoader);
-#if NET45 // CORECLR_TODO: Process
-            _loader.Add(new MSBuildProjectAssemblyLoader(rootDirectory, _watcher));
-#endif
-            _loader.Add(new NuGetAssemblyLoader(_projectDir));
+            var projectResolver = new ProjectResolver(_projectDir, rootDirectory);
+
+            var nugetDependencyResolver = new NuGetDependencyResolver(_projectDir);
+            var nugetLoader = new NuGetAssemblyLoader(_loaderEngine, nugetDependencyResolver);
+            var cachedLoader = new CachedCompilationLoader(_loaderEngine, projectResolver);
+            var globalAssemblyCache = new DefaultGlobalAssemblyCache();
+
+            // Roslyn needs to be able to resolve exported references and sources
+            var dependencyExporters = new List<IDependencyExporter>();
+
+            // Add the host exporter
+            dependencyExporters.Add(_hostExporter);
+
+            // Cached loader
+            if (options.UseCachedCompilations)
+            {
+                dependencyExporters.Add(cachedLoader);
+            }
+
+            // GAC
+            dependencyExporters.Add(new GacDependencyExporter(globalAssemblyCache));
+
+            // NuGet exporter
+            dependencyExporters.Add(nugetDependencyResolver);
+
+            var dependencyExporter = new CompositeDependencyExporter(dependencyExporters);
+            var roslynLoader = new LazyRoslynAssemblyLoader(_loaderEngine, projectResolver, _watcher, dependencyExporter, globalAssemblyCache);
+
+            // Order is important
+            if (options.UseCachedCompilations)
+            {
+                // Cached compilations
+                loaders.Add(cachedLoader);
+                dependencyProviders.Add(cachedLoader);
+            }
+
+            // Project.json projects
+            loaders.Add(roslynLoader);
+            dependencyProviders.Add(new ProjectReferenceDependencyProvider(projectResolver));
+
+            // NuGet packages
+            loaders.Add(nugetLoader);
+            dependencyProviders.Add(nugetDependencyResolver);
+
+            _dependencyWalker = new DependencyWalker(dependencyProviders);
+            _loader = new AssemblyLoader(loaders);
+
+            _serviceProvider.Add(typeof(IFileMonitor), _watcher);
+            _serviceProvider.Add(typeof(IDependencyExporter),
+                new CompositeDependencyExporter(
+                    dependencyExporters.Concat(new[] { roslynLoader })));
         }
 
         public static string ResolveRootDirectory(string projectDir)

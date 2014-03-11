@@ -206,10 +206,8 @@ namespace NuGet
 
         public abstract Stream GetStream();
         
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1024:UsePropertiesWhereAppropriate", Justification = "This operation can be expensive.")]
         protected abstract IEnumerable<IPackageFile> GetFilesBase();
 
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1024:UsePropertiesWhereAppropriate", Justification = "This operation can be expensive.")]
         protected abstract IEnumerable<IPackageAssemblyReference> GetAssemblyReferencesCore();
 
         protected void ReadManifest(Stream manifestStream)

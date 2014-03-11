@@ -1,128 +1,67 @@
 ﻿
 using System;
-using System.Diagnostics;
-using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Threading.Tasks;
 using Microsoft.Net.Runtime;
-using klr.host;
+using Microsoft.Net.Runtime.Common;
+using Microsoft.Net.Runtime.Common.DependencyInjection;
 
-public class Bootstrapper
+namespace klr.host
 {
-    private HostContainer _container;
-
-    public int Main(int argc, string[] argv)
+    public class Bootstrapper
     {
-        if (argc < 1)
+        private readonly IHostContainer _container;
+        private readonly IAssemblyLoaderEngine _loaderEngine;
+        private readonly IDependencyExporter _exporter;
+
+        public Bootstrapper(IHostContainer container,
+                            IAssemblyLoaderEngine loaderEngine,
+                            IDependencyExporter exporter)
         {
-            Console.WriteLine("{app} [args]");
-            return -1;
+            _container = container;
+            _loaderEngine = loaderEngine;
+            _exporter = exporter;
         }
 
-        int exitCode = 0;
-#if NET45 // CORECLR_TODO: Classic tracing
-        var listener = new ConsoleTraceListener();
-        Trace.Listeners.Add(listener);
-        Trace.AutoFlush = true;
+        public async Task<int> Main(string[] args)
+        {
+            if (args.Length < 1)
+            {
+                Console.WriteLine("{app} [args]");
+                return -1;
+            }
+
+            var name = args[0];
+            var programArgs = args.Skip(1).ToArray();
+
+            var assembly = Assembly.Load(new AssemblyName(name));
+
+            if (assembly == null)
+            {
+                return -1;
+            }
+
+#if NET45
+            string applicationBaseDirectory = AppDomain.CurrentDomain.SetupInformation.ApplicationBase;
+#else
+            string applicationBaseDirectory = (string)typeof(AppDomain).GetRuntimeMethod("GetData", new[] { typeof(string) }).Invoke(AppDomain.CurrentDomain, new object[] { "APPBASE" });
 #endif
 
-        string path = Path.GetFullPath(argv[0]);
+            var framework = Environment.GetEnvironmentVariable("TARGET_FRAMEWORK");
+            var targetFramework = FrameworkNameUtility.ParseFrameworkName(framework ?? "net45");
 
-        _container = new HostContainer();
+            var applicationEnvironment = new ApplicationEnvironment(applicationBaseDirectory,
+                                                                    targetFramework,
+                                                                    assembly);
 
-        AppDomain.CurrentDomain.AssemblyResolve += OnAssemblyResolve;
+            var serviceProvider = new ServiceProvider();
+            serviceProvider.Add(typeof(IHostContainer), _container);
+            serviceProvider.Add(typeof(IAssemblyLoaderEngine), _loaderEngine);
+            serviceProvider.Add(typeof(IApplicationEnvironment), applicationEnvironment);
+            serviceProvider.Add(typeof(IDependencyExporter), _exporter);
 
-        var host = new RootHost(path);
-
-        using (_container.AddHost(host))
-        {
-            exitCode = ExecuteMain(path, argv.Skip(1).ToArray());
+            return await EntryPointExecutor.Execute(assembly, programArgs, serviceProvider);
         }
-
-        AppDomain.CurrentDomain.AssemblyResolve -= OnAssemblyResolve;
-
-        return exitCode;
-    }
-
-    private int ExecuteMain(string path, string[] args)
-    {
-        var assembly = _container.GetEntryPoint();
-
-        if (assembly == null)
-        {
-            return -1;
-        }
-
-        string name = assembly.GetName().Name;
-
-        var programType = assembly.GetType("Program") ?? assembly.DefinedTypes.Where(t => t.Name == "Program").Select(t => t.AsType()).FirstOrDefault();
-
-        if (programType == null)
-        {
-            Console.WriteLine("'{0}' does not contain a static 'Main' method suitable for an entry point", name);
-            return -1;
-        }
-
-        // Invoke the constructor with the most arguments
-        var ctor = programType.GetTypeInfo()
-                              .DeclaredConstructors
-                              .OrderByDescending(p => p.GetParameters().Length)
-                              .FirstOrDefault();
-
-        var parameterValues = ctor.GetParameters()
-                                  .Select(Satisfy)
-                                  .ToArray();
-
-        object programInstance = ctor.Invoke(parameterValues);
-
-        var main = programType.GetTypeInfo().GetDeclaredMethods("Main").FirstOrDefault();
-
-        if (main == null)
-        {
-            Console.WriteLine("'{0}' does not contain a static 'Main' method suitable for an entry point", name);
-            return -1;
-        }
-
-        var parameters = main.GetParameters();
-        object result = null;
-
-        if (parameters.Length == 0)
-        {
-            result = main.Invoke(programInstance, null);
-        }
-        else if (parameters.Length == 1)
-        {
-            result = main.Invoke(programInstance, new object[] { args });
-        }
-
-        if (result is int)
-        {
-            return (int)result;
-        }
-
-        return 0;
-    }
-
-    private object Satisfy(ParameterInfo arg)
-    {
-        if (arg.ParameterType == typeof(IHostContainer))
-        {
-            return _container;
-        }
-
-        return null;
-    }
-
-    private Assembly OnAssemblyResolve(object sender, ResolveEventArgs args)
-    {
-        // REVIEW: Do we need to support resources?
-        if (args.Name.Contains(".resources"))
-        {
-            return null;
-        }
-
-        var name = new AssemblyName(args.Name).Name;
-
-        return _container.Load(name);
     }
 }

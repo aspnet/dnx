@@ -1,0 +1,9 @@
+{
+    "dependencies": {
+        "Shouldly" : "1.1.1.1",
+        "xunit" : "1.9.2",
+        "xunit.extensions": "1.9.2",
+        "Microsoft.Net.Runtime": "",
+        "Microsoft.Net.Runtime.Interfaces": ""
+    }
+}

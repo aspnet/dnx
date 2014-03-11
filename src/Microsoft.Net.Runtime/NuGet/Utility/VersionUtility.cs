@@ -8,7 +8,6 @@ using System.Reflection;
 using System.Runtime.Versioning;
 using System.Text;
 using System.Text.RegularExpressions;
-using Microsoft.Net.Runtime;
 using NuGet.Resources;
 using CompatibilityMapping = System.Collections.Generic.Dictionary<string, string[]>;
 
@@ -22,23 +21,9 @@ namespace NuGet
         private const string LessThanOrEqualTo = "\u2264";
         private const string GreaterThanOrEqualTo = "\u2265";
 
-        [System.Diagnostics.CodeAnalysis.SuppressMessage(
-            "Microsoft.Security",
-            "CA2104:DoNotDeclareReadOnlyMutableReferenceTypes",
-            Justification = "The type FrameworkName is immutable.")]
         public static readonly FrameworkName EmptyFramework = new FrameworkName("NoFramework", new Version(0, 0));
-
-        [System.Diagnostics.CodeAnalysis.SuppressMessage(
-            "Microsoft.Security",
-            "CA2104:DoNotDeclareReadOnlyMutableReferenceTypes",
-            Justification = "The type FrameworkName is immutable.")]
-        public static readonly FrameworkName NativeProjectFramework = new FrameworkName("Native", new Version(0, 0));
-
-        [System.Diagnostics.CodeAnalysis.SuppressMessage(
-            "Microsoft.Security",
-            "CA2104:DoNotDeclareReadOnlyMutableReferenceTypes",
-            Justification = "The type FrameworkName is immutable.")]
         public static readonly FrameworkName UnsupportedFrameworkName = new FrameworkName("Unsupported", new Version(0, 0));
+
         private static readonly Version _emptyVersion = new Version(0, 0);
 
         private static readonly IDictionary<string, string> _knownIdentifiers = PopulateKnownFrameworks();
@@ -95,7 +80,7 @@ namespace NuGet
             { new FrameworkName("Windows, Version=v8.0"), new FrameworkName(".NETCore, Version=v4.5") },
             { new FrameworkName("Windows, Version=v8.1"), new FrameworkName(".NETCore, Version=v4.5.1") },
 
-            // Temporary hack to make K 1.0 is compatible with NetCore 4.5.1
+            // HACK: Temporary hack to make K 1.0 is compatible with NetCore 4.5.1
             { new FrameworkName("K, Version=v1.0"), new FrameworkName(".NETCore, Version=v4.5.1") }
         };
 
@@ -115,6 +100,11 @@ namespace NuGet
             {
                 return new FrameworkName(NetFrameworkIdentifier, DefaultTargetFrameworkVersion);
             }
+        }
+
+        public static bool IsDesktop(FrameworkName frameworkName)
+        {
+            return frameworkName.Identifier == DefaultTargetFramework.Identifier;
         }
 
         /// <summary>
@@ -544,7 +534,6 @@ namespace NuGet
             return name + "-" + profile;
         }
 
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1021:AvoidOutParameters", MessageId = "1#")]
         public static FrameworkName ParseFrameworkNameFromFilePath(string filePath, out string effectivePath)
         {
             var knownFolders = new string[] 
@@ -598,7 +587,6 @@ namespace NuGet
         /// <param name="strictParsing">if set to <c>true</c>, parse the first folder of path even if it is unrecognized framework.</param>
         /// <param name="effectivePath">returns the path after the parsed target framework</param>
         /// <returns></returns>
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1021:AvoidOutParameters", MessageId = "2#")]
         public static FrameworkName ParseFrameworkFolderName(string path, bool strictParsing, out string effectivePath)
         {
             // The path for a reference might look like this for assembly foo.dll:            
@@ -1044,22 +1032,9 @@ namespace NuGet
                 { "MonoAndroid", "MonoAndroid" },
                 { "MonoTouch", "MonoTouch" },
                 { "MonoMac", "MonoMac" },
-                { "native", "native"}
+                { "native", "native"},
+                { "k", "K" }
             };
-
-            foreach (var frameworkDirectory in FrameworkReferenceResolver.GetFrameworkDirectories())
-            {
-                if (Directory.Exists(frameworkDirectory))
-                {
-                    var di = new DirectoryInfo(frameworkDirectory);
-
-                    foreach (var d in di.EnumerateDirectories())
-                    {
-                        frameworks[d.Name] = d.Name;
-                    }
-                }
-
-            }
 
             return frameworks;
         }

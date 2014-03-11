@@ -1,5 +1,6 @@
 
-var VERSION='0.1-alpha'
+var PRODUCT_VERSION = '0.1'
+var VERSION='${PRODUCT_VERSION}-alpha'
 var AUTHORS='Microsoft'
 
 default Configuration='Release'
@@ -9,48 +10,37 @@ k-standard-goals
 
 var ROOT = '${Directory.GetCurrentDirectory()}'
 var SCRIPTS_DIR = '${Path.Combine(ROOT, "scripts")}'
-var BIN_DIR = '${Path.Combine(ROOT, "bin", Configuration)}'
-var SDK_ROOT = '${Path.Combine(ROOT, "artifacts", "sdk")}'
 var BUILD_DIR2 = '${Path.Combine(ROOT, "artifacts", "build")}'
+var SDK_ROOT = '${Path.Combine(BUILD_DIR2, "ProjectK")}'
 var TOOLS_DIR = '${Path.Combine(SDK_ROOT, "tools")}'
 var TOOLS_BIN_DIR = '${Path.Combine(TOOLS_DIR, "bin")}'
 var PACKAGES_DIR = '${Path.Combine(ROOT, "packages")}'
 var TEST_RESULTS = '${Path.Combine(ROOT, "TestResults")}'
 var SAMPLES_DIR = '${Path.Combine(ROOT, "samples")}'
-
 var FULL_VERSION = '${VERSION + "-" + BuildNumber}'
-
-#solution-compile target='compile'
-    var programFilesX86 = '${Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86)}'
-    var msbuild = '${Path.Combine(programFilesX86, @"MSBuild\12.0\Bin\MSBuild.exe")}'
-
-    @{
-        if(!File.Exists(msbuild))
-        {
-            Log.Warn("msbuild version 12 not found. Please ensure you have the VS 2013 C++ SDK installed.");
-            Environment.Exit(1);
-        }
-        else 
-        {
-            Exec(msbuild, " KRuntime.sln /p:Configuration=" + Configuration + " /v:quiet"); 
-        }
-    }
+var CORECLR_PATH = '${Environment.GetEnvironmentVariable("CORECLR_PATH")}'
 
 #package-runtime .clean-sdk-dir .copy-bits .tweak-scripts .copy-package-dependencies .copy-coreclr .nuget-pack-runtime target='package'
+    
+#rebuild-package .build-compile .native-compile .package-runtime
 
-#verify-package target='verify'
+#test-package
     var helloWorld = '${Path.Combine(SAMPLES_DIR, "HelloWorld")}'
     var kcmd = '${Path.Combine(TEST_RESULTS, "ProjectK", "tools", "k.cmd")}'
-
-    nuget-install package='ProjectK' outputDir='${TEST_RESULTS}' extra='-source ${SDK_ROOT} -ExcludeVersion -pre'
+    
+    nuget-install package='ProjectK' outputDir='${TEST_RESULTS}' extra='-source ${BUILD_DIR2} -ExcludeVersion -pre -nocache'
 
     @{
-        Action<string> runWithFramework = framework => {
+        Action<string, string> runWithFramework = (framework, platform) => {
             try
             {
                 Environment.SetEnvironmentVariable("TARGET_FRAMEWORK", framework);
+                Environment.SetEnvironmentVariable("TARGET_PLATFORM", platform);
+                Environment.SetEnvironmentVariable("K_APPBASE", helloWorld);
 
-                var commands = new [] { "run", "build", "clean" };
+                Exec(kcmd, "run");
+
+                var commands = new [] { "build" };
                 foreach(var cmd in commands)
                 {
                     Exec(kcmd, cmd + " " + helloWorld);
@@ -58,44 +48,100 @@ var FULL_VERSION = '${VERSION + "-" + BuildNumber}'
             }
             finally
             {
+                Environment.SetEnvironmentVariable("K_APPBASE", null);
                 Environment.SetEnvironmentVariable("TARGET_FRAMEWORK", null);
+                Environment.SetEnvironmentVariable("TARGET_PLATFORM", null);
             }
         };
 
-        // Default
-        runWithFramework(null);
-        runWithFramework("k10");
+        runWithFramework(null, "");
+        runWithFramework("k10", "");
+        runWithFramework(null, "amd64");
+        runWithFramework("k10", "amd64");
     }
+
+#ensure-latest-package
+    @{
+        // We need to re-run the build using the current output
+        // Delete the package directory
+        foreach (var dir in Directory.EnumerateDirectories(PACKAGES_DIR, "projectk*"))
+        {
+         Directory.Delete(dir, recursive: true); 
+        }
+
+        NuGetInstall("projectk", PACKAGES_DIR, "-source \"" + BUILD_DIR2 + "\" -pre -nocache");
+        
+        // Nuke the build dir
+        Directory.Delete(BUILD_DIR2, recursive: true); 
+        
+        Log.Info("Rebuilding target default"); 
+        Exec("build.cmd", "rebuild-package");
+    }
+    
+#verify-package .ensure-latest-package .test-package target='verify'
 
 #clean-sdk-dir
     directory delete="${SDK_ROOT}"
     directory create="${SDK_ROOT}"
 
 #copy-bits
+    var x86Target="x86"
+    var x64Target="amd64"
+    
     copy sourceDir='${SCRIPTS_DIR}' outputDir='${TOOLS_DIR}' overwrite='${true}'
 
-    copy sourceDir='${BIN_DIR}' outputDir='${TOOLS_BIN_DIR}' include='klr*net45*.dll' overwrite='${true}'
-    copy sourceDir='${BIN_DIR}' outputDir='${TOOLS_BIN_DIR}' include='klr*core*.dll' overwrite='${true}'
-    copy sourceDir='${BIN_DIR}' outputDir='${TOOLS_BIN_DIR}' include='klr.exe' overwrite='${true}'
-    copy sourceDir='${BIN_DIR}' outputDir='${TOOLS_BIN_DIR}' include='klr*config' overwrite='${true}'
+    copy sourceDir='${Path.Combine(BUILD_DIR2, "klr", "bin", "Win32", Configuration)}' outputDir='${Path.Combine(TOOLS_BIN_DIR, x86Target)}' include='*.exe' overwrite='${true}'
+    copy sourceDir='${Path.Combine(BUILD_DIR2, "klr", "bin", "x64", Configuration)}' outputDir='${Path.Combine(TOOLS_BIN_DIR, x64Target)}' include='*.exe' overwrite='${true}'
 
-    copy sourceDir='${BUILD_DIR2}' outputDir='${TOOLS_BIN_DIR}' include='**/klr.host.dll' overwrite='${true}'
-    copy sourceDir='${BUILD_DIR2}' outputDir='${TOOLS_BIN_DIR}' include='**/Microsoft.Net.Runtime.Interfaces.dll' overwrite='${true}'
-    copy sourceDir='${BUILD_DIR2}' outputDir='${TOOLS_BIN_DIR}' include='**/Stubs.dll' overwrite='${true}'
+    copy sourceDir='${Path.Combine(BUILD_DIR2, "klr.core45", "bin", "Win32", Configuration)}' outputDir='${Path.Combine(TOOLS_BIN_DIR, x86Target)}' include='*.dll' overwrite='${true}'
+    copy sourceDir='${Path.Combine(BUILD_DIR2, "klr.core45", "bin", "x64", Configuration)}' outputDir='${Path.Combine(TOOLS_BIN_DIR, x64Target)}' include='*.dll' overwrite='${true}'
 
-    copy sourceDir='${BUILD_DIR2}' outputDir='${TOOLS_DIR}' include='**/Microsoft*.dll' exclude='**/*Interfaces*' overwrite='${true}'
+    copy sourceDir='${Path.Combine(BUILD_DIR2, "klr.net45", "bin", "Win32", Configuration)}' outputDir='${Path.Combine(TOOLS_BIN_DIR, x86Target)}' include='*.dll' overwrite='${true}'
+    copy sourceDir='${Path.Combine(BUILD_DIR2, "klr.net45", "bin", "x64", Configuration)}' outputDir='${Path.Combine(TOOLS_BIN_DIR, x64Target)}' include='*.dll' overwrite='${true}'
 
-    directory delete='${BUILD_DIR2}'
+    copy sourceDir='${Path.Combine(ROOT, "src", "klr.net45.managed")}' outputDir='${Path.Combine(TOOLS_BIN_DIR, x86Target)}' include='*.config' overwrite='${true}'
+    copy sourceDir='${Path.Combine(ROOT, "src", "klr.net45.managed")}' outputDir='${Path.Combine(TOOLS_BIN_DIR, x64Target)}' include='*.config' overwrite='${true}'
+
+    @{
+        var hostK10 = Path.Combine(BUILD_DIR2, "*", "k10", "**.dll");
+        var hostnet45 = Path.Combine(BUILD_DIR2, "*", "net45", "**.dll");
+
+        var sharedSourceAssemblies = new [] { 
+            Path.Combine(BUILD_DIR2, "klr.hosting.shared/**/*.dll"), 
+            Path.Combine(BUILD_DIR2, "Microsoft.Net.CommandLineUtils/**/*.dll"), 
+            Path.Combine(BUILD_DIR2, "Microsoft.Net.Runtime.Common/**/*.dll"),
+            Path.Combine(BUILD_DIR2, "Microsoft.Net.Runtime.Interfaces/**/*.dll")
+        };
+        
+        Directory.CreateDirectory(Path.Combine(TOOLS_DIR, "k10"));
+        Directory.CreateDirectory(Path.Combine(TOOLS_DIR, "net45"));
+        
+        foreach(var file in Files.Include(hostK10).Exclude(sharedSourceAssemblies))
+        {
+            string dest = Path.Combine(TOOLS_DIR, "k10", Path.GetFileName(file));
+            File.Copy(file, dest, true);
+        }
+        
+        foreach(var file in Files.Include(hostnet45).Exclude(sharedSourceAssemblies))
+        {
+            string dest = Path.Combine(TOOLS_DIR, "net45", Path.GetFileName(file));
+            File.Copy(file, dest, true);
+        }
+    }
+
+    copy sourceDir='${Path.Combine(TOOLS_DIR, "net45")}' outputDir='${Path.Combine(TOOLS_BIN_DIR, x86Target)}' include='*managed.dll' overwrite='${true}'
+    copy sourceDir='${Path.Combine(TOOLS_DIR, "net45")}' outputDir='${Path.Combine(TOOLS_BIN_DIR, x64Target)}' include='*managed.dll' overwrite='${true}'
+    copy sourceDir='${Path.Combine(TOOLS_DIR, "k10")}' outputDir='${Path.Combine(TOOLS_BIN_DIR, x86Target)}' include='*managed.dll' overwrite='${true}'
+    copy sourceDir='${Path.Combine(TOOLS_DIR, "k10")}' outputDir='${Path.Combine(TOOLS_BIN_DIR, x64Target)}' include='*managed.dll' overwrite='${true}'
+    
 
 #tweak-scripts
     @{
         foreach(var file in Files.Include(Path.Combine(TOOLS_DIR, "*.cmd")))
         {
-            var script = File.ReadAllText(file)
-                             .Replace(@"..\bin\Debug", "bin")
-                             .Replace(@"..\src\", "")
-                             .Replace(@"=bin\Debug\", "=")
-                             .Replace(@"bin\Debug", "");
+            var script = File.ReadAllText(file);
+
+            script = Regex.Replace(script, @"REM \<dev\>(.*?)REM \<\/dev\>(\s*)", @"", RegexOptions.Singleline);
 
             File.WriteAllText(file, script);
         }
@@ -103,88 +149,117 @@ var FULL_VERSION = '${VERSION + "-" + BuildNumber}'
 
 #copy-package-dependencies
     @{
-        var runners = new[] { "Microsoft.Net.Project", "Microsoft.Net.ApplicationHost" };
         var targetFrameworks = new [] { "k10", "net45" };
 
         var packages = new[] { "Newtonsoft.Json", 
-                               "Microsoft.CodeAnalysis", 
+                               "Microsoft.CodeAnalysis.Common", 
                                "Microsoft.CodeAnalysis.CSharp", 
-                               "System.Collections.Immutable", 
+                               "Microsoft.Bcl.Immutable", 
                                "System.Reflection.Metadata.Ecma335" };
 
-        foreach (var project in runners)
+        
+        foreach (var framework in targetFrameworks)
         {
-            foreach (var framework in targetFrameworks)
+            foreach (var package in packages)
             {
-                string source = Path.Combine(TOOLS_DIR, "Microsoft.Net.Runtime", framework, "Microsoft.Net.Runtime.dll");
-                string dest = Path.Combine(TOOLS_DIR, project, framework, "Microsoft.Net.Runtime.dll");
+                var packageDir = Directory.GetDirectories(PACKAGES_DIR, package + "*").OrderByDescending(d => d).FirstOrDefault();
 
-                File.Copy(source, dest, true);
-                Log.Info("Copying to " + dest);
-
-                foreach (var package in packages)
+                if(packageDir == null)
                 {
-                    var packageDir = Directory.GetDirectories(PACKAGES_DIR, package + "*").FirstOrDefault();
+                    Log.Warn("Unable to find resolve " + package);
 
-                    if(packageDir == null)
-                    {
-                        Log.Warn("Unable to find resolve " + package);
+                    continue;
+                }
 
-                        continue;
-                    }
+                string[] candidates = null;
 
-                    string[] candidates = null;
+                if(framework == "k10")
+                {
+                    candidates = new [] { framework, "netcore45" };
+                }
+                else
+                {
+                    candidates = new [] { framework, "net40", "net35", "net20" };
+                }
 
-                    if(framework == "k10")
-                    {
-                        candidates = new [] { framework, "netcore45" };
-                    }
-                    else
-                    {
-                        candidates = new [] { framework, "net40", "net35", "net20" };
-                    }
+                var lib = new DirectoryInfo(Path.Combine(packageDir, "lib"));
+                var di = candidates.Select(fmk => lib.EnumerateDirectories("*" + fmk+ "*")
+                                                     .OrderBy(d => d.Name.Length)
+                                                     .FirstOrDefault())
+                                   .FirstOrDefault(d => d != null);
 
-                    var di = candidates.Select(fmk => new DirectoryInfo(Path.Combine(packageDir, "lib", fmk)))
-                                       .FirstOrDefault(d => d.Exists);
+                if(!di.Exists)
+                {
+                    Log.Warn("Couldn't find version of " + package + " matching " + framework);
+                    continue;
+                }
 
-                    if(!di.Exists)
-                    {
-                        Log.Warn("Couldn't find version of " + package + " matching " + framework);
-                        continue;
-                    }
+                foreach(var fi in di.GetFiles("*.dll"))
+                {
+                    string packageFileDest = Path.Combine(TOOLS_DIR, framework, fi.Name);
+                    File.Copy(fi.FullName, packageFileDest, true);
 
-                    foreach(var fi in di.GetFiles("*.dll"))
-                    {
-                        string packageFileDest = Path.Combine(TOOLS_DIR, project, framework, fi.Name);
-                        File.Copy(fi.FullName, packageFileDest);
-
-                        Log.Info("Copying to " + packageFileDest);
-                    }
+                    Log.Info("Copying to " + packageFileDest);
                 }
             }
         }
     }
 
-    directory delete='${Path.Combine(TOOLS_DIR, "Microsoft.Net.Runtime")}'
-
 #copy-coreclr
+    var PROJECTK_DIR='${""}'
     @{
-        var coreClrPath = Environment.GetEnvironmentVariable("CORECLR_PATH");
-
-        if (String.IsNullOrEmpty(coreClrPath))
+        if (String.IsNullOrEmpty(CORECLR_PATH))
         {
-            Log.Warn("The environment variable CORECLR_PATH is not set. The core clr not will not be included in this build.");
-            Environment.Exit(1);
-            return;
+            Func<string, long> getVersion = version => {
+            var dash = version.LastIndexOf('-');
+
+                if(dash != -1)
+                {
+                    var lastToken = version.Substring(dash + 1);
+
+                    if(lastToken.StartsWith("t"))
+                    {
+                        return Int64.Parse(lastToken.Substring(1));
+                    }
+
+                    return Int64.Parse(lastToken);
+                }
+                return Int64.MaxValue;
+            };
+
+            string packagesDir = Path.Combine(Directory.GetCurrentDirectory(), "packages");
+            PROJECTK_DIR = Directory.EnumerateDirectories(packagesDir, "ProjectK*")
+                                    .OrderByDescending(getVersion)
+                                    .First();
+                                          
+            Log.Warn("The environment variable CORECLR_PATH is not set, using " + PROJECTK_DIR);
         }
     }
 
-    copy sourceDir='${coreClrPath}' outputDir='${SDK_ROOT}' overwrite='${true}'
+    copy sourceDir='${CORECLR_PATH}' outputDir='${SDK_ROOT}' overwrite='${true}' if='!String.IsNullOrEmpty(CORECLR_PATH)'
+    copy sourceDir='${Path.Combine(PROJECTK_DIR, "Runtime")}' outputDir='${Path.Combine(SDK_ROOT, "Runtime")}' overwrite='${true}' if='!String.IsNullOrEmpty(PROJECTK_DIR)'
+    copy sourceDir='${Path.Combine(PROJECTK_DIR, "Framework")}' outputDir='${Path.Combine(SDK_ROOT, "Framework")}' overwrite='${true}' if='!String.IsNullOrEmpty(PROJECTK_DIR)'
+    
+    @{
+        var files = Files.Include(Path.Combine(SDK_ROOT, "Framework", "**", "*.dll"));
+        foreach (var binary in files)
+        {
+            File.Delete(binary);
+            Log.Info("Deleted " + binary);
+        }
+    }
 
 #nuget-pack-runtime
+    @{
+        var allPackages = Path.Combine(BUILD_DIR2, "**", "*.nupkg");
+        var excludePackages = Path.Combine(BUILD_DIR2, "**", "Microsoft.Net.Runtime.Interfaces*.nupkg");
+        foreach(var packageFile in Files.Include(allPackages).Exclude(excludePackages))
+        {
+            File.Delete(packageFile);
+        }
+    }
     copy sourceDir='${ROOT}' outputDir='${SDK_ROOT}' include='ProjectK.nuspec' overwrite='${true}'
-    nuget-pack nuspecFile='${Path.Combine(SDK_ROOT, "ProjectK.nuspec")}' packageVersion='${FULL_VERSION}' outputDir='${SDK_ROOT}' extra='-NoPackageAnalysis'
+    nuget-pack nuspecFile='${Path.Combine(SDK_ROOT, "ProjectK.nuspec")}' packageVersion='${FULL_VERSION}' outputDir='${BUILD_DIR2}' extra='-NoPackageAnalysis'
 
-
-macro name='Exec' program='string' commandline='string'
-    exec
+macro name='NuGetInstall' Package='string' OutputDir='string' Extra='string'
+    nuget-install package='${Package}' outputDir='${OutputDir}' extra='${Extra}'

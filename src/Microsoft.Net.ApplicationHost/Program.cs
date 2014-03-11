@@ -3,181 +3,109 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Threading.Tasks;
 using Microsoft.Net.Runtime;
+using Microsoft.Net.Runtime.Common;
+using Microsoft.Net.Runtime.Common.CommandLine;
 
 namespace Microsoft.Net.ApplicationHost
 {
     public class Program
     {
-        private readonly IHostContainer _container;
+        private static readonly Dictionary<string, CommandOptionType> _options = new Dictionary<string, CommandOptionType>
+        {
+            { "nobin", CommandOptionType.NoValue },
+            { "watch", CommandOptionType.NoValue }
+        };
 
-        public Program(IHostContainer container)
+        private readonly IHostContainer _container;
+        private readonly IApplicationEnvironment _environment;
+        private readonly IServiceProvider _serviceProvider;
+
+        public Program(IHostContainer container, IApplicationEnvironment environment, IServiceProvider serviceProvider)
         {
             _container = container;
+            _environment = environment;
+            _serviceProvider = serviceProvider;
         }
 
-        public int Main(string[] args)
+        public async Task<int> Main(string[] args)
         {
             DefaultHostOptions options;
             string[] programArgs;
 
             ParseArgs(args, out options, out programArgs);
 
-            try
-            {
-                var host = new DefaultHost(options);
+            var host = new DefaultHost(options, _serviceProvider);
 
-                using (_container.AddHost(host))
-                {
-                    return ExecuteMain(host, programArgs);
-                }
-            }
-            catch (Exception ex)
+            if (host.Project == null)
             {
-                Console.Error.WriteLine(String.Join(Environment.NewLine, GetExceptions(ex)));
-                return -2;
+                return -1;
+            }
+
+            using (_container.AddHost(host))
+            {
+                var lookupCommand = string.IsNullOrEmpty(options.ApplicationName) ? "run" : options.ApplicationName;
+                string replacementCommand;
+                if (host.Project.Commands.TryGetValue(lookupCommand, out replacementCommand))
+                {
+                    // TODO: command line parsing!!
+                    var replacementArgs = replacementCommand.Split(new[] { ' ' });
+                    options.ApplicationName = replacementArgs.First();
+                    programArgs = replacementArgs.Skip(1).Concat(programArgs).ToArray();
+                }
+
+                if (string.IsNullOrEmpty(options.ApplicationName) ||
+                    string.Equals(options.ApplicationName, "run", StringComparison.Ordinal))
+                {
+                    if (string.IsNullOrEmpty(host.Project.Name))
+                    {
+                        options.ApplicationName = Path.GetFileName(options.ApplicationBaseDirectory);
+                    }
+                    else
+                    {
+                        options.ApplicationName = host.Project.Name;
+                    }
+                }
+
+                return await ExecuteMain(host, options.ApplicationName, programArgs);
             }
         }
 
-        private void ParseArgs(string[] args, out DefaultHostOptions options, out string[] outArgs)
+        private void ParseArgs(string[] args, out DefaultHostOptions defaultHostOptions, out string[] outArgs)
         {
-            options = new DefaultHostOptions();
-            options.ProjectDir = Directory.GetCurrentDirectory();
+            var parser = new CommandLineParser();
+            CommandOptions options;
+            parser.ParseOptions(args, _options, out options);
 
-            // TODO: Just pass this as an argument from the caller
-            options.TargetFramework = Environment.GetEnvironmentVariable("TARGET_FRAMEWORK");
+            defaultHostOptions = new DefaultHostOptions();
+            defaultHostOptions.UseCachedCompilations = !options.HasOption("nobin");
+            defaultHostOptions.WatchFiles = options.HasOption("watch");
+            defaultHostOptions.TargetFramework = _environment.TargetFramework;
+            defaultHostOptions.ApplicationBaseDirectory = _environment.ApplicationBasePath;
 
-            int index = 0;
-            for (index = 0; index < args.Length; index++)
+            if (options.RemainingArgs.Count > 0)
             {
-                string arg = args[index];
-                if (arg.StartsWith("--"))
-                {
-                    var option = arg.Substring(2);
+                defaultHostOptions.ApplicationName = options.RemainingArgs[0];
 
-                    switch (option.ToLowerInvariant())
-                    {
-                        case "nobin":
-                            options.UseCachedCompilations = false;
-                            break;
-                        case "framework":
-                            options.TargetFramework = option;
-                            break;
-                        case "watch":
-                            options.WatchFiles = true;
-                            break;
-                        default:
-                            break;
-                    }
-                }
-                else
-                {
-                    options.ProjectDir = arg;
-                    break;
-                }
-            }
-
-            if (index == 0)
-            {
-                outArgs = args;
+                outArgs = options.RemainingArgs.Skip(1).ToArray();
             }
             else
             {
-                outArgs = args.Skip(index).ToArray();
+                outArgs = options.RemainingArgs.ToArray();
             }
         }
 
-        private static IEnumerable<string> GetExceptions(Exception ex)
+        private async Task<int> ExecuteMain(DefaultHost host, string applicationName, string[] args)
         {
-            if (ex.InnerException != null)
-            {
-                foreach (var e in GetExceptions(ex.InnerException))
-                {
-                    yield return e;
-                }
-            }
-
-            if (!(ex is TargetInvocationException))
-            {
-                yield return ex.ToString();
-            }
-        }
-
-        private int ExecuteMain(DefaultHost host, string[] args)
-        {
-            var assembly = host.GetEntryPoint();
+            var assembly = host.GetEntryPoint(applicationName);
 
             if (assembly == null)
             {
                 return -1;
             }
 
-            string name = assembly.GetName().Name;
-
-            var program = assembly.GetType("Program");
-
-            if (program == null)
-            {
-                var programTypeInfo = assembly.DefinedTypes.FirstOrDefault(t => t.Name == "Program");
-
-                if (programTypeInfo == null)
-                {
-                    Console.WriteLine("'{0}' does not contain a static 'Main' method suitable for an entry point", name);
-                    return -1;
-                }
-
-                program = programTypeInfo.AsType();
-            }
-
-            var main = program.GetTypeInfo().GetDeclaredMethods("Main").FirstOrDefault();
-
-            if (main == null)
-            {
-                Console.WriteLine("'{0}' does not contain a 'Main' method suitable for an entry point", name);
-                return -1;
-            }
-
-            object instance = null;
-            if ((main.Attributes & MethodAttributes.Static) != MethodAttributes.Static)
-            {
-                var constructors = program.GetTypeInfo().DeclaredConstructors.Where(c => c.IsPublic).ToList();
-
-                switch (constructors.Count)
-                {
-                    case 0:
-                        Console.WriteLine("'{0}' does not contain a public constructor.", name);
-                        return -1;
-
-                    case 1:
-                        var constructor = constructors[0];
-                        var services = constructor.GetParameters().Select(pi => _container);
-                        instance = constructor.Invoke(services.ToArray());
-                        break;
-
-                    default:
-                        Console.WriteLine("'{0}' has too many public constructors for an entry point.", name);
-                        return -1;
-                }
-            }
-
-            object result = null;
-            var parameters = main.GetParameters();
-
-            if (parameters.Length == 0)
-            {
-                result = main.Invoke(instance, null);
-            }
-            else if (parameters.Length == 1)
-            {
-                result = main.Invoke(instance, new object[] { args });
-            }
-
-            if (result is int)
-            {
-                return (int)result;
-            }
-
-            return 0;
+            return await EntryPointExecutor.Execute(assembly, args, host.ServiceProvider);
         }
     }
 }

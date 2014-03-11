@@ -7,7 +7,6 @@
 #include "..\klr\klr.h"
 
 typedef int (STDMETHODCALLTYPE *HostMain)(
-    const wchar_t* appBase,
     const int argc,
     const wchar_t** argv
     );
@@ -42,13 +41,21 @@ HMODULE LoadCoreClr()
     {
         // Try the relative location based in install dir
         // ..\..\Runtime\x86
-        hCoreCLRModule = ::LoadLibraryExW(L"..\\..\\Runtime\\x86\\coreclr.dll", NULL, 0);
+#if AMD64
+        hCoreCLRModule = ::LoadLibraryExW(L"..\\..\\..\\Runtime\\amd64\\coreclr.dll", NULL, 0);
+#else
+        hCoreCLRModule = ::LoadLibraryExW(L"..\\..\\..\\Runtime\\x86\\coreclr.dll", NULL, 0);
+#endif
     }
 
     if (hCoreCLRModule == nullptr)
     {
         // This is used when developing
-        hCoreCLRModule = ::LoadLibraryExW(L"..\\artifacts\\sdk\\Runtime\\x86\\coreclr.dll", NULL, 0);
+#if AMD64
+        hCoreCLRModule = ::LoadLibraryExW(L"..\\..\\..\\artifacts\\build\\ProjectK\\Runtime\\amd64\\coreclr.dll", NULL, 0);
+#else
+        hCoreCLRModule = ::LoadLibraryExW(L"..\\..\\..\\artifacts\\build\\ProjectK\\Runtime\\x86\\coreclr.dll", NULL, 0);
+#endif
     }
 
     if (hCoreCLRModule == nullptr)
@@ -70,7 +77,11 @@ extern "C" __declspec(dllexport) bool __stdcall CallApplicationMain(PCALL_APPLIC
     TCHAR szCoreClrDirectory[MAX_PATH];
     TCHAR lpCoreClrModulePath[MAX_PATH];
 
-    GetModuleDirectory(NULL, szCurrentDirectory);
+    if (data->klrDirectory) {
+        wcscpy_s(szCurrentDirectory, data->klrDirectory);
+    } else {
+        GetModuleDirectory(NULL, szCurrentDirectory);
+    }
 
     HMODULE hCoreCLRModule = LoadCoreClr();
     if (!hCoreCLRModule)
@@ -194,7 +205,7 @@ extern "C" __declspec(dllexport) bool __stdcall CallApplicationMain(PCALL_APPLIC
 
     const wchar_t* property_values[] = {
         // APPBASE
-        szCurrentDirectory, // TODO: Allow overriding this
+        data->applicationBase,
         // TRUSTED_PLATFORM_ASSEMBLIES
         trustedPlatformAssemblies.c_str(),
         // APP_PATHS
@@ -204,20 +215,19 @@ extern "C" __declspec(dllexport) bool __stdcall CallApplicationMain(PCALL_APPLIC
     DWORD domainId;
     DWORD dwFlagsAppDomain =
         APPDOMAIN_ENABLE_PLATFORM_SPECIFIC_APPS |
-        APPDOMAIN_ENABLE_PINVOKE_AND_CLASSIC_COMINTEROP |
-        APPDOMAIN_ENABLE_ASSEMBLY_LOADFILE;
+        APPDOMAIN_ENABLE_PINVOKE_AND_CLASSIC_COMINTEROP;
 
     LPCWSTR szAssemblyName = L"klr.core45.managed, Version=1.0.0.0";
-    LPCWSTR szDomainManagerTypeName = L"DomainManager";
-    LPCWSTR szMainMethodName = L"Main";
+    LPCWSTR szEntryPointTypeName = L"DomainManager";
+    LPCWSTR szMainMethodName = L"Execute";
 
     int nprops = sizeof(property_keys) / sizeof(wchar_t*);
 
     hr = pCLRRuntimeHost->CreateAppDomainWithManager(
         L"klr.core45.managed",
         dwFlagsAppDomain,
-        szAssemblyName,
-        szDomainManagerTypeName,
+        NULL,
+        NULL,
         nprops,
         property_keys,
         property_values,
@@ -234,7 +244,7 @@ extern "C" __declspec(dllexport) bool __stdcall CallApplicationMain(PCALL_APPLIC
     hr = pCLRRuntimeHost->CreateDelegate(
         domainId,
         szAssemblyName,
-        szDomainManagerTypeName,
+        szEntryPointTypeName,
         szMainMethodName,
         (INT_PTR*)&pHostMain);
 
@@ -244,8 +254,11 @@ extern "C" __declspec(dllexport) bool __stdcall CallApplicationMain(PCALL_APPLIC
         return false;
     }
 
+    // REVIEW: Versioning? k 1.0, 2.0?
+    SetEnvironmentVariable(L"TARGET_FRAMEWORK", L"k10");
+
     // Call main
-    data->exitcode = pHostMain(szCurrentDirectory, data->argc, data->argv);
+    data->exitcode = pHostMain(data->argc, data->argv);
 
     pCLRRuntimeHost->UnloadAppDomain(domainId, true);
 
