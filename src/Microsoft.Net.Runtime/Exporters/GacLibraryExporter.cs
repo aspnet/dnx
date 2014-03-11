@@ -4,16 +4,16 @@ using NuGet;
 
 namespace Microsoft.Net.Runtime
 {
-    public class GacDependencyExporter : IDependencyExporter
+    public class GacLibraryExporter : ILibraryExportProvider
     {
         private readonly IGlobalAssemblyCache _globalAssemblyCache;
 
-        public GacDependencyExporter(IGlobalAssemblyCache globalAssemblyCache)
+        public GacLibraryExporter(IGlobalAssemblyCache globalAssemblyCache)
         {
             _globalAssemblyCache = globalAssemblyCache;
         }
 
-        public IDependencyExport GetDependencyExport(string name, FrameworkName targetFramework)
+        public ILibraryExport GetLibraryExport(string name, FrameworkName targetFramework)
         {
             // Only use the GAC on full .NET
             if (VersionUtility.IsDesktop(targetFramework))
@@ -21,7 +21,7 @@ namespace Microsoft.Net.Runtime
                 string assemblyLocation;
                 if (_globalAssemblyCache.TryResolvePartialName(name, out assemblyLocation))
                 {
-                    return new DependencyExport(assemblyLocation);
+                    return new LibraryExport(assemblyLocation);
                 }
             }
 

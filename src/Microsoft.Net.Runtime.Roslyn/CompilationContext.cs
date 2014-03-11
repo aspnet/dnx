@@ -1,8 +1,8 @@
 ﻿using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
-using Microsoft.Net.Runtime.Loader;
 
 namespace Microsoft.Net.Runtime.Roslyn
 {
@@ -16,21 +16,19 @@ namespace Microsoft.Net.Runtime.Roslyn
         // Processed information
         public CSharpCompilation Compilation { get; set; }
         public IList<Diagnostic> Diagnostics { get; set; }
-        public IDictionary<string, AssemblyNeutralMetadataReference> AssemblyNeutralReferences { get; set; }
 
+        public IList<IMetadataReference> MetadataReferences { get; set; }
         public IList<CompilationContext> ProjectReferences { get; set; }
-        public IList<IDependencyExport> Exports { get; set; }
 
 
         public CompilationContext()
         {
             Diagnostics = new List<Diagnostic>();
-            AssemblyNeutralReferences = new Dictionary<string, AssemblyNeutralMetadataReference>();
         }
 
         internal void PopulateAllAssemblyNeutralResources(IList<ResourceDescription> resources)
         {
-            foreach (var reference in AssemblyNeutralReferences.Values)
+            foreach (var reference in MetadataReferences.OfType<AssemblyNeutralMetadataReference>())
             {
                 resources.Add(new ResourceDescription(reference.Name + ".dll", () =>
                 {

@@ -23,7 +23,7 @@ namespace Microsoft.Net.Runtime
         private readonly string _name;
         private readonly ServiceProvider _serviceProvider;
         private readonly IAssemblyLoaderEngine _loaderEngine;
-        private readonly IDependencyExporter _hostExporter;
+        private readonly ILibraryExportProvider _hostExporter;
 
         private Project _project;
 
@@ -36,7 +36,7 @@ namespace Microsoft.Net.Runtime
             _targetFramework = options.TargetFramework;
 
             _loaderEngine = (IAssemblyLoaderEngine)hostProvider.GetService(typeof(IAssemblyLoaderEngine));
-            _hostExporter = (IDependencyExporter)hostProvider.GetService(typeof(IDependencyExporter));
+            _hostExporter = (ILibraryExportProvider)hostProvider.GetService(typeof(ILibraryExportProvider));
 
             _serviceProvider = new ServiceProvider(hostProvider);
 
@@ -119,24 +119,24 @@ namespace Microsoft.Net.Runtime
             var globalAssemblyCache = new DefaultGlobalAssemblyCache();
 
             // Roslyn needs to be able to resolve exported references and sources
-            var dependencyExporters = new List<IDependencyExporter>();
+            var libraryExporters = new List<ILibraryExportProvider>();
 
             // Add the host exporter
-            dependencyExporters.Add(_hostExporter);
+            libraryExporters.Add(_hostExporter);
 
             // Cached loader
             if (options.UseCachedCompilations)
             {
-                dependencyExporters.Add(cachedLoader);
+                libraryExporters.Add(cachedLoader);
             }
 
             // GAC
-            dependencyExporters.Add(new GacDependencyExporter(globalAssemblyCache));
+            libraryExporters.Add(new GacLibraryExporter(globalAssemblyCache));
 
             // NuGet exporter
-            dependencyExporters.Add(nugetDependencyResolver);
+            libraryExporters.Add(nugetDependencyResolver);
 
-            var dependencyExporter = new CompositeDependencyExporter(dependencyExporters);
+            var dependencyExporter = new CompositeLibraryExporter(libraryExporters);
             var roslynLoader = new LazyRoslynAssemblyLoader(_loaderEngine, projectResolver, _watcher, dependencyExporter, globalAssemblyCache);
 
             // Order is important
@@ -159,9 +159,9 @@ namespace Microsoft.Net.Runtime
             _loader = new AssemblyLoader(loaders);
 
             _serviceProvider.Add(typeof(IFileMonitor), _watcher);
-            _serviceProvider.Add(typeof(IDependencyExporter),
-                new CompositeDependencyExporter(
-                    dependencyExporters.Concat(new[] { roslynLoader })));
+            _serviceProvider.Add(typeof(ILibraryExportProvider),
+                new CompositeLibraryExporter(
+                    libraryExporters.Concat(new[] { roslynLoader })));
         }
 
         public static string ResolveRootDirectory(string projectDir)

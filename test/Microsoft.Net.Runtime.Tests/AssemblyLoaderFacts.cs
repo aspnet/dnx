@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Runtime.Versioning;
-using Microsoft.Net.Runtime.Loader;
+using Microsoft.Net.Runtime;
 using NuGet;
 using Shouldly;
 using Xunit;
@@ -12,7 +12,7 @@ namespace Loader.Tests
 {
     public class AssemblyLoaderFacts
     {
-        Dependency[] Dependencies(Action<TestDependencyProvider.Entry> configure)
+        Library[] Dependencies(Action<TestDependencyProvider.Entry> configure)
         {
             var entry = new TestDependencyProvider.Entry();
             configure(entry);
@@ -169,30 +169,30 @@ namespace Loader.Tests
 
     public class TestDependencyProvider : IDependencyProvider
     {
-        private readonly IDictionary<Dependency, Entry> _entries = new Dictionary<Dependency, Entry>();
-        public IEnumerable<Dependency> Dependencies { get; set; }
+        private readonly IDictionary<Library, Entry> _entries = new Dictionary<Library, Entry>();
+        public IEnumerable<Library> Dependencies { get; set; }
         public FrameworkName FrameworkName { get; set; }
 
-        public DependencyDescription GetDescription(string name, SemanticVersion version, FrameworkName frameworkName)
+        public LibraryDescription GetDescription(string name, SemanticVersion version, FrameworkName frameworkName)
         {
             Trace.WriteLine(string.Format("StubAssemblyLoader.GetDependencies {0} {1} {2}", name, version, frameworkName));
             Entry entry;
-            if (!_entries.TryGetValue(new Dependency { Name = name, Version = version }, out entry))
+            if (!_entries.TryGetValue(new Library { Name = name, Version = version }, out entry))
             {
                 return null;
             }
 
-            var d = entry.Dependencies as Dependency[] ?? entry.Dependencies.ToArray();
+            var d = entry.Dependencies as Library[] ?? entry.Dependencies.ToArray();
             Trace.WriteLine(string.Format("StubAssemblyLoader.GetDependencies {0} {1}", d.Aggregate("", (a, b) => a + " " + b), frameworkName));
 
-            return new DependencyDescription
+            return new LibraryDescription
             {
-                Identity = new Dependency { Name = name, Version = version },
+                Identity = new Library { Name = name, Version = version },
                 Dependencies = entry.Dependencies
             };
         }
 
-        public void Initialize(IEnumerable<DependencyDescription> packages, FrameworkName frameworkName)
+        public void Initialize(IEnumerable<LibraryDescription> packages, FrameworkName frameworkName)
         {
             var d = packages.Select(package => package.Identity).ToArray();
 
@@ -209,7 +209,7 @@ namespace Loader.Tests
 
         public TestDependencyProvider Package(string name, string version, Action<Entry> configure)
         {
-            var entry = new Entry { Key = new Dependency { Name = name, Version = new SemanticVersion(version) } };
+            var entry = new Entry { Key = new Library { Name = name, Version = new SemanticVersion(version) } };
             _entries[entry.Key] = entry;
             configure(entry);
             return this;
@@ -219,15 +219,15 @@ namespace Loader.Tests
         {
             public Entry()
             {
-                Dependencies = new List<Dependency>();
+                Dependencies = new List<Library>();
             }
 
-            public Dependency Key { get; set; }
-            public IList<Dependency> Dependencies { get; private set; }
+            public Library Key { get; set; }
+            public IList<Library> Dependencies { get; private set; }
 
             public Entry Needs(string name, string version)
             {
-                Dependencies.Add(new Dependency { Name = name, Version = new SemanticVersion(version) });
+                Dependencies.Add(new Library { Name = name, Version = new SemanticVersion(version) });
                 return this;
             }
         }

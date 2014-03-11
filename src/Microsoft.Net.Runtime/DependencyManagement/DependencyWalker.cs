@@ -1,10 +1,9 @@
 ﻿using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.Versioning;
-using Microsoft.Net.Runtime.Loader.Infrastructure;
 using NuGet;
 
-namespace Microsoft.Net.Runtime.Loader
+namespace Microsoft.Net.Runtime
 {
     public class DependencyWalker
     {

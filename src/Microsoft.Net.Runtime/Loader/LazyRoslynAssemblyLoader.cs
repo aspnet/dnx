@@ -9,11 +9,11 @@ using NuGet;
 
 namespace Microsoft.Net.Runtime
 {
-    internal class LazyRoslynAssemblyLoader : IAssemblyLoader, IDependencyExporter
+    internal class LazyRoslynAssemblyLoader : IAssemblyLoader, ILibraryExportProvider
     {
         private readonly ProjectResolver _projectResolver;
         private readonly IFileWatcher _watcher;
-        private readonly IDependencyExporter _exportResolver;
+        private readonly ILibraryExportProvider _libraryExporter;
         private object _roslynLoaderInstance;
         private bool _roslynInitializing;
         private readonly IAssemblyLoaderEngine _loaderEngine;
@@ -22,13 +22,13 @@ namespace Microsoft.Net.Runtime
         public LazyRoslynAssemblyLoader(IAssemblyLoaderEngine loaderEngine,
                                         ProjectResolver projectResolver,
                                         IFileWatcher watcher,
-                                        IDependencyExporter exportResolver,
+                                        ILibraryExportProvider libraryExporter,
                                         IGlobalAssemblyCache globalAssemblyCache)
         {
             _loaderEngine = loaderEngine;
             _projectResolver = projectResolver;
             _watcher = watcher;
-            _exportResolver = exportResolver;
+            _libraryExporter = libraryExporter;
             _globalAssemblyCache = globalAssemblyCache;
         }
 
@@ -45,11 +45,11 @@ namespace Microsoft.Net.Runtime
             });
         }
 
-        public IDependencyExport GetDependencyExport(string name, FrameworkName targetFramework)
+        public ILibraryExport GetLibraryExport(string name, FrameworkName targetFramework)
         {
-            return ExecuteWith<IDependencyExporter, IDependencyExport>(exporter =>
+            return ExecuteWith<ILibraryExportProvider, ILibraryExport>(exporter =>
             {
-                return exporter.GetDependencyExport(name, targetFramework);
+                return exporter.GetLibraryExport(name, targetFramework);
             });
         }
 
@@ -71,7 +71,7 @@ namespace Microsoft.Net.Runtime
                         _loaderEngine, 
                         _watcher, 
                         _projectResolver, 
-                        _exportResolver, 
+                        _libraryExporter, 
                         _globalAssemblyCache
                     };
 

@@ -16,14 +16,14 @@ namespace Microsoft.Net.Runtime.Roslyn
                                  .Where(p => !String.IsNullOrEmpty(p)) // REVIEW: Raw sources?
                                  .ToList();
 
-            RawReferences = context.AssemblyNeutralReferences.Select(r =>
+            RawReferences = context.MetadataReferences.OfType<AssemblyNeutralMetadataReference>().Select(r =>
             {
                 var ms = new MemoryStream();
-                r.Value.OutputStream.CopyTo(ms);
+                r.OutputStream.CopyTo(ms);
 
                 return new
                 {
-                    Name = r.Key,
+                    Name = r.Name,
                     Bytes = ms.ToArray()
                 };
             })
@@ -34,9 +34,9 @@ namespace Microsoft.Net.Runtime.Roslyn
                                         .Select(r => r.FullPath)
                                         .ToList();
 #else
-            References = context.Exports.SelectMany(export => export.MetadataReferences.OfType<IMetadataFileReference>())
-                                        .Select(r => r.Path)
-                                        .ToList();
+            References = context.MetadataReferences.OfType<IMetadataFileReference>()
+                                .Select(r => r.Path)
+                                .ToList();
 #endif
 
             ProjectReferences = context.ProjectReferences.Select(p => p.Project.ProjectFilePath)

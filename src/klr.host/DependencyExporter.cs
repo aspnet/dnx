@@ -5,7 +5,8 @@ using Microsoft.Net.Runtime;
 
 namespace klr.host
 {
-    public class DependencyExporter : IDependencyExporter
+    // REVIEW: Make this work differently.
+    public class DependencyExporter : ILibraryExportProvider
     {
         private readonly string[] _searchPaths;
 
@@ -14,7 +15,7 @@ namespace klr.host
             _searchPaths = searchPaths;
         }
 
-        public IDependencyExport GetDependencyExport(string name, FrameworkName targetFramework)
+        public ILibraryExport GetLibraryExport(string name, FrameworkName targetFramework)
         {
             foreach (var searchPath in _searchPaths)
             {
@@ -29,7 +30,7 @@ namespace klr.host
             return null;
         }
 
-        private class DependencyExport : IDependencyExport
+        private class DependencyExport : ILibraryExport
         {
             public DependencyExport(string file)
             {
