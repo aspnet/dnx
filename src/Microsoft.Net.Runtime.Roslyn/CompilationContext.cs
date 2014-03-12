@@ -8,25 +8,60 @@ namespace Microsoft.Net.Runtime.Roslyn
 {
     public class CompilationContext
     {
+        private RoslynLibraryExport _roslynLibraryExport;
+
         /// <summary>
         /// The project associated with this compilation
         /// </summary>
-        public Project Project { get; set; }
+        public Project Project { get; private set; }
 
         // Processed information
-        public CSharpCompilation Compilation { get; set; }
-        public IList<Diagnostic> Diagnostics { get; set; }
+        public CSharpCompilation Compilation { get; private set; }
+        public IList<Diagnostic> Diagnostics { get; private set; }
 
-        public IList<IMetadataReference> MetadataReferences { get; set; }
-        public IList<CompilationContext> ProjectReferences { get; set; }
+        public IList<IMetadataReference> MetadataReferences { get; private set; }
+        public IList<CompilationContext> ProjectReferences { get; private set; }
 
-
-        public CompilationContext()
+        public CompilationContext(CSharpCompilation compilation,
+                                  IList<IMetadataReference> metadataReferences,
+                                  IList<CompilationContext> projectReferences,
+                                  IList<Diagnostic> diagnostics,
+                                  Project project)
         {
-            Diagnostics = new List<Diagnostic>();
+            Compilation = compilation;
+            MetadataReferences = metadataReferences;
+            ProjectReferences = projectReferences;
+            Diagnostics = diagnostics;
+            Project = project;
         }
 
-        internal void PopulateAllAssemblyNeutralResources(IList<ResourceDescription> resources)
+        public RoslynLibraryExport GetLibraryExport()
+        {
+            if (_roslynLibraryExport == null)
+            {
+                var metadataReferences = new List<IMetadataReference>();
+                var sourceReferences = new List<ISourceReference>();
+
+                // Compilation reference
+                var metadataReference = Compilation.ToMetadataReference(embedInteropTypes: Project.EmbedInteropTypes);
+                metadataReferences.Add(new RoslynMetadataReference(Project.Name, metadataReference));
+
+                // Other references
+                metadataReferences.AddRange(MetadataReferences);
+
+                // Shared sources
+                foreach (var sharedFile in Project.SharedFiles)
+                {
+                    sourceReferences.Add(new SourceFileReference(sharedFile));
+                }
+
+                _roslynLibraryExport = new RoslynLibraryExport(metadataReferences, sourceReferences, this);
+            }
+
+            return _roslynLibraryExport;
+        }
+
+        public void PopulateAssemblyNeutralResources(IList<ResourceDescription> resources)
         {
             foreach (var reference in MetadataReferences.OfType<AssemblyNeutralMetadataReference>())
             {

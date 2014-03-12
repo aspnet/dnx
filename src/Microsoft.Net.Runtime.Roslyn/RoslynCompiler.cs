@@ -149,22 +149,18 @@ namespace Microsoft.Net.Runtime.Roslyn
 
             assemblyNeutralWorker.Generate();
 
-            var newCompilation = assemblyNeutralWorker.Compilation;
-
-            compilationContext = new CompilationContext
-            {
-                Compilation = newCompilation,
-                Project = project,
-                ProjectReferences = projectReferences,
-                MetadataReferences = metadataReferences
-            };
-            
             foreach (var t in assemblyNeutralWorker.TypeCompilations)
             {
-                compilationContext.MetadataReferences.Add(new AssemblyNeutralMetadataReference(t));
+                metadataReferences.Add(new AssemblyNeutralMetadataReference(t));
             }
 
-            compilationContext.Diagnostics.AddRange(assemblyNeutralTypeDiagnostics);
+            var newCompilation = assemblyNeutralWorker.Compilation;
+
+            compilationContext = new CompilationContext(newCompilation,
+                metadataReferences,
+                projectReferences,
+                assemblyNeutralTypeDiagnostics,
+                project);
 
             compilationCache[name] = compilationContext;
 
@@ -242,28 +238,7 @@ namespace Microsoft.Net.Runtime.Roslyn
                 return null;
             }
 
-            return MakeLibraryExport(compilationContext);
-        }
-
-        internal static RoslynLibraryExport MakeLibraryExport(CompilationContext compilationContext)
-        {
-            var metadataReferences = new List<IMetadataReference>();
-            var sourceReferences = new List<ISourceReference>();
-
-            // Compilation reference
-            var metadataReference = compilationContext.Compilation.ToMetadataReference(embedInteropTypes: compilationContext.Project.EmbedInteropTypes);
-            metadataReferences.Add(new RoslynMetadataReference(compilationContext.Project.Name, metadataReference));
-
-            // Other references
-            metadataReferences.AddRange(compilationContext.MetadataReferences);
-
-            // Shared sources
-            foreach (var sharedFile in compilationContext.Project.SharedFiles)
-            {
-                sourceReferences.Add(new SourceFileReference(sharedFile));
-            }
-
-            return new RoslynLibraryExport(metadataReferences, sourceReferences, compilationContext);
+            return compilationContext.GetLibraryExport();
         }
 
         private void ExtractReferences(List<ILibraryExport> dependencyExports,
@@ -272,7 +247,7 @@ namespace Microsoft.Net.Runtime.Roslyn
                                        out IList<IMetadataReference> metadataReferences,
                                        out IDictionary<string, AssemblyNeutralMetadataReference> assemblyNeutralReferences)
         {
-            var seen = new HashSet<string>();
+            var used = new HashSet<string>();
             references = new List<MetadataReference>();
             projectReferences = new List<CompilationContext>();
             metadataReferences = new List<IMetadataReference>();
@@ -291,13 +266,12 @@ namespace Microsoft.Net.Runtime.Roslyn
 
                 foreach (var reference in export.MetadataReferences)
                 {
-                    if (seen.Contains(reference.Name))
+                    if (!used.Add(reference.Name))
                     {
                         continue;
                     }
 
                     metadataReferences.Add(reference);
-                    seen.Add(reference.Name);
 
                     var fileMetadataReference = reference as IMetadataFileReference;
 

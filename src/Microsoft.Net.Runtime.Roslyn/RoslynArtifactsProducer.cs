@@ -43,7 +43,7 @@ namespace Microsoft.Net.Runtime.Roslyn
 
             var resources = _resourceProvider.GetResources(project);
 
-            compilationContext.PopulateAllAssemblyNeutralResources(resources);
+            compilationContext.PopulateAssemblyNeutralResources(resources);
 
             diagnostics.AddRange(compilationContext.Diagnostics);
 

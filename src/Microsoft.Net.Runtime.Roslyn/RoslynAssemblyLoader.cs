@@ -52,7 +52,7 @@ namespace Microsoft.Net.Runtime.Roslyn
 
             var resources = _resourceProvider.GetResources(project);
 
-            compilationContext.PopulateAllAssemblyNeutralResources(resources);
+            compilationContext.PopulateAssemblyNeutralResources(resources);
 
             return CompileInMemory(name, compilationContext, resources);
         }
@@ -66,7 +66,7 @@ namespace Microsoft.Net.Runtime.Roslyn
                 return null;
             }
 
-            return RoslynCompiler.MakeLibraryExport(compliationContext);
+            return compliationContext.GetLibraryExport();
         }
 
         private CompilationContext GetCompilationContext(string name, FrameworkName targetFramework)
