@@ -127,7 +127,7 @@ namespace Microsoft.Net.Runtime.Loader.NuGet
 
             var paths = new HashSet<string>();
 
-            PopulateDependenciesPaths(name, targetFramework, paths);
+            PopulateDependenciesPaths(name, paths);
 
             var metadataReferenes = paths.Select(path => (IMetadataReference)new MetadataFileReference(path))
                                          .ToList();
@@ -146,7 +146,7 @@ namespace Microsoft.Net.Runtime.Loader.NuGet
             return new LibraryExport(metadataReferenes, sourceReferences);
         }
 
-        private void PopulateDependenciesPaths(string name, FrameworkName targetFramework, ISet<string> paths)
+        private void PopulateDependenciesPaths(string name, ISet<string> paths)
         {
             LibraryDescription description;
             if (!_dependencies.TryGetValue(name, out description))
@@ -154,25 +154,25 @@ namespace Microsoft.Net.Runtime.Loader.NuGet
                 return;
             }
 
-            // Use the contract for compilation if available
+            // Use contract if both contract and target path are available
+            string contractPath;
+            bool hasContract = _contractPaths.TryGetValue(name, out contractPath);
 
-            string path;
-            bool found = _contractPaths.TryGetValue(name, out path);
+            string libPath;
+            bool hasLib = _paths.TryGetValue(name, out libPath);
 
-            if (!found)
+            if (hasContract && hasLib)
             {
-                found = _paths.TryGetValue(name, out path);
+                paths.Add(contractPath);
             }
-
-            if (found)
+            else if (hasLib)
             {
-                paths.Add(path);
+                paths.Add(libPath);
             }
-
 
             foreach (var dependency in description.Dependencies)
             {
-                PopulateDependenciesPaths(dependency.Name, targetFramework, paths);
+                PopulateDependenciesPaths(dependency.Name, paths);
             }
         }
 
