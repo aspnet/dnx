@@ -9,7 +9,6 @@ using Microsoft.Net.DesignTimeHost.Models.IncomingMessages;
 using Microsoft.Net.DesignTimeHost.Models.OutgoingMessages;
 using Microsoft.Net.Runtime;
 using Microsoft.Net.Runtime.FileSystem;
-using Microsoft.Net.Runtime.Loader;
 using Microsoft.Net.Runtime.Loader.NuGet;
 using Microsoft.Net.Runtime.Roslyn;
 using Newtonsoft.Json.Linq;
@@ -106,6 +105,21 @@ namespace Microsoft.Net.DesignTimeHost
                 }
 
                 DoProcessLoop();
+            }
+            catch (Exception ex)
+            {
+                // Unhandled errors
+                var error = new ErrorMessage
+                {
+                    Message = ex.Message
+                };
+
+                OnTransmit(new Message
+                {
+                    ContextId = Id,
+                    MessageType = "Error",
+                    Payload = JToken.FromObject(error)
+                });
             }
             finally
             {
