@@ -4,11 +4,11 @@ using System.Runtime.Versioning;
 
 namespace Microsoft.Net.Runtime
 {
-    public class CompositeLibraryExporter : ILibraryExportProvider
+    public class CompositeLibraryExportProvider : ILibraryExportProvider
     {
         private readonly IEnumerable<ILibraryExportProvider> _libraryExporters;
 
-        public CompositeLibraryExporter(IEnumerable<ILibraryExportProvider> libraryExporters)
+        public CompositeLibraryExportProvider(IEnumerable<ILibraryExportProvider> libraryExporters)
         {
             _libraryExporters = libraryExporters;
         }

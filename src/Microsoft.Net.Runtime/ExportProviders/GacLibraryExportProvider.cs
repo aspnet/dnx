@@ -4,11 +4,11 @@ using NuGet;
 
 namespace Microsoft.Net.Runtime
 {
-    public class GacLibraryExporter : ILibraryExportProvider
+    public class GacLibraryExportProvider : ILibraryExportProvider
     {
         private readonly IGlobalAssemblyCache _globalAssemblyCache;
 
-        public GacLibraryExporter(IGlobalAssemblyCache globalAssemblyCache)
+        public GacLibraryExportProvider(IGlobalAssemblyCache globalAssemblyCache)
         {
             _globalAssemblyCache = globalAssemblyCache;
         }

@@ -331,8 +331,8 @@ namespace Microsoft.Net.DesignTimeHost
             var projectResolver = new ProjectResolver(projectDir, rootDirectory);
 
             var nugetDependencyResolver = new NuGetDependencyResolver(projectDir);
-            var gacDependencyExporter = new GacLibraryExporter(globalAssemblyCache);
-            var compositeDependencyExporter = new CompositeLibraryExporter(new ILibraryExportProvider[] { 
+            var gacDependencyExporter = new GacLibraryExportProvider(globalAssemblyCache);
+            var compositeDependencyExporter = new CompositeLibraryExportProvider(new ILibraryExportProvider[] { 
                 gacDependencyExporter, 
                 nugetDependencyResolver 
             });

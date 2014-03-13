@@ -131,12 +131,12 @@ namespace Microsoft.Net.Runtime
             }
 
             // GAC
-            libraryExporters.Add(new GacLibraryExporter(globalAssemblyCache));
+            libraryExporters.Add(new GacLibraryExportProvider(globalAssemblyCache));
 
             // NuGet exporter
             libraryExporters.Add(nugetDependencyResolver);
 
-            var dependencyExporter = new CompositeLibraryExporter(libraryExporters);
+            var dependencyExporter = new CompositeLibraryExportProvider(libraryExporters);
             var roslynLoader = new LazyRoslynAssemblyLoader(_loaderEngine, projectResolver, _watcher, dependencyExporter, globalAssemblyCache);
 
             // Order is important
@@ -160,7 +160,7 @@ namespace Microsoft.Net.Runtime
 
             _serviceProvider.Add(typeof(IFileMonitor), _watcher);
             _serviceProvider.Add(typeof(ILibraryExportProvider),
-                new CompositeLibraryExporter(
+                new CompositeLibraryExportProvider(
                     libraryExporters.Concat(new[] { roslynLoader })));
         }
 

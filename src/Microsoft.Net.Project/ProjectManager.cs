@@ -227,8 +227,8 @@ namespace Microsoft.Net.Project
             var compositeResourceProvider = new CompositeResourceProvider(new IResourceProvider[] { resxProvider, embeddedResourceProvider });
 
             var nugetDependencyResolver = new NuGetDependencyResolver(projectDir);
-            var gacDependencyExporter = new GacLibraryExporter(globalAssemblyCache);
-            var compositeDependencyExporter = new CompositeLibraryExporter(new ILibraryExportProvider[] { 
+            var gacDependencyExporter = new GacLibraryExportProvider(globalAssemblyCache);
+            var compositeDependencyExporter = new CompositeLibraryExportProvider(new ILibraryExportProvider[] { 
                 gacDependencyExporter, 
                 nugetDependencyResolver 
             });
