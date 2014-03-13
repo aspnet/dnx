@@ -1,6 +1,8 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Reflection.PortableExecutable;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 
@@ -63,19 +65,102 @@ namespace Microsoft.Net.Runtime.Roslyn
 
         public void PopulateAssemblyNeutralResources(IList<ResourceDescription> resources)
         {
-            foreach (var reference in MetadataReferences.OfType<AssemblyNeutralMetadataReference>())
+            var assemblyNeutralTypes = MetadataReferences.OfType<AssemblyNeutralMetadataReference>()
+                                                         .ToDictionary(r => r.Name, r => r.OutputStream);
+
+            // No assembly neutral types so do nothing
+            if (assemblyNeutralTypes.Count == 0)
             {
-                resources.Add(new ResourceDescription(reference.Name + ".dll", () =>
+                return;
+            }
+
+            // Walk the assembly neutral references and embed anything that we use
+            // directly or indirectly
+            var results = GetUsedReferences(assemblyNeutralTypes);
+
+            foreach (var reference in results)
+            {
+                var stream = assemblyNeutralTypes[reference];
+
+                resources.Add(new ResourceDescription(reference + ".dll", () =>
                 {
                     // REVIEW: Performance?
                     var ms = new MemoryStream();
-                    reference.OutputStream.Position = 0;
-                    reference.OutputStream.CopyTo(ms);
+                    stream.Position = 0;
+                    stream.CopyTo(ms);
                     ms.Position = 0;
                     return ms;
 
                 }, isPublic: true));
             }
+        }
+
+        private HashSet<string> GetUsedReferences(Dictionary<string, Stream> assemblies)
+        {
+            var results = new HashSet<string>();
+
+            // First we need to emit metadata reference for this compilation
+            using (var metadataStream = new MemoryStream())
+            {
+                var result = Compilation.EmitMetadataOnly(metadataStream);
+
+                if (!result.Success)
+                {
+                    // We failed to emit metadata so do nothing since we're probably
+                    // going to fail compilation anyways
+                    return results;
+                }
+
+                var stack = new Stack<Tuple<string, Stream>>();
+                stack.Push(Tuple.Create((string)null, (Stream)metadataStream));
+
+                while (stack.Count > 0)
+                {
+                    var top = stack.Pop();
+
+                    var assemblyName = top.Item1;
+
+                    if (!String.IsNullOrEmpty(assemblyName) &&
+                        !results.Add(assemblyName))
+                    {
+                        // Skip the reference if saw it already
+                        continue;
+                    }
+
+                    var stream = top.Item2;
+                    stream.Position = 0;
+
+                    foreach (var reference in GetReferences(stream))
+                    {
+                        Stream referenceStream;
+                        if (assemblies.TryGetValue(reference, out referenceStream))
+                        {
+                            stack.Push(Tuple.Create(reference, referenceStream));
+                        }
+                    }
+                }
+            }
+
+            return results;
+        }
+
+        private static IList<string> GetReferences(Stream stream)
+        {
+            var references = new List<string>();
+
+            var peReader = new PEReader(stream);
+
+            var reader = peReader.GetMetadataReader();
+
+            foreach (var a in reader.AssemblyReferences)
+            {
+                var reference = reader.GetAssemblyReference(a);
+                var referenceName = reader.GetString(reference.Name);
+
+                references.Add(referenceName);
+            }
+
+            return references;
         }
     }
 }
