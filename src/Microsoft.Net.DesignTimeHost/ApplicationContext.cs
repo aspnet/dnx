@@ -204,7 +204,6 @@ namespace Microsoft.Net.DesignTimeHost
                 {
                     Configurations = state.Project.GetTargetFrameworkConfigurations().Select(c => new ConfigurationData
                     {
-                        CompilationOptions = state.Project.GetConfiguration(c.FrameworkName).Value["compilationOptions"],
                         CompilationSettings = state.Project.GetCompilationSettings(c.FrameworkName),
                         FrameworkName = VersionUtility.GetShortFrameworkName(c.FrameworkName),
                     }).ToList()

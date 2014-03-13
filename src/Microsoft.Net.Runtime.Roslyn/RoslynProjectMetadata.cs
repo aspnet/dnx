@@ -29,15 +29,9 @@ namespace Microsoft.Net.Runtime.Roslyn
             })
             .ToDictionary(a => a.Name, a => a.Bytes);
 
-#if NET45
-            References = context.Compilation.References.OfType<MetadataFileReference>()
-                                        .Select(r => r.FullPath)
-                                        .ToList();
-#else
             References = context.MetadataReferences.OfType<IMetadataFileReference>()
-                                .Select(r => r.Path)
-                                .ToList();
-#endif
+                                            .Select(r => r.Path)
+                                            .ToList();
 
             ProjectReferences = context.ProjectReferences.Select(p => p.Project.ProjectFilePath)
                                                          .ToList();

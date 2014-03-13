@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Runtime.Versioning;
-using Microsoft.Net.Runtime.Loader;
 using Newtonsoft.Json.Linq;
 using NuGet;
 
