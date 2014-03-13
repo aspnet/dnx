@@ -39,6 +39,12 @@ namespace Microsoft.Net.Runtime.Roslyn
                           GetCompilationOptions(rootOptions) ??
                           defaultOptions;
 
+            // Disable 1702 until roslyn turns this off by default
+            options = options.WithSpecificWarningOptions(new Dictionary<int, ReportWarning>
+            {
+                { 1702, ReportWarning.Suppress }
+            });
+
             var settings = new CompilationSettings
             {
                 Defines = rootDefines.Concat(specificDefines),
@@ -56,11 +62,7 @@ namespace Microsoft.Net.Runtime.Roslyn
             }
 
             var options = new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary)
-                                .WithHighEntropyVirtualAddressSpace(true)
-                                .WithSpecificWarningOptions(new Dictionary<int, ReportWarning>
-                                {
-                                     { 1702, ReportWarning.Suppress }
-                                });
+                                .WithHighEntropyVirtualAddressSpace(true);
 
             bool allowUnsafe = GetValue<bool>(compilationOptions, "allowUnsafe");
             string platformValue = GetValue<string>(compilationOptions, "platform");
