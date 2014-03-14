@@ -27,7 +27,12 @@ namespace klr.hosting
 
         public Assembly LoadBytes(byte[] assemblyBytes, byte[] pdbBytes)
         {
-            return LoadFromStream(new MemoryStream(assemblyBytes));
+            if (pdbBytes == null)
+            {
+                return LoadFromStream(new MemoryStream(assemblyBytes));
+            }
+
+            return LoadFromStream(new MemoryStream(assemblyBytes), new MemoryStream(pdbBytes));
         }
     }
 }

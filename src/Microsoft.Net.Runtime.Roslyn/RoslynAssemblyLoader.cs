@@ -119,7 +119,7 @@ namespace Microsoft.Net.Runtime.Roslyn
                 }
 
                 var assemblyBytes = assemblyStream.ToArray();
-                byte[] pdbBytes = pdbStream.ToArray();
+                var pdbBytes = pdbStream.ToArray();
 
                 var assembly = _loaderEngine.LoadBytes(assemblyBytes, pdbBytes);
 
