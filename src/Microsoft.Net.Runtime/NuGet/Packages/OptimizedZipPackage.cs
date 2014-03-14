@@ -257,16 +257,6 @@ namespace NuGet
                     string filePath = Path.Combine(_expandedFolderPath, path);
 
                     bool copyFile = true;
-                    if (_expandedFileSystem.FileExists(filePath))
-                    {
-                        using (Stream partStream = file.Open(),
-                                      targetStream = _expandedFileSystem.OpenFile(filePath))
-                        {
-                            // if the target file already exists, 
-                            // don't copy file if the lengths are equal.
-                            copyFile = partStream.Length != targetStream.Length;
-                        }
-                    }
 
                     if (copyFile)
                     {
