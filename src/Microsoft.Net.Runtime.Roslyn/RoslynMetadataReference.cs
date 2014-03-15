@@ -1,13 +1,19 @@
 ﻿using Microsoft.CodeAnalysis;
-using Microsoft.Net.Runtime.Loader;
 
 namespace Microsoft.Net.Runtime.Roslyn
 {
-    public class MetadataReferenceWrapper : IRoslynMetadataReference
+    public class RoslynMetadataReference : IRoslynMetadataReference
     {
-        public MetadataReferenceWrapper(MetadataReference metadataReference)
+        public RoslynMetadataReference(string name, MetadataReference metadataReference)
         {
+            Name = name;
             MetadataReference = metadataReference;
+        }
+
+        public string Name
+        {
+            get;
+            private set;
         }
 
         public MetadataReference MetadataReference { get; private set; }

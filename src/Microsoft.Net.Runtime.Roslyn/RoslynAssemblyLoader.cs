@@ -10,7 +10,7 @@ using Microsoft.Net.Runtime.FileSystem;
 
 namespace Microsoft.Net.Runtime.Roslyn
 {
-    public class RoslynAssemblyLoader : IAssemblyLoader, IDependencyExporter
+    public class RoslynAssemblyLoader : IAssemblyLoader, ILibraryExportProvider
     {
         private readonly Dictionary<string, CompilationContext> _compilationCache = new Dictionary<string, CompilationContext>();
 
@@ -22,7 +22,7 @@ namespace Microsoft.Net.Runtime.Roslyn
         public RoslynAssemblyLoader(IAssemblyLoaderEngine loaderEngine,
                                     IFileWatcher watcher,
                                     IProjectResolver projectResolver,
-                                    IDependencyExporter dependencyExporter,
+                                    ILibraryExportProvider dependencyExporter,
                                     IGlobalAssemblyCache globalAssemblyCache)
         {
             _loaderEngine = loaderEngine;
@@ -52,12 +52,12 @@ namespace Microsoft.Net.Runtime.Roslyn
 
             var resources = _resourceProvider.GetResources(project);
 
-            compilationContext.PopulateAllAssemblyNeutralResources(resources);
+            compilationContext.PopulateAssemblyNeutralResources(resources);
 
             return CompileInMemory(name, compilationContext, resources);
         }
 
-        public IDependencyExport GetDependencyExport(string name, FrameworkName targetFramework)
+        public ILibraryExport GetLibraryExport(string name, FrameworkName targetFramework)
         {
             var compliationContext = GetCompilationContext(name, targetFramework);
 
@@ -66,7 +66,7 @@ namespace Microsoft.Net.Runtime.Roslyn
                 return null;
             }
 
-            return RoslynCompiler.MakeDependencyExport(compliationContext);
+            return compliationContext.GetLibraryExport();
         }
 
         private CompilationContext GetCompilationContext(string name, FrameworkName targetFramework)
@@ -119,7 +119,7 @@ namespace Microsoft.Net.Runtime.Roslyn
                 }
 
                 var assemblyBytes = assemblyStream.ToArray();
-                byte[] pdbBytes = pdbStream.ToArray();
+                var pdbBytes = pdbStream.ToArray();
 
                 var assembly = _loaderEngine.LoadBytes(assemblyBytes, pdbBytes);
 

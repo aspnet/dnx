@@ -8,24 +8,23 @@ using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.Text;
 using Microsoft.Net.Runtime.FileSystem;
-using Microsoft.Net.Runtime.Loader;
 using NuGet;
 
 namespace Microsoft.Net.Runtime.Roslyn
 {
     public class RoslynCompiler : IRoslynCompiler
     {
-        private readonly IDependencyExporter _dependencyResolver;
+        private readonly ILibraryExportProvider _libraryExportProvider;
         private readonly IFileWatcher _watcher;
         private readonly IProjectResolver _projectResolver;
 
         public RoslynCompiler(IProjectResolver projectResolver,
                               IFileWatcher watcher,
-                              IDependencyExporter dependencyExportResolver)
+                              ILibraryExportProvider libraryExportProvider)
         {
             _projectResolver = projectResolver;
             _watcher = watcher;
-            _dependencyResolver = dependencyExportResolver;
+            _libraryExportProvider = libraryExportProvider;
         }
 
         public CompilationContext CompileProject(string name, FrameworkName targetFramework)
@@ -58,7 +57,7 @@ namespace Microsoft.Net.Runtime.Roslyn
 
             Trace.TraceInformation("[{0}]: Found project '{1}' framework={2}", GetType().Name, project.Name, targetFramework);
 
-            var exports = new List<IDependencyExport>();
+            var exports = new List<ILibraryExport>();
 
             var dependencies = project.Dependencies.Concat(targetFrameworkConfig.Dependencies)
                                                    .Select(d => d.Name)
@@ -83,16 +82,16 @@ namespace Microsoft.Net.Runtime.Roslyn
 
                 foreach (var dependency in dependencies)
                 {
-                    var dependencyExport = GetDependencyExport(dependency, targetFramework, compilationCache) ??
-                        _dependencyResolver.GetDependencyExport(dependency, targetFramework);
+                    var libraryExport = GetLibraryExport(dependency, targetFramework, compilationCache) ??
+                        _libraryExportProvider.GetLibraryExport(dependency, targetFramework);
 
-                    if (dependencyExport == null)
+                    if (libraryExport == null)
                     {
                         // TODO: Failed to resolve dependency so do something useful
                     }
                     else
                     {
-                        exports.Add(dependencyExport);
+                        exports.Add(libraryExport);
                     }
                 }
 
@@ -117,10 +116,12 @@ namespace Microsoft.Net.Runtime.Roslyn
             IDictionary<string, AssemblyNeutralMetadataReference> assemblyNeutralReferences;
             IList<MetadataReference> exportedReferences;
             IList<CompilationContext> projectReferences;
+            IList<IMetadataReference> metadataReferences;
 
             ExtractReferences(exports,
                               out exportedReferences,
                               out projectReferences,
+                              out metadataReferences,
                               out assemblyNeutralReferences);
 
             Trace.TraceInformation("[{0}]: Exported References {1}", GetType().Name, exportedReferences.Count);
@@ -148,35 +149,27 @@ namespace Microsoft.Net.Runtime.Roslyn
 
             assemblyNeutralWorker.Generate();
 
-            var newCompilation = assemblyNeutralWorker.Compilation;
-
-            compilationContext = new CompilationContext
-            {
-                Compilation = newCompilation,
-                Project = project,
-                ProjectReferences = projectReferences,
-                Exports = exports
-            };
-
             foreach (var t in assemblyNeutralWorker.TypeCompilations)
             {
-                compilationContext.AssemblyNeutralReferences[t.AssemblyName] = new AssemblyNeutralMetadataReference(t);
+                metadataReferences.Add(new AssemblyNeutralMetadataReference(t));
             }
 
-            // Add assembly neutral interfaces from 
-            foreach (var t in assemblyNeutralReferences.Values)
-            {
-                compilationContext.AssemblyNeutralReferences[t.Name] = t;
-            }
+            var newCompilation = assemblyNeutralWorker.Compilation;
 
-            compilationContext.Diagnostics.AddRange(assemblyNeutralTypeDiagnostics);
+            compilationContext = new CompilationContext(newCompilation,
+                metadataReferences,
+                projectReferences,
+                assemblyNeutralTypeDiagnostics,
+                project);
 
             compilationCache[name] = compilationContext;
 
             return compilationContext;
         }
 
-        private IList<SyntaxTree> GetSyntaxTrees(Project project, CompilationSettings compilationSettings, List<IDependencyExport> exports)
+        private IList<SyntaxTree> GetSyntaxTrees(Project project,
+                                                 CompilationSettings compilationSettings,
+                                                 List<ILibraryExport> exports)
         {
             var trees = new List<SyntaxTree>();
 
@@ -194,29 +187,24 @@ namespace Microsoft.Net.Runtime.Roslyn
                 }
 
                 _watcher.WatchFile(sourcePath);
-#if NET45
-                var syntaxTree = CSharpSyntaxTree.ParseFile(sourcePath, parseOptions);
-#else
-                var sourceText = SourceText.From(File.ReadAllText(sourcePath));
-                var syntaxTree = CSharpSyntaxTree.ParseText(sourceText, sourcePath, parseOptions);
-#endif
+
+                var syntaxTree = CreateSyntaxTree(sourcePath, parseOptions);
+
                 trees.Add(syntaxTree);
             }
 
             foreach (var sourceReference in exports.SelectMany(export => export.SourceReferences))
             {
                 var sourceFileReference = sourceReference as ISourceFileReference;
+
                 if (sourceFileReference != null)
                 {
                     var sourcePath = sourceFileReference.Path;
 
                     _watcher.WatchFile(sourcePath);
-#if NET45
-                    var syntaxTree = CSharpSyntaxTree.ParseFile(sourcePath, parseOptions);
-#else
-                    var sourceText = SourceText.From(File.ReadAllText(sourcePath));
-                    var syntaxTree = CSharpSyntaxTree.ParseText(sourceText, sourcePath, parseOptions);
-#endif
+
+                    var syntaxTree = CreateSyntaxTree(sourcePath, parseOptions);
+
                     trees.Add(syntaxTree);
                 }
             }
@@ -230,21 +218,18 @@ namespace Microsoft.Net.Runtime.Roslyn
             return trees;
         }
 
-        public IEnumerable<IMetadataReference> GetReferences(string name, FrameworkName targetFramework)
+        private static SyntaxTree CreateSyntaxTree(string sourcePath, CSharpParseOptions parseOptions)
         {
-            var cache = new Dictionary<string, CompilationContext>();
-
-            var export = GetDependencyExport(name, targetFramework, cache);
-
-            if (export == null)
-            {
-                return null;
-            }
-
-            return export.MetadataReferences;
+#if NET45
+            var syntaxTree = CSharpSyntaxTree.ParseFile(sourcePath, parseOptions);
+#else
+            var sourceText = SourceText.From(File.ReadAllText(sourcePath));
+            var syntaxTree = CSharpSyntaxTree.ParseText(sourceText, sourcePath, parseOptions);
+#endif
+            return syntaxTree;
         }
 
-        public RoslynDepenencyExport GetDependencyExport(string name, FrameworkName targetFramework, IDictionary<string, CompilationContext> compilationCache)
+        public RoslynLibraryExport GetLibraryExport(string name, FrameworkName targetFramework, IDictionary<string, CompilationContext> compilationCache)
         {
             var compilationContext = Compile(name, targetFramework, compilationCache);
 
@@ -253,39 +238,24 @@ namespace Microsoft.Net.Runtime.Roslyn
                 return null;
             }
 
-            return MakeDependencyExport(compilationContext);
+            return compilationContext.GetLibraryExport();
         }
 
-        internal static RoslynDepenencyExport MakeDependencyExport(CompilationContext compilationContext)
-        {
-            var metadataReferences = new List<IMetadataReference>();
-            var sourceReferences = new List<ISourceReference>();
-
-            var metadataReference = compilationContext.Compilation.ToMetadataReference(embedInteropTypes: compilationContext.Project.EmbedInteropTypes);
-            metadataReferences.Add(new MetadataReferenceWrapper(metadataReference));
-            metadataReferences.AddRange(compilationContext.AssemblyNeutralReferences.Values);
-
-            foreach (var sharedFile in compilationContext.Project.SharedFiles)
-            {
-                sourceReferences.Add(new SourceFileReference(sharedFile));
-            }
-
-            return new RoslynDepenencyExport(metadataReferences, sourceReferences, compilationContext);
-        }
-
-        private void ExtractReferences(List<IDependencyExport> dependencyExports,
+        private void ExtractReferences(List<ILibraryExport> dependencyExports,
                                        out IList<MetadataReference> references,
                                        out IList<CompilationContext> projectReferences,
+                                       out IList<IMetadataReference> metadataReferences,
                                        out IDictionary<string, AssemblyNeutralMetadataReference> assemblyNeutralReferences)
         {
-            var paths = new HashSet<string>();
+            var used = new HashSet<string>();
             references = new List<MetadataReference>();
             projectReferences = new List<CompilationContext>();
+            metadataReferences = new List<IMetadataReference>();
             assemblyNeutralReferences = new Dictionary<string, AssemblyNeutralMetadataReference>();
 
             foreach (var export in dependencyExports)
             {
-                var roslynExport = export as RoslynDepenencyExport;
+                var roslynExport = export as RoslynLibraryExport;
 
                 // Roslyn exports have more information that we might want to flow to the 
                 // original compilation
@@ -296,12 +266,18 @@ namespace Microsoft.Net.Runtime.Roslyn
 
                 foreach (var reference in export.MetadataReferences)
                 {
+                    if (!used.Add(reference.Name))
+                    {
+                        continue;
+                    }
+
+                    metadataReferences.Add(reference);
+
                     var fileMetadataReference = reference as IMetadataFileReference;
 
                     if (fileMetadataReference != null)
                     {
-                        // Make sure nothing is duped
-                        paths.Add(fileMetadataReference.Path);
+                        references.Add(MetadataFileReferenceFactory.CreateReference(fileMetadataReference.Path));
                     }
                     else
                     {
@@ -316,9 +292,6 @@ namespace Microsoft.Net.Runtime.Roslyn
                     }
                 }
             }
-
-            // Now add the final set to the final set of references
-            references.AddRange(paths.Select(path => MetadataFileReferenceFactory.CreateReference(path)));
         }
 
         private MetadataReference ConvertMetadataReference(IMetadataReference metadataReference)
@@ -330,24 +303,14 @@ namespace Microsoft.Net.Runtime.Roslyn
                 return MetadataFileReferenceFactory.CreateReference(fileMetadataReference.Path);
             }
 
-            var metadataReferenceWrapper = metadataReference as MetadataReferenceWrapper;
+            var roslynReference = metadataReference as RoslynMetadataReference;
 
-            if (metadataReferenceWrapper != null)
+            if (roslynReference != null)
             {
-                return metadataReferenceWrapper.MetadataReference;
+                return roslynReference.MetadataReference;
             }
 
             throw new NotSupportedException();
-        }
-
-        private static DependencyExport CreateDependencyExport(MetadataReference metadataReference)
-        {
-            return new DependencyExport(new MetadataReferenceWrapper(metadataReference));
-        }
-
-        private static DependencyExport CreateDependencyExport(string assemblyLocation)
-        {
-            return CreateDependencyExport(MetadataFileReferenceFactory.CreateReference(assemblyLocation));
         }
     }
 }

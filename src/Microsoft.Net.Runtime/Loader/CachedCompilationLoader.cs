@@ -7,7 +7,7 @@ using NuGet;
 
 namespace Microsoft.Net.Runtime.Loader
 {
-    public class CachedCompilationLoader : IAssemblyLoader, IDependencyProvider, IDependencyExporter
+    public class CachedCompilationLoader : IAssemblyLoader, IDependencyProvider, ILibraryExportProvider
     {
         private readonly IProjectResolver _resolver;
         private readonly Dictionary<string, string> _paths = new Dictionary<string, string>();
@@ -32,18 +32,18 @@ namespace Microsoft.Net.Runtime.Loader
             return null;
         }
 
-        public IDependencyExport GetDependencyExport(string name, FrameworkName targetFramework)
+        public ILibraryExport GetLibraryExport(string name, FrameworkName targetFramework)
         {
             string path;
             if (_paths.TryGetValue(name, out path))
             {
-                return new DependencyExport(path);
+                return new LibraryExport(path);
             }
 
             return null;
         }
 
-        public DependencyDescription GetDescription(string name, SemanticVersion version, FrameworkName targetFramework)
+        public LibraryDescription GetDescription(string name, SemanticVersion version, FrameworkName targetFramework)
         {
             string cachedFile;
             Project project;
@@ -58,9 +58,9 @@ namespace Microsoft.Net.Runtime.Loader
             {
                 var config = project.GetTargetFrameworkConfiguration(targetFramework);
 
-                return new DependencyDescription
+                return new LibraryDescription
                 {
-                    Identity = new Dependency { Name = project.Name, Version = project.Version },
+                    Identity = new Library { Name = project.Name, Version = project.Version },
                     Dependencies = project.Dependencies.Concat(config.Dependencies),
                 };
             }
@@ -68,7 +68,7 @@ namespace Microsoft.Net.Runtime.Loader
             return null;
         }
 
-        public void Initialize(IEnumerable<DependencyDescription> packages, FrameworkName targetFramework)
+        public void Initialize(IEnumerable<LibraryDescription> packages, FrameworkName targetFramework)
         {
             foreach (var package in packages)
             {

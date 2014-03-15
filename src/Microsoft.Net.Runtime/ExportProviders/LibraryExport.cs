@@ -1,24 +1,25 @@
 ﻿using System.Collections.Generic;
 
-namespace Microsoft.Net.Runtime.Loader
+namespace Microsoft.Net.Runtime
 {
-    public class DependencyExport : IDependencyExport
+    public class LibraryExport : ILibraryExport
     {
-        public DependencyExport(string path)
+        public LibraryExport(string path)
             : this(new MetadataFileReference(path))
         {
         }
 
-        public DependencyExport(IMetadataReference metadataReference)
+        public LibraryExport(IMetadataReference metadataReference)
         {
             MetadataReferences = new List<IMetadataReference>
             {
                 metadataReference
             };
+
             SourceReferences = new List<ISourceReference>();
         }
 
-        public DependencyExport(
+        public LibraryExport(
             IList<IMetadataReference> metadataReferences,
             IList<ISourceReference> sourceReferences)
         {

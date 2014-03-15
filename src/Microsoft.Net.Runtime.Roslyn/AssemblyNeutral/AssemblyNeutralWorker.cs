@@ -77,7 +77,7 @@ namespace Microsoft.Net.Runtime.Roslyn
                     continue;
                 }
 
-                var result = context.Generate();
+                var result = context.Generate(_existingReferences);
 
                 diagnostics.AddRange(result.Diagnostics);
             }

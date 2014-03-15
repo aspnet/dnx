@@ -8,12 +8,12 @@ using NuGet;
 
 namespace Microsoft.Net.Runtime.Loader.NuGet
 {
-    public class NuGetDependencyResolver : IDependencyProvider, IDependencyExporter
+    public class NuGetDependencyResolver : IDependencyProvider, ILibraryExportProvider
     {
         private readonly LocalPackageRepository _repository;
         private readonly Dictionary<string, string> _contractPaths = new Dictionary<string, string>();
         private readonly Dictionary<string, string> _paths = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-        private readonly Dictionary<string, DependencyDescription> _dependencies = new Dictionary<string, DependencyDescription>();
+        private readonly Dictionary<string, LibraryDescription> _dependencies = new Dictionary<string, LibraryDescription>();
         private readonly IDictionary<string, IList<string>> _sharedSources = new Dictionary<string, IList<string>>();
 
         public NuGetDependencyResolver(string projectPath)
@@ -29,15 +29,15 @@ namespace Microsoft.Net.Runtime.Loader.NuGet
             }
         }
 
-        public DependencyDescription GetDescription(string name, SemanticVersion version, FrameworkName frameworkName)
+        public LibraryDescription GetDescription(string name, SemanticVersion version, FrameworkName frameworkName)
         {
             var package = FindCandidate(name, version);
 
             if (package != null)
             {
-                return new DependencyDescription
+                return new LibraryDescription
                 {
-                    Identity = new Dependency { Name = package.Id, Version = package.Version },
+                    Identity = new Library { Name = package.Id, Version = package.Version },
                     Dependencies = GetDependencies(package, frameworkName)
                 };
             }
@@ -45,7 +45,7 @@ namespace Microsoft.Net.Runtime.Loader.NuGet
             return null;
         }
 
-        private IEnumerable<Dependency> GetDependencies(IPackage package, FrameworkName targetFramework)
+        private IEnumerable<Library> GetDependencies(IPackage package, FrameworkName targetFramework)
         {
             IEnumerable<PackageDependencySet> dependencySet;
             if (VersionUtility.TryGetCompatibleItems(targetFramework, package.DependencySets, out dependencySet))
@@ -59,7 +59,7 @@ namespace Microsoft.Net.Runtime.Loader.NuGet
                                                     .FirstOrDefault();
                         if (dependency != null)
                         {
-                            yield return new Dependency
+                            yield return new Library
                             {
                                 Name = dependency.Id,
                                 Version = dependency.Version
@@ -70,7 +70,7 @@ namespace Microsoft.Net.Runtime.Loader.NuGet
             }
         }
 
-        public void Initialize(IEnumerable<DependencyDescription> packages, FrameworkName targetFramework)
+        public void Initialize(IEnumerable<LibraryDescription> packages, FrameworkName targetFramework)
         {
             foreach (var dependency in packages)
             {
@@ -118,7 +118,7 @@ namespace Microsoft.Net.Runtime.Loader.NuGet
             }
         }
 
-        public IDependencyExport GetDependencyExport(string name, FrameworkName targetFramework)
+        public ILibraryExport GetLibraryExport(string name, FrameworkName targetFramework)
         {
             if (!_dependencies.ContainsKey(name))
             {
@@ -127,7 +127,7 @@ namespace Microsoft.Net.Runtime.Loader.NuGet
 
             var paths = new HashSet<string>();
 
-            PopulateDependenciesPaths(name, targetFramework, paths);
+            PopulateDependenciesPaths(name, paths);
 
             var metadataReferenes = paths.Select(path => (IMetadataReference)new MetadataFileReference(path))
                                          .ToList();
@@ -143,36 +143,36 @@ namespace Microsoft.Net.Runtime.Loader.NuGet
                 }
             }
 
-            return new DependencyExport(metadataReferenes, sourceReferences);
+            return new LibraryExport(metadataReferenes, sourceReferences);
         }
 
-        private void PopulateDependenciesPaths(string name, FrameworkName targetFramework, ISet<string> paths)
+        private void PopulateDependenciesPaths(string name, ISet<string> paths)
         {
-            DependencyDescription description;
+            LibraryDescription description;
             if (!_dependencies.TryGetValue(name, out description))
             {
                 return;
             }
 
-            // Use the contract for compilation if available
+            // Use contract if both contract and target path are available
+            string contractPath;
+            bool hasContract = _contractPaths.TryGetValue(name, out contractPath);
 
-            string path;
-            bool found = _contractPaths.TryGetValue(name, out path);
+            string libPath;
+            bool hasLib = _paths.TryGetValue(name, out libPath);
 
-            if (!found)
+            if (hasContract && hasLib)
             {
-                found = _paths.TryGetValue(name, out path);
+                paths.Add(contractPath);
             }
-
-            if (found)
+            else if (hasLib)
             {
-                paths.Add(path);
+                paths.Add(libPath);
             }
-
 
             foreach (var dependency in description.Dependencies)
             {
-                PopulateDependenciesPaths(dependency.Name, targetFramework, paths);
+                PopulateDependenciesPaths(dependency.Name, paths);
             }
         }
 

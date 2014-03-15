@@ -2,9 +2,9 @@
 using NuGet;
 using System.Collections.Generic;
 
-namespace Microsoft.Net.Runtime.Loader
+namespace Microsoft.Net.Runtime
 {
-    public class Dependency : IEquatable<Dependency>
+    public class Library : IEquatable<Library>
     {
         public string Name { get; set; }
 
@@ -15,7 +15,7 @@ namespace Microsoft.Net.Runtime.Loader
             return Name + " " + Version;
         }
 
-        public bool Equals(Dependency other)
+        public bool Equals(Library other)
         {
             if (ReferenceEquals(null, other)) return false;
             if (ReferenceEquals(this, other)) return true;
@@ -27,7 +27,7 @@ namespace Microsoft.Net.Runtime.Loader
             if (ReferenceEquals(null, obj)) return false;
             if (ReferenceEquals(this, obj)) return true;
             if (obj.GetType() != this.GetType()) return false;
-            return Equals((Dependency)obj);
+            return Equals((Library)obj);
         }
 
         public override int GetHashCode()
@@ -38,12 +38,12 @@ namespace Microsoft.Net.Runtime.Loader
             }
         }
 
-        public static bool operator ==(Dependency left, Dependency right)
+        public static bool operator ==(Library left, Library right)
         {
             return Equals(left, right);
         }
 
-        public static bool operator !=(Dependency left, Dependency right)
+        public static bool operator !=(Library left, Library right)
         {
             return !Equals(left, right);
         }

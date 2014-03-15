@@ -16,12 +16,12 @@ namespace Microsoft.Net.Runtime.Roslyn
         private readonly IRoslynCompiler _compiler;
         private readonly IResourceProvider _resourceProvider;
         private readonly IGlobalAssemblyCache _globalAssemblyCache;
-        private readonly IEnumerable<DependencyDescription> _resolvedDependencies;
+        private readonly IEnumerable<LibraryDescription> _resolvedDependencies;
 
         public RoslynArtifactsProducer(IRoslynCompiler compiler,
                                        IResourceProvider resourceProvider,
                                        IGlobalAssemblyCache globalAssemblyCache,
-                                       IEnumerable<DependencyDescription> resolvedDependencies)
+                                       IEnumerable<LibraryDescription> resolvedDependencies)
         {
             _compiler = compiler;
             _resourceProvider = resourceProvider;
@@ -43,7 +43,7 @@ namespace Microsoft.Net.Runtime.Roslyn
 
             var resources = _resourceProvider.GetResources(project);
 
-            compilationContext.PopulateAllAssemblyNeutralResources(resources);
+            compilationContext.PopulateAssemblyNeutralResources(resources);
 
             diagnostics.AddRange(compilationContext.Diagnostics);
 

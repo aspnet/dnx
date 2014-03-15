@@ -5,7 +5,7 @@ using System.Linq;
 using System.Runtime.Versioning;
 using NuGet;
 
-namespace Microsoft.Net.Runtime.Loader.Infrastructure
+namespace Microsoft.Net.Runtime
 {
     public class WalkContext
     {
@@ -47,11 +47,11 @@ namespace Microsoft.Net.Runtime.Loader.Infrastructure
         {
             var root = new Node
             {
-                Key = new Dependency { Name = name, Version = version }
+                Key = new Library { Name = name, Version = version }
             };
 
             var resolvers = dependencyResolvers as IDependencyProvider[] ?? dependencyResolvers.ToArray();
-            var resolvedItems = new Dictionary<Dependency, Item>();
+            var resolvedItems = new Dictionary<Library, Item>();
 
             // Recurse through dependencies optimistically, asking resolvers for dependencies
             // based on best match of each encountered dependency
@@ -199,9 +199,9 @@ namespace Microsoft.Net.Runtime.Loader.Infrastructure
         }
 
         private Item Resolve(
-            Dictionary<Dependency, Item> resolvedItems,
+            Dictionary<Library, Item> resolvedItems,
             IEnumerable<IDependencyProvider> resolvers,
-            Dependency packageKey,
+            Library packageKey,
             FrameworkName frameworkName)
         {
             Item item;
@@ -243,7 +243,7 @@ namespace Microsoft.Net.Runtime.Loader.Infrastructure
 
                 var descriptions = groupByResolver.Select(entry =>
                 {
-                    return new DependencyDescription
+                    return new LibraryDescription
                     {
                         Identity = entry.Value.Key,
                         Dependencies = entry.Value.Dependencies.Where(p => _usedItems.ContainsKey(p.Name))
@@ -265,7 +265,7 @@ namespace Microsoft.Net.Runtime.Loader.Infrastructure
                 Disposition = Disposition.Acceptable;
             }
 
-            public Dependency Key { get; set; }
+            public Library Key { get; set; }
             public Item Item { get; set; }
             public Node OuterNode { get; set; }
             public IList<Node> InnerNodes { get; private set; }
@@ -275,9 +275,9 @@ namespace Microsoft.Net.Runtime.Loader.Infrastructure
 
         public class Item
         {
-            public Dependency Key { get; set; }
+            public Library Key { get; set; }
             public IDependencyProvider Resolver { get; set; }
-            public IEnumerable<Dependency> Dependencies { get; set; }
+            public IEnumerable<Library> Dependencies { get; set; }
         }
 
         public class Tracker

@@ -227,8 +227,8 @@ namespace Microsoft.Net.Project
             var compositeResourceProvider = new CompositeResourceProvider(new IResourceProvider[] { resxProvider, embeddedResourceProvider });
 
             var nugetDependencyResolver = new NuGetDependencyResolver(projectDir);
-            var gacDependencyExporter = new GacDependencyExporter(globalAssemblyCache);
-            var compositeDependencyExporter = new CompositeDependencyExporter(new IDependencyExporter[] { 
+            var gacDependencyExporter = new GacLibraryExportProvider(globalAssemblyCache);
+            var compositeDependencyExporter = new CompositeLibraryExportProvider(new ILibraryExportProvider[] { 
                 gacDependencyExporter, 
                 nugetDependencyResolver 
             });
@@ -248,7 +248,7 @@ namespace Microsoft.Net.Project
             var roslynArtifactsProducer = new RoslynArtifactsProducer(roslynCompiler,
                                                                       compositeResourceProvider,
                                                                       globalAssemblyCache,
-                                                                      projectReferenceResolver.ResolvedDependencies);
+                                                                      projectReferenceResolver.Dependencies);
 
 
             return roslynArtifactsProducer;

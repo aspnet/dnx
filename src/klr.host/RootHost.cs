@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Reflection;
@@ -9,7 +8,6 @@ namespace klr.host
 {
     public class RootHost : IHost
     {
-        private readonly IDictionary<string, Assembly> _cache = new Dictionary<string, Assembly>();
         private readonly string[] _searchPaths;
         private readonly IAssemblyLoaderEngine _loaderEngine;
 

@@ -1,11 +1,10 @@
 ﻿using System.Collections.Generic;
-using Microsoft.Net.Runtime.Loader;
 
 namespace Microsoft.Net.Runtime.Roslyn
 {
-    public class RoslynDepenencyExport : DependencyExport
+    public class RoslynLibraryExport : LibraryExport
     {
-        public RoslynDepenencyExport(
+        public RoslynLibraryExport(
             IList<IMetadataReference> metadataReferences,
             IList<ISourceReference> sourceReferences,
             CompilationContext compilationContext)

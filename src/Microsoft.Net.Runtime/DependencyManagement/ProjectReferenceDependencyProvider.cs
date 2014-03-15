@@ -3,7 +3,7 @@ using System.Linq;
 using System.Runtime.Versioning;
 using NuGet;
 
-namespace Microsoft.Net.Runtime.Loader
+namespace Microsoft.Net.Runtime
 {
     public class ProjectReferenceDependencyProvider : IDependencyProvider
     {
@@ -12,12 +12,12 @@ namespace Microsoft.Net.Runtime.Loader
         public ProjectReferenceDependencyProvider(IProjectResolver projectResolver)
         {
             _projectResolver = projectResolver;
-            ResolvedDependencies = Enumerable.Empty<DependencyDescription>();
+            Dependencies = Enumerable.Empty<LibraryDescription>();
         }
 
-        public IEnumerable<DependencyDescription> ResolvedDependencies { get; private set; }
+        public IEnumerable<LibraryDescription> Dependencies { get; private set; }
 
-        public DependencyDescription GetDescription(string name, SemanticVersion version, FrameworkName targetFramework)
+        public LibraryDescription GetDescription(string name, SemanticVersion version, FrameworkName targetFramework)
         {
             Project project;
 
@@ -33,17 +33,17 @@ namespace Microsoft.Net.Runtime.Loader
 
             var config = project.GetTargetFrameworkConfiguration(targetFramework);
 
-            return new DependencyDescription
+            return new LibraryDescription
             {
-                Identity = new Dependency { Name = project.Name, Version = project.Version },
+                Identity = new Library { Name = project.Name, Version = project.Version },
                 Dependencies = project.Dependencies.Concat(config.Dependencies),
             };
         }
 
 
-        public virtual void Initialize(IEnumerable<DependencyDescription> dependencies, FrameworkName targetFramework)
+        public virtual void Initialize(IEnumerable<LibraryDescription> dependencies, FrameworkName targetFramework)
         {
-            ResolvedDependencies = dependencies;
+            Dependencies = dependencies;
         }
     }
 }

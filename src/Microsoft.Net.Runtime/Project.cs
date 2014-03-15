@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Runtime.Versioning;
-using Microsoft.Net.Runtime.Loader;
 using Newtonsoft.Json.Linq;
 using NuGet;
 
@@ -44,7 +43,7 @@ namespace Microsoft.Net.Runtime
 
         public SemanticVersion Version { get; private set; }
 
-        public IList<Dependency> Dependencies { get; private set; }
+        public IList<Library> Dependencies { get; private set; }
 
         public string SourcePattern { get; private set; }
 
@@ -167,7 +166,7 @@ namespace Microsoft.Net.Runtime
             project.Version = version == null ? new SemanticVersion("1.0.0") : new SemanticVersion(version.Value<string>());
             project.Description = GetValue<string>(settings, "description");
             project.Authors = authors == null ? new string[] { } : authors.ToObject<string[]>();
-            project.Dependencies = new List<Dependency>();
+            project.Dependencies = new List<Library>();
             project.ProjectFilePath = projectPath;
             project.EmbedInteropTypes = GetValue<bool>(settings, "embedInteropTypes");
 
@@ -205,7 +204,7 @@ namespace Microsoft.Net.Runtime
             return token != null ? token.Value<string>() : defaultValue;
         }
 
-        private static void PopulateDependencies(IList<Dependency> results, JObject settings)
+        private static void PopulateDependencies(IList<Library> results, JObject settings)
         {
             var dependencies = settings["dependencies"] as JObject;
             if (dependencies != null)
@@ -231,7 +230,7 @@ namespace Microsoft.Net.Runtime
                         dependencyVersion = SemanticVersion.Parse(dependencyVersionValue);
                     }
 
-                    results.Add(new Dependency
+                    results.Add(new Library
                     {
                         Name = dependency.Key,
                         Version = dependencyVersion
@@ -262,7 +261,7 @@ namespace Microsoft.Net.Runtime
 
             _defaultTargetFrameworkConfiguration = new TargetFrameworkConfiguration
             {
-                Dependencies = new List<Dependency>()
+                Dependencies = new List<Library>()
             };
 
             // Parse the specific configuration section
@@ -276,7 +275,7 @@ namespace Microsoft.Net.Runtime
                     config.FrameworkName = VersionUtility.ParseFrameworkName(configuration.Key);
                     var properties = configuration.Value.Value<JObject>();
 
-                    config.Dependencies = new List<Dependency>();
+                    config.Dependencies = new List<Library>();
 
                     PopulateDependencies(config.Dependencies, properties);
 
@@ -325,6 +324,6 @@ namespace Microsoft.Net.Runtime
     {
         public FrameworkName FrameworkName { get; set; }
 
-        public IList<Dependency> Dependencies { get; set; }
+        public IList<Library> Dependencies { get; set; }
     }
 }

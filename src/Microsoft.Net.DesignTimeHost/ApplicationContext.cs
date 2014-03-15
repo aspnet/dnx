@@ -9,7 +9,6 @@ using Microsoft.Net.DesignTimeHost.Models.IncomingMessages;
 using Microsoft.Net.DesignTimeHost.Models.OutgoingMessages;
 using Microsoft.Net.Runtime;
 using Microsoft.Net.Runtime.FileSystem;
-using Microsoft.Net.Runtime.Loader;
 using Microsoft.Net.Runtime.Loader.NuGet;
 using Microsoft.Net.Runtime.Roslyn;
 using Newtonsoft.Json.Linq;
@@ -107,6 +106,21 @@ namespace Microsoft.Net.DesignTimeHost
 
                 DoProcessLoop();
             }
+            catch (Exception ex)
+            {
+                // Unhandled errors
+                var error = new ErrorMessage
+                {
+                    Message = ex.Message
+                };
+
+                OnTransmit(new Message
+                {
+                    ContextId = Id,
+                    MessageType = "Error",
+                    Payload = JToken.FromObject(error)
+                });
+            }
             finally
             {
                 Monitor.Exit(_processingLock);
@@ -190,7 +204,6 @@ namespace Microsoft.Net.DesignTimeHost
                 {
                     Configurations = state.Project.GetTargetFrameworkConfigurations().Select(c => new ConfigurationData
                     {
-                        CompilationOptions = state.Project.GetConfiguration(c.FrameworkName).Value["compilationOptions"],
                         CompilationSettings = state.Project.GetCompilationSettings(c.FrameworkName),
                         FrameworkName = VersionUtility.GetShortFrameworkName(c.FrameworkName),
                     }).ToList()
@@ -318,8 +331,8 @@ namespace Microsoft.Net.DesignTimeHost
             var projectResolver = new ProjectResolver(projectDir, rootDirectory);
 
             var nugetDependencyResolver = new NuGetDependencyResolver(projectDir);
-            var gacDependencyExporter = new GacDependencyExporter(globalAssemblyCache);
-            var compositeDependencyExporter = new CompositeDependencyExporter(new IDependencyExporter[] { 
+            var gacDependencyExporter = new GacLibraryExportProvider(globalAssemblyCache);
+            var compositeDependencyExporter = new CompositeLibraryExportProvider(new ILibraryExportProvider[] { 
                 gacDependencyExporter, 
                 nugetDependencyResolver 
             });
