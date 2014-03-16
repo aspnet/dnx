@@ -11,10 +11,10 @@ namespace Microsoft.Net.Runtime.Loader.NuGet
     public class NuGetDependencyResolver : IDependencyProvider, ILibraryExportProvider
     {
         private readonly LocalPackageRepository _repository;
-        private readonly Dictionary<string, string> _contractPaths = new Dictionary<string, string>();
+        private readonly Dictionary<string, string> _contractPaths = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
         private readonly Dictionary<string, string> _paths = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-        private readonly Dictionary<string, LibraryDescription> _dependencies = new Dictionary<string, LibraryDescription>();
-        private readonly IDictionary<string, IList<string>> _sharedSources = new Dictionary<string, IList<string>>();
+        private readonly Dictionary<string, LibraryDescription> _dependencies = new Dictionary<string, LibraryDescription>(StringComparer.OrdinalIgnoreCase);
+        private readonly IDictionary<string, IList<string>> _sharedSources = new Dictionary<string, IList<string>>(StringComparer.OrdinalIgnoreCase);
 
         public NuGetDependencyResolver(string projectPath)
         {
