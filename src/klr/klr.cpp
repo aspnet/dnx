@@ -93,7 +93,15 @@ Finished:
 
     if (m_hHostModule)
     {
-        fSuccess = FreeLibrary(m_hHostModule);
+        if (FreeLibrary(m_hHostModule))
+        {
+            fSuccess = true;
+        }
+        else
+        {
+            fSuccess = false;
+        }
+        
         m_hHostModule = nullptr;
     }
 
