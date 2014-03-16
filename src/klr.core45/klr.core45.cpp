@@ -176,7 +176,7 @@ extern "C" __declspec(dllexport) bool __stdcall CallApplicationMain(PCALL_APPLIC
     if (INVALID_HANDLE_VALUE == findHandle)
     {
         printf_s("Failed to find files in the coreclr directory\n");
-        return -1;
+        return false;
     }
 
     do
@@ -264,5 +264,12 @@ extern "C" __declspec(dllexport) bool __stdcall CallApplicationMain(PCALL_APPLIC
 
     pCLRRuntimeHost->Stop();
 
-    return hr;
+    if (FAILED(hr))
+    {
+        return false;
+    }
+    else
+    {
+        return true;
+    }
 }
