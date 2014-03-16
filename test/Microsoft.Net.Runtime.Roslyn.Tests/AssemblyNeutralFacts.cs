@@ -187,13 +187,13 @@ namespace Something
         private AssemblyNeutralWorker DoAssemblyNeutralCompilation(params string[] fileContents)
         {
             var compilation = CSharpCompilation.Create("test",
-                new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary),
+                options: new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary),
                 references: new[] { 
                     new MetadataFileReference(typeof(object).GetTypeInfo().Assembly.Location) 
                 },
                 syntaxTrees: fileContents.Select(text => CSharpSyntaxTree.ParseText(text)));
 
-            var worker = new AssemblyNeutralWorker(compilation, 
+            var worker = new AssemblyNeutralWorker(compilation,
                 new Dictionary<string, AssemblyNeutralMetadataReference>());
             worker.FindTypeCompilations(compilation.GlobalNamespace);
             worker.OrderTypeCompilations();

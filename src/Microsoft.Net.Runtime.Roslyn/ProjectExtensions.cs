@@ -4,21 +4,21 @@ using System.Linq;
 using System.Runtime.Versioning;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
-using Microsoft.Net.Runtime.Loader;
 using Newtonsoft.Json.Linq;
+using NuGet;
 
 namespace Microsoft.Net.Runtime.Roslyn
 {
     public static class ProjectExtensions
     {
-        public static CompilationSettings GetCompilationSettings(this Project project, FrameworkName frameworkName)
+        public static CompilationSettings GetCompilationSettings(this Project project, FrameworkName targetFramework)
         {
             // TODO: Don't parse stuff everytime
 
             var rootOptions = project.GetCompilationOptions();
             var rootDefines = ConvertValue<string[]>(rootOptions, "define") ?? new string[] { };
 
-            var configuration = project.GetConfiguration(frameworkName);
+            var configuration = project.GetConfiguration(targetFramework);
 
             JToken specificOptions = null;
             string[] specificDefines = null;
@@ -40,10 +40,16 @@ namespace Microsoft.Net.Runtime.Roslyn
                           defaultOptions;
 
             // Disable 1702 until roslyn turns this off by default
-            options = options.WithSpecificWarningOptions(new Dictionary<int, ReportWarning>
+            options = options.WithSpecificDiagnosticOptions(new Dictionary<string, ReportDiagnostic>
             {
-                { 1702, ReportWarning.Suppress }
+                { "1702", ReportDiagnostic.Suppress }
             });
+
+            // If we're targeting desktop then use desktop comparer
+            var assemblyIdentityComparer = VersionUtility.IsDesktop(targetFramework) ?
+                DesktopAssemblyIdentityComparer.Default : null;
+
+            options = options.WithAssemblyIdentityComparer(assemblyIdentityComparer);
 
             var settings = new CompilationSettings
             {
@@ -74,11 +80,11 @@ namespace Microsoft.Net.Runtime.Roslyn
                 platform = Platform.AnyCpu;
             }
 
-            ReportWarning warningOption = warningsAsErrors ? ReportWarning.Error : ReportWarning.Default;
+            ReportDiagnostic warningOption = warningsAsErrors ? ReportDiagnostic.Error : ReportDiagnostic.Default;
 
             return options.WithAllowUnsafe(allowUnsafe)
                           .WithPlatform(platform)
-                          .WithGeneralWarningOption(warningOption);
+                          .WithGeneralDiagnosticOption(warningOption);
         }
 
         private static T ConvertValue<T>(JToken token, string name)

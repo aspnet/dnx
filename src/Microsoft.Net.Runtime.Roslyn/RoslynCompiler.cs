@@ -130,16 +130,11 @@ namespace Microsoft.Net.Runtime.Roslyn
             var references = new List<MetadataReference>();
             references.AddRange(exportedReferences);
 
-            // If we're targeting desktop then use desktop comparer
-            var assemblyIdentityComparer = VersionUtility.IsDesktop(targetFramework) ?
-                DesktopAssemblyIdentityComparer.Default : null;
-
             var compilation = CSharpCompilation.Create(
                 name,
-                compilationSettings.CompilationOptions,
-                syntaxTrees: trees,
-                references: references,
-                assemblyIdentityComparer: assemblyIdentityComparer);
+                trees,
+                references,
+                compilationSettings.CompilationOptions);
 
             var assemblyNeutralWorker = new AssemblyNeutralWorker(compilation, assemblyNeutralReferences);
             assemblyNeutralWorker.FindTypeCompilations(compilation.Assembly.GlobalNamespace);
@@ -220,7 +215,13 @@ namespace Microsoft.Net.Runtime.Roslyn
 
         private static SyntaxTree CreateSyntaxTree(string sourcePath, CSharpParseOptions parseOptions)
         {
-#if NET45
+            // REVIEW: Update this when roslyn fixes issues with access crypto API
+#if SHA
+            using (var stream = File.OpenRead(sourcePath))
+            {
+                return CSharpSyntaxTree.ParseText(SourceText.From(stream), sourcePath, parseOptions);
+            }
+#elif NET45
             var syntaxTree = CSharpSyntaxTree.ParseFile(sourcePath, parseOptions);
 #else
             var sourceText = SourceText.From(File.ReadAllText(sourcePath));
