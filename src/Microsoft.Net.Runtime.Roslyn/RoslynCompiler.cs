@@ -215,19 +215,10 @@ namespace Microsoft.Net.Runtime.Roslyn
 
         private static SyntaxTree CreateSyntaxTree(string sourcePath, CSharpParseOptions parseOptions)
         {
-            // REVIEW: Update this when roslyn fixes issues with access crypto API
-#if SHA
             using (var stream = File.OpenRead(sourcePath))
             {
                 return CSharpSyntaxTree.ParseText(SourceText.From(stream), sourcePath, parseOptions);
             }
-#elif NET45
-            var syntaxTree = CSharpSyntaxTree.ParseFile(sourcePath, parseOptions);
-#else
-            var sourceText = SourceText.From(File.ReadAllText(sourcePath));
-            var syntaxTree = CSharpSyntaxTree.ParseText(sourceText, sourcePath, parseOptions);
-#endif
-            return syntaxTree;
         }
 
         public RoslynLibraryExport GetLibraryExport(string name, FrameworkName targetFramework, IDictionary<string, CompilationContext> compilationCache)
