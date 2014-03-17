@@ -1,16 +1,19 @@
 {
     "dependencies": {
-        "xunit" : "1.9.2",
-        "xunit.extensions": "1.9.2",
         "Microsoft.Net.Runtime.Roslyn": "",
         "Microsoft.Net.Runtime.Interfaces": "",
         "Microsoft.CodeAnalysis.Common" : "0.7-beta-*",
         "Microsoft.CodeAnalysis.CSharp" : "0.7-beta-*",
         "System.Reflection.Metadata.Ecma335": "0.7-beta-*",
-        "Microsoft.Bcl.Immutable" : "1.1.18-beta"
+        "Microsoft.Bcl.Immutable" : "1.1.18-beta",
+        "Xunit.KRunner": "0.1-alpha-*",
+        "xunit.abstractions": "2.0.0-aspnet-*",
+        "xunit.assert": "2.0.0-aspnet-*",
+        "xunit.core": "2.0.0-aspnet-*",
+        "xunit.execution": "2.0.0-aspnet-*"
     },
-    "configurations" : {
-        "net45" : {
+    "configurations": {
+        "net45": {
             "dependencies": {
                 "System.Xml.Linq": "",
                 "System.Xml": "",
@@ -18,5 +21,8 @@
                 "System.Collections" : ""
             }
         }
+    },
+    "commands": {
+        "test": "Xunit.KRunner"
     }
 }
