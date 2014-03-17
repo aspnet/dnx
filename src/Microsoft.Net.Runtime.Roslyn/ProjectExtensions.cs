@@ -42,7 +42,7 @@ namespace Microsoft.Net.Runtime.Roslyn
             // Disable 1702 until roslyn turns this off by default
             options = options.WithSpecificDiagnosticOptions(new Dictionary<string, ReportDiagnostic>
             {
-                { "1702", ReportDiagnostic.Suppress }
+                { "CS1702", ReportDiagnostic.Suppress }
             });
 
             // If we're targeting desktop then use desktop comparer
