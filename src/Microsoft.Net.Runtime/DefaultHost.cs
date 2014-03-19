@@ -157,11 +157,11 @@ namespace Microsoft.Net.Runtime
 
             _dependencyWalker = new DependencyWalker(dependencyProviders);
             _loader = new AssemblyLoader(loaders);
-
             _serviceProvider.Add(typeof(IFileMonitor), _watcher);
-            _serviceProvider.Add(typeof(ILibraryExportProvider),
-                new CompositeLibraryExportProvider(
-                    libraryExporters.Concat(new[] { roslynLoader })));
+            _serviceProvider.Add(typeof(ILibraryManager),
+                new LibraryManager(_targetFramework, 
+                                   _dependencyWalker, 
+                                   libraryExporters.Concat(new[] { roslynLoader })));
         }
 
         public static string ResolveRootDirectory(string projectDir)

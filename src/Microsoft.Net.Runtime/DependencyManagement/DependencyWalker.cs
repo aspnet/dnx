@@ -8,10 +8,16 @@ namespace Microsoft.Net.Runtime
     public class DependencyWalker
     {
         private readonly IEnumerable<IDependencyProvider> _dependencyProviders;
+        private readonly List<LibraryDescription> _libraries = new List<LibraryDescription>();
 
         public DependencyWalker(IEnumerable<IDependencyProvider> dependencyProviders)
         {
             _dependencyProviders = dependencyProviders;
+        }
+
+        public IList<LibraryDescription> Libraries
+        {
+            get { return _libraries; }
         }
 
         public void Walk(string name, SemanticVersion version, FrameworkName targetFramework)
@@ -27,7 +33,7 @@ namespace Microsoft.Net.Runtime
                 version,
                 targetFramework);
 
-            context.Populate(targetFramework);
+            context.Populate(targetFramework, Libraries);
 
             sw.Stop();
             Trace.TraceInformation("Resolved dependencies for {0} in {1}ms", name, sw.ElapsedMilliseconds);
