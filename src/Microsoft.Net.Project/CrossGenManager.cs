@@ -14,7 +14,7 @@ namespace Microsoft.Net.Project
         public CrossgenManager(CrossgenOptions options)
         {
             _options = options;
-            _universe = BuildUniverse(options.InputPaths);
+            _universe = BuildUniverse(options.RuntimePath, options.InputPaths);
         }
 
         public void GenerateNativeImages()
@@ -40,25 +40,29 @@ namespace Microsoft.Net.Project
         {
             Console.WriteLine("Generating native images for {0}", assemblyInfo.Name);
 
-            const string crossGenArgsTemplate = "/in {0} /out {1} /MissingDependenciesOK /Trusted_Platform_Assemblies {2}";
+            const string crossgenArgsTemplate = "/in {0} /out {1} /MissingDependenciesOK /Trusted_Platform_Assemblies {2}";
 
             // crossgen.exe /in {il-path}.dll /out {native-image-path} /MissingDependenciesOK /Trusted_Platform_Assemblies {closure}
             string args = null;
 
+            // Treat mscorlib specially
             if (assemblyInfo.Name.Equals("mscorlib", StringComparison.OrdinalIgnoreCase))
             {
-                args = String.Format(crossGenArgsTemplate,
+                args = String.Format(crossgenArgsTemplate,
                                      assemblyInfo.AssemblyPath,
                                      assemblyInfo.NativeImagePath,
                                      assemblyInfo.AssemblyPath);
             }
             else
             {
-                args = String.Format(crossGenArgsTemplate,
+                args = String.Format(crossgenArgsTemplate,
                                      assemblyInfo.AssemblyPath,
                                      assemblyInfo.NativeImagePath,
                                      String.Join(";", assemblyInfo.Closure.Select(d => d.NativeImagePath)));
             }
+
+            // Make sure the target directory for the native image is there
+            Directory.CreateDirectory(Path.GetDirectoryName(assemblyInfo.NativeImagePath));
 
             var options = new ProcessStartInfo
             {
@@ -69,19 +73,45 @@ namespace Microsoft.Net.Project
                 WindowStyle = ProcessWindowStyle.Hidden,
                 UseShellExecute = false,
 #endif
+                RedirectStandardError = true,
+                RedirectStandardOutput = true
             };
 
             var p = Process.Start(options);
+#if NET45
+            p.EnableRaisingEvents = true;
+#endif
+
+            p.ErrorDataReceived += OnErrorDataReceived;
+            p.OutputDataReceived += OnOutputDataReceived;
+
+            p.BeginErrorReadLine();
+            p.BeginOutputReadLine();
             p.WaitForExit();
+            Console.WriteLine("Exit code for {0}: {1}", assemblyInfo.Name, p.ExitCode);
         }
 
-        private static IDictionary<string, AssemblyInformation> BuildUniverse(IEnumerable<string> paths)
+        void OnErrorDataReceived(object sender, DataReceivedEventArgs e)
         {
+            Console.Error.WriteLine(e.Data);
+        }
+
+        void OnOutputDataReceived(object sender, DataReceivedEventArgs e)
+        {
+            Console.WriteLine(e.Data);
+        }
+
+        private static IDictionary<string, AssemblyInformation> BuildUniverse(string runtimePath, IEnumerable<string> paths)
+        {
+            var runtimeAssemblies = Directory.EnumerateFiles(Path.GetFullPath(runtimePath), "*.dll")
+                                             .Where(AssemblyInformation.IsValidImage)
+                                             .Select(path => new AssemblyInformation(path) { IsRuntimeAssembly = true });
+
             // REVIEW: Is this the correct way to deal with duplicate assembly names?
-            return paths.SelectMany(path => Directory.EnumerateFiles(path, "*.dll"))
+            return runtimeAssemblies.Concat(paths.SelectMany(path => Directory.EnumerateFiles(path, "*.dll"))
                              .Where(AssemblyInformation.IsValidImage)
                              .Select(path => new AssemblyInformation(path))
-                             .Distinct(AssemblyInformation.NameComparer)
+                             .Distinct(AssemblyInformation.NameComparer))
                              .ToDictionary(a => a.Name);
         }
 
@@ -101,9 +131,13 @@ namespace Microsoft.Net.Project
         {
             // TODO: Cycle check?
 
-            foreach (var dependency in node.GetDependencies(_universe))
+            foreach (var dependency in node.GetDependencies())
             {
-                Sort(dependency, output);
+                AssemblyInformation dependencyInfo;
+                if (_universe.TryGetValue(dependency, out dependencyInfo))
+                {
+                    Sort(dependencyInfo, output);
+                }
             }
 
             if (!output.Contains(node))

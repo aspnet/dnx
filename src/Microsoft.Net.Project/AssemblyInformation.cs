@@ -11,24 +11,39 @@ namespace Microsoft.Net.Project
 
         public AssemblyInformation(string path)
         {
-            Name = Path.GetFileNameWithoutExtension(path);
+            path = Path.GetFullPath(path);
 
-            var assemblyPathWithoutExtension = Path.Combine(Path.GetDirectoryName(path), Name);
+            Name = Path.GetFileNameWithoutExtension(path);
             AssemblyPath = path;
-            NativeImagePath = assemblyPathWithoutExtension + ".ni.dll";
         }
+
+        public bool IsRuntimeAssembly { get; set; }
 
         public string Name { get; private set; }
 
         public string AssemblyPath { get; private set; }
 
-        public string NativeImagePath { get; private set; }
+        public string NativeImagePath
+        {
+            get
+            {
+                var assemblyDirectory = Path.GetDirectoryName(AssemblyPath);
+                if (IsRuntimeAssembly)
+                {
+                    var assemblyPathWithoutExtension = Path.Combine(assemblyDirectory, Name);
+                    return assemblyPathWithoutExtension + ".ni.dll";
+                }
+
+                // REVIEW: Architecture? What about ARM?
+                return Path.Combine(assemblyDirectory, IntPtr.Size == 4 ? "x86" : "amd64", Name + ".ni.dll");
+            }
+        }
 
         public IEnumerable<AssemblyInformation> Closure { get; set; }
 
-        public IEnumerable<AssemblyInformation> GetDependencies(IDictionary<string, AssemblyInformation> universe)
+        public IEnumerable<string> GetDependencies()
         {
-            var dependencies = new HashSet<AssemblyInformation>();
+            var dependencies = new HashSet<string>();
 
             using (var stream = File.OpenRead(AssemblyPath))
             {
@@ -41,11 +56,7 @@ namespace Microsoft.Net.Project
                     var reference = reader.GetAssemblyReference(a);
                     var referenceName = reader.GetString(reference.Name);
 
-                    AssemblyInformation info;
-                    if (universe.TryGetValue(referenceName, out info))
-                    {
-                        dependencies.Add(info);
-                    }
+                    dependencies.Add(referenceName);
                 }
             }
 
