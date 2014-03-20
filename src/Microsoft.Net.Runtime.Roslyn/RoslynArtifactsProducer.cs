@@ -3,11 +3,8 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.Emit;
 using NuGet;
-using Microsoft.Net.Runtime.Loader;
-using System.Runtime.Versioning;
 
 namespace Microsoft.Net.Runtime.Roslyn
 {
