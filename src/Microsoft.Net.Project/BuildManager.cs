@@ -16,11 +16,11 @@ using KProject = Microsoft.Net.Runtime.Project;
 
 namespace Microsoft.Net.Project
 {
-    public class ProjectManager
+    public class BuildManager
     {
         private readonly BuildOptions _buildOptions;
 
-        public ProjectManager(BuildOptions buildOptions)
+        public BuildManager(BuildOptions buildOptions)
         {
             _buildOptions = buildOptions;
             _buildOptions.ProjectDir = Normalize(buildOptions.ProjectDir);

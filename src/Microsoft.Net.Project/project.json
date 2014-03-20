@@ -18,7 +18,8 @@
                 "System.Xml.Linq": "",
                 "System.Xml": "",
                 "System.Runtime" : "",
-                "System.Collections" : ""
+                "System.Collections" : "",
+                "System.IO" :  ""
             }
         },
         "k10" : { 
@@ -27,6 +28,7 @@
                 "System.ComponentModel": "4.0.0.0",
                 "System.Console": "4.0.0.0",
                 "System.Diagnostics.Debug": "4.0.10.0",
+                "System.Diagnostics.Process": "4.0.0.0",
                 "System.IO": "4.0.0.0",
                 "System.IO.FileSystem": "4.0.0.0",
                 "System.Linq": "4.0.0.0",
