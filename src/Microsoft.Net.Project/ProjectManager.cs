@@ -31,7 +31,7 @@ namespace Microsoft.Net.Project
             KProject project;
             if (!KProject.TryGetProject(_buildOptions.ProjectDir, out project))
             {
-                System.Console.WriteLine("Unable to locate {0}.'", KProject.ProjectFileName);
+                Console.WriteLine("Unable to locate {0}.'", KProject.ProjectFileName);
                 return false;
             }
 
@@ -105,14 +105,14 @@ namespace Microsoft.Net.Project
                     builder.Save(fs);
                 }
 
-                System.Console.WriteLine("{0} -> {1}", project.Name, nupkg);
+                Console.WriteLine("{0} -> {1}", project.Name, nupkg);
             }
 
             sw.Stop();
 
             WriteSummary(allDiagnostics);
 
-            System.Console.WriteLine("Time elapsed {0}", sw.Elapsed);
+            Console.WriteLine("Time elapsed {0}", sw.Elapsed);
             return success;
         }
 
@@ -121,14 +121,14 @@ namespace Microsoft.Net.Project
             var errors = allDiagnostics.Count(IsError);
             var warnings = allDiagnostics.Count(d => d.Severity == DiagnosticSeverity.Warning);
 
-            System.Console.WriteLine();
+            Console.WriteLine();
 
             if (errors > 0)
             {
 #if NET45
                 WriteColor("Build failed.", ConsoleColor.Red);
 #else
-                System.Console.WriteLine("Build succeeded.");
+                Console.WriteLine("Build succeeded.");
 #endif
             }
             else
@@ -136,14 +136,14 @@ namespace Microsoft.Net.Project
 #if NET45
                 WriteColor("Build succeeded.", ConsoleColor.Green);
 #else
-                System.Console.WriteLine("Build succeeded.");
+                Console.WriteLine("Build succeeded.");
 #endif
             }
 
-            System.Console.WriteLine("    {0} Warnings(s)", warnings);
-            System.Console.WriteLine("    {0} Error(s)", errors);
+            Console.WriteLine("    {0} Warnings(s)", warnings);
+            Console.WriteLine("    {0} Error(s)", errors);
 
-            System.Console.WriteLine();
+            Console.WriteLine();
         }
 
         private void WriteDiagnostics(List<Diagnostic> diagnostics)
@@ -168,7 +168,7 @@ namespace Microsoft.Net.Project
 #if NET45
             WriteColor(message, ConsoleColor.Red);
 #else
-            System.Console.WriteLine(message);
+            Console.WriteLine(message);
 #endif
         }
 
@@ -177,23 +177,23 @@ namespace Microsoft.Net.Project
 #if NET45
             WriteColor(message, ConsoleColor.Yellow);
 #else
-            System.Console.WriteLine(message);
+            Console.WriteLine(message);
 #endif
         }
 
 #if NET45
         private void WriteColor(string message, ConsoleColor color)
         {
-            var old = System.Console.ForegroundColor;
+            var old = Console.ForegroundColor;
 
             try
             {
-                System.Console.ForegroundColor = color;
-                System.Console.WriteLine(message);
+                Console.ForegroundColor = color;
+                Console.WriteLine(message);
             }
             finally
             {
-                System.Console.ForegroundColor = old;
+                Console.ForegroundColor = old;
             }
         }
 #endif
