@@ -128,7 +128,7 @@ namespace Microsoft.Net.Project
 #if NET45
                 WriteColor("Build failed.", ConsoleColor.Red);
 #else
-                Console.WriteLine("Build succeeded.");
+                Console.WriteLine("Build failed.");
 #endif
             }
             else
