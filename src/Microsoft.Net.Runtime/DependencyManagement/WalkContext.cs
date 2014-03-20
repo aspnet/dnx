@@ -232,7 +232,7 @@ namespace Microsoft.Net.Runtime
             };
         }
 
-        public void Populate(FrameworkName frameworkName)
+        public void Populate(FrameworkName frameworkName, IList<LibraryDescription> libraries)
         {
             foreach (var groupByResolver in _usedItems.GroupBy(x => x.Value.Resolver))
             {
@@ -253,6 +253,7 @@ namespace Microsoft.Net.Runtime
                 }).ToList();
 
                 resolver.Initialize(descriptions, frameworkName);
+                libraries.AddRange(descriptions);
             }
         }
 
