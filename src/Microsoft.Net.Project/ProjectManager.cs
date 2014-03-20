@@ -98,7 +98,7 @@ namespace Microsoft.Net.Project
             }
 
             // If there were any errors then don't create the package
-            if (!allDiagnostics.Any(IsError))
+            if (!allDiagnostics.Any(IsError) && success)
             {
                 using (var fs = File.Create(nupkg))
                 {
