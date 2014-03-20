@@ -58,13 +58,13 @@ namespace Microsoft.Net.Project
                 }
                 else
                 {
-                    System.Console.WriteLine("unknown command '{0}'", command);
+                    Console.WriteLine("unknown command '{0}'", command);
                     return -1;
                 }
             }
             catch (Exception ex)
             {
-                System.Console.Error.WriteLine(String.Join(Environment.NewLine, ExceptionHelper.GetExceptions(ex)));
+                Console.Error.WriteLine(String.Join(Environment.NewLine, ExceptionHelper.GetExceptions(ex)));
                 return -2;
             }
 
