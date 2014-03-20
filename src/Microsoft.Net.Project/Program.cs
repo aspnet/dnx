@@ -22,7 +22,7 @@ namespace Microsoft.Net.Project
         {
             { "in", CommandOptionType.MultipleValue },
             { "out", CommandOptionType.SingleValue },
-            { "exepath", CommandOptionType.NoValue }
+            { "exepath", CommandOptionType.SingleValue }
         };
 
         private readonly IApplicationEnvironment _environment;
