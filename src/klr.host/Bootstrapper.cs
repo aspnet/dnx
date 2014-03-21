@@ -45,7 +45,19 @@ namespace klr.host
 #if NET45
             string applicationBaseDirectory = AppDomain.CurrentDomain.SetupInformation.ApplicationBase;
 #else
-            string applicationBaseDirectory = (string)typeof(AppDomain).GetRuntimeMethod("GetData", new[] { typeof(string) }).Invoke(AppDomain.CurrentDomain, new object[] { "APPBASE" });
+            var appDomainType = typeof(object)
+                                    .GetTypeInfo()
+                                    .Assembly
+                                    .GetType("System.AppDomain");
+
+            var currentAppDomainProperty = appDomainType.GetRuntimeProperty("CurrentDomain");
+
+            var currentAppDomain = currentAppDomainProperty.GetValue(null);
+
+            var getDataMethod = appDomainType
+                .GetRuntimeMethod("GetData", new[] { typeof(string) });
+
+            string applicationBaseDirectory = (string)getDataMethod.Invoke(currentAppDomain, new object[] { "APPBASE" });
 #endif
 
             var framework = Environment.GetEnvironmentVariable("TARGET_FRAMEWORK");
