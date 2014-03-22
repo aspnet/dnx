@@ -38,6 +38,10 @@ var CORECLR_PATH = '${Environment.GetEnvironmentVariable("CORECLR_PATH")}'
                 Environment.SetEnvironmentVariable("TARGET_FRAMEWORK", framework);
                 Environment.SetEnvironmentVariable("TARGET_PLATFORM", platform);
                 Environment.SetEnvironmentVariable("K_APPBASE", helloWorld);
+                
+                Log.Info("TARGET_FRAMEWORK = " + framework);
+                Log.Info("TARGET_PLATFORM = " + platform);
+                Log.Info("K_APPBASE = " + helloWorld);
 
                 Exec(kcmd, "run");
 
@@ -56,7 +60,10 @@ var CORECLR_PATH = '${Environment.GetEnvironmentVariable("CORECLR_PATH")}'
             }
         };
         
-        Action<string> crossGen = (platform) => {
+        Action<string> crossGen = (platform) => {        
+            Log.Info("TARGET_FRAMEWORK = " + Environment.GetEnvironmentVariable("TARGET_FRAMEWORK"));
+            Log.Info("TARGET_PLATFORM = " + platform);
+            
             try
             {
                 Environment.SetEnvironmentVariable("TARGET_PLATFORM", platform);
