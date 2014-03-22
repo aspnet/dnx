@@ -18,6 +18,36 @@ void GetModuleDirectory(HMODULE module, LPWSTR szPath)
     szPath[dirLength + 1] = '\0';
 }
 
+bool ScanDirectory(TCHAR* szDirectory, TCHAR* szPattern, wstring& trustedPlatformAssemblies)
+{
+    // Enumerate the core clr directory and add each .dll or .ni.dll to the list of trusted assemblies
+    wstring pattern(szDirectory);
+    pattern += szPattern;
+
+    WIN32_FIND_DATA ffd;
+    HANDLE findHandle = FindFirstFile(pattern.c_str(), &ffd);
+
+    if (INVALID_HANDLE_VALUE == findHandle)
+    {
+        return false;
+    }
+
+    do
+    {
+        if (ffd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
+        {
+            // Skip directories
+        }
+        else
+        {
+            trustedPlatformAssemblies += szDirectory;
+            trustedPlatformAssemblies += ffd.cFileName;
+            trustedPlatformAssemblies += L";";
+        }
+
+    } while (FindNextFile(findHandle, &ffd) != 0);
+}
+
 HMODULE LoadCoreClr()
 {
     TCHAR szCoreClrDirectory[MAX_PATH];
@@ -79,7 +109,8 @@ extern "C" __declspec(dllexport) bool __stdcall CallApplicationMain(PCALL_APPLIC
 
     if (data->klrDirectory) {
         wcscpy_s(szCurrentDirectory, data->klrDirectory);
-    } else {
+    }
+    else {
         GetModuleDirectory(NULL, szCurrentDirectory);
     }
 
@@ -164,35 +195,20 @@ extern "C" __declspec(dllexport) bool __stdcall CallApplicationMain(PCALL_APPLIC
         //
     };
 
-    wstring trustedPlatformAssemblies(L"");
+    // TODO: Scan a fixed list instead and check for either .ni or .ni.dll
+    // This list coule be generated a build time
 
-    // Enumerate the core clr directory and add each .dll or .ni.dll to the list of trusted assemblies
-    wstring pattern(szCoreClrDirectory);
-    pattern += L"*.dll";
+    wstring trustedPlatformAssemblies;
 
-    WIN32_FIND_DATA ffd;
-    HANDLE findHandle = FindFirstFile(pattern.c_str(), &ffd);
-
-    if (INVALID_HANDLE_VALUE == findHandle)
+    // Try native images first
+    if (!ScanDirectory(szCoreClrDirectory, L"*.ni.dll", trustedPlatformAssemblies))
     {
-        printf_s("Failed to find files in the coreclr directory\n");
-        return false;
+        if (!ScanDirectory(szCoreClrDirectory, L"*.dll", trustedPlatformAssemblies))
+        {
+            printf_s("Failed to find files in the coreclr directory\n");
+            return false;
+        }
     }
-
-    do
-    {
-        if (ffd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
-        {
-            // Skip directories
-        }
-        else
-        {
-            trustedPlatformAssemblies += szCoreClrDirectory;
-            trustedPlatformAssemblies += ffd.cFileName;
-            trustedPlatformAssemblies += L";";
-        }
-
-    } while (FindNextFile(findHandle, &ffd) != 0);
 
     // Add the assembly containing the app domain manager to the trusted list
     trustedPlatformAssemblies += szCurrentDirectory;

@@ -22,6 +22,14 @@ namespace klr.hosting
 
         public Assembly LoadFile(string path)
         {
+            // Look for platform specific native image
+            string nativeImagePath = GetNativeImagePath(path);
+
+            if (File.Exists(nativeImagePath))
+            {
+                return LoadFromFileWithNativeImage(path, nativeImagePath);
+            }
+
             return LoadFromFile(path);
         }
 
@@ -33,6 +41,15 @@ namespace klr.hosting
             }
 
             return LoadFromStream(new MemoryStream(assemblyBytes), new MemoryStream(pdbBytes));
+        }
+
+        private string GetNativeImagePath(string ilPath)
+        {
+            string directory = Path.GetDirectoryName(ilPath);
+
+            return Path.Combine(directory,
+                                IntPtr.Size == 4 ? "x86" : "amd64",
+                                Path.GetFileNameWithoutExtension(ilPath) + ".ni.dll");
         }
     }
 }
