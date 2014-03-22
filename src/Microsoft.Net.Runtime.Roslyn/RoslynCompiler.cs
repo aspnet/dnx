@@ -88,6 +88,7 @@ namespace Microsoft.Net.Runtime.Roslyn
                     if (libraryExport == null)
                     {
                         // TODO: Failed to resolve dependency so do something useful
+                        Trace.TraceInformation("[{0}]: Failed to resolve dependency '{1}'", GetType().Name, dependency);
                     }
                     else
                     {
@@ -124,8 +125,8 @@ namespace Microsoft.Net.Runtime.Roslyn
                               out metadataReferences,
                               out assemblyNeutralReferences);
 
-            Trace.TraceInformation("[{0}]: Exported References {1}", GetType().Name, exportedReferences.Count);
-            Trace.TraceInformation("[{0}]: Assembly Neutral References {1}", GetType().Name, assemblyNeutralReferences.Count);
+            Trace.TraceInformation("[{0}]: Exported References {1} {2}", GetType().Name, project.Name, exportedReferences.Count);
+            Trace.TraceInformation("[{0}]: Assembly Neutral References {1} {2}", GetType().Name, project.Name, assemblyNeutralReferences.Count);
 
             var references = new List<MetadataReference>();
             references.AddRange(exportedReferences);
