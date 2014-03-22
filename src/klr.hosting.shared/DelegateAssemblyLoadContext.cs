@@ -27,6 +27,8 @@ namespace klr.hosting
 
             if (File.Exists(nativeImagePath))
             {
+                // TODO: Remove this tracing
+                Console.WriteLine("Information: LoadFromFileWithNativeImage({0})", nativeImagePath);
                 return LoadFromFileWithNativeImage(path, nativeImagePath);
             }
 
