@@ -15,7 +15,10 @@ namespace Microsoft.Net.Project
         {
             { "framework", CommandOptionType.MultipleValue },
             { "out", CommandOptionType.SingleValue },
-            { "dependencies", CommandOptionType.NoValue }
+            { "dependencies", CommandOptionType.NoValue },
+            { "native", CommandOptionType.NoValue },
+            { "crossgenPath", CommandOptionType.SingleValue },
+            { "runtimePath", CommandOptionType.SingleValue }
         };
 
         private static readonly Dictionary<string, CommandOptionType> _crossgenOptions = new Dictionary<string, CommandOptionType>
@@ -56,6 +59,9 @@ namespace Microsoft.Net.Project
                     buildOptions.OutputDir = options.GetValue("out");
                     buildOptions.ProjectDir = options.RemainingArgs.Count > 0 ? options.RemainingArgs[0] : Directory.GetCurrentDirectory();
                     buildOptions.CopyDependencies = options.HasOption("dependencies");
+                    buildOptions.GenerateNativeImages = options.HasOption("native");
+                    buildOptions.RuntimePath = options.GetValue("runtimePath");
+                    buildOptions.CrossgenPath = options.GetValue("crossgenPath");
 
                     var projectManager = new BuildManager(buildOptions);
 

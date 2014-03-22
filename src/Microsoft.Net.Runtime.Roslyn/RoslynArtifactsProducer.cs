@@ -35,6 +35,8 @@ namespace Microsoft.Net.Runtime.Roslyn
                 return false;
             }
 
+            buildContext.CompilationContext = compilationContext;
+
             var project = compilationContext.Project;
             var name = project.Name;
 
@@ -100,7 +102,7 @@ namespace Microsoft.Net.Runtime.Roslyn
                         continue;
                     }
 
-                    if (VersionUtility.IsDesktop(targetFramework) && 
+                    if (VersionUtility.IsDesktop(targetFramework) &&
                         _globalAssemblyCache.IsInGac(dependency.Name))
                     {
                         frameworkAssemblies.Add(dependency.Name);

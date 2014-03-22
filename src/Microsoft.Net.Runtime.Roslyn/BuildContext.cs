@@ -17,10 +17,10 @@ namespace Microsoft.Net.Runtime.Roslyn
 
         public string OutputPath { get; set; }
 
-        public bool CopyDependencies { get; set; }
-
         public PackageBuilder PackageBuilder { get; set; }
 
         public PackageBuilder SymbolPackageBuilder { get; set; }
+
+        public CompilationContext CompilationContext { get; set; }
     }
 }

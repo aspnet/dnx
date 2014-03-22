@@ -12,8 +12,8 @@ namespace Microsoft.Net.Project
         public AssemblyInformation(string path)
         {
             path = Path.GetFullPath(path);
-
             Name = Path.GetFileNameWithoutExtension(path);
+
             AssemblyPath = path;
         }
 
@@ -42,7 +42,7 @@ namespace Microsoft.Net.Project
 
         public IEnumerable<AssemblyInformation> Closure { get; set; }
 
-        public IEnumerable<string> GetDependencies()
+        public ICollection<string> GetDependencies()
         {
             var dependencies = new HashSet<string>();
 

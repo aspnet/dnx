@@ -107,36 +107,44 @@ namespace Microsoft.Net.Project
                                              .Where(AssemblyInformation.IsValidImage)
                                              .Select(path => new AssemblyInformation(path) { IsRuntimeAssembly = true });
 
-            // REVIEW: Is this the correct way to deal with duplicate assembly names?
-            return runtimeAssemblies.Concat(paths.SelectMany(path => Directory.EnumerateFiles(path, "*.dll"))
+            var otherAssemblies = paths.SelectMany(path => Directory.EnumerateFiles(path, "*.dll"))
                              .Where(AssemblyInformation.IsValidImage)
-                             .Select(path => new AssemblyInformation(path))
-                             .Distinct(AssemblyInformation.NameComparer))
-                             .ToDictionary(a => a.Name);
+                             .Select(path => new AssemblyInformation(path));
+
+            var allAssemblies = runtimeAssemblies
+                             .Concat(otherAssemblies)
+                             .Distinct(AssemblyInformation.NameComparer);
+
+            // REVIEW: Is this the correct way to deal with duplicate assembly names?
+            return allAssemblies.ToDictionary(a => a.Name);
         }
 
         private IEnumerable<AssemblyInformation> Sort(IEnumerable<AssemblyInformation> input)
         {
             var output = new List<AssemblyInformation>();
+            var seen = new HashSet<AssemblyInformation>();
 
             foreach (var node in input)
             {
-                Sort(node, output);
+                Sort(node, output, seen);
             }
 
             return output;
         }
 
-        private void Sort(AssemblyInformation node, List<AssemblyInformation> output)
+        private void Sort(AssemblyInformation node, List<AssemblyInformation> output, HashSet<AssemblyInformation> seen)
         {
-            // TODO: Cycle check?
+            if (!seen.Add(node))
+            {
+                return;
+            }
 
             foreach (var dependency in node.GetDependencies())
             {
                 AssemblyInformation dependencyInfo;
                 if (_universe.TryGetValue(dependency, out dependencyInfo))
                 {
-                    Sort(dependencyInfo, output);
+                    Sort(dependencyInfo, output, seen);
                 }
             }
 

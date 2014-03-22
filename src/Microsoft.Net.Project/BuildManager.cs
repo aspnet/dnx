@@ -208,11 +208,38 @@ namespace Microsoft.Net.Project
             var buildContext = new BuildContext(project.Name, targetFramework)
             {
                 OutputPath = targetPath,
-                PackageBuilder = builder,
-                CopyDependencies = _buildOptions.CopyDependencies
+                PackageBuilder = builder
             };
 
-            return roslynArtifactsProducer.Build(buildContext, diagnostics);
+            if (!roslynArtifactsProducer.Build(buildContext, diagnostics))
+            {
+                return false;
+            }
+
+            if (_buildOptions.GenerateNativeImages && 
+                !VersionUtility.IsDesktop(targetFramework))
+            {
+                // Generate native images
+                var options = new CrossgenOptions
+                {
+                    CrossgenPath = _buildOptions.CrossgenPath,
+                    RuntimePath = _buildOptions.RuntimePath
+                };
+
+                // TODO: We want to generate native images for packages in a sibling folder.
+                // This is temporary
+                options.InputPaths = buildContext.CompilationContext.MetadataReferences
+                                        .OfType<IMetadataFileReference>()
+                                        .Select(f => Path.GetDirectoryName(f.Path))
+                                        .Concat(new[] { targetPath });
+
+                // TODO: Project references
+
+                var crossgen = new CrossgenManager(options);
+                crossgen.GenerateNativeImages();
+            }
+
+            return true;
         }
 
         private static RoslynArtifactsProducer PrepareCompiler(KProject project, FrameworkName targetFramework)
@@ -249,7 +276,6 @@ namespace Microsoft.Net.Project
                                                                       compositeResourceProvider,
                                                                       globalAssemblyCache,
                                                                       projectReferenceResolver.Dependencies);
-
 
             return roslynArtifactsProducer;
         }
