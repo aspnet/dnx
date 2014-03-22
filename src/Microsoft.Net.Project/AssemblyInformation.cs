@@ -34,8 +34,9 @@ namespace Microsoft.Net.Project
                     return assemblyPathWithoutExtension + ".ni.dll";
                 }
 
-                // REVIEW: Architecture? What about ARM?
-                return Path.Combine(assemblyDirectory, IntPtr.Size == 4 ? "x86" : "amd64", Name + ".ni.dll");
+                var arch = Environment.GetEnvironmentVariable("PROCESSOR_ARCHITECTURE");
+
+                return Path.Combine(assemblyDirectory, arch, Name + ".ni.dll");
             }
         }
 

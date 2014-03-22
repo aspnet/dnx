@@ -45,10 +45,11 @@ namespace klr.hosting
 
         private string GetNativeImagePath(string ilPath)
         {
-            string directory = Path.GetDirectoryName(ilPath);
+            var directory = Path.GetDirectoryName(ilPath);
+            var arch = Environment.GetEnvironmentVariable("PROCESSOR_ARCHITECTURE");
 
             return Path.Combine(directory,
-                                IntPtr.Size == 4 ? "x86" : "amd64",
+                                arch,
                                 Path.GetFileNameWithoutExtension(ilPath) + ".ni.dll");
         }
     }
