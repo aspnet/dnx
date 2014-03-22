@@ -236,7 +236,7 @@ namespace Microsoft.Net.Project
                 // TODO: Project references
 
                 var crossgen = new CrossgenManager(options);
-                crossgen.GenerateNativeImages();
+                return crossgen.GenerateNativeImages();
             }
 
             return true;

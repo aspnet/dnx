@@ -17,7 +17,7 @@ namespace Microsoft.Net.Project
             _universe = BuildUniverse(options.RuntimePath, options.InputPaths);
         }
 
-        public void GenerateNativeImages()
+        public bool GenerateNativeImages()
         {
             // Generate a -> [closure]
             foreach (var assemblyInfo in _universe.Values)
@@ -29,15 +29,25 @@ namespace Microsoft.Net.Project
                                                             .ToList();
             }
 
+            bool success = true;
+
             // Generate the native images in dependency order
             foreach (var assemblyInfo in Sort(_universe.Values))
             {
-                GenerateNativeImage(assemblyInfo);
+                success = success && GenerateNativeImage(assemblyInfo);
             }
+
+            return success;
         }
 
-        private void GenerateNativeImage(AssemblyInformation assemblyInfo)
+        private bool GenerateNativeImage(AssemblyInformation assemblyInfo)
         {
+            if (assemblyInfo.Closure.Any(a => !a.Generated))
+            {
+                Console.WriteLine("Skipping {0}. Because one or more dependencies failed to generate", assemblyInfo.Name);
+                return false;
+            }
+
             Console.WriteLine("Generating native images for {0}", assemblyInfo.Name);
 
             const string crossgenArgsTemplate = "/in {0} /out {1} /MissingDependenciesOK /Trusted_Platform_Assemblies {2}";
@@ -88,7 +98,16 @@ namespace Microsoft.Net.Project
             p.BeginErrorReadLine();
             p.BeginOutputReadLine();
             p.WaitForExit();
+
             Console.WriteLine("Exit code for {0}: {1}", assemblyInfo.Name, p.ExitCode);
+
+            if (p.ExitCode == 0)
+            {
+                assemblyInfo.Generated = true;
+                return true;
+            }
+
+            return false;
         }
 
         void OnErrorDataReceived(object sender, DataReceivedEventArgs e)

@@ -42,6 +42,8 @@ namespace Microsoft.Net.Project
 
         public IEnumerable<AssemblyInformation> Closure { get; set; }
 
+        public bool Generated { get; set; }
+
         public ICollection<string> GetDependencies()
         {
             var dependencies = new HashSet<string>();

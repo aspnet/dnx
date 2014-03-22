@@ -82,7 +82,10 @@ namespace Microsoft.Net.Project
                     crossgenOptions.CrossgenPath = options.GetValue("exePath");
 
                     var gen = new CrossgenManager(crossgenOptions);
-                    gen.GenerateNativeImages();
+                    if (!gen.GenerateNativeImages())
+                    {
+                        return -1;
+                    }
                 }
                 else
                 {
