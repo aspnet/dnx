@@ -27,6 +27,7 @@ var CORECLR_PATH = '${Environment.GetEnvironmentVariable("CORECLR_PATH")}'
 #test-package
     var helloWorld = '${Path.Combine(SAMPLES_DIR, "HelloWorld")}'
     var kcmd = '${Path.Combine(TEST_RESULTS, "ProjectK", "tools", "k.cmd")}'
+    var k10Tools = '${Path.Combine(TEST_RESULTS, "ProjectK", "tools", "k10")}'
     
     nuget-install package='ProjectK' outputDir='${TEST_RESULTS}' extra='-source ${BUILD_DIR2} -ExcludeVersion -pre -nocache'
 
@@ -44,6 +45,7 @@ var CORECLR_PATH = '${Environment.GetEnvironmentVariable("CORECLR_PATH")}'
                 foreach(var cmd in commands)
                 {
                     Exec(kcmd, cmd + " " + helloWorld);
+                    Directory.Delete(Path.Combine(helloWorld, "bin"), true);
                 }
             }
             finally
@@ -53,10 +55,28 @@ var CORECLR_PATH = '${Environment.GetEnvironmentVariable("CORECLR_PATH")}'
                 Environment.SetEnvironmentVariable("TARGET_PLATFORM", null);
             }
         };
+        
+        Action<string> crossGen = (platform) => {
+            try
+            {
+                Environment.SetEnvironmentVariable("TARGET_PLATFORM", platform);
+                Exec(kcmd, "crossgen --in " + k10Tools);
+            }
+            finally
+            {
+                Environment.SetEnvironmentVariable("TARGET_PLATFORM", null);
+            }
+        };
 
         runWithFramework(null, "");
         runWithFramework("k10", "");
         runWithFramework(null, "amd64");
+        runWithFramework("k10", "amd64");
+        
+        // Crossgen
+        crossGen("");
+        crossGen("amd64");
+        runWithFramework("k10", "");
         runWithFramework("k10", "amd64");
     }
 
