@@ -194,7 +194,7 @@ namespace Something
                 syntaxTrees: fileContents.Select(text => CSharpSyntaxTree.ParseText(text)));
 
             var worker = new AssemblyNeutralWorker(compilation,
-                new Dictionary<string, AssemblyNeutralMetadataReference>());
+                new Dictionary<string, EmbeddedMetadataReference>());
             worker.FindTypeCompilations(compilation.GlobalNamespace);
             worker.OrderTypeCompilations();
             return worker;

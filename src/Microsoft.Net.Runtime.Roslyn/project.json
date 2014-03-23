@@ -1,6 +1,6 @@
 {
     "version": "0.1-alpha-*",
-    "compilationOptions" : { "define" : ["TRACE"] },
+    "compilationOptions" : { "define" : ["TRACE"], "allowUnsafe": true },
     "dependencies": {
         "Microsoft.Net.Runtime" :  "",
         "Microsoft.Net.Runtime.Interfaces" : "",
