@@ -134,7 +134,7 @@ namespace Microsoft.Net.Runtime.Roslyn
             }
         }
 
-        public EmitResult Generate(IDictionary<string, AssemblyNeutralMetadataReference> existingReferences)
+        public EmitResult Generate(IDictionary<string, EmbeddedMetadataReference> existingReferences)
         {
             Compilation = CSharpCompilation.Create(
                 assemblyName: AssemblyName,

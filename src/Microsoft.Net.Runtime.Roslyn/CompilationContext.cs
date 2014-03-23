@@ -65,7 +65,7 @@ namespace Microsoft.Net.Runtime.Roslyn
 
         public void PopulateAssemblyNeutralResources(IList<ResourceDescription> resources)
         {
-            var assemblyNeutralTypes = MetadataReferences.OfType<AssemblyNeutralMetadataReference>()
+            var assemblyNeutralTypes = MetadataReferences.OfType<EmbeddedMetadataReference>()
                                                          .ToDictionary(r => r.Name, r => r.OutputStream);
 
             // No assembly neutral types so do nothing
@@ -77,6 +77,18 @@ namespace Microsoft.Net.Runtime.Roslyn
             // Walk the assembly neutral references and embed anything that we use
             // directly or indirectly
             var results = GetUsedReferences(assemblyNeutralTypes);
+
+
+            // REVIEW: This should probably by driven by a property in the project metadata
+            if (results.Count == 0)
+            {
+                // If nothing outgoing from this assembly, treat it like a carrier assembly
+                // and embed everyting
+                foreach (var a in assemblyNeutralTypes.Keys)
+                {
+                    results.Add(a);
+                }
+            }
 
             foreach (var reference in results)
             {

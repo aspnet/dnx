@@ -15,10 +15,10 @@ namespace Microsoft.Net.Runtime.Roslyn
     public class AssemblyNeutralWorker
     {
         private IList<TypeCompilationContext> _typeCompilationContexts = new List<TypeCompilationContext>();
-        private readonly IDictionary<string, AssemblyNeutralMetadataReference> _existingReferences;
+        private readonly IDictionary<string, EmbeddedMetadataReference> _existingReferences;
 
         public AssemblyNeutralWorker(CSharpCompilation compilation, 
-                                     IDictionary<string, AssemblyNeutralMetadataReference> existingReferences)
+                                     IDictionary<string, EmbeddedMetadataReference> existingReferences)
         {
             OriginalCompilation = compilation;
             _existingReferences = existingReferences;
@@ -100,7 +100,7 @@ namespace Microsoft.Net.Runtime.Roslyn
 
                 MetadataReference neutralReference = neutralTypeContext.Reference;
 
-                AssemblyNeutralMetadataReference assemblyNeutralReference;
+                EmbeddedMetadataReference assemblyNeutralReference;
                 if (_existingReferences.TryGetValue(neutralTypeContext.AssemblyName, out assemblyNeutralReference))
                 {
                     neutralReference = assemblyNeutralReference.MetadataReference;
