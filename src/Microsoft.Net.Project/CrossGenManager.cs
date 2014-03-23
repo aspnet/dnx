@@ -65,10 +65,14 @@ namespace Microsoft.Net.Project
             }
             else
             {
+                // Add the assembly itself to the closure
+                var closure = assemblyInfo.Closure.Select(d => d.NativeImagePath)
+                                          .Concat(new[] { assemblyInfo.AssemblyPath });
+
                 args = String.Format(crossgenArgsTemplate,
                                      assemblyInfo.AssemblyPath,
                                      assemblyInfo.NativeImagePath,
-                                     String.Join(";", assemblyInfo.Closure.Select(d => d.NativeImagePath)));
+                                     String.Join(";", closure));
             }
 
             // Make sure the target directory for the native image is there
