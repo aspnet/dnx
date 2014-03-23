@@ -200,7 +200,8 @@ namespace Microsoft.Net.Project
 
         private bool Build(KProject project, string outputPath, FrameworkName targetFramework, PackageBuilder builder, List<Diagnostic> diagnostics)
         {
-            var roslynArtifactsProducer = PrepareCompiler(project, targetFramework);
+            IDictionary<string, string> packagePaths;
+            var roslynArtifactsProducer = PrepareCompiler(project, targetFramework, out packagePaths);
 
             var targetFrameworkFolder = VersionUtility.GetShortFrameworkName(targetFramework);
             string targetPath = Path.Combine(outputPath, targetFrameworkFolder);
@@ -216,7 +217,7 @@ namespace Microsoft.Net.Project
                 return false;
             }
 
-            if (_buildOptions.GenerateNativeImages && 
+            if (_buildOptions.GenerateNativeImages &&
                 !VersionUtility.IsDesktop(targetFramework))
             {
                 // Generate native images
@@ -228,9 +229,8 @@ namespace Microsoft.Net.Project
 
                 // TODO: We want to generate native images for packages in a sibling folder.
                 // This is temporary
-                options.InputPaths = buildContext.CompilationContext.MetadataReferences
-                                        .OfType<IMetadataFileReference>()
-                                        .Select(f => Path.GetDirectoryName(f.Path))
+                options.InputPaths = packagePaths.Values
+                                        .Select(path => Path.GetDirectoryName(path))
                                         .Concat(new[] { targetPath });
 
                 // TODO: Project references
@@ -242,7 +242,7 @@ namespace Microsoft.Net.Project
             return true;
         }
 
-        private static RoslynArtifactsProducer PrepareCompiler(KProject project, FrameworkName targetFramework)
+        private static RoslynArtifactsProducer PrepareCompiler(KProject project, FrameworkName targetFramework, out IDictionary<string, string> packagePaths)
         {
             var projectDir = project.ProjectDirectory;
             var rootDirectory = DefaultHost.ResolveRootDirectory(projectDir);
@@ -276,6 +276,8 @@ namespace Microsoft.Net.Project
                                                                       compositeResourceProvider,
                                                                       globalAssemblyCache,
                                                                       projectReferenceResolver.Dependencies);
+
+            packagePaths = nugetDependencyResolver.ResolvedPackagePaths;
 
             return roslynArtifactsProducer;
         }
