@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using Microsoft.CodeAnalysis;
@@ -160,7 +161,15 @@ namespace Microsoft.Net.Runtime.Roslyn
             using (var pdbStream = new MemoryStream())
             using (var assemblyStream = new MemoryStream())
             {
+                Trace.TraceInformation("[{0}]: Emitting assembly for {1}", GetType().Name, buildContext.AssemblyName);
+
+                var sw = Stopwatch.StartNew();
+
                 EmitResult result = compilationContext.Compilation.Emit(assemblyStream, outputName: Path.GetFileName(assemblyPath), pdbFileName: pdbPath, pdbStream: pdbStream, manifestResources: resources);
+
+                sw.Stop();
+
+                Trace.TraceInformation("[{0}]: Emitted {1} in {2}ms", GetType().Name, buildContext.AssemblyName, sw.ElapsedMilliseconds);
 
                 if (!result.Success)
                 {
