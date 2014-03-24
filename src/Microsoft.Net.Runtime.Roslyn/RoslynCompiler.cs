@@ -127,9 +127,6 @@ namespace Microsoft.Net.Runtime.Roslyn
             var embeddedReferences = metadataReferences.OfType<EmbeddedMetadataReference>()
                                                        .ToDictionary(a => a.Name);
 
-            Trace.TraceInformation("[{0}]: Exported References {1}", GetType().Name, exportedReferences.Count);
-            Trace.TraceInformation("[{0}]: Assembly Neutral References {1}", GetType().Name, embeddedReferences.Count);
-
             var references = new List<MetadataReference>();
             references.AddRange(exportedReferences);
 
@@ -151,6 +148,8 @@ namespace Microsoft.Net.Runtime.Roslyn
             {
                 metadataReferences.Add(new EmbeddedMetadataReference(t));
             }
+
+            Trace.TraceInformation("[{0}]: Exported References {1}", GetType().Name, metadataReferences.Count);
 
             var newCompilation = assemblyNeutralWorker.Compilation;
 

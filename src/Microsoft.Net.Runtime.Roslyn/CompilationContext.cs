@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection.PortableExecutable;
@@ -74,6 +75,9 @@ namespace Microsoft.Net.Runtime.Roslyn
                 return;
             }
 
+            Trace.TraceInformation("Assembly Neutral References {0}", assemblyNeutralTypes.Count);
+            var sw = Stopwatch.StartNew();
+
             // Walk the assembly neutral references and embed anything that we use
             // directly or indirectly
             var results = GetUsedReferences(assemblyNeutralTypes);
@@ -105,6 +109,9 @@ namespace Microsoft.Net.Runtime.Roslyn
 
                 }, isPublic: true));
             }
+
+            sw.Stop();
+            Trace.TraceInformation("Found {0} Assembly Neutral References in {1}ms", resources.Count, sw.ElapsedMilliseconds);
         }
 
         private HashSet<string> GetUsedReferences(Dictionary<string, Stream> assemblies)
