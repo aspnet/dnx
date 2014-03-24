@@ -101,14 +101,14 @@ namespace Microsoft.Net.Runtime
 
         public void BuildInverseGraph()
         {
-            var firstLevelLookups = new Dictionary<string, List<ILibraryInformation>>(StringComparer.OrdinalIgnoreCase);
-            var visited = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            var firstLevelLookups = new Dictionary<string, List<ILibraryInformation>>(StringComparer.Ordinal);
+            var visited = new HashSet<string>(StringComparer.Ordinal);
             foreach (var item in _graph.Values)
             {
                 Visit(item, firstLevelLookups, visited);
             }
 
-            _inverse = new Dictionary<string, IEnumerable<ILibraryInformation>>(StringComparer.OrdinalIgnoreCase);
+            _inverse = new Dictionary<string, IEnumerable<ILibraryInformation>>();
 
             // Flatten the graph
             foreach (var item in _graph.Values)

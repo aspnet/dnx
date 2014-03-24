@@ -115,8 +115,6 @@ var CORECLR_PATH = '${Environment.GetEnvironmentVariable("CORECLR_PATH")}'
     var x86Target="x86"
     var x64Target="amd64"
     
-    nuget-install package='NuGet.CommandLine' outputDir='${PACKAGES_DIR}' extra='-source AspNetVNext -nocache -excludeversion'
-    copy sourceDir='${Path.Combine(PACKAGES_DIR, "NuGet.CommandLine", "tools")}' outputDir='${TOOLS_DIR}' include='*.exe' overwrite='${true}'
     copy sourceDir='${SCRIPTS_DIR}' outputDir='${TOOLS_DIR}' overwrite='${true}'
 
     copy sourceDir='${Path.Combine(BUILD_DIR2, "klr", "bin", "Win32", Configuration)}' outputDir='${Path.Combine(TOOLS_BIN_DIR, x86Target)}' include='*.exe' overwrite='${true}'
