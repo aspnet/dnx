@@ -1,5 +1,4 @@
-﻿#if NET45 // NETWORKING
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Net;
@@ -31,11 +30,13 @@ namespace Microsoft.Net.DesignTimeHost
 
             // Add a watch to the host PID. If it goes away we will self terminate
             var hostProcess = Process.GetProcessById(hostPID);
+#if NET45
             hostProcess.EnableRaisingEvents = true;
             hostProcess.Exited += (s, e) =>
             {
                 Environment.Exit(0);
             };
+#endif
 
             string hostId = args[2];
 
@@ -70,4 +71,3 @@ namespace Microsoft.Net.DesignTimeHost
 
     }
 }
-#endif
