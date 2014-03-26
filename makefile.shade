@@ -80,11 +80,12 @@ var CORECLR_PATH = '${Environment.GetEnvironmentVariable("CORECLR_PATH")}'
         runWithFramework(null, "amd64");
         runWithFramework("k10", "amd64");
         
+        /*
         // Crossgen
         crossGen("");
         crossGen("amd64");
         runWithFramework("k10", "");
-        runWithFramework("k10", "amd64");
+        runWithFramework("k10", "amd64");*/
     }
 
 #ensure-latest-package
