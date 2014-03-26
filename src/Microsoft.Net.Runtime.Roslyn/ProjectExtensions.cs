@@ -45,13 +45,8 @@ namespace Microsoft.Net.Runtime.Roslyn
                 { "CS1702", ReportDiagnostic.Suppress }
             });
 
-#if NET45 // TODO: We're doing to need this in the portable build eventually
-            // If we're targeting desktop then use desktop comparer
             var assemblyIdentityComparer = VersionUtility.IsDesktop(targetFramework) ?
                 DesktopAssemblyIdentityComparer.Default : null;
-#else
-            AssemblyIdentityComparer assemblyIdentityComparer = null;
-#endif
 
             options = options.WithAssemblyIdentityComparer(assemblyIdentityComparer);
 
