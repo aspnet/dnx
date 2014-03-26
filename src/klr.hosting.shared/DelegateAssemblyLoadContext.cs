@@ -29,7 +29,7 @@ namespace klr.hosting
             {
                 // TODO: Remove this tracing
                 Console.WriteLine("Information: LoadFromFileWithNativeImage({0})", nativeImagePath);
-                return LoadFromNativeImagePath(path, nativeImagePath);
+                return LoadFromNativeImagePath(nativeImagePath, path);
             }
 
             return LoadFromAssemblyPath(path);
