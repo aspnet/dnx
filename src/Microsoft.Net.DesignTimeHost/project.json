@@ -5,6 +5,7 @@
         "Microsoft.Net.Runtime.Interfaces" : "",
         "Microsoft.Net.Runtime.Roslyn" : ""
     },
+    "compilationOptions" : { "define" : ["TRACE"] },
     "configurations" : {
         "net45" : {
             "dependencies" : {
