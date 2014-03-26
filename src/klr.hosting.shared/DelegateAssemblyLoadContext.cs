@@ -2,7 +2,7 @@
 using System;
 using System.IO;
 using System.Reflection;
-using System.Runtime.Hosting.Loader;
+using System.Runtime.Loader;
 
 namespace klr.hosting
 {
@@ -29,10 +29,10 @@ namespace klr.hosting
             {
                 // TODO: Remove this tracing
                 Console.WriteLine("Information: LoadFromFileWithNativeImage({0})", nativeImagePath);
-                return LoadFromFileWithNativeImage(path, nativeImagePath);
+                return LoadFromNativeImagePath(path, nativeImagePath);
             }
 
-            return LoadFromFile(path);
+            return LoadFromAssemblyPath(path);
         }
 
         public Assembly LoadBytes(byte[] assemblyBytes, byte[] pdbBytes)

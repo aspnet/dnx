@@ -5,7 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 #if K10
-using System.Runtime.Hosting.Loader;
+using System.Runtime.Loader;
 #endif
 using System.Threading.Tasks;
 using Microsoft.Net.Runtime.Common.CommandLine;
@@ -87,7 +87,7 @@ namespace klr.hosting
             loadBytes = bytes => loaderImpl.LoadBytes(bytes, null);
             loadFile = path => loaderImpl.LoadFile(path);
 
-            AssemblyLoadContext.Default = loaderImpl;
+            AssemblyLoadContext.InitializeDefaultContext(loaderImpl);
 #else
             var loaderImpl = new LoaderEngine();
             loadBytes = bytes => loaderImpl.LoadBytes(bytes, null);
