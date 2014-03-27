@@ -64,15 +64,15 @@ namespace Microsoft.Net.Runtime.Roslyn
             return _roslynLibraryExport;
         }
 
-        public void PopulateAssemblyNeutralResources(IList<ResourceDescription> resources)
+        public IEnumerable<EmbeddedMetadataReference> GetRequiredEmbeddedReferences()
         {
             var assemblyNeutralTypes = MetadataReferences.OfType<EmbeddedMetadataReference>()
-                                                         .ToDictionary(r => r.Name, r => r.OutputStream);
+                                                         .ToDictionary(r => r.Name);
 
             // No assembly neutral types so do nothing
             if (assemblyNeutralTypes.Count == 0)
             {
-                return;
+                return Enumerable.Empty<EmbeddedMetadataReference>();
             }
 
             Trace.TraceInformation("Assembly Neutral References {0}", assemblyNeutralTypes.Count);
@@ -94,27 +94,15 @@ namespace Microsoft.Net.Runtime.Roslyn
                 }
             }
 
-            foreach (var reference in results)
-            {
-                var stream = assemblyNeutralTypes[reference];
-
-                resources.Add(new ResourceDescription(reference + ".dll", () =>
-                {
-                    // REVIEW: Performance?
-                    var ms = new MemoryStream();
-                    stream.Position = 0;
-                    stream.CopyTo(ms);
-                    ms.Position = 0;
-                    return ms;
-
-                }, isPublic: true));
-            }
+            var embeddedTypes = results.Select(name => assemblyNeutralTypes[name])
+                                       .ToList();
 
             sw.Stop();
-            Trace.TraceInformation("Found {0} Assembly Neutral References in {1}ms", resources.Count, sw.ElapsedMilliseconds);
+            Trace.TraceInformation("Found {0} Assembly Neutral References in {1}ms", embeddedTypes.Count, sw.ElapsedMilliseconds);
+            return embeddedTypes;
         }
 
-        private HashSet<string> GetUsedReferences(Dictionary<string, Stream> assemblies)
+        private HashSet<string> GetUsedReferences(Dictionary<string, EmbeddedMetadataReference> assemblies)
         {
             var results = new HashSet<string>();
 
@@ -151,10 +139,10 @@ namespace Microsoft.Net.Runtime.Roslyn
 
                     foreach (var reference in GetReferences(stream))
                     {
-                        Stream referenceStream;
-                        if (assemblies.TryGetValue(reference, out referenceStream))
+                        EmbeddedMetadataReference embeddedReference;
+                        if (assemblies.TryGetValue(reference, out embeddedReference))
                         {
-                            stack.Push(Tuple.Create(reference, referenceStream));
+                            stack.Push(Tuple.Create(reference, embeddedReference.OutputStream));
                         }
                     }
                 }
