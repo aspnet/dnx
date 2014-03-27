@@ -35,7 +35,8 @@ namespace Microsoft.Net.Project
             { "in", CommandOptionType.MultipleValue },
             { "out", CommandOptionType.SingleValue },
             { "exePath", CommandOptionType.SingleValue },
-            { "runtimePath", CommandOptionType.SingleValue }
+            { "runtimePath", CommandOptionType.SingleValue },
+            { "symbols", CommandOptionType.NoValue }
         };
 
         private readonly IApplicationEnvironment _environment;
@@ -89,6 +90,7 @@ namespace Microsoft.Net.Project
                     crossgenOptions.InputPaths = options.GetValues("in") ?? Enumerable.Empty<string>();
                     crossgenOptions.RuntimePath = options.GetValue("runtimePath");
                     crossgenOptions.CrossgenPath = options.GetValue("exePath");
+                    crossgenOptions.Symbols = options.HasOption("symbols");
 
                     var gen = new CrossgenManager(crossgenOptions);
                     if (!gen.GenerateNativeImages())

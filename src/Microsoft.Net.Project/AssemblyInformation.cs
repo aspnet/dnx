@@ -23,20 +23,35 @@ namespace Microsoft.Net.Project
 
         public string AssemblyPath { get; private set; }
 
-        public string NativeImagePath
+        public string NativeImageDirectory
         {
             get
             {
                 var assemblyDirectory = Path.GetDirectoryName(AssemblyPath);
                 if (IsRuntimeAssembly)
                 {
-                    var assemblyPathWithoutExtension = Path.Combine(assemblyDirectory, Name);
-                    return assemblyPathWithoutExtension + ".ni.dll";
+                    return assemblyDirectory;
                 }
 
                 var arch = Environment.GetEnvironmentVariable("PROCESSOR_ARCHITECTURE");
 
-                return Path.Combine(assemblyDirectory, arch, Name + ".ni.dll");
+                return Path.Combine(assemblyDirectory, arch);
+            }
+        }
+
+        public string NativeImagePath
+        {
+            get
+            {
+                return Path.Combine(NativeImageDirectory, Name + ".ni.dll");
+            }
+        }
+        
+        public string NativePdbPath
+        {
+            get
+            {
+                return Path.Combine(NativeImageDirectory, Name + ".ni.pdb");
             }
         }
 
