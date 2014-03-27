@@ -78,6 +78,8 @@ namespace klr.hosting
             loadFile = path => loaderImpl.LoadFile(path);
 
             AssemblyLoadContext.InitializeDefaultContext(loaderImpl);
+            
+            loaderImpl.EnableMultiCoreJit();
 #else
             var loaderImpl = new LoaderEngine();
             loadBytes = bytes => loaderImpl.LoadBytes(bytes, null);
