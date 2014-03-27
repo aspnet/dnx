@@ -52,7 +52,7 @@ namespace Microsoft.Net.Runtime.Roslyn
 
             var resources = _resourceProvider.GetResources(project);
 
-            compilationContext.PopulateAssemblyNeutralResources(resources);
+            resources.AddEmbeddedReferences(compilationContext.GetRequiredEmbeddedReferences());
 
             return CompileInMemory(name, compilationContext, resources);
         }
