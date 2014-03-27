@@ -13,5 +13,7 @@ namespace Microsoft.Net.Project
         public string RuntimePath { get; set; }
 
         public IEnumerable<string> InputPaths { get; set; }
+        
+        public bool Symbols { get; set; }
     }
 }
