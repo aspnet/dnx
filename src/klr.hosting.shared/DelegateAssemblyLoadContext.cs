@@ -52,6 +52,38 @@ namespace klr.hosting
                                 arch,
                                 Path.GetFileNameWithoutExtension(ilPath) + ".ni.dll");
         }
+        
+        public bool EnableMultiCoreJit()
+        {
+            var appBaseDirectory = ApplicationContext.BaseDirectory;
+            var appBinDirectoryName = "bin";
+            var appBinDirectory = Path.Combine(appBaseDirectory, appBinDirectoryName);
+            var appProfileDirectoryName = "profile";
+            var appProfileDirectory = Path.Combine(appBinDirectory, appProfileDirectoryName);
+            
+            if (!Directory.Exists(appProfileDirectory))
+            {
+                Directory.CreateDirectory(appProfileDirectory);
+                
+                try 
+                {
+                    Directory.CreateDirectory(appProfileDirectory);
+                }
+                catch (Exception)
+                {
+                    return false;
+                }
+            }
+            
+            SetProfileOptimizationRoot(appProfileDirectory);
+
+            return true;
+        }
+        
+        public void StartMultiCoreJitProfile(string profileFilename)
+        {
+            StartProfileOptimization(profileFilename);
+        }
     }
 }
 #endif
