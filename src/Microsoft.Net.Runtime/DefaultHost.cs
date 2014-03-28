@@ -115,7 +115,6 @@ namespace Microsoft.Net.Runtime
 
             var nugetDependencyResolver = new NuGetDependencyResolver(_projectDir);
             var nugetLoader = new NuGetAssemblyLoader(_loaderEngine, nugetDependencyResolver);
-            var cachedLoader = new CachedCompilationLoader(_loaderEngine, projectResolver);
             var globalAssemblyCache = new DefaultGlobalAssemblyCache();
 
             // Roslyn needs to be able to resolve exported references and sources
@@ -123,12 +122,6 @@ namespace Microsoft.Net.Runtime
 
             // Add the host exporter
             libraryExporters.Add(_hostExporter);
-
-            // Cached loader
-            if (options.UseCachedCompilations)
-            {
-                libraryExporters.Add(cachedLoader);
-            }
 
             // GAC
             libraryExporters.Add(new GacLibraryExportProvider(globalAssemblyCache));
@@ -138,14 +131,6 @@ namespace Microsoft.Net.Runtime
 
             var dependencyExporter = new CompositeLibraryExportProvider(libraryExporters);
             var roslynLoader = new LazyRoslynAssemblyLoader(_loaderEngine, projectResolver, _watcher, dependencyExporter, globalAssemblyCache);
-
-            // Order is important
-            if (options.UseCachedCompilations)
-            {
-                // Cached compilations
-                loaders.Add(cachedLoader);
-                dependencyProviders.Add(cachedLoader);
-            }
 
             // Project.json projects
             loaders.Add(roslynLoader);
