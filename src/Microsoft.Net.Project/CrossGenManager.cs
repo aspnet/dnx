@@ -50,7 +50,7 @@ namespace Microsoft.Net.Project
 
             Console.WriteLine("Generating native images for {0}", assemblyInfo.Name);
 
-            const string crossgenArgsTemplate = "/in {0} /out {1} /MissingDependenciesOK /Trusted_Platform_Assemblies {2}";
+            const string crossgenArgsTemplate = @"/in ""{0}"" /out ""{1}"" /MissingDependenciesOK /Trusted_Platform_Assemblies ""{2}""";
 
             // crossgen.exe /in {il-path}.dll /out {native-image-path} /MissingDependenciesOK /Trusted_Platform_Assemblies {closure}
             string args = null;
