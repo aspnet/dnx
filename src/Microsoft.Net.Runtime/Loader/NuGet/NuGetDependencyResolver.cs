@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -19,6 +20,7 @@ namespace Microsoft.Net.Runtime.Loader.NuGet
         public NuGetDependencyResolver(string projectPath)
         {
             _repository = new LocalPackageRepository(ResolveRepositoryPath(projectPath));
+            Dependencies = Enumerable.Empty<LibraryDescription>();
         }
 
         public IDictionary<string, string> ResolvedPackagePaths
@@ -28,6 +30,8 @@ namespace Microsoft.Net.Runtime.Loader.NuGet
                 return _paths;
             }
         }
+
+        public IEnumerable<LibraryDescription> Dependencies { get; private set; }
 
         public LibraryDescription GetDescription(string name, SemanticVersion version, FrameworkName frameworkName)
         {
@@ -72,6 +76,8 @@ namespace Microsoft.Net.Runtime.Loader.NuGet
 
         public void Initialize(IEnumerable<LibraryDescription> packages, FrameworkName targetFramework)
         {
+            Dependencies = packages;
+
             foreach (var dependency in packages)
             {
                 _dependencies[dependency.Identity.Name] = dependency;
@@ -216,7 +222,7 @@ namespace Microsoft.Net.Runtime.Loader.NuGet
             }
         }
 
-        private IPackage FindCandidate(string name, SemanticVersion version)
+        public IPackage FindCandidate(string name, SemanticVersion version)
         {
             if (version == null)
             {

@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
+using Microsoft.Net.ApplicationHost.CommandLine;
 using Microsoft.Net.Runtime;
 using Microsoft.Net.Runtime.Common;
 using Microsoft.Net.Runtime.Common.CommandLine;
@@ -49,8 +50,10 @@ namespace Microsoft.Net.ApplicationHost
                 string replacementCommand;
                 if (host.Project.Commands.TryGetValue(lookupCommand, out replacementCommand))
                 {
-                    // TODO: command line parsing!!
-                    var replacementArgs = replacementCommand.Split(new[] { ' ' });
+                    var replacementArgs = CommandGrammerUtilities.Process(
+                        replacementCommand,
+                        GetVariable).ToArray();
+                    
                     options.ApplicationName = replacementArgs.First();
                     programArgs = replacementArgs.Skip(1).Concat(programArgs).ToArray();
                 }
@@ -71,6 +74,28 @@ namespace Microsoft.Net.ApplicationHost
                 return await ExecuteMain(host, options.ApplicationName, programArgs);
             }
         }
+
+        private string GetVariable(string key)
+        {
+            if (string.Equals(key, "env:ApplicationBasePath", StringComparison.OrdinalIgnoreCase))
+            {
+                return _environment.ApplicationBasePath;
+            }
+            if (string.Equals(key, "env:ApplicationName", StringComparison.OrdinalIgnoreCase))
+            {
+                return _environment.ApplicationName;
+            }
+            if (string.Equals(key, "env:Version", StringComparison.OrdinalIgnoreCase))
+            {
+                return _environment.Version;
+            }
+            if (string.Equals(key, "env:TargetFramework", StringComparison.OrdinalIgnoreCase))
+            {
+                return _environment.TargetFramework.Identifier;
+            }
+            return Environment.GetEnvironmentVariable(key);
+        }
+
 
         private void ParseArgs(string[] args, out DefaultHostOptions defaultHostOptions, out string[] outArgs)
         {

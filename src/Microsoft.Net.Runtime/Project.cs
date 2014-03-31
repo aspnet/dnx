@@ -187,7 +187,7 @@ namespace Microsoft.Net.Runtime
 
             if (project.Version.IsSnapshot)
             {
-                var buildVersion = Environment.GetEnvironmentVariable("K_BUILD_VERSION") ?? "";
+                var buildVersion = Environment.GetEnvironmentVariable("K_BUILD_VERSION") ?? "SNAPSHOT";
                 project.Version = project.Version.SpecifySnapshot(buildVersion);
             }
 
