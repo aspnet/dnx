@@ -77,7 +77,34 @@ namespace Microsoft.Net.Runtime.Roslyn
 
         private void BuildSymbolsPackage(BuildContext buildContext, CompilationContext compilationContext, string assemblyPath, string pdbPath)
         {
-            // TODO: Build symbols packages
+            var framework = buildContext.TargetFramework;
+            var project = compilationContext.Project;
+            var frameworkFolder = VersionUtility.GetShortFrameworkName(framework);
+            var root = project.ProjectDirectory;
+
+            // REVIEW: How do we handle meta programming scenarios
+            foreach (var syntaxTree in compilationContext.Compilation.SyntaxTrees)
+            {
+                if (String.IsNullOrEmpty(syntaxTree.FilePath))
+                {
+                    continue;
+                }
+
+                var srcFile = new PhysicalPackageFile();
+                srcFile.SourcePath = syntaxTree.FilePath;
+                srcFile.TargetPath = Path.Combine("src", syntaxTree.FilePath.Substring(root.Length).Trim(Path.DirectorySeparatorChar));
+                buildContext.SymbolPackageBuilder.Files.Add(srcFile);
+            }
+
+            var assemblyFile = new PhysicalPackageFile();
+            assemblyFile.SourcePath = assemblyPath;
+            assemblyFile.TargetPath = String.Format(@"lib\{0}\{1}.dll", frameworkFolder, project.Name);
+            buildContext.SymbolPackageBuilder.Files.Add(assemblyFile);
+
+            var pdbFile = new PhysicalPackageFile();
+            pdbFile.SourcePath = pdbPath;
+            pdbFile.TargetPath = String.Format(@"lib\{0}\{1}.pdb", frameworkFolder, project.Name);
+            buildContext.SymbolPackageBuilder.Files.Add(pdbFile);
         }
 
         private void BuildPackage(BuildContext buildContext, CompilationContext compilationContext, string assemblyPath)

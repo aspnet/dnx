@@ -39,6 +39,7 @@ namespace Microsoft.Net.Project
 
             string outputPath = _buildOptions.OutputDir ?? Path.Combine(_buildOptions.ProjectDir, "bin");
             string nupkg = GetPackagePath(project, outputPath);
+            string symbolsNupkg = GetPackagePath(project, outputPath, symbols: true);
 
             var configurations = new HashSet<FrameworkName>(
                 project.GetTargetFrameworkConfigurations()
@@ -50,20 +51,10 @@ namespace Microsoft.Net.Project
             }
 
             var builder = new PackageBuilder();
+            var symbolPackageBuilder = new PackageBuilder();
 
-            // TODO: Support nuspecs in the project folder
-            builder.Authors.AddRange(project.Authors);
-
-            if (builder.Authors.Count == 0)
-            {
-                // Temporary
-                builder.Authors.Add("K");
-            }
-
-            builder.Description = project.Description ?? project.Name;
-            builder.Id = project.Name;
-            builder.Version = project.Version;
-            builder.Title = project.Name;
+            InitializeBuilder(project, builder);
+            InitializeBuilder(project, symbolPackageBuilder);
 
             bool success = true;
 
@@ -76,7 +67,12 @@ namespace Microsoft.Net.Project
                 {
                     var diagnostics = new List<Diagnostic>();
 
-                    success = success && Build(project, outputPath, targetFramework, builder, diagnostics);
+                    success = success && Build(project,
+                                               outputPath,
+                                               targetFramework,
+                                               builder,
+                                               symbolPackageBuilder,
+                                               diagnostics);
 
                     allDiagnostics.AddRange(diagnostics);
 
@@ -105,7 +101,13 @@ namespace Microsoft.Net.Project
                     builder.Save(fs);
                 }
 
+                using (var fs = File.Create(symbolsNupkg))
+                {
+                    symbolPackageBuilder.Save(fs);
+                }
+
                 Console.WriteLine("{0} -> {1}", project.Name, nupkg);
+                Console.WriteLine("{0} -> {1}", project.Name, symbolsNupkg);
             }
 
             sw.Stop();
@@ -114,6 +116,21 @@ namespace Microsoft.Net.Project
 
             Console.WriteLine("Time elapsed {0}", sw.Elapsed);
             return success;
+        }
+
+        private static void InitializeBuilder(KProject project, PackageBuilder builder)
+        {
+            builder.Authors.AddRange(project.Authors);
+
+            if (builder.Authors.Count == 0)
+            {
+                builder.Authors.Add("K");
+            }
+
+            builder.Description = project.Description ?? project.Name;
+            builder.Id = project.Name;
+            builder.Version = project.Version;
+            builder.Title = project.Name;
         }
 
         private void WriteSummary(List<Diagnostic> allDiagnostics)
@@ -198,7 +215,12 @@ namespace Microsoft.Net.Project
         }
 #endif
 
-        private bool Build(KProject project, string outputPath, FrameworkName targetFramework, PackageBuilder builder, List<Diagnostic> diagnostics)
+        private bool Build(KProject project,
+                           string outputPath,
+                           FrameworkName targetFramework,
+                           PackageBuilder builder,
+                           PackageBuilder symbolPackageBuilder,
+                           List<Diagnostic> diagnostics)
         {
             IDictionary<string, string> packagePaths;
             var roslynArtifactsProducer = PrepareCompiler(project, targetFramework, out packagePaths);
@@ -209,7 +231,8 @@ namespace Microsoft.Net.Project
             var buildContext = new BuildContext(project.Name, targetFramework)
             {
                 OutputPath = targetPath,
-                PackageBuilder = builder
+                PackageBuilder = builder,
+                SymbolPackageBuilder = symbolPackageBuilder
             };
 
             if (!roslynArtifactsProducer.Build(buildContext, diagnostics))
@@ -292,9 +315,10 @@ namespace Microsoft.Net.Project
             return Path.GetFullPath(projectDir.TrimEnd(Path.DirectorySeparatorChar));
         }
 
-        private static string GetPackagePath(KProject project, string outputPath)
+        private static string GetPackagePath(KProject project, string outputPath, bool symbols = false)
         {
-            return Path.Combine(outputPath, project.Name + "." + project.Version + ".nupkg");
+            string fileName = project.Name + "." + project.Version + (symbols ? ".symbols" : "") + ".nupkg";
+            return Path.Combine(outputPath, fileName);
         }
 
         private static string GetMessage(Diagnostic diagnostic)
