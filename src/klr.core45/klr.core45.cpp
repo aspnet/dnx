@@ -151,7 +151,8 @@ extern "C" __declspec(dllexport) bool __stdcall CallApplicationMain(PCALL_APPLIC
 
     STARTUP_FLAGS dwStartupFlags = (STARTUP_FLAGS)(
         STARTUP_FLAGS::STARTUP_LOADER_OPTIMIZATION_SINGLE_DOMAIN |
-        STARTUP_FLAGS::STARTUP_SINGLE_APPDOMAIN
+        STARTUP_FLAGS::STARTUP_SINGLE_APPDOMAIN |
+        STARTUP_FLAGS::STARTUP_SERVER_GC
         );
 
     pCLRRuntimeHost->SetStartupFlags(dwStartupFlags);
