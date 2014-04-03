@@ -18,14 +18,10 @@ namespace Microsoft.Net.Runtime.Roslyn
 
             RawReferences = context.GetRequiredEmbeddedReferences().Select(r =>
             {
-                var ms = new MemoryStream();
-                r.OutputStream.Position = 0;
-                r.OutputStream.CopyTo(ms);
-
                 return new
                 {
                     Name = r.Name,
-                    Bytes = ms.ToArray()
+                    Bytes = r.Contents
                 };
             })
             .ToDictionary(a => a.Name, a => a.Bytes);
