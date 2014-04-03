@@ -1,3 +1,4 @@
+using System;
 using System.IO;
 using System.IO.Compression;
 using System.Runtime.Versioning;
@@ -31,6 +32,8 @@ namespace Microsoft.Net.Project.Packing
             var package = _nugetDependencyResolver.FindCandidate(
                 _library.Name,
                 _library.Version);
+
+            Console.WriteLine("Packing runtime {0} {1}", package.Id, package.Version);
 
             Name = package.Id;
             Version = package.Version;

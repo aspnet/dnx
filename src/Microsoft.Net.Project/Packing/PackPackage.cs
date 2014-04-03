@@ -27,6 +27,8 @@ namespace Microsoft.Net.Project.Packing
                 _libraryDescription.Identity.Name,
                 _libraryDescription.Identity.Version);
 
+            Console.WriteLine("Packing nupkg dependency {0} {1}", package.Id, package.Version);
+
             var targetName = package.Id + "." + package.Version;
             TargetPath = Path.Combine(root.PackagesPath, targetName);
 
@@ -36,7 +38,9 @@ namespace Microsoft.Net.Project.Packing
             {
                 Directory.CreateDirectory(TargetPath);
             }
-            
+
+            Console.WriteLine("  Target {0}", TargetPath);
+
             var targetNupkgPath = Path.Combine(TargetPath, targetName + ".nupkg");
             using (var sourceStream = package.GetStream())
             {

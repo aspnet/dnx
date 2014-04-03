@@ -24,6 +24,8 @@ namespace Microsoft.Net.Project.Packing
 
         public void Emit(PackRoot root)
         {
+            Console.WriteLine("Packing project dependency {0}", _libraryDescription.Identity.Name);
+
             Runtime.Project project;
             if (!_projectResolver.TryResolveProject(_libraryDescription.Identity.Name, out project))
             {
@@ -32,6 +34,9 @@ namespace Microsoft.Net.Project.Packing
 
             var targetName = project.Name;
             var targetPath = Path.Combine(root.OutputPath, targetName);
+
+            Console.WriteLine("  Source {0}", project.ProjectDirectory);
+            Console.WriteLine("  Target {0}", targetPath);
 
             root.Delete(targetPath);
             CopyRecursive(project.ProjectDirectory, targetPath, isProjectRootFolder: true);

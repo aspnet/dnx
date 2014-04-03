@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Microsoft.Net.Runtime;
@@ -27,6 +28,8 @@ namespace Microsoft.Net.Project.Packing
 
         public void Emit()
         {
+            Console.WriteLine("Copying to output path {0}", OutputPath);
+
             foreach (var deploymentPackage in Packages)
             {
                 deploymentPackage.Emit(this);

@@ -47,15 +47,9 @@ namespace Microsoft.Net.Project
 
             var projectDir = project.ProjectDirectory;
             var rootDirectory = DefaultHost.ResolveRootDirectory(projectDir);
-            //var globalAssemblyCache = new DefaultGlobalAssemblyCache();
             var projectResolver = new ProjectResolver(projectDir, rootDirectory);
 
             var nugetDependencyResolver = new NuGetDependencyResolver(projectDir);
-            //var gacDependencyExporter = new GacLibraryExportProvider(globalAssemblyCache);
-            //var compositeDependencyExporter = new CompositeLibraryExportProvider(new ILibraryExportProvider[] { 
-            //    gacDependencyExporter, 
-            //    nugetDependencyResolver 
-            //});
 
             var projectReferenceDependencyProvider = new ProjectReferenceDependencyProvider(projectResolver);
 
