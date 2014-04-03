@@ -106,7 +106,9 @@ namespace Microsoft.Net.Runtime.Roslyn
         {
             var results = new HashSet<string>();
 
-            // First we need to emit metadata reference for this compilation
+            byte[] metadataBuffer = null;
+
+            // First we need to emit just the metadata for this compilation
             using (var metadataStream = new MemoryStream())
             {
                 var result = Compilation.EmitMetadataOnly(metadataStream);
@@ -118,32 +120,34 @@ namespace Microsoft.Net.Runtime.Roslyn
                     return results;
                 }
 
-                var stack = new Stack<Tuple<string, Stream>>();
-                stack.Push(Tuple.Create((string)null, (Stream)metadataStream));
+                // Store the buffer and close the stream
+                metadataBuffer = metadataStream.ToArray();
+            }
 
-                while (stack.Count > 0)
+            var stack = new Stack<Tuple<string, byte[]>>();
+            stack.Push(Tuple.Create((string)null, metadataBuffer));
+
+            while (stack.Count > 0)
+            {
+                var top = stack.Pop();
+
+                var assemblyName = top.Item1;
+
+                if (!String.IsNullOrEmpty(assemblyName) &&
+                    !results.Add(assemblyName))
                 {
-                    var top = stack.Pop();
+                    // Skip the reference if saw it already
+                    continue;
+                }
 
-                    var assemblyName = top.Item1;
+                var buffer = top.Item2;
 
-                    if (!String.IsNullOrEmpty(assemblyName) &&
-                        !results.Add(assemblyName))
+                foreach (var reference in GetReferences(buffer))
+                {
+                    EmbeddedMetadataReference embeddedReference;
+                    if (assemblies.TryGetValue(reference, out embeddedReference))
                     {
-                        // Skip the reference if saw it already
-                        continue;
-                    }
-
-                    var stream = top.Item2;
-                    stream.Position = 0;
-
-                    foreach (var reference in GetReferences(stream))
-                    {
-                        EmbeddedMetadataReference embeddedReference;
-                        if (assemblies.TryGetValue(reference, out embeddedReference))
-                        {
-                            stack.Push(Tuple.Create(reference, embeddedReference.OutputStream));
-                        }
+                        stack.Push(Tuple.Create(reference, embeddedReference.Contents));
                     }
                 }
             }
@@ -151,23 +155,26 @@ namespace Microsoft.Net.Runtime.Roslyn
             return results;
         }
 
-        private static IList<string> GetReferences(Stream stream)
+        private static IList<string> GetReferences(byte[] buffer)
         {
             var references = new List<string>();
 
-            var peReader = new PEReader(stream);
-
-            var reader = peReader.GetMetadataReader();
-
-            foreach (var a in reader.AssemblyReferences)
+            using (var stream = new MemoryStream(buffer))
             {
-                var reference = reader.GetAssemblyReference(a);
-                var referenceName = reader.GetString(reference.Name);
+                var peReader = new PEReader(stream);
 
-                references.Add(referenceName);
+                var reader = peReader.GetMetadataReader();
+
+                foreach (var a in reader.AssemblyReferences)
+                {
+                    var reference = reader.GetAssemblyReference(a);
+                    var referenceName = reader.GetString(reference.Name);
+
+                    references.Add(referenceName);
+                }
+
+                return references;
             }
-
-            return references;
         }
     }
 }

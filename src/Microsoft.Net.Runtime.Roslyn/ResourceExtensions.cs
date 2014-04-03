@@ -12,13 +12,9 @@ namespace Microsoft.Net.Runtime.Roslyn
             {
                 resources.Add(new ResourceDescription(reference.Name + ".dll", () =>
                 {
-                    var ms = new MemoryStream();
-                    reference.OutputStream.Position = 0;
-                    reference.OutputStream.CopyTo(ms);
-                    ms.Position = 0;
-                    return ms;
-
-                }, isPublic: true));
+                    return new MemoryStream(reference.Contents);
+                }, 
+                isPublic: true));
             }
         }
     }

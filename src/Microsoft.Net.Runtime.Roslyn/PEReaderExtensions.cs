@@ -7,7 +7,7 @@ using System.Reflection.PortableExecutable;
 
 namespace Microsoft.Net.Runtime.Roslyn
 {
-    public static class PEReaderExtensions
+    internal static class PEReaderExtensions
     {
         public static IList<EmbeddedMetadataReference> GetEmbeddedReferences(this PEReader reader)
         {
@@ -22,20 +22,19 @@ namespace Microsoft.Net.Runtime.Roslyn
                 // Embedded interface
                 if (resourceName.EndsWith(".dll", StringComparison.OrdinalIgnoreCase))
                 {
-                    var ms = reader.GetEmbeddedResourceStream(resource);
-                    ms.Seek(0, SeekOrigin.Begin);
+                    var buffer = GetEmbeddedResourceContents(reader, resource);
 
                     // Remove .dll
                     var nameWithoutDll = resourceName.Substring(0, resourceName.Length - 4);
 
-                    items.Add(new EmbeddedMetadataReference(nameWithoutDll, ms));
+                    items.Add(new EmbeddedMetadataReference(nameWithoutDll, buffer));
                 }
             }
 
             return items;
         }
 
-        private static unsafe MemoryStream GetEmbeddedResourceStream(this PEReader peReader, ManifestResource resource)
+        private static unsafe byte[] GetEmbeddedResourceContents(PEReader peReader, ManifestResource resource)
         {
             if (!resource.Implementation.IsNil)
             {
@@ -80,7 +79,7 @@ namespace Microsoft.Net.Runtime.Roslyn
                     buffer[i] = *(resourceStart + i);
                 }
 
-                return new MemoryStream(buffer);
+                return buffer;
             }
         }
     }
