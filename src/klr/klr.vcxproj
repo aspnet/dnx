@@ -122,6 +122,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -139,6 +140,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -170,9 +172,9 @@
   </PropertyGroup>
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
-    <Target Name="CopyManagedForDebuggingLocally" AfterTargets="Build" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-        <Copy SourceFiles="$(ProjectDir)..\klr.core45.managed\bin\$(Configuration)\K\klr.core45.managed.dll" DestinationFolder="$(SolutionDir)\bin\$(Platform)\$(Configuration)" />
-        <Copy SourceFiles="$(ProjectDir)..\klr.net45.managed\bin\$(Configuration)\net45\klr.net45.managed.dll" DestinationFolder="$(SolutionDir)\bin\$(Platform)\$(Configuration)" />
-        <Copy SourceFiles="$(ProjectDir)..\klr.net45.managed\klr.net45.config" DestinationFolder="$(SolutionDir)\bin\$(Platform)\$(Configuration)" />
-    </Target>
+  <Target Name="CopyManagedForDebuggingLocally" AfterTargets="Build" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Copy SourceFiles="$(ProjectDir)..\klr.core45.managed\bin\$(Configuration)\K\klr.core45.managed.dll" DestinationFolder="$(SolutionDir)\bin\$(Platform)\$(Configuration)" />
+    <Copy SourceFiles="$(ProjectDir)..\klr.net45.managed\bin\$(Configuration)\net45\klr.net45.managed.dll" DestinationFolder="$(SolutionDir)\bin\$(Platform)\$(Configuration)" />
+    <Copy SourceFiles="$(ProjectDir)..\klr.net45.managed\klr.net45.config" DestinationFolder="$(SolutionDir)\bin\$(Platform)\$(Configuration)" />
+  </Target>
 </Project>
