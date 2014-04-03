@@ -4,7 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
-using Microsoft.Net.ApplicationHost.CommandLine;
+using Microsoft.Net.ApplicationHost.Impl.Syntax;
 using Microsoft.Net.Runtime;
 using Microsoft.Net.Runtime.Common;
 using Microsoft.Net.Runtime.Common.CommandLine;
@@ -50,7 +50,7 @@ namespace Microsoft.Net.ApplicationHost
                 string replacementCommand;
                 if (host.Project.Commands.TryGetValue(lookupCommand, out replacementCommand))
                 {
-                    var replacementArgs = CommandGrammerUtilities.Process(
+                    var replacementArgs = CommandGrammar.Process(
                         replacementCommand,
                         GetVariable).ToArray();
                     
