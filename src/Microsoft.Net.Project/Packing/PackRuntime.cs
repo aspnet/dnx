@@ -43,6 +43,7 @@ namespace Microsoft.Net.Project.Packing
 
             if (Directory.Exists(targetPath))
             {
+                Console.WriteLine("  {0} already exists.", targetPath);
                 return;
             }
 
