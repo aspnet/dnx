@@ -32,11 +32,10 @@ namespace Microsoft.Net.Project.Packing
             var targetName = package.Id + "." + package.Version;
             TargetPath = Path.Combine(root.PackagesPath, targetName);
 
-            root.Delete(TargetPath);
-
-            if (!Directory.Exists(TargetPath))
+            if (Directory.Exists(TargetPath))
             {
-                Directory.CreateDirectory(TargetPath);
+                Console.WriteLine("  {0} already exists.", TargetPath);
+                return;
             }
 
             Console.WriteLine("  Target {0}", TargetPath);
