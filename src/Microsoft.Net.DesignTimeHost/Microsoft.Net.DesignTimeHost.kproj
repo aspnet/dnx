@@ -1,0 +1,44 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="__ToolsVersion__" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">12.0</VisualStudioVersion>
+    <VSToolsPath Condition="'$(VSToolsPath)' == ''">$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)</VSToolsPath>
+  </PropertyGroup>
+  <Import Project="$(VSToolsPath)\ProjectK\Microsoft.Web.ProjectK.Props" Condition="'$(VSToolsPath)' != ''" />
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>b8208d93-75c4-44bf-80bc-deb9678fa05e</ProjectGuid>
+    <OutputType>Library</OutputType>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x86'" Label="Configuration">
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x86'" Label="Configuration">
+  </PropertyGroup>
+  <PropertyGroup>
+    <SchemaVersion>2.0</SchemaVersion>
+  </PropertyGroup>
+  <ItemGroup>
+    <Content Include="Project.json" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="ApplicationContext.cs" />
+    <Compile Include="ConnectionContext.cs" />
+    <Compile Include="Context.cs" />
+    <Compile Include="Models\IncomingMessages\ChangeTargetFrameworkMessage.cs" />
+    <Compile Include="Models\IncomingMessages\InitializeMessage.cs" />
+    <Compile Include="Models\Message.cs" />
+    <Compile Include="Models\OutgoingMessages\ConfigurationData.cs" />
+    <Compile Include="Models\OutgoingMessages\ConfigurationsMessage.cs" />
+    <Compile Include="Models\OutgoingMessages\DiagnosticsMessage.cs" />
+    <Compile Include="Models\OutgoingMessages\ErrorMessage.cs" />
+    <Compile Include="Models\OutgoingMessages\ReferencesMessage.cs" />
+    <Compile Include="Models\OutgoingMessages\SourcesMessage.cs" />
+    <Compile Include="Models\World.cs" />
+    <Compile Include="ProcessingQueue.cs" />
+    <Compile Include="Program.cs" />
+    <Compile Include="Trace.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Properties\" />
+  </ItemGroup>
+  <Import Project="$(VSToolsPath)\ProjectK\Microsoft.Web.ProjectK.targets" Condition="'$(VSToolsPath)' != ''" />
+</Project>

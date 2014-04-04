@@ -1,0 +1,44 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="__ToolsVersion__" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">12.0</VisualStudioVersion>
+    <VSToolsPath Condition="'$(VSToolsPath)' == ''">$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)</VSToolsPath>
+  </PropertyGroup>
+  <Import Project="$(VSToolsPath)\ProjectK\Microsoft.Web.ProjectK.Props" Condition="'$(VSToolsPath)' != ''" />
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>ae99f965-68e2-4e7a-947a-0d2c61992792</ProjectGuid>
+    <OutputType>Library</OutputType>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x86'" Label="Configuration">
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x86'" Label="Configuration">
+  </PropertyGroup>
+  <PropertyGroup>
+    <SchemaVersion>2.0</SchemaVersion>
+  </PropertyGroup>
+  <ItemGroup>
+    <Content Include="App.config" />
+    <Content Include="Project.json" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="AssemblyInformation.cs" />
+    <Compile Include="BuildManager.cs" />
+    <Compile Include="BuildOptions.cs" />
+    <Compile Include="CrossGenManager.cs" />
+    <Compile Include="CrossgenOptions.cs" />
+    <Compile Include="Packing\PackPackage.cs" />
+    <Compile Include="Packing\PackProject.cs" />
+    <Compile Include="Packing\PackRoot.cs" />
+    <Compile Include="Packing\PackRuntime.cs" />
+    <Compile Include="Packing\PackUtilities.cs" />
+    <Compile Include="PackManager.cs" />
+    <Compile Include="PackOptions.cs" />
+    <Compile Include="Program.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="CommandLine\" />
+    <Folder Include="Impl\DependencyInjection\" />
+  </ItemGroup>
+  <Import Project="$(VSToolsPath)\ProjectK\Microsoft.Web.ProjectK.targets" Condition="'$(VSToolsPath)' != ''" />
+</Project>

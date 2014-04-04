@@ -1,0 +1,137 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="__ToolsVersion__" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">12.0</VisualStudioVersion>
+    <VSToolsPath Condition="'$(VSToolsPath)' == ''">$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)</VSToolsPath>
+  </PropertyGroup>
+  <Import Project="$(VSToolsPath)\ProjectK\Microsoft.Web.ProjectK.Props" Condition="'$(VSToolsPath)' != ''" />
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>d346515a-d457-49ac-b74d-1a343d870449</ProjectGuid>
+    <OutputType>Library</OutputType>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x86'" Label="Configuration">
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x86'" Label="Configuration">
+  </PropertyGroup>
+  <PropertyGroup>
+    <SchemaVersion>2.0</SchemaVersion>
+  </PropertyGroup>
+  <ItemGroup>
+    <Content Include="NuGet\Authoring\nuspec.xsd" />
+    <Content Include="NuGet\Resources\NuGetResources.resx" />
+    <Content Include="Project.json" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="ApplicationEnvironment.cs" />
+    <Compile Include="DefaultGlobalAssemblyCache.cs" />
+    <Compile Include="DefaultHost.cs" />
+    <Compile Include="DefaultHostOptions.cs" />
+    <Compile Include="DependencyManagement\DependencyWalker.cs" />
+    <Compile Include="DependencyManagement\IDependencyProvider.cs" />
+    <Compile Include="DependencyManagement\Library.cs" />
+    <Compile Include="DependencyManagement\LibraryDescription.cs" />
+    <Compile Include="DependencyManagement\LibraryInformation.cs" />
+    <Compile Include="DependencyManagement\LibraryManager.cs" />
+    <Compile Include="DependencyManagement\ProjectReferenceDependencyProvider.cs" />
+    <Compile Include="DependencyManagement\WalkContext.cs" />
+    <Compile Include="DictionaryExtensions.cs" />
+    <Compile Include="Executable.cs" />
+    <Compile Include="ExportProviders\CompositeLibraryExportProvider.cs" />
+    <Compile Include="ExportProviders\GacLibraryExportProvider.cs" />
+    <Compile Include="ExportProviders\LibraryExport.cs" />
+    <Compile Include="ExportProviders\MetadataFileReference.cs" />
+    <Compile Include="ExportProviders\SourceFileReference.cs" />
+    <Compile Include="FileSystem\FileWatcher.cs" />
+    <Compile Include="FileSystem\IFileWatcher.cs" />
+    <Compile Include="GlobalSettings.cs" />
+    <Compile Include="IGlobalAssemblyCache.cs" />
+    <Compile Include="IProjectResolver.cs" />
+    <Compile Include="Loader\AssemblyLoader.cs" />
+    <Compile Include="Loader\AssemblyLoadResult.cs" />
+    <Compile Include="Loader\IAssemblyLoader.cs" />
+    <Compile Include="Loader\LazyRoslynAssemblyLoader.cs" />
+    <Compile Include="Loader\LoadContext.cs" />
+    <Compile Include="Loader\MSBuildProject\MSBuildProjectAssemblyLoader.cs" />
+    <Compile Include="Loader\NuGet\NuGetAssemblyLoader.cs" />
+    <Compile Include="Loader\NuGet\NuGetDependencyResolver.cs" />
+    <Compile Include="NuGet\Authoring\EmptyFrameworkFolderFile.cs" />
+    <Compile Include="NuGet\Authoring\IPackageBuilder.cs" />
+    <Compile Include="NuGet\Authoring\IPropertyProvider.cs" />
+    <Compile Include="NuGet\Authoring\Manifest.cs" />
+    <Compile Include="NuGet\Authoring\ManifestDependency.cs" />
+    <Compile Include="NuGet\Authoring\ManifestDependencySet.cs" />
+    <Compile Include="NuGet\Authoring\ManifestFile.cs" />
+    <Compile Include="NuGet\Authoring\ManifestFrameworkAssembly.cs" />
+    <Compile Include="NuGet\Authoring\ManifestMetadata.cs" />
+    <Compile Include="NuGet\Authoring\ManifestReader.cs" />
+    <Compile Include="NuGet\Authoring\ManifestReference.cs" />
+    <Compile Include="NuGet\Authoring\ManifestReferenceSet.cs" />
+    <Compile Include="NuGet\Authoring\ManifestSchemaUtility.cs" />
+    <Compile Include="NuGet\Authoring\ManifestVersionAttribute.cs" />
+    <Compile Include="NuGet\Authoring\ManifestVersionUtility.cs" />
+    <Compile Include="NuGet\Authoring\NullPropertyProvider.cs" />
+    <Compile Include="NuGet\Authoring\PackageBuilder.cs" />
+    <Compile Include="NuGet\Authoring\PackageDependencySet.cs" />
+    <Compile Include="NuGet\Authoring\PackageReferenceSet.cs" />
+    <Compile Include="NuGet\Authoring\PathResolver.cs" />
+    <Compile Include="NuGet\Authoring\PhysicalPackageAssemblyReference.cs" />
+    <Compile Include="NuGet\Authoring\PhysicalPackageFile.cs" />
+    <Compile Include="NuGet\Extensions\CollectionExtensions.cs" />
+    <Compile Include="NuGet\Extensions\EnumerableExtensions.cs" />
+    <Compile Include="NuGet\Extensions\FileSystemExtensions.cs" />
+    <Compile Include="NuGet\Extensions\ObjectExtensions.cs" />
+    <Compile Include="NuGet\Extensions\PackageExtensions.cs" />
+    <Compile Include="NuGet\Extensions\StreamExtensions.cs" />
+    <Compile Include="NuGet\Extensions\StringExtensions.cs" />
+    <Compile Include="NuGet\Extensions\VersionExtensions.cs" />
+    <Compile Include="NuGet\Extensions\XElementExtensions.cs" />
+    <Compile Include="NuGet\Logging\ILogger.cs" />
+    <Compile Include="NuGet\Logging\MessageLevel.cs" />
+    <Compile Include="NuGet\Logging\NullLogger.cs" />
+    <Compile Include="NuGet\NETPortable\NetPortableProfile.cs" />
+    <Compile Include="NuGet\NETPortable\NetPortableProfileCollection.cs" />
+    <Compile Include="NuGet\NETPortable\NetPortableProfileTable.cs" />
+    <Compile Include="NuGet\Packages\Constants.cs" />
+    <Compile Include="NuGet\Packages\DefaultPackagePathResolver.cs" />
+    <Compile Include="NuGet\Packages\FrameworkAssemblyReference.cs" />
+    <Compile Include="NuGet\Packages\IFrameworkTargetable.cs" />
+    <Compile Include="NuGet\Packages\IPackage.cs" />
+    <Compile Include="NuGet\Packages\IPackageAssemblyReference.cs" />
+    <Compile Include="NuGet\Packages\IPackageFile.cs" />
+    <Compile Include="NuGet\Packages\IPackageMetadata.cs" />
+    <Compile Include="NuGet\Packages\IPackagePathResolver.cs" />
+    <Compile Include="NuGet\Packages\LocalPackage.cs" />
+    <Compile Include="NuGet\Packages\OptimizedZipPackage.cs" />
+    <Compile Include="NuGet\Packages\PackageDependency.cs" />
+    <Compile Include="NuGet\Packages\ZipPackage.cs" />
+    <Compile Include="NuGet\Packages\ZipPackageAssemblyReference.cs" />
+    <Compile Include="NuGet\Packages\ZipPackageFile.cs" />
+    <Compile Include="NuGet\ProjectSystem\IFileSystem.cs" />
+    <Compile Include="NuGet\ProjectSystem\PhysicalFileSystem.cs" />
+    <Compile Include="NuGet\Repositories\IPackageName.cs" />
+    <Compile Include="NuGet\Repositories\LocalPackageRepository.cs" />
+    <Compile Include="NuGet\Repositories\PackageName.cs" />
+    <Compile Include="NuGet\Resources\NuGetResources.Designer.cs" />
+    <Compile Include="NuGet\SemanticVersion.cs" />
+    <Compile Include="NuGet\Utility\FrameworkNameEqualityComparer.cs" />
+    <Compile Include="NuGet\Utility\IVersionSpec.cs" />
+    <Compile Include="NuGet\Utility\PackageEqualityComparer.cs" />
+    <Compile Include="NuGet\Utility\PackageHelper.cs" />
+    <Compile Include="NuGet\Utility\PackageIdValidator.cs" />
+    <Compile Include="NuGet\Utility\PathUtility.cs" />
+    <Compile Include="NuGet\Utility\PathValidator.cs" />
+    <Compile Include="NuGet\Utility\ReadOnlyHashSet.cs" />
+    <Compile Include="NuGet\Utility\UriUtility.cs" />
+    <Compile Include="NuGet\Utility\VersionSpec.cs" />
+    <Compile Include="NuGet\Utility\VersionUtility.cs" />
+    <Compile Include="NuGet\Utility\XmlUtility.cs" />
+    <Compile Include="NuGet\Utility\ZipArchiveExtensions.cs" />
+    <Compile Include="Project.cs" />
+    <Compile Include="ProjectResolver.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Impl\DependencyInjection\" />
+  </ItemGroup>
+  <Import Project="$(VSToolsPath)\ProjectK\Microsoft.Web.ProjectK.targets" Condition="'$(VSToolsPath)' != ''" />
+</Project>
