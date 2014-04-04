@@ -45,6 +45,10 @@ namespace Microsoft.Net.Runtime.Roslyn
                 { "CS1702", ReportDiagnostic.Suppress }
             });
 
+            // TODO: Base this on debug/release configuration (when we
+            // support it)
+            options = options.WithDebugInformationKind(DebugInformationKind.Full);
+
             var assemblyIdentityComparer = VersionUtility.IsDesktop(targetFramework) ?
                 DesktopAssemblyIdentityComparer.Default : null;
 
