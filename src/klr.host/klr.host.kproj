@@ -6,7 +6,7 @@
   </PropertyGroup>
   <Import Project="$(VSToolsPath)\ProjectK\Microsoft.Web.ProjectK.Props" Condition="'$(VSToolsPath)' != ''" />
   <PropertyGroup Label="Globals">
-    <ProjectGuid>7829f696-afc4-4011-b9de-6f1c24846d67</ProjectGuid>
+    <ProjectGuid>68048350-2996-4b4a-90be-3405f088bd5a</ProjectGuid>
     <OutputType>Library</OutputType>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x86'" Label="Configuration">
@@ -20,15 +20,15 @@
     <Content Include="Project.json" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Impl\Syntax\Chain.cs" />
-    <Compile Include="Impl\Syntax\CommandGrammar.cs" />
-    <Compile Include="Impl\Syntax\Cursor.cs" />
-    <Compile Include="Impl\Syntax\Grammar.cs" />
-    <Compile Include="Impl\Syntax\Parser.cs" />
-    <Compile Include="Impl\Syntax\ParserExtensions.cs" />
-    <Compile Include="Impl\Syntax\Result.cs" />
-    <Compile Include="Program.cs" />
+    <Compile Include="ApplicationEnvironment.cs" />
+    <Compile Include="Bootstrapper.cs" />
+    <Compile Include="DefaultLoaderEngine.cs" />
+    <Compile Include="DependencyExporter.cs" />
+    <Compile Include="FrameworkNameUtility.cs" />
+    <Compile Include="HostContainer.cs" />
+    <Compile Include="MetadataFileReference.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="RootHost.cs" />
   </ItemGroup>
   <Import Project="$(VSToolsPath)\ProjectK\Microsoft.Web.ProjectK.targets" Condition="'$(VSToolsPath)' != ''" />
 </Project>

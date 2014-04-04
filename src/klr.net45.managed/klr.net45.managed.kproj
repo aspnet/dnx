@@ -8,6 +8,7 @@
   <PropertyGroup Label="Globals">
     <ProjectGuid>2d50d502-e10a-4b1c-8a49-dbc52b5ce9cb</ProjectGuid>
     <OutputType>Library</OutputType>
+    <ActiveTargetFramework>net45</ActiveTargetFramework>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x86'" Label="Configuration">
   </PropertyGroup>
@@ -24,9 +25,6 @@
     <Compile Include="DomainManager.cs" />
     <Compile Include="EntryPoint.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-  </ItemGroup>
-  <ItemGroup>
-    <Folder Include="CommandLine\" />
   </ItemGroup>
   <Import Project="$(VSToolsPath)\ProjectK\Microsoft.Web.ProjectK.targets" Condition="'$(VSToolsPath)' != ''" />
 </Project>

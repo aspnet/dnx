@@ -8,6 +8,7 @@
   <PropertyGroup Label="Globals">
     <ProjectGuid>e2c080e8-ea5b-4f49-afd8-2534c8f5ca78</ProjectGuid>
     <OutputType>Library</OutputType>
+    <ActiveTargetFramework>net45</ActiveTargetFramework>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x86'" Label="Configuration">
   </PropertyGroup>
@@ -18,9 +19,6 @@
   </PropertyGroup>
   <ItemGroup>
     <Content Include="Project.json" />
-  </ItemGroup>
-  <ItemGroup>
-    <Folder Include="Properties\" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AssemblyNeutralFacts.cs" />

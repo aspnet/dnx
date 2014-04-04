@@ -20,10 +20,6 @@
     <Content Include="Project.json" />
   </ItemGroup>
   <ItemGroup>
-    <Folder Include="CommandLine\" />
-    <Folder Include="Properties\" />
-  </ItemGroup>
-  <ItemGroup>
     <Compile Include="DelegateAssemblyLoadContext.cs" />
     <Compile Include="LoaderEngine.cs" />
     <Compile Include="RuntimeBootstrapper.cs" />
