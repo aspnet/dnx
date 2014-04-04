@@ -21,6 +21,13 @@ namespace Microsoft.Net.Project
             { "runtimePath", CommandOptionType.SingleValue }
         };
 
+        private static readonly Dictionary<string, CommandOptionType> _packageOptions = new Dictionary<string, CommandOptionType>
+        {
+            { "framework", CommandOptionType.MultipleValue },
+            { "out", CommandOptionType.SingleValue },
+        };
+
+
         private static readonly Dictionary<string, CommandOptionType> _crossgenOptions = new Dictionary<string, CommandOptionType>
         {
             { "in", CommandOptionType.MultipleValue },
@@ -83,6 +90,23 @@ namespace Microsoft.Net.Project
 
                     var gen = new CrossgenManager(crossgenOptions);
                     if (!gen.GenerateNativeImages())
+                    {
+                        return -1;
+                    }
+                }
+                else if (command.Equals("pack", StringComparison.OrdinalIgnoreCase))
+                {
+                    var parser = new CommandLineParser();
+                    CommandOptions options;
+                    parser.ParseOptions(args.Skip(1).ToArray(), _packageOptions, out options);
+
+                    var packageOptions = new PackOptions();
+                    packageOptions.RuntimeTargetFramework = _environment.TargetFramework;
+                    packageOptions.OutputDir = options.GetValue("out");
+                    packageOptions.ProjectDir = options.RemainingArgs.Count > 0 ? options.RemainingArgs[0] : Directory.GetCurrentDirectory();
+
+                    var gen = new PackManager(packageOptions);
+                    if (!gen.Package())
                     {
                         return -1;
                     }

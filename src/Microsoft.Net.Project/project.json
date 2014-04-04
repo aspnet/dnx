@@ -15,6 +15,7 @@
     "configurations" : {
         "net45" : {
             "dependencies": {
+                "System.IO.Compression" : "",
                 "System.Xml.Linq": "",
                 "System.Xml": "",
                 "System.Runtime" : "",
@@ -31,6 +32,8 @@
                 "System.Diagnostics.Process": "4.0.0.0",
                 "System.IO": "4.0.0.0",
                 "System.IO.FileSystem": "4.0.0.0",
+                "System.IO.FileSystem.Primitives": "4.0.0.0",
+                "System.IO.Compression": "4.0.0.0",
                 "System.Linq": "4.0.0.0",
                 "System.Reflection": "4.0.10.0",
                 "System.Runtime": "4.0.20.0",
