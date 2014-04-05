@@ -29,22 +29,6 @@ namespace klr.hosting
                 return 1;
             }
 
-#if K10
-            var threadPoolType = typeof(ThreadPool);
-            int minWorker = 0;
-            int minIOC = 0;
-
-            //Get. Obtain current MinIO Threads
-            var argsGet = new object[] { minWorker, minIOC};
-            threadPoolType.GetTypeInfo().GetDeclaredMethod("GetMinThreads").Invoke(null, argsGet);
-
-            //Set. Future: We can tune the minWorker thread count depending on loads we test
-            minWorker = Environment.ProcessorCount * 64;
-            minIOC = (int)argsGet[1];
-           
-            threadPoolType.GetTypeInfo().GetDeclaredMethod("SetMinThreads").Invoke(null, new object[] { minWorker, minIOC});
-#endif
-
 #if NET45
             // TODO: Make this pluggable and not limited to the console logger
             var listener = new ConsoleTraceListener();
