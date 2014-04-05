@@ -92,7 +92,7 @@ namespace Microsoft.Net.Runtime.Roslyn
 
                 var srcFile = new PhysicalPackageFile();
                 srcFile.SourcePath = syntaxTree.FilePath;
-                srcFile.TargetPath = Path.Combine("src", syntaxTree.FilePath.Substring(root.Length).Trim(Path.DirectorySeparatorChar));
+                srcFile.TargetPath = Path.Combine("src", PathUtility.GetRelativePath(root, syntaxTree.FilePath));
                 buildContext.SymbolPackageBuilder.Files.Add(srcFile);
             }
 
