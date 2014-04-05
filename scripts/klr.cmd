@@ -77,7 +77,7 @@ echo %KLR_LIB_PATH%
 IF "%~1" == "Microsoft.Net.ApplicationHost" (
     SET KLR_LIB_PATH=%KLR_LIB_PATH%;%~dp0..\src\Microsoft.Net.Runtime\bin\%FRAMEWORK%;%~dp0..\src\Microsoft.Net.ApplicationHost\bin\%FRAMEWORK%;%~dp0..\src\Microsoft.Net.Runtime.Roslyn\bin\%FRAMEWORK%
 ) ELSE IF "%~1" == "Microsoft.Net.Project" (
-    SET KLR_LIB_PATH=%KLR_LIB_PATH%;%~dp0..\src\Microsoft.Net.Runtime\bin\%FRAMEWORK%;%~dp0..\src\Microsoft.Net.Project\bin\%FRAMEWORK%
+    SET KLR_LIB_PATH=%KLR_LIB_PATH%;%~dp0..\src\Microsoft.Net.Runtime\bin\%FRAMEWORK%;%~dp0..\src\Microsoft.Net.Runtime.Roslyn\bin\%FRAMEWORK%;%~dp0..\src\Microsoft.Net.Project\bin\%FRAMEWORK%
 ) ELSE IF "%~1" == "Microsoft.Net.DesignTimeHost" (
     SET KLR_LIB_PATH=%KLR_LIB_PATH%;%~dp0..\src\Microsoft.Net.Runtime\bin\%FRAMEWORK%;%~dp0..\src\Microsoft.Net.DesignTimeHost\bin\%FRAMEWORK%;%~dp0..\src\Microsoft.Net.Runtime.Roslyn\bin\%FRAMEWORK%
 )
