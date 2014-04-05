@@ -66,6 +66,12 @@ IF EXIST %~dp0..\packages\Microsoft.CodeAnalysis.Common* FOR /F %%I IN ('DIR %~d
 
 SET KLR_LIB_PATH=%KLR_LIB_PATH%;%~dp0..\packages\%Microsoft_CodeAnalysis_Common%\lib\%FRAMEWORK%
 
+:START_System_Reflection_Metadata
+IF EXIST %~dp0..\packages\Microsoft.CodeAnalysis.Common* FOR /F %%I IN ('DIR %~dp0..\packages\System.Reflection.Metadata* /B /O:-D') DO (SET System_Reflection_Metadata=%%I& GOTO :END_System_Reflection_Metadata)
+:END_System_Reflection_Metadata
+
+SET KLR_LIB_PATH=%KLR_LIB_PATH%;%~dp0..\packages\%System_Reflection_Metadata%\lib\%FRAMEWORK%
+
 echo %KLR_LIB_PATH%
 
 IF "%~1" == "Microsoft.Net.ApplicationHost" (
