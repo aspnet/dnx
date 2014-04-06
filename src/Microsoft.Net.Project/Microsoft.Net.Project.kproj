@@ -30,7 +30,7 @@
     <Compile Include="Packing\PackProject.cs" />
     <Compile Include="Packing\PackRoot.cs" />
     <Compile Include="Packing\PackRuntime.cs" />
-    <Compile Include="Packing\PackUtilities.cs" />
+    <Compile Include="Packing\PackOperations.cs" />
     <Compile Include="PackManager.cs" />
     <Compile Include="PackOptions.cs" />
     <Compile Include="Program.cs" />
