@@ -17,18 +17,25 @@ namespace Microsoft.Net.Project.Packing
             Packages = new List<PackPackage>();
             OutputPath = outputPath;
             PackagesPath = Path.Combine(outputPath, "packages");
+            Operations = new PackOperations();
         }
 
         public string OutputPath { get; private set; }
         public string PackagesPath { get; private set; }
+        public bool Overwrite { get; set; }
+        public bool Bundle { get; set; }
 
         public PackRuntime Runtime { get; set; }
         public IList<PackProject> Projects { get; private set; }
         public IList<PackPackage> Packages { get; private set; }
 
+        public PackOperations Operations { get; private set; }
+
         public void Emit()
         {
             Console.WriteLine("Copying to output path {0}", OutputPath);
+
+            var mainProject = Projects.Single(project => project.Name == _project.Name);
 
             foreach (var deploymentPackage in Packages)
             {
@@ -42,44 +49,20 @@ namespace Microsoft.Net.Project.Packing
 
             Runtime.Emit(this);
 
-            if (_project != null && _project.Commands != null)
+            mainProject.PostProcess(this);
+
+
+            foreach (var commandName in _project.Commands.Keys)
             {
-                foreach (var commandName in _project.Commands.Keys)
-                {
-                    const string template = @"
+                const string template = @"
 SETLOCAL
 SET K_APPBASE=%~dp0{0}
 CALL ""%~dp0packages\{1}.{2}\tools\k"" {3} %*
 ENDLOCAL";
 
-                    File.WriteAllText(
-                        Path.Combine(OutputPath, commandName + ".cmd"),
-                        string.Format(template, _project.Name, Runtime.Name, Runtime.Version, commandName));
-                }
-            }
-        }
-
-        public void Delete(string folderPath)
-        {
-            DeleteRecursive(folderPath);
-        }
-
-        private void DeleteRecursive(string deletePath)
-        {
-            if (!Directory.Exists(deletePath))
-            {
-                return;
-            }
-
-            foreach (var deleteFilePath in Directory.EnumerateFiles(deletePath).Select(Path.GetFileName))
-            {
-                File.Delete(Path.Combine(deletePath, deleteFilePath));
-            }
-
-            foreach (var deleteFolderPath in Directory.EnumerateDirectories(deletePath).Select(Path.GetFileName))
-            {
-                DeleteRecursive(Path.Combine(deletePath, deleteFolderPath));
-                Directory.Delete(Path.Combine(deletePath, deleteFolderPath), true);
+                File.WriteAllText(
+                    Path.Combine(OutputPath, commandName + ".cmd"),
+                    string.Format(template, _project.Name, Runtime.Name, Runtime.Version, commandName));
             }
         }
     }
