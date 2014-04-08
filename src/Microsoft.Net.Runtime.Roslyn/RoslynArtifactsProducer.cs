@@ -80,7 +80,7 @@ namespace Microsoft.Net.Runtime.Roslyn
             var framework = buildContext.TargetFramework;
             var project = compilationContext.Project;
             var frameworkFolder = VersionUtility.GetShortFrameworkName(framework);
-            var root = project.ProjectDirectory;
+            var root = PathUtility.EnsureTrailingSlash(project.ProjectDirectory);
 
             // REVIEW: How do we handle meta programming scenarios
             foreach (var syntaxTree in compilationContext.Compilation.SyntaxTrees)
