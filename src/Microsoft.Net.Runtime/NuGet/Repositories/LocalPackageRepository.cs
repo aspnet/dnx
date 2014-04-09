@@ -36,13 +36,18 @@ namespace NuGet
 
         private ILookup<string, IPackage> PopulateCache()
         {
-            string filter = "*" + Constants.PackageExtension;
+            string nupkgFilter = "*" + Constants.PackageExtension;
+            string nuspecFilter = "*" + Constants.ManifestExtension;
 
             var packages = new List<IPackage>();
 
             foreach (var dir in FileSystem.GetDirectories(String.Empty))
             {
-                foreach (var path in FileSystem.GetFiles(dir, filter))
+                foreach (var path in FileSystem.GetFiles(dir, nupkgFilter))
+                {
+                    packages.Add(OpenPackage(path));
+                }
+                foreach (var path in FileSystem.GetFiles(dir, nuspecFilter))
                 {
                     packages.Add(OpenPackage(path));
                 }
@@ -103,6 +108,25 @@ namespace NuGet
                 try
                 {
                     package = new OptimizedZipPackage(FileSystem, path);
+                }
+                catch (InvalidDataException ex)
+                {
+                    throw new InvalidDataException(String.Format(CultureInfo.CurrentCulture, NuGetResources.ErrorReadingPackage, path), ex);
+                }
+
+                // Set the last modified date on the package
+                package.Published = FileSystem.GetLastModified(path);
+
+                return package;
+            }
+
+            if (Path.GetExtension(path) == Constants.ManifestExtension)
+            {
+                UnzippedPackage package;
+
+                try
+                {
+                    package = new UnzippedPackage(FileSystem, path);
                 }
                 catch (InvalidDataException ex)
                 {

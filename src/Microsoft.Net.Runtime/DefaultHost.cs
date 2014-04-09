@@ -113,7 +113,7 @@ namespace Microsoft.Net.Runtime
 
             var projectResolver = new ProjectResolver(_projectDir, rootDirectory);
 
-            var nugetDependencyResolver = new NuGetDependencyResolver(_projectDir);
+            var nugetDependencyResolver = new NuGetDependencyResolver(_projectDir, options.PackageDirectory);
             var nugetLoader = new NuGetAssemblyLoader(_loaderEngine, nugetDependencyResolver);
             var globalAssemblyCache = new DefaultGlobalAssemblyCache();
 
