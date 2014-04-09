@@ -206,7 +206,9 @@ namespace Microsoft.Net.DesignTimeHost
                     {
                         CompilationSettings = state.Project.GetCompilationSettings(c.FrameworkName),
                         FrameworkName = VersionUtility.GetShortFrameworkName(c.FrameworkName),
-                    }).ToList()
+                    }).ToList(),
+
+                    Commands = state.Project.Commands
                 };
 
                 var metadata = state.MetadataProvider.GetMetadata(state.Project.Name, state.TargetFramework);
