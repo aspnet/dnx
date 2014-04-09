@@ -3,6 +3,7 @@ using System.IO;
 using System.IO.Compression;
 using Microsoft.Net.Runtime;
 using Microsoft.Net.Runtime.Loader.NuGet;
+using System.Security.Cryptography;
 
 namespace Microsoft.Net.Project.Packing
 {
@@ -34,8 +35,15 @@ namespace Microsoft.Net.Project.Packing
 
             if (Directory.Exists(TargetPath))
             {
-                Console.WriteLine("  {0} already exists.", TargetPath);
-                return;
+                if (root.Overwrite)
+                {
+                    root.Operations.Delete(TargetPath);
+                }
+                else
+                {
+                    Console.WriteLine("  {0} already exists.", TargetPath);
+                    return;
+                }
             }
 
             Console.WriteLine("  Target {0}", TargetPath);
@@ -45,7 +53,7 @@ namespace Microsoft.Net.Project.Packing
             {
                 using (var archive = new ZipArchive(sourceStream, ZipArchiveMode.Read))
                 {
-                    PackUtilities.ExtractFiles(archive, TargetPath);
+                    root.Operations.ExtractNupkg(archive, TargetPath);
                 }
             }
             using (var sourceStream = package.GetStream())
@@ -54,6 +62,10 @@ namespace Microsoft.Net.Project.Packing
                 {
                     sourceStream.CopyTo(targetStream);
                 }
+
+                sourceStream.Seek(0, SeekOrigin.Begin);
+                var sha512Bytes = SHA512.Create().ComputeHash(sourceStream);
+                File.WriteAllText(targetNupkgPath + ".sha512", Convert.ToBase64String(sha512Bytes));
             }
         }
     }

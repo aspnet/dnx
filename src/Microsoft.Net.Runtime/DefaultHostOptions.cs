@@ -8,6 +8,8 @@ namespace Microsoft.Net.Runtime
 
         public string ApplicationBaseDirectory { get; set; }
 
+        public string PackageDirectory { get; set; }
+
         public FrameworkName TargetFramework { get; set; }
 
         public bool WatchFiles { get; set; }

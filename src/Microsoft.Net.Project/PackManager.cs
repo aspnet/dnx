@@ -60,7 +60,11 @@ namespace Microsoft.Net.Project
 
             dependencyWalker.Walk(project.Name, project.Version, _options.RuntimeTargetFramework);
 
-            var root = new PackRoot(project, outputPath);
+            var root = new PackRoot(project, outputPath)
+            {
+                Overwrite = _options.Overwrite,
+                ZipPackages = _options.ZipPackages
+            };
 
             root.Runtime = new PackRuntime(
                 nugetDependencyResolver,
