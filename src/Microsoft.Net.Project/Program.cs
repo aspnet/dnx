@@ -25,7 +25,7 @@ namespace Microsoft.Net.Project
         {
             { "framework", CommandOptionType.MultipleValue },
             { "out", CommandOptionType.SingleValue },
-            { "bundle", CommandOptionType.NoValue },
+            { "zippackages", CommandOptionType.NoValue },
             { "overwrite", CommandOptionType.NoValue },
         };
 
@@ -106,7 +106,7 @@ namespace Microsoft.Net.Project
                     packageOptions.RuntimeTargetFramework = _environment.TargetFramework;
                     packageOptions.ProjectDir = options.RemainingArgs.Count > 0 ? options.RemainingArgs[0] : Directory.GetCurrentDirectory();
                     packageOptions.OutputDir = options.GetValue("out");
-                    packageOptions.Bundle = options.HasOption("bundle");
+                    packageOptions.ZipPackages = options.HasOption("zippackages");
                     packageOptions.Overwrite = options.HasOption("overwrite");
 
                     var gen = new PackManager(packageOptions);

@@ -23,7 +23,7 @@ namespace Microsoft.Net.Project.Packing
         public string OutputPath { get; private set; }
         public string PackagesPath { get; private set; }
         public bool Overwrite { get; set; }
-        public bool Bundle { get; set; }
+        public bool ZipPackages { get; set; }
 
         public PackRuntime Runtime { get; set; }
         public IList<PackProject> Projects { get; private set; }
