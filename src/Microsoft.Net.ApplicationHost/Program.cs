@@ -16,7 +16,8 @@ namespace Microsoft.Net.ApplicationHost
         private static readonly Dictionary<string, CommandOptionType> _options = new Dictionary<string, CommandOptionType>
         {
             { "nobin", CommandOptionType.NoValue },
-            { "watch", CommandOptionType.NoValue }
+            { "watch", CommandOptionType.NoValue },
+            { "packages", CommandOptionType.SingleValue}
         };
 
         private readonly IHostContainer _container;
@@ -106,6 +107,8 @@ namespace Microsoft.Net.ApplicationHost
             defaultHostOptions = new DefaultHostOptions();
             defaultHostOptions.UseCachedCompilations = !options.HasOption("nobin");
             defaultHostOptions.WatchFiles = options.HasOption("watch");
+            defaultHostOptions.PackageDirectory = options.GetValue("packages");
+
             defaultHostOptions.TargetFramework = _environment.TargetFramework;
             defaultHostOptions.ApplicationBaseDirectory = _environment.ApplicationBasePath;
 

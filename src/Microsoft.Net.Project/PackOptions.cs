@@ -10,7 +10,7 @@ namespace Microsoft.Net.Project
         
         public FrameworkName RuntimeTargetFramework { get; set; }
 
-        public bool Bundle { get; set; }
+        public bool ZipPackages { get; set; }
 
         public bool Overwrite { get; set; }
     }

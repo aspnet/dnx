@@ -31,21 +31,29 @@ namespace Microsoft.Net.Project.Packing
             foreach (var deleteFolderPath in Directory.EnumerateDirectories(deletePath).Select(Path.GetFileName))
             {
                 DeleteRecursive(Path.Combine(deletePath, deleteFolderPath));
-                Directory.Delete(Path.Combine(deletePath, deleteFolderPath), true);
+                Directory.Delete(Path.Combine(deletePath, deleteFolderPath), recursive: true);
             }
         }
 
         public void Copy(string sourcePath, string targetPath)
         {
-            CopyRecursive(sourcePath, targetPath, true, (_, __) => true);
+            CopyRecursive(
+                sourcePath, 
+                targetPath, 
+                isProjectRootFolder: true, 
+                shouldInclude: (_, __) => true);
         }
 
-        public void Copy(string sourcePath, string targetPath, Func<bool, string, bool> predicate)
+        public void Copy(string sourcePath, string targetPath, Func<bool, string, bool> shouldInclude)
         {
-            CopyRecursive(sourcePath, targetPath, true, predicate);
+            CopyRecursive(
+                sourcePath, 
+                targetPath, 
+                isProjectRootFolder: true,
+                shouldInclude: shouldInclude);
         }
 
-        private void CopyRecursive(string sourcePath, string targetPath, bool isProjectRootFolder, Func<bool, string, bool> predicate)
+        private void CopyRecursive(string sourcePath, string targetPath, bool isProjectRootFolder, Func<bool, string, bool> shouldInclude)
         {
             if (!Directory.Exists(targetPath))
             {
@@ -57,7 +65,7 @@ namespace Microsoft.Net.Project.Packing
                 var fileName = Path.GetFileName(sourceFilePath);
                 Debug.Assert(fileName != null, "fileName != null");
 
-                if (!predicate(isProjectRootFolder, fileName))
+                if (!shouldInclude(isProjectRootFolder, fileName))
                 {
                     continue;
                 }
@@ -72,7 +80,7 @@ namespace Microsoft.Net.Project.Packing
                 var folderName = Path.GetFileName(sourceFolderPath);
                 Debug.Assert(folderName != null, "folderName != null");
 
-                if (!predicate(isProjectRootFolder, folderName))
+                if (!shouldInclude(isProjectRootFolder, folderName))
                 {
                     continue;
                 }
@@ -80,15 +88,18 @@ namespace Microsoft.Net.Project.Packing
                 CopyRecursive(
                     Path.Combine(sourcePath, folderName),
                     Path.Combine(targetPath, folderName),
-                    false,
-                    predicate);
+                    isProjectRootFolder: false,
+                    shouldInclude: shouldInclude);
             }
         }
 
 
         public void ExtractNupkg(ZipArchive archive, string targetPath)
         {
-            ExtractFiles(archive, targetPath, NupkgFilter);
+            ExtractFiles(
+                archive, 
+                targetPath, 
+                shouldInclude: NupkgFilter);
         }
 
         private static bool NupkgFilter(string fullName)
@@ -115,7 +126,7 @@ namespace Microsoft.Net.Project.Packing
             return true;
         }
 
-        public void ExtractFiles(ZipArchive archive, string targetPath, Func<string, bool> predicate)
+        public void ExtractFiles(ZipArchive archive, string targetPath, Func<string, bool> shouldInclude)
         {
             foreach (ZipArchiveEntry entry in archive.Entries)
             {
@@ -125,7 +136,7 @@ namespace Microsoft.Net.Project.Packing
                     continue;
                 }
 
-                if (!predicate(entry.FullName))
+                if (!shouldInclude(entry.FullName))
                 {
                     continue;
                 }
@@ -153,16 +164,21 @@ namespace Microsoft.Net.Project.Packing
             }
         }
 
-        public void AddFiles(ZipArchive archive, string sourcePath, string targetPath, Func<string, string, bool> predicate)
+        public void AddFiles(ZipArchive archive, string sourcePath, string targetPath, Func<string, string, bool> shouldInclude)
         {
-            AddFilesRecursive(archive, sourcePath, "", targetPath, predicate);
+            AddFilesRecursive(
+                archive, 
+                sourcePath, 
+                "", 
+                targetPath,
+                shouldInclude);
         }
 
-        private void AddFilesRecursive(ZipArchive archive, string sourceBasePath, string sourcePath, string targetPath, Func<string, string, bool> predicate)
+        private void AddFilesRecursive(ZipArchive archive, string sourceBasePath, string sourcePath, string targetPath, Func<string, string, bool> shouldInclude)
         {
             foreach (var fileName in Directory.EnumerateFiles(Path.Combine(sourceBasePath, sourcePath)).Select(Path.GetFileName))
             {
-                if (!predicate(sourcePath, fileName))
+                if (!shouldInclude(sourcePath, fileName))
                 {
                     continue;
                 }
@@ -183,7 +199,7 @@ namespace Microsoft.Net.Project.Packing
                     sourceBasePath,
                     Path.Combine(sourcePath, folderName),
                     Path.Combine(targetPath, folderName),
-                    predicate);
+                    shouldInclude);
             }
         }
     }

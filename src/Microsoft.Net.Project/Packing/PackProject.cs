@@ -91,15 +91,18 @@ namespace Microsoft.Net.Project.Packing
                 }
             }
 
-            // Copy lib/**/*.dll into bin/bundle-{guid}.zip to support web deploy
-            if (root.Bundle)
+            // Copy lib/**/*.dll into bin/$xxxxxxx.packages to support web deploy
+            if (root.ZipPackages)
             {
                 if (!Directory.Exists(binFolderPath))
                 {
                     Directory.CreateDirectory(binFolderPath);
                 }
 
-                var targetFile = Path.Combine(binFolderPath, "bundle-" + Guid.NewGuid().ToString("n") + ".zip");
+                var chars = "abcdefghijklmnopqrstuvwxyz0123456789";
+                var rnd = new Random();
+                var sequence = new string(Enumerable.Range(0, 7).Select(_ => chars[rnd.Next(chars.Length)]).ToArray());
+                var targetFile = Path.Combine(binFolderPath, "$" + sequence + ".packages");
 
                 using (var targetStream = new FileStream(targetFile, FileMode.Create, FileAccess.Write, FileShare.None))
                 {
@@ -113,6 +116,11 @@ namespace Microsoft.Net.Project.Packing
                                 Path.Combine("packages", package.Library.Name + "." + package.Library.Version),
                                 IncludePackageFileInBundle);
                         }
+                        root.Operations.AddFiles(
+                            archive,
+                            root.Runtime.TargetPath,
+                            Path.Combine("packages", root.Runtime.Name + "." + root.Runtime.Version),
+                            IncludeRuntimeFileInBundle);
                     }
                 }
             }
@@ -123,7 +131,7 @@ namespace Microsoft.Net.Project.Packing
             var fileExtension = Path.GetExtension(fileName);
             var rootFolder = BasePath(relativePath);
 
-            if (string.Equals(rootFolder, "lib", StringComparison.OrdinalIgnoreCase) &&
+            if (/*string.Equals(rootFolder, "lib", StringComparison.OrdinalIgnoreCase) && */
                 string.Equals(fileExtension, ".dll", StringComparison.OrdinalIgnoreCase))
             {
                 return true;
@@ -135,6 +143,11 @@ namespace Microsoft.Net.Project.Packing
                 return true;
             }
             return false;
+        }
+
+        private bool IncludeRuntimeFileInBundle(string relativePath, string fileName)
+        {
+            return true;
         }
 
         private string BasePath(string relativePath)

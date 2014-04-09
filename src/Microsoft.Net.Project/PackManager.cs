@@ -63,7 +63,7 @@ namespace Microsoft.Net.Project
             var root = new PackRoot(project, outputPath)
             {
                 Overwrite = _options.Overwrite,
-                Bundle = _options.Bundle
+                ZipPackages = _options.ZipPackages
             };
 
             root.Runtime = new PackRuntime(
