@@ -347,8 +347,8 @@ namespace Microsoft.Net.DesignTimeHost
             state.Project = project;
 
             var dependencyWalker = new DependencyWalker(new IDependencyProvider[] { 
+                new ProjectReferenceDependencyProvider(projectResolver),
                 nugetDependencyResolver,
-                new ProjectReferenceDependencyProvider(projectResolver)
             });
 
             dependencyWalker.Walk(state.Project.Name, state.Project.Version, targetFramework);
