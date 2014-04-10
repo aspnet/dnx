@@ -3,6 +3,9 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Runtime.Versioning;
+using System.Text;
+using System.Xml;
+using System.Xml.Linq;
 using NuGet;
 
 namespace Microsoft.Net.Runtime
@@ -172,6 +175,8 @@ namespace Microsoft.Net.Runtime
 
                 incomplete = false;
                 ForEach(root, node => incomplete |= node.Disposition == Disposition.Acceptable);
+
+                // uncomment in case of emergencies: TraceState(root);
             }
 
             ForEach(root, true, (node, state) =>
@@ -189,6 +194,28 @@ namespace Microsoft.Net.Runtime
                 }
                 return true;
             });
+
+            // uncomment in case of emergencies: TraceState(root);
+        }
+
+        private void TraceState(Node root)
+        {
+            var elt = new XElement("state");
+            ForEach(root, elt, (node, parent) =>
+            {
+                var child = new XElement(node.Key.Name,
+                    new XAttribute("version", node.Key.Version == null ? "null" : node.Key.Version.ToString()),
+                    new XAttribute("disposition", node.Disposition.ToString()));
+                parent.Add(child);
+                return child;
+            });
+
+            var sb = new StringBuilder();
+            using (var writer = XmlWriter.Create(sb, new XmlWriterSettings { Indent = true, IndentChars = "  " }))
+            {
+                elt.WriteTo(writer);
+            }
+            Trace.TraceInformation("[{0}] Current State\r\n{1}", GetType().Name, sb);
         }
 
         public enum Disposition
@@ -224,12 +251,20 @@ namespace Microsoft.Net.Runtime
                 return null;
             }
 
-            return resolvedItems[packageKey] = new Item()
+            if (resolvedItems.TryGetValue(hit.Details.Identity, out item))
+            {
+                return item;
+            }
+
+            item = new Item()
             {
                 Key = hit.Details.Identity,
                 Dependencies = hit.Details.Dependencies,
                 Resolver = hit.Resolver,
             };
+            resolvedItems[packageKey] = item;
+            resolvedItems[hit.Details.Identity] = item;
+            return item;
         }
 
         public void Populate(FrameworkName frameworkName, IList<LibraryDescription> libraries)
