@@ -111,7 +111,7 @@ namespace Microsoft.Net.Runtime.Roslyn
             // First we need to emit just the metadata for this compilation
             using (var metadataStream = new MemoryStream())
             {
-                var result = Compilation.EmitMetadataOnly(metadataStream);
+                var result = Compilation.Emit(metadataStream);
 
                 if (!result.Success)
                 {
