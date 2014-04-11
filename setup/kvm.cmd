@@ -122,7 +122,7 @@ IF "%3"=="" (
   )
 
   ECHO Setting alias '%2' to '%3'
-  ECHO %3 >%~dp0alias\%2.txt
+  ECHO %3>%~dp0alias\%2.txt
 )
 GOTO:EOF
 
@@ -137,7 +137,7 @@ GOTO:EOF
 
 @REM read _KVM_VERSION.txt if _KVM_VERSION not set
 IF "%_KVM_VERSION%" == "" (
-  FOR /F "delims=" %%G IN (%~dp0alias\default.txt) DO (
+  FOR /F %%G IN (%~dp0alias\default.txt) DO (
     SET "_KVM_VERSION=%%G"
   )
 )
