@@ -5,6 +5,7 @@ using System.Runtime.Versioning;
 using Microsoft.Net.Runtime;
 using Microsoft.Net.Runtime.Loader.NuGet;
 using NuGet;
+using System.Security.Cryptography;
 
 namespace Microsoft.Net.Project.Packing
 {
@@ -26,6 +27,7 @@ namespace Microsoft.Net.Project.Packing
 
         public string Name { get; set; }
         public SemanticVersion Version { get; set; }
+        public string TargetPath { get; set; }
 
         public void Emit(PackRoot root)
         {
@@ -39,25 +41,25 @@ namespace Microsoft.Net.Project.Packing
             Version = package.Version;
 
             var targetName = package.Id + "." + package.Version;
-            var targetPath = Path.Combine(root.PackagesPath, targetName);
-
-            if (Directory.Exists(targetPath))
+            TargetPath = Path.Combine(root.PackagesPath, targetName);
+            
+            if (Directory.Exists(TargetPath))
             {
-                Console.WriteLine("  {0} already exists.", targetPath);
+                Console.WriteLine("  {0} already exists.", TargetPath);
                 return;
             }
 
-            if (!Directory.Exists(targetPath))
+            if (!Directory.Exists(TargetPath))
             {
-                Directory.CreateDirectory(targetPath);
+                Directory.CreateDirectory(TargetPath);
             }
             
-            var targetNupkgPath = Path.Combine(targetPath, targetName + ".nupkg");
+            var targetNupkgPath = Path.Combine(TargetPath, targetName + ".nupkg");
             using (var sourceStream = package.GetStream())
             {
                 using (var archive = new ZipArchive(sourceStream, ZipArchiveMode.Read))
                 {
-                    PackUtilities.ExtractFiles(archive, targetPath);
+                    root.Operations.ExtractNupkg(archive, TargetPath);
                 }
             }
             using (var sourceStream = package.GetStream())
@@ -66,6 +68,10 @@ namespace Microsoft.Net.Project.Packing
                 {
                     sourceStream.CopyTo(targetStream);
                 }
+
+                sourceStream.Seek(0, SeekOrigin.Begin);
+                var sha512Bytes = SHA512.Create().ComputeHash(sourceStream);
+                File.WriteAllText(targetNupkgPath + ".sha512", Convert.ToBase64String(sha512Bytes));
             }
         }
     }

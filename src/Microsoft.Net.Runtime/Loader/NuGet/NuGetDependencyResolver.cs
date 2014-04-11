@@ -18,8 +18,17 @@ namespace Microsoft.Net.Runtime.Loader.NuGet
         private readonly IDictionary<string, IList<string>> _sharedSources = new Dictionary<string, IList<string>>(StringComparer.OrdinalIgnoreCase);
 
         public NuGetDependencyResolver(string projectPath)
+            : this(projectPath, null)
         {
-            _repository = new LocalPackageRepository(ResolveRepositoryPath(projectPath));
+        }
+
+        public NuGetDependencyResolver(string projectPath, string packagesPath)
+        {
+            if (string.IsNullOrEmpty(packagesPath))
+            {
+                packagesPath = ResolveRepositoryPath(projectPath);
+            }
+            _repository = new LocalPackageRepository(packagesPath);
             Dependencies = Enumerable.Empty<LibraryDescription>();
         }
 
@@ -237,7 +246,7 @@ namespace Microsoft.Net.Runtime.Loader.NuGet
             return _repository.FindPackage(name, version);
         }
 
-        private string ResolveRepositoryPath(string projectPath)
+        public static string ResolveRepositoryPath(string projectPath)
         {
             var di = new DirectoryInfo(projectPath);
 
