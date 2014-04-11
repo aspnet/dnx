@@ -23,7 +23,6 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="ApplicationEnvironment.cs" />
-    <Compile Include="DefaultGlobalAssemblyCache.cs" />
     <Compile Include="DefaultHost.cs" />
     <Compile Include="DefaultHostOptions.cs" />
     <Compile Include="DependencyManagement\DependencyWalker.cs" />
@@ -37,14 +36,14 @@
     <Compile Include="DictionaryExtensions.cs" />
     <Compile Include="Executable.cs" />
     <Compile Include="ExportProviders\CompositeLibraryExportProvider.cs" />
-    <Compile Include="ExportProviders\GacLibraryExportProvider.cs" />
+    <Compile Include="ExportProviders\ReferenceAssemblyLibraryExporter.cs" />
     <Compile Include="ExportProviders\LibraryExport.cs" />
     <Compile Include="ExportProviders\MetadataFileReference.cs" />
     <Compile Include="ExportProviders\SourceFileReference.cs" />
     <Compile Include="FileSystem\FileWatcher.cs" />
     <Compile Include="FileSystem\IFileWatcher.cs" />
+    <Compile Include="FrameworkReferenceResolver.cs" />
     <Compile Include="GlobalSettings.cs" />
-    <Compile Include="IGlobalAssemblyCache.cs" />
     <Compile Include="IProjectResolver.cs" />
     <Compile Include="Loader\AssemblyLoader.cs" />
     <Compile Include="Loader\AssemblyLoadResult.cs" />

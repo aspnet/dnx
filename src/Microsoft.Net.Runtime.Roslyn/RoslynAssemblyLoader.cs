@@ -22,8 +22,7 @@ namespace Microsoft.Net.Runtime.Roslyn
         public RoslynAssemblyLoader(IAssemblyLoaderEngine loaderEngine,
                                     IFileWatcher watcher,
                                     IProjectResolver projectResolver,
-                                    ILibraryExportProvider dependencyExporter,
-                                    IGlobalAssemblyCache globalAssemblyCache)
+                                    ILibraryExportProvider dependencyExporter)
         {
             _loaderEngine = loaderEngine;
             _projectResolver = projectResolver;

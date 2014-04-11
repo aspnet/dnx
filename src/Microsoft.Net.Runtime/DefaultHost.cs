@@ -115,7 +115,6 @@ namespace Microsoft.Net.Runtime
 
             var nugetDependencyResolver = new NuGetDependencyResolver(_projectDir, options.PackageDirectory);
             var nugetLoader = new NuGetAssemblyLoader(_loaderEngine, nugetDependencyResolver);
-            var globalAssemblyCache = new DefaultGlobalAssemblyCache();
 
             // Roslyn needs to be able to resolve exported references and sources
             var libraryExporters = new List<ILibraryExportProvider>();
@@ -123,14 +122,14 @@ namespace Microsoft.Net.Runtime
             // Add the host exporter
             libraryExporters.Add(_hostExporter);
 
-            // GAC
-            libraryExporters.Add(new GacLibraryExportProvider(globalAssemblyCache));
+            // Reference assemblies
+            libraryExporters.Add(new ReferenceAssemblyLibraryExporter());
 
             // NuGet exporter
             libraryExporters.Add(nugetDependencyResolver);
 
             var dependencyExporter = new CompositeLibraryExportProvider(libraryExporters);
-            var roslynLoader = new LazyRoslynAssemblyLoader(_loaderEngine, projectResolver, _watcher, dependencyExporter, globalAssemblyCache);
+            var roslynLoader = new LazyRoslynAssemblyLoader(_loaderEngine, projectResolver, _watcher, dependencyExporter);
 
             // Project.json projects
             loaders.Add(roslynLoader);

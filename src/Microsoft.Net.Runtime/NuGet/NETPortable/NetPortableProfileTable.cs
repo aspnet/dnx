@@ -59,7 +59,7 @@ namespace NuGet
             {
                 // This setter is only for Unit Tests.
                 _portableProfiles = value;
-                _portableProfilesByCustomProfileString = _portableProfiles.ToDictionary(x => x.CustomProfileString);
+                _portableProfilesByCustomProfileString = _portableProfiles.ToDictionary(x => x.CustomProfileString, new ProfileStringComparer());
             }
         }
 
@@ -112,7 +112,7 @@ namespace NuGet
             return Enumerable.Empty<NetPortableProfile>();
         }
 
-        private static NetPortableProfile LoadPortableProfile(string version, string profileDirectory)
+        private static NetPortableProfile LoadPortableProfile(string versionDirectory, string profileDirectory)
         {
             string profileName = Path.GetFileName(profileDirectory);
 
@@ -126,7 +126,7 @@ namespace NuGet
                                                .Select(LoadSupportedFramework)
                                                .Where(p => p != null);
 
-            return new NetPortableProfile(version, profileName, supportedFrameworks);
+            return new NetPortableProfile(versionDirectory, profileName, supportedFrameworks);
         }
 
         private static FrameworkName LoadSupportedFramework(string frameworkFile)
@@ -213,6 +213,27 @@ namespace NuGet
             }
 
             return null;
+        }
+
+        private class ProfileStringComparer : EqualityComparer<string>
+        {
+            public override bool Equals(string x, string y)
+            {
+                var left = x.Split('+');
+                var right = y.Split('+');
+
+                Array.Sort(left);
+                Array.Sort(right);
+
+                return Enumerable.SequenceEqual(left, right);
+            }
+
+            public override int GetHashCode(string obj)
+            {
+                var values = obj.Split('+');
+                Array.Sort(values);
+                return String.Join("+", values).GetHashCode();
+            }
         }
     }
 }
