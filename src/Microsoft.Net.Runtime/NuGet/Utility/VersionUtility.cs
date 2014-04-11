@@ -118,6 +118,19 @@ namespace NuGet
                 throw new ArgumentNullException("frameworkName");
             }
 
+            if (frameworkName.Contains("+"))
+            {
+                var portableProfile = NetPortableProfile.Parse(frameworkName);
+
+                if (portableProfile != null &&
+                    portableProfile.FrameworkName.Profile != frameworkName)
+                {
+                    return portableProfile.FrameworkName;
+                }
+
+                return VersionUtility.UnsupportedFrameworkName;
+            }
+
             // {Identifier}{Version}-{Profile}
 
             // Split the framework name into 3 parts, identifier, version and profile.
@@ -1000,7 +1013,7 @@ namespace NuGet
             return version != null;
         }
 
-        internal static bool IsPortableFramework(this FrameworkName framework)
+        public static bool IsPortableFramework(this FrameworkName framework)
         {
             // The profile part has been verified in the ParseFrameworkName() method. 
             // By the time it is called here, it's guaranteed to be valid.

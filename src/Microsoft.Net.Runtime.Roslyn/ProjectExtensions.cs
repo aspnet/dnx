@@ -30,7 +30,11 @@ namespace Microsoft.Net.Runtime.Roslyn
             else
             {
                 specificOptions = configuration.Value["compilationOptions"];
-                specificDefines = ConvertValue<string[]>(specificOptions, "define") ?? new string[] { configuration.Key.ToUpperInvariant() };
+                specificDefines = ConvertValue<string[]>(specificOptions, "define") ??
+                    new[] { 
+                        configuration.Key.Replace('+', '_')
+                                             .ToUpperInvariant() 
+                    };
             }
 
             var defaultOptions = new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary);

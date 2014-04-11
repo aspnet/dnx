@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Runtime.Versioning;
 using NuGet.Resources;
@@ -31,12 +32,12 @@ namespace NuGet
         /// Creates a portable profile for the given framework version, profile name and 
         /// supported frameworks.
         /// </summary>
-        /// <param name="version">.NET framework version that the profile belongs to, like "v4.0".</param>
+        /// <param name="frameworkDirectory">.NET framework version that the profile belongs to, like "v4.0".</param>
         /// <param name="name">Name of the portable profile, like "win+net45".</param>
         /// <param name="supportedFrameworks">Supported frameworks.</param>
-        public NetPortableProfile(string version, string name, IEnumerable<FrameworkName> supportedFrameworks)
+        public NetPortableProfile(string frameworkDirectory, string name, IEnumerable<FrameworkName> supportedFrameworks)
         {
-            if (String.IsNullOrEmpty(version))
+            if (String.IsNullOrEmpty(frameworkDirectory))
             {
                 throw new ArgumentNullException( "version");
             }
@@ -63,7 +64,9 @@ namespace NuGet
 
             Name = name;
             SupportedFrameworks = new ReadOnlyHashSet<FrameworkName>(frameworks);
-            FrameworkVersion = version;
+            FrameworkDirectory = frameworkDirectory;
+            FrameworkVersion = new DirectoryInfo(frameworkDirectory).Name.TrimStart('v');
+            FrameworkName = new FrameworkName(".NETPortable", Version.Parse(FrameworkVersion), Name);
         }
 
         /// <summary>
@@ -71,9 +74,13 @@ namespace NuGet
         /// </summary>
         public string Name { get; private set; }
 
+        public FrameworkName FrameworkName { get; set; }
+
         /// <summary>
         /// Gets the framework version that this profile belongs to.
         /// </summary>
+        public string FrameworkDirectory { get; private set; }
+
         public string FrameworkVersion { get; private set; }
 
         public ISet<FrameworkName> SupportedFrameworks { get; private set; }

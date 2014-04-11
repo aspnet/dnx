@@ -13,18 +13,18 @@ namespace Microsoft.Net.Runtime.Roslyn
     {
         private readonly IRoslynCompiler _compiler;
         private readonly IResourceProvider _resourceProvider;
-        private readonly IGlobalAssemblyCache _globalAssemblyCache;
         private readonly IEnumerable<LibraryDescription> _resolvedDependencies;
+        private readonly FrameworkReferenceResolver _frameworkResolver;
 
         public RoslynArtifactsProducer(IRoslynCompiler compiler,
                                        IResourceProvider resourceProvider,
-                                       IGlobalAssemblyCache globalAssemblyCache,
-                                       IEnumerable<LibraryDescription> resolvedDependencies)
+                                       IEnumerable<LibraryDescription> resolvedDependencies,
+                                       FrameworkReferenceResolver frameworkResolver)
         {
             _compiler = compiler;
             _resourceProvider = resourceProvider;
-            _globalAssemblyCache = globalAssemblyCache;
             _resolvedDependencies = resolvedDependencies;
+            _frameworkResolver = frameworkResolver;
         }
 
         public bool Build(BuildContext buildContext, List<Diagnostic> diagnostics)
@@ -132,8 +132,8 @@ namespace Microsoft.Net.Runtime.Roslyn
                         continue;
                     }
 
-                    if (VersionUtility.IsDesktop(targetFramework) &&
-                        _globalAssemblyCache.IsInGac(dependency.Name))
+                    string path;
+                    if (_frameworkResolver.TryGetAssembly(dependency.Name, targetFramework, out path))
                     {
                         frameworkAssemblies.Add(dependency.Name);
                     }
@@ -168,13 +168,9 @@ namespace Microsoft.Net.Runtime.Roslyn
                 }
             }
 
-            // Only do this on full desktop
-            if (VersionUtility.IsDesktop(buildContext.TargetFramework))
+            foreach (var a in frameworkAssemblies)
             {
-                foreach (var a in frameworkAssemblies)
-                {
-                    buildContext.PackageBuilder.FrameworkReferences.Add(new FrameworkAssemblyReference(a));
-                }
+                buildContext.PackageBuilder.FrameworkReferences.Add(new FrameworkAssemblyReference(a));
             }
 
             var file = new PhysicalPackageFile();
