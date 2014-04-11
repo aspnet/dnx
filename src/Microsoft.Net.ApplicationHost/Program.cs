@@ -17,7 +17,7 @@ namespace Microsoft.Net.ApplicationHost
         {
             { "nobin", CommandOptionType.NoValue },
             { "watch", CommandOptionType.NoValue },
-            { "packages", CommandOptionType.SingleValue}
+            { "packages", CommandOptionType.SingleValue},
         };
 
         private readonly IHostContainer _container;
