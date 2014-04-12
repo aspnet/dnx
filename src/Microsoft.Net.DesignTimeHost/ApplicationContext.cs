@@ -334,10 +334,11 @@ namespace Microsoft.Net.DesignTimeHost
             var projectResolver = new ProjectResolver(projectDir, rootDirectory);
 
             var nugetDependencyResolver = new NuGetDependencyResolver(projectDir);
-            var referenceAssemblyDependencyExporter = new ReferenceAssemblyLibraryExporter();
+            var referenceAssemblyDependencyExporter = new ReferenceAssemblyLibraryExportProvider();
             var compositeDependencyExporter = new CompositeLibraryExportProvider(new ILibraryExportProvider[] { 
+                nugetDependencyResolver,
                 referenceAssemblyDependencyExporter, 
-                nugetDependencyResolver 
+                new GacLibraryExportProvider()
             });
 
             var roslynCompiler = new RoslynCompiler(projectResolver,
