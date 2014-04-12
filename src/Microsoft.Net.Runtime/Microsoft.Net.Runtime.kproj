@@ -36,7 +36,8 @@
     <Compile Include="DictionaryExtensions.cs" />
     <Compile Include="Executable.cs" />
     <Compile Include="ExportProviders\CompositeLibraryExportProvider.cs" />
-    <Compile Include="ExportProviders\ReferenceAssemblyLibraryExporter.cs" />
+    <Compile Include="ExportProviders\GacLibraryExportProvider.cs" />
+    <Compile Include="ExportProviders\ReferenceAssemblyLibraryExportProvider.cs" />
     <Compile Include="ExportProviders\LibraryExport.cs" />
     <Compile Include="ExportProviders\MetadataFileReference.cs" />
     <Compile Include="ExportProviders\SourceFileReference.cs" />

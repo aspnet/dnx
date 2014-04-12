@@ -4,9 +4,9 @@ using NuGet;
 
 namespace Microsoft.Net.Runtime
 {
-    public class ReferenceAssemblyLibraryExporter : ILibraryExportProvider
+    public class ReferenceAssemblyLibraryExportProvider : ILibraryExportProvider
     {
-        public ReferenceAssemblyLibraryExporter()
+        public ReferenceAssemblyLibraryExportProvider()
         {
             FrameworkResolver = new FrameworkReferenceResolver();
         }
