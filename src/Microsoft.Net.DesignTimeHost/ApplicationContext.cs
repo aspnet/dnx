@@ -336,9 +336,9 @@ namespace Microsoft.Net.DesignTimeHost
             var nugetDependencyResolver = new NuGetDependencyResolver(projectDir);
             var referenceAssemblyDependencyExporter = new ReferenceAssemblyLibraryExportProvider();
             var compositeDependencyExporter = new CompositeLibraryExportProvider(new ILibraryExportProvider[] { 
-                nugetDependencyResolver,
                 referenceAssemblyDependencyExporter, 
-                new GacLibraryExportProvider()
+                new GacLibraryExportProvider(),
+                nugetDependencyResolver,
             });
 
             var roslynCompiler = new RoslynCompiler(projectResolver,
