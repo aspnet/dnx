@@ -122,14 +122,14 @@ namespace Microsoft.Net.Runtime
             // Add the host exporter
             libraryExporters.Add(_hostExporter);
 
-            // NuGet exporter
-            libraryExporters.Add(nugetDependencyResolver);
-
             // Reference assemblies
             libraryExporters.Add(new ReferenceAssemblyLibraryExportProvider());
 
             // GAC assemblies
             libraryExporters.Add(new GacLibraryExportProvider());
+
+            // NuGet exporter
+            libraryExporters.Add(nugetDependencyResolver);
 
             var dependencyExporter = new CompositeLibraryExportProvider(libraryExporters);
             var roslynLoader = new LazyRoslynAssemblyLoader(_loaderEngine, projectResolver, _watcher, dependencyExporter);

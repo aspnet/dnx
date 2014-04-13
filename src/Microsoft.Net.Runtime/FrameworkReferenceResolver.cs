@@ -82,7 +82,16 @@ namespace Microsoft.Net.Runtime
                 foreach (var assemblyName in GetFrameworkAssemblies(redistList))
                 {
                     var assemblyPath = Path.Combine(directory.FullName, assemblyName + ".dll");
-                    frameworkInfo.Assemblies.Add(assemblyName, assemblyPath);
+                    var facadePath = Path.Combine(directory.FullName, "Facades", assemblyName + ".dll");
+
+                    if (File.Exists(assemblyPath))
+                    {
+                        frameworkInfo.Assemblies.Add(assemblyName, assemblyPath);
+                    }
+                    else if (File.Exists(facadePath))
+                    {
+                        frameworkInfo.Assemblies.Add(assemblyName, facadePath);
+                    }
                 }
             }
 
