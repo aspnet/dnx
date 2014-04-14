@@ -40,6 +40,7 @@
     <Compile Include="RoslynCompiler.cs" />
     <Compile Include="RoslynLibraryExport.cs" />
     <Compile Include="RoslynMetadataProvider.cs" />
+    <Compile Include="RoslynProjectReference.cs" />
     <Compile Include="RoslynMetadataReference.cs" />
     <Compile Include="RoslynProjectMetadata.cs" />
     <Compile Include="Services\IRoslynMetadataReference.cs" />

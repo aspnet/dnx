@@ -23,17 +23,14 @@ namespace Microsoft.Net.Runtime.Roslyn
         public IList<Diagnostic> Diagnostics { get; private set; }
 
         public IList<IMetadataReference> MetadataReferences { get; private set; }
-        public IList<CompilationContext> ProjectReferences { get; private set; }
 
         public CompilationContext(CSharpCompilation compilation,
                                   IList<IMetadataReference> metadataReferences,
-                                  IList<CompilationContext> projectReferences,
                                   IList<Diagnostic> diagnostics,
                                   Project project)
         {
             Compilation = compilation;
             MetadataReferences = metadataReferences;
-            ProjectReferences = projectReferences;
             Diagnostics = diagnostics;
             Project = project;
         }
@@ -45,9 +42,8 @@ namespace Microsoft.Net.Runtime.Roslyn
                 var metadataReferences = new List<IMetadataReference>();
                 var sourceReferences = new List<ISourceReference>();
 
-                // Compilation reference
-                var metadataReference = Compilation.ToMetadataReference(embedInteropTypes: Project.EmbedInteropTypes);
-                metadataReferences.Add(new RoslynMetadataReference(Project.Name, metadataReference));
+                // Project reference
+                metadataReferences.Add(new RoslynProjectReference(this));
 
                 // Other references
                 metadataReferences.AddRange(MetadataReferences);

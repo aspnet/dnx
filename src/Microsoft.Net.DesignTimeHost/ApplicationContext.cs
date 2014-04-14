@@ -111,7 +111,7 @@ namespace Microsoft.Net.DesignTimeHost
                 // Unhandled errors
                 var error = new ErrorMessage
                 {
-                    Message = ex.Message
+                    Message = ex.ToString()
                 };
 
                 OnTransmit(new Message

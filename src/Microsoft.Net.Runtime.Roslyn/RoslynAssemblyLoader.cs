@@ -93,9 +93,9 @@ namespace Microsoft.Net.Runtime.Roslyn
         {
             _compilationCache[context.Project.Name] = context;
 
-            foreach (var ctx in context.ProjectReferences)
+            foreach (var projectReference in context.MetadataReferences.OfType<RoslynProjectReference>())
             {
-                CacheCompilation(ctx);
+                CacheCompilation(projectReference.CompliationContext);
             }
         }
 
