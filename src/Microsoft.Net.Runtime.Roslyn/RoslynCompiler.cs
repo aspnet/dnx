@@ -116,12 +116,10 @@ namespace Microsoft.Net.Runtime.Roslyn
             IList<SyntaxTree> trees = GetSyntaxTrees(project, compilationSettings, exports);
 
             IList<MetadataReference> exportedReferences;
-            IList<CompilationContext> projectReferences;
             IList<IMetadataReference> metadataReferences;
 
             ExtractReferences(exports,
                               out exportedReferences,
-                              out projectReferences,
                               out metadataReferences);
 
             var embeddedReferences = metadataReferences.OfType<EmbeddedMetadataReference>()
@@ -155,7 +153,6 @@ namespace Microsoft.Net.Runtime.Roslyn
 
             compilationContext = new CompilationContext(newCompilation,
                 metadataReferences,
-                projectReferences,
                 assemblyNeutralTypeDiagnostics,
                 project);
 
@@ -237,25 +234,14 @@ namespace Microsoft.Net.Runtime.Roslyn
 
         private void ExtractReferences(List<ILibraryExport> dependencyExports,
                                        out IList<MetadataReference> references,
-                                       out IList<CompilationContext> projectReferences,
                                        out IList<IMetadataReference> metadataReferences)
         {
             var used = new HashSet<string>();
             references = new List<MetadataReference>();
-            projectReferences = new List<CompilationContext>();
             metadataReferences = new List<IMetadataReference>();
 
             foreach (var export in dependencyExports)
             {
-                var roslynExport = export as RoslynLibraryExport;
-
-                // Roslyn exports have more information that we might want to flow to the 
-                // original compilation
-                if (roslynExport != null)
-                {
-                    projectReferences.Add(roslynExport.CompilationContext);
-                }
-
                 ExpandEmbeddedReferences(export.MetadataReferences);
 
                 foreach (var reference in export.MetadataReferences)
@@ -301,7 +287,7 @@ namespace Microsoft.Net.Runtime.Roslyn
                 return MetadataFileReferenceFactory.CreateReference(fileMetadataReference.Path);
             }
 
-            var roslynReference = metadataReference as RoslynMetadataReference;
+            var roslynReference = metadataReference as IRoslynMetadataReference;
 
             if (roslynReference != null)
             {
