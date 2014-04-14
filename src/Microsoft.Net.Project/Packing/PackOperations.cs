@@ -13,6 +13,8 @@ namespace Microsoft.Net.Project.Packing
     {
         public void Delete(string folderPath)
         {
+            // Calling DeleteRecursive rather than Directory.Delete(..., recursive: true)
+            // due to an infrequent exception which can be thrown from that API
             DeleteRecursive(folderPath);
         }
 
