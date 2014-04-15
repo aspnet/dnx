@@ -27,6 +27,7 @@ namespace Microsoft.Net.DesignTimeHost
             public Project Project { get; set; }
 
             public RoslynMetadataProvider MetadataProvider { get; set; }
+            public IDictionary<string, ReferenceDescription> Dependencies { get; set; }
         }
 
         public class Trigger<TValue>
@@ -217,7 +218,8 @@ namespace Microsoft.Net.DesignTimeHost
                 {
                     ProjectReferences = metadata.ProjectReferences,
                     FileReferences = metadata.References,
-                    RawReferences = metadata.RawReferences
+                    RawReferences = metadata.RawReferences,
+                    Dependencies = state.Dependencies
                 };
 
                 _local.Diagnostics = new DiagnosticsMessage
@@ -349,10 +351,64 @@ namespace Microsoft.Net.DesignTimeHost
             var dependencyWalker = new DependencyWalker(new IDependencyProvider[] { 
                 new ProjectReferenceDependencyProvider(projectResolver),
                 nugetDependencyResolver,
+                new UnresolvedDependencyProvider() // A catch all for unresolved dependencies
             });
 
             dependencyWalker.Walk(state.Project.Name, state.Project.Version, targetFramework);
+
+            Func<LibraryDescription, ReferenceDescription> referenceFactory = library =>
+            {
+                var type = ReferenceDescriptionType.Unresolved;
+
+                string path = null;
+
+                Project thisProject;
+                if (projectResolver.TryResolveProject(library.Identity.Name, out thisProject))
+                {
+                    path = thisProject.ProjectFilePath;
+                    type = ReferenceDescriptionType.Project;
+                }
+                else if (nugetDependencyResolver.PackagePaths.TryGetValue(library.Identity.Name, out path))
+                {
+                    type = ReferenceDescriptionType.Package;
+                }
+
+                return new ReferenceDescription
+                {
+                    Name = library.Identity.Name,
+                    Version = library.Identity.Version.ToString(),
+                    Type = type.ToString(),
+                    Path = path,
+                    Dependencies = library.Dependencies.Select(lib => new ReferenceItem
+                    {
+                        Name = lib.Name,
+                        Version = lib.Version.ToString()
+                    })
+                };
+            };
+
+            state.Dependencies = dependencyWalker.Libraries
+                                                 .Select(referenceFactory)
+                                                 .ToDictionary(d => d.Name);
+
             return state;
+        }
+
+        private class UnresolvedDependencyProvider : IDependencyProvider
+        {
+            public LibraryDescription GetDescription(string name, SemanticVersion version, FrameworkName targetFramework)
+            {
+                return new LibraryDescription
+                {
+                    Identity = new Library { Name = name, Version = version },
+                    Dependencies = Enumerable.Empty<Library>()
+                };
+            }
+
+            public void Initialize(IEnumerable<LibraryDescription> dependencies, FrameworkName targetFramework)
+            {
+
+            }
         }
     }
 }
