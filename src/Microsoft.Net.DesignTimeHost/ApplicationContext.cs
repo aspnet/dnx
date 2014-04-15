@@ -377,7 +377,7 @@ namespace Microsoft.Net.DesignTimeHost
                 {
                     Name = library.Identity.Name,
                     Version = library.Identity.Version.ToString(),
-                    Type = type,
+                    Type = type.ToString(),
                     Path = path,
                     Dependencies = library.Dependencies.Select(lib => new ReferenceItem
                     {

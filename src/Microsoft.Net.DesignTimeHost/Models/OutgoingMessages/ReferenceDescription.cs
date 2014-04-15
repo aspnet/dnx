@@ -11,7 +11,7 @@ namespace Microsoft.Net.DesignTimeHost.Models.OutgoingMessages
 
         public string Path { get; set; }
 
-        public ReferenceDescriptionType Type { get; set; }
+        public string Type { get; set; }
 
         public IEnumerable<ReferenceItem> Dependencies { get; set; }
     }
