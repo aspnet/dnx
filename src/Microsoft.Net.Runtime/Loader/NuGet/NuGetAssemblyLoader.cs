@@ -15,7 +15,7 @@ namespace Microsoft.Net.Runtime.Loader.NuGet
         public AssemblyLoadResult Load(LoadContext loadContext)
         {
             string path;
-            if (_dependencyResolver.ResolvedPackagePaths.TryGetValue(loadContext.AssemblyName, out path))
+            if (_dependencyResolver.PackageAssemblyPaths.TryGetValue(loadContext.AssemblyName, out path))
             {
                 return new AssemblyLoadResult(_loaderEngine.LoadFile(path));
             }

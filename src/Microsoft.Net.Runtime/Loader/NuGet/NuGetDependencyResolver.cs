@@ -16,6 +16,7 @@ namespace Microsoft.Net.Runtime.Loader.NuGet
         private readonly Dictionary<string, string> _paths = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
         private readonly Dictionary<string, LibraryDescription> _dependencies = new Dictionary<string, LibraryDescription>(StringComparer.OrdinalIgnoreCase);
         private readonly IDictionary<string, IList<string>> _sharedSources = new Dictionary<string, IList<string>>(StringComparer.OrdinalIgnoreCase);
+        private readonly IDictionary<string, string> _packagePaths = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
         public NuGetDependencyResolver(string projectPath)
             : this(projectPath, null)
@@ -32,11 +33,19 @@ namespace Microsoft.Net.Runtime.Loader.NuGet
             Dependencies = Enumerable.Empty<LibraryDescription>();
         }
 
-        public IDictionary<string, string> ResolvedPackagePaths
+        public IDictionary<string, string> PackageAssemblyPaths
         {
             get
             {
                 return _paths;
+            }
+        }
+
+        public IDictionary<string, string> PackagePaths
+        {
+            get
+            {
+                return _packagePaths;
             }
         }
 
@@ -97,6 +106,8 @@ namespace Microsoft.Net.Runtime.Loader.NuGet
                 {
                     continue;
                 }
+
+                _packagePaths[dependency.Identity.Name] = _repository.PathResolver.GetInstallPath(package);
 
                 // Try to find a contract folder for this package and store that
                 // for compilation

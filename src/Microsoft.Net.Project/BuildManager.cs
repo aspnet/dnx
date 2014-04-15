@@ -300,7 +300,7 @@ namespace Microsoft.Net.Project
                                                                       globalAssemblyCache,
                                                                       projectReferenceResolver.Dependencies);
 
-            packagePaths = nugetDependencyResolver.ResolvedPackagePaths;
+            packagePaths = nugetDependencyResolver.PackageAssemblyPaths;
 
             return roslynArtifactsProducer;
         }
