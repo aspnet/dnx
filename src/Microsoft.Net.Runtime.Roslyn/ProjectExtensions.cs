@@ -32,8 +32,7 @@ namespace Microsoft.Net.Runtime.Roslyn
                 specificOptions = configuration.Value["compilationOptions"];
                 specificDefines = ConvertValue<string[]>(specificOptions, "define") ??
                     new[] { 
-                        configuration.Key.Replace('+', '_')
-                                             .ToUpperInvariant() 
+                        MakeDefaultTargetFrameworkDefine(targetFramework)
                     };
             }
 
@@ -65,6 +64,18 @@ namespace Microsoft.Net.Runtime.Roslyn
             };
 
             return settings;
+        }
+
+        private static string MakeDefaultTargetFrameworkDefine(FrameworkName targetFramework)
+        {
+            var shortName = VersionUtility.GetShortFrameworkName(targetFramework);
+
+            if (VersionUtility.IsPortableFramework(targetFramework))
+            {
+                return shortName.Substring("portable-".Length).Replace('+', '_');
+            }
+
+            return shortName.ToUpperInvariant();
         }
 
         private static CSharpCompilationOptions GetCompilationOptions(JToken compilationOptions)

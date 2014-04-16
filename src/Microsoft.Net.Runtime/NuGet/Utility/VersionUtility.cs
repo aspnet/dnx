@@ -118,19 +118,6 @@ namespace NuGet
                 throw new ArgumentNullException("frameworkName");
             }
 
-            if (frameworkName.Contains("+"))
-            {
-                var portableProfile = NetPortableProfile.Parse(frameworkName);
-
-                if (portableProfile != null &&
-                    portableProfile.FrameworkName.Profile != frameworkName)
-                {
-                    return portableProfile.FrameworkName;
-                }
-
-                return VersionUtility.UnsupportedFrameworkName;
-            }
-
             // {Identifier}{Version}-{Profile}
 
             // Split the framework name into 3 parts, identifier, version and profile.

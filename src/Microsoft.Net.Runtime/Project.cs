@@ -272,7 +272,7 @@ namespace Microsoft.Net.Runtime
                 {
                     var config = new TargetFrameworkConfiguration();
 
-                    config.FrameworkName = VersionUtility.ParseFrameworkName(configuration.Key);
+                    config.FrameworkName = ParseFrameworkName(configuration.Key);
                     var properties = configuration.Value.Value<JObject>();
 
                     config.Dependencies = new List<Library>();
@@ -283,6 +283,32 @@ namespace Microsoft.Net.Runtime
                     _compilationOptions[config.FrameworkName] = configuration;
                 }
             }
+        }
+
+        private FrameworkName ParseFrameworkName(string configurationName)
+        {
+            if (configurationName.Contains("+"))
+            {
+                var portableProfile = NetPortableProfile.Parse(configurationName);
+
+                if (portableProfile != null &&
+                    portableProfile.FrameworkName.Profile != configurationName)
+                {
+                    return portableProfile.FrameworkName;
+                }
+
+                return VersionUtility.UnsupportedFrameworkName;
+            }
+
+            if (configurationName.IndexOf(',') != -1)
+            {
+                // Assume it's a framework name if it contains commas
+                // e.g. .NETPortable,Version=v4.5,Profile=Profile78
+                return new FrameworkName(configurationName);
+            }
+
+            return VersionUtility.ParseFrameworkName(configurationName);
+
         }
 
         private static T GetValue<T>(JToken token, string name)
