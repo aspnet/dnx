@@ -5,6 +5,7 @@ namespace Microsoft.Net.DesignTimeHost.Models.OutgoingMessages
     {
         Unresolved,
         Project,
-        Package
+        Package,
+        GAC
     }
 }

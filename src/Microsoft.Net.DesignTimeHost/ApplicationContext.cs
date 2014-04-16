@@ -372,17 +372,23 @@ namespace Microsoft.Net.DesignTimeHost
                 {
                     type = ReferenceDescriptionType.Package;
                 }
+                else if (VersionUtility.IsDesktop(targetFramework) && 
+                         globalAssemblyCache.Contains(library.Identity.Name))
+                {
+                    // Special case GAC references
+                    type = ReferenceDescriptionType.GAC;
+                }
 
                 return new ReferenceDescription
                 {
                     Name = library.Identity.Name,
-                    Version = library.Identity.Version.ToString(),
+                    Version = library.Identity.Version == null ? null : library.Identity.Version.ToString(),
                     Type = type.ToString(),
                     Path = path,
                     Dependencies = library.Dependencies.Select(lib => new ReferenceItem
                     {
                         Name = lib.Name,
-                        Version = lib.Version.ToString()
+                        Version = lib.Version == null ? null : lib.Version.ToString()
                     })
                 };
             };
