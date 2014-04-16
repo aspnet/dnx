@@ -131,7 +131,7 @@ namespace Microsoft.Net.Runtime
 
             string projectPath = null;
 
-            if (Path.GetFileName(path) == ProjectFileName)
+            if (String.Equals(Path.GetFileName(path), ProjectFileName, StringComparison.OrdinalIgnoreCase))
             {
                 projectPath = path;
                 path = Path.GetDirectoryName(path);
