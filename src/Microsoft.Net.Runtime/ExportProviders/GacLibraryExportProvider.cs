@@ -22,6 +22,12 @@ namespace Microsoft.Net.Runtime
             return null;
         }
 
+        public bool Contains(string name)
+        {
+            string assemblyPath;
+            return TryResolvePartialName(name, out assemblyPath);
+        }
+
         private bool TryResolvePartialName(string name, out string assemblyLocation)
         {
             var gacFolders = new[] { IntPtr.Size == 4 ? "GAC_32" : "GAC_64", "GAC_MSIL" };
