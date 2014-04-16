@@ -25,7 +25,8 @@ namespace Microsoft.Net.Runtime
             {
                 // REVIEW: Should we cache misses?
                 // TODO: Performance
-                project = _searchPaths.SelectMany(path => Directory.EnumerateFiles(path, "project.json", SearchOption.AllDirectories))
+                project = _searchPaths.Where(Directory.Exists)
+                            .SelectMany(path => Directory.EnumerateFiles(path, "project.json", SearchOption.AllDirectories))
                             .Select(path => GetProject(path))
                             .FirstOrDefault(p => p != null && String.Equals(p.Name, name, StringComparison.OrdinalIgnoreCase));
             }
