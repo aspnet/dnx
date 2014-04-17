@@ -1,11 +1,11 @@
 ﻿
 namespace Microsoft.Net.DesignTimeHost.Models.OutgoingMessages
 {
-    public enum ReferenceDescriptionType
+    public static class ReferenceDescriptionType
     {
-        Unresolved,
-        Project,
-        Package,
-        GAC
+        public static readonly string Unresolved = "Unresolved";
+        public static readonly string Project = "Project";
+        public static readonly string Package = "Package";
+        public static readonly string GAC = "GAC";
     }
 }

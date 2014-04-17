@@ -8,6 +8,8 @@ namespace Microsoft.Net.Runtime
         public LibraryInformation(LibraryDescription description)
         {
             Name = description.Identity.Name;
+            Path = description.Path;
+            Type = description.Type;
             Dependencies = description.Dependencies.Select(d => d.Name);
         }
 
@@ -18,6 +20,18 @@ namespace Microsoft.Net.Runtime
         }
 
         public string Name
+        {
+            get;
+            private set;
+        }
+
+        public string Path
+        {
+            get;
+            private set;
+        }
+
+        public string Type
         {
             get;
             private set;

@@ -358,22 +358,10 @@ namespace Microsoft.Net.DesignTimeHost
 
             Func<LibraryDescription, ReferenceDescription> referenceFactory = library =>
             {
-                var type = ReferenceDescriptionType.Unresolved;
-
-                string path = null;
-
-                Project thisProject;
-                if (projectResolver.TryResolveProject(library.Identity.Name, out thisProject))
-                {
-                    path = thisProject.ProjectFilePath;
-                    type = ReferenceDescriptionType.Project;
-                }
-                else if (nugetDependencyResolver.PackagePaths.TryGetValue(library.Identity.Name, out path))
-                {
-                    type = ReferenceDescriptionType.Package;
-                }
-                else if (VersionUtility.IsDesktop(targetFramework) && 
-                         globalAssemblyCache.Contains(library.Identity.Name))
+                var type = library.Type ?? ReferenceDescriptionType.Unresolved;
+ 
+                if (VersionUtility.IsDesktop(targetFramework) && 
+                    globalAssemblyCache.Contains(library.Identity.Name))
                 {
                     // Special case GAC references
                     type = ReferenceDescriptionType.GAC;
@@ -383,8 +371,8 @@ namespace Microsoft.Net.DesignTimeHost
                 {
                     Name = library.Identity.Name,
                     Version = library.Identity.Version == null ? null : library.Identity.Version.ToString(),
-                    Type = type.ToString(),
-                    Path = path,
+                    Type = type,
+                    Path = library.Path,
                     Dependencies = library.Dependencies.Select(lib => new ReferenceItem
                     {
                         Name = lib.Name,
