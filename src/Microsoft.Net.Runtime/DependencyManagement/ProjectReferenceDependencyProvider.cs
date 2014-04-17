@@ -43,6 +43,18 @@ namespace Microsoft.Net.Runtime
 
         public virtual void Initialize(IEnumerable<LibraryDescription> dependencies, FrameworkName targetFramework)
         {
+            // PERF: It sucks that we have to do this twice. We should be able to round trip
+            // the information from GetDescription
+            foreach (var d in dependencies)
+            {
+                Project project;
+                if (_projectResolver.TryResolveProject(d.Identity.Name, out project))
+                {
+                    d.Path = project.ProjectFilePath;
+                    d.Type = "Project";
+                }
+            }
+
             Dependencies = dependencies;
         }
     }
