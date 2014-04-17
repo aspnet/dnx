@@ -21,16 +21,6 @@ namespace Microsoft.Net.Runtime
                                   .Select(path => GetProject(path))
                                   .FirstOrDefault(p => p != null);
 
-            if (project == null)
-            {
-                // REVIEW: Should we cache misses?
-                // TODO: Performance
-                project = _searchPaths.Where(Directory.Exists)
-                            .SelectMany(path => Directory.EnumerateFiles(path, "project.json", SearchOption.AllDirectories))
-                            .Select(path => GetProject(path))
-                            .FirstOrDefault(p => p != null && String.Equals(p.Name, name, StringComparison.OrdinalIgnoreCase));
-            }
-
             return project != null;
         }
 
