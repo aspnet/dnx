@@ -361,8 +361,8 @@ namespace Microsoft.Net.DesignTimeHost
             {
                 var type = library.Type ?? ReferenceDescriptionType.Unresolved;
  
-                if (VersionUtility.IsDesktop(targetFramework) && 
-                    globalAssemblyCache.Contains(library.Identity.Name))
+                if (VersionUtility.IsDesktop(targetFramework) &&
+                    gacLibraryExportProvider.Contains(library.Identity.Name))
                 {
                     // Special case GAC references
                     type = ReferenceDescriptionType.GAC;
