@@ -7,14 +7,10 @@ namespace Microsoft.Net.Runtime.Roslyn
     {
         internal static MetadataReference CreateReference(string path)
         {
-#if NET45
-            return new MetadataFileReference(path);
-#else
             using (var stream = File.OpenRead(path))
             {
                 return new MetadataImageReference(stream);
             }
-#endif
         }
     }
 }
