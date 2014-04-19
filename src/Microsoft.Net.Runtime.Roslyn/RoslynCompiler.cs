@@ -18,6 +18,7 @@ namespace Microsoft.Net.Runtime.Roslyn
         private readonly ILibraryExportProvider _libraryExportProvider;
         private readonly IFileWatcher _watcher;
         private readonly IProjectResolver _projectResolver;
+        private readonly MetadataFileReferenceFactory _metadataFileReferenceFactory;
 
         public RoslynCompiler(IProjectResolver projectResolver,
                               IFileWatcher watcher,
@@ -26,6 +27,7 @@ namespace Microsoft.Net.Runtime.Roslyn
             _projectResolver = projectResolver;
             _watcher = watcher;
             _libraryExportProvider = libraryExportProvider;
+            _metadataFileReferenceFactory = new MetadataFileReferenceFactory();
         }
 
         public CompilationContext CompileProject(string name, FrameworkName targetFramework)
@@ -284,7 +286,7 @@ namespace Microsoft.Net.Runtime.Roslyn
 
             if (fileMetadataReference != null)
             {
-                return MetadataFileReferenceFactory.CreateReference(fileMetadataReference.Path);
+                return _metadataFileReferenceFactory.GetMetadataReference(fileMetadataReference.Path);
             }
 
             var roslynReference = metadataReference as IRoslynMetadataReference;

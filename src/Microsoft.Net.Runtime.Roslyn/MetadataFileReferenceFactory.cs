@@ -1,16 +1,26 @@
-﻿using System.IO;
+﻿using System;
+using System.Collections.Generic;
+using System.IO;
 using Microsoft.CodeAnalysis;
 
 namespace Microsoft.Net.Runtime.Roslyn
 {
-    internal static class MetadataFileReferenceFactory
+    internal class MetadataFileReferenceFactory
     {
-        internal static MetadataReference CreateReference(string path)
+        private readonly Dictionary<string, MetadataReference> _metadataCache = new Dictionary<string, MetadataReference>(StringComparer.OrdinalIgnoreCase);
+
+        public MetadataReference GetMetadataReference(string path)
         {
-            using (var stream = File.OpenRead(path))
+            MetadataReference metadata;
+            if (!_metadataCache.TryGetValue(path, out metadata))
             {
-                return new MetadataImageReference(stream);
+                using (var stream = File.OpenRead(path))
+                {
+                    metadata = new MetadataImageReference(stream);
+                    _metadataCache[path] = metadata;
+                }
             }
+            return metadata;
         }
     }
 }
