@@ -334,22 +334,37 @@ namespace Microsoft.Net.Runtime
             return path.Substring(Path.GetDirectoryName(path).Length).Trim(Path.DirectorySeparatorChar);
         }
 
-        public TargetFrameworkConfiguration GetTargetFrameworkConfiguration(FrameworkName frameworkName)
+        public TargetFrameworkConfiguration GetTargetFrameworkConfiguration(FrameworkName targetFramework)
         {
             TargetFrameworkConfiguration config;
-            if (_configurations.TryGetValue(frameworkName, out config))
+            if (_configurations.TryGetValue(targetFramework, out config))
             {
                 return config;
             }
 
-            return _defaultTargetFrameworkConfiguration;
+            IEnumerable<TargetFrameworkConfiguration> compatibleConfigurations;
+            if (VersionUtility.TryGetCompatibleItems(targetFramework, GetTargetFrameworkConfigurations(), out compatibleConfigurations) &&
+                compatibleConfigurations.Any())
+            {
+                config = compatibleConfigurations.FirstOrDefault();
+            }
+
+            return config ?? _defaultTargetFrameworkConfiguration;
         }
     }
 
-    public class TargetFrameworkConfiguration
+    public class TargetFrameworkConfiguration : IFrameworkTargetable
     {
         public FrameworkName FrameworkName { get; set; }
 
         public IList<Library> Dependencies { get; set; }
+
+        public IEnumerable<FrameworkName> SupportedFrameworks
+        {
+            get
+            {
+                return new[] { FrameworkName };
+            }
+        }
     }
 }
