@@ -58,6 +58,9 @@ namespace Microsoft.Net.Runtime.Roslyn
 
             var targetFrameworkConfig = project.GetTargetFrameworkConfiguration(targetFramework);
 
+            // Update the target framework for compilation
+            targetFramework = targetFrameworkConfig.FrameworkName;
+
             Trace.TraceInformation("[{0}]: Found project '{1}' framework={2}", GetType().Name, project.Name, targetFramework);
 
             var exports = new List<ILibraryExport>();
