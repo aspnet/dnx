@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 2013
-VisualStudioVersion = 12.0.30327.0
+VisualStudioVersion = 12.0.30320.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "scripts", "scripts", "{189961D1-DFF4-406A-9D42-39B61221A73A}"
 	ProjectSection(SolutionItems) = preProject
@@ -13,6 +13,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "scripts", "scripts", "{1899
 		scripts\k.cmd = scripts\k.cmd
 		scripts\klr.cmd = scripts\klr.cmd
 		makefile.shade = makefile.shade
+		ProjectK.nuspec = ProjectK.nuspec
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "host", "host", "{13ED5001-B871-4BC3-8499-29607F596C7C}"
@@ -60,6 +61,10 @@ EndProject
 Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "klr.net45.managed", "src\klr.net45.managed\klr.net45.managed.kproj", "{2D50D502-E10A-4B1C-8A49-DBC52B5CE9CB}"
 EndProject
 Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "klr.host", "src\klr.host\klr.host.kproj", "{68048350-2996-4B4A-90BE-3405F088BD5A}"
+EndProject
+Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Microsoft.Net.PackageManager", "src\Microsoft.Net.PackageManager\Microsoft.Net.PackageManager.kproj", "{0D752D1C-3985-4E27-92C4-0BEE72B1F58D}"
+EndProject
+Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Microsoft.Net.PackageManager.Tests", "test\Microsoft.Net.PackageManager.Tests\Microsoft.Net.PackageManager.Tests.kproj", "{5216EA90-1AFB-4154-A0AA-7488A3EC4DF8}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -382,6 +387,38 @@ Global
 		{68048350-2996-4B4A-90BE-3405F088BD5A}.Release|x64.ActiveCfg = Release|x86
 		{68048350-2996-4B4A-90BE-3405F088BD5A}.Release|x86.ActiveCfg = Release|x86
 		{68048350-2996-4B4A-90BE-3405F088BD5A}.Release|x86.Build.0 = Release|x86
+		{0D752D1C-3985-4E27-92C4-0BEE72B1F58D}.Debug|Any CPU.ActiveCfg = Debug|x86
+		{0D752D1C-3985-4E27-92C4-0BEE72B1F58D}.Debug|Mixed Platforms.ActiveCfg = Debug|x86
+		{0D752D1C-3985-4E27-92C4-0BEE72B1F58D}.Debug|Mixed Platforms.Build.0 = Debug|x86
+		{0D752D1C-3985-4E27-92C4-0BEE72B1F58D}.Debug|Win32.ActiveCfg = Debug|x86
+		{0D752D1C-3985-4E27-92C4-0BEE72B1F58D}.Debug|Win32.Build.0 = Debug|x86
+		{0D752D1C-3985-4E27-92C4-0BEE72B1F58D}.Debug|x64.ActiveCfg = Debug|x86
+		{0D752D1C-3985-4E27-92C4-0BEE72B1F58D}.Debug|x86.ActiveCfg = Debug|x86
+		{0D752D1C-3985-4E27-92C4-0BEE72B1F58D}.Debug|x86.Build.0 = Debug|x86
+		{0D752D1C-3985-4E27-92C4-0BEE72B1F58D}.Release|Any CPU.ActiveCfg = Release|x86
+		{0D752D1C-3985-4E27-92C4-0BEE72B1F58D}.Release|Mixed Platforms.ActiveCfg = Release|x86
+		{0D752D1C-3985-4E27-92C4-0BEE72B1F58D}.Release|Mixed Platforms.Build.0 = Release|x86
+		{0D752D1C-3985-4E27-92C4-0BEE72B1F58D}.Release|Win32.ActiveCfg = Release|x86
+		{0D752D1C-3985-4E27-92C4-0BEE72B1F58D}.Release|Win32.Build.0 = Release|x86
+		{0D752D1C-3985-4E27-92C4-0BEE72B1F58D}.Release|x64.ActiveCfg = Release|x86
+		{0D752D1C-3985-4E27-92C4-0BEE72B1F58D}.Release|x86.ActiveCfg = Release|x86
+		{0D752D1C-3985-4E27-92C4-0BEE72B1F58D}.Release|x86.Build.0 = Release|x86
+		{5216EA90-1AFB-4154-A0AA-7488A3EC4DF8}.Debug|Any CPU.ActiveCfg = Debug|x86
+		{5216EA90-1AFB-4154-A0AA-7488A3EC4DF8}.Debug|Mixed Platforms.ActiveCfg = Debug|x86
+		{5216EA90-1AFB-4154-A0AA-7488A3EC4DF8}.Debug|Mixed Platforms.Build.0 = Debug|x86
+		{5216EA90-1AFB-4154-A0AA-7488A3EC4DF8}.Debug|Win32.ActiveCfg = Debug|x86
+		{5216EA90-1AFB-4154-A0AA-7488A3EC4DF8}.Debug|Win32.Build.0 = Debug|x86
+		{5216EA90-1AFB-4154-A0AA-7488A3EC4DF8}.Debug|x64.ActiveCfg = Debug|x86
+		{5216EA90-1AFB-4154-A0AA-7488A3EC4DF8}.Debug|x86.ActiveCfg = Debug|x86
+		{5216EA90-1AFB-4154-A0AA-7488A3EC4DF8}.Debug|x86.Build.0 = Debug|x86
+		{5216EA90-1AFB-4154-A0AA-7488A3EC4DF8}.Release|Any CPU.ActiveCfg = Release|x86
+		{5216EA90-1AFB-4154-A0AA-7488A3EC4DF8}.Release|Mixed Platforms.ActiveCfg = Release|x86
+		{5216EA90-1AFB-4154-A0AA-7488A3EC4DF8}.Release|Mixed Platforms.Build.0 = Release|x86
+		{5216EA90-1AFB-4154-A0AA-7488A3EC4DF8}.Release|Win32.ActiveCfg = Release|x86
+		{5216EA90-1AFB-4154-A0AA-7488A3EC4DF8}.Release|Win32.Build.0 = Release|x86
+		{5216EA90-1AFB-4154-A0AA-7488A3EC4DF8}.Release|x64.ActiveCfg = Release|x86
+		{5216EA90-1AFB-4154-A0AA-7488A3EC4DF8}.Release|x86.ActiveCfg = Release|x86
+		{5216EA90-1AFB-4154-A0AA-7488A3EC4DF8}.Release|x86.Build.0 = Release|x86
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -407,5 +444,7 @@ Global
 		{FE569E9D-AAAE-43CE-BE29-2C2197C0DF8F} = {13ED5001-B871-4BC3-8499-29607F596C7C}
 		{2D50D502-E10A-4B1C-8A49-DBC52B5CE9CB} = {13ED5001-B871-4BC3-8499-29607F596C7C}
 		{68048350-2996-4B4A-90BE-3405F088BD5A} = {13ED5001-B871-4BC3-8499-29607F596C7C}
+		{0D752D1C-3985-4E27-92C4-0BEE72B1F58D} = {AF391791-F4B7-41AC-8F08-9485DAC543C5}
+		{5216EA90-1AFB-4154-A0AA-7488A3EC4DF8} = {C43EE429-DE10-4906-BB09-54E6A080948A}
 	EndGlobalSection
 EndGlobal

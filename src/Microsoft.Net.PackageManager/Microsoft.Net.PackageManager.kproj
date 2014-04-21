@@ -1,0 +1,40 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="12.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">12.0</VisualStudioVersion>
+    <VSToolsPath Condition="'$(VSToolsPath)' == ''">$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)</VSToolsPath>
+  </PropertyGroup>
+  <Import Project="$(VSToolsPath)\ProjectK\Microsoft.Web.ProjectK.Props" Condition="'$(VSToolsPath)' != ''" />
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>0d752d1c-3985-4e27-92c4-0bee72b1f58d</ProjectGuid>
+    <OutputType>Console</OutputType>
+    <ActiveTargetFramework>net45</ActiveTargetFramework>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x86'" Label="Configuration">
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x86'" Label="Configuration">
+  </PropertyGroup>
+  <PropertyGroup>
+    <SchemaVersion>2.0</SchemaVersion>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="CommandLine\CommandBase.cs" />
+    <Compile Include="CommandLine\CommandLineApplication.cs" />
+    <Compile Include="CommandLine\CommandArgument.cs" />
+    <Compile Include="CommandLine\CommandOption.cs" />
+    <Compile Include="Packing\PackManager.cs" />
+    <Compile Include="Packing\PackOperations.cs" />
+    <Compile Include="Packing\PackOptions.cs" />
+    <Compile Include="Packing\PackPackage.cs" />
+    <Compile Include="Packing\PackProject.cs" />
+    <Compile Include="Packing\PackRoot.cs" />
+    <Compile Include="Packing\PackRuntime.cs" />
+    <Compile Include="Program.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="kpm.cmd" />
+    <Content Include="Microsoft.Net.PackageManager.kproj.user" />
+    <Content Include="Project.json" />
+  </ItemGroup>
+  <Import Project="$(VSToolsPath)\ProjectK\Microsoft.Web.ProjectK.targets" Condition="'$(VSToolsPath)' != ''" />
+</Project>

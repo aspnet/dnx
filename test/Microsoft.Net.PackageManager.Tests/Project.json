@@ -1,0 +1,26 @@
+﻿{
+    "dependencies": {
+        "xunit.assert": "2.0.0-aspnet-*",
+        "xunit.core": "2.0.0-aspnet-*",
+        "Xunit.KRunner": "0.1-alpha-*",
+        "Microsoft.Net.PackageManager":  "0.1-alpha-*"
+    },
+
+    "configurations" : {
+        "net45" : {
+            "dependencies": {
+                "System.Runtime": "4.0.20.0"
+            }
+        },
+        "k10" : { 
+            "dependencies": {
+                "System.Runtime": "4.0.20.0"
+            }
+        }
+    },
+
+    "commands": {
+        "run": "Xunit.KRunner",
+        "test": "Xunit.KRunner"
+    }
+}
