@@ -27,7 +27,7 @@ namespace Microsoft.Net.Runtime
 
             SemanticVersion assemblyVersion = VersionUtility.GetAssemblyVersion(path);
 
-            if (version == null || version != assemblyVersion)
+            if (version == null || version == assemblyVersion)
             {
                 _resolvedPaths[name] = path;
 
