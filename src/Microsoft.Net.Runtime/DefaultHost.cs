@@ -72,7 +72,7 @@ namespace Microsoft.Net.Runtime
             {
                 throw new InvalidOperationException(
                     String.Format("Unable to resolve depedendencies {0}",
-                        String.Join(",", _unresolvedProvider.UnresolvedDependencies.Select(d => d.ToString()))));
+                        String.Join(",", _unresolvedProvider.UnresolvedDependencies.Select(d => d.Identity.ToString()))));
             }
 
             _serviceProvider.Add(typeof(IApplicationEnvironment), new ApplicationEnvironment(Project, _targetFramework));
