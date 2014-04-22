@@ -1008,6 +1008,15 @@ namespace NuGet
             return framework != null && PortableFrameworkIdentifier.Equals(framework.Identifier, StringComparison.OrdinalIgnoreCase);
         }
 
+        internal static SemanticVersion GetAssemblyVersion(string path)
+        { 
+#if NET45
+            return new SemanticVersion(AssemblyName.GetAssemblyName(path).Version);
+#else
+            return new SemanticVersion(System.Runtime.Loader.AssemblyLoadContext.GetAssemblyName(path).Version);
+#endif
+        }
+
         private static IDictionary<string, string> PopulateKnownFrameworks()
         {
             var frameworks = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase) {

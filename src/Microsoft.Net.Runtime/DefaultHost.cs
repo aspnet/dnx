@@ -24,6 +24,7 @@ namespace Microsoft.Net.Runtime
         private readonly ServiceProvider _serviceProvider;
         private readonly IAssemblyLoaderEngine _loaderEngine;
         private readonly ILibraryExportProvider _hostExporter;
+        private readonly UnresolvedDependencyProvider _unresolvedProvider = new UnresolvedDependencyProvider();
 
         private Project _project;
 
@@ -65,6 +66,14 @@ namespace Microsoft.Net.Runtime
             }
 
             _dependencyWalker.Walk(Project.Name, Project.Version, _targetFramework);
+
+            // If there's any unresolved dependencies then complain
+            if (_unresolvedProvider.UnresolvedDependencies.Any())
+            {
+                throw new InvalidOperationException(
+                    String.Format("Unable to resolve depedendencies {0}",
+                        String.Join(",", _unresolvedProvider.UnresolvedDependencies.Select(d => d.Identity.ToString()))));
+            }
 
             _serviceProvider.Add(typeof(IApplicationEnvironment), new ApplicationEnvironment(Project, _targetFramework));
 
@@ -114,6 +123,9 @@ namespace Microsoft.Net.Runtime
             var projectResolver = new ProjectResolver(_projectDir, rootDirectory);
 
             var nugetDependencyResolver = new NuGetDependencyResolver(_projectDir, options.PackageDirectory);
+            var referenceAssemblyDependencyResolver = new ReferenceAssemblyDependencyResolver();
+            var gacDependencyResolver = new GacDependencyResolver();
+
             var nugetLoader = new NuGetAssemblyLoader(_loaderEngine, nugetDependencyResolver);
 
             // Roslyn needs to be able to resolve exported references and sources
@@ -123,10 +135,10 @@ namespace Microsoft.Net.Runtime
             libraryExporters.Add(_hostExporter);
 
             // Reference assemblies
-            libraryExporters.Add(new ReferenceAssemblyLibraryExportProvider());
+            libraryExporters.Add(referenceAssemblyDependencyResolver);
 
             // GAC assemblies
-            libraryExporters.Add(new GacLibraryExportProvider());
+            libraryExporters.Add(gacDependencyResolver);
 
             // NuGet exporter
             libraryExporters.Add(nugetDependencyResolver);
@@ -138,9 +150,16 @@ namespace Microsoft.Net.Runtime
             loaders.Add(roslynLoader);
             dependencyProviders.Add(new ProjectReferenceDependencyProvider(projectResolver));
 
+            // GAC and reference assembly resolver
+            dependencyProviders.Add(referenceAssemblyDependencyResolver);
+            dependencyProviders.Add(gacDependencyResolver);
+
             // NuGet packages
             loaders.Add(nugetLoader);
             dependencyProviders.Add(nugetDependencyResolver);
+
+            // Catch all for unresolved depedencies
+            dependencyProviders.Add(_unresolvedProvider);
 
             _dependencyWalker = new DependencyWalker(dependencyProviders);
             _loader = new AssemblyLoader(loaders);

@@ -277,10 +277,11 @@ namespace Microsoft.Net.Project
             var compositeResourceProvider = new CompositeResourceProvider(new IResourceProvider[] { resxProvider, embeddedResourceProvider });
 
             var nugetDependencyResolver = new NuGetDependencyResolver(projectDir);
-            var referenceAssemblyDependencyExporter = new ReferenceAssemblyLibraryExportProvider();
+            var referenceAssemblyDependencyResolver = new ReferenceAssemblyDependencyResolver();
+            var gacDependencyResolver = new GacDependencyResolver();
             var compositeDependencyExporter = new CompositeLibraryExportProvider(new ILibraryExportProvider[] { 
-                referenceAssemblyDependencyExporter, 
-                new GacLibraryExportProvider(),
+                referenceAssemblyDependencyResolver, 
+                gacDependencyResolver,
                 nugetDependencyResolver,
             });
 
@@ -289,9 +290,12 @@ namespace Microsoft.Net.Project
                                                     compositeDependencyExporter);
 
             var projectReferenceResolver = new ProjectReferenceDependencyProvider(projectResolver);
+            
             var dependencyWalker = new DependencyWalker(new IDependencyProvider[] { 
                 projectReferenceResolver, 
-                nugetDependencyResolver 
+                referenceAssemblyDependencyResolver, 
+                gacDependencyResolver,
+                nugetDependencyResolver
             });
 
             dependencyWalker.Walk(project.Name, project.Version, targetFramework);
@@ -299,7 +303,7 @@ namespace Microsoft.Net.Project
             var roslynArtifactsProducer = new RoslynArtifactsProducer(roslynCompiler,
                                                                       compositeResourceProvider,
                                                                       projectReferenceResolver.Dependencies,
-                                                                      referenceAssemblyDependencyExporter.FrameworkResolver);
+                                                                      referenceAssemblyDependencyResolver.FrameworkResolver);
 
             packagePaths = nugetDependencyResolver.PackageAssemblyPaths;
 

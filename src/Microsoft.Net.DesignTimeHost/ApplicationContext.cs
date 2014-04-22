@@ -334,11 +334,12 @@ namespace Microsoft.Net.DesignTimeHost
             var projectResolver = new ProjectResolver(projectDir, rootDirectory);
 
             var nugetDependencyResolver = new NuGetDependencyResolver(projectDir);
-            var referenceAssemblyDependencyExporter = new ReferenceAssemblyLibraryExportProvider();
-            var gacLibraryExportProvider = new GacLibraryExportProvider();
+            var referenceAssemblyDependencyResolver = new ReferenceAssemblyDependencyResolver();
+            var gacDependencyResolver = new GacDependencyResolver();
+
             var compositeDependencyExporter = new CompositeLibraryExportProvider(new ILibraryExportProvider[] { 
-                referenceAssemblyDependencyExporter, 
-                gacLibraryExportProvider,
+                referenceAssemblyDependencyResolver, 
+                gacDependencyResolver,
                 nugetDependencyResolver,
             });
 
@@ -351,6 +352,8 @@ namespace Microsoft.Net.DesignTimeHost
 
             var dependencyWalker = new DependencyWalker(new IDependencyProvider[] { 
                 new ProjectReferenceDependencyProvider(projectResolver),
+                referenceAssemblyDependencyResolver, 
+                gacDependencyResolver,
                 nugetDependencyResolver,
                 new UnresolvedDependencyProvider() // A catch all for unresolved dependencies
             });
@@ -359,20 +362,11 @@ namespace Microsoft.Net.DesignTimeHost
 
             Func<LibraryDescription, ReferenceDescription> referenceFactory = library =>
             {
-                var type = library.Type ?? ReferenceDescriptionType.Unresolved;
- 
-                if (VersionUtility.IsDesktop(targetFramework) &&
-                    gacLibraryExportProvider.Contains(library.Identity.Name))
-                {
-                    // Special case GAC references
-                    type = ReferenceDescriptionType.GAC;
-                }
-
                 return new ReferenceDescription
                 {
                     Name = library.Identity.Name,
                     Version = library.Identity.Version == null ? null : library.Identity.Version.ToString(),
-                    Type = type,
+                    Type = library.Type ?? "Unresolved",
                     Path = library.Path,
                     Dependencies = library.Dependencies.Select(lib => new ReferenceItem
                     {
@@ -387,23 +381,6 @@ namespace Microsoft.Net.DesignTimeHost
                                                  .ToDictionary(d => d.Name);
 
             return state;
-        }
-
-        private class UnresolvedDependencyProvider : IDependencyProvider
-        {
-            public LibraryDescription GetDescription(string name, SemanticVersion version, FrameworkName targetFramework)
-            {
-                return new LibraryDescription
-                {
-                    Identity = new Library { Name = name, Version = version },
-                    Dependencies = Enumerable.Empty<Library>()
-                };
-            }
-
-            public void Initialize(IEnumerable<LibraryDescription> dependencies, FrameworkName targetFramework)
-            {
-
-            }
         }
     }
 }

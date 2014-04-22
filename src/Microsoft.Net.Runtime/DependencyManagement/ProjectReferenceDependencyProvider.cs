@@ -31,15 +31,26 @@ namespace Microsoft.Net.Runtime
                 return null;
             }
 
-            var config = project.GetTargetFrameworkConfiguration(targetFramework);
+            // This never returns null
+            var configDependencies = project.GetTargetFrameworkConfiguration(targetFramework).Dependencies;
+
+            if (VersionUtility.IsDesktop(targetFramework))
+            {
+                // mscorlib is ok
+                configDependencies.Add(new Library { Name = "mscorlib" });
+
+                // TODO: Remove these references (but we need to update the dependent projects first)
+                configDependencies.Add(new Library { Name = "System" });
+                configDependencies.Add(new Library { Name = "System.Core" });
+                configDependencies.Add(new Library { Name = "Microsoft.CSharp" });
+            }
 
             return new LibraryDescription
             {
                 Identity = new Library { Name = project.Name, Version = project.Version },
-                Dependencies = project.Dependencies.Concat(config.Dependencies),
+                Dependencies = project.Dependencies.Concat(configDependencies),
             };
         }
-
 
         public virtual void Initialize(IEnumerable<LibraryDescription> dependencies, FrameworkName targetFramework)
         {

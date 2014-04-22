@@ -31,7 +31,6 @@
     <Compile Include="Models\OutgoingMessages\DiagnosticsMessage.cs" />
     <Compile Include="Models\OutgoingMessages\ErrorMessage.cs" />
     <Compile Include="Models\OutgoingMessages\ReferenceItem.cs" />
-    <Compile Include="Models\OutgoingMessages\ReferenceDescriptionType.cs" />
     <Compile Include="Models\OutgoingMessages\ReferenceDescription.cs" />
     <Compile Include="Models\OutgoingMessages\ReferencesMessage.cs" />
     <Compile Include="Models\OutgoingMessages\SourcesMessage.cs" />

@@ -7,7 +7,7 @@ using System.Reflection;
 using System.Runtime.Versioning;
 using NuGet;
 
-namespace Microsoft.Net.Runtime.Loader.NuGet
+namespace Microsoft.Net.Runtime
 {
     public class NuGetDependencyResolver : IDependencyProvider, ILibraryExportProvider
     {
