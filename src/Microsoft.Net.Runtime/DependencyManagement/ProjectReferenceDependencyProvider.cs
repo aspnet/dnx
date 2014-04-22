@@ -26,10 +26,6 @@ namespace Microsoft.Net.Runtime
             {
                 return null;
             }
-            else if (version != null && !project.Version.EqualsSnapshot(version))
-            {
-                return null;
-            }
 
             // This never returns null
             var configDependencies = project.GetTargetFrameworkConfiguration(targetFramework).Dependencies;
