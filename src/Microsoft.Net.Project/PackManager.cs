@@ -50,11 +50,15 @@ namespace Microsoft.Net.Project
             var projectResolver = new ProjectResolver(projectDir, rootDirectory);
 
             var nugetDependencyResolver = new NuGetDependencyResolver(projectDir);
+            var referenceAssemblyDependencyResolver = new ReferenceAssemblyDependencyResolver();
+            var gacDependencyResolver = new GacDependencyResolver();
 
             var projectReferenceDependencyProvider = new ProjectReferenceDependencyProvider(projectResolver);
 
             var dependencyWalker = new DependencyWalker(new IDependencyProvider[] { 
                 projectReferenceDependencyProvider,
+                referenceAssemblyDependencyResolver,
+                gacDependencyResolver,
                 nugetDependencyResolver
             });
 
