@@ -41,6 +41,7 @@
     <Compile Include="Executable.cs" />
     <Compile Include="ExportProviders\CompositeLibraryExportProvider.cs" />
     <Compile Include="ExportProviders\LibraryExport.cs" />
+    <Compile Include="ExportProviders\UnresolvedMetadataReference.cs" />
     <Compile Include="ExportProviders\MetadataFileReference.cs" />
     <Compile Include="ExportProviders\SourceFileReference.cs" />
     <Compile Include="FileSystem\FileWatcher.cs" />

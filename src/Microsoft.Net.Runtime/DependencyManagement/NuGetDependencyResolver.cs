@@ -114,12 +114,12 @@ namespace Microsoft.Net.Runtime
 
                 foreach (var fileName in GetAssemblies(package, targetFramework))
                 {
-#if NET45 // CORECLR_TODO: AssemblyName.GetAssemblyName
+#if NET45
                     var an = AssemblyName.GetAssemblyName(fileName);
-                    _paths[an.Name] = fileName;
 #else
-                    _paths[Path.GetFileNameWithoutExtension(fileName)] = fileName;
+                    var an = System.Runtime.Loader.AssemblyLoadContext.GetAssemblyName(fileName);
 #endif
+                    _paths[an.Name] = fileName;
 
                     if (!_paths.ContainsKey(package.Id))
                     {
@@ -143,12 +143,25 @@ namespace Microsoft.Net.Runtime
                 return null;
             }
 
-            var paths = new HashSet<string>();
+            var paths = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
             PopulateDependenciesPaths(name, paths);
 
-            var metadataReferenes = paths.Select(path => (IMetadataReference)new MetadataFileReference(path))
-                                         .ToList();
+            var metadataReferenes = paths.Select(pair =>
+            {
+                IMetadataReference reference = null;
+                
+                if (pair.Value == null)
+                {
+                    reference = new UnresolvedMetadataReference(pair.Key);
+                }
+                else
+                {
+                    reference = new MetadataFileReference(pair.Key, pair.Value);
+                }
+
+                return reference;
+            }).ToList();
 
             var sourceReferences = new List<ISourceReference>();
 
@@ -164,11 +177,12 @@ namespace Microsoft.Net.Runtime
             return new LibraryExport(metadataReferenes, sourceReferences);
         }
 
-        private void PopulateDependenciesPaths(string name, ISet<string> paths)
+        private void PopulateDependenciesPaths(string name, IDictionary<string, string> paths)
         {
             LibraryDescription description;
             if (!_dependencies.TryGetValue(name, out description))
             {
+                paths[name] = null;
                 return;
             }
 
@@ -181,11 +195,11 @@ namespace Microsoft.Net.Runtime
 
             if (hasContract && hasLib)
             {
-                paths.Add(contractPath);
+                paths[name] = contractPath;
             }
             else if (hasLib)
             {
-                paths.Add(libPath);
+                paths[name] = libPath;
             }
 
             foreach (var dependency in description.Dependencies)

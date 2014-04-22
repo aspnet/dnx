@@ -55,7 +55,7 @@ namespace Microsoft.Net.Runtime
             string assemblyPath;
             if (_resolvedPaths.TryGetValue(name, out assemblyPath))
             {
-                return new LibraryExport(assemblyPath);
+                return new LibraryExport(name, assemblyPath);
             }
 
             return null;
