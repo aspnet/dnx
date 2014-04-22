@@ -362,13 +362,11 @@ namespace Microsoft.Net.DesignTimeHost
 
             Func<LibraryDescription, ReferenceDescription> referenceFactory = library =>
             {
-                var type = library.Type ?? ReferenceDescriptionType.Unresolved;
- 
                 return new ReferenceDescription
                 {
                     Name = library.Identity.Name,
                     Version = library.Identity.Version == null ? null : library.Identity.Version.ToString(),
-                    Type = type,
+                    Type = library.Type ?? "Unresolved",
                     Path = library.Path,
                     Dependencies = library.Dependencies.Select(lib => new ReferenceItem
                     {

@@ -46,7 +46,7 @@ namespace Microsoft.Net.Runtime
             foreach (var d in dependencies)
             {
                 d.Path = _resolvedPaths[d.Identity.Name];
-                d.Type = "GAC";
+                d.Type = "Assembly";
             }
         }
 
