@@ -27,4 +27,4 @@ if test ! -d packages/KoreBuild; then
     mono .nuget/nuget.exe install Sake -version 0.2 -o packages -ExcludeVersion
 fi
 
-mono packages/Sake/tools/Sake.exe -I packages/KoreBuild/build -f makefile.shade "$*"
+mono packages/Sake/tools/Sake.exe -I packages/KoreBuild/build -f makefile.shade "$@"
