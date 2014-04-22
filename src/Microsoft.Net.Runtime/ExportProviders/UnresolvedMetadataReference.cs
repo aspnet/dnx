@@ -1,12 +1,11 @@
 ﻿
 namespace Microsoft.Net.Runtime
 {
-    internal class MetadataFileReference : IMetadataFileReference
+    public class UnresolvedMetadataReference : IMetadataReference
     {
-        public MetadataFileReference(string name, string path)
+        public UnresolvedMetadataReference(string name)
         {
             Name = name;
-            Path = path;
         }
 
         public string Name
@@ -14,8 +13,6 @@ namespace Microsoft.Net.Runtime
             get;
             private set;
         }
-
-        public string Path { get; private set; }
 
         public override string ToString()
         {

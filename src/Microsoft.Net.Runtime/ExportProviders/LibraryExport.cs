@@ -4,8 +4,8 @@ namespace Microsoft.Net.Runtime
 {
     public class LibraryExport : ILibraryExport
     {
-        public LibraryExport(string path)
-            : this(new MetadataFileReference(path))
+        public LibraryExport(string name, string path)
+            : this(new MetadataFileReference(name, path))
         {
         }
 

@@ -124,6 +124,8 @@ namespace Microsoft.Net.Runtime.Roslyn
             IList<IMetadataReference> metadataReferences;
 
             ExtractReferences(exports,
+                              targetFramework,
+                              compilationCache,
                               out exportedReferences,
                               out metadataReferences);
 
@@ -238,6 +240,8 @@ namespace Microsoft.Net.Runtime.Roslyn
         }
 
         private void ExtractReferences(List<ILibraryExport> dependencyExports,
+                                       FrameworkName targetFramework,
+                                       IDictionary<string, CompilationContext> compilationCache,
                                        out IList<MetadataReference> references,
                                        out IList<IMetadataReference> metadataReferences)
         {
@@ -247,9 +251,39 @@ namespace Microsoft.Net.Runtime.Roslyn
 
             foreach (var export in dependencyExports)
             {
-                ExpandEmbeddedReferences(export.MetadataReferences);
+                ProcessExport(export, 
+                              targetFramework, 
+                              compilationCache, 
+                              references, 
+                              metadataReferences, 
+                              used);
+            }
+        }
 
-                foreach (var reference in export.MetadataReferences)
+        private void ProcessExport(ILibraryExport export, 
+                                   FrameworkName targetFramework, 
+                                   IDictionary<string, CompilationContext> compilationCache, 
+                                   IList<MetadataReference> references, 
+                                   IList<IMetadataReference> metadataReferences, 
+                                   HashSet<string> used)
+        {
+            ExpandEmbeddedReferences(export.MetadataReferences);
+
+            foreach (var reference in export.MetadataReferences)
+            {
+                var unresolvedReference = reference as UnresolvedMetadataReference;
+
+                if (unresolvedReference != null)
+                {
+                    // Try to resolve the unresolved references
+                    var compilationExport = GetLibraryExport(unresolvedReference.Name, targetFramework, compilationCache);
+
+                    if (compilationExport != null)
+                    {
+                        ProcessExport(compilationExport, targetFramework, compilationCache, references, metadataReferences, used);
+                    }
+                }
+                else
                 {
                     if (!used.Add(reference.Name))
                     {
