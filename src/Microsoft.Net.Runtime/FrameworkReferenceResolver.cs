@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Runtime.Versioning;
 using System.Xml.Linq;
 
@@ -29,11 +30,22 @@ namespace Microsoft.Net.Runtime
 
         private void PopulateCache()
         {
-            string defaultPath = Path.Combine(
-                Environment.ExpandEnvironmentVariables("%ProgramFiles(x86)%"),
-                "Reference Assemblies", "Microsoft", "Framework");
+            if (PlatformHelper.IsMono)
+            {
+                // REVIEW: Make sure this is the correct way to find the mono reference assemblies
+                // This also needs to use the correct version of mono.
+                string referenceAssembliesPath = "/Library/Frameworks/Mono.framework/Versions/Current/lib/mono/xbuild-frameworks";
 
-            PopulateReferenceAssemblies(defaultPath);
+                PopulateReferenceAssemblies(referenceAssembliesPath);
+            }
+            else
+            {
+                string defaultPath = Path.Combine(
+                    Environment.ExpandEnvironmentVariables("%ProgramFiles(x86)%"),
+                    "Reference Assemblies", "Microsoft", "Framework");
+
+                PopulateReferenceAssemblies(defaultPath);
+            }
         }
 
         private void PopulateReferenceAssemblies(string path)
@@ -79,41 +91,86 @@ namespace Microsoft.Net.Runtime
 
             if (File.Exists(redistList))
             {
-                foreach (var assemblyName in GetFrameworkAssemblies(redistList))
+                foreach (var pair in GetFrameworkAssemblies(directory.FullName, redistList))
                 {
-                    var assemblyPath = Path.Combine(directory.FullName, assemblyName + ".dll");
-                    var facadePath = Path.Combine(directory.FullName, "Facades", assemblyName + ".dll");
-
-                    if (File.Exists(assemblyPath))
-                    {
-                        frameworkInfo.Assemblies.Add(assemblyName, assemblyPath);
-                    }
-                    else if (File.Exists(facadePath))
-                    {
-                        frameworkInfo.Assemblies.Add(assemblyName, facadePath);
-                    }
+                    frameworkInfo.Assemblies.Add(pair.Item1, pair.Item2);
                 }
             }
 
             _cache[frameworkName] = frameworkInfo;
         }
 
-        private static IEnumerable<string> GetFrameworkAssemblies(string path)
+        private static IEnumerable<Tuple<string, string>> GetFrameworkAssemblies(string frameworkPath, string path)
         {
             if (!File.Exists(path))
             {
-                yield break;
+                return Enumerable.Empty<Tuple<string, string>>();
             }
+
+            var assemblies = new List<Tuple<string, string>>();
 
             using (var stream = File.OpenRead(path))
             {
                 var frameworkList = XDocument.Load(stream);
 
-                foreach (var e in frameworkList.Root.Elements())
+                // The redist list files on osx have this
+                var targetFrameworkDirectory = frameworkList.Root.Attribute("TargetFrameworkDirectory");
+
+                if (targetFrameworkDirectory != null)
                 {
-                    yield return e.Attribute("AssemblyName").Value;
+                    string normalized = targetFrameworkDirectory.Value.Replace('\\', Path.DirectorySeparatorChar);
+
+                    var targetFrameworkPath = Path.GetFullPath(Path.Combine(Path.GetDirectoryName(path), normalized));
+
+                    PopulateAssemblies(assemblies, targetFrameworkPath);
+                    PopulateAssemblies(assemblies, Path.Combine(targetFrameworkPath, "Facades"));
+                }
+                else
+                {
+                    foreach (var e in frameworkList.Root.Elements())
+                    {
+                        string assemblyName = e.Attribute("AssemblyName").Value;
+                        string assemblyPath = GetAssemblyPath(frameworkPath, assemblyName);
+
+                        if (!string.IsNullOrEmpty(assemblyPath))
+                        {
+                            assemblies.Add(Tuple.Create(assemblyName, assemblyPath));
+                        }
+                    }
                 }
             }
+
+            return assemblies;
+        }
+
+        private static void PopulateAssemblies(List<Tuple<string, string>> assemblies, string path)
+        {
+            if (!Directory.Exists(path))
+            {
+                return;
+            }
+
+            foreach (var assemblyPath in Directory.GetFiles(path, "*.dll"))
+            {
+                assemblies.Add(Tuple.Create(Path.GetFileNameWithoutExtension(assemblyPath), assemblyPath));
+            }
+        }
+
+        private static string GetAssemblyPath(string basePath, string assemblyName)
+        {
+            var assemblyPath = Path.Combine(basePath, assemblyName + ".dll");
+            var facadePath = Path.Combine(basePath, "Facades", assemblyName + ".dll");
+
+            if (File.Exists(assemblyPath))
+            {
+                return assemblyPath;
+            }
+            else if (File.Exists(facadePath))
+            {
+                return facadePath;
+            }
+
+            return null;
         }
 
         private class FrameworkInformation

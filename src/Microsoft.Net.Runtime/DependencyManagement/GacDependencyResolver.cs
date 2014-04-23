@@ -14,6 +14,11 @@ namespace Microsoft.Net.Runtime
 
         public LibraryDescription GetDescription(string name, SemanticVersion version, FrameworkName targetFramework)
         {
+            if (PlatformHelper.IsMono)
+            {
+                return null;
+            }
+
             if (!VersionUtility.IsDesktop(targetFramework))
             {
                 return null;
