@@ -103,6 +103,7 @@
     <Compile Include="NuGet\Packages\IPackageMetadata.cs" />
     <Compile Include="NuGet\Packages\IPackagePathResolver.cs" />
     <Compile Include="NuGet\Packages\LocalPackage.cs" />
+    <Compile Include="NuGet\Packages\OptimizedOpcZipPackage.cs" />
     <Compile Include="NuGet\Packages\OptimizedZipPackage.cs" />
     <Compile Include="NuGet\Packages\PackageDependency.cs" />
     <Compile Include="NuGet\Packages\UnzippedPackage.cs" />
