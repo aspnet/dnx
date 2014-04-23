@@ -24,6 +24,7 @@
     <Compile Include="Impl\DependencyInjection\ServiceProvider.cs" />
     <Compile Include="Impl\EntryPointExecutor.cs" />
     <Compile Include="Impl\ExceptionHelper.cs" />
+    <Compile Include="Impl\PlatformHelper.cs" />
     <Compile Include="Impl\Trace.cs" />
   </ItemGroup>
   <Import Project="$(VSToolsPath)\ProjectK\Microsoft.Web.ProjectK.targets" Condition="'$(VSToolsPath)' != ''" />

@@ -1,5 +1,6 @@
 ﻿
 using System;
+using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
@@ -43,7 +44,10 @@ namespace klr.host
             }
 
 #if NET45
-            string applicationBaseDirectory = AppDomain.CurrentDomain.SetupInformation.ApplicationBase;
+            // REVIEW: Need a way to set the application base on mono
+            string applicationBaseDirectory = PlatformHelper.IsMono ? 
+                                              Directory.GetCurrentDirectory() : 
+                                              AppDomain.CurrentDomain.SetupInformation.ApplicationBase;
 #else
             var appDomainType = typeof(object)
                                     .GetTypeInfo()

@@ -50,38 +50,25 @@ namespace klr.hosting
 
             Func<AssemblyName, Assembly> loaderCallback = assemblyName =>
             {
-                try
+                string name = assemblyName.Name;
+
+                // If the assembly was already loaded use it
+                Assembly assembly;
+                if (_assemblyCache.TryGetValue(name, out assembly))
                 {
-                    string name = assemblyName.Name;
-
-                    // If the assembly was already loaded use it
-                    Assembly assembly;
-                    if (_assemblyCache.TryGetValue(name, out assembly))
-                    {
-                        return assembly;
-                    }
-
-                    assembly = loader(name) ?? ResolveHostAssembly(loadFile, searchPaths, name);
-
-                    if (assembly != null)
-                    {
-                        ExtractAssemblyNeutralInterfaces(assembly, loadBytes);
-
-                        _assemblyCache[name] = assembly;
-                    }
-
                     return assembly;
                 }
-                catch (Exception ex)
+
+                assembly = loader(name) ?? ResolveHostAssembly(loadFile, searchPaths, name);
+
+                if (assembly != null)
                 {
-                    // Trace load failures
-#if NET45
-                    Trace.TraceError(String.Join(Environment.NewLine, GetExceptions(ex)));
-#else
-                    Console.Error.WriteLine(String.Join(Environment.NewLine, GetExceptions(ex)));
-#endif
-                    throw;
+                    ExtractAssemblyNeutralInterfaces(assembly, loadBytes);
+
+                    _assemblyCache[name] = assembly;
                 }
+
+                return assembly;
             };
 #if K10
             var loaderImpl = new DelegateAssemblyLoadContext(loaderCallback);
@@ -154,15 +141,6 @@ namespace klr.hosting
                     return await (Task<int>)mainMethod.Invoke(bootstrapper, bootstrapperArgs);
                 }
             }
-            catch (Exception ex)
-            {
-#if NET45
-                Trace.TraceError(String.Join(Environment.NewLine, GetExceptions(ex)));
-#else
-                Console.Error.WriteLine(String.Join(Environment.NewLine, GetExceptions(ex)));
-#endif
-                return 1;
-            }
             finally
             {
 #if NET45
@@ -206,29 +184,6 @@ namespace klr.hosting
             }
 
             return null;
-        }
-
-        private static IEnumerable<string> GetExceptions(Exception ex)
-        {
-            while (ex != null)
-            {
-                if ((ex is TargetInvocationException))
-                {
-                    ex = ex.InnerException;
-                    continue;
-                }
-                else if (ex.GetType().Name == "FileLoadException")
-                {
-                    if (ex.InnerException != null)
-                    {
-                        ex = ex.InnerException;
-                        continue;
-                    }
-                }
-
-                yield return ex.ToString();
-                ex = ex.InnerException;
-            }
         }
     }
 }
