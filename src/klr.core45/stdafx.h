@@ -14,12 +14,6 @@
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 
-// C++ Headers
-#include <string>
-
-// STL
-using namespace std;
-
 // CRT Headers
 #include <stdio.h>
 #include <strsafe.h>
