@@ -7,6 +7,7 @@ using System.Reflection;
 using System.Runtime.Versioning;
 using Microsoft.Net.Runtime.Common.DependencyInjection;
 using Microsoft.Net.Runtime.FileSystem;
+using Microsoft.Net.Runtime.Infrastructure;
 using Microsoft.Net.Runtime.Loader;
 using Microsoft.Net.Runtime.Loader.NuGet;
 
@@ -40,6 +41,7 @@ namespace Microsoft.Net.Runtime
             _hostExporter = (ILibraryExportProvider)hostProvider.GetService(typeof(ILibraryExportProvider));
 
             _serviceProvider = new ServiceProvider(hostProvider);
+            CallContextServiceLocator.Locator.ServiceProvider = _serviceProvider;
 
             Initialize(options);
         }

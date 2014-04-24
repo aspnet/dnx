@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using Microsoft.Net.Runtime;
 using Microsoft.Net.Runtime.Common;
 using Microsoft.Net.Runtime.Common.DependencyInjection;
+using Microsoft.Net.Runtime.Infrastructure;
 
 namespace klr.host
 {
@@ -71,11 +72,14 @@ namespace klr.host
                                                                     targetFramework,
                                                                     assembly);
 
+            CallContextServiceLocator.Locator = new ServiceProviderLocator();
+
             var serviceProvider = new ServiceProvider();
             serviceProvider.Add(typeof(IHostContainer), _container);
             serviceProvider.Add(typeof(IAssemblyLoaderEngine), _loaderEngine);
             serviceProvider.Add(typeof(IApplicationEnvironment), applicationEnvironment);
             serviceProvider.Add(typeof(ILibraryExportProvider), _exportProvider);
+            CallContextServiceLocator.Locator.ServiceProvider = serviceProvider;
 
             return await EntryPointExecutor.Execute(assembly, programArgs, serviceProvider);
         }
