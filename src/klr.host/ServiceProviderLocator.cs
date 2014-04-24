@@ -11,10 +11,12 @@ namespace klr.host
     internal class ServiceProviderLocator : IServiceProviderLocator
     {
 #if NET45
+        private const string ServiceProviderDataName = "klr.host.ServiceProviderLocator.ServiceProvider";
+
         public IServiceProvider ServiceProvider
         {
-            get { return (IServiceProvider)CallContext.LogicalGetData(GetType().Name); }
-            set { CallContext.LogicalSetData(GetType().Name, value); }
+            get { return (IServiceProvider)CallContext.LogicalGetData(ServiceProviderDataName); }
+            set { CallContext.LogicalSetData(ServiceProviderDataName, value); }
         }
 #else
         private readonly AsyncLocal<IServiceProvider> _serviceProvider = new AsyncLocal<IServiceProvider>();
