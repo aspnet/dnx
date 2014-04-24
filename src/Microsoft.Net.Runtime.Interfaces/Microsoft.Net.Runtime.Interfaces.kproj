@@ -32,6 +32,8 @@
     <Compile Include="ILibraryManager.cs" />
     <Compile Include="IMetadataFileReference.cs" />
     <Compile Include="IMetadataReference.cs" />
+    <Compile Include="Infrastructure\CallContextServiceLocator.cs" />
+    <Compile Include="Infrastructure\IServiceProviderLocator.cs" />
     <Compile Include="ISourceFileReference.cs" />
     <Compile Include="ISourceReference.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
