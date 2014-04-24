@@ -63,7 +63,9 @@ namespace klr.hosting
 
                 if (assembly != null)
                 {
+#if K10
                     ExtractAssemblyNeutralInterfaces(assembly, loadBytes);
+#endif
 
                     _assemblyCache[name] = assembly;
                 }
@@ -93,6 +95,10 @@ namespace klr.hosting
             };
 
             AppDomain.CurrentDomain.AssemblyResolve += handler;
+            AppDomain.CurrentDomain.AssemblyLoad += (object sender, AssemblyLoadEventArgs loadedArgs) => 
+            {
+                ExtractAssemblyNeutralInterfaces(loadedArgs.LoadedAssembly, loadBytes);
+            };
 #endif
 
             try
