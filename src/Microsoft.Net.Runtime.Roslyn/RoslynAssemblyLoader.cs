@@ -2,6 +2,7 @@
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Runtime.Versioning;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Emit;
@@ -107,7 +108,16 @@ namespace Microsoft.Net.Runtime.Roslyn
 
                 var sw = Stopwatch.StartNew();
 
-                EmitResult result = compilationContext.Compilation.Emit(assemblyStream, pdbStream: pdbStream, manifestResources: resources);
+                EmitResult result = null;
+
+                if (PlatformHelper.IsMono)
+                {
+                    result = compilationContext.Compilation.Emit(assemblyStream, manifestResources: resources);
+                }
+                else
+                {
+                    result = compilationContext.Compilation.Emit(assemblyStream, pdbStream: pdbStream, manifestResources: resources);
+                }
 
                 sw.Stop();
 
@@ -126,9 +136,19 @@ namespace Microsoft.Net.Runtime.Roslyn
                 }
 
                 var assemblyBytes = assemblyStream.ToArray();
-                var pdbBytes = pdbStream.ToArray();
 
-                var assembly = _loaderEngine.LoadBytes(assemblyBytes, pdbBytes);
+                Assembly assembly = null;
+
+                if (PlatformHelper.IsMono)
+                {
+                    // Pdb generation doesn't work on mono today
+                    assembly = _loaderEngine.LoadBytes(assemblyBytes, pdbBytes: null);
+                }
+                else
+                {
+                    var pdbBytes = pdbStream.ToArray();
+                    assembly = _loaderEngine.LoadBytes(assemblyBytes, pdbBytes);
+                }
 
                 return new AssemblyLoadResult(assembly);
             }
