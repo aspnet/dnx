@@ -7,6 +7,7 @@ using System.IO;
 using System.IO.Compression;
 using System.Linq;
 using System.Reflection;
+using Microsoft.Net.Runtime;
 using NuGet.Resources;
 
 namespace NuGet
@@ -244,17 +245,44 @@ namespace NuGet
             ValidateDependencySets(Version, DependencySets);
             ValidateReferenceAssemblies(Files, PackageAssemblyReferences);
 
-            using (var package = new ZipArchive(stream, ZipArchiveMode.Update))
+            if (PlatformHelper.IsMono)
             {
-                // Validate and write the manifest
-                WriteManifest(package, DetermineMinimumSchemaVersion(Files));
+#if NET45
+                // Mono's zip implementation isn't complete as yet
+                using (var package = System.IO.Packaging.Package.Open(stream, FileMode.Create))
+                {
+                    // Validate and write the manifest
+                    WriteManifest(package, DetermineMinimumSchemaVersion(Files));
 
-                // Write the files to the package
-                var extensions = WriteFiles(package);
+                    // Write the files to the package
+                    WriteFiles(package);
 
-                extensions.Add("nuspec");
+                    // Copy the metadata properties back to the package
+                    package.PackageProperties.Creator = String.Join(",", Authors);
+                    package.PackageProperties.Description = Description;
+                    package.PackageProperties.Identifier = Id;
+                    package.PackageProperties.Version = Version.ToString();
+                    package.PackageProperties.Language = Language;
+                    package.PackageProperties.Keywords = ((IPackageMetadata)this).Tags;
+                    package.PackageProperties.Title = Title;
+                    package.PackageProperties.LastModifiedBy = CreatorInfo();
+                }
+#endif
+            }
+            else
+            {
+                using (var package = new ZipArchive(stream, ZipArchiveMode.Update))
+                {
+                    // Validate and write the manifest
+                    WriteManifest(package, DetermineMinimumSchemaVersion(Files));
 
-                WriteOpcContentTypes(package, extensions);
+                    // Write the files to the package
+                    var extensions = WriteFiles(package);
+
+                    extensions.Add("nuspec");
+
+                    WriteOpcContentTypes(package, extensions);
+                }
             }
         }
 
@@ -430,6 +458,50 @@ namespace NuGet
             }
         }
 
+#if NET45
+        private void WriteManifest(System.IO.Packaging.Package package, int minimumManifestVersion)
+        {
+            Uri uri = UriUtility.CreatePartUri(Id + Constants.ManifestExtension);
+
+            // Create the manifest relationship
+            package.CreateRelationship(uri, System.IO.Packaging.TargetMode.Internal, Constants.PackageRelationshipNamespace + ManifestRelationType);
+
+            // Create the part
+            var packagePart = package.CreatePart(uri, DefaultContentType, System.IO.Packaging.CompressionOption.Maximum);
+
+            using (Stream stream = packagePart.GetStream())
+            {
+                Manifest manifest = Manifest.Create(this);
+                manifest.Save(stream, minimumManifestVersion);
+            }
+        }
+
+        private void WriteFiles(System.IO.Packaging.Package package)
+        {
+            // Add files that might not come from expanding files on disk
+            foreach (IPackageFile file in new HashSet<IPackageFile>(Files))
+            {
+                using (Stream stream = file.GetStream())
+                {
+                    try
+                    {
+                        CreatePart(package, file.Path, stream);
+                    }
+                    catch
+                    {
+                        Console.WriteLine(file.Path);
+                        throw;
+                    }
+                }
+            }
+
+            foreach (var file in package.GetParts().GroupBy(s => s.Uri).Where(_ => _.Count() > 1))
+            {
+                Console.WriteLine(file.Key);
+            }
+        }
+#endif
+
         private void WriteManifest(ZipArchive package, int minimumManifestVersion)
         {
             string path = Id + Constants.ManifestExtension;
@@ -512,6 +584,25 @@ namespace NuGet
                 PathResolver.FilterPackageFiles(searchFiles, p => p.SourcePath, new[] { wildCard });
             }
         }
+
+#if NET45
+        private static void CreatePart(System.IO.Packaging.Package package, string path, Stream sourceStream)
+        {
+            if (PackageHelper.IsManifest(path))
+            {
+                return;
+            }
+
+            Uri uri = UriUtility.CreatePartUri(path);
+
+            // Create the part
+            var packagePart = package.CreatePart(uri, DefaultContentType, System.IO.Packaging.CompressionOption.Maximum);
+            using (Stream stream = packagePart.GetStream())
+            {
+                sourceStream.CopyTo(stream);
+            }
+        }
+#endif
 
         private static void CreatePart(ZipArchive package, string path, Stream sourceStream)
         {

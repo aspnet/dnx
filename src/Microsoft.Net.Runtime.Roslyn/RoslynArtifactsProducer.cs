@@ -101,10 +101,13 @@ namespace Microsoft.Net.Runtime.Roslyn
             assemblyFile.TargetPath = String.Format(@"lib\{0}\{1}.dll", frameworkFolder, project.Name);
             buildContext.SymbolPackageBuilder.Files.Add(assemblyFile);
 
-            var pdbFile = new PhysicalPackageFile();
-            pdbFile.SourcePath = pdbPath;
-            pdbFile.TargetPath = String.Format(@"lib\{0}\{1}.pdb", frameworkFolder, project.Name);
-            buildContext.SymbolPackageBuilder.Files.Add(pdbFile);
+            if (!PlatformHelper.IsMono)
+            {
+                var pdbFile = new PhysicalPackageFile();
+                pdbFile.SourcePath = pdbPath;
+                pdbFile.TargetPath = String.Format(@"lib\{0}\{1}.pdb", frameworkFolder, project.Name);
+                buildContext.SymbolPackageBuilder.Files.Add(pdbFile);
+            }
         }
 
         private void BuildPackage(BuildContext buildContext, CompilationContext compilationContext, string assemblyPath)
@@ -190,7 +193,17 @@ namespace Microsoft.Net.Runtime.Roslyn
 
                 var sw = Stopwatch.StartNew();
 
-                EmitResult result = compilationContext.Compilation.Emit(assemblyStream, outputName: Path.GetFileName(assemblyPath), pdbFileName: pdbPath, pdbStream: pdbStream, manifestResources: resources);
+                EmitResult result = null;
+
+                if (PlatformHelper.IsMono)
+                {
+                    // No pdb support yet
+                    result = compilationContext.Compilation.Emit(assemblyStream, outputName: Path.GetFileName(assemblyPath), pdbFileName: null, pdbStream: null, manifestResources: resources);
+                }
+                else
+                {
+                    result = compilationContext.Compilation.Emit(assemblyStream, outputName: Path.GetFileName(assemblyPath), pdbFileName: pdbPath, pdbStream: pdbStream, manifestResources: resources);
+                }
 
                 sw.Stop();
 
@@ -214,11 +227,17 @@ namespace Microsoft.Net.Runtime.Roslyn
                 assemblyStream.Position = 0;
                 pdbStream.Position = 0;
 
-                using (var pdbFileStream = File.Create(pdbPath))
                 using (var assemblyFileStream = File.Create(assemblyPath))
                 {
                     assemblyStream.CopyTo(assemblyFileStream);
-                    pdbStream.CopyTo(pdbFileStream);
+                }
+
+                if (!PlatformHelper.IsMono)
+                {
+                    using (var pdbFileStream = File.Create(pdbPath))
+                    {
+                        pdbStream.CopyTo(pdbFileStream);
+                    }
                 }
 
                 return true;
