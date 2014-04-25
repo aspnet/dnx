@@ -47,9 +47,11 @@ namespace NuGet
 
         private static Regex WildcardToRegex(string wildcard)
         {
-            var pattern = Regex.Escape(wildcard);
+            string pattern = null;
+
             if (Path.DirectorySeparatorChar == '/')
             {
+                pattern = Regex.Escape(wildcard.Replace('\\', '/'));
                 // regex wildcard adjustments for *nix-style file systems
                 pattern = pattern
                     .Replace(@"\*\*/", ".*") //For recursive wildcards /**/, include the current directory.
@@ -59,6 +61,7 @@ namespace NuGet
             }
             else
             {
+                pattern = Regex.Escape(wildcard);
                 // regex wildcard adjustments for Windows-style file systems
                 pattern = pattern
                     .Replace("/", @"\\") // On Windows, / is treated the same as \.
