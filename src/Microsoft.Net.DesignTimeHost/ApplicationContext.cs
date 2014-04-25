@@ -216,6 +216,7 @@ namespace Microsoft.Net.DesignTimeHost
 
                 _local.References = new ReferencesMessage
                 {
+                    RootDependency = state.Project.Name,
                     ProjectReferences = metadata.ProjectReferences,
                     FileReferences = metadata.References,
                     RawReferences = metadata.RawReferences,
