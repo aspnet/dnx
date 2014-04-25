@@ -89,7 +89,7 @@ namespace Microsoft.Net.Project
 
             // Add the assembly itself to the closure
             var closure = assemblyInfo.Closure.Select(d => d.NativeImagePath)
-                                      .Concat(new[] { assemblyInfo.NativeImagePath });
+                                      .Concat(new[] { assemblyInfo.AssemblyPath });
 
             Console.WriteLine("Generating native images for {0}", assemblyInfo.Name);
 
