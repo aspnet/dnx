@@ -11,12 +11,20 @@ namespace klr.host
     internal class ServiceProviderLocator : IServiceProviderLocator
     {
 #if NET45
-        private const string ServiceProviderDataName = "klr.host.ServiceProviderLocator.ServiceProvider";
+        // private const string ServiceProviderDataName = "klr.host.ServiceProviderLocator.ServiceProvider";
 
         public IServiceProvider ServiceProvider
         {
-            get { return (IServiceProvider)CallContext.LogicalGetData(ServiceProviderDataName); }
-            set { CallContext.LogicalSetData(ServiceProviderDataName, value); }
+            // TODO: Figure out how we make this work well on desktop.
+            // Since helios does cross app domain calls it means that everything
+            // object in the graph of objects added to the service provider needs to be
+            // marked [Serializabe]
+            // We may need async local on desktop as well
+            //get { return (IServiceProvider)CallContext.LogicalGetData(ServiceProviderDataName); }
+            //set { CallContext.LogicalSetData(ServiceProviderDataName, value); }
+
+            get { throw new NotSupportedException(); }
+            set {  }
         }
 #else
         private readonly AsyncLocal<IServiceProvider> _serviceProvider = new AsyncLocal<IServiceProvider>();
