@@ -31,9 +31,15 @@ namespace Microsoft.Net.PackageManager
             {
                 c.Description = "Restore packages";
 
+                var argProject = c.Argument("[project]", "Project to restore, default is current directory");
+
                 c.OnExecute(() =>
                 {
                     if (showHelp()) { return app.Execute("help", "restore"); }
+
+                    var command = new RestoreCommand();
+                    command.RestoreDirectory = argProject.Value;
+                    command.ExecuteCommand();
 
                     Console.WriteLine("You ran restore");
                     return 0;

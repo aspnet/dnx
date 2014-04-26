@@ -22,6 +22,29 @@
     <Compile Include="CommandLine\CommandLineApplication.cs" />
     <Compile Include="CommandLine\CommandArgument.cs" />
     <Compile Include="CommandLine\CommandOption.cs" />
+    <Compile Include="NuGet\CommandLine\CommandLineMachineWideSettings.cs" />
+    <Compile Include="NuGet\CommandLine\Common\CommandLineConstants.cs" />
+    <Compile Include="NuGet\CommandLine\Common\LocalizedResourceManager.cs" />
+    <Compile Include="NuGet\CommandLine\PackageSourceBuilder.cs" />
+    <Compile Include="NuGet\Common\CommonResources.cs" />
+    <Compile Include="NuGet\Common\CommonResources.Designer.cs" />
+    <Compile Include="NuGet\Common\NuGetConstants.cs" />
+    <Compile Include="NuGet\Core\Configuration\ConfigurationDefaults.cs" />
+    <Compile Include="NuGet\Core\Configuration\ISettings.cs" />
+    <Compile Include="NuGet\Core\Configuration\NullSettings.cs" />
+    <Compile Include="NuGet\Core\Configuration\Settings.cs" />
+    <Compile Include="NuGet\Core\Configuration\SettingValue.cs" />
+    <Compile Include="NuGet\Core\Extensions\SettingsExtensions.cs" />
+    <Compile Include="NuGet\Core\IMachineWideSettings.cs" />
+    <Compile Include="NuGet\Core\PackageSource\IPackageSourceProvider.cs" />
+    <Compile Include="NuGet\Core\PackageSource\PackageSource.cs" />
+    <Compile Include="NuGet\Core\PackageSource\PackageSourceProvider.cs" />
+    <Compile Include="NuGet\Core\PackageSource\PackageSourceProviderExtensions.cs" />
+    <Compile Include="NuGet\Core\Utility\CryptoHashProvider.cs" />
+    <Compile Include="NuGet\Core\Utility\EncryptionUtility.cs" />
+    <Compile Include="NuGet\Core\Utility\IHashProvider.cs" />
+    <Compile Include="NuGet\Core\Utility\XmlUtility.cs" />
+    <Compile Include="NuGet\NuGetResources.Designer.cs.txt" />
     <Compile Include="Packing\PackManager.cs" />
     <Compile Include="Packing\PackOperations.cs" />
     <Compile Include="Packing\PackOptions.cs" />
@@ -30,10 +53,15 @@
     <Compile Include="Packing\PackRoot.cs" />
     <Compile Include="Packing\PackRuntime.cs" />
     <Compile Include="Program.cs" />
+    <Compile Include="Restore\RestoreCommand.cs" />
+    <Compile Include="Restore\RestoreOperations.cs" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="kpm.cmd" />
     <Content Include="Microsoft.Net.PackageManager.kproj.user" />
+    <Content Include="NuGet\Common\CommonResources.resx" />
+    <Content Include="NuGet\NuGetResources.Designer.cs.txt" />
+    <Content Include="NuGet\NuGetResources.resx" />
     <Content Include="Project.json" />
   </ItemGroup>
   <Import Project="$(VSToolsPath)\ProjectK\Microsoft.Web.ProjectK.targets" Condition="'$(VSToolsPath)' != ''" />

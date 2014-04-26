@@ -19,32 +19,15 @@
                 "System.Xml": "",
                 "System.Runtime" : "",
                 "System.Collections" : "",
-                "System.IO" :  ""
-            }
-        },
-        "k10": { 
-            "dependencies": {
-                "System.Collections": "4.0.0.0",
-                "System.ComponentModel": "4.0.0.0",
-                "System.Console": "4.0.0.0",
-                "System.Diagnostics.Debug": "4.0.10.0",
-                "System.Diagnostics.Process": "4.0.0.0",
-                "System.IO": "4.0.0.0",
-                "System.IO.FileSystem": "4.0.0.0",
-                "System.IO.FileSystem.Primitives": "4.0.0.0",
-                "System.IO.Compression": "4.0.0.0",
-                "System.Linq": "4.0.0.0",
-                "System.Reflection": "4.0.10.0",
-                "System.Runtime": "4.0.20.0",
-                "System.Runtime.Extensions": "4.0.10.0",
-                "System.Runtime.InteropServices": "4.0.20.0",
-                "System.Security.Cryptography.HashAlgorithms.SHA2": "4.0.0.0",
-                "System.Threading.Tasks": "4.0.10.0"
+                "System.IO" :  "",
+                "System.Security": "",
+                "System.Runtime.Serialization": ""
             }
         }
     },
 
     "commands":  {
+        "run": "Microsoft.Net.PackageManager restore C:\\Users\\lodejard\\Projects\\ProjectK\\Universe\\Entropy\\samples\\Container.Autofac.Web",
         "kpm": "Microsoft.Net.PackageManager"
     }
 }
