@@ -24,7 +24,7 @@ var CORECLR_PATH = '${Environment.GetEnvironmentVariable("CORECLR_PATH")}'
 
 #package-runtime .clean-sdk-dir .copy-bits .tweak-scripts .copy-package-dependencies .copy-coreclr .nuget-pack-runtime target='package'
 
-#rebuild-package .build-compile .native-compile .package-runtime
+#rebuild-package .build-mono-entrypoint .build-compile .native-compile .package-runtime
 
 #build-mono-entrypoint target='compile' if='!IsMono'
     directory create='artifacts/build/klr.mono.managed'
