@@ -11,7 +11,7 @@ namespace klr.host
     internal class ServiceProviderLocator : IServiceProviderLocator
     {
 #if NET45
-        // private const string ServiceProviderDataName = "klr.host.ServiceProviderLocator.ServiceProvider";
+        private const string ServiceProviderDataName = "klr.host.ServiceProviderLocator.ServiceProvider";
 
         public IServiceProvider ServiceProvider
         {
@@ -20,11 +20,8 @@ namespace klr.host
             // object in the graph of objects added to the service provider needs to be
             // marked [Serializabe]
             // We may need async local on desktop as well
-            //get { return (IServiceProvider)CallContext.LogicalGetData(ServiceProviderDataName); }
-            //set { CallContext.LogicalSetData(ServiceProviderDataName, value); }
-
-            get { throw new NotSupportedException(); }
-            set {  }
+            get { return (IServiceProvider)CallContext.LogicalGetData(ServiceProviderDataName); }
+            set { CallContext.LogicalSetData(ServiceProviderDataName, value); }
         }
 #else
         private readonly AsyncLocal<IServiceProvider> _serviceProvider = new AsyncLocal<IServiceProvider>();
