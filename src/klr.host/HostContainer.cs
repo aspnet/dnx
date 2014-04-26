@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Collections.Generic;
 using System.Reflection;
 using Microsoft.Net.Runtime;
@@ -26,7 +27,7 @@ namespace klr.host
 
         public Assembly Load(string name)
         {
-            foreach (var host in _hosts)
+            foreach (var host in _hosts.Reverse())
             {
                 var assembly = host.Load(name);
                 if (assembly != null)
