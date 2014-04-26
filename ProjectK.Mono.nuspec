@@ -10,5 +10,6 @@
     <files>
         <file src="tools\net45\**" target="tools\net45" />
         <file src="..\klr.mono.managed\klr.mono.managed.dll" target="tools\net45" />
+        <file src="tools\NuGet.exe" target="tools" />
     </files>
 </package>
