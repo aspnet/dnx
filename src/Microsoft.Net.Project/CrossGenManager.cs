@@ -147,11 +147,16 @@ namespace Microsoft.Net.Project
                 }
                 else
                 {
+                    // Note: for CreatePDB need the native image (not the il image)
+                    // Add the assembly itself to the closure
+                    var closurePdb = assemblyInfo.Closure.Select(d => d.NativeImagePath)
+                                              .Concat(new[] { assemblyInfo.NativeImagePath });
+
                     argsPdb = String.Format(crossgenArgsTemplateCreatePdb,
                                          assemblyInfo.NativeImageDirectory,
                                          assemblyInfo.NativeImagePath,
                                          assemblyInfo.NativePdbPath,
-                                         String.Join(";", closure));
+                                         String.Join(";", closurePdb));
                 }
             
                 retCrossgen = ExecuteCrossgen(_options.CrossgenPath, argsPdb, assemblyInfo.Name);
