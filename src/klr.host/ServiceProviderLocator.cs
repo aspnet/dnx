@@ -2,6 +2,7 @@
 using Microsoft.Net.Runtime.Infrastructure;
 #if NET45
 using System.Runtime.Remoting.Messaging;
+using System.Runtime.Remoting;
 #else
 using System.Threading;
 #endif
@@ -15,13 +16,14 @@ namespace klr.host
 
         public IServiceProvider ServiceProvider
         {
-            // TODO: Figure out how we make this work well on desktop.
-            // Since helios does cross app domain calls it means that everything
-            // object in the graph of objects added to the service provider needs to be
-            // marked [Serializabe]
-            // We may need async local on desktop as well
-            get { return (IServiceProvider)CallContext.LogicalGetData(ServiceProviderDataName); }
-            set { CallContext.LogicalSetData(ServiceProviderDataName, value); }
+            get
+            {
+                return (IServiceProvider)((ObjectHandle)CallContext.LogicalGetData(ServiceProviderDataName)).Unwrap();
+            }
+            set
+            {
+                CallContext.LogicalSetData(ServiceProviderDataName, new ObjectHandle(value));
+            }
         }
 #else
         private readonly AsyncLocal<IServiceProvider> _serviceProvider = new AsyncLocal<IServiceProvider>();
