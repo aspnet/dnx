@@ -171,7 +171,7 @@ namespace Microsoft.Net.Runtime
             project.EmbedInteropTypes = GetValue<bool>(settings, "embedInteropTypes");
 
             project.SourcePattern = GetSettingsValue(settings, "code", @"**\*.cs");
-            project.SourceExcludePattern = GetSettingsValue(settings, "exclude", "");
+            project.SourceExcludePattern = GetSettingsValue(settings, "exclude", @"obj\**\*");
             project.PreprocessPattern = GetSettingsValue(settings, "preprocess", @"Compiler\Preprocess\**\*.cs");
             project.SharedPattern = GetSettingsValue(settings, "shared", @"Compiler\Shared\**\*.cs");
             project.ResourcesPattern = GetSettingsValue(settings, "resources", @"Compiler\Resources\**\*");
