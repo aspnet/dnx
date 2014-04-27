@@ -22,6 +22,7 @@
   <ItemGroup>
     <Compile Include="AssemblyNeutralAttribute.cs" />
     <Compile Include="IApplicationEnvironment.cs" />
+    <Compile Include="IApplicationShutdown.cs" />
     <Compile Include="IAssemblyLoaderEngine.cs" />
     <Compile Include="IFileMonitor.cs" />
     <Compile Include="IHost.cs" />

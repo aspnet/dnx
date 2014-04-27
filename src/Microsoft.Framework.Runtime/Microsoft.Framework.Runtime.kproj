@@ -23,8 +23,10 @@
     <Content Include="project.json" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ApplicationShutdown.cs" />
     <Compile Include="ApplicationEnvironment.cs" />
     <Compile Include="CompilerOptions.cs" />
+    <Compile Include="DebuggerDetachWatcher.cs" />
     <Compile Include="DefaultHost.cs" />
     <Compile Include="DefaultHostOptions.cs" />
     <Compile Include="DependencyManagement\DependencyWalker.cs" />

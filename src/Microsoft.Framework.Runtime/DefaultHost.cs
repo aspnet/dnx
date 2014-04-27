@@ -29,6 +29,7 @@ namespace Microsoft.Framework.Runtime
         private readonly ServiceProvider _serviceProvider;
         private readonly IAssemblyLoaderEngine _loaderEngine;
         private readonly UnresolvedDependencyProvider _unresolvedProvider = new UnresolvedDependencyProvider();
+        private readonly ApplicationShutdown _shutdown = new ApplicationShutdown();
 
         private Project _project;
 
@@ -131,7 +132,12 @@ namespace Microsoft.Framework.Runtime
 
             if (options.WatchFiles)
             {
-                _watcher = new FileWatcher(rootDirectory);
+                var watcher = new FileWatcher(rootDirectory);
+                _watcher = watcher;
+                watcher.OnChanged += _ =>
+                {
+                    _shutdown.RequestShutdownWaitForDebugger();
+                };
             }
             else
             {
@@ -188,6 +194,8 @@ namespace Microsoft.Framework.Runtime
             _unresolvedProvider.AttemptedProviders = dependencyProviders;
 
             _loader = new AssemblyLoader(loaders);
+
+            _serviceProvider.Add(typeof(IApplicationShutdown), _shutdown);
             _serviceProvider.Add(typeof(IFileMonitor), _watcher);
             _serviceProvider.Add(typeof(ILibraryManager),
                 new LibraryManager(_targetFramework,
