@@ -3,6 +3,7 @@ using NuGet;
 using NuGet.Common;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Runtime.Versioning;
@@ -12,22 +13,116 @@ namespace Microsoft.Net.PackageManager
 {
     public class RestoreOperations
     {
-        public async Task CreateGraph(RestoreContext context, Library library)
+        public IReport Report { get; set; }
+
+        public async Task<GraphNode> CreateGraphNode(RestoreContext context, Library library, Func<string, bool> predicate)
         {
-            var match = await FindLibrary(context, library);
-            var dependencies = await match.Provider.GetDependencies(match.Library, context.TargetFrameworkConfiguration.FrameworkName);
-            foreach (var dependency in dependencies)
+            var sw = new Stopwatch();
+            sw.Start();
+
+            var node = new GraphNode
             {
-                await CreateGraph(context, dependency);
+                Library = library,
+                Item = await FindLibraryCached(context, library),
+            };
+
+            if (node.Item != null)
+            {
+                if (node.Library.Version.IsSnapshot)
+                {
+                    node.Library = node.Item.Match.Library;
+                    lock (context.FindLibraryCache)
+                    {
+                        if (!context.FindLibraryCache.ContainsKey(node.Library))
+                        {
+                            context.FindLibraryCache[node.Library] = Task.FromResult(node.Item);
+                        }
+                    }
+                }
+
+                var tasks = new List<Task<GraphNode>>();
+                var dependencies = node.Item.Dependencies ?? Enumerable.Empty<Library>();
+                foreach (var dependency in dependencies)
+                {
+                    if (predicate(dependency.Name))
+                    {
+                        tasks.Add(CreateGraphNode(context, dependency, ChainPredicate(predicate, node.Item, dependency)));
+                    }
+                }
+                while (tasks.Any())
+                {
+                    var task = await Task.WhenAny(tasks);
+                    tasks.Remove(task);
+                    var dependency = await task;
+                    node.Dependencies.Add(dependency);
+                }
+            }
+            return node;
+        }
+
+        Func<string, bool> ChainPredicate(Func<string, bool> predicate, GraphItem item, Library dependency)
+        {
+            return name =>
+            {
+                if (item.Match.Library.Name == name)
+                {
+                    return false;
+                }
+                if (item.Dependencies.Any(d => d != dependency && d.Name == name))
+                {
+                    return false;
+                }
+                return predicate(name);
+            };
+        }
+
+        public Task<GraphItem> FindLibraryCached(RestoreContext context, Library library)
+        {
+            lock (context.FindLibraryCache)
+            {
+                Task<GraphItem> task;
+                if (!context.FindLibraryCache.TryGetValue(library, out task))
+                {
+                    task = FindLibraryEntry(context, library);
+                    context.FindLibraryCache[library] = task;
+                }
+                return task;
             }
         }
 
-        public async Task<WalkProviderMatch> FindLibrary(RestoreContext context, Library library)
+        public async Task<GraphItem> FindLibraryEntry(RestoreContext context, Library library)
+        {
+            Report.WriteLine(string.Format("Attempting to resolve dependency {0} >= {1}", library.Name, library.Version));
+
+            var match = await FindLibraryMatch(context, library);
+            if (match == null)
+            {
+                //                Report.WriteLine(string.Format("Unable to find '{1}' of package '{0}'", library.Name, library.Version));
+                return null;
+            }
+
+            var dependencies = await match.Provider.GetDependencies(match, context.TargetFrameworkConfiguration.FrameworkName);
+
+            //Report.WriteLine(string.Format("Resolved {0} {1}", match.Library.Name, match.Library.Version));
+
+            return new GraphItem
+            {
+                Match = match,
+                Dependencies = dependencies,
+            };
+        }
+
+        public async Task<WalkProviderMatch> FindLibraryMatch(RestoreContext context, Library library)
         {
             var projectMatch = await FindLibraryByName(context, library.Name, context.ProjectLibraryProviders);
             if (projectMatch != null)
             {
                 return projectMatch;
+            }
+
+            if (library.Version == null)
+            {
+                return null;
             }
 
             if (library.Version.IsSnapshot)
@@ -99,7 +194,7 @@ namespace Microsoft.Net.PackageManager
         private async Task<WalkProviderMatch> FindLibraryByVersion(RestoreContext context, Library library, IEnumerable<IWalkProvider> providers)
         {
             List<Task<WalkProviderMatch>> tasks = new List<Task<WalkProviderMatch>>();
-            foreach (var provider in context.RemoteLibraryProviders)
+            foreach (var provider in providers)
             {
                 tasks.Add(provider.FindLibraryByVersion(library, context.TargetFrameworkConfiguration.FrameworkName));
             }

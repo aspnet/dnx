@@ -6,16 +6,21 @@ using Microsoft.Net.PackageManager.Packing;
 using Microsoft.Net.Runtime;
 using Microsoft.Net.Runtime.Common;
 using Microsoft.Net.Runtime.Common.CommandLine;
+using System.Diagnostics;
+using System.Threading;
+using System.Net;
 
 namespace Microsoft.Net.PackageManager
 {
-    public class Program
+    public class Program : IReport
     {
         private readonly IApplicationEnvironment _environment;
 
         public Program(IApplicationEnvironment environment)
         {
             _environment = environment;
+            Thread.GetDomain().SetData(".appDomain", this);
+            ServicePointManager.DefaultConnectionLimit = 1024;
         }
 
         public int Main(string[] args)
@@ -38,6 +43,7 @@ namespace Microsoft.Net.PackageManager
                     if (showHelp()) { return app.Execute("help", "restore"); }
 
                     var command = new RestoreCommand();
+                    command.Report = this;
                     command.RestoreDirectory = argProject.Value;
                     command.ExecuteCommand();
 
@@ -173,6 +179,12 @@ namespace Microsoft.Net.PackageManager
                     }
                 }
             }
+        }
+
+        public void WriteLine(string message)
+        {
+            Trace.WriteLine(message);
+            Console.WriteLine(message);
         }
     }
 }

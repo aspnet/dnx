@@ -22,6 +22,7 @@
     <Compile Include="CommandLine\CommandLineApplication.cs" />
     <Compile Include="CommandLine\CommandArgument.cs" />
     <Compile Include="CommandLine\CommandOption.cs" />
+    <Compile Include="IReport.cs" />
     <Compile Include="NuGet\CommandLine\CommandLineMachineWideSettings.cs" />
     <Compile Include="NuGet\CommandLine\Common\CommandLineConstants.cs" />
     <Compile Include="NuGet\CommandLine\Common\LocalizedResourceManager.cs" />
@@ -44,7 +45,6 @@
     <Compile Include="NuGet\Core\Utility\EncryptionUtility.cs" />
     <Compile Include="NuGet\Core\Utility\IHashProvider.cs" />
     <Compile Include="NuGet\Core\Utility\XmlUtility.cs" />
-    <Compile Include="NuGet\NuGetResources.Designer.cs.txt" />
     <Compile Include="Packing\PackManager.cs" />
     <Compile Include="Packing\PackOperations.cs" />
     <Compile Include="Packing\PackOptions.cs" />
@@ -53,15 +53,21 @@
     <Compile Include="Packing\PackRoot.cs" />
     <Compile Include="Packing\PackRuntime.cs" />
     <Compile Include="Program.cs" />
+    <Compile Include="Restore\GraphModel\GraphItem.cs" />
+    <Compile Include="Restore\GraphModel\GraphNode.cs" />
+    <Compile Include="Restore\RemoteWalkProvider.cs" />
+    <Compile Include="Restore\NuGet\IPackageFeed.cs" />
+    <Compile Include="Restore\NuGet\PackageFeed.cs" />
+    <Compile Include="Restore\NuGet\PackageInfo.cs" />
+    <Compile Include="Restore\RestoreContext.cs" />
+    <Compile Include="Restore\LocalWalkProvider.cs" />
     <Compile Include="Restore\RestoreCommand.cs" />
     <Compile Include="Restore\RestoreOperations.cs" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="kpm.cmd" />
-    <Content Include="Microsoft.Net.PackageManager.kproj.user" />
     <Content Include="NuGet\Common\CommonResources.resx" />
-    <Content Include="NuGet\NuGetResources.Designer.cs.txt" />
     <Content Include="NuGet\NuGetResources.resx" />
+    <Content Include="out.txt" />
     <Content Include="Project.json" />
   </ItemGroup>
   <Import Project="$(VSToolsPath)\ProjectK\Microsoft.Web.ProjectK.targets" Condition="'$(VSToolsPath)' != ''" />

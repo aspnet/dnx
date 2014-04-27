@@ -1,112 +1,22 @@
-﻿using Microsoft.Net.Runtime;
+﻿using Microsoft.Net.PackageManager.Packing;
+using Microsoft.Net.PackageManager.Restore.NuGet;
+using Microsoft.Net.Runtime;
 using Microsoft.Net.Runtime.Loader.NuGet;
 using NuGet;
 using NuGet.Common;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
+using System.IO.Compression;
 using System.Linq;
 using System.Runtime.Versioning;
 using System.Threading.Tasks;
 
 namespace Microsoft.Net.PackageManager
 {
-    public class WalkProviderMatch
-    {
-        public IWalkProvider Provider { get; set; }
-        public Library Library { get; set; }
-        public string Path { get; set; }
-    }
 
-    public class WalkProviderDependencies
-    {
-        public IWalkProvider Provider { get; set; }
-        public Library Library { get; set; }
-        public string Path { get; set; }
-    }
-
-    public interface IWalkProvider
-    {
-        Task<WalkProviderMatch> FindLibraryByName(string name, FrameworkName targetFramework);
-        Task<WalkProviderMatch> FindLibraryByVersion(Library library, FrameworkName targetFramework);
-        Task<WalkProviderMatch> FindLibraryBySnapshot(Library library, FrameworkName targetFramework);
-        Task<IEnumerable<Library>> GetDependencies(Library library, FrameworkName targetFramework);
-    }
-
-    public class WalkProvider : IWalkProvider
-    {
-        IDependencyProvider _dependencyProvider;
-
-        public WalkProvider(IDependencyProvider dependencyProvider)
-        {
-            _dependencyProvider = dependencyProvider;
-        }
-
-        public async Task<WalkProviderMatch> FindLibraryByName(string name, FrameworkName targetFramework)
-        {
-            var description = _dependencyProvider.GetDescription(name, new SemanticVersion(new Version(0, 0)), targetFramework);
-            if (description == null)
-            {
-                return null;
-            }
-            return new WalkProviderMatch
-            {
-                Library = description.Identity,
-                Path = description.Path,
-                Provider = this,
-            };
-        }
-
-        public async Task<WalkProviderMatch> FindLibraryByVersion(Library library, FrameworkName targetFramework)
-        {
-            var description = _dependencyProvider.GetDescription(library.Name, library.Version, targetFramework);
-            if (description == null)
-            {
-                return null;
-            }
-            return new WalkProviderMatch
-            {
-                Library = description.Identity,
-                Path = description.Path,
-                Provider = this,
-            };
-        }
-
-        public async Task<WalkProviderMatch> FindLibraryBySnapshot(Library library, FrameworkName targetFramework)
-        {
-            var description = _dependencyProvider.GetDescription(library.Name, library.Version, targetFramework);
-            if (description == null)
-            {
-                return null;
-            }
-            return new WalkProviderMatch
-            {
-                Library = description.Identity,
-                Path = description.Path,
-                Provider = this,
-            };
-        }
-
-        public async Task<IEnumerable<Library>> GetDependencies(Library library, FrameworkName targetFramework)
-        {
-            var description = _dependencyProvider.GetDescription(library.Name, library.Version, targetFramework);
-            return description.Dependencies;
-        }
-    }
-
-    public class RestoreContext
-    {
-        public RestoreContext()
-        {
-
-        }
-
-        public TargetFrameworkConfiguration TargetFrameworkConfiguration { get; set; }
-
-        public IList<IWalkProvider> ProjectLibraryProviders { get; set; }
-        public IList<IWalkProvider> LocalLibraryProviders { get; set; }
-        public IList<IWalkProvider> RemoteLibraryProviders { get; set; }
-    }
 
     public class RestoreCommand
     {
@@ -120,6 +30,7 @@ namespace Microsoft.Net.PackageManager
         public string ConfigFile { get; set; }
         public IMachineWideSettings MachineWideSettings { get; set; }
         public IFileSystem FileSystem { get; set; }
+        public IReport Report { get; set; }
         protected internal ISettings Settings { get; set; }
         protected internal IPackageSourceProvider SourceProvider { get; set; }
 
@@ -143,30 +54,58 @@ namespace Microsoft.Net.PackageManager
 
             foreach (var projectJsonPath in projectJsonFiles)
             {
-                RestoreForProject(localRepository, projectJsonPath, rootDirectory);
+                RestoreForProject(localRepository, projectJsonPath, rootDirectory).Wait();
             }
         }
 
-        private void RestoreForProject(LocalPackageRepository localRepository, string projectJsonPath, string rootDirectory)
+        private async Task RestoreForProject(LocalPackageRepository localRepository, string projectJsonPath, string rootDirectory)
         {
+            var sw = new Stopwatch();
+            sw.Start();
+
             Project project;
             if (!Project.TryGetProject(projectJsonPath, out project))
             {
                 throw new Exception("TODO: project.json parse error");
             }
 
-            var restoreOperations = new RestoreOperations();
+            var projectDirectory = project.ProjectDirectory;
+            var packagesDirectory = Path.Combine(rootDirectory, CommandLineConstants.PackagesDirectoryName);
+
+            var restoreOperations = new RestoreOperations { Report = Report };
             var projectProviders = new List<IWalkProvider>();
             var localProviders = new List<IWalkProvider>();
             var remoteProviders = new List<IWalkProvider>();
             var contexts = new List<RestoreContext>();
 
-            projectProviders.Add(new WalkProvider(new ProjectReferenceDependencyProvider(
-                new ProjectResolver(project.ProjectDirectory, rootDirectory))));
+            projectProviders.Add(
+                new LocalWalkProvider(
+                    new ProjectReferenceDependencyProvider(
+                        new ProjectResolver(
+                            projectDirectory,
+                            rootDirectory))));
 
-            localProviders.Add(new WalkProvider(new NuGetDependencyResolver(
-                Path.GetDirectoryName(projectJsonPath), 
-                Path.Combine(rootDirectory, CommandLineConstants.PackagesDirectoryName))));
+            localProviders.Add(
+                new LocalWalkProvider(
+                    new NuGetDependencyResolver(
+                        projectDirectory,
+                        packagesDirectory)));
+
+            remoteProviders.Add(
+                new RemoteWalkProvider(
+                    new PackageFeed(
+                        "https://www.nuget.org/api/v2/",
+                        null,
+                        null,
+                        Report)));
+
+            remoteProviders.Add(
+                new RemoteWalkProvider(
+                    new PackageFeed(
+                        "https://www.myget.org/F/aspnetvnext/api/v2/",
+                        "aspnetreadonly",
+                        "4d8a2d9c-7b80-4162-9978-47e918c9658c",
+                        Report)));
 
             foreach (var configuration in project.GetTargetFrameworkConfigurations())
             {
@@ -180,43 +119,73 @@ namespace Microsoft.Net.PackageManager
                 contexts.Add(context);
             }
 
-            var tasks = new List<Task>();
+            var tasks = new List<Task<GraphNode>>();
             foreach (var context in contexts)
             {
-                tasks.Add(restoreOperations.CreateGraph(context, new Library { Name = project.Name, Version = project.Version }));
+                tasks.Add(restoreOperations.CreateGraphNode(context, new Library { Name = project.Name, Version = project.Version }, _ => true));
             }
-            Task.WhenAll(tasks).Wait();
+            var graphs = await Task.WhenAll(tasks);
 
-#if false
-            Project project;
-            if (Project.TryGetProject(projectJsonPath, out project))
+            Report.WriteLine(string.Format("Resolving complete, {0}ms elapsed", sw.ElapsedMilliseconds));
+
+            var installItems = new List<GraphItem>();
+            ForEach(graphs, node =>
             {
-                var projectResolver = new ProjectResolver(project.ProjectDirectory, rootDirectory);
-                var projectDependencyProvider = new ProjectReferenceDependencyProvider(projectResolver);
-                var nugetDependencyProvider = new NuGetDependencyProvider(localRepository, CreateRepository());
-
-                foreach (var configuration in project.GetTargetFrameworkConfigurations())
+                if (node == null || node.Item == null || node.Item.Match == null)
                 {
-                    var walker = new DependencyWalker(new IDependencyProvider[] {
-                        projectDependencyProvider,
-                        nugetDependencyProvider
-                    });
+                    return;
+                }
+                var isRemote = remoteProviders.Contains(node.Item.Match.Provider);
+                var isAdded = installItems.Any(item => item.Match.Library == node.Item.Match.Library);
+                if (isRemote && !isAdded)
+                {
+                    installItems.Add(node.Item);
+                }
+            });
 
-                    walker.Walk(project.Name, project.Version, configuration.FrameworkName);
-                    System.Console.WriteLine();
+            foreach (var item in installItems)
+            {
+                var library = item.Match.Library;
 
-                    Parallel.ForEach(nugetDependencyProvider.Dependencies, d =>
+                Report.WriteLine(string.Format("Installing {0} {1}", library.Name, library.Version));
+
+                var targetPath = Path.Combine(packagesDirectory, library.Name + "." + library.Version);
+                var targetNupkg = Path.Combine(targetPath, library.Name + "." + library.Version + ".nupkg");
+
+                Directory.CreateDirectory(targetPath);
+                using (var stream = new FileStream(targetNupkg, FileMode.Create, FileAccess.ReadWrite, FileShare.ReadWrite | FileShare.Delete))
+                {
+                    await item.Match.Provider.CopyToAsync(item.Match, stream);
+                    stream.Seek(0, SeekOrigin.Begin);
+                    using (var archive = new ZipArchive(stream, ZipArchiveMode.Read))
                     {
-                        string packageDirectory = localRepository.PathResolver.GetPackageDirectory(d.Identity.Package);
-
-                        // Add files
-                        localRepository.FileSystem.AddFiles(d.Identity.Package.GetFiles(), packageDirectory);
-
-                        localRepository.AddPackage(d.Identity.Package);
-                    });
+                        var packOperations = new PackOperations();
+                        packOperations.ExtractNupkg(archive, targetPath);
+                    }
                 }
             }
-#endif
+
+            Report.WriteLine(string.Format("Restore complete, {0}ms elapsed", sw.ElapsedMilliseconds));
+            //            Display(" ", graphs);
+        }
+
+
+        void ForEach(IEnumerable<GraphNode> nodes, Action<GraphNode> callback)
+        {
+            foreach (var node in nodes)
+            {
+                callback(node);
+                ForEach(node.Dependencies, callback);
+            }
+        }
+
+        void Display(string indent, IEnumerable<GraphNode> graphs)
+        {
+            foreach (var node in graphs)
+            {
+                Report.WriteLine(indent + node.Library.Name + "@" + node.Library.Version);
+                Display(indent + " ", node.Dependencies);
+            }
         }
 
         public static string ResolveRootDirectory(string projectDir)

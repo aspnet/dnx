@@ -17,6 +17,7 @@
                 "System.IO.Compression" : "",
                 "System.Xml.Linq": "",
                 "System.Xml": "",
+                "System.Net.Http" : "",
                 "System.Runtime" : "",
                 "System.Collections" : "",
                 "System.IO" :  "",
