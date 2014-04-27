@@ -50,19 +50,7 @@ namespace klr.host
                                               Directory.GetCurrentDirectory() : 
                                               AppDomain.CurrentDomain.SetupInformation.ApplicationBase;
 #else
-            var appDomainType = typeof(object)
-                                    .GetTypeInfo()
-                                    .Assembly
-                                    .GetType("System.AppDomain");
-
-            var currentAppDomainProperty = appDomainType.GetRuntimeProperty("CurrentDomain");
-
-            var currentAppDomain = currentAppDomainProperty.GetValue(null);
-
-            var getDataMethod = appDomainType
-                .GetRuntimeMethod("GetData", new[] { typeof(string) });
-
-            string applicationBaseDirectory = (string)getDataMethod.Invoke(currentAppDomain, new object[] { "APPBASE" });
+            string applicationBaseDirectory = ApplicationContext.BaseDirectory;
 #endif
 
             var framework = Environment.GetEnvironmentVariable("TARGET_FRAMEWORK");
