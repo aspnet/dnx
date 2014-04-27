@@ -1,9 +1,11 @@
 ﻿using System;
+using System.Reflection;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Runtime.Versioning;
 using System.Xml.Linq;
+using NuGet;
 
 namespace Microsoft.Net.Runtime
 {
@@ -32,11 +34,39 @@ namespace Microsoft.Net.Runtime
         {
             if (PlatformHelper.IsMono)
             {
-                // REVIEW: Make sure this is the correct way to find the mono reference assemblies
-                // This also needs to use the correct version of mono.
-                string referenceAssembliesPath = "/Library/Frameworks/Mono.framework/Versions/Current/lib/mono/xbuild-frameworks";
+#if NET45
+                var mscorlibLocationOnThisRunningMonoInstance = typeof(object).GetTypeInfo().Assembly.Location;
 
-                PopulateReferenceAssemblies(referenceAssembliesPath);
+                var libPath = Path.GetDirectoryName(Path.GetDirectoryName(mscorlibLocationOnThisRunningMonoInstance));
+
+                var supportedVersions = new[] { "4.5", "4.0" };
+
+                foreach (var version in supportedVersions)
+                {
+                    var targetFrameworkPath = Path.Combine(libPath, version);
+
+                    if (!Directory.Exists(targetFrameworkPath))
+                    {
+                        continue;
+                    }
+
+                    var frameworkName = new FrameworkName(VersionUtility.DefaultTargetFramework.Identifier, new Version(version));
+
+                    var frameworkInfo = new FrameworkInformation();
+
+                    var assemblies = new List<Tuple<string, string>>();
+
+                    PopulateAssemblies(assemblies, targetFrameworkPath);
+                    PopulateAssemblies(assemblies, Path.Combine(targetFrameworkPath, "Facades"));
+
+                    foreach (var pair in assemblies)
+                    {
+                        frameworkInfo.Assemblies.Add(pair.Item1, pair.Item2);
+                    }
+
+                    _cache[frameworkName] = frameworkInfo;
+                }
+#endif
             }
             else
             {
@@ -113,29 +143,14 @@ namespace Microsoft.Net.Runtime
             {
                 var frameworkList = XDocument.Load(stream);
 
-                // The redist list files on osx have this
-                var targetFrameworkDirectory = frameworkList.Root.Attribute("TargetFrameworkDirectory");
-
-                if (targetFrameworkDirectory != null)
+                foreach (var e in frameworkList.Root.Elements())
                 {
-                    string normalized = targetFrameworkDirectory.Value.Replace('\\', Path.DirectorySeparatorChar);
+                    string assemblyName = e.Attribute("AssemblyName").Value;
+                    string assemblyPath = GetAssemblyPath(frameworkPath, assemblyName);
 
-                    var targetFrameworkPath = Path.GetFullPath(Path.Combine(Path.GetDirectoryName(path), normalized));
-
-                    PopulateAssemblies(assemblies, targetFrameworkPath);
-                    PopulateAssemblies(assemblies, Path.Combine(targetFrameworkPath, "Facades"));
-                }
-                else
-                {
-                    foreach (var e in frameworkList.Root.Elements())
+                    if (!string.IsNullOrEmpty(assemblyPath))
                     {
-                        string assemblyName = e.Attribute("AssemblyName").Value;
-                        string assemblyPath = GetAssemblyPath(frameworkPath, assemblyName);
-
-                        if (!string.IsNullOrEmpty(assemblyPath))
-                        {
-                            assemblies.Add(Tuple.Create(assemblyName, assemblyPath));
-                        }
+                        assemblies.Add(Tuple.Create(assemblyName, assemblyPath));
                     }
                 }
             }
