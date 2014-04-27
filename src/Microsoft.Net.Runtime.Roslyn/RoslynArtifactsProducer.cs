@@ -209,9 +209,10 @@ namespace Microsoft.Net.Runtime.Roslyn
 
                 Trace.TraceInformation("[{0}]: Emitted {1} in {2}ms", GetType().Name, buildContext.AssemblyName, sw.ElapsedMilliseconds);
 
+                diagnostics.AddRange(result.Diagnostics);
+
                 if (!result.Success)
                 {
-                    diagnostics.AddRange(result.Diagnostics);
                     return false;
                 }
 
