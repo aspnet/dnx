@@ -118,8 +118,7 @@ namespace Microsoft.Net.Runtime
 
             if (!Project.TryGetProject(_projectDir, out _project))
             {
-                Trace.TraceInformation("Unable to locate {0}.'", Project.ProjectFileName);
-                return;
+                throw new Exception("Unable to locate " + Project.ProjectFileName);
             }
 
             var projectResolver = new ProjectResolver(_projectDir, rootDirectory);

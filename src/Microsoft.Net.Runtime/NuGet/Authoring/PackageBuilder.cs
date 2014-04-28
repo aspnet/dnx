@@ -489,15 +489,9 @@ namespace NuGet
                     }
                     catch
                     {
-                        Console.WriteLine(file.Path);
                         throw;
                     }
                 }
-            }
-
-            foreach (var file in package.GetParts().GroupBy(s => s.Uri).Where(_ => _.Count() > 1))
-            {
-                Console.WriteLine(file.Key);
             }
         }
 #endif
@@ -533,15 +527,9 @@ namespace NuGet
                     }
                     catch
                     {
-                        Console.WriteLine(file.Path);
                         throw;
                     }
                 }
-            }
-
-            foreach (var file in package.Entries.GroupBy(s => s.Name).Where(_ => _.Count() > 1))
-            {
-                Console.WriteLine(file.Key);
             }
 
             return extensions;

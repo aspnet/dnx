@@ -5,8 +5,8 @@
 
 int CallFirmwareProcessMain(int argc, wchar_t* argv[])
 {
-    TCHAR szKreTrace[2];
-    bool m_fVerboseTrace = GetEnvironmentVariableW(L"KRE_TRACE", szKreTrace, 2) > 0;
+    TCHAR szKreTrace[1];
+    bool m_fVerboseTrace = GetEnvironmentVariableW(L"KRE_TRACE", szKreTrace, 1) > 0;
     bool fSuccess = true;
     HMODULE m_hHostModule = nullptr;
     LPCWSTR pwzHostModuleName = L"klr.net45.dll";
