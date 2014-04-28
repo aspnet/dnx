@@ -35,7 +35,7 @@ namespace Microsoft.Net.PackageManager.Restore.NuGet
             string password,
             IReport report)
         {
-            _baseUri = baseUri;
+            _baseUri = baseUri + (baseUri.EndsWith("/") ? "" : "/");
             _userName = userName;
             _password = password;
             _report = report;
@@ -171,7 +171,7 @@ namespace Microsoft.Net.PackageManager.Restore.NuGet
 
                     var result = new NupkgEntry();
                     result.TempFileName = Path.GetTempFileName();
-                    result.TempFileStream =new FileStream(
+                    result.TempFileStream = new FileStream(
                         result.TempFileName,
                         FileMode.Create,
                         FileAccess.ReadWrite,

@@ -24,13 +24,19 @@ namespace Microsoft.Net.PackageManager
         {
             FileSystem = new PhysicalFileSystem(Environment.CurrentDirectory);
             MachineWideSettings = new CommandLineMachineWideSettings();
+            Sources = Enumerable.Empty<string>();
+            FallbackSources = Enumerable.Empty<string>();
         }
 
         public string RestoreDirectory { get; set; }
         public string ConfigFile { get; set; }
+        public IEnumerable<string> Sources { get; set; }
+        public IEnumerable<string> FallbackSources { get; set; }
+
         public IMachineWideSettings MachineWideSettings { get; set; }
         public IFileSystem FileSystem { get; set; }
         public IReport Report { get; set; }
+
         protected internal ISettings Settings { get; set; }
         protected internal IPackageSourceProvider SourceProvider { get; set; }
 
@@ -91,21 +97,46 @@ namespace Microsoft.Net.PackageManager
                         projectDirectory,
                         packagesDirectory)));
 
-            remoteProviders.Add(
-                new RemoteWalkProvider(
-                    new PackageFeed(
-                        "https://www.nuget.org/api/v2/",
-                        null,
-                        null,
-                        Report)));
+            var allSources = SourceProvider.LoadPackageSources();
 
-            remoteProviders.Add(
-                new RemoteWalkProvider(
-                    new PackageFeed(
-                        "https://www.myget.org/F/aspnetvnext/api/v2/",
-                        "aspnetreadonly",
-                        "4d8a2d9c-7b80-4162-9978-47e918c9658c",
-                        Report)));
+            var enabledSources = Sources.Any() ?
+                Enumerable.Empty<PackageSource>() :
+                allSources.Where(s => s.IsEnabled);
+
+            var addedSources = Sources.Concat(FallbackSources).Select(
+                value => allSources.FirstOrDefault(source => CorrectName(value, source)) ?? new PackageSource(value));
+
+            var effectiveSources = enabledSources.Concat(addedSources).Distinct().ToList();
+
+            foreach (var source in effectiveSources)
+            {
+                if (new Uri(source.Source).IsFile)
+                {
+                    remoteProviders.Add(
+                        new RemoteWalkProvider(
+                            new PackageFolder(
+                                source.Source,
+                                Report)));
+                }
+                else
+                {
+                    remoteProviders.Add(
+                        new RemoteWalkProvider(
+                            new PackageFeed(
+                                source.Source,
+                                source.UserName,
+                                source.Password,
+                                Report)));
+                }
+            }
+
+            //remoteProviders.Add(
+            //    new RemoteWalkProvider(
+            //        new PackageFeed(
+            //            "https://www.myget.org/F/aspnetvnext/api/v2/",
+            //            "aspnetreadonly",
+            //            "4d8a2d9c-7b80-4162-9978-47e918c9658c",
+            //            Report)));
 
             foreach (var configuration in project.GetTargetFrameworkConfigurations())
             {
@@ -166,7 +197,12 @@ namespace Microsoft.Net.PackageManager
             }
 
             Report.WriteLine(string.Format("Restore complete, {0}ms elapsed", sw.ElapsedMilliseconds));
-            //            Display(" ", graphs);
+        }
+
+        private bool CorrectName(string value, PackageSource source)
+        {
+            return source.Name.Equals(value, StringComparison.CurrentCultureIgnoreCase) ||
+                source.Source.Equals(value, StringComparison.OrdinalIgnoreCase);
         }
 
 

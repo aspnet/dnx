@@ -4,7 +4,6 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Runtime.Versioning;
-using Microsoft.CodeAnalysis;
 using Microsoft.Net.PackageManager.Packing;
 using Microsoft.Net.Runtime;
 using Microsoft.Net.Runtime.Loader.NuGet;

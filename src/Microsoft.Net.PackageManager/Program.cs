@@ -5,7 +5,6 @@ using Microsoft.Net.PackageManager.CommandLine;
 using Microsoft.Net.PackageManager.Packing;
 using Microsoft.Net.Runtime;
 using Microsoft.Net.Runtime.Common;
-using Microsoft.Net.Runtime.Common.CommandLine;
 using System.Diagnostics;
 using System.Threading;
 using System.Net;
@@ -42,13 +41,24 @@ namespace Microsoft.Net.PackageManager
                 {
                     if (showHelp()) { return app.Execute("help", "restore"); }
 
-                    var command = new RestoreCommand();
-                    command.Report = this;
-                    command.RestoreDirectory = argProject.Value;
-                    command.ExecuteCommand();
+                    try
+                    {
+                        var command = new RestoreCommand();
+                        command.Report = this;
+                        command.RestoreDirectory = argProject.Value;
+                        command.ExecuteCommand();
 
-                    Console.WriteLine("You ran restore");
-                    return 0;
+                        return 0;
+                    }
+                    catch (Exception ex)
+                    {
+                        this.WriteLine("----------");
+                        this.WriteLine(ex.ToString());
+                        this.WriteLine("----------");
+                        this.WriteLine("Restore failed");
+                        this.WriteLine(ex.Message);
+                        return 1;
+                    }
                 });
             });
 
@@ -64,7 +74,6 @@ namespace Microsoft.Net.PackageManager
                 {
                     if (showHelp()) { return app.Execute("help", "install"); }
 
-                    Console.WriteLine("You ran restore");
                     return 0;
                 });
             });
@@ -72,7 +81,7 @@ namespace Microsoft.Net.PackageManager
             app.Command("pack", c =>
             {
                 c.Description = "Bundle application for deployment";
-                
+
                 var argProject = c.Argument("[project]", "Path to project, default is current directory");
                 var optionOut = c.Option("-o|--out <PATH>", "Where does it go");
                 var optionZipPackages = c.Option("-z|--zippackages", "Bundle a zip full of packages");

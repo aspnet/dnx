@@ -41,6 +41,7 @@
     <Compile Include="NuGet\Core\PackageSource\PackageSource.cs" />
     <Compile Include="NuGet\Core\PackageSource\PackageSourceProvider.cs" />
     <Compile Include="NuGet\Core\PackageSource\PackageSourceProviderExtensions.cs" />
+    <Compile Include="NuGet\Core\Repository\LocalPackageRepository.cs" />
     <Compile Include="NuGet\Core\Utility\CryptoHashProvider.cs" />
     <Compile Include="NuGet\Core\Utility\EncryptionUtility.cs" />
     <Compile Include="NuGet\Core\Utility\IHashProvider.cs" />
@@ -55,6 +56,7 @@
     <Compile Include="Program.cs" />
     <Compile Include="Restore\GraphModel\GraphItem.cs" />
     <Compile Include="Restore\GraphModel\GraphNode.cs" />
+    <Compile Include="Restore\NuGet\PackageFolder.cs" />
     <Compile Include="Restore\RemoteWalkProvider.cs" />
     <Compile Include="Restore\NuGet\IPackageFeed.cs" />
     <Compile Include="Restore\NuGet\PackageFeed.cs" />

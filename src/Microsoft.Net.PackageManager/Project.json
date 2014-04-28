@@ -1,14 +1,9 @@
 ﻿{
+    "version": "0.1-alpha-*",
+
     "dependencies": {
         "Microsoft.Net.Runtime" : "",
-        "Microsoft.Net.Runtime.Common" : "",
-        "Microsoft.Net.CommandLineUtils" : "",
-        "Microsoft.Net.Runtime.Roslyn" : "",
-        "Microsoft.Net.Runtime.Interfaces" : "",
-        "Microsoft.CodeAnalysis.Common" : "0.7-beta-*",
-        "Microsoft.CodeAnalysis.CSharp" : "0.7-beta-*",
-        "System.Reflection.Metadata.Ecma335": "0.7-beta-*",
-        "Microsoft.Bcl.Immutable" : "1.1.18-beta-*"
+        "Microsoft.Net.Runtime.Interfaces" : ""
     },
 
     "configurations": {

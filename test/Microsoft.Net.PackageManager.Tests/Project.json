@@ -9,7 +9,7 @@
     "configurations" : {
         "net45" : {
             "dependencies": {
-                "System.Runtime": "4.0.20.0"
+                "System.Runtime": ""
             }
         },
         "k10" : { 

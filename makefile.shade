@@ -295,7 +295,8 @@ var CORECLR_PATH = '${Environment.GetEnvironmentVariable("CORECLR_PATH")}'
     @{
         var allPackages = Path.Combine(BUILD_DIR2, "**", "*.nupkg");
         var excludePackages = Path.Combine(BUILD_DIR2, "**", "Microsoft.Net.Runtime.Interfaces*.nupkg");
-        foreach(var packageFile in Files.Include(allPackages).Exclude(excludePackages))
+        var excludePackages2 = Path.Combine(BUILD_DIR2, "**", "Microsoft.Net.PackageManager*.nupkg");
+        foreach(var packageFile in Files.Include(allPackages).Exclude(excludePackages).Exclude(excludePackages2))
         {
             File.Delete(packageFile);
         }
