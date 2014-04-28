@@ -5,11 +5,13 @@
 
 int CallFirmwareProcessMain(int argc, wchar_t* argv[])
 {
+    TCHAR szKreTrace[1];
+    bool m_fVerboseTrace = GetEnvironmentVariableW(L"KRE_TRACE", szKreTrace, 1) > 0;
     bool fSuccess = true;
-    bool m_fVerboseTrace = true;
     HMODULE m_hHostModule = nullptr;
     LPCWSTR pwzHostModuleName = L"klr.net45.dll";
-    //Note: need to keep as ASCII as GetProcAddress function takes ASCII params
+
+    // Note: need to keep as ASCII as GetProcAddress function takes ASCII params
     LPCSTR pszCallApplicationMainName = "CallApplicationMain";
     FnCallApplicationMain pfnCallApplicationMain = nullptr;
     int exitCode = 0;

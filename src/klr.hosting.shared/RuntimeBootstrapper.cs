@@ -19,7 +19,6 @@ namespace klr.hosting
         private static readonly Dictionary<string, CommandOptionType> _options = new Dictionary<string, CommandOptionType>
         {
             { "lib", CommandOptionType.MultipleValue },
-            { "verbosity", CommandOptionType.NoValue }
         };
 
         public static async Task<int> Execute(string[] args)
@@ -29,11 +28,15 @@ namespace klr.hosting
                 return 1;
             }
 
+            var enableTrace = Environment.GetEnvironmentVariable("KRE_TRACE") == "1";
 #if NET45
             // TODO: Make this pluggable and not limited to the console logger
-            var listener = new ConsoleTraceListener();
-            Trace.Listeners.Add(listener);
-            Trace.AutoFlush = true;
+            if (enableTrace)
+            {
+                var listener = new ConsoleTraceListener();
+                Trace.Listeners.Add(listener);
+                Trace.AutoFlush = true;
+            }
 #endif
             var parser = new CommandLineParser();
             CommandOptions options;

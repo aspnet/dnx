@@ -8,17 +8,34 @@ namespace System.Diagnostics
     {
         public static void TraceError(string message, params object[] args)
         {
-            Console.WriteLine("Error: " + message, args);
+            if (IsEnabled)
+            {
+                Console.WriteLine("Error: " + message, args);
+            }
         }
 
         public static void TraceInformation(string message, params object[] args)
         {
-            Console.WriteLine("Information: " + message, args);
+            if (IsEnabled)
+            {
+                Console.WriteLine("Information: " + message, args);
+            }
         }
 
         public static void TraceWarning(string message, params object[] args)
         {
-            Console.WriteLine("Warning: " + message, args);
+            if (IsEnabled)
+            {
+                Console.WriteLine("Warning: " + message, args);
+            }
+        }
+
+        private static bool IsEnabled
+        {
+            get
+            {
+                return Environment.GetEnvironmentVariable("KRE_TRACE") == "1";
+            }
         }
     }
 }
