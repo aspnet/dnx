@@ -100,6 +100,12 @@ namespace klr.hosting
             AppDomain.CurrentDomain.AssemblyResolve += handler;
             AppDomain.CurrentDomain.AssemblyLoad += (object sender, AssemblyLoadEventArgs loadedArgs) => 
             {
+                // Skip loading interfaces for dynamic assemblies
+                if (loadedArgs.LoadedAssembly.IsDynamic)
+                {
+                    return;
+                }
+
                 ExtractAssemblyNeutralInterfaces(loadedArgs.LoadedAssembly, loadBytes);
             };
 #endif
