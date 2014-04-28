@@ -235,6 +235,8 @@ namespace Microsoft.Net.Project
                 SymbolPackageBuilder = symbolPackageBuilder
             };
 
+            Console.WriteLine("Building {0} {1}", project.Name, targetFramework);
+
             if (!roslynArtifactsProducer.Build(buildContext, diagnostics))
             {
                 return false;
