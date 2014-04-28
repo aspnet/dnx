@@ -93,7 +93,7 @@ namespace Microsoft.Net.Project
 
             Console.WriteLine("Generating native images for {0}", assemblyInfo.Name);
 
-            const string crossgenArgsTemplate = @"/in ""{0}"" /out ""{1}"" /MissingDependenciesOK /Trusted_Platform_Assemblies ""{2}""";
+            const string crossgenArgsTemplate = @"/Nologo /in ""{0}"" /out ""{1}"" /MissingDependenciesOK /Trusted_Platform_Assemblies ""{2}""";
 
             // crossgen.exe /in {il-path}.dll /out {native-image-path} /MissingDependenciesOK /Trusted_Platform_Assemblies {closure}
             string args = null;
@@ -131,7 +131,7 @@ namespace Microsoft.Net.Project
             {
                 Console.WriteLine("Generating native pdb for {0}", assemblyInfo.Name);
 
-                const string crossgenArgsTemplateCreatePdb = @"/CreatePDB ""{0}"" /in ""{1}"" /out ""{2}"" /Trusted_Platform_Assemblies ""{3}""";
+                const string crossgenArgsTemplateCreatePdb = @"/Nologo /CreatePDB ""{0}"" /in ""{1}"" /out ""{2}"" /Trusted_Platform_Assemblies ""{3}""";
 
                 // crossgen.exe /CreatePDB {native-pdb-directory} /in {native-image-path}.dll /out {native-pdb-path} /Trusted_Platform_Assemblies {closure}
                 string argsPdb = null;
