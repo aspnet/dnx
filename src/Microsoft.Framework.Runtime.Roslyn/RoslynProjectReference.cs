@@ -1,6 +1,7 @@
 // Copyright (c) Microsoft Open Technologies, Inc. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -42,6 +43,18 @@ namespace Microsoft.Framework.Runtime.Roslyn
             }
         }
 
+        // Pdbs aren't supported on mono
+        // Diasmreader.dll not supported on CoreSystemServer: SET KRE_ROSLYN_EMIT_PDB_DISABLE=1
+        private static Lazy<bool> _roslynPdbGenerationDisable = new Lazy<bool>(() => ((PlatformHelper.IsMono) || (Environment.GetEnvironmentVariable("KRE_ROSLYN_EMIT_PDB_DISABLE") == "1")));
+
+        public bool RoslynPdbGenerationDisable
+        {
+            get
+            {
+                return _roslynPdbGenerationDisable.Value;
+            }
+        }
+
         public IDiagnosticResult GetDiagnostics()
         {
             var diagnostics = CompilationContext.Diagnostics
@@ -74,9 +87,8 @@ namespace Microsoft.Framework.Runtime.Roslyn
 
                 EmitResult emitResult = null;
 
-                if (PlatformHelper.IsMono)
+                if (RoslynPdbGenerationDisable)
                 {
-                    // Pdbs aren't supported on mono
                     emitResult = CompilationContext.Compilation.Emit(assemblyStream, manifestResources: resources);
                 }
                 else
@@ -140,9 +152,8 @@ namespace Microsoft.Framework.Runtime.Roslyn
 
                 EmitResult result = null;
 
-                if (PlatformHelper.IsMono)
+                if (RoslynPdbGenerationDisable)
                 {
-                    // No pdb support yet
                     result = CompilationContext.Compilation.Emit(assemblyStream, outputName: Path.GetFileName(assemblyPath), pdbFilePath: null, pdbStream: null, xmlDocumentationStream: xmlDocStream, manifestResources: resources);
                 }
                 else

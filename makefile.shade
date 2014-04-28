@@ -8,7 +8,6 @@ var AUTHORS='Microsoft Open Technologies, Inc.'
 use-standard-lifecycle
 k-standard-goals
 
-
 var Configuration2='${E("Configuration")}'
 var ROOT = '${Directory.GetCurrentDirectory()}'
 var SCRIPTS_DIR = '${Path.Combine(ROOT, "scripts")}'
@@ -30,34 +29,96 @@ var KRE_CORECLR_TARGETS = '${new [] {KRE_CORECLR_x86_BIN, KRE_CORECLR_amd64_BIN}
 var ALL_TARGETS = '${KRE_CLR_TARGETS.Concat(KRE_CORECLR_TARGETS)}'
 var NEW_RUNTIME = '${E("NEW_RUNTIME") == "1"}'
 var CORE_CLR_VERSION = '${E("CORE_CLR_VERSION")}'
-
+var PROGRAM_FILES_X86 = '${Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86)}'
+var MSBUILD = '${Path.Combine(PROGRAM_FILES_X86, "MSBuild", "12.0", "Bin", "MSBuild.exe")}'
 
 #package-runtime .clean-sdk-dir .copy-bits .tweak-scripts .copy-package-dependencies .copy-coreclr-kpm-dependencies .copy-coreclr .nuget-pack-runtime target='package'
 
 #rebuild-package .build-mono-entrypoint .build-compile .native-compile .xunit-test .package-runtime
 
+#native-compile target='compile' if='!IsMono'
+  var nativeProjects ='${Files.Include(Path.Combine(ROOT, "src", "**", "*.vcxproj"))}'
+
+  @{
+      if (nativeProjects.Any())
+      {
+        if (!IsMsbuildInstalled(MSBUILD))
+        {
+            Environment.Exit(1);
+        }
+        else
+        {
+            foreach (var project in nativeProjects)
+            {
+                //Skip redefined targets (compile-klr, compile-klrcore45)
+                if (project.Contains("klr.vcxproj") || project.Contains("klr.core45.vcxproj"))
+                {
+                    continue;
+                }
+                
+                Exec(MSBUILD, project + " /p:Configuration=" + Configuration2 + ";Platform=Win32");
+                Exec(MSBUILD, project + " /p:Configuration=" + Configuration2 + ";Platform=x64");
+            }
+        }
+      }
+  }
+
+  copy sourceDir='${Path.GetDirectoryName(project)}' include='bin/**/' outputDir='${Path.Combine(BUILD_DIR2, Path.GetFileNameWithoutExtension(project))}' overwrite='${true}' each='var project in nativeProjects'
+
 #compile-klr target='native-compile' if='!IsMono'
-  var programFilesX86 = '${Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86)}'
-  var msbuild = '${Path.Combine(programFilesX86, "MSBuild", "12.0", "Bin", "MSBuild.exe")}'
   var klrProj = '${Path.Combine(ROOT, "src", "klr", "klr.vcxproj")}'
 
   @{
-      if(!File.Exists(msbuild))
+      if (!IsMsbuildInstalled(MSBUILD))
       {
-          Log.Warn("msbuild version 12 not found. Please ensure you have the VS 2013 C++ SDK installed.");
           Environment.Exit(1);
       }
       else
       {
-          Exec(msbuild, klrProj + " /p:Configuration=" + Configuration2 + ";Platform=Win32;TargetFramework=net45");
-          Exec(msbuild, klrProj + " /p:Configuration=" + Configuration2 + ";Platform=x64;TargetFramework=net45");
-          Exec(msbuild, klrProj + " /p:Configuration=" + Configuration2 + ";Platform=Win32;TargetFramework=aspnetcore50");
-          Exec(msbuild, klrProj + " /p:Configuration=" + Configuration2 + ";Platform=x64;TargetFramework=aspnetcore50");
+          var environmentKreTargetOS = Environment.GetEnvironmentVariable("KRE_TARGET_OS");
+          var configKreTargetOS = "";
+      
+          Exec(MSBUILD, klrProj + " /p:Configuration=" + Configuration2 + ";Platform=Win32;TargetFramework=net45");
+          Exec(MSBUILD, klrProj + " /p:Configuration=" + Configuration2 + ";Platform=x64;TargetFramework=net45");
+
+          if (environmentKreTargetOS == "WIN7_PLUS_CORESYSTEM")
+          {
+            configKreTargetOS = ";KreTargetOS=WIN7_PLUS_CORESYSTEM";
+          }
+          
+          Exec(MSBUILD, klrProj + " /p:Configuration=" + Configuration2 + ";Platform=Win32;TargetFramework=aspnetcore50" + configKreTargetOS);
+          Exec(MSBUILD, klrProj + " /p:Configuration=" + Configuration2 + ";Platform=x64;TargetFramework=aspnetcore50" + configKreTargetOS);
       }
   }
 
   directory delete='${Path.Combine(BUILD_DIR2, "klr")}'
   copy sourceDir='${Path.Combine(ROOT, "src", "klr")}' include='bin/**/' outputDir='${Path.Combine(BUILD_DIR2, "klr")}' overwrite='${true}'
+
+#compile-klrcore45 target='native-compile' if='!IsMono'
+  var klrCore45Proj = '${Path.Combine(ROOT, "src", "klr.core45", "klr.core45.vcxproj")}'
+
+  @{
+      if (!IsMsbuildInstalled(MSBUILD))
+      {
+          Environment.Exit(1);
+      }
+      else
+      {
+          var environmentKreTargetOS = Environment.GetEnvironmentVariable("KRE_TARGET_OS");
+          var configKreTargetOS = "";
+      
+          if (environmentKreTargetOS == "WIN7_PLUS_CORESYSTEM")
+          {
+            configKreTargetOS = ";KreTargetOS=WIN7_PLUS_CORESYSTEM";
+          }
+          
+          Exec(MSBUILD, klrCore45Proj + " /p:Configuration=" + Configuration2 + ";Platform=Win32" + configKreTargetOS);
+          Exec(MSBUILD, klrCore45Proj + " /p:Configuration=" + Configuration2 + ";Platform=x64" + configKreTargetOS);
+      }
+  }
+
+  directory delete='${Path.Combine(BUILD_DIR2, "klr.core45")}'
+  copy sourceDir='${Path.Combine(ROOT, "src", "klr.core45")}' include='bin/**/' outputDir='${Path.Combine(BUILD_DIR2, "klr.core45")}' overwrite='${true}'
 
 #build-mono-entrypoint target='compile' if='!IsMono'
     directory create='artifacts/build/klr.mono.managed'
@@ -556,5 +617,16 @@ functions @{
         return Directory.GetDirectories(packageMetadataDir)
                         .OrderByDescending(d => d)
                         .FirstOrDefault();
+    }
+    
+    bool IsMsbuildInstalled(string msBuildPath)
+    {
+        if (!File.Exists(msBuildPath))
+        {
+            Log.Warn("msbuild version 12 not found. Please ensure you have the VS 2013 C++ SDK installed.");
+            return false;
+        }
+    
+        return true;
     }
 }

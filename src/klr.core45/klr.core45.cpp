@@ -4,6 +4,7 @@
 #include "stdafx.h"
 
 #include "..\klr\klr.h"
+#include "klr.core45.h"
 
 #define TRUSTED_PLATFORM_ASSEMBLIES_STRING_BUFFER_SIZE_CCH (63 * 1024) //32K WCHARs
 #define CHECK_RETURN_VALUE_FAIL_EXIT_VIA_FINISHED(errno) { if (errno) { goto Finished;}}
@@ -90,6 +91,25 @@ Finished:
 HMODULE LoadCoreClr()
 {
     errno_t errno = 0;
+    bool fSuccess = true;
+    TCHAR szKreTrace[1] = {};
+    bool m_fVerboseTrace = GetEnvironmentVariableW(L"KRE_TRACE", szKreTrace, 1) > 0;
+    LPWSTR rgwzOSLoaderModuleNames[] = {
+                        L"api-ms-win-core-libraryloader-l1-1-1.dll", 
+                        L"kernel32.dll", 
+                        NULL
+    };
+    LPWSTR rgwszModuleFileName = NULL;
+    DWORD dwModuleFileName = 0;
+
+    HMODULE hOSLoaderModule = nullptr;
+
+    // Note: need to keep as ASCII as GetProcAddress function takes ASCII params
+    LPCSTR pszAddDllDirectoryName = "AddDllDirectory";
+    FnAddDllDirectory pFnAddDllDirectory = nullptr;
+
+    LPCSTR pszSetDefaultDllDirectoriesName = "SetDefaultDllDirectories";
+    FnSetDefaultDllDirectories pFnSetDefaultDllDirectories = nullptr;
 
     TCHAR szCoreClrDirectory[MAX_PATH];
     DWORD dwCoreClrDirectory = GetEnvironmentVariableW(L"CORECLR_DIR", szCoreClrDirectory, MAX_PATH);
@@ -112,11 +132,78 @@ HMODULE LoadCoreClr()
         errno = wcscat_s(wszClrPath, _countof(wszClrPath), L"coreclr.dll");
         CHECK_RETURN_VALUE_FAIL_EXIT_VIA_FINISHED(errno);
 
-        // Add the core clr directory to the list of dll search paths
-        AddDllDirectory(szCoreClrDirectory);
+        //Scan through module name list looking for a valid module that has both DLL exports
+        rgwszModuleFileName = rgwzOSLoaderModuleNames[dwModuleFileName];
+        while (rgwszModuleFileName != NULL)
+        {
+            hOSLoaderModule = ::LoadLibraryExW(rgwszModuleFileName, NULL, LOAD_LIBRARY_SEARCH_DEFAULT_DIRS);
 
+            if (!hOSLoaderModule)
+            {
+                if (m_fVerboseTrace)
+                    ::wprintf_s(L"Failed to load: %s\r\n", rgwszModuleFileName);
+                hOSLoaderModule = nullptr;
+                continue;
+            }
+            
+            if (m_fVerboseTrace)
+                ::wprintf_s(L"Loaded Module: %s\r\n", rgwszModuleFileName);
+
+            pFnAddDllDirectory = (FnAddDllDirectory)::GetProcAddress(hOSLoaderModule, pszAddDllDirectoryName);
+            if (!pFnAddDllDirectory)
+            {
+                if (m_fVerboseTrace)
+                    ::wprintf_s(L"Failed to find function %S in %s\n", pszAddDllDirectoryName, rgwszModuleFileName);
+
+                fSuccess = false;
+                
+                if (!hOSLoaderModule)
+                {
+                    FreeLibrary(hOSLoaderModule);
+                    hOSLoaderModule = nullptr;
+                }
+                
+                continue;
+            }
+
+            pFnSetDefaultDllDirectories = (FnSetDefaultDllDirectories)::GetProcAddress(hOSLoaderModule, pszSetDefaultDllDirectoriesName);
+            if (!pFnSetDefaultDllDirectories)
+            {
+                if (m_fVerboseTrace)
+                    ::wprintf_s(L"Failed to find function %S in %s\n", pszSetDefaultDllDirectoriesName, rgwszModuleFileName);
+
+                fSuccess = false;
+                
+                if (!hOSLoaderModule)
+                {
+                    FreeLibrary(hOSLoaderModule);
+                    hOSLoaderModule = nullptr;
+                }
+                
+                continue;
+            }
+
+            //module has both DLL exports
+            if (hOSLoaderModule && pFnAddDllDirectory && pFnSetDefaultDllDirectories)
+            {
+                break;
+            }
+        
+            dwModuleFileName++;
+            rgwszModuleFileName = rgwzOSLoaderModuleNames[dwModuleFileName];
+        }
+
+        if (!hOSLoaderModule || !pFnAddDllDirectory || !pFnSetDefaultDllDirectories)
+        {
+            fSuccess = false;
+            goto Finished;
+        }
+        
+        pFnAddDllDirectory(szCoreClrDirectory);
         // Modify the default dll flags so that dependencies can be found in this path
-        SetDefaultDllDirectories(LOAD_LIBRARY_SEARCH_DEFAULT_DIRS | LOAD_LIBRARY_SEARCH_USER_DIRS);
+        pFnSetDefaultDllDirectories(LOAD_LIBRARY_SEARCH_DEFAULT_DIRS | LOAD_LIBRARY_SEARCH_USER_DIRS);
+        
+        fSuccess = true;
 
         // Continue loading as usual
         hCoreCLRModule = ::LoadLibraryExW(wszClrPath, NULL, 0);
