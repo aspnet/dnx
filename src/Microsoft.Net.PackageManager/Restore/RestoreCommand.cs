@@ -130,14 +130,6 @@ namespace Microsoft.Net.PackageManager
                 }
             }
 
-            //remoteProviders.Add(
-            //    new RemoteWalkProvider(
-            //        new PackageFeed(
-            //            "https://www.myget.org/F/aspnetvnext/api/v2/",
-            //            "aspnetreadonly",
-            //            "4d8a2d9c-7b80-4162-9978-47e918c9658c",
-            //            Report)));
-
             foreach (var configuration in project.GetTargetFrameworkConfigurations())
             {
                 var context = new RestoreContext
