@@ -1,10 +1,10 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <package>
     <metadata>
-        <id>ProjectK</id>
+        <id>KRE</id>
         <version>0.0.1-pre</version>
         <authors>Microsoft</authors>
         <requireLicenseAcceptance>false</requireLicenseAcceptance>
-        <description>Lean mean webstack for .NET.</description>
+        <description>The K Runtime Environment for all platforms</description>
     </metadata>
 </package>

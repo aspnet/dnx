@@ -1,0 +1,18 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<package>
+    <metadata>
+        <id>KRE-svrc50-x86</id>
+        <version>0.0.1-pre</version>
+        <authors>Microsoft</authors>
+        <requireLicenseAcceptance>false</requireLicenseAcceptance>
+        <description>The K Runtime Environment for CoreCLR x86</description>
+    </metadata>
+    <files>
+        <file src="tools\k10\**" exclude="tools\k10\*DesignTime*;tools\k10\*Project*" target="bin" />
+        <file src="tools\bin\x86\klr.exe" target="bin" />
+        <file src="tools\bin\x86\klr.core45.dll" target="bin" />
+        <file src="Runtime\x86\**" target="bin" />
+        <file src="tools\k10\*DesignTime*;tools\k10\*Project*" target="tools" />
+        <file src="tools\NuGet.exe" target="tools" />
+    </files>
+</package>

@@ -1,0 +1,16 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<package>
+    <metadata>
+        <id>KRE-mono45-osx</id>
+        <version>0.0.1-pre</version>
+        <authors>Microsoft</authors>
+        <requireLicenseAcceptance>false</requireLicenseAcceptance>
+        <description>The K Runtime Environment for Mono on OSX</description>
+    </metadata>
+    <files>
+        <file src="tools\net45\**" exclude="tools\net45\klr.net45.managed*;tools\net45\*DesignTime*;tools\net45\*Project*" target="bin" />
+        <file src="..\klr.mono.managed\klr.mono.managed.dll" target="bin" />
+        <file src="tools\net45\*DesignTime*;tools\net45\*Project*" target="tools" />
+        <file src="tools\NuGet.exe" target="tools" />
+    </files>
+</package>

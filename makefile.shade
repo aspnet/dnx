@@ -13,7 +13,8 @@ k-standard-goals
 var ROOT = '${Directory.GetCurrentDirectory()}'
 var SCRIPTS_DIR = '${Path.Combine(ROOT, "scripts")}'
 var BUILD_DIR2 = '${Path.Combine(ROOT, "artifacts", "build")}'
-var SDK_ROOT = '${Path.Combine(BUILD_DIR2, "ProjectK")}'
+var SDK_ROOT = '${Path.Combine(BUILD_DIR2, "KRE")}'
+var NUSPEC_ROOT = '${Path.Combine(ROOT, "nuspec")}'
 var TOOLS_DIR = '${Path.Combine(SDK_ROOT, "tools")}'
 var TOOLS_BIN_DIR = '${Path.Combine(TOOLS_DIR, "bin")}'
 var PACKAGES_DIR = '${Path.Combine(ROOT, "packages")}'
@@ -37,8 +38,8 @@ var CORECLR_PATH = '${Environment.GetEnvironmentVariable("CORECLR_PATH")}'
 
 #test-package
     var helloWorld = '${Path.Combine(SAMPLES_DIR, "HelloWorld")}'
-    var kcmd = '${Path.Combine(TEST_RESULTS, "ProjectK", "tools", "k.cmd")}'
-    var k10Tools = '${Path.Combine(TEST_RESULTS, "ProjectK", "tools", "k10")}'
+    var kcmd = '${Path.Combine(TEST_RESULTS, "KRE", "tools", "k.cmd")}'
+    var k10Tools = '${Path.Combine(TEST_RESULTS, "KRE", "tools", "k10")}'
     
     nuget-install package='ProjectK' outputDir='${TEST_RESULTS}' extra='-source ${BUILD_DIR2} -ExcludeVersion -pre -nocache'
 
@@ -299,10 +300,9 @@ var CORECLR_PATH = '${Environment.GetEnvironmentVariable("CORECLR_PATH")}'
             File.Delete(packageFile);
         }
     }
-    copy sourceDir='${ROOT}' outputDir='${SDK_ROOT}' include='ProjectK.nuspec' overwrite='${true}'
-    copy sourceDir='${ROOT}' outputDir='${SDK_ROOT}' include='ProjectK.Mono.nuspec' overwrite='${true}'
-    nuget-pack nuspecFile='${Path.Combine(SDK_ROOT, "ProjectK.nuspec")}' packageVersion='${FULL_VERSION}' outputDir='${BUILD_DIR2}' extra='-NoPackageAnalysis'
-    nuget-pack nuspecFile='${Path.Combine(SDK_ROOT, "ProjectK.Mono.nuspec")}' packageVersion='${FULL_VERSION}' outputDir='${BUILD_DIR2}' extra='-NoPackageAnalysis'
+    
+    copy sourceDir='${NUSPEC_ROOT}' outputDir='${SDK_ROOT}' include='*.nuspec' overwrite='${true}'
+    nuget-pack nuspecFile='${nuspec}' packageVersion='${FULL_VERSION}' outputDir='${BUILD_DIR2}' extra='-NoPackageAnalysis' each='var nuspec in Files.Include(Path.Combine(SDK_ROOT, "*.nuspec"))'
 
 macro name='NuGetInstall' Package='string' OutputDir='string' Extra='string'
     nuget-install package='${Package}' outputDir='${OutputDir}' extra='${Extra}'
