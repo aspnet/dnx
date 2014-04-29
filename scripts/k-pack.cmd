@@ -6,15 +6,7 @@ REM <dev>
 @Echo ON
 REM </dev>
 
-if "%TARGET_PLATFORM%" == "" (
-    SET PLATFORM=x86
-)
-
-if "%TARGET_PLATFORM%" == "amd64" (
-    SET PLATFORM=amd64
-)
-
-SET KLR_RUNTIME_PATH=%~dp0..\Runtime\%PLATFORM%
+SET KLR_RUNTIME_PATH=%~dp0
 REM <dev>
 SET KLR_RUNTIME_PATH=%~dp0..\artifacts\build\ProjectK\Runtime\x86
 REM </dev>
