@@ -28,7 +28,9 @@ namespace Microsoft.Net.PackageManager
 
             if (node.Item != null)
             {
-                if (node.Library.Version.IsSnapshot)
+                if (node.Library != null &&
+                    node.Library.Version != null &&
+                    node.Library.Version.IsSnapshot)
                 {
                     node.Library = node.Item.Match.Library;
                     lock (context.FindLibraryCache)
