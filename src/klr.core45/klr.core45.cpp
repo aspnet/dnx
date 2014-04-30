@@ -52,6 +52,25 @@ bool ScanDirectory(WCHAR* szDirectory, WCHAR* szPattern, LPWSTR pszTrustedPlatfo
         }
         else
         {
+            if (wcscmp(ffd.cFileName, L"klr.host.dll") == 0 || 
+                wcscmp(ffd.cFileName, L"klr.host.ni.dll") == 0 ||
+                wcscmp(ffd.cFileName, L"Microsoft.Net.ApplicationHost.dll") == 0 ||
+                wcscmp(ffd.cFileName, L"Microsoft.Net.ApplicationHost.ni.dll") == 0 ||
+                wcscmp(ffd.cFileName, L"Microsoft.Net.Runtime.dll") == 0 ||
+                wcscmp(ffd.cFileName, L"Microsoft.Net.Runtime.ni.dll") == 0 ||
+                wcscmp(ffd.cFileName, L"Microsoft.Net.Runtime.Roslyn.dll") == 0 ||
+                wcscmp(ffd.cFileName, L"Microsoft.Net.Runtime.Roslyn.ni.dll") == 0 ||
+                wcscmp(ffd.cFileName, L"Microsoft.Net.Project.dll") == 0 ||
+                wcscmp(ffd.cFileName, L"Microsoft.Net.Project.ni.dll") == 0 ||
+                wcscmp(ffd.cFileName, L"Microsoft.Net.DesignTimeHost.dll") == 0 ||
+                wcscmp(ffd.cFileName, L"Microsoft.Net.DesignTimeHost.ni.dll") == 0)
+            {
+                // Exclude these assemblies from the TPA list since they need to
+                // be handled by the loader since they depend on assembly neutral
+                // interfaces
+                continue;
+            }
+
             errno = wcscat_s(pszTrustedPlatformAssemblies, cchTrustedPlatformAssemblies, szDirectory);
             CHECK_RETURN_VALUE_FAIL_EXIT_VIA_FINISHED_SETSTATE(errno, ret = false);
             
@@ -94,17 +113,6 @@ HMODULE LoadCoreClr()
         CHECK_RETURN_VALUE_FAIL_EXIT_VIA_FINISHED(errno);
 
         hCoreCLRModule = ::LoadLibraryExW(wszClrPath, NULL, 0);
-    }
-
-    if (hCoreCLRModule == nullptr)
-    {
-        // Try the relative location based in install dir
-        // ..\..\Runtime\x86
-#if AMD64
-        hCoreCLRModule = ::LoadLibraryExW(L"..\\..\\..\\Runtime\\amd64\\coreclr.dll", NULL, 0);
-#else
-        hCoreCLRModule = ::LoadLibraryExW(L"..\\..\\..\\Runtime\\x86\\coreclr.dll", NULL, 0);
-#endif
     }
 
     if (hCoreCLRModule == nullptr)
