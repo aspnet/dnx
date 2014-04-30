@@ -23,7 +23,6 @@
     },
 
     "commands":  {
-        "run": "Microsoft.Net.PackageManager restore C:\\Users\\lodejard\\Projects\\ProjectK\\Universe\\Entropy\\samples\\Container.Autofac.Web",
         "kpm": "Microsoft.Net.PackageManager"
     }
 }

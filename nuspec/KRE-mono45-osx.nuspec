@@ -10,6 +10,9 @@
     <files>
         <file src="tools\net45\**" exclude="tools\net45\klr.net45.managed*;tools\net45\*DesignTime*;tools\net45\*Project*" target="bin" />
         <file src="..\klr.mono.managed\klr.mono.managed.dll" target="bin" />
-        <file src="tools\net45\*DesignTime*;tools\net45\*Project*" target="tools" />
+        <file src="tools\kpm.cmd" target="bin\kpm.cmd" />
+        <file src="tools\net45\Microsoft.Net.DesignTimeHost.dll" target="bin\lib\Microsoft.Net.DesignTimeHost\Microsoft.Net.DesignTimeHost.dll" />
+        <file src="tools\net45\Microsoft.Net.PackageManager.dll" target="bin\lib\Microsoft.Net.PackageManager\Microsoft.Net.PackageManager.dll" />
+        <file src="tools\net45\Microsoft.Net.Project.dll" target="bin\lib\Microsoft.Net.Project\Microsoft.Net.Project.dll" />
     </files>
 </package>
