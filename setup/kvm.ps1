@@ -1,6 +1,6 @@
 param(
   [parameter(Position=0)]
-  [string]$command,
+  [string] $command,
   [switch] $verbosity = $false,
   [alias("g")][switch] $global = $false,
   [switch] $x86 = $false,
@@ -12,33 +12,56 @@ param(
 )
 
 $userKrePath = $env:USERPROFILE + "\.kre"
+$globalKrePath = $env:ProgramFiles + "\KRE"
 
+$scriptPath = $myInvocation.MyCommand.Definition
 
 function Kvm-Help {
 @"
 kvm - K Runtime Environment Version Manager
 
 kvm upgrade
+  install latest KRE from feed
+  set 'default' alias
+  add KRE bin to path of current command line
 
-kvm install <version>|<alias> [-x86][-x64] [-svr50][-svrc50]
+kvm install <semver>|<alias> [-x86][-x64] [-svr50][-svrc50] [-g|-global]
+  install requested KRE from feed
 
-kvm use <version>|<alias> [-x86][-x64] [-svr50][-svrc50]
+kvm list [-g|-global]
+  list KRE versions installed 
+
+kvm use <semver>|<alias> [-x86][-x64] [-svr50][-svrc50] [-g|-global]
+  add KRE bin to path of current command line
 
 kvm alias
+  list KRE aliases which have been defined
+
 kvm alias <alias>
-kvm alias <alias> <version> [-x86][-x64] [-svr50][-svrc50]
+  display value of named alias
 
-kvm setup
-
+kvm alias <alias> <semver> [-x86][-x64] [-svr50][-svrc50]
+  set alias to specific version
 
 "@ | Write-Host
 }
 
 
+function Kvm-Upgrade {
+    $version = Kvm-Find-Latest (Requested-Platform "svr50") (Requested-Architecture "x86")
+    Kvm-Install $version
+    Kvm-Alias-Set "default" $version
+}
+
+
 function Kvm-Find-Latest {
+param(
+    [string] $platform,
+    [string] $architecture
+)
     Write-Host "Determining latest version"
 
-    $url = "https://www.myget.org/F/aspnetvnext/api/v2/GetUpdates()?packageIds=%27ProjectK%27&versions=%270.0%27&includePrerelease=true&includeAllVersions=false"
+    $url = "https://www.myget.org/F/aspnetvnext/api/v2/GetUpdates()?packageIds=%27KRE-$platform-$architecture%27&versions=%270.0%27&includePrerelease=true&includeAllVersions=false"
 
     $wc = New-Object System.Net.WebClient
     $wc.Credentials = new-object System.Net.NetworkCredential("aspnetreadonly", "4d8a2d9c-7b80-4162-9978-47e918c9658c")
@@ -50,28 +73,24 @@ function Kvm-Find-Latest {
 }
 
 function Kvm-Install-Latest {
-    Kvm-Install Kvm-Find-Latest
+    Kvm-Install (Kvm-Find-Latest (Requested-Platform "svr50") (Requested-Architecture "x86"))
 }
 
-function Kvm
-
-function Kvm-Install {
+function Do-Kvm-Install {
 param(
-  [string] $version
+  [string] $kreFullName,
+  [string] $kreFolder
 )
-    if ($version -eq "") {
-        $version = Kvm-Find-Latest
-    }
+    $parts = $kreFullName.Split(".", 2)
 
-    $url = "https://www.myget.org/F/aspnetvnext/api/v2/package/ProjectK/" + $version
-    $kreFolder = $userKrePath + "\packages\ProjectK." + $version
-    $kreFile = $kreFolder + "\ProjectK." + $version + ".nupkg"
+    $url = "https://www.myget.org/F/aspnetvnext/api/v2/package/" + $parts[0] + "/" + $parts[1]
+    $kreFile = "$kreFolder\$kreFullName.nupkg"
 
     If (Test-Path $kreFolder) {
         Remove-Item $kreFolder -Force -Recurse
     }
 
-    Write-Host "Downloading" $version "from https://www.myget.org/F/aspnetvnext/api/v2/"
+    Write-Host "Downloading" $kreFullName "from https://www.myget.org/F/aspnetvnext/api/v2/"
 
     md $kreFolder -Force | Out-Null
 
@@ -93,26 +112,89 @@ param(
     If (Test-Path ($kreFolder + "\package\")) {
         Remove-Item ($kreFolder + "\package\") -Force -Recurse
     }
+}
 
-    Kvm-Use $version
+function Kvm-Install {
+param(
+  [string] $versionOrAlias
+)
+    $kreFullName = Requested-VersionOrAlias $versionOrAlias
+
+    $kreFolder = "$userKrePath\packages\$kreFullName"
+
+    Do-Kvm-Install $kreFullName $kreFolder
+
+    Kvm-Use $versionOrAlias
+}
+
+function Kvm-Global-Install {
+param(
+  [string] $versionOrAlias
+)
+    If (-NOT ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole] "Administrator"))
+    {
+        $arguments = "install -global $versionOrAlias" 
+        if ($x86) {$arguments = "$arguments -x86"}
+        if ($x64) {$arguments = "$arguments -x64"}
+        if ($svr50) {$arguments = "$arguments -svr50"}
+        if ($svrc50) {$arguments = "$arguments -svrc50"}
+
+        $arguments = "& '$scriptPath' $arguments"
+        Start-Process "$psHome\powershell.exe" -Verb runAs -ArgumentList $arguments
+        Kvm-Global-Use $versionOrAlias
+        break
+    }
+    $kreFullName = Requested-VersionOrAlias $versionOrAlias
+
+    $kreFolder = $globalKrePath + "\packages\$kreFullName"
+
+    Do-Kvm-Install $kreFullName $kreFolder
+}
+
+function Kvm-List {
+    Get-ChildItem ($userKrePath + "\packages\") | Select Name
+}
+
+function Kvm-Global-List {
+    Get-ChildItem ($globalKrePath + "\packages\") | Select Name
 }
 
 function Kvm-Use {
 param(
-  [string] $version
+  [string] $versionOrAlias
 )
+    $kreFullName = Requested-VersionOrAlias $versionOrAlias
 
-    If (Test-Path ($userKrePath + "\alias\" + $version + ".txt")) {
-        $version = Get-Content ($userKrePath + "\alias\" + $version + ".txt")
-    }
-
-    $kreBin = $userKrePath + "\packages\ProjectK." + $version + "\tools"
+    $kreBin = $userKrePath + "\packages\" + $kreFullName + "\bin"
 
     Write-Host "Adding" $kreBin "to PATH"
 
     $newPath = $kreBin
     foreach($portion in $env:Path.Split(';')) {
-      if (!$portion.StartsWith($userKrePath)) {
+      if (!$portion.StartsWith($userKrePath) -and !$portion.StartsWith($globalKrePath)) {
+        $newPath = $newPath + ";" + $portion
+      }
+    }
+
+@"
+SET "KRE_VERSION=$version"
+SET "PATH=$newPath"
+"@ | Out-File ($userKrePath + "\run-once.cmd") ascii
+}
+
+function Kvm-Global-Use {
+param(
+  [string] $versionOrAlias
+)
+    $kreFullName = Requested-VersionOrAlias $versionOrAlias
+
+    $kreBin = "$globalKrePath\packages\$kreFullName\bin"
+
+    Write-Host "Adding" $kreBin "to PATH"
+
+    $newPath = $kreBin
+    foreach($portion in $env:Path.Split(';')) {
+      if (!$portion.StartsWith($userKrePath) -and !$portion.StartsWith($globalKrePath)) {
         $newPath = $newPath + ";" + $portion
       }
     }
@@ -126,41 +208,97 @@ SET "PATH=$newPath"
 function Kvm-Alias-List {
     md ($userKrePath + "\alias\") -Force | Out-Null
 
-    Get-ChildItem ($userKrePath + "\alias\") | Select @{label='alias';expression={$_.BaseName}}, @{label='value';expression={Get-Content $_.FullName }} | Format-Table -AutoSize
+    Get-ChildItem ($userKrePath + "\alias\") | Select @{label='Alias';expression={$_.BaseName}}, @{label='Name';expression={Get-Content $_.FullName }} | Format-Table -AutoSize
 }
 
 function Kvm-Alias-Get {
 param(
   [string] $name
 )
-    Write-Host "Alias '$name' is set to"
     md ($userKrePath + "\alias\") -Force | Out-Null
-    Get-Content ($userKrePath + "\alias\" + $name + ".txt")
+    Write-Host "Alias '$name' is set to" (Get-Content ($userKrePath + "\alias\" + $name + ".txt"))
 }
-
-function Kvm-Upgrade {
-    $version = Kvm-Find-Latest
-    Kvm-Install $version
-    Kvm-Alias-Set "default" $version
-}
-
 
 function Kvm-Alias-Set {
 param(
   [string] $name,
   [string] $value
 )
-    Write-Host "Setting alias '$name' to '$value'"
+    $kreFullName = "KRE-" + (Requested-Platform "svr50") + "-" + (Requested-Architecture "x86") + "." + $value
+
+    Write-Host "Setting alias '$name' to '$kreFullName'"
     md ($userKrePath + "\alias\") -Force | Out-Null
-    $value | Out-File ($userKrePath + "\alias\" + $name + ".txt") ascii
+    $kreFullName | Out-File ($userKrePath + "\alias\" + $name + ".txt") ascii
 }
 
-  try {
+function Requested-VersionOrAlias() {
+param(
+  [string] $versionOrAlias
+)
+    If (Test-Path ($userKrePath + "\alias\" + $versionOrAlias + ".txt")) {
+        $aliasValue = Get-Content ($userKrePath + "\alias\" + $versionOrAlias + ".txt")
+        $parts = $aliasValue.Split('.', 2)
+        $pkgVersion = $parts[1]
+        $parts =$parts[0].Split('-', 3)
+        $pkgPlatform = Requested-Platform $parts[1]
+        $pkgArchitecture = Requested-Architecture $parts[2]
+    } else {
+        $pkgVersion = $versionOrAlias
+        $pkgPlatform = Requested-Platform "svr50"
+        $pkgArchitecture = Requested-Architecture "x86"
+    }
+    return "KRE-" + $pkgPlatform + "-" + $pkgArchitecture + "." + $pkgVersion
+}
+
+function Requested-Platform() {
+param(
+  [string] $default
+)
+    if ($svr50 -and $svrc50) {
+        Throw "This command cannot accept both -svr50 and -svrc50"
+    } 
+    if ($svr50) {
+        return "svr50"
+    }
+    if ($svrc50) {
+        return "svrc50"
+    }
+    return $default
+}
+
+function Requested-Architecture() {
+param(
+  [string] $default
+)
+    if ($x86 -and $x64) {
+        Throw "This command cannot accept both -x86 and -x64"
+    } 
+    if ($x86) {
+        return "x86"
+    }
+    if ($x64) {
+        return "x64"
+    }
+    return $default
+}
+
+
+ try {
+   if ($global) {
     switch -wildcard ($command + " " + $args.Count) {
-      "setup 0"           {Kvm-Setup}
+#      "upgrade 0"         {Kvm-Global-Upgrade}
+#      "install 0"         {Kvm-Global-Install-Latest}
+      "install 1"         {Kvm-Global-Install $args[0]}
+      "list 0"            {Kvm-Global-List}
+      "use 1"             {Kvm-Global-Use $args[0]}
+      default             {Write-Host 'Unknown command, or global switch not supported'; Kvm-Help;}
+    }
+   } else {
+    switch -wildcard ($command + " " + $args.Count) {
       "upgrade 0"         {Kvm-Upgrade}
       "install 0"         {Kvm-Install-Latest}
       "install 1"         {Kvm-Install $args[0]}
+      "list 0"            {Kvm-List}
       "use 1"             {Kvm-Use $args[0]}
       "alias 0"           {Kvm-Alias-List}
       "alias 1"           {Kvm-Alias-Get $args[0]}
@@ -168,7 +306,8 @@ param(
       "help"              {Kvm-Help}
       default             {Write-Host 'Unknown command'; Kvm-Help;}
     }
+   }
   }
   catch {
-    Write-Host $_ -BackgroundColor "Red" -ForegroundColor White ;
+    Write-Host $_ -ForegroundColor Red ;
   }
