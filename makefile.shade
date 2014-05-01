@@ -298,6 +298,7 @@ var CORECLR_PATH = '${Environment.GetEnvironmentVariable("CORECLR_PATH")}'
     }
 
 #copy-coreclr
+    nuget-install package='ProjectK' outputDir='packages' extra='-pre -nocache' once='ProjectK-NuGet' if='!IsMono'
     var PROJECTK_DIR='${""}'
     @{
         if (String.IsNullOrEmpty(CORECLR_PATH))
