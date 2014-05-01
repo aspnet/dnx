@@ -4,7 +4,7 @@ cd %~dp0
 SETLOCAL
 SET CACHED_NUGET=%LocalAppData%\NuGet\NuGet.exe
 
-@powershell -NoProfile -ExecutionPolicy unrestricted setup\kvm.ps1 install
+CALL setup\kvm.ps1 install
 
 IF EXIST %CACHED_NUGET% goto copynuget
 echo Downloading latest version of NuGet.exe...
