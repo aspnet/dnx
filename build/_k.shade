@@ -19,42 +19,13 @@ prefetch='true'
 default prefetch='${true}'
 default mono='${IsMono}'
 
--//nuget-install package='ProjectK' outputDir='packages' extra='-pre -nocache' once='ProjectK-NuGet' if='prefetch && !mono'
--//nuget-install package='ProjectK.Mono' outputDir='packages' extra='-pre -nocache' once='ProjectK-NuGet' if='mono'
-
-@{
-    Func<string, long> getVersion = version => {
-        var dash = version.LastIndexOf('-');
-
-        if(dash != -1)
-        {
-            var lastToken = version.Substring(dash + 1);
-
-            if(lastToken.StartsWith("t"))
-            {
-                return Int64.Parse(lastToken.Substring(1));
-            }
-
-            return Int64.Parse(lastToken);
-        } 
-        return Int64.MaxValue;
-    };
-
-    var projectKPrefix =  mono ? "ProjectK.Mono" : "ProjectK";
-
-    string packagesDir = Path.Combine(Directory.GetCurrentDirectory(), "packages"),
-           projectKDir = Directory.EnumerateDirectories(packagesDir, projectKPrefix + "*")
-                                  .OrderByDescending(getVersion)
-                                  .First();
-    
-}
-
 exec program='cmd' commandline='/C k ${command}' if='!mono'
 
-default kMonoProgram='${projectKDir}/tools/net45/klr.mono.managed.dll'
-default monoPath='${Environment.GetEnvironmentVariable("MONO_PATH")}'
+-//default kMonoProgram='${projectKDir}/tools/net45/klr.mono.managed.dll'
+-//default monoPath='${Environment.GetEnvironmentVariable("MONO_PATH")}'
 
 @{
+/* FIX
     if(mono)
     {
         if(string.IsNullOrEmpty(monoPath))
@@ -78,6 +49,7 @@ default monoPath='${Environment.GetEnvironmentVariable("MONO_PATH")}'
             command = kMonoEntryPoint + " --lib " + folder + " Microsoft.Net.ApplicationHost " + command;
         }
     }
+*/
 }
 
-exec program='${monoPath}' commandline='${command}' if='mono'
+-//exec program='${monoPath}' commandline='${command}' if='mono'
