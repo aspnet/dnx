@@ -76,7 +76,7 @@ function Kvm-Install-Latest {
     Kvm-Install (Kvm-Find-Latest (Requested-Platform "svr50") (Requested-Architecture "x86"))
 }
 
-function Do-Kvm-Install {
+function Do-Kvm-Download {
 param(
   [string] $kreFullName,
   [string] $kreFolder
@@ -98,6 +98,14 @@ param(
     $wc.Credentials = new-object System.Net.NetworkCredential("aspnetreadonly", "4d8a2d9c-7b80-4162-9978-47e918c9658c")
     $wc.DownloadFile($url, $kreFile)
 
+    Do-Kvm-Unpack $kreFile $kreFolder
+}
+
+function Do-Kvm-Unpack {
+param(
+  [string] $kreFile,
+  [string] $kreFolder
+)
     Write-Host "Installing to" $kreFolder
 
     [System.Reflection.Assembly]::LoadWithPartialName('System.IO.Compression.FileSystem') | Out-Null
@@ -118,13 +126,27 @@ function Kvm-Install {
 param(
   [string] $versionOrAlias
 )
-    $kreFullName = Requested-VersionOrAlias $versionOrAlias
+    if ($versionOrAlias.EndsWith(".nupkg"))
+    {
+        $kreFullName = [System.IO.Path]::GetFileNameWithoutExtension($versionOrAlias)
+        $kreFolder = "$userKrePath\packages\$kreFullName"
+        $kreFile = "$kreFolder\$kreFullName.nupkg"
 
-    $kreFolder = "$userKrePath\packages\$kreFullName"
+        md $kreFolder -Force | Out-Null
 
-    Do-Kvm-Install $kreFullName $kreFolder
+        copy $versionOrAlias $kreFile
 
-    Kvm-Use $versionOrAlias
+        Do-Kvm-Unpack $kreFile $kreFolder
+    }
+    else
+    {
+        $kreFullName = Requested-VersionOrAlias $versionOrAlias
+
+        $kreFolder = "$userKrePath\packages\$kreFullName"
+
+        Do-Kvm-Download $kreFullName $kreFolder
+        Kvm-Use $versionOrAlias
+    }
 }
 
 function Kvm-Global-Install {
@@ -144,11 +166,12 @@ param(
         Kvm-Global-Use $versionOrAlias
         break
     }
+
     $kreFullName = Requested-VersionOrAlias $versionOrAlias
 
     $kreFolder = $globalKrePath + "\packages\$kreFullName"
 
-    Do-Kvm-Install $kreFullName $kreFolder
+    Do-Kvm-Download $kreFullName $kreFolder
 }
 
 function Kvm-List {
