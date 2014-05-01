@@ -25,7 +25,10 @@ namespace Microsoft.Net.PackageManager.Restore.NuGet
             string physicalPath,
             IReport report)
         {
-            _repository = new LocalPackageRepository(physicalPath);
+            _repository = new LocalPackageRepository(physicalPath) 
+            {
+                Report = report
+            };
             _report = report;
         }
 

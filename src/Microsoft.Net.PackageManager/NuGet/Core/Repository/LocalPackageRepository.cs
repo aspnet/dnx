@@ -295,6 +295,11 @@ namespace NuGet
                 // We need to do this so we capture the correct loop variable
                 string packagePath = path;
 
+                if (Report != null)
+                {
+                    Report.WriteLine(string.Format("  OPEN {0}", packagePath));
+                }
+
                 // Create the package
                 IPackage package = openPackage(packagePath);
 
@@ -326,6 +331,10 @@ namespace NuGet
             {
                 foreach (var path in FileSystem.GetFiles(dir, filter, recursive: false))
                 {
+                    if (Path.GetFileNameWithoutExtension(path).EndsWith(".symbols", StringComparison.OrdinalIgnoreCase))
+                    {
+                        continue;
+                    }
                     yield return path;
                 }
             }
@@ -333,6 +342,10 @@ namespace NuGet
             // Check top level directory
             foreach (var path in FileSystem.GetFiles(String.Empty, filter, recursive: false))
             {
+                if (Path.GetFileNameWithoutExtension(path).EndsWith(".symbols", StringComparison.OrdinalIgnoreCase))
+                {
+                    continue;
+                }
                 yield return path;
             }
         }
@@ -414,5 +427,7 @@ namespace NuGet
             public IPackage Package { get; private set; }
             public DateTimeOffset LastModifiedTime { get; private set; }
         }
+
+        public Microsoft.Net.PackageManager.IReport Report { get; set; }
     }
 }

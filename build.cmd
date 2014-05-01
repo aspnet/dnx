@@ -4,7 +4,7 @@ cd %~dp0
 SETLOCAL
 SET CACHED_NUGET=%LocalAppData%\NuGet\NuGet.exe
 
-CALL setup\kvm.cmd install
+IF NOT "%1" == "rebuild-package" CALL setup\kvm.cmd install
 
 IF EXIST %CACHED_NUGET% goto copynuget
 echo Downloading latest version of NuGet.exe...
