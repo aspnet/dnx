@@ -1,4 +1,5 @@
 use assembly="System.Xml.Linq, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089"
+use assembly="System.IO.Compression.FileSystem, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089"
 use import="Environment"
 
 var PRODUCT_VERSION = '0.1'
@@ -18,7 +19,7 @@ var NUSPEC_ROOT = '${Path.Combine(ROOT, "nuspec")}'
 var TOOLS_DIR = '${Path.Combine(SDK_ROOT, "tools")}'
 var TOOLS_BIN_DIR = '${Path.Combine(TOOLS_DIR, "bin")}'
 var PACKAGES_DIR = '${Path.Combine(ROOT, "packages")}'
-var TEST_RESULTS = '${Path.Combine(ROOT, "TestResults")}'
+var TEST_RESULTS = '${Path.Combine(ROOT, "artifacts", "TestResults")}'
 var SAMPLES_DIR = '${Path.Combine(ROOT, "samples")}'
 var FULL_VERSION = '${VERSION + "-" + BuildNumber}'
 var CORECLR_PATH = '${Environment.GetEnvironmentVariable("CORECLR_PATH")}'
@@ -41,81 +42,130 @@ var CORECLR_PATH = '${Environment.GetEnvironmentVariable("CORECLR_PATH")}'
     var kcmd = '${Path.Combine(TEST_RESULTS, "KRE", "tools", "k.cmd")}'
     var k10Tools = '${Path.Combine(TEST_RESULTS, "KRE", "tools", "k10")}'
     
-    nuget-install package='ProjectK' outputDir='${TEST_RESULTS}' extra='-source ${BUILD_DIR2} -ExcludeVersion -pre -nocache'
+
+    var nupkgPaths = '${new string[] {
+        Files.Include(Path.Combine(BUILD_DIR2, "KRE-svr50-x86.*.nupkg")).Single(),
+        Files.Include(Path.Combine(BUILD_DIR2, "KRE-svr50-x64.*.nupkg")).Single(),
+        //FIX Files.Include(Path.Combine(BUILD_DIR2, "KRE-svrc50-x86.*.nupkg")).Single(),
+        //FIX Files.Include(Path.Combine(BUILD_DIR2, "KRE-svrc50-x64.*.nupkg")).Single(),
+    }}'
+
+    for each='var nupkgPath in nupkgPaths' 
+      @{
+        var kreName = Path.GetFileNameWithoutExtension(nupkgPath);
+        var krePath = Path.Combine(TEST_RESULTS, "KRE", kreName);
+
+        Log.Info("Unpacking " + nupkgPath);
+        if (Directory.Exists(krePath)) {
+            Directory.Delete(krePath, recursive:true);
+        }
+
+        Directory.CreateDirectory(krePath);
+
+        System.IO.Compression.ZipFile.ExtractToDirectory(
+            nupkgPath,
+            krePath);
+      }
 
     @{
-        Action<string, string> runWithFramework = (framework, platform) => {
+        Action<string> runWithFramework = nupkgPath => {
+            var envPath = Environment.GetEnvironmentVariable("PATH");
             try
             {
-                Environment.SetEnvironmentVariable("TARGET_FRAMEWORK", framework);
-                Environment.SetEnvironmentVariable("TARGET_PLATFORM", platform);
+                var kreName = Path.GetFileNameWithoutExtension(nupkgPath);
+                var krePath = Path.Combine(TEST_RESULTS, "KRE", kreName);
                 Environment.SetEnvironmentVariable("K_APPBASE", helloWorld);
-                
-                Log.Info("TARGET_FRAMEWORK = " + framework);
-                Log.Info("TARGET_PLATFORM = " + platform);
+
+                var kPath = Path.Combine(krePath, "bin", "k");
+
+                Log.Info("kreName = " + kreName);
                 Log.Info("K_APPBASE = " + helloWorld);
 
-                Exec(kcmd, "run");
+                Exec("cmd", "/C " + kPath + " run");
 
                 var commands = new [] { "build" };
                 foreach(var cmd in commands)
                 {
-                    Exec(kcmd, cmd + " " + helloWorld);
+                    Exec("cmd", "/C " + kPath + " " + cmd + " " + helloWorld);
                     Directory.Delete(Path.Combine(helloWorld, "bin"), true);
                 }
             }
             finally
             {
+                Environment.SetEnvironmentVariable("PATH", envPath);
                 Environment.SetEnvironmentVariable("K_APPBASE", null);
+                /*
                 Environment.SetEnvironmentVariable("TARGET_FRAMEWORK", null);
                 Environment.SetEnvironmentVariable("TARGET_PLATFORM", null);
+                */
             }
         };
         
-        Action<string> crossGen = (platform) => {        
-            Log.Info("TARGET_FRAMEWORK = " + Environment.GetEnvironmentVariable("TARGET_FRAMEWORK"));
-            Log.Info("TARGET_PLATFORM = " + platform);
+        Action<string> crossGen = nupkgPath => {        
+            var kreName = Path.GetFileNameWithoutExtension(nupkgPath);
+            var krePath = Path.Combine(TEST_RESULTS, "KRE", kreName);
+
+            var kPath = Path.Combine(krePath, "bin", "k");
+
+            var kTools = new[] {
+                Path.Combine(krePath, "bin", "lib", "Microsoft.Net.Project"),
+                Path.Combine(krePath, "bin", "lib", "Microsoft.Net.PackageManager"),
+                Path.Combine(krePath, "bin", "lib", "Microsoft.Net.DesignTimeHost"),
+            };
+
+            Log.Info("kreName = " + kreName);
             
-            try
-            {
-                Environment.SetEnvironmentVariable("TARGET_PLATFORM", platform);
-                Exec(kcmd, "crossgen --in " + k10Tools);
-            }
-            finally
-            {
-                Environment.SetEnvironmentVariable("TARGET_PLATFORM", null);
+            foreach(var kTool in kTools) {
+                Exec("cmd", string.Format("/C \"{0}\"  crossgen --in \"{1}\"", kPath, kTool));
             }
         };
 
-        runWithFramework(null, "");
-        runWithFramework("k10", "");
-        runWithFramework(null, "amd64");
-        runWithFramework("k10", "amd64");
-        
-        
+        foreach(var nupkgPath in nupkgPaths) { 
+            runWithFramework(nupkgPath);
+        }
+                
         // Crossgen
-        crossGen("");
-        crossGen("amd64");
-        runWithFramework("k10", "");
-        runWithFramework("k10", "amd64");
+        /* FIX
+        crossGen(nupkgPaths[2]);
+        crossGen(nupkgPaths[3]);
+
+        foreach(var nupkgPath in nupkgPaths) { 
+            runWithFramework(nupkgPath);
+        }
+        */
     }
 
 #ensure-latest-package
     @{
         // We need to re-run the build using the current output
-        // Delete the package directory
-        foreach (var dir in Directory.EnumerateDirectories(PACKAGES_DIR, "projectk*"))
-        {
-         Directory.Delete(dir, recursive: true); 
+
+        var nupkgPath = Files.Include(Path.Combine(BUILD_DIR2, "KRE-svr50-x86.*.nupkg")).Single();
+        Log.Info("Unpacking " + nupkgPath);
+        if (Directory.Exists(Path.Combine(PACKAGES_DIR, "KRE"))) {
+            Directory.Delete(Path.Combine(PACKAGES_DIR, "KRE"), recursive:true);
         }
 
-        NuGetInstall("projectk", PACKAGES_DIR, "-source \"" + BUILD_DIR2 + "\" -pre -nocache");
-        
+        Directory.CreateDirectory(Path.Combine(PACKAGES_DIR, "KRE"));
+
+        System.IO.Compression.ZipFile.ExtractToDirectory(
+            Path.Combine(nupkgPath),
+            Path.Combine(PACKAGES_DIR, "KRE"));
+
         // Nuke the build dir
         Directory.Delete(BUILD_DIR2, recursive: true); 
-        
-        Log.Info("Rebuilding target default"); 
-        Exec("build.cmd", "rebuild-package");
+
+        var envPath = Environment.GetEnvironmentVariable("PATH");
+        try
+        {
+            Log.Info("Adding PATH " + Path.Combine(PACKAGES_DIR, "KRE", "bin"));
+            Environment.SetEnvironmentVariable("PATH", Path.Combine(PACKAGES_DIR, "KRE", "bin") + ";" + envPath);
+            Log.Info("Rebuilding target default"); 
+            Exec("build.cmd", "rebuild-package");
+        }
+        finally
+        {
+            Environment.SetEnvironmentVariable("PATH", envPath);
+        }
     }
     
 #verify-package .ensure-latest-package .test-package target='verify'

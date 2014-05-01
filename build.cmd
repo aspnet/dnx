@@ -4,6 +4,8 @@ cd %~dp0
 SETLOCAL
 SET CACHED_NUGET=%LocalAppData%\NuGet\NuGet.exe
 
+@powershell -NoProfile -ExecutionPolicy unrestricted setup\kvm.ps1 install
+
 IF EXIST %CACHED_NUGET% goto copynuget
 echo Downloading latest version of NuGet.exe...
 IF NOT EXIST %LocalAppData%\NuGet md %LocalAppData%\NuGet
@@ -20,4 +22,4 @@ IF EXIST packages\KoreBuild goto run
 .nuget\NuGet.exe install Sake -version 0.2 -o packages -ExcludeVersion
 
 :run
-packages\Sake\tools\Sake.exe -I packages\KoreBuild\build -f makefile.shade %*
+packages\Sake\tools\Sake.exe -I build -I packages\KoreBuild\build -f makefile.shade %*
