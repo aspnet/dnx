@@ -132,13 +132,21 @@ namespace Microsoft.Net.PackageManager.Packing
         {
             foreach (ZipArchiveEntry entry in archive.Entries)
             {
-                var targetFile = Path.Combine(targetPath, entry.FullName);
+                var entryFullName = entry.FullName;
+                if (entryFullName.StartsWith("/", StringComparison.Ordinal))
+                {
+                    entryFullName = entryFullName.Substring(1);
+                }
+                entryFullName = Uri.UnescapeDataString(entryFullName.Replace('/', Path.DirectorySeparatorChar));
+
+
+                var targetFile = Path.Combine(targetPath, entryFullName);
                 if (!targetFile.StartsWith(targetPath, StringComparison.OrdinalIgnoreCase))
                 {
                     continue;
                 }
 
-                if (!shouldInclude(entry.FullName))
+                if (!shouldInclude(entryFullName))
                 {
                     continue;
                 }
