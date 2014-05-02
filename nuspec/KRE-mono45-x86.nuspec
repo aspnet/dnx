@@ -1,7 +1,7 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <package>
     <metadata>
-        <id>KRE-mono45-osx</id>
+        <id>KRE-mono45-x86</id>
         <version>0.0.1-pre</version>
         <authors>Microsoft</authors>
         <requireLicenseAcceptance>false</requireLicenseAcceptance>
