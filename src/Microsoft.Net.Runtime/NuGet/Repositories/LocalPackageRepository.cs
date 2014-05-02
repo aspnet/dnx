@@ -54,7 +54,7 @@ namespace NuGet
                 }
             }
 
-            return packages.ToLookup(p => p.Id);
+            return packages.ToLookup(p => p.Id, StringComparer.OrdinalIgnoreCase);
         }
 
         public IPackagePathResolver PathResolver
