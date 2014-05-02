@@ -69,7 +69,6 @@
   <ItemGroup>
     <Content Include="NuGet\Common\CommonResources.resx" />
     <Content Include="NuGet\NuGetResources.resx" />
-    <Content Include="out.txt" />
     <Content Include="Project.json" />
   </ItemGroup>
   <Import Project="$(VSToolsPath)\ProjectK\Microsoft.Web.ProjectK.targets" Condition="'$(VSToolsPath)' != ''" />
