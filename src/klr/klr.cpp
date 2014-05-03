@@ -9,7 +9,11 @@ int CallFirmwareProcessMain(int argc, wchar_t* argv[])
     bool m_fVerboseTrace = GetEnvironmentVariableW(L"KRE_TRACE", szKreTrace, 1) > 0;
     bool fSuccess = true;
     HMODULE m_hHostModule = nullptr;
+#if CORECLR
+    LPCWSTR pwzHostModuleName = L"klr.core45.dll";
+#else
     LPCWSTR pwzHostModuleName = L"klr.net45.dll";
+#endif
 
     // Note: need to keep as ASCII as GetProcAddress function takes ASCII params
     LPCSTR pszCallApplicationMainName = "CallApplicationMain";
@@ -34,18 +38,6 @@ int CallFirmwareProcessMain(int argc, wchar_t* argv[])
             data.applicationBase = data.argv[1];
             data.argc -= 2;
             data.argv += 2;
-        }
-        else if (data.argc >= 1 && stringsEqual(data.argv[0], L"--net45"))
-        {
-            pwzHostModuleName = L"klr.net45.dll";
-            data.argc -= 1;
-            data.argv += 1;
-        }
-        else if (data.argc >= 1 && stringsEqual(data.argv[0], L"--core45"))
-        {
-            pwzHostModuleName = L"klr.core45.dll";
-            data.argc -= 1;
-            data.argv += 1;
         }
         else
         {

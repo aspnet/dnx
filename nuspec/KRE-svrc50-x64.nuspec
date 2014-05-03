@@ -9,10 +9,10 @@
     </metadata>
     <files>
         <file src="tools\k10\**" exclude="tools\k10\*DesignTime*;tools\k10\*Project*" target="bin" />
-        <file src="tools\bin\amd64\klr.exe" target="bin" />
+        <file src="tools\bin\amd64\k10\klr.exe" target="bin" />
         <file src="tools\bin\amd64\klr.core45.dll" target="bin" />
         <file src="Runtime\amd64\**" target="bin" />
-        <file src="tools\klr-svrc.cmd" target="bin\klr.cmd" />
+        <file src="tools\klr.cmd" target="bin\klr.cmd" />
         <file src="tools\k.cmd" target="bin\k.cmd" />
         <file src="tools\k-build.cmd" target="bin\k-build.cmd" />
         <file src="tools\k-crossgen.cmd" target="bin\k-crossgen.cmd" />

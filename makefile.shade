@@ -28,6 +28,29 @@ var CORECLR_PATH = '${Environment.GetEnvironmentVariable("CORECLR_PATH")}'
 
 #rebuild-package .build-mono-entrypoint .build-compile .native-compile .package-runtime
 
+#compile-klr target='native-compile' if='!IsMono'
+  var programFilesX86 = '${Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86)}'
+  var msbuild = '${Path.Combine(programFilesX86, "MSBuild", "12.0", "Bin", "MSBuild.exe")}'
+  var klrProj = '${Path.Combine(ROOT, "src", "klr", "klr.vcxproj")}'
+
+  @{
+      if(!File.Exists(msbuild))
+      {
+          Log.Warn("msbuild version 12 not found. Please ensure you have the VS 2013 C++ SDK installed.");
+          Environment.Exit(1);
+      }
+      else
+      {
+          Exec(msbuild, klrProj + " /p:Configuration=" + Configuration + ";Platform=Win32");
+          Exec(msbuild, klrProj + " /p:Configuration=" + Configuration + ";Platform=x64");
+          Exec(msbuild, klrProj + " /p:Configuration=" + Configuration + ";Platform=Win32;TargetFramework=k10");
+          Exec(msbuild, klrProj + " /p:Configuration=" + Configuration + ";Platform=x64;TargetFramework=k10");
+      }
+  }
+
+  directory delete='${Path.Combine(BUILD_DIR2, "klr")}'
+  copy sourceDir='${Path.Combine(ROOT, "src", "klr")}' include='bin/**/' outputDir='${Path.Combine(BUILD_DIR2, "klr")}' overwrite='${true}'
+
 #build-mono-entrypoint target='compile' if='!IsMono'
     directory create='artifacts/build/klr.mono.managed'
     
@@ -182,8 +205,10 @@ var CORECLR_PATH = '${Environment.GetEnvironmentVariable("CORECLR_PATH")}'
     copy sourceDir='${Path.Combine(PACKAGES_DIR, "NuGet.CommandLine", "tools")}' outputDir='${TOOLS_DIR}' include='*.exe' overwrite='${true}'
     copy sourceDir='${SCRIPTS_DIR}' outputDir='${TOOLS_DIR}' overwrite='${true}'
 
-    copy sourceDir='${Path.Combine(BUILD_DIR2, "klr", "bin", "Win32", Configuration)}' outputDir='${Path.Combine(TOOLS_BIN_DIR, x86Target)}' include='*.exe' overwrite='${true}'
-    copy sourceDir='${Path.Combine(BUILD_DIR2, "klr", "bin", "x64", Configuration)}' outputDir='${Path.Combine(TOOLS_BIN_DIR, x64Target)}' include='*.exe' overwrite='${true}'
+    copy sourceDir='${Path.Combine(BUILD_DIR2, "klr", "bin", "Win32", Configuration, "net45")}' outputDir='${Path.Combine(TOOLS_BIN_DIR, x86Target, "net45")}' include='*.exe' overwrite='${true}'
+    copy sourceDir='${Path.Combine(BUILD_DIR2, "klr", "bin", "x64", Configuration, "net45")}' outputDir='${Path.Combine(TOOLS_BIN_DIR, x64Target, "net45")}' include='*.exe' overwrite='${true}'
+    copy sourceDir='${Path.Combine(BUILD_DIR2, "klr", "bin", "Win32", Configuration, "k10")}' outputDir='${Path.Combine(TOOLS_BIN_DIR, x86Target, "k10")}' include='*.exe' overwrite='${true}'
+    copy sourceDir='${Path.Combine(BUILD_DIR2, "klr", "bin", "x64", Configuration, "k10")}' outputDir='${Path.Combine(TOOLS_BIN_DIR, x64Target, "k10")}' include='*.exe' overwrite='${true}'
 
     copy sourceDir='${Path.Combine(BUILD_DIR2, "klr.core45", "bin", "Win32", Configuration)}' outputDir='${Path.Combine(TOOLS_BIN_DIR, x86Target)}' include='*.dll' overwrite='${true}'
     copy sourceDir='${Path.Combine(BUILD_DIR2, "klr.core45", "bin", "x64", Configuration)}' outputDir='${Path.Combine(TOOLS_BIN_DIR, x64Target)}' include='*.dll' overwrite='${true}'
