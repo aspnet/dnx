@@ -64,11 +64,7 @@ namespace Microsoft.Net.DesignTimeHost
 
         private static Task<Socket> AcceptAsync(Socket socket)
         {
-#if NET45 // Async sockets still seem broken
             return Task.Factory.FromAsync((cb, state) => socket.BeginAccept(cb, state), ar => socket.EndAccept(ar), null);
-#else
-            return Task.FromResult(socket.Accept());
-#endif
         }
 
     }
