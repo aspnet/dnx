@@ -207,6 +207,7 @@ namespace Microsoft.Net.DesignTimeHost
                     {
                         CompilationSettings = state.Project.GetCompilationSettings(c.FrameworkName),
                         FrameworkName = VersionUtility.GetShortFrameworkName(c.FrameworkName),
+                        LongFrameworkName = c.FrameworkName.ToString(),
                     }).ToList(),
 
                     Commands = state.Project.Commands
