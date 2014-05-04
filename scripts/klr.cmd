@@ -14,6 +14,7 @@ SET KLR_EXE_PATH=%~dp0klr.exe
 SET KLR_LIB_PATH=%~dp0;%~dp0..\tools
 
 REM <dev>
+SET FRAMEWORK=net45
 SET KLR_EXE_PATH=%~dp0..\bin\Win32\Debug\klr.exe
 SET KLR_LIB_PATH=%~dp0..\src\klr.host\bin\%FRAMEWORK%
 
@@ -21,13 +22,7 @@ SET KLR_LIB_PATH=%~dp0..\src\klr.host\bin\%FRAMEWORK%
 IF EXIST %~dp0..\packages\Newtonsoft.Json* FOR /F %%I IN ('DIR %~dp0..\packages\Newtonsoft.Json* /B /O:-D') DO (SET Newtonsoft_Json=%%I& GOTO :END_Newtonsoft_Json)
 :END_Newtonsoft_Json
 
-SET Newtonsoft_Json_Lib=net45
-
-if "%TARGET_FRAMEWORK%" == "k10" (
-    SET Newtonsoft_Json_Lib=netcore45
-)
-
-SET KLR_LIB_PATH=%KLR_LIB_PATH%;%~dp0..\packages\%Newtonsoft_Json%\lib\%Newtonsoft_Json_Lib%
+SET KLR_LIB_PATH=%KLR_LIB_PATH%;%~dp0..\packages\%Newtonsoft_Json%\lib\%FRAMEWORK%
 
 REM This is insane (I'm sure there's a better way to build up the KLR_LIB_PATH)
 
