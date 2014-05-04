@@ -11,7 +11,7 @@ IF "%K_APPBASE%"=="" (
 )
 
 SET KLR_EXE_PATH=%~dp0klr.exe
-SET KLR_LIB_PATH=%~dp0;%~dp0..\tools
+SET KLR_LIB_PATH=%~dp0..\tools
 
 REM <dev>
 SET FRAMEWORK=net45
