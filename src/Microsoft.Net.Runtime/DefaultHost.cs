@@ -24,7 +24,6 @@ namespace Microsoft.Net.Runtime
         private readonly string _name;
         private readonly ServiceProvider _serviceProvider;
         private readonly IAssemblyLoaderEngine _loaderEngine;
-        private readonly ILibraryExportProvider _hostExporter;
         private readonly UnresolvedDependencyProvider _unresolvedProvider = new UnresolvedDependencyProvider();
 
         private Project _project;
@@ -38,7 +37,6 @@ namespace Microsoft.Net.Runtime
             _targetFramework = options.TargetFramework;
 
             _loaderEngine = (IAssemblyLoaderEngine)hostProvider.GetService(typeof(IAssemblyLoaderEngine));
-            _hostExporter = (ILibraryExportProvider)hostProvider.GetService(typeof(ILibraryExportProvider));
 
             _serviceProvider = new ServiceProvider(hostProvider);
             CallContextServiceLocator.Locator.ServiceProvider = _serviceProvider;
@@ -131,9 +129,6 @@ namespace Microsoft.Net.Runtime
 
             // Roslyn needs to be able to resolve exported references and sources
             var libraryExporters = new List<ILibraryExportProvider>();
-
-            // Add the host exporter
-            libraryExporters.Add(_hostExporter);
 
             // Reference assemblies
             libraryExporters.Add(referenceAssemblyDependencyResolver);

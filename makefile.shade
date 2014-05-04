@@ -69,8 +69,8 @@ var CORECLR_PATH = '${Environment.GetEnvironmentVariable("CORECLR_PATH")}'
     var nupkgPaths = '${new string[] {
         Files.Include(Path.Combine(BUILD_DIR2, "KRE-svr50-x86.*.nupkg")).Single(),
         Files.Include(Path.Combine(BUILD_DIR2, "KRE-svr50-x64.*.nupkg")).Single(),
-        //FIX Files.Include(Path.Combine(BUILD_DIR2, "KRE-svrc50-x86.*.nupkg")).Single(),
-        //FIX Files.Include(Path.Combine(BUILD_DIR2, "KRE-svrc50-x64.*.nupkg")).Single(),
+        Files.Include(Path.Combine(BUILD_DIR2, "KRE-svrc50-x86.*.nupkg")).Single(),
+        Files.Include(Path.Combine(BUILD_DIR2, "KRE-svrc50-x64.*.nupkg")).Single(),
     }}'
 
     for each='var nupkgPath in nupkgPaths' 
@@ -117,10 +117,6 @@ var CORECLR_PATH = '${Environment.GetEnvironmentVariable("CORECLR_PATH")}'
             {
                 Environment.SetEnvironmentVariable("PATH", envPath);
                 Environment.SetEnvironmentVariable("K_APPBASE", null);
-                /*
-                Environment.SetEnvironmentVariable("TARGET_FRAMEWORK", null);
-                Environment.SetEnvironmentVariable("TARGET_PLATFORM", null);
-                */
             }
         };
         
@@ -201,8 +197,6 @@ var CORECLR_PATH = '${Environment.GetEnvironmentVariable("CORECLR_PATH")}'
     var x86Target="x86"
     var x64Target="amd64"
     
-    nuget-install package='NuGet.CommandLine' outputDir='${PACKAGES_DIR}' extra='-source AspNetVNext -nocache -excludeversion'
-    copy sourceDir='${Path.Combine(PACKAGES_DIR, "NuGet.CommandLine", "tools")}' outputDir='${TOOLS_DIR}' include='*.exe' overwrite='${true}'
     copy sourceDir='${SCRIPTS_DIR}' outputDir='${TOOLS_DIR}' overwrite='${true}'
 
     copy sourceDir='${Path.Combine(BUILD_DIR2, "klr", "bin", "Win32", Configuration, "net45")}' outputDir='${Path.Combine(TOOLS_BIN_DIR, x86Target, "net45")}' include='*.exe' overwrite='${true}'

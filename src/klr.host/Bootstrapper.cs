@@ -15,15 +15,12 @@ namespace klr.host
     {
         private readonly IHostContainer _container;
         private readonly IAssemblyLoaderEngine _loaderEngine;
-        private readonly ILibraryExportProvider _exportProvider;
 
         public Bootstrapper(IHostContainer container,
-                            IAssemblyLoaderEngine loaderEngine,
-                            ILibraryExportProvider exportProvider)
+                            IAssemblyLoaderEngine loaderEngine)
         {
             _container = container;
             _loaderEngine = loaderEngine;
-            _exportProvider = exportProvider;
         }
 
         public async Task<int> Main(string[] args)
@@ -66,7 +63,7 @@ namespace klr.host
             serviceProvider.Add(typeof(IHostContainer), _container);
             serviceProvider.Add(typeof(IAssemblyLoaderEngine), _loaderEngine);
             serviceProvider.Add(typeof(IApplicationEnvironment), applicationEnvironment);
-            serviceProvider.Add(typeof(ILibraryExportProvider), _exportProvider);
+
             CallContextServiceLocator.Locator.ServiceProvider = serviceProvider;
 
             return await EntryPointExecutor.Execute(assembly, programArgs, serviceProvider);
