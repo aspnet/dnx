@@ -25,7 +25,6 @@
     <Compile Include="DefaultLoaderEngine.cs" />
     <Compile Include="FrameworkNameUtility.cs" />
     <Compile Include="HostContainer.cs" />
-    <Compile Include="MetadataFileReference.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="RootHost.cs" />
     <Compile Include="ServiceProviderLocator.cs" />
