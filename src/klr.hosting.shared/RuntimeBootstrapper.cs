@@ -15,11 +15,13 @@ namespace klr.hosting
 {
     internal static class RuntimeBootstrapper
     {
-        private static Dictionary<string, Assembly> _assemblyCache = new Dictionary<string, Assembly>();
+        private static readonly Dictionary<string, Assembly> _assemblyCache = new Dictionary<string, Assembly>();
         private static readonly Dictionary<string, CommandOptionType> _options = new Dictionary<string, CommandOptionType>
         {
             { "lib", CommandOptionType.MultipleValue },
         };
+
+        private static readonly char[] _libPathSeparator = new[] { ';' };
 
         public static async Task<int> Execute(string[] args)
         {
@@ -42,10 +44,8 @@ namespace klr.hosting
             CommandOptions options;
             parser.ParseOptions(args, _options, out options);
 
-            var libs = options.GetValues("lib");
-
-            IList<string> searchPaths = libs == null ? new string[0] :
-                libs.SelectMany(lib => lib.Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries).Select(Path.GetFullPath)).ToArray();
+            // Resolve the lib paths
+            string[] searchPaths = ResolveSearchPaths(options);
 
             Func<string, Assembly> loader = _ => null;
             Func<byte[], Assembly> loadBytes = _ => null;
@@ -114,7 +114,6 @@ namespace klr.hosting
             {
                 var assembly = Assembly.Load(new AssemblyName("klr.host"));
 
-
                 // Loader impl
                 // var loaderEngine = new DefaultLoaderEngine(loaderImpl);
                 var loaderEngineType = assembly.GetType("klr.host.DefaultLoaderEngine");
@@ -159,6 +158,53 @@ namespace klr.hosting
                 AppDomain.CurrentDomain.AssemblyResolve -= handler;
 #endif
             }
+        }
+
+        private static string[] ResolveSearchPaths(CommandOptions options)
+        {
+            var searchPaths = new List<string>();
+
+            var defaultLibPath = Environment.GetEnvironmentVariable("DEFAULT_LIB");
+
+            if (!string.IsNullOrEmpty(defaultLibPath))
+            {
+                // Add the default lib folder if specified
+                searchPaths.AddRange(ExpandSearchPath(defaultLibPath));
+            }
+
+            // Explicit --lib options
+            var specifiedLibPaths = options.GetValues("lib") ?? Enumerable.Empty<string>();
+
+            // Add the expanded search libs to the list of paths
+            searchPaths.AddRange(specifiedLibPaths.SelectMany(ExpandSearchPath));
+
+            // If a .dll or .exe is specified then turn this into
+            // --lib {path to dll/exe} [dll/exe name]
+            if (options.RemainingArgs.Count > 0)
+            {
+                var application = options.RemainingArgs[0];
+                var extension = Path.GetExtension(application);
+
+                if (!string.IsNullOrEmpty(extension) &&
+                    extension.Equals(".dll", StringComparison.OrdinalIgnoreCase) ||
+                    extension.Equals(".exe", StringComparison.OrdinalIgnoreCase))
+                {
+                    // Add the directory to the list of search paths
+                    searchPaths.Add(Path.GetDirectoryName(application));
+
+                    // Modify the argument to be the dll/exe name
+                    options.RemainingArgs[0] = Path.GetFileNameWithoutExtension(application);
+                }
+            }
+
+            return searchPaths.ToArray();
+        }
+
+        private static IEnumerable<string> ExpandSearchPath(string libPath)
+        {
+            // Expand ; separated arguments
+            return libPath.Split(_libPathSeparator, StringSplitOptions.RemoveEmptyEntries)
+                          .Select(Path.GetFullPath);
         }
 
         private static void ExtractAssemblyNeutralInterfaces(Assembly assembly, Func<byte[], Assembly> loadBytes)

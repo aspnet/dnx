@@ -3,6 +3,13 @@
 #include "stdafx.h"
 #include "klr.h"
 
+void GetModuleDirectory(HMODULE module, LPWSTR szPath)
+{
+    DWORD dirLength = GetModuleFileName(module, szPath, MAX_PATH);
+    for (dirLength--; dirLength >= 0 && szPath[dirLength] != '\\'; dirLength--);
+    szPath[dirLength + 1] = '\0';
+}
+
 int CallFirmwareProcessMain(int argc, wchar_t* argv[])
 {
     TCHAR szKreTrace[1];
@@ -20,6 +27,12 @@ int CallFirmwareProcessMain(int argc, wchar_t* argv[])
     FnCallApplicationMain pfnCallApplicationMain = nullptr;
     int exitCode = 0;
 
+    TCHAR szCurrentDirectory[MAX_PATH];
+    GetModuleDirectory(NULL, szCurrentDirectory);
+
+    // Set the DEFAULT_LIB environment variable to be the same directory
+    // as the exe
+    SetEnvironmentVariable(L"DEFAULT_LIB", szCurrentDirectory);
 
     CALL_APPLICATION_MAIN_DATA data = { 0 };
     data.argc = argc - 1;
