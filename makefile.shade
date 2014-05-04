@@ -317,8 +317,9 @@ var CORECLR_PATH = '${Environment.GetEnvironmentVariable("CORECLR_PATH")}'
     }
 
 #copy-coreclr
-    nuget-install package='ProjectK' outputDir='packages' extra='-pre -nocache' once='ProjectK-NuGet' if='!IsMono'
-    var PROJECTK_DIR='${""}'
+    nuget-install package='CoreCLR' outputDir='packages' extra='-pre -nocache' once='CoreCLR' if='!IsMono'
+    
+    var CoreCLR_DIR='${""}'
     @{
         if (String.IsNullOrEmpty(CORECLR_PATH))
         {
@@ -340,26 +341,16 @@ var CORECLR_PATH = '${Environment.GetEnvironmentVariable("CORECLR_PATH")}'
             };
 
             string packagesDir = Path.Combine(Directory.GetCurrentDirectory(), "packages");
-            PROJECTK_DIR = Directory.EnumerateDirectories(packagesDir, "ProjectK*")
+            CoreCLR_DIR = Directory.EnumerateDirectories(packagesDir, "CoreCLR*")
                                     .OrderByDescending(getVersion)
                                     .First();
                                           
-            Log.Warn("The environment variable CORECLR_PATH is not set, using " + PROJECTK_DIR);
+            Log.Warn("The environment variable CORECLR_PATH is not set, using " + CoreCLR_DIR);
         }
     }
 
     copy sourceDir='${CORECLR_PATH}' outputDir='${SDK_ROOT}' overwrite='${true}' if='!String.IsNullOrEmpty(CORECLR_PATH)'
-    copy sourceDir='${Path.Combine(PROJECTK_DIR, "Runtime")}' outputDir='${Path.Combine(SDK_ROOT, "Runtime")}' overwrite='${true}' if='!String.IsNullOrEmpty(PROJECTK_DIR)'
-    copy sourceDir='${Path.Combine(PROJECTK_DIR, "Framework")}' outputDir='${Path.Combine(SDK_ROOT, "Framework")}' overwrite='${true}' if='!String.IsNullOrEmpty(PROJECTK_DIR)'
-    
-    @{
-        var files = Files.Include(Path.Combine(SDK_ROOT, "Framework", "**", "*.dll"));
-        foreach (var binary in files)
-        {
-            File.Delete(binary);
-            Log.Info("Deleted " + binary);
-        }
-    }
+    copy sourceDir='${Path.Combine(CoreCLR_DIR, "Runtime")}' outputDir='${Path.Combine(SDK_ROOT, "Runtime")}' overwrite='${true}' if='!String.IsNullOrEmpty(CoreCLR_DIR)'
 
 #nuget-pack-runtime
     @{
