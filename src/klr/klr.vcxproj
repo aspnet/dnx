@@ -23,7 +23,6 @@
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>klr</RootNamespace>
     <ProjectName>klr</ProjectName>
-    <TargetFramework Condition="$(TargetFramework) == ''">net45</TargetFramework>
     <Defines Condition="$(TargetFramework) == 'k10'">CORECLR</Defines>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />

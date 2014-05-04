@@ -41,8 +41,8 @@ var CORECLR_PATH = '${Environment.GetEnvironmentVariable("CORECLR_PATH")}'
       }
       else
       {
-          Exec(msbuild, klrProj + " /p:Configuration=" + Configuration + ";Platform=Win32");
-          Exec(msbuild, klrProj + " /p:Configuration=" + Configuration + ";Platform=x64");
+          Exec(msbuild, klrProj + " /p:Configuration=" + Configuration + ";Platform=Win32;TargetFramework=net45");
+          Exec(msbuild, klrProj + " /p:Configuration=" + Configuration + ";Platform=x64;TargetFramework=net45");
           Exec(msbuild, klrProj + " /p:Configuration=" + Configuration + ";Platform=Win32;TargetFramework=k10");
           Exec(msbuild, klrProj + " /p:Configuration=" + Configuration + ";Platform=x64;TargetFramework=k10");
       }
