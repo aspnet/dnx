@@ -122,6 +122,8 @@ namespace Microsoft.Net.Runtime.Roslyn
 
             var targetFrameworkConfig = project.GetTargetFrameworkConfiguration(targetFramework);
 
+            targetFramework = targetFrameworkConfig.FrameworkName ?? targetFramework;
+
             var projectDependencies = project.Dependencies.Concat(targetFrameworkConfig.Dependencies)
                                                           .ToList();
 
@@ -173,7 +175,7 @@ namespace Microsoft.Net.Runtime.Roslyn
 
             foreach (var a in frameworkAssemblies)
             {
-                buildContext.PackageBuilder.FrameworkReferences.Add(new FrameworkAssemblyReference(a));
+                buildContext.PackageBuilder.FrameworkReferences.Add(new FrameworkAssemblyReference(a, new[] { targetFramework }));
             }
 
             var file = new PhysicalPackageFile();
