@@ -15,11 +15,13 @@ namespace klr.hosting
 {
     internal static class RuntimeBootstrapper
     {
-        private static Dictionary<string, Assembly> _assemblyCache = new Dictionary<string, Assembly>();
+        private static readonly Dictionary<string, Assembly> _assemblyCache = new Dictionary<string, Assembly>();
         private static readonly Dictionary<string, CommandOptionType> _options = new Dictionary<string, CommandOptionType>
         {
             { "lib", CommandOptionType.MultipleValue },
         };
+
+        private static readonly char[] _libPathSeparator = new[] { ';' };
 
         public static async Task<int> Execute(string[] args)
         {
@@ -167,19 +169,14 @@ namespace klr.hosting
             if (!string.IsNullOrEmpty(defaultLibPath))
             {
                 // Add the default lib folder if specified
-                searchPaths.Add(defaultLibPath);
+                searchPaths.AddRange(ExpandSearchPath(defaultLibPath));
             }
 
             // Explicit --lib options
             var specifiedLibPaths = options.GetValues("lib") ?? Enumerable.Empty<string>();
 
-            // Expand --lib since it can be a semi colon separated list of
-            // paths
-            var expandedLibs = specifiedLibPaths.SelectMany(lib => lib.Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries))
-                                                .Select(Path.GetFullPath);
-
             // Add the expanded search libs to the list of paths
-            searchPaths.AddRange(expandedLibs);
+            searchPaths.AddRange(specifiedLibPaths.SelectMany(ExpandSearchPath));
 
             // If a .dll or .exe is specified then turn this into
             // --lib {path to dll/exe} [dll/exe name]
@@ -201,6 +198,13 @@ namespace klr.hosting
             }
 
             return searchPaths.ToArray();
+        }
+
+        private static IEnumerable<string> ExpandSearchPath(string libPath)
+        {
+            // Expand ; separated arguments
+            return libPath.Split(_libPathSeparator, StringSplitOptions.RemoveEmptyEntries)
+                          .Select(Path.GetFullPath);
         }
 
         private static void ExtractAssemblyNeutralInterfaces(Assembly assembly, Func<byte[], Assembly> loadBytes)
