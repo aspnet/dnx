@@ -294,7 +294,7 @@ extern "C" __declspec(dllexport) bool __stdcall CallApplicationMain(PCALL_APPLIC
         APPDOMAIN_ENABLE_PLATFORM_SPECIFIC_APPS |
         APPDOMAIN_ENABLE_PINVOKE_AND_CLASSIC_COMINTEROP;
 
-    LPCWSTR szAssemblyName = L"klr.core45.managed, Version=1.0.0.0";
+    LPCWSTR szAssemblyName = L"klr.core45.managed, Version=0.1.0.0";
     LPCWSTR szEntryPointTypeName = L"DomainManager";
     LPCWSTR szMainMethodName = L"Execute";
 
