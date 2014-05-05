@@ -158,6 +158,8 @@ namespace Microsoft.Net.Runtime.Roslyn
 
             var newCompilation = assemblyNeutralWorker.Compilation;
 
+            newCompilation = ApplyVersionInfo(newCompilation, project);
+
             compilationContext = new CompilationContext(newCompilation,
                 metadataReferences,
                 assemblyNeutralTypeDiagnostics,
@@ -168,13 +170,28 @@ namespace Microsoft.Net.Runtime.Roslyn
             return compilationContext;
         }
 
+        private static CSharpCompilation ApplyVersionInfo(CSharpCompilation compilation, Project project)
+        {
+            var emptyVersion = new Version(0, 0, 0, 0);
+
+            // If the assembly version is empty then set the version
+            if (compilation.Assembly.Identity.Version == emptyVersion)
+            {
+                return compilation.AddSyntaxTrees(new[]
+                {
+                    CSharpSyntaxTree.ParseText("[assembly: System.Reflection.AssemblyVersion(\"" + project.Version.Version + "\")]"),
+                    CSharpSyntaxTree.ParseText("[assembly: System.Reflection.AssemblyInformationalVersion(\"" + project.Version + "\")]")
+                });
+            }
+
+            return compilation;
+        }
+
         private IList<SyntaxTree> GetSyntaxTrees(Project project,
                                                  CompilationSettings compilationSettings,
                                                  List<ILibraryExport> exports)
         {
             var trees = new List<SyntaxTree>();
-
-            var hasAssemblyInfo = false;
 
             var sourceFiles = project.SourceFiles.ToList();
 
@@ -182,11 +199,6 @@ namespace Microsoft.Net.Runtime.Roslyn
 
             foreach (var sourcePath in sourceFiles)
             {
-                if (!hasAssemblyInfo && Path.GetFileNameWithoutExtension(sourcePath).Equals("AssemblyInfo"))
-                {
-                    hasAssemblyInfo = true;
-                }
-
                 _watcher.WatchFile(sourcePath);
 
                 var syntaxTree = CreateSyntaxTree(sourcePath, parseOptions);
@@ -208,12 +220,6 @@ namespace Microsoft.Net.Runtime.Roslyn
 
                     trees.Add(syntaxTree);
                 }
-            }
-
-            if (!hasAssemblyInfo)
-            {
-                trees.Add(CSharpSyntaxTree.ParseText("[assembly: System.Reflection.AssemblyVersion(\"" + project.Version.Version + "\")]"));
-                trees.Add(CSharpSyntaxTree.ParseText("[assembly: System.Reflection.AssemblyInformationalVersion(\"" + project.Version + "\")]"));
             }
 
             return trees;
@@ -251,20 +257,20 @@ namespace Microsoft.Net.Runtime.Roslyn
 
             foreach (var export in dependencyExports)
             {
-                ProcessExport(export, 
-                              targetFramework, 
-                              compilationCache, 
-                              references, 
-                              metadataReferences, 
+                ProcessExport(export,
+                              targetFramework,
+                              compilationCache,
+                              references,
+                              metadataReferences,
                               used);
             }
         }
 
-        private void ProcessExport(ILibraryExport export, 
-                                   FrameworkName targetFramework, 
-                                   IDictionary<string, CompilationContext> compilationCache, 
-                                   IList<MetadataReference> references, 
-                                   IList<IMetadataReference> metadataReferences, 
+        private void ProcessExport(ILibraryExport export,
+                                   FrameworkName targetFramework,
+                                   IDictionary<string, CompilationContext> compilationCache,
+                                   IList<MetadataReference> references,
+                                   IList<IMetadataReference> metadataReferences,
                                    HashSet<string> used)
         {
             ExpandEmbeddedReferences(export.MetadataReferences);
