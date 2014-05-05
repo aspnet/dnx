@@ -133,7 +133,6 @@
     <Compile Include="NuGet\Utility\ZipArchiveExtensions.cs" />
     <Compile Include="Project.cs" />
     <Compile Include="ProjectResolver.cs" />
-    <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <Import Project="$(VSToolsPath)\ProjectK\Microsoft.Web.ProjectK.targets" Condition="'$(VSToolsPath)' != ''" />
 </Project>

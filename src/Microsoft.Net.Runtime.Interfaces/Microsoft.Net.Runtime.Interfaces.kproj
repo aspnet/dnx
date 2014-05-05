@@ -36,7 +36,6 @@
     <Compile Include="Infrastructure\IServiceProviderLocator.cs" />
     <Compile Include="ISourceFileReference.cs" />
     <Compile Include="ISourceReference.cs" />
-    <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <Import Project="$(VSToolsPath)\ProjectK\Microsoft.Web.ProjectK.targets" Condition="'$(VSToolsPath)' != ''" />
 </Project>

@@ -28,7 +28,6 @@
     <Compile Include="Impl\Syntax\ParserExtensions.cs" />
     <Compile Include="Impl\Syntax\Result.cs" />
     <Compile Include="Program.cs" />
-    <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <Import Project="$(VSToolsPath)\ProjectK\Microsoft.Web.ProjectK.targets" Condition="'$(VSToolsPath)' != ''" />
 </Project>

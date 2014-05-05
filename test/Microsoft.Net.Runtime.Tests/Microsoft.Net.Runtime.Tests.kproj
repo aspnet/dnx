@@ -24,7 +24,6 @@
     <Compile Include="AssemblyLoaderFacts.cs" />
     <Compile Include="FileWatcherFacts.cs" />
     <Compile Include="LibraryManagerFacts.cs" />
-    <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <Import Project="$(VSToolsPath)\ProjectK\Microsoft.Web.ProjectK.targets" Condition="'$(VSToolsPath)' != ''" />
 </Project>
