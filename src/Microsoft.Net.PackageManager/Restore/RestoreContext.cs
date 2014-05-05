@@ -1,6 +1,7 @@
 ﻿using Microsoft.Net.Runtime;
 using System;
 using System.Collections.Generic;
+using System.Runtime.Versioning;
 using System.Threading.Tasks;
 using System.Web;
 
@@ -13,7 +14,7 @@ namespace Microsoft.Net.PackageManager
             FindLibraryCache = new Dictionary<Library, Task<GraphItem>>();
         }
 
-        public TargetFrameworkConfiguration TargetFrameworkConfiguration { get; set; }
+        public FrameworkName FrameworkName { get; set; }
 
         public IList<IWalkProvider> ProjectLibraryProviders { get; set; }
         public IList<IWalkProvider> LocalLibraryProviders { get; set; }

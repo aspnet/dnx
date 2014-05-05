@@ -20,8 +20,9 @@ namespace Microsoft.Net.PackageManager
 
     public class RestoreCommand
     {
-        public RestoreCommand()
+        public RestoreCommand(IApplicationEnvironment env)
         {
+            ApplicationEnvironment = env;
             FileSystem = new PhysicalFileSystem(Environment.CurrentDirectory);
             MachineWideSettings = new CommandLineMachineWideSettings();
             Sources = Enumerable.Empty<string>();
@@ -33,6 +34,7 @@ namespace Microsoft.Net.PackageManager
         public IEnumerable<string> Sources { get; set; }
         public IEnumerable<string> FallbackSources { get; set; }
 
+        public IApplicationEnvironment ApplicationEnvironment { get; private set; }
         public IMachineWideSettings MachineWideSettings { get; set; }
         public IFileSystem FileSystem { get; set; }
         public IReport Report { get; set; }
@@ -134,12 +136,22 @@ namespace Microsoft.Net.PackageManager
             {
                 var context = new RestoreContext
                 {
-                    TargetFrameworkConfiguration = configuration,
+                    FrameworkName = configuration.FrameworkName,
                     ProjectLibraryProviders = projectProviders,
                     LocalLibraryProviders = localProviders,
                     RemoteLibraryProviders = remoteProviders,
                 };
                 contexts.Add(context);
+            }
+            if (!contexts.Any())
+            {
+                contexts.Add(new RestoreContext
+                {
+                    FrameworkName = ApplicationEnvironment.TargetFramework,
+                    ProjectLibraryProviders = projectProviders,
+                    LocalLibraryProviders = localProviders,
+                    RemoteLibraryProviders = remoteProviders,
+                });
             }
 
             var tasks = new List<Task<GraphNode>>();

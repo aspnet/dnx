@@ -43,7 +43,7 @@ namespace Microsoft.Net.PackageManager
 
                     try
                     {
-                        var command = new RestoreCommand();
+                        var command = new RestoreCommand(_environment);
                         command.Report = this;
                         command.RestoreDirectory = argProject.Value;
                         command.ExecuteCommand();

@@ -103,7 +103,7 @@ namespace Microsoft.Net.PackageManager
                 return null;
             }
 
-            var dependencies = await match.Provider.GetDependencies(match, context.TargetFrameworkConfiguration.FrameworkName);
+            var dependencies = await match.Provider.GetDependencies(match, context.FrameworkName);
 
             //Report.WriteLine(string.Format("Resolved {0} {1}", match.Library.Name, match.Library.Version));
 
@@ -161,7 +161,7 @@ namespace Microsoft.Net.PackageManager
         {
             foreach (var provider in providers)
             {
-                var match = await provider.FindLibraryByName(name, context.TargetFrameworkConfiguration.FrameworkName);
+                var match = await provider.FindLibraryByName(name, context.FrameworkName);
                 if (match != null)
                 {
                     return match;
@@ -175,7 +175,7 @@ namespace Microsoft.Net.PackageManager
             List<Task<WalkProviderMatch>> tasks = new List<Task<WalkProviderMatch>>();
             foreach (var provider in providers)
             {
-                tasks.Add(provider.FindLibraryBySnapshot(library, context.TargetFrameworkConfiguration.FrameworkName));
+                tasks.Add(provider.FindLibraryBySnapshot(library, context.FrameworkName));
             }
             var matches = await Task.WhenAll(tasks);
             WalkProviderMatch bestMatch = null;
@@ -198,7 +198,7 @@ namespace Microsoft.Net.PackageManager
             List<Task<WalkProviderMatch>> tasks = new List<Task<WalkProviderMatch>>();
             foreach (var provider in providers)
             {
-                tasks.Add(provider.FindLibraryByVersion(library, context.TargetFrameworkConfiguration.FrameworkName));
+                tasks.Add(provider.FindLibraryByVersion(library, context.FrameworkName));
             }
             var matches = await Task.WhenAll(tasks);
             WalkProviderMatch bestMatch = null;
