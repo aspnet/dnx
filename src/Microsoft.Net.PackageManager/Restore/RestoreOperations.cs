@@ -68,7 +68,7 @@ namespace Microsoft.Net.PackageManager
             {
                 if (item.Match.Library.Name == name)
                 {
-                    return false;
+                    throw new Exception(string.Format("TODO: Circular dependency references not supported. Package '{0}'.", name));
                 }
                 if (item.Dependencies.Any(d => d != dependency && d.Name == name))
                 {
