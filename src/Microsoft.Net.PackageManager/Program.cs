@@ -36,6 +36,8 @@ namespace Microsoft.Net.PackageManager
                 c.Description = "Restore packages";
 
                 var argProject = c.Argument("[project]", "Project to restore, default is current directory");
+                var optSource = app.Option("-s|--source <FEED>", "A list of packages sources to use for this command");
+                var optFallbackSource = app.Option("-f|--fallbacksource <FEED>", "A list of packages sources to use as a fallback");
 
                 c.OnExecute(() =>
                 {
@@ -46,6 +48,14 @@ namespace Microsoft.Net.PackageManager
                         var command = new RestoreCommand(_environment);
                         command.Report = this;
                         command.RestoreDirectory = argProject.Value;
+                        if (!string.IsNullOrEmpty(optSource.Value))
+                        {
+                            command.Sources = new[] { optSource.Value };
+                        }
+                        if (!string.IsNullOrEmpty(optFallbackSource.Value))
+                        {
+                            command.FallbackSources = new[] { optFallbackSource.Value };
+                        }
                         command.ExecuteCommand();
 
                         return 0;
