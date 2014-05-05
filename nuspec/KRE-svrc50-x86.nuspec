@@ -8,7 +8,7 @@
         <description>The K Runtime Environment for CoreCLR x86</description>
     </metadata>
     <files>
-        <file src="tools\k10\**" exclude="tools\k10\*DesignTime*;tools\k10\*Project*" target="bin" />
+        <file src="tools\k10\**" exclude="tools\k10\*DesignTime*;tools\k10\*Project*;tools\k10\*PackageManager*" target="bin" />
         <file src="tools\bin\x86\k10\klr.exe" target="bin" />
         <file src="tools\bin\x86\klr.core45.dll" target="bin" />
         <file src="Runtime\x86\**" target="bin" />
