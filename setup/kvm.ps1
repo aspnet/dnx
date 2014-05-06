@@ -370,7 +370,8 @@ function Set-Path() {
 param(
   [string] $newPath
 )
-$env:Path = $newPath
+  md $userKrePath -Force | Out-Null
+  $env:Path = $newPath
 @"
 SET "PATH=$newPath"
 "@ | Out-File ($userKrePath + "\run-once.cmd") ascii
