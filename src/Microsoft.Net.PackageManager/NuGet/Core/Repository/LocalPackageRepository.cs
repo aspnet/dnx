@@ -377,7 +377,7 @@ namespace NuGet
             {
                 if (FileSystem.FileExists(path))
                 {
-                    return new UnzippedPackage(FileSystem, Path.GetFileNameWithoutExtension(path));
+                    return new UnzippedPackage(FileSystem, path);
                 }
             }
 
