@@ -3,6 +3,7 @@ param(
   [string] $command,
   [switch] $verbosity = $false,
   [alias("g")][switch] $global = $false,
+  [alias("p")][switch] $persistent = $false,
   [switch] $x86 = $false,
   [switch] $x64 = $false,
   [switch] $svr50 = $false,
@@ -12,7 +13,9 @@ param(
 )
 
 $userKrePath = $env:USERPROFILE + "\.kre"
+$userKrePackages = $userKrePath + "\packages"
 $globalKrePath = $env:ProgramFiles + "\KRE"
+$globalKrePackages = $globalKrePath + "\packages"
 
 $scriptPath = $myInvocation.MyCommand.Definition
 
@@ -43,9 +46,55 @@ kvm alias <alias>
 kvm alias <alias> <semver> [-x86][-x64] [-svr50][-svrc50]
   set alias to specific version
 
+kvm setup
+  install kvm tool machine-wide and download latest KRE 
+
 "@ | Write-Host
 }
 
+function Kvm-Global-Setup {
+    $persistent = $true
+
+    If (Needs-Elevation)
+    {
+        $arguments = "& '$scriptPath' setup $(Requested-Switches) -persistent"
+        Start-Process "$psHome\powershell.exe" -Verb runAs -ArgumentList $arguments -Wait
+        break
+    }
+
+    $scriptFolder = [System.IO.Path]::GetDirectoryName($scriptPath)
+
+    Write-Host "Copying file $globalKrePath\bin\kvm.ps1"
+    md "$globalKrePath\bin" -Force | Out-Null
+    copy "$scriptFolder\kvm.ps1" "$globalKrePath\bin\kvm.ps1"
+
+    Write-Host "Copying file $globalKrePath\bin\kvm.cmd"
+    copy "$scriptFolder\kvm.cmd" "$globalKrePath\bin\kvm.cmd"
+
+    Write-Host "Adding $globalKrePath\bin to machine PATH"
+    $machinePath = [Environment]::GetEnvironmentVariable("Path", [System.EnvironmentVariableTarget]::Machine)
+    $machinePath = Change-Path $machinePath "$globalKrePath\bin" ($globalKrePath)
+    [Environment]::SetEnvironmentVariable("Path", $machinePath, [System.EnvironmentVariableTarget]::Machine)
+
+    Write-Host "Adding $globalKrePath\bin to process PATH"
+    $envPath = $env:Path
+    $envPath = Change-Path $envPath "$globalKrePath\bin" ($globalKrePath)
+    Set-Path $envPath
+
+    Write-Host "Adding $globalKrePath;%USERPROFILE%\.kre to machine KRE_HOME"
+    $machineKreHome = [Environment]::GetEnvironmentVariable("KRE_HOME", [System.EnvironmentVariableTarget]::Machine)
+    $machineKreHome = Change-Path $machineKreHome "%USERPROFILE%\.kre" ("%USERPROFILE%\.kre")
+    $machineKreHome = Change-Path $machineKreHome $globalKrePath ($globalKrePath)
+
+    Kvm-Global-Upgrade
+}
+
+
+function Kvm-Global-Upgrade {
+    $version = Kvm-Find-Latest (Requested-Platform "svr50") (Requested-Architecture "x86")
+    Kvm-Global-Install $version
+    Kvm-Alias-Set "default" $version
+}
 
 function Kvm-Upgrade {
     $version = Kvm-Find-Latest (Requested-Platform "svr50") (Requested-Architecture "x86")
@@ -122,6 +171,23 @@ param(
     }
 }
 
+function Kvm-Global-Install {
+param(
+  [string] $versionOrAlias
+)
+    If (Needs-Elevation) {
+        $arguments = "& '$scriptPath' install -global $versionOrAlias $(Requested-Switches)"
+        Start-Process "$psHome\powershell.exe" -Verb runAs -ArgumentList $arguments -Wait
+        Kvm-Global-Use $versionOrAlias
+        break
+    }
+
+    $kreFullName = Requested-VersionOrAlias $versionOrAlias
+    $kreFolder = "$globalKrePackages\$kreFullName"
+    Do-Kvm-Download $kreFullName $kreFolder
+    Kvm-Global-Use $versionOrAlias
+}
+
 function Kvm-Install {
 param(
   [string] $versionOrAlias
@@ -129,80 +195,38 @@ param(
     if ($versionOrAlias.EndsWith(".nupkg"))
     {
         $kreFullName = [System.IO.Path]::GetFileNameWithoutExtension($versionOrAlias)
-        $kreFolder = "$userKrePath\packages\$kreFullName"
+        $kreFolder = "$userKrePackages\$kreFullName"
         $kreFile = "$kreFolder\$kreFullName.nupkg"
 
-        md $kreFolder -Force | Out-Null
+        if (Test-Path($kreFolder)) {
+          Write-Host "Target folder '$kreFolder' already exists"
+        } else {
+          md $kreFolder -Force | Out-Null
+          copy $versionOrAlias $kreFile
+          Do-Kvm-Unpack $kreFile $kreFolder
+        }
 
-        copy $versionOrAlias $kreFile
-
-        Do-Kvm-Unpack $kreFile $kreFolder
+        $kreBin = "$kreFolder\bin"
+        Write-Host "Adding" $kreBin "to process PATH"
+        Set-Path (Change-Path $env:Path $kreBin ($globalKrePackages, $userKrePackages))
     }
     else
     {
         $kreFullName = Requested-VersionOrAlias $versionOrAlias
 
-        $kreFolder = "$userKrePath\packages\$kreFullName"
+        $kreFolder = "$userKrePackages\$kreFullName"
 
         Do-Kvm-Download $kreFullName $kreFolder
         Kvm-Use $versionOrAlias
     }
 }
 
-function Kvm-Global-Install {
-param(
-  [string] $versionOrAlias
-)
-    If (-NOT ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole] "Administrator"))
-    {
-        $arguments = "install -global $versionOrAlias" 
-        if ($x86) {$arguments = "$arguments -x86"}
-        if ($x64) {$arguments = "$arguments -x64"}
-        if ($svr50) {$arguments = "$arguments -svr50"}
-        if ($svrc50) {$arguments = "$arguments -svrc50"}
-
-        $arguments = "& '$scriptPath' $arguments"
-        Start-Process "$psHome\powershell.exe" -Verb runAs -ArgumentList $arguments
-        Kvm-Global-Use $versionOrAlias
-        break
-    }
-
-    $kreFullName = Requested-VersionOrAlias $versionOrAlias
-
-    $kreFolder = $globalKrePath + "\packages\$kreFullName"
-
-    Do-Kvm-Download $kreFullName $kreFolder
-}
-
 function Kvm-List {
-    Get-ChildItem ($userKrePath + "\packages\") | Select Name
+    Get-ChildItem ($userKrePackages) | Select Name
 }
 
 function Kvm-Global-List {
-    Get-ChildItem ($globalKrePath + "\packages\") | Select Name
-}
-
-function Kvm-Use {
-param(
-  [string] $versionOrAlias
-)
-    $kreFullName = Requested-VersionOrAlias $versionOrAlias
-
-    $kreBin = $userKrePath + "\packages\" + $kreFullName + "\bin"
-
-    Write-Host "Adding" $kreBin "to PATH"
-
-    $newPath = $kreBin
-    foreach($portion in $env:Path.Split(';')) {
-      if (!$portion.StartsWith($userKrePath) -and !$portion.StartsWith($globalKrePath)) {
-        $newPath = $newPath + ";" + $portion
-      }
-    }
-
-@"
-SET "KRE_VERSION=$version"
-SET "PATH=$newPath"
-"@ | Out-File ($userKrePath + "\run-once.cmd") ascii
+    Get-ChildItem ($globalKrePackages) | Select Name
 }
 
 function Kvm-Global-Use {
@@ -211,21 +235,36 @@ param(
 )
     $kreFullName = Requested-VersionOrAlias $versionOrAlias
 
-    $kreBin = "$globalKrePath\packages\$kreFullName\bin"
+    $kreBin = "$globalKrePackages\$kreFullName\bin"
 
-    Write-Host "Adding" $kreBin "to PATH"
+    Write-Host "Adding" $kreBin "to process PATH"
+    Set-Path (Change-Path $env:Path $kreBin ($globalKrePackages, $userKrePackages))
 
-    $newPath = $kreBin
-    foreach($portion in $env:Path.Split(';')) {
-      if (!$portion.StartsWith($userKrePath) -and !$portion.StartsWith($globalKrePath)) {
-        $newPath = $newPath + ";" + $portion
-      }
+    if ($persistent) {
+        Write-Host "Adding $kreBin to machine PATH"
+        $machinePath = [Environment]::GetEnvironmentVariable("Path", [System.EnvironmentVariableTarget]::Machine)
+        $machinePath = Change-Path $machinePath $kreBin ($globalKrePackages, $userKrePackages)
+        [Environment]::SetEnvironmentVariable("Path", $machinePath, [System.EnvironmentVariableTarget]::Machine)
     }
+}
 
-@"
-SET "KRE_VERSION=$version"
-SET "PATH=$newPath"
-"@ | Out-File ($userKrePath + "\run-once.cmd") ascii
+function Kvm-Use {
+param(
+  [string] $versionOrAlias
+)
+    $kreFullName = Requested-VersionOrAlias $versionOrAlias
+
+    $kreBin = "$userKrePackages\$kreFullName\bin"
+
+    Write-Host "Adding" $kreBin "to process PATH"
+    Set-Path (Change-Path $env:Path $kreBin ($globalKrePackages, $userKrePackages))
+
+    if ($persistent) {
+        Write-Host "Adding $kreBin to user PATH"
+        $userPath = [Environment]::GetEnvironmentVariable("Path", [System.EnvironmentVariableTarget]::User)
+        $userPath = Change-Path $userPath $kreBin ($globalKrePackages, $userKrePackages)
+        [Environment]::SetEnvironmentVariable("Path", $userPath, [System.EnvironmentVariableTarget]::User)
+    }
 }
 
 function Kvm-Alias-List {
@@ -305,10 +344,56 @@ param(
     return $default
 }
 
+function Change-Path() {
+param(
+  [string] $existingPaths,
+  [string] $prependPath,
+  [string[]] $removePaths
+)
+    $newPath = $prependPath
+    foreach($portion in $existingPaths.Split(';')) {
+      $skip = $portion -eq ""
+      foreach($removePath in $removePaths) {
+        if ($portion.StartsWith($removePath)) {
+          $skip = $true
+        }      
+      }
+      if (!$skip) {
+        $newPath = $newPath + ";" + $portion
+      }
+    }
+    return $newPath
+}
+
+function Set-Path() {
+param(
+  [string] $newPath
+)
+$env:Path = $newPath
+@"
+SET "PATH=$newPath"
+"@ | Out-File ($userKrePath + "\run-once.cmd") ascii
+}
+
+function Needs-Elevation() {
+    $user = [Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()
+    $elevated = $user.IsInRole([Security.Principal.WindowsBuiltInRole] "Administrator")
+    return -NOT $elevated
+}
+
+function Requested-Switches() {
+  $arguments = ""
+  if ($x86) {$arguments = "$arguments -x86"}
+  if ($x64) {$arguments = "$arguments -x64"}
+  if ($svr50) {$arguments = "$arguments -svr50"}
+  if ($svrc50) {$arguments = "$arguments -svrc50"}
+  return $arguments
+}
 
  try {
    if ($global) {
     switch -wildcard ($command + " " + $args.Count) {
+#      "setup 0"            {Kvm-Global-Setup}
 #      "upgrade 0"         {Kvm-Global-Upgrade}
 #      "install 0"         {Kvm-Global-Install-Latest}
       "install 1"         {Kvm-Global-Install $args[0]}
@@ -318,6 +403,7 @@ param(
     }
    } else {
     switch -wildcard ($command + " " + $args.Count) {
+      "setup 0"           {Kvm-Global-Setup}
       "upgrade 0"         {Kvm-Upgrade}
       "install 0"         {Kvm-Install-Latest}
       "install 1"         {Kvm-Install $args[0]}
