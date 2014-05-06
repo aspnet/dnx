@@ -85,6 +85,7 @@ function Kvm-Global-Setup {
     $machineKreHome = [Environment]::GetEnvironmentVariable("KRE_HOME", [System.EnvironmentVariableTarget]::Machine)
     $machineKreHome = Change-Path $machineKreHome "%USERPROFILE%\.kre" ("%USERPROFILE%\.kre")
     $machineKreHome = Change-Path $machineKreHome $globalKrePath ($globalKrePath)
+    [Environment]::SetEnvironmentVariable("KRE_HOME", $machineKreHome, [System.EnvironmentVariableTarget]::Machine)
 
     Kvm-Global-Upgrade
 }
