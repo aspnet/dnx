@@ -353,8 +353,8 @@ param(
   [string] $kreFullName
 )
   $kreHome = $env:KRE_HOME
-  if ($kreHome -eq "") {
-    $kreHome = "$(env:ProgramFiles);%USERPROFILE%\.kre"
+  if (!$kreHome) {
+    $kreHome = $env:ProgramFiles + ";%USERPROFILE%\.kre"
   }
   foreach($portion in $kreHome.Split(';')) {
     $path = [System.Environment]::ExpandEnvironmentVariables($portion)
