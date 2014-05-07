@@ -23,19 +23,23 @@ function Kvm-Help {
 @"
 kvm - K Runtime Environment Version Manager
 
-kvm upgrade
-  install latest KRE from feed
-  set 'default' alias
+kvm upgrade [-x86][-x64] [-svr50][-svrc50] [-g|-global]
+  install latest KRE from feed and set 'default' alias
+  add KRE bin to PATH environment variable in a persistently
+  -g|-global        install machine-wide and change machine PATH instead of user PATH
+
+kvm install <semver>|<alias>|<nupkg> [-x86][-x64] [-svr50][-svrc50] [-g|-global]
+  install requested KRE from feed
   add KRE bin to path of current command line
 
-kvm install <semver>|<alias> [-x86][-x64] [-svr50][-svrc50] [-g|-global]
-  install requested KRE from feed
-
-kvm list [-g|-global]
+kvm list
   list KRE versions installed 
 
-kvm use <semver>|<alias> [-x86][-x64] [-svr50][-svrc50] [-g|-global]
-  add KRE bin to path of current command line
+kvm use <semver>|<alias>|none [-x86][-x64] [-svr50][-svrc50] [-p|-persist] [-g|-global]
+  <semver>|<alias>  add KRE bin to path of current command line   
+  none              remove KRE bin from path of current command line
+  -p|-persistent    add KRE bin to PATH environment variable in a persistently
+  -g|-global        combined with -p to change machine PATH instead of user PATH
 
 kvm alias
   list KRE aliases which have been defined
@@ -92,12 +96,19 @@ function Kvm-Global-Setup {
 
 
 function Kvm-Global-Upgrade {
+    $persistent = $true
+    If (Needs-Elevation) {
+        $arguments = "& '$scriptPath' upgrade -global $(Requested-Switches)"
+        Start-Process "$psHome\powershell.exe" -Verb runAs -ArgumentList $arguments -Wait
+        break
+    }
     $version = Kvm-Find-Latest (Requested-Platform "svr50") (Requested-Architecture "x86")
     Kvm-Global-Install $version
     Kvm-Alias-Set "default" $version
 }
 
 function Kvm-Upgrade {
+    $persistent = $true
     $version = Kvm-Find-Latest (Requested-Platform "svr50") (Requested-Architecture "x86")
     Kvm-Install $version
     Kvm-Alias-Set "default" $version
@@ -456,8 +467,8 @@ function Requested-Switches() {
  try {
    if ($global) {
     switch -wildcard ($command + " " + $args.Count) {
-#      "setup 0"            {Kvm-Global-Setup}
-#      "upgrade 0"         {Kvm-Global-Upgrade}
+      "setup 0"           {Kvm-Global-Setup}
+      "upgrade 0"         {Kvm-Global-Upgrade}
 #      "install 0"         {Kvm-Global-Install-Latest}
       "install 1"         {Kvm-Global-Install $args[0]}
       "list 0"            {Kvm-Global-List}
@@ -468,7 +479,7 @@ function Requested-Switches() {
     switch -wildcard ($command + " " + $args.Count) {
       "setup 0"           {Kvm-Global-Setup}
       "upgrade 0"         {Kvm-Upgrade}
-      "install 0"         {Kvm-Install-Latest}
+#      "install 0"         {Kvm-Install-Latest}
       "install 1"         {Kvm-Install $args[0]}
       "list 0"            {Kvm-List}
       "use 1"             {Kvm-Use $args[0]}
