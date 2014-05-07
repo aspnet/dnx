@@ -234,9 +234,35 @@ function Kvm-Global-Use {
 param(
   [string] $versionOrAlias
 )
+    If (Needs-Elevation) {
+        $arguments = "& '$scriptPath' use -global $versionOrAlias $(Requested-Switches)"
+        if ($persistent) {
+          $arguments = $arguments + " -persistent"
+        }
+        Start-Process "$psHome\powershell.exe" -Verb runAs -ArgumentList $arguments -Wait
+        break
+    }
+
+    if ($versionOrAlias -eq "none") {
+      Write-Host "Removing KRE from process PATH"
+      Set-Path (Change-Path $env:Path "" ($globalKrePackages, $userKrePackages))
+
+      if ($persistent) {  
+          Write-Host "Removing KRE from machine PATH"
+          $machinePath = [Environment]::GetEnvironmentVariable("Path", [System.EnvironmentVariableTarget]::Machine)
+          $machinePath = Change-Path $machinePath "" ($globalKrePackages, $userKrePackages)
+          [Environment]::SetEnvironmentVariable("Path", $machinePath, [System.EnvironmentVariableTarget]::Machine)
+      }
+      return;
+    }
+
     $kreFullName = Requested-VersionOrAlias $versionOrAlias
 
-    $kreBin = "$globalKrePackages\$kreFullName\bin"
+    $kreBin = Locate-KreBinFromFullName $kreFullName
+    if ($kreBin -eq $null) {
+      Write-Host "Cannot find $kreFullName, do you need to run 'kvm install $versionOrAlias'?"
+      return
+    } 
 
     Write-Host "Adding" $kreBin "to process PATH"
     Set-Path (Change-Path $env:Path $kreBin ($globalKrePackages, $userKrePackages))
@@ -253,14 +279,31 @@ function Kvm-Use {
 param(
   [string] $versionOrAlias
 )
+    if ($versionOrAlias -eq "none") {
+      Write-Host "Removing KRE from process PATH"
+      Set-Path (Change-Path $env:Path "" ($globalKrePackages, $userKrePackages))
+
+      if ($persistent) {  
+          Write-Host "Removing KRE from user PATH"
+          $userPath = [Environment]::GetEnvironmentVariable("Path", [System.EnvironmentVariableTarget]::User)
+          $userPath = Change-Path $userPath "" ($globalKrePackages, $userKrePackages)
+          [Environment]::SetEnvironmentVariable("Path", $userPath, [System.EnvironmentVariableTarget]::User)
+      }
+      return;
+    }
+
     $kreFullName = Requested-VersionOrAlias $versionOrAlias
 
-    $kreBin = "$userKrePackages\$kreFullName\bin"
+    $kreBin = Locate-KreBinFromFullName $kreFullName
+    if ($kreBin -eq $null) {
+      Write-Host "Cannot find $kreFullName, do you need to run 'kvm install $versionOrAlias'?"
+      return
+    } 
 
     Write-Host "Adding" $kreBin "to process PATH"
     Set-Path (Change-Path $env:Path $kreBin ($globalKrePackages, $userKrePackages))
 
-    if ($persistent) {
+    if ($persistent) {  
         Write-Host "Adding $kreBin to user PATH"
         $userPath = [Environment]::GetEnvironmentVariable("Path", [System.EnvironmentVariableTarget]::User)
         $userPath = Change-Path $userPath $kreBin ($globalKrePackages, $userKrePackages)
@@ -292,6 +335,24 @@ param(
     Write-Host "Setting alias '$name' to '$kreFullName'"
     md ($userKrePath + "\alias\") -Force | Out-Null
     $kreFullName | Out-File ($userKrePath + "\alias\" + $name + ".txt") ascii
+}
+
+function Locate-KreBinFromFullName() {
+param(
+  [string] $kreFullName
+)
+  $kreHome = $env:KRE_HOME
+  if ($kreHome -eq "") {
+    $kreHome = "$(env:ProgramFiles);%USERPROFILE%\.kre"
+  }
+  foreach($portion in $kreHome.Split(';')) {
+    $path = [System.Environment]::ExpandEnvironmentVariables($portion)
+    $kreBin = "$path\packages\$kreFullName\bin"
+    if (Test-Path "$kreBin") {
+      return $kreBin
+    }
+  }
+  return $null
 }
 
 function Requested-VersionOrAlias() {
