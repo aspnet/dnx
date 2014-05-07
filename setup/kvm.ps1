@@ -234,11 +234,38 @@ param(
 }
 
 function Kvm-List {
-    Get-ChildItem ($userKrePackages) | Select Name
+  $kreHome = $env:KRE_HOME
+  if (!$kreHome) {
+    $kreHome = $env:ProgramFiles + ";%USERPROFILE%\.kre"
+  }
+  $items = @()
+  foreach($portion in $kreHome.Split(';')) {
+    $path = [System.Environment]::ExpandEnvironmentVariables($portion)
+    $items += Get-ChildItem ("$path\packages\KRE-*") | List-Parts
+  }
+  $items | Sort-Object Version, Runtime, Architecture | Format-Table -AutoSize -Property @{name="Active";expression={$_.Active};alignment="center"}, "Version", "Runtime", "Architecture", "Location"
 }
 
-function Kvm-Global-List {
-    Get-ChildItem ($globalKrePackages) | Select Name
+filter List-Parts {
+  $hasBin = Test-Path($_.FullName+"\bin") 
+  if (!$hasBin) {
+    return
+  }
+  $active = $false
+  foreach($portion in $env:Path.Split(';')) {
+    if ($portion.StartsWith($_.FullName)) {
+      $active = $true
+    }
+  }
+  $parts1 = $_.Name.Split('.', 2)
+  $parts2 = $parts1[0].Split('-', 3)
+  return New-Object PSObject -Property @{
+    Active = if($active){"*"}else{""}
+    Version = $parts1[1]
+    Runtime = $parts2[1]
+    Architecture = $parts2[2]
+    Location = $_.Parent.FullName
+  }
 }
 
 function Kvm-Global-Use {
@@ -471,7 +498,7 @@ function Requested-Switches() {
       "upgrade 0"         {Kvm-Global-Upgrade}
 #      "install 0"         {Kvm-Global-Install-Latest}
       "install 1"         {Kvm-Global-Install $args[0]}
-      "list 0"            {Kvm-Global-List}
+#      "list 0"            {Kvm-Global-List}
       "use 1"             {Kvm-Global-Use $args[0]}
       default             {Write-Host 'Unknown command, or global switch not supported'; Kvm-Help;}
     }
