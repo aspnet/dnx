@@ -22,4 +22,4 @@ IF EXIST packages\KoreBuild goto run
 .nuget\NuGet.exe install Sake -version 0.2 -o packages -ExcludeVersion
 
 :run
-packages\Sake\tools\Sake.exe -I build -I packages\KoreBuild\build -f makefile.shade %*
+packages\Sake\tools\Sake.exe -I packages\KoreBuild\build -f makefile.shade %*
