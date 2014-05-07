@@ -54,7 +54,18 @@ namespace NuGet
         public override Stream GetStream()
         {
             var nupkgName = Id + "." + Version + Constants.PackageExtension;
-            return _fileSystem.OpenFile(nupkgName);
+            if (_fileSystem.FileExists(nupkgName))
+            {
+                return _fileSystem.OpenFile(nupkgName);
+            }
+            else if (_fileSystem.FileExists(Path.Combine("..", nupkgName)))
+            {
+                return _fileSystem.OpenFile(Path.Combine("..", nupkgName));
+            }
+            else
+            {
+                throw new Exception("nupkg file missing from source");
+            }
         }
 
         protected override IEnumerable<IPackageAssemblyReference> GetAssemblyReferencesCore()
