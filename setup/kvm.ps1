@@ -38,7 +38,7 @@ kvm list
 kvm use <semver>|<alias>|none [-x86][-x64] [-svr50][-svrc50] [-p|-persist] [-g|-global]
   <semver>|<alias>  add KRE bin to path of current command line   
   none              remove KRE bin from path of current command line
-  -p|-persistent    add KRE bin to PATH environment variable in a persistently
+  -p|-persistent    add KRE bin to PATH environment variables persistently
   -g|-global        combined with -p to change machine PATH instead of user PATH
 
 kvm alias
