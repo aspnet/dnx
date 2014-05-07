@@ -53,7 +53,8 @@ namespace NuGet
 
         public override Stream GetStream()
         {
-            throw new NotImplementedException();
+            var nupkgName = Id + "." + Version + Constants.PackageExtension;
+            return _fileSystem.OpenFile(nupkgName);
         }
 
         protected override IEnumerable<IPackageAssemblyReference> GetAssemblyReferencesCore()
