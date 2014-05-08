@@ -2,25 +2,25 @@
     "version": "0.1-alpha-*",
     "compilationOptions" : { "define" : ["TRACE"] },
     "dependencies": {
-        "Microsoft.Net.Runtime" : "",
-        "Microsoft.Net.Runtime.Common" : "",
-        "Microsoft.Net.CommandLineUtils" : "",
-        "Microsoft.Net.Runtime.Roslyn" : "",
-        "Microsoft.Net.Runtime.Interfaces" : "",
+        "Microsoft.Bcl.Immutable" : "1.1.18-beta-*",
         "Microsoft.CodeAnalysis.Common" : "0.7-beta-*",
         "Microsoft.CodeAnalysis.CSharp" : "0.7-beta-*",
-        "System.Reflection.Metadata.Ecma335": "0.7-beta-*",
-        "Microsoft.Bcl.Immutable" : "1.1.18-beta-*"
+        "Microsoft.Net.CommandLineUtils" : "",
+        "Microsoft.Net.Runtime" : "",
+        "Microsoft.Net.Runtime.Common" : "",
+        "Microsoft.Net.Runtime.Interfaces" : "",
+        "Microsoft.Net.Runtime.Roslyn" : "",
+        "System.Reflection.Metadata.Ecma335": "0.7-beta-*"
     },
     "configurations" : {
         "net45" : {
             "dependencies": {
-                "System.IO.Compression" : "",
-                "System.Xml.Linq": "",
-                "System.Xml": "",
-                "System.Runtime" : "",
                 "System.Collections" : "",
-                "System.IO" :  ""
+                "System.IO" :  "",
+                "System.IO.Compression" : "",
+                "System.Runtime" : "",
+                "System.Xml": "",
+                "System.Xml.Linq": ""
             }
         },
         "k10" : { 
@@ -31,9 +31,9 @@
                 "System.Diagnostics.Debug": "4.0.10.0",
                 "System.Diagnostics.Process": "4.0.0.0",
                 "System.IO": "4.0.0.0",
+                "System.IO.Compression": "4.0.0.0",
                 "System.IO.FileSystem": "4.0.10.0",
                 "System.IO.FileSystem.Primitives": "4.0.20.0",
-                "System.IO.Compression": "4.0.0.0",
                 "System.Linq": "4.0.0.0",
                 "System.Reflection": "4.0.10.0",
                 "System.Runtime": "4.0.20.0",

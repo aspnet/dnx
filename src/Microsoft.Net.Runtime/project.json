@@ -2,20 +2,20 @@
     "version": "0.1-alpha-*",
     "compilationOptions" : { "define" : ["LOADER", "TRACE"] },
     "dependencies": {
-        "Newtonsoft.Json": "5.0.8",
         "Microsoft.Net.Runtime.Common" : "",
-        "Microsoft.Net.Runtime.Interfaces" : ""
+        "Microsoft.Net.Runtime.Interfaces" : "",
+        "Newtonsoft.Json": "5.0.8"
     },
     "configurations" : {
         "net45" : {
             "dependencies": {
+                "System.Collections" : "",
                 "System.IO.Compression" : "",
                 "System.IO.Compression.FileSystem" : "",
-                "WindowsBase": "",
                 "System.Runtime" : "",
                 "System.Xml" : "",
                 "System.Xml.Linq" : "",
-                "System.Collections" : ""
+                "WindowsBase": ""
             }
         },
         "k10" : { 
@@ -38,8 +38,8 @@
                 "System.Resources.ResourceManager": "4.0.0.0",
                 "System.Runtime": "4.0.20.0",
                 "System.Runtime.Extensions": "4.0.10.0",
-                "System.Runtime.Loader": "4.0.0.0",
                 "System.Runtime.InteropServices": "4.0.20.0",
+                "System.Runtime.Loader": "4.0.0.0",
                 "System.Text.RegularExpressions": "4.0.0.0",
                 "System.Threading": "4.0.0.0",
                 "System.Threading.Tasks": "4.0.10.0",
