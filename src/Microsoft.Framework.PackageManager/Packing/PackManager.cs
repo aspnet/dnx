@@ -70,10 +70,7 @@ namespace Microsoft.Framework.PackageManager.Packing
 
             foreach (var runtime in _options.Runtimes)
             {
-                if (TryAddRuntime(root, runtime))
-                {
-                    continue;
-                }
+                var runtimeLocated = TryAddRuntime(root, runtime);
 
                 var kreHome = Environment.GetEnvironmentVariable("KRE_HOME");
                 if (string.IsNullOrEmpty(kreHome))
@@ -90,8 +87,15 @@ namespace Microsoft.Framework.PackageManager.Packing
 
                     if (TryAddRuntime(root, packagesPath))
                     {
+                        runtimeLocated = true;
                         break;
                     }
+                }
+
+                if (!runtimeLocated)
+                {
+                    Console.WriteLine(string.Format("Unable to locate runtime '{0}'", runtime));
+                    return false;
                 }
             }
 
