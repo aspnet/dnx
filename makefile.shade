@@ -266,7 +266,7 @@ var CORECLR_PATH = '${Environment.GetEnvironmentVariable("CORECLR_PATH")}'
                                "Microsoft.CodeAnalysis.Common", 
                                "Microsoft.CodeAnalysis.CSharp", 
                                "Microsoft.Bcl.Immutable", 
-                               "System.Reflection.Metadata.Ecma335" };
+                               "Microsoft.Bcl.Metadata" };
 
         
         foreach (var framework in targetFrameworks)
@@ -286,7 +286,7 @@ var CORECLR_PATH = '${Environment.GetEnvironmentVariable("CORECLR_PATH")}'
 
                 if(framework == "k10")
                 {
-                    candidates = new [] { framework, "netcore45" };
+                    candidates = new [] { framework, "netcore45", "win8" };
                 }
                 else
                 {
