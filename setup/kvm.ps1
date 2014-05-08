@@ -57,33 +57,40 @@ kvm setup
 }
 
 function Kvm-Global-Setup {
-    $persistent = $true
-
     If (Needs-Elevation)
     {
         $arguments = "& '$scriptPath' setup $(Requested-Switches) -persistent"
         Start-Process "$psHome\powershell.exe" -Verb runAs -ArgumentList $arguments -Wait
+        Write-Host "Setup complete"
+        Kvm-Alias-List
+        Kvm-List
         break
     }
 
     $scriptFolder = [System.IO.Path]::GetDirectoryName($scriptPath)
 
-    Write-Host "Copying file $globalKrePath\bin\kvm.ps1"
-    md "$globalKrePath\bin" -Force | Out-Null
-    copy "$scriptFolder\kvm.ps1" "$globalKrePath\bin\kvm.ps1"
+    $kvmBinPath = "$userKrePath\bin"
 
-    Write-Host "Copying file $globalKrePath\bin\kvm.cmd"
-    copy "$scriptFolder\kvm.cmd" "$globalKrePath\bin\kvm.cmd"
+    Write-Host "Copying file $kvmBinPath\kvm.ps1"
+    md $kvmBinPath -Force | Out-Null
+    copy "$scriptFolder\kvm.ps1" "$kvmBinPath\kvm.ps1"
 
-    Write-Host "Adding $globalKrePath\bin to machine PATH"
-    $machinePath = [Environment]::GetEnvironmentVariable("Path", [System.EnvironmentVariableTarget]::Machine)
-    $machinePath = Change-Path $machinePath "$globalKrePath\bin" ($globalKrePath)
-    [Environment]::SetEnvironmentVariable("Path", $machinePath, [System.EnvironmentVariableTarget]::Machine)
+    Write-Host "Copying file $kvmBinPath\kvm.cmd"
+    copy "$scriptFolder\kvm.cmd" "$kvmBinPath\kvm.cmd"
 
-    Write-Host "Adding $globalKrePath\bin to process PATH"
-    $envPath = $env:Path
-    $envPath = Change-Path $envPath "$globalKrePath\bin" ($globalKrePath)
-    Set-Path $envPath
+    Write-Host "Adding $kvmBinPath to process PATH"
+    Set-Path (Change-Path $env:Path $kvmBinPath ($kvmBinPath))
+
+    Write-Host "Adding $kvmBinPath to user PATH"
+    $userPath = [Environment]::GetEnvironmentVariable("Path", [System.EnvironmentVariableTarget]::User)
+    $userPath = Change-Path $userPath $kvmBinPath ($kvmBinPath)
+    [Environment]::SetEnvironmentVariable("Path", $userPath, [System.EnvironmentVariableTarget]::User)
+
+    Write-Host "Adding $globalKrePath;%USERPROFILE%\.kre to process KRE_HOME"
+    $envKreHome = $env:KRE_HOME
+    $envKreHome = Change-Path $envKreHome "%USERPROFILE%\.kre" ("%USERPROFILE%\.kre")
+    $envKreHome = Change-Path $envKreHome $globalKrePath ($globalKrePath)
+    $env:KRE_HOME = $envKreHome
 
     Write-Host "Adding $globalKrePath;%USERPROFILE%\.kre to machine KRE_HOME"
     $machineKreHome = [Environment]::GetEnvironmentVariable("KRE_HOME", [System.EnvironmentVariableTarget]::Machine)
@@ -91,9 +98,9 @@ function Kvm-Global-Setup {
     $machineKreHome = Change-Path $machineKreHome $globalKrePath ($globalKrePath)
     [Environment]::SetEnvironmentVariable("KRE_HOME", $machineKreHome, [System.EnvironmentVariableTarget]::Machine)
 
+    $persistent = $false
     Kvm-Global-Upgrade
 }
-
 
 function Kvm-Global-Upgrade {
     $persistent = $true
@@ -113,7 +120,6 @@ function Kvm-Upgrade {
     Kvm-Install $version
     Kvm-Alias-Set "default" $version
 }
-
 
 function Kvm-Find-Latest {
 param(
@@ -197,7 +203,7 @@ param(
     $kreFullName = Requested-VersionOrAlias $versionOrAlias
     $kreFolder = "$globalKrePackages\$kreFullName"
     Do-Kvm-Download $kreFullName $kreFolder
-    Kvm-Global-Use $versionOrAlias
+    Kvm-Use $versionOrAlias
 }
 
 function Kvm-Install {
@@ -236,12 +242,14 @@ param(
 function Kvm-List {
   $kreHome = $env:KRE_HOME
   if (!$kreHome) {
-    $kreHome = $env:ProgramFiles + ";%USERPROFILE%\.kre"
+    $kreHome = $env:ProgramFiles + "\KRE;%USERPROFILE%\.kre"
   }
   $items = @()
   foreach($portion in $kreHome.Split(';')) {
     $path = [System.Environment]::ExpandEnvironmentVariables($portion)
-    $items += Get-ChildItem ("$path\packages\KRE-*") | List-Parts
+    if (Test-Path("$path\packages")) {
+      $items += Get-ChildItem ("$path\packages\KRE-*") | List-Parts
+    }
   }
   $items | Sort-Object Version, Runtime, Architecture | Format-Table -AutoSize -Property @{name="Active";expression={$_.Active};alignment="center"}, "Version", "Runtime", "Architecture", "Location"
 }
