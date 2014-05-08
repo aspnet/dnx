@@ -96,6 +96,7 @@ namespace Microsoft.Net.PackageManager
                 var optionOut = c.Option("-o|--out <PATH>", "Where does it go");
                 var optionZipPackages = c.Option("-z|--zippackages", "Bundle a zip full of packages");
                 var optionOverwrite = c.Option("--overwrite", "Remove existing files in target folders");
+                var optionRuntime = c.Option("--runtime <KRE>", "Names or paths to KRE files to include ");
 
                 c.OnExecute(() =>
                 {
@@ -114,6 +115,7 @@ namespace Microsoft.Net.PackageManager
                         RuntimeTargetFramework = _environment.TargetFramework,
                         ZipPackages = optionZipPackages.Value != null,
                         Overwrite = optionOverwrite.Value != null,
+                        Runtimes = optionRuntime.Value != null ? optionRuntime.Value.Split(new[]{';'}, StringSplitOptions.RemoveEmptyEntries) : new string[0],
                     };
 
                     var manager = new PackManager(options);

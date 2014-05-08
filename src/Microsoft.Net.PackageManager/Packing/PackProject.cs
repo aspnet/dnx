@@ -116,11 +116,14 @@ namespace Microsoft.Net.PackageManager.Packing
                                 Path.Combine("packages", package.Library.Name + "." + package.Library.Version),
                                 IncludePackageFileInBundle);
                         }
-                        root.Operations.AddFiles(
-                            archive,
-                            root.Runtime.TargetPath,
-                            Path.Combine("packages", root.Runtime.Name + "." + root.Runtime.Version),
-                            IncludeRuntimeFileInBundle);
+                        foreach (var runtime in root.Runtimes)
+                        {
+                            //root.Operations.AddFiles(
+                            //    archive,
+                            //    root.Runtime.TargetPath,
+                            //    Path.Combine("packages", root.Runtime.Name + "." + root.Runtime.Version),
+                            //    IncludeRuntimeFileInBundle);
+                        }
                     }
                 }
             }

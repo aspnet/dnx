@@ -65,10 +65,32 @@ namespace Microsoft.Net.PackageManager.Packing
                 ZipPackages = _options.ZipPackages
             };
 
-            root.Runtime = new PackRuntime(
-                nugetDependencyResolver,
-                new Library { Name = "ProjectK", Version = SemanticVersion.Parse("0.1.0-alpha-*") },
-                _options.RuntimeTargetFramework);
+            foreach (var runtime in _options.Runtimes)
+            {
+                if (TryAddRuntime(root, runtime))
+                {
+                    continue;
+                }
+
+                var kreHome = Environment.GetEnvironmentVariable("KRE_HOME");
+                if (string.IsNullOrEmpty(kreHome))
+                {
+                    kreHome = Environment.GetEnvironmentVariable("ProgramFiles") + @"\KRE;%USERPROFILE%\.kre";
+                }
+
+                foreach(var portion in kreHome.Split(new[]{';'}, StringSplitOptions.RemoveEmptyEntries))
+                {
+                    var packagesPath = Path.Combine(
+                        Environment.ExpandEnvironmentVariables(portion),
+                        "packages",
+                        runtime);
+
+                    if (TryAddRuntime(root, packagesPath))
+                    {
+                        break;
+                    }
+                }
+            }
 
             foreach (var libraryDescription in projectReferenceDependencyProvider.Dependencies)
             {
@@ -85,6 +107,24 @@ namespace Microsoft.Net.PackageManager.Packing
             sw.Stop();
 
             Console.WriteLine("Time elapsed {0}", sw.Elapsed);
+            return true;
+        }
+
+        bool TryAddRuntime(PackRoot root, string krePath)
+        {
+            if (!Directory.Exists(krePath))
+            {
+                return false;
+            }
+
+            var kreName = Path.GetFileName(Path.GetDirectoryName(Path.Combine(krePath, ".")));
+            var kreNupkgPath = Path.Combine(krePath, kreName + ".nupkg");
+            if (!File.Exists(kreNupkgPath))
+            {
+                return false;
+            }
+
+            root.Runtimes.Add(new PackRuntime(kreNupkgPath));
             return true;
         }
     }

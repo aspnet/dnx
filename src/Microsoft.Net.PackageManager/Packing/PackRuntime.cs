@@ -11,18 +11,15 @@ namespace Microsoft.Net.PackageManager.Packing
 {
     public class PackRuntime
     {
-        private readonly NuGetDependencyResolver _nugetDependencyResolver;
-        private readonly Library _library;
-        private readonly FrameworkName _frameworkName;
+        //private readonly NuGetDependencyResolver _nugetDependencyResolver;
+        //private readonly Library _library;
+        //private readonly FrameworkName _frameworkName;
+        string _kreNupkgPath;
 
         public PackRuntime(
-            NuGetDependencyResolver nugetDependencyResolver, 
-            Library library,
-            FrameworkName frameworkName)
+            string kreNupkgPath)
         {
-            _nugetDependencyResolver = nugetDependencyResolver;
-            _library = library;
-            _frameworkName = frameworkName;
+            _kreNupkgPath = kreNupkgPath;
         }
 
         public string Name { get; set; }
@@ -31,18 +28,12 @@ namespace Microsoft.Net.PackageManager.Packing
 
         public void Emit(PackRoot root)
         {
-            var package = _nugetDependencyResolver.FindCandidate(
-                _library.Name,
-                _library.Version);
+            Name = Path.GetFileName(Path.GetDirectoryName(_kreNupkgPath));
 
-            Console.WriteLine("Packing runtime {0} {1}", package.Id, package.Version);
+            Console.WriteLine("Packing runtime {0}", Name);
 
-            Name = package.Id;
-            Version = package.Version;
+            TargetPath = Path.Combine(root.PackagesPath, Name);
 
-            var targetName = package.Id + "." + package.Version;
-            TargetPath = Path.Combine(root.PackagesPath, targetName);
-            
             if (Directory.Exists(TargetPath))
             {
                 Console.WriteLine("  {0} already exists.", TargetPath);
@@ -53,16 +44,16 @@ namespace Microsoft.Net.PackageManager.Packing
             {
                 Directory.CreateDirectory(TargetPath);
             }
-            
-            var targetNupkgPath = Path.Combine(TargetPath, targetName + ".nupkg");
-            using (var sourceStream = package.GetStream())
+
+            var targetNupkgPath = Path.Combine(TargetPath, Name + ".nupkg");
+            using (var sourceStream = File.OpenRead(_kreNupkgPath))
             {
                 using (var archive = new ZipArchive(sourceStream, ZipArchiveMode.Read))
                 {
                     root.Operations.ExtractNupkg(archive, TargetPath);
                 }
             }
-            using (var sourceStream = package.GetStream())
+            using (var sourceStream = File.OpenRead(_kreNupkgPath))
             {
                 using (var targetStream = new FileStream(targetNupkgPath, FileMode.Create, FileAccess.Write, FileShare.None))
                 {

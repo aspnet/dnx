@@ -15,6 +15,7 @@ namespace Microsoft.Net.PackageManager.Packing
             _project = project;
             Projects = new List<PackProject>();
             Packages = new List<PackPackage>();
+            Runtimes = new List<PackRuntime>();
             OutputPath = outputPath;
             PackagesPath = Path.Combine(outputPath, "packages");
             Operations = new PackOperations();
@@ -25,7 +26,7 @@ namespace Microsoft.Net.PackageManager.Packing
         public bool Overwrite { get; set; }
         public bool ZipPackages { get; set; }
 
-        public PackRuntime Runtime { get; set; }
+        public IList<PackRuntime> Runtimes { get; set; }
         public IList<PackProject> Projects { get; private set; }
         public IList<PackPackage> Packages { get; private set; }
 
@@ -47,22 +48,33 @@ namespace Microsoft.Net.PackageManager.Packing
                 deploymentProject.Emit(this);
             }
 
-            Runtime.Emit(this);
+            foreach (var deploymentRuntime in Runtimes)
+            {
+                deploymentRuntime.Emit(this);
+            }
 
             mainProject.PostProcess(this);
 
-
             foreach (var commandName in _project.Commands.Keys)
             {
-                const string template = @"
-SETLOCAL
-SET K_APPBASE=%~dp0{0}
-CALL ""%~dp0packages\{1}.{2}\tools\k"" {3} %*
-ENDLOCAL";
-
-                File.WriteAllText(
-                    Path.Combine(OutputPath, commandName + ".cmd"),
-                    string.Format(template, _project.Name, Runtime.Name, Runtime.Version, commandName));
+                const string template1 = @"
+@""%~dp0packages\{2}\bin\klr.exe"" --appbase ""%~dp0{1}"" Microsoft.Net.ApplicationHost {0} %*
+";
+                const string template2 = @"
+@klr.exe --appbase ""%~dp0{1}"" Microsoft.Net.ApplicationHost {0} %*
+";
+                if (Runtimes.Any())
+                {
+                    File.WriteAllText(
+                        Path.Combine(OutputPath, commandName + ".cmd"),
+                        string.Format(template1, commandName, _project.Name, Runtimes.First().Name));
+                }
+                else
+                {
+                    File.WriteAllText(
+                        Path.Combine(OutputPath, commandName + ".cmd"),
+                        string.Format(template2, commandName, _project.Name));
+                }
             }
         }
     }

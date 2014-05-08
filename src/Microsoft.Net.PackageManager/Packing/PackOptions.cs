@@ -1,4 +1,5 @@
-﻿using System.Runtime.Versioning;
+﻿using System.Collections.Generic;
+using System.Runtime.Versioning;
 
 namespace Microsoft.Net.PackageManager.Packing
 {
@@ -13,5 +14,7 @@ namespace Microsoft.Net.PackageManager.Packing
         public bool ZipPackages { get; set; }
 
         public bool Overwrite { get; set; }
+
+        public IEnumerable<string> Runtimes { get; set; }
     }
 }
