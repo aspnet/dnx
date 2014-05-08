@@ -1,0 +1,28 @@
+{
+    "version": "0.1-alpha-*",
+
+    "dependencies": {
+        "Microsoft.Framework.Runtime" : "",
+        "Microsoft.Framework.Runtime.Interfaces" : ""
+    },
+
+    "configurations": {
+        "net45": { 
+            "dependencies": {
+                "System.IO.Compression" : "",
+                "System.Xml.Linq": "",
+                "System.Xml": "",
+                "System.Net.Http" : "",
+                "System.Runtime" : "",
+                "System.Collections" : "",
+                "System.IO" :  "",
+                "System.Security": "",
+                "System.Runtime.Serialization": ""
+            }
+        }
+    },
+
+    "commands":  {
+        "kpm": "Microsoft.Framework.PackageManager"
+    }
+}

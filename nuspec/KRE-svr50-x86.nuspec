@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <package>
     <metadata>
         <id>KRE-svr50-x86</id>
@@ -17,8 +17,8 @@
         <file src="tools\k-build.cmd" target="bin\k-build.cmd" />
         <file src="tools\k-crossgen.cmd" target="bin\k-crossgen.cmd" />
         <file src="tools\kpm.cmd" target="bin\kpm.cmd" />
-        <file src="tools\net45\Microsoft.Net.DesignTimeHost.dll" target="bin\lib\Microsoft.Net.DesignTimeHost\Microsoft.Net.DesignTimeHost.dll" />
-        <file src="tools\net45\Microsoft.Net.PackageManager.dll" target="bin\lib\Microsoft.Net.PackageManager\Microsoft.Net.PackageManager.dll" />
-        <file src="tools\net45\Microsoft.Net.Project.dll" target="bin\lib\Microsoft.Net.Project\Microsoft.Net.Project.dll" />
+        <file src="tools\net45\Microsoft.Framework.DesignTimeHost.dll" target="bin\lib\Microsoft.Framework.DesignTimeHost\Microsoft.Framework.DesignTimeHost.dll" />
+        <file src="tools\net45\Microsoft.Framework.PackageManager.dll" target="bin\lib\Microsoft.Framework.PackageManager\Microsoft.Framework.PackageManager.dll" />
+        <file src="tools\net45\Microsoft.Framework.Project.dll" target="bin\lib\Microsoft.Framework.Project\Microsoft.Framework.Project.dll" />
     </files>
 </package>

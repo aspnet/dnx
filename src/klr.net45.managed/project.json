@@ -3,7 +3,7 @@
     "compilationOptions" : { "define" : ["TRACE"], "allowUnsafe": true },
     "dependencies": {
         "klr.hosting.shared" : "",
-        "Microsoft.Net.CommandLineUtils" : ""
+        "Microsoft.Framework.CommandLineUtils" : ""
     },
     "configurations": {
         "net45" : { }

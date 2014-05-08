@@ -1,0 +1,36 @@
+{
+    "dependencies" : {
+        "Newtonsoft.Json" : "5.0.8",
+        "Microsoft.Framework.Runtime" : "",
+        "Microsoft.Framework.Runtime.Interfaces" : "",
+        "Microsoft.Framework.Runtime.Roslyn" : ""
+    },
+    "compilationOptions" : { "define" : ["TRACE"] },
+    "configurations" : {
+        "net45" : {
+            "dependencies" : {
+                "System.Net" : ""
+            }
+        },
+        "k10" : {
+            "dependencies": {
+                "System.Collections": "4.0.0.0",
+                "System.Console": "4.0.0.0",
+                "System.Diagnostics.Debug": "4.0.10.0",
+                "System.Diagnostics.Process": "4.0.0.0",
+                "System.Diagnostics.Tools": "4.0.0.0",
+                "System.Dynamic.Runtime": "4.0.0.0",
+                "System.IO": "4.0.0.0",
+                "System.Linq": "4.0.0.0",
+                "System.Net.Sockets": "4.0.0.0",
+                "System.Net.Primitives": "4.0.10.0",
+                "System.Runtime": "4.0.20.0",
+                "System.Runtime.Extensions": "4.0.10.0",
+                "System.Threading": "4.0.0.0",
+                "System.Threading.Thread": "4.0.0.0",
+                "System.Threading.ThreadPool": "4.0.10.0",
+                "System.Threading.Tasks": "4.0.10.0"
+            }
+        }
+    }
+}

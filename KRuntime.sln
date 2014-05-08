@@ -1,4 +1,4 @@
-﻿
+
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 2013
 VisualStudioVersion = 12.0.30320.0
@@ -30,25 +30,25 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{AF391791-F4B
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "samples", "samples", "{3F68EE40-3C6A-4FD1-B057-0427A9BF88BE}"
 EndProject
-Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Microsoft.Net.Runtime.Tests", "test\Microsoft.Net.Runtime.Tests\Microsoft.Net.Runtime.Tests.kproj", "{CCC1F7F8-8D3B-49C3-BAD4-17C784499AF1}"
+Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Microsoft.Framework.Runtime.Tests", "test\Microsoft.Framework.Runtime.Tests\Microsoft.Framework.Runtime.Tests.kproj", "{CCC1F7F8-8D3B-49C3-BAD4-17C784499AF1}"
 EndProject
-Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Microsoft.Net.Runtime.Interfaces", "src\Microsoft.Net.Runtime.Interfaces\Microsoft.Net.Runtime.Interfaces.kproj", "{34E6FF7E-EACA-4542-A569-812738A83EB8}"
+Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Microsoft.Framework.Runtime.Interfaces", "src\Microsoft.Framework.Runtime.Interfaces\Microsoft.Framework.Runtime.Interfaces.kproj", "{34E6FF7E-EACA-4542-A569-812738A83EB8}"
 EndProject
-Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Microsoft.Net.Runtime", "src\Microsoft.Net.Runtime\Microsoft.Net.Runtime.kproj", "{D346515A-D457-49AC-B74D-1A343D870449}"
+Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Microsoft.Framework.Runtime", "src\Microsoft.Framework.Runtime\Microsoft.Framework.Runtime.kproj", "{D346515A-D457-49AC-B74D-1A343D870449}"
 EndProject
-Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Microsoft.Net.Runtime.Common", "src\Microsoft.Net.Runtime.Common\Microsoft.Net.Runtime.Common.kproj", "{FFA613E0-5AA7-4385-AD3D-B1B4ABD959FA}"
+Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Microsoft.Framework.Runtime.Common", "src\Microsoft.Framework.Runtime.Common\Microsoft.Framework.Runtime.Common.kproj", "{FFA613E0-5AA7-4385-AD3D-B1B4ABD959FA}"
 EndProject
-Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Microsoft.Net.Runtime.Roslyn.Tests", "test\Microsoft.Net.Runtime.Roslyn.Tests\Microsoft.Net.Runtime.Roslyn.Tests.kproj", "{E2C080E8-EA5B-4F49-AFD8-2534C8F5CA78}"
+Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Microsoft.Framework.Runtime.Roslyn.Tests", "test\Microsoft.Framework.Runtime.Roslyn.Tests\Microsoft.Framework.Runtime.Roslyn.Tests.kproj", "{E2C080E8-EA5B-4F49-AFD8-2534C8F5CA78}"
 EndProject
-Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Microsoft.Net.Runtime.Roslyn", "src\Microsoft.Net.Runtime.Roslyn\Microsoft.Net.Runtime.Roslyn.kproj", "{8B24A782-7A34-4258-B397-733C6728952C}"
+Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Microsoft.Framework.Runtime.Roslyn", "src\Microsoft.Framework.Runtime.Roslyn\Microsoft.Framework.Runtime.Roslyn.kproj", "{8B24A782-7A34-4258-B397-733C6728952C}"
 EndProject
-Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Microsoft.Net.ApplicationHost", "src\Microsoft.Net.ApplicationHost\Microsoft.Net.ApplicationHost.kproj", "{7829F696-AFC4-4011-B9DE-6F1C24846D67}"
+Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Microsoft.Framework.ApplicationHost", "src\Microsoft.Framework.ApplicationHost\Microsoft.Framework.ApplicationHost.kproj", "{7829F696-AFC4-4011-B9DE-6F1C24846D67}"
 EndProject
-Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Microsoft.Net.CommandLineUtils", "src\Microsoft.Net.CommandLineUtils\Microsoft.Net.CommandLineUtils.kproj", "{C46A8C00-CD50-4478-8639-6A6CF8CDD05B}"
+Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Microsoft.Framework.CommandLineUtils", "src\Microsoft.Framework.CommandLineUtils\Microsoft.Framework.CommandLineUtils.kproj", "{C46A8C00-CD50-4478-8639-6A6CF8CDD05B}"
 EndProject
-Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Microsoft.Net.DesignTimeHost", "src\Microsoft.Net.DesignTimeHost\Microsoft.Net.DesignTimeHost.kproj", "{B8208D93-75C4-44BF-80BC-DEB9678FA05E}"
+Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Microsoft.Framework.DesignTimeHost", "src\Microsoft.Framework.DesignTimeHost\Microsoft.Framework.DesignTimeHost.kproj", "{B8208D93-75C4-44BF-80BC-DEB9678FA05E}"
 EndProject
-Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Microsoft.Net.Project", "src\Microsoft.Net.Project\Microsoft.Net.Project.kproj", "{AE99F965-68E2-4E7A-947A-0D2C61992792}"
+Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Microsoft.Framework.Project", "src\Microsoft.Framework.Project\Microsoft.Framework.Project.kproj", "{AE99F965-68E2-4E7A-947A-0D2C61992792}"
 EndProject
 Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "HelloWorld", "samples\HelloWorld\HelloWorld.kproj", "{BF98054D-21EB-46B2-994B-007B145D32A1}"
 EndProject
@@ -62,9 +62,9 @@ Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "klr.net45.managed", "src\kl
 EndProject
 Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "klr.host", "src\klr.host\klr.host.kproj", "{68048350-2996-4B4A-90BE-3405F088BD5A}"
 EndProject
-Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Microsoft.Net.PackageManager", "src\Microsoft.Net.PackageManager\Microsoft.Net.PackageManager.kproj", "{0D752D1C-3985-4E27-92C4-0BEE72B1F58D}"
+Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Microsoft.Framework.PackageManager", "src\Microsoft.Framework.PackageManager\Microsoft.Framework.PackageManager.kproj", "{0D752D1C-3985-4E27-92C4-0BEE72B1F58D}"
 EndProject
-Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Microsoft.Net.PackageManager.Tests", "test\Microsoft.Net.PackageManager.Tests\Microsoft.Net.PackageManager.Tests.kproj", "{5216EA90-1AFB-4154-A0AA-7488A3EC4DF8}"
+Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Microsoft.Framework.PackageManager.Tests", "test\Microsoft.Framework.PackageManager.Tests\Microsoft.Framework.PackageManager.Tests.kproj", "{5216EA90-1AFB-4154-A0AA-7488A3EC4DF8}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

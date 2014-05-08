@@ -57,7 +57,7 @@ var CORECLR_PATH = '${Environment.GetEnvironmentVariable("CORECLR_PATH")}'
     @{
         var cscPath = Path.Combine(Environment.GetEnvironmentVariable("WINDIR"), "Microsoft.NET", "Framework", "v4.0.30319", "csc.exe");
         Log.Info("Using csc path:" + cscPath);
-        Exec(cscPath, @"/target:exe /nologo /unsafe /out:artifacts\build\klr.mono.managed\klr.mono.managed.dll /define:NET45 src\klr.mono.managed\EntryPoint.cs src\klr.hosting.shared\RuntimeBootstrapper.cs src\klr.hosting.shared\LoaderEngine.cs src\Microsoft.Net.CommandLineUtils\CommandLine\CommandLineParser.cs src\Microsoft.Net.CommandLineUtils\CommandLine\CommandOptions.cs src\Microsoft.Net.CommandLineUtils\CommandLine\CommandOptionType.cs");
+        Exec(cscPath, @"/target:exe /nologo /unsafe /out:artifacts\build\klr.mono.managed\klr.mono.managed.dll /define:NET45 src\klr.mono.managed\EntryPoint.cs src\klr.hosting.shared\RuntimeBootstrapper.cs src\klr.hosting.shared\LoaderEngine.cs src\Microsoft.Framework.CommandLineUtils\CommandLine\CommandLineParser.cs src\Microsoft.Framework.CommandLineUtils\CommandLine\CommandOptions.cs src\Microsoft.Framework.CommandLineUtils\CommandLine\CommandOptionType.cs");
     }
 
 #test-package
@@ -127,9 +127,9 @@ var CORECLR_PATH = '${Environment.GetEnvironmentVariable("CORECLR_PATH")}'
             var kPath = Path.Combine(krePath, "bin", "k");
 
             var kTools = new[] {
-                Path.Combine(krePath, "bin", "lib", "Microsoft.Net.Project"),
-                Path.Combine(krePath, "bin", "lib", "Microsoft.Net.PackageManager"),
-                Path.Combine(krePath, "bin", "lib", "Microsoft.Net.DesignTimeHost"),
+                Path.Combine(krePath, "bin", "lib", "Microsoft.Framework.Project"),
+                Path.Combine(krePath, "bin", "lib", "Microsoft.Framework.PackageManager"),
+                Path.Combine(krePath, "bin", "lib", "Microsoft.Framework.DesignTimeHost"),
             };
 
             Log.Info("kreName = " + kreName);
@@ -219,9 +219,9 @@ var CORECLR_PATH = '${Environment.GetEnvironmentVariable("CORECLR_PATH")}'
 
         var sharedSourceAssemblies = new [] { 
             Path.Combine(BUILD_DIR2, "klr.hosting.shared/**/*.dll"), 
-            Path.Combine(BUILD_DIR2, "Microsoft.Net.CommandLineUtils/**/*.dll"), 
-            Path.Combine(BUILD_DIR2, "Microsoft.Net.Runtime.Common/**/*.dll"),
-            Path.Combine(BUILD_DIR2, "Microsoft.Net.Runtime.Interfaces/**/*.dll")
+            Path.Combine(BUILD_DIR2, "Microsoft.Framework.CommandLineUtils/**/*.dll"), 
+            Path.Combine(BUILD_DIR2, "Microsoft.Framework.Runtime.Common/**/*.dll"),
+            Path.Combine(BUILD_DIR2, "Microsoft.Framework.Runtime.Interfaces/**/*.dll")
         };
         
         Directory.CreateDirectory(Path.Combine(TOOLS_DIR, "k10"));
@@ -355,8 +355,8 @@ var CORECLR_PATH = '${Environment.GetEnvironmentVariable("CORECLR_PATH")}'
 #nuget-pack-runtime
     @{
         var allPackages = Path.Combine(BUILD_DIR2, "**", "*.nupkg");
-        var excludePackages = Path.Combine(BUILD_DIR2, "**", "Microsoft.Net.Runtime.Interfaces*.nupkg");
-        var excludePackages2 = Path.Combine(BUILD_DIR2, "**", "Microsoft.Net.PackageManager*.nupkg");
+        var excludePackages = Path.Combine(BUILD_DIR2, "**", "Microsoft.Framework.Runtime.Interfaces*.nupkg");
+        var excludePackages2 = Path.Combine(BUILD_DIR2, "**", "Microsoft.Framework.PackageManager*.nupkg");
         foreach(var packageFile in Files.Include(allPackages).Exclude(excludePackages).Exclude(excludePackages2))
         {
             File.Delete(packageFile);

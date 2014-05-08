@@ -54,16 +54,16 @@ bool ScanDirectory(WCHAR* szDirectory, WCHAR* szPattern, LPWSTR pszTrustedPlatfo
         {
             if (wcscmp(ffd.cFileName, L"klr.host.dll") == 0 || 
                 wcscmp(ffd.cFileName, L"klr.host.ni.dll") == 0 ||
-                wcscmp(ffd.cFileName, L"Microsoft.Net.ApplicationHost.dll") == 0 ||
-                wcscmp(ffd.cFileName, L"Microsoft.Net.ApplicationHost.ni.dll") == 0 ||
-                wcscmp(ffd.cFileName, L"Microsoft.Net.Runtime.dll") == 0 ||
-                wcscmp(ffd.cFileName, L"Microsoft.Net.Runtime.ni.dll") == 0 ||
-                wcscmp(ffd.cFileName, L"Microsoft.Net.Runtime.Roslyn.dll") == 0 ||
-                wcscmp(ffd.cFileName, L"Microsoft.Net.Runtime.Roslyn.ni.dll") == 0 ||
-                wcscmp(ffd.cFileName, L"Microsoft.Net.Project.dll") == 0 ||
-                wcscmp(ffd.cFileName, L"Microsoft.Net.Project.ni.dll") == 0 ||
-                wcscmp(ffd.cFileName, L"Microsoft.Net.DesignTimeHost.dll") == 0 ||
-                wcscmp(ffd.cFileName, L"Microsoft.Net.DesignTimeHost.ni.dll") == 0)
+                wcscmp(ffd.cFileName, L"Microsoft.Framework.ApplicationHost.dll") == 0 ||
+                wcscmp(ffd.cFileName, L"Microsoft.Framework.ApplicationHost.ni.dll") == 0 ||
+                wcscmp(ffd.cFileName, L"Microsoft.Framework.Runtime.dll") == 0 ||
+                wcscmp(ffd.cFileName, L"Microsoft.Framework.Runtime.ni.dll") == 0 ||
+                wcscmp(ffd.cFileName, L"Microsoft.Framework.Runtime.Roslyn.dll") == 0 ||
+                wcscmp(ffd.cFileName, L"Microsoft.Framework.Runtime.Roslyn.ni.dll") == 0 ||
+                wcscmp(ffd.cFileName, L"Microsoft.Framework.Project.dll") == 0 ||
+                wcscmp(ffd.cFileName, L"Microsoft.Framework.Project.ni.dll") == 0 ||
+                wcscmp(ffd.cFileName, L"Microsoft.Framework.DesignTimeHost.dll") == 0 ||
+                wcscmp(ffd.cFileName, L"Microsoft.Framework.DesignTimeHost.ni.dll") == 0)
             {
                 // Exclude these assemblies from the TPA list since they need to
                 // be handled by the loader since they depend on assembly neutral

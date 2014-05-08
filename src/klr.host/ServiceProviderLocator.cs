@@ -1,5 +1,5 @@
-﻿using System;
-using Microsoft.Net.Runtime.Infrastructure;
+using System;
+using Microsoft.Framework.Runtime.Infrastructure;
 #if NET45
 using System.Runtime.Remoting.Messaging;
 using System.Runtime.Remoting;

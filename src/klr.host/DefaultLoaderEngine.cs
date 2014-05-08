@@ -1,6 +1,6 @@
-﻿using System;
+using System;
 using System.Reflection;
-using Microsoft.Net.Runtime;
+using Microsoft.Framework.Runtime;
 
 namespace klr.host
 {

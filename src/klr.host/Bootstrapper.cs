@@ -1,13 +1,13 @@
-﻿
+
 using System;
 using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
-using Microsoft.Net.Runtime;
-using Microsoft.Net.Runtime.Common;
-using Microsoft.Net.Runtime.Common.DependencyInjection;
-using Microsoft.Net.Runtime.Infrastructure;
+using Microsoft.Framework.Runtime;
+using Microsoft.Framework.Runtime.Common;
+using Microsoft.Framework.Runtime.Common.DependencyInjection;
+using Microsoft.Framework.Runtime.Infrastructure;
 
 namespace klr.host
 {

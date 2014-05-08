@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -9,7 +9,7 @@ using System.Threading;
 using System.Runtime.Loader;
 #endif
 using System.Threading.Tasks;
-using Microsoft.Net.Runtime.Common.CommandLine;
+using Microsoft.Framework.Runtime.Common.CommandLine;
 
 namespace klr.hosting
 {

@@ -1,0 +1,43 @@
+{
+    "version": "0.1-alpha-*",
+    "compilationOptions" : { "define" : ["TRACE"] },
+    "dependencies": {
+        "Microsoft.Framework.Runtime" : "",
+        "Microsoft.Framework.Runtime.Common" : "",
+        "Microsoft.Framework.CommandLineUtils" : "",
+        "Microsoft.Framework.Runtime.Roslyn" : "",
+        "Microsoft.Framework.Runtime.Interfaces" : ""
+    },
+    "configurations" : {
+        "net45" : {
+            "dependencies": {
+                "System.IO.Compression" : "",
+                "System.Xml.Linq": "",
+                "System.Xml": "",
+                "System.Runtime" : "",
+                "System.Collections" : "",
+                "System.IO" :  ""
+            }
+        },
+        "k10" : { 
+            "dependencies": {
+                "System.Collections": "4.0.0.0",
+                "System.ComponentModel": "4.0.0.0",
+                "System.Console": "4.0.0.0",
+                "System.Diagnostics.Debug": "4.0.10.0",
+                "System.Diagnostics.Process": "4.0.0.0",
+                "System.IO": "4.0.0.0",
+                "System.IO.FileSystem": "4.0.10.0",
+                "System.IO.FileSystem.Primitives": "4.0.20.0",
+                "System.IO.Compression": "4.0.0.0",
+                "System.Linq": "4.0.0.0",
+                "System.Reflection": "4.0.10.0",
+                "System.Runtime": "4.0.20.0",
+                "System.Runtime.Extensions": "4.0.10.0",
+                "System.Runtime.InteropServices": "4.0.20.0",
+                "System.Security.Cryptography.HashAlgorithms.SHA2": "4.0.0.0",
+                "System.Threading.Tasks": "4.0.10.0"
+            }
+        }
+    }
+}

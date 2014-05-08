@@ -2,8 +2,8 @@
     "version": "0.1-alpha-*",
     "compilationOptions" : { "define" : ["TRACE"] },
     "dependencies": {
-        "Microsoft.Net.Runtime.Common" : "",
-        "Microsoft.Net.Runtime.Interfaces" : ""
+        "Microsoft.Framework.Runtime.Common" : "",
+        "Microsoft.Framework.Runtime.Interfaces" : ""
     },
     "configurations" : {
         "net45" : { },
