@@ -63,8 +63,7 @@ function Kvm-Global-Setup {
         $arguments = "& '$scriptPath' setup $(Requested-Switches) -persistent"
         Start-Process "$psHome\powershell.exe" -Verb runAs -ArgumentList $arguments -Wait
         Write-Host "Setup complete"
-        Kvm-Alias-List
-        Kvm-List
+        Kvm-Help
         break
     }
 
