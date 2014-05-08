@@ -98,8 +98,8 @@ function Kvm-Global-Setup {
     $machineKreHome = Change-Path $machineKreHome $globalKrePath ($globalKrePath)
     [Environment]::SetEnvironmentVariable("KRE_HOME", $machineKreHome, [System.EnvironmentVariableTarget]::Machine)
 
-#    $persistent = $false
-#    Kvm-Global-Upgrade
+    Write-Host "Press any key to continue ..."
+    $x = $host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown,AllowCtrlC")
 }
 
 function Kvm-Global-Upgrade {
