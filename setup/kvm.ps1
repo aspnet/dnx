@@ -21,25 +21,29 @@ $scriptPath = $myInvocation.MyCommand.Definition
 
 function Kvm-Help {
 @"
-kvm - K Runtime Environment Version Manager
+K Runtime Environment Version Manager - Build {{BUILD_NUMBER}}
+
+USAGE: kvm <command> [options]
 
 kvm upgrade [-x86][-x64] [-svr50][-svrc50] [-g|-global]
-  install latest KRE from feed and set 'default' alias
-  add KRE bin to PATH environment variable in a persistently
-  -g|-global        install machine-wide and change machine PATH instead of user PATH
+  install latest KRE from feed
+  set 'default' alias to installed version
+  add KRE bin to user PATH environment variable persistently
+  -g|-global        install to machine-wide location
 
 kvm install <semver>|<alias>|<nupkg> [-x86][-x64] [-svr50][-svrc50] [-g|-global]
   install requested KRE from feed
   add KRE bin to path of current command line
+  -g|-global        install to machine-wide location
 
-kvm list
-  list KRE versions installed 
-
-kvm use <semver>|<alias>|none [-x86][-x64] [-svr50][-svrc50] [-p|-persist] [-g|-global]
+kvm use <semver>|<alias>|none [-x86][-x64] [-svr50][-svrc50] [-p|-persistent] [-g|-global]
   <semver>|<alias>  add KRE bin to path of current command line   
   none              remove KRE bin from path of current command line
   -p|-persistent    add KRE bin to PATH environment variables persistently
   -g|-global        combined with -p to change machine PATH instead of user PATH
+
+kvm list
+  list KRE versions installed 
 
 kvm alias
   list KRE aliases which have been defined
@@ -49,9 +53,6 @@ kvm alias <alias>
 
 kvm alias <alias> <semver> [-x86][-x64] [-svr50][-svrc50]
   set alias to specific version
-
-kvm setup
-  install kvm tool machine-wide and download latest KRE 
 
 "@ | Write-Host
 }
@@ -98,8 +99,8 @@ function Kvm-Global-Setup {
     $machineKreHome = Change-Path $machineKreHome $globalKrePath ($globalKrePath)
     [Environment]::SetEnvironmentVariable("KRE_HOME", $machineKreHome, [System.EnvironmentVariableTarget]::Machine)
 
-    $persistent = $false
-    Kvm-Global-Upgrade
+#    $persistent = $false
+#    Kvm-Global-Upgrade
 }
 
 function Kvm-Global-Upgrade {
@@ -521,7 +522,8 @@ function Requested-Switches() {
       "alias 0"           {Kvm-Alias-List}
       "alias 1"           {Kvm-Alias-Get $args[0]}
       "alias 2"           {Kvm-Alias-Set $args[0] $args[1]}
-      "help"              {Kvm-Help}
+      "help 0"              {Kvm-Help}
+      " 0"              {Kvm-Help}
       default             {Write-Host 'Unknown command'; Kvm-Help;}
     }
    }
