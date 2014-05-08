@@ -13,6 +13,7 @@ k-standard-goals
 
 var ROOT = '${Directory.GetCurrentDirectory()}'
 var SCRIPTS_DIR = '${Path.Combine(ROOT, "scripts")}'
+var ARTIFACTS_DIR = '${Path.Combine(ROOT, "artifacts")}'
 var BUILD_DIR2 = '${Path.Combine(ROOT, "artifacts", "build")}'
 var SDK_ROOT = '${Path.Combine(BUILD_DIR2, "KRE")}'
 var NUSPEC_ROOT = '${Path.Combine(ROOT, "nuspec")}'
@@ -58,6 +59,13 @@ var CORECLR_PATH = '${Environment.GetEnvironmentVariable("CORECLR_PATH")}'
         var cscPath = Path.Combine(Environment.GetEnvironmentVariable("WINDIR"), "Microsoft.NET", "Framework", "v4.0.30319", "csc.exe");
         Log.Info("Using csc path:" + cscPath);
         Exec(cscPath, @"/target:exe /nologo /unsafe /out:artifacts\build\klr.mono.managed\klr.mono.managed.dll /define:NET45 src\klr.mono.managed\EntryPoint.cs src\klr.hosting.shared\RuntimeBootstrapper.cs src\klr.hosting.shared\LoaderEngine.cs src\Microsoft.Framework.CommandLineUtils\CommandLine\CommandLineParser.cs src\Microsoft.Framework.CommandLineUtils\CommandLine\CommandOptions.cs src\Microsoft.Framework.CommandLineUtils\CommandLine\CommandOptionType.cs");
+    }
+
+#copy-kvm target='compile'
+    copy sourceDir='setup' outputDir='${ARTIFACTS_DIR}' include='*.cmd' overwrite='${true}'
+    copy sourceDir='setup' outputDir='${ARTIFACTS_DIR}' include='*.ps1'
+    update-file updateFile='${ARTIFACTS_DIR}\kvm.ps1' @{
+        updateText = updateText.Replace("{{BUILD_NUMBER}}", Environment.GetEnvironmentVariable("BUILD_NUMBER"));
     }
 
 #test-package
