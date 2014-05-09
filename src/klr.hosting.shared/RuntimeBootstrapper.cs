@@ -23,11 +23,11 @@ namespace klr.hosting
 
         private static readonly char[] _libPathSeparator = new[] { ';' };
 
-        public static async Task<int> Execute(string[] args)
+        public static Task<int> Execute(string[] args)
         {
             if (args.Length == 0)
             {
-                return 1;
+                return Task.FromResult(1);
             }
 
             var enableTrace = Environment.GetEnvironmentVariable("KRE_TRACE") == "1";
@@ -103,7 +103,7 @@ namespace klr.hosting
             };
 
             AppDomain.CurrentDomain.AssemblyResolve += handler;
-            AppDomain.CurrentDomain.AssemblyLoad += (object sender, AssemblyLoadEventArgs loadedArgs) => 
+            AppDomain.CurrentDomain.AssemblyLoad += (object sender, AssemblyLoadEventArgs loadedArgs) =>
             {
                 // Skip loading interfaces for dynamic assemblies
                 if (loadedArgs.LoadedAssembly.IsDynamic)
@@ -147,14 +147,28 @@ namespace klr.hosting
                 var mainMethod = bootstrapperType.GetTypeInfo().GetDeclaredMethod("Main");
                 var bootstrapper = Activator.CreateInstance(bootstrapperType, hostContainer, loaderEngine);
 
-                using (disposable)
+                try
                 {
-                    var bootstrapperArgs = new object[] 
+                    var bootstrapperArgs = new object[]
                     {
                         options.RemainingArgs.ToArray()
                     };
 
-                    return await (Task<int>)mainMethod.Invoke(bootstrapper, bootstrapperArgs);
+                    var task = (Task<int>)mainMethod.Invoke(bootstrapper, bootstrapperArgs);
+
+                    return task.ContinueWith(async (t, state) =>
+                    {
+                        // Dispose the host
+                        ((IDisposable)state).Dispose();
+                        return await t;
+                    },
+                    disposable).Unwrap();
+                }
+                catch
+                {
+                    // If we throw synchronously then dispose then rethtrow
+                    disposable.Dispose();
+                    throw;
                 }
             }
             finally
