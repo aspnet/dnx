@@ -16,9 +16,6 @@
   <PropertyGroup>
     <SchemaVersion>2.0</SchemaVersion>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x86'">
-    <DevelopmentServerPort>39618</DevelopmentServerPort>
-  </PropertyGroup>
   <ItemGroup>
     <Content Include="Project.json" />
   </ItemGroup>
