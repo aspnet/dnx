@@ -31,7 +31,7 @@ namespace Microsoft.Framework.ApplicationHost
             _serviceProvider = serviceProvider;
         }
 
-        public async Task<int> Main(string[] args)
+        public Task<int> Main(string[] args)
         {
             DefaultHostOptions options;
             string[] programArgs;
@@ -42,37 +42,58 @@ namespace Microsoft.Framework.ApplicationHost
 
             if (host.Project == null)
             {
-                return -1;
+                return Task.FromResult(-1);
             }
 
-            using (_container.AddHost(host))
+
+            var lookupCommand = string.IsNullOrEmpty(options.ApplicationName) ? "run" : options.ApplicationName;
+            string replacementCommand;
+            if (host.Project.Commands.TryGetValue(lookupCommand, out replacementCommand))
             {
-                var lookupCommand = string.IsNullOrEmpty(options.ApplicationName) ? "run" : options.ApplicationName;
-                string replacementCommand;
-                if (host.Project.Commands.TryGetValue(lookupCommand, out replacementCommand))
+                var replacementArgs = CommandGrammar.Process(
+                    replacementCommand,
+                    GetVariable).ToArray();
+
+                options.ApplicationName = replacementArgs.First();
+                programArgs = replacementArgs.Skip(1).Concat(programArgs).ToArray();
+            }
+
+            if (string.IsNullOrEmpty(options.ApplicationName) ||
+                string.Equals(options.ApplicationName, "run", StringComparison.Ordinal))
+            {
+                if (string.IsNullOrEmpty(host.Project.Name))
                 {
-                    var replacementArgs = CommandGrammar.Process(
-                        replacementCommand,
-                        GetVariable).ToArray();
-                    
-                    options.ApplicationName = replacementArgs.First();
-                    programArgs = replacementArgs.Skip(1).Concat(programArgs).ToArray();
+                    options.ApplicationName = Path.GetFileName(options.ApplicationBaseDirectory);
+                }
+                else
+                {
+                    options.ApplicationName = host.Project.Name;
+                }
+            }
+
+            IDisposable disposable = null;
+
+            try
+            {
+                disposable = _container.AddHost(host);
+
+                return ExecuteMain(host, options.ApplicationName, programArgs)
+                        .ContinueWith(async (t, state) =>
+                        {
+                            ((IDisposable)state).Dispose();
+                            return await t;
+                        }, 
+                        disposable).Unwrap();
+            }
+            catch
+            {
+                // If there's an error, dispose the host and throw
+                if (disposable != null)
+                {
+                    disposable.Dispose();
                 }
 
-                if (string.IsNullOrEmpty(options.ApplicationName) ||
-                    string.Equals(options.ApplicationName, "run", StringComparison.Ordinal))
-                {
-                    if (string.IsNullOrEmpty(host.Project.Name))
-                    {
-                        options.ApplicationName = Path.GetFileName(options.ApplicationBaseDirectory);
-                    }
-                    else
-                    {
-                        options.ApplicationName = host.Project.Name;
-                    }
-                }
-
-                return await ExecuteMain(host, options.ApplicationName, programArgs);
+                throw;
             }
         }
 
@@ -124,16 +145,16 @@ namespace Microsoft.Framework.ApplicationHost
             }
         }
 
-        private async Task<int> ExecuteMain(DefaultHost host, string applicationName, string[] args)
+        private Task<int> ExecuteMain(DefaultHost host, string applicationName, string[] args)
         {
             var assembly = host.GetEntryPoint(applicationName);
 
             if (assembly == null)
             {
-                return -1;
+                return Task.FromResult(-1);
             }
 
-            return await EntryPointExecutor.Execute(assembly, args, host.ServiceProvider);
+            return EntryPointExecutor.Execute(assembly, args, host.ServiceProvider);
         }
     }
 }

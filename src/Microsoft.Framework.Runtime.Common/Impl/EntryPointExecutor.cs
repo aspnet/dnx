@@ -8,7 +8,7 @@ namespace Microsoft.Framework.Runtime.Common
 {
     internal static class EntryPointExecutor
     {
-        public static async Task<int> Execute(Assembly assembly, string[] args, IServiceProvider serviceProvider)
+        public static Task<int> Execute(Assembly assembly, string[] args, IServiceProvider serviceProvider)
         {
             string name = assembly.GetName().Name;
 
@@ -21,7 +21,7 @@ namespace Microsoft.Framework.Runtime.Common
                 if (programTypeInfo == null)
                 {
                     System.Console.WriteLine("'{0}' does not contain a static 'Main' method suitable for an entry point", name);
-                    return -1;
+                    return Task.FromResult(-1);
                 }
 
                 programType = programTypeInfo.AsType();
@@ -32,7 +32,7 @@ namespace Microsoft.Framework.Runtime.Common
             if (main == null)
             {
                 System.Console.WriteLine("'{0}' does not contain a 'Main' method suitable for an entry point", name);
-                return -1;
+                return Task.FromResult(-1);
             }
 
             object instance = programType.GetTypeInfo().IsAbstract ? null : ActivatorUtilities.CreateInstance(serviceProvider, programType);
@@ -51,21 +51,23 @@ namespace Microsoft.Framework.Runtime.Common
 
             if (result is int)
             {
-                return (int)result;
+                return Task.FromResult((int)result);
             }
 
             if (result is Task<int>)
             {
-                return await (Task<int>)result;
+                return (Task<int>)result;
             }
 
             if (result is Task)
             {
-                await (Task)result;
-                return 0;
+                return ((Task)result).ContinueWith(t =>
+                {
+                    return 0;
+                });
             }
 
-            return 0;
+            return Task.FromResult(0);
         }
     }
 }

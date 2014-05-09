@@ -23,12 +23,12 @@ namespace klr.host
             _loaderEngine = loaderEngine;
         }
 
-        public async Task<int> Main(string[] args)
+        public Task<int> Main(string[] args)
         {
             if (args.Length < 1)
             {
                 Console.WriteLine("{app} [args]");
-                return -1;
+                return Task.FromResult(-1);
             }
 
             var name = args[0];
@@ -38,7 +38,7 @@ namespace klr.host
 
             if (assembly == null)
             {
-                return -1;
+                return Task.FromResult(-1);
             }
 
 #if NET45
@@ -66,7 +66,7 @@ namespace klr.host
 
             CallContextServiceLocator.Locator.ServiceProvider = serviceProvider;
 
-            return await EntryPointExecutor.Execute(assembly, programArgs, serviceProvider);
+            return EntryPointExecutor.Execute(assembly, programArgs, serviceProvider);
         }
     }
 }
