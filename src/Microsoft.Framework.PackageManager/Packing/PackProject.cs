@@ -84,9 +84,8 @@ namespace Microsoft.Framework.PackageManager.Packing
                     parts = parts[0].Split(new []{'-'}, 3);
                     if (parts.Length == 3)
                     {
-                        var flavor = parts[2];
-                        File.WriteAllText(iniFilePath, string.Format(@"
-[Runtime]
+                        var flavor = parts[1];
+                        File.WriteAllText(iniFilePath, string.Format(@"[Runtime]
 KRE_Version={0}
 KRE_Flavor={1}
 ", versionNumber, flavor == "svrc50" ? "CoreCLR" : "Desktop"));
