@@ -61,9 +61,9 @@ namespace Microsoft.Framework.PackageManager
                         {
                             command.FallbackSources = new[] { optFallbackSource.Value };
                         }
-                        command.ExecuteCommand();
+                        var success = command.ExecuteCommand();
 
-                        return 0;
+                        return success ? 0 : 1;
                     }
                     catch (Exception ex)
                     {

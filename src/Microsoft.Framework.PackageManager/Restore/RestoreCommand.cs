@@ -43,8 +43,11 @@ namespace Microsoft.Framework.PackageManager
         protected internal ISettings Settings { get; set; }
         protected internal IPackageSourceProvider SourceProvider { get; set; }
 
-        public void ExecuteCommand()
+        public bool ExecuteCommand()
         {
+            var sw = new Stopwatch();
+            sw.Start();
+
             var restoreDirectory = RestoreDirectory ?? Directory.GetCurrentDirectory();
 
             var projectJsonFiles = Directory.GetFiles(restoreDirectory, "project.json", SearchOption.AllDirectories);
@@ -61,14 +64,32 @@ namespace Microsoft.Framework.PackageManager
                 //PackageSaveMode = PackageSaveModes.Nuspec | PackageSaveModes.Nupkg,
             };
 
+            int restoreCount = 0;
+            int successCount = 0;
             foreach (var projectJsonPath in projectJsonFiles)
             {
-                RestoreForProject(localRepository, projectJsonPath, rootDirectory).Wait();
+                restoreCount += 1;
+                var success = RestoreForProject(localRepository, projectJsonPath, rootDirectory).Result;
+                if (success)
+                {
+                    successCount += 1;
+                }
             }
+
+            if (restoreCount > 1)
+            {
+                Report.WriteLine(string.Format("Total time {1}ms", sw.ElapsedMilliseconds));
+            }
+
+            return restoreCount == successCount;
         }
 
-        private async Task RestoreForProject(LocalPackageRepository localRepository, string projectJsonPath, string rootDirectory)
+        private async Task<bool> RestoreForProject(LocalPackageRepository localRepository, string projectJsonPath, string rootDirectory)
         {
+            var success = true;
+
+            Report.WriteLine(string.Format("Restoring packages for {0}", projectJsonPath.Bold()));
+
             var sw = new Stopwatch();
             sw.Start();
 
@@ -162,18 +183,29 @@ namespace Microsoft.Framework.PackageManager
             }
             var graphs = await Task.WhenAll(tasks);
 
-            Report.WriteLine(string.Format("Resolving complete, {0}ms elapsed".Green(), sw.ElapsedMilliseconds));
+            Report.WriteLine(string.Format("{0}, {1}ms elapsed", "Resolving complete".Green(), sw.ElapsedMilliseconds));
 
             var installItems = new List<GraphItem>();
+            var missingItems = new List<Library>();
             ForEach(graphs, node =>
             {
-                if (node == null || node.Item == null || node.Item.Match == null)
+                if (node == null || node.Library == null)
                 {
+                    return;
+                }
+                if (node.Item == null || node.Item.Match == null)
+                {
+                    if (node.Library.Version != null && !missingItems.Contains(node.Library))
+                    {
+                        missingItems.Add(node.Library);
+                        Report.WriteLine(string.Format("Unable to locate {0} >= {1}", node.Library.Name.Red().Bold(), node.Library.Version));
+                        success = false;
+                    }
                     return;
                 }
                 var isRemote = remoteProviders.Contains(node.Item.Match.Provider);
                 var isAdded = installItems.Any(item => item.Match.Library == node.Item.Match.Library);
-                if (isRemote && !isAdded)
+                if (!isAdded && isRemote)
                 {
                     installItems.Add(node.Item);
                 }
@@ -201,7 +233,8 @@ namespace Microsoft.Framework.PackageManager
                 }
             }
 
-            Report.WriteLine(string.Format("Restore complete, {0}ms elapsed".Green().Bold(), sw.ElapsedMilliseconds));
+            Report.WriteLine(string.Format("{0}, {1}ms elapsed", "Restore complete".Green().Bold(), sw.ElapsedMilliseconds));
+            return success;
         }
 
         private bool CorrectName(string value, PackageSource source)
