@@ -163,6 +163,10 @@ namespace klr.hosting
                     {
                         // Dispose the host
                         ((IDisposable)state).Dispose();
+
+#if NET45
+                        AppDomain.CurrentDomain.AssemblyResolve -= handler;
+#endif
                         return await t;
                     },
                     disposable).Unwrap();
@@ -174,11 +178,12 @@ namespace klr.hosting
                     throw;
                 }
             }
-            finally
+            catch
             {
 #if NET45
                 AppDomain.CurrentDomain.AssemblyResolve -= handler;
 #endif
+                throw;
             }
         }
 
