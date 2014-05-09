@@ -78,7 +78,7 @@ namespace Microsoft.Framework.PackageManager
 
             if (restoreCount > 1)
             {
-                Report.WriteLine(string.Format("Total time {1}ms", sw.ElapsedMilliseconds));
+                Report.WriteLine(string.Format("Total time {0}ms", sw.ElapsedMilliseconds));
             }
 
             return restoreCount == successCount;
