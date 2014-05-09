@@ -73,6 +73,27 @@ namespace Microsoft.Framework.PackageManager.Packing
         {
             var binFolderPath = Path.Combine(TargetPath, "bin");
 
+            var defaultRuntime = root.Runtimes.FirstOrDefault();
+            var iniFilePath = Path.Combine(TargetPath, "k.ini");
+            if (defaultRuntime != null && !File.Exists(iniFilePath))
+            {
+                var parts = defaultRuntime.Name.Split(new []{'.'}, 2);
+                if (parts.Length == 2)
+                {
+                    var versionNumber = parts[1];
+                    parts = parts[0].Split(new []{'-'}, 3);
+                    if (parts.Length == 3)
+                    {
+                        var flavor = parts[2];
+                        File.WriteAllText(iniFilePath, string.Format(@"
+[Runtime]
+KRE_Version={0}
+KRE_Flavor={1}
+", versionNumber, flavor == "svrc50" ? "CoreCLR" : "Desktop"));
+                    }
+                }
+            }
+
             // Copy tools/*.dll into bin to support AspNet.Loader.dll
             foreach (var package in root.Packages)
             {
