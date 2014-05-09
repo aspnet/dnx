@@ -27,6 +27,8 @@ namespace Microsoft.Framework.PackageManager
 
         public int Main(string[] args)
         {
+            _originalForeground = Console.ForegroundColor;
+
             var app = new CommandLineApplication();
 
             var optionVerbose = app.Option("-v|--verbose", "Show verbose output");
@@ -118,7 +120,7 @@ namespace Microsoft.Framework.PackageManager
                         RuntimeTargetFramework = _environment.TargetFramework,
                         ZipPackages = optionZipPackages.Value != null,
                         Overwrite = optionOverwrite.Value != null,
-                        Runtimes = optionRuntime.Value != null ? optionRuntime.Value.Split(new[]{';'}, StringSplitOptions.RemoveEmptyEntries) : new string[0],
+                        Runtimes = optionRuntime.Value != null ? optionRuntime.Value.Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries) : new string[0],
                     };
 
                     var manager = new PackManager(options);
@@ -205,10 +207,104 @@ namespace Microsoft.Framework.PackageManager
             }
         }
 
+        object _lock = new object();
+        ConsoleColor _originalForeground;
+        void SetColor(ConsoleColor color)
+        {
+            Console.ForegroundColor = (ConsoleColor)(((int)Console.ForegroundColor & 0x08) | ((int)color & 0x07));
+        }
+        void SetBold(bool bold)
+        {
+            Console.ForegroundColor = (ConsoleColor)(((int)Console.ForegroundColor & 0x07) | (bold ? 0x08 : 0x00));
+        }
+
         public void WriteLine(string message)
         {
-            Trace.WriteLine(message);
-            Console.WriteLine(message);
+            var sb = new System.Text.StringBuilder();
+            lock (_lock)
+            {
+                var escapeScan = 0;
+                for (; ; )
+                {
+                    var escapeIndex = message.IndexOf("\x1b[", escapeScan);
+                    if (escapeIndex == -1)
+                    {
+                        var text = message.Substring(escapeScan);
+                        sb.Append(text);
+                        Console.Write(text);
+                        break;
+                    }
+                    else
+                    {
+                        var startIndex = escapeIndex + 2;
+                        var endIndex = startIndex;
+                        while (endIndex != message.Length &&
+                            message[endIndex] >= 0x20 &&
+                            message[endIndex] <= 0x3f)
+                        {
+                            endIndex += 1;
+                        }
+
+                        var text = message.Substring(escapeScan, escapeIndex - escapeScan);
+                        sb.Append(text);
+                        Console.Write(text);
+                        if (endIndex == message.Length)
+                        {
+                            break;
+                        }
+
+                        switch (message[endIndex])
+                        {
+                            case 'm':
+                                int value;
+                                if (int.TryParse(message.Substring(startIndex, endIndex - startIndex), out value))
+                                {
+                                    switch (value)
+                                    {
+                                        case 1:
+                                            SetBold(true);
+                                            break;
+                                        case 22:
+                                            SetBold(false);
+                                            break;
+                                        case 30:
+                                            SetColor(ConsoleColor.Black);
+                                            break;
+                                        case 31:
+                                            SetColor(ConsoleColor.Red);
+                                            break;
+                                        case 32:
+                                            SetColor(ConsoleColor.Green);
+                                            break;
+                                        case 33:
+                                            SetColor(ConsoleColor.Yellow);
+                                            break;
+                                        case 34:
+                                            SetColor(ConsoleColor.Blue);
+                                            break;
+                                        case 35:
+                                            SetColor(ConsoleColor.Magenta);
+                                            break;
+                                        case 36:
+                                            SetColor(ConsoleColor.Cyan);
+                                            break;
+                                        case 37:
+                                            SetColor(ConsoleColor.Gray);
+                                            break;
+                                        case 39:
+                                            SetColor(_originalForeground);
+                                            break;
+                                    }
+                                }
+                                break;
+                        }
+
+                        escapeScan = endIndex + 1;
+                    }
+                }
+                Console.WriteLine();
+            }
+            Trace.WriteLine(sb.ToString());
         }
     }
 }

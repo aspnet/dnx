@@ -97,7 +97,7 @@ namespace Microsoft.Framework.PackageManager
 
         public async Task<GraphItem> FindLibraryEntry(RestoreContext context, Library library)
         {
-            Report.WriteLine(string.Format("Attempting to resolve dependency {0} >= {1}", library.Name, library.Version));
+            Report.WriteLine(string.Format("Attempting to resolve dependency {0} >= {1}", library.Name.Bold(), library.Version));
 
             var match = await FindLibraryMatch(context, library);
             if (match == null)
@@ -136,7 +136,7 @@ namespace Microsoft.Framework.PackageManager
                 if (remoteMatch != null)
                 {
                     var localMatch = await FindLibraryByVersion(context, remoteMatch.Library, context.LocalLibraryProviders);
-                    if (localMatch != null)
+                    if (localMatch != null && localMatch.Library.Version.Equals(remoteMatch.Library.Version))
                     {
                         return localMatch;
                     }
@@ -146,16 +146,32 @@ namespace Microsoft.Framework.PackageManager
             else
             {
                 var localMatch = await FindLibraryByVersion(context, library, context.LocalLibraryProviders);
-                if (localMatch != null)
+                if (localMatch != null && localMatch.Library.Version.Equals(library.Version))
                 {
                     return localMatch;
                 }
 
                 var remoteMatch = await FindLibraryByVersion(context, library, context.RemoteLibraryProviders);
-                if (remoteMatch != null)
+                if (remoteMatch != null && localMatch == null)
                 {
-                    return remoteMatch;
+                    localMatch = await FindLibraryByVersion(context, remoteMatch.Library, context.LocalLibraryProviders);
                 }
+                if (localMatch != null && remoteMatch != null)
+                {
+                    if (VersionUtilities.ShouldUseConsidering(
+                        current: localMatch.Library.Version,
+                        considering: remoteMatch.Library.Version,
+                        ideal: library.Version))
+                    {
+                        return remoteMatch;
+                    }
+                    else
+                    {
+                        return localMatch;
+                    }
+                }
+
+                return localMatch ?? remoteMatch;
             }
             return null;
         }
@@ -184,13 +200,12 @@ namespace Microsoft.Framework.PackageManager
             WalkProviderMatch bestMatch = null;
             foreach (var match in matches)
             {
-                if (match != null)
+                if (VersionUtilities.ShouldUseConsidering(
+                    current: (bestMatch == null || bestMatch.Library == null) ? null : bestMatch.Library.Version,
+                    considering: (match == null || match.Library == null) ? null : match.Library.Version,
+                    ideal: library.Version))
                 {
-                    if (bestMatch == null ||
-                        bestMatch.Library.Version < match.Library.Version)
-                    {
-                        bestMatch = match;
-                    }
+                    bestMatch = match;
                 }
             }
             return bestMatch;
@@ -207,13 +222,12 @@ namespace Microsoft.Framework.PackageManager
             WalkProviderMatch bestMatch = null;
             foreach (var match in matches)
             {
-                if (match != null)
+                if (VersionUtilities.ShouldUseConsidering(
+                    current: (bestMatch == null || bestMatch.Library == null) ? null : bestMatch.Library.Version,
+                    considering: (match == null || match.Library == null) ? null : match.Library.Version,
+                    ideal: library.Version))
                 {
-                    if (bestMatch == null ||
-                        bestMatch.Library.Version < match.Library.Version)
-                    {
-                        bestMatch = match;
-                    }
+                    bestMatch = match;
                 }
             }
             return bestMatch;

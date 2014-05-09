@@ -71,12 +71,12 @@ namespace Microsoft.Framework.PackageManager.Restore.NuGet
 
                     var uri = _baseUri + "FindPackagesById()?Id='" + id + "'";
 
-                    _report.WriteLine(string.Format("  GET {0}", uri));
+                    _report.WriteLine(string.Format("  {0} {1}", "GET".Yellow(), uri));
 
                     var response = await GetAsync(uri);
                     var stream = await response.Content.ReadAsStreamAsync();
 
-                    _report.WriteLine(string.Format("  {1} {0} {2}ms", uri, response.StatusCode, sw.ElapsedMilliseconds));
+                    _report.WriteLine(string.Format("  {1} {0} {2}ms", uri, response.StatusCode.ToString().Green(), sw.ElapsedMilliseconds.ToString().Bold()));
 
                     var doc = XDocument.Load(stream);
                     var result = doc.Root
@@ -182,14 +182,14 @@ namespace Microsoft.Framework.PackageManager.Restore.NuGet
                         8192 /*bufferSize*/,
                         FileOptions.Asynchronous | FileOptions.DeleteOnClose);
 
-                    _report.WriteLine(string.Format("  GET {0}", package.ContentUri));
+                    _report.WriteLine(string.Format("  {0} {1}", "GET".Yellow(), package.ContentUri));
 
                     var response = await GetAsync(package.ContentUri);
 
                     await response.Content.CopyToAsync(result.TempFileStream);
                     await result.TempFileStream.FlushAsync();
 
-                    _report.WriteLine(string.Format("  {1} {0} {2}ms", package.ContentUri, response.StatusCode, sw.ElapsedMilliseconds));
+                    _report.WriteLine(string.Format("  {1} {0} {2}ms", package.ContentUri, response.StatusCode.ToString().Green(), sw.ElapsedMilliseconds.ToString().Bold()));
 
                     sw.Stop();
                     return result;
@@ -198,11 +198,11 @@ namespace Microsoft.Framework.PackageManager.Restore.NuGet
                 {
                     if (retry == 2)
                     {
-                        _report.WriteLine(string.Format("Error: DownloadPackageAsync: {1}\r\n  {0}", ex.Message, package.ContentUri));
+                        _report.WriteLine(string.Format("Error: DownloadPackageAsync: {1}\r\n  {0}", ex.Message, package.ContentUri.Red().Bold()));
                     }
                     else
                     {
-                        _report.WriteLine(string.Format("Warning: DownloadPackageAsync: {1}\r\n  {0}", ex.Message, package.ContentUri));
+                        _report.WriteLine(string.Format("Warning: DownloadPackageAsync: {1}\r\n  {0}".Yellow().Bold(), ex.Message, package.ContentUri.Yellow().Bold()));
                     }
                 }
             }

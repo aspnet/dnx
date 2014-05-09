@@ -44,12 +44,12 @@ namespace Microsoft.Framework.PackageManager
             PackageInfo bestResult = null;
             foreach (var result in results)
             {
-                if (result.Version.EqualsSnapshot(library.Version))
+                if (VersionUtilities.ShouldUseConsidering(
+                    current: bestResult == null ? null : bestResult.Version,
+                    considering: result.Version,
+                    ideal: library.Version))
                 {
-                    if (bestResult == null || bestResult.Version < result.Version)
-                    {
-                        bestResult = result;
-                    }
+                    bestResult = result;
                 }
             }
             if (bestResult == null)

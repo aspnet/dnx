@@ -162,7 +162,7 @@ namespace Microsoft.Framework.PackageManager
             }
             var graphs = await Task.WhenAll(tasks);
 
-            Report.WriteLine(string.Format("Resolving complete, {0}ms elapsed", sw.ElapsedMilliseconds));
+            Report.WriteLine(string.Format("Resolving complete, {0}ms elapsed".Green(), sw.ElapsedMilliseconds));
 
             var installItems = new List<GraphItem>();
             ForEach(graphs, node =>
@@ -183,7 +183,7 @@ namespace Microsoft.Framework.PackageManager
             {
                 var library = item.Match.Library;
 
-                Report.WriteLine(string.Format("Installing {0} {1}", library.Name, library.Version));
+                Report.WriteLine(string.Format("Installing {0} {1}", library.Name.Bold(), library.Version));
 
                 var targetPath = Path.Combine(packagesDirectory, library.Name + "." + library.Version);
                 var targetNupkg = Path.Combine(targetPath, library.Name + "." + library.Version + ".nupkg");
@@ -201,7 +201,7 @@ namespace Microsoft.Framework.PackageManager
                 }
             }
 
-            Report.WriteLine(string.Format("Restore complete, {0}ms elapsed", sw.ElapsedMilliseconds));
+            Report.WriteLine(string.Format("Restore complete, {0}ms elapsed".Green().Bold(), sw.ElapsedMilliseconds));
         }
 
         private bool CorrectName(string value, PackageSource source)
