@@ -154,7 +154,8 @@ param(
     $kreFile = "$kreFolder\$kreFullName.nupkg"
 
     If (Test-Path $kreFolder) {
-        Remove-Item $kreFolder -Force -Recurse
+      Write-Host "$kreFullName already installed."
+      return;
     }
 
     Write-Host "Downloading" $kreFullName "from https://www.myget.org/F/aspnetvnext/api/v2/"
