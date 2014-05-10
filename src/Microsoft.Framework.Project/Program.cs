@@ -101,25 +101,6 @@ namespace Microsoft.Framework.Project
                         return -1;
                     }
                 }
-                else if (command.Equals("pack", StringComparison.OrdinalIgnoreCase))
-                {
-                    var parser = new CommandLineParser();
-                    CommandOptions options;
-                    parser.ParseOptions(args.Skip(1).ToArray(), _packageOptions, out options);
-
-                    var packageOptions = new PackOptions();
-                    packageOptions.RuntimeTargetFramework = _environment.TargetFramework;
-                    packageOptions.ProjectDir = options.RemainingArgs.Count > 0 ? options.RemainingArgs[0] : Directory.GetCurrentDirectory();
-                    packageOptions.OutputDir = options.GetValue("out");
-                    packageOptions.ZipPackages = options.HasOption("zippackages");
-                    packageOptions.Overwrite = options.HasOption("overwrite");
-
-                    var gen = new PackManager(packageOptions);
-                    if (!gen.Package())
-                    {
-                        return -1;
-                    }
-                }
                 else
                 {
                     Console.WriteLine("unknown command '{0}'", command);

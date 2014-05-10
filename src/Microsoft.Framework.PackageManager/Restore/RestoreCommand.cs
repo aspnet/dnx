@@ -98,7 +98,8 @@ namespace Microsoft.Framework.PackageManager
                 new LocalWalkProvider(
                     new NuGetDependencyResolver(
                         projectDirectory,
-                        packagesDirectory)));
+                        packagesDirectory,
+                        new FrameworkReferenceResolver())));
 
             var allSources = SourceProvider.LoadPackageSources();
 

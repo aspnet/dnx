@@ -31,8 +31,6 @@
     <Compile Include="Packing\PackRoot.cs" />
     <Compile Include="Packing\PackRuntime.cs" />
     <Compile Include="Packing\PackOperations.cs" />
-    <Compile Include="PackManager.cs" />
-    <Compile Include="PackOptions.cs" />
     <Compile Include="Program.cs" />
   </ItemGroup>
   <Import Project="$(VSToolsPath)\ProjectK\Microsoft.Web.ProjectK.targets" Condition="'$(VSToolsPath)' != ''" />

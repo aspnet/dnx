@@ -18,6 +18,7 @@
     <SchemaVersion>2.0</SchemaVersion>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="Colors.cs" />
     <Compile Include="CommandLine\CommandBase.cs" />
     <Compile Include="CommandLine\CommandLineApplication.cs" />
     <Compile Include="CommandLine\CommandArgument.cs" />
@@ -65,6 +66,7 @@
     <Compile Include="Restore\LocalWalkProvider.cs" />
     <Compile Include="Restore\RestoreCommand.cs" />
     <Compile Include="Restore\RestoreOperations.cs" />
+    <Compile Include="Restore\VersionUtilities.cs" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="NuGet\Common\CommonResources.resx" />

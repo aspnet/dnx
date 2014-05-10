@@ -124,8 +124,8 @@ namespace Microsoft.Framework.Runtime
 
             var projectResolver = new ProjectResolver(_projectDir, rootDirectory);
 
-            var nugetDependencyResolver = new NuGetDependencyResolver(_projectDir, options.PackageDirectory);
             var referenceAssemblyDependencyResolver = new ReferenceAssemblyDependencyResolver();
+            var nugetDependencyResolver = new NuGetDependencyResolver(_projectDir, options.PackageDirectory, referenceAssemblyDependencyResolver.FrameworkResolver);
             var gacDependencyResolver = new GacDependencyResolver();
 
             var nugetLoader = new NuGetAssemblyLoader(_loaderEngine, nugetDependencyResolver);

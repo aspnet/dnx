@@ -17,21 +17,24 @@ namespace Microsoft.Framework.Runtime
         private readonly LocalPackageRepository _repository;
         private readonly Dictionary<string, string> _contractPaths = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
         private readonly Dictionary<string, string> _paths = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        private readonly Dictionary<string, List<string>> _frameworkAssemblies = new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase);
         private readonly Dictionary<string, LibraryDescription> _dependencies = new Dictionary<string, LibraryDescription>(StringComparer.OrdinalIgnoreCase);
         private readonly IDictionary<string, IList<string>> _sharedSources = new Dictionary<string, IList<string>>(StringComparer.OrdinalIgnoreCase);
+        private readonly FrameworkReferenceResolver _frameworkReferenceResolver;
 
-        public NuGetDependencyResolver(string projectPath)
-            : this(projectPath, null)
+        public NuGetDependencyResolver(string projectPath, FrameworkReferenceResolver frameworkReferenceResolver)
+            : this(projectPath, null, frameworkReferenceResolver)
         {
         }
 
-        public NuGetDependencyResolver(string projectPath, string packagesPath)
+        public NuGetDependencyResolver(string projectPath, string packagesPath, FrameworkReferenceResolver frameworkReferenceResolver)
         {
             if (string.IsNullOrEmpty(packagesPath))
             {
                 packagesPath = ResolveRepositoryPath(projectPath);
             }
             _repository = new LocalPackageRepository(packagesPath);
+            _frameworkReferenceResolver = frameworkReferenceResolver;
             Dependencies = Enumerable.Empty<LibraryDescription>();
         }
 
@@ -84,6 +87,23 @@ namespace Microsoft.Framework.Runtime
                     }
                 }
             }
+
+            IEnumerable<FrameworkAssemblyReference> frameworkAssemblies;
+            if (VersionUtility.TryGetCompatibleItems(targetFramework, package.FrameworkAssemblies, out frameworkAssemblies))
+            {
+                foreach (var assemblyReference in frameworkAssemblies)
+                {
+                    string path;
+                    if (_frameworkReferenceResolver.TryGetAssembly(assemblyReference.AssemblyName, targetFramework, out path))
+                    {
+                        yield return new Library
+                        {
+                            Name = assemblyReference.AssemblyName,
+                            Version = VersionUtility.GetAssemblyVersion(path)
+                        };
+                    }
+                }
+            }
         }
 
         public void Initialize(IEnumerable<LibraryDescription> packages, FrameworkName targetFramework)
@@ -117,11 +137,8 @@ namespace Microsoft.Framework.Runtime
 
                 foreach (var fileName in GetAssemblies(package, targetFramework))
                 {
-#if NET45
-                    var an = AssemblyName.GetAssemblyName(fileName);
-#else
-                    var an = System.Runtime.Loader.AssemblyLoadContext.GetAssemblyName(fileName);
-#endif
+                    AssemblyName an = GetAssemblyName(fileName);
+
                     _paths[an.Name] = fileName;
 
                     if (!_paths.ContainsKey(package.Id))
@@ -130,6 +147,11 @@ namespace Microsoft.Framework.Runtime
                     }
                 }
 
+                var frameworkReferences = GetFrameworkAssemblies(package, targetFramework).ToList();
+                if (!frameworkReferences.IsEmpty())
+                {
+                    _frameworkAssemblies[package.Id] = frameworkReferences;
+                }
 
                 var sharedSources = GetSharedSources(package, targetFramework).ToList();
                 if (!sharedSources.IsEmpty())
@@ -153,7 +175,7 @@ namespace Microsoft.Framework.Runtime
             var metadataReferenes = paths.Select(pair =>
             {
                 IMetadataReference reference = null;
-                
+
                 if (pair.Value == null)
                 {
                     reference = new UnresolvedMetadataReference(pair.Key);
@@ -209,6 +231,18 @@ namespace Microsoft.Framework.Runtime
             {
                 PopulateDependenciesPaths(dependency.Name, paths);
             }
+
+            // Overwrite paths that may not have been found with framework
+            // references
+            List<string> frameworkAssemblies;
+            if (_frameworkAssemblies.TryGetValue(name, out frameworkAssemblies))
+            {
+                foreach (var assemblyPath in frameworkAssemblies)
+                {
+                    var an = GetAssemblyName(assemblyPath);
+                    paths[an.Name] = assemblyPath;
+                }
+            }
         }
 
         private IEnumerable<string> GetAssemblies(IPackage package, FrameworkName frameworkName)
@@ -236,6 +270,22 @@ namespace Microsoft.Framework.Runtime
             }
 
             return Directory.EnumerateFiles(directory, "*.*", SearchOption.AllDirectories);
+        }
+
+        private IEnumerable<string> GetFrameworkAssemblies(IPackage package, FrameworkName targetFramework)
+        {
+            IEnumerable<FrameworkAssemblyReference> frameworkAssemblies;
+            if (VersionUtility.TryGetCompatibleItems(targetFramework, package.FrameworkAssemblies, out frameworkAssemblies))
+            {
+                foreach (var reference in frameworkAssemblies)
+                {
+                    string path;
+                    if (_frameworkReferenceResolver.TryGetAssembly(reference.AssemblyName, targetFramework, out path))
+                    {
+                        yield return path;
+                    }
+                }
+            }
         }
 
         private static IEnumerable<string> GetAssembliesFromPackage(IPackage package, FrameworkName frameworkName, string path)
@@ -288,5 +338,15 @@ namespace Microsoft.Framework.Runtime
 
             return Path.Combine(rootPath, "packages");
         }
+
+        private static AssemblyName GetAssemblyName(string fileName)
+        {
+#if NET45
+            return AssemblyName.GetAssemblyName(fileName);
+#else
+            return System.Runtime.Loader.AssemblyLoadContext.GetAssemblyName(fileName);
+#endif
+        }
+
     }
 }

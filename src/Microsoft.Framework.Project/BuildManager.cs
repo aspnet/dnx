@@ -281,8 +281,8 @@ namespace Microsoft.Framework.Project
             var embeddedResourceProvider = new EmbeddedResourceProvider();
             var compositeResourceProvider = new CompositeResourceProvider(new IResourceProvider[] { resxProvider, embeddedResourceProvider });
 
-            var nugetDependencyResolver = new NuGetDependencyResolver(projectDir);
             var referenceAssemblyDependencyResolver = new ReferenceAssemblyDependencyResolver();
+            var nugetDependencyResolver = new NuGetDependencyResolver(projectDir, referenceAssemblyDependencyResolver.FrameworkResolver);
             var gacDependencyResolver = new GacDependencyResolver();
             var compositeDependencyExporter = new CompositeLibraryExportProvider(new ILibraryExportProvider[] { 
                 referenceAssemblyDependencyResolver, 
