@@ -51,12 +51,15 @@ namespace Microsoft.Framework.PackageManager.Packing
             var rootDirectory = DefaultHost.ResolveRootDirectory(projectDir);
             var projectResolver = new ProjectResolver(projectDir, rootDirectory);
 
-            var nugetDependencyResolver = new NuGetDependencyResolver(projectDir);
-
+            var referenceAssemblyDependencyResolver = new ReferenceAssemblyDependencyResolver();
+            var nugetDependencyResolver = new NuGetDependencyResolver(projectDir, referenceAssemblyDependencyResolver.FrameworkResolver);
+            var gacDependencyResolver = new GacDependencyResolver();
             var projectReferenceDependencyProvider = new ProjectReferenceDependencyProvider(projectResolver);
 
             var dependencyWalker = new DependencyWalker(new IDependencyProvider[] { 
                 projectReferenceDependencyProvider,
+                referenceAssemblyDependencyResolver,
+                gacDependencyResolver,
                 nugetDependencyResolver
             });
 
