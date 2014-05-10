@@ -86,9 +86,9 @@ namespace Microsoft.Framework.PackageManager.Packing
                     {
                         var flavor = parts[1];
                         File.WriteAllText(iniFilePath, string.Format(@"[Runtime]
-KRE_Version={0}
-KRE_Flavor={1}
-", versionNumber, flavor == "svrc50" ? "CoreCLR" : "Desktop"));
+KRE_VERSION={0}
+KRE_FLAVOR={1}
+", versionNumber, flavor == "svrc50" ? "CoreCLR" : "DesktopCLR"));
                     }
                 }
             }
