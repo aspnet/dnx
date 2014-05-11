@@ -84,6 +84,15 @@ namespace Microsoft.Framework.Runtime
                                 Version = dependency.Version
                             };
                         }
+                        else
+                        {
+                            // REVIEW: What happens to the range
+                            yield return new Library
+                            {
+                                Name = d.Id,
+                                Version = d.VersionSpec.MinVersion
+                            };
+                        }
                     }
                 }
             }
