@@ -15,3 +15,6 @@
 - Append tools directory to PATH. SET PATH=%PATH%;your_directory\KRuntime\artifacts\build\ProjectK\tools
 - SET TARGET_FRAMEWORK=k10
 - k run
+
+This project is part of ASP.NET vNext. You can find samples, documentation and getting started instructions for ASP.NET vNext at the [Home](https://github.com/aspnet/home) repo.
+
