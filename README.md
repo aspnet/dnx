@@ -1,7 +1,9 @@
 KRuntime
 ===
 
-This is the core components required to run an application.
+This is the code required to bootstrap and run an ASP.NET vNext application. This includes things like the compilation system, SDK tools, and the native CLR hosts.
+
+
 
 ### Goals
 - Create a new development experience that enables a quick development workflow (change code and run)
