@@ -113,6 +113,23 @@ namespace Microsoft.Framework.Runtime
                     }
                 }
             }
+
+            IEnumerable<FrameworkAssemblyReference> frameworkAssemblies;
+            if (VersionUtility.TryGetCompatibleItems(targetFramework, package.FrameworkAssemblies, out frameworkAssemblies))
+            {
+                foreach (var assemblyReference in frameworkAssemblies)
+                {
+                    string path;
+                    if (_frameworkReferenceResolver.TryGetAssembly(assemblyReference.AssemblyName, targetFramework, out path))
+                    {
+                        yield return new Library
+                        {
+                            Name = assemblyReference.AssemblyName,
+                            Version = VersionUtility.GetAssemblyVersion(path)
+                        };
+                    }
+                }
+            }
         }
 
         public void Initialize(IEnumerable<LibraryDescription> packages, FrameworkName targetFramework)
