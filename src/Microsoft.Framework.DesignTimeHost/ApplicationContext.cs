@@ -206,6 +206,7 @@ namespace Microsoft.Framework.DesignTimeHost
 
                 _local.Configurations = new ConfigurationsMessage
                 {
+                    ProjectName = state.Project.Name,
                     Configurations = state.Project.GetTargetFrameworkConfigurations().Select(c => new ConfigurationData
                     {
                         CompilationSettings = state.Project.GetCompilationSettings(c.FrameworkName),

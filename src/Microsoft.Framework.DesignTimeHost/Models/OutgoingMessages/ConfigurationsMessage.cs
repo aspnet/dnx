@@ -7,6 +7,7 @@ namespace Microsoft.Framework.DesignTimeHost.Models.OutgoingMessages
 {
     public class ConfigurationsMessage
     {
+        public string ProjectName { get; set; }
         public IList<ConfigurationData> Configurations { get; set; }
         public IDictionary<string, string> Commands { get; set; }
     }
