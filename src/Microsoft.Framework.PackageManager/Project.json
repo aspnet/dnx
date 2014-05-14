@@ -9,15 +9,15 @@
     "configurations": {
         "net45": { 
             "dependencies": {
-                "System.IO.Compression" : "",
-                "System.Xml.Linq": "",
-                "System.Xml": "",
-                "System.Net.Http" : "",
-                "System.Runtime" : "",
                 "System.Collections" : "",
                 "System.IO" :  "",
+                "System.IO.Compression" : "",
+                "System.Net.Http" : "",
+                "System.Runtime" : "",
+                "System.Runtime.Serialization": "",
                 "System.Security": "",
-                "System.Runtime.Serialization": ""
+                "System.Xml": "",
+                "System.Xml.Linq": ""
             }
         }
     },

@@ -1,21 +1,21 @@
 {
     "dependencies": {
-        "Microsoft.Framework.Runtime.Roslyn": "",
-        "Microsoft.Framework.Runtime.Interfaces": "",
         "K.Roslyn" : "0.1-alpha-*",
-        "Xunit.KRunner": "0.1-alpha-*",
+        "Microsoft.Framework.Runtime.Interfaces": "",
+        "Microsoft.Framework.Runtime.Roslyn": "",
         "xunit.abstractions": "2.0.0-aspnet-*",
         "xunit.assert": "2.0.0-aspnet-*",
         "xunit.core": "2.0.0-aspnet-*",
-        "xunit.execution": "2.0.0-aspnet-*"
+        "xunit.execution": "2.0.0-aspnet-*",
+        "Xunit.KRunner": "0.1-alpha-*"
     },
     "configurations": {
         "net45": {
             "dependencies": {
-                "System.Xml.Linq": "",
-                "System.Xml": "",
+                "System.Collections" : "",
                 "System.Runtime" : "",
-                "System.Collections" : ""
+                "System.Xml": "",
+                "System.Xml.Linq": ""
             }
         }
     },

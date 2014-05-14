@@ -1,13 +1,13 @@
 {
     "dependencies": {
-        "Shouldly" : "1.1.1.1",
         "Microsoft.Framework.Runtime": "",
         "Microsoft.Framework.Runtime.Interfaces": "",
-        "Xunit.KRunner": "0.1-alpha-*",
+        "Shouldly" : "1.1.1.1",
         "xunit.abstractions": "2.0.0-aspnet-*",
         "xunit.assert": "2.0.0-aspnet-*",
         "xunit.core": "2.0.0-aspnet-*",
-        "xunit.execution": "2.0.0-aspnet-*"
+        "xunit.execution": "2.0.0-aspnet-*",
+        "Xunit.KRunner": "0.1-alpha-*"
     },
     "configurations": {
         "net45": {
