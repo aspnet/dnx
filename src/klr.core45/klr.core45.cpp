@@ -112,7 +112,7 @@ HMODULE LoadCoreClr()
         errno = wcscat_s(wszClrPath, _countof(wszClrPath), L"coreclr.dll");
         CHECK_RETURN_VALUE_FAIL_EXIT_VIA_FINISHED(errno);
 
-        hCoreCLRModule = ::LoadLibraryExW(wszClrPath, NULL, 0);
+        hCoreCLRModule = ::LoadLibraryExW(wszClrPath, NULL, LOAD_LIBRARY_SEARCH_DLL_LOAD_DIR);
     }
 
     if (hCoreCLRModule == nullptr)
