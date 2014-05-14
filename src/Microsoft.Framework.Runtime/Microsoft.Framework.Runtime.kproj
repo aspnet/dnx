@@ -49,6 +49,7 @@
     <Compile Include="FileSystem\IFileWatcher.cs" />
     <Compile Include="FrameworkReferenceResolver.cs" />
     <Compile Include="GlobalSettings.cs" />
+    <Compile Include="IFrameworkReferenceResolver.cs" />
     <Compile Include="IProjectResolver.cs" />
     <Compile Include="Loader\AssemblyLoader.cs" />
     <Compile Include="Loader\AssemblyLoadResult.cs" />

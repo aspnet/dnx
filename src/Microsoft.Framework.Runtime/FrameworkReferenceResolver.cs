@@ -12,7 +12,7 @@ using NuGet;
 
 namespace Microsoft.Framework.Runtime
 {
-    public class FrameworkReferenceResolver
+    public class FrameworkReferenceResolver : IFrameworkReferenceResolver
     {
         private readonly IDictionary<FrameworkName, FrameworkInformation> _cache = new Dictionary<FrameworkName, FrameworkInformation>();
 

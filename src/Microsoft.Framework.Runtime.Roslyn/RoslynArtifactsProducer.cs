@@ -17,12 +17,12 @@ namespace Microsoft.Framework.Runtime.Roslyn
         private readonly IRoslynCompiler _compiler;
         private readonly IResourceProvider _resourceProvider;
         private readonly IEnumerable<LibraryDescription> _resolvedDependencies;
-        private readonly FrameworkReferenceResolver _frameworkResolver;
+        private readonly IFrameworkReferenceResolver _frameworkResolver;
 
         public RoslynArtifactsProducer(IRoslynCompiler compiler,
                                        IResourceProvider resourceProvider,
                                        IEnumerable<LibraryDescription> resolvedDependencies,
-                                       FrameworkReferenceResolver frameworkResolver)
+                                       IFrameworkReferenceResolver frameworkResolver)
         {
             _compiler = compiler;
             _resourceProvider = resourceProvider;

@@ -20,14 +20,14 @@ namespace Microsoft.Framework.Runtime
         private readonly Dictionary<string, List<string>> _frameworkAssemblies = new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase);
         private readonly Dictionary<string, LibraryDescription> _dependencies = new Dictionary<string, LibraryDescription>(StringComparer.OrdinalIgnoreCase);
         private readonly IDictionary<string, IList<string>> _sharedSources = new Dictionary<string, IList<string>>(StringComparer.OrdinalIgnoreCase);
-        private readonly FrameworkReferenceResolver _frameworkReferenceResolver;
+        private readonly IFrameworkReferenceResolver _frameworkReferenceResolver;
 
-        public NuGetDependencyResolver(string projectPath, FrameworkReferenceResolver frameworkReferenceResolver)
+        public NuGetDependencyResolver(string projectPath, IFrameworkReferenceResolver frameworkReferenceResolver)
             : this(projectPath, null, frameworkReferenceResolver)
         {
         }
 
-        public NuGetDependencyResolver(string projectPath, string packagesPath, FrameworkReferenceResolver frameworkReferenceResolver)
+        public NuGetDependencyResolver(string projectPath, string packagesPath, IFrameworkReferenceResolver frameworkReferenceResolver)
         {
             if (string.IsNullOrEmpty(packagesPath))
             {

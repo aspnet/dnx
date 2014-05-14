@@ -55,6 +55,7 @@
     <Compile Include="Packing\PackRoot.cs" />
     <Compile Include="Packing\PackRuntime.cs" />
     <Compile Include="Program.cs" />
+    <Compile Include="Restore\EmptyFrameworkResolver.cs" />
     <Compile Include="Restore\GraphModel\GraphItem.cs" />
     <Compile Include="Restore\GraphModel\GraphNode.cs" />
     <Compile Include="Restore\NuGet\PackageFolder.cs" />

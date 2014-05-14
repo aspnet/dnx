@@ -120,7 +120,7 @@ namespace Microsoft.Framework.PackageManager
                     new NuGetDependencyResolver(
                         projectDirectory,
                         packagesDirectory,
-                        new FrameworkReferenceResolver())));
+                        new EmptyFrameworkResolver())));
 
             var allSources = SourceProvider.LoadPackageSources();
 
