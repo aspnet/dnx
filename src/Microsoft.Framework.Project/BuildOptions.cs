@@ -15,5 +15,6 @@ namespace Microsoft.Framework.Project
         public bool GenerateNativeImages { get; set; }
         public string RuntimePath { get; set; }
         public string CrossgenPath { get; set; }
+        public bool CheckDiagnostics { get; set; }
     }
 }

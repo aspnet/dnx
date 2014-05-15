@@ -18,6 +18,7 @@ namespace Microsoft.Framework.Project
         {
             { "framework", CommandOptionType.MultipleValue },
             { "out", CommandOptionType.SingleValue },
+            { "check", CommandOptionType.NoValue },
             { "dependencies", CommandOptionType.NoValue },
             { "native", CommandOptionType.NoValue },
             { "crossgenPath", CommandOptionType.SingleValue },
@@ -75,6 +76,7 @@ namespace Microsoft.Framework.Project
                     buildOptions.GenerateNativeImages = options.HasOption("native");
                     buildOptions.RuntimePath = options.GetValue("runtimePath");
                     buildOptions.CrossgenPath = options.GetValue("crossgenPath");
+                    buildOptions.CheckDiagnostics = options.HasOption("check");
 
                     var projectManager = new BuildManager(buildOptions);
 
