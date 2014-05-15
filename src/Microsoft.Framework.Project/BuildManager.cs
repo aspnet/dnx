@@ -70,12 +70,19 @@ namespace Microsoft.Framework.Project
                 {
                     var diagnostics = new List<Diagnostic>();
 
-                    success = success && Build(project,
-                                               outputPath,
-                                               targetFramework,
-                                               builder,
-                                               symbolPackageBuilder,
-                                               diagnostics);
+                    if (_buildOptions.CheckDiagnostics)
+                    {
+                        success = success && CheckDiagnostics(project, targetFramework, diagnostics);
+                    }
+                    else
+                    {
+                        success = success && Build(project,
+                                                   outputPath,
+                                                   targetFramework,
+                                                   builder,
+                                                   symbolPackageBuilder,
+                                                   diagnostics);
+                    }
 
                     allDiagnostics.AddRange(diagnostics);
 
@@ -88,29 +95,35 @@ namespace Microsoft.Framework.Project
                 }
             }
 
-            foreach (var sharedFile in project.SharedFiles)
+            if (!_buildOptions.CheckDiagnostics)
             {
-                var file = new PhysicalPackageFile();
-                file.SourcePath = sharedFile;
-                file.TargetPath = String.Format(@"shared\{0}", Path.GetFileName(sharedFile));
-                builder.Files.Add(file);
+                foreach (var sharedFile in project.SharedFiles)
+                {
+                    var file = new PhysicalPackageFile();
+                    file.SourcePath = sharedFile;
+                    file.TargetPath = String.Format(@"shared\{0}", Path.GetFileName(sharedFile));
+                    builder.Files.Add(file);
+                }
             }
 
-            // If there were any errors then don't create the package
-            if (!allDiagnostics.Any(IsError) && success)
+            if (!_buildOptions.CheckDiagnostics)
             {
-                using (var fs = File.Create(nupkg))
+                // If there were any errors then don't create the package
+                if (!allDiagnostics.Any(IsError) && success)
                 {
-                    builder.Save(fs);
-                }
+                    using (var fs = File.Create(nupkg))
+                    {
+                        builder.Save(fs);
+                    }
 
-                using (var fs = File.Create(symbolsNupkg))
-                {
-                    symbolPackageBuilder.Save(fs);
-                }
+                    using (var fs = File.Create(symbolsNupkg))
+                    {
+                        symbolPackageBuilder.Save(fs);
+                    }
 
-                Console.WriteLine("{0} -> {1}", project.Name, nupkg);
-                Console.WriteLine("{0} -> {1}", project.Name, symbolsNupkg);
+                    Console.WriteLine("{0} -> {1}", project.Name, nupkg);
+                    Console.WriteLine("{0} -> {1}", project.Name, symbolsNupkg);
+                }
             }
 
             sw.Stop();
@@ -218,6 +231,24 @@ namespace Microsoft.Framework.Project
         }
 #endif
 
+        private bool CheckDiagnostics(KProject project,
+                                      FrameworkName targetFramework,
+                                      List<Diagnostic> diagnostics)
+        {
+            var compiler = PrepareCompiler(project, targetFramework);
+            var compilationContext = compiler.CompileProject(project.Name, targetFramework);
+
+            if (compilationContext == null)
+            {
+                return false;
+            }
+
+            diagnostics.AddRange(compilationContext.Diagnostics);
+            diagnostics.AddRange(compilationContext.Compilation.GetDiagnostics());
+
+            return true;
+        }
+
         private bool Build(KProject project,
                            string outputPath,
                            FrameworkName targetFramework,
@@ -226,7 +257,7 @@ namespace Microsoft.Framework.Project
                            List<Diagnostic> diagnostics)
         {
             IDictionary<string, string> packagePaths;
-            var roslynArtifactsProducer = PrepareCompiler(project, targetFramework, out packagePaths);
+            var roslynArtifactsProducer = PrepareArtifactsProducer(project, targetFramework, out packagePaths);
 
             var targetFrameworkFolder = VersionUtility.GetShortFrameworkName(targetFramework);
             string targetPath = Path.Combine(outputPath, targetFrameworkFolder);
@@ -271,7 +302,7 @@ namespace Microsoft.Framework.Project
             return true;
         }
 
-        private static RoslynArtifactsProducer PrepareCompiler(KProject project, FrameworkName targetFramework, out IDictionary<string, string> packagePaths)
+        private static RoslynArtifactsProducer PrepareArtifactsProducer(KProject project, FrameworkName targetFramework, out IDictionary<string, string> packagePaths)
         {
             var projectDir = project.ProjectDirectory;
             var rootDirectory = DefaultHost.ResolveRootDirectory(projectDir);
@@ -284,8 +315,8 @@ namespace Microsoft.Framework.Project
             var referenceAssemblyDependencyResolver = new ReferenceAssemblyDependencyResolver();
             var nugetDependencyResolver = new NuGetDependencyResolver(projectDir, referenceAssemblyDependencyResolver.FrameworkResolver);
             var gacDependencyResolver = new GacDependencyResolver();
-            var compositeDependencyExporter = new CompositeLibraryExportProvider(new ILibraryExportProvider[] { 
-                referenceAssemblyDependencyResolver, 
+            var compositeDependencyExporter = new CompositeLibraryExportProvider(new ILibraryExportProvider[] {
+                referenceAssemblyDependencyResolver,
                 gacDependencyResolver,
                 nugetDependencyResolver,
             });
@@ -295,10 +326,10 @@ namespace Microsoft.Framework.Project
                                                     compositeDependencyExporter);
 
             var projectReferenceResolver = new ProjectReferenceDependencyProvider(projectResolver);
-            
-            var dependencyWalker = new DependencyWalker(new IDependencyProvider[] { 
-                projectReferenceResolver, 
-                referenceAssemblyDependencyResolver, 
+
+            var dependencyWalker = new DependencyWalker(new IDependencyProvider[] {
+                projectReferenceResolver,
+                referenceAssemblyDependencyResolver,
                 gacDependencyResolver,
                 nugetDependencyResolver
             });
@@ -313,6 +344,40 @@ namespace Microsoft.Framework.Project
             packagePaths = nugetDependencyResolver.PackageAssemblyPaths;
 
             return roslynArtifactsProducer;
+        }
+
+        private IRoslynCompiler PrepareCompiler(KProject project, FrameworkName targetFramework)
+        {
+            var projectDir = project.ProjectDirectory;
+            var rootDirectory = DefaultHost.ResolveRootDirectory(projectDir);
+            var projectResolver = new ProjectResolver(projectDir, rootDirectory);
+
+            var referenceAssemblyDependencyResolver = new ReferenceAssemblyDependencyResolver();
+            var nugetDependencyResolver = new NuGetDependencyResolver(projectDir, referenceAssemblyDependencyResolver.FrameworkResolver);
+            var gacDependencyResolver = new GacDependencyResolver();
+            var compositeDependencyExporter = new CompositeLibraryExportProvider(new ILibraryExportProvider[] {
+                referenceAssemblyDependencyResolver,
+                gacDependencyResolver,
+                nugetDependencyResolver,
+            });
+
+            var roslynCompiler = new RoslynCompiler(projectResolver,
+                                                    NoopWatcher.Instance,
+                                                    compositeDependencyExporter);
+
+            var projectReferenceResolver = new ProjectReferenceDependencyProvider(projectResolver);
+
+            var dependencyWalker = new DependencyWalker(new IDependencyProvider[] {
+                projectReferenceResolver,
+                referenceAssemblyDependencyResolver,
+                gacDependencyResolver,
+                nugetDependencyResolver
+            });
+
+            dependencyWalker.Walk(project.Name, project.Version, targetFramework);
+
+
+            return roslynCompiler;
         }
 
         private static string Normalize(string projectDir)
