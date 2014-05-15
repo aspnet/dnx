@@ -140,15 +140,27 @@ namespace Microsoft.Framework.DesignTimeHost
 
         private void DrainInbox()
         {
+            // Process all of the messages in the inbox
+            while (ProcessMessage()) { }
+        }
+
+        private bool ProcessMessage()
+        {
             Message message;
 
             lock (_inbox)
             {
+                if (_inbox.IsEmpty())
+                {
+                    return false;
+                }
+
                 message = _inbox.Dequeue();
 
+                // REVIEW: Can this ever happen?
                 if (message == null)
                 {
-                    return;
+                    return false;
                 }
             }
 
@@ -180,6 +192,8 @@ namespace Microsoft.Framework.DesignTimeHost
                     }
                     break;
             }
+
+            return true;
         }
 
         private void SetTargetFramework(string targetFrameworkValue)
