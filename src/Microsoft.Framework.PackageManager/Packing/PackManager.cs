@@ -34,6 +34,66 @@ namespace Microsoft.Framework.PackageManager.Packing
             return Path.GetFullPath(projectDir.TrimEnd(Path.DirectorySeparatorChar));
         }
 
+        public class DependencyContext
+        {
+            public DependencyContext(string projectDir)
+            {
+                var rootDirectory = DefaultHost.ResolveRootDirectory(projectDir);
+                var projectResolver = new ProjectResolver(projectDir, rootDirectory);
+
+                var referenceAssemblyDependencyResolver = new ReferenceAssemblyDependencyResolver();
+                var nugetDependencyResolver = new NuGetDependencyResolver(projectDir, referenceAssemblyDependencyResolver.FrameworkResolver);
+                var gacDependencyResolver = new GacDependencyResolver();
+                var projectReferenceDependencyProvider = new ProjectReferenceDependencyProvider(projectResolver);
+
+                var dependencyWalker = new DependencyWalker(new IDependencyProvider[] { 
+                    projectReferenceDependencyProvider,
+                    referenceAssemblyDependencyResolver,
+                    gacDependencyResolver,
+                    nugetDependencyResolver
+                });
+
+                ProjectResolver = projectResolver;
+                NuGetDependencyResolver = nugetDependencyResolver;
+                ProjectReferenceDependencyProvider = projectReferenceDependencyProvider;
+                DependencyWalker = dependencyWalker;
+            }
+
+            public ProjectResolver ProjectResolver { get; set; }
+            public NuGetDependencyResolver NuGetDependencyResolver { get; set; }
+            public ProjectReferenceDependencyProvider ProjectReferenceDependencyProvider { get; set; }
+            public DependencyWalker DependencyWalker { get; set; }
+            public FrameworkName FrameworkName { get; set; }
+
+            public void Walk(string projectName, SemanticVersion projectVersion, FrameworkName frameworkName)
+            {
+                FrameworkName = frameworkName;
+                DependencyWalker.Walk(projectName, projectVersion, frameworkName);
+            }
+
+            public static FrameworkName GetFrameworkNameForRuntime(string runtime)
+            {
+                var parts = runtime.Split(new[] { '.' }, 2);
+                if (parts.Length != 2)
+                {
+                    return null;
+                }
+                parts = parts[0].Split(new[] { '-' }, 3);
+                if (parts.Length != 3)
+                {
+                    return null;
+                }
+                switch (parts[1])
+                {
+                    case "svr50":
+                        return VersionUtility.ParseFrameworkName("net45");
+                    case "svrc50":
+                        return VersionUtility.ParseFrameworkName("k10");
+                }
+                return null;
+            }
+        }
+
         public bool Package()
         {
             Runtime.Project project;
@@ -48,22 +108,8 @@ namespace Microsoft.Framework.PackageManager.Packing
             string outputPath = _options.OutputDir ?? Path.Combine(_options.ProjectDir, "bin", "output");
 
             var projectDir = project.ProjectDirectory;
-            var rootDirectory = DefaultHost.ResolveRootDirectory(projectDir);
-            var projectResolver = new ProjectResolver(projectDir, rootDirectory);
 
-            var referenceAssemblyDependencyResolver = new ReferenceAssemblyDependencyResolver();
-            var nugetDependencyResolver = new NuGetDependencyResolver(projectDir, referenceAssemblyDependencyResolver.FrameworkResolver);
-            var gacDependencyResolver = new GacDependencyResolver();
-            var projectReferenceDependencyProvider = new ProjectReferenceDependencyProvider(projectResolver);
-
-            var dependencyWalker = new DependencyWalker(new IDependencyProvider[] { 
-                projectReferenceDependencyProvider,
-                referenceAssemblyDependencyResolver,
-                gacDependencyResolver,
-                nugetDependencyResolver
-            });
-
-            dependencyWalker.Walk(project.Name, project.Version, _options.RuntimeTargetFramework);
+            var dependencyContexts = new List<DependencyContext>();
 
             var root = new PackRoot(project, outputPath)
             {
@@ -81,7 +127,7 @@ namespace Microsoft.Framework.PackageManager.Packing
                     kreHome = Environment.GetEnvironmentVariable("ProgramFiles") + @"\KRE;%USERPROFILE%\.kre";
                 }
 
-                foreach(var portion in kreHome.Split(new[]{';'}, StringSplitOptions.RemoveEmptyEntries))
+                foreach (var portion in kreHome.Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries))
                 {
                     var packagesPath = Path.Combine(
                         Environment.ExpandEnvironmentVariables(portion),
@@ -100,16 +146,40 @@ namespace Microsoft.Framework.PackageManager.Packing
                     Console.WriteLine(string.Format("Unable to locate runtime '{0}'", runtime));
                     return false;
                 }
+
+                var frameworkName = DependencyContext.GetFrameworkNameForRuntime(runtime);
+                if (!dependencyContexts.Any(dc => dc.FrameworkName == frameworkName))
+                {
+                    var dependencyContext = new DependencyContext(projectDir);
+                    dependencyContext.Walk(project.Name, project.Version, frameworkName);
+                    dependencyContexts.Add(dependencyContext);
+                }
             }
 
-            foreach (var libraryDescription in projectReferenceDependencyProvider.Dependencies)
+            if (!dependencyContexts.Any())
             {
-                root.Projects.Add(new PackProject(projectReferenceDependencyProvider, projectResolver, libraryDescription));
+                var frameworkName = DependencyContext.GetFrameworkNameForRuntime("KRE-svr50-x86.*");
+                var dependencyContext = new DependencyContext(projectDir);
+                dependencyContext.Walk(project.Name, project.Version, frameworkName);
+                dependencyContexts.Add(dependencyContext);
             }
 
-            foreach (var libraryDescription in nugetDependencyResolver.Dependencies)
+            foreach (var dependencyContext in dependencyContexts)
             {
-                root.Packages.Add(new PackPackage(nugetDependencyResolver, libraryDescription));
+                foreach (var libraryDescription in dependencyContext.NuGetDependencyResolver.Dependencies)
+                {
+                    if (!root.Packages.Any(p => p.Library == libraryDescription.Identity))
+                    {
+                        root.Packages.Add(new PackPackage(dependencyContext.NuGetDependencyResolver, libraryDescription));
+                    }
+                }
+                foreach (var libraryDescription in dependencyContext.ProjectReferenceDependencyProvider.Dependencies)
+                {
+                    if (!root.Projects.Any(p => p.Name == libraryDescription.Identity.Name))
+                    {
+                        root.Projects.Add(new PackProject(dependencyContext.ProjectReferenceDependencyProvider, dependencyContext.ProjectResolver, libraryDescription));
+                    }
+                }
             }
 
             root.Emit();
