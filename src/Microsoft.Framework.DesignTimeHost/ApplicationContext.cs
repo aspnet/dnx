@@ -31,6 +31,7 @@ namespace Microsoft.Framework.DesignTimeHost
 
             public RoslynMetadataProvider MetadataProvider { get; set; }
             public IDictionary<string, ReferenceDescription> Dependencies { get; set; }
+            public FrameworkReferenceResolver FrameworkResolver { get; set; }
         }
 
         public class Trigger<TValue>
@@ -226,6 +227,7 @@ namespace Microsoft.Framework.DesignTimeHost
                         CompilationSettings = state.Project.GetCompilationSettings(c.FrameworkName),
                         FrameworkName = VersionUtility.GetShortFrameworkName(c.FrameworkName),
                         LongFrameworkName = c.FrameworkName.ToString(),
+                        FriendlyFrameworkName  = GetFriendlyFrameworkName(state.FrameworkResolver, c.FrameworkName)
                     }).ToList(),
 
                     Commands = state.Project.Commands
@@ -237,6 +239,7 @@ namespace Microsoft.Framework.DesignTimeHost
                 {
                     RootDependency = state.Project.Name,
                     LongFrameworkName = state.TargetFramework.ToString(),
+                    FriendlyFrameworkName  = GetFriendlyFrameworkName(state.FrameworkResolver, state.TargetFramework),
                     ProjectReferences = metadata.ProjectReferences,
                     FileReferences = metadata.References,
                     RawReferences = metadata.RawReferences,
@@ -254,6 +257,18 @@ namespace Microsoft.Framework.DesignTimeHost
                     Files = metadata.SourceFiles
                 };
             }
+        }
+
+        private string GetFriendlyFrameworkName(FrameworkReferenceResolver frameworkResolver, FrameworkName targetFramework)
+        {
+            // We don't have a friendly name for this anywhere on the machine so hard code it
+            if (targetFramework.Identifier.Equals("K", StringComparison.OrdinalIgnoreCase))
+            {
+                // REVIEW: 4.5?
+                return ".NET Core Framework 4.5";
+            }
+
+            return frameworkResolver.GetFriendlyFrameworkName(targetFramework) ?? targetFramework.ToString();
         }
 
         private void Reconcile()
@@ -370,6 +385,7 @@ namespace Microsoft.Framework.DesignTimeHost
 
             state.MetadataProvider = new RoslynMetadataProvider(roslynCompiler);
             state.Project = project;
+            state.FrameworkResolver = referenceAssemblyDependencyResolver.FrameworkResolver;
 
             var dependencyWalker = new DependencyWalker(new IDependencyProvider[] { 
                 new ProjectReferenceDependencyProvider(projectResolver),
