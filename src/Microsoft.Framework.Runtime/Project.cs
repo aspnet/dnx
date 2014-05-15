@@ -69,6 +69,7 @@ namespace Microsoft.Framework.Runtime
 
                 var includePatterns = SourcePattern.Split(new[] { ';' });
                 var includeFiles = includePatterns
+                    .Where(pattern => !string.IsNullOrEmpty(pattern))
                     .SelectMany(pattern => PathResolver.PerformWildcardSearch(path, pattern))
                     .ToArray();
 
