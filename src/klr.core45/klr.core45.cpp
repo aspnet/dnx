@@ -112,7 +112,14 @@ HMODULE LoadCoreClr()
         errno = wcscat_s(wszClrPath, _countof(wszClrPath), L"coreclr.dll");
         CHECK_RETURN_VALUE_FAIL_EXIT_VIA_FINISHED(errno);
 
-        hCoreCLRModule = ::LoadLibraryExW(wszClrPath, NULL, LOAD_LIBRARY_SEARCH_DLL_LOAD_DIR);
+        // Add the core clr directory to the list of dll search paths
+        AddDllDirectory(szCoreClrDirectory);
+
+        // Modify the default dll flags so that dependencies can be found in this path
+        SetDefaultDllDirectories(LOAD_LIBRARY_SEARCH_DEFAULT_DIRS | LOAD_LIBRARY_SEARCH_USER_DIRS);
+
+        // Continue loading as usual
+        hCoreCLRModule = ::LoadLibraryExW(wszClrPath, NULL, 0);
     }
 
     if (hCoreCLRModule == nullptr)
