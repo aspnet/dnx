@@ -9,6 +9,7 @@ namespace Microsoft.Framework.DesignTimeHost.Models.OutgoingMessages
     {
         public string RootDependency { get; set; }
         public string LongFrameworkName { get; set; }
+        public string FriendlyFrameworkName { get; set; }
         public IList<string> ProjectReferences { get; set; }
         public IList<string> FileReferences { get; set; }
         public IDictionary<string, byte[]> RawReferences { get; set; }

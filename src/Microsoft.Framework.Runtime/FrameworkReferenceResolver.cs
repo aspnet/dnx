@@ -21,16 +21,27 @@ namespace Microsoft.Framework.Runtime
             PopulateCache();
         }
 
-        public bool TryGetAssembly(string name, FrameworkName frameworkName, out string path)
+        public bool TryGetAssembly(string name, FrameworkName targetFramework, out string path)
         {
             FrameworkInformation frameworkInfo;
-            if (_cache.TryGetValue(frameworkName, out frameworkInfo))
+            if (_cache.TryGetValue(targetFramework, out frameworkInfo))
             {
                 return frameworkInfo.Assemblies.TryGetValue(name, out path);
             }
 
             path = null;
             return false;
+        }
+
+        public string GetFriendlyFrameworkName(FrameworkName targetFramework)
+        {
+            FrameworkInformation frameworkInfomation;
+            if (_cache.TryGetValue(targetFramework, out frameworkInfomation))
+            {
+                return frameworkInfomation.Name;
+            }
+
+            return null;
         }
 
         private void PopulateCache()
@@ -124,37 +135,36 @@ namespace Microsoft.Framework.Runtime
 
             if (File.Exists(redistList))
             {
-                foreach (var pair in GetFrameworkAssemblies(directory.FullName, redistList))
+                using (var stream = File.OpenRead(redistList))
                 {
-                    frameworkInfo.Assemblies.Add(pair.Item1, pair.Item2);
+                    var frameworkList = XDocument.Load(stream);
+
+                    foreach (var pair in GetFrameworkAssemblies(directory.FullName, frameworkList))
+                    {
+                        frameworkInfo.Assemblies.Add(pair.Item1, pair.Item2);
+                    }
+
+                    var nameAttribute = frameworkList.Root.Attribute("Name");
+
+                    frameworkInfo.Name = nameAttribute == null ? null : nameAttribute.Value;
                 }
             }
 
             _cache[frameworkName] = frameworkInfo;
         }
 
-        private static IEnumerable<Tuple<string, string>> GetFrameworkAssemblies(string frameworkPath, string path)
+        private static IEnumerable<Tuple<string, string>> GetFrameworkAssemblies(string frameworkPath, XDocument frameworkList)
         {
-            if (!File.Exists(path))
-            {
-                return Enumerable.Empty<Tuple<string, string>>();
-            }
-
             var assemblies = new List<Tuple<string, string>>();
 
-            using (var stream = File.OpenRead(path))
+            foreach (var e in frameworkList.Root.Elements())
             {
-                var frameworkList = XDocument.Load(stream);
+                string assemblyName = e.Attribute("AssemblyName").Value;
+                string assemblyPath = GetAssemblyPath(frameworkPath, assemblyName);
 
-                foreach (var e in frameworkList.Root.Elements())
+                if (!string.IsNullOrEmpty(assemblyPath))
                 {
-                    string assemblyName = e.Attribute("AssemblyName").Value;
-                    string assemblyPath = GetAssemblyPath(frameworkPath, assemblyName);
-
-                    if (!string.IsNullOrEmpty(assemblyPath))
-                    {
-                        assemblies.Add(Tuple.Create(assemblyName, assemblyPath));
-                    }
+                    assemblies.Add(Tuple.Create(assemblyName, assemblyPath));
                 }
             }
 
@@ -199,6 +209,8 @@ namespace Microsoft.Framework.Runtime
             }
 
             public IDictionary<string, string> Assemblies { get; private set; }
+
+            public string Name { get; set; }
         }
     }
 }

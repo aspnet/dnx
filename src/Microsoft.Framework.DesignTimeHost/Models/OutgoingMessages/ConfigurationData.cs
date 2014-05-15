@@ -10,6 +10,7 @@ namespace Microsoft.Framework.DesignTimeHost.Models.OutgoingMessages
     {
         public string FrameworkName { get; set; }
         public string LongFrameworkName { get; set; }
+        public string FriendlyFrameworkName { get; set; }
         public CompilationSettings CompilationSettings { get; set; }
     }
 }
