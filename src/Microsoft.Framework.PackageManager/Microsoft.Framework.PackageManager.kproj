@@ -7,7 +7,7 @@
   <Import Project="$(VSToolsPath)\ProjectK\Microsoft.Web.ProjectK.Props" Condition="'$(VSToolsPath)' != ''" />
   <PropertyGroup Label="Globals">
     <ProjectGuid>0d752d1c-3985-4e27-92c4-0bee72b1f58d</ProjectGuid>
-    <OutputType>Console</OutputType>
+    <OutputType>Library</OutputType>
     <ActiveTargetFramework>net45</ActiveTargetFramework>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x86'" Label="Configuration">

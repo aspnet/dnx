@@ -147,7 +147,7 @@ namespace Microsoft.Framework.PackageManager.Packing
                     return false;
                 }
 
-                var frameworkName = DependencyContext.GetFrameworkNameForRuntime(runtime);
+                var frameworkName = DependencyContext.GetFrameworkNameForRuntime(Path.GetFileName(runtime));
                 if (!dependencyContexts.Any(dc => dc.FrameworkName == frameworkName))
                 {
                     var dependencyContext = new DependencyContext(projectDir);
