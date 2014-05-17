@@ -12,6 +12,7 @@ namespace Microsoft.Framework.Runtime
     public class CompilationException : Exception
     {
         public CompilationException(IList<string> errors)
+            : base(string.Join(Environment.NewLine, errors))
         {
             Errors = errors;
         }
