@@ -1,21 +1,19 @@
 // Copyright (c) Microsoft Open Technologies, Inc. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
-using Microsoft.Framework.PackageManager.Packing;
-using Microsoft.Framework.PackageManager.Restore.NuGet;
-using Microsoft.Framework.Runtime;
-using Microsoft.Framework.Runtime.Loader.NuGet;
-using NuGet;
-using NuGet.Common;
 using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
+using System.IO.Packaging;
 using System.Linq;
-using System.Runtime.Versioning;
 using System.Threading.Tasks;
+using Microsoft.Framework.PackageManager.Packing;
+using Microsoft.Framework.PackageManager.Restore.NuGet;
+using Microsoft.Framework.Runtime;
+using NuGet;
+using NuGet.Common;
 
 namespace Microsoft.Framework.PackageManager
 {
@@ -226,10 +224,22 @@ namespace Microsoft.Framework.PackageManager
                 {
                     await item.Match.Provider.CopyToAsync(item.Match, stream);
                     stream.Seek(0, SeekOrigin.Begin);
-                    using (var archive = new ZipArchive(stream, ZipArchiveMode.Read))
+
+                    if (PlatformHelper.IsMono)
                     {
-                        var packOperations = new PackOperations();
-                        packOperations.ExtractNupkg(archive, targetPath);
+                        using (var archive = Package.Open(stream, FileMode.Open, FileAccess.Read))
+                        {
+                            var packOperations = new PackOperations();
+                            packOperations.ExtractNupkg(archive, targetPath);
+                        }
+                    }
+                    else
+                    {
+                        using (var archive = new ZipArchive(stream, ZipArchiveMode.Read))
+                        {
+                            var packOperations = new PackOperations();
+                            packOperations.ExtractNupkg(archive, targetPath);
+                        }
                     }
                 }
             }
