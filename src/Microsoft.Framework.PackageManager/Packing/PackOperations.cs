@@ -2,13 +2,11 @@
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
+using System.IO.Packaging;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Microsoft.Framework.PackageManager.Packing
 {
@@ -189,6 +187,60 @@ namespace Microsoft.Framework.PackageManager.Packing
             }
         }
 
+        public void ExtractNupkg(Package archive, string targetPath)
+        {
+            ExtractFiles(
+                archive,
+                targetPath,
+                shouldInclude: NupkgFilter);
+        }
+
+        public void ExtractFiles(Package archive, string targetPath, Func<string, bool> shouldInclude)
+        {
+            foreach (PackagePart part in archive.GetParts())
+            {
+                var entryFullName = GetPath(part.Uri);
+                if (entryFullName.StartsWith("/", StringComparison.Ordinal))
+                {
+                    entryFullName = entryFullName.Substring(1);
+                }
+                entryFullName = Uri.UnescapeDataString(entryFullName.Replace('/', Path.DirectorySeparatorChar));
+
+
+                var targetFile = Path.Combine(targetPath, entryFullName);
+                if (!targetFile.StartsWith(targetPath, StringComparison.OrdinalIgnoreCase))
+                {
+                    continue;
+                }
+
+                if (!shouldInclude(entryFullName))
+                {
+                    continue;
+                }
+
+                if (Path.GetFileName(targetFile).Length == 0)
+                {
+                    Directory.CreateDirectory(targetFile);
+                }
+                else
+                {
+                    var targetEntryPath = Path.GetDirectoryName(targetFile);
+                    if (!Directory.Exists(targetEntryPath))
+                    {
+                        Directory.CreateDirectory(targetEntryPath);
+                    }
+
+                    using (var entryStream = part.GetStream())
+                    {
+                        using (var targetStream = new FileStream(targetFile, FileMode.Create, FileAccess.Write, FileShare.None))
+                        {
+                            entryStream.CopyTo(targetStream);
+                        }
+                    }
+                }
+            }
+        }
+
         public void AddFiles(ZipArchive archive, string sourcePath, string targetPath, Func<string, string, bool> shouldInclude)
         {
             AddFilesRecursive(
@@ -226,6 +278,19 @@ namespace Microsoft.Framework.PackageManager.Packing
                     Path.Combine(targetPath, folderName),
                     shouldInclude);
             }
+        }
+
+        private static string GetPath(Uri uri)
+        {
+            string path = uri.OriginalString;
+            if (path.StartsWith("/", StringComparison.Ordinal))
+            {
+                path = path.Substring(1);
+            }
+
+            // Bug 483: We need the unescaped uri string to ensure that all characters are valid for a path.
+            // Change the direction of the slashes to match the filesystem.
+            return Uri.UnescapeDataString(path.Replace('/', Path.DirectorySeparatorChar));
         }
     }
 }
