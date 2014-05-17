@@ -159,7 +159,7 @@ namespace Microsoft.Framework.Runtime.Roslyn
 
         private static AssemblyLoadResult ReportCompilationError(IEnumerable<Diagnostic> results)
         {
-            return new AssemblyLoadResult(GetErrors(results));
+            return new AssemblyLoadResult(new CompilationException(GetErrors(results)));
         }
 
         private static IList<string> GetErrors(IEnumerable<Diagnostic> diagnostis)

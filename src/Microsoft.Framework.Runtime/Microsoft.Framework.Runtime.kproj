@@ -58,6 +58,7 @@
     <Compile Include="Loader\LoadContext.cs" />
     <Compile Include="Loader\MSBuildProject\MSBuildProjectAssemblyLoader.cs" />
     <Compile Include="Loader\NuGet\NuGetAssemblyLoader.cs" />
+    <Compile Include="Loader\CompilationException.cs" />
     <Compile Include="NuGet\Authoring\EmptyFrameworkFolderFile.cs" />
     <Compile Include="NuGet\Authoring\IPackageBuilder.cs" />
     <Compile Include="NuGet\Authoring\IPropertyProvider.cs" />

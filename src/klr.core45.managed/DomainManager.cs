@@ -25,7 +25,6 @@ sealed class DomainManager
             arguments[i] = new string(argv[i]);
         }
 
-        // TODO: Return a wait handle
-        return RuntimeBootstrapper.Execute(arguments).Result;
+        return RuntimeBootstrapper.Execute(arguments);
     }
 }

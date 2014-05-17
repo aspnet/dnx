@@ -32,7 +32,11 @@ int CallFirmwareProcessMain(int argc, wchar_t* argv[])
 
     // Set the DEFAULT_LIB environment variable to be the same directory
     // as the exe
-    SetEnvironmentVariable(L"DEFAULT_LIB", szCurrentDirectory);
+    SetEnvironmentVariable(L"KRE_DEFAULT_LIB", szCurrentDirectory);
+
+    // Set the KRE_CONOSLE_HOST flag which will print exceptions
+    // to stderr instead of throwing
+    SetEnvironmentVariable(L"KRE_CONSOLE_HOST", L"1");
 
     CALL_APPLICATION_MAIN_DATA data = { 0 };
     data.argc = argc - 1;
