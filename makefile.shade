@@ -374,5 +374,17 @@ var CORECLR_PATH = '${Environment.GetEnvironmentVariable("CORECLR_PATH")}'
     copy sourceDir='${NUSPEC_ROOT}' outputDir='${SDK_ROOT}' include='*.nuspec' overwrite='${true}'
     nuget-pack nuspecFile='${nuspec}' packageVersion='${FULL_VERSION}' outputDir='${BUILD_DIR2}' extra='-NoPackageAnalysis' each='var nuspec in Files.Include(Path.Combine(SDK_ROOT, "*.nuspec"))'
 
+#install-runtime target='install'
+  var matchVersion=''
+  for each='var pattern in new[]{"svr50-x86", "svrc50-x86", "svr50-x64", "svrc50-x64"}'
+    for each='var runtime in Files.Include(Path.Combine(BUILD_DIR2, "KRE-"+pattern+".*.nupkg"))'
+      exec program='cmd' commandline='/C kvm install ${runtime}' if='!IsMono'
+      var parts='${Path.GetFileNameWithoutExtension(runtime).Split(".".ToArray(), 2)}'
+      set matchVersion='${parts[1]}' if='matchVersion == ""'
+
+  exec program='cmd' commandline='/C kvm alias build ${matchVersion}' if='!IsMono && matchVersion != ""' 
+  exec program='cmd' commandline='/C start cmd /K kvm use build' if='!IsMono && matchVersion != ""' 
+  
+
 macro name='NuGetInstall' Package='string' OutputDir='string' Extra='string'
     nuget-install package='${Package}' outputDir='${OutputDir}' extra='${Extra}'
