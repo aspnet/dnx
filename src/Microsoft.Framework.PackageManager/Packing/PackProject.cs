@@ -62,6 +62,9 @@ namespace Microsoft.Framework.PackageManager.Packing
             if (string.Equals(fileExtension, ".csproj", StringComparison.OrdinalIgnoreCase) ||
                 string.Equals(fileExtension, ".kproj", StringComparison.OrdinalIgnoreCase) ||
                 string.Equals(fileExtension, ".user", StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(fileExtension, ".vspscc", StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(fileExtension, ".vssscc", StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(fileExtension, ".pubxml", StringComparison.OrdinalIgnoreCase) ||
                 string.Equals(fileName, "bin", StringComparison.OrdinalIgnoreCase) ||
                 string.Equals(fileName, "obj", StringComparison.OrdinalIgnoreCase))
             {
