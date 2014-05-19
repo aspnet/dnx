@@ -74,10 +74,22 @@ namespace Microsoft.Framework.PackageManager.Packing
                 {
                     continue;
                 }
+
+                // copy file
+                var fullSourcePath = Path.Combine(sourcePath, fileName);
+                var fullTargetPath = Path.Combine(targetPath, fileName);
+
                 File.Copy(
-                    Path.Combine(sourcePath, fileName),
-                    Path.Combine(targetPath, fileName),
+                    fullSourcePath,
+                    fullTargetPath,
                     overwrite: true);
+
+                // clear read-only bit if set
+                var fileAttributes = File.GetAttributes(fullTargetPath);
+                if ((fileAttributes & FileAttributes.ReadOnly) == FileAttributes.ReadOnly)
+                {
+                    File.SetAttributes(fullTargetPath, fileAttributes & ~FileAttributes.ReadOnly);
+                }
             }
 
             foreach (var sourceFolderPath in Directory.EnumerateDirectories(sourcePath))
