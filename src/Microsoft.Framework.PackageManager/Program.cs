@@ -77,22 +77,6 @@ namespace Microsoft.Framework.PackageManager
                 });
             });
 
-            app.Command("install", c =>
-            {
-                c.Description = "Install package to project";
-
-                var argProject = c.Argument("[package]", "Package Id to install");
-                var optionOut = c.Option("--version <SEMVER>", "Version of the package to install, default is latest");
-                var optionPrerelease = c.Option("--prerelease", "Use prerelease packages from the feed");
-
-                c.OnExecute(() =>
-                {
-                    if (showHelp()) { return app.Execute("help", "install"); }
-
-                    return 0;
-                });
-            });
-
             app.Command("pack", c =>
             {
                 c.Description = "Bundle application for deployment";
