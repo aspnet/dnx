@@ -85,7 +85,8 @@ namespace Microsoft.Framework.PackageManager
                 var optionOut = c.Option("-o|--out <PATH>", "Where does it go");
                 var optionZipPackages = c.Option("-z|--zippackages", "Bundle a zip full of packages");
                 var optionOverwrite = c.Option("--overwrite", "Remove existing files in target folders");
-                var optionRuntime = c.Option("--runtime <KRE>", "Names or paths to KRE files to include ");
+                var optionRuntime = c.Option("--runtime <KRE>", "Names or paths to KRE files to include");
+                var optionAppFolder = c.Option("--appfolder <NAME>", "Determine the name of the application primary folder");
 
                 c.OnExecute(() =>
                 {
@@ -101,6 +102,7 @@ namespace Microsoft.Framework.PackageManager
                     {
                         OutputDir = optionOut.Value,
                         ProjectDir = argProject.Value ?? System.IO.Directory.GetCurrentDirectory(),
+                        AppFolder = optionAppFolder.Value,
                         RuntimeTargetFramework = _environment.TargetFramework,
                         ZipPackages = optionZipPackages.Value != null,
                         Overwrite = optionOverwrite.Value != null,

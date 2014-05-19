@@ -11,7 +11,9 @@ namespace Microsoft.Framework.PackageManager.Packing
         public string OutputDir { get; set; }
 
         public string ProjectDir { get; set; }
-        
+
+        public string AppFolder { get; set; }
+
         public FrameworkName RuntimeTargetFramework { get; set; }
 
         public bool ZipPackages { get; set; }

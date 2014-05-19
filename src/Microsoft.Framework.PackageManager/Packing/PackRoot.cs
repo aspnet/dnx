@@ -26,6 +26,8 @@ namespace Microsoft.Framework.PackageManager.Packing
 
         public string OutputPath { get; private set; }
         public string PackagesPath { get; private set; }
+
+        public string AppFolder { get; set; }
         public bool Overwrite { get; set; }
         public bool ZipPackages { get; set; }
 
@@ -70,13 +72,13 @@ namespace Microsoft.Framework.PackageManager.Packing
                 {
                     File.WriteAllText(
                         Path.Combine(OutputPath, commandName + ".cmd"),
-                        string.Format(template1, commandName, _project.Name, Runtimes.First().Name));
+                        string.Format(template1, commandName, AppFolder ?? _project.Name, Runtimes.First().Name));
                 }
                 else
                 {
                     File.WriteAllText(
                         Path.Combine(OutputPath, commandName + ".cmd"),
-                        string.Format(template2, commandName, _project.Name));
+                        string.Format(template2, commandName, AppFolder ?? _project.Name));
                 }
             }
         }

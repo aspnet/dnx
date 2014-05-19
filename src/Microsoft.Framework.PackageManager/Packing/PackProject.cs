@@ -28,6 +28,7 @@ namespace Microsoft.Framework.PackageManager.Packing
 
         public string Name { get { return _libraryDescription.Identity.Name; } }
         public string TargetPath { get; private set; }
+        public string AppFolder { get; set; }
 
         public void Emit(PackRoot root)
         {
@@ -39,7 +40,7 @@ namespace Microsoft.Framework.PackageManager.Packing
                 throw new Exception("TODO: unable to resolve project named " + _libraryDescription.Identity.Name);
             }
 
-            var targetName = project.Name;
+            var targetName = AppFolder ?? project.Name;
             TargetPath = Path.Combine(root.OutputPath, targetName);
 
             Console.WriteLine("  Source {0}", project.ProjectDirectory);
@@ -182,5 +183,6 @@ KRE_FLAVOR={1}
             var index2 = (relativePath + Path.AltDirectorySeparatorChar).IndexOf(Path.AltDirectorySeparatorChar);
             return relativePath.Substring(0, Math.Min(index1, index2));
         }
+
     }
 }

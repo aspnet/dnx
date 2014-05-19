@@ -114,7 +114,8 @@ namespace Microsoft.Framework.PackageManager.Packing
             var root = new PackRoot(project, outputPath)
             {
                 Overwrite = _options.Overwrite,
-                ZipPackages = _options.ZipPackages
+                ZipPackages = _options.ZipPackages,
+                AppFolder = _options.AppFolder ?? project.Name,
             };
 
             foreach (var runtime in _options.Runtimes)
@@ -177,7 +178,12 @@ namespace Microsoft.Framework.PackageManager.Packing
                 {
                     if (!root.Projects.Any(p => p.Name == libraryDescription.Identity.Name))
                     {
-                        root.Projects.Add(new PackProject(dependencyContext.ProjectReferenceDependencyProvider, dependencyContext.ProjectResolver, libraryDescription));
+                        var packProject = new PackProject(dependencyContext.ProjectReferenceDependencyProvider, dependencyContext.ProjectResolver, libraryDescription);
+                        if (packProject.Name == project.Name)
+                        {
+                            packProject.AppFolder = _options.AppFolder;
+                        }
+                        root.Projects.Add(packProject);
                     }
                 }
             }
