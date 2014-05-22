@@ -9,4 +9,4 @@ done
 DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
 
 
-klr $DIR/lib/Microsoft.Framework.Project/Microsoft.Framework.Project.dll "$@"
+exec klr $DIR/lib/Microsoft.Framework.Project/Microsoft.Framework.Project.dll "$@"
