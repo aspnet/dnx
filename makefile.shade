@@ -15,15 +15,22 @@ var ROOT = '${Directory.GetCurrentDirectory()}'
 var SCRIPTS_DIR = '${Path.Combine(ROOT, "scripts")}'
 var ARTIFACTS_DIR = '${Path.Combine(ROOT, "artifacts")}'
 var BUILD_DIR2 = '${Path.Combine(ROOT, "artifacts", "build")}'
-var SDK_ROOT = '${Path.Combine(BUILD_DIR2, "KRE")}'
 var NUSPEC_ROOT = '${Path.Combine(ROOT, "nuspec")}'
-var TOOLS_DIR = '${Path.Combine(SDK_ROOT, "tools")}'
-var TOOLS_BIN_DIR = '${Path.Combine(TOOLS_DIR, "bin")}'
 var PACKAGES_DIR = '${Path.Combine(ROOT, "packages")}'
 var TEST_RESULTS = '${Path.Combine(ROOT, "artifacts", "TestResults")}'
 var SAMPLES_DIR = '${Path.Combine(ROOT, "samples")}'
 var FULL_VERSION = '${VERSION + "-" + BuildNumber}'
 var CORECLR_PATH = '${Environment.GetEnvironmentVariable("CORECLR_PATH")}'
+var CORECLR_TARGET_PATH = '${Path.Combine(BUILD_DIR2, "CoreCLR")}'
+var MONO_x86_BIN='${Path.Combine(BUILD_DIR2, "KRE-mono45-x86", "bin")}'
+var SVR50_x86_BIN='${Path.Combine(BUILD_DIR2, "KRE-svr50-x86", "bin")}'
+var SVR50_x64_BIN='${Path.Combine(BUILD_DIR2, "KRE-svr50-x64", "bin")}'
+var SVRC50_x86_BIN='${Path.Combine(BUILD_DIR2, "KRE-svrc50-x86", "bin")}'
+var SVRC50_x64_BIN='${Path.Combine(BUILD_DIR2, "KRE-svrc50-x64", "bin")}'
+var NET45_TARGETS = '${new [] { MONO_x86_BIN, SVR50_x86_BIN, SVR50_x64_BIN}}'
+var K10_TARGETS = '${new [] { SVRC50_x86_BIN, SVRC50_x64_BIN}}'
+var ALL_TARGETS = '${NET45_TARGETS.Concat(K10_TARGETS)}'
+
 
 #package-runtime .clean-sdk-dir .copy-bits .tweak-scripts .copy-package-dependencies .copy-coreclr .nuget-pack-runtime target='package'
 
@@ -198,32 +205,57 @@ var CORECLR_PATH = '${Environment.GetEnvironmentVariable("CORECLR_PATH")}'
 #verify-package .ensure-latest-package .test-package target='verify'
 
 #clean-sdk-dir
-    directory delete="${SDK_ROOT}"
-    directory create="${SDK_ROOT}"
+    directory each='var delete in ALL_TARGETS'
+    directory each='var create in ALL_TARGETS'
 
 #copy-bits
     var x86Target="x86"
     var x64Target="amd64"
-    
-    copy sourceDir='${SCRIPTS_DIR}' outputDir='${TOOLS_DIR}' overwrite='${true}'
 
-    copy sourceDir='${Path.Combine(BUILD_DIR2, "klr", "bin", "Win32", Configuration, "net45")}' outputDir='${Path.Combine(TOOLS_BIN_DIR, x86Target, "net45")}' include='*.exe' overwrite='${true}'
-    copy sourceDir='${Path.Combine(BUILD_DIR2, "klr", "bin", "x64", Configuration, "net45")}' outputDir='${Path.Combine(TOOLS_BIN_DIR, x64Target, "net45")}' include='*.exe' overwrite='${true}'
-    copy sourceDir='${Path.Combine(BUILD_DIR2, "klr", "bin", "Win32", Configuration, "k10")}' outputDir='${Path.Combine(TOOLS_BIN_DIR, x86Target, "k10")}' include='*.exe' overwrite='${true}'
-    copy sourceDir='${Path.Combine(BUILD_DIR2, "klr", "bin", "x64", Configuration, "k10")}' outputDir='${Path.Combine(TOOLS_BIN_DIR, x64Target, "k10")}' include='*.exe' overwrite='${true}'
+    -// KRE-mono45-x86
+    copy sourceDir='${SCRIPTS_DIR}' include='*.sh' outputDir='${MONO_x86_BIN}' overwrite='${true}'
+    copy sourceDir='${Path.Combine(BUILD_DIR2, "klr.mono.managed")}' outputDir='${MONO_x86_BIN}' include='*.dll' overwrite='${true}'
+    @{
+        // Rename all .sh files to remove the sh
+        foreach (var shFile in Files.Include(Path.Combine(MONO_x86_BIN, "*.sh")))
+        {
+            var targetShFile = Path.Combine(Path.GetDirectoryName(shFile), 
+                                            Path.GetFileNameWithoutExtension(shFile));
+            if (File.Exists(targetShFile))
+            {
+                File.Delete(targetShFile);
+            }
+            
+            File.Move(shFile, targetShFile);
+        }
+    }
 
-    copy sourceDir='${Path.Combine(BUILD_DIR2, "klr.core45", "bin", "Win32", Configuration)}' outputDir='${Path.Combine(TOOLS_BIN_DIR, x86Target)}' include='*.dll' overwrite='${true}'
-    copy sourceDir='${Path.Combine(BUILD_DIR2, "klr.core45", "bin", "x64", Configuration)}' outputDir='${Path.Combine(TOOLS_BIN_DIR, x64Target)}' include='*.dll' overwrite='${true}'
+    -// KRE-svr50-x86
+    copy sourceDir='${Path.Combine(BUILD_DIR2, "klr", "bin", "Win32", Configuration, "net45")}' outputDir='${SVR50_x86_BIN}' include='*.exe' overwrite='${true}'
+    copy sourceDir='${Path.Combine(BUILD_DIR2, "klr.net45", "bin", "Win32", Configuration)}' outputDir='${SVR50_x86_BIN}' include='*.dll' overwrite='${true}'
+    copy sourceDir='${Path.Combine(ROOT, "src", "klr.net45.managed")}' outputDir='${SVR50_x86_BIN}' include='*.config' overwrite='${true}'
 
-    copy sourceDir='${Path.Combine(BUILD_DIR2, "klr.net45", "bin", "Win32", Configuration)}' outputDir='${Path.Combine(TOOLS_BIN_DIR, x86Target)}' include='*.dll' overwrite='${true}'
-    copy sourceDir='${Path.Combine(BUILD_DIR2, "klr.net45", "bin", "x64", Configuration)}' outputDir='${Path.Combine(TOOLS_BIN_DIR, x64Target)}' include='*.dll' overwrite='${true}'
+    -// KRE-svr50-x64
+    copy sourceDir='${Path.Combine(BUILD_DIR2, "klr", "bin", "x64", Configuration, "net45")}' outputDir='${SVR50_x64_BIN}' include='*.exe' overwrite='${true}'
+    copy sourceDir='${Path.Combine(BUILD_DIR2, "klr.net45", "bin", "x64", Configuration)}' outputDir='${SVR50_x64_BIN}' include='*.dll' overwrite='${true}'
+    copy sourceDir='${Path.Combine(ROOT, "src", "klr.net45.managed")}' outputDir='${SVR50_x64_BIN}' include='*.config' overwrite='${true}'
 
-    copy sourceDir='${Path.Combine(ROOT, "src", "klr.net45.managed")}' outputDir='${Path.Combine(TOOLS_BIN_DIR, x86Target)}' include='*.config' overwrite='${true}'
-    copy sourceDir='${Path.Combine(ROOT, "src", "klr.net45.managed")}' outputDir='${Path.Combine(TOOLS_BIN_DIR, x64Target)}' include='*.config' overwrite='${true}'
+    -// KRE-svrc50-x86
+    copy sourceDir='${Path.Combine(BUILD_DIR2, "klr", "bin", "Win32", Configuration, "k10")}' outputDir='${SVRC50_x86_BIN}' include='*.exe' overwrite='${true}'
+    copy sourceDir='${Path.Combine(BUILD_DIR2, "klr.core45", "bin", "Win32", Configuration)}' outputDir='${SVRC50_x86_BIN}' include='*.dll' overwrite='${true}'
+
+    -// KRE-svrc50-x64
+    copy sourceDir='${Path.Combine(BUILD_DIR2, "klr", "bin", "x64", Configuration, "k10")}' outputDir='${SVRC50_x64_BIN}' include='*.exe' overwrite='${true}'
+    copy sourceDir='${Path.Combine(BUILD_DIR2, "klr.core45", "bin", "x64", Configuration)}' outputDir='${SVRC50_x64_BIN}' include='*.dll' overwrite='${true}'
+
+    copy sourceDir='${SCRIPTS_DIR}' include='*.cmd' overwrite='${true}' each='var outputDir in new[]{ SVR50_x86_BIN, SVR50_x64_BIN, SVRC50_x86_BIN, SVRC50_x64_BIN }'
 
     @{
         var hostK10 = Path.Combine(BUILD_DIR2, "*", "k10", "**.dll");
         var hostnet45 = Path.Combine(BUILD_DIR2, "*", "net45", "**.dll");
+        var libPackages = new[] { "Microsoft.Framework.PackageManager", 
+                                  "Microsoft.Framework.DesignTimeHost", 
+                                  "Microsoft.Framework.Project" };
 
         var sharedSourceAssemblies = new [] { 
             Path.Combine(BUILD_DIR2, "klr.hosting.shared/**/*.dll"), 
@@ -232,37 +264,80 @@ var CORECLR_PATH = '${Environment.GetEnvironmentVariable("CORECLR_PATH")}'
             Path.Combine(BUILD_DIR2, "Microsoft.Framework.Runtime.Interfaces/**/*.dll")
         };
         
-        Directory.CreateDirectory(Path.Combine(TOOLS_DIR, "k10"));
-        Directory.CreateDirectory(Path.Combine(TOOLS_DIR, "net45"));
-        
         foreach(var file in Files.Include(hostK10).Exclude(sharedSourceAssemblies))
         {
-            string dest = Path.Combine(TOOLS_DIR, "k10", Path.GetFileName(file));
-            File.Copy(file, dest, true);
+            foreach(var k10Target in K10_TARGETS)
+            {
+                string dest = Path.Combine(k10Target, Path.GetFileName(file));
+                File.Copy(file, dest, true);
+            }
         }
         
         foreach(var file in Files.Include(hostnet45).Exclude(sharedSourceAssemblies))
         {
-            string dest = Path.Combine(TOOLS_DIR, "net45", Path.GetFileName(file));
-            File.Copy(file, dest, true);
+            foreach(var net45Target in NET45_TARGETS)
+            {
+                string dest = Path.Combine(net45Target, Path.GetFileName(file));
+                File.Copy(file, dest, true);
+            }
+        }
+
+        // Clean up net45.managed from mono (it's never used)
+        File.Delete(Path.Combine(MONO_x86_BIN, "klr.net45.managed.dll"));
+
+        // Remove k-crossgen.cmd from the net45 build
+        foreach (var net45Target in NET45_TARGETS)
+        {
+            var crossgen = Path.Combine(net45Target, "k-crossgen.cmd");
+            if(File.Exists(crossgen))
+            {
+                File.Delete(crossgen);
+                Log.Info("Deleting crossgen from " + crossgen);
+            }
+        }
+
+        // Move some packages into the lib/ folder
+        foreach(var libPackage in libPackages)
+        {
+            foreach(var binFolder in ALL_TARGETS)
+            {
+                var libPath = Path.Combine(binFolder, "lib", libPackage);
+                var source = Path.Combine(binFolder, libPackage + ".dll");
+                var target = Path.Combine(libPath, libPackage + ".dll");
+
+                if(File.Exists(source))
+                {
+                    if (File.Exists(target))
+                    {
+                        File.Delete(target);
+                    }
+
+                    Directory.CreateDirectory(libPath);
+                    File.Move(source, target);
+
+                    Log.Info("Moving " + libPackage + " to " + target);
+                }
+                else
+                {
+                    Log.Warn(libPackage + " does not exist in " + binFolder);
+                }
+            }
         }
     }
-
-    copy sourceDir='${Path.Combine(TOOLS_DIR, "net45")}' outputDir='${Path.Combine(TOOLS_BIN_DIR, x86Target)}' include='*managed.dll' overwrite='${true}'
-    copy sourceDir='${Path.Combine(TOOLS_DIR, "net45")}' outputDir='${Path.Combine(TOOLS_BIN_DIR, x64Target)}' include='*managed.dll' overwrite='${true}'
-    copy sourceDir='${Path.Combine(TOOLS_DIR, "k10")}' outputDir='${Path.Combine(TOOLS_BIN_DIR, x86Target)}' include='*managed.dll' overwrite='${true}'
-    copy sourceDir='${Path.Combine(TOOLS_DIR, "k10")}' outputDir='${Path.Combine(TOOLS_BIN_DIR, x64Target)}' include='*managed.dll' overwrite='${true}'
     
 
 #tweak-scripts
     @{
-        foreach(var file in Files.Include(Path.Combine(TOOLS_DIR, "*.cmd")))
+        foreach(var targetDir in new[] { SVR50_x86_BIN, SVR50_x64_BIN, SVRC50_x86_BIN, SVRC50_x64_BIN })
         {
-            var script = File.ReadAllText(file);
+            foreach(var file in Files.Include(Path.Combine(targetDir, "*.cmd")))
+            {
+                var script = File.ReadAllText(file);
 
-            script = Regex.Replace(script, @"REM \<dev\>(.*?)REM \<\/dev\>(\s*)", @"", RegexOptions.Singleline);
+                script = Regex.Replace(script, @"REM \<dev\>(.*?)REM \<\/dev\>(\s*)", @"", RegexOptions.Singleline);
 
-            File.WriteAllText(file, script);
+                File.WriteAllText(file, script);
+            }
         }
     }
 
@@ -315,18 +390,32 @@ var CORECLR_PATH = '${Environment.GetEnvironmentVariable("CORECLR_PATH")}'
 
                 foreach(var fi in di.GetFiles("*.dll"))
                 {
-                    string packageFileDest = Path.Combine(TOOLS_DIR, framework, fi.Name);
-                    File.Copy(fi.FullName, packageFileDest, true);
+                    string[] targetDirs = null;
 
-                    Log.Info("Copying to " + packageFileDest);
+                    if (framework == "k10")
+                    {
+                        targetDirs = K10_TARGETS;
+                    }
+                    else
+                    {
+                        targetDirs = NET45_TARGETS;
+                    }
+
+                    foreach(var targetDir in targetDirs)
+                    {
+                        string packageFileDest = Path.Combine(targetDir, fi.Name);
+                        File.Copy(fi.FullName, packageFileDest, true);
+
+                        Log.Info("Copying to " + packageFileDest);
+                    }
                 }
             }
         }
     }
 
 #copy-coreclr
-    nuget-install package='CoreCLR' outputDir='packages' extra='-pre -nocache' once='CoreCLR' if='!IsMono'
-    
+    nuget-install package='CoreCLR' outputDir='packages' extra='-pre -nocache' once='CoreCLR' if='!IsMono && String.IsNullOrEmpty(CORECLR_PATH)'
+
     var CoreCLR_DIR='${""}'
     @{
         if (String.IsNullOrEmpty(CORECLR_PATH))
@@ -357,10 +446,18 @@ var CORECLR_PATH = '${Environment.GetEnvironmentVariable("CORECLR_PATH")}'
         }
     }
 
-    copy sourceDir='${CORECLR_PATH}' outputDir='${SDK_ROOT}' overwrite='${true}' if='!String.IsNullOrEmpty(CORECLR_PATH)'
-    copy sourceDir='${Path.Combine(CoreCLR_DIR, "Runtime")}' outputDir='${Path.Combine(SDK_ROOT, "Runtime")}' overwrite='${true}' if='!String.IsNullOrEmpty(CoreCLR_DIR)'
+    -// For CI builds
+    copy sourceDir='${CORECLR_PATH}' outputDir='${CORECLR_TARGET_PATH}' overwrite='${true}' if='!String.IsNullOrEmpty(CORECLR_PATH)'
+
+    -// For local builds
+    copy sourceDir='${Path.Combine(CoreCLR_DIR, "Runtime")}' outputDir='${Path.Combine(CORECLR_TARGET_PATH, "Runtime")}' overwrite='${true}' if='!String.IsNullOrEmpty(CoreCLR_DIR)'
+    
+    -// Copy the CoreCLR to the k10 builds
+    copy sourceDir='${Path.Combine(CORECLR_TARGET_PATH, "Runtime", "x86")}' outputDir='${SVRC50_x86_BIN}'
+    copy sourceDir='${Path.Combine(CORECLR_TARGET_PATH, "Runtime", "amd64")}' outputDir='${SVRC50_x64_BIN}'
 
 #nuget-pack-runtime
+    -//var nuspecs = KRE-mono45-x86
     @{
         var allPackages = Path.Combine(BUILD_DIR2, "**", "*.nupkg");
         var excludePackages = Path.Combine(BUILD_DIR2, "**", "Microsoft.Framework.Runtime.Interfaces*.nupkg");
@@ -371,8 +468,8 @@ var CORECLR_PATH = '${Environment.GetEnvironmentVariable("CORECLR_PATH")}'
         }
     }
     
-    copy sourceDir='${NUSPEC_ROOT}' outputDir='${SDK_ROOT}' include='*.nuspec' overwrite='${true}'
-    nuget-pack nuspecFile='${nuspec}' packageVersion='${FULL_VERSION}' outputDir='${BUILD_DIR2}' extra='-NoPackageAnalysis' each='var nuspec in Files.Include(Path.Combine(SDK_ROOT, "*.nuspec"))'
+    copy sourceDir='${NUSPEC_ROOT}' outputDir='${BUILD_DIR2}' include='*.nuspec' overwrite='${true}'
+    nuget-pack packageVersion='${FULL_VERSION}' outputDir='${BUILD_DIR2}' extra='-NoPackageAnalysis' each='var nuspecFile in Files.Include(Path.Combine(BUILD_DIR2, "*.nuspec"))'
 
 #install-runtime target='install'
   var matchVersion=''

@@ -8,14 +8,6 @@
         <description>The K Runtime Environment for Mono on OSX</description>
     </metadata>
     <files>
-        <file src="tools\net45\**" exclude="tools\net45\klr.net45.managed*;tools\net45\*DesignTime*;tools\net45\*Project*;tools\net45\*PackageManager*" target="bin" />
-        <file src="..\klr.mono.managed\klr.mono.managed.dll" target="bin" />
-        <file src="tools\klr.sh" target="bin\klr" />
-        <file src="tools\k.sh" target="bin\k" />
-        <file src="tools\k-build.sh" target="bin\k-build" />
-        <file src="tools\kpm.sh" target="bin\kpm" />
-        <file src="tools\net45\Microsoft.Framework.DesignTimeHost.dll" target="bin\lib\Microsoft.Framework.DesignTimeHost\Microsoft.Framework.DesignTimeHost.dll" />
-        <file src="tools\net45\Microsoft.Framework.PackageManager.dll" target="bin\lib\Microsoft.Framework.PackageManager\Microsoft.Framework.PackageManager.dll" />
-        <file src="tools\net45\Microsoft.Framework.Project.dll" target="bin\lib\Microsoft.Framework.Project\Microsoft.Framework.Project.dll" />
+        <file src="KRE-mono45-x86\bin\**" target="bin" />
     </files>
 </package>

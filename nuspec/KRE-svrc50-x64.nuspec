@@ -8,17 +8,6 @@
         <description>The K Runtime Environment for CoreCLR x64</description>
     </metadata>
     <files>
-        <file src="tools\k10\**" exclude="tools\k10\*DesignTime*;tools\k10\*Project*;tools\k10\*PackageManager*" target="bin" />
-        <file src="tools\bin\amd64\k10\klr.exe" target="bin" />
-        <file src="tools\bin\amd64\klr.core45.dll" target="bin" />
-        <file src="Runtime\amd64\**" target="bin" />
-        <file src="tools\klr.cmd" target="bin\klr.cmd" />
-        <file src="tools\k.cmd" target="bin\k.cmd" />
-        <file src="tools\k-build.cmd" target="bin\k-build.cmd" />
-        <file src="tools\k-crossgen.cmd" target="bin\k-crossgen.cmd" />
-<!--        <file src="tools\kpm.cmd" target="bin\kpm.cmd" />  -->
-        <file src="tools\k10\Microsoft.Framework.DesignTimeHost.dll" target="bin\lib\Microsoft.Framework.DesignTimeHost\Microsoft.Framework.DesignTimeHost.dll" />
-<!--        <file src="tools\k10\Microsoft.Framework.PackageManager.dll" target="bin\lib\Microsoft.Framework.PackageManager\Microsoft.Framework.PackageManager.dll" /> -->
-        <file src="tools\k10\Microsoft.Framework.Project.dll" target="bin\lib\Microsoft.Framework.Project\Microsoft.Framework.Project.dll" />
+        <file src="KRE-svrc50-x64\bin\**" target="bin" />
     </files>
 </package>
