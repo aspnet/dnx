@@ -74,7 +74,7 @@ namespace Microsoft.Framework.Runtime
             if (_unresolvedProvider.UnresolvedDependencies.Any())
             {
                 throw new InvalidOperationException(
-                    String.Format("Unable to resolve depedendencies {0}",
+                    String.Format("Unable to resolve dependencies {0}",
                         String.Join(",", _unresolvedProvider.UnresolvedDependencies.Select(d => d.Identity.ToString()))));
             }
 
