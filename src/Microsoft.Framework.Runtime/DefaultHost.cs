@@ -106,7 +106,7 @@ namespace Microsoft.Framework.Runtime
             var dependencyProviders = new List<IDependencyProvider>();
             var loaders = new List<IAssemblyLoader>();
 
-            string rootDirectory = ResolveRootDirectory(_projectDir);
+            string rootDirectory = ProjectResolver.ResolveRootDirectory(_projectDir);
 
             if (options.WatchFiles)
             {
@@ -169,25 +169,6 @@ namespace Microsoft.Framework.Runtime
                                    libraryExporters.Concat(new[] { roslynLoader })));
         }
 
-        public static string ResolveRootDirectory(string projectDir)
-        {
-            var di = new DirectoryInfo(Path.GetDirectoryName(projectDir));
-
-            while (di.Parent != null)
-            {
-                if (di.EnumerateFiles("*." + GlobalSettings.GlobalFileName).Any() ||
-                    di.EnumerateFiles("*.sln").Any() ||
-                    di.EnumerateDirectories("packages").Any() ||
-                    di.EnumerateDirectories(".git").Any())
-                {
-                    return di.FullName;
-                }
-
-                di = di.Parent;
-            }
-
-            return Path.GetDirectoryName(projectDir);
-        }
 
         private static string Normalize(string projectDir)
         {

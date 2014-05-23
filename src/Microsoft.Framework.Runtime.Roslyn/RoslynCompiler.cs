@@ -57,6 +57,8 @@ namespace Microsoft.Framework.Runtime.Roslyn
 
             string path = project.ProjectDirectory;
 
+            _watcher.WatchProject(path);
+
             _watcher.WatchFile(project.ProjectFilePath);
 
             var targetFrameworkConfig = project.GetTargetFrameworkConfiguration(targetFramework);

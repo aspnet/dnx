@@ -305,7 +305,7 @@ namespace Microsoft.Framework.Project
         private static RoslynArtifactsProducer PrepareArtifactsProducer(KProject project, FrameworkName targetFramework, out IDictionary<string, string> packagePaths)
         {
             var projectDir = project.ProjectDirectory;
-            var rootDirectory = DefaultHost.ResolveRootDirectory(projectDir);
+            var rootDirectory = ProjectResolver.ResolveRootDirectory(projectDir);
             var projectResolver = new ProjectResolver(projectDir, rootDirectory);
 
             var resxProvider = new ResxResourceProvider();
@@ -349,7 +349,7 @@ namespace Microsoft.Framework.Project
         private IRoslynCompiler PrepareCompiler(KProject project, FrameworkName targetFramework)
         {
             var projectDir = project.ProjectDirectory;
-            var rootDirectory = DefaultHost.ResolveRootDirectory(projectDir);
+            var rootDirectory = ProjectResolver.ResolveRootDirectory(projectDir);
             var projectResolver = new ProjectResolver(projectDir, rootDirectory);
 
             var referenceAssemblyDependencyResolver = new ReferenceAssemblyDependencyResolver();

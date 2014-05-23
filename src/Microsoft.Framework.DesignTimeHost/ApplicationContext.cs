@@ -366,7 +366,7 @@ namespace Microsoft.Framework.DesignTimeHost
             }
 
             var projectDir = project.ProjectDirectory;
-            var rootDirectory = DefaultHost.ResolveRootDirectory(projectDir);
+            var rootDirectory = ProjectResolver.ResolveRootDirectory(projectDir);
             var projectResolver = new ProjectResolver(projectDir, rootDirectory);
 
             var referenceAssemblyDependencyResolver = new ReferenceAssemblyDependencyResolver();

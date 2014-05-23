@@ -38,7 +38,7 @@ namespace Microsoft.Framework.PackageManager.Packing
         {
             public DependencyContext(string projectDir)
             {
-                var rootDirectory = DefaultHost.ResolveRootDirectory(projectDir);
+                var rootDirectory = ProjectResolver.ResolveRootDirectory(projectDir);
                 var projectResolver = new ProjectResolver(projectDir, rootDirectory);
 
                 var referenceAssemblyDependencyResolver = new ReferenceAssemblyDependencyResolver();
