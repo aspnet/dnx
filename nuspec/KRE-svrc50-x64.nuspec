@@ -8,6 +8,6 @@
         <description>The K Runtime Environment for CoreCLR x64</description>
     </metadata>
     <files>
-        <file src="KRE-svrc50-x64\bin\**" target="bin" />
+        <file src="KRE-svrc50-x64\bin\**" exclude="**\*.pdb;**\*.xml" target="bin" />
     </files>
 </package>

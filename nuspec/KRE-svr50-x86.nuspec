@@ -8,6 +8,6 @@
         <description>The K Runtime Environment for Desktop CLR x86</description>
     </metadata>
     <files>
-        <file src="KRE-svr50-x86\bin\**" target="bin" />
+        <file src="KRE-svr50-x86\bin\**" exclude="**\*.pdb;**\*.xml" target="bin" />
     </files>
 </package>

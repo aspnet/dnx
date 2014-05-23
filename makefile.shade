@@ -233,35 +233,39 @@ var ALL_TARGETS = '${NET45_TARGETS.Concat(K10_TARGETS)}'
     -// KRE-svr50-x86
     copy sourceDir='${Path.Combine(BUILD_DIR2, "klr", "bin", "Win32", Configuration, "net45")}' outputDir='${SVR50_x86_BIN}' include='*.exe' overwrite='${true}'
     copy sourceDir='${Path.Combine(BUILD_DIR2, "klr.net45", "bin", "Win32", Configuration)}' outputDir='${SVR50_x86_BIN}' include='*.dll' overwrite='${true}'
+    copy sourceDir='${Path.Combine(BUILD_DIR2, "klr.net45", "bin", "Win32", Configuration)}' outputDir='${SVR50_x86_BIN}' include='*.pdb' overwrite='${true}'
     copy sourceDir='${Path.Combine(ROOT, "src", "klr.net45.managed")}' outputDir='${SVR50_x86_BIN}' include='*.config' overwrite='${true}'
 
     -// KRE-svr50-x64
     copy sourceDir='${Path.Combine(BUILD_DIR2, "klr", "bin", "x64", Configuration, "net45")}' outputDir='${SVR50_x64_BIN}' include='*.exe' overwrite='${true}'
     copy sourceDir='${Path.Combine(BUILD_DIR2, "klr.net45", "bin", "x64", Configuration)}' outputDir='${SVR50_x64_BIN}' include='*.dll' overwrite='${true}'
+    copy sourceDir='${Path.Combine(BUILD_DIR2, "klr.net45", "bin", "x64", Configuration)}' outputDir='${SVR50_x64_BIN}' include='*.pdb' overwrite='${true}'
     copy sourceDir='${Path.Combine(ROOT, "src", "klr.net45.managed")}' outputDir='${SVR50_x64_BIN}' include='*.config' overwrite='${true}'
 
     -// KRE-svrc50-x86
     copy sourceDir='${Path.Combine(BUILD_DIR2, "klr", "bin", "Win32", Configuration, "k10")}' outputDir='${SVRC50_x86_BIN}' include='*.exe' overwrite='${true}'
     copy sourceDir='${Path.Combine(BUILD_DIR2, "klr.core45", "bin", "Win32", Configuration)}' outputDir='${SVRC50_x86_BIN}' include='*.dll' overwrite='${true}'
+    copy sourceDir='${Path.Combine(BUILD_DIR2, "klr.core45", "bin", "Win32", Configuration)}' outputDir='${SVRC50_x86_BIN}' include='*.pdb' overwrite='${true}'
 
     -// KRE-svrc50-x64
     copy sourceDir='${Path.Combine(BUILD_DIR2, "klr", "bin", "x64", Configuration, "k10")}' outputDir='${SVRC50_x64_BIN}' include='*.exe' overwrite='${true}'
     copy sourceDir='${Path.Combine(BUILD_DIR2, "klr.core45", "bin", "x64", Configuration)}' outputDir='${SVRC50_x64_BIN}' include='*.dll' overwrite='${true}'
+    copy sourceDir='${Path.Combine(BUILD_DIR2, "klr.core45", "bin", "x64", Configuration)}' outputDir='${SVRC50_x64_BIN}' include='*.pdb' overwrite='${true}'
 
     copy sourceDir='${SCRIPTS_DIR}' include='*.cmd' overwrite='${true}' each='var outputDir in new[]{ SVR50_x86_BIN, SVR50_x64_BIN, SVRC50_x86_BIN, SVRC50_x64_BIN }'
 
     @{
-        var hostK10 = Path.Combine(BUILD_DIR2, "*", "k10", "**.dll");
-        var hostnet45 = Path.Combine(BUILD_DIR2, "*", "net45", "**.dll");
+        var hostK10 = Path.Combine(BUILD_DIR2, "*", "k10", "**.*");
+        var hostnet45 = Path.Combine(BUILD_DIR2, "*", "net45", "**.*");
         var libPackages = new[] { "Microsoft.Framework.PackageManager", 
                                   "Microsoft.Framework.DesignTimeHost", 
                                   "Microsoft.Framework.Project" };
 
         var sharedSourceAssemblies = new [] { 
-            Path.Combine(BUILD_DIR2, "klr.hosting.shared/**/*.dll"), 
-            Path.Combine(BUILD_DIR2, "Microsoft.Framework.CommandLineUtils/**/*.dll"), 
-            Path.Combine(BUILD_DIR2, "Microsoft.Framework.Runtime.Common/**/*.dll"),
-            Path.Combine(BUILD_DIR2, "Microsoft.Framework.Runtime.Interfaces/**/*.dll")
+            Path.Combine(BUILD_DIR2, "klr.hosting.shared/**/*.*"), 
+            Path.Combine(BUILD_DIR2, "Microsoft.Framework.CommandLineUtils/**/*.*"), 
+            Path.Combine(BUILD_DIR2, "Microsoft.Framework.Runtime.Common/**/*.*"),
+            Path.Combine(BUILD_DIR2, "Microsoft.Framework.Runtime.Interfaces/**/*.*")
         };
         
         foreach(var file in Files.Include(hostK10).Exclude(sharedSourceAssemblies))
@@ -296,31 +300,37 @@ var ALL_TARGETS = '${NET45_TARGETS.Concat(K10_TARGETS)}'
             }
         }
 
+        Action<string, string, string> move = (binFolder, name, extension) =>
+        {
+            var libPath = Path.Combine(binFolder, "lib", name);
+            var source = Path.Combine(binFolder, name + extension);
+            var target = Path.Combine(libPath, name + extension);
+            
+            if (File.Exists(source))
+            {
+                if (File.Exists(target))
+                {
+                    File.Delete(target);
+                }
+                
+                Directory.CreateDirectory(libPath);
+                File.Move(source, target);
+
+                Log.Info("Moving " + name + " to " + target);
+            }
+            else
+            {
+                Log.Warn(name + " does not exist in " + binFolder);
+            }
+        };
+        
         // Move some packages into the lib/ folder
-        foreach(var libPackage in libPackages)
+        foreach (var libPackage in libPackages)
         {
             foreach(var binFolder in ALL_TARGETS)
             {
-                var libPath = Path.Combine(binFolder, "lib", libPackage);
-                var source = Path.Combine(binFolder, libPackage + ".dll");
-                var target = Path.Combine(libPath, libPackage + ".dll");
-
-                if(File.Exists(source))
-                {
-                    if (File.Exists(target))
-                    {
-                        File.Delete(target);
-                    }
-
-                    Directory.CreateDirectory(libPath);
-                    File.Move(source, target);
-
-                    Log.Info("Moving " + libPackage + " to " + target);
-                }
-                else
-                {
-                    Log.Warn(libPackage + " does not exist in " + binFolder);
-                }
+                move(binFolder, libPackage, ".dll");
+                move(binFolder, libPackage, ".pdb");
             }
         }
     }

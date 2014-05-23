@@ -8,6 +8,6 @@
         <description>The K Runtime Environment for Mono on OSX</description>
     </metadata>
     <files>
-        <file src="KRE-mono45-x86\bin\**" target="bin" />
+        <file src="KRE-mono45-x86\bin\**" exclude="**\*.pdb;**\*.xml" target="bin" />
     </files>
 </package>
