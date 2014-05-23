@@ -20,6 +20,7 @@ namespace Microsoft.Framework.Runtime.Roslyn
 
             var rootOptions = project.GetCompilationOptions();
             var rootDefines = ConvertValue<string[]>(rootOptions, "define") ?? new string[] { };
+            var languageVersionValue = ConvertValue<string>(rootOptions, "languageVersion");
 
             var configuration = project.GetConfiguration(targetFramework);
 
@@ -34,7 +35,7 @@ namespace Microsoft.Framework.Runtime.Roslyn
             {
                 specificOptions = configuration.Value["compilationOptions"];
                 specificDefines = ConvertValue<string[]>(specificOptions, "define") ??
-                    new[] { 
+                    new[] {
                         MakeDefaultTargetFrameworkDefine(targetFramework)
                     };
             }
@@ -60,8 +61,18 @@ namespace Microsoft.Framework.Runtime.Roslyn
 
             options = options.WithAssemblyIdentityComparer(assemblyIdentityComparer);
 
+            LanguageVersion languageVersion;
+            if (!Enum.TryParse<LanguageVersion>(value: languageVersionValue,
+                                                ignoreCase: true,
+                                                result: out languageVersion))
+            {
+                // REVIEW: Should the default be C# 6 or experimental?
+                languageVersion = LanguageVersion.CSharp6;
+            }
+
             var settings = new CompilationSettings
             {
+                LanguageVersion = languageVersion,
                 Defines = rootDefines.Concat(specificDefines),
                 CompilationOptions = options
             };
@@ -96,7 +107,9 @@ namespace Microsoft.Framework.Runtime.Roslyn
             bool warningsAsErrors = GetValue<bool>(compilationOptions, "warningsAsErrors");
 
             Platform platform;
-            if (!Enum.TryParse<Platform>(platformValue, out platform))
+            if (!Enum.TryParse<Platform>(value: platformValue,
+                                         ignoreCase: true,
+                                         result: out platform))
             {
                 platform = Platform.AnyCpu;
             }

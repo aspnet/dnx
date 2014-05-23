@@ -200,7 +200,8 @@ namespace Microsoft.Framework.Runtime.Roslyn
 
             var sourceFiles = project.SourceFiles.ToList();
 
-            var parseOptions = new CSharpParseOptions(preprocessorSymbols: compilationSettings.Defines.AsImmutable());
+            var parseOptions = new CSharpParseOptions(languageVersion: compilationSettings.LanguageVersion,
+                                                      preprocessorSymbols: compilationSettings.Defines.AsImmutable());
 
             foreach (var sourcePath in sourceFiles)
             {
