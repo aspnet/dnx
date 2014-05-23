@@ -66,7 +66,6 @@ namespace Microsoft.Framework.Runtime.Roslyn
                                                 ignoreCase: true,
                                                 result: out languageVersion))
             {
-                // REVIEW: Should the default be C# 6 or experimental?
                 languageVersion = LanguageVersion.CSharp6;
             }
 
