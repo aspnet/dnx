@@ -11,5 +11,7 @@ namespace Microsoft.Framework.Runtime.FileSystem
         void WatchDirectory(string path, string extension);
 
         bool WatchFile(string path);
+
+        void WatchProject(string path);
     }
 }
