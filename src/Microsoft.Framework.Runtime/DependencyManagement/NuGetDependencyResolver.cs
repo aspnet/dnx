@@ -304,6 +304,13 @@ namespace Microsoft.Framework.Runtime
             {
                 foreach (var reference in references)
                 {
+                    // Skip anything that isn't a dll. Unfortunately some packages put random stuff
+                    // in the lib folder and they surface as assembly references
+                    if (!Path.GetExtension(reference.Path).Equals(".dll", StringComparison.OrdinalIgnoreCase))
+                    {
+                        continue;
+                    }
+
                     string fileName = Path.Combine(path, reference.Path);
                     yield return fileName;
                 }
@@ -327,23 +334,7 @@ namespace Microsoft.Framework.Runtime
 
         public static string ResolveRepositoryPath(string projectPath)
         {
-            var di = new DirectoryInfo(projectPath);
-
-            string rootPath = null;
-
-            while (di.Parent != null)
-            {
-                if (di.EnumerateDirectories("packages").Any() ||
-                    di.EnumerateFiles("*.sln").Any())
-                {
-                    rootPath = di.FullName;
-                    break;
-                }
-
-                di = di.Parent;
-            }
-
-            rootPath = rootPath ?? Path.GetDirectoryName(projectPath);
+            var rootPath = ProjectResolver.ResolveRootDirectory(projectPath);
 
             return Path.Combine(rootPath, "packages");
         }
