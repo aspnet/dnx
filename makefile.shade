@@ -226,7 +226,10 @@ var ALL_TARGETS = '${NET45_TARGETS.Concat(K10_TARGETS)}'
                 File.Delete(targetShFile);
             }
             
+            // Make sure new lines are \n (\r\n messes up the bash script)
+            var script = File.ReadAllText(shFile).Replace('\r\n', '\n');
             File.Move(shFile, targetShFile);
+            File.WriteAllText(targetShFile, script);
         }
     }
 
