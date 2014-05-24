@@ -8,6 +8,7 @@ using System.Linq;
 using System.Runtime.Versioning;
 using System.Security;
 using System.Xml;
+using Microsoft.Framework.Runtime;
 
 namespace NuGet
 {
@@ -70,21 +71,21 @@ namespace NuGet
         {
             var profileCollection = new NetPortableProfileCollection();
 
-#if NET45 // CORECLR_TODO: Environment.GetFolderPath
-            string portableRootDirectory =
-                    Path.Combine(
-                        Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86, Environment.SpecialFolderOption.DoNotVerify),
-                        @"Reference Assemblies\Microsoft\Framework\.NETPortable");
+            var referenceAssembliesPath = FrameworkReferenceResolver.GetReferenceAssembliesPath();
 
-            if (Directory.Exists(portableRootDirectory))
+            if (!string.IsNullOrEmpty(referenceAssembliesPath))
             {
-                foreach (string versionDir in Directory.EnumerateDirectories(portableRootDirectory, "v*", SearchOption.TopDirectoryOnly))
+                string portableRootDirectory = Path.Combine(referenceAssembliesPath, ".NETPortable");
+
+                if (Directory.Exists(portableRootDirectory))
                 {
-                    string profileFilesPath = versionDir + @"\Profile\";
-                    profileCollection.AddRange(LoadProfilesFromFramework(versionDir, profileFilesPath));
+                    foreach (string versionDir in Directory.EnumerateDirectories(portableRootDirectory, "v*", SearchOption.TopDirectoryOnly))
+                    {
+                        string profileFilesPath = versionDir + @"\Profile\";
+                        profileCollection.AddRange(LoadProfilesFromFramework(versionDir, profileFilesPath));
+                    }
                 }
             }
-#endif
 
             return profileCollection;
         }
