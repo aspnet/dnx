@@ -30,11 +30,12 @@ var SVRC50_x64_BIN='${Path.Combine(BUILD_DIR2, "KRE-svrc50-x64", "bin")}'
 var NET45_TARGETS = '${new [] { MONO_x86_BIN, SVR50_x86_BIN, SVR50_x64_BIN}}'
 var K10_TARGETS = '${new [] { SVRC50_x86_BIN, SVRC50_x64_BIN}}'
 var ALL_TARGETS = '${NET45_TARGETS.Concat(K10_TARGETS)}'
+var NEW_RUNTIME = '${Environment.GetEnvironmentVariable("NEW_RUNTIME") == "1"}'
 
 
 #package-runtime .clean-sdk-dir .copy-bits .tweak-scripts .copy-package-dependencies .copy-coreclr .nuget-pack-runtime target='package'
 
-#rebuild-package .build-mono-entrypoint .build-compile .native-compile .package-runtime
+#rebuild-package .build-mono-entrypoint .build-compile .native-compile .xunit-test .package-runtime
 
 #compile-klr target='native-compile' if='!IsMono'
   var programFilesX86 = '${Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86)}'
@@ -75,6 +76,9 @@ var ALL_TARGETS = '${NET45_TARGETS.Concat(K10_TARGETS)}'
         updateText = updateText.Replace("{{BUILD_NUMBER}}", Environment.GetEnvironmentVariable("BUILD_NUMBER"));
     }
 
+#xunit-test target='test' if='Directory.Exists("test")'
+  k-test each='var projectFile in Files.Include("test/**/project.json")' if='NEW_RUNTIME'
+  
 #test-package
     var helloWorld = '${Path.Combine(SAMPLES_DIR, "HelloWorld")}'
     var kcmd = '${Path.Combine(TEST_RESULTS, "KRE", "tools", "k.cmd")}'
@@ -193,12 +197,14 @@ var ALL_TARGETS = '${NET45_TARGETS.Concat(K10_TARGETS)}'
         {
             Log.Info("Adding PATH " + Path.Combine(PACKAGES_DIR, "KRE", "bin"));
             Environment.SetEnvironmentVariable("PATH", Path.Combine(PACKAGES_DIR, "KRE", "bin") + ";" + envPath);
+            Environment.SetEnvironmentVariable("NEW_RUNTIME", "1"); 
             Log.Info("Rebuilding target default"); 
             Exec("build.cmd", "rebuild-package");
         }
         finally
         {
             Environment.SetEnvironmentVariable("PATH", envPath);
+            Environment.SetEnvironmentVariable("NEW_RUNTIME", null);
         }
     }
     

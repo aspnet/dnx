@@ -13,7 +13,7 @@ namespace Microsoft.Framework.Runtime.FileSystem
         private readonly HashSet<string> _files = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         private readonly Dictionary<string, HashSet<string>> _directories = new Dictionary<string, HashSet<string>>(StringComparer.OrdinalIgnoreCase);
 
-        private readonly List<FileSystemWatcher> _watchers = new List<FileSystemWatcher>();
+        private readonly List<IWatcherRoot> _watchers = new List<IWatcherRoot>();
 
         internal FileWatcher()
         {
@@ -41,20 +41,13 @@ namespace Microsoft.Framework.Runtime.FileSystem
 
         public void WatchProject(string projectPath)
         {
-            bool anyWatchers = false;
-
-            foreach (var watcher in _watchers)
+            if (string.IsNullOrEmpty(projectPath))
             {
-                // REVIEW: This needs to work x-platform, should this be case
-                // sensitive?
-                if (projectPath.StartsWith(watcher.Path, StringComparison.OrdinalIgnoreCase))
-                {
-                    anyWatchers = true;
-                }
+                return;
             }
 
             // If any watchers already handle this path then noop
-            if (!anyWatchers)
+            if (!IsAlreadyWatched(projectPath))
             {
                 // To reduce the number of watchers we have we add a watcher to the root
                 // of this project so that we'll be notified if anything we care
@@ -62,6 +55,29 @@ namespace Microsoft.Framework.Runtime.FileSystem
                 var rootPath = ProjectResolver.ResolveRootDirectory(projectPath);
                 AddWatcher(rootPath);
             }
+        }
+
+        // For testing
+        internal bool IsAlreadyWatched(string projectPath)
+        {
+            if (string.IsNullOrEmpty(projectPath))
+            {
+                return false;
+            }
+
+            bool anyWatchers = false;
+
+            foreach (var watcher in _watchers)
+            {
+                // REVIEW: This needs to work x-platform, should this be case
+                // sensitive?
+                if (EnsureTrailingSlash(projectPath).StartsWith(EnsureTrailingSlash(watcher.Path), StringComparison.OrdinalIgnoreCase))
+                {
+                    anyWatchers = true;
+                }
+            }
+
+            return anyWatchers;
         }
 
         public void Dispose()
@@ -103,6 +119,27 @@ namespace Microsoft.Framework.Runtime.FileSystem
             return false;
         }
 
+        private static string EnsureTrailingSlash(string path)
+        {
+            if (string.IsNullOrEmpty(path))
+            {
+                return path;
+            }
+
+            if (path[path.Length - 1] != Path.DirectorySeparatorChar)
+            {
+                return path + Path.DirectorySeparatorChar;
+            }
+
+            return path;
+        }
+
+        // For testing only
+        internal void AddWatcher(IWatcherRoot watcherRoot)
+        {
+            _watchers.Add(watcherRoot);
+        }
+
         private void AddWatcher(string path)
         {
             var watcher = new FileSystemWatcher(path);
@@ -114,7 +151,7 @@ namespace Microsoft.Framework.Runtime.FileSystem
             watcher.Deleted += OnWatcherChanged;
             watcher.Created += OnWatcherChanged;
 
-            _watchers.Add(watcher);
+            _watchers.Add(new FileSystemWatcherRoot(watcher));
         }
 
         private void OnRenamed(object sender, RenamedEventArgs e)

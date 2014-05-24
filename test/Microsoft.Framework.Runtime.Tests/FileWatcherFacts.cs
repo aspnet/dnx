@@ -178,5 +178,39 @@ namespace Loader.Tests
 
             Assert.True(changed);
         }
+
+        [Theory]
+        [InlineData(@"c:\myprojects\foo", true)]
+        [InlineData(@"c:\myprojects\foo\b\c\d.txt", true)]
+        [InlineData(@"c:\myprojects\", false)]
+        [InlineData(@"c:\myprojects", false)]
+        [InlineData(@"c:\myprojects\anotherproject", false)]
+        [InlineData(@"c:\myprojects\foos\", false)]
+        [InlineData(@"c:\myprojects\foos", false)]
+        [InlineData(null, false)]
+        [InlineData("", false)]
+        public void IsAlreadyWatched(string newPath, bool expectedResult)
+        {
+            var watcher = new FileWatcher();
+            watcher.AddWatcher(new WatcherRoot(@"c:\myprojects\foo"));
+
+            var isAlreadyWatched = watcher.IsAlreadyWatched(newPath);
+
+            Assert.Equal(expectedResult, isAlreadyWatched);
+        }
+
+        private class WatcherRoot : IWatcherRoot
+        {
+            public WatcherRoot(string path)
+            {
+                Path = path;
+            }
+            public string Path { get; private set; }
+
+            public void Dispose()
+            {
+
+            }
+        }
     }
 }

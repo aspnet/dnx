@@ -45,7 +45,9 @@
     <Compile Include="ExportProviders\UnresolvedMetadataReference.cs" />
     <Compile Include="ExportProviders\MetadataFileReference.cs" />
     <Compile Include="ExportProviders\SourceFileReference.cs" />
+    <Compile Include="FileSystem\FileSystemWatcherRoot.cs" />
     <Compile Include="FileSystem\FileWatcher.cs" />
+    <Compile Include="FileSystem\IWatcherRoot.cs" />
     <Compile Include="FileSystem\IFileWatcher.cs" />
     <Compile Include="FrameworkReferenceResolver.cs" />
     <Compile Include="GlobalSettings.cs" />
