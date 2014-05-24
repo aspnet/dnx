@@ -14,6 +14,8 @@ namespace NuGet
 {
     public static class NetPortableProfileTable
     {
+        private static readonly object _profileTableInitLock = new object();
+
         // This collection is the original indexed collection where profiles are indexed by 
         // the full "ProfileXXX" naming. 
         private static NetPortableProfileCollection _portableProfiles;
@@ -45,25 +47,26 @@ namespace NuGet
             return result;
         }
 
-        internal static NetPortableProfileCollection Profiles
+        private static NetPortableProfileCollection Profiles
         {
             get
             {
                 if (_portableProfiles == null)
                 {
-                    // We use the setter so that we can consistently set both the 
-                    // existing collection as well as the CustomProfileString-indexed one.
-                    // This keeps both in sync.
-                    Profiles = BuildPortableProfileCollection();
+                    lock (_profileTableInitLock)
+                    {
+                        if (_portableProfiles == null)
+                        {
+                            // We use the setter so that we can consistently set both the 
+                            // existing collection as well as the CustomProfileString-indexed one.
+                            // This keeps both in sync.
+                            _portableProfiles = BuildPortableProfileCollection();
+                            _portableProfilesByCustomProfileString = _portableProfiles.ToDictionary(x => x.CustomProfileString, new ProfileStringComparer());
+                        }
+                    }
                 }
 
                 return _portableProfiles;
-            }
-            set
-            {
-                // This setter is only for Unit Tests.
-                _portableProfiles = value;
-                _portableProfilesByCustomProfileString = _portableProfiles.ToDictionary(x => x.CustomProfileString, new ProfileStringComparer());
             }
         }
 
@@ -141,7 +144,7 @@ namespace NuGet
             }
         }
 
-        internal static FrameworkName LoadSupportedFramework(Stream stream)
+        private static FrameworkName LoadSupportedFramework(Stream stream)
         {
             try
             {
