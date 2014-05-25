@@ -8,6 +8,7 @@ using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using Microsoft.Framework.Runtime;
 using NuGet.Resources;
 
 namespace NuGet
@@ -362,10 +363,21 @@ namespace NuGet
 
             if (Path.GetExtension(path) == Constants.PackageExtension)
             {
-                OptimizedZipPackage package;
+                LocalPackage package;
                 try
                 {
+#if NET45
+                    if (PlatformHelper.IsMono)
+                    {
+                        package = new OptimizedOpcZipPackage(FileSystem, path);
+                    }
+                    else
+                    {
+                        package = new OptimizedZipPackage(FileSystem, path);
+                    }
+#else
                     package = new OptimizedZipPackage(FileSystem, path);
+#endif
                 }
                 catch (FileFormatException ex)
                 {

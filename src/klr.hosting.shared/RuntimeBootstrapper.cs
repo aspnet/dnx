@@ -26,7 +26,56 @@ namespace klr.hosting
 
         private static readonly char[] _libPathSeparator = new[] { ';' };
 
-        public static Task<int> Execute(string[] args)
+        public static int Execute(string[] args)
+        {
+            // If we're a console host then print exceptions to stderr
+            var printExceptionsToStdError = Environment.GetEnvironmentVariable("KRE_CONSOLE_HOST") == "1";
+
+            try
+            {
+                return ExecuteAsync(args).Result;
+            }
+            catch (Exception ex)
+            {
+                if (printExceptionsToStdError)
+                {
+                    PrintErrors(ex);
+                    return 1;
+                }
+
+                throw;
+            }
+        }
+
+        private static void PrintErrors(Exception ex)
+        {
+            var enableTrace = Environment.GetEnvironmentVariable("KRE_TRACE") == "1";
+
+            while (ex != null)
+            {
+                if (ex is TargetInvocationException ||
+                    ex is AggregateException)
+                {
+                    // Skip these exception messages as they are
+                    // generic
+                }
+                else
+                {
+                    if (enableTrace)
+                    {
+                        Console.Error.WriteLine(ex);
+                    }
+                    else
+                    {
+                        Console.Error.WriteLine(ex.Message);
+                    }
+                }
+
+                ex = ex.InnerException;
+            }
+        }
+
+        public static Task<int> ExecuteAsync(string[] args)
         {
             if (args.Length == 0)
             {
@@ -191,7 +240,7 @@ namespace klr.hosting
         {
             var searchPaths = new List<string>();
 
-            var defaultLibPath = Environment.GetEnvironmentVariable("DEFAULT_LIB");
+            var defaultLibPath = Environment.GetEnvironmentVariable("KRE_DEFAULT_LIB");
 
             if (!string.IsNullOrEmpty(defaultLibPath))
             {

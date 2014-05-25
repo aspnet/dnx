@@ -56,7 +56,7 @@ namespace klr.net45.managed
                 }
             }
 
-            return new Awaiter(RuntimeBootstrapper.Execute(args));
+            return new Awaiter(RuntimeBootstrapper.ExecuteAsync(args));
         }
 
         private sealed class Awaiter : IAwaiter

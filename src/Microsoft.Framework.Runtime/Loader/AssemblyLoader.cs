@@ -26,9 +26,9 @@ namespace Microsoft.Framework.Runtime.Loader
                 return null;
             }
 
-            if (result.Errors != null)
+            if (result.Error != null)
             {
-                throw new Exception(String.Join(Environment.NewLine, result.Errors));
+                throw result.Error;
             }
 
             return result.Assembly;

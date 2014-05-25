@@ -6,12 +6,9 @@ using System;
 
 namespace Microsoft.Framework.Runtime.FileSystem
 {
-    public interface IFileWatcher : IDisposable
+    // For testiblilty
+    internal interface IWatcherRoot : IDisposable
     {
-        void WatchDirectory(string path, string extension);
-
-        bool WatchFile(string path);
-
-        void WatchProject(string path);
+        string Path { get; }
     }
 }

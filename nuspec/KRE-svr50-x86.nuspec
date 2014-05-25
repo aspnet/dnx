@@ -8,17 +8,6 @@
         <description>The K Runtime Environment for Desktop CLR x86</description>
     </metadata>
     <files>
-        <file src="tools\net45\**" exclude="tools\net45\*DesignTime*;tools\net45\*Project*;tools\net45\*PackageManager*" target="bin" />
-        <file src="tools\bin\x86\net45\klr.exe" target="bin" />
-        <file src="tools\bin\x86\klr.net45.dll" target="bin" />
-        <file src="tools\bin\x86\klr.net45.config" target="bin" />
-        <file src="tools\klr.cmd" target="bin\klr.cmd" />
-        <file src="tools\k.cmd" target="bin\k.cmd" />
-        <file src="tools\k-build.cmd" target="bin\k-build.cmd" />
-        <file src="tools\k-crossgen.cmd" target="bin\k-crossgen.cmd" />
-        <file src="tools\kpm.cmd" target="bin\kpm.cmd" />
-        <file src="tools\net45\Microsoft.Framework.DesignTimeHost.dll" target="bin\lib\Microsoft.Framework.DesignTimeHost\Microsoft.Framework.DesignTimeHost.dll" />
-        <file src="tools\net45\Microsoft.Framework.PackageManager.dll" target="bin\lib\Microsoft.Framework.PackageManager\Microsoft.Framework.PackageManager.dll" />
-        <file src="tools\net45\Microsoft.Framework.Project.dll" target="bin\lib\Microsoft.Framework.Project\Microsoft.Framework.Project.dll" />
+        <file src="KRE-svr50-x86\bin\**" exclude="**\*.pdb;**\*.xml" target="bin" />
     </files>
 </package>

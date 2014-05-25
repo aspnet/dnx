@@ -8,6 +8,7 @@ namespace Microsoft.Framework.Runtime.Roslyn
 {
     public class CompilationSettings
     {
+        public LanguageVersion LanguageVersion { get; set; }
         public IEnumerable<string> Defines { get; set; }
         public CSharpCompilationOptions CompilationOptions { get; set; }
     }

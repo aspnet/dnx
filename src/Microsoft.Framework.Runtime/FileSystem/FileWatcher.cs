@@ -13,7 +13,7 @@ namespace Microsoft.Framework.Runtime.FileSystem
         private readonly HashSet<string> _files = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         private readonly Dictionary<string, HashSet<string>> _directories = new Dictionary<string, HashSet<string>>(StringComparer.OrdinalIgnoreCase);
 
-        private readonly FileSystemWatcher _watcher;
+        private readonly List<IWatcherRoot> _watchers = new List<IWatcherRoot>();
 
         internal FileWatcher()
         {
@@ -22,14 +22,7 @@ namespace Microsoft.Framework.Runtime.FileSystem
 
         public FileWatcher(string path)
         {
-            _watcher = new FileSystemWatcher(path);
-            _watcher.IncludeSubdirectories = true;
-            _watcher.EnableRaisingEvents = true;
-
-            _watcher.Changed += OnWatcherChanged;
-            _watcher.Renamed += OnRenamed;
-            _watcher.Deleted += OnWatcherChanged;
-            _watcher.Created += OnWatcherChanged;
+            AddWatcher(path);
         }
 
         public event Action<string> OnChanged;
@@ -45,9 +38,56 @@ namespace Microsoft.Framework.Runtime.FileSystem
         {
             return _files.Add(path);
         }
+
+        public void WatchProject(string projectPath)
+        {
+            if (string.IsNullOrEmpty(projectPath))
+            {
+                return;
+            }
+
+            // If any watchers already handle this path then noop
+            if (!IsAlreadyWatched(projectPath))
+            {
+                // To reduce the number of watchers we have we add a watcher to the root
+                // of this project so that we'll be notified if anything we care
+                // about changes
+                var rootPath = ProjectResolver.ResolveRootDirectory(projectPath);
+                AddWatcher(rootPath);
+            }
+        }
+
+        // For testing
+        internal bool IsAlreadyWatched(string projectPath)
+        {
+            if (string.IsNullOrEmpty(projectPath))
+            {
+                return false;
+            }
+
+            bool anyWatchers = false;
+
+            foreach (var watcher in _watchers)
+            {
+                // REVIEW: This needs to work x-platform, should this be case
+                // sensitive?
+                if (EnsureTrailingSlash(projectPath).StartsWith(EnsureTrailingSlash(watcher.Path), StringComparison.OrdinalIgnoreCase))
+                {
+                    anyWatchers = true;
+                }
+            }
+
+            return anyWatchers;
+        }
+
         public void Dispose()
         {
-            _watcher.Dispose();
+            foreach (var w in _watchers)
+            {
+                w.Dispose();
+            }
+
+            _watchers.Clear();
         }
 
         public bool ReportChange(string newPath, WatcherChangeTypes changeType)
@@ -77,6 +117,41 @@ namespace Microsoft.Framework.Runtime.FileSystem
             }
 
             return false;
+        }
+
+        private static string EnsureTrailingSlash(string path)
+        {
+            if (string.IsNullOrEmpty(path))
+            {
+                return path;
+            }
+
+            if (path[path.Length - 1] != Path.DirectorySeparatorChar)
+            {
+                return path + Path.DirectorySeparatorChar;
+            }
+
+            return path;
+        }
+
+        // For testing only
+        internal void AddWatcher(IWatcherRoot watcherRoot)
+        {
+            _watchers.Add(watcherRoot);
+        }
+
+        private void AddWatcher(string path)
+        {
+            var watcher = new FileSystemWatcher(path);
+            watcher.IncludeSubdirectories = true;
+            watcher.EnableRaisingEvents = true;
+
+            watcher.Changed += OnWatcherChanged;
+            watcher.Renamed += OnRenamed;
+            watcher.Deleted += OnWatcherChanged;
+            watcher.Created += OnWatcherChanged;
+
+            _watchers.Add(new FileSystemWatcherRoot(watcher));
         }
 
         private void OnRenamed(object sender, RenamedEventArgs e)
@@ -153,6 +228,11 @@ namespace Microsoft.Framework.Runtime.FileSystem
 
         public void Dispose()
         {
+        }
+
+        public void WatchProject(string path)
+        {
+
         }
     }
 }

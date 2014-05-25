@@ -8,11 +8,14 @@ using System.Linq;
 using System.Runtime.Versioning;
 using System.Security;
 using System.Xml;
+using Microsoft.Framework.Runtime;
 
 namespace NuGet
 {
     public static class NetPortableProfileTable
     {
+        private static readonly object _profileTableInitLock = new object();
+
         // This collection is the original indexed collection where profiles are indexed by 
         // the full "ProfileXXX" naming. 
         private static NetPortableProfileCollection _portableProfiles;
@@ -44,25 +47,26 @@ namespace NuGet
             return result;
         }
 
-        internal static NetPortableProfileCollection Profiles
+        private static NetPortableProfileCollection Profiles
         {
             get
             {
                 if (_portableProfiles == null)
                 {
-                    // We use the setter so that we can consistently set both the 
-                    // existing collection as well as the CustomProfileString-indexed one.
-                    // This keeps both in sync.
-                    Profiles = BuildPortableProfileCollection();
+                    lock (_profileTableInitLock)
+                    {
+                        if (_portableProfiles == null)
+                        {
+                            // We use the setter so that we can consistently set both the 
+                            // existing collection as well as the CustomProfileString-indexed one.
+                            // This keeps both in sync.
+                            _portableProfiles = BuildPortableProfileCollection();
+                            _portableProfilesByCustomProfileString = _portableProfiles.ToDictionary(x => x.CustomProfileString, new ProfileStringComparer());
+                        }
+                    }
                 }
 
                 return _portableProfiles;
-            }
-            set
-            {
-                // This setter is only for Unit Tests.
-                _portableProfiles = value;
-                _portableProfilesByCustomProfileString = _portableProfiles.ToDictionary(x => x.CustomProfileString, new ProfileStringComparer());
             }
         }
 
@@ -70,21 +74,21 @@ namespace NuGet
         {
             var profileCollection = new NetPortableProfileCollection();
 
-#if NET45 // CORECLR_TODO: Environment.GetFolderPath
-            string portableRootDirectory =
-                    Path.Combine(
-                        Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86, Environment.SpecialFolderOption.DoNotVerify),
-                        @"Reference Assemblies\Microsoft\Framework\.NETPortable");
+            var referenceAssembliesPath = FrameworkReferenceResolver.GetReferenceAssembliesPath();
 
-            if (Directory.Exists(portableRootDirectory))
+            if (!string.IsNullOrEmpty(referenceAssembliesPath))
             {
-                foreach (string versionDir in Directory.EnumerateDirectories(portableRootDirectory, "v*", SearchOption.TopDirectoryOnly))
+                string portableRootDirectory = Path.Combine(referenceAssembliesPath, ".NETPortable");
+
+                if (Directory.Exists(portableRootDirectory))
                 {
-                    string profileFilesPath = versionDir + @"\Profile\";
-                    profileCollection.AddRange(LoadProfilesFromFramework(versionDir, profileFilesPath));
+                    foreach (string versionDir in Directory.EnumerateDirectories(portableRootDirectory, "v*", SearchOption.TopDirectoryOnly))
+                    {
+                        string profileFilesPath = versionDir + @"\Profile\";
+                        profileCollection.AddRange(LoadProfilesFromFramework(versionDir, profileFilesPath));
+                    }
                 }
             }
-#endif
 
             return profileCollection;
         }
@@ -140,7 +144,7 @@ namespace NuGet
             }
         }
 
-        internal static FrameworkName LoadSupportedFramework(Stream stream)
+        private static FrameworkName LoadSupportedFramework(Stream stream)
         {
             try
             {

@@ -48,7 +48,6 @@ namespace Microsoft.Framework.ApplicationHost
                 return Task.FromResult(-1);
             }
 
-
             var lookupCommand = string.IsNullOrEmpty(options.ApplicationName) ? "run" : options.ApplicationName;
             string replacementCommand;
             if (host.Project.Commands.TryGetValue(lookupCommand, out replacementCommand))
@@ -85,7 +84,7 @@ namespace Microsoft.Framework.ApplicationHost
                         {
                             ((IDisposable)state).Dispose();
                             return await t;
-                        }, 
+                        },
                         disposable).Unwrap();
             }
             catch
@@ -150,7 +149,41 @@ namespace Microsoft.Framework.ApplicationHost
 
         private Task<int> ExecuteMain(DefaultHost host, string applicationName, string[] args)
         {
-            var assembly = host.GetEntryPoint(applicationName);
+            Assembly assembly = null;
+
+            try
+            {
+                assembly = host.GetEntryPoint(applicationName);
+            }
+            catch (FileLoadException ex)
+            {
+                // FileName is always turned into an assembly name
+                if (new AssemblyName(ex.FileName).Name == applicationName)
+                {
+                    ThrowEntryPointNotfoundException(
+                        host,
+                        applicationName,
+                        ex.InnerException);
+                }
+                else
+                {
+                    throw;
+                }
+            }
+            catch (FileNotFoundException ex)
+            {
+                if (ex.FileName == applicationName)
+                {
+                    ThrowEntryPointNotfoundException(
+                        host,
+                        applicationName,
+                        ex.InnerException);
+                }
+                else
+                {
+                    throw;
+                }
+            }
 
             if (assembly == null)
             {
@@ -158,6 +191,43 @@ namespace Microsoft.Framework.ApplicationHost
             }
 
             return EntryPointExecutor.Execute(assembly, args, host.ServiceProvider);
+        }
+
+        private static void ThrowEntryPointNotfoundException(
+            DefaultHost host,
+            string applicationName,
+            Exception innerException)
+        {
+
+            var compilationException = innerException as CompilationException;
+
+            if (compilationException != null)
+            {
+                throw new InvalidOperationException(
+                    string.Join(Environment.NewLine, compilationException.Errors));
+            }
+
+#if K10
+            // HACK: Don't show inner exceptions for non compilation errors.
+            // There's a bug in the CoreCLR loader, where it throws another
+            // invalid operation exception for any load failure with a bizzare
+            // message.
+            innerException = null;
+#endif
+
+            if (host.Project.Commands.Any())
+            {
+                // Throw a nicer exception message if the command
+                // can't be found
+                throw new InvalidOperationException(
+                    string.Format("Unable to load application or execute command '{0}'. Available commands: {1}.",
+                    applicationName,
+                    string.Join(", ", host.Project.Commands.Keys)), innerException);
+            }
+
+            throw new InvalidOperationException(
+                    string.Format("Unable to load application or execute command '{0}'.",
+                    applicationName), innerException);
         }
     }
 }

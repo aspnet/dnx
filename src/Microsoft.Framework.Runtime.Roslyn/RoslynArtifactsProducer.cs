@@ -53,32 +53,33 @@ namespace Microsoft.Framework.Runtime.Roslyn
             // If the output path is null then load the assembly from memory
             var assemblyPath = Path.Combine(buildContext.OutputPath, name + ".dll");
             var pdbPath = Path.Combine(buildContext.OutputPath, name + ".pdb");
+            var xmlDocPath = Path.Combine(buildContext.OutputPath, name + ".xml");
 
-            if (CompileToDisk(buildContext, assemblyPath, pdbPath, compilationContext, resources, diagnostics))
+            if (CompileToDisk(buildContext, assemblyPath, pdbPath, xmlDocPath, compilationContext, resources, diagnostics))
             {
                 // Build packages for this project
-                BuildPackages(buildContext, compilationContext, assemblyPath, pdbPath);
+                BuildPackages(buildContext, compilationContext, assemblyPath, pdbPath, xmlDocPath);
                 return true;
             }
 
             return false;
         }
 
-        private void BuildPackages(BuildContext buildContext, CompilationContext compilationContext, string assemblyPath, string pdbPath)
+        private void BuildPackages(BuildContext buildContext, CompilationContext compilationContext, string assemblyPath, string pdbPath, string xmlDocPath)
         {
             // Build packages
             if (buildContext.PackageBuilder != null)
             {
-                BuildPackage(buildContext, compilationContext, assemblyPath);
+                BuildPackage(buildContext, compilationContext, assemblyPath, xmlDocPath);
             }
 
             if (buildContext.SymbolPackageBuilder != null)
             {
-                BuildSymbolsPackage(buildContext, compilationContext, assemblyPath, pdbPath);
+                BuildSymbolsPackage(buildContext, compilationContext, assemblyPath, pdbPath, xmlDocPath);
             }
         }
 
-        private void BuildSymbolsPackage(BuildContext buildContext, CompilationContext compilationContext, string assemblyPath, string pdbPath)
+        private void BuildSymbolsPackage(BuildContext buildContext, CompilationContext compilationContext, string assemblyPath, string pdbPath, string xmlDocPath)
         {
             var framework = buildContext.TargetFramework;
             var project = compilationContext.Project;
@@ -104,6 +105,11 @@ namespace Microsoft.Framework.Runtime.Roslyn
             assemblyFile.TargetPath = String.Format(@"lib\{0}\{1}.dll", frameworkFolder, project.Name);
             buildContext.SymbolPackageBuilder.Files.Add(assemblyFile);
 
+            var xmlDocFile = new PhysicalPackageFile();
+            xmlDocFile.SourcePath = xmlDocPath;
+            xmlDocFile.TargetPath = string.Format(@"lib\{0}\{1}.xml", frameworkFolder, project.Name);
+            buildContext.PackageBuilder.Files.Add(xmlDocFile);
+
             if (!PlatformHelper.IsMono)
             {
                 var pdbFile = new PhysicalPackageFile();
@@ -113,7 +119,7 @@ namespace Microsoft.Framework.Runtime.Roslyn
             }
         }
 
-        private void BuildPackage(BuildContext buildContext, CompilationContext compilationContext, string assemblyPath)
+        private void BuildPackage(BuildContext buildContext, CompilationContext compilationContext, string assemblyPath, string xmlDocPath)
         {
             var targetFramework = buildContext.TargetFramework;
             var dependencies = new List<PackageDependency>();
@@ -181,16 +187,23 @@ namespace Microsoft.Framework.Runtime.Roslyn
                 buildContext.PackageBuilder.FrameworkReferences.Add(new FrameworkAssemblyReference(a, new[] { targetFramework }));
             }
 
+            var folder = VersionUtility.GetShortFrameworkName(targetFramework);
+
             var file = new PhysicalPackageFile();
             file.SourcePath = assemblyPath;
-            var folder = VersionUtility.GetShortFrameworkName(targetFramework);
-            file.TargetPath = String.Format(@"lib\{0}\{1}.dll", folder, project.Name);
+            file.TargetPath = string.Format(@"lib\{0}\{1}.dll", folder, project.Name);
             buildContext.PackageBuilder.Files.Add(file);
+
+            var xmlDocFile = new PhysicalPackageFile();
+            xmlDocFile.SourcePath = xmlDocPath;
+            xmlDocFile.TargetPath = string.Format(@"lib\{0}\{1}.xml", folder, project.Name);
+            buildContext.PackageBuilder.Files.Add(xmlDocFile);
         }
 
-        private bool CompileToDisk(BuildContext buildContext, string assemblyPath, string pdbPath, CompilationContext compilationContext, IList<ResourceDescription> resources, List<Diagnostic> diagnostics)
+        private bool CompileToDisk(BuildContext buildContext, string assemblyPath, string pdbPath, string xmlDocPath, CompilationContext compilationContext, IList<ResourceDescription> resources, List<Diagnostic> diagnostics)
         {
             // REVIEW: Memory bloat?
+            using (var xmlDocStream = new MemoryStream())
             using (var pdbStream = new MemoryStream())
             using (var assemblyStream = new MemoryStream())
             {
@@ -203,11 +216,11 @@ namespace Microsoft.Framework.Runtime.Roslyn
                 if (PlatformHelper.IsMono)
                 {
                     // No pdb support yet
-                    result = compilationContext.Compilation.Emit(assemblyStream, outputName: Path.GetFileName(assemblyPath), pdbFileName: null, pdbStream: null, manifestResources: resources);
+                    result = compilationContext.Compilation.Emit(assemblyStream, outputName: Path.GetFileName(assemblyPath), pdbFileName: null, pdbStream: null, xmlDocStream: xmlDocStream, manifestResources: resources);
                 }
                 else
                 {
-                    result = compilationContext.Compilation.Emit(assemblyStream, outputName: Path.GetFileName(assemblyPath), pdbFileName: pdbPath, pdbStream: pdbStream, manifestResources: resources);
+                    result = compilationContext.Compilation.Emit(assemblyStream, outputName: Path.GetFileName(assemblyPath), pdbFileName: pdbPath, pdbStream: pdbStream, xmlDocStream: xmlDocStream, manifestResources: resources);
                 }
 
                 sw.Stop();
@@ -232,10 +245,16 @@ namespace Microsoft.Framework.Runtime.Roslyn
 
                 assemblyStream.Position = 0;
                 pdbStream.Position = 0;
+                xmlDocStream.Position = 0;
 
                 using (var assemblyFileStream = File.Create(assemblyPath))
                 {
                     assemblyStream.CopyTo(assemblyFileStream);
+                }
+
+                using (var xmlDocFileStream = File.Create(xmlDocPath))
+                {
+                    xmlDocStream.CopyTo(xmlDocFileStream);
                 }
 
                 if (!PlatformHelper.IsMono)
