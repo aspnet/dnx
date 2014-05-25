@@ -20,6 +20,6 @@
         }
     },
     "commands": {
-
+        "test": "Xunit.KRunner"
     }
 }

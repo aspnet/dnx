@@ -14,31 +14,21 @@ namespace Microsoft.Framework.Runtime.Roslyn
 {
     public static class ProjectExtensions
     {
+        public static CompilationSettings GetCompilationSettings(this Project project, string configurationName)
+        {
+            return GetCompilationSettings(project, Project.ParseFrameworkName(configurationName));
+        }
+
         public static CompilationSettings GetCompilationSettings(this Project project, FrameworkName targetFramework)
         {
-            // TODO: Don't parse stuff everytime
+            var rootOptions = project.GetCompilerOptions();
+            var rootDefines = rootOptions.Defines ?? Enumerable.Empty<string>();
+            var languageVersionValue = rootOptions.LanguageVersion;
 
-            var rootOptions = project.GetCompilationOptions();
-            var rootDefines = ConvertValue<string[]>(rootOptions, "define") ?? new string[] { };
-            var languageVersionValue = ConvertValue<string>(rootOptions, "languageVersion");
-
-            var configuration = project.GetConfiguration(targetFramework);
-
-            JToken specificOptions = null;
-            string[] specificDefines = null;
-
-            if (configuration.Value == null)
-            {
-                specificDefines = new string[] { };
-            }
-            else
-            {
-                specificOptions = configuration.Value["compilationOptions"];
-                specificDefines = ConvertValue<string[]>(specificOptions, "define") ??
-                    new[] {
-                        MakeDefaultTargetFrameworkDefine(targetFramework)
-                    };
-            }
+            var specificOptions = project.GetCompilerOptions(targetFramework);
+            var specificDefines = (specificOptions == null ? null : specificOptions.Defines) ?? new[] {
+                MakeDefaultTargetFrameworkDefine(targetFramework)
+            };
 
             var defaultOptions = new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary);
 
@@ -72,7 +62,7 @@ namespace Microsoft.Framework.Runtime.Roslyn
             var settings = new CompilationSettings
             {
                 LanguageVersion = languageVersion,
-                Defines = rootDefines.Concat(specificDefines),
+                Defines = rootDefines.Concat(specificDefines).ToArray(),
                 CompilationOptions = options
             };
 
@@ -91,9 +81,9 @@ namespace Microsoft.Framework.Runtime.Roslyn
             return shortName.ToUpperInvariant();
         }
 
-        private static CSharpCompilationOptions GetCompilationOptions(JToken compilationOptions)
+        private static CSharpCompilationOptions GetCompilationOptions(CompilerOptions compilerOptions)
         {
-            if (compilationOptions == null)
+            if (compilerOptions == null)
             {
                 return null;
             }
@@ -101,9 +91,9 @@ namespace Microsoft.Framework.Runtime.Roslyn
             var options = new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary)
                                 .WithHighEntropyVirtualAddressSpace(true);
 
-            bool allowUnsafe = GetValue<bool>(compilationOptions, "allowUnsafe");
-            string platformValue = GetValue<string>(compilationOptions, "platform");
-            bool warningsAsErrors = GetValue<bool>(compilationOptions, "warningsAsErrors");
+            bool allowUnsafe = compilerOptions.AllowUnsafe;
+            string platformValue = compilerOptions.Platform;
+            bool warningsAsErrors = compilerOptions.WarningsAsErrors;
 
             Platform platform;
             if (!Enum.TryParse<Platform>(value: platformValue,
@@ -118,40 +108,6 @@ namespace Microsoft.Framework.Runtime.Roslyn
             return options.WithAllowUnsafe(allowUnsafe)
                           .WithPlatform(platform)
                           .WithGeneralDiagnosticOption(warningOption);
-        }
-
-        private static T ConvertValue<T>(JToken token, string name)
-        {
-            if (token == null)
-            {
-                return default(T);
-            }
-
-            var obj = token[name];
-
-            if (obj == null)
-            {
-                return default(T);
-            }
-
-            return obj.ToObject<T>();
-        }
-
-        private static T GetValue<T>(JToken token, string name)
-        {
-            if (token == null)
-            {
-                return default(T);
-            }
-
-            var obj = token[name];
-
-            if (obj == null)
-            {
-                return default(T);
-            }
-
-            return obj.Value<T>();
         }
     }
 }

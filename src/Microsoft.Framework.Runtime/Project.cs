@@ -15,9 +15,12 @@ namespace Microsoft.Framework.Runtime
     {
         public const string ProjectFileName = "project.json";
 
-        private Dictionary<FrameworkName, TargetFrameworkConfiguration> _configurations = new Dictionary<FrameworkName, TargetFrameworkConfiguration>();
-        private Dictionary<FrameworkName, KeyValuePair<string, JToken>> _compilationOptions = new Dictionary<FrameworkName, KeyValuePair<string, JToken>>();
-        private JToken _defaultOptions;
+        private static readonly CompilerOptions _emptyOptions = new CompilerOptions();
+
+        private readonly Dictionary<FrameworkName, TargetFrameworkConfiguration> _configurations = new Dictionary<FrameworkName, TargetFrameworkConfiguration>();
+        private readonly Dictionary<FrameworkName, CompilerOptions> _compilationOptions = new Dictionary<FrameworkName, CompilerOptions>();
+
+        private CompilerOptions _defaultCompilerOptions;
 
         private TargetFrameworkConfiguration _defaultTargetFrameworkConfiguration;
 
@@ -57,7 +60,6 @@ namespace Microsoft.Framework.Runtime
         public string SharedPattern { get; set; }
 
         public string ResourcesPattern { get; private set; }
-
 
         public IEnumerable<string> SourceFiles
         {
@@ -149,38 +151,48 @@ namespace Microsoft.Framework.Runtime
                 projectPath = Path.Combine(path, ProjectFileName);
             }
 
-            project = new Project();
+            var json = File.ReadAllText(projectPath);
+
+            // Assume the directory name is the project name if none was specified
+            var fallbackProjectName = GetDirectoryName(path);
+
+            project = GetProject(json, fallbackProjectName, projectPath);
+
+            return true;
+        }
+
+        public static Project GetProject(string json, string fallbackProjectName, string projectPath)
+        {
+            var project = new Project();
 
             project.SourcePattern = @"**\*.cs";
             project.PreprocessPattern = @"Compiler\Preprocess\**\*.cs";
             project.ResourcesPattern = @"Compiler\Resources\**\*";
 
-            string json = File.ReadAllText(projectPath);
-            var settings = JObject.Parse(json);
-            var version = settings["version"];
-            var authors = settings["authors"];
-            project.Name = GetValue<string>(settings, "name");
+            var rawProject = JObject.Parse(json);
+            var version = rawProject["version"];
+            var authors = rawProject["authors"];
+            project.Name = GetValue<string>(rawProject, "name");
 
             if (String.IsNullOrEmpty(project.Name))
             {
-                // Assume the directory name is the project name
-                project.Name = GetDirectoryName(path);
+                project.Name = fallbackProjectName;
             }
 
             project.Version = version == null ? new SemanticVersion("1.0.0") : new SemanticVersion(version.Value<string>());
-            project.Description = GetValue<string>(settings, "description");
+            project.Description = GetValue<string>(rawProject, "description");
             project.Authors = authors == null ? new string[] { } : authors.ToObject<string[]>();
             project.Dependencies = new List<Library>();
             project.ProjectFilePath = projectPath;
-            project.EmbedInteropTypes = GetValue<bool>(settings, "embedInteropTypes");
+            project.EmbedInteropTypes = GetValue<bool>(rawProject, "embedInteropTypes");
 
-            project.SourcePattern = GetSettingsValue(settings, "code", @"**\*.cs");
-            project.SourceExcludePattern = GetSettingsValue(settings, "exclude", @"obj\**\*");
-            project.PreprocessPattern = GetSettingsValue(settings, "preprocess", @"Compiler\Preprocess\**\*.cs");
-            project.SharedPattern = GetSettingsValue(settings, "shared", @"Compiler\Shared\**\*.cs");
-            project.ResourcesPattern = GetSettingsValue(settings, "resources", @"Compiler\Resources\**\*");
+            project.SourcePattern = GetSettingsValue(rawProject, "code", @"**\*.cs");
+            project.SourceExcludePattern = GetSettingsValue(rawProject, "exclude", @"obj\**\*");
+            project.PreprocessPattern = GetSettingsValue(rawProject, "preprocess", @"Compiler\Preprocess\**\*.cs");
+            project.SharedPattern = GetSettingsValue(rawProject, "shared", @"Compiler\Shared\**\*.cs");
+            project.ResourcesPattern = GetSettingsValue(rawProject, "resources", @"Compiler\Resources\**\*");
 
-            var commands = settings["commands"] as JObject;
+            var commands = rawProject["commands"] as JObject;
             if (commands != null)
             {
                 foreach (var command in commands)
@@ -195,11 +207,11 @@ namespace Microsoft.Framework.Runtime
                 project.Version = project.Version.SpecifySnapshot(buildVersion);
             }
 
-            project.BuildTargetFrameworkConfigurations(settings);
+            project.BuildTargetFrameworkConfigurations(rawProject);
 
-            PopulateDependencies(project.Dependencies, settings);
+            PopulateDependencies(project.Dependencies, rawProject);
 
-            return true;
+            return project;
         }
 
         private static string GetSettingsValue(JObject settings, string propertyName, string defaultValue)
@@ -243,25 +255,31 @@ namespace Microsoft.Framework.Runtime
             }
         }
 
-        public JToken GetCompilationOptions()
+        public CompilerOptions GetCompilerOptions()
         {
-            return _defaultOptions;
+            return _defaultCompilerOptions;
         }
 
-        public KeyValuePair<string, JToken> GetConfiguration(FrameworkName frameworkName)
+        public CompilerOptions GetCompilerOptions(string frameworkName)
         {
-            KeyValuePair<string, JToken> optionsToken;
-            if (_compilationOptions.TryGetValue(frameworkName, out optionsToken))
+            return GetCompilerOptions(ParseFrameworkName(frameworkName));
+        }
+
+        public CompilerOptions GetCompilerOptions(FrameworkName frameworkName)
+        {
+            CompilerOptions options;
+            if (_compilationOptions.TryGetValue(frameworkName, out options))
             {
-                return optionsToken;
+                return options;
             }
-            return new KeyValuePair<string, JToken>();
+
+            return null;
         }
 
-        private void BuildTargetFrameworkConfigurations(JObject settings)
+        private void BuildTargetFrameworkConfigurations(JObject rawProject)
         {
-            // Get the base configuration
-            _defaultOptions = settings["compilationOptions"];
+            // Get the shared compilationOptions
+            _defaultCompilerOptions = GetCompilationOptions(rawProject) ?? _emptyOptions;
 
             _defaultTargetFrameworkConfiguration = new TargetFrameworkConfiguration
             {
@@ -269,7 +287,7 @@ namespace Microsoft.Framework.Runtime
             };
 
             // Parse the specific configuration section
-            var configurations = settings["configurations"] as JObject;
+            var configurations = rawProject["configurations"] as JObject;
             if (configurations != null)
             {
                 foreach (var configuration in configurations)
@@ -284,12 +302,34 @@ namespace Microsoft.Framework.Runtime
                     PopulateDependencies(config.Dependencies, properties);
 
                     _configurations[config.FrameworkName] = config;
-                    _compilationOptions[config.FrameworkName] = configuration;
+                    _compilationOptions[config.FrameworkName] = GetCompilationOptions(configuration.Value);
                 }
             }
         }
 
-        private FrameworkName ParseFrameworkName(string configurationName)
+        private CompilerOptions GetCompilationOptions(JToken topLevelOrConfiguration)
+        {
+            var rawOptions = topLevelOrConfiguration["compilationOptions"];
+
+            if (rawOptions == null)
+            {
+                return null;
+            }
+
+            var options = new CompilerOptions
+            {
+                Defines = ConvertValue<string[]>(rawOptions, "define"),
+                LanguageVersion = ConvertValue<string>(rawOptions, "languageVersion"),
+                AllowUnsafe = GetValue<bool>(rawOptions, "allowUnsafe"),
+                Platform = GetValue<string>(rawOptions, "platform"),
+                WarningsAsErrors = GetValue<bool>(rawOptions, "warningsAsErrors"),
+                CommandLine = GetValue<string>(rawOptions, "commandLineArgs")
+            };
+
+            return options;
+        }
+
+        public static FrameworkName ParseFrameworkName(string configurationName)
         {
             if (configurationName.Contains("+"))
             {
@@ -330,6 +370,23 @@ namespace Microsoft.Framework.Runtime
             }
 
             return obj.Value<T>();
+        }
+
+        private static T ConvertValue<T>(JToken token, string name)
+        {
+            if (token == null)
+            {
+                return default(T);
+            }
+
+            var obj = token[name];
+
+            if (obj == null)
+            {
+                return default(T);
+            }
+
+            return obj.ToObject<T>();
         }
 
         private static string GetDirectoryName(string path)

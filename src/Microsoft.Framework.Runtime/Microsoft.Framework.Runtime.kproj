@@ -24,6 +24,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="ApplicationEnvironment.cs" />
+    <Compile Include="CompilerOptions.cs" />
     <Compile Include="DefaultHost.cs" />
     <Compile Include="DefaultHostOptions.cs" />
     <Compile Include="DependencyManagement\DependencyWalker.cs" />
