@@ -16,6 +16,13 @@ namespace Microsoft.Framework.Runtime
         public const string ProjectFileName = "project.json";
 
         private static readonly CompilerOptions _emptyOptions = new CompilerOptions();
+        private static readonly char[] _sourceSeparator = new[] { ';' };
+
+        internal static readonly string[] _defaultSourcePatterns = new[] { @"**\*.cs" };
+        internal static readonly string[] _defaultSourceExcludePatterns = new[] { @"obj\**\*", @"bin\**\*" };
+        internal static readonly string[] _defaultPreprocessPatterns = new[] { @"Compiler\Preprocess\**\*.cs" };
+        internal static readonly string[] _defaultSharedPatterns = new[] { @"Compiler\Shared\**\*.cs" };
+        internal static readonly string[] _defaultResourcesPatterns = new[] { @"Compiler\Resources\**\*" };
 
         private readonly Dictionary<FrameworkName, TargetFrameworkConfiguration> _configurations = new Dictionary<FrameworkName, TargetFrameworkConfiguration>();
         private readonly Dictionary<FrameworkName, CompilerOptions> _compilationOptions = new Dictionary<FrameworkName, CompilerOptions>();
@@ -51,15 +58,15 @@ namespace Microsoft.Framework.Runtime
 
         public IList<Library> Dependencies { get; private set; }
 
-        public string SourcePattern { get; private set; }
+        internal IEnumerable<string> SourcePatterns { get; set; }
 
-        public string SourceExcludePattern { get; set; }
+        internal IEnumerable<string> SourceExcludePatterns { get; set; }
 
-        public string PreprocessPattern { get; private set; }
+        internal IEnumerable<string> PreprocessPatterns { get; set; }
 
-        public string SharedPattern { get; set; }
+        internal IEnumerable<string> SharedPatterns { get; set; }
 
-        public string ResourcesPattern { get; private set; }
+        internal IEnumerable<string> ResourcesPatterns { get; set; }
 
         public IEnumerable<string> SourceFiles
         {
@@ -69,14 +76,11 @@ namespace Microsoft.Framework.Runtime
 
                 var files = Enumerable.Empty<string>();
 
-                var includePatterns = SourcePattern.Split(new[] { ';' });
-                var includeFiles = includePatterns
-                    .Where(pattern => !string.IsNullOrEmpty(pattern))
+                var includeFiles = SourcePatterns
                     .SelectMany(pattern => PathResolver.PerformWildcardSearch(path, pattern))
                     .ToArray();
 
-                var excludePatterns = (PreprocessPattern + ";" + SharedPattern + ";" + ResourcesPattern + ";" + SourceExcludePattern)
-                    .Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries)
+                var excludePatterns = PreprocessPatterns.Concat(SharedPatterns).Concat(ResourcesPatterns).Concat(SourceExcludePatterns)
                     .Select(pattern => PathResolver.NormalizeWildcardForExcludedFiles(path, pattern))
                     .ToArray();
 
@@ -93,8 +97,7 @@ namespace Microsoft.Framework.Runtime
             {
                 string path = ProjectDirectory;
 
-                var includePatterns = ResourcesPattern.Split(new[] { ';' });
-                var includeFiles = includePatterns
+                var includeFiles = ResourcesPatterns
                     .SelectMany(pattern => PathResolver.PerformWildcardSearch(path, pattern))
                     .ToArray();
 
@@ -108,8 +111,7 @@ namespace Microsoft.Framework.Runtime
             {
                 string path = ProjectDirectory;
 
-                var includePatterns = SharedPattern.Split(new[] { ';' });
-                var includeFiles = includePatterns
+                var includeFiles = SharedPatterns
                     .SelectMany(pattern => PathResolver.PerformWildcardSearch(path, pattern))
                     .ToArray();
 
@@ -165,16 +167,14 @@ namespace Microsoft.Framework.Runtime
         {
             var project = new Project();
 
-            project.SourcePattern = @"**\*.cs";
-            project.PreprocessPattern = @"Compiler\Preprocess\**\*.cs";
-            project.ResourcesPattern = @"Compiler\Resources\**\*";
-
             var rawProject = JObject.Parse(json);
+
+            // Metadata properties
             var version = rawProject["version"];
             var authors = rawProject["authors"];
             project.Name = GetValue<string>(rawProject, "name");
 
-            if (String.IsNullOrEmpty(project.Name))
+            if (string.IsNullOrEmpty(project.Name))
             {
                 project.Name = fallbackProjectName;
             }
@@ -184,13 +184,16 @@ namespace Microsoft.Framework.Runtime
             project.Authors = authors == null ? new string[] { } : authors.ToObject<string[]>();
             project.Dependencies = new List<Library>();
             project.ProjectFilePath = projectPath;
+
+            // TODO: Move this to the dependencies node
             project.EmbedInteropTypes = GetValue<bool>(rawProject, "embedInteropTypes");
 
-            project.SourcePattern = GetSettingsValue(rawProject, "code", @"**\*.cs");
-            project.SourceExcludePattern = GetSettingsValue(rawProject, "exclude", @"obj\**\*");
-            project.PreprocessPattern = GetSettingsValue(rawProject, "preprocess", @"Compiler\Preprocess\**\*.cs");
-            project.SharedPattern = GetSettingsValue(rawProject, "shared", @"Compiler\Shared\**\*.cs");
-            project.ResourcesPattern = GetSettingsValue(rawProject, "resources", @"Compiler\Resources\**\*");
+            // Source file patterns
+            project.SourcePatterns = GetSourcePattern(rawProject, "code", _defaultSourcePatterns);
+            project.SourceExcludePatterns = GetSourcePattern(rawProject, "exclude", _defaultSourceExcludePatterns);
+            project.PreprocessPatterns = GetSourcePattern(rawProject, "preprocess", _defaultPreprocessPatterns);
+            project.SharedPatterns = GetSourcePattern(rawProject, "shared", _defaultSharedPatterns);
+            project.ResourcesPatterns = GetSourcePattern(rawProject, "resources", _defaultResourcesPatterns);
 
             var commands = rawProject["commands"] as JObject;
             if (commands != null)
@@ -214,10 +217,37 @@ namespace Microsoft.Framework.Runtime
             return project;
         }
 
-        private static string GetSettingsValue(JObject settings, string propertyName, string defaultValue)
+        private static IEnumerable<string> GetSourcePattern(JObject rawProject, string propertyName, string[] defaultPatterns)
         {
-            var token = settings[propertyName];
-            return token != null ? token.Value<string>() : defaultValue;
+            var token = rawProject[propertyName];
+
+            if (token == null)
+            {
+                return defaultPatterns;
+            }
+
+            if (token.Type == JTokenType.Null)
+            {
+                return Enumerable.Empty<string>();
+            }
+
+            if (token.Type == JTokenType.String)
+            {
+                return GetSourcesSplit(token.Value<string>());
+            }
+
+            // Assume it's an array (it should explode if it's not)
+            return token.ToObject<string[]>().SelectMany(GetSourcesSplit);
+        }
+
+        private static IEnumerable<string> GetSourcesSplit(string sourceDescription)
+        {
+            if (string.IsNullOrEmpty(sourceDescription))
+            {
+                return Enumerable.Empty<string>();
+            }
+
+            return sourceDescription.Split(_sourceSeparator, StringSplitOptions.RemoveEmptyEntries);
         }
 
         private static void PopulateDependencies(IList<Library> results, JObject settings)
