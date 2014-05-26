@@ -15,6 +15,21 @@ namespace Microsoft.Framework.Runtime
     {
         private readonly Dictionary<string, string> _resolvedPaths = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
+        public IEnumerable<string> GetAttemptedPaths(FrameworkName targetFramework)
+        {
+            if (PlatformHelper.IsMono)
+            {
+                return Enumerable.Empty<string>();
+            }
+
+            if (!VersionUtility.IsDesktop(targetFramework))
+            {
+                return Enumerable.Empty<string>();
+            }
+
+            return GetGacSearchPaths();
+        }
+
         public LibraryDescription GetDescription(string name, SemanticVersion version, FrameworkName targetFramework)
         {
             if (PlatformHelper.IsMono)
@@ -71,17 +86,9 @@ namespace Microsoft.Framework.Runtime
 
         private bool TryResolvePartialName(string name, out string assemblyLocation)
         {
-            var gacFolders = new[] { IntPtr.Size == 4 ? "GAC_32" : "GAC_64", "GAC_MSIL" };
-            string windowsFolder = Environment.GetEnvironmentVariable("WINDIR");
-
-            foreach (var folder in gacFolders)
+            foreach (var gacPath in GetGacSearchPaths())
             {
-                string gacPath = Path.Combine(windowsFolder,
-                                             @"Microsoft.NET\assembly",
-                                             folder,
-                                             name);
-
-                var di = new DirectoryInfo(gacPath);
+                var di = new DirectoryInfo(Path.Combine(gacPath, name));
 
                 if (!di.Exists)
                 {
@@ -100,6 +107,20 @@ namespace Microsoft.Framework.Runtime
 
             assemblyLocation = null;
             return false;
+        }
+
+        private static IEnumerable<string> GetGacSearchPaths()
+        {
+            var gacFolders = new[] { IntPtr.Size == 4 ? "GAC_32" : "GAC_64", "GAC_MSIL" };
+            string windowsFolder = Environment.GetEnvironmentVariable("WINDIR");
+
+            foreach (var folder in gacFolders)
+            {
+                yield return Path.Combine(windowsFolder,
+                                          "Microsoft.NET",
+                                          "assembly",
+                                          folder);
+            }
         }
     }
 }

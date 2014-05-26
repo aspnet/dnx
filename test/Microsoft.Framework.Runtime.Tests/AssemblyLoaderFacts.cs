@@ -176,6 +176,11 @@ namespace Loader.Tests
         public IEnumerable<Library> Dependencies { get; set; }
         public FrameworkName FrameworkName { get; set; }
 
+        public IEnumerable<string> GetAttemptedPaths(FrameworkName targetFramework)
+        {
+            return null;
+        }
+
         public LibraryDescription GetDescription(string name, SemanticVersion version, FrameworkName frameworkName)
         {
             Trace.WriteLine(string.Format("StubAssemblyLoader.GetDependencies {0} {1} {2}", name, version, frameworkName));

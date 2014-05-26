@@ -15,7 +15,15 @@ namespace Microsoft.Framework.Runtime
         public ProjectResolver(string projectPath, string rootPath)
         {
             // We could find all project.json files in the search paths up front here
-            _searchPaths = ResolveSearchPaths(projectPath, rootPath);
+            _searchPaths = ResolveSearchPaths(projectPath, rootPath).ToList();
+        }
+
+        public IEnumerable<string> SearchPaths
+        {
+            get
+            {
+                return _searchPaths;
+            }
         }
 
         public bool TryResolveProject(string name, out Project project)
@@ -34,7 +42,7 @@ namespace Microsoft.Framework.Runtime
             return project;
         }
 
-        private IList<string> ResolveSearchPaths(string projectPath, string rootPath)
+        private IEnumerable<string> ResolveSearchPaths(string projectPath, string rootPath)
         {
             var paths = new List<string>
             {
@@ -51,7 +59,7 @@ namespace Microsoft.Framework.Runtime
                 }
             }
 
-            return paths;
+            return paths.Distinct();
         }
 
         public static string ResolveRootDirectory(string projectPath)

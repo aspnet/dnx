@@ -66,7 +66,7 @@ namespace NuGet
             set;
         }
 
-        protected IFileSystem FileSystem
+        public IFileSystem FileSystem
         {
             get;
             private set;

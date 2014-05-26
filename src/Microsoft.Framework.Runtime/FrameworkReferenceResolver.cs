@@ -44,6 +44,17 @@ namespace Microsoft.Framework.Runtime
             return null;
         }
 
+        public string GetFrameworkPath(FrameworkName targetFramework)
+        {
+            FrameworkInformation frameworkInfomation;
+            if (_cache.TryGetValue(targetFramework, out frameworkInfomation))
+            {
+                return frameworkInfomation.Path;
+            }
+
+            return null;
+        }
+
         public static string GetReferenceAssembliesPath()
         {
             // References assemblies are in %ProgramFiles(x86)% on
@@ -155,6 +166,8 @@ namespace Microsoft.Framework.Runtime
         private void PopulateFrameworkReferences(DirectoryInfo directory, FrameworkName frameworkName)
         {
             var frameworkInfo = new FrameworkInformation();
+            frameworkInfo.Path = directory.FullName;
+
             string redistList = Path.Combine(directory.FullName, "RedistList", "FrameworkList.xml");
 
             if (File.Exists(redistList))
@@ -231,6 +244,8 @@ namespace Microsoft.Framework.Runtime
             {
                 Assemblies = new Dictionary<string, string>();
             }
+
+            public string Path { get; set; }
 
             public IDictionary<string, string> Assemblies { get; private set; }
 

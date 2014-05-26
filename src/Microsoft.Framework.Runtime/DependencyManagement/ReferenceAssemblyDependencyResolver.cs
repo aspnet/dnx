@@ -3,6 +3,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Runtime.Versioning;
 using NuGet;
@@ -19,6 +20,17 @@ namespace Microsoft.Framework.Runtime
         }
 
         public FrameworkReferenceResolver FrameworkResolver { get; private set; }
+
+        public IEnumerable<string> GetAttemptedPaths(FrameworkName targetFramework)
+        {
+            string path = FrameworkResolver.GetFrameworkPath(targetFramework);
+            if (!string.IsNullOrEmpty(path))
+            {
+                return new[] { path };
+            }
+
+            return Enumerable.Empty<string>();
+        }
 
         public LibraryDescription GetDescription(string name, SemanticVersion version, FrameworkName targetFramework)
         {

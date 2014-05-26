@@ -33,6 +33,7 @@ namespace Microsoft.Framework.Runtime
             {
                 packagesPath = ResolveRepositoryPath(projectPath);
             }
+
             _repository = new LocalPackageRepository(packagesPath);
             _frameworkReferenceResolver = frameworkReferenceResolver;
             Dependencies = Enumerable.Empty<LibraryDescription>();
@@ -48,7 +49,15 @@ namespace Microsoft.Framework.Runtime
 
         public IEnumerable<LibraryDescription> Dependencies { get; private set; }
 
-        public LibraryDescription GetDescription(string name, SemanticVersion version, FrameworkName frameworkName)
+        public IEnumerable<string> GetAttemptedPaths(FrameworkName targetFramework)
+        {
+            return new[]
+            {
+                _repository.FileSystem.Root
+            };
+        }
+
+        public LibraryDescription GetDescription(string name, SemanticVersion version, FrameworkName targetFramework)
         {
             var package = FindCandidate(name, version);
 
@@ -57,7 +66,7 @@ namespace Microsoft.Framework.Runtime
                 return new LibraryDescription
                 {
                     Identity = new Library { Name = package.Id, Version = package.Version },
-                    Dependencies = GetDependencies(package, frameworkName)
+                    Dependencies = GetDependencies(package, targetFramework)
                 };
             }
 

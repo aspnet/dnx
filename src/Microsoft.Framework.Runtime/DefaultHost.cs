@@ -8,6 +8,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.Versioning;
+using System.Text;
 using Microsoft.Framework.Runtime.Common.DependencyInjection;
 using Microsoft.Framework.Runtime.FileSystem;
 using Microsoft.Framework.Runtime.Infrastructure;
@@ -73,9 +74,29 @@ namespace Microsoft.Framework.Runtime
             // If there's any unresolved dependencies then complain
             if (_unresolvedProvider.UnresolvedDependencies.Any())
             {
-                throw new InvalidOperationException(
-                    String.Format("Unable to resolve depedendencies {0}",
-                        String.Join(",", _unresolvedProvider.UnresolvedDependencies.Select(d => d.Identity.ToString()))));
+                var sb = new StringBuilder();
+
+                // TODO: Localize messages
+
+                sb.AppendLine("Failed to resolve the following dependencies:");
+
+                foreach (var d in _unresolvedProvider.UnresolvedDependencies.OrderBy(d => d.Identity.Name))
+                {
+                    sb.AppendLine("   " + d.Identity.ToString());
+                }
+
+                sb.AppendLine();
+                sb.AppendLine("Searched Locations:");
+
+                foreach (var path in _unresolvedProvider.GetAttemptedPaths(_targetFramework))
+                {
+                    sb.AppendLine("  " + path);
+                }
+
+                sb.AppendLine();
+                sb.AppendLine("Try running 'kpm restore'.");
+
+                throw new InvalidOperationException(sb.ToString());
             }
 
             _serviceProvider.Add(typeof(IApplicationEnvironment), new ApplicationEnvironment(Project, _targetFramework));
@@ -161,11 +182,16 @@ namespace Microsoft.Framework.Runtime
             dependencyProviders.Add(_unresolvedProvider);
 
             _dependencyWalker = new DependencyWalker(dependencyProviders);
+
+            // Setup the attempted providers in case there are unresolved
+            // dependencies
+            _unresolvedProvider.AttemptedProviders = dependencyProviders;
+
             _loader = new AssemblyLoader(loaders);
             _serviceProvider.Add(typeof(IFileMonitor), _watcher);
             _serviceProvider.Add(typeof(ILibraryManager),
-                new LibraryManager(_targetFramework, 
-                                   _dependencyWalker, 
+                new LibraryManager(_targetFramework,
+                                   _dependencyWalker,
                                    libraryExporters.Concat(new[] { roslynLoader })));
         }
 

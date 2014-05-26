@@ -1,7 +1,9 @@
 // Copyright (c) Microsoft Open Technologies, Inc. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
+using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Runtime.Versioning;
 using NuGet;
@@ -19,6 +21,11 @@ namespace Microsoft.Framework.Runtime
         }
 
         public IEnumerable<LibraryDescription> Dependencies { get; private set; }
+
+        public IEnumerable<string> GetAttemptedPaths(FrameworkName targetFramework)
+        {
+            return _projectResolver.SearchPaths;
+        }
 
         public LibraryDescription GetDescription(string name, SemanticVersion version, FrameworkName targetFramework)
         {
