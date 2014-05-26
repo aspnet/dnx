@@ -20,7 +20,7 @@
   <ItemGroup>
     <Content Include="NuGet\Authoring\nuspec.xsd" />
     <Content Include="NuGet\Resources\NuGetResources.resx" />
-    <Content Include="Project.json" />
+    <Content Include="project.json" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="ApplicationEnvironment.cs" />

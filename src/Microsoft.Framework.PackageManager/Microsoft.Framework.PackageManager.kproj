@@ -72,7 +72,7 @@
   <ItemGroup>
     <Content Include="NuGet\Common\CommonResources.resx" />
     <Content Include="NuGet\NuGetResources.resx" />
-    <Content Include="Project.json" />
+    <Content Include="project.json" />
   </ItemGroup>
   <Import Project="$(VSToolsPath)\AspNet\Microsoft.Web.AspNet.targets" Condition="'$(VSToolsPath)' != ''" />
 </Project>

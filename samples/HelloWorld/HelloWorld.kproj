@@ -18,7 +18,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Content Include="Compiler\Resources\HTMLPage1.html" />
-    <Content Include="Project.json" />
+    <Content Include="project.json" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Compiler\Preprocess\HelloMetaProgramming.cs" />
