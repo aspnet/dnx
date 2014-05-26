@@ -137,5 +137,91 @@ namespace Microsoft.Framework.Runtime.Tests
             Assert.True(k10Options.WarningsAsErrors);
             Assert.Null(k10Options.Platform);
         }
+
+        [Fact]
+        public void SourcePatternsAreSet()
+        {
+            var project = Project.GetProject(@"
+{
+    ""code"": ""*.cs;../*.cs"",
+    ""exclude"": ""buggy/*.*"",
+    ""preprocess"": ""other/**/*.cs;*.cs;*.*"",
+    ""shared"": ""shared/**/*.cs"",
+    ""resources"": ""a.cs;foo.js""
+}",
+"foo",
+@"c:\foo\project.json");
+
+            Assert.Equal(new[] { "*.cs", @"../*.cs" }, project.SourcePatterns);
+            Assert.Equal(new[] { @"buggy/*.*" }, project.SourceExcludePatterns);
+            Assert.Equal(new[] { @"other/**/*.cs", "*.cs", "*.*" }, project.PreprocessPatterns);
+            Assert.Equal(new[] { @"shared/**/*.cs" }, project.SharedPatterns);
+            Assert.Equal(new[] { "a.cs", @"foo.js" }, project.ResourcesPatterns);
+        }
+
+        [Fact]
+        public void SourcePatternsWorkForArraysAreSet()
+        {
+            var project = Project.GetProject(@"
+{
+    ""code"": [""*.cs"", ""../*.cs""],
+    ""exclude"": [""buggy/*.*""],
+    ""preprocess"": [""other/**/*.cs"", ""*.cs"", ""*.*""],
+    ""shared"": [""shared/**/*.cs;../../shared/*.cs""],
+    ""resources"": [""a.cs"", ""foo.js""]
+}",
+"foo",
+@"c:\foo\project.json");
+
+            Assert.Equal(new[] { "*.cs", @"../*.cs" }, project.SourcePatterns);
+            Assert.Equal(new[] { @"buggy/*.*" }, project.SourceExcludePatterns);
+            Assert.Equal(new[] { @"other/**/*.cs", "*.cs", "*.*" }, project.PreprocessPatterns);
+            Assert.Equal(new[] { @"shared/**/*.cs", @"../../shared/*.cs" }, project.SharedPatterns);
+            Assert.Equal(new[] { "a.cs", @"foo.js" }, project.ResourcesPatterns);
+        }
+
+        [Fact]
+        public void DefaultSourcePatternsAreUsedIfNoneSpecified()
+        {
+            var project = Project.GetProject(@"
+{
+}",
+"foo",
+@"c:\foo\project.json");
+
+            Assert.Equal(Project._defaultSourcePatterns, project.SourcePatterns);
+            Assert.Equal(Project._defaultSourceExcludePatterns, project.SourceExcludePatterns);
+            Assert.Equal(Project._defaultPreprocessPatterns, project.PreprocessPatterns);
+            Assert.Equal(Project._defaultSharedPatterns, project.SharedPatterns);
+            Assert.Equal(Project._defaultResourcesPatterns, project.ResourcesPatterns);
+        }
+
+        [Fact]
+        public void NullSourcePatternReturnsEmptySet()
+        {
+            var project = Project.GetProject(@"
+{
+    ""code"": null
+}",
+"foo",
+@"c:\foo\project.json");
+
+            Assert.Empty(project.SourcePatterns);
+        }
+
+        [Fact]
+        public void EmptyStringAndNullElementsAreIgnored()
+        {
+            var project = Project.GetProject(@"
+{
+    ""code"": [""a.cs"", """", ""b.cs;;;"", ""c.cs"", null],
+    ""exclude"": ""a.cs;;;;""
+}",
+"foo",
+@"c:\foo\project.json");
+
+            Assert.Equal(new[] { "a.cs", "b.cs", "c.cs" }, project.SourcePatterns);
+            Assert.Equal(new[] { "a.cs" }, project.SourceExcludePatterns);
+        }
     }
 }

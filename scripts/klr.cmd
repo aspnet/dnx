@@ -30,7 +30,7 @@ REM This is insane (I'm sure there's a better way to build up the KLR_LIB_PATH)
 IF EXIST %~dp0..\packages\Microsoft.Bcl.Immutable* FOR /F %%I IN ('DIR %~dp0..\packages\Microsoft.Bcl.Immutable* /B /O:-D') DO (SET Microsoft_Bcl_Immutable=%%I& GOTO :END_Microsoft_Bcl_Immutable)
 :END_Microsoft_Bcl_Immutable
 
-SET KLR_LIB_PATH=%KLR_LIB_PATH%;%~dp0..\packages\%Microsoft_Bcl_Immutable%\lib\%FRAMEWORK%
+SET KLR_LIB_PATH=%KLR_LIB_PATH%;%~dp0..\packages\%Microsoft_Bcl_Immutable%\lib\portable-net45+win8
 
 :START_Microsoft_CodeAnalysis_CSharp
 IF EXIST %~dp0..\packages\Microsoft.CodeAnalysis.CSharp* FOR /F %%I IN ('DIR %~dp0..\packages\Microsoft.CodeAnalysis.CSharp* /B /O:-D') DO (SET Microsoft_CodeAnalysis_CSharp=%%I& GOTO :END_Microsoft_CodeAnalysis_CSharp)
@@ -44,11 +44,11 @@ IF EXIST %~dp0..\packages\Microsoft.CodeAnalysis.Common* FOR /F %%I IN ('DIR %~d
 
 SET KLR_LIB_PATH=%KLR_LIB_PATH%;%~dp0..\packages\%Microsoft_CodeAnalysis_Common%\lib\%FRAMEWORK%
 
-:START_System_Reflection_Metadata
-IF EXIST %~dp0..\packages\System.Reflection.Metadata* FOR /F %%I IN ('DIR %~dp0..\packages\System.Reflection.Metadata* /B /O:-D') DO (SET System_Reflection_Metadata=%%I& GOTO :END_System_Reflection_Metadata)
-:END_System_Reflection_Metadata
+:START_Microsoft_Bcl_Metadata
+IF EXIST %~dp0..\packages\Microsoft.Bcl.Metadata* FOR /F %%I IN ('DIR %~dp0..\packages\Microsoft.Bcl.Metadata* /B /O:-D') DO (SET Microsoft_Bcl_Metadata=%%I& GOTO :END_Microsoft_Bcl_Metadata)
+:END_Microsoft_Bcl_Metadata
 
-SET KLR_LIB_PATH=%KLR_LIB_PATH%;%~dp0..\packages\%System_Reflection_Metadata%\lib\%FRAMEWORK%
+SET KLR_LIB_PATH=%KLR_LIB_PATH%;%~dp0..\packages\%Microsoft_Bcl_Metadata%\lib\portable-net45+win8
 
 echo %KLR_LIB_PATH%
 
