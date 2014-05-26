@@ -15,7 +15,7 @@ namespace Microsoft.Framework.Runtime
 
         public override string ToString()
         {
-            return Name + " " + Version;
+            return Name + " " + Version + (Version.IsSnapshot ? "-*" : string.Empty);
         }
 
         public bool Equals(Library other)

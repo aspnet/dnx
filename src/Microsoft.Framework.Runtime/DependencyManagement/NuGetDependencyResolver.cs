@@ -53,7 +53,8 @@ namespace Microsoft.Framework.Runtime
         {
             return new[]
             {
-                _repository.FileSystem.Root
+                Path.Combine(_repository.FileSystem.Root, "{name}.{version}", "{name}.nuspec"),
+                Path.Combine(_repository.FileSystem.Root, "{name}.{version}", "{name}.{version}.nupkg")
             };
         }
 

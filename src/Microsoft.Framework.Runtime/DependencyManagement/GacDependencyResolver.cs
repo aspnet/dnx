@@ -27,7 +27,7 @@ namespace Microsoft.Framework.Runtime
                 return Enumerable.Empty<string>();
             }
 
-            return GetGacSearchPaths();
+            return GetGacSearchPaths().Select(p => Path.Combine(p, "{name}", "{version}", "{name}.dll"));
         }
 
         public LibraryDescription GetDescription(string name, SemanticVersion version, FrameworkName targetFramework)

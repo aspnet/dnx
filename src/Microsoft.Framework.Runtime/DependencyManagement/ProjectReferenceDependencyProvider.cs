@@ -24,7 +24,7 @@ namespace Microsoft.Framework.Runtime
 
         public IEnumerable<string> GetAttemptedPaths(FrameworkName targetFramework)
         {
-            return _projectResolver.SearchPaths;
+            return _projectResolver.SearchPaths.Select(p => Path.Combine(p, "{name}", "project.json"));
         }
 
         public LibraryDescription GetDescription(string name, SemanticVersion version, FrameworkName targetFramework)

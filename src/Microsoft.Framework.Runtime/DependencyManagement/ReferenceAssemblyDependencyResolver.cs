@@ -26,7 +26,11 @@ namespace Microsoft.Framework.Runtime
             string path = FrameworkResolver.GetFrameworkPath(targetFramework);
             if (!string.IsNullOrEmpty(path))
             {
-                return new[] { path };
+                return new[]
+                {
+                    Path.Combine(path, "{name}.dll"),
+                    Path.Combine(path, "Facades", "{name}.dll")
+                };
             }
 
             return Enumerable.Empty<string>();
