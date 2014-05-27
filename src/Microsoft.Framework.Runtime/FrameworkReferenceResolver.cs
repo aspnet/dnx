@@ -101,6 +101,7 @@ namespace Microsoft.Framework.Runtime
                     var frameworkName = new FrameworkName(VersionUtility.DefaultTargetFramework.Identifier, new Version(version));
 
                     var frameworkInfo = new FrameworkInformation();
+                    frameworkInfo.Path = targetFrameworkPath;
 
                     var assemblies = new List<Tuple<string, string>>();
 
@@ -109,7 +110,7 @@ namespace Microsoft.Framework.Runtime
 
                     foreach (var pair in assemblies)
                     {
-                        frameworkInfo.Assemblies.Add(pair.Item1, pair.Item2);
+                        frameworkInfo.Assemblies[pair.Item1] = pair.Item2;
                     }
 
                     _cache[frameworkName] = frameworkInfo;
