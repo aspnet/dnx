@@ -10,13 +10,13 @@ namespace Microsoft.Framework.Runtime
     public class DebuggerDetachWatcher
     {
         private Timer _debuggerEventsTimer;
-        private Action _detachAction;
+        private Action _detachCallback;
 
         private readonly object _debuggerEventsSyncLock = new object();
 
-        public DebuggerDetachWatcher(Action detachAction)
+        public DebuggerDetachWatcher(Action detachCallback)
         {
-            _detachAction = detachAction;
+            _detachCallback = detachCallback;
         }
 
         public void ScheduleDetachCallback()
@@ -38,7 +38,7 @@ namespace Microsoft.Framework.Runtime
                 _debuggerEventsTimer.Dispose();
 
                 // Trigger the callback
-                Interlocked.Exchange(ref _detachAction, () => { }).Invoke();
+                Interlocked.Exchange(ref _detachCallback, () => { }).Invoke();
             }
         }
     }
