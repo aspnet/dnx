@@ -138,19 +138,22 @@ namespace Microsoft.Framework.Runtime.Roslyn
                     return ReportCompilationError(errors);
                 }
 
-                var assemblyBytes = assemblyStream.ToArray();
-
                 Assembly assembly = null;
+
+                // Rewind the stream
+                assemblyStream.Seek(0, SeekOrigin.Begin);
 
                 if (PlatformHelper.IsMono)
                 {
-                    // Pdb generation doesn't work on mono today
-                    assembly = _loaderEngine.LoadBytes(assemblyBytes, pdbBytes: null);
+                    // Pdbs aren't supported on mono
+                    assembly = _loaderEngine.LoadStream(assemblyStream, pdbStream: null);
                 }
                 else
                 {
-                    var pdbBytes = pdbStream.ToArray();
-                    assembly = _loaderEngine.LoadBytes(assemblyBytes, pdbBytes);
+                    // Rewind the pdb stream
+                    pdbStream.Seek(0, SeekOrigin.Begin);
+
+                    assembly = _loaderEngine.LoadStream(assemblyStream, pdbStream);
                 }
 
                 return new AssemblyLoadResult(assembly);

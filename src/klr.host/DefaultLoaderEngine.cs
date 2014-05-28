@@ -2,6 +2,7 @@
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 using System;
+using System.IO;
 using System.Reflection;
 using Microsoft.Framework.Runtime;
 
@@ -10,7 +11,7 @@ namespace klr.host
     public class DefaultLoaderEngine : IAssemblyLoaderEngine
     {
         private readonly Func<string, Assembly> _loadFile;
-        private readonly Func<byte[], byte[], Assembly> _loadBytes;
+        private readonly Func<Stream, Stream, Assembly> _loadStream;
 
         public DefaultLoaderEngine(object loaderImpl)
         {
@@ -21,10 +22,10 @@ namespace klr.host
 
             var typeInfo = loaderImpl.GetType().GetTypeInfo();
             var loaderFileMethod = typeInfo.GetDeclaredMethod("LoadFile");
-            var loadBytesMethod = typeInfo.GetDeclaredMethod("LoadBytes");
+            var loadStreamMethod = typeInfo.GetDeclaredMethod("LoadStream");
 
             _loadFile = (Func<string, Assembly>)loaderFileMethod.CreateDelegate(typeof(Func<string, Assembly>), loaderImpl);
-            _loadBytes = (Func<byte[], byte[], Assembly>)loadBytesMethod.CreateDelegate(typeof(Func<byte[], byte[], Assembly>), loaderImpl);
+            _loadStream = (Func<Stream, Stream, Assembly>)loadStreamMethod.CreateDelegate(typeof(Func<Stream, Stream, Assembly>), loaderImpl);
         }
 
         public Assembly LoadFile(string path)
@@ -32,9 +33,9 @@ namespace klr.host
             return _loadFile(path);
         }
 
-        public Assembly LoadBytes(byte[] assemblyBytes, byte[] pdbBytes)
+        public Assembly LoadStream(Stream assemblyStream, Stream pdbStream)
         {
-            return _loadBytes(assemblyBytes, pdbBytes);
+            return _loadStream(assemblyStream, pdbStream);
         }
     }
 }

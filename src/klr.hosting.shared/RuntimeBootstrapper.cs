@@ -100,7 +100,7 @@ namespace klr.hosting
             string[] searchPaths = ResolveSearchPaths(options);
 
             Func<string, Assembly> loader = _ => null;
-            Func<byte[], Assembly> loadBytes = _ => null;
+            Func<Stream, Assembly> loadStream = _ => null;
             Func<string, Assembly> loadFile = _ => null;
 
             Func<AssemblyName, Assembly> loaderCallback = assemblyName =>
@@ -119,7 +119,7 @@ namespace klr.hosting
                 if (assembly != null)
                 {
 #if K10
-                    ExtractAssemblyNeutralInterfaces(assembly, loadBytes);
+                    ExtractAssemblyNeutralInterfaces(assembly, loadStream);
 #endif
 
                     _assemblyCache[name] = assembly;
@@ -129,7 +129,7 @@ namespace klr.hosting
             };
 #if K10
             var loaderImpl = new DelegateAssemblyLoadContext(loaderCallback);
-            loadBytes = bytes => loaderImpl.LoadBytes(bytes, null);
+            loadStream = assemblyStream => loaderImpl.LoadStream(assemblyStream, pdbStream: null);
             loadFile = path => loaderImpl.LoadFile(path);
 
             AssemblyLoadContext.InitializeDefaultContext(loaderImpl);
@@ -140,7 +140,7 @@ namespace klr.hosting
             }
 #else
             var loaderImpl = new LoaderEngine();
-            loadBytes = bytes => loaderImpl.LoadBytes(bytes, null);
+            loadStream = assemblyStream => loaderImpl.LoadStream(assemblyStream, pdbStream: null);
             loadFile = path => loaderImpl.LoadFile(path);
 
             ResolveEventHandler handler = (sender, a) =>
@@ -163,7 +163,7 @@ namespace klr.hosting
                     return;
                 }
 
-                ExtractAssemblyNeutralInterfaces(loadedArgs.LoadedAssembly, loadBytes);
+                ExtractAssemblyNeutralInterfaces(loadedArgs.LoadedAssembly, loadStream);
             };
 #endif
 
@@ -283,7 +283,7 @@ namespace klr.hosting
                           .Select(Path.GetFullPath);
         }
 
-        private static void ExtractAssemblyNeutralInterfaces(Assembly assembly, Func<byte[], Assembly> loadBytes)
+        private static void ExtractAssemblyNeutralInterfaces(Assembly assembly, Func<Stream, Assembly> load)
         {
             // Embedded assemblies end with .dll
             foreach (var name in assembly.GetManifestResourceNames())
@@ -297,10 +297,10 @@ namespace klr.hosting
                         continue;
                     }
 
-                    // We're creating 2 streams under the covers on core clr
-                    var ms = new MemoryStream();
-                    assembly.GetManifestResourceStream(name).CopyTo(ms);
-                    _assemblyCache[assemblyName] = loadBytes(ms.ToArray());
+
+                    var neutralAssemblyStream = assembly.GetManifestResourceStream(name);
+
+                    _assemblyCache[assemblyName] = load(neutralAssemblyStream);
                 }
             }
         }
