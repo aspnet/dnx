@@ -8,6 +8,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection.PortableExecutable;
 using System.Runtime.Versioning;
+using System.Text;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.Text;
@@ -235,7 +236,12 @@ namespace Microsoft.Framework.Runtime.Roslyn
         {
             using (var stream = File.OpenRead(sourcePath))
             {
-                return CSharpSyntaxTree.ParseText(SourceText.From(stream), sourcePath, parseOptions);
+#if NET45
+                var sourceText = SourceText.From(stream, encoding: Encoding.UTF8);
+#else
+                var sourceText = SourceText.From(stream);
+#endif
+                return CSharpSyntaxTree.ParseText(sourceText, options: parseOptions, path: sourcePath);
             }
         }
 

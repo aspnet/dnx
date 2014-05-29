@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
@@ -72,7 +73,7 @@ namespace Microsoft.Framework.Runtime.Roslyn
                 {
                     DoTypeSymbol(shallowUsage, propertyMember.Type);
                 }
-                
+
                 if (fieldMember != null)
                 {
                     DoTypeSymbol(shallowUsage, fieldMember.Type);
@@ -171,7 +172,11 @@ namespace Microsoft.Framework.Runtime.Roslyn
 
                 // what it looks like when removed
                 var newRoot = root.RemoveNodes(nodesToRemove, SyntaxRemoveOptions.KeepDirectives);
-                var newTree = SyntaxFactory.SyntaxTree(newRoot, tree.FilePath, tree.Options);
+#if NET45
+                var newTree = SyntaxFactory.SyntaxTree(newRoot, options: tree.Options, path: tree.FilePath, encoding: Encoding.UTF8);
+#else
+                var newTree = SyntaxFactory.SyntaxTree(newRoot, options: tree.Options, path: tree.FilePath);
+#endif
 
                 // update compilation with code removed
                 Compilation = Compilation.AddSyntaxTrees(newTree);
@@ -226,7 +231,11 @@ namespace Microsoft.Framework.Runtime.Roslyn
                 }
 
                 var newRoot = root.RemoveNodes(nodesToRemove.ToArray(), SyntaxRemoveOptions.KeepDirectives);
-                var newTree = SyntaxFactory.SyntaxTree(newRoot, tree.FilePath, tree.Options);
+#if NET45
+                var newTree = SyntaxFactory.SyntaxTree(newRoot, options: tree.Options, path: tree.FilePath, encoding: Encoding.UTF8);
+#else
+                var newTree = SyntaxFactory.SyntaxTree(newRoot, options: tree.Options, path: tree.FilePath);
+#endif
 
                 ShallowCompilation = ShallowCompilation.AddSyntaxTrees(newTree);
             }
