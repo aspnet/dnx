@@ -17,6 +17,8 @@ namespace Microsoft.Framework.PackageManager.Restore.NuGet
 {
     public class HttpSource
     {
+        private HttpClient _client = new HttpClient();
+
         private string _baseUri;
         private string _userName;
         private string _password;
@@ -70,9 +72,7 @@ namespace Microsoft.Framework.PackageManager.Restore.NuGet
                 request.Headers.Authorization = new AuthenticationHeaderValue("Basic", token);
             };
 
-            var client = new HttpClient();
-
-            var response = await client.SendAsync(request);
+            var response = await _client.SendAsync(request);
 
             using (var stream = new FileStream(
                 result.CacheFileName + "-new",
