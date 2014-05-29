@@ -46,6 +46,11 @@ namespace Microsoft.Framework.Runtime.Roslyn
             // support it)
             options = options.WithDebugInformationKind(DebugInformationKind.Full);
 
+            if (PlatformHelper.IsMono)
+            {
+                options = options.WithConcurrentBuild(concurrentBuild: false);
+            }
+
             var assemblyIdentityComparer = VersionUtility.IsDesktop(targetFramework) ?
                 DesktopAssemblyIdentityComparer.Default : null;
 
