@@ -25,15 +25,6 @@ namespace Microsoft.Framework.Project
             { "runtimePath", CommandOptionType.SingleValue }
         };
 
-        private static readonly Dictionary<string, CommandOptionType> _packageOptions = new Dictionary<string, CommandOptionType>
-        {
-            { "framework", CommandOptionType.MultipleValue },
-            { "out", CommandOptionType.SingleValue },
-            { "zippackages", CommandOptionType.NoValue },
-            { "overwrite", CommandOptionType.NoValue },
-        };
-
-
         private static readonly Dictionary<string, CommandOptionType> _crossgenOptions = new Dictionary<string, CommandOptionType>
         {
             { "in", CommandOptionType.MultipleValue },
