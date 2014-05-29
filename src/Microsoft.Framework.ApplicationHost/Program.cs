@@ -16,13 +16,6 @@ namespace Microsoft.Framework.ApplicationHost
 {
     public class Program
     {
-        private static readonly Dictionary<string, CommandOptionType> _options = new Dictionary<string, CommandOptionType>
-        {
-            { "nobin", CommandOptionType.NoValue },
-            { "watch", CommandOptionType.NoValue },
-            { "packages", CommandOptionType.SingleValue},
-        };
-
         private readonly IHostContainer _container;
         private readonly IApplicationEnvironment _environment;
         private readonly IServiceProvider _serviceProvider;
@@ -39,7 +32,11 @@ namespace Microsoft.Framework.ApplicationHost
             DefaultHostOptions options;
             string[] programArgs;
 
-            ParseArgs(args, out options, out programArgs);
+            var isShowingHelp = ParseArgs(args, out options, out programArgs);
+            if (isShowingHelp)
+            {
+                return Task.FromResult(0);
+            }
 
             var host = new DefaultHost(options, _serviceProvider);
 
@@ -121,30 +118,37 @@ namespace Microsoft.Framework.ApplicationHost
         }
 
 
-        private void ParseArgs(string[] args, out DefaultHostOptions defaultHostOptions, out string[] outArgs)
+        private bool ParseArgs(string[] args, out DefaultHostOptions defaultHostOptions, out string[] outArgs)
         {
-            var parser = new CommandLineParser();
-            CommandOptions options;
-            parser.ParseOptions(args, _options, out options);
+            var app = new CommandLineApplication(throwOnUnexpectedArg: false);
+            app.Name = "k";
+            var optionNobin = app.Option("--nobin", "Use cached binaries", CommandOptionType.NoValue);
+            var optionWatch = app.Option("--watch", "Watch file changes", CommandOptionType.NoValue);
+            var optionPackages = app.Option("--packages <PACKAGE_DIR>", "Directory contatining packages",
+                CommandOptionType.SingleValue);
+            app.HelpOption("-?|-h|--help");
+            app.Execute(args);
 
             defaultHostOptions = new DefaultHostOptions();
-            defaultHostOptions.UseCachedCompilations = !options.HasOption("nobin");
-            defaultHostOptions.WatchFiles = options.HasOption("watch");
-            defaultHostOptions.PackageDirectory = options.GetValue("packages");
+            defaultHostOptions.UseCachedCompilations = !optionNobin.Values.Any();
+            defaultHostOptions.WatchFiles = optionWatch.Values.Any();
+            defaultHostOptions.PackageDirectory = optionPackages.Value();
 
             defaultHostOptions.TargetFramework = _environment.TargetFramework;
             defaultHostOptions.ApplicationBaseDirectory = _environment.ApplicationBasePath;
 
-            if (options.RemainingArgs.Count > 0)
+            if (app.RemainingArguments.Any())
             {
-                defaultHostOptions.ApplicationName = options.RemainingArgs[0];
+                defaultHostOptions.ApplicationName = app.RemainingArguments[0];
 
-                outArgs = options.RemainingArgs.Skip(1).ToArray();
+                outArgs = app.RemainingArguments.Skip(1).ToArray();
             }
             else
             {
-                outArgs = options.RemainingArgs.ToArray();
+                outArgs = app.RemainingArguments.ToArray();
             }
+
+            return app.IsShowingHelp;
         }
 
         private Task<int> ExecuteMain(DefaultHost host, string applicationName, string[] args)

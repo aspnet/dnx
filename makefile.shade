@@ -66,7 +66,7 @@ var NEW_RUNTIME = '${Environment.GetEnvironmentVariable("NEW_RUNTIME") == "1"}'
     @{
         var cscPath = Path.Combine(Environment.GetEnvironmentVariable("WINDIR"), "Microsoft.NET", "Framework", "v4.0.30319", "csc.exe");
         Log.Info("Using csc path:" + cscPath);
-        Exec(cscPath, @"/target:exe /nologo /unsafe /out:artifacts\build\klr.mono.managed\klr.mono.managed.dll /define:NET45 src\klr.mono.managed\EntryPoint.cs src\klr.hosting.shared\RuntimeBootstrapper.cs src\klr.hosting.shared\LoaderEngine.cs src\Microsoft.Framework.CommandLineUtils\CommandLine\CommandLineParser.cs src\Microsoft.Framework.CommandLineUtils\CommandLine\CommandOptions.cs src\Microsoft.Framework.CommandLineUtils\CommandLine\CommandOptionType.cs");
+        Exec(cscPath, @"/target:exe /nologo /unsafe /out:artifacts\build\klr.mono.managed\klr.mono.managed.dll /define:NET45 src\klr.mono.managed\EntryPoint.cs src\klr.hosting.shared\RuntimeBootstrapper.cs src\klr.hosting.shared\LoaderEngine.cs src\Microsoft.Framework.CommandLineUtils\CommandLine\CommandArgument.cs src\Microsoft.Framework.CommandLineUtils\CommandLine\CommandLineApplication.cs src\Microsoft.Framework.CommandLineUtils\CommandLine\CommandOption.cs src\Microsoft.Framework.CommandLineUtils\CommandLine\CommandOptionType.cs");
     }
 
 #copy-kvm target='compile'

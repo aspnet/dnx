@@ -1,6 +1,6 @@
 {
     "dependencies": {
-        "Microsoft.Framework.PackageManager":  "0.1-alpha-*",
+        "Microsoft.Framework.CommandLineUtils":  "",
         "xunit.abstractions": "2.0.0-aspnet-*",
         "xunit.assert": "2.0.0-aspnet-*",
         "xunit.core": "2.0.0-aspnet-*",

@@ -4,7 +4,7 @@
 using System;
 using System.Linq;
 using System.Collections.Generic;
-using Microsoft.Framework.PackageManager.CommandLine;
+using Microsoft.Framework.Runtime.Common.CommandLine;
 using Microsoft.Framework.PackageManager.Packing;
 using Microsoft.Framework.Runtime;
 using Microsoft.Framework.Runtime.Common;
@@ -30,36 +30,43 @@ namespace Microsoft.Framework.PackageManager
             _originalForeground = Console.ForegroundColor;
 
             var app = new CommandLineApplication();
+            app.Name = "kpm";
 
-            var optionVerbose = app.Option("-v|--verbose", "Show verbose output");
-            var optionHelp = app.Option("-h|--help", "Show command help");
-            var optionHelp2 = app.Option("-?", "Show command help");
-            Func<bool> showHelp = () => optionHelp.Value != null || optionHelp2.Value != null;
+            var optionVerbose = app.Option("-v|--verbose", "Show verbose output", CommandOptionType.NoValue);
+            app.HelpOption("-?|-h|--help");
+
+            // Show help information if no subcommand was specified
+            app.OnExecute(() =>
+            {
+                app.ShowHelp();
+                return 0;
+            });
 
             app.Command("restore", c =>
             {
                 c.Description = "Restore packages";
 
                 var argProject = c.Argument("[project]", "Project to restore, default is current directory");
-                var optSource = app.Option("-s|--source <FEED>", "A list of packages sources to use for this command");
-                var optFallbackSource = app.Option("-f|--fallbacksource <FEED>", "A list of packages sources to use as a fallback");
+                var optSource = c.Option("-s|--source <FEED>", "A list of packages sources to use for this command",
+                    CommandOptionType.MultipleValue);
+                var optFallbackSource = c.Option("-f|--fallbacksource <FEED>",
+                    "A list of packages sources to use as a fallback", CommandOptionType.MultipleValue);
+                c.HelpOption("-?|-h|--help");
 
                 c.OnExecute(() =>
                 {
-                    if (showHelp()) { return app.Execute("help", "restore"); }
-
                     try
                     {
                         var command = new RestoreCommand(_environment);
                         command.Report = this;
                         command.RestoreDirectory = argProject.Value;
-                        if (!string.IsNullOrEmpty(optSource.Value))
+                        if (optSource.HasValue())
                         {
-                            command.Sources = new[] { optSource.Value };
+                            command.Sources = optSource.Values;
                         }
-                        if (!string.IsNullOrEmpty(optFallbackSource.Value))
+                        if (optFallbackSource.HasValue())
                         {
-                            command.FallbackSources = new[] { optFallbackSource.Value };
+                            command.FallbackSources = optFallbackSource.Values;
                         }
                         var success = command.ExecuteCommand();
 
@@ -82,31 +89,37 @@ namespace Microsoft.Framework.PackageManager
                 c.Description = "Bundle application for deployment";
 
                 var argProject = c.Argument("[project]", "Path to project, default is current directory");
-                var optionOut = c.Option("-o|--out <PATH>", "Where does it go");
-                var optionZipPackages = c.Option("-z|--zippackages", "Bundle a zip full of packages");
-                var optionOverwrite = c.Option("--overwrite", "Remove existing files in target folders");
-                var optionRuntime = c.Option("--runtime <KRE>", "Names or paths to KRE files to include");
-                var optionAppFolder = c.Option("--appfolder <NAME>", "Determine the name of the application primary folder");
+                var optionOut = c.Option("-o|--out <PATH>", "Where does it go", CommandOptionType.SingleValue);
+                var optionZipPackages = c.Option("-z|--zippackages", "Bundle a zip full of packages",
+                    CommandOptionType.NoValue);
+                var optionOverwrite = c.Option("--overwrite", "Remove existing files in target folders",
+                    CommandOptionType.NoValue);
+                var optionRuntime = c.Option("--runtime <KRE>", "Names or paths to KRE files to include",
+                    CommandOptionType.MultipleValue);
+                var optionAppFolder = c.Option("--appfolder <NAME>",
+                    "Determine the name of the application primary folder", CommandOptionType.SingleValue);
+                c.HelpOption("-?|-h|--help");
 
                 c.OnExecute(() =>
                 {
-                    if (showHelp()) { return app.Execute("help", "pack"); }
-
                     Console.WriteLine("verbose:{0} out:{1} zip:{2} project:{3}",
-                        optionVerbose.Value,
-                        optionOut.Value,
-                        optionZipPackages.Value,
+                        optionVerbose.HasValue(),
+                        optionOut.Value(),
+                        optionZipPackages.HasValue(),
                         argProject.Value);
 
                     var options = new PackOptions
                     {
-                        OutputDir = optionOut.Value,
+                        OutputDir = optionVerbose.Value(),
                         ProjectDir = argProject.Value ?? System.IO.Directory.GetCurrentDirectory(),
-                        AppFolder = optionAppFolder.Value,
+                        AppFolder = optionAppFolder.Value(),
                         RuntimeTargetFramework = _environment.TargetFramework,
-                        ZipPackages = optionZipPackages.Value != null,
-                        Overwrite = optionOverwrite.Value != null,
-                        Runtimes = optionRuntime.Value != null ? optionRuntime.Value.Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries) : new string[0],
+                        ZipPackages = optionZipPackages.HasValue(),
+                        Overwrite = optionOverwrite.HasValue(),
+                        Runtimes = optionRuntime.HasValue() ?
+                            string.Join(";", optionRuntime.Values).
+                                Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries) :
+                            new string[0],
                     };
 
                     var manager = new PackManager(options);
@@ -119,78 +132,7 @@ namespace Microsoft.Framework.PackageManager
                 });
             });
 
-            app.Command("help", c =>
-            {
-                c.Description = "Display help";
-
-                var argCommand = c.Argument("command", "Display help for a specific command");
-
-                c.OnExecute(() =>
-                {
-                    DisplayHelp(app, argCommand.Value);
-                    return 0;
-                });
-            });
-
-            app.OnExecute(() => app.Execute("help"));
-
             return app.Execute(args);
-        }
-
-        void DisplayHelp(CommandLineApplication app, string commandName)
-        {
-            if (commandName == null)
-            {
-                Console.WriteLine("kpm [command] [options] ...");
-                Console.WriteLine();
-                Console.WriteLine("Commands:");
-                foreach (var command in app.Commands)
-                {
-                    Console.WriteLine("  {0}: {1}", command.Name, command.Description);
-                }
-            }
-            else
-            {
-                var command = app.Commands.SingleOrDefault(cmd => String.Equals(cmd.Name, commandName, StringComparison.OrdinalIgnoreCase));
-                if (command == null)
-                {
-                    Console.WriteLine("Unknown command {0}", commandName);
-                }
-                else
-                {
-                    var line = command.Name;
-                    if (command.Options.Count != 0)
-                    {
-                        line += " [options]";
-                    }
-                    foreach (var argument in command.Arguments)
-                    {
-                        line += " " + argument.Name;
-                    }
-                    Console.WriteLine(command.Description);
-                    Console.WriteLine();
-                    Console.WriteLine("usage: {0}", line);
-
-                    if (command.Arguments.Any())
-                    {
-                        Console.WriteLine();
-                        Console.WriteLine("Arguments:");
-                        foreach (var argument in command.Arguments)
-                        {
-                            Console.WriteLine("  {0}  {1}", argument.Name, argument.Description);
-                        }
-                    }
-                    if (command.GetAllOptions().Any())
-                    {
-                        Console.WriteLine();
-                        Console.WriteLine("Options:");
-                        foreach (var option in command.GetAllOptions())
-                        {
-                            Console.WriteLine("  {0}  {1}", option.Template, option.Description);
-                        }
-                    }
-                }
-            }
         }
 
         object _lock = new object();
@@ -210,7 +152,7 @@ namespace Microsoft.Framework.PackageManager
             lock (_lock)
             {
                 var escapeScan = 0;
-                for (; ; )
+                for (; ;)
                 {
                     var escapeIndex = message.IndexOf("\x1b[", escapeScan);
                     if (escapeIndex == -1)

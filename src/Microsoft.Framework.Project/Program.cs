@@ -14,35 +14,6 @@ namespace Microsoft.Framework.Project
 {
     public class Program
     {
-        private static readonly Dictionary<string, CommandOptionType> _buildOptions = new Dictionary<string, CommandOptionType>
-        {
-            { "framework", CommandOptionType.MultipleValue },
-            { "out", CommandOptionType.SingleValue },
-            { "check", CommandOptionType.NoValue },
-            { "dependencies", CommandOptionType.NoValue },
-            { "native", CommandOptionType.NoValue },
-            { "crossgenPath", CommandOptionType.SingleValue },
-            { "runtimePath", CommandOptionType.SingleValue }
-        };
-
-        private static readonly Dictionary<string, CommandOptionType> _packageOptions = new Dictionary<string, CommandOptionType>
-        {
-            { "framework", CommandOptionType.MultipleValue },
-            { "out", CommandOptionType.SingleValue },
-            { "zippackages", CommandOptionType.NoValue },
-            { "overwrite", CommandOptionType.NoValue },
-        };
-
-
-        private static readonly Dictionary<string, CommandOptionType> _crossgenOptions = new Dictionary<string, CommandOptionType>
-        {
-            { "in", CommandOptionType.MultipleValue },
-            { "out", CommandOptionType.SingleValue },
-            { "exePath", CommandOptionType.SingleValue },
-            { "runtimePath", CommandOptionType.SingleValue },
-            { "symbols", CommandOptionType.NoValue }
-        };
-
         private readonly IApplicationEnvironment _environment;
 
         public Program(IApplicationEnvironment environment)
@@ -52,31 +23,42 @@ namespace Microsoft.Framework.Project
 
         public int Main(string[] args)
         {
-            if (args.Length < 1)
-            {
-                Console.WriteLine("[command] [options]");
-                return -1;
-            }
+            var app = new CommandLineApplication(throwOnUnexpectedArg: false);
+            app.Name = "Microsoft.Framework.Project";
+            app.HelpOption("-?|-h|--help");
 
-            string command = args[0];
-
-            try
+            // Show help information if no subcommand was specified
+            app.OnExecute(() =>
             {
-                if (command.Equals("build", StringComparison.OrdinalIgnoreCase))
+                app.ShowHelp();
+                return 0;
+            });
+
+            app.Command("build", c =>
+            {
+                c.Description = "Build the project in given directory";
+
+                var optionFramework = c.Option("--framework <TARGET_FRAMEWORK>", "Target framework", CommandOptionType.MultipleValue);
+                var optionOut = c.Option("--out <OUTPUT_DIR>", "Output directory", CommandOptionType.SingleValue);
+                var optionCheckt = c.Option("--check", "Check diagnostics", CommandOptionType.NoValue);
+                var optionDependencies = c.Option("--dependencies", "Copy dependencies", CommandOptionType.NoValue);
+                var optionNative = c.Option("--native", "Generate native images", CommandOptionType.NoValue);
+                var optionCrossgenPath = c.Option("--crossgenPath <PATH>", "Crossgen path", CommandOptionType.SingleValue);
+                var optionRuntimePath = c.Option("--runtimePath <PATH>", "Runtime path", CommandOptionType.SingleValue);
+                var argProjectDir = c.Argument("[project]", "Project to build, default is current directory");
+                c.HelpOption("-?|-h|--help");
+
+                c.OnExecute(() =>
                 {
-                    var parser = new CommandLineParser();
-                    CommandOptions options;
-                    parser.ParseOptions(args.Skip(1).ToArray(), _buildOptions, out options);
-
                     var buildOptions = new BuildOptions();
                     buildOptions.RuntimeTargetFramework = _environment.TargetFramework;
-                    buildOptions.OutputDir = options.GetValue("out");
-                    buildOptions.ProjectDir = options.RemainingArgs.Count > 0 ? options.RemainingArgs[0] : Directory.GetCurrentDirectory();
-                    buildOptions.CopyDependencies = options.HasOption("dependencies");
-                    buildOptions.GenerateNativeImages = options.HasOption("native");
-                    buildOptions.RuntimePath = options.GetValue("runtimePath");
-                    buildOptions.CrossgenPath = options.GetValue("crossgenPath");
-                    buildOptions.CheckDiagnostics = options.HasOption("check");
+                    buildOptions.OutputDir = optionOut.Value();
+                    buildOptions.ProjectDir = argProjectDir.Value ?? Directory.GetCurrentDirectory();
+                    buildOptions.CopyDependencies = optionDependencies.HasValue();
+                    buildOptions.GenerateNativeImages = optionNative.HasValue();
+                    buildOptions.RuntimePath = optionRuntimePath.Value();
+                    buildOptions.CrossgenPath = optionCrossgenPath.Value();
+                    buildOptions.CheckDiagnostics = optionCheckt.HasValue();
 
                     var projectManager = new BuildManager(buildOptions);
 
@@ -84,36 +66,40 @@ namespace Microsoft.Framework.Project
                     {
                         return -1;
                     }
-                }
-                else if (command.Equals("crossgen", StringComparison.OrdinalIgnoreCase))
-                {
-                    var parser = new CommandLineParser();
-                    CommandOptions options;
-                    parser.ParseOptions(args.Skip(1).ToArray(), _crossgenOptions, out options);
 
+                    return 0;
+                });
+            });
+            app.Command("crossgen", c =>
+            {
+                c.Description = "Do CrossGen";
+
+                var optionIn = c.Option("--in <INPUT_DIR>", "Input directory", CommandOptionType.MultipleValue);
+                var optionOut = c.Option("--out <OUTOUT_DIR>", "Output directory", CommandOptionType.SingleValue);
+                var optionExePath = c.Option("--exePath", "Exe path", CommandOptionType.SingleValue);
+                var optionRuntimePath = c.Option("--runtimePath <PATH>", "Runtime path", CommandOptionType.SingleValue);
+                var optionSymbols = c.Option("--symbols", "Use symbols", CommandOptionType.NoValue);
+                c.HelpOption("-?|-h|--help");
+
+                c.OnExecute(() =>
+                {
                     var crossgenOptions = new CrossgenOptions();
-                    crossgenOptions.InputPaths = options.GetValues("in") ?? Enumerable.Empty<string>();
-                    crossgenOptions.RuntimePath = options.GetValue("runtimePath");
-                    crossgenOptions.CrossgenPath = options.GetValue("exePath");
-                    crossgenOptions.Symbols = options.HasOption("symbols");
+                    crossgenOptions.InputPaths = optionIn.Values;
+                    crossgenOptions.RuntimePath = optionOut.Value();
+                    crossgenOptions.CrossgenPath = optionOut.Value();
+                    crossgenOptions.Symbols = optionSymbols.HasValue();
 
                     var gen = new CrossgenManager(crossgenOptions);
                     if (!gen.GenerateNativeImages())
                     {
                         return -1;
                     }
-                }
-                else
-                {
-                    Console.WriteLine("unknown command '{0}'", command);
-                    return -1;
-                }
-            }
-            catch (Exception ex)
-            {
-                Console.Error.WriteLine(String.Join(Environment.NewLine, ExceptionHelper.GetExceptions(ex)));
-                return -2;
-            }
+
+                    return 0;
+                });
+            });
+
+            app.Execute(args);
 
             return 0;
         }

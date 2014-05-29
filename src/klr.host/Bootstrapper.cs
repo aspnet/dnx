@@ -30,7 +30,7 @@ namespace klr.host
         {
             if (args.Length < 1)
             {
-                Console.WriteLine("{app} [args]");
+                Console.WriteLine("{app} [arguments]");
                 return Task.FromResult(-1);
             }
 

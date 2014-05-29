@@ -3,9 +3,9 @@
 
 using System;
 
-namespace Microsoft.Framework.PackageManager
+namespace Microsoft.Framework.Runtime.Common.CommandLine
 {
-    public class CommandArgument
+    internal class CommandArgument
     {
         public string Name { get; set; }
         public string Description { get; set; }

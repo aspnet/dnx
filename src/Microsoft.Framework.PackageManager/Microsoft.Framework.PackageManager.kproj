@@ -19,10 +19,6 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="Colors.cs" />
-    <Compile Include="CommandLine\CommandBase.cs" />
-    <Compile Include="CommandLine\CommandLineApplication.cs" />
-    <Compile Include="CommandLine\CommandArgument.cs" />
-    <Compile Include="CommandLine\CommandOption.cs" />
     <Compile Include="IReport.cs" />
     <Compile Include="NuGet\CommandLine\CommandLineMachineWideSettings.cs" />
     <Compile Include="NuGet\CommandLine\Common\CommandLineConstants.cs" />

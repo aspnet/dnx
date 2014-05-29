@@ -63,7 +63,7 @@ Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "klr.host", "src\klr.host\kl
 EndProject
 Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Microsoft.Framework.PackageManager", "src\Microsoft.Framework.PackageManager\Microsoft.Framework.PackageManager.kproj", "{0D752D1C-3985-4E27-92C4-0BEE72B1F58D}"
 EndProject
-Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Microsoft.Framework.PackageManager.Tests", "test\Microsoft.Framework.PackageManager.Tests\Microsoft.Framework.PackageManager.Tests.kproj", "{5216EA90-1AFB-4154-A0AA-7488A3EC4DF8}"
+Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Microsoft.Framework.CommandLineUtils.Tests", "test\Microsoft.Framework.CommandLineUtils.Tests\Microsoft.Framework.CommandLineUtils.Tests.kproj", "{7E6564C3-04E3-418C-B96A-463FE2906F09}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -368,20 +368,20 @@ Global
 		{0D752D1C-3985-4E27-92C4-0BEE72B1F58D}.Release|Win32.ActiveCfg = Release|Any CPU
 		{0D752D1C-3985-4E27-92C4-0BEE72B1F58D}.Release|x64.ActiveCfg = Release|Any CPU
 		{0D752D1C-3985-4E27-92C4-0BEE72B1F58D}.Release|x86.ActiveCfg = Release|Any CPU
-		{5216EA90-1AFB-4154-A0AA-7488A3EC4DF8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{5216EA90-1AFB-4154-A0AA-7488A3EC4DF8}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{5216EA90-1AFB-4154-A0AA-7488A3EC4DF8}.Debug|Mixed Platforms.ActiveCfg = Debug|Any CPU
-		{5216EA90-1AFB-4154-A0AA-7488A3EC4DF8}.Debug|Mixed Platforms.Build.0 = Debug|Any CPU
-		{5216EA90-1AFB-4154-A0AA-7488A3EC4DF8}.Debug|Win32.ActiveCfg = Debug|Any CPU
-		{5216EA90-1AFB-4154-A0AA-7488A3EC4DF8}.Debug|x64.ActiveCfg = Debug|Any CPU
-		{5216EA90-1AFB-4154-A0AA-7488A3EC4DF8}.Debug|x86.ActiveCfg = Debug|Any CPU
-		{5216EA90-1AFB-4154-A0AA-7488A3EC4DF8}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{5216EA90-1AFB-4154-A0AA-7488A3EC4DF8}.Release|Any CPU.Build.0 = Release|Any CPU
-		{5216EA90-1AFB-4154-A0AA-7488A3EC4DF8}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
-		{5216EA90-1AFB-4154-A0AA-7488A3EC4DF8}.Release|Mixed Platforms.Build.0 = Release|Any CPU
-		{5216EA90-1AFB-4154-A0AA-7488A3EC4DF8}.Release|Win32.ActiveCfg = Release|Any CPU
-		{5216EA90-1AFB-4154-A0AA-7488A3EC4DF8}.Release|x64.ActiveCfg = Release|Any CPU
-		{5216EA90-1AFB-4154-A0AA-7488A3EC4DF8}.Release|x86.ActiveCfg = Release|Any CPU
+		{7E6564C3-04E3-418C-B96A-463FE2906F09}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7E6564C3-04E3-418C-B96A-463FE2906F09}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7E6564C3-04E3-418C-B96A-463FE2906F09}.Debug|Mixed Platforms.ActiveCfg = Debug|Any CPU
+		{7E6564C3-04E3-418C-B96A-463FE2906F09}.Debug|Mixed Platforms.Build.0 = Debug|Any CPU
+		{7E6564C3-04E3-418C-B96A-463FE2906F09}.Debug|Win32.ActiveCfg = Debug|Any CPU
+		{7E6564C3-04E3-418C-B96A-463FE2906F09}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{7E6564C3-04E3-418C-B96A-463FE2906F09}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{7E6564C3-04E3-418C-B96A-463FE2906F09}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7E6564C3-04E3-418C-B96A-463FE2906F09}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7E6564C3-04E3-418C-B96A-463FE2906F09}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
+		{7E6564C3-04E3-418C-B96A-463FE2906F09}.Release|Mixed Platforms.Build.0 = Release|Any CPU
+		{7E6564C3-04E3-418C-B96A-463FE2906F09}.Release|Win32.ActiveCfg = Release|Any CPU
+		{7E6564C3-04E3-418C-B96A-463FE2906F09}.Release|x64.ActiveCfg = Release|Any CPU
+		{7E6564C3-04E3-418C-B96A-463FE2906F09}.Release|x86.ActiveCfg = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -408,6 +408,6 @@ Global
 		{2D50D502-E10A-4B1C-8A49-DBC52B5CE9CB} = {13ED5001-B871-4BC3-8499-29607F596C7C}
 		{68048350-2996-4B4A-90BE-3405F088BD5A} = {13ED5001-B871-4BC3-8499-29607F596C7C}
 		{0D752D1C-3985-4E27-92C4-0BEE72B1F58D} = {AF391791-F4B7-41AC-8F08-9485DAC543C5}
-		{5216EA90-1AFB-4154-A0AA-7488A3EC4DF8} = {C43EE429-DE10-4906-BB09-54E6A080948A}
+		{7E6564C3-04E3-418C-B96A-463FE2906F09} = {C43EE429-DE10-4906-BB09-54E6A080948A}
 	EndGlobalSection
 EndGlobal

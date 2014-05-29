@@ -19,10 +19,6 @@ namespace klr.hosting
     internal static class RuntimeBootstrapper
     {
         private static readonly Dictionary<string, Assembly> _assemblyCache = new Dictionary<string, Assembly>();
-        private static readonly Dictionary<string, CommandOptionType> _options = new Dictionary<string, CommandOptionType>
-        {
-            { "lib", CommandOptionType.MultipleValue },
-        };
 
         private static readonly char[] _libPathSeparator = new[] { ';' };
 
@@ -77,11 +73,6 @@ namespace klr.hosting
 
         public static Task<int> ExecuteAsync(string[] args)
         {
-            if (args.Length == 0)
-            {
-                return Task.FromResult(1);
-            }
-
             var enableTrace = Environment.GetEnvironmentVariable("KRE_TRACE") == "1";
 #if NET45
             // TODO: Make this pluggable and not limited to the console logger
@@ -92,12 +83,25 @@ namespace klr.hosting
                 Trace.AutoFlush = true;
             }
 #endif
-            var parser = new CommandLineParser();
-            CommandOptions options;
-            parser.ParseOptions(args, _options, out options);
+            var app = new CommandLineApplication(throwOnUnexpectedArg: false);
+            app.Name = "klr";
+            var optionLib = app.Option("--lib <LIB_PATHS>", "Paths used for library look-up",
+                CommandOptionType.MultipleValue);
+            app.HelpOption("-?|-h|--help");
+            app.Execute(args);
+
+            if (!app.IsShowingHelp && !app.RemainingArguments.Any())
+            {
+                app.ShowHelp();
+            }
+
+            if (app.IsShowingHelp)
+            {
+                return Task.FromResult(0);
+            }
 
             // Resolve the lib paths
-            string[] searchPaths = ResolveSearchPaths(options);
+            string[] searchPaths = ResolveSearchPaths(optionLib.Values, app.RemainingArguments);
 
             Func<string, Assembly> loader = _ => null;
             Func<Stream, Assembly> loadStream = _ => null;
@@ -203,7 +207,7 @@ namespace klr.hosting
                 {
                     var bootstrapperArgs = new object[]
                     {
-                        options.RemainingArgs.ToArray()
+                        app.RemainingArguments.ToArray()
                     };
 
                     var task = (Task<int>)mainMethod.Invoke(bootstrapper, bootstrapperArgs);
@@ -236,7 +240,7 @@ namespace klr.hosting
             }
         }
 
-        private static string[] ResolveSearchPaths(CommandOptions options)
+        private static string[] ResolveSearchPaths(IEnumerable<string> libPaths, List<string> remainingArgs)
         {
             var searchPaths = new List<string>();
 
@@ -248,17 +252,14 @@ namespace klr.hosting
                 searchPaths.AddRange(ExpandSearchPath(defaultLibPath));
             }
 
-            // Explicit --lib options
-            var specifiedLibPaths = options.GetValues("lib") ?? Enumerable.Empty<string>();
-
             // Add the expanded search libs to the list of paths
-            searchPaths.AddRange(specifiedLibPaths.SelectMany(ExpandSearchPath));
+            searchPaths.AddRange(libPaths.SelectMany(ExpandSearchPath));
 
             // If a .dll or .exe is specified then turn this into
             // --lib {path to dll/exe} [dll/exe name]
-            if (options.RemainingArgs.Count > 0)
+            if (remainingArgs.Any())
             {
-                var application = options.RemainingArgs[0];
+                var application = remainingArgs[0];
                 var extension = Path.GetExtension(application);
 
                 if (!string.IsNullOrEmpty(extension) &&
@@ -269,7 +270,7 @@ namespace klr.hosting
                     searchPaths.Add(Path.GetDirectoryName(application));
 
                     // Modify the argument to be the dll/exe name
-                    options.RemainingArgs[0] = Path.GetFileNameWithoutExtension(application);
+                    remainingArgs[0] = Path.GetFileNameWithoutExtension(application);
                 }
             }
 
