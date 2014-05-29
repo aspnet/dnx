@@ -20,9 +20,9 @@ namespace Microsoft.Framework.Runtime
 
         internal static readonly string[] _defaultSourcePatterns = new[] { @"**\*.cs" };
         internal static readonly string[] _defaultSourceExcludePatterns = new[] { @"obj\**\*", @"bin\**\*" };
-        internal static readonly string[] _defaultPreprocessPatterns = new[] { @"Compiler\Preprocess\**\*.cs" };
-        internal static readonly string[] _defaultSharedPatterns = new[] { @"Compiler\Shared\**\*.cs" };
-        internal static readonly string[] _defaultResourcesPatterns = new[] { @"Compiler\Resources\**\*" };
+        internal static readonly string[] _defaultPreprocessPatterns = new[] { @"compiler\preprocess\**\*.cs" };
+        internal static readonly string[] _defaultSharedPatterns = new[] { @"compiler\shared\**\*.cs" };
+        internal static readonly string[] _defaultResourcesPatterns = new[] { @"compiler\resources\**\*" };
 
         private readonly Dictionary<FrameworkName, TargetFrameworkConfiguration> _configurations = new Dictionary<FrameworkName, TargetFrameworkConfiguration>();
         private readonly Dictionary<FrameworkName, CompilerOptions> _compilationOptions = new Dictionary<FrameworkName, CompilerOptions>();
