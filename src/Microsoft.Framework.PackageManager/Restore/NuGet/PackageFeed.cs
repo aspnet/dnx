@@ -32,8 +32,8 @@ namespace Microsoft.Framework.PackageManager.Restore.NuGet
         private readonly string _baseUri;
         private readonly IReport _report;
         private HttpSource _httpSource;
-        TimeSpan _cacheAgeLimitList;
-        TimeSpan _cacheAgeLimitNupkg;
+        private TimeSpan _cacheAgeLimitList;
+        private TimeSpan _cacheAgeLimitNupkg;
 
         public PackageFeed(
             string baseUri,

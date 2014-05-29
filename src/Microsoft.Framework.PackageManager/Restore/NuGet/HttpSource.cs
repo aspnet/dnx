@@ -1,3 +1,4 @@
+#if NET45
 // Copyright (c) Microsoft Open Technologies, Inc. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
@@ -16,7 +17,7 @@ using System.Security.Cryptography;
 
 namespace Microsoft.Framework.PackageManager.Restore.NuGet
 {
-    public class HttpSource
+    internal class HttpSource
     {
         private HttpClient _client;
 
@@ -68,22 +69,7 @@ namespace Microsoft.Framework.PackageManager.Restore.NuGet
             }
         }
 
-        public class HttpSourceResult : IDisposable
-        {
-            public string CacheFileName { get; set; }
-            public Stream Stream { get; set; }
-
-            public void Dispose()
-            {
-                if (Stream != null)
-                {
-                    Stream.Dispose();
-                    Stream = null;
-                }
-            }
-        }
-
-        public async Task<HttpSourceResult> GetAsync(string uri, string cacheKey, TimeSpan cacheAgeLimit)
+        internal async Task<HttpSourceResult> GetAsync(string uri, string cacheKey, TimeSpan cacheAgeLimit)
         {
             Stopwatch sw = new Stopwatch();
             sw.Start();
@@ -111,8 +97,8 @@ namespace Microsoft.Framework.PackageManager.Restore.NuGet
                 FileMode.Create,
                 FileAccess.ReadWrite,
                 FileShare.ReadWrite | FileShare.Delete,
-                8192 /*bufferSize*/,
-                FileOptions.Asynchronous))
+                bufferSize: 8192,
+                useAsync: true))
             {
                 await response.Content.CopyToAsync(stream);
                 await stream.FlushAsync();
@@ -132,8 +118,8 @@ namespace Microsoft.Framework.PackageManager.Restore.NuGet
                 FileMode.Open,
                 FileAccess.Read,
                 FileShare.Read | FileShare.Delete,
-                8192 /*bufferSize*/,
-                FileOptions.Asynchronous);
+                bufferSize: 8192,
+                useAsync: true);
 
             _report.WriteLine(string.Format("  {1} {0} {2}ms", uri, response.StatusCode.ToString().Green(), sw.ElapsedMilliseconds.ToString().Bold()));
 
@@ -183,7 +169,7 @@ namespace Microsoft.Framework.PackageManager.Restore.NuGet
             };
         }
 
-        string ComputeHash(string value)
+        private static string ComputeHash(string value)
         {
             var trailing = value.Length > 32 ? value.Substring(value.Length - 32) : value;
             var sha = SHA1.Create();
@@ -192,7 +178,7 @@ namespace Microsoft.Framework.PackageManager.Restore.NuGet
             return hash.Aggregate("$" + trailing, (result, ch) => "" + hex[ch / 0x10] + hex[ch % 0x10] + result);
         }
 
-        string RemoveInvalidFileNameChars(string value)
+        private static string RemoveInvalidFileNameChars(string value)
         {
             var invalid = Path.GetInvalidFileNameChars();
             return new String(
@@ -203,3 +189,4 @@ namespace Microsoft.Framework.PackageManager.Restore.NuGet
         }
     }
 }
+#endif

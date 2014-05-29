@@ -58,7 +58,7 @@ namespace Microsoft.Framework.PackageManager
                     "A list of packages sources to use as a fallback", CommandOptionType.MultipleValue);
                 var optProxy = c.Option("-p|--proxy <ADDRESS>", "The HTTP proxy to use when retrieving packages",
                     CommandOptionType.SingleValue);
-                var optRefresh = c.Option("-r|--refresh", "Force refresh of cached content from http sources",
+                var optRefresh = c.Option("-r|--refresh", "Force refresh of cached content from HTTP sources",
                     CommandOptionType.NoValue);
                 c.HelpOption("-?|-h|--help");
 
