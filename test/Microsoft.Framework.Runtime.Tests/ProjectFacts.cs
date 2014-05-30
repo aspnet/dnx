@@ -41,7 +41,7 @@ namespace Microsoft.Framework.Runtime.Tests
             Assert.Equal(1, project.Commands.Count);
             Assert.True(project.Commands.ContainsKey("web"));
             Assert.Equal("Microsoft.AspNet.Hosting something", project.Commands["web"]);
-            Assert.False(project.Commands.ContainsKey("Web"));
+            Assert.True(project.Commands.ContainsKey("Web"));
         }
 
         [Fact]

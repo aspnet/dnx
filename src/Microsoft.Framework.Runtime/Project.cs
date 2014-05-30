@@ -33,7 +33,7 @@ namespace Microsoft.Framework.Runtime
 
         public Project()
         {
-            Commands = new Dictionary<string, string>();
+            Commands = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
         }
 
         public string ProjectFilePath { get; private set; }
