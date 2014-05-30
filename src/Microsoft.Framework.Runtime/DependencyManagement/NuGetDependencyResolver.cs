@@ -15,11 +15,13 @@ namespace Microsoft.Framework.Runtime
     public class NuGetDependencyResolver : IDependencyProvider, ILibraryExportProvider
     {
         private readonly LocalPackageRepository _repository;
-        private readonly Dictionary<string, string> _contractPaths = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-        private readonly Dictionary<string, string> _paths = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-        private readonly Dictionary<string, List<string>> _frameworkAssemblies = new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase);
-        private readonly Dictionary<string, LibraryDescription> _dependencies = new Dictionary<string, LibraryDescription>(StringComparer.OrdinalIgnoreCase);
-        private readonly IDictionary<string, IList<string>> _sharedSources = new Dictionary<string, IList<string>>(StringComparer.OrdinalIgnoreCase);
+
+        // Assembly name and path lifted from the appropriate lib folder
+        private readonly Dictionary<string, string> _packageAssemblyPaths = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+
+        // All the information required by this package
+        private readonly Dictionary<string, PackageDescription> _packageDescriptions = new Dictionary<string, PackageDescription>(StringComparer.OrdinalIgnoreCase);
+
         private readonly IFrameworkReferenceResolver _frameworkReferenceResolver;
 
         public NuGetDependencyResolver(string projectPath, IFrameworkReferenceResolver frameworkReferenceResolver)
@@ -43,7 +45,7 @@ namespace Microsoft.Framework.Runtime
         {
             get
             {
-                return _paths;
+                return _packageAssemblyPaths;
             }
         }
 
@@ -131,8 +133,6 @@ namespace Microsoft.Framework.Runtime
 
             foreach (var dependency in packages)
             {
-                _dependencies[dependency.Identity.Name] = dependency;
-
                 var package = FindCandidate(dependency.Identity.Name, dependency.Identity.Version);
 
                 if (package == null)
@@ -143,46 +143,60 @@ namespace Microsoft.Framework.Runtime
                 dependency.Type = "Package";
                 dependency.Path = _repository.PathResolver.GetInstallPath(package);
 
+                var packageDescription = new PackageDescription
+                {
+                    Library = dependency
+                };
+
+                _packageDescriptions[package.Id] = packageDescription;
+
                 // Try to find a contract folder for this package and store that
                 // for compilation
-                string contractPath = Path.Combine(_repository.PathResolver.GetInstallPath(package),
-                                                   "lib",
-                                                   "contract",
+                string contractPath = Path.Combine(dependency.Path, "lib", "contract",
                                                    package.Id + ".dll");
                 if (File.Exists(contractPath))
                 {
-                    _contractPaths[package.Id] = contractPath;
+                    packageDescription.ContractPath = contractPath;
                 }
 
-                foreach (var fileName in GetAssemblies(package, targetFramework))
+                var assemblies = GetAssemblies(package, targetFramework).ToList();
+                foreach (var path in assemblies)
                 {
-                    AssemblyName an = GetAssemblyName(fileName);
-
-                    _paths[an.Name] = fileName;
-
-                    if (!_paths.ContainsKey(package.Id))
+                    var assemblyName = GetAssemblyName(path);
+                    packageDescription.PackageAssemblies.Add(new AssemblyDescription
                     {
-                        _paths[package.Id] = fileName;
-                    }
+                        Name = assemblyName.Name,
+                        Path = path
+                    });
+
+                    _packageAssemblyPaths[assemblyName.Name] = path;
                 }
 
                 var frameworkReferences = GetFrameworkAssemblies(package, targetFramework).ToList();
                 if (!frameworkReferences.IsEmpty())
                 {
-                    _frameworkAssemblies[package.Id] = frameworkReferences;
+                    foreach (var path in frameworkReferences)
+                    {
+                        var assemblyName = GetAssemblyName(path);
+                        packageDescription.FrameworkAssemblies.Add(new AssemblyDescription
+                        {
+                            Name = assemblyName.Name,
+                            Path = path
+                        });
+                    }
                 }
 
                 var sharedSources = GetSharedSources(package, targetFramework).ToList();
                 if (!sharedSources.IsEmpty())
                 {
-                    _sharedSources[dependency.Identity.Name] = sharedSources;
+                    packageDescription.SharedSources = sharedSources;
                 }
             }
         }
 
         public ILibraryExport GetLibraryExport(string name, FrameworkName targetFramework)
         {
-            if (!_dependencies.ContainsKey(name))
+            if (!_packageDescriptions.ContainsKey(name))
             {
                 return null;
             }
@@ -207,12 +221,12 @@ namespace Microsoft.Framework.Runtime
                 return reference;
             }).ToList();
 
+            // REVIEW: This requires more design
             var sourceReferences = new List<ISourceReference>();
-
-            IList<string> sharedSources;
-            if (_sharedSources.TryGetValue(name, out sharedSources))
+            PackageDescription description;
+            if (_packageDescriptions.TryGetValue(name, out description))
             {
-                foreach (var sharedSource in sharedSources)
+                foreach (var sharedSource in description.SharedSources)
                 {
                     sourceReferences.Add(new SourceFileReference(sharedSource));
                 }
@@ -223,44 +237,39 @@ namespace Microsoft.Framework.Runtime
 
         private void PopulateDependenciesPaths(string name, IDictionary<string, string> paths)
         {
-            LibraryDescription description;
-            if (!_dependencies.TryGetValue(name, out description))
+            PackageDescription description;
+            if (!_packageDescriptions.TryGetValue(name, out description))
             {
                 paths[name] = null;
                 return;
             }
 
             // Use contract if both contract and target path are available
-            string contractPath;
-            bool hasContract = _contractPaths.TryGetValue(name, out contractPath);
-
-            string libPath;
-            bool hasLib = _paths.TryGetValue(name, out libPath);
+            bool hasContract = description.ContractPath != null;
+            bool hasLib = description.PackageAssemblies.Any();
 
             if (hasContract && hasLib)
             {
-                paths[name] = contractPath;
+                paths[name] = description.ContractPath;
             }
             else if (hasLib)
             {
-                paths[name] = libPath;
+                foreach (var assembly in description.PackageAssemblies)
+                {
+                    paths[assembly.Name] = assembly.Path;
+                }
             }
 
-            foreach (var dependency in description.Dependencies)
+            foreach (var dependency in description.Library.Dependencies)
             {
                 PopulateDependenciesPaths(dependency.Name, paths);
             }
 
             // Overwrite paths that may not have been found with framework
             // references
-            List<string> frameworkAssemblies;
-            if (_frameworkAssemblies.TryGetValue(name, out frameworkAssemblies))
+            foreach (var assembly in description.FrameworkAssemblies)
             {
-                foreach (var assemblyPath in frameworkAssemblies)
-                {
-                    var an = GetAssemblyName(assemblyPath);
-                    paths[an.Name] = assemblyPath;
-                }
+                paths[assembly.Name] = assembly.Path;
             }
         }
 
@@ -339,6 +348,7 @@ namespace Microsoft.Framework.Runtime
                     .OrderByDescending(pk => pk.Version.SpecialVersion, StringComparer.OrdinalIgnoreCase)
                     .FirstOrDefault(pk => pk.Version.EqualsSnapshot(version));
             }
+
             return _repository.FindPackage(name, version);
         }
 
@@ -358,5 +368,31 @@ namespace Microsoft.Framework.Runtime
 #endif
         }
 
+        private class PackageDescription
+        {
+            public LibraryDescription Library { get; set; }
+
+            public string ContractPath { get; set; }
+
+            public List<AssemblyDescription> PackageAssemblies { get; set; }
+
+            public List<AssemblyDescription> FrameworkAssemblies { get; set; }
+
+            public List<string> SharedSources { get; set; }
+
+            public PackageDescription()
+            {
+                PackageAssemblies = new List<AssemblyDescription>();
+                FrameworkAssemblies = new List<AssemblyDescription>();
+                SharedSources = new List<string>();
+            }
+        }
+
+        private class AssemblyDescription
+        {
+            public string Name { get; set; }
+
+            public string Path { get; set; }
+        }
     }
 }
