@@ -103,7 +103,7 @@ namespace Microsoft.Framework.PackageManager
                         OutputDir = optionOut.Value,
                         ProjectDir = argProject.Value ?? System.IO.Directory.GetCurrentDirectory(),
                         AppFolder = optionAppFolder.Value,
-                        RuntimeTargetFramework = _environment.TargetFramework,
+                        RuntimeTargetFramework = _environment.RuntimeFramework,
                         ZipPackages = optionZipPackages.Value != null,
                         Overwrite = optionOverwrite.Value != null,
                         Runtimes = optionRuntime.Value != null ? optionRuntime.Value.Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries) : new string[0],

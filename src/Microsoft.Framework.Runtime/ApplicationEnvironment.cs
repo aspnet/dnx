@@ -42,7 +42,7 @@ namespace Microsoft.Framework.Runtime
         }
 
 
-        public FrameworkName TargetFramework
+        public FrameworkName RuntimeFramework
         {
             get { return _targetFramework; }
         }

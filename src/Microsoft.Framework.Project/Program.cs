@@ -69,7 +69,7 @@ namespace Microsoft.Framework.Project
                     parser.ParseOptions(args.Skip(1).ToArray(), _buildOptions, out options);
 
                     var buildOptions = new BuildOptions();
-                    buildOptions.RuntimeTargetFramework = _environment.TargetFramework;
+                    buildOptions.RuntimeTargetFramework = _environment.RuntimeFramework;
                     buildOptions.OutputDir = options.GetValue("out");
                     buildOptions.ProjectDir = options.RemainingArgs.Count > 0 ? options.RemainingArgs[0] : Directory.GetCurrentDirectory();
                     buildOptions.CopyDependencies = options.HasOption("dependencies");

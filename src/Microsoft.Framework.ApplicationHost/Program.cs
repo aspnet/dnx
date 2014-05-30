@@ -115,7 +115,7 @@ namespace Microsoft.Framework.ApplicationHost
             }
             if (string.Equals(key, "env:TargetFramework", StringComparison.OrdinalIgnoreCase))
             {
-                return _environment.TargetFramework.Identifier;
+                return _environment.RuntimeFramework.Identifier;
             }
             return Environment.GetEnvironmentVariable(key);
         }
@@ -132,7 +132,7 @@ namespace Microsoft.Framework.ApplicationHost
             defaultHostOptions.WatchFiles = options.HasOption("watch");
             defaultHostOptions.PackageDirectory = options.GetValue("packages");
 
-            defaultHostOptions.TargetFramework = _environment.TargetFramework;
+            defaultHostOptions.TargetFramework = _environment.RuntimeFramework;
             defaultHostOptions.ApplicationBaseDirectory = _environment.ApplicationBasePath;
 
             if (options.RemainingArgs.Count > 0)

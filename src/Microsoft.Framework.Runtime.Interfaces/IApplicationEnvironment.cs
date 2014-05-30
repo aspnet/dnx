@@ -11,6 +11,6 @@ namespace Microsoft.Framework.Runtime
         string ApplicationName { get; }
         string Version { get; }
         string ApplicationBasePath { get; }
-        FrameworkName TargetFramework { get; }
+        FrameworkName RuntimeFramework { get; }
     }
 }
