@@ -43,6 +43,7 @@ namespace Microsoft.Framework.PackageManager
                 var argProject = c.Argument("[project]", "Project to restore, default is current directory");
                 var optSource = app.Option("-s|--source <FEED>", "A list of packages sources to use for this command");
                 var optFallbackSource = app.Option("-f|--fallbacksource <FEED>", "A list of packages sources to use as a fallback");
+                var optRefresh = app.Option("-r|--refresh", "Force refresh of cached content from http sources");
 
                 c.OnExecute(() =>
                 {
@@ -61,6 +62,8 @@ namespace Microsoft.Framework.PackageManager
                         {
                             command.FallbackSources = new[] { optFallbackSource.Value };
                         }
+                        command.CacheRefresh = optRefresh.Value != null;
+
                         var success = command.ExecuteCommand();
 
                         return success ? 0 : 1;

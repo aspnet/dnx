@@ -32,6 +32,7 @@ namespace Microsoft.Framework.PackageManager
         public string ConfigFile { get; set; }
         public IEnumerable<string> Sources { get; set; }
         public IEnumerable<string> FallbackSources { get; set; }
+        public bool CacheRefresh { get; set; }
 
         public IApplicationEnvironment ApplicationEnvironment { get; private set; }
         public IMachineWideSettings MachineWideSettings { get; set; }
@@ -149,6 +150,7 @@ namespace Microsoft.Framework.PackageManager
                                 source.Source,
                                 source.UserName,
                                 source.Password,
+                                CacheRefresh,
                                 Report)));
                 }
             }

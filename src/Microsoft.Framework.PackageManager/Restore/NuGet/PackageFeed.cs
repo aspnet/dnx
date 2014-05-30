@@ -26,21 +26,32 @@ namespace Microsoft.Framework.PackageManager.Restore.NuGet
         static readonly XName _xnameId = XName.Get("Id", "http://schemas.microsoft.com/ado/2007/08/dataservices");
         static readonly XName _xnameVersion = XName.Get("Version", "http://schemas.microsoft.com/ado/2007/08/dataservices");
 
-        private string _baseUri;
-        private string _userName;
-        private string _password;
-        private IReport _report;
+        private readonly string _baseUri;
+        private readonly IReport _report;
+        private HttpSource _httpSource;
+        TimeSpan _cacheAgeLimitList;
+        TimeSpan _cacheAgeLimitNupkg;
 
         public PackageFeed(
             string baseUri,
             string userName,
             string password,
+            bool cacheRefresh,
             IReport report)
         {
-            _baseUri = baseUri + (baseUri.EndsWith("/") ? "" : "/");
-            _userName = userName;
-            _password = password;
+            _baseUri = baseUri.EndsWith("/") ? baseUri : (baseUri + "/");
             _report = report;
+            _httpSource = new HttpSource(baseUri, userName, password, report);
+            if (cacheRefresh)
+            {
+                _cacheAgeLimitList = TimeSpan.Zero;
+                _cacheAgeLimitNupkg = TimeSpan.Zero;
+            }
+            else
+            {
+                _cacheAgeLimitList = TimeSpan.FromMinutes(30);
+                _cacheAgeLimitNupkg = TimeSpan.FromHours(24);
+            }
         }
 
         Dictionary<string, Task<IEnumerable<PackageInfo>>> _cache = new Dictionary<string, Task<IEnumerable<PackageInfo>>>();
@@ -65,25 +76,20 @@ namespace Microsoft.Framework.PackageManager.Restore.NuGet
             {
                 try
                 {
-                    Stopwatch sw = new Stopwatch();
-                    sw.Start();
+                    using (var data = await _httpSource.GetAsync(
+                        _baseUri + "FindPackagesById()?Id='" + id + "'",
+                        "list_" + id,
+                        retry == 0 ? _cacheAgeLimitList : TimeSpan.Zero))
+                    {
+                        var doc = XDocument.Load(data.Stream);
 
-                    var uri = _baseUri + "FindPackagesById()?Id='" + id + "'";
+                        var result = doc.Root
+                            .Elements(_xnameEntry)
+                            .Select(x => BuildModel(id, x))
+                            .ToArray();
 
-                    _report.WriteLine(string.Format("  {0} {1}", "GET".Yellow(), uri));
-
-                    var response = await GetAsync(uri);
-                    var stream = await response.Content.ReadAsStreamAsync();
-
-                    _report.WriteLine(string.Format("  {1} {0} {2}ms", uri, response.StatusCode.ToString().Green(), sw.ElapsedMilliseconds.ToString().Bold()));
-
-                    var doc = XDocument.Load(stream);
-                    var result = doc.Root
-                        .Elements(_xnameEntry)
-                        .Select(x => BuildModel(id, x))
-                        .ToArray();
-
-                    return result;
+                        return result;
+                    }
                 }
                 catch (Exception ex)
                 {
@@ -99,19 +105,6 @@ namespace Microsoft.Framework.PackageManager.Restore.NuGet
                 }
             }
             return null;
-        }
-
-        private async Task<HttpResponseMessage> GetAsync(string uri)
-        {
-            var request = new HttpRequestMessage(HttpMethod.Get, uri);
-            if (_userName != null)
-            {
-                var token = Convert.ToBase64String(Encoding.ASCII.GetBytes(_userName + ":" + _password));
-                request.Headers.Authorization = new AuthenticationHeaderValue("Basic", token);
-            };
-
-            var client = new HttpClient();
-            return await client.SendAsync(request);
         }
 
         public PackageInfo BuildModel(string id, XElement element)
@@ -185,30 +178,16 @@ namespace Microsoft.Framework.PackageManager.Restore.NuGet
             {
                 try
                 {
-                    Stopwatch sw = new Stopwatch();
-                    sw.Start();
-
-                    var result = new NupkgEntry();
-                    result.TempFileName = Path.GetTempFileName();
-                    result.TempFileStream = new FileStream(
-                        result.TempFileName,
-                        FileMode.Create,
-                        FileAccess.ReadWrite,
-                        FileShare.ReadWrite | FileShare.Delete,
-                        8192 /*bufferSize*/,
-                        FileOptions.Asynchronous | FileOptions.DeleteOnClose);
-
-                    _report.WriteLine(string.Format("  {0} {1}", "GET".Yellow(), package.ContentUri));
-
-                    var response = await GetAsync(package.ContentUri);
-
-                    await response.Content.CopyToAsync(result.TempFileStream);
-                    await result.TempFileStream.FlushAsync();
-
-                    _report.WriteLine(string.Format("  {1} {0} {2}ms", package.ContentUri, response.StatusCode.ToString().Green(), sw.ElapsedMilliseconds.ToString().Bold()));
-
-                    sw.Stop();
-                    return result;
+                    using (var data = await _httpSource.GetAsync(
+                        package.ContentUri,
+                        "nupkg_" + package.Id + "." + package.Version,
+                        retry == 0 ? _cacheAgeLimitNupkg : TimeSpan.Zero))
+                    {
+                        return new NupkgEntry
+                        {
+                            TempFileName = data.CacheFileName
+                        };
+                    }
                 }
                 catch (Exception ex)
                 {
@@ -228,7 +207,6 @@ namespace Microsoft.Framework.PackageManager.Restore.NuGet
         class NupkgEntry
         {
             public string TempFileName { get; set; }
-            public FileStream TempFileStream { get; set; }
         }
     }
 }
