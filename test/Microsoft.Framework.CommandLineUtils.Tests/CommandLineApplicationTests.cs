@@ -147,27 +147,6 @@ namespace Microsoft.Framework.Runtime.Common.CommandLine
         }
 
         [Fact]
-        public void ForwardSlashIsSameAsDashDash()
-        {
-            CommandOption first = null;
-            CommandOption second = null;
-
-            var app = new CommandLineApplication();
-
-            app.Command("test", c =>
-            {
-                first = c.Option("--first <NAME>", "First argument", CommandOptionType.SingleValue);
-                second = c.Option("--second <NAME>", "Second argument", CommandOptionType.SingleValue);
-                c.OnExecute(() => 0);
-            });
-
-            app.Execute("test", "/first=one", "/second", "two");
-
-            Assert.Equal("one", first.Values[0]);
-            Assert.Equal("two", second.Values[0]);
-        }
-
-        [Fact]
         public void ShortNamesMayBeDefined()
         {
             CommandOption first = null;

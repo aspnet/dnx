@@ -122,15 +122,18 @@ namespace Microsoft.Framework.ApplicationHost
         {
             var app = new CommandLineApplication(throwOnUnexpectedArg: false);
             app.Name = "k";
-            var optionNobin = app.Option("--nobin", "Use cached binaries", CommandOptionType.NoValue);
             var optionWatch = app.Option("--watch", "Watch file changes", CommandOptionType.NoValue);
             var optionPackages = app.Option("--packages <PACKAGE_DIR>", "Directory contatining packages",
                 CommandOptionType.SingleValue);
             app.HelpOption("-?|-h|--help");
             app.Execute(args);
 
+            if (!(app.IsShowingHelp || app.RemainingArguments.Any()))
+            {
+                app.ShowHelp(commandName: null);
+            }
+
             defaultHostOptions = new DefaultHostOptions();
-            defaultHostOptions.UseCachedCompilations = !optionNobin.Values.Any();
             defaultHostOptions.WatchFiles = optionWatch.Values.Any();
             defaultHostOptions.PackageDirectory = optionPackages.Value();
 

@@ -117,11 +117,8 @@ namespace Microsoft.Framework.Runtime.Common.CommandLine
                 {
                     string[] longOption = null;
                     string[] shortOption = null;
-                    if (arg.StartsWith("/"))
-                    {
-                        longOption = arg.Substring(1).Split(new[] { ':', '=' }, 2);
-                    }
-                    else if (arg.StartsWith("--"))
+
+                    if (arg.StartsWith("--"))
                     {
                         longOption = arg.Substring(2).Split(new[] { ':', '=' }, 2);
                     }
