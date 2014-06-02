@@ -285,10 +285,9 @@ namespace Microsoft.Framework.Runtime.Common.CommandLine
         // Show short hint that reminds users to use help option
         public void ShowHint()
         {
-            var andCmdStr = Commands.Any() ? " and commands" : string.Empty;
             if (HelpOptions.Any())
             {
-                Console.WriteLine(string.Format("Try --{0} for options{1}", HelpOptions.First().LongName, andCmdStr));
+                Console.WriteLine(string.Format("Specify --{0} for a list of available options and commands.", HelpOptions.First().LongName));
             }
         }
 

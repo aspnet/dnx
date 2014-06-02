@@ -100,7 +100,7 @@ namespace Microsoft.Framework.Runtime.Common.CommandLine
 
         private bool IsEnglishLetter(char c)
         {
-            return (c > 'a' && c < 'z') || (c > 'A' && c < 'Z');
+            return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z');
         }
     }
 }

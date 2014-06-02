@@ -40,7 +40,7 @@ namespace Microsoft.Framework.Project
 
                 var optionFramework = c.Option("--framework <TARGET_FRAMEWORK>", "Target framework", CommandOptionType.MultipleValue);
                 var optionOut = c.Option("--out <OUTPUT_DIR>", "Output directory", CommandOptionType.SingleValue);
-                var optionCheckt = c.Option("--check", "Check diagnostics", CommandOptionType.NoValue);
+                var optionCheck = c.Option("--check", "Check diagnostics", CommandOptionType.NoValue);
                 var optionDependencies = c.Option("--dependencies", "Copy dependencies", CommandOptionType.NoValue);
                 var optionNative = c.Option("--native", "Generate native images", CommandOptionType.NoValue);
                 var optionCrossgenPath = c.Option("--crossgenPath <PATH>", "Crossgen path", CommandOptionType.SingleValue);
@@ -58,7 +58,7 @@ namespace Microsoft.Framework.Project
                     buildOptions.GenerateNativeImages = optionNative.HasValue();
                     buildOptions.RuntimePath = optionRuntimePath.Value();
                     buildOptions.CrossgenPath = optionCrossgenPath.Value();
-                    buildOptions.CheckDiagnostics = optionCheckt.HasValue();
+                    buildOptions.CheckDiagnostics = optionCheck.HasValue();
 
                     var projectManager = new BuildManager(buildOptions);
 
@@ -85,8 +85,8 @@ namespace Microsoft.Framework.Project
                 {
                     var crossgenOptions = new CrossgenOptions();
                     crossgenOptions.InputPaths = optionIn.Values;
-                    crossgenOptions.RuntimePath = optionOut.Value();
-                    crossgenOptions.CrossgenPath = optionOut.Value();
+                    crossgenOptions.RuntimePath = optionRuntimePath.Value();
+                    crossgenOptions.CrossgenPath = optionExePath.Value();
                     crossgenOptions.Symbols = optionSymbols.HasValue();
 
                     var gen = new CrossgenManager(crossgenOptions);
