@@ -110,7 +110,7 @@ namespace Microsoft.Framework.PackageManager
 
                     var options = new PackOptions
                     {
-                        OutputDir = optionVerbose.Value(),
+                        OutputDir = optionOut.Value(),
                         ProjectDir = argProject.Value ?? System.IO.Directory.GetCurrentDirectory(),
                         AppFolder = optionAppFolder.Value(),
                         RuntimeTargetFramework = _environment.TargetFramework,
