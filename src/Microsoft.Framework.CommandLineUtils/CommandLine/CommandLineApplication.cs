@@ -310,6 +310,13 @@ namespace Microsoft.Framework.Runtime.Common.CommandLine
             else
             {
                 target = Commands.SingleOrDefault(cmd => string.Equals(cmd.Name, commandName, StringComparison.OrdinalIgnoreCase));
+
+                if (target == null)
+                {
+                    ShowHint();
+                    throw new Exception(string.Format("TODO: Error: unknown command '{0}'", commandName));
+                }
+
                 headerBuilder.AppendFormat(" {0}", commandName);
             }
 

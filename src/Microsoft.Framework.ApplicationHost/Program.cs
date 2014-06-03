@@ -45,7 +45,7 @@ namespace Microsoft.Framework.ApplicationHost
                 return Task.FromResult(-1);
             }
 
-            var lookupCommand = string.IsNullOrEmpty(options.ApplicationName) ? "run" : options.ApplicationName;
+            var lookupCommand = options.ApplicationName;
             string replacementCommand;
             if (host.Project.Commands.TryGetValue(lookupCommand, out replacementCommand))
             {
@@ -58,7 +58,7 @@ namespace Microsoft.Framework.ApplicationHost
             }
 
             if (string.IsNullOrEmpty(options.ApplicationName) ||
-                string.Equals(options.ApplicationName, "run", StringComparison.Ordinal))
+                string.Equals(options.ApplicationName, "run", StringComparison.OrdinalIgnoreCase))
             {
                 if (string.IsNullOrEmpty(host.Project.Name))
                 {
@@ -120,36 +120,58 @@ namespace Microsoft.Framework.ApplicationHost
 
         private bool ParseArgs(string[] args, out DefaultHostOptions defaultHostOptions, out string[] outArgs)
         {
+            var localDefaultHostOptions = new DefaultHostOptions();
             var app = new CommandLineApplication(throwOnUnexpectedArg: false);
+            string appName = null;
             app.Name = "k";
-            var optionWatch = app.Option("--watch", "Watch file changes", CommandOptionType.NoValue);
-            var optionPackages = app.Option("--packages <PACKAGE_DIR>", "Directory contatining packages",
-                CommandOptionType.SingleValue);
             app.HelpOption("-?|-h|--help");
+            app.Command("run", c =>
+            {
+                c.Description = "Run given application";
+
+                c.HelpOption("-?|-h|--help");
+                var argumentAppName = c.Argument("[appName]", "Application to be run");
+                var optionWatch = c.Option("--watch", "Watch file changes", CommandOptionType.NoValue);
+                var optionPackages = c.Option("--packages <PACKAGE_DIR>", "Directory contatining packages",
+                    CommandOptionType.SingleValue);
+                c.OnExecute(() =>
+                {
+                    localDefaultHostOptions.ApplicationName = c.Name;
+                    localDefaultHostOptions.WatchFiles = optionWatch.HasValue();
+                    localDefaultHostOptions.PackageDirectory = optionPackages.Value();
+                    appName = argumentAppName.Value;
+                    return 0;
+                });
+            });
             app.Execute(args);
 
-            if (!(app.IsShowingHelp || app.RemainingArguments.Any()))
+            // If the user types simply a "k" without any argument or option
+            if (!app.IsShowingHelp &&
+                string.IsNullOrEmpty(localDefaultHostOptions.ApplicationName) &&
+                !app.RemainingArguments.Any())
             {
                 app.ShowHelp(commandName: null);
             }
 
-            defaultHostOptions = new DefaultHostOptions();
-            defaultHostOptions.WatchFiles = optionWatch.Values.Any();
-            defaultHostOptions.PackageDirectory = optionPackages.Value();
+            localDefaultHostOptions.TargetFramework = _environment.TargetFramework;
+            localDefaultHostOptions.ApplicationBaseDirectory = _environment.ApplicationBasePath;
 
-            defaultHostOptions.TargetFramework = _environment.TargetFramework;
-            defaultHostOptions.ApplicationBaseDirectory = _environment.ApplicationBasePath;
-
-            if (app.RemainingArguments.Any())
+            if (!string.IsNullOrEmpty(appName))
             {
-                defaultHostOptions.ApplicationName = app.RemainingArguments[0];
-
+                app.RemainingArguments.Insert(0, appName);
+                outArgs = app.RemainingArguments.ToArray();
+            }
+            else if (app.RemainingArguments.Any())
+            {
+                localDefaultHostOptions.ApplicationName = app.RemainingArguments[0];
                 outArgs = app.RemainingArguments.Skip(1).ToArray();
             }
             else
             {
                 outArgs = app.RemainingArguments.ToArray();
             }
+
+            defaultHostOptions = localDefaultHostOptions;
 
             return app.IsShowingHelp;
         }
