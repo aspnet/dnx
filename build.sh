@@ -4,9 +4,9 @@ if test `uname` = Darwin; then
     cachedir=~/Library/Caches/KBuild
 else
     if x$XDG_DATA_HOME = x; then
-	cachedir=$HOME/.local/share
+        cachedir=$HOME/.local/share
     else
-	cachedir=$XDG_DATA_HOME;
+        cachedir=$XDG_DATA_HOME;
     fi
 fi
 mkdir -p $cachedir
@@ -28,7 +28,7 @@ if test ! -d packages/KoreBuild; then
 fi
 
 if ! type k > /dev/null 2>&1; then
-  source setup/kvm.sh
+    source setup/kvm.sh
 fi
 
 if ! type k > /dev/null 2>&1; then
