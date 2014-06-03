@@ -40,21 +40,21 @@ namespace Microsoft.Framework.Runtime.Common.CommandLine
 
         public List<CommandLineApplication> Commands { get; private set; }
 
-        public CommandLineApplication Command(string name, Action<CommandLineApplication> configuration, bool throwOnUnexpectedArg = true)
+        public CommandLineApplication Command(string name, Action<CommandLineApplication> configuration,
+            bool addHelpCommand = true, bool throwOnUnexpectedArg = true)
         {
-            var addingFirstCmd = false;
-            if (!Commands.Any())
-            {
-                addingFirstCmd = true;
-            }
-
             var command = new CommandLineApplication(throwOnUnexpectedArg) { Name = name, Parent = this };
             Commands.Add(command);
             configuration(command);
 
-            // If we are adding the first command, we also automatically add "help" command
-            if (addingFirstCmd)
+            if (addHelpCommand)
             {
+                if (HasHelpCommand())
+                {
+                    // Already added before
+                    return this;
+                }
+
                 Command("help", c =>
                 {
                     c.Description = "Show help information";
@@ -66,7 +66,8 @@ namespace Microsoft.Framework.Runtime.Common.CommandLine
                         ShowHelp(argCommand.Value);
                         return 0;
                     });
-                });
+                },
+                addHelpCommand: false);
             }
 
             return this;
@@ -324,10 +325,11 @@ namespace Microsoft.Framework.Runtime.Common.CommandLine
                 argumentsBuilder.AppendLine();
                 argumentsBuilder.AppendLine("Arguments:");
                 var maxArgLen = MaxArgumentLength(target.Arguments);
-                var outputFormat = string.Format("  {{0, -{0}}}{{1}}\n", maxArgLen + 2);
+                var outputFormat = string.Format("  {{0, -{0}}}{{1}}", maxArgLen + 2);
                 foreach (var arg in target.Arguments)
                 {
                     argumentsBuilder.AppendFormat(outputFormat, arg.Name, arg.Description);
+                    argumentsBuilder.AppendLine();
                 }
             }
 
@@ -338,10 +340,11 @@ namespace Microsoft.Framework.Runtime.Common.CommandLine
                 optionsBuilder.AppendLine();
                 optionsBuilder.AppendLine("Options:");
                 var maxOptLen = MaxOptionTemplateLength(target.Options);
-                var outputFormat = string.Format("  {{0, -{0}}}{{1}}\n", maxOptLen + 2);
+                var outputFormat = string.Format("  {{0, -{0}}}{{1}}", maxOptLen + 2);
                 foreach (var opt in target.Options)
                 {
                     optionsBuilder.AppendFormat(outputFormat, opt.Template, opt.Description);
+                    optionsBuilder.AppendLine();
                 }
             }
 
@@ -352,17 +355,28 @@ namespace Microsoft.Framework.Runtime.Common.CommandLine
                 commandsBuilder.AppendLine();
                 commandsBuilder.AppendLine("Commands:");
                 var maxCmdLen = MaxCommandLength(target.Commands);
-                var outputFormat = string.Format("  {{0, -{0}}}{{1}}\n", maxCmdLen + 2);
+                var outputFormat = string.Format("  {{0, -{0}}}{{1}}", maxCmdLen + 2);
                 foreach (var cmd in target.Commands)
                 {
                     commandsBuilder.AppendFormat(outputFormat, cmd.Name, cmd.Description);
+                    commandsBuilder.AppendLine();
                 }
 
-                commandsBuilder.AppendLine();
-                commandsBuilder.AppendFormat("Use \"{0} help [command]\" for more information about a command.", Name);
+                if (HasHelpCommand())
+                {
+                    commandsBuilder.AppendLine();
+                    commandsBuilder.AppendFormat("Use \"{0} help [command]\" for more information about a command.", Name);
+                    commandsBuilder.AppendLine();
+                }
             }
             headerBuilder.AppendLine();
-            Console.WriteLine("{0}{1}{2}{3}", headerBuilder, argumentsBuilder, optionsBuilder, commandsBuilder);
+            Console.Write("{0}{1}{2}{3}", headerBuilder, argumentsBuilder, optionsBuilder, commandsBuilder);
+        }
+
+        private bool HasHelpCommand()
+        {
+            var helpCmd = Commands.SingleOrDefault(cmd => string.Equals("help", cmd.Name, StringComparison.OrdinalIgnoreCase));
+            return helpCmd != null;
         }
 
         private int MaxOptionTemplateLength(IEnumerable<CommandOption> options)

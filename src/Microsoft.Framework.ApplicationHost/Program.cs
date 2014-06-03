@@ -125,20 +125,40 @@ namespace Microsoft.Framework.ApplicationHost
             var optionWatch = app.Option("--watch", "Watch file changes", CommandOptionType.NoValue);
             var optionPackages = app.Option("--packages <PACKAGE_DIR>", "Directory contatining packages",
                 CommandOptionType.SingleValue);
+            var runCmdExecuted = false;
             app.HelpOption("-?|-h|--help");
+            app.Command("run", c =>
+            {
+                // We don't actually execute "run" command here
+                // We are adding this command for the purpose of displaying correct help information
+                c.Description = "Run application";
+                c.OnExecute(() =>
+                {
+                    runCmdExecuted = true;
+                    return 0;
+                });
+            },
+            addHelpCommand: false);
             app.Execute(args);
 
-            if (!(app.IsShowingHelp || app.RemainingArguments.Any()))
+            if (!(app.IsShowingHelp || app.RemainingArguments.Any() || runCmdExecuted))
             {
                 app.ShowHelp(commandName: null);
             }
 
             defaultHostOptions = new DefaultHostOptions();
-            defaultHostOptions.WatchFiles = optionWatch.Values.Any();
+            defaultHostOptions.WatchFiles = optionWatch.HasValue();
             defaultHostOptions.PackageDirectory = optionPackages.Value();
 
             defaultHostOptions.TargetFramework = _environment.TargetFramework;
             defaultHostOptions.ApplicationBaseDirectory = _environment.ApplicationBasePath;
+
+            if (runCmdExecuted)
+            {
+                // Later logic will execute "run" command
+                // So we put this argment back after it was consumed by parser
+                app.RemainingArguments.Insert(0, "run");
+            }
 
             if (app.RemainingArguments.Any())
             {
