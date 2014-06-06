@@ -147,14 +147,17 @@ var NEW_RUNTIME = '${Environment.GetEnvironmentVariable("NEW_RUNTIME") == "1"}'
 
             var kTools = new[] {
                 Path.Combine(krePath, "bin", "lib", "Microsoft.Framework.Project"),
+                /* Fix
+                TODO: enable this line after we have kpm on CoreCLR
                 Path.Combine(krePath, "bin", "lib", "Microsoft.Framework.PackageManager"),
+                */
                 Path.Combine(krePath, "bin", "lib", "Microsoft.Framework.DesignTimeHost"),
             };
 
             Log.Info("kreName = " + kreName);
             
             foreach(var kTool in kTools) {
-                Exec("cmd", string.Format("/C \"{0}\"  crossgen --in \"{1}\"", kPath, kTool));
+                Exec("cmd", string.Format("/C \"\"{0}\" crossgen --in \"{1}\"\"", kPath, kTool));
             }
         };
 
@@ -163,14 +166,12 @@ var NEW_RUNTIME = '${Environment.GetEnvironmentVariable("NEW_RUNTIME") == "1"}'
         }
                 
         // Crossgen
-        /* FIX
         crossGen(nupkgPaths[2]);
         crossGen(nupkgPaths[3]);
 
         foreach(var nupkgPath in nupkgPaths) { 
             runWithFramework(nupkgPath);
         }
-        */
     }
 
 #ensure-latest-package
