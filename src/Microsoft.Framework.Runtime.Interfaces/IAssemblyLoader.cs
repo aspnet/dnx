@@ -2,11 +2,13 @@
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 using System.Reflection;
+using System.Runtime.Versioning;
 
-namespace Microsoft.Framework.Runtime.Loader
+namespace Microsoft.Framework.Runtime
 {
+    [AssemblyNeutral]
     public interface IAssemblyLoader
     {
-        AssemblyLoadResult Load(LoadContext loadContext);
+        Assembly Load(string assemblyName);
     }
 }

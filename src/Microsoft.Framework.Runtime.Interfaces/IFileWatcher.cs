@@ -4,9 +4,10 @@
 
 using System;
 
-namespace Microsoft.Framework.Runtime.FileSystem
+namespace Microsoft.Framework.Runtime
 {
-    public interface IFileWatcher : IDisposable
+    [AssemblyNeutral]
+    public interface IFileWatcher : IFileMonitor, IDisposable
     {
         void WatchDirectory(string path, string extension);
 

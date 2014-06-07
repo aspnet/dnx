@@ -19,7 +19,7 @@ namespace Microsoft.Framework.Runtime
 {
     public class DefaultHost : IHost
     {
-        private AssemblyLoader _loader;
+        private CompositeAssemblyLoader _loader;
         private DependencyWalker _dependencyWalker;
 
         private IFileWatcher _watcher;
@@ -100,8 +100,6 @@ namespace Microsoft.Framework.Runtime
                 throw new InvalidOperationException(sb.ToString());
             }
 
-            _serviceProvider.Add(typeof(IApplicationEnvironment), new ApplicationEnvironment(Project, _targetFramework));
-
             Trace.TraceInformation("Loading entry point from {0}", applicationName);
 
             var assembly = Assembly.Load(new AssemblyName(applicationName));
@@ -115,7 +113,7 @@ namespace Microsoft.Framework.Runtime
 
         public Assembly Load(string name)
         {
-            return _loader.LoadAssembly(new LoadContext(name, _targetFramework));
+            return _loader.Load(name);
         }
 
         public void Dispose()
@@ -149,6 +147,7 @@ namespace Microsoft.Framework.Runtime
                 throw new Exception("Unable to locate " + Project.ProjectFileName);
             }
 
+            var applicationEnvironment = new ApplicationEnvironment(Project, _targetFramework);
             var projectResolver = new ProjectResolver(_projectDir, rootDirectory);
 
             var referenceAssemblyDependencyResolver = new ReferenceAssemblyDependencyResolver();
@@ -170,10 +169,10 @@ namespace Microsoft.Framework.Runtime
             libraryExporters.Add(nugetDependencyResolver);
 
             var dependencyExporter = new CompositeLibraryExportProvider(libraryExporters);
-            var roslynLoader = new LazyRoslynAssemblyLoader(_loaderEngine, projectResolver, _watcher, dependencyExporter);
+            var projectLoader = new ProjectAssemblyLoader(projectResolver, _serviceProvider);
 
             // Project.json projects
-            loaders.Add(roslynLoader);
+            loaders.Add(projectLoader);
             dependencyProviders.Add(new ProjectReferenceDependencyProvider(projectResolver));
 
             // GAC and reference assembly resolver
@@ -193,14 +192,22 @@ namespace Microsoft.Framework.Runtime
             // dependencies
             _unresolvedProvider.AttemptedProviders = dependencyProviders;
 
-            _loader = new AssemblyLoader(loaders);
+            _loader = new CompositeAssemblyLoader(applicationEnvironment, loaders);
 
+            _serviceProvider.Add(typeof(IApplicationEnvironment), applicationEnvironment);
             _serviceProvider.Add(typeof(IApplicationShutdown), _shutdown);
+
+            // TODO: Get rid of this and just use the IFileWatcher
             _serviceProvider.Add(typeof(IFileMonitor), _watcher);
+
+            _serviceProvider.Add(typeof(IFileWatcher), _watcher);
             _serviceProvider.Add(typeof(ILibraryManager),
                 new LibraryManager(_targetFramework,
                                    _dependencyWalker,
-                                   libraryExporters.Concat(new[] { roslynLoader })));
+                                   libraryExporters.Concat(new[] { projectLoader })));
+
+            _serviceProvider.Add(typeof(ILibraryExportProvider), dependencyExporter);
+            _serviceProvider.Add(typeof(IProjectResolver), projectResolver);
         }
 
 

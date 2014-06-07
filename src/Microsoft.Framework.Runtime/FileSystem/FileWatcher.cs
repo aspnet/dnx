@@ -8,7 +8,7 @@ using System.IO;
 
 namespace Microsoft.Framework.Runtime.FileSystem
 {
-    public class FileWatcher : IFileWatcher, IFileMonitor
+    public class FileWatcher : IFileWatcher
     {
         private readonly HashSet<string> _files = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         private readonly Dictionary<string, HashSet<string>> _directories = new Dictionary<string, HashSet<string>>(StringComparer.OrdinalIgnoreCase);

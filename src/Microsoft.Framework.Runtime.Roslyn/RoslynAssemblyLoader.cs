@@ -22,13 +22,16 @@ namespace Microsoft.Framework.Runtime.Roslyn
         private readonly IAssemblyLoaderEngine _loaderEngine;
         private readonly IProjectResolver _projectResolver;
         private readonly IResourceProvider _resourceProvider;
+        private readonly IApplicationEnvironment _applicationEnvironment;
 
         public RoslynAssemblyLoader(IAssemblyLoaderEngine loaderEngine,
+                                    IApplicationEnvironment applicationEnvironment,
                                     IFileWatcher watcher,
                                     IProjectResolver projectResolver,
                                     ILibraryExportProvider dependencyExporter)
         {
             _loaderEngine = loaderEngine;
+            _applicationEnvironment = applicationEnvironment;
             _projectResolver = projectResolver;
 
             var resxProvider = new ResxResourceProvider();
@@ -40,9 +43,9 @@ namespace Microsoft.Framework.Runtime.Roslyn
                                            dependencyExporter);
         }
 
-        public AssemblyLoadResult Load(LoadContext loadContext)
+        public Assembly Load(string assemblyName)
         {
-            var compilationContext = GetCompilationContext(loadContext.AssemblyName, loadContext.TargetFramework);
+            var compilationContext = GetCompilationContext(assemblyName, _applicationEnvironment.TargetFramework);
 
             if (compilationContext == null)
             {
@@ -102,7 +105,7 @@ namespace Microsoft.Framework.Runtime.Roslyn
             }
         }
 
-        private AssemblyLoadResult CompileInMemory(string name, CompilationContext compilationContext, IEnumerable<ResourceDescription> resources)
+        private Assembly CompileInMemory(string name, CompilationContext compilationContext, IEnumerable<ResourceDescription> resources)
         {
             using (var pdbStream = new MemoryStream())
             using (var assemblyStream = new MemoryStream())
@@ -128,14 +131,14 @@ namespace Microsoft.Framework.Runtime.Roslyn
 
                 if (!result.Success)
                 {
-                    return ReportCompilationError(
-                        compilationContext.Diagnostics.Where(IsError).Concat(result.Diagnostics));
+                    throw new CompilationException(
+                        GetErrors(compilationContext.Diagnostics.Where(IsError).Concat(result.Diagnostics)));
                 }
 
                 var errors = compilationContext.Diagnostics.Where(IsError);
                 if (errors.Any())
                 {
-                    return ReportCompilationError(errors);
+                    throw new CompilationException(GetErrors(errors));
                 }
 
                 Assembly assembly = null;
@@ -156,13 +159,8 @@ namespace Microsoft.Framework.Runtime.Roslyn
                     assembly = _loaderEngine.LoadStream(assemblyStream, pdbStream);
                 }
 
-                return new AssemblyLoadResult(assembly);
+                return assembly;
             }
-        }
-
-        private static AssemblyLoadResult ReportCompilationError(IEnumerable<Diagnostic> results)
-        {
-            return new AssemblyLoadResult(new CompilationException(GetErrors(results)));
         }
 
         private static IList<string> GetErrors(IEnumerable<Diagnostic> diagnostis)
