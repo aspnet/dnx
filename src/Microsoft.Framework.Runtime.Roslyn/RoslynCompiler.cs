@@ -63,7 +63,7 @@ namespace Microsoft.Framework.Runtime.Roslyn
             _watcher.WatchFile(project.ProjectFilePath);
 
             var exportProvider = new CachedCompilationLibraryExportProvider(this, compilationCache, _libraryExportProvider);
-            var export = _projectExportProvider.GetProjectExport(exportProvider, name, targetFramework);
+            var export = _projectExportProvider.GetProjectExport(exportProvider, name, targetFramework, out targetFramework);
             var metadataReferences = export.MetadataReferences;
             var exportedReferences = metadataReferences.Select(ConvertMetadataReference);
 

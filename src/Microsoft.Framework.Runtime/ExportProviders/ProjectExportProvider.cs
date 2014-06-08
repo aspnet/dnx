@@ -22,8 +22,10 @@ namespace Microsoft.Framework.Runtime
             _projectResolver = projectResolver;
         }
 
-        public ILibraryExport GetProjectExport(ILibraryExportProvider libraryExportProvider, string name, FrameworkName targetFramework)
+        public ILibraryExport GetProjectExport(ILibraryExportProvider libraryExportProvider, string name, FrameworkName targetFramework, out FrameworkName effectiveTargetFramework)
         {
+            effectiveTargetFramework = null;
+
             Project project;
             // Can't find a project file with the name so bail
             if (!_projectResolver.TryResolveProject(name, out project))
@@ -33,7 +35,6 @@ namespace Microsoft.Framework.Runtime
 
             var targetFrameworkConfig = project.GetTargetFrameworkConfiguration(targetFramework);
 
-            // Update the target framework for compilation
             targetFramework = targetFrameworkConfig.FrameworkName ?? targetFramework;
 
             Trace.TraceInformation("[{0}]: Found project '{1}' framework={2}", GetType().Name, project.Name, targetFramework);
@@ -92,6 +93,8 @@ namespace Microsoft.Framework.Runtime
                                   project.Name, 
                                   dependencyStopWatch.ElapsedMilliseconds);
 
+            // Set the effective target framework (the specific framework used for resolution)
+            effectiveTargetFramework = targetFramework;
             return new LibraryExport(resolvedReferences, resolvedSources);
         }
 
