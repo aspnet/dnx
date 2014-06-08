@@ -6,13 +6,11 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Reflection.PortableExecutable;
 using System.Runtime.Versioning;
 using System.Text;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.Text;
-using Microsoft.Framework.Runtime.FileSystem;
 using NuGet;
 
 namespace Microsoft.Framework.Runtime.Roslyn
@@ -23,6 +21,7 @@ namespace Microsoft.Framework.Runtime.Roslyn
         private readonly IFileWatcher _watcher;
         private readonly IProjectResolver _projectResolver;
         private readonly MetadataFileReferenceFactory _metadataFileReferenceFactory;
+        private readonly ProjectExportProvider _projectExportProvider;
 
         public RoslynCompiler(IProjectResolver projectResolver,
                               IFileWatcher watcher,
@@ -32,6 +31,7 @@ namespace Microsoft.Framework.Runtime.Roslyn
             _watcher = watcher;
             _libraryExportProvider = libraryExportProvider;
             _metadataFileReferenceFactory = new MetadataFileReferenceFactory();
+            _projectExportProvider = new ProjectExportProvider(projectResolver);
         }
 
         public CompilationContext CompileProject(string name, FrameworkName targetFramework)
@@ -62,58 +62,12 @@ namespace Microsoft.Framework.Runtime.Roslyn
 
             _watcher.WatchFile(project.ProjectFilePath);
 
-            var targetFrameworkConfig = project.GetTargetFrameworkConfiguration(targetFramework);
-
-            // Update the target framework for compilation
-            targetFramework = targetFrameworkConfig.FrameworkName ?? targetFramework;
-
-            Trace.TraceInformation("[{0}]: Found project '{1}' framework={2}", GetType().Name, project.Name, targetFramework);
-
-            var exports = new List<ILibraryExport>();
-
-            var dependencies = project.Dependencies.Concat(targetFrameworkConfig.Dependencies)
-                                                   .Select(d => d.Name)
-                                                   .ToList();
-
-            if (VersionUtility.IsDesktop(targetFramework))
-            {
-                // mscorlib is ok
-                dependencies.Add("mscorlib");
-
-                // TODO: Remove these references
-                dependencies.Add("System");
-                dependencies.Add("System.Core");
-                dependencies.Add("Microsoft.CSharp");
-            }
-
-
-            if (dependencies.Count > 0)
-            {
-                Trace.TraceInformation("[{0}]: Loading dependencies for '{1}'", GetType().Name, project.Name);
-                var dependencyStopWatch = Stopwatch.StartNew();
-
-                foreach (var dependency in dependencies)
-                {
-                    var libraryExport = GetLibraryExport(dependency, targetFramework, compilationCache) ??
-                        _libraryExportProvider.GetLibraryExport(dependency, targetFramework);
-
-                    if (libraryExport == null)
-                    {
-                        // TODO: Failed to resolve dependency so do something useful
-                        Trace.TraceInformation("[{0}]: Failed to resolve dependency '{1}'", GetType().Name, dependency);
-                    }
-                    else
-                    {
-                        exports.Add(libraryExport);
-                    }
-                }
-
-                dependencyStopWatch.Stop();
-                Trace.TraceInformation("[{0}]: Completed loading dependencies for '{1}' in {2}ms", GetType().Name, project.Name, dependencyStopWatch.ElapsedMilliseconds);
-            }
+            var exportProvider = new CachedCompilationLibraryExportProvider(this, compilationCache, _libraryExportProvider);
+            var export = _projectExportProvider.GetProjectExport(exportProvider, name, targetFramework);
+            var metadataReferences = export.MetadataReferences;
+            var exportedReferences = metadataReferences.Select(ConvertMetadataReference);
 
             Trace.TraceInformation("[{0}]: Compiling '{1}'", GetType().Name, name);
-            var sw = Stopwatch.StartNew();
 
             _watcher.WatchDirectory(path, ".cs");
 
@@ -124,19 +78,10 @@ namespace Microsoft.Framework.Runtime.Roslyn
 
             var compilationSettings = project.GetCompilationSettings(targetFramework);
 
-            IList<SyntaxTree> trees = GetSyntaxTrees(project, compilationSettings, exports);
+            IList<SyntaxTree> trees = GetSyntaxTrees(project, compilationSettings, export);
 
-            IList<MetadataReference> exportedReferences;
-            IList<IMetadataReference> metadataReferences;
-
-            ExtractReferences(exports,
-                              targetFramework,
-                              compilationCache,
-                              out exportedReferences,
-                              out metadataReferences);
-
-            var embeddedReferences = metadataReferences.OfType<EmbeddedMetadataReference>()
-                                                       .ToDictionary(a => a.Name);
+            var embeddedReferences = metadataReferences.OfType<IMetadataRawReference>()
+                                                       .ToDictionary(a => a.Name, ConvertMetadataReference);
 
             var references = new List<MetadataReference>();
             references.AddRange(exportedReferences);
@@ -195,7 +140,7 @@ namespace Microsoft.Framework.Runtime.Roslyn
 
         private IList<SyntaxTree> GetSyntaxTrees(Project project,
                                                  CompilationSettings compilationSettings,
-                                                 List<ILibraryExport> exports)
+                                                 ILibraryExport export)
         {
             var trees = new List<SyntaxTree>();
 
@@ -213,7 +158,7 @@ namespace Microsoft.Framework.Runtime.Roslyn
                 trees.Add(syntaxTree);
             }
 
-            foreach (var sourceReference in exports.SelectMany(export => export.SourceReferences))
+            foreach (var sourceReference in export.SourceReferences)
             {
                 var sourceFileReference = sourceReference as ISourceFileReference;
 
@@ -257,93 +202,8 @@ namespace Microsoft.Framework.Runtime.Roslyn
             return compilationContext.GetLibraryExport();
         }
 
-        private void ExtractReferences(List<ILibraryExport> dependencyExports,
-                                       FrameworkName targetFramework,
-                                       IDictionary<string, CompilationContext> compilationCache,
-                                       out IList<MetadataReference> references,
-                                       out IList<IMetadataReference> metadataReferences)
-        {
-            var used = new HashSet<string>();
-            references = new List<MetadataReference>();
-            metadataReferences = new List<IMetadataReference>();
-
-            foreach (var export in dependencyExports)
-            {
-                ProcessExport(export,
-                              targetFramework,
-                              compilationCache,
-                              references,
-                              metadataReferences,
-                              used);
-            }
-        }
-
-        private void ProcessExport(ILibraryExport export,
-                                   FrameworkName targetFramework,
-                                   IDictionary<string, CompilationContext> compilationCache,
-                                   IList<MetadataReference> references,
-                                   IList<IMetadataReference> metadataReferences,
-                                   HashSet<string> used)
-        {
-            ExpandEmbeddedReferences(export.MetadataReferences);
-
-            foreach (var reference in export.MetadataReferences)
-            {
-                var unresolvedReference = reference as UnresolvedMetadataReference;
-
-                if (unresolvedReference != null)
-                {
-                    // Try to resolve the unresolved references
-                    var compilationExport = GetLibraryExport(unresolvedReference.Name, targetFramework, compilationCache);
-
-                    if (compilationExport != null)
-                    {
-                        ProcessExport(compilationExport, targetFramework, compilationCache, references, metadataReferences, used);
-                    }
-                }
-                else
-                {
-                    if (!used.Add(reference.Name))
-                    {
-                        continue;
-                    }
-
-                    metadataReferences.Add(reference);
-                    references.Add(ConvertMetadataReference(reference));
-                }
-            }
-        }
-
-        private void ExpandEmbeddedReferences(IList<IMetadataReference> references)
-        {
-            var otherReferences = new List<IMetadataReference>();
-
-            foreach (var reference in references)
-            {
-                var fileReference = reference as IMetadataFileReference;
-
-                if (fileReference != null)
-                {
-                    using (var fileStream = File.OpenRead(fileReference.Path))
-                    using (var reader = new PEReader(fileStream))
-                    {
-                        otherReferences.AddRange(reader.GetEmbeddedReferences());
-                    }
-                }
-            }
-
-            references.AddRange(otherReferences);
-        }
-
         private MetadataReference ConvertMetadataReference(IMetadataReference metadataReference)
         {
-            var fileMetadataReference = metadataReference as IMetadataFileReference;
-
-            if (fileMetadataReference != null)
-            {
-                return _metadataFileReferenceFactory.GetMetadataReference(fileMetadataReference.Path);
-            }
-
             var roslynReference = metadataReference as IRoslynMetadataReference;
 
             if (roslynReference != null)
@@ -351,7 +211,40 @@ namespace Microsoft.Framework.Runtime.Roslyn
                 return roslynReference.MetadataReference;
             }
 
+            var rawMetadataReference = metadataReference as IMetadataRawReference;
+
+            if (rawMetadataReference != null)
+            {
+                return new MetadataImageReference(rawMetadataReference.Contents);
+            }
+
+            var fileMetadataReference = metadataReference as IMetadataFileReference;
+
+            if (fileMetadataReference != null)
+            {
+                return _metadataFileReferenceFactory.GetMetadataReference(fileMetadataReference.Path);
+            }
+
             throw new NotSupportedException();
+        }
+
+        private struct CachedCompilationLibraryExportProvider : ILibraryExportProvider
+        {
+            private readonly RoslynCompiler _compiler;
+            private readonly IDictionary<string, CompilationContext> _compliationCache;
+            private readonly ILibraryExportProvider _previous;
+
+            public CachedCompilationLibraryExportProvider(RoslynCompiler compiler, IDictionary<string, CompilationContext> compliationCache, ILibraryExportProvider previous)
+            {
+                _compiler = compiler;
+                _compliationCache = compliationCache;
+                _previous = previous;
+            }
+
+            public ILibraryExport GetLibraryExport(string name, FrameworkName targetFramework)
+            {
+                return _compiler.GetLibraryExport(name, targetFramework, _compliationCache) ?? _previous.GetLibraryExport(name, targetFramework);
+            }
         }
     }
 }

@@ -138,7 +138,7 @@ namespace Microsoft.Framework.Runtime.Roslyn
             }
         }
 
-        public EmitResult Generate(IDictionary<string, EmbeddedMetadataReference> existingReferences)
+        public EmitResult Generate(IDictionary<string, MetadataReference> existingReferences)
         {
             Compilation = CSharpCompilation.Create(
                 assemblyName: AssemblyName,

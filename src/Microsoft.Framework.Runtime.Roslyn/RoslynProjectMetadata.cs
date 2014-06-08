@@ -16,10 +16,10 @@ namespace Microsoft.Framework.Runtime.Roslyn
             SourceFiles = context.Compilation
                                  .SyntaxTrees
                                  .Select(t => t.FilePath)
-                                 .Where(p => !String.IsNullOrEmpty(p)) // REVIEW: Raw sources?
+                                 .Where(p => !string.IsNullOrEmpty(p)) // REVIEW: Raw sources?
                                  .ToList();
 
-            RawReferences = context.MetadataReferences.OfType<EmbeddedMetadataReference>().Select(r =>
+            RawReferences = context.MetadataReferences.OfType<IMetadataRawReference>().Select(r =>
             {
                 return new
                 {

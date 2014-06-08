@@ -46,7 +46,7 @@ namespace Microsoft.Framework.Runtime.Roslyn
 
             var resources = _resourceProvider.GetResources(project);
 
-            resources.AddEmbeddedReferences(compilationContext.GetRequiredEmbeddedReferences());
+            resources.AddRawReferences(compilationContext.GetRequiredEmbeddedReferences());
 
             diagnostics.AddRange(compilationContext.Diagnostics);
 

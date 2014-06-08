@@ -4,8 +4,7 @@
     "dependencies": {
         "K.Roslyn" : "0.1-alpha-*",
         "Microsoft.Framework.Runtime" :  "",
-        "Microsoft.Framework.Runtime.Interfaces" : "",
-        "Newtonsoft.Json" : "5.0.8"
+        "Microsoft.Framework.Runtime.Interfaces" : ""
     },
     "configurations" : {
         "net45" : {

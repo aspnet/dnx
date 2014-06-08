@@ -8,13 +8,13 @@ using System.IO;
 using System.Reflection.Metadata;
 using System.Reflection.PortableExecutable;
 
-namespace Microsoft.Framework.Runtime.Roslyn
+namespace Microsoft.Framework.Runtime
 {
     internal static class PEReaderExtensions
     {
-        public static IList<EmbeddedMetadataReference> GetEmbeddedReferences(this PEReader reader)
+        public static IList<IMetadataRawReference> GetEmbeddedReferences(this PEReader reader)
         {
-            var items = new List<EmbeddedMetadataReference>();
+            var items = new List<IMetadataRawReference>();
 
             var mdReader = reader.GetMetadataReader();
             foreach (var resourceHandle in mdReader.ManifestResources)
@@ -30,7 +30,7 @@ namespace Microsoft.Framework.Runtime.Roslyn
                     // Remove .dll
                     var nameWithoutDll = resourceName.Substring(0, resourceName.Length - 4);
 
-                    items.Add(new EmbeddedMetadataReference(nameWithoutDll, buffer));
+                    items.Add(new RawMetadataReference(nameWithoutDll, buffer));
                 }
             }
 
