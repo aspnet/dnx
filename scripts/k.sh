@@ -9,7 +9,7 @@ done
 DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
 
 if [ -f "$DIR/k-$1" ]; then
-    k-$1 "$@"
+    exec k-$1 "$@"
 else
-    klr Microsoft.Framework.ApplicationHost "$@"  
+    exec klr Microsoft.Framework.ApplicationHost "$@"  
 fi

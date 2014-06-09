@@ -9,4 +9,4 @@ done
 DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
 
 
-mono $DIR/klr.mono.managed.dll "$@"
+exec mono $DIR/klr.mono.managed.dll "$@"
