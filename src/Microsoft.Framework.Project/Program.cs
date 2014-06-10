@@ -1,6 +1,8 @@
 // Copyright (c) Microsoft Open Technologies, Inc. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
+using System.IO;
+using Microsoft.Framework.PackageManager;
 using Microsoft.Framework.Runtime;
 using Microsoft.Framework.Runtime.Common.CommandLine;
 
@@ -26,6 +28,37 @@ namespace Microsoft.Framework.Project
             {
                 app.ShowHelp();
                 return 0;
+            });
+
+            // This is temporary until we update the rest of the stack (including tooling)
+            app.Command("build", c =>
+            {
+                c.Description = "Build nuget packages for the project in given directory";
+
+                var optionFramework = c.Option("--framework <TARGET_FRAMEWORK>", "Target framework", CommandOptionType.MultipleValue);
+                var optionOut = c.Option("--out <OUTPUT_DIR>", "Output directory", CommandOptionType.SingleValue);
+                var optionCheck = c.Option("--check", "Check diagnostics", CommandOptionType.NoValue);
+                var optionDependencies = c.Option("--dependencies", "Copy dependencies", CommandOptionType.NoValue);
+                var argProjectDir = c.Argument("[project]", "Project to build, default is current directory");
+                c.HelpOption("-?|-h|--help");
+
+                c.OnExecute(() =>
+                {
+                    var buildOptions = new BuildOptions();
+                    buildOptions.RuntimeTargetFramework = _environment.TargetFramework;
+                    buildOptions.OutputDir = optionOut.Value();
+                    buildOptions.ProjectDir = argProjectDir.Value ?? Directory.GetCurrentDirectory();
+                    buildOptions.CheckDiagnostics = optionCheck.HasValue();
+
+                    var projectManager = new BuildManager(buildOptions);
+
+                    if (!projectManager.Build())
+                    {
+                        return -1;
+                    }
+
+                    return 0;
+                });
             });
 
             app.Command("crossgen", c =>
