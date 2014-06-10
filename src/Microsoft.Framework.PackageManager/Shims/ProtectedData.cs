@@ -5,12 +5,12 @@ namespace System.Security.Cryptography
     {
         public static byte[] Protect(byte[] userData, byte[] optionalEntropy, DataProtectionScope scope)
         {
-            return userData;
+            throw new NotImplementedException();
         }
         
         public static byte[] Unprotect(byte[] encryptedData, byte[] optionalEntropy, DataProtectionScope scope)
         {
-            return encryptedData;
+            throw new NotImplementedException();
         }
     }
 

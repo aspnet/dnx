@@ -137,7 +137,7 @@ namespace Microsoft.Framework.PackageManager
 
             app.Command("build", c =>
             {
-                c.Description = "Build nuget packages for the project in given directory";
+                c.Description = "Build NuGet packages for the project in given directory";
 
                 var optionFramework = c.Option("--framework <TARGET_FRAMEWORK>", "Target framework", CommandOptionType.MultipleValue);
                 var optionOut = c.Option("--out <OUTPUT_DIR>", "Output directory", CommandOptionType.SingleValue);
