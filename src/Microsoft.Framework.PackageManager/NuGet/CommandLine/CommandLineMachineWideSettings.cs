@@ -15,7 +15,11 @@ namespace NuGet
 
         public CommandLineMachineWideSettings()
         {
+#if NET45
             var baseDirectory = Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData);
+#else
+            var baseDirectory = Environment.GetEnvironmentVariable("ProgramData");
+#endif
             _settings = new Lazy<IEnumerable<NuGet.Settings>>(
                 () => NuGet.Settings.LoadMachineWideSettings(
                     new PhysicalFileSystem(baseDirectory)));

@@ -4,12 +4,13 @@
 using System.Globalization;
 using System.Resources;
 using System.Threading;
+using System.Reflection;
 
 namespace NuGet
 {
     internal static class LocalizedResourceManager
     {
-        private static readonly ResourceManager _resourceManager = new ResourceManager("Microsoft.Framework.PackageManager.NuGetResources", typeof(LocalizedResourceManager).Assembly);
+        private static readonly ResourceManager _resourceManager = new ResourceManager("Microsoft.Framework.PackageManager.NuGetResources", typeof(LocalizedResourceManager).GetTypeInfo().Assembly);
 
         public static string GetString(string resourceName)
         {
@@ -25,7 +26,7 @@ namespace NuGet
         /// <returns>the 3 letter language name used to locate localized resources.</returns>
         public static string GetLanguageName()
         {
-            var culture = Thread.CurrentThread.CurrentUICulture;
+            var culture = CultureInfo.DefaultThreadCurrentUICulture;
             while (!culture.IsNeutralCulture)
             {
                 if (culture.Parent == culture)
@@ -35,8 +36,11 @@ namespace NuGet
 
                 culture = culture.Parent;
             }
-
+#if NET45
             return culture.ThreeLetterWindowsLanguageName.ToLowerInvariant();
+#else
+            return "enu";
+#endif
         }
     }
 }

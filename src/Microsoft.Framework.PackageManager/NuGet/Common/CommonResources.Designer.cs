@@ -10,8 +10,7 @@
 
 namespace NuGet.Dialog
 {
-
-
+    using System.Reflection;
     /// <summary>
     ///   A strongly-typed resource class, for looking up localized strings, etc.
     /// </summary>
@@ -44,7 +43,7 @@ namespace NuGet.Dialog
             {
                 if (object.ReferenceEquals(resourceMan, null))
                 {
-                    global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("NuGet.Dialog.CommonResources", typeof(CommonResources).Assembly);
+                    global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("NuGet.Dialog.CommonResources", typeof(CommonResources).GetTypeInfo().Assembly);
                     resourceMan = temp;
                 }
                 return resourceMan;

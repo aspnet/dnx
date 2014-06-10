@@ -66,6 +66,9 @@
     <Compile Include="Restore\RestoreCommand.cs" />
     <Compile Include="Restore\RestoreOperations.cs" />
     <Compile Include="Restore\VersionUtilities.cs" />
+    <Compile Include="Shims\ConsoleColor.cs" />
+    <Compile Include="Shims\ListExtensions.cs" />
+    <Compile Include="Shims\ProtectedData.cs" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="NuGet\Common\CommonResources.resx" />

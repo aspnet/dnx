@@ -4,11 +4,8 @@
 using System;
 using System.IO;
 using System.IO.Compression;
-using System.Runtime.Versioning;
-using Microsoft.Framework.Runtime;
-using Microsoft.Framework.Runtime.Loader.NuGet;
-using NuGet;
 using System.Security.Cryptography;
+using NuGet;
 
 namespace Microsoft.Framework.PackageManager.Packing
 {

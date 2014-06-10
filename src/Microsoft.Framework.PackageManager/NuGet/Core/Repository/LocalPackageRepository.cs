@@ -67,79 +67,12 @@ namespace NuGet
             set;
         }
 
-        public /*override*/ bool SupportsPrereleasePackages
-        {
-            get { return true; }
-        }
 
         public IFileSystem FileSystem
         {
             get;
             private set;
         }
-
-        public /*override*/ IQueryable<IPackage> GetPackages()
-        {
-            return GetPackages(OpenPackage).AsQueryable();
-        }
-
-#if false
-        public /*override*/ void AddPackage(IPackage package)
-        {
-            if (PackageSaveMode.HasFlag(PackageSaveModes.Nuspec))
-            {
-                // Starting from 2.1, we save the nuspec file into the subdirectory with the name as <packageId>.<version>
-                // for example, for jQuery version 1.0, it will be "jQuery.1.0\\jQuery.1.0.nuspec"
-                string packageFilePath = GetManifestFilePath(package.Id, package.Version);
-                Manifest manifest = Manifest.Create(package);
-
-                // The IPackage object doesn't carry the References information.
-                // Thus we set the References for the manifest to the set of all valid assembly references
-                manifest.Metadata.ReferenceSets = package.AssemblyReferences
-                                                      .GroupBy(f => f.TargetFramework)
-                                                      .Select(
-                                                        g => new ManifestReferenceSet
-                                                        {
-                                                            TargetFramework = g.Key == null ? null : VersionUtility.GetFrameworkString(g.Key),
-                                                            References = g.Select(p => new ManifestReference { File = p.Name }).ToList()
-                                                        })
-                                                      .ToList();
-
-                FileSystem.AddFileWithCheck(packageFilePath, manifest.Save);
-            }
-
-            if (PackageSaveMode.HasFlag(PackageSaveModes.Nupkg))
-            {
-                string packageFilePath = GetPackageFilePath(package);
-
-                FileSystem.AddFileWithCheck(packageFilePath, package.GetStream);
-            }
-        }
-
-        public /*override*/ void RemovePackage(IPackage package)
-        {
-            string manifestFilePath = GetManifestFilePath(package.Id, package.Version);
-            if (FileSystem.FileExists(manifestFilePath))
-            {
-                // delete .nuspec file
-                FileSystem.DeleteFileSafe(manifestFilePath);
-            }
-
-            // Delete the package file
-            string packageFilePath = GetPackageFilePath(package);
-            FileSystem.DeleteFileSafe(packageFilePath);
-
-            // Delete the package directory if any
-            FileSystem.DeleteDirectorySafe(PathResolver.GetPackageDirectory(package), recursive: false);
-
-            // If this is the last package delete the package directory
-            if (!FileSystem.GetFilesSafe(String.Empty).Any() &&
-                !FileSystem.GetDirectoriesSafe(String.Empty).Any())
-            {
-                FileSystem.DeleteDirectorySafe(String.Empty, recursive: false);
-            }
-        }
-#endif
 
         public virtual IPackage FindPackage(string packageId, SemanticVersion version)
         {
@@ -379,7 +312,7 @@ namespace NuGet
                     package = new OptimizedZipPackage(FileSystem, path);
 #endif
                 }
-                catch (FileFormatException ex)
+                catch (InvalidDataException ex)
                 {
                     throw new InvalidDataException(String.Format(CultureInfo.CurrentCulture, NuGetResources.ErrorReadingPackage, path), ex);
                 }

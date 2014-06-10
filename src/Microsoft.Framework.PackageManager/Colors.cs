@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Web;
-
+﻿
 namespace Microsoft.Framework.PackageManager
 {
     public static class Colors

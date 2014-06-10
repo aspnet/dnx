@@ -104,7 +104,12 @@ namespace NuGet
         {
             // Walk up the tree to find a config file; also look in .nuget subdirectories
             var validSettingFiles = new List<Settings>();
-            var redirectSettingsPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+#if NET45
+            var appData = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
+#else
+            var appData = Environment.GetEnvironmentVariable("APPDATA");
+#endif
+            var redirectSettingsPath = Path.Combine(appData,
                                                     "nuget",
                                                     "nuget.redirect.config");
 
@@ -167,7 +172,11 @@ namespace NuGet
             if (configFileName == null)
             {
                 // load %AppData%\NuGet\NuGet.config
-                string appDataPath = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
+#if NET45
+                var appDataPath = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
+#else
+                var appDataPath = Environment.GetEnvironmentVariable("APPDATA");
+#endif
                 if (!String.IsNullOrEmpty(appDataPath))
                 {
                     var defaultSettingsPath = Path.Combine(appDataPath, "NuGet");
