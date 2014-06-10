@@ -57,6 +57,7 @@
     <Compile Include="Restore\GraphModel\GraphItem.cs" />
     <Compile Include="Restore\GraphModel\GraphNode.cs" />
     <Compile Include="Restore\NuGet\PackageFolder.cs" />
+    <Compile Include="Restore\NuGet\PackageUtilities.cs" />
     <Compile Include="Restore\RemoteWalkProvider.cs" />
     <Compile Include="Restore\NuGet\IPackageFeed.cs" />
     <Compile Include="Restore\NuGet\PackageFeed.cs" />

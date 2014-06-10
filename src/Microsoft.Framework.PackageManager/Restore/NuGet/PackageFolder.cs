@@ -64,7 +64,7 @@ namespace Microsoft.Framework.PackageManager.Restore.NuGet
 
                 using (var archive = new ZipArchive(nupkgStream, ZipArchiveMode.Read, leaveOpen: true))
                 {
-                    var entry = archive.GetEntry(package.Id + ".nuspec");
+                    var entry = archive.GetEntryOrdinalIgnoreCase(package.Id + ".nuspec");
                     using (var entryStream = entry.Open())
                     {
                         var nuspecStream = new MemoryStream((int)entry.Length);
