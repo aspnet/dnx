@@ -26,7 +26,8 @@ namespace NuGet
         /// <returns>the 3 letter language name used to locate localized resources.</returns>
         public static string GetLanguageName()
         {
-            var culture = CultureInfo.DefaultThreadCurrentUICulture;
+#if NET45
+            var culture = Thread.CurrentThread.CurrentUICulture;
             while (!culture.IsNeutralCulture)
             {
                 if (culture.Parent == culture)
@@ -36,7 +37,7 @@ namespace NuGet
 
                 culture = culture.Parent;
             }
-#if NET45
+
             return culture.ThreeLetterWindowsLanguageName.ToLowerInvariant();
 #else
             return "enu";
