@@ -2,15 +2,13 @@
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 using System;
-using System.Linq;
-using System.Collections.Generic;
-using Microsoft.Framework.Runtime.Common.CommandLine;
+using System.Diagnostics;
+using System.IO;
+using System.Net;
+using System.Threading;
 using Microsoft.Framework.PackageManager.Packing;
 using Microsoft.Framework.Runtime;
-using Microsoft.Framework.Runtime.Common;
-using System.Diagnostics;
-using System.Threading;
-using System.Net;
+using Microsoft.Framework.Runtime.Common.CommandLine;
 
 namespace Microsoft.Framework.PackageManager
 {
@@ -124,6 +122,36 @@ namespace Microsoft.Framework.PackageManager
 
                     var manager = new PackManager(options);
                     if (!manager.Package())
+                    {
+                        return -1;
+                    }
+
+                    return 0;
+                });
+            });
+
+            app.Command("build", c =>
+            {
+                c.Description = "Build nuget packages for the project in given directory";
+
+                var optionFramework = c.Option("--framework <TARGET_FRAMEWORK>", "Target framework", CommandOptionType.MultipleValue);
+                var optionOut = c.Option("--out <OUTPUT_DIR>", "Output directory", CommandOptionType.SingleValue);
+                var optionCheck = c.Option("--check", "Check diagnostics", CommandOptionType.NoValue);
+                var optionDependencies = c.Option("--dependencies", "Copy dependencies", CommandOptionType.NoValue);
+                var argProjectDir = c.Argument("[project]", "Project to build, default is current directory");
+                c.HelpOption("-?|-h|--help");
+
+                c.OnExecute(() =>
+                {
+                    var buildOptions = new BuildOptions();
+                    buildOptions.RuntimeTargetFramework = _environment.TargetFramework;
+                    buildOptions.OutputDir = optionOut.Value();
+                    buildOptions.ProjectDir = argProjectDir.Value ?? Directory.GetCurrentDirectory();
+                    buildOptions.CheckDiagnostics = optionCheck.HasValue();
+
+                    var projectManager = new BuildManager(buildOptions);
+
+                    if (!projectManager.Build())
                     {
                         return -1;
                     }

@@ -11,13 +11,10 @@ using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.Framework.Runtime;
 using Microsoft.Framework.Runtime.FileSystem;
-using Microsoft.Framework.Runtime.Loader;
-using Microsoft.Framework.Runtime.Loader.NuGet;
 using Microsoft.Framework.Runtime.Roslyn;
 using NuGet;
-using KProject = Microsoft.Framework.Runtime.Project;
 
-namespace Microsoft.Framework.Project
+namespace Microsoft.Framework.PackageManager
 {
     public class BuildManager
     {
@@ -31,10 +28,10 @@ namespace Microsoft.Framework.Project
 
         public bool Build()
         {
-            KProject project;
-            if (!KProject.TryGetProject(_buildOptions.ProjectDir, out project))
+            Project project;
+            if (!Project.TryGetProject(_buildOptions.ProjectDir, out project))
             {
-                Console.WriteLine("Unable to locate {0}.'", KProject.ProjectFileName);
+                Console.WriteLine("Unable to locate {0}.'", Project.ProjectFileName);
                 return false;
             }
 
@@ -134,7 +131,7 @@ namespace Microsoft.Framework.Project
             return success;
         }
 
-        private static void InitializeBuilder(KProject project, PackageBuilder builder)
+        private static void InitializeBuilder(Project project, PackageBuilder builder)
         {
             builder.Authors.AddRange(project.Authors);
 
@@ -231,7 +228,7 @@ namespace Microsoft.Framework.Project
         }
 #endif
 
-        private bool CheckDiagnostics(KProject project,
+        private bool CheckDiagnostics(Project project,
                                       FrameworkName targetFramework,
                                       List<Diagnostic> diagnostics)
         {
@@ -249,7 +246,7 @@ namespace Microsoft.Framework.Project
             return true;
         }
 
-        private bool Build(KProject project,
+        private bool Build(Project project,
                            string outputPath,
                            FrameworkName targetFramework,
                            PackageBuilder builder,
@@ -276,33 +273,10 @@ namespace Microsoft.Framework.Project
                 return false;
             }
 
-            if (_buildOptions.GenerateNativeImages &&
-                !VersionUtility.IsDesktop(targetFramework) &&
-                !VersionUtility.IsPortableFramework(targetFramework))
-            {
-                // Generate native images
-                var options = new CrossgenOptions
-                {
-                    CrossgenPath = _buildOptions.CrossgenPath,
-                    RuntimePath = _buildOptions.RuntimePath
-                };
-
-                // TODO: We want to generate native images for packages in a sibling folder.
-                // This is temporary
-                options.InputPaths = packagePaths.Values
-                                        .Select(path => Path.GetDirectoryName(path))
-                                        .Concat(new[] { targetPath });
-
-                // TODO: Project references
-
-                var crossgen = new CrossgenManager(options);
-                return crossgen.GenerateNativeImages();
-            }
-
             return true;
         }
 
-        private static RoslynArtifactsProducer PrepareArtifactsProducer(KProject project, FrameworkName targetFramework, out IDictionary<string, string> packagePaths)
+        private static RoslynArtifactsProducer PrepareArtifactsProducer(Project project, FrameworkName targetFramework, out IDictionary<string, string> packagePaths)
         {
             var projectDir = project.ProjectDirectory;
             var rootDirectory = ProjectResolver.ResolveRootDirectory(projectDir);
@@ -346,7 +320,7 @@ namespace Microsoft.Framework.Project
             return roslynArtifactsProducer;
         }
 
-        private IRoslynCompiler PrepareCompiler(KProject project, FrameworkName targetFramework)
+        private IRoslynCompiler PrepareCompiler(Project project, FrameworkName targetFramework)
         {
             var projectDir = project.ProjectDirectory;
             var rootDirectory = ProjectResolver.ResolveRootDirectory(projectDir);
@@ -390,7 +364,7 @@ namespace Microsoft.Framework.Project
             return Path.GetFullPath(projectDir.TrimEnd(Path.DirectorySeparatorChar));
         }
 
-        private static string GetPackagePath(KProject project, string outputPath, bool symbols = false)
+        private static string GetPackagePath(Project project, string outputPath, bool symbols = false)
         {
             string fileName = project.Name + "." + project.Version + (symbols ? ".symbols" : "") + ".nupkg";
             return Path.Combine(outputPath, fileName);

@@ -22,15 +22,8 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AssemblyInformation.cs" />
-    <Compile Include="BuildManager.cs" />
-    <Compile Include="BuildOptions.cs" />
     <Compile Include="CrossGenManager.cs" />
     <Compile Include="CrossgenOptions.cs" />
-    <Compile Include="Packing\PackPackage.cs" />
-    <Compile Include="Packing\PackProject.cs" />
-    <Compile Include="Packing\PackRoot.cs" />
-    <Compile Include="Packing\PackRuntime.cs" />
-    <Compile Include="Packing\PackOperations.cs" />
     <Compile Include="Program.cs" />
   </ItemGroup>
   <Import Project="$(VSToolsPath)\AspNet\Microsoft.Web.AspNet.targets" Condition="'$(VSToolsPath)' != ''" />
