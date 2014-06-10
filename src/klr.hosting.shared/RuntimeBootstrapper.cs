@@ -87,8 +87,15 @@ namespace klr.hosting
             app.Name = "klr";
             var optionLib = app.Option("--lib <LIB_PATHS>", "Paths used for library look-up",
                 CommandOptionType.MultipleValue);
+            var optionVersion = app.Option("--version", "Show version information", CommandOptionType.NoValue);
             app.HelpOption("-?|-h|--help");
             app.Execute(args);
+
+            if (!app.IsShowingHelp && optionVersion.HasValue())
+            {
+                ShowVersion();
+                return Task.FromResult(0);
+            }
 
             if (!app.IsShowingHelp && !app.RemainingArguments.Any())
             {
@@ -319,6 +326,13 @@ namespace klr.hosting
             }
 
             return null;
+        }
+
+        private static void ShowVersion()
+        {
+            var assembly = typeof(RuntimeBootstrapper).GetTypeInfo().Assembly;
+            var assemblyInformationalVersionAttribute = assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>();
+            Console.WriteLine(assemblyInformationalVersionAttribute.InformationalVersion);
         }
     }
 }

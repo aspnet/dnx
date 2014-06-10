@@ -32,8 +32,8 @@ namespace Microsoft.Framework.ApplicationHost
             DefaultHostOptions options;
             string[] programArgs;
 
-            var isShowingHelp = ParseArgs(args, out options, out programArgs);
-            if (isShowingHelp)
+            var isShowingInfo = ParseArgs(args, out options, out programArgs);
+            if (isShowingInfo)
             {
                 return Task.FromResult(0);
             }
@@ -125,6 +125,7 @@ namespace Microsoft.Framework.ApplicationHost
             var optionWatch = app.Option("--watch", "Watch file changes", CommandOptionType.NoValue);
             var optionPackages = app.Option("--packages <PACKAGE_DIR>", "Directory contatining packages",
                 CommandOptionType.SingleValue);
+            var optionVersion = app.Option("--version", "Show version information", CommandOptionType.NoValue);
             var runCmdExecuted = false;
             app.HelpOption("-?|-h|--help");
             app.Command("run", c =>
@@ -140,6 +141,14 @@ namespace Microsoft.Framework.ApplicationHost
             },
             addHelpCommand: false);
             app.Execute(args);
+
+            if (!app.IsShowingHelp && optionVersion.HasValue())
+            {
+                ShowVersion();
+                defaultHostOptions = null;
+                outArgs = null;
+                return true;
+            }
 
             if (!(app.IsShowingHelp || app.RemainingArguments.Any() || runCmdExecuted))
             {
@@ -255,6 +264,13 @@ namespace Microsoft.Framework.ApplicationHost
             throw new InvalidOperationException(
                     string.Format("Unable to load application or execute command '{0}'.",
                     applicationName), innerException);
+        }
+
+        private void ShowVersion()
+        {
+            var assembly = typeof(Program).GetTypeInfo().Assembly;
+            var assemblyInformationalVersionAttribute = assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>();
+            Console.WriteLine(assemblyInformationalVersionAttribute.InformationalVersion);
         }
     }
 }

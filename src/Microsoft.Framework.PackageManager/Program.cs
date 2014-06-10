@@ -5,6 +5,7 @@ using System;
 using System.Diagnostics;
 using System.IO;
 using System.Net;
+using System.Reflection;
 using System.Threading;
 using Microsoft.Framework.PackageManager.Packing;
 using Microsoft.Framework.Runtime;
@@ -36,11 +37,18 @@ namespace Microsoft.Framework.PackageManager
             app.Name = "kpm";
 
             var optionVerbose = app.Option("-v|--verbose", "Show verbose output", CommandOptionType.NoValue);
+            var optionVersion = app.Option("--version", "Show version information", CommandOptionType.NoValue);
             app.HelpOption("-?|-h|--help");
 
             // Show help information if no subcommand was specified
             app.OnExecute(() =>
             {
+                if (optionVersion.HasValue())
+                {
+                    ShowVersion();
+                    return 0;
+                }
+
                 app.ShowHelp();
                 return 0;
             });
@@ -58,6 +66,12 @@ namespace Microsoft.Framework.PackageManager
 
                 c.OnExecute(() =>
                 {
+                    if (optionVersion.HasValue())
+                    {
+                        ShowVersion();
+                        return 0;
+                    }
+
                     try
                     {
                         var command = new RestoreCommand(_environment);
@@ -105,6 +119,12 @@ namespace Microsoft.Framework.PackageManager
 
                 c.OnExecute(() =>
                 {
+                    if (optionVersion.HasValue())
+                    {
+                        ShowVersion();
+                        return 0;
+                    }
+
                     Console.WriteLine("verbose:{0} out:{1} zip:{2} project:{3}",
                         optionVerbose.HasValue(),
                         optionOut.Value(),
@@ -148,6 +168,12 @@ namespace Microsoft.Framework.PackageManager
 
                 c.OnExecute(() =>
                 {
+                    if (optionVersion.HasValue())
+                    {
+                        ShowVersion();
+                        return 0;
+                    }
+
                     var buildOptions = new BuildOptions();
                     buildOptions.RuntimeTargetFramework = _environment.TargetFramework;
                     buildOptions.OutputDir = optionOut.Value();
@@ -273,6 +299,13 @@ namespace Microsoft.Framework.PackageManager
 #if NET45
             Trace.WriteLine(sb.ToString());
 #endif
+        }
+
+        private void ShowVersion()
+        {
+            var assembly = typeof(Program).GetTypeInfo().Assembly;
+            var assemblyInformationalVersionAttribute = assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>();
+            Console.WriteLine(assemblyInformationalVersionAttribute.InformationalVersion);
         }
     }
 }
