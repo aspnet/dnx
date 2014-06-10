@@ -1,13 +1,7 @@
 // Copyright (c) Microsoft Open Technologies, Inc. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Reflection;
 using Microsoft.Framework.Runtime;
-using Microsoft.Framework.Runtime.Common;
 using Microsoft.Framework.Runtime.Common.CommandLine;
 
 namespace Microsoft.Framework.Project
@@ -34,42 +28,6 @@ namespace Microsoft.Framework.Project
                 return 0;
             });
 
-            app.Command("build", c =>
-            {
-                c.Description = "Build the project in given directory";
-
-                var optionFramework = c.Option("--framework <TARGET_FRAMEWORK>", "Target framework", CommandOptionType.MultipleValue);
-                var optionOut = c.Option("--out <OUTPUT_DIR>", "Output directory", CommandOptionType.SingleValue);
-                var optionCheck = c.Option("--check", "Check diagnostics", CommandOptionType.NoValue);
-                var optionDependencies = c.Option("--dependencies", "Copy dependencies", CommandOptionType.NoValue);
-                var optionNative = c.Option("--native", "Generate native images", CommandOptionType.NoValue);
-                var optionCrossgenPath = c.Option("--crossgenPath <PATH>", "Crossgen path", CommandOptionType.SingleValue);
-                var optionRuntimePath = c.Option("--runtimePath <PATH>", "Runtime path", CommandOptionType.SingleValue);
-                var argProjectDir = c.Argument("[project]", "Project to build, default is current directory");
-                c.HelpOption("-?|-h|--help");
-
-                c.OnExecute(() =>
-                {
-                    var buildOptions = new BuildOptions();
-                    buildOptions.RuntimeTargetFramework = _environment.TargetFramework;
-                    buildOptions.OutputDir = optionOut.Value();
-                    buildOptions.ProjectDir = argProjectDir.Value ?? Directory.GetCurrentDirectory();
-                    buildOptions.CopyDependencies = optionDependencies.HasValue();
-                    buildOptions.GenerateNativeImages = optionNative.HasValue();
-                    buildOptions.RuntimePath = optionRuntimePath.Value();
-                    buildOptions.CrossgenPath = optionCrossgenPath.Value();
-                    buildOptions.CheckDiagnostics = optionCheck.HasValue();
-
-                    var projectManager = new BuildManager(buildOptions);
-
-                    if (!projectManager.Build())
-                    {
-                        return -1;
-                    }
-
-                    return 0;
-                });
-            });
             app.Command("crossgen", c =>
             {
                 c.Description = "Do CrossGen";
