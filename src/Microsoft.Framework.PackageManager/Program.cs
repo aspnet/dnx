@@ -19,13 +19,18 @@ namespace Microsoft.Framework.PackageManager
         public Program(IApplicationEnvironment environment)
         {
             _environment = environment;
+
+#if NET45
             Thread.GetDomain().SetData(".appDomain", this);
             ServicePointManager.DefaultConnectionLimit = 1024;
+#endif
         }
 
         public int Main(string[] args)
         {
+#if NET45
             _originalForeground = Console.ForegroundColor;
+#endif
 
             var app = new CommandLineApplication();
             app.Name = "kpm";
@@ -167,11 +172,16 @@ namespace Microsoft.Framework.PackageManager
         ConsoleColor _originalForeground;
         void SetColor(ConsoleColor color)
         {
+#if NET45
             Console.ForegroundColor = (ConsoleColor)(((int)Console.ForegroundColor & 0x08) | ((int)color & 0x07));
+#endif
         }
+
         void SetBold(bool bold)
         {
+#if NET45
             Console.ForegroundColor = (ConsoleColor)(((int)Console.ForegroundColor & 0x07) | (bold ? 0x08 : 0x00));
+#endif
         }
 
         public void WriteLine(string message)
@@ -260,7 +270,9 @@ namespace Microsoft.Framework.PackageManager
                 }
                 Console.WriteLine();
             }
+#if NET45
             Trace.WriteLine(sb.ToString());
+#endif
         }
     }
 }

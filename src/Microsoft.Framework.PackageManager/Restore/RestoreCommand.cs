@@ -6,7 +6,9 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
+#if NET45
 using System.IO.Packaging;
+#endif
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Framework.PackageManager.Packing;
@@ -22,7 +24,7 @@ namespace Microsoft.Framework.PackageManager
         public RestoreCommand(IApplicationEnvironment env)
         {
             ApplicationEnvironment = env;
-            FileSystem = new PhysicalFileSystem(Environment.CurrentDirectory);
+            FileSystem = new PhysicalFileSystem(Directory.GetCurrentDirectory());
             MachineWideSettings = new CommandLineMachineWideSettings();
             Sources = Enumerable.Empty<string>();
             FallbackSources = Enumerable.Empty<string>();
@@ -143,6 +145,7 @@ namespace Microsoft.Framework.PackageManager
                 }
                 else
                 {
+#if NET45
                     remoteProviders.Add(
                         new RemoteWalkProvider(
                             new PackageFeed(
@@ -150,6 +153,7 @@ namespace Microsoft.Framework.PackageManager
                                 source.UserName,
                                 source.Password,
                                 Report)));
+#endif
                 }
             }
 
@@ -225,27 +229,34 @@ namespace Microsoft.Framework.PackageManager
                     await item.Match.Provider.CopyToAsync(item.Match, stream);
                     stream.Seek(0, SeekOrigin.Begin);
 
-                    if (PlatformHelper.IsMono)
-                    {
-                        using (var archive = Package.Open(stream, FileMode.Open, FileAccess.Read))
-                        {
-                            var packOperations = new PackOperations();
-                            packOperations.ExtractNupkg(archive, targetPath);
-                        }
-                    }
-                    else
-                    {
-                        using (var archive = new ZipArchive(stream, ZipArchiveMode.Read))
-                        {
-                            var packOperations = new PackOperations();
-                            packOperations.ExtractNupkg(archive, targetPath);
-                        }
-                    }
+                    ExtractPackage(targetPath, stream);
                 }
             }
 
             Report.WriteLine(string.Format("{0}, {1}ms elapsed", "Restore complete".Green().Bold(), sw.ElapsedMilliseconds));
             return success;
+        }
+
+        private static void ExtractPackage(string targetPath, FileStream stream)
+        {
+#if NET45
+            if (PlatformHelper.IsMono)
+            {
+                using (var archive = Package.Open(stream, FileMode.Open, FileAccess.Read))
+                {
+                    var packOperations = new PackOperations();
+                    packOperations.ExtractNupkg(archive, targetPath);
+                }
+
+                return;
+            }
+#endif
+
+            using (var archive = new ZipArchive(stream, ZipArchiveMode.Read))
+            {
+                var packOperations = new PackOperations();
+                packOperations.ExtractNupkg(archive, targetPath);
+            }
         }
 
         private bool CorrectName(string value, PackageSource source)

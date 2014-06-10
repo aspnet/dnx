@@ -21,7 +21,12 @@ namespace NuGet
 
         private static ConfigurationDefaults InitializeInstance()
         {
-            var baseDirectory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "NuGet");
+#if NET45
+            var commonAppData = Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData);
+#else
+            var commonAppData = Environment.GetEnvironmentVariable("ProgramData");
+#endif
+            var baseDirectory = Path.Combine(commonAppData, "NuGet");
             PhysicalFileSystem fileSystem = new PhysicalFileSystem(baseDirectory);
             return new ConfigurationDefaults(fileSystem, ConfigurationDefaultsFile);
         }

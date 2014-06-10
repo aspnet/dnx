@@ -1,21 +1,14 @@
 // Copyright (c) Microsoft Open Technologies, Inc. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
-using NuGet;
-using System;
-using System.Linq;
 using System.Collections.Generic;
-using System.Diagnostics;
-using System.Net.Http;
-using System.Net.Http.Headers;
-using System.Runtime.Versioning;
-using System.Text;
-using System.Threading.Tasks;
-using System.Web;
-using System.Xml.Linq;
-using Microsoft.Framework.Runtime;
-using Microsoft.Framework.PackageManager.Restore.NuGet;
 using System.IO;
+using System.Linq;
+using System.Runtime.Versioning;
+using System.Threading.Tasks;
+using Microsoft.Framework.PackageManager.Restore.NuGet;
+using Microsoft.Framework.Runtime;
+using NuGet;
 
 namespace Microsoft.Framework.PackageManager
 {

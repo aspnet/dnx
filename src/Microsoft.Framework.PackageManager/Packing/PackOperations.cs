@@ -5,7 +5,9 @@ using System;
 using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
+#if NET45
 using System.IO.Packaging;
+#endif
 using System.Linq;
 
 namespace Microsoft.Framework.PackageManager.Packing
@@ -187,6 +189,7 @@ namespace Microsoft.Framework.PackageManager.Packing
             }
         }
 
+#if NET45
         public void ExtractNupkg(Package archive, string targetPath)
         {
             ExtractFiles(
@@ -240,7 +243,7 @@ namespace Microsoft.Framework.PackageManager.Packing
                 }
             }
         }
-
+#endif
         public void AddFiles(ZipArchive archive, string sourcePath, string targetPath, Func<string, string, bool> shouldInclude)
         {
             AddFilesRecursive(
