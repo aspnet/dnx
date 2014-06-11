@@ -9,6 +9,7 @@ using System.IO;
 using System.IO.Compression;
 using System.IO.Packaging;
 using System.Linq;
+using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
@@ -44,7 +45,37 @@ namespace Microsoft.Framework.PackageManager.Restore.NuGet
             _userName = userName;
             _password = password;
             _report = report;
-            _httpClient = new HttpClient();
+
+            var proxy = Environment.GetEnvironmentVariable("http_proxy");
+            if (string.IsNullOrEmpty(proxy))
+            {
+                _httpClient = new HttpClient();
+            }
+            else
+            {
+                // To use an authenticated proxy, the proxy address should be in the form of
+                // "http://user:password@proxyaddress.com:8888"
+                var proxyUriBuilder = new UriBuilder(proxy);
+                var webProxy = new WebProxy(proxy);
+                if (string.IsNullOrEmpty(proxyUriBuilder.UserName))
+                {
+                    // If no credentials were specified we use default credentials
+                    webProxy.Credentials = CredentialCache.DefaultCredentials;
+                }
+                else
+                {
+                    ICredentials credentials = new NetworkCredential(proxyUriBuilder.UserName,
+                        proxyUriBuilder.Password);
+                    webProxy.Credentials = credentials;
+                }
+
+                var handler = new HttpClientHandler
+                {
+                    Proxy = webProxy,
+                    UseProxy = true
+                };
+                _httpClient = new HttpClient(handler);
+            }
         }
 
         Dictionary<string, Task<IEnumerable<PackageInfo>>> _cache = new Dictionary<string, Task<IEnumerable<PackageInfo>>>();

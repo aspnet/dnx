@@ -56,6 +56,8 @@ namespace Microsoft.Framework.PackageManager
                     CommandOptionType.MultipleValue);
                 var optFallbackSource = c.Option("-f|--fallbacksource <FEED>",
                     "A list of packages sources to use as a fallback", CommandOptionType.MultipleValue);
+                var optProxy = c.Option("-p|--proxy <ADDRESS>", "The HTTP proxy to use when retrieving packages",
+                    CommandOptionType.SingleValue);
                 c.HelpOption("-?|-h|--help");
 
                 c.OnExecute(() =>
@@ -72,6 +74,16 @@ namespace Microsoft.Framework.PackageManager
                         if (optFallbackSource.HasValue())
                         {
                             command.FallbackSources = optFallbackSource.Values;
+                        }
+                        if (optProxy.HasValue())
+                        {
+#if NET45
+                            Environment.SetEnvironmentVariable("http_proxy", optProxy.Value(),
+                                EnvironmentVariableTarget.Process);
+#else
+                            throw new NotImplementedException(
+                                "TODO: \"kpm --proxy\" is not supported on current target framework");
+#endif
                         }
                         var success = command.ExecuteCommand();
 
