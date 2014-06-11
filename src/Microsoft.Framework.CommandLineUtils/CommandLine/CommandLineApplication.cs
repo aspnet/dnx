@@ -19,7 +19,6 @@ namespace Microsoft.Framework.Runtime.Common.CommandLine
         {
             _throwOnUnexpectedArg = throwOnUnexpectedArg;
             Options = new List<CommandOption>();
-            HelpOptions = new HashSet<CommandOption>();
             Arguments = new List<CommandArgument>();
             Commands = new List<CommandLineApplication>();
             RemainingArguments = new List<string>();
@@ -31,12 +30,14 @@ namespace Microsoft.Framework.Runtime.Common.CommandLine
         public string Syntax { get; set; }
         public string Description { get; set; }
         public List<CommandOption> Options { get; private set; }
-        public HashSet<CommandOption> HelpOptions { get; private set; }
+        public CommandOption OptionHelp { get; private set; }
+        public CommandOption OptionVersion { get; private set; }
         public List<CommandArgument> Arguments { get; private set; }
         public List<string> RemainingArguments { get; private set; }
-        public bool IsShowingHelp { get; protected set; }
+        public bool IsShowingInformation { get; protected set; }  // Is showing help or version?
         public bool AnySubCommandExecuted { get; private set; }
         public Func<int> Invoke { get; set; }
+        public string Version { get; set; }
 
         public List<CommandLineApplication> Commands { get; private set; }
 
@@ -132,19 +133,24 @@ namespace Microsoft.Framework.Runtime.Common.CommandLine
                         processed = true;
                         option = command.Options.SingleOrDefault(opt => string.Equals(opt.LongName, longOption[0], StringComparison.Ordinal));
 
-                        // Help options have the highest priority
-                        // If we find a help option, show help information and stop parsing
-                        if (command.HelpOptions.Contains(option))
-                        {
-                            command.ShowHelp();
-                            return 0;
-                        }
-
                         if (option == null)
                         {
                             command.ShowHint();
                             throw new Exception(string.Format("TODO: Error: unrecognized flag '{0}'", arg));
                         }
+
+                        // If we find a help/version option, show information and stop parsing
+                        if (command.OptionHelp == option)
+                        {
+                            command.ShowHelp();
+                            return 0;
+                        }
+                        else if (command.OptionVersion == option)
+                        {
+                            command.ShowVersion();
+                            return 0;
+                        }
+
                         if (longOption.Length == 2)
                         {
                             if (!option.TryParse(longOption[1]))
@@ -172,19 +178,24 @@ namespace Microsoft.Framework.Runtime.Common.CommandLine
                             option = command.Options.SingleOrDefault(opt => string.Equals(opt.SymbolName, shortOption[0], StringComparison.Ordinal));
                         }
 
-                        // Help options have the highest priority
-                        // If we find a help option, show help information and stop parsing
-                        if (command.HelpOptions.Contains(option))
-                        {
-                            command.ShowHelp();
-                            return 0;
-                        }
-
                         if (option == null)
                         {
                             command.ShowHint();
                             throw new Exception(string.Format("TODO: Error: unrecognized flag '{0}'", arg));
                         }
+
+                        // If we find a help/version option, show information and stop parsing
+                        if (command.OptionHelp == option)
+                        {
+                            command.ShowHelp();
+                            return 0;
+                        }
+                        else if (command.OptionVersion == option)
+                        {
+                            command.ShowVersion();
+                            return 0;
+                        }
+
                         if (shortOption.Length == 2)
                         {
                             if (!option.TryParse(shortOption[1]))
@@ -273,22 +284,32 @@ namespace Microsoft.Framework.Runtime.Common.CommandLine
         }
 
         // Helper method that adds a help option
-        public CommandLineApplication HelpOption(string template)
+        public CommandOption HelpOption(string template)
         {
-            // Help options are special because they are used like commands although they options
-            // Moreover, help options have higher priority than all other commands and options
-            // So we store them separately for further use
-            HelpOptions.Add(Option(template, "Show help information", CommandOptionType.NoValue));
+            // Help option is special because we stop parsing once we see it
+            // So we store it separately for further use
+            OptionHelp = Option(template, "Show help information", CommandOptionType.NoValue);
 
-            return this;
+            return OptionHelp;
+        }
+
+        // Helper method that adds a version option
+        public CommandOption VersionOption(string template, string versionText)
+        {
+            // Version option is special because we stop parsing once we see it
+            // So we store it separately for further use
+            OptionVersion = Option(template, "Show version information", CommandOptionType.NoValue);
+            Version = versionText;
+
+            return OptionVersion;
         }
 
         // Show short hint that reminds users to use help option
         public void ShowHint()
         {
-            if (HelpOptions.Any())
+            if (OptionHelp != null)
             {
-                Console.WriteLine(string.Format("Specify --{0} for a list of available options and commands.", HelpOptions.First().LongName));
+                Console.WriteLine(string.Format("Specify --{0} for a list of available options and commands.", OptionHelp.LongName));
             }
         }
 
@@ -298,7 +319,7 @@ namespace Microsoft.Framework.Runtime.Common.CommandLine
             var headerBuilder = new StringBuilder("Usage:");
             for (var cmd = this; cmd != null; cmd = cmd.Parent)
             {
-                cmd.IsShowingHelp = true;
+                cmd.IsShowingInformation = true;
                 headerBuilder.Insert(6, string.Format(" {0}", cmd.Name));
             }
 
@@ -371,6 +392,16 @@ namespace Microsoft.Framework.Runtime.Common.CommandLine
             }
             headerBuilder.AppendLine();
             Console.Write("{0}{1}{2}{3}", headerBuilder, argumentsBuilder, optionsBuilder, commandsBuilder);
+        }
+
+        public void ShowVersion()
+        {
+            for (var cmd = this; cmd != null; cmd = cmd.Parent)
+            {
+                cmd.IsShowingInformation = true;
+            }
+
+            Console.WriteLine(Version);
         }
 
         private bool HasHelpCommand()

@@ -5,6 +5,7 @@ using System;
 using System.Diagnostics;
 using System.IO;
 using System.Net;
+using System.Reflection;
 using System.Threading;
 using Microsoft.Framework.PackageManager.Packing;
 using Microsoft.Framework.Runtime;
@@ -37,6 +38,7 @@ namespace Microsoft.Framework.PackageManager
 
             var optionVerbose = app.Option("-v|--verbose", "Show verbose output", CommandOptionType.NoValue);
             app.HelpOption("-?|-h|--help");
+            app.VersionOption("--version", GetVersion());
 
             // Show help information if no subcommand was specified
             app.OnExecute(() =>
@@ -273,6 +275,13 @@ namespace Microsoft.Framework.PackageManager
 #if NET45
             Trace.WriteLine(sb.ToString());
 #endif
+        }
+
+        private static string GetVersion()
+        {
+            var assembly = typeof(Program).GetTypeInfo().Assembly;
+            var assemblyInformationalVersionAttribute = assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>();
+            return assemblyInformationalVersionAttribute.InformationalVersion;
         }
     }
 }

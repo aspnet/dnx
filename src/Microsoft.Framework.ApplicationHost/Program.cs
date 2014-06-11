@@ -32,8 +32,8 @@ namespace Microsoft.Framework.ApplicationHost
             DefaultHostOptions options;
             string[] programArgs;
 
-            var isShowingHelp = ParseArgs(args, out options, out programArgs);
-            if (isShowingHelp)
+            var isShowingInformation = ParseArgs(args, out options, out programArgs);
+            if (isShowingInformation)
             {
                 return Task.FromResult(0);
             }
@@ -127,6 +127,7 @@ namespace Microsoft.Framework.ApplicationHost
                 CommandOptionType.SingleValue);
             var runCmdExecuted = false;
             app.HelpOption("-?|-h|--help");
+            app.VersionOption("--version", GetVersion());
             app.Command("run", c =>
             {
                 // We don't actually execute "run" command here
@@ -141,7 +142,7 @@ namespace Microsoft.Framework.ApplicationHost
             addHelpCommand: false);
             app.Execute(args);
 
-            if (!(app.IsShowingHelp || app.RemainingArguments.Any() || runCmdExecuted))
+            if (!(app.IsShowingInformation || app.RemainingArguments.Any() || runCmdExecuted))
             {
                 app.ShowHelp(commandName: null);
             }
@@ -171,7 +172,7 @@ namespace Microsoft.Framework.ApplicationHost
                 outArgs = app.RemainingArguments.ToArray();
             }
 
-            return app.IsShowingHelp;
+            return app.IsShowingInformation;
         }
 
         private Task<int> ExecuteMain(DefaultHost host, string applicationName, string[] args)
@@ -255,6 +256,13 @@ namespace Microsoft.Framework.ApplicationHost
             throw new InvalidOperationException(
                     string.Format("Unable to load application or execute command '{0}'.",
                     applicationName), innerException);
+        }
+
+        private static string GetVersion()
+        {
+            var assembly = typeof(Program).GetTypeInfo().Assembly;
+            var assemblyInformationalVersionAttribute = assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>();
+            return assemblyInformationalVersionAttribute.InformationalVersion;
         }
     }
 }
