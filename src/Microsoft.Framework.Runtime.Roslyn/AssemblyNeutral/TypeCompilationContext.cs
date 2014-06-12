@@ -172,11 +172,7 @@ namespace Microsoft.Framework.Runtime.Roslyn
 
                 // what it looks like when removed
                 var newRoot = root.RemoveNodes(nodesToRemove, SyntaxRemoveOptions.KeepDirectives);
-#if NET45
                 var newTree = SyntaxFactory.SyntaxTree(newRoot, options: tree.Options, path: tree.FilePath, encoding: Encoding.UTF8);
-#else
-                var newTree = SyntaxFactory.SyntaxTree(newRoot, options: tree.Options, path: tree.FilePath);
-#endif
 
                 // update compilation with code removed
                 Compilation = Compilation.AddSyntaxTrees(newTree);
@@ -231,11 +227,7 @@ namespace Microsoft.Framework.Runtime.Roslyn
                 }
 
                 var newRoot = root.RemoveNodes(nodesToRemove.ToArray(), SyntaxRemoveOptions.KeepDirectives);
-#if NET45
                 var newTree = SyntaxFactory.SyntaxTree(newRoot, options: tree.Options, path: tree.FilePath, encoding: Encoding.UTF8);
-#else
-                var newTree = SyntaxFactory.SyntaxTree(newRoot, options: tree.Options, path: tree.FilePath);
-#endif
 
                 ShallowCompilation = ShallowCompilation.AddSyntaxTrees(newTree);
             }

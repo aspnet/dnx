@@ -181,11 +181,8 @@ namespace Microsoft.Framework.Runtime.Roslyn
         {
             using (var stream = File.OpenRead(sourcePath))
             {
-#if NET45
                 var sourceText = SourceText.From(stream, encoding: Encoding.UTF8);
-#else
-                var sourceText = SourceText.From(stream);
-#endif
+
                 return CSharpSyntaxTree.ParseText(sourceText, options: parseOptions, path: sourcePath);
             }
         }

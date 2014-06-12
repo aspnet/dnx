@@ -134,11 +134,7 @@ namespace Microsoft.Framework.Runtime.Roslyn
 
                 // what it looks like when removed
                 var newRoot = root.RemoveNodes(removeNodes, SyntaxRemoveOptions.KeepDirectives);
-#if NET45
                 var newTree = SyntaxFactory.SyntaxTree(newRoot, options: tree.Options, path: tree.FilePath, encoding: Encoding.UTF8);
-#else
-                var newTree = SyntaxFactory.SyntaxTree(newRoot, options: tree.Options, path: tree.FilePath);
-#endif
 
                 // update compilation with code removed
                 Compilation = Compilation.ReplaceSyntaxTree(tree, newTree);
