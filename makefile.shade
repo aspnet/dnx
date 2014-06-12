@@ -487,17 +487,6 @@ var NEW_RUNTIME = '${Environment.GetEnvironmentVariable("NEW_RUNTIME") == "1"}'
     copy sourceDir='${Path.Combine(CORECLR_TARGET_PATH, "Runtime", "amd64")}' outputDir='${SVRC50_x64_BIN}'
 
 #nuget-pack-runtime
-    -//var nuspecs = KRE-mono45-x86
-    @{
-        var allPackages = Path.Combine(BUILD_DIR2, "**", "*.nupkg");
-        var excludePackages = Path.Combine(BUILD_DIR2, "**", "Microsoft.Framework.Runtime.Interfaces*.nupkg");
-        var excludePackages2 = Path.Combine(BUILD_DIR2, "**", "Microsoft.Framework.PackageManager*.nupkg");
-        foreach(var packageFile in Files.Include(allPackages).Exclude(excludePackages).Exclude(excludePackages2))
-        {
-            File.Delete(packageFile);
-        }
-    }
-    
     copy sourceDir='${NUSPEC_ROOT}' outputDir='${BUILD_DIR2}' include='*.nuspec' overwrite='${true}'
     nuget-pack packageVersion='${FULL_VERSION}' outputDir='${BUILD_DIR2}' extra='-NoPackageAnalysis' each='var nuspecFile in Files.Include(Path.Combine(BUILD_DIR2, "*.nuspec"))'
 

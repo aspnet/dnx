@@ -58,6 +58,8 @@ namespace Microsoft.Framework.Runtime
 
         public IList<Library> Dependencies { get; private set; }
 
+        public LoaderInformation Loader { get; private set; }
+
         internal IEnumerable<string> SourcePatterns { get; set; }
 
         internal IEnumerable<string> SourceExcludePatterns { get; set; }
@@ -194,6 +196,23 @@ namespace Microsoft.Framework.Runtime
             project.PreprocessPatterns = GetSourcePattern(rawProject, "preprocess", _defaultPreprocessPatterns);
             project.SharedPatterns = GetSourcePattern(rawProject, "shared", _defaultSharedPatterns);
             project.ResourcesPatterns = GetSourcePattern(rawProject, "resources", _defaultResourcesPatterns);
+
+            var loaderInformation = new LoaderInformation();
+
+            var loaderInfo = rawProject["loader"] as JObject;
+
+            if (loaderInfo != null)
+            {
+                loaderInformation.AssemblyName = GetValue<string>(loaderInfo, "name");
+                loaderInformation.TypeName = GetValue<string>(loaderInfo, "type");
+            }
+            else
+            {
+                loaderInformation.AssemblyName = "Microsoft.Framework.Runtime.Roslyn";
+                loaderInformation.TypeName = "Microsoft.Framework.Runtime.Roslyn.RoslynAssemblyLoader";
+            }
+
+            project.Loader = loaderInformation;
 
             var commands = rawProject["commands"] as JObject;
             if (commands != null)
@@ -442,20 +461,12 @@ namespace Microsoft.Framework.Runtime
 
             return config ?? _defaultTargetFrameworkConfiguration;
         }
-    }
 
-    public class TargetFrameworkConfiguration : IFrameworkTargetable
-    {
-        public FrameworkName FrameworkName { get; set; }
-
-        public IList<Library> Dependencies { get; set; }
-
-        public IEnumerable<FrameworkName> SupportedFrameworks
+        public class LoaderInformation
         {
-            get
-            {
-                return new[] { FrameworkName };
-            }
+            public string AssemblyName { get; set; }
+
+            public string TypeName { get; set; }
         }
     }
 }

@@ -2,6 +2,7 @@
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 using System;
+using System.Collections.Generic;
 using System.Reflection;
 using System.Runtime.Versioning;
 using Microsoft.Framework.Runtime.Common.DependencyInjection;
@@ -12,8 +13,7 @@ namespace Microsoft.Framework.Runtime
     {
         private readonly IProjectResolver _projectResolver;
         private readonly IServiceProvider _serviceProvider;
-        private object _loaderInstance;
-        private bool _loaderInitializing;
+        private readonly Dictionary<string, Loader> _loaders = new Dictionary<string, Loader>(StringComparer.OrdinalIgnoreCase);
 
         public ProjectAssemblyLoader(IProjectResolver projectResolver, IServiceProvider serviceProvider)
         {
@@ -23,15 +23,11 @@ namespace Microsoft.Framework.Runtime
 
         public Assembly Load(string name)
         {
-            if (_loaderInitializing)
-            {
-                return null;
-            }
-
             return ExecuteWith<IAssemblyLoader, Assembly>(name, loader =>
             {
                 return loader.Load(name);
-            });
+            },
+            stopIfInitializing: true);
         }
 
         public ILibraryExport GetLibraryExport(string name, FrameworkName targetFramework)
@@ -42,7 +38,7 @@ namespace Microsoft.Framework.Runtime
             });
         }
 
-        private TResult ExecuteWith<TInterface, TResult>(string name, Func<TInterface, TResult> execute) where TResult : class where TInterface : class
+        private TResult ExecuteWith<TInterface, TResult>(string name, Func<TInterface, TResult> execute, bool stopIfInitializing = false) where TResult : class where TInterface : class
         {
             // Don't load anything if there's no project
             Project project;
@@ -51,34 +47,42 @@ namespace Microsoft.Framework.Runtime
                 return null;
             }
 
-            if (_loaderInstance == null)
+            // Get the specific loader
+            var loader = _loaders.GetOrAdd(project.Loader.AssemblyName, _ => new Loader());
+
+            if (stopIfInitializing && loader.LoaderInitializing)
+            {
+                return default(TResult);
+            }
+
+            if (loader.LoaderInstance == null)
             {
                 try
                 {
-                    _loaderInitializing = true;
+                    loader.LoaderInitializing = true;
 
-                    var assembly = Assembly.Load(new AssemblyName("Microsoft.Framework.Runtime.Roslyn"));
+                    var assembly = Assembly.Load(new AssemblyName(project.Loader.AssemblyName));
 
-                    var assemblyLoaderType = assembly.GetType("Microsoft.Framework.Runtime.Roslyn.RoslynAssemblyLoader");
+                    var assemblyLoaderType = assembly.GetType(project.Loader.TypeName);
 
-                    _loaderInstance = ActivatorUtilities.CreateInstance(_serviceProvider, assemblyLoaderType);
+                    loader.LoaderInstance = ActivatorUtilities.CreateInstance(_serviceProvider, assemblyLoaderType);
 
-                    return ExecuteLoaderAsInterface(execute);
+                    return ExecuteLoaderAsInterface(loader, execute);
                 }
                 finally
                 {
-                    _loaderInitializing = false;
+                    loader.LoaderInitializing = false;
                 }
             }
 
-            return ExecuteLoaderAsInterface(execute);
+            return ExecuteLoaderAsInterface(loader, execute);
         }
 
-        private TResult ExecuteLoaderAsInterface<TInterface, TResult>(Func<TInterface, TResult> executor)
+        private TResult ExecuteLoaderAsInterface<TInterface, TResult>(Loader loader, Func<TInterface, TResult> executor)
             where TInterface : class
             where TResult : class
         {
-            var loaderAsInterface = _loaderInstance as TInterface;
+            var loaderAsInterface = loader.LoaderInstance as TInterface;
 
             if (loaderAsInterface != null)
             {
@@ -86,6 +90,12 @@ namespace Microsoft.Framework.Runtime
             }
 
             return null;
+        }
+
+        private class Loader
+        {
+            public object LoaderInstance;
+            public bool LoaderInitializing;
         }
     }
 }
