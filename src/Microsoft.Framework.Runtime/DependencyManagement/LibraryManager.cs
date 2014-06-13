@@ -20,20 +20,20 @@ namespace Microsoft.Framework.Runtime
 
         public LibraryManager(FrameworkName targetFramework,
                               DependencyWalker dependencyWalker,
-                              IEnumerable<ILibraryExportProvider> libraryExportProviders)
+                              ILibraryExportProvider libraryExportProvider)
             : this(targetFramework,
                    GetLibraryInfoThunk(dependencyWalker),
-                   libraryExportProviders)
+                   libraryExportProvider)
         {
         }
 
         public LibraryManager(FrameworkName targetFramework,
                               Func<IEnumerable<ILibraryInformation>> libraryInfoThunk,
-                              IEnumerable<ILibraryExportProvider> libraryExportProviders)
+                              ILibraryExportProvider libraryExportProvider)
         {
             _targetFramework = targetFramework;
             _libraryInfoThunk = libraryInfoThunk;
-            _libraryExportProvider = new CompositeLibraryExportProvider(libraryExportProviders);
+            _libraryExportProvider = libraryExportProvider;
         }
 
         private Dictionary<string, ILibraryInformation> LibraryLookup

@@ -168,8 +168,8 @@ namespace Microsoft.Framework.Runtime
             // NuGet exporter
             libraryExporters.Add(nugetDependencyResolver);
 
-            var dependencyExporter = new CompositeLibraryExportProvider(libraryExporters);
             var projectLoader = new ProjectAssemblyLoader(projectResolver, _serviceProvider);
+            libraryExporters.Add(projectLoader);
 
             // Project.json projects
             loaders.Add(projectLoader);
@@ -201,12 +201,14 @@ namespace Microsoft.Framework.Runtime
             _serviceProvider.Add(typeof(IFileMonitor), _watcher);
 
             _serviceProvider.Add(typeof(IFileWatcher), _watcher);
+
+            var exportProvider = new CompositeLibraryExportProvider(libraryExporters);
+            _serviceProvider.Add(typeof(ILibraryExportProvider), exportProvider);
             _serviceProvider.Add(typeof(ILibraryManager),
                 new LibraryManager(_targetFramework,
                                    _dependencyWalker,
-                                   libraryExporters.Concat(new[] { projectLoader })));
+                                   exportProvider));
 
-            _serviceProvider.Add(typeof(ILibraryExportProvider), dependencyExporter);
             _serviceProvider.Add(typeof(IProjectResolver), projectResolver);
         }
 
