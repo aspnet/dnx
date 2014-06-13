@@ -326,6 +326,10 @@ namespace klr.hosting
         {
             var assembly = typeof(RuntimeBootstrapper).GetTypeInfo().Assembly;
             var assemblyInformationalVersionAttribute = assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>();
+            if (assemblyInformationalVersionAttribute == null)
+            {
+                return assembly.GetName().Version.ToString();
+            }
             return assemblyInformationalVersionAttribute.InformationalVersion;
         }
     }
