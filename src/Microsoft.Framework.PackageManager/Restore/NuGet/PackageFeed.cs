@@ -23,6 +23,7 @@ namespace Microsoft.Framework.PackageManager.Restore.NuGet
     {
         static readonly XName _xnameEntry = XName.Get("entry", "http://www.w3.org/2005/Atom");
         static readonly XName _xnameContent = XName.Get("content", "http://www.w3.org/2005/Atom");
+        static readonly XName _xnameLink = XName.Get("link", "http://www.w3.org/2005/Atom");
         static readonly XName _xnameProperties = XName.Get("properties", "http://schemas.microsoft.com/ado/2007/08/dataservices/metadata");
         static readonly XName _xnameId = XName.Get("Id", "http://schemas.microsoft.com/ado/2007/08/dataservices");
         static readonly XName _xnameVersion = XName.Get("Version", "http://schemas.microsoft.com/ado/2007/08/dataservices");
@@ -56,35 +57,57 @@ namespace Microsoft.Framework.PackageManager.Restore.NuGet
                 {
                     return task;
                 }
-                return _cache[id] = _FindPackagesByIdAsync(id);
+                return _cache[id] = FindPackagesByIdAsyncCore(id);
             }
         }
 
-        public async Task<IEnumerable<PackageInfo>> _FindPackagesByIdAsync(string id)
+        public async Task<IEnumerable<PackageInfo>> FindPackagesByIdAsyncCore(string id)
         {
             for (int retry = 0; retry != 3; ++retry)
             {
                 try
                 {
-                    Stopwatch sw = new Stopwatch();
-                    sw.Start();
-
                     var uri = _baseUri + "FindPackagesById()?Id='" + id + "'";
+                    var results = new List<PackageInfo>();
 
-                    _report.WriteLine(string.Format("  {0} {1}", "GET".Yellow(), uri));
+                    while (true)
+                    {
+                        _report.WriteLine(string.Format("  {0} {1}", "GET".Yellow(), uri));
 
-                    var response = await GetAsync(uri);
-                    var stream = await response.Content.ReadAsStreamAsync();
+                        var sw = new Stopwatch();
+                        sw.Start();
 
-                    _report.WriteLine(string.Format("  {1} {0} {2}ms", uri, response.StatusCode.ToString().Green(), sw.ElapsedMilliseconds.ToString().Bold()));
+                        var response = await GetAsync(uri);
+                        var stream = await response.Content.ReadAsStreamAsync();
 
-                    var doc = XDocument.Load(stream);
-                    var result = doc.Root
-                        .Elements(_xnameEntry)
-                        .Select(x => BuildModel(id, x))
-                        .ToArray();
+                        _report.WriteLine(string.Format("  {1} {0} {2}ms", uri, response.StatusCode.ToString().Green(), sw.ElapsedMilliseconds.ToString().Bold()));
 
-                    return result;
+                        var doc = XDocument.Load(stream);
+                        var result = doc.Root
+                            .Elements(_xnameEntry)
+                            .Select(x => BuildModel(id, x));
+
+                        results.AddRange(result);
+
+                        // Example of what this looks like in the odata feed:
+                        // <link rel="next" href="{nextLink}" />
+                        var nextUri = (from e in doc.Root.Elements(_xnameLink)
+                                       let attr = e.Attribute("rel")
+                                       where attr != null && string.Equals(attr.Value, "next", StringComparison.OrdinalIgnoreCase)
+                                       select e.Attribute("href") into nextLink
+                                       where nextLink != null
+                                       select nextLink.Value).FirstOrDefault();
+
+                        // Stop if there's nothing else to GET
+                        if (string.IsNullOrEmpty(nextUri))
+                        {
+                            break;
+                        }
+
+                        uri = nextUri;
+                    }
+
+                    return results;
                 }
                 catch (Exception ex)
                 {
