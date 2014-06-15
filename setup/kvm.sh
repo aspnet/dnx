@@ -48,12 +48,17 @@ _kvm_prepend_path() {
     fi
 }
 
+_kvm_package_version() {
+    local kreFullName="$1"
+    echo "$kreFullName" | sed "s/[^.]*.\(.*\)/\1/"
+}
+
 _kvm_download() {
     local kreFullName="$1"
     local kreFolder="$2"
 
     local pkgName=$(echo "$kreFullName" | sed "s/\([^.]*\).*/\1/")
-    local pkgVersion=$(echo "$kreFullName" | sed "s/[^.]*.\(.*\)/\1/")
+    local pkgVersion=$(_kvm_package_version "$kreFullName")
     local url="$KRE_NUGET_API_URL/package/$pkgName/$pkgVersion"
     local kreFile="$kreFolder/$kreFullName.nupkg"
 
@@ -159,11 +164,14 @@ kvm()
             echo ""
             echo "kvm upgrade"
             echo "install latest KRE from feed"
-            echo "set 'default' alias to installed version"
-            echo "add KRE bin to user PATH environment variable persistently"
+            echo "add KRE bin to path of current command line"
+            echo "set installed version as default"
             echo ""
-            echo "kvm install <semver>|<alias>|<nupkg>"
-            echo "install requested KRE from feed"
+            echo "kvm install <semver>|<alias>|<nupkg>|latest [-p -persistent]"
+            echo "<semver>|<alias>  install requested KRE from feed"
+            echo "<nupkg>           install requested KRE from local package on filesystem"
+            echo "latest            install latest version of KRE from feed"
+            echo "-p -persistent    set installed version as default"
             echo "add KRE bin to path of current command line"
             echo ""
             echo "kvm use <semver>|<alias>|none [-p -persistent]"
@@ -188,39 +196,49 @@ kvm()
 
         "upgrade" )
             [ $# -ne 1 ] && kvm help && return
-            echo "Determining latest version"
-            local version=$(_kvm_find_latest mono45 x86)
-            echo $version
-            kvm install $version
-            kvm alias default $version
+            kvm install latest -p
         ;;
 
         "install" )
-            [ $# -ne 2 ] && kvm help && return
+            [ $# -gt 3 ] && kvm help && return
+            [ $# -lt 2 ] && kvm help && return
 
-            local versionOrAlias="$2"
-
+            shift
+            local persistant=
+            while [ $# -ne 0 ]
+            do
+                if [[ $1 == "-p" || $1 == "-persistant" ]]; then
+                    local persistent="-p"
+                elif [[ -n $1 ]]; then
+                    local versionOrAlias=$1
+                fi
+                shift
+            done
+            if [[ "$versionOrAlias" == "latest" ]]; then
+                echo "Determining latest version"
+                local versionOrAlias=$(_kvm_find_latest mono45 x86)
+                echo "Latest version is $versionOrAlias"
+            fi
             if [[ "$versionOrAlias" == *.nupkg ]]; then
                 local kreFullName=$(basename $versionOrAlias | sed "s/\(.*\)\.nupkg/\1/")
+                local kreVersion=$(_kvm_package_version "$kreFullName")
                 local kreFolder="$KRE_USER_PACKAGES/$kreFullName"
                 local kreFile="$kreFolder/$kreFullName.nupkg"
 
                 if [ -e "$kreFolder" ]; then
-                  echo "Target folder '$kreFolder' already exists"
+                  echo "$kreFullName already installed"
                 else
                   mkdir "$kreFolder" > /dev/null 2>&1
                   cp -a "$versionOrAlias" "$kreFile"
                   _kvm_unpack "$kreFile" "$kreFolder"
                 fi
-
-                echo "Adding $kreBin to current PATH"
-                PATH=$(_kvm_strip_path "$PATH" "/bin")
-                PATH=$(_kvm_prepend_path "$PATH" "$kreBin")
+                kvm use "$kreVersion" "$persistent"
             else
                 local kreFullName="$(_kvm_requested_version_or_alias $versionOrAlias)"
                 local kreFolder="$KRE_USER_PACKAGES/$kreFullName"
                 _kvm_download "$kreFullName" "$kreFolder"
-                kvm use "$versionOrAlias"
+                [[ $? == 1 ]] && return
+                kvm use "$versionOrAlias" "$persistent"
             fi
         ;;
 
@@ -229,13 +247,12 @@ kvm()
             [ $# -lt 2 ] && kvm help && return
 
             shift
-            local persistant=
-
+            local persistent=
             while [ $# -ne 0 ]
             do
-                if [[ $1 == "-p" || $1 == "-persistant" ]]; then
-                    local persistant="true"
-                else
+                if [[ $1 == "-p" || $1 == "-persistent" ]]; then
+                    local persistent="true"
+                elif [[ -n $1 ]]; then
                     local versionOrAlias=$1
                 fi
                 shift
@@ -267,16 +284,20 @@ kvm()
             PATH=$(_kvm_prepend_path "$PATH" "$kreBin")
 
             if [[ -n $persistent ]]; then
-                echo "Setting  $kreBin as default KRE"
-                kvm alias default "$versionOrAlias"
+                local kreVersion=$(_kvm_package_version "$kreFullName")
+                kvm alias default "$kreVersion"
             fi
         ;;
 
         "alias" )
             [[ $# -gt 3 ]] && kvm help && return
 
+            [[ ! -e "$KRE_USER_HOME/alias/" ]] && mkdir "$KRE_USER_HOME/alias/" > /dev/null
+
             if [[ $# == 1 ]]; then
-                for f in $(find "$KRE_USER_HOME/alias" -name *.alias); do printf "%-20s %s\n" "$(basename $f | sed 's/.alias//')" "$(cat $f)"; done
+                _kvm_file=
+                for _kvm_file in $(find "$KRE_USER_HOME/alias" -name *.alias); do printf "%-20s %s\n" "$(basename $_kvm_file | sed 's/.alias//')" "$(cat $_kvm_file)"; done
+                [ -z $_kvm_file ] && echo "There are no aliases defined"
                 echo ""
                 return
             fi
@@ -296,7 +317,6 @@ kvm()
             [[ ! -d "$KRE_USER_PACKAGES/$kreFullName" ]] && echo "$semver is not an installed KRE version." && return 1
 
             echo "Setting alias '$name' to '$kreFullName'"
-            [[ ! -e "$KRE_USER_HOME/alias/" ]] && mkdir "$KRE_USER_HOME/alias/" > /dev/null
 
             echo "$kreFullName" > "$KRE_USER_HOME/alias/$name.alias"
         ;;
