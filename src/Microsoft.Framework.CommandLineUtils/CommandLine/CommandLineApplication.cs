@@ -35,7 +35,6 @@ namespace Microsoft.Framework.Runtime.Common.CommandLine
         public List<CommandArgument> Arguments { get; private set; }
         public List<string> RemainingArguments { get; private set; }
         public bool IsShowingInformation { get; protected set; }  // Is showing help or version?
-        public bool AnySubCommandExecuted { get; private set; }
         public Func<int> Invoke { get; set; }
         public string Version { get; set; }
 
@@ -71,7 +70,7 @@ namespace Microsoft.Framework.Runtime.Common.CommandLine
                 addHelpCommand: false);
             }
 
-            return this;
+            return command;
         }
 
         public CommandOption Option(string template, string description, CommandOptionType optionType)
@@ -241,8 +240,6 @@ namespace Microsoft.Framework.Runtime.Common.CommandLine
                     // If we detect a subcommand
                     if (command != currentCommand)
                     {
-                        // Mark flag in current command and start to parse subcommand
-                        currentCommand.AnySubCommandExecuted = true;
                         processed = true;
                     }
                 }
@@ -260,7 +257,7 @@ namespace Microsoft.Framework.Runtime.Common.CommandLine
                 }
                 if (!processed)
                 {
-                    if (_throwOnUnexpectedArg)
+                    if (command._throwOnUnexpectedArg)
                     {
                         command.ShowHint();
                         throw new Exception(string.Format("TODO: Error: unexpected argument '{0}'", arg));

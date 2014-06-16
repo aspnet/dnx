@@ -52,7 +52,6 @@ namespace Microsoft.Framework.ApplicationHost
                 var replacementArgs = CommandGrammar.Process(
                     replacementCommand,
                     GetVariable).ToArray();
-
                 options.ApplicationName = replacementArgs.First();
                 programArgs = replacementArgs.Skip(1).Concat(programArgs).ToArray();
             }
@@ -128,7 +127,7 @@ namespace Microsoft.Framework.ApplicationHost
             var runCmdExecuted = false;
             app.HelpOption("-?|-h|--help");
             app.VersionOption("--version", GetVersion());
-            app.Command("run", c =>
+            var runCmd = app.Command("run", c =>
             {
                 // We don't actually execute "run" command here
                 // We are adding this command for the purpose of displaying correct help information
@@ -139,7 +138,8 @@ namespace Microsoft.Framework.ApplicationHost
                     return 0;
                 });
             },
-            addHelpCommand: false);
+            addHelpCommand: false,
+            throwOnUnexpectedArg: false);
             app.Execute(args);
 
             if (!(app.IsShowingInformation || app.RemainingArguments.Any() || runCmdExecuted))
@@ -154,22 +154,27 @@ namespace Microsoft.Framework.ApplicationHost
             defaultHostOptions.TargetFramework = _environment.TargetFramework;
             defaultHostOptions.ApplicationBaseDirectory = _environment.ApplicationBasePath;
 
+            var remainingArgs = new List<string>();
             if (runCmdExecuted)
             {
                 // Later logic will execute "run" command
                 // So we put this argment back after it was consumed by parser
-                app.RemainingArguments.Insert(0, "run");
-            }
-
-            if (app.RemainingArguments.Any())
-            {
-                defaultHostOptions.ApplicationName = app.RemainingArguments[0];
-
-                outArgs = app.RemainingArguments.Skip(1).ToArray();
+                remainingArgs.Add("run");
+                remainingArgs.AddRange(runCmd.RemainingArguments);
             }
             else
             {
-                outArgs = app.RemainingArguments.ToArray();
+                remainingArgs.AddRange(app.RemainingArguments);
+            }
+
+            if (remainingArgs.Any())
+            {
+                defaultHostOptions.ApplicationName = remainingArgs[0];
+                outArgs = remainingArgs.Skip(1).ToArray();
+            }
+            else
+            {
+                outArgs = remainingArgs.ToArray();
             }
 
             return app.IsShowingInformation;
