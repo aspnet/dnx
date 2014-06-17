@@ -32,6 +32,7 @@ namespace Microsoft.Framework.PackageManager.Restore.NuGet
         private string _userName;
         private string _password;
         private IReport _report;
+        private HttpClient _httpClient;
 
         public PackageFeed(
             string baseUri,
@@ -43,6 +44,7 @@ namespace Microsoft.Framework.PackageManager.Restore.NuGet
             _userName = userName;
             _password = password;
             _report = report;
+            _httpClient = new HttpClient();
         }
 
         Dictionary<string, Task<IEnumerable<PackageInfo>>> _cache = new Dictionary<string, Task<IEnumerable<PackageInfo>>>();
@@ -134,8 +136,7 @@ namespace Microsoft.Framework.PackageManager.Restore.NuGet
                 request.Headers.Authorization = new AuthenticationHeaderValue("Basic", token);
             };
 
-            var client = new HttpClient();
-            return await client.SendAsync(request);
+            return await _httpClient.SendAsync(request);
         }
 
         public PackageInfo BuildModel(string id, XElement element)
