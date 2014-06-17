@@ -137,7 +137,16 @@ namespace Microsoft.Framework.PackageManager
 
             if (builder.Authors.Count == 0)
             {
-                builder.Authors.Add("K");
+                // TODO: K_AUTHOR is a temporary name
+                var defaultAuthor = Environment.GetEnvironmentVariable("K_AUTHOR");
+                if (string.IsNullOrEmpty(defaultAuthor))
+                {
+                    builder.Authors.Add(project.Name);
+                }
+                else
+                {
+                    builder.Authors.Add(defaultAuthor);
+                }
             }
 
             builder.Description = project.Description ?? project.Name;
