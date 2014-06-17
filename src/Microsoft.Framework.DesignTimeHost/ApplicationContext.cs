@@ -12,7 +12,6 @@ using Microsoft.Framework.DesignTimeHost.Models.IncomingMessages;
 using Microsoft.Framework.DesignTimeHost.Models.OutgoingMessages;
 using Microsoft.Framework.Runtime;
 using Microsoft.Framework.Runtime.FileSystem;
-using Microsoft.Framework.Runtime.Loader.NuGet;
 using Microsoft.Framework.Runtime.Roslyn;
 using Newtonsoft.Json.Linq;
 using NuGet;

@@ -5,7 +5,6 @@ using System;
 using System.IO;
 using System.IO.Compression;
 using Microsoft.Framework.Runtime;
-using Microsoft.Framework.Runtime.Loader.NuGet;
 using System.Security.Cryptography;
 
 namespace Microsoft.Framework.PackageManager.Packing

@@ -58,8 +58,8 @@
     <Compile Include="IFrameworkReferenceResolver.cs" />
     <Compile Include="IProjectResolver.cs" />
     <Compile Include="Loader\CompositeAssemblyLoader.cs" />
+    <Compile Include="Loader\NuGetAssemblyLoader.cs" />
     <Compile Include="Loader\ProjectAssemblyLoader.cs" />
-    <Compile Include="Loader\NuGet\NuGetAssemblyLoader.cs" />
     <Compile Include="Loader\CompilationException.cs" />
     <Compile Include="NuGet\Authoring\EmptyFrameworkFolderFile.cs" />
     <Compile Include="NuGet\Authoring\IPackageBuilder.cs" />

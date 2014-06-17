@@ -4,7 +4,7 @@
 
 using System.Reflection;
 
-namespace Microsoft.Framework.Runtime.Loader.NuGet
+namespace Microsoft.Framework.Runtime.Loader
 {
     public class NuGetAssemblyLoader : IAssemblyLoader
     {

@@ -13,7 +13,6 @@ using Microsoft.Framework.Runtime.Common.DependencyInjection;
 using Microsoft.Framework.Runtime.FileSystem;
 using Microsoft.Framework.Runtime.Infrastructure;
 using Microsoft.Framework.Runtime.Loader;
-using Microsoft.Framework.Runtime.Loader.NuGet;
 
 namespace Microsoft.Framework.Runtime
 {

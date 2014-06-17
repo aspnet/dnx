@@ -7,7 +7,7 @@ using System.Reflection;
 using System.Runtime.Versioning;
 using Microsoft.Framework.Runtime.Common.DependencyInjection;
 
-namespace Microsoft.Framework.Runtime
+namespace Microsoft.Framework.Runtime.Loader
 {
     internal class ProjectAssemblyLoader : IAssemblyLoader, ILibraryExportProvider
     {

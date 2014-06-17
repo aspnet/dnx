@@ -9,7 +9,6 @@ using System.Linq;
 using System.Runtime.Versioning;
 using Microsoft.Framework.PackageManager.Packing;
 using Microsoft.Framework.Runtime;
-using Microsoft.Framework.Runtime.Loader.NuGet;
 using NuGet;
 
 namespace Microsoft.Framework.PackageManager.Packing
