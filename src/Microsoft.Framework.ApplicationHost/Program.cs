@@ -123,7 +123,7 @@ namespace Microsoft.Framework.ApplicationHost
             var app = new CommandLineApplication(throwOnUnexpectedArg: false);
             app.Name = "k";
             var optionWatch = app.Option("--watch", "Watch file changes", CommandOptionType.NoValue);
-            var optionPackages = app.Option("--packages <PACKAGE_DIR>", "Directory contatining packages",
+            var optionPackages = app.Option("--packages <PACKAGE_DIR>", "Directory containing packages",
                 CommandOptionType.SingleValue);
             var runCmdExecuted = false;
             app.HelpOption("-?|-h|--help");
