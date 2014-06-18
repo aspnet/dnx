@@ -4,7 +4,7 @@ use import="Environment"
 
 var PRODUCT_VERSION = '0.1'
 var VERSION='${PRODUCT_VERSION}-alpha'
-var AUTHORS='Microsoft'
+var AUTHORS='Microsoft Open Technologies, Inc.'
 
 default Configuration='Release'
 
