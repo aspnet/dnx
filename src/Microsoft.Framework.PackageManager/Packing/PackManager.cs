@@ -85,7 +85,7 @@ namespace Microsoft.Framework.PackageManager.Packing
                 switch (parts[1])
                 {
                     case "svr50":
-                        return VersionUtility.ParseFrameworkName("net45");
+                        return VersionUtility.ParseFrameworkName("net451");
                     case "svrc50":
                         return VersionUtility.ParseFrameworkName("k10");
                 }
