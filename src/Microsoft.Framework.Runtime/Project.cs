@@ -158,14 +158,14 @@ namespace Microsoft.Framework.Runtime
             var json = File.ReadAllText(projectPath);
 
             // Assume the directory name is the project name if none was specified
-            var fallbackProjectName = GetDirectoryName(path);
+            var projectName = GetDirectoryName(path);
 
-            project = GetProject(json, fallbackProjectName, projectPath);
+            project = GetProject(json, projectName, projectPath);
 
             return true;
         }
 
-        public static Project GetProject(string json, string fallbackProjectName, string projectPath)
+        public static Project GetProject(string json, string projectName, string projectPath)
         {
             var project = new Project();
 
@@ -174,13 +174,8 @@ namespace Microsoft.Framework.Runtime
             // Metadata properties
             var version = rawProject["version"];
             var authors = rawProject["authors"];
-            project.Name = GetValue<string>(rawProject, "name");
 
-            if (string.IsNullOrEmpty(project.Name))
-            {
-                project.Name = fallbackProjectName;
-            }
-
+            project.Name = projectName;
             project.Version = version == null ? new SemanticVersion("1.0.0") : new SemanticVersion(version.Value<string>());
             project.Description = GetValue<string>(rawProject, "description");
             project.Authors = authors == null ? new string[] { } : authors.ToObject<string[]>();

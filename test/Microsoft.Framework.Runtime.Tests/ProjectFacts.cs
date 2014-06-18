@@ -9,23 +9,13 @@ namespace Microsoft.Framework.Runtime.Tests
     public class ProjectFacts
     {
         [Fact]
-        public void FallbackProjectNameIsUsedIfNoneSpecified()
-        {
-            // Arrange & Act
-            var project = Project.GetProject(@"{}", @"foo", @"c:\foo\project.json");
-
-            // Act
-            Assert.Equal("foo", project.Name);
-        }
-
-        [Fact]
-        public void NameOverridesFallbackName()
+        public void NameIsIgnoredIsSpecified()
         {
             // Arrange & Act
             var project = Project.GetProject(@"{ ""name"": ""hello"" }", @"foo", @"c:\foo\project.json");
 
             // Assert
-            Assert.Equal("hello", project.Name);
+            Assert.Equal("foo", project.Name);
         }
 
         [Fact]
