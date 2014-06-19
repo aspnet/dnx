@@ -60,19 +60,20 @@ namespace Microsoft.Framework.PackageManager.Packing
 
         private void CopyRecursive(string sourcePath, string targetPath, bool isProjectRootFolder, Func<bool, string, bool> shouldInclude)
         {
-            if (!Directory.Exists(targetPath))
-            {
-                Directory.CreateDirectory(targetPath);
-            }
-
             foreach (var sourceFilePath in Directory.EnumerateFiles(sourcePath))
             {
                 var fileName = Path.GetFileName(sourceFilePath);
                 Debug.Assert(fileName != null, "fileName != null");
 
-                if (!shouldInclude(isProjectRootFolder, fileName))
+                if (!shouldInclude(isProjectRootFolder, sourceFilePath))
                 {
                     continue;
+                }
+
+                // Create directory before copying a file
+                if (!Directory.Exists(targetPath))
+                {
+                    Directory.CreateDirectory(targetPath);
                 }
 
                 // copy file
@@ -97,7 +98,7 @@ namespace Microsoft.Framework.PackageManager.Packing
                 var folderName = Path.GetFileName(sourceFolderPath);
                 Debug.Assert(folderName != null, "folderName != null");
 
-                if (!shouldInclude(isProjectRootFolder, folderName))
+                if (!shouldInclude(isProjectRootFolder, sourceFolderPath))
                 {
                     continue;
                 }

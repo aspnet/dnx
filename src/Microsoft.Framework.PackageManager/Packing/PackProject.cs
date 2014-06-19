@@ -2,11 +2,11 @@
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 using System;
-using System.Diagnostics;
+using System.Collections.Generic;
 using System.IO;
+using System.IO.Compression;
 using System.Linq;
 using Microsoft.Framework.Runtime;
-using System.IO.Compression;
 
 namespace Microsoft.Framework.PackageManager.Packing
 {
@@ -47,17 +47,30 @@ namespace Microsoft.Framework.PackageManager.Packing
             Console.WriteLine("  Target {0}", TargetPath);
 
             root.Operations.Delete(TargetPath);
-            root.Operations.Copy(project.ProjectDirectory, TargetPath, IsProjectFileIncluded);
+
+            // A set of excluded source files used as a filter when doing copy
+            var sourceExcludeFiles = new HashSet<string>(project.SourceExcludeFiles, StringComparer.OrdinalIgnoreCase);
+
+            root.Operations.Copy(project.ProjectDirectory, TargetPath, (isRoot, filePath) =>
+            {
+                if (IsImplicitlyExcludedFile(filePath))
+                {
+                    return false;
+                }
+
+                if (sourceExcludeFiles.Contains(filePath))
+                {
+                    return false;
+                }
+
+                return true;
+            });
         }
 
-        private static bool IsProjectFileIncluded(bool isRoot, string fileName)
+        private static bool IsImplicitlyExcludedFile(string filePath)
         {
-            var fileExtension = Path.GetExtension(fileName);
-
-            if (!isRoot)
-            {
-                return true;
-            }
+            var fileExtension = Path.GetExtension(filePath);
+            var fileName = Path.GetFileName(filePath);
 
             if (string.Equals(fileExtension, ".csproj", StringComparison.OrdinalIgnoreCase) ||
                 string.Equals(fileExtension, ".kproj", StringComparison.OrdinalIgnoreCase) ||
@@ -68,9 +81,9 @@ namespace Microsoft.Framework.PackageManager.Packing
                 string.Equals(fileName, "bin", StringComparison.OrdinalIgnoreCase) ||
                 string.Equals(fileName, "obj", StringComparison.OrdinalIgnoreCase))
             {
-                return false;
+                return true;
             }
-            return true;
+            return false;
         }
 
         public void PostProcess(PackRoot root)

@@ -93,6 +93,20 @@ namespace Microsoft.Framework.Runtime
             }
         }
 
+        public IEnumerable<string> SourceExcludeFiles
+        {
+            get
+            {
+                string path = ProjectDirectory;
+
+                var sourceExcludeFiles = SourceExcludePatterns
+                    .SelectMany(pattern => PathResolver.PerformWildcardSearch(path, pattern))
+                    .ToArray();
+
+                return sourceExcludeFiles;
+            }
+        }
+
         public IEnumerable<string> ResourceFiles
         {
             get
