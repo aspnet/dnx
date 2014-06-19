@@ -1,8 +1,8 @@
 {
-    "version": "0.1-alpha-*",
+    "version": "1.0.0-*",
     "compilationOptions" : { "define" : ["TRACE"], "allowUnsafe": true },
     "dependencies": {
-        "K.Roslyn" : "0.1-alpha-*",
+        "K.Roslyn" : "1.0.0-*",
         "Microsoft.Framework.Runtime" :  "",
         "Microsoft.Framework.Runtime.Interfaces" : ""
     },

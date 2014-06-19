@@ -1,13 +1,9 @@
 {
     "dependencies": {
-        "K.Roslyn" : "0.1-alpha-*",
+        "K.Roslyn" : "1.0.0-*",
         "Microsoft.Framework.Runtime.Interfaces": "",
         "Microsoft.Framework.Runtime.Roslyn": "",
-        "xunit.abstractions": "2.0.0-aspnet-*",
-        "xunit.assert": "2.0.0-aspnet-*",
-        "xunit.core": "2.0.0-aspnet-*",
-        "xunit.execution": "2.0.0-aspnet-*",
-        "Xunit.KRunner": "0.1-alpha-*"
+        "Xunit.KRunner": "1.0.0-*"
     },
     "configurations": {
         "net45": {
