@@ -3,7 +3,7 @@
         "K.Roslyn" : "1.0.0-*",
         "Microsoft.Framework.Runtime.Interfaces": "",
         "Microsoft.Framework.Runtime.Roslyn": "",
-        "Xunit.KRunner": "1.0.0-*"
+        "Xunit.KRunner": "0.1-*"
     },
     "configurations": {
         "net45": {

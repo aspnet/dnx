@@ -3,7 +3,7 @@
         "Microsoft.Framework.Runtime": "",
         "Microsoft.Framework.Runtime.Interfaces": "",
         "Shouldly" : "1.1.1.1",
-        "Xunit.KRunner": "1.0.0-*"
+        "Xunit.KRunner": "0.1-*"
     },
     "configurations": {
         "net45": {
