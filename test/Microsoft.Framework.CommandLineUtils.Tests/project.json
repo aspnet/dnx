@@ -1,7 +1,7 @@
 {
     "dependencies": {
         "Microsoft.Framework.CommandLineUtils":  "",
-        "Xunit.KRunner": "0.1-*"
+        "Xunit.KRunner": "1.0.0-*"
     },
 
     "configurations" : {
