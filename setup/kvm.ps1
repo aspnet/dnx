@@ -18,6 +18,12 @@ $userKrePath = $env:USERPROFILE + "\.kre"
 $userKrePackages = $userKrePath + "\packages"
 $globalKrePath = $env:ProgramFiles + "\KRE"
 $globalKrePackages = $globalKrePath + "\packages"
+$feed = $env:KRE_NUGET_API_URL
+
+if (!$feed)
+{
+    $feed = "https://www.myget.org/F/aspnetvnext/api/v2";
+}
 
 $scriptPath = $myInvocation.MyCommand.Definition
 
@@ -152,7 +158,7 @@ param(
 )
     Write-Host "Determining latest version"
 
-    $url = "https://www.myget.org/F/aspnetvnext/api/v2/GetUpdates()?packageIds=%27KRE-$platform-$architecture%27&versions=%270.0%27&includePrerelease=true&includeAllVersions=false"
+    $url = "$feed/GetUpdates()?packageIds=%27KRE-$platform-$architecture%27&versions=%270.0%27&includePrerelease=true&includeAllVersions=false"
 
     $wc = New-Object System.Net.WebClient
     $wc.Credentials = new-object System.Net.NetworkCredential("aspnetreadonly", "4d8a2d9c-7b80-4162-9978-47e918c9658c")
@@ -175,7 +181,7 @@ param(
 )
     $parts = $kreFullName.Split(".", 2)
 
-    $url = "https://www.myget.org/F/aspnetvnext/api/v2/package/" + $parts[0] + "/" + $parts[1]
+    $url = "$feed/package/" + $parts[0] + "/" + $parts[1]
     $kreFolder = Join-Path $packagesFolder $kreFullName
     $kreFile = Join-Path $kreFolder "$kreFullName.nupkg"
 
