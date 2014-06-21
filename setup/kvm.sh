@@ -167,10 +167,11 @@ kvm()
             echo "add KRE bin to path of current command line"
             echo "set installed version as default"
             echo ""
-            echo "kvm install <semver>|<alias>|<nupkg>|latest [-p -persistent]"
+            echo "kvm install <semver>|<alias>|<nupkg>|latest [-a|-alias <alias>] [-p -persistent]"
             echo "<semver>|<alias>  install requested KRE from feed"
             echo "<nupkg>           install requested KRE from local package on filesystem"
             echo "latest            install latest version of KRE from feed"
+            echo "-a|-alias <alias> set alias <alias> for requested KRE on install"
             echo "-p -persistent    set installed version as default"
             echo "add KRE bin to path of current command line"
             echo ""
@@ -200,16 +201,20 @@ kvm()
         ;;
 
         "install" )
-            [ $# -gt 3 ] && kvm help && return
             [ $# -lt 2 ] && kvm help && return
-
             shift
             local persistant=
+            local versionOrAlias=
+            local alias=
             while [ $# -ne 0 ]
             do
                 if [[ $1 == "-p" || $1 == "-persistant" ]]; then
                     local persistent="-p"
+                elif [[ $1 == "-a" || $1 == "-alias" ]]; then
+                    local alias=$2
+                    shift
                 elif [[ -n $1 ]]; then
+                    [[ -n $versionOrAlias ]] && echo "Invalid option $1" && kvm help && return
                     local versionOrAlias=$1
                 fi
                 shift
@@ -233,12 +238,14 @@ kvm()
                   _kvm_unpack "$kreFile" "$kreFolder"
                 fi
                 kvm use "$kreVersion" "$persistent"
+                [[ -n $alias ]] && kvm alias "$alias" "$versionOrAlias"
             else
                 local kreFullName="$(_kvm_requested_version_or_alias $versionOrAlias)"
                 local kreFolder="$KRE_USER_PACKAGES/$kreFullName"
                 _kvm_download "$kreFullName" "$kreFolder"
                 [[ $? == 1 ]] && return
                 kvm use "$versionOrAlias" "$persistent"
+                [[ -n $alias ]] && kvm alias "$alias" "$versionOrAlias"
             fi
         ;;
 
