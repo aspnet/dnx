@@ -38,6 +38,7 @@ kvm install <semver>|<alias>|<nupkg>|latest [-x86][-x64] [-svr50][-svrc50] [-g|-
   <nupkg>           install requested KRE from package on local filesystem
   latest            install latest KRE from feed
   add KRE bin to path of current command line
+  -p|-persistent    add KRE bin to PATH environment variables persistently
   -g|-global        install to machine-wide location
   -f|-force         install even if specified version is already installed
 
