@@ -35,12 +35,13 @@ kvm upgrade [-x86][-x64] [-svr50][-svrc50] [-g|-global]
   -g|-global        install to machine-wide location
   -f|-force         upgrade even if latest is already installed
 
-kvm install <semver>|<alias>|<nupkg>|latest [-x86][-x64] [-svr50][-svrc50] [-g|-global]
+kvm install <semver>|<alias>|<nupkg>|latest [-x86][-x64] [-svr50][-svrc50] [-a|-alias <alias>] [-g|-global] [-f|-force]
   <semver>|<alias>  install requested KRE from feed
   <nupkg>           install requested KRE from package on local filesystem
   latest            install latest KRE from feed
   add KRE bin to path of current command line
   -p|-persistent    add KRE bin to PATH environment variables persistently
+  -a|-alias <alias> set alias <alias> for requested KRE on install
   -g|-global        install to machine-wide location
   -f|-force         install even if specified version is already installed
 
