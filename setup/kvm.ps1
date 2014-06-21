@@ -9,6 +9,8 @@ param(
   [switch] $x64 = $false,
   [switch] $svr50 = $false,
   [switch] $svrc50 = $false,
+  [alias("a")]
+  [string] $alias = $null,
   [parameter(Position=1, ValueFromRemainingArguments=$true)]
   [string[]]$args=@()
 )
@@ -110,20 +112,19 @@ function Kvm-Global-Setup {
 
 function Kvm-Global-Upgrade {
     $persistent = $true
+    $alias="default"
     If (Needs-Elevation) {
         $arguments = "& '$scriptPath' upgrade -global $(Requested-Switches)"
         Start-Process "$psHome\powershell.exe" -Verb runAs -ArgumentList $arguments -Wait
         break
     }
-
     Kvm-Global-Install "latest"
-    Kvm-Alias-Set "default" $version
 }
 
 function Kvm-Upgrade {
     $persistent = $true
+    $alias="default"
     Kvm-Install "latest"
-    Kvm-Alias-Set "default" $version
 }
 
 function Kvm-Find-Latest {
@@ -239,6 +240,9 @@ param(
 
     Do-Kvm-Download $kreFullName $globalKrePackages
     Kvm-Use $versionOrAlias
+    if ($alias -ne $null) {
+        Kvm-Alias-Set $alias $versionOrAlias
+    }
 }
 
 function Kvm-Install {
@@ -288,6 +292,9 @@ param(
 
         Do-Kvm-Download $kreFullName $userKrePackages
         Kvm-Use $versionOrAlias
+        if ($alias -ne $null) {
+            Kvm-Alias-Set $alias $versionOrAlias
+        }
     }
 }
 
