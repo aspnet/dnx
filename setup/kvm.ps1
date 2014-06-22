@@ -241,7 +241,7 @@ param(
 
     Do-Kvm-Download $kreFullName $globalKrePackages
     Kvm-Use $versionOrAlias
-    if ($alias -ne $null) {
+    if (![string]::IsNullOrWhiteSpace($alias)) {
         Kvm-Alias-Set $alias $versionOrAlias
     }
 }
@@ -293,7 +293,7 @@ param(
 
         Do-Kvm-Download $kreFullName $userKrePackages
         Kvm-Use $versionOrAlias
-        if ($alias -ne $null) {
+        if (![string]::IsNullOrWhiteSpace($alias)) {
             Kvm-Alias-Set $alias $versionOrAlias
         }
     }
