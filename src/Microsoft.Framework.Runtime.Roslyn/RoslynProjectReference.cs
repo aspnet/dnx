@@ -1,20 +1,22 @@
 // Copyright (c) Microsoft Open Technologies, Inc. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
+using System;
+using System.IO;
 using Microsoft.CodeAnalysis;
 
 namespace Microsoft.Framework.Runtime.Roslyn
 {
-    public class RoslynProjectReference : IRoslynMetadataReference
+    public class RoslynProjectReference : IRoslynMetadataReference, IMetadataProjectReference
     {
         public RoslynProjectReference(CompilationContext compilationContext)
         {
-            CompliationContext = compilationContext;
+            CompilationContext = compilationContext;
             MetadataReference = compilationContext.Compilation.ToMetadataReference(embedInteropTypes: compilationContext.Project.EmbedInteropTypes);
             Name = compilationContext.Project.Name;
         }
 
-        public CompilationContext CompliationContext { get; set; }
+        public CompilationContext CompilationContext { get; set; }
 
         public MetadataReference MetadataReference
         {
@@ -26,6 +28,19 @@ namespace Microsoft.Framework.Runtime.Roslyn
         {
             get;
             private set;
+        }
+
+        public string ProjectPath
+        {
+            get
+            {
+                return CompilationContext.Project.ProjectFilePath;
+            }
+        }
+
+        public void WriteReferenceAssemblyStream(Stream stream)
+        {
+            CompilationContext.Compilation.EmitMetadataOnly(stream);
         }
     }
 }

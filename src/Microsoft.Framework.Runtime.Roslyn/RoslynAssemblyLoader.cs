@@ -101,7 +101,7 @@ namespace Microsoft.Framework.Runtime.Roslyn
 
             foreach (var projectReference in context.MetadataReferences.OfType<RoslynProjectReference>())
             {
-                CacheCompilation(projectReference.CompliationContext);
+                CacheCompilation(projectReference.CompilationContext);
             }
         }
 

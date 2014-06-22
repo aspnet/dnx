@@ -222,6 +222,19 @@ namespace Microsoft.Framework.Runtime.Roslyn
                 return _metadataFileReferenceFactory.GetMetadataReference(fileMetadataReference.Path);
             }
 
+            var projectReference = metadataReference as IMetadataProjectReference;
+            if (projectReference != null)
+            {
+                using (var ms = new MemoryStream())
+                {
+                    projectReference.WriteReferenceAssemblyStream(ms);
+
+                    ms.Seek(0, SeekOrigin.Begin);
+
+                    return new MetadataImageReference(ms);
+                }
+            }
+
             throw new NotSupportedException();
         }
 

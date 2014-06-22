@@ -33,8 +33,8 @@ namespace Microsoft.Framework.Runtime.Roslyn
                                             .Select(r => r.Path)
                                             .ToList();
 
-            ProjectReferences = context.MetadataReferences.OfType<RoslynProjectReference>()
-                                                          .Select(r => r.CompliationContext.Project.ProjectFilePath)
+            ProjectReferences = context.MetadataReferences.OfType<IMetadataProjectReference>()
+                                                          .Select(r => r.ProjectPath)
                                                           .ToList();
 
             var formatter = new DiagnosticFormatter();

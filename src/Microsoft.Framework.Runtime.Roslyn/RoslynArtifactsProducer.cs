@@ -125,7 +125,7 @@ namespace Microsoft.Framework.Runtime.Roslyn
             var dependencies = new List<PackageDependency>();
             var project = compilationContext.Project;
             var projectReferenceByName = compilationContext.MetadataReferences.OfType<RoslynProjectReference>()
-                                                                              .Select(r => r.CompliationContext)
+                                                                              .Select(r => r.CompilationContext)
                                                                               .ToDictionary(p => p.Project.Name, p => p.Project);
             var frameworkAssemblies = new List<string>();
 
