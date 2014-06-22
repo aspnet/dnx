@@ -80,7 +80,7 @@ namespace Microsoft.Framework.Runtime.Roslyn
 
             IList<SyntaxTree> trees = GetSyntaxTrees(project, compilationSettings, export);
 
-            var embeddedReferences = metadataReferences.OfType<IMetadataRawReference>()
+            var embeddedReferences = metadataReferences.OfType<IMetadataEmbeddedReference>()
                                                        .ToDictionary(a => a.Name, ConvertMetadataReference);
 
             var references = new List<MetadataReference>();
@@ -208,11 +208,11 @@ namespace Microsoft.Framework.Runtime.Roslyn
                 return roslynReference.MetadataReference;
             }
 
-            var rawMetadataReference = metadataReference as IMetadataRawReference;
+            var embeddedReference = metadataReference as IMetadataEmbeddedReference;
 
-            if (rawMetadataReference != null)
+            if (embeddedReference != null)
             {
-                return new MetadataImageReference(rawMetadataReference.Contents);
+                return new MetadataImageReference(embeddedReference.Contents);
             }
 
             var fileMetadataReference = metadataReference as IMetadataFileReference;

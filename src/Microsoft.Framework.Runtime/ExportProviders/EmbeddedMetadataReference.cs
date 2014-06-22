@@ -5,9 +5,9 @@ using System.IO;
 
 namespace Microsoft.Framework.Runtime
 {
-    public class RawMetadataReference : IMetadataRawReference
+    internal class EmbeddedMetadataReference : IMetadataEmbeddedReference
     {
-        public RawMetadataReference(string name, byte[] buffer)
+        public EmbeddedMetadataReference(string name, byte[] buffer)
         {
             Name = name;
             Contents = buffer;

@@ -12,9 +12,9 @@ namespace Microsoft.Framework.Runtime
 {
     internal static class PEReaderExtensions
     {
-        public static IList<IMetadataRawReference> GetEmbeddedReferences(this PEReader reader)
+        public static IList<IMetadataEmbeddedReference> GetEmbeddedReferences(this PEReader reader)
         {
-            var items = new List<IMetadataRawReference>();
+            var items = new List<IMetadataEmbeddedReference>();
 
             var mdReader = reader.GetMetadataReader();
             foreach (var resourceHandle in mdReader.ManifestResources)
@@ -30,7 +30,7 @@ namespace Microsoft.Framework.Runtime
                     // Remove .dll
                     var nameWithoutDll = resourceName.Substring(0, resourceName.Length - 4);
 
-                    items.Add(new RawMetadataReference(nameWithoutDll, buffer));
+                    items.Add(new EmbeddedMetadataReference(nameWithoutDll, buffer));
                 }
             }
 

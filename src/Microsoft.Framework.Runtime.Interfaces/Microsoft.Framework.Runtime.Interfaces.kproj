@@ -34,7 +34,7 @@
     <Compile Include="ILibraryInformation.cs" />
     <Compile Include="ILibraryManager.cs" />
     <Compile Include="IMetadataProjectReference.cs" />
-    <Compile Include="IMetadataRawReference.cs" />
+    <Compile Include="IMetadataEmbeddedReference.cs" />
     <Compile Include="IMetadataFileReference.cs" />
     <Compile Include="IMetadataReference.cs" />
     <Compile Include="Infrastructure\CallContextServiceLocator.cs" />

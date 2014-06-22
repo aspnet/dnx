@@ -19,7 +19,7 @@ namespace Microsoft.Framework.Runtime.Roslyn
                                  .Where(p => !string.IsNullOrEmpty(p)) // REVIEW: Raw sources?
                                  .ToList();
 
-            RawReferences = context.MetadataReferences.OfType<IMetadataRawReference>().Select(r =>
+            RawReferences = context.MetadataReferences.OfType<IMetadataEmbeddedReference>().Select(r =>
             {
                 return new
                 {

@@ -63,15 +63,15 @@ namespace Microsoft.Framework.Runtime.Roslyn
             return _roslynLibraryExport;
         }
 
-        public IEnumerable<IMetadataRawReference> GetRequiredEmbeddedReferences()
+        public IEnumerable<IMetadataEmbeddedReference> GetRequiredEmbeddedReferences()
         {
-            var assemblyNeutralTypes = MetadataReferences.OfType<IMetadataRawReference>()
+            var assemblyNeutralTypes = MetadataReferences.OfType<IMetadataEmbeddedReference>()
                                                          .ToDictionary(r => r.Name);
 
             // No assembly neutral types so do nothing
             if (assemblyNeutralTypes.Count == 0)
             {
-                return Enumerable.Empty<IMetadataRawReference>();
+                return Enumerable.Empty<IMetadataEmbeddedReference>();
             }
 
             Trace.TraceInformation("Assembly Neutral References {0}", assemblyNeutralTypes.Count);
@@ -101,7 +101,7 @@ namespace Microsoft.Framework.Runtime.Roslyn
             return embeddedTypes;
         }
 
-        private HashSet<string> GetUsedReferences(Dictionary<string, IMetadataRawReference> assemblies)
+        private HashSet<string> GetUsedReferences(Dictionary<string, IMetadataEmbeddedReference> assemblies)
         {
             var results = new HashSet<string>();
 
@@ -143,7 +143,7 @@ namespace Microsoft.Framework.Runtime.Roslyn
 
                 foreach (var reference in GetReferences(buffer))
                 {
-                    IMetadataRawReference embeddedReference;
+                    IMetadataEmbeddedReference embeddedReference;
                     if (assemblies.TryGetValue(reference, out embeddedReference))
                     {
                         stack.Push(Tuple.Create(reference, embeddedReference.Contents));

@@ -9,7 +9,7 @@ namespace Microsoft.Framework.Runtime.Roslyn
 {
     internal static class ResourceExtensions
     {
-        public static void AddRawReferences(this IList<ResourceDescription> resources, IEnumerable<IMetadataRawReference> references)
+        public static void AddEmbeddedReferences(this IList<ResourceDescription> resources, IEnumerable<IMetadataEmbeddedReference> references)
         {
             foreach (var reference in references)
             {

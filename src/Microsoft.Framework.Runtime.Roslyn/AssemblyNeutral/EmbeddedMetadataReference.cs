@@ -5,7 +5,7 @@ using System.IO;
 
 namespace Microsoft.Framework.Runtime.Roslyn
 {
-    public class EmbeddedMetadataReference : RoslynMetadataReference, IMetadataRawReference
+    public class EmbeddedMetadataReference : RoslynMetadataReference, IMetadataEmbeddedReference
     {
         public EmbeddedMetadataReference(TypeCompilationContext context)
             : base(context.AssemblyName, context.RealOrShallowReference())

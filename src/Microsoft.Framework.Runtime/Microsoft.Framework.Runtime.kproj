@@ -46,7 +46,7 @@
     <Compile Include="ExportProviders\LibraryExport.cs" />
     <Compile Include="ExportProviders\PEReaderExtensions.cs" />
     <Compile Include="ExportProviders\ProjectExportProvider.cs" />
-    <Compile Include="ExportProviders\RawMetadataReference.cs" />
+    <Compile Include="ExportProviders\EmbeddedMetadataReference.cs" />
     <Compile Include="ExportProviders\UnresolvedMetadataReference.cs" />
     <Compile Include="ExportProviders\MetadataFileReference.cs" />
     <Compile Include="ExportProviders\SourceFileReference.cs" />
