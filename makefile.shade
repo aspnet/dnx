@@ -3,7 +3,6 @@ use assembly="System.IO.Compression.FileSystem, Version=4.0.0.0, Culture=neutral
 use import="Environment"
 
 var PRODUCT_VERSION = '0.1'
-var VERSION='${PRODUCT_VERSION}-alpha'
 var AUTHORS='Microsoft Open Technologies, Inc.'
 
 default Configuration='Release'
@@ -19,7 +18,7 @@ var NUSPEC_ROOT = '${Path.Combine(ROOT, "nuspec")}'
 var PACKAGES_DIR = '${Path.Combine(ROOT, "packages")}'
 var TEST_RESULTS = '${Path.Combine(ROOT, "artifacts", "TestResults")}'
 var SAMPLES_DIR = '${Path.Combine(ROOT, "samples")}'
-var FULL_VERSION = '${VERSION + "-" + BuildNumber}'
+var FULL_VERSION = '${PRODUCT_VERSION + "-" + E("K_BUILD_VERSION")}'
 var CORECLR_PATH = '${Environment.GetEnvironmentVariable("CORECLR_PATH")}'
 var CORECLR_TARGET_PATH = '${Path.Combine(BUILD_DIR2, "CoreCLR")}'
 var MONO_x86_BIN='${Path.Combine(BUILD_DIR2, "KRE-mono45-x86", "bin")}'
