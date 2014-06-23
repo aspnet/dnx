@@ -10,6 +10,8 @@ param(
   [switch] $x64 = $false,
   [switch] $svr50 = $false,
   [switch] $svrc50 = $false,
+  [alias("a")]
+  [string] $alias = $null,
   [parameter(Position=1, ValueFromRemainingArguments=$true)]
   [string[]]$args=@()
 )
@@ -41,12 +43,13 @@ kvm upgrade [-x86][-x64] [-svr50][-svrc50] [-g|-global] [-proxy <ADDRESS>]
   -f|-force         upgrade even if latest is already installed
   -proxy <ADDRESS>  use given address as proxy when accessing remote server
 
-kvm install <semver>|<alias>|<nupkg>|latest [-x86][-x64] [-svr50][-svrc50] [-g|-global]
+kvm install <semver>|<alias>|<nupkg>|latest [-x86][-x64] [-svr50][-svrc50] [-a|-alias <alias>] [-g|-global] [-f|-force]
   <semver>|<alias>  install requested KRE from feed
   <nupkg>           install requested KRE from package on local filesystem
   latest            install latest KRE from feed
   add KRE bin to path of current command line
   -p|-persistent    add KRE bin to PATH environment variables persistently
+  -a|-alias <alias> set alias <alias> for requested KRE on install
   -g|-global        install to machine-wide location
   -f|-force         install even if specified version is already installed
 
@@ -118,20 +121,19 @@ function Kvm-Global-Setup {
 
 function Kvm-Global-Upgrade {
     $persistent = $true
+    $alias="default"
     If (Needs-Elevation) {
         $arguments = "& '$scriptPath' upgrade -global $(Requested-Switches)"
         Start-Process "$psHome\powershell.exe" -Verb runAs -ArgumentList $arguments -Wait
         break
     }
-
     Kvm-Global-Install "latest"
-    Kvm-Alias-Set "default" $version
 }
 
 function Kvm-Upgrade {
     $persistent = $true
+    $alias="default"
     Kvm-Install "latest"
-    Kvm-Alias-Set "default" $version
 }
 
 function Add-Proxy-If-Specified {
@@ -268,6 +270,9 @@ param(
 
     Do-Kvm-Download $kreFullName $globalKrePackages
     Kvm-Use $versionOrAlias
+    if (![string]::IsNullOrWhiteSpace($alias)) {
+        Kvm-Alias-Set $alias $versionOrAlias
+    }
 }
 
 function Kvm-Install {
@@ -317,6 +322,9 @@ param(
 
         Do-Kvm-Download $kreFullName $userKrePackages
         Kvm-Use $versionOrAlias
+        if (![string]::IsNullOrWhiteSpace($alias)) {
+            Kvm-Alias-Set $alias $versionOrAlias
+        }
     }
 }
 
