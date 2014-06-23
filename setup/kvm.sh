@@ -53,11 +53,21 @@ _kvm_package_version() {
     echo "$kreFullName" | sed "s/[^.]*.\(.*\)/\1/"
 }
 
+_kvm_package_name() {
+    local kreFullName="$1"
+    echo "$kreFullName" | sed "s/\([^.]*\).*/\1/"
+}
+
+_kvm_package_runtime() {
+    local kreFullName="$1"
+    echo "$kreFullName" | sed "s/KRE-\([^-]*\).*/\1/"
+}
+
 _kvm_download() {
     local kreFullName="$1"
     local kreFolder="$2"
 
-    local pkgName=$(echo "$kreFullName" | sed "s/\([^.]*\).*/\1/")
+    local pkgName=$(_kvm_package_name "$kreFullName")
     local pkgVersion=$(_kvm_package_version "$kreFullName")
     local url="$KRE_NUGET_API_URL/package/$pkgName/$pkgVersion"
     local kreFile="$kreFolder/$kreFullName.nupkg"
@@ -78,8 +88,8 @@ _kvm_download() {
 
     local httpResult=$(curl -L -D - -u aspnetreadonly:4d8a2d9c-7b80-4162-9978-47e918c9658c "$url" -o "$kreFile" 2>/dev/null | grep "^HTTP/1.1" | head -n 1 | sed "s/HTTP.1.1 \([0-9]*\).*/\1/")
 
-    [[ $httpResult == "404" ]] && echo "$kreFullName was not found in repository $KRE_NUGET_API_URL" && return 1
-    [[ $httpResult != "302" ]] && echo "Http Error $httpResult fetching $kreFullName from $KRE_NUGET_API_URL" && return 1
+    [[ $httpResult == "404" ]] && echo "$kreFullName was not found in repository $KRE_NUGET_API_URL" && rmdir "$kreFolder" > /dev/null 2>&1 && return 1
+    [[ $httpResult != "302" ]] && echo "Http Error $httpResult fetching $kreFullName from $KRE_NUGET_API_URL" && rmdir "$kreFolder" > /dev/null 2>&1 && return 1
 
     _kvm_unpack $kreFile $kreFolder
 }
@@ -302,9 +312,15 @@ kvm()
             [[ ! -e "$KRE_USER_HOME/alias/" ]] && mkdir "$KRE_USER_HOME/alias/" > /dev/null
 
             if [[ $# == 1 ]]; then
-                _kvm_file=
-                for _kvm_file in $(find "$KRE_USER_HOME/alias" -name *.alias); do printf "%-20s %s\n" "$(basename $_kvm_file | sed 's/.alias//')" "$(cat $_kvm_file)"; done
-                [ -z $_kvm_file ] && echo "There are no aliases defined"
+                echo ""
+                local format="%-10s %s\n"
+                printf "$format" "Alias" "Name"
+                printf "$format" "-----" "----"
+                for _kvm_file in $(find "$KRE_USER_HOME/alias" -name *.alias); do
+                    local alias="$(basename $_kvm_file | sed 's/.alias//')"
+                    local name="$(cat $_kvm_file)"
+                    printf "$format" "$alias" "$name"
+                done
                 echo ""
                 return
             fi
@@ -337,22 +353,22 @@ kvm()
             if [ $# == 2 ]; then
                 local versionOrAlias=$2
                 local searchGlob=$(_kvm_requested_version_or_alias "$versionOrAlias")
-                echo $searchGlob
             fi
-
+            echo ""
+            local formatString="%-6s %-20s %-7s %-12s %s\n"
+            printf "$formatString" "Active" "Version" "Runtime" "Architecture" "Location"
+            printf "$formatString" "------" "-------" "-------" "------------" "--------"
             for f in $(find $KRE_USER_PACKAGES/* -name "$searchGlob" -type d -prune -exec basename {} \;); do
-                #TODO: Format, extract package, version arch etc
-                echo -n $f
-                if [[ $PATH == *"$KRE_USER_PACKAGES/$f/bin"* ]]; then
-                    echo " *"
-                else
-                    echo ""
-                fi
+                local active=""
+                [[ $PATH == *"$KRE_USER_PACKAGES/$f/bin"* ]] && local active="  *"
+                local pkgName=$(_kvm_package_runtime "$f")
+                local pkgVersion=$(_kvm_package_version "$f")
+                printf "$formatString" "$active" "$pkgVersion" "$pkgName" "x86" "$KRE_USER_PACKAGES"
                 [[ $# == 2 ]] && echo "" &&  return 0
             done
 
             echo ""
-            [[ $# == 2 ]] && return 1 # kvm list xxx - xxx was not found
+            [[ $# == 2 ]] && echo "$versionOrAlias not found" && return 1
         ;;
 
         *)
