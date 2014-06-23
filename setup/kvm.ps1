@@ -41,9 +41,12 @@ kvm upgrade [-x86][-x64] [-svr50][-svrc50] [-g|-global] [-proxy <ADDRESS>]
   -f|-force         upgrade even if latest is already installed
   -proxy <ADDRESS>  use given address as proxy when accessing remote server
 
-kvm install <semver>|<alias>|<nupkg> [-x86][-x64] [-svr50][-svrc50] [-g|-global]
-  install requested KRE from feed
+kvm install <semver>|<alias>|<nupkg>|latest [-x86][-x64] [-svr50][-svrc50] [-g|-global]
+  <semver>|<alias>  install requested KRE from feed
+  <nupkg>           install requested KRE from package on local filesystem
+  latest            install latest KRE from feed
   add KRE bin to path of current command line
+  -p|-persistent    add KRE bin to PATH environment variables persistently
   -g|-global        install to machine-wide location
   -f|-force         install even if specified version is already installed
 
@@ -120,15 +123,14 @@ function Kvm-Global-Upgrade {
         Start-Process "$psHome\powershell.exe" -Verb runAs -ArgumentList $arguments -Wait
         break
     }
-    $version = Kvm-Find-Latest (Requested-Platform "svr50") (Requested-Architecture "x86")
-    Kvm-Global-Install $version
+
+    Kvm-Global-Install "latest"
     Kvm-Alias-Set "default" $version
 }
 
 function Kvm-Upgrade {
     $persistent = $true
-    $version = Kvm-Find-Latest (Requested-Platform "svr50") (Requested-Architecture "x86")
-    Kvm-Install $version
+    Kvm-Install "latest"
     Kvm-Alias-Set "default" $version
 }
 
@@ -168,10 +170,6 @@ param(
     $version = Select-Xml "//d:Version" -Namespace @{d='http://schemas.microsoft.com/ado/2007/08/dataservices'} $xml 
 
     return $version
-}
-
-function Kvm-Install-Latest {
-    Kvm-Install (Kvm-Find-Latest (Requested-Platform "svr50") (Requested-Architecture "x86"))
 }
 
 function Do-Kvm-Download {
@@ -262,6 +260,10 @@ param(
         break
     }
 
+    if ($versionOrAlias -eq "latest") {
+        $versionOrAlias = Kvm-Find-Latest (Requested-Platform "svr50") (Requested-Architecture "x86")
+    }
+    
     $kreFullName = Requested-VersionOrAlias $versionOrAlias
 
     Do-Kvm-Download $kreFullName $globalKrePackages
@@ -308,6 +310,9 @@ param(
     }
     else
     {
+        if ($versionOrAlias -eq "latest") {
+            $versionOrAlias = Kvm-Find-Latest (Requested-Platform "svr50") (Requested-Architecture "x86")
+        }
         $kreFullName = Requested-VersionOrAlias $versionOrAlias
 
         Do-Kvm-Download $kreFullName $userKrePackages
@@ -580,7 +585,6 @@ function Requested-Switches() {
     switch -wildcard ($command + " " + $args.Count) {
       "setup 0"           {Kvm-Global-Setup}
       "upgrade 0"         {Kvm-Global-Upgrade}
-#      "install 0"         {Kvm-Global-Install-Latest}
       "install 1"         {Kvm-Global-Install $args[0]}
 #      "list 0"            {Kvm-Global-List}
       "use 1"             {Kvm-Global-Use $args[0]}
@@ -590,7 +594,6 @@ function Requested-Switches() {
     switch -wildcard ($command + " " + $args.Count) {
       "setup 0"           {Kvm-Global-Setup}
       "upgrade 0"         {Kvm-Upgrade}
-#      "install 0"         {Kvm-Install-Latest}
       "install 1"         {Kvm-Install $args[0]}
       "list 0"            {Kvm-List}
       "use 1"             {Kvm-Use $args[0]}
