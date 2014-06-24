@@ -343,16 +343,6 @@ var NEW_RUNTIME = '${Environment.GetEnvironmentVariable("NEW_RUNTIME") == "1"}'
             {
                 move(binFolder, libPackage, ".dll");
                 move(binFolder, libPackage, ".pdb");
-
-                // Temporary hack to ease transition pain moving k build to kpm build
-                if(libPackage == "Microsoft.Framework.Project")
-                {
-                    // Copy Microsoft.Framework.PackageManager.dll to the Microsoft.Framework.Project folder
-                    // so that Visual still works
-                    File.Copy(Path.Combine(binFolder, "Microsoft.Framework.PackageManager.dll"),
-                              Path.Combine(binFolder, "lib", libPackage, "Microsoft.Framework.PackageManager.dll"),
-                              true);
-                }
             }
         }
     }
