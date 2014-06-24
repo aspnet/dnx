@@ -89,7 +89,7 @@ _kvm_download() {
     local httpResult=$(curl -L -D - -u aspnetreadonly:4d8a2d9c-7b80-4162-9978-47e918c9658c "$url" -o "$kreFile" 2>/dev/null | grep "^HTTP/1.1" | head -n 1 | sed "s/HTTP.1.1 \([0-9]*\).*/\1/")
 
     [[ $httpResult == "404" ]] && echo "$kreFullName was not found in repository $KRE_NUGET_API_URL" && return 1
-    [[ $httpResult != "302" && $httpResult != "200" ]] && echo "Http Error $httpResult fetching $kreFullName from $KRE_NUGET_API_URL" && return 1
+    [[ $httpResult != "302" && $httpResult != "200" ]] && echo "HTTP Error $httpResult fetching $kreFullName from $KRE_NUGET_API_URL" && return 1
 
     _kvm_unpack $kreFile $kreFolder
 }
