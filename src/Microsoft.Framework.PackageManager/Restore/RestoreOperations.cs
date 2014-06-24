@@ -158,7 +158,7 @@ namespace Microsoft.Framework.PackageManager
                 }
                 if (localMatch != null && remoteMatch != null)
                 {
-                    if (VersionUtilities.ShouldUseConsidering(
+                    if (VersionUtility.ShouldUseConsidering(
                         current: localMatch.Library.Version,
                         considering: remoteMatch.Library.Version,
                         ideal: library.Version))
@@ -200,7 +200,7 @@ namespace Microsoft.Framework.PackageManager
             WalkProviderMatch bestMatch = null;
             foreach (var match in matches)
             {
-                if (VersionUtilities.ShouldUseConsidering(
+                if (VersionUtility.ShouldUseConsidering(
                     current: (bestMatch == null || bestMatch.Library == null) ? null : bestMatch.Library.Version,
                     considering: (match == null || match.Library == null) ? null : match.Library.Version,
                     ideal: library.Version))
@@ -222,7 +222,7 @@ namespace Microsoft.Framework.PackageManager
             WalkProviderMatch bestMatch = null;
             foreach (var match in matches)
             {
-                if (VersionUtilities.ShouldUseConsidering(
+                if (VersionUtility.ShouldUseConsidering(
                     current: (bestMatch == null || bestMatch.Library == null) ? null : bestMatch.Library.Version,
                     considering: (match == null || match.Library == null) ? null : match.Library.Version,
                     ideal: library.Version))

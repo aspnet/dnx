@@ -85,26 +85,11 @@ namespace Microsoft.Framework.Runtime
                 {
                     foreach (var d in set.Dependencies)
                     {
-                        var dependency = _repository.FindPackagesById(d.Id)
-                                                    .Where(d.VersionSpec.ToDelegate())
-                                                    .FirstOrDefault();
-                        if (dependency != null)
+                        yield return new Library
                         {
-                            yield return new Library
-                            {
-                                Name = dependency.Id,
-                                Version = dependency.Version
-                            };
-                        }
-                        else
-                        {
-                            // REVIEW: What happens to the range
-                            yield return new Library
-                            {
-                                Name = d.Id,
-                                Version = d.VersionSpec.MinVersion
-                            };
-                        }
+                            Name = d.Id,
+                            Version = d.VersionSpec != null ? d.VersionSpec.MinVersion : null
+                        };
                     }
                 }
             }
@@ -342,14 +327,22 @@ namespace Microsoft.Framework.Runtime
             {
                 return _repository.FindPackagesById(name).FirstOrDefault();
             }
-            else if (version.IsSnapshot)
+
+            var packages = _repository.FindPackagesById(name);
+            IPackage bestMatch = null;
+
+            foreach (var package in packages)
             {
-                return _repository.FindPackagesById(name)
-                    .OrderByDescending(pk => pk.Version.SpecialVersion, StringComparer.OrdinalIgnoreCase)
-                    .FirstOrDefault(pk => pk.Version.EqualsSnapshot(version));
+                if (VersionUtility.ShouldUseConsidering(
+                    current: bestMatch != null ? bestMatch.Version : null,
+                    considering: package.Version,
+                    ideal: version))
+                {
+                    bestMatch = package;
+                }
             }
 
-            return _repository.FindPackage(name, version);
+            return bestMatch;
         }
 
         public static string ResolveRepositoryPath(string projectPath)
