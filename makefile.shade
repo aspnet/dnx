@@ -19,7 +19,6 @@ var PACKAGES_DIR = '${Path.Combine(ROOT, "packages")}'
 var TEST_RESULTS = '${Path.Combine(ROOT, "artifacts", "TestResults")}'
 var SAMPLES_DIR = '${Path.Combine(ROOT, "samples")}'
 var FULL_VERSION = '${PRODUCT_VERSION + "-" + E("K_BUILD_VERSION")}'
-var CORECLR_PATH = '${Environment.GetEnvironmentVariable("CORECLR_PATH")}'
 var CORECLR_TARGET_PATH = '${Path.Combine(BUILD_DIR2, "CoreCLR")}'
 var MONO_x86_BIN='${Path.Combine(BUILD_DIR2, "KRE-mono45-x86", "bin")}'
 var SVR50_x86_BIN='${Path.Combine(BUILD_DIR2, "KRE-svr50-x86", "bin")}'
@@ -447,43 +446,37 @@ var NEW_RUNTIME = '${Environment.GetEnvironmentVariable("NEW_RUNTIME") == "1"}'
     }
 
 #copy-coreclr
-    nuget-install package='CoreCLR' outputDir='packages' extra='-pre -nocache' once='CoreCLR' if='!IsMono && String.IsNullOrEmpty(CORECLR_PATH)'
+    nuget-install package='CoreCLR' outputDir='packages' extra='-pre -nocache' once='CoreCLR'
 
     var CoreCLR_DIR='${""}'
     @{
-        if (String.IsNullOrEmpty(CORECLR_PATH))
-        {
-            Func<string, long> getVersion = version => {
-            var dash = version.LastIndexOf('-');
+        Func<string, long> getVersion = version => {
+        var dash = version.LastIndexOf('-');
 
-                if(dash != -1)
+            if(dash != -1)
+            {
+                var lastToken = version.Substring(dash + 1);
+
+                if(lastToken.StartsWith("t"))
                 {
-                    var lastToken = version.Substring(dash + 1);
-
-                    if(lastToken.StartsWith("t"))
-                    {
-                        return Int64.Parse(lastToken.Substring(1));
-                    }
-
-                    return Int64.Parse(lastToken);
+                    return Int64.Parse(lastToken.Substring(1));
                 }
-                return Int64.MaxValue;
-            };
 
-            string packagesDir = Path.Combine(Directory.GetCurrentDirectory(), "packages");
-            CoreCLR_DIR = Directory.EnumerateDirectories(packagesDir, "CoreCLR*")
-                                    .OrderByDescending(getVersion)
-                                    .First();
-                                          
-            Log.Warn("The environment variable CORECLR_PATH is not set, using " + CoreCLR_DIR);
-        }
+                return Int64.Parse(lastToken);
+            }
+            return Int64.MaxValue;
+        };
+
+        string packagesDir = Path.Combine(Directory.GetCurrentDirectory(), "packages");
+        CoreCLR_DIR = Directory.EnumerateDirectories(packagesDir, "CoreCLR*")
+                                .OrderByDescending(getVersion)
+                                .First();
+                                      
+        Log.Info("Using " + CoreCLR_DIR);
     }
-
-    -// For CI builds
-    copy sourceDir='${CORECLR_PATH}' outputDir='${CORECLR_TARGET_PATH}' overwrite='${true}' if='!String.IsNullOrEmpty(CORECLR_PATH)'
-
-    -// For local builds
-    copy sourceDir='${Path.Combine(CoreCLR_DIR, "Runtime")}' outputDir='${Path.Combine(CORECLR_TARGET_PATH, "Runtime")}' overwrite='${true}' if='!String.IsNullOrEmpty(CoreCLR_DIR)'
+    
+    -// Copy to target
+    copy sourceDir='${Path.Combine(CoreCLR_DIR, "Runtime")}' outputDir='${Path.Combine(CORECLR_TARGET_PATH, "Runtime")}' overwrite='${true}'
     
     -// Copy the CoreCLR to the k10 builds
     copy sourceDir='${Path.Combine(CORECLR_TARGET_PATH, "Runtime", "x86")}' outputDir='${SVRC50_x86_BIN}'
