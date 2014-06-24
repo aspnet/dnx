@@ -30,6 +30,7 @@ namespace Microsoft.Framework.PackageManager.Packing
         public string AppFolder { get; set; }
         public bool Overwrite { get; set; }
         public bool ZipPackages { get; set; }
+        public bool NoSource { get; set; }
 
         public IList<PackRuntime> Runtimes { get; set; }
         public IList<PackProject> Projects { get; private set; }
@@ -50,7 +51,24 @@ namespace Microsoft.Framework.PackageManager.Packing
 
             foreach (var deploymentProject in Projects)
             {
-                deploymentProject.Emit(this);
+                // TODO: temporarily we always emit sources for main project to make sure "k run"
+                // can find entry point of the program. Later we should make main project
+                // a nukpg too.
+                if (deploymentProject == mainProject)
+                {
+                    deploymentProject.EmitSource(this);
+                }
+                else
+                {
+                    if (NoSource)
+                    {
+                        deploymentProject.EmitNupkg(this);
+                    }
+                    else
+                    {
+                        deploymentProject.EmitSource(this);
+                    }
+                }
             }
 
             foreach (var deploymentRuntime in Runtimes)

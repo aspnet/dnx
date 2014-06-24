@@ -111,6 +111,8 @@ namespace Microsoft.Framework.PackageManager
                     CommandOptionType.NoValue);
                 var optionOverwrite = c.Option("--overwrite", "Remove existing files in target folders",
                     CommandOptionType.NoValue);
+                var optionNoSource = c.Option("--no-source", "Don't include sources of project dependencies",
+                    CommandOptionType.NoValue);
                 var optionRuntime = c.Option("--runtime <KRE>", "Names or paths to KRE files to include",
                     CommandOptionType.MultipleValue);
                 var optionAppFolder = c.Option("--appfolder <NAME>",
@@ -133,6 +135,7 @@ namespace Microsoft.Framework.PackageManager
                         RuntimeTargetFramework = _environment.TargetFramework,
                         ZipPackages = optionZipPackages.HasValue(),
                         Overwrite = optionOverwrite.HasValue(),
+                        NoSource = optionNoSource.HasValue(),
                         Runtimes = optionRuntime.HasValue() ?
                             string.Join(";", optionRuntime.Values).
                                 Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries) :

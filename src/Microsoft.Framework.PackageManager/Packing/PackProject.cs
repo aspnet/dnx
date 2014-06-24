@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
+using System.Security.Cryptography;
 using Microsoft.Framework.Runtime;
 
 namespace Microsoft.Framework.PackageManager.Packing
@@ -30,7 +31,7 @@ namespace Microsoft.Framework.PackageManager.Packing
         public string TargetPath { get; private set; }
         public string AppFolder { get; set; }
 
-        public void Emit(PackRoot root)
+        public void EmitSource(PackRoot root)
         {
             Console.WriteLine("Packing project dependency {0}", _libraryDescription.Identity.Name);
 
@@ -67,7 +68,70 @@ namespace Microsoft.Framework.PackageManager.Packing
             });
         }
 
-        private static bool IsImplicitlyExcludedFile(string filePath)
+        public void EmitNupkg(PackRoot root)
+        {
+            Console.WriteLine("Packing nupkg from project dependency {0}", _libraryDescription.Identity.Name);
+
+            Runtime.Project project;
+            if (!_projectResolver.TryResolveProject(_libraryDescription.Identity.Name, out project))
+            {
+                throw new Exception("TODO: unable to resolve project named " + _libraryDescription.Identity.Name);
+            }
+
+            var targetName = AppFolder ?? project.Name;
+            var targetNupkgName = string.Format("{0}.{1}", targetName, project.Version);
+            TargetPath = Path.Combine(root.OutputPath, "packages", targetNupkgName);
+
+            Console.WriteLine("  Source {0}", project.ProjectDirectory);
+            Console.WriteLine("  Target {0}", TargetPath);
+
+            if (Directory.Exists(TargetPath))
+            {
+                if (root.Overwrite)
+                {
+                    root.Operations.Delete(TargetPath);
+                }
+                else
+                {
+                    Console.WriteLine("  {0} already exists.", TargetPath);
+                    return;
+                }
+            }
+
+            // Generate nupkg from this project dependency
+            var buildOptions = new BuildOptions();
+            buildOptions.ProjectDir = project.ProjectDirectory;
+            buildOptions.OutputDir = Path.Combine(project.ProjectDirectory, "bin");
+            var buildManager = new BuildManager(buildOptions);
+            if (!buildManager.Build())
+            {
+                return;
+            }
+
+            // Extract the generated nupkg to target path
+            var srcNupkgPath = Path.Combine(buildOptions.OutputDir, targetNupkgName + ".nupkg");
+            var targetNupkgPath = Path.Combine(TargetPath, targetNupkgName + ".nupkg");
+            using (var sourceStream = new FileStream(srcNupkgPath, FileMode.Open, FileAccess.Read))
+            {
+                using (var archive = new ZipArchive(sourceStream, ZipArchiveMode.Read))
+                {
+                    root.Operations.ExtractNupkg(archive, TargetPath);
+                }
+            }
+            using (var sourceStream = new FileStream(srcNupkgPath, FileMode.Open, FileAccess.Read))
+            {
+                using (var targetStream = new FileStream(targetNupkgPath, FileMode.Create, FileAccess.Write, FileShare.None))
+                {
+                    sourceStream.CopyTo(targetStream);
+                }
+
+                sourceStream.Seek(0, SeekOrigin.Begin);
+                var sha512Bytes = SHA512.Create().ComputeHash(sourceStream);
+                File.WriteAllText(targetNupkgPath + ".sha512", Convert.ToBase64String(sha512Bytes));
+            }
+        }
+
+    private static bool IsImplicitlyExcludedFile(string filePath)
         {
             var fileExtension = Path.GetExtension(filePath);
             var fileName = Path.GetFileName(filePath);

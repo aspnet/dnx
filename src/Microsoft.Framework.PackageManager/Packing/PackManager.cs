@@ -115,6 +115,7 @@ namespace Microsoft.Framework.PackageManager.Packing
                 Overwrite = _options.Overwrite,
                 ZipPackages = _options.ZipPackages,
                 AppFolder = _options.AppFolder ?? project.Name,
+                NoSource = _options.NoSource
             };
 
             foreach (var runtime in _options.Runtimes)

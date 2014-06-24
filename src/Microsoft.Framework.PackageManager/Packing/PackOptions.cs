@@ -20,6 +20,8 @@ namespace Microsoft.Framework.PackageManager.Packing
 
         public bool Overwrite { get; set; }
 
+        public bool NoSource { get; set; }
+
         public IEnumerable<string> Runtimes { get; set; }
     }
 }
