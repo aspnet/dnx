@@ -72,7 +72,8 @@ namespace Microsoft.Framework.PackageManager
                 {
                     return dependencySet
                         .SelectMany(x => x.Dependencies)
-                        .Select(x => new Library { Name = x.Id, Version = x.VersionSpec.MinVersion })
+                        .Select(x => new Library { Name = x.Id,
+                            Version = x.VersionSpec != null ? x.VersionSpec.MinVersion : null })
                         .ToList();
                 }
             }
