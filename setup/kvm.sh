@@ -248,7 +248,7 @@ kvm()
                   _kvm_unpack "$kreFile" "$kreFolder"
                 fi
                 kvm use "$kreVersion" "$persistent"
-                [[ -n $alias ]] && kvm alias "$alias" "$versionOrAlias"
+                [[ -n $alias ]] && kvm alias "$alias" "$kreVersion"
             else
                 local kreFullName="$(_kvm_requested_version_or_alias $versionOrAlias)"
                 local kreFolder="$KRE_USER_PACKAGES/$kreFullName"
@@ -313,7 +313,7 @@ kvm()
 
             if [[ $# == 1 ]]; then
                 echo ""
-                local format="%-10s %s\n"
+                local format="%-20s %s\n"
                 printf "$format" "Alias" "Name"
                 printf "$format" "-----" "----"
                 for _kvm_file in $(find "$KRE_USER_HOME/alias" -name *.alias); do

@@ -309,9 +309,11 @@ param(
             mv "$tempUnpackFolder\*" $kreFolder
         }
 
-        $kreBin = "$kreFolder\bin"
-        Write-Host "Adding" $kreBin "to process PATH"
-        Set-Path (Change-Path $env:Path $kreBin ($globalKrePackages, $userKrePackages))
+        $packageVersion = Package-Version $kreFullName
+        Kvm-Use $packageVersion
+        if (![string]::IsNullOrWhiteSpace($alias)) {
+            Kvm-Alias-Set $alias $packageVersion
+        }
     }
     else
     {
@@ -493,6 +495,13 @@ param(
     }
   }
   return $null
+}
+
+function Package-Version() {
+param(
+  [string] $kreFullName
+)
+    return $kreFullName -replace '[^.]*.(.*)', '$1'
 }
 
 function Requested-VersionOrAlias() {
