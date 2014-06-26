@@ -92,8 +92,18 @@ namespace Microsoft.Framework.PackageManager.Restore.NuGet
 
             var response = await _client.SendAsync(request);
 
+            var newFile = result.CacheFileName + "-new";
+
+            // Zero value of TTL means we always download the latest package
+            // So we write to a temp file instead of cache
+            if (cacheAgeLimit.Equals(TimeSpan.Zero))
+            {
+                result.CacheFileName = Path.GetTempFileName();
+                newFile = Path.GetTempFileName();
+            }
+
             using (var stream = new FileStream(
-                result.CacheFileName + "-new",
+                newFile,
                 FileMode.Create,
                 FileAccess.ReadWrite,
                 FileShare.ReadWrite | FileShare.Delete,
@@ -110,7 +120,7 @@ namespace Microsoft.Framework.PackageManager.Restore.NuGet
             }
 
             File.Move(
-                result.CacheFileName + "-new",
+                newFile,
                 result.CacheFileName);
 
             result.Stream = new FileStream(
@@ -135,7 +145,7 @@ namespace Microsoft.Framework.PackageManager.Restore.NuGet
             var cacheFolder = Path.Combine(localAppDataFolder, "kpm", "cache", baseFolderName);
             var cacheFile = Path.Combine(cacheFolder, baseFileName);
 
-            if (!Directory.Exists(cacheFolder))
+            if (!Directory.Exists(cacheFolder) && !cacheAgeLimit.Equals(TimeSpan.Zero))
             {
                 Directory.CreateDirectory(cacheFolder);
             }

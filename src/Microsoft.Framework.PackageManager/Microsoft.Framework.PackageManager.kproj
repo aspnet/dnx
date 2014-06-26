@@ -56,6 +56,7 @@
     <Compile Include="Restore\EmptyFrameworkResolver.cs" />
     <Compile Include="Restore\GraphModel\GraphItem.cs" />
     <Compile Include="Restore\GraphModel\GraphNode.cs" />
+    <Compile Include="Restore\NuGet\HttpSourceResult.cs" />
     <Compile Include="Restore\NuGet\HttpSource.cs" />
     <Compile Include="Restore\NuGet\PackageFolder.cs" />
     <Compile Include="Restore\NuGet\PackageUtilities.cs" />

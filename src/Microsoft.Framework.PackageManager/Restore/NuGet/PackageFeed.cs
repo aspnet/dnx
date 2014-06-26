@@ -39,13 +39,13 @@ namespace Microsoft.Framework.PackageManager.Restore.NuGet
             string baseUri,
             string userName,
             string password,
-            bool cacheRefresh,
+            bool noCache,
             IReport report)
         {
             _baseUri = baseUri.EndsWith("/") ? baseUri : (baseUri + "/");
             _report = report;
             _httpSource = new HttpSource(baseUri, userName, password, report);
-            if (cacheRefresh)
+            if (noCache)
             {
                 _cacheAgeLimitList = TimeSpan.Zero;
                 _cacheAgeLimitNupkg = TimeSpan.Zero;
@@ -79,20 +79,49 @@ namespace Microsoft.Framework.PackageManager.Restore.NuGet
             {
                 try
                 {
-                    using (var data = await _httpSource.GetAsync(
-                        _baseUri + "FindPackagesById()?Id='" + id + "'",
-                        "list_" + id,
-                        retry == 0 ? _cacheAgeLimitList : TimeSpan.Zero))
+                    var uri = _baseUri + "FindPackagesById()?Id='" + id + "'";
+                    var results = new List<PackageInfo>();
+                    var page = 1;
+                    while (true)
                     {
-                        var doc = XDocument.Load(data.Stream);
+                        // TODO: Pages for a package Id are cahced separately.
+                        // So we will get inaccurate data when a page shrinks.
+                        // However, (1) In most cases the pages grow rather than shrink;
+                        // (2) cache for pages is valid for only 30 min.
+                        // So we decide to leave current logic and observe.
+                        using (var data = await _httpSource.GetAsync(uri,
+                        string.Format("list_{0}_page{1}", id, page),
+                        retry == 0 ? _cacheAgeLimitList : TimeSpan.Zero))
+                        {
+                            var doc = XDocument.Load(data.Stream);
 
-                        var result = doc.Root
-                            .Elements(_xnameEntry)
-                            .Select(x => BuildModel(id, x))
-                            .ToArray();
+                            var result = doc.Root
+                                .Elements(_xnameEntry)
+                                .Select(x => BuildModel(id, x));
 
-                        return result;
+                            results.AddRange(result);
+
+                            // Example of what this looks like in the odata feed:
+                            // <link rel="next" href="{nextLink}" />
+                            var nextUri = (from e in doc.Root.Elements(_xnameLink)
+                                           let attr = e.Attribute("rel")
+                                           where attr != null && string.Equals(attr.Value, "next", StringComparison.OrdinalIgnoreCase)
+                                           select e.Attribute("href") into nextLink
+                                           where nextLink != null
+                                           select nextLink.Value).FirstOrDefault();
+
+                            // Stop if there's nothing else to GET
+                            if (string.IsNullOrEmpty(nextUri))
+                            {
+                                break;
+                            }
+
+                            uri = nextUri;
+                            page++;
+                        }
                     }
+
+                    return results;
                 }
                 catch (Exception ex)
                 {
