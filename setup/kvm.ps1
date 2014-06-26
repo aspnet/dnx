@@ -217,6 +217,7 @@ param(
     md $kreFolder -Force | Out-Null   
     Write-Host "Installing to $kreFolder"
     mv "$kreTempDownload\*" $kreFolder
+    del $kreTempDownload -Force
 }
 
 function Do-Kvm-Unpack {
