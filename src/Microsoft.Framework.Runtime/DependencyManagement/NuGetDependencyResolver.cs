@@ -262,14 +262,7 @@ namespace Microsoft.Framework.Runtime
         {
             var path = _repository.PathResolver.GetInstallPath(package);
 
-            var directory = Path.Combine(path, "lib", VersionUtility.GetShortFrameworkName(frameworkName));
-
-            if (!Directory.Exists(directory))
-            {
-                return GetAssembliesFromPackage(package, frameworkName, path);
-            }
-
-            return Directory.EnumerateFiles(directory, "*.dll");
+            return GetAssembliesFromPackage(package, frameworkName, path);
         }
 
         private IEnumerable<string> GetSharedSources(IPackage package, FrameworkName targetFramework)
@@ -301,11 +294,28 @@ namespace Microsoft.Framework.Runtime
             }
         }
 
-        private static IEnumerable<string> GetAssembliesFromPackage(IPackage package, FrameworkName frameworkName, string path)
+        private static IEnumerable<string> GetAssembliesFromPackage(IPackage package, FrameworkName targetFramework, string path)
         {
-            IEnumerable<IPackageAssemblyReference> references;
-            if (VersionUtility.TryGetCompatibleItems(frameworkName, package.AssemblyReferences, out references))
+            IEnumerable<IPackageAssemblyReference> compatibleReferences;
+            if (VersionUtility.TryGetCompatibleItems(targetFramework, package.AssemblyReferences, out compatibleReferences))
             {
+                // Get the list of references for this target framework
+                var references = compatibleReferences.ToList();
+
+                // See if there's a list of specific references defined for this target framework
+                IEnumerable<PackageReferenceSet> referenceSets;
+                if (VersionUtility.TryGetCompatibleItems(targetFramework, package.PackageAssemblyReferences, out referenceSets))
+                {
+                    // Get the first compatible reference set
+                    var referenceSet = referenceSets.FirstOrDefault();
+
+                    if (referenceSet != null)
+                    {
+                        // Remove all assemblies of which names do not appear in the References list
+                        references.RemoveAll(r => !referenceSet.References.Contains(r.Name, StringComparer.OrdinalIgnoreCase));
+                    }
+                }
+
                 foreach (var reference in references)
                 {
                     // Skip anything that isn't a dll. Unfortunately some packages put random stuff
