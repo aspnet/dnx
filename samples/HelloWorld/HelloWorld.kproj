@@ -17,11 +17,11 @@
     <SchemaVersion>2.0</SchemaVersion>
   </PropertyGroup>
   <ItemGroup>
-    <Content Include="Compiler\Resources\HTMLPage1.html" />
+    <Content Include="compiler\resources\HTMLPage1.html" />
     <Content Include="project.json" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Compiler\Preprocess\HelloMetaProgramming.cs" />
+    <Compile Include="compiler\preprocess\HelloMetaProgramming.cs" />
     <Compile Include="more\CompilerError.cs" />
     <Compile Include="Program.cs" />
   </ItemGroup>
