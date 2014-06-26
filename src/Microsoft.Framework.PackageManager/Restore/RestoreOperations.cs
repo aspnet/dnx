@@ -127,10 +127,13 @@ namespace Microsoft.Framework.PackageManager
 
             if (library.Version == null)
             {
-                return null;
+                // When version is null, we assume the latest version is used.
+                // For indirect dependencies, the assumption above is true.
+                // For direct dependencies, the assumption is not true and
+                // we will avoid installation of the package we find here in logic for installation
+                return await FindLibraryByVersion(context, library, context.RemoteLibraryProviders);
             }
-
-            if (library.Version.IsSnapshot)
+            else if (library.Version.IsSnapshot)
             {
                 var remoteMatch = await FindLibraryBySnapshot(context, library, context.RemoteLibraryProviders);
                 if (remoteMatch != null)

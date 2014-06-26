@@ -210,7 +210,12 @@ namespace Microsoft.Framework.PackageManager
                 var isAdded = installItems.Any(item => item.Match.Library == node.Item.Match.Library);
                 if (!isAdded && isRemote)
                 {
-                    installItems.Add(node.Item);
+                    // Direct dependencies without version information are not installed
+                    var isDirectDependency = graphs.Any(n => n.Dependencies.Contains(node));
+                    if (!(isDirectDependency && node.Library.Version == null))
+                    {
+                        installItems.Add(node.Item);
+                    }
                 }
             });
 
