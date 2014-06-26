@@ -19,12 +19,12 @@ fi
 
 if test ! -e .nuget; then
     mkdir .nuget
-    cp $cachedir/nuget.exe .nuget/nuget.exe
+    cp $cachedir/nuget.exe .nuget/NuGet.exe
 fi
 
 if test ! -d packages/KoreBuild; then
-    mono .nuget/nuget.exe install KoreBuild -ExcludeVersion -o packages -nocache -pre
-    mono .nuget/nuget.exe install Sake -version 0.2 -o packages -ExcludeVersion
+    mono .nuget/NuGet.exe install KoreBuild -ExcludeVersion -o packages -nocache -pre
+    mono .nuget/NuGet.exe install Sake -version 0.2 -o packages -ExcludeVersion
 fi
 
 if ! type k > /dev/null 2>&1; then
