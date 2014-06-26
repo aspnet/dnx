@@ -1022,7 +1022,7 @@ namespace NuGet
                 // skip nulls
                 return false;
             }
-            if (!considering.EqualsSnapshot(ideal) && considering < ideal)
+            if (ideal != null && !considering.EqualsSnapshot(ideal) && considering < ideal)
             {
                 // don't use anything that's less than the requested version
                 return false;
@@ -1032,11 +1032,16 @@ namespace NuGet
                 // always use version when it's the first valid
                 return true;
             }
-            if (current.EqualsSnapshot(ideal) &&
+            if (ideal != null && current.EqualsSnapshot(ideal) &&
                 considering.EqualsSnapshot(ideal))
             {
                 // favor higher version when they both match a snapshot patter
                 return current < considering;
+            }
+            else if (ideal == null)
+            {
+                // If requested version is null, we always favor higher version
+                return considering > current;
             }
             else
             {
