@@ -21,9 +21,9 @@ namespace Microsoft.Framework.PackageManager
             _source = source;
         }
 
-        public async Task<WalkProviderMatch> FindLibraryByName(string name, FrameworkName targetFramework)
+        public Task<WalkProviderMatch> FindLibraryByName(string name, FrameworkName targetFramework)
         {
-            return null;
+            return Task.FromResult<WalkProviderMatch>(null);
         }
 
         public async Task<WalkProviderMatch> FindLibraryByVersion(Library library, FrameworkName targetFramework)

@@ -5,7 +5,7 @@ using System;
 
 namespace Microsoft.Framework.Runtime
 {
-    public static class PlatformHelper
+    internal static class PlatformHelper
     {
         private static Lazy<bool> _isMono = new Lazy<bool>(() => Type.GetType("Mono.Runtime") != null);
 

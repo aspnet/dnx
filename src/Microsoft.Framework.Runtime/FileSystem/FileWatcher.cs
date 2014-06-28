@@ -220,7 +220,10 @@ namespace Microsoft.Framework.Runtime.FileSystem
             return true;
         }
 
+// Suppressing warning CS0067: The event 'Microsoft.Framework.Runtime.FileSystem.NoopWatcher.OnChanged' is never used
+#pragma warning disable 0067
         public event Action<string> OnChanged;
+#pragma warning restore 0067
 
         public void WatchDirectory(string path, string extension)
         {

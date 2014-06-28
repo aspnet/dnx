@@ -41,7 +41,7 @@ namespace NuGet
             return safeSettings;
         }
 
-        internal static XDocument GetOrCreateDocument(XName rootName, IFileSystem fileSystem, string path)
+        public static XDocument GetOrCreateDocument(XName rootName, IFileSystem fileSystem, string path)
         {
             if (fileSystem.FileExists(path))
             {

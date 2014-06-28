@@ -31,6 +31,10 @@ namespace Microsoft.Framework.PackageManager
         {
 #if NET45
             _originalForeground = Console.ForegroundColor;
+#else
+            // TODO: temporary hack to eliminate warnings, remove this line 
+            // after we have Console.ForegroundColor on CoreCLR
+            _originalForeground = ConsoleColor.White;
 #endif
 
             var app = new CommandLineApplication();

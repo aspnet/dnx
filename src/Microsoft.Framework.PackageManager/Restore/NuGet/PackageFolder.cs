@@ -31,13 +31,13 @@ namespace Microsoft.Framework.PackageManager.Restore.NuGet
             _report = report;
         }
 
-        public async Task<IEnumerable<PackageInfo>> FindPackagesByIdAsync(string id)
+        public Task<IEnumerable<PackageInfo>> FindPackagesByIdAsync(string id)
         {
-            return _repository.FindPackagesById(id).Select(p => new PackageInfo
+            return Task.FromResult(_repository.FindPackagesById(id).Select(p => new PackageInfo
             {
                 Id = p.Id,
                 Version = p.Version
-            });
+            }));
         }
 
         public async Task<Stream> OpenNuspecStreamAsync(PackageInfo package)
@@ -76,9 +76,9 @@ namespace Microsoft.Framework.PackageManager.Restore.NuGet
             }
         }
 
-        public async Task<Stream> OpenNupkgStreamAsync(PackageInfo package)
+        public Task<Stream> OpenNupkgStreamAsync(PackageInfo package)
         {
-            return _repository.FindPackage(package.Id, package.Version).GetStream();
+            return Task.FromResult(_repository.FindPackage(package.Id, package.Version).GetStream());
         }
     }
 }

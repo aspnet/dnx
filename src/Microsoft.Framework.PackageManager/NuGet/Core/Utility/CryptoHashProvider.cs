@@ -14,11 +14,8 @@ namespace NuGet
         /// </summary>
         private const string SHA256HashAlgorithm = "SHA256";
 
-        private readonly string _hashAlgorithm;
-
         public CryptoHashProvider()
         {
-            _hashAlgorithm = SHA256HashAlgorithm;
         }
 
         public byte[] CalculateHash(Stream stream)

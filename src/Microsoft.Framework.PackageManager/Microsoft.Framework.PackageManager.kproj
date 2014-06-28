@@ -44,7 +44,6 @@
     <Compile Include="NuGet\Core\Utility\CryptoHashProvider.cs" />
     <Compile Include="NuGet\Core\Utility\EncryptionUtility.cs" />
     <Compile Include="NuGet\Core\Utility\IHashProvider.cs" />
-    <Compile Include="NuGet\Core\Utility\XmlUtility.cs" />
     <Compile Include="Packing\PackManager.cs" />
     <Compile Include="Packing\PackOperations.cs" />
     <Compile Include="Packing\PackOptions.cs" />
