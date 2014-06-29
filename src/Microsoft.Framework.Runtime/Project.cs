@@ -206,22 +206,19 @@ namespace Microsoft.Framework.Runtime
             project.SharedPatterns = GetSourcePattern(rawProject, "shared", _defaultSharedPatterns);
             project.ResourcesPatterns = GetSourcePattern(rawProject, "resources", _defaultResourcesPatterns);
 
-            var loaderInformation = new LoaderInformation();
+            // Set the default loader information for projects
+            var loaderAssemblyName = "Microsoft.Framework.Runtime.Roslyn";
+            var loaderTypeName = "Microsoft.Framework.Runtime.Roslyn.RoslynAssemblyLoader";
 
             var loaderInfo = rawProject["loader"] as JObject;
 
             if (loaderInfo != null)
             {
-                loaderInformation.AssemblyName = GetValue<string>(loaderInfo, "name");
-                loaderInformation.TypeName = GetValue<string>(loaderInfo, "type");
-            }
-            else
-            {
-                loaderInformation.AssemblyName = "Microsoft.Framework.Runtime.Roslyn";
-                loaderInformation.TypeName = "Microsoft.Framework.Runtime.Roslyn.RoslynAssemblyLoader";
+                loaderAssemblyName = GetValue<string>(loaderInfo, "name");
+                loaderTypeName = GetValue<string>(loaderInfo, "type");
             }
 
-            project.Loader = loaderInformation;
+            project.Loader = new LoaderInformation(loaderAssemblyName, loaderTypeName);
 
             var commands = rawProject["commands"] as JObject;
             if (commands != null)
@@ -469,13 +466,6 @@ namespace Microsoft.Framework.Runtime
             }
 
             return config ?? _defaultTargetFrameworkConfiguration;
-        }
-
-        public class LoaderInformation
-        {
-            public string AssemblyName { get; set; }
-
-            public string TypeName { get; set; }
         }
     }
 }

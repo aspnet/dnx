@@ -253,7 +253,7 @@ namespace Microsoft.Framework.Runtime.Roslyn
 
             public ILibraryExport GetLibraryExport(string name, FrameworkName targetFramework)
             {
-                return _compiler.GetLibraryExport(name, targetFramework, _compliationCache) ?? _previous.GetLibraryExport(name, targetFramework);
+                return _previous.GetLibraryExport(name, targetFramework) ?? _compiler.GetLibraryExport(name, targetFramework, _compliationCache);
             }
         }
     }

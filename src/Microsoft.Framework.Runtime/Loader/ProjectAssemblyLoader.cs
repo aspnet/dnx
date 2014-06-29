@@ -13,7 +13,7 @@ namespace Microsoft.Framework.Runtime.Loader
     {
         private readonly IProjectResolver _projectResolver;
         private readonly IServiceProvider _serviceProvider;
-        private readonly Dictionary<string, Loader> _loaders = new Dictionary<string, Loader>(StringComparer.OrdinalIgnoreCase);
+        private readonly Dictionary<LoaderInformation, Loader> _loaders = new Dictionary<LoaderInformation, Loader>();
 
         public ProjectAssemblyLoader(IProjectResolver projectResolver, IServiceProvider serviceProvider)
         {
@@ -48,7 +48,7 @@ namespace Microsoft.Framework.Runtime.Loader
             }
 
             // Get the specific loader
-            var loader = _loaders.GetOrAdd(project.Loader.AssemblyName, _ => new Loader());
+            var loader = _loaders.GetOrAdd(project.Loader, _ => new Loader());
 
             if (stopIfInitializing && loader.LoaderInitializing)
             {

@@ -58,6 +58,7 @@
     <Compile Include="IFrameworkReferenceResolver.cs" />
     <Compile Include="IProjectResolver.cs" />
     <Compile Include="Loader\CompositeAssemblyLoader.cs" />
+    <Compile Include="Loader\LoaderInformation.cs" />
     <Compile Include="Loader\NuGetAssemblyLoader.cs" />
     <Compile Include="Loader\ProjectAssemblyLoader.cs" />
     <Compile Include="Loader\CompilationException.cs" />
