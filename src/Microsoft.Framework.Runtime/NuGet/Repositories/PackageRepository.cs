@@ -6,22 +6,21 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
-using Microsoft.Framework.Runtime;
 using NuGet.Resources;
 
 namespace NuGet
 {
-    public class LocalPackageRepository
+    public class PackageRepository
     {
         private readonly ILookup<string, IPackage> _cache;
 
-        public LocalPackageRepository(string physicalPath)
+        public PackageRepository(string physicalPath)
             : this(new DefaultPackagePathResolver(physicalPath),
                    new PhysicalFileSystem(physicalPath))
         {
         }
 
-        public LocalPackageRepository(IPackagePathResolver pathResolver, IFileSystem fileSystem)
+        public PackageRepository(IPackagePathResolver pathResolver, IFileSystem fileSystem)
         {
             if (pathResolver == null)
             {
@@ -40,20 +39,15 @@ namespace NuGet
 
         private ILookup<string, IPackage> PopulateCache()
         {
-            string nupkgFilter = "*" + Constants.PackageExtension;
             string nuspecFilter = "*" + Constants.ManifestExtension;
 
             var packages = new List<IPackage>();
 
             foreach (var dir in FileSystem.GetDirectories(String.Empty))
             {
-                foreach (var path in FileSystem.GetFiles(dir, nupkgFilter))
-                {
-                    packages.Add(OpenPackage(path));
-                }
                 foreach (var path in FileSystem.GetFiles(dir, nuspecFilter))
                 {
-                    packages.Add(OpenPackage(path));
+                    packages.Add(OpenNuspec(path));
                 }
             }
 
@@ -72,21 +66,6 @@ namespace NuGet
             private set;
         }
 
-        public IPackage FindPackage(string packageId, SemanticVersion version)
-        {
-            if (String.IsNullOrEmpty(packageId))
-            {
-                throw new ArgumentNullException("packageId");
-            }
-
-            if (version == null)
-            {
-                throw new ArgumentNullException("version");
-            }
-
-            return _cache[packageId].FirstOrDefault(p => p.Version == version);
-        }
-
         public IEnumerable<IPackage> FindPackagesById(string packageId)
         {
             if (String.IsNullOrEmpty(packageId))
@@ -98,41 +77,11 @@ namespace NuGet
         }
 
 
-        private IPackage OpenPackage(string path)
+        private IPackage OpenNuspec(string path)
         {
             if (!FileSystem.FileExists(path))
             {
                 return null;
-            }
-
-            if (Path.GetExtension(path) == Constants.PackageExtension)
-            {
-                LocalPackage package;
-
-                try
-                {
-#if NET45
-                    if (PlatformHelper.IsMono)
-                    {
-                        package = new OptimizedOpcZipPackage(FileSystem, path);
-                    }
-                    else
-                    {
-                        package = new OptimizedZipPackage(FileSystem, path);
-                    }
-#else
-                    package = new OptimizedZipPackage(FileSystem, path);
-#endif
-                }
-                catch (InvalidDataException ex)
-                {
-                    throw new InvalidDataException(String.Format(CultureInfo.CurrentCulture, NuGetResources.ErrorReadingPackage, path), ex);
-                }
-
-                // Set the last modified date on the package
-                package.Published = FileSystem.GetLastModified(path);
-
-                return package;
             }
 
             if (Path.GetExtension(path) == Constants.ManifestExtension)

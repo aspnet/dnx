@@ -119,7 +119,7 @@
     <Compile Include="NuGet\ProjectSystem\IFileSystem.cs" />
     <Compile Include="NuGet\ProjectSystem\PhysicalFileSystem.cs" />
     <Compile Include="NuGet\Repositories\IPackageName.cs" />
-    <Compile Include="NuGet\Repositories\LocalPackageRepository.cs" />
+    <Compile Include="NuGet\Repositories\PackageRepository.cs" />
     <Compile Include="NuGet\Repositories\PackageName.cs" />
     <Compile Include="NuGet\Resources\NuGetResources.Designer.cs" />
     <Compile Include="NuGet\SemanticVersion.cs" />

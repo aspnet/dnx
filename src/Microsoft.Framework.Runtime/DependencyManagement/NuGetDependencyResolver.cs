@@ -14,7 +14,7 @@ namespace Microsoft.Framework.Runtime
 {
     public class NuGetDependencyResolver : IDependencyProvider, ILibraryExportProvider
     {
-        private readonly LocalPackageRepository _repository;
+        private readonly PackageRepository _repository;
 
         // Assembly name and path lifted from the appropriate lib folder
         private readonly Dictionary<string, string> _packageAssemblyPaths = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
@@ -36,7 +36,7 @@ namespace Microsoft.Framework.Runtime
                 packagesPath = ResolveRepositoryPath(projectPath);
             }
 
-            _repository = new LocalPackageRepository(packagesPath);
+            _repository = new PackageRepository(packagesPath);
             _frameworkReferenceResolver = frameworkReferenceResolver;
             Dependencies = Enumerable.Empty<LibraryDescription>();
         }
