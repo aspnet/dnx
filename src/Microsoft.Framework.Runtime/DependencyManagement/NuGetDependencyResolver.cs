@@ -320,7 +320,8 @@ namespace Microsoft.Framework.Runtime
                     string fileName = Path.Combine(path, reference.Path);
                     results.Add(new AssemblyDescription
                     {
-                        Name = reference.Name,
+                        // Remove the .dll extension
+                        Name = Path.GetFileNameWithoutExtension(reference.Name),
                         Path = fileName
                     });
                 }
