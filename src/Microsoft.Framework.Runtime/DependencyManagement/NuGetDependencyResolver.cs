@@ -144,32 +144,14 @@ namespace Microsoft.Framework.Runtime
                     packageDescription.ContractPath = contractPath;
                 }
 
-                var assemblies = GetAssemblies(package, targetFramework).ToList();
-                foreach (var path in assemblies)
-                {
-                    var assemblyName = GetAssemblyName(path);
-                    packageDescription.PackageAssemblies.Add(new AssemblyDescription
-                    {
-                        Name = assemblyName.Name,
-                        Path = path
-                    });
+                packageDescription.PackageAssemblies = GetAssemblies(package, targetFramework);
 
-                    _packageAssemblyPaths[assemblyName.Name] = path;
+                foreach (var assemblyInfo in packageDescription.PackageAssemblies)
+                {
+                    _packageAssemblyPaths[assemblyInfo.Name] = assemblyInfo.Path;
                 }
 
-                var frameworkReferences = GetFrameworkAssemblies(package, targetFramework).ToList();
-                if (!frameworkReferences.IsEmpty())
-                {
-                    foreach (var path in frameworkReferences)
-                    {
-                        var assemblyName = GetAssemblyName(path);
-                        packageDescription.FrameworkAssemblies.Add(new AssemblyDescription
-                        {
-                            Name = assemblyName.Name,
-                            Path = path
-                        });
-                    }
-                }
+                packageDescription.FrameworkAssemblies = GetFrameworkAssemblies(package, targetFramework);
 
                 var sharedSources = GetSharedSources(package, targetFramework).ToList();
                 if (!sharedSources.IsEmpty())
@@ -258,7 +240,7 @@ namespace Microsoft.Framework.Runtime
             }
         }
 
-        private IEnumerable<string> GetAssemblies(IPackage package, FrameworkName frameworkName)
+        private List<AssemblyDescription> GetAssemblies(IPackage package, FrameworkName frameworkName)
         {
             var path = _repository.PathResolver.GetInstallPath(package);
 
@@ -278,8 +260,10 @@ namespace Microsoft.Framework.Runtime
             return Directory.EnumerateFiles(directory, "*.*", SearchOption.AllDirectories);
         }
 
-        private IEnumerable<string> GetFrameworkAssemblies(IPackage package, FrameworkName targetFramework)
+        private List<AssemblyDescription> GetFrameworkAssemblies(IPackage package, FrameworkName targetFramework)
         {
+            var results = new List<AssemblyDescription>();
+
             IEnumerable<FrameworkAssemblyReference> frameworkAssemblies;
             if (VersionUtility.TryGetCompatibleItems(targetFramework, package.FrameworkAssemblies, out frameworkAssemblies))
             {
@@ -288,14 +272,22 @@ namespace Microsoft.Framework.Runtime
                     string path;
                     if (_frameworkReferenceResolver.TryGetAssembly(reference.AssemblyName, targetFramework, out path))
                     {
-                        yield return path;
+                        results.Add(new AssemblyDescription
+                        {
+                            Name = reference.AssemblyName,
+                            Path = path
+                        });
                     }
                 }
             }
+
+            return results;
         }
 
-        private static IEnumerable<string> GetAssembliesFromPackage(IPackage package, FrameworkName targetFramework, string path)
+        private static List<AssemblyDescription> GetAssembliesFromPackage(IPackage package, FrameworkName targetFramework, string path)
         {
+            var results = new List<AssemblyDescription>();
+
             IEnumerable<IPackageAssemblyReference> compatibleReferences;
             if (VersionUtility.TryGetCompatibleItems(targetFramework, package.AssemblyReferences, out compatibleReferences))
             {
@@ -326,9 +318,15 @@ namespace Microsoft.Framework.Runtime
                     }
 
                     string fileName = Path.Combine(path, reference.Path);
-                    yield return fileName;
+                    results.Add(new AssemblyDescription
+                    {
+                        Name = reference.Name,
+                        Path = fileName
+                    });
                 }
             }
+
+            return results;
         }
 
         public IPackage FindCandidate(string name, SemanticVersion version)
@@ -362,15 +360,6 @@ namespace Microsoft.Framework.Runtime
             return Path.Combine(rootPath, "packages");
         }
 
-        private static AssemblyName GetAssemblyName(string fileName)
-        {
-#if NET45
-            return AssemblyName.GetAssemblyName(fileName);
-#else
-            return System.Runtime.Loader.AssemblyLoadContext.GetAssemblyName(fileName);
-#endif
-        }
-
         private class PackageDescription
         {
             public LibraryDescription Library { get; set; }
@@ -385,8 +374,6 @@ namespace Microsoft.Framework.Runtime
 
             public PackageDescription()
             {
-                PackageAssemblies = new List<AssemblyDescription>();
-                FrameworkAssemblies = new List<AssemblyDescription>();
                 SharedSources = new List<string>();
             }
         }
