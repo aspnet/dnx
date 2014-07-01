@@ -11,6 +11,8 @@ namespace klr.host
 {
     public class RootHost : IHost
     {
+        private static readonly string[] _extensions = new string[] { ".dll", ".exe" };
+
         private readonly string[] _searchPaths;
         private readonly IAssemblyLoaderEngine _loaderEngine;
 
@@ -30,18 +32,22 @@ namespace klr.host
 
             foreach (var path in _searchPaths)
             {
-                var filePath = Path.Combine(path, name + ".dll");
-                if (File.Exists(filePath))
+                foreach (var extension in _extensions)
                 {
-                    try
-                    {
-                        Trace.TraceInformation("RootHost Assembly.LoadFile({0})", filePath);
+                    var filePath = Path.Combine(path, name + extension);
 
-                        return _loaderEngine.LoadFile(filePath);
-                    }
-                    catch (Exception ex)
+                    if (File.Exists(filePath))
                     {
-                        Trace.TraceWarning("Exception {0} loading {1}", ex.Message, filePath);
+                        try
+                        {
+                            Trace.TraceInformation("RootHost Assembly.LoadFile({0})", filePath);
+
+                            return _loaderEngine.LoadFile(filePath);
+                        }
+                        catch (Exception ex)
+                        {
+                            Trace.TraceWarning("Exception {0} loading {1}", ex.Message, filePath);
+                        }
                     }
                 }
             }

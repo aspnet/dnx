@@ -13,43 +13,24 @@ namespace Microsoft.Framework.Runtime.Common
     {
         public static Task<int> Execute(Assembly assembly, string[] args, IServiceProvider serviceProvider)
         {
-            string name = assembly.GetName().Name;
+            object instance;
+            MethodInfo entryPoint;
 
-            var programType = assembly.GetType("Program") ?? assembly.GetType(name + ".Program");
-
-            if (programType == null)
+            if (!TryGetEntryPoint(assembly, serviceProvider, out instance, out entryPoint))
             {
-                var programTypeInfo = assembly.DefinedTypes.FirstOrDefault(t => t.Name == "Program");
-
-                if (programTypeInfo == null)
-                {
-                    System.Console.WriteLine("'{0}' does not contain a static 'Main' method suitable for an entry point", name);
-                    return Task.FromResult(-1);
-                }
-
-                programType = programTypeInfo.AsType();
-            }
-
-            var main = programType.GetTypeInfo().GetDeclaredMethods("Main").FirstOrDefault();
-
-            if (main == null)
-            {
-                System.Console.WriteLine("'{0}' does not contain a 'Main' method suitable for an entry point", name);
                 return Task.FromResult(-1);
             }
 
-            object instance = programType.GetTypeInfo().IsAbstract ? null : ActivatorUtilities.CreateInstance(serviceProvider, programType);
-
             object result = null;
-            var parameters = main.GetParameters();
+            var parameters = entryPoint.GetParameters();
 
             if (parameters.Length == 0)
             {
-                result = main.Invoke(instance, null);
+                result = entryPoint.Invoke(instance, null);
             }
             else if (parameters.Length == 1)
             {
-                result = main.Invoke(instance, new object[] { args });
+                result = entryPoint.Invoke(instance, new object[] { args });
             }
 
             if (result is int)
@@ -71,6 +52,49 @@ namespace Microsoft.Framework.Runtime.Common
             }
 
             return Task.FromResult(0);
+        }
+
+        private static bool TryGetEntryPoint(Assembly assembly, IServiceProvider serviceProvider, out object instance, out MethodInfo entryPoint)
+        {
+            string name = assembly.GetName().Name;
+
+            instance = null;
+            entryPoint = null;
+#if NET45
+            if (assembly.EntryPoint != null)
+            {
+                // Add support for console apps
+                // This allows us to boot any existing console application
+                // under the runtime
+                entryPoint = assembly.EntryPoint;
+                return true;
+            }
+#endif
+            var programType = assembly.GetType("Program") ?? assembly.GetType(name + ".Program");
+
+            if (programType == null)
+            {
+                var programTypeInfo = assembly.DefinedTypes.FirstOrDefault(t => t.Name == "Program");
+
+                if (programTypeInfo == null)
+                {
+                    System.Console.WriteLine("'{0}' does not contain a static 'Main' method suitable for an entry point", name);
+                    return false;
+                }
+
+                programType = programTypeInfo.AsType();
+            }
+
+            entryPoint = programType.GetTypeInfo().GetDeclaredMethods("Main").FirstOrDefault();
+
+            if (entryPoint == null)
+            {
+                System.Console.WriteLine("'{0}' does not contain a 'Main' method suitable for an entry point", name);
+                return false;
+            }
+
+            instance = programType.GetTypeInfo().IsAbstract ? null : ActivatorUtilities.CreateInstance(serviceProvider, programType);
+            return true;
         }
     }
 }
