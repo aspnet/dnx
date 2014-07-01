@@ -195,7 +195,7 @@ param(
       }
     }
 
-    Write-Host "Downloading" $kreFullName "from https://www.myget.org/F/aspnetvnext/api/v2/"
+    Write-Host "Downloading" $kreFullName "from $feed"
 
     #Downloading to temp location
     $kreTempDownload = Join-Path $packagesFolder "temp"
