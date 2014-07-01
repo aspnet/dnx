@@ -164,7 +164,7 @@ namespace Microsoft.Framework.Runtime
             var frameworkInfo = new FrameworkInformation();
             frameworkInfo.Path = directory.FullName;
 
-            // The redist list conains the list of assemblies for this target framework
+            // The redist list contains the list of assemblies for this target framework
             string redistList = Path.Combine(directory.FullName, "RedistList", "FrameworkList.xml");
 
             if (File.Exists(redistList))
