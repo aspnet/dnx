@@ -1,6 +1,6 @@
 {
     "version": "1.0.0-*",
-    "compilationOptions" : { "define" : ["TRACE"], "allowUnsafe": true },
+    "compilationOptions" : { "define" : ["TRACE"], "allowUnsafe": true, "warningsAsErrors": true },
     "dependencies": {
         "K.Roslyn" : "1.0.0-*",
         "Microsoft.Framework.Runtime" :  "",

@@ -1,6 +1,6 @@
 {
     "version": "1.0.0-*",
-    "compilationOptions" : { "define" : ["TRACE"], "allowUnsafe": true },
+    "compilationOptions" : { "define" : ["TRACE"], "allowUnsafe": true, "warningsAsErrors": true },
     "dependencies": {
         "klr.hosting.shared" : "",
         "Microsoft.Framework.CommandLineUtils" : ""

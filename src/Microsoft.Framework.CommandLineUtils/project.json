@@ -1,6 +1,6 @@
 {
     "version": "1.0.0-*",
-    "compilationOptions" : { "define" : ["TRACE"] },
+    "compilationOptions" : { "define" : ["TRACE"], "warningsAsErrors": true },
     "shared": "**/*.cs",
     "configurations" : {
         "net45" : { },

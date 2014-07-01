@@ -1,6 +1,6 @@
 {
     "version": "1.0.0-*",
-    "compilationOptions" : { "define" : ["LOADER", "TRACE"], "allowUnsafe": true },
+    "compilationOptions" : { "define" : ["LOADER", "TRACE"], "allowUnsafe": true, "warningsAsErrors": true },
     "dependencies": {
         "Microsoft.Bcl.Metadata": "1.0.11-alpha",
         "Microsoft.Framework.Runtime.Common" : "",

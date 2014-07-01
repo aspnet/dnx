@@ -1,5 +1,6 @@
 {
     "version": "1.0.0-*",
+    "compilationOptions" : { "warningsAsErrors": true },
     "configurations" : {
         "net45" : { },
         "k10" : { 
