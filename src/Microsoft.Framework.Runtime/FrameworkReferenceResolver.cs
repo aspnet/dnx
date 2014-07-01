@@ -23,36 +23,49 @@ namespace Microsoft.Framework.Runtime
 
         public bool TryGetAssembly(string name, FrameworkName targetFramework, out string path)
         {
-            FrameworkInformation frameworkInfo;
-            if (_cache.TryGetValue(targetFramework, out frameworkInfo))
+            var information = _cache.GetOrAdd(targetFramework, GetFrameworkInformation);
+
+            if (information == null)
             {
-                return frameworkInfo.Assemblies.TryGetValue(name, out path);
+                path = null;
+                return false;
             }
 
-            path = null;
-            return false;
+            lock (information.Assemblies)
+            {
+                if (information.Assemblies.TryGetValue(name, out path) && 
+                    string.IsNullOrEmpty(path))
+                {
+                    path = GetAssemblyPath(information.Path, name);
+                    information.Assemblies[name] = path;
+                }
+            }
+
+            return !string.IsNullOrEmpty(path);
         }
 
         public string GetFriendlyFrameworkName(FrameworkName targetFramework)
         {
-            FrameworkInformation frameworkInfomation;
-            if (_cache.TryGetValue(targetFramework, out frameworkInfomation))
+            var information = _cache.GetOrAdd(targetFramework, GetFrameworkInformation);
+
+            if (information == null)
             {
-                return frameworkInfomation.Name;
+                return null;
             }
 
-            return null;
+            return information.Name;
         }
 
         public string GetFrameworkPath(FrameworkName targetFramework)
         {
-            FrameworkInformation frameworkInfomation;
-            if (_cache.TryGetValue(targetFramework, out frameworkInfomation))
+            var information = _cache.GetOrAdd(targetFramework, GetFrameworkInformation);
+
+            if (information == null)
             {
-                return frameworkInfomation.Path;
+                return null;
             }
 
-            return null;
+            return information.Path;
         }
 
         public static string GetReferenceAssembliesPath()
@@ -80,9 +93,9 @@ namespace Microsoft.Framework.Runtime
 
         private void PopulateCache()
         {
+#if NET45
             if (PlatformHelper.IsMono)
             {
-#if NET45
                 var mscorlibLocationOnThisRunningMonoInstance = typeof(object).GetTypeInfo().Assembly.Location;
 
                 var libPath = Path.GetDirectoryName(Path.GetDirectoryName(mscorlibLocationOnThisRunningMonoInstance));
@@ -115,60 +128,43 @@ namespace Microsoft.Framework.Runtime
 
                     _cache[frameworkName] = frameworkInfo;
                 }
+            }
 #endif
-            }
-            else
-            {
-                string referenceAssembliesPath = GetReferenceAssembliesPath();
-
-                if (!string.IsNullOrEmpty(referenceAssembliesPath))
-                {
-                    PopulateReferenceAssemblies(referenceAssembliesPath);
-                }
-            }
         }
 
-        private void PopulateReferenceAssemblies(string path)
+        private static FrameworkInformation GetFrameworkInformation(FrameworkName targetFramework)
         {
-            var di = new DirectoryInfo(path);
+            string referenceAssembliesPath = GetReferenceAssembliesPath();
 
-            if (!di.Exists)
+            if (string.IsNullOrEmpty(referenceAssembliesPath))
             {
-                return;
+                return null;
             }
 
-            foreach (var framework in di.EnumerateDirectories())
+            string basePath = Path.Combine(referenceAssembliesPath,
+                                           targetFramework.Identifier,
+                                           "v" + targetFramework.Version);
+
+            if (!string.IsNullOrEmpty(targetFramework.Profile))
             {
-                if (framework.Name.StartsWith("v"))
-                {
-                    continue;
-                }
-
-                foreach (var version in framework.EnumerateDirectories())
-                {
-                    var frameworkName = new FrameworkName(framework.Name, new Version(version.Name.TrimStart('v')));
-
-                    PopulateFrameworkReferences(version, frameworkName);
-
-                    var profiles = new DirectoryInfo(Path.Combine(version.FullName, "Profile"));
-                    if (profiles.Exists)
-                    {
-                        foreach (var profile in profiles.EnumerateDirectories("Profile*"))
-                        {
-                            var profileFrameworkName = new FrameworkName(frameworkName.Identifier, frameworkName.Version, profile.Name);
-
-                            PopulateFrameworkReferences(profile, profileFrameworkName);
-                        }
-                    }
-                }
+                basePath = Path.Combine(basePath, "Profile", targetFramework.Profile);
             }
+
+            var version = new DirectoryInfo(basePath);
+            if (!version.Exists)
+            {
+                return null;
+            }
+
+            return GetFrameworkInformation(version, targetFramework);
         }
 
-        private void PopulateFrameworkReferences(DirectoryInfo directory, FrameworkName frameworkName)
+        private static FrameworkInformation GetFrameworkInformation(DirectoryInfo directory, FrameworkName targetFramework)
         {
             var frameworkInfo = new FrameworkInformation();
             frameworkInfo.Path = directory.FullName;
 
+            // The redist list conains the list of assemblies for this target framework
             string redistList = Path.Combine(directory.FullName, "RedistList", "FrameworkList.xml");
 
             if (File.Exists(redistList))
@@ -177,9 +173,10 @@ namespace Microsoft.Framework.Runtime
                 {
                     var frameworkList = XDocument.Load(stream);
 
-                    foreach (var pair in GetFrameworkAssemblies(directory.FullName, frameworkList))
+                    foreach (var e in frameworkList.Root.Elements())
                     {
-                        frameworkInfo.Assemblies.Add(pair.Item1, pair.Item2);
+                        string assemblyName = e.Attribute("AssemblyName").Value;
+                        frameworkInfo.Assemblies.Add(assemblyName, null);
                     }
 
                     var nameAttribute = frameworkList.Root.Attribute("Name");
@@ -188,25 +185,7 @@ namespace Microsoft.Framework.Runtime
                 }
             }
 
-            _cache[frameworkName] = frameworkInfo;
-        }
-
-        private static IEnumerable<Tuple<string, string>> GetFrameworkAssemblies(string frameworkPath, XDocument frameworkList)
-        {
-            var assemblies = new List<Tuple<string, string>>();
-
-            foreach (var e in frameworkList.Root.Elements())
-            {
-                string assemblyName = e.Attribute("AssemblyName").Value;
-                string assemblyPath = GetAssemblyPath(frameworkPath, assemblyName);
-
-                if (!string.IsNullOrEmpty(assemblyPath))
-                {
-                    assemblies.Add(Tuple.Create(assemblyName, assemblyPath));
-                }
-            }
-
-            return assemblies;
+            return frameworkInfo;
         }
 
         private static void PopulateAssemblies(List<Tuple<string, string>> assemblies, string path)
@@ -225,13 +204,15 @@ namespace Microsoft.Framework.Runtime
         private static string GetAssemblyPath(string basePath, string assemblyName)
         {
             var assemblyPath = Path.Combine(basePath, assemblyName + ".dll");
-            var facadePath = Path.Combine(basePath, "Facades", assemblyName + ".dll");
 
             if (File.Exists(assemblyPath))
             {
                 return assemblyPath;
             }
-            else if (File.Exists(facadePath))
+
+            var facadePath = Path.Combine(basePath, "Facades", assemblyName + ".dll");
+
+            if (File.Exists(facadePath))
             {
                 return facadePath;
             }
