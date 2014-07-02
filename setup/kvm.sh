@@ -341,7 +341,9 @@ kvm()
 
             [[ ! -d "$KRE_USER_PACKAGES/$kreFullName" ]] && echo "$semver is not an installed KRE version." && return 1
 
-            echo "Setting alias '$name' to '$kreFullName'"
+            local action="Setting"
+            [[ -e "$KRE_USER_HOME/alias/$name.alias" ]] && action="Updating"
+            echo "$action alias '$name' to '$kreFullName'"
 
             echo "$kreFullName" > "$KRE_USER_HOME/alias/$name.alias"
         ;;
