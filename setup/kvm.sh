@@ -17,7 +17,9 @@ KRE_USER_PACKAGES="$KRE_USER_HOME/packages"
 KRE_MONO45=
 KRE_X86=
 KRE_X64=
-KRE_NUGET_API_URL="https://www.myget.org/F/aspnetvnext/api/v2"
+if [ -z "$KRE_FEED" ]; then
+    KRE_FEED="https://www.myget.org/F/aspnetvnext/api/v2"
+fi
 
 _kvm_find_latest() {
     local platform="mono45"
@@ -28,11 +30,10 @@ _kvm_find_latest() {
         return 1
     fi
 
-    local url="$KRE_NUGET_API_URL/GetUpdates()?packageIds=%27KRE-$platform-$architecture%27&versions=%270.0%27&includePrerelease=true&includeAllVersions=false"
-    local cmd=
-    local xml="$(curl $url 2>/dev/null)"
+    local url="$KRE_FEED/GetUpdates()?packageIds=%27KRE-$platform-$architecture%27&versions=%270.0%27&includePrerelease=true&includeAllVersions=false"
+    xml="$(curl $url 2>/dev/null)"
+    echo $xml | grep \<[a-zA-Z]:Version\>* >> /dev/null || return 1
     version="$(echo $xml | sed 's/.*<[a-zA-Z]:Version>\([^<]*\).*/\1/')"
-    [[ $xml == $version ]] && return 1
     echo $version
 }
 
@@ -69,7 +70,7 @@ _kvm_download() {
 
     local pkgName=$(_kvm_package_name "$kreFullName")
     local pkgVersion=$(_kvm_package_version "$kreFullName")
-    local url="$KRE_NUGET_API_URL/package/$pkgName/$pkgVersion"
+    local url="$KRE_FEED/package/$pkgName/$pkgVersion"
     local kreFile="$kreFolder/$kreFullName.nupkg"
 
     if [ -e "$kreFolder" ]; then
@@ -77,7 +78,7 @@ _kvm_download() {
         return 0
     fi
 
-    echo "Downloading $kreFullName from $KRE_NUGET_API_URL"
+    echo "Downloading $kreFullName from $KRE_FEED"
 
     if ! _kvm_has "curl"; then
         echo "KVM Needs curl to proceed." >&2;
@@ -88,8 +89,8 @@ _kvm_download() {
 
     local httpResult=$(curl -L -D - -u aspnetreadonly:4d8a2d9c-7b80-4162-9978-47e918c9658c "$url" -o "$kreFile" 2>/dev/null | grep "^HTTP/1.1" | head -n 1 | sed "s/HTTP.1.1 \([0-9]*\).*/\1/")
 
-    [[ $httpResult == "404" ]] && echo "$kreFullName was not found in repository $KRE_NUGET_API_URL" && return 1
-    [[ $httpResult != "302" && $httpResult != "200" ]] && echo "HTTP Error $httpResult fetching $kreFullName from $KRE_NUGET_API_URL" && return 1
+    [[ $httpResult == "404" ]] && echo "$kreFullName was not found in repository $KRE_FEED" && return 1
+    [[ $httpResult != "302" && $httpResult != "200" ]] && echo "HTTP Error $httpResult fetching $kreFullName from $KRE_FEED" && return 1
 
     _kvm_unpack $kreFile $kreFolder
 }
@@ -224,14 +225,15 @@ kvm()
                     local alias=$2
                     shift
                 elif [[ -n $1 ]]; then
-                    [[ -n $versionOrAlias ]] && echo "Invalid option $1" && kvm help && return
+                    [[ -n $versionOrAlias ]] && echo "Invalid option $1" && kvm help && return 1
                     local versionOrAlias=$1
                 fi
                 shift
             done
             if [[ "$versionOrAlias" == "latest" ]]; then
                 echo "Determining latest version"
-                local versionOrAlias=$(_kvm_find_latest mono45 x86)
+                versionOrAlias=$(_kvm_find_latest mono45 x86)
+                [[ $? == 1 ]] && echo "Error: Could not find latest version from feed $KRE_FEED" && return 1
                 echo "Latest version is $versionOrAlias"
             fi
             if [[ "$versionOrAlias" == *.nupkg ]]; then
