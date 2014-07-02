@@ -189,7 +189,7 @@ kvm()
             echo "kvm use <semver>|<alias>|none [-p -persistent]"
             echo "<semver>|<alias>  add KRE bin to path of current command line   "
             echo "none              remove KRE bin from path of current command line"
-            echo "-p -persistent   set selected version as default"
+            echo "-p -persistent    set selected version as default"
             echo ""
             echo "kvm list"
             echo "list KRE versions installed "
@@ -201,7 +201,8 @@ kvm()
             echo "display value of named alias"
             echo ""
             echo "kvm alias <alias> <semver>"
-            echo "set alias to specific version"
+            echo "<alias>            The name of the alias to set"
+            echo "<semver>|<alias>   The KRE version to set the alias to. Alternatively use the version of the specified alias"
             echo ""
             echo ""
         ;;
@@ -336,10 +337,9 @@ kvm()
                 return
             fi
 
-            local semver="$3"
-            local kreFullName="KRE-$(_kvm_requested_platform mono45)-$(_kvm_requested_architecture x86).$semver"
+            local kreFullName=$(_kvm_requested_version_or_alias "$3")
 
-            [[ ! -d "$KRE_USER_PACKAGES/$kreFullName" ]] && echo "$semver is not an installed KRE version." && return 1
+            [[ ! -d "$KRE_USER_PACKAGES/$kreFullName" ]] && echo "$kreFullName is not an installed KRE version." && return 1
 
             echo "Setting alias '$name' to '$kreFullName'"
 

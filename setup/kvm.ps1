@@ -68,8 +68,9 @@ kvm alias
 kvm alias <alias>
   display value of named alias
 
-kvm alias <alias> <semver> [-x86][-x64] [-svr50][-svrc50]
-  set alias to specific version
+kvm alias <alias> <semver>|<alias> [-x86][-x64] [-svr50][-svrc50]
+  <alias>            The name of the alias to set 
+  <semver>|<alias>   The KRE version to set the alias to. Alternatively use the version of the specified alias
 
 "@ | Write-Host
 }
@@ -472,7 +473,7 @@ param(
   [string] $name,
   [string] $value
 )
-    $kreFullName = "KRE-" + (Requested-Platform "svr50") + "-" + (Requested-Architecture "x86") + "." + $value
+    $kreFullName = Requested-VersionOrAlias $value
 
     Write-Host "Setting alias '$name' to '$kreFullName'"
     md ($userKrePath + "\alias\") -Force | Out-Null
