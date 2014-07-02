@@ -473,10 +473,12 @@ param(
   [string] $value
 )
     $kreFullName = "KRE-" + (Requested-Platform "svr50") + "-" + (Requested-Architecture "x86") + "." + $value
-
-    Write-Host "Setting alias '$name' to '$kreFullName'"
+    
+    $aliasFilePath=$userKrePath + "\alias\" + $name + ".txt"
+    $action=if (Test-Path $aliasFilePath) { "Updating"} else { "Setting" }
+    Write-Host "$action alias '$name' to '$kreFullName'"
     md ($userKrePath + "\alias\") -Force | Out-Null
-    $kreFullName | Out-File ($userKrePath + "\alias\" + $name + ".txt") ascii
+    $kreFullName | Out-File ($aliasFilePath) ascii
 }
 
 function Locate-KreBinFromFullName() {
