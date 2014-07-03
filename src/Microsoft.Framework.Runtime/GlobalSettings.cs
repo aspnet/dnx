@@ -44,7 +44,7 @@ namespace Microsoft.Framework.Runtime
             return true;
         }
 
-        private static bool HasGlobalFile(string path)
+        public static bool HasGlobalFile(string path)
         {
             string projectPath = Path.Combine(path, GlobalFileName);
 

@@ -5,7 +5,9 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Xml.Linq;
 using Microsoft.Framework.Runtime;
+using Newtonsoft.Json.Linq;
 
 namespace Microsoft.Framework.PackageManager.Packing
 {
@@ -78,6 +80,8 @@ namespace Microsoft.Framework.PackageManager.Packing
 
             mainProject.PostProcess(this);
 
+            WriteDependenciesToGlobalJson();
+
             foreach (var commandName in _project.Commands.Keys)
             {
                 const string template1 = @"
@@ -99,6 +103,81 @@ namespace Microsoft.Framework.PackageManager.Packing
                         string.Format(template2, commandName, AppFolder ?? _project.Name));
                 }
             }
+        }
+
+        private void WriteDependenciesToGlobalJson()
+        {
+            var nugetDependencyResolver = new NuGetDependencyResolver(
+                _project.ProjectDirectory,
+                PackagesPath,
+                new EmptyFrameworkResolver());
+            var rootDirectory = ProjectResolver.ResolveRootDirectory(_project.ProjectDirectory);
+            var projectResolver = new ProjectResolver(_project.ProjectDirectory, rootDirectory);
+            var dependenciesObj = new JObject();
+
+            // Generate SHAs for all package dependencies
+            foreach (var deploymentPackage in Packages)
+            {
+                var package = nugetDependencyResolver.FindCandidate(
+                    deploymentPackage.Library.Name,
+                    deploymentPackage.Library.Version);
+                var shaFilePath = Path.Combine(
+                    PackagesPath,
+                    string.Format("{0}.{1}", package.Id, package.Version),
+                    string.Format("{0}.{1}.nupkg.sha512", package.Id, package.Version));
+                var sha = File.ReadAllText(shaFilePath);
+
+                var shaObj = new JObject();
+                shaObj.Add(new JProperty("version", package.Version.ToString()));
+                shaObj.Add(new JProperty("sha", sha));
+                dependenciesObj.Add(new JProperty(package.Id, shaObj));
+            }
+
+            // If "--no-source" is specified, project dependencies are packed to packages
+            // So we also generate SHAs for them in this case
+            foreach (var deploymentProject in Projects)
+            {
+                Runtime.Project project;
+                if (!projectResolver.TryResolveProject(deploymentProject.Name, out project))
+                {
+                    throw new Exception("TODO: unable to resolve project named " + deploymentProject.Name);
+                }
+
+                var shaFilePath = Path.Combine(
+                    PackagesPath,
+                    string.Format("{0}.{1}", project.Name, project.Version),
+                    string.Format("{0}.{1}.nupkg.sha512", project.Name, project.Version));
+
+                if (!File.Exists(shaFilePath))
+                {
+                    // This project is not packed to a package
+                    continue;
+                }
+
+                var sha = File.ReadAllText(shaFilePath);
+
+                var shaObj = new JObject();
+                shaObj.Add(new JProperty("version", project.Version.ToString()));
+                shaObj.Add(new JProperty("sha", sha));
+                dependenciesObj.Add(new JProperty(project.Name, shaObj));
+            }
+
+            var rootObject = default(JObject);
+            var rootDir = ProjectResolver.ResolveRootDirectory(_project.ProjectDirectory);
+            if (GlobalSettings.HasGlobalFile(rootDir))
+            {
+                rootObject = JObject.Parse(File.ReadAllText(Path.Combine(
+                    rootDir,
+                    GlobalSettings.GlobalFileName)));
+            }
+            else
+            {
+                rootObject = new JObject();
+            }
+
+            rootObject["dependencies"] = dependenciesObj;
+
+            File.WriteAllText(Path.Combine(OutputPath, GlobalSettings.GlobalFileName), rootObject.ToString());
         }
     }
 }
