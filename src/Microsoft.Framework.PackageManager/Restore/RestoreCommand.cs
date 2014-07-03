@@ -10,10 +10,12 @@ using System.IO.Compression;
 using System.IO.Packaging;
 #endif
 using System.Linq;
+using System.Security.Cryptography;
 using System.Threading.Tasks;
 using Microsoft.Framework.PackageManager.Packing;
 using Microsoft.Framework.PackageManager.Restore.NuGet;
 using Microsoft.Framework.Runtime;
+using Newtonsoft.Json.Linq;
 using NuGet;
 using NuGet.Common;
 
@@ -31,11 +33,12 @@ namespace Microsoft.Framework.PackageManager
         }
 
         public string RestoreDirectory { get; set; }
-        public string ConfigFile { get; set; }
+        public string NuGetConfigFile { get; set; }
         public IEnumerable<string> Sources { get; set; }
         public IEnumerable<string> FallbackSources { get; set; }
         public bool NoCache { get; set; }
         public string PackageFolder { get; set; }
+        public string GlobalJsonFile { get; set; }
 
         public IApplicationEnvironment ApplicationEnvironment { get; private set; }
         public IMachineWideSettings MachineWideSettings { get; set; }
@@ -217,9 +220,60 @@ namespace Microsoft.Framework.PackageManager
                 }
             });
 
+            var dependencies = new Dictionary<Library, string>();
+
+            // If there is a global.json file specified, we should do SHA value verification
+            var globalJsonFileSpecified = !string.IsNullOrEmpty(GlobalJsonFile);
+            JToken dependenciesNode = null;
+            if (globalJsonFileSpecified)
+            {
+                var globalJson = JObject.Parse(File.ReadAllText(GlobalJsonFile));
+                dependenciesNode = globalJson["dependencies"];
+                if (dependenciesNode != null)
+                {
+                    dependencies = dependenciesNode
+                        .OfType<JProperty>()
+                        .ToDictionary(d => new Library()
+                        {
+                            Name = d.Name,
+                            Version = SemanticVersion.Parse(d.Value.Value<string>("version"))
+                        },
+                        d => d.Value.Value<string>("sha"));
+                }
+            }
+
             foreach (var item in installItems)
             {
                 var library = item.Match.Library;
+                string expectedSHA;
+                if (dependencies.TryGetValue(library, out expectedSHA))
+                {
+                    var memStream = new MemoryStream();
+                    await item.Match.Provider.CopyToAsync(item.Match, memStream);
+                    memStream.Seek(0, SeekOrigin.Begin);
+
+                    using (var sha512 = SHA512.Create())
+                    {
+                        var actualSHA = Convert.ToBase64String(sha512.ComputeHash(memStream));
+                        if (!string.Equals(expectedSHA, actualSHA, StringComparison.Ordinal))
+                        {
+                            Report.WriteLine(
+                                string.Format("SHA of downloaded package {0} doesn't match expected value.".Red().Bold(),
+                                library.ToString()));
+                            continue;
+                        }
+                    }
+                }
+                else
+                {
+                    // Report warnings only when given global.json contains "dependencies"
+                    if (globalJsonFileSpecified && dependenciesNode != null)
+                    {
+                        Report.WriteLine(
+                        string.Format("Expected SHA of package {0} doesn't exist in given global.json file.".Yellow().Bold(),
+                        library.ToString()));
+                    }
+                }
 
                 Report.WriteLine(string.Format("Installing {0} {1}", library.Name.Bold(), library.Version));
 
@@ -316,14 +370,14 @@ namespace Microsoft.Framework.PackageManager
                 NuGetConstants.NuGetSolutionSettingsFolder);
             var fileSystem = CreateFileSystem(solutionSettingsFile);
 
-            if (ConfigFile != null)
+            if (NuGetConfigFile != null)
             {
-                ConfigFile = FileSystem.GetFullPath(ConfigFile);
+                NuGetConfigFile = FileSystem.GetFullPath(NuGetConfigFile);
             }
 
             Settings = NuGet.Settings.LoadDefaultSettings(
                 fileSystem: fileSystem,
-                configFileName: ConfigFile,
+                configFileName: NuGetConfigFile,
                 machineWideSettings: MachineWideSettings);
 
             // Recreate the source provider and credential provider

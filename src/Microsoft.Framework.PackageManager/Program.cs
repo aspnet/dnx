@@ -55,7 +55,7 @@ namespace Microsoft.Framework.PackageManager
             {
                 c.Description = "Restore packages";
 
-                var argProject = c.Argument("[project]", "Project to restore, default is current directory");
+                var argRoot = c.Argument("[root]", "Root of all projects to restore. It can be a directory, a project.json or a global.json.");
                 var optSource = c.Option("-s|--source <FEED>", "A list of packages sources to use for this command",
                     CommandOptionType.MultipleValue);
                 var optFallbackSource = c.Option("-f|--fallbacksource <FEED>",
@@ -72,15 +72,44 @@ namespace Microsoft.Framework.PackageManager
                     {
                         var command = new RestoreCommand(_environment);
                         command.Report = this;
-                        command.RestoreDirectory = argProject.Value;
+
+                        // If the root argument is a directory
+                        if (Directory.Exists(argRoot.Value))
+                        {
+                            command.RestoreDirectory = argRoot.Value;
+                        }
+                        // If the root argument is a project.json file
+                        else if (string.Equals(
+                            Project.ProjectFileName,
+                            Path.GetFileName(argRoot.Value),
+                            StringComparison.OrdinalIgnoreCase))
+                        {
+                            command.RestoreDirectory = Path.GetDirectoryName(Path.GetFullPath(argRoot.Value));
+                        }
+                        // If the root argument is a global.json file
+                        else if (string.Equals(
+                            GlobalSettings.GlobalFileName,
+                            Path.GetFileName(argRoot.Value),
+                            StringComparison.OrdinalIgnoreCase))
+                        {
+                            command.RestoreDirectory = Path.GetDirectoryName(Path.GetFullPath(argRoot.Value));
+                            command.GlobalJsonFile = argRoot.Value;
+                        }
+                        else if (!string.IsNullOrEmpty(argRoot.Value))
+                        {
+                            throw new InvalidOperationException("The given root is invalid.");
+                        }
+
                         if (optSource.HasValue())
                         {
                             command.Sources = optSource.Values;
                         }
+
                         if (optFallbackSource.HasValue())
                         {
                             command.FallbackSources = optFallbackSource.Values;
                         }
+
                         if (optProxy.HasValue())
                         {
 #if NET45
