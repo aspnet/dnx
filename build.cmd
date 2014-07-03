@@ -4,8 +4,6 @@ cd %~dp0
 SETLOCAL
 SET CACHED_NUGET=%LocalAppData%\NuGet\NuGet.exe
 
-IF NOT "%1" == "rebuild-package" CALL setup\kvm.cmd upgrade -svr50 -x86
-
 IF EXIST %CACHED_NUGET% goto copynuget
 echo Downloading latest version of NuGet.exe...
 IF NOT EXIST %LocalAppData%\NuGet md %LocalAppData%\NuGet
@@ -20,6 +18,8 @@ copy %CACHED_NUGET% .nuget\nuget.exe > nul
 IF EXIST packages\KoreBuild goto run
 .nuget\NuGet.exe install KoreBuild -ExcludeVersion -o packages -nocache -pre
 .nuget\NuGet.exe install Sake -version 0.2 -o packages -ExcludeVersion
+
+IF NOT "%1" == "rebuild-package" CALL packages\KoreBuild\build\kvm.cmd upgrade -svr50 -x86
 
 :run
 packages\Sake\tools\Sake.exe -I packages\KoreBuild\build -f makefile.shade %*

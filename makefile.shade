@@ -67,17 +67,6 @@ var NEW_RUNTIME = '${Environment.GetEnvironmentVariable("NEW_RUNTIME") == "1"}'
         Exec(cscPath, @"/target:exe /nologo /unsafe /out:artifacts\build\klr.mono.managed\klr.mono.managed.dll /define:NET45 src\klr.mono.managed\EntryPoint.cs src\klr.hosting.shared\RuntimeBootstrapper.cs src\klr.hosting.shared\LoaderEngine.cs src\Microsoft.Framework.CommandLineUtils\CommandLine\CommandArgument.cs src\Microsoft.Framework.CommandLineUtils\CommandLine\CommandLineApplication.cs src\Microsoft.Framework.CommandLineUtils\CommandLine\CommandOption.cs src\Microsoft.Framework.CommandLineUtils\CommandLine\CommandOptionType.cs");
     }
 
-#copy-kvm target='compile'
-    copy sourceDir='setup' outputDir='${ARTIFACTS_DIR}' include='*.cmd' overwrite='${true}'
-    copy sourceDir='setup' outputDir='${ARTIFACTS_DIR}' include='*.ps1'
-    copy sourceDir='setup' outputDir='${ARTIFACTS_DIR}' include='*.sh'
-    update-file updateFile='${ARTIFACTS_DIR}\kvm.ps1' @{
-        updateText = updateText.Replace("{{BUILD_NUMBER}}", Environment.GetEnvironmentVariable("BUILD_NUMBER"));
-    }
-    update-file updateFile='${ARTIFACTS_DIR}\kvm.sh' @{
-        updateText = updateText.Replace("{{BUILD_NUMBER}}", Environment.GetEnvironmentVariable("BUILD_NUMBER"));
-    }
-
 #xunit-test target='test' if='Directory.Exists("test")'
   k-test each='var projectFile in Files.Include("test/**/project.json")' if='NEW_RUNTIME'
   
