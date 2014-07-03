@@ -46,8 +46,9 @@ namespace Microsoft.Framework.DesignTimeHost
 
         private async Task OpenChannel(int port, string hostId)
         {
-            var listenSocket = new Socket(SocketType.Stream, ProtocolType.Tcp);
-            listenSocket.Bind(new IPEndPoint(IPAddress.Loopback, port));
+            var ipEndPoint = new IPEndPoint(IPAddress.Loopback, port);
+            var listenSocket = new Socket(ipEndPoint.Address.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
+            listenSocket.Bind(ipEndPoint);
             listenSocket.Listen(10);
 
             Console.WriteLine("Listening on port {0}", port);
