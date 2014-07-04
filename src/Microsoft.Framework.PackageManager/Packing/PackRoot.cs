@@ -118,6 +118,8 @@ namespace Microsoft.Framework.PackageManager.Packing
             // Generate SHAs for all package dependencies
             foreach (var deploymentPackage in Packages)
             {
+                // Use the exactly same approach in PackPackage.Emit() to
+                // find the package actually in use
                 var package = nugetDependencyResolver.FindCandidate(
                     deploymentPackage.Library.Name,
                     deploymentPackage.Library.Version);
