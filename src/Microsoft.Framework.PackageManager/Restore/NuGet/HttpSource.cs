@@ -1,4 +1,3 @@
-#if NET45
 // Copyright (c) Microsoft Open Technologies, Inc. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
@@ -12,7 +11,6 @@ using System.Net.Http.Headers;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Web;
 using System.Linq;
 using System.Security.Cryptography;
 
@@ -38,6 +36,7 @@ namespace Microsoft.Framework.PackageManager.Restore.NuGet
             _password = password;
             _report = report;
 
+#if NET45 // TODO: Figure out proxy support for http client
             var proxy = Environment.GetEnvironmentVariable("http_proxy");
             if (string.IsNullOrEmpty(proxy))
             {
@@ -68,6 +67,9 @@ namespace Microsoft.Framework.PackageManager.Restore.NuGet
                 };
                 _client = new HttpClient(handler);
             }
+#else
+            _client = new HttpClient(new Microsoft.Net.Http.Client.ManagedHandler());
+#endif
         }
 
         internal async Task<HttpSourceResult> GetAsync(string uri, string cacheKey, TimeSpan cacheAgeLimit)
@@ -160,7 +162,11 @@ namespace Microsoft.Framework.PackageManager.Restore.NuGet
             var baseFolderName = RemoveInvalidFileNameChars(ComputeHash(_baseUri));
             var baseFileName = RemoveInvalidFileNameChars(cacheKey) + ".dat";
 
+#if NET45
             var localAppDataFolder = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+#else
+            var localAppDataFolder = Environment.GetEnvironmentVariable("LocalAppData");
+#endif
             var cacheFolder = Path.Combine(localAppDataFolder, "kpm", "cache", baseFolderName);
             var cacheFile = Path.Combine(cacheFolder, baseFileName);
 
@@ -176,8 +182,11 @@ namespace Microsoft.Framework.PackageManager.Restore.NuGet
                 if (File.Exists(cacheFile))
                 {
                     var fileInfo = new FileInfo(cacheFile);
-
+#if NET45
                     var age = DateTime.UtcNow.Subtract(fileInfo.LastWriteTimeUtc);
+#else
+                    var age = DateTime.Now.Subtract(fileInfo.LastWriteTime);
+#endif
                     if (age < cacheAgeLimit)
                     {
                         var stream = CreateAsyncFileStream(
@@ -236,7 +245,7 @@ namespace Microsoft.Framework.PackageManager.Restore.NuGet
             {
                 if (stream != null)
                 {
-                    stream.Close();
+                    stream.Dispose();
                 }
             }
 
@@ -249,4 +258,3 @@ namespace Microsoft.Framework.PackageManager.Restore.NuGet
         }
     }
 }
-#endif

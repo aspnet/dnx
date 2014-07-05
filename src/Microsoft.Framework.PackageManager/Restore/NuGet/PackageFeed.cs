@@ -1,4 +1,3 @@
-#if NET45
 // Copyright (c) Microsoft Open Technologies, Inc. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
@@ -7,7 +6,9 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
+#if NET45
 using System.IO.Packaging;
+#endif
 using System.Linq;
 using System.Net;
 using System.Net.Http;
@@ -156,6 +157,7 @@ namespace Microsoft.Framework.PackageManager.Restore.NuGet
         {
             using (var nupkgStream = await OpenNupkgStreamAsync(package))
             {
+#if NET45
                 if (PlatformHelper.IsMono)
                 {
                     // Don't close the stream
@@ -170,18 +172,16 @@ namespace Microsoft.Framework.PackageManager.Restore.NuGet
                         return nuspecStream;
                     }
                 }
-                else
+#endif
+                using (var archive = new ZipArchive(nupkgStream, ZipArchiveMode.Read, leaveOpen: true))
                 {
-                    using (var archive = new ZipArchive(nupkgStream, ZipArchiveMode.Read, leaveOpen: true))
+                    var entry = archive.GetEntryOrdinalIgnoreCase(package.Id + ".nuspec");
+                    using (var entryStream = entry.Open())
                     {
-                        var entry = archive.GetEntryOrdinalIgnoreCase(package.Id + ".nuspec");
-                        using (var entryStream = entry.Open())
-                        {
-                            var nuspecStream = new MemoryStream((int)entry.Length);
-                            await entryStream.CopyToAsync(nuspecStream);
-                            nuspecStream.Seek(0, SeekOrigin.Begin);
-                            return nuspecStream;
-                        }
+                        var nuspecStream = new MemoryStream((int)entry.Length);
+                        await entryStream.CopyToAsync(nuspecStream);
+                        nuspecStream.Seek(0, SeekOrigin.Begin);
+                        return nuspecStream;
                     }
                 }
             }
@@ -251,4 +251,3 @@ namespace Microsoft.Framework.PackageManager.Restore.NuGet
         }
     }
 }
-#endif

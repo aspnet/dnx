@@ -151,7 +151,6 @@ namespace Microsoft.Framework.PackageManager
                 }
                 else
                 {
-#if NET45
                     remoteProviders.Add(
                         new RemoteWalkProvider(
                             new PackageFeed(
@@ -160,7 +159,6 @@ namespace Microsoft.Framework.PackageManager
                                 source.Password,
                                 NoCache,
                                 Report)));
-#endif
                 }
             }
 
