@@ -63,6 +63,7 @@ namespace Microsoft.Framework.PackageManager
                 var optProxy = c.Option("-p|--proxy <ADDRESS>", "The HTTP proxy to use when retrieving packages",
                     CommandOptionType.SingleValue);
                 var optNoCache = c.Option("--no-cache", "Do not use local cache", CommandOptionType.NoValue);
+                var optPackageFolder = c.Option("--packages", "Path to restore packages", CommandOptionType.SingleValue);
                 c.HelpOption("-?|-h|--help");
 
                 c.OnExecute(() =>
@@ -91,6 +92,7 @@ namespace Microsoft.Framework.PackageManager
 #endif
                         }
                         command.NoCache = optNoCache.HasValue();
+                        command.PackageFolder = optPackageFolder.Value();
 
                         var success = command.ExecuteCommand();
 

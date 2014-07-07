@@ -35,6 +35,7 @@ namespace Microsoft.Framework.PackageManager
         public IEnumerable<string> Sources { get; set; }
         public IEnumerable<string> FallbackSources { get; set; }
         public bool NoCache { get; set; }
+        public string PackageFolder { get; set; }
 
         public IApplicationEnvironment ApplicationEnvironment { get; private set; }
         public IMachineWideSettings MachineWideSettings { get; set; }
@@ -101,7 +102,7 @@ namespace Microsoft.Framework.PackageManager
             }
 
             var projectDirectory = project.ProjectDirectory;
-            var packagesDirectory = Path.Combine(rootDirectory, CommandLineConstants.PackagesDirectoryName);
+            var packagesDirectory = PackageFolder ?? Path.Combine(rootDirectory, CommandLineConstants.PackagesDirectoryName);
 
             var restoreOperations = new RestoreOperations { Report = Report };
             var projectProviders = new List<IWalkProvider>();
