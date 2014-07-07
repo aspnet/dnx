@@ -99,15 +99,10 @@ namespace Microsoft.Framework.Runtime
             {
                 foreach (var assemblyReference in frameworkAssemblies)
                 {
-                    string path;
-                    if (_frameworkReferenceResolver.TryGetAssembly(assemblyReference.AssemblyName, targetFramework, out path))
+                    yield return new Library
                     {
-                        yield return new Library
-                        {
-                            Name = assemblyReference.AssemblyName,
-                            Version = VersionUtility.GetAssemblyVersion(path)
-                        };
-                    }
+                        Name = assemblyReference.AssemblyName
+                    };
                 }
             }
         }
