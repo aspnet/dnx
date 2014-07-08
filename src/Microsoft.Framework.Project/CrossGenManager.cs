@@ -20,7 +20,7 @@ namespace Microsoft.Framework.Project
             _universe = BuildUniverse(options.RuntimePath, options.InputPaths);
         }
 
-        public bool GenerateNativeImages()
+        public CrossgenResult GenerateNativeImages()
         {
             // Generate a -> [closure]
             foreach (var assemblyInfo in _universe.Values)
@@ -32,15 +32,19 @@ namespace Microsoft.Framework.Project
                                                             .ToList();
             }
 
-            bool success = true;
-
+            var crossgenResult = new CrossgenResult();
+            
             // Generate the native images in dependency order
             foreach (var assemblyInfo in Sort(_universe.Values))
             {
-                success = success && GenerateNativeImage(assemblyInfo);
+                GenerateNativeImage(assemblyInfo, crossgenResult);
+                if (crossgenResult.Failed)
+                {
+                    break;
+                }
             }
-            
-            return success;
+
+            return crossgenResult;
         }
         
         private bool ExecuteCrossgen(string filename, string arguments, string assemblyName)
@@ -80,18 +84,24 @@ namespace Microsoft.Framework.Project
             return false;
         }
 
-        private bool GenerateNativeImage(AssemblyInformation assemblyInfo)
+        private void GenerateNativeImage(AssemblyInformation assemblyInfo, CrossgenResult result)
         {
             var retCrossgen = false;
-        
-            if (assemblyInfo.Closure.Any(a => !a.Generated))
-            {
-                Console.WriteLine("Skipping {0}. Because one or more dependencies failed to generate", assemblyInfo.Name);
-                return false;
-            }
 
             // Add the assembly itself to the closure
-            var closure = assemblyInfo.Closure.Select(d => d.NativeImagePath)
+            var closure = assemblyInfo.Closure.Where(a =>
+            {
+                if (a.Generated)
+                {
+                    return true;
+                }
+                else
+                {
+                    result.Warn();
+                    Console.WriteLine(string.Format("WARNING: {0} depends on {1}. Dependency's native image failed to generate", assemblyInfo.Name, a.Name));
+                    return false;
+                }
+            }).Select(d => d.NativeImagePath)
                                       .Concat(new[] { assemblyInfo.AssemblyPath });
 
             Console.WriteLine("Generating native images for {0}", assemblyInfo.Name);
@@ -127,7 +137,8 @@ namespace Microsoft.Framework.Project
             }
             else
             {
-                return false;
+                result.Fail();
+                return;
             }
 
             if (_options.Symbols)
@@ -165,7 +176,10 @@ namespace Microsoft.Framework.Project
                 retCrossgen = ExecuteCrossgen(_options.CrossgenPath, argsPdb, assemblyInfo.Name);
             }
 
-            return retCrossgen;
+            if (!retCrossgen)
+            {
+                result.Fail();
+            }
         }
 
         void OnErrorDataReceived(object sender, DataReceivedEventArgs e)
