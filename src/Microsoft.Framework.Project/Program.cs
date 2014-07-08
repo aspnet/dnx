@@ -1,6 +1,7 @@
 // Copyright (c) Microsoft Open Technologies, Inc. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
+using System;
 using System.IO;
 using Microsoft.Framework.Runtime;
 using Microsoft.Framework.Runtime.Common.CommandLine;
@@ -49,9 +50,16 @@ namespace Microsoft.Framework.Project
                     crossgenOptions.Symbols = optionSymbols.HasValue();
 
                     var gen = new CrossgenManager(crossgenOptions);
-                    if (!gen.GenerateNativeImages())
+                    var crossgenResult = gen.GenerateNativeImages();
+                    if (crossgenResult.Failed)
                     {
+                        Console.WriteLine("Crossgen FAILED.");
                         return -1;
+                    }
+                    else if (crossgenResult.HasWarning)
+                    {
+                        Console.WriteLine("Crossgen completed with warnings. Some native images may be incomplete");
+                        return -2;
                     }
 
                     return 0;
