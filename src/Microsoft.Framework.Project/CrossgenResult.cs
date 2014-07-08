@@ -7,14 +7,23 @@ namespace Microsoft.Framework.Project
     /// </summary>
     public class CrossgenResult
     {
-        public bool Failed { get; private set; }
-        public bool HasWarning { get; private set; }
+        public bool Failed
+        {
+            get;
+            private set;
+        }
 
-	    public CrossgenResult()
-	    {
+        public bool HasWarning
+        {
+            get;
+            private set;
+        }
+
+        public CrossgenResult()
+        {
             Failed = false;
             HasWarning = false;
-	    }
+        }
 
         public void Fail()
         {
