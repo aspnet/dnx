@@ -30,7 +30,9 @@ namespace Microsoft.Framework.Runtime.Roslyn
                 MakeDefaultTargetFrameworkDefine(targetFramework)
             };
 
-            var defaultOptions = new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary);
+            var defaultOptions = new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary)
+                                    // TODO: Base this on debug/release configuration (when we support it)
+                                    .WithDebugInformationKind(DebugInformationKind.Full);
 
             var options = GetCompilationOptions(specificOptions) ??
                           GetCompilationOptions(rootOptions) ??
@@ -41,10 +43,6 @@ namespace Microsoft.Framework.Runtime.Roslyn
             {
                 { "CS1702", ReportDiagnostic.Suppress }
             });
-
-            // TODO: Base this on debug/release configuration (when we
-            // support it)
-            options = options.WithDebugInformationKind(DebugInformationKind.Full);
 
             if (PlatformHelper.IsMono)
             {
@@ -93,11 +91,12 @@ namespace Microsoft.Framework.Runtime.Roslyn
                 return null;
             }
 
-            var options = new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary)
-                                .WithHighEntropyVirtualAddressSpace(true);
+            var options = new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary);
 
-            bool allowUnsafe = compilerOptions.AllowUnsafe;
             string platformValue = compilerOptions.Platform;
+            string debugSymbolsValue = compilerOptions.DebugSymbols;
+            bool allowUnsafe = compilerOptions.AllowUnsafe;
+            bool optimize = compilerOptions.Optimize;
             bool warningsAsErrors = compilerOptions.WarningsAsErrors;
 
             Platform platform;
@@ -108,11 +107,21 @@ namespace Microsoft.Framework.Runtime.Roslyn
                 platform = Platform.AnyCpu;
             }
 
+            DebugInformationKind debugInformationKind;
+            if (!Enum.TryParse<DebugInformationKind>(debugSymbolsValue,
+                                                     ignoreCase: true,
+                                                     result: out debugInformationKind))
+            {
+                debugInformationKind = DebugInformationKind.Full;
+            }
+
             ReportDiagnostic warningOption = warningsAsErrors ? ReportDiagnostic.Error : ReportDiagnostic.Default;
 
             return options.WithAllowUnsafe(allowUnsafe)
                           .WithPlatform(platform)
-                          .WithGeneralDiagnosticOption(warningOption);
+                          .WithGeneralDiagnosticOption(warningOption)
+                          .WithOptimizations(optimize)
+                          .WithDebugInformationKind(debugInformationKind);
         }
     }
 }

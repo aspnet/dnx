@@ -68,7 +68,7 @@ namespace Microsoft.Framework.Runtime.Tests
         {
             var project = Project.GetProject(@"
 {
-    ""compilationOptions"": { ""allowUnsafe"": true, ""define"": [""X"", ""y""], ""platform"": ""x86"", ""warningsAsErrors"": true }
+    ""compilationOptions"": { ""allowUnsafe"": true, ""define"": [""X"", ""y""], ""platform"": ""x86"", ""warningsAsErrors"": true, ""debugSymbols"": ""pdbOnly"", ""optimize"": true }
 }",
 "foo",
 @"c:\foo\project.json");
@@ -79,6 +79,8 @@ namespace Microsoft.Framework.Runtime.Tests
             Assert.Equal(new[] { "X", "y" }, compilerOptions.Defines);
             Assert.True(compilerOptions.WarningsAsErrors);
             Assert.Equal("x86", compilerOptions.Platform);
+            Assert.Equal("pdbOnly", compilerOptions.DebugSymbols);
+            Assert.True(compilerOptions.Optimize);
         }
 
         [Fact]

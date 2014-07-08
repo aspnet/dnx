@@ -17,6 +17,8 @@ namespace Microsoft.Framework.Runtime
 
         public bool WarningsAsErrors { get; set; }
 
-        public string CommandLine { get; set; }
+        public bool Optimize { get; set; }
+
+        public string DebugSymbols { get; set; }
     }
 }

@@ -378,7 +378,8 @@ namespace Microsoft.Framework.Runtime
                 AllowUnsafe = GetValue<bool>(rawOptions, "allowUnsafe"),
                 Platform = GetValue<string>(rawOptions, "platform"),
                 WarningsAsErrors = GetValue<bool>(rawOptions, "warningsAsErrors"),
-                CommandLine = GetValue<string>(rawOptions, "commandLineArgs")
+                Optimize = GetValue<bool>(rawOptions, "optimize"),
+                DebugSymbols = GetValue<string>(rawOptions, "debugSymbols"),
             };
 
             return options;
