@@ -260,6 +260,7 @@ namespace Microsoft.Framework.PackageManager
                             Report.WriteLine(
                                 string.Format("SHA of downloaded package {0} doesn't match expected value.".Red().Bold(),
                                 library.ToString()));
+                            success = false;
                             continue;
                         }
                     }
