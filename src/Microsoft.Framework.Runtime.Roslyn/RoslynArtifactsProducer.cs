@@ -32,7 +32,7 @@ namespace Microsoft.Framework.Runtime.Roslyn
 
         public bool Build(BuildContext buildContext, List<Diagnostic> diagnostics)
         {
-            var compilationContext = _compiler.CompileProject(buildContext.AssemblyName, buildContext.TargetFramework);
+            var compilationContext = _compiler.CompileProject(buildContext.AssemblyName, buildContext.TargetFramework, buildContext.Configuration);
 
             if (compilationContext == null)
             {
@@ -129,11 +129,11 @@ namespace Microsoft.Framework.Runtime.Roslyn
                                                                               .ToDictionary(p => p.Project.Name, p => p.Project);
             var frameworkAssemblies = new List<string>();
 
-            var targetFrameworkConfig = project.GetTargetFrameworkConfiguration(targetFramework);
+            var targetFrameworkInformation = project.GetTargetFramework(targetFramework);
 
-            targetFramework = targetFrameworkConfig.FrameworkName ?? targetFramework;
+            targetFramework = targetFrameworkInformation.FrameworkName ?? targetFramework;
 
-            var projectDependencies = project.Dependencies.Concat(targetFrameworkConfig.Dependencies)
+            var projectDependencies = project.Dependencies.Concat(targetFrameworkInformation.Dependencies)
                                                           .ToList();
 
             if (projectDependencies.Count > 0)

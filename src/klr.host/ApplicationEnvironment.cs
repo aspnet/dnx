@@ -9,16 +9,23 @@ namespace klr.host
 {
     internal class ApplicationEnvironment : IApplicationEnvironment
     {
-        public ApplicationEnvironment(string appBase, FrameworkName targetFramework, Assembly assembly)
+        public ApplicationEnvironment(string appBase, FrameworkName targetFramework, string configuration, Assembly assembly)
         {
             var assemblyName = assembly.GetName();
             ApplicationName = assemblyName.Name;
             Version = assemblyName.Version.ToString();
             ApplicationBasePath = appBase;
             TargetFramework = targetFramework;
+            Configuration = configuration;
         }
 
         public string ApplicationName
+        {
+            get;
+            private set;
+        }
+
+        public string Configuration
         {
             get;
             private set;

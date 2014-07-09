@@ -146,7 +146,7 @@ namespace Microsoft.Framework.Runtime
                 throw new Exception("Unable to locate " + Project.ProjectFileName);
             }
 
-            var applicationEnvironment = new ApplicationEnvironment(Project, _targetFramework);
+            var applicationEnvironment = new ApplicationEnvironment(Project, _targetFramework, options.Configuration);
             var projectResolver = new ProjectResolver(_projectDir, rootDirectory);
 
             var referenceAssemblyDependencyResolver = new ReferenceAssemblyDependencyResolver();
@@ -205,6 +205,7 @@ namespace Microsoft.Framework.Runtime
             _serviceProvider.Add(typeof(ILibraryExportProvider), exportProvider);
             _serviceProvider.Add(typeof(ILibraryManager),
                 new LibraryManager(_targetFramework,
+                                   applicationEnvironment.Configuration,
                                    _dependencyWalker,
                                    exportProvider));
 

@@ -30,11 +30,11 @@ namespace Microsoft.Framework.Runtime.Loader
             stopIfInitializing: true);
         }
 
-        public ILibraryExport GetLibraryExport(string name, FrameworkName targetFramework)
+        public ILibraryExport GetLibraryExport(string name, FrameworkName targetFramework, string configuration)
         {
             return ExecuteWith<ILibraryExportProvider, ILibraryExport>(name, exporter =>
             {
-                return exporter.GetLibraryExport(name, targetFramework);
+                return exporter.GetLibraryExport(name, targetFramework, configuration);
             });
         }
 

@@ -8,7 +8,7 @@ using NuGet;
 
 namespace Microsoft.Framework.Runtime
 {
-    public class TargetFrameworkConfiguration : IFrameworkTargetable
+    public class TargetFrameworkInformation : IFrameworkTargetable
     {
         public FrameworkName FrameworkName { get; set; }
 

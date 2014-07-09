@@ -7,6 +7,6 @@ namespace Microsoft.Framework.Runtime.Roslyn
 {
     public interface IRoslynCompiler
     {
-        CompilationContext CompileProject(string name, FrameworkName targetFramework);
+        CompilationContext CompileProject(string name, FrameworkName targetFramework, string configuration);
     }
 }

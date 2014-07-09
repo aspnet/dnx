@@ -2,8 +2,10 @@
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Net;
 using System.Reflection;
 using System.Threading;
@@ -188,7 +190,8 @@ namespace Microsoft.Framework.PackageManager
             {
                 c.Description = "Build NuGet packages for the project in given directory";
 
-                var optionFramework = c.Option("--framework <TARGET_FRAMEWORK>", "Target framework", CommandOptionType.MultipleValue);
+                var optionFramework = c.Option("--framework <TARGET_FRAMEWORK>", "A list of target frameworks to build.", CommandOptionType.MultipleValue);
+                var optionConfiguration = c.Option("--configuration <CONFIGURATION>", "A list of configurations to build.", CommandOptionType.MultipleValue);
                 var optionOut = c.Option("--out <OUTPUT_DIR>", "Output directory", CommandOptionType.SingleValue);
                 var optionCheck = c.Option("--check", "Check diagnostics", CommandOptionType.NoValue);
                 var optionDependencies = c.Option("--dependencies", "Copy dependencies", CommandOptionType.NoValue);
@@ -202,6 +205,8 @@ namespace Microsoft.Framework.PackageManager
                     buildOptions.OutputDir = optionOut.Value();
                     buildOptions.ProjectDir = argProjectDir.Value ?? Directory.GetCurrentDirectory();
                     buildOptions.CheckDiagnostics = optionCheck.HasValue();
+                    buildOptions.Configurations = !optionConfiguration.Values.Any() ? (IList<string>)new[] { "debug" } : optionConfiguration.Values;
+                    buildOptions.TargetFrameworks = optionFramework.Values;
 
                     var projectManager = new BuildManager(buildOptions);
 

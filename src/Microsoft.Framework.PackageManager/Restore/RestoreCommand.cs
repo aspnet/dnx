@@ -163,7 +163,7 @@ namespace Microsoft.Framework.PackageManager
                 }
             }
 
-            foreach (var configuration in project.GetTargetFrameworkConfigurations())
+            foreach (var configuration in project.GetTargetFrameworks())
             {
                 var context = new RestoreContext
                 {

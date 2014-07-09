@@ -139,7 +139,7 @@
     <Compile Include="Project.cs" />
     <Compile Include="ProjectResolver.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="TargetFrameworkConfiguration.cs" />
+    <Compile Include="TargetFrameworkInformation.cs" />
   </ItemGroup>
   <Import Project="$(VSToolsPath)\AspNet\Microsoft.Web.AspNet.targets" Condition="'$(VSToolsPath)' != ''" />
 </Project>

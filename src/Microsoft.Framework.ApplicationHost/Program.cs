@@ -124,6 +124,8 @@ namespace Microsoft.Framework.ApplicationHost
             var optionWatch = app.Option("--watch", "Watch file changes", CommandOptionType.NoValue);
             var optionPackages = app.Option("--packages <PACKAGE_DIR>", "Directory containing packages",
                 CommandOptionType.SingleValue);
+            var optionConfiguration = app.Option("--configuration <CONFIGURATION>", "The configuration to run under", CommandOptionType.SingleValue);
+
             var runCmdExecuted = false;
             app.HelpOption("-?|-h|--help");
             app.VersionOption("--version", GetVersion());
@@ -152,6 +154,7 @@ namespace Microsoft.Framework.ApplicationHost
             defaultHostOptions.PackageDirectory = optionPackages.Value();
 
             defaultHostOptions.TargetFramework = _environment.TargetFramework;
+            defaultHostOptions.Configuration = _environment.Configuration ?? optionConfiguration.Value() ?? "debug";
             defaultHostOptions.ApplicationBaseDirectory = _environment.ApplicationBasePath;
 
             var remainingArgs = new List<string>();

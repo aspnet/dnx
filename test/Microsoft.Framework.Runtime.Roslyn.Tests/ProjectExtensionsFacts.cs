@@ -171,4 +171,12 @@ namespace Microsoft.Framework.Runtime.Roslyn.Tests
             Assert.Equal(DebugInformationKind.Full, k10Options.CompilationOptions.DebugInformationKind);
         }
     }
+
+    public static class ProjectTestExtensions
+    {
+        public static CompilationSettings GetCompilationSettings(this Project project, string configurationName)
+        {
+            return project.GetCompilationSettings(Project.ParseFrameworkName(configurationName), "debug");
+        }
+    }
 }

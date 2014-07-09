@@ -115,14 +115,14 @@ namespace Microsoft.Framework.Runtime.Tests
 
             var compilerOptions = project.GetCompilerOptions();
             Assert.NotNull(compilerOptions);
-            var net45Options = project.GetCompilerOptions("net45");
+            var net45Options = project.GetCompilerOptions(Project.ParseFrameworkName("net45"));
             Assert.NotNull(net45Options);
             Assert.True(net45Options.AllowUnsafe);
             Assert.Equal(new[] { "X", "y" }, net45Options.Defines);
             Assert.True(net45Options.WarningsAsErrors);
             Assert.Equal("x86", net45Options.Platform);
 
-            var k10Options = project.GetCompilerOptions("k10");
+            var k10Options = project.GetCompilerOptions(Project.ParseFrameworkName("k10"));
             Assert.NotNull(k10Options);
             Assert.False(k10Options.AllowUnsafe);
             Assert.Null(k10Options.Defines);

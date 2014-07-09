@@ -8,15 +8,18 @@ namespace Microsoft.Framework.Runtime.Roslyn
 {
     public class BuildContext
     {
-        public BuildContext(string assemblyName, FrameworkName targetFramework)
+        public BuildContext(string assemblyName, FrameworkName targetFramework, string configuration)
         {
             AssemblyName = assemblyName;
             TargetFramework = targetFramework;
+            Configuration = configuration;
         }
 
         public string AssemblyName { get; private set; }
 
         public FrameworkName TargetFramework { get; private set; }
+
+        public string Configuration { get; set; }
 
         public string OutputPath { get; set; }
 

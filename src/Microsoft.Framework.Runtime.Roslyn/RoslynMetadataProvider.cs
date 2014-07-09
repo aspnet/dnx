@@ -15,9 +15,9 @@ namespace Microsoft.Framework.Runtime.Roslyn
             _compiler = compiler;
         }
 
-        public RoslynProjectMetadata GetMetadata(string name, FrameworkName targetFramework)
+        public RoslynProjectMetadata GetMetadata(string name, FrameworkName targetFramework, string configuration)
         {
-            var context = _compiler.CompileProject(name, targetFramework);
+            var context = _compiler.CompileProject(name, targetFramework, configuration);
 
             if (context == null)
             {

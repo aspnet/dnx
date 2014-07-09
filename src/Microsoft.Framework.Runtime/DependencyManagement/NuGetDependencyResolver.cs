@@ -169,7 +169,7 @@ namespace Microsoft.Framework.Runtime
             }
         }
 
-        public ILibraryExport GetLibraryExport(string name, FrameworkName targetFramework)
+        public ILibraryExport GetLibraryExport(string name, FrameworkName targetFramework, string configuration)
         {
             if (!_packageDescriptions.ContainsKey(name))
             {

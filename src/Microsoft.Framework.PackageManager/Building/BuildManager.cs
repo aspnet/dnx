@@ -38,16 +38,30 @@ namespace Microsoft.Framework.PackageManager
             var sw = Stopwatch.StartNew();
 
             string outputPath = _buildOptions.OutputDir ?? Path.Combine(_buildOptions.ProjectDir, "bin");
-            string nupkg = GetPackagePath(project, outputPath);
-            string symbolsNupkg = GetPackagePath(project, outputPath, symbols: true);
 
-            var configurations = new HashSet<FrameworkName>(
-                project.GetTargetFrameworkConfigurations()
+            var specifiedFrameworks = _buildOptions.TargetFrameworks
+                .ToDictionary(f => f, Project.ParseFrameworkName);
+
+            var projectFrameworks = new HashSet<FrameworkName>(
+                project.GetTargetFrameworks()
                        .Select(c => c.FrameworkName));
 
-            if (configurations.Count == 0)
+            IEnumerable<FrameworkName> frameworks = null;
+
+            if (projectFrameworks.Count > 0)
             {
-                configurations.Add(_buildOptions.RuntimeTargetFramework);
+                // Specified target frameworks have to be a subset of
+                // the project frameworks
+                if (!ValidateFrameworks(projectFrameworks, specifiedFrameworks))
+                {
+                    return false;
+                }
+
+                frameworks = specifiedFrameworks.Count > 0 ? specifiedFrameworks.Values : (IEnumerable<FrameworkName>)projectFrameworks;
+            }
+            else
+            {
+                frameworks = new[] { _buildOptions.RuntimeTargetFramework };
             }
 
             var builder = new PackageBuilder();
@@ -60,54 +74,73 @@ namespace Microsoft.Framework.PackageManager
 
             var allDiagnostics = new List<Diagnostic>();
 
-            // Build all target frameworks a project supports
-            foreach (var targetFramework in configurations)
+            // Build all specified configurations
+            foreach (var configuration in _buildOptions.Configurations)
             {
-                try
-                {
-                    var diagnostics = new List<Diagnostic>();
+                bool configurationSuccess = true;
 
-                    if (_buildOptions.CheckDiagnostics)
+                outputPath = Path.Combine(outputPath, configuration);
+
+                // Build all target frameworks a project supports
+                foreach (var targetFramework in frameworks)
+                {
+                    try
                     {
-                        success = success && CheckDiagnostics(project, targetFramework, diagnostics);
+                        var diagnostics = new List<Diagnostic>();
+
+                        if (_buildOptions.CheckDiagnostics)
+                        {
+                            configurationSuccess = configurationSuccess &&
+                                                    CheckDiagnostics(project,
+                                                                     targetFramework,
+                                                                     configuration,
+                                                                     diagnostics);
+                        }
+                        else
+                        {
+                            configurationSuccess = configurationSuccess && 
+                                                   Build(project,
+                                                         outputPath,
+                                                         targetFramework,
+                                                         configuration,
+                                                         builder,
+                                                         symbolPackageBuilder,
+                                                         diagnostics);
+                        }
+
+                        allDiagnostics.AddRange(diagnostics);
+
+                        WriteDiagnostics(diagnostics);
                     }
-                    else
+                    catch (Exception ex)
                     {
-                        success = success && Build(project,
-                                                   outputPath,
-                                                   targetFramework,
-                                                   builder,
-                                                   symbolPackageBuilder,
-                                                   diagnostics);
+                        configurationSuccess = false;
+                        WriteError(ex.ToString());
                     }
-
-                    allDiagnostics.AddRange(diagnostics);
-
-                    WriteDiagnostics(diagnostics);
                 }
-                catch (Exception ex)
+
+                success = success && configurationSuccess;
+
+                if (_buildOptions.CheckDiagnostics)
                 {
-                    success = false;
-                    WriteError(ex.ToString());
+                    continue;
                 }
-            }
 
-            if (!_buildOptions.CheckDiagnostics)
-            {
-                foreach (var sharedFile in project.SharedFiles)
-                {
-                    var file = new PhysicalPackageFile();
-                    file.SourcePath = sharedFile;
-                    file.TargetPath = String.Format(@"shared\{0}", Path.GetFileName(sharedFile));
-                    builder.Files.Add(file);
-                }
-            }
+                // Create a package per configuration
+                string nupkg = GetPackagePath(project, outputPath);
+                string symbolsNupkg = GetPackagePath(project, outputPath, symbols: true);
 
-            if (!_buildOptions.CheckDiagnostics)
-            {
                 // If there were any errors then don't create the package
-                if (!allDiagnostics.Any(IsError) && success)
+                if (!allDiagnostics.Any(IsError) && configurationSuccess)
                 {
+                    foreach (var sharedFile in project.SharedFiles)
+                    {
+                        var file = new PhysicalPackageFile();
+                        file.SourcePath = sharedFile;
+                        file.TargetPath = String.Format(@"shared\{0}", Path.GetFileName(sharedFile));
+                        builder.Files.Add(file);
+                    }
+
                     using (var fs = File.Create(nupkg))
                     {
                         builder.Save(fs);
@@ -128,6 +161,22 @@ namespace Microsoft.Framework.PackageManager
             WriteSummary(allDiagnostics);
 
             Console.WriteLine("Time elapsed {0}", sw.Elapsed);
+            return success;
+        }
+
+        private bool ValidateFrameworks(HashSet<FrameworkName> projectFrameworks, IDictionary<string, FrameworkName> specifiedFrameworks)
+        {
+            bool success = true;
+
+            foreach (var framework in specifiedFrameworks)
+            {
+                if (!projectFrameworks.Contains(framework.Value))
+                {
+                    Console.WriteLine(framework.Key + " is not specified in project.json");
+                    success = false;
+                }
+            }
+
             return success;
         }
 
@@ -239,10 +288,11 @@ namespace Microsoft.Framework.PackageManager
 
         private bool CheckDiagnostics(Project project,
                                       FrameworkName targetFramework,
+                                      string configuration,
                                       List<Diagnostic> diagnostics)
         {
             var compiler = PrepareCompiler(project, targetFramework);
-            var compilationContext = compiler.CompileProject(project.Name, targetFramework);
+            var compilationContext = compiler.CompileProject(project.Name, targetFramework, configuration);
 
             if (compilationContext == null)
             {
@@ -258,6 +308,7 @@ namespace Microsoft.Framework.PackageManager
         private bool Build(Project project,
                            string outputPath,
                            FrameworkName targetFramework,
+                           string configuration,
                            PackageBuilder builder,
                            PackageBuilder symbolPackageBuilder,
                            List<Diagnostic> diagnostics)
@@ -268,7 +319,7 @@ namespace Microsoft.Framework.PackageManager
             var targetFrameworkFolder = VersionUtility.GetShortFrameworkName(targetFramework);
             string targetPath = Path.Combine(outputPath, targetFrameworkFolder);
 
-            var buildContext = new BuildContext(project.Name, targetFramework)
+            var buildContext = new BuildContext(project.Name, targetFramework, configuration)
             {
                 OutputPath = targetPath,
                 PackageBuilder = builder,
