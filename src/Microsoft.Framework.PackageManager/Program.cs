@@ -29,13 +29,7 @@ namespace Microsoft.Framework.PackageManager
 
         public int Main(string[] args)
         {
-#if NET45
             _originalForeground = Console.ForegroundColor;
-#else
-            // TODO: temporary hack to eliminate warnings, remove this line 
-            // after we have Console.ForegroundColor on CoreCLR
-            _originalForeground = ConsoleColor.White;
-#endif
 
             var app = new CommandLineApplication();
             app.Name = "kpm";
@@ -227,16 +221,12 @@ namespace Microsoft.Framework.PackageManager
         ConsoleColor _originalForeground;
         void SetColor(ConsoleColor color)
         {
-#if NET45
             Console.ForegroundColor = (ConsoleColor)(((int)Console.ForegroundColor & 0x08) | ((int)color & 0x07));
-#endif
         }
 
         void SetBold(bool bold)
         {
-#if NET45
             Console.ForegroundColor = (ConsoleColor)(((int)Console.ForegroundColor & 0x07) | (bold ? 0x08 : 0x00));
-#endif
         }
 
         public void WriteLine(string message)
