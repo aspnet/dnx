@@ -12,6 +12,7 @@ namespace Microsoft.Framework.Runtime
         public const string GlobalFileName = "global.json";
 
         public IList<string> SourcePaths { get; private set; }
+        public string PackagesPath { get; private set; }
 
         public static bool TryGetGlobalSettings(string path, out GlobalSettings solution)
         {
@@ -40,6 +41,7 @@ namespace Microsoft.Framework.Runtime
             var sources = settings["sources"];
 
             solution.SourcePaths = sources == null ? new string[] { } : sources.ToObject<string[]>();
+            solution.PackagesPath = settings.Value<string>("packages");
 
             return true;
         }

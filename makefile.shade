@@ -191,6 +191,8 @@ var NEW_RUNTIME = '${Environment.GetEnvironmentVariable("NEW_RUNTIME") == "1"}'
             Environment.SetEnvironmentVariable("PATH", Path.Combine(PACKAGES_DIR, "KRE", "bin") + ";" + envPath);
             Environment.SetEnvironmentVariable("NEW_RUNTIME", "1"); 
             Log.Info("Rebuilding target default"); 
+            // TODO REMOVE after bootstrapping: We need to restore again because the location changes
+            Exec("build.cmd", "initialize");
             Exec("build.cmd", "rebuild-package");
         }
         finally
@@ -366,17 +368,16 @@ var NEW_RUNTIME = '${Environment.GetEnvironmentVariable("NEW_RUNTIME") == "1"}'
                                "Microsoft.CodeAnalysis.CSharp", 
                                "Microsoft.Bcl.Immutable", 
                                "Microsoft.Bcl.Metadata" };
-
         
         foreach (var framework in targetFrameworks)
         {
             foreach (var package in packages)
             {
-                var packageDir = Directory.GetDirectories(PACKAGES_DIR, package + "*").OrderByDescending(d => d).FirstOrDefault();
+                var packageDir = FindPackageDirectory(PACKAGES_DIR, package);
 
                 if(packageDir == null)
                 {
-                    Log.Warn("Unable to find resolve " + package);
+                    Log.Warn("Unable to find " + package);
 
                     continue;
                 }
@@ -484,3 +485,43 @@ var NEW_RUNTIME = '${Environment.GetEnvironmentVariable("NEW_RUNTIME") == "1"}'
 
 macro name='NuGetInstall' Package='string' OutputDir='string' Extra='string'
     nuget-install package='${Package}' outputDir='${OutputDir}' extra='${Extra}'
+
+functions @{
+    string FindPackageDirectory(string packagesDirectory, string name)
+    {
+        // If it's in the packages dir then it's the old format
+        var packageDir = Directory.GetDirectories(packagesDirectory, name + "*")
+                                  .OrderByDescending(d => d)
+                                  .FirstOrDefault();
+                                  
+        if (!string.IsNullOrEmpty(packageDir))
+        {
+            return packageDir;
+        }
+                                  
+        var packagesDir = Environment.GetEnvironmentVariable("KRE_PACKAGES");
+
+        if (string.IsNullOrEmpty(packagesDir))
+        {
+            var profileDirectory = Environment.GetEnvironmentVariable("USERPROFILE");
+
+            if (string.IsNullOrEmpty(profileDirectory))
+            {
+                profileDirectory = Environment.GetEnvironmentVariable("HOME");
+            }
+
+            packagesDir = Path.Combine(profileDirectory, ".kpm", "packages");
+        }
+        
+        var packageMetadataDir = Path.Combine(packagesDir, name);
+        
+        if (!Directory.Exists(packageMetadataDir))
+        {
+            return null;
+        }
+        
+        return Directory.GetDirectories(packageMetadataDir)
+                        .OrderByDescending(d => d)
+                        .FirstOrDefault();
+    }
+}

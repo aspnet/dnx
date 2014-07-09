@@ -57,24 +57,26 @@ namespace Microsoft.Framework.PackageManager
 
             var projectJsonFiles = Directory.GetFiles(restoreDirectory, "project.json", SearchOption.AllDirectories);
 
-            var rootDirectory = ResolveRootDirectory(restoreDirectory);
-
+            var rootDirectory = ProjectResolver.ResolveRootDirectory(restoreDirectory);
             ReadSettings(rootDirectory);
 
-            string packagesFolder = Path.Combine(rootDirectory, CommandLineConstants.PackagesDirectoryName);
-            var packagesFolderFileSystem = CreateFileSystem(packagesFolder);
-            var pathResolver = new DefaultPackagePathResolver(packagesFolderFileSystem, useSideBySidePaths: true);
-            var localRepository = new LocalPackageRepository(pathResolver, packagesFolderFileSystem)
+            string packagesDirectory = PackageFolder;
+
+            if (string.IsNullOrEmpty(PackageFolder))
             {
-                //PackageSaveMode = PackageSaveModes.Nuspec | PackageSaveModes.Nupkg,
-            };
+                packagesDirectory = NuGetDependencyResolver.ResolveRepositoryPath(rootDirectory);
+            }
+
+            var packagesFolderFileSystem = CreateFileSystem(packagesDirectory);
+            var pathResolver = new DefaultPackagePathResolver(packagesFolderFileSystem, useSideBySidePaths: true);
+            var localRepository = new LocalPackageRepository(pathResolver, packagesFolderFileSystem);
 
             int restoreCount = 0;
             int successCount = 0;
             foreach (var projectJsonPath in projectJsonFiles)
             {
                 restoreCount += 1;
-                var success = RestoreForProject(localRepository, projectJsonPath, rootDirectory).Result;
+                var success = RestoreForProject(localRepository, projectJsonPath, rootDirectory, packagesDirectory).Result;
                 if (success)
                 {
                     successCount += 1;
@@ -89,7 +91,7 @@ namespace Microsoft.Framework.PackageManager
             return restoreCount == successCount;
         }
 
-        private async Task<bool> RestoreForProject(LocalPackageRepository localRepository, string projectJsonPath, string rootDirectory)
+        private async Task<bool> RestoreForProject(LocalPackageRepository localRepository, string projectJsonPath, string rootDirectory, string packagesDirectory)
         {
             var success = true;
 
@@ -105,7 +107,6 @@ namespace Microsoft.Framework.PackageManager
             }
 
             var projectDirectory = project.ProjectDirectory;
-            var packagesDirectory = PackageFolder ?? Path.Combine(rootDirectory, CommandLineConstants.PackagesDirectoryName);
 
             var restoreOperations = new RestoreOperations { Report = Report };
             var projectProviders = new List<IWalkProvider>();
@@ -278,7 +279,7 @@ namespace Microsoft.Framework.PackageManager
 
                 Report.WriteLine(string.Format("Installing {0} {1}", library.Name.Bold(), library.Version));
 
-                var targetPath = Path.Combine(packagesDirectory, library.Name + "." + library.Version);
+                var targetPath = Path.Combine(packagesDirectory, library.Name, library.Version.ToString());
                 var targetNupkg = Path.Combine(targetPath, library.Name + "." + library.Version + ".nupkg");
 
                 Directory.CreateDirectory(targetPath);
@@ -340,26 +341,6 @@ namespace Microsoft.Framework.PackageManager
                 Report.WriteLine(indent + node.Library.Name + "@" + node.Library.Version);
                 Display(indent + " ", node.Dependencies);
             }
-        }
-
-        public static string ResolveRootDirectory(string projectDir)
-        {
-            var di = new DirectoryInfo(projectDir);
-
-            while (di.Parent != null)
-            {
-                if (di.EnumerateFiles("*.global.json").Any() ||
-                    di.EnumerateFiles("*.sln").Any() ||
-                    di.EnumerateDirectories("packages").Any() ||
-                    di.EnumerateDirectories(".git").Any())
-                {
-                    return di.FullName;
-                }
-
-                di = di.Parent;
-            }
-
-            return Path.GetDirectoryName(projectDir);
         }
 
 

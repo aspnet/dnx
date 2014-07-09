@@ -3,10 +3,7 @@
 
 using System;
 using System.Collections.Generic;
-using System.Globalization;
-using System.IO;
 using System.Linq;
-using NuGet.Resources;
 
 namespace NuGet
 {
@@ -43,11 +40,16 @@ namespace NuGet
 
             var packages = new List<IPackage>();
 
-            foreach (var dir in FileSystem.GetDirectories(String.Empty))
+            // packages\{name}\{version}\{name}.nuspec
+
+            foreach (var pakageDir in FileSystem.GetDirectories(String.Empty))
             {
-                foreach (var path in FileSystem.GetFiles(dir, nuspecFilter))
+                foreach (var versionDir in FileSystem.GetDirectories(pakageDir))
                 {
-                    packages.Add(OpenNuspec(path));
+                    foreach (var nuspecPath in FileSystem.GetFiles(versionDir, nuspecFilter))
+                    {
+                        packages.Add(new UnzippedPackage(FileSystem, nuspecPath));
+                    }
                 }
             }
 
@@ -74,48 +76,6 @@ namespace NuGet
             }
 
             return _cache[packageId];
-        }
-
-
-        private IPackage OpenNuspec(string path)
-        {
-            if (!FileSystem.FileExists(path))
-            {
-                return null;
-            }
-
-            if (Path.GetExtension(path) == Constants.ManifestExtension)
-            {
-                UnzippedPackage package;
-
-                try
-                {
-                    package = new UnzippedPackage(FileSystem, path);
-                }
-                catch (InvalidDataException ex)
-                {
-                    throw new InvalidDataException(String.Format(CultureInfo.CurrentCulture, NuGetResources.ErrorReadingPackage, path), ex);
-                }
-
-                // Set the last modified date on the package
-                package.Published = FileSystem.GetLastModified(path);
-
-                return package;
-            }
-
-            return null;
-        }
-
-        private string GetPackageFilePath(IPackage package)
-        {
-            return Path.Combine(PathResolver.GetPackageDirectory(package),
-                                PathResolver.GetPackageFileName(package));
-        }
-
-        private string GetPackageFilePath(string id, SemanticVersion version)
-        {
-            return Path.Combine(PathResolver.GetPackageDirectory(id, version),
-                                PathResolver.GetPackageFileName(id, version));
         }
     }
 }

@@ -8,6 +8,7 @@ using System.Linq;
 using System.Xml.Linq;
 using Microsoft.Framework.Runtime;
 using Newtonsoft.Json.Linq;
+using NuGet;
 
 namespace Microsoft.Framework.PackageManager.Packing
 {
@@ -81,7 +82,7 @@ namespace Microsoft.Framework.PackageManager.Packing
 
             mainProject.PostProcess(this);
 
-            WriteDependenciesToGlobalJson();
+            WriteGlobalJson();
 
             foreach (var commandName in _project.Commands.Keys)
             {
@@ -106,7 +107,7 @@ namespace Microsoft.Framework.PackageManager.Packing
             }
         }
 
-        private void WriteDependenciesToGlobalJson()
+        private void WriteGlobalJson()
         {
             var nugetDependencyResolver = new NuGetDependencyResolver(
                 _project.ProjectDirectory,
@@ -166,11 +167,10 @@ namespace Microsoft.Framework.PackageManager.Packing
             }
 
             var rootObject = default(JObject);
-            var rootDir = ProjectResolver.ResolveRootDirectory(_project.ProjectDirectory);
-            if (GlobalSettings.HasGlobalFile(rootDir))
+            if (GlobalSettings.HasGlobalFile(rootDirectory))
             {
                 rootObject = JObject.Parse(File.ReadAllText(Path.Combine(
-                    rootDir,
+                    rootDirectory,
                     GlobalSettings.GlobalFileName)));
             }
             else
@@ -178,9 +178,13 @@ namespace Microsoft.Framework.PackageManager.Packing
                 rootObject = new JObject();
             }
 
-            rootObject["dependencies"] = dependenciesObj;
+            var applicationRoot = Path.Combine(OutputPath, PackRoot.AppRootName);
 
-            File.WriteAllText(Path.Combine(OutputPath, PackRoot.AppRootName, GlobalSettings.GlobalFileName),
+            rootObject["dependencies"] = dependenciesObj;
+            rootObject["packages"] = PathUtility.GetRelativePath(PathUtility.EnsureTrailingSlash(applicationRoot),
+                                                                 PackagesPath);
+
+            File.WriteAllText(Path.Combine(applicationRoot, GlobalSettings.GlobalFileName),
                 rootObject.ToString());
         }
     }

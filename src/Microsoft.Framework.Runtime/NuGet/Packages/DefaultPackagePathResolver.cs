@@ -56,7 +56,7 @@ namespace NuGet
             string directory = packageId;
             if (_useSideBySidePaths)
             {
-                directory += "." + version;
+                directory = Path.Combine(directory, version.ToString());
             }
             return directory;
         }
@@ -66,7 +66,7 @@ namespace NuGet
             string fileNameBase = packageId;
             if (_useSideBySidePaths)
             {
-                fileNameBase += "." + version;
+                fileNameBase = Path.Combine(fileNameBase, version.ToString());
             }
             return fileNameBase + Constants.PackageExtension;
         }

@@ -24,16 +24,16 @@ namespace Microsoft.Framework.Runtime
 
         private readonly IFrameworkReferenceResolver _frameworkReferenceResolver;
 
-        public NuGetDependencyResolver(string projectPath, IFrameworkReferenceResolver frameworkReferenceResolver)
-            : this(projectPath, null, frameworkReferenceResolver)
+        public NuGetDependencyResolver(string rootDirectory, IFrameworkReferenceResolver frameworkReferenceResolver)
+            : this(rootDirectory, null, frameworkReferenceResolver)
         {
         }
 
-        public NuGetDependencyResolver(string projectPath, string packagesPath, IFrameworkReferenceResolver frameworkReferenceResolver)
+        public NuGetDependencyResolver(string rootDirectory, string packagesPath, IFrameworkReferenceResolver frameworkReferenceResolver)
         {
             if (string.IsNullOrEmpty(packagesPath))
             {
-                packagesPath = ResolveRepositoryPath(projectPath);
+                packagesPath = ResolveRepositoryPath(rootDirectory);
             }
 
             _repository = new PackageRepository(packagesPath);
@@ -55,8 +55,8 @@ namespace Microsoft.Framework.Runtime
         {
             return new[]
             {
-                Path.Combine(_repository.FileSystem.Root, "{name}.{version}", "{name}.nuspec"),
-                Path.Combine(_repository.FileSystem.Root, "{name}.{version}", "{name}.{version}.nupkg")
+                Path.Combine(_repository.FileSystem.Root, "{name}", "{version}", "{name}.nuspec"),
+                Path.Combine(_repository.FileSystem.Root, "{name}", "{version}", "{name}.{version}.nupkg")
             };
         }
 
@@ -99,7 +99,7 @@ namespace Microsoft.Framework.Runtime
             {
                 foreach (var assemblyReference in frameworkAssemblies)
                 {
-                    if (!assemblyReference.SupportedFrameworks.Any() && 
+                    if (!assemblyReference.SupportedFrameworks.Any() &&
                         !VersionUtility.IsDesktop(targetFramework))
                     {
                         // REVIEW: This isn't 100% correct since none *can* mean 
@@ -362,11 +362,36 @@ namespace Microsoft.Framework.Runtime
             return bestMatch;
         }
 
-        public static string ResolveRepositoryPath(string projectPath)
+        public static string ResolveRepositoryPath(string rootDirectory)
         {
-            var rootPath = ProjectResolver.ResolveRootDirectory(projectPath);
+            // Order
+            // 1. KRE_PACKAGES environment variable
+            // 2. global.json { "packages": "..." }
+            // 3. NuGet.config repositoryPath (maybe)?
+            // 4. %userprofile%\.kpm\packages
 
-            return Path.Combine(rootPath, "packages");
+            var krePackages = Environment.GetEnvironmentVariable("KRE_PACKAGES");
+
+            if (!string.IsNullOrEmpty(krePackages))
+            {
+                return krePackages;
+            }
+
+            GlobalSettings settings;
+            if (GlobalSettings.TryGetGlobalSettings(rootDirectory, out settings) &&
+                !string.IsNullOrEmpty(settings.PackagesPath))
+            {
+                return Path.Combine(rootDirectory, settings.PackagesPath);
+            }
+
+            var profileDirectory = Environment.GetEnvironmentVariable("USERPROFILE");
+
+            if (string.IsNullOrEmpty(profileDirectory))
+            {
+                profileDirectory = Environment.GetEnvironmentVariable("HOME");
+            }
+
+            return Path.Combine(profileDirectory, ".kpm", "packages");
         }
 
         private class PackageDescription
