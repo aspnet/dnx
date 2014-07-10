@@ -48,6 +48,14 @@ namespace Microsoft.Framework.PackageManager.Packing
 
             var mainProject = Projects.Single(project => project.Name == _project.Name);
 
+            // TODO: this folder is needed by WebDeply team
+            // we create an empty one as a temp workaround.
+            // Later we should extract all static files from main project
+            // and put them into this folder.
+            var staticFileRootName = AppFolder ?? mainProject.Name;
+            var staticFileRootPath = Path.Combine(OutputPath, staticFileRootName);
+            Directory.CreateDirectory(staticFileRootPath);
+
             foreach (var deploymentPackage in Packages)
             {
                 deploymentPackage.Emit(this);
