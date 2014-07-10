@@ -37,10 +37,8 @@ namespace Microsoft.Framework.PackageManager
 
             var sw = Stopwatch.StartNew();
 
-            string outputPath = _buildOptions.OutputDir ?? Path.Combine(_buildOptions.ProjectDir, "bin");
-
-            var configurations = !_buildOptions.Configurations.Any() ? (IEnumerable<string>)new[] { "debug" } :
-                                  _buildOptions.Configurations;
+            var outputPath = _buildOptions.OutputDir ?? Path.Combine(_buildOptions.ProjectDir, "bin");
+            var configurations = _buildOptions.Configurations.DefaultIfEmpty("debug");
 
             var specifiedFrameworks = _buildOptions.TargetFrameworks
                 .ToDictionary(f => f, Project.ParseFrameworkName);
@@ -67,20 +65,21 @@ namespace Microsoft.Framework.PackageManager
                 frameworks = new[] { _buildOptions.RuntimeTargetFramework };
             }
 
-            var builder = new PackageBuilder();
-            var symbolPackageBuilder = new PackageBuilder();
-
-            InitializeBuilder(project, builder);
-            InitializeBuilder(project, symbolPackageBuilder);
-
-            bool success = true;
+            var success = true;
 
             var allDiagnostics = new List<Diagnostic>();
 
             // Build all specified configurations
             foreach (var configuration in configurations)
             {
-                bool configurationSuccess = true;
+                // Create a new builder per configuration
+                var builder = new PackageBuilder();
+                var symbolPackageBuilder = new PackageBuilder();
+
+                InitializeBuilder(project, builder);
+                InitializeBuilder(project, symbolPackageBuilder);
+
+                var configurationSuccess = true;
 
                 outputPath = Path.Combine(outputPath, configuration);
 
