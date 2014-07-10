@@ -141,6 +141,7 @@ namespace Microsoft.Framework.PackageManager
 
                 var argProject = c.Argument("[project]", "Path to project, default is current directory");
                 var optionOut = c.Option("-o|--out <PATH>", "Where does it go", CommandOptionType.SingleValue);
+                var optionConfiguration = c.Option("--configuration <CONFIGURATION>", "The configuration to use for deployment", CommandOptionType.SingleValue);
                 var optionZipPackages = c.Option("-z|--zippackages", "Bundle a zip full of packages",
                     CommandOptionType.NoValue);
                 var optionOverwrite = c.Option("--overwrite", "Remove existing files in target folders",
@@ -166,6 +167,7 @@ namespace Microsoft.Framework.PackageManager
                         OutputDir = optionOut.Value(),
                         ProjectDir = argProject.Value ?? System.IO.Directory.GetCurrentDirectory(),
                         AppFolder = optionAppFolder.Value(),
+                        Configuration = optionConfiguration.Value() ?? "debug",
                         RuntimeTargetFramework = _environment.TargetFramework,
                         ZipPackages = optionZipPackages.HasValue(),
                         Overwrite = optionOverwrite.HasValue(),

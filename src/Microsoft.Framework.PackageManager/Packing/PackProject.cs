@@ -102,6 +102,7 @@ namespace Microsoft.Framework.PackageManager.Packing
             var buildOptions = new BuildOptions();
             buildOptions.ProjectDir = project.ProjectDirectory;
             buildOptions.OutputDir = Path.Combine(project.ProjectDirectory, "bin");
+            buildOptions.Configurations.Add(root.Configuration);
             var buildManager = new BuildManager(buildOptions);
             if (!buildManager.Build())
             {
@@ -109,7 +110,7 @@ namespace Microsoft.Framework.PackageManager.Packing
             }
 
             // Extract the generated nupkg to target path
-            var srcNupkgPath = Path.Combine(buildOptions.OutputDir, targetNupkgName + ".nupkg");
+            var srcNupkgPath = Path.Combine(buildOptions.OutputDir, root.Configuration, targetNupkgName + ".nupkg");
             var targetNupkgPath = Path.Combine(TargetPath, targetNupkgName + ".nupkg");
             using (var sourceStream = new FileStream(srcNupkgPath, FileMode.Open, FileAccess.Read))
             {
@@ -169,7 +170,11 @@ namespace Microsoft.Framework.PackageManager.Packing
                         File.WriteAllText(iniFilePath, string.Format(@"[Runtime]
 KRE_VERSION={0}
 KRE_FLAVOR={1}
-", versionNumber, flavor == "svrc50" ? "CoreCLR" : "DesktopCLR"));
+CONFIGURATION={2}
+", 
+versionNumber, 
+flavor == "svrc50" ? "CoreCLR" : "DesktopCLR",
+root.Configuration));
                     }
                 }
             }

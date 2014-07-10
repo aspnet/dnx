@@ -33,6 +33,7 @@ namespace Microsoft.Framework.PackageManager.Packing
         public bool Overwrite { get; set; }
         public bool ZipPackages { get; set; }
         public bool NoSource { get; set; }
+        public string Configuration { get; set; }
 
         public IList<PackRuntime> Runtimes { get; set; }
         public IList<PackProject> Projects { get; private set; }

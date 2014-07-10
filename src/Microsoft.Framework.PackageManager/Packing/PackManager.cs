@@ -45,7 +45,7 @@ namespace Microsoft.Framework.PackageManager.Packing
                 var gacDependencyResolver = new GacDependencyResolver();
                 var projectReferenceDependencyProvider = new ProjectReferenceDependencyProvider(projectResolver);
 
-                var dependencyWalker = new DependencyWalker(new IDependencyProvider[] { 
+                var dependencyWalker = new DependencyWalker(new IDependencyProvider[] {
                     projectReferenceDependencyProvider,
                     referenceAssemblyDependencyResolver,
                     gacDependencyResolver,
@@ -115,6 +115,7 @@ namespace Microsoft.Framework.PackageManager.Packing
                 Overwrite = _options.Overwrite,
                 ZipPackages = _options.ZipPackages,
                 AppFolder = _options.AppFolder ?? project.Name,
+                Configuration = _options.Configuration,
                 NoSource = _options.NoSource
             };
 

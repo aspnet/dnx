@@ -18,5 +18,11 @@ namespace Microsoft.Framework.PackageManager
 
         public FrameworkName RuntimeTargetFramework { get; set; }
         public bool CheckDiagnostics { get; set; }
+
+        public BuildOptions()
+        {
+            Configurations = new List<string>();
+            TargetFrameworks = new List<string>();
+        }
     }
 }
