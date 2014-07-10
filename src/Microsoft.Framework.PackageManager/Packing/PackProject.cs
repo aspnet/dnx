@@ -42,7 +42,7 @@ namespace Microsoft.Framework.PackageManager.Packing
             }
 
             var targetName = AppFolder ?? project.Name;
-            TargetPath = Path.Combine(root.OutputPath, targetName);
+            TargetPath = Path.Combine(root.OutputPath, PackRoot.AppRootName, "src", targetName);
 
             Console.WriteLine("  Source {0}", project.ProjectDirectory);
             Console.WriteLine("  Target {0}", TargetPath);
@@ -80,7 +80,7 @@ namespace Microsoft.Framework.PackageManager.Packing
 
             var targetName = AppFolder ?? project.Name;
             var targetNupkgName = string.Format("{0}.{1}", targetName, project.Version);
-            TargetPath = Path.Combine(root.OutputPath, "packages", targetNupkgName);
+            TargetPath = Path.Combine(root.OutputPath, PackRoot.AppRootName, "packages", targetNupkgName);
 
             Console.WriteLine("  Source {0}", project.ProjectDirectory);
             Console.WriteLine("  Target {0}", TargetPath);

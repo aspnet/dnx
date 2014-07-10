@@ -14,6 +14,7 @@ namespace Microsoft.Framework.PackageManager.Packing
     public class PackRoot
     {
         private readonly Runtime.Project _project;
+        public static readonly string AppRootName = "approot";
 
         public PackRoot(Runtime.Project project, string outputPath)
         {
@@ -22,7 +23,7 @@ namespace Microsoft.Framework.PackageManager.Packing
             Packages = new List<PackPackage>();
             Runtimes = new List<PackRuntime>();
             OutputPath = outputPath;
-            PackagesPath = Path.Combine(outputPath, "packages");
+            PackagesPath = Path.Combine(outputPath, AppRootName, "packages");
             Operations = new PackOperations();
         }
 
@@ -95,13 +96,13 @@ namespace Microsoft.Framework.PackageManager.Packing
                 {
                     File.WriteAllText(
                         Path.Combine(OutputPath, commandName + ".cmd"),
-                        string.Format(template1, commandName, AppFolder ?? _project.Name, Runtimes.First().Name));
+                        string.Format(template1, commandName, Path.Combine(AppRootName, "src", AppFolder ?? _project.Name), Runtimes.First().Name));
                 }
                 else
                 {
                     File.WriteAllText(
                         Path.Combine(OutputPath, commandName + ".cmd"),
-                        string.Format(template2, commandName, AppFolder ?? _project.Name));
+                        string.Format(template2, commandName, Path.Combine(AppRootName, "src", AppFolder ?? _project.Name)));
                 }
             }
         }
@@ -180,7 +181,8 @@ namespace Microsoft.Framework.PackageManager.Packing
 
             rootObject["dependencies"] = dependenciesObj;
 
-            File.WriteAllText(Path.Combine(OutputPath, GlobalSettings.GlobalFileName), rootObject.ToString());
+            File.WriteAllText(Path.Combine(OutputPath, PackRoot.AppRootName, GlobalSettings.GlobalFileName),
+                rootObject.ToString());
         }
     }
 }
