@@ -256,8 +256,13 @@ var NEW_RUNTIME = '${Environment.GetEnvironmentVariable("NEW_RUNTIME") == "1"}'
     copy sourceDir='${SCRIPTS_DIR}' include='*.cmd' overwrite='${true}' each='var outputDir in new[]{ SVR50_x86_BIN, SVR50_x64_BIN, SVRC50_x86_BIN, SVRC50_x64_BIN }'
 
     @{
-        var hostK10 = Path.Combine(BUILD_DIR2, "*", Configuration, "k10", "**.*");
-        var hostnet45 = Path.Combine(BUILD_DIR2, "*", Configuration, "net45", "**.*");
+        // This is a workaround because we're adding configuration support. We need to be able to build
+        // the new KRE with the old KRE which has no configuration in the output
+        var hasConfiguration = Directory.Exists(Path.Combine(BUILD_DIR2, "klr.net45.managed", Configuration));
+        
+        var hostK10 = hasConfiguration ? Path.Combine(BUILD_DIR2, "*", Configuration, "k10", "**.*") : Path.Combine(BUILD_DIR2, "*", "k10", "**.*");
+        var hostnet45 = hasConfiguration ? Path.Combine(BUILD_DIR2, "*", Configuration, "net45", "**.*") : Path.Combine(BUILD_DIR2, "*", "net45", "**.*");
+        
         var libPackages = new[] { "Microsoft.Framework.Project",
                                   "Microsoft.Framework.PackageManager", 
                                   "Microsoft.Framework.DesignTimeHost" };
