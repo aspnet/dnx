@@ -51,7 +51,7 @@ namespace Microsoft.Framework.PackageManager
             {
                 c.Description = "Restore packages";
 
-                var argRoot = c.Argument("[root]", "Root of all projects to restore. It can be a directory, a project.json or a global.json.");
+                var argRoot = c.Argument("[root]", "Root of all projects to restore. It can be a directory, a project.json, or a global.json.");
                 var optSource = c.Option("-s|--source <FEED>", "A list of packages sources to use for this command",
                     CommandOptionType.MultipleValue);
                 var optFallbackSource = c.Option("-f|--fallbacksource <FEED>",
