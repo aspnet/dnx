@@ -39,6 +39,9 @@ namespace Microsoft.Framework.PackageManager
 
             string outputPath = _buildOptions.OutputDir ?? Path.Combine(_buildOptions.ProjectDir, "bin");
 
+            var configurations = !_buildOptions.Configurations.Any() ? (IEnumerable<string>)new[] { "debug" } :
+                                  _buildOptions.Configurations;
+
             var specifiedFrameworks = _buildOptions.TargetFrameworks
                 .ToDictionary(f => f, Project.ParseFrameworkName);
 
@@ -75,7 +78,7 @@ namespace Microsoft.Framework.PackageManager
             var allDiagnostics = new List<Diagnostic>();
 
             // Build all specified configurations
-            foreach (var configuration in _buildOptions.Configurations)
+            foreach (var configuration in configurations)
             {
                 bool configurationSuccess = true;
 

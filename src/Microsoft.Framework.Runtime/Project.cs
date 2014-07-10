@@ -529,10 +529,10 @@ namespace Microsoft.Framework.Runtime
             {
                 Defines = ConvertValue<string[]>(rawOptions, "define"),
                 LanguageVersion = ConvertValue<string>(rawOptions, "languageVersion"),
-                AllowUnsafe = GetValue<bool>(rawOptions, "allowUnsafe"),
+                AllowUnsafe = GetValue<bool?>(rawOptions, "allowUnsafe"),
                 Platform = GetValue<string>(rawOptions, "platform"),
-                WarningsAsErrors = GetValue<bool>(rawOptions, "warningsAsErrors"),
-                Optimize = GetValue<bool>(rawOptions, "optimize"),
+                WarningsAsErrors = GetValue<bool?>(rawOptions, "warningsAsErrors"),
+                Optimize = GetValue<bool?>(rawOptions, "optimize"),
                 DebugSymbols = GetValue<string>(rawOptions, "debugSymbols"),
             };
 

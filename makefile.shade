@@ -5,7 +5,7 @@ use import="Environment"
 var PRODUCT_VERSION = '1.0.0'
 var AUTHORS='Microsoft Open Technologies, Inc.'
 
-default Configuration='Release'
+default Configuration='debug'
 
 use-standard-lifecycle
 k-standard-goals
@@ -256,8 +256,8 @@ var NEW_RUNTIME = '${Environment.GetEnvironmentVariable("NEW_RUNTIME") == "1"}'
     copy sourceDir='${SCRIPTS_DIR}' include='*.cmd' overwrite='${true}' each='var outputDir in new[]{ SVR50_x86_BIN, SVR50_x64_BIN, SVRC50_x86_BIN, SVRC50_x64_BIN }'
 
     @{
-        var hostK10 = Path.Combine(BUILD_DIR2, "*", "k10", "**.*");
-        var hostnet45 = Path.Combine(BUILD_DIR2, "*", "net45", "**.*");
+        var hostK10 = Path.Combine(BUILD_DIR2, "*", Configuration, "k10", "**.*");
+        var hostnet45 = Path.Combine(BUILD_DIR2, "*", Configuration, "net45", "**.*");
         var libPackages = new[] { "Microsoft.Framework.Project",
                                   "Microsoft.Framework.PackageManager", 
                                   "Microsoft.Framework.DesignTimeHost" };

@@ -205,7 +205,7 @@ namespace Microsoft.Framework.PackageManager
                     buildOptions.OutputDir = optionOut.Value();
                     buildOptions.ProjectDir = argProjectDir.Value ?? Directory.GetCurrentDirectory();
                     buildOptions.CheckDiagnostics = optionCheck.HasValue();
-                    buildOptions.Configurations = !optionConfiguration.Values.Any() ? (IList<string>)new[] { "debug" } : optionConfiguration.Values;
+                    buildOptions.Configurations = optionConfiguration.Values;
                     buildOptions.TargetFrameworks = optionFramework.Values;
 
                     var projectManager = new BuildManager(buildOptions);

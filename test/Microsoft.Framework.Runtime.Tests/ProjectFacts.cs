@@ -75,12 +75,12 @@ namespace Microsoft.Framework.Runtime.Tests
 
             var compilerOptions = project.GetCompilerOptions();
             Assert.NotNull(compilerOptions);
-            Assert.True(compilerOptions.AllowUnsafe);
+            Assert.True(compilerOptions.AllowUnsafe.Value);
             Assert.Equal(new[] { "X", "y" }, compilerOptions.Defines);
-            Assert.True(compilerOptions.WarningsAsErrors);
+            Assert.True(compilerOptions.WarningsAsErrors.Value);
             Assert.Equal("x86", compilerOptions.Platform);
             Assert.Equal("pdbOnly", compilerOptions.DebugSymbols);
-            Assert.True(compilerOptions.Optimize);
+            Assert.True(compilerOptions.Optimize.Value);
         }
 
         [Fact]
@@ -117,16 +117,16 @@ namespace Microsoft.Framework.Runtime.Tests
             Assert.NotNull(compilerOptions);
             var net45Options = project.GetCompilerOptions(Project.ParseFrameworkName("net45"));
             Assert.NotNull(net45Options);
-            Assert.True(net45Options.AllowUnsafe);
-            Assert.Equal(new[] { "X", "y" }, net45Options.Defines);
-            Assert.True(net45Options.WarningsAsErrors);
+            Assert.True(net45Options.AllowUnsafe.Value);
+            Assert.Equal(new[] { "X", "y", "NET45" }, net45Options.Defines);
+            Assert.True(net45Options.WarningsAsErrors.Value);
             Assert.Equal("x86", net45Options.Platform);
 
             var k10Options = project.GetCompilerOptions(Project.ParseFrameworkName("k10"));
             Assert.NotNull(k10Options);
-            Assert.False(k10Options.AllowUnsafe);
-            Assert.Null(k10Options.Defines);
-            Assert.True(k10Options.WarningsAsErrors);
+            Assert.Null(k10Options.AllowUnsafe);
+            Assert.Equal(new[] { "K10" }, k10Options.Defines);
+            Assert.True(k10Options.WarningsAsErrors.Value);
             Assert.Null(k10Options.Platform);
         }
 

@@ -22,6 +22,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AssemblyLoaderFacts.cs" />
+    <Compile Include="CompilerOptionsFacts.cs" />
     <Compile Include="FileWatcherFacts.cs" />
     <Compile Include="ProjectFacts.cs" />
     <Compile Include="LibraryManagerFacts.cs" />
