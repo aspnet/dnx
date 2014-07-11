@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using Microsoft.Framework.Runtime;
 
 namespace Microsoft.Framework.Project
 {
@@ -17,7 +18,18 @@ namespace Microsoft.Framework.Project
         public CrossgenManager(CrossgenOptions options)
         {
             _options = options;
-            _universe = BuildUniverse(options.RuntimePath, options.InputPaths);
+
+            var crossgenPaths = options.InputPaths;
+
+            if (options.Packages)
+            {
+                Console.WriteLine("Crossgen will include all package dependencies");
+                var packageRoot = NuGetDependencyResolver.ResolveRepositoryPath(Directory.GetCurrentDirectory());
+                var packageDirectories = Directory.EnumerateDirectories(packageRoot, "k10", SearchOption.AllDirectories);
+                crossgenPaths = crossgenPaths.Concat(packageDirectories);
+            }
+
+            _universe = BuildUniverse(options.RuntimePath, crossgenPaths);
         }
 
         public CrossgenResult GenerateNativeImages()
