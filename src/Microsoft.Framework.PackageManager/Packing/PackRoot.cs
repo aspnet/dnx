@@ -32,7 +32,6 @@ namespace Microsoft.Framework.PackageManager.Packing
 
         public string AppFolder { get; set; }
         public bool Overwrite { get; set; }
-        public bool ZipPackages { get; set; }
         public bool NoSource { get; set; }
         public string Configuration { get; set; }
 

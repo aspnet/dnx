@@ -142,8 +142,6 @@ namespace Microsoft.Framework.PackageManager
                 var argProject = c.Argument("[project]", "Path to project, default is current directory");
                 var optionOut = c.Option("-o|--out <PATH>", "Where does it go", CommandOptionType.SingleValue);
                 var optionConfiguration = c.Option("--configuration <CONFIGURATION>", "The configuration to use for deployment", CommandOptionType.SingleValue);
-                var optionZipPackages = c.Option("-z|--zippackages", "Bundle a zip full of packages",
-                    CommandOptionType.NoValue);
                 var optionOverwrite = c.Option("--overwrite", "Remove existing files in target folders",
                     CommandOptionType.NoValue);
                 var optionNoSource = c.Option("--no-source", "Don't include sources of project dependencies",
@@ -156,10 +154,9 @@ namespace Microsoft.Framework.PackageManager
 
                 c.OnExecute(() =>
                 {
-                    Console.WriteLine("verbose:{0} out:{1} zip:{2} project:{3}",
+                    Console.WriteLine("verbose:{0} out:{1} project:{2}",
                         optionVerbose.HasValue(),
                         optionOut.Value(),
-                        optionZipPackages.HasValue(),
                         argProject.Value);
 
                     var options = new PackOptions
@@ -169,7 +166,6 @@ namespace Microsoft.Framework.PackageManager
                         AppFolder = optionAppFolder.Value(),
                         Configuration = optionConfiguration.Value() ?? "debug",
                         RuntimeTargetFramework = _environment.TargetFramework,
-                        ZipPackages = optionZipPackages.HasValue(),
                         Overwrite = optionOverwrite.HasValue(),
                         NoSource = optionNoSource.HasValue(),
                         Runtimes = optionRuntime.HasValue() ?

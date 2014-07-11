@@ -16,6 +16,7 @@ namespace Microsoft.Framework.PackageManager.Packing
         private readonly ProjectReferenceDependencyProvider _projectReferenceDependencyProvider;
         private readonly IProjectResolver _projectResolver;
         private readonly LibraryDescription _libraryDescription;
+        private readonly string[] AppFolderExcludeExtensions = { ".kproj", ".user" };
 
         public PackProject(
             ProjectReferenceDependencyProvider projectReferenceDependencyProvider,
@@ -41,7 +42,7 @@ namespace Microsoft.Framework.PackageManager.Packing
                 throw new Exception("TODO: unable to resolve project named " + _libraryDescription.Identity.Name);
             }
 
-            var targetName = AppFolder ?? project.Name;
+            var targetName = project.Name;
             TargetPath = Path.Combine(root.OutputPath, PackRoot.AppRootName, "src", targetName);
 
             Console.WriteLine("  Source {0}", project.ProjectDirectory);
@@ -78,7 +79,7 @@ namespace Microsoft.Framework.PackageManager.Packing
                 throw new Exception("TODO: unable to resolve project named " + _libraryDescription.Identity.Name);
             }
 
-            var targetName = AppFolder ?? project.Name;
+            var targetName = project.Name;
             var targetNupkgName = string.Format("{0}.{1}", targetName, project.Version);
             TargetPath = Path.Combine(root.OutputPath, PackRoot.AppRootName, "packages", targetNupkgName);
 
@@ -132,7 +133,7 @@ namespace Microsoft.Framework.PackageManager.Packing
             }
         }
 
-    private static bool IsImplicitlyExcludedFile(string filePath)
+        private static bool IsImplicitlyExcludedFile(string filePath)
         {
             var fileExtension = Path.GetExtension(filePath);
             var fileName = Path.GetFileName(filePath);
@@ -153,7 +154,26 @@ namespace Microsoft.Framework.PackageManager.Packing
 
         public void PostProcess(PackRoot root)
         {
-            var binFolderPath = Path.Combine(TargetPath, "bin");
+            Project project;
+            if (!_projectResolver.TryResolveProject(_libraryDescription.Identity.Name, out project))
+            {
+                throw new Exception("TODO: unable to resolve project named " + _libraryDescription.Identity.Name);
+            }
+
+            // Construct path to public app folder, which contains content files and tool dlls
+            // The name of public app folder is specified with "--appfolder" option
+            // Default name of public app folder is the same as main project
+            var appFolderPath = Path.Combine(root.OutputPath, AppFolder ?? project.Name);
+
+            // Delete old public app folder because we don't want leftovers from previous operations
+            root.Operations.Delete(appFolderPath);
+            Directory.CreateDirectory(appFolderPath);
+
+            // Copy content files (e.g. html, js and images) of main project into public app folder
+            CopyContentFiles(root, project);
+
+            // Tool dlls including AspNet.Loader.dll go to bin folder under public app folder
+            var appFolderBinPath = Path.Combine(appFolderPath, "bin");
 
             var defaultRuntime = root.Runtimes.FirstOrDefault();
             var iniFilePath = Path.Combine(TargetPath, "k.ini");
@@ -179,6 +199,18 @@ root.Configuration));
                 }
             }
 
+            // Generate k.ini for public app folder
+            var appFolderIniFilePath = Path.Combine(appFolderPath, "k.ini");
+            var appBaseLine = string.Format("APP_BASE={0}",
+                Path.Combine("..", PackRoot.AppRootName, "src", project.Name));
+            var iniContents = string.Empty;
+            if (File.Exists(iniFilePath))
+            {
+                iniContents = File.ReadAllText(iniFilePath);
+            }
+            File.WriteAllText(appFolderIniFilePath,
+                string.Format("{0}{1}", iniContents, appBaseLine));
+
             // Copy tools/*.dll into bin to support AspNet.Loader.dll
             foreach (var package in root.Packages)
             {
@@ -187,74 +219,57 @@ root.Configuration));
                 {
                     foreach (var packageToolFile in Directory.EnumerateFiles(packageToolsPath, "*.dll").Select(Path.GetFileName))
                     {
-                        if (!Directory.Exists(binFolderPath))
+                        if (!Directory.Exists(appFolderBinPath))
                         {
-                            Directory.CreateDirectory(binFolderPath);
+                            Directory.CreateDirectory(appFolderBinPath);
                         }
 
+                        // Copy to bin folder under public app folder
                         File.Copy(
                             Path.Combine(packageToolsPath, packageToolFile),
-                            Path.Combine(binFolderPath, packageToolFile),
+                            Path.Combine(appFolderBinPath, packageToolFile),
                             true);
-                    }
-                }
-            }
-
-            // Copy lib/**/*.dll into bin/$xxxxxxx.packages to support web deploy
-            if (root.ZipPackages)
-            {
-                if (!Directory.Exists(binFolderPath))
-                {
-                    Directory.CreateDirectory(binFolderPath);
-                }
-
-                var chars = "abcdefghijklmnopqrstuvwxyz0123456789";
-                var rnd = new Random();
-                var sequence = new string(Enumerable.Range(0, 7).Select(_ => chars[rnd.Next(chars.Length)]).ToArray());
-                var targetFile = Path.Combine(binFolderPath, "$" + sequence + ".packages");
-
-                using (var targetStream = new FileStream(targetFile, FileMode.Create, FileAccess.Write, FileShare.None))
-                {
-                    using (var archive = new ZipArchive(targetStream, ZipArchiveMode.Create))
-                    {
-                        foreach (var package in root.Packages)
-                        {
-                            root.Operations.AddFiles(
-                                archive,
-                                package.TargetPath,
-                                Path.Combine("packages", package.Library.Name + "." + package.Library.Version),
-                                IncludePackageFileInBundle);
-                        }
-                        foreach (var runtime in root.Runtimes)
-                        {
-                            //root.Operations.AddFiles(
-                            //    archive,
-                            //    root.Runtime.TargetPath,
-                            //    Path.Combine("packages", root.Runtime.Name + "." + root.Runtime.Version),
-                            //    IncludeRuntimeFileInBundle);
-                        }
                     }
                 }
             }
         }
 
-        private bool IncludePackageFileInBundle(string relativePath, string fileName)
+        private void CopyContentFiles(PackRoot root, Project project)
         {
-            var fileExtension = Path.GetExtension(fileName);
-            var rootFolder = BasePath(relativePath);
+            var targetName = AppFolder ?? project.Name;
+            Console.WriteLine("Copying contents of project dependency {0} to {1}",
+                _libraryDescription.Identity.Name, targetName);
 
-            if (/*string.Equals(rootFolder, "lib", StringComparison.OrdinalIgnoreCase) && */
-                string.Equals(fileExtension, ".dll", StringComparison.OrdinalIgnoreCase))
+            var appFolderPath = Path.Combine(root.OutputPath, targetName);
+
+            Console.WriteLine("  Source {0}", project.ProjectDirectory);
+            Console.WriteLine("  Target {0}", appFolderPath);
+
+            // A set of content files that should be copied
+            var contentFiles = new HashSet<string>(project.ContentFiles, StringComparer.OrdinalIgnoreCase);
+
+            // File extensions we exclude when copying files into public app folder
+            var appFolderExcludeExtensions = new HashSet<string>(AppFolderExcludeExtensions,
+                    StringComparer.OrdinalIgnoreCase);
+
+            root.Operations.Copy(project.ProjectDirectory, appFolderPath, (isRoot, filePath) =>
             {
-                return true;
-            }
-            if (string.IsNullOrEmpty(relativePath) &&
-                (string.Equals(fileExtension, ".sha512", StringComparison.OrdinalIgnoreCase) ||
-                string.Equals(fileExtension, ".nuspec", StringComparison.OrdinalIgnoreCase)))
-            {
-                return true;
-            }
-            return false;
+                // We always explore a directory
+                if (Directory.Exists(filePath))
+                {
+                    return true;
+                }
+
+                var fileName = Path.GetFileName(filePath);
+                var fileExtension = Path.GetExtension(filePath);
+                if (appFolderExcludeExtensions.Contains(fileExtension) ||
+                    string.Equals(fileName, "project.json", StringComparison.OrdinalIgnoreCase))
+                {
+                    return false;
+                }
+
+                return contentFiles.Contains(filePath);
+            });
         }
 
         private bool IncludeRuntimeFileInBundle(string relativePath, string fileName)

@@ -18,8 +18,6 @@ namespace Microsoft.Framework.PackageManager.Packing
 
         public FrameworkName RuntimeTargetFramework { get; set; }
 
-        public bool ZipPackages { get; set; }
-
         public bool Overwrite { get; set; }
 
         public bool NoSource { get; set; }

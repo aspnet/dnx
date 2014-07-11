@@ -23,6 +23,7 @@ namespace Microsoft.Framework.Runtime
         internal static readonly string[] _defaultPreprocessPatterns = new[] { @"compiler\preprocess\**\*.cs" };
         internal static readonly string[] _defaultSharedPatterns = new[] { @"compiler\shared\**\*.cs" };
         internal static readonly string[] _defaultResourcesPatterns = new[] { @"compiler\resources\**\*" };
+        internal static readonly string[] _defaultContentsPatterns = new[] { @"**\*" };
 
         private readonly Dictionary<FrameworkName, TargetFrameworkInformation> _targetFrameworks = new Dictionary<FrameworkName, TargetFrameworkInformation>();
         private readonly Dictionary<FrameworkName, CompilerOptions> _compilationOptions = new Dictionary<FrameworkName, CompilerOptions>();
@@ -70,6 +71,8 @@ namespace Microsoft.Framework.Runtime
         internal IEnumerable<string> SharedPatterns { get; set; }
 
         internal IEnumerable<string> ResourcesPatterns { get; set; }
+
+        internal IEnumerable<string> ContentsPatterns { get; set; }
 
         public IEnumerable<string> SourceFiles
         {
@@ -133,6 +136,28 @@ namespace Microsoft.Framework.Runtime
                     .ToArray();
 
                 return includeFiles;
+            }
+        }
+
+        public IEnumerable<string> ContentFiles
+        {
+            get
+            {
+                string path = ProjectDirectory;
+
+                var includeFiles = ContentsPatterns
+                    .SelectMany(pattern => PathResolver.PerformWildcardSearch(path, pattern))
+                    .ToArray();
+
+                var excludePatterns = PreprocessPatterns.Concat(SharedPatterns).Concat(ResourcesPatterns)
+                    .Concat(SourceExcludePatterns).Concat(SourcePatterns)
+                    .Select(pattern => PathResolver.NormalizeWildcardForExcludedFiles(path, pattern))
+                    .ToArray();
+
+                var excludeFiles = PathResolver.GetMatches(includeFiles, x => x, excludePatterns)
+                    .ToArray();
+
+                return includeFiles.Except(excludeFiles).Distinct().ToArray();
             }
         }
 
@@ -211,6 +236,7 @@ namespace Microsoft.Framework.Runtime
             project.PreprocessPatterns = GetSourcePattern(rawProject, "preprocess", _defaultPreprocessPatterns);
             project.SharedPatterns = GetSourcePattern(rawProject, "shared", _defaultSharedPatterns);
             project.ResourcesPatterns = GetSourcePattern(rawProject, "resources", _defaultResourcesPatterns);
+            project.ContentsPatterns = GetSourcePattern(rawProject, "files", _defaultContentsPatterns);
 
             // Set the default loader information for projects
             var loaderAssemblyName = "Microsoft.Framework.Runtime.Roslyn";
