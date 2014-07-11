@@ -45,7 +45,9 @@ namespace Microsoft.Framework.Runtime.Roslyn
 
         public Assembly Load(string assemblyName)
         {
-            var compilationContext = GetCompilationContext(assemblyName, _applicationEnvironment.TargetFramework);
+            var compilationContext = GetCompilationContext(assemblyName, 
+                                                           _applicationEnvironment.TargetFramework, 
+                                                           _applicationEnvironment.Configuration);
 
             if (compilationContext == null)
             {
@@ -63,9 +65,9 @@ namespace Microsoft.Framework.Runtime.Roslyn
             return CompileInMemory(name, compilationContext, resources);
         }
 
-        public ILibraryExport GetLibraryExport(string name, FrameworkName targetFramework)
+        public ILibraryExport GetLibraryExport(string name, FrameworkName targetFramework, string configuration)
         {
-            var compliationContext = GetCompilationContext(name, targetFramework);
+            var compliationContext = GetCompilationContext(name, targetFramework, configuration);
 
             if (compliationContext == null)
             {
@@ -75,7 +77,7 @@ namespace Microsoft.Framework.Runtime.Roslyn
             return compliationContext.GetLibraryExport();
         }
 
-        private CompilationContext GetCompilationContext(string name, FrameworkName targetFramework)
+        private CompilationContext GetCompilationContext(string name, FrameworkName targetFramework, string configuration)
         {
             CompilationContext compilationContext;
             if (_compilationCache.TryGetValue(name, out compilationContext))
@@ -83,7 +85,7 @@ namespace Microsoft.Framework.Runtime.Roslyn
                 return compilationContext;
             }
 
-            var context = _compiler.CompileProject(name, targetFramework);
+            var context = _compiler.CompileProject(name, targetFramework, configuration);
 
             if (context == null)
             {

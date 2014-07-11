@@ -23,11 +23,14 @@
     <Compile Include="ApplicationContext.cs" />
     <Compile Include="ConnectionContext.cs" />
     <Compile Include="Context.cs" />
+    <Compile Include="Models\IncomingMessages\ChangeConfigurationMessage.cs" />
     <Compile Include="Models\IncomingMessages\ChangeTargetFrameworkMessage.cs" />
     <Compile Include="Models\IncomingMessages\InitializeMessage.cs" />
+    <Compile Include="Models\IncomingMessages\TestExecutionMessage.cs" />
     <Compile Include="Models\Message.cs" />
     <Compile Include="Models\OutgoingMessages\ConfigurationData.cs" />
-    <Compile Include="Models\OutgoingMessages\ConfigurationsMessage.cs" />
+    <Compile Include="Models\OutgoingMessages\FrameworkData.cs" />
+    <Compile Include="Models\OutgoingMessages\ProjectInformationMessage.cs" />
     <Compile Include="Models\OutgoingMessages\DiagnosticsMessage.cs" />
     <Compile Include="Models\OutgoingMessages\ErrorMessage.cs" />
     <Compile Include="Models\OutgoingMessages\ReferenceItem.cs" />
@@ -37,6 +40,8 @@
     <Compile Include="Models\World.cs" />
     <Compile Include="ProcessingQueue.cs" />
     <Compile Include="Program.cs" />
+    <Compile Include="TestAdapter\TestExecutionSink.cs" />
+    <Compile Include="TestAdapter\TestDiscoverySink.cs" />
     <Compile Include="Trace.cs" />
   </ItemGroup>
   <Import Project="$(VSToolsPath)\AspNet\Microsoft.Web.AspNet.targets" Condition="'$(VSToolsPath)' != ''" />

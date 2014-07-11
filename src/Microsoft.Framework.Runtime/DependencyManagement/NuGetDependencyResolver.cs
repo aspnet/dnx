@@ -99,15 +99,23 @@ namespace Microsoft.Framework.Runtime
             {
                 foreach (var assemblyReference in frameworkAssemblies)
                 {
-                    string path;
-                    if (_frameworkReferenceResolver.TryGetAssembly(assemblyReference.AssemblyName, targetFramework, out path))
+                    if (!assemblyReference.SupportedFrameworks.Any() && 
+                        !VersionUtility.IsDesktop(targetFramework))
                     {
-                        yield return new Library
-                        {
-                            Name = assemblyReference.AssemblyName,
-                            Version = VersionUtility.GetAssemblyVersion(path)
-                        };
+                        // REVIEW: This isn't 100% correct since none *can* mean 
+                        // any in theory, but in practice it means .NET full reference assembly
+                        // If there's no supported target frameworks and we're not targeting
+                        // the desktop framework then skip it.
+
+                        // To do this properly we'll need all reference assemblies supported
+                        // by each supported target framework which isn't always available.
+                        continue;
                     }
+
+                    yield return new Library
+                    {
+                        Name = assemblyReference.AssemblyName
+                    };
                 }
             }
         }
@@ -161,7 +169,7 @@ namespace Microsoft.Framework.Runtime
             }
         }
 
-        public ILibraryExport GetLibraryExport(string name, FrameworkName targetFramework)
+        public ILibraryExport GetLibraryExport(string name, FrameworkName targetFramework, string configuration)
         {
             if (!_packageDescriptions.ContainsKey(name))
             {

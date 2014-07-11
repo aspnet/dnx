@@ -112,6 +112,12 @@ namespace klr.hosting
             {
                 string name = assemblyName.Name;
 
+                // Skip resource assemblies
+                if (name.EndsWith(".resources"))
+                {
+                    return null;
+                }
+
                 // If the assembly was already loaded use it
                 Assembly assembly;
                 if (_assemblyCache.TryGetValue(name, out assembly))

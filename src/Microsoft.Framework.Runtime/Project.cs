@@ -24,12 +24,13 @@ namespace Microsoft.Framework.Runtime
         internal static readonly string[] _defaultSharedPatterns = new[] { @"compiler\shared\**\*.cs" };
         internal static readonly string[] _defaultResourcesPatterns = new[] { @"compiler\resources\**\*" };
 
-        private readonly Dictionary<FrameworkName, TargetFrameworkConfiguration> _configurations = new Dictionary<FrameworkName, TargetFrameworkConfiguration>();
+        private readonly Dictionary<FrameworkName, TargetFrameworkInformation> _targetFrameworks = new Dictionary<FrameworkName, TargetFrameworkInformation>();
         private readonly Dictionary<FrameworkName, CompilerOptions> _compilationOptions = new Dictionary<FrameworkName, CompilerOptions>();
+        private readonly Dictionary<string, CompilerOptions> _configurations = new Dictionary<string, CompilerOptions>(StringComparer.OrdinalIgnoreCase);
 
         private CompilerOptions _defaultCompilerOptions;
 
-        private TargetFrameworkConfiguration _defaultTargetFrameworkConfiguration;
+        private TargetFrameworkInformation _defaultTargetFrameworkConfiguration;
 
         public Project()
         {
@@ -137,9 +138,14 @@ namespace Microsoft.Framework.Runtime
 
         public IDictionary<string, string> Commands { get; private set; }
 
-        public IEnumerable<TargetFrameworkConfiguration> GetTargetFrameworkConfigurations()
+        public IEnumerable<TargetFrameworkInformation> GetTargetFrameworks()
         {
-            return _configurations.Values;
+            return _targetFrameworks.Values;
+        }
+
+        public IEnumerable<string> GetConfigurations()
+        {
+            return _configurations.Keys;
         }
 
         public static bool HasProjectFile(string path)
@@ -235,7 +241,7 @@ namespace Microsoft.Framework.Runtime
                 project.Version = project.Version.SpecifySnapshot(buildVersion);
             }
 
-            project.BuildTargetFrameworkConfigurations(rawProject);
+            project.BuildTargetFrameworksAndConfigurations(rawProject);
 
             PopulateDependencies(project.Dependencies, rawProject);
 
@@ -315,9 +321,15 @@ namespace Microsoft.Framework.Runtime
             return _defaultCompilerOptions;
         }
 
-        public CompilerOptions GetCompilerOptions(string frameworkName)
+        public CompilerOptions GetCompilerOptions(string configurationName)
         {
-            return GetCompilerOptions(ParseFrameworkName(frameworkName));
+            CompilerOptions options;
+            if (_configurations.TryGetValue(configurationName, out options))
+            {
+                return options;
+            }
+
+            return null;
         }
 
         public CompilerOptions GetCompilerOptions(FrameworkName frameworkName)
@@ -331,35 +343,177 @@ namespace Microsoft.Framework.Runtime
             return null;
         }
 
-        private void BuildTargetFrameworkConfigurations(JObject rawProject)
+        private void BuildTargetFrameworksAndConfigurations(JObject rawProject)
         {
             // Get the shared compilationOptions
             _defaultCompilerOptions = GetCompilationOptions(rawProject) ?? _emptyOptions;
 
-            _defaultTargetFrameworkConfiguration = new TargetFrameworkConfiguration
+            _defaultTargetFrameworkConfiguration = new TargetFrameworkInformation
             {
                 Dependencies = new List<Library>()
             };
 
-            // Parse the specific configuration section
+            // Add default configurations
+            _configurations["debug"] = new CompilerOptions
+            {
+                DebugSymbols = "full",
+                Defines = new[] { "DEBUG", "TRACE" },
+                Optimize = false
+            };
+
+            _configurations["release"] = new CompilerOptions
+            {
+                DebugSymbols = "pdbOnly",
+                Defines = new[] { "RELEASE", "TRACE" },
+                Optimize = true
+            };
+
+            // The configuration node has things like debug/release compiler settings
+            /*
+                {
+                    "configurations": {
+                        "debug": {
+                        },
+                        "release": {
+                        }
+                    }
+                }
+            */
             var configurations = rawProject["configurations"] as JObject;
             if (configurations != null)
             {
                 foreach (var configuration in configurations)
                 {
-                    var config = new TargetFrameworkConfiguration();
+                    var compilerOptions = GetCompilationOptions(configuration.Value);
 
-                    config.FrameworkName = ParseFrameworkName(configuration.Key);
-                    var properties = configuration.Value.Value<JObject>();
-
-                    config.Dependencies = new List<Library>();
-
-                    PopulateDependencies(config.Dependencies, properties);
-
-                    _configurations[config.FrameworkName] = config;
-                    _compilationOptions[config.FrameworkName] = GetCompilationOptions(configuration.Value);
+                    // This code is for backwards compatibility with the old project format until
+                    // we make all the necessary changes to understand the new format
+                    if (!BuildTargetFrameworkNode(configuration, compilerOptions))
+                    {
+                        // Only use this as a configuration if it's not a target framework
+                        _configurations[configuration.Key] = compilerOptions;
+                    }
                 }
             }
+
+            // The frameworks node is where target frameworks go
+            /*
+                {
+                    "frameworks": {
+                        "net45": {
+                        },
+                        "k10": {
+                        }
+                    }
+                }
+            */
+
+            var frameworks = rawProject["frameworks"] as JObject;
+            if (frameworks != null)
+            {
+                foreach (var framework in frameworks)
+                {
+                    BuildTargetFrameworkNode(framework, compilerOptions: null);
+                }
+            }
+        }
+
+        private bool BuildTargetFrameworkNode(KeyValuePair<string, JToken> configuration, CompilerOptions compilerOptions)
+        {
+            // If no compilation options are provided then figure them out from the
+            // node
+            compilerOptions = compilerOptions ??
+                              GetCompilationOptions(configuration.Value) ??
+                              new CompilerOptions();
+
+            var frameworkName = ParseFrameworkName(configuration.Key);
+
+            // If it's not unsupported then keep it
+            if (frameworkName == VersionUtility.UnsupportedFrameworkName)
+            {
+                // REVIEW: Should we skip unsupported target frameworks
+                return false;
+            }
+
+            // Add the target framework specific define
+            var defines = new HashSet<string>(compilerOptions.Defines ?? Enumerable.Empty<string>());
+            defines.Add(MakeDefaultTargetFrameworkDefine(frameworkName));
+            compilerOptions.Defines = defines;
+
+            var targetFrameworkInformation = new TargetFrameworkInformation
+            {
+                FrameworkName = frameworkName,
+                Dependencies = new List<Library>()
+            };
+
+            var properties = configuration.Value.Value<JObject>();
+
+            PopulateDependencies(targetFrameworkInformation.Dependencies, properties);
+
+            _compilationOptions[frameworkName] = compilerOptions;
+            _targetFrameworks[frameworkName] = targetFrameworkInformation;
+
+            return true;
+        }
+
+        public static FrameworkName ParseFrameworkName(string targetFramework)
+        {
+            if (targetFramework.Contains("+"))
+            {
+                var portableProfile = NetPortableProfile.Parse(targetFramework);
+
+                if (portableProfile != null &&
+                    portableProfile.FrameworkName.Profile != targetFramework)
+                {
+                    return portableProfile.FrameworkName;
+                }
+
+                return VersionUtility.UnsupportedFrameworkName;
+            }
+
+            if (targetFramework.IndexOf(',') != -1)
+            {
+                // Assume it's a framework name if it contains commas
+                // e.g. .NETPortable,Version=v4.5,Profile=Profile78
+                return new FrameworkName(targetFramework);
+            }
+
+            return VersionUtility.ParseFrameworkName(targetFramework);
+        }
+
+
+        public TargetFrameworkInformation GetTargetFramework(FrameworkName targetFramework)
+        {
+            TargetFrameworkInformation targetFrameworkInfo;
+            if (_targetFrameworks.TryGetValue(targetFramework, out targetFrameworkInfo))
+            {
+                return targetFrameworkInfo;
+            }
+
+            IEnumerable<TargetFrameworkInformation> compatibleConfigurations;
+            if (VersionUtility.TryGetCompatibleItems(targetFramework, GetTargetFrameworks(), out compatibleConfigurations) &&
+                compatibleConfigurations.Any())
+            {
+                targetFrameworkInfo = compatibleConfigurations.FirstOrDefault();
+            }
+
+            return targetFrameworkInfo ?? _defaultTargetFrameworkConfiguration;
+        }
+
+        private static string MakeDefaultTargetFrameworkDefine(FrameworkName targetFramework)
+        {
+            var shortName = VersionUtility.GetShortFrameworkName(targetFramework);
+
+            if (VersionUtility.IsPortableFramework(targetFramework))
+            {
+                // #if NET45_WIN8
+                // Nobody can figure this out anyways
+                return shortName.Substring("portable-".Length)
+                                .Replace('+', '_')
+                                .ToUpperInvariant();
+            }
+
+            return shortName.ToUpperInvariant();
         }
 
         private CompilerOptions GetCompilationOptions(JToken topLevelOrConfiguration)
@@ -375,39 +529,14 @@ namespace Microsoft.Framework.Runtime
             {
                 Defines = ConvertValue<string[]>(rawOptions, "define"),
                 LanguageVersion = ConvertValue<string>(rawOptions, "languageVersion"),
-                AllowUnsafe = GetValue<bool>(rawOptions, "allowUnsafe"),
+                AllowUnsafe = GetValue<bool?>(rawOptions, "allowUnsafe"),
                 Platform = GetValue<string>(rawOptions, "platform"),
-                WarningsAsErrors = GetValue<bool>(rawOptions, "warningsAsErrors"),
-                CommandLine = GetValue<string>(rawOptions, "commandLineArgs")
+                WarningsAsErrors = GetValue<bool?>(rawOptions, "warningsAsErrors"),
+                Optimize = GetValue<bool?>(rawOptions, "optimize"),
+                DebugSymbols = GetValue<string>(rawOptions, "debugSymbols"),
             };
 
             return options;
-        }
-
-        public static FrameworkName ParseFrameworkName(string configurationName)
-        {
-            if (configurationName.Contains("+"))
-            {
-                var portableProfile = NetPortableProfile.Parse(configurationName);
-
-                if (portableProfile != null &&
-                    portableProfile.FrameworkName.Profile != configurationName)
-                {
-                    return portableProfile.FrameworkName;
-                }
-
-                return VersionUtility.UnsupportedFrameworkName;
-            }
-
-            if (configurationName.IndexOf(',') != -1)
-            {
-                // Assume it's a framework name if it contains commas
-                // e.g. .NETPortable,Version=v4.5,Profile=Profile78
-                return new FrameworkName(configurationName);
-            }
-
-            return VersionUtility.ParseFrameworkName(configurationName);
-
         }
 
         private static T GetValue<T>(JToken token, string name)
@@ -448,24 +577,6 @@ namespace Microsoft.Framework.Runtime
         {
             path = path.TrimEnd(Path.DirectorySeparatorChar);
             return path.Substring(Path.GetDirectoryName(path).Length).Trim(Path.DirectorySeparatorChar);
-        }
-
-        public TargetFrameworkConfiguration GetTargetFrameworkConfiguration(FrameworkName targetFramework)
-        {
-            TargetFrameworkConfiguration config;
-            if (_configurations.TryGetValue(targetFramework, out config))
-            {
-                return config;
-            }
-
-            IEnumerable<TargetFrameworkConfiguration> compatibleConfigurations;
-            if (VersionUtility.TryGetCompatibleItems(targetFramework, GetTargetFrameworkConfigurations(), out compatibleConfigurations) &&
-                compatibleConfigurations.Any())
-            {
-                config = compatibleConfigurations.FirstOrDefault();
-            }
-
-            return config ?? _defaultTargetFrameworkConfiguration;
         }
     }
 }

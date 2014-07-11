@@ -22,7 +22,7 @@ namespace Microsoft.Framework.Runtime
             _projectResolver = projectResolver;
         }
 
-        public ILibraryExport GetProjectExport(ILibraryExportProvider libraryExportProvider, string name, FrameworkName targetFramework, out FrameworkName effectiveTargetFramework)
+        public ILibraryExport GetProjectExport(ILibraryExportProvider libraryExportProvider, string name, FrameworkName targetFramework, string configuration, out FrameworkName effectiveTargetFramework)
         {
             effectiveTargetFramework = null;
 
@@ -33,15 +33,15 @@ namespace Microsoft.Framework.Runtime
                 return null;
             }
 
-            var targetFrameworkConfig = project.GetTargetFrameworkConfiguration(targetFramework);
+            var targetFrameworkInformation = project.GetTargetFramework(targetFramework);
 
-            targetFramework = targetFrameworkConfig.FrameworkName ?? targetFramework;
+            targetFramework = targetFrameworkInformation.FrameworkName ?? targetFramework;
 
             Trace.TraceInformation("[{0}]: Found project '{1}' framework={2}", GetType().Name, project.Name, targetFramework);
 
             var exports = new List<ILibraryExport>();
 
-            var dependencies = project.Dependencies.Concat(targetFrameworkConfig.Dependencies)
+            var dependencies = project.Dependencies.Concat(targetFrameworkInformation.Dependencies)
                                                    .Select(d => d.Name)
                                                    .ToList();
 
@@ -63,7 +63,7 @@ namespace Microsoft.Framework.Runtime
             {
                 foreach (var dependency in dependencies)
                 {
-                    var libraryExport = libraryExportProvider.GetLibraryExport(dependency, targetFramework);
+                    var libraryExport = libraryExportProvider.GetLibraryExport(dependency, targetFramework, configuration);
 
                     if (libraryExport == null)
                     {
@@ -82,15 +82,16 @@ namespace Microsoft.Framework.Runtime
 
             ExtractReferences(exports,
                               libraryExportProvider,
-                              targetFramework, 
-                              out resolvedReferences, 
+                              targetFramework,
+                              configuration,
+                              out resolvedReferences,
                               out resolvedSources);
 
             dependencyStopWatch.Stop();
-            Trace.TraceInformation("[{0}]: Resolved {1} exports for '{2}' in {3}ms", 
-                                  GetType().Name, 
-                                  resolvedReferences.Count, 
-                                  project.Name, 
+            Trace.TraceInformation("[{0}]: Resolved {1} exports for '{2}' in {3}ms",
+                                  GetType().Name,
+                                  resolvedReferences.Count,
+                                  project.Name,
                                   dependencyStopWatch.ElapsedMilliseconds);
 
             // Set the effective target framework (the specific framework used for resolution)
@@ -101,6 +102,7 @@ namespace Microsoft.Framework.Runtime
         private void ExtractReferences(List<ILibraryExport> dependencyExports,
                                        ILibraryExportProvider libraryExportProvider,
                                        FrameworkName targetFramework,
+                                       string configuration,
                                        out IList<IMetadataReference> metadataReferences,
                                        out IList<ISourceReference> sourceReferences)
         {
@@ -113,6 +115,7 @@ namespace Microsoft.Framework.Runtime
                 ProcessExport(export,
                               libraryExportProvider,
                               targetFramework,
+                              configuration,
                               metadataReferences,
                               sourceReferences,
                               used);
@@ -122,6 +125,7 @@ namespace Microsoft.Framework.Runtime
         private void ProcessExport(ILibraryExport export,
                                    ILibraryExportProvider libraryExportProvider,
                                    FrameworkName targetFramework,
+                                   string configuration,
                                    IList<IMetadataReference> metadataReferences,
                                    IList<ISourceReference> sourceReferences,
                                    HashSet<string> used)
@@ -135,13 +139,14 @@ namespace Microsoft.Framework.Runtime
                 if (unresolvedReference != null)
                 {
                     // Try to resolve the unresolved references
-                    var compilationExport = libraryExportProvider.GetLibraryExport(unresolvedReference.Name, targetFramework);
+                    var compilationExport = libraryExportProvider.GetLibraryExport(unresolvedReference.Name, targetFramework, configuration);
 
                     if (compilationExport != null)
                     {
                         ProcessExport(compilationExport,
                                       libraryExportProvider,
                                       targetFramework,
+                                      configuration,
                                       metadataReferences,
                                       sourceReferences,
                                       used);

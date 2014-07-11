@@ -67,7 +67,6 @@
     <Compile Include="Restore\LocalWalkProvider.cs" />
     <Compile Include="Restore\RestoreCommand.cs" />
     <Compile Include="Restore\RestoreOperations.cs" />
-    <Compile Include="Shims\ConsoleColor.cs" />
     <Compile Include="Shims\ListExtensions.cs" />
     <Compile Include="Shims\ProtectedData.cs" />
   </ItemGroup>

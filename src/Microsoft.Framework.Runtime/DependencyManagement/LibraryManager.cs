@@ -11,6 +11,7 @@ namespace Microsoft.Framework.Runtime
     public class LibraryManager : ILibraryManager
     {
         private readonly FrameworkName _targetFramework;
+        private readonly string _configuration;
         private readonly ILibraryExportProvider _libraryExportProvider;
         private readonly Func<IEnumerable<ILibraryInformation>> _libraryInfoThunk;
         private readonly object _initializeLock = new object();
@@ -19,19 +20,23 @@ namespace Microsoft.Framework.Runtime
         private bool _initialized;
 
         public LibraryManager(FrameworkName targetFramework,
+                              string configuration,
                               DependencyWalker dependencyWalker,
                               ILibraryExportProvider libraryExportProvider)
             : this(targetFramework,
+                   configuration,
                    GetLibraryInfoThunk(dependencyWalker),
                    libraryExportProvider)
         {
         }
 
         public LibraryManager(FrameworkName targetFramework,
+                              string configuration,
                               Func<IEnumerable<ILibraryInformation>> libraryInfoThunk,
                               ILibraryExportProvider libraryExportProvider)
         {
             _targetFramework = targetFramework;
+            _configuration = configuration;
             _libraryInfoThunk = libraryInfoThunk;
             _libraryExportProvider = libraryExportProvider;
         }
@@ -78,7 +83,7 @@ namespace Microsoft.Framework.Runtime
 
         public ILibraryExport GetLibraryExport(string name)
         {
-            return _libraryExportProvider.GetLibraryExport(name, _targetFramework);
+            return _libraryExportProvider.GetLibraryExport(name, _targetFramework, _configuration);
         }
 
         public IEnumerable<ILibraryInformation> GetLibraries()

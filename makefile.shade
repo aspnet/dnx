@@ -5,11 +5,11 @@ use import="Environment"
 var PRODUCT_VERSION = '1.0.0'
 var AUTHORS='Microsoft Open Technologies, Inc.'
 
-default Configuration='Release'
-
 use-standard-lifecycle
 k-standard-goals
 
+
+var Configuration2='${E("Configuration")}'
 var ROOT = '${Directory.GetCurrentDirectory()}'
 var SCRIPTS_DIR = '${Path.Combine(ROOT, "scripts")}'
 var ARTIFACTS_DIR = '${Path.Combine(ROOT, "artifacts")}'
@@ -48,10 +48,10 @@ var NEW_RUNTIME = '${Environment.GetEnvironmentVariable("NEW_RUNTIME") == "1"}'
       }
       else
       {
-          Exec(msbuild, klrProj + " /p:Configuration=" + Configuration + ";Platform=Win32;TargetFramework=net45");
-          Exec(msbuild, klrProj + " /p:Configuration=" + Configuration + ";Platform=x64;TargetFramework=net45");
-          Exec(msbuild, klrProj + " /p:Configuration=" + Configuration + ";Platform=Win32;TargetFramework=k10");
-          Exec(msbuild, klrProj + " /p:Configuration=" + Configuration + ";Platform=x64;TargetFramework=k10");
+          Exec(msbuild, klrProj + " /p:Configuration=" + Configuration2 + ";Platform=Win32;TargetFramework=net45");
+          Exec(msbuild, klrProj + " /p:Configuration=" + Configuration2 + ";Platform=x64;TargetFramework=net45");
+          Exec(msbuild, klrProj + " /p:Configuration=" + Configuration2 + ";Platform=Win32;TargetFramework=k10");
+          Exec(msbuild, klrProj + " /p:Configuration=" + Configuration2 + ";Platform=x64;TargetFramework=k10");
       }
   }
 
@@ -232,32 +232,37 @@ var NEW_RUNTIME = '${Environment.GetEnvironmentVariable("NEW_RUNTIME") == "1"}'
     }
 
     -// KRE-svr50-x86
-    copy sourceDir='${Path.Combine(BUILD_DIR2, "klr", "bin", "Win32", Configuration, "net45")}' outputDir='${SVR50_x86_BIN}' include='*.exe' overwrite='${true}'
-    copy sourceDir='${Path.Combine(BUILD_DIR2, "klr.net45", "bin", "Win32", Configuration)}' outputDir='${SVR50_x86_BIN}' include='*.dll' overwrite='${true}'
-    copy sourceDir='${Path.Combine(BUILD_DIR2, "klr.net45", "bin", "Win32", Configuration)}' outputDir='${SVR50_x86_BIN}' include='*.pdb' overwrite='${true}'
+    copy sourceDir='${Path.Combine(BUILD_DIR2, "klr", "bin", "Win32", Configuration2, "net45")}' outputDir='${SVR50_x86_BIN}' include='*.exe' overwrite='${true}'
+    copy sourceDir='${Path.Combine(BUILD_DIR2, "klr.net45", "bin", "Win32", Configuration2)}' outputDir='${SVR50_x86_BIN}' include='*.dll' overwrite='${true}'
+    copy sourceDir='${Path.Combine(BUILD_DIR2, "klr.net45", "bin", "Win32", Configuration2)}' outputDir='${SVR50_x86_BIN}' include='*.pdb' overwrite='${true}'
     copy sourceDir='${Path.Combine(ROOT, "src", "klr.net45.managed")}' outputDir='${SVR50_x86_BIN}' include='*.config' overwrite='${true}'
 
     -// KRE-svr50-x64
-    copy sourceDir='${Path.Combine(BUILD_DIR2, "klr", "bin", "x64", Configuration, "net45")}' outputDir='${SVR50_x64_BIN}' include='*.exe' overwrite='${true}'
-    copy sourceDir='${Path.Combine(BUILD_DIR2, "klr.net45", "bin", "x64", Configuration)}' outputDir='${SVR50_x64_BIN}' include='*.dll' overwrite='${true}'
-    copy sourceDir='${Path.Combine(BUILD_DIR2, "klr.net45", "bin", "x64", Configuration)}' outputDir='${SVR50_x64_BIN}' include='*.pdb' overwrite='${true}'
+    copy sourceDir='${Path.Combine(BUILD_DIR2, "klr", "bin", "x64", Configuration2, "net45")}' outputDir='${SVR50_x64_BIN}' include='*.exe' overwrite='${true}'
+    copy sourceDir='${Path.Combine(BUILD_DIR2, "klr.net45", "bin", "x64", Configuration2)}' outputDir='${SVR50_x64_BIN}' include='*.dll' overwrite='${true}'
+    copy sourceDir='${Path.Combine(BUILD_DIR2, "klr.net45", "bin", "x64", Configuration2)}' outputDir='${SVR50_x64_BIN}' include='*.pdb' overwrite='${true}'
     copy sourceDir='${Path.Combine(ROOT, "src", "klr.net45.managed")}' outputDir='${SVR50_x64_BIN}' include='*.config' overwrite='${true}'
 
     -// KRE-svrc50-x86
-    copy sourceDir='${Path.Combine(BUILD_DIR2, "klr", "bin", "Win32", Configuration, "k10")}' outputDir='${SVRC50_x86_BIN}' include='*.exe' overwrite='${true}'
-    copy sourceDir='${Path.Combine(BUILD_DIR2, "klr.core45", "bin", "Win32", Configuration)}' outputDir='${SVRC50_x86_BIN}' include='*.dll' overwrite='${true}'
-    copy sourceDir='${Path.Combine(BUILD_DIR2, "klr.core45", "bin", "Win32", Configuration)}' outputDir='${SVRC50_x86_BIN}' include='*.pdb' overwrite='${true}'
+    copy sourceDir='${Path.Combine(BUILD_DIR2, "klr", "bin", "Win32", Configuration2, "k10")}' outputDir='${SVRC50_x86_BIN}' include='*.exe' overwrite='${true}'
+    copy sourceDir='${Path.Combine(BUILD_DIR2, "klr.core45", "bin", "Win32", Configuration2)}' outputDir='${SVRC50_x86_BIN}' include='*.dll' overwrite='${true}'
+    copy sourceDir='${Path.Combine(BUILD_DIR2, "klr.core45", "bin", "Win32", Configuration2)}' outputDir='${SVRC50_x86_BIN}' include='*.pdb' overwrite='${true}'
 
     -// KRE-svrc50-x64
-    copy sourceDir='${Path.Combine(BUILD_DIR2, "klr", "bin", "x64", Configuration, "k10")}' outputDir='${SVRC50_x64_BIN}' include='*.exe' overwrite='${true}'
-    copy sourceDir='${Path.Combine(BUILD_DIR2, "klr.core45", "bin", "x64", Configuration)}' outputDir='${SVRC50_x64_BIN}' include='*.dll' overwrite='${true}'
-    copy sourceDir='${Path.Combine(BUILD_DIR2, "klr.core45", "bin", "x64", Configuration)}' outputDir='${SVRC50_x64_BIN}' include='*.pdb' overwrite='${true}'
+    copy sourceDir='${Path.Combine(BUILD_DIR2, "klr", "bin", "x64", Configuration2, "k10")}' outputDir='${SVRC50_x64_BIN}' include='*.exe' overwrite='${true}'
+    copy sourceDir='${Path.Combine(BUILD_DIR2, "klr.core45", "bin", "x64", Configuration2)}' outputDir='${SVRC50_x64_BIN}' include='*.dll' overwrite='${true}'
+    copy sourceDir='${Path.Combine(BUILD_DIR2, "klr.core45", "bin", "x64", Configuration2)}' outputDir='${SVRC50_x64_BIN}' include='*.pdb' overwrite='${true}'
 
     copy sourceDir='${SCRIPTS_DIR}' include='*.cmd' overwrite='${true}' each='var outputDir in new[]{ SVR50_x86_BIN, SVR50_x64_BIN, SVRC50_x86_BIN, SVRC50_x64_BIN }'
 
     @{
-        var hostK10 = Path.Combine(BUILD_DIR2, "*", "k10", "**.*");
-        var hostnet45 = Path.Combine(BUILD_DIR2, "*", "net45", "**.*");
+        // This is a workaround because we're adding Configuration2 support. We need to be able to build
+        // the new KRE with the old KRE which has no Configuration2 in the output
+        var hasConfiguration2 = Directory.Exists(Path.Combine(BUILD_DIR2, "klr.net45.managed", Configuration2));
+        
+        var hostK10 = hasConfiguration2 ? Path.Combine(BUILD_DIR2, "*", Configuration2, "k10", "**.*") : Path.Combine(BUILD_DIR2, "*", "k10", "**.*");
+        var hostnet45 = hasConfiguration2 ? Path.Combine(BUILD_DIR2, "*", Configuration2, "net45", "**.*") : Path.Combine(BUILD_DIR2, "*", "net45", "**.*");
+        
         var libPackages = new[] { "Microsoft.Framework.Project",
                                   "Microsoft.Framework.PackageManager", 
                                   "Microsoft.Framework.DesignTimeHost" };

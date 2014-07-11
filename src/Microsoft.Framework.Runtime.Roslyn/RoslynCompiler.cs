@@ -34,14 +34,14 @@ namespace Microsoft.Framework.Runtime.Roslyn
             _projectExportProvider = new ProjectExportProvider(projectResolver);
         }
 
-        public CompilationContext CompileProject(string name, FrameworkName targetFramework)
+        public CompilationContext CompileProject(string name, FrameworkName targetFramework, string configuration)
         {
             var compilationCache = new Dictionary<string, CompilationContext>();
 
-            return Compile(name, targetFramework, compilationCache);
+            return Compile(name, targetFramework, configuration, compilationCache);
         }
 
-        private CompilationContext Compile(string name, FrameworkName targetFramework, IDictionary<string, CompilationContext> compilationCache)
+        private CompilationContext Compile(string name, FrameworkName targetFramework, string configuration, IDictionary<string, CompilationContext> compilationCache)
         {
             CompilationContext compilationContext;
             if (compilationCache.TryGetValue(name, out compilationContext))
@@ -63,7 +63,7 @@ namespace Microsoft.Framework.Runtime.Roslyn
             _watcher.WatchFile(project.ProjectFilePath);
 
             var exportProvider = new CachedCompilationLibraryExportProvider(this, compilationCache, _libraryExportProvider);
-            var export = _projectExportProvider.GetProjectExport(exportProvider, name, targetFramework, out targetFramework);
+            var export = _projectExportProvider.GetProjectExport(exportProvider, name, targetFramework, configuration, out targetFramework);
             var metadataReferences = export.MetadataReferences;
             var exportedReferences = metadataReferences.Select(ConvertMetadataReference);
 
@@ -76,7 +76,7 @@ namespace Microsoft.Framework.Runtime.Roslyn
                 _watcher.WatchDirectory(directory, ".cs");
             }
 
-            var compilationSettings = project.GetCompilationSettings(targetFramework);
+            var compilationSettings = project.GetCompilationSettings(targetFramework, configuration);
 
             IList<SyntaxTree> trees = GetSyntaxTrees(project, compilationSettings, export);
 
@@ -187,9 +187,9 @@ namespace Microsoft.Framework.Runtime.Roslyn
             }
         }
 
-        public RoslynLibraryExport GetLibraryExport(string name, FrameworkName targetFramework, IDictionary<string, CompilationContext> compilationCache)
+        public RoslynLibraryExport GetLibraryExport(string name, FrameworkName targetFramework, string configuration, IDictionary<string, CompilationContext> compilationCache)
         {
-            var compilationContext = Compile(name, targetFramework, compilationCache);
+            var compilationContext = Compile(name, targetFramework, configuration, compilationCache);
 
             if (compilationContext == null)
             {
@@ -251,9 +251,9 @@ namespace Microsoft.Framework.Runtime.Roslyn
                 _previous = previous;
             }
 
-            public ILibraryExport GetLibraryExport(string name, FrameworkName targetFramework)
+            public ILibraryExport GetLibraryExport(string name, FrameworkName targetFramework, string configuration)
             {
-                return _previous.GetLibraryExport(name, targetFramework) ?? _compiler.GetLibraryExport(name, targetFramework, _compliationCache);
+                return _previous.GetLibraryExport(name, targetFramework, configuration) ?? _compiler.GetLibraryExport(name, targetFramework, configuration, _compliationCache);
             }
         }
     }

@@ -7,12 +7,15 @@ using System.Diagnostics;
 using System.Linq;
 using System.Runtime.Versioning;
 using System.Threading;
+using System.Threading.Tasks;
 using Microsoft.Framework.DesignTimeHost.Models;
 using Microsoft.Framework.DesignTimeHost.Models.IncomingMessages;
 using Microsoft.Framework.DesignTimeHost.Models.OutgoingMessages;
 using Microsoft.Framework.Runtime;
+using Microsoft.Framework.Runtime.Common.DependencyInjection;
 using Microsoft.Framework.Runtime.FileSystem;
 using Microsoft.Framework.Runtime.Roslyn;
+using Microsoft.Framework.TestAdapter;
 using Newtonsoft.Json.Linq;
 using NuGet;
 
@@ -21,11 +24,15 @@ namespace Microsoft.Framework.DesignTimeHost
     public class ApplicationContext
     {
         private readonly IAssemblyLoaderEngine _loaderEngine;
+        private readonly IServiceProvider _services;
 
         public class State
         {
             public string Path { get; set; }
             public FrameworkName TargetFramework { get; set; }
+
+            public string Configuration { get; set; }
+
             public Project Project { get; set; }
 
             public RoslynMetadataProvider MetadataProvider { get; set; }
@@ -64,6 +71,7 @@ namespace Microsoft.Framework.DesignTimeHost
 
         private readonly Trigger<string> _appPath = new Trigger<string>();
         private readonly Trigger<FrameworkName> _targetFramework = new Trigger<FrameworkName>();
+        private readonly Trigger<string> _configuration = new Trigger<string>();
         private readonly Trigger<Nada> _filesChanged = new Trigger<Nada>();
 
         private readonly Trigger<State> _state = new Trigger<State>();
@@ -71,8 +79,9 @@ namespace Microsoft.Framework.DesignTimeHost
         private World _remote = new World();
         private World _local = new World();
 
-        public ApplicationContext(IAssemblyLoaderEngine loaderEngine, int id)
+        public ApplicationContext(IServiceProvider services, IAssemblyLoaderEngine loaderEngine, int id)
         {
+            _services = services;
             _loaderEngine = loaderEngine;
             Id = id;
         }
@@ -172,12 +181,14 @@ namespace Microsoft.Framework.DesignTimeHost
                     {
                         var data = message.Payload.ToObject<InitializeMessage>();
                         _appPath.Value = data.ProjectFolder;
+                        _configuration.Value = data.Configuration ?? "debug";
 
                         SetTargetFramework(data.TargetFramework);
                     }
                     break;
                 case "Teardown":
                     {
+                        // TODO: Implement
                     }
                     break;
                 case "ChangeTargetFramework":
@@ -186,9 +197,27 @@ namespace Microsoft.Framework.DesignTimeHost
                         SetTargetFramework(data.TargetFramework);
                     }
                     break;
+                case "ChangeConfiguration":
+                    {
+                        var data = message.Payload.ToObject<ChangeConfigurationMessage>();
+                        _configuration.Value = data.Configuration;
+                    }
+                    break;
                 case "FilesChanged":
                     {
                         _filesChanged.Value = default(Nada);
+                    }
+                    break;
+
+                case "TestDiscovery":
+                    {
+                        DiscoverTests();
+                    }
+                    break;
+                case "TestExecution":
+                    {
+                        var data = message.Payload.ToObject<TestExecutionMessage>();
+                        ExecuteTests(data.Tests);
                     }
                     break;
             }
@@ -204,13 +233,17 @@ namespace Microsoft.Framework.DesignTimeHost
 
         private void Calculate()
         {
-            if (_appPath.WasAssigned || _targetFramework.WasAssigned || _filesChanged.WasAssigned)
+            if (_appPath.WasAssigned ||
+                _targetFramework.WasAssigned ||
+                _configuration.WasAssigned ||
+                _filesChanged.WasAssigned)
             {
                 _appPath.ClearAssigned();
                 _targetFramework.ClearAssigned();
+                _configuration.ClearAssigned();
                 _filesChanged.ClearAssigned();
 
-                _state.Value = Initialize(_appPath.Value, _targetFramework.Value);
+                _state.Value = Initialize(_appPath.Value, _targetFramework.Value, _configuration.Value);
             }
 
             var state = _state.Value;
@@ -218,27 +251,45 @@ namespace Microsoft.Framework.DesignTimeHost
             {
                 _state.ClearAssigned();
 
-                _local.Configurations = new ConfigurationsMessage
+                var frameworks = state.Project.GetTargetFrameworks().Select(frameworkInfo => new FrameworkData
+                {
+                    CompilationSettings = state.Project.GetCompilationSettings(frameworkInfo.FrameworkName, state.Configuration),
+                    FrameworkName = VersionUtility.GetShortFrameworkName(frameworkInfo.FrameworkName),
+                    LongFrameworkName = frameworkInfo.FrameworkName.ToString(),
+                    FriendlyFrameworkName = GetFriendlyFrameworkName(state.FrameworkResolver, frameworkInfo.FrameworkName)
+                })
+                .ToList();
+
+                var configurations = state.Project.GetConfigurations().Select(config => new ConfigurationData
+                {
+                    Name = config,
+                    CompilationSettings = state.Project.GetCompilationSettings(state.TargetFramework, config)
+                })
+                .ToList();
+
+                _local.Configurations = new ProjectInformationMessage
                 {
                     ProjectName = state.Project.Name,
-                    Configurations = state.Project.GetTargetFrameworkConfigurations().Select(c => new ConfigurationData
-                    {
-                        CompilationSettings = state.Project.GetCompilationSettings(c.FrameworkName),
-                        FrameworkName = VersionUtility.GetShortFrameworkName(c.FrameworkName),
-                        LongFrameworkName = c.FrameworkName.ToString(),
-                        FriendlyFrameworkName  = GetFriendlyFrameworkName(state.FrameworkResolver, c.FrameworkName)
-                    }).ToList(),
+
+                    // REVIEW: For backwards compatibility
+                    Configurations = frameworks,
+
+                    // All target framework information
+                    Frameworks = frameworks,
+
+                    // debug/release etc
+                    ProjectConfigurations = configurations,
 
                     Commands = state.Project.Commands
                 };
 
-                var metadata = state.MetadataProvider.GetMetadata(state.Project.Name, state.TargetFramework);
+                var metadata = state.MetadataProvider.GetMetadata(state.Project.Name, state.TargetFramework, state.Configuration);
 
                 _local.References = new ReferencesMessage
                 {
                     RootDependency = state.Project.Name,
                     LongFrameworkName = state.TargetFramework.ToString(),
-                    FriendlyFrameworkName  = GetFriendlyFrameworkName(state.FrameworkResolver, state.TargetFramework),
+                    FriendlyFrameworkName = GetFriendlyFrameworkName(state.FrameworkResolver, state.TargetFramework),
                     ProjectReferences = metadata.ProjectReferences,
                     FileReferences = metadata.References,
                     RawReferences = metadata.RawReferences,
@@ -329,7 +380,7 @@ namespace Microsoft.Framework.DesignTimeHost
             }
         }
 
-        private bool IsDifferent(ConfigurationsMessage local, ConfigurationsMessage remote)
+        private bool IsDifferent(ProjectInformationMessage local, ProjectInformationMessage remote)
         {
             return true;
         }
@@ -349,12 +400,13 @@ namespace Microsoft.Framework.DesignTimeHost
             return true;
         }
 
-        public State Initialize(string appPath, FrameworkName targetFramework)
+        public State Initialize(string appPath, FrameworkName targetFramework, string configuration)
         {
             var state = new State
             {
                 Path = appPath,
-                TargetFramework = targetFramework
+                TargetFramework = targetFramework,
+                Configuration = configuration
             };
 
             Project project;
@@ -372,8 +424,8 @@ namespace Microsoft.Framework.DesignTimeHost
             var nugetDependencyResolver = new NuGetDependencyResolver(projectDir, referenceAssemblyDependencyResolver.FrameworkResolver);
             var gacDependencyResolver = new GacDependencyResolver();
 
-            var compositeDependencyExporter = new CompositeLibraryExportProvider(new ILibraryExportProvider[] { 
-                referenceAssemblyDependencyResolver, 
+            var compositeDependencyExporter = new CompositeLibraryExportProvider(new ILibraryExportProvider[] {
+                referenceAssemblyDependencyResolver,
                 gacDependencyResolver,
                 nugetDependencyResolver,
             });
@@ -386,9 +438,9 @@ namespace Microsoft.Framework.DesignTimeHost
             state.Project = project;
             state.FrameworkResolver = referenceAssemblyDependencyResolver.FrameworkResolver;
 
-            var dependencyWalker = new DependencyWalker(new IDependencyProvider[] { 
+            var dependencyWalker = new DependencyWalker(new IDependencyProvider[] {
                 new ProjectReferenceDependencyProvider(projectResolver),
-                referenceAssemblyDependencyResolver, 
+                referenceAssemblyDependencyResolver,
                 gacDependencyResolver,
                 nugetDependencyResolver,
                 new UnresolvedDependencyProvider() // A catch all for unresolved dependencies
@@ -417,6 +469,158 @@ namespace Microsoft.Framework.DesignTimeHost
                                                  .ToDictionary(d => d.Name);
 
             return state;
+        }
+
+        private async void ExecuteTests(string[] tests)
+        {
+            if (_appPath.Value == null)
+            {
+                throw new InvalidOperationException("The context must be initialized with a project.");
+            }
+
+            string testCommand = null;
+            Project project = null;
+            if (Project.TryGetProject(_appPath.Value, out project))
+            {
+                project.Commands.TryGetValue("test", out testCommand);
+            }
+
+            if (testCommand == null)
+            {
+                // No test command means no tests.
+                Trace.TraceInformation("[ApplicationContext]: OnTransmit(ExecuteTests)");
+                OnTransmit(new Message
+                {
+                    ContextId = Id,
+                    MessageType = "TestExecution.Response",
+                });
+            }
+
+            var testServices = new ServiceProvider(_services);
+            testServices.Add(typeof(ITestExecutionSink), new TestExecutionSink(this));
+
+            var environment = new ApplicationEnvironment(project, _targetFramework.Value, _configuration.Value);
+            var applicationHost = new ApplicationHost.Program(
+                (IHostContainer)_services.GetService(typeof(IHostContainer)),
+                environment,
+                testServices);
+
+            var args = new List<string>()
+            {
+                "test",
+                "--designtime"
+            };
+
+            if (tests != null && tests.Length > 0)
+            {
+                args.Add("--test");
+                args.Add(string.Join(",", tests));
+            }
+
+            try
+            {
+                var result = await applicationHost.Main(args.ToArray());
+
+                Trace.TraceInformation("[ApplicationContext]: OnTransmit(ExecuteTests)");
+                OnTransmit(new Message
+                {
+                    ContextId = Id,
+                    MessageType = "TestExecution.Response",
+                });
+            }
+            catch (Exception ex)
+            {
+                OnTransmit(new Message()
+                {
+                    ContextId = Id,
+                    MessageType = "Error",
+                    Payload = JToken.FromObject(new ErrorMessage()
+                    {
+                        Message = ex.ToString(),
+                    }),
+                });
+
+                Trace.TraceInformation("[ApplicationContext]: OnTransmit(ExecuteTests)");
+                OnTransmit(new Message
+                {
+                    ContextId = Id,
+                    MessageType = "TestExecution.Response",
+                });
+            }
+        }
+
+        private async void DiscoverTests()
+        {
+            if (_appPath.Value == null)
+            {
+                throw new InvalidOperationException("The context must be initialized with a project.");
+            }
+
+            string testCommand = null;
+            Project project = null;
+            if (Project.TryGetProject(_appPath.Value, out project))
+            {
+                project.Commands.TryGetValue("test", out testCommand);
+            }
+
+            if (testCommand == null)
+            {
+                // No test command means no tests.
+                Trace.TraceInformation("[ApplicationContext]: OnTransmit(DiscoverTests)");
+                OnTransmit(new Message
+                {
+                    ContextId = Id,
+                    MessageType = "TestDiscovery.Response",
+                });
+            }
+
+            var testServices = new ServiceProvider(_services);
+            testServices.Add(typeof(ITestDiscoverySink), new TestDiscoverySink(this));
+
+            var environment = new ApplicationEnvironment(project, _targetFramework.Value, _configuration.Value);
+
+            var applicationHost = new ApplicationHost.Program(
+                (IHostContainer)_services.GetService(typeof(IHostContainer)),
+                environment,
+                testServices);
+
+            var args = new string[] { "test", "--list", "--designtime" };
+
+            try
+            {
+                var result = await applicationHost.Main(args);
+
+                Trace.TraceInformation("[ApplicationContext]: OnTransmit(DiscoverTests)");
+                OnTransmit(new Message
+                {
+                    ContextId = Id,
+                    MessageType = "TestDiscovery.Response",
+                });
+            }
+            catch (Exception ex)
+            {
+                OnTransmit(new Message()
+                {
+                    ContextId = Id,
+                    MessageType = "Error",
+                    Payload = JToken.FromObject(new ErrorMessage()
+                    {
+                        Message = ex.ToString(),
+                    }),
+                });
+                Trace.TraceInformation("[ApplicationContext]: OnTransmit(DiscoverTests)");
+                OnTransmit(new Message
+                {
+                    ContextId = Id,
+                    MessageType = "TestDiscovery.Response",
+                });
+            };
+        }
+
+        public void Send(Message message)
+        {
+            message.ContextId = Id;
+            OnTransmit(message);
         }
     }
 }
