@@ -2,7 +2,6 @@
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 using System;
-using System.IO;
 using Microsoft.Framework.Runtime;
 using Microsoft.Framework.Runtime.Common.CommandLine;
 
@@ -39,15 +38,19 @@ namespace Microsoft.Framework.Project
                 var optionExePath = c.Option("--exePath", "Exe path", CommandOptionType.SingleValue);
                 var optionRuntimePath = c.Option("--runtimePath <PATH>", "Runtime path", CommandOptionType.SingleValue);
                 var optionSymbols = c.Option("--symbols", "Use symbols", CommandOptionType.NoValue);
+                var optionCrossgenPackages = c.Option("--packages", "Crossgen all dependencies", CommandOptionType.NoValue);
+
                 c.HelpOption("-?|-h|--help");
 
                 c.OnExecute(() =>
                 {
                     var crossgenOptions = new CrossgenOptions();
+
                     crossgenOptions.InputPaths = optionIn.Values;
                     crossgenOptions.RuntimePath = optionRuntimePath.Value();
                     crossgenOptions.CrossgenPath = optionExePath.Value();
                     crossgenOptions.Symbols = optionSymbols.HasValue();
+                    crossgenOptions.Packages = optionCrossgenPackages.HasValue();
 
                     var gen = new CrossgenManager(crossgenOptions);
                     var crossgenResult = gen.GenerateNativeImages();
