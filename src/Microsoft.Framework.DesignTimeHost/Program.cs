@@ -13,10 +13,12 @@ namespace Microsoft.Framework.DesignTimeHost
 {
     public class Program
     {
-        private IAssemblyLoaderEngine _loaderEngine;
+        private readonly IAssemblyLoaderEngine _loaderEngine;
+        private readonly IServiceProvider _services;
 
-        public Program(IAssemblyLoaderEngine loaderEngine)
+        public Program(IServiceProvider services, IAssemblyLoaderEngine loaderEngine)
         {
+            _services = services;
             _loaderEngine = loaderEngine;
         }
 
@@ -58,7 +60,7 @@ namespace Microsoft.Framework.DesignTimeHost
 
                 Console.WriteLine("Client accepted {0}", acceptSocket.LocalEndPoint);
 
-                var connection = new ConnectionContext(_loaderEngine, new NetworkStream(acceptSocket), hostId);
+                var connection = new ConnectionContext(_services, _loaderEngine, new NetworkStream(acceptSocket), hostId);
 
                 connection.Start();
             }
