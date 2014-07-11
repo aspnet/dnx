@@ -16,7 +16,7 @@ SET "KLR_LIB_PATH=%~dp0..\tools"
 REM <dev>
 SET FRAMEWORK=net45
 SET "KLR_EXE_PATH=%~dp0..\bin\Win32\Debug\klr.exe"
-SET "KLR_LIB_PATH=%~dp0..\src\klr.host\bin\%FRAMEWORK%"
+SET "KLR_LIB_PATH=%~dp0..\src\klr.host\bin\debug\%FRAMEWORK%"
 
 :START_Newtonsoft_Json
 IF EXIST "%~dp0..\packages\Newtonsoft.Json*" FOR /F %%I IN ('DIR %~dp0..\packages\Newtonsoft.Json* /B /O:-D') DO (SET Newtonsoft_Json=%%I& GOTO :END_Newtonsoft_Json)
@@ -53,11 +53,11 @@ SET "KLR_LIB_PATH=%KLR_LIB_PATH%;%~dp0..\packages\%Microsoft_Bcl_Metadata%\lib\p
 echo "%KLR_LIB_PATH%"
 
 IF "%~1" == "Microsoft.Framework.ApplicationHost" (
-    SET "KLR_LIB_PATH=%KLR_LIB_PATH%;%~dp0..\src\Microsoft.Framework.Runtime\bin\%FRAMEWORK%;%~dp0..\src\Microsoft.Framework.ApplicationHost\bin\%FRAMEWORK%;%~dp0..\src\Microsoft.Framework.Runtime.Roslyn\bin\%FRAMEWORK%"
+    SET "KLR_LIB_PATH=%KLR_LIB_PATH%;%~dp0..\src\Microsoft.Framework.Runtime\bin\debug\%FRAMEWORK%;%~dp0..\src\Microsoft.Framework.ApplicationHost\bin\debug\%FRAMEWORK%;%~dp0..\src\Microsoft.Framework.Runtime.Roslyn\bin\debug\%FRAMEWORK%"
 ) ELSE IF "%~3" == "Microsoft.Framework.Project" (
-    SET "KLR_LIB_PATH=%KLR_LIB_PATH%;%~dp0..\src\Microsoft.Framework.Runtime\bin\%FRAMEWORK%;%~dp0..\src\Microsoft.Framework.Runtime.Roslyn\bin\%FRAMEWORK%;%~dp0..\src\Microsoft.Framework.Project\bin\%FRAMEWORK%"
+    SET "KLR_LIB_PATH=%KLR_LIB_PATH%;%~dp0..\src\Microsoft.Framework.Runtime\bin\debug\%FRAMEWORK%;%~dp0..\src\Microsoft.Framework.Runtime.Roslyn\bin\debug\%FRAMEWORK%;%~dp0..\src\Microsoft.Framework.Project\bin\debug\%FRAMEWORK%"
 ) ELSE IF "%~3" == "Microsoft.Framework.PackageManager" (
-    SET "KLR_LIB_PATH=%KLR_LIB_PATH%;%~dp0..\src\Microsoft.Framework.Runtime\bin\%FRAMEWORK%;%~dp0..\src\Microsoft.Framework.Runtime.Roslyn\bin\%FRAMEWORK%;%~dp0..\src\Microsoft.Framework.PackageManager\bin\%FRAMEWORK%"
+    SET "KLR_LIB_PATH=%KLR_LIB_PATH%;%~dp0..\src\Microsoft.Framework.Runtime\bin\debug\%FRAMEWORK%;%~dp0..\src\Microsoft.Framework.Runtime.Roslyn\bin\debug\%FRAMEWORK%;%~dp0..\src\Microsoft.Framework.PackageManager\bin\debug\%FRAMEWORK%"
 )
 REM </dev>
 

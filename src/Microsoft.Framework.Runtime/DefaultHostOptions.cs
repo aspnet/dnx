@@ -15,6 +15,8 @@ namespace Microsoft.Framework.Runtime
 
         public FrameworkName TargetFramework { get; set; }
 
+        public string Configuration { get; set; }
+
         public bool WatchFiles { get; set; }
 
         public bool UseCachedCompilations { get; set; }

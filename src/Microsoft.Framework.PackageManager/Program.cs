@@ -2,8 +2,10 @@
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Net;
 using System.Reflection;
 using System.Threading;
@@ -29,13 +31,7 @@ namespace Microsoft.Framework.PackageManager
 
         public int Main(string[] args)
         {
-#if NET45
             _originalForeground = Console.ForegroundColor;
-#else
-            // TODO: temporary hack to eliminate warnings, remove this line 
-            // after we have Console.ForegroundColor on CoreCLR
-            _originalForeground = ConsoleColor.White;
-#endif
 
             var app = new CommandLineApplication();
             app.Name = "kpm";
@@ -55,7 +51,7 @@ namespace Microsoft.Framework.PackageManager
             {
                 c.Description = "Restore packages";
 
-                var argProject = c.Argument("[project]", "Project to restore, default is current directory");
+                var argRoot = c.Argument("[root]", "Root of all projects to restore. It can be a directory, a project.json or a global.json.");
                 var optSource = c.Option("-s|--source <FEED>", "A list of packages sources to use for this command",
                     CommandOptionType.MultipleValue);
                 var optFallbackSource = c.Option("-f|--fallbacksource <FEED>",
@@ -63,6 +59,7 @@ namespace Microsoft.Framework.PackageManager
                 var optProxy = c.Option("-p|--proxy <ADDRESS>", "The HTTP proxy to use when retrieving packages",
                     CommandOptionType.SingleValue);
                 var optNoCache = c.Option("--no-cache", "Do not use local cache", CommandOptionType.NoValue);
+                var optPackageFolder = c.Option("--packages", "Path to restore packages", CommandOptionType.SingleValue);
                 c.HelpOption("-?|-h|--help");
 
                 c.OnExecute(() =>
@@ -71,15 +68,44 @@ namespace Microsoft.Framework.PackageManager
                     {
                         var command = new RestoreCommand(_environment);
                         command.Report = this;
-                        command.RestoreDirectory = argProject.Value;
+
+                        // If the root argument is a directory
+                        if (Directory.Exists(argRoot.Value))
+                        {
+                            command.RestoreDirectory = argRoot.Value;
+                        }
+                        // If the root argument is a project.json file
+                        else if (string.Equals(
+                            Project.ProjectFileName,
+                            Path.GetFileName(argRoot.Value),
+                            StringComparison.OrdinalIgnoreCase))
+                        {
+                            command.RestoreDirectory = Path.GetDirectoryName(Path.GetFullPath(argRoot.Value));
+                        }
+                        // If the root argument is a global.json file
+                        else if (string.Equals(
+                            GlobalSettings.GlobalFileName,
+                            Path.GetFileName(argRoot.Value),
+                            StringComparison.OrdinalIgnoreCase))
+                        {
+                            command.RestoreDirectory = Path.GetDirectoryName(Path.GetFullPath(argRoot.Value));
+                            command.GlobalJsonFile = argRoot.Value;
+                        }
+                        else if (!string.IsNullOrEmpty(argRoot.Value))
+                        {
+                            throw new InvalidOperationException("The given root is invalid.");
+                        }
+
                         if (optSource.HasValue())
                         {
                             command.Sources = optSource.Values;
                         }
+
                         if (optFallbackSource.HasValue())
                         {
                             command.FallbackSources = optFallbackSource.Values;
                         }
+
                         if (optProxy.HasValue())
                         {
 #if NET45
@@ -91,6 +117,7 @@ namespace Microsoft.Framework.PackageManager
 #endif
                         }
                         command.NoCache = optNoCache.HasValue();
+                        command.PackageFolder = optPackageFolder.Value();
 
                         var success = command.ExecuteCommand();
 
@@ -114,6 +141,7 @@ namespace Microsoft.Framework.PackageManager
 
                 var argProject = c.Argument("[project]", "Path to project, default is current directory");
                 var optionOut = c.Option("-o|--out <PATH>", "Where does it go", CommandOptionType.SingleValue);
+                var optionConfiguration = c.Option("--configuration <CONFIGURATION>", "The configuration to use for deployment", CommandOptionType.SingleValue);
                 var optionZipPackages = c.Option("-z|--zippackages", "Bundle a zip full of packages",
                     CommandOptionType.NoValue);
                 var optionOverwrite = c.Option("--overwrite", "Remove existing files in target folders",
@@ -139,6 +167,7 @@ namespace Microsoft.Framework.PackageManager
                         OutputDir = optionOut.Value(),
                         ProjectDir = argProject.Value ?? System.IO.Directory.GetCurrentDirectory(),
                         AppFolder = optionAppFolder.Value(),
+                        Configuration = optionConfiguration.Value() ?? "debug",
                         RuntimeTargetFramework = _environment.TargetFramework,
                         ZipPackages = optionZipPackages.HasValue(),
                         Overwrite = optionOverwrite.HasValue(),
@@ -163,7 +192,8 @@ namespace Microsoft.Framework.PackageManager
             {
                 c.Description = "Build NuGet packages for the project in given directory";
 
-                var optionFramework = c.Option("--framework <TARGET_FRAMEWORK>", "Target framework", CommandOptionType.MultipleValue);
+                var optionFramework = c.Option("--framework <TARGET_FRAMEWORK>", "A list of target frameworks to build.", CommandOptionType.MultipleValue);
+                var optionConfiguration = c.Option("--configuration <CONFIGURATION>", "A list of configurations to build.", CommandOptionType.MultipleValue);
                 var optionOut = c.Option("--out <OUTPUT_DIR>", "Output directory", CommandOptionType.SingleValue);
                 var optionCheck = c.Option("--check", "Check diagnostics", CommandOptionType.NoValue);
                 var optionDependencies = c.Option("--dependencies", "Copy dependencies", CommandOptionType.NoValue);
@@ -177,6 +207,8 @@ namespace Microsoft.Framework.PackageManager
                     buildOptions.OutputDir = optionOut.Value();
                     buildOptions.ProjectDir = argProjectDir.Value ?? Directory.GetCurrentDirectory();
                     buildOptions.CheckDiagnostics = optionCheck.HasValue();
+                    buildOptions.Configurations = optionConfiguration.Values;
+                    buildOptions.TargetFrameworks = optionFramework.Values;
 
                     var projectManager = new BuildManager(buildOptions);
 
@@ -196,16 +228,12 @@ namespace Microsoft.Framework.PackageManager
         ConsoleColor _originalForeground;
         void SetColor(ConsoleColor color)
         {
-#if NET45
             Console.ForegroundColor = (ConsoleColor)(((int)Console.ForegroundColor & 0x08) | ((int)color & 0x07));
-#endif
         }
 
         void SetBold(bool bold)
         {
-#if NET45
             Console.ForegroundColor = (ConsoleColor)(((int)Console.ForegroundColor & 0x07) | (bold ? 0x08 : 0x00));
-#endif
         }
 
         public void WriteLine(string message)

@@ -1,6 +1,7 @@
 // Copyright (c) Microsoft Open Technologies, Inc. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -26,7 +27,7 @@ namespace Microsoft.Framework.Runtime.Roslyn.Tests
 
             Assert.NotNull(settings);
             Assert.NotNull(settings.Defines);
-            Assert.Equal(new[] { "NET45" }, settings.Defines);
+            Assert.Equal(new[] { "DEBUG", "TRACE" }, settings.Defines);
             Assert.Equal(LanguageVersion.CSharp6, settings.LanguageVersion);
             Assert.IsType<DesktopAssemblyIdentityComparer>(settings.CompilationOptions.AssemblyIdentityComparer);
             Assert.Equal(DebugInformationKind.Full, settings.CompilationOptions.DebugInformationKind);
@@ -49,8 +50,8 @@ namespace Microsoft.Framework.Runtime.Roslyn.Tests
         }
 
         [Theory]
-        [InlineData("net45", "NET45")]
-        [InlineData("k10", "K10")]
+        [InlineData("net45", "DEBUG,TRACE")]
+        [InlineData("k10", "DEBUG,TRACE")]
         public void DefaultDefines(string shortName, string define)
         {
             var project = Project.GetProject(
@@ -64,7 +65,8 @@ namespace Microsoft.Framework.Runtime.Roslyn.Tests
 
             Assert.NotNull(settings);
             Assert.NotNull(settings.Defines);
-            Assert.Equal(new[] { define }, settings.Defines);
+            Assert.Equal(define.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries),
+                         settings.Defines);
         }
 
         [Fact]
@@ -86,7 +88,7 @@ namespace Microsoft.Framework.Runtime.Roslyn.Tests
 
             Assert.NotNull(settings);
             Assert.NotNull(settings.Defines);
-            Assert.Equal(new[] { "X", "NET45", "Something" }, settings.Defines);
+            Assert.Equal(new[] { "X", "DEBUG", "TRACE", "NET45", "Something" }, settings.Defines);
         }
 
         [Fact]
@@ -96,10 +98,10 @@ namespace Microsoft.Framework.Runtime.Roslyn.Tests
 {
     ""configurations"" : {
         ""net45"":  {
-            ""compilationOptions"": { ""allowUnsafe"": true, ""define"": [""X"", ""y""], ""platform"": ""x86"", ""warningsAsErrors"": true }
+            ""compilationOptions"": { ""allowUnsafe"": true, ""define"": [""X"", ""y""], ""platform"": ""x86"", ""warningsAsErrors"": true, ""optimize"": true, ""debugSymbols"": ""none"" }
         },
         ""k10"": {
-            ""compilationOptions"": { ""warningsAsErrors"": true }
+            ""compilationOptions"": { ""warningsAsErrors"": true, ""debugSymbols"": ""pdbOnly"" }
         }
     }
 }",
@@ -110,12 +112,15 @@ namespace Microsoft.Framework.Runtime.Roslyn.Tests
             var k10Options = project.GetCompilationSettings("k10");
 
             Assert.True(net45Options.CompilationOptions.AllowUnsafe);
-            Assert.Equal(new[] { "X", "y" }, net45Options.Defines);
+            Assert.Equal(new[] { "DEBUG", "TRACE", "X", "y", "NET45" }, net45Options.Defines);
             Assert.Equal(Platform.X86, net45Options.CompilationOptions.Platform);
             Assert.Equal(ReportDiagnostic.Error, net45Options.CompilationOptions.GeneralDiagnosticOption);
+            Assert.True(net45Options.CompilationOptions.Optimize);
+            Assert.Equal(DebugInformationKind.None, net45Options.CompilationOptions.DebugInformationKind);
 
-            Assert.Equal(new[] { "K10" }, k10Options.Defines);
+            Assert.Equal(new[] { "DEBUG", "TRACE", "K10" }, k10Options.Defines);
             Assert.Equal(ReportDiagnostic.Error, k10Options.CompilationOptions.GeneralDiagnosticOption);
+            Assert.Equal(DebugInformationKind.PDBOnly, k10Options.CompilationOptions.DebugInformationKind);
         }
 
         [Fact]
@@ -136,11 +141,12 @@ namespace Microsoft.Framework.Runtime.Roslyn.Tests
 "foo",
 @"c:\foo\project.json");
 
-            var net451ptions = project.GetCompilationSettings("net451");
+            var net451Options = project.GetCompilationSettings("net451");
 
-            Assert.False(net451ptions.CompilationOptions.AllowUnsafe);
-            Assert.Equal(new[] { "NET451" }, net451ptions.Defines);
-            Assert.Equal(Platform.AnyCpu, net451ptions.CompilationOptions.Platform);
+            Assert.False(net451Options.CompilationOptions.AllowUnsafe);
+            Assert.Equal(new[] { "DEBUG", "TRACE" }, net451Options.Defines);
+            Assert.Equal(Platform.AnyCpu, net451Options.CompilationOptions.Platform);
+            Assert.Equal(DebugInformationKind.Full, net451Options.CompilationOptions.DebugInformationKind);
         }
 
         [Fact]
@@ -162,8 +168,17 @@ namespace Microsoft.Framework.Runtime.Roslyn.Tests
             var k10Options = project.GetCompilationSettings("k10");
 
             Assert.True(k10Options.CompilationOptions.AllowUnsafe);
-            Assert.Equal(new[] { "K10" }, k10Options.Defines);
+            Assert.Equal(new[] { "DEBUG", "TRACE", "K10" }, k10Options.Defines);
             Assert.Equal(Platform.AnyCpu, k10Options.CompilationOptions.Platform);
+            Assert.Equal(DebugInformationKind.Full, k10Options.CompilationOptions.DebugInformationKind);
+        }
+    }
+
+    public static class ProjectTestExtensions
+    {
+        public static CompilationSettings GetCompilationSettings(this Project project, string frameworkName)
+        {
+            return project.GetCompilationSettings(Project.ParseFrameworkName(frameworkName), "debug");
         }
     }
 }

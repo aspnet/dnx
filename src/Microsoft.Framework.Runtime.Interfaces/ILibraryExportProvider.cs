@@ -8,6 +8,6 @@ namespace Microsoft.Framework.Runtime
     [AssemblyNeutral]
     public interface ILibraryExportProvider
     {
-        ILibraryExport GetLibraryExport(string name, FrameworkName targetFramework);
+        ILibraryExport GetLibraryExport(string name, FrameworkName targetFramework, string configuration);
     }
 }

@@ -38,23 +38,23 @@ namespace Microsoft.Framework.Runtime
             }
 
             // This never returns null
-            var configDependencies = project.GetTargetFrameworkConfiguration(targetFramework).Dependencies;
+            var targetFrameworkDependencies = project.GetTargetFramework(targetFramework).Dependencies;
 
             if (VersionUtility.IsDesktop(targetFramework))
             {
                 // mscorlib is ok
-                configDependencies.Add(new Library { Name = "mscorlib" });
+                targetFrameworkDependencies.Add(new Library { Name = "mscorlib" });
 
                 // TODO: Remove these references (but we need to update the dependent projects first)
-                configDependencies.Add(new Library { Name = "System" });
-                configDependencies.Add(new Library { Name = "System.Core" });
-                configDependencies.Add(new Library { Name = "Microsoft.CSharp" });
+                targetFrameworkDependencies.Add(new Library { Name = "System" });
+                targetFrameworkDependencies.Add(new Library { Name = "System.Core" });
+                targetFrameworkDependencies.Add(new Library { Name = "Microsoft.CSharp" });
             }
 
             return new LibraryDescription
             {
                 Identity = new Library { Name = project.Name, Version = project.Version },
-                Dependencies = project.Dependencies.Concat(configDependencies),
+                Dependencies = project.Dependencies.Concat(targetFrameworkDependencies),
             };
         }
 

@@ -46,19 +46,22 @@ namespace klr.host
 
 #if NET45
             // REVIEW: Need a way to set the application base on mono
-            string applicationBaseDirectory = PlatformHelper.IsMono ? 
-                                              Directory.GetCurrentDirectory() : 
+            string applicationBaseDirectory = PlatformHelper.IsMono ?
+                                              Directory.GetCurrentDirectory() :
                                               AppDomain.CurrentDomain.SetupInformation.ApplicationBase;
 #else
             string applicationBaseDirectory = ApplicationContext.BaseDirectory;
 #endif
 
             var framework = Environment.GetEnvironmentVariable("TARGET_FRAMEWORK");
+            var configuration = Environment.GetEnvironmentVariable("TARGET_CONFIGURATION");
+
             var targetFramework = FrameworkNameUtility.ParseFrameworkName(framework ?? (PlatformHelper.IsMono ? "net45" : "net451"));
 
             var applicationEnvironment = new ApplicationEnvironment(applicationBaseDirectory,
                                                                     targetFramework,
-                                                                    assembly);
+                                                                    configuration,
+                                                                    assembly: assembly);
 
             CallContextServiceLocator.Locator = new ServiceProviderLocator();
 

@@ -23,11 +23,13 @@
     <Compile Include="ApplicationContext.cs" />
     <Compile Include="ConnectionContext.cs" />
     <Compile Include="Context.cs" />
+    <Compile Include="Models\IncomingMessages\ChangeConfigurationMessage.cs" />
     <Compile Include="Models\IncomingMessages\ChangeTargetFrameworkMessage.cs" />
     <Compile Include="Models\IncomingMessages\InitializeMessage.cs" />
     <Compile Include="Models\Message.cs" />
     <Compile Include="Models\OutgoingMessages\ConfigurationData.cs" />
-    <Compile Include="Models\OutgoingMessages\ConfigurationsMessage.cs" />
+    <Compile Include="Models\OutgoingMessages\FrameworkData.cs" />
+    <Compile Include="Models\OutgoingMessages\ProjectInformationMessage.cs" />
     <Compile Include="Models\OutgoingMessages\DiagnosticsMessage.cs" />
     <Compile Include="Models\OutgoingMessages\ErrorMessage.cs" />
     <Compile Include="Models\OutgoingMessages\ReferenceItem.cs" />

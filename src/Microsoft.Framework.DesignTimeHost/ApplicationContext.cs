@@ -26,6 +26,9 @@ namespace Microsoft.Framework.DesignTimeHost
         {
             public string Path { get; set; }
             public FrameworkName TargetFramework { get; set; }
+
+            public string Configuration { get; set; }
+
             public Project Project { get; set; }
 
             public RoslynMetadataProvider MetadataProvider { get; set; }
@@ -64,6 +67,7 @@ namespace Microsoft.Framework.DesignTimeHost
 
         private readonly Trigger<string> _appPath = new Trigger<string>();
         private readonly Trigger<FrameworkName> _targetFramework = new Trigger<FrameworkName>();
+        private readonly Trigger<string> _configuration = new Trigger<string>();
         private readonly Trigger<Nada> _filesChanged = new Trigger<Nada>();
 
         private readonly Trigger<State> _state = new Trigger<State>();
@@ -172,18 +176,26 @@ namespace Microsoft.Framework.DesignTimeHost
                     {
                         var data = message.Payload.ToObject<InitializeMessage>();
                         _appPath.Value = data.ProjectFolder;
+                        _configuration.Value = data.Configuration ?? "debug";
 
                         SetTargetFramework(data.TargetFramework);
                     }
                     break;
                 case "Teardown":
                     {
+                        // TODO: Implement
                     }
                     break;
                 case "ChangeTargetFramework":
                     {
                         var data = message.Payload.ToObject<ChangeTargetFrameworkMessage>();
                         SetTargetFramework(data.TargetFramework);
+                    }
+                    break;
+                case "ChangeConfiguration":
+                    {
+                        var data = message.Payload.ToObject<ChangeConfigurationMessage>();
+                        _configuration.Value = data.Configuration;
                     }
                     break;
                 case "FilesChanged":
@@ -204,13 +216,17 @@ namespace Microsoft.Framework.DesignTimeHost
 
         private void Calculate()
         {
-            if (_appPath.WasAssigned || _targetFramework.WasAssigned || _filesChanged.WasAssigned)
+            if (_appPath.WasAssigned ||
+                _targetFramework.WasAssigned ||
+                _configuration.WasAssigned ||
+                _filesChanged.WasAssigned)
             {
                 _appPath.ClearAssigned();
                 _targetFramework.ClearAssigned();
+                _configuration.ClearAssigned();
                 _filesChanged.ClearAssigned();
 
-                _state.Value = Initialize(_appPath.Value, _targetFramework.Value);
+                _state.Value = Initialize(_appPath.Value, _targetFramework.Value, _configuration.Value);
             }
 
             var state = _state.Value;
@@ -218,27 +234,45 @@ namespace Microsoft.Framework.DesignTimeHost
             {
                 _state.ClearAssigned();
 
-                _local.Configurations = new ConfigurationsMessage
+                var frameworks = state.Project.GetTargetFrameworks().Select(frameworkInfo => new FrameworkData
+                {
+                    CompilationSettings = state.Project.GetCompilationSettings(frameworkInfo.FrameworkName, state.Configuration),
+                    FrameworkName = VersionUtility.GetShortFrameworkName(frameworkInfo.FrameworkName),
+                    LongFrameworkName = frameworkInfo.FrameworkName.ToString(),
+                    FriendlyFrameworkName = GetFriendlyFrameworkName(state.FrameworkResolver, frameworkInfo.FrameworkName)
+                })
+                .ToList();
+
+                var configurations = state.Project.GetConfigurations().Select(config => new ConfigurationData
+                {
+                    Name = config,
+                    CompilationSettings = state.Project.GetCompilationSettings(state.TargetFramework, config)
+                })
+                .ToList();
+
+                _local.Configurations = new ProjectInformationMessage
                 {
                     ProjectName = state.Project.Name,
-                    Configurations = state.Project.GetTargetFrameworkConfigurations().Select(c => new ConfigurationData
-                    {
-                        CompilationSettings = state.Project.GetCompilationSettings(c.FrameworkName),
-                        FrameworkName = VersionUtility.GetShortFrameworkName(c.FrameworkName),
-                        LongFrameworkName = c.FrameworkName.ToString(),
-                        FriendlyFrameworkName  = GetFriendlyFrameworkName(state.FrameworkResolver, c.FrameworkName)
-                    }).ToList(),
+
+                    // REVIEW: For backwards compatibility
+                    Configurations = frameworks,
+
+                    // All target framework information
+                    Frameworks = frameworks,
+
+                    // debug/release etc
+                    ProjectConfigurations = configurations,
 
                     Commands = state.Project.Commands
                 };
 
-                var metadata = state.MetadataProvider.GetMetadata(state.Project.Name, state.TargetFramework);
+                var metadata = state.MetadataProvider.GetMetadata(state.Project.Name, state.TargetFramework, state.Configuration);
 
                 _local.References = new ReferencesMessage
                 {
                     RootDependency = state.Project.Name,
                     LongFrameworkName = state.TargetFramework.ToString(),
-                    FriendlyFrameworkName  = GetFriendlyFrameworkName(state.FrameworkResolver, state.TargetFramework),
+                    FriendlyFrameworkName = GetFriendlyFrameworkName(state.FrameworkResolver, state.TargetFramework),
                     ProjectReferences = metadata.ProjectReferences,
                     FileReferences = metadata.References,
                     RawReferences = metadata.RawReferences,
@@ -329,7 +363,7 @@ namespace Microsoft.Framework.DesignTimeHost
             }
         }
 
-        private bool IsDifferent(ConfigurationsMessage local, ConfigurationsMessage remote)
+        private bool IsDifferent(ProjectInformationMessage local, ProjectInformationMessage remote)
         {
             return true;
         }
@@ -349,12 +383,13 @@ namespace Microsoft.Framework.DesignTimeHost
             return true;
         }
 
-        public State Initialize(string appPath, FrameworkName targetFramework)
+        public State Initialize(string appPath, FrameworkName targetFramework, string configuration)
         {
             var state = new State
             {
                 Path = appPath,
-                TargetFramework = targetFramework
+                TargetFramework = targetFramework,
+                Configuration = configuration
             };
 
             Project project;
@@ -372,8 +407,8 @@ namespace Microsoft.Framework.DesignTimeHost
             var nugetDependencyResolver = new NuGetDependencyResolver(projectDir, referenceAssemblyDependencyResolver.FrameworkResolver);
             var gacDependencyResolver = new GacDependencyResolver();
 
-            var compositeDependencyExporter = new CompositeLibraryExportProvider(new ILibraryExportProvider[] { 
-                referenceAssemblyDependencyResolver, 
+            var compositeDependencyExporter = new CompositeLibraryExportProvider(new ILibraryExportProvider[] {
+                referenceAssemblyDependencyResolver,
                 gacDependencyResolver,
                 nugetDependencyResolver,
             });
@@ -386,9 +421,9 @@ namespace Microsoft.Framework.DesignTimeHost
             state.Project = project;
             state.FrameworkResolver = referenceAssemblyDependencyResolver.FrameworkResolver;
 
-            var dependencyWalker = new DependencyWalker(new IDependencyProvider[] { 
+            var dependencyWalker = new DependencyWalker(new IDependencyProvider[] {
                 new ProjectReferenceDependencyProvider(projectResolver),
-                referenceAssemblyDependencyResolver, 
+                referenceAssemblyDependencyResolver,
                 gacDependencyResolver,
                 nugetDependencyResolver,
                 new UnresolvedDependencyProvider() // A catch all for unresolved dependencies

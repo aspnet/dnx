@@ -14,10 +14,11 @@ namespace Microsoft.Framework.Runtime
         private readonly Project _project;
         private readonly FrameworkName _targetFramework;
 
-        public ApplicationEnvironment(Project project, FrameworkName targetFramework)
+        public ApplicationEnvironment(Project project, FrameworkName targetFramework, string configuration)
         {
             _project = project;
             _targetFramework = targetFramework;
+            Configuration = configuration;
         }
 
         public string ApplicationName
@@ -40,6 +41,8 @@ namespace Microsoft.Framework.Runtime
         {
             get { return _project.Version.ToString(); }
         }
+
+        public string Configuration { get; private set; }
 
 
         public FrameworkName TargetFramework

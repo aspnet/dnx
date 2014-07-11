@@ -42,7 +42,7 @@ namespace Microsoft.Framework.PackageManager.Packing
             }
 
             var targetName = AppFolder ?? project.Name;
-            TargetPath = Path.Combine(root.OutputPath, targetName);
+            TargetPath = Path.Combine(root.OutputPath, PackRoot.AppRootName, "src", targetName);
 
             Console.WriteLine("  Source {0}", project.ProjectDirectory);
             Console.WriteLine("  Target {0}", TargetPath);
@@ -80,7 +80,7 @@ namespace Microsoft.Framework.PackageManager.Packing
 
             var targetName = AppFolder ?? project.Name;
             var targetNupkgName = string.Format("{0}.{1}", targetName, project.Version);
-            TargetPath = Path.Combine(root.OutputPath, "packages", targetNupkgName);
+            TargetPath = Path.Combine(root.OutputPath, PackRoot.AppRootName, "packages", targetNupkgName);
 
             Console.WriteLine("  Source {0}", project.ProjectDirectory);
             Console.WriteLine("  Target {0}", TargetPath);
@@ -102,6 +102,7 @@ namespace Microsoft.Framework.PackageManager.Packing
             var buildOptions = new BuildOptions();
             buildOptions.ProjectDir = project.ProjectDirectory;
             buildOptions.OutputDir = Path.Combine(project.ProjectDirectory, "bin");
+            buildOptions.Configurations.Add(root.Configuration);
             var buildManager = new BuildManager(buildOptions);
             if (!buildManager.Build())
             {
@@ -109,7 +110,7 @@ namespace Microsoft.Framework.PackageManager.Packing
             }
 
             // Extract the generated nupkg to target path
-            var srcNupkgPath = Path.Combine(buildOptions.OutputDir, targetNupkgName + ".nupkg");
+            var srcNupkgPath = Path.Combine(buildOptions.OutputDir, root.Configuration, targetNupkgName + ".nupkg");
             var targetNupkgPath = Path.Combine(TargetPath, targetNupkgName + ".nupkg");
             using (var sourceStream = new FileStream(srcNupkgPath, FileMode.Open, FileAccess.Read))
             {
@@ -169,7 +170,11 @@ namespace Microsoft.Framework.PackageManager.Packing
                         File.WriteAllText(iniFilePath, string.Format(@"[Runtime]
 KRE_VERSION={0}
 KRE_FLAVOR={1}
-", versionNumber, flavor == "svrc50" ? "CoreCLR" : "DesktopCLR"));
+CONFIGURATION={2}
+", 
+versionNumber, 
+flavor == "svrc50" ? "CoreCLR" : "DesktopCLR",
+root.Configuration));
                     }
                 }
             }
