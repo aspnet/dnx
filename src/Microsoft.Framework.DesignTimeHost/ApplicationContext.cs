@@ -581,7 +581,7 @@ namespace Microsoft.Framework.DesignTimeHost
             });
         }
 
-        private async Task ExecuteCommandWithServices(IServiceProvider services, Project project, string[] args)
+        private async Task<int> ExecuteCommandWithServices(IServiceProvider services, Project project, string[] args)
         {
             var environment = new ApplicationEnvironment(project, _targetFramework.Value, _configuration.Value);
 
@@ -592,7 +592,7 @@ namespace Microsoft.Framework.DesignTimeHost
 
             try
             {
-                var result = await applicationHost.Main(args);
+                return await applicationHost.Main(args);
             }
             catch (Exception ex)
             {
