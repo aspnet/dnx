@@ -16,7 +16,6 @@ namespace Microsoft.Framework.PackageManager.Packing
         private readonly ProjectReferenceDependencyProvider _projectReferenceDependencyProvider;
         private readonly IProjectResolver _projectResolver;
         private readonly LibraryDescription _libraryDescription;
-        private readonly string[] AppFolderExcludeExtensions = { ".kproj", ".user" };
 
         public PackProject(
             ProjectReferenceDependencyProvider projectReferenceDependencyProvider,
@@ -50,17 +49,12 @@ namespace Microsoft.Framework.PackageManager.Packing
 
             root.Operations.Delete(TargetPath);
 
-            // A set of excluded source files used as a filter when doing copy
-            var sourceExcludeFiles = new HashSet<string>(project.SourceExcludeFiles, StringComparer.OrdinalIgnoreCase);
+            // A set of excluded files used as a filter when doing copy
+            var excludeFiles = new HashSet<string>(project.ExcludeFiles, StringComparer.OrdinalIgnoreCase);
 
             root.Operations.Copy(project.ProjectDirectory, TargetPath, (isRoot, filePath) =>
             {
-                if (IsImplicitlyExcludedFile(filePath))
-                {
-                    return false;
-                }
-
-                if (sourceExcludeFiles.Contains(filePath))
+                if (excludeFiles.Contains(filePath))
                 {
                     return false;
                 }
@@ -131,25 +125,6 @@ namespace Microsoft.Framework.PackageManager.Packing
                 var sha512Bytes = SHA512.Create().ComputeHash(sourceStream);
                 File.WriteAllText(targetNupkgPath + ".sha512", Convert.ToBase64String(sha512Bytes));
             }
-        }
-
-        private static bool IsImplicitlyExcludedFile(string filePath)
-        {
-            var fileExtension = Path.GetExtension(filePath);
-            var fileName = Path.GetFileName(filePath);
-
-            if (string.Equals(fileExtension, ".csproj", StringComparison.OrdinalIgnoreCase) ||
-                string.Equals(fileExtension, ".kproj", StringComparison.OrdinalIgnoreCase) ||
-                string.Equals(fileExtension, ".user", StringComparison.OrdinalIgnoreCase) ||
-                string.Equals(fileExtension, ".vspscc", StringComparison.OrdinalIgnoreCase) ||
-                string.Equals(fileExtension, ".vssscc", StringComparison.OrdinalIgnoreCase) ||
-                string.Equals(fileExtension, ".pubxml", StringComparison.OrdinalIgnoreCase) ||
-                string.Equals(fileName, "bin", StringComparison.OrdinalIgnoreCase) ||
-                string.Equals(fileName, "obj", StringComparison.OrdinalIgnoreCase))
-            {
-                return true;
-            }
-            return false;
         }
 
         public void PostProcess(PackRoot root)
@@ -248,10 +223,6 @@ root.Configuration));
             // A set of content files that should be copied
             var contentFiles = new HashSet<string>(project.ContentFiles, StringComparer.OrdinalIgnoreCase);
 
-            // File extensions we exclude when copying files into public app folder
-            var appFolderExcludeExtensions = new HashSet<string>(AppFolderExcludeExtensions,
-                    StringComparer.OrdinalIgnoreCase);
-
             root.Operations.Copy(project.ProjectDirectory, appFolderPath, (isRoot, filePath) =>
             {
                 // We always explore a directory
@@ -261,9 +232,8 @@ root.Configuration));
                 }
 
                 var fileName = Path.GetFileName(filePath);
-                var fileExtension = Path.GetExtension(filePath);
-                if (appFolderExcludeExtensions.Contains(fileExtension) ||
-                    string.Equals(fileName, "project.json", StringComparison.OrdinalIgnoreCase))
+                // Public app folder doesn't need project.json
+                if (string.Equals(fileName, "project.json", StringComparison.OrdinalIgnoreCase))
                 {
                     return false;
                 }
