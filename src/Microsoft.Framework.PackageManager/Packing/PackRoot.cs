@@ -15,6 +15,7 @@ namespace Microsoft.Framework.PackageManager.Packing
     {
         private readonly Runtime.Project _project;
         public static readonly string AppRootName = "approot";
+        public static readonly string DefaultAppFolderName = "public";
 
         public PackRoot(Runtime.Project project, string outputPath)
         {
@@ -30,7 +31,6 @@ namespace Microsoft.Framework.PackageManager.Packing
         public string OutputPath { get; private set; }
         public string PackagesPath { get; private set; }
 
-        public string AppFolder { get; set; }
         public bool Overwrite { get; set; }
         public bool NoSource { get; set; }
         public string Configuration { get; set; }
@@ -95,13 +95,13 @@ namespace Microsoft.Framework.PackageManager.Packing
                 {
                     File.WriteAllText(
                         Path.Combine(OutputPath, commandName + ".cmd"),
-                        string.Format(template1, commandName, Path.Combine(AppRootName, "src", AppFolder ?? _project.Name), Runtimes.First().Name));
+                        string.Format(template1, commandName, Path.Combine(AppRootName, "src", _project.Name), Runtimes.First().Name));
                 }
                 else
                 {
                     File.WriteAllText(
                         Path.Combine(OutputPath, commandName + ".cmd"),
-                        string.Format(template2, commandName, Path.Combine(AppRootName, "src", AppFolder ?? _project.Name)));
+                        string.Format(template2, commandName, Path.Combine(AppRootName, "src", _project.Name)));
                 }
             }
         }

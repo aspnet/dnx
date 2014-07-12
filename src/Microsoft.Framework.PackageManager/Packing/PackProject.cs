@@ -138,14 +138,15 @@ namespace Microsoft.Framework.PackageManager.Packing
             // Construct path to public app folder, which contains content files and tool dlls
             // The name of public app folder is specified with "--appfolder" option
             // Default name of public app folder is the same as main project
-            var appFolderPath = Path.Combine(root.OutputPath, AppFolder ?? project.Name);
+            var appFolderName = AppFolder ?? PackRoot.DefaultAppFolderName;
+            var appFolderPath = Path.Combine(root.OutputPath, appFolderName);
 
             // Delete old public app folder because we don't want leftovers from previous operations
             root.Operations.Delete(appFolderPath);
             Directory.CreateDirectory(appFolderPath);
 
             // Copy content files (e.g. html, js and images) of main project into public app folder
-            CopyContentFiles(root, project);
+            CopyContentFiles(root, project, appFolderName);
 
             // Tool dlls including AspNet.Loader.dll go to bin folder under public app folder
             var appFolderBinPath = Path.Combine(appFolderPath, "bin");
@@ -209,13 +210,12 @@ root.Configuration));
             }
         }
 
-        private void CopyContentFiles(PackRoot root, Project project)
+        private void CopyContentFiles(PackRoot root, Project project, string appFolderName)
         {
-            var targetName = AppFolder ?? project.Name;
             Console.WriteLine("Copying contents of project dependency {0} to {1}",
-                _libraryDescription.Identity.Name, targetName);
+                _libraryDescription.Identity.Name, appFolderName);
 
-            var appFolderPath = Path.Combine(root.OutputPath, targetName);
+            var appFolderPath = Path.Combine(root.OutputPath, appFolderName);
 
             Console.WriteLine("  Source {0}", project.ProjectDirectory);
             Console.WriteLine("  Target {0}", appFolderPath);

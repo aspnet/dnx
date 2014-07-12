@@ -113,7 +113,6 @@ namespace Microsoft.Framework.PackageManager.Packing
             var root = new PackRoot(project, outputPath)
             {
                 Overwrite = _options.Overwrite,
-                AppFolder = _options.AppFolder ?? project.Name,
                 Configuration = _options.Configuration,
                 NoSource = _options.NoSource
             };
