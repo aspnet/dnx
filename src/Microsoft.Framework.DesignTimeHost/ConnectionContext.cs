@@ -15,12 +15,14 @@ namespace Microsoft.Framework.DesignTimeHost
     {
         private readonly IDictionary<int, ApplicationContext> _contexts = new Dictionary<int, ApplicationContext>();
         private readonly IAssemblyLoaderEngine _loaderEngine;
+        private readonly IServiceProvider _services;
         private readonly Stream _stream;
         private ProcessingQueue _queue;
         private string _hostId;
 
-        public ConnectionContext(IAssemblyLoaderEngine loaderEngine, Stream stream, string hostId)
+        public ConnectionContext(IServiceProvider services, IAssemblyLoaderEngine loaderEngine, Stream stream, string hostId)
         {
+            _services = services;
             _loaderEngine = loaderEngine;
             _stream = stream;
             _hostId = hostId;
@@ -47,7 +49,7 @@ namespace Microsoft.Framework.DesignTimeHost
             {
                 Trace.TraceInformation("[ConnectionContext]: Creating new application context for {0}", message.ContextId);
 
-                applicationContext = new ApplicationContext(_loaderEngine, message.ContextId);
+                applicationContext = new ApplicationContext(_services, _loaderEngine, message.ContextId);
                 applicationContext.OnTransmit += OnTransmit;
                 _contexts.Add(message.ContextId, applicationContext);
             }
