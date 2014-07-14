@@ -215,19 +215,11 @@ namespace Microsoft.Framework.PackageManager
 
             if (errors > 0)
             {
-#if NET45
                 WriteColor("Build failed.", ConsoleColor.Red);
-#else
-                Console.WriteLine("Build failed.");
-#endif
             }
             else
             {
-#if NET45
                 WriteColor("Build succeeded.", ConsoleColor.Green);
-#else
-                Console.WriteLine("Build succeeded.");
-#endif
             }
 
             Console.WriteLine("    {0} Warnings(s)", warnings);
@@ -255,23 +247,14 @@ namespace Microsoft.Framework.PackageManager
 
         private void WriteError(string message)
         {
-#if NET45
             WriteColor(message, ConsoleColor.Red);
-#else
-            Console.WriteLine(message);
-#endif
         }
 
         private void WriteWarning(string message)
         {
-#if NET45
             WriteColor(message, ConsoleColor.Yellow);
-#else
-            Console.WriteLine(message);
-#endif
         }
 
-#if NET45
         private void WriteColor(string message, ConsoleColor color)
         {
             var old = Console.ForegroundColor;
@@ -286,7 +269,6 @@ namespace Microsoft.Framework.PackageManager
                 Console.ForegroundColor = old;
             }
         }
-#endif
 
         private bool CheckDiagnostics(Project project,
                                       FrameworkName targetFramework,
