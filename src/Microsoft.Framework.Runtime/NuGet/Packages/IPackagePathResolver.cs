@@ -9,19 +9,23 @@ namespace NuGet
         /// <summary>
         /// Gets the physical installation path of a package
         /// </summary>
-        string GetInstallPath(IPackage package);
+        string GetInstallPath(string packageId, SemanticVersion version);
+
+        /// <summary>
+        /// Gets the physical path to the nupkg.sha512 file
+        /// </summary>
+        /// <returns></returns>
+        string GetHashPath(string packageId, SemanticVersion version);
+
+        /// <summary>
+        /// Gets the phsyical path to the nupkg file
+        /// </summary>
+        string GetPackageFilePath(string packageId, SemanticVersion version);
 
         /// <summary>
         /// Gets the package directory name
         /// </summary>
-        string GetPackageDirectory(IPackage package);
-
         string GetPackageDirectory(string packageId, SemanticVersion version);
-
-        /// <summary>
-        /// Gets the package file name
-        /// </summary>
-        string GetPackageFileName(IPackage package);
 
         string GetPackageFileName(string packageId, SemanticVersion version);
     }

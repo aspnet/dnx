@@ -109,13 +109,15 @@ namespace Microsoft.Framework.PackageManager.Packing
 
         private void WriteGlobalJson()
         {
-            var nugetDependencyResolver = new NuGetDependencyResolver(
-                _project.ProjectDirectory,
-                PackagesPath,
-                new EmptyFrameworkResolver());
             var rootDirectory = ProjectResolver.ResolveRootDirectory(_project.ProjectDirectory);
             var projectResolver = new ProjectResolver(_project.ProjectDirectory, rootDirectory);
+            var packagesDir = NuGetDependencyResolver.ResolveRepositoryPath(rootDirectory);
+
+            var nugetDependencyResolver = new NuGetDependencyResolver(packagesDir, new EmptyFrameworkResolver());
+            var pathResolver = new DefaultPackagePathResolver(PackagesPath);
+
             var dependenciesObj = new JObject();
+
 
             // Generate SHAs for all package dependencies
             foreach (var deploymentPackage in Packages)
@@ -125,10 +127,8 @@ namespace Microsoft.Framework.PackageManager.Packing
                 var package = nugetDependencyResolver.FindCandidate(
                     deploymentPackage.Library.Name,
                     deploymentPackage.Library.Version);
-                var shaFilePath = Path.Combine(
-                    PackagesPath,
-                    string.Format("{0}.{1}", package.Id, package.Version),
-                    string.Format("{0}.{1}.nupkg.sha512", package.Id, package.Version));
+
+                var shaFilePath = pathResolver.GetHashPath(package.Id, package.Version);
                 var sha = File.ReadAllText(shaFilePath);
 
                 var shaObj = new JObject();
@@ -147,10 +147,7 @@ namespace Microsoft.Framework.PackageManager.Packing
                     throw new Exception("TODO: unable to resolve project named " + deploymentProject.Name);
                 }
 
-                var shaFilePath = Path.Combine(
-                    PackagesPath,
-                    string.Format("{0}.{1}", project.Name, project.Version),
-                    string.Format("{0}.{1}.nupkg.sha512", project.Name, project.Version));
+                var shaFilePath = pathResolver.GetHashPath(project.Name, project.Version);
 
                 if (!File.Exists(shaFilePath))
                 {

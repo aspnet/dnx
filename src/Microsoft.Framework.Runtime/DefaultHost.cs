@@ -146,11 +146,12 @@ namespace Microsoft.Framework.Runtime
                 throw new Exception("Unable to locate " + Project.ProjectFileName);
             }
 
+            string packagesDirectory = options.PackageDirectory ?? NuGetDependencyResolver.ResolveRepositoryPath(rootDirectory);
+
             var applicationEnvironment = new ApplicationEnvironment(Project, _targetFramework, options.Configuration);
             var projectResolver = new ProjectResolver(_projectDir, rootDirectory);
-
             var referenceAssemblyDependencyResolver = new ReferenceAssemblyDependencyResolver();
-            var nugetDependencyResolver = new NuGetDependencyResolver(_projectDir, options.PackageDirectory, referenceAssemblyDependencyResolver.FrameworkResolver);
+            var nugetDependencyResolver = new NuGetDependencyResolver(packagesDirectory, referenceAssemblyDependencyResolver.FrameworkResolver);
             var gacDependencyResolver = new GacDependencyResolver();
 
             var nugetLoader = new NuGetAssemblyLoader(_loaderEngine, nugetDependencyResolver);

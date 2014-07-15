@@ -325,13 +325,14 @@ namespace Microsoft.Framework.PackageManager
             var projectDir = project.ProjectDirectory;
             var rootDirectory = ProjectResolver.ResolveRootDirectory(projectDir);
             var projectResolver = new ProjectResolver(projectDir, rootDirectory);
+            var packagesDir = NuGetDependencyResolver.ResolveRepositoryPath(rootDirectory);
 
             var resxProvider = new ResxResourceProvider();
             var embeddedResourceProvider = new EmbeddedResourceProvider();
             var compositeResourceProvider = new CompositeResourceProvider(new IResourceProvider[] { resxProvider, embeddedResourceProvider });
 
             var referenceAssemblyDependencyResolver = new ReferenceAssemblyDependencyResolver();
-            var nugetDependencyResolver = new NuGetDependencyResolver(projectDir, referenceAssemblyDependencyResolver.FrameworkResolver);
+            var nugetDependencyResolver = new NuGetDependencyResolver(packagesDir, referenceAssemblyDependencyResolver.FrameworkResolver);
             var gacDependencyResolver = new GacDependencyResolver();
             var compositeDependencyExporter = new CompositeLibraryExportProvider(new ILibraryExportProvider[] {
                 referenceAssemblyDependencyResolver,
@@ -369,9 +370,10 @@ namespace Microsoft.Framework.PackageManager
             var projectDir = project.ProjectDirectory;
             var rootDirectory = ProjectResolver.ResolveRootDirectory(projectDir);
             var projectResolver = new ProjectResolver(projectDir, rootDirectory);
+            var packagesDir = NuGetDependencyResolver.ResolveRepositoryPath(rootDirectory);
 
             var referenceAssemblyDependencyResolver = new ReferenceAssemblyDependencyResolver();
-            var nugetDependencyResolver = new NuGetDependencyResolver(projectDir, referenceAssemblyDependencyResolver.FrameworkResolver);
+            var nugetDependencyResolver = new NuGetDependencyResolver(packagesDir, referenceAssemblyDependencyResolver.FrameworkResolver);
             var gacDependencyResolver = new GacDependencyResolver();
             var compositeDependencyExporter = new CompositeLibraryExportProvider(new ILibraryExportProvider[] {
                 referenceAssemblyDependencyResolver,

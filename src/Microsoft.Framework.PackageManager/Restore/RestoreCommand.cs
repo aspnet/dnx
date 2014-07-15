@@ -107,7 +107,6 @@ namespace Microsoft.Framework.PackageManager
             }
 
             var projectDirectory = project.ProjectDirectory;
-
             var restoreOperations = new RestoreOperations { Report = Report };
             var projectProviders = new List<IWalkProvider>();
             var localProviders = new List<IWalkProvider>();
@@ -124,7 +123,6 @@ namespace Microsoft.Framework.PackageManager
             localProviders.Add(
                 new LocalWalkProvider(
                     new NuGetDependencyResolver(
-                        projectDirectory,
                         packagesDirectory,
                         new EmptyFrameworkResolver())));
 

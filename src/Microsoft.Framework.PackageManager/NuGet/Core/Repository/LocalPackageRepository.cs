@@ -13,7 +13,7 @@ using NuGet.Resources;
 
 namespace NuGet
 {
-    public class LocalPackageRepository //: PackageRepositoryBase, IPackageLookup
+    public class LocalPackageRepository
     {
         private readonly ConcurrentDictionary<string, PackageCacheEntry> _packageCache = new ConcurrentDictionary<string, PackageCacheEntry>(StringComparer.OrdinalIgnoreCase);
         private readonly ConcurrentDictionary<PackageName, string> _packagePathLookup = new ConcurrentDictionary<PackageName, string>();
@@ -330,18 +330,6 @@ namespace NuGet
             }
 
             return null;
-        }
-
-        protected virtual string GetPackageFilePath(IPackage package)
-        {
-            return Path.Combine(PathResolver.GetPackageDirectory(package),
-                                PathResolver.GetPackageFileName(package));
-        }
-
-        protected virtual string GetPackageFilePath(string id, SemanticVersion version)
-        {
-            return Path.Combine(PathResolver.GetPackageDirectory(id, version),
-                                PathResolver.GetPackageFileName(id, version));
         }
 
         private static bool FileNameMatchesPattern(string packageId, SemanticVersion version, string path)

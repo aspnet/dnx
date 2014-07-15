@@ -24,18 +24,8 @@ namespace Microsoft.Framework.Runtime
 
         private readonly IFrameworkReferenceResolver _frameworkReferenceResolver;
 
-        public NuGetDependencyResolver(string rootDirectory, IFrameworkReferenceResolver frameworkReferenceResolver)
-            : this(rootDirectory, null, frameworkReferenceResolver)
+        public NuGetDependencyResolver(string packagesPath, IFrameworkReferenceResolver frameworkReferenceResolver)
         {
-        }
-
-        public NuGetDependencyResolver(string rootDirectory, string packagesPath, IFrameworkReferenceResolver frameworkReferenceResolver)
-        {
-            if (string.IsNullOrEmpty(packagesPath))
-            {
-                packagesPath = ResolveRepositoryPath(rootDirectory);
-            }
-
             _repository = new PackageRepository(packagesPath);
             _frameworkReferenceResolver = frameworkReferenceResolver;
             Dependencies = Enumerable.Empty<LibraryDescription>();
@@ -55,8 +45,7 @@ namespace Microsoft.Framework.Runtime
         {
             return new[]
             {
-                Path.Combine(_repository.FileSystem.Root, "{name}", "{version}", "{name}.nuspec"),
-                Path.Combine(_repository.FileSystem.Root, "{name}", "{version}", "{name}.{version}.nupkg")
+                Path.Combine(_repository.RepositoryRoot.Root, "{name}", "{version}", "{name}.nuspec")
             };
         }
 
@@ -124,6 +113,9 @@ namespace Microsoft.Framework.Runtime
         {
             Dependencies = packages;
 
+            var cacheResolvers = GetCacheResolvers();
+            var defaultResolver = new DefaultPackagePathResolver(_repository.RepositoryRoot);
+
             foreach (var dependency in packages)
             {
                 var package = FindCandidate(dependency.Identity.Name, dependency.Identity.Version);
@@ -133,8 +125,10 @@ namespace Microsoft.Framework.Runtime
                     continue;
                 }
 
+                string packagePath = ResolvePackagePath(defaultResolver, cacheResolvers, package);
+
                 dependency.Type = "Package";
-                dependency.Path = _repository.PathResolver.GetInstallPath(package);
+                dependency.Path = packagePath;
 
                 var packageDescription = new PackageDescription
                 {
@@ -152,7 +146,7 @@ namespace Microsoft.Framework.Runtime
                     packageDescription.ContractPath = contractPath;
                 }
 
-                packageDescription.PackageAssemblies = GetAssemblies(package, targetFramework);
+                packageDescription.PackageAssemblies = GetAssemblies(packagePath, package, targetFramework);
 
                 foreach (var assemblyInfo in packageDescription.PackageAssemblies)
                 {
@@ -161,12 +155,47 @@ namespace Microsoft.Framework.Runtime
 
                 packageDescription.FrameworkAssemblies = GetFrameworkAssemblies(package, targetFramework);
 
-                var sharedSources = GetSharedSources(package, targetFramework).ToList();
+                var sharedSources = GetSharedSources(packagePath, package, targetFramework).ToList();
                 if (!sharedSources.IsEmpty())
                 {
                     packageDescription.SharedSources = sharedSources;
                 }
             }
+        }
+
+        private static string ResolvePackagePath(IPackagePathResolver defaultResolver,
+                                                 IEnumerable<IPackagePathResolver> cacheResolvers,
+                                                 IPackage package)
+        {
+            var defaultHashPath = defaultResolver.GetHashPath(package.Id, package.Version);
+
+            foreach (var resolver in cacheResolvers)
+            {
+                var cacheHashFile = resolver.GetHashPath(package.Id, package.Version);
+
+                // REVIEW: More efficient compare?
+                if (File.Exists(defaultHashPath) &&
+                    File.Exists(cacheHashFile) &&
+                    File.ReadAllText(defaultHashPath) == File.ReadAllText(cacheHashFile))
+                {
+                    return resolver.GetInstallPath(package.Id, package.Version);
+                }
+            }
+
+            return defaultResolver.GetInstallPath(package.Id, package.Version);
+        }
+
+        private static IEnumerable<IPackagePathResolver> GetCacheResolvers()
+        {
+            var packageCachePathValue = Environment.GetEnvironmentVariable("KRE_PACKAGES_CACHE");
+
+            if (string.IsNullOrEmpty(packageCachePathValue))
+            {
+                return Enumerable.Empty<IPackagePathResolver>();
+            }
+
+            return packageCachePathValue.Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries)
+                                        .Select(path => new DefaultPackagePathResolver(path));
         }
 
         public ILibraryExport GetLibraryExport(string name, FrameworkName targetFramework, string configuration)
@@ -248,18 +277,14 @@ namespace Microsoft.Framework.Runtime
             }
         }
 
-        private List<AssemblyDescription> GetAssemblies(IPackage package, FrameworkName frameworkName)
+        private List<AssemblyDescription> GetAssemblies(string packagePath, IPackage package, FrameworkName frameworkName)
         {
-            var path = _repository.PathResolver.GetInstallPath(package);
-
-            return GetAssembliesFromPackage(package, frameworkName, path);
+            return GetAssembliesFromPackage(package, frameworkName, packagePath);
         }
 
-        private IEnumerable<string> GetSharedSources(IPackage package, FrameworkName targetFramework)
+        private IEnumerable<string> GetSharedSources(string packagePath, IPackage package, FrameworkName targetFramework)
         {
-            var path = _repository.PathResolver.GetInstallPath(package);
-
-            var directory = Path.Combine(path, "shared");
+            var directory = Path.Combine(packagePath, "shared");
             if (!Directory.Exists(directory))
             {
                 return Enumerable.Empty<string>();

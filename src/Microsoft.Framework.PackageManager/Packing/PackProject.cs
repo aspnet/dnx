@@ -8,6 +8,7 @@ using System.IO.Compression;
 using System.Linq;
 using System.Security.Cryptography;
 using Microsoft.Framework.Runtime;
+using NuGet;
 
 namespace Microsoft.Framework.PackageManager.Packing
 {
@@ -73,9 +74,10 @@ namespace Microsoft.Framework.PackageManager.Packing
                 throw new Exception("TODO: unable to resolve project named " + _libraryDescription.Identity.Name);
             }
 
-            var targetName = project.Name;
-            var targetNupkgName = string.Format("{0}.{1}", targetName, project.Version);
-            TargetPath = Path.Combine(root.OutputPath, PackRoot.AppRootName, "packages", targetNupkgName);
+            var resolver = new DefaultPackagePathResolver(root.PackagesPath);
+
+            var targetNupkg = resolver.GetPackageFileName(project.Name, project.Version);
+            TargetPath = resolver.GetInstallPath(project.Name, project.Version);
 
             Console.WriteLine("  Source {0}", project.ProjectDirectory);
             Console.WriteLine("  Target {0}", TargetPath);
@@ -105,8 +107,10 @@ namespace Microsoft.Framework.PackageManager.Packing
             }
 
             // Extract the generated nupkg to target path
-            var srcNupkgPath = Path.Combine(buildOptions.OutputDir, root.Configuration, targetNupkgName + ".nupkg");
-            var targetNupkgPath = Path.Combine(TargetPath, targetNupkgName + ".nupkg");
+            var srcNupkgPath = Path.Combine(buildOptions.OutputDir, root.Configuration, targetNupkg);
+            var targetNupkgPath = resolver.GetPackageFilePath(project.Name, project.Version);
+            var hashFile = resolver.GetHashPath(project.Name, project.Version);
+
             using (var sourceStream = new FileStream(srcNupkgPath, FileMode.Open, FileAccess.Read))
             {
                 using (var archive = new ZipArchive(sourceStream, ZipArchiveMode.Read))
@@ -114,6 +118,7 @@ namespace Microsoft.Framework.PackageManager.Packing
                     root.Operations.ExtractNupkg(archive, TargetPath);
                 }
             }
+
             using (var sourceStream = new FileStream(srcNupkgPath, FileMode.Open, FileAccess.Read))
             {
                 using (var targetStream = new FileStream(targetNupkgPath, FileMode.Create, FileAccess.Write, FileShare.None))
@@ -123,7 +128,7 @@ namespace Microsoft.Framework.PackageManager.Packing
 
                 sourceStream.Seek(0, SeekOrigin.Begin);
                 var sha512Bytes = SHA512.Create().ComputeHash(sourceStream);
-                File.WriteAllText(targetNupkgPath + ".sha512", Convert.ToBase64String(sha512Bytes));
+                File.WriteAllText(hashFile, Convert.ToBase64String(sha512Bytes));
             }
         }
 

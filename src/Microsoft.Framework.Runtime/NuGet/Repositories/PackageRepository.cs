@@ -9,63 +9,20 @@ namespace NuGet
 {
     public class PackageRepository
     {
-        private readonly ILookup<string, IPackage> _cache;
+        private readonly Dictionary<string, IEnumerable<IPackage>> _cache = new Dictionary<string, IEnumerable<IPackage>>(StringComparer.OrdinalIgnoreCase);
+        private readonly IFileSystem _repositoryRoot;
 
-        public PackageRepository(string physicalPath)
-            : this(new DefaultPackagePathResolver(physicalPath),
-                   new PhysicalFileSystem(physicalPath))
+        public PackageRepository(string path)
         {
+            _repositoryRoot = new PhysicalFileSystem(path);
         }
 
-        public PackageRepository(IPackagePathResolver pathResolver, IFileSystem fileSystem)
+        public IFileSystem RepositoryRoot
         {
-            if (pathResolver == null)
+            get
             {
-                throw new ArgumentNullException("pathResolver");
+                return _repositoryRoot;
             }
-
-            if (fileSystem == null)
-            {
-                throw new ArgumentNullException("fileSystem");
-            }
-
-            FileSystem = fileSystem;
-            PathResolver = pathResolver;
-            _cache = PopulateCache();
-        }
-
-        private ILookup<string, IPackage> PopulateCache()
-        {
-            string nuspecFilter = "*" + Constants.ManifestExtension;
-
-            var packages = new List<IPackage>();
-
-            // packages\{name}\{version}\{name}.nuspec
-
-            foreach (var pakageDir in FileSystem.GetDirectories(String.Empty))
-            {
-                foreach (var versionDir in FileSystem.GetDirectories(pakageDir))
-                {
-                    foreach (var nuspecPath in FileSystem.GetFiles(versionDir, nuspecFilter))
-                    {
-                        packages.Add(new UnzippedPackage(FileSystem, nuspecPath));
-                    }
-                }
-            }
-
-            return packages.ToLookup(p => p.Id, StringComparer.OrdinalIgnoreCase);
-        }
-
-        public IPackagePathResolver PathResolver
-        {
-            get;
-            set;
-        }
-
-        public IFileSystem FileSystem
-        {
-            get;
-            private set;
         }
 
         public IEnumerable<IPackage> FindPackagesById(string packageId)
@@ -75,7 +32,21 @@ namespace NuGet
                 throw new ArgumentNullException("packageId");
             }
 
-            return _cache[packageId];
+            // packages\{name}\{version}\{name}.nuspec
+            return _cache.GetOrAdd(packageId, id =>
+            {
+                var packages = new List<IPackage>();
+
+                foreach (var versionDir in _repositoryRoot.GetDirectories(id))
+                {
+                    foreach (var nuspecPath in _repositoryRoot.GetFiles(versionDir, "*.nuspec"))
+                    {
+                        packages.Add(new UnzippedPackage(_repositoryRoot, nuspecPath));
+                    }
+                }
+
+                return packages;
+            });
         }
     }
 }

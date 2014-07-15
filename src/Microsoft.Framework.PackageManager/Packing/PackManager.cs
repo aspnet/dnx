@@ -39,9 +39,10 @@ namespace Microsoft.Framework.PackageManager.Packing
             {
                 var rootDirectory = ProjectResolver.ResolveRootDirectory(projectDir);
                 var projectResolver = new ProjectResolver(projectDir, rootDirectory);
+                var packagesDir = NuGetDependencyResolver.ResolveRepositoryPath(rootDirectory);
 
                 var referenceAssemblyDependencyResolver = new ReferenceAssemblyDependencyResolver();
-                var nugetDependencyResolver = new NuGetDependencyResolver(projectDir, referenceAssemblyDependencyResolver.FrameworkResolver);
+                var nugetDependencyResolver = new NuGetDependencyResolver(packagesDir, referenceAssemblyDependencyResolver.FrameworkResolver);
                 var gacDependencyResolver = new GacDependencyResolver();
                 var projectReferenceDependencyProvider = new ProjectReferenceDependencyProvider(projectResolver);
 

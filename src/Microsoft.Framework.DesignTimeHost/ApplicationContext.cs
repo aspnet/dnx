@@ -419,9 +419,10 @@ namespace Microsoft.Framework.DesignTimeHost
             var projectDir = project.ProjectDirectory;
             var rootDirectory = ProjectResolver.ResolveRootDirectory(projectDir);
             var projectResolver = new ProjectResolver(projectDir, rootDirectory);
+            var packagesDir = NuGetDependencyResolver.ResolveRepositoryPath(rootDirectory);
 
             var referenceAssemblyDependencyResolver = new ReferenceAssemblyDependencyResolver();
-            var nugetDependencyResolver = new NuGetDependencyResolver(rootDirectory, referenceAssemblyDependencyResolver.FrameworkResolver);
+            var nugetDependencyResolver = new NuGetDependencyResolver(packagesDir, referenceAssemblyDependencyResolver.FrameworkResolver);
             var gacDependencyResolver = new GacDependencyResolver();
 
             var compositeDependencyExporter = new CompositeLibraryExportProvider(new ILibraryExportProvider[] {
