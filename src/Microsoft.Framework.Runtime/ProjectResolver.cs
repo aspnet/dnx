@@ -64,7 +64,7 @@ namespace Microsoft.Framework.Runtime
 
         public static string ResolveRootDirectory(string projectPath)
         {
-            var di = new DirectoryInfo(Path.GetDirectoryName(projectPath));
+            var di = new DirectoryInfo(projectPath);
 
             while (di.Parent != null)
             {
