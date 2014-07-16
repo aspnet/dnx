@@ -58,6 +58,7 @@
     <Compile Include="Restore\NuGet\HttpSourceResult.cs" />
     <Compile Include="Restore\NuGet\HttpSource.cs" />
     <Compile Include="Restore\NuGet\PackageFolder.cs" />
+    <Compile Include="Restore\NuGet\ConcurrencyUtilities.cs" />
     <Compile Include="Restore\NuGet\PackageUtilities.cs" />
     <Compile Include="Restore\RemoteWalkProvider.cs" />
     <Compile Include="Restore\NuGet\IPackageFeed.cs" />

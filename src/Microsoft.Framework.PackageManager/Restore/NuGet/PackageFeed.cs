@@ -13,6 +13,7 @@ using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Xml.Linq;
 using Microsoft.Framework.Runtime;
@@ -201,7 +202,15 @@ namespace Microsoft.Framework.PackageManager.Restore.NuGet
             {
                 return null;
             }
-            return new FileStream(result.TempFileName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
+
+            // Acquire the lock on a file before we open it to prevent this process
+            // from opening a file deleted by the logic in HttpSource.GetAsync() in another process
+            return await ConcurrencyUtilities.ExecuteWithFileLocked(result.TempFileName, _ =>
+            {
+                return Task.FromResult(
+                    new FileStream(result.TempFileName, FileMode.Open, FileAccess.Read,
+                    FileShare.ReadWrite | FileShare.Delete));
+            });
         }
 
         private async Task<NupkgEntry> _OpenNupkgStreamAsync(PackageInfo package)

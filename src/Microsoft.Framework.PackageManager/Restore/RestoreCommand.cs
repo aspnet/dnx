@@ -11,6 +11,7 @@ using System.IO.Packaging;
 #endif
 using System.Linq;
 using System.Security.Cryptography;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Framework.PackageManager.Packing;
 using Microsoft.Framework.PackageManager.Restore.NuGet;
@@ -282,16 +283,29 @@ namespace Microsoft.Framework.PackageManager
                     var targetNupkg = packagePathResolver.GetPackageFilePath(library.Name, library.Version);
                     var hashPath = packagePathResolver.GetHashPath(library.Name, library.Version);
 
-                    Directory.CreateDirectory(targetPath);
-                    using (var stream = new FileStream(targetNupkg, FileMode.Create, FileAccess.ReadWrite, FileShare.ReadWrite | FileShare.Delete))
+                    // Acquire the lock on a nukpg before we extract it to prevent the race condition when multiple
+                    // processes are extracting to the same destination simultaneously
+                    await ConcurrencyUtilities.ExecuteWithFileLocked(targetNupkg, async createdNewLock =>
                     {
-                        await item.Match.Provider.CopyToAsync(item.Match, stream);
-                        stream.Seek(0, SeekOrigin.Begin);
+                        // If this is the first process trying to install the target nupkg, go ahead
+                        // After this process successfully installs the package, all other processes
+                        // waiting on this lock don't need to install it again
+                        if (createdNewLock)
+                        {
+                            Directory.CreateDirectory(targetPath);
+                            using (var stream = new FileStream(targetNupkg, FileMode.Create, FileAccess.ReadWrite, FileShare.ReadWrite | FileShare.Delete))
+                            {
+                                await item.Match.Provider.CopyToAsync(item.Match, stream);
+                                stream.Seek(0, SeekOrigin.Begin);
 
-                        ExtractPackage(targetPath, stream);
-                    }
+                                ExtractPackage(targetPath, stream);
+                            }
 
-                    File.WriteAllText(hashPath, nupkgSHA);
+                            File.WriteAllText(hashPath, nupkgSHA);
+                        }
+
+                        return 0;
+                    });
                 }
             }
 
