@@ -373,7 +373,7 @@ var NEW_RUNTIME = '${Environment.GetEnvironmentVariable("NEW_RUNTIME") == "1"}'
         {
             foreach (var package in packages)
             {
-                var packageDir = FindPackageDirectory(PACKAGES_DIR, package);
+                var packageDir = FindPackageDirectory(package);
 
                 if(packageDir == null)
                 {
@@ -487,18 +487,8 @@ macro name='NuGetInstall' Package='string' OutputDir='string' Extra='string'
     nuget-install package='${Package}' outputDir='${OutputDir}' extra='${Extra}'
 
 functions @{
-    string FindPackageDirectory(string packagesDirectory, string name)
+    string FindPackageDirectory(string name)
     {
-        // If it's in the packages dir then it's the old format
-        var packageDir = Directory.GetDirectories(packagesDirectory, name + "*")
-                                  .OrderByDescending(d => d)
-                                  .FirstOrDefault();
-                                  
-        if (!string.IsNullOrEmpty(packageDir))
-        {
-            return packageDir;
-        }
-                                  
         var packagesDir = Environment.GetEnvironmentVariable("KRE_PACKAGES");
 
         if (string.IsNullOrEmpty(packagesDir))
