@@ -112,6 +112,7 @@
     <Compile Include="NuGet\Packages\OptimizedOpcZipPackage.cs" />
     <Compile Include="NuGet\Packages\OptimizedZipPackage.cs" />
     <Compile Include="NuGet\Packages\PackageDependency.cs" />
+    <Compile Include="NuGet\Packages\PackageInfo.cs" />
     <Compile Include="NuGet\Packages\UnzippedPackage.cs" />
     <Compile Include="NuGet\Packages\ZipPackage.cs" />
     <Compile Include="NuGet\Packages\ZipPackageAssemblyReference.cs" />

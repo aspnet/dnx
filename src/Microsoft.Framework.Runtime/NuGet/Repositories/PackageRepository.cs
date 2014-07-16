@@ -3,13 +3,13 @@
 
 using System;
 using System.Collections.Generic;
-using System.Linq;
+using System.IO;
 
 namespace NuGet
 {
     public class PackageRepository
     {
-        private readonly Dictionary<string, IEnumerable<IPackage>> _cache = new Dictionary<string, IEnumerable<IPackage>>(StringComparer.OrdinalIgnoreCase);
+        private readonly Dictionary<string, IEnumerable<PackageInfo>> _cache = new Dictionary<string, IEnumerable<PackageInfo>>(StringComparer.OrdinalIgnoreCase);
         private readonly IFileSystem _repositoryRoot;
 
         public PackageRepository(string path)
@@ -25,24 +25,39 @@ namespace NuGet
             }
         }
 
-        public IEnumerable<IPackage> FindPackagesById(string packageId)
+        public IEnumerable<PackageInfo> FindPackagesById(string packageId)
         {
             if (String.IsNullOrEmpty(packageId))
             {
                 throw new ArgumentNullException("packageId");
             }
 
-            // packages\{name}\{version}\{name}.nuspec
+            // packages\{packageId}\{version}\{packageId}.nuspec
             return _cache.GetOrAdd(packageId, id =>
             {
-                var packages = new List<IPackage>();
+                var packages = new List<PackageInfo>();
 
                 foreach (var versionDir in _repositoryRoot.GetDirectories(id))
                 {
-                    foreach (var nuspecPath in _repositoryRoot.GetFiles(versionDir, "*.nuspec"))
+                    // versionDir = {packageId}\{version}
+                    var folders = versionDir.Split(new[] { Path.DirectorySeparatorChar }, 2);
+
+                    // Unknown format
+                    if (folders.Length < 2)
                     {
-                        packages.Add(new UnzippedPackage(_repositoryRoot, nuspecPath));
+                        continue;
                     }
+
+                    string versionPart = folders[1];
+
+                    // Get the version part and parse it
+                    SemanticVersion version;
+                    if (!SemanticVersion.TryParse(versionPart, out version))
+                    {
+                        continue;
+                    }
+
+                    packages.Add(new PackageInfo(_repositoryRoot, id, version, versionDir));
                 }
 
                 return packages;

@@ -51,6 +51,12 @@ namespace Microsoft.Framework.Runtime
 
         public LibraryDescription GetDescription(string name, SemanticVersion version, FrameworkName targetFramework)
         {
+            // Null versions aren't supported
+            if (version == null)
+            {
+                return null;
+            }
+
             var package = FindCandidate(name, version);
 
             if (package != null)
@@ -365,26 +371,25 @@ namespace Microsoft.Framework.Runtime
 
         public IPackage FindCandidate(string name, SemanticVersion version)
         {
-            if (version == null)
-            {
-                return _repository.FindPackagesById(name).FirstOrDefault();
-            }
+            PackageInfo bestMatch = null;
 
-            var packages = _repository.FindPackagesById(name);
-            IPackage bestMatch = null;
-
-            foreach (var package in packages)
+            foreach (var packageInfo in _repository.FindPackagesById(name))
             {
                 if (VersionUtility.ShouldUseConsidering(
                     current: bestMatch != null ? bestMatch.Version : null,
-                    considering: package.Version,
+                    considering: packageInfo.Version,
                     ideal: version))
                 {
-                    bestMatch = package;
+                    bestMatch = packageInfo;
                 }
             }
 
-            return bestMatch;
+            if (bestMatch == null)
+            {
+                return null;
+            }
+
+            return bestMatch.Package;
         }
 
         public static string ResolveRepositoryPath(string rootDirectory)
