@@ -51,12 +51,6 @@ namespace Microsoft.Framework.Runtime
 
         public LibraryDescription GetDescription(string name, SemanticVersion version, FrameworkName targetFramework)
         {
-            // Null versions aren't supported
-            if (version == null)
-            {
-                return null;
-            }
-
             var package = FindCandidate(name, version);
 
             if (package != null)
@@ -371,9 +365,23 @@ namespace Microsoft.Framework.Runtime
 
         public IPackage FindCandidate(string name, SemanticVersion version)
         {
+            var packages = _repository.FindPackagesById(name);
+
+            if (version == null)
+            {
+                // TODO: Disallow null versions for nuget packages
+                var packageInfo = packages.FirstOrDefault();
+                if (packageInfo != null)
+                {
+                    return packageInfo.Package;
+                }
+
+                return null;
+            }
+
             PackageInfo bestMatch = null;
 
-            foreach (var packageInfo in _repository.FindPackagesById(name))
+            foreach (var packageInfo in packages)
             {
                 if (VersionUtility.ShouldUseConsidering(
                     current: bestMatch != null ? bestMatch.Version : null,
