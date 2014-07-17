@@ -62,24 +62,7 @@ namespace Microsoft.Framework.PackageManager.Packing
 
             foreach (var deploymentProject in Projects)
             {
-                // TODO: temporarily we always emit sources for main project to make sure "k run"
-                // can find entry point of the program. Later we should make main project
-                // a nukpg too.
-                if (deploymentProject == mainProject)
-                {
-                    deploymentProject.EmitSource(this);
-                }
-                else
-                {
-                    if (NoSource)
-                    {
-                        deploymentProject.EmitNupkg(this);
-                    }
-                    else
-                    {
-                        deploymentProject.EmitSource(this);
-                    }
-                }
+                deploymentProject.Emit(this);
             }
 
             foreach (var deploymentRuntime in Runtimes)
@@ -90,6 +73,17 @@ namespace Microsoft.Framework.PackageManager.Packing
             mainProject.PostProcess(this);
 
             WriteGlobalJson();
+
+            string relativeAppBase;
+            if (NoSource)
+            {
+                relativeAppBase = Path.Combine(AppRootName, "packages", _project.Name,
+                    _project.Version.ToString(), "root");
+            }
+            else
+            {
+                relativeAppBase = Path.Combine(AppRootName, "src", _project.Name);
+            }
 
             foreach (var commandName in _project.Commands.Keys)
             {
@@ -103,14 +97,13 @@ namespace Microsoft.Framework.PackageManager.Packing
                 {
                     File.WriteAllText(
                         Path.Combine(OutputPath, commandName + ".cmd"),
-                        string.Format(template1, commandName, Path.Combine(AppRootName, "src", _project.Name),
-                            Runtimes.First().Name, AppRootName));
+                        string.Format(template1, commandName, relativeAppBase, Runtimes.First().Name, AppRootName));
                 }
                 else
                 {
                     File.WriteAllText(
                         Path.Combine(OutputPath, commandName + ".cmd"),
-                        string.Format(template2, commandName, Path.Combine(AppRootName, "src", _project.Name)));
+                        string.Format(template2, commandName, relativeAppBase));
                 }
             }
         }
