@@ -49,7 +49,7 @@
                 "System.Runtime.InteropServices": "4.0.20.0",
                 "System.Runtime.Loader": "4.0.0.0",
                 "System.Runtime.Serialization.Primitives": "4.0.0.0",
-                "System.Security.Cryptography": "4.0.0.0",
+                "System.Security.Cryptography.Encryption": "4.0.0.0",
                 "System.Security.Cryptography.Hashing.Algorithms": "4.0.0.0",
                 "System.Text.RegularExpressions": "4.0.0.0",
                 "System.Threading": "4.0.0.0",
