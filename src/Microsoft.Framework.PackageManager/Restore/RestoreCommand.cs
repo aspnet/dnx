@@ -241,20 +241,22 @@ namespace Microsoft.Framework.PackageManager
                 }
             }
 
-            foreach (var item in installItems)
+            var packagePathResolver = new DefaultPackagePathResolver(packagesDirectory);
+            using (var sha512 = SHA512.Create())
             {
-                var library = item.Match.Library;
-                string expectedSHA;
-                if (dependencies.TryGetValue(library, out expectedSHA))
+                foreach (var item in installItems)
                 {
+                    var library = item.Match.Library;
+
                     var memStream = new MemoryStream();
                     await item.Match.Provider.CopyToAsync(item.Match, memStream);
                     memStream.Seek(0, SeekOrigin.Begin);
+                    var nupkgSHA = Convert.ToBase64String(sha512.ComputeHash(memStream));
 
-                    using (var sha512 = SHA512.Create())
+                    string expectedSHA;
+                    if (dependencies.TryGetValue(library, out expectedSHA))
                     {
-                        var actualSHA = Convert.ToBase64String(sha512.ComputeHash(memStream));
-                        if (!string.Equals(expectedSHA, actualSHA, StringComparison.Ordinal))
+                        if (!string.Equals(expectedSHA, nupkgSHA, StringComparison.Ordinal))
                         {
                             Report.WriteLine(
                                 string.Format("SHA of downloaded package {0} doesn't match expected value.".Red().Bold(),
@@ -263,30 +265,33 @@ namespace Microsoft.Framework.PackageManager
                             continue;
                         }
                     }
-                }
-                else
-                {
-                    // Report warnings only when given global.json contains "dependencies"
-                    if (globalJsonFileSpecified && dependenciesNode != null)
+                    else
                     {
-                        Report.WriteLine(
-                        string.Format("Expected SHA of package {0} doesn't exist in given global.json file.".Yellow().Bold(),
-                        library.ToString()));
+                        // Report warnings only when given global.json contains "dependencies"
+                        if (globalJsonFileSpecified && dependenciesNode != null)
+                        {
+                            Report.WriteLine(
+                                string.Format("Expected SHA of package {0} doesn't exist in given global.json file.".Yellow().Bold(),
+                                library.ToString()));
+                        }
                     }
-                }
 
-                Report.WriteLine(string.Format("Installing {0} {1}", library.Name.Bold(), library.Version));
+                    Report.WriteLine(string.Format("Installing {0} {1}", library.Name.Bold(), library.Version));
 
-                var targetPath = Path.Combine(packagesDirectory, library.Name, library.Version.ToString());
-                var targetNupkg = Path.Combine(targetPath, library.Name + "." + library.Version + ".nupkg");
+                    var targetPath = packagePathResolver.GetInstallPath(library.Name, library.Version);
+                    var targetNupkg = packagePathResolver.GetPackageFilePath(library.Name, library.Version);
+                    var hashPath = packagePathResolver.GetHashPath(library.Name, library.Version);
 
-                Directory.CreateDirectory(targetPath);
-                using (var stream = new FileStream(targetNupkg, FileMode.Create, FileAccess.ReadWrite, FileShare.ReadWrite | FileShare.Delete))
-                {
-                    await item.Match.Provider.CopyToAsync(item.Match, stream);
-                    stream.Seek(0, SeekOrigin.Begin);
+                    Directory.CreateDirectory(targetPath);
+                    using (var stream = new FileStream(targetNupkg, FileMode.Create, FileAccess.ReadWrite, FileShare.ReadWrite | FileShare.Delete))
+                    {
+                        await item.Match.Provider.CopyToAsync(item.Match, stream);
+                        stream.Seek(0, SeekOrigin.Begin);
 
-                    ExtractPackage(targetPath, stream);
+                        ExtractPackage(targetPath, stream);
+                    }
+
+                    File.WriteAllText(hashPath, nupkgSHA);
                 }
             }
 
