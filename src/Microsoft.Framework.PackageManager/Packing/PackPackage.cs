@@ -1,13 +1,8 @@
 // Copyright (c) Microsoft Open Technologies, Inc. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
-using System;
 using System.Collections.Generic;
 using System.IO;
-using System.IO.Compression;
-using System.Linq;
-using System.Runtime.Versioning;
-using System.Security.Cryptography;
 using Microsoft.Framework.Runtime;
 using NuGet;
 
@@ -16,12 +11,10 @@ namespace Microsoft.Framework.PackageManager.Packing
     public class PackPackage
     {
         private readonly LibraryDescription _libraryDescription;
-        private readonly IReport _report;
 
-        public PackPackage(LibraryDescription libraryDescription, IReport report)
+        public PackPackage(LibraryDescription libraryDescription)
         {
             _libraryDescription = libraryDescription;
-            _report = report;
         }
 
         public Library Library { get { return _libraryDescription.Identity; } }
@@ -32,7 +25,8 @@ namespace Microsoft.Framework.PackageManager.Packing
         {
             foreach (var context in root.LibraryDependencyContexts[Library])
             {
-                _report.WriteLine("Packing nupkg dependency {0} for {1}", Library, context.FrameworkName);
+                root.Reports.Quiet.WriteLine("Packing nupkg dependency {0} for {1}", Library, context.FrameworkName);
+
                 Emit(root, context.PackageAssemblies[Library.Name]);
             }
         }
@@ -47,13 +41,13 @@ namespace Microsoft.Framework.PackageManager.Packing
 
             // Copy nuspec
             var nuspecName = resolver.GetManifestFileName(Library.Name, Library.Version);
-            CopyFile(Path.Combine(_libraryDescription.Path, nuspecName), Path.Combine(TargetPath, nuspecName), root.Overwrite);
+            CopyFile(root, Path.Combine(_libraryDescription.Path, nuspecName), Path.Combine(TargetPath, nuspecName), root.Overwrite);
 
             // Copy assemblies for current framework
             foreach (var assembly in assemblies)
             {
                 var targetAssemblyPath = Path.Combine(TargetPath, assembly.RelativePath);
-                CopyFile(assembly.Path, targetAssemblyPath, root.Overwrite);
+                CopyFile(root, assembly.Path, targetAssemblyPath, root.Overwrite);
             }
 
             // Special cases
@@ -81,17 +75,17 @@ namespace Microsoft.Framework.PackageManager.Packing
                 }
                 else
                 {
-                    _report.WriteLine("  {0} already exists", targetFolder);
+                    root.Reports.Quiet.WriteLine("  {0} already exists", targetFolder);
                     return;
                 }
             }
 
-            _report.WriteLine("  Target {0}", targetFolder);
+            root.Reports.Quiet.WriteLine("  Target {0}", targetFolder);
             Directory.CreateDirectory(targetFolder);
             root.Operations.Copy(srcFolder, targetFolder);
         }
 
-        private void CopyFile(string srcPath, string targetPath, bool overwrite)
+        private void CopyFile(PackRoot root, string srcPath, string targetPath, bool overwrite)
         {
             var targetFolder = Path.GetDirectoryName(targetPath);
             Directory.CreateDirectory(targetFolder);
@@ -104,12 +98,12 @@ namespace Microsoft.Framework.PackageManager.Packing
                 }
                 else
                 {
-                    _report.WriteLine("  {0} already exists", targetPath);
+                    root.Reports.Quiet.WriteLine("  {0} already exists", targetPath);
                     return;
                 }
             }
 
-            _report.WriteLine("  Target {0}", targetPath);
+            root.Reports.Quiet.WriteLine("  Target {0}", targetPath);
             File.Copy(srcPath, targetPath);
         }
     }

@@ -25,7 +25,7 @@ namespace Microsoft.Framework.Runtime
         {
             get
             {
-                return _project.Name;
+                return _project.EntryPoint ?? _project.Name;
             }
         }
 
