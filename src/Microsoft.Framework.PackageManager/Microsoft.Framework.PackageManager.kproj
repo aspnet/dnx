@@ -21,6 +21,7 @@
     <Compile Include="Building\BuildManager.cs" />
     <Compile Include="Building\BuildOptions.cs" />
     <Compile Include="Colors.cs" />
+    <Compile Include="ReportExtensions.cs" />
     <Compile Include="IReport.cs" />
     <Compile Include="NuGet\CommandLine\CommandLineMachineWideSettings.cs" />
     <Compile Include="NuGet\CommandLine\Common\CommandLineConstants.cs" />
