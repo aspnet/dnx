@@ -106,8 +106,8 @@ namespace Microsoft.Framework.Runtime
                                        out IList<IMetadataReference> metadataReferences,
                                        out IList<ISourceReference> sourceReferences)
         {
-            var used = new HashSet<string>();
-            metadataReferences = new List<IMetadataReference>();
+            var references = new Dictionary<string, IMetadataReference>(StringComparer.OrdinalIgnoreCase);
+
             sourceReferences = new List<ISourceReference>();
 
             foreach (var export in dependencyExports)
@@ -116,19 +116,19 @@ namespace Microsoft.Framework.Runtime
                               libraryExportProvider,
                               targetFramework,
                               configuration,
-                              metadataReferences,
-                              sourceReferences,
-                              used);
+                              references,
+                              sourceReferences);
             }
+
+            metadataReferences = references.Values.ToList();
         }
 
         private void ProcessExport(ILibraryExport export,
                                    ILibraryExportProvider libraryExportProvider,
                                    FrameworkName targetFramework,
                                    string configuration,
-                                   IList<IMetadataReference> metadataReferences,
-                                   IList<ISourceReference> sourceReferences,
-                                   HashSet<string> used)
+                                   IDictionary<string, IMetadataReference> metadataReferences,
+                                   IList<ISourceReference> sourceReferences)
         {
             ExpandEmbeddedReferences(export.MetadataReferences);
 
@@ -148,18 +148,12 @@ namespace Microsoft.Framework.Runtime
                                       targetFramework,
                                       configuration,
                                       metadataReferences,
-                                      sourceReferences,
-                                      used);
+                                      sourceReferences);
                     }
                 }
                 else
                 {
-                    if (!used.Add(reference.Name))
-                    {
-                        continue;
-                    }
-
-                    metadataReferences.Add(reference);
+                    metadataReferences[reference.Name] = reference;
                 }
             }
 

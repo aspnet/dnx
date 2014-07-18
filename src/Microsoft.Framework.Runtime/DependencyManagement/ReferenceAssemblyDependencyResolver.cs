@@ -72,7 +72,7 @@ namespace Microsoft.Framework.Runtime
         public ILibraryExport GetLibraryExport(string name, FrameworkName targetFramework, string configuration)
         {
             string path;
-            if (_resolvedPaths.TryGetValue(name, out path))
+            if (FrameworkResolver.TryGetAssembly(name, targetFramework, out path))
             {
                 return new LibraryExport(name, path);
             }
