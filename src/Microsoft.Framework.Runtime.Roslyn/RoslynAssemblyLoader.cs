@@ -9,8 +9,6 @@ using System.Reflection;
 using System.Runtime.Versioning;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Emit;
-using Microsoft.Framework.Runtime.FileSystem;
-using Microsoft.Framework.Runtime.Loader;
 
 namespace Microsoft.Framework.Runtime.Roslyn
 {
@@ -18,7 +16,7 @@ namespace Microsoft.Framework.Runtime.Roslyn
     {
         private readonly Dictionary<string, CompilationContext> _compilationCache = new Dictionary<string, CompilationContext>();
 
-        private readonly IRoslynCompiler _compiler;
+        private readonly RoslynCompiler _compiler;
         private readonly IAssemblyLoaderEngine _loaderEngine;
         private readonly IProjectResolver _projectResolver;
         private readonly IResourceProvider _resourceProvider;
@@ -134,13 +132,13 @@ namespace Microsoft.Framework.Runtime.Roslyn
                 if (!result.Success)
                 {
                     throw new CompilationException(
-                        GetErrors(compilationContext.Diagnostics.Where(IsError).Concat(result.Diagnostics)));
+                        RoslynCompiler.GetMessages(compilationContext.Diagnostics.Where(RoslynCompiler.IsError).Concat(result.Diagnostics)));
                 }
 
-                var errors = compilationContext.Diagnostics.Where(IsError);
+                var errors = compilationContext.Diagnostics.Where(RoslynCompiler.IsError);
                 if (errors.Any())
                 {
-                    throw new CompilationException(GetErrors(errors));
+                    throw new CompilationException(RoslynCompiler.GetMessages(errors));
                 }
 
                 Assembly assembly = null;
@@ -163,18 +161,6 @@ namespace Microsoft.Framework.Runtime.Roslyn
 
                 return assembly;
             }
-        }
-
-        private static IList<string> GetErrors(IEnumerable<Diagnostic> diagnostis)
-        {
-            var formatter = new DiagnosticFormatter();
-
-            return diagnostis.Select(d => formatter.Format(d)).ToList();
-        }
-
-        private static bool IsError(Diagnostic diagnostic)
-        {
-            return diagnostic.Severity == DiagnosticSeverity.Error || diagnostic.IsWarningAsError;
         }
     }
 }

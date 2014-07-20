@@ -13,7 +13,7 @@ namespace Microsoft.Framework.Runtime.Loader
     {
         private readonly IProjectResolver _projectResolver;
         private readonly IServiceProvider _serviceProvider;
-        private readonly Dictionary<LoaderInformation, Loader> _loaders = new Dictionary<LoaderInformation, Loader>();
+        private readonly Dictionary<TypeInformation, Loader> _loaders = new Dictionary<TypeInformation, Loader>();
 
         public ProjectAssemblyLoader(IProjectResolver projectResolver, IServiceProvider serviceProvider)
         {

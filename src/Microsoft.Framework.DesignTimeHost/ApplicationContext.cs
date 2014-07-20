@@ -29,14 +29,17 @@ namespace Microsoft.Framework.DesignTimeHost
         public class State
         {
             public string Path { get; set; }
+
             public FrameworkName TargetFramework { get; set; }
 
             public string Configuration { get; set; }
 
             public Project Project { get; set; }
 
-            public RoslynMetadataProvider MetadataProvider { get; set; }
+            public IProjectMetadataProvider MetadataProvider { get; set; }
+
             public IDictionary<string, ReferenceDescription> Dependencies { get; set; }
+
             public FrameworkReferenceResolver FrameworkResolver { get; set; }
         }
 
@@ -283,7 +286,7 @@ namespace Microsoft.Framework.DesignTimeHost
                     Commands = state.Project.Commands
                 };
 
-                var metadata = state.MetadataProvider.GetMetadata(state.Project.Name, state.TargetFramework, state.Configuration);
+                var metadata = state.MetadataProvider.GetProjectMetadata(state.Project.Name, state.TargetFramework, state.Configuration);
 
                 _local.References = new ReferencesMessage
                 {
@@ -431,11 +434,7 @@ namespace Microsoft.Framework.DesignTimeHost
                 nugetDependencyResolver,
             });
 
-            var roslynCompiler = new RoslynCompiler(projectResolver,
-                                                    NoopWatcher.Instance,
-                                                    compositeDependencyExporter);
-
-            state.MetadataProvider = new RoslynMetadataProvider(roslynCompiler);
+            state.MetadataProvider = new RoslynProjectMetadataProvider(projectResolver, compositeDependencyExporter);
             state.Project = project;
             state.FrameworkResolver = referenceAssemblyDependencyResolver.FrameworkResolver;
 

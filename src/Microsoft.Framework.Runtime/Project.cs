@@ -61,7 +61,11 @@ namespace Microsoft.Framework.Runtime
 
         public IList<Library> Dependencies { get; private set; }
 
-        public LoaderInformation Loader { get; private set; }
+        public TypeInformation Loader { get; private set; }
+
+        public TypeInformation Builder { get; set; }
+
+        public TypeInformation MetadataProvider { get; set; }
 
         internal IEnumerable<string> SourcePatterns { get; set; }
 
@@ -240,18 +244,24 @@ namespace Microsoft.Framework.Runtime
             project.ContentsPatterns = GetSourcePattern(rawProject, "files", _defaultContentsPatterns);
 
             // Set the default loader information for projects
-            var loaderAssemblyName = "Microsoft.Framework.Runtime.Roslyn";
+            var projectLoaderAssembly = "Microsoft.Framework.Runtime.Roslyn";
             var loaderTypeName = "Microsoft.Framework.Runtime.Roslyn.RoslynAssemblyLoader";
+            var builderTypeName = "Microsoft.Framework.Runtime.Roslyn.RoslynProjectBuilder";
+            var metadataProviderTypeName = "Microsoft.Framework.Runtime.Roslyn.RoslynProjectMetadataProvider";
 
             var loaderInfo = rawProject["loader"] as JObject;
 
             if (loaderInfo != null)
             {
-                loaderAssemblyName = GetValue<string>(loaderInfo, "name");
-                loaderTypeName = GetValue<string>(loaderInfo, "type");
+                projectLoaderAssembly = GetValue<string>(loaderInfo, "assembly");
+                loaderTypeName = GetValue<string>(loaderInfo, "loaderType");
+                builderTypeName = GetValue<string>(loaderInfo, "builderType");
+                metadataProviderTypeName = GetValue<string>(loaderInfo, "metadataProviderType");
             }
 
-            project.Loader = new LoaderInformation(loaderAssemblyName, loaderTypeName);
+            project.Loader = new TypeInformation(projectLoaderAssembly, loaderTypeName);
+            project.Builder = new TypeInformation(projectLoaderAssembly, builderTypeName);
+            project.MetadataProvider = new TypeInformation(projectLoaderAssembly, metadataProviderTypeName);
 
             var commands = rawProject["commands"] as JObject;
             if (commands != null)

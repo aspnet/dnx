@@ -110,6 +110,7 @@ var NEW_RUNTIME = '${Environment.GetEnvironmentVariable("NEW_RUNTIME") == "1"}'
                 Environment.SetEnvironmentVariable("K_APPBASE", helloWorld);
 
                 var kPath = Path.Combine(krePath, "bin", "k");
+                var kpmPath = Path.Combine(krePath, "bin", "kpm");
 
                 Log.Info("kreName = " + kreName);
                 Log.Info("K_APPBASE = " + helloWorld);
@@ -119,7 +120,7 @@ var NEW_RUNTIME = '${Environment.GetEnvironmentVariable("NEW_RUNTIME") == "1"}'
                 var commands = new [] { "build" };
                 foreach(var cmd in commands)
                 {
-                    Exec("cmd", "/C " + kPath + " " + cmd + " " + helloWorld);
+                    Exec("cmd", "/C " + kpmPath + " " + cmd + " " + helloWorld);
                     Directory.Delete(Path.Combine(helloWorld, "bin"), true);
                 }
             }

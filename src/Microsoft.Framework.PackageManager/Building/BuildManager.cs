@@ -7,11 +7,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Runtime.Versioning;
-using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.Framework.Runtime;
-using Microsoft.Framework.Runtime.FileSystem;
-using Microsoft.Framework.Runtime.Roslyn;
 using NuGet;
 
 namespace Microsoft.Framework.PackageManager
@@ -37,7 +33,7 @@ namespace Microsoft.Framework.PackageManager
 
             var sw = Stopwatch.StartNew();
 
-            var outputPath = _buildOptions.OutputDir ?? Path.Combine(_buildOptions.ProjectDir, "bin");
+            var baseOutputPath = _buildOptions.OutputDir ?? Path.Combine(_buildOptions.ProjectDir, "bin");
             var configurations = _buildOptions.Configurations.DefaultIfEmpty("debug");
 
             var specifiedFrameworks = _buildOptions.TargetFrameworks
@@ -67,100 +63,93 @@ namespace Microsoft.Framework.PackageManager
 
             var success = true;
 
-            var allDiagnostics = new List<Diagnostic>();
+            var allErrors = new List<string>();
+            var allWarnings = new List<string>();
 
             // Build all specified configurations
             foreach (var configuration in configurations)
             {
                 // Create a new builder per configuration
-                var builder = new PackageBuilder();
+                var packageBuilder = new PackageBuilder();
                 var symbolPackageBuilder = new PackageBuilder();
 
-                InitializeBuilder(project, builder);
+                InitializeBuilder(project, packageBuilder);
                 InitializeBuilder(project, symbolPackageBuilder);
 
                 var configurationSuccess = true;
 
-                outputPath = Path.Combine(outputPath, configuration);
+                baseOutputPath = Path.Combine(baseOutputPath, configuration);
 
                 // Build all target frameworks a project supports
                 foreach (var targetFramework in frameworks)
                 {
-                    try
+                    var errors = new List<string>();
+                    var warnings = new List<string>();
+
+                    var context = new BuildContext(project, targetFramework, configuration, baseOutputPath);
+                    context.Initialize();
+                    context.PopulateDependencies(packageBuilder);
+
+                    if (context.Build(warnings, errors))
                     {
-                        var diagnostics = new List<Diagnostic>();
-
-                        if (_buildOptions.CheckDiagnostics)
-                        {
-                            configurationSuccess = configurationSuccess &&
-                                                    CheckDiagnostics(project,
-                                                                     targetFramework,
-                                                                     configuration,
-                                                                     diagnostics);
-                        }
-                        else
-                        {
-                            configurationSuccess = configurationSuccess && 
-                                                   Build(project,
-                                                         outputPath,
-                                                         targetFramework,
-                                                         configuration,
-                                                         builder,
-                                                         symbolPackageBuilder,
-                                                         diagnostics);
-                        }
-
-                        allDiagnostics.AddRange(diagnostics);
-
-                        WriteDiagnostics(diagnostics);
+                        context.AddLibs(packageBuilder);
                     }
-                    catch (Exception ex)
+                    else
                     {
                         configurationSuccess = false;
-                        WriteError(ex.ToString());
                     }
-                }
 
-                success = success && configurationSuccess;
+                    allErrors.AddRange(errors);
+                    allWarnings.AddRange(warnings);
 
-                if (_buildOptions.CheckDiagnostics)
-                {
-                    continue;
+                    WriteDiagnostics(warnings, errors);
                 }
 
                 // Create a package per configuration
-                string nupkg = GetPackagePath(project, outputPath);
-                string symbolsNupkg = GetPackagePath(project, outputPath, symbols: true);
+                string nupkg = GetPackagePath(project, baseOutputPath);
+                string symbolsNupkg = GetPackagePath(project, baseOutputPath, symbols: true);
 
-                // If there were any errors then don't create the package
-                if (!allDiagnostics.Any(IsError) && configurationSuccess)
+                if (configurationSuccess)
                 {
                     foreach (var sharedFile in project.SharedFiles)
                     {
                         var file = new PhysicalPackageFile();
                         file.SourcePath = sharedFile;
                         file.TargetPath = String.Format(@"shared\{0}", Path.GetFileName(sharedFile));
-                        builder.Files.Add(file);
+                        packageBuilder.Files.Add(file);
+                    }
+
+                    var root = project.ProjectDirectory;
+
+                    foreach (var path in project.SourceFiles)
+                    {
+                        var srcFile = new PhysicalPackageFile();
+                        srcFile.SourcePath = path;
+                        srcFile.TargetPath = Path.Combine("src", PathUtility.GetRelativePath(root, path));
+                        symbolPackageBuilder.Files.Add(srcFile);
                     }
 
                     using (var fs = File.Create(nupkg))
                     {
-                        builder.Save(fs);
+                        packageBuilder.Save(fs);
+                        Console.WriteLine("{0} -> {1}", project.Name, nupkg);
                     }
 
-                    using (var fs = File.Create(symbolsNupkg))
+                    if (symbolPackageBuilder.Files.Any())
                     {
-                        symbolPackageBuilder.Save(fs);
-                    }
+                        using (var fs = File.Create(symbolsNupkg))
+                        {
+                            symbolPackageBuilder.Save(fs);
+                        }
 
-                    Console.WriteLine("{0} -> {1}", project.Name, nupkg);
-                    Console.WriteLine("{0} -> {1}", project.Name, symbolsNupkg);
+                        Console.WriteLine("{0} -> {1}", project.Name, symbolsNupkg);
+                    }
                 }
             }
 
             sw.Stop();
 
-            WriteSummary(allDiagnostics);
+            WriteSummary(allWarnings, allErrors);
 
             Console.WriteLine("Time elapsed {0}", sw.Elapsed);
             return success;
@@ -206,14 +195,11 @@ namespace Microsoft.Framework.PackageManager
             builder.Title = project.Name;
         }
 
-        private void WriteSummary(List<Diagnostic> allDiagnostics)
+        private void WriteSummary(List<string> warnings, List<string> errors)
         {
-            var errors = allDiagnostics.Count(IsError);
-            var warnings = allDiagnostics.Count(d => d.Severity == DiagnosticSeverity.Warning);
-
             Console.WriteLine();
 
-            if (errors > 0)
+            if (errors.Count > 0)
             {
                 WriteColor("Build failed.", ConsoleColor.Red);
             }
@@ -222,26 +208,22 @@ namespace Microsoft.Framework.PackageManager
                 WriteColor("Build succeeded.", ConsoleColor.Green);
             }
 
-            Console.WriteLine("    {0} Warnings(s)", warnings);
-            Console.WriteLine("    {0} Error(s)", errors);
+            Console.WriteLine("    {0} Warnings(s)", warnings.Count);
+            Console.WriteLine("    {0} Error(s)", errors.Count);
 
             Console.WriteLine();
         }
 
-        private void WriteDiagnostics(List<Diagnostic> diagnostics)
+        private void WriteDiagnostics(List<string> warnings, List<string> errors)
         {
-            foreach (var diagnostic in diagnostics)
+            foreach (var error in errors)
             {
-                string message = GetMessage(diagnostic);
+                WriteError(error);
+            }
 
-                if (IsError(diagnostic))
-                {
-                    WriteError(message);
-                }
-                else if (diagnostic.Severity == DiagnosticSeverity.Warning)
-                {
-                    WriteWarning(message);
-                }
+            foreach (var warning in warnings)
+            {
+                WriteWarning(warning);
             }
         }
 
@@ -270,136 +252,6 @@ namespace Microsoft.Framework.PackageManager
             }
         }
 
-        private bool CheckDiagnostics(Project project,
-                                      FrameworkName targetFramework,
-                                      string configuration,
-                                      List<Diagnostic> diagnostics)
-        {
-            var compiler = PrepareCompiler(project, targetFramework);
-            var compilationContext = compiler.CompileProject(project.Name, targetFramework, configuration);
-
-            if (compilationContext == null)
-            {
-                return false;
-            }
-
-            diagnostics.AddRange(compilationContext.Diagnostics);
-            diagnostics.AddRange(compilationContext.Compilation.GetDiagnostics());
-
-            return true;
-        }
-
-        private bool Build(Project project,
-                           string outputPath,
-                           FrameworkName targetFramework,
-                           string configuration,
-                           PackageBuilder builder,
-                           PackageBuilder symbolPackageBuilder,
-                           List<Diagnostic> diagnostics)
-        {
-            IDictionary<string, string> packagePaths;
-            var roslynArtifactsProducer = PrepareArtifactsProducer(project, targetFramework, out packagePaths);
-
-            var targetFrameworkFolder = VersionUtility.GetShortFrameworkName(targetFramework);
-            string targetPath = Path.Combine(outputPath, targetFrameworkFolder);
-
-            var buildContext = new BuildContext(project.Name, targetFramework, configuration)
-            {
-                OutputPath = targetPath,
-                PackageBuilder = builder,
-                SymbolPackageBuilder = symbolPackageBuilder
-            };
-
-            Console.WriteLine("Building {0} {1}", project.Name, targetFramework);
-
-            if (!roslynArtifactsProducer.Build(buildContext, diagnostics))
-            {
-                return false;
-            }
-
-            return true;
-        }
-
-        private static RoslynArtifactsProducer PrepareArtifactsProducer(Project project, FrameworkName targetFramework, out IDictionary<string, string> packagePaths)
-        {
-            var projectDir = project.ProjectDirectory;
-            var rootDirectory = ProjectResolver.ResolveRootDirectory(projectDir);
-            var projectResolver = new ProjectResolver(projectDir, rootDirectory);
-            var packagesDir = NuGetDependencyResolver.ResolveRepositoryPath(rootDirectory);
-
-            var resxProvider = new ResxResourceProvider();
-            var embeddedResourceProvider = new EmbeddedResourceProvider();
-            var compositeResourceProvider = new CompositeResourceProvider(new IResourceProvider[] { resxProvider, embeddedResourceProvider });
-
-            var referenceAssemblyDependencyResolver = new ReferenceAssemblyDependencyResolver();
-            var nugetDependencyResolver = new NuGetDependencyResolver(packagesDir, referenceAssemblyDependencyResolver.FrameworkResolver);
-            var gacDependencyResolver = new GacDependencyResolver();
-            var compositeDependencyExporter = new CompositeLibraryExportProvider(new ILibraryExportProvider[] {
-                referenceAssemblyDependencyResolver,
-                gacDependencyResolver,
-                nugetDependencyResolver,
-            });
-
-            var roslynCompiler = new RoslynCompiler(projectResolver,
-                                                    NoopWatcher.Instance,
-                                                    compositeDependencyExporter);
-
-            var projectReferenceResolver = new ProjectReferenceDependencyProvider(projectResolver);
-
-            var dependencyWalker = new DependencyWalker(new IDependencyProvider[] {
-                projectReferenceResolver,
-                referenceAssemblyDependencyResolver,
-                gacDependencyResolver,
-                nugetDependencyResolver
-            });
-
-            dependencyWalker.Walk(project.Name, project.Version, targetFramework);
-
-            var roslynArtifactsProducer = new RoslynArtifactsProducer(roslynCompiler,
-                                                                      compositeResourceProvider,
-                                                                      projectReferenceResolver.Dependencies,
-                                                                      referenceAssemblyDependencyResolver.FrameworkResolver);
-
-            packagePaths = nugetDependencyResolver.PackageAssemblyPaths;
-
-            return roslynArtifactsProducer;
-        }
-
-        private IRoslynCompiler PrepareCompiler(Project project, FrameworkName targetFramework)
-        {
-            var projectDir = project.ProjectDirectory;
-            var rootDirectory = ProjectResolver.ResolveRootDirectory(projectDir);
-            var projectResolver = new ProjectResolver(projectDir, rootDirectory);
-            var packagesDir = NuGetDependencyResolver.ResolveRepositoryPath(rootDirectory);
-
-            var referenceAssemblyDependencyResolver = new ReferenceAssemblyDependencyResolver();
-            var nugetDependencyResolver = new NuGetDependencyResolver(packagesDir, referenceAssemblyDependencyResolver.FrameworkResolver);
-            var gacDependencyResolver = new GacDependencyResolver();
-            var compositeDependencyExporter = new CompositeLibraryExportProvider(new ILibraryExportProvider[] {
-                referenceAssemblyDependencyResolver,
-                gacDependencyResolver,
-                nugetDependencyResolver,
-            });
-
-            var roslynCompiler = new RoslynCompiler(projectResolver,
-                                                    NoopWatcher.Instance,
-                                                    compositeDependencyExporter);
-
-            var projectReferenceResolver = new ProjectReferenceDependencyProvider(projectResolver);
-
-            var dependencyWalker = new DependencyWalker(new IDependencyProvider[] {
-                projectReferenceResolver,
-                referenceAssemblyDependencyResolver,
-                gacDependencyResolver,
-                nugetDependencyResolver
-            });
-
-            dependencyWalker.Walk(project.Name, project.Version, targetFramework);
-
-
-            return roslynCompiler;
-        }
-
         private static string Normalize(string projectDir)
         {
             if (File.Exists(projectDir))
@@ -414,18 +266,6 @@ namespace Microsoft.Framework.PackageManager
         {
             string fileName = project.Name + "." + project.Version + (symbols ? ".symbols" : "") + ".nupkg";
             return Path.Combine(outputPath, fileName);
-        }
-
-        private static string GetMessage(Diagnostic diagnostic)
-        {
-            var formatter = new DiagnosticFormatter();
-
-            return formatter.Format(diagnostic);
-        }
-
-        private static bool IsError(Diagnostic diagnostic)
-        {
-            return diagnostic.IsWarningAsError || diagnostic.Severity == DiagnosticSeverity.Error;
         }
     }
 }

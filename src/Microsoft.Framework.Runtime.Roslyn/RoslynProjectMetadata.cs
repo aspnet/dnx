@@ -9,7 +9,7 @@ using Microsoft.CodeAnalysis;
 
 namespace Microsoft.Framework.Runtime.Roslyn
 {
-    public class RoslynProjectMetadata
+    public class RoslynProjectMetadata : IProjectMetadata
     {
         public RoslynProjectMetadata(CompilationContext context)
         {

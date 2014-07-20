@@ -2,11 +2,11 @@
 
 namespace Microsoft.Framework.Runtime
 {
-    public class LoaderInformation
+    public class TypeInformation
     {
         private readonly Tuple<string, string> _tuple;
 
-        public LoaderInformation(string assemblyName, string typeName)
+        public TypeInformation(string assemblyName, string typeName)
         {
             _tuple = Tuple.Create(assemblyName, typeName);
         }
@@ -34,7 +34,7 @@ namespace Microsoft.Framework.Runtime
 
         public override bool Equals(object obj)
         {
-            var li = obj as LoaderInformation;
+            var li = obj as TypeInformation;
 
             return li != null && li._tuple.Equals(_tuple);
         }
