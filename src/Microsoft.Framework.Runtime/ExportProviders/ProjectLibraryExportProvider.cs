@@ -11,7 +11,7 @@ namespace Microsoft.Framework.Runtime
     {
         private readonly IProjectResolver _projectResolver;
         private readonly IServiceProvider _serviceProvider;
-        private readonly Dictionary<TypeInformation, ILibraryExportProvider> _loaders = new Dictionary<TypeInformation, ILibraryExportProvider>();
+        private readonly Dictionary<TypeInformation, ILibraryExportProvider> _exportProviders = new Dictionary<TypeInformation, ILibraryExportProvider>();
 
         public ProjectLibraryExportProvider(IProjectResolver projectResolver, IServiceProvider serviceProvider)
         {
@@ -28,7 +28,7 @@ namespace Microsoft.Framework.Runtime
                 return null;
             }
 
-            var exportProvider = _loaders.GetOrAdd(project.Services.LibraryExportProvider, typeInfo =>
+            var exportProvider = _exportProviders.GetOrAdd(project.Services.LibraryExportProvider, typeInfo =>
             {
                 return ProjectServices.CreateService<ILibraryExportProvider>(_serviceProvider, typeInfo);
             });

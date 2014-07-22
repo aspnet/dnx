@@ -23,6 +23,14 @@ namespace Microsoft.Framework.Runtime
             get { return _libraries; }
         }
 
+        public IEnumerable<IDependencyProvider> DependencyProviders
+        {
+            get
+            {
+                return _dependencyProviders;
+            }
+        }
+
         public void Walk(string name, SemanticVersion version, FrameworkName targetFramework)
         {
             var sw = Stopwatch.StartNew();

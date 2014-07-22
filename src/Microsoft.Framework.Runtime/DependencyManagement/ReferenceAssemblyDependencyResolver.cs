@@ -14,12 +14,12 @@ namespace Microsoft.Framework.Runtime
     {
         private readonly Dictionary<string, string> _resolvedPaths = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
-        public ReferenceAssemblyDependencyResolver()
+        public ReferenceAssemblyDependencyResolver(FrameworkReferenceResolver frameworkReferenceResolver)
         {
-            FrameworkResolver = new FrameworkReferenceResolver();
+            FrameworkResolver = frameworkReferenceResolver;
         }
 
-        public FrameworkReferenceResolver FrameworkResolver { get; private set; }
+        private FrameworkReferenceResolver FrameworkResolver { get; set; }
 
         public IEnumerable<string> GetAttemptedPaths(FrameworkName targetFramework)
         {

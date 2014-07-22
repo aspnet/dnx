@@ -88,21 +88,34 @@ namespace Microsoft.Framework.PackageManager
 
                     var context = new BuildContext(project, targetFramework, configuration, baseOutputPath);
                     context.Initialize();
-                    context.PopulateDependencies(packageBuilder);
 
-                    if (context.Build(warnings, errors))
+                    if (_buildOptions.CheckDiagnostics)
                     {
-                        context.AddLibs(packageBuilder);
+                        configurationSuccess = configurationSuccess && context.GetDiagnostics(warnings, errors);
                     }
                     else
                     {
-                        configurationSuccess = false;
+                        if (context.Build(warnings, errors))
+                        {
+                            context.PopulateDependencies(packageBuilder);
+                            context.AddLibs(packageBuilder);
+                        }
+                        else
+                        {
+                            configurationSuccess = false;
+                        }
                     }
 
                     allErrors.AddRange(errors);
                     allWarnings.AddRange(warnings);
 
                     WriteDiagnostics(warnings, errors);
+                }
+
+                // Skip producing the nupkg if we're just checking diagnostics
+                if (_buildOptions.CheckDiagnostics)
+                {
+                    continue;
                 }
 
                 // Create a package per configuration

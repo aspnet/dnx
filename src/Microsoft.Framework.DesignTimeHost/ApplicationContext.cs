@@ -24,7 +24,7 @@ namespace Microsoft.Framework.DesignTimeHost
     public class ApplicationContext
     {
         private readonly IAssemblyLoaderEngine _loaderEngine;
-        private readonly IServiceProvider _services;
+        private readonly IServiceProvider _hostServices;
 
         public class State
         {
@@ -84,7 +84,7 @@ namespace Microsoft.Framework.DesignTimeHost
 
         public ApplicationContext(IServiceProvider services, IAssemblyLoaderEngine loaderEngine, int id)
         {
-            _services = services;
+            _hostServices = services;
             _loaderEngine = loaderEngine;
             Id = id;
         }
@@ -412,41 +412,24 @@ namespace Microsoft.Framework.DesignTimeHost
                 Configuration = configuration
             };
 
-            Project project;
-            if (!Project.TryGetProject(appPath, out project))
+            var applicationHostContext = new ApplicationHostContext(_hostServices, appPath);
+
+            Project project = applicationHostContext.Project;
+
+            if (project == null)
             {
                 // package.json sad
                 return state;
             }
 
-            var projectDir = project.ProjectDirectory;
-            var rootDirectory = ProjectResolver.ResolveRootDirectory(projectDir);
-            var projectResolver = new ProjectResolver(projectDir, rootDirectory);
-            var packagesDir = NuGetDependencyResolver.ResolveRepositoryPath(rootDirectory);
+            state.MetadataProvider = ProjectServices.CreateService<IProjectMetadataProvider>(
+                applicationHostContext.ServiceProvider,
+                project.Services.MetadataProvider);
 
-            var referenceAssemblyDependencyResolver = new ReferenceAssemblyDependencyResolver();
-            var nugetDependencyResolver = new NuGetDependencyResolver(packagesDir, referenceAssemblyDependencyResolver.FrameworkResolver);
-            var gacDependencyResolver = new GacDependencyResolver();
-
-            var compositeDependencyExporter = new CompositeLibraryExportProvider(new ILibraryExportProvider[] {
-                referenceAssemblyDependencyResolver,
-                gacDependencyResolver,
-                nugetDependencyResolver,
-            });
-
-            state.MetadataProvider = new RoslynProjectMetadataProvider(projectResolver, compositeDependencyExporter);
             state.Project = project;
-            state.FrameworkResolver = referenceAssemblyDependencyResolver.FrameworkResolver;
+            state.FrameworkResolver = applicationHostContext.FrameworkReferenceResolver;
 
-            var dependencyWalker = new DependencyWalker(new IDependencyProvider[] {
-                new ProjectReferenceDependencyProvider(projectResolver),
-                referenceAssemblyDependencyResolver,
-                gacDependencyResolver,
-                nugetDependencyResolver,
-                new UnresolvedDependencyProvider() // A catch all for unresolved dependencies
-            });
-
-            dependencyWalker.Walk(state.Project.Name, state.Project.Version, targetFramework);
+            applicationHostContext.DependencyWalker.Walk(state.Project.Name, state.Project.Version, targetFramework);
 
             Func<LibraryDescription, ReferenceDescription> referenceFactory = library =>
             {
@@ -464,9 +447,10 @@ namespace Microsoft.Framework.DesignTimeHost
                 };
             };
 
-            state.Dependencies = dependencyWalker.Libraries
-                                                 .Select(referenceFactory)
-                                                 .ToDictionary(d => d.Name);
+            state.Dependencies = applicationHostContext.DependencyWalker
+                                                       .Libraries
+                                                       .Select(referenceFactory)
+                                                       .ToDictionary(d => d.Name);
 
             return state;
         }
@@ -498,7 +482,7 @@ namespace Microsoft.Framework.DesignTimeHost
                 return;
             }
 
-            var testServices = new ServiceProvider(_services);
+            var testServices = new ServiceProvider(_hostServices);
             testServices.Add(typeof(ITestExecutionSink), new TestExecutionSink(this));
 
             var args = new List<string>()
@@ -558,7 +542,7 @@ namespace Microsoft.Framework.DesignTimeHost
                 return;
             }
 
-            var testServices = new ServiceProvider(_services);
+            var testServices = new ServiceProvider(_hostServices);
             testServices.Add(typeof(ITestDiscoverySink), new TestDiscoverySink(this));
 
             var args = new string[] { "test", "--list", "--designtime" };
@@ -586,7 +570,7 @@ namespace Microsoft.Framework.DesignTimeHost
             var environment = new ApplicationEnvironment(project, _targetFramework.Value, _configuration.Value);
 
             var applicationHost = new ApplicationHost.Program(
-                (IHostContainer)_services.GetService(typeof(IHostContainer)),
+                (IHostContainer)_hostServices.GetService(typeof(IHostContainer)),
                 environment,
                 services);
 

@@ -2,7 +2,6 @@
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -18,34 +17,24 @@ namespace Microsoft.Framework.Runtime
 {
     public class DefaultHost : IHost
     {
-        private CompositeAssemblyLoader _loader;
-        private DependencyWalker _dependencyWalker;
+        private IAssemblyLoader _loader;
+        private ApplicationHostContext _applicationHostContext;
+        private ServiceProvider _serviceProvider;
 
         private IFileWatcher _watcher;
-        private readonly string _projectDir;
+        private readonly string _projectDirectory;
         private readonly FrameworkName _targetFramework;
-        private readonly string _name;
-        private readonly ServiceProvider _serviceProvider;
-        private readonly IAssemblyLoaderEngine _loaderEngine;
-        private readonly UnresolvedDependencyProvider _unresolvedProvider = new UnresolvedDependencyProvider();
         private readonly ApplicationShutdown _shutdown = new ApplicationShutdown();
 
         private Project _project;
 
-        public DefaultHost(DefaultHostOptions options, IServiceProvider hostProvider)
+        public DefaultHost(DefaultHostOptions options, 
+                          IServiceProvider hostServices)
         {
-            _projectDir = Normalize(options.ApplicationBaseDirectory);
-
-            _name = options.ApplicationName;
-
+            _projectDirectory = Normalize(options.ApplicationBaseDirectory);
             _targetFramework = options.TargetFramework;
 
-            _loaderEngine = (IAssemblyLoaderEngine)hostProvider.GetService(typeof(IAssemblyLoaderEngine));
-
-            _serviceProvider = new ServiceProvider(hostProvider);
-            CallContextServiceLocator.Locator.ServiceProvider = _serviceProvider;
-
-            Initialize(options);
+            Initialize(options, hostServices);
         }
 
         public IServiceProvider ServiceProvider
@@ -60,7 +49,7 @@ namespace Microsoft.Framework.Runtime
 
         public Assembly GetEntryPoint(string applicationName)
         {
-            Trace.TraceInformation("Project root is {0}", _projectDir);
+            Trace.TraceInformation("Project root is {0}", _projectDirectory);
 
             var sw = Stopwatch.StartNew();
 
@@ -69,10 +58,10 @@ namespace Microsoft.Framework.Runtime
                 return null;
             }
 
-            _dependencyWalker.Walk(Project.Name, Project.Version, _targetFramework);
+            _applicationHostContext.DependencyWalker.Walk(Project.Name, Project.Version, _targetFramework);
 
             // If there's any unresolved dependencies then complain
-            if (_unresolvedProvider.UnresolvedDependencies.Any())
+            if (_applicationHostContext.UnresolvedDependencyProvider.UnresolvedDependencies.Any())
             {
                 var sb = new StringBuilder();
 
@@ -80,7 +69,7 @@ namespace Microsoft.Framework.Runtime
 
                 sb.AppendLine("Failed to resolve the following dependencies:");
 
-                foreach (var d in _unresolvedProvider.UnresolvedDependencies.OrderBy(d => d.Identity.Name))
+                foreach (var d in _applicationHostContext.UnresolvedDependencyProvider.UnresolvedDependencies.OrderBy(d => d.Identity.Name))
                 {
                     sb.AppendLine("   " + d.Identity.ToString());
                 }
@@ -88,7 +77,7 @@ namespace Microsoft.Framework.Runtime
                 sb.AppendLine();
                 sb.AppendLine("Searched Locations:");
 
-                foreach (var path in _unresolvedProvider.GetAttemptedPaths(_targetFramework))
+                foreach (var path in _applicationHostContext.UnresolvedDependencyProvider.GetAttemptedPaths(_targetFramework))
                 {
                     sb.AppendLine("  " + path);
                 }
@@ -120,16 +109,20 @@ namespace Microsoft.Framework.Runtime
             _watcher.Dispose();
         }
 
-        private void Initialize(DefaultHostOptions options)
+        private void Initialize(DefaultHostOptions options, IServiceProvider hostServices)
         {
-            var dependencyProviders = new List<IDependencyProvider>();
-            var loaders = new List<IAssemblyLoader>();
+            _applicationHostContext = new ApplicationHostContext(hostServices, _projectDirectory, options.PackageDirectory);
 
-            string rootDirectory = ProjectResolver.ResolveRootDirectory(_projectDir);
+            _project = _applicationHostContext.Project;
+
+            if (Project == null)
+            {
+                throw new Exception("Unable to locate " + Project.ProjectFileName);
+            }
 
             if (options.WatchFiles)
             {
-                var watcher = new FileWatcher(rootDirectory);
+                var watcher = new FileWatcher(_applicationHostContext.RootDirectory);
                 _watcher = watcher;
                 watcher.OnChanged += _ =>
                 {
@@ -141,63 +134,35 @@ namespace Microsoft.Framework.Runtime
                 _watcher = NoopWatcher.Instance;
             }
 
-            if (!Project.TryGetProject(_projectDir, out _project))
-            {
-                throw new Exception("Unable to locate " + Project.ProjectFileName);
-            }
-
-            string packagesDirectory = options.PackageDirectory ?? NuGetDependencyResolver.ResolveRepositoryPath(rootDirectory);
-
             var applicationEnvironment = new ApplicationEnvironment(Project, _targetFramework, options.Configuration);
-            var projectResolver = new ProjectResolver(_projectDir, rootDirectory);
-            var referenceAssemblyDependencyResolver = new ReferenceAssemblyDependencyResolver();
-            var nugetDependencyResolver = new NuGetDependencyResolver(packagesDirectory, referenceAssemblyDependencyResolver.FrameworkResolver);
-            var gacDependencyResolver = new GacDependencyResolver();
-            var nugetLoader = new NuGetAssemblyLoader(_loaderEngine, nugetDependencyResolver);
 
-            // Library exporters are used for compilation
-            var libraryExporters = new List<ILibraryExportProvider>();
-            libraryExporters.Add(new ProjectLibraryExportProvider(projectResolver, _serviceProvider));
-            libraryExporters.Add(referenceAssemblyDependencyResolver);
-            libraryExporters.Add(gacDependencyResolver);
-            libraryExporters.Add(nugetDependencyResolver);
- 
-            // Dependency providers
-            dependencyProviders.Add(new ProjectReferenceDependencyProvider(projectResolver));
-            dependencyProviders.Add(referenceAssemblyDependencyResolver);
-            dependencyProviders.Add(gacDependencyResolver);
-            dependencyProviders.Add(nugetDependencyResolver);
-            dependencyProviders.Add(_unresolvedProvider);
-
-            _dependencyWalker = new DependencyWalker(dependencyProviders);
-
-            // Setup the attempted providers in case there are unresolved
-            // dependencies
-            _unresolvedProvider.AttemptedProviders = dependencyProviders;
-
-            // Loaders
-            loaders.Add(new ProjectAssemblyLoader(projectResolver, _serviceProvider));
-            loaders.Add(nugetLoader);
-
-            _loader = new CompositeAssemblyLoader(applicationEnvironment, loaders);
+            _serviceProvider = new ServiceProvider(_applicationHostContext.ServiceProvider);
 
             _serviceProvider.Add(typeof(IApplicationEnvironment), applicationEnvironment);
             _serviceProvider.Add(typeof(IApplicationShutdown), _shutdown);
 
             // TODO: Get rid of this and just use the IFileWatcher
             _serviceProvider.Add(typeof(IFileMonitor), _watcher);
-
             _serviceProvider.Add(typeof(IFileWatcher), _watcher);
-
-            var exportProvider = new CompositeLibraryExportProvider(libraryExporters);
-            _serviceProvider.Add(typeof(ILibraryExportProvider), exportProvider);
             _serviceProvider.Add(typeof(ILibraryManager),
                 new LibraryManager(_targetFramework,
                                    applicationEnvironment.Configuration,
-                                   _dependencyWalker,
-                                   exportProvider));
+                                   _applicationHostContext.DependencyWalker,
+                                   (ILibraryExportProvider)_serviceProvider.GetService(typeof(ILibraryExportProvider))));
 
-            _serviceProvider.Add(typeof(IProjectResolver), projectResolver);
+            var loaders = new[]
+            {
+                typeof(ProjectAssemblyLoader),
+                typeof(NuGetAssemblyLoader),
+            }
+            .Select(loaderType => (IAssemblyLoader)ActivatorUtilities.CreateInstance(_serviceProvider, loaderType))
+            .ToList();
+
+            var nugetLoader = ActivatorUtilities.CreateInstance<NuGetAssemblyLoader>(_serviceProvider);
+
+            _loader = new CompositeAssemblyLoader(applicationEnvironment, loaders);
+
+            CallContextServiceLocator.Locator.ServiceProvider = _serviceProvider;
         }
 
 

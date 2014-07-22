@@ -23,6 +23,7 @@
     <Content Include="project.json" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ApplicationHostContext.cs" />
     <Compile Include="ApplicationShutdown.cs" />
     <Compile Include="ApplicationEnvironment.cs" />
     <Compile Include="CompilerOptions.cs" />

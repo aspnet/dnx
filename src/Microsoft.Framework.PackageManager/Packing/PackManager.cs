@@ -7,7 +7,6 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Runtime.Versioning;
-using Microsoft.Framework.PackageManager.Packing;
 using Microsoft.Framework.Runtime;
 using NuGet;
 
@@ -35,31 +34,17 @@ namespace Microsoft.Framework.PackageManager.Packing
 
         public class DependencyContext
         {
-            public DependencyContext(string projectDir)
+            public DependencyContext(string projectDirectory)
             {
-                var rootDirectory = ProjectResolver.ResolveRootDirectory(projectDir);
-                var projectResolver = new ProjectResolver(projectDir, rootDirectory);
-                var packagesDir = NuGetDependencyResolver.ResolveRepositoryPath(rootDirectory);
+                var applicationHostContext = new ApplicationHostContext(serviceProvider: null, projectDirectory: projectDirectory);
 
-                var referenceAssemblyDependencyResolver = new ReferenceAssemblyDependencyResolver();
-                var nugetDependencyResolver = new NuGetDependencyResolver(packagesDir, referenceAssemblyDependencyResolver.FrameworkResolver);
-                var gacDependencyResolver = new GacDependencyResolver();
-                var projectReferenceDependencyProvider = new ProjectReferenceDependencyProvider(projectResolver);
-
-                var dependencyWalker = new DependencyWalker(new IDependencyProvider[] {
-                    projectReferenceDependencyProvider,
-                    referenceAssemblyDependencyResolver,
-                    gacDependencyResolver,
-                    nugetDependencyResolver
-                });
-
-                ProjectResolver = projectResolver;
-                NuGetDependencyResolver = nugetDependencyResolver;
-                ProjectReferenceDependencyProvider = projectReferenceDependencyProvider;
-                DependencyWalker = dependencyWalker;
+                ProjectResolver = applicationHostContext.ProjectResolver;
+                NuGetDependencyResolver = applicationHostContext.NuGetDependencyProvider;
+                ProjectReferenceDependencyProvider = applicationHostContext.ProjectDepencyProvider;
+                DependencyWalker = applicationHostContext.DependencyWalker;
             }
 
-            public ProjectResolver ProjectResolver { get; set; }
+            public IProjectResolver ProjectResolver { get; set; }
             public NuGetDependencyResolver NuGetDependencyResolver { get; set; }
             public ProjectReferenceDependencyProvider ProjectReferenceDependencyProvider { get; set; }
             public DependencyWalker DependencyWalker { get; set; }

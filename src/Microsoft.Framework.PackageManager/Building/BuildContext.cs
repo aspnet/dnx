@@ -16,12 +16,7 @@ namespace Microsoft.Framework.PackageManager
         private readonly string _configuration;
         private readonly string _targetFrameworkFolder;
         private readonly string _outputPath;
-
-        private IEnumerable<LibraryDescription> _projectDependencies;
-        private IEnumerable<LibraryDescription> _resolvedDependencies;
-        private IFrameworkReferenceResolver _frameworkResolver;
-        private ProjectResolver _projectResolver;
-        private ServiceProvider _serviceProvider;
+        private readonly ApplicationHostContext _applicationHostContext;
 
         public BuildContext(Project project, FrameworkName targetFramework, string configuration, string outputPath)
         {
@@ -30,56 +25,19 @@ namespace Microsoft.Framework.PackageManager
             _configuration = configuration;
             _targetFrameworkFolder = VersionUtility.GetShortFrameworkName(_targetFramework);
             _outputPath = Path.Combine(outputPath, _targetFrameworkFolder);
-            _serviceProvider = new ServiceProvider();
-        }
-
-        public IServiceProvider ServiceProvider
-        {
-            get
-            {
-                return _serviceProvider;
-            }
+            _applicationHostContext = new ApplicationHostContext(serviceProvider: null, projectDirectory: project.ProjectDirectory);
         }
 
         public void Initialize()
         {
-            var projectDir = _project.ProjectDirectory;
-            var rootDirectory = ProjectResolver.ResolveRootDirectory(projectDir);
-            _projectResolver = new ProjectResolver(projectDir, rootDirectory);
-            var packagesDir = NuGetDependencyResolver.ResolveRepositoryPath(rootDirectory);
-
-            var referenceAssemblyDependencyResolver = new ReferenceAssemblyDependencyResolver();
-            var nugetDependencyResolver = new NuGetDependencyResolver(packagesDir, referenceAssemblyDependencyResolver.FrameworkResolver);
-            var gacDependencyResolver = new GacDependencyResolver();
-            var projectReferenceResolver = new ProjectReferenceDependencyProvider(_projectResolver);
-
-            var dependencyWalker = new DependencyWalker(new IDependencyProvider[] {
-                projectReferenceResolver,
-                referenceAssemblyDependencyResolver,
-                gacDependencyResolver,
-                nugetDependencyResolver
-            });
-
-            dependencyWalker.Walk(_project.Name, _project.Version, _targetFramework);
-
-            _projectDependencies = projectReferenceResolver.Dependencies;
-            _resolvedDependencies = dependencyWalker.Libraries;
-            _frameworkResolver = referenceAssemblyDependencyResolver.FrameworkResolver;
-
-            var compositeDependencyExporter = new CompositeLibraryExportProvider(new ILibraryExportProvider[] {
-                new ProjectLibraryExportProvider(_projectResolver, _serviceProvider),
-                referenceAssemblyDependencyResolver,
-                gacDependencyResolver,
-                nugetDependencyResolver
-            });
-
-            _serviceProvider.Add(typeof(ILibraryExportProvider), compositeDependencyExporter);
-            _serviceProvider.Add(typeof(IProjectResolver), _projectResolver);
+            _applicationHostContext.DependencyWalker.Walk(_project.Name, _project.Version, _targetFramework);
         }
 
         public bool Build(IList<string> warnings, IList<string> errors)
         {
-            var builder = ProjectServices.CreateService<IProjectBuilder>(_serviceProvider, _project.Services.Builder);
+            var builder = ProjectServices.CreateService<IProjectBuilder>(
+                _applicationHostContext.ServiceProvider,
+                _project.Services.Builder);
 
             var result = builder.Build(_project.Name,
                                        _targetFramework,
@@ -99,10 +57,26 @@ namespace Microsoft.Framework.PackageManager
             return result.Success;
         }
 
+        public bool GetDiagnostics(IList<string> warnings, IList<string> errors)
+        {
+            var metadataProvider = ProjectServices.CreateService<IProjectMetadataProvider>(
+                _applicationHostContext.ServiceProvider,
+                _project.Services.MetadataProvider);
+
+            var metadata = metadataProvider.GetProjectMetadata(_project.Name, _targetFramework, _configuration);
+
+            errors.AddRange(metadata.Errors);
+            warnings.AddRange(metadata.Warnings);
+
+            return metadata.Errors.Count == 0;
+        }
+
         public void PopulateDependencies(PackageBuilder packageBuilder)
         {
             var dependencies = new List<PackageDependency>();
-            var projectReferenceByName = _projectDependencies.ToDictionary(r => r.Identity.Name);
+            var projectReferenceByName = _applicationHostContext.ProjectDepencyProvider
+                                                                .Dependencies
+                                                                .ToDictionary(r => r.Identity.Name);
 
             var frameworkAssemblies = new List<string>();
 
@@ -119,14 +93,14 @@ namespace Microsoft.Framework.PackageManager
                 {
                     Project dependencyProject;
                     if (projectReferenceByName.ContainsKey(dependency.Name) &&
-                        _projectResolver.TryResolveProject(dependency.Name, out dependencyProject) &&
+                        _applicationHostContext.ProjectResolver.TryResolveProject(dependency.Name, out dependencyProject) &&
                         dependencyProject.EmbedInteropTypes)
                     {
                         continue;
                     }
 
                     string path;
-                    if (_frameworkResolver.TryGetAssembly(dependency.Name, targetFramework, out path))
+                    if (_applicationHostContext.FrameworkReferenceResolver.TryGetAssembly(dependency.Name, targetFramework, out path))
                     {
                         frameworkAssemblies.Add(dependency.Name);
                     }
@@ -140,7 +114,7 @@ namespace Microsoft.Framework.PackageManager
 
                         if (dependencyVersion.MinVersion == null || dependencyVersion.MinVersion.IsSnapshot)
                         {
-                            var actual = _resolvedDependencies
+                            var actual = _applicationHostContext.DependencyWalker.Libraries
                                 .Where(pkg => string.Equals(pkg.Identity.Name, _project.Name, StringComparison.OrdinalIgnoreCase))
                                 .SelectMany(pkg => pkg.Dependencies)
                                 .SingleOrDefault(dep => string.Equals(dep.Name, dependency.Name, StringComparison.OrdinalIgnoreCase));
