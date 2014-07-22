@@ -23,6 +23,7 @@
     <Compile Include="Building\BuildOptions.cs" />
     <Compile Include="Building\ProjectBuilder.cs" />
     <Compile Include="Colors.cs" />
+    <Compile Include="Commands\AddCommand.cs" />
     <Compile Include="ReportExtensions.cs" />
     <Compile Include="DictionaryExtensions.cs" />
     <Compile Include="IReport.cs" />

@@ -219,6 +219,29 @@ namespace Microsoft.Framework.PackageManager
                 });
             });
 
+            app.Command("add", c =>
+            {
+                c.Description = "Add a dependency into dependencies section of project.json";
+
+                var argName = c.Argument("[name]", "Name of the dependency to add");
+                var argVersion = c.Argument("[version]", "Version of the dependency to add");
+                var argProject = c.Argument("[project]", "Path to project, default is current directory");
+                c.HelpOption("-?|-h|--help");
+
+                c.OnExecute(() =>
+                {
+                    var command = new AddCommand();
+                    command.Report = this;
+                    command.Name = argName.Value;
+                    command.Version = argVersion.Value;
+                    command.ProjectDir = argProject.Value;
+
+                    var success = command.ExecuteCommand();
+
+                    return success ? 0 : 1;
+                });
+            });
+
             return app.Execute(args);
         }
 

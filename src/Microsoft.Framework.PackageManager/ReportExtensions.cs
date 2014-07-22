@@ -9,5 +9,10 @@ namespace Microsoft.Framework.PackageManager
         {
             report.WriteLine(string.Empty);
         }
+
+        public static void WriteLine(this IReport report, string format, params object[] args)
+        {
+            report.WriteLine(string.Format(format, args));
+        }
     }
 }
