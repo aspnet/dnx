@@ -130,9 +130,11 @@ namespace Microsoft.Framework.Runtime
                                    IDictionary<string, IMetadataReference> metadataReferences,
                                    IList<ISourceReference> sourceReferences)
         {
-            ExpandEmbeddedReferences(export.MetadataReferences);
+            var references = new List<IMetadataReference>(export.MetadataReferences);
 
-            foreach (var reference in export.MetadataReferences)
+            ExpandEmbeddedReferences(references);
+
+            foreach (var reference in references)
             {
                 var unresolvedReference = reference as UnresolvedMetadataReference;
 
