@@ -21,7 +21,7 @@ namespace Microsoft.Framework.Runtime.Roslyn
         private readonly IFileWatcher _watcher;
         private readonly IProjectResolver _projectResolver;
         private readonly MetadataFileReferenceFactory _metadataFileReferenceFactory;
-        private readonly ProjectExportProvider _projectExportProvider;
+        private readonly ProjectExportProviderHelper _projectExportProvider;
 
         public RoslynCompiler(IProjectResolver projectResolver,
                               IFileWatcher watcher,
@@ -31,7 +31,7 @@ namespace Microsoft.Framework.Runtime.Roslyn
             _watcher = watcher;
             _libraryExportProvider = libraryExportProvider;
             _metadataFileReferenceFactory = new MetadataFileReferenceFactory();
-            _projectExportProvider = new ProjectExportProvider(projectResolver);
+            _projectExportProvider = new ProjectExportProviderHelper(projectResolver);
         }
 
         public CompilationContext CompileProject(string name, FrameworkName targetFramework, string configuration)

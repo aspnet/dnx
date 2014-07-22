@@ -153,37 +153,20 @@ namespace Microsoft.Framework.Runtime
             var referenceAssemblyDependencyResolver = new ReferenceAssemblyDependencyResolver();
             var nugetDependencyResolver = new NuGetDependencyResolver(packagesDirectory, referenceAssemblyDependencyResolver.FrameworkResolver);
             var gacDependencyResolver = new GacDependencyResolver();
-
             var nugetLoader = new NuGetAssemblyLoader(_loaderEngine, nugetDependencyResolver);
 
-            // Roslyn needs to be able to resolve exported references and sources
+            // Library exporters are used for compilation
             var libraryExporters = new List<ILibraryExportProvider>();
-
-            // Reference assemblies
+            libraryExporters.Add(new ProjectLibraryExportProvider(projectResolver, _serviceProvider));
             libraryExporters.Add(referenceAssemblyDependencyResolver);
-
-            // GAC assemblies
             libraryExporters.Add(gacDependencyResolver);
-
-            // NuGet exporter
             libraryExporters.Add(nugetDependencyResolver);
-
-            var projectLoader = new ProjectAssemblyLoader(projectResolver, _serviceProvider);
-            libraryExporters.Add(projectLoader);
-
-            // Project.json projects
-            loaders.Add(projectLoader);
+ 
+            // Dependency providers
             dependencyProviders.Add(new ProjectReferenceDependencyProvider(projectResolver));
-
-            // GAC and reference assembly resolver
             dependencyProviders.Add(referenceAssemblyDependencyResolver);
             dependencyProviders.Add(gacDependencyResolver);
-
-            // NuGet packages
-            loaders.Add(nugetLoader);
             dependencyProviders.Add(nugetDependencyResolver);
-
-            // Catch all for unresolved depedencies
             dependencyProviders.Add(_unresolvedProvider);
 
             _dependencyWalker = new DependencyWalker(dependencyProviders);
@@ -191,6 +174,10 @@ namespace Microsoft.Framework.Runtime
             // Setup the attempted providers in case there are unresolved
             // dependencies
             _unresolvedProvider.AttemptedProviders = dependencyProviders;
+
+            // Loaders
+            loaders.Add(new ProjectAssemblyLoader(projectResolver, _serviceProvider));
+            loaders.Add(nugetLoader);
 
             _loader = new CompositeAssemblyLoader(applicationEnvironment, loaders);
 

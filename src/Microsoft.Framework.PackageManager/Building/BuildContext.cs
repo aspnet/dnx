@@ -22,7 +22,6 @@ namespace Microsoft.Framework.PackageManager
         private IFrameworkReferenceResolver _frameworkResolver;
         private ProjectResolver _projectResolver;
         private ServiceProvider _serviceProvider;
-        private ProjectBuilder _projectBuilder;
 
         public BuildContext(Project project, FrameworkName targetFramework, string configuration, string outputPath)
         {
@@ -53,7 +52,6 @@ namespace Microsoft.Framework.PackageManager
             var nugetDependencyResolver = new NuGetDependencyResolver(packagesDir, referenceAssemblyDependencyResolver.FrameworkResolver);
             var gacDependencyResolver = new GacDependencyResolver();
             var projectReferenceResolver = new ProjectReferenceDependencyProvider(_projectResolver);
-            _projectBuilder = new ProjectBuilder(_projectResolver, _serviceProvider);
 
             var dependencyWalker = new DependencyWalker(new IDependencyProvider[] {
                 projectReferenceResolver,
@@ -69,10 +67,10 @@ namespace Microsoft.Framework.PackageManager
             _frameworkResolver = referenceAssemblyDependencyResolver.FrameworkResolver;
 
             var compositeDependencyExporter = new CompositeLibraryExportProvider(new ILibraryExportProvider[] {
+                new ProjectLibraryExportProvider(_projectResolver, _serviceProvider),
                 referenceAssemblyDependencyResolver,
                 gacDependencyResolver,
-                nugetDependencyResolver,
-                _projectBuilder
+                nugetDependencyResolver
             });
 
             _serviceProvider.Add(typeof(ILibraryExportProvider), compositeDependencyExporter);
@@ -81,10 +79,12 @@ namespace Microsoft.Framework.PackageManager
 
         public bool Build(IList<string> warnings, IList<string> errors)
         {
-            var result = _projectBuilder.Build(_project.Name,
-                                               _targetFramework,
-                                               _configuration,
-                                               _outputPath);
+            var builder = ProjectServices.CreateService<IProjectBuilder>(_serviceProvider, _project.Services.Builder);
+
+            var result = builder.Build(_project.Name,
+                                       _targetFramework,
+                                       _configuration,
+                                       _outputPath);
 
             if (result.Errors != null)
             {

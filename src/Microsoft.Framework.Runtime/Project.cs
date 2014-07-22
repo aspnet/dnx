@@ -61,11 +61,7 @@ namespace Microsoft.Framework.Runtime
 
         public IList<Library> Dependencies { get; private set; }
 
-        public TypeInformation Loader { get; private set; }
-
-        public TypeInformation Builder { get; set; }
-
-        public TypeInformation MetadataProvider { get; set; }
+        public ProjectServices Services { get; private set; }
 
         internal IEnumerable<string> SourcePatterns { get; set; }
 
@@ -167,7 +163,7 @@ namespace Microsoft.Framework.Runtime
         }
 
         public IDictionary<string, string> Commands { get; private set; }
-
+        
         public IEnumerable<TargetFrameworkInformation> GetTargetFrameworks()
         {
             return _targetFrameworks.Values;
@@ -244,24 +240,29 @@ namespace Microsoft.Framework.Runtime
             project.ContentsPatterns = GetSourcePattern(rawProject, "files", _defaultContentsPatterns);
 
             // Set the default loader information for projects
-            var projectLoaderAssembly = "Microsoft.Framework.Runtime.Roslyn";
+            var projectServicesAssemly = "Microsoft.Framework.Runtime.Roslyn";
             var loaderTypeName = "Microsoft.Framework.Runtime.Roslyn.RoslynAssemblyLoader";
             var builderTypeName = "Microsoft.Framework.Runtime.Roslyn.RoslynProjectBuilder";
             var metadataProviderTypeName = "Microsoft.Framework.Runtime.Roslyn.RoslynProjectMetadataProvider";
+            var libraryExportProviderTypeName = "Microsoft.Framework.Runtime.Roslyn.RoslynLibraryExportProvider";
 
-            var loaderInfo = rawProject["loader"] as JObject;
+            var loaderInfo = rawProject["services"] as JObject;
 
             if (loaderInfo != null)
             {
-                projectLoaderAssembly = GetValue<string>(loaderInfo, "assembly");
+                projectServicesAssemly = GetValue<string>(loaderInfo, "assembly");
                 loaderTypeName = GetValue<string>(loaderInfo, "loaderType");
                 builderTypeName = GetValue<string>(loaderInfo, "builderType");
                 metadataProviderTypeName = GetValue<string>(loaderInfo, "metadataProviderType");
+                libraryExportProviderTypeName = GetValue<string>(loaderInfo, "libraryExportProviderType");
             }
 
-            project.Loader = new TypeInformation(projectLoaderAssembly, loaderTypeName);
-            project.Builder = new TypeInformation(projectLoaderAssembly, builderTypeName);
-            project.MetadataProvider = new TypeInformation(projectLoaderAssembly, metadataProviderTypeName);
+            var loader = new TypeInformation(projectServicesAssemly, loaderTypeName);
+            var builder = new TypeInformation(projectServicesAssemly, builderTypeName);
+            var metadataProvider = new TypeInformation(projectServicesAssemly, metadataProviderTypeName);
+            var libraryExporter = new TypeInformation(projectServicesAssemly, libraryExportProviderTypeName);
+
+            project.Services = new ProjectServices(loader, builder, metadataProvider, libraryExporter);
 
             var commands = rawProject["commands"] as JObject;
             if (commands != null)

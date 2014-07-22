@@ -12,10 +12,8 @@ using Microsoft.Framework.Runtime.FileSystem;
 
 namespace Microsoft.Framework.Runtime.Roslyn
 {
-    public class RoslynProjectBuilder : IProjectBuilder, ILibraryExportProvider
+    public class RoslynProjectBuilder : IProjectBuilder
     {
-        private readonly Dictionary<string, CompilationContext> _compilationCache = new Dictionary<string, CompilationContext>();
-
         private readonly RoslynCompiler _compiler;
         private readonly IResourceProvider _resourceProvider;
 
@@ -37,7 +35,7 @@ namespace Microsoft.Framework.Runtime.Roslyn
                                          string configuration,
                                          string outputPath)
         {
-            var compilationContext = GetCompilationContext(name, targetFramework, configuration);
+            var compilationContext = _compiler.CompileProject(name, targetFramework, configuration);
 
             if (compilationContext == null)
             {
@@ -70,48 +68,6 @@ namespace Microsoft.Framework.Runtime.Roslyn
                                   .Select(d => formatter.Format(d)).ToList();
 
             return new RoslynBuildResult(success, warnings, errors);
-        }
-
-        public ILibraryExport GetLibraryExport(string name, FrameworkName targetFramework, string configuration)
-        {
-            var compliationContext = GetCompilationContext(name, targetFramework, configuration);
-
-            if (compliationContext == null)
-            {
-                return null;
-            }
-
-            return compliationContext.GetLibraryExport();
-        }
-
-        private CompilationContext GetCompilationContext(string name, FrameworkName targetFramework, string configuration)
-        {
-            CompilationContext compilationContext;
-            if (_compilationCache.TryGetValue(name, out compilationContext))
-            {
-                return compilationContext;
-            }
-
-            var context = _compiler.CompileProject(name, targetFramework, configuration);
-
-            if (context == null)
-            {
-                return null;
-            }
-
-            CacheCompilation(context);
-
-            return context;
-        }
-
-        private void CacheCompilation(CompilationContext context)
-        {
-            _compilationCache[context.Project.Name] = context;
-
-            foreach (var projectReference in context.MetadataReferences.OfType<RoslynProjectReference>())
-            {
-                CacheCompilation(projectReference.CompilationContext);
-            }
         }
 
         private bool CompileToDisk(

@@ -12,7 +12,7 @@ using Microsoft.CodeAnalysis.Emit;
 
 namespace Microsoft.Framework.Runtime.Roslyn
 {
-    public class RoslynAssemblyLoader : IAssemblyLoader, ILibraryExportProvider
+    public class RoslynAssemblyLoader : IAssemblyLoader
     {
         private readonly Dictionary<string, CompilationContext> _compilationCache = new Dictionary<string, CompilationContext>();
 
@@ -61,18 +61,6 @@ namespace Microsoft.Framework.Runtime.Roslyn
             resources.AddEmbeddedReferences(compilationContext.GetRequiredEmbeddedReferences());
 
             return CompileInMemory(name, compilationContext, resources);
-        }
-
-        public ILibraryExport GetLibraryExport(string name, FrameworkName targetFramework, string configuration)
-        {
-            var compliationContext = GetCompilationContext(name, targetFramework, configuration);
-
-            if (compliationContext == null)
-            {
-                return null;
-            }
-
-            return compliationContext.GetLibraryExport();
         }
 
         private CompilationContext GetCompilationContext(string name, FrameworkName targetFramework, string configuration)

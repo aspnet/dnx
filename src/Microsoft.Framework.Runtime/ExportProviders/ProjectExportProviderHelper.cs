@@ -13,11 +13,11 @@ using NuGet;
 
 namespace Microsoft.Framework.Runtime
 {
-    public class ProjectExportProvider
+    public class ProjectExportProviderHelper
     {
         private readonly IProjectResolver _projectResolver;
 
-        public ProjectExportProvider(IProjectResolver projectResolver)
+        public ProjectExportProviderHelper(IProjectResolver projectResolver)
         {
             _projectResolver = projectResolver;
         }

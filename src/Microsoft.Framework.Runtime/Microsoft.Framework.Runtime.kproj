@@ -45,7 +45,8 @@
     <Compile Include="ExportProviders\CompositeLibraryExportProvider.cs" />
     <Compile Include="ExportProviders\LibraryExport.cs" />
     <Compile Include="ExportProviders\PEReaderExtensions.cs" />
-    <Compile Include="ExportProviders\ProjectExportProvider.cs" />
+    <Compile Include="ExportProviders\ProjectExportProviderHelper.cs" />
+    <Compile Include="ExportProviders\ProjectLibraryExportProvider.cs" />
     <Compile Include="ExportProviders\EmbeddedMetadataReference.cs" />
     <Compile Include="ExportProviders\UnresolvedMetadataReference.cs" />
     <Compile Include="ExportProviders\MetadataFileReference.cs" />
@@ -139,6 +140,7 @@
     <Compile Include="NuGet\Utility\ZipArchiveExtensions.cs" />
     <Compile Include="Project.cs" />
     <Compile Include="ProjectResolver.cs" />
+    <Compile Include="ProjectServices.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="TargetFrameworkInformation.cs" />
   </ItemGroup>
