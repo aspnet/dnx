@@ -2,6 +2,7 @@
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -18,7 +19,10 @@ namespace klr.hosting
 {
     internal static class RuntimeBootstrapper
     {
-        private static readonly Dictionary<string, Assembly> _assemblyCache = new Dictionary<string, Assembly>();
+        private static readonly ConcurrentDictionary<string, object> _assemblyLoadLocks =
+                new ConcurrentDictionary<string, object>(StringComparer.Ordinal);
+        private static readonly Dictionary<string, Assembly> _assemblyCache
+                = new Dictionary<string, Assembly>(StringComparer.Ordinal);
 
         private static readonly char[] _libPathSeparator = new[] { ';' };
 
@@ -125,15 +129,34 @@ namespace klr.hosting
                     return assembly;
                 }
 
-                assembly = loader(name) ?? ResolveHostAssembly(loadFile, searchPaths, name);
-
-                if (assembly != null)
+                var loadLock = _assemblyLoadLocks.GetOrAdd(name, new object());
+                try
                 {
-#if K10
-                    ExtractAssemblyNeutralInterfaces(assembly, loadStream);
-#endif
+                    // Concurrently loading the assembly might result in two distinct instances of the same assembly 
+                    // being loaded. This was observed when loading via Assembly.LoadStream. Prevent this by locking on the name.
+                    lock (loadLock)
+                    {
+                        if (_assemblyCache.TryGetValue(name, out assembly))
+                        {
+                            // This would succeed in case the thread was previously waiting on the lock when assembly 
+                            // load was in progress
+                            return assembly;
+                        }
 
-                    _assemblyCache[name] = assembly;
+                        assembly = loader(name) ?? ResolveHostAssembly(loadFile, searchPaths, name);
+
+                        if (assembly != null)
+                        {
+#if K10
+                            ExtractAssemblyNeutralInterfaces(assembly, loadStream);
+#endif
+                            _assemblyCache[name] = assembly;
+                        }
+                    }
+                }
+                finally
+                {
+                    _assemblyLoadLocks.TryRemove(name, out loadLock);
                 }
 
                 return assembly;
