@@ -1,6 +1,7 @@
 // Copyright (c) Microsoft Open Technologies, Inc. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -16,35 +17,28 @@ namespace Microsoft.Framework.Runtime.Roslyn
     {
         private readonly Dictionary<string, CompilationContext> _compilationCache = new Dictionary<string, CompilationContext>();
 
-        private readonly RoslynCompiler _compiler;
+        private readonly ILibraryExportProvider _libraryExportProvider;
         private readonly IAssemblyLoaderEngine _loaderEngine;
-        private readonly IProjectResolver _projectResolver;
         private readonly IResourceProvider _resourceProvider;
         private readonly IApplicationEnvironment _applicationEnvironment;
 
         public RoslynAssemblyLoader(IAssemblyLoaderEngine loaderEngine,
                                     IApplicationEnvironment applicationEnvironment,
-                                    IFileWatcher watcher,
-                                    IProjectResolver projectResolver,
-                                    ILibraryExportProvider dependencyExporter)
+                                    ILibraryExportProvider libraryExportProvider)
         {
             _loaderEngine = loaderEngine;
             _applicationEnvironment = applicationEnvironment;
-            _projectResolver = projectResolver;
+            _libraryExportProvider = libraryExportProvider;
 
             var resxProvider = new ResxResourceProvider();
             var embeddedResourceProvider = new EmbeddedResourceProvider();
-
             _resourceProvider = new CompositeResourceProvider(new IResourceProvider[] { resxProvider, embeddedResourceProvider });
-            _compiler = new RoslynCompiler(projectResolver,
-                                           watcher,
-                                           dependencyExporter);
         }
 
         public Assembly Load(string assemblyName)
         {
-            var compilationContext = GetCompilationContext(assemblyName, 
-                                                           _applicationEnvironment.TargetFramework, 
+            var compilationContext = GetCompilationContext(assemblyName,
+                                                           _applicationEnvironment.TargetFramework,
                                                            _applicationEnvironment.Configuration);
 
             if (compilationContext == null)
@@ -71,26 +65,25 @@ namespace Microsoft.Framework.Runtime.Roslyn
                 return compilationContext;
             }
 
-            var context = _compiler.CompileProject(name, targetFramework, configuration);
+            var export = _libraryExportProvider.GetLibraryExport(name, targetFramework, configuration);
 
-            if (context == null)
+            if (export == null)
             {
                 return null;
             }
 
-            CacheCompilation(context);
-
-            return context;
-        }
-
-        private void CacheCompilation(CompilationContext context)
-        {
-            _compilationCache[context.Project.Name] = context;
-
-            foreach (var projectReference in context.MetadataReferences.OfType<RoslynProjectReference>())
+            // This has all transitive project references so we can just cache up front
+            foreach (var projectReference in export.MetadataReferences.OfType<RoslynProjectReference>())
             {
-                CacheCompilation(projectReference.CompilationContext);
+                if (string.Equals(projectReference.Name, name, StringComparison.OrdinalIgnoreCase))
+                {
+                    compilationContext = projectReference.CompilationContext;
+                }
+
+                _compilationCache[projectReference.Name] = projectReference.CompilationContext;
             }
+
+            return compilationContext;
         }
 
         private Assembly CompileInMemory(string name, CompilationContext compilationContext, IEnumerable<ResourceDescription> resources)

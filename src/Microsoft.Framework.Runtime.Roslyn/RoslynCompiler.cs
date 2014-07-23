@@ -36,19 +36,6 @@ namespace Microsoft.Framework.Runtime.Roslyn
 
         public CompilationContext CompileProject(string name, FrameworkName targetFramework, string configuration)
         {
-            var compilationCache = new Dictionary<string, CompilationContext>();
-
-            return Compile(name, targetFramework, configuration, compilationCache);
-        }
-
-        private CompilationContext Compile(string name, FrameworkName targetFramework, string configuration, IDictionary<string, CompilationContext> compilationCache)
-        {
-            CompilationContext compilationContext;
-            if (compilationCache.TryGetValue(name, out compilationContext))
-            {
-                return compilationContext;
-            }
-
             Project project;
             // Can't find a project file with the name so bail
             if (!_projectResolver.TryResolveProject(name, out project))
@@ -62,8 +49,7 @@ namespace Microsoft.Framework.Runtime.Roslyn
 
             _watcher.WatchFile(project.ProjectFilePath);
 
-            var exportProvider = new CachedCompilationLibraryExportProvider(this, compilationCache, _libraryExportProvider);
-            var export = _projectExportProvider.GetProjectExport(exportProvider, name, targetFramework, configuration, out targetFramework);
+            var export = _projectExportProvider.GetProjectExport(_libraryExportProvider, name, targetFramework, configuration, out targetFramework);
             var metadataReferences = export.MetadataReferences;
             var exportedReferences = metadataReferences.Select(ConvertMetadataReference);
 
@@ -111,12 +97,10 @@ namespace Microsoft.Framework.Runtime.Roslyn
 
             newCompilation = ApplyVersionInfo(newCompilation, project);
 
-            compilationContext = new CompilationContext(newCompilation,
+            var compilationContext = new CompilationContext(newCompilation,
                 metadataReferences,
                 assemblyNeutralTypeDiagnostics,
                 project);
-
-            compilationCache[name] = compilationContext;
 
             return compilationContext;
         }
@@ -187,18 +171,6 @@ namespace Microsoft.Framework.Runtime.Roslyn
             }
         }
 
-        public RoslynLibraryExport GetLibraryExport(string name, FrameworkName targetFramework, string configuration, IDictionary<string, CompilationContext> compilationCache)
-        {
-            var compilationContext = Compile(name, targetFramework, configuration, compilationCache);
-
-            if (compilationContext == null)
-            {
-                return null;
-            }
-
-            return compilationContext.GetLibraryExport();
-        }
-
         private MetadataReference ConvertMetadataReference(IMetadataReference metadataReference)
         {
             var roslynReference = metadataReference as IRoslynMetadataReference;
@@ -248,25 +220,6 @@ namespace Microsoft.Framework.Runtime.Roslyn
         internal static bool IsError(Diagnostic diagnostic)
         {
             return diagnostic.Severity == DiagnosticSeverity.Error || diagnostic.IsWarningAsError;
-        }
-
-        private struct CachedCompilationLibraryExportProvider : ILibraryExportProvider
-        {
-            private readonly RoslynCompiler _compiler;
-            private readonly IDictionary<string, CompilationContext> _compliationCache;
-            private readonly ILibraryExportProvider _previous;
-
-            public CachedCompilationLibraryExportProvider(RoslynCompiler compiler, IDictionary<string, CompilationContext> compliationCache, ILibraryExportProvider previous)
-            {
-                _compiler = compiler;
-                _compliationCache = compliationCache;
-                _previous = previous;
-            }
-
-            public ILibraryExport GetLibraryExport(string name, FrameworkName targetFramework, string configuration)
-            {
-                return _previous.GetLibraryExport(name, targetFramework, configuration) ?? _compiler.GetLibraryExport(name, targetFramework, configuration, _compliationCache);
-            }
         }
     }
 }

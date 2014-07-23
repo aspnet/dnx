@@ -1,8 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.Versioning;
-using Microsoft.Framework.Runtime.FileSystem;
 
 namespace Microsoft.Framework.Runtime.Roslyn
 {
@@ -15,10 +13,11 @@ namespace Microsoft.Framework.Runtime.Roslyn
         private readonly RoslynCompiler _compiler;
 
         public RoslynLibraryExportProvider(IProjectResolver projectResolver,
+                                           IFileWatcher watcher,
                                            ILibraryExportProvider dependencyExporter)
         {
             _compiler = new RoslynCompiler(projectResolver,
-                                           NoopWatcher.Instance,
+                                           watcher,
                                            dependencyExporter);
         }
 
@@ -49,19 +48,15 @@ namespace Microsoft.Framework.Runtime.Roslyn
                 return null;
             }
 
-            CacheCompilation(context);
+            _compilationCache[name] = context;
 
-            return context;
-        }
-
-        private void CacheCompilation(CompilationContext context)
-        {
-            _compilationCache[context.Project.Name] = context;
-
+            // This has the closure of references
             foreach (var projectReference in context.MetadataReferences.OfType<RoslynProjectReference>())
             {
-                CacheCompilation(projectReference.CompilationContext);
+                _compilationCache[projectReference.Name] = projectReference.CompilationContext;
             }
+            
+            return context;
         }
     }
 }

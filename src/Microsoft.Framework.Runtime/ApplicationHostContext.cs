@@ -1,5 +1,6 @@
 ﻿using System;
 using Microsoft.Framework.Runtime.Common.DependencyInjection;
+using Microsoft.Framework.Runtime.FileSystem;
 
 namespace Microsoft.Framework.Runtime
 {
@@ -57,6 +58,7 @@ namespace Microsoft.Framework.Runtime
             // Default services
             _serviceProvider.Add(typeof(ILibraryExportProvider), compositeDependencyExporter);
             _serviceProvider.Add(typeof(IProjectResolver), ProjectResolver);
+            _serviceProvider.Add(typeof(IFileWatcher), NoopWatcher.Instance);
 
             _serviceProvider.Add(typeof(NuGetDependencyResolver), NuGetDependencyProvider);
             _serviceProvider.Add(typeof(ProjectReferenceDependencyProvider), ProjectDepencyProvider);

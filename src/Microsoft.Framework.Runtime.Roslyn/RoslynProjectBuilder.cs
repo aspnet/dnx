@@ -1,6 +1,7 @@
 // Copyright (c) Microsoft Open Technologies, Inc. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -8,26 +9,22 @@ using System.Linq;
 using System.Runtime.Versioning;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Emit;
-using Microsoft.Framework.Runtime.FileSystem;
 
 namespace Microsoft.Framework.Runtime.Roslyn
 {
     public class RoslynProjectBuilder : IProjectBuilder
     {
-        private readonly RoslynCompiler _compiler;
         private readonly IResourceProvider _resourceProvider;
+        private readonly ILibraryExportProvider _libraryExportProvider;
 
-        public RoslynProjectBuilder(IProjectResolver projectResolver,
-                                    ILibraryExportProvider dependencyExporter)
+        public RoslynProjectBuilder(ILibraryExportProvider libraryExportProvider)
         {
             var resxProvider = new ResxResourceProvider();
             var embeddedResourceProvider = new EmbeddedResourceProvider();
 
             _resourceProvider = new CompositeResourceProvider(new IResourceProvider[] { resxProvider, embeddedResourceProvider });
 
-            _compiler = new RoslynCompiler(projectResolver,
-                                           NoopWatcher.Instance,
-                                           dependencyExporter);
+            _libraryExportProvider = libraryExportProvider;
         }
 
         public IProjectBuildResult Build(string name,
@@ -35,7 +32,7 @@ namespace Microsoft.Framework.Runtime.Roslyn
                                          string configuration,
                                          string outputPath)
         {
-            var compilationContext = _compiler.CompileProject(name, targetFramework, configuration);
+            var compilationContext = GetCompilationContext(name, targetFramework, configuration);
 
             if (compilationContext == null)
             {
@@ -68,6 +65,26 @@ namespace Microsoft.Framework.Runtime.Roslyn
                                   .Select(d => formatter.Format(d)).ToList();
 
             return new RoslynBuildResult(success, warnings, errors);
+        }
+
+        private CompilationContext GetCompilationContext(string name, FrameworkName targetFramework, string configuration)
+        {
+            var export = _libraryExportProvider.GetLibraryExport(name, targetFramework, configuration);
+
+            if (export == null)
+            {
+                return null;
+            }
+
+            foreach (var projectReference in export.MetadataReferences.OfType<RoslynProjectReference>())
+            {
+                if (string.Equals(projectReference.Name, name, StringComparison.OrdinalIgnoreCase))
+                {
+                    return projectReference.CompilationContext;
+                }
+            }
+
+            return null;
         }
 
         private bool CompileToDisk(
