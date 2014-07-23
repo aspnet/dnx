@@ -19,7 +19,6 @@ namespace Microsoft.Framework.Runtime
     {
         private IAssemblyLoader _loader;
         private ApplicationHostContext _applicationHostContext;
-        private ServiceProvider _serviceProvider;
 
         private IFileWatcher _watcher;
         private readonly string _projectDirectory;
@@ -39,7 +38,7 @@ namespace Microsoft.Framework.Runtime
 
         public IServiceProvider ServiceProvider
         {
-            get { return _serviceProvider; }
+            get { return _applicationHostContext.ServiceProvider; }
         }
 
         public Project Project
@@ -136,33 +135,32 @@ namespace Microsoft.Framework.Runtime
 
             var applicationEnvironment = new ApplicationEnvironment(Project, _targetFramework, options.Configuration);
 
-            _serviceProvider = new ServiceProvider(_applicationHostContext.ServiceProvider);
 
-            _serviceProvider.Add(typeof(IApplicationEnvironment), applicationEnvironment);
-            _serviceProvider.Add(typeof(IApplicationShutdown), _shutdown);
+            _applicationHostContext.AddService(typeof(IApplicationEnvironment), applicationEnvironment);
+            _applicationHostContext.AddService(typeof(IApplicationShutdown), _shutdown);
 
             // TODO: Get rid of this and just use the IFileWatcher
-            _serviceProvider.Add(typeof(IFileMonitor), _watcher);
-            _serviceProvider.Add(typeof(IFileWatcher), _watcher);
-            _serviceProvider.Add(typeof(ILibraryManager),
+            _applicationHostContext.AddService(typeof(IFileMonitor), _watcher);
+            _applicationHostContext.AddService(typeof(IFileWatcher), _watcher);
+            _applicationHostContext.AddService(typeof(ILibraryManager),
                 new LibraryManager(_targetFramework,
                                    applicationEnvironment.Configuration,
                                    _applicationHostContext.DependencyWalker,
-                                   (ILibraryExportProvider)_serviceProvider.GetService(typeof(ILibraryExportProvider))));
+                                   (ILibraryExportProvider)ServiceProvider.GetService(typeof(ILibraryExportProvider))));
 
             var loaders = new[]
             {
                 typeof(ProjectAssemblyLoader),
                 typeof(NuGetAssemblyLoader),
             }
-            .Select(loaderType => (IAssemblyLoader)ActivatorUtilities.CreateInstance(_serviceProvider, loaderType))
+            .Select(loaderType => (IAssemblyLoader)ActivatorUtilities.CreateInstance(ServiceProvider, loaderType))
             .ToList();
 
-            var nugetLoader = ActivatorUtilities.CreateInstance<NuGetAssemblyLoader>(_serviceProvider);
+            var nugetLoader = ActivatorUtilities.CreateInstance<NuGetAssemblyLoader>(ServiceProvider);
 
             _loader = new CompositeAssemblyLoader(applicationEnvironment, loaders);
 
-            CallContextServiceLocator.Locator.ServiceProvider = _serviceProvider;
+            CallContextServiceLocator.Locator.ServiceProvider = ServiceProvider;
         }
 
 

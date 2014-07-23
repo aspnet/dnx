@@ -64,6 +64,11 @@ namespace Microsoft.Framework.Runtime
             _serviceProvider.Add(typeof(ProjectReferenceDependencyProvider), ProjectDepencyProvider);
         }
 
+        public void AddService(Type type, object instance)
+        {
+            _serviceProvider.Add(type, instance);
+        }
+
         public IServiceProvider ServiceProvider
         {
             get
