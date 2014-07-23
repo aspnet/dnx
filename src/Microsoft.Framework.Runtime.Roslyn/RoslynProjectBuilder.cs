@@ -32,7 +32,7 @@ namespace Microsoft.Framework.Runtime.Roslyn
                                          string configuration,
                                          string outputPath)
         {
-            var compilationContext = GetCompilationContext(name, targetFramework, configuration);
+            var compilationContext = _libraryExportProvider.GetCompilationContext(name, targetFramework, configuration);
 
             if (compilationContext == null)
             {
@@ -65,26 +65,6 @@ namespace Microsoft.Framework.Runtime.Roslyn
                                   .Select(d => formatter.Format(d)).ToList();
 
             return new RoslynBuildResult(success, warnings, errors);
-        }
-
-        private CompilationContext GetCompilationContext(string name, FrameworkName targetFramework, string configuration)
-        {
-            var export = _libraryExportProvider.GetLibraryExport(name, targetFramework, configuration);
-
-            if (export == null)
-            {
-                return null;
-            }
-
-            foreach (var projectReference in export.MetadataReferences.OfType<RoslynProjectReference>())
-            {
-                if (string.Equals(projectReference.Name, name, StringComparison.OrdinalIgnoreCase))
-                {
-                    return projectReference.CompilationContext;
-                }
-            }
-
-            return null;
         }
 
         private bool CompileToDisk(

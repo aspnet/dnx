@@ -33,6 +33,7 @@
     <Compile Include="ResourceExtensions.cs" />
     <Compile Include="ResxResourceProvider.cs" />
     <Compile Include="RoslynLibraryExportProvider.cs" />
+    <Compile Include="RoslynLibraryExportProviderExtensions.cs" />
     <Compile Include="RoslynProjectBuilder.cs" />
     <Compile Include="RoslynAssemblyLoader.cs" />
     <Compile Include="RoslynCompiler.cs" />

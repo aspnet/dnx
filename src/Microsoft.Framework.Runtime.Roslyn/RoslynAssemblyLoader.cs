@@ -15,8 +15,6 @@ namespace Microsoft.Framework.Runtime.Roslyn
 {
     public class RoslynAssemblyLoader : IAssemblyLoader
     {
-        private readonly Dictionary<string, CompilationContext> _compilationCache = new Dictionary<string, CompilationContext>();
-
         private readonly ILibraryExportProvider _libraryExportProvider;
         private readonly IAssemblyLoaderEngine _loaderEngine;
         private readonly IResourceProvider _resourceProvider;
@@ -37,9 +35,9 @@ namespace Microsoft.Framework.Runtime.Roslyn
 
         public Assembly Load(string assemblyName)
         {
-            var compilationContext = GetCompilationContext(assemblyName,
-                                                           _applicationEnvironment.TargetFramework,
-                                                           _applicationEnvironment.Configuration);
+            var compilationContext = _libraryExportProvider.GetCompilationContext(assemblyName,
+                                                                                  _applicationEnvironment.TargetFramework,
+                                                                                  _applicationEnvironment.Configuration);
 
             if (compilationContext == null)
             {
@@ -55,35 +53,6 @@ namespace Microsoft.Framework.Runtime.Roslyn
             resources.AddEmbeddedReferences(compilationContext.GetRequiredEmbeddedReferences());
 
             return CompileInMemory(name, compilationContext, resources);
-        }
-
-        private CompilationContext GetCompilationContext(string name, FrameworkName targetFramework, string configuration)
-        {
-            CompilationContext compilationContext;
-            if (_compilationCache.TryGetValue(name, out compilationContext))
-            {
-                return compilationContext;
-            }
-
-            var export = _libraryExportProvider.GetLibraryExport(name, targetFramework, configuration);
-
-            if (export == null)
-            {
-                return null;
-            }
-
-            // This has all transitive project references so we can just cache up front
-            foreach (var projectReference in export.MetadataReferences.OfType<RoslynProjectReference>())
-            {
-                if (string.Equals(projectReference.Name, name, StringComparison.OrdinalIgnoreCase))
-                {
-                    compilationContext = projectReference.CompilationContext;
-                }
-
-                _compilationCache[projectReference.Name] = projectReference.CompilationContext;
-            }
-
-            return compilationContext;
         }
 
         private Assembly CompileInMemory(string name, CompilationContext compilationContext, IEnumerable<ResourceDescription> resources)
