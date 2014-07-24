@@ -54,7 +54,7 @@ namespace Microsoft.Framework.PackageManager.Packing
             root.Operations.Delete(TargetPath);
 
             // A set of excluded files/directories used as a filter when doing copy
-            var excludeSet = new HashSet<string>(project.ExcludeFiles, StringComparer.OrdinalIgnoreCase);
+            var excludeSet = new HashSet<string>(project.PackExcludeFiles, StringComparer.OrdinalIgnoreCase);
 
             root.Operations.Copy(project.ProjectDirectory, TargetPath, (isRoot, filePath) =>
             {

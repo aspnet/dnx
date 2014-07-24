@@ -21,6 +21,8 @@ namespace Microsoft.Framework.Runtime
         internal static readonly string[] _defaultSourcePatterns = new[] { @"**\*.cs" };
         internal static readonly string[] _defaultExcludePatterns = new[] { @"obj\**\*", @"bin\**\*", @"**.csproj",
             @"**.kproj", @"**.user", @"**.vspscc", @"**.vssscc", @"**.pubxml" };
+        internal static readonly string[] _defaultPackExcludePatterns = new[] { @"obj\**\*", @"bin\**\*", @"**.csproj",
+            @"**.kproj", @"**.user", @"**.vspscc", @"**.vssscc", @"**.pubxml" };
         internal static readonly string[] _defaultPreprocessPatterns = new[] { @"compiler\preprocess\**\*.cs" };
         internal static readonly string[] _defaultSharedPatterns = new[] { @"compiler\shared\**\*.cs" };
         internal static readonly string[] _defaultResourcesPatterns = new[] { @"compiler\resources\**\*" };
@@ -67,6 +69,8 @@ namespace Microsoft.Framework.Runtime
 
         internal IEnumerable<string> ExcludePatterns { get; set; }
 
+        internal IEnumerable<string> PackExcludePatterns { get; set; }
+
         internal IEnumerable<string> PreprocessPatterns { get; set; }
 
         internal IEnumerable<string> SharedPatterns { get; set; }
@@ -98,17 +102,17 @@ namespace Microsoft.Framework.Runtime
             }
         }
 
-        public IEnumerable<string> ExcludeFiles
+        public IEnumerable<string> PackExcludeFiles
         {
             get
             {
                 string path = ProjectDirectory;
 
-                var sourceExcludeFiles = ExcludePatterns
+                var packExcludeFiles = PackExcludePatterns
                     .SelectMany(pattern => PathResolver.PerformWildcardSearch(path, pattern))
                     .ToArray();
 
-                return sourceExcludeFiles;
+                return packExcludeFiles;
             }
         }
 
@@ -151,7 +155,7 @@ namespace Microsoft.Framework.Runtime
                     .ToArray();
 
                 var excludePatterns = PreprocessPatterns.Concat(SharedPatterns).Concat(ResourcesPatterns)
-                    .Concat(ExcludePatterns).Concat(SourcePatterns)
+                    .Concat(PackExcludePatterns).Concat(SourcePatterns)
                     .Select(pattern => PathResolver.NormalizeWildcardForExcludedFiles(path, pattern))
                     .ToArray();
 
@@ -234,6 +238,7 @@ namespace Microsoft.Framework.Runtime
             // Source file patterns
             project.SourcePatterns = GetSourcePattern(rawProject, "code", _defaultSourcePatterns);
             project.ExcludePatterns = GetSourcePattern(rawProject, "exclude", _defaultExcludePatterns);
+            project.PackExcludePatterns = GetSourcePattern(rawProject, "pack-exclude", _defaultPackExcludePatterns);
             project.PreprocessPatterns = GetSourcePattern(rawProject, "preprocess", _defaultPreprocessPatterns);
             project.SharedPatterns = GetSourcePattern(rawProject, "shared", _defaultSharedPatterns);
             project.ResourcesPatterns = GetSourcePattern(rawProject, "resources", _defaultResourcesPatterns);
