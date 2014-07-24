@@ -21,6 +21,7 @@
     <Compile Include="Building\BuildContext.cs" />
     <Compile Include="Building\BuildManager.cs" />
     <Compile Include="Building\BuildOptions.cs" />
+    <Compile Include="Building\ProjectBuilder.cs" />
     <Compile Include="Colors.cs" />
     <Compile Include="ReportExtensions.cs" />
     <Compile Include="DictionaryExtensions.cs" />

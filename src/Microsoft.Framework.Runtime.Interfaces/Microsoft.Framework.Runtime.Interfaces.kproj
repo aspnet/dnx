@@ -40,9 +40,6 @@
     <Compile Include="IMetadataReference.cs" />
     <Compile Include="Infrastructure\CallContextServiceLocator.cs" />
     <Compile Include="Infrastructure\IServiceProviderLocator.cs" />
-    <Compile Include="IProjectMetadata.cs" />
-    <Compile Include="IProjectMetadataProvider.cs" />
-    <Compile Include="IProjectBuilder.cs" />
     <Compile Include="ISourceFileReference.cs" />
     <Compile Include="ISourceReference.cs" />
   </ItemGroup>

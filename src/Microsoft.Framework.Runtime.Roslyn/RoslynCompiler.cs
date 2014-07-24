@@ -199,7 +199,7 @@ namespace Microsoft.Framework.Runtime.Roslyn
             {
                 using (var ms = new MemoryStream())
                 {
-                    projectReference.WriteReferenceAssemblyStream(ms);
+                    projectReference.EmitReferenceAssembly(ms);
 
                     ms.Seek(0, SeekOrigin.Begin);
 

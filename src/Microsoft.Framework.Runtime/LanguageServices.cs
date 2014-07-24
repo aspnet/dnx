@@ -4,22 +4,16 @@ using Microsoft.Framework.Runtime.Common.DependencyInjection;
 
 namespace Microsoft.Framework.Runtime
 {
-    public class ProjectServices
+    public class LanguageServices
     {
-        public ProjectServices(TypeInformation loader,
-                               TypeInformation builder,
-                               TypeInformation metadataProvider,
-                               TypeInformation libraryExporter)
+        public LanguageServices(string name, TypeInformation libraryExporter)
         {
-            Loader = loader;
-            Builder = builder;
-            MetadataProvider = metadataProvider;
+            Name = name;
             LibraryExportProvider = libraryExporter;
         }
 
-        public TypeInformation Loader { get; private set; }
-        public TypeInformation Builder { get; private set; }
-        public TypeInformation MetadataProvider { get; private set; }
+        public string Name { get; private set; }
+
         public TypeInformation LibraryExportProvider { get; private set; }
 
         public static T CreateService<T>(IServiceProvider sp, TypeInformation typeInfo)

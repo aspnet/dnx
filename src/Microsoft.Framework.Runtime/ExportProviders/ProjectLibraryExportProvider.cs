@@ -28,9 +28,9 @@ namespace Microsoft.Framework.Runtime
                 return null;
             }
 
-            var exportProvider = _exportProviders.GetOrAdd(project.Services.LibraryExportProvider, typeInfo =>
+            var exportProvider = _exportProviders.GetOrAdd(project.LanguageServices.LibraryExportProvider, typeInfo =>
             {
-                return ProjectServices.CreateService<ILibraryExportProvider>(_serviceProvider, typeInfo);
+                return LanguageServices.CreateService<ILibraryExportProvider>(_serviceProvider, typeInfo);
             });
 
             return exportProvider.GetLibraryExport(name, targetFramework, configuration);

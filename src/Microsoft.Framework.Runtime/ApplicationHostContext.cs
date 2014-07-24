@@ -69,6 +69,11 @@ namespace Microsoft.Framework.Runtime
             _serviceProvider.Add(type, instance);
         }
 
+        public T CreateInstance<T>()
+        {
+            return ActivatorUtilities.CreateInstance<T>(_serviceProvider);
+        }
+
         public IServiceProvider ServiceProvider
         {
             get

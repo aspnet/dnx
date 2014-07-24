@@ -10,6 +10,12 @@ namespace Microsoft.Framework.Runtime
     {
         string ProjectPath { get; }
 
-        void WriteReferenceAssemblyStream(Stream stream);
+        IProjectBuildResult GetDiagnostics();
+
+        void EmitReferenceAssembly(Stream stream);
+
+        IProjectBuildResult EmitAssembly(Stream assemblyStream, Stream pdbStream);
+
+        IProjectBuildResult EmitAssembly(string outputPath);
     }
 }

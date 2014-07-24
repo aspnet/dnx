@@ -61,7 +61,7 @@ namespace Microsoft.Framework.Runtime
 
         public IList<Library> Dependencies { get; private set; }
 
-        public ProjectServices Services { get; private set; }
+        public LanguageServices LanguageServices { get; private set; }
 
         internal IEnumerable<string> SourcePatterns { get; set; }
 
@@ -240,29 +240,22 @@ namespace Microsoft.Framework.Runtime
             project.ContentsPatterns = GetSourcePattern(rawProject, "files", _defaultContentsPatterns);
 
             // Set the default loader information for projects
-            var projectServicesAssemly = "Microsoft.Framework.Runtime.Roslyn";
-            var loaderTypeName = "Microsoft.Framework.Runtime.Roslyn.RoslynAssemblyLoader";
-            var builderTypeName = "Microsoft.Framework.Runtime.Roslyn.RoslynProjectBuilder";
-            var metadataProviderTypeName = "Microsoft.Framework.Runtime.Roslyn.RoslynProjectMetadataProvider";
+            var languageServicesAssembly = "Microsoft.Framework.Runtime.Roslyn";
             var libraryExportProviderTypeName = "Microsoft.Framework.Runtime.Roslyn.RoslynLibraryExportProvider";
+            var languageName = "C#";
 
-            var loaderInfo = rawProject["services"] as JObject;
+            var languageInfo = rawProject["language"] as JObject;
 
-            if (loaderInfo != null)
+            if (languageInfo != null)
             {
-                projectServicesAssemly = GetValue<string>(loaderInfo, "assembly");
-                loaderTypeName = GetValue<string>(loaderInfo, "loaderType");
-                builderTypeName = GetValue<string>(loaderInfo, "builderType");
-                metadataProviderTypeName = GetValue<string>(loaderInfo, "metadataProviderType");
-                libraryExportProviderTypeName = GetValue<string>(loaderInfo, "libraryExportProviderType");
+                languageName = GetValue<string>(languageInfo, "name");
+                languageServicesAssembly = GetValue<string>(languageInfo, "assembly");
+                libraryExportProviderTypeName = GetValue<string>(languageInfo, "libraryExportProviderType");
             }
 
-            var loader = new TypeInformation(projectServicesAssemly, loaderTypeName);
-            var builder = new TypeInformation(projectServicesAssemly, builderTypeName);
-            var metadataProvider = new TypeInformation(projectServicesAssemly, metadataProviderTypeName);
-            var libraryExporter = new TypeInformation(projectServicesAssemly, libraryExportProviderTypeName);
+            var libraryExporter = new TypeInformation(languageServicesAssembly, libraryExportProviderTypeName);
 
-            project.Services = new ProjectServices(loader, builder, metadataProvider, libraryExporter);
+            project.LanguageServices = new LanguageServices(languageName, libraryExporter);
 
             var commands = rawProject["commands"] as JObject;
             if (commands != null)

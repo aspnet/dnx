@@ -64,6 +64,8 @@
     <Compile Include="Loader\NuGetAssemblyLoader.cs" />
     <Compile Include="Loader\ProjectAssemblyLoader.cs" />
     <Compile Include="Loader\CompilationException.cs" />
+    <Compile Include="MetadataProvider\ProjectMetadata.cs" />
+    <Compile Include="MetadataProvider\ProjectMetadataProvider.cs" />
     <Compile Include="NuGet\Authoring\EmptyFrameworkFolderFile.cs" />
     <Compile Include="NuGet\Authoring\IPackageBuilder.cs" />
     <Compile Include="NuGet\Authoring\IPropertyProvider.cs" />
@@ -141,7 +143,7 @@
     <Compile Include="NuGet\Utility\ZipArchiveExtensions.cs" />
     <Compile Include="Project.cs" />
     <Compile Include="ProjectResolver.cs" />
-    <Compile Include="ProjectServices.cs" />
+    <Compile Include="LanguageServices.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="TargetFrameworkInformation.cs" />
   </ItemGroup>

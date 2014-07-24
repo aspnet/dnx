@@ -36,7 +36,7 @@ namespace Microsoft.Framework.DesignTimeHost
 
             public Project Project { get; set; }
 
-            public IProjectMetadataProvider MetadataProvider { get; set; }
+            public ProjectMetadataProvider MetadataProvider { get; set; }
 
             public IDictionary<string, ReferenceDescription> Dependencies { get; set; }
 
@@ -422,10 +422,7 @@ namespace Microsoft.Framework.DesignTimeHost
                 return state;
             }
 
-            state.MetadataProvider = ProjectServices.CreateService<IProjectMetadataProvider>(
-                applicationHostContext.ServiceProvider,
-                project.Services.MetadataProvider);
-
+            state.MetadataProvider = applicationHostContext.CreateInstance<ProjectMetadataProvider>();
             state.Project = project;
             state.FrameworkResolver = applicationHostContext.FrameworkReferenceResolver;
 

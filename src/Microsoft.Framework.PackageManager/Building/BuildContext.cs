@@ -35,9 +35,7 @@ namespace Microsoft.Framework.PackageManager
 
         public bool Build(IList<string> warnings, IList<string> errors)
         {
-            var builder = ProjectServices.CreateService<IProjectBuilder>(
-                _applicationHostContext.ServiceProvider,
-                _project.Services.Builder);
+            var builder = _applicationHostContext.CreateInstance<ProjectBuilder>();
 
             var result = builder.Build(_project.Name,
                                        _targetFramework,
@@ -59,9 +57,7 @@ namespace Microsoft.Framework.PackageManager
 
         public bool GetDiagnostics(IList<string> warnings, IList<string> errors)
         {
-            var metadataProvider = ProjectServices.CreateService<IProjectMetadataProvider>(
-                _applicationHostContext.ServiceProvider,
-                _project.Services.MetadataProvider);
+            var metadataProvider = _applicationHostContext.CreateInstance<ProjectMetadataProvider>();
 
             var metadata = metadataProvider.GetProjectMetadata(_project.Name, _targetFramework, _configuration);
 
