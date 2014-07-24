@@ -5,7 +5,7 @@
         "Shouldly" : "1.1.1.1",
         "Xunit.KRunner": "1.0.0-*"
     },
-    "configurations": {
+    "frameworks": {
         "net45": {
             "dependencies": {
                 "System.Runtime" : ""

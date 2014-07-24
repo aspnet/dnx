@@ -5,7 +5,7 @@
         "Microsoft.Framework.CommandLineUtils" : ""
     },
     "shared": "**/*.cs",
-    "configurations" : {
+    "frameworks" : {
         "net45" : { },
         "k10" : { 
             "dependencies": {

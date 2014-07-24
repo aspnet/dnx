@@ -7,7 +7,7 @@
         "Microsoft.Framework.Runtime.Common" : "",
         "Microsoft.Framework.Runtime.Interfaces" :  ""
     },
-    "configurations" : {
+    "frameworks" : {
         "net45" : {
             "dependencies": {
                 "System.Collections" : "",

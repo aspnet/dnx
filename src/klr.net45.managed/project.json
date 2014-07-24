@@ -5,7 +5,7 @@
         "klr.hosting.shared" : "",
         "Microsoft.Framework.CommandLineUtils" : ""
     },
-    "configurations": {
+    "frameworks": {
         "net45" : { }
     }
 }

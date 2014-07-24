@@ -5,7 +5,7 @@
         "klr.hosting.shared" : "",
         "Microsoft.Framework.CommandLineUtils" : ""
     },
-    "configurations": {
+    "frameworks": {
         "k10" : { 
             "dependencies": {
                 "System.Collections": "4.0.10.0",

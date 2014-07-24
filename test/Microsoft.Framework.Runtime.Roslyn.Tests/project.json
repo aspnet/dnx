@@ -5,7 +5,7 @@
         "Microsoft.Framework.Runtime.Roslyn": "",
         "Xunit.KRunner": "1.0.0-*"
     },
-    "configurations": {
+    "frameworks": {
         "net45": {
             "dependencies": {
                 "System.Collections" : "",

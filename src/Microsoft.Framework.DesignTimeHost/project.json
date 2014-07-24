@@ -10,7 +10,7 @@
         "Microsoft.Framework.TestAdapter": "" 
     },
     "compilationOptions" : { "define" : ["TRACE"], "warningsAsErrors": true },
-    "configurations" : {
+    "frameworks" : {
         "net45" : {
             "dependencies" : {
                 "System.Net" : ""

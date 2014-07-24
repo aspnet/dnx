@@ -2,7 +2,7 @@
     "version": "1.0.0-*",
     "compilationOptions" : { "define" : ["TRACE"], "warningsAsErrors": true },
     "shared": "**/*.cs",
-    "configurations" : {
+    "frameworks" : {
         "net45" : { },
         "k10" : { 
             "dependencies": {

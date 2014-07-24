@@ -1,6 +1,6 @@
 {
     "dependencies": { },
-    "configurations": {
+    "frameworks": {
         "net45": { },
         "k10": {
             "dependencies": {

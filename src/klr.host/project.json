@@ -5,7 +5,7 @@
         "Microsoft.Framework.Runtime.Common" : "",
         "Microsoft.Framework.Runtime.Interfaces" : ""
     },
-    "configurations" : {
+    "frameworks" : {
         "net45" : { },
         "k10": {
             "dependencies": {
