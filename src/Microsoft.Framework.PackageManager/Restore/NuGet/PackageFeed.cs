@@ -179,7 +179,13 @@ namespace Microsoft.Framework.PackageManager.Restore.NuGet
                     using (var entryStream = entry.Open())
                     {
                         var nuspecStream = new MemoryStream((int)entry.Length);
+#if NET45
                         await entryStream.CopyToAsync(nuspecStream);
+#else
+                        // System.IO.Compression.DeflateStream throws exception when multiple
+                        // async readers/writers are working on a single instance of it
+                        entryStream.CopyTo(nuspecStream);
+#endif
                         nuspecStream.Seek(0, SeekOrigin.Begin);
                         return nuspecStream;
                     }

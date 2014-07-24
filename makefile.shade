@@ -31,7 +31,7 @@ var ALL_TARGETS = '${NET45_TARGETS.Concat(K10_TARGETS)}'
 var NEW_RUNTIME = '${Environment.GetEnvironmentVariable("NEW_RUNTIME") == "1"}'
 
 
-#package-runtime .clean-sdk-dir .copy-bits .tweak-scripts .copy-package-dependencies .copy-coreclr .nuget-pack-runtime target='package'
+#package-runtime .clean-sdk-dir .copy-bits .tweak-scripts .copy-package-dependencies .copy-coreclr-kpm-dependencies .copy-coreclr .nuget-pack-runtime target='package'
 
 #rebuild-package .build-mono-entrypoint .build-compile .native-compile .xunit-test .package-runtime
 
@@ -139,10 +139,7 @@ var NEW_RUNTIME = '${Environment.GetEnvironmentVariable("NEW_RUNTIME") == "1"}'
 
             var kTools = new[] {
                 Path.Combine(krePath, "bin", "lib", "Microsoft.Framework.Project"),
-                /* Fix
-                TODO: enable this line after we have kpm on CoreCLR
                 Path.Combine(krePath, "bin", "lib", "Microsoft.Framework.PackageManager"),
-                */
                 Path.Combine(krePath, "bin", "lib", "Microsoft.Framework.DesignTimeHost"),
             };
 
@@ -428,6 +425,51 @@ var NEW_RUNTIME = '${Environment.GetEnvironmentVariable("NEW_RUNTIME") == "1"}'
 
                         Log.Info("Copying to " + packageFileDest);
                     }
+                }
+            }
+        }
+    }
+
+#copy-coreclr-kpm-dependencies
+    @{
+        var packages = new[] { "Microsoft.Net.Http.Client",
+                               "Microsoft.Net.Security" };
+        
+        foreach (var package in packages)
+        {
+            var packageDir = FindPackageDirectory(package);
+
+            if(packageDir == null)
+            {
+                Log.Warn("Unable to find " + package);
+
+                continue;
+            }
+
+            string[] candidates = new [] { "k10", "netcore45", "win8" };
+
+            var lib = new DirectoryInfo(Path.Combine(packageDir, "lib"));
+            var di = candidates.Select(fmk => lib.EnumerateDirectories("*" + fmk+ "*")
+                                                 .OrderBy(d => d.Name.Length)
+                                                 .FirstOrDefault())
+                               .FirstOrDefault(d => d != null);
+
+            if(!di.Exists)
+            {
+                Log.Warn("Couldn't find version of " + package + " matching k10");
+                continue;
+            }
+
+            foreach(var fi in di.GetFiles("*.dll"))
+            {
+                var targetDirs = K10_TARGETS.Select(dir => Path.Combine(dir, "lib", "Microsoft.Framework.PackageManager"));
+
+                foreach(var targetDir in targetDirs)
+                {
+                    string packageFileDest = Path.Combine(targetDir, fi.Name);
+                    File.Copy(fi.FullName, packageFileDest, true);
+
+                    Log.Info("Copying to " + packageFileDest);
                 }
             }
         }

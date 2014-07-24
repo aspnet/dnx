@@ -110,14 +110,9 @@ namespace Microsoft.Framework.PackageManager
 
                         if (optProxy.HasValue())
                         {
-#if NET45
-                            Environment.SetEnvironmentVariable("http_proxy", optProxy.Value(),
-                                EnvironmentVariableTarget.Process);
-#else
-                            throw new NotImplementedException(
-                                "TODO: \"kpm --proxy\" is not supported on current target framework");
-#endif
+                            Environment.SetEnvironmentVariable("http_proxy", optProxy.Value());
                         }
+
                         command.NoCache = optNoCache.HasValue();
                         command.PackageFolder = optPackageFolder.Value();
 

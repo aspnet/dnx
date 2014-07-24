@@ -24,7 +24,11 @@ namespace Microsoft.Framework.PackageManager.Restore.NuGet
         private string _userName;
         private string _password;
         private IReport _report;
-        
+#if K10
+        private string _proxyUserName;
+        private string _proxyPassword;
+#endif
+
         public HttpSource(
             string baseUri,
             string userName,
@@ -36,17 +40,21 @@ namespace Microsoft.Framework.PackageManager.Restore.NuGet
             _password = password;
             _report = report;
 
-#if NET45 // TODO: Figure out proxy support for http client
             var proxy = Environment.GetEnvironmentVariable("http_proxy");
             if (string.IsNullOrEmpty(proxy))
             {
+#if NET45
                 _client = new HttpClient();
+#else
+                _client = new HttpClient(new Microsoft.Net.Http.Client.ManagedHandler());
+#endif
             }
             else
             {
                 // To use an authenticated proxy, the proxy address should be in the form of
                 // "http://user:password@proxyaddress.com:8888"
                 var proxyUriBuilder = new UriBuilder(proxy);
+#if NET45
                 var webProxy = new WebProxy(proxy);
                 if (string.IsNullOrEmpty(proxyUriBuilder.UserName))
                 {
@@ -66,10 +74,19 @@ namespace Microsoft.Framework.PackageManager.Restore.NuGet
                     UseProxy = true
                 };
                 _client = new HttpClient(handler);
-            }
 #else
-            _client = new HttpClient(new Microsoft.Net.Http.Client.ManagedHandler());
+                if (!string.IsNullOrEmpty(proxyUriBuilder.UserName))
+                {
+                    _proxyUserName = proxyUriBuilder.UserName;
+                    _proxyPassword = proxyUriBuilder.Password;
+                }
+
+                _client = new HttpClient(new Microsoft.Net.Http.Client.ManagedHandler()
+                {
+                    ProxyAddress = new Uri(proxy)
+                });
 #endif
+            }
         }
 
         internal async Task<HttpSourceResult> GetAsync(string uri, string cacheKey, TimeSpan cacheAgeLimit)
@@ -84,7 +101,7 @@ namespace Microsoft.Framework.PackageManager.Restore.NuGet
                 return result;
             }
 
-            _report.WriteLine(string.Format("  {0} {1}", "GET".Yellow(), uri));
+            _report.WriteLine(string.Format("  {0} {1}.", "GET".Yellow(), uri));
 
             var request = new HttpRequestMessage(HttpMethod.Get, uri);
             if (_userName != null)
@@ -92,6 +109,14 @@ namespace Microsoft.Framework.PackageManager.Restore.NuGet
                 var token = Convert.ToBase64String(Encoding.ASCII.GetBytes(_userName + ":" + _password));
                 request.Headers.Authorization = new AuthenticationHeaderValue("Basic", token);
             };
+
+#if K10
+            if (_proxyUserName != null)
+            {
+                var proxyToken = Convert.ToBase64String(Encoding.ASCII.GetBytes(_proxyUserName + ":" + _proxyPassword));
+                request.Headers.ProxyAuthorization = new AuthenticationHeaderValue("Basic", proxyToken);
+            }
+#endif
 
             var response = await _client.SendAsync(request);
 
