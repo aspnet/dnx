@@ -159,7 +159,9 @@ var NEW_RUNTIME = '${Environment.GetEnvironmentVariable("NEW_RUNTIME") == "1"}'
                 
         // Crossgen
         crossGen(nupkgPaths[2]);
-        crossGen(nupkgPaths[3]);
+        
+        // SKIP amd64 for now to work around error
+        // crossGen(nupkgPaths[3]);
 
         foreach(var nupkgPath in nupkgPaths) { 
             runWithFramework(nupkgPath);
