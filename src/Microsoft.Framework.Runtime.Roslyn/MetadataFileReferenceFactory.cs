@@ -2,7 +2,7 @@
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 using System;
-using System.Collections.Generic;
+using System.Collections.Concurrent;
 using System.IO;
 using Microsoft.CodeAnalysis;
 
@@ -10,20 +10,18 @@ namespace Microsoft.Framework.Runtime.Roslyn
 {
     internal class MetadataFileReferenceFactory
     {
-        private readonly Dictionary<string, MetadataReference> _metadataCache = new Dictionary<string, MetadataReference>(StringComparer.OrdinalIgnoreCase);
+        // REVIEW: Should this be case sensitive since it contains file paths
+        private readonly ConcurrentDictionary<string, MetadataReference> _metadataCache = new ConcurrentDictionary<string, MetadataReference>(StringComparer.OrdinalIgnoreCase);
 
         public MetadataReference GetMetadataReference(string path)
         {
-            MetadataReference metadata;
-            if (!_metadataCache.TryGetValue(path, out metadata))
+            return _metadataCache.GetOrAdd(path, p =>
             {
-                using (var stream = File.OpenRead(path))
+                using (var stream = File.OpenRead(p))
                 {
-                    metadata = new MetadataImageReference(stream);
-                    _metadataCache[path] = metadata;
+                    return new MetadataImageReference(stream);
                 }
-            }
-            return metadata;
+            });
         }
     }
 }

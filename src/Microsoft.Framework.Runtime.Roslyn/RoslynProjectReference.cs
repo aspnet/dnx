@@ -172,8 +172,28 @@ namespace Microsoft.Framework.Runtime.Roslyn
 
             var resourceProvider = new CompositeResourceProvider(new IResourceProvider[] { resxProvider, embeddedResourceProvider });
 
+
+            var sw = Stopwatch.StartNew();
+            Trace.TraceInformation("[{0}]: Generating resources for {1}", GetType().Name, Name);
+
             var resources = resourceProvider.GetResources(CompilationContext.Project);
-            resources.AddEmbeddedReferences(CompilationContext.GetRequiredEmbeddedReferences());
+
+            sw.Stop();
+            Trace.TraceInformation("[{0}]: Generated resources for {1} in {2}ms", GetType().Name, Name, sw.ElapsedMilliseconds);
+
+            sw = Stopwatch.StartNew();
+            Trace.TraceInformation("[{0}]: Resolving required assembly neutral references for {1}", GetType().Name, Name);
+
+            var embeddedReferences = CompilationContext.GetRequiredEmbeddedReferences();
+            resources.AddEmbeddedReferences(embeddedReferences);
+
+            Trace.TraceInformation("[{0}]: Resolved {1} required assembly neutral references for {2} in {3}ms",
+                GetType().Name,
+                embeddedReferences.Count,
+                Name,
+                sw.ElapsedMilliseconds);
+            sw.Stop();
+
             return resources;
         }
 

@@ -43,6 +43,7 @@ namespace Microsoft.Framework.Runtime.Roslyn
             var exportedReferences = metadataReferences.Select(ConvertMetadataReference);
 
             Trace.TraceInformation("[{0}]: Compiling '{1}'", GetType().Name, name);
+            var sw = Stopwatch.StartNew();
 
             _watcher.WatchDirectory(path, ".cs");
 
@@ -80,8 +81,6 @@ namespace Microsoft.Framework.Runtime.Roslyn
                 metadataReferences.Add(new EmbeddedMetadataReference(t));
             }
 
-            Trace.TraceInformation("[{0}]: Exported References {1}", GetType().Name, metadataReferences.Count);
-
             var newCompilation = assemblyNeutralWorker.Compilation;
 
             newCompilation = ApplyVersionInfo(newCompilation, project);
@@ -90,6 +89,9 @@ namespace Microsoft.Framework.Runtime.Roslyn
                 metadataReferences,
                 assemblyNeutralTypeDiagnostics,
                 project);
+
+            sw.Stop();
+            Trace.TraceInformation("[{0}]: Compiled '{1}' in {2}ms", GetType().Name, name, sw.ElapsedMilliseconds);
 
             return compilationContext;
         }

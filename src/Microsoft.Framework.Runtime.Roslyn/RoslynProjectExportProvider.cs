@@ -1,4 +1,6 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.Versioning;
 
@@ -9,7 +11,6 @@ namespace Microsoft.Framework.Runtime.Roslyn
     /// </summary>
     public class RoslynProjectExportProvider : IProjectExportProvider
     {
-        private readonly Dictionary<string, CompilationContext> _compilationCache = new Dictionary<string, CompilationContext>();
         private readonly RoslynCompiler _compiler;
 
         public RoslynProjectExportProvider(IFileWatcher watcher)
@@ -21,9 +22,9 @@ namespace Microsoft.Framework.Runtime.Roslyn
             Project project,
             FrameworkName targetFramework,
             string configuration,
-            ILibraryExport projectExport)
+            ILibraryExport projectDependenciesExport)
         {
-            var compliationContext = GetCompilationContext(project, targetFramework, configuration, projectExport);
+            var compliationContext = _compiler.CompileProject(project, targetFramework, configuration, projectDependenciesExport);
 
             if (compliationContext == null)
             {
@@ -31,38 +32,6 @@ namespace Microsoft.Framework.Runtime.Roslyn
             }
 
             return compliationContext.GetLibraryExport();
-        }
-
-        private CompilationContext GetCompilationContext(
-            Project project,
-            FrameworkName targetFramework,
-            string configuration,
-            ILibraryExport projectExport)
-        {
-            string name = project.Name;
-
-            CompilationContext compilationContext;
-            if (_compilationCache.TryGetValue(name, out compilationContext))
-            {
-                return compilationContext;
-            }
-
-            var context = _compiler.CompileProject(project, targetFramework, configuration, projectExport);
-
-            if (context == null)
-            {
-                return null;
-            }
-
-            _compilationCache[name] = context;
-
-            // This has the closure of references
-            foreach (var projectReference in context.MetadataReferences.OfType<RoslynProjectReference>())
-            {
-                _compilationCache[projectReference.Name] = projectReference.CompilationContext;
-            }
-
-            return context;
         }
     }
 }

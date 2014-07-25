@@ -16,6 +16,8 @@ namespace Microsoft.Framework.Runtime.Roslyn
     {
         private ILibraryExport _export;
 
+        private static readonly IList<IMetadataEmbeddedReference> _emptyList = new List<IMetadataEmbeddedReference>();
+
         /// <summary>
         /// The project associated with this compilation
         /// </summary>
@@ -63,7 +65,7 @@ namespace Microsoft.Framework.Runtime.Roslyn
             return _export;
         }
 
-        public IEnumerable<IMetadataEmbeddedReference> GetRequiredEmbeddedReferences()
+        public IList<IMetadataEmbeddedReference> GetRequiredEmbeddedReferences()
         {
             var assemblyNeutralTypes = MetadataReferences.OfType<IMetadataEmbeddedReference>()
                                                          .ToDictionary(r => r.Name);
@@ -71,11 +73,8 @@ namespace Microsoft.Framework.Runtime.Roslyn
             // No assembly neutral types so do nothing
             if (assemblyNeutralTypes.Count == 0)
             {
-                return Enumerable.Empty<IMetadataEmbeddedReference>();
+                return _emptyList;
             }
-
-            Trace.TraceInformation("Assembly Neutral References {0}", assemblyNeutralTypes.Count);
-            var sw = Stopwatch.StartNew();
 
             // Walk the assembly neutral references and embed anything that we use
             // directly or indirectly
@@ -93,12 +92,8 @@ namespace Microsoft.Framework.Runtime.Roslyn
                 }
             }
 
-            var embeddedTypes = results.Select(name => assemblyNeutralTypes[name])
-                                       .ToList();
-
-            sw.Stop();
-            Trace.TraceInformation("Found {0} Assembly Neutral References in {1}ms", embeddedTypes.Count, sw.ElapsedMilliseconds);
-            return embeddedTypes;
+            return results.Select(name => assemblyNeutralTypes[name])
+                          .ToList();
         }
 
         private HashSet<string> GetUsedReferences(Dictionary<string, IMetadataEmbeddedReference> assemblies)

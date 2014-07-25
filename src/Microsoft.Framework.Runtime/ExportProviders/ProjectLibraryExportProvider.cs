@@ -12,8 +12,9 @@ namespace Microsoft.Framework.Runtime
         private readonly IProjectResolver _projectResolver;
         private readonly IServiceProvider _serviceProvider;
         private readonly Dictionary<TypeInformation, IProjectExportProvider> _exportProviders = new Dictionary<TypeInformation, IProjectExportProvider>();
+        private readonly Dictionary<string, ILibraryExport> _exportCache = new Dictionary<string, ILibraryExport>(StringComparer.OrdinalIgnoreCase);
 
-        public ProjectLibraryExportProvider(IProjectResolver projectResolver, 
+        public ProjectLibraryExportProvider(IProjectResolver projectResolver,
                                             IServiceProvider serviceProvider)
         {
             _projectResolver = projectResolver;
@@ -29,26 +30,41 @@ namespace Microsoft.Framework.Runtime
                 return null;
             }
 
-            // Get the composite library export provider
-            var exportProvider = (ILibraryExportProvider)_serviceProvider.GetService(typeof(ILibraryExportProvider));
+            // REVIEW: This cache should probably be keyed on all the inputs. This works because
+            // callers create a new environment per target framework today.
 
-            // Get the exports for the project dependencies
-            FrameworkName effectiveTargetFramework;
-            var projectExport = ProjectExportProviderHelper.GetProjectDependenciesExport(
-                exportProvider, 
-                project, 
-                targetFramework, 
-                configuration, 
-                out effectiveTargetFramework);
-
-            // Find the default project exporter
-            var projectExportProvider = _exportProviders.GetOrAdd(project.LanguageServices.ProjectExportProvider, typeInfo =>
+            return _exportCache.GetOrAdd(name, _ =>
             {
-                return LanguageServices.CreateService<IProjectExportProvider>(_serviceProvider, typeInfo);
-            });
+                // Get the composite library export provider
+                var exportProvider = (ILibraryExportProvider)_serviceProvider.GetService(typeof(ILibraryExportProvider));
 
-            // Resolve the project export
-            return projectExportProvider.GetProjectExport(project, effectiveTargetFramework, configuration, projectExport);
+                var targetFrameworkInformation = project.GetTargetFramework(targetFramework);
+
+                // This is the target framework defined in the project. If there were no target frameworks
+                // defined then this is the targetFramework specified
+                var effectiveTargetFramework = targetFrameworkInformation.FrameworkName ?? targetFramework;
+
+                // Get the exports for the project dependencies
+                ILibraryExport projectExport = ProjectExportProviderHelper.GetProjectDependenciesExport(
+                    exportProvider,
+                    project,
+                    effectiveTargetFramework,
+                    targetFrameworkInformation.Dependencies,
+                    configuration);
+
+                // Find the default project exporter
+                var projectExportProvider = _exportProviders.GetOrAdd(project.LanguageServices.ProjectExportProvider, typeInfo =>
+                {
+                    return LanguageServices.CreateService<IProjectExportProvider>(_serviceProvider, typeInfo);
+                });
+
+                // Resolve the project export
+                return projectExportProvider.GetProjectExport(
+                    project, 
+                    effectiveTargetFramework, 
+                    configuration, 
+                    projectExport);
+            });
         }
     }
 }

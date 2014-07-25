@@ -14,19 +14,18 @@ namespace Microsoft.Framework.Runtime
 {
     internal static class ProjectExportProviderHelper
     {
-        public static ILibraryExport GetProjectDependenciesExport(ILibraryExportProvider libraryExportProvider, Project project, FrameworkName targetFramework, string configuration, out FrameworkName effectiveTargetFramework)
+        public static ILibraryExport GetProjectDependenciesExport(
+            ILibraryExportProvider libraryExportProvider, 
+            Project project,
+            FrameworkName targetFramework,
+            IList<Library> targetFrameworkDependencies, 
+            string configuration)
         {
-            effectiveTargetFramework = null;
-
-            var targetFrameworkInformation = project.GetTargetFramework(targetFramework);
-
-            targetFramework = targetFrameworkInformation.FrameworkName ?? targetFramework;
-
             Trace.TraceInformation("[{0}]: Found project '{1}' framework={2}", typeof(ProjectExportProviderHelper).Name, project.Name, targetFramework);
 
             var exports = new List<ILibraryExport>();
 
-            var dependencies = project.Dependencies.Concat(targetFrameworkInformation.Dependencies)
+            var dependencies = project.Dependencies.Concat(targetFrameworkDependencies)
                                                    .Select(d => d.Name)
                                                    .ToList();
 
@@ -42,7 +41,7 @@ namespace Microsoft.Framework.Runtime
             }
 
             var dependencyStopWatch = Stopwatch.StartNew();
-            Trace.TraceInformation("[{0}]: Resolving exports for '{1}'", typeof(ProjectExportProviderHelper).Name, project.Name);
+            Trace.TraceInformation("[{0}]: Resolving references for '{1}'", typeof(ProjectExportProviderHelper).Name, project.Name);
 
             if (dependencies.Count > 0)
             {
@@ -73,14 +72,12 @@ namespace Microsoft.Framework.Runtime
                               out resolvedSources);
 
             dependencyStopWatch.Stop();
-            Trace.TraceInformation("[{0}]: Resolved {1} exports for '{2}' in {3}ms",
+            Trace.TraceInformation("[{0}]: Resolved {1} references for '{2}' in {3}ms",
                                   typeof(ProjectExportProviderHelper).Name,
                                   resolvedReferences.Count,
                                   project.Name,
                                   dependencyStopWatch.ElapsedMilliseconds);
 
-            // Set the effective target framework (the specific framework used for resolution)
-            effectiveTargetFramework = targetFramework;
             return new LibraryExport(resolvedReferences, resolvedSources);
         }
 
