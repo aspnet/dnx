@@ -98,7 +98,9 @@ namespace Microsoft.Framework.PackageManager
                         if (context.Build(warnings, errors))
                         {
                             context.PopulateDependencies(packageBuilder);
-                            context.AddLibs(packageBuilder);
+                            context.AddLibs(packageBuilder, "*.dll");
+                            context.AddLibs(packageBuilder, "*.xml");
+                            context.AddLibs(symbolPackageBuilder, "*.*");
                         }
                         else
                         {

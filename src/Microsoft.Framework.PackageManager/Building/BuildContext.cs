@@ -137,10 +137,10 @@ namespace Microsoft.Framework.PackageManager
             }
         }
 
-        public void AddLibs(PackageBuilder packageBuilder)
+        public void AddLibs(PackageBuilder packageBuilder, string pattern)
         {
             // Add everything in the output folder to the lib path
-            foreach (var path in Directory.EnumerateFiles(_outputPath, "*.*"))
+            foreach (var path in Directory.EnumerateFiles(_outputPath, pattern))
             {
                 packageBuilder.Files.Add(new PhysicalPackageFile
                 {
