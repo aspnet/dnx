@@ -112,6 +112,8 @@ namespace Microsoft.Framework.PackageManager
                     allWarnings.AddRange(warnings);
 
                     WriteDiagnostics(warnings, errors);
+
+                    success = success && (errors.Count == 0);
                 }
 
                 // Skip producing the nupkg if we're just checking diagnostics
