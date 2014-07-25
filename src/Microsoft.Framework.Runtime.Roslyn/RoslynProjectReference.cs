@@ -46,7 +46,7 @@ namespace Microsoft.Framework.Runtime.Roslyn
             var diagnostics = CompilationContext.Diagnostics
                 .Concat(CompilationContext.Compilation.GetDiagnostics());
 
-            return RoslynBuildResult.FromDiagnostics(success: true, diagnostics: diagnostics);
+            return CreateBuildResult(success: true, diagnostics: diagnostics);
         }
 
         public IList<ISourceReference> GetSources()
@@ -91,7 +91,7 @@ namespace Microsoft.Framework.Runtime.Roslyn
             var diagnostics = CompilationContext.Diagnostics.Concat(
                 result.Diagnostics);
 
-            return RoslynBuildResult.FromDiagnostics(result.Success, diagnostics);
+            return CreateBuildResult(result.Success, diagnostics);
         }
 
         public IProjectBuildResult EmitAssembly(string outputPath)
@@ -130,10 +130,10 @@ namespace Microsoft.Framework.Runtime.Roslyn
                 var diagnostics = new List<Diagnostic>(CompilationContext.Diagnostics);
                 diagnostics.AddRange(result.Diagnostics);
 
-                if (!result.Success || 
-                    diagnostics.Any(RoslynCompiler.IsError))
+                if (!result.Success ||
+                    diagnostics.Any(IsError))
                 {
-                    return RoslynBuildResult.FromDiagnostics(result.Success, diagnostics);
+                    return CreateBuildResult(result.Success, diagnostics);
                 }
 
                 // Ensure there's an output directory
@@ -161,7 +161,7 @@ namespace Microsoft.Framework.Runtime.Roslyn
                     }
                 }
 
-                return RoslynBuildResult.FromDiagnostics(result.Success, diagnostics);
+                return CreateBuildResult(result.Success, diagnostics);
             }
         }
 
@@ -177,55 +177,22 @@ namespace Microsoft.Framework.Runtime.Roslyn
             return resources;
         }
 
-        private struct RoslynBuildResult : IProjectBuildResult
+        private static ProjectBuildResult CreateBuildResult(bool success, IEnumerable<Diagnostic> diagnostics)
         {
-            private readonly bool _success;
-            private readonly IEnumerable<string> _warnings;
-            private readonly IEnumerable<string> _errors;
+            var formatter = new DiagnosticFormatter();
 
-            public RoslynBuildResult(bool success, IEnumerable<string> warnings, IEnumerable<string> errors)
-            {
-                _success = success;
-                _warnings = warnings;
-                _errors = errors;
-            }
+            var errors = diagnostics.Where(IsError)
+                                .Select(d => formatter.Format(d)).ToList();
 
-            public bool Success
-            {
-                get
-                {
-                    return _success;
-                }
-            }
+            var warnings = diagnostics.Where(d => d.Severity == DiagnosticSeverity.Warning)
+                                  .Select(d => formatter.Format(d)).ToList();
 
-            public IEnumerable<string> Warnings
-            {
-                get
-                {
-                    return _warnings;
-                }
-            }
+            return new ProjectBuildResult(success, warnings, errors);
+        }
 
-            public IEnumerable<string> Errors
-            {
-                get
-                {
-                    return _errors;
-                }
-            }
-
-            public static RoslynBuildResult FromDiagnostics(bool success, IEnumerable<Diagnostic> diagnostics)
-            {
-                var formatter = new DiagnosticFormatter();
-
-                var errors = diagnostics.Where(d => d.Severity == DiagnosticSeverity.Error || d.IsWarningAsError)
-                                    .Select(d => formatter.Format(d)).ToList();
-
-                var warnings = diagnostics.Where(d => d.Severity == DiagnosticSeverity.Warning)
-                                      .Select(d => formatter.Format(d)).ToList();
-
-                return new RoslynBuildResult(success, warnings, errors);
-            }
+        private static bool IsError(Diagnostic diagnostic)
+        {
+            return diagnostic.Severity == DiagnosticSeverity.Error || diagnostic.IsWarningAsError;
         }
     }
 }

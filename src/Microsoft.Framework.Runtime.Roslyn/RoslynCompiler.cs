@@ -198,17 +198,5 @@ namespace Microsoft.Framework.Runtime.Roslyn
 
             throw new NotSupportedException();
         }
-
-        internal static IList<string> GetMessages(IEnumerable<Diagnostic> diagnostics)
-        {
-            var formatter = new DiagnosticFormatter();
-
-            return diagnostics.Select(d => formatter.Format(d)).ToList();
-        }
-
-        internal static bool IsError(Diagnostic diagnostic)
-        {
-            return diagnostic.Severity == DiagnosticSeverity.Error || diagnostic.IsWarningAsError;
-        }
     }
 }

@@ -71,17 +71,15 @@ namespace Microsoft.Framework.Runtime.Loader
 
                 // Rewind the stream
                 assemblyStream.Seek(0, SeekOrigin.Begin);
+                pdbStream.Seek(0, SeekOrigin.Begin);
 
-                if (PlatformHelper.IsMono)
+                if (pdbStream.Length == 0)
                 {
                     // Pdbs aren't supported on mono
                     assembly = _loaderEngine.LoadStream(assemblyStream, pdbStream: null);
                 }
                 else
                 {
-                    // Rewind the pdb stream
-                    pdbStream.Seek(0, SeekOrigin.Begin);
-
                     assembly = _loaderEngine.LoadStream(assemblyStream, pdbStream);
                 }
 

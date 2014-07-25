@@ -46,6 +46,7 @@
     <Compile Include="ExportProviders\CompositeLibraryExportProvider.cs" />
     <Compile Include="ExportProviders\LibraryExport.cs" />
     <Compile Include="ExportProviders\PEReaderExtensions.cs" />
+    <Compile Include="ExportProviders\ProjectBuildResult.cs" />
     <Compile Include="ExportProviders\ProjectExportProviderHelper.cs" />
     <Compile Include="ExportProviders\ProjectLibraryExportProvider.cs" />
     <Compile Include="ExportProviders\EmbeddedMetadataReference.cs" />
