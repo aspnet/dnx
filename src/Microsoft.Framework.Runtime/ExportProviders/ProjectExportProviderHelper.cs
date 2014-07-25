@@ -2,7 +2,6 @@
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -13,31 +12,17 @@ using NuGet;
 
 namespace Microsoft.Framework.Runtime
 {
-    public class ProjectExportProviderHelper
+    internal static class ProjectExportProviderHelper
     {
-        private readonly IProjectResolver _projectResolver;
-
-        public ProjectExportProviderHelper(IProjectResolver projectResolver)
-        {
-            _projectResolver = projectResolver;
-        }
-
-        public ILibraryExport GetProjectExport(ILibraryExportProvider libraryExportProvider, string name, FrameworkName targetFramework, string configuration, out FrameworkName effectiveTargetFramework)
+        public static ILibraryExport GetProjectDependenciesExport(ILibraryExportProvider libraryExportProvider, Project project, FrameworkName targetFramework, string configuration, out FrameworkName effectiveTargetFramework)
         {
             effectiveTargetFramework = null;
-
-            Project project;
-            // Can't find a project file with the name so bail
-            if (!_projectResolver.TryResolveProject(name, out project))
-            {
-                return null;
-            }
 
             var targetFrameworkInformation = project.GetTargetFramework(targetFramework);
 
             targetFramework = targetFrameworkInformation.FrameworkName ?? targetFramework;
 
-            Trace.TraceInformation("[{0}]: Found project '{1}' framework={2}", GetType().Name, project.Name, targetFramework);
+            Trace.TraceInformation("[{0}]: Found project '{1}' framework={2}", typeof(ProjectExportProviderHelper).Name, project.Name, targetFramework);
 
             var exports = new List<ILibraryExport>();
 
@@ -57,7 +42,7 @@ namespace Microsoft.Framework.Runtime
             }
 
             var dependencyStopWatch = Stopwatch.StartNew();
-            Trace.TraceInformation("[{0}]: Resolving exports for '{1}'", GetType().Name, project.Name);
+            Trace.TraceInformation("[{0}]: Resolving exports for '{1}'", typeof(ProjectExportProviderHelper).Name, project.Name);
 
             if (dependencies.Count > 0)
             {
@@ -68,7 +53,7 @@ namespace Microsoft.Framework.Runtime
                     if (libraryExport == null)
                     {
                         // TODO: Failed to resolve dependency so do something useful
-                        Trace.TraceInformation("[{0}]: Failed to resolve dependency '{1}'", GetType().Name, dependency);
+                        Trace.TraceInformation("[{0}]: Failed to resolve dependency '{1}'", typeof(ProjectExportProviderHelper).Name, dependency);
                     }
                     else
                     {
@@ -89,7 +74,7 @@ namespace Microsoft.Framework.Runtime
 
             dependencyStopWatch.Stop();
             Trace.TraceInformation("[{0}]: Resolved {1} exports for '{2}' in {3}ms",
-                                  GetType().Name,
+                                  typeof(ProjectExportProviderHelper).Name,
                                   resolvedReferences.Count,
                                   project.Name,
                                   dependencyStopWatch.ElapsedMilliseconds);
@@ -99,12 +84,12 @@ namespace Microsoft.Framework.Runtime
             return new LibraryExport(resolvedReferences, resolvedSources);
         }
 
-        private void ExtractReferences(List<ILibraryExport> dependencyExports,
-                                       ILibraryExportProvider libraryExportProvider,
-                                       FrameworkName targetFramework,
-                                       string configuration,
-                                       out IList<IMetadataReference> metadataReferences,
-                                       out IList<ISourceReference> sourceReferences)
+        private static void ExtractReferences(List<ILibraryExport> dependencyExports,
+                                              ILibraryExportProvider libraryExportProvider,
+                                              FrameworkName targetFramework,
+                                              string configuration,
+                                              out IList<IMetadataReference> metadataReferences,
+                                              out IList<ISourceReference> sourceReferences)
         {
             var references = new Dictionary<string, IMetadataReference>(StringComparer.OrdinalIgnoreCase);
 
@@ -123,12 +108,12 @@ namespace Microsoft.Framework.Runtime
             metadataReferences = references.Values.ToList();
         }
 
-        private void ProcessExport(ILibraryExport export,
-                                   ILibraryExportProvider libraryExportProvider,
-                                   FrameworkName targetFramework,
-                                   string configuration,
-                                   IDictionary<string, IMetadataReference> metadataReferences,
-                                   IList<ISourceReference> sourceReferences)
+        private static void ProcessExport(ILibraryExport export,
+                                          ILibraryExportProvider libraryExportProvider,
+                                          FrameworkName targetFramework,
+                                          string configuration,
+                                          IDictionary<string, IMetadataReference> metadataReferences,
+                                          IList<ISourceReference> sourceReferences)
         {
             var references = new List<IMetadataReference>(export.MetadataReferences);
 
@@ -165,7 +150,7 @@ namespace Microsoft.Framework.Runtime
             }
         }
 
-        private void ExpandEmbeddedReferences(IList<IMetadataReference> references)
+        private static void ExpandEmbeddedReferences(IList<IMetadataReference> references)
         {
             var otherReferences = new List<IMetadataReference>();
 

@@ -241,7 +241,7 @@ namespace Microsoft.Framework.Runtime
 
             // Set the default loader information for projects
             var languageServicesAssembly = "Microsoft.Framework.Runtime.Roslyn";
-            var libraryExportProviderTypeName = "Microsoft.Framework.Runtime.Roslyn.RoslynLibraryExportProvider";
+            var projectExportProviderType = "Microsoft.Framework.Runtime.Roslyn.RoslynProjectExportProvider";
             var languageName = "C#";
 
             var languageInfo = rawProject["language"] as JObject;
@@ -250,10 +250,10 @@ namespace Microsoft.Framework.Runtime
             {
                 languageName = GetValue<string>(languageInfo, "name");
                 languageServicesAssembly = GetValue<string>(languageInfo, "assembly");
-                libraryExportProviderTypeName = GetValue<string>(languageInfo, "libraryExportProviderType");
+                projectExportProviderType = GetValue<string>(languageInfo, "projectExportProviderType");
             }
 
-            var libraryExporter = new TypeInformation(languageServicesAssembly, libraryExportProviderTypeName);
+            var libraryExporter = new TypeInformation(languageServicesAssembly, projectExportProviderType);
 
             project.LanguageServices = new LanguageServices(languageName, libraryExporter);
 

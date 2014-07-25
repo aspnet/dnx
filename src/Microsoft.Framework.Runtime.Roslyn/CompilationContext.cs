@@ -14,7 +14,7 @@ namespace Microsoft.Framework.Runtime.Roslyn
 {
     public class CompilationContext
     {
-        private RoslynLibraryExport _roslynLibraryExport;
+        private ILibraryExport _export;
 
         /// <summary>
         /// The project associated with this compilation
@@ -38,9 +38,9 @@ namespace Microsoft.Framework.Runtime.Roslyn
             Project = project;
         }
 
-        public RoslynLibraryExport GetLibraryExport()
+        public ILibraryExport GetLibraryExport()
         {
-            if (_roslynLibraryExport == null)
+            if (_export == null)
             {
                 var metadataReferences = new List<IMetadataReference>();
                 var sourceReferences = new List<ISourceReference>();
@@ -57,10 +57,10 @@ namespace Microsoft.Framework.Runtime.Roslyn
                     sourceReferences.Add(new SourceFileReference(sharedFile));
                 }
 
-                _roslynLibraryExport = new RoslynLibraryExport(metadataReferences, sourceReferences, this);
+                _export = new LibraryExport(metadataReferences, sourceReferences);
             }
 
-            return _roslynLibraryExport;
+            return _export;
         }
 
         public IEnumerable<IMetadataEmbeddedReference> GetRequiredEmbeddedReferences()

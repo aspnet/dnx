@@ -11,9 +11,10 @@ namespace Microsoft.Framework.Runtime
     {
         private readonly IProjectResolver _projectResolver;
         private readonly IServiceProvider _serviceProvider;
-        private readonly Dictionary<TypeInformation, ILibraryExportProvider> _exportProviders = new Dictionary<TypeInformation, ILibraryExportProvider>();
+        private readonly Dictionary<TypeInformation, IProjectExportProvider> _exportProviders = new Dictionary<TypeInformation, IProjectExportProvider>();
 
-        public ProjectLibraryExportProvider(IProjectResolver projectResolver, IServiceProvider serviceProvider)
+        public ProjectLibraryExportProvider(IProjectResolver projectResolver, 
+                                            IServiceProvider serviceProvider)
         {
             _projectResolver = projectResolver;
             _serviceProvider = serviceProvider;
@@ -28,12 +29,26 @@ namespace Microsoft.Framework.Runtime
                 return null;
             }
 
-            var exportProvider = _exportProviders.GetOrAdd(project.LanguageServices.LibraryExportProvider, typeInfo =>
+            // Get the composite library export provider
+            var exportProvider = (ILibraryExportProvider)_serviceProvider.GetService(typeof(ILibraryExportProvider));
+
+            // Get the exports for the project dependencies
+            FrameworkName effectiveTargetFramework;
+            var projectExport = ProjectExportProviderHelper.GetProjectDependenciesExport(
+                exportProvider, 
+                project, 
+                targetFramework, 
+                configuration, 
+                out effectiveTargetFramework);
+
+            // Find the default project exporter
+            var projectExportProvider = _exportProviders.GetOrAdd(project.LanguageServices.ProjectExportProvider, typeInfo =>
             {
-                return LanguageServices.CreateService<ILibraryExportProvider>(_serviceProvider, typeInfo);
+                return LanguageServices.CreateService<IProjectExportProvider>(_serviceProvider, typeInfo);
             });
 
-            return exportProvider.GetLibraryExport(name, targetFramework, configuration);
+            // Resolve the project export
+            return projectExportProvider.GetProjectExport(project, effectiveTargetFramework, configuration, projectExport);
         }
     }
 }

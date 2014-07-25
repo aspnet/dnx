@@ -17,40 +17,29 @@ namespace Microsoft.Framework.Runtime.Roslyn
 {
     public class RoslynCompiler
     {
-        private readonly ILibraryExportProvider _libraryExportProvider;
         private readonly IFileWatcher _watcher;
-        private readonly IProjectResolver _projectResolver;
         private readonly MetadataFileReferenceFactory _metadataFileReferenceFactory;
-        private readonly ProjectExportProviderHelper _projectExportProvider;
 
-        public RoslynCompiler(IProjectResolver projectResolver,
-                              IFileWatcher watcher,
-                              ILibraryExportProvider libraryExportProvider)
+        public RoslynCompiler(IFileWatcher watcher)
         {
-            _projectResolver = projectResolver;
             _watcher = watcher;
-            _libraryExportProvider = libraryExportProvider;
             _metadataFileReferenceFactory = new MetadataFileReferenceFactory();
-            _projectExportProvider = new ProjectExportProviderHelper(projectResolver);
         }
 
-        public CompilationContext CompileProject(string name, FrameworkName targetFramework, string configuration)
+        public CompilationContext CompileProject(
+            Project project,
+            FrameworkName targetFramework,
+            string configuration,
+            ILibraryExport projectExport)
         {
-            Project project;
-            // Can't find a project file with the name so bail
-            if (!_projectResolver.TryResolveProject(name, out project))
-            {
-                return null;
-            }
-
-            string path = project.ProjectDirectory;
+            var path = project.ProjectDirectory;
+            var name = project.Name;
 
             _watcher.WatchProject(path);
 
             _watcher.WatchFile(project.ProjectFilePath);
 
-            var export = _projectExportProvider.GetProjectExport(_libraryExportProvider, name, targetFramework, configuration, out targetFramework);
-            var metadataReferences = export.MetadataReferences;
+            var metadataReferences = projectExport.MetadataReferences;
             var exportedReferences = metadataReferences.Select(ConvertMetadataReference);
 
             Trace.TraceInformation("[{0}]: Compiling '{1}'", GetType().Name, name);
@@ -64,7 +53,7 @@ namespace Microsoft.Framework.Runtime.Roslyn
 
             var compilationSettings = project.GetCompilationSettings(targetFramework, configuration);
 
-            IList<SyntaxTree> trees = GetSyntaxTrees(project, compilationSettings, export);
+            IList<SyntaxTree> trees = GetSyntaxTrees(project, compilationSettings, projectExport);
 
             var embeddedReferences = metadataReferences.OfType<IMetadataEmbeddedReference>()
                                                        .ToDictionary(a => a.Name, ConvertMetadataReference);

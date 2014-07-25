@@ -6,15 +6,15 @@ namespace Microsoft.Framework.Runtime
 {
     public class LanguageServices
     {
-        public LanguageServices(string name, TypeInformation libraryExporter)
+        public LanguageServices(string name, TypeInformation projectExportProvider)
         {
             Name = name;
-            LibraryExportProvider = libraryExporter;
+            ProjectExportProvider = projectExportProvider;
         }
 
         public string Name { get; private set; }
 
-        public TypeInformation LibraryExportProvider { get; private set; }
+        public TypeInformation ProjectExportProvider { get; private set; }
 
         public static T CreateService<T>(IServiceProvider sp, TypeInformation typeInfo)
         {

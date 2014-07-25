@@ -7,23 +7,23 @@ namespace Microsoft.Framework.Runtime.Roslyn
     /// <summary>
     /// Summary description for RoslynLibraryExportProvider
     /// </summary>
-    public class RoslynLibraryExportProvider : ILibraryExportProvider
+    public class RoslynProjectExportProvider : IProjectExportProvider
     {
         private readonly Dictionary<string, CompilationContext> _compilationCache = new Dictionary<string, CompilationContext>();
         private readonly RoslynCompiler _compiler;
 
-        public RoslynLibraryExportProvider(IProjectResolver projectResolver,
-                                           IFileWatcher watcher,
-                                           ILibraryExportProvider dependencyExporter)
+        public RoslynProjectExportProvider(IFileWatcher watcher)
         {
-            _compiler = new RoslynCompiler(projectResolver,
-                                           watcher,
-                                           dependencyExporter);
+            _compiler = new RoslynCompiler(watcher);
         }
 
-        public ILibraryExport GetLibraryExport(string name, FrameworkName targetFramework, string configuration)
+        public ILibraryExport GetProjectExport(
+            Project project,
+            FrameworkName targetFramework,
+            string configuration,
+            ILibraryExport projectExport)
         {
-            var compliationContext = GetCompilationContext(name, targetFramework, configuration);
+            var compliationContext = GetCompilationContext(project, targetFramework, configuration, projectExport);
 
             if (compliationContext == null)
             {
@@ -33,15 +33,21 @@ namespace Microsoft.Framework.Runtime.Roslyn
             return compliationContext.GetLibraryExport();
         }
 
-        private CompilationContext GetCompilationContext(string name, FrameworkName targetFramework, string configuration)
+        private CompilationContext GetCompilationContext(
+            Project project,
+            FrameworkName targetFramework,
+            string configuration,
+            ILibraryExport projectExport)
         {
+            string name = project.Name;
+
             CompilationContext compilationContext;
             if (_compilationCache.TryGetValue(name, out compilationContext))
             {
                 return compilationContext;
             }
 
-            var context = _compiler.CompileProject(name, targetFramework, configuration);
+            var context = _compiler.CompileProject(project, targetFramework, configuration, projectExport);
 
             if (context == null)
             {
@@ -55,7 +61,7 @@ namespace Microsoft.Framework.Runtime.Roslyn
             {
                 _compilationCache[projectReference.Name] = projectReference.CompilationContext;
             }
-            
+
             return context;
         }
     }
