@@ -41,17 +41,28 @@ namespace Microsoft.Framework.Runtime.Roslyn
             }
         }
 
-        public void EmitReferenceAssembly(Stream stream)
-        {
-            CompilationContext.Compilation.EmitMetadataOnly(stream);
-        }
-
         public IProjectBuildResult GetDiagnostics()
         {
             var diagnostics = CompilationContext.Diagnostics
                 .Concat(CompilationContext.Compilation.GetDiagnostics());
 
             return RoslynBuildResult.FromDiagnostics(success: true, diagnostics: diagnostics);
+        }
+
+        public IList<ISourceReference> GetSources()
+        {
+            // REVIEW: Raw sources?
+            return CompilationContext.Compilation
+                                     .SyntaxTrees
+                                     .Select(t => t.FilePath)
+                                     .Where(path => !string.IsNullOrEmpty(path))
+                                     .Select(path => (ISourceReference)new SourceFileReference(path))
+                                     .ToList();
+        }
+
+        public void EmitReferenceAssembly(Stream stream)
+        {
+            CompilationContext.Compilation.EmitMetadataOnly(stream);
         }
 
         public IProjectBuildResult EmitAssembly(Stream assemblyStream, Stream pdbStream)

@@ -15,7 +15,10 @@ namespace Microsoft.Framework.Runtime
             // Get all other metadata references
             var otherReferences = projectExport.MetadataReferences.Where(r => r != projectReference);
 
-            SourceFiles = project.SourceFiles.ToList();
+            SourceFiles = projectReference.GetSources()
+                                          .OfType<ISourceFileReference>()
+                                          .Select(s => s.Path)
+                                          .ToList();
 
             RawReferences = otherReferences.OfType<IMetadataEmbeddedReference>().Select(r =>
             {
