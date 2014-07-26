@@ -11,11 +11,9 @@ namespace Microsoft.Framework.Runtime.Loader
     public class CompositeAssemblyLoader : IAssemblyLoader
     {
         private readonly IList<IAssemblyLoader> _loaders;
-        private readonly IApplicationEnvironment _environment;
 
-        public CompositeAssemblyLoader(IApplicationEnvironment environment, IList<IAssemblyLoader> loaders)
+        public CompositeAssemblyLoader(IList<IAssemblyLoader> loaders)
         {
-            _environment = environment;
             _loaders = loaders;
         }
 
@@ -23,7 +21,6 @@ namespace Microsoft.Framework.Runtime.Loader
         {
             var sw = new Stopwatch();
             sw.Start();
-            Trace.TraceInformation("Loading {0} for '{1}'.", name, _environment.TargetFramework);
             var result = LoadImpl(name, sw);
             sw.Stop();
             return result;
@@ -37,11 +34,10 @@ namespace Microsoft.Framework.Runtime.Loader
 
                 if (assembly != null)
                 {
-                    Trace.TraceInformation("[{0}]: Finished loading {1} in {2}ms", loader.GetType().Name, name, sw.ElapsedMilliseconds);
-
                     return assembly;
                 }
             }
+
             return null;
         }
     }

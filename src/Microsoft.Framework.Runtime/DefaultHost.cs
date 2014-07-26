@@ -59,7 +59,6 @@ namespace Microsoft.Framework.Runtime
 
             Initialize();
 
-
             // If there's any unresolved dependencies then complain
             if (_applicationHostContext.UnresolvedDependencyProvider.UnresolvedDependencies.Any())
             {
@@ -88,15 +87,7 @@ namespace Microsoft.Framework.Runtime
                 throw new InvalidOperationException(sb.ToString());
             }
 
-            Trace.TraceInformation("Loading entry point from {0}", applicationName);
-
-            var assembly = Assembly.Load(new AssemblyName(applicationName));
-
-            sw.Stop();
-
-            Trace.TraceInformation("Load took {0}ms", sw.ElapsedMilliseconds);
-
-            return assembly;
+            return Assembly.Load(new AssemblyName(applicationName));
         }
 
         public void Initialize()
@@ -106,7 +97,12 @@ namespace Microsoft.Framework.Runtime
 
         public Assembly Load(string name)
         {
-            return _loader.Load(name);
+            Trace.TraceInformation("[{0}]: Load name={1}", GetType().Name, name);
+            var sw = Stopwatch.StartNew();
+            var assembly = _loader.Load(name);
+            sw.Stop();
+            Trace.TraceInformation("[{0}]: Loaded name={1} in {2}ms", GetType().Name, name, sw.ElapsedMilliseconds);
+            return assembly;
         }
 
         public void Dispose()
@@ -162,9 +158,7 @@ namespace Microsoft.Framework.Runtime
             .Select(loaderType => (IAssemblyLoader)ActivatorUtilities.CreateInstance(ServiceProvider, loaderType))
             .ToList();
 
-            var nugetLoader = ActivatorUtilities.CreateInstance<NuGetAssemblyLoader>(ServiceProvider);
-
-            _loader = new CompositeAssemblyLoader(applicationEnvironment, loaders);
+            _loader = new CompositeAssemblyLoader(loaders);
 
             CallContextServiceLocator.Locator.ServiceProvider = ServiceProvider;
         }

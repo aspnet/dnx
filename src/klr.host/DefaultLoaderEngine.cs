@@ -2,6 +2,7 @@
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 using System;
+using System.Diagnostics;
 using System.IO;
 using System.Reflection;
 using Microsoft.Framework.Runtime;
@@ -30,11 +31,13 @@ namespace klr.host
 
         public Assembly LoadFile(string path)
         {
+            Trace.TraceInformation("[{0}]: LoadFile({1})", GetType().Name, path);
             return _loadFile(path);
         }
 
         public Assembly LoadStream(Stream assemblyStream, Stream pdbStream)
         {
+            // REVIEW: Should we trace the stream length?
             return _loadStream(assemblyStream, pdbStream);
         }
     }

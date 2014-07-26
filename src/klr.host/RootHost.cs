@@ -28,7 +28,8 @@ namespace klr.host
 
         public Assembly Load(string name)
         {
-            Trace.TraceInformation("RootHost.Load name={0}", name);
+            var sw = Stopwatch.StartNew();
+            Trace.TraceInformation("[{0}]: Load name={1}", GetType().Name, name);
 
             foreach (var path in _searchPaths)
             {
@@ -38,19 +39,18 @@ namespace klr.host
 
                     if (File.Exists(filePath))
                     {
-                        try
-                        {
-                            Trace.TraceInformation("RootHost Assembly.LoadFile({0})", filePath);
+                        var assembly = _loaderEngine.LoadFile(filePath);
 
-                            return _loaderEngine.LoadFile(filePath);
-                        }
-                        catch (Exception ex)
-                        {
-                            Trace.TraceWarning("Exception {0} loading {1}", ex.Message, filePath);
-                        }
+                        sw.Stop();
+
+                        Trace.TraceInformation("[{0}]: Loaded name={1} in {2}ms", GetType().Name, name, sw.ElapsedMilliseconds);
+
+                        return assembly;
                     }
                 }
             }
+
+            sw.Stop();
 
             return null;
         }

@@ -3,6 +3,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Runtime.Versioning;
 
 namespace Microsoft.Framework.Runtime
@@ -57,6 +58,8 @@ namespace Microsoft.Framework.Runtime
                 {
                     return LanguageServices.CreateService<IProjectExportProvider>(_serviceProvider, typeInfo);
                 });
+
+                Trace.TraceInformation("[{0}]: GetProjectExport({1}, {2}, {3})", project.LanguageServices.ProjectExportProvider.TypeName, name, targetFramework, configuration);
 
                 // Resolve the project export
                 return projectExportProvider.GetProjectExport(
