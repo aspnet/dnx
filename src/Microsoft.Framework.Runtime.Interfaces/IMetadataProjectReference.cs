@@ -4,6 +4,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
+using System.Reflection;
 
 namespace Microsoft.Framework.Runtime
 {
@@ -16,9 +17,9 @@ namespace Microsoft.Framework.Runtime
 
         IList<ISourceReference> GetSources();
 
-        void EmitReferenceAssembly(Stream stream);
+        Assembly Load(IAssemblyLoaderEngine loaderEngine);
 
-        IProjectBuildResult EmitAssembly(Stream assemblyStream, Stream pdbStream);
+        void EmitReferenceAssembly(Stream stream);
 
         IProjectBuildResult EmitAssembly(string outputPath);
     }

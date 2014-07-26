@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Emit;
 
@@ -60,38 +61,65 @@ namespace Microsoft.Framework.Runtime.Roslyn
                                      .ToList();
         }
 
+        public Assembly Load(IAssemblyLoaderEngine loaderEngine)
+        {
+            using (var pdbStream = new MemoryStream())
+            using (var assemblyStream = new MemoryStream())
+            {
+                IList<ResourceDescription> resources = GetResources();
+
+                Trace.TraceInformation("[{0}]: Emitting assembly for {1}", GetType().Name, Name);
+
+                var sw = Stopwatch.StartNew();
+
+                EmitResult emitResult = null;
+
+                if (PlatformHelper.IsMono)
+                {
+                    // Pdbs aren't supported on mono
+                    emitResult = CompilationContext.Compilation.Emit(assemblyStream, manifestResources: resources);
+                }
+                else
+                {
+                    emitResult = CompilationContext.Compilation.Emit(assemblyStream, pdbStream: pdbStream, manifestResources: resources);
+                }
+
+                sw.Stop();
+
+                Trace.TraceInformation("[{0}]: Emitted {1} in {2}ms", GetType().Name, Name, sw.ElapsedMilliseconds);
+
+                var diagnostics = CompilationContext.Diagnostics.Concat(
+                    emitResult.Diagnostics);
+
+                var result = CreateBuildResult(emitResult.Success, diagnostics);
+
+                if (!result.Success)
+                {
+                    throw new CompilationException(result.Errors.ToList());
+                }
+
+                Assembly assembly = null;
+
+                // Rewind the stream
+                assemblyStream.Seek(0, SeekOrigin.Begin);
+                pdbStream.Seek(0, SeekOrigin.Begin);
+
+                if (pdbStream.Length == 0)
+                {
+                    assembly = loaderEngine.LoadStream(assemblyStream, pdbStream: null);
+                }
+                else
+                {
+                    assembly = loaderEngine.LoadStream(assemblyStream, pdbStream);
+                }
+
+                return assembly;
+            }
+        }
+
         public void EmitReferenceAssembly(Stream stream)
         {
             CompilationContext.Compilation.EmitMetadataOnly(stream);
-        }
-
-        public IProjectBuildResult EmitAssembly(Stream assemblyStream, Stream pdbStream)
-        {
-            IList<ResourceDescription> resources = GetResources();
-
-            Trace.TraceInformation("[{0}]: Emitting assembly for {1}", GetType().Name, Name);
-
-            var sw = Stopwatch.StartNew();
-
-            EmitResult result = null;
-
-            if (PlatformHelper.IsMono)
-            {
-                result = CompilationContext.Compilation.Emit(assemblyStream, manifestResources: resources);
-            }
-            else
-            {
-                result = CompilationContext.Compilation.Emit(assemblyStream, pdbStream: pdbStream, manifestResources: resources);
-            }
-
-            sw.Stop();
-
-            Trace.TraceInformation("[{0}]: Emitted {1} in {2}ms", GetType().Name, Name, sw.ElapsedMilliseconds);
-
-            var diagnostics = CompilationContext.Diagnostics.Concat(
-                result.Diagnostics);
-
-            return CreateBuildResult(result.Success, diagnostics);
         }
 
         public IProjectBuildResult EmitAssembly(string outputPath)

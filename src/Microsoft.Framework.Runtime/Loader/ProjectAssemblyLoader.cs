@@ -2,8 +2,6 @@
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 using System;
-using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Reflection;
 
@@ -48,43 +46,11 @@ namespace Microsoft.Framework.Runtime.Loader
             {
                 if (string.Equals(projectReference.Name, name, StringComparison.OrdinalIgnoreCase))
                 {
-                    return LoadAssembly(projectReference);
+                    return projectReference.Load(_loaderEngine);
                 }
             }
 
             return null;
-        }
-
-        private Assembly LoadAssembly(IMetadataProjectReference projectReference)
-        {
-            using (var pdbStream = new MemoryStream())
-            using (var assemblyStream = new MemoryStream())
-            {
-                IProjectBuildResult result = projectReference.EmitAssembly(assemblyStream, pdbStream);
-
-                if (!result.Success)
-                {
-                    throw new CompilationException(result.Errors.ToList());
-                }
-
-                Assembly assembly = null;
-
-                // Rewind the stream
-                assemblyStream.Seek(0, SeekOrigin.Begin);
-                pdbStream.Seek(0, SeekOrigin.Begin);
-
-                if (pdbStream.Length == 0)
-                {
-                    // Pdbs aren't supported on mono
-                    assembly = _loaderEngine.LoadStream(assemblyStream, pdbStream: null);
-                }
-                else
-                {
-                    assembly = _loaderEngine.LoadStream(assemblyStream, pdbStream);
-                }
-
-                return assembly;
-            }
         }
     }
 }
