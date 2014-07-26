@@ -32,8 +32,8 @@
     <Compile Include="ProjectExtensions.cs" />
     <Compile Include="ResourceExtensions.cs" />
     <Compile Include="ResxResourceProvider.cs" />
-    <Compile Include="RoslynProjectExportProvider.cs" />
     <Compile Include="RoslynCompiler.cs" />
+    <Compile Include="RoslynProjectExportProvider.cs" />
     <Compile Include="RoslynProjectReference.cs" />
     <Compile Include="RoslynMetadataReference.cs" />
     <Compile Include="Services\IRoslynMetadataReference.cs" />

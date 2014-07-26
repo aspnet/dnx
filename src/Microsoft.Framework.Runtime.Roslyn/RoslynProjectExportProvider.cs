@@ -31,7 +31,22 @@ namespace Microsoft.Framework.Runtime.Roslyn
                 return null;
             }
 
-            return compliationContext.GetLibraryExport();
+            var metadataReferences = new List<IMetadataReference>();
+            var sourceReferences = new List<ISourceReference>();
+
+            // Project reference
+            metadataReferences.Add(new RoslynProjectReference(compliationContext));
+
+            // Other references
+            metadataReferences.AddRange(projectDependenciesExport.MetadataReferences);
+
+            // Shared sources
+            foreach (var sharedFile in project.SharedFiles)
+            {
+                sourceReferences.Add(new SourceFileReference(sharedFile));
+            }
+
+            return new LibraryExport(metadataReferences, sourceReferences);
         }
     }
 }
