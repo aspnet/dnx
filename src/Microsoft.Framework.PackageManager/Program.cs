@@ -17,10 +17,12 @@ namespace Microsoft.Framework.PackageManager
 {
     public class Program : IReport
     {
+        private readonly IServiceProvider _hostServices;
         private readonly IApplicationEnvironment _environment;
 
-        public Program(IApplicationEnvironment environment)
+        public Program(IServiceProvider hostServices, IApplicationEnvironment environment)
         {
+            _hostServices = hostServices;
             _environment = environment;
 
 #if NET45
@@ -174,7 +176,7 @@ namespace Microsoft.Framework.PackageManager
                             new string[0],
                     };
 
-                    var manager = new PackManager(options);
+                    var manager = new PackManager(_hostServices, options);
                     if (!manager.Package())
                     {
                         return -1;
@@ -206,7 +208,7 @@ namespace Microsoft.Framework.PackageManager
                     buildOptions.Configurations = optionConfiguration.Values;
                     buildOptions.TargetFrameworks = optionFramework.Values;
 
-                    var projectManager = new BuildManager(buildOptions);
+                    var projectManager = new BuildManager(_hostServices, buildOptions);
 
                     if (!projectManager.Build())
                     {

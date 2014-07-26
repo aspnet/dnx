@@ -14,10 +14,12 @@ namespace Microsoft.Framework.PackageManager
 {
     public class BuildManager
     {
+        private readonly IServiceProvider _hostServices;
         private readonly BuildOptions _buildOptions;
 
-        public BuildManager(BuildOptions buildOptions)
+        public BuildManager(IServiceProvider hostServices, BuildOptions buildOptions)
         {
+            _hostServices = hostServices;
             _buildOptions = buildOptions;
             _buildOptions.ProjectDir = Normalize(buildOptions.ProjectDir);
         }
@@ -66,100 +68,118 @@ namespace Microsoft.Framework.PackageManager
             var allErrors = new List<string>();
             var allWarnings = new List<string>();
 
-            // Build all specified configurations
-            foreach (var configuration in configurations)
+            var applicationEnvironment = (IApplicationEnvironment)_hostServices.GetService(typeof(IApplicationEnvironment));
+            var hostContainer = (IHostContainer)_hostServices.GetService(typeof(IHostContainer));
+
+            // Initialize the default host so that we can load custom project export
+            // providers from nuget packages/projects
+            var host = new DefaultHost(new DefaultHostOptions()
             {
-                // Create a new builder per configuration
-                var packageBuilder = new PackageBuilder();
-                var symbolPackageBuilder = new PackageBuilder();
+                ApplicationBaseDirectory = project.ProjectDirectory,
+                TargetFramework = applicationEnvironment.TargetFramework,
+                Configuration = applicationEnvironment.Configuration
+            },
+            _hostServices);
 
-                InitializeBuilder(project, packageBuilder);
-                InitializeBuilder(project, symbolPackageBuilder);
+            host.Initialize();
 
-                var configurationSuccess = true;
-
-                baseOutputPath = Path.Combine(baseOutputPath, configuration);
-
-                // Build all target frameworks a project supports
-                foreach (var targetFramework in frameworks)
+            using (hostContainer.AddHost(host))
+            {
+                // Build all specified configurations
+                foreach (var configuration in configurations)
                 {
-                    var errors = new List<string>();
-                    var warnings = new List<string>();
+                    // Create a new builder per configuration
+                    var packageBuilder = new PackageBuilder();
+                    var symbolPackageBuilder = new PackageBuilder();
 
-                    var context = new BuildContext(project, targetFramework, configuration, baseOutputPath);
-                    context.Initialize();
+                    InitializeBuilder(project, packageBuilder);
+                    InitializeBuilder(project, symbolPackageBuilder);
 
-                    if (_buildOptions.CheckDiagnostics)
+                    var configurationSuccess = true;
+
+                    baseOutputPath = Path.Combine(baseOutputPath, configuration);
+
+                    // Build all target frameworks a project supports
+                    foreach (var targetFramework in frameworks)
                     {
-                        configurationSuccess = configurationSuccess && context.GetDiagnostics(warnings, errors);
-                    }
-                    else
-                    {
-                        if (context.Build(warnings, errors))
+                        var errors = new List<string>();
+                        var warnings = new List<string>();
+
+                        var context = new BuildContext(project, targetFramework, configuration, baseOutputPath);
+                        context.Initialize();
+
+                        if (_buildOptions.CheckDiagnostics)
                         {
-                            context.PopulateDependencies(packageBuilder);
-                            context.AddLibs(packageBuilder, "*.dll");
-                            context.AddLibs(packageBuilder, "*.xml");
-                            context.AddLibs(symbolPackageBuilder, "*.*");
+                            configurationSuccess = configurationSuccess && context.GetDiagnostics(warnings, errors);
                         }
                         else
                         {
-                            configurationSuccess = false;
+                            if (context.Build(warnings, errors))
+                            {
+                                context.PopulateDependencies(packageBuilder);
+                                context.AddLibs(packageBuilder, "*.dll");
+                                context.AddLibs(packageBuilder, "*.xml");
+                                context.AddLibs(symbolPackageBuilder, "*.*");
+                            }
+                            else
+                            {
+                                configurationSuccess = false;
+                            }
                         }
+
+                        allErrors.AddRange(errors);
+                        allWarnings.AddRange(warnings);
+
+                        WriteDiagnostics(warnings, errors);
                     }
-
-                    allErrors.AddRange(errors);
-                    allWarnings.AddRange(warnings);
-
-                    WriteDiagnostics(warnings, errors);
-
+                    
                     success = success && configurationSuccess;
-                }
 
-                // Skip producing the nupkg if we're just checking diagnostics
-                if (_buildOptions.CheckDiagnostics)
-                {
-                    continue;
-                }
-
-                // Create a package per configuration
-                string nupkg = GetPackagePath(project, baseOutputPath);
-                string symbolsNupkg = GetPackagePath(project, baseOutputPath, symbols: true);
-
-                if (configurationSuccess)
-                {
-                    foreach (var sharedFile in project.SharedFiles)
+                    // Skip producing the nupkg if we're just checking diagnostics
+                    if (_buildOptions.CheckDiagnostics)
                     {
-                        var file = new PhysicalPackageFile();
-                        file.SourcePath = sharedFile;
-                        file.TargetPath = String.Format(@"shared\{0}", Path.GetFileName(sharedFile));
-                        packageBuilder.Files.Add(file);
+                        continue;
                     }
 
-                    var root = project.ProjectDirectory;
+                    // Create a package per configuration
+                    string nupkg = GetPackagePath(project, baseOutputPath);
+                    string symbolsNupkg = GetPackagePath(project, baseOutputPath, symbols: true);
 
-                    foreach (var path in project.SourceFiles)
+                    if (configurationSuccess)
                     {
-                        var srcFile = new PhysicalPackageFile();
-                        srcFile.SourcePath = path;
-                        srcFile.TargetPath = Path.Combine("src", PathUtility.GetRelativePath(root, path));
-                        symbolPackageBuilder.Files.Add(srcFile);
-                    }
-
-                    using (var fs = File.Create(nupkg))
-                    {
-                        packageBuilder.Save(fs);
-                        Console.WriteLine("{0} -> {1}", project.Name, nupkg);
-                    }
-
-                    if (symbolPackageBuilder.Files.Any())
-                    {
-                        using (var fs = File.Create(symbolsNupkg))
+                        foreach (var sharedFile in project.SharedFiles)
                         {
-                            symbolPackageBuilder.Save(fs);
+                            var file = new PhysicalPackageFile();
+                            file.SourcePath = sharedFile;
+                            file.TargetPath = String.Format(@"shared\{0}", Path.GetFileName(sharedFile));
+                            packageBuilder.Files.Add(file);
                         }
 
-                        Console.WriteLine("{0} -> {1}", project.Name, symbolsNupkg);
+                        var root = project.ProjectDirectory;
+
+                        foreach (var path in project.SourceFiles)
+                        {
+                            var srcFile = new PhysicalPackageFile();
+                            srcFile.SourcePath = path;
+                            srcFile.TargetPath = Path.Combine("src", PathUtility.GetRelativePath(root, path));
+                            symbolPackageBuilder.Files.Add(srcFile);
+                        }
+
+                        using (var fs = File.Create(nupkg))
+                        {
+                            packageBuilder.Save(fs);
+                            Console.WriteLine("{0} -> {1}", project.Name, nupkg);
+                        }
+
+                        if (symbolPackageBuilder.Files.Any())
+                        {
+                            using (var fs = File.Create(symbolsNupkg))
+                            {
+                                symbolPackageBuilder.Save(fs);
+                            }
+
+                            Console.WriteLine("{0} -> {1}", project.Name, symbolsNupkg);
+                        }
                     }
                 }
             }

@@ -18,13 +18,14 @@ namespace Microsoft.Framework.PackageManager.Packing
         public static readonly string AppRootName = "approot";
         public static readonly string DefaultAppFolderName = "public";
 
-        public PackRoot(Runtime.Project project, string outputPath)
+        public PackRoot(Runtime.Project project, string outputPath, IServiceProvider hostServices)
         {
             _project = project;
             Projects = new List<PackProject>();
             Packages = new List<PackPackage>();
             Runtimes = new List<PackRuntime>();
             OutputPath = outputPath;
+            HostServices = hostServices;
             PackagesPath = Path.Combine(outputPath, AppRootName, "packages");
             Operations = new PackOperations();
         }
@@ -41,6 +42,8 @@ namespace Microsoft.Framework.PackageManager.Packing
         public IList<PackPackage> Packages { get; private set; }
 
         public PackOperations Operations { get; private set; }
+
+        public IServiceProvider HostServices { get; private set; }
 
         public void Emit()
         {

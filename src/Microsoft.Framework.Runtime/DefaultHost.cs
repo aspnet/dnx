@@ -57,7 +57,8 @@ namespace Microsoft.Framework.Runtime
                 return null;
             }
 
-            _applicationHostContext.DependencyWalker.Walk(Project.Name, Project.Version, _targetFramework);
+            Initialize();
+
 
             // If there's any unresolved dependencies then complain
             if (_applicationHostContext.UnresolvedDependencyProvider.UnresolvedDependencies.Any())
@@ -96,6 +97,11 @@ namespace Microsoft.Framework.Runtime
             Trace.TraceInformation("Load took {0}ms", sw.ElapsedMilliseconds);
 
             return assembly;
+        }
+
+        public void Initialize()
+        {
+            _applicationHostContext.DependencyWalker.Walk(Project.Name, Project.Version, _targetFramework);
         }
 
         public Assembly Load(string name)

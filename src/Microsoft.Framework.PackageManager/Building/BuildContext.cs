@@ -4,7 +4,6 @@ using System.IO;
 using System.Linq;
 using System.Runtime.Versioning;
 using Microsoft.Framework.Runtime;
-using Microsoft.Framework.Runtime.Common.DependencyInjection;
 using NuGet;
 
 namespace Microsoft.Framework.PackageManager
@@ -145,7 +144,7 @@ namespace Microsoft.Framework.PackageManager
                 packageBuilder.Files.Add(new PhysicalPackageFile
                 {
                     SourcePath = path,
-                    TargetPath = string.Format(@"lib\{0}\{1}", _targetFrameworkFolder, Path.GetFileName(path))
+                    TargetPath = Path.Combine("lib", _targetFrameworkFolder, Path.GetFileName(path))
                 });
             }
         }

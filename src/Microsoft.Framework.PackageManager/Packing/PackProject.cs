@@ -107,7 +107,7 @@ namespace Microsoft.Framework.PackageManager.Packing
             buildOptions.ProjectDir = project.ProjectDirectory;
             buildOptions.OutputDir = Path.Combine(project.ProjectDirectory, "bin");
             buildOptions.Configurations.Add(root.Configuration);
-            var buildManager = new BuildManager(buildOptions);
+            var buildManager = new BuildManager(root.HostServices, buildOptions);
             if (!buildManager.Build())
             {
                 return;
@@ -167,20 +167,20 @@ namespace Microsoft.Framework.PackageManager.Packing
             var iniFilePath = Path.Combine(TargetPath, "k.ini");
             if (defaultRuntime != null && !File.Exists(iniFilePath))
             {
-                var parts = defaultRuntime.Name.Split(new []{'.'}, 2);
+                var parts = defaultRuntime.Name.Split(new[] { '.' }, 2);
                 if (parts.Length == 2)
                 {
                     var versionNumber = parts[1];
-                    parts = parts[0].Split(new []{'-'}, 3);
+                    parts = parts[0].Split(new[] { '-' }, 3);
                     if (parts.Length == 3)
                     {
                         var flavor = parts[1];
                         File.WriteAllText(iniFilePath, string.Format(@"[Runtime]
 KRE_VERSION={0}
 KRE_FLAVOR={1}
-CONFIGURATION={2}
-", 
-versionNumber, 
+KRE_CONFIGURATION={2}
+",
+versionNumber,
 flavor == "svrc50" ? "CoreCLR" : "DesktopCLR",
 root.Configuration));
                     }

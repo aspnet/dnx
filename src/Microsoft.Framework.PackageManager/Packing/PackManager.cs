@@ -14,10 +14,12 @@ namespace Microsoft.Framework.PackageManager.Packing
 {
     public class PackManager
     {
+        private readonly IServiceProvider _hostServices;
         private readonly PackOptions _options;
 
-        public PackManager(PackOptions options)
+        public PackManager(IServiceProvider hostServices, PackOptions options)
         {
+            _hostServices = hostServices;
             _options = options;
             _options.ProjectDir = Normalize(_options.ProjectDir);
         }
@@ -96,7 +98,7 @@ namespace Microsoft.Framework.PackageManager.Packing
 
             var dependencyContexts = new List<DependencyContext>();
 
-            var root = new PackRoot(project, outputPath)
+            var root = new PackRoot(project, outputPath, _hostServices)
             {
                 Overwrite = _options.Overwrite,
                 Configuration = _options.Configuration,
