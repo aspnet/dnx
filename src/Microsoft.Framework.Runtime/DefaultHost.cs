@@ -2,6 +2,7 @@
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -15,9 +16,8 @@ using Microsoft.Framework.Runtime.Loader;
 
 namespace Microsoft.Framework.Runtime
 {
-    public class DefaultHost : IHost
+    public class DefaultHost : IDisposable
     {
-        private IAssemblyLoader _loader;
         private ApplicationHostContext _applicationHostContext;
 
         private IFileWatcher _watcher;
@@ -27,8 +27,8 @@ namespace Microsoft.Framework.Runtime
 
         private Project _project;
 
-        public DefaultHost(DefaultHostOptions options, 
-                          IServiceProvider hostServices)
+        public DefaultHost(DefaultHostOptions options,
+                           IServiceProvider hostServices)
         {
             _projectDirectory = Normalize(options.ApplicationBaseDirectory);
             _targetFramework = options.TargetFramework;
@@ -95,14 +95,28 @@ namespace Microsoft.Framework.Runtime
             _applicationHostContext.DependencyWalker.Walk(Project.Name, Project.Version, _targetFramework);
         }
 
-        public Assembly Load(string name)
+        public IDisposable AddLoaders(IAssemblyLoaderContainer container)
         {
-            Trace.TraceInformation("[{0}]: Load name={1}", GetType().Name, name);
-            var sw = Stopwatch.StartNew();
-            var assembly = _loader.Load(name);
-            sw.Stop();
-            Trace.TraceInformation("[{0}]: Loaded name={1} in {2}ms", GetType().Name, name, sw.ElapsedMilliseconds);
-            return assembly;
+            var loaders = new[]
+            {
+                typeof(ProjectAssemblyLoader),
+                typeof(NuGetAssemblyLoader),
+            };
+
+            var disposables = new List<IDisposable>();
+            foreach (var loaderType in loaders)
+            {
+                var loader = (IAssemblyLoader)ActivatorUtilities.CreateInstance(ServiceProvider, loaderType);
+                disposables.Add(container.AddLoader(loader));
+            }
+
+            return new DisposableAction(() =>
+            {
+                foreach (var d in Enumerable.Reverse(disposables))
+                {
+                    d.Dispose();
+                }
+            });
         }
 
         public void Dispose()
@@ -137,9 +151,10 @@ namespace Microsoft.Framework.Runtime
 
             var applicationEnvironment = new ApplicationEnvironment(Project, _targetFramework, options.Configuration);
 
-
             _applicationHostContext.AddService(typeof(IApplicationEnvironment), applicationEnvironment);
             _applicationHostContext.AddService(typeof(IApplicationShutdown), _shutdown);
+
+            var exportProvider = (ILibraryExportProvider)ServiceProvider.GetService(typeof(ILibraryExportProvider));
 
             // TODO: Get rid of this and just use the IFileWatcher
             _applicationHostContext.AddService(typeof(IFileMonitor), _watcher);
@@ -148,17 +163,7 @@ namespace Microsoft.Framework.Runtime
                 new LibraryManager(_targetFramework,
                                    applicationEnvironment.Configuration,
                                    _applicationHostContext.DependencyWalker,
-                                   (ILibraryExportProvider)ServiceProvider.GetService(typeof(ILibraryExportProvider))));
-
-            var loaders = new[]
-            {
-                typeof(ProjectAssemblyLoader),
-                typeof(NuGetAssemblyLoader),
-            }
-            .Select(loaderType => (IAssemblyLoader)ActivatorUtilities.CreateInstance(ServiceProvider, loaderType))
-            .ToList();
-
-            _loader = new CompositeAssemblyLoader(loaders);
+                                   exportProvider));
 
             CallContextServiceLocator.Locator.ServiceProvider = ServiceProvider;
         }

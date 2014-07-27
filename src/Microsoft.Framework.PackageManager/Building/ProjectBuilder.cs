@@ -14,10 +14,10 @@ namespace Microsoft.Framework.PackageManager
             _libraryExportProvider = libraryExportProvider;
         }
 
-        public IProjectBuildResult Build(string name,
-                                         FrameworkName targetFramework,
-                                         string configuration,
-                                         string outputPath)
+        public IDiagnosticResult Build(string name,
+                                       FrameworkName targetFramework,
+                                       string configuration,
+                                       string outputPath)
         {
             var export = _libraryExportProvider.GetLibraryExport(name, targetFramework, configuration);
 

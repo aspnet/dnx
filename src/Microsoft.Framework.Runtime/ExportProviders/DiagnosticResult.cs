@@ -3,13 +3,13 @@ using System.Collections.Generic;
 
 namespace Microsoft.Framework.Runtime
 {
-    public struct ProjectBuildResult : IProjectBuildResult
+    public struct DiagnosticResult : IDiagnosticResult
     {
         private readonly bool _success;
         private readonly IEnumerable<string> _warnings;
         private readonly IEnumerable<string> _errors;
 
-        public ProjectBuildResult(bool success, IEnumerable<string> warnings, IEnumerable<string> errors)
+        public DiagnosticResult(bool success, IEnumerable<string> warnings, IEnumerable<string> errors)
         {
             _success = success;
             _warnings = warnings;

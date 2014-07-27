@@ -16,10 +16,10 @@ namespace klr.host
 {
     public class Bootstrapper
     {
-        private readonly IHostContainer _container;
+        private readonly IAssemblyLoaderContainer _container;
         private readonly IAssemblyLoaderEngine _loaderEngine;
 
-        public Bootstrapper(IHostContainer container,
+        public Bootstrapper(IAssemblyLoaderContainer container,
                             IAssemblyLoaderEngine loaderEngine)
         {
             _container = container;
@@ -66,7 +66,7 @@ namespace klr.host
             CallContextServiceLocator.Locator = new ServiceProviderLocator();
 
             var serviceProvider = new ServiceProvider();
-            serviceProvider.Add(typeof(IHostContainer), _container);
+            serviceProvider.Add(typeof(IAssemblyLoaderContainer), _container);
             serviceProvider.Add(typeof(IAssemblyLoaderEngine), _loaderEngine);
             serviceProvider.Add(typeof(IApplicationEnvironment), applicationEnvironment);
 

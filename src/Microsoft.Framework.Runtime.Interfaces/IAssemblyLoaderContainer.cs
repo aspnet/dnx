@@ -7,8 +7,8 @@ using System;
 namespace Microsoft.Framework.Runtime
 {
     [AssemblyNeutral]
-    public interface IHostContainer
+    public interface IAssemblyLoaderContainer
     {
-        IDisposable AddHost(IHost host);
+        IDisposable AddLoader(IAssemblyLoader loader);
     }
 }

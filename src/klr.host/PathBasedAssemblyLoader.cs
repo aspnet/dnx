@@ -9,28 +9,21 @@ using Microsoft.Framework.Runtime;
 
 namespace klr.host
 {
-    public class RootHost : IHost
+    public class PathBasedAssemblyLoader : IAssemblyLoader
     {
         private static readonly string[] _extensions = new string[] { ".dll", ".exe" };
 
         private readonly string[] _searchPaths;
         private readonly IAssemblyLoaderEngine _loaderEngine;
 
-        public RootHost(IAssemblyLoaderEngine loaderEngine, string[] searchPaths)
+        public PathBasedAssemblyLoader(IAssemblyLoaderEngine loaderEngine, string[] searchPaths)
         {
             _loaderEngine = loaderEngine;
             _searchPaths = searchPaths;
         }
 
-        public void Dispose()
-        {
-        }
-
         public Assembly Load(string name)
         {
-            var sw = Stopwatch.StartNew();
-            Trace.TraceInformation("[{0}]: Load name={1}", GetType().Name, name);
-
             foreach (var path in _searchPaths)
             {
                 foreach (var extension in _extensions)
@@ -39,18 +32,10 @@ namespace klr.host
 
                     if (File.Exists(filePath))
                     {
-                        var assembly = _loaderEngine.LoadFile(filePath);
-
-                        sw.Stop();
-
-                        Trace.TraceInformation("[{0}]: Loaded name={1} in {2}ms", GetType().Name, name, sw.ElapsedMilliseconds);
-
-                        return assembly;
+                        return _loaderEngine.LoadFile(filePath);
                     }
                 }
             }
-
-            sw.Stop();
 
             return null;
         }

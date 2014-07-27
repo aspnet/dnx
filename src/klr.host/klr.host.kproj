@@ -24,8 +24,8 @@
     <Compile Include="Bootstrapper.cs" />
     <Compile Include="DefaultLoaderEngine.cs" />
     <Compile Include="FrameworkNameUtility.cs" />
-    <Compile Include="HostContainer.cs" />
-    <Compile Include="RootHost.cs" />
+    <Compile Include="LoaderContainer.cs" />
+    <Compile Include="PathBasedAssemblyLoader.cs" />
     <Compile Include="ServiceProviderLocator.cs" />
   </ItemGroup>
   <Import Project="$(VSToolsPath)\AspNet\Microsoft.Web.AspNet.targets" Condition="'$(VSToolsPath)' != ''" />

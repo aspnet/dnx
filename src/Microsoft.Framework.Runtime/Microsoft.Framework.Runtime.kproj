@@ -46,7 +46,7 @@
     <Compile Include="ExportProviders\CompositeLibraryExportProvider.cs" />
     <Compile Include="ExportProviders\LibraryExport.cs" />
     <Compile Include="ExportProviders\PEReaderExtensions.cs" />
-    <Compile Include="ExportProviders\ProjectBuildResult.cs" />
+    <Compile Include="ExportProviders\DiagnosticResult.cs" />
     <Compile Include="ExportProviders\ProjectExportProviderHelper.cs" />
     <Compile Include="ExportProviders\ProjectLibraryExportProvider.cs" />
     <Compile Include="ExportProviders\EmbeddedMetadataReference.cs" />
@@ -60,9 +60,9 @@
     <Compile Include="FrameworkReferenceResolver.cs" />
     <Compile Include="GlobalSettings.cs" />
     <Compile Include="IFrameworkReferenceResolver.cs" />
+    <Compile Include="Infrastructure\DisposableAction.cs" />
     <Compile Include="IProjectResolver.cs" />
-    <Compile Include="Loader\CompositeAssemblyLoader.cs" />
-    <Compile Include="Loader\LoaderInformation.cs" />
+    <Compile Include="TypeInformation.cs" />
     <Compile Include="Loader\NuGetAssemblyLoader.cs" />
     <Compile Include="Loader\ProjectAssemblyLoader.cs" />
     <Compile Include="Loader\CompilationException.cs" />

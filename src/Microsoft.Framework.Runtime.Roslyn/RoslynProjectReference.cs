@@ -46,12 +46,12 @@ namespace Microsoft.Framework.Runtime.Roslyn
             }
         }
 
-        public IProjectBuildResult GetDiagnostics()
+        public IDiagnosticResult GetDiagnostics()
         {
             var diagnostics = CompilationContext.Diagnostics
                 .Concat(CompilationContext.Compilation.GetDiagnostics());
 
-            return CreateBuildResult(success: true, diagnostics: diagnostics);
+            return CreateDiagnosticResult(success: true, diagnostics: diagnostics);
         }
 
         public IList<ISourceReference> GetSources()
@@ -95,7 +95,7 @@ namespace Microsoft.Framework.Runtime.Roslyn
                 var diagnostics = CompilationContext.Diagnostics.Concat(
                     emitResult.Diagnostics);
 
-                var result = CreateBuildResult(emitResult.Success, diagnostics);
+                var result = CreateDiagnosticResult(emitResult.Success, diagnostics);
 
                 if (!result.Success)
                 {
@@ -126,7 +126,7 @@ namespace Microsoft.Framework.Runtime.Roslyn
             CompilationContext.Compilation.EmitMetadataOnly(stream);
         }
 
-        public IProjectBuildResult EmitAssembly(string outputPath)
+        public IDiagnosticResult EmitAssembly(string outputPath)
         {
             IList<ResourceDescription> resources = GetResources();
 
@@ -165,7 +165,7 @@ namespace Microsoft.Framework.Runtime.Roslyn
                 if (!result.Success ||
                     diagnostics.Any(IsError))
                 {
-                    return CreateBuildResult(result.Success, diagnostics);
+                    return CreateDiagnosticResult(result.Success, diagnostics);
                 }
 
                 // Ensure there's an output directory
@@ -193,7 +193,7 @@ namespace Microsoft.Framework.Runtime.Roslyn
                     }
                 }
 
-                return CreateBuildResult(result.Success, diagnostics);
+                return CreateDiagnosticResult(result.Success, diagnostics);
             }
         }
 
@@ -335,7 +335,7 @@ namespace Microsoft.Framework.Runtime.Roslyn
             }
         }
 
-        private static ProjectBuildResult CreateBuildResult(bool success, IEnumerable<Diagnostic> diagnostics)
+        private static DiagnosticResult CreateDiagnosticResult(bool success, IEnumerable<Diagnostic> diagnostics)
         {
             var formatter = new DiagnosticFormatter();
 
@@ -345,7 +345,7 @@ namespace Microsoft.Framework.Runtime.Roslyn
             var warnings = diagnostics.Where(d => d.Severity == DiagnosticSeverity.Warning)
                                   .Select(d => formatter.Format(d)).ToList();
 
-            return new ProjectBuildResult(success, warnings, errors);
+            return new DiagnosticResult(success, warnings, errors);
         }
 
         private static bool IsError(Diagnostic diagnostic)

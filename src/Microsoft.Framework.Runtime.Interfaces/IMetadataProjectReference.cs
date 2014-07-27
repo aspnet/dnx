@@ -13,7 +13,7 @@ namespace Microsoft.Framework.Runtime
     {
         string ProjectPath { get; }
 
-        IProjectBuildResult GetDiagnostics();
+        IDiagnosticResult GetDiagnostics();
 
         IList<ISourceReference> GetSources();
 
@@ -21,6 +21,6 @@ namespace Microsoft.Framework.Runtime
 
         void EmitReferenceAssembly(Stream stream);
 
-        IProjectBuildResult EmitAssembly(string outputPath);
+        IDiagnosticResult EmitAssembly(string outputPath);
     }
 }

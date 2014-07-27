@@ -69,7 +69,7 @@ namespace Microsoft.Framework.PackageManager
             var allWarnings = new List<string>();
 
             var applicationEnvironment = (IApplicationEnvironment)_hostServices.GetService(typeof(IApplicationEnvironment));
-            var hostContainer = (IHostContainer)_hostServices.GetService(typeof(IHostContainer));
+            var loaderContainer = (IAssemblyLoaderContainer)_hostServices.GetService(typeof(IAssemblyLoaderContainer));
 
             // Initialize the default host so that we can load custom project export
             // providers from nuget packages/projects
@@ -83,7 +83,7 @@ namespace Microsoft.Framework.PackageManager
 
             host.Initialize();
 
-            using (hostContainer.AddHost(host))
+            using (host.AddLoaders(loaderContainer))
             {
                 // Build all specified configurations
                 foreach (var configuration in configurations)

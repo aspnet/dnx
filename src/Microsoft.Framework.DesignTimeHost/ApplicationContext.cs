@@ -567,7 +567,7 @@ namespace Microsoft.Framework.DesignTimeHost
             var environment = new ApplicationEnvironment(project, _targetFramework.Value, _configuration.Value);
 
             var applicationHost = new ApplicationHost.Program(
-                (IHostContainer)_hostServices.GetService(typeof(IHostContainer)),
+                (IAssemblyLoaderContainer)_hostServices.GetService(typeof(IAssemblyLoaderContainer)),
                 environment,
                 services);
 
