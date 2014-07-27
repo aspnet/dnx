@@ -15,7 +15,7 @@ namespace Microsoft.Framework.Runtime.Roslyn
 {
     public class RoslynProjectReference : IRoslynMetadataReference, IMetadataProjectReference
     {
-        private static readonly IList<IMetadataEmbeddedReference> _emptyList = new List<IMetadataEmbeddedReference>();
+        private static readonly IList<IMetadataEmbeddedReference> _emptyList = new IMetadataEmbeddedReference[0];
 
         public RoslynProjectReference(CompilationContext compilationContext)
         {
