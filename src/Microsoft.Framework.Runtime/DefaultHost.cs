@@ -48,8 +48,6 @@ namespace Microsoft.Framework.Runtime
 
         public Assembly GetEntryPoint(string applicationName)
         {
-            Trace.TraceInformation("Project root is {0}", _projectDirectory);
-
             var sw = Stopwatch.StartNew();
 
             if (Project == null)
@@ -127,6 +125,10 @@ namespace Microsoft.Framework.Runtime
         private void Initialize(DefaultHostOptions options, IServiceProvider hostServices)
         {
             _applicationHostContext = new ApplicationHostContext(hostServices, _projectDirectory, options.PackageDirectory);
+
+            Trace.TraceInformation("[{0}]: Project path: {1}", GetType().Name, _projectDirectory);
+            Trace.TraceInformation("[{0}]: Project root: {1}", GetType().Name, _applicationHostContext.RootDirectory);
+            Trace.TraceInformation("[{0}]: Packages path: {1}", GetType().Name, _applicationHostContext.PackagesDirectory);
 
             _project = _applicationHostContext.Project;
 

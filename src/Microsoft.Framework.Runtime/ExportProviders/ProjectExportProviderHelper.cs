@@ -41,7 +41,7 @@ namespace Microsoft.Framework.Runtime
             }
 
             var dependencyStopWatch = Stopwatch.StartNew();
-            Trace.TraceInformation("[{0}]: Resolving references for '{1}'", typeof(ProjectExportProviderHelper).Name, project.Name);
+            Trace.TraceInformation("[{0}]: Resolving exports for '{1}'", typeof(ProjectExportProviderHelper).Name, project.Name);
 
             if (dependencies.Count > 0)
             {
@@ -61,8 +61,18 @@ namespace Microsoft.Framework.Runtime
                 }
             }
 
+            dependencyStopWatch.Stop();
+            Trace.TraceInformation("[{0}]: Resolved {1} exports for '{2}' in {3}ms",
+                                  typeof(ProjectExportProviderHelper).Name,
+                                  exports.Count,
+                                  project.Name,
+                                  dependencyStopWatch.ElapsedMilliseconds);
+
             IList<IMetadataReference> resolvedReferences;
             IList<ISourceReference> resolvedSources;
+
+            dependencyStopWatch = Stopwatch.StartNew();
+            Trace.TraceInformation("[{0}]: Resolving references for '{1}'", typeof(ProjectExportProviderHelper).Name, project.Name);
 
             ExtractReferences(exports,
                               libraryExportProvider,

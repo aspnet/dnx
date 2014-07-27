@@ -30,10 +30,10 @@ namespace Microsoft.Framework.Runtime
             FrameworkReferenceResolver = new FrameworkReferenceResolver();
             _serviceProvider = new ServiceProvider(serviceProvider);
 
-            packagesDirectory = packagesDirectory ?? NuGetDependencyResolver.ResolveRepositoryPath(RootDirectory);
+            PackagesDirectory = packagesDirectory ?? NuGetDependencyResolver.ResolveRepositoryPath(RootDirectory);
 
             var referenceAssemblyDependencyResolver = new ReferenceAssemblyDependencyResolver(FrameworkReferenceResolver);
-            NuGetDependencyProvider = new NuGetDependencyResolver(packagesDirectory, FrameworkReferenceResolver);
+            NuGetDependencyProvider = new NuGetDependencyResolver(PackagesDirectory, FrameworkReferenceResolver);
             var gacDependencyResolver = new GacDependencyResolver();
             ProjectDepencyProvider = new ProjectReferenceDependencyProvider(ProjectResolver);
             UnresolvedDependencyProvider = new UnresolvedDependencyProvider();
