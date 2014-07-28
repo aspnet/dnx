@@ -125,12 +125,10 @@ namespace Microsoft.Framework.Runtime.Roslyn
         {
             var trees = new List<SyntaxTree>();
 
-            var sourceFiles = project.SourceFiles.ToList();
-
             var parseOptions = new CSharpParseOptions(languageVersion: compilationSettings.LanguageVersion,
                                                       preprocessorSymbols: compilationSettings.Defines.AsImmutable());
 
-            foreach (var sourcePath in sourceFiles)
+            foreach (var sourcePath in project.SourceFiles)
             {
                 _watcher.WatchFile(sourcePath);
 
