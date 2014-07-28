@@ -68,6 +68,9 @@ namespace Microsoft.Framework.Runtime.Roslyn
                 references,
                 compilationSettings.CompilationOptions);
 
+            var aniSw = Stopwatch.StartNew();
+            Trace.TraceInformation("[{0}]: Scanning '{1}' for assembly neutral interfaces", GetType().Name, name);
+
             var assemblyNeutralWorker = new AssemblyNeutralWorker(compilation, embeddedReferences);
             assemblyNeutralWorker.FindTypeCompilations(compilation.Assembly.GlobalNamespace);
 
@@ -75,6 +78,9 @@ namespace Microsoft.Framework.Runtime.Roslyn
             var assemblyNeutralTypeDiagnostics = assemblyNeutralWorker.GenerateTypeCompilations();
 
             assemblyNeutralWorker.Generate();
+
+            aniSw.Stop();
+            Trace.TraceInformation("[{0}]: Found {1} assembly neutral interfaces for '{2}' in {3}ms", GetType().Name, assemblyNeutralWorker.TypeCompilations.Count(), name, aniSw.ElapsedMilliseconds);
 
             foreach (var t in assemblyNeutralWorker.TypeCompilations)
             {
