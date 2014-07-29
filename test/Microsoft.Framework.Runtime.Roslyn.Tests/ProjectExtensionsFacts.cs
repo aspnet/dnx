@@ -120,7 +120,7 @@ namespace Microsoft.Framework.Runtime.Roslyn.Tests
 
             Assert.Equal(new[] { "DEBUG", "TRACE", "K10" }, k10Options.Defines);
             Assert.Equal(ReportDiagnostic.Error, k10Options.CompilationOptions.GeneralDiagnosticOption);
-            Assert.Equal(DebugInformationKind.PDBOnly, k10Options.CompilationOptions.DebugInformationKind);
+            Assert.Equal(DebugInformationKind.PdbOnly, k10Options.CompilationOptions.DebugInformationKind);
         }
 
         [Fact]

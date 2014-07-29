@@ -7,6 +7,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Reflection.Metadata;
 using System.Reflection.PortableExecutable;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Emit;
@@ -148,11 +149,11 @@ namespace Microsoft.Framework.Runtime.Roslyn
                 if (PlatformHelper.IsMono)
                 {
                     // No pdb support yet
-                    result = CompilationContext.Compilation.Emit(assemblyStream, outputName: Path.GetFileName(assemblyPath), pdbFileName: null, pdbStream: null, xmlDocStream: xmlDocStream, manifestResources: resources);
+                    result = CompilationContext.Compilation.Emit(assemblyStream, outputName: Path.GetFileName(assemblyPath), pdbFilePath: null, pdbStream: null, xmlDocumentationStream: xmlDocStream, manifestResources: resources);
                 }
                 else
                 {
-                    result = CompilationContext.Compilation.Emit(assemblyStream, outputName: Path.GetFileName(assemblyPath), pdbFileName: pdbPath, pdbStream: pdbStream, xmlDocStream: xmlDocStream, manifestResources: resources);
+                    result = CompilationContext.Compilation.Emit(assemblyStream, outputName: Path.GetFileName(assemblyPath), pdbFilePath: pdbPath, pdbStream: pdbStream, xmlDocumentationStream: xmlDocStream, manifestResources: resources);
                 }
 
                 sw.Stop();

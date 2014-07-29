@@ -36,8 +36,12 @@ namespace Microsoft.Framework.Runtime.Roslyn
                 options = options.WithConcurrentBuild(concurrentBuild: false);
             }
 
-            var assemblyIdentityComparer = VersionUtility.IsDesktop(targetFramework) ?
-                DesktopAssemblyIdentityComparer.Default : null;
+            AssemblyIdentityComparer assemblyIdentityComparer =
+#if NET45
+                VersionUtility.IsDesktop(targetFramework) ?
+                DesktopAssemblyIdentityComparer.Default : 
+#endif
+                null;
 
             options = options.WithAssemblyIdentityComparer(assemblyIdentityComparer);
 

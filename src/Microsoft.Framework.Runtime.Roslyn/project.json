@@ -14,7 +14,9 @@
                 "System.IO": "",
                 "System.Runtime" : "",
                 "System.Xml": "",
-                "System.Xml.Linq": ""
+                "System.Xml.Linq": "",
+                "System.Threading.Tasks": "",
+                "System.Text.Encoding": ""
             }
         },
         "k10" : { 
