@@ -6,8 +6,8 @@ using System.Runtime.Versioning;
 
 namespace Microsoft.Framework.Runtime
 {
-    public interface IProjectExportProvider
+    public interface IProjectReferenceProvider
     {
-        ILibraryExport GetProjectExport(Project project, FrameworkName targetFramework, string configuration, ILibraryExport projectExport);
+        IMetadataProjectReference GetProjectReference(Project project, FrameworkName targetFramework, string configuration, ILibraryExport projectExport);
     }
 }

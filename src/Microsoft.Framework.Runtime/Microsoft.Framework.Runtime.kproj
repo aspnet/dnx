@@ -43,6 +43,7 @@
     <Compile Include="DependencyManagement\ReferenceAssemblyDependencyResolver.cs" />
     <Compile Include="DependencyManagement\WalkContext.cs" />
     <Compile Include="DictionaryExtensions.cs" />
+    <Compile Include="ExportProviders\CompiledProjectMetadataReference.cs" />
     <Compile Include="ExportProviders\CompositeLibraryExportProvider.cs" />
     <Compile Include="ExportProviders\LibraryExport.cs" />
     <Compile Include="ExportProviders\PEReaderExtensions.cs" />
@@ -50,7 +51,7 @@
     <Compile Include="ExportProviders\ProjectExportProviderHelper.cs" />
     <Compile Include="ExportProviders\ProjectLibraryExportProvider.cs" />
     <Compile Include="ExportProviders\EmbeddedMetadataReference.cs" />
-    <Compile Include="ExportProviders\IProjectExportProvider.cs" />
+    <Compile Include="ExportProviders\IProjectReferenceProvider.cs" />
     <Compile Include="ExportProviders\UnresolvedMetadataReference.cs" />
     <Compile Include="ExportProviders\MetadataFileReference.cs" />
     <Compile Include="ExportProviders\SourceFileReference.cs" />

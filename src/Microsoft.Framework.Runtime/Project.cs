@@ -241,7 +241,7 @@ namespace Microsoft.Framework.Runtime
 
             // Set the default loader information for projects
             var languageServicesAssembly = "Microsoft.Framework.Runtime.Roslyn";
-            var projectExportProviderType = "Microsoft.Framework.Runtime.Roslyn.RoslynProjectExportProvider";
+            var projectReferenceProviderType = "Microsoft.Framework.Runtime.Roslyn.RoslynProjectReferenceProvider";
             var languageName = "C#";
 
             var languageInfo = rawProject["language"] as JObject;
@@ -250,10 +250,10 @@ namespace Microsoft.Framework.Runtime
             {
                 languageName = GetValue<string>(languageInfo, "name");
                 languageServicesAssembly = GetValue<string>(languageInfo, "assembly");
-                projectExportProviderType = GetValue<string>(languageInfo, "projectExportProviderType");
+                projectReferenceProviderType = GetValue<string>(languageInfo, "projectReferenceProviderType");
             }
 
-            var libraryExporter = new TypeInformation(languageServicesAssembly, projectExportProviderType);
+            var libraryExporter = new TypeInformation(languageServicesAssembly, projectReferenceProviderType);
 
             project.LanguageServices = new LanguageServices(languageName, libraryExporter);
 
@@ -449,15 +449,15 @@ namespace Microsoft.Framework.Runtime
             }
         }
 
-        private bool BuildTargetFrameworkNode(KeyValuePair<string, JToken> configuration, CompilerOptions compilerOptions)
+        private bool BuildTargetFrameworkNode(KeyValuePair<string, JToken> targetFramework, CompilerOptions compilerOptions)
         {
             // If no compilation options are provided then figure them out from the
             // node
             compilerOptions = compilerOptions ??
-                              GetCompilationOptions(configuration.Value) ??
+                              GetCompilationOptions(targetFramework.Value) ??
                               new CompilerOptions();
 
-            var frameworkName = ParseFrameworkName(configuration.Key);
+            var frameworkName = ParseFrameworkName(targetFramework.Key);
 
             // If it's not unsupported then keep it
             if (frameworkName == VersionUtility.UnsupportedFrameworkName)
@@ -477,9 +477,17 @@ namespace Microsoft.Framework.Runtime
                 Dependencies = new List<Library>()
             };
 
-            var properties = configuration.Value.Value<JObject>();
+            var properties = targetFramework.Value.Value<JObject>();
 
             PopulateDependencies(targetFrameworkInformation.Dependencies, properties);
+
+            var binNode = properties["bin"];
+
+            if (binNode != null)
+            {
+                targetFrameworkInformation.AssemblyPath = GetValue<string>(binNode, "assembly");
+                targetFrameworkInformation.PdbPath = GetValue<string>(binNode, "pdb");
+            }
 
             _compilationOptions[frameworkName] = compilerOptions;
             _targetFrameworks[frameworkName] = targetFrameworkInformation;

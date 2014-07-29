@@ -9,12 +9,12 @@ namespace Microsoft.Framework.Runtime
         public LanguageServices(string name, TypeInformation projectExportProvider)
         {
             Name = name;
-            ProjectExportProvider = projectExportProvider;
+            ProjectReferenceProvider = projectExportProvider;
         }
 
         public string Name { get; private set; }
 
-        public TypeInformation ProjectExportProvider { get; private set; }
+        public TypeInformation ProjectReferenceProvider { get; private set; }
 
         public static T CreateService<T>(IServiceProvider sp, TypeInformation typeInfo)
         {
