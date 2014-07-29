@@ -29,7 +29,7 @@ namespace Microsoft.Framework.PackageManager
             Project project;
             if (!Project.TryGetProject(_buildOptions.ProjectDir, out project))
             {
-                Console.WriteLine("Unable to locate {0}.'", Project.ProjectFileName);
+                WriteError(string.Format("Unable to locate {0}.'", Project.ProjectFileName));
                 return false;
             }
 
@@ -200,7 +200,7 @@ namespace Microsoft.Framework.PackageManager
             {
                 if (!projectFrameworks.Contains(framework.Value))
                 {
-                    Console.WriteLine(framework.Key + " is not specified in project.json");
+                    WriteError(framework.Key + " is not specified in project.json");
                     success = false;
                 }
             }
@@ -238,7 +238,7 @@ namespace Microsoft.Framework.PackageManager
 
             if (errors.Count > 0)
             {
-                WriteColor("Build failed.", ConsoleColor.Red);
+                WriteError("Build failed.");
             }
             else
             {
@@ -266,7 +266,7 @@ namespace Microsoft.Framework.PackageManager
 
         private void WriteError(string message)
         {
-            WriteColor(message, ConsoleColor.Red);
+            WriteColor(Console.Error, message, ConsoleColor.Red);
         }
 
         private void WriteWarning(string message)
@@ -276,12 +276,17 @@ namespace Microsoft.Framework.PackageManager
 
         private void WriteColor(string message, ConsoleColor color)
         {
+            WriteColor(Console.Out, message, color);
+        }
+
+        private void WriteColor(TextWriter writer, string message, ConsoleColor color)
+        {
             var old = Console.ForegroundColor;
 
             try
             {
                 Console.ForegroundColor = color;
-                Console.WriteLine(message);
+                writer.WriteLine(message);
             }
             finally
             {
