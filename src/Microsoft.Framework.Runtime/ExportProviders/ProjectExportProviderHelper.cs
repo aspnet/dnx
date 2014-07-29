@@ -15,49 +15,52 @@ namespace Microsoft.Framework.Runtime
     internal static class ProjectExportProviderHelper
     {
         public static ILibraryExport GetProjectDependenciesExport(
-            ILibraryExportProvider libraryExportProvider, 
+            ILibraryManager manager,
+            ILibraryExportProvider libraryExportProvider,
             Project project,
             FrameworkName targetFramework,
-            IList<Library> targetFrameworkDependencies, 
             string configuration)
         {
-            Trace.TraceInformation("[{0}]: Found project '{1}' framework={2}", typeof(ProjectExportProviderHelper).Name, project.Name, targetFramework);
-
-            var exports = new List<ILibraryExport>();
-
-            var dependencies = project.Dependencies.Concat(targetFrameworkDependencies)
-                                                   .Select(d => d.Name)
-                                                   .ToList();
-
-            if (VersionUtility.IsDesktop(targetFramework))
-            {
-                // mscorlib is ok
-                dependencies.Add("mscorlib");
-
-                // TODO: Remove these references
-                dependencies.Add("System");
-                dependencies.Add("System.Core");
-                dependencies.Add("Microsoft.CSharp");
-            }
-
             var dependencyStopWatch = Stopwatch.StartNew();
             Trace.TraceInformation("[{0}]: Resolving exports for '{1}'", typeof(ProjectExportProviderHelper).Name, project.Name);
 
-            if (dependencies.Count > 0)
+            var exports = new List<ILibraryExport>();
+
+            // Walk the dependency tree and resolve the library export for all references to this project
+            var stack = new Stack<ILibraryInformation>();
+            var processed = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+            stack.Push(manager.GetLibraryInformation(project.Name));
+
+            while (stack.Count > 0)
             {
-                foreach (var dependency in dependencies)
+                var library = stack.Pop();
+
+                // Skip it if we've already seen it
+                if (!processed.Add(library.Name))
                 {
-                    var libraryExport = libraryExportProvider.GetLibraryExport(dependency, targetFramework, configuration);
+                    continue;
+                }
+
+                // Skip the root
+                if (!string.Equals(library.Name, project.Name, StringComparison.OrdinalIgnoreCase))
+                {
+                    var libraryExport = libraryExportProvider.GetLibraryExport(library.Name, targetFramework, configuration);
 
                     if (libraryExport == null)
                     {
                         // TODO: Failed to resolve dependency so do something useful
-                        Trace.TraceInformation("[{0}]: Failed to resolve dependency '{1}'", typeof(ProjectExportProviderHelper).Name, dependency);
+                        Trace.TraceInformation("[{0}]: Failed to resolve dependency '{1}'", typeof(ProjectExportProviderHelper).Name, library.Name);
                     }
                     else
                     {
                         exports.Add(libraryExport);
                     }
+                }
+
+                foreach (var dependency in library.Dependencies)
+                {
+                    stack.Push(manager.GetLibraryInformation(dependency));
                 }
             }
 
@@ -74,12 +77,7 @@ namespace Microsoft.Framework.Runtime
             dependencyStopWatch = Stopwatch.StartNew();
             Trace.TraceInformation("[{0}]: Resolving references for '{1}'", typeof(ProjectExportProviderHelper).Name, project.Name);
 
-            ExtractReferences(exports,
-                              libraryExportProvider,
-                              targetFramework,
-                              configuration,
-                              out resolvedReferences,
-                              out resolvedSources);
+            ExtractReferences(exports, out resolvedReferences, out resolvedSources);
 
             dependencyStopWatch.Stop();
             Trace.TraceInformation("[{0}]: Resolved {1} references for '{2}' in {3}ms",
@@ -92,9 +90,6 @@ namespace Microsoft.Framework.Runtime
         }
 
         private static void ExtractReferences(List<ILibraryExport> dependencyExports,
-                                              ILibraryExportProvider libraryExportProvider,
-                                              FrameworkName targetFramework,
-                                              string configuration,
                                               out IList<IMetadataReference> metadataReferences,
                                               out IList<ISourceReference> sourceReferences)
         {
@@ -104,21 +99,13 @@ namespace Microsoft.Framework.Runtime
 
             foreach (var export in dependencyExports)
             {
-                ProcessExport(export,
-                              libraryExportProvider,
-                              targetFramework,
-                              configuration,
-                              references,
-                              sourceReferences);
+                ProcessExport(export, references, sourceReferences);
             }
 
             metadataReferences = references.Values.ToList();
         }
 
         private static void ProcessExport(ILibraryExport export,
-                                          ILibraryExportProvider libraryExportProvider,
-                                          FrameworkName targetFramework,
-                                          string configuration,
                                           IDictionary<string, IMetadataReference> metadataReferences,
                                           IList<ISourceReference> sourceReferences)
         {
@@ -128,27 +115,7 @@ namespace Microsoft.Framework.Runtime
 
             foreach (var reference in references)
             {
-                var unresolvedReference = reference as UnresolvedMetadataReference;
-
-                if (unresolvedReference != null)
-                {
-                    // Try to resolve the unresolved references
-                    var compilationExport = libraryExportProvider.GetLibraryExport(unresolvedReference.Name, targetFramework, configuration);
-
-                    if (compilationExport != null)
-                    {
-                        ProcessExport(compilationExport,
-                                      libraryExportProvider,
-                                      targetFramework,
-                                      configuration,
-                                      metadataReferences,
-                                      sourceReferences);
-                    }
-                }
-                else
-                {
-                    metadataReferences[reference.Name] = reference;
-                }
+                metadataReferences[reference.Name] = reference;
             }
 
             foreach (var sourceReference in export.SourceReferences)

@@ -1,4 +1,5 @@
-﻿using System.Runtime.Versioning;
+﻿using System.Collections.Generic;
+using System.Runtime.Versioning;
 
 namespace Microsoft.Framework.Runtime.Roslyn
 {
@@ -15,9 +16,17 @@ namespace Microsoft.Framework.Runtime.Roslyn
             Project project,
             FrameworkName targetFramework,
             string configuration,
-            ILibraryExport projectDependenciesExport)
+            IEnumerable<IMetadataReference> incomingReferences,
+            IEnumerable<ISourceReference> incomingSourceReferences,
+            IList<IMetadataReference> outgoingReferences)
         {
-            var compliationContext = _compiler.CompileProject(project, targetFramework, configuration, projectDependenciesExport);
+            var compliationContext = _compiler.CompileProject(
+                project, 
+                targetFramework, 
+                configuration, 
+                incomingReferences,
+                incomingSourceReferences,
+                outgoingReferences);
 
             if (compliationContext == null)
             {

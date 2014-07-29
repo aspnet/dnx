@@ -39,6 +39,7 @@ namespace Microsoft.Framework.Runtime
             {
                 // Get the composite library export provider
                 var exportProvider = (ILibraryExportProvider)_serviceProvider.GetService(typeof(ILibraryExportProvider));
+                var libraryManager = (ILibraryManager)_serviceProvider.GetService(typeof(ILibraryManager));
 
                 var targetFrameworkInformation = project.GetTargetFramework(targetFramework);
 
@@ -48,12 +49,11 @@ namespace Microsoft.Framework.Runtime
 
                 // Get the exports for the project dependencies
                 ILibraryExport projectExport = ProjectExportProviderHelper.GetProjectDependenciesExport(
+                    libraryManager,
                     exportProvider,
                     project,
                     effectiveTargetFramework,
-                    targetFrameworkInformation.Dependencies,
                     configuration);
-
 
                 var metadataReferences = new List<IMetadataReference>();
                 var sourceReferences = new List<ISourceReference>();
@@ -80,7 +80,9 @@ namespace Microsoft.Framework.Runtime
                         project,
                         effectiveTargetFramework,
                         configuration,
-                        projectExport);
+                        projectExport.MetadataReferences,
+                        projectExport.SourceReferences,
+                        metadataReferences);
 
                     metadataReferences.Add(projectReference);
 
@@ -90,8 +92,6 @@ namespace Microsoft.Framework.Runtime
                         sourceReferences.Add(new SourceFileReference(sharedFile));
                     }
                 }
-
-                metadataReferences.AddRange(projectExport.MetadataReferences);
 
                 return new LibraryExport(metadataReferences, sourceReferences);
             });

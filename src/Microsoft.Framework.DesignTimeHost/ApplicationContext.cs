@@ -412,7 +412,11 @@ namespace Microsoft.Framework.DesignTimeHost
                 Configuration = configuration
             };
 
-            var applicationHostContext = new ApplicationHostContext(_hostServices, appPath);
+            var applicationHostContext = new ApplicationHostContext(_hostServices,
+                                                                    appPath,
+                                                                    packagesDirectory: null,
+                                                                    configuration: configuration,
+                                                                    targetFramework: targetFramework);
 
             Project project = applicationHostContext.Project;
 

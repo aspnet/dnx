@@ -200,80 +200,48 @@ namespace Microsoft.Framework.Runtime
 
         public ILibraryExport GetLibraryExport(string name, FrameworkName targetFramework, string configuration)
         {
-            if (!_packageDescriptions.ContainsKey(name))
+            PackageDescription description;
+            if (!_packageDescriptions.TryGetValue(name, out description))
             {
                 return null;
             }
 
-            var paths = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+            var references = new Dictionary<string, IMetadataReference>(StringComparer.OrdinalIgnoreCase);
 
-            PopulateDependenciesPaths(name, paths);
-
-            var metadataReferenes = paths.Select(pair =>
-            {
-                IMetadataReference reference = null;
-
-                if (pair.Value == null)
-                {
-                    reference = new UnresolvedMetadataReference(pair.Key);
-                }
-                else
-                {
-                    reference = new MetadataFileReference(pair.Key, pair.Value);
-                }
-
-                return reference;
-            }).ToList();
+            PopulateMetadataReferences(description, references);
 
             // REVIEW: This requires more design
             var sourceReferences = new List<ISourceReference>();
-            PackageDescription description;
-            if (_packageDescriptions.TryGetValue(name, out description))
+
+            foreach (var sharedSource in description.SharedSources)
             {
-                foreach (var sharedSource in description.SharedSources)
-                {
-                    sourceReferences.Add(new SourceFileReference(sharedSource));
-                }
+                sourceReferences.Add(new SourceFileReference(sharedSource));
             }
 
-            return new LibraryExport(metadataReferenes, sourceReferences);
+            return new LibraryExport(references.Values.ToList(), sourceReferences);
         }
 
-        private void PopulateDependenciesPaths(string name, IDictionary<string, string> paths)
+        private void PopulateMetadataReferences(PackageDescription description, IDictionary<string, IMetadataReference> paths)
         {
-            PackageDescription description;
-            if (!_packageDescriptions.TryGetValue(name, out description))
-            {
-                paths[name] = null;
-                return;
-            }
-
             // Use contract if both contract and target path are available
             bool hasContract = description.ContractPath != null;
             bool hasLib = description.PackageAssemblies.Any();
 
             if (hasContract && hasLib)
             {
-                paths[name] = description.ContractPath;
+                paths[description.Library.Identity.Name] = new MetadataFileReference(description.Library.Identity.Name, description.ContractPath);
             }
             else if (hasLib)
             {
                 foreach (var assembly in description.PackageAssemblies)
                 {
-                    paths[assembly.Name] = assembly.Path;
+                    paths[assembly.Name] = new MetadataFileReference(assembly.Name, assembly.Path);
                 }
             }
 
-            foreach (var dependency in description.Library.Dependencies)
-            {
-                PopulateDependenciesPaths(dependency.Name, paths);
-            }
-
-            // Overwrite paths that may not have been found with framework
-            // references
             foreach (var assembly in description.FrameworkAssemblies)
             {
-                paths[assembly.Name] = assembly.Path;
+                paths[assembly.Name] = new MetadataFileReference(assembly.Name, assembly.Path);
             }
         }
 
