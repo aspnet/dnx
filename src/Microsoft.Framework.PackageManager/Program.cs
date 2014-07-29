@@ -64,75 +64,28 @@ namespace Microsoft.Framework.PackageManager
                 var optPackageFolder = c.Option("--packages", "Path to restore packages", CommandOptionType.SingleValue);
                 c.HelpOption("-?|-h|--help");
 
-                c.OnExecute(() =>
+                c.OnExecute(async () =>
                 {
-                    try
+                    var command = new RestoreCommand(_environment);
+                    command.Reports = new Reports()
                     {
-                        var command = new RestoreCommand(_environment);
-                        command.Reports = new Reports()
-                        {
-                            Information = this,
-                            Verbose = optionVerbose.HasValue() ? (this as IReport) : new NullReport()
-                        };
+                        Information = this,
+                        Verbose = optionVerbose.HasValue() ? (this as IReport) : new NullReport()
+                    };
+                    command.RestoreDirectory = argRoot.Value;
+                    command.Sources = optSource.Values;
+                    command.FallbackSources = optFallbackSource.Values;
+                    command.NoCache = optNoCache.HasValue();
+                    command.PackageFolder = optPackageFolder.Value();
 
-                        // If the root argument is a directory
-                        if (Directory.Exists(argRoot.Value))
-                        {
-                            command.RestoreDirectory = argRoot.Value;
-                        }
-                        // If the root argument is a project.json file
-                        else if (string.Equals(
-                            Project.ProjectFileName,
-                            Path.GetFileName(argRoot.Value),
-                            StringComparison.OrdinalIgnoreCase))
-                        {
-                            command.RestoreDirectory = Path.GetDirectoryName(Path.GetFullPath(argRoot.Value));
-                        }
-                        // If the root argument is a global.json file
-                        else if (string.Equals(
-                            GlobalSettings.GlobalFileName,
-                            Path.GetFileName(argRoot.Value),
-                            StringComparison.OrdinalIgnoreCase))
-                        {
-                            command.RestoreDirectory = Path.GetDirectoryName(Path.GetFullPath(argRoot.Value));
-                            command.GlobalJsonFile = argRoot.Value;
-                        }
-                        else if (!string.IsNullOrEmpty(argRoot.Value))
-                        {
-                            throw new InvalidOperationException("The given root is invalid.");
-                        }
-
-                        if (optSource.HasValue())
-                        {
-                            command.Sources = optSource.Values;
-                        }
-
-                        if (optFallbackSource.HasValue())
-                        {
-                            command.FallbackSources = optFallbackSource.Values;
-                        }
-
-                        if (optProxy.HasValue())
-                        {
-                            Environment.SetEnvironmentVariable("http_proxy", optProxy.Value());
-                        }
-
-                        command.NoCache = optNoCache.HasValue();
-                        command.PackageFolder = optPackageFolder.Value();
-
-                        var success = command.ExecuteCommand();
-
-                        return success ? 0 : 1;
-                    }
-                    catch (Exception ex)
+                    if (optProxy.HasValue())
                     {
-                        this.WriteLine("----------");
-                        this.WriteLine(ex.ToString());
-                        this.WriteLine("----------");
-                        this.WriteLine("Restore failed");
-                        this.WriteLine(ex.Message);
-                        return 1;
+                        Environment.SetEnvironmentVariable("http_proxy", optProxy.Value());
                     }
+
+                    var success = await command.ExecuteCommand();
+
+                    return success ? 0 : 1;
                 });
             });
 
@@ -234,6 +187,58 @@ namespace Microsoft.Framework.PackageManager
                     command.ProjectDir = argProject.Value;
 
                     var success = command.ExecuteCommand();
+
+                    return success ? 0 : 1;
+                });
+            });
+
+            app.Command("install", c =>
+            {
+                c.Description = "Install the given dependency";
+
+                var argName = c.Argument("[name]", "Name of the dependency to add");
+                var argVersion = c.Argument("[version]", "Version of the dependency to add, default is the latest version.");
+                var argProject = c.Argument("[project]", "Path to project, default is current directory");
+                var optSource = c.Option("-s|--source <FEED>", "A list of packages sources to use for this command",
+                    CommandOptionType.MultipleValue);
+                var optFallbackSource = c.Option("-f|--fallbacksource <FEED>",
+                    "A list of packages sources to use as a fallback", CommandOptionType.MultipleValue);
+                var optProxy = c.Option("-p|--proxy <ADDRESS>", "The HTTP proxy to use when retrieving packages",
+                    CommandOptionType.SingleValue);
+                var optNoCache = c.Option("--no-cache", "Do not use local cache", CommandOptionType.NoValue);
+                var optPackageFolder = c.Option("--packages", "Path to restore packages", CommandOptionType.SingleValue);
+                c.HelpOption("-?|-h|--help");
+
+                c.OnExecute(async () =>
+                {
+                    var addCmd = new AddCommand();
+                    addCmd.Report = this;
+                    addCmd.Name = argName.Value;
+                    addCmd.Version = argVersion.Value;
+                    addCmd.ProjectDir = argProject.Value;
+
+                    var restoreCmd = new RestoreCommand(_environment);
+                    restoreCmd.Reports = new Reports()
+                    {
+                        Information = this,
+                        Verbose = optionVerbose.HasValue() ? (this as IReport) : new NullReport()
+                    };
+
+                    restoreCmd.RestoreDirectory = argProject.Value;
+                    restoreCmd.Sources = optSource.Values;
+                    restoreCmd.FallbackSources = optFallbackSource.Values;
+                    restoreCmd.NoCache = optNoCache.HasValue();
+                    restoreCmd.PackageFolder = optPackageFolder.Value();
+
+                    if (optProxy.HasValue())
+                    {
+                        Environment.SetEnvironmentVariable("http_proxy", optProxy.Value());
+                    }
+
+                    var installCmd = new InstallCommand(addCmd, restoreCmd);
+                    installCmd.Report = this;
+
+                    var success = await installCmd.ExecuteCommand();
 
                     return success ? 0 : 1;
                 });
