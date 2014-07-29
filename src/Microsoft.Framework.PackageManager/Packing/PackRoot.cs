@@ -90,7 +90,7 @@ namespace Microsoft.Framework.PackageManager.Packing
             foreach (var commandName in _project.Commands.Keys)
             {
                 const string template1 = @"
-@""%~dp0packages\{2}\bin\klr.exe"" --appbase ""%~dp0{1}"" Microsoft.Framework.ApplicationHost {0} %*
+@""%~dp0{3}\packages\{2}\bin\klr.exe"" --appbase ""%~dp0{1}"" Microsoft.Framework.ApplicationHost {0} %*
 ";
                 const string template2 = @"
 @klr.exe --appbase ""%~dp0{1}"" Microsoft.Framework.ApplicationHost {0} %*
@@ -99,7 +99,8 @@ namespace Microsoft.Framework.PackageManager.Packing
                 {
                     File.WriteAllText(
                         Path.Combine(OutputPath, commandName + ".cmd"),
-                        string.Format(template1, commandName, Path.Combine(AppRootName, "src", _project.Name), Runtimes.First().Name));
+                        string.Format(template1, commandName, Path.Combine(AppRootName, "src", _project.Name),
+                            Runtimes.First().Name, AppRootName));
                 }
                 else
                 {
