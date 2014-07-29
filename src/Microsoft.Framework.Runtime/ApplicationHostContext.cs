@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Runtime.Versioning;
 using Microsoft.Framework.Runtime.Common.DependencyInjection;
 using Microsoft.Framework.Runtime.FileSystem;
 
@@ -12,17 +13,10 @@ namespace Microsoft.Framework.Runtime
         private readonly ServiceProvider _serviceProvider;
 
         public ApplicationHostContext(IServiceProvider serviceProvider,
-                                      string projectDirectory) :
-            this(serviceProvider,
-                 projectDirectory,
-                 packagesDirectory: null)
-        {
-
-        }
-
-        public ApplicationHostContext(IServiceProvider serviceProvider,
                                       string projectDirectory,
-                                      string packagesDirectory)
+                                      string packagesDirectory,
+                                      string configuration,
+                                      FrameworkName targetFramework)
         {
             ProjectDirectory = projectDirectory;
             RootDirectory = Runtime.ProjectResolver.ResolveRootDirectory(ProjectDirectory);
@@ -62,6 +56,7 @@ namespace Microsoft.Framework.Runtime
 
             _serviceProvider.Add(typeof(NuGetDependencyResolver), NuGetDependencyProvider);
             _serviceProvider.Add(typeof(ProjectReferenceDependencyProvider), ProjectDepencyProvider);
+            _serviceProvider.Add(typeof(ILibraryManager), new LibraryManager(targetFramework, configuration, DependencyWalker, compositeDependencyExporter));
         }
 
         public void AddService(Type type, object instance)

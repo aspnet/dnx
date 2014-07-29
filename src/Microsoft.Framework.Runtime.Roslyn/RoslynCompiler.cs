@@ -11,7 +11,6 @@ using System.Text;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.Text;
-using NuGet;
 
 namespace Microsoft.Framework.Runtime.Roslyn
 {
@@ -30,7 +29,9 @@ namespace Microsoft.Framework.Runtime.Roslyn
             Project project,
             FrameworkName targetFramework,
             string configuration,
-            ILibraryExport projectExport)
+            IEnumerable<IMetadataReference> incomingReferences,
+            IEnumerable<ISourceReference> incomingSourceReferences,
+            IList<IMetadataReference> outgoingReferences)
         {
             var path = project.ProjectDirectory;
             var name = project.Name;
@@ -39,8 +40,7 @@ namespace Microsoft.Framework.Runtime.Roslyn
 
             _watcher.WatchFile(project.ProjectFilePath);
 
-            var metadataReferences = projectExport.MetadataReferences;
-            var exportedReferences = metadataReferences.Select(ConvertMetadataReference);
+            var exportedReferences = incomingReferences.Select(ConvertMetadataReference);
 
             Trace.TraceInformation("[{0}]: Compiling '{1}'", GetType().Name, name);
             var sw = Stopwatch.StartNew();
@@ -54,9 +54,9 @@ namespace Microsoft.Framework.Runtime.Roslyn
 
             var compilationSettings = project.GetCompilationSettings(targetFramework, configuration);
 
-            IList<SyntaxTree> trees = GetSyntaxTrees(project, compilationSettings, projectExport);
+            IList<SyntaxTree> trees = GetSyntaxTrees(project, compilationSettings, incomingSourceReferences);
 
-            var embeddedReferences = metadataReferences.OfType<IMetadataEmbeddedReference>()
+            var embeddedReferences = incomingReferences.OfType<IMetadataEmbeddedReference>()
                                                        .ToDictionary(a => a.Name, ConvertMetadataReference);
 
             var references = new List<MetadataReference>();
@@ -84,7 +84,7 @@ namespace Microsoft.Framework.Runtime.Roslyn
 
             foreach (var t in assemblyNeutralWorker.TypeCompilations)
             {
-                metadataReferences.Add(new EmbeddedMetadataReference(t));
+                outgoingReferences.Add(new EmbeddedMetadataReference(t));
             }
 
             var newCompilation = assemblyNeutralWorker.Compilation;
@@ -92,7 +92,7 @@ namespace Microsoft.Framework.Runtime.Roslyn
             newCompilation = ApplyVersionInfo(newCompilation, project);
 
             var compilationContext = new CompilationContext(newCompilation,
-                metadataReferences,
+                incomingReferences.Concat(outgoingReferences).ToList(),
                 assemblyNeutralTypeDiagnostics,
                 project);
 
@@ -121,7 +121,7 @@ namespace Microsoft.Framework.Runtime.Roslyn
 
         private IList<SyntaxTree> GetSyntaxTrees(Project project,
                                                  CompilationSettings compilationSettings,
-                                                 ILibraryExport export)
+                                                 IEnumerable<ISourceReference> sourceReferences)
         {
             var trees = new List<SyntaxTree>();
 
@@ -137,20 +137,15 @@ namespace Microsoft.Framework.Runtime.Roslyn
                 trees.Add(syntaxTree);
             }
 
-            foreach (var sourceReference in export.SourceReferences)
+            foreach (var sourceFileReference in sourceReferences.OfType<ISourceFileReference>())
             {
-                var sourceFileReference = sourceReference as ISourceFileReference;
+                var sourcePath = sourceFileReference.Path;
 
-                if (sourceFileReference != null)
-                {
-                    var sourcePath = sourceFileReference.Path;
+                _watcher.WatchFile(sourcePath);
 
-                    _watcher.WatchFile(sourcePath);
+                var syntaxTree = CreateSyntaxTree(sourcePath, parseOptions);
 
-                    var syntaxTree = CreateSyntaxTree(sourcePath, parseOptions);
-
-                    trees.Add(syntaxTree);
-                }
+                trees.Add(syntaxTree);
             }
 
             return trees;

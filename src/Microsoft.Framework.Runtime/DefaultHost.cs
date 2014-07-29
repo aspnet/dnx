@@ -124,7 +124,12 @@ namespace Microsoft.Framework.Runtime
 
         private void Initialize(DefaultHostOptions options, IServiceProvider hostServices)
         {
-            _applicationHostContext = new ApplicationHostContext(hostServices, _projectDirectory, options.PackageDirectory);
+            _applicationHostContext = new ApplicationHostContext(
+                hostServices, 
+                _projectDirectory, 
+                options.PackageDirectory,
+                options.Configuration,
+                _targetFramework);
 
             Trace.TraceInformation("[{0}]: Project path: {1}", GetType().Name, _projectDirectory);
             Trace.TraceInformation("[{0}]: Project root: {1}", GetType().Name, _applicationHostContext.RootDirectory);
@@ -155,17 +160,9 @@ namespace Microsoft.Framework.Runtime
 
             _applicationHostContext.AddService(typeof(IApplicationEnvironment), applicationEnvironment);
             _applicationHostContext.AddService(typeof(IApplicationShutdown), _shutdown);
-
-            var exportProvider = (ILibraryExportProvider)ServiceProvider.GetService(typeof(ILibraryExportProvider));
-
             // TODO: Get rid of this and just use the IFileWatcher
             _applicationHostContext.AddService(typeof(IFileMonitor), _watcher);
             _applicationHostContext.AddService(typeof(IFileWatcher), _watcher);
-            _applicationHostContext.AddService(typeof(ILibraryManager),
-                new LibraryManager(_targetFramework,
-                                   applicationEnvironment.Configuration,
-                                   _applicationHostContext.DependencyWalker,
-                                   exportProvider));
 
             CallContextServiceLocator.Locator.ServiceProvider = ServiceProvider;
         }

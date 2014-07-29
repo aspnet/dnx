@@ -24,7 +24,12 @@ namespace Microsoft.Framework.PackageManager
             _configuration = configuration;
             _targetFrameworkFolder = VersionUtility.GetShortFrameworkName(_targetFramework);
             _outputPath = Path.Combine(outputPath, _targetFrameworkFolder);
-            _applicationHostContext = new ApplicationHostContext(serviceProvider: null, projectDirectory: project.ProjectDirectory);
+            _applicationHostContext = new ApplicationHostContext(
+                serviceProvider: null,
+                projectDirectory: project.ProjectDirectory,
+                packagesDirectory: null,
+                configuration: configuration,
+                targetFramework: targetFramework);
         }
 
         public void Initialize()
