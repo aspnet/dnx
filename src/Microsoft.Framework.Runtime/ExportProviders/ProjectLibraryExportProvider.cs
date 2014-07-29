@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Runtime.Versioning;
 
 namespace Microsoft.Framework.Runtime
@@ -12,7 +13,7 @@ namespace Microsoft.Framework.Runtime
     {
         private readonly IProjectResolver _projectResolver;
         private readonly IServiceProvider _serviceProvider;
-        private readonly Dictionary<TypeInformation, IProjectExportProvider> _exportProviders = new Dictionary<TypeInformation, IProjectExportProvider>();
+        private readonly Dictionary<TypeInformation, IProjectReferenceProvider> _projectReferenceProviders = new Dictionary<TypeInformation, IProjectReferenceProvider>();
         private readonly Dictionary<string, ILibraryExport> _exportCache = new Dictionary<string, ILibraryExport>(StringComparer.OrdinalIgnoreCase);
 
         public ProjectLibraryExportProvider(IProjectResolver projectResolver,
@@ -53,21 +54,68 @@ namespace Microsoft.Framework.Runtime
                     targetFrameworkInformation.Dependencies,
                     configuration);
 
-                // Find the default project exporter
-                var projectExportProvider = _exportProviders.GetOrAdd(project.LanguageServices.ProjectExportProvider, typeInfo =>
+
+                var metadataReferences = new List<IMetadataReference>();
+                var sourceReferences = new List<ISourceReference>();
+
+                if (!string.IsNullOrEmpty(targetFrameworkInformation.AssemblyPath))
                 {
-                    return LanguageServices.CreateService<IProjectExportProvider>(_serviceProvider, typeInfo);
-                });
+                    var assemblyPath = ResolvePath(project, configuration, targetFrameworkInformation.AssemblyPath);
+                    var pdbPath = ResolvePath(project, configuration, targetFrameworkInformation.PdbPath);
 
-                Trace.TraceInformation("[{0}]: GetProjectExport({1}, {2}, {3})", project.LanguageServices.ProjectExportProvider.TypeName, name, targetFramework, configuration);
+                    metadataReferences.Add(new CompiledProjectMetadataReference(project, assemblyPath, pdbPath));
+                }
+                else
+                {
+                    // Find the default project exporter
+                    var projectReferenceProvider = _projectReferenceProviders.GetOrAdd(project.LanguageServices.ProjectReferenceProvider, typeInfo =>
+                    {
+                        return LanguageServices.CreateService<IProjectReferenceProvider>(_serviceProvider, typeInfo);
+                    });
 
-                // Resolve the project export
-                return projectExportProvider.GetProjectExport(
-                    project, 
-                    effectiveTargetFramework, 
-                    configuration, 
-                    projectExport);
+                    Trace.TraceInformation("[{0}]: GetProjectReference({1}, {2}, {3})", project.LanguageServices.ProjectReferenceProvider.TypeName, name, targetFramework, configuration);
+
+                    // Resolve the project export
+                    IMetadataProjectReference projectReference = projectReferenceProvider.GetProjectReference(
+                        project,
+                        effectiveTargetFramework,
+                        configuration,
+                        projectExport);
+
+                    metadataReferences.Add(projectReference);
+
+                    // Shared sources
+                    foreach (var sharedFile in project.SharedFiles)
+                    {
+                        sourceReferences.Add(new SourceFileReference(sharedFile));
+                    }
+                }
+
+                metadataReferences.AddRange(projectExport.MetadataReferences);
+
+                return new LibraryExport(metadataReferences, sourceReferences);
             });
+        }
+
+        private static string ResolvePath(Project project, string configuration, string path)
+        {
+            if (string.IsNullOrEmpty(path))
+            {
+                return null;
+            }
+
+            if (Path.DirectorySeparatorChar == '/')
+            {
+                path = path.Replace('\\', Path.DirectorySeparatorChar);
+            }
+            else
+            {
+                path = path.Replace('/', Path.DirectorySeparatorChar);
+            }
+
+            path = path.Replace("{configuration}", configuration);
+
+            return Path.Combine(project.ProjectDirectory, path);
         }
     }
 }
