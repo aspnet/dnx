@@ -5,7 +5,6 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Reflection.PortableExecutable;
-using System.Reflection.Metadata;
 
 namespace Microsoft.Framework.Project
 {

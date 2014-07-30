@@ -47,9 +47,9 @@ namespace Microsoft.Framework.Runtime
             checked // arithmetic overflow here could cause AV
             {
                 // Locate start and end of PE image in unmanaged memory.
-                var block = peReader.GetEntireImage();
-                IntPtr peImageStartAsIntPtr = block.Pointer;
-                int peImageSize = block.Length;
+                IntPtr peImageStartAsIntPtr;
+                int peImageSize;
+                peReader.GetEntireImage(out peImageStartAsIntPtr, out peImageSize);
                 byte* peImageStart = (byte*)peImageStartAsIntPtr;
                 byte* peImageEnd = peImageStart + peImageSize;
                 Debug.Assert(peImageStart != null && peImageSize > 0);
