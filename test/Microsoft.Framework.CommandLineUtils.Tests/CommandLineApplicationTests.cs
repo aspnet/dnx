@@ -339,5 +339,25 @@ namespace Microsoft.Framework.Runtime.Common.CommandLine
             Assert.Equal(1, subCmd.RemainingArguments.Count);
             Assert.Equal(unexpectedOption, subCmd.RemainingArguments[0]);
         }
+        
+        [Fact]
+        public void HandlesAsyncExecutes()
+        {
+            bool called = false;
+
+            var app = new CommandLineApplication();
+
+            app.OnExecute(async () =>
+            {
+                await Task.Delay(5);
+                called = true;
+                return 2;
+            });
+
+            var result = app.Execute();
+
+            Assert.True(called);
+            Assert.Equal(2, result);
+        }
     }
 }

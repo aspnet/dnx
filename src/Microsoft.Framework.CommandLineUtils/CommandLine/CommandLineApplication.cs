@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace Microsoft.Framework.Runtime.Common.CommandLine
 {
@@ -102,6 +103,11 @@ namespace Microsoft.Framework.Runtime.Common.CommandLine
         public void OnExecute(Func<int> invoke)
         {
             Invoke = invoke;
+        }
+        
+        public void OnExecute(Func<Task<int>> invoke)
+        {
+            Invoke = () => invoke().Result;
         }
 
         public int Execute(params string[] args)
