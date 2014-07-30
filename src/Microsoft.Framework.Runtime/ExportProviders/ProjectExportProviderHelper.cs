@@ -22,9 +22,10 @@ namespace Microsoft.Framework.Runtime
             string configuration)
         {
             var dependencyStopWatch = Stopwatch.StartNew();
-            Trace.TraceInformation("[{0}]: Resolving exports for '{1}'", typeof(ProjectExportProviderHelper).Name, project.Name);
+            Trace.TraceInformation("[{0}]: Resolving references for '{1}'", typeof(ProjectExportProviderHelper).Name, project.Name);
 
-            var exports = new List<ILibraryExport>();
+            var references = new Dictionary<string, IMetadataReference>(StringComparer.OrdinalIgnoreCase);
+            var sourceReferences = new List<ISourceReference>();
 
             // Walk the dependency tree and resolve the library export for all references to this project
             var stack = new Stack<ILibraryInformation>();
@@ -54,7 +55,7 @@ namespace Microsoft.Framework.Runtime
                     }
                     else
                     {
-                        exports.Add(libraryExport);
+                        ProcessExport(libraryExport, references, sourceReferences);
                     }
                 }
 
@@ -65,44 +66,13 @@ namespace Microsoft.Framework.Runtime
             }
 
             dependencyStopWatch.Stop();
-            Trace.TraceInformation("[{0}]: Resolved {1} exports for '{2}' in {3}ms",
-                                  typeof(ProjectExportProviderHelper).Name,
-                                  exports.Count,
-                                  project.Name,
-                                  dependencyStopWatch.ElapsedMilliseconds);
-
-            IList<IMetadataReference> resolvedReferences;
-            IList<ISourceReference> resolvedSources;
-
-            dependencyStopWatch = Stopwatch.StartNew();
-            Trace.TraceInformation("[{0}]: Resolving references for '{1}'", typeof(ProjectExportProviderHelper).Name, project.Name);
-
-            ExtractReferences(exports, out resolvedReferences, out resolvedSources);
-
-            dependencyStopWatch.Stop();
             Trace.TraceInformation("[{0}]: Resolved {1} references for '{2}' in {3}ms",
                                   typeof(ProjectExportProviderHelper).Name,
-                                  resolvedReferences.Count,
+                                  references.Count,
                                   project.Name,
                                   dependencyStopWatch.ElapsedMilliseconds);
 
-            return new LibraryExport(resolvedReferences, resolvedSources);
-        }
-
-        private static void ExtractReferences(List<ILibraryExport> dependencyExports,
-                                              out IList<IMetadataReference> metadataReferences,
-                                              out IList<ISourceReference> sourceReferences)
-        {
-            var references = new Dictionary<string, IMetadataReference>(StringComparer.OrdinalIgnoreCase);
-
-            sourceReferences = new List<ISourceReference>();
-
-            foreach (var export in dependencyExports)
-            {
-                ProcessExport(export, references, sourceReferences);
-            }
-
-            metadataReferences = references.Values.ToList();
+            return new LibraryExport(references.Values.ToList(), sourceReferences);
         }
 
         private static void ProcessExport(ILibraryExport export,
