@@ -10,6 +10,8 @@ namespace Microsoft.Framework.Runtime
     {
         ILibraryExport GetLibraryExport(string name);
 
+        ILibraryExport GetAllExports(string name);
+
         IEnumerable<ILibraryInformation> GetReferencingLibraries(string name);
 
         ILibraryInformation GetLibraryInformation(string name);

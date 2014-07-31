@@ -14,15 +14,18 @@ namespace Microsoft.Framework.Runtime
 {
     internal static class ProjectExportProviderHelper
     {
-        public static ILibraryExport GetProjectDependenciesExport(
+        // TODO: Figure out caching here
+
+        public static ILibraryExport GetExportsRecursive(
             ILibraryManager manager,
             ILibraryExportProvider libraryExportProvider,
-            Project project,
+            string name,
             FrameworkName targetFramework,
-            string configuration)
+            string configuration,
+            bool dependenciesOnly)
         {
             var dependencyStopWatch = Stopwatch.StartNew();
-            Trace.TraceInformation("[{0}]: Resolving references for '{1}'", typeof(ProjectExportProviderHelper).Name, project.Name);
+            Trace.TraceInformation("[{0}]: Resolving references for '{1}'", typeof(ProjectExportProviderHelper).Name, name);
 
             var references = new Dictionary<string, IMetadataReference>(StringComparer.OrdinalIgnoreCase);
             var sourceReferences = new List<ISourceReference>();
@@ -31,7 +34,7 @@ namespace Microsoft.Framework.Runtime
             var stack = new Stack<ILibraryInformation>();
             var processed = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
-            stack.Push(manager.GetLibraryInformation(project.Name));
+            stack.Push(manager.GetLibraryInformation(name));
 
             while (stack.Count > 0)
             {
@@ -43,8 +46,9 @@ namespace Microsoft.Framework.Runtime
                     continue;
                 }
 
-                // Skip the root
-                if (!string.Equals(library.Name, project.Name, StringComparison.OrdinalIgnoreCase))
+                bool isRoot = string.Equals(library.Name, name, StringComparison.OrdinalIgnoreCase);
+
+                if (!dependenciesOnly || (dependenciesOnly && !isRoot))
                 {
                     var libraryExport = libraryExportProvider.GetLibraryExport(library.Name, targetFramework, configuration);
 
@@ -69,7 +73,7 @@ namespace Microsoft.Framework.Runtime
             Trace.TraceInformation("[{0}]: Resolved {1} references for '{2}' in {3}ms",
                                   typeof(ProjectExportProviderHelper).Name,
                                   references.Count,
-                                  project.Name,
+                                  name,
                                   dependencyStopWatch.ElapsedMilliseconds);
 
             return new LibraryExport(references.Values.ToList(), sourceReferences);

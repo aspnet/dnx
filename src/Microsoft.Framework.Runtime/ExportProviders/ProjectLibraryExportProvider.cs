@@ -48,12 +48,13 @@ namespace Microsoft.Framework.Runtime
                 var effectiveTargetFramework = targetFrameworkInformation.FrameworkName ?? targetFramework;
 
                 // Get the exports for the project dependencies
-                ILibraryExport projectExport = ProjectExportProviderHelper.GetProjectDependenciesExport(
+                ILibraryExport projectExport = ProjectExportProviderHelper.GetExportsRecursive(
                     libraryManager,
                     exportProvider,
-                    project,
+                    project.Name,
                     effectiveTargetFramework,
-                    configuration);
+                    configuration,
+                    dependenciesOnly: true);
 
                 var metadataReferences = new List<IMetadataReference>();
                 var sourceReferences = new List<ISourceReference>();
