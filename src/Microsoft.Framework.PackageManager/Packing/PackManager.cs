@@ -36,14 +36,20 @@ namespace Microsoft.Framework.PackageManager.Packing
 
         public class DependencyContext
         {
-            public DependencyContext(string projectDirectory)
+            public DependencyContext(string projectDirectory, string configuration, FrameworkName targetFramework)
             {
-                var applicationHostContext = new ApplicationHostContext(serviceProvider: null, projectDirectory: projectDirectory);
+                var applicationHostContext = new ApplicationHostContext(
+                    serviceProvider: null,
+                    projectDirectory: projectDirectory,
+                    packagesDirectory: null,
+                    configuration: configuration,
+                    targetFramework: targetFramework);
 
                 ProjectResolver = applicationHostContext.ProjectResolver;
                 NuGetDependencyResolver = applicationHostContext.NuGetDependencyProvider;
                 ProjectReferenceDependencyProvider = applicationHostContext.ProjectDepencyProvider;
                 DependencyWalker = applicationHostContext.DependencyWalker;
+                FrameworkName = targetFramework;
             }
 
             public IProjectResolver ProjectResolver { get; set; }
@@ -52,10 +58,9 @@ namespace Microsoft.Framework.PackageManager.Packing
             public DependencyWalker DependencyWalker { get; set; }
             public FrameworkName FrameworkName { get; set; }
 
-            public void Walk(string projectName, SemanticVersion projectVersion, FrameworkName frameworkName)
+            public void Walk(string projectName, SemanticVersion projectVersion)
             {
-                FrameworkName = frameworkName;
-                DependencyWalker.Walk(projectName, projectVersion, frameworkName);
+                DependencyWalker.Walk(projectName, projectVersion, FrameworkName);
             }
 
             public static FrameworkName GetFrameworkNameForRuntime(string runtime)
@@ -138,8 +143,8 @@ namespace Microsoft.Framework.PackageManager.Packing
                 var frameworkName = DependencyContext.GetFrameworkNameForRuntime(Path.GetFileName(runtime));
                 if (!dependencyContexts.Any(dc => dc.FrameworkName == frameworkName))
                 {
-                    var dependencyContext = new DependencyContext(projectDir);
-                    dependencyContext.Walk(project.Name, project.Version, frameworkName);
+                    var dependencyContext = new DependencyContext(projectDir, _options.Configuration, frameworkName);
+                    dependencyContext.Walk(project.Name, project.Version);
                     dependencyContexts.Add(dependencyContext);
                 }
             }
@@ -147,8 +152,8 @@ namespace Microsoft.Framework.PackageManager.Packing
             if (!dependencyContexts.Any())
             {
                 var frameworkName = DependencyContext.GetFrameworkNameForRuntime("KRE-svr50-x86.*");
-                var dependencyContext = new DependencyContext(projectDir);
-                dependencyContext.Walk(project.Name, project.Version, frameworkName);
+                var dependencyContext = new DependencyContext(projectDir, _options.Configuration, frameworkName);
+                dependencyContext.Walk(project.Name, project.Version);
                 dependencyContexts.Add(dependencyContext);
             }
 

@@ -286,7 +286,7 @@ namespace Microsoft.Framework.DesignTimeHost
                     Commands = state.Project.Commands
                 };
 
-                var metadata = state.MetadataProvider.GetProjectMetadata(state.Project.Name, state.TargetFramework, state.Configuration);
+                var metadata = state.MetadataProvider.GetProjectMetadata(state.Project.Name);
 
                 _local.References = new ReferencesMessage
                 {
@@ -412,7 +412,11 @@ namespace Microsoft.Framework.DesignTimeHost
                 Configuration = configuration
             };
 
-            var applicationHostContext = new ApplicationHostContext(_hostServices, appPath);
+            var applicationHostContext = new ApplicationHostContext(_hostServices,
+                                                                    appPath,
+                                                                    packagesDirectory: null,
+                                                                    configuration: configuration,
+                                                                    targetFramework: targetFramework);
 
             Project project = applicationHostContext.Project;
 

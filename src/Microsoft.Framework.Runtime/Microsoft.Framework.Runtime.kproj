@@ -52,7 +52,6 @@
     <Compile Include="ExportProviders\ProjectLibraryExportProvider.cs" />
     <Compile Include="ExportProviders\EmbeddedMetadataReference.cs" />
     <Compile Include="ExportProviders\IProjectReferenceProvider.cs" />
-    <Compile Include="ExportProviders\UnresolvedMetadataReference.cs" />
     <Compile Include="ExportProviders\MetadataFileReference.cs" />
     <Compile Include="ExportProviders\SourceFileReference.cs" />
     <Compile Include="FileSystem\FileSystemWatcherRoot.cs" />

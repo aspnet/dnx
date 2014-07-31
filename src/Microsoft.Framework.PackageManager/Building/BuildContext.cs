@@ -24,7 +24,12 @@ namespace Microsoft.Framework.PackageManager
             _configuration = configuration;
             _targetFrameworkFolder = VersionUtility.GetShortFrameworkName(_targetFramework);
             _outputPath = Path.Combine(outputPath, _targetFrameworkFolder);
-            _applicationHostContext = new ApplicationHostContext(serviceProvider: null, projectDirectory: project.ProjectDirectory);
+            _applicationHostContext = new ApplicationHostContext(
+                serviceProvider: null,
+                projectDirectory: project.ProjectDirectory,
+                packagesDirectory: null,
+                configuration: configuration,
+                targetFramework: targetFramework);
         }
 
         public void Initialize()
@@ -36,10 +41,7 @@ namespace Microsoft.Framework.PackageManager
         {
             var builder = _applicationHostContext.CreateInstance<ProjectBuilder>();
 
-            var result = builder.Build(_project.Name,
-                                       _targetFramework,
-                                       _configuration,
-                                       _outputPath);
+            var result = builder.Build(_project.Name, _outputPath);
 
             if (result.Errors != null)
             {
@@ -58,7 +60,7 @@ namespace Microsoft.Framework.PackageManager
         {
             var metadataProvider = _applicationHostContext.CreateInstance<ProjectMetadataProvider>();
 
-            var metadata = metadataProvider.GetProjectMetadata(_project.Name, _targetFramework, _configuration);
+            var metadata = metadataProvider.GetProjectMetadata(_project.Name);
 
             errors.AddRange(metadata.Errors);
             warnings.AddRange(metadata.Warnings);
