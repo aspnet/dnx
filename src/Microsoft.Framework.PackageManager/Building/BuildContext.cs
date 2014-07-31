@@ -41,10 +41,7 @@ namespace Microsoft.Framework.PackageManager
         {
             var builder = _applicationHostContext.CreateInstance<ProjectBuilder>();
 
-            var result = builder.Build(_project.Name,
-                                       _targetFramework,
-                                       _configuration,
-                                       _outputPath);
+            var result = builder.Build(_project.Name, _outputPath);
 
             if (result.Errors != null)
             {
@@ -63,7 +60,7 @@ namespace Microsoft.Framework.PackageManager
         {
             var metadataProvider = _applicationHostContext.CreateInstance<ProjectMetadataProvider>();
 
-            var metadata = metadataProvider.GetProjectMetadata(_project.Name, _targetFramework, _configuration);
+            var metadata = metadataProvider.GetProjectMetadata(_project.Name);
 
             errors.AddRange(metadata.Errors);
             warnings.AddRange(metadata.Warnings);

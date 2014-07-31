@@ -286,7 +286,7 @@ namespace Microsoft.Framework.DesignTimeHost
                     Commands = state.Project.Commands
                 };
 
-                var metadata = state.MetadataProvider.GetProjectMetadata(state.Project.Name, state.TargetFramework, state.Configuration);
+                var metadata = state.MetadataProvider.GetProjectMetadata(state.Project.Name);
 
                 _local.References = new ReferencesMessage
                 {

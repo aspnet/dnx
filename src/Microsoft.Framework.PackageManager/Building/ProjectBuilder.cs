@@ -7,19 +7,16 @@ namespace Microsoft.Framework.PackageManager
 {
     public class ProjectBuilder
     {
-        private readonly ILibraryExportProvider _libraryExportProvider;
+        private readonly ILibraryManager _libraryManager;
 
-        public ProjectBuilder(ILibraryExportProvider libraryExportProvider)
+        public ProjectBuilder(ILibraryManager libraryManager)
         {
-            _libraryExportProvider = libraryExportProvider;
+            _libraryManager = libraryManager;
         }
 
-        public IDiagnosticResult Build(string name,
-                                       FrameworkName targetFramework,
-                                       string configuration,
-                                       string outputPath)
+        public IDiagnosticResult Build(string name, string outputPath)
         {
-            var export = _libraryExportProvider.GetLibraryExport(name, targetFramework, configuration);
+            var export = _libraryManager.GetLibraryExport(name);
 
             if (export == null)
             {
