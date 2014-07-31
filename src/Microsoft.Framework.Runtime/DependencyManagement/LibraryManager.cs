@@ -86,6 +86,17 @@ namespace Microsoft.Framework.Runtime
             return _libraryExportProvider.GetLibraryExport(name, _targetFramework, _configuration);
         }
 
+        public ILibraryExport GetAllExports(string name)
+        {
+            return ProjectExportProviderHelper.GetExportsRecursive(
+                this,
+                _libraryExportProvider,
+                name,
+                _targetFramework,
+                _configuration,
+                dependenciesOnly: false);
+        }
+
         public IEnumerable<ILibraryInformation> GetLibraries()
         {
             EnsureInitialized();
