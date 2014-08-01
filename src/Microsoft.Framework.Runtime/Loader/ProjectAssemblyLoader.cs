@@ -10,19 +10,16 @@ namespace Microsoft.Framework.Runtime.Loader
     internal class ProjectAssemblyLoader : IAssemblyLoader
     {
         private readonly IProjectResolver _projectResolver;
-        private readonly ILibraryExportProvider _libraryExportProvider;
+        private readonly ILibraryManager _libraryManager;
         private readonly IAssemblyLoaderEngine _loaderEngine;
-        private readonly IApplicationEnvironment _applicationEnvironment;
 
         public ProjectAssemblyLoader(IProjectResolver projectResovler,
                                      IAssemblyLoaderEngine loaderEngine,
-                                     IApplicationEnvironment applicationEnvironment,
-                                     ILibraryExportProvider libraryExportProvider)
+                                     ILibraryManager libraryManager)
         {
             _projectResolver = projectResovler;
             _loaderEngine = loaderEngine;
-            _applicationEnvironment = applicationEnvironment;
-            _libraryExportProvider = libraryExportProvider;
+            _libraryManager = libraryManager;
         }
 
         public Assembly Load(string name)
@@ -33,9 +30,7 @@ namespace Microsoft.Framework.Runtime.Loader
                 return null;
             }
 
-            var export = _libraryExportProvider.GetLibraryExport(name,
-                                                                 _applicationEnvironment.TargetFramework,
-                                                                 _applicationEnvironment.Configuration);
+            var export = _libraryManager.GetLibraryExport(name);
 
             if (export == null)
             {

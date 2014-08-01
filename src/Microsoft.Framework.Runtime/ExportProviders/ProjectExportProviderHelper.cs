@@ -31,41 +31,61 @@ namespace Microsoft.Framework.Runtime
             var sourceReferences = new Dictionary<string, ISourceReference>(StringComparer.OrdinalIgnoreCase);
 
             // Walk the dependency tree and resolve the library export for all references to this project
-            var stack = new Stack<ILibraryInformation>();
+            var stack = new Queue<Node>();
             var processed = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
-            stack.Push(manager.GetLibraryInformation(name));
+            var rootNode = new Node
+            {
+                Library = manager.GetLibraryInformation(name)
+            };
+
+            stack.Enqueue(rootNode);
 
             while (stack.Count > 0)
             {
-                var library = stack.Pop();
+                var node = stack.Dequeue();
 
                 // Skip it if we've already seen it
-                if (!processed.Add(library.Name))
+                if (!processed.Add(node.Library.Name))
                 {
                     continue;
                 }
 
-                bool isRoot = string.Equals(library.Name, name, StringComparison.OrdinalIgnoreCase);
+                bool isRoot = node.Parent == null;
 
                 if (!dependenciesOnly || (dependenciesOnly && !isRoot))
                 {
-                    var libraryExport = libraryExportProvider.GetLibraryExport(library.Name, targetFramework, configuration);
+                    var libraryExport = libraryExportProvider.GetLibraryExport(node.Library.Name, targetFramework, configuration);
 
                     if (libraryExport == null)
                     {
                         // TODO: Failed to resolve dependency so do something useful
-                        Trace.TraceInformation("[{0}]: Failed to resolve dependency '{1}'", typeof(ProjectExportProviderHelper).Name, library.Name);
+                        Trace.TraceInformation("[{0}]: Failed to resolve dependency '{1}'", typeof(ProjectExportProviderHelper).Name, node.Library.Name);
                     }
                     else
                     {
-                        ProcessExport(libraryExport, references, sourceReferences);
+                        if (node.Parent == rootNode)
+                        {
+                            // Only export sources from first level dependencies
+                            ProcessExport(libraryExport, references, sourceReferences);
+                        }
+                        else
+                        {
+                            // Skip source exports from anything else
+                            ProcessExport(libraryExport, references, sourceReferences: null);
+                        }
                     }
                 }
 
-                foreach (var dependency in library.Dependencies)
+                foreach (var dependency in node.Library.Dependencies)
                 {
-                    stack.Push(manager.GetLibraryInformation(dependency));
+                    var childNode = new Node
+                    {
+                        Library = manager.GetLibraryInformation(dependency),
+                        Parent = node
+                    };
+
+                    stack.Enqueue(childNode);
                 }
             }
 
@@ -94,9 +114,12 @@ namespace Microsoft.Framework.Runtime
                 metadataReferences[reference.Name] = reference;
             }
 
-            foreach (var sourceReference in export.SourceReferences)
+            if (sourceReferences != null)
             {
-                sourceReferences[sourceReference.Name] = sourceReference;
+                foreach (var sourceReference in export.SourceReferences)
+                {
+                    sourceReferences[sourceReference.Name] = sourceReference;
+                }
             }
         }
 
@@ -121,5 +144,11 @@ namespace Microsoft.Framework.Runtime
             references.AddRange(otherReferences);
         }
 
+        private class Node
+        {
+            public ILibraryInformation Library { get; set; }
+
+            public Node Parent { get; set; }
+        }
     }
 }
