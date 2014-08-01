@@ -28,7 +28,7 @@ namespace Microsoft.Framework.Runtime
             Trace.TraceInformation("[{0}]: Resolving references for '{1}'", typeof(ProjectExportProviderHelper).Name, name);
 
             var references = new Dictionary<string, IMetadataReference>(StringComparer.OrdinalIgnoreCase);
-            var sourceReferences = new List<ISourceReference>();
+            var sourceReferences = new Dictionary<string, ISourceReference>(StringComparer.OrdinalIgnoreCase);
 
             // Walk the dependency tree and resolve the library export for all references to this project
             var stack = new Stack<ILibraryInformation>();
@@ -76,12 +76,14 @@ namespace Microsoft.Framework.Runtime
                                   name,
                                   dependencyStopWatch.ElapsedMilliseconds);
 
-            return new LibraryExport(references.Values.ToList(), sourceReferences);
+            return new LibraryExport(
+                references.Values.ToList(),
+                sourceReferences.Values.ToList());
         }
 
         private static void ProcessExport(ILibraryExport export,
                                           IDictionary<string, IMetadataReference> metadataReferences,
-                                          IList<ISourceReference> sourceReferences)
+                                          IDictionary<string, ISourceReference> sourceReferences)
         {
             var references = new List<IMetadataReference>(export.MetadataReferences);
 
@@ -94,7 +96,7 @@ namespace Microsoft.Framework.Runtime
 
             foreach (var sourceReference in export.SourceReferences)
             {
-                sourceReferences.Add(sourceReference);
+                sourceReferences[sourceReference.Name] = sourceReference;
             }
         }
 
