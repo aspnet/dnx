@@ -22,7 +22,11 @@ namespace Microsoft.Framework.PackageManager
             _hostServices = hostServices;
             _buildOptions = buildOptions;
             _buildOptions.ProjectDir = Normalize(buildOptions.ProjectDir);
+
+            ScriptExecutor = new ScriptExecutor();
         }
+
+        public ScriptExecutor ScriptExecutor;
 
         public bool Build()
         {
@@ -62,6 +66,13 @@ namespace Microsoft.Framework.PackageManager
             {
                 frameworks = new[] { _buildOptions.RuntimeTargetFramework };
             }
+
+            Func<string, string> getVariable = key =>
+            {
+                return null;
+            };
+
+            ScriptExecutor.Execute(project, "prebuild", getVariable);
 
             var success = true;
 
@@ -132,7 +143,7 @@ namespace Microsoft.Framework.PackageManager
 
                         WriteDiagnostics(warnings, errors);
                     }
-                    
+
                     success = success && configurationSuccess;
 
                     // Skip producing the nupkg if we're just checking diagnostics
@@ -183,6 +194,8 @@ namespace Microsoft.Framework.PackageManager
                     }
                 }
             }
+
+            ScriptExecutor.Execute(project, "postbuild", getVariable);
 
             sw.Stop();
 

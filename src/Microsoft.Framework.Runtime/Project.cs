@@ -39,6 +39,7 @@ namespace Microsoft.Framework.Runtime
         public Project()
         {
             Commands = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+            Scripts = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
         }
 
         public string ProjectFilePath { get; private set; }
@@ -167,7 +168,9 @@ namespace Microsoft.Framework.Runtime
         }
 
         public IDictionary<string, string> Commands { get; private set; }
-        
+
+        public IDictionary<string, string> Scripts { get; private set; }
+
         public IEnumerable<TargetFrameworkInformation> GetTargetFrameworks()
         {
             return _targetFrameworks.Values;
@@ -268,6 +271,15 @@ namespace Microsoft.Framework.Runtime
                 foreach (var command in commands)
                 {
                     project.Commands[command.Key] = command.Value.ToObject<string>();
+                }
+            }
+
+            var scripts = rawProject["scripts"] as JObject;
+            if (scripts != null)
+            {
+                foreach (var script in scripts)
+                {
+                    project.Scripts[script.Key] = script.Value.ToObject<string>();
                 }
             }
 

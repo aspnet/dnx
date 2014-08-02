@@ -22,7 +22,10 @@ namespace Microsoft.Framework.PackageManager.Packing
             _hostServices = hostServices;
             _options = options;
             _options.ProjectDir = Normalize(_options.ProjectDir);
+            ScriptExecutor = new ScriptExecutor();
         }
+
+        public ScriptExecutor ScriptExecutor;
 
         private static string Normalize(string projectDir)
         {
@@ -110,6 +113,15 @@ namespace Microsoft.Framework.PackageManager.Packing
                 NoSource = _options.NoSource
             };
 
+            Func<string, string> getVariable = key =>
+            {
+                return null;
+            };
+
+            ScriptExecutor.Execute(project, "prepare", getVariable);
+
+            ScriptExecutor.Execute(project, "prepack", getVariable);
+
             foreach (var runtime in _options.Runtimes)
             {
                 var runtimeLocated = TryAddRuntime(root, runtime);
@@ -181,6 +193,8 @@ namespace Microsoft.Framework.PackageManager.Packing
             }
 
             root.Emit();
+
+            ScriptExecutor.Execute(project, "postpack", getVariable);
 
             sw.Stop();
 

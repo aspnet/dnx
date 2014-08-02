@@ -32,6 +32,7 @@ namespace Microsoft.Framework.PackageManager
             MachineWideSettings = new CommandLineMachineWideSettings();
             Sources = Enumerable.Empty<string>();
             FallbackSources = Enumerable.Empty<string>();
+            ScriptExecutor = new ScriptExecutor();
         }
 
         public string RestoreDirectory { get; set; }
@@ -41,6 +42,8 @@ namespace Microsoft.Framework.PackageManager
         public bool NoCache { get; set; }
         public string PackageFolder { get; set; }
         public string GlobalJsonFile { get; set; }
+
+        public ScriptExecutor ScriptExecutor;
 
         public IApplicationEnvironment ApplicationEnvironment { get; private set; }
         public IMachineWideSettings MachineWideSettings { get; set; }
@@ -107,6 +110,13 @@ namespace Microsoft.Framework.PackageManager
             {
                 throw new Exception("TODO: project.json parse error");
             }
+
+            Func<string, string> getVariable = key =>
+            {
+                return null;
+            };
+
+            ScriptExecutor.Execute(project, "prerestore", getVariable);
 
             var projectDirectory = project.ProjectDirectory;
             var restoreOperations = new RestoreOperations { Report = Report };
@@ -307,6 +317,10 @@ namespace Microsoft.Framework.PackageManager
                     });
                 }
             }
+
+            ScriptExecutor.Execute(project, "postrestore", getVariable);
+
+            ScriptExecutor.Execute(project, "prepare", getVariable);
 
             Report.WriteLine(string.Format("{0}, {1}ms elapsed", "Restore complete".Green().Bold(), sw.ElapsedMilliseconds));
 

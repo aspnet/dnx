@@ -7,6 +7,7 @@
         "Microsoft.Framework.Runtime.Common" : "",
         "Microsoft.Framework.Runtime.Interfaces" : ""
     },
+    "code": "**\\*.cs;..\\Microsoft.Framework.ApplicationHost\\Impl\\**\\*.cs",
 
     "frameworks": {
         "net45": { 
@@ -31,6 +32,7 @@
                 "System.ComponentModel": "4.0.0.0",
                 "System.Console": "4.0.0.0",
                 "System.Diagnostics.Debug": "4.0.10.0",
+                "System.Diagnostics.Process": "4.0.0.0",
                 "System.Diagnostics.Tools": "4.0.0.0",
                 "System.Dynamic.Runtime": "4.0.0.0",
                 "System.Globalization": "4.0.10.0",
