@@ -14,8 +14,6 @@ namespace Microsoft.Framework.Runtime
 {
     internal static class ProjectExportProviderHelper
     {
-        // TODO: Figure out caching here
-
         public static ILibraryExport GetExportsRecursive(
             ILibraryManager manager,
             ILibraryExportProvider libraryExportProvider,

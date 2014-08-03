@@ -14,7 +14,7 @@ namespace Microsoft.Framework.Runtime
         private readonly IProjectResolver _projectResolver;
         private readonly IServiceProvider _serviceProvider;
         private readonly Dictionary<TypeInformation, IProjectReferenceProvider> _projectReferenceProviders = new Dictionary<TypeInformation, IProjectReferenceProvider>();
-        private readonly Dictionary<string, ILibraryExport> _exportCache = new Dictionary<string, ILibraryExport>(StringComparer.OrdinalIgnoreCase);
+        private readonly Dictionary<Tuple<string, FrameworkName, string>, ILibraryExport> _exportCache = new Dictionary<Tuple<string, FrameworkName, string>, ILibraryExport>();
 
         public ProjectLibraryExportProvider(IProjectResolver projectResolver,
                                             IServiceProvider serviceProvider)
@@ -32,27 +32,28 @@ namespace Microsoft.Framework.Runtime
                 return null;
             }
 
-            // REVIEW: This cache should probably be keyed on all the inputs. This works because
-            // callers create a new environment per target framework today.
+            Trace.TraceInformation("[{0}]: GetLibraryExport({1}, {2}, {3})", GetType().Name, name, targetFramework, configuration);
 
-            return _exportCache.GetOrAdd(name, _ =>
+            var targetFrameworkInformation = project.GetTargetFramework(targetFramework);
+
+            // This is the target framework defined in the project. If there were no target frameworks
+            // defined then this is the targetFramework specified
+            targetFramework = targetFrameworkInformation.FrameworkName ?? targetFramework;
+
+            var cacheKey = Tuple.Create(name, targetFramework, configuration);
+
+            return _exportCache.GetOrAdd(cacheKey, _ =>
             {
                 // Get the composite library export provider
                 var exportProvider = (ILibraryExportProvider)_serviceProvider.GetService(typeof(ILibraryExportProvider));
                 var libraryManager = (ILibraryManager)_serviceProvider.GetService(typeof(ILibraryManager));
-
-                var targetFrameworkInformation = project.GetTargetFramework(targetFramework);
-
-                // This is the target framework defined in the project. If there were no target frameworks
-                // defined then this is the targetFramework specified
-                var effectiveTargetFramework = targetFrameworkInformation.FrameworkName ?? targetFramework;
 
                 // Get the exports for the project dependencies
                 ILibraryExport projectExport = ProjectExportProviderHelper.GetExportsRecursive(
                     libraryManager,
                     exportProvider,
                     project.Name,
-                    effectiveTargetFramework,
+                    targetFramework,
                     configuration,
                     dependenciesOnly: true);
 
@@ -79,7 +80,7 @@ namespace Microsoft.Framework.Runtime
                     // Resolve the project export
                     IMetadataProjectReference projectReference = projectReferenceProvider.GetProjectReference(
                         project,
-                        effectiveTargetFramework,
+                        targetFramework,
                         configuration,
                         projectExport.MetadataReferences,
                         projectExport.SourceReferences,
