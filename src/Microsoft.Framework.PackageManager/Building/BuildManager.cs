@@ -26,7 +26,7 @@ namespace Microsoft.Framework.PackageManager
             ScriptExecutor = new ScriptExecutor();
         }
 
-        public ScriptExecutor ScriptExecutor;
+        public ScriptExecutor ScriptExecutor { get; private set; }
 
         public bool Build()
         {

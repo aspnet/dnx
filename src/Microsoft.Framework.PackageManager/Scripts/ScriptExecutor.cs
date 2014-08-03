@@ -12,7 +12,7 @@ namespace Microsoft.Framework.PackageManager
     /// </summary>
     public class ScriptExecutor
     {
-        public void Execute(Project project, string scriptName, Func<string, string> variables)
+        public void Execute(Project project, string scriptName, Func<string, string> getVariable)
         {
             string scriptCommandLine;
             if (!project.Scripts.TryGetValue(scriptName, out scriptCommandLine))
@@ -22,12 +22,15 @@ namespace Microsoft.Framework.PackageManager
 
             var scriptArguments = CommandGrammar.Process(
                 scriptCommandLine,
-                GetScriptVariable(project, variables));
+                GetScriptVariable(project, getVariable));
 
+            // Command-lines on Windows are executed via "cmd /C" in order
+            // to support batch files, &&, built-in commands like echo, etc.
+            // ComSpec is Windows-specific, and contains the full path to cmd.exe
             var comSpec = Environment.GetEnvironmentVariable("ComSpec");
             if (!string.IsNullOrEmpty(comSpec))
             {
-                scriptArguments = 
+                scriptArguments =
                     new[] { comSpec, "/C", "\"" }
                     .Concat(scriptArguments)
                     .Concat(new[] { "\"" })
@@ -37,7 +40,7 @@ namespace Microsoft.Framework.PackageManager
             var startInfo = new ProcessStartInfo
             {
                 FileName = scriptArguments.FirstOrDefault(),
-                Arguments = scriptArguments.Skip(1).Aggregate("", (a, b) => a + " " + b),
+                Arguments = String.Join(" ", scriptArguments.Skip(1).ToArray()),
                 WorkingDirectory = project.ProjectDirectory,
 #if NET45
                 UseShellExecute = false,
@@ -48,13 +51,13 @@ namespace Microsoft.Framework.PackageManager
             process.WaitForExit();
         }
 
-        private Func<string, string> GetScriptVariable(Project project, Func<string, string> variables)
+        private Func<string, string> GetScriptVariable(Project project, Func<string, string> getVariable)
         {
             var keys = new Dictionary<string, Func<string>>(StringComparer.OrdinalIgnoreCase)
             {
-                { "project:Directory", ()=>project.ProjectDirectory },
-                { "project:Name", ()=>project.Name },
-                { "project:Version", ()=>project.Version.ToString() },
+                { "project:Directory", () => project.ProjectDirectory },
+                { "project:Name", () => project.Name },
+                { "project:Version", () => project.Version.ToString() },
             };
 
             return key =>
@@ -67,7 +70,7 @@ namespace Microsoft.Framework.PackageManager
                 }
 
                 // try returning command-specific key
-                var value = variables(key);
+                var value = getVariable(key);
                 if (!string.IsNullOrEmpty(value))
                 {
                     return value;

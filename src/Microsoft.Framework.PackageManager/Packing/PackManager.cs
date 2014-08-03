@@ -25,7 +25,7 @@ namespace Microsoft.Framework.PackageManager.Packing
             ScriptExecutor = new ScriptExecutor();
         }
 
-        public ScriptExecutor ScriptExecutor;
+        public ScriptExecutor ScriptExecutor { get; private set; }
 
         private static string Normalize(string projectDir)
         {

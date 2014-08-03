@@ -43,7 +43,7 @@ namespace Microsoft.Framework.PackageManager
         public string PackageFolder { get; set; }
         public string GlobalJsonFile { get; set; }
 
-        public ScriptExecutor ScriptExecutor;
+        public ScriptExecutor ScriptExecutor { get; private set; }
 
         public IApplicationEnvironment ApplicationEnvironment { get; private set; }
         public IMachineWideSettings MachineWideSettings { get; set; }
