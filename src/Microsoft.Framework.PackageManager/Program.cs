@@ -69,7 +69,11 @@ namespace Microsoft.Framework.PackageManager
                     try
                     {
                         var command = new RestoreCommand(_environment);
-                        command.Report = this;
+                        command.Reports = new Reports()
+                        {
+                            Information = this,
+                            Verbose = optionVerbose.HasValue() ? (this as IReport) : new NullReport()
+                        };
 
                         // If the root argument is a directory
                         if (Directory.Exists(argRoot.Value))
@@ -348,6 +352,15 @@ namespace Microsoft.Framework.PackageManager
             var assembly = typeof(Program).GetTypeInfo().Assembly;
             var assemblyInformationalVersionAttribute = assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>();
             return assemblyInformationalVersionAttribute.InformationalVersion;
+        }
+    }
+
+    internal class NullReport : IReport
+    {
+        public void WriteLine(string message)
+        {
+            // Consume the write operation and do nothing
+            // Used when verbose option is not specified
         }
     }
 }

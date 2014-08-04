@@ -48,7 +48,7 @@ namespace Microsoft.Framework.PackageManager
         public IApplicationEnvironment ApplicationEnvironment { get; private set; }
         public IMachineWideSettings MachineWideSettings { get; set; }
         public IFileSystem FileSystem { get; set; }
-        public IReport Report { get; set; }
+        public Reports Reports { get; set; }
 
         protected internal ISettings Settings { get; set; }
         protected internal IPackageSourceProvider SourceProvider { get; set; }
@@ -90,7 +90,7 @@ namespace Microsoft.Framework.PackageManager
 
             if (restoreCount > 1)
             {
-                Report.WriteLine(string.Format("Total time {0}ms", sw.ElapsedMilliseconds));
+                Reports.Information.WriteLine(string.Format("Total time {0}ms", sw.ElapsedMilliseconds));
             }
 
             return restoreCount == successCount;
@@ -100,7 +100,7 @@ namespace Microsoft.Framework.PackageManager
         {
             var success = true;
 
-            Report.WriteLine(string.Format("Restoring packages for {0}", projectJsonPath.Bold()));
+            Reports.Information.WriteLine(string.Format("Restoring packages for {0}", projectJsonPath.Bold()));
 
             var sw = new Stopwatch();
             sw.Start();
@@ -119,7 +119,7 @@ namespace Microsoft.Framework.PackageManager
             ScriptExecutor.Execute(project, "prerestore", getVariable);
 
             var projectDirectory = project.ProjectDirectory;
-            var restoreOperations = new RestoreOperations { Report = Report };
+            var restoreOperations = new RestoreOperations { Report = Reports.Information };
             var projectProviders = new List<IWalkProvider>();
             var localProviders = new List<IWalkProvider>();
             var remoteProviders = new List<IWalkProvider>();
@@ -157,7 +157,7 @@ namespace Microsoft.Framework.PackageManager
                         new RemoteWalkProvider(
                             new PackageFolder(
                                 source.Source,
-                                Report)));
+                                Reports.Verbose)));
                 }
                 else
                 {
@@ -168,7 +168,7 @@ namespace Microsoft.Framework.PackageManager
                                 source.UserName,
                                 source.Password,
                                 NoCache,
-                                Report)));
+                                Reports.Verbose)));
                 }
             }
 
@@ -201,7 +201,7 @@ namespace Microsoft.Framework.PackageManager
             }
             var graphs = await Task.WhenAll(tasks);
 
-            Report.WriteLine(string.Format("{0}, {1}ms elapsed", "Resolving complete".Green(), sw.ElapsedMilliseconds));
+            Reports.Information.WriteLine(string.Format("{0}, {1}ms elapsed", "Resolving complete".Green(), sw.ElapsedMilliseconds));
 
             var installItems = new List<GraphItem>();
             var missingItems = new List<Library>();
@@ -216,7 +216,7 @@ namespace Microsoft.Framework.PackageManager
                     if (node.Library.Version != null && !missingItems.Contains(node.Library))
                     {
                         missingItems.Add(node.Library);
-                        Report.WriteLine(string.Format("Unable to locate {0} >= {1}", node.Library.Name.Red().Bold(), node.Library.Version));
+                        Reports.Information.WriteLine(string.Format("Unable to locate {0} >= {1}", node.Library.Name.Red().Bold(), node.Library.Version));
                         success = false;
                     }
                     return;
@@ -268,7 +268,7 @@ namespace Microsoft.Framework.PackageManager
                     {
                         if (!string.Equals(expectedSHA, nupkgSHA, StringComparison.Ordinal))
                         {
-                            Report.WriteLine(
+                            Reports.Information.WriteLine(
                                 string.Format("SHA of downloaded package {0} doesn't match expected value.".Red().Bold(),
                                 library.ToString()));
                             success = false;
@@ -280,13 +280,13 @@ namespace Microsoft.Framework.PackageManager
                         // Report warnings only when given global.json contains "dependencies"
                         if (globalJsonFileSpecified && dependenciesNode != null)
                         {
-                            Report.WriteLine(
+                            Reports.Information.WriteLine(
                                 string.Format("Expected SHA of package {0} doesn't exist in given global.json file.".Yellow().Bold(),
                                 library.ToString()));
                         }
                     }
 
-                    Report.WriteLine(string.Format("Installing {0} {1}", library.Name.Bold(), library.Version));
+                    Reports.Information.WriteLine(string.Format("Installing {0} {1}", library.Name.Bold(), library.Version));
 
                     var targetPath = packagePathResolver.GetInstallPath(library.Name, library.Version);
                     var targetNupkg = packagePathResolver.GetPackageFilePath(library.Name, library.Version);
@@ -322,7 +322,7 @@ namespace Microsoft.Framework.PackageManager
 
             ScriptExecutor.Execute(project, "prepare", getVariable);
 
-            Report.WriteLine(string.Format("{0}, {1}ms elapsed", "Restore complete".Green().Bold(), sw.ElapsedMilliseconds));
+            Reports.Information.WriteLine(string.Format("{0}, {1}ms elapsed", "Restore complete".Green().Bold(), sw.ElapsedMilliseconds));
 
             // Print the dependency graph
             if (success)
@@ -346,7 +346,7 @@ namespace Microsoft.Framework.PackageManager
             const char LIGHT_VERTICAL_AND_RIGHT = '\u251C';
 
             var frameworkSuffix = string.Format(" [{0}]", frameworkName.ToString());
-            Report.WriteLine(root.Item.Match.Library.ToString() + frameworkSuffix);
+            Reports.Verbose.WriteLine(root.Item.Match.Library.ToString() + frameworkSuffix);
 
             Func<GraphNode, bool> isValidDependency = d => 
                 (d != null && d.Library != null && d.Item != null && d.Item.Match != null);
@@ -365,10 +365,10 @@ namespace Microsoft.Framework.PackageManager
                     .Where(isValidDependency)
                     .Select(d => d.Item.Match.Library.ToString()));
                 var format = string.IsNullOrEmpty(dependencyListStr) ? "{0}{1} {2}{3}" : "{0}{1} {2} ({3})";
-                Report.WriteLine(string.Format(format,
+                Reports.Verbose.WriteLine(string.Format(format,
                     branchChar, LIGHT_HORIZONTAL, name, dependencyListStr));
             }
-            Report.WriteLine();
+            Reports.Verbose.WriteLine();
         }
 
         private static void ExtractPackage(string targetPath, FileStream stream)
@@ -413,7 +413,7 @@ namespace Microsoft.Framework.PackageManager
         {
             foreach (var node in graphs)
             {
-                Report.WriteLine(indent + node.Library.Name + "@" + node.Library.Version);
+                Reports.Information.WriteLine(indent + node.Library.Name + "@" + node.Library.Version);
                 Display(indent + " ", node.Dependencies);
             }
         }
