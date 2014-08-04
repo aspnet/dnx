@@ -40,7 +40,7 @@ namespace Microsoft.Framework.PackageManager
             var startInfo = new ProcessStartInfo
             {
                 FileName = scriptArguments.FirstOrDefault(),
-                Arguments = String.Join(" ", scriptArguments.Skip(1).ToArray()),
+                Arguments = String.Join(" ", scriptArguments.Skip(1)),
                 WorkingDirectory = project.ProjectDirectory,
 #if NET45
                 UseShellExecute = false,
