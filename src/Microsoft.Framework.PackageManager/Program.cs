@@ -122,11 +122,11 @@ namespace Microsoft.Framework.PackageManager
                     }
                     catch (Exception ex)
                     {
-                        this.WriteLine("----------");
-                        this.WriteLine(ex.ToString());
-                        this.WriteLine("----------");
-                        this.WriteLine("Restore failed");
-                        this.WriteLine(ex.Message);
+                        WriteError("----------");
+                        WriteError(ex.ToString());
+                        WriteError("----------");
+                        WriteError("Restore failed");
+                        WriteError(ex.Message);
                         return 1;
                     }
                 });
@@ -252,7 +252,17 @@ namespace Microsoft.Framework.PackageManager
             Console.ForegroundColor = (ConsoleColor)(((int)Console.ForegroundColor & 0x07) | (bold ? 0x08 : 0x00));
         }
 
+        public void WriteError(string message)
+        {
+            WriteLine(Console.Error, message);
+        }
+
         public void WriteLine(string message)
+        {
+            WriteLine(Console.Out, message);
+        }
+
+        private void WriteLine(TextWriter writer, string message)
         {
             var sb = new System.Text.StringBuilder();
             lock (_lock)
@@ -265,7 +275,7 @@ namespace Microsoft.Framework.PackageManager
                     {
                         var text = message.Substring(escapeScan);
                         sb.Append(text);
-                        Console.Write(text);
+                        writer.Write(text);
                         break;
                     }
                     else
@@ -281,7 +291,7 @@ namespace Microsoft.Framework.PackageManager
 
                         var text = message.Substring(escapeScan, escapeIndex - escapeScan);
                         sb.Append(text);
-                        Console.Write(text);
+                        writer.Write(text);
                         if (endIndex == message.Length)
                         {
                             break;
@@ -336,7 +346,7 @@ namespace Microsoft.Framework.PackageManager
                         escapeScan = endIndex + 1;
                     }
                 }
-                Console.WriteLine();
+                writer.WriteLine();
             }
 #if NET45
             Trace.WriteLine(sb.ToString());

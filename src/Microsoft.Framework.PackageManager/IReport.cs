@@ -9,5 +9,6 @@ namespace Microsoft.Framework.PackageManager
     public interface IReport
     {
         void WriteLine(string message);
+        void WriteError(string message);
     }
 }
