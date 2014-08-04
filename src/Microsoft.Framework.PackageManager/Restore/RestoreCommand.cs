@@ -216,7 +216,7 @@ namespace Microsoft.Framework.PackageManager
                     if (node.Library.Version != null && !missingItems.Contains(node.Library))
                     {
                         missingItems.Add(node.Library);
-                        Report.WriteLine(string.Format("Unable to locate {0} >= {1}", node.Library.Name.Red().Bold(), node.Library.Version));
+                        Report.WriteError(string.Format("Unable to locate {0} >= {1}", node.Library.Name.Red().Bold(), node.Library.Version));
                         success = false;
                     }
                     return;
@@ -268,7 +268,7 @@ namespace Microsoft.Framework.PackageManager
                     {
                         if (!string.Equals(expectedSHA, nupkgSHA, StringComparison.Ordinal))
                         {
-                            Report.WriteLine(
+                            Report.WriteError(
                                 string.Format("SHA of downloaded package {0} doesn't match expected value.".Red().Bold(),
                                 library.ToString()));
                             success = false;
@@ -280,7 +280,7 @@ namespace Microsoft.Framework.PackageManager
                         // Report warnings only when given global.json contains "dependencies"
                         if (globalJsonFileSpecified && dependenciesNode != null)
                         {
-                            Report.WriteLine(
+                            Report.WriteError(
                                 string.Format("Expected SHA of package {0} doesn't exist in given global.json file.".Yellow().Bold(),
                                 library.ToString()));
                         }
