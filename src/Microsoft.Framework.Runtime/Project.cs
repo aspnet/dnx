@@ -456,18 +456,16 @@ namespace Microsoft.Framework.Runtime
             {
                 foreach (var framework in frameworks)
                 {
-                    BuildTargetFrameworkNode(framework, compilerOptions: null);
+                    BuildTargetFrameworkNode(framework);
                 }
             }
         }
 
-        private bool BuildTargetFrameworkNode(KeyValuePair<string, JToken> targetFramework, CompilerOptions compilerOptions)
+        private bool BuildTargetFrameworkNode(KeyValuePair<string, JToken> targetFramework)
         {
-            // If no compilation options are provided then figure them out from the
-            // node
-            compilerOptions = compilerOptions ??
-                              GetCompilationOptions(targetFramework.Value) ??
-                              new CompilerOptions();
+            // If no compilation options are provided then figure them out from the node
+            var compilerOptions = GetCompilationOptions(targetFramework.Value) ??
+                                  new CompilerOptions();
 
             var frameworkName = ParseFrameworkName(targetFramework.Key);
 

@@ -75,7 +75,7 @@ namespace Microsoft.Framework.Runtime.Roslyn.Tests
             var project = Project.GetProject(
 @"{
     ""compilationOptions"": { ""define"": [""X""] },
-    ""configurations"": {
+    ""frameworks"": {
         ""net45"": { 
             ""compilationOptions"": { ""define"": [""NET45"", ""Something""] }        
         }
@@ -83,7 +83,6 @@ namespace Microsoft.Framework.Runtime.Roslyn.Tests
 }",
 "foo",
 @"c\foo\project.json");
-
             var settings = project.GetCompilationSettings("net45");
 
             Assert.NotNull(settings);
@@ -96,7 +95,7 @@ namespace Microsoft.Framework.Runtime.Roslyn.Tests
         {
             var project = Project.GetProject(@"
 {
-    ""configurations"" : {
+    ""frameworks"" : {
         ""net45"":  {
             ""compilationOptions"": { ""allowUnsafe"": true, ""define"": [""X"", ""y""], ""platform"": ""x86"", ""warningsAsErrors"": true, ""optimize"": true, ""debugSymbols"": ""none"" }
         },
@@ -128,7 +127,7 @@ namespace Microsoft.Framework.Runtime.Roslyn.Tests
         {
             var project = Project.GetProject(@"
 {
-    ""configurations"" : {
+    ""frameworks"" : {
         ""net45"":  {
             ""compilationOptions"": { ""allowUnsafe"": true, ""define"": [""X"", ""y""], ""platform"": ""x86"", ""warningsAsErrors"": true }
         },
@@ -155,7 +154,7 @@ namespace Microsoft.Framework.Runtime.Roslyn.Tests
             var project = Project.GetProject(@"
 {
     ""compilationOptions"": { ""allowUnsafe"": true },
-    ""configurations"" : {
+    ""frameworks"" : {
         ""k10"": {
             ""dependencies"": {
             }
