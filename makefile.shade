@@ -28,7 +28,8 @@ var SVRC50_x64_BIN='${Path.Combine(BUILD_DIR2, "KRE-svrc50-x64", "bin")}'
 var NET45_TARGETS = '${new [] { MONO_x86_BIN, SVR50_x86_BIN, SVR50_x64_BIN}}'
 var K10_TARGETS = '${new [] { SVRC50_x86_BIN, SVRC50_x64_BIN}}'
 var ALL_TARGETS = '${NET45_TARGETS.Concat(K10_TARGETS)}'
-var NEW_RUNTIME = '${Environment.GetEnvironmentVariable("NEW_RUNTIME") == "1"}'
+var NEW_RUNTIME = '${E("NEW_RUNTIME") == "1"}'
+var CORE_CLR_VERSION = '${E("CORE_CLR_VERSION")}'
 
 
 #package-runtime .clean-sdk-dir .copy-bits .tweak-scripts .copy-package-dependencies .copy-coreclr-kpm-dependencies .copy-coreclr .nuget-pack-runtime target='package'
@@ -476,7 +477,8 @@ var NEW_RUNTIME = '${Environment.GetEnvironmentVariable("NEW_RUNTIME") == "1"}'
     }
 
 #copy-coreclr
-    nuget-install package='CoreCLR' outputDir='packages' extra='-pre -nocache' once='CoreCLR'
+    nuget-install package='CoreCLR' outputDir='packages' extra='-pre -nocache' once='CoreCLR' if='string.IsNullOrEmpty(CORE_CLR_VERSION)'
+    nuget-install package='CoreCLR' packageVersion='${CORE_CLR_VERSION}' outputDir='packages' extra='-pre -nocache' once='CoreCLR' if='!string.IsNullOrEmpty(CORE_CLR_VERSION)'
 
     var CoreCLR_DIR='${""}'
     @{
