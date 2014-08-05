@@ -101,7 +101,7 @@ namespace Microsoft.Framework.Runtime.Tests
         {
             var project = Project.GetProject(@"
 {
-    ""configurations"" : {
+    ""frameworks"" : {
         ""net45"":  {
             ""compilationOptions"": { ""allowUnsafe"": true, ""define"": [""X"", ""y""], ""platform"": ""x86"", ""warningsAsErrors"": true }
         },
