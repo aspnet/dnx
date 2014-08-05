@@ -165,7 +165,7 @@ namespace Microsoft.Framework.PackageManager
                         OutputDir = optionOut.Value(),
                         ProjectDir = argProject.Value ?? System.IO.Directory.GetCurrentDirectory(),
                         AppFolder = optionAppFolder.Value(),
-                        Configuration = optionConfiguration.Value() ?? "debug",
+                        Configuration = optionConfiguration.Value() ?? "Debug",
                         RuntimeTargetFramework = _environment.TargetFramework,
                         Overwrite = optionOverwrite.HasValue(),
                         NoSource = optionNoSource.HasValue(),

@@ -154,7 +154,7 @@ namespace Microsoft.Framework.ApplicationHost
             defaultHostOptions.PackageDirectory = optionPackages.Value();
 
             defaultHostOptions.TargetFramework = _environment.TargetFramework;
-            defaultHostOptions.Configuration = optionConfiguration.Value() ?? _environment.Configuration ?? "debug";
+            defaultHostOptions.Configuration = optionConfiguration.Value() ?? _environment.Configuration ?? "Debug";
             defaultHostOptions.ApplicationBaseDirectory = _environment.ApplicationBasePath;
 
             var remainingArgs = new List<string>();

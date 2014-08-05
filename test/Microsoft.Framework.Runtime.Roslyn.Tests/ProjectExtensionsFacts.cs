@@ -178,7 +178,7 @@ namespace Microsoft.Framework.Runtime.Roslyn.Tests
     {
         public static CompilationSettings GetCompilationSettings(this Project project, string frameworkName)
         {
-            return project.GetCompilationSettings(Project.ParseFrameworkName(frameworkName), "debug");
+            return project.GetCompilationSettings(Project.ParseFrameworkName(frameworkName), "Debug");
         }
     }
 }

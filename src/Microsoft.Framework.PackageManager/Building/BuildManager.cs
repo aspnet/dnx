@@ -40,7 +40,7 @@ namespace Microsoft.Framework.PackageManager
             var sw = Stopwatch.StartNew();
 
             var baseOutputPath = _buildOptions.OutputDir ?? Path.Combine(_buildOptions.ProjectDir, "bin");
-            var configurations = _buildOptions.Configurations.DefaultIfEmpty("debug");
+            var configurations = _buildOptions.Configurations.DefaultIfEmpty("Debug");
 
             var specifiedFrameworks = _buildOptions.TargetFrameworks
                 .ToDictionary(f => f, Project.ParseFrameworkName);

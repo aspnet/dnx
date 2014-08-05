@@ -402,14 +402,14 @@ namespace Microsoft.Framework.Runtime
             };
 
             // Add default configurations
-            _configurations["debug"] = new CompilerOptions
+            _configurations["Debug"] = new CompilerOptions
             {
                 DebugSymbols = "full",
                 Defines = new[] { "DEBUG", "TRACE" },
                 Optimize = false
             };
 
-            _configurations["release"] = new CompilerOptions
+            _configurations["Release"] = new CompilerOptions
             {
                 DebugSymbols = "pdbOnly",
                 Defines = new[] { "RELEASE", "TRACE" },
@@ -420,9 +420,9 @@ namespace Microsoft.Framework.Runtime
             /*
                 {
                     "configurations": {
-                        "debug": {
+                        "Debug": {
                         },
-                        "release": {
+                        "Release": {
                         }
                     }
                 }
@@ -434,13 +434,8 @@ namespace Microsoft.Framework.Runtime
                 {
                     var compilerOptions = GetCompilationOptions(configuration.Value);
 
-                    // This code is for backwards compatibility with the old project format until
-                    // we make all the necessary changes to understand the new format
-                    if (!BuildTargetFrameworkNode(configuration, compilerOptions))
-                    {
-                        // Only use this as a configuration if it's not a target framework
-                        _configurations[configuration.Key] = compilerOptions;
-                    }
+                    // Only use this as a configuration if it's not a target framework
+                    _configurations[configuration.Key] = compilerOptions;
                 }
             }
 

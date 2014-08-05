@@ -184,7 +184,7 @@ namespace Microsoft.Framework.DesignTimeHost
                     {
                         var data = message.Payload.ToObject<InitializeMessage>();
                         _appPath.Value = data.ProjectFolder;
-                        _configuration.Value = data.Configuration ?? "debug";
+                        _configuration.Value = data.Configuration ?? "Debug";
 
                         SetTargetFramework(data.TargetFramework);
                     }
