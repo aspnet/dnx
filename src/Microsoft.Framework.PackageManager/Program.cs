@@ -9,6 +9,9 @@ using System.Threading;
 using Microsoft.Framework.PackageManager.Packing;
 using Microsoft.Framework.Runtime;
 using Microsoft.Framework.Runtime.Common.CommandLine;
+using Microsoft.Framework.PackageManager.Feeds.Commit;
+using Microsoft.Framework.PackageManager.Feeds.Push;
+using Microsoft.Framework.PackageManager.Feeds.Pull;
 
 namespace Microsoft.Framework.PackageManager
 {
@@ -286,6 +289,68 @@ namespace Microsoft.Framework.PackageManager
                     });
                 });
             }
+
+            app.Command("feed", feedCommand =>
+            {
+                var reports = CreateReports(optionVerbose.HasValue(), quiet: false);
+                feedCommand.Command("commit", c =>
+                {
+                    c.Description = "Add index files to packages directory";
+                    var optionPackages = c.Option("--packages <DIR>", "Path to local packages, default is current directory", CommandOptionType.SingleValue);
+
+                    c.OnExecute(() =>
+                    {
+                        var options = new CommitOptions
+                        {
+                            Report = reports.Information,
+                            LocalPackages = optionPackages.Value(),
+                        };
+                        var command = new CommitCommand(options);
+                        var success = command.Execute();
+                        return success ? 0 : 1;
+                    });
+                });
+
+                feedCommand.Command("push", c =>
+                {
+                    c.Description = "Incremental copy of files from local packages to remote location";
+                    var optionPackages = c.Option("--packages <DIR>", "Path to local packages, default is current directory", CommandOptionType.SingleValue);
+                    var argRemote = c.Argument("[remote]", "Path to remote packages folder");
+
+                    c.OnExecute(() =>
+                    {
+                        var options = new PushOptions
+                        {
+                            Report = reports.Information,
+                            LocalPackages = optionPackages.Value(),
+                            RemotePackages = argRemote.Value,
+                        };
+                        var command = new PushCommand(options);
+                        var success = command.Execute();
+                        return success ? 0 : 1;
+                    });
+                });
+
+                feedCommand.Command("pull", c =>
+                {
+                    c.Description = "Incremental copy of files from remote location to local packages";
+                    var optionPackages = c.Option("--packages <DIR>", "Path to local packages, default is current directory", CommandOptionType.SingleValue);
+                    var argRemote = c.Argument("[remote]", "Path to remote packages folder");
+
+                    c.OnExecute(() =>
+                    {
+                        var options = new PullOptions
+                        {
+                            Report = reports.Information,
+                            LocalPackages = optionPackages.Value(),
+                            RemotePackages = argRemote.Value,
+                        };
+                        var command = new PullCommand(options);
+                        var success = command.Execute();
+                        return success ? 0 : 1;
+                    });
+                });
+            });
 
             return app.Execute(args);
         }

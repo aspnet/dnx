@@ -44,7 +44,7 @@ namespace Microsoft.Framework.PackageManager
 
             var sw = Stopwatch.StartNew();
 
-            var baseOutputPath = GetBuildOutputDir(_buildOptions);
+            var baseOutputPath = _buildOptions.OutputDir ?? CalculateDefaultOutputPath(project);
             var configurations = _buildOptions.Configurations.DefaultIfEmpty("Debug");
 
             var specifiedFrameworks = _buildOptions.TargetFrameworks
@@ -199,6 +199,17 @@ namespace Microsoft.Framework.PackageManager
 
             _buildOptions.Reports.Information.WriteLine("Time elapsed {0}", sw.Elapsed);
             return success;
+        }
+
+        private string CalculateDefaultOutputPath(Runtime.Project project)
+        {
+            var rootDirectory = ProjectResolver.ResolveRootDirectory(_buildOptions.ProjectDir);
+            return Path.Combine(
+                rootDirectory,
+                "artifacts", 
+                "packages",
+                project.Name,
+                project.Version.ToString());
         }
 
         private bool ValidateFrameworks(HashSet<FrameworkName> projectFrameworks, IDictionary<string, FrameworkName> specifiedFrameworks)
