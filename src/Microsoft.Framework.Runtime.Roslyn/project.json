@@ -5,37 +5,24 @@
         "K.Roslyn" : "1.0.0-*",
         "Microsoft.Framework.Runtime" :  "",
         "Microsoft.Framework.Runtime.Common" : "",
-        "Microsoft.Framework.Runtime.Interfaces" : ""
+        "Microsoft.Framework.Runtime.Interfaces" :  ""
     },
-    "configurations" : {
+    "frameworks" : {
         "net45" : {
             "dependencies": {
                 "System.Collections" : "",
                 "System.IO": "",
                 "System.Runtime" : "",
                 "System.Xml": "",
-                "System.Xml.Linq": ""
+                "System.Xml.Linq": "",
+                "System.Threading.Tasks": "",
+                "System.Text.Encoding": ""
             }
         },
         "k10" : { 
             "dependencies": {
-                "System.Collections": "4.0.0.0",
-                "System.Console": "4.0.0.0",
-                "System.Diagnostics.Debug": "4.0.10.0",
-                "System.Dynamic.Runtime": "4.0.0.0",
-                "System.IO": "4.0.0.0",
-                "System.IO.FileSystem": "4.0.10.0",
-                "System.Linq": "4.0.0.0",
-                "System.Reflection": "4.0.10.0",
-                "System.Resources.ResourceWriter" : "4.0.0.0",
-                "System.Runtime": "4.0.20.0",
-                "System.Runtime.Extensions": "4.0.10.0",
-                "System.Runtime.Handles": "4.0.0.0",
-                "System.Runtime.InteropServices": "4.0.20.0",
-                "System.Text.Encoding": "4.0.20.0",
-                "System.Threading.Tasks": "4.0.10.0",
-                "System.Xml.ReaderWriter": "4.0.10.0",
-                "System.Xml.XDocument": "4.0.0.0"
+                "System.Collections.Concurrent": "4.0.0.0",
+                "System.Resources.ResourceWriter" : "4.0.0.0"
             }
         }
     }

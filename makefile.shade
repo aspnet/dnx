@@ -28,10 +28,11 @@ var SVRC50_x64_BIN='${Path.Combine(BUILD_DIR2, "KRE-svrc50-x64", "bin")}'
 var NET45_TARGETS = '${new [] { MONO_x86_BIN, SVR50_x86_BIN, SVR50_x64_BIN}}'
 var K10_TARGETS = '${new [] { SVRC50_x86_BIN, SVRC50_x64_BIN}}'
 var ALL_TARGETS = '${NET45_TARGETS.Concat(K10_TARGETS)}'
-var NEW_RUNTIME = '${Environment.GetEnvironmentVariable("NEW_RUNTIME") == "1"}'
+var NEW_RUNTIME = '${E("NEW_RUNTIME") == "1"}'
+var CORE_CLR_VERSION = '${E("CORE_CLR_VERSION")}'
 
 
-#package-runtime .clean-sdk-dir .copy-bits .tweak-scripts .copy-package-dependencies .copy-coreclr .nuget-pack-runtime target='package'
+#package-runtime .clean-sdk-dir .copy-bits .tweak-scripts .copy-package-dependencies .copy-coreclr-kpm-dependencies .copy-coreclr .nuget-pack-runtime target='package'
 
 #rebuild-package .build-mono-entrypoint .build-compile .native-compile .xunit-test .package-runtime
 
@@ -110,6 +111,7 @@ var NEW_RUNTIME = '${Environment.GetEnvironmentVariable("NEW_RUNTIME") == "1"}'
                 Environment.SetEnvironmentVariable("K_APPBASE", helloWorld);
 
                 var kPath = Path.Combine(krePath, "bin", "k");
+                var kpmPath = Path.Combine(krePath, "bin", "kpm");
 
                 Log.Info("kreName = " + kreName);
                 Log.Info("K_APPBASE = " + helloWorld);
@@ -119,7 +121,7 @@ var NEW_RUNTIME = '${Environment.GetEnvironmentVariable("NEW_RUNTIME") == "1"}'
                 var commands = new [] { "build" };
                 foreach(var cmd in commands)
                 {
-                    Exec("cmd", "/C " + kPath + " " + cmd + " " + helloWorld);
+                    Exec("cmd", "/C " + kpmPath + " " + cmd + " " + helloWorld);
                     Directory.Delete(Path.Combine(helloWorld, "bin"), true);
                 }
             }
@@ -138,10 +140,7 @@ var NEW_RUNTIME = '${Environment.GetEnvironmentVariable("NEW_RUNTIME") == "1"}'
 
             var kTools = new[] {
                 Path.Combine(krePath, "bin", "lib", "Microsoft.Framework.Project"),
-                /* Fix
-                TODO: enable this line after we have kpm on CoreCLR
                 Path.Combine(krePath, "bin", "lib", "Microsoft.Framework.PackageManager"),
-                */
                 Path.Combine(krePath, "bin", "lib", "Microsoft.Framework.DesignTimeHost"),
             };
 
@@ -158,7 +157,9 @@ var NEW_RUNTIME = '${Environment.GetEnvironmentVariable("NEW_RUNTIME") == "1"}'
                 
         // Crossgen
         crossGen(nupkgPaths[2]);
-        crossGen(nupkgPaths[3]);
+        
+        // SKIP amd64 for now to work around error
+        // crossGen(nupkgPaths[3]);
 
         foreach(var nupkgPath in nupkgPaths) { 
             runWithFramework(nupkgPath);
@@ -191,6 +192,8 @@ var NEW_RUNTIME = '${Environment.GetEnvironmentVariable("NEW_RUNTIME") == "1"}'
             Environment.SetEnvironmentVariable("PATH", Path.Combine(PACKAGES_DIR, "KRE", "bin") + ";" + envPath);
             Environment.SetEnvironmentVariable("NEW_RUNTIME", "1"); 
             Log.Info("Rebuilding target default"); 
+            // TODO REMOVE after bootstrapping: We need to restore again because the location changes
+            Exec("build.cmd", "initialize");
             Exec("build.cmd", "rebuild-package");
         }
         finally
@@ -366,17 +369,16 @@ var NEW_RUNTIME = '${Environment.GetEnvironmentVariable("NEW_RUNTIME") == "1"}'
                                "Microsoft.CodeAnalysis.CSharp", 
                                "Microsoft.Bcl.Immutable", 
                                "Microsoft.Bcl.Metadata" };
-
         
         foreach (var framework in targetFrameworks)
         {
             foreach (var package in packages)
             {
-                var packageDir = Directory.GetDirectories(PACKAGES_DIR, package + "*").OrderByDescending(d => d).FirstOrDefault();
+                var packageDir = FindPackageDirectory(package);
 
                 if(packageDir == null)
                 {
-                    Log.Warn("Unable to find resolve " + package);
+                    Log.Warn("Unable to find " + package);
 
                     continue;
                 }
@@ -429,8 +431,54 @@ var NEW_RUNTIME = '${Environment.GetEnvironmentVariable("NEW_RUNTIME") == "1"}'
         }
     }
 
+#copy-coreclr-kpm-dependencies
+    @{
+        var packages = new[] { "Microsoft.Net.Http.Client",
+                               "Microsoft.Net.Security" };
+        
+        foreach (var package in packages)
+        {
+            var packageDir = FindPackageDirectory(package);
+
+            if(packageDir == null)
+            {
+                Log.Warn("Unable to find " + package);
+
+                continue;
+            }
+
+            string[] candidates = new [] { "k10", "netcore45", "win8" };
+
+            var lib = new DirectoryInfo(Path.Combine(packageDir, "lib"));
+            var di = candidates.Select(fmk => lib.EnumerateDirectories("*" + fmk+ "*")
+                                                 .OrderBy(d => d.Name.Length)
+                                                 .FirstOrDefault())
+                               .FirstOrDefault(d => d != null);
+
+            if(!di.Exists)
+            {
+                Log.Warn("Couldn't find version of " + package + " matching k10");
+                continue;
+            }
+
+            foreach(var fi in di.GetFiles("*.dll"))
+            {
+                var targetDirs = K10_TARGETS.Select(dir => Path.Combine(dir, "lib", "Microsoft.Framework.PackageManager"));
+
+                foreach(var targetDir in targetDirs)
+                {
+                    string packageFileDest = Path.Combine(targetDir, fi.Name);
+                    File.Copy(fi.FullName, packageFileDest, true);
+
+                    Log.Info("Copying to " + packageFileDest);
+                }
+            }
+        }
+    }
+
 #copy-coreclr
-    nuget-install package='CoreCLR' outputDir='packages' extra='-pre -nocache' once='CoreCLR'
+    nuget-install package='CoreCLR' outputDir='packages' extra='-pre -nocache' once='CoreCLR' if='string.IsNullOrEmpty(CORE_CLR_VERSION)'
+    nuget-install package='CoreCLR' packageVersion='${CORE_CLR_VERSION}' outputDir='packages' extra='-pre -nocache' once='CoreCLR' if='!string.IsNullOrEmpty(CORE_CLR_VERSION)'
 
     var CoreCLR_DIR='${""}'
     @{
@@ -484,3 +532,33 @@ var NEW_RUNTIME = '${Environment.GetEnvironmentVariable("NEW_RUNTIME") == "1"}'
 
 macro name='NuGetInstall' Package='string' OutputDir='string' Extra='string'
     nuget-install package='${Package}' outputDir='${OutputDir}' extra='${Extra}'
+
+functions @{
+    string FindPackageDirectory(string name)
+    {
+        var packagesDir = Environment.GetEnvironmentVariable("KRE_PACKAGES");
+
+        if (string.IsNullOrEmpty(packagesDir))
+        {
+            var profileDirectory = Environment.GetEnvironmentVariable("USERPROFILE");
+
+            if (string.IsNullOrEmpty(profileDirectory))
+            {
+                profileDirectory = Environment.GetEnvironmentVariable("HOME");
+            }
+
+            packagesDir = Path.Combine(profileDirectory, ".kpm", "packages");
+        }
+        
+        var packageMetadataDir = Path.Combine(packagesDir, name);
+        
+        if (!Directory.Exists(packageMetadataDir))
+        {
+            return null;
+        }
+        
+        return Directory.GetDirectories(packageMetadataDir)
+                        .OrderByDescending(d => d)
+                        .FirstOrDefault();
+    }
+}

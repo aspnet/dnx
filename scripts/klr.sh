@@ -8,5 +8,8 @@ while [ -h "$SOURCE" ]; do # resolve $SOURCE until the file is no longer a symli
 done
 DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
 
-
-mono $DIR/klr.mono.managed.dll "$@"
+if [ -f "$DIR/mono" ]; then
+  "$DIR/mono" "$DIR/klr.mono.managed.dll" "$@"
+else
+  mono "$DIR/klr.mono.managed.dll" "$@"
+fi

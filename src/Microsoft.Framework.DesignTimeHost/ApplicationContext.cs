@@ -7,12 +7,15 @@ using System.Diagnostics;
 using System.Linq;
 using System.Runtime.Versioning;
 using System.Threading;
+using System.Threading.Tasks;
 using Microsoft.Framework.DesignTimeHost.Models;
 using Microsoft.Framework.DesignTimeHost.Models.IncomingMessages;
 using Microsoft.Framework.DesignTimeHost.Models.OutgoingMessages;
 using Microsoft.Framework.Runtime;
+using Microsoft.Framework.Runtime.Common.DependencyInjection;
 using Microsoft.Framework.Runtime.FileSystem;
 using Microsoft.Framework.Runtime.Roslyn;
+using Microsoft.Framework.TestAdapter;
 using Newtonsoft.Json.Linq;
 using NuGet;
 
@@ -21,18 +24,22 @@ namespace Microsoft.Framework.DesignTimeHost
     public class ApplicationContext
     {
         private readonly IAssemblyLoaderEngine _loaderEngine;
+        private readonly IServiceProvider _hostServices;
 
         public class State
         {
             public string Path { get; set; }
+
             public FrameworkName TargetFramework { get; set; }
 
             public string Configuration { get; set; }
 
             public Project Project { get; set; }
 
-            public RoslynMetadataProvider MetadataProvider { get; set; }
+            public ProjectMetadataProvider MetadataProvider { get; set; }
+
             public IDictionary<string, ReferenceDescription> Dependencies { get; set; }
+
             public FrameworkReferenceResolver FrameworkResolver { get; set; }
         }
 
@@ -75,8 +82,9 @@ namespace Microsoft.Framework.DesignTimeHost
         private World _remote = new World();
         private World _local = new World();
 
-        public ApplicationContext(IAssemblyLoaderEngine loaderEngine, int id)
+        public ApplicationContext(IServiceProvider services, IAssemblyLoaderEngine loaderEngine, int id)
         {
+            _hostServices = services;
             _loaderEngine = loaderEngine;
             Id = id;
         }
@@ -176,7 +184,7 @@ namespace Microsoft.Framework.DesignTimeHost
                     {
                         var data = message.Payload.ToObject<InitializeMessage>();
                         _appPath.Value = data.ProjectFolder;
-                        _configuration.Value = data.Configuration ?? "debug";
+                        _configuration.Value = data.Configuration ?? "Debug";
 
                         SetTargetFramework(data.TargetFramework);
                     }
@@ -201,6 +209,18 @@ namespace Microsoft.Framework.DesignTimeHost
                 case "FilesChanged":
                     {
                         _filesChanged.Value = default(Nada);
+                    }
+                    break;
+
+                case "TestDiscovery":
+                    {
+                        DiscoverTests();
+                    }
+                    break;
+                case "TestExecution":
+                    {
+                        var data = message.Payload.ToObject<TestExecutionMessage>();
+                        ExecuteTests(data.Tests);
                     }
                     break;
             }
@@ -266,7 +286,7 @@ namespace Microsoft.Framework.DesignTimeHost
                     Commands = state.Project.Commands
                 };
 
-                var metadata = state.MetadataProvider.GetMetadata(state.Project.Name, state.TargetFramework, state.Configuration);
+                var metadata = state.MetadataProvider.GetProjectMetadata(state.Project.Name);
 
                 _local.References = new ReferencesMessage
                 {
@@ -392,44 +412,25 @@ namespace Microsoft.Framework.DesignTimeHost
                 Configuration = configuration
             };
 
-            Project project;
-            if (!Project.TryGetProject(appPath, out project))
+            var applicationHostContext = new ApplicationHostContext(_hostServices,
+                                                                    appPath,
+                                                                    packagesDirectory: null,
+                                                                    configuration: configuration,
+                                                                    targetFramework: targetFramework);
+
+            Project project = applicationHostContext.Project;
+
+            if (project == null)
             {
                 // package.json sad
                 return state;
             }
 
-            var projectDir = project.ProjectDirectory;
-            var rootDirectory = ProjectResolver.ResolveRootDirectory(projectDir);
-            var projectResolver = new ProjectResolver(projectDir, rootDirectory);
-
-            var referenceAssemblyDependencyResolver = new ReferenceAssemblyDependencyResolver();
-            var nugetDependencyResolver = new NuGetDependencyResolver(projectDir, referenceAssemblyDependencyResolver.FrameworkResolver);
-            var gacDependencyResolver = new GacDependencyResolver();
-
-            var compositeDependencyExporter = new CompositeLibraryExportProvider(new ILibraryExportProvider[] {
-                referenceAssemblyDependencyResolver,
-                gacDependencyResolver,
-                nugetDependencyResolver,
-            });
-
-            var roslynCompiler = new RoslynCompiler(projectResolver,
-                                                    NoopWatcher.Instance,
-                                                    compositeDependencyExporter);
-
-            state.MetadataProvider = new RoslynMetadataProvider(roslynCompiler);
+            state.MetadataProvider = applicationHostContext.CreateInstance<ProjectMetadataProvider>();
             state.Project = project;
-            state.FrameworkResolver = referenceAssemblyDependencyResolver.FrameworkResolver;
+            state.FrameworkResolver = applicationHostContext.FrameworkReferenceResolver;
 
-            var dependencyWalker = new DependencyWalker(new IDependencyProvider[] {
-                new ProjectReferenceDependencyProvider(projectResolver),
-                referenceAssemblyDependencyResolver,
-                gacDependencyResolver,
-                nugetDependencyResolver,
-                new UnresolvedDependencyProvider() // A catch all for unresolved dependencies
-            });
-
-            dependencyWalker.Walk(state.Project.Name, state.Project.Version, targetFramework);
+            applicationHostContext.DependencyWalker.Walk(state.Project.Name, state.Project.Version, targetFramework);
 
             Func<LibraryDescription, ReferenceDescription> referenceFactory = library =>
             {
@@ -447,11 +448,158 @@ namespace Microsoft.Framework.DesignTimeHost
                 };
             };
 
-            state.Dependencies = dependencyWalker.Libraries
-                                                 .Select(referenceFactory)
-                                                 .ToDictionary(d => d.Name);
+            state.Dependencies = applicationHostContext.DependencyWalker
+                                                       .Libraries
+                                                       .Select(referenceFactory)
+                                                       .ToDictionary(d => d.Name);
 
             return state;
+        }
+
+        private async void ExecuteTests(IList<string> tests)
+        {
+            if (_appPath.Value == null)
+            {
+                throw new InvalidOperationException("The context must be initialized with a project.");
+            }
+
+            string testCommand = null;
+            Project project = null;
+            if (Project.TryGetProject(_appPath.Value, out project))
+            {
+                project.Commands.TryGetValue("test", out testCommand);
+            }
+
+            if (testCommand == null)
+            {
+                // No test command means no tests.
+                Trace.TraceInformation("[ApplicationContext]: OnTransmit(ExecuteTests)");
+                OnTransmit(new Message
+                {
+                    ContextId = Id,
+                    MessageType = "TestExecution.Response",
+                });
+
+                return;
+            }
+
+            var testServices = new ServiceProvider(_hostServices);
+            testServices.Add(typeof(ITestExecutionSink), new TestExecutionSink(this));
+
+            var args = new List<string>()
+            {
+                "test",
+                "--designtime"
+            };
+
+            if (tests != null && tests.Count > 0)
+            {
+                args.Add("--test");
+                args.Add(string.Join(",", tests));
+            }
+
+            try
+            {
+                await ExecuteCommandWithServices(testServices, project, args.ToArray());
+            }
+            catch
+            {
+                // For now we're not doing anything with these exceptions, we might want to report them
+                // to VS.   
+            }
+
+            Trace.TraceInformation("[ApplicationContext]: OnTransmit(ExecuteTests)");
+            OnTransmit(new Message
+            {
+                ContextId = Id,
+                MessageType = "TestExecution.Response",
+            });
+        }
+
+        private async void DiscoverTests()
+        {
+            if (_appPath.Value == null)
+            {
+                throw new InvalidOperationException("The context must be initialized with a project.");
+            }
+
+            string testCommand = null;
+            Project project = null;
+            if (Project.TryGetProject(_appPath.Value, out project))
+            {
+                project.Commands.TryGetValue("test", out testCommand);
+            }
+
+            if (testCommand == null)
+            {
+                // No test command means no tests.
+                Trace.TraceInformation("[ApplicationContext]: OnTransmit(DiscoverTests)");
+                OnTransmit(new Message
+                {
+                    ContextId = Id,
+                    MessageType = "TestDiscovery.Response",
+                });
+
+                return;
+            }
+
+            var testServices = new ServiceProvider(_hostServices);
+            testServices.Add(typeof(ITestDiscoverySink), new TestDiscoverySink(this));
+
+            var args = new string[] { "test", "--list", "--designtime" };
+
+            try
+            {
+                await ExecuteCommandWithServices(testServices, project, args);
+            }
+            catch
+            {
+                // For now we're not doing anything with these exceptions, we might want to report them
+                // to VS.   
+            }
+
+            Trace.TraceInformation("[ApplicationContext]: OnTransmit(DiscoverTests)");
+            OnTransmit(new Message
+            {
+                ContextId = Id,
+                MessageType = "TestDiscovery.Response",
+            });
+        }
+
+        private async Task<int> ExecuteCommandWithServices(IServiceProvider services, Project project, string[] args)
+        {
+            var environment = new ApplicationEnvironment(project, _targetFramework.Value, _configuration.Value);
+
+            var applicationHost = new ApplicationHost.Program(
+                (IAssemblyLoaderContainer)_hostServices.GetService(typeof(IAssemblyLoaderContainer)),
+                environment,
+                services);
+
+            try
+            {
+                return await applicationHost.Main(args);
+            }
+            catch (Exception ex)
+            {
+                Trace.TraceError("[ApplicationContext]: ExecutCommandWithServices" + Environment.NewLine + ex.ToString());
+                OnTransmit(new Message()
+                {
+                    ContextId = Id,
+                    MessageType = "Error",
+                    Payload = JToken.FromObject(new ErrorMessage()
+                    {
+                        Message = ex.ToString(),
+                    }),
+                });
+
+                throw;
+            };
+        }
+
+        public void Send(Message message)
+        {
+            message.ContextId = Id;
+            OnTransmit(message);
         }
     }
 }

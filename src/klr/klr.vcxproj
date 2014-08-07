@@ -173,11 +173,13 @@
   </PropertyGroup>
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
-  <Target Name="CopyManagedForDebuggingLocally" AfterTargets="Build" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32' And '$(BuildingInVisualStudio)' == 'true'">
+  <Target Name="CopyManagedForDebuggingLocally" AfterTargets="Build" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <Copy SourceFiles="$(ProjectDir)..\klr.core45.managed\bin\$(Configuration)\k10\klr.core45.managed.dll" 
-          DestinationFolder="$(SolutionDir)\bin\$(Platform)\$(Configuration)" />
+          DestinationFolder="$(SolutionDir)\bin\$(Platform)\$(Configuration)"
+          Condition="Exists('$(ProjectDir)..\klr.core45.managed\bin\$(Configuration)\k10\klr.core45.managed.dll')" />
     <Copy SourceFiles="$(ProjectDir)..\klr.net45.managed\bin\$(Configuration)\net45\klr.net45.managed.dll" 
-          DestinationFolder="$(SolutionDir)\bin\$(Platform)\$(Configuration)" />
+          DestinationFolder="$(SolutionDir)\bin\$(Platform)\$(Configuration)"
+          Condition="Exists('$(ProjectDir)..\klr.net45.managed\bin\$(Configuration)\net45\klr.net45.managed.dll')" />
     <Copy SourceFiles="$(ProjectDir)..\klr.net45.managed\klr.net45.config" 
           DestinationFolder="$(SolutionDir)\bin\$(Platform)\$(Configuration)" />
   </Target>

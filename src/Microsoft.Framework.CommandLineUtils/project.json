@@ -2,12 +2,12 @@
     "version": "1.0.0-*",
     "compilationOptions" : { "define" : ["TRACE"], "warningsAsErrors": true },
     "shared": "**/*.cs",
-    "configurations" : {
+    "frameworks" : {
         "net45" : { },
         "k10" : { 
             "dependencies": {
-                "System.Collections" : "4.0.0.0",
-                "System.Runtime" : "4.0.20.0"
+                "System.Collections": "4.0.10.0",
+                "System.Runtime": "4.0.20.0"
             }
         }
     }

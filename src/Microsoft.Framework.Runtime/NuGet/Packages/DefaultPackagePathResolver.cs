@@ -36,19 +36,21 @@ namespace NuGet
             _fileSystem = fileSystem;
         }
 
-        public virtual string GetInstallPath(IPackage package)
+        public virtual string GetInstallPath(string packageId, SemanticVersion version)
         {
-            return Path.Combine(_fileSystem.Root, GetPackageDirectory(package));
+            return Path.Combine(_fileSystem.Root, GetPackageDirectory(packageId, version));
         }
 
-        public virtual string GetPackageDirectory(IPackage package)
+        public string GetPackageFilePath(string packageId, SemanticVersion version)
         {
-            return GetPackageDirectory(package.Id, package.Version);
+            return Path.Combine(GetInstallPath(packageId, version),
+                                GetPackageFileName(packageId, version));
         }
 
-        public virtual string GetPackageFileName(IPackage package)
+        public string GetHashPath(string packageId, SemanticVersion version)
         {
-            return GetPackageFileName(package.Id, package.Version);
+            return Path.Combine(GetInstallPath(packageId, version),
+                                string.Format("{0}.{1}.nupkg.sha512", packageId, version));
         }
 
         public virtual string GetPackageDirectory(string packageId, SemanticVersion version)
@@ -56,7 +58,7 @@ namespace NuGet
             string directory = packageId;
             if (_useSideBySidePaths)
             {
-                directory += "." + version;
+                directory = Path.Combine(directory, version.ToString());
             }
             return directory;
         }

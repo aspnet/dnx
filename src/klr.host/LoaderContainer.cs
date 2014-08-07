@@ -6,35 +6,39 @@ using System.Linq;
 using System.Collections.Generic;
 using System.Reflection;
 using Microsoft.Framework.Runtime;
+using System.Diagnostics;
 
 namespace klr.host
 {
-    public class HostContainer : IHostContainer
+    public class LoaderContainer : IAssemblyLoaderContainer
     {
-        private readonly Stack<IHost> _hosts = new Stack<IHost>();
+        private readonly Stack<IAssemblyLoader> _loaders = new Stack<IAssemblyLoader>();
 
-        public IDisposable AddHost(IHost host)
+        public IDisposable AddLoader(IAssemblyLoader loader)
         {
-            _hosts.Push(host);
+            _loaders.Push(loader);
 
             return new DisposableAction(() =>
             {
-                var removed = _hosts.Pop();
-                if (!ReferenceEquals(host, removed))
+                var removed = _loaders.Pop();
+                if (!ReferenceEquals(loader, removed))
                 {
-                    throw new InvalidOperationException("Host scopes being disposed in wrong order");
+                    throw new InvalidOperationException("TODO: Loader scopes being disposed in wrong order");
                 }
-                removed.Dispose();
             });
         }
 
         public Assembly Load(string name)
         {
-            foreach (var host in _hosts.Reverse())
+            Trace.TraceInformation("[{0}]: Load name={1}", GetType().Name, name);
+            var sw = Stopwatch.StartNew();
+
+            foreach (var loader in _loaders.Reverse())
             {
-                var assembly = host.Load(name);
+                var assembly = loader.Load(name);
                 if (assembly != null)
                 {
+                    Trace.TraceInformation("[{0}]: Loaded name={1} in {2}ms", loader.GetType().Name, name, sw.ElapsedMilliseconds);
                     return assembly;
                 }
             }

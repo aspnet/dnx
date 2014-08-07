@@ -17,10 +17,12 @@ namespace Microsoft.Framework.PackageManager
 {
     public class Program : IReport
     {
+        private readonly IServiceProvider _hostServices;
         private readonly IApplicationEnvironment _environment;
 
-        public Program(IApplicationEnvironment environment)
+        public Program(IServiceProvider hostServices, IApplicationEnvironment environment)
         {
+            _hostServices = hostServices;
             _environment = environment;
 
 #if NET45
@@ -67,7 +69,11 @@ namespace Microsoft.Framework.PackageManager
                     try
                     {
                         var command = new RestoreCommand(_environment);
-                        command.Report = this;
+                        command.Reports = new Reports()
+                        {
+                            Information = this,
+                            Verbose = optionVerbose.HasValue() ? (this as IReport) : new NullReport()
+                        };
 
                         // If the root argument is a directory
                         if (Directory.Exists(argRoot.Value))
@@ -108,14 +114,9 @@ namespace Microsoft.Framework.PackageManager
 
                         if (optProxy.HasValue())
                         {
-#if NET45
-                            Environment.SetEnvironmentVariable("http_proxy", optProxy.Value(),
-                                EnvironmentVariableTarget.Process);
-#else
-                            throw new NotImplementedException(
-                                "TODO: \"kpm --proxy\" is not supported on current target framework");
-#endif
+                            Environment.SetEnvironmentVariable("http_proxy", optProxy.Value());
                         }
+
                         command.NoCache = optNoCache.HasValue();
                         command.PackageFolder = optPackageFolder.Value();
 
@@ -142,8 +143,6 @@ namespace Microsoft.Framework.PackageManager
                 var argProject = c.Argument("[project]", "Path to project, default is current directory");
                 var optionOut = c.Option("-o|--out <PATH>", "Where does it go", CommandOptionType.SingleValue);
                 var optionConfiguration = c.Option("--configuration <CONFIGURATION>", "The configuration to use for deployment", CommandOptionType.SingleValue);
-                var optionZipPackages = c.Option("-z|--zippackages", "Bundle a zip full of packages",
-                    CommandOptionType.NoValue);
                 var optionOverwrite = c.Option("--overwrite", "Remove existing files in target folders",
                     CommandOptionType.NoValue);
                 var optionNoSource = c.Option("--no-source", "Don't include sources of project dependencies",
@@ -156,10 +155,9 @@ namespace Microsoft.Framework.PackageManager
 
                 c.OnExecute(() =>
                 {
-                    Console.WriteLine("verbose:{0} out:{1} zip:{2} project:{3}",
+                    Console.WriteLine("verbose:{0} out:{1} project:{2}",
                         optionVerbose.HasValue(),
                         optionOut.Value(),
-                        optionZipPackages.HasValue(),
                         argProject.Value);
 
                     var options = new PackOptions
@@ -167,9 +165,8 @@ namespace Microsoft.Framework.PackageManager
                         OutputDir = optionOut.Value(),
                         ProjectDir = argProject.Value ?? System.IO.Directory.GetCurrentDirectory(),
                         AppFolder = optionAppFolder.Value(),
-                        Configuration = optionConfiguration.Value() ?? "debug",
+                        Configuration = optionConfiguration.Value() ?? "Debug",
                         RuntimeTargetFramework = _environment.TargetFramework,
-                        ZipPackages = optionZipPackages.HasValue(),
                         Overwrite = optionOverwrite.HasValue(),
                         NoSource = optionNoSource.HasValue(),
                         Runtimes = optionRuntime.HasValue() ?
@@ -178,7 +175,7 @@ namespace Microsoft.Framework.PackageManager
                             new string[0],
                     };
 
-                    var manager = new PackManager(options);
+                    var manager = new PackManager(_hostServices, options);
                     if (!manager.Package())
                     {
                         return -1;
@@ -210,7 +207,7 @@ namespace Microsoft.Framework.PackageManager
                     buildOptions.Configurations = optionConfiguration.Values;
                     buildOptions.TargetFrameworks = optionFramework.Values;
 
-                    var projectManager = new BuildManager(buildOptions);
+                    var projectManager = new BuildManager(_hostServices, buildOptions);
 
                     if (!projectManager.Build())
                     {
@@ -218,6 +215,29 @@ namespace Microsoft.Framework.PackageManager
                     }
 
                     return 0;
+                });
+            });
+
+            app.Command("add", c =>
+            {
+                c.Description = "Add a dependency into dependencies section of project.json";
+
+                var argName = c.Argument("[name]", "Name of the dependency to add");
+                var argVersion = c.Argument("[version]", "Version of the dependency to add");
+                var argProject = c.Argument("[project]", "Path to project, default is current directory");
+                c.HelpOption("-?|-h|--help");
+
+                c.OnExecute(() =>
+                {
+                    var command = new AddCommand();
+                    command.Report = this;
+                    command.Name = argName.Value;
+                    command.Version = argVersion.Value;
+                    command.ProjectDir = argProject.Value;
+
+                    var success = command.ExecuteCommand();
+
+                    return success ? 0 : 1;
                 });
             });
 
@@ -332,6 +352,15 @@ namespace Microsoft.Framework.PackageManager
             var assembly = typeof(Program).GetTypeInfo().Assembly;
             var assemblyInformationalVersionAttribute = assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>();
             return assemblyInformationalVersionAttribute.InformationalVersion;
+        }
+    }
+
+    internal class NullReport : IReport
+    {
+        public void WriteLine(string message)
+        {
+            // Consume the write operation and do nothing
+            // Used when verbose option is not specified
         }
     }
 }

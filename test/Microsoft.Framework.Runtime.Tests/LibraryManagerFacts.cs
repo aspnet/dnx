@@ -57,7 +57,7 @@ namespace Microsoft.Framework.Runtime.Tests
                 new LibraryInformation("MyApp", new[] { "DI", "Hosting", "Mvc", "HttpAbstractions" })
 
             };
-            return new LibraryManager(frameworkName, "debug", () => libraryInfo, new CompositeLibraryExportProvider(Enumerable.Empty<ILibraryExportProvider>()));
+            return new LibraryManager(frameworkName, "Debug", () => libraryInfo, new CompositeLibraryExportProvider(Enumerable.Empty<ILibraryExportProvider>()));
         }
     }
 }

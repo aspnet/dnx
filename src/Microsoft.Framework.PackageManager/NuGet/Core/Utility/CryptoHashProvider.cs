@@ -9,18 +9,13 @@ namespace NuGet
 {
     public class CryptoHashProvider : IHashProvider
     {
-        /// <summary>
-        /// Server token used to represent that the hash being used is SHA 256
-        /// </summary>
-        private const string SHA256HashAlgorithm = "SHA256";
-
         public CryptoHashProvider()
         {
         }
 
         public byte[] CalculateHash(Stream stream)
         {
-            using (var hashAlgorithm = new SHA256CryptoServiceProvider())
+            using (var hashAlgorithm = SHA256.Create())
             {
                 return hashAlgorithm.ComputeHash(stream);
             }
@@ -28,7 +23,7 @@ namespace NuGet
 
         public byte[] CalculateHash(byte[] data)
         {
-            using (var hashAlgorithm = new SHA256CryptoServiceProvider())
+            using (var hashAlgorithm = SHA256.Create())
             {
                 return hashAlgorithm.ComputeHash(data);
             }

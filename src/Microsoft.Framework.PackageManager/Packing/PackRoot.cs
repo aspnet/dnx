@@ -8,6 +8,7 @@ using System.Linq;
 using System.Xml.Linq;
 using Microsoft.Framework.Runtime;
 using Newtonsoft.Json.Linq;
+using NuGet;
 
 namespace Microsoft.Framework.PackageManager.Packing
 {
@@ -15,14 +16,16 @@ namespace Microsoft.Framework.PackageManager.Packing
     {
         private readonly Runtime.Project _project;
         public static readonly string AppRootName = "approot";
+        public static readonly string DefaultAppFolderName = "public";
 
-        public PackRoot(Runtime.Project project, string outputPath)
+        public PackRoot(Runtime.Project project, string outputPath, IServiceProvider hostServices)
         {
             _project = project;
             Projects = new List<PackProject>();
             Packages = new List<PackPackage>();
             Runtimes = new List<PackRuntime>();
             OutputPath = outputPath;
+            HostServices = hostServices;
             PackagesPath = Path.Combine(outputPath, AppRootName, "packages");
             Operations = new PackOperations();
         }
@@ -30,9 +33,7 @@ namespace Microsoft.Framework.PackageManager.Packing
         public string OutputPath { get; private set; }
         public string PackagesPath { get; private set; }
 
-        public string AppFolder { get; set; }
         public bool Overwrite { get; set; }
-        public bool ZipPackages { get; set; }
         public bool NoSource { get; set; }
         public string Configuration { get; set; }
 
@@ -41,6 +42,8 @@ namespace Microsoft.Framework.PackageManager.Packing
         public IList<PackPackage> Packages { get; private set; }
 
         public PackOperations Operations { get; private set; }
+
+        public IServiceProvider HostServices { get; private set; }
 
         public void Emit()
         {
@@ -82,12 +85,12 @@ namespace Microsoft.Framework.PackageManager.Packing
 
             mainProject.PostProcess(this);
 
-            WriteDependenciesToGlobalJson();
+            WriteGlobalJson();
 
             foreach (var commandName in _project.Commands.Keys)
             {
                 const string template1 = @"
-@""%~dp0packages\{2}\bin\klr.exe"" --appbase ""%~dp0{1}"" Microsoft.Framework.ApplicationHost {0} %*
+@""%~dp0{3}\packages\{2}\bin\klr.exe"" --appbase ""%~dp0{1}"" Microsoft.Framework.ApplicationHost {0} %*
 ";
                 const string template2 = @"
 @klr.exe --appbase ""%~dp0{1}"" Microsoft.Framework.ApplicationHost {0} %*
@@ -96,26 +99,29 @@ namespace Microsoft.Framework.PackageManager.Packing
                 {
                     File.WriteAllText(
                         Path.Combine(OutputPath, commandName + ".cmd"),
-                        string.Format(template1, commandName, Path.Combine(AppRootName, "src", AppFolder ?? _project.Name), Runtimes.First().Name));
+                        string.Format(template1, commandName, Path.Combine(AppRootName, "src", _project.Name),
+                            Runtimes.First().Name, AppRootName));
                 }
                 else
                 {
                     File.WriteAllText(
                         Path.Combine(OutputPath, commandName + ".cmd"),
-                        string.Format(template2, commandName, Path.Combine(AppRootName, "src", AppFolder ?? _project.Name)));
+                        string.Format(template2, commandName, Path.Combine(AppRootName, "src", _project.Name)));
                 }
             }
         }
 
-        private void WriteDependenciesToGlobalJson()
+        private void WriteGlobalJson()
         {
-            var nugetDependencyResolver = new NuGetDependencyResolver(
-                _project.ProjectDirectory,
-                PackagesPath,
-                new EmptyFrameworkResolver());
             var rootDirectory = ProjectResolver.ResolveRootDirectory(_project.ProjectDirectory);
             var projectResolver = new ProjectResolver(_project.ProjectDirectory, rootDirectory);
+            var packagesDir = NuGetDependencyResolver.ResolveRepositoryPath(rootDirectory);
+
+            var nugetDependencyResolver = new NuGetDependencyResolver(packagesDir, new EmptyFrameworkResolver());
+            var pathResolver = new DefaultPackagePathResolver(PackagesPath);
+
             var dependenciesObj = new JObject();
+
 
             // Generate SHAs for all package dependencies
             foreach (var deploymentPackage in Packages)
@@ -125,10 +131,8 @@ namespace Microsoft.Framework.PackageManager.Packing
                 var package = nugetDependencyResolver.FindCandidate(
                     deploymentPackage.Library.Name,
                     deploymentPackage.Library.Version);
-                var shaFilePath = Path.Combine(
-                    PackagesPath,
-                    string.Format("{0}.{1}", package.Id, package.Version),
-                    string.Format("{0}.{1}.nupkg.sha512", package.Id, package.Version));
+
+                var shaFilePath = pathResolver.GetHashPath(package.Id, package.Version);
                 var sha = File.ReadAllText(shaFilePath);
 
                 var shaObj = new JObject();
@@ -147,10 +151,7 @@ namespace Microsoft.Framework.PackageManager.Packing
                     throw new Exception("TODO: unable to resolve project named " + deploymentProject.Name);
                 }
 
-                var shaFilePath = Path.Combine(
-                    PackagesPath,
-                    string.Format("{0}.{1}", project.Name, project.Version),
-                    string.Format("{0}.{1}.nupkg.sha512", project.Name, project.Version));
+                var shaFilePath = pathResolver.GetHashPath(project.Name, project.Version);
 
                 if (!File.Exists(shaFilePath))
                 {
@@ -167,11 +168,10 @@ namespace Microsoft.Framework.PackageManager.Packing
             }
 
             var rootObject = default(JObject);
-            var rootDir = ProjectResolver.ResolveRootDirectory(_project.ProjectDirectory);
-            if (GlobalSettings.HasGlobalFile(rootDir))
+            if (GlobalSettings.HasGlobalFile(rootDirectory))
             {
                 rootObject = JObject.Parse(File.ReadAllText(Path.Combine(
-                    rootDir,
+                    rootDirectory,
                     GlobalSettings.GlobalFileName)));
             }
             else
@@ -179,9 +179,13 @@ namespace Microsoft.Framework.PackageManager.Packing
                 rootObject = new JObject();
             }
 
-            rootObject["dependencies"] = dependenciesObj;
+            var applicationRoot = Path.Combine(OutputPath, PackRoot.AppRootName);
 
-            File.WriteAllText(Path.Combine(OutputPath, PackRoot.AppRootName, GlobalSettings.GlobalFileName),
+            rootObject["dependencies"] = dependenciesObj;
+            rootObject["packages"] = PathUtility.GetRelativePath(PathUtility.EnsureTrailingSlash(applicationRoot),
+                                                                 PackagesPath);
+
+            File.WriteAllText(Path.Combine(applicationRoot, GlobalSettings.GlobalFileName),
                 rootObject.ToString());
         }
     }

@@ -23,25 +23,19 @@
     <Compile Include="AssemblyNeutral\AssemblyNeutralWorker.cs" />
     <Compile Include="AssemblyNeutral\EmbeddedMetadataReference.cs" />
     <Compile Include="AssemblyNeutral\TypeCompilationContext.cs" />
-    <Compile Include="BuildContext.cs" />
     <Compile Include="CompilationContext.cs" />
     <Compile Include="CompilationSettings.cs" />
     <Compile Include="CompositeResourceProvider.cs" />
     <Compile Include="EmbeddedResourceProvider.cs" />
     <Compile Include="IResourceProvider.cs" />
-    <Compile Include="IRoslynCompiler.cs" />
     <Compile Include="MetadataFileReferenceFactory.cs" />
     <Compile Include="ProjectExtensions.cs" />
     <Compile Include="ResourceExtensions.cs" />
     <Compile Include="ResxResourceProvider.cs" />
-    <Compile Include="RoslynArtifactsProducer.cs" />
-    <Compile Include="RoslynAssemblyLoader.cs" />
     <Compile Include="RoslynCompiler.cs" />
-    <Compile Include="RoslynLibraryExport.cs" />
-    <Compile Include="RoslynMetadataProvider.cs" />
+    <Compile Include="RoslynProjectReferenceProvider.cs" />
     <Compile Include="RoslynProjectReference.cs" />
     <Compile Include="RoslynMetadataReference.cs" />
-    <Compile Include="RoslynProjectMetadata.cs" />
     <Compile Include="Services\IRoslynMetadataReference.cs" />
   </ItemGroup>
   <Import Project="$(VSToolsPath)\AspNet\Microsoft.Web.AspNet.targets" Condition="'$(VSToolsPath)' != ''" />

@@ -8,8 +8,12 @@ namespace Microsoft.Framework.Runtime
     {
         public SourceFileReference(string path)
         {
+            // Unique name of the reference
+            Name = path;
             Path = path;
         }
+
+        public string Name { get; private set; }
 
         public string Path { get; private set; }
     }

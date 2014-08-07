@@ -23,6 +23,7 @@
     <Content Include="project.json" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ApplicationHostContext.cs" />
     <Compile Include="ApplicationShutdown.cs" />
     <Compile Include="ApplicationEnvironment.cs" />
     <Compile Include="CompilerOptions.cs" />
@@ -42,12 +43,15 @@
     <Compile Include="DependencyManagement\ReferenceAssemblyDependencyResolver.cs" />
     <Compile Include="DependencyManagement\WalkContext.cs" />
     <Compile Include="DictionaryExtensions.cs" />
+    <Compile Include="ExportProviders\CompiledProjectMetadataReference.cs" />
     <Compile Include="ExportProviders\CompositeLibraryExportProvider.cs" />
     <Compile Include="ExportProviders\LibraryExport.cs" />
     <Compile Include="ExportProviders\PEReaderExtensions.cs" />
-    <Compile Include="ExportProviders\ProjectExportProvider.cs" />
+    <Compile Include="ExportProviders\DiagnosticResult.cs" />
+    <Compile Include="ExportProviders\ProjectExportProviderHelper.cs" />
+    <Compile Include="ExportProviders\ProjectLibraryExportProvider.cs" />
     <Compile Include="ExportProviders\EmbeddedMetadataReference.cs" />
-    <Compile Include="ExportProviders\UnresolvedMetadataReference.cs" />
+    <Compile Include="ExportProviders\IProjectReferenceProvider.cs" />
     <Compile Include="ExportProviders\MetadataFileReference.cs" />
     <Compile Include="ExportProviders\SourceFileReference.cs" />
     <Compile Include="FileSystem\FileSystemWatcherRoot.cs" />
@@ -56,12 +60,14 @@
     <Compile Include="FrameworkReferenceResolver.cs" />
     <Compile Include="GlobalSettings.cs" />
     <Compile Include="IFrameworkReferenceResolver.cs" />
+    <Compile Include="Infrastructure\DisposableAction.cs" />
     <Compile Include="IProjectResolver.cs" />
-    <Compile Include="Loader\CompositeAssemblyLoader.cs" />
-    <Compile Include="Loader\LoaderInformation.cs" />
+    <Compile Include="TypeInformation.cs" />
     <Compile Include="Loader\NuGetAssemblyLoader.cs" />
     <Compile Include="Loader\ProjectAssemblyLoader.cs" />
     <Compile Include="Loader\CompilationException.cs" />
+    <Compile Include="MetadataProvider\ProjectMetadata.cs" />
+    <Compile Include="MetadataProvider\ProjectMetadataProvider.cs" />
     <Compile Include="NuGet\Authoring\EmptyFrameworkFolderFile.cs" />
     <Compile Include="NuGet\Authoring\IPackageBuilder.cs" />
     <Compile Include="NuGet\Authoring\IPropertyProvider.cs" />
@@ -112,6 +118,7 @@
     <Compile Include="NuGet\Packages\OptimizedOpcZipPackage.cs" />
     <Compile Include="NuGet\Packages\OptimizedZipPackage.cs" />
     <Compile Include="NuGet\Packages\PackageDependency.cs" />
+    <Compile Include="NuGet\Packages\PackageInfo.cs" />
     <Compile Include="NuGet\Packages\UnzippedPackage.cs" />
     <Compile Include="NuGet\Packages\ZipPackage.cs" />
     <Compile Include="NuGet\Packages\ZipPackageAssemblyReference.cs" />
@@ -138,6 +145,7 @@
     <Compile Include="NuGet\Utility\ZipArchiveExtensions.cs" />
     <Compile Include="Project.cs" />
     <Compile Include="ProjectResolver.cs" />
+    <Compile Include="LanguageServices.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="TargetFrameworkInformation.cs" />
   </ItemGroup>

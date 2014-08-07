@@ -19,10 +19,14 @@ namespace Microsoft.Framework.Runtime
         private static readonly char[] _sourceSeparator = new[] { ';' };
 
         internal static readonly string[] _defaultSourcePatterns = new[] { @"**\*.cs" };
-        internal static readonly string[] _defaultSourceExcludePatterns = new[] { @"obj\**\*", @"bin\**\*" };
+        internal static readonly string[] _defaultExcludePatterns = new[] { @"obj\**\*", @"bin\**\*", @"**.csproj",
+            @"**.kproj", @"**.user", @"**.vspscc", @"**.vssscc", @"**.pubxml" };
+        internal static readonly string[] _defaultPackExcludePatterns = new[] { @"obj\**\*", @"bin\**\*", @"**.csproj",
+            @"**.kproj", @"**.user", @"**.vspscc", @"**.vssscc", @"**.pubxml" };
         internal static readonly string[] _defaultPreprocessPatterns = new[] { @"compiler\preprocess\**\*.cs" };
         internal static readonly string[] _defaultSharedPatterns = new[] { @"compiler\shared\**\*.cs" };
         internal static readonly string[] _defaultResourcesPatterns = new[] { @"compiler\resources\**\*" };
+        internal static readonly string[] _defaultContentsPatterns = new[] { @"**\*" };
 
         private readonly Dictionary<FrameworkName, TargetFrameworkInformation> _targetFrameworks = new Dictionary<FrameworkName, TargetFrameworkInformation>();
         private readonly Dictionary<FrameworkName, CompilerOptions> _compilationOptions = new Dictionary<FrameworkName, CompilerOptions>();
@@ -35,6 +39,7 @@ namespace Microsoft.Framework.Runtime
         public Project()
         {
             Commands = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+            Scripts = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
         }
 
         public string ProjectFilePath { get; private set; }
@@ -59,17 +64,21 @@ namespace Microsoft.Framework.Runtime
 
         public IList<Library> Dependencies { get; private set; }
 
-        public LoaderInformation Loader { get; private set; }
+        public LanguageServices LanguageServices { get; private set; }
 
         internal IEnumerable<string> SourcePatterns { get; set; }
 
-        internal IEnumerable<string> SourceExcludePatterns { get; set; }
+        internal IEnumerable<string> ExcludePatterns { get; set; }
+
+        internal IEnumerable<string> PackExcludePatterns { get; set; }
 
         internal IEnumerable<string> PreprocessPatterns { get; set; }
 
         internal IEnumerable<string> SharedPatterns { get; set; }
 
         internal IEnumerable<string> ResourcesPatterns { get; set; }
+
+        internal IEnumerable<string> ContentsPatterns { get; set; }
 
         public IEnumerable<string> SourceFiles
         {
@@ -83,7 +92,7 @@ namespace Microsoft.Framework.Runtime
                     .SelectMany(pattern => PathResolver.PerformWildcardSearch(path, pattern))
                     .ToArray();
 
-                var excludePatterns = PreprocessPatterns.Concat(SharedPatterns).Concat(ResourcesPatterns).Concat(SourceExcludePatterns)
+                var excludePatterns = PreprocessPatterns.Concat(SharedPatterns).Concat(ResourcesPatterns).Concat(ExcludePatterns)
                     .Select(pattern => PathResolver.NormalizeWildcardForExcludedFiles(path, pattern))
                     .ToArray();
 
@@ -94,17 +103,17 @@ namespace Microsoft.Framework.Runtime
             }
         }
 
-        public IEnumerable<string> SourceExcludeFiles
+        public IEnumerable<string> PackExcludeFiles
         {
             get
             {
                 string path = ProjectDirectory;
 
-                var sourceExcludeFiles = SourceExcludePatterns
+                var packExcludeFiles = PackExcludePatterns
                     .SelectMany(pattern => PathResolver.PerformWildcardSearch(path, pattern))
                     .ToArray();
 
-                return sourceExcludeFiles;
+                return packExcludeFiles;
             }
         }
 
@@ -136,7 +145,31 @@ namespace Microsoft.Framework.Runtime
             }
         }
 
+        public IEnumerable<string> ContentFiles
+        {
+            get
+            {
+                string path = ProjectDirectory;
+
+                var includeFiles = ContentsPatterns
+                    .SelectMany(pattern => PathResolver.PerformWildcardSearch(path, pattern))
+                    .ToArray();
+
+                var excludePatterns = PreprocessPatterns.Concat(SharedPatterns).Concat(ResourcesPatterns)
+                    .Concat(PackExcludePatterns).Concat(SourcePatterns)
+                    .Select(pattern => PathResolver.NormalizeWildcardForExcludedFiles(path, pattern))
+                    .ToArray();
+
+                var excludeFiles = PathResolver.GetMatches(includeFiles, x => x, excludePatterns)
+                    .ToArray();
+
+                return includeFiles.Except(excludeFiles).Distinct().ToArray();
+            }
+        }
+
         public IDictionary<string, string> Commands { get; private set; }
+
+        public IDictionary<string, string> Scripts { get; private set; }
 
         public IEnumerable<TargetFrameworkInformation> GetTargetFrameworks()
         {
@@ -207,24 +240,30 @@ namespace Microsoft.Framework.Runtime
 
             // Source file patterns
             project.SourcePatterns = GetSourcePattern(rawProject, "code", _defaultSourcePatterns);
-            project.SourceExcludePatterns = GetSourcePattern(rawProject, "exclude", _defaultSourceExcludePatterns);
+            project.ExcludePatterns = GetSourcePattern(rawProject, "exclude", _defaultExcludePatterns);
+            project.PackExcludePatterns = GetSourcePattern(rawProject, "pack-exclude", _defaultPackExcludePatterns);
             project.PreprocessPatterns = GetSourcePattern(rawProject, "preprocess", _defaultPreprocessPatterns);
             project.SharedPatterns = GetSourcePattern(rawProject, "shared", _defaultSharedPatterns);
             project.ResourcesPatterns = GetSourcePattern(rawProject, "resources", _defaultResourcesPatterns);
+            project.ContentsPatterns = GetSourcePattern(rawProject, "files", _defaultContentsPatterns);
 
             // Set the default loader information for projects
-            var loaderAssemblyName = "Microsoft.Framework.Runtime.Roslyn";
-            var loaderTypeName = "Microsoft.Framework.Runtime.Roslyn.RoslynAssemblyLoader";
+            var languageServicesAssembly = "Microsoft.Framework.Runtime.Roslyn";
+            var projectReferenceProviderType = "Microsoft.Framework.Runtime.Roslyn.RoslynProjectReferenceProvider";
+            var languageName = "C#";
 
-            var loaderInfo = rawProject["loader"] as JObject;
+            var languageInfo = rawProject["language"] as JObject;
 
-            if (loaderInfo != null)
+            if (languageInfo != null)
             {
-                loaderAssemblyName = GetValue<string>(loaderInfo, "name");
-                loaderTypeName = GetValue<string>(loaderInfo, "type");
+                languageName = GetValue<string>(languageInfo, "name");
+                languageServicesAssembly = GetValue<string>(languageInfo, "assembly");
+                projectReferenceProviderType = GetValue<string>(languageInfo, "projectReferenceProviderType");
             }
 
-            project.Loader = new LoaderInformation(loaderAssemblyName, loaderTypeName);
+            var libraryExporter = new TypeInformation(languageServicesAssembly, projectReferenceProviderType);
+
+            project.LanguageServices = new LanguageServices(languageName, libraryExporter);
 
             var commands = rawProject["commands"] as JObject;
             if (commands != null)
@@ -232,6 +271,15 @@ namespace Microsoft.Framework.Runtime
                 foreach (var command in commands)
                 {
                     project.Commands[command.Key] = command.Value.ToObject<string>();
+                }
+            }
+
+            var scripts = rawProject["scripts"] as JObject;
+            if (scripts != null)
+            {
+                foreach (var script in scripts)
+                {
+                    project.Scripts[script.Key] = script.Value.ToObject<string>();
                 }
             }
 
@@ -354,14 +402,14 @@ namespace Microsoft.Framework.Runtime
             };
 
             // Add default configurations
-            _configurations["debug"] = new CompilerOptions
+            _configurations["Debug"] = new CompilerOptions
             {
                 DebugSymbols = "full",
                 Defines = new[] { "DEBUG", "TRACE" },
                 Optimize = false
             };
 
-            _configurations["release"] = new CompilerOptions
+            _configurations["Release"] = new CompilerOptions
             {
                 DebugSymbols = "pdbOnly",
                 Defines = new[] { "RELEASE", "TRACE" },
@@ -372,9 +420,9 @@ namespace Microsoft.Framework.Runtime
             /*
                 {
                     "configurations": {
-                        "debug": {
+                        "Debug": {
                         },
-                        "release": {
+                        "Release": {
                         }
                     }
                 }
@@ -386,13 +434,8 @@ namespace Microsoft.Framework.Runtime
                 {
                     var compilerOptions = GetCompilationOptions(configuration.Value);
 
-                    // This code is for backwards compatibility with the old project format until
-                    // we make all the necessary changes to understand the new format
-                    if (!BuildTargetFrameworkNode(configuration, compilerOptions))
-                    {
-                        // Only use this as a configuration if it's not a target framework
-                        _configurations[configuration.Key] = compilerOptions;
-                    }
+                    // Only use this as a configuration if it's not a target framework
+                    _configurations[configuration.Key] = compilerOptions;
                 }
             }
 
@@ -413,20 +456,18 @@ namespace Microsoft.Framework.Runtime
             {
                 foreach (var framework in frameworks)
                 {
-                    BuildTargetFrameworkNode(framework, compilerOptions: null);
+                    BuildTargetFrameworkNode(framework);
                 }
             }
         }
 
-        private bool BuildTargetFrameworkNode(KeyValuePair<string, JToken> configuration, CompilerOptions compilerOptions)
+        private bool BuildTargetFrameworkNode(KeyValuePair<string, JToken> targetFramework)
         {
-            // If no compilation options are provided then figure them out from the
-            // node
-            compilerOptions = compilerOptions ??
-                              GetCompilationOptions(configuration.Value) ??
-                              new CompilerOptions();
+            // If no compilation options are provided then figure them out from the node
+            var compilerOptions = GetCompilationOptions(targetFramework.Value) ??
+                                  new CompilerOptions();
 
-            var frameworkName = ParseFrameworkName(configuration.Key);
+            var frameworkName = ParseFrameworkName(targetFramework.Key);
 
             // If it's not unsupported then keep it
             if (frameworkName == VersionUtility.UnsupportedFrameworkName)
@@ -446,9 +487,17 @@ namespace Microsoft.Framework.Runtime
                 Dependencies = new List<Library>()
             };
 
-            var properties = configuration.Value.Value<JObject>();
+            var properties = targetFramework.Value.Value<JObject>();
 
             PopulateDependencies(targetFrameworkInformation.Dependencies, properties);
+
+            var binNode = properties["bin"];
+
+            if (binNode != null)
+            {
+                targetFrameworkInformation.AssemblyPath = GetValue<string>(binNode, "assembly");
+                targetFrameworkInformation.PdbPath = GetValue<string>(binNode, "pdb");
+            }
 
             _compilationOptions[frameworkName] = compilerOptions;
             _targetFrameworks[frameworkName] = targetFrameworkInformation;

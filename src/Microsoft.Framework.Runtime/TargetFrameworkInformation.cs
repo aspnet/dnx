@@ -14,6 +14,10 @@ namespace Microsoft.Framework.Runtime
 
         public IList<Library> Dependencies { get; set; }
 
+        public string AssemblyPath { get; set; }
+
+        public string PdbPath { get; set; }
+
         public IEnumerable<FrameworkName> SupportedFrameworks
         {
             get

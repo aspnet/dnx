@@ -8,7 +8,7 @@
         "hi": "HelloWorld --mode amazing",
         "run": "HelloWorld I can customize the default command"
     },
-    "configurations": {
+    "frameworks": {
         "net45": {},
         "k10": {
             "dependencies": {

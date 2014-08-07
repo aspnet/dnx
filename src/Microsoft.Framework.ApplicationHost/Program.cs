@@ -16,11 +16,11 @@ namespace Microsoft.Framework.ApplicationHost
 {
     public class Program
     {
-        private readonly IHostContainer _container;
+        private readonly IAssemblyLoaderContainer _container;
         private readonly IApplicationEnvironment _environment;
         private readonly IServiceProvider _serviceProvider;
 
-        public Program(IHostContainer container, IApplicationEnvironment environment, IServiceProvider serviceProvider)
+        public Program(IAssemblyLoaderContainer container, IApplicationEnvironment environment, IServiceProvider serviceProvider)
         {
             _container = container;
             _environment = environment;
@@ -73,7 +73,7 @@ namespace Microsoft.Framework.ApplicationHost
 
             try
             {
-                disposable = _container.AddHost(host);
+                disposable = host.AddLoaders(_container);
 
                 return ExecuteMain(host, options.ApplicationName, programArgs)
                         .ContinueWith(async (t, state) =>
@@ -154,7 +154,7 @@ namespace Microsoft.Framework.ApplicationHost
             defaultHostOptions.PackageDirectory = optionPackages.Value();
 
             defaultHostOptions.TargetFramework = _environment.TargetFramework;
-            defaultHostOptions.Configuration = optionConfiguration.Value() ?? _environment.Configuration ?? "debug";
+            defaultHostOptions.Configuration = optionConfiguration.Value() ?? _environment.Configuration ?? "Debug";
             defaultHostOptions.ApplicationBaseDirectory = _environment.ApplicationBasePath;
 
             var remainingArgs = new List<string>();

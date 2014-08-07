@@ -7,7 +7,6 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Runtime.Versioning;
-using Microsoft.Framework.PackageManager.Packing;
 using Microsoft.Framework.Runtime;
 using NuGet;
 
@@ -15,13 +14,18 @@ namespace Microsoft.Framework.PackageManager.Packing
 {
     public class PackManager
     {
+        private readonly IServiceProvider _hostServices;
         private readonly PackOptions _options;
 
-        public PackManager(PackOptions options)
+        public PackManager(IServiceProvider hostServices, PackOptions options)
         {
+            _hostServices = hostServices;
             _options = options;
             _options.ProjectDir = Normalize(_options.ProjectDir);
+            ScriptExecutor = new ScriptExecutor();
         }
+
+        public ScriptExecutor ScriptExecutor { get; private set; }
 
         private static string Normalize(string projectDir)
         {
@@ -35,39 +39,31 @@ namespace Microsoft.Framework.PackageManager.Packing
 
         public class DependencyContext
         {
-            public DependencyContext(string projectDir)
+            public DependencyContext(string projectDirectory, string configuration, FrameworkName targetFramework)
             {
-                var rootDirectory = ProjectResolver.ResolveRootDirectory(projectDir);
-                var projectResolver = new ProjectResolver(projectDir, rootDirectory);
+                var applicationHostContext = new ApplicationHostContext(
+                    serviceProvider: null,
+                    projectDirectory: projectDirectory,
+                    packagesDirectory: null,
+                    configuration: configuration,
+                    targetFramework: targetFramework);
 
-                var referenceAssemblyDependencyResolver = new ReferenceAssemblyDependencyResolver();
-                var nugetDependencyResolver = new NuGetDependencyResolver(projectDir, referenceAssemblyDependencyResolver.FrameworkResolver);
-                var gacDependencyResolver = new GacDependencyResolver();
-                var projectReferenceDependencyProvider = new ProjectReferenceDependencyProvider(projectResolver);
-
-                var dependencyWalker = new DependencyWalker(new IDependencyProvider[] {
-                    projectReferenceDependencyProvider,
-                    referenceAssemblyDependencyResolver,
-                    gacDependencyResolver,
-                    nugetDependencyResolver
-                });
-
-                ProjectResolver = projectResolver;
-                NuGetDependencyResolver = nugetDependencyResolver;
-                ProjectReferenceDependencyProvider = projectReferenceDependencyProvider;
-                DependencyWalker = dependencyWalker;
+                ProjectResolver = applicationHostContext.ProjectResolver;
+                NuGetDependencyResolver = applicationHostContext.NuGetDependencyProvider;
+                ProjectReferenceDependencyProvider = applicationHostContext.ProjectDepencyProvider;
+                DependencyWalker = applicationHostContext.DependencyWalker;
+                FrameworkName = targetFramework;
             }
 
-            public ProjectResolver ProjectResolver { get; set; }
+            public IProjectResolver ProjectResolver { get; set; }
             public NuGetDependencyResolver NuGetDependencyResolver { get; set; }
             public ProjectReferenceDependencyProvider ProjectReferenceDependencyProvider { get; set; }
             public DependencyWalker DependencyWalker { get; set; }
             public FrameworkName FrameworkName { get; set; }
 
-            public void Walk(string projectName, SemanticVersion projectVersion, FrameworkName frameworkName)
+            public void Walk(string projectName, SemanticVersion projectVersion)
             {
-                FrameworkName = frameworkName;
-                DependencyWalker.Walk(projectName, projectVersion, frameworkName);
+                DependencyWalker.Walk(projectName, projectVersion, FrameworkName);
             }
 
             public static FrameworkName GetFrameworkNameForRuntime(string runtime)
@@ -110,14 +106,21 @@ namespace Microsoft.Framework.PackageManager.Packing
 
             var dependencyContexts = new List<DependencyContext>();
 
-            var root = new PackRoot(project, outputPath)
+            var root = new PackRoot(project, outputPath, _hostServices)
             {
                 Overwrite = _options.Overwrite,
-                ZipPackages = _options.ZipPackages,
-                AppFolder = _options.AppFolder ?? project.Name,
                 Configuration = _options.Configuration,
                 NoSource = _options.NoSource
             };
+
+            Func<string, string> getVariable = key =>
+            {
+                return null;
+            };
+
+            ScriptExecutor.Execute(project, "prepare", getVariable);
+
+            ScriptExecutor.Execute(project, "prepack", getVariable);
 
             foreach (var runtime in _options.Runtimes)
             {
@@ -152,8 +155,8 @@ namespace Microsoft.Framework.PackageManager.Packing
                 var frameworkName = DependencyContext.GetFrameworkNameForRuntime(Path.GetFileName(runtime));
                 if (!dependencyContexts.Any(dc => dc.FrameworkName == frameworkName))
                 {
-                    var dependencyContext = new DependencyContext(projectDir);
-                    dependencyContext.Walk(project.Name, project.Version, frameworkName);
+                    var dependencyContext = new DependencyContext(projectDir, _options.Configuration, frameworkName);
+                    dependencyContext.Walk(project.Name, project.Version);
                     dependencyContexts.Add(dependencyContext);
                 }
             }
@@ -161,8 +164,8 @@ namespace Microsoft.Framework.PackageManager.Packing
             if (!dependencyContexts.Any())
             {
                 var frameworkName = DependencyContext.GetFrameworkNameForRuntime("KRE-svr50-x86.*");
-                var dependencyContext = new DependencyContext(projectDir);
-                dependencyContext.Walk(project.Name, project.Version, frameworkName);
+                var dependencyContext = new DependencyContext(projectDir, _options.Configuration, frameworkName);
+                dependencyContext.Walk(project.Name, project.Version);
                 dependencyContexts.Add(dependencyContext);
             }
 
@@ -190,6 +193,8 @@ namespace Microsoft.Framework.PackageManager.Packing
             }
 
             root.Emit();
+
+            ScriptExecutor.Execute(project, "postpack", getVariable);
 
             sw.Stop();
 

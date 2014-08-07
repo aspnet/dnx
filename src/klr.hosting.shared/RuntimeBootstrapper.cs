@@ -2,6 +2,7 @@
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -18,7 +19,10 @@ namespace klr.hosting
 {
     internal static class RuntimeBootstrapper
     {
-        private static readonly Dictionary<string, Assembly> _assemblyCache = new Dictionary<string, Assembly>();
+        private static readonly ConcurrentDictionary<string, object> _assemblyLoadLocks =
+                new ConcurrentDictionary<string, object>(StringComparer.Ordinal);
+        private static readonly Dictionary<string, Assembly> _assemblyCache
+                = new Dictionary<string, Assembly>(StringComparer.Ordinal);
 
         private static readonly char[] _libPathSeparator = new[] { ';' };
 
@@ -125,15 +129,34 @@ namespace klr.hosting
                     return assembly;
                 }
 
-                assembly = loader(name) ?? ResolveHostAssembly(loadFile, searchPaths, name);
-
-                if (assembly != null)
+                var loadLock = _assemblyLoadLocks.GetOrAdd(name, new object());
+                try
                 {
-#if K10
-                    ExtractAssemblyNeutralInterfaces(assembly, loadStream);
-#endif
+                    // Concurrently loading the assembly might result in two distinct instances of the same assembly 
+                    // being loaded. This was observed when loading via Assembly.LoadStream. Prevent this by locking on the name.
+                    lock (loadLock)
+                    {
+                        if (_assemblyCache.TryGetValue(name, out assembly))
+                        {
+                            // This would succeed in case the thread was previously waiting on the lock when assembly 
+                            // load was in progress
+                            return assembly;
+                        }
 
-                    _assemblyCache[name] = assembly;
+                        assembly = loader(name) ?? ResolveHostAssembly(loadFile, searchPaths, name);
+
+                        if (assembly != null)
+                        {
+#if K10
+                            ExtractAssemblyNeutralInterfaces(assembly, loadStream);
+#endif
+                            _assemblyCache[name] = assembly;
+                        }
+                    }
+                }
+                finally
+                {
+                    _assemblyLoadLocks.TryRemove(name, out loadLock);
                 }
 
                 return assembly;
@@ -188,27 +211,27 @@ namespace klr.hosting
                 var loaderEngine = Activator.CreateInstance(loaderEngineType, loaderImpl);
 
                 // The following code is doing:
-                // var hostContainer = new klr.host.HostContainer();
-                // var rootHost = new klr.host.RootHost(loaderEngine, searchPaths);
-                // hostContainer.AddHost(rootHost);
-                // var bootstrapper = new klr.host.Bootstrapper(hostContainer, loaderEngine);
+                // var loaderContainer = new klr.host.LoaderContainer();
+                // var libLoader = new klr.host.PathBasedAssemblyLoader(loaderEngine, searchPaths);
+                // loaderContainer.AddLoader(libLoader);
+                // var bootstrapper = new klr.host.Bootstrapper(loaderContainer, loaderEngine);
                 // bootstrapper.Main(bootstrapperArgs);
 
-                var hostContainerType = assembly.GetType("klr.host.HostContainer");
-                var rootHostType = assembly.GetType("klr.host.RootHost");
+                var loaderContainerType = assembly.GetType("klr.host.LoaderContainer");
+                var pathBasedLoaderType = assembly.GetType("klr.host.PathBasedAssemblyLoader");
 
-                var hostContainer = Activator.CreateInstance(hostContainerType);
-                var rootHost = Activator.CreateInstance(rootHostType, new object[] { loaderEngine, searchPaths });
+                var loaderContainer = Activator.CreateInstance(loaderContainerType);
+                var libLoader = Activator.CreateInstance(pathBasedLoaderType, new object[] { loaderEngine, searchPaths });
 
-                MethodInfo addHostMethodInfo = hostContainerType.GetTypeInfo().GetDeclaredMethod("AddHost");
-                var disposable = (IDisposable)addHostMethodInfo.Invoke(hostContainer, new[] { rootHost });
-                var hostContainerLoad = hostContainerType.GetTypeInfo().GetDeclaredMethod("Load");
+                MethodInfo addLoaderMethodInfo = loaderContainerType.GetTypeInfo().GetDeclaredMethod("AddLoader");
+                var disposable = (IDisposable)addLoaderMethodInfo.Invoke(loaderContainer, new[] { libLoader });
+                var loaderContainerLoadMethodInfo = loaderContainerType.GetTypeInfo().GetDeclaredMethod("Load");
 
-                loader = (Func<string, Assembly>)hostContainerLoad.CreateDelegate(typeof(Func<string, Assembly>), hostContainer);
+                loader = (Func<string, Assembly>)loaderContainerLoadMethodInfo.CreateDelegate(typeof(Func<string, Assembly>), loaderContainer);
 
                 var bootstrapperType = assembly.GetType("klr.host.Bootstrapper");
                 var mainMethod = bootstrapperType.GetTypeInfo().GetDeclaredMethod("Main");
-                var bootstrapper = Activator.CreateInstance(bootstrapperType, hostContainer, loaderEngine);
+                var bootstrapper = Activator.CreateInstance(bootstrapperType, loaderContainer, loaderEngine);
 
                 try
                 {

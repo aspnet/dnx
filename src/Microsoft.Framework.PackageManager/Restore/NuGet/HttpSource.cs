@@ -1,4 +1,3 @@
-#if NET45
 // Copyright (c) Microsoft Open Technologies, Inc. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
@@ -10,8 +9,8 @@ using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
-using System.Web;
 using System.Linq;
 using System.Security.Cryptography;
 
@@ -25,7 +24,11 @@ namespace Microsoft.Framework.PackageManager.Restore.NuGet
         private string _userName;
         private string _password;
         private IReport _report;
-        
+#if K10
+        private string _proxyUserName;
+        private string _proxyPassword;
+#endif
+
         public HttpSource(
             string baseUri,
             string userName,
@@ -40,13 +43,18 @@ namespace Microsoft.Framework.PackageManager.Restore.NuGet
             var proxy = Environment.GetEnvironmentVariable("http_proxy");
             if (string.IsNullOrEmpty(proxy))
             {
+#if NET45
                 _client = new HttpClient();
+#else
+                _client = new HttpClient(new Microsoft.Net.Http.Client.ManagedHandler());
+#endif
             }
             else
             {
                 // To use an authenticated proxy, the proxy address should be in the form of
                 // "http://user:password@proxyaddress.com:8888"
                 var proxyUriBuilder = new UriBuilder(proxy);
+#if NET45
                 var webProxy = new WebProxy(proxy);
                 if (string.IsNullOrEmpty(proxyUriBuilder.UserName))
                 {
@@ -66,6 +74,18 @@ namespace Microsoft.Framework.PackageManager.Restore.NuGet
                     UseProxy = true
                 };
                 _client = new HttpClient(handler);
+#else
+                if (!string.IsNullOrEmpty(proxyUriBuilder.UserName))
+                {
+                    _proxyUserName = proxyUriBuilder.UserName;
+                    _proxyPassword = proxyUriBuilder.Password;
+                }
+
+                _client = new HttpClient(new Microsoft.Net.Http.Client.ManagedHandler()
+                {
+                    ProxyAddress = new Uri(proxy)
+                });
+#endif
             }
         }
 
@@ -74,14 +94,14 @@ namespace Microsoft.Framework.PackageManager.Restore.NuGet
             Stopwatch sw = new Stopwatch();
             sw.Start();
 
-            var result = TryCache(uri, cacheKey, cacheAgeLimit);
+            var result = await TryCache(uri, cacheKey, cacheAgeLimit);
             if (result.Stream != null)
             {
                 _report.WriteLine(string.Format("  {0} {1}", "CACHE".Green(), uri));
                 return result;
             }
 
-            _report.WriteLine(string.Format("  {0} {1}", "GET".Yellow(), uri));
+            _report.WriteLine(string.Format("  {0} {1}.", "GET".Yellow(), uri));
 
             var request = new HttpRequestMessage(HttpMethod.Get, uri);
             if (_userName != null)
@@ -89,6 +109,14 @@ namespace Microsoft.Framework.PackageManager.Restore.NuGet
                 var token = Convert.ToBase64String(Encoding.ASCII.GetBytes(_userName + ":" + _password));
                 request.Headers.Authorization = new AuthenticationHeaderValue("Basic", token);
             };
+
+#if K10
+            if (_proxyUserName != null)
+            {
+                var proxyToken = Convert.ToBase64String(Encoding.ASCII.GetBytes(_proxyUserName + ":" + _proxyPassword));
+                request.Headers.ProxyAuthorization = new AuthenticationHeaderValue("Basic", proxyToken);
+            }
+#endif
 
             var response = await _client.SendAsync(request);
 
@@ -102,46 +130,68 @@ namespace Microsoft.Framework.PackageManager.Restore.NuGet
                 newFile = Path.GetTempFileName();
             }
 
-            using (var stream = new FileStream(
-                newFile,
-                FileMode.Create,
-                FileAccess.ReadWrite,
-                FileShare.ReadWrite | FileShare.Delete,
-                bufferSize: 8192,
-                useAsync: true))
+            // The update of a cached file is divided into two steps:
+            // 1) Delete the old file. 2) Create a new file with the same name.
+            // To prevent race condition among multiple processes, here we use a lock to make the update atomic.
+            await ConcurrencyUtilities.ExecuteWithFileLocked(result.CacheFileName, async _ =>
             {
-                await response.Content.CopyToAsync(stream);
-                await stream.FlushAsync();
-            }
+                using (var stream = CreateAsyncFileStream(
+                    newFile,
+                    FileMode.Create,
+                    FileAccess.ReadWrite,
+                    FileShare.ReadWrite | FileShare.Delete))
+                {
+                    await response.Content.CopyToAsync(stream);
+                    await stream.FlushAsync();
+                }
 
-            if (File.Exists(result.CacheFileName))
-            {
-                File.Delete(result.CacheFileName);
-            }
+                if (File.Exists(result.CacheFileName))
+                {
+                    // Process B can perform deletion on an opened file if the file is opened by process A
+                    // with FileShare.Delete flag. However, the file won't be actually deleted until A close it.
+                    // This special feature can cause race condition, so we never delete an opened file.
+                    if (!IsFileAlreadyOpen(result.CacheFileName))
+                    {
+                        File.Delete(result.CacheFileName);
+                    }
+                }
 
-            File.Move(
-                newFile,
-                result.CacheFileName);
+                // If the desitnation file doesn't exist, we can safely perform moving operation.
+                // Otherwise, moving operation will fail.
+                if (!File.Exists(result.CacheFileName))
+                {
+                    File.Move(
+                        newFile,
+                        result.CacheFileName);
+                }
 
-            result.Stream = new FileStream(
-                result.CacheFileName,
-                FileMode.Open,
-                FileAccess.Read,
-                FileShare.Read | FileShare.Delete,
-                bufferSize: 8192,
-                useAsync: true);
+                // Even the file deletion operation above succeeds but the file is not actually deleted,
+                // we can still safely read it because it means that some other process just updated it
+                // and we don't need to update it with the same content again.
+                result.Stream = CreateAsyncFileStream(
+                    result.CacheFileName,
+                    FileMode.Open,
+                    FileAccess.Read,
+                    FileShare.Read | FileShare.Delete);
+
+                return 0;
+            });
 
             _report.WriteLine(string.Format("  {1} {0} {2}ms", uri, response.StatusCode.ToString().Green(), sw.ElapsedMilliseconds.ToString().Bold()));
 
             return result;
         }
 
-        private HttpSourceResult TryCache(string uri, string cacheKey, TimeSpan cacheAgeLimit)
+        private async Task<HttpSourceResult> TryCache(string uri, string cacheKey, TimeSpan cacheAgeLimit)
         {
             var baseFolderName = RemoveInvalidFileNameChars(ComputeHash(_baseUri));
             var baseFileName = RemoveInvalidFileNameChars(cacheKey) + ".dat";
 
+#if NET45
             var localAppDataFolder = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+#else
+            var localAppDataFolder = Environment.GetEnvironmentVariable("LocalAppData");
+#endif
             var cacheFolder = Path.Combine(localAppDataFolder, "kpm", "cache", baseFolderName);
             var cacheFile = Path.Combine(cacheFolder, baseFileName);
 
@@ -150,33 +200,39 @@ namespace Microsoft.Framework.PackageManager.Restore.NuGet
                 Directory.CreateDirectory(cacheFolder);
             }
 
-            if (File.Exists(cacheFile))
+            // Acquire the lock on a file before we open it to prevent this process
+            // from opening a file deleted by the logic in HttpSource.GetAsync() in another process
+            return await ConcurrencyUtilities.ExecuteWithFileLocked(cacheFile, _ =>
             {
-                var fileInfo = new FileInfo(cacheFile);
-
-                var age = DateTime.UtcNow.Subtract(fileInfo.LastWriteTimeUtc);
-                if (age < cacheAgeLimit)
+                if (File.Exists(cacheFile))
                 {
-                    var stream = new FileStream(
-                        cacheFile,
-                        FileMode.Open,
-                        FileAccess.Read,
-                        FileShare.Read | FileShare.Delete,
-                        bufferSize: 8192,
-                        useAsync: true);
-
-                    return new HttpSourceResult
+                    var fileInfo = new FileInfo(cacheFile);
+#if NET45
+                    var age = DateTime.UtcNow.Subtract(fileInfo.LastWriteTimeUtc);
+#else
+                    var age = DateTime.Now.Subtract(fileInfo.LastWriteTime);
+#endif
+                    if (age < cacheAgeLimit)
                     {
-                        CacheFileName = cacheFile,
-                        Stream = stream,
-                    };
-                }
-            }
+                        var stream = CreateAsyncFileStream(
+                            cacheFile,
+                            FileMode.Open,
+                            FileAccess.Read,
+                            FileShare.Read | FileShare.Delete);
 
-            return new HttpSourceResult
-            {
-                CacheFileName = cacheFile
-            };
+                        return Task.FromResult(new HttpSourceResult
+                        {
+                            CacheFileName = cacheFile,
+                            Stream = stream,
+                        });
+                    }
+                }
+
+                return Task.FromResult(new HttpSourceResult
+                {
+                    CacheFileName = cacheFile,
+                });
+            });
         }
 
         private static string ComputeHash(string value)
@@ -197,6 +253,33 @@ namespace Microsoft.Framework.PackageManager.Restore.NuGet
                 .Replace("__", "_")
                 .Replace("__", "_");
         }
+
+        private static bool IsFileAlreadyOpen(string filePath)
+        {
+            FileStream stream = null;
+
+            try
+            {
+                stream = new FileStream(filePath, FileMode.Open, FileAccess.ReadWrite, FileShare.None);
+            }
+            catch
+            {
+                return true;
+            }
+            finally
+            {
+                if (stream != null)
+                {
+                    stream.Dispose();
+                }
+            }
+
+            return false;
+        }
+
+        private static FileStream CreateAsyncFileStream(string path, FileMode mode, FileAccess access, FileShare share)
+        {
+            return new FileStream(path, mode, access, share, bufferSize: 8192, useAsync: true);
+        }
     }
 }
-#endif

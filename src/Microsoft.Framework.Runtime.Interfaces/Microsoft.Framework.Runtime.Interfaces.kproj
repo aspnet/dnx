@@ -21,14 +21,14 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AssemblyNeutralAttribute.cs" />
+    <Compile Include="IDiagnosticResult.cs" />
     <Compile Include="IApplicationEnvironment.cs" />
     <Compile Include="IApplicationShutdown.cs" />
-    <Compile Include="IAssemblyLoader.cs" />
     <Compile Include="IAssemblyLoaderEngine.cs" />
     <Compile Include="IFileMonitor.cs" />
     <Compile Include="IFileWatcher.cs" />
-    <Compile Include="IHost.cs" />
-    <Compile Include="IHostContainer.cs" />
+    <Compile Include="IAssemblyLoader.cs" />
+    <Compile Include="IAssemblyLoaderContainer.cs" />
     <Compile Include="ILibraryExport.cs" />
     <Compile Include="ILibraryExportProvider.cs" />
     <Compile Include="ILibraryInformation.cs" />

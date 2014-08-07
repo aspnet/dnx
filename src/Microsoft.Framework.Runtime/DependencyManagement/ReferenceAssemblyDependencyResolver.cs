@@ -14,12 +14,12 @@ namespace Microsoft.Framework.Runtime
     {
         private readonly Dictionary<string, string> _resolvedPaths = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
-        public ReferenceAssemblyDependencyResolver()
+        public ReferenceAssemblyDependencyResolver(FrameworkReferenceResolver frameworkReferenceResolver)
         {
-            FrameworkResolver = new FrameworkReferenceResolver();
+            FrameworkResolver = frameworkReferenceResolver;
         }
 
-        public FrameworkReferenceResolver FrameworkResolver { get; private set; }
+        private FrameworkReferenceResolver FrameworkResolver { get; set; }
 
         public IEnumerable<string> GetAttemptedPaths(FrameworkName targetFramework)
         {
@@ -72,7 +72,7 @@ namespace Microsoft.Framework.Runtime
         public ILibraryExport GetLibraryExport(string name, FrameworkName targetFramework, string configuration)
         {
             string path;
-            if (_resolvedPaths.TryGetValue(name, out path))
+            if (FrameworkResolver.TryGetAssembly(name, targetFramework, out path))
             {
                 return new LibraryExport(name, path);
             }

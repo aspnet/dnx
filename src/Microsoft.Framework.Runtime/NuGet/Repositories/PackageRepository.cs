@@ -3,119 +3,65 @@
 
 using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.IO;
-using System.Linq;
-using NuGet.Resources;
 
 namespace NuGet
 {
     public class PackageRepository
     {
-        private readonly ILookup<string, IPackage> _cache;
+        private readonly Dictionary<string, IEnumerable<PackageInfo>> _cache = new Dictionary<string, IEnumerable<PackageInfo>>(StringComparer.OrdinalIgnoreCase);
+        private readonly IFileSystem _repositoryRoot;
 
-        public PackageRepository(string physicalPath)
-            : this(new DefaultPackagePathResolver(physicalPath),
-                   new PhysicalFileSystem(physicalPath))
+        public PackageRepository(string path)
         {
+            _repositoryRoot = new PhysicalFileSystem(path);
         }
 
-        public PackageRepository(IPackagePathResolver pathResolver, IFileSystem fileSystem)
+        public IFileSystem RepositoryRoot
         {
-            if (pathResolver == null)
+            get
             {
-                throw new ArgumentNullException("pathResolver");
+                return _repositoryRoot;
             }
-
-            if (fileSystem == null)
-            {
-                throw new ArgumentNullException("fileSystem");
-            }
-
-            FileSystem = fileSystem;
-            PathResolver = pathResolver;
-            _cache = PopulateCache();
         }
 
-        private ILookup<string, IPackage> PopulateCache()
-        {
-            string nuspecFilter = "*" + Constants.ManifestExtension;
-
-            var packages = new List<IPackage>();
-
-            foreach (var dir in FileSystem.GetDirectories(String.Empty))
-            {
-                foreach (var path in FileSystem.GetFiles(dir, nuspecFilter))
-                {
-                    packages.Add(OpenNuspec(path));
-                }
-            }
-
-            return packages.ToLookup(p => p.Id, StringComparer.OrdinalIgnoreCase);
-        }
-
-        public IPackagePathResolver PathResolver
-        {
-            get;
-            set;
-        }
-
-        public IFileSystem FileSystem
-        {
-            get;
-            private set;
-        }
-
-        public IEnumerable<IPackage> FindPackagesById(string packageId)
+        public IEnumerable<PackageInfo> FindPackagesById(string packageId)
         {
             if (String.IsNullOrEmpty(packageId))
             {
                 throw new ArgumentNullException("packageId");
             }
 
-            return _cache[packageId];
-        }
-
-
-        private IPackage OpenNuspec(string path)
-        {
-            if (!FileSystem.FileExists(path))
+            // packages\{packageId}\{version}\{packageId}.nuspec
+            return _cache.GetOrAdd(packageId, id =>
             {
-                return null;
-            }
+                var packages = new List<PackageInfo>();
 
-            if (Path.GetExtension(path) == Constants.ManifestExtension)
-            {
-                UnzippedPackage package;
-
-                try
+                foreach (var versionDir in _repositoryRoot.GetDirectories(id))
                 {
-                    package = new UnzippedPackage(FileSystem, path);
+                    // versionDir = {packageId}\{version}
+                    var folders = versionDir.Split(new[] { Path.DirectorySeparatorChar }, 2);
+
+                    // Unknown format
+                    if (folders.Length < 2)
+                    {
+                        continue;
+                    }
+
+                    string versionPart = folders[1];
+
+                    // Get the version part and parse it
+                    SemanticVersion version;
+                    if (!SemanticVersion.TryParse(versionPart, out version))
+                    {
+                        continue;
+                    }
+
+                    packages.Add(new PackageInfo(_repositoryRoot, id, version, versionDir));
                 }
-                catch (InvalidDataException ex)
-                {
-                    throw new InvalidDataException(String.Format(CultureInfo.CurrentCulture, NuGetResources.ErrorReadingPackage, path), ex);
-                }
 
-                // Set the last modified date on the package
-                package.Published = FileSystem.GetLastModified(path);
-
-                return package;
-            }
-
-            return null;
-        }
-
-        private string GetPackageFilePath(IPackage package)
-        {
-            return Path.Combine(PathResolver.GetPackageDirectory(package),
-                                PathResolver.GetPackageFileName(package));
-        }
-
-        private string GetPackageFilePath(string id, SemanticVersion version)
-        {
-            return Path.Combine(PathResolver.GetPackageDirectory(id, version),
-                                PathResolver.GetPackageFileName(id, version));
+                return packages;
+            });
         }
     }
 }

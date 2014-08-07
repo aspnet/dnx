@@ -10,7 +10,9 @@ using System.IO.Compression;
 using System.IO.Packaging;
 #endif
 using System.Linq;
+using System.Runtime.Versioning;
 using System.Security.Cryptography;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Framework.PackageManager.Packing;
 using Microsoft.Framework.PackageManager.Restore.NuGet;
@@ -30,6 +32,7 @@ namespace Microsoft.Framework.PackageManager
             MachineWideSettings = new CommandLineMachineWideSettings();
             Sources = Enumerable.Empty<string>();
             FallbackSources = Enumerable.Empty<string>();
+            ScriptExecutor = new ScriptExecutor();
         }
 
         public string RestoreDirectory { get; set; }
@@ -40,10 +43,12 @@ namespace Microsoft.Framework.PackageManager
         public string PackageFolder { get; set; }
         public string GlobalJsonFile { get; set; }
 
+        public ScriptExecutor ScriptExecutor { get; private set; }
+
         public IApplicationEnvironment ApplicationEnvironment { get; private set; }
         public IMachineWideSettings MachineWideSettings { get; set; }
         public IFileSystem FileSystem { get; set; }
-        public IReport Report { get; set; }
+        public Reports Reports { get; set; }
 
         protected internal ISettings Settings { get; set; }
         protected internal IPackageSourceProvider SourceProvider { get; set; }
@@ -57,24 +62,26 @@ namespace Microsoft.Framework.PackageManager
 
             var projectJsonFiles = Directory.GetFiles(restoreDirectory, "project.json", SearchOption.AllDirectories);
 
-            var rootDirectory = ResolveRootDirectory(restoreDirectory);
-
+            var rootDirectory = ProjectResolver.ResolveRootDirectory(restoreDirectory);
             ReadSettings(rootDirectory);
 
-            string packagesFolder = Path.Combine(rootDirectory, CommandLineConstants.PackagesDirectoryName);
-            var packagesFolderFileSystem = CreateFileSystem(packagesFolder);
-            var pathResolver = new DefaultPackagePathResolver(packagesFolderFileSystem, useSideBySidePaths: true);
-            var localRepository = new LocalPackageRepository(pathResolver, packagesFolderFileSystem)
+            string packagesDirectory = PackageFolder;
+
+            if (string.IsNullOrEmpty(PackageFolder))
             {
-                //PackageSaveMode = PackageSaveModes.Nuspec | PackageSaveModes.Nupkg,
-            };
+                packagesDirectory = NuGetDependencyResolver.ResolveRepositoryPath(rootDirectory);
+            }
+
+            var packagesFolderFileSystem = CreateFileSystem(packagesDirectory);
+            var pathResolver = new DefaultPackagePathResolver(packagesFolderFileSystem, useSideBySidePaths: true);
+            var localRepository = new LocalPackageRepository(pathResolver, packagesFolderFileSystem);
 
             int restoreCount = 0;
             int successCount = 0;
             foreach (var projectJsonPath in projectJsonFiles)
             {
                 restoreCount += 1;
-                var success = RestoreForProject(localRepository, projectJsonPath, rootDirectory).Result;
+                var success = RestoreForProject(localRepository, projectJsonPath, rootDirectory, packagesDirectory).Result;
                 if (success)
                 {
                     successCount += 1;
@@ -83,17 +90,17 @@ namespace Microsoft.Framework.PackageManager
 
             if (restoreCount > 1)
             {
-                Report.WriteLine(string.Format("Total time {0}ms", sw.ElapsedMilliseconds));
+                Reports.Information.WriteLine(string.Format("Total time {0}ms", sw.ElapsedMilliseconds));
             }
 
             return restoreCount == successCount;
         }
 
-        private async Task<bool> RestoreForProject(LocalPackageRepository localRepository, string projectJsonPath, string rootDirectory)
+        private async Task<bool> RestoreForProject(LocalPackageRepository localRepository, string projectJsonPath, string rootDirectory, string packagesDirectory)
         {
             var success = true;
 
-            Report.WriteLine(string.Format("Restoring packages for {0}", projectJsonPath.Bold()));
+            Reports.Information.WriteLine(string.Format("Restoring packages for {0}", projectJsonPath.Bold()));
 
             var sw = new Stopwatch();
             sw.Start();
@@ -104,10 +111,15 @@ namespace Microsoft.Framework.PackageManager
                 throw new Exception("TODO: project.json parse error");
             }
 
-            var projectDirectory = project.ProjectDirectory;
-            var packagesDirectory = PackageFolder ?? Path.Combine(rootDirectory, CommandLineConstants.PackagesDirectoryName);
+            Func<string, string> getVariable = key =>
+            {
+                return null;
+            };
 
-            var restoreOperations = new RestoreOperations { Report = Report };
+            ScriptExecutor.Execute(project, "prerestore", getVariable);
+
+            var projectDirectory = project.ProjectDirectory;
+            var restoreOperations = new RestoreOperations { Report = Reports.Information };
             var projectProviders = new List<IWalkProvider>();
             var localProviders = new List<IWalkProvider>();
             var remoteProviders = new List<IWalkProvider>();
@@ -123,7 +135,6 @@ namespace Microsoft.Framework.PackageManager
             localProviders.Add(
                 new LocalWalkProvider(
                     new NuGetDependencyResolver(
-                        projectDirectory,
                         packagesDirectory,
                         new EmptyFrameworkResolver())));
 
@@ -146,11 +157,10 @@ namespace Microsoft.Framework.PackageManager
                         new RemoteWalkProvider(
                             new PackageFolder(
                                 source.Source,
-                                Report)));
+                                Reports.Verbose)));
                 }
                 else
                 {
-#if NET45
                     remoteProviders.Add(
                         new RemoteWalkProvider(
                             new PackageFeed(
@@ -158,8 +168,7 @@ namespace Microsoft.Framework.PackageManager
                                 source.UserName,
                                 source.Password,
                                 NoCache,
-                                Report)));
-#endif
+                                Reports.Verbose)));
                 }
             }
 
@@ -192,7 +201,7 @@ namespace Microsoft.Framework.PackageManager
             }
             var graphs = await Task.WhenAll(tasks);
 
-            Report.WriteLine(string.Format("{0}, {1}ms elapsed", "Resolving complete".Green(), sw.ElapsedMilliseconds));
+            Reports.Information.WriteLine(string.Format("{0}, {1}ms elapsed", "Resolving complete".Green(), sw.ElapsedMilliseconds));
 
             var installItems = new List<GraphItem>();
             var missingItems = new List<Library>();
@@ -207,7 +216,7 @@ namespace Microsoft.Framework.PackageManager
                     if (node.Library.Version != null && !missingItems.Contains(node.Library))
                     {
                         missingItems.Add(node.Library);
-                        Report.WriteLine(string.Format("Unable to locate {0} >= {1}", node.Library.Name.Red().Bold(), node.Library.Version));
+                        Reports.Information.WriteLine(string.Format("Unable to locate {0} >= {1}", node.Library.Name.Red().Bold(), node.Library.Version));
                         success = false;
                     }
                     return;
@@ -242,57 +251,124 @@ namespace Microsoft.Framework.PackageManager
                 }
             }
 
-            foreach (var item in installItems)
+            var packagePathResolver = new DefaultPackagePathResolver(packagesDirectory);
+            using (var sha512 = SHA512.Create())
             {
-                var library = item.Match.Library;
-                string expectedSHA;
-                if (dependencies.TryGetValue(library, out expectedSHA))
+                foreach (var item in installItems)
                 {
+                    var library = item.Match.Library;
+
                     var memStream = new MemoryStream();
                     await item.Match.Provider.CopyToAsync(item.Match, memStream);
                     memStream.Seek(0, SeekOrigin.Begin);
+                    var nupkgSHA = Convert.ToBase64String(sha512.ComputeHash(memStream));
 
-                    using (var sha512 = SHA512.Create())
+                    string expectedSHA;
+                    if (dependencies.TryGetValue(library, out expectedSHA))
                     {
-                        var actualSHA = Convert.ToBase64String(sha512.ComputeHash(memStream));
-                        if (!string.Equals(expectedSHA, actualSHA, StringComparison.Ordinal))
+                        if (!string.Equals(expectedSHA, nupkgSHA, StringComparison.Ordinal))
                         {
-                            Report.WriteLine(
+                            Reports.Information.WriteLine(
                                 string.Format("SHA of downloaded package {0} doesn't match expected value.".Red().Bold(),
                                 library.ToString()));
                             success = false;
                             continue;
                         }
                     }
-                }
-                else
-                {
-                    // Report warnings only when given global.json contains "dependencies"
-                    if (globalJsonFileSpecified && dependenciesNode != null)
+                    else
                     {
-                        Report.WriteLine(
-                        string.Format("Expected SHA of package {0} doesn't exist in given global.json file.".Yellow().Bold(),
-                        library.ToString()));
+                        // Report warnings only when given global.json contains "dependencies"
+                        if (globalJsonFileSpecified && dependenciesNode != null)
+                        {
+                            Reports.Information.WriteLine(
+                                string.Format("Expected SHA of package {0} doesn't exist in given global.json file.".Yellow().Bold(),
+                                library.ToString()));
+                        }
                     }
-                }
 
-                Report.WriteLine(string.Format("Installing {0} {1}", library.Name.Bold(), library.Version));
+                    Reports.Information.WriteLine(string.Format("Installing {0} {1}", library.Name.Bold(), library.Version));
 
-                var targetPath = Path.Combine(packagesDirectory, library.Name + "." + library.Version);
-                var targetNupkg = Path.Combine(targetPath, library.Name + "." + library.Version + ".nupkg");
+                    var targetPath = packagePathResolver.GetInstallPath(library.Name, library.Version);
+                    var targetNupkg = packagePathResolver.GetPackageFilePath(library.Name, library.Version);
+                    var hashPath = packagePathResolver.GetHashPath(library.Name, library.Version);
 
-                Directory.CreateDirectory(targetPath);
-                using (var stream = new FileStream(targetNupkg, FileMode.Create, FileAccess.ReadWrite, FileShare.ReadWrite | FileShare.Delete))
-                {
-                    await item.Match.Provider.CopyToAsync(item.Match, stream);
-                    stream.Seek(0, SeekOrigin.Begin);
+                    // Acquire the lock on a nukpg before we extract it to prevent the race condition when multiple
+                    // processes are extracting to the same destination simultaneously
+                    await ConcurrencyUtilities.ExecuteWithFileLocked(targetNupkg, async createdNewLock =>
+                    {
+                        // If this is the first process trying to install the target nupkg, go ahead
+                        // After this process successfully installs the package, all other processes
+                        // waiting on this lock don't need to install it again
+                        if (createdNewLock)
+                        {
+                            Directory.CreateDirectory(targetPath);
+                            using (var stream = new FileStream(targetNupkg, FileMode.Create, FileAccess.ReadWrite, FileShare.ReadWrite | FileShare.Delete))
+                            {
+                                await item.Match.Provider.CopyToAsync(item.Match, stream);
+                                stream.Seek(0, SeekOrigin.Begin);
 
-                    ExtractPackage(targetPath, stream);
+                                ExtractPackage(targetPath, stream);
+                            }
+
+                            File.WriteAllText(hashPath, nupkgSHA);
+                        }
+
+                        return 0;
+                    });
                 }
             }
 
-            Report.WriteLine(string.Format("{0}, {1}ms elapsed", "Restore complete".Green().Bold(), sw.ElapsedMilliseconds));
+            ScriptExecutor.Execute(project, "postrestore", getVariable);
+
+            ScriptExecutor.Execute(project, "prepare", getVariable);
+
+            Reports.Information.WriteLine(string.Format("{0}, {1}ms elapsed", "Restore complete".Green().Bold(), sw.ElapsedMilliseconds));
+
+            // Print the dependency graph
+            if (success)
+            {
+                var graphNum = contexts.Count;
+                for (int i = 0; i < graphNum; i++)
+                {
+                    PrintDependencyGraph(graphs[i], contexts[i].FrameworkName);
+                }
+            }
+
             return success;
+        }
+
+        private void PrintDependencyGraph(GraphNode root, FrameworkName frameworkName)
+        {
+            // Box Drawing Unicode characters:
+            // http://www.unicode.org/charts/PDF/U2500.pdf
+            const char LIGHT_HORIZONTAL = '\u2500';
+            const char LIGHT_UP_AND_RIGHT = '\u2514';
+            const char LIGHT_VERTICAL_AND_RIGHT = '\u251C';
+
+            var frameworkSuffix = string.Format(" [{0}]", frameworkName.ToString());
+            Reports.Verbose.WriteLine(root.Item.Match.Library.ToString() + frameworkSuffix);
+
+            Func<GraphNode, bool> isValidDependency = d => 
+                (d != null && d.Library != null && d.Item != null && d.Item.Match != null);
+            var dependencies = root.Dependencies.Where(isValidDependency).ToList();
+            var dependencyNum = dependencies.Count;
+            for (int i = 0; i < dependencyNum; i++)
+            {
+                var branchChar = LIGHT_VERTICAL_AND_RIGHT;
+                if (i == dependencyNum - 1)
+                {
+                    branchChar = LIGHT_UP_AND_RIGHT;
+                }
+
+                var name = dependencies[i].Item.Match.Library.ToString();
+                var dependencyListStr = string.Join(", ", dependencies[i].Dependencies
+                    .Where(isValidDependency)
+                    .Select(d => d.Item.Match.Library.ToString()));
+                var format = string.IsNullOrEmpty(dependencyListStr) ? "{0}{1} {2}{3}" : "{0}{1} {2} ({3})";
+                Reports.Verbose.WriteLine(string.Format(format,
+                    branchChar, LIGHT_HORIZONTAL, name, dependencyListStr));
+            }
+            Reports.Verbose.WriteLine();
         }
 
         private static void ExtractPackage(string targetPath, FileStream stream)
@@ -337,29 +413,9 @@ namespace Microsoft.Framework.PackageManager
         {
             foreach (var node in graphs)
             {
-                Report.WriteLine(indent + node.Library.Name + "@" + node.Library.Version);
+                Reports.Information.WriteLine(indent + node.Library.Name + "@" + node.Library.Version);
                 Display(indent + " ", node.Dependencies);
             }
-        }
-
-        public static string ResolveRootDirectory(string projectDir)
-        {
-            var di = new DirectoryInfo(projectDir);
-
-            while (di.Parent != null)
-            {
-                if (di.EnumerateFiles("*.global.json").Any() ||
-                    di.EnumerateFiles("*.sln").Any() ||
-                    di.EnumerateDirectories("packages").Any() ||
-                    di.EnumerateDirectories(".git").Any())
-                {
-                    return di.FullName;
-                }
-
-                di = di.Parent;
-            }
-
-            return Path.GetDirectoryName(projectDir);
         }
 
 

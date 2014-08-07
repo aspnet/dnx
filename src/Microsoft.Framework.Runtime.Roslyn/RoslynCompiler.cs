@@ -11,63 +11,39 @@ using System.Text;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.Text;
-using NuGet;
 
 namespace Microsoft.Framework.Runtime.Roslyn
 {
-    public class RoslynCompiler : IRoslynCompiler
+    public class RoslynCompiler
     {
-        private readonly ILibraryExportProvider _libraryExportProvider;
         private readonly IFileWatcher _watcher;
-        private readonly IProjectResolver _projectResolver;
         private readonly MetadataFileReferenceFactory _metadataFileReferenceFactory;
-        private readonly ProjectExportProvider _projectExportProvider;
 
-        public RoslynCompiler(IProjectResolver projectResolver,
-                              IFileWatcher watcher,
-                              ILibraryExportProvider libraryExportProvider)
+        public RoslynCompiler(IFileWatcher watcher)
         {
-            _projectResolver = projectResolver;
             _watcher = watcher;
-            _libraryExportProvider = libraryExportProvider;
             _metadataFileReferenceFactory = new MetadataFileReferenceFactory();
-            _projectExportProvider = new ProjectExportProvider(projectResolver);
         }
 
-        public CompilationContext CompileProject(string name, FrameworkName targetFramework, string configuration)
+        public CompilationContext CompileProject(
+            Project project,
+            FrameworkName targetFramework,
+            string configuration,
+            IEnumerable<IMetadataReference> incomingReferences,
+            IEnumerable<ISourceReference> incomingSourceReferences,
+            IList<IMetadataReference> outgoingReferences)
         {
-            var compilationCache = new Dictionary<string, CompilationContext>();
-
-            return Compile(name, targetFramework, configuration, compilationCache);
-        }
-
-        private CompilationContext Compile(string name, FrameworkName targetFramework, string configuration, IDictionary<string, CompilationContext> compilationCache)
-        {
-            CompilationContext compilationContext;
-            if (compilationCache.TryGetValue(name, out compilationContext))
-            {
-                return compilationContext;
-            }
-
-            Project project;
-            // Can't find a project file with the name so bail
-            if (!_projectResolver.TryResolveProject(name, out project))
-            {
-                return null;
-            }
-
-            string path = project.ProjectDirectory;
+            var path = project.ProjectDirectory;
+            var name = project.Name;
 
             _watcher.WatchProject(path);
 
             _watcher.WatchFile(project.ProjectFilePath);
 
-            var exportProvider = new CachedCompilationLibraryExportProvider(this, compilationCache, _libraryExportProvider);
-            var export = _projectExportProvider.GetProjectExport(exportProvider, name, targetFramework, configuration, out targetFramework);
-            var metadataReferences = export.MetadataReferences;
-            var exportedReferences = metadataReferences.Select(ConvertMetadataReference);
+            var exportedReferences = incomingReferences.Select(ConvertMetadataReference);
 
             Trace.TraceInformation("[{0}]: Compiling '{1}'", GetType().Name, name);
+            var sw = Stopwatch.StartNew();
 
             _watcher.WatchDirectory(path, ".cs");
 
@@ -78,9 +54,9 @@ namespace Microsoft.Framework.Runtime.Roslyn
 
             var compilationSettings = project.GetCompilationSettings(targetFramework, configuration);
 
-            IList<SyntaxTree> trees = GetSyntaxTrees(project, compilationSettings, export);
+            IList<SyntaxTree> trees = GetSyntaxTrees(project, compilationSettings, incomingSourceReferences);
 
-            var embeddedReferences = metadataReferences.OfType<IMetadataEmbeddedReference>()
+            var embeddedReferences = incomingReferences.OfType<IMetadataEmbeddedReference>()
                                                        .ToDictionary(a => a.Name, ConvertMetadataReference);
 
             var references = new List<MetadataReference>();
@@ -92,6 +68,9 @@ namespace Microsoft.Framework.Runtime.Roslyn
                 references,
                 compilationSettings.CompilationOptions);
 
+            var aniSw = Stopwatch.StartNew();
+            Trace.TraceInformation("[{0}]: Scanning '{1}' for assembly neutral interfaces", GetType().Name, name);
+
             var assemblyNeutralWorker = new AssemblyNeutralWorker(compilation, embeddedReferences);
             assemblyNeutralWorker.FindTypeCompilations(compilation.Assembly.GlobalNamespace);
 
@@ -100,23 +79,25 @@ namespace Microsoft.Framework.Runtime.Roslyn
 
             assemblyNeutralWorker.Generate();
 
+            aniSw.Stop();
+            Trace.TraceInformation("[{0}]: Found {1} assembly neutral interfaces for '{2}' in {3}ms", GetType().Name, assemblyNeutralWorker.TypeCompilations.Count(), name, aniSw.ElapsedMilliseconds);
+
             foreach (var t in assemblyNeutralWorker.TypeCompilations)
             {
-                metadataReferences.Add(new EmbeddedMetadataReference(t));
+                outgoingReferences.Add(new EmbeddedMetadataReference(t));
             }
-
-            Trace.TraceInformation("[{0}]: Exported References {1}", GetType().Name, metadataReferences.Count);
 
             var newCompilation = assemblyNeutralWorker.Compilation;
 
             newCompilation = ApplyVersionInfo(newCompilation, project);
 
-            compilationContext = new CompilationContext(newCompilation,
-                metadataReferences,
+            var compilationContext = new CompilationContext(newCompilation,
+                incomingReferences.Concat(outgoingReferences).ToList(),
                 assemblyNeutralTypeDiagnostics,
                 project);
 
-            compilationCache[name] = compilationContext;
+            sw.Stop();
+            Trace.TraceInformation("[{0}]: Compiled '{1}' in {2}ms", GetType().Name, name, sw.ElapsedMilliseconds);
 
             return compilationContext;
         }
@@ -140,16 +121,14 @@ namespace Microsoft.Framework.Runtime.Roslyn
 
         private IList<SyntaxTree> GetSyntaxTrees(Project project,
                                                  CompilationSettings compilationSettings,
-                                                 ILibraryExport export)
+                                                 IEnumerable<ISourceReference> sourceReferences)
         {
             var trees = new List<SyntaxTree>();
-
-            var sourceFiles = project.SourceFiles.ToList();
 
             var parseOptions = new CSharpParseOptions(languageVersion: compilationSettings.LanguageVersion,
                                                       preprocessorSymbols: compilationSettings.Defines.AsImmutable());
 
-            foreach (var sourcePath in sourceFiles)
+            foreach (var sourcePath in project.SourceFiles)
             {
                 _watcher.WatchFile(sourcePath);
 
@@ -158,20 +137,15 @@ namespace Microsoft.Framework.Runtime.Roslyn
                 trees.Add(syntaxTree);
             }
 
-            foreach (var sourceReference in export.SourceReferences)
+            foreach (var sourceFileReference in sourceReferences.OfType<ISourceFileReference>())
             {
-                var sourceFileReference = sourceReference as ISourceFileReference;
+                var sourcePath = sourceFileReference.Path;
 
-                if (sourceFileReference != null)
-                {
-                    var sourcePath = sourceFileReference.Path;
+                _watcher.WatchFile(sourcePath);
 
-                    _watcher.WatchFile(sourcePath);
+                var syntaxTree = CreateSyntaxTree(sourcePath, parseOptions);
 
-                    var syntaxTree = CreateSyntaxTree(sourcePath, parseOptions);
-
-                    trees.Add(syntaxTree);
-                }
+                trees.Add(syntaxTree);
             }
 
             return trees;
@@ -185,18 +159,6 @@ namespace Microsoft.Framework.Runtime.Roslyn
 
                 return CSharpSyntaxTree.ParseText(sourceText, options: parseOptions, path: sourcePath);
             }
-        }
-
-        public RoslynLibraryExport GetLibraryExport(string name, FrameworkName targetFramework, string configuration, IDictionary<string, CompilationContext> compilationCache)
-        {
-            var compilationContext = Compile(name, targetFramework, configuration, compilationCache);
-
-            if (compilationContext == null)
-            {
-                return null;
-            }
-
-            return compilationContext.GetLibraryExport();
         }
 
         private MetadataReference ConvertMetadataReference(IMetadataReference metadataReference)
@@ -227,7 +189,7 @@ namespace Microsoft.Framework.Runtime.Roslyn
             {
                 using (var ms = new MemoryStream())
                 {
-                    projectReference.WriteReferenceAssemblyStream(ms);
+                    projectReference.EmitReferenceAssembly(ms);
 
                     ms.Seek(0, SeekOrigin.Begin);
 
@@ -236,25 +198,6 @@ namespace Microsoft.Framework.Runtime.Roslyn
             }
 
             throw new NotSupportedException();
-        }
-
-        private struct CachedCompilationLibraryExportProvider : ILibraryExportProvider
-        {
-            private readonly RoslynCompiler _compiler;
-            private readonly IDictionary<string, CompilationContext> _compliationCache;
-            private readonly ILibraryExportProvider _previous;
-
-            public CachedCompilationLibraryExportProvider(RoslynCompiler compiler, IDictionary<string, CompilationContext> compliationCache, ILibraryExportProvider previous)
-            {
-                _compiler = compiler;
-                _compliationCache = compliationCache;
-                _previous = previous;
-            }
-
-            public ILibraryExport GetLibraryExport(string name, FrameworkName targetFramework, string configuration)
-            {
-                return _previous.GetLibraryExport(name, targetFramework, configuration) ?? _compiler.GetLibraryExport(name, targetFramework, configuration, _compliationCache);
-            }
         }
     }
 }

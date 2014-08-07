@@ -6,6 +6,7 @@ using System.IO;
 using System.IO.Compression;
 using Microsoft.Framework.Runtime;
 using System.Security.Cryptography;
+using NuGet;
 
 namespace Microsoft.Framework.PackageManager.Packing
 {
@@ -32,8 +33,9 @@ namespace Microsoft.Framework.PackageManager.Packing
 
             Console.WriteLine("Packing nupkg dependency {0} {1}", package.Id, package.Version);
 
-            var targetName = package.Id + "." + package.Version;
-            TargetPath = Path.Combine(root.PackagesPath, targetName);
+            var resolver = new DefaultPackagePathResolver(root.PackagesPath);
+
+            TargetPath = resolver.GetInstallPath(package.Id, package.Version);
 
             if (Directory.Exists(TargetPath))
             {
@@ -50,7 +52,9 @@ namespace Microsoft.Framework.PackageManager.Packing
 
             Console.WriteLine("  Target {0}", TargetPath);
 
-            var targetNupkgPath = Path.Combine(TargetPath, targetName + ".nupkg");
+            var targetNupkgPath = resolver.GetPackageFilePath(package.Id, package.Version);
+            var hashPath = resolver.GetHashPath(package.Id, package.Version);
+
             using (var sourceStream = package.GetStream())
             {
                 using (var archive = new ZipArchive(sourceStream, ZipArchiveMode.Read))
@@ -67,7 +71,7 @@ namespace Microsoft.Framework.PackageManager.Packing
 
                 sourceStream.Seek(0, SeekOrigin.Begin);
                 var sha512Bytes = SHA512.Create().ComputeHash(sourceStream);
-                File.WriteAllText(targetNupkgPath + ".sha512", Convert.ToBase64String(sha512Bytes));
+                File.WriteAllText(hashPath, Convert.ToBase64String(sha512Bytes));
             }
         }
     }

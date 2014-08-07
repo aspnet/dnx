@@ -23,10 +23,18 @@ namespace Microsoft.Framework.Runtime
             get { return _libraries; }
         }
 
+        public IEnumerable<IDependencyProvider> DependencyProviders
+        {
+            get
+            {
+                return _dependencyProviders;
+            }
+        }
+
         public void Walk(string name, SemanticVersion version, FrameworkName targetFramework)
         {
             var sw = Stopwatch.StartNew();
-            Trace.TraceInformation("Walking dependency graph for '{0} {1}'.", name, targetFramework);
+            Trace.TraceInformation("[{0}]: Walking dependency graph for '{1} {2}'.", GetType().Name, name, targetFramework);
 
             var context = new WalkContext();
 
@@ -39,7 +47,7 @@ namespace Microsoft.Framework.Runtime
             context.Populate(targetFramework, Libraries);
 
             sw.Stop();
-            Trace.TraceInformation("Resolved dependencies for {0} in {1}ms", name, sw.ElapsedMilliseconds);
+            Trace.TraceInformation("[{0}]: Resolved dependencies for {1} in {2}ms", GetType().Name, name, sw.ElapsedMilliseconds);
         }
     }
 }
