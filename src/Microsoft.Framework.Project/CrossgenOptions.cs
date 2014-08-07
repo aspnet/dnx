@@ -18,5 +18,7 @@ namespace Microsoft.Framework.Project
         public IEnumerable<string> InputPaths { get; set; }
         
         public bool Symbols { get; set; }
+
+        public bool Packages { get; set; }
     }
 }

@@ -11,7 +11,12 @@ namespace NuGet
 {
     public abstract class LocalPackage : IPackage
     {
-        private const string ResourceAssemblyExtension = ".resources.dll";
+        private static readonly string[] ExcludedExtensions =
+        {
+            ".resources.dll",     // ResourceAssembly
+            ".ni.dll"             // NativeImage
+        };
+
         private IList<IPackageAssemblyReference> _assemblyReferences;
 
         protected LocalPackage()
@@ -263,8 +268,8 @@ namespace NuGet
                 return true;
             }
 
-            // Assembly reference must have a .dll|.exe|.winmd extension and is not a resource assembly;
-            return !filePath.EndsWith(ResourceAssemblyExtension, StringComparison.OrdinalIgnoreCase) &&
+            // Assembly reference must have a .dll|.exe|.winmd extension and is not a resource assembly or ni images;
+            return !ExcludedExtensions.Any(ext => filePath.EndsWith(ext, StringComparison.OrdinalIgnoreCase)) &&
                 Constants.AssemblyReferencesExtensions.Contains(Path.GetExtension(filePath), StringComparer.OrdinalIgnoreCase);
         }
 
