@@ -55,8 +55,6 @@ namespace Microsoft.Framework.PackageManager
 
             var restoreDirectory = RestoreDirectory ?? Directory.GetCurrentDirectory();
 
-            var projectJsonFiles = Directory.GetFiles(restoreDirectory, "project.json", SearchOption.AllDirectories);
-
             var rootDirectory = ProjectResolver.ResolveRootDirectory(restoreDirectory);
             ReadSettings(rootDirectory);
 
@@ -73,13 +71,27 @@ namespace Microsoft.Framework.PackageManager
 
             int restoreCount = 0;
             int successCount = 0;
-            foreach (var projectJsonPath in projectJsonFiles)
+
+            if (string.IsNullOrEmpty(GlobalJsonFile))
             {
-                restoreCount += 1;
-                var success = RestoreForProject(localRepository, projectJsonPath, rootDirectory, packagesDirectory).Result;
+                var projectJsonFiles = Directory.GetFiles(restoreDirectory, "project.json", SearchOption.AllDirectories);
+                foreach (var projectJsonPath in projectJsonFiles)
+                {
+                    restoreCount += 1;
+                    var success = RestoreForProject(localRepository, projectJsonPath, rootDirectory, packagesDirectory).Result;
+                    if (success)
+                    {
+                        successCount += 1;
+                    }
+                }
+            }
+            else
+            {
+                restoreCount = 1;
+                var success = RestoreFromGlobalJson(localRepository, rootDirectory, packagesDirectory).Result;
                 if (success)
                 {
-                    successCount += 1;
+                    successCount = 1;
                 }
             }
 
@@ -133,39 +145,10 @@ namespace Microsoft.Framework.PackageManager
                         packagesDirectory,
                         new EmptyFrameworkResolver())));
 
-            var allSources = SourceProvider.LoadPackageSources();
+            var effectiveSources = PackageSourceUtils.GetEffectivePackageSources(SourceProvider,
+                Sources, FallbackSources);
 
-            var enabledSources = Sources.Any() ?
-                Enumerable.Empty<PackageSource>() :
-                allSources.Where(s => s.IsEnabled);
-
-            var addedSources = Sources.Concat(FallbackSources).Select(
-                value => allSources.FirstOrDefault(source => CorrectName(value, source)) ?? new PackageSource(value));
-
-            var effectiveSources = enabledSources.Concat(addedSources).Distinct().ToList();
-
-            foreach (var source in effectiveSources)
-            {
-                if (new Uri(source.Source).IsFile)
-                {
-                    remoteProviders.Add(
-                        new RemoteWalkProvider(
-                            new PackageFolder(
-                                source.Source,
-                                Reports.Verbose)));
-                }
-                else
-                {
-                    remoteProviders.Add(
-                        new RemoteWalkProvider(
-                            new PackageFeed(
-                                source.Source,
-                                source.UserName,
-                                source.Password,
-                                NoCache,
-                                Reports.Verbose)));
-                }
-            }
+            AddRemoteProvidersFromSources(remoteProviders, effectiveSources);
 
             foreach (var configuration in project.GetTargetFrameworks())
             {
@@ -224,28 +207,130 @@ namespace Microsoft.Framework.PackageManager
                 }
             });
 
-            var dependencies = new Dictionary<Library, string>();
+            await InstallPackages(installItems, packagesDirectory, packageFilter: (library, nupkgSHA) => true);
 
-            // If there is a global.json file specified, we should do SHA value verification
-            var globalJsonFileSpecified = !string.IsNullOrEmpty(GlobalJsonFile);
-            JToken dependenciesNode = null;
-            if (globalJsonFileSpecified)
+            ScriptExecutor.Execute(project, "postrestore", getVariable);
+
+            ScriptExecutor.Execute(project, "prepare", getVariable);
+
+            Reports.Information.WriteLine(string.Format("{0}, {1}ms elapsed", "Restore complete".Green().Bold(), sw.ElapsedMilliseconds));
+
+            // Print the dependency graph
+            if (success)
             {
-                var globalJson = JObject.Parse(File.ReadAllText(GlobalJsonFile));
-                dependenciesNode = globalJson["dependencies"];
-                if (dependenciesNode != null)
+                var graphNum = contexts.Count;
+                for (int i = 0; i < graphNum; i++)
                 {
-                    dependencies = dependenciesNode
-                        .OfType<JProperty>()
-                        .ToDictionary(d => new Library()
-                        {
-                            Name = d.Name,
-                            Version = SemanticVersion.Parse(d.Value.Value<string>("version"))
-                        },
-                        d => d.Value.Value<string>("sha"));
+                    PrintDependencyGraph(graphs[i], contexts[i].FrameworkName);
                 }
             }
 
+            return success;
+        }
+
+        private async Task<bool> RestoreFromGlobalJson(LocalPackageRepository localRepository, string rootDirectory, string packagesDirectory)
+        {
+            var success = true;
+
+            Reports.Information.WriteLine(string.Format("Restoring packages for {0}", Path.GetFullPath(GlobalJsonFile).Bold()));
+
+            var sw = new Stopwatch();
+            sw.Start();
+
+            var restoreOperations = new RestoreOperations { Report = Reports.Information };
+            var localProviders = new List<IWalkProvider>();
+            var remoteProviders = new List<IWalkProvider>();
+
+            localProviders.Add(
+                new LocalWalkProvider(
+                    new NuGetDependencyResolver(
+                        packagesDirectory,
+                        new EmptyFrameworkResolver())));
+
+            var effectiveSources = PackageSourceUtils.GetEffectivePackageSources(SourceProvider,
+                Sources, FallbackSources);
+
+            AddRemoteProvidersFromSources(remoteProviders, effectiveSources);
+
+            var context = new RestoreContext
+            {
+                FrameworkName = ApplicationEnvironment.TargetFramework,
+                ProjectLibraryProviders = new List<IWalkProvider>(),
+                LocalLibraryProviders = localProviders,
+                RemoteLibraryProviders = remoteProviders,
+            };
+
+            var dependencies = new Dictionary<Library, string>();
+            JToken dependenciesNode = null;
+            var globalJson = JObject.Parse(File.ReadAllText(GlobalJsonFile));
+            dependenciesNode = globalJson["dependencies"];
+            if (dependenciesNode != null)
+            {
+                dependencies = dependenciesNode
+                    .OfType<JProperty>()
+                    .ToDictionary(d => new Library()
+                    {
+                        Name = d.Name,
+                        Version = SemanticVersion.Parse(d.Value.Value<string>("version"))
+                    },
+                    d => d.Value.Value<string>("sha"));
+            }
+
+            var libsToRestore = new List<Library>(dependencies.Keys);
+            var tasks = new List<Task<GraphItem>>();
+            foreach (var lib in libsToRestore)
+            {
+                tasks.Add(restoreOperations.FindLibraryCached(context,
+                    new Library { Name = lib.Name, Version = lib.Version }));
+            }
+            var resolvedItems = await Task.WhenAll(tasks);
+
+            Reports.Information.WriteLine(string.Format("{0}, {1}ms elapsed", "Resolving complete".Green(),
+                sw.ElapsedMilliseconds));
+
+            var installItems = new List<GraphItem>();
+            var missingItems = new List<Library>();
+            for (int i = 0; i < resolvedItems.Length; i++)
+            {
+                var item = resolvedItems[i];
+                var lib = libsToRestore[i];
+                if (item == null || item.Match == null || item.Match.Library.Version != lib.Version)
+                {
+                    missingItems.Add(lib);
+                    Reports.Information.WriteLine(string.Format("Unable to locate {0} {1}",
+                        lib.Name.Red().Bold(), lib.Version));
+                    success = false;
+                    continue;
+                }
+                var isRemote = remoteProviders.Contains(item.Match.Provider);
+                var isAdded = installItems.Any(x => x.Match.Library == item.Match.Library);
+                if (!isAdded && isRemote)
+                {
+                    installItems.Add(item);
+                }
+            }
+
+            await InstallPackages(installItems, packagesDirectory, packageFilter: (library, nupkgSHA) =>
+            {
+                string expectedSHA = dependencies[library];
+                if (!string.Equals(expectedSHA, nupkgSHA, StringComparison.Ordinal))
+                {
+                    Reports.Information.WriteLine(
+                        string.Format("SHA of downloaded package {0} doesn't match expected value.".Red().Bold(),
+                        library.ToString()));
+                    success = false;
+                    return false;
+                }
+                return true;
+            });
+
+            Reports.Information.WriteLine(string.Format("{0}, {1}ms elapsed", "Restore complete".Green().Bold(), sw.ElapsedMilliseconds));
+
+            return success;
+        }
+
+        private async Task InstallPackages(List<GraphItem> installItems, string packagesDirectory, Func<Library, string, bool> packageFilter)
+        {
             var packagePathResolver = new DefaultPackagePathResolver(packagesDirectory);
             using (var sha512 = SHA512.Create())
             {
@@ -258,27 +343,10 @@ namespace Microsoft.Framework.PackageManager
                     memStream.Seek(0, SeekOrigin.Begin);
                     var nupkgSHA = Convert.ToBase64String(sha512.ComputeHash(memStream));
 
-                    string expectedSHA;
-                    if (dependencies.TryGetValue(library, out expectedSHA))
+                    bool shouldInstall = packageFilter(library, nupkgSHA);
+                    if (!shouldInstall)
                     {
-                        if (!string.Equals(expectedSHA, nupkgSHA, StringComparison.Ordinal))
-                        {
-                            Reports.Information.WriteLine(
-                                string.Format("SHA of downloaded package {0} doesn't match expected value.".Red().Bold(),
-                                library.ToString()));
-                            success = false;
-                            continue;
-                        }
-                    }
-                    else
-                    {
-                        // Report warnings only when given global.json contains "dependencies"
-                        if (globalJsonFileSpecified && dependenciesNode != null)
-                        {
-                            Reports.Information.WriteLine(
-                                string.Format("Expected SHA of package {0} doesn't exist in given global.json file.".Yellow().Bold(),
-                                library.ToString()));
-                        }
+                        continue;
                     }
 
                     Reports.Information.WriteLine(string.Format("Installing {0} {1}", library.Name.Bold(), library.Version));
@@ -312,24 +380,32 @@ namespace Microsoft.Framework.PackageManager
                     });
                 }
             }
+        }
 
-            ScriptExecutor.Execute(project, "postrestore", getVariable);
-
-            ScriptExecutor.Execute(project, "prepare", getVariable);
-
-            Reports.Information.WriteLine(string.Format("{0}, {1}ms elapsed", "Restore complete".Green().Bold(), sw.ElapsedMilliseconds));
-
-            // Print the dependency graph
-            if (success)
+        private void AddRemoteProvidersFromSources(List<IWalkProvider> remoteProviders, List<PackageSource> effectiveSources)
+        {
+            foreach (var source in effectiveSources)
             {
-                var graphNum = contexts.Count;
-                for (int i = 0; i < graphNum; i++)
+                if (new Uri(source.Source).IsFile)
                 {
-                    PrintDependencyGraph(graphs[i], contexts[i].FrameworkName);
+                    remoteProviders.Add(
+                        new RemoteWalkProvider(
+                            new PackageFolder(
+                                source.Source,
+                                Reports.Verbose)));
+                }
+                else
+                {
+                    remoteProviders.Add(
+                        new RemoteWalkProvider(
+                            new PackageFeed(
+                                source.Source,
+                                source.UserName,
+                                source.Password,
+                                NoCache,
+                                Reports.Verbose)));
                 }
             }
-
-            return success;
         }
 
         private void PrintDependencyGraph(GraphNode root, FrameworkName frameworkName)
@@ -374,13 +450,6 @@ namespace Microsoft.Framework.PackageManager
                 packOperations.ExtractNupkg(archive, targetPath);
             }
         }
-
-        private bool CorrectName(string value, PackageSource source)
-        {
-            return source.Name.Equals(value, StringComparison.CurrentCultureIgnoreCase) ||
-                source.Source.Equals(value, StringComparison.OrdinalIgnoreCase);
-        }
-
 
         void ForEach(IEnumerable<GraphNode> nodes, Action<GraphNode> callback)
         {
@@ -430,6 +499,5 @@ namespace Microsoft.Framework.PackageManager
             path = FileSystem.GetFullPath(path);
             return new PhysicalFileSystem(path);
         }
-
     }
 }
