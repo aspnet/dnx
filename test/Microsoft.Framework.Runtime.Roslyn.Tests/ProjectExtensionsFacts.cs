@@ -28,7 +28,7 @@ namespace Microsoft.Framework.Runtime.Roslyn.Tests
             Assert.NotNull(settings);
             Assert.NotNull(settings.Defines);
             Assert.Equal(new[] { "DEBUG", "TRACE" }, settings.Defines);
-            Assert.Equal(LanguageVersion.CSharp6, settings.LanguageVersion);
+            Assert.Equal(LanguageVersion.Experimental, settings.LanguageVersion);
             Assert.IsType<DesktopAssemblyIdentityComparer>(settings.CompilationOptions.AssemblyIdentityComparer);
             Assert.Equal(DebugInformationKind.Full, settings.CompilationOptions.DebugInformationKind);
             Assert.Equal(OutputKind.DynamicallyLinkedLibrary, settings.CompilationOptions.OutputKind);
@@ -39,14 +39,14 @@ namespace Microsoft.Framework.Runtime.Roslyn.Tests
         {
             var project = Project.GetProject(
 @"{
-    ""compilationOptions"": { ""languageVersion"" : ""experimental"" }
+    ""compilationOptions"": { ""languageVersion"" : ""csharp6"" }
 }",
 "foo",
 @"c\foo\project.json");
 
             var settings = project.GetCompilationSettings("net45");
 
-            Assert.Equal(LanguageVersion.Experimental, settings.LanguageVersion);
+            Assert.Equal(LanguageVersion.CSharp6, settings.LanguageVersion);
         }
 
         [Theory]
