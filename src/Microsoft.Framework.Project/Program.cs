@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Open Technologies, Inc. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
-using System.IO;
+using System;
 using Microsoft.Framework.Runtime;
 using Microsoft.Framework.Runtime.Common.CommandLine;
 
@@ -38,6 +38,7 @@ namespace Microsoft.Framework.Project
                 var optionExePath = c.Option("--exePath", "Exe path", CommandOptionType.SingleValue);
                 var optionRuntimePath = c.Option("--runtimePath <PATH>", "Runtime path", CommandOptionType.SingleValue);
                 var optionSymbols = c.Option("--symbols", "Use symbols", CommandOptionType.NoValue);
+                var optionCrossgenPackages = c.Option("--packages", "Crossgen all dependencies", CommandOptionType.NoValue);
                 c.HelpOption("-?|-h|--help");
 
                 c.OnExecute(() =>
@@ -47,14 +48,25 @@ namespace Microsoft.Framework.Project
                     crossgenOptions.RuntimePath = optionRuntimePath.Value();
                     crossgenOptions.CrossgenPath = optionExePath.Value();
                     crossgenOptions.Symbols = optionSymbols.HasValue();
+                    crossgenOptions.Packages = optionCrossgenPackages.HasValue();
 
                     var gen = new CrossgenManager(crossgenOptions);
-                    if (!gen.GenerateNativeImages())
+                    var crossgenResult = gen.GenerateNativeImages();
+                    if (crossgenResult.Failed)
                     {
+                        Console.WriteLine("Crossgen FAILED.");
                         return -1;
                     }
-
-                    return 0;
+                    else if (crossgenResult.HasWarning)
+                    {
+                        Console.WriteLine("Crossgen completed with warnings. Some native images may be suboptimal");
+                        return -2;
+                    }
+                    else
+                    {
+                        Console.WriteLine("Crossgen successful");
+                        return 0;
+                    }
                 });
             });
 
