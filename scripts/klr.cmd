@@ -24,7 +24,7 @@ IF "%PACKAGE_ROOT%"=="" (
 
 SET "PACKAGE_LIBS=%PACKAGE_ROOT%\Newtonsoft.Json\5.0.8\lib\net45"
 SET "PACKAGE_LIBS=%PACKAGE_LIBS%;%PACKAGE_ROOT%\Microsoft.Bcl.Immutable\1.1.20-beta\lib\portable-net45+win8"
-SET "PACKAGE_LIBS=%PACKAGE_LIBS%;%PACKAGE_ROOT%\Microsoft.Bcl.Metadata\1.0.11-alpha\lib\portable-net45+win8"
+SET "PACKAGE_LIBS=%PACKAGE_LIBS%;%PACKAGE_ROOT%\Microsoft.Bcl.Metadata\1.0.12-alpha\lib\portable-net45+win8"
 
 :START_Microsoft_CodeAnalysis_CSharp
 FOR /F %%I IN ('DIR %PACKAGE_ROOT%\Microsoft.CodeAnalysis.CSharp\* /B /O:-D') DO (SET Microsoft_CodeAnalysis_CSharp=%%I& GOTO :END_Microsoft_CodeAnalysis_CSharp)

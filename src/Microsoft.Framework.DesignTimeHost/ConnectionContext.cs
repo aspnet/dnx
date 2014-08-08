@@ -14,6 +14,7 @@ namespace Microsoft.Framework.DesignTimeHost
     public class ConnectionContext
     {
         private readonly IDictionary<int, ApplicationContext> _contexts = new Dictionary<int, ApplicationContext>();
+        private readonly Cache _cache = new Cache();
         private readonly IAssemblyLoaderEngine _loaderEngine;
         private readonly IServiceProvider _services;
         private readonly Stream _stream;
@@ -49,7 +50,7 @@ namespace Microsoft.Framework.DesignTimeHost
             {
                 Trace.TraceInformation("[ConnectionContext]: Creating new application context for {0}", message.ContextId);
 
-                applicationContext = new ApplicationContext(_services, _loaderEngine, message.ContextId);
+                applicationContext = new ApplicationContext(_services, _loaderEngine, message.ContextId, _cache);
                 applicationContext.OnTransmit += OnTransmit;
                 _contexts.Add(message.ContextId, applicationContext);
             }

@@ -57,6 +57,7 @@ namespace Microsoft.Framework.Runtime
             _serviceProvider.Add(typeof(NuGetDependencyResolver), NuGetDependencyProvider);
             _serviceProvider.Add(typeof(ProjectReferenceDependencyProvider), ProjectDepencyProvider);
             _serviceProvider.Add(typeof(ILibraryManager), new LibraryManager(targetFramework, configuration, DependencyWalker, compositeDependencyExporter));
+            _serviceProvider.Add(typeof(ICache), new Cache());
         }
 
         public void AddService(Type type, object instance)

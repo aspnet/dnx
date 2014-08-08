@@ -69,6 +69,7 @@ namespace Microsoft.Framework.DesignTimeHost
         {
         }
 
+        private readonly ICache _cache;
         private readonly Queue<Message> _inbox = new Queue<Message>();
         private readonly object _processingLock = new object();
 
@@ -82,11 +83,12 @@ namespace Microsoft.Framework.DesignTimeHost
         private World _remote = new World();
         private World _local = new World();
 
-        public ApplicationContext(IServiceProvider services, IAssemblyLoaderEngine loaderEngine, int id)
+        public ApplicationContext(IServiceProvider services, IAssemblyLoaderEngine loaderEngine, int id, ICache cache)
         {
             _hostServices = services;
             _loaderEngine = loaderEngine;
             Id = id;
+            _cache = cache;
         }
 
         public int Id { get; private set; }
@@ -417,6 +419,8 @@ namespace Microsoft.Framework.DesignTimeHost
                                                                     packagesDirectory: null,
                                                                     configuration: configuration,
                                                                     targetFramework: targetFramework);
+
+            applicationHostContext.AddService(typeof(ICache), _cache);
 
             Project project = applicationHostContext.Project;
 
