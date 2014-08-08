@@ -1,10 +1,10 @@
 {
     "version": "1.0.0-*",
-    "compilationOptions" : { "define" : ["LOADER", "TRACE"], "allowUnsafe": true, "warningsAsErrors": true },
+    "compilationOptions": { "define": [ "LOADER", "TRACE" ], "allowUnsafe": true, "warningsAsErrors": true },
     "dependencies": {
         "Microsoft.Bcl.Metadata": "1.0.12-alpha",
-        "Microsoft.Framework.Runtime.Common" : "",
-        "Microsoft.Framework.Runtime.Interfaces" : "",
+        "Microsoft.Framework.Runtime.Common": "",
+        "Microsoft.Framework.Runtime.Interfaces": "",
         "Newtonsoft.Json": "5.0.8"
     },
     "frameworks" : {
@@ -23,6 +23,7 @@
         "k10" : { 
             "dependencies": {
                 "System.Collections": "4.0.10.0",
+                "System.Collections.Concurrent": "4.0.0.0",
                 "System.ComponentModel": "4.0.0.0",
                 "System.Console": "4.0.0.0",
                 "System.Diagnostics.Debug": "4.0.10.0",

@@ -16,13 +16,13 @@ namespace Microsoft.Framework.Runtime.Roslyn
 {
     public class RoslynCompiler
     {
+        private readonly ICache _cache;
         private readonly IFileWatcher _watcher;
-        private readonly MetadataFileReferenceFactory _metadataFileReferenceFactory;
 
-        public RoslynCompiler(IFileWatcher watcher)
+        public RoslynCompiler(ICache cache, IFileWatcher watcher)
         {
+            _cache = cache;
             _watcher = watcher;
-            _metadataFileReferenceFactory = new MetadataFileReferenceFactory();
         }
 
         public CompilationContext CompileProject(
@@ -151,14 +151,19 @@ namespace Microsoft.Framework.Runtime.Roslyn
             return trees;
         }
 
-        private static SyntaxTree CreateSyntaxTree(string sourcePath, CSharpParseOptions parseOptions)
+        private SyntaxTree CreateSyntaxTree(string sourcePath, CSharpParseOptions parseOptions)
         {
-            using (var stream = File.OpenRead(sourcePath))
+            return _cache.Get<SyntaxTree>(sourcePath, ctx =>
             {
-                var sourceText = SourceText.From(stream, encoding: Encoding.UTF8);
+                ctx.Monitor(new FileWriteTimeChangedToken(sourcePath));
 
-                return CSharpSyntaxTree.ParseText(sourceText, options: parseOptions, path: sourcePath);
-            }
+                using (var stream = File.OpenRead(sourcePath))
+                {
+                    var sourceText = SourceText.From(stream, encoding: Encoding.UTF8);
+
+                    return CSharpSyntaxTree.ParseText(sourceText, options: parseOptions, path: sourcePath);
+                }
+            });
         }
 
         private MetadataReference ConvertMetadataReference(IMetadataReference metadataReference)
@@ -181,7 +186,7 @@ namespace Microsoft.Framework.Runtime.Roslyn
 
             if (fileMetadataReference != null)
             {
-                return _metadataFileReferenceFactory.GetMetadataReference(fileMetadataReference.Path);
+                return GetMetadataReference(fileMetadataReference.Path);
             }
 
             var projectReference = metadataReference as IMetadataProjectReference;
@@ -198,6 +203,19 @@ namespace Microsoft.Framework.Runtime.Roslyn
             }
 
             throw new NotSupportedException();
+        }
+
+        private MetadataReference GetMetadataReference(string path)
+        {
+            return _cache.Get<MetadataReference>(path, ctx =>
+            {
+                ctx.Monitor(new FileWriteTimeChangedToken(path));
+
+                using (var stream = File.OpenRead(path))
+                {
+                    return new MetadataImageReference(stream);
+                }
+            });
         }
     }
 }

@@ -28,7 +28,6 @@
     <Compile Include="CompositeResourceProvider.cs" />
     <Compile Include="EmbeddedResourceProvider.cs" />
     <Compile Include="IResourceProvider.cs" />
-    <Compile Include="MetadataFileReferenceFactory.cs" />
     <Compile Include="ProjectExtensions.cs" />
     <Compile Include="ResourceExtensions.cs" />
     <Compile Include="ResxResourceProvider.cs" />
