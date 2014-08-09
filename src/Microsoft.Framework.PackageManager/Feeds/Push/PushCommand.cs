@@ -10,17 +10,13 @@ namespace Microsoft.Framework.PackageManager.Feeds.Push
     /// <summary>
     /// Summary description for PushCommand
     /// </summary>
-    public class PushCommand
+    public class PushCommand : FeedCommand<PushOptions>
     {
-        public PushCommand(PushOptions options)
+        public PushCommand(PushOptions options) : base(options)
         {
-            Options = options;
         }
 
-        public PushOptions Options { get; private set; }
-        public string LocalPackages { get; private set; }
         public string RemotePackages { get; private set; }
-        public IReport Report { get; private set; }
 
         public bool Execute()
         {
@@ -29,8 +25,12 @@ namespace Microsoft.Framework.PackageManager.Feeds.Push
             RemotePackages = Options.RemotePackages;
 
             Options.Report.WriteLine(
-                "Pushing artifacts from {0} to {1}",
-                LocalPackages.Bold(),
+                "Pushing artifacts");
+            Options.Report.WriteLine(
+                "  from {0}",
+                LocalPackages.Bold());
+            Options.Report.WriteLine(
+                "  to {0}",
                 RemotePackages.Bold());
 
             var sw = new Stopwatch();
@@ -39,7 +39,7 @@ namespace Microsoft.Framework.PackageManager.Feeds.Push
             IRepositoryPublisher local = new FileSystemRepositoryPublisher(LocalPackages);
             IRepositoryPublisher remote = new FileSystemRepositoryPublisher(RemotePackages);
 
-            // Recall which next to pushed to remote
+            // Recall what index to start pushing to remote
             var transmitRecord = FillOut(local.GetRepositoryTransmitRecord());
 
             int nextIndex;
@@ -51,8 +51,18 @@ namespace Microsoft.Framework.PackageManager.Feeds.Push
             // Read change index from that point forward
             var changeRecord = FillOut(local.MergeRepositoryChangeRecordsStartingWithIndex(nextIndex));
 
-            if (changeRecord.Add.Any() || changeRecord.Remove.Any())
+            if (!changeRecord.Add.Any() &&
+                !changeRecord.Remove.Any())
             {
+                Report.WriteLine("There are no changes to push");
+            }
+            else
+            {
+                Report.WriteLine(
+                    "Pushing {0} added and {0} removed artifacts",
+                    changeRecord.Add.Count().ToString().Bold(),
+                    changeRecord.Remove.Count().ToString().Bold());
+
                 // We now know where to start from next time
                 transmitRecord.Push[RemotePackages] = changeRecord.Next;
 
@@ -76,54 +86,13 @@ namespace Microsoft.Framework.PackageManager.Feeds.Push
                 // Locally commit where to push remotely next
                 local.StoreRepositoryTransmitRecord(transmitRecord);
             }
-            else
-            {
-                Report.WriteLine("There are no changes to push");
-            }
 
             Report.WriteLine(
                 "{0}, {1}ms elapsed",
                 "Push complete".Green().Bold(),
                 sw.ElapsedMilliseconds);
 
-            return false;
-        }
-
-        private RepositoryTransmitRecord FillOut(RepositoryTransmitRecord record)
-        {
-            if (record == null)
-            {
-                record = new RepositoryTransmitRecord();
-            }
-            if (record.Push == null)
-            {
-                record.Push = new Dictionary<string, int>();
-            }
-            if (record == null)
-            {
-                record.Pull = new Dictionary<string, int>();
-            }
-            return record;
-        }
-        private RepositoryChangeRecord FillOut(RepositoryChangeRecord record)
-        {
-            if (record == null)
-            {
-                record = new RepositoryChangeRecord();
-            }
-            if (record.Next == 0)
-            {
-                record.Next = 1;
-            }
-            if (record.Add == null)
-            {
-                record.Add = new List<string>();
-            }
-            if (record.Remove == null)
-            {
-                record.Remove = new List<string>();
-            }
-            return record;
+            return true;
         }
     }
 }

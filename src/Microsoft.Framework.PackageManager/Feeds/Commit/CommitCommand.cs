@@ -10,17 +10,12 @@ namespace Microsoft.Framework.PackageManager.Feeds.Commit
     /// <summary>
     /// Summary description for CommitCommand
     /// </summary>
-    public class CommitCommand
+    public class CommitCommand : FeedCommand<CommitOptions>
     {
-        public CommitCommand(CommitOptions options)
+        public CommitCommand(CommitOptions options) : base(options)
         {
-            Options = options;
         }
 
-        public CommitOptions Options { get; private set; }
-
-        IReport Report { get; set; }
-        string LocalPackages { get; set; }
 
         public bool Execute()
         {
@@ -94,7 +89,7 @@ namespace Microsoft.Framework.PackageManager.Feeds.Commit
                 return false;
             }
 
-            foreach(var extension in InnerJoin(
+            foreach (var extension in InnerJoin(
                 new[] { ".nupkg", ".nuspec" },
                 new[] { "", ".asc" },
                 new[] { "", ".sha256", ".sha512" }))
@@ -110,7 +105,7 @@ namespace Microsoft.Framework.PackageManager.Feeds.Commit
         private IEnumerable<string> InnerJoin(params string[][] sets)
         {
             List<string> result = new List<string> { "" };
-            foreach(var set in sets)
+            foreach (var set in sets)
             {
                 result = result.SelectMany(a => set.Select(b => a + b)).ToList();
             }
