@@ -58,16 +58,22 @@ namespace Microsoft.Framework.PackageManager.Feeds.Workers
             foreach (var name in Directory.EnumerateDirectories(Path.Combine(_path, subPath)))
             {
                 var directoryName = Path.GetFileName(name);
-                var directoryPath = Path.Combine(subPath, directoryName);
+                var directoryPath = Path.Combine(subPath, directoryName)
+                    .Replace("\\","/");
                 if (folderPredicate(directoryPath))
                 {
-                    EnumerateArtifactsRecursive(directoryPath, folderPredicate, artifactPredicate, result);
+                    EnumerateArtifactsRecursive(
+                        directoryPath, 
+                        folderPredicate, 
+                        artifactPredicate, 
+                        result);
                 }
             }
             foreach (var name in Directory.EnumerateFiles(Path.Combine(_path, subPath)))
             {
                 var fileName = Path.GetFileName(name);
-                var filePath = Path.Combine(subPath, fileName);
+                var filePath = Path.Combine(subPath, fileName)
+                    .Replace("\\", "/");
                 if (artifactPredicate(filePath))
                 {
                     result.Add(filePath);
