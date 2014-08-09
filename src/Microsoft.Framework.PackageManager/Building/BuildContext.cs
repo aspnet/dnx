@@ -23,7 +23,7 @@ namespace Microsoft.Framework.PackageManager
             _targetFramework = targetFramework;
             _configuration = configuration;
             _targetFrameworkFolder = VersionUtility.GetShortFrameworkName(_targetFramework);
-            _outputPath = Path.Combine(outputPath, _targetFrameworkFolder);
+            _outputPath = Path.Combine(outputPath, "lib", _targetFrameworkFolder);
             _applicationHostContext = new ApplicationHostContext(
                 serviceProvider: null,
                 projectDirectory: project.ProjectDirectory,
