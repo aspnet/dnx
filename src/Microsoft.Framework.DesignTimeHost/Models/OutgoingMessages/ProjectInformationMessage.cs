@@ -2,6 +2,7 @@
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Microsoft.Framework.DesignTimeHost.Models.OutgoingMessages
 {
@@ -19,5 +20,21 @@ namespace Microsoft.Framework.DesignTimeHost.Models.OutgoingMessages
         public IList<ConfigurationData> ProjectConfigurations { get; set; }
 
         public IDictionary<string, string> Commands { get; set; }
+
+        public override bool Equals(object obj)
+        {
+            var other = obj as ProjectInformationMessage;
+
+            return other != null &&
+                   ProjectName.Equals(other.ProjectName) &&
+                   Enumerable.SequenceEqual(Configurations, other.Configurations) &&
+                   Enumerable.SequenceEqual(Frameworks, other.Frameworks) &&
+                   Enumerable.SequenceEqual(ProjectConfigurations, other.ProjectConfigurations) &&
+                   Enumerable.SequenceEqual(Commands, other.Commands);
+        }
+        public override int GetHashCode()
+        {
+            return base.GetHashCode();
+        }
     }
 }

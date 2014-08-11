@@ -10,5 +10,17 @@ namespace Microsoft.Framework.DesignTimeHost.Models.OutgoingMessages
         public string Name { get; set; }
 
         public string Version { get; set; }
+
+        public override bool Equals(object obj)
+        {
+            var other = obj as ReferenceItem;
+            return other != null &&
+                   Name.Equals(other.Name) &&
+                   Version.Equals(other.Version);
+        }
+        public override int GetHashCode()
+        {
+            return base.GetHashCode();
+        }
     }
 }

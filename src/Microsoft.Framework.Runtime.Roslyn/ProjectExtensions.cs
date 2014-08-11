@@ -56,7 +56,7 @@ namespace Microsoft.Framework.Runtime.Roslyn
             var settings = new CompilationSettings
             {
                 LanguageVersion = languageVersion,
-                Defines = resultOptions.Defines,
+                Defines = resultOptions.Defines ?? Enumerable.Empty<string>(),
                 CompilationOptions = options
             };
 

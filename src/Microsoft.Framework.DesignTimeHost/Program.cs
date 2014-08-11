@@ -60,7 +60,7 @@ namespace Microsoft.Framework.DesignTimeHost
 
                 Console.WriteLine("Client accepted {0}", acceptSocket.LocalEndPoint);
 
-                var connection = new ConnectionContext(_services, _loaderEngine, new NetworkStream(acceptSocket), hostId);
+                var connection = new ConnectionContext(_services, new NetworkStream(acceptSocket), hostId);
 
                 connection.Start();
             }

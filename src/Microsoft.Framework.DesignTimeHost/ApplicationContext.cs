@@ -23,7 +23,6 @@ namespace Microsoft.Framework.DesignTimeHost
 {
     public class ApplicationContext
     {
-        private readonly IAssemblyLoaderEngine _loaderEngine;
         private readonly IServiceProvider _hostServices;
 
         public class State
@@ -83,15 +82,16 @@ namespace Microsoft.Framework.DesignTimeHost
         private World _remote = new World();
         private World _local = new World();
 
-        public ApplicationContext(IServiceProvider services, IAssemblyLoaderEngine loaderEngine, int id, ICache cache)
+        public ApplicationContext(IServiceProvider services, int id, ICache cache)
         {
             _hostServices = services;
-            _loaderEngine = loaderEngine;
             Id = id;
             _cache = cache;
         }
 
         public int Id { get; private set; }
+
+        public string ApplicationPath { get { return _appPath.Value; } }
 
         public event Action<Message> OnTransmit;
 
@@ -387,22 +387,22 @@ namespace Microsoft.Framework.DesignTimeHost
 
         private bool IsDifferent(ProjectInformationMessage local, ProjectInformationMessage remote)
         {
-            return true;
+            return !Object.Equals(local, remote);
         }
 
         private bool IsDifferent(ReferencesMessage local, ReferencesMessage remote)
         {
-            return true;
+            return !Object.Equals(local, remote);
         }
 
         private bool IsDifferent(DiagnosticsMessage local, DiagnosticsMessage remote)
         {
-            return true;
+            return !Object.Equals(local, remote);
         }
 
         private bool IsDifferent(SourcesMessage local, SourcesMessage remote)
         {
-            return true;
+            return !Object.Equals(local, remote);
         }
 
         public State Initialize(string appPath, FrameworkName targetFramework, string configuration)
