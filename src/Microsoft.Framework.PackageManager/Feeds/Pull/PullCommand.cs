@@ -11,17 +11,20 @@ namespace Microsoft.Framework.PackageManager.Feeds.Pull
     /// </summary>
     public class PullCommand : FeedCommand<PullOptions>
     {
-        public PullCommand(PullOptions options) : base (options)
+        public PullCommand(PullOptions options) : base(options)
         {
         }
 
         public string RemotePackages { get; private set; }
+
+        public string RemoteKey { get; private set; }
 
         public bool Execute()
         {
             Report = Options.Report;
             LocalPackages = Options.LocalPackages ?? Directory.GetCurrentDirectory();
             RemotePackages = Options.RemotePackages;
+            RemoteKey = Options.RemoteKey ?? "";
 
             Options.Report.WriteLine(
                 "Pulling artifacts");
@@ -35,8 +38,13 @@ namespace Microsoft.Framework.PackageManager.Feeds.Pull
             var sw = new Stopwatch();
             sw.Start();
 
-            IRepositoryPublisher local = new FileSystemRepositoryPublisher(LocalPackages);
-            IRepositoryPublisher remote = new FileSystemRepositoryPublisher(RemotePackages);
+            IRepositoryPublisher local = new FileSystemRepositoryPublisher(
+                LocalPackages);
+
+            IRepositoryPublisher remote = RepositoryPublishers.Create(
+                RemotePackages,
+                RemoteKey,
+                Report);
 
             // Recall what index to start pulling from remote
             var transmitRecord = FillOut(local.GetRepositoryTransmitRecord());
@@ -58,7 +66,7 @@ namespace Microsoft.Framework.PackageManager.Feeds.Pull
             else
             {
                 Report.WriteLine(
-                    "Pulling {0} added and {0} removed artifacts",
+                    "Pulling {0} added and {1} removed artifacts",
                     changeRecord.Add.Count().ToString().Bold(),
                     changeRecord.Remove.Count().ToString().Bold());
 

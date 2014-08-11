@@ -9,5 +9,7 @@ namespace Microsoft.Framework.PackageManager.Feeds.Push
     public class PushOptions : FeedOptions
     {
         public string RemotePackages { get; set; }
+
+        public string RemoteKey { get; set; }
     }
 }
