@@ -15,6 +15,9 @@ namespace Microsoft.Framework.Runtime
     {
         public const string ProjectFileName = "project.json";
 
+        internal static string DefaultLanguageServicesAssembly = "Microsoft.Framework.Runtime.Roslyn";
+        internal static string DefaultProjectReferenceProviderType = "Microsoft.Framework.Runtime.Roslyn.RoslynProjectReferenceProvider";
+
         private static readonly CompilerOptions _emptyOptions = new CompilerOptions();
         private static readonly char[] _sourceSeparator = new[] { ';' };
 
@@ -248,8 +251,8 @@ namespace Microsoft.Framework.Runtime
             project.ContentsPatterns = GetSourcePattern(rawProject, "files", _defaultContentsPatterns);
 
             // Set the default loader information for projects
-            var languageServicesAssembly = "Microsoft.Framework.Runtime.Roslyn";
-            var projectReferenceProviderType = "Microsoft.Framework.Runtime.Roslyn.RoslynProjectReferenceProvider";
+            var languageServicesAssembly = DefaultLanguageServicesAssembly;
+            var projectReferenceProviderType = DefaultProjectReferenceProviderType;
             var languageName = "C#";
 
             var languageInfo = rawProject["language"] as JObject;

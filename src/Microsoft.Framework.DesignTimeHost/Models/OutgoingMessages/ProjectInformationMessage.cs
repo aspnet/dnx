@@ -26,7 +26,7 @@ namespace Microsoft.Framework.DesignTimeHost.Models.OutgoingMessages
             var other = obj as ProjectInformationMessage;
 
             return other != null &&
-                   ProjectName.Equals(other.ProjectName) &&
+                   string.Equals(ProjectName, other.ProjectName) &&
                    Enumerable.SequenceEqual(Configurations, other.Configurations) &&
                    Enumerable.SequenceEqual(Frameworks, other.Frameworks) &&
                    Enumerable.SequenceEqual(ProjectConfigurations, other.ProjectConfigurations) &&

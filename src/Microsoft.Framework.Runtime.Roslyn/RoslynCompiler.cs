@@ -155,7 +155,7 @@ namespace Microsoft.Framework.Runtime.Roslyn
         {
             return _cache.Get<SyntaxTree>(sourcePath, ctx =>
             {
-                ctx.Monitor(new FileWriteTimeChangedToken(sourcePath));
+                ctx.Monitor(new FileWriteTimeCacheDependency(sourcePath));
 
                 using (var stream = File.OpenRead(sourcePath))
                 {
@@ -209,7 +209,7 @@ namespace Microsoft.Framework.Runtime.Roslyn
         {
             return _cache.Get<MetadataReference>(path, ctx =>
             {
-                ctx.Monitor(new FileWriteTimeChangedToken(path));
+                ctx.Monitor(new FileWriteTimeCacheDependency(path));
 
                 using (var stream = File.OpenRead(path))
                 {

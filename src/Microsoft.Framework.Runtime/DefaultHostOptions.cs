@@ -19,11 +19,6 @@ namespace Microsoft.Framework.Runtime
 
         public bool WatchFiles { get; set; }
 
-        public bool UseCachedCompilations { get; set; }
-
-        public DefaultHostOptions()
-        {
-            UseCachedCompilations = true;
-        }
+        public int? CompilationServerPort { get; set; }
     }
 }

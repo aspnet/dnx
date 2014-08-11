@@ -19,10 +19,10 @@ namespace Microsoft.Framework.DesignTimeHost.Models.OutgoingMessages
             var other = obj as FrameworkData;
 
             return other != null && 
-                   Object.Equals(FrameworkName, other.FrameworkName) &&
-                   Object.Equals(LongFrameworkName, other.LongFrameworkName) &&
-                   Object.Equals(FriendlyFrameworkName, other.FriendlyFrameworkName) &&
-                   Object.Equals(CompilationSettings, other.CompilationSettings);
+                   string.Equals(FrameworkName, other.FrameworkName) &&
+                   string.Equals(LongFrameworkName, other.LongFrameworkName) &&
+                   string.Equals(FriendlyFrameworkName, other.FriendlyFrameworkName) &&
+                   object.Equals(CompilationSettings, other.CompilationSettings);
         }
         public override int GetHashCode()
         {

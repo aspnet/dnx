@@ -15,7 +15,7 @@ namespace Microsoft.Framework.DesignTimeHost.Models.OutgoingMessages
 
             return other != null &&
                    string.Equals(Name, other.Name) &&
-                   CompilationSettings.Equals(other.CompilationSettings);
+                   object.Equals(CompilationSettings, other.CompilationSettings);
         }
 
         public override int GetHashCode()

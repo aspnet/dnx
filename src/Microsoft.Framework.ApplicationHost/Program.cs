@@ -125,7 +125,7 @@ namespace Microsoft.Framework.ApplicationHost
             var optionPackages = app.Option("--packages <PACKAGE_DIR>", "Directory containing packages",
                 CommandOptionType.SingleValue);
             var optionConfiguration = app.Option("--configuration <CONFIGURATION>", "The configuration to run under", CommandOptionType.SingleValue);
-
+            var optionCompilationServer = app.Option("--port <PORT>", "The port to the compilation server", CommandOptionType.SingleValue);
             var runCmdExecuted = false;
             app.HelpOption("-?|-h|--help");
             app.VersionOption("--version", GetVersion());
@@ -156,6 +156,13 @@ namespace Microsoft.Framework.ApplicationHost
             defaultHostOptions.TargetFramework = _environment.TargetFramework;
             defaultHostOptions.Configuration = optionConfiguration.Value() ?? _environment.Configuration ?? "Debug";
             defaultHostOptions.ApplicationBaseDirectory = _environment.ApplicationBasePath;
+            var portValue = optionCompilationServer.Value();
+
+            int port;
+            if (!string.IsNullOrEmpty(portValue) && int.TryParse(portValue, out port))
+            {
+                defaultHostOptions.CompilationServerPort = port;
+            }
 
             var remainingArgs = new List<string>();
             if (runCmdExecuted)

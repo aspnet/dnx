@@ -13,7 +13,6 @@ namespace Communication
 {
     public class ProcessingQueue
     {
-        private readonly List<Message> _queue = new List<Message>();
         private readonly BinaryReader _reader;
         private readonly BinaryWriter _writer;
 
@@ -31,11 +30,16 @@ namespace Communication
             new Thread(ReceiveMessages).Start();
         }
 
+        public void WriteCustom(Action<BinaryWriter> write)
+        {
+            write(_writer);
+        }
+
         public void Post(Message message)
         {
             lock (_writer)
             {
-                Trace.TraceInformation("[ProcessingQueue]: Post({0})", message);
+                Trace.TraceInformation("[ProcessingQueue]: Post({0})", message.MessageType);
                 _writer.Write(JsonConvert.SerializeObject(message));
             }
         }
