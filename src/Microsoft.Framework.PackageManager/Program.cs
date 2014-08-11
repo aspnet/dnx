@@ -293,10 +293,15 @@ namespace Microsoft.Framework.PackageManager
             app.Command("feed", feedCommand =>
             {
                 var reports = CreateReports(optionVerbose.HasValue(), quiet: false);
+
+                feedCommand.Description = "Commands related to managing local and remote feed folders";
+                feedCommand.HelpOption("-?|-h|--help");
+
                 feedCommand.Command("commit", c =>
                 {
                     c.Description = "Add index files to packages directory";
                     var optionPackages = c.Option("--packages <DIR>", "Path to local packages, default is current directory", CommandOptionType.SingleValue);
+                    c.HelpOption("-?|-h|--help");
 
                     c.OnExecute(() =>
                     {
@@ -314,8 +319,10 @@ namespace Microsoft.Framework.PackageManager
                 feedCommand.Command("push", c =>
                 {
                     c.Description = "Incremental copy of files from local packages to remote location";
-                    var optionPackages = c.Option("--packages <DIR>", "Path to local packages, default is current directory", CommandOptionType.SingleValue);
                     var argRemote = c.Argument("[remote]", "Path to remote packages folder");
+                    var optionKey = c.Option("--key <BASE64>", "API key to modify remote packages folder", CommandOptionType.SingleValue);
+                    var optionPackages = c.Option("--packages <DIR>", "Path to local packages, default is current directory", CommandOptionType.SingleValue);
+                    c.HelpOption("-?|-h|--help");
 
                     c.OnExecute(() =>
                     {
@@ -324,6 +331,7 @@ namespace Microsoft.Framework.PackageManager
                             Report = reports.Information,
                             LocalPackages = optionPackages.Value(),
                             RemotePackages = argRemote.Value,
+                            RemoteKey = optionKey.Value(),
                         };
                         var command = new PushCommand(options);
                         var success = command.Execute();
@@ -334,8 +342,10 @@ namespace Microsoft.Framework.PackageManager
                 feedCommand.Command("pull", c =>
                 {
                     c.Description = "Incremental copy of files from remote location to local packages";
-                    var optionPackages = c.Option("--packages <DIR>", "Path to local packages, default is current directory", CommandOptionType.SingleValue);
                     var argRemote = c.Argument("[remote]", "Path to remote packages folder");
+                    var optionKey = c.Option("--key <BASE64>", "API key to modify remote packages folder", CommandOptionType.SingleValue);
+                    var optionPackages = c.Option("--packages <DIR>", "Path to local packages, default is current directory", CommandOptionType.SingleValue);
+                    c.HelpOption("-?|-h|--help");
 
                     c.OnExecute(() =>
                     {
@@ -344,6 +354,7 @@ namespace Microsoft.Framework.PackageManager
                             Report = reports.Information,
                             LocalPackages = optionPackages.Value(),
                             RemotePackages = argRemote.Value,
+                            RemoteKey = optionKey.Value(),
                         };
                         var command = new PullCommand(options);
                         var success = command.Execute();

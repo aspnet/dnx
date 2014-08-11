@@ -9,5 +9,7 @@ namespace Microsoft.Framework.PackageManager.Feeds.Pull
     public class PullOptions : FeedOptions
     {
         public string RemotePackages { get; set; }
+
+        public string RemoteKey { get; set; }
     }
 }
