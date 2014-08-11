@@ -48,19 +48,22 @@ namespace Microsoft.Framework.DesignTimeHost
 
         private async Task OpenChannel(int port, string hostId)
         {
+            var cache = new Cache();
+            var contexts = new Dictionary<int, ApplicationContext>();
+
             var listenSocket = new Socket(SocketType.Stream, ProtocolType.Tcp);
             listenSocket.Bind(new IPEndPoint(IPAddress.Loopback, port));
             listenSocket.Listen(10);
 
             Console.WriteLine("Listening on port {0}", port);
 
-            for (; ; )
+            for (; ;)
             {
                 var acceptSocket = await AcceptAsync(listenSocket);
 
                 Console.WriteLine("Client accepted {0}", acceptSocket.LocalEndPoint);
 
-                var connection = new ConnectionContext(_services, new NetworkStream(acceptSocket), hostId);
+                var connection = new ConnectionContext(contexts, _services, cache, new NetworkStream(acceptSocket), hostId);
 
                 connection.Start();
             }

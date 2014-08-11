@@ -3,226 +3,12 @@
 
 using System;
 using System.Collections.Generic;
-using System.Collections.Concurrent;
-using System.Threading;
-using System.Linq;
 using System.Diagnostics;
 using System.IO;
 using System.Runtime.Versioning;
 
 namespace Microsoft.Framework.Runtime
 {
-    public class FileWriteTimeChangedToken : IToken
-    {
-        private readonly string _path;
-        private readonly DateTime _lastWriteTime;
-
-        public FileWriteTimeChangedToken(string path)
-        {
-            _path = path;
-            _lastWriteTime = File.GetLastWriteTime(path);
-        }
-
-        public bool HasChanged
-        {
-            get
-            {
-                return _lastWriteTime < File.GetLastWriteTime(_path);
-            }
-        }
-
-        public override string ToString()
-        {
-            return _path;
-        }
-
-        public override bool Equals(object obj)
-        {
-            var token = obj as FileWriteTimeChangedToken;
-            return token != null && token._path.Equals(_path, StringComparison.OrdinalIgnoreCase);
-        }
-
-        public override int GetHashCode()
-        {
-            return _path.GetHashCode();
-        }
-    }
-
-    public interface IToken
-    {
-        bool HasChanged { get; }
-    }
-
-    public interface ICache
-    {
-        object Get(object key, Func<CacheContext, object> factory);
-    }
-
-    public class CacheContext
-    {
-        public object Key { get; private set; }
-
-        public Action<IToken> Monitor { get; private set; }
-
-        public CacheContext(object key, Action<IToken> monitor)
-        {
-            Key = key;
-            Monitor = monitor;
-        }
-    }
-
-    public interface ICacheContextAccessor
-    {
-        CacheContext Current { get; set; }
-    }
-
-    public class CacheContextAccessor : ICacheContextAccessor
-    {
-        [ThreadStatic]
-        private static CacheContext _threadInstance;
-
-        public static CacheContext ThreadInstance
-        {
-            get { return _threadInstance; }
-            set { _threadInstance = value; }
-        }
-
-        public CacheContext Current
-        {
-            get { return ThreadInstance; }
-            set { ThreadInstance = value; }
-        }
-    }
-
-    public static class CacheExtensions
-    {
-        public static T Get<T>(this ICache cache, object key, Func<CacheContext, T> factory)
-        {
-            return (T)cache.Get(key, ctx => factory(ctx));
-        }
-    }
-
-    public class Cache : ICache
-    {
-        private readonly ConcurrentDictionary<object, Lazy<CacheEntry>> _entries = new ConcurrentDictionary<object, Lazy<CacheEntry>>();
-        private readonly ICacheContextAccessor _accessor;
-
-        public Cache() : this(new CacheContextAccessor())
-        {
-        }
-
-        public Cache(ICacheContextAccessor accessor)
-        {
-            _accessor = accessor;
-        }
-
-        public object Get(object key, Func<CacheContext, object> factory)
-        {
-            var entry = _entries.AddOrUpdate(key,
-                k => AddEntry(k, factory),
-                (k, oldValue) => UpdateEntry(oldValue, k, factory));
-
-            return entry.Value.Result;
-        }
-
-        private Lazy<CacheEntry> AddEntry(object k, Func<CacheContext, object> acquire)
-        {
-            return new Lazy<CacheEntry>(() =>
-            {
-                var entry = CreateEntry(k, acquire);
-                PropagateTokens(entry);
-                return entry;
-            });
-        }
-
-        private Lazy<CacheEntry> UpdateEntry(Lazy<CacheEntry> currentEntry, object k, Func<CacheContext, object> acquire)
-        {
-            bool expired = currentEntry.Value.Tokens.Any(t => t.HasChanged);
-
-            if (expired)
-            {
-                return AddEntry(k, acquire);
-            }
-            else
-            {
-                Trace.TraceInformation("[{0}]: Cache hit for {1}", GetType().Name, k);
-
-                // Already evaluated
-                PropagateTokens(currentEntry.Value);
-                return currentEntry;
-            }
-        }
-
-        private void PropagateTokens(CacheEntry entry)
-        {
-            // Bubble up volatile tokens to parent context
-            if (_accessor.Current != null)
-            {
-                foreach (var token in entry.Tokens)
-                {
-                    _accessor.Current.Monitor(token);
-                }
-            }
-        }
-
-        private CacheEntry CreateEntry(object k, Func<CacheContext, object> acquire)
-        {
-            var entry = new CacheEntry();
-            var context = new CacheContext(k, entry.AddToken);
-            CacheContext parentContext = null;
-            try
-            {
-                // Push context
-                parentContext = _accessor.Current;
-                _accessor.Current = context;
-
-                entry.Result = acquire(context);
-            }
-            finally
-            {
-                // Pop context
-                _accessor.Current = parentContext;
-            }
-
-            Trace.TraceInformation("[{0}]: Cache miss for {1}", GetType().Name, k);
-
-            entry.CompactTokens();
-            return entry;
-        }
-
-        private class CacheEntry
-        {
-            private IList<IToken> _tokens;
-
-            public CacheEntry()
-            {
-
-            }
-
-            public IEnumerable<IToken> Tokens { get { return _tokens ?? Enumerable.Empty<IToken>(); } }
-
-            public object Result { get; set; }
-
-            public void AddToken(IToken token)
-            {
-                if (_tokens == null)
-                {
-                    _tokens = new List<IToken>();
-                }
-
-                _tokens.Add(token);
-            }
-
-            public void CompactTokens()
-            {
-                if (_tokens != null)
-                {
-                    _tokens = _tokens.Distinct().ToArray();
-                }
-            }
-        }
-    }
-
     public class ProjectLibraryExportProvider : ILibraryExportProvider
     {
         private readonly IProjectResolver _projectResolver;
@@ -263,15 +49,6 @@ namespace Microsoft.Framework.Runtime
                 var exportProvider = (ILibraryExportProvider)_serviceProvider.GetService(typeof(ILibraryExportProvider));
                 var libraryManager = (ILibraryManager)_serviceProvider.GetService(typeof(ILibraryManager));
 
-                // Get the exports for the project dependencies
-                ILibraryExport projectExport = ProjectExportProviderHelper.GetExportsRecursive(
-                   libraryManager,
-                   exportProvider,
-                   project.Name,
-                   targetFramework,
-                   configuration,
-                   dependenciesOnly: true);
-
                 var metadataReferences = new List<IMetadataReference>();
                 var sourceReferences = new List<ISourceReference>();
 
@@ -286,20 +63,28 @@ namespace Microsoft.Framework.Runtime
                 {
                     // Find the default project exporter
                     var projectReferenceProvider = _projectReferenceProviders.GetOrAdd(project.LanguageServices.ProjectReferenceProvider, typeInfo =>
-                   {
-                       return LanguageServices.CreateService<IProjectReferenceProvider>(_serviceProvider, typeInfo);
-                   });
+                    {
+                        return LanguageServices.CreateService<IProjectReferenceProvider>(_serviceProvider, typeInfo);
+                    });
 
                     Trace.TraceInformation("[{0}]: GetProjectReference({1}, {2}, {3})", project.LanguageServices.ProjectReferenceProvider.TypeName, name, targetFramework, configuration);
 
+                    // Get the exports for the project dependencies
+                    var projectExport = new Lazy<ILibraryExport>(() => ProjectExportProviderHelper.GetExportsRecursive(
+                        libraryManager,
+                        exportProvider,
+                        project.Name,
+                        targetFramework,
+                        configuration,
+                        dependenciesOnly: true));
+
                     // Resolve the project export
                     IMetadataProjectReference projectReference = projectReferenceProvider.GetProjectReference(
-                       project,
-                       targetFramework,
-                       configuration,
-                       projectExport.MetadataReferences,
-                       projectExport.SourceReferences,
-                       metadataReferences);
+                        project,
+                        targetFramework,
+                        configuration,
+                        () => projectExport.Value,
+                        metadataReferences);
 
                     metadataReferences.Add(projectReference);
 

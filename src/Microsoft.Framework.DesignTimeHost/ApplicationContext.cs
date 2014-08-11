@@ -387,22 +387,22 @@ namespace Microsoft.Framework.DesignTimeHost
 
         private bool IsDifferent(ProjectInformationMessage local, ProjectInformationMessage remote)
         {
-            return !Object.Equals(local, remote);
+            return !object.Equals(local, remote);
         }
 
         private bool IsDifferent(ReferencesMessage local, ReferencesMessage remote)
         {
-            return !Object.Equals(local, remote);
+            return !object.Equals(local, remote);
         }
 
         private bool IsDifferent(DiagnosticsMessage local, DiagnosticsMessage remote)
         {
-            return !Object.Equals(local, remote);
+            return !object.Equals(local, remote);
         }
 
         private bool IsDifferent(SourcesMessage local, SourcesMessage remote)
         {
-            return !Object.Equals(local, remote);
+            return !object.Equals(local, remote);
         }
 
         public State Initialize(string appPath, FrameworkName targetFramework, string configuration)

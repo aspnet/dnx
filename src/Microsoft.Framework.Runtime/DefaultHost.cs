@@ -3,6 +3,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -13,6 +14,12 @@ using Microsoft.Framework.Runtime.Common.DependencyInjection;
 using Microsoft.Framework.Runtime.FileSystem;
 using Microsoft.Framework.Runtime.Infrastructure;
 using Microsoft.Framework.Runtime.Loader;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+using System.Threading;
+using System.Net;
+using System.Net.Sockets;
+using System.Threading.Tasks;
 
 namespace Microsoft.Framework.Runtime
 {
@@ -125,8 +132,8 @@ namespace Microsoft.Framework.Runtime
         private void Initialize(DefaultHostOptions options, IServiceProvider hostServices)
         {
             _applicationHostContext = new ApplicationHostContext(
-                hostServices, 
-                _projectDirectory, 
+                hostServices,
+                _projectDirectory,
                 options.PackageDirectory,
                 options.Configuration,
                 _targetFramework);
@@ -163,6 +170,21 @@ namespace Microsoft.Framework.Runtime
             // TODO: Get rid of this and just use the IFileWatcher
             _applicationHostContext.AddService(typeof(IFileMonitor), _watcher);
             _applicationHostContext.AddService(typeof(IFileWatcher), _watcher);
+
+            if (options.CompilationServerPort.HasValue)
+            {
+                var socket = new Socket(SocketType.Stream, ProtocolType.Tcp);
+                socket.Connect(new IPEndPoint(IPAddress.Loopback, options.CompilationServerPort.Value));
+
+                var networkStream = new NetworkStream(socket);
+
+                _applicationHostContext.AddService(typeof(IDesignTimeHostCompiler),
+                    new DesignTimeHostCompiler(networkStream));
+
+                // Change the project reference provider
+                Project.DefaultLanguageServicesAssembly = typeof(DefaultHost).GetTypeInfo().Assembly.GetName().Name;
+                Project.DefaultProjectReferenceProviderType = typeof(DesignTimeHostProjectReferenceProvider).FullName;
+            }
 
             CallContextServiceLocator.Locator.ServiceProvider = ServiceProvider;
         }
