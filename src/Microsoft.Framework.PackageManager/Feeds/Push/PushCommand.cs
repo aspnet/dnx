@@ -18,11 +18,14 @@ namespace Microsoft.Framework.PackageManager.Feeds.Push
 
         public string RemotePackages { get; private set; }
 
+        public string RemoteKey { get; private set; }
+
         public bool Execute()
         {
             Report = Options.Report;
             LocalPackages = Options.LocalPackages ?? Directory.GetCurrentDirectory();
             RemotePackages = Options.RemotePackages;
+            RemoteKey = Options.RemoteKey ?? "";
 
             Options.Report.WriteLine(
                 "Pushing artifacts");
@@ -36,8 +39,13 @@ namespace Microsoft.Framework.PackageManager.Feeds.Push
             var sw = new Stopwatch();
             sw.Start();
 
-            IRepositoryPublisher local = new FileSystemRepositoryPublisher(LocalPackages);
-            IRepositoryPublisher remote = new FileSystemRepositoryPublisher(RemotePackages);
+            IRepositoryPublisher local = new FileSystemRepositoryPublisher(
+                LocalPackages);
+
+            IRepositoryPublisher remote = RepositoryPublishers.Create(
+                RemotePackages,
+                RemoteKey,
+                Report);
 
             // Recall what index to start pushing to remote
             var transmitRecord = FillOut(local.GetRepositoryTransmitRecord());
@@ -59,7 +67,7 @@ namespace Microsoft.Framework.PackageManager.Feeds.Push
             else
             {
                 Report.WriteLine(
-                    "Pushing {0} added and {0} removed artifacts",
+                    "Pushing {0} added and {1} removed artifacts",
                     changeRecord.Add.Count().ToString().Bold(),
                     changeRecord.Remove.Count().ToString().Bold());
 
