@@ -13,7 +13,6 @@ using Microsoft.Framework.DesignTimeHost.Models.IncomingMessages;
 using Microsoft.Framework.DesignTimeHost.Models.OutgoingMessages;
 using Microsoft.Framework.Runtime;
 using Microsoft.Framework.Runtime.Common.DependencyInjection;
-using Microsoft.Framework.Runtime.FileSystem;
 using Microsoft.Framework.Runtime.Roslyn;
 using Microsoft.Framework.TestAdapter;
 using Newtonsoft.Json.Linq;
@@ -36,6 +35,8 @@ namespace Microsoft.Framework.DesignTimeHost
             public Project Project { get; set; }
 
             public ProjectMetadataProvider MetadataProvider { get; set; }
+
+            public ILibraryManager LibraryManager { get; set; }
 
             public IDictionary<string, ReferenceDescription> Dependencies { get; set; }
 
@@ -92,6 +93,8 @@ namespace Microsoft.Framework.DesignTimeHost
         public int Id { get; private set; }
 
         public string ApplicationPath { get { return _appPath.Value; } }
+
+        public World Local { get { return _local; } }
 
         public event Action<Message> OnTransmit;
 
@@ -213,7 +216,6 @@ namespace Microsoft.Framework.DesignTimeHost
                         _filesChanged.Value = default(Nada);
                     }
                     break;
-
                 case "TestDiscovery":
                     {
                         DiscoverTests();
@@ -240,7 +242,7 @@ namespace Microsoft.Framework.DesignTimeHost
         {
             if (_appPath.WasAssigned ||
                 _targetFramework.WasAssigned ||
-                _configuration.WasAssigned ||
+                _configuration.WasAssigned || 
                 _filesChanged.WasAssigned)
             {
                 _appPath.ClearAssigned();
@@ -310,6 +312,36 @@ namespace Microsoft.Framework.DesignTimeHost
                 _local.Sources = new SourcesMessage
                 {
                     Files = metadata.SourceFiles
+                };
+
+                var export = state.LibraryManager.GetLibraryExport(state.Project.Name);
+                var projectReference = export.MetadataReferences.OfType<IMetadataProjectReference>()
+                                                                .First();
+
+                var embeddedReferences = export.MetadataReferences.OfType<IMetadataEmbeddedReference>().Select(r =>
+                {
+                    return new
+                    {
+                        Name = r.Name,
+                        Bytes = r.Contents
+                    };
+                })
+                .ToDictionary(a => a.Name, a => a.Bytes);
+
+
+                var engine = new NonLoadingLoaderEngine();
+
+                if (!metadata.Errors.Any())
+                {
+                    projectReference.Load(engine);
+                }
+
+                _local.CompiledBits = new CompileResponse
+                {
+                    AssemblyBytes = engine.AssemblyBytes ?? new byte[0],
+                    PdbBytes = engine.PdbBytes ?? new byte[0],
+                    AssemblyPath = engine.AssemblyPath,
+                    EmbeddedReferences = embeddedReferences
                 };
             }
         }
@@ -430,6 +462,7 @@ namespace Microsoft.Framework.DesignTimeHost
                 return state;
             }
 
+            state.LibraryManager = (ILibraryManager)applicationHostContext.ServiceProvider.GetService(typeof(ILibraryManager));
             state.MetadataProvider = applicationHostContext.CreateInstance<ProjectMetadataProvider>();
             state.Project = project;
             state.FrameworkResolver = applicationHostContext.FrameworkReferenceResolver;
