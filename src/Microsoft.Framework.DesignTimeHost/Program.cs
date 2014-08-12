@@ -13,13 +13,11 @@ namespace Microsoft.Framework.DesignTimeHost
 {
     public class Program
     {
-        private readonly IAssemblyLoaderEngine _loaderEngine;
         private readonly IServiceProvider _services;
 
-        public Program(IServiceProvider services, IAssemblyLoaderEngine loaderEngine)
+        public Program(IServiceProvider services)
         {
             _services = services;
-            _loaderEngine = loaderEngine;
         }
 
         public void Main(string[] args)
