@@ -30,7 +30,6 @@ namespace Microsoft.Framework.Runtime.Roslyn.Tests
             Assert.Equal(new[] { "DEBUG", "TRACE" }, settings.Defines);
             Assert.Equal(LanguageVersion.Experimental, settings.LanguageVersion);
             Assert.IsType<DesktopAssemblyIdentityComparer>(settings.CompilationOptions.AssemblyIdentityComparer);
-            Assert.Equal(DebugInformationKind.Full, settings.CompilationOptions.DebugInformationKind);
             Assert.Equal(OutputKind.DynamicallyLinkedLibrary, settings.CompilationOptions.OutputKind);
         }
 
@@ -114,12 +113,10 @@ namespace Microsoft.Framework.Runtime.Roslyn.Tests
             Assert.Equal(new[] { "DEBUG", "TRACE", "X", "y", "NET45" }, net45Options.Defines);
             Assert.Equal(Platform.X86, net45Options.CompilationOptions.Platform);
             Assert.Equal(ReportDiagnostic.Error, net45Options.CompilationOptions.GeneralDiagnosticOption);
-            Assert.True(net45Options.CompilationOptions.Optimize);
-            Assert.Equal(DebugInformationKind.None, net45Options.CompilationOptions.DebugInformationKind);
+            Assert.Equal(OptimizationLevel.Release, net45Options.CompilationOptions.OptimizationLevel);
 
             Assert.Equal(new[] { "DEBUG", "TRACE", "K10" }, k10Options.Defines);
             Assert.Equal(ReportDiagnostic.Error, k10Options.CompilationOptions.GeneralDiagnosticOption);
-            Assert.Equal(DebugInformationKind.PdbOnly, k10Options.CompilationOptions.DebugInformationKind);
         }
 
         [Fact]
@@ -145,7 +142,6 @@ namespace Microsoft.Framework.Runtime.Roslyn.Tests
             Assert.False(net451Options.CompilationOptions.AllowUnsafe);
             Assert.Equal(new[] { "DEBUG", "TRACE" }, net451Options.Defines);
             Assert.Equal(Platform.AnyCpu, net451Options.CompilationOptions.Platform);
-            Assert.Equal(DebugInformationKind.Full, net451Options.CompilationOptions.DebugInformationKind);
         }
 
         [Fact]
@@ -169,7 +165,6 @@ namespace Microsoft.Framework.Runtime.Roslyn.Tests
             Assert.True(k10Options.CompilationOptions.AllowUnsafe);
             Assert.Equal(new[] { "DEBUG", "TRACE", "K10" }, k10Options.Defines);
             Assert.Equal(Platform.AnyCpu, k10Options.CompilationOptions.Platform);
-            Assert.Equal(DebugInformationKind.Full, k10Options.CompilationOptions.DebugInformationKind);
         }
     }
 
