@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading.Tasks;
@@ -61,17 +62,53 @@ namespace Microsoft.Framework.DesignTimeHost
 
                 Console.WriteLine("Client accepted {0}", acceptSocket.LocalEndPoint);
 
-                var connection = new ConnectionContext(contexts, _services, cache, new NetworkStream(acceptSocket), hostId);
+                var stream = new NetworkStream(acceptSocket);
+                var queue = new ProcessingQueue(stream);
+                var connection = new ConnectionContext(contexts, _services, cache, queue, hostId);
 
-                connection.Start();
+                queue.OnReceive += message =>
+                {
+                    // Enumerates all project contexts and return them to the
+                    // sender
+                    if (message.MessageType == "EnumerateProjectContexts")
+                    {
+                        WriteProjectContexts(queue, contexts);
+                    }
+                    else
+                    {
+                        // Otherwise it's a context specific message
+                        connection.OnReceive(message);
+                    }
+                };
+
+                queue.Start();
             }
         }
-
 
         private static Task<Socket> AcceptAsync(Socket socket)
         {
             return Task.Factory.FromAsync((cb, state) => socket.BeginAccept(cb, state), ar => socket.EndAccept(ar), null);
         }
 
+        private static void WriteProjectContexts(ProcessingQueue queue, IDictionary<int, ApplicationContext> contexts)
+        {
+            var projects = contexts.Values.Select(p => new
+            {
+                Id = p.Id,
+                ProjectPath = p.ApplicationPath
+            })
+            .ToList();
+
+            queue.Send(writer =>
+            {
+                writer.Write("ProjectContexts");
+                writer.Write(projects.Count);
+                for (int i = 0; i < projects.Count; i++)
+                {
+                    writer.Write(projects[i].ProjectPath);
+                    writer.Write(projects[i].Id);
+                }
+            });
+        }
     }
 }

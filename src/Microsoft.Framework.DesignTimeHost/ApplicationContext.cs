@@ -23,52 +23,6 @@ namespace Microsoft.Framework.DesignTimeHost
     public class ApplicationContext
     {
         private readonly IServiceProvider _hostServices;
-
-        public class State
-        {
-            public string Path { get; set; }
-
-            public FrameworkName TargetFramework { get; set; }
-
-            public string Configuration { get; set; }
-
-            public Project Project { get; set; }
-
-            public ProjectMetadataProvider MetadataProvider { get; set; }
-
-            public ILibraryManager LibraryManager { get; set; }
-
-            public IDictionary<string, ReferenceDescription> Dependencies { get; set; }
-
-            public FrameworkReferenceResolver FrameworkResolver { get; set; }
-        }
-
-        public class Trigger<TValue>
-        {
-            private TValue _value;
-
-            public bool WasAssigned { get; private set; }
-
-            public void ClearAssigned()
-            {
-                WasAssigned = false;
-            }
-
-            public TValue Value
-            {
-                get { return _value; }
-                set
-                {
-                    WasAssigned = true;
-                    _value = value;
-                }
-            }
-        }
-
-        public struct Nada
-        {
-        }
-
         private readonly ICache _cache;
         private readonly Queue<Message> _inbox = new Queue<Message>();
         private readonly object _processingLock = new object();
@@ -83,20 +37,20 @@ namespace Microsoft.Framework.DesignTimeHost
         private World _remote = new World();
         private World _local = new World();
 
-        public ApplicationContext(IServiceProvider services, int id, ICache cache)
+        private ConnectionContext _initializedContext;
+        private readonly List<CompiledAssemblyState> _waitingForCompiledAssemblies = new List<CompiledAssemblyState>();
+        private readonly List<ConnectionContext> _waitingForDiagnostics = new List<ConnectionContext>();
+
+        public ApplicationContext(IServiceProvider services, ICache cache, int id)
         {
             _hostServices = services;
-            Id = id;
             _cache = cache;
+            Id = id;
         }
 
         public int Id { get; private set; }
 
         public string ApplicationPath { get { return _appPath.Value; } }
-
-        public World Local { get { return _local; } }
-
-        public event Action<Message> OnTransmit;
 
         public void OnReceive(Message message)
         {
@@ -129,13 +83,15 @@ namespace Microsoft.Framework.DesignTimeHost
             }
             catch (Exception ex)
             {
+                Trace.TraceError("[ApplicationContext]: Error occured: {0}", ex);
+
                 // Unhandled errors
                 var error = new ErrorMessage
                 {
                     Message = ex.ToString()
                 };
 
-                OnTransmit(new Message
+                _initializedContext.Transmit(new Message
                 {
                     ContextId = Id,
                     MessageType = "Error",
@@ -187,11 +143,21 @@ namespace Microsoft.Framework.DesignTimeHost
             {
                 case "Initialize":
                     {
-                        var data = message.Payload.ToObject<InitializeMessage>();
-                        _appPath.Value = data.ProjectFolder;
-                        _configuration.Value = data.Configuration ?? "Debug";
+                        // This should only be sent once
+                        if (_initializedContext == null)
+                        {
+                            _initializedContext = message.Sender;
 
-                        SetTargetFramework(data.TargetFramework);
+                            var data = message.Payload.ToObject<InitializeMessage>();
+                            _appPath.Value = data.ProjectFolder;
+                            _configuration.Value = data.Configuration ?? "Debug";
+
+                            SetTargetFramework(data.TargetFramework);
+                        }
+                        else
+                        {
+                            Trace.TraceInformation("[ApplicationContext]: Received Initialize message more than once for {0}", _appPath.Value);
+                        }
                     }
                     break;
                 case "Teardown":
@@ -214,6 +180,19 @@ namespace Microsoft.Framework.DesignTimeHost
                 case "FilesChanged":
                     {
                         _filesChanged.Value = default(Nada);
+                    }
+                    break;
+                case "GetCompiledAssembly":
+                    {
+                        _waitingForCompiledAssemblies.Add(new CompiledAssemblyState
+                        {
+                            Connection = message.Sender,
+                        });
+                    }
+                    break;
+                case "GetDiagnostics":
+                    {
+                        _waitingForDiagnostics.Add(message.Sender);
                     }
                     break;
                 case "TestDiscovery":
@@ -242,7 +221,7 @@ namespace Microsoft.Framework.DesignTimeHost
         {
             if (_appPath.WasAssigned ||
                 _targetFramework.WasAssigned ||
-                _configuration.WasAssigned || 
+                _configuration.WasAssigned ||
                 _filesChanged.WasAssigned)
             {
                 _appPath.ClearAssigned();
@@ -336,13 +315,21 @@ namespace Microsoft.Framework.DesignTimeHost
                     projectReference.Load(engine);
                 }
 
-                _local.CompiledBits = new CompileResponse
+                _local.Compiled = new CompileMessage
                 {
                     AssemblyBytes = engine.AssemblyBytes ?? new byte[0],
                     PdbBytes = engine.PdbBytes ?? new byte[0],
                     AssemblyPath = engine.AssemblyPath,
                     EmbeddedReferences = embeddedReferences
                 };
+
+                foreach (var waitingForCompiledAssembly in _waitingForCompiledAssemblies)
+                {
+                    if (waitingForCompiledAssembly.AssemblySent)
+                    {
+                        waitingForCompiledAssembly.ProjectChanged = true;
+                    }
+                }
             }
         }
 
@@ -364,7 +351,7 @@ namespace Microsoft.Framework.DesignTimeHost
             {
                 Trace.TraceInformation("[ApplicationContext]: OnTransmit(Configurations)");
 
-                OnTransmit(new Message
+                _initializedContext.Transmit(new Message
                 {
                     ContextId = Id,
                     MessageType = "Configurations",
@@ -378,7 +365,7 @@ namespace Microsoft.Framework.DesignTimeHost
             {
                 Trace.TraceInformation("[ApplicationContext]: OnTransmit(References)");
 
-                OnTransmit(new Message
+                _initializedContext.Transmit(new Message
                 {
                     ContextId = Id,
                     MessageType = "References",
@@ -392,7 +379,7 @@ namespace Microsoft.Framework.DesignTimeHost
             {
                 Trace.TraceInformation("[ApplicationContext]: OnTransmit(Diagnostics)");
 
-                OnTransmit(new Message
+                _initializedContext.Transmit(new Message
                 {
                     ContextId = Id,
                     MessageType = "Diagnostics",
@@ -406,7 +393,7 @@ namespace Microsoft.Framework.DesignTimeHost
             {
                 Trace.TraceInformation("[ApplicationContext]: OnTransmit(Sources)");
 
-                OnTransmit(new Message
+                _initializedContext.Transmit(new Message
                 {
                     ContextId = Id,
                     MessageType = "Sources",
@@ -415,6 +402,72 @@ namespace Microsoft.Framework.DesignTimeHost
 
                 _remote.Sources = _local.Sources;
             }
+
+            for (int i = _waitingForCompiledAssemblies.Count - 1; i >= 0; i--)
+            {
+                var waitingForCompiledAssembly = _waitingForCompiledAssemblies[i];
+
+                if (!waitingForCompiledAssembly.AssemblySent)
+                {
+                    Trace.TraceInformation("[ApplicationContext]: OnTransmit(Assembly)");
+
+                    waitingForCompiledAssembly.Connection.Transmit(writer =>
+                    {
+                        writer.Write("Assembly");
+                        writer.Write(Id);
+                        writer.Write(_local.Diagnostics.Warnings.Count);
+                        foreach (var warning in _local.Diagnostics.Warnings)
+                        {
+                            writer.Write(warning);
+                        }
+                        writer.Write(_local.Diagnostics.Errors.Count);
+                        foreach (var error in _local.Diagnostics.Errors)
+                        {
+                            writer.Write(error);
+                        }
+                        writer.Write(_local.Compiled.EmbeddedReferences.Count);
+                        foreach (var pair in _local.Compiled.EmbeddedReferences)
+                        {
+                            writer.Write(pair.Key);
+                            writer.Write(pair.Value.Length);
+                            writer.Write(pair.Value);
+                        }
+                        writer.Write(_local.Compiled.AssemblyBytes.Length);
+                        writer.Write(_local.Compiled.AssemblyBytes);
+                        writer.Write(_local.Compiled.PdbBytes.Length);
+                        writer.Write(_local.Compiled.PdbBytes);
+                    });
+
+                    waitingForCompiledAssembly.AssemblySent = true;
+                }
+
+                if (waitingForCompiledAssembly.ProjectChanged && !waitingForCompiledAssembly.ProjectChangedSent)
+                {
+                    Trace.TraceInformation("[ApplicationContext]: OnTransmit(ProjectChanged)");
+
+                    waitingForCompiledAssembly.Connection.Transmit(writer =>
+                    {
+                        writer.Write("ProjectChanged");
+                        writer.Write(Id);
+                    });
+
+                    waitingForCompiledAssembly.ProjectChangedSent = true;
+
+                    _waitingForCompiledAssemblies.Remove(waitingForCompiledAssembly);
+                }
+            }
+
+            foreach (var connection in _waitingForDiagnostics)
+            {
+                connection.Transmit(new Message
+                {
+                    ContextId = Id,
+                    MessageType = "Diagnostics",
+                    Payload = JToken.FromObject(_local.Diagnostics)
+                });
+            }
+
+            _waitingForDiagnostics.Clear();
         }
 
         private bool IsDifferent(ProjectInformationMessage local, ProjectInformationMessage remote)
@@ -437,7 +490,7 @@ namespace Microsoft.Framework.DesignTimeHost
             return !object.Equals(local, remote);
         }
 
-        public State Initialize(string appPath, FrameworkName targetFramework, string configuration)
+        private State Initialize(string appPath, FrameworkName targetFramework, string configuration)
         {
             var state = new State
             {
@@ -511,7 +564,7 @@ namespace Microsoft.Framework.DesignTimeHost
             {
                 // No test command means no tests.
                 Trace.TraceInformation("[ApplicationContext]: OnTransmit(ExecuteTests)");
-                OnTransmit(new Message
+                _initializedContext.Transmit(new Message
                 {
                     ContextId = Id,
                     MessageType = "TestExecution.Response",
@@ -546,7 +599,7 @@ namespace Microsoft.Framework.DesignTimeHost
             }
 
             Trace.TraceInformation("[ApplicationContext]: OnTransmit(ExecuteTests)");
-            OnTransmit(new Message
+            _initializedContext.Transmit(new Message
             {
                 ContextId = Id,
                 MessageType = "TestExecution.Response",
@@ -571,7 +624,7 @@ namespace Microsoft.Framework.DesignTimeHost
             {
                 // No test command means no tests.
                 Trace.TraceInformation("[ApplicationContext]: OnTransmit(DiscoverTests)");
-                OnTransmit(new Message
+                _initializedContext.Transmit(new Message
                 {
                     ContextId = Id,
                     MessageType = "TestDiscovery.Response",
@@ -596,7 +649,7 @@ namespace Microsoft.Framework.DesignTimeHost
             }
 
             Trace.TraceInformation("[ApplicationContext]: OnTransmit(DiscoverTests)");
-            OnTransmit(new Message
+            _initializedContext.Transmit(new Message
             {
                 ContextId = Id,
                 MessageType = "TestDiscovery.Response",
@@ -619,7 +672,7 @@ namespace Microsoft.Framework.DesignTimeHost
             catch (Exception ex)
             {
                 Trace.TraceError("[ApplicationContext]: ExecutCommandWithServices" + Environment.NewLine + ex.ToString());
-                OnTransmit(new Message()
+                _initializedContext.Transmit(new Message()
                 {
                     ContextId = Id,
                     MessageType = "Error",
@@ -636,7 +689,63 @@ namespace Microsoft.Framework.DesignTimeHost
         public void Send(Message message)
         {
             message.ContextId = Id;
-            OnTransmit(message);
+            _initializedContext.Transmit(message);
+        }
+
+        private class Trigger<TValue>
+        {
+            private TValue _value;
+
+            public bool WasAssigned { get; private set; }
+
+            public void ClearAssigned()
+            {
+                WasAssigned = false;
+            }
+
+            public TValue Value
+            {
+                get { return _value; }
+                set
+                {
+                    WasAssigned = true;
+                    _value = value;
+                }
+            }
+        }
+
+        private struct Nada
+        {
+        }
+
+        private class State
+        {
+            public string Path { get; set; }
+
+            public FrameworkName TargetFramework { get; set; }
+
+            public string Configuration { get; set; }
+
+            public Project Project { get; set; }
+
+            public ProjectMetadataProvider MetadataProvider { get; set; }
+
+            public ILibraryManager LibraryManager { get; set; }
+
+            public IDictionary<string, ReferenceDescription> Dependencies { get; set; }
+
+            public FrameworkReferenceResolver FrameworkResolver { get; set; }
+        }
+
+        private class CompiledAssemblyState
+        {
+            public ConnectionContext Connection { get; set; }
+
+            public bool AssemblySent { get; set; }
+
+            public bool ProjectChanged { get; set; }
+
+            public bool ProjectChangedSent { get; set; }
         }
     }
 }

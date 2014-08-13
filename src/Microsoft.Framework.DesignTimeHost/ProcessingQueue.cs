@@ -2,14 +2,13 @@
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Threading;
 using Microsoft.Framework.DesignTimeHost.Models;
 using Newtonsoft.Json;
 
-namespace Communication
+namespace Microsoft.Framework.DesignTimeHost
 {
     public class ProcessingQueue
     {
@@ -30,18 +29,43 @@ namespace Communication
             new Thread(ReceiveMessages).Start();
         }
 
-        public void WriteCustom(Action<BinaryWriter> write)
+        public bool Send(Action<BinaryWriter> write)
         {
-            write(_writer);
+            try
+            {
+                lock (_writer)
+                {
+                    write(_writer);
+                    return true;
+                }
+            }
+            catch (Exception ex)
+            {
+                Trace.TraceInformation("[ProcessingQueue]: Error sending {0}", ex);
+            }
+
+            return false;
         }
 
-        public void Post(Message message)
+        public bool Send(Message message)
         {
             lock (_writer)
             {
-                Trace.TraceInformation("[ProcessingQueue]: Post({0})", message.MessageType);
-                _writer.Write(JsonConvert.SerializeObject(message));
+                try
+                {
+                    Trace.TraceInformation("[ProcessingQueue]: Send({0})", message.MessageType);
+
+                    _writer.Write(JsonConvert.SerializeObject(message));
+
+                    return true;
+                }
+                catch (Exception ex)
+                {
+                    Trace.TraceInformation("[ProcessingQueue]: Error sending {0}", ex);
+                }
             }
+
+            return false;
         }
 
         private void ReceiveMessages()
@@ -57,7 +81,7 @@ namespace Communication
             }
             catch (Exception ex)
             {
-                Console.WriteLine(ex.Message);
+                Trace.TraceInformation("[ProcessingQueue]: Error occurred: {0}", ex);
             }
         }
     }

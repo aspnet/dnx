@@ -20,12 +20,9 @@ namespace Microsoft.Framework.Runtime
             Func<ILibraryExport> referenceResolver,
             IList<IMetadataReference> outgoingReferences)
         {
-            var task = _compiler.Compile(new CompileRequest
-            {
-                ProjectPath = project.ProjectDirectory,
-                Configuration = configuration,
-                TargetFramework = targetFramework.ToString()
-            });
+            // The target framework and configuration are assumed to be correct
+            // in the design time process
+            var task = _compiler.Compile(project.ProjectDirectory);
 
             foreach (var embeddedReference in task.Result.EmbeddedReferences)
             {

@@ -2,7 +2,6 @@
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 using Microsoft.Framework.DesignTimeHost.Models.OutgoingMessages;
-using Microsoft.Framework.Runtime;
 
 namespace Microsoft.Framework.DesignTimeHost.Models
 {
@@ -12,7 +11,6 @@ namespace Microsoft.Framework.DesignTimeHost.Models
         public ReferencesMessage References { get; set; }
         public DiagnosticsMessage Diagnostics { get; set; }
         public SourcesMessage Sources { get; set; }
-
-        public CompileResponse CompiledBits { get; set; }
+        public CompileMessage Compiled { get; set; }
     }
 }

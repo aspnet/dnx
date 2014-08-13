@@ -3,7 +3,6 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
-using Newtonsoft.Json.Linq;
 
 namespace Microsoft.Framework.Runtime
 {
@@ -13,37 +12,37 @@ namespace Microsoft.Framework.Runtime
         private readonly ConcurrentDictionary<int, TaskCompletionSource<CompileResponse>> _cache = new ConcurrentDictionary<int, TaskCompletionSource<CompileResponse>>();
         private readonly TaskCompletionSource<Dictionary<string, int>> _projectContexts = new TaskCompletionSource<Dictionary<string, int>>();
 
-        public DesignTimeHostCompiler(Stream stream)
+        public DesignTimeHostCompiler(IApplicationShutdown shutdown, Stream stream)
         {
             _queue = new ProcessingQueue(stream);
-            _queue.OnReceive += OnMessage;
+            _queue.ProjectCompiled += OnProjectCompiled;
             _queue.ProjectsInitialized += ProjectContextsInitialized;
+            _queue.ProjectChanged += _ => shutdown.RequestShutdown();
             _queue.Start();
 
-            _queue.Post(new DesignTimeMessage
+            _queue.Send(new DesignTimeMessage
             {
                 HostId = "Application",
                 MessageType = "EnumerateProjectContexts"
             });
         }
 
-        public async Task<CompileResponse> Compile(CompileRequest request)
+        public async Task<CompileResponse> Compile(string projectPath)
         {
             var contexts = await _projectContexts.Task;
 
             int contextId;
-            if (!contexts.TryGetValue(request.ProjectPath, out contextId))
+            if (!contexts.TryGetValue(projectPath, out contextId))
             {
                 // This should never happen
                 throw new InvalidOperationException();
             }
 
-            _queue.Post(new DesignTimeMessage
+            _queue.Send(new DesignTimeMessage
             {
                 HostId = "Application",
                 MessageType = "GetCompiledAssembly",
-                ContextId = contextId,
-                Payload = JToken.FromObject(request)
+                ContextId = contextId
             });
 
             return await _cache.GetOrAdd(contextId, _ => new TaskCompletionSource<CompileResponse>()).Task;
@@ -54,7 +53,7 @@ namespace Microsoft.Framework.Runtime
             _projectContexts.TrySetResult(projectContexts);
         }
 
-        private void OnMessage(int contextId, CompileResponse response)
+        private void OnProjectCompiled(int contextId, CompileResponse response)
         {
             _cache.AddOrUpdate(contextId,
                 _ =>

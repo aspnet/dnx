@@ -9,9 +9,15 @@ namespace Microsoft.Framework.DesignTimeHost.Models
     public class Message
     {
         public string HostId { get; set; }
+
         public string MessageType { get; set; }
+
         public int ContextId { get; set; }
+
         public JToken Payload { get; set; }
+
+        [JsonIgnore]
+        public ConnectionContext Sender { get; set; }
 
         public override string ToString()
         {

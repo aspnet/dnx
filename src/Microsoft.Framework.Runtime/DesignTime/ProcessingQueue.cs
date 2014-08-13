@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Collections.Generic;
 using System.IO;
 using System.Threading;
@@ -11,8 +12,9 @@ namespace Microsoft.Framework.Runtime
         private readonly BinaryReader _reader;
         private readonly BinaryWriter _writer;
 
-        public event Action<int, CompileResponse> OnReceive;
         public event Action<Dictionary<string, int>> ProjectsInitialized;
+        public event Action<int, CompileResponse> ProjectCompiled;
+        public event Action<int> ProjectChanged;
 
         public ProcessingQueue(Stream stream)
         {
@@ -25,7 +27,7 @@ namespace Microsoft.Framework.Runtime
             new Thread(ReceiveMessages).Start();
         }
 
-        public void Post(DesignTimeMessage message)
+        public void Send(DesignTimeMessage message)
         {
             lock (_writer)
             {
@@ -40,8 +42,7 @@ namespace Microsoft.Framework.Runtime
                 while (true)
                 {
                     var messageType = _reader.ReadString();
-
-                    if (messageType == "GetCompiledAssembly")
+                    if (messageType == "Assembly")
                     {
                         var compileResponse = new CompileResponse();
                         var id = _reader.ReadInt32();
@@ -73,9 +74,9 @@ namespace Microsoft.Framework.Runtime
                         var pdbBytesLength = _reader.ReadInt32();
                         compileResponse.PdbBytes = _reader.ReadBytes(pdbBytesLength);
 
-                        OnReceive(id, compileResponse);
+                        ProjectCompiled(id, compileResponse);
                     }
-                    else if (messageType == "EnumerateProjectContexts")
+                    else if (messageType == "ProjectContexts")
                     {
                         int count = _reader.ReadInt32();
                         var projectContexts = new Dictionary<string, int>();
@@ -89,11 +90,16 @@ namespace Microsoft.Framework.Runtime
 
                         ProjectsInitialized(projectContexts);
                     }
+                    else if (messageType == "ProjectChanged")
+                    {
+                        var id = _reader.ReadInt32();
+                        ProjectChanged(id);
+                    }
                 }
             }
             catch (Exception ex)
             {
-                Console.WriteLine(ex.Message);
+                Trace.TraceError("[{0}]: Exception occurred: {1}", GetType().Name, ex);
             }
         }
     }
