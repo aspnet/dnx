@@ -9,7 +9,7 @@ namespace Microsoft.Framework.Runtime
     public class DesignTimeHostCompiler : IDesignTimeHostCompiler
     {
         private readonly ProcessingQueue _queue;
-        private readonly ConcurrentDictionary<int, TaskCompletionSource<CompileResponse>> _cache = new ConcurrentDictionary<int, TaskCompletionSource<CompileResponse>>();
+        private readonly ConcurrentDictionary<int, TaskCompletionSource<CompileResponse>> _compileResponses = new ConcurrentDictionary<int, TaskCompletionSource<CompileResponse>>();
         private readonly TaskCompletionSource<Dictionary<string, int>> _projectContexts = new TaskCompletionSource<Dictionary<string, int>>();
 
         public DesignTimeHostCompiler(IApplicationShutdown shutdown, Stream stream)
@@ -18,6 +18,7 @@ namespace Microsoft.Framework.Runtime
             _queue.ProjectCompiled += OnProjectCompiled;
             _queue.ProjectsInitialized += ProjectContextsInitialized;
             _queue.ProjectChanged += _ => shutdown.RequestShutdown();
+            _queue.Closed += OnClosed;
             _queue.Start();
 
             _queue.Send(new DesignTimeMessage
@@ -45,7 +46,16 @@ namespace Microsoft.Framework.Runtime
                 ContextId = contextId
             });
 
-            return await _cache.GetOrAdd(contextId, _ => new TaskCompletionSource<CompileResponse>()).Task;
+            return await _compileResponses.GetOrAdd(contextId, _ => new TaskCompletionSource<CompileResponse>()).Task;
+        }
+
+        private void OnClosed()
+        {
+            // Cancel all pending responses
+            foreach (var q in _compileResponses)
+            {
+                q.Value.TrySetCanceled();
+            }
         }
 
         private void ProjectContextsInitialized(Dictionary<string, int> projectContexts)
@@ -55,7 +65,7 @@ namespace Microsoft.Framework.Runtime
 
         private void OnProjectCompiled(int contextId, CompileResponse response)
         {
-            _cache.AddOrUpdate(contextId,
+            _compileResponses.AddOrUpdate(contextId,
                 _ =>
                 {
                     var tcs = new TaskCompletionSource<CompileResponse>();
