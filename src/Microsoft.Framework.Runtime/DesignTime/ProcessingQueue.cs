@@ -15,6 +15,7 @@ namespace Microsoft.Framework.Runtime
         public event Action<Dictionary<string, int>> ProjectsInitialized;
         public event Action<int, CompileResponse> ProjectCompiled;
         public event Action<int> ProjectChanged;
+        public event Action Closed;
 
         public ProcessingQueue(Stream stream)
         {
@@ -100,6 +101,8 @@ namespace Microsoft.Framework.Runtime
             catch (Exception ex)
             {
                 Trace.TraceError("[{0}]: Exception occurred: {1}", GetType().Name, ex);
+                Closed();
+                return;
             }
         }
     }
