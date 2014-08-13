@@ -25,6 +25,8 @@ namespace Microsoft.Framework.Runtime.Roslyn
 
         public override int GetHashCode()
         {
+            // These objects are currently POCOs and we're overriding equals
+            // so that things like Enumerable.SequenceEqual just work.
             return base.GetHashCode();
         }
     }

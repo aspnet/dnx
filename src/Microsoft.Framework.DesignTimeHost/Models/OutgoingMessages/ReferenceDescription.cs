@@ -29,8 +29,11 @@ namespace Microsoft.Framework.DesignTimeHost.Models.OutgoingMessages
                    Type.Equals(other.Type) &&
                    Enumerable.SequenceEqual(Dependencies, other.Dependencies);
         }
+
         public override int GetHashCode()
         {
+            // These objects are currently POCOs and we're overriding equals
+            // so that things like Enumerable.SequenceEqual just work.
             return base.GetHashCode();
         }
     }

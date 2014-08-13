@@ -174,7 +174,7 @@ namespace Microsoft.Framework.Runtime
                 var networkStream = new NetworkStream(socket);
 
                 _applicationHostContext.AddService(typeof(IDesignTimeHostCompiler),
-                    new DesignTimeHostCompiler(networkStream));
+                    new DesignTimeHostCompiler(_shutdown, networkStream));
 
                 // Change the project reference provider
                 Project.DefaultLanguageServicesAssembly = typeof(DefaultHost).GetTypeInfo().Assembly.GetName().Name;
