@@ -404,14 +404,12 @@ namespace Microsoft.Framework.Runtime
             // Add default configurations
             _configurations["Debug"] = new CompilerOptions
             {
-                DebugSymbols = "full",
                 Defines = new[] { "DEBUG", "TRACE" },
                 Optimize = false
             };
 
             _configurations["Release"] = new CompilerOptions
             {
-                DebugSymbols = "pdbOnly",
                 Defines = new[] { "RELEASE", "TRACE" },
                 Optimize = true
             };
@@ -582,7 +580,6 @@ namespace Microsoft.Framework.Runtime
                 Platform = GetValue<string>(rawOptions, "platform"),
                 WarningsAsErrors = GetValue<bool?>(rawOptions, "warningsAsErrors"),
                 Optimize = GetValue<bool?>(rawOptions, "optimize"),
-                DebugSymbols = GetValue<string>(rawOptions, "debugSymbols"),
             };
 
             return options;
