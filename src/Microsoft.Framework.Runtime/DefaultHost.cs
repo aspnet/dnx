@@ -168,7 +168,8 @@ namespace Microsoft.Framework.Runtime
 
             if (options.CompilationServerPort.HasValue)
             {
-                var socket = new Socket(SocketType.Stream, ProtocolType.Tcp);
+                var socket = new Socket(AddressFamily.InterNetworkV6, SocketType.Stream, ProtocolType.Tcp);
+                socket.SetSocketOption(SocketOptionLevel.IPv6, SocketOptionName.IPv6Only, 0);
                 socket.Connect(new IPEndPoint(IPAddress.Loopback, options.CompilationServerPort.Value));
 
                 var networkStream = new NetworkStream(socket);
