@@ -23,6 +23,9 @@ namespace Microsoft.Framework.PackageManager.Feeds.Workers
             Func<string, bool> artifactPredicate);
 
         void ApplyFileChanges(
+            RepositoryChangeRecord changeRecord);
+
+        void ApplyFileChanges(
             RepositoryChangeRecord changeRecord,
             IRepositoryPublisher local);
 
@@ -114,8 +117,93 @@ namespace Microsoft.Framework.PackageManager.Feeds.Workers
                 createNew: false);
         }
 
+        public virtual void ApplyFileChanges(RepositoryChangeRecord changeRecord)
+        {
+            var alterations = changeRecord.Add
+                            .Concat(changeRecord.Remove)
+                            .Select(FirstTwoParts)
+                            .Distinct()
+                            .ToLookup(FirstPart);
+
+            foreach (var firstPart in alterations)
+            {
+                Report.WriteLine("Working with {0}", firstPart.Key.Bold());
+
+                var nameIndexPath = firstPart + "/$index.json";
+
+                var addVersions = new List<string>();
+                var removeVersions = new List<string>();
+
+                foreach (var firstTwoParts in firstPart)
+                {
+                    Report.WriteLine("Working with {0}", firstTwoParts.Bold());
+
+                    var addAssets = changeRecord.Add.SelectMany(After(firstTwoParts));
+                    var removeAssets = changeRecord.Remove.SelectMany(After(firstTwoParts));
+
+                    bool addedAllAssets;
+                    bool removedAllAssets;
+                    ChangeContents(
+                        firstTwoParts + "/$index.json", 
+                        addAssets, 
+                        removeAssets, 
+                        out addedAllAssets, 
+                        out removedAllAssets);
+
+                    if (addedAllAssets)
+                    {
+                        addVersions.Add(After(firstPart.Key)(firstTwoParts).Single());
+                    }
+                    else if (removedAllAssets)
+                    {
+                        removeVersions.Add(After(firstPart.Key)(firstTwoParts).Single());
+                    }
+                }
+
+                bool addedAllVersions;
+                bool removedAllVersions;
+                ChangeContents(
+                    firstPart.Key + "/$index.json",
+                    addVersions,
+                    removeVersions,
+                    out addedAllVersions,
+                    out removedAllVersions);
+            }
+        }
+
+        private void ChangeContents(
+            string nameVersionIndexPath, 
+            IEnumerable<string> addItems, 
+            IEnumerable<string> removeItems, 
+            out bool addedAll,
+            out bool removedAll)
+        {
+            var record = FillOut(GetFile<RepositoryContentsRecord>(nameVersionIndexPath));
+            var originalContents = record.Contents;
+
+            record.Contents = originalContents
+                .Except(removeItems)
+                .Union(addItems)
+                .Distinct()
+                .ToList();
+
+            addedAll = record.Contents.Any() && originalContents.Count() == 0;
+            removedAll = record.Contents.Count() == 0 && originalContents.Any();
+
+            if (removedAll)
+            {
+                RemoveArtifact(nameVersionIndexPath);
+            }
+            else
+            {
+                StoreFile(nameVersionIndexPath, record, createNew: false);
+            }
+        }
+
         public virtual void ApplyFileChanges(RepositoryChangeRecord changeRecord, IRepositoryPublisher source)
         {
+            ApplyFileChanges(changeRecord);
+
             foreach (var removeFile in changeRecord.Remove)
             {
                 RemoveArtifact(removeFile);
@@ -129,6 +217,41 @@ namespace Microsoft.Framework.PackageManager.Feeds.Workers
             }
         }
 
+        private Func<string, IEnumerable<string>> After(string startsWith)
+        {
+            return path =>
+            {
+                if (path.StartsWith(startsWith + "/", StringComparison.Ordinal))
+                {
+                    return new[] { path.Substring(startsWith.Length + 1) };
+                }
+                return Enumerable.Empty<string>();
+            };
+        }
+
+        private RepositoryContentsRecord FillOut(RepositoryContentsRecord record)
+        {
+            if (record == null)
+            {
+                record = new RepositoryContentsRecord();
+            }
+            if (record.Contents == null)
+            {
+                record.Contents = new List<string>();
+            }
+            return record;
+        }
+
+        private string FirstTwoParts(string path)
+        {
+            var parts = path.Split(new[] { '/' }, 3);
+            return string.Join("/", parts.Take(2));
+        }
+        private string FirstPart(string path)
+        {
+            var parts = path.Split(new[] { '/' }, 2);
+            return parts.First();
+        }
     }
 
     /// <summary>
@@ -280,6 +403,11 @@ namespace Microsoft.Framework.PackageManager.Feeds.Workers
         }
     }
 
+
+    public class RepositoryContentsRecord
+    {
+        public List<string> Contents { get; set; }
+    }
 
     public class RepositoryChangeRecord
     {
