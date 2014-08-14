@@ -27,7 +27,10 @@ namespace Microsoft.Framework.PackageManager.Feeds.Commit
             var sw = new Stopwatch();
             sw.Start();
 
-            IRepositoryPublisher local = new FileSystemRepositoryPublisher(LocalPackages);
+            IRepositoryPublisher local = new FileSystemRepositoryPublisher(LocalPackages)
+            {
+                Report = Report
+            };
 
             // Read entire index starting with 1
             var index = local.MergeRepositoryChangeRecordsStartingWithIndex(1);
@@ -61,6 +64,8 @@ namespace Microsoft.Framework.PackageManager.Feeds.Commit
                     index.Next,
                     record.Add.Count(),
                     record.Remove.Count());
+
+                local.ApplyFileChanges(record);
 
                 local.StoreRepositoryChangeRecord(index.Next, record);
             }
