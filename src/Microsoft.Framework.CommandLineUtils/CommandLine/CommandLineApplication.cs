@@ -134,8 +134,8 @@ namespace Microsoft.Framework.Runtime.Common.CommandLine
 
                         if (option == null)
                         {
-                            command.ShowHint();
-                            throw new Exception(string.Format("TODO: Error: unrecognized flag '{0}'", arg));
+                            HandleUnexpectedArg(command, args, index, argTypeName: "option");
+                            break;
                         }
 
                         // If we find a help/version option, show information and stop parsing
@@ -179,8 +179,8 @@ namespace Microsoft.Framework.Runtime.Common.CommandLine
 
                         if (option == null)
                         {
-                            command.ShowHint();
-                            throw new Exception(string.Format("TODO: Error: unrecognized flag '{0}'", arg));
+                            HandleUnexpectedArg(command, args, index, argTypeName: "option");
+                            break;
                         }
 
                         // If we find a help/version option, show information and stop parsing
@@ -257,17 +257,8 @@ namespace Microsoft.Framework.Runtime.Common.CommandLine
                 }
                 if (!processed)
                 {
-                    if (command._throwOnUnexpectedArg)
-                    {
-                        command.ShowHint();
-                        throw new Exception(string.Format("TODO: Error: unexpected argument '{0}'", arg));
-                    }
-                    else
-                    {
-                        // All remaining arguments are stored for further use
-                        command.RemainingArguments.AddRange(new ArraySegment<string>(args, index, args.Length - index));
-                        break;
-                    }
+                    HandleUnexpectedArg(command, args, index, argTypeName: "argument");
+                    break;
                 }
             }
 
@@ -435,6 +426,20 @@ namespace Microsoft.Framework.Runtime.Common.CommandLine
                 maxLen = arg.Name.Length > maxLen ? arg.Name.Length : maxLen;
             }
             return maxLen;
+        }
+
+        private void HandleUnexpectedArg(CommandLineApplication command, string[] args, int index, string argTypeName)
+        {
+            if (command._throwOnUnexpectedArg)
+            {
+                command.ShowHint();
+                throw new Exception(string.Format("TODO: Error: unrecognized {0} '{1}'", argTypeName, args[index]));
+            }
+            else
+            {
+                // All remaining arguments are stored for further use
+                command.RemainingArguments.AddRange(new ArraySegment<string>(args, index, args.Length - index));
+            }
         }
     }
 }

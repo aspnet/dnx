@@ -166,5 +166,178 @@ namespace Microsoft.Framework.Runtime.Common.CommandLine
             Assert.Equal("one", first.Values[0]);
             Assert.Equal("two", second.Values[0]);
         }
+
+        [Fact]
+        public void ThrowsExceptionOnUnexpectedArgumentByDefault()
+        {
+            var unexpectedArg = "UnexpectedArg";
+            var app = new CommandLineApplication();
+
+            app.Command("test", c =>
+            {
+                c.OnExecute(() => 0);
+            });
+
+            var exception = Assert.Throws<Exception>(() => app.Execute("test", unexpectedArg));
+            Assert.Equal(string.Format("TODO: Error: unrecognized {0} '{1}'", "argument", unexpectedArg),
+                exception.Message);
+        }
+
+        [Fact]
+        public void AllowNoThrowBehaviorOnUnexpectedArgument()
+        {
+            var unexpectedArg = "UnexpectedArg";
+            var app = new CommandLineApplication();
+
+            var testCmd = app.Command("test", c =>
+            {
+                c.OnExecute(() => 0);
+            },
+            addHelpCommand: false,
+            throwOnUnexpectedArg: false);
+
+            Assert.DoesNotThrow(() => app.Execute("test", unexpectedArg));
+            Assert.Equal(1, testCmd.RemainingArguments.Count);
+            Assert.Equal(unexpectedArg, testCmd.RemainingArguments[0]);
+        }
+
+        [Fact]
+        public void ThrowsExceptionOnUnexpectedLongOptionByDefault()
+        {
+            var unexpectedOption = "--UnexpectedOption";
+            var app = new CommandLineApplication();
+
+            app.Command("test", c =>
+            {
+                c.OnExecute(() => 0);
+            });
+
+            var exception = Assert.Throws<Exception>(() => app.Execute("test", unexpectedOption));
+            Assert.Equal(string.Format("TODO: Error: unrecognized {0} '{1}'", "option", unexpectedOption),
+                exception.Message);
+        }
+
+        [Fact]
+        public void AllowNoThrowBehaviorOnUnexpectedLongOption()
+        {
+            var unexpectedOption = "--UnexpectedOption";
+            var app = new CommandLineApplication();
+
+            var testCmd = app.Command("test", c =>
+            {
+                c.OnExecute(() => 0);
+            },
+            addHelpCommand: false,
+            throwOnUnexpectedArg: false);
+
+            Assert.DoesNotThrow(() => app.Execute("test", unexpectedOption));
+            Assert.Equal(1, testCmd.RemainingArguments.Count);
+            Assert.Equal(unexpectedOption, testCmd.RemainingArguments[0]);
+        }
+
+        [Fact]
+        public void ThrowsExceptionOnUnexpectedShortOptionByDefault()
+        {
+            var unexpectedOption = "-uexp";
+            var app = new CommandLineApplication();
+
+            app.Command("test", c =>
+            {
+                c.OnExecute(() => 0);
+            });
+
+            var exception = Assert.Throws<Exception>(() => app.Execute("test", unexpectedOption));
+            Assert.Equal(string.Format("TODO: Error: unrecognized {0} '{1}'", "option", unexpectedOption),
+                exception.Message);
+        }
+
+        [Fact]
+        public void AllowNoThrowBehaviorOnUnexpectedShortOption()
+        {
+            var unexpectedOption = "-uexp";
+            var app = new CommandLineApplication();
+
+            var testCmd = app.Command("test", c =>
+            {
+                c.OnExecute(() => 0);
+            },
+            addHelpCommand: false,
+            throwOnUnexpectedArg: false);
+
+            Assert.DoesNotThrow(() => app.Execute("test", unexpectedOption));
+            Assert.Equal(1, testCmd.RemainingArguments.Count);
+            Assert.Equal(unexpectedOption, testCmd.RemainingArguments[0]);
+        }
+
+        [Fact]
+        public void ThrowsExceptionOnUnexpectedSymbolOptionByDefault()
+        {
+            var unexpectedOption = "-?";
+            var app = new CommandLineApplication();
+
+            app.Command("test", c =>
+            {
+                c.OnExecute(() => 0);
+            });
+
+            var exception = Assert.Throws<Exception>(() => app.Execute("test", unexpectedOption));
+            Assert.Equal(string.Format("TODO: Error: unrecognized {0} '{1}'", "option", unexpectedOption),
+                exception.Message);
+        }
+
+        [Fact]
+        public void AllowNoThrowBehaviorOnUnexpectedSymbolOption()
+        {
+            var unexpectedOption = "-?";
+            var app = new CommandLineApplication();
+
+            var testCmd = app.Command("test", c =>
+            {
+                c.OnExecute(() => 0);
+            },
+            addHelpCommand: false,
+            throwOnUnexpectedArg: false);
+
+            Assert.DoesNotThrow(() => app.Execute("test", unexpectedOption));
+            Assert.Equal(1, testCmd.RemainingArguments.Count);
+            Assert.Equal(unexpectedOption, testCmd.RemainingArguments[0]);
+        }
+
+        [Fact]
+        public void ThrowsExceptionOnUnexpectedOptionBeforeValidSubcommandByDefault()
+        {
+            var unexpectedOption = "--unexpected";
+            CommandLineApplication subCmd = null;
+            var app = new CommandLineApplication();
+
+            app.Command("k", c =>
+            {
+                subCmd = c.Command("run", _=> { });
+                c.OnExecute(() => 0);
+            });
+
+            var exception = Assert.Throws<Exception>(() => app.Execute("k", unexpectedOption, "run"));
+            Assert.Equal(string.Format("TODO: Error: unrecognized {0} '{1}'", "option", unexpectedOption),
+                exception.Message);
+        }
+
+        [Fact]
+        public void AllowNoThrowBehaviorOnUnexpectedOptionAfterSubcommand()
+        {
+            var unexpectedOption = "--unexpected";
+            CommandLineApplication subCmd = null;
+            var app = new CommandLineApplication();
+
+            var testCmd = app.Command("k", c =>
+            {
+                subCmd = c.Command("run", _ => { }, addHelpCommand: false, throwOnUnexpectedArg: false);
+                c.OnExecute(() => 0);
+            });
+
+            Assert.DoesNotThrow(() => app.Execute("k", "run", unexpectedOption));
+            Assert.Equal(0, testCmd.RemainingArguments.Count);
+            Assert.Equal(1, subCmd.RemainingArguments.Count);
+            Assert.Equal(unexpectedOption, subCmd.RemainingArguments[0]);
+        }
     }
 }
