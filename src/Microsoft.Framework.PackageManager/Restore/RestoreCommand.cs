@@ -7,6 +7,8 @@ using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
+using System.Net;
+using System.Net.Http;
 using System.Runtime.Versioning;
 using System.Security.Cryptography;
 using System.Threading.Tasks;
@@ -37,6 +39,7 @@ namespace Microsoft.Framework.PackageManager
         public bool NoCache { get; set; }
         public string PackageFolder { get; set; }
         public string GlobalJsonFile { get; set; }
+        public string Configuration { get; set; }
 
         public ScriptExecutor ScriptExecutor { get; private set; }
 
@@ -175,7 +178,9 @@ namespace Microsoft.Framework.PackageManager
             var tasks = new List<Task<GraphNode>>();
             foreach (var context in contexts)
             {
-                tasks.Add(restoreOperations.CreateGraphNode(context, new Library { Name = project.Name, Version = project.Version }, _ => true));
+                tasks.Add(restoreOperations.CreateGraphNode(context,
+                    new Library { Name = project.Name, Version = project.Version, Configuration = Configuration },
+                    _ => true));
             }
             var graphs = await Task.WhenAll(tasks);
 
@@ -194,7 +199,9 @@ namespace Microsoft.Framework.PackageManager
                     if (node.Library.Version != null && !missingItems.Contains(node.Library))
                     {
                         missingItems.Add(node.Library);
-                        Reports.Information.WriteLine(string.Format("Unable to locate {0} >= {1}", node.Library.Name.Red().Bold(), node.Library.Version));
+                        Reports.Information.WriteLine(
+                            string.Format("Unable to locate {0} >= {1} ({2})",
+                                node.Library.Name.Red().Bold(), node.Library.Version, node.Library.Configuration));
                         success = false;
                     }
                     return;
@@ -349,11 +356,12 @@ namespace Microsoft.Framework.PackageManager
                         continue;
                     }
 
-                    Reports.Information.WriteLine(string.Format("Installing {0} {1}", library.Name.Bold(), library.Version));
+                    Reports.Information.WriteLine(string.Format("Installing {0} {1} ({2})",
+                        library.Name.Bold(), library.Version, library.Configuration));
 
-                    var targetPath = packagePathResolver.GetInstallPath(library.Name, library.Version);
-                    var targetNupkg = packagePathResolver.GetPackageFilePath(library.Name, library.Version);
-                    var hashPath = packagePathResolver.GetHashPath(library.Name, library.Version);
+                    var targetPath = packagePathResolver.GetInstallPath(library.Name, library.Version, Configuration);
+                    var targetNupkg = packagePathResolver.GetPackageFilePath(library.Name, library.Version, Configuration);
+                    var hashPath = packagePathResolver.GetHashPath(library.Name, library.Version, Configuration);
 
                     // Acquire the lock on a nukpg before we extract it to prevent the race condition when multiple
                     // processes are extracting to the same destination simultaneously
@@ -386,25 +394,9 @@ namespace Microsoft.Framework.PackageManager
         {
             foreach (var source in effectiveSources)
             {
-                if (new Uri(source.Source).IsFile)
-                {
-                    remoteProviders.Add(
-                        new RemoteWalkProvider(
-                            new PackageFolder(
-                                source.Source,
-                                Reports.Verbose)));
-                }
-                else
-                {
-                    remoteProviders.Add(
-                        new RemoteWalkProvider(
-                            new PackageFeed(
-                                source.Source,
-                                source.UserName,
-                                source.Password,
-                                NoCache,
-                                Reports.Verbose)));
-                }
+                remoteProviders.Add(
+                    new RemoteWalkProvider(
+                        PackageFeedFromSource(source)));
             }
         }
 
@@ -460,16 +452,6 @@ namespace Microsoft.Framework.PackageManager
             }
         }
 
-        void Display(string indent, IEnumerable<GraphNode> graphs)
-        {
-            foreach (var node in graphs)
-            {
-                Reports.Information.WriteLine(indent + node.Library.Name + "@" + node.Library.Version);
-                Display(indent + " ", node.Dependencies);
-            }
-        }
-
-
         private void ReadSettings(string solutionDirectory)
         {
             // Read the solution-level settings
@@ -498,6 +480,34 @@ namespace Microsoft.Framework.PackageManager
         {
             path = FileSystem.GetFullPath(path);
             return new PhysicalFileSystem(path);
+        }
+
+        private IPackageFeed PackageFeedFromSource(PackageSource source)
+        {
+            if (new Uri(source.Source).IsFile)
+            {
+                return new PackageFolder(source.Source, Reports.Verbose);
+            }
+            else if (IsV2PackageFeedUri(source.Source))
+            {
+                return new V2PackageFeed(source.Source, source.UserName, source.Password, NoCache, Reports.Verbose);
+            }
+            else
+            {
+                return new V3PackageBlob(source.Source, NoCache, Reports.Verbose);
+            }
+        }
+
+        private bool IsV2PackageFeedUri(string uri)
+        {
+            uri = uri.EndsWith("/") ? uri : (uri + "/");
+            var client = new HttpClient();
+            var response = client.GetAsync(uri + "$metadata").Result;
+            if (response.StatusCode == HttpStatusCode.OK)
+            {
+                return true;
+            }
+            return false;
         }
     }
 }

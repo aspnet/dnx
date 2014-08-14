@@ -92,7 +92,8 @@ namespace Microsoft.Framework.Runtime
 
         public void Initialize()
         {
-            _applicationHostContext.DependencyWalker.Walk(Project.Name, Project.Version, _targetFramework);
+            _applicationHostContext.DependencyWalker.Walk(Project.Name, Project.Version,
+                _applicationHostContext.Configuration, _targetFramework);
         }
 
         public IDisposable AddLoaders(IAssemblyLoaderContainer container)

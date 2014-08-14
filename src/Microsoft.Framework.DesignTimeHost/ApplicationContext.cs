@@ -520,7 +520,8 @@ namespace Microsoft.Framework.DesignTimeHost
             state.Project = project;
             state.FrameworkResolver = applicationHostContext.FrameworkReferenceResolver;
 
-            applicationHostContext.DependencyWalker.Walk(state.Project.Name, state.Project.Version, targetFramework);
+            applicationHostContext.DependencyWalker.Walk(state.Project.Name, state.Project.Version,
+                configuration, targetFramework);
 
             Func<LibraryDescription, ReferenceDescription> referenceFactory = library =>
             {

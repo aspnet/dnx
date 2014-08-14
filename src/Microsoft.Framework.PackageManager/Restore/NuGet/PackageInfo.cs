@@ -9,6 +9,7 @@ namespace Microsoft.Framework.PackageManager
     {
         public string Id { get; set; }
         public SemanticVersion Version { get; set; }
+        public string Configuration { get; set; }
         public string ContentUri { get; set; }
     }
 }

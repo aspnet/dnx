@@ -120,6 +120,11 @@ namespace Microsoft.Framework.PackageManager.Restore.NuGet
 
             var response = await _client.SendAsync(request);
 
+            if (response.StatusCode != HttpStatusCode.OK)
+            {
+                return null;
+            }
+
             var newFile = result.CacheFileName + "-new";
 
             // Zero value of TTL means we always download the latest package

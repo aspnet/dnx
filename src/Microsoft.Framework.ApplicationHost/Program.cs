@@ -154,7 +154,8 @@ namespace Microsoft.Framework.ApplicationHost
             defaultHostOptions.PackageDirectory = optionPackages.Value();
 
             defaultHostOptions.TargetFramework = _environment.TargetFramework;
-            defaultHostOptions.Configuration = optionConfiguration.Value() ?? _environment.Configuration ?? "Debug";
+            defaultHostOptions.Configuration = ConfigurationHelper.NormalizeConfigurationName(
+                optionConfiguration.Value() ?? _environment.Configuration ?? "Debug");
             defaultHostOptions.ApplicationBaseDirectory = _environment.ApplicationBasePath;
             var portValue = optionCompilationServer.Value() ?? Environment.GetEnvironmentVariable("KRE_COMPILATION_SERVER_PORT");
 

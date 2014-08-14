@@ -36,7 +36,8 @@ namespace Microsoft.Framework.Runtime
             return Enumerable.Empty<string>();
         }
 
-        public LibraryDescription GetDescription(string name, SemanticVersion version, FrameworkName targetFramework)
+        public LibraryDescription GetDescription(string name, SemanticVersion version, string configuration,
+            FrameworkName targetFramework)
         {
             string path;
             if (!FrameworkResolver.TryGetAssembly(name, targetFramework, out path))
@@ -52,7 +53,7 @@ namespace Microsoft.Framework.Runtime
 
                 return new LibraryDescription
                 {
-                    Identity = new Library { Name = name, Version = assemblyVersion },
+                    Identity = new Library { Name = name, Version = assemblyVersion, Configuration = configuration },
                     Dependencies = Enumerable.Empty<Library>()
                 };
             }

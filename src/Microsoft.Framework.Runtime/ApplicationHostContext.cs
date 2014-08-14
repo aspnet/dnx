@@ -25,7 +25,7 @@ namespace Microsoft.Framework.Runtime
             ProjectResolver = new ProjectResolver(ProjectDirectory, RootDirectory);
             FrameworkReferenceResolver = new FrameworkReferenceResolver();
             _serviceProvider = new ServiceProvider(serviceProvider);
-
+            Configuration = configuration;
             PackagesDirectory = packagesDirectory ?? NuGetDependencyResolver.ResolveRepositoryPath(RootDirectory);
 
             var referenceAssemblyDependencyResolver = new ReferenceAssemblyDependencyResolver(FrameworkReferenceResolver);
@@ -106,5 +106,6 @@ namespace Microsoft.Framework.Runtime
         public string RootDirectory { get; private set; }
         public string ProjectDirectory { get; private set; }
         public string PackagesDirectory { get; private set; }
+        public string Configuration { get; private set; }
     }
 }

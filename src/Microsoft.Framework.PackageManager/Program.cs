@@ -11,6 +11,7 @@ using System.Reflection;
 using System.Threading;
 using Microsoft.Framework.PackageManager.Packing;
 using Microsoft.Framework.Runtime;
+using Microsoft.Framework.Runtime.Common;
 using Microsoft.Framework.Runtime.Common.CommandLine;
 using Microsoft.Framework.PackageManager.Feeds.Commit;
 using Microsoft.Framework.PackageManager.Feeds.Push;
@@ -65,6 +66,8 @@ namespace Microsoft.Framework.PackageManager
                     CommandOptionType.SingleValue);
                 var optNoCache = c.Option("--no-cache", "Do not use local cache", CommandOptionType.NoValue);
                 var optPackageFolder = c.Option("--packages", "Path to restore packages", CommandOptionType.SingleValue);
+                var optionConfiguration = c.Option("--configuration <CONFIGURATION>",
+                    "The configuration to use for deployment", CommandOptionType.SingleValue);
                 c.HelpOption("-?|-h|--help");
 
                 c.OnExecute(() =>
@@ -122,6 +125,8 @@ namespace Microsoft.Framework.PackageManager
 
                         command.NoCache = optNoCache.HasValue();
                         command.PackageFolder = optPackageFolder.Value();
+                        command.Configuration = ConfigurationHelper.NormalizeConfigurationName(
+                            optionConfiguration.Value() ?? "Debug");
 
                         var success = command.ExecuteCommand();
 
@@ -168,7 +173,8 @@ namespace Microsoft.Framework.PackageManager
                         OutputDir = optionOut.Value(),
                         ProjectDir = argProject.Value ?? System.IO.Directory.GetCurrentDirectory(),
                         AppFolder = optionAppFolder.Value(),
-                        Configuration = optionConfiguration.Value() ?? "Debug",
+                        Configuration = ConfigurationHelper.NormalizeConfigurationName(
+                            optionConfiguration.Value() ?? "Debug"),
                         RuntimeTargetFramework = _environment.TargetFramework,
                         Overwrite = optionOverwrite.HasValue(),
                         NoSource = optionNoSource.HasValue(),
@@ -207,7 +213,8 @@ namespace Microsoft.Framework.PackageManager
                     buildOptions.OutputDir = optionOut.Value();
                     buildOptions.ProjectDir = argProjectDir.Value ?? Directory.GetCurrentDirectory();
                     buildOptions.CheckDiagnostics = optionCheck.HasValue();
-                    buildOptions.Configurations = optionConfiguration.Values;
+                    buildOptions.Configurations = optionConfiguration.Values.Select(
+                        x => ConfigurationHelper.NormalizeConfigurationName(x)).ToList();
                     buildOptions.TargetFrameworks = optionFramework.Values;
 
                     var projectManager = new BuildManager(_hostServices, buildOptions);

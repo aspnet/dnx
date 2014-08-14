@@ -20,11 +20,12 @@ namespace Microsoft.Framework.Runtime
             UnresolvedDependencies = Enumerable.Empty<LibraryDescription>();
         }
 
-        public LibraryDescription GetDescription(string name, SemanticVersion version, FrameworkName targetFramework)
+        public LibraryDescription GetDescription(string name, SemanticVersion version, string configuration,
+            FrameworkName targetFramework)
         {
             return new LibraryDescription
             {
-                Identity = new Library { Name = name, Version = version },
+                Identity = new Library { Name = name, Version = version, Configuration = configuration },
                 Dependencies = Enumerable.Empty<Library>()
             };
         }

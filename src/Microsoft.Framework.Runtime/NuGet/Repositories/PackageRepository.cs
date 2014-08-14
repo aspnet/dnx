@@ -32,7 +32,7 @@ namespace NuGet
                 throw new ArgumentNullException("packageId");
             }
 
-            // packages\{packageId}\{version}\{packageId}.nuspec
+            // packages\{packageId}\{version}\{configuration}\{packageId}.nuspec
             return _cache.GetOrAdd(packageId, id =>
             {
                 var packages = new List<PackageInfo>();
@@ -40,15 +40,15 @@ namespace NuGet
                 foreach (var versionDir in _repositoryRoot.GetDirectories(id))
                 {
                     // versionDir = {packageId}\{version}
-                    var folders = versionDir.Split(new[] { Path.DirectorySeparatorChar }, 2);
+                    var versionPathComponents = versionDir.Split(new[] { Path.DirectorySeparatorChar }, 2);
 
                     // Unknown format
-                    if (folders.Length < 2)
+                    if (versionPathComponents.Length < 2)
                     {
                         continue;
                     }
 
-                    string versionPart = folders[1];
+                    string versionPart = versionPathComponents[1];
 
                     // Get the version part and parse it
                     SemanticVersion version;
@@ -57,7 +57,20 @@ namespace NuGet
                         continue;
                     }
 
-                    packages.Add(new PackageInfo(_repositoryRoot, id, version, versionDir));
+                    foreach (var configurationDir in _repositoryRoot.GetDirectories(versionDir))
+                    {
+                        // configurationDir = {packageId}\{version}\{configuration}
+                        var configPathComponents = configurationDir.Split(new[] { Path.DirectorySeparatorChar }, 3);
+
+                        // Unknown format
+                        if (configPathComponents.Length < 3)
+                        {
+                            continue;
+                        }
+
+                        string configurationPart = configPathComponents[2];
+                        packages.Add(new PackageInfo(_repositoryRoot, id, version, configurationPart, configurationDir));
+                    }
                 }
 
                 return packages;

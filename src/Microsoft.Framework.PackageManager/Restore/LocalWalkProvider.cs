@@ -23,7 +23,7 @@ namespace Microsoft.Framework.PackageManager
 
     public interface IWalkProvider
     {
-        Task<WalkProviderMatch> FindLibraryByName(string name, FrameworkName targetFramework);
+        Task<WalkProviderMatch> FindLibraryByName(string name, string configuration, FrameworkName targetFramework);
         Task<WalkProviderMatch> FindLibraryByVersion(Library library, FrameworkName targetFramework);
         Task<WalkProviderMatch> FindLibraryBySnapshot(Library library, FrameworkName targetFramework);
         Task<IEnumerable<Library>> GetDependencies(WalkProviderMatch match, FrameworkName targetFramework);
@@ -39,9 +39,10 @@ namespace Microsoft.Framework.PackageManager
             _dependencyProvider = dependencyProvider;
         }
 
-        public Task<WalkProviderMatch> FindLibraryByName(string name, FrameworkName targetFramework)
+        public Task<WalkProviderMatch> FindLibraryByName(string name, string configuration, FrameworkName targetFramework)
         {
-            var description = _dependencyProvider.GetDescription(name, new SemanticVersion(new Version(0, 0)), targetFramework);
+            var description = _dependencyProvider.GetDescription(name, new SemanticVersion(new Version(0, 0)),
+                configuration, targetFramework);
             if (description == null)
             {
                 return Task.FromResult<WalkProviderMatch>(null);
@@ -56,7 +57,8 @@ namespace Microsoft.Framework.PackageManager
 
         public Task<WalkProviderMatch> FindLibraryByVersion(Library library, FrameworkName targetFramework)
         {
-            var description = _dependencyProvider.GetDescription(library.Name, library.Version, targetFramework);
+            var description = _dependencyProvider.GetDescription(library.Name, library.Version,
+                library.Configuration, targetFramework);
             if (description == null)
             {
                 return Task.FromResult<WalkProviderMatch>(null);
@@ -71,7 +73,8 @@ namespace Microsoft.Framework.PackageManager
 
         public Task<WalkProviderMatch> FindLibraryBySnapshot(Library library, FrameworkName targetFramework)
         {
-            var description = _dependencyProvider.GetDescription(library.Name, library.Version, targetFramework);
+            var description = _dependencyProvider.GetDescription(library.Name, library.Version,
+                library.Configuration, targetFramework);
             if (description == null)
             {
                 return Task.FromResult<WalkProviderMatch>(null);
@@ -86,7 +89,8 @@ namespace Microsoft.Framework.PackageManager
 
         public Task<IEnumerable<Library>> GetDependencies(WalkProviderMatch match, FrameworkName targetFramework)
         {
-            var description = _dependencyProvider.GetDescription(match.Library.Name, match.Library.Version, targetFramework);
+            var description = _dependencyProvider.GetDescription(match.Library.Name, match.Library.Version,
+                match.Library.Configuration, targetFramework);
             return Task.FromResult(description.Dependencies);
         }
 

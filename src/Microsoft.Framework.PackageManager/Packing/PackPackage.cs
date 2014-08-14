@@ -29,13 +29,14 @@ namespace Microsoft.Framework.PackageManager.Packing
         {
             var package = _nugetDependencyResolver.FindCandidate(
                 _libraryDescription.Identity.Name,
-                _libraryDescription.Identity.Version);
+                _libraryDescription.Identity.Version,
+                _libraryDescription.Identity.Configuration);
 
             Console.WriteLine("Packing nupkg dependency {0} {1}", package.Id, package.Version);
 
             var resolver = new DefaultPackagePathResolver(root.PackagesPath);
 
-            TargetPath = resolver.GetInstallPath(package.Id, package.Version);
+            TargetPath = resolver.GetInstallPath(package.Id, package.Version, root.Configuration);
 
             if (Directory.Exists(TargetPath))
             {
@@ -52,8 +53,8 @@ namespace Microsoft.Framework.PackageManager.Packing
 
             Console.WriteLine("  Target {0}", TargetPath);
 
-            var targetNupkgPath = resolver.GetPackageFilePath(package.Id, package.Version);
-            var hashPath = resolver.GetHashPath(package.Id, package.Version);
+            var targetNupkgPath = resolver.GetPackageFilePath(package.Id, package.Version, root.Configuration);
+            var hashPath = resolver.GetHashPath(package.Id, package.Version, root.Configuration);
 
             using (var sourceStream = package.GetStream())
             {

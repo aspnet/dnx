@@ -21,7 +21,7 @@ namespace Microsoft.Framework.PackageManager
             _source = source;
         }
 
-        public Task<WalkProviderMatch> FindLibraryByName(string name, FrameworkName targetFramework)
+        public Task<WalkProviderMatch> FindLibraryByName(string name, string configuration, FrameworkName targetFramework)
         {
             return Task.FromResult<WalkProviderMatch>(null);
         }
@@ -34,6 +34,7 @@ namespace Microsoft.Framework.PackageManager
         public async Task<WalkProviderMatch> FindLibraryBySnapshot(Library library, FrameworkName targetFramework)
         {
             var results = await _source.FindPackagesByIdAsync(library.Name);
+            results = results.Where(x => string.Equals(library.Configuration, x.Configuration));
             PackageInfo bestResult = null;
             foreach (var result in results)
             {
@@ -51,7 +52,8 @@ namespace Microsoft.Framework.PackageManager
             }
             return new WalkProviderMatch
             {
-                Library = new Library { Name = bestResult.Id, Version = bestResult.Version },
+                Library = new Library { Name = bestResult.Id, Version = bestResult.Version,
+                    Configuration = library.Configuration },
                 Path = bestResult.ContentUri,
                 Provider = this,
             };
@@ -63,6 +65,7 @@ namespace Microsoft.Framework.PackageManager
             {
                 Id = match.Library.Name,
                 Version = match.Library.Version,
+                Configuration = match.Library.Configuration,
                 ContentUri = match.Path
             }))
             {
@@ -73,7 +76,8 @@ namespace Microsoft.Framework.PackageManager
                     return dependencySet
                         .SelectMany(x => x.Dependencies)
                         .Select(x => new Library { Name = x.Id,
-                            Version = x.VersionSpec != null ? x.VersionSpec.MinVersion : null })
+                            Version = x.VersionSpec != null ? x.VersionSpec.MinVersion : null,
+                            Configuration = match.Library.Configuration })
                         .ToList();
                 }
             }
@@ -86,6 +90,7 @@ namespace Microsoft.Framework.PackageManager
             {
                 Id = match.Library.Name,
                 Version = match.Library.Version,
+                Configuration = match.Library.Configuration,
                 ContentUri = match.Path
             }))
             {

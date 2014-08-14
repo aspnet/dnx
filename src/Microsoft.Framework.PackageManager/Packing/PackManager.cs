@@ -66,9 +66,9 @@ namespace Microsoft.Framework.PackageManager.Packing
             public DependencyWalker DependencyWalker { get; set; }
             public FrameworkName FrameworkName { get; set; }
 
-            public void Walk(string projectName, SemanticVersion projectVersion)
+            public void Walk(string projectName, SemanticVersion projectVersion, string configuration)
             {
-                DependencyWalker.Walk(projectName, projectVersion, FrameworkName);
+                DependencyWalker.Walk(projectName, projectVersion, configuration, FrameworkName);
             }
 
             public static FrameworkName GetFrameworkNameForRuntime(string runtime)
@@ -161,7 +161,7 @@ namespace Microsoft.Framework.PackageManager.Packing
                 if (!dependencyContexts.Any(dc => dc.FrameworkName == frameworkName))
                 {
                     var dependencyContext = new DependencyContext(projectDir, _options.Configuration, frameworkName);
-                    dependencyContext.Walk(project.Name, project.Version);
+                    dependencyContext.Walk(project.Name, project.Version, _options.Configuration);
                     dependencyContexts.Add(dependencyContext);
                 }
             }
@@ -170,7 +170,7 @@ namespace Microsoft.Framework.PackageManager.Packing
             {
                 var frameworkName = DependencyContext.GetFrameworkNameForRuntime("KRE-svr50-x86.*");
                 var dependencyContext = new DependencyContext(projectDir, _options.Configuration, frameworkName);
-                dependencyContext.Walk(project.Name, project.Version);
+                dependencyContext.Walk(project.Name, project.Version, _options.Configuration);
                 dependencyContexts.Add(dependencyContext);
             }
 

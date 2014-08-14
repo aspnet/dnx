@@ -27,7 +27,8 @@ namespace Microsoft.Framework.Runtime
             return _projectResolver.SearchPaths.Select(p => Path.Combine(p, "{name}", "project.json"));
         }
 
-        public LibraryDescription GetDescription(string name, SemanticVersion version, FrameworkName targetFramework)
+        public LibraryDescription GetDescription(string name, SemanticVersion version, string configuration,
+            FrameworkName targetFramework)
         {
             Project project;
 
@@ -51,9 +52,15 @@ namespace Microsoft.Framework.Runtime
                 targetFrameworkDependencies.Add(new Library { Name = "Microsoft.CSharp" });
             }
 
+            foreach (var dependency in project.Dependencies)
+            {
+                dependency.Configuration = configuration;
+            }
+
             return new LibraryDescription
             {
-                Identity = new Library { Name = project.Name, Version = project.Version },
+                Identity = new Library { Name = project.Name, Version = project.Version,
+                    Configuration = configuration },
                 Dependencies = project.Dependencies.Concat(targetFrameworkDependencies),
             };
         }

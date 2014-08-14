@@ -45,27 +45,27 @@ namespace Microsoft.Framework.Runtime
         {
             return new[]
             {
-                Path.Combine(_repository.RepositoryRoot.Root, "{name}", "{version}", "{name}.nuspec")
+                Path.Combine(_repository.RepositoryRoot.Root, "{name}", "{version}", "{configuration}", "{name}.nuspec")
             };
         }
 
-        public LibraryDescription GetDescription(string name, SemanticVersion version, FrameworkName targetFramework)
+        public LibraryDescription GetDescription(string name, SemanticVersion version, string configuration, FrameworkName targetFramework)
         {
-            var package = FindCandidate(name, version);
+            var package = FindCandidate(name, version, configuration);
 
             if (package != null)
             {
                 return new LibraryDescription
                 {
-                    Identity = new Library { Name = package.Id, Version = package.Version },
-                    Dependencies = GetDependencies(package, targetFramework)
+                    Identity = new Library { Name = package.Id, Version = package.Version, Configuration = configuration },
+                    Dependencies = GetDependencies(package, configuration, targetFramework)
                 };
             }
 
             return null;
         }
 
-        private IEnumerable<Library> GetDependencies(IPackage package, FrameworkName targetFramework)
+        private IEnumerable<Library> GetDependencies(IPackage package, string configuration, FrameworkName targetFramework)
         {
             IEnumerable<PackageDependencySet> dependencySet;
             if (VersionUtility.TryGetCompatibleItems(targetFramework, package.DependencySets, out dependencySet))
@@ -77,7 +77,8 @@ namespace Microsoft.Framework.Runtime
                         yield return new Library
                         {
                             Name = d.Id,
-                            Version = d.VersionSpec != null ? d.VersionSpec.MinVersion : null
+                            Version = d.VersionSpec != null ? d.VersionSpec.MinVersion : null,
+                            Configuration = configuration
                         };
                     }
                 }
@@ -103,7 +104,8 @@ namespace Microsoft.Framework.Runtime
 
                     yield return new Library
                     {
-                        Name = assemblyReference.AssemblyName
+                        Name = assemblyReference.AssemblyName,
+                        Configuration = configuration
                     };
                 }
             }
@@ -118,14 +120,14 @@ namespace Microsoft.Framework.Runtime
 
             foreach (var dependency in packages)
             {
-                var package = FindCandidate(dependency.Identity.Name, dependency.Identity.Version);
+                var package = FindCandidate(dependency.Identity.Name, dependency.Identity.Version, dependency.Identity.Configuration);
 
                 if (package == null)
                 {
                     continue;
                 }
 
-                string packagePath = ResolvePackagePath(defaultResolver, cacheResolvers, package);
+                string packagePath = ResolvePackagePath(defaultResolver, cacheResolvers, package, dependency.Identity.Configuration);
 
                 dependency.Type = "Package";
                 dependency.Path = packagePath;
@@ -154,26 +156,27 @@ namespace Microsoft.Framework.Runtime
             }
         }
 
-        private static string ResolvePackagePath(IPackagePathResolver defaultResolver,
+        private string ResolvePackagePath(IPackagePathResolver defaultResolver,
                                                  IEnumerable<IPackagePathResolver> cacheResolvers,
-                                                 IPackage package)
+                                                 IPackage package,
+                                                 string configuration)
         {
-            var defaultHashPath = defaultResolver.GetHashPath(package.Id, package.Version);
+            var defaultHashPath = defaultResolver.GetHashPath(package.Id, package.Version, configuration);
 
             foreach (var resolver in cacheResolvers)
             {
-                var cacheHashFile = resolver.GetHashPath(package.Id, package.Version);
+                var cacheHashFile = resolver.GetHashPath(package.Id, package.Version, configuration);
 
                 // REVIEW: More efficient compare?
                 if (File.Exists(defaultHashPath) &&
                     File.Exists(cacheHashFile) &&
                     File.ReadAllText(defaultHashPath) == File.ReadAllText(cacheHashFile))
                 {
-                    return resolver.GetInstallPath(package.Id, package.Version);
+                    return resolver.GetInstallPath(package.Id, package.Version, configuration);
                 }
             }
 
-            return defaultResolver.GetInstallPath(package.Id, package.Version);
+            return defaultResolver.GetInstallPath(package.Id, package.Version, configuration);
         }
 
         private static IEnumerable<IPackagePathResolver> GetCacheResolvers()
@@ -323,7 +326,7 @@ namespace Microsoft.Framework.Runtime
             return results;
         }
 
-        public IPackage FindCandidate(string name, SemanticVersion version)
+        public IPackage FindCandidate(string name, SemanticVersion version, string configuration)
         {
             var packages = _repository.FindPackagesById(name);
 
@@ -338,6 +341,8 @@ namespace Microsoft.Framework.Runtime
 
                 return null;
             }
+
+            packages = packages.Where(x => string.Equals(x.Configuration, configuration));
 
             PackageInfo bestMatch = null;
 

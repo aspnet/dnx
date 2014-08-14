@@ -333,14 +333,6 @@ namespace NuGet
                    parsedVersion == version;
         }
 
-        private string GetManifestFilePath(string packageId, SemanticVersion version)
-        {
-            string packageDirectory = PathResolver.GetPackageDirectory(packageId, version);
-            string manifestFileName = packageDirectory + Constants.ManifestExtension;
-
-            return Path.Combine(packageDirectory, manifestFileName);
-        }
-
         private class PackageCacheEntry
         {
             public PackageCacheEntry(IPackage package, DateTimeOffset lastModifiedTime)

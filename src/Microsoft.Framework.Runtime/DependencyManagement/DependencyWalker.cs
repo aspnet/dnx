@@ -31,10 +31,10 @@ namespace Microsoft.Framework.Runtime
             }
         }
 
-        public void Walk(string name, SemanticVersion version, FrameworkName targetFramework)
+        public void Walk(string name, SemanticVersion version, string configuration, FrameworkName targetFramework)
         {
             var sw = Stopwatch.StartNew();
-            Trace.TraceInformation("[{0}]: Walking dependency graph for '{1} {2}'.", GetType().Name, name, targetFramework);
+            Trace.TraceInformation("[{0}]: Walking dependency graph for '{1} ({2}) {3}'.", GetType().Name, name, configuration, targetFramework);
 
             var context = new WalkContext();
 
@@ -42,6 +42,7 @@ namespace Microsoft.Framework.Runtime
                 _dependencyProviders,
                 name,
                 version,
+                configuration,
                 targetFramework);
 
             context.Populate(targetFramework, Libraries);

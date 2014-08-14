@@ -36,29 +36,29 @@ namespace NuGet
             _fileSystem = fileSystem;
         }
 
-        public virtual string GetInstallPath(string packageId, SemanticVersion version)
+        public virtual string GetInstallPath(string packageId, SemanticVersion version, string configuration)
         {
-            return Path.Combine(_fileSystem.Root, GetPackageDirectory(packageId, version));
+            return Path.Combine(_fileSystem.Root, GetPackageDirectory(packageId, version, configuration));
         }
 
-        public string GetPackageFilePath(string packageId, SemanticVersion version)
+        public string GetPackageFilePath(string packageId, SemanticVersion version, string configuration)
         {
-            return Path.Combine(GetInstallPath(packageId, version),
+            return Path.Combine(GetInstallPath(packageId, version, configuration),
                                 GetPackageFileName(packageId, version));
         }
 
-        public string GetHashPath(string packageId, SemanticVersion version)
+        public string GetHashPath(string packageId, SemanticVersion version, string configuration)
         {
-            return Path.Combine(GetInstallPath(packageId, version),
+            return Path.Combine(GetInstallPath(packageId, version, configuration),
                                 string.Format("{0}.{1}.nupkg.sha512", packageId, version));
         }
 
-        public virtual string GetPackageDirectory(string packageId, SemanticVersion version)
+        public virtual string GetPackageDirectory(string packageId, SemanticVersion version, string configuration)
         {
             string directory = packageId;
             if (_useSideBySidePaths)
             {
-                directory = Path.Combine(directory, version.ToString());
+                directory = Path.Combine(directory, version.ToString(), configuration);
             }
             return directory;
         }

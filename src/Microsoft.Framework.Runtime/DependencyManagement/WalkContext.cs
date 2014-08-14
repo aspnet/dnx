@@ -49,11 +49,12 @@ namespace Microsoft.Framework.Runtime
             IEnumerable<IDependencyProvider> dependencyResolvers,
             string name,
             SemanticVersion version,
+            string configuration,
             FrameworkName frameworkName)
         {
             var root = new Node
             {
-                Key = new Library { Name = name, Version = version }
+                Key = new Library { Name = name, Version = version, Configuration = configuration }
             };
 
             var resolvers = dependencyResolvers as IDependencyProvider[] ?? dependencyResolvers.ToArray();
@@ -64,6 +65,7 @@ namespace Microsoft.Framework.Runtime
             ForEach(root, node =>
             {
                 node.Item = Resolve(resolvedItems, resolvers, node.Key, frameworkName);
+
                 if (node.Item == null)
                 {
                     node.Disposition = Disposition.Rejected;
@@ -244,7 +246,8 @@ namespace Microsoft.Framework.Runtime
                 .Select(x => new
                 {
                     Resolver = x,
-                    Details = x.GetDescription(packageKey.Name, packageKey.Version, frameworkName)
+                    Details = x.GetDescription(packageKey.Name, packageKey.Version, packageKey.Configuration,
+                        frameworkName)
                 })
                 .FirstOrDefault(x => x.Details != null);
 
@@ -256,6 +259,7 @@ namespace Microsoft.Framework.Runtime
 
             if (resolvedItems.TryGetValue(hit.Details.Identity, out item))
             {
+                resolvedItems[packageKey] = item;
                 return item;
             }
 

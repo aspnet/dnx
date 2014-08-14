@@ -84,7 +84,7 @@ namespace Microsoft.Framework.PackageManager.Packing
             var resolver = new DefaultPackagePathResolver(root.PackagesPath);
 
             var targetNupkg = resolver.GetPackageFileName(project.Name, project.Version);
-            TargetPath = resolver.GetInstallPath(project.Name, project.Version);
+            TargetPath = resolver.GetInstallPath(project.Name, project.Version, root.Configuration);
 
             Console.WriteLine("  Source {0}", project.ProjectDirectory);
             Console.WriteLine("  Target {0}", TargetPath);
@@ -115,8 +115,8 @@ namespace Microsoft.Framework.PackageManager.Packing
 
             // Extract the generated nupkg to target path
             var srcNupkgPath = Path.Combine(buildOptions.OutputDir, root.Configuration, targetNupkg);
-            var targetNupkgPath = resolver.GetPackageFilePath(project.Name, project.Version);
-            var hashFile = resolver.GetHashPath(project.Name, project.Version);
+            var targetNupkgPath = resolver.GetPackageFilePath(project.Name, project.Version, root.Configuration);
+            var hashFile = resolver.GetHashPath(project.Name, project.Version, root.Configuration);
 
             using (var sourceStream = new FileStream(srcNupkgPath, FileMode.Open, FileAccess.Read))
             {

@@ -90,23 +90,24 @@ namespace Microsoft.Framework.PackageManager.Packing
             foreach (var commandName in _project.Commands.Keys)
             {
                 const string template1 = @"
-@""%~dp0{3}\packages\{2}\bin\klr.exe"" --appbase ""%~dp0{1}"" Microsoft.Framework.ApplicationHost {0} %*
+@""%~dp0{3}\packages\{2}\bin\klr.exe"" --appbase ""%~dp0{1}"" Microsoft.Framework.ApplicationHost --configuration {4} {0} %*
 ";
                 const string template2 = @"
-@klr.exe --appbase ""%~dp0{1}"" Microsoft.Framework.ApplicationHost {0} %*
+@klr.exe --appbase ""%~dp0{1}"" Microsoft.Framework.ApplicationHost --configuration {2} {0} %*
 ";
                 if (Runtimes.Any())
                 {
                     File.WriteAllText(
                         Path.Combine(OutputPath, commandName + ".cmd"),
                         string.Format(template1, commandName, Path.Combine(AppRootName, "src", _project.Name),
-                            Runtimes.First().Name, AppRootName));
+                            Runtimes.First().Name, AppRootName, Configuration));
                 }
                 else
                 {
                     File.WriteAllText(
                         Path.Combine(OutputPath, commandName + ".cmd"),
-                        string.Format(template2, commandName, Path.Combine(AppRootName, "src", _project.Name)));
+                        string.Format(template2, commandName, Path.Combine(AppRootName, "src", _project.Name),
+                            Configuration));
                 }
             }
         }
@@ -130,9 +131,10 @@ namespace Microsoft.Framework.PackageManager.Packing
                 // find the package actually in use
                 var package = nugetDependencyResolver.FindCandidate(
                     deploymentPackage.Library.Name,
-                    deploymentPackage.Library.Version);
+                    deploymentPackage.Library.Version,
+                    deploymentPackage.Library.Configuration);
 
-                var shaFilePath = pathResolver.GetHashPath(package.Id, package.Version);
+                var shaFilePath = pathResolver.GetHashPath(package.Id, package.Version, Configuration);
                 var sha = File.ReadAllText(shaFilePath);
 
                 var shaObj = new JObject();
@@ -151,7 +153,7 @@ namespace Microsoft.Framework.PackageManager.Packing
                     throw new Exception("TODO: unable to resolve project named " + deploymentProject.Name);
                 }
 
-                var shaFilePath = pathResolver.GetHashPath(project.Name, project.Version);
+                var shaFilePath = pathResolver.GetHashPath(project.Name, project.Version, Configuration);
 
                 if (!File.Exists(shaFilePath))
                 {

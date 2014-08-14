@@ -97,7 +97,8 @@ namespace Microsoft.Framework.PackageManager
 
         public async Task<GraphItem> FindLibraryEntry(RestoreContext context, Library library)
         {
-            Report.WriteLine(string.Format("Attempting to resolve dependency {0} >= {1}", library.Name.Bold(), library.Version));
+            Report.WriteLine(string.Format("Attempting to resolve dependency {0} >= {1} ({2})",
+                library.Name.Bold(), library.Version, library.Configuration));
 
             var match = await FindLibraryMatch(context, library);
             if (match == null)
@@ -107,6 +108,12 @@ namespace Microsoft.Framework.PackageManager
             }
 
             var dependencies = await match.Provider.GetDependencies(match, context.FrameworkName);
+
+            // Dependencies should have the same configuration
+            foreach (var dependency in dependencies)
+            {
+                dependency.Configuration = library.Configuration;
+            }
 
             //Report.WriteLine(string.Format("Resolved {0} {1}", match.Library.Name, match.Library.Version));
 
@@ -119,7 +126,7 @@ namespace Microsoft.Framework.PackageManager
 
         public async Task<WalkProviderMatch> FindLibraryMatch(RestoreContext context, Library library)
         {
-            var projectMatch = await FindLibraryByName(context, library.Name, context.ProjectLibraryProviders);
+            var projectMatch = await FindLibraryByName(context, library.Name, library.Configuration, context.ProjectLibraryProviders);
             if (projectMatch != null)
             {
                 return projectMatch;
@@ -176,11 +183,11 @@ namespace Microsoft.Framework.PackageManager
             return null;
         }
 
-        public async Task<WalkProviderMatch> FindLibraryByName(RestoreContext context, string name, IEnumerable<IWalkProvider> providers)
+        public async Task<WalkProviderMatch> FindLibraryByName(RestoreContext context, string name, string configuration, IEnumerable<IWalkProvider> providers)
         {
             foreach (var provider in providers)
             {
-                var match = await provider.FindLibraryByName(name, context.FrameworkName);
+                var match = await provider.FindLibraryByName(name, configuration, context.FrameworkName);
                 if (match != null)
                 {
                     return match;

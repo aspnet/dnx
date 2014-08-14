@@ -30,7 +30,8 @@ namespace Microsoft.Framework.Runtime
             return GetGacSearchPaths().Select(p => Path.Combine(p, "{name}", "{version}", "{name}.dll"));
         }
 
-        public LibraryDescription GetDescription(string name, SemanticVersion version, FrameworkName targetFramework)
+        public LibraryDescription GetDescription(string name, SemanticVersion version, string configuration,
+            FrameworkName targetFramework)
         {
             if (PlatformHelper.IsMono)
             {
@@ -56,7 +57,7 @@ namespace Microsoft.Framework.Runtime
 
                 return new LibraryDescription
                 {
-                    Identity = new Library { Name = name, Version = assemblyVersion },
+                    Identity = new Library { Name = name, Version = assemblyVersion, Configuration = configuration },
                     Dependencies = Enumerable.Empty<Library>()
                 };
             }

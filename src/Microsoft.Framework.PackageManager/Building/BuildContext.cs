@@ -36,7 +36,8 @@ namespace Microsoft.Framework.PackageManager
 
         public void Initialize()
         {
-            _applicationHostContext.DependencyWalker.Walk(_project.Name, _project.Version, _targetFramework);
+            _applicationHostContext.DependencyWalker.Walk(_project.Name, _project.Version, _configuration,
+                _targetFramework);
         }
 
         public bool Build(IList<string> warnings, IList<string> errors)

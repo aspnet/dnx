@@ -38,8 +38,10 @@ namespace Microsoft.Framework.PackageManager.Feeds.Pull
             var sw = new Stopwatch();
             sw.Start();
 
-            IRepositoryPublisher local = new FileSystemRepositoryPublisher(
-                LocalPackages);
+            IRepositoryPublisher local = RepositoryPublishers.Create(
+                LocalPackages,
+                accessKey: null,
+                report: Report);
 
             IRepositoryPublisher remote = RepositoryPublishers.Create(
                 RemotePackages,
