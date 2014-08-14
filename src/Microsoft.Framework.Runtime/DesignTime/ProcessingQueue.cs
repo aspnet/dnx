@@ -80,7 +80,7 @@ namespace Microsoft.Framework.Runtime
                     else if (messageType == "ProjectContexts")
                     {
                         int count = _reader.ReadInt32();
-                        var projectContexts = new Dictionary<string, int>();
+                        var projectContexts = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
                         for (int i = 0; i < count; i++)
                         {
                             string key = _reader.ReadString();
