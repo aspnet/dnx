@@ -16,16 +16,5 @@
   <PropertyGroup>
     <SchemaVersion>2.0</SchemaVersion>
   </PropertyGroup>
-  <ItemGroup>
-    <Content Include="project.json" />
-  </ItemGroup>
-  <ItemGroup>
-    <Compile Include="Impl\DependencyInjection\ActivatorUtilities.cs" />
-    <Compile Include="Impl\DependencyInjection\ServiceProvider.cs" />
-    <Compile Include="Impl\EntryPointExecutor.cs" />
-    <Compile Include="Impl\ExceptionHelper.cs" />
-    <Compile Include="Impl\PlatformHelper.cs" />
-    <Compile Include="Impl\Trace.cs" />
-  </ItemGroup>
   <Import Project="$(VSToolsPath)\AspNet\Microsoft.Web.AspNet.targets" Condition="'$(VSToolsPath)' != ''" />
 </Project>

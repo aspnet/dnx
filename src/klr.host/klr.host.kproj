@@ -16,17 +16,5 @@
   <PropertyGroup>
     <SchemaVersion>2.0</SchemaVersion>
   </PropertyGroup>
-  <ItemGroup>
-    <Content Include="project.json" />
-  </ItemGroup>
-  <ItemGroup>
-    <Compile Include="ApplicationEnvironment.cs" />
-    <Compile Include="Bootstrapper.cs" />
-    <Compile Include="DefaultLoaderEngine.cs" />
-    <Compile Include="FrameworkNameUtility.cs" />
-    <Compile Include="LoaderContainer.cs" />
-    <Compile Include="PathBasedAssemblyLoader.cs" />
-    <Compile Include="ServiceProviderLocator.cs" />
-  </ItemGroup>
   <Import Project="$(VSToolsPath)\AspNet\Microsoft.Web.AspNet.targets" Condition="'$(VSToolsPath)' != ''" />
 </Project>
