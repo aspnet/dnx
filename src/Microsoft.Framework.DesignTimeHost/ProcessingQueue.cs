@@ -53,8 +53,7 @@ namespace Microsoft.Framework.DesignTimeHost
             {
                 try
                 {
-                    Trace.TraceInformation("[ProcessingQueue]: Send({0})", message.MessageType);
-
+                    Trace.TraceInformation("[ProcessingQueue]: Send({0})", message);
                     _writer.Write(JsonConvert.SerializeObject(message));
 
                     return true;

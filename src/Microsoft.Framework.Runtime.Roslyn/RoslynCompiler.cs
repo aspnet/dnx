@@ -153,7 +153,10 @@ namespace Microsoft.Framework.Runtime.Roslyn
 
         private SyntaxTree CreateSyntaxTree(string sourcePath, CSharpParseOptions parseOptions)
         {
-            return _cache.Get<SyntaxTree>(sourcePath, ctx =>
+            // The cache key needs to take the parseOptions into account
+            var cacheKey = sourcePath + string.Join(",", parseOptions.PreprocessorSymbolNames) + parseOptions.LanguageVersion;
+
+            return _cache.Get<SyntaxTree>(cacheKey, ctx =>
             {
                 ctx.Monitor(new FileWriteTimeCacheDependency(sourcePath));
 
