@@ -94,6 +94,8 @@ namespace Microsoft.Framework.PackageManager
 
             host.Initialize();
 
+            var cache = new Cache();
+
             using (host.AddLoaders(loaderContainer))
             {
                 // Build all specified configurations
@@ -116,7 +118,7 @@ namespace Microsoft.Framework.PackageManager
                         var errors = new List<string>();
                         var warnings = new List<string>();
 
-                        var context = new BuildContext(project, targetFramework, configuration, baseOutputPath);
+                        var context = new BuildContext(cache, project, targetFramework, configuration, baseOutputPath);
                         context.Initialize();
 
                         if (_buildOptions.CheckDiagnostics)

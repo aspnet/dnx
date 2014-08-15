@@ -17,7 +17,7 @@ namespace Microsoft.Framework.PackageManager
         private readonly string _outputPath;
         private readonly ApplicationHostContext _applicationHostContext;
 
-        public BuildContext(Project project, FrameworkName targetFramework, string configuration, string outputPath)
+        public BuildContext(ICache cache, Project project, FrameworkName targetFramework, string configuration, string outputPath)
         {
             _project = project;
             _targetFramework = targetFramework;
@@ -30,6 +30,8 @@ namespace Microsoft.Framework.PackageManager
                 packagesDirectory: null,
                 configuration: configuration,
                 targetFramework: targetFramework);
+
+            _applicationHostContext.AddService(typeof(ICache), cache);
         }
 
         public void Initialize()
