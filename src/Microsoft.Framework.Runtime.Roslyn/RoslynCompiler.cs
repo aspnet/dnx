@@ -210,15 +210,17 @@ namespace Microsoft.Framework.Runtime.Roslyn
 
         private MetadataReference GetMetadataReference(string path)
         {
-            return _cache.Get<MetadataReference>(path, ctx =>
+            var metadata = _cache.Get<AssemblyMetadata>(path, ctx =>
             {
                 ctx.Monitor(new FileWriteTimeCacheDependency(path));
 
                 using (var stream = File.OpenRead(path))
                 {
-                    return new MetadataImageReference(stream);
+                    return AssemblyMetadata.CreateFromImageStream(stream);
                 }
             });
+
+            return new MetadataImageReference(metadata);
         }
     }
 }
