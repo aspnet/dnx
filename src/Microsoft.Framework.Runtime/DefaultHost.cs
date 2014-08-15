@@ -168,7 +168,9 @@ namespace Microsoft.Framework.Runtime
 
             if (options.CompilationServerPort.HasValue)
             {
-                var socket = new Socket(SocketType.Stream, ProtocolType.Tcp);
+                // Using this ctor because it works on mono, this is hard coded to ipv4
+                // right now. Mono will eventually have the dualmode overload
+                var socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
                 socket.Connect(new IPEndPoint(IPAddress.Loopback, options.CompilationServerPort.Value));
 
                 var networkStream = new NetworkStream(socket);

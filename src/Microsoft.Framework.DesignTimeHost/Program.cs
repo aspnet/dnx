@@ -50,7 +50,8 @@ namespace Microsoft.Framework.DesignTimeHost
             var cache = new Cache();
             var contexts = new Dictionary<int, ApplicationContext>();
 
-            var listenSocket = new Socket(SocketType.Stream, ProtocolType.Tcp);
+            // This fixes the mono incompatibility but ties it to ipv4 connections
+            var listenSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
             listenSocket.Bind(new IPEndPoint(IPAddress.Loopback, port));
             listenSocket.Listen(10);
 
