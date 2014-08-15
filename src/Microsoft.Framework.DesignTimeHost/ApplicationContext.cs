@@ -470,22 +470,7 @@ namespace Microsoft.Framework.DesignTimeHost
             _waitingForDiagnostics.Clear();
         }
 
-        private bool IsDifferent(ProjectInformationMessage local, ProjectInformationMessage remote)
-        {
-            return !object.Equals(local, remote);
-        }
-
-        private bool IsDifferent(ReferencesMessage local, ReferencesMessage remote)
-        {
-            return !object.Equals(local, remote);
-        }
-
-        private bool IsDifferent(DiagnosticsMessage local, DiagnosticsMessage remote)
-        {
-            return !object.Equals(local, remote);
-        }
-
-        private bool IsDifferent(SourcesMessage local, SourcesMessage remote)
+        private bool IsDifferent<T>(T local, T remote) where T : class
         {
             return !object.Equals(local, remote);
         }
