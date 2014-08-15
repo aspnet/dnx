@@ -5,9 +5,6 @@ using System;
 using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
-#if NET45
-using System.IO.Packaging;
-#endif
 using System.Linq;
 
 namespace Microsoft.Framework.PackageManager.Packing
@@ -190,61 +187,6 @@ namespace Microsoft.Framework.PackageManager.Packing
             }
         }
 
-#if NET45
-        public void ExtractNupkg(Package archive, string targetPath)
-        {
-            ExtractFiles(
-                archive,
-                targetPath,
-                shouldInclude: NupkgFilter);
-        }
-
-        public void ExtractFiles(Package archive, string targetPath, Func<string, bool> shouldInclude)
-        {
-            foreach (PackagePart part in archive.GetParts())
-            {
-                var entryFullName = GetPath(part.Uri);
-                if (entryFullName.StartsWith("/", StringComparison.Ordinal))
-                {
-                    entryFullName = entryFullName.Substring(1);
-                }
-                entryFullName = Uri.UnescapeDataString(entryFullName.Replace('/', Path.DirectorySeparatorChar));
-
-
-                var targetFile = Path.Combine(targetPath, entryFullName);
-                if (!targetFile.StartsWith(targetPath, StringComparison.OrdinalIgnoreCase))
-                {
-                    continue;
-                }
-
-                if (!shouldInclude(entryFullName))
-                {
-                    continue;
-                }
-
-                if (Path.GetFileName(targetFile).Length == 0)
-                {
-                    Directory.CreateDirectory(targetFile);
-                }
-                else
-                {
-                    var targetEntryPath = Path.GetDirectoryName(targetFile);
-                    if (!Directory.Exists(targetEntryPath))
-                    {
-                        Directory.CreateDirectory(targetEntryPath);
-                    }
-
-                    using (var entryStream = part.GetStream())
-                    {
-                        using (var targetStream = new FileStream(targetFile, FileMode.Create, FileAccess.Write, FileShare.None))
-                        {
-                            entryStream.CopyTo(targetStream);
-                        }
-                    }
-                }
-            }
-        }
-#endif
         public void AddFiles(ZipArchive archive, string sourcePath, string targetPath, Func<string, string, bool> shouldInclude)
         {
             AddFilesRecursive(

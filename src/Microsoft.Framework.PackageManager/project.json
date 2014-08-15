@@ -12,7 +12,6 @@
     "frameworks": {
         "net45": { 
             "dependencies": {
-                "WindowsBase": "",
                 "System.Collections" : "",
                 "System.IO" :  "",
                 "System.IO.Compression" : "",

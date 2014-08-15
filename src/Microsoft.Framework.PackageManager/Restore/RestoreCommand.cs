@@ -6,20 +6,15 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
-#if NET45
-using System.IO.Packaging;
-#endif
 using System.Linq;
 using System.Runtime.Versioning;
 using System.Security.Cryptography;
-using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Framework.PackageManager.Packing;
 using Microsoft.Framework.PackageManager.Restore.NuGet;
 using Microsoft.Framework.Runtime;
 using Newtonsoft.Json.Linq;
 using NuGet;
-using NuGet.Common;
 
 namespace Microsoft.Framework.PackageManager
 {
@@ -373,19 +368,6 @@ namespace Microsoft.Framework.PackageManager
 
         private static void ExtractPackage(string targetPath, FileStream stream)
         {
-#if NET45
-            if (PlatformHelper.IsMono)
-            {
-                using (var archive = Package.Open(stream, FileMode.Open, FileAccess.Read))
-                {
-                    var packOperations = new PackOperations();
-                    packOperations.ExtractNupkg(archive, targetPath);
-                }
-
-                return;
-            }
-#endif
-
             using (var archive = new ZipArchive(stream, ZipArchiveMode.Read))
             {
                 var packOperations = new PackOperations();

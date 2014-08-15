@@ -9,17 +9,6 @@ namespace NuGet
 {
     internal static class UriUtility
     {
-#if NET45
-        internal static Uri CreatePartUri(string path)
-        {
-            // Only the segments between the path separators should be escaped
-            var segments = path.Split(new[] { '/', Path.DirectorySeparatorChar }, StringSplitOptions.None)
-                               .Select(Uri.EscapeDataString);
-            var escapedPath = String.Join("/", segments);
-            return System.IO.Packaging.PackUriHelper.CreatePartUri(new Uri(escapedPath, UriKind.Relative));
-        }
-#endif
-
         /// <summary>
         /// Converts a uri to a path. Only used for local paths.
         /// </summary>

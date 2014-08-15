@@ -3,21 +3,11 @@
 
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
-#if NET45
-using System.IO.Packaging;
-#endif
 using System.Linq;
-using System.Net;
-using System.Net.Http;
-using System.Net.Http.Headers;
-using System.Text;
-using System.Threading;
 using System.Threading.Tasks;
 using System.Xml.Linq;
-using Microsoft.Framework.Runtime;
 using NuGet;
 
 namespace Microsoft.Framework.PackageManager.Restore.NuGet
@@ -157,22 +147,6 @@ namespace Microsoft.Framework.PackageManager.Restore.NuGet
         {
             using (var nupkgStream = await OpenNupkgStreamAsync(package))
             {
-#if NET45
-                if (PlatformHelper.IsMono)
-                {
-                    // Don't close the stream
-                    var archive = Package.Open(nupkgStream, FileMode.Open, FileAccess.Read);
-                    var partUri = PackUriHelper.CreatePartUri(new Uri(package.Id + ".nuspec", UriKind.Relative));
-                    var entry = archive.GetPart(partUri);
-                    using (var entryStream = entry.GetStream())
-                    {
-                        var nuspecStream = new MemoryStream((int)entryStream.Length);
-                        await entryStream.CopyToAsync(nuspecStream);
-                        nuspecStream.Seek(0, SeekOrigin.Begin);
-                        return nuspecStream;
-                    }
-                }
-#endif
                 using (var archive = new ZipArchive(nupkgStream, ZipArchiveMode.Read, leaveOpen: true))
                 {
                     var entry = archive.GetEntryOrdinalIgnoreCase(package.Id + ".nuspec");

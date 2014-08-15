@@ -3,7 +3,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
@@ -152,14 +151,5 @@ namespace NuGet
                    !PackageHelper.IsManifest(path) &&
                    !path.StartsWith("[Content_Types]", StringComparison.OrdinalIgnoreCase);
         }
-#if NET45
-        internal static bool IsPackageFile(System.IO.Packaging.PackagePart part)
-        {
-            string path = UriUtility.GetPath(part.Uri);
-            // We exclude any opc files and the manifest file (.nuspec)
-            return !ExcludePaths.Any(p => path.StartsWith(p, StringComparison.OrdinalIgnoreCase)) &&
-                   !PackageHelper.IsManifest(path);
-        }
-#endif
     }
 }

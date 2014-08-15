@@ -16,8 +16,7 @@
                 "System.IO.Compression.FileSystem" : "",
                 "System.Runtime" : "",
                 "System.Xml" : "",
-                "System.Xml.Linq" : "",
-                "WindowsBase": ""
+                "System.Xml.Linq" : ""
             }
         },
         "k10" : { 

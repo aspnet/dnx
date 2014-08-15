@@ -299,18 +299,7 @@ namespace NuGet
                 LocalPackage package;
                 try
                 {
-#if NET45
-                    if (PlatformHelper.IsMono)
-                    {
-                        package = new OptimizedOpcZipPackage(FileSystem, path);
-                    }
-                    else
-                    {
-                        package = new OptimizedZipPackage(FileSystem, path);
-                    }
-#else
                     package = new OptimizedZipPackage(FileSystem, path);
-#endif
                 }
                 catch (InvalidDataException ex)
                 {
