@@ -257,9 +257,6 @@ namespace Microsoft.Framework.DesignTimeHost
                 {
                     ProjectName = state.Project.Name,
 
-                    // REVIEW: For backwards compatibility
-                    Configurations = frameworks,
-
                     // All target framework information
                     Frameworks = frameworks,
 

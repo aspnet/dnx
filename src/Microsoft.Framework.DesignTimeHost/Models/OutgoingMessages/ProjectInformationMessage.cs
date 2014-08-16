@@ -10,10 +10,6 @@ namespace Microsoft.Framework.DesignTimeHost.Models.OutgoingMessages
     {
         public string ProjectName { get; set; }
 
-        // TODO: This is for legacy scenarios. Remove when
-        // this is fully implemented
-        public IList<FrameworkData> Configurations { get; set; }
-
         public IList<FrameworkData> Frameworks { get; set; }
 
         // We'll eventually move this to the configurations property
@@ -27,7 +23,6 @@ namespace Microsoft.Framework.DesignTimeHost.Models.OutgoingMessages
 
             return other != null &&
                    string.Equals(ProjectName, other.ProjectName) &&
-                   Enumerable.SequenceEqual(Configurations, other.Configurations) &&
                    Enumerable.SequenceEqual(Frameworks, other.Frameworks) &&
                    Enumerable.SequenceEqual(ProjectConfigurations, other.ProjectConfigurations) &&
                    Enumerable.SequenceEqual(Commands, other.Commands);
