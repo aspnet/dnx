@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Runtime.Versioning;
 using System.Threading;
@@ -106,9 +107,21 @@ namespace Microsoft.Framework.DesignTimeHost
 
         public void DoProcessLoop()
         {
-            DrainInbox();
-            Calculate();
-            Reconcile();
+            while (true)
+            {
+                DrainInbox();
+                Calculate();
+                Reconcile();
+
+                lock (_inbox)
+                {
+                    // If there's no more messages queued then bail out.
+                    if (_inbox.Count == 0)
+                    {
+                        return;
+                    }
+                }
+            }
         }
 
         private void DrainInbox()
@@ -408,32 +421,7 @@ namespace Microsoft.Framework.DesignTimeHost
                 {
                     Trace.TraceInformation("[ApplicationContext]: OnTransmit(Assembly)");
 
-                    waitingForCompiledAssembly.Connection.Transmit(writer =>
-                    {
-                        writer.Write("Assembly");
-                        writer.Write(Id);
-                        writer.Write(_local.Diagnostics.Warnings.Count);
-                        foreach (var warning in _local.Diagnostics.Warnings)
-                        {
-                            writer.Write(warning);
-                        }
-                        writer.Write(_local.Diagnostics.Errors.Count);
-                        foreach (var error in _local.Diagnostics.Errors)
-                        {
-                            writer.Write(error);
-                        }
-                        writer.Write(_local.Compiled.EmbeddedReferences.Count);
-                        foreach (var pair in _local.Compiled.EmbeddedReferences)
-                        {
-                            writer.Write(pair.Key);
-                            writer.Write(pair.Value.Length);
-                            writer.Write(pair.Value);
-                        }
-                        writer.Write(_local.Compiled.AssemblyBytes.Length);
-                        writer.Write(_local.Compiled.AssemblyBytes);
-                        writer.Write(_local.Compiled.PdbBytes.Length);
-                        writer.Write(_local.Compiled.PdbBytes);
-                    });
+                    waitingForCompiledAssembly.Connection.Transmit(WriteAssembly);
 
                     waitingForCompiledAssembly.AssemblySent = true;
                 }
@@ -465,6 +453,33 @@ namespace Microsoft.Framework.DesignTimeHost
             }
 
             _waitingForDiagnostics.Clear();
+        }
+
+        private void WriteAssembly(BinaryWriter writer)
+        {
+            writer.Write("Assembly");
+            writer.Write(Id);
+            writer.Write(_local.Diagnostics.Warnings.Count);
+            foreach (var warning in _local.Diagnostics.Warnings)
+            {
+                writer.Write(warning);
+            }
+            writer.Write(_local.Diagnostics.Errors.Count);
+            foreach (var error in _local.Diagnostics.Errors)
+            {
+                writer.Write(error);
+            }
+            writer.Write(_local.Compiled.EmbeddedReferences.Count);
+            foreach (var pair in _local.Compiled.EmbeddedReferences)
+            {
+                writer.Write(pair.Key);
+                writer.Write(pair.Value.Length);
+                writer.Write(pair.Value);
+            }
+            writer.Write(_local.Compiled.AssemblyBytes.Length);
+            writer.Write(_local.Compiled.AssemblyBytes);
+            writer.Write(_local.Compiled.PdbBytes.Length);
+            writer.Write(_local.Compiled.PdbBytes);
         }
 
         private bool IsDifferent<T>(T local, T remote) where T : class
