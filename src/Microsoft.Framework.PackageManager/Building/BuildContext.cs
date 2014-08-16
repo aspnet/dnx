@@ -29,9 +29,8 @@ namespace Microsoft.Framework.PackageManager
                 projectDirectory: project.ProjectDirectory,
                 packagesDirectory: null,
                 configuration: configuration,
-                targetFramework: targetFramework);
-
-            _applicationHostContext.AddService(typeof(ICache), cache);
+                targetFramework: targetFramework,
+                cache: cache);
         }
 
         public void Initialize()

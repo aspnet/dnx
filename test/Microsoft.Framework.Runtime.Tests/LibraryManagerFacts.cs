@@ -57,7 +57,19 @@ namespace Microsoft.Framework.Runtime.Tests
                 new LibraryInformation("MyApp", new[] { "DI", "Hosting", "Mvc", "HttpAbstractions" })
 
             };
-            return new LibraryManager(frameworkName, "Debug", () => libraryInfo, new CompositeLibraryExportProvider(Enumerable.Empty<ILibraryExportProvider>()));
+            return new LibraryManager(frameworkName, 
+                                      "Debug", 
+                                      () => libraryInfo, 
+                                      new CompositeLibraryExportProvider(Enumerable.Empty<ILibraryExportProvider>()),
+                                      new EmptyCache());
+        }
+
+        private class EmptyCache : ICache
+        {
+            public object Get(object key, Func<CacheContext, object> factory)
+            {
+                throw new NotImplementedException();
+            }
         }
     }
 }

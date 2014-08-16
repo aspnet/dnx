@@ -485,9 +485,8 @@ namespace Microsoft.Framework.DesignTimeHost
                                                                     appPath,
                                                                     packagesDirectory: null,
                                                                     configuration: configuration,
-                                                                    targetFramework: targetFramework);
-
-            applicationHostContext.AddService(typeof(ICache), _cache);
+                                                                    targetFramework: targetFramework,
+                                                                    cache: _cache);
 
             Project project = applicationHostContext.Project;
 

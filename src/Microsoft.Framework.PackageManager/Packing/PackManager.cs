@@ -46,7 +46,8 @@ namespace Microsoft.Framework.PackageManager.Packing
                     projectDirectory: projectDirectory,
                     packagesDirectory: null,
                     configuration: configuration,
-                    targetFramework: targetFramework);
+                    targetFramework: targetFramework,
+                    cache: new Cache());
 
                 ProjectResolver = applicationHostContext.ProjectResolver;
                 NuGetDependencyResolver = applicationHostContext.NuGetDependencyProvider;

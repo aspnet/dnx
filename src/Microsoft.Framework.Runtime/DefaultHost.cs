@@ -131,7 +131,8 @@ namespace Microsoft.Framework.Runtime
                 _projectDirectory,
                 options.PackageDirectory,
                 options.Configuration,
-                _targetFramework);
+                _targetFramework,
+                new Cache());
 
             Trace.TraceInformation("[{0}]: Project path: {1}", GetType().Name, _projectDirectory);
             Trace.TraceInformation("[{0}]: Project root: {1}", GetType().Name, _applicationHostContext.RootDirectory);

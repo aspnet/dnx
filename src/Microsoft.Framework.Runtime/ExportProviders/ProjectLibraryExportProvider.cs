@@ -71,6 +71,7 @@ namespace Microsoft.Framework.Runtime
 
                     // Get the exports for the project dependencies
                     var projectExport = new Lazy<ILibraryExport>(() => ProjectExportProviderHelper.GetExportsRecursive(
+                        cache,
                         libraryManager,
                         exportProvider,
                         project.Name,

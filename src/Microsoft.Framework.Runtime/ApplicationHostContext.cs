@@ -16,7 +16,8 @@ namespace Microsoft.Framework.Runtime
                                       string projectDirectory,
                                       string packagesDirectory,
                                       string configuration,
-                                      FrameworkName targetFramework)
+                                      FrameworkName targetFramework,
+                                      ICache cache)
         {
             ProjectDirectory = projectDirectory;
             RootDirectory = Runtime.ProjectResolver.ResolveRootDirectory(ProjectDirectory);
@@ -56,8 +57,8 @@ namespace Microsoft.Framework.Runtime
 
             _serviceProvider.Add(typeof(NuGetDependencyResolver), NuGetDependencyProvider);
             _serviceProvider.Add(typeof(ProjectReferenceDependencyProvider), ProjectDepencyProvider);
-            _serviceProvider.Add(typeof(ILibraryManager), new LibraryManager(targetFramework, configuration, DependencyWalker, compositeDependencyExporter));
-            _serviceProvider.Add(typeof(ICache), new Cache());
+            _serviceProvider.Add(typeof(ILibraryManager), new LibraryManager(targetFramework, configuration, DependencyWalker, compositeDependencyExporter, cache));
+            _serviceProvider.Add(typeof(ICache), cache);
         }
 
         public void AddService(Type type, object instance)
