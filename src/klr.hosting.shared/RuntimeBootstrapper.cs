@@ -49,8 +49,6 @@ namespace klr.hosting
 
         private static void PrintErrors(Exception ex)
         {
-            var enableTrace = Environment.GetEnvironmentVariable("KRE_TRACE") == "1";
-
             while (ex != null)
             {
                 if (ex is TargetInvocationException ||
@@ -61,14 +59,7 @@ namespace klr.hosting
                 }
                 else
                 {
-                    if (enableTrace)
-                    {
-                        Console.Error.WriteLine(ex);
-                    }
-                    else
-                    {
-                        Console.Error.WriteLine(ex.Message);
-                    }
+                    Console.Error.WriteLine(ex);
                 }
 
                 ex = ex.InnerException;
@@ -167,7 +158,7 @@ namespace klr.hosting
             loadFile = path => loaderImpl.LoadFile(path);
 
             AssemblyLoadContext.InitializeDefaultContext(loaderImpl);
-            
+
             if (loaderImpl.EnableMultiCoreJit())
             {
                 loaderImpl.StartMultiCoreJitProfile("startup.prof");
