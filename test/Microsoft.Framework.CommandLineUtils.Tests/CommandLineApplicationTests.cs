@@ -359,5 +359,19 @@ namespace Microsoft.Framework.Runtime.Common.CommandLine
             Assert.True(called);
             Assert.Equal(2, result);
         }
+
+        [Fact]
+        public void PropagatesAsyncExceptions()
+        {
+            var app = new CommandLineApplication();
+
+            app.OnExecute(async () =>
+            {
+                await Task.Delay(5);
+                throw new InvalidOperationException("this should throw");
+            });
+
+            Assert.Throws<AggregateException>(() => app.Execute());
+        }
     }
 }
