@@ -371,7 +371,10 @@ namespace Microsoft.Framework.Runtime.Common.CommandLine
                 throw new InvalidOperationException("this should throw");
             });
 
-            Assert.Throws<AggregateException>(() => app.Execute());
+            var ex = Assert.Throws<AggregateException>(() => app.Execute()).InnerException;
+            Assert.NotNull(ex);
+            Assert.IsType<InvalidOperationException>(ex);
+            Assert.Equal("this should throw", ex.Message);
         }
     }
 }
