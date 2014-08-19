@@ -56,7 +56,8 @@ namespace klr.host
             var framework = Environment.GetEnvironmentVariable("TARGET_FRAMEWORK") ?? Environment.GetEnvironmentVariable("KRE_FRAMEWORK");
             var configuration = Environment.GetEnvironmentVariable("TARGET_CONFIGURATION") ?? Environment.GetEnvironmentVariable("KRE_CONFIGURATION") ?? "Debug";
 
-            var targetFramework = FrameworkNameUtility.ParseFrameworkName(framework ?? (PlatformHelper.IsMono ? "net45" : "net451"));
+            // TODO: Support the highest installed version
+            var targetFramework = FrameworkNameUtility.ParseFrameworkName("net451");
 
             var applicationEnvironment = new ApplicationEnvironment(applicationBaseDirectory,
                                                                     targetFramework,

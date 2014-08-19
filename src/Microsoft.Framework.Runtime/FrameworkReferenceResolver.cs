@@ -33,7 +33,7 @@ namespace Microsoft.Framework.Runtime
 
             lock (information.Assemblies)
             {
-                if (information.Assemblies.TryGetValue(name, out path) && 
+                if (information.Assemblies.TryGetValue(name, out path) &&
                     string.IsNullOrEmpty(path))
                 {
                     path = GetAssemblyPath(information.Path, name);
@@ -100,34 +100,51 @@ namespace Microsoft.Framework.Runtime
 
                 var libPath = Path.GetDirectoryName(Path.GetDirectoryName(mscorlibLocationOnThisRunningMonoInstance));
 
-                var supportedVersions = new[] { "4.5", "4.0" };
+                // Mono is a bit inconsistent as .NET 4.5 and .NET 4.5.1 are the
+                // same folder
+                var supportedVersions = new Dictionary<string, string> {
+                    { "4.5.1", "4.5" },
+                    { "4.5", "4.5" },
+                    { "4.0", "4.0" }
+                };
 
-                foreach (var version in supportedVersions)
+                // Temporary cache while enumerating assemblies in directories
+                var pathCache = new Dictionary<string, FrameworkInformation>();
+
+                foreach (var versionFolderPair in supportedVersions)
                 {
-                    var targetFrameworkPath = Path.Combine(libPath, version);
+                    var targetFrameworkPath = Path.Combine(libPath, versionFolderPair.Value);
 
                     if (!Directory.Exists(targetFrameworkPath))
                     {
                         continue;
                     }
 
-                    var frameworkName = new FrameworkName(VersionUtility.DefaultTargetFramework.Identifier, new Version(version));
-
-                    var frameworkInfo = new FrameworkInformation();
-                    frameworkInfo.Path = targetFrameworkPath;
-
-                    var assemblies = new List<Tuple<string, string>>();
-
-                    PopulateAssemblies(assemblies, targetFrameworkPath);
-                    PopulateAssemblies(assemblies, Path.Combine(targetFrameworkPath, "Facades"));
-
-                    foreach (var pair in assemblies)
+                    FrameworkInformation frameworkInfo;
+                    if (!pathCache.TryGetValue(targetFrameworkPath, out frameworkInfo))
                     {
-                        frameworkInfo.Assemblies[pair.Item1] = pair.Item2;
+                        frameworkInfo = new FrameworkInformation();
+                        frameworkInfo.Path = targetFrameworkPath;
+
+                        var assemblies = new List<Tuple<string, string>>();
+
+                        PopulateAssemblies(assemblies, targetFrameworkPath);
+                        PopulateAssemblies(assemblies, Path.Combine(targetFrameworkPath, "Facades"));
+
+                        foreach (var pair in assemblies)
+                        {
+                            frameworkInfo.Assemblies[pair.Item1] = pair.Item2;
+                        }
+
+                        pathCache[targetFrameworkPath] = frameworkInfo;
                     }
 
+                    var frameworkName = new FrameworkName(VersionUtility.DefaultTargetFramework.Identifier, new Version(versionFolderPair.Key));
                     _cache[frameworkName] = frameworkInfo;
                 }
+
+                // Not needed anymore
+                pathCache.Clear();
             }
 #endif
         }

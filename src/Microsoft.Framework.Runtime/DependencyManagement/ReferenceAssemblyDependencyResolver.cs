@@ -71,6 +71,17 @@ namespace Microsoft.Framework.Runtime
 
         public ILibraryExport GetLibraryExport(string name, FrameworkName targetFramework, string configuration)
         {
+            // Did we even resolve this name, if not then do nothing
+            if (!_resolvedPaths.ContainsKey(name))
+            {
+                return null;
+            }
+
+            // We can't use resolved paths since it might be different to the target framework
+            // being passed in here. After we know this resolver is handling the 
+            // requested name, we can call back into the FrameworkResolver to figure out
+            //  the specific path for the target framework
+
             string path;
             if (FrameworkResolver.TryGetAssembly(name, targetFramework, out path))
             {
