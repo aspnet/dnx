@@ -25,6 +25,8 @@ namespace Microsoft.Framework.DesignTimeHost
     {
         private readonly IServiceProvider _hostServices;
         private readonly ICache _cache;
+        private readonly ICacheContextAccessor _cacheContextAccessor;
+
         private readonly Queue<Message> _inbox = new Queue<Message>();
         private readonly object _processingLock = new object();
 
@@ -42,10 +44,11 @@ namespace Microsoft.Framework.DesignTimeHost
         private readonly List<CompiledAssemblyState> _waitingForCompiledAssemblies = new List<CompiledAssemblyState>();
         private readonly List<ConnectionContext> _waitingForDiagnostics = new List<ConnectionContext>();
 
-        public ApplicationContext(IServiceProvider services, ICache cache, int id)
+        public ApplicationContext(IServiceProvider services, ICache cache, ICacheContextAccessor cacheContextAccessor, int id)
         {
             _hostServices = services;
             _cache = cache;
+            _cacheContextAccessor = cacheContextAccessor;
             Id = id;
         }
 
@@ -501,7 +504,8 @@ namespace Microsoft.Framework.DesignTimeHost
                                                                     packagesDirectory: null,
                                                                     configuration: configuration,
                                                                     targetFramework: targetFramework,
-                                                                    cache: _cache);
+                                                                    cache: _cache,
+                                                                    cacheContextAccessor: _cacheContextAccessor);
 
             Project project = applicationHostContext.Project;
 

@@ -17,11 +17,15 @@ namespace Microsoft.Framework.Runtime.Roslyn
     public class RoslynCompiler
     {
         private readonly ICache _cache;
+        private readonly ICacheContextAccessor _cacheContextAccessor;
         private readonly IFileWatcher _watcher;
 
-        public RoslynCompiler(ICache cache, IFileWatcher watcher)
+        public RoslynCompiler(ICache cache, 
+                              ICacheContextAccessor cacheContextAccessor, 
+                              IFileWatcher watcher)
         {
             _cache = cache;
+            _cacheContextAccessor = cacheContextAccessor;
             _watcher = watcher;
         }
 
@@ -44,13 +48,6 @@ namespace Microsoft.Framework.Runtime.Roslyn
 
             Trace.TraceInformation("[{0}]: Compiling '{1}'", GetType().Name, name);
             var sw = Stopwatch.StartNew();
-
-            _watcher.WatchDirectory(path, ".cs");
-
-            foreach (var directory in Directory.EnumerateDirectories(path, "*.*", SearchOption.AllDirectories))
-            {
-                _watcher.WatchDirectory(directory, ".cs");
-            }
 
             var compilationSettings = project.GetCompilationSettings(targetFramework, configuration);
 
@@ -128,8 +125,13 @@ namespace Microsoft.Framework.Runtime.Roslyn
             var parseOptions = new CSharpParseOptions(languageVersion: compilationSettings.LanguageVersion,
                                                       preprocessorSymbols: compilationSettings.Defines.AsImmutable());
 
+            var dirs = new HashSet<string>();
+            dirs.Add(project.ProjectDirectory);
+
             foreach (var sourcePath in project.SourceFiles)
             {
+                dirs.Add(Path.GetDirectoryName(sourcePath));
+
                 _watcher.WatchFile(sourcePath);
 
                 var syntaxTree = CreateSyntaxTree(sourcePath, parseOptions);
@@ -141,11 +143,22 @@ namespace Microsoft.Framework.Runtime.Roslyn
             {
                 var sourcePath = sourceFileReference.Path;
 
+                dirs.Add(Path.GetDirectoryName(sourcePath));
+
                 _watcher.WatchFile(sourcePath);
 
                 var syntaxTree = CreateSyntaxTree(sourcePath, parseOptions);
 
                 trees.Add(syntaxTree);
+            }
+
+            // Watch all directories
+            var ctx = _cacheContextAccessor.Current;
+
+            foreach (var d in dirs)
+            {
+                ctx.Monitor(new FileWriteTimeCacheDependency(d));
+                _watcher.WatchDirectory(d, ".cs");
             }
 
             return trees;

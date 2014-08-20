@@ -10,10 +10,6 @@ namespace Microsoft.Framework.Runtime
         private readonly ConcurrentDictionary<object, Lazy<CacheEntry>> _entries = new ConcurrentDictionary<object, Lazy<CacheEntry>>();
         private readonly ICacheContextAccessor _accessor;
 
-        public Cache() : this(new CacheContextAccessor())
-        {
-        }
-
         public Cache(ICacheContextAccessor accessor)
         {
             _accessor = accessor;

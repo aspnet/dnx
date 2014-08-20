@@ -15,18 +15,21 @@ namespace Microsoft.Framework.DesignTimeHost
         private readonly IDictionary<int, ApplicationContext> _contexts;
         private readonly IServiceProvider _services;
         private readonly ICache _cache;
+        private readonly ICacheContextAccessor _cacheContextAccessor;
         private ProcessingQueue _queue;
         private string _hostId;
 
         public ConnectionContext(IDictionary<int, ApplicationContext> contexts,
                                  IServiceProvider services,
                                  ICache cache,
+                                 ICacheContextAccessor cacheContextAccessor,
                                  ProcessingQueue queue,
                                  string hostId)
         {
             _contexts = contexts;
             _services = services;
             _cache = cache;
+            _cacheContextAccessor = cacheContextAccessor;
             _queue = queue;
             _hostId = hostId;
         }
@@ -53,7 +56,11 @@ namespace Microsoft.Framework.DesignTimeHost
             {
                 Trace.TraceInformation("[ConnectionContext]: Creating new application context for {0}", message.ContextId);
 
-                applicationContext = new ApplicationContext(_services, _cache, message.ContextId);
+                applicationContext = new ApplicationContext(_services,
+                                                            _cache,
+                                                            _cacheContextAccessor,
+                                                            message.ContextId);
+
                 _contexts.Add(message.ContextId, applicationContext);
             }
 
