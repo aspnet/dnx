@@ -47,7 +47,8 @@ namespace Microsoft.Framework.DesignTimeHost
 
         private async Task OpenChannel(int port, string hostId)
         {
-            var cache = new Cache();
+            var cacheContextAccessor = new CacheContextAccessor();
+            var cache = new Cache(cacheContextAccessor);
             var contexts = new Dictionary<int, ApplicationContext>();
 
             // This fixes the mono incompatibility but ties it to ipv4 connections
@@ -65,7 +66,7 @@ namespace Microsoft.Framework.DesignTimeHost
 
                 var stream = new NetworkStream(acceptSocket);
                 var queue = new ProcessingQueue(stream);
-                var connection = new ConnectionContext(contexts, _services, cache, queue, hostId);
+                var connection = new ConnectionContext(contexts, _services, cache, cacheContextAccessor, queue, hostId);
 
                 queue.OnReceive += message =>
                 {

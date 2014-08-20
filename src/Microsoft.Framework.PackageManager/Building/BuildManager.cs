@@ -94,7 +94,8 @@ namespace Microsoft.Framework.PackageManager
 
             host.Initialize();
 
-            var cache = new Cache();
+            var cacheContextAccessor = new CacheContextAccessor();
+            var cache = new Cache(cacheContextAccessor);
 
             using (host.AddLoaders(loaderContainer))
             {
@@ -118,7 +119,12 @@ namespace Microsoft.Framework.PackageManager
                         var errors = new List<string>();
                         var warnings = new List<string>();
 
-                        var context = new BuildContext(cache, project, targetFramework, configuration, baseOutputPath);
+                        var context = new BuildContext(cache,
+                                                       cacheContextAccessor,
+                                                       project,
+                                                       targetFramework,
+                                                       configuration,
+                                                       baseOutputPath);
                         context.Initialize();
 
                         if (_buildOptions.CheckDiagnostics)

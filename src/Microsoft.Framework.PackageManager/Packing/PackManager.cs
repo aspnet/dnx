@@ -41,13 +41,17 @@ namespace Microsoft.Framework.PackageManager.Packing
         {
             public DependencyContext(string projectDirectory, string configuration, FrameworkName targetFramework)
             {
+                var cacheContextAccessor = new CacheContextAccessor();
+                var cache = new Cache(cacheContextAccessor);
+
                 var applicationHostContext = new ApplicationHostContext(
                     serviceProvider: null,
                     projectDirectory: projectDirectory,
                     packagesDirectory: null,
                     configuration: configuration,
                     targetFramework: targetFramework,
-                    cache: new Cache());
+                    cache: cache,
+                    cacheContextAccessor: cacheContextAccessor);
 
                 ProjectResolver = applicationHostContext.ProjectResolver;
                 NuGetDependencyResolver = applicationHostContext.NuGetDependencyProvider;

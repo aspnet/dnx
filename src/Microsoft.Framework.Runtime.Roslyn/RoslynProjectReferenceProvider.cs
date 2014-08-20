@@ -8,9 +8,9 @@ namespace Microsoft.Framework.Runtime.Roslyn
     {
         private readonly RoslynCompiler _compiler;
 
-        public RoslynProjectReferenceProvider(ICache cache, IFileWatcher watcher)
+        public RoslynProjectReferenceProvider(ICache cache, ICacheContextAccessor cacheContextAccessor, IFileWatcher watcher)
         {
-            _compiler = new RoslynCompiler(cache, watcher);
+            _compiler = new RoslynCompiler(cache, cacheContextAccessor, watcher);
         }
 
         public IMetadataProjectReference GetProjectReference(

@@ -126,13 +126,17 @@ namespace Microsoft.Framework.Runtime
 
         private void Initialize(DefaultHostOptions options, IServiceProvider hostServices)
         {
+            var cacheContextAccessor = new CacheContextAccessor();
+            var cache = new Cache(cacheContextAccessor);
+
             _applicationHostContext = new ApplicationHostContext(
                 hostServices,
                 _projectDirectory,
                 options.PackageDirectory,
                 options.Configuration,
                 _targetFramework,
-                new Cache());
+                cache,
+                cacheContextAccessor);
 
             Trace.TraceInformation("[{0}]: Project path: {1}", GetType().Name, _projectDirectory);
             Trace.TraceInformation("[{0}]: Project root: {1}", GetType().Name, _applicationHostContext.RootDirectory);
