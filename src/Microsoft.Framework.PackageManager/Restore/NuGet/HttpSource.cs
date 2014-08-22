@@ -279,7 +279,11 @@ namespace Microsoft.Framework.PackageManager.Restore.NuGet
 
         private static FileStream CreateAsyncFileStream(string path, FileMode mode, FileAccess access, FileShare share)
         {
+#if NET45
             return new FileStream(path, mode, access, share, bufferSize: 8192, useAsync: true);
+#else
+            return new FileStream(path, mode, access, share);
+#endif
         }
     }
 }

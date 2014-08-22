@@ -8,15 +8,18 @@ namespace Microsoft.Framework.Runtime.Roslyn
     {
         private readonly RoslynCompiler _compiler;
 
-        public RoslynProjectReferenceProvider(ICache cache, ICacheContextAccessor cacheContextAccessor, IFileWatcher watcher)
+        public RoslynProjectReferenceProvider(
+            ICache cache, 
+            ICacheContextAccessor cacheContextAccessor, 
+            IFileWatcher watcher,
+            IServiceProvider services)
         {
-            _compiler = new RoslynCompiler(cache, cacheContextAccessor, watcher);
+            _compiler = new RoslynCompiler(cache, cacheContextAccessor, watcher, services);
         }
 
         public IMetadataProjectReference GetProjectReference(
             Project project,
-            FrameworkName targetFramework,
-            string configuration,
+            ILibraryKey target,
             Func<ILibraryExport> referenceResolver,
             IList<IMetadataReference> outgoingReferences)
         {
@@ -26,8 +29,7 @@ namespace Microsoft.Framework.Runtime.Roslyn
 
             var compliationContext = _compiler.CompileProject(
                 project,
-                targetFramework,
-                configuration,
+                target,
                 incomingReferences,
                 incomingSourceReferences,
                 outgoingReferences);

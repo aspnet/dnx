@@ -11,6 +11,8 @@ using System.Text;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.Text;
+using System.Reflection;
+using Microsoft.Framework.Runtime.Common.DependencyInjection;
 
 namespace Microsoft.Framework.Runtime.Roslyn
 {
@@ -19,26 +21,31 @@ namespace Microsoft.Framework.Runtime.Roslyn
         private readonly ICache _cache;
         private readonly ICacheContextAccessor _cacheContextAccessor;
         private readonly IFileWatcher _watcher;
+        private readonly IServiceProvider _services;
 
         public RoslynCompiler(ICache cache, 
                               ICacheContextAccessor cacheContextAccessor, 
-                              IFileWatcher watcher)
+                              IFileWatcher watcher, 
+                              IServiceProvider services)
         {
             _cache = cache;
             _cacheContextAccessor = cacheContextAccessor;
             _watcher = watcher;
+            _services = services;
         }
 
         public CompilationContext CompileProject(
             Project project,
-            FrameworkName targetFramework,
-            string configuration,
+            ILibraryKey target,
             IEnumerable<IMetadataReference> incomingReferences,
             IEnumerable<ISourceReference> incomingSourceReferences,
             IList<IMetadataReference> outgoingReferences)
         {
             var path = project.ProjectDirectory;
             var name = project.Name;
+
+            var isMainAspect = String.IsNullOrEmpty(target.Aspect);
+            var isPreprocessAspect = String.Equals(target.Aspect, "preprocess", StringComparison.OrdinalIgnoreCase);
 
             _watcher.WatchProject(path);
 
@@ -49,9 +56,32 @@ namespace Microsoft.Framework.Runtime.Roslyn
             Trace.TraceInformation("[{0}]: Compiling '{1}'", GetType().Name, name);
             var sw = Stopwatch.StartNew();
 
-            var compilationSettings = project.GetCompilationSettings(targetFramework, configuration);
+            _watcher.WatchDirectory(path, ".cs");
 
-            IList<SyntaxTree> trees = GetSyntaxTrees(project, compilationSettings, incomingSourceReferences);
+            foreach (var directory in Directory.EnumerateDirectories(path, "*.*", SearchOption.AllDirectories))
+            {
+                _watcher.WatchDirectory(directory, ".cs");
+            }
+
+            var compilationSettings = project.GetCompilationSettings(
+                target.TargetFramework, 
+                target.Configuration);
+
+            var sourceFiles = Enumerable.Empty<String>();
+            if (isMainAspect)
+            {
+                sourceFiles = project.SourceFiles;
+            }
+            else if (isPreprocessAspect)
+            {
+                sourceFiles = project.PreprocessSourceFiles;
+            }
+
+            IList<SyntaxTree> trees = GetSyntaxTrees(
+                project, 
+                sourceFiles, 
+                compilationSettings, 
+                incomingSourceReferences);
 
             var embeddedReferences = incomingReferences.OfType<IMetadataEmbeddedReference>()
                                                        .ToDictionary(a => a.Name, ConvertMetadataReference);
@@ -93,6 +123,19 @@ namespace Microsoft.Framework.Runtime.Roslyn
                 assemblyNeutralTypeDiagnostics,
                 project);
 
+            if (isMainAspect)
+            {
+                var preprocessAssembly = Assembly.Load(new AssemblyName(project.Name + "!preprocess"));
+                foreach (var preprocessType in preprocessAssembly.ExportedTypes)
+                {
+                    if (preprocessType.GetTypeInfo().ImplementedInterfaces.Contains(typeof(ICompileModule)))
+                    {
+                        var module = (ICompileModule)ActivatorUtilities.CreateInstance(_services, preprocessType);
+                        compilationContext.Modules.Add(module);
+                    }
+                }
+            }
+
             sw.Stop();
             Trace.TraceInformation("[{0}]: Compiled '{1}' in {2}ms", GetType().Name, name, sw.ElapsedMilliseconds);
 
@@ -117,6 +160,7 @@ namespace Microsoft.Framework.Runtime.Roslyn
         }
 
         private IList<SyntaxTree> GetSyntaxTrees(Project project,
+                                                 IEnumerable<string> sourceFiles,
                                                  CompilationSettings compilationSettings,
                                                  IEnumerable<ISourceReference> sourceReferences)
         {
@@ -128,7 +172,7 @@ namespace Microsoft.Framework.Runtime.Roslyn
             var dirs = new HashSet<string>();
             dirs.Add(project.ProjectDirectory);
 
-            foreach (var sourcePath in project.SourceFiles)
+            foreach (var sourcePath in sourceFiles)
             {
                 dirs.Add(Path.GetDirectoryName(sourcePath));
 

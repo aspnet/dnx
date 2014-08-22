@@ -17,5 +17,15 @@ namespace Microsoft.Framework.Runtime
         ILibraryInformation GetLibraryInformation(string name);
 
         IEnumerable<ILibraryInformation> GetLibraries();
+
+        ILibraryExport GetLibraryExport(string name, string aspect);
+
+        ILibraryExport GetAllExports(string name, string aspect);
+
+        IEnumerable<ILibraryInformation> GetReferencingLibraries(string name, string aspect);
+
+        ILibraryInformation GetLibraryInformation(string name, string aspect);
+
+        IEnumerable<ILibraryInformation> GetLibraries(string aspect);
     }
 }
