@@ -123,7 +123,7 @@ namespace Microsoft.Framework.Runtime.Roslyn
                 assemblyNeutralTypeDiagnostics,
                 project);
 
-            if (isMainAspect)
+            if (isMainAspect && project.PreprocessSourceFiles.Any())
             {
                 var preprocessAssembly = Assembly.Load(new AssemblyName(project.Name + "!preprocess"));
                 foreach (var preprocessType in preprocessAssembly.ExportedTypes)
