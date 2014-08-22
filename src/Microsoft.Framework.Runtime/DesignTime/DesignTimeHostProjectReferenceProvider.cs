@@ -15,8 +15,7 @@ namespace Microsoft.Framework.Runtime
 
         public IMetadataProjectReference GetProjectReference(
             Project project,
-            FrameworkName targetFramework,
-            string configuration,
+            ILibraryKey target,
             Func<ILibraryExport> referenceResolver,
             IList<IMetadataReference> outgoingReferences)
         {

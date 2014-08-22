@@ -22,24 +22,31 @@ namespace Microsoft.Framework.Runtime
             _serviceProvider = serviceProvider;
         }
 
-        public ILibraryExport GetLibraryExport(string name, FrameworkName targetFramework, string configuration)
+        public ILibraryExport GetLibraryExport(ILibraryKey target)
         {
             Project project;
             // Can't find a project file with the name so bail
-            if (!_projectResolver.TryResolveProject(name, out project))
+            if (!_projectResolver.TryResolveProject(target.Name, out project))
             {
                 return null;
             }
 
-            Trace.TraceInformation("[{0}]: GetLibraryExport({1}, {2}, {3})", GetType().Name, name, targetFramework, configuration);
+            Trace.TraceInformation("[{0}]: GetLibraryExport({1}, {2}, {3}, {4})", GetType().Name, target.Name, target.TargetFramework, target.Configuration, target.Aspect);
 
-            var targetFrameworkInformation = project.GetTargetFramework(targetFramework);
+            var targetFrameworkInformation = project.GetTargetFramework(target.TargetFramework);
 
             // This is the target framework defined in the project. If there were no target frameworks
             // defined then this is the targetFramework specified
-            targetFramework = targetFrameworkInformation.FrameworkName ?? targetFramework;
-
-            var key = Tuple.Create(name, targetFramework, configuration);
+            if (targetFrameworkInformation.FrameworkName != null)
+            {
+                target = target.ChangeTargetFramework(targetFrameworkInformation.FrameworkName);
+            }
+            
+            var key = Tuple.Create(
+                target.Name, 
+                target.TargetFramework, 
+                target.Configuration,
+                target.Aspect);
 
             var cache = (ICache)_serviceProvider.GetService(typeof(ICache));
 
@@ -54,8 +61,8 @@ namespace Microsoft.Framework.Runtime
 
                 if (!string.IsNullOrEmpty(targetFrameworkInformation.AssemblyPath))
                 {
-                    var assemblyPath = ResolvePath(project, configuration, targetFrameworkInformation.AssemblyPath);
-                    var pdbPath = ResolvePath(project, configuration, targetFrameworkInformation.PdbPath);
+                    var assemblyPath = ResolvePath(project, target.Configuration, targetFrameworkInformation.AssemblyPath);
+                    var pdbPath = ResolvePath(project, target.Configuration, targetFrameworkInformation.PdbPath);
 
                     metadataReferences.Add(new CompiledProjectMetadataReference(project, assemblyPath, pdbPath));
                 }
@@ -67,23 +74,20 @@ namespace Microsoft.Framework.Runtime
                         return LanguageServices.CreateService<IProjectReferenceProvider>(_serviceProvider, typeInfo);
                     });
 
-                    Trace.TraceInformation("[{0}]: GetProjectReference({1}, {2}, {3})", project.LanguageServices.ProjectReferenceProvider.TypeName, name, targetFramework, configuration);
+                    Trace.TraceInformation("[{0}]: GetProjectReference({1}, {2}, {3}, {4})", project.LanguageServices.ProjectReferenceProvider.TypeName, target.Name, target.TargetFramework, target.Configuration, target.Aspect);
 
                     // Get the exports for the project dependencies
                     var projectExport = new Lazy<ILibraryExport>(() => ProjectExportProviderHelper.GetExportsRecursive(
                         cache,
                         libraryManager,
                         exportProvider,
-                        project.Name,
-                        targetFramework,
-                        configuration,
+                        target,
                         dependenciesOnly: true));
 
                     // Resolve the project export
                     IMetadataProjectReference projectReference = projectReferenceProvider.GetProjectReference(
                         project,
-                        targetFramework,
-                        configuration,
+                        target,
                         () => projectExport.Value,
                         metadataReferences);
 

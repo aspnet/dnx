@@ -7,12 +7,12 @@ using System.Runtime.Versioning;
 
 namespace Microsoft.Framework.Runtime
 {
-    public interface IProjectReferenceProvider
+    [AssemblyNeutral]
+    public interface ILibraryKey
     {
-        IMetadataProjectReference GetProjectReference(
-            Project project,
-            ILibraryKey target, 
-            Func<ILibraryExport> referenceResolver,
-            IList<IMetadataReference> outgoingReferences);
+        string Name { get; }
+        FrameworkName TargetFramework { get; }
+        string Configuration { get; }
+        string Aspect { get; }
     }
 }

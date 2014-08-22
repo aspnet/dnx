@@ -18,13 +18,11 @@ namespace Microsoft.Framework.Runtime
             ICache cache,
             ILibraryManager manager,
             ILibraryExportProvider libraryExportProvider,
-            string name,
-            FrameworkName targetFramework,
-            string configuration,
+            ILibraryKey target,
             bool dependenciesOnly)
         {
             var dependencyStopWatch = Stopwatch.StartNew();
-            Trace.TraceInformation("[{0}]: Resolving references for '{1}'", typeof(ProjectExportProviderHelper).Name, name);
+            Trace.TraceInformation("[{0}]: Resolving references for '{1}' {2}", typeof(ProjectExportProviderHelper).Name, target.Name, target.Aspect);
 
             var references = new Dictionary<string, IMetadataReference>(StringComparer.OrdinalIgnoreCase);
             var sourceReferences = new Dictionary<string, ISourceReference>(StringComparer.OrdinalIgnoreCase);
@@ -35,7 +33,7 @@ namespace Microsoft.Framework.Runtime
 
             var rootNode = new Node
             {
-                Library = manager.GetLibraryInformation(name)
+                Library = manager.GetLibraryInformation(target.Name, target.Aspect)
             };
 
             stack.Enqueue(rootNode);
@@ -54,7 +52,7 @@ namespace Microsoft.Framework.Runtime
 
                 if (!dependenciesOnly || (dependenciesOnly && !isRoot))
                 {
-                    var libraryExport = libraryExportProvider.GetLibraryExport(node.Library.Name, targetFramework, configuration);
+                    var libraryExport = libraryExportProvider.GetLibraryExport(target.ChangeName(node.Library.Name));
 
                     if (libraryExport == null)
                     {
@@ -80,7 +78,7 @@ namespace Microsoft.Framework.Runtime
                 {
                     var childNode = new Node
                     {
-                        Library = manager.GetLibraryInformation(dependency),
+                        Library = manager.GetLibraryInformation(dependency, target.Aspect),
                         Parent = node
                     };
 
@@ -92,7 +90,7 @@ namespace Microsoft.Framework.Runtime
             Trace.TraceInformation("[{0}]: Resolved {1} references for '{2}' in {3}ms",
                                   typeof(ProjectExportProviderHelper).Name,
                                   references.Count,
-                                  name,
+                                  target.Name,
                                   dependencyStopWatch.ElapsedMilliseconds);
 
             return new LibraryExport(

@@ -106,6 +106,29 @@ namespace Microsoft.Framework.Runtime
             }
         }
 
+        public IEnumerable<string> PreprocessSourceFiles
+        {
+            get
+            {
+                string path = ProjectDirectory;
+
+                var files = Enumerable.Empty<string>();
+
+                var includeFiles = PreprocessPatterns
+                    .SelectMany(pattern => PathResolver.PerformWildcardSearch(path, pattern))
+                    .ToArray();
+
+                var excludePatterns = SharedPatterns.Concat(ResourcesPatterns).Concat(ExcludePatterns)
+                    .Select(pattern => PathResolver.NormalizeWildcardForExcludedFiles(path, pattern))
+                    .ToArray();
+
+                var excludeFiles = PathResolver.GetMatches(includeFiles, x => x, excludePatterns)
+                    .ToArray();
+
+                return files.Concat(includeFiles.Except(excludeFiles)).Distinct().ToArray();
+            }
+        }
+
         public IEnumerable<string> PackExcludeFiles
         {
             get
@@ -349,10 +372,18 @@ namespace Microsoft.Framework.Runtime
                     //    "Name" : "1.0"
                     // }
 
-                    string dependencyVersionValue = dependency.Value.Value<string>();
+                    var dependencyValue = dependency.Value;
+                    string dependencyVersionValue = null;
+                    if (dependencyValue.Type == JTokenType.String)
+                    {
+                        dependencyVersionValue = dependencyValue.Value<string>();
+                    }
+                    else
+                    {
+                        dependencyValue["version"].Value<string>();
+                    }
 
                     SemanticVersion dependencyVersion = null;
-
                     if (!String.IsNullOrEmpty(dependencyVersionValue))
                     {
                         dependencyVersion = SemanticVersion.Parse(dependencyVersionValue);
@@ -361,7 +392,7 @@ namespace Microsoft.Framework.Runtime
                     results.Add(new Library
                     {
                         Name = dependency.Key,
-                        Version = dependencyVersion
+                        Version = dependencyVersion,
                     });
                 }
             }
