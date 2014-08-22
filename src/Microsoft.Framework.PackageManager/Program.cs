@@ -192,7 +192,6 @@ namespace Microsoft.Framework.PackageManager
                 var optionFramework = c.Option("--framework <TARGET_FRAMEWORK>", "A list of target frameworks to build.", CommandOptionType.MultipleValue);
                 var optionConfiguration = c.Option("--configuration <CONFIGURATION>", "A list of configurations to build.", CommandOptionType.MultipleValue);
                 var optionOut = c.Option("--out <OUTPUT_DIR>", "Output directory", CommandOptionType.SingleValue);
-                var optionCheck = c.Option("--check", "Check diagnostics", CommandOptionType.NoValue);
                 var optionDependencies = c.Option("--dependencies", "Copy dependencies", CommandOptionType.NoValue);
                 var argProjectDir = c.Argument("[project]", "Project to build, default is current directory");
                 c.HelpOption("-?|-h|--help");
@@ -203,7 +202,6 @@ namespace Microsoft.Framework.PackageManager
                     buildOptions.RuntimeTargetFramework = _environment.TargetFramework;
                     buildOptions.OutputDir = optionOut.Value();
                     buildOptions.ProjectDir = argProjectDir.Value ?? Directory.GetCurrentDirectory();
-                    buildOptions.CheckDiagnostics = optionCheck.HasValue();
                     buildOptions.Configurations = optionConfiguration.Values;
                     buildOptions.TargetFrameworks = optionFramework.Values;
 

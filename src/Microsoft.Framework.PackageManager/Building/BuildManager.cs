@@ -127,23 +127,16 @@ namespace Microsoft.Framework.PackageManager
                                                        baseOutputPath);
                         context.Initialize();
 
-                        if (_buildOptions.CheckDiagnostics)
+                        if (context.Build(warnings, errors))
                         {
-                            configurationSuccess = configurationSuccess && context.GetDiagnostics(warnings, errors);
+                            context.PopulateDependencies(packageBuilder);
+                            context.AddLibs(packageBuilder, "*.dll");
+                            context.AddLibs(packageBuilder, "*.xml");
+                            context.AddLibs(symbolPackageBuilder, "*.*");
                         }
                         else
                         {
-                            if (context.Build(warnings, errors))
-                            {
-                                context.PopulateDependencies(packageBuilder);
-                                context.AddLibs(packageBuilder, "*.dll");
-                                context.AddLibs(packageBuilder, "*.xml");
-                                context.AddLibs(symbolPackageBuilder, "*.*");
-                            }
-                            else
-                            {
-                                configurationSuccess = false;
-                            }
+                            configurationSuccess = false;
                         }
 
                         allErrors.AddRange(errors);
@@ -153,12 +146,6 @@ namespace Microsoft.Framework.PackageManager
                     }
 
                     success = success && configurationSuccess;
-
-                    // Skip producing the nupkg if we're just checking diagnostics
-                    if (_buildOptions.CheckDiagnostics)
-                    {
-                        continue;
-                    }
 
                     // Create a package per configuration
                     string nupkg = GetPackagePath(project, baseOutputPath);

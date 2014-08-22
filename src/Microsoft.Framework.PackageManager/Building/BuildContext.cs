@@ -58,18 +58,6 @@ namespace Microsoft.Framework.PackageManager
             return result.Success;
         }
 
-        public bool GetDiagnostics(IList<string> warnings, IList<string> errors)
-        {
-            var metadataProvider = _applicationHostContext.CreateInstance<ProjectMetadataProvider>();
-
-            var metadata = metadataProvider.GetProjectMetadata(_project.Name);
-
-            errors.AddRange(metadata.Errors);
-            warnings.AddRange(metadata.Warnings);
-
-            return metadata.Errors.Count == 0;
-        }
-
         public void PopulateDependencies(PackageBuilder packageBuilder)
         {
             var dependencies = new List<PackageDependency>();

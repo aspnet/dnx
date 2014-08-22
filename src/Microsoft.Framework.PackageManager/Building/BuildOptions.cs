@@ -17,7 +17,6 @@ namespace Microsoft.Framework.PackageManager
         public IList<string> TargetFrameworks { get;set; }
 
         public FrameworkName RuntimeTargetFramework { get; set; }
-        public bool CheckDiagnostics { get; set; }
 
         public BuildOptions()
         {
