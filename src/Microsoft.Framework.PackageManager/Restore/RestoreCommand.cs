@@ -215,14 +215,9 @@ namespace Microsoft.Framework.PackageManager
 
             Reports.Information.WriteLine(string.Format("{0}, {1}ms elapsed", "Restore complete".Green().Bold(), sw.ElapsedMilliseconds));
 
-            // Print the dependency graph
-            if (success)
+            for (int i = 0; i < contexts.Count; i++)
             {
-                var graphNum = contexts.Count;
-                for (int i = 0; i < graphNum; i++)
-                {
-                    PrintDependencyGraph(graphs[i], contexts[i].FrameworkName);
-                }
+                PrintDependencyGraph(graphs[i], contexts[i].FrameworkName);
             }
 
             return success;
