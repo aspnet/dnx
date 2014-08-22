@@ -126,7 +126,7 @@ namespace Microsoft.Framework.PackageManager
             ScriptExecutor.Execute(project, "prerestore", getVariable);
 
             var projectDirectory = project.ProjectDirectory;
-            var restoreOperations = new RestoreOperations { Report = Reports.Information };
+            var restoreOperations = new RestoreOperations { Report = Reports.Verbose };
             var projectProviders = new List<IWalkProvider>();
             var localProviders = new List<IWalkProvider>();
             var remoteProviders = new List<IWalkProvider>();
@@ -387,7 +387,7 @@ namespace Microsoft.Framework.PackageManager
                         new RemoteWalkProvider(
                             new PackageFolder(
                                 source.Source,
-                                Reports.Verbose)));
+                                Reports.Information)));
                 }
                 else
                 {
@@ -398,7 +398,7 @@ namespace Microsoft.Framework.PackageManager
                                 source.UserName,
                                 source.Password,
                                 NoCache,
-                                Reports.Verbose)));
+                                Reports.Information)));
                 }
             }
         }
