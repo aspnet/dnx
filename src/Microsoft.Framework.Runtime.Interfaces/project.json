@@ -1,9 +1,6 @@
 {
     "version": "1.0.0-*",
     "compilationOptions" : { "warningsAsErrors": true },
-    "dependencies": {
-        "K.Roslyn" : "1.0.0-*"
-    },
     "frameworks" : {
         "net45" : { },
         "k10" : { 
