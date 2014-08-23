@@ -55,7 +55,7 @@ namespace Microsoft.Framework.PackageManager
                 warnings.AddRange(result.Warnings);
             }
 
-            return result.Success;
+            return result.Success && errors.Count == 0;
         }
 
         public void PopulateDependencies(PackageBuilder packageBuilder)
