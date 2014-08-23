@@ -60,13 +60,6 @@ namespace Microsoft.Framework.Runtime.Roslyn
             Trace.TraceInformation("[{0}]: Compiling '{1}'", GetType().Name, name);
             var sw = Stopwatch.StartNew();
 
-            _watcher.WatchDirectory(path, ".cs");
-
-            foreach (var directory in Directory.EnumerateDirectories(path, "*.*", SearchOption.AllDirectories))
-            {
-                _watcher.WatchDirectory(directory, ".cs");
-            }
-
             var compilationSettings = project.GetCompilationSettings(
                 target.TargetFramework,
                 target.Configuration);
