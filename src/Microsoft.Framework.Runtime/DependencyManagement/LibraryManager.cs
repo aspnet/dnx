@@ -66,27 +66,27 @@ namespace Microsoft.Framework.Runtime
 
         public ILibraryExport GetLibraryExport(string name)
         {
-            return GetLibraryExport(name, null);
+            return GetLibraryExport(name, aspect: null);
         }
 
         public ILibraryExport GetAllExports(string name)
         {
-            return GetAllExports(name, null);
+            return GetAllExports(name, aspect: null);
         }
 
         public IEnumerable<ILibraryInformation> GetReferencingLibraries(string name)
         {
-            return GetReferencingLibraries(name, null);
+            return GetReferencingLibraries(name, aspect: null);
         }
 
         public ILibraryInformation GetLibraryInformation(string name)
         {
-            return GetLibraryInformation(name, null);
+            return GetLibraryInformation(name, aspect: null);
         }
 
         public IEnumerable<ILibraryInformation> GetLibraries()
         {
-            return GetLibraries(null);
+            return GetLibraries(aspect: null);
         }
 
         public ILibraryInformation GetLibraryInformation(string name, string aspect)

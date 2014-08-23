@@ -44,8 +44,8 @@ namespace Microsoft.Framework.Runtime.Roslyn
             var path = project.ProjectDirectory;
             var name = project.Name;
 
-            var isMainAspect = String.IsNullOrEmpty(target.Aspect);
-            var isPreprocessAspect = String.Equals(target.Aspect, "preprocess", StringComparison.OrdinalIgnoreCase);
+            var isMainAspect = string.IsNullOrEmpty(target.Aspect);
+            var isPreprocessAspect = string.Equals(target.Aspect, "preprocess", StringComparison.OrdinalIgnoreCase);
 
             _watcher.WatchProject(path);
 

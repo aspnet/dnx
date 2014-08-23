@@ -20,8 +20,7 @@ namespace Microsoft.Framework.Runtime.Roslyn
         private static readonly IList<IMetadataEmbeddedReference> _emptyList = new IMetadataEmbeddedReference[0];
 
         private Lazy<IList<ResourceDescription>> _resources;
-        private bool _beforeCompileCalled = false;
-//        private bool _afterCompileCalled = false;
+        private bool _beforeCompileCalled;
 
         public RoslynProjectReference(CompilationContext compilationContext)
         {

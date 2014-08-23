@@ -24,6 +24,13 @@ namespace Microsoft.Framework.Runtime.Loader
 
         public Assembly Load(string name)
         {
+            // An assembly name like "MyLibrary!alternate!more-text"
+            // is parsed into:
+            // name == "MyLibrary"
+            // aspect == "alternate"
+            // and the more-text may be used to force a recompilation of an aspect that would
+            // otherwise have been cached by some layer within Assembly.Load
+
             String aspect = null;
             var parts = name.Split(new[] { '!' }, 3);
             if (parts.Length != 1)

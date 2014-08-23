@@ -8,6 +8,5 @@ namespace Microsoft.Framework.Runtime
     public class LibraryDependency
     {
         public Library Library { get; set; }
-
     }
 }
