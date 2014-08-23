@@ -17,7 +17,14 @@ namespace HelloWorld.Compiler.Preprocess
 
         public void BeforeCompile(IBeforeCompileContext context)
         {
-
+            context.CSharpCompilation = context.CSharpCompilation.AddSyntaxTrees(CSharpSyntaxTree.ParseText(@"
+public class Foo 
+{
+    public string Message
+    {
+        get { return ""Metaprogrammg!""; } 
+    }
+}"));
         }
 
         public void AfterCompile(IAfterCompileContext context)

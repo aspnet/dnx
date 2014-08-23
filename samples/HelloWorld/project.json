@@ -10,7 +10,17 @@
         "run": "HelloWorld I can customize the default command"
     },
     "frameworks": {
-        "net45": { },
+        "net45": {
+            "dependencies": { 
+                "System.Collections" : "",
+                "System.IO": "",
+                "System.Runtime" : "",
+                "System.Xml": "",
+                "System.Xml.Linq": "",
+                "System.Threading.Tasks": "",
+                "System.Text.Encoding": ""
+            }
+        },
         "k10": {
             "dependencies": {
                 "System.Console": "4.0.0.0",
