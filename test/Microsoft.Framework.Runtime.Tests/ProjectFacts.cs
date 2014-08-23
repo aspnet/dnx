@@ -43,16 +43,18 @@ namespace Microsoft.Framework.Runtime.Tests
         ""A"": """",
         ""B"": ""1.0-alpha-*"",
         ""C"": ""1.0.0"",
+        ""D"": { ""version"": ""2.0.0"" }
     }
 }",
 "foo",
 @"c:\foo\project.json");
 
             Assert.NotNull(project.Dependencies);
-            Assert.Equal(3, project.Dependencies.Count);
+            Assert.Equal(4, project.Dependencies.Count);
             var d1 = project.Dependencies[0];
             var d2 = project.Dependencies[1];
             var d3 = project.Dependencies[2];
+            var d4 = project.Dependencies[3];
             Assert.Equal("A", d1.Name);
             Assert.Null(d1.Version);
             Assert.Equal("B", d2.Name);
@@ -61,6 +63,9 @@ namespace Microsoft.Framework.Runtime.Tests
             Assert.Equal("C", d3.Name);
             Assert.Equal(SemanticVersion.Parse("1.0.0"), d3.Version);
             Assert.False(d3.Version.IsSnapshot);
+            Assert.Equal("D", d4.Name);
+            Assert.Equal(SemanticVersion.Parse("2.0.0"), d4.Version);
+            Assert.False(d4.Version.IsSnapshot);
         }
 
         [Fact]

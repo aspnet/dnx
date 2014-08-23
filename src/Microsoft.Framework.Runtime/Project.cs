@@ -380,7 +380,7 @@ namespace Microsoft.Framework.Runtime
                     }
                     else
                     {
-                        dependencyValue["version"].Value<string>();
+                        dependencyVersionValue = dependencyValue["version"].Value<string>();
                     }
 
                     SemanticVersion dependencyVersion = null;
