@@ -6,7 +6,6 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Runtime.Versioning;
 using System.Text;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
@@ -23,9 +22,9 @@ namespace Microsoft.Framework.Runtime.Roslyn
         private readonly IFileWatcher _watcher;
         private readonly IServiceProvider _services;
 
-        public RoslynCompiler(ICache cache, 
-                              ICacheContextAccessor cacheContextAccessor, 
-                              IFileWatcher watcher, 
+        public RoslynCompiler(ICache cache,
+                              ICacheContextAccessor cacheContextAccessor,
+                              IFileWatcher watcher,
                               IServiceProvider services)
         {
             _cache = cache;
@@ -47,6 +46,11 @@ namespace Microsoft.Framework.Runtime.Roslyn
             var isMainAspect = string.IsNullOrEmpty(target.Aspect);
             var isPreprocessAspect = string.Equals(target.Aspect, "preprocess", StringComparison.OrdinalIgnoreCase);
 
+            if (!string.IsNullOrEmpty(target.Aspect))
+            {
+                name += "!" + target.Aspect;
+            }
+
             _watcher.WatchProject(path);
 
             _watcher.WatchFile(project.ProjectFilePath);
@@ -64,7 +68,7 @@ namespace Microsoft.Framework.Runtime.Roslyn
             }
 
             var compilationSettings = project.GetCompilationSettings(
-                target.TargetFramework, 
+                target.TargetFramework,
                 target.Configuration);
 
             var sourceFiles = Enumerable.Empty<String>();
@@ -78,9 +82,9 @@ namespace Microsoft.Framework.Runtime.Roslyn
             }
 
             IList<SyntaxTree> trees = GetSyntaxTrees(
-                project, 
-                sourceFiles, 
-                compilationSettings, 
+                project,
+                sourceFiles,
+                compilationSettings,
                 incomingSourceReferences);
 
             var embeddedReferences = incomingReferences.OfType<IMetadataEmbeddedReference>()
@@ -125,13 +129,35 @@ namespace Microsoft.Framework.Runtime.Roslyn
 
             if (isMainAspect && project.PreprocessSourceFiles.Any())
             {
-                var preprocessAssembly = Assembly.Load(new AssemblyName(project.Name + "!preprocess"));
-                foreach (var preprocessType in preprocessAssembly.ExportedTypes)
+                try
                 {
-                    if (preprocessType.GetTypeInfo().ImplementedInterfaces.Contains(typeof(ICompileModule)))
+                    var preprocessAssembly = Assembly.Load(new AssemblyName(project.Name + "!preprocess"));
+                    foreach (var preprocessType in preprocessAssembly.ExportedTypes)
                     {
-                        var module = (ICompileModule)ActivatorUtilities.CreateInstance(_services, preprocessType);
-                        compilationContext.Modules.Add(module);
+                        if (preprocessType.GetTypeInfo().ImplementedInterfaces.Contains(typeof(ICompileModule)))
+                        {
+                            var module = (ICompileModule)ActivatorUtilities.CreateInstance(_services, preprocessType);
+                            compilationContext.Modules.Add(module);
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    var compilationException = ex.InnerException as RoslynCompilationException;
+
+                    if (compilationException != null)
+                    {
+                        // Add diagnostics from the precompile step
+                        foreach (var diag in compilationException.Diagnostics)
+                        {
+                            compilationContext.Diagnostics.Add(diag);
+                        }
+
+                        Trace.TraceError("[{0}]: Failed loading meta assembly '{1}'", GetType().Name, name);
+                    }
+                    else
+                    {
+                        Trace.TraceError("[{0}]: Failed loading meta assembly '{1}':\n {2}", GetType().Name, name, ex);
                     }
                 }
             }

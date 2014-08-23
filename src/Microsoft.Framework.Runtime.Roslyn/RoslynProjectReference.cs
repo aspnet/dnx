@@ -125,11 +125,10 @@ namespace Microsoft.Framework.Runtime.Roslyn
                 var diagnostics = CompilationContext.Diagnostics.Concat(
                     emitResult.Diagnostics);
 
-                var result = CreateDiagnosticResult(emitResult.Success, diagnostics);
-
-                if (!result.Success)
+                if (!emitResult.Success ||
+                    diagnostics.Any(RoslynDiagnosticUtilities.IsError))
                 {
-                    throw new CompilationException(result.Errors.ToList());
+                    throw new RoslynCompilationException(diagnostics);
                 }
 
                 Assembly assembly = null;
@@ -197,7 +196,7 @@ namespace Microsoft.Framework.Runtime.Roslyn
                 diagnostics.AddRange(result.Diagnostics);
 
                 if (!result.Success ||
-                    diagnostics.Any(IsError))
+                    diagnostics.Any(RoslynDiagnosticUtilities.IsError))
                 {
                     return CreateDiagnosticResult(result.Success, diagnostics);
                 }
@@ -373,7 +372,7 @@ namespace Microsoft.Framework.Runtime.Roslyn
         {
             var formatter = new DiagnosticFormatter();
 
-            var errors = diagnostics.Where(IsError)
+            var errors = diagnostics.Where(RoslynDiagnosticUtilities.IsError)
                                 .Select(d => formatter.Format(d)).ToList();
 
             var warnings = diagnostics.Where(d => d.Severity == DiagnosticSeverity.Warning)
@@ -382,29 +381,24 @@ namespace Microsoft.Framework.Runtime.Roslyn
             return new DiagnosticResult(success, warnings, errors);
         }
 
-        private static bool IsError(Diagnostic diagnostic)
-        {
-            return diagnostic.Severity == DiagnosticSeverity.Error || diagnostic.IsWarningAsError;
-        }
-
         private class BeforeCompileContext : IBeforeCompileContext
         {
-            private RoslynProjectReference roslynProjectReference;
+            private readonly RoslynProjectReference _roslynProjectReference;
 
             public BeforeCompileContext(RoslynProjectReference roslynProjectReference)
             {
-                this.roslynProjectReference = roslynProjectReference;
+                _roslynProjectReference = roslynProjectReference;
             }
 
             public CSharpCompilation CSharpCompilation
             {
                 get
                 {
-                    return roslynProjectReference.CompilationContext.Compilation;
+                    return _roslynProjectReference.CompilationContext.Compilation;
                 }
                 set
                 {
-                    roslynProjectReference.CompilationContext.Compilation = value;
+                    _roslynProjectReference.CompilationContext.Compilation = value;
                 }
             }
 
@@ -412,7 +406,7 @@ namespace Microsoft.Framework.Runtime.Roslyn
             {
                 get
                 {
-                    return roslynProjectReference.CompilationContext.Diagnostics;
+                    return _roslynProjectReference.CompilationContext.Diagnostics;
                 }
             }
 
@@ -420,7 +414,7 @@ namespace Microsoft.Framework.Runtime.Roslyn
             {
                 get
                 {
-                    return roslynProjectReference._resources.Value;
+                    return _roslynProjectReference._resources.Value;
                 }
             }
         }

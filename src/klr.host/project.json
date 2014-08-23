@@ -1,12 +1,16 @@
 {
     "version": "1.0.0-*",
-    "compilationOptions" : { "define" : ["TRACE"], "warningsAsErrors": true },
+    "compilationOptions": { "define": [ "TRACE" ], "warningsAsErrors": true },
     "dependencies": {
-        "Microsoft.Framework.Runtime.Common" : "",
-        "Microsoft.Framework.Runtime.Interfaces" : ""
+        "Microsoft.Framework.Runtime.Common": "",
+        "Microsoft.Framework.Runtime.Interfaces": ""
     },
-    "frameworks" : {
-        "net45" : { },
+    "frameworks": {
+        "net45": {
+            "dependencies": { 
+                "System.Runtime": ""
+            }
+        },
         "k10": {
             "dependencies": {
                 "System.ApplicationContext": "4.0.0.0",

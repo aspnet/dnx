@@ -76,8 +76,7 @@ namespace Microsoft.Framework.Runtime
         public ILibraryExport GetLibraryExport(ILibraryKey target)
         {
             string assemblyPath;
-            if (!string.IsNullOrEmpty(target.Aspect) && 
-                _resolvedPaths.TryGetValue(target.Name, out assemblyPath))
+            if (_resolvedPaths.TryGetValue(target.Name, out assemblyPath))
             {
                 return new LibraryExport(target.Name, assemblyPath);
             }

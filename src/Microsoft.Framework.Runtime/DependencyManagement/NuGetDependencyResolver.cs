@@ -192,8 +192,7 @@ namespace Microsoft.Framework.Runtime
         public ILibraryExport GetLibraryExport(ILibraryKey target)
         {
             PackageDescription description;
-            if (string.IsNullOrEmpty(target.Aspect) ||
-                !_packageDescriptions.TryGetValue(target.Name, out description))
+            if (!_packageDescriptions.TryGetValue(target.Name, out description))
             {
                 return null;
             }

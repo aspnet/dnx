@@ -250,14 +250,6 @@ namespace Microsoft.Framework.ApplicationHost
                     string.Join(Environment.NewLine, compilationException.Errors));
             }
 
-#if K10
-            // HACK: Don't show inner exceptions for non compilation errors.
-            // There's a bug in the CoreCLR loader, where it throws another
-            // invalid operation exception for any load failure with a bizzare
-            // message.
-            innerException = null;
-#endif
-
             if (host.Project.Commands.Any())
             {
                 // Throw a nicer exception message if the command
