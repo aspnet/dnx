@@ -69,7 +69,7 @@ namespace Microsoft.Framework.Runtime
             }
         }
 
-        public ILibraryExport GetLibraryExport(string name, FrameworkName targetFramework, string configuration)
+        public ILibraryExport GetLibraryExport(ILibraryKey target)
         {
             // Did we even resolve this name, if not then do nothing
             if (!_resolvedPaths.ContainsKey(name))
@@ -83,9 +83,10 @@ namespace Microsoft.Framework.Runtime
             //  the specific path for the target framework
 
             string path;
-            if (FrameworkResolver.TryGetAssembly(name, targetFramework, out path))
+            if (!String.IsNullOrEmpty(target.Aspect) &&
+                FrameworkResolver.TryGetAssembly(target.Name, target.TargetFramework, out path))
             {
-                return new LibraryExport(name, path);
+                return new LibraryExport(target.Name, path);
             }
 
             return null;

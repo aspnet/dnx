@@ -24,13 +24,21 @@ namespace Microsoft.Framework.Runtime.Loader
 
         public Assembly Load(string name)
         {
+            String aspect = null;
+            var parts = name.Split(new[] { '!' }, 3);
+            if (parts.Length != 1)
+            {
+                name = parts[0];
+                aspect = parts[1];
+            }
+
             Project project;
             if (!_projectResolver.TryResolveProject(name, out project))
             {
                 return null;
             }
 
-            var export = _libraryManager.GetLibraryExport(name);
+            var export = _libraryManager.GetLibraryExport(name, aspect);
 
             if (export == null)
             {

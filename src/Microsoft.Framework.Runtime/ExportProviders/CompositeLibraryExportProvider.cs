@@ -16,9 +16,9 @@ namespace Microsoft.Framework.Runtime
             _libraryExporters = libraryExporters;
         }
 
-        public ILibraryExport GetLibraryExport(string name, FrameworkName targetFramework, string configuration)
+        public ILibraryExport GetLibraryExport(ILibraryKey target)
         {
-            return _libraryExporters.Select(r => r.GetLibraryExport(name, targetFramework, configuration))
+            return _libraryExporters.Select(r => r.GetLibraryExport(target))
                                              .FirstOrDefault(export => export != null);
         }
     }

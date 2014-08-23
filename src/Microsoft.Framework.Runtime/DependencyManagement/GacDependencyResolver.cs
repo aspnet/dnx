@@ -73,12 +73,13 @@ namespace Microsoft.Framework.Runtime
             }
         }
 
-        public ILibraryExport GetLibraryExport(string name, FrameworkName targetFramework, string configuration)
+        public ILibraryExport GetLibraryExport(ILibraryKey target)
         {
             string assemblyPath;
-            if (_resolvedPaths.TryGetValue(name, out assemblyPath))
+            if (!String.IsNullOrEmpty(target.Aspect) && 
+                _resolvedPaths.TryGetValue(target.Name, out assemblyPath))
             {
-                return new LibraryExport(name, assemblyPath);
+                return new LibraryExport(target.Name, assemblyPath);
             }
 
             return null;

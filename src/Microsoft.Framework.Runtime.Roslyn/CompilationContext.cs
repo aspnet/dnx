@@ -4,6 +4,7 @@
 using System.Collections.Generic;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
+using Microsoft.Framework.Runtime;
 
 namespace Microsoft.Framework.Runtime.Roslyn
 {
@@ -15,10 +16,12 @@ namespace Microsoft.Framework.Runtime.Roslyn
         public Project Project { get; private set; }
 
         // Processed information
-        public CSharpCompilation Compilation { get; private set; }
+        public CSharpCompilation Compilation { get; set; }
         public IList<Diagnostic> Diagnostics { get; private set; }
 
         public IList<IMetadataReference> MetadataReferences { get; private set; }
+
+        public IList<ICompileModule> Modules { get; private set; }
 
         public CompilationContext(CSharpCompilation compilation,
                                   IList<IMetadataReference> metadataReferences,
@@ -29,6 +32,7 @@ namespace Microsoft.Framework.Runtime.Roslyn
             MetadataReferences = metadataReferences;
             Diagnostics = diagnostics;
             Project = project;
+            Modules = new List<ICompileModule>();
         }
     }
 }

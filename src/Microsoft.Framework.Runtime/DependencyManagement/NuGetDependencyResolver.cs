@@ -189,22 +189,23 @@ namespace Microsoft.Framework.Runtime
                                         .Select(path => new DefaultPackagePathResolver(path));
         }
 
-        public ILibraryExport GetLibraryExport(string name, FrameworkName targetFramework, string configuration)
+        public ILibraryExport GetLibraryExport(ILibraryKey target)
         {
             PackageDescription description;
-            if (!_packageDescriptions.TryGetValue(name, out description))
+            if (String.IsNullOrEmpty(target.Aspect) ||
+                !_packageDescriptions.TryGetValue(target.Name, out description))
             {
                 return null;
             }
 
             var references = new Dictionary<string, IMetadataReference>(StringComparer.OrdinalIgnoreCase);
 
-            PopulateMetadataReferences(description, targetFramework, references);
+            PopulateMetadataReferences(description, target.TargetFramework, references);
 
             // REVIEW: This requires more design
             var sourceReferences = new List<ISourceReference>();
 
-            foreach (var sharedSource in GetSharedSources(description, targetFramework))
+            foreach (var sharedSource in GetSharedSources(description, target.TargetFramework))
             {
                 sourceReferences.Add(new SourceFileReference(sharedSource));
             }

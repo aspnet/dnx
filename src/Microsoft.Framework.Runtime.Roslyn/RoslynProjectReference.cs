@@ -11,6 +11,7 @@ using System.Reflection.Metadata;
 using System.Reflection.PortableExecutable;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Emit;
+using Microsoft.CodeAnalysis.CSharp;
 
 namespace Microsoft.Framework.Runtime.Roslyn
 {
@@ -18,14 +19,21 @@ namespace Microsoft.Framework.Runtime.Roslyn
     {
         private static readonly IList<IMetadataEmbeddedReference> _emptyList = new IMetadataEmbeddedReference[0];
 
+        private Lazy<IList<ResourceDescription>> _resources;
+        private bool _beforeCompileCalled = false;
+//        private bool _afterCompileCalled = false;
+
         public RoslynProjectReference(CompilationContext compilationContext)
         {
             CompilationContext = compilationContext;
             MetadataReference = compilationContext.Compilation.ToMetadataReference(embedInteropTypes: compilationContext.Project.EmbedInteropTypes);
             Name = compilationContext.Project.Name;
+            _resources = new Lazy<IList<ResourceDescription>>(GetResources);
         }
 
         public CompilationContext CompilationContext { get; set; }
+
+        public IList<ResourceDescription> Resources { get; set; }
 
         public MetadataReference MetadataReference
         {
@@ -47,8 +55,26 @@ namespace Microsoft.Framework.Runtime.Roslyn
             }
         }
 
+        private void EnsureBeforeCompile()
+        {
+            if (_beforeCompileCalled)
+            {
+                return;
+            }
+            _beforeCompileCalled = true;
+            var context = new BeforeCompileContext(this);
+            foreach (var module in CompilationContext.Modules)
+            {
+                module.BeforeCompile(context);
+            }
+        }
+
+
+
         public IDiagnosticResult GetDiagnostics()
         {
+            EnsureBeforeCompile();
+
             var diagnostics = CompilationContext.Diagnostics
                 .Concat(CompilationContext.Compilation.GetDiagnostics());
 
@@ -57,6 +83,8 @@ namespace Microsoft.Framework.Runtime.Roslyn
 
         public IList<ISourceReference> GetSources()
         {
+            EnsureBeforeCompile();
+
             // REVIEW: Raw sources?
             return CompilationContext.Compilation
                                      .SyntaxTrees
@@ -68,10 +96,12 @@ namespace Microsoft.Framework.Runtime.Roslyn
 
         public Assembly Load(IAssemblyLoaderEngine loaderEngine)
         {
+            EnsureBeforeCompile();
+
             using (var pdbStream = new MemoryStream())
             using (var assemblyStream = new MemoryStream())
             {
-                IList<ResourceDescription> resources = GetResources();
+                IList<ResourceDescription> resources = _resources.Value;
 
                 Trace.TraceInformation("[{0}]: Emitting assembly for {1}", GetType().Name, Name);
 
@@ -124,12 +154,16 @@ namespace Microsoft.Framework.Runtime.Roslyn
 
         public void EmitReferenceAssembly(Stream stream)
         {
+            EnsureBeforeCompile();
+
             CompilationContext.Compilation.EmitMetadataOnly(stream);
         }
 
         public IDiagnosticResult EmitAssembly(string outputPath)
         {
-            IList<ResourceDescription> resources = GetResources();
+            EnsureBeforeCompile();
+
+            IList<ResourceDescription> resources = _resources.Value;
 
             var assemblyPath = Path.Combine(outputPath, Name + ".dll");
             var pdbPath = Path.Combine(outputPath, Name + ".pdb");
@@ -352,6 +386,44 @@ namespace Microsoft.Framework.Runtime.Roslyn
         private static bool IsError(Diagnostic diagnostic)
         {
             return diagnostic.Severity == DiagnosticSeverity.Error || diagnostic.IsWarningAsError;
+        }
+
+        private class BeforeCompileContext : IBeforeCompileContext
+        {
+            private RoslynProjectReference roslynProjectReference;
+
+            public BeforeCompileContext(RoslynProjectReference roslynProjectReference)
+            {
+                this.roslynProjectReference = roslynProjectReference;
+            }
+
+            public CSharpCompilation CSharpCompilation
+            {
+                get
+                {
+                    return roslynProjectReference.CompilationContext.Compilation;
+                }
+                set
+                {
+                    roslynProjectReference.CompilationContext.Compilation = value;
+                }
+            }
+
+            public IList<Diagnostic> Diagnostics
+            {
+                get
+                {
+                    return roslynProjectReference.CompilationContext.Diagnostics;
+                }
+            }
+
+            public IList<ResourceDescription> Resources
+            {
+                get
+                {
+                    return roslynProjectReference._resources.Value;
+                }
+            }
         }
     }
 }
