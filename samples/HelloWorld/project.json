@@ -2,7 +2,7 @@
     "version": "0.1-beta-*",
     "exclude": "more\\*.cs",
     "dependencies": {
-        "HelloShared": { "version": "0.1-beta-*", "type": "compile" },
+        "HelloShared": "0.1-beta-*",
         "Microsoft.CodeAnalysis.CSharp": "0.7.4082002-*"
     },
     "commands": {
