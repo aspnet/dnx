@@ -163,9 +163,6 @@ namespace Microsoft.Framework.Runtime
                 _watcher = NoopWatcher.Instance;
             }
 
-            var applicationEnvironment = new ApplicationEnvironment(Project, _targetFramework, options.Configuration);
-
-            _applicationHostContext.AddService(typeof(IApplicationEnvironment), applicationEnvironment);
             _applicationHostContext.AddService(typeof(IApplicationShutdown), _shutdown);
             // TODO: Get rid of this and just use the IFileWatcher
             _applicationHostContext.AddService(typeof(IFileMonitor), _watcher);
