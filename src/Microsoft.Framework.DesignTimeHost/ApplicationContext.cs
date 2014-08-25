@@ -288,7 +288,7 @@ namespace Microsoft.Framework.DesignTimeHost
                 {
                     RootDependency = state.Project.Name,
                     LongFrameworkName = state.TargetFramework.ToString(),
-                    FriendlyFrameworkName = GetFriendlyFrameworkName(state.FrameworkResolver, state.TargetFramework),
+                    FriendlyFrameworkName = state.FrameworkResolver.GetFriendlyFrameworkName(state.TargetFramework),
                     ProjectReferences = metadata.ProjectReferences,
                     FileReferences = metadata.References,
                     RawReferences = metadata.RawReferences,
@@ -348,14 +348,7 @@ namespace Microsoft.Framework.DesignTimeHost
 
         private string GetFriendlyFrameworkName(FrameworkReferenceResolver frameworkResolver, FrameworkName targetFramework)
         {
-            // We don't have a friendly name for this anywhere on the machine so hard code it
-            if (targetFramework.Identifier.Equals("K", StringComparison.OrdinalIgnoreCase))
-            {
-                // REVIEW: 4.5?
-                return ".NET Core Framework 4.5";
-            }
-
-            return frameworkResolver.GetFriendlyFrameworkName(targetFramework) ?? targetFramework.ToString();
+            return frameworkResolver.GetFriendlyFrameworkName(targetFramework);
         }
 
         private void Reconcile()

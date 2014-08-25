@@ -56,11 +56,25 @@ namespace Microsoft.Framework.Runtime
 
         public string GetFriendlyFrameworkName(FrameworkName targetFramework)
         {
+            // We don't have a friendly name for this anywhere on the machine so hard code it
+            if (string.Equals(targetFramework.Identifier, "K", StringComparison.OrdinalIgnoreCase))
+            {
+                return ".NET Core Framework 4.5";
+            }
+            else if (string.Equals(targetFramework.Identifier, VersionUtility.AspNetCoreFrameworkIdentifier, StringComparison.OrdinalIgnoreCase))
+            {
+                return "ASP.NET Core 5.0";
+            }
+            else if (string.Equals(targetFramework.Identifier, VersionUtility.AspNetFrameworkIdentifier, StringComparison.OrdinalIgnoreCase))
+            {
+                return "ASP.NET 5.0";
+            }
+
             var information = _cache.GetOrAdd(targetFramework, GetFrameworkInformation);
 
             if (information == null)
             {
-                return null;
+                return targetFramework.ToString();
             }
 
             return information.Name;
