@@ -157,10 +157,9 @@ namespace Microsoft.Framework.Runtime.Roslyn
                 }
             }
 
-            var context = new BeforeCompileContext(compilationContext);
             foreach (var module in modules)
             {
-                module.BeforeCompile(context);
+                module.BeforeCompile(compilationContext);
             }
 
             sw.Stop();
@@ -305,44 +304,6 @@ namespace Microsoft.Framework.Runtime.Roslyn
             });
 
             return new MetadataImageReference(metadata);
-        }
-
-        private class BeforeCompileContext : IBeforeCompileContext
-        {
-            private readonly CompilationContext _context;
-
-            public BeforeCompileContext(CompilationContext context)
-            {
-                _context = context;
-            }
-
-            public CSharpCompilation CSharpCompilation
-            {
-                get
-                {
-                    return _context.Compilation;
-                }
-                set
-                {
-                    _context.Compilation = value;
-                }
-            }
-
-            public IList<Diagnostic> Diagnostics
-            {
-                get
-                {
-                    return _context.Diagnostics;
-                }
-            }
-
-            public IList<ResourceDescription> Resources
-            {
-                get
-                {
-                    return _context.Resources;
-                }
-            }
         }
     }
 }

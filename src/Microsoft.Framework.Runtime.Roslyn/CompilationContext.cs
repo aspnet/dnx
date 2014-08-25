@@ -9,7 +9,7 @@ using Microsoft.CodeAnalysis.CSharp;
 
 namespace Microsoft.Framework.Runtime.Roslyn
 {
-    public class CompilationContext
+    public class CompilationContext : IBeforeCompileContext
     {
         private readonly Lazy<IList<ResourceDescription>> _resources;
 
@@ -19,13 +19,26 @@ namespace Microsoft.Framework.Runtime.Roslyn
         public Project Project { get; private set; }
 
         // Processed information
-        public CSharpCompilation Compilation { get; set; }
+        public CSharpCompilation Compilation { get; private set; }
 
         public IList<Diagnostic> Diagnostics { get; private set; }
 
         public IList<IMetadataReference> MetadataReferences { get; private set; }
 
         public IList<ResourceDescription> Resources { get { return _resources.Value; } }
+
+        CSharpCompilation IBeforeCompileContext.CSharpCompilation
+        {
+            get
+            {
+                return Compilation;
+            }
+
+            set
+            {
+                Compilation = value;
+            }
+        }
 
         public CompilationContext(CSharpCompilation compilation,
                                   IList<IMetadataReference> metadataReferences,
