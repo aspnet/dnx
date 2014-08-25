@@ -1,10 +1,17 @@
 {
     "version": "0.1-beta-*",
-    "dependencies": {},
+    "dependencies": { },
     "shared": "*.cs",
     "frameworks": {
-        "net45": {},
+        "net45": { },
         "k10": {
+            "dependencies": {
+                "System.Linq": "4.0.0.0",
+                "System.Runtime": "4.0.20.0"
+            }
+        },
+        "aspnet50": { },
+        "aspnetcore50": {
             "dependencies": {
                 "System.Linq": "4.0.0.0",
                 "System.Runtime": "4.0.20.0"

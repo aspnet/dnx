@@ -11,10 +11,10 @@
     },
     "frameworks": {
         "net45": {
-            "dependencies": { 
-                "System.Collections" : "",
+            "dependencies": {
+                "System.Collections": "",
                 "System.IO": "",
-                "System.Runtime" : "",
+                "System.Runtime": "",
                 "System.Xml": "",
                 "System.Xml.Linq": "",
                 "System.Threading.Tasks": "",
@@ -29,6 +29,26 @@
                 "System.Runtime": "4.0.20.0",
                 "System.Threading.Tasks": "4.0.10.0",
                 "System.ComponentModel": "4.0.0.0"
+            }
+        },
+        "aspnet50": { 
+            "dependencies": { 
+                "System.Collections" : "",
+                "System.IO": "",
+                "System.Runtime" : "",
+                "System.Xml": "",
+                "System.Xml.Linq": "",
+                "System.Threading.Tasks": "",
+                "System.Text.Encoding": ""
+            }
+        },
+        "aspnetcore50": {
+            "dependencies": {
+                "System.Console": "4.0.0.0",
+                "System.Linq": "4.0.0.0",
+                "System.Reflection": "4.0.10.0",
+                "System.Runtime": "4.0.20.0",
+                "System.Threading.Tasks": "4.0.10.0"
             }
         }
     }

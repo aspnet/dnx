@@ -16,6 +16,16 @@ namespace Microsoft.Framework.Runtime
     {
         private readonly IDictionary<FrameworkName, FrameworkInformation> _cache = new Dictionary<FrameworkName, FrameworkInformation>();
 
+        private static readonly IDictionary<FrameworkName, FrameworkName> _aliases = new Dictionary<FrameworkName, FrameworkName>
+        {
+            { new FrameworkName(VersionUtility.AspNetFrameworkIdentifier, new Version(5, 0)), new FrameworkName(VersionUtility.NetFrameworkIdentifier, new Version(4, 5, 3)) }
+        };
+
+        private static readonly IDictionary<FrameworkName, FrameworkName> _monoAliases = new Dictionary<FrameworkName, FrameworkName>
+        {
+            { new FrameworkName(VersionUtility.NetFrameworkIdentifier, new Version(4, 5, 3)), new FrameworkName(VersionUtility.AspNetFrameworkIdentifier, new Version(5, 0)) }
+        };
+
         public FrameworkReferenceResolver()
         {
             PopulateCache();
@@ -103,6 +113,7 @@ namespace Microsoft.Framework.Runtime
                 // Mono is a bit inconsistent as .NET 4.5 and .NET 4.5.1 are the
                 // same folder
                 var supportedVersions = new Dictionary<string, string> {
+                    { "4.5.3", "4.5" },
                     { "4.5.1", "4.5" },
                     { "4.5", "4.5" },
                     { "4.0", "4.0" }
@@ -139,8 +150,14 @@ namespace Microsoft.Framework.Runtime
                         pathCache[targetFrameworkPath] = frameworkInfo;
                     }
 
-                    var frameworkName = new FrameworkName(VersionUtility.DefaultTargetFramework.Identifier, new Version(versionFolderPair.Key));
+                    var frameworkName = new FrameworkName(VersionUtility.NetFrameworkIdentifier, new Version(versionFolderPair.Key));
                     _cache[frameworkName] = frameworkInfo;
+
+                    FrameworkName aliasFrameworkName;
+                    if (_monoAliases.TryGetValue(frameworkName, out aliasFrameworkName))
+                    {
+                        _cache[aliasFrameworkName] = frameworkInfo;
+                    }
                 }
 
                 // Not needed anymore
@@ -151,6 +168,12 @@ namespace Microsoft.Framework.Runtime
 
         private static FrameworkInformation GetFrameworkInformation(FrameworkName targetFramework)
         {
+            FrameworkName aliasFramework;
+            if (_aliases.TryGetValue(targetFramework, out aliasFramework))
+            {
+                targetFramework = aliasFramework;
+            }
+
             string referenceAssembliesPath = GetReferenceAssembliesPath();
 
             if (string.IsNullOrEmpty(referenceAssembliesPath))

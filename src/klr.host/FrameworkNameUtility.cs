@@ -53,13 +53,17 @@ namespace klr.host
 
             if (!String.IsNullOrEmpty(identifierPart))
             {
-                if (identifierPart.Equals("net", StringComparison.OrdinalIgnoreCase))
+                if (identifierPart.Equals("aspnet", StringComparison.OrdinalIgnoreCase))
                 {
-                    identifierPart = ".NETFramework";
+                    identifierPart = "Asp.Net";
+                }
+                else if (identifierPart.Equals("aspnetcore", StringComparison.OrdinalIgnoreCase))
+                {
+                    identifierPart = "Asp.NetCore";
                 }
                 else if (identifierPart.Equals("k", StringComparison.OrdinalIgnoreCase))
                 {
-                    identifierPart = "K";
+                    identifierPart = "Asp.NetCore";
                 }
             }
 
