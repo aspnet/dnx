@@ -1,15 +1,18 @@
 // Copyright (c) Microsoft Open Technologies, Inc. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
+using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
-using Microsoft.Framework.Runtime;
 
 namespace Microsoft.Framework.Runtime.Roslyn
 {
     public class CompilationContext
     {
+        private readonly Lazy<IList<ResourceDescription>> _resources;
+
         /// <summary>
         /// The project associated with this compilation
         /// </summary>
@@ -17,11 +20,12 @@ namespace Microsoft.Framework.Runtime.Roslyn
 
         // Processed information
         public CSharpCompilation Compilation { get; set; }
+
         public IList<Diagnostic> Diagnostics { get; private set; }
 
         public IList<IMetadataReference> MetadataReferences { get; private set; }
 
-        public IList<ICompileModule> Modules { get; private set; }
+        public IList<ResourceDescription> Resources { get { return _resources.Value; } }
 
         public CompilationContext(CSharpCompilation compilation,
                                   IList<IMetadataReference> metadataReferences,
@@ -32,7 +36,38 @@ namespace Microsoft.Framework.Runtime.Roslyn
             MetadataReferences = metadataReferences;
             Diagnostics = diagnostics;
             Project = project;
-            Modules = new List<ICompileModule>();
+            _resources = new Lazy<IList<ResourceDescription>>(() => GetResources(this));
+        }
+
+        private static IList<ResourceDescription> GetResources(CompilationContext context)
+        {
+            var resxProvider = new ResxResourceProvider();
+            var embeddedResourceProvider = new EmbeddedResourceProvider();
+
+            var resourceProvider = new CompositeResourceProvider(new IResourceProvider[] { resxProvider, embeddedResourceProvider });
+
+            var sw = Stopwatch.StartNew();
+            Trace.TraceInformation("[{0}]: Generating resources for {1}", nameof(CompilationContext), context.Project.Name);
+
+            var resources = resourceProvider.GetResources(context.Project);
+
+            sw.Stop();
+            Trace.TraceInformation("[{0}]: Generated resources for {1} in {2}ms", nameof(CompilationContext), context.Project.Name, sw.ElapsedMilliseconds);
+
+            sw = Stopwatch.StartNew();
+            Trace.TraceInformation("[{0}]: Resolving required assembly neutral references for {1}", nameof(CompilationContext), context.Project.Name);
+
+            var embeddedReferences = EmbeddedReferencesHelper.GetRequiredEmbeddedReferences(context);
+            resources.AddEmbeddedReferences(embeddedReferences);
+
+            Trace.TraceInformation("[{0}]: Resolved {1} required assembly neutral references for {2} in {3}ms",
+                nameof(CompilationContext),
+                embeddedReferences.Count,
+                context.Project.Name,
+                sw.ElapsedMilliseconds);
+            sw.Stop();
+
+            return resources;
         }
     }
 }

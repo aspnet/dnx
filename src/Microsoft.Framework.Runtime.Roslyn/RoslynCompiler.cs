@@ -6,11 +6,11 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.Text;
-using System.Reflection;
 using Microsoft.Framework.Runtime.Common.DependencyInjection;
 
 namespace Microsoft.Framework.Runtime.Roslyn
@@ -120,6 +120,8 @@ namespace Microsoft.Framework.Runtime.Roslyn
                 assemblyNeutralTypeDiagnostics,
                 project);
 
+            var modules = new List<ICompileModule>();
+
             if (isMainAspect && project.PreprocessSourceFiles.Any())
             {
                 try
@@ -130,7 +132,7 @@ namespace Microsoft.Framework.Runtime.Roslyn
                         if (preprocessType.GetTypeInfo().ImplementedInterfaces.Contains(typeof(ICompileModule)))
                         {
                             var module = (ICompileModule)ActivatorUtilities.CreateInstance(_services, preprocessType);
-                            compilationContext.Modules.Add(module);
+                            modules.Add(module);
                         }
                     }
                 }
@@ -153,6 +155,12 @@ namespace Microsoft.Framework.Runtime.Roslyn
                         Trace.TraceError("[{0}]: Failed loading meta assembly '{1}':\n {2}", GetType().Name, name, ex);
                     }
                 }
+            }
+
+            var context = new BeforeCompileContext(compilationContext);
+            foreach (var module in modules)
+            {
+                module.BeforeCompile(context);
             }
 
             sw.Stop();
@@ -297,6 +305,44 @@ namespace Microsoft.Framework.Runtime.Roslyn
             });
 
             return new MetadataImageReference(metadata);
+        }
+
+        private class BeforeCompileContext : IBeforeCompileContext
+        {
+            private readonly CompilationContext _context;
+
+            public BeforeCompileContext(CompilationContext context)
+            {
+                _context = context;
+            }
+
+            public CSharpCompilation CSharpCompilation
+            {
+                get
+                {
+                    return _context.Compilation;
+                }
+                set
+                {
+                    _context.Compilation = value;
+                }
+            }
+
+            public IList<Diagnostic> Diagnostics
+            {
+                get
+                {
+                    return _context.Diagnostics;
+                }
+            }
+
+            public IList<ResourceDescription> Resources
+            {
+                get
+                {
+                    return _context.Resources;
+                }
+            }
         }
     }
 }
