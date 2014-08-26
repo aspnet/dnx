@@ -420,7 +420,7 @@ namespace Microsoft.Framework.PackageManager
                         new RemoteWalkProvider(
                             new PackageFolder(
                                 source.Source,
-                                Reports.Information)));
+                                Reports.Quiet)));
                 }
                 else
                 {
@@ -431,7 +431,7 @@ namespace Microsoft.Framework.PackageManager
                                 source.UserName,
                                 source.Password,
                                 NoCache,
-                                Reports.Information)));
+                                Reports.Quiet)));
                 }
             }
         }

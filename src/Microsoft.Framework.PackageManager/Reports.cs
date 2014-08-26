@@ -7,5 +7,6 @@ namespace Microsoft.Framework.PackageManager
     {
         public IReport Information { get; set; }
         public IReport Verbose { get; set; }
+        public IReport Quiet { get; set; }
     }
 }

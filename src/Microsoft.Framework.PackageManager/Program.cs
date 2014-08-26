@@ -62,6 +62,8 @@ namespace Microsoft.Framework.PackageManager
                     CommandOptionType.SingleValue);
                 var optNoCache = c.Option("--no-cache", "Do not use local cache", CommandOptionType.NoValue);
                 var optPackageFolder = c.Option("--packages", "Path to restore packages", CommandOptionType.SingleValue);
+                var optQuiet = c.Option("--quiet", "Do not show output such as HTTP request/cache information",
+                    CommandOptionType.NoValue);
                 c.HelpOption("-?|-h|--help");
 
                 c.OnExecute(async () =>
@@ -72,6 +74,10 @@ namespace Microsoft.Framework.PackageManager
                         Information = this,
                         Verbose = optionVerbose.HasValue() ? (this as IReport) : new NullReport()
                     };
+
+                    // If "--verbose" and "--quiet" are specified together, "--verbose" wins
+                    command.Reports.Quiet = optQuiet.HasValue() ? command.Reports.Verbose : this;
+
                     command.RestoreDirectory = argRoot.Value;
                     command.Sources = optSource.Values;
                     command.FallbackSources = optFallbackSource.Values;
@@ -356,14 +362,14 @@ namespace Microsoft.Framework.PackageManager
             var assemblyInformationalVersionAttribute = assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>();
             return assemblyInformationalVersionAttribute.InformationalVersion;
         }
-    }
 
-    internal class NullReport : IReport
-    {
-        public void WriteLine(string message)
+        private class NullReport : IReport
         {
-            // Consume the write operation and do nothing
-            // Used when verbose option is not specified
+            public void WriteLine(string message)
+            {
+                // Consume the write operation and do nothing
+                // Used when verbose option is not specified
+            }
         }
     }
 }
