@@ -21,9 +21,9 @@ namespace Microsoft.Framework.DesignTimeHost.Models.OutgoingMessages
             var other = obj as ReferencesMessage;
 
             return other != null &&
-                   RootDependency.Equals(other.RootDependency) &&
-                   LongFrameworkName.Equals(other.LongFrameworkName) &&
-                   FriendlyFrameworkName.Equals(other.FriendlyFrameworkName) &&
+                   string.Equals(RootDependency, other.RootDependency) &&
+                   string.Equals(LongFrameworkName, other.LongFrameworkName) &&
+                   string.Equals(FriendlyFrameworkName, other.FriendlyFrameworkName) &&
                    Enumerable.SequenceEqual(ProjectReferences, other.ProjectReferences) &&
                    Enumerable.SequenceEqual(FileReferences, other.FileReferences) &&
                    Enumerable.SequenceEqual(Dependencies, other.Dependencies) &&

@@ -23,10 +23,10 @@ namespace Microsoft.Framework.DesignTimeHost.Models.OutgoingMessages
             var other = obj as ReferenceDescription;
 
             return other != null &&
-                   Name.Equals(other.Name) &&
-                   Version.Equals(other.Version) &&
-                   Path.Equals(other.Path) &&
-                   Type.Equals(other.Type) &&
+                   string.Equals(Name, other.Name) &&
+                   object.Equals(Version, other.Version) &&
+                   string.Equals(Path, other.Path) &&
+                   string.Equals(Type, other.Type) &&
                    Enumerable.SequenceEqual(Dependencies, other.Dependencies);
         }
 

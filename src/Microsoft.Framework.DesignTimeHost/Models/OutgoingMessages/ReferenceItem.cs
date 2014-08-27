@@ -15,8 +15,8 @@ namespace Microsoft.Framework.DesignTimeHost.Models.OutgoingMessages
         {
             var other = obj as ReferenceItem;
             return other != null &&
-                   Name.Equals(other.Name) &&
-                   Version.Equals(other.Version);
+                   string.Equals(Name, other.Name) &&
+                   object.Equals(Version, other.Version);
         }
         public override int GetHashCode()
         {
