@@ -6,7 +6,7 @@
         "Microsoft.Framework.CommandLineUtils" : ""
     },
     "frameworks": {
-        "k10" : { 
+        "aspnetcore50" : { 
             "dependencies": {
                 "System.Collections": "4.0.10.0",
                 "System.Console": "4.0.0.0",

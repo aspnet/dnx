@@ -7,7 +7,7 @@
     "shared": "**/*.cs",
     "frameworks" : {
         "net45" : { },
-        "k10" : { 
+        "aspnetcore50" : { 
             "dependencies": {
                 "System.ApplicationContext": "4.0.0.0",
                 "System.Collections": "4.0.10.0",

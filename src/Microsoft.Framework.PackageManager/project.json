@@ -23,7 +23,7 @@
                 "System.Xml.Linq": ""
             }
         },
-        "k10": {
+        "aspnetcore50": {
             "dependencies": {
                 "Microsoft.Net.Http.Client": "1.0.0-*",
                 "System.Collections": "4.0.10.0",

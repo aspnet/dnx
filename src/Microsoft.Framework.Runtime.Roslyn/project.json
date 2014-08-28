@@ -19,7 +19,7 @@
                 "System.Text.Encoding": ""
             }
         },
-        "k10" : { 
+        "aspnetcore50" : { 
             "dependencies": {
                 "System.Collections.Concurrent": "4.0.0.0",
                 "System.Resources.ResourceWriter" : "4.0.0.0"
