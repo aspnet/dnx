@@ -9,6 +9,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 #if ASPNETCORE50
+using System.Text;
 using System.Threading;
 using System.Runtime.Loader;
 #endif
@@ -21,8 +22,9 @@ namespace klr.hosting
     {
         private static readonly ConcurrentDictionary<string, object> _assemblyLoadLocks =
                 new ConcurrentDictionary<string, object>(StringComparer.Ordinal);
-        private static readonly Dictionary<string, Assembly> _assemblyCache
-                = new Dictionary<string, Assembly>(StringComparer.Ordinal);
+
+        private static readonly ConcurrentDictionary<string, Assembly> _assemblyCache = 
+                new ConcurrentDictionary<string, Assembly>(StringComparer.Ordinal);
 
         private static readonly char[] _libPathSeparator = new[] { ';' };
 
@@ -46,7 +48,7 @@ namespace klr.hosting
                 throw;
             }
         }
-
+        
         private static void PrintErrors(Exception ex)
         {
             while (ex != null)
@@ -69,6 +71,7 @@ namespace klr.hosting
         public static Task<int> ExecuteAsync(string[] args)
         {
             var enableTrace = Environment.GetEnvironmentVariable("KRE_TRACE") == "1";
+
 #if NET45
             // TODO: Make this pluggable and not limited to the console logger
             if (enableTrace)
@@ -142,6 +145,15 @@ namespace klr.hosting
                             ExtractAssemblyNeutralInterfaces(assembly, loadStream);
 #endif
                             _assemblyCache[name] = assembly;
+
+#if NET45
+                            StartupOptimizer.AssemblyProfile_RecordQueueAdd(StartupOptimizer.LocationFromAssembly(assembly));
+                            StartupOptimizer.AssemblyPrepare_ScheduleAssembly(assembly.GetName().Name, assembly);
+#else
+                            Console.WriteLine("loaderCallback AssemblyType {0}", assembly.GetType().ToString());
+                            StartupOptimizer.AssemblyProfile_RecordQueueAdd(StartupOptimizer.LocationFromAssembly(assembly));
+                            StartupOptimizer.AssemblyPrepare_ScheduleAssembly(assembly.GetName().Name, assembly);
+#endif
                         }
                     }
                 }
@@ -150,7 +162,7 @@ namespace klr.hosting
                     _assemblyLoadLocks.TryRemove(name, out loadLock);
                 }
 
-                return assembly;
+                return assembly;                
             };
 #if ASPNETCORE50
             var loaderImpl = new DelegateAssemblyLoadContext(loaderCallback);
@@ -159,10 +171,6 @@ namespace klr.hosting
 
             AssemblyLoadContext.InitializeDefaultContext(loaderImpl);
 
-            if (loaderImpl.EnableMultiCoreJit())
-            {
-                loaderImpl.StartMultiCoreJitProfile("startup.prof");
-            }
 #else
             var loaderImpl = new LoaderEngine();
             loadStream = assemblyStream => loaderImpl.LoadStream(assemblyStream, pdbStream: null);
@@ -175,7 +183,13 @@ namespace klr.hosting
                 {
                     return Assembly.Load(a.Name);
                 }
-
+                
+                // Special case .resources
+                if (a.Name.EndsWith(".resources"))
+                {
+                    return null;
+                }
+                
                 return loaderCallback(new AssemblyName(a.Name));
             };
 
@@ -190,7 +204,12 @@ namespace klr.hosting
 
                 ExtractAssemblyNeutralInterfaces(loadedArgs.LoadedAssembly, loadStream);
             };
+            
+
 #endif
+            StartupOptimizer.Init(_assemblyCache, loaderImpl, loadFile, loadStream);
+            StartupOptimizer.ComputeStartupProfilePath();
+            StartupOptimizer.MultiCoreJit_Start();
 
             try
             {
@@ -230,6 +249,11 @@ namespace klr.hosting
                     {
                         app.RemainingArguments.ToArray()
                     };
+
+                    StartupOptimizer.AssemblyProfile_RecordPlayback_Start();
+                    
+                    //PlanB Location
+                    //@@StartupOptimizer.MultiCoreJit_Start();
 
                     var task = (Task<int>)mainMethod.Invoke(bootstrapper, bootstrapperArgs);
 
@@ -305,7 +329,7 @@ namespace klr.hosting
                           .Select(Path.GetFullPath);
         }
 
-        private static void ExtractAssemblyNeutralInterfaces(Assembly assembly, Func<Stream, Assembly> load)
+        public static void ExtractAssemblyNeutralInterfaces(Assembly assembly, Func<Stream, Assembly> load)
         {
             // Embedded assemblies end with .dll
             foreach (var name in assembly.GetManifestResourceNames())

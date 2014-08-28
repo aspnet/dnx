@@ -8,7 +8,8 @@
     "frameworks": {
         "net45": {
             "frameworkAssemblies": { 
-                "System.Runtime": ""
+                "System.Runtime": "",
+                "System.Threading": "4.0.0.0"
             }
         },
         "aspnetcore50": {
@@ -26,6 +27,7 @@
                 "System.Runtime.Extensions": "4.0.10-beta-*",
                 "System.Runtime.InteropServices": "4.0.20-beta-*",
                 "System.Text.RegularExpressions": "4.0.10-beta-*",
+                "System.Threading": "4.0.0-beta-*",
                 "System.Threading.ExecutionContext": "4.0.0-beta-*",
                 "System.Threading.Tasks": "4.0.10-beta-*"
             }

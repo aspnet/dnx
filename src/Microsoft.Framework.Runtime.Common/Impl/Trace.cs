@@ -21,7 +21,7 @@ namespace System.Diagnostics
         {
             if (IsEnabled)
             {
-                Console.WriteLine("Information: " + message, args);
+                Console.WriteLine(DateTime.Now.ToString("HH:mm:ss.fff") + " Information: " + message, args);
             }
         }
 

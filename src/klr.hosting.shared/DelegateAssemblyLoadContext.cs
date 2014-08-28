@@ -3,9 +3,14 @@
 
 #if ASPNETCORE50
 using System;
+using System.Collections.Concurrent;
+using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Reflection;
 using System.Runtime.Loader;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace klr.hosting
 {
@@ -30,10 +35,20 @@ namespace klr.hosting
 
             if (nativeImagePath != null)
             {
-                return LoadFromNativeImagePath(nativeImagePath, path);
+                var assemblyNI = LoadFromNativeImagePath(nativeImagePath, path);
+                if (assemblyNI != null)
+                {
+                    StartupOptimizer.AssemblyProfile_RecordQueueAdd(nativeImagePath);
+                }
+                return assemblyNI;
             }
 
-            return LoadFromAssemblyPath(path);
+            var assembly = LoadFromAssemblyPath(path);
+            if (assembly != null)
+            {
+                StartupOptimizer.AssemblyProfile_RecordQueueAdd(path);
+            }
+            return assembly;
         }
 
         public Assembly LoadStream(Stream assemblyStream, Stream pdbStream)
@@ -71,33 +86,14 @@ namespace klr.hosting
             return null;
         }
         
-        public bool EnableMultiCoreJit()
+        //CoreCLR - MultiCoreJit
+        public bool EnableMultiCoreJit(string profileOptimizationRootPath)
         {
-            var appBaseDirectory = AppContext.BaseDirectory;
-            var appBinDirectoryName = "bin";
-            var appBinDirectory = Path.Combine(appBaseDirectory, appBinDirectoryName);
-            var appProfileDirectoryName = "profile";
-            var appProfileDirectory = Path.Combine(appBinDirectory, appProfileDirectoryName);
-            
-            if (!Directory.Exists(appProfileDirectory))
-            {
-                Directory.CreateDirectory(appProfileDirectory);
-                
-                try 
-                {
-                    Directory.CreateDirectory(appProfileDirectory);
-                }
-                catch (Exception)
-                {
-                    return false;
-                }
-            }
-            
-            SetProfileOptimizationRoot(appProfileDirectory);
+            SetProfileOptimizationRoot(profileOptimizationRootPath);
 
             return true;
         }
-        
+
         public void StartMultiCoreJitProfile(string profileFilename)
         {
             StartProfileOptimization(profileFilename);
