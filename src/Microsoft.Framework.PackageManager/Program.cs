@@ -103,6 +103,8 @@ namespace Microsoft.Framework.PackageManager
                     CommandOptionType.MultipleValue);
                 var optionAppFolder = c.Option("--appfolder <NAME>",
                     "Determine the name of the application primary folder", CommandOptionType.SingleValue);
+                var optionNative = c.Option("--native", "Build and include native images. User must provide targeted CoreCLR runtime versions along with this option.",
+                    CommandOptionType.NoValue);
                 c.HelpOption("-?|-h|--help");
 
                 c.OnExecute(() =>
@@ -125,6 +127,7 @@ namespace Microsoft.Framework.PackageManager
                             string.Join(";", optionRuntime.Values).
                                 Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries) :
                             new string[0],
+                        Native = optionNative.HasValue()
                     };
 
                     var manager = new PackManager(_hostServices, options);

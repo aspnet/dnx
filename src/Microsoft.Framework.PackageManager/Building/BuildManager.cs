@@ -30,10 +30,10 @@ namespace Microsoft.Framework.PackageManager
 
         public bool Build()
         {
-            Project project;
-            if (!Project.TryGetProject(_buildOptions.ProjectDir, out project))
+            Runtime.Project project;
+            if (!Runtime.Project.TryGetProject(_buildOptions.ProjectDir, out project))
             {
-                WriteError(string.Format("Unable to locate {0}.'", Project.ProjectFileName));
+                WriteError(string.Format("Unable to locate {0}.'", Runtime.Project.ProjectFileName));
                 return false;
             }
 
@@ -43,7 +43,7 @@ namespace Microsoft.Framework.PackageManager
             var configurations = _buildOptions.Configurations.DefaultIfEmpty("Debug");
 
             var specifiedFrameworks = _buildOptions.TargetFrameworks
-                .ToDictionary(f => f, Project.ParseFrameworkName);
+                .ToDictionary(f => f, Runtime.Project.ParseFrameworkName);
 
             var projectFrameworks = new HashSet<FrameworkName>(
                 project.GetTargetFrameworks()
@@ -216,7 +216,7 @@ namespace Microsoft.Framework.PackageManager
             return success;
         }
 
-        private static void InitializeBuilder(Project project, PackageBuilder builder)
+        private static void InitializeBuilder(Runtime.Project project, PackageBuilder builder)
         {
             builder.Authors.AddRange(project.Authors);
 
@@ -312,7 +312,7 @@ namespace Microsoft.Framework.PackageManager
             return Path.GetFullPath(projectDir.TrimEnd(Path.DirectorySeparatorChar));
         }
 
-        private static string GetPackagePath(Project project, string outputPath, bool symbols = false)
+        private static string GetPackagePath(Runtime.Project project, string outputPath, bool symbols = false)
         {
             string fileName = project.Name + "." + project.Version + (symbols ? ".symbols" : "") + ".nupkg";
             return Path.Combine(outputPath, fileName);

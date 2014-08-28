@@ -3,6 +3,7 @@
     "compilationOptions" : { "warningsAsErrors": true },
     "dependencies": {
         "Microsoft.Framework.CommandLineUtils" : "",
+        "Microsoft.Framework.Project": "",
         "Microsoft.Framework.Runtime" : "",
         "Microsoft.Framework.Runtime.Common" : "",
         "Microsoft.Framework.Runtime.Interfaces" : ""

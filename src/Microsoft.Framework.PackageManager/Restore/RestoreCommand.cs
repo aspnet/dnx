@@ -56,7 +56,7 @@ namespace Microsoft.Framework.PackageManager
 
                 // If the root argument is a project.json file
                 if (string.Equals(
-                    Project.ProjectFileName,
+                    Runtime.Project.ProjectFileName,
                     Path.GetFileName(RestoreDirectory),
                     StringComparison.OrdinalIgnoreCase))
                 {
@@ -144,8 +144,8 @@ namespace Microsoft.Framework.PackageManager
             var sw = new Stopwatch();
             sw.Start();
 
-            Project project;
-            if (!Project.TryGetProject(projectJsonPath, out project))
+            Runtime.Project project;
+            if (!Runtime.Project.TryGetProject(projectJsonPath, out project))
             {
                 throw new Exception("TODO: project.json parse error");
             }

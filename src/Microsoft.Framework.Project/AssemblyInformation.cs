@@ -13,12 +13,13 @@ namespace Microsoft.Framework.Project
     {
         public static readonly IEqualityComparer<AssemblyInformation> NameComparer = new AssemblyNameComparer();
 
-        public AssemblyInformation(string path)
+        public AssemblyInformation(string path, string processorArchitecture)
         {
             path = Path.GetFullPath(path);
             Name = Path.GetFileNameWithoutExtension(path);
 
             AssemblyPath = path;
+            ProcessorArchitecture = processorArchitecture;
         }
 
         public bool IsRuntimeAssembly { get; set; }
@@ -26,6 +27,8 @@ namespace Microsoft.Framework.Project
         public string Name { get; private set; }
 
         public string AssemblyPath { get; private set; }
+
+        public string ProcessorArchitecture { get; private set; }
 
         public string NativeImageDirectory
         {
@@ -37,9 +40,7 @@ namespace Microsoft.Framework.Project
                     return assemblyDirectory;
                 }
 
-                var arch = Environment.GetEnvironmentVariable("PROCESSOR_ARCHITECTURE");
-
-                return Path.Combine(assemblyDirectory, arch);
+                return Path.Combine(assemblyDirectory, ProcessorArchitecture);
             }
         }
 

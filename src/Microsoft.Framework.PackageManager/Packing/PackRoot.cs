@@ -5,7 +5,6 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Xml.Linq;
 using Microsoft.Framework.Runtime;
 using Newtonsoft.Json.Linq;
 using NuGet;

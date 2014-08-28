@@ -17,7 +17,7 @@ namespace Microsoft.Framework.Runtime
         private readonly PackageRepository _repository;
 
         // Assembly name and path lifted from the appropriate lib folder
-        private readonly Dictionary<string, string> _packageAssemblyPaths = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        private readonly Dictionary<string, PackageAssembly> _packageAssemblyLookup = new Dictionary<string, PackageAssembly>(StringComparer.OrdinalIgnoreCase);
 
         // All the information required by this package
         private readonly Dictionary<string, PackageDescription> _packageDescriptions = new Dictionary<string, PackageDescription>(StringComparer.OrdinalIgnoreCase);
@@ -31,11 +31,11 @@ namespace Microsoft.Framework.Runtime
             Dependencies = Enumerable.Empty<LibraryDescription>();
         }
 
-        public IDictionary<string, string> PackageAssemblyPaths
+        public IDictionary<string, PackageAssembly> PackageAssemblyLookup
         {
             get
             {
-                return _packageAssemblyPaths;
+                return _packageAssemblyLookup;
             }
         }
 
@@ -149,7 +149,11 @@ namespace Microsoft.Framework.Runtime
 
                 foreach (var assemblyInfo in GetPackageAssemblies(packageDescription, targetFramework))
                 {
-                    _packageAssemblyPaths[assemblyInfo.Name] = assemblyInfo.Path;
+                    _packageAssemblyLookup[assemblyInfo.Name] = new PackageAssembly()
+                    {
+                        Path = assemblyInfo.Path,
+                        Library = dependency
+                    };
                 }
             }
         }
