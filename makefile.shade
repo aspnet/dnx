@@ -26,8 +26,8 @@ var SVR50_x64_BIN='${Path.Combine(BUILD_DIR2, "KRE-svr50-x64", "bin")}'
 var SVRC50_x86_BIN='${Path.Combine(BUILD_DIR2, "KRE-svrc50-x86", "bin")}'
 var SVRC50_x64_BIN='${Path.Combine(BUILD_DIR2, "KRE-svrc50-x64", "bin")}'
 var NET45_TARGETS = '${new [] { MONO_x86_BIN, SVR50_x86_BIN, SVR50_x64_BIN}}'
-var K10_TARGETS = '${new [] { SVRC50_x86_BIN, SVRC50_x64_BIN}}'
-var ALL_TARGETS = '${NET45_TARGETS.Concat(K10_TARGETS)}'
+var ASPNETCORE_TARGETS = '${new [] { SVRC50_x86_BIN, SVRC50_x64_BIN}}'
+var ALL_TARGETS = '${NET45_TARGETS.Concat(ASPNETCORE_TARGETS)}'
 var NEW_RUNTIME = '${E("NEW_RUNTIME") == "1"}'
 var CORE_CLR_VERSION = '${E("CORE_CLR_VERSION")}'
 
@@ -51,8 +51,8 @@ var CORE_CLR_VERSION = '${E("CORE_CLR_VERSION")}'
       {
           Exec(msbuild, klrProj + " /p:Configuration=" + Configuration2 + ";Platform=Win32;TargetFramework=net45");
           Exec(msbuild, klrProj + " /p:Configuration=" + Configuration2 + ";Platform=x64;TargetFramework=net45");
-          Exec(msbuild, klrProj + " /p:Configuration=" + Configuration2 + ";Platform=Win32;TargetFramework=k10");
-          Exec(msbuild, klrProj + " /p:Configuration=" + Configuration2 + ";Platform=x64;TargetFramework=k10");
+          Exec(msbuild, klrProj + " /p:Configuration=" + Configuration2 + ";Platform=Win32;TargetFramework=aspnetcore50");
+          Exec(msbuild, klrProj + " /p:Configuration=" + Configuration2 + ";Platform=x64;TargetFramework=aspnetcore50");
       }
   }
 
@@ -74,7 +74,7 @@ var CORE_CLR_VERSION = '${E("CORE_CLR_VERSION")}'
 #test-package
     var helloWorld = '${Path.Combine(SAMPLES_DIR, "HelloWorld")}'
     var kcmd = '${Path.Combine(TEST_RESULTS, "KRE", "tools", "k.cmd")}'
-    var k10Tools = '${Path.Combine(TEST_RESULTS, "KRE", "tools", "k10")}'
+    var aspnetCore50Tools = '${Path.Combine(TEST_RESULTS, "KRE", "tools", "aspnetcore50")}'
     
 
     var nupkgPaths = '${new string[] {
@@ -247,24 +247,20 @@ var CORE_CLR_VERSION = '${E("CORE_CLR_VERSION")}'
     copy sourceDir='${Path.Combine(ROOT, "src", "klr.net45.managed")}' outputDir='${SVR50_x64_BIN}' include='*.config' overwrite='${true}'
 
     -// KRE-svrc50-x86
-    copy sourceDir='${Path.Combine(BUILD_DIR2, "klr", "bin", "Win32", Configuration2, "k10")}' outputDir='${SVRC50_x86_BIN}' include='*.exe' overwrite='${true}'
+    copy sourceDir='${Path.Combine(BUILD_DIR2, "klr", "bin", "Win32", Configuration2, "aspnetcore50")}' outputDir='${SVRC50_x86_BIN}' include='*.exe' overwrite='${true}'
     copy sourceDir='${Path.Combine(BUILD_DIR2, "klr.core45", "bin", "Win32", Configuration2)}' outputDir='${SVRC50_x86_BIN}' include='*.dll' overwrite='${true}'
     copy sourceDir='${Path.Combine(BUILD_DIR2, "klr.core45", "bin", "Win32", Configuration2)}' outputDir='${SVRC50_x86_BIN}' include='*.pdb' overwrite='${true}'
 
     -// KRE-svrc50-x64
-    copy sourceDir='${Path.Combine(BUILD_DIR2, "klr", "bin", "x64", Configuration2, "k10")}' outputDir='${SVRC50_x64_BIN}' include='*.exe' overwrite='${true}'
+    copy sourceDir='${Path.Combine(BUILD_DIR2, "klr", "bin", "x64", Configuration2, "aspnetcore50")}' outputDir='${SVRC50_x64_BIN}' include='*.exe' overwrite='${true}'
     copy sourceDir='${Path.Combine(BUILD_DIR2, "klr.core45", "bin", "x64", Configuration2)}' outputDir='${SVRC50_x64_BIN}' include='*.dll' overwrite='${true}'
     copy sourceDir='${Path.Combine(BUILD_DIR2, "klr.core45", "bin", "x64", Configuration2)}' outputDir='${SVRC50_x64_BIN}' include='*.pdb' overwrite='${true}'
 
     copy sourceDir='${SCRIPTS_DIR}' include='*.cmd' overwrite='${true}' each='var outputDir in new[]{ SVR50_x86_BIN, SVR50_x64_BIN, SVRC50_x86_BIN, SVRC50_x64_BIN }'
 
     @{
-        // This is a workaround because we're adding Configuration2 support. We need to be able to build
-        // the new KRE with the old KRE which has no Configuration2 in the output
-        var hasConfiguration2 = Directory.Exists(Path.Combine(BUILD_DIR2, "klr.net45.managed", Configuration2));
-        
-        var hostK10 = hasConfiguration2 ? Path.Combine(BUILD_DIR2, "*", Configuration2, "k10", "**.*") : Path.Combine(BUILD_DIR2, "*", "k10", "**.*");
-        var hostnet45 = hasConfiguration2 ? Path.Combine(BUILD_DIR2, "*", Configuration2, "net45", "**.*") : Path.Combine(BUILD_DIR2, "*", "net45", "**.*");
+        var hostAspNetCore50 = Path.Combine(BUILD_DIR2, "*", "aspnetcore50", "**.*");
+        var hostnet45 = Path.Combine(BUILD_DIR2, "*", "net45", "**.*");
         
         var libPackages = new[] { "Microsoft.Framework.Project",
                                   "Microsoft.Framework.PackageManager", 
@@ -277,11 +273,11 @@ var CORE_CLR_VERSION = '${E("CORE_CLR_VERSION")}'
             Path.Combine(BUILD_DIR2, "Microsoft.Framework.Runtime.Interfaces/**/*.*")
         };
         
-        foreach(var file in Files.Include(hostK10).Exclude(sharedSourceAssemblies))
+        foreach(var file in Files.Include(hostAspNetCore50).Exclude(sharedSourceAssemblies))
         {
-            foreach(var k10Target in K10_TARGETS)
+            foreach(var aspNetCore50Target in ASPNETCORE_TARGETS)
             {
-                string dest = Path.Combine(k10Target, Path.GetFileName(file));
+                string dest = Path.Combine(aspNetCore50Target, Path.GetFileName(file));
                 File.Copy(file, dest, true);
             }
         }
@@ -362,7 +358,7 @@ var CORE_CLR_VERSION = '${E("CORE_CLR_VERSION")}'
 
 #copy-package-dependencies
     @{
-        var targetFrameworks = new [] { "k10", "net45" };
+        var targetFrameworks = new [] { "aspnetcore50", "net45" };
 
         var packages = new[] { "Newtonsoft.Json", 
                                "Microsoft.CodeAnalysis.Common", 
@@ -385,9 +381,9 @@ var CORE_CLR_VERSION = '${E("CORE_CLR_VERSION")}'
 
                 string[] candidates = null;
 
-                if(framework == "k10")
+                if (framework == "aspnetcore50")
                 {
-                    candidates = new [] { framework, "netcore45", "win8" };
+                    candidates = new [] { framework, "netcore45", "win8", "k10" };
                 }
                 else
                 {
@@ -410,9 +406,9 @@ var CORE_CLR_VERSION = '${E("CORE_CLR_VERSION")}'
                 {
                     string[] targetDirs = null;
 
-                    if (framework == "k10")
+                    if (framework == "aspnetcore50")
                     {
-                        targetDirs = K10_TARGETS;
+                        targetDirs = ASPNETCORE_TARGETS;
                     }
                     else
                     {
@@ -447,7 +443,7 @@ var CORE_CLR_VERSION = '${E("CORE_CLR_VERSION")}'
                 continue;
             }
 
-            string[] candidates = new [] { "k10", "netcore45", "win8" };
+            string[] candidates = new [] { "aspnetcore50", "k10", "netcore45", "win8" };
 
             var lib = new DirectoryInfo(Path.Combine(packageDir, "lib"));
             var di = candidates.Select(fmk => lib.EnumerateDirectories("*" + fmk+ "*")
@@ -457,13 +453,13 @@ var CORE_CLR_VERSION = '${E("CORE_CLR_VERSION")}'
 
             if(!di.Exists)
             {
-                Log.Warn("Couldn't find version of " + package + " matching k10");
+                Log.Warn("Couldn't find version of " + package + " matching aspnetcore50");
                 continue;
             }
 
             foreach(var fi in di.GetFiles("*.dll"))
             {
-                var targetDirs = K10_TARGETS.Select(dir => Path.Combine(dir, "lib", "Microsoft.Framework.PackageManager"));
+                var targetDirs = ASPNETCORE_TARGETS.Select(dir => Path.Combine(dir, "lib", "Microsoft.Framework.PackageManager"));
 
                 foreach(var targetDir in targetDirs)
                 {
@@ -510,7 +506,7 @@ var CORE_CLR_VERSION = '${E("CORE_CLR_VERSION")}'
     -// Copy to target
     copy sourceDir='${Path.Combine(CoreCLR_DIR, "Runtime")}' outputDir='${Path.Combine(CORECLR_TARGET_PATH, "Runtime")}' overwrite='${true}'
     
-    -// Copy the CoreCLR to the k10 builds
+    -// Copy the CoreCLR to the aspentcore50 builds
     copy sourceDir='${Path.Combine(CORECLR_TARGET_PATH, "Runtime", "x86")}' outputDir='${SVRC50_x86_BIN}'
     copy sourceDir='${Path.Combine(CORECLR_TARGET_PATH, "Runtime", "amd64")}' outputDir='${SVRC50_x64_BIN}'
 

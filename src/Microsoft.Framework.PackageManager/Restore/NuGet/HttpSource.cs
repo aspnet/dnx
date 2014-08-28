@@ -24,7 +24,7 @@ namespace Microsoft.Framework.PackageManager.Restore.NuGet
         private string _userName;
         private string _password;
         private IReport _report;
-#if K10
+#if ASPNETCORE50
         private string _proxyUserName;
         private string _proxyPassword;
 #endif
@@ -110,7 +110,7 @@ namespace Microsoft.Framework.PackageManager.Restore.NuGet
                 request.Headers.Authorization = new AuthenticationHeaderValue("Basic", token);
             };
 
-#if K10
+#if ASPNETCORE50
             if (_proxyUserName != null)
             {
                 var proxyToken = Convert.ToBase64String(Encoding.ASCII.GetBytes(_proxyUserName + ":" + _proxyPassword));

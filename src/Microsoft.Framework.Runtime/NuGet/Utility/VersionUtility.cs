@@ -86,7 +86,8 @@ namespace NuGet
 
             { new FrameworkName("Windows, Version=v0.0"), new FrameworkName(".NETCore, Version=v4.5") },
             { new FrameworkName("Windows, Version=v8.0"), new FrameworkName(".NETCore, Version=v4.5") },
-            { new FrameworkName("Windows, Version=v8.1"), new FrameworkName(".NETCore, Version=v4.5.1") }
+            { new FrameworkName("Windows, Version=v8.1"), new FrameworkName(".NETCore, Version=v4.5.1") },
+            { new FrameworkName(AspNetCoreFrameworkIdentifier, new Version(5, 0)), new FrameworkName("K", new Version(1, 0)) }
         };
 
         private static readonly Version MaxVersion = new Version(Int32.MaxValue, Int32.MaxValue, Int32.MaxValue, Int32.MaxValue);
@@ -94,8 +95,9 @@ namespace NuGet
         {
             { AspNetFrameworkIdentifier, new FrameworkName(NetFrameworkIdentifier, MaxVersion) },
 
-            // Temporary backwards compatiblity, eventually this will point directly to ".NETCore"
-            { AspNetCoreFrameworkIdentifier, new FrameworkName("K", MaxVersion) },
+            { AspNetCoreFrameworkIdentifier, new FrameworkName(NetCoreFrameworkIdentifier, MaxVersion) },
+
+            // Temporary backwards compatiblity .NETCore
             { "K", new FrameworkName(NetCoreFrameworkIdentifier, MaxVersion) },
         };
 

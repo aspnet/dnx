@@ -1,4 +1,4 @@
-﻿#if K10
+﻿#if ASPNETCORE50
 namespace System.Security.Cryptography
 {
     public static class ProtectedData

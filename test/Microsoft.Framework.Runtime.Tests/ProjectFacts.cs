@@ -109,6 +109,12 @@ namespace Microsoft.Framework.Runtime.Tests
         ""net45"":  {
             ""compilationOptions"": { ""allowUnsafe"": true, ""define"": [""X"", ""y""], ""platform"": ""x86"", ""warningsAsErrors"": true }
         },
+        ""aspnet50"": {
+            
+        },
+        ""aspnetcore50"": {
+            ""compilationOptions"": { ""define"": [""X""], ""warningsAsErrors"": true }
+        },
         ""k10"": {
             ""compilationOptions"": { ""warningsAsErrors"": true }
         }
@@ -125,6 +131,15 @@ namespace Microsoft.Framework.Runtime.Tests
             Assert.Equal(new[] { "X", "y", "NET45" }, net45Options.Defines);
             Assert.True(net45Options.WarningsAsErrors.Value);
             Assert.Equal("x86", net45Options.Platform);
+
+            var aspnet50Options = project.GetCompilerOptions(Project.ParseFrameworkName("aspnet50"));
+            Assert.NotNull(aspnet50Options);
+            Assert.Equal(new[] { "ASPNET50" }, aspnet50Options.Defines);
+
+            var aspnetCore50Options = project.GetCompilerOptions(Project.ParseFrameworkName("aspnetcore50"));
+            Assert.NotNull(aspnetCore50Options);
+            Assert.Equal(new[] { "X", "ASPNETCORE50" }, aspnetCore50Options.Defines);
+            Assert.True(aspnetCore50Options.WarningsAsErrors.Value);
 
             var k10Options = project.GetCompilerOptions(Project.ParseFrameworkName("k10"));
             Assert.NotNull(k10Options);

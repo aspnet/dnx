@@ -1,4 +1,4 @@
-﻿#if K10
+﻿#if ASPNETCORE50
 namespace System.Collections.Generic
 {
     internal static class ListExtensions

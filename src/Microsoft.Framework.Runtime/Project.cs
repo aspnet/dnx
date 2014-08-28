@@ -510,7 +510,14 @@ namespace Microsoft.Framework.Runtime
 
             // Add the target framework specific define
             var defines = new HashSet<string>(compilerOptions.Defines ?? Enumerable.Empty<string>());
-            defines.Add(MakeDefaultTargetFrameworkDefine(frameworkName));
+            var frameworkDefinition = Tuple.Create(targetFramework.Key, frameworkName);
+            var frameworkDefine = MakeDefaultTargetFrameworkDefine(frameworkDefinition);
+
+            if (!string.IsNullOrEmpty(frameworkDefine))
+            {
+                defines.Add(frameworkDefine);
+            }
+
             compilerOptions.Defines = defines;
 
             var targetFrameworkInformation = new TargetFrameworkInformation
@@ -581,17 +588,14 @@ namespace Microsoft.Framework.Runtime
             return targetFrameworkInfo ?? _defaultTargetFrameworkConfiguration;
         }
 
-        private static string MakeDefaultTargetFrameworkDefine(FrameworkName targetFramework)
+        private static string MakeDefaultTargetFrameworkDefine(Tuple<string, FrameworkName> frameworkDefinition)
         {
-            var shortName = VersionUtility.GetShortFrameworkName(targetFramework);
+            var shortName = frameworkDefinition.Item1;
+            var targetFramework = frameworkDefinition.Item2;
 
             if (VersionUtility.IsPortableFramework(targetFramework))
             {
-                // #if NET45_WIN8
-                // Nobody can figure this out anyways
-                return shortName.Substring("portable-".Length)
-                                .Replace('+', '_')
-                                .ToUpperInvariant();
+                return null;
             }
 
             return shortName.ToUpperInvariant();

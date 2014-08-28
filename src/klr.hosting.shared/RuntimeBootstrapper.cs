@@ -8,7 +8,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-#if K10
+#if ASPNETCORE50
 using System.Threading;
 using System.Runtime.Loader;
 #endif
@@ -138,7 +138,7 @@ namespace klr.hosting
 
                         if (assembly != null)
                         {
-#if K10
+#if ASPNETCORE50
                             ExtractAssemblyNeutralInterfaces(assembly, loadStream);
 #endif
                             _assemblyCache[name] = assembly;
@@ -152,7 +152,7 @@ namespace klr.hosting
 
                 return assembly;
             };
-#if K10
+#if ASPNETCORE50
             var loaderImpl = new DelegateAssemblyLoadContext(loaderCallback);
             loadStream = assemblyStream => loaderImpl.LoadStream(assemblyStream, pdbStream: null);
             loadFile = path => loaderImpl.LoadFile(path);
