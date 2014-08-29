@@ -8,18 +8,20 @@ namespace NuGet
 {
     public static class PathUtility
     {
-        public static bool IsSubdirectory(string basePath, string path)
+        public static bool IsChildOfDirectory(string dir, string candidate)
         {
-            if (basePath == null)
+            if (dir == null)
             {
-                throw new ArgumentNullException("basePath");
+                throw new ArgumentNullException("dir");
             }
-            if (path == null)
+            if (candidate == null)
             {
-                throw new ArgumentNullException("path");
+                throw new ArgumentNullException("candidate");
             }
-            basePath = basePath.TrimEnd(Path.DirectorySeparatorChar);
-            return path.StartsWith(basePath, StringComparison.OrdinalIgnoreCase);
+            dir = Path.GetFullPath(dir);
+            dir = EnsureTrailingSlash(dir);
+            candidate = Path.GetFullPath(candidate);
+            return candidate.StartsWith(dir, StringComparison.OrdinalIgnoreCase);
         }
 
         public static string EnsureTrailingSlash(string path)
