@@ -340,7 +340,7 @@ extern "C" __declspec(dllexport) bool __stdcall CallApplicationMain(PCALL_APPLIC
         return false;
     }
 
-    SetEnvironmentVariable(L"TARGET_FRAMEWORK", L"aspnetcore50");
+    SetEnvironmentVariable(L"KRE_FRAMEWORK", L"aspnetcore50");
 
     // Call main
     data->exitcode = pHostMain(data->argc, data->argv);
