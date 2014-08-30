@@ -23,13 +23,13 @@ namespace Microsoft.Framework.PackageManager
             _restoreCommand = restoreCmd;
         }
 
-        public IReport Report { get; set; }
+        public Reports Reports { get; set; }
 
         public async Task<bool> ExecuteCommand()
         {
             if (string.IsNullOrEmpty(_addCommand.Name))
             {
-                Report.WriteLine("Name of dependency to install is required.");
+                Reports.Information.WriteLine("Name of dependency to install is required.");
                 return false;
             }
 
@@ -57,12 +57,12 @@ namespace Microsoft.Framework.PackageManager
             {
                 if (new Uri(source.Source).IsFile)
                 {
-                    packageFeeds.Add(new PackageFolder(source.Source, Report));
+                    packageFeeds.Add(new PackageFolder(source.Source, Reports.Quiet));
                 }
                 else
                 {
                     packageFeeds.Add(new PackageFeed(
-                        source.Source, source.UserName, source.Password, _restoreCommand.NoCache, Report));
+                        source.Source, source.UserName, source.Password, _restoreCommand.NoCache, Reports.Quiet));
                 }
             }
 
@@ -78,7 +78,7 @@ namespace Microsoft.Framework.PackageManager
 
             if (result == null)
             {
-                Report.WriteLine("Unable to locate {0} >= {1}", _addCommand.Name, _addCommand.Version);
+                Reports.Information.WriteLine("Unable to locate {0} >= {1}", _addCommand.Name, _addCommand.Version);
                 return false;
             }
 

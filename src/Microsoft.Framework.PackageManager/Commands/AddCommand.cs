@@ -10,10 +10,10 @@ namespace Microsoft.Framework.PackageManager
 {
     public class AddCommand
     {
-        public string Name;
-        public string Version;
-        public string ProjectDir;
-        public IReport Report;
+        public string Name { get; set; }
+        public string Version { get; set; }
+        public string ProjectDir { get; set; }
+        public IReport Report { get; set; }
 
         public bool ExecuteCommand()
         {
