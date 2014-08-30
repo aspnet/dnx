@@ -23,7 +23,12 @@ namespace klr.host
             {
                 var handle = CallContext.LogicalGetData(ServiceProviderDataName) as ObjectHandle;
 
-                return handle?.Unwrap() as IServiceProvider;
+                if (handle == null)
+                {
+                    return null;
+                }
+
+                return handle.Unwrap() as IServiceProvider;
             }
             set
             {
