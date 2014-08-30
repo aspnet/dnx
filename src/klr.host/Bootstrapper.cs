@@ -45,10 +45,19 @@ namespace klr.host
             }
 
 #if NET45
-            // REVIEW: Need a way to set the application base on mono
-            string applicationBaseDirectory = PlatformHelper.IsMono ?
-                                              Directory.GetCurrentDirectory() :
-                                              AppDomain.CurrentDomain.SetupInformation.ApplicationBase;
+            string applicationBaseDirectory;
+            if (PlatformHelper.IsMono)
+            {
+                applicationBaseDirectory = Environment.GetEnvironmentVariable("KRE_APPBASE");
+                if (string.IsNullOrEmpty(applicationBaseDirectory))
+                {
+                    applicationBaseDirectory = Directory.GetCurrentDirectory();
+                }
+            }
+            else
+            {
+                applicationBaseDirectory = AppDomain.CurrentDomain.SetupInformation.ApplicationBase;
+            }
 #else
             string applicationBaseDirectory = ApplicationContext.BaseDirectory;
 #endif

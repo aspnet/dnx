@@ -42,6 +42,15 @@ int CallFirmwareProcessMain(int argc, wchar_t* argv[])
     data.argc = argc - 1;
     data.argv = const_cast<LPCWSTR*>(&argv[1]);
 
+    // Get application base from KRE_APPBASE environment variable
+    // Note: this value can be overriden by --appbase option
+    TCHAR szAppBase[MAX_PATH];
+    DWORD dwAppBase = GetEnvironmentVariableW(L"KRE_APPBASE", szAppBase, MAX_PATH);
+    if (dwAppBase != 0)
+    {
+        data.applicationBase = szAppBase;
+    }
+
     auto stringsEqual = [](const wchar_t*  const a, const wchar_t*  const b) -> bool
     {
         return ::_wcsicmp(a, b) == 0;
