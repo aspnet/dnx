@@ -8,6 +8,8 @@ namespace Microsoft.Framework.DesignTimeHost.Models.OutgoingMessages
 {
     public class DiagnosticsMessage
     {
+        public FrameworkData Framework { get; set; }
+
         public IList<string> Warnings { get; set; }
         public IList<string> Errors { get; set; }
 
@@ -19,6 +21,7 @@ namespace Microsoft.Framework.DesignTimeHost.Models.OutgoingMessages
                  Enumerable.SequenceEqual(Warnings, other.Warnings) &&
                  Enumerable.SequenceEqual(Errors, other.Errors);
         }
+
         public override int GetHashCode()
         {
             // These objects are currently POCOs and we're overriding equals

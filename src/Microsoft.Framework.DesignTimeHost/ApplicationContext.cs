@@ -8,12 +8,10 @@ using System.IO;
 using System.Linq;
 using System.Runtime.Versioning;
 using System.Threading;
-using System.Threading.Tasks;
 using Microsoft.Framework.DesignTimeHost.Models;
 using Microsoft.Framework.DesignTimeHost.Models.IncomingMessages;
 using Microsoft.Framework.DesignTimeHost.Models.OutgoingMessages;
 using Microsoft.Framework.Runtime;
-using Microsoft.Framework.Runtime.Common.DependencyInjection;
 using Microsoft.Framework.Runtime.Roslyn;
 using Newtonsoft.Json.Linq;
 using NuGet;
@@ -30,9 +28,8 @@ namespace Microsoft.Framework.DesignTimeHost
         private readonly object _processingLock = new object();
 
         private readonly Trigger<string> _appPath = new Trigger<string>();
-        private readonly Trigger<FrameworkName> _targetFramework = new Trigger<FrameworkName>();
         private readonly Trigger<string> _configuration = new Trigger<string>();
-        private readonly Trigger<Nada> _filesChanged = new Trigger<Nada>();
+        private readonly Trigger<Void> _filesChanged = new Trigger<Void>();
 
         private readonly Trigger<State> _state = new Trigger<State>();
 
@@ -166,8 +163,6 @@ namespace Microsoft.Framework.DesignTimeHost
                             var data = message.Payload.ToObject<InitializeMessage>();
                             _appPath.Value = data.ProjectFolder;
                             _configuration.Value = data.Configuration ?? "Debug";
-
-                            SetTargetFramework(data.TargetFramework);
                         }
                         else
                         {
@@ -180,12 +175,6 @@ namespace Microsoft.Framework.DesignTimeHost
                         // TODO: Implement
                     }
                     break;
-                case "ChangeTargetFramework":
-                    {
-                        var data = message.Payload.ToObject<ChangeTargetFrameworkMessage>();
-                        SetTargetFramework(data.TargetFramework);
-                    }
-                    break;
                 case "ChangeConfiguration":
                     {
                         var data = message.Payload.ToObject<ChangeConfigurationMessage>();
@@ -194,7 +183,7 @@ namespace Microsoft.Framework.DesignTimeHost
                     break;
                 case "FilesChanged":
                     {
-                        _filesChanged.Value = default(Nada);
+                        _filesChanged.Value = default(Void);
                     }
                     break;
                 case "GetCompiledAssembly":
@@ -215,186 +204,196 @@ namespace Microsoft.Framework.DesignTimeHost
             return true;
         }
 
-        private void SetTargetFramework(string targetFrameworkValue)
-        {
-            var targetFramework = VersionUtility.ParseFrameworkName(targetFrameworkValue ?? "net45");
-            _targetFramework.Value = targetFramework == VersionUtility.UnsupportedFrameworkName ? new FrameworkName(targetFrameworkValue) : targetFramework;
-        }
-
         private void Calculate()
         {
             if (_appPath.WasAssigned ||
-                _targetFramework.WasAssigned ||
                 _configuration.WasAssigned ||
                 _filesChanged.WasAssigned)
             {
                 _appPath.ClearAssigned();
-                _targetFramework.ClearAssigned();
                 _configuration.ClearAssigned();
                 _filesChanged.ClearAssigned();
 
-                _state.Value = Initialize(_appPath.Value, _targetFramework.Value, _configuration.Value);
+                _state.Value = Initialize(_appPath.Value, _configuration.Value);
             }
 
             var state = _state.Value;
+
             if (_state.WasAssigned && state != null)
             {
                 _state.ClearAssigned();
 
-                var frameworks = state.Project.GetTargetFrameworks().Select(frameworkInfo => new FrameworkData
+                var frameworks = state.Frameworks.Select(targetFrameworkInfo => new FrameworkData
                 {
-                    CompilationSettings = state.Project.GetCompilationSettings(frameworkInfo.FrameworkName, state.Configuration),
-                    FrameworkName = VersionUtility.GetShortFrameworkName(frameworkInfo.FrameworkName),
-                    LongFrameworkName = frameworkInfo.FrameworkName.ToString(),
-                    FriendlyFrameworkName = GetFriendlyFrameworkName(state.FrameworkResolver, frameworkInfo.FrameworkName)
+                    FrameworkName = targetFrameworkInfo.ShortName,
+                    LongFrameworkName = targetFrameworkInfo.FrameworkName.ToString(),
+                    FriendlyFrameworkName = targetFrameworkInfo.Name
                 })
                 .ToList();
 
-                var configurations = state.Project.GetConfigurations().Select(config => new ConfigurationData
+                var configurations = state.Configurations.Select(config => new ConfigurationData
                 {
-                    Name = config,
-                    CompilationSettings = state.Project.GetCompilationSettings(state.TargetFramework, config)
+                    Name = config
                 })
                 .ToList();
 
-                _local.Configurations = new ProjectInformationMessage
+                _local = new World();
+                _local.ProjectInformation = new ProjectMessage
                 {
-                    ProjectName = state.Project.Name,
+                    ProjectName = state.Name,
 
                     // All target framework information
                     Frameworks = frameworks,
 
                     // debug/release etc
-                    ProjectConfigurations = configurations,
+                    Configurations = configurations,
 
-                    Commands = state.Project.Commands
+                    Commands = state.Commands
                 };
 
-                var metadata = state.MetadataProvider.GetProjectMetadata(state.Project.Name);
-
-                _local.References = new ReferencesMessage
+                for (int i = 0; i < state.Projects.Count; i++)
                 {
-                    RootDependency = state.Project.Name,
-                    LongFrameworkName = state.TargetFramework.ToString(),
-                    FriendlyFrameworkName = state.FrameworkResolver.GetFriendlyFrameworkName(state.TargetFramework),
-                    ProjectReferences = metadata.ProjectReferences,
-                    FileReferences = metadata.References,
-                    RawReferences = metadata.RawReferences,
-                    Dependencies = state.Dependencies
-                };
-
-                _local.Diagnostics = new DiagnosticsMessage
-                {
-                    Warnings = metadata.Warnings.ToList(),
-                    Errors = metadata.Errors.ToList(),
-                };
-
-                _local.Sources = new SourcesMessage
-                {
-                    Files = metadata.SourceFiles
-                };
-
-                var export = state.LibraryManager.GetLibraryExport(state.Project.Name);
-                var projectReference = export.MetadataReferences.OfType<IMetadataProjectReference>()
-                                                                .First();
-
-                var embeddedReferences = export.MetadataReferences.OfType<IMetadataEmbeddedReference>().Select(r =>
-                {
-                    return new
+                    var project = state.Projects[i];
+                    var frameworkData = new FrameworkData
                     {
-                        Name = r.Name,
-                        Bytes = r.Contents
+                        FrameworkName = project.TargetFramework.ShortName,
+                        LongFrameworkName = project.TargetFramework.FrameworkName.ToString(),
+                        FriendlyFrameworkName = project.TargetFramework.Name
                     };
-                })
-                .ToDictionary(a => a.Name, a => a.Bytes);
 
-
-                var engine = new NonLoadingLoaderEngine();
-
-                if (!metadata.Errors.Any())
-                {
-                    projectReference.Load(engine);
-                }
-
-                _local.Compiled = new CompileMessage
-                {
-                    AssemblyBytes = engine.AssemblyBytes ?? new byte[0],
-                    PdbBytes = engine.PdbBytes ?? new byte[0],
-                    AssemblyPath = engine.AssemblyPath,
-                    EmbeddedReferences = embeddedReferences
-                };
-
-                foreach (var waitingForCompiledAssembly in _waitingForCompiledAssemblies)
-                {
-                    if (waitingForCompiledAssembly.AssemblySent)
+                    var projectWorld = new ProjectWorld
                     {
-                        waitingForCompiledAssembly.ProjectChanged = true;
-                    }
+                        Sources = new SourcesMessage
+                        {
+                            Framework = frameworkData,
+                            Files = project.Metadata.SourceFiles
+                        },
+                        CompilerOptions = new CompilationOptionsMessage
+                        {
+                            Framework = frameworkData,
+                            CompilationOptions = project.CompilationSettings
+                        },
+                        References = new ReferencesMessage
+                        {
+                            Framework = frameworkData,
+                            RootDependency = state.Name,
+                            ProjectReferences = project.Metadata.ProjectReferences,
+                            FileReferences = project.Metadata.References,
+                            RawReferences = project.Metadata.RawReferences,
+                            Dependencies = project.Dependencies
+                        },
+                        Diagnostics = new DiagnosticsMessage
+                        {
+                            Framework = frameworkData,
+                            Errors = project.Metadata.Errors,
+                            Warnings = project.Metadata.Warnings
+                        },
+                        Compiled = new CompileMessage
+                        {
+                            FrameworkData = frameworkData,
+                            AssemblyBytes = project.Output.AssemblyBytes,
+                            PdbBytes = project.Output.PdbBytes,
+                            AssemblyPath = project.Output.AssemblyPath,
+                            EmbeddedReferences = project.Output.EmbeddedReferences
+                        }
+                    };
+
+                    _local.Projects[project.TargetFramework.FrameworkName] = projectWorld;
+
+                    //foreach (var waitingForCompiledAssembly in _waitingForCompiledAssemblies)
+                    //{
+                    //    if (waitingForCompiledAssembly.AssemblySent)
+                    //    {
+                    //        waitingForCompiledAssembly.ProjectChanged = true;
+                    //    }
+                    //}
                 }
             }
-        }
-
-        private string GetFriendlyFrameworkName(FrameworkReferenceResolver frameworkResolver, FrameworkName targetFramework)
-        {
-            return frameworkResolver.GetFriendlyFrameworkName(targetFramework);
         }
 
         private void Reconcile()
         {
-            if (IsDifferent(_local.Configurations, _remote.Configurations))
+            if (IsDifferent(_local.ProjectInformation, _remote.ProjectInformation))
             {
-                Trace.TraceInformation("[ApplicationContext]: OnTransmit(Configurations)");
+                Trace.TraceInformation("[ApplicationContext]: OnTransmit(ProjectInformation)");
 
                 _initializedContext.Transmit(new Message
                 {
                     ContextId = Id,
-                    MessageType = "Configurations",
-                    Payload = JToken.FromObject(_local.Configurations)
+                    MessageType = "ProjectInformation",
+                    Payload = JToken.FromObject(_local.ProjectInformation)
                 });
 
-                _remote.Configurations = _local.Configurations;
+                _remote.ProjectInformation = _local.ProjectInformation;
             }
 
-            if (IsDifferent(_local.References, _remote.References))
+            foreach (var pair in _local.Projects)
             {
-                Trace.TraceInformation("[ApplicationContext]: OnTransmit(References)");
+                ProjectWorld localProject = pair.Value;
+                ProjectWorld remoteProject;
 
-                _initializedContext.Transmit(new Message
+                if (!_remote.Projects.TryGetValue(pair.Key, out remoteProject))
                 {
-                    ContextId = Id,
-                    MessageType = "References",
-                    Payload = JToken.FromObject(_local.References)
-                });
+                    remoteProject = new ProjectWorld();
+                    _remote.Projects[pair.Key] = remoteProject;
+                }
 
-                _remote.References = _local.References;
-            }
 
-            if (IsDifferent(_local.Diagnostics, _remote.Diagnostics))
-            {
-                Trace.TraceInformation("[ApplicationContext]: OnTransmit(Diagnostics)");
-
-                _initializedContext.Transmit(new Message
+                if (IsDifferent(localProject.CompilerOptions, remoteProject.CompilerOptions))
                 {
-                    ContextId = Id,
-                    MessageType = "Diagnostics",
-                    Payload = JToken.FromObject(_local.Diagnostics)
-                });
+                    Trace.TraceInformation("[ApplicationContext]: OnTransmit(CompilerOptions)");
 
-                _remote.Diagnostics = _local.Diagnostics;
-            }
+                    _initializedContext.Transmit(new Message
+                    {
+                        ContextId = Id,
+                        MessageType = "CompilerOptions",
+                        Payload = JToken.FromObject(localProject.CompilerOptions)
+                    });
 
-            if (IsDifferent(_local.Sources, _remote.Sources))
-            {
-                Trace.TraceInformation("[ApplicationContext]: OnTransmit(Sources)");
+                    remoteProject.CompilerOptions = localProject.CompilerOptions;
+                }
 
-                _initializedContext.Transmit(new Message
+                if (IsDifferent(localProject.References, remoteProject.References))
                 {
-                    ContextId = Id,
-                    MessageType = "Sources",
-                    Payload = JToken.FromObject(_local.Sources)
-                });
+                    Trace.TraceInformation("[ApplicationContext]: OnTransmit(References)");
 
-                _remote.Sources = _local.Sources;
+                    _initializedContext.Transmit(new Message
+                    {
+                        ContextId = Id,
+                        MessageType = "References",
+                        Payload = JToken.FromObject(localProject.References)
+                    });
+
+                    remoteProject.References = localProject.References;
+                }
+
+                if (IsDifferent(localProject.Diagnostics, remoteProject.Diagnostics))
+                {
+                    Trace.TraceInformation("[ApplicationContext]: OnTransmit(Diagnostics)");
+
+                    _initializedContext.Transmit(new Message
+                    {
+                        ContextId = Id,
+                        MessageType = "Diagnostics",
+                        Payload = JToken.FromObject(localProject.Diagnostics)
+                    });
+
+                    remoteProject.Diagnostics = localProject.Diagnostics;
+                }
+
+                if (IsDifferent(localProject.Sources, localProject.Sources))
+                {
+                    Trace.TraceInformation("[ApplicationContext]: OnTransmit(Sources)");
+
+                    _initializedContext.Transmit(new Message
+                    {
+                        ContextId = Id,
+                        MessageType = "Sources",
+                        Payload = JToken.FromObject(localProject.Sources)
+                    });
+
+                    remoteProject.Sources = localProject.Sources;
+                }
             }
 
             for (int i = _waitingForCompiledAssemblies.Count - 1; i >= 0; i--)
@@ -405,7 +404,11 @@ namespace Microsoft.Framework.DesignTimeHost
                 {
                     Trace.TraceInformation("[ApplicationContext]: OnTransmit(Assembly)");
 
-                    waitingForCompiledAssembly.Connection.Transmit(WriteAssembly);
+                    waitingForCompiledAssembly.Connection.Transmit(writer =>
+                    {
+                        // TODO: Fix this
+                        WriteAssembly(_local.Projects.Values.FirstOrDefault(), writer);
+                    });
 
                     waitingForCompiledAssembly.AssemblySent = true;
                 }
@@ -426,44 +429,51 @@ namespace Microsoft.Framework.DesignTimeHost
                 }
             }
 
-            foreach (var connection in _waitingForDiagnostics)
-            {
-                connection.Transmit(new Message
-                {
-                    ContextId = Id,
-                    MessageType = "Diagnostics",
-                    Payload = JToken.FromObject(_local.Diagnostics)
-                });
-            }
 
-            _waitingForDiagnostics.Clear();
+            // Send all diagnostics back
+            if (_waitingForDiagnostics.Count > 0)
+            {
+                var allDiagnostics = _local.Projects.Select(d => d.Value.Diagnostics).ToList();
+
+                foreach (var connection in _waitingForDiagnostics)
+                {
+                    connection.Transmit(new Message
+                    {
+                        ContextId = Id,
+                        MessageType = "AllDiagnostics",
+                        Payload = JToken.FromObject(allDiagnostics)
+                    });
+                }
+
+                _waitingForDiagnostics.Clear();
+            }
         }
 
-        private void WriteAssembly(BinaryWriter writer)
+        private void WriteAssembly(ProjectWorld project, BinaryWriter writer)
         {
             writer.Write("Assembly");
             writer.Write(Id);
-            writer.Write(_local.Diagnostics.Warnings.Count);
-            foreach (var warning in _local.Diagnostics.Warnings)
+            writer.Write(project.Diagnostics.Warnings.Count);
+            foreach (var warning in project.Diagnostics.Warnings)
             {
                 writer.Write(warning);
             }
-            writer.Write(_local.Diagnostics.Errors.Count);
-            foreach (var error in _local.Diagnostics.Errors)
+            writer.Write(project.Diagnostics.Errors.Count);
+            foreach (var error in project.Diagnostics.Errors)
             {
                 writer.Write(error);
             }
-            writer.Write(_local.Compiled.EmbeddedReferences.Count);
-            foreach (var pair in _local.Compiled.EmbeddedReferences)
+            writer.Write(project.Compiled.EmbeddedReferences.Count);
+            foreach (var pair in project.Compiled.EmbeddedReferences)
             {
                 writer.Write(pair.Key);
                 writer.Write(pair.Value.Length);
                 writer.Write(pair.Value);
             }
-            writer.Write(_local.Compiled.AssemblyBytes.Length);
-            writer.Write(_local.Compiled.AssemblyBytes);
-            writer.Write(_local.Compiled.PdbBytes.Length);
-            writer.Write(_local.Compiled.PdbBytes);
+            writer.Write(project.Compiled.AssemblyBytes.Length);
+            writer.Write(project.Compiled.AssemblyBytes);
+            writer.Write(project.Compiled.PdbBytes.Length);
+            writer.Write(project.Compiled.PdbBytes);
         }
 
         private bool IsDifferent<T>(T local, T remote) where T : class
@@ -471,66 +481,112 @@ namespace Microsoft.Framework.DesignTimeHost
             return !object.Equals(local, remote);
         }
 
-        private State Initialize(string appPath, FrameworkName targetFramework, string configuration)
+        private State Initialize(string appPath, string configuration)
         {
             var state = new State
             {
-                Path = appPath,
-                TargetFramework = targetFramework,
-                Configuration = configuration
+                Frameworks = new List<TargetFrameworkData>(),
+                Projects = new List<ProjectInfo>()
             };
 
-            var applicationHostContext = new ApplicationHostContext(_hostServices,
-                                                                    appPath,
-                                                                    packagesDirectory: null,
-                                                                    configuration: configuration,
-                                                                    targetFramework: targetFramework,
-                                                                    cache: _cache,
-                                                                    cacheContextAccessor: _cacheContextAccessor);
-
-            Project project = applicationHostContext.Project;
-
-            if (project == null)
+            Project project;
+            if (!Project.TryGetProject(appPath, out project))
             {
-                // package.json sad
-                return state;
+                throw new InvalidOperationException(string.Format("Unable to find project.json in '{0}'", appPath));
             }
 
-            state.LibraryManager = (ILibraryManager)applicationHostContext.ServiceProvider.GetService(typeof(ILibraryManager));
-            state.MetadataProvider = applicationHostContext.CreateInstance<ProjectMetadataProvider>();
-            state.Project = project;
-            state.FrameworkResolver = applicationHostContext.FrameworkReferenceResolver;
+            state.Name = project.Name;
+            state.Configurations = project.GetConfigurations().ToList();
+            state.Commands = project.Commands;
 
-            applicationHostContext.DependencyWalker.Walk(state.Project.Name, state.Project.Version, targetFramework);
-
-            Func<LibraryDescription, ReferenceDescription> referenceFactory = library =>
+            foreach (var frameworkInfo in project.GetTargetFrameworks())
             {
-                return new ReferenceDescription
-                {
-                    Name = library.Identity.Name,
-                    Version = library.Identity.Version == null ? null : library.Identity.Version.ToString(),
-                    Type = library.Type ?? "Unresolved",
-                    Path = library.Path,
-                    Dependencies = library.Dependencies.Select(lib => new ReferenceItem
-                    {
-                        Name = lib.Name,
-                        Version = lib.Version == null ? null : lib.Version.ToString()
-                    })
-                };
-            };
+                var applicationHostContext = new ApplicationHostContext(_hostServices,
+                                                                        appPath,
+                                                                        packagesDirectory: null,
+                                                                        configuration: configuration,
+                                                                        targetFramework: frameworkInfo.FrameworkName,
+                                                                        cache: _cache,
+                                                                        cacheContextAccessor: _cacheContextAccessor);
 
-            state.Dependencies = applicationHostContext.DependencyWalker
-                                                       .Libraries
-                                                       .Select(referenceFactory)
-                                                       .ToDictionary(d => d.Name);
+                applicationHostContext.DependencyWalker.Walk(project.Name, project.Version, frameworkInfo.FrameworkName);
+
+                var libraryManager = (ILibraryManager)applicationHostContext.ServiceProvider.GetService(typeof(ILibraryManager));
+                var metadataProvider = applicationHostContext.CreateInstance<ProjectMetadataProvider>();
+                var frameworkResolver = applicationHostContext.FrameworkReferenceResolver;
+                var metadata = metadataProvider.GetProjectMetadata(project.Name);
+
+                var dependencies = applicationHostContext.DependencyWalker
+                                                         .Libraries
+                                                         .Select(CreateReferenceDescription)
+                                                         .ToDictionary(d => d.Name);
+
+                var frameworkData = new TargetFrameworkData
+                {
+                    ShortName = VersionUtility.GetShortFrameworkName(frameworkInfo.FrameworkName),
+                    FrameworkName = frameworkInfo.FrameworkName,
+                    Name = frameworkResolver.GetFriendlyFrameworkName(frameworkInfo.FrameworkName)
+                };
+
+                state.Frameworks.Add(frameworkData);
+
+                var projectInfo = new ProjectInfo()
+                {
+                    Path = appPath,
+                    Configuration = configuration,
+                    TargetFramework = frameworkData,
+                    CompilationSettings = project.GetCompilationSettings(frameworkInfo.FrameworkName, configuration),
+                    Dependencies = dependencies,
+                    Metadata = metadata,
+                    Output = new ProjectOutput()
+                };
+
+                var export = libraryManager.GetLibraryExport(project.Name);
+                var projectReference = export.MetadataReferences.OfType<IMetadataProjectReference>()
+                                                                .First();
+
+                var embeddedReferences = export.MetadataReferences.OfType<IMetadataEmbeddedReference>().Select(r =>
+                {
+                    return new
+                    {
+                        Name = r.Name,
+                        Bytes = r.Contents
+                    };
+                })
+                .ToDictionary(a => a.Name, a => a.Bytes);
+
+                var engine = new NonLoadingLoaderEngine();
+
+                if (!metadata.Errors.Any())
+                {
+                    projectReference.Load(engine);
+                }
+
+                projectInfo.Output.AssemblyBytes = engine.AssemblyBytes ?? new byte[0];
+                projectInfo.Output.PdbBytes = engine.PdbBytes ?? new byte[0];
+                projectInfo.Output.AssemblyPath = engine.AssemblyPath;
+                projectInfo.Output.EmbeddedReferences = embeddedReferences;
+
+                state.Projects.Add(projectInfo);
+            }
 
             return state;
         }
 
-        public void Send(Message message)
+        private static ReferenceDescription CreateReferenceDescription(LibraryDescription library)
         {
-            message.ContextId = Id;
-            _initializedContext.Transmit(message);
+            return new ReferenceDescription
+            {
+                Name = library.Identity.Name,
+                Version = library.Identity.Version == null ? null : library.Identity.Version.ToString(),
+                Type = library.Type ?? "Unresolved",
+                Path = library.Path,
+                Dependencies = library.Dependencies.Select(lib => new ReferenceItem
+                {
+                    Name = lib.Name,
+                    Version = lib.Version == null ? null : lib.Version.ToString()
+                })
+            };
         }
 
         private class Trigger<TValue>
@@ -555,27 +611,54 @@ namespace Microsoft.Framework.DesignTimeHost
             }
         }
 
-        private struct Nada
+        private class State
         {
+            public string Name { get; set; }
+
+            public IList<string> Configurations { get; set; }
+
+            public IList<TargetFrameworkData> Frameworks { get; set; }
+
+            public IDictionary<string, string> Commands { get; set; }
+
+            public IList<ProjectInfo> Projects { get; set; }
         }
 
-        private class State
+        // Represents a project that should be used for intellisense
+        private class ProjectInfo
         {
             public string Path { get; set; }
 
-            public FrameworkName TargetFramework { get; set; }
-
             public string Configuration { get; set; }
 
-            public Project Project { get; set; }
+            public TargetFrameworkData TargetFramework { get; set; }
 
-            public ProjectMetadataProvider MetadataProvider { get; set; }
+            public CompilationSettings CompilationSettings { get; set; }
 
-            public ILibraryManager LibraryManager { get; set; }
+            public ProjectMetadata Metadata { get; set; }
 
             public IDictionary<string, ReferenceDescription> Dependencies { get; set; }
 
-            public FrameworkReferenceResolver FrameworkResolver { get; set; }
+            public ProjectOutput Output { get; set; }
+        }
+
+        private class ProjectOutput
+        {
+            public IDictionary<string, byte[]> EmbeddedReferences { get; set; }
+
+            public byte[] AssemblyBytes { get; set; }
+            public byte[] PdbBytes { get; set; }
+
+            public string AssemblyPath { get; set; }
+        }
+
+        private class TargetFrameworkData
+        {
+            public string Name { get; set; }
+
+            public string ShortName { get; set; }
+
+            public FrameworkName FrameworkName { get; set; }
         }
 
         private class CompiledAssemblyState
@@ -587,6 +670,10 @@ namespace Microsoft.Framework.DesignTimeHost
             public bool ProjectChanged { get; set; }
 
             public bool ProjectChangedSent { get; set; }
+        }
+
+        private struct Void
+        {
         }
     }
 }

@@ -6,25 +6,24 @@ using System.Linq;
 
 namespace Microsoft.Framework.DesignTimeHost.Models.OutgoingMessages
 {
-    public class ProjectInformationMessage
+    public class ProjectMessage
     {
         public string ProjectName { get; set; }
 
         public IList<FrameworkData> Frameworks { get; set; }
 
-        // We'll eventually move this to the configurations property
-        public IList<ConfigurationData> ProjectConfigurations { get; set; }
+        public IList<ConfigurationData> Configurations { get; set; }
 
         public IDictionary<string, string> Commands { get; set; }
 
         public override bool Equals(object obj)
         {
-            var other = obj as ProjectInformationMessage;
+            var other = obj as ProjectMessage;
 
             return other != null &&
                    string.Equals(ProjectName, other.ProjectName) &&
                    Enumerable.SequenceEqual(Frameworks, other.Frameworks) &&
-                   Enumerable.SequenceEqual(ProjectConfigurations, other.ProjectConfigurations) &&
+                   Enumerable.SequenceEqual(Configurations, other.Configurations) &&
                    Enumerable.SequenceEqual(Commands, other.Commands);
         }
 

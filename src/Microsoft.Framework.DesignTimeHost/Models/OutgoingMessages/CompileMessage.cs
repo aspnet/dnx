@@ -5,6 +5,8 @@ namespace Microsoft.Framework.DesignTimeHost.Models.OutgoingMessages
 {
     public class CompileMessage
     {
+        public FrameworkData FrameworkData { get; set; }
+
         public IDictionary<string, byte[]> EmbeddedReferences { get; set; }
 
         public byte[] AssemblyBytes { get; set; }

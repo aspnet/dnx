@@ -1,26 +1,22 @@
-// Copyright (c) Microsoft Open Technologies, Inc. All rights reserved.
-// Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
-
+﻿using System;
 using System.Collections.Generic;
-using System.Linq;
+using Microsoft.Framework.Runtime.Roslyn;
 
 namespace Microsoft.Framework.DesignTimeHost.Models.OutgoingMessages
 {
-    public class SourcesMessage
+    public class CompilationOptionsMessage
     {
         public FrameworkData Framework { get; set; }
 
-        public IList<string> Files { get; set; }
-        public IDictionary<string, string> GeneratedFiles { get; set; }
-
+        public CompilationSettings CompilationOptions { get; set; }
 
         public override bool Equals(object obj)
         {
-            var other = obj as SourcesMessage;
+            var other = obj as CompilationOptionsMessage;
 
             return other != null &&
-                   Enumerable.SequenceEqual(Files, other.Files);
-
+                 object.Equals(Framework, other.Framework) &&
+                 object.Equals(CompilationOptions, other.CompilationOptions);
         }
 
         public override int GetHashCode()

@@ -1,9 +1,9 @@
 {
     "version": "1.0.0-*",
-    "dependencies" : {
-        "Newtonsoft.Json" : "6.0.4",
+    "dependencies": {
+        "Newtonsoft.Json": "6.0.4",
         "Microsoft.Framework.ApplicationHost": "",
-        "Microsoft.Framework.Runtime" : "",
+        "Microsoft.Framework.Runtime": "",
         "Microsoft.Framework.Runtime.Common": "",
         "Microsoft.Framework.Runtime.Interfaces" : "",
         "Microsoft.Framework.Runtime.Roslyn" : ""
@@ -15,7 +15,7 @@
                 "System.Net" : "4.0.0.0"
             }
         },
-        "aspnetcore50" : {
+        "aspnetcore50": {
             "dependencies": {
                 "System.Collections": "4.0.10.0",
                 "System.Console": "4.0.0.0",
@@ -35,5 +35,8 @@
                 "System.Threading.ThreadPool": "4.0.10.0"
             }
         }
+    },
+    "scripts": {
+        "postbuild": "xcopy /F /Y /I bin\\Debug\\net45\\*.* ..\\..\\artifacts\\build\\KRE-CLR-x86\\bin"
     }
 }
