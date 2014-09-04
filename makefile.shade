@@ -20,14 +20,14 @@ var TEST_RESULTS = '${Path.Combine(ROOT, "artifacts", "TestResults")}'
 var SAMPLES_DIR = '${Path.Combine(ROOT, "samples")}'
 var FULL_VERSION = '${PRODUCT_VERSION + "-" + E("K_BUILD_VERSION")}'
 var CORECLR_TARGET_PATH = '${Path.Combine(BUILD_DIR2, "CoreCLR")}'
-var MONO_BIN='${Path.Combine(BUILD_DIR2, "KRE-Mono", "bin")}'
-var CLR_x86_BIN='${Path.Combine(BUILD_DIR2, "KRE-CLR-x86", "bin")}'
-var CLR_amd64_BIN='${Path.Combine(BUILD_DIR2, "KRE-CLR-amd64", "bin")}'
-var CORECLR_x86_BIN='${Path.Combine(BUILD_DIR2, "KRE-CoreCLR-x86", "bin")}'
-var CORECLR_amd64_BIN='${Path.Combine(BUILD_DIR2, "KRE-CoreCLR-amd64", "bin")}'
-var NET45_TARGETS = '${new [] { MONO_BIN, CLR_x86_BIN, CLR_amd64_BIN}}'
-var ASPNETCORE_TARGETS = '${new [] { CORECLR_x86_BIN, CORECLR_amd64_BIN}}'
-var ALL_TARGETS = '${NET45_TARGETS.Concat(ASPNETCORE_TARGETS)}'
+var KRE_MONO_BIN='${Path.Combine(BUILD_DIR2, "KRE-Mono", "bin")}'
+var KRE_CLR_x86_BIN='${Path.Combine(BUILD_DIR2, "KRE-CLR-x86", "bin")}'
+var KRE_CLR_amd64_BIN='${Path.Combine(BUILD_DIR2, "KRE-CLR-amd64", "bin")}'
+var KRE_CORECLR_x86_BIN='${Path.Combine(BUILD_DIR2, "KRE-CoreCLR-x86", "bin")}'
+var KRE_CORECLR_amd64_BIN='${Path.Combine(BUILD_DIR2, "KRE-CoreCLR-amd64", "bin")}'
+var KRE_CLR_TARGETS = '${new [] {KRE_MONO_BIN, KRE_CLR_x86_BIN, KRE_CLR_amd64_BIN}}'
+var KRE_CORECLR_TARGETS = '${new [] {KRE_CORECLR_x86_BIN, KRE_CORECLR_amd64_BIN}}'
+var ALL_TARGETS = '${KRE_CLR_TARGETS.Concat(KRE_CORECLR_TARGETS)}'
 var NEW_RUNTIME = '${E("NEW_RUNTIME") == "1"}'
 var CORE_CLR_VERSION = '${E("CORE_CLR_VERSION")}'
 
@@ -214,11 +214,11 @@ var CORE_CLR_VERSION = '${E("CORE_CLR_VERSION")}'
     var x64Target="amd64"
 
     -// KRE-mono45-x86
-    copy sourceDir='${SCRIPTS_DIR}' include='*.sh' outputDir='${MONO_BIN}' overwrite='${true}'
-    copy sourceDir='${Path.Combine(BUILD_DIR2, "klr.mono.managed")}' outputDir='${MONO_BIN}' include='*.dll' overwrite='${true}'
+    copy sourceDir='${SCRIPTS_DIR}' include='*.sh' outputDir='${KRE_MONO_BIN}' overwrite='${true}'
+    copy sourceDir='${Path.Combine(BUILD_DIR2, "klr.mono.managed")}' outputDir='${KRE_MONO_BIN}' include='*.dll' overwrite='${true}'
     @{
         // Rename all .sh files to remove the sh
-        foreach (var shFile in Files.Include(Path.Combine(MONO_BIN, "*.sh")))
+        foreach (var shFile in Files.Include(Path.Combine(KRE_MONO_BIN, "*.sh")))
         {
             var targetShFile = Path.Combine(Path.GetDirectoryName(shFile), 
                                             Path.GetFileNameWithoutExtension(shFile));
@@ -235,28 +235,28 @@ var CORE_CLR_VERSION = '${E("CORE_CLR_VERSION")}'
     }
 
     -// KRE-CLR-x86
-    copy sourceDir='${Path.Combine(BUILD_DIR2, "klr", "bin", "Win32", Configuration2, "net45")}' outputDir='${CLR_x86_BIN}' include='*.exe' overwrite='${true}'
-    copy sourceDir='${Path.Combine(BUILD_DIR2, "klr.net45", "bin", "Win32", Configuration2)}' outputDir='${CLR_x86_BIN}' include='*.dll' overwrite='${true}'
-    copy sourceDir='${Path.Combine(BUILD_DIR2, "klr.net45", "bin", "Win32", Configuration2)}' outputDir='${CLR_x86_BIN}' include='*.pdb' overwrite='${true}'
-    copy sourceDir='${Path.Combine(ROOT, "src", "klr.net45.managed")}' outputDir='${CLR_x86_BIN}' include='*.config' overwrite='${true}'
+    copy sourceDir='${Path.Combine(BUILD_DIR2, "klr", "bin", "Win32", Configuration2, "net45")}' outputDir='${KRE_CLR_x86_BIN}' include='*.exe' overwrite='${true}'
+    copy sourceDir='${Path.Combine(BUILD_DIR2, "klr.net45", "bin", "Win32", Configuration2)}' outputDir='${KRE_CLR_x86_BIN}' include='*.dll' overwrite='${true}'
+    copy sourceDir='${Path.Combine(BUILD_DIR2, "klr.net45", "bin", "Win32", Configuration2)}' outputDir='${KRE_CLR_x86_BIN}' include='*.pdb' overwrite='${true}'
+    copy sourceDir='${Path.Combine(ROOT, "src", "klr.net45.managed")}' outputDir='${KRE_CLR_x86_BIN}' include='*.config' overwrite='${true}'
 
     -// KRE-CLR-amd64
-    copy sourceDir='${Path.Combine(BUILD_DIR2, "klr", "bin", "x64", Configuration2, "net45")}' outputDir='${CLR_amd64_BIN}' include='*.exe' overwrite='${true}'
-    copy sourceDir='${Path.Combine(BUILD_DIR2, "klr.net45", "bin", "x64", Configuration2)}' outputDir='${CLR_amd64_BIN}' include='*.dll' overwrite='${true}'
-    copy sourceDir='${Path.Combine(BUILD_DIR2, "klr.net45", "bin", "x64", Configuration2)}' outputDir='${CLR_amd64_BIN}' include='*.pdb' overwrite='${true}'
-    copy sourceDir='${Path.Combine(ROOT, "src", "klr.net45.managed")}' outputDir='${CLR_amd64_BIN}' include='*.config' overwrite='${true}'
+    copy sourceDir='${Path.Combine(BUILD_DIR2, "klr", "bin", "x64", Configuration2, "net45")}' outputDir='${KRE_CLR_amd64_BIN}' include='*.exe' overwrite='${true}'
+    copy sourceDir='${Path.Combine(BUILD_DIR2, "klr.net45", "bin", "x64", Configuration2)}' outputDir='${KRE_CLR_amd64_BIN}' include='*.dll' overwrite='${true}'
+    copy sourceDir='${Path.Combine(BUILD_DIR2, "klr.net45", "bin", "x64", Configuration2)}' outputDir='${KRE_CLR_amd64_BIN}' include='*.pdb' overwrite='${true}'
+    copy sourceDir='${Path.Combine(ROOT, "src", "klr.net45.managed")}' outputDir='${KRE_CLR_amd64_BIN}' include='*.config' overwrite='${true}'
 
     -// KRE-CoreCLR-x86
-    copy sourceDir='${Path.Combine(BUILD_DIR2, "klr", "bin", "Win32", Configuration2, "aspnetcore50")}' outputDir='${CORECLR_x86_BIN}' include='*.exe' overwrite='${true}'
-    copy sourceDir='${Path.Combine(BUILD_DIR2, "klr.core45", "bin", "Win32", Configuration2)}' outputDir='${CORECLR_x86_BIN}' include='*.dll' overwrite='${true}'
-    copy sourceDir='${Path.Combine(BUILD_DIR2, "klr.core45", "bin", "Win32", Configuration2)}' outputDir='${CORECLR_x86_BIN}' include='*.pdb' overwrite='${true}'
+    copy sourceDir='${Path.Combine(BUILD_DIR2, "klr", "bin", "Win32", Configuration2, "aspnetcore50")}' outputDir='${KRE_CORECLR_x86_BIN}' include='*.exe' overwrite='${true}'
+    copy sourceDir='${Path.Combine(BUILD_DIR2, "klr.core45", "bin", "Win32", Configuration2)}' outputDir='${KRE_CORECLR_x86_BIN}' include='*.dll' overwrite='${true}'
+    copy sourceDir='${Path.Combine(BUILD_DIR2, "klr.core45", "bin", "Win32", Configuration2)}' outputDir='${KRE_CORECLR_x86_BIN}' include='*.pdb' overwrite='${true}'
 
     -// KRE-CoreCLR-amd64
-    copy sourceDir='${Path.Combine(BUILD_DIR2, "klr", "bin", "x64", Configuration2, "aspnetcore50")}' outputDir='${CORECLR_amd64_BIN}' include='*.exe' overwrite='${true}'
-    copy sourceDir='${Path.Combine(BUILD_DIR2, "klr.core45", "bin", "x64", Configuration2)}' outputDir='${CORECLR_amd64_BIN}' include='*.dll' overwrite='${true}'
-    copy sourceDir='${Path.Combine(BUILD_DIR2, "klr.core45", "bin", "x64", Configuration2)}' outputDir='${CORECLR_amd64_BIN}' include='*.pdb' overwrite='${true}'
+    copy sourceDir='${Path.Combine(BUILD_DIR2, "klr", "bin", "x64", Configuration2, "aspnetcore50")}' outputDir='${KRE_CORECLR_amd64_BIN}' include='*.exe' overwrite='${true}'
+    copy sourceDir='${Path.Combine(BUILD_DIR2, "klr.core45", "bin", "x64", Configuration2)}' outputDir='${KRE_CORECLR_amd64_BIN}' include='*.dll' overwrite='${true}'
+    copy sourceDir='${Path.Combine(BUILD_DIR2, "klr.core45", "bin", "x64", Configuration2)}' outputDir='${KRE_CORECLR_amd64_BIN}' include='*.pdb' overwrite='${true}'
 
-    copy sourceDir='${SCRIPTS_DIR}' include='*.cmd' overwrite='${true}' each='var outputDir in new[]{ CLR_x86_BIN, CLR_amd64_BIN, CORECLR_x86_BIN, CORECLR_amd64_BIN }'
+    copy sourceDir='${SCRIPTS_DIR}' include='*.cmd' overwrite='${true}' each='var outputDir in new[]{ KRE_CLR_x86_BIN, KRE_CLR_amd64_BIN, KRE_CORECLR_x86_BIN, KRE_CORECLR_amd64_BIN }'
 
     @{
         var hostAspNetCore50 = Path.Combine(BUILD_DIR2, "*", "aspnetcore50", "**.*");
@@ -275,7 +275,7 @@ var CORE_CLR_VERSION = '${E("CORE_CLR_VERSION")}'
         
         foreach(var file in Files.Include(hostAspNetCore50).Exclude(sharedSourceAssemblies))
         {
-            foreach(var aspNetCore50Target in ASPNETCORE_TARGETS)
+            foreach(var aspNetCore50Target in KRE_CORECLR_TARGETS)
             {
                 string dest = Path.Combine(aspNetCore50Target, Path.GetFileName(file));
                 File.Copy(file, dest, true);
@@ -284,7 +284,7 @@ var CORE_CLR_VERSION = '${E("CORE_CLR_VERSION")}'
         
         foreach(var file in Files.Include(hostnet45).Exclude(sharedSourceAssemblies))
         {
-            foreach(var net45Target in NET45_TARGETS)
+            foreach(var net45Target in KRE_CLR_TARGETS)
             {
                 string dest = Path.Combine(net45Target, Path.GetFileName(file));
                 File.Copy(file, dest, true);
@@ -292,10 +292,10 @@ var CORE_CLR_VERSION = '${E("CORE_CLR_VERSION")}'
         }
 
         // Clean up net45.managed from mono (it's never used)
-        File.Delete(Path.Combine(MONO_BIN, "klr.net45.managed.dll"));
+        File.Delete(Path.Combine(KRE_MONO_BIN, "klr.net45.managed.dll"));
 
         // Remove k-crossgen.cmd from the net45 build
-        foreach (var net45Target in NET45_TARGETS)
+        foreach (var net45Target in KRE_CLR_TARGETS)
         {
             var crossgen = Path.Combine(net45Target, "k-crossgen.cmd");
             if(File.Exists(crossgen))
@@ -343,7 +343,7 @@ var CORE_CLR_VERSION = '${E("CORE_CLR_VERSION")}'
 
 #tweak-scripts
     @{
-        foreach(var targetDir in new[] { CLR_x86_BIN, CLR_amd64_BIN, CORECLR_x86_BIN, CORECLR_amd64_BIN })
+        foreach(var targetDir in new[] { KRE_CLR_x86_BIN, KRE_CLR_amd64_BIN, KRE_CORECLR_x86_BIN, KRE_CORECLR_amd64_BIN })
         {
             foreach(var file in Files.Include(Path.Combine(targetDir, "*.cmd")))
             {
@@ -408,11 +408,11 @@ var CORE_CLR_VERSION = '${E("CORE_CLR_VERSION")}'
 
                     if (framework == "aspnetcore50")
                     {
-                        targetDirs = ASPNETCORE_TARGETS;
+                        targetDirs = KRE_CORECLR_TARGETS;
                     }
                     else
                     {
-                        targetDirs = NET45_TARGETS;
+                        targetDirs = KRE_CLR_TARGETS;
                     }
 
                     foreach(var targetDir in targetDirs)
@@ -459,7 +459,7 @@ var CORE_CLR_VERSION = '${E("CORE_CLR_VERSION")}'
 
             foreach(var fi in di.GetFiles("*.dll"))
             {
-                var targetDirs = ASPNETCORE_TARGETS.Select(dir => Path.Combine(dir, "lib", "Microsoft.Framework.PackageManager"));
+                var targetDirs = KRE_CORECLR_TARGETS.Select(dir => Path.Combine(dir, "lib", "Microsoft.Framework.PackageManager"));
 
                 foreach(var targetDir in targetDirs)
                 {
@@ -507,8 +507,8 @@ var CORE_CLR_VERSION = '${E("CORE_CLR_VERSION")}'
     copy sourceDir='${Path.Combine(CoreCLR_DIR, "Runtime")}' outputDir='${Path.Combine(CORECLR_TARGET_PATH, "Runtime")}' overwrite='${true}'
     
     -// Copy the CoreCLR to the aspentcore50 builds
-    copy sourceDir='${Path.Combine(CORECLR_TARGET_PATH, "Runtime", "x86")}' outputDir='${CORECLR_x86_BIN}'
-    copy sourceDir='${Path.Combine(CORECLR_TARGET_PATH, "Runtime", "amd64")}' outputDir='${CORECLR_amd64_BIN}'
+    copy sourceDir='${Path.Combine(CORECLR_TARGET_PATH, "Runtime", "x86")}' outputDir='${KRE_CORECLR_x86_BIN}'
+    copy sourceDir='${Path.Combine(CORECLR_TARGET_PATH, "Runtime", "amd64")}' outputDir='${KRE_CORECLR_amd64_BIN}'
 
 #nuget-pack-runtime
     copy sourceDir='${NUSPEC_ROOT}' outputDir='${BUILD_DIR2}' include='*.nuspec' overwrite='${true}'
