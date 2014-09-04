@@ -210,7 +210,7 @@ KRE_FLAVOR={1}
 KRE_CONFIGURATION={2}
 ",
 versionNumber,
-flavor == "svrc50" ? "CoreCLR" : "DesktopCLR",
+flavor,
 root.Configuration));
                     }
                 }

@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <package>
     <metadata>
-        <id>KRE-svrc50-x86</id>
+        <id>KRE-CoreCLR-amd64</id>
         <version>0.0.1-pre</version>
         <authors>Microsoft</authors>
         <requireLicenseAcceptance>false</requireLicenseAcceptance>
-        <description>The K Runtime Environment for CoreCLR x86</description>
+        <description>The K Runtime Environment for CoreCLR amd64</description>
     </metadata>
     <files>
-        <file src="KRE-svrc50-x86\bin\**" exclude="**\*.pdb;**\*.xml" target="bin" />
+        <file src="KRE-CoreCLR-amd64\bin\**" exclude="**\*.pdb;**\*.xml" target="bin" />
     </files>
 </package>

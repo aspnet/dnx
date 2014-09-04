@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <package>
     <metadata>
-        <id>KRE-svr50-x64</id>
+        <id>KRE-CLR-amd64</id>
         <version>0.0.1-pre</version>
         <authors>Microsoft</authors>
         <requireLicenseAcceptance>false</requireLicenseAcceptance>
-        <description>The K Runtime Environment for Desktop CLR x64</description>
+        <description>The K Runtime Environment for Desktop CLR amd64</description>
     </metadata>
     <files>
-        <file src="KRE-svr50-x64\bin\**" exclude="**\*.pdb;**\*.xml" target="bin" />
+        <file src="KRE-CLR-amd64\bin\**" exclude="**\*.pdb;**\*.xml" target="bin" />
     </files>
 </package>

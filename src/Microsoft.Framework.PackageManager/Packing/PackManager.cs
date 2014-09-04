@@ -83,12 +83,13 @@ namespace Microsoft.Framework.PackageManager.Packing
                 {
                     return null;
                 }
-                switch (parts[1])
+                switch (parts[1].ToLowerInvariant())
                 {
-                    case "svr50":
-                        return VersionUtility.ParseFrameworkName("net451");
-                    case "svrc50":
-                        return VersionUtility.ParseFrameworkName("k10");
+                    case "mono":
+                    case "clr":
+                        return VersionUtility.ParseFrameworkName("aspnet50");
+                    case "coreclr":
+                        return VersionUtility.ParseFrameworkName("aspnetcore50");
                 }
                 return null;
             }
@@ -168,7 +169,7 @@ namespace Microsoft.Framework.PackageManager.Packing
 
             if (!dependencyContexts.Any())
             {
-                var frameworkName = DependencyContext.GetFrameworkNameForRuntime("KRE-svr50-x86.*");
+                var frameworkName = DependencyContext.GetFrameworkNameForRuntime("KRE-CLR-x86.*");
                 var dependencyContext = new DependencyContext(projectDir, _options.Configuration, frameworkName);
                 dependencyContext.Walk(project.Name, project.Version);
                 dependencyContexts.Add(dependencyContext);
