@@ -23,10 +23,23 @@ namespace NuGet
         string GetPackageFilePath(string packageId, SemanticVersion version);
 
         /// <summary>
+        /// Gets the phsyical path to the nuspec file
+        /// </summary>
+        string GetManifestFilePath(string packageId, SemanticVersion version);
+
+        /// <summary>
         /// Gets the package directory name
         /// </summary>
         string GetPackageDirectory(string packageId, SemanticVersion version);
 
+        /// <summary>
+        /// Gets file name of the nupkg file
+        /// </summary>
         string GetPackageFileName(string packageId, SemanticVersion version);
+
+        /// <summary>
+        /// Gets file name of the nuspec file
+        /// </summary>
+        string GetManifestFileName(string packageId, SemanticVersion version);
     }
 }

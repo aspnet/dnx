@@ -90,7 +90,6 @@ namespace Microsoft.Framework.PackageManager
 
                 var packagesFolderFileSystem = CreateFileSystem(packagesDirectory);
                 var pathResolver = new DefaultPackagePathResolver(packagesFolderFileSystem, useSideBySidePaths: true);
-                var localRepository = new LocalPackageRepository(pathResolver, packagesFolderFileSystem);
 
                 int restoreCount = 0;
                 int successCount = 0;
@@ -101,7 +100,7 @@ namespace Microsoft.Framework.PackageManager
                     foreach (var projectJsonPath in projectJsonFiles)
                     {
                         restoreCount += 1;
-                        var success = await RestoreForProject(localRepository, projectJsonPath, rootDirectory, packagesDirectory);
+                        var success = await RestoreForProject(projectJsonPath, rootDirectory, packagesDirectory);
                         if (success)
                         {
                             successCount += 1;
@@ -111,7 +110,7 @@ namespace Microsoft.Framework.PackageManager
                 else
                 {
                     restoreCount = 1;
-                    var success = await RestoreFromGlobalJson(localRepository, rootDirectory, packagesDirectory);
+                    var success = await RestoreFromGlobalJson(rootDirectory, packagesDirectory);
                     if (success)
                     {
                         successCount = 1;
@@ -136,7 +135,7 @@ namespace Microsoft.Framework.PackageManager
             }
         }
 
-        private async Task<bool> RestoreForProject(LocalPackageRepository localRepository, string projectJsonPath, string rootDirectory, string packagesDirectory)
+        private async Task<bool> RestoreForProject(string projectJsonPath, string rootDirectory, string packagesDirectory)
         {
             var success = true;
 
@@ -256,7 +255,7 @@ namespace Microsoft.Framework.PackageManager
             return success;
         }
 
-        private async Task<bool> RestoreFromGlobalJson(LocalPackageRepository localRepository, string rootDirectory, string packagesDirectory)
+        private async Task<bool> RestoreFromGlobalJson(string rootDirectory, string packagesDirectory)
         {
             var success = true;
 
@@ -418,7 +417,7 @@ namespace Microsoft.Framework.PackageManager
                 {
                     remoteProviders.Add(
                         new RemoteWalkProvider(
-                            new PackageFolder(
+                            PackageFolderFactory.CreatePackageFolderFromPath(
                                 source.Source,
                                 Reports.Quiet)));
                 }

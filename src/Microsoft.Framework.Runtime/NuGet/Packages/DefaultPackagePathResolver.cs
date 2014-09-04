@@ -47,6 +47,12 @@ namespace NuGet
                                 GetPackageFileName(packageId, version));
         }
 
+        public string GetManifestFilePath(string packageId, SemanticVersion version)
+        {
+            return Path.Combine(GetInstallPath(packageId, version),
+                                GetManifestFileName(packageId, version));
+        }
+
         public string GetHashPath(string packageId, SemanticVersion version)
         {
             return Path.Combine(GetInstallPath(packageId, version),
@@ -71,6 +77,11 @@ namespace NuGet
                 fileNameBase += "." + version;
             }
             return fileNameBase + Constants.PackageExtension;
+        }
+
+        public virtual string GetManifestFileName(string packageId, SemanticVersion version)
+        {
+            return packageId + Constants.ManifestExtension;
         }
     }
 }

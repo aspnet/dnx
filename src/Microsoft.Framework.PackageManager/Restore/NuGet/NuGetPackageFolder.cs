@@ -10,12 +10,12 @@ using NuGet;
 
 namespace Microsoft.Framework.PackageManager.Restore.NuGet
 {
-    public class PackageFolder : IPackageFeed
+    public class NuGetPackageFolder : IPackageFeed
     {
-        private IReport _report;
-        private LocalPackageRepository _repository;
+        private readonly IReport _report;
+        private readonly LocalPackageRepository _repository;
 
-        public PackageFolder(
+        public NuGetPackageFolder(
             string physicalPath,
             IReport report)
         {

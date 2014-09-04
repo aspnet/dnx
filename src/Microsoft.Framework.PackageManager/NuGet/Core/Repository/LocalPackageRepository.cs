@@ -40,12 +40,12 @@ namespace NuGet
         {
             if (pathResolver == null)
             {
-                throw new ArgumentNullException("pathResolver");
+                throw new ArgumentNullException(nameof(pathResolver));
             }
 
             if (fileSystem == null)
             {
-                throw new ArgumentNullException("fileSystem");
+                throw new ArgumentNullException(nameof(fileSystem));
             }
 
             FileSystem = fileSystem;
@@ -78,11 +78,11 @@ namespace NuGet
         {
             if (String.IsNullOrEmpty(packageId))
             {
-                throw new ArgumentException(CommonResources.Argument_Cannot_Be_Null_Or_Empty, "packageId");
+                throw new ArgumentException(CommonResources.Argument_Cannot_Be_Null_Or_Empty, nameof(packageId));
             }
             if (version == null)
             {
-                throw new ArgumentNullException("version");
+                throw new ArgumentNullException(nameof(version));
             }
             return FindPackage(OpenPackage, packageId, version);
         }
@@ -91,7 +91,7 @@ namespace NuGet
         {
             if (String.IsNullOrEmpty(packageId))
             {
-                throw new ArgumentException(CommonResources.Argument_Cannot_Be_Null_Or_Empty, "packageId");
+                throw new ArgumentException(CommonResources.Argument_Cannot_Be_Null_Or_Empty, nameof(packageId));
             }
 
             return FindPackagesById(OpenPackage, packageId);
