@@ -234,7 +234,7 @@ namespace NuGet
 
                 if (Report != null)
                 {
-                    Report.WriteLine(string.Format("  OPEN {0}", packagePath));
+                    Report.WriteLine(string.Format("  OPEN {0}", FileSystem.GetFullPath(packagePath)));
                 }
 
                 // Create the package

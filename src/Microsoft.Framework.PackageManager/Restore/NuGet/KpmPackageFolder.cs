@@ -46,6 +46,10 @@ namespace Microsoft.Framework.PackageManager.Restore.NuGet
         {
             var nuspecPath = _pathResolver.GetManifestFilePath(package.Id, package.Version);
             var unzippedPackage = new UnzippedPackage(_fileSystem, nuspecPath);
+
+            var nupkgPath = _pathResolver.GetPackageFilePath(package.Id, package.Version);
+            _report.WriteLine(string.Format("  OPEN {0}", _fileSystem.GetFullPath(nupkgPath)));
+
             return Task.FromResult(unzippedPackage.GetStream());
         }
     }
