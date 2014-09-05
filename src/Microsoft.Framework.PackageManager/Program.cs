@@ -369,14 +369,5 @@ namespace Microsoft.Framework.PackageManager
             var assemblyInformationalVersionAttribute = assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>();
             return assemblyInformationalVersionAttribute.InformationalVersion;
         }
-
-        private class NullReport : IReport
-        {
-            public void WriteLine(string message)
-            {
-                // Consume the write operation and do nothing
-                // Used when verbose option is not specified
-            }
-        }
     }
 }
