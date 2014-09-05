@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.Versioning;
+using System.Text;
 using NuGet;
 
 namespace Microsoft.Framework.Runtime
@@ -38,6 +39,34 @@ namespace Microsoft.Framework.Runtime
         {
             return AttemptedProviders.Where(p => p != this)
                                      .SelectMany(p => p.GetAttemptedPaths(targetFramework));
+        }
+
+        public string GetMissingDependenciesWarning(FrameworkName targetFramework)
+        {
+            var sb = new StringBuilder();
+
+            // TODO: Localize messages
+
+            sb.AppendFormat("Failed to resolve the following dependencies for target framework '{0}':", targetFramework.ToString());
+            sb.AppendLine();
+
+            foreach (var d in UnresolvedDependencies.OrderBy(d => d.Identity.Name))
+            {
+                sb.AppendLine("   " + d.Identity.ToString());
+            }
+
+            sb.AppendLine();
+            sb.AppendLine("Searched Locations:");
+
+            foreach (var path in GetAttemptedPaths(targetFramework))
+            {
+                sb.AppendLine("  " + path);
+            }
+
+            sb.AppendLine();
+            sb.AppendLine("Try running 'kpm restore'.");
+
+            return sb.ToString();
         }
     }
 }

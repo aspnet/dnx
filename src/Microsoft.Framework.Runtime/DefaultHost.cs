@@ -62,29 +62,9 @@ namespace Microsoft.Framework.Runtime
             // If there's any unresolved dependencies then complain
             if (_applicationHostContext.UnresolvedDependencyProvider.UnresolvedDependencies.Any())
             {
-                var sb = new StringBuilder();
-
-                // TODO: Localize messages
-
-                sb.AppendLine("Failed to resolve the following dependencies:");
-
-                foreach (var d in _applicationHostContext.UnresolvedDependencyProvider.UnresolvedDependencies.OrderBy(d => d.Identity.Name))
-                {
-                    sb.AppendLine("   " + d.Identity.ToString());
-                }
-
-                sb.AppendLine();
-                sb.AppendLine("Searched Locations:");
-
-                foreach (var path in _applicationHostContext.UnresolvedDependencyProvider.GetAttemptedPaths(_targetFramework))
-                {
-                    sb.AppendLine("  " + path);
-                }
-
-                sb.AppendLine();
-                sb.AppendLine("Try running 'kpm restore'.");
-
-                throw new InvalidOperationException(sb.ToString());
+                var exceptionMsg = _applicationHostContext.UnresolvedDependencyProvider.GetMissingDependenciesWarning(
+                    _targetFramework);
+                throw new InvalidOperationException(exceptionMsg);
             }
 
             return Assembly.Load(new AssemblyName(applicationName));

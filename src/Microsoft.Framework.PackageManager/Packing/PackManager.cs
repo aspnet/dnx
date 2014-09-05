@@ -56,6 +56,7 @@ namespace Microsoft.Framework.PackageManager.Packing
                 ProjectResolver = applicationHostContext.ProjectResolver;
                 NuGetDependencyResolver = applicationHostContext.NuGetDependencyProvider;
                 ProjectReferenceDependencyProvider = applicationHostContext.ProjectDepencyProvider;
+                UnresolvedDependencyProvider = applicationHostContext.UnresolvedDependencyProvider;
                 DependencyWalker = applicationHostContext.DependencyWalker;
                 FrameworkName = targetFramework;
             }
@@ -63,6 +64,7 @@ namespace Microsoft.Framework.PackageManager.Packing
             public IProjectResolver ProjectResolver { get; set; }
             public NuGetDependencyResolver NuGetDependencyResolver { get; set; }
             public ProjectReferenceDependencyProvider ProjectReferenceDependencyProvider { get; set; }
+            public UnresolvedDependencyProvider UnresolvedDependencyProvider { get; set; }
             public DependencyWalker DependencyWalker { get; set; }
             public FrameworkName FrameworkName { get; set; }
 
@@ -175,8 +177,18 @@ namespace Microsoft.Framework.PackageManager.Packing
                 dependencyContexts.Add(dependencyContext);
             }
 
+            bool anyUnresolvedDependency = false;
             foreach (var dependencyContext in dependencyContexts)
             {
+                // If there's any unresolved dependencies then complain and keep working
+                if (dependencyContext.UnresolvedDependencyProvider.UnresolvedDependencies.Any())
+                {
+                    anyUnresolvedDependency = true;
+                    Console.WriteLine("Warning: " +
+                        dependencyContext.UnresolvedDependencyProvider.GetMissingDependenciesWarning(
+                            dependencyContext.FrameworkName));
+                }
+
                 foreach (var libraryDescription in dependencyContext.NuGetDependencyResolver.Dependencies)
                 {
                     if (!root.Packages.Any(p => p.Library == libraryDescription.Identity))
@@ -205,7 +217,7 @@ namespace Microsoft.Framework.PackageManager.Packing
             sw.Stop();
 
             Console.WriteLine("Time elapsed {0}", sw.Elapsed);
-            return true;
+            return !anyUnresolvedDependency;
         }
 
         bool TryAddRuntime(PackRoot root, string krePath)
