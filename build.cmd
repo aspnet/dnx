@@ -19,7 +19,7 @@ IF EXIST packages\KoreBuild goto run
 .nuget\NuGet.exe install KoreBuild -ExcludeVersion -o packages -nocache -pre
 .nuget\NuGet.exe install Sake -version 0.2 -o packages -ExcludeVersion
 
-IF NOT "%1" == "rebuild-package" CALL packages\KoreBuild\build\kvm.cmd upgrade -svr50 -x86
+IF NOT "%1" == "rebuild-package" CALL packages\KoreBuild\build\kvm.cmd upgrade -runtime CLR -x86
 
 :run
 packages\Sake\tools\Sake.exe -I packages\KoreBuild\build -f makefile.shade %*
