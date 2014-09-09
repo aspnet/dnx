@@ -233,17 +233,20 @@ namespace NuGet
 
         internal static string NormalizeBasePath(string basePath, ref string searchPath)
         {
-            const string relativePath = @"..\";
+            const string relativePathBackSlash = @"..\";
+            const string relativePathForwardSlash = "../";
 
             // If no base path is provided, use the current directory.
-            basePath = String.IsNullOrEmpty(basePath) ? @".\" : basePath;
+            basePath = String.IsNullOrEmpty(basePath) ? "./" : basePath;
 
             // If the search path is relative, transfer the ..\ portion to the base path. 
             // This needs to be done because the base path determines the root for our enumeration.
-            while (searchPath.StartsWith(relativePath, StringComparison.OrdinalIgnoreCase))
+            while (searchPath.StartsWith(relativePathBackSlash, StringComparison.OrdinalIgnoreCase) ||
+                searchPath.StartsWith(relativePathForwardSlash, StringComparison.OrdinalIgnoreCase))
             {
-                basePath = Path.Combine(basePath, relativePath);
-                searchPath = searchPath.Substring(relativePath.Length);
+                // Forward slash works on both Windows and *nix
+                basePath = Path.Combine(basePath, relativePathForwardSlash);
+                searchPath = searchPath.Substring(relativePathForwardSlash.Length).Replace('\\', '/');
             }
 
             return Path.GetFullPath(basePath);
