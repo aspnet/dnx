@@ -218,7 +218,7 @@ root.Configuration));
 
             // Generate k.ini for public app folder
             var appFolderIniFilePath = Path.Combine(appFolderPath, "k.ini");
-            var appBaseLine = string.Format("APP_BASE={0}",
+            var appBaseLine = string.Format("KRE_APPBASE={0}",
                 Path.Combine("..", PackRoot.AppRootName, "src", project.Name));
             var iniContents = string.Empty;
             if (File.Exists(iniFilePath))
