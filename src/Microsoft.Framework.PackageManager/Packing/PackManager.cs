@@ -106,6 +106,31 @@ namespace Microsoft.Framework.PackageManager.Packing
                 return false;
             }
 
+            // '--wwwroot' option can override 'webroot' property in project.json
+            _options.WwwRoot = _options.WwwRoot ?? project.WebRoot;
+            _options.WwwRootOut = _options.WwwRootOut ?? _options.WwwRoot;
+
+            if (string.IsNullOrEmpty(_options.WwwRoot) && !string.IsNullOrEmpty(_options.WwwRootOut))
+            {
+                Console.WriteLine("'--wwwroot-out' option can be used only when the '--wwwroot' option or 'webroot' in project.json is specified.");
+                return false;
+            }
+
+            if (!string.IsNullOrEmpty(_options.WwwRoot) &&
+                !Directory.Exists(Path.Combine(project.ProjectDirectory, _options.WwwRoot)))
+            {
+                Console.WriteLine("The specified wwwroot folder '{0}' doesn't exist in the project directory.",
+                    _options.WwwRoot);
+                return false;
+            }
+
+            if (string.Equals(_options.WwwRootOut, PackRoot.AppRootName, StringComparison.OrdinalIgnoreCase))
+            {
+                Console.WriteLine("'{0}' is a reserved folder name. Please choose another name for the wwwroot-out folder.",
+                    PackRoot.AppRootName);
+                return false;
+            }
+
             var sw = Stopwatch.StartNew();
 
             string outputPath = _options.OutputDir ?? Path.Combine(_options.ProjectDir, "bin", "output");
@@ -206,7 +231,8 @@ namespace Microsoft.Framework.PackageManager.Packing
                         var packProject = new PackProject(dependencyContext.ProjectReferenceDependencyProvider, dependencyContext.ProjectResolver, libraryDescription);
                         if (packProject.Name == project.Name)
                         {
-                            packProject.AppFolder = _options.AppFolder;
+                            packProject.WwwRoot = _options.WwwRoot;
+                            packProject.WwwRootOut = _options.WwwRootOut;
                         }
                         root.Projects.Add(packProject);
                     }

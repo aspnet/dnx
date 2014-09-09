@@ -8,6 +8,7 @@ using System.IO.Compression;
 using System.Linq;
 using System.Security.Cryptography;
 using Microsoft.Framework.Runtime;
+using Newtonsoft.Json.Linq;
 using NuGet;
 
 namespace Microsoft.Framework.PackageManager.Packing
@@ -30,7 +31,8 @@ namespace Microsoft.Framework.PackageManager.Packing
 
         public string Name { get { return _libraryDescription.Identity.Name; } }
         public string TargetPath { get; private set; }
-        public string AppFolder { get; set; }
+        public string WwwRoot { get; set; }
+        public string WwwRootOut { get; set; }
 
         public void EmitSource(PackRoot root)
         {
@@ -69,6 +71,16 @@ namespace Microsoft.Framework.PackageManager.Packing
 
                 return true;
             });
+
+            // Update the 'webroot' property, which was specified with '--wwwroot-out' option
+            if (!string.IsNullOrEmpty(WwwRootOut))
+            {
+                var targetWebRootPath = Path.Combine(root.OutputPath, WwwRootOut);
+                var targetProjectJson = Path.Combine(TargetPath, Runtime.Project.ProjectFileName);
+                var jsonObj = JObject.Parse(File.ReadAllText(targetProjectJson));
+                jsonObj["webroot"] = PathUtility.GetRelativePath(targetProjectJson, targetWebRootPath);
+                File.WriteAllText(targetProjectJson, jsonObj.ToString());
+            }
 
             // We can reference source files outside of project root with "code" property in project.json,
             // e.g. { "code" : "..\\ExternalProject\\**.cs" }
@@ -170,6 +182,12 @@ namespace Microsoft.Framework.PackageManager.Packing
 
         public void PostProcess(PackRoot root)
         {
+            // If --wwwroot-out doesn't have a non-empty value, we don't need a public app folder in output
+            if (string.IsNullOrEmpty(WwwRootOut))
+            {
+                return;
+            }
+
             Runtime.Project project;
             if (!_projectResolver.TryResolveProject(_libraryDescription.Identity.Name, out project))
             {
@@ -179,18 +197,17 @@ namespace Microsoft.Framework.PackageManager.Packing
             // Construct path to public app folder, which contains content files and tool dlls
             // The name of public app folder is specified with "--appfolder" option
             // Default name of public app folder is the same as main project
-            var appFolderName = AppFolder ?? PackRoot.DefaultAppFolderName;
-            var appFolderPath = Path.Combine(root.OutputPath, appFolderName);
+            var wwwRootOutPath = Path.Combine(root.OutputPath, WwwRootOut);
 
             // Delete old public app folder because we don't want leftovers from previous operations
-            root.Operations.Delete(appFolderPath);
-            Directory.CreateDirectory(appFolderPath);
+            root.Operations.Delete(wwwRootOutPath);
+            Directory.CreateDirectory(wwwRootOutPath);
 
             // Copy content files (e.g. html, js and images) of main project into public app folder
-            CopyContentFiles(root, project, appFolderName);
+            CopyContentFiles(root, project);
 
             // Tool dlls including AspNet.Loader.dll go to bin folder under public app folder
-            var appFolderBinPath = Path.Combine(appFolderPath, "bin");
+            var wwwRootOutBinPath = Path.Combine(wwwRootOutPath, "bin");
 
             var defaultRuntime = root.Runtimes.FirstOrDefault();
             var iniFilePath = Path.Combine(TargetPath, "k.ini");
@@ -217,7 +234,7 @@ root.Configuration));
             }
 
             // Generate k.ini for public app folder
-            var appFolderIniFilePath = Path.Combine(appFolderPath, "k.ini");
+            var wwwRootOutIniFilePath = Path.Combine(wwwRootOutPath, "k.ini");
             var appBaseLine = string.Format("KRE_APPBASE={0}",
                 Path.Combine("..", PackRoot.AppRootName, "src", project.Name));
             var iniContents = string.Empty;
@@ -225,7 +242,7 @@ root.Configuration));
             {
                 iniContents = File.ReadAllText(iniFilePath);
             }
-            File.WriteAllText(appFolderIniFilePath,
+            File.WriteAllText(wwwRootOutIniFilePath,
                 string.Format("{0}{1}", iniContents, appBaseLine));
 
             // Copy tools/*.dll into bin to support AspNet.Loader.dll
@@ -236,35 +253,36 @@ root.Configuration));
                 {
                     foreach (var packageToolFile in Directory.EnumerateFiles(packageToolsPath, "*.dll").Select(Path.GetFileName))
                     {
-                        if (!Directory.Exists(appFolderBinPath))
+                        if (!Directory.Exists(wwwRootOutBinPath))
                         {
-                            Directory.CreateDirectory(appFolderBinPath);
+                            Directory.CreateDirectory(wwwRootOutBinPath);
                         }
 
                         // Copy to bin folder under public app folder
                         File.Copy(
                             Path.Combine(packageToolsPath, packageToolFile),
-                            Path.Combine(appFolderBinPath, packageToolFile),
+                            Path.Combine(wwwRootOutBinPath, packageToolFile),
                             true);
                     }
                 }
             }
         }
 
-        private void CopyContentFiles(PackRoot root, Runtime.Project project, string appFolderName)
+        private void CopyContentFiles(PackRoot root, Runtime.Project project)
         {
             Console.WriteLine("Copying contents of project dependency {0} to {1}",
-                _libraryDescription.Identity.Name, appFolderName);
+                _libraryDescription.Identity.Name, WwwRootOut);
 
-            var appFolderPath = Path.Combine(root.OutputPath, appFolderName);
+            var wwwRootPath = Path.Combine(project.ProjectDirectory, WwwRoot);
+            var wwwRootOutPath = Path.Combine(root.OutputPath, WwwRootOut);
 
-            Console.WriteLine("  Source {0}", project.ProjectDirectory);
-            Console.WriteLine("  Target {0}", appFolderPath);
+            Console.WriteLine("  Source {0}", wwwRootPath);
+            Console.WriteLine("  Target {0}", wwwRootOutPath);
 
             // A set of content files that should be copied
             var contentFiles = new HashSet<string>(project.ContentFiles, StringComparer.OrdinalIgnoreCase);
 
-            root.Operations.Copy(project.ProjectDirectory, appFolderPath, (isRoot, filePath) =>
+            root.Operations.Copy(wwwRootPath, wwwRootOutPath, (isRoot, filePath) =>
             {
                 // We always explore a directory
                 if (Directory.Exists(filePath))
@@ -274,7 +292,7 @@ root.Configuration));
 
                 var fileName = Path.GetFileName(filePath);
                 // Public app folder doesn't need project.json
-                if (string.Equals(fileName, "project.json", StringComparison.OrdinalIgnoreCase))
+                if (string.Equals(fileName, Runtime.Project.ProjectFileName, StringComparison.OrdinalIgnoreCase))
                 {
                     return false;
                 }

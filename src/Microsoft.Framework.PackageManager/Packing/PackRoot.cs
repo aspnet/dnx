@@ -15,7 +15,6 @@ namespace Microsoft.Framework.PackageManager.Packing
     {
         private readonly Runtime.Project _project;
         public static readonly string AppRootName = "approot";
-        public static readonly string DefaultAppFolderName = "public";
 
         public PackRoot(Runtime.Project project, string outputPath, IServiceProvider hostServices)
         {

@@ -12,9 +12,11 @@ namespace Microsoft.Framework.PackageManager.Packing
 
         public string ProjectDir { get; set; }
 
-        public string AppFolder { get; set; }
-
         public string Configuration { get; set; }
+
+        public string WwwRoot { get; set; }
+
+        public string WwwRootOut { get; set; }
 
         public FrameworkName RuntimeTargetFramework { get; set; }
 

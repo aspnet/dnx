@@ -101,10 +101,13 @@ namespace Microsoft.Framework.PackageManager
                     CommandOptionType.NoValue);
                 var optionRuntime = c.Option("--runtime <KRE>", "Names or paths to KRE files to include",
                     CommandOptionType.MultipleValue);
-                var optionAppFolder = c.Option("--appfolder <NAME>",
-                    "Determine the name of the application primary folder", CommandOptionType.SingleValue);
                 var optionNative = c.Option("--native", "Build and include native images. User must provide targeted CoreCLR runtime versions along with this option.",
                     CommandOptionType.NoValue);
+                var optionWwwRoot = c.Option("--wwwroot <NAME>", "Name of public folder in the project directory",
+                    CommandOptionType.SingleValue);
+                var optionWwwRootOut = c.Option("--wwwroot-out <NAME>",
+                    "Name of public folder in the packed image, can be used only when the '--wwwroot' option or 'webroot' in project.json is specified",
+                    CommandOptionType.SingleValue);
                 c.HelpOption("-?|-h|--help");
 
                 c.OnExecute(() =>
@@ -118,9 +121,10 @@ namespace Microsoft.Framework.PackageManager
                     {
                         OutputDir = optionOut.Value(),
                         ProjectDir = argProject.Value ?? System.IO.Directory.GetCurrentDirectory(),
-                        AppFolder = optionAppFolder.Value(),
                         Configuration = optionConfiguration.Value() ?? "Debug",
                         RuntimeTargetFramework = _environment.RuntimeFramework,
+                        WwwRoot = optionWwwRoot.Value(),
+                        WwwRootOut = optionWwwRootOut.Value() ?? optionWwwRoot.Value(),
                         Overwrite = optionOverwrite.HasValue(),
                         NoSource = optionNoSource.HasValue(),
                         Runtimes = optionRuntime.HasValue() ?
