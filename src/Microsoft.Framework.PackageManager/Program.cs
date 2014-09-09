@@ -361,9 +361,6 @@ namespace Microsoft.Framework.PackageManager
                 }
                 Console.WriteLine();
             }
-#if NET45
-            Trace.WriteLine(sb.ToString());
-#endif
         }
 
         private static string GetVersion()
