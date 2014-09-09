@@ -132,25 +132,29 @@ namespace Microsoft.Framework.PackageManager.Packing
 
             foreach (var runtime in _options.Runtimes)
             {
-                var runtimeLocated = TryAddRuntime(root, runtime);
+                var frameworkName = DependencyContext.GetFrameworkNameForRuntime(Path.GetFileName(runtime));
+                var runtimeLocated = TryAddRuntime(root, frameworkName, runtime);
 
-                var kreHome = Environment.GetEnvironmentVariable("KRE_HOME");
-                if (string.IsNullOrEmpty(kreHome))
+                if (!runtimeLocated)
                 {
-                    kreHome = Environment.GetEnvironmentVariable("ProgramFiles") + @"\KRE;%USERPROFILE%\.kre";
-                }
-
-                foreach (var portion in kreHome.Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries))
-                {
-                    var packagesPath = Path.Combine(
-                        Environment.ExpandEnvironmentVariables(portion),
-                        "packages",
-                        runtime);
-
-                    if (TryAddRuntime(root, packagesPath))
+                    var kreHome = Environment.GetEnvironmentVariable("KRE_HOME");
+                    if (string.IsNullOrEmpty(kreHome))
                     {
-                        runtimeLocated = true;
-                        break;
+                        kreHome = Environment.GetEnvironmentVariable("ProgramFiles") + @"\KRE;%USERPROFILE%\.kre";
+                    }
+
+                    foreach (var portion in kreHome.Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries))
+                    {
+                        var packagesPath = Path.Combine(
+                            Environment.ExpandEnvironmentVariables(portion),
+                            "packages",
+                            runtime);
+
+                        if (TryAddRuntime(root, frameworkName, packagesPath))
+                        {
+                            runtimeLocated = true;
+                            break;
+                        }
                     }
                 }
 
@@ -160,7 +164,6 @@ namespace Microsoft.Framework.PackageManager.Packing
                     return false;
                 }
 
-                var frameworkName = DependencyContext.GetFrameworkNameForRuntime(Path.GetFileName(runtime));
                 if (!dependencyContexts.Any(dc => dc.FrameworkName == frameworkName))
                 {
                     var dependencyContext = new DependencyContext(projectDir, _options.Configuration, frameworkName);
@@ -210,9 +213,26 @@ namespace Microsoft.Framework.PackageManager.Packing
                 }
             }
 
+            NativeImageGenerator nativeImageGenerator = null;
+            if (_options.Native)
+            {
+                nativeImageGenerator = NativeImageGenerator.Create(_options, root, dependencyContexts);
+                if (nativeImageGenerator == null)
+                {
+                    Console.WriteLine("Fail to initiate native image generation process.");
+                    return false;
+                }
+            }
+
             root.Emit();
 
             ScriptExecutor.Execute(project, "postpack", getVariable);
+
+            if (_options.Native && !nativeImageGenerator.BuildNativeImages(root))
+            {
+                Console.WriteLine("Native image generation failed.");
+                return false;
+            }
 
             sw.Stop();
 
@@ -220,7 +240,7 @@ namespace Microsoft.Framework.PackageManager.Packing
             return !anyUnresolvedDependency;
         }
 
-        bool TryAddRuntime(PackRoot root, string krePath)
+        bool TryAddRuntime(PackRoot root, FrameworkName frameworkName, string krePath)
         {
             if (!Directory.Exists(krePath))
             {
@@ -234,7 +254,7 @@ namespace Microsoft.Framework.PackageManager.Packing
                 return false;
             }
 
-            root.Runtimes.Add(new PackRuntime(kreNupkgPath));
+            root.Runtimes.Add(new PackRuntime(root, frameworkName, kreNupkgPath));
             return true;
         }
     }

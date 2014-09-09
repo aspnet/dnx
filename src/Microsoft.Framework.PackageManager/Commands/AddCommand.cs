@@ -34,10 +34,10 @@ namespace Microsoft.Framework.PackageManager
 
             ProjectDir = ProjectDir ?? Directory.GetCurrentDirectory();
 
-            Project project;
-            if (!Project.TryGetProject(ProjectDir, out project))
+            Runtime.Project project;
+            if (!Runtime.Project.TryGetProject(ProjectDir, out project))
             {
-                Report.WriteLine("Unable to locate {0}.", Project.ProjectFileName);
+                Report.WriteLine("Unable to locate {0}.", Runtime.Project.ProjectFileName);
                 return false;
             }
 
@@ -51,7 +51,7 @@ namespace Microsoft.Framework.PackageManager
 
             File.WriteAllText(project.ProjectFilePath, root.ToString());
 
-            Report.WriteLine("{0}.{1} was added to {2}.", Name, Version, Project.ProjectFileName);
+            Report.WriteLine("{0}.{1} was added to {2}.", Name, Version, Runtime.Project.ProjectFileName);
 
             return true;
         }

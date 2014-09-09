@@ -4,6 +4,7 @@
 using System;
 using System.IO;
 using System.IO.Compression;
+using System.Runtime.Versioning;
 using System.Security.Cryptography;
 using NuGet;
 
@@ -13,26 +14,27 @@ namespace Microsoft.Framework.PackageManager.Packing
     {
         //private readonly NuGetDependencyResolver _nugetDependencyResolver;
         //private readonly Library _library;
-        //private readonly FrameworkName _frameworkName;
-        string _kreNupkgPath;
+        private readonly FrameworkName _frameworkName;
+        private readonly string _kreNupkgPath;
 
         public PackRuntime(
+            PackRoot root,
+            FrameworkName frameworkName,
             string kreNupkgPath)
         {
+            _frameworkName = frameworkName;
             _kreNupkgPath = kreNupkgPath;
+            Name = Path.GetFileName(Path.GetDirectoryName(_kreNupkgPath));
+            TargetPath = Path.Combine(root.PackagesPath, Name);
         }
 
-        public string Name { get; set; }
-        public SemanticVersion Version { get; set; }
-        public string TargetPath { get; set; }
+        public string Name { get; private set; }
+        public string TargetPath { get; private set; }
+        public FrameworkName Framework { get { return _frameworkName; } }
 
         public void Emit(PackRoot root)
         {
-            Name = Path.GetFileName(Path.GetDirectoryName(_kreNupkgPath));
-
             Console.WriteLine("Packing runtime {0}", Name);
-
-            TargetPath = Path.Combine(root.PackagesPath, Name);
 
             if (Directory.Exists(TargetPath))
             {

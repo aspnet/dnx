@@ -10,14 +10,14 @@ namespace Microsoft.Framework.PackageManager
 {
     public class BuildContext
     {
-        private readonly Project _project;
+        private readonly Runtime.Project _project;
         private readonly FrameworkName _targetFramework;
         private readonly string _configuration;
         private readonly string _targetFrameworkFolder;
         private readonly string _outputPath;
         private readonly ApplicationHostContext _applicationHostContext;
 
-        public BuildContext(ICache cache, ICacheContextAccessor cacheContextAccessor, Project project, FrameworkName targetFramework, string configuration, string outputPath)
+        public BuildContext(ICache cache, ICacheContextAccessor cacheContextAccessor, Runtime.Project project, FrameworkName targetFramework, string configuration, string outputPath)
         {
             _project = project;
             _targetFramework = targetFramework;
@@ -78,7 +78,7 @@ namespace Microsoft.Framework.PackageManager
             {
                 foreach (var dependency in projectDependencies.OrderBy(d => d.Name))
                 {
-                    Project dependencyProject;
+                    Runtime.Project dependencyProject;
                     if (projectReferenceByName.ContainsKey(dependency.Name) &&
                         _applicationHostContext.ProjectResolver.TryResolveProject(dependency.Name, out dependencyProject) &&
                         dependencyProject.EmbedInteropTypes)

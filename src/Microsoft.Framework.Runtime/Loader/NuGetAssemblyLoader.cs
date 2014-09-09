@@ -19,10 +19,10 @@ namespace Microsoft.Framework.Runtime.Loader
 
         public Assembly Load(string name)
         {
-            string path;
-            if (_dependencyResolver.PackageAssemblyPaths.TryGetValue(name, out path))
+            PackageAssembly assemblyInfo;
+            if (_dependencyResolver.PackageAssemblyLookup.TryGetValue(name, out assemblyInfo))
             {
-                return _loaderEngine.LoadFile(path);
+                return _loaderEngine.LoadFile(assemblyInfo.Path);
             }
 
             return null;

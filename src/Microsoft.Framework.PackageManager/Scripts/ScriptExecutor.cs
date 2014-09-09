@@ -12,7 +12,7 @@ namespace Microsoft.Framework.PackageManager
     /// </summary>
     public class ScriptExecutor
     {
-        public void Execute(Project project, string scriptName, Func<string, string> getVariable)
+        public void Execute(Runtime.Project project, string scriptName, Func<string, string> getVariable)
         {
             string scriptCommandLine;
             if (!project.Scripts.TryGetValue(scriptName, out scriptCommandLine))
@@ -51,7 +51,7 @@ namespace Microsoft.Framework.PackageManager
             process.WaitForExit();
         }
 
-        private Func<string, string> GetScriptVariable(Project project, Func<string, string> getVariable)
+        private Func<string, string> GetScriptVariable(Runtime.Project project, Func<string, string> getVariable)
         {
             var keys = new Dictionary<string, Func<string>>(StringComparer.OrdinalIgnoreCase)
             {

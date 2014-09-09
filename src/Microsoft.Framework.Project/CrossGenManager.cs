@@ -180,13 +180,14 @@ namespace Microsoft.Framework.Project
 
         private static IDictionary<string, AssemblyInformation> BuildUniverse(string runtimePath, IEnumerable<string> paths)
         {
+            var procArch = ResolveProcessorArchitecture(Path.GetDirectoryName(runtimePath));
             var runtimeAssemblies = Directory.EnumerateFiles(Path.GetFullPath(runtimePath), "*.dll")
                                              .Where(AssemblyInformation.IsValidImage)
-                                             .Select(path => new AssemblyInformation(path) { IsRuntimeAssembly = true });
+                                             .Select(path => new AssemblyInformation(path, procArch) { IsRuntimeAssembly = true });
 
             var otherAssemblies = paths.SelectMany(path => Directory.EnumerateFiles(path, "*.dll"))
                              .Where(AssemblyInformation.IsValidImage)
-                             .Select(path => new AssemblyInformation(path));
+                             .Select(path => new AssemblyInformation(path, procArch));
 
             var allAssemblies = runtimeAssemblies
                              .Concat(otherAssemblies)
@@ -229,6 +230,14 @@ namespace Microsoft.Framework.Project
             {
                 output.Add(node);
             }
+        }
+
+        public static string ResolveProcessorArchitecture(string runtimePath)
+        {
+            var kreFullName = new DirectoryInfo(runtimePath).Name;
+            var kreName = kreFullName.Substring(0, kreFullName.IndexOf('.'));
+            var arch = kreName.Substring(kreName.LastIndexOf('-') + 1);
+            return arch;
         }
     }
 }

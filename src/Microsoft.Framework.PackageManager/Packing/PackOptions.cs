@@ -23,5 +23,7 @@ namespace Microsoft.Framework.PackageManager.Packing
         public bool NoSource { get; set; }
 
         public IEnumerable<string> Runtimes { get; set; }
+
+        public bool Native { get; set; }
     }
 }
