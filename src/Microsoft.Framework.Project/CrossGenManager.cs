@@ -180,8 +180,9 @@ namespace Microsoft.Framework.Project
 
         private static IDictionary<string, AssemblyInformation> BuildUniverse(string runtimePath, IEnumerable<string> paths)
         {
-            var procArch = ResolveProcessorArchitecture(Path.GetDirectoryName(runtimePath));
-            var runtimeAssemblies = Directory.EnumerateFiles(Path.GetFullPath(runtimePath), "*.dll")
+            var activeRuntimePath = Path.GetFullPath(runtimePath);
+            var procArch = ResolveProcessorArchitecture(Path.GetDirectoryName(activeRuntimePath));
+            var runtimeAssemblies = Directory.EnumerateFiles(activeRuntimePath, "*.dll")
                                              .Where(AssemblyInformation.IsValidImage)
                                              .Select(path => new AssemblyInformation(path, procArch) { IsRuntimeAssembly = true });
 
