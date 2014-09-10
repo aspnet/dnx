@@ -1,6 +1,7 @@
 // Copyright (c) Microsoft Open Technologies, Inc. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
+using System.IO;
 using Xunit;
 using NuGet;
 
@@ -16,6 +17,14 @@ namespace Microsoft.Framework.Runtime.Tests
 
             // Assert
             Assert.Equal("foo", project.Name);
+        }
+
+        [Fact]
+        public void GetProjectNormalizesPaths()
+        {
+            var project = Project.GetProject(@"{}", "name", "../../foo");
+
+            Assert.True(Path.IsPathRooted(project.ProjectFilePath));
         }
 
         [Fact]

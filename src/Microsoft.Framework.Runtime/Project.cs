@@ -259,7 +259,7 @@ namespace Microsoft.Framework.Runtime
             project.Description = GetValue<string>(rawProject, "description");
             project.Authors = authors == null ? new string[] { } : authors.ToObject<string[]>();
             project.Dependencies = new List<Library>();
-            project.ProjectFilePath = projectPath;
+            project.ProjectFilePath = Path.GetFullPath(projectPath);
 
             // TODO: Move this to the dependencies node
             project.EmbedInteropTypes = GetValue<bool>(rawProject, "embedInteropTypes");
