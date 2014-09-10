@@ -21,7 +21,9 @@ namespace Microsoft.Framework.PackageManager.Restore.NuGet
             string physicalPath,
             IReport report)
         {
-            _repository = new PackageRepository(physicalPath);
+            // We need to help "kpm restore" to ensure case-sensitivity here
+            // Turn on the flag to get package ids in accurate casing
+            _repository = new PackageRepository(physicalPath, checkPackageIdCase: true);
             _fileSystem = new PhysicalFileSystem(physicalPath);
             _pathResolver = new DefaultPackagePathResolver(_fileSystem);
             _report = report;

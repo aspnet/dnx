@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 
 namespace NuGet
 {
@@ -11,10 +12,12 @@ namespace NuGet
     {
         private readonly Dictionary<string, IEnumerable<PackageInfo>> _cache = new Dictionary<string, IEnumerable<PackageInfo>>(StringComparer.OrdinalIgnoreCase);
         private readonly IFileSystem _repositoryRoot;
+        private readonly bool _checkPackageIdCase;
 
-        public PackageRepository(string path)
+        public PackageRepository(string path, bool checkPackageIdCase)
         {
             _repositoryRoot = new PhysicalFileSystem(path);
+            _checkPackageIdCase = checkPackageIdCase;
         }
 
         public IFileSystem RepositoryRoot
@@ -48,13 +51,27 @@ namespace NuGet
                         continue;
                     }
 
-                    string versionPart = folders[1];
+                    var versionPart = folders[1];
 
                     // Get the version part and parse it
                     SemanticVersion version;
                     if (!SemanticVersion.TryParse(versionPart, out version))
                     {
                         continue;
+                    }
+
+                    // If we need to help ensure case-sensitivity, we try to get
+                    // the package id in accurate casing by extracting the name of nuspec file
+                    // Otherwise we just use the passed in package id for efficiency
+                    if (_checkPackageIdCase)
+                    {
+                        var manifestFileName = Path.GetFileName(
+                            _repositoryRoot.GetFiles(versionDir, "*" + Constants.ManifestExtension).FirstOrDefault());
+                        if (string.IsNullOrEmpty(manifestFileName))
+                        {
+                            continue;
+                        }
+                        id = Path.GetFileNameWithoutExtension(manifestFileName);
                     }
 
                     packages.Add(new PackageInfo(_repositoryRoot, id, version, versionDir));
