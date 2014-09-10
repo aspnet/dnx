@@ -183,7 +183,7 @@ namespace NuGet
             else
             {
                 // If not, find the first directory separator and use the path to the left of it as the base path to enumerate from.
-                int directorySeparatoryIndex = searchPath.LastIndexOf(Path.DirectorySeparatorChar, wildcardIndex);
+                int directorySeparatoryIndex = searchPath.LastIndexOf('/', wildcardIndex);
                 if (directorySeparatoryIndex == -1)
                 {
                     // We're looking at a path like "NuGet*.dll", NuGet*\bin\release\*.dll
