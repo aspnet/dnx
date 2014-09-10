@@ -40,7 +40,7 @@ namespace Microsoft.Framework.PackageManager.Restore.NuGet
         {
             var nuspecPath = _pathResolver.GetManifestFilePath(package.Id, package.Version);
             _report.WriteLine(string.Format("  OPEN {0}", _fileSystem.GetFullPath(nuspecPath)));
-            return Task.FromResult<Stream>(File.Open(nuspecPath, FileMode.Open));
+            return Task.FromResult<Stream>(File.OpenRead(nuspecPath));
         }
 
         public Task<Stream> OpenNupkgStreamAsync(PackageInfo package)
