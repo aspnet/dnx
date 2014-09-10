@@ -214,7 +214,7 @@ namespace Microsoft.Framework.PackageManager
             Reports.Information.WriteLine(string.Format("{0}, {1}ms elapsed", "Resolving complete".Green(), sw.ElapsedMilliseconds));
 
             var installItems = new List<GraphItem>();
-            var missingItems = new List<Library>();
+            var missingItems = new HashSet<Library>();
             ForEach(graphs, node =>
             {
                 if (node == null || node.Library == null)
@@ -227,6 +227,18 @@ namespace Microsoft.Framework.PackageManager
                     {
                         missingItems.Add(node.Library);
                         Reports.Information.WriteLine(string.Format("Unable to locate {0} >= {1}", node.Library.Name.Red().Bold(), node.Library.Version));
+                        success = false;
+                    }
+                    return;
+                }
+                // "kpm restore" is case-sensitive
+                if (!string.Equals(node.Item.Match.Library.Name, node.Library.Name, StringComparison.Ordinal))
+                {
+                    if (!missingItems.Contains(node.Library))
+                    {
+                        missingItems.Add(node.Library);
+                        Reports.Information.WriteLine("Unable to locate {0} >= {1}. Do you mean {2}?",
+                            node.Library.Name.Red().Bold(), node.Library.Version, node.Item.Match.Library.Name.Bold());
                         success = false;
                     }
                     return;

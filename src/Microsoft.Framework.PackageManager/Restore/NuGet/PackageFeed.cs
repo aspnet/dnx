@@ -15,6 +15,7 @@ namespace Microsoft.Framework.PackageManager.Restore.NuGet
     public class PackageFeed : IPackageFeed
     {
         static readonly XName _xnameEntry = XName.Get("entry", "http://www.w3.org/2005/Atom");
+        static readonly XName _xnameTitle = XName.Get("title", "http://www.w3.org/2005/Atom");
         static readonly XName _xnameContent = XName.Get("content", "http://www.w3.org/2005/Atom");
         static readonly XName _xnameLink = XName.Get("link", "http://www.w3.org/2005/Atom");
         static readonly XName _xnameProperties = XName.Get("properties", "http://schemas.microsoft.com/ado/2007/08/dataservices/metadata");
@@ -137,7 +138,7 @@ namespace Microsoft.Framework.PackageManager.Restore.NuGet
 
             return new PackageInfo
             {
-                Id = id,
+                Id = element.Element(_xnameTitle).Value,
                 Version = SemanticVersion.Parse(properties.Element(_xnameVersion).Value),
                 ContentUri = element.Element(_xnameContent).Attribute("src").Value,
             };

@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 
 namespace NuGet
 {
@@ -48,7 +49,7 @@ namespace NuGet
                         continue;
                     }
 
-                    string versionPart = folders[1];
+                    var versionPart = folders[1];
 
                     // Get the version part and parse it
                     SemanticVersion version;
@@ -57,7 +58,18 @@ namespace NuGet
                         continue;
                     }
 
-                    packages.Add(new PackageInfo(_repositoryRoot, id, version, versionDir));
+                    // Get the accurate package id to ensure case-sensitivity
+                    var manifestFileName = Path.GetFileName(
+                        _repositoryRoot.GetFiles(versionDir, "*" + Constants.ManifestExtension).FirstOrDefault());
+                    if (string.IsNullOrEmpty(manifestFileName))
+                    {
+                        throw new Exception(
+                            string.Format("TODO: Manifest file is missing from {0}",
+                            _repositoryRoot.GetFullPath(versionDir)));
+                    }
+
+                    packages.Add(new PackageInfo(_repositoryRoot, Path.GetFileNameWithoutExtension(manifestFileName),
+                        version, versionDir));
                 }
 
                 return packages;
