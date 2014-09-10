@@ -183,7 +183,7 @@ namespace NuGet
             else
             {
                 // If not, find the first directory separator and use the path to the left of it as the base path to enumerate from.
-                int directorySeparatoryIndex = searchPath.LastIndexOf('/', wildcardIndex);
+                int directorySeparatoryIndex = searchPath.LastIndexOf(Path.DirectorySeparatorChar, wildcardIndex);
                 if (directorySeparatoryIndex == -1)
                 {
                     // We're looking at a path like "NuGet*.dll", NuGet*\bin\release\*.dll
@@ -246,7 +246,18 @@ namespace NuGet
             {
                 // Forward slash works on both Windows and *nix
                 basePath = Path.Combine(basePath, relativePathForwardSlash);
-                searchPath = searchPath.Substring(relativePathForwardSlash.Length).Replace('\\', '/');
+                searchPath = searchPath.Substring(relativePathForwardSlash.Length);
+            }
+
+            if (Path.DirectorySeparatorChar ==  '/')
+            {
+                searchPath = searchPath.Replace('\\', Path.DirectorySeparatorChar);
+                basePath = basePath.Replace('\\', Path.DirectorySeparatorChar);
+            }
+            else
+            {
+                searchPath = searchPath.Replace('/', Path.DirectorySeparatorChar);
+                basePath = basePath.Replace('/', Path.DirectorySeparatorChar);
             }
 
             return Path.GetFullPath(basePath);
