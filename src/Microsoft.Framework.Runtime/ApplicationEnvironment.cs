@@ -45,7 +45,7 @@ namespace Microsoft.Framework.Runtime
         public string Configuration { get; private set; }
 
 
-        public FrameworkName TargetFramework
+        public FrameworkName RuntimeFramework
         {
             get { return _targetFramework; }
         }

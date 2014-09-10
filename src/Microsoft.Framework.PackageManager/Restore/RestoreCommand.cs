@@ -197,7 +197,7 @@ namespace Microsoft.Framework.PackageManager
             {
                 contexts.Add(new RestoreContext
                 {
-                    FrameworkName = ApplicationEnvironment.TargetFramework,
+                    FrameworkName = ApplicationEnvironment.RuntimeFramework,
                     ProjectLibraryProviders = projectProviders,
                     LocalLibraryProviders = localProviders,
                     RemoteLibraryProviders = remoteProviders,
@@ -281,7 +281,7 @@ namespace Microsoft.Framework.PackageManager
 
             var context = new RestoreContext
             {
-                FrameworkName = ApplicationEnvironment.TargetFramework,
+                FrameworkName = ApplicationEnvironment.RuntimeFramework,
                 ProjectLibraryProviders = new List<IWalkProvider>(),
                 LocalLibraryProviders = localProviders,
                 RemoteLibraryProviders = remoteProviders,

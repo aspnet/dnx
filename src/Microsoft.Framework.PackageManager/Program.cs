@@ -120,7 +120,7 @@ namespace Microsoft.Framework.PackageManager
                         ProjectDir = argProject.Value ?? System.IO.Directory.GetCurrentDirectory(),
                         AppFolder = optionAppFolder.Value(),
                         Configuration = optionConfiguration.Value() ?? "Debug",
-                        RuntimeTargetFramework = _environment.TargetFramework,
+                        RuntimeTargetFramework = _environment.RuntimeFramework,
                         Overwrite = optionOverwrite.HasValue(),
                         NoSource = optionNoSource.HasValue(),
                         Runtimes = optionRuntime.HasValue() ?
@@ -154,7 +154,7 @@ namespace Microsoft.Framework.PackageManager
                 c.OnExecute(() =>
                 {
                     var buildOptions = new BuildOptions();
-                    buildOptions.RuntimeTargetFramework = _environment.TargetFramework;
+                    buildOptions.RuntimeTargetFramework = _environment.RuntimeFramework;
                     buildOptions.OutputDir = optionOut.Value();
                     buildOptions.ProjectDir = argProjectDir.Value ?? Directory.GetCurrentDirectory();
                     buildOptions.Configurations = optionConfiguration.Values;

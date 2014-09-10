@@ -111,7 +111,7 @@ namespace Microsoft.Framework.ApplicationHost
             }
             if (string.Equals(key, "env:TargetFramework", StringComparison.OrdinalIgnoreCase))
             {
-                return _environment.TargetFramework.Identifier;
+                return _environment.RuntimeFramework.Identifier;
             }
             return Environment.GetEnvironmentVariable(key);
         }
@@ -153,7 +153,7 @@ namespace Microsoft.Framework.ApplicationHost
             defaultHostOptions.WatchFiles = optionWatch.HasValue();
             defaultHostOptions.PackageDirectory = optionPackages.Value();
 
-            defaultHostOptions.TargetFramework = _environment.TargetFramework;
+            defaultHostOptions.TargetFramework = _environment.RuntimeFramework;
             defaultHostOptions.Configuration = optionConfiguration.Value() ?? _environment.Configuration ?? "Debug";
             defaultHostOptions.ApplicationBaseDirectory = _environment.ApplicationBasePath;
             var portValue = optionCompilationServer.Value() ?? Environment.GetEnvironmentVariable("KRE_COMPILATION_SERVER_PORT");

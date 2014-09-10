@@ -15,7 +15,7 @@ namespace klr.host
             ApplicationName = assemblyName.Name;
             Version = assemblyName.Version.ToString();
             ApplicationBasePath = appBase;
-            TargetFramework = targetFramework;
+            RuntimeFramework = targetFramework;
             Configuration = configuration;
         }
 
@@ -43,7 +43,7 @@ namespace klr.host
             private set;
         }
 
-        public FrameworkName TargetFramework
+        public FrameworkName RuntimeFramework
         {
             get;
             private set;

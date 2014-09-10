@@ -87,7 +87,7 @@ namespace Microsoft.Framework.PackageManager
             var host = new DefaultHost(new DefaultHostOptions()
             {
                 ApplicationBaseDirectory = project.ProjectDirectory,
-                TargetFramework = applicationEnvironment.TargetFramework,
+                TargetFramework = applicationEnvironment.RuntimeFramework,
                 Configuration = applicationEnvironment.Configuration
             },
             _hostServices);
