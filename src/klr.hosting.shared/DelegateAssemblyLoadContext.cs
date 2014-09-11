@@ -58,7 +58,7 @@ namespace klr.hosting
         
         public bool EnableMultiCoreJit()
         {
-            var appBaseDirectory = ApplicationContext.BaseDirectory;
+            var appBaseDirectory = AppContext.BaseDirectory;
             var appBinDirectoryName = "bin";
             var appBinDirectory = Path.Combine(appBaseDirectory, appBinDirectoryName);
             var appProfileDirectoryName = "profile";
