@@ -59,7 +59,7 @@ namespace klr.host
                 applicationBaseDirectory = AppDomain.CurrentDomain.SetupInformation.ApplicationBase;
             }
 #else
-            string applicationBaseDirectory = ApplicationContext.BaseDirectory;
+            string applicationBaseDirectory = AppContext.BaseDirectory;
 #endif
 
             var framework = Environment.GetEnvironmentVariable("TARGET_FRAMEWORK") ?? Environment.GetEnvironmentVariable("KRE_FRAMEWORK");
