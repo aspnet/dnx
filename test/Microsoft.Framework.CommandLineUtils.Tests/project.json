@@ -1,0 +1,19 @@
+{
+    "dependencies": {
+        "Microsoft.Framework.CommandLineUtils":  "",
+        "Xunit.KRunner": "1.0.0-*"
+    },
+
+    "frameworks" : {
+        "net45" : {
+            "dependencies": {
+                "System.Runtime": ""
+            }
+        }
+    },
+
+    "commands": {
+        "run": "Xunit.KRunner",
+        "test": "Xunit.KRunner"
+    }
+}
