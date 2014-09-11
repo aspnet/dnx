@@ -69,6 +69,8 @@ namespace Microsoft.Framework.Runtime
 
         public LanguageServices LanguageServices { get; private set; }
 
+        public string WebRoot { get; private set; }
+
         internal IEnumerable<string> SourcePatterns { get; set; }
 
         internal IEnumerable<string> ExcludePatterns { get; set; }
@@ -260,6 +262,7 @@ namespace Microsoft.Framework.Runtime
             project.Authors = authors == null ? new string[] { } : authors.ToObject<string[]>();
             project.Dependencies = new List<Library>();
             project.ProjectFilePath = Path.GetFullPath(projectPath);
+            project.WebRoot = GetValue<string>(rawProject, "webroot");
 
             // TODO: Move this to the dependencies node
             project.EmbedInteropTypes = GetValue<bool>(rawProject, "embedInteropTypes");
