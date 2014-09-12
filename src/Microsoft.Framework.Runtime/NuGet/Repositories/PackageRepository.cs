@@ -12,12 +12,12 @@ namespace NuGet
     {
         private readonly Dictionary<string, IEnumerable<PackageInfo>> _cache = new Dictionary<string, IEnumerable<PackageInfo>>(StringComparer.OrdinalIgnoreCase);
         private readonly IFileSystem _repositoryRoot;
-        private readonly bool _isInRuntimeContext;
+        private readonly bool _checkPackageIdCase;
 
-        public PackageRepository(string path, bool isInRuntimeContext)
+        public PackageRepository(string path, bool checkPackageIdCase)
         {
             _repositoryRoot = new PhysicalFileSystem(path);
-            _isInRuntimeContext = isInRuntimeContext;
+            _checkPackageIdCase = checkPackageIdCase;
         }
 
         public IFileSystem RepositoryRoot
@@ -60,12 +60,11 @@ namespace NuGet
                         continue;
                     }
 
-                    // If this object is not used by runtime, it must be used by "kpm restore"
-                    // We need to help "kpm restore" to ensure case-sensitivity here. So we try to
-                    // get the package id in accurate casing by extracting the name of nuspec file
-                    if (!_isInRuntimeContext)
+                    // If we need to help ensure case-sensitivity, we try to get
+                    // the package id in accurate casing by extracting the name of nuspec file
+                    // Otherwise we just use the passed in package id for efficiency
+                    if (_checkPackageIdCase)
                     {
-                        // Get the accurate package id to ensure case-sensitivity
                         var manifestFileName = Path.GetFileName(
                             _repositoryRoot.GetFiles(versionDir, "*" + Constants.ManifestExtension).FirstOrDefault());
                         if (string.IsNullOrEmpty(manifestFileName))
@@ -77,9 +76,6 @@ namespace NuGet
                         id = Path.GetFileNameWithoutExtension(manifestFileName);
                     }
 
-                    // Runtime already ensures case-sensitivity. So if this object is used by runtime,
-                    // we don't need to iterate files to get the package id in accurate casing and
-                    // we use the passed in package id for efficiency
                     packages.Add(new PackageInfo(_repositoryRoot, id, version, versionDir));
                 }
 

@@ -26,7 +26,8 @@ namespace Microsoft.Framework.Runtime
 
         public NuGetDependencyResolver(string packagesPath, IFrameworkReferenceResolver frameworkReferenceResolver)
         {
-            _repository = new PackageRepository(packagesPath, isInRuntimeContext: true);
+            // Runtime already ensures case-sensitivity, so we don't need package ids in accurate casing here
+            _repository = new PackageRepository(packagesPath, checkPackageIdCase: false);
             _frameworkReferenceResolver = frameworkReferenceResolver;
             Dependencies = Enumerable.Empty<LibraryDescription>();
         }
