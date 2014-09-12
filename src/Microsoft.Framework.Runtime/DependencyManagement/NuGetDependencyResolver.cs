@@ -26,7 +26,7 @@ namespace Microsoft.Framework.Runtime
 
         public NuGetDependencyResolver(string packagesPath, IFrameworkReferenceResolver frameworkReferenceResolver)
         {
-            _repository = new PackageRepository(packagesPath);
+            _repository = new PackageRepository(packagesPath, isInRuntimeContext: true);
             _frameworkReferenceResolver = frameworkReferenceResolver;
             Dependencies = Enumerable.Empty<LibraryDescription>();
         }

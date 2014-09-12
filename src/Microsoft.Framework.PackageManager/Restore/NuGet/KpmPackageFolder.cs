@@ -21,7 +21,7 @@ namespace Microsoft.Framework.PackageManager.Restore.NuGet
             string physicalPath,
             IReport report)
         {
-            _repository = new PackageRepository(physicalPath);
+            _repository = new PackageRepository(physicalPath, isInRuntimeContext: false);
             _fileSystem = new PhysicalFileSystem(physicalPath);
             _pathResolver = new DefaultPackagePathResolver(_fileSystem);
             _report = report;
