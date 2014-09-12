@@ -273,7 +273,9 @@ root.Configuration));
             Console.WriteLine("Copying contents of project dependency {0} to {1}",
                 _libraryDescription.Identity.Name, WwwRootOut);
 
-            var wwwRootPath = Path.Combine(project.ProjectDirectory, WwwRoot);
+            // If the value of '--wwwroot' is ".", we need to pack the project root dir
+            // Use Path.GetFullPath() to get rid of the trailing "."
+            var wwwRootPath = Path.GetFullPath(Path.Combine(project.ProjectDirectory, WwwRoot));
             var wwwRootOutPath = Path.Combine(root.OutputPath, WwwRootOut);
 
             Console.WriteLine("  Source {0}", wwwRootPath);
