@@ -58,9 +58,24 @@ namespace Microsoft.Framework.PackageManager.Packing
             // A set of excluded files/directories used as a filter when doing copy
             var excludeSet = new HashSet<string>(project.PackExcludeFiles, StringComparer.OrdinalIgnoreCase);
 
+            // If a public folder is specified with 'webroot' or '--wwwroot', we ignore it when copying project files
+            var wwwRootPath = string.Empty;
+            if (!string.IsNullOrEmpty(WwwRoot))
+            {
+                wwwRootPath = Path.Combine(project.ProjectDirectory, WwwRoot);
+            }
+
             root.Operations.Copy(project.ProjectDirectory, TargetPath, (isRoot, filePath) =>
             {
+                // If current file/folder is in the exclusion list, we don't copy it
                 if (excludeSet.Contains(filePath))
+                {
+                    return false;
+                }
+
+                // If current folder is the public folder, we don't copy it to destination project
+                // All files/folders inside this folder also get ignored if we return false here
+                if (string.Equals(wwwRootPath, filePath))
                 {
                     return false;
                 }
