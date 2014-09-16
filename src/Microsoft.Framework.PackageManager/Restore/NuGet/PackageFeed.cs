@@ -135,10 +135,15 @@ namespace Microsoft.Framework.PackageManager.Restore.NuGet
         public PackageInfo BuildModel(string id, XElement element)
         {
             var properties = element.Element(_xnameProperties);
+            var idElement = properties.Element(_xnameId);
+            var titleElement = element.Element(_xnameTitle);
 
             return new PackageInfo
             {
-                Id = element.Element(_xnameTitle).Value,
+                // If 'Id' element exist, use its value as accurate package Id
+                // Otherwise, use the value of 'title' if it exist
+                // Use the given Id as final fallback if all elements above don't exist
+                Id = idElement?.Value ?? titleElement?.Value ?? id,
                 Version = SemanticVersion.Parse(properties.Element(_xnameVersion).Value),
                 ContentUri = element.Element(_xnameContent).Attribute("src").Value,
             };
