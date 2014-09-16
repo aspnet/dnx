@@ -29,7 +29,8 @@ namespace Microsoft.Framework.Runtime.Tests
                 AllowUnsafe = false,
                 Optimize = true,
                 WarningsAsErrors = true,
-                LanguageVersion = "x"
+                LanguageVersion = "x",
+                DebugSymbols = "foo"
             };
 
             var options2 = new CompilerOptions
@@ -38,6 +39,7 @@ namespace Microsoft.Framework.Runtime.Tests
                 Optimize = false,
                 WarningsAsErrors = false,
                 LanguageVersion = "y",
+                DebugSymbols = "foo2",
             };
 
             var result = CompilerOptions.Combine(options, options2);
@@ -46,6 +48,7 @@ namespace Microsoft.Framework.Runtime.Tests
             Assert.False(result.Optimize.Value);
             Assert.False(result.WarningsAsErrors.Value);
             Assert.Equal("y", result.LanguageVersion);
+            Assert.Equal("foo2", result.DebugSymbols);
         }
 
         [Fact]

@@ -68,6 +68,7 @@ namespace Microsoft.Framework.Runtime.Roslyn
             var options = new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary);
 
             string platformValue = compilerOptions.Platform;
+            string debugSymbolsValue = compilerOptions.DebugSymbols;
             bool allowUnsafe = compilerOptions.AllowUnsafe ?? false;
             bool optimize = compilerOptions.Optimize ?? false;
             bool warningsAsErrors = compilerOptions.WarningsAsErrors ?? false;
@@ -80,12 +81,21 @@ namespace Microsoft.Framework.Runtime.Roslyn
                 platform = Platform.AnyCpu;
             }
 
+            DebugInformationKind debugInformationKind;
+            if (!Enum.TryParse<DebugInformationKind>(debugSymbolsValue,
+                                                     ignoreCase: true,
+                                                     result: out debugInformationKind))
+            {
+                debugInformationKind = DebugInformationKind.Full;
+            }
+
             ReportDiagnostic warningOption = warningsAsErrors ? ReportDiagnostic.Error : ReportDiagnostic.Default;
 
             return options.WithAllowUnsafe(allowUnsafe)
                           .WithPlatform(platform)
                           .WithGeneralDiagnosticOption(warningOption)
-                          .WithOptimizationLevel(optimize ? OptimizationLevel.Release : OptimizationLevel.Debug);
+                          .WithOptimizations(optimize)
+                          .WithDebugInformationKind(debugInformationKind);
         }
     }
 }

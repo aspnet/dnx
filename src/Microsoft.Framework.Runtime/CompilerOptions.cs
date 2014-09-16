@@ -12,6 +12,8 @@ namespace Microsoft.Framework.Runtime
 
         public string LanguageVersion { get; set; }
 
+        public string DebugSymbols { get; set; }
+
         public string Platform { get; set; }
 
         public bool? AllowUnsafe { get; set; }
@@ -42,6 +44,11 @@ namespace Microsoft.Framework.Runtime
                 if (option.LanguageVersion != null)
                 {
                     result.LanguageVersion = option.LanguageVersion;
+                }
+
+                if (option.DebugSymbols != null)
+                {
+                    result.DebugSymbols = option.DebugSymbols;
                 }
 
                 if (option.Platform != null)
