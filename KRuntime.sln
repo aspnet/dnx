@@ -1,6 +1,6 @@
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 14
-VisualStudioVersion = 14.0.22111.0
+VisualStudioVersion = 14.0.22207.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "scripts", "scripts", "{189961D1-DFF4-406A-9D42-39B61221A73A}"
 	ProjectSection(SolutionItems) = preProject
@@ -64,6 +64,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 	ProjectSection(SolutionItems) = preProject
 		global.json = global.json
 	EndProjectSection
+EndProject
+Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Microsoft.Framework.PackageManager.FunctionalTests", "test\Microsoft.Framework.PackageManager.FunctionalTests\Microsoft.Framework.PackageManager.FunctionalTests.kproj", "{C8404BE7-504E-477C-BC29-41A49B1BCBD9}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -382,6 +384,20 @@ Global
 		{7E6564C3-04E3-418C-B96A-463FE2906F09}.Release|Win32.ActiveCfg = Release|Any CPU
 		{7E6564C3-04E3-418C-B96A-463FE2906F09}.Release|x64.ActiveCfg = Release|Any CPU
 		{7E6564C3-04E3-418C-B96A-463FE2906F09}.Release|x86.ActiveCfg = Release|Any CPU
+		{C8404BE7-504E-477C-BC29-41A49B1BCBD9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C8404BE7-504E-477C-BC29-41A49B1BCBD9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C8404BE7-504E-477C-BC29-41A49B1BCBD9}.Debug|Mixed Platforms.ActiveCfg = Debug|Any CPU
+		{C8404BE7-504E-477C-BC29-41A49B1BCBD9}.Debug|Mixed Platforms.Build.0 = Debug|Any CPU
+		{C8404BE7-504E-477C-BC29-41A49B1BCBD9}.Debug|Win32.ActiveCfg = Debug|Any CPU
+		{C8404BE7-504E-477C-BC29-41A49B1BCBD9}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{C8404BE7-504E-477C-BC29-41A49B1BCBD9}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{C8404BE7-504E-477C-BC29-41A49B1BCBD9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C8404BE7-504E-477C-BC29-41A49B1BCBD9}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C8404BE7-504E-477C-BC29-41A49B1BCBD9}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
+		{C8404BE7-504E-477C-BC29-41A49B1BCBD9}.Release|Mixed Platforms.Build.0 = Release|Any CPU
+		{C8404BE7-504E-477C-BC29-41A49B1BCBD9}.Release|Win32.ActiveCfg = Release|Any CPU
+		{C8404BE7-504E-477C-BC29-41A49B1BCBD9}.Release|x64.ActiveCfg = Release|Any CPU
+		{C8404BE7-504E-477C-BC29-41A49B1BCBD9}.Release|x86.ActiveCfg = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -409,5 +425,6 @@ Global
 		{68048350-2996-4B4A-90BE-3405F088BD5A} = {13ED5001-B871-4BC3-8499-29607F596C7C}
 		{0D752D1C-3985-4E27-92C4-0BEE72B1F58D} = {AF391791-F4B7-41AC-8F08-9485DAC543C5}
 		{7E6564C3-04E3-418C-B96A-463FE2906F09} = {C43EE429-DE10-4906-BB09-54E6A080948A}
+		{C8404BE7-504E-477C-BC29-41A49B1BCBD9} = {C43EE429-DE10-4906-BB09-54E6A080948A}
 	EndGlobalSection
 EndGlobal

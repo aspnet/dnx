@@ -34,7 +34,7 @@ var MSBUILD = '${Path.Combine(PROGRAM_FILES_X86, "MSBuild", "14.0", "Bin", "MSBu
 
 #package-runtime .clean-sdk-dir .copy-bits .tweak-scripts .copy-package-dependencies .copy-coreclr-kpm-dependencies .copy-coreclr .nuget-pack-runtime target='package'
 
-#rebuild-package .build-mono-entrypoint .build-compile .native-compile .xunit-test .package-runtime
+#rebuild-package .build-mono-entrypoint .build-compile .native-compile .package-runtime .xunit-test
 
 #native-compile target='compile' if='!IsMono'
   var nativeProjects ='${Files.Include(Path.Combine(ROOT, "src", "**", "*.vcxproj"))}'
