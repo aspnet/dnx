@@ -22,6 +22,7 @@ namespace Microsoft.Framework.PackageManager.Packing
             _hostServices = hostServices;
             _options = options;
             _options.ProjectDir = Normalize(_options.ProjectDir);
+            _options.OutputDir = Normalize(_options.OutputDir);
             ScriptExecutor = new ScriptExecutor();
         }
 
