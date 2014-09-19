@@ -37,6 +37,7 @@ namespace Microsoft.Framework.PackageManager.Packing
         public bool Overwrite { get; set; }
         public bool NoSource { get; set; }
         public string Configuration { get; set; }
+        public IReport Report { get; set; }
 
         public IList<PackRuntime> Runtimes { get; set; }
         public IList<PackProject> Projects { get; private set; }
@@ -49,7 +50,7 @@ namespace Microsoft.Framework.PackageManager.Packing
 
         public void Emit()
         {
-            Console.WriteLine("Copying to output path {0}", OutputPath);
+            Report.WriteLine("Copying to output path {0}", OutputPath);
 
             var mainProject = Projects.Single(project => project.Name == _project.Name);
 

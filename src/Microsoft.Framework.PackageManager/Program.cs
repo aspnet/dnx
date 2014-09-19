@@ -112,15 +112,12 @@ namespace Microsoft.Framework.PackageManager
                 var optionWwwRootOut = c.Option("--wwwroot-out <NAME>",
                     "Name of public folder in the packed image, can be used only when the '--wwwroot' option or 'webroot' in project.json is specified",
                     CommandOptionType.SingleValue);
+                var optionQuiet = c.Option("--quiet", "Do not show output such as source/destination of packed files",
+                    CommandOptionType.NoValue);
                 c.HelpOption("-?|-h|--help");
 
                 c.OnExecute(() =>
                 {
-                    Console.WriteLine("verbose:{0} out:{1} project:{2}",
-                        optionVerbose.HasValue(),
-                        optionOut.Value(),
-                        argProject.Value);
-
                     var options = new PackOptions
                     {
                         OutputDir = optionOut.Value(),
@@ -135,7 +132,8 @@ namespace Microsoft.Framework.PackageManager
                             string.Join(";", optionRuntime.Values).
                                 Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries) :
                             new string[0],
-                        Native = optionNative.HasValue()
+                        Native = optionNative.HasValue(),
+                        Reports = CreateReports(optionVerbose.HasValue(), optionQuiet.HasValue())
                     };
 
                     var manager = new PackManager(_hostServices, options);
@@ -156,6 +154,8 @@ namespace Microsoft.Framework.PackageManager
                 var optionConfiguration = c.Option("--configuration <CONFIGURATION>", "A list of configurations to build.", CommandOptionType.MultipleValue);
                 var optionOut = c.Option("--out <OUTPUT_DIR>", "Output directory", CommandOptionType.SingleValue);
                 var optionDependencies = c.Option("--dependencies", "Copy dependencies", CommandOptionType.NoValue);
+                var optionQuiet = c.Option("--quiet", "Do not show output such as source/destination of nupkgs",
+                    CommandOptionType.NoValue);
                 var argProjectDir = c.Argument("[project]", "Project to build, default is current directory");
                 c.HelpOption("-?|-h|--help");
 
@@ -167,6 +167,7 @@ namespace Microsoft.Framework.PackageManager
                     buildOptions.ProjectDir = argProjectDir.Value ?? Directory.GetCurrentDirectory();
                     buildOptions.Configurations = optionConfiguration.Values;
                     buildOptions.TargetFrameworks = optionFramework.Values;
+                    buildOptions.Reports = CreateReports(optionVerbose.HasValue(), optionQuiet.HasValue());
 
                     var projectManager = new BuildManager(_hostServices, buildOptions);
 

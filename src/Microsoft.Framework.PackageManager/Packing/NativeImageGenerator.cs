@@ -114,7 +114,8 @@ namespace Microsoft.Framework.PackageManager.Packing
         {
             if (options.Runtimes.Count() == 0)
             {
-                Console.WriteLine("Please provide target CoreCLR runtimes using --runtime flags");
+                options.Reports.Information.WriteLine(
+                    "Please provide target CoreCLR runtimes using --runtime flags".Yellow());
                 return null;
             }
 
@@ -124,7 +125,8 @@ namespace Microsoft.Framework.PackageManager.Packing
                 // NOTE: !IsDesktop == IsCore and only Core packages can be crossgened at least for now
                 if (VersionUtility.IsDesktop(frameworkName))
                 {
-                    Console.WriteLine("Native image generation is only supported for KLR Core flavors.");
+                    options.Reports.Information.WriteLine(
+                        "Native image generation is only supported for KLR Core flavors.".Yellow());
                     return null;
                 }
             }
@@ -135,9 +137,10 @@ namespace Microsoft.Framework.PackageManager.Packing
 
             if (duplicates.Any())
             {
-                Console.WriteLine("The following runtimes will result in output conflicts. Please provide distinct KRE flavor for each processor architecture:\n"
+                var message = "The following runtimes will result in output conflicts. Please provide distinct KRE flavor for each processor architecture:\n"
                     + string.Join("\n", duplicates.Select(
-                        g => string.Format("Architecture: {0}\nRuntimes: {1}", g.Key, string.Join(", ", g)))));
+                        g => string.Format("Architecture: {0}\nRuntimes: {1}", g.Key, string.Join(", ", g))));
+                options.Reports.Information.WriteLine(message.Yellow());
                 return null;
             }
 

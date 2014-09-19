@@ -27,5 +27,7 @@ namespace Microsoft.Framework.PackageManager.Packing
         public IEnumerable<string> Runtimes { get; set; }
 
         public bool Native { get; set; }
+
+        public Reports Reports { get; set; }
     }
 }

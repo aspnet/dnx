@@ -31,14 +31,15 @@ namespace Microsoft.Framework.PackageManager.Packing
         public string Name { get; private set; }
         public string TargetPath { get; private set; }
         public FrameworkName Framework { get { return _frameworkName; } }
+        public IReport Report { get; set; }
 
         public void Emit(PackRoot root)
         {
-            Console.WriteLine("Packing runtime {0}", Name);
+            Report.WriteLine("Packing runtime {0}", Name);
 
             if (Directory.Exists(TargetPath))
             {
-                Console.WriteLine("  {0} already exists.", TargetPath);
+                Report.WriteLine("  {0} already exists.", TargetPath);
                 return;
             }
 

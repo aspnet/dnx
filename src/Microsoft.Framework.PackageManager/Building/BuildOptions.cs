@@ -18,6 +18,8 @@ namespace Microsoft.Framework.PackageManager
 
         public FrameworkName RuntimeTargetFramework { get; set; }
 
+        public Reports Reports { get; set; }
+
         public BuildOptions()
         {
             Configurations = new List<string>();

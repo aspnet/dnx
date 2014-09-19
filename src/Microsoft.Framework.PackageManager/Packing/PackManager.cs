@@ -43,7 +43,7 @@ namespace Microsoft.Framework.PackageManager.Packing
             Runtime.Project project;
             if (!Runtime.Project.TryGetProject(_options.ProjectDir, out project))
             {
-                Console.WriteLine("Unable to locate {0}.'", Runtime.Project.ProjectFileName);
+                _options.Reports.Information.WriteLine("Unable to locate {0}.'".Red(), Runtime.Project.ProjectFileName);
                 return false;
             }
 
@@ -53,21 +53,23 @@ namespace Microsoft.Framework.PackageManager.Packing
 
             if (string.IsNullOrEmpty(_options.WwwRoot) && !string.IsNullOrEmpty(_options.WwwRootOut))
             {
-                Console.WriteLine("'--wwwroot-out' option can be used only when the '--wwwroot' option or 'webroot' in project.json is specified.");
+                _options.Reports.Information.WriteLine(
+                    "'--wwwroot-out' option can be used only when the '--wwwroot' option or 'webroot' in project.json is specified.".Red());
                 return false;
             }
 
             if (!string.IsNullOrEmpty(_options.WwwRoot) &&
                 !Directory.Exists(Path.Combine(project.ProjectDirectory, _options.WwwRoot)))
             {
-                Console.WriteLine("The specified wwwroot folder '{0}' doesn't exist in the project directory.",
-                    _options.WwwRoot);
+                _options.Reports.Information.WriteLine(
+                    "The specified wwwroot folder '{0}' doesn't exist in the project directory.".Red(), _options.WwwRoot);
                 return false;
             }
 
             if (string.Equals(_options.WwwRootOut, PackRoot.AppRootName, StringComparison.OrdinalIgnoreCase))
             {
-                Console.WriteLine("'{0}' is a reserved folder name. Please choose another name for the wwwroot-out folder.",
+                _options.Reports.Information.WriteLine(
+                    "'{0}' is a reserved folder name. Please choose another name for the wwwroot-out folder.".Red(),
                     PackRoot.AppRootName);
                 return false;
             }
@@ -84,7 +86,8 @@ namespace Microsoft.Framework.PackageManager.Packing
             {
                 Overwrite = _options.Overwrite,
                 Configuration = _options.Configuration,
-                NoSource = _options.NoSource
+                NoSource = _options.NoSource,
+                Report = _options.Reports.Quiet
             };
 
             Func<string, string> getVariable = key =>
@@ -126,14 +129,15 @@ namespace Microsoft.Framework.PackageManager.Packing
 
                 if (!runtimeLocated)
                 {
-                    Console.WriteLine(string.Format("Unable to locate runtime '{0}'", runtime));
+                    _options.Reports.Information.WriteLine(string.Format("Unable to locate runtime '{0}'", runtime.Red().Bold()));
                     return false;
                 }
 
                 if (!project.GetTargetFrameworks().Any(x => x.FrameworkName == frameworkName))
                 {
-                    Console.WriteLine(string.Format("'{0}' is not a target framework of the project being packed",
-                        frameworkName));
+                    _options.Reports.Information.WriteLine(
+                        string.Format("'{0}' is not a target framework of the project being packed",
+                        frameworkName.ToString().Red().Bold()));
                     return false;
                 }
 
@@ -172,9 +176,10 @@ namespace Microsoft.Framework.PackageManager.Packing
                 if (dependencyContext.UnresolvedDependencyProvider.UnresolvedDependencies.Any())
                 {
                     anyUnresolvedDependency = true;
-                    Console.WriteLine("Warning: " +
+                    var message = "Warning: " +
                         dependencyContext.UnresolvedDependencyProvider.GetMissingDependenciesWarning(
-                            dependencyContext.FrameworkName));
+                            dependencyContext.FrameworkName);
+                    _options.Reports.Quiet.WriteLine(message.Yellow());
                 }
 
                 foreach (var libraryDescription in dependencyContext.NuGetDependencyResolver.Dependencies)
@@ -182,7 +187,7 @@ namespace Microsoft.Framework.PackageManager.Packing
                     IList<DependencyContext> contexts;
                     if (!root.LibraryDependencyContexts.TryGetValue(libraryDescription.Identity, out contexts))
                     {
-                        root.Packages.Add(new PackPackage(libraryDescription));
+                        root.Packages.Add(new PackPackage(libraryDescription) { Report = _options.Reports.Quiet });
                         contexts = new List<DependencyContext>();
                         root.LibraryDependencyContexts[libraryDescription.Identity] = contexts;
                     }
@@ -199,6 +204,7 @@ namespace Microsoft.Framework.PackageManager.Packing
                             packProject.WwwRoot = _options.WwwRoot;
                             packProject.WwwRootOut = _options.WwwRootOut;
                         }
+                        packProject.Report = _options.Reports.Quiet;
                         root.Projects.Add(packProject);
                     }
                 }
@@ -210,7 +216,7 @@ namespace Microsoft.Framework.PackageManager.Packing
                 nativeImageGenerator = NativeImageGenerator.Create(_options, root, frameworkContexts.Values);
                 if (nativeImageGenerator == null)
                 {
-                    Console.WriteLine("Fail to initiate native image generation process.");
+                    _options.Reports.Information.WriteLine("Fail to initiate native image generation process.".Red());
                     return false;
                 }
             }
@@ -221,13 +227,13 @@ namespace Microsoft.Framework.PackageManager.Packing
 
             if (_options.Native && !nativeImageGenerator.BuildNativeImages(root))
             {
-                Console.WriteLine("Native image generation failed.");
+                _options.Reports.Information.WriteLine("Native image generation failed.");
                 return false;
             }
 
             sw.Stop();
 
-            Console.WriteLine("Time elapsed {0}", sw.Elapsed);
+            _options.Reports.Information.WriteLine("Time elapsed {0}", sw.Elapsed);
             return !anyUnresolvedDependency;
         }
 

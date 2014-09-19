@@ -19,13 +19,13 @@ namespace Microsoft.Framework.PackageManager
         {
             if (string.IsNullOrEmpty(Name))
             {
-                Report.WriteLine("Name of dependency to add is required.");
+                Report.WriteLine("Name of dependency to add is required.".Red());
                 return false;
             }
 
             if (string.IsNullOrEmpty(Version))
             {
-                Report.WriteLine("Version of dependency to add is required.");
+                Report.WriteLine("Version of dependency to add is required.".Red());
                 return false;
             }
 
@@ -37,7 +37,7 @@ namespace Microsoft.Framework.PackageManager
             Runtime.Project project;
             if (!Runtime.Project.TryGetProject(ProjectDir, out project))
             {
-                Report.WriteLine("Unable to locate {0}.", Runtime.Project.ProjectFileName);
+                Report.WriteLine("Unable to locate {0}.".Red(), Runtime.Project.ProjectFileName);
                 return false;
             }
 

@@ -174,7 +174,7 @@ namespace Microsoft.Framework.PackageManager
                         using (var fs = File.Create(nupkg))
                         {
                             packageBuilder.Save(fs);
-                            Console.WriteLine("{0} -> {1}", project.Name, nupkg);
+                            _buildOptions.Reports.Quiet.WriteLine("{0} -> {1}", project.Name, nupkg);
                         }
 
                         if (symbolPackageBuilder.Files.Any())
@@ -184,7 +184,7 @@ namespace Microsoft.Framework.PackageManager
                                 symbolPackageBuilder.Save(fs);
                             }
 
-                            Console.WriteLine("{0} -> {1}", project.Name, symbolsNupkg);
+                            _buildOptions.Reports.Quiet.WriteLine("{0} -> {1}", project.Name, symbolsNupkg);
                         }
                     }
                 }
@@ -196,7 +196,7 @@ namespace Microsoft.Framework.PackageManager
 
             WriteSummary(allWarnings, allErrors);
 
-            Console.WriteLine("Time elapsed {0}", sw.Elapsed);
+            _buildOptions.Reports.Information.WriteLine("Time elapsed {0}", sw.Elapsed);
             return success;
         }
 
@@ -242,7 +242,7 @@ namespace Microsoft.Framework.PackageManager
 
         private void WriteSummary(List<string> warnings, List<string> errors)
         {
-            Console.WriteLine();
+            _buildOptions.Reports.Information.WriteLine();
 
             if (errors.Count > 0)
             {
@@ -250,13 +250,13 @@ namespace Microsoft.Framework.PackageManager
             }
             else
             {
-                WriteColor("Build succeeded.", ConsoleColor.Green);
+                _buildOptions.Reports.Information.WriteLine("Build succeeded.".Green());
             }
 
-            Console.WriteLine("    {0} Warnings(s)", warnings.Count);
-            Console.WriteLine("    {0} Error(s)", errors.Count);
+            _buildOptions.Reports.Information.WriteLine("    {0} Warnings(s)", warnings.Count);
+            _buildOptions.Reports.Information.WriteLine("    {0} Error(s)", errors.Count);
 
-            Console.WriteLine();
+            _buildOptions.Reports.Information.WriteLine();
         }
 
         private void WriteDiagnostics(List<string> warnings, List<string> errors)
@@ -274,32 +274,12 @@ namespace Microsoft.Framework.PackageManager
 
         private void WriteError(string message)
         {
-            WriteColor(Console.Error, message, ConsoleColor.Red);
+            _buildOptions.Reports.Information.WriteLine(message.Red());
         }
 
         private void WriteWarning(string message)
         {
-            WriteColor(message, ConsoleColor.Yellow);
-        }
-
-        private void WriteColor(string message, ConsoleColor color)
-        {
-            WriteColor(Console.Out, message, color);
-        }
-
-        private void WriteColor(TextWriter writer, string message, ConsoleColor color)
-        {
-            var old = Console.ForegroundColor;
-
-            try
-            {
-                Console.ForegroundColor = color;
-                writer.WriteLine(message);
-            }
-            finally
-            {
-                Console.ForegroundColor = old;
-            }
+            _buildOptions.Reports.Information.WriteLine(message.Yellow());
         }
 
         private static string Normalize(string projectDir)

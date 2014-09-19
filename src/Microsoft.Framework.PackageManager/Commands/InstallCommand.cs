@@ -29,7 +29,7 @@ namespace Microsoft.Framework.PackageManager
         {
             if (string.IsNullOrEmpty(_addCommand.Name))
             {
-                Reports.Information.WriteLine("Name of dependency to install is required.");
+                Reports.Information.WriteLine("Name of dependency to install is required.".Red());
                 return false;
             }
 
@@ -79,7 +79,8 @@ namespace Microsoft.Framework.PackageManager
 
             if (result == null)
             {
-                Reports.Information.WriteLine("Unable to locate {0} >= {1}", _addCommand.Name, _addCommand.Version);
+                Reports.Information.WriteLine("Unable to locate {0} >= {1}",
+                    _addCommand.Name.Red().Bold(), _addCommand.Version);
                 return false;
             }
 

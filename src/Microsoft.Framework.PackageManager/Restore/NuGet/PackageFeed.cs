@@ -139,12 +139,13 @@ namespace Microsoft.Framework.PackageManager.Restore.NuGet
                             return new List<PackageInfo>();
                         }
 
-                        _report.WriteLine(string.Format("Error: FindPackagesById: {1}\r\n  {0}", ex.Message, id));
+                        _report.WriteLine(string.Format("Error: FindPackagesById: {1}\r\n  {0}",
+                            ex.Message, id.Red().Bold()));
                         throw;
                     }
                     else
                     {
-                        _report.WriteLine(string.Format("Warning: FindPackagesById: {1}\r\n  {0}", ex.Message, id));
+                        _report.WriteLine(string.Format("Warning: FindPackagesById: {1}\r\n  {0}", ex.Message, id.Yellow().Bold()));
                     }
                 }
             }

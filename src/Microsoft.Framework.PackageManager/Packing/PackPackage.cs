@@ -26,11 +26,13 @@ namespace Microsoft.Framework.PackageManager.Packing
 
         public string TargetPath { get; private set; }
 
+        public IReport Report { get; set; }
+
         public void Emit(PackRoot root)
         {
             foreach (var context in root.LibraryDependencyContexts[Library])
             {
-                Console.WriteLine("Packing nupkg dependency {0} for {1}", Library, context.FrameworkName);
+                Report.WriteLine("Packing nupkg dependency {0} for {1}", Library, context.FrameworkName);
                 Emit(root, context.PackageAssemblies[Library.Name]);
             }
         }
@@ -64,7 +66,7 @@ namespace Microsoft.Framework.PackageManager.Packing
             }
         }
 
-        private static void CopyFolder(PackRoot root, string srcFolder, string targetFolder)
+        private void CopyFolder(PackRoot root, string srcFolder, string targetFolder)
         {
             if (!Directory.Exists(srcFolder))
             {
@@ -79,17 +81,17 @@ namespace Microsoft.Framework.PackageManager.Packing
                 }
                 else
                 {
-                    Console.WriteLine("  {0} already exists", targetFolder);
+                    Report.WriteLine("  {0} already exists", targetFolder);
                     return;
                 }
             }
 
-            Console.WriteLine("  Target {0}", targetFolder);
+            Report.WriteLine("  Target {0}", targetFolder);
             Directory.CreateDirectory(targetFolder);
             root.Operations.Copy(srcFolder, targetFolder);
         }
 
-        private static void CopyFile(string srcPath, string targetPath, bool overwrite)
+        private void CopyFile(string srcPath, string targetPath, bool overwrite)
         {
             var targetFolder = Path.GetDirectoryName(targetPath);
             Directory.CreateDirectory(targetFolder);
@@ -102,12 +104,12 @@ namespace Microsoft.Framework.PackageManager.Packing
                 }
                 else
                 {
-                    Console.WriteLine("  {0} already exists", targetPath);
+                    Report.WriteLine("  {0} already exists", targetPath);
                     return;
                 }
             }
 
-            Console.WriteLine("  Target {0}", targetPath);
+            Report.WriteLine("  Target {0}", targetPath);
             File.Copy(srcPath, targetPath);
         }
     }

@@ -33,10 +33,11 @@ namespace Microsoft.Framework.PackageManager.Packing
         public string TargetPath { get; private set; }
         public string WwwRoot { get; set; }
         public string WwwRootOut { get; set; }
+        public IReport Report { get; set; }
 
         public void EmitSource(PackRoot root)
         {
-            Console.WriteLine("Packing project dependency {0}", _libraryDescription.Identity.Name);
+            Report.WriteLine("Packing project dependency {0}", _libraryDescription.Identity.Name);
 
             Runtime.Project project;
             if (!_projectResolver.TryResolveProject(_libraryDescription.Identity.Name, out project))
@@ -50,8 +51,8 @@ namespace Microsoft.Framework.PackageManager.Packing
             // If root.OutputPath is specified by --out option, it might not be a full path
             TargetPath = Path.GetFullPath(TargetPath);
 
-            Console.WriteLine("  Source {0}", project.ProjectDirectory);
-            Console.WriteLine("  Target {0}", TargetPath);
+            Report.WriteLine("  Source {0}", project.ProjectDirectory);
+            Report.WriteLine("  Target {0}", TargetPath);
 
             root.Operations.Delete(TargetPath);
 
@@ -121,15 +122,16 @@ namespace Microsoft.Framework.PackageManager.Packing
                 }
                 else
                 {
-                    Console.WriteLine(
-                        string.Format("TODO: Warning: the referenced source file '{0}' is not in solution root and it is not packed to output.", sourceFile));
+                    Report.WriteLine(
+                        string.Format(
+                            "TODO: Warning: the referenced source file '{0}' is not in solution root and it is not packed to output.".Yellow(), sourceFile));
                 }
             }
         }
 
         public void EmitNupkg(PackRoot root)
         {
-            Console.WriteLine("Packing nupkg from project dependency {0}", _libraryDescription.Identity.Name);
+            Report.WriteLine("Packing nupkg from project dependency {0}", _libraryDescription.Identity.Name);
 
             Runtime.Project project;
             if (!_projectResolver.TryResolveProject(_libraryDescription.Identity.Name, out project))
@@ -142,8 +144,8 @@ namespace Microsoft.Framework.PackageManager.Packing
             var targetNupkg = resolver.GetPackageFileName(project.Name, project.Version);
             TargetPath = resolver.GetInstallPath(project.Name, project.Version);
 
-            Console.WriteLine("  Source {0}", project.ProjectDirectory);
-            Console.WriteLine("  Target {0}", TargetPath);
+            Report.WriteLine("  Source {0}", project.ProjectDirectory);
+            Report.WriteLine("  Target {0}", TargetPath);
 
             if (Directory.Exists(TargetPath))
             {
@@ -153,7 +155,7 @@ namespace Microsoft.Framework.PackageManager.Packing
                 }
                 else
                 {
-                    Console.WriteLine("  {0} already exists.", TargetPath);
+                    Report.WriteLine("  {0} already exists.", TargetPath);
                     return;
                 }
             }
@@ -292,7 +294,7 @@ root.Configuration));
 
         private void CopyContentFiles(PackRoot root, Runtime.Project project)
         {
-            Console.WriteLine("Copying contents of project dependency {0} to {1}",
+            Report.WriteLine("Copying contents of project dependency {0} to {1}",
                 _libraryDescription.Identity.Name, WwwRootOut);
 
             // If the value of '--wwwroot' is ".", we need to pack the project root dir
@@ -300,8 +302,8 @@ root.Configuration));
             var wwwRootPath = Path.GetFullPath(Path.Combine(project.ProjectDirectory, WwwRoot));
             var wwwRootOutPath = Path.Combine(root.OutputPath, WwwRootOut);
 
-            Console.WriteLine("  Source {0}", wwwRootPath);
-            Console.WriteLine("  Target {0}", wwwRootOutPath);
+            Report.WriteLine("  Source {0}", wwwRootPath);
+            Report.WriteLine("  Target {0}", wwwRootOutPath);
 
             // A set of content files that should be copied
             var contentFiles = new HashSet<string>(project.ContentFiles, StringComparer.OrdinalIgnoreCase);
