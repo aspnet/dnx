@@ -64,10 +64,9 @@ namespace Microsoft.Framework.Runtime
                     {
                         Name = name,
                         Version = assemblyVersion,
-                        IsGacOrFrameworkReference = true,
-                        IsImplicit = library.IsImplicit
+                        IsGacOrFrameworkReference = true
                     },
-                    Dependencies = Enumerable.Empty<Library>()
+                    Dependencies = Enumerable.Empty<LibraryDependency>()
                 };
             }
 

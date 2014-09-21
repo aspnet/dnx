@@ -73,10 +73,11 @@ namespace Microsoft.Framework.PackageManager
 
             foreach (var dependency in description.Dependencies)
             {
-                if (dependency.IsImplicit)
-                {
-                    continue;
-                }
+                // FIX: this should be a dependency type flag
+                //if (dependency.IsImplicit)
+                //{
+                //    continue;
+                //}
 
                 Runtime.Project dependencyProject;
                 if (projectReferenceByName.ContainsKey(dependency.Name) &&
@@ -86,7 +87,7 @@ namespace Microsoft.Framework.PackageManager
                     continue;
                 }
 
-                if (dependency.IsGacOrFrameworkReference)
+                if (dependency.Library.IsGacOrFrameworkReference)
                 {
                     packageBuilder.FrameworkReferences.Add(new FrameworkAssemblyReference(dependency.Name, new[] { _targetFramework }));
                 }

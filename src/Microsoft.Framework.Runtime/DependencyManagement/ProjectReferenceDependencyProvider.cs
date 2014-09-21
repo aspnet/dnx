@@ -52,29 +52,21 @@ namespace Microsoft.Framework.Runtime
 
             if (VersionUtility.IsDesktop(targetFramework))
             {
-                targetFrameworkDependencies.Add(new Library
-                {
-                    Name = "mscorlib",
-                    IsGacOrFrameworkReference = true
-                });
+                targetFrameworkDependencies.Add(new LibraryDependency(
+                    name: "mscorlib",
+                    isGacOrFrameworkReference: true));
 
-                targetFrameworkDependencies.Add(new Library
-                {
-                    Name = "System",
-                    IsGacOrFrameworkReference = true
-                });
+                targetFrameworkDependencies.Add(new LibraryDependency(
+                    name: "System",
+                    isGacOrFrameworkReference: true));
 
-                targetFrameworkDependencies.Add(new Library
-                {
-                    Name = "System.Core",
-                    IsGacOrFrameworkReference = true
-                });
+                targetFrameworkDependencies.Add(new LibraryDependency(
+                    name: "System.Core",
+                    isGacOrFrameworkReference: true));
 
-                targetFrameworkDependencies.Add(new Library
-                {
-                    Name = "Microsoft.CSharp",
-                    IsGacOrFrameworkReference = true
-                });
+                targetFrameworkDependencies.Add(new LibraryDependency(
+                    name: "Microsoft.CSharp",
+                    isGacOrFrameworkReference: true));
             }
 
             var dependencies = project.Dependencies.Concat(targetFrameworkDependencies).ToList();
@@ -83,17 +75,17 @@ namespace Microsoft.Framework.Runtime
             // We need to keep this for bootstrapping to continue working
             foreach (var d in dependencies)
             {
-                if (d.IsGacOrFrameworkReference)
+                if (d.Library.IsGacOrFrameworkReference)
                 {
                     continue;
                 }
 
-                d.IsGacOrFrameworkReference = _frameworkReferenceResolver.TryGetAssembly(d.Name, targetFramework, out var path);
+                d.Library.IsGacOrFrameworkReference = _frameworkReferenceResolver.TryGetAssembly(d.Name, targetFramework, out var path);
 
                 // We need to fix up the version here since
-                if (d.IsGacOrFrameworkReference)
+                if (d.Library.IsGacOrFrameworkReference)
                 {
-                    d.Version = VersionUtility.GetAssemblyVersion(path);
+                    d.Library.Version = VersionUtility.GetAssemblyVersion(path);
                 }
             }
 
@@ -102,8 +94,7 @@ namespace Microsoft.Framework.Runtime
                 Identity = new Library
                 {
                     Name = project.Name,
-                    Version = project.Version,
-                    IsImplicit = library.IsImplicit
+                    Version = project.Version
                 },
                 Dependencies = dependencies,
             };

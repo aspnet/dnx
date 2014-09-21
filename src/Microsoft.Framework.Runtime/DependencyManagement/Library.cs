@@ -15,18 +15,21 @@ namespace Microsoft.Framework.Runtime
 
         public bool IsGacOrFrameworkReference { get; set; }
 
-        public bool IsImplicit { get; set; }
+        //public bool IsImplicit { get; set; }
 
         public override string ToString()
         {
-            return Name + " " + Version + (Version != null && Version.IsSnapshot ? "-*" : string.Empty);
+            var name = IsGacOrFrameworkReference ? "gac/" + Name : Name;
+            return name + " " + Version + (Version != null && Version.IsSnapshot ? "-*" : string.Empty);
         }
 
         public bool Equals(Library other)
         {
             if (ReferenceEquals(null, other)) return false;
             if (ReferenceEquals(this, other)) return true;
-            return string.Equals(Name, other.Name) && Equals(Version, other.Version);
+            return string.Equals(Name, other.Name) &&
+                Equals(Version, other.Version) &&
+                Equals(IsGacOrFrameworkReference, other.IsGacOrFrameworkReference);
         }
 
         public override bool Equals(object obj)
@@ -41,7 +44,9 @@ namespace Microsoft.Framework.Runtime
         {
             unchecked
             {
-                return ((Name != null ? Name.GetHashCode() : 0) * 397) ^ (Version != null ? Version.GetHashCode() : 0);
+                return ((Name != null ? Name.GetHashCode() : 0) * 397) ^ 
+                    (Version != null ? Version.GetHashCode() : 0) ^
+                    (IsGacOrFrameworkReference.GetHashCode());
             }
         }
 

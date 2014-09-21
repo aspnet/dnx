@@ -26,7 +26,7 @@ namespace Microsoft.Framework.Runtime
             return new LibraryDescription
             {
                 Identity = library,
-                Dependencies = Enumerable.Empty<Library>()
+                Dependencies = Enumerable.Empty<LibraryDependency>()
             };
         }
 

@@ -15,7 +15,7 @@ namespace Loader.Tests
 {
     public class AssemblyLoaderFacts
     {
-        Library[] Dependencies(Action<TestDependencyProvider.Entry> configure)
+        LibraryDependency[] Dependencies(Action<TestDependencyProvider.Entry> configure)
         {
             var entry = new TestDependencyProvider.Entry();
             configure(entry);
@@ -173,7 +173,7 @@ namespace Loader.Tests
     public class TestDependencyProvider : IDependencyProvider
     {
         private readonly IDictionary<Library, Entry> _entries = new Dictionary<Library, Entry>();
-        public IEnumerable<Library> Dependencies { get; set; }
+        public IEnumerable<LibraryDependency> Dependencies { get; set; }
         public FrameworkName FrameworkName { get; set; }
 
         public IEnumerable<string> GetAttemptedPaths(FrameworkName targetFramework)
@@ -190,7 +190,7 @@ namespace Loader.Tests
                 return null;
             }
 
-            var d = entry.Dependencies as Library[] ?? entry.Dependencies.ToArray();
+            var d = entry.Dependencies as LibraryDependency[] ?? entry.Dependencies.ToArray();
             Trace.WriteLine(string.Format("StubAssemblyLoader.GetDependencies {0} {1}", d.Aggregate("", (a, b) => a + " " + b), frameworkName));
 
             return new LibraryDescription
@@ -202,7 +202,7 @@ namespace Loader.Tests
 
         public void Initialize(IEnumerable<LibraryDescription> packages, FrameworkName frameworkName)
         {
-            var d = packages.Select(package => package.Identity).ToArray();
+            var d = packages.Select(package => new LibraryDependency(package.Identity)).ToArray();
 
             Trace.WriteLine(string.Format("StubAssemblyLoader.Initialize {0} {1}", d.Aggregate("", (a, b) => a + " " + b), frameworkName));
 
@@ -227,15 +227,18 @@ namespace Loader.Tests
         {
             public Entry()
             {
-                Dependencies = new List<Library>();
+                Dependencies = new List<LibraryDependency>();
             }
 
             public Library Key { get; set; }
-            public IList<Library> Dependencies { get; private set; }
+            public IList<LibraryDependency> Dependencies { get; private set; }
 
             public Entry Needs(string name, string version)
             {
-                Dependencies.Add(new Library { Name = name, Version = new SemanticVersion(version) });
+                Dependencies.Add(new LibraryDependency(
+                    name: name,
+                    version: new SemanticVersion(version)
+                ));
                 return this;
             }
         }

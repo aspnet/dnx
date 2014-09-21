@@ -57,7 +57,7 @@ namespace Microsoft.Framework.PackageManager
             };
         }
 
-        public async Task<IEnumerable<Library>> GetDependencies(WalkProviderMatch match, FrameworkName targetFramework)
+        public async Task<IEnumerable<LibraryDependency>> GetDependencies(WalkProviderMatch match, FrameworkName targetFramework)
         {
             using (var stream = await _source.OpenNuspecStreamAsync(new PackageInfo
             {
@@ -72,12 +72,12 @@ namespace Microsoft.Framework.PackageManager
                 {
                     return dependencySet
                         .SelectMany(x => x.Dependencies)
-                        .Select(x => new Library { Name = x.Id,
-                            Version = x.VersionSpec != null ? x.VersionSpec.MinVersion : null })
+                        .Select(x => new LibraryDependency(name: x.Id,
+                            version: x.VersionSpec != null ? x.VersionSpec.MinVersion : null ))
                         .ToList();
                 }
             }
-            return Enumerable.Empty<Library>();
+            return Enumerable.Empty<LibraryDependency>();
         }
 
         public async Task CopyToAsync(WalkProviderMatch match, Stream stream)

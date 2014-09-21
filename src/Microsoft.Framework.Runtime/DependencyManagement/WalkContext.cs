@@ -101,7 +101,7 @@ namespace Microsoft.Framework.Runtime
                         var innerNode = new Node
                         {
                             OuterNode = node,
-                            Key = dependency,
+                            Key = dependency.Library,
                         };
                         node.InnerNodes.Add(innerNode);
                     }
@@ -284,9 +284,7 @@ namespace Microsoft.Framework.Runtime
                     return new LibraryDescription
                     {
                         Identity = entry.Value.Key,
-                        Dependencies = entry.Value.Dependencies.Where(p => _usedItems.ContainsKey(p.Name))
-                                                               .Select(p => _usedItems[p.Name].Key)
-                                                               .ToList()
+                        Dependencies = entry.Value.Dependencies.SelectMany(CorrectDependencyVersion).ToList()
                     };
                 }).ToList();
 
@@ -295,6 +293,13 @@ namespace Microsoft.Framework.Runtime
             }
         }
 
+        IEnumerable<LibraryDependency> CorrectDependencyVersion(LibraryDependency dependency)
+        {
+            if (_usedItems.TryGetValue(dependency.Name, out var item))
+            {
+                yield return dependency.ChangeVersion(item.Key.Version);
+            }
+        }
 
         public class Node
         {
@@ -316,7 +321,7 @@ namespace Microsoft.Framework.Runtime
         {
             public Library Key { get; set; }
             public IDependencyProvider Resolver { get; set; }
-            public IEnumerable<Library> Dependencies { get; set; }
+            public IEnumerable<LibraryDependency> Dependencies { get; set; }
         }
 
         public class Tracker

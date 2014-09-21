@@ -65,7 +65,7 @@ namespace Microsoft.Framework.Runtime
 
         public SemanticVersion Version { get; private set; }
 
-        public IList<Library> Dependencies { get; private set; }
+        public IList<LibraryDependency> Dependencies { get; private set; }
 
         public LanguageServices LanguageServices { get; private set; }
 
@@ -260,7 +260,7 @@ namespace Microsoft.Framework.Runtime
             project.Version = version == null ? new SemanticVersion("1.0.0") : new SemanticVersion(version.Value<string>());
             project.Description = GetValue<string>(rawProject, "description");
             project.Authors = authors == null ? new string[] { } : authors.ToObject<string[]>();
-            project.Dependencies = new List<Library>();
+            project.Dependencies = new List<LibraryDependency>();
             project.ProjectFilePath = Path.GetFullPath(projectPath);
             project.WebRoot = GetValue<string>(rawProject, "webroot");
 
@@ -320,7 +320,11 @@ namespace Microsoft.Framework.Runtime
 
             project.BuildTargetFrameworksAndConfigurations(rawProject);
 
-            PopulateDependencies(project.Dependencies, rawProject, "dependencies");
+            PopulateDependencies(
+                project.Dependencies,
+                rawProject,
+                "dependencies",
+                isGacOrFrameworkReference: false);
 
             return project;
         }
@@ -358,7 +362,11 @@ namespace Microsoft.Framework.Runtime
             return sourceDescription.Split(_sourceSeparator, StringSplitOptions.RemoveEmptyEntries);
         }
 
-        private static void PopulateDependencies(IList<Library> results, JObject settings, string propertyName)
+        private static void PopulateDependencies(
+            IList<LibraryDependency> results,
+            JObject settings,
+            string propertyName,
+            bool isGacOrFrameworkReference)
         {
             var dependencies = settings[propertyName] as JObject;
             if (dependencies != null)
@@ -392,11 +400,11 @@ namespace Microsoft.Framework.Runtime
                         dependencyVersion = SemanticVersion.Parse(dependencyVersionValue);
                     }
 
-                    results.Add(new Library
-                    {
-                        Name = dependency.Key,
-                        Version = dependencyVersion,
-                    });
+                    results.Add(new LibraryDependency(
+                        name: dependency.Key,
+                        version: dependencyVersion,
+                        isGacOrFrameworkReference: isGacOrFrameworkReference
+                    ));
                 }
             }
         }
@@ -435,7 +443,7 @@ namespace Microsoft.Framework.Runtime
 
             _defaultTargetFrameworkConfiguration = new TargetFrameworkInformation
             {
-                Dependencies = new List<Library>()
+                Dependencies = new List<LibraryDependency>()
             };
 
             // Add default configurations
@@ -526,20 +534,23 @@ namespace Microsoft.Framework.Runtime
             var targetFrameworkInformation = new TargetFrameworkInformation
             {
                 FrameworkName = frameworkName,
-                Dependencies = new List<Library>(),
+                Dependencies = new List<LibraryDependency>()
             };
 
             var properties = targetFramework.Value.Value<JObject>();
 
-            PopulateDependencies(targetFrameworkInformation.Dependencies, properties, "dependencies");
+            PopulateDependencies(
+                targetFrameworkInformation.Dependencies,
+                properties,
+                "dependencies",
+                isGacOrFrameworkReference: false);
 
-            var frameworkAssemblies = new List<Library>();
-            PopulateDependencies(frameworkAssemblies, properties, "frameworkAssemblies");
-
-            foreach (var assembly in frameworkAssemblies)
-            {
-                assembly.IsGacOrFrameworkReference = true;
-            }
+            var frameworkAssemblies = new List<LibraryDependency>();
+            PopulateDependencies(
+                frameworkAssemblies,
+                properties,
+                "frameworkAssemblies",
+                isGacOrFrameworkReference: true);
 
             targetFrameworkInformation.Dependencies.AddRange(frameworkAssemblies);
 

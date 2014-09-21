@@ -75,8 +75,7 @@ namespace Microsoft.Framework.Runtime
                     Identity = new Library
                     {
                         Name = package.Id,
-                        Version = package.Version,
-                        IsImplicit = library.IsImplicit
+                        Version = package.Version
                     },
                     Dependencies = GetDependencies(package, targetFramework)
                 };
@@ -85,7 +84,7 @@ namespace Microsoft.Framework.Runtime
             return null;
         }
 
-        private IEnumerable<Library> GetDependencies(IPackage package, FrameworkName targetFramework)
+        private IEnumerable<LibraryDependency> GetDependencies(IPackage package, FrameworkName targetFramework)
         {
             IEnumerable<PackageDependencySet> dependencySet;
             if (VersionUtility.TryGetCompatibleItems(targetFramework, package.DependencySets, out dependencySet))
@@ -94,11 +93,11 @@ namespace Microsoft.Framework.Runtime
                 {
                     foreach (var d in set.Dependencies)
                     {
-                        yield return new Library
-                        {
-                            Name = d.Id,
-                            Version = d.VersionSpec != null ? d.VersionSpec.MinVersion : null
-                        };
+                        yield return new LibraryDependency
+                        (
+                            name: d.Id,
+                            version: d.VersionSpec != null ? d.VersionSpec.MinVersion : null
+                        );
                     }
                 }
             }
@@ -128,11 +127,10 @@ namespace Microsoft.Framework.Runtime
                         continue;
                     }
 
-                    yield return new Library
-                    {
-                        Name = assemblyReference.AssemblyName,
-                        IsGacOrFrameworkReference = true
-                    };
+                    yield return new LibraryDependency(
+                        name: assemblyReference.AssemblyName,
+                        isGacOrFrameworkReference: true
+                    );
                 }
             }
         }

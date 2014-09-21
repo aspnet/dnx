@@ -46,12 +46,12 @@ namespace Microsoft.Framework.PackageManager
                 }
 
                 var tasks = new List<Task<GraphNode>>();
-                var dependencies = node.Item.Dependencies ?? Enumerable.Empty<Library>();
+                var dependencies = node.Item.Dependencies ?? Enumerable.Empty<LibraryDependency>();
                 foreach (var dependency in dependencies)
                 {
                     if (predicate(dependency.Name))
                     {
-                        tasks.Add(CreateGraphNode(context, dependency, ChainPredicate(predicate, node.Item, dependency)));
+                        tasks.Add(CreateGraphNode(context, dependency.Library, ChainPredicate(predicate, node.Item, dependency)));
                     }
                 }
                 while (tasks.Any())
@@ -65,7 +65,7 @@ namespace Microsoft.Framework.PackageManager
             return node;
         }
 
-        Func<string, bool> ChainPredicate(Func<string, bool> predicate, GraphItem item, Library dependency)
+        Func<string, bool> ChainPredicate(Func<string, bool> predicate, GraphItem item, LibraryDependency dependency)
         {
             return name =>
             {

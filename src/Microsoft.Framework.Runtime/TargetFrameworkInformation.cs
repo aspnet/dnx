@@ -12,7 +12,7 @@ namespace Microsoft.Framework.Runtime
     {
         public FrameworkName FrameworkName { get; set; }
 
-        public IList<Library> Dependencies { get; set; }
+        public IList<LibraryDependency> Dependencies { get; set; }
 
         public string AssemblyPath { get; set; }
 
