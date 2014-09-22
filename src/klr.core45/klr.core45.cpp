@@ -88,6 +88,56 @@ Finished:
     return ret;
 }
 
+bool KlrLoadLibraryExWAndGetProcAddress(
+            LPWSTR   pwszModuleFileName, 
+            LPCSTR   pszFunctionName, 
+            HMODULE* phModule, 
+            FARPROC* ppFunction)
+{
+    bool fSuccess = true;
+    HMODULE hModule = nullptr; 
+    FARPROC pFunction = nullptr;
+    
+    //Clear out params
+    *phModule = nullptr;
+    *(FARPROC*)ppFunction = nullptr;
+    
+    //Load module and look for require DLL export
+    hModule = ::LoadLibraryExW(pwszModuleFileName, NULL, LOAD_LIBRARY_SEARCH_DEFAULT_DIRS);
+    if (!hModule)
+    {
+        ::wprintf_s(L"Failed to load: %s\r\n", pwszModuleFileName);
+        hModule = nullptr;
+        goto Finished;
+    }
+    
+    pFunction = ::GetProcAddress(hModule, pszFunctionName);
+    if (!pFunction)
+    {
+        ::wprintf_s(L"Failed to find function %S in %s\n", pszFunctionName, pwszModuleFileName);
+        fSuccess = false;
+        goto Finished;
+    }
+
+Finished:
+    //Cleanup
+    if (fSuccess)
+    {
+        *phModule = hModule;
+        *(FARPROC*)ppFunction = pFunction;
+    }
+    else
+    {
+        if (hModule)
+        {
+            FreeLibrary(hModule);
+            hModule = nullptr;
+        }
+    }
+
+    return fSuccess;
+}
+
 HMODULE LoadCoreClr()
 {
     errno_t errno = 0;
@@ -132,67 +182,40 @@ HMODULE LoadCoreClr()
         errno = wcscat_s(wszClrPath, _countof(wszClrPath), L"coreclr.dll");
         CHECK_RETURN_VALUE_FAIL_EXIT_VIA_FINISHED(errno);
 
-        //Scan through module name list looking for a valid module that has both DLL exports
+        //Scan through module name list looking for a valid module that has first DLL export
         rgwszModuleFileName = rgwzOSLoaderModuleNames[dwModuleFileName];
         while (rgwszModuleFileName != NULL)
         {
-            hOSLoaderModule = ::LoadLibraryExW(rgwszModuleFileName, NULL, LOAD_LIBRARY_SEARCH_DEFAULT_DIRS);
-
-            if (!hOSLoaderModule)
-            {
-                if (m_fVerboseTrace)
-                    ::wprintf_s(L"Failed to load: %s\r\n", rgwszModuleFileName);
-                hOSLoaderModule = nullptr;
-                continue;
-            }
-            
-            if (m_fVerboseTrace)
-                ::wprintf_s(L"Loaded Module: %s\r\n", rgwszModuleFileName);
-
-            pFnAddDllDirectory = (FnAddDllDirectory)::GetProcAddress(hOSLoaderModule, pszAddDllDirectoryName);
-            if (!pFnAddDllDirectory)
-            {
-                if (m_fVerboseTrace)
-                    ::wprintf_s(L"Failed to find function %S in %s\n", pszAddDllDirectoryName, rgwszModuleFileName);
-
-                fSuccess = false;
-                
-                if (!hOSLoaderModule)
-                {
-                    FreeLibrary(hOSLoaderModule);
-                    hOSLoaderModule = nullptr;
-                }
-                
-                continue;
-            }
-
-            pFnSetDefaultDllDirectories = (FnSetDefaultDllDirectories)::GetProcAddress(hOSLoaderModule, pszSetDefaultDllDirectoriesName);
-            if (!pFnSetDefaultDllDirectories)
-            {
-                if (m_fVerboseTrace)
-                    ::wprintf_s(L"Failed to find function %S in %s\n", pszSetDefaultDllDirectoriesName, rgwszModuleFileName);
-
-                fSuccess = false;
-                
-                if (!hOSLoaderModule)
-                {
-                    FreeLibrary(hOSLoaderModule);
-                    hOSLoaderModule = nullptr;
-                }
-                
-                continue;
-            }
-
-            //module has both DLL exports
-            if (hOSLoaderModule && pFnAddDllDirectory && pFnSetDefaultDllDirectories)
-            {
+            fSuccess = KlrLoadLibraryExWAndGetProcAddress(
+                            rgwszModuleFileName, 
+                            pszAddDllDirectoryName, 
+                            &hOSLoaderModule, 
+                            (FARPROC*)&pFnAddDllDirectory);
+            if (fSuccess)
                 break;
-            }
-        
+            
             dwModuleFileName++;
             rgwszModuleFileName = rgwzOSLoaderModuleNames[dwModuleFileName];
+         }
+         
+        if (!hOSLoaderModule || !pFnAddDllDirectory)
+        {
+            fSuccess = false;
+            goto Finished;
+        }
+         
+        //Find the second DLL export
+        pFnSetDefaultDllDirectories = (FnSetDefaultDllDirectories)::GetProcAddress(hOSLoaderModule, pszSetDefaultDllDirectoriesName);
+        if (!pFnSetDefaultDllDirectories)
+        {
+            if (m_fVerboseTrace)
+                ::wprintf_s(L"Failed to find function %S in %s\n", pszSetDefaultDllDirectoriesName, rgwszModuleFileName);
+
+            fSuccess = false;
+            goto Finished;
         }
 
+        //Verify HANDLE and two DLL exports are valid before proceeding
         if (!hOSLoaderModule || !pFnAddDllDirectory || !pFnSetDefaultDllDirectories)
         {
             fSuccess = false;
@@ -230,6 +253,78 @@ Finished:
     return hCoreCLRModule;
 }
 
+
+/*
+    Win2KDisable : DisallowWin32kSystemCalls
+    SET KRE_WIN32K_DISABLE=1
+*/
+
+bool Win32KDisable()
+{
+    bool fSuccess = true;
+    TCHAR szKreWin32KDisable[2] = {};
+    LPWSTR lpwszModuleFileName = L"api-ms-win-core-processthreads-l1-1-1.dll";
+    DWORD dwModuleFileName = 0;
+    HMODULE hProcessThreadsModule = nullptr;
+    // Note: Need to keep as ASCII as GetProcAddress function takes ASCII params
+    LPCSTR pszSetProcessMitigationPolicy = "SetProcessMitigationPolicy";
+    FnSetProcessMitigationPolicy pFnSetProcessMitigationPolicy = nullptr;
+    PROCESS_MITIGATION_SYSTEM_CALL_DISABLE_POLICY systemCallDisablePolicy = {};
+    systemCallDisablePolicy.DisallowWin32kSystemCalls = 1;
+
+    fSuccess = GetEnvironmentVariableW(L"KRE_WIN32K_DISABLE", szKreWin32KDisable, _countof(szKreWin32KDisable)) > 0;
+    if (!fSuccess)
+    {
+        goto Finished;
+    }
+    
+    if (wcscmp(szKreWin32KDisable, L"1") != 0)
+    {
+        fSuccess = false;
+        goto Finished;
+    }
+
+    fSuccess = KlrLoadLibraryExWAndGetProcAddress(
+                    lpwszModuleFileName, 
+                    pszSetProcessMitigationPolicy, 
+                    &hProcessThreadsModule, 
+                    (FARPROC*)&pFnSetProcessMitigationPolicy);
+    if (!fSuccess)
+    {
+        goto Finished;
+    }
+    
+    if (!hProcessThreadsModule || !pFnSetProcessMitigationPolicy)
+    {
+        fSuccess = false;
+        goto Finished;
+    }
+
+    if (pFnSetProcessMitigationPolicy(
+              ProcessSystemCallDisablePolicy,   //_In_  PROCESS_MITIGATION_POLICY MitigationPolicy,
+              &systemCallDisablePolicy,         //_In_  PVOID lpBuffer,
+              sizeof(systemCallDisablePolicy)  //_In_  SIZE_T dwLength
+            ))
+    {
+        printf_s("KRE_WIN32K_DISABLE successful.\n");
+    }
+
+Finished:
+    //Cleanup
+    if (pFnSetProcessMitigationPolicy)
+    {
+        pFnSetProcessMitigationPolicy = nullptr;
+    }
+    
+    if (hProcessThreadsModule)
+    {
+        FreeLibrary(hProcessThreadsModule);
+        hProcessThreadsModule = nullptr;
+    }
+
+    return fSuccess;
+}
+
 extern "C" __declspec(dllexport) bool __stdcall CallApplicationMain(PCALL_APPLICATION_MAIN_DATA data)
 {
     HRESULT hr = S_OK;
@@ -241,6 +336,8 @@ extern "C" __declspec(dllexport) bool __stdcall CallApplicationMain(PCALL_APPLIC
     TCHAR lpCoreClrModulePath[MAX_PATH];
     size_t cchTrustedPlatformAssemblies = 0;
     LPWSTR pwszTrustedPlatformAssemblies = nullptr;
+
+    Win32KDisable();
 
     if (data->klrDirectory) {
         errno = wcscpy_s(szCurrentDirectory, data->klrDirectory);
