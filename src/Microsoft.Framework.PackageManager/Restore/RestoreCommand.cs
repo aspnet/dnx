@@ -37,6 +37,7 @@ namespace Microsoft.Framework.PackageManager
         public bool NoCache { get; set; }
         public string PackageFolder { get; set; }
         public string GlobalJsonFile { get; set; }
+        public bool IgnoreFailedSources { get; set; }
 
         public ScriptExecutor ScriptExecutor { get; private set; }
 
@@ -465,7 +466,8 @@ namespace Microsoft.Framework.PackageManager
                                 source.UserName,
                                 source.Password,
                                 NoCache,
-                                Reports.Quiet)));
+                                Reports.Quiet,
+                                ignoreFailure: IgnoreFailedSources)));
                 }
             }
         }

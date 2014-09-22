@@ -64,6 +64,9 @@ namespace Microsoft.Framework.PackageManager
                 var optPackageFolder = c.Option("--packages", "Path to restore packages", CommandOptionType.SingleValue);
                 var optQuiet = c.Option("--quiet", "Do not show output such as HTTP request/cache information",
                     CommandOptionType.NoValue);
+                var optIgnoreFailedSources = c.Option("--ignore-failed-sources",
+                    "Ignore failed remote sources if there are local packages meeting version requirements",
+                    CommandOptionType.NoValue);
                 c.HelpOption("-?|-h|--help");
 
                 c.OnExecute(async () =>
@@ -76,6 +79,7 @@ namespace Microsoft.Framework.PackageManager
                     command.FallbackSources = optFallbackSource.Values;
                     command.NoCache = optNoCache.HasValue();
                     command.PackageFolder = optPackageFolder.Value();
+                    command.IgnoreFailedSources = optIgnoreFailedSources.HasValue();
 
                     if (optProxy.HasValue())
                     {
@@ -215,6 +219,9 @@ namespace Microsoft.Framework.PackageManager
                 var optPackageFolder = c.Option("--packages", "Path to restore packages", CommandOptionType.SingleValue);
                 var optQuiet = c.Option("--quiet", "Do not show output such as HTTP request/cache information",
                     CommandOptionType.NoValue);
+                var optIgnoreFailedSources = c.Option("--ignore-failed-sources",
+                    "Ignore failed remote sources if there are local packages meeting version requirements",
+                    CommandOptionType.NoValue);
                 c.HelpOption("-?|-h|--help");
 
                 c.OnExecute(async () =>
@@ -235,6 +242,7 @@ namespace Microsoft.Framework.PackageManager
                     restoreCmd.FallbackSources = optFallbackSource.Values;
                     restoreCmd.NoCache = optNoCache.HasValue();
                     restoreCmd.PackageFolder = optPackageFolder.Value();
+                    restoreCmd.IgnoreFailedSources = optIgnoreFailedSources.HasValue();
 
                     if (optProxy.HasValue())
                     {

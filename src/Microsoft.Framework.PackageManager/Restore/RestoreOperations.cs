@@ -138,7 +138,12 @@ namespace Microsoft.Framework.PackageManager
             if (library.Version.IsSnapshot)
             {
                 var remoteMatch = await FindLibraryBySnapshot(context, library, context.RemoteLibraryProviders);
-                if (remoteMatch != null)
+                if (remoteMatch == null)
+                {
+                    var localMatch = await FindLibraryBySnapshot(context, library, context.LocalLibraryProviders);
+                    return localMatch;
+                }
+                else
                 {
                     var localMatch = await FindLibraryByVersion(context, remoteMatch.Library, context.LocalLibraryProviders);
                     if (localMatch != null && localMatch.Library.Version.Equals(remoteMatch.Library.Version))
@@ -178,7 +183,6 @@ namespace Microsoft.Framework.PackageManager
 
                 return localMatch ?? remoteMatch;
             }
-            return null;
         }
 
         public async Task<WalkProviderMatch> FindLibraryByName(RestoreContext context, string name, IEnumerable<IWalkProvider> providers)

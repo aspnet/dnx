@@ -24,20 +24,24 @@ namespace Microsoft.Framework.PackageManager.Restore.NuGet
 
         private readonly string _baseUri;
         private readonly IReport _report;
-        private HttpSource _httpSource;
-        private TimeSpan _cacheAgeLimitList;
-        private TimeSpan _cacheAgeLimitNupkg;
+        private readonly HttpSource _httpSource;
+        private readonly TimeSpan _cacheAgeLimitList;
+        private readonly TimeSpan _cacheAgeLimitNupkg;
+        private readonly bool _ignoreFailure;
+        private bool _ignored;
 
         public PackageFeed(
             string baseUri,
             string userName,
             string password,
             bool noCache,
-            IReport report)
+            IReport report,
+            bool ignoreFailure)
         {
             _baseUri = baseUri.EndsWith("/") ? baseUri : (baseUri + "/");
             _report = report;
             _httpSource = new HttpSource(baseUri, userName, password, report);
+            _ignoreFailure = ignoreFailure;
             if (noCache)
             {
                 _cacheAgeLimitList = TimeSpan.Zero;
@@ -70,6 +74,11 @@ namespace Microsoft.Framework.PackageManager.Restore.NuGet
         {
             for (int retry = 0; retry != 3; ++retry)
             {
+                if (_ignored)
+                {
+                    return new List<PackageInfo>();
+                }
+
                 try
                 {
                     var uri = _baseUri + "FindPackagesById()?Id='" + id + "'";
@@ -120,6 +129,16 @@ namespace Microsoft.Framework.PackageManager.Restore.NuGet
                 {
                     if (retry == 2)
                     {
+                        // Fail silently by returning empty result list
+                        if (_ignoreFailure)
+                        {
+                            _ignored = true;
+                            _report.WriteLine(
+                                string.Format("Failed to retrieve information from remote source '{0}'".Yellow(),
+                                    _baseUri));
+                            return new List<PackageInfo>();
+                        }
+
                         _report.WriteLine(string.Format("Error: FindPackagesById: {1}\r\n  {0}", ex.Message, id));
                         throw;
                     }

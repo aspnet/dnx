@@ -62,7 +62,8 @@ namespace Microsoft.Framework.PackageManager
                 else
                 {
                     packageFeeds.Add(new PackageFeed(
-                        source.Source, source.UserName, source.Password, _restoreCommand.NoCache, Reports.Quiet));
+                        source.Source, source.UserName, source.Password, _restoreCommand.NoCache, Reports.Quiet,
+                        _restoreCommand.IgnoreFailedSources));
                 }
             }
 
