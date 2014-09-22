@@ -175,10 +175,12 @@ namespace Microsoft.Framework.Runtime.Roslyn
             // If the assembly version is empty then set the version
             if (compilation.Assembly.Identity.Version == emptyVersion)
             {
+                var parseOptions = CSharpParseOptions.Default
+                    .WithLanguageVersion(compilation.LanguageVersion);
                 return compilation.AddSyntaxTrees(new[]
                 {
-                    CSharpSyntaxTree.ParseText("[assembly: System.Reflection.AssemblyVersion(\"" + project.Version.Version + "\")]"),
-                    CSharpSyntaxTree.ParseText("[assembly: System.Reflection.AssemblyInformationalVersion(\"" + project.Version + "\")]")
+                    CSharpSyntaxTree.ParseText("[assembly: System.Reflection.AssemblyVersion(\"" + project.Version.Version + "\")]", parseOptions),
+                    CSharpSyntaxTree.ParseText("[assembly: System.Reflection.AssemblyInformationalVersion(\"" + project.Version + "\")]", parseOptions)
                 });
             }
 

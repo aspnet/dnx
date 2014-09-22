@@ -17,6 +17,8 @@ namespace HelloWorld.Compiler.Preprocess
 
         public void BeforeCompile(IBeforeCompileContext context)
         {
+            var options = CSharpParseOptions.Default
+                .WithLanguageVersion(context.CSharpCompilation.LanguageVersion);
             context.CSharpCompilation = context.CSharpCompilation.AddSyntaxTrees(CSharpSyntaxTree.ParseText(@"
 public class Foo 
 {
@@ -24,7 +26,7 @@ public class Foo
     {
         get { return ""Metaprogrammg!""; } 
     }
-}"));
+}", options));
         }
 
         public void AfterCompile(IAfterCompileContext context)
