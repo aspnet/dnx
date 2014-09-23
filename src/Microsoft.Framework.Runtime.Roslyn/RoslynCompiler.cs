@@ -113,7 +113,9 @@ namespace Microsoft.Framework.Runtime.Roslyn
 
             var newCompilation = assemblyNeutralWorker.Compilation;
 
-            newCompilation = ApplyVersionInfo(newCompilation, project);
+            var parseOptions = new CSharpParseOptions(languageVersion: compilationSettings.LanguageVersion,
+                                                      preprocessorSymbols: compilationSettings.Defines.AsImmutable());
+            newCompilation = ApplyVersionInfo(newCompilation, project, parseOptions);
 
             var compilationContext = new CompilationContext(newCompilation,
                 incomingReferences.Concat(outgoingReferences).ToList(),
@@ -168,15 +170,14 @@ namespace Microsoft.Framework.Runtime.Roslyn
             return compilationContext;
         }
 
-        private static CSharpCompilation ApplyVersionInfo(CSharpCompilation compilation, Project project)
+        private static CSharpCompilation ApplyVersionInfo(CSharpCompilation compilation, Project project,
+            CSharpParseOptions parseOptions)
         {
             var emptyVersion = new Version(0, 0, 0, 0);
 
             // If the assembly version is empty then set the version
             if (compilation.Assembly.Identity.Version == emptyVersion)
             {
-                var parseOptions = CSharpParseOptions.Default
-                    .WithLanguageVersion(compilation.LanguageVersion);
                 return compilation.AddSyntaxTrees(new[]
                 {
                     CSharpSyntaxTree.ParseText("[assembly: System.Reflection.AssemblyVersion(\"" + project.Version.Version + "\")]", parseOptions),
