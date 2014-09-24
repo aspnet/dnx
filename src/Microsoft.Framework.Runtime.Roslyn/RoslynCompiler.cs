@@ -74,11 +74,14 @@ namespace Microsoft.Framework.Runtime.Roslyn
                 sourceFiles = project.PreprocessSourceFiles;
             }
 
+            var parseOptions = new CSharpParseOptions(languageVersion: compilationSettings.LanguageVersion,
+                                                      preprocessorSymbols: compilationSettings.Defines.AsImmutable());
+
             IList<SyntaxTree> trees = GetSyntaxTrees(
                 project,
                 sourceFiles,
-                compilationSettings,
-                incomingSourceReferences);
+                incomingSourceReferences,
+                parseOptions);
 
             var embeddedReferences = incomingReferences.OfType<IMetadataEmbeddedReference>()
                                                        .ToDictionary(a => a.Name, ConvertMetadataReference);
@@ -113,8 +116,6 @@ namespace Microsoft.Framework.Runtime.Roslyn
 
             var newCompilation = assemblyNeutralWorker.Compilation;
 
-            var parseOptions = new CSharpParseOptions(languageVersion: compilationSettings.LanguageVersion,
-                                                      preprocessorSymbols: compilationSettings.Defines.AsImmutable());
             newCompilation = ApplyVersionInfo(newCompilation, project, parseOptions);
 
             var compilationContext = new CompilationContext(newCompilation,
@@ -190,13 +191,10 @@ namespace Microsoft.Framework.Runtime.Roslyn
 
         private IList<SyntaxTree> GetSyntaxTrees(Project project,
                                                  IEnumerable<string> sourceFiles,
-                                                 CompilationSettings compilationSettings,
-                                                 IEnumerable<ISourceReference> sourceReferences)
+                                                 IEnumerable<ISourceReference> sourceReferences,
+                                                 CSharpParseOptions parseOptions)
         {
             var trees = new List<SyntaxTree>();
-
-            var parseOptions = new CSharpParseOptions(languageVersion: compilationSettings.LanguageVersion,
-                                                      preprocessorSymbols: compilationSettings.Defines.AsImmutable());
 
             var dirs = new HashSet<string>();
             dirs.Add(project.ProjectDirectory);
