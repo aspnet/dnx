@@ -137,7 +137,7 @@ namespace Microsoft.Framework.PackageManager.Packing
                 throw new Exception("TODO: unable to resolve project named " + _libraryDescription.Identity.Name);
             }
 
-            var resolver = new DefaultPackagePathResolver(root.PackagesPath);
+            var resolver = new DefaultPackagePathResolver(root.TargetPackagesPath);
 
             var targetNupkg = resolver.GetPackageFileName(project.Name, project.Version);
             TargetPath = resolver.GetInstallPath(project.Name, project.Version);
@@ -260,10 +260,17 @@ root.Configuration));
             File.WriteAllText(wwwRootOutIniFilePath,
                 string.Format("{0}{1}", iniContents, appBaseLine));
 
-            // Copy tools/*.dll into bin to support AspNet.Loader.dll
+            // Copy Microsoft.AspNet.Loader.IIS.Interop/tools/*.dll into bin to support AspNet.Loader.dll
+            var resolver = new DefaultPackagePathResolver(root.SourcePackagesPath);
             foreach (var package in root.Packages)
             {
-                var packageToolsPath = Path.Combine(package.TargetPath, "tools");
+                if (!string.Equals(package.Library.Name, "Microsoft.AspNet.Loader.IIS.Interop"))
+                {
+                    continue;
+                }
+
+                var packagePath = resolver.GetInstallPath(package.Library.Name, package.Library.Version);
+                var packageToolsPath = Path.Combine(packagePath, "tools");
                 if (Directory.Exists(packageToolsPath))
                 {
                     foreach (var packageToolFile in Directory.EnumerateFiles(packageToolsPath, "*.dll").Select(Path.GetFileName))

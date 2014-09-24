@@ -25,7 +25,7 @@ namespace Microsoft.Framework.PackageManager.Packing
             _frameworkName = frameworkName;
             _kreNupkgPath = kreNupkgPath;
             Name = Path.GetFileName(Path.GetDirectoryName(_kreNupkgPath));
-            TargetPath = Path.Combine(root.PackagesPath, Name);
+            TargetPath = Path.Combine(root.TargetPackagesPath, Name);
         }
 
         public string Name { get; private set; }

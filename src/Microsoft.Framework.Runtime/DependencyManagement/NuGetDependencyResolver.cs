@@ -24,12 +24,18 @@ namespace Microsoft.Framework.Runtime
 
         private readonly IFrameworkReferenceResolver _frameworkReferenceResolver;
 
-        public NuGetDependencyResolver(string packagesPath, IFrameworkReferenceResolver frameworkReferenceResolver)
+        private readonly GlobalSettings _globalSettings;
+
+        public NuGetDependencyResolver(string packagesPath, IFrameworkReferenceResolver frameworkReferenceResolver, string rootDir = null)
         {
             // Runtime already ensures case-sensitivity, so we don't need package ids in accurate casing here
             _repository = new PackageRepository(packagesPath, checkPackageIdCase: false);
             _frameworkReferenceResolver = frameworkReferenceResolver;
             Dependencies = Enumerable.Empty<LibraryDescription>();
+            if (!string.IsNullOrEmpty(rootDir))
+            {
+                GlobalSettings.TryGetGlobalSettings(rootDir, out _globalSettings);
+            }
         }
 
         public IDictionary<string, PackageAssembly> PackageAssemblyLookup
@@ -174,26 +180,46 @@ namespace Microsoft.Framework.Runtime
                     _packageAssemblyLookup[assemblyInfo.Name] = new PackageAssembly()
                     {
                         Path = assemblyInfo.Path,
+                        RelativePath = assemblyInfo.RelativePath,
                         Library = dependency
                     };
                 }
             }
         }
 
-        private static string ResolvePackagePath(IPackagePathResolver defaultResolver,
+        private string ResolvePackagePath(IPackagePathResolver defaultResolver,
                                                  IEnumerable<IPackagePathResolver> cacheResolvers,
                                                  IPackage package)
         {
             var defaultHashPath = defaultResolver.GetHashPath(package.Id, package.Version);
+            string expectedHash = null;
+            if (File.Exists(defaultHashPath))
+            {
+                expectedHash = File.ReadAllText(defaultHashPath);
+            }
+            else if (_globalSettings != null)
+            {
+                var library = new Library()
+                {
+                    Name = package.Id,
+                    Version = package.Version
+                };
+
+                _globalSettings.PackageHashes.TryGetValue(library, out expectedHash);
+            }
+
+            if (string.IsNullOrEmpty(expectedHash))
+            {
+                return defaultResolver.GetInstallPath(package.Id, package.Version);
+            }
 
             foreach (var resolver in cacheResolvers)
             {
                 var cacheHashFile = resolver.GetHashPath(package.Id, package.Version);
 
                 // REVIEW: More efficient compare?
-                if (File.Exists(defaultHashPath) &&
-                    File.Exists(cacheHashFile) &&
-                    File.ReadAllText(defaultHashPath) == File.ReadAllText(cacheHashFile))
+                if (File.Exists(cacheHashFile) &&
+                    File.ReadAllText(cacheHashFile) == expectedHash)
                 {
                     return resolver.GetInstallPath(package.Id, package.Version);
                 }
@@ -341,7 +367,8 @@ namespace Microsoft.Framework.Runtime
                     {
                         // Remove the .dll extension
                         Name = Path.GetFileNameWithoutExtension(reference.Name),
-                        Path = fileName
+                        Path = fileName,
+                        RelativePath = reference.Path
                     });
                 }
             }
@@ -432,6 +459,8 @@ namespace Microsoft.Framework.Runtime
             public string Name { get; set; }
 
             public string Path { get; set; }
+
+            public string RelativePath { get; set; }
         }
     }
 }

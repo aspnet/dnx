@@ -29,7 +29,7 @@ namespace Microsoft.Framework.Runtime
             PackagesDirectory = packagesDirectory ?? NuGetDependencyResolver.ResolveRepositoryPath(RootDirectory);
 
             var referenceAssemblyDependencyResolver = new ReferenceAssemblyDependencyResolver(FrameworkReferenceResolver);
-            NuGetDependencyProvider = new NuGetDependencyResolver(PackagesDirectory, FrameworkReferenceResolver);
+            NuGetDependencyProvider = new NuGetDependencyResolver(PackagesDirectory, FrameworkReferenceResolver, RootDirectory);
             var gacDependencyResolver = new GacDependencyResolver();
             ProjectDepencyProvider = new ProjectReferenceDependencyProvider(ProjectResolver, FrameworkReferenceResolver);
             UnresolvedDependencyProvider = new UnresolvedDependencyProvider();

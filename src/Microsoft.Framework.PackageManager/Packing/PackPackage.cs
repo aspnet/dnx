@@ -2,22 +2,23 @@
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
-using Microsoft.Framework.Runtime;
+using System.Linq;
+using System.Runtime.Versioning;
 using System.Security.Cryptography;
+using Microsoft.Framework.Runtime;
 using NuGet;
 
 namespace Microsoft.Framework.PackageManager.Packing
 {
     public class PackPackage
     {
-        private readonly NuGetDependencyResolver _nugetDependencyResolver;
         private readonly LibraryDescription _libraryDescription;
 
-        public PackPackage(NuGetDependencyResolver nugetDependencyResolver, LibraryDescription libraryDescription)
+        public PackPackage(LibraryDescription libraryDescription)
         {
-            _nugetDependencyResolver = nugetDependencyResolver;
             _libraryDescription = libraryDescription;
         }
 
@@ -27,52 +28,80 @@ namespace Microsoft.Framework.PackageManager.Packing
 
         public void Emit(PackRoot root)
         {
-            var package = _nugetDependencyResolver.FindCandidate(
-                _libraryDescription.Identity.Name,
-                _libraryDescription.Identity.Version);
+            foreach (var context in root.LibraryDependencyContexts[Library])
+            {
+                Console.WriteLine("Packing nupkg dependency {0} for {1}", Library, context.FrameworkName);
+                Emit(root, context.PackageAssemblies[Library.Name]);
+            }
+        }
 
-            Console.WriteLine("Packing nupkg dependency {0} {1}", package.Id, package.Version);
+        private void Emit(PackRoot root, IEnumerable<PackageAssembly> assemblies)
+        {
+            var resolver = new DefaultPackagePathResolver(root.TargetPackagesPath);
 
-            var resolver = new DefaultPackagePathResolver(root.PackagesPath);
+            TargetPath = resolver.GetInstallPath(Library.Name, Library.Version);
 
-            TargetPath = resolver.GetInstallPath(package.Id, package.Version);
+            Directory.CreateDirectory(TargetPath);
 
-            if (Directory.Exists(TargetPath))
+            // Copy nuspec
+            var nuspecName = resolver.GetManifestFileName(Library.Name, Library.Version);
+            CopyFile(Path.Combine(_libraryDescription.Path, nuspecName), Path.Combine(TargetPath, nuspecName), root.Overwrite);
+
+            // Copy assemblies for current framework
+            foreach (var assembly in assemblies)
+            {
+                var targetAssemblyPath = Path.Combine(TargetPath, assembly.RelativePath);
+                CopyFile(assembly.Path, targetAssemblyPath, root.Overwrite);
+            }
+
+            // Special cases
+            var specialFolders = new[] { "native", "InteropAssemblies", "redist", Path.Combine("lib", "contract") };
+            foreach (var folder in specialFolders)
+            {
+                var srcFolder = Path.Combine(_libraryDescription.Path, folder);
+                var targetFolder = Path.Combine(TargetPath, folder);
+                CopyFolder(root, srcFolder, targetFolder);
+            }
+        }
+
+        private static void CopyFolder(PackRoot root, string srcFolder, string targetFolder)
+        {
+            if (!Directory.Exists(srcFolder))
+            {
+                return;
+            }
+
+            if (Directory.Exists(targetFolder))
             {
                 if (root.Overwrite)
                 {
-                    root.Operations.Delete(TargetPath);
+                    Directory.Delete(targetFolder);
                 }
                 else
                 {
-                    Console.WriteLine("  {0} already exists.", TargetPath);
+                    Console.WriteLine("  {0} already exists", targetFolder);
                     return;
                 }
             }
 
-            Console.WriteLine("  Target {0}", TargetPath);
+            Console.WriteLine("  Target {0}", targetFolder);
+            Directory.CreateDirectory(targetFolder);
+            root.Operations.Copy(srcFolder, targetFolder);
+        }
 
-            var targetNupkgPath = resolver.GetPackageFilePath(package.Id, package.Version);
-            var hashPath = resolver.GetHashPath(package.Id, package.Version);
+        private static void CopyFile(string srcPath, string targetPath, bool overwrite)
+        {
+            var targetFolder = Path.GetDirectoryName(targetPath);
+            Directory.CreateDirectory(targetFolder);
 
-            using (var sourceStream = package.GetStream())
+            if (!overwrite && File.Exists(targetPath))
             {
-                using (var archive = new ZipArchive(sourceStream, ZipArchiveMode.Read))
-                {
-                    root.Operations.ExtractNupkg(archive, TargetPath);
-                }
+                Console.WriteLine("  {0} already exists", targetPath);
+                return;
             }
-            using (var sourceStream = package.GetStream())
-            {
-                using (var targetStream = new FileStream(targetNupkgPath, FileMode.Create, FileAccess.Write, FileShare.None))
-                {
-                    sourceStream.CopyTo(targetStream);
-                }
 
-                sourceStream.Seek(0, SeekOrigin.Begin);
-                var sha512Bytes = SHA512.Create().ComputeHash(sourceStream);
-                File.WriteAllText(hashPath, Convert.ToBase64String(sha512Bytes));
-            }
+            Console.WriteLine("  Target {0}", targetPath);
+            File.Copy(srcPath, targetPath);
         }
     }
 }

@@ -7,8 +7,6 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Runtime.Versioning;
-using Microsoft.Framework.Runtime;
-using NuGet;
 
 namespace Microsoft.Framework.PackageManager.Packing
 {
@@ -38,66 +36,6 @@ namespace Microsoft.Framework.PackageManager.Packing
             }
 
             return Path.GetFullPath(projectDir.TrimEnd(Path.DirectorySeparatorChar));
-        }
-
-        public class DependencyContext
-        {
-            public DependencyContext(string projectDirectory, string configuration, FrameworkName targetFramework)
-            {
-                var cacheContextAccessor = new CacheContextAccessor();
-                var cache = new Cache(cacheContextAccessor);
-
-                var applicationHostContext = new ApplicationHostContext(
-                    serviceProvider: null,
-                    projectDirectory: projectDirectory,
-                    packagesDirectory: null,
-                    configuration: configuration,
-                    targetFramework: targetFramework,
-                    cache: cache,
-                    cacheContextAccessor: cacheContextAccessor);
-
-                ProjectResolver = applicationHostContext.ProjectResolver;
-                NuGetDependencyResolver = applicationHostContext.NuGetDependencyProvider;
-                ProjectReferenceDependencyProvider = applicationHostContext.ProjectDepencyProvider;
-                UnresolvedDependencyProvider = applicationHostContext.UnresolvedDependencyProvider;
-                DependencyWalker = applicationHostContext.DependencyWalker;
-                FrameworkName = targetFramework;
-            }
-
-            public IProjectResolver ProjectResolver { get; set; }
-            public NuGetDependencyResolver NuGetDependencyResolver { get; set; }
-            public ProjectReferenceDependencyProvider ProjectReferenceDependencyProvider { get; set; }
-            public UnresolvedDependencyProvider UnresolvedDependencyProvider { get; set; }
-            public DependencyWalker DependencyWalker { get; set; }
-            public FrameworkName FrameworkName { get; set; }
-
-            public void Walk(string projectName, SemanticVersion projectVersion)
-            {
-                DependencyWalker.Walk(projectName, projectVersion, FrameworkName);
-            }
-
-            public static FrameworkName GetFrameworkNameForRuntime(string runtime)
-            {
-                var parts = runtime.Split(new[] { '.' }, 2);
-                if (parts.Length != 2)
-                {
-                    return null;
-                }
-                parts = parts[0].Split(new[] { '-' }, 3);
-                if (parts.Length != 3)
-                {
-                    return null;
-                }
-                switch (parts[1].ToLowerInvariant())
-                {
-                    case "mono":
-                    case "clr":
-                        return VersionUtility.ParseFrameworkName("aspnet50");
-                    case "coreclr":
-                        return VersionUtility.ParseFrameworkName("aspnetcore50");
-                }
-                return null;
-            }
         }
 
         public bool Package()
@@ -140,7 +78,7 @@ namespace Microsoft.Framework.PackageManager.Packing
 
             var projectDir = project.ProjectDirectory;
 
-            var dependencyContexts = new List<DependencyContext>();
+            var frameworkContexts = new Dictionary<FrameworkName, DependencyContext>();
 
             var root = new PackRoot(project, outputPath, _hostServices)
             {
@@ -192,24 +130,43 @@ namespace Microsoft.Framework.PackageManager.Packing
                     return false;
                 }
 
-                if (!dependencyContexts.Any(dc => dc.FrameworkName == frameworkName))
+                if (!project.GetTargetFrameworks().Any(x => x.FrameworkName == frameworkName))
                 {
-                    var dependencyContext = new DependencyContext(projectDir, _options.Configuration, frameworkName);
-                    dependencyContext.Walk(project.Name, project.Version);
-                    dependencyContexts.Add(dependencyContext);
+                    Console.WriteLine(string.Format("'{0}' is not a target framework of the project being packed",
+                        frameworkName));
+                    return false;
+                }
+
+                if (!frameworkContexts.ContainsKey(frameworkName))
+                {
+                    frameworkContexts[frameworkName] = CreateDependencyContext(project, frameworkName);
                 }
             }
 
-            if (!dependencyContexts.Any())
+            // If there is no target framework filter specified with '--runtime',
+            // the packed output targets all frameworks specified in project.json
+            if (!_options.Runtimes.Any())
             {
-                var frameworkName = DependencyContext.GetFrameworkNameForRuntime("KRE-CLR-x86.*");
-                var dependencyContext = new DependencyContext(projectDir, _options.Configuration, frameworkName);
-                dependencyContext.Walk(project.Name, project.Version);
-                dependencyContexts.Add(dependencyContext);
+                foreach (var frameworkInfo in project.GetTargetFrameworks())
+                {
+                    if (!frameworkContexts.ContainsKey(frameworkInfo.FrameworkName))
+                    {
+                        frameworkContexts[frameworkInfo.FrameworkName] =
+                            CreateDependencyContext(project, frameworkInfo.FrameworkName);
+                    }
+                }
             }
 
+            if (!frameworkContexts.Any())
+            {
+                var frameworkName = DependencyContext.GetFrameworkNameForRuntime("KRE-CLR-x86.*");
+                frameworkContexts[frameworkName] = CreateDependencyContext(project, frameworkName);
+            }
+
+            root.SourcePackagesPath = frameworkContexts.First().Value.PackagesDirectory;
+
             bool anyUnresolvedDependency = false;
-            foreach (var dependencyContext in dependencyContexts)
+            foreach (var dependencyContext in frameworkContexts.Values)
             {
                 // If there's any unresolved dependencies then complain and keep working
                 if (dependencyContext.UnresolvedDependencyProvider.UnresolvedDependencies.Any())
@@ -222,11 +179,16 @@ namespace Microsoft.Framework.PackageManager.Packing
 
                 foreach (var libraryDescription in dependencyContext.NuGetDependencyResolver.Dependencies)
                 {
-                    if (!root.Packages.Any(p => p.Library == libraryDescription.Identity))
+                    IList<DependencyContext> contexts;
+                    if (!root.LibraryDependencyContexts.TryGetValue(libraryDescription.Identity, out contexts))
                     {
-                        root.Packages.Add(new PackPackage(dependencyContext.NuGetDependencyResolver, libraryDescription));
+                        root.Packages.Add(new PackPackage(libraryDescription));
+                        contexts = new List<DependencyContext>();
+                        root.LibraryDependencyContexts[libraryDescription.Identity] = contexts;
                     }
+                    contexts.Add(dependencyContext);
                 }
+
                 foreach (var libraryDescription in dependencyContext.ProjectReferenceDependencyProvider.Dependencies)
                 {
                     if (!root.Projects.Any(p => p.Name == libraryDescription.Identity.Name))
@@ -245,7 +207,7 @@ namespace Microsoft.Framework.PackageManager.Packing
             NativeImageGenerator nativeImageGenerator = null;
             if (_options.Native)
             {
-                nativeImageGenerator = NativeImageGenerator.Create(_options, root, dependencyContexts);
+                nativeImageGenerator = NativeImageGenerator.Create(_options, root, frameworkContexts.Values);
                 if (nativeImageGenerator == null)
                 {
                     Console.WriteLine("Fail to initiate native image generation process.");
@@ -285,6 +247,13 @@ namespace Microsoft.Framework.PackageManager.Packing
 
             root.Runtimes.Add(new PackRuntime(root, frameworkName, kreNupkgPath));
             return true;
+        }
+
+        private DependencyContext CreateDependencyContext(Runtime.Project project, FrameworkName frameworkName)
+        {
+            var dependencyContext = new DependencyContext(project.ProjectDirectory, _options.Configuration, frameworkName);
+            dependencyContext.Walk(project.Name, project.Version);
+            return dependencyContext;
         }
     }
 }

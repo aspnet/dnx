@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Runtime.Versioning;
 using Microsoft.Framework.Runtime;
 using Newtonsoft.Json.Linq;
 using NuGet;
@@ -24,12 +25,14 @@ namespace Microsoft.Framework.PackageManager.Packing
             Runtimes = new List<PackRuntime>();
             OutputPath = outputPath;
             HostServices = hostServices;
-            PackagesPath = Path.Combine(outputPath, AppRootName, "packages");
+            TargetPackagesPath = Path.Combine(outputPath, AppRootName, "packages");
             Operations = new PackOperations();
+            LibraryDependencyContexts = new Dictionary<Library, IList<DependencyContext>>();
         }
 
         public string OutputPath { get; private set; }
-        public string PackagesPath { get; private set; }
+        public string TargetPackagesPath { get; private set; }
+        public string SourcePackagesPath { get; set; }
 
         public bool Overwrite { get; set; }
         public bool NoSource { get; set; }
@@ -38,6 +41,7 @@ namespace Microsoft.Framework.PackageManager.Packing
         public IList<PackRuntime> Runtimes { get; set; }
         public IList<PackProject> Projects { get; private set; }
         public IList<PackPackage> Packages { get; private set; }
+        public IDictionary<Library, IList<DependencyContext>> LibraryDependencyContexts { get; private set; }
 
         public PackOperations Operations { get; private set; }
 
@@ -114,29 +118,26 @@ namespace Microsoft.Framework.PackageManager.Packing
             var rootDirectory = ProjectResolver.ResolveRootDirectory(_project.ProjectDirectory);
             var projectResolver = new ProjectResolver(_project.ProjectDirectory, rootDirectory);
             var packagesDir = NuGetDependencyResolver.ResolveRepositoryPath(rootDirectory);
-
-            var nugetDependencyResolver = new NuGetDependencyResolver(packagesDir, new EmptyFrameworkResolver());
-            var pathResolver = new DefaultPackagePathResolver(PackagesPath);
-
+            var pathResolver = new DefaultPackagePathResolver(packagesDir);
             var dependenciesObj = new JObject();
-
 
             // Generate SHAs for all package dependencies
             foreach (var deploymentPackage in Packages)
             {
-                // Use the exactly same approach in PackPackage.Emit() to
-                // find the package actually in use
-                var package = nugetDependencyResolver.FindCandidate(
-                    deploymentPackage.Library.Name,
-                    deploymentPackage.Library.Version);
+                var library = deploymentPackage.Library;
+                var shaFilePath = pathResolver.GetHashPath(library.Name, library.Version);
 
-                var shaFilePath = pathResolver.GetHashPath(package.Id, package.Version);
+                if (!File.Exists(shaFilePath))
+                {
+                    throw new FileNotFoundException("Expected SHA file doesn't exist", shaFilePath);
+                }
+
                 var sha = File.ReadAllText(shaFilePath);
 
                 var shaObj = new JObject();
-                shaObj.Add(new JProperty("version", package.Version.ToString()));
-                shaObj.Add(new JProperty("sha", sha));
-                dependenciesObj.Add(new JProperty(package.Id, shaObj));
+                shaObj["version"] = library.Version.ToString();
+                shaObj["sha"] = sha;
+                dependenciesObj[library.Name] = shaObj;
             }
 
             // If "--no-source" is specified, project dependencies are packed to packages
@@ -181,7 +182,7 @@ namespace Microsoft.Framework.PackageManager.Packing
 
             rootObject["dependencies"] = dependenciesObj;
             rootObject["packages"] = PathUtility.GetRelativePath(PathUtility.EnsureTrailingSlash(applicationRoot),
-                                                                 PackagesPath);
+                                                                 TargetPackagesPath);
 
             File.WriteAllText(Path.Combine(applicationRoot, GlobalSettings.GlobalFileName),
                 rootObject.ToString());

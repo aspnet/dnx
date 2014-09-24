@@ -8,6 +8,7 @@ namespace Microsoft.Framework.Runtime
     public class PackageAssembly
     {
         public string Path { get; set; }
+        public string RelativePath { get; set; }
         public LibraryDescription Library { get; set; }
     }
 }

@@ -110,7 +110,7 @@ namespace Microsoft.Framework.PackageManager.Packing
         /// This is the factory method to instantiate a PackNativeManager, if parameters are in invalid state and native
         /// generation cannot be performed, it would return null
         /// </summary>
-        public static NativeImageGenerator Create(PackOptions options, PackRoot root, IEnumerable<PackManager.DependencyContext> contexts)
+        public static NativeImageGenerator Create(PackOptions options, PackRoot root, IEnumerable<DependencyContext> contexts)
         {
             if (options.Runtimes.Count() == 0)
             {
