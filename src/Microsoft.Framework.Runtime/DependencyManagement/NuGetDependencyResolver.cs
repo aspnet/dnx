@@ -97,6 +97,13 @@ namespace Microsoft.Framework.Runtime
                 }
             }
 
+            // TODO: Remove this when we do #596
+            // ASP.NET Core isn't compatible with generic PCL profiles
+            if (string.Equals(targetFramework.Identifier, VersionUtility.AspNetCoreFrameworkIdentifier, StringComparison.OrdinalIgnoreCase))
+            {
+                yield break;
+            }
+
             IEnumerable<FrameworkAssemblyReference> frameworkAssemblies;
             if (VersionUtility.TryGetCompatibleItems(targetFramework, package.FrameworkAssemblies, out frameworkAssemblies))
             {
