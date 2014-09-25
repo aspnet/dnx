@@ -88,6 +88,12 @@ namespace Microsoft.Framework.Runtime
             foreach (var d in dependencies)
             {
                 d.IsGacOrFrameworkReference = _frameworkReferenceResolver.TryGetAssembly(d.Name, targetFramework, out var path);
+
+                // We need to fix up the version here since
+                if (d.IsGacOrFrameworkReference)
+                {
+                    d.Version = VersionUtility.GetAssemblyVersion(path);
+                }
             }
 
             return new LibraryDescription
