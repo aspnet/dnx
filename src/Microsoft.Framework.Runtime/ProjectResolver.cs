@@ -68,7 +68,7 @@ namespace Microsoft.Framework.Runtime
 
             while (di.Parent != null)
             {
-                if (di.EnumerateFiles("*." + GlobalSettings.GlobalFileName).Any() ||
+                if (di.EnumerateFiles(GlobalSettings.GlobalFileName).Any() ||
                     di.EnumerateFiles("*.sln").Any() ||
                     di.EnumerateDirectories("packages").Any() ||
                     di.EnumerateDirectories(".git").Any())
