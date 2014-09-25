@@ -169,7 +169,8 @@ namespace Microsoft.Framework.PackageManager
                     new ProjectReferenceDependencyProvider(
                         new ProjectResolver(
                             projectDirectory,
-                            rootDirectory))));
+                            rootDirectory),
+                        new EmptyFrameworkResolver())));
 
             localProviders.Add(
                 new LocalWalkProvider(

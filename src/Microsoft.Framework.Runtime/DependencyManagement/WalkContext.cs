@@ -244,7 +244,7 @@ namespace Microsoft.Framework.Runtime
                 .Select(x => new
                 {
                     Resolver = x,
-                    Details = x.GetDescription(packageKey.Name, packageKey.Version, frameworkName)
+                    Details = x.GetDescription(packageKey, frameworkName)
                 })
                 .FirstOrDefault(x => x.Details != null);
 

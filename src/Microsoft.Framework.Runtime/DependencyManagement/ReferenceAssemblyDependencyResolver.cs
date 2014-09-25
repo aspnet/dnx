@@ -36,8 +36,16 @@ namespace Microsoft.Framework.Runtime
             return Enumerable.Empty<string>();
         }
 
-        public LibraryDescription GetDescription(string name, SemanticVersion version, FrameworkName targetFramework)
+        public LibraryDescription GetDescription(Library library, FrameworkName targetFramework)
         {
+            if (!library.IsGacOrFrameworkReference)
+            {
+                return null;
+            }
+
+            var name = library.Name;
+            var version = library.Version;
+
             string path;
             if (!FrameworkResolver.TryGetAssembly(name, targetFramework, out path))
             {
@@ -52,7 +60,13 @@ namespace Microsoft.Framework.Runtime
 
                 return new LibraryDescription
                 {
-                    Identity = new Library { Name = name, Version = assemblyVersion },
+                    Identity = new Library
+                    {
+                        Name = name,
+                        Version = assemblyVersion,
+                        IsGacOrFrameworkReference = true,
+                        IsImplicit = library.IsImplicit
+                    },
                     Dependencies = Enumerable.Empty<Library>()
                 };
             }

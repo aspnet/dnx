@@ -13,10 +13,12 @@ namespace Microsoft.Framework.Runtime
     public class ProjectReferenceDependencyProvider : IDependencyProvider
     {
         private readonly IProjectResolver _projectResolver;
+        private readonly IFrameworkReferenceResolver _frameworkReferenceResolver;
 
-        public ProjectReferenceDependencyProvider(IProjectResolver projectResolver)
+        public ProjectReferenceDependencyProvider(IProjectResolver projectResolver, IFrameworkReferenceResolver frameworkReferenceResolver)
         {
             _projectResolver = projectResolver;
+            _frameworkReferenceResolver = frameworkReferenceResolver;
             Dependencies = Enumerable.Empty<LibraryDescription>();
         }
 
@@ -27,8 +29,16 @@ namespace Microsoft.Framework.Runtime
             return _projectResolver.SearchPaths.Select(p => Path.Combine(p, "{name}", "project.json"));
         }
 
-        public LibraryDescription GetDescription(string name, SemanticVersion version, FrameworkName targetFramework)
+        public LibraryDescription GetDescription(Library library, FrameworkName targetFramework)
         {
+            if (library.IsGacOrFrameworkReference)
+            {
+                return null;
+            }
+
+            var name = library.Name;
+            var version = library.Version;
+
             Project project;
 
             // Can't find a project file with the name so bail
@@ -42,19 +52,54 @@ namespace Microsoft.Framework.Runtime
 
             if (VersionUtility.IsDesktop(targetFramework))
             {
-                // mscorlib is ok
-                targetFrameworkDependencies.Add(new Library { Name = "mscorlib" });
+                targetFrameworkDependencies.Add(new Library
+                {
+                    Name = "mscorlib",
+                    IsGacOrFrameworkReference = true,
+                    IsImplicit = true
+                });
 
-                // TODO: Remove these references (but we need to update the dependent projects first)
-                targetFrameworkDependencies.Add(new Library { Name = "System" });
-                targetFrameworkDependencies.Add(new Library { Name = "System.Core" });
-                targetFrameworkDependencies.Add(new Library { Name = "Microsoft.CSharp" });
+                targetFrameworkDependencies.Add(new Library
+                {
+                    Name = "System",
+                    IsGacOrFrameworkReference = true,
+                    IsImplicit = true
+                });
+
+                targetFrameworkDependencies.Add(new Library
+                {
+                    Name = "System.Core",
+                    IsGacOrFrameworkReference = true,
+                    IsImplicit = true
+                });
+
+                targetFrameworkDependencies.Add(new Library
+                {
+                    Name = "Microsoft.CSharp",
+                    IsGacOrFrameworkReference = true,
+                    IsImplicit = true
+                });
+            }
+
+            var dependencies = project.Dependencies.Concat(targetFrameworkDependencies).ToList();
+
+            // TODO: Remove this code once there's a new build of the KRE
+            // We need to keep this for bootstrapping to continue working
+            foreach (var d in dependencies)
+            {
+                d.IsGacOrFrameworkReference = d.Version == null &&
+                    _frameworkReferenceResolver.TryGetAssembly(d.Name, targetFramework, out var path);
             }
 
             return new LibraryDescription
             {
-                Identity = new Library { Name = project.Name, Version = project.Version },
-                Dependencies = project.Dependencies.Concat(targetFrameworkDependencies),
+                Identity = new Library
+                {
+                    Name = project.Name,
+                    Version = project.Version,
+                    IsImplicit = library.IsImplicit
+                },
+                Dependencies = dependencies,
             };
         }
 

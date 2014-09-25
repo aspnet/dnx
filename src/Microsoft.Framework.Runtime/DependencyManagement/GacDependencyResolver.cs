@@ -30,8 +30,13 @@ namespace Microsoft.Framework.Runtime
             return GetGacSearchPaths().Select(p => Path.Combine(p, "{name}", "{version}", "{name}.dll"));
         }
 
-        public LibraryDescription GetDescription(string name, SemanticVersion version, FrameworkName targetFramework)
+        public LibraryDescription GetDescription(Library library, FrameworkName targetFramework)
         {
+            if (!library.IsGacOrFrameworkReference)
+            {
+                return null;
+            }
+
             if (PlatformHelper.IsMono)
             {
                 return null;
@@ -41,6 +46,9 @@ namespace Microsoft.Framework.Runtime
             {
                 return null;
             }
+
+            var name = library.Name;
+            var version = library.Version;
 
             string path;
             if (!TryResolvePartialName(name, out path))
@@ -56,7 +64,13 @@ namespace Microsoft.Framework.Runtime
 
                 return new LibraryDescription
                 {
-                    Identity = new Library { Name = name, Version = assemblyVersion },
+                    Identity = new Library
+                    {
+                        Name = name,
+                        Version = assemblyVersion,
+                        IsGacOrFrameworkReference = true,
+                        IsImplicit = library.IsImplicit
+                    },
                     Dependencies = Enumerable.Empty<Library>()
                 };
             }

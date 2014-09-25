@@ -130,6 +130,11 @@ namespace Microsoft.Framework.PackageManager
                 return null;
             }
 
+            if (library.IsGacOrFrameworkReference)
+            {
+                return null;
+            }
+
             if (library.Version.IsSnapshot)
             {
                 var remoteMatch = await FindLibraryBySnapshot(context, library, context.RemoteLibraryProviders);

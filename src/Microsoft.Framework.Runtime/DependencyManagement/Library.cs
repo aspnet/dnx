@@ -13,6 +13,10 @@ namespace Microsoft.Framework.Runtime
 
         public SemanticVersion Version { get; set; }
 
+        public bool IsGacOrFrameworkReference { get; set; }
+
+        public bool IsImplicit { get; set; }
+
         public override string ToString()
         {
             return Name + " " + Version + (Version != null && Version.IsSnapshot ? "-*" : string.Empty);

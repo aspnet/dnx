@@ -320,7 +320,7 @@ namespace Microsoft.Framework.Runtime
 
             project.BuildTargetFrameworksAndConfigurations(rawProject);
 
-            PopulateDependencies(project.Dependencies, rawProject);
+            PopulateDependencies(project.Dependencies, rawProject, "dependencies");
 
             return project;
         }
@@ -358,9 +358,9 @@ namespace Microsoft.Framework.Runtime
             return sourceDescription.Split(_sourceSeparator, StringSplitOptions.RemoveEmptyEntries);
         }
 
-        private static void PopulateDependencies(IList<Library> results, JObject settings)
+        private static void PopulateDependencies(IList<Library> results, JObject settings, string propertyName)
         {
-            var dependencies = settings["dependencies"] as JObject;
+            var dependencies = settings[propertyName] as JObject;
             if (dependencies != null)
             {
                 foreach (var dependency in dependencies)
@@ -526,12 +526,22 @@ namespace Microsoft.Framework.Runtime
             var targetFrameworkInformation = new TargetFrameworkInformation
             {
                 FrameworkName = frameworkName,
-                Dependencies = new List<Library>()
+                Dependencies = new List<Library>(),
             };
 
             var properties = targetFramework.Value.Value<JObject>();
 
-            PopulateDependencies(targetFrameworkInformation.Dependencies, properties);
+            PopulateDependencies(targetFrameworkInformation.Dependencies, properties, "dependencies");
+
+            var frameworkAssemblies = new List<Library>();
+            PopulateDependencies(frameworkAssemblies, properties, "frameworkAssemblies");
+
+            foreach (var assembly in frameworkAssemblies)
+            {
+                assembly.IsGacOrFrameworkReference = true;
+            }
+
+            targetFrameworkInformation.Dependencies.AddRange(frameworkAssemblies);
 
             var binNode = properties["bin"];
 

@@ -31,14 +31,14 @@ namespace Microsoft.Framework.Runtime
             var referenceAssemblyDependencyResolver = new ReferenceAssemblyDependencyResolver(FrameworkReferenceResolver);
             NuGetDependencyProvider = new NuGetDependencyResolver(PackagesDirectory, FrameworkReferenceResolver);
             var gacDependencyResolver = new GacDependencyResolver();
-            ProjectDepencyProvider = new ProjectReferenceDependencyProvider(ProjectResolver);
+            ProjectDepencyProvider = new ProjectReferenceDependencyProvider(ProjectResolver, FrameworkReferenceResolver);
             UnresolvedDependencyProvider = new UnresolvedDependencyProvider();
 
             DependencyWalker = new DependencyWalker(new IDependencyProvider[] {
                 ProjectDepencyProvider,
+                NuGetDependencyProvider,
                 referenceAssemblyDependencyResolver,
                 gacDependencyResolver,
-                NuGetDependencyProvider,
                 UnresolvedDependencyProvider
             });
 

@@ -41,7 +41,13 @@ namespace Microsoft.Framework.PackageManager
 
         public Task<WalkProviderMatch> FindLibraryByName(string name, FrameworkName targetFramework)
         {
-            var description = _dependencyProvider.GetDescription(name, new SemanticVersion(new Version(0, 0)), targetFramework);
+            var library = new Library
+            {
+                Name = name,
+                Version = new SemanticVersion(new Version(0, 0))
+            };
+
+            var description = _dependencyProvider.GetDescription(library, targetFramework);
             if (description == null)
             {
                 return Task.FromResult<WalkProviderMatch>(null);
@@ -56,7 +62,7 @@ namespace Microsoft.Framework.PackageManager
 
         public Task<WalkProviderMatch> FindLibraryByVersion(Library library, FrameworkName targetFramework)
         {
-            var description = _dependencyProvider.GetDescription(library.Name, library.Version, targetFramework);
+            var description = _dependencyProvider.GetDescription(library, targetFramework);
             if (description == null)
             {
                 return Task.FromResult<WalkProviderMatch>(null);
@@ -71,7 +77,7 @@ namespace Microsoft.Framework.PackageManager
 
         public Task<WalkProviderMatch> FindLibraryBySnapshot(Library library, FrameworkName targetFramework)
         {
-            var description = _dependencyProvider.GetDescription(library.Name, library.Version, targetFramework);
+            var description = _dependencyProvider.GetDescription(library, targetFramework);
             if (description == null)
             {
                 return Task.FromResult<WalkProviderMatch>(null);
@@ -86,7 +92,7 @@ namespace Microsoft.Framework.PackageManager
 
         public Task<IEnumerable<Library>> GetDependencies(WalkProviderMatch match, FrameworkName targetFramework)
         {
-            var description = _dependencyProvider.GetDescription(match.Library.Name, match.Library.Version, targetFramework);
+            var description = _dependencyProvider.GetDescription(match.Library, targetFramework);
             return Task.FromResult(description.Dependencies);
         }
 

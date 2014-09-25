@@ -50,15 +50,28 @@ namespace Microsoft.Framework.Runtime
             };
         }
 
-        public LibraryDescription GetDescription(string name, SemanticVersion version, FrameworkName targetFramework)
+        public LibraryDescription GetDescription(Library library, FrameworkName targetFramework)
         {
+            if (library.IsGacOrFrameworkReference)
+            {
+                return null;
+            }
+
+            var name = library.Name;
+            var version = library.Version;
+
             var package = FindCandidate(name, version);
 
             if (package != null)
             {
                 return new LibraryDescription
                 {
-                    Identity = new Library { Name = package.Id, Version = package.Version },
+                    Identity = new Library
+                    {
+                        Name = package.Id,
+                        Version = package.Version,
+                        IsImplicit = library.IsImplicit
+                    },
                     Dependencies = GetDependencies(package, targetFramework)
                 };
             }
@@ -104,7 +117,8 @@ namespace Microsoft.Framework.Runtime
 
                     yield return new Library
                     {
-                        Name = assemblyReference.AssemblyName
+                        Name = assemblyReference.AssemblyName,
+                        IsGacOrFrameworkReference = true
                     };
                 }
             }

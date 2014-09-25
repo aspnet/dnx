@@ -181,11 +181,11 @@ namespace Loader.Tests
             return null;
         }
 
-        public LibraryDescription GetDescription(string name, SemanticVersion version, FrameworkName frameworkName)
+        public LibraryDescription GetDescription(Library library, FrameworkName frameworkName)
         {
-            Trace.WriteLine(string.Format("StubAssemblyLoader.GetDependencies {0} {1} {2}", name, version, frameworkName));
+            Trace.WriteLine(string.Format("StubAssemblyLoader.GetDependencies {0} {1} {2}", library.Name, library.Version, frameworkName));
             Entry entry;
-            if (!_entries.TryGetValue(new Library { Name = name, Version = version }, out entry))
+            if (!_entries.TryGetValue(library, out entry))
             {
                 return null;
             }
@@ -195,7 +195,7 @@ namespace Loader.Tests
 
             return new LibraryDescription
             {
-                Identity = new Library { Name = name, Version = version },
+                Identity = new Library { Name = library.Name, Version = library.Version },
                 Dependencies = entry.Dependencies
             };
         }

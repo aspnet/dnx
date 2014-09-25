@@ -65,66 +65,59 @@ namespace Microsoft.Framework.PackageManager
                                                                 .Dependencies
                                                                 .ToDictionary(r => r.Identity.Name);
 
-            var frameworkAssemblies = new List<string>();
-
-            var targetFrameworkInformation = _project.GetTargetFramework(_targetFramework);
-
-            var targetFramework = targetFrameworkInformation.FrameworkName ?? _targetFramework;
-
-            var projectDependencies = _project.Dependencies.Concat(targetFrameworkInformation.Dependencies)
-                                                           .ToList();
-
-            if (projectDependencies.Count > 0)
+            LibraryDescription description;
+            if (!projectReferenceByName.TryGetValue(_project.Name, out description))
             {
-                foreach (var dependency in projectDependencies.OrderBy(d => d.Name))
+                return;
+            }
+
+            foreach (var dependency in description.Dependencies)
+            {
+                if (dependency.IsImplicit)
                 {
-                    Runtime.Project dependencyProject;
-                    if (projectReferenceByName.ContainsKey(dependency.Name) &&
-                        _applicationHostContext.ProjectResolver.TryResolveProject(dependency.Name, out dependencyProject) &&
-                        dependencyProject.EmbedInteropTypes)
-                    {
-                        continue;
-                    }
-
-                    string path;
-                    if (_applicationHostContext.FrameworkReferenceResolver.TryGetAssembly(dependency.Name, targetFramework, out path))
-                    {
-                        frameworkAssemblies.Add(dependency.Name);
-                    }
-                    else
-                    {
-                        var dependencyVersion = new VersionSpec()
-                        {
-                            IsMinInclusive = true,
-                            MinVersion = dependency.Version
-                        };
-
-                        if (dependencyVersion.MinVersion == null || dependencyVersion.MinVersion.IsSnapshot)
-                        {
-                            var actual = _applicationHostContext.DependencyWalker.Libraries
-                                .Where(pkg => string.Equals(pkg.Identity.Name, _project.Name, StringComparison.OrdinalIgnoreCase))
-                                .SelectMany(pkg => pkg.Dependencies)
-                                .SingleOrDefault(dep => string.Equals(dep.Name, dependency.Name, StringComparison.OrdinalIgnoreCase));
-
-                            if (actual != null)
-                            {
-                                dependencyVersion.MinVersion = actual.Version;
-                            }
-                        }
-
-                        dependencies.Add(new PackageDependency(dependency.Name, dependencyVersion));
-                    }
+                    continue;
                 }
 
-                if (dependencies.Count > 0)
+                Runtime.Project dependencyProject;
+                if (projectReferenceByName.ContainsKey(dependency.Name) &&
+                    _applicationHostContext.ProjectResolver.TryResolveProject(dependency.Name, out dependencyProject) &&
+                    dependencyProject.EmbedInteropTypes)
                 {
-                    packageBuilder.DependencySets.Add(new PackageDependencySet(targetFramework, dependencies));
+                    continue;
+                }
+
+                if (dependency.IsGacOrFrameworkReference)
+                {
+                    packageBuilder.FrameworkReferences.Add(new FrameworkAssemblyReference(dependency.Name, new[] { _targetFramework }));
+                }
+                else
+                {
+                    var dependencyVersion = new VersionSpec()
+                    {
+                        IsMinInclusive = true,
+                        MinVersion = dependency.Version
+                    };
+
+                    if (dependencyVersion.MinVersion == null || dependencyVersion.MinVersion.IsSnapshot)
+                    {
+                        var actual = _applicationHostContext.DependencyWalker.Libraries
+                            .Where(pkg => string.Equals(pkg.Identity.Name, _project.Name, StringComparison.OrdinalIgnoreCase))
+                            .SelectMany(pkg => pkg.Dependencies)
+                            .SingleOrDefault(dep => string.Equals(dep.Name, dependency.Name, StringComparison.OrdinalIgnoreCase));
+
+                        if (actual != null)
+                        {
+                            dependencyVersion.MinVersion = actual.Version;
+                        }
+                    }
+
+                    dependencies.Add(new PackageDependency(dependency.Name, dependencyVersion));
                 }
             }
 
-            foreach (var a in frameworkAssemblies)
+            if (dependencies.Count > 0)
             {
-                packageBuilder.FrameworkReferences.Add(new FrameworkAssemblyReference(a, new[] { targetFramework }));
+                packageBuilder.DependencySets.Add(new PackageDependencySet(_targetFramework, dependencies));
             }
         }
 

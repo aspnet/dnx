@@ -2,6 +2,7 @@
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 using System.IO;
+using System.Linq;
 using Xunit;
 using NuGet;
 
@@ -75,6 +76,89 @@ namespace Microsoft.Framework.Runtime.Tests
             Assert.Equal("D", d4.Name);
             Assert.Equal(SemanticVersion.Parse("2.0.0"), d4.Version);
             Assert.False(d4.Version.IsSnapshot);
+        }
+
+        [Fact]
+        public void DependenciesAreSetPerTargetFramework()
+        {
+            var project = Project.GetProject(@"
+{
+    ""frameworks"": {
+        ""net45"": {
+            ""dependencies"": {  
+                ""A"": """",
+                ""B"": ""1.0-alpha-*"",
+                ""C"": ""1.0.0"",
+                ""D"": { ""version"": ""2.0.0"" }
+            }
+        }
+    }
+}",
+"foo",
+@"c:\foo\project.json");
+
+            Assert.Empty(project.Dependencies);
+            var targetFrameworkInfo = project.GetTargetFrameworks().First();
+            Assert.NotNull(targetFrameworkInfo.Dependencies);
+            Assert.Equal(4, targetFrameworkInfo.Dependencies.Count);
+            var d1 = targetFrameworkInfo.Dependencies[0];
+            var d2 = targetFrameworkInfo.Dependencies[1];
+            var d3 = targetFrameworkInfo.Dependencies[2];
+            var d4 = targetFrameworkInfo.Dependencies[3];
+            Assert.Equal("A", d1.Name);
+            Assert.Null(d1.Version);
+            Assert.Equal("B", d2.Name);
+            Assert.Equal(SemanticVersion.Parse("1.0-alpha-*"), d2.Version);
+            Assert.True(d2.Version.IsSnapshot);
+            Assert.Equal("C", d3.Name);
+            Assert.Equal(SemanticVersion.Parse("1.0.0"), d3.Version);
+            Assert.False(d3.Version.IsSnapshot);
+            Assert.Equal("D", d4.Name);
+            Assert.Equal(SemanticVersion.Parse("2.0.0"), d4.Version);
+            Assert.False(d4.Version.IsSnapshot);
+        }
+
+        [Fact]
+        public void FrameworkAssembliesAreSet()
+        {
+            var project = Project.GetProject(@"
+{
+    ""frameworks"": {
+        ""net45"": {
+            ""frameworkAssemblies"": {  
+                ""A"": """",
+                ""B"": ""1.0-alpha-*"",
+                ""C"": ""1.0.0"",
+                ""D"": { ""version"": ""2.0.0"" }
+            }
+        }
+    }
+}",
+"foo",
+@"c:\foo\project.json");
+
+            Assert.Empty(project.Dependencies);
+            var targetFrameworkInfo = project.GetTargetFrameworks().First();
+            Assert.Equal(4, targetFrameworkInfo.Dependencies.Count);
+            var d1 = targetFrameworkInfo.Dependencies[0];
+            var d2 = targetFrameworkInfo.Dependencies[1];
+            var d3 = targetFrameworkInfo.Dependencies[2];
+            var d4 = targetFrameworkInfo.Dependencies[3];
+            Assert.Equal("A", d1.Name);
+            Assert.Null(d1.Version);
+            Assert.True(d1.IsGacOrFrameworkReference);
+            Assert.Equal("B", d2.Name);
+            Assert.Equal(SemanticVersion.Parse("1.0-alpha-*"), d2.Version);
+            Assert.True(d2.Version.IsSnapshot);
+            Assert.True(d2.IsGacOrFrameworkReference);
+            Assert.Equal("C", d3.Name);
+            Assert.Equal(SemanticVersion.Parse("1.0.0"), d3.Version);
+            Assert.False(d3.Version.IsSnapshot);
+            Assert.True(d3.IsGacOrFrameworkReference);
+            Assert.Equal("D", d4.Name);
+            Assert.Equal(SemanticVersion.Parse("2.0.0"), d4.Version);
+            Assert.False(d4.Version.IsSnapshot);
+            Assert.True(d4.IsGacOrFrameworkReference);
         }
 
         [Fact]
