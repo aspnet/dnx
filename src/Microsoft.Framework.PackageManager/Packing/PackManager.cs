@@ -22,7 +22,9 @@ namespace Microsoft.Framework.PackageManager.Packing
             _hostServices = hostServices;
             _options = options;
             _options.ProjectDir = Normalize(_options.ProjectDir);
-            _options.OutputDir = Normalize(_options.OutputDir);
+
+            var outputDir = _options.OutputDir ?? Path.Combine(_options.ProjectDir, "bin", "output");
+            _options.OutputDir = Normalize(outputDir);
             ScriptExecutor = new ScriptExecutor();
         }
 
@@ -134,7 +136,7 @@ namespace Microsoft.Framework.PackageManager.Packing
 
             var sw = Stopwatch.StartNew();
 
-            string outputPath = _options.OutputDir ?? Path.Combine(_options.ProjectDir, "bin", "output");
+            string outputPath = _options.OutputDir;
 
             var projectDir = project.ProjectDirectory;
 
