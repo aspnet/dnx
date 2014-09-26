@@ -61,10 +61,12 @@ namespace Microsoft.Framework.Runtime
             get { return Library.Version; }
         }
 
+        public LibraryDependencyType Type { get; private set; }
+
         public LibraryDependency ChangeVersion(SemanticVersion version)
         {
             return new LibraryDependency(
-                name: Name, 
+                name: Name,
                 version: version);
         }
     }

@@ -385,13 +385,17 @@ namespace Microsoft.Framework.Runtime
 
                     var dependencyValue = dependency.Value;
                     string dependencyVersionValue = null;
+                    LibraryDependencyType dependencyTypeValue = null;
                     if (dependencyValue.Type == JTokenType.String)
                     {
                         dependencyVersionValue = dependencyValue.Value<string>();
                     }
                     else
                     {
-                        dependencyVersionValue = dependencyValue["version"].Value<string>();
+                        if (TryGetStringEnumerable(dependencyValue["type"], out var strings))
+                        {
+                            dependencyTypeValue = LibraryDependencyType.Parse(strings);
+                        }
                     }
 
                     SemanticVersion dependencyVersion = null;
@@ -407,6 +411,30 @@ namespace Microsoft.Framework.Runtime
                     ));
                 }
             }
+        }
+
+        private static bool TryGetStringEnumerable(JToken token, out IEnumerable<string> result)
+        {
+            IEnumerable<string> values;
+            if (token == null)
+            {
+                result = null;
+                return false;
+            }
+            else if (token.Type == JTokenType.String)
+            {
+                values = new[]
+                {
+                    token.Value<string>()
+                };
+            }
+            else
+            {
+                values = token.Value<string[]>();
+            }
+            result = values
+                .SelectMany(value => value.Split(new[] { ' ', ',' }, StringSplitOptions.RemoveEmptyEntries));
+            return true;
         }
 
         public CompilerOptions GetCompilerOptions()

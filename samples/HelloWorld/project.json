@@ -2,7 +2,10 @@
     "version": "0.1-beta-*",
     "exclude": "more\\*.cs",
     "dependencies": {
-        "HelloShared": "0.1-beta-*",
+        "HelloShared": {
+            "version": "0.1-beta-*",
+            "type": "build"
+        },
         "K.Roslyn": "1.0.0-*"
     },
     "commands": {
@@ -31,11 +34,11 @@
                 "System.ComponentModel": "4.0.0.0"
             }
         },
-        "aspnet50": { 
-            "dependencies": { 
-                "System.Collections" : "",
+        "aspnet50": {
+            "dependencies": {
+                "System.Collections": "",
                 "System.IO": "",
-                "System.Runtime" : "",
+                "System.Runtime": "",
                 "System.Xml": "",
                 "System.Xml.Linq": "",
                 "System.Threading.Tasks": "",
