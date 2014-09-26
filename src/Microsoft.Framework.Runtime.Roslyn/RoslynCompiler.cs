@@ -298,10 +298,7 @@ namespace Microsoft.Framework.Runtime.Roslyn
             {
                 ctx.Monitor(new FileWriteTimeCacheDependency(path));
 
-                using (var stream = File.OpenRead(path))
-                {
-                    return AssemblyMetadata.CreateFromImageStream(stream);
-                }
+                return AssemblyMetadata.CreateFromImageStream(File.OpenRead(path));
             });
 
             return new MetadataImageReference(metadata);

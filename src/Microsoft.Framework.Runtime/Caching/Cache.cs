@@ -42,6 +42,14 @@ namespace Microsoft.Framework.Runtime
 
                 if (expired)
                 {
+                    // Dispose any entries that are disposable since
+                    // we're creating a new one
+                    var disposable = currentEntry.Value as IDisposable;
+                    if (disposable != null)
+                    {
+                        disposable.Dispose();
+                    }
+
                     return AddEntry(k, acquire);
                 }
                 else
