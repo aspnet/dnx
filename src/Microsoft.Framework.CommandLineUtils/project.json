@@ -4,11 +4,6 @@
     "shared": "**/*.cs",
     "frameworks" : {
         "net45" : { },
-        "aspnetcore50" : { 
-            "dependencies": {
-                "System.Collections": "4.0.10.0",
-                "System.Runtime": "4.0.20.0"
-            }
-        }
+        "aspnetcore50" : { }
     }
 }
