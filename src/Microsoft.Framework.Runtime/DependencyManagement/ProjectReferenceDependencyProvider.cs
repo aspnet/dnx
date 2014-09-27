@@ -55,29 +55,25 @@ namespace Microsoft.Framework.Runtime
                 targetFrameworkDependencies.Add(new Library
                 {
                     Name = "mscorlib",
-                    IsGacOrFrameworkReference = true,
-                    IsImplicit = true
+                    IsGacOrFrameworkReference = true
                 });
 
                 targetFrameworkDependencies.Add(new Library
                 {
                     Name = "System",
-                    IsGacOrFrameworkReference = true,
-                    IsImplicit = true
+                    IsGacOrFrameworkReference = true
                 });
 
                 targetFrameworkDependencies.Add(new Library
                 {
                     Name = "System.Core",
-                    IsGacOrFrameworkReference = true,
-                    IsImplicit = true
+                    IsGacOrFrameworkReference = true
                 });
 
                 targetFrameworkDependencies.Add(new Library
                 {
                     Name = "Microsoft.CSharp",
-                    IsGacOrFrameworkReference = true,
-                    IsImplicit = true
+                    IsGacOrFrameworkReference = true
                 });
             }
 
