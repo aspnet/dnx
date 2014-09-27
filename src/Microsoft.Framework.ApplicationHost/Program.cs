@@ -59,14 +59,7 @@ namespace Microsoft.Framework.ApplicationHost
             if (string.IsNullOrEmpty(options.ApplicationName) ||
                 string.Equals(options.ApplicationName, "run", StringComparison.Ordinal))
             {
-                if (string.IsNullOrEmpty(host.Project.Name))
-                {
-                    options.ApplicationName = Path.GetFileName(options.ApplicationBaseDirectory);
-                }
-                else
-                {
-                    options.ApplicationName = host.Project.Name;
-                }
+                options.ApplicationName = host.Project.EntryPoint ?? host.Project.Name;
             }
 
             IDisposable disposable = null;

@@ -19,6 +19,7 @@ namespace Microsoft.Framework.PackageManager.Packing
         private readonly IProjectResolver _projectResolver;
         private readonly LibraryDescription _libraryDescription;
         private readonly IReport _report;
+        private string _applicationBase;
 
         public PackProject(
             ProjectReferenceDependencyProvider projectReferenceDependencyProvider,
@@ -69,23 +70,11 @@ namespace Microsoft.Framework.PackageManager.Packing
 
             root.Operations.Delete(TargetPath);
 
-            // A set of excluded files/directories used as a filter when doing copy
-            var excludeSet = new HashSet<string>(project.PackExcludeFiles, StringComparer.OrdinalIgnoreCase);
+            CopyProject(root, project, TargetPath, includeSource: true);
 
-            // If a public folder is specified with 'webroot' or '--wwwroot', we ignore it when copying project files
-            var wwwRootPath = string.Empty;
-            if (!string.IsNullOrEmpty(WwwRoot))
-            {
-                wwwRootPath = Path.Combine(project.ProjectDirectory, WwwRoot);
-            }
+            CopyRelativeSources(project);
 
-            root.Operations.Copy(project.ProjectDirectory, TargetPath, (isRoot, filePath) =>
-            {
-                // If current file/folder is in the exclusion list, we don't copy it
-                if (excludeSet.Contains(filePath))
-                {
-                    return false;
-                }
+            UpdateWebRoot(root, TargetPath);
 
                 // If current folder is the public folder, we don't copy it to destination project
                 // All files/folders inside this folder also get ignored if we return false here
@@ -211,8 +200,125 @@ namespace Microsoft.Framework.PackageManager.Packing
 
             // Copy content files (e.g. html, js and images) of main project into "root" folder of the exported package
             var rootFolderPath = Path.Combine(TargetPath, "root");
-            CopyContentFiles(root, project, rootFolderPath, copyProjectJson: true);
+            var rootProjectJson = Path.Combine(rootFolderPath, Runtime.Project.ProjectFileName);
 
+            CopyProject(root, project, rootFolderPath, includeSource: false);
+
+            UpdateWebRoot(root, rootFolderPath);
+
+            UpdateJson(rootProjectJson, jsonObj =>
+            {
+                // Update the project entrypoint
+                jsonObj["entryPoint"] = _libraryDescription.Identity.Name;
+
+                // Update the dependencies node to reference the main project
+                var deps = new JObject();
+                jsonObj["dependencies"] = deps;
+
+                deps[_libraryDescription.Identity.Name] = _libraryDescription.Identity.Version.ToString();
+            });
+
+            _applicationBase = Path.Combine("..", PackRoot.AppRootName, "packages", resolver.GetPackageDirectory(_libraryDescription.Identity.Name, _libraryDescription.Identity.Version), "root");
+        }
+
+        private void CopyRelativeSources(Runtime.Project project)
+        {
+            // We can reference source files outside of project root with "code" property in project.json,
+            // e.g. { "code" : "..\\ExternalProject\\**.cs" }
+            // So we find out external source files and copy them separately
+            var rootDirectory = ProjectResolver.ResolveRootDirectory(project.ProjectDirectory);
+            foreach (var sourceFile in project.SourceFiles)
+            {
+                // This source file is in project root directory. So it was already copied.
+                if (PathUtility.IsChildOfDirectory(dir: project.ProjectDirectory, candidate: sourceFile))
+                {
+                    continue;
+                }
+
+                // This source file is in solution root but out of project root,
+                // it is an external source file that we should copy here
+                if (PathUtility.IsChildOfDirectory(dir: rootDirectory, candidate: sourceFile))
+                {
+                    // Keep the relativeness between external source files and project root,
+                    var relativeSourcePath = PathUtility.GetRelativePath(project.ProjectFilePath, sourceFile);
+                    var relativeParentDir = Path.GetDirectoryName(relativeSourcePath);
+                    Directory.CreateDirectory(Path.Combine(TargetPath, relativeParentDir));
+                    File.Copy(sourceFile, Path.Combine(TargetPath, relativeSourcePath));
+                }
+                else
+                {
+                    Console.WriteLine(
+                        string.Format("TODO: Warning: the referenced source file '{0}' is not in solution root and it is not packed to output.", sourceFile));
+                }
+            }
+        }
+
+        private void UpdateWebRoot(PackRoot root, string targetPath)
+        {
+            // Update the 'webroot' property, which was specified with '--wwwroot-out' option
+            if (!string.IsNullOrEmpty(WwwRootOut))
+            {
+                var targetProjectJson = Path.Combine(targetPath, Runtime.Project.ProjectFileName);
+
+                UpdateJson(targetProjectJson, jsonObj =>
+                {
+                    var targetWebRootPath = Path.Combine(root.OutputPath, WwwRootOut);
+                    jsonObj["webroot"] = PathUtility.GetRelativePath(targetProjectJson, targetWebRootPath);
+                });
+            }
+        }
+
+        private static void UpdateJson(string jsonFile, Action<JObject> modifier)
+        {
+            var jsonObj = JObject.Parse(File.ReadAllText(jsonFile));
+            modifier(jsonObj);
+            File.WriteAllText(jsonFile, jsonObj.ToString());
+        }
+
+        private void CopyProject(PackRoot root, Runtime.Project project, string targetPath, bool includeSource)
+        {
+            // A set of excluded files/directories used as a filter when doing copy
+            var excludeSet = new HashSet<string>(project.PackExcludeFiles, StringComparer.OrdinalIgnoreCase);
+            var contentFiles = new HashSet<string>(project.ContentFiles, StringComparer.OrdinalIgnoreCase);
+
+            // If a public folder is specified with 'webroot' or '--wwwroot', we ignore it when copying project files
+            var wwwRootPath = string.Empty;
+            if (!string.IsNullOrEmpty(WwwRoot))
+            {
+                wwwRootPath = Path.Combine(project.ProjectDirectory, WwwRoot);
+            }
+
+            root.Operations.Copy(project.ProjectDirectory, targetPath, (isRoot, itemPath) =>
+            {
+                // If current file/folder is in the exclusion list, we don't copy it
+                if (excludeSet.Contains(itemPath))
+                {
+                    return false;
+                }
+
+                // If current folder is the public folder, we don't copy it to destination project
+                // All files/folders inside this folder also get ignored if we return false here
+                if (string.Equals(wwwRootPath, itemPath))
+                {
+                    return false;
+                }
+
+                // The full path of target generated by copy operation should also be excluded
+                var targetFullPath = itemPath.Replace(project.ProjectDirectory, TargetPath);
+                excludeSet.Add(targetFullPath);
+
+                if (includeSource)
+                {
+                    return true;
+                }
+
+                if (Directory.Exists(itemPath))
+                {
+                    return true;
+                }
+
+                return contentFiles.Contains(itemPath);
+            });
         }
 
         public void PostProcess(PackRoot root)
@@ -270,8 +376,7 @@ root.Configuration));
 
             // Generate k.ini for public app folder
             var wwwRootOutIniFilePath = Path.Combine(wwwRootOutPath, "k.ini");
-            var appBaseLine = string.Format("KRE_APPBASE={0}",
-                Path.Combine("..", PackRoot.AppRootName, "src", project.Name));
+            var appBaseLine = string.Format("KRE_APPBASE={0}", _applicationBase);
             var iniContents = string.Empty;
             if (File.Exists(iniFilePath))
             {
@@ -310,8 +415,7 @@ root.Configuration));
             }
         }
 
-        private void CopyContentFiles(PackRoot root, Runtime.Project project, string targetFolderPath,
-            bool copyProjectJson)
+        private void CopyContentFiles(PackRoot root, Runtime.Project project, string targetFolderPath)
         {
             _report.WriteLine("Copying contents of project dependency {0} to {1}",
                 _libraryDescription.Identity.Name, targetFolderPath);
@@ -326,27 +430,7 @@ root.Configuration));
             _report.WriteLine("  Source {0}", contentSourcePath);
             _report.WriteLine("  Target {0}", targetFolderPath);
 
-            // A set of content files that should be copied
-            var contentFiles = new HashSet<string>(project.ContentFiles, StringComparer.OrdinalIgnoreCase);
-
-            root.Operations.Copy(contentSourcePath, targetFolderPath, (isRoot, filePath) =>
-            {
-                // We always explore a directory
-                if (Directory.Exists(filePath))
-                {
-                    return true;
-                }
-
-                var fileName = Path.GetFileName(filePath);
-
-                // Public app folder doesn't need project.json
-                if (!copyProjectJson && string.Equals(fileName, Runtime.Project.ProjectFileName, StringComparison.OrdinalIgnoreCase))
-                {
-                    return false;
-                }
-
-                return contentFiles.Contains(filePath);
-            });
+            root.Operations.Copy(contentSourcePath, targetFolderPath);
         }
 
         private bool IncludeRuntimeFileInBundle(string relativePath, string fileName)

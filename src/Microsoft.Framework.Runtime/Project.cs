@@ -71,6 +71,8 @@ namespace Microsoft.Framework.Runtime
 
         public string WebRoot { get; private set; }
 
+        public string EntryPoint { get; set; }
+
         internal IEnumerable<string> SourcePatterns { get; set; }
 
         internal IEnumerable<string> ExcludePatterns { get; set; }
@@ -263,6 +265,7 @@ namespace Microsoft.Framework.Runtime
             project.Dependencies = new List<LibraryDependency>();
             project.ProjectFilePath = Path.GetFullPath(projectPath);
             project.WebRoot = GetValue<string>(rawProject, "webroot");
+            project.EntryPoint = GetValue<string>(rawProject, "entryPoint");
 
             // TODO: Move this to the dependencies node
             project.EmbedInteropTypes = GetValue<bool>(rawProject, "embedInteropTypes");
