@@ -283,9 +283,7 @@ namespace Microsoft.Framework.Runtime.Roslyn
                 {
                     projectReference.EmitReferenceAssembly(ms);
 
-                    ms.Seek(0, SeekOrigin.Begin);
-
-                    return new MetadataImageReference(ms);
+                    return new MetadataImageReference(ms.ToArray());
                 }
             }
 
