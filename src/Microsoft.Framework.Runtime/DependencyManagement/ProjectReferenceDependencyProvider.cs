@@ -87,6 +87,11 @@ namespace Microsoft.Framework.Runtime
             // We need to keep this for bootstrapping to continue working
             foreach (var d in dependencies)
             {
+                if (d.IsGacOrFrameworkReference)
+                {
+                    continue;
+                }
+
                 d.IsGacOrFrameworkReference = _frameworkReferenceResolver.TryGetAssembly(d.Name, targetFramework, out var path);
 
                 // We need to fix up the version here since
