@@ -1,6 +1,6 @@
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 14
-VisualStudioVersion = 14.0.21812.0
+VisualStudioVersion = 14.0.22111.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "scripts", "scripts", "{189961D1-DFF4-406A-9D42-39B61221A73A}"
 	ProjectSection(SolutionItems) = preProject
@@ -8,7 +8,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "scripts", "scripts", "{1899
 		scripts\k.cmd = scripts\k.cmd
 		scripts\klr.cmd = scripts\klr.cmd
 		makefile.shade = makefile.shade
-		ProjectK.nuspec = ProjectK.nuspec
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "host", "host", "{13ED5001-B871-4BC3-8499-29607F596C7C}"
@@ -62,6 +61,11 @@ EndProject
 Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Microsoft.Framework.CommandLineUtils.Tests", "test\Microsoft.Framework.CommandLineUtils.Tests\Microsoft.Framework.CommandLineUtils.Tests.kproj", "{7E6564C3-04E3-418C-B96A-463FE2906F09}"
 EndProject
 Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Microsoft.Framework.TestAdapter", "src\Microsoft.Framework.TestAdapter\Microsoft.Framework.TestAdapter.kproj", "{71C2F8AA-05E6-47DB-9A1A-D2760CEF7DC1}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{9B91C1A4-0DDF-4F1A-A353-5E2BF7A824F2}"
+	ProjectSection(SolutionItems) = preProject
+		global.json = global.json
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
