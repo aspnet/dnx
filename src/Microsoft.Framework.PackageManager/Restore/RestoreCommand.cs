@@ -390,6 +390,7 @@ namespace Microsoft.Framework.PackageManager
                     Reports.Information.WriteLine(string.Format("Installing {0} {1}", library.Name.Bold(), library.Version));
 
                     var targetPath = packagePathResolver.GetInstallPath(library.Name, library.Version);
+                    var targetNuspec = packagePathResolver.GetManifestFilePath(library.Name, library.Version);
                     var targetNupkg = packagePathResolver.GetPackageFilePath(library.Name, library.Version);
                     var hashPath = packagePathResolver.GetHashPath(library.Name, library.Version);
 
@@ -411,6 +412,29 @@ namespace Microsoft.Framework.PackageManager
                                 ExtractPackage(targetPath, stream);
                             }
 
+                            // Fixup the casing of the nuspec on disk to match what we expect
+                            var nuspecFile = Directory.EnumerateFiles(targetPath, "*" + Constants.ManifestExtension).Single();
+
+                            if (!string.Equals(nuspecFile, targetNuspec, StringComparison.Ordinal))
+                            {
+                                Manifest manifest = null;
+                                using (var stream = File.OpenRead(nuspecFile))
+                                {
+                                    manifest = Manifest.ReadFrom(stream, validateSchema: false);
+                                    manifest.Metadata.Id = library.Name;
+                                }
+
+                                // Nuke the previous nuspec file
+                                File.Delete(nuspecFile);
+
+                                // Write the new manifest
+                                using (var stream = File.OpenWrite(targetNuspec))
+                                {
+                                    manifest.Save(stream);
+                                }
+                            }
+
+                            // Ensure the manifest file name matches
                             File.WriteAllText(hashPath, nupkgSHA);
                         }
 
