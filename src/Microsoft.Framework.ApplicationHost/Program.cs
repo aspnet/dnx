@@ -125,7 +125,7 @@ namespace Microsoft.Framework.ApplicationHost
             var optionPackages = app.Option("--packages <PACKAGE_DIR>", "Directory containing packages",
                 CommandOptionType.SingleValue);
             var optionConfiguration = app.Option("--configuration <CONFIGURATION>", "The configuration to run under", CommandOptionType.SingleValue);
-            var optionCompilationServer = app.Option("--dth-port <PORT>", "The port to the design time host compilation server",
+            var optionCompilationServer = app.Option("--dth-port <PORT>", "The port for the design time host compilation server",
                 CommandOptionType.SingleValue);
             var runCmdExecuted = false;
             app.HelpOption("-?|-h|--help");
