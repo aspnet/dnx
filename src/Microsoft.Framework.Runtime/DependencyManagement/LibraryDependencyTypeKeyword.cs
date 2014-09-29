@@ -1,4 +1,7 @@
-﻿using System;
+﻿// Copyright (c) Microsoft Open Technologies, Inc. All rights reserved.
+// Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
+
+using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
@@ -6,56 +9,6 @@ using System.Reflection;
 
 namespace Microsoft.Framework.Runtime
 {
-    public class LibraryDependencyType
-    {
-        private readonly LibraryDependencyTypeFlag[] _keywords;
-
-        public static LibraryDependencyType Default;
-
-        static LibraryDependencyType()
-        {
-            Default = Parse(new[] { "default" });
-        }
-
-        public LibraryDependencyType()
-        {
-            _keywords = new LibraryDependencyTypeFlag[0];
-        }
-
-        private LibraryDependencyType(LibraryDependencyTypeFlag[] flags)
-        {
-            _keywords = flags;
-        }
-
-        public bool Contains(LibraryDependencyTypeFlag flag)
-        {
-            return _keywords.Contains(flag);
-        }
-
-        public static LibraryDependencyType Parse(IEnumerable<string> keywords)
-        {
-            var type = new LibraryDependencyType();
-            foreach (var keyword in keywords.Select(LibraryDependencyTypeKeyword.Parse))
-            {
-                type = type.Combine(keyword.Add, keyword.Remove);
-            }
-            return type;
-        }
-
-        public LibraryDependencyType Combine(
-            IEnumerable<LibraryDependencyTypeFlag> add,
-            IEnumerable<LibraryDependencyTypeFlag> remove)
-        {
-            return new LibraryDependencyType(
-                _keywords.Except(remove).Union(add).ToArray());
-        }
-
-        public override string ToString()
-        {
-            return string.Join(",", _keywords.Select(kw => kw.ToString()));
-        }
-    }
-
     public class LibraryDependencyTypeKeyword
     {
         private static ConcurrentDictionary<string, LibraryDependencyTypeKeyword> _keywords = new ConcurrentDictionary<string, LibraryDependencyTypeKeyword>();
@@ -86,6 +39,7 @@ namespace Microsoft.Framework.Runtime
                 "default",
                 add: Group(
                     LibraryDependencyTypeFlag.MainReference,
+                    LibraryDependencyTypeFlag.MainSource,
                     LibraryDependencyTypeFlag.MainExport,
                     LibraryDependencyTypeFlag.RuntimeComponent,
                     LibraryDependencyTypeFlag.BecomesNupkgDependency),
@@ -96,6 +50,7 @@ namespace Microsoft.Framework.Runtime
                 "private",
                 add: Group(
                     LibraryDependencyTypeFlag.MainReference,
+                    LibraryDependencyTypeFlag.MainSource,
                     LibraryDependencyTypeFlag.RuntimeComponent,
                     LibraryDependencyTypeFlag.BecomesNupkgDependency),
                 remove: Group());
@@ -109,15 +64,14 @@ namespace Microsoft.Framework.Runtime
             Build = Declare(
                 "build",
                 add: Group(
-                    LibraryDependencyTypeFlag.PreprocessComponent
-                    ),
+                    LibraryDependencyTypeFlag.MainSource,
+                    LibraryDependencyTypeFlag.PreprocessComponent),
                 remove: Group());
 
             Preprocess = Declare(
                 "preproc",
                 add: Group(
-                    LibraryDependencyTypeFlag.PreprocessReference
-                    ),
+                    LibraryDependencyTypeFlag.PreprocessReference),
                 remove: Group());
 
             foreach (var fieldInfo in typeof(LibraryDependencyTypeFlag).GetTypeInfo().DeclaredFields)
@@ -164,47 +118,6 @@ namespace Microsoft.Framework.Runtime
                 return value;
             }
             throw new Exception(string.Format("TODO: unknown keyword {0}", keyword));
-        }
-    }
-
-    public class LibraryDependencyTypeFlag
-    {
-        private static ConcurrentDictionary<string, LibraryDependencyTypeFlag> _flags = new ConcurrentDictionary<string, LibraryDependencyTypeFlag>();
-        private readonly string _value;
-
-        public static LibraryDependencyTypeFlag MainReference;
-        public static LibraryDependencyTypeFlag MainExport;
-        public static LibraryDependencyTypeFlag PreprocessReference;
-
-        public static LibraryDependencyTypeFlag RuntimeComponent;
-        public static LibraryDependencyTypeFlag DevComponent;
-        public static LibraryDependencyTypeFlag PreprocessComponent;
-        public static LibraryDependencyTypeFlag BecomesNupkgDependency;
-
-        static LibraryDependencyTypeFlag()
-        {
-            foreach (var fieldInfo in typeof(LibraryDependencyTypeFlag).GetTypeInfo().DeclaredFields)
-            {
-                if (fieldInfo.FieldType == typeof(LibraryDependencyTypeFlag))
-                {
-                    fieldInfo.SetValue(null, Declare(fieldInfo.Name));
-                }
-            }
-        }
-
-        LibraryDependencyTypeFlag(string value)
-        {
-            _value = value;
-        }
-
-        public static LibraryDependencyTypeFlag Declare(string keyword)
-        {
-            return _flags.GetOrAdd(keyword, x => new LibraryDependencyTypeFlag(x));
-        }
-
-        public override string ToString()
-        {
-            return _value;
         }
     }
 }
