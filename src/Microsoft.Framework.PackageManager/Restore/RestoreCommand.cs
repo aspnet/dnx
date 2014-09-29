@@ -424,7 +424,7 @@ namespace Microsoft.Framework.PackageManager
                                     manifest.Metadata.Id = library.Name;
                                 }
 
-                                // Nuke the previous nuspec file
+                                // Delete the previous nuspec file
                                 File.Delete(nuspecFile);
 
                                 // Write the new manifest
