@@ -8,45 +8,68 @@ namespace Microsoft.Framework.Runtime
     /// </summary>
     public class LibraryDependency
     {
-        public LibraryDependency(string name)
+        public LibraryDependency(
+            string name) : this(
+                new Library
+                {
+                    Name = name
+                },
+                LibraryDependencyType.Default)
         {
-            Library = new Library
-            {
-                Name = name
-            };
         }
 
-        public LibraryDependency(string name, bool isGacOrFrameworkReference)
+        public LibraryDependency(
+            string name,
+            bool isGacOrFrameworkReference) : this(
+                new Library
+                {
+                    Name = name,
+                    IsGacOrFrameworkReference = isGacOrFrameworkReference
+                },
+                LibraryDependencyType.Default)
         {
-            Library = new Library
-            {
-                Name = name,
-                IsGacOrFrameworkReference = isGacOrFrameworkReference
-            };
         }
 
-        public LibraryDependency(string name, SemanticVersion version)
+        public LibraryDependency(
+            string name,
+            SemanticVersion version) : this(
+                new Library
+                {
+                    Name = name,
+                    Version = version
+                },
+                LibraryDependencyType.Default)
         {
-            Library = new Library
-            {
-                Name = name,
-                Version = version
-            };
         }
 
-        public LibraryDependency(string name, SemanticVersion version, bool isGacOrFrameworkReference)
+        public LibraryDependency(
+            string name,
+            SemanticVersion version,
+            bool isGacOrFrameworkReference,
+            LibraryDependencyType type) : this(
+                new Library
+                {
+                    Name = name,
+                    Version = version,
+                    IsGacOrFrameworkReference = isGacOrFrameworkReference
+                },
+                type)
         {
-            Library = new Library
-            {
-                Name = name,
-                Version = version,
-                IsGacOrFrameworkReference = isGacOrFrameworkReference
-            };
         }
 
-        public LibraryDependency(Library library)
+        public LibraryDependency(
+            Library library) : this(
+                library,
+                LibraryDependencyType.Default)
+        {
+        }
+
+        public LibraryDependency(
+            Library library,
+            LibraryDependencyType type)
         {
             Library = library;
+            Type = type;
         }
 
         public Library Library { get; set; }
@@ -63,11 +86,23 @@ namespace Microsoft.Framework.Runtime
 
         public LibraryDependencyType Type { get; private set; }
 
+        public override string ToString()
+        {
+            return string.Format("{0} {1}", Library, Type);
+        }
+
         public LibraryDependency ChangeVersion(SemanticVersion version)
         {
             return new LibraryDependency(
-                name: Name,
-                version: version);
+                name: Library.Name,
+                version: version,
+                isGacOrFrameworkReference: Library.IsGacOrFrameworkReference,
+                type: Type);
+        }
+
+        public bool HasFlag(LibraryDependencyTypeFlag flag)
+        {
+            return Type.Contains(flag);
         }
     }
 }

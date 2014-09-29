@@ -73,11 +73,10 @@ namespace Microsoft.Framework.PackageManager
 
             foreach (var dependency in description.Dependencies)
             {
-                // FIX: this should be a dependency type flag
-                //if (dependency.IsImplicit)
-                //{
-                //    continue;
-                //}
+                if (!dependency.HasFlag(LibraryDependencyTypeFlag.BecomesNupkgDependency))
+                {
+                    continue;
+                }
 
                 Runtime.Project dependencyProject;
                 if (projectReferenceByName.ContainsKey(dependency.Name) &&

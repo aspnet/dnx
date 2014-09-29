@@ -10,6 +10,13 @@ namespace Microsoft.Framework.Runtime
     {
         private readonly LibraryDependencyTypeFlag[] _keywords;
 
+        public static LibraryDependencyType Default;
+
+        static LibraryDependencyType()
+        {
+            Default = Parse(new[] { "default" });
+        }
+
         public LibraryDependencyType()
         {
             _keywords = new LibraryDependencyTypeFlag[0];
@@ -41,6 +48,11 @@ namespace Microsoft.Framework.Runtime
         {
             return new LibraryDependencyType(
                 _keywords.Except(remove).Union(add).ToArray());
+        }
+
+        public override string ToString()
+        {
+            return string.Join(",", _keywords.Select(kw => kw.ToString()));
         }
     }
 
@@ -188,6 +200,11 @@ namespace Microsoft.Framework.Runtime
         public static LibraryDependencyTypeFlag Declare(string keyword)
         {
             return _flags.GetOrAdd(keyword, x => new LibraryDependencyTypeFlag(x));
+        }
+
+        public override string ToString()
+        {
+            return _value;
         }
     }
 }

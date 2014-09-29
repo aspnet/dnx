@@ -385,7 +385,7 @@ namespace Microsoft.Framework.Runtime
 
                     var dependencyValue = dependency.Value;
                     string dependencyVersionValue = null;
-                    LibraryDependencyType dependencyTypeValue = null;
+                    var dependencyTypeValue = LibraryDependencyType.Default;
                     if (dependencyValue.Type == JTokenType.String)
                     {
                         dependencyVersionValue = dependencyValue.Value<string>();
@@ -407,7 +407,8 @@ namespace Microsoft.Framework.Runtime
                     results.Add(new LibraryDependency(
                         name: dependency.Key,
                         version: dependencyVersion,
-                        isGacOrFrameworkReference: isGacOrFrameworkReference
+                        isGacOrFrameworkReference: isGacOrFrameworkReference,
+                        type: dependencyTypeValue
                     ));
                 }
             }
