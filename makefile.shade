@@ -215,16 +215,18 @@ var MSBUILD = '${Path.Combine(PROGRAM_FILES_X86, "MSBuild", "12.0", "Bin", "MSBu
         foreach(var nupkgPath in nupkgPaths) { 
             runWithFramework(nupkgPath);
         }
-                
+        
+        /*
         // Crossgen
         crossGen(nupkgPaths[2]);
         
         // SKIP amd64 for now to work around error
-        // crossGen(nupkgPaths[3]);
+        crossGen(nupkgPaths[3]);
 
         foreach(var nupkgPath in nupkgPaths) { 
             runWithFramework(nupkgPath);
         }
+        */
     }
 
 #ensure-latest-package
