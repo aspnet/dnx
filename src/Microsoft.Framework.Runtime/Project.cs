@@ -25,7 +25,7 @@ namespace Microsoft.Framework.Runtime
         internal static readonly string[] _defaultExcludePatterns = new[] { @"obj\**\*", @"bin\**\*", @"**.csproj",
             @"**.kproj", @"**.user", @"**.vspscc", @"**.vssscc", @"**.pubxml" };
         internal static readonly string[] _defaultPackExcludePatterns = new[] { @"obj\**\*", @"bin\**\*", @"**.csproj",
-            @"**.kproj", @"**.user", @"**.vspscc", @"**.vssscc", @"**.pubxml" };
+            @"**.kproj", @"**.user", @"**.vspscc", @"**.vssscc", @"**.pubxml", @"**\.*\**" };
         internal static readonly string[] _defaultPreprocessPatterns = new[] { @"compiler\preprocess\**\*.cs" };
         internal static readonly string[] _defaultSharedPatterns = new[] { @"compiler\shared\**\*.cs" };
         internal static readonly string[] _defaultResourcesPatterns = new[] { @"compiler\resources\**\*" };
