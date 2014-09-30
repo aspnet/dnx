@@ -20,59 +20,70 @@ namespace Microsoft.Framework.Runtime
         public static LibraryDependencyTypeKeyword Dev;
 
         private readonly string _value;
-        private readonly IEnumerable<LibraryDependencyTypeFlag> _add;
-        private readonly IEnumerable<LibraryDependencyTypeFlag> _remove;
+        private readonly IEnumerable<LibraryDependencyTypeFlag> _flagsToAdd;
+        private readonly IEnumerable<LibraryDependencyTypeFlag> _flagsToRemove;
 
-        public IEnumerable<LibraryDependencyTypeFlag> Add
+        public IEnumerable<LibraryDependencyTypeFlag> FlagsToAdd
         {
-            get { return _add; }
+            get { return _flagsToAdd; }
         }
 
-        public IEnumerable<LibraryDependencyTypeFlag> Remove
+        public IEnumerable<LibraryDependencyTypeFlag> FlagsToRemove
         {
-            get { return _remove; }
+            get { return _flagsToRemove; }
         }
 
         static LibraryDependencyTypeKeyword()
         {
+            var emptyFlags = Enumerable.Empty<LibraryDependencyTypeFlag>();
+
             Default = Declare(
                 "default",
-                add: Group(
+                flagsToAdd: new[]
+                {
                     LibraryDependencyTypeFlag.MainReference,
                     LibraryDependencyTypeFlag.MainSource,
                     LibraryDependencyTypeFlag.MainExport,
                     LibraryDependencyTypeFlag.RuntimeComponent,
-                    LibraryDependencyTypeFlag.BecomesNupkgDependency),
-                remove: Group(
-                    ));
+                    LibraryDependencyTypeFlag.BecomesNupkgDependency,
+                },
+                flagsToRemove: emptyFlags);
 
             Private = Declare(
                 "private",
-                add: Group(
+                flagsToAdd: new[]
+                {
                     LibraryDependencyTypeFlag.MainReference,
                     LibraryDependencyTypeFlag.MainSource,
                     LibraryDependencyTypeFlag.RuntimeComponent,
-                    LibraryDependencyTypeFlag.BecomesNupkgDependency),
-                remove: Group());
+                    LibraryDependencyTypeFlag.BecomesNupkgDependency,
+                },
+                flagsToRemove: emptyFlags);
 
             Dev = Declare(
                 "dev",
-                add: Group(
-                    LibraryDependencyTypeFlag.DevComponent),
-                remove: Group());
+                flagsToAdd: new[]
+                {
+                    LibraryDependencyTypeFlag.DevComponent,
+                },
+                flagsToRemove: emptyFlags);
 
             Build = Declare(
                 "build",
-                add: Group(
+                flagsToAdd: new[]
+                {
                     LibraryDependencyTypeFlag.MainSource,
-                    LibraryDependencyTypeFlag.PreprocessComponent),
-                remove: Group());
+                    LibraryDependencyTypeFlag.PreprocessComponent,
+                },
+                flagsToRemove: emptyFlags);
 
             Preprocess = Declare(
                 "preproc",
-                add: Group(
-                    LibraryDependencyTypeFlag.PreprocessReference),
-                remove: Group());
+                flagsToAdd: new[]
+                {
+                    LibraryDependencyTypeFlag.PreprocessReference,
+                },
+                flagsToRemove: emptyFlags);
 
             foreach (var fieldInfo in typeof(LibraryDependencyTypeFlag).GetTypeInfo().DeclaredFields)
             {
@@ -81,34 +92,32 @@ namespace Microsoft.Framework.Runtime
                     var flag = (LibraryDependencyTypeFlag)fieldInfo.GetValue(null);
                     Declare(
                         fieldInfo.Name,
-                        Group(flag),
-                        Group());
+                        flagsToAdd: new[] { flag },
+                        flagsToRemove: emptyFlags);
                     Declare(
                         fieldInfo.Name + "-off",
-                        Group(),
-                        Group(flag));
+                        flagsToAdd: emptyFlags,
+                        flagsToRemove: new[] { flag });
                 }
             }
         }
 
-        LibraryDependencyTypeKeyword(string value, IEnumerable<LibraryDependencyTypeFlag> add, IEnumerable<LibraryDependencyTypeFlag> remove)
+        private LibraryDependencyTypeKeyword(
+            string value, 
+            IEnumerable<LibraryDependencyTypeFlag> flagsToAdd, 
+            IEnumerable<LibraryDependencyTypeFlag> flagsToRemove)
         {
             _value = value;
-            _add = add;
-            _remove = remove;
+            _flagsToAdd = flagsToAdd;
+            _flagsToRemove = flagsToRemove;
         }
 
-        public static IEnumerable<LibraryDependencyTypeFlag> Group(params LibraryDependencyTypeFlag[] flags)
-        {
-            return flags;
-        }
-
-        public static LibraryDependencyTypeKeyword Declare(
+        internal static LibraryDependencyTypeKeyword Declare(
             string keyword,
-            IEnumerable<LibraryDependencyTypeFlag> add,
-            IEnumerable<LibraryDependencyTypeFlag> remove)
+            IEnumerable<LibraryDependencyTypeFlag> flagsToAdd,
+            IEnumerable<LibraryDependencyTypeFlag> flagsToRemove)
         {
-            return _keywords.GetOrAdd(keyword, x => new LibraryDependencyTypeKeyword(x, add, remove));
+            return _keywords.GetOrAdd(keyword, _ => new LibraryDependencyTypeKeyword(keyword, flagsToAdd, flagsToRemove));
         }
 
         internal static LibraryDependencyTypeKeyword Parse(string keyword)

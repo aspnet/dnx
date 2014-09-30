@@ -40,7 +40,7 @@ namespace Microsoft.Framework.Runtime
             var type = new LibraryDependencyType();
             foreach (var keyword in keywords.Select(LibraryDependencyTypeKeyword.Parse))
             {
-                type = type.Combine(keyword.Add, keyword.Remove);
+                type = type.Combine(keyword.FlagsToAdd, keyword.FlagsToRemove);
             }
             return type;
         }
