@@ -14,16 +14,7 @@ namespace NuGet
 {
     public static class NetPortableProfileTable
     {
-        private static readonly object _profileTableInitLock = new object();
-
-        // This collection is the original indexed collection where profiles are indexed by 
-        // the full "ProfileXXX" naming. 
-        private static NetPortableProfileCollection _portableProfiles;
-        // In order to make the NetPortableProfile.Parse capable of also parsing so-called 
-        // "custom profile string" version (i.e. "net40-client"), we need an alternate index
-        // by this key. I used dictionary here since I saw no value in creating a custom collection 
-        // like it's done already for the _portableProfiles. Not sure why it's done that way there.
-        private static IDictionary<string, NetPortableProfile> _portableProfilesByCustomProfileString;
+        private static readonly Lazy<ProfileCollectionData> _profileData = new Lazy<ProfileCollectionData>(GetProfileData);
 
         public static NetPortableProfile GetProfile(string profileName)
         {
@@ -34,40 +25,44 @@ namespace NuGet
 
             // Original behavior fully preserved, as we first try the original behavior.
             // NOTE: this could be a single TryGetValue if this collection was kept as a dictionary...
-            if (Profiles.Contains(profileName))
+            if (ProfileData.Collection.Contains(profileName))
             {
-                return Profiles[profileName];
+                return ProfileData.Collection[profileName];
             }
 
             // If we didn't get a profile by the simple profile name, try now with 
             // the custom profile string (i.e. "net40-client")
             NetPortableProfile result = null;
-            _portableProfilesByCustomProfileString.TryGetValue(profileName, out result);
+            ProfileData.ProfilesByCustomProfileString.TryGetValue(profileName, out result);
 
             return result;
         }
 
-        private static NetPortableProfileCollection Profiles
+        private static ProfileCollectionData ProfileData
         {
             get
             {
-                if (_portableProfiles == null)
-                {
-                    lock (_profileTableInitLock)
-                    {
-                        if (_portableProfiles == null)
-                        {
-                            // We use the setter so that we can consistently set both the 
-                            // existing collection as well as the CustomProfileString-indexed one.
-                            // This keeps both in sync.
-                            _portableProfiles = BuildPortableProfileCollection();
-                            _portableProfilesByCustomProfileString = _portableProfiles.ToDictionary(x => x.CustomProfileString, new ProfileStringComparer());
-                        }
-                    }
-                }
-
-                return _portableProfiles;
+                return _profileData.Value;
             }
+        }
+
+        private static ProfileCollectionData GetProfileData()
+        {
+            var collection = BuildPortableProfileCollection();
+
+            return new ProfileCollectionData
+            {
+                // This collection is the original indexed collection where profiles are indexed by 
+                // the full "ProfileXXX" naming. 
+                Collection = collection,
+
+                // In order to make the NetPortableProfile.Parse capable of also parsing so-called 
+                // "custom profile string" version (i.e. "net40-client"), we need an alternate index
+                // by this key. I used dictionary here since I saw no value in creating a custom collection 
+                // like it's done already for the _portableProfiles. Not sure why it's done that way there.
+
+                ProfilesByCustomProfileString = collection.ToDictionary(x => x.CustomProfileString, new ProfileStringComparer())
+            };
         }
 
         private static NetPortableProfileCollection BuildPortableProfileCollection()
@@ -220,6 +215,12 @@ namespace NuGet
             }
 
             return null;
+        }
+
+        private class ProfileCollectionData
+        {
+            public NetPortableProfileCollection Collection { get; set; }
+            public IDictionary<string, NetPortableProfile> ProfilesByCustomProfileString { get; set; }
         }
 
         private class ProfileStringComparer : EqualityComparer<string>
