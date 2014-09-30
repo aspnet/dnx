@@ -87,6 +87,11 @@ namespace Microsoft.Framework.Runtime
             get { return Library.Version; }
         }
 
+        public bool IsGacOrFrameworkReference
+        {
+            get { return Library.IsGacOrFrameworkReference; }
+        }
+
         public LibraryDependencyType Type { get; private set; }
 
         public override string ToString()
