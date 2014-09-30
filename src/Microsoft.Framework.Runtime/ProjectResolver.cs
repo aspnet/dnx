@@ -69,9 +69,7 @@ namespace Microsoft.Framework.Runtime
             while (di.Parent != null)
             {
                 if (di.EnumerateFiles(GlobalSettings.GlobalFileName).Any() ||
-                    di.EnumerateFiles("*.sln").Any() ||
-                    di.EnumerateDirectories("packages").Any() ||
-                    di.EnumerateDirectories(".git").Any())
+                    di.EnumerateFiles("*.sln").Any())
                 {
                     return di.FullName;
                 }
@@ -79,7 +77,8 @@ namespace Microsoft.Framework.Runtime
                 di = di.Parent;
             }
 
-            return Path.GetDirectoryName(projectPath);
+            // If we don't find any files then make the project folder the root
+            return projectPath;
         }
     }
 }
