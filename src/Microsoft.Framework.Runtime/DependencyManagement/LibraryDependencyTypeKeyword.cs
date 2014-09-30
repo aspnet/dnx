@@ -78,7 +78,7 @@ namespace Microsoft.Framework.Runtime
                 flagsToRemove: emptyFlags);
 
             Preprocess = Declare(
-                "preproc",
+                "preprocess",
                 flagsToAdd: new[]
                 {
                     LibraryDependencyTypeFlag.PreprocessReference,
