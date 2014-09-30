@@ -293,7 +293,7 @@ namespace Microsoft.Framework.Runtime
             }
         }
 
-        IEnumerable<LibraryDependency> CorrectDependencyVersion(LibraryDependency dependency)
+        private IEnumerable<LibraryDependency> CorrectDependencyVersion(LibraryDependency dependency)
         {
             if (_usedItems.TryGetValue(dependency.Name, out var item))
             {
