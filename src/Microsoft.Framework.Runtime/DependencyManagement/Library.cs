@@ -15,8 +15,6 @@ namespace Microsoft.Framework.Runtime
 
         public bool IsGacOrFrameworkReference { get; set; }
 
-        //public bool IsImplicit { get; set; }
-
         public override string ToString()
         {
             var name = IsGacOrFrameworkReference ? "gac/" + Name : Name;
