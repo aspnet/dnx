@@ -75,7 +75,7 @@ namespace Microsoft.Framework.PackageManager.Packing
             {
                 if (root.Overwrite)
                 {
-                    Directory.Delete(targetFolder);
+                    Directory.Delete(targetFolder, recursive: true);
                 }
                 else
                 {
@@ -94,10 +94,17 @@ namespace Microsoft.Framework.PackageManager.Packing
             var targetFolder = Path.GetDirectoryName(targetPath);
             Directory.CreateDirectory(targetFolder);
 
-            if (!overwrite && File.Exists(targetPath))
+            if (File.Exists(targetPath))
             {
-                Console.WriteLine("  {0} already exists", targetPath);
-                return;
+                if (overwrite)
+                {
+                    File.Delete(targetPath);
+                }
+                else
+                {
+                    Console.WriteLine("  {0} already exists", targetPath);
+                    return;
+                }
             }
 
             Console.WriteLine("  Target {0}", targetPath);
