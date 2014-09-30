@@ -75,7 +75,7 @@ namespace Microsoft.Framework.PackageManager.Packing
             {
                 if (root.Overwrite)
                 {
-                    Directory.Delete(targetFolder, recursive: true);
+                    root.Operations.Delete(targetFolder);
                 }
                 else
                 {
