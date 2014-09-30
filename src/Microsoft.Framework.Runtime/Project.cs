@@ -42,7 +42,7 @@ namespace Microsoft.Framework.Runtime
         public Project()
         {
             Commands = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-            Scripts = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+            Scripts = new Dictionary<string, IEnumerable<string>>(StringComparer.OrdinalIgnoreCase);
         }
 
         public string ProjectFilePath { get; private set; }
@@ -197,7 +197,7 @@ namespace Microsoft.Framework.Runtime
 
         public IDictionary<string, string> Commands { get; private set; }
 
-        public IDictionary<string, string> Scripts { get; private set; }
+        public IDictionary<string, IEnumerable<string>> Scripts { get; private set; }
 
         public IEnumerable<TargetFrameworkInformation> GetTargetFrameworks()
         {
@@ -308,7 +308,20 @@ namespace Microsoft.Framework.Runtime
             {
                 foreach (var script in scripts)
                 {
-                    project.Scripts[script.Key] = script.Value.ToObject<string>();
+                    var value = script.Value;
+                    if (value.Type == JTokenType.String)
+                    {
+                        project.Scripts[script.Key] = new string[] { value.ToObject<string>() };
+                    }
+                    else if (value.Type == JTokenType.Array)
+                    {
+                        project.Scripts[script.Key] = script.Value.ToObject<string[]>();
+                    }
+                    else
+                    {
+                        throw new InvalidDataException(string.Format(
+                            "The value of a script in {0} can only be a string or an array of strings", ProjectFileName));
+                    }
                 }
             }
 

@@ -14,41 +14,44 @@ namespace Microsoft.Framework.PackageManager
     {
         public void Execute(Runtime.Project project, string scriptName, Func<string, string> getVariable)
         {
-            string scriptCommandLine;
-            if (!project.Scripts.TryGetValue(scriptName, out scriptCommandLine))
+            IEnumerable<string> scriptCommandLines;
+            if (!project.Scripts.TryGetValue(scriptName, out scriptCommandLines))
             {
                 return;
             }
 
-            var scriptArguments = CommandGrammar.Process(
-                scriptCommandLine,
-                GetScriptVariable(project, getVariable));
-
-            // Command-lines on Windows are executed via "cmd /C" in order
-            // to support batch files, &&, built-in commands like echo, etc.
-            // ComSpec is Windows-specific, and contains the full path to cmd.exe
-            var comSpec = Environment.GetEnvironmentVariable("ComSpec");
-            if (!string.IsNullOrEmpty(comSpec))
+            foreach (var scriptCommandLine in scriptCommandLines)
             {
-                scriptArguments =
-                    new[] { comSpec, "/C", "\"" }
-                    .Concat(scriptArguments)
-                    .Concat(new[] { "\"" })
-                    .ToArray();
+                var scriptArguments = CommandGrammar.Process(
+                    scriptCommandLine,
+                    GetScriptVariable(project, getVariable));
+
+                // Command-lines on Windows are executed via "cmd /C" in order
+                // to support batch files, &&, built-in commands like echo, etc.
+                // ComSpec is Windows-specific, and contains the full path to cmd.exe
+                var comSpec = Environment.GetEnvironmentVariable("ComSpec");
+                if (!string.IsNullOrEmpty(comSpec))
+                {
+                    scriptArguments =
+                        new[] { comSpec, "/C", "\"" }
+                        .Concat(scriptArguments)
+                        .Concat(new[] { "\"" })
+                        .ToArray();
+                }
+
+                var startInfo = new ProcessStartInfo
+                {
+                    FileName = scriptArguments.FirstOrDefault(),
+                    Arguments = String.Join(" ", scriptArguments.Skip(1)),
+                    WorkingDirectory = project.ProjectDirectory,
+    #if NET45
+                    UseShellExecute = false,
+    #endif
+                };
+                var process = Process.Start(startInfo);
+
+                process.WaitForExit();
             }
-
-            var startInfo = new ProcessStartInfo
-            {
-                FileName = scriptArguments.FirstOrDefault(),
-                Arguments = String.Join(" ", scriptArguments.Skip(1)),
-                WorkingDirectory = project.ProjectDirectory,
-#if NET45
-                UseShellExecute = false,
-#endif
-            };
-            var process = Process.Start(startInfo);
-
-            process.WaitForExit();
         }
 
         private Func<string, string> GetScriptVariable(Runtime.Project project, Func<string, string> getVariable)
