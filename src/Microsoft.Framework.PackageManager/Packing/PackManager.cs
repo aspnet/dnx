@@ -7,6 +7,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Runtime.Versioning;
+using Microsoft.Framework.Runtime;
 
 namespace Microsoft.Framework.PackageManager.Packing
 {
@@ -108,7 +109,17 @@ namespace Microsoft.Framework.PackageManager.Packing
                     var kreHome = Environment.GetEnvironmentVariable("KRE_HOME");
                     if (string.IsNullOrEmpty(kreHome))
                     {
+#if ASPNETCORE50
                         kreHome = Environment.GetEnvironmentVariable("ProgramFiles") + @"\KRE;%USERPROFILE%\.kre";
+#else
+                        var userProfile = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+                        kreHome = Path.Combine(userProfile, ".kre");
+                        if (!PlatformHelper.IsMono)
+                        {
+                            var programFilesPath = Environment.GetEnvironmentVariable("ProgramFiles");
+                            kreHome = Path.Combine(programFilesPath, "KRE") + ";" + kreHome;
+                        }
+#endif
                     }
 
                     foreach (var portion in kreHome.Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries))

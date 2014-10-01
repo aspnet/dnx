@@ -1,0 +1,12 @@
+{
+    "dependencies": {
+        "Microsoft.Framework.PackageManager": "1.0.0-*",
+        "Xunit.KRunner": "1.0.0-*"
+    },
+    "frameworks": {
+        "aspnet50": { }
+    },
+    "commands": {
+        "test": "Xunit.KRunner"
+    }
+}

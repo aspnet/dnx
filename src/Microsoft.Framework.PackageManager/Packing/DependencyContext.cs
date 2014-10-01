@@ -57,7 +57,11 @@ namespace Microsoft.Framework.PackageManager.Packing
                 return null;
             }
             parts = parts[0].Split(new[] { '-' }, 3);
-            if (parts.Length != 3)
+            if (parts.Length < 2)
+            {
+                return null;
+            }
+            if (parts.Length == 2 && !string.Equals(parts[1].ToLowerInvariant(), "mono"))
             {
                 return null;
             }
