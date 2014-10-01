@@ -295,7 +295,8 @@ namespace Microsoft.Framework.Runtime
 
         private IEnumerable<LibraryDependency> CorrectDependencyVersion(LibraryDependency dependency)
         {
-            if (_usedItems.TryGetValue(dependency.Name, out var item))
+            Item item;
+            if (_usedItems.TryGetValue(dependency.Name, out item))
             {
                 yield return dependency.ChangeVersion(item.Key.Version);
             }

@@ -400,7 +400,9 @@ namespace Microsoft.Framework.Runtime
                                 dependencyVersionValue = dependencyVersionToken.Value<string>();
                             }
                         }
-                        if (TryGetStringEnumerable(dependencyValue["type"], out var strings))
+
+                        IEnumerable<string> strings;
+                        if (TryGetStringEnumerable(dependencyValue["type"], out strings))
                         {
                             dependencyTypeValue = LibraryDependencyType.Parse(strings);
                         }

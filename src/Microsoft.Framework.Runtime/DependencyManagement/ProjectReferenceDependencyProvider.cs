@@ -80,7 +80,8 @@ namespace Microsoft.Framework.Runtime
                     continue;
                 }
 
-                d.Library.IsGacOrFrameworkReference = _frameworkReferenceResolver.TryGetAssembly(d.Name, targetFramework, out var path);
+                string path;
+                d.Library.IsGacOrFrameworkReference = _frameworkReferenceResolver.TryGetAssembly(d.Name, targetFramework, out path);
 
                 // We need to fix up the version here since
                 if (d.Library.IsGacOrFrameworkReference)

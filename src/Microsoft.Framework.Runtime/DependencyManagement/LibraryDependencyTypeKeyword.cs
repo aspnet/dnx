@@ -122,7 +122,8 @@ namespace Microsoft.Framework.Runtime
 
         internal static LibraryDependencyTypeKeyword Parse(string keyword)
         {
-            if (_keywords.TryGetValue(keyword, out var value))
+            LibraryDependencyTypeKeyword value;
+            if (_keywords.TryGetValue(keyword, out value))
             {
                 return value;
             }
