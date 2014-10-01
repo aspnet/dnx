@@ -50,7 +50,7 @@ namespace Microsoft.Framework.Runtime.Roslyn
                                                 ignoreCase: true,
                                                 result: out languageVersion))
             {
-                languageVersion = LanguageVersion.Experimental;
+                languageVersion = LanguageVersion.CSharp6;
             }
 
             var settings = new CompilationSettings
