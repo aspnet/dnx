@@ -392,6 +392,14 @@ namespace Microsoft.Framework.Runtime
                     }
                     else
                     {
+                        if (dependencyValue.Type == JTokenType.Object)
+                        {
+                            var dependencyVersionToken = dependencyValue["version"];
+                            if (dependencyVersionToken != null && dependencyVersionToken.Type == JTokenType.String)
+                            {
+                                dependencyVersionValue = dependencyVersionToken.Value<string>();
+                            }
+                        }
                         if (TryGetStringEnumerable(dependencyValue["type"], out var strings))
                         {
                             dependencyTypeValue = LibraryDependencyType.Parse(strings);

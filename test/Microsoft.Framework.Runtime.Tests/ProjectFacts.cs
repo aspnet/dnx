@@ -8,6 +8,14 @@ using NuGet;
 
 namespace Microsoft.Framework.Runtime.Tests
 {
+    public class Program
+    {
+        public void Main(string[] args)
+        {
+            new ProjectFacts().DependenciesAreSet();
+        }
+    }
+
     public class ProjectFacts
     {
         [Fact]

@@ -22,6 +22,18 @@ namespace Loader.Tests
             return entry.Dependencies.ToArray();
         }
 
+        private void AssertDependencies(
+            IEnumerable<LibraryDependency> actual,
+            Action<TestDependencyProvider.Entry> expected)
+        {
+            var builder = new TestDependencyProvider.Entry();
+            expected(builder);
+
+            actual.Select(d => d.Library).ShouldBe(
+                builder.Dependencies.Select(d => d.Library)
+            );
+        }
+
         [Fact]
         public void SimpleGraphCanBeWalked()
         {
@@ -33,10 +45,10 @@ namespace Loader.Tests
             var walker = new DependencyWalker(new[] { testProvider });
             walker.Walk("a", new SemanticVersion("1.0"), VersionUtility.ParseFrameworkName("net45"));
 
-            testProvider.Dependencies.ShouldBe(Dependencies(that => that
-                .Needs("a", "1.0")
-                .Needs("b", "1.0")
-                .Needs("c", "1.0")));
+            AssertDependencies(testProvider.Dependencies, that => that
+                 .Needs("a", "1.0")
+                 .Needs("b", "1.0")
+                 .Needs("c", "1.0"));
         }
 
 
@@ -49,14 +61,14 @@ namespace Loader.Tests
                 .Package("c", "1.0")
                 .Package("d", "1.0");
 
-            var walker = new DependencyWalker(new[]{ testProvider });
+            var walker = new DependencyWalker(new[] { testProvider });
             walker.Walk("a", new SemanticVersion("1.0"), VersionUtility.ParseFrameworkName("net45"));
 
-            testProvider.Dependencies.ShouldBe(Dependencies(that => that
+            AssertDependencies(testProvider.Dependencies, that => that
                 .Needs("a", "1.0")
                 .Needs("b", "1.0")
                 .Needs("c", "1.0")
-                .Needs("d", "1.0")));
+                .Needs("d", "1.0"));
         }
 
 
@@ -66,11 +78,11 @@ namespace Loader.Tests
             var testProvider = new TestDependencyProvider()
                 .Package("a", "1.0", that => that.Needs("x", "1.0"));
 
-            var walker = new DependencyWalker(new[]{ testProvider });
+            var walker = new DependencyWalker(new[] { testProvider });
             walker.Walk("a", new SemanticVersion("1.0"), VersionUtility.ParseFrameworkName("net45"));
 
-            testProvider.Dependencies.ShouldBe(Dependencies(that => that
-                .Needs("a", "1.0")));
+            AssertDependencies(testProvider.Dependencies, that => that
+                .Needs("a", "1.0"));
         }
 
         [Fact]
@@ -82,14 +94,14 @@ namespace Loader.Tests
                 .Package("c", "1.0", that => that.Needs("d", "1.0").Needs("b", "1.0"))
                 .Package("d", "1.0", that => that.Needs("b", "1.0"));
 
-            var walker = new DependencyWalker(new[]{ testProvider });
+            var walker = new DependencyWalker(new[] { testProvider });
             walker.Walk("a", new SemanticVersion("1.0"), VersionUtility.ParseFrameworkName("net45"));
 
-            testProvider.Dependencies.ShouldBe(Dependencies(that => that
+            AssertDependencies(testProvider.Dependencies, that => that
                 .Needs("a", "1.0")
                 .Needs("b", "1.0")
                 .Needs("c", "1.0")
-                .Needs("d", "1.0")));
+                .Needs("d", "1.0"));
         }
 
         [Fact]
@@ -102,15 +114,14 @@ namespace Loader.Tests
                 .Package("x", "1.0")
                 .Package("x", "2.0");
 
-            var walker = new DependencyWalker(new[]{ testProvider });
+            var walker = new DependencyWalker(new[] { testProvider });
             walker.Walk("a", new SemanticVersion("1.0"), VersionUtility.ParseFrameworkName("net45"));
 
-            testProvider.Dependencies.ShouldBe(Dependencies(that => that
+            AssertDependencies(testProvider.Dependencies, that => that
                 .Needs("a", "1.0")
                 .Needs("b", "1.0")
                 .Needs("c", "1.0")
-                .Needs("x", "1.0")
-                ));
+                .Needs("x", "1.0"));
         }
 
 
@@ -127,12 +138,11 @@ namespace Loader.Tests
             var walker = new DependencyWalker(new[] { testProvider });
             walker.Walk("a", new SemanticVersion("1.0"), VersionUtility.ParseFrameworkName("net45"));
 
-            testProvider.Dependencies.ShouldBe(Dependencies(that => that
+            AssertDependencies(testProvider.Dependencies, that => that
                 .Needs("a", "1.0")
                 .Needs("b", "1.0")
                 .Needs("c", "1.0")
-                .Needs("x", "2.0")
-                ));
+                .Needs("x", "2.0"));
         }
 
         [Fact]
@@ -159,14 +169,13 @@ namespace Loader.Tests
 
             // the d1->e2->x2 line has no effect because d2 has no dependencies, 
 
-            testProvider.Dependencies.ShouldBe(Dependencies(that => that
+            AssertDependencies(testProvider.Dependencies, that => that
                 .Needs("a", "1.0")
                 .Needs("b", "1.0")
                 .Needs("c", "1.0")
                 .Needs("d", "2.0")
                 .Needs("e", "1.0")
-                .Needs("x", "1.0")
-                ));
+                .Needs("x", "1.0"));
         }
     }
 
