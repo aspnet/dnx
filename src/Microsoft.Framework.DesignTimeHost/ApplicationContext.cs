@@ -229,7 +229,7 @@ namespace Microsoft.Framework.DesignTimeHost
 
         private void SetTargetFramework(string targetFrameworkValue)
         {
-            var targetFramework = VersionUtility.ParseFrameworkName(targetFrameworkValue ?? "net45");
+            var targetFramework = VersionUtility.ParseFrameworkName(targetFrameworkValue ?? "aspnet50");
             _targetFramework.Value = targetFramework == VersionUtility.UnsupportedFrameworkName ? new FrameworkName(targetFrameworkValue) : targetFramework;
         }
 
