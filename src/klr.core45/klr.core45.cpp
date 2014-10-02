@@ -108,6 +108,7 @@ bool KlrLoadLibraryExWAndGetProcAddress(
     {
         ::wprintf_s(L"Failed to load: %s\r\n", pwszModuleFileName);
         hModule = nullptr;
+        fSuccess = false;
         goto Finished;
     }
     
