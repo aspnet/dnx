@@ -251,7 +251,7 @@ namespace Microsoft.Framework.PackageManager.Packing
                 return false;
             }
 
-            root.Runtimes.Add(new PackRuntime(root, frameworkName, kreNupkgPath));
+            root.Runtimes.Add(new PackRuntime(root, frameworkName, kreNupkgPath) { Report = _options.Reports.Quiet });
             return true;
         }
 
