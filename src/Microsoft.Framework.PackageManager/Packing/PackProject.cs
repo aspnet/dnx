@@ -18,26 +18,28 @@ namespace Microsoft.Framework.PackageManager.Packing
         private readonly ProjectReferenceDependencyProvider _projectReferenceDependencyProvider;
         private readonly IProjectResolver _projectResolver;
         private readonly LibraryDescription _libraryDescription;
+        private readonly IReport _report;
 
         public PackProject(
             ProjectReferenceDependencyProvider projectReferenceDependencyProvider,
             IProjectResolver projectResolver,
-            LibraryDescription libraryDescription)
+            LibraryDescription libraryDescription,
+            IReport report)
         {
             _projectReferenceDependencyProvider = projectReferenceDependencyProvider;
             _projectResolver = projectResolver;
             _libraryDescription = libraryDescription;
+            _report = report;
         }
 
         public string Name { get { return _libraryDescription.Identity.Name; } }
         public string TargetPath { get; private set; }
         public string WwwRoot { get; set; }
         public string WwwRootOut { get; set; }
-        public IReport Report { get; set; }
 
         public void EmitSource(PackRoot root)
         {
-            Report.WriteLine("Packing project dependency {0}", _libraryDescription.Identity.Name);
+            _report.WriteLine("Packing project dependency {0}", _libraryDescription.Identity.Name);
 
             Runtime.Project project;
             if (!_projectResolver.TryResolveProject(_libraryDescription.Identity.Name, out project))
@@ -51,8 +53,8 @@ namespace Microsoft.Framework.PackageManager.Packing
             // If root.OutputPath is specified by --out option, it might not be a full path
             TargetPath = Path.GetFullPath(TargetPath);
 
-            Report.WriteLine("  Source {0}", project.ProjectDirectory);
-            Report.WriteLine("  Target {0}", TargetPath);
+            _report.WriteLine("  Source {0}", project.ProjectDirectory);
+            _report.WriteLine("  Target {0}", TargetPath);
 
             root.Operations.Delete(TargetPath);
 
@@ -122,7 +124,7 @@ namespace Microsoft.Framework.PackageManager.Packing
                 }
                 else
                 {
-                    Report.WriteLine(
+                    _report.WriteLine(
                         string.Format(
                             "TODO: Warning: the referenced source file '{0}' is not in solution root and it is not packed to output.".Yellow(), sourceFile));
                 }
@@ -131,7 +133,7 @@ namespace Microsoft.Framework.PackageManager.Packing
 
         public void EmitNupkg(PackRoot root)
         {
-            Report.WriteLine("Packing nupkg from project dependency {0}", _libraryDescription.Identity.Name);
+            _report.WriteLine("Packing nupkg from project dependency {0}", _libraryDescription.Identity.Name);
 
             Runtime.Project project;
             if (!_projectResolver.TryResolveProject(_libraryDescription.Identity.Name, out project))
@@ -144,8 +146,8 @@ namespace Microsoft.Framework.PackageManager.Packing
             var targetNupkg = resolver.GetPackageFileName(project.Name, project.Version);
             TargetPath = resolver.GetInstallPath(project.Name, project.Version);
 
-            Report.WriteLine("  Source {0}", project.ProjectDirectory);
-            Report.WriteLine("  Target {0}", TargetPath);
+            _report.WriteLine("  Source {0}", project.ProjectDirectory);
+            _report.WriteLine("  Target {0}", TargetPath);
 
             if (Directory.Exists(TargetPath))
             {
@@ -155,7 +157,7 @@ namespace Microsoft.Framework.PackageManager.Packing
                 }
                 else
                 {
-                    Report.WriteLine("  {0} already exists.", TargetPath);
+                    _report.WriteLine("  {0} already exists.", TargetPath);
                     return;
                 }
             }
@@ -294,7 +296,7 @@ root.Configuration));
 
         private void CopyContentFiles(PackRoot root, Runtime.Project project)
         {
-            Report.WriteLine("Copying contents of project dependency {0} to {1}",
+            _report.WriteLine("Copying contents of project dependency {0} to {1}",
                 _libraryDescription.Identity.Name, WwwRootOut);
 
             // If the value of '--wwwroot' is ".", we need to pack the project root dir
@@ -302,8 +304,8 @@ root.Configuration));
             var wwwRootPath = Path.GetFullPath(Path.Combine(project.ProjectDirectory, WwwRoot));
             var wwwRootOutPath = Path.Combine(root.OutputPath, WwwRootOut);
 
-            Report.WriteLine("  Source {0}", wwwRootPath);
-            Report.WriteLine("  Target {0}", wwwRootOutPath);
+            _report.WriteLine("  Source {0}", wwwRootPath);
+            _report.WriteLine("  Target {0}", wwwRootOutPath);
 
             // A set of content files that should be copied
             var contentFiles = new HashSet<string>(project.ContentFiles, StringComparer.OrdinalIgnoreCase);

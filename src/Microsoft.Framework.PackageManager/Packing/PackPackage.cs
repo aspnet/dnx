@@ -16,23 +16,23 @@ namespace Microsoft.Framework.PackageManager.Packing
     public class PackPackage
     {
         private readonly LibraryDescription _libraryDescription;
+        private readonly IReport _report;
 
-        public PackPackage(LibraryDescription libraryDescription)
+        public PackPackage(LibraryDescription libraryDescription, IReport report)
         {
             _libraryDescription = libraryDescription;
+            _report = report;
         }
 
         public Library Library { get { return _libraryDescription.Identity; } }
 
         public string TargetPath { get; private set; }
 
-        public IReport Report { get; set; }
-
         public void Emit(PackRoot root)
         {
             foreach (var context in root.LibraryDependencyContexts[Library])
             {
-                Report.WriteLine("Packing nupkg dependency {0} for {1}", Library, context.FrameworkName);
+                _report.WriteLine("Packing nupkg dependency {0} for {1}", Library, context.FrameworkName);
                 Emit(root, context.PackageAssemblies[Library.Name]);
             }
         }
@@ -81,12 +81,12 @@ namespace Microsoft.Framework.PackageManager.Packing
                 }
                 else
                 {
-                    Report.WriteLine("  {0} already exists", targetFolder);
+                    _report.WriteLine("  {0} already exists", targetFolder);
                     return;
                 }
             }
 
-            Report.WriteLine("  Target {0}", targetFolder);
+            _report.WriteLine("  Target {0}", targetFolder);
             Directory.CreateDirectory(targetFolder);
             root.Operations.Copy(srcFolder, targetFolder);
         }
@@ -104,12 +104,12 @@ namespace Microsoft.Framework.PackageManager.Packing
                 }
                 else
                 {
-                    Report.WriteLine("  {0} already exists", targetPath);
+                    _report.WriteLine("  {0} already exists", targetPath);
                     return;
                 }
             }
 
-            Report.WriteLine("  Target {0}", targetPath);
+            _report.WriteLine("  Target {0}", targetPath);
             File.Copy(srcPath, targetPath);
         }
     }

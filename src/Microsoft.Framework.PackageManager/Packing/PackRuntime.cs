@@ -16,14 +16,17 @@ namespace Microsoft.Framework.PackageManager.Packing
         //private readonly Library _library;
         private readonly FrameworkName _frameworkName;
         private readonly string _kreNupkgPath;
+        private readonly IReport _report;
 
         public PackRuntime(
             PackRoot root,
             FrameworkName frameworkName,
-            string kreNupkgPath)
+            string kreNupkgPath,
+            IReport report)
         {
             _frameworkName = frameworkName;
             _kreNupkgPath = kreNupkgPath;
+            _report = report;
             Name = Path.GetFileName(Path.GetDirectoryName(_kreNupkgPath));
             TargetPath = Path.Combine(root.TargetPackagesPath, Name);
         }
@@ -31,15 +34,14 @@ namespace Microsoft.Framework.PackageManager.Packing
         public string Name { get; private set; }
         public string TargetPath { get; private set; }
         public FrameworkName Framework { get { return _frameworkName; } }
-        public IReport Report { get; set; }
 
         public void Emit(PackRoot root)
         {
-            Report.WriteLine("Packing runtime {0}", Name);
+            _report.WriteLine("Packing runtime {0}", Name);
 
             if (Directory.Exists(TargetPath))
             {
-                Report.WriteLine("  {0} already exists.", TargetPath);
+                _report.WriteLine("  {0} already exists.", TargetPath);
                 return;
             }
 

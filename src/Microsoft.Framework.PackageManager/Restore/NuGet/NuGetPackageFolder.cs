@@ -19,10 +19,7 @@ namespace Microsoft.Framework.PackageManager.Restore.NuGet
             string physicalPath,
             IReport report)
         {
-            _repository = new LocalPackageRepository(physicalPath)
-            {
-                Report = report
-            };
+            _repository = new LocalPackageRepository(physicalPath, report);
             _report = report;
         }
 

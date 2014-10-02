@@ -9,6 +9,7 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using Microsoft.Framework.Runtime;
+using Microsoft.Framework.PackageManager;
 using NuGet.Resources;
 
 namespace NuGet
@@ -18,25 +19,27 @@ namespace NuGet
         private readonly ConcurrentDictionary<string, PackageCacheEntry> _packageCache = new ConcurrentDictionary<string, PackageCacheEntry>(StringComparer.OrdinalIgnoreCase);
         private readonly ConcurrentDictionary<PackageName, string> _packagePathLookup = new ConcurrentDictionary<PackageName, string>();
         private readonly bool _enableCaching;
+        private readonly IReport _report;
 
-        public LocalPackageRepository(string physicalPath)
-            : this(physicalPath, enableCaching: true)
+        public LocalPackageRepository(string physicalPath, IReport report)
+            : this(physicalPath, report, enableCaching: true)
         {
         }
 
-        public LocalPackageRepository(string physicalPath, bool enableCaching)
+        public LocalPackageRepository(string physicalPath, IReport report, bool enableCaching)
             : this(new DefaultPackagePathResolver(physicalPath),
                    new PhysicalFileSystem(physicalPath),
+                   report,
                    enableCaching)
         {
         }
 
-        public LocalPackageRepository(IPackagePathResolver pathResolver, IFileSystem fileSystem)
-            : this(pathResolver, fileSystem, enableCaching: true)
+        public LocalPackageRepository(IPackagePathResolver pathResolver, IFileSystem fileSystem, IReport report)
+            : this(pathResolver, fileSystem, report, enableCaching: true)
         {
         }
 
-        public LocalPackageRepository(IPackagePathResolver pathResolver, IFileSystem fileSystem, bool enableCaching)
+        public LocalPackageRepository(IPackagePathResolver pathResolver, IFileSystem fileSystem, IReport report, bool enableCaching)
         {
             if (pathResolver == null)
             {
@@ -51,6 +54,7 @@ namespace NuGet
             FileSystem = fileSystem;
             PathResolver = pathResolver;
             _enableCaching = enableCaching;
+            _report = report;
         }
 
         public /*override*/ string Source
@@ -232,10 +236,7 @@ namespace NuGet
                 // We need to do this so we capture the correct loop variable
                 string packagePath = path;
 
-                if (Report != null)
-                {
-                    Report.WriteLine(string.Format("  OPEN {0}", FileSystem.GetFullPath(packagePath)));
-                }
+                _report.WriteLine(string.Format("  OPEN {0}", FileSystem.GetFullPath(packagePath)));
 
                 // Create the package
                 IPackage package = openPackage(packagePath);
@@ -352,7 +353,5 @@ namespace NuGet
             public IPackage Package { get; private set; }
             public DateTimeOffset LastModifiedTime { get; private set; }
         }
-
-        public Microsoft.Framework.PackageManager.IReport Report { get; set; }
     }
 }

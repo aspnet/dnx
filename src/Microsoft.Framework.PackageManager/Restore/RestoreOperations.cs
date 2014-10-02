@@ -16,7 +16,12 @@ namespace Microsoft.Framework.PackageManager
 {
     public class RestoreOperations
     {
-        public IReport Report { get; set; }
+        private readonly IReport _report;
+
+        public RestoreOperations(IReport report)
+        {
+            _report = report;
+        }
 
         public async Task<GraphNode> CreateGraphNode(RestoreContext context, Library library, Func<string, bool> predicate)
         {
@@ -97,7 +102,7 @@ namespace Microsoft.Framework.PackageManager
 
         public async Task<GraphItem> FindLibraryEntry(RestoreContext context, Library library)
         {
-            Report.WriteLine(string.Format("Attempting to resolve dependency {0} >= {1}", library.Name.Bold(), library.Version));
+            _report.WriteLine(string.Format("Attempting to resolve dependency {0} >= {1}", library.Name.Bold(), library.Version));
 
             var match = await FindLibraryMatch(context, library);
             if (match == null)

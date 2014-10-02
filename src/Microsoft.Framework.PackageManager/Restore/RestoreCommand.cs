@@ -159,7 +159,7 @@ namespace Microsoft.Framework.PackageManager
             ScriptExecutor.Execute(project, "prerestore", getVariable);
 
             var projectDirectory = project.ProjectDirectory;
-            var restoreOperations = new RestoreOperations { Report = Reports.Verbose };
+            var restoreOperations = new RestoreOperations(Reports.Verbose);
             var projectProviders = new List<IWalkProvider>();
             var localProviders = new List<IWalkProvider>();
             var remoteProviders = new List<IWalkProvider>();
@@ -276,7 +276,7 @@ namespace Microsoft.Framework.PackageManager
             var sw = new Stopwatch();
             sw.Start();
 
-            var restoreOperations = new RestoreOperations { Report = Reports.Information };
+            var restoreOperations = new RestoreOperations(Reports.Information);
             var localProviders = new List<IWalkProvider>();
             var remoteProviders = new List<IWalkProvider>();
 

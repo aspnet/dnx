@@ -82,12 +82,11 @@ namespace Microsoft.Framework.PackageManager.Packing
 
             var frameworkContexts = new Dictionary<FrameworkName, DependencyContext>();
 
-            var root = new PackRoot(project, outputPath, _hostServices)
+            var root = new PackRoot(project, outputPath, _hostServices, _options.Reports.Quiet)
             {
                 Overwrite = _options.Overwrite,
                 Configuration = _options.Configuration,
-                NoSource = _options.NoSource,
-                Report = _options.Reports.Quiet
+                NoSource = _options.NoSource
             };
 
             Func<string, string> getVariable = key =>
@@ -187,7 +186,7 @@ namespace Microsoft.Framework.PackageManager.Packing
                     IList<DependencyContext> contexts;
                     if (!root.LibraryDependencyContexts.TryGetValue(libraryDescription.Identity, out contexts))
                     {
-                        root.Packages.Add(new PackPackage(libraryDescription) { Report = _options.Reports.Quiet });
+                        root.Packages.Add(new PackPackage(libraryDescription, _options.Reports.Quiet));
                         contexts = new List<DependencyContext>();
                         root.LibraryDependencyContexts[libraryDescription.Identity] = contexts;
                     }
@@ -198,13 +197,16 @@ namespace Microsoft.Framework.PackageManager.Packing
                 {
                     if (!root.Projects.Any(p => p.Name == libraryDescription.Identity.Name))
                     {
-                        var packProject = new PackProject(dependencyContext.ProjectReferenceDependencyProvider, dependencyContext.ProjectResolver, libraryDescription);
+                        var packProject = new PackProject(
+                            dependencyContext.ProjectReferenceDependencyProvider,
+                            dependencyContext.ProjectResolver,
+                            libraryDescription,
+                            _options.Reports.Quiet);
                         if (packProject.Name == project.Name)
                         {
                             packProject.WwwRoot = _options.WwwRoot;
                             packProject.WwwRootOut = _options.WwwRootOut;
                         }
-                        packProject.Report = _options.Reports.Quiet;
                         root.Projects.Add(packProject);
                     }
                 }
@@ -251,7 +253,7 @@ namespace Microsoft.Framework.PackageManager.Packing
                 return false;
             }
 
-            root.Runtimes.Add(new PackRuntime(root, frameworkName, kreNupkgPath) { Report = _options.Reports.Quiet });
+            root.Runtimes.Add(new PackRuntime(root, frameworkName, kreNupkgPath, _options.Reports.Quiet));
             return true;
         }
 
