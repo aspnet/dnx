@@ -266,7 +266,7 @@ namespace Microsoft.Framework.Runtime.Roslyn
 
             if (embeddedReference != null)
             {
-                return new MetadataImageReference(embeddedReference.Contents);
+                return MetadataReference.CreateFromImage(embeddedReference.Contents);
             }
 
             var fileMetadataReference = metadataReference as IMetadataFileReference;
@@ -283,7 +283,7 @@ namespace Microsoft.Framework.Runtime.Roslyn
                 {
                     projectReference.EmitReferenceAssembly(ms);
 
-                    return new MetadataImageReference(ms.ToArray());
+                    return MetadataReference.CreateFromImage(ms.ToArray());
                 }
             }
 
@@ -296,10 +296,10 @@ namespace Microsoft.Framework.Runtime.Roslyn
             {
                 ctx.Monitor(new FileWriteTimeCacheDependency(path));
 
-                return AssemblyMetadata.CreateFromImageStream(File.OpenRead(path));
+                return AssemblyMetadata.CreateFromStream(File.OpenRead(path));
             });
 
-            return new MetadataImageReference(metadata);
+            return metadata.GetReference();
         }
     }
 }

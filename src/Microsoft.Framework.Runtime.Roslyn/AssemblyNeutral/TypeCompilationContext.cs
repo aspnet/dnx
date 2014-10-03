@@ -40,12 +40,12 @@ namespace Microsoft.Framework.Runtime.Roslyn
 
         public CSharpCompilation Compilation { get; private set; }
 
-        public Stream OutputStream { get; private set; }
+        public byte[] OutputBytes { get; private set; }
         public MetadataReference Reference { get; private set; }
         public EmitResult EmitResult { get; private set; }
 
         public CSharpCompilation ShallowCompilation { get; private set; }
-        public Stream ShallowOutputStream { get; private set; }
+        public byte[] ShallowBytes { get; private set; }
         public MetadataReference ShallowReference { get; private set; }
         public EmitResult ShallowEmitResult { get; private set; }
 
@@ -178,16 +178,15 @@ namespace Microsoft.Framework.Runtime.Roslyn
                 Compilation = Compilation.AddSyntaxTrees(newTree);
             }
 
-            OutputStream = new MemoryStream();
-            EmitResult = Compilation.Emit(OutputStream);
+            var outputStream = new MemoryStream();
+            EmitResult = Compilation.Emit(outputStream);
             if (!EmitResult.Success)
             {
                 return EmitResult;
             }
 
-            OutputStream.Position = 0;
-            Reference = new MetadataImageReference(OutputStream);
-            OutputStream.Position = 0;
+            OutputBytes = outputStream.ToArray();
+            Reference = MetadataReference.CreateFromImage(OutputBytes);
 
             return EmitResult;
         }
@@ -231,11 +230,10 @@ namespace Microsoft.Framework.Runtime.Roslyn
 
                 ShallowCompilation = ShallowCompilation.AddSyntaxTrees(newTree);
             }
-            ShallowOutputStream = new MemoryStream();
-            ShallowEmitResult = ShallowCompilation.Emit(ShallowOutputStream);
-            ShallowOutputStream.Position = 0;
-            ShallowReference = new MetadataImageReference(ShallowOutputStream);
-            ShallowOutputStream.Position = 0;
+            var shallowOutputStream = new MemoryStream();
+            ShallowEmitResult = ShallowCompilation.Emit(shallowOutputStream);
+            ShallowBytes = shallowOutputStream.ToArray();
+            ShallowReference = MetadataReference.CreateFromImage(ShallowBytes);
             return ShallowReference;
         }
 

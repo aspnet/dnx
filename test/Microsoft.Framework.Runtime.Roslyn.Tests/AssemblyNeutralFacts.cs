@@ -192,7 +192,7 @@ namespace Something
             var compilation = CSharpCompilation.Create("test",
                 options: new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary),
                 references: new[] { 
-                    new MetadataFileReference(typeof(object).GetTypeInfo().Assembly.Location) 
+                    MetadataReference.CreateFromAssembly(typeof(object).GetTypeInfo().Assembly) 
                 },
                 syntaxTrees: fileContents.Select(text => CSharpSyntaxTree.ParseText(text)));
 
