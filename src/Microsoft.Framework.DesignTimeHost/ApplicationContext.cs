@@ -15,7 +15,6 @@ using Microsoft.Framework.DesignTimeHost.Models.OutgoingMessages;
 using Microsoft.Framework.Runtime;
 using Microsoft.Framework.Runtime.Common.DependencyInjection;
 using Microsoft.Framework.Runtime.Roslyn;
-using Microsoft.Framework.TestAdapter;
 using Newtonsoft.Json.Linq;
 using NuGet;
 
@@ -209,17 +208,6 @@ namespace Microsoft.Framework.DesignTimeHost
                 case "GetDiagnostics":
                     {
                         _waitingForDiagnostics.Add(message.Sender);
-                    }
-                    break;
-                case "TestDiscovery":
-                    {
-                        DiscoverTests();
-                    }
-                    break;
-                case "TestExecution":
-                    {
-                        var data = message.Payload.ToObject<TestExecutionMessage>();
-                        ExecuteTests(data.Tests);
                     }
                     break;
             }
@@ -537,146 +525,6 @@ namespace Microsoft.Framework.DesignTimeHost
                                                        .ToDictionary(d => d.Name);
 
             return state;
-        }
-
-        private async void ExecuteTests(IList<string> tests)
-        {
-            if (_appPath.Value == null)
-            {
-                throw new InvalidOperationException("The context must be initialized with a project.");
-            }
-
-            string testCommand = null;
-            Project project = null;
-            if (Project.TryGetProject(_appPath.Value, out project))
-            {
-                project.Commands.TryGetValue("test", out testCommand);
-            }
-
-            if (testCommand == null)
-            {
-                // No test command means no tests.
-                Trace.TraceInformation("[ApplicationContext]: OnTransmit(ExecuteTests)");
-                _initializedContext.Transmit(new Message
-                {
-                    ContextId = Id,
-                    MessageType = "TestExecution.Response",
-                });
-
-                return;
-            }
-
-            var testServices = new ServiceProvider(_hostServices);
-            testServices.Add(typeof(ITestExecutionSink), new TestExecutionSink(this));
-
-            var args = new List<string>()
-            {
-                "test",
-                "--designtime"
-            };
-
-            if (tests != null && tests.Count > 0)
-            {
-                args.Add("--test");
-                args.Add(string.Join(",", tests));
-            }
-
-            try
-            {
-                await ExecuteCommandWithServices(testServices, project, args.ToArray());
-            }
-            catch
-            {
-                // For now we're not doing anything with these exceptions, we might want to report them
-                // to VS.   
-            }
-
-            Trace.TraceInformation("[ApplicationContext]: OnTransmit(ExecuteTests)");
-            _initializedContext.Transmit(new Message
-            {
-                ContextId = Id,
-                MessageType = "TestExecution.Response",
-            });
-        }
-
-        private async void DiscoverTests()
-        {
-            if (_appPath.Value == null)
-            {
-                throw new InvalidOperationException("The context must be initialized with a project.");
-            }
-
-            string testCommand = null;
-            Project project = null;
-            if (Project.TryGetProject(_appPath.Value, out project))
-            {
-                project.Commands.TryGetValue("test", out testCommand);
-            }
-
-            if (testCommand == null)
-            {
-                // No test command means no tests.
-                Trace.TraceInformation("[ApplicationContext]: OnTransmit(DiscoverTests)");
-                _initializedContext.Transmit(new Message
-                {
-                    ContextId = Id,
-                    MessageType = "TestDiscovery.Response",
-                });
-
-                return;
-            }
-
-            var testServices = new ServiceProvider(_hostServices);
-            testServices.Add(typeof(ITestDiscoverySink), new TestDiscoverySink(this));
-
-            var args = new string[] { "test", "--list", "--designtime" };
-
-            try
-            {
-                await ExecuteCommandWithServices(testServices, project, args);
-            }
-            catch
-            {
-                // For now we're not doing anything with these exceptions, we might want to report them
-                // to VS.   
-            }
-
-            Trace.TraceInformation("[ApplicationContext]: OnTransmit(DiscoverTests)");
-            _initializedContext.Transmit(new Message
-            {
-                ContextId = Id,
-                MessageType = "TestDiscovery.Response",
-            });
-        }
-
-        private async Task<int> ExecuteCommandWithServices(IServiceProvider services, Project project, string[] args)
-        {
-            var environment = new ApplicationEnvironment(project, _targetFramework.Value, _configuration.Value);
-
-            var applicationHost = new ApplicationHost.Program(
-                (IAssemblyLoaderContainer)_hostServices.GetService(typeof(IAssemblyLoaderContainer)),
-                environment,
-                services);
-
-            try
-            {
-                return await applicationHost.Main(args);
-            }
-            catch (Exception ex)
-            {
-                Trace.TraceError("[ApplicationContext]: ExecutCommandWithServices" + Environment.NewLine + ex.ToString());
-                _initializedContext.Transmit(new Message()
-                {
-                    ContextId = Id,
-                    MessageType = "Error",
-                    Payload = JToken.FromObject(new ErrorMessage()
-                    {
-                        Message = ex.ToString(),
-                    }),
-                });
-
-                throw;
-            };
         }
 
         public void Send(Message message)
