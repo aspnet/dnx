@@ -23,6 +23,7 @@ namespace Microsoft.Framework.DesignTimeHost.Models
         public CompilationOptionsMessage CompilerOptions { get; set; }
         public SourcesMessage Sources { get; set; }
         public ReferencesMessage References { get; set; }
+        public DependenciesMessage Dependencies { get; set; }
         public DiagnosticsMessage Diagnostics { get; set; }
         public CompileMessage Compiled { get; set; }
     }

@@ -9,22 +9,18 @@ namespace Microsoft.Framework.DesignTimeHost.Models.OutgoingMessages
     public class ReferencesMessage
     {
         public FrameworkData Framework { get; set; }
-        public string RootDependency { get; set; }
         public IList<string> ProjectReferences { get; set; }
         public IList<string> FileReferences { get; set; }
         public IDictionary<string, byte[]> RawReferences { get; set; }
-        public IDictionary<string, ReferenceDescription> Dependencies { get; set; }
 
         public override bool Equals(object obj)
         {
             var other = obj as ReferencesMessage;
 
             return other != null &&
-                   string.Equals(RootDependency, other.RootDependency) &&
                    object.Equals(Framework, other.Framework) &&
                    Enumerable.SequenceEqual(ProjectReferences, other.ProjectReferences) &&
                    Enumerable.SequenceEqual(FileReferences, other.FileReferences) &&
-                   Enumerable.SequenceEqual(Dependencies, other.Dependencies) &&
                    Enumerable.SequenceEqual(RawReferences, other.RawReferences);
         }
 

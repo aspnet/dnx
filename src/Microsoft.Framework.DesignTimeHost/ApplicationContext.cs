@@ -230,22 +230,16 @@ namespace Microsoft.Framework.DesignTimeHost
                 })
                 .ToList();
 
-                var configurations = state.Configurations.Select(config => new ConfigurationData
-                {
-                    Name = config
-                })
-                .ToList();
-
                 _local = new World();
                 _local.ProjectInformation = new ProjectMessage
                 {
-                    ProjectName = state.Name,
+                    Name = state.Name,
 
                     // All target framework information
                     Frameworks = frameworks,
 
                     // debug/release etc
-                    Configurations = configurations,
+                    Configurations = state.Configurations,
 
                     Commands = state.Commands
                 };
@@ -271,14 +265,18 @@ namespace Microsoft.Framework.DesignTimeHost
                             Framework = frameworkData,
                             CompilationOptions = project.CompilationSettings
                         },
-                        References = new ReferencesMessage
+                        Dependencies = new DependenciesMessage
                         {
                             Framework = frameworkData,
                             RootDependency = state.Name,
+                            Dependencies = project.Dependencies
+                        },
+                        References = new ReferencesMessage
+                        {
+                            Framework = frameworkData,
                             ProjectReferences = project.Metadata.ProjectReferences,
                             FileReferences = project.Metadata.References,
-                            RawReferences = project.Metadata.RawReferences,
-                            Dependencies = project.Dependencies
+                            RawReferences = project.Metadata.RawReferences
                         },
                         Diagnostics = new DiagnosticsMessage
                         {
@@ -336,6 +334,19 @@ namespace Microsoft.Framework.DesignTimeHost
                     _remote.Projects[pair.Key] = remoteProject;
                 }
 
+                if (IsDifferent(localProject.Dependencies, remoteProject.Dependencies))
+                {
+                    Trace.TraceInformation("[ApplicationContext]: OnTransmit(Dependencies)");
+
+                    _initializedContext.Transmit(new Message
+                    {
+                        ContextId = Id,
+                        MessageType = "Dependencies",
+                        Payload = JToken.FromObject(localProject.Dependencies)
+                    });
+
+                    remoteProject.Dependencies = localProject.Dependencies;
+                }
 
                 if (IsDifferent(localProject.CompilerOptions, remoteProject.CompilerOptions))
                 {
@@ -516,12 +527,11 @@ namespace Microsoft.Framework.DesignTimeHost
 
                 var dependencies = applicationHostContext.DependencyWalker
                                                          .Libraries
-                                                         .Select(CreateReferenceDescription)
+                                                         .Select(CreateDependencyDescription)
                                                          .ToDictionary(d => d.Name);
 
                 var frameworkData = new TargetFrameworkData
                 {
-                    ShortName = VersionUtility.GetShortFrameworkName(frameworkInfo.FrameworkName),
                     FrameworkName = frameworkInfo.FrameworkName,
                     Name = frameworkResolver.GetFriendlyFrameworkName(frameworkInfo.FrameworkName)
                 };
@@ -571,15 +581,15 @@ namespace Microsoft.Framework.DesignTimeHost
             return state;
         }
 
-        private static ReferenceDescription CreateReferenceDescription(LibraryDescription library)
+        private static DependencyDescription CreateDependencyDescription(LibraryDescription library)
         {
-            return new ReferenceDescription
+            return new DependencyDescription
             {
                 Name = library.Identity.Name,
                 Version = library.Identity.Version == null ? null : library.Identity.Version.ToString(),
                 Type = library.Type ?? "Unresolved",
                 Path = library.Path,
-                Dependencies = library.Dependencies.Select(lib => new ReferenceItem
+                Dependencies = library.Dependencies.Select(lib => new DependencyItem
                 {
                     Name = lib.Name,
                     Version = lib.Version == null ? null : lib.Version.ToString()
@@ -635,7 +645,7 @@ namespace Microsoft.Framework.DesignTimeHost
 
             public ProjectMetadata Metadata { get; set; }
 
-            public IDictionary<string, ReferenceDescription> Dependencies { get; set; }
+            public IDictionary<string, DependencyDescription> Dependencies { get; set; }
 
             public ProjectOutput Output { get; set; }
         }
@@ -653,8 +663,6 @@ namespace Microsoft.Framework.DesignTimeHost
         private class TargetFrameworkData
         {
             public string Name { get; set; }
-
-            public string ShortName { get; set; }
 
             public FrameworkName FrameworkName { get; set; }
         }

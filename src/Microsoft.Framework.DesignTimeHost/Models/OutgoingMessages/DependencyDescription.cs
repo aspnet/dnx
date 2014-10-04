@@ -6,7 +6,7 @@ using System.Linq;
 
 namespace Microsoft.Framework.DesignTimeHost.Models.OutgoingMessages
 {
-    public class ReferenceDescription
+    public class DependencyDescription
     {
         public string Name { get; set; }
 
@@ -16,11 +16,11 @@ namespace Microsoft.Framework.DesignTimeHost.Models.OutgoingMessages
 
         public string Type { get; set; }
 
-        public IEnumerable<ReferenceItem> Dependencies { get; set; }
+        public IEnumerable<DependencyItem> Dependencies { get; set; }
 
         public override bool Equals(object obj)
         {
-            var other = obj as ReferenceDescription;
+            var other = obj as DependencyDescription;
 
             return other != null &&
                    string.Equals(Name, other.Name) &&

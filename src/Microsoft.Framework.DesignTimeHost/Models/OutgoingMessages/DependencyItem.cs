@@ -2,31 +2,22 @@
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 using System.Collections.Generic;
-using System.Linq;
 
 namespace Microsoft.Framework.DesignTimeHost.Models.OutgoingMessages
 {
-    public class ProjectMessage
+    public class DependencyItem
     {
         public string Name { get; set; }
 
-        public IList<FrameworkData> Frameworks { get; set; }
-
-        public IList<string> Configurations { get; set; }
-
-        public IDictionary<string, string> Commands { get; set; }
+        public string Version { get; set; }
 
         public override bool Equals(object obj)
         {
-            var other = obj as ProjectMessage;
-
+            var other = obj as DependencyItem;
             return other != null &&
                    string.Equals(Name, other.Name) &&
-                   Enumerable.SequenceEqual(Frameworks, other.Frameworks) &&
-                   Enumerable.SequenceEqual(Configurations, other.Configurations) &&
-                   Enumerable.SequenceEqual(Commands, other.Commands);
+                   object.Equals(Version, other.Version);
         }
-
         public override int GetHashCode()
         {
             // These objects are currently POCOs and we're overriding equals
