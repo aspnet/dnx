@@ -225,9 +225,8 @@ namespace Microsoft.Framework.DesignTimeHost
 
                 var frameworks = state.Frameworks.Select(targetFrameworkInfo => new FrameworkData
                 {
-                    FrameworkName = targetFrameworkInfo.ShortName,
-                    LongFrameworkName = targetFrameworkInfo.FrameworkName.ToString(),
-                    FriendlyFrameworkName = targetFrameworkInfo.Name
+                    FrameworkName = targetFrameworkInfo.FrameworkName.ToString(),
+                    FriendlyName = targetFrameworkInfo.Name
                 })
                 .ToList();
 
@@ -256,9 +255,8 @@ namespace Microsoft.Framework.DesignTimeHost
                     var project = state.Projects[i];
                     var frameworkData = new FrameworkData
                     {
-                        FrameworkName = project.TargetFramework.ShortName,
-                        LongFrameworkName = project.TargetFramework.FrameworkName.ToString(),
-                        FriendlyFrameworkName = project.TargetFramework.Name
+                        FrameworkName = project.TargetFramework.FrameworkName.ToString(),
+                        FriendlyName = project.TargetFramework.Name
                     };
 
                     var projectWorld = new ProjectWorld

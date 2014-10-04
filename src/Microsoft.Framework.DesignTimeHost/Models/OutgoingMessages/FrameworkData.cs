@@ -7,8 +7,7 @@ namespace Microsoft.Framework.DesignTimeHost.Models.OutgoingMessages
     public class FrameworkData
     {
         public string FrameworkName { get; set; }
-        public string LongFrameworkName { get; set; }
-        public string FriendlyFrameworkName { get; set; }
+        public string FriendlyName { get; set; }
 
         public override bool Equals(object obj)
         {
@@ -16,8 +15,7 @@ namespace Microsoft.Framework.DesignTimeHost.Models.OutgoingMessages
 
             return other != null &&
                    string.Equals(FrameworkName, other.FrameworkName) &&
-                   string.Equals(LongFrameworkName, other.LongFrameworkName) &&
-                   string.Equals(FriendlyFrameworkName, other.FriendlyFrameworkName);
+                   string.Equals(FriendlyName, other.FriendlyName);
         }
 
         public override int GetHashCode()
