@@ -55,6 +55,11 @@ namespace Microsoft.Framework.Runtime.Roslyn
 
             _watcher.WatchFile(project.ProjectFilePath);
 
+            if (_cacheContextAccessor.Current != null)
+            {
+                _cacheContextAccessor.Current.Monitor(new FileWriteTimeCacheDependency(project.ProjectFilePath));
+            }
+
             var exportedReferences = incomingReferences.Select(ConvertMetadataReference);
 
             Trace.TraceInformation("[{0}]: Compiling '{1}'", GetType().Name, name);
