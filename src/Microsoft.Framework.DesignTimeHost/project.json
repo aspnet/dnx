@@ -11,8 +11,8 @@
     "compilationOptions" : { "define" : ["TRACE"], "warningsAsErrors": true },
     "frameworks" : {
         "net45" : {
-            "dependencies" : {
-                "System.Net" : ""
+            "frameworkAssemblies" : {
+                "System.Net" : "4.0.0.0"
             }
         },
         "aspnetcore50" : {

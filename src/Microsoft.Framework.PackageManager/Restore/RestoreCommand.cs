@@ -170,14 +170,12 @@ namespace Microsoft.Framework.PackageManager
                     new ProjectReferenceDependencyProvider(
                         new ProjectResolver(
                             projectDirectory,
-                            rootDirectory),
-                        new EmptyFrameworkResolver())));
+                            rootDirectory))));
 
             localProviders.Add(
                 new LocalWalkProvider(
                     new NuGetDependencyResolver(
-                        packagesDirectory,
-                        new EmptyFrameworkResolver())));
+                        packagesDirectory)));
 
             var effectiveSources = PackageSourceUtils.GetEffectivePackageSources(SourceProvider,
                 Sources, FallbackSources);
@@ -285,8 +283,7 @@ namespace Microsoft.Framework.PackageManager
             localProviders.Add(
                 new LocalWalkProvider(
                     new NuGetDependencyResolver(
-                        packagesDirectory,
-                        new EmptyFrameworkResolver())));
+                        packagesDirectory)));
 
             var effectiveSources = PackageSourceUtils.GetEffectivePackageSources(SourceProvider,
                 Sources, FallbackSources);

@@ -1,19 +1,12 @@
 {
     "dependencies": {
-        "K.Roslyn" : "1.0.0-*",
+        "K.Roslyn": "1.0.0-*",
         "Microsoft.Framework.Runtime.Interfaces": "",
         "Microsoft.Framework.Runtime.Roslyn": "",
         "Xunit.KRunner": "1.0.0-*"
     },
     "frameworks": {
-        "aspnet50": {
-            "dependencies": {
-                "System.Collections" : "",
-                "System.Runtime" : "",
-                "System.Xml": "",
-                "System.Xml.Linq": ""
-            }
-        }
+        "aspnet50": { }
     },
     "commands": {
         "test": "Xunit.KRunner"

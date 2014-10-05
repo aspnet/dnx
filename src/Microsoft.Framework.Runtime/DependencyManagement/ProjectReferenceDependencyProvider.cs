@@ -13,12 +13,10 @@ namespace Microsoft.Framework.Runtime
     public class ProjectReferenceDependencyProvider : IDependencyProvider
     {
         private readonly IProjectResolver _projectResolver;
-        private readonly IFrameworkReferenceResolver _frameworkReferenceResolver;
 
-        public ProjectReferenceDependencyProvider(IProjectResolver projectResolver, IFrameworkReferenceResolver frameworkReferenceResolver)
+        public ProjectReferenceDependencyProvider(IProjectResolver projectResolver)
         {
             _projectResolver = projectResolver;
-            _frameworkReferenceResolver = frameworkReferenceResolver;
             Dependencies = Enumerable.Empty<LibraryDescription>();
         }
 
@@ -70,25 +68,6 @@ namespace Microsoft.Framework.Runtime
             }
 
             var dependencies = project.Dependencies.Concat(targetFrameworkDependencies).ToList();
-
-            // TODO: Remove this code once there's a new build of the KRE
-            // We need to keep this for bootstrapping to continue working
-            foreach (var d in dependencies)
-            {
-                if (d.Library.IsGacOrFrameworkReference)
-                {
-                    continue;
-                }
-
-                string path;
-                d.Library.IsGacOrFrameworkReference = _frameworkReferenceResolver.TryGetAssembly(d.Name, targetFramework, out path);
-
-                // We need to fix up the version here since
-                if (d.Library.IsGacOrFrameworkReference)
-                {
-                    d.Library.Version = VersionUtility.GetAssemblyVersion(path);
-                }
-            }
 
             return new LibraryDescription
             {

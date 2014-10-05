@@ -9,13 +9,13 @@
     },
     "frameworks" : {
         "net45" : {
-            "dependencies": {
-                "System.Collections" : "",
-                "System.IO" :  "",
-                "System.IO.Compression" : "",
-                "System.Runtime" : "",
-                "System.Xml": "",
-                "System.Xml.Linq": ""
+            "frameworkAssemblies": {
+                "System.Collections" : "4.0.0.0",
+                "System.IO" :  "4.0.0.0",
+                "System.IO.Compression" : "4.0.0.0",
+                "System.Runtime" : "4.0.0.0",
+                "System.Xml": "4.0.0.0",
+                "System.Xml.Linq": "4.0.0.0"
             }
         },
         "aspnetcore50" : { 

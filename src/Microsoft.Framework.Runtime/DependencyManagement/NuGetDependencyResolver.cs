@@ -22,16 +22,14 @@ namespace Microsoft.Framework.Runtime
         // All the information required by this package
         private readonly Dictionary<string, PackageDescription> _packageDescriptions = new Dictionary<string, PackageDescription>(StringComparer.OrdinalIgnoreCase);
 
-        private readonly IFrameworkReferenceResolver _frameworkReferenceResolver;
-
         private readonly GlobalSettings _globalSettings;
 
-        public NuGetDependencyResolver(string packagesPath, IFrameworkReferenceResolver frameworkReferenceResolver, string rootDir = null)
+        public NuGetDependencyResolver(string packagesPath, string rootDir = null)
         {
             // Runtime already ensures case-sensitivity, so we don't need package ids in accurate casing here
             _repository = new PackageRepository(packagesPath, checkPackageIdCase: false);
-            _frameworkReferenceResolver = frameworkReferenceResolver;
             Dependencies = Enumerable.Empty<LibraryDescription>();
+
             if (!string.IsNullOrEmpty(rootDir))
             {
                 GlobalSettings.TryGetGlobalSettings(rootDir, out _globalSettings);
@@ -281,11 +279,6 @@ namespace Microsoft.Framework.Runtime
                     paths[assembly.Name] = new MetadataFileReference(assembly.Name, assembly.Path);
                 }
             }
-
-            foreach (var assembly in GetFrameworkAssemblies(description, targetFramework))
-            {
-                paths[assembly.Name] = new MetadataFileReference(assembly.Name, assembly.Path);
-            }
         }
 
 
@@ -298,31 +291,6 @@ namespace Microsoft.Framework.Runtime
             }
 
             return Directory.EnumerateFiles(directory, "*.*", SearchOption.AllDirectories);
-        }
-
-        private List<AssemblyDescription> GetFrameworkAssemblies(PackageDescription description, FrameworkName targetFramework)
-        {
-            var results = new List<AssemblyDescription>();
-            var package = description.Package;
-
-            IEnumerable<FrameworkAssemblyReference> frameworkAssemblies;
-            if (VersionUtility.TryGetCompatibleItems(targetFramework, package.FrameworkAssemblies, out frameworkAssemblies))
-            {
-                foreach (var reference in frameworkAssemblies)
-                {
-                    string path;
-                    if (_frameworkReferenceResolver.TryGetAssembly(reference.AssemblyName, targetFramework, out path))
-                    {
-                        results.Add(new AssemblyDescription
-                        {
-                            Name = reference.AssemblyName,
-                            Path = path
-                        });
-                    }
-                }
-            }
-
-            return results;
         }
 
         private static List<AssemblyDescription> GetPackageAssemblies(PackageDescription description, FrameworkName targetFramework)

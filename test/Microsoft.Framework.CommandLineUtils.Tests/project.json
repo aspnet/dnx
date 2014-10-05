@@ -1,15 +1,11 @@
 {
     "dependencies": {
-        "Microsoft.Framework.CommandLineUtils":  "",
+        "Microsoft.Framework.CommandLineUtils": "",
         "Xunit.KRunner": "1.0.0-*"
     },
 
-    "frameworks" : {
-        "aspnet50" : {
-            "dependencies": {
-                "System.Runtime": ""
-            }
-        }
+    "frameworks": {
+        "aspnet50": { }
     },
 
     "commands": {

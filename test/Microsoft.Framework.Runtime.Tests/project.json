@@ -2,15 +2,11 @@
     "dependencies": {
         "Microsoft.Framework.Runtime": "",
         "Microsoft.Framework.Runtime.Interfaces": "",
-        "Shouldly" : "1.1.1.1",
+        "Shouldly": "1.1.1.1",
         "Xunit.KRunner": "1.0.0-*"
     },
     "frameworks": {
-        "aspnet50": {
-            "dependencies": {
-                "System.Runtime" : ""
-            }
-        }
+        "aspnet50": { }
     },
     "commands": {
         "test": "Xunit.KRunner"
