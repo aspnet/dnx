@@ -225,7 +225,9 @@ namespace Microsoft.Framework.PackageManager
                 }
                 if (node.Item == null || node.Item.Match == null)
                 {
-                    if (node.Library.Version != null && missingItems.Add(node.Library))
+                    if (!node.Library.IsGacOrFrameworkReference && 
+                         node.Library.Version != null && 
+                         missingItems.Add(node.Library))
                     {
                         Reports.Information.WriteLine(string.Format("Unable to locate {0} >= {1}", node.Library.Name.Red().Bold(), node.Library.Version));
                         success = false;
