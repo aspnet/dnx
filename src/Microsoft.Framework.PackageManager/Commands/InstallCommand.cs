@@ -2,12 +2,12 @@
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 using System;
-using System.IO;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
-using Microsoft.Framework.Runtime;
 using Microsoft.Framework.PackageManager.Restore.NuGet;
+using Microsoft.Framework.Runtime;
 using NuGet;
 
 namespace Microsoft.Framework.PackageManager
@@ -29,7 +29,7 @@ namespace Microsoft.Framework.PackageManager
         {
             if (string.IsNullOrEmpty(_addCommand.Name))
             {
-                Reports.Information.WriteLine("Name of dependency to install is required.".Red());
+                Reports.Error.WriteLine("Name of dependency to install is required.".Red());
                 return false;
             }
 
@@ -62,7 +62,7 @@ namespace Microsoft.Framework.PackageManager
                 else
                 {
                     packageFeeds.Add(new PackageFeed(
-                        source.Source, source.UserName, source.Password, _restoreCommand.NoCache, Reports.Quiet,
+                        source.Source, source.UserName, source.Password, _restoreCommand.NoCache, Reports,
                         _restoreCommand.IgnoreFailedSources));
                 }
             }
@@ -79,7 +79,7 @@ namespace Microsoft.Framework.PackageManager
 
             if (result == null)
             {
-                Reports.Information.WriteLine("Unable to locate {0} >= {1}",
+                Reports.Error.WriteLine("Unable to locate {0} >= {1}",
                     _addCommand.Name.Red().Bold(), _addCommand.Version);
                 return false;
             }

@@ -2,10 +2,7 @@
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 using System;
-using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
-using System.Linq;
 using System.Net;
 using System.Reflection;
 using System.Threading;
@@ -15,7 +12,7 @@ using Microsoft.Framework.Runtime.Common.CommandLine;
 
 namespace Microsoft.Framework.PackageManager
 {
-    public class Program : IReport
+    public class Program
     {
         private readonly IServiceProvider _hostServices;
         private readonly IApplicationEnvironment _environment;
@@ -33,8 +30,6 @@ namespace Microsoft.Framework.PackageManager
 
         public int Main(string[] args)
         {
-            AnsiConsole.OriginalForegroundColor = Console.ForegroundColor;
-
             var app = new CommandLineApplication();
             app.Name = "kpm";
 
@@ -191,8 +186,10 @@ namespace Microsoft.Framework.PackageManager
 
                 c.OnExecute(() =>
                 {
+                    var reports = CreateReports(optionVerbose.HasValue(), quiet: false);
+
                     var command = new AddCommand();
-                    command.Report = this;
+                    command.Reports = reports;
                     command.Name = argName.Value;
                     command.Version = argVersion.Value;
                     command.ProjectDir = argProject.Value;
@@ -230,7 +227,7 @@ namespace Microsoft.Framework.PackageManager
                     var reports = CreateReports(optionVerbose.HasValue(), optQuiet.HasValue());
 
                     var addCmd = new AddCommand();
-                    addCmd.Report = this;
+                    addCmd.Reports = reports;
                     addCmd.Name = argName.Value;
                     addCmd.Version = argVersion.Value;
                     addCmd.ProjectDir = argProject.Value;
@@ -264,26 +261,18 @@ namespace Microsoft.Framework.PackageManager
 
         private Reports CreateReports(bool verbose, bool quiet)
         {
+            IReport output = new Report(AnsiConsole.Output);
             var reports = new Reports()
             {
-                Information = this,
-                Verbose = verbose ? (this as IReport) : new NullReport()
+                Information = output,
+                Verbose = verbose ? output : new NullReport(),
+                Error = new Report(AnsiConsole.Error),
             };
 
             // If "--verbose" and "--quiet" are specified together, "--verbose" wins
-            reports.Quiet = quiet ? reports.Verbose : this;
+            reports.Quiet = quiet ? reports.Verbose : output;
 
             return reports;
-        }
-
-        object _lock = new object();
-
-        public void WriteLine(string message)
-        {
-            lock (_lock)
-            {
-                AnsiConsole.WriteLine(message);
-            }
         }
 
         private static string GetVersion()

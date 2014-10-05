@@ -227,7 +227,7 @@ namespace Microsoft.Framework.PackageManager
                          node.Library.Version != null && 
                          missingItems.Add(node.Library))
                     {
-                        Reports.Information.WriteLine(string.Format("Unable to locate {0} >= {1}", node.Library.Name.Red().Bold(), node.Library.Version));
+                        Reports.Error.WriteLine(string.Format("Unable to locate {0} >= {1}", node.Library.Name.Red().Bold(), node.Library.Version));
                         success = false;
                     }
                     return;
@@ -237,7 +237,7 @@ namespace Microsoft.Framework.PackageManager
                 {
                     if (missingItems.Add(node.Library))
                     {
-                        Reports.Information.WriteLine("Unable to locate {0} >= {1}. Do you mean {2}?",
+                        Reports.Error.WriteLine("Unable to locate {0} >= {1}. Do you mean {2}?",
                             node.Library.Name.Red().Bold(), node.Library.Version, node.Item.Match.Library.Name.Bold());
                         success = false;
                     }
@@ -335,7 +335,7 @@ namespace Microsoft.Framework.PackageManager
                 if (item == null || item.Match == null || item.Match.Library.Version != lib.Version)
                 {
                     missingItems.Add(lib);
-                    Reports.Information.WriteLine(string.Format("Unable to locate {0} {1}",
+                    Reports.Error.WriteLine(string.Format("Unable to locate {0} {1}",
                         lib.Name.Red().Bold(), lib.Version));
                     success = false;
                     continue;
@@ -353,7 +353,7 @@ namespace Microsoft.Framework.PackageManager
                 string expectedSHA = dependencies[library];
                 if (!string.Equals(expectedSHA, nupkgSHA, StringComparison.Ordinal))
                 {
-                    Reports.Information.WriteLine(
+                    Reports.Error.WriteLine(
                         string.Format("SHA of downloaded package {0} doesn't match expected value.".Red().Bold(),
                         library.ToString()));
                     success = false;
@@ -465,7 +465,7 @@ namespace Microsoft.Framework.PackageManager
                                 source.UserName,
                                 source.Password,
                                 NoCache,
-                                Reports.Quiet,
+                                Reports,
                                 ignoreFailure: IgnoreFailedSources)));
                 }
             }
