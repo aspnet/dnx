@@ -2,7 +2,6 @@
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 using System.IO;
-using Microsoft.Framework.Runtime;
 using Newtonsoft.Json.Linq;
 using NuGet;
 
@@ -13,19 +12,19 @@ namespace Microsoft.Framework.PackageManager
         public string Name { get; set; }
         public string Version { get; set; }
         public string ProjectDir { get; set; }
-        public IReport Report { get; set; }
+        public Reports Reports { get; set; }
 
         public bool ExecuteCommand()
         {
             if (string.IsNullOrEmpty(Name))
             {
-                Report.WriteLine("Name of dependency to add is required.".Red());
+                Reports.Error.WriteLine("Name of dependency to add is required.".Red());
                 return false;
             }
 
             if (string.IsNullOrEmpty(Version))
             {
-                Report.WriteLine("Version of dependency to add is required.".Red());
+                Reports.Error.WriteLine("Version of dependency to add is required.".Red());
                 return false;
             }
 
@@ -37,7 +36,7 @@ namespace Microsoft.Framework.PackageManager
             Runtime.Project project;
             if (!Runtime.Project.TryGetProject(ProjectDir, out project))
             {
-                Report.WriteLine("Unable to locate {0}.".Red(), Runtime.Project.ProjectFileName);
+                Reports.Error.WriteLine("Unable to locate {0}.".Red(), Runtime.Project.ProjectFileName);
                 return false;
             }
 
@@ -51,7 +50,7 @@ namespace Microsoft.Framework.PackageManager
 
             File.WriteAllText(project.ProjectFilePath, root.ToString());
 
-            Report.WriteLine("{0}.{1} was added to {2}.", Name, Version, Runtime.Project.ProjectFileName);
+            Reports.Information.WriteLine("{0}.{1} was added to {2}.", Name, Version, Runtime.Project.ProjectFileName);
 
             return true;
         }

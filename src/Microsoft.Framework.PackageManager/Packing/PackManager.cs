@@ -43,7 +43,7 @@ namespace Microsoft.Framework.PackageManager.Packing
             Runtime.Project project;
             if (!Runtime.Project.TryGetProject(_options.ProjectDir, out project))
             {
-                _options.Reports.Information.WriteLine("Unable to locate {0}.'".Red(), Runtime.Project.ProjectFileName);
+                _options.Reports.Error.WriteLine("Unable to locate {0}.'".Red(), Runtime.Project.ProjectFileName);
                 return false;
             }
 
@@ -53,7 +53,7 @@ namespace Microsoft.Framework.PackageManager.Packing
 
             if (string.IsNullOrEmpty(_options.WwwRoot) && !string.IsNullOrEmpty(_options.WwwRootOut))
             {
-                _options.Reports.Information.WriteLine(
+                _options.Reports.Error.WriteLine(
                     "'--wwwroot-out' option can be used only when the '--wwwroot' option or 'webroot' in project.json is specified.".Red());
                 return false;
             }
@@ -61,14 +61,14 @@ namespace Microsoft.Framework.PackageManager.Packing
             if (!string.IsNullOrEmpty(_options.WwwRoot) &&
                 !Directory.Exists(Path.Combine(project.ProjectDirectory, _options.WwwRoot)))
             {
-                _options.Reports.Information.WriteLine(
+                _options.Reports.Error.WriteLine(
                     "The specified wwwroot folder '{0}' doesn't exist in the project directory.".Red(), _options.WwwRoot);
                 return false;
             }
 
             if (string.Equals(_options.WwwRootOut, PackRoot.AppRootName, StringComparison.OrdinalIgnoreCase))
             {
-                _options.Reports.Information.WriteLine(
+                _options.Reports.Error.WriteLine(
                     "'{0}' is a reserved folder name. Please choose another name for the wwwroot-out folder.".Red(),
                     PackRoot.AppRootName);
                 return false;
@@ -128,13 +128,13 @@ namespace Microsoft.Framework.PackageManager.Packing
 
                 if (!runtimeLocated)
                 {
-                    _options.Reports.Information.WriteLine(string.Format("Unable to locate runtime '{0}'", runtime.Red().Bold()));
+                    _options.Reports.Error.WriteLine(string.Format("Unable to locate runtime '{0}'", runtime.Red().Bold()));
                     return false;
                 }
 
                 if (!project.GetTargetFrameworks().Any(x => x.FrameworkName == frameworkName))
                 {
-                    _options.Reports.Information.WriteLine(
+                    _options.Reports.Error.WriteLine(
                         string.Format("'{0}' is not a target framework of the project being packed",
                         frameworkName.ToString().Red().Bold()));
                     return false;
@@ -218,7 +218,7 @@ namespace Microsoft.Framework.PackageManager.Packing
                 nativeImageGenerator = NativeImageGenerator.Create(_options, root, frameworkContexts.Values);
                 if (nativeImageGenerator == null)
                 {
-                    _options.Reports.Information.WriteLine("Fail to initiate native image generation process.".Red());
+                    _options.Reports.Error.WriteLine("Fail to initiate native image generation process.".Red());
                     return false;
                 }
             }
@@ -229,7 +229,7 @@ namespace Microsoft.Framework.PackageManager.Packing
 
             if (_options.Native && !nativeImageGenerator.BuildNativeImages(root))
             {
-                _options.Reports.Information.WriteLine("Native image generation failed.");
+                _options.Reports.Error.WriteLine("Native image generation failed.");
                 return false;
             }
 

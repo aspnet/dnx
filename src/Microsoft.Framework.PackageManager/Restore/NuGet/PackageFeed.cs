@@ -23,7 +23,7 @@ namespace Microsoft.Framework.PackageManager.Restore.NuGet
         static readonly XName _xnameVersion = XName.Get("Version", "http://schemas.microsoft.com/ado/2007/08/dataservices");
 
         private readonly string _baseUri;
-        private readonly IReport _report;
+        private readonly Reports _reports;
         private readonly HttpSource _httpSource;
         private readonly TimeSpan _cacheAgeLimitList;
         private readonly TimeSpan _cacheAgeLimitNupkg;
@@ -35,12 +35,12 @@ namespace Microsoft.Framework.PackageManager.Restore.NuGet
             string userName,
             string password,
             bool noCache,
-            IReport report,
+            Reports reports,
             bool ignoreFailure)
         {
             _baseUri = baseUri.EndsWith("/") ? baseUri : (baseUri + "/");
-            _report = report;
-            _httpSource = new HttpSource(baseUri, userName, password, report);
+            _reports = reports;
+            _httpSource = new HttpSource(baseUri, userName, password, reports);
             _ignoreFailure = ignoreFailure;
             if (noCache)
             {
@@ -133,19 +133,19 @@ namespace Microsoft.Framework.PackageManager.Restore.NuGet
                         if (_ignoreFailure)
                         {
                             _ignored = true;
-                            _report.WriteLine(
+                            _reports.Information.WriteLine(
                                 string.Format("Failed to retrieve information from remote source '{0}'".Yellow(),
                                     _baseUri));
                             return new List<PackageInfo>();
                         }
 
-                        _report.WriteLine(string.Format("Error: FindPackagesById: {1}\r\n  {0}",
+                        _reports.Error.WriteLine(string.Format("Error: FindPackagesById: {1}\r\n  {0}",
                             ex.Message, id.Red().Bold()));
                         throw;
                     }
                     else
                     {
-                        _report.WriteLine(string.Format("Warning: FindPackagesById: {1}\r\n  {0}", ex.Message, id.Yellow().Bold()));
+                        _reports.Information.WriteLine(string.Format("Warning: FindPackagesById: {1}\r\n  {0}", ex.Message, id.Yellow().Bold()));
                     }
                 }
             }
@@ -240,11 +240,11 @@ namespace Microsoft.Framework.PackageManager.Restore.NuGet
                 {
                     if (retry == 2)
                     {
-                        _report.WriteLine(string.Format("Error: DownloadPackageAsync: {1}\r\n  {0}", ex.Message, package.ContentUri.Red().Bold()));
+                        _reports.Error.WriteLine(string.Format("Error: DownloadPackageAsync: {1}\r\n  {0}", ex.Message, package.ContentUri.Red().Bold()));
                     }
                     else
                     {
-                        _report.WriteLine(string.Format("Warning: DownloadPackageAsync: {1}\r\n  {0}".Yellow().Bold(), ex.Message, package.ContentUri.Yellow().Bold()));
+                        _reports.Information.WriteLine(string.Format("Warning: DownloadPackageAsync: {1}\r\n  {0}".Yellow().Bold(), ex.Message, package.ContentUri.Yellow().Bold()));
                     }
                 }
             }

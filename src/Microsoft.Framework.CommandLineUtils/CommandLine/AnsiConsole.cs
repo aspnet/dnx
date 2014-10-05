@@ -2,32 +2,40 @@
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 using System;
+using System.IO;
+using System.Text;
 
 namespace Microsoft.Framework.Runtime.Common.CommandLine
 {
-    internal static class AnsiConsole
+    internal class AnsiConsole
     {
-        private static ConsoleColor _originalForeground = ConsoleColor.White;
-        
-        public static ConsoleColor OriginalForegroundColor
+        private AnsiConsole(TextWriter writer)
         {
-            get { return _originalForeground; }
-            set { _originalForeground = value; }
+            Writer = writer;
+            OriginalForegroundColor = Console.ForegroundColor;
         }
+
+        public static AnsiConsole Output = new AnsiConsole(Console.Out);
+
+        public static AnsiConsole Error = new AnsiConsole(Console.Error);
+
+        public TextWriter Writer { get; }
+
+        public ConsoleColor OriginalForegroundColor { get; }
         
-        private static void SetColor(ConsoleColor color)
+        private void SetColor(ConsoleColor color)
         {
             Console.ForegroundColor = (ConsoleColor)(((int)Console.ForegroundColor & 0x08) | ((int)color & 0x07));
         }
 
-        private static void SetBold(bool bold)
+        private void SetBold(bool bold)
         {
             Console.ForegroundColor = (ConsoleColor)(((int)Console.ForegroundColor & 0x07) | (bold ? 0x08 : 0x00));
         }
 
-        public static void WriteLine(string message)
+        public void WriteLine(string message)
         {
-            var sb = new System.Text.StringBuilder();
+            var sb = new StringBuilder();
             var escapeScan = 0;
             for (; ;)
             {
@@ -36,7 +44,7 @@ namespace Microsoft.Framework.Runtime.Common.CommandLine
                 {
                     var text = message.Substring(escapeScan);
                     sb.Append(text);
-                    Console.Write(text);
+                    Writer.Write(text);
                     break;
                 }
                 else
@@ -52,7 +60,7 @@ namespace Microsoft.Framework.Runtime.Common.CommandLine
 
                     var text = message.Substring(escapeScan, escapeIndex - escapeScan);
                     sb.Append(text);
-                    Console.Write(text);
+                    Writer.Write(text);
                     if (endIndex == message.Length)
                     {
                         break;
@@ -97,7 +105,7 @@ namespace Microsoft.Framework.Runtime.Common.CommandLine
                                         SetColor(ConsoleColor.Gray);
                                         break;
                                     case 39:
-                                        SetColor(_originalForeground);
+                                        SetColor(OriginalForegroundColor);
                                         break;
                                 }
                             }
@@ -107,7 +115,7 @@ namespace Microsoft.Framework.Runtime.Common.CommandLine
                     escapeScan = endIndex + 1;
                 }
             }
-            Console.WriteLine();
+            Writer.WriteLine();
         }
     }
 }
