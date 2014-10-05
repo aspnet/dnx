@@ -21,7 +21,7 @@ namespace Microsoft.Framework.Runtime
         {
             // The target framework and configuration are assumed to be correct
             // in the design time process
-            var task = _compiler.Compile(project.ProjectDirectory);
+            var task = _compiler.Compile(project.ProjectDirectory, target);
 
             foreach (var embeddedReference in task.Result.EmbeddedReferences)
             {

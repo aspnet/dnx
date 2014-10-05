@@ -37,7 +37,7 @@ namespace Microsoft.Framework.DesignTimeHost
         private World _local = new World();
 
         private ConnectionContext _initializedContext;
-        private readonly List<CompiledAssemblyState> _waitingForCompiledAssemblies = new List<CompiledAssemblyState>();
+        private readonly Dictionary<FrameworkName, List<CompiledAssemblyState>> _waitingForCompiledAssemblies = new Dictionary<FrameworkName, List<CompiledAssemblyState>>();
         private readonly List<ConnectionContext> _waitingForDiagnostics = new List<ConnectionContext>();
 
         public ApplicationContext(IServiceProvider services, ICache cache, ICacheContextAccessor cacheContextAccessor, int id)
@@ -188,9 +188,19 @@ namespace Microsoft.Framework.DesignTimeHost
                     break;
                 case "GetCompiledAssembly":
                     {
-                        _waitingForCompiledAssemblies.Add(new CompiledAssemblyState
+                        var libraryKey = message.Payload.ToObject<LibraryKey>();
+                        var targetFramework = new FrameworkName(libraryKey.TargetFramework);
+
+                        List<CompiledAssemblyState> waitingForCompiledAssemblies;
+                        if (!_waitingForCompiledAssemblies.TryGetValue(targetFramework, out waitingForCompiledAssemblies))
                         {
-                            Connection = message.Sender,
+                            waitingForCompiledAssemblies = new List<CompiledAssemblyState>();
+                            _waitingForCompiledAssemblies[targetFramework] = waitingForCompiledAssemblies;
+                        }
+
+                        waitingForCompiledAssemblies.Add(new CompiledAssemblyState
+                        {
+                            Connection = message.Sender
                         });
                     }
                     break;
@@ -255,6 +265,7 @@ namespace Microsoft.Framework.DesignTimeHost
 
                     var projectWorld = new ProjectWorld
                     {
+                        TargetFramework = project.TargetFramework.FrameworkName,
                         Sources = new SourcesMessage
                         {
                             Framework = frameworkData,
@@ -296,13 +307,17 @@ namespace Microsoft.Framework.DesignTimeHost
 
                     _local.Projects[project.TargetFramework.FrameworkName] = projectWorld;
 
-                    //foreach (var waitingForCompiledAssembly in _waitingForCompiledAssemblies)
-                    //{
-                    //    if (waitingForCompiledAssembly.AssemblySent)
-                    //    {
-                    //        waitingForCompiledAssembly.ProjectChanged = true;
-                    //    }
-                    //}
+                    List<CompiledAssemblyState> waitingForCompiledAssemblies;
+                    if (_waitingForCompiledAssemblies.TryGetValue(project.TargetFramework.FrameworkName, out waitingForCompiledAssemblies))
+                    {
+                        foreach (var waitingForCompiledAssembly in waitingForCompiledAssemblies)
+                        {
+                            if (waitingForCompiledAssembly.AssemblySent)
+                            {
+                                waitingForCompiledAssembly.ProjectChanged = true;
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -390,7 +405,7 @@ namespace Microsoft.Framework.DesignTimeHost
                     remoteProject.Diagnostics = localProject.Diagnostics;
                 }
 
-                if (IsDifferent(localProject.Sources, localProject.Sources))
+                if (IsDifferent(localProject.Sources, remoteProject.Sources))
                 {
                     Trace.TraceInformation("[ApplicationContext]: OnTransmit(Sources)");
 
@@ -403,42 +418,15 @@ namespace Microsoft.Framework.DesignTimeHost
 
                     remoteProject.Sources = localProject.Sources;
                 }
+
+                SendCompiledAssemblies(localProject);
             }
 
-            for (int i = _waitingForCompiledAssemblies.Count - 1; i >= 0; i--)
-            {
-                var waitingForCompiledAssembly = _waitingForCompiledAssemblies[i];
+            SendDiagnostics();
+        }
 
-                if (!waitingForCompiledAssembly.AssemblySent)
-                {
-                    Trace.TraceInformation("[ApplicationContext]: OnTransmit(Assembly)");
-
-                    waitingForCompiledAssembly.Connection.Transmit(writer =>
-                    {
-                        // TODO: Fix this
-                        WriteAssembly(_local.Projects.Values.FirstOrDefault(), writer);
-                    });
-
-                    waitingForCompiledAssembly.AssemblySent = true;
-                }
-
-                if (waitingForCompiledAssembly.ProjectChanged && !waitingForCompiledAssembly.ProjectChangedSent)
-                {
-                    Trace.TraceInformation("[ApplicationContext]: OnTransmit(ProjectChanged)");
-
-                    waitingForCompiledAssembly.Connection.Transmit(writer =>
-                    {
-                        writer.Write("ProjectChanged");
-                        writer.Write(Id);
-                    });
-
-                    waitingForCompiledAssembly.ProjectChangedSent = true;
-
-                    _waitingForCompiledAssemblies.Remove(waitingForCompiledAssembly);
-                }
-            }
-
-
+        private void SendDiagnostics()
+        {
             // Send all diagnostics back
             if (_waitingForDiagnostics.Count > 0)
             {
@@ -455,6 +443,45 @@ namespace Microsoft.Framework.DesignTimeHost
                 }
 
                 _waitingForDiagnostics.Clear();
+            }
+        }
+
+        private void SendCompiledAssemblies(ProjectWorld localProject)
+        {
+            List<CompiledAssemblyState> waitingForCompiledAssemblies;
+            if (_waitingForCompiledAssemblies.TryGetValue(localProject.TargetFramework, out waitingForCompiledAssemblies))
+            {
+                for (int i = waitingForCompiledAssemblies.Count - 1; i >= 0; i--)
+                {
+                    var waitingForCompiledAssembly = waitingForCompiledAssemblies[i];
+
+                    if (!waitingForCompiledAssembly.AssemblySent)
+                    {
+                        Trace.TraceInformation("[ApplicationContext]: OnTransmit(Assembly)");
+
+                        waitingForCompiledAssembly.Connection.Transmit(writer =>
+                        {
+                            WriteAssembly(localProject, writer);
+                        });
+
+                        waitingForCompiledAssembly.AssemblySent = true;
+                    }
+
+                    if (waitingForCompiledAssembly.ProjectChanged && !waitingForCompiledAssembly.ProjectChangedSent)
+                    {
+                        Trace.TraceInformation("[ApplicationContext]: OnTransmit(ProjectChanged)");
+
+                        waitingForCompiledAssembly.Connection.Transmit(writer =>
+                        {
+                            writer.Write("ProjectChanged");
+                            writer.Write(Id);
+                        });
+
+                        waitingForCompiledAssembly.ProjectChangedSent = true;
+
+                        waitingForCompiledAssemblies.Remove(waitingForCompiledAssembly);
+                    }
+                }
             }
         }
 
@@ -508,17 +535,26 @@ namespace Microsoft.Framework.DesignTimeHost
             state.Configurations = project.GetConfigurations().ToList();
             state.Commands = project.Commands;
 
-            foreach (var frameworkInfo in project.GetTargetFrameworks())
+            var frameworks = new List<FrameworkName>(
+                project.GetTargetFrameworks()
+                .Select(tf => tf.FrameworkName));
+
+            if (!frameworks.Any())
+            {
+                frameworks.Add(VersionUtility.ParseFrameworkName("aspnet50"));
+            }
+
+            foreach (var frameworkName in frameworks)
             {
                 var applicationHostContext = new ApplicationHostContext(_hostServices,
                                                                         appPath,
                                                                         packagesDirectory: null,
                                                                         configuration: configuration,
-                                                                        targetFramework: frameworkInfo.FrameworkName,
+                                                                        targetFramework: frameworkName,
                                                                         cache: _cache,
                                                                         cacheContextAccessor: _cacheContextAccessor);
 
-                applicationHostContext.DependencyWalker.Walk(project.Name, project.Version, frameworkInfo.FrameworkName);
+                applicationHostContext.DependencyWalker.Walk(project.Name, project.Version, frameworkName);
 
                 var libraryManager = (ILibraryManager)applicationHostContext.ServiceProvider.GetService(typeof(ILibraryManager));
                 var metadataProvider = applicationHostContext.CreateInstance<ProjectMetadataProvider>();
@@ -532,8 +568,8 @@ namespace Microsoft.Framework.DesignTimeHost
 
                 var frameworkData = new TargetFrameworkData
                 {
-                    FrameworkName = frameworkInfo.FrameworkName,
-                    Name = frameworkResolver.GetFriendlyFrameworkName(frameworkInfo.FrameworkName)
+                    FrameworkName = frameworkName,
+                    Name = frameworkResolver.GetFriendlyFrameworkName(frameworkName)
                 };
 
                 state.Frameworks.Add(frameworkData);
@@ -543,7 +579,8 @@ namespace Microsoft.Framework.DesignTimeHost
                     Path = appPath,
                     Configuration = configuration,
                     TargetFramework = frameworkData,
-                    CompilationSettings = project.GetCompilationSettings(frameworkInfo.FrameworkName, configuration),
+                    // TODO: This shouldn't be roslyn specific compilation options
+                    CompilationSettings = project.GetCompilationSettings(frameworkName, configuration),
                     Dependencies = dependencies,
                     Metadata = metadata,
                     Output = new ProjectOutput()
@@ -676,6 +713,14 @@ namespace Microsoft.Framework.DesignTimeHost
             public bool ProjectChanged { get; set; }
 
             public bool ProjectChangedSent { get; set; }
+        }
+
+        private class LibraryKey
+        {
+            public string Name { get; set; }
+            public string TargetFramework { get; set; }
+            public string Configuration { get; set; }
+            public string Aspect { get; set; }
         }
 
         private struct Void

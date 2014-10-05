@@ -3,6 +3,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
+using Newtonsoft.Json.Linq;
 
 namespace Microsoft.Framework.Runtime
 {
@@ -28,7 +29,7 @@ namespace Microsoft.Framework.Runtime
             });
         }
 
-        public async Task<CompileResponse> Compile(string projectPath)
+        public async Task<CompileResponse> Compile(string projectPath, ILibraryKey library)
         {
             var contexts = await _projectContexts.Task;
 
@@ -43,6 +44,13 @@ namespace Microsoft.Framework.Runtime
             {
                 HostId = "Application",
                 MessageType = "GetCompiledAssembly",
+                Payload = JToken.FromObject(new LibraryKey
+                {
+                    Name = library.Name,
+                    Configuration = library.Configuration,
+                    TargetFramework = library.TargetFramework.ToString(),
+                    Aspect = library.Aspect
+                }),
                 ContextId = contextId
             });
 
@@ -83,6 +91,14 @@ namespace Microsoft.Framework.Runtime
 
                     return existing;
                 });
+        }
+
+        private class LibraryKey
+        {
+            public string Name { get; set; }
+            public string TargetFramework { get; set; }
+            public string Configuration { get; set; }
+            public string Aspect { get; set; }
         }
     }
 }
