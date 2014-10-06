@@ -245,7 +245,7 @@ var MSBUILD = '${Path.Combine(PROGRAM_FILES_X86, "MSBuild", "14.0", "Bin", "MSBu
             Path.Combine(nupkgPath),
             Path.Combine(PACKAGES_DIR, "KRE"));
 
-        // Nuke the build dir
+        // Delete the build dir
         Directory.Delete(BUILD_DIR2, recursive: true); 
 
         var envPath = Environment.GetEnvironmentVariable("PATH");

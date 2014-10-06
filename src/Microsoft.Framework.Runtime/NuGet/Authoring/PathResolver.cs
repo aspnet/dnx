@@ -127,7 +127,7 @@ namespace NuGet
             // Append the basePath to searchPattern and get the search regex. We need to do this because the search regex is matched from line start.
             Regex searchRegex = WildcardToRegex(Path.Combine(basePath, searchPath));
 
-            // This is a hack to prevent enumerating over the entire directory tree if the only wildcard characters are the ones in the file name. 
+            // This is a workaround to prevent enumerating over the entire directory tree if the only wildcard characters are the ones in the file name. 
             // If the path portion of the search path does not contain any wildcard characters only iterate over the TopDirectory.
             SearchOption searchOption = SearchOption.AllDirectories;
             // (a) Path is not recursive search
