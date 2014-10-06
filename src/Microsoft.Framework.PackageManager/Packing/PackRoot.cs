@@ -15,13 +15,12 @@ namespace Microsoft.Framework.PackageManager.Packing
     public class PackRoot
     {
         private readonly Runtime.Project _project;
-        private readonly IReport _report;
         public static readonly string AppRootName = "approot";
 
-        public PackRoot(Runtime.Project project, string outputPath, IServiceProvider hostServices, IReport report)
+        public PackRoot(Runtime.Project project, string outputPath, IServiceProvider hostServices, Reports reports)
         {
             _project = project;
-            _report = report;
+            Reports = reports;
             Projects = new List<PackProject>();
             Packages = new List<PackPackage>();
             Runtimes = new List<PackRuntime>();
@@ -45,13 +44,14 @@ namespace Microsoft.Framework.PackageManager.Packing
         public IList<PackPackage> Packages { get; private set; }
         public IDictionary<Library, IList<DependencyContext>> LibraryDependencyContexts { get; private set; }
 
+        public Reports Reports { get; private set; }
         public PackOperations Operations { get; private set; }
 
         public IServiceProvider HostServices { get; private set; }
 
         public void Emit()
         {
-            _report.WriteLine("Copying to output path {0}", OutputPath);
+            Reports.Quiet.WriteLine("Copying to output path {0}", OutputPath);
 
             var mainProject = Projects.Single(project => project.Name == _project.Name);
 

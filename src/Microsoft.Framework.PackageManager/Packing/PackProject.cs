@@ -18,19 +18,16 @@ namespace Microsoft.Framework.PackageManager.Packing
         private readonly ProjectReferenceDependencyProvider _projectReferenceDependencyProvider;
         private readonly IProjectResolver _projectResolver;
         private readonly LibraryDescription _libraryDescription;
-        private readonly IReport _report;
         private string _applicationBase;
 
         public PackProject(
             ProjectReferenceDependencyProvider projectReferenceDependencyProvider,
             IProjectResolver projectResolver,
-            LibraryDescription libraryDescription,
-            IReport report)
+            LibraryDescription libraryDescription)
         {
             _projectReferenceDependencyProvider = projectReferenceDependencyProvider;
             _projectResolver = projectResolver;
             _libraryDescription = libraryDescription;
-            _report = report;
         }
 
         public string Name { get { return _libraryDescription.Identity.Name; } }
@@ -40,7 +37,8 @@ namespace Microsoft.Framework.PackageManager.Packing
 
         public void Emit(PackRoot root)
         {
-            _report.WriteLine("Packing project dependency {0}", _libraryDescription.Identity.Name);
+            root.Reports.Quiet.WriteLine("Packing project dependency {0}", _libraryDescription.Identity.Name);
+
             if (root.NoSource)
             {
                 EmitNupkg(root);
@@ -65,8 +63,8 @@ namespace Microsoft.Framework.PackageManager.Packing
             // If root.OutputPath is specified by --out option, it might not be a full path
             TargetPath = Path.GetFullPath(TargetPath);
 
-            _report.WriteLine("  Source {0}", project.ProjectDirectory);
-            _report.WriteLine("  Target {0}", TargetPath);
+            root.Reports.Quiet.WriteLine("  Source {0}", project.ProjectDirectory);
+            root.Reports.Quiet.WriteLine("  Target {0}", TargetPath);
 
             root.Operations.Delete(TargetPath);
 
@@ -79,7 +77,7 @@ namespace Microsoft.Framework.PackageManager.Packing
 
         private void EmitNupkg(PackRoot root)
         {
-            _report.WriteLine("Packing nupkg from project dependency {0}", _libraryDescription.Identity.Name);
+            root.Reports.Quiet.WriteLine("Packing nupkg from project dependency {0}", _libraryDescription.Identity.Name);
 
             Runtime.Project project;
             if (!_projectResolver.TryResolveProject(_libraryDescription.Identity.Name, out project))
@@ -92,8 +90,8 @@ namespace Microsoft.Framework.PackageManager.Packing
             var targetNupkg = resolver.GetPackageFileName(project.Name, project.Version);
             TargetPath = resolver.GetInstallPath(project.Name, project.Version);
 
-            _report.WriteLine("  Source {0}", project.ProjectDirectory);
-            _report.WriteLine("  Target {0}", TargetPath);
+            root.Reports.Quiet.WriteLine("  Source {0}", project.ProjectDirectory);
+            root.Reports.Quiet.WriteLine("  Target {0}", TargetPath);
 
             if (Directory.Exists(TargetPath))
             {
@@ -103,7 +101,7 @@ namespace Microsoft.Framework.PackageManager.Packing
                 }
                 else
                 {
-                    _report.WriteLine("  {0} already exists.", TargetPath);
+                    root.Reports.Quiet.WriteLine("  {0} already exists.", TargetPath);
                     return;
                 }
             }
@@ -113,6 +111,7 @@ namespace Microsoft.Framework.PackageManager.Packing
             buildOptions.ProjectDir = project.ProjectDirectory;
             buildOptions.OutputDir = Path.Combine(project.ProjectDirectory, "bin");
             buildOptions.Configurations.Add(root.Configuration);
+            buildOptions.Reports = root.Reports;
             var buildManager = new BuildManager(root.HostServices, buildOptions);
             if (!buildManager.Build())
             {
@@ -363,7 +362,7 @@ root.Configuration));
 
         private void CopyContentFiles(PackRoot root, Runtime.Project project, string targetFolderPath)
         {
-            _report.WriteLine("Copying contents of project dependency {0} to {1}",
+            root.Reports.Quiet.WriteLine("Copying contents of project dependency {0} to {1}",
                 _libraryDescription.Identity.Name, targetFolderPath);
 
             var contentSourceFolder = WwwRoot ?? string.Empty;
@@ -373,8 +372,8 @@ root.Configuration));
             // Use Path.GetFullPath() to get rid of the trailing "."
             contentSourcePath = Path.GetFullPath(contentSourcePath);
 
-            _report.WriteLine("  Source {0}", contentSourcePath);
-            _report.WriteLine("  Target {0}", targetFolderPath);
+            root.Reports.Quiet.WriteLine("  Source {0}", contentSourcePath);
+            root.Reports.Quiet.WriteLine("  Target {0}", targetFolderPath);
 
             root.Operations.Copy(contentSourcePath, targetFolderPath);
         }

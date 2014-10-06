@@ -6,27 +6,18 @@ using System.IO;
 using System.IO.Compression;
 using System.Runtime.Versioning;
 using System.Security.Cryptography;
-using NuGet;
 
 namespace Microsoft.Framework.PackageManager.Packing
 {
     public class PackRuntime
     {
-        //private readonly NuGetDependencyResolver _nugetDependencyResolver;
-        //private readonly Library _library;
         private readonly FrameworkName _frameworkName;
         private readonly string _kreNupkgPath;
-        private readonly IReport _report;
 
-        public PackRuntime(
-            PackRoot root,
-            FrameworkName frameworkName,
-            string kreNupkgPath,
-            IReport report)
+        public PackRuntime(PackRoot root, FrameworkName frameworkName, string kreNupkgPath)
         {
             _frameworkName = frameworkName;
             _kreNupkgPath = kreNupkgPath;
-            _report = report;
             Name = Path.GetFileName(Path.GetDirectoryName(_kreNupkgPath));
             TargetPath = Path.Combine(root.TargetPackagesPath, Name);
         }
@@ -37,11 +28,11 @@ namespace Microsoft.Framework.PackageManager.Packing
 
         public void Emit(PackRoot root)
         {
-            _report.WriteLine("Packing runtime {0}", Name);
+            root.Reports.Quiet.WriteLine("Packing runtime {0}", Name);
 
             if (Directory.Exists(TargetPath))
             {
-                _report.WriteLine("  {0} already exists.", TargetPath);
+                root.Reports.Quiet.WriteLine("  {0} already exists.", TargetPath);
                 return;
             }
 

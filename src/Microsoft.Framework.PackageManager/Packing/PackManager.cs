@@ -82,7 +82,7 @@ namespace Microsoft.Framework.PackageManager.Packing
 
             var frameworkContexts = new Dictionary<FrameworkName, DependencyContext>();
 
-            var root = new PackRoot(project, outputPath, _hostServices, _options.Reports.Quiet)
+            var root = new PackRoot(project, outputPath, _hostServices, _options.Reports)
             {
                 Overwrite = _options.Overwrite,
                 Configuration = _options.Configuration,
@@ -186,7 +186,7 @@ namespace Microsoft.Framework.PackageManager.Packing
                     IList<DependencyContext> contexts;
                     if (!root.LibraryDependencyContexts.TryGetValue(libraryDescription.Identity, out contexts))
                     {
-                        root.Packages.Add(new PackPackage(libraryDescription, _options.Reports.Quiet));
+                        root.Packages.Add(new PackPackage(libraryDescription));
                         contexts = new List<DependencyContext>();
                         root.LibraryDependencyContexts[libraryDescription.Identity] = contexts;
                     }
@@ -200,8 +200,8 @@ namespace Microsoft.Framework.PackageManager.Packing
                         var packProject = new PackProject(
                             dependencyContext.ProjectReferenceDependencyProvider,
                             dependencyContext.ProjectResolver,
-                            libraryDescription,
-                            _options.Reports.Quiet);
+                            libraryDescription);
+
                         if (packProject.Name == project.Name)
                         {
                             packProject.WwwRoot = _options.WwwRoot;
@@ -253,7 +253,7 @@ namespace Microsoft.Framework.PackageManager.Packing
                 return false;
             }
 
-            root.Runtimes.Add(new PackRuntime(root, frameworkName, kreNupkgPath, _options.Reports.Quiet));
+            root.Runtimes.Add(new PackRuntime(root, frameworkName, kreNupkgPath));
             return true;
         }
 
