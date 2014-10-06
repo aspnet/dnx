@@ -57,7 +57,7 @@ namespace NuGet
                 pattern = Regex.Escape(wildcard.Replace('\\', '/'));
                 // regex wildcard adjustments for *nix-style file systems
                 pattern = pattern
-                    .Replace(@"\*\*/", ".*") //For recursive wildcards /**/, include the current directory.
+                    .Replace(@"\*\*/", "(.*/)?") //For recursive wildcards /**/, include the current directory.
                     .Replace(@"\*\*", ".*") // For recursive wildcards that don't end in a slash e.g. **.txt would be treated as a .txt file at any depth
                     .Replace(@"\*\.\*", @"\*") // "*.*" is equivalent to "*"
                     .Replace(@"\*", @"[^/]*(/)?") // For non recursive searches, limit it any character that is not a directory separator
@@ -69,7 +69,7 @@ namespace NuGet
                 // regex wildcard adjustments for Windows-style file systems
                 pattern = pattern
                     .Replace("/", @"\\") // On Windows, / is treated the same as \.
-                    .Replace(@"\*\*\\", ".*") //For recursive wildcards \**\, include the current directory.
+                    .Replace(@"\*\*\\", @"(.*\\)?") //For recursive wildcards \**\, include the current directory.
                     .Replace(@"\*\*", ".*") // For recursive wildcards that don't end in a slash e.g. **.txt would be treated as a .txt file at any depth
                     .Replace(@"\*\.\*", @"\*") // "*.*" is equivalent to "*"
                     .Replace(@"\*", @"[^\\]*(\\)?") // For non recursive searches, limit it any character that is not a directory separator

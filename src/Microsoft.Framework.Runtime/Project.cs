@@ -109,7 +109,10 @@ namespace Microsoft.Framework.Runtime
                     .Select(pattern => PathResolver.NormalizeWildcardForExcludedFiles(path, pattern))
                     .ToArray();
 
-                var excludeFiles = PathResolver.GetMatches(includeFiles, x => x, excludePatterns)
+                var excludeFiles = PathResolver.GetMatches(
+                    includeFiles,
+                    x => x,
+                    excludePatterns.Select(x => Path.Combine(path, x)))
                     .ToArray();
 
                 return files.Concat(includeFiles.Except(excludeFiles)).Distinct().ToArray();
@@ -132,7 +135,10 @@ namespace Microsoft.Framework.Runtime
                     .Select(pattern => PathResolver.NormalizeWildcardForExcludedFiles(path, pattern))
                     .ToArray();
 
-                var excludeFiles = PathResolver.GetMatches(includeFiles, x => x, excludePatterns)
+                var excludeFiles = PathResolver.GetMatches(
+                    includeFiles,
+                    x => x,
+                    excludePatterns.Select(x => Path.Combine(path, x)))
                     .ToArray();
 
                 return files.Concat(includeFiles.Except(excludeFiles)).Distinct().ToArray();
@@ -196,7 +202,10 @@ namespace Microsoft.Framework.Runtime
                     .Select(pattern => PathResolver.NormalizeWildcardForExcludedFiles(path, pattern))
                     .ToArray();
 
-                var excludeFiles = PathResolver.GetMatches(includeFiles, x => x, excludePatterns)
+                var excludeFiles = PathResolver.GetMatches(
+                    includeFiles,
+                    x => x,
+                    excludePatterns.Select(x => Path.Combine(path, x)))
                     .ToArray();
 
                 return includeFiles.Except(excludeFiles).Distinct().ToArray();

@@ -279,6 +279,7 @@ namespace Microsoft.Framework.PackageManager
     'UselessSub4': ['file1.js', 'file2.html'],
     'UselessSub5': ['file1.js', 'file2.html']
   },
+  '.git': ['index', 'HEAD', 'log'],
   'packages': {}
 }";
             var expectedOutputStructure = @"{
@@ -309,6 +310,7 @@ namespace Microsoft.Framework.PackageManager
     ""MixFolder/UselessSub3\\"",
     ""MixFolder/UselessSub4"",
     ""MixFolder\\UselessSub5"",
+    "".git""
   ]
 }")
                     .WriteTo(testEnv.ProjectPath);
@@ -339,6 +341,7 @@ namespace Microsoft.Framework.PackageManager
     ""MixFolder/UselessSub3\\"",
     ""MixFolder/UselessSub4"",
     ""MixFolder\\UselessSub5"",
+    "".git""
   ]
 }")
                     .WithFileContents(Path.Combine("approot", "global.json"), @"{
@@ -432,6 +435,96 @@ namespace Microsoft.Framework.PackageManager
     ""MixFolder1\\*"",
     ""MixFolder2/*.*""
   ]
+}")
+                    .WithFileContents(Path.Combine("approot", "global.json"), @"{
+  ""dependencies"": {},
+  ""packages"": ""packages""
+}");
+                Assert.True(expectedOutputDir.MatchDirectoryOnDisk(testEnv.PackOutputDirPath,
+                    compareFileContents: true));
+            }
+        }
+        
+        [Theory]
+        [MemberData("KrePaths")]
+        public void CorrectlyExcludeFoldersStartingWithDots(string krePath)
+        {
+            var projectStructure = @"{
+  '.': ['project.json', 'File', '.FileStartingWithDot', 'File.Having.Dots'],
+  '.FolderStaringWithDot': {
+    'SubFolder': ['File', '.FileStartingWithDot', 'File.Having.Dots'],
+    '.SubFolderStartingWithDot': ['File', '.FileStartingWithDot', 'File.Having.Dots'],
+    'SubFolder.Having.Dots': ['File', '.FileStartingWithDot', 'File.Having.Dots'],
+    'File': '',
+    '.FileStartingWithDot': '',
+    'File.Having.Dots': ''
+  },
+  'Folder': {
+    'SubFolder': ['File', '.FileStartingWithDot', 'File.Having.Dots'],
+    '.SubFolderStartingWithDot': ['File', '.FileStartingWithDot', 'File.Having.Dots'],
+    'SubFolder.Having.Dots': ['File', '.FileStartingWithDot', 'File.Having.Dots'],
+    'File': '',
+    '.FileStartingWithDot': '',
+    'File.Having.Dots': ''
+  },
+  'Folder.Having.Dots': {
+    'SubFolder': ['File', '.FileStartingWithDot', 'File.Having.Dots'],
+    '.SubFolderStartingWithDot': ['File', '.FileStartingWithDot', 'File.Having.Dots'],
+    'SubFolder.Having.Dots': ['File', '.FileStartingWithDot', 'File.Having.Dots'],
+    'File': '',
+    '.FileStartingWithDot': '',
+    'File.Having.Dots': ''
+  },
+  'packages': {}
+}";
+            var expectedOutputStructure = @"{
+  'approot': {
+    'global.json': '',
+    'src': {
+      'PROJECT_NAME': {
+        '.': ['project.json', 'File', '.FileStartingWithDot', 'File.Having.Dots'],
+        'Folder': {
+          'SubFolder': ['File', '.FileStartingWithDot', 'File.Having.Dots'],
+          'SubFolder.Having.Dots': ['File', '.FileStartingWithDot', 'File.Having.Dots'],
+          'File': '',
+          '.FileStartingWithDot': '',
+          'File.Having.Dots': ''
+        },
+        'Folder.Having.Dots': {
+          'SubFolder': ['File', '.FileStartingWithDot', 'File.Having.Dots'],
+          'SubFolder.Having.Dots': ['File', '.FileStartingWithDot', 'File.Having.Dots'],
+          'File': '',
+          '.FileStartingWithDot': '',
+          'File.Having.Dots': ''
+        }
+      }
+    }
+  }
+}".Replace("PROJECT_NAME", _projectName);
+
+            using (var testEnv = new KpmTestEnvironment(krePath, _projectName, _outputDirName))
+            {
+                TestUtils.CreateDirTree(projectStructure)
+                    .WithFileContents("project.json", @"{
+}")
+                    .WriteTo(testEnv.ProjectPath);
+
+                var environment = new Dictionary<string, string>()
+                {
+                    { "KRE_PACKAGES", Path.Combine(testEnv.ProjectPath, "packages") }
+                };
+
+                var exitCode = TestUtils.ExecKpm(
+                    krePath,
+                    subcommand: "pack",
+                    arguments: string.Format("--out {0}",
+                        testEnv.PackOutputDirPath),
+                    environment: environment,
+                    workingDir: testEnv.ProjectPath);
+                Assert.Equal(0, exitCode);
+
+                var expectedOutputDir = TestUtils.CreateDirTree(expectedOutputStructure)
+                    .WithFileContents(Path.Combine("approot", "src", testEnv.ProjectName, "project.json"), @"{
 }")
                     .WithFileContents(Path.Combine("approot", "global.json"), @"{
   ""dependencies"": {},
