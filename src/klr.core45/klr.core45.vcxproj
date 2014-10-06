@@ -86,7 +86,6 @@
     <IncludePath Condition="'$(KreTargetOS)' == 'WIN7_PLUS_CORESYSTEM'">$(ProgramFiles)\Windows Kits\Win8CoreSystem\inc\crt;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-  <IncludePath Condition="'$(KreTargetOS)' == 'WIN7_PLUS_CORESYSTEM'">$(ProgramFiles)\Windows Kits\Win8CoreSystem\inc\crt;$(IncludePath)</IncludePath>
     <LinkIncremental>false</LinkIncremental>
     <OutDir>$(SolutionDir)bin\$(Platform)\$(Configuration)\</OutDir>
     <IntDir>bin\$(Platform)\$(Configuration)\</IntDir>
