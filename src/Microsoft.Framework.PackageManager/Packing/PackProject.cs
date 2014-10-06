@@ -73,6 +73,8 @@ namespace Microsoft.Framework.PackageManager.Packing
             CopyRelativeSources(project);
 
             UpdateWebRoot(root, TargetPath);
+
+            _applicationBase = Path.Combine("..", PackRoot.AppRootName, "src", project.Name);
         }
 
         private void EmitNupkg(PackRoot root)
