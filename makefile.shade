@@ -30,7 +30,7 @@ var ALL_TARGETS = '${KRE_CLR_TARGETS.Concat(KRE_CORECLR_TARGETS)}'
 var NEW_RUNTIME = '${E("NEW_RUNTIME") == "1"}'
 var CORE_CLR_VERSION = '${E("CORE_CLR_VERSION")}'
 var PROGRAM_FILES_X86 = '${Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86)}'
-var MSBUILD = '${Path.Combine(PROGRAM_FILES_X86, "MSBuild", "12.0", "Bin", "MSBuild.exe")}'
+var MSBUILD = '${Path.Combine(PROGRAM_FILES_X86, "MSBuild", "14.0", "Bin", "MSBuild.exe")}'
 
 #package-runtime .clean-sdk-dir .copy-bits .tweak-scripts .copy-package-dependencies .copy-coreclr-kpm-dependencies .copy-coreclr .nuget-pack-runtime target='package'
 

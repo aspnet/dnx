@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Project DefaultTargets="Build" ToolsVersion="12.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<Project DefaultTargets="Build" ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|Win32">
       <Configuration>Debug</Configuration>
@@ -29,26 +29,26 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v120</PlatformToolset>
+    <PlatformToolset>v140</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v120</PlatformToolset>
+    <PlatformToolset>v140</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v120</PlatformToolset>
+    <PlatformToolset>v140</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v120</PlatformToolset>
+    <PlatformToolset>v140</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
@@ -188,13 +188,8 @@
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
   <Target Name="CopyManagedForDebuggingLocally" AfterTargets="Build" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <Copy SourceFiles="$(ProjectDir)..\klr.core45.managed\bin\$(Configuration)\aspnetcore50\klr.core45.managed.dll" 
-          DestinationFolder="$(SolutionDir)\bin\$(Platform)\$(Configuration)"
-          Condition="Exists('$(ProjectDir)..\klr.core45.managed\bin\$(Configuration)\aspnetcore50\klr.core45.managed.dll')" />
-    <Copy SourceFiles="$(ProjectDir)..\klr.net45.managed\bin\$(Configuration)\net45\klr.net45.managed.dll" 
-          DestinationFolder="$(SolutionDir)\bin\$(Platform)\$(Configuration)"
-          Condition="Exists('$(ProjectDir)..\klr.net45.managed\bin\$(Configuration)\net45\klr.net45.managed.dll')" />
-    <Copy SourceFiles="$(ProjectDir)..\klr.net45.managed\klr.net45.config" 
-          DestinationFolder="$(SolutionDir)\bin\$(Platform)\$(Configuration)" />
+    <Copy SourceFiles="$(ProjectDir)..\klr.core45.managed\bin\$(Configuration)\aspnetcore50\klr.core45.managed.dll" DestinationFolder="$(SolutionDir)\bin\$(Platform)\$(Configuration)" Condition="Exists('$(ProjectDir)..\klr.core45.managed\bin\$(Configuration)\aspnetcore50\klr.core45.managed.dll')" />
+    <Copy SourceFiles="$(ProjectDir)..\klr.net45.managed\bin\$(Configuration)\net45\klr.net45.managed.dll" DestinationFolder="$(SolutionDir)\bin\$(Platform)\$(Configuration)" Condition="Exists('$(ProjectDir)..\klr.net45.managed\bin\$(Configuration)\net45\klr.net45.managed.dll')" />
+    <Copy SourceFiles="$(ProjectDir)..\klr.net45.managed\klr.net45.config" DestinationFolder="$(SolutionDir)\bin\$(Platform)\$(Configuration)" />
   </Target>
 </Project>
