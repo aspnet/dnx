@@ -58,6 +58,13 @@ namespace Microsoft.Framework.Project
                 RedirectStandardOutput = true
             };
 
+            // Disable partial NGEN
+#if NET45
+            options.EnvironmentVariables["COMPLUS_PartialNGen"] = "0";
+#else
+            options.Environment["COMPLUS_PartialNGen"] = "0";
+#endif
+
             var p = Process.Start(options);
 #if NET45
             p.EnableRaisingEvents = true;
