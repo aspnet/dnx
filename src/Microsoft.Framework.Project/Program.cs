@@ -38,6 +38,7 @@ namespace Microsoft.Framework.Project
                 var optionExePath = c.Option("--exePath", "Exe path", CommandOptionType.SingleValue);
                 var optionRuntimePath = c.Option("--runtimePath <PATH>", "Runtime path", CommandOptionType.SingleValue);
                 var optionSymbols = c.Option("--symbols", "Use symbols", CommandOptionType.NoValue);
+                var optionPartial = c.Option("--partial", "Allow partial NGEN", CommandOptionType.NoValue);
                 c.HelpOption("-?|-h|--help");
 
                 c.OnExecute(() =>
@@ -47,6 +48,7 @@ namespace Microsoft.Framework.Project
                     crossgenOptions.RuntimePath = optionRuntimePath.Value();
                     crossgenOptions.CrossgenPath = optionExePath.Value();
                     crossgenOptions.Symbols = optionSymbols.HasValue();
+                    crossgenOptions.Partial = optionPartial.HasValue();
 
                     var gen = new CrossgenManager(crossgenOptions);
                     if (!gen.GenerateNativeImages())
