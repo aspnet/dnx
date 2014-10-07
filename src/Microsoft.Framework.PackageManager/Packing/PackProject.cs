@@ -377,7 +377,23 @@ root.Configuration));
             root.Reports.Quiet.WriteLine("  Source {0}", contentSourcePath);
             root.Reports.Quiet.WriteLine("  Target {0}", targetFolderPath);
 
-            root.Operations.Copy(contentSourcePath, targetFolderPath);
+            var contentFiles = new HashSet<string>(project.ContentFiles, StringComparer.OrdinalIgnoreCase);
+
+            root.Operations.Copy(contentSourcePath, targetFolderPath, (isRoot, filePath) =>
+            {
+                if (Directory.Exists(filePath))
+                {
+                    return true;
+                }
+
+                if (string.Equals(Path.GetFileName(filePath), Runtime.Project.ProjectFileName,
+                    StringComparison.OrdinalIgnoreCase))
+                {
+                    return false;
+                }
+
+                return contentFiles.Contains(filePath);
+            });
         }
 
         private bool IncludeRuntimeFileInBundle(string relativePath, string fileName)
