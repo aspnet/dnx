@@ -18,6 +18,7 @@ namespace Microsoft.Framework.DesignTimeHost.Models.OutgoingMessages
                    string.Equals(Name, other.Name) &&
                    object.Equals(Version, other.Version);
         }
+
         public override int GetHashCode()
         {
             // These objects are currently POCOs and we're overriding equals

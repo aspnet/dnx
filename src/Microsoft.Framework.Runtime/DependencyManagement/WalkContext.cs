@@ -261,6 +261,7 @@ namespace Microsoft.Framework.Runtime
 
             item = new Item()
             {
+                Description = hit.Details,
                 Key = hit.Details.Identity,
                 Dependencies = hit.Details.Dependencies,
                 Resolver = hit.Resolver,
@@ -284,6 +285,9 @@ namespace Microsoft.Framework.Runtime
                     return new LibraryDescription
                     {
                         Identity = entry.Value.Key,
+                        Path = entry.Value.Description.Path,
+                        Type = entry.Value.Description.Type,
+                        Framework = entry.Value.Description.Framework ?? frameworkName,
                         Dependencies = entry.Value.Dependencies.SelectMany(CorrectDependencyVersion).ToList()
                     };
                 }).ToList();
@@ -320,6 +324,7 @@ namespace Microsoft.Framework.Runtime
 
         public class Item
         {
+            public LibraryDescription Description { get; set; }
             public Library Key { get; set; }
             public IDependencyProvider Resolver { get; set; }
             public IEnumerable<LibraryDependency> Dependencies { get; set; }

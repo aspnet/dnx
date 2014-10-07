@@ -33,10 +33,6 @@ namespace Microsoft.Framework.Runtime
                                         .Select(r => r.Path)
                                         .ToList();
 
-            ProjectReferences = otherReferences.OfType<IMetadataProjectReference>()
-                                               .Select(r => r.ProjectPath)
-                                               .ToList();
-
             var result = projectReference.GetDiagnostics();
 
             Errors = result.Errors.ToList();
@@ -69,12 +65,6 @@ namespace Microsoft.Framework.Runtime
         }
 
         public IDictionary<string, byte[]> RawReferences
-        {
-            get;
-            private set;
-        }
-
-        public IList<string> ProjectReferences
         {
             get;
             private set;

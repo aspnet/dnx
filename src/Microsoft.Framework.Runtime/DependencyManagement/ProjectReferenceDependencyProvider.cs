@@ -1,7 +1,6 @@
 // Copyright (c) Microsoft Open Technologies, Inc. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
-using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -46,7 +45,8 @@ namespace Microsoft.Framework.Runtime
             }
 
             // This never returns null
-            var targetFrameworkDependencies = project.GetTargetFramework(targetFramework).Dependencies;
+            var targetFrameworkInfo = project.GetTargetFramework(targetFramework);
+            var targetFrameworkDependencies = targetFrameworkInfo.Dependencies;
 
             if (VersionUtility.IsDesktop(targetFramework))
             {
@@ -76,24 +76,15 @@ namespace Microsoft.Framework.Runtime
                     Name = project.Name,
                     Version = project.Version
                 },
+                Type = "Project",
+                Path = project.ProjectFilePath,
+                Framework = targetFrameworkInfo.FrameworkName,
                 Dependencies = dependencies,
             };
         }
 
         public virtual void Initialize(IEnumerable<LibraryDescription> dependencies, FrameworkName targetFramework)
         {
-            // PERF: It sucks that we have to do this twice. We should be able to round trip
-            // the information from GetDescription
-            foreach (var d in dependencies)
-            {
-                Project project;
-                if (_projectResolver.TryResolveProject(d.Identity.Name, out project))
-                {
-                    d.Path = project.ProjectFilePath;
-                    d.Type = "Project";
-                }
-            }
-
             Dependencies = dependencies;
         }
     }

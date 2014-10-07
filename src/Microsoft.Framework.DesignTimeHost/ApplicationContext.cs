@@ -233,20 +233,13 @@ namespace Microsoft.Framework.DesignTimeHost
             {
                 _state.ClearAssigned();
 
-                var frameworks = state.Frameworks.Select(targetFrameworkInfo => new FrameworkData
-                {
-                    FrameworkName = targetFrameworkInfo.FrameworkName.ToString(),
-                    FriendlyName = targetFrameworkInfo.Name
-                })
-                .ToList();
-
                 _local = new World();
                 _local.ProjectInformation = new ProjectMessage
                 {
                     Name = state.Name,
 
                     // All target framework information
-                    Frameworks = frameworks,
+                    Frameworks = state.Frameworks,
 
                     // debug/release etc
                     Configurations = state.Configurations,
@@ -257,15 +250,11 @@ namespace Microsoft.Framework.DesignTimeHost
                 for (int i = 0; i < state.Projects.Count; i++)
                 {
                     var project = state.Projects[i];
-                    var frameworkData = new FrameworkData
-                    {
-                        FrameworkName = project.TargetFramework.FrameworkName.ToString(),
-                        FriendlyName = project.TargetFramework.Name
-                    };
+                    var frameworkData = project.TargetFramework;
 
                     var projectWorld = new ProjectWorld
                     {
-                        TargetFramework = project.TargetFramework.FrameworkName,
+                        TargetFramework = project.FrameworkName,
                         Sources = new SourcesMessage
                         {
                             Framework = frameworkData,
@@ -285,7 +274,7 @@ namespace Microsoft.Framework.DesignTimeHost
                         References = new ReferencesMessage
                         {
                             Framework = frameworkData,
-                            ProjectReferences = project.Metadata.ProjectReferences,
+                            ProjectReferences = project.ProjectReferences,
                             FileReferences = project.Metadata.References,
                             RawReferences = project.Metadata.RawReferences
                         },
@@ -305,10 +294,10 @@ namespace Microsoft.Framework.DesignTimeHost
                         }
                     };
 
-                    _local.Projects[project.TargetFramework.FrameworkName] = projectWorld;
+                    _local.Projects[project.FrameworkName] = projectWorld;
 
                     List<CompiledAssemblyState> waitingForCompiledAssemblies;
-                    if (_waitingForCompiledAssemblies.TryGetValue(project.TargetFramework.FrameworkName, out waitingForCompiledAssemblies))
+                    if (_waitingForCompiledAssemblies.TryGetValue(project.FrameworkName, out waitingForCompiledAssemblies))
                     {
                         foreach (var waitingForCompiledAssembly in waitingForCompiledAssemblies)
                         {
@@ -521,7 +510,7 @@ namespace Microsoft.Framework.DesignTimeHost
         {
             var state = new State
             {
-                Frameworks = new List<TargetFrameworkData>(),
+                Frameworks = new List<FrameworkData>(),
                 Projects = new List<ProjectInfo>()
             };
 
@@ -566,10 +555,23 @@ namespace Microsoft.Framework.DesignTimeHost
                                                          .Select(CreateDependencyDescription)
                                                          .ToDictionary(d => d.Name);
 
-                var frameworkData = new TargetFrameworkData
+                var projectReferences = applicationHostContext.DependencyWalker
+                                                              .Libraries.Where(d => d.Type == "Project")
+                                                              .Select(d => new ProjectReference
+                                                              {
+                                                                  Framework = new FrameworkData
+                                                                  {
+                                                                      FrameworkName = d.Framework.ToString(),
+                                                                      FriendlyName = frameworkResolver.GetFriendlyFrameworkName(d.Framework)
+                                                                  },
+                                                                  Path = d.Path
+                                                              })
+                                                              .ToList();
+
+                var frameworkData = new FrameworkData
                 {
-                    FrameworkName = frameworkName,
-                    Name = frameworkResolver.GetFriendlyFrameworkName(frameworkName)
+                    FrameworkName = frameworkName.ToString(),
+                    FriendlyName = frameworkResolver.GetFriendlyFrameworkName(frameworkName)
                 };
 
                 state.Frameworks.Add(frameworkData);
@@ -579,9 +581,11 @@ namespace Microsoft.Framework.DesignTimeHost
                     Path = appPath,
                     Configuration = configuration,
                     TargetFramework = frameworkData,
+                    FrameworkName = frameworkName,
                     // TODO: This shouldn't be roslyn specific compilation options
                     CompilationSettings = project.GetCompilationSettings(frameworkName, configuration),
                     Dependencies = dependencies,
+                    ProjectReferences = projectReferences,
                     Metadata = metadata,
                     Output = new ProjectOutput()
                 };
@@ -662,7 +666,7 @@ namespace Microsoft.Framework.DesignTimeHost
 
             public IList<string> Configurations { get; set; }
 
-            public IList<TargetFrameworkData> Frameworks { get; set; }
+            public IList<FrameworkData> Frameworks { get; set; }
 
             public IDictionary<string, string> Commands { get; set; }
 
@@ -676,13 +680,17 @@ namespace Microsoft.Framework.DesignTimeHost
 
             public string Configuration { get; set; }
 
-            public TargetFrameworkData TargetFramework { get; set; }
+            public FrameworkName FrameworkName { get; set; }
+
+            public FrameworkData TargetFramework { get; set; }
 
             public CompilationSettings CompilationSettings { get; set; }
 
             public ProjectMetadata Metadata { get; set; }
 
             public IDictionary<string, DependencyDescription> Dependencies { get; set; }
+
+            public IList<ProjectReference> ProjectReferences { get; set; }
 
             public ProjectOutput Output { get; set; }
         }
@@ -695,13 +703,6 @@ namespace Microsoft.Framework.DesignTimeHost
             public byte[] PdbBytes { get; set; }
 
             public string AssemblyPath { get; set; }
-        }
-
-        private class TargetFrameworkData
-        {
-            public string Name { get; set; }
-
-            public FrameworkName FrameworkName { get; set; }
         }
 
         private class CompiledAssemblyState

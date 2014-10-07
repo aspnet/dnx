@@ -75,6 +75,7 @@ namespace Microsoft.Framework.Runtime
                         Name = package.Id,
                         Version = package.Version
                     },
+                    Type = "Package",
                     Dependencies = GetDependencies(package, targetFramework)
                 };
             }
@@ -151,7 +152,6 @@ namespace Microsoft.Framework.Runtime
 
                 string packagePath = ResolvePackagePath(defaultResolver, cacheResolvers, package);
 
-                dependency.Type = "Package";
                 dependency.Path = packagePath;
 
                 var packageDescription = new PackageDescription
