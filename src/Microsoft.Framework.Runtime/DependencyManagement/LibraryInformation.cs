@@ -11,6 +11,7 @@ namespace Microsoft.Framework.Runtime
         public LibraryInformation(LibraryDescription description)
         {
             Name = description.Identity.Name;
+            Version = description.Identity.Version.ToString();
             Path = description.Path;
             Type = description.Type;
             Dependencies = description.Dependencies.Select(d => d.Name);
@@ -23,6 +24,12 @@ namespace Microsoft.Framework.Runtime
         }
 
         public string Name
+        {
+            get;
+            private set;
+        }
+
+        public string Version
         {
             get;
             private set;

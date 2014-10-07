@@ -10,6 +10,8 @@ namespace Microsoft.Framework.Runtime
     {
         string Name { get; }
 
+        string Version { get; }
+
         string Path { get; }
 
         string Type { get; }
