@@ -7,6 +7,7 @@ namespace Microsoft.Framework.PackageManager
 {
     internal class Report : IReport
     {
+        private static readonly object _lock = new object();
         private readonly AnsiConsole _console;
 
         public Report(AnsiConsole console)
@@ -16,7 +17,10 @@ namespace Microsoft.Framework.PackageManager
 
         public void WriteLine(string message)
         {
-            _console.WriteLine(message);
+            lock (_lock)
+            {
+                _console.WriteLine(message);
+            }
         }
     }
 }
