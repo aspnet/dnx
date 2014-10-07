@@ -95,11 +95,11 @@ namespace Microsoft.Framework.PackageManager.Restore.NuGet
             var result = await TryCache(uri, cacheKey, cacheAgeLimit);
             if (result.Stream != null)
             {
-                _reports.Verbose.WriteLine(string.Format("  {0} {1}", "CACHE".Green(), uri));
+                _reports.Quiet.WriteLine(string.Format("  {0} {1}", "CACHE".Green(), uri));
                 return result;
             }
 
-            _reports.Verbose.WriteLine(string.Format("  {0} {1}.", "GET".Yellow(), uri));
+            _reports.Quiet.WriteLine(string.Format("  {0} {1}.", "GET".Yellow(), uri));
 
             var request = new HttpRequestMessage(HttpMethod.Get, uri);
             if (_userName != null)
