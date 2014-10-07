@@ -284,7 +284,7 @@ namespace Microsoft.Framework.DesignTimeHost
                             Errors = project.Metadata.Errors,
                             Warnings = project.Metadata.Warnings
                         },
-                        Compiled = new CompileMessage
+                        Outputs = new OutputsMessage
                         {
                             FrameworkData = frameworkData,
                             AssemblyBytes = project.Output.AssemblyBytes,
@@ -488,17 +488,17 @@ namespace Microsoft.Framework.DesignTimeHost
             {
                 writer.Write(error);
             }
-            writer.Write(project.Compiled.EmbeddedReferences.Count);
-            foreach (var pair in project.Compiled.EmbeddedReferences)
+            writer.Write(project.Outputs.EmbeddedReferences.Count);
+            foreach (var pair in project.Outputs.EmbeddedReferences)
             {
                 writer.Write(pair.Key);
                 writer.Write(pair.Value.Length);
                 writer.Write(pair.Value);
             }
-            writer.Write(project.Compiled.AssemblyBytes.Length);
-            writer.Write(project.Compiled.AssemblyBytes);
-            writer.Write(project.Compiled.PdbBytes.Length);
-            writer.Write(project.Compiled.PdbBytes);
+            writer.Write(project.Outputs.AssemblyBytes.Length);
+            writer.Write(project.Outputs.AssemblyBytes);
+            writer.Write(project.Outputs.PdbBytes.Length);
+            writer.Write(project.Outputs.PdbBytes);
         }
 
         private bool IsDifferent<T>(T local, T remote) where T : class

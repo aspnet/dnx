@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace Microsoft.Framework.DesignTimeHost.Models.OutgoingMessages
 {
-    public class CompileMessage
+    public class OutputsMessage
     {
         public FrameworkData FrameworkData { get; set; }
 
