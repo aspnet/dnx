@@ -28,7 +28,7 @@ namespace klr.hosting
             // Look for platform specific native image
             string nativeImagePath = GetNativeImagePath(path);
 
-            if (File.Exists(nativeImagePath))
+            if (nativeImagePath != null)
             {
                 return LoadFromNativeImagePath(nativeImagePath, path);
             }
@@ -51,9 +51,24 @@ namespace klr.hosting
             var directory = Path.GetDirectoryName(ilPath);
             var arch = Environment.GetEnvironmentVariable("PROCESSOR_ARCHITECTURE");
 
-            return Path.Combine(directory,
-                                arch,
-                                Path.GetFileNameWithoutExtension(ilPath) + ".ni.dll");
+            var nativeImageName = Path.GetFileNameWithoutExtension(ilPath) + ".ni.dll";
+            var nativePath = Path.Combine(directory, arch, nativeImageName);
+
+            if (File.Exists(nativePath))
+            {
+                return nativePath;
+            }
+            else
+            {
+                // KRE is arch sensitive so the ni is in the same folder as IL
+                nativePath = Path.Combine(directory, nativeImageName);
+                if (File.Exists(nativePath))
+                {
+                    return nativePath;
+                }
+            }
+
+            return null;
         }
         
         public bool EnableMultiCoreJit()
