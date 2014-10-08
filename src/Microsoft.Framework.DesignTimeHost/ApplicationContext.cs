@@ -556,7 +556,8 @@ namespace Microsoft.Framework.DesignTimeHost
                                                          .ToDictionary(d => d.Name);
 
                 var projectReferences = applicationHostContext.DependencyWalker
-                                                              .Libraries.Where(d => d.Type == "Project")
+                                                              .Libraries
+                                                              .Where(d => string.Equals(d.Type, "Project") && !string.Equals(d.Identity.Name, project.Name))
                                                               .Select(d => new ProjectReference
                                                               {
                                                                   Framework = new FrameworkData
