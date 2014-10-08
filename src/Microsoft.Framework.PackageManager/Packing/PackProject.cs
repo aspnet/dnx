@@ -190,7 +190,11 @@ namespace Microsoft.Framework.PackageManager.Packing
                     var relativeSourcePath = PathUtility.GetRelativePath(project.ProjectFilePath, sourceFile);
                     var relativeParentDir = Path.GetDirectoryName(relativeSourcePath);
                     Directory.CreateDirectory(Path.Combine(TargetPath, relativeParentDir));
-                    File.Copy(sourceFile, Path.Combine(TargetPath, relativeSourcePath));
+                    var targetFile = Path.Combine(TargetPath, relativeSourcePath);
+                    if (!File.Exists(targetFile))
+                    {
+                        File.Copy(sourceFile, targetFile);
+                    }
                 }
                 else
                 {
