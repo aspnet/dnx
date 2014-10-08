@@ -162,7 +162,6 @@ namespace Microsoft.Framework.PackageManager
                 c.OnExecute(() =>
                 {
                     var buildOptions = new BuildOptions();
-                    buildOptions.RuntimeTargetFramework = _environment.RuntimeFramework;
                     buildOptions.OutputDir = optionOut.Value();
                     buildOptions.ProjectDir = argProjectDir.Value ?? Directory.GetCurrentDirectory();
                     buildOptions.Configurations = optionConfiguration.Values;

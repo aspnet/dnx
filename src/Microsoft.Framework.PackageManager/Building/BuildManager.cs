@@ -15,6 +15,8 @@ namespace Microsoft.Framework.PackageManager
     public class BuildManager
     {
         private readonly IServiceProvider _hostServices;
+        private readonly IAssemblyLoaderContainer _loaderContainer;
+        private readonly IApplicationEnvironment _applicationEnvironment;
         private readonly BuildOptions _buildOptions;
 
         public BuildManager(IServiceProvider hostServices, BuildOptions buildOptions)
@@ -22,6 +24,9 @@ namespace Microsoft.Framework.PackageManager
             _hostServices = hostServices;
             _buildOptions = buildOptions;
             _buildOptions.ProjectDir = Normalize(buildOptions.ProjectDir);
+
+            _applicationEnvironment = (IApplicationEnvironment)hostServices.GetService(typeof(IApplicationEnvironment));
+            _loaderContainer = (IAssemblyLoaderContainer)hostServices.GetService(typeof(IAssemblyLoaderContainer));
 
             ScriptExecutor = new ScriptExecutor();
         }
@@ -64,7 +69,7 @@ namespace Microsoft.Framework.PackageManager
             }
             else
             {
-                frameworks = new[] { _buildOptions.RuntimeTargetFramework };
+                frameworks = new[] { _applicationEnvironment.RuntimeFramework };
             }
 
             Func<string, string> getVariable = key =>
@@ -79,16 +84,13 @@ namespace Microsoft.Framework.PackageManager
             var allErrors = new List<string>();
             var allWarnings = new List<string>();
 
-            var applicationEnvironment = (IApplicationEnvironment)_hostServices.GetService(typeof(IApplicationEnvironment));
-            var loaderContainer = (IAssemblyLoaderContainer)_hostServices.GetService(typeof(IAssemblyLoaderContainer));
-
             // Initialize the default host so that we can load custom project export
             // providers from nuget packages/projects
             var host = new DefaultHost(new DefaultHostOptions()
             {
                 ApplicationBaseDirectory = project.ProjectDirectory,
-                TargetFramework = applicationEnvironment.RuntimeFramework,
-                Configuration = applicationEnvironment.Configuration
+                TargetFramework = _applicationEnvironment.RuntimeFramework,
+                Configuration = _applicationEnvironment.Configuration
             },
             _hostServices);
 
@@ -97,7 +99,7 @@ namespace Microsoft.Framework.PackageManager
             var cacheContextAccessor = new CacheContextAccessor();
             var cache = new Cache(cacheContextAccessor);
 
-            using (host.AddLoaders(loaderContainer))
+            using (host.AddLoaders(_loaderContainer))
             {
                 // Build all specified configurations
                 foreach (var configuration in configurations)
