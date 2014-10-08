@@ -130,7 +130,8 @@ namespace Microsoft.Framework.Runtime.Roslyn
 
         public void EmitReferenceAssembly(Stream stream)
         {
-            CompilationContext.Compilation.EmitMetadataOnly(stream);
+            var emitOptions = new EmitOptions(metadataOnly: true);
+            CompilationContext.Compilation.Emit(stream, options: emitOptions);
         }
 
         public IDiagnosticResult EmitAssembly(string outputPath)
@@ -154,11 +155,12 @@ namespace Microsoft.Framework.Runtime.Roslyn
 
                 if (RoslynPdbGenerationDisable)
                 {
-                    result = CompilationContext.Compilation.Emit(assemblyStream, outputName: Path.GetFileName(assemblyPath), pdbFilePath: null, pdbStream: null, xmlDocumentationStream: xmlDocStream, manifestResources: resources);
+                    result = CompilationContext.Compilation.Emit(assemblyStream, xmlDocumentationStream: xmlDocStream, manifestResources: resources);
                 }
                 else
                 {
-                    result = CompilationContext.Compilation.Emit(assemblyStream, outputName: Path.GetFileName(assemblyPath), pdbFilePath: pdbPath, pdbStream: pdbStream, xmlDocumentationStream: xmlDocStream, manifestResources: resources);
+                    var options = new EmitOptions(pdbFilePath: pdbPath);
+                    result = CompilationContext.Compilation.Emit(assemblyStream, pdbStream: pdbStream, xmlDocumentationStream: xmlDocStream, manifestResources: resources, options: options);
                 }
 
                 sw.Stop();
