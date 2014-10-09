@@ -562,6 +562,7 @@ namespace Microsoft.Framework.DesignTimeHost
                                                               {
                                                                   Framework = new FrameworkData
                                                                   {
+                                                                      ShortName = VersionUtility.GetShortFrameworkName(d.Framework),
                                                                       FrameworkName = d.Framework.ToString(),
                                                                       FriendlyName = frameworkResolver.GetFriendlyFrameworkName(d.Framework)
                                                                   },
@@ -571,6 +572,7 @@ namespace Microsoft.Framework.DesignTimeHost
 
                 var frameworkData = new FrameworkData
                 {
+                    ShortName = VersionUtility.GetShortFrameworkName(frameworkName),
                     FrameworkName = frameworkName.ToString(),
                     FriendlyName = frameworkResolver.GetFriendlyFrameworkName(frameworkName)
                 };
