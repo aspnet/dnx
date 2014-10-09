@@ -276,7 +276,7 @@ namespace Microsoft.Framework.PackageManager
 
         private void WriteError(string message)
         {
-            _buildOptions.Reports.Information.WriteLine(message.Red());
+            _buildOptions.Reports.Error.WriteLine(message.Red());
         }
 
         private void WriteWarning(string message)
