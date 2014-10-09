@@ -340,5 +340,65 @@ namespace Microsoft.Framework.Runtime.Tests
             Assert.Equal(new[] { "a.cs", "b.cs", "c.cs" }, project.SourcePatterns);
             Assert.Equal(new[] { "a.cs" }, project.ExcludePatterns);
         }
+
+        [Fact]
+        public void ProjectUrlIsSet()
+        {
+            var project = Project.GetProject(@"
+{
+    ""projectUrl"": ""https://github.com/aspnet/KRuntime""
+}",
+"foo",
+@"c:\foo\project.json");
+
+            Assert.Equal("https://github.com/aspnet/KRuntime", project.ProjectUrl);
+        }
+
+        [Fact]
+        public void RequireLicenseAcceptanceIsSet()
+        {
+            var project = Project.GetProject(@"
+{
+    ""requireLicenseAcceptance"": ""true""
+}",
+"foo",
+@"c:\foo\project.json");
+
+            Assert.True(project.RequireLicenseAcceptance);
+        }
+
+        [Fact]
+        public void RequireLicenseAcceptanceDefaultValueIsFalse()
+        {
+            var project = Project.GetProject(@" { }", "foo", @"c:\foo\project.json");
+
+            Assert.False(project.RequireLicenseAcceptance);
+        }
+
+        [Fact]
+        public void TagsAreSet()
+        {
+            var project = Project.GetProject(@"
+{
+    ""tags"": [""awesome"", ""fantastic"", ""aspnet""]
+}",
+"foo",
+@"c:\foo\project.json");
+            var tags = new ReadOnlyHashSet<string>(project.Tags);
+
+            Assert.Equal(3, tags.Count);
+            Assert.True(tags.Contains("awesome"));
+            Assert.True(tags.Contains("fantastic"));
+            Assert.True(tags.Contains("aspnet"));
+        }
+
+        [Fact]
+        public void EmptyTagsListWhenNotSpecified()
+        {
+            var project = Project.GetProject(@" { }", "foo", @"c:\foo\project.json");
+
+            Assert.NotNull(project.Tags);
+            Assert.Equal(0, project.Tags.Count());
+        }
     }
 }

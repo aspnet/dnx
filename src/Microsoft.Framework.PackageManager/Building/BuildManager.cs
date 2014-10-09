@@ -240,6 +240,13 @@ namespace Microsoft.Framework.PackageManager
             builder.Id = project.Name;
             builder.Version = project.Version;
             builder.Title = project.Name;
+            builder.RequireLicenseAcceptance = project.RequireLicenseAcceptance;
+            builder.Tags.AddRange(project.Tags);
+
+            if (!string.IsNullOrEmpty(project.ProjectUrl))
+            {
+                builder.ProjectUrl = new Uri(project.ProjectUrl);
+            }
         }
 
         private void WriteSummary(List<string> warnings, List<string> errors)

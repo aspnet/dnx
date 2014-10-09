@@ -71,7 +71,13 @@ namespace Microsoft.Framework.Runtime
 
         public string WebRoot { get; private set; }
 
-        public string EntryPoint { get; set; }
+        public string EntryPoint { get; private set; }
+
+        public string ProjectUrl { get; private set; }
+
+        public bool RequireLicenseAcceptance { get; private set; }
+
+        public string[] Tags { get; private set; }
 
         internal IEnumerable<string> SourcePatterns { get; set; }
 
@@ -257,6 +263,7 @@ namespace Microsoft.Framework.Runtime
             // Metadata properties
             var version = rawProject["version"];
             var authors = rawProject["authors"];
+            var tags = rawProject["tags"];
 
             project.Name = projectName;
             project.Version = version == null ? new SemanticVersion("1.0.0") : new SemanticVersion(version.Value<string>());
@@ -266,6 +273,9 @@ namespace Microsoft.Framework.Runtime
             project.ProjectFilePath = Path.GetFullPath(projectPath);
             project.WebRoot = GetValue<string>(rawProject, "webroot");
             project.EntryPoint = GetValue<string>(rawProject, "entryPoint");
+            project.ProjectUrl = GetValue<string>(rawProject, "projectUrl");
+            project.RequireLicenseAcceptance = GetValue<bool?>(rawProject, "requireLicenseAcceptance") ?? false;
+            project.Tags = tags == null ? new string[] { } : tags.ToObject<string[]>();
 
             // TODO: Move this to the dependencies node
             project.EmbedInteropTypes = GetValue<bool>(rawProject, "embedInteropTypes");
