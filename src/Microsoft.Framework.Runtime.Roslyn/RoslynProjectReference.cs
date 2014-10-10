@@ -7,6 +7,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.InteropServices;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Emit;
 
@@ -14,6 +15,8 @@ namespace Microsoft.Framework.Runtime.Roslyn
 {
     public class RoslynProjectReference : IRoslynMetadataReference, IMetadataProjectReference
     {
+        private static Lazy<bool> _supportsPdbGeneration = new Lazy<bool>(SupportsPdbGeneration);
+
         public RoslynProjectReference(CompilationContext compilationContext)
         {
             CompilationContext = compilationContext;
@@ -40,18 +43,6 @@ namespace Microsoft.Framework.Runtime.Roslyn
             get
             {
                 return CompilationContext.Project.ProjectFilePath;
-            }
-        }
-
-        // Pdbs aren't supported on mono
-        // Diasmreader.dll not supported on CoreSystemServer: SET KRE_ROSLYN_EMIT_PDB_DISABLE=1
-        private static Lazy<bool> _roslynPdbGenerationDisable = new Lazy<bool>(() => ((PlatformHelper.IsMono) || (Environment.GetEnvironmentVariable("KRE_ROSLYN_EMIT_PDB_DISABLE") == "1")));
-
-        public bool RoslynPdbGenerationDisable
-        {
-            get
-            {
-                return _roslynPdbGenerationDisable.Value;
             }
         }
 
@@ -87,13 +78,13 @@ namespace Microsoft.Framework.Runtime.Roslyn
 
                 EmitResult emitResult = null;
 
-                if (RoslynPdbGenerationDisable)
+                if (_supportsPdbGeneration.Value)
                 {
-                    emitResult = CompilationContext.Compilation.Emit(assemblyStream, manifestResources: resources);
+                    emitResult = CompilationContext.Compilation.Emit(assemblyStream, pdbStream: pdbStream, manifestResources: resources);
                 }
                 else
                 {
-                    emitResult = CompilationContext.Compilation.Emit(assemblyStream, pdbStream: pdbStream, manifestResources: resources);
+                    emitResult = CompilationContext.Compilation.Emit(assemblyStream, manifestResources: resources);
                 }
 
                 sw.Stop();
@@ -153,14 +144,14 @@ namespace Microsoft.Framework.Runtime.Roslyn
 
                 EmitResult result = null;
 
-                if (RoslynPdbGenerationDisable)
-                {
-                    result = CompilationContext.Compilation.Emit(assemblyStream, xmlDocumentationStream: xmlDocStream, manifestResources: resources);
-                }
-                else
+                if (_supportsPdbGeneration.Value)
                 {
                     var options = new EmitOptions(pdbFilePath: pdbPath);
                     result = CompilationContext.Compilation.Emit(assemblyStream, pdbStream: pdbStream, xmlDocumentationStream: xmlDocStream, manifestResources: resources, options: options);
+                }
+                else
+                {
+                    result = CompilationContext.Compilation.Emit(assemblyStream, xmlDocumentationStream: xmlDocStream, manifestResources: resources);
                 }
 
                 sw.Stop();
@@ -216,6 +207,26 @@ namespace Microsoft.Framework.Runtime.Roslyn
                                   .Select(d => formatter.Format(d)).ToList();
 
             return new DiagnosticResult(success, warnings, errors);
+        }
+
+        private static bool SupportsPdbGeneration()
+        {
+            try
+            {
+                if (PlatformHelper.IsMono)
+                {
+                    return false;
+                }
+
+                // Check for the pdb writer component that roslyn uses to generate pdbs
+                const string SymWriterGuid = "0AE2DEB0-F901-478b-BB9F-881EE8066788";
+
+                return Marshal.GetTypeFromCLSID(new Guid(SymWriterGuid)) != null;
+            }
+            catch
+            {
+                return false;
+            }
         }
     }
 }
