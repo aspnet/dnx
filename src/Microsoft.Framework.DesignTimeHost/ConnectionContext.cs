@@ -16,6 +16,7 @@ namespace Microsoft.Framework.DesignTimeHost
         private readonly IServiceProvider _services;
         private readonly ICache _cache;
         private readonly ICacheContextAccessor _cacheContextAccessor;
+        private readonly INamedCacheDependencyProvider _namedDependencyProvider;
         private ProcessingQueue _queue;
         private string _hostId;
 
@@ -23,6 +24,7 @@ namespace Microsoft.Framework.DesignTimeHost
                                  IServiceProvider services,
                                  ICache cache,
                                  ICacheContextAccessor cacheContextAccessor,
+                                 INamedCacheDependencyProvider namedDependencyProvider,
                                  ProcessingQueue queue,
                                  string hostId)
         {
@@ -30,6 +32,7 @@ namespace Microsoft.Framework.DesignTimeHost
             _services = services;
             _cache = cache;
             _cacheContextAccessor = cacheContextAccessor;
+            _namedDependencyProvider = namedDependencyProvider;
             _queue = queue;
             _hostId = hostId;
         }
@@ -59,6 +62,7 @@ namespace Microsoft.Framework.DesignTimeHost
                 applicationContext = new ApplicationContext(_services,
                                                             _cache,
                                                             _cacheContextAccessor,
+                                                            _namedDependencyProvider,
                                                             message.ContextId);
 
                 _contexts.Add(message.ContextId, applicationContext);

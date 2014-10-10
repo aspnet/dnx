@@ -31,7 +31,8 @@ namespace Microsoft.Framework.PackageManager
                 configuration: configuration,
                 targetFramework: targetFramework,
                 cache: cache,
-                cacheContextAccessor: cacheContextAccessor);
+                cacheContextAccessor: cacheContextAccessor,
+                namedCacheDependencyProvider: new NamedCacheDependencyProvider());
         }
 
         public void Initialize()

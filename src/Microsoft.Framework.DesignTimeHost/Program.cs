@@ -49,6 +49,7 @@ namespace Microsoft.Framework.DesignTimeHost
         {
             var cacheContextAccessor = new CacheContextAccessor();
             var cache = new Cache(cacheContextAccessor);
+            var namedDependencyProvider = new NamedCacheDependencyProvider();
             var contexts = new Dictionary<int, ApplicationContext>();
 
             // This fixes the mono incompatibility but ties it to ipv4 connections
@@ -66,7 +67,14 @@ namespace Microsoft.Framework.DesignTimeHost
 
                 var stream = new NetworkStream(acceptSocket);
                 var queue = new ProcessingQueue(stream);
-                var connection = new ConnectionContext(contexts, _services, cache, cacheContextAccessor, queue, hostId);
+                var connection = new ConnectionContext(
+                    contexts, 
+                    _services, 
+                    cache, 
+                    cacheContextAccessor,
+                    namedDependencyProvider,
+                    queue, 
+                    hostId);
 
                 queue.OnReceive += message =>
                 {

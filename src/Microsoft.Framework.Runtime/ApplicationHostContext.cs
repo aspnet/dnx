@@ -18,7 +18,8 @@ namespace Microsoft.Framework.Runtime
                                       string configuration,
                                       FrameworkName targetFramework,
                                       ICache cache,
-                                      ICacheContextAccessor cacheContextAccessor)
+                                      ICacheContextAccessor cacheContextAccessor,
+                                      INamedCacheDependencyProvider namedCacheDependencyProvider)
         {
             ProjectDirectory = projectDirectory;
             RootDirectory = Runtime.ProjectResolver.ResolveRootDirectory(ProjectDirectory);
@@ -62,6 +63,7 @@ namespace Microsoft.Framework.Runtime
             _serviceProvider.Add(typeof(ILibraryManager), new LibraryManager(targetFramework, configuration, DependencyWalker, compositeDependencyExporter, cache));
             _serviceProvider.Add(typeof(ICache), cache);
             _serviceProvider.Add(typeof(ICacheContextAccessor), cacheContextAccessor);
+            _serviceProvider.Add(typeof(INamedCacheDependencyProvider), namedCacheDependencyProvider);
         }
 
         public void AddService(Type type, object instance)

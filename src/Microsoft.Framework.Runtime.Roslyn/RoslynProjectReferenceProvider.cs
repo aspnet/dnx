@@ -10,11 +10,12 @@ namespace Microsoft.Framework.Runtime.Roslyn
 
         public RoslynProjectReferenceProvider(
             ICache cache, 
-            ICacheContextAccessor cacheContextAccessor, 
+            ICacheContextAccessor cacheContextAccessor,
+            INamedCacheDependencyProvider namedCacheProvider, 
             IFileWatcher watcher,
             IServiceProvider services)
         {
-            _compiler = new RoslynCompiler(cache, cacheContextAccessor, watcher, services);
+            _compiler = new RoslynCompiler(cache, cacheContextAccessor, namedCacheProvider, watcher, services);
         }
 
         public IMetadataProjectReference GetProjectReference(

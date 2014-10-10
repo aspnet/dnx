@@ -19,16 +19,19 @@ namespace Microsoft.Framework.Runtime.Roslyn
     {
         private readonly ICache _cache;
         private readonly ICacheContextAccessor _cacheContextAccessor;
+        private readonly INamedCacheDependencyProvider _namedDependencyProvider;
         private readonly IFileWatcher _watcher;
         private readonly IServiceProvider _services;
 
         public RoslynCompiler(ICache cache,
                               ICacheContextAccessor cacheContextAccessor,
+                              INamedCacheDependencyProvider namedDependencyProvider,
                               IFileWatcher watcher,
                               IServiceProvider services)
         {
             _cache = cache;
             _cacheContextAccessor = cacheContextAccessor;
+            _namedDependencyProvider = namedDependencyProvider;
             _watcher = watcher;
             _services = services;
         }
@@ -58,6 +61,8 @@ namespace Microsoft.Framework.Runtime.Roslyn
             if (_cacheContextAccessor.Current != null)
             {
                 _cacheContextAccessor.Current.Monitor(new FileWriteTimeCacheDependency(project.ProjectFilePath));
+
+                _cacheContextAccessor.Current.Monitor(_namedDependencyProvider.GetNamedDependency("BuildOutputs"));
             }
 
             var exportedReferences = incomingReferences.Select(ConvertMetadataReference);

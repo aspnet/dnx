@@ -22,7 +22,8 @@ namespace Microsoft.Framework.PackageManager.Packing
                 configuration: configuration,
                 targetFramework: targetFramework,
                 cache: cache,
-                cacheContextAccessor: cacheContextAccessor);
+                cacheContextAccessor: cacheContextAccessor,
+                namedCacheDependencyProvider: new NamedCacheDependencyProvider());
 
             ProjectResolver = applicationHostContext.ProjectResolver;
             NuGetDependencyResolver = applicationHostContext.NuGetDependencyProvider;

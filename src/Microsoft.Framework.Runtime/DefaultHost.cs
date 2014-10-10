@@ -108,6 +108,7 @@ namespace Microsoft.Framework.Runtime
         {
             var cacheContextAccessor = new CacheContextAccessor();
             var cache = new Cache(cacheContextAccessor);
+            var namedCacheDependencyProvider = new NamedCacheDependencyProvider();
 
             _applicationHostContext = new ApplicationHostContext(
                 hostServices,
@@ -116,7 +117,8 @@ namespace Microsoft.Framework.Runtime
                 options.Configuration,
                 _targetFramework,
                 cache,
-                cacheContextAccessor);
+                cacheContextAccessor,
+                namedCacheDependencyProvider);
 
             Trace.TraceInformation("[{0}]: Project path: {1}", GetType().Name, _projectDirectory);
             Trace.TraceInformation("[{0}]: Project root: {1}", GetType().Name, _applicationHostContext.RootDirectory);

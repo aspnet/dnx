@@ -23,6 +23,7 @@ namespace Microsoft.Framework.DesignTimeHost
         private readonly IServiceProvider _hostServices;
         private readonly ICache _cache;
         private readonly ICacheContextAccessor _cacheContextAccessor;
+        private readonly INamedCacheDependencyProvider _namedDependencyProvider;
 
         private readonly Queue<Message> _inbox = new Queue<Message>();
         private readonly object _processingLock = new object();
@@ -41,11 +42,16 @@ namespace Microsoft.Framework.DesignTimeHost
         private readonly Dictionary<FrameworkName, List<CompiledAssemblyState>> _waitingForCompiledAssemblies = new Dictionary<FrameworkName, List<CompiledAssemblyState>>();
         private readonly List<ConnectionContext> _waitingForDiagnostics = new List<ConnectionContext>();
 
-        public ApplicationContext(IServiceProvider services, ICache cache, ICacheContextAccessor cacheContextAccessor, int id)
+        public ApplicationContext(IServiceProvider services,
+                                  ICache cache,
+                                  ICacheContextAccessor cacheContextAccessor,
+                                  INamedCacheDependencyProvider namedDependencyProvider,
+                                  int id)
         {
             _hostServices = services;
             _cache = cache;
             _cacheContextAccessor = cacheContextAccessor;
+            _namedDependencyProvider = namedDependencyProvider;
             Id = id;
         }
 
@@ -232,6 +238,11 @@ namespace Microsoft.Framework.DesignTimeHost
                 _filesChanged.WasAssigned ||
                 _rebuild.WasAssigned)
             {
+                if (_rebuild.WasAssigned)
+                {
+                    _namedDependencyProvider.Trigger("BuildOutputs");
+                }
+
                 _appPath.ClearAssigned();
                 _configuration.ClearAssigned();
                 _filesChanged.ClearAssigned();
@@ -554,7 +565,8 @@ namespace Microsoft.Framework.DesignTimeHost
                                                                         configuration: configuration,
                                                                         targetFramework: frameworkName,
                                                                         cache: _cache,
-                                                                        cacheContextAccessor: _cacheContextAccessor);
+                                                                        cacheContextAccessor: _cacheContextAccessor,
+                                                                        namedCacheDependencyProvider: _namedDependencyProvider);
 
                 applicationHostContext.DependencyWalker.Walk(project.Name, project.Version, frameworkName);
 
