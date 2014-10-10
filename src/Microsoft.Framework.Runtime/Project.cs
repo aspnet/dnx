@@ -280,9 +280,18 @@ namespace Microsoft.Framework.Runtime
             // TODO: Move this to the dependencies node
             project.EmbedInteropTypes = GetValue<bool>(rawProject, "embedInteropTypes");
 
+            IEnumerable<string> defaultExcludePatterns = _defaultExcludePatterns;
+
+            // 'webroot' should be excluded from compilation if specified
+            if (!string.IsNullOrEmpty(project.WebRoot))
+            {
+                var webRootPattern = Path.Combine(project.WebRoot, "**", "*");
+                defaultExcludePatterns = defaultExcludePatterns.Concat(new[] { webRootPattern });
+            }
+
             // Source file patterns
             project.SourcePatterns = GetSourcePattern(rawProject, "code", _defaultSourcePatterns);
-            project.ExcludePatterns = GetSourcePattern(rawProject, "exclude", _defaultExcludePatterns);
+            project.ExcludePatterns = GetSourcePattern(rawProject, "exclude", defaultExcludePatterns.ToArray());
             project.PackExcludePatterns = GetSourcePattern(rawProject, "pack-exclude", _defaultPackExcludePatterns);
             project.PreprocessPatterns = GetSourcePattern(rawProject, "preprocess", _defaultPreprocessPatterns);
             project.SharedPatterns = GetSourcePattern(rawProject, "shared", _defaultSharedPatterns);
