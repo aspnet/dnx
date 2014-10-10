@@ -124,7 +124,16 @@ namespace Microsoft.Framework.Runtime
 
         public ILibraryExport GetAllExports(string name, string aspect)
         {
-            return ProjectExportProviderHelper.GetExportsRecursive(
+            var key = Tuple.Create(
+                nameof(LibraryManager),
+                nameof(GetAllExports),
+                name,
+                _targetFramework,
+                _configuration,
+                aspect);
+
+            return _cache.Get<ILibraryExport>(key, ctx =>
+            ProjectExportProviderHelper.GetExportsRecursive(
                 _cache,
                 this,
                 _libraryExportProvider,
@@ -135,7 +144,8 @@ namespace Microsoft.Framework.Runtime
                     Configuration = _configuration,
                     Aspect = aspect,
                 },
-                dependenciesOnly: false);
+                dependenciesOnly: false)
+            );
         }
 
         public IEnumerable<ILibraryInformation> GetLibraries(string aspect)

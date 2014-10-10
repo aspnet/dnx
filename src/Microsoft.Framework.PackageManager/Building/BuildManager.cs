@@ -118,6 +118,9 @@ namespace Microsoft.Framework.PackageManager
                     // Build all target frameworks a project supports
                     foreach (var targetFramework in frameworks)
                     {
+                        _buildOptions.Reports.Information.WriteLine("Building {0} for {1}",
+                            project.Name, targetFramework);
+
                         var errors = new List<string>();
                         var warnings = new List<string>();
 
@@ -127,7 +130,7 @@ namespace Microsoft.Framework.PackageManager
                                                        targetFramework,
                                                        configuration,
                                                        baseOutputPath);
-                        context.Initialize();
+                        context.Initialize(_buildOptions.Reports.Quiet);
 
                         if (context.Build(warnings, errors))
                         {

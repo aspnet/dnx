@@ -35,9 +35,10 @@ namespace Microsoft.Framework.PackageManager
                 namedCacheDependencyProvider: new NamedCacheDependencyProvider());
         }
 
-        public void Initialize()
+        public void Initialize(IReport report)
         {
             _applicationHostContext.DependencyWalker.Walk(_project.Name, _project.Version, _targetFramework);
+            ShowDependencyInformation(report);
         }
 
         public bool Build(IList<string> warnings, IList<string> errors)
@@ -133,6 +134,44 @@ namespace Microsoft.Framework.PackageManager
                     TargetPath = Path.Combine("lib", _targetFrameworkFolder, Path.GetFileName(path))
                 });
             }
+        }
+
+        private void ShowDependencyInformation(IReport report)
+        {
+            // Make lookup for actual package dependency assemblies
+            var projectExport = _applicationHostContext.LibraryManager.GetAllExports(_project.Name);
+            if (projectExport == null)
+            {
+                return;
+            }
+            var metadataFileRefs = projectExport.MetadataReferences
+                .OfType<IMetadataFileReference>();
+
+            foreach (var library in _applicationHostContext.DependencyWalker.Libraries)
+            {
+                var libraryPath = NormalizeDirectoryPath(library.Path);
+                report.WriteLine("Using {0} dependency {1} for {2}", library.Type, library.Identity, _targetFramework);
+                report.WriteLine("  Source: {0}", libraryPath);
+
+                if (library.Type == "Package")
+                {
+                    // TODO: temporarily use prefix to tell whether an assembly belongs to a package
+                    // Should expose LibraryName from IMetadataReference later for more efficient lookup
+                    var packageAssemblies = metadataFileRefs.Where(x => Path.GetFullPath(x.Path).StartsWith(libraryPath));
+                    foreach (var assembly in packageAssemblies)
+                    {
+                        var relativeAssemblyPath = PathUtility.GetRelativePath(
+                            libraryPath,
+                            Path.GetFullPath(assembly.Path));
+                        report.WriteLine("  File: {0}", relativeAssemblyPath);
+                    }
+                }
+            }
+        }
+
+        private static string NormalizeDirectoryPath(string path)
+        {
+            return PathUtility.EnsureTrailingSlash(Path.GetFullPath(path));
         }
     }
 }

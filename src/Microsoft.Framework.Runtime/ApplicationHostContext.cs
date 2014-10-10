@@ -52,6 +52,9 @@ namespace Microsoft.Framework.Runtime
                 NuGetDependencyProvider
             });
 
+            LibraryManager = new LibraryManager(targetFramework, configuration, DependencyWalker,
+                compositeDependencyExporter, cache);
+
             // Default services
             _serviceProvider.Add(typeof(IApplicationEnvironment), new ApplicationEnvironment(Project, targetFramework, configuration));
             _serviceProvider.Add(typeof(ILibraryExportProvider), compositeDependencyExporter);
@@ -60,7 +63,7 @@ namespace Microsoft.Framework.Runtime
 
             _serviceProvider.Add(typeof(NuGetDependencyResolver), NuGetDependencyProvider);
             _serviceProvider.Add(typeof(ProjectReferenceDependencyProvider), ProjectDepencyProvider);
-            _serviceProvider.Add(typeof(ILibraryManager), new LibraryManager(targetFramework, configuration, DependencyWalker, compositeDependencyExporter, cache));
+            _serviceProvider.Add(typeof(ILibraryManager), LibraryManager);
             _serviceProvider.Add(typeof(ICache), cache);
             _serviceProvider.Add(typeof(ICacheContextAccessor), cacheContextAccessor);
             _serviceProvider.Add(typeof(INamedCacheDependencyProvider), namedCacheDependencyProvider);
@@ -104,6 +107,7 @@ namespace Microsoft.Framework.Runtime
         public ProjectReferenceDependencyProvider ProjectDepencyProvider { get; private set; }
 
         public IProjectResolver ProjectResolver { get; private set; }
+        public ILibraryManager LibraryManager { get; private set; }
         public DependencyWalker DependencyWalker { get; private set; }
         public FrameworkReferenceResolver FrameworkReferenceResolver { get; private set; }
         public string RootDirectory { get; private set; }

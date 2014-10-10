@@ -25,8 +25,8 @@ namespace Microsoft.Framework.PackageManager.Packing
         {
             foreach (var context in root.LibraryDependencyContexts[Library])
             {
-                root.Reports.Quiet.WriteLine("Packing nupkg dependency {0} for {1}", Library, context.FrameworkName);
-
+                root.Reports.Quiet.WriteLine("Using {0} dependency {1} for {2}",
+                    _libraryDescription.Type, Library, context.FrameworkName);
                 Emit(root, context.PackageAssemblies[Library.Name]);
             }
         }
@@ -37,6 +37,9 @@ namespace Microsoft.Framework.PackageManager.Packing
 
             TargetPath = resolver.GetInstallPath(Library.Name, Library.Version);
 
+            root.Reports.Quiet.WriteLine("  Source: {0}", _libraryDescription.Path);
+            root.Reports.Quiet.WriteLine("  Target: {0}", TargetPath);
+
             Directory.CreateDirectory(TargetPath);
 
             // Copy nuspec
@@ -46,6 +49,8 @@ namespace Microsoft.Framework.PackageManager.Packing
             // Copy assemblies for current framework
             foreach (var assembly in assemblies)
             {
+                root.Reports.Quiet.WriteLine("  File: {0}", assembly.RelativePath);
+
                 var targetAssemblyPath = Path.Combine(TargetPath, assembly.RelativePath);
                 CopyFile(root, assembly.Path, targetAssemblyPath, root.Overwrite);
             }
@@ -80,7 +85,6 @@ namespace Microsoft.Framework.PackageManager.Packing
                 }
             }
 
-            root.Reports.Quiet.WriteLine("  Target {0}", targetFolder);
             Directory.CreateDirectory(targetFolder);
             root.Operations.Copy(srcFolder, targetFolder);
         }
@@ -103,7 +107,6 @@ namespace Microsoft.Framework.PackageManager.Packing
                 }
             }
 
-            root.Reports.Quiet.WriteLine("  Target {0}", targetPath);
             File.Copy(srcPath, targetPath);
         }
     }

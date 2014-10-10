@@ -39,7 +39,8 @@ namespace Microsoft.Framework.PackageManager.Packing
 
         public void Emit(PackRoot root)
         {
-            root.Reports.Quiet.WriteLine("Packing project dependency {0}", _libraryDescription.Identity.Name);
+            root.Reports.Quiet.WriteLine("Using {0} dependency {1} for {2}",
+                _libraryDescription.Type, _libraryDescription.Identity, _libraryDescription.Framework);
 
             if (root.NoSource)
             {
@@ -65,7 +66,7 @@ namespace Microsoft.Framework.PackageManager.Packing
             // If root.OutputPath is specified by --out option, it might not be a full path
             TargetPath = Path.GetFullPath(TargetPath);
 
-            root.Reports.Quiet.WriteLine("  Source {0}", project.ProjectDirectory);
+            root.Reports.Quiet.WriteLine("  Source {0}", _libraryDescription.Path);
             root.Reports.Quiet.WriteLine("  Target {0}", TargetPath);
 
             root.Operations.Delete(TargetPath);
@@ -81,7 +82,8 @@ namespace Microsoft.Framework.PackageManager.Packing
 
         private void EmitNupkg(PackRoot root)
         {
-            root.Reports.Quiet.WriteLine("Packing nupkg from project dependency {0}", _libraryDescription.Identity.Name);
+            root.Reports.Quiet.WriteLine("Packing nupkg from {0} dependency {1}",
+                _libraryDescription.Type, _libraryDescription.Identity.Name);
 
             Runtime.Project project;
             if (!_projectResolver.TryResolveProject(_libraryDescription.Identity.Name, out project))
@@ -94,7 +96,7 @@ namespace Microsoft.Framework.PackageManager.Packing
             var targetNupkg = resolver.GetPackageFileName(project.Name, project.Version);
             TargetPath = resolver.GetInstallPath(project.Name, project.Version);
 
-            root.Reports.Quiet.WriteLine("  Source {0}", project.ProjectDirectory);
+            root.Reports.Quiet.WriteLine("  Source {0}", _libraryDescription.Path);
             root.Reports.Quiet.WriteLine("  Target {0}", TargetPath);
 
             if (Directory.Exists(TargetPath))
@@ -516,8 +518,8 @@ root.Configuration));
 
         private void CopyContentFiles(PackRoot root, Runtime.Project project, string targetFolderPath)
         {
-            root.Reports.Quiet.WriteLine("Copying contents of project dependency {0} to {1}",
-                _libraryDescription.Identity.Name, targetFolderPath);
+            root.Reports.Quiet.WriteLine("Copying contents of {0} dependency {1} to {2}",
+                _libraryDescription.Type, _libraryDescription.Identity.Name, targetFolderPath);
 
             var contentSourceFolder = WwwRoot ?? string.Empty;
             var contentSourcePath = Path.Combine(project.ProjectDirectory, contentSourceFolder);
