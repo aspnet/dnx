@@ -10,13 +10,13 @@
     "frameworks" : {
         "net45" : {
             "frameworkAssemblies": {
-                "System.Collections" : "4.0.0-beta-*",
-                "System.IO": "4.0.0-beta-*",
-                "System.Runtime" : "4.0.0-beta-*",
-                "System.Xml": "4.0.0-beta-*",
-                "System.Xml.Linq": "4.0.0-beta-*",
-                "System.Threading.Tasks": "4.0.0-beta-*",
-                "System.Text.Encoding": "4.0.0-beta-*"
+                "System.Collections" : "",
+                "System.IO": "",
+                "System.Runtime" : "",
+                "System.Xml": "",
+                "System.Xml.Linq": "",
+                "System.Threading.Tasks": "",
+                "System.Text.Encoding": ""
             }
         },
         "aspnetcore50" : { 

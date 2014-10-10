@@ -12,7 +12,7 @@
     "frameworks" : {
         "net45" : {
             "frameworkAssemblies" : {
-                "System.Net" : "4.0.0-beta-*"
+                "System.Net" : ""
             }
         },
         "aspnetcore50": {
