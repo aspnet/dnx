@@ -10,19 +10,19 @@
     "frameworks" : {
         "net45" : {
             "frameworkAssemblies": {
-                "System.Collections" : "4.0.0.0",
-                "System.IO": "4.0.0.0",
-                "System.Runtime" : "4.0.0.0",
-                "System.Xml": "4.0.0.0",
-                "System.Xml.Linq": "4.0.0.0",
-                "System.Threading.Tasks": "4.0.0.0",
-                "System.Text.Encoding": "4.0.0.0"
+                "System.Collections" : "4.0.0-beta-*",
+                "System.IO": "4.0.0-beta-*",
+                "System.Runtime" : "4.0.0-beta-*",
+                "System.Xml": "4.0.0-beta-*",
+                "System.Xml.Linq": "4.0.0-beta-*",
+                "System.Threading.Tasks": "4.0.0-beta-*",
+                "System.Text.Encoding": "4.0.0-beta-*"
             }
         },
         "aspnetcore50" : { 
             "dependencies": {
-                "System.Collections.Concurrent": "4.0.0.0",
-                "System.Resources.ResourceWriter" : "4.0.0.0"
+                "System.Collections.Concurrent": "4.0.0-beta-*",
+                "System.Resources.ResourceWriter" : "4.0.0-beta-*"
             }
         }
     }

@@ -10,30 +10,30 @@
     "frameworks" : {
         "net45" : {
             "frameworkAssemblies": {
-                "System.Collections" : "4.0.0.0",
-                "System.IO" :  "4.0.0.0",
-                "System.IO.Compression" : "4.0.0.0",
-                "System.Runtime" : "4.0.0.0",
-                "System.Xml": "4.0.0.0",
-                "System.Xml.Linq": "4.0.0.0"
+                "System.Collections" : "4.0.0-beta-*",
+                "System.IO" :  "4.0.0-beta-*",
+                "System.IO.Compression" : "4.0.0-beta-*",
+                "System.Runtime" : "4.0.0-beta-*",
+                "System.Xml": "4.0.0-beta-*",
+                "System.Xml.Linq": "4.0.0-beta-*"
             }
         },
         "aspnetcore50" : { 
             "dependencies": {
-                "System.Collections": "4.0.10.0",
-                "System.ComponentModel": "4.0.0.0",
-                "System.Console": "4.0.0.0",
-                "System.Diagnostics.Debug": "4.0.10.0",
-                "System.Diagnostics.Process": "4.0.0.0",
-                "System.IO": "4.0.10.0",
-                "System.IO.Compression": "4.0.0.0",
-                "System.IO.FileSystem": "4.0.0.0",
-                "System.Linq": "4.0.0.0",
-                "System.Reflection": "4.0.10.0",
-                "System.Runtime": "4.0.20.0",
-                "System.Runtime.Extensions": "4.0.10.0",
-                "System.Runtime.InteropServices": "4.0.20.0",
-                "System.Threading.Tasks": "4.0.10.0"
+                "System.Collections": "4.0.10-beta-*",
+                "System.ComponentModel": "4.0.0-beta-*",
+                "System.Console": "4.0.0-beta-*",
+                "System.Diagnostics.Debug": "4.0.10-beta-*",
+                "System.Diagnostics.Process": "4.0.0-beta-*",
+                "System.IO": "4.0.10-beta-*",
+                "System.IO.Compression": "4.0.0-beta-*",
+                "System.IO.FileSystem": "4.0.0-beta-*",
+                "System.Linq": "4.0.0-beta-*",
+                "System.Reflection": "4.0.10-beta-*",
+                "System.Runtime": "4.0.20-beta-*",
+                "System.Runtime.Extensions": "4.0.10-beta-*",
+                "System.Runtime.InteropServices": "4.0.20-beta-*",
+                "System.Threading.Tasks": "4.0.10-beta-*"
             }
         }
     }

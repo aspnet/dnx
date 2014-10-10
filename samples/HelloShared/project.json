@@ -6,15 +6,15 @@
         "net45": { },
         "k10": {
             "dependencies": {
-                "System.Linq": "4.0.0.0",
-                "System.Runtime": "4.0.20.0"
+                "System.Linq": "4.0.0-beta-*",
+                "System.Runtime": "4.0.20-beta-*"
             }
         },
         "aspnet50": { },
         "aspnetcore50": {
             "dependencies": {
-                "System.Linq": "4.0.0.0",
-                "System.Runtime": "4.0.20.0"
+                "System.Linq": "4.0.0-beta-*",
+                "System.Runtime": "4.0.20-beta-*"
             }
         }
     }
