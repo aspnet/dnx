@@ -30,6 +30,7 @@ namespace Microsoft.Framework.DesignTimeHost
         private readonly Trigger<string> _appPath = new Trigger<string>();
         private readonly Trigger<string> _configuration = new Trigger<string>();
         private readonly Trigger<Void> _filesChanged = new Trigger<Void>();
+        private readonly Trigger<Void> _rebuild = new Trigger<Void>();
 
         private readonly Trigger<State> _state = new Trigger<State>();
 
@@ -181,6 +182,16 @@ namespace Microsoft.Framework.DesignTimeHost
                         _configuration.Value = data.Configuration;
                     }
                     break;
+                case "RestoreComplete":
+                    {
+                        _rebuild.Value = default(Void);
+                    }
+                    break;
+                case "Rebuild":
+                    {
+                        _rebuild.Value = default(Void);
+                    }
+                    break;
                 case "FilesChanged":
                     {
                         _filesChanged.Value = default(Void);
@@ -218,11 +229,13 @@ namespace Microsoft.Framework.DesignTimeHost
         {
             if (_appPath.WasAssigned ||
                 _configuration.WasAssigned ||
-                _filesChanged.WasAssigned)
+                _filesChanged.WasAssigned ||
+                _rebuild.WasAssigned)
             {
                 _appPath.ClearAssigned();
                 _configuration.ClearAssigned();
                 _filesChanged.ClearAssigned();
+                _rebuild.ClearAssigned();
 
                 _state.Value = Initialize(_appPath.Value, _configuration.Value);
             }
