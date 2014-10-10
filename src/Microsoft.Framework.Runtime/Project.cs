@@ -281,13 +281,13 @@ namespace Microsoft.Framework.Runtime
             project.EmbedInteropTypes = GetValue<bool>(rawProject, "embedInteropTypes");
 
             // Source file patterns
-            project.SourcePatterns = GetSourcePattern(rawProject, "code", _defaultSourcePatterns);
-            project.ExcludePatterns = GetSourcePattern(rawProject, "exclude", _defaultExcludePatterns);
-            project.PackExcludePatterns = GetSourcePattern(rawProject, "pack-exclude", _defaultPackExcludePatterns);
-            project.PreprocessPatterns = GetSourcePattern(rawProject, "preprocess", _defaultPreprocessPatterns);
-            project.SharedPatterns = GetSourcePattern(rawProject, "shared", _defaultSharedPatterns);
-            project.ResourcesPatterns = GetSourcePattern(rawProject, "resources", _defaultResourcesPatterns);
-            project.ContentsPatterns = GetSourcePattern(rawProject, "files", _defaultContentsPatterns);
+            project.SourcePatterns = GetSourcePattern(project, rawProject, "code", _defaultSourcePatterns);
+            project.ExcludePatterns = GetSourcePattern(project, rawProject, "exclude", _defaultExcludePatterns);
+            project.PackExcludePatterns = GetSourcePattern(project, rawProject, "pack-exclude", _defaultPackExcludePatterns);
+            project.PreprocessPatterns = GetSourcePattern(project, rawProject, "preprocess", _defaultPreprocessPatterns);
+            project.SharedPatterns = GetSourcePattern(project, rawProject, "shared", _defaultSharedPatterns);
+            project.ResourcesPatterns = GetSourcePattern(project, rawProject, "resources", _defaultResourcesPatterns);
+            project.ContentsPatterns = GetSourcePattern(project, rawProject, "files", _defaultContentsPatterns);
 
             // Set the default loader information for projects
             var languageServicesAssembly = DefaultLanguageServicesAssembly;
@@ -354,8 +354,14 @@ namespace Microsoft.Framework.Runtime
 
             return project;
         }
+        private static IEnumerable<string> GetSourcePattern(Project project, JObject rawProject, string propertyName,
+            string[] defaultPatterns)
+        {
+            return GetSourcePatternCore(rawProject, propertyName, defaultPatterns)
+                .Select(p => FolderToPattern(p, project.ProjectDirectory));
+        }
 
-        private static IEnumerable<string> GetSourcePattern(JObject rawProject, string propertyName, string[] defaultPatterns)
+        private static IEnumerable<string> GetSourcePatternCore(JObject rawProject, string propertyName, string[] defaultPatterns)
         {
             var token = rawProject[propertyName];
 
@@ -376,6 +382,27 @@ namespace Microsoft.Framework.Runtime
 
             // Assume it's an array (it should explode if it's not)
             return token.ToObject<string[]>().SelectMany(GetSourcesSplit);
+        }
+
+        private static string FolderToPattern(string candidate, string projectDir)
+        {
+            // If it's already a pattern, no change is needed
+            if (candidate.Contains('*'))
+            {
+                return candidate;
+            }
+
+            // If the given string ends with a path separator, or it is an existing directory
+            // we convert this folder name to a pattern matching all files in the folder
+            if (candidate.EndsWith(@"\") ||
+                candidate.EndsWith("/") ||
+                Directory.Exists(Path.Combine(projectDir, candidate)))
+            {
+                return Path.Combine(candidate, "**", "*");
+            }
+
+            // Otherwise, it represents a single file
+            return candidate;
         }
 
         private static IEnumerable<string> GetSourcesSplit(string sourceDescription)

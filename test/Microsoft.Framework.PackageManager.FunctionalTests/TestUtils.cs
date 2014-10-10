@@ -67,7 +67,7 @@ namespace Microsoft.Framework.PackageManager
             return process.ExitCode;
         }
 
-        public static void UnpackFrameworksToDir(string buildArtifactDir, string destination)
+        public static IEnumerable<string> GetUnpackedKrePaths(string buildArtifactDir)
         {
             var kreNupkgs = new List<string>();
             kreNupkgs.Add(Directory.GetFiles(buildArtifactDir, "KRE-CLR-amd64.*.nupkg", SearchOption.TopDirectoryOnly).First());
@@ -77,9 +77,9 @@ namespace Microsoft.Framework.PackageManager
             foreach (var nupkg in kreNupkgs)
             {
                 var kreName = Path.GetFileNameWithoutExtension(nupkg);
-                var krePath = Path.Combine(destination, kreName);
-                Directory.CreateDirectory(krePath);
+                var krePath = CreateTempDir();
                 System.IO.Compression.ZipFile.ExtractToDirectory(nupkg, krePath);
+                yield return krePath;
             }
         }
 

@@ -10,11 +10,13 @@ namespace Microsoft.Framework.PackageManager
     {
         private readonly string _projectName;
         private readonly string _outputDirName;
+        private readonly string _krePath;
 
-        public KpmTestEnvironment(string projectName = null, string outputDirName = null)
+        public KpmTestEnvironment(string krePath, string projectName = null, string outputDirName = null)
         {
             _projectName = projectName ?? "ProjectName";
             _outputDirName = outputDirName ?? "OutputDirName";
+            _krePath = krePath;
             RootDir = TestUtils.CreateTempDir();
         }
 
@@ -55,6 +57,11 @@ namespace Microsoft.Framework.PackageManager
         public void Dispose()
         {
             TestUtils.DeleteFolder(RootDir);
+
+            if (!string.IsNullOrEmpty(_krePath))
+            {
+                TestUtils.DeleteFolder(_krePath);
+            }
         }
     }
 }

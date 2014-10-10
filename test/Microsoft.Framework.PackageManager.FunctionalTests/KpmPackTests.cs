@@ -9,27 +9,27 @@ using Xunit;
 
 namespace Microsoft.Framework.PackageManager
 {
-    public class KpmPackTests : IDisposable
+    public class KpmPackTests
     {
         private readonly string _projectName = "TestProject";
         private readonly string _outputDirName = "PackOutput";
-        private readonly string _frameworksRoot;
 
-        public KpmPackTests()
+        public static IEnumerable<object[]> KrePaths
         {
-            _frameworksRoot = TestUtils.CreateTempDir();
-            var kRuntimeRoot = ProjectResolver.ResolveRootDirectory(Directory.GetCurrentDirectory());
-            var buildArtifactDir = Path.Combine(kRuntimeRoot, "artifacts", "build");
-            TestUtils.UnpackFrameworksToDir(buildArtifactDir, destination: _frameworksRoot);
+            get
+            {
+                var kRuntimeRoot = ProjectResolver.ResolveRootDirectory(Directory.GetCurrentDirectory());
+                var buildArtifactDir = Path.Combine(kRuntimeRoot, "artifacts", "build");
+                foreach (var path in TestUtils.GetUnpackedKrePaths(buildArtifactDir))
+                {
+                    yield return new[] { path };
+                }
+            }
         }
 
-        public void Dispose()
-        {
-            TestUtils.DeleteFolder(_frameworksRoot);
-        }
-
-        [Fact]
-        public void KpmPackWebApp_RootAsPublicFolder()
+        [Theory]
+        [MemberData("KrePaths")]
+        public void KpmPackWebApp_RootAsPublicFolder(string krePath)
         {
             var projectStructure = @"{
   '.': ['project.json', 'Config.json', 'Program.cs', 'build_config1.bconfig'],
@@ -69,54 +69,52 @@ namespace Microsoft.Framework.PackageManager
   }
 }".Replace("PROJECT_NAME", _projectName);
 
-            foreach (var framework in Directory.EnumerateDirectories(_frameworksRoot))
+            using (var testEnv = new KpmTestEnvironment(krePath, _projectName, _outputDirName))
             {
-                using (var testEnv = new KpmTestEnvironment(_projectName, _outputDirName))
-                {
-                    TestUtils.CreateDirTree(projectStructure)
-                        .WithFileContents("project.json", @"{
+                TestUtils.CreateDirTree(projectStructure)
+                    .WithFileContents("project.json", @"{
   ""pack-exclude"": ""**.bconfig"",
   ""webroot"": ""to_be_overridden""
 }")
-                        .WriteTo(testEnv.ProjectPath);
+                    .WriteTo(testEnv.ProjectPath);
 
-                    var environment = new Dictionary<string, string>()
-                    {
-                        { "KRE_PACKAGES", Path.Combine(testEnv.ProjectPath, "packages") }
-                    };
+                var environment = new Dictionary<string, string>()
+                {
+                    { "KRE_PACKAGES", Path.Combine(testEnv.ProjectPath, "packages") }
+                };
 
-                    var exitCode = TestUtils.ExecKpm(
-                        krePath: framework,
-                        subcommand: "pack",
-                        arguments: string.Format("--out {0} --wwwroot . --wwwroot-out wwwroot",
-                            testEnv.PackOutputDirPath),
-                        environment: environment,
-                        workingDir: testEnv.ProjectPath);
-                    Assert.Equal(0, exitCode);
+                var exitCode = TestUtils.ExecKpm(
+                    krePath,
+                    subcommand: "pack",
+                    arguments: string.Format("--out {0} --wwwroot . --wwwroot-out wwwroot",
+                        testEnv.PackOutputDirPath),
+                    environment: environment,
+                    workingDir: testEnv.ProjectPath);
+                Assert.Equal(0, exitCode);
 
-                    var expectedOutputDir = TestUtils.CreateDirTree(expectedOutputStructure)
-                        .WithFileContents(Path.Combine("approot", "src", testEnv.ProjectName, "project.json"), @"{
+                var expectedOutputDir = TestUtils.CreateDirTree(expectedOutputStructure)
+                    .WithFileContents(Path.Combine("approot", "src", testEnv.ProjectName, "project.json"), @"{
   ""pack-exclude"": ""**.bconfig"",
   ""webroot"": ""WEB_ROOT""
 }".Replace("WEB_ROOT", Path.Combine("..", "..", "..", "wwwroot").Replace(@"\", @"\\")))
-                        .WithFileContents(Path.Combine("wwwroot", "project.json"), @"{
+                    .WithFileContents(Path.Combine("wwwroot", "project.json"), @"{
   ""pack-exclude"": ""**.bconfig"",
   ""webroot"": ""to_be_overridden""
 }")
-                        .WithFileContents(Path.Combine("wwwroot", "k.ini"), @"KRE_APPBASE=..\approot\src\"
-                            + testEnv.ProjectName)
-                        .WithFileContents(Path.Combine("approot", "global.json"), @"{
+                    .WithFileContents(Path.Combine("wwwroot", "k.ini"), @"KRE_APPBASE=..\approot\src\"
+                        + testEnv.ProjectName)
+                    .WithFileContents(Path.Combine("approot", "global.json"), @"{
   ""dependencies"": {},
   ""packages"": ""packages""
 }");
-                    Assert.True(expectedOutputDir.MatchDirectoryOnDisk(testEnv.PackOutputDirPath,
-                        compareFileContents: true));
-                }
+                Assert.True(expectedOutputDir.MatchDirectoryOnDisk(testEnv.PackOutputDirPath,
+                    compareFileContents: true));
             }
         }
 
-        [Fact]
-        public void KpmPackWebApp_SubfolderAsPublicFolder()
+        [Theory]
+        [MemberData("KrePaths")]
+        public void KpmPackWebApp_SubfolderAsPublicFolder(string krePath)
         {
             var projectStructure = @"{
   '.': ['project.json', 'Config.json', 'Program.cs'],
@@ -155,50 +153,48 @@ namespace Microsoft.Framework.PackageManager
   }
 }".Replace("PROJECT_NAME", _projectName);
 
-            foreach (var framework in Directory.EnumerateDirectories(_frameworksRoot))
+            using (var testEnv = new KpmTestEnvironment(krePath, _projectName, _outputDirName))
             {
-                using (var testEnv = new KpmTestEnvironment(_projectName, _outputDirName))
-                {
-                    TestUtils.CreateDirTree(projectStructure)
-                        .WithFileContents("project.json", @"{
+                TestUtils.CreateDirTree(projectStructure)
+                    .WithFileContents("project.json", @"{
   ""pack-exclude"": ""**.useless"",
   ""webroot"": ""public""
 }")
-                        .WriteTo(testEnv.ProjectPath);
+                    .WriteTo(testEnv.ProjectPath);
 
-                    var environment = new Dictionary<string, string>()
-                    {
-                        { "KRE_PACKAGES", Path.Combine(testEnv.ProjectPath, "packages") }
-                    };
+                var environment = new Dictionary<string, string>()
+                {
+                    { "KRE_PACKAGES", Path.Combine(testEnv.ProjectPath, "packages") }
+                };
 
-                    var exitCode = TestUtils.ExecKpm(
-                        krePath: framework,
-                        subcommand: "pack",
-                        arguments: string.Format("--out {0} --wwwroot-out wwwroot",
-                            testEnv.PackOutputDirPath),
-                        environment: environment,
-                        workingDir: testEnv.ProjectPath);
-                    Assert.Equal(0, exitCode);
+                var exitCode = TestUtils.ExecKpm(
+                    krePath,
+                    subcommand: "pack",
+                    arguments: string.Format("--out {0} --wwwroot-out wwwroot",
+                        testEnv.PackOutputDirPath),
+                    environment: environment,
+                    workingDir: testEnv.ProjectPath);
+                Assert.Equal(0, exitCode);
 
-                    var expectedOutputDir = TestUtils.CreateDirTree(expectedOutputStructure)
-                        .WithFileContents(Path.Combine("approot", "src", testEnv.ProjectName, "project.json"), @"{
+                var expectedOutputDir = TestUtils.CreateDirTree(expectedOutputStructure)
+                    .WithFileContents(Path.Combine("approot", "src", testEnv.ProjectName, "project.json"), @"{
   ""pack-exclude"": ""**.useless"",
   ""webroot"": ""WEB_ROOT""
 }".Replace("WEB_ROOT", Path.Combine("..", "..", "..", "wwwroot").Replace(@"\", @"\\")))
-                        .WithFileContents(Path.Combine("wwwroot", "k.ini"), @"KRE_APPBASE=..\approot\src\"
-                            + testEnv.ProjectName)
-                        .WithFileContents(Path.Combine("approot", "global.json"), @"{
+                    .WithFileContents(Path.Combine("wwwroot", "k.ini"), @"KRE_APPBASE=..\approot\src\"
+                        + testEnv.ProjectName)
+                    .WithFileContents(Path.Combine("approot", "global.json"), @"{
   ""dependencies"": {},
   ""packages"": ""packages""
 }");
-                    Assert.True(expectedOutputDir.MatchDirectoryOnDisk(testEnv.PackOutputDirPath,
-                        compareFileContents: true));
-                }
+                Assert.True(expectedOutputDir.MatchDirectoryOnDisk(testEnv.PackOutputDirPath,
+                    compareFileContents: true));
             }
         }
 
-        [Fact]
-        public void KpmPackConsoleApp()
+        [Theory]
+        [MemberData("KrePaths")]
+        public void KpmPackConsoleApp(string krePath)
         {
             var projectStructure = @"{
   '.': ['project.json', 'Config.json', 'Program.cs'],
@@ -222,41 +218,135 @@ namespace Microsoft.Framework.PackageManager
     }
   }".Replace("PROJECT_NAME", _projectName);
 
-            foreach (var framework in Directory.EnumerateDirectories(_frameworksRoot))
+            using (var testEnv = new KpmTestEnvironment(krePath, _projectName, _outputDirName))
             {
-                using (var testEnv = new KpmTestEnvironment(_projectName, _outputDirName))
+                TestUtils.CreateDirTree(projectStructure)
+                    .WithFileContents("project.json", @"{
+  ""pack-exclude"": ""Data/Backup/**""
+}")
+                    .WriteTo(testEnv.ProjectPath);
+
+                var environment = new Dictionary<string, string>()
                 {
-                    TestUtils.CreateDirTree(projectStructure)
-                        .WithFileContents("project.json", @"{
+                    { "KRE_PACKAGES", Path.Combine(testEnv.ProjectPath, "packages") }
+                };
+
+                var exitCode = TestUtils.ExecKpm(
+                    krePath,
+                    subcommand: "pack",
+                    arguments: string.Format("--out {0}",
+                        testEnv.PackOutputDirPath),
+                    environment: environment,
+                    workingDir: testEnv.ProjectPath);
+                Assert.Equal(0, exitCode);
+
+                var expectedOutputDir = TestUtils.CreateDirTree(expectedOutputStructure)
+                    .WithFileContents(Path.Combine("approot", "src", testEnv.ProjectName, "project.json"), @"{
   ""pack-exclude"": ""Data/Backup/**""
 }")
-                        .WriteTo(testEnv.ProjectPath);
-
-                    var environment = new Dictionary<string, string>()
-                    {
-                        { "KRE_PACKAGES", Path.Combine(testEnv.ProjectPath, "packages") }
-                    };
-
-                    var exitCode = TestUtils.ExecKpm(
-                        krePath: framework,
-                        subcommand: "pack",
-                        arguments: string.Format("--out {0}",
-                            testEnv.PackOutputDirPath),
-                        environment: environment,
-                        workingDir: testEnv.ProjectPath);
-                    Assert.Equal(0, exitCode);
-
-                    var expectedOutputDir = TestUtils.CreateDirTree(expectedOutputStructure)
-                        .WithFileContents(Path.Combine("approot", "src", testEnv.ProjectName, "project.json"), @"{
-  ""pack-exclude"": ""Data/Backup/**""
-}")
-                        .WithFileContents(Path.Combine("approot", "global.json"), @"{
+                    .WithFileContents(Path.Combine("approot", "global.json"), @"{
   ""dependencies"": {},
   ""packages"": ""packages""
 }");
-                    Assert.True(expectedOutputDir.MatchDirectoryOnDisk(testEnv.PackOutputDirPath,
-                        compareFileContents: true));
-                }
+                Assert.True(expectedOutputDir.MatchDirectoryOnDisk(testEnv.PackOutputDirPath,
+                    compareFileContents: true));
+            }
+        }
+
+        [Theory]
+        [MemberData("KrePaths")]
+        public void FoldersAsFilePatternsAutoGlob(string krePath)
+        {
+            var projectStructure = @"{
+  '.': ['project.json', 'FileWithoutExtension'],
+  'UselessFolder1': {
+    '.': ['file1.txt', 'file2.css'],
+    'SubFolder': ['file3.js', 'file4.html']
+  },
+  'UselessFolder2': {
+    '.': ['file1.txt', 'file2.css'],
+    'SubFolder': ['file3.js', 'file4.html']
+  },
+  'UselessFolder3': {
+    '.': ['file1.txt', 'file2.css'],
+    'SubFolder': ['file3.js', 'file4.html']
+  },
+  'MixFolder': {
+    'UsefulSub': ['useful.txt', 'useful.css'],
+    'UselessSub1': ['file1.js', 'file2.html'],
+    'UselessSub2': ['file1.js', 'file2.html'],
+    'UselessSub3': ['file1.js', 'file2.html'],
+    'UselessSub4': ['file1.js', 'file2.html'],
+    'UselessSub5': ['file1.js', 'file2.html']
+  },
+  'packages': {}
+}";
+            var expectedOutputStructure = @"{
+  'approot': {
+    'global.json': '',
+    'src': {
+      'PROJECT_NAME': {
+        '.': ['project.json'],
+        'MixFolder': {
+          'UsefulSub': ['useful.txt', 'useful.css']
+        }
+      }
+    }
+  }
+}".Replace("PROJECT_NAME", _projectName);
+
+            using (var testEnv = new KpmTestEnvironment(krePath, _projectName, _outputDirName))
+            {
+                TestUtils.CreateDirTree(projectStructure)
+                    .WithFileContents("project.json", @"{
+  ""pack-exclude"": [
+    ""FileWithoutExtension"",
+    ""UselessFolder1"",
+    ""UselessFolder2/"",
+    ""UselessFolder3\\"",
+    ""MixFolder/UselessSub1/"",
+    ""MixFolder\\UselessSub2\\"",
+    ""MixFolder/UselessSub3\\"",
+    ""MixFolder/UselessSub4"",
+    ""MixFolder\\UselessSub5"",
+  ]
+}")
+                    .WriteTo(testEnv.ProjectPath);
+
+                var environment = new Dictionary<string, string>()
+                {
+                    { "KRE_PACKAGES", Path.Combine(testEnv.ProjectPath, "packages") }
+                };
+
+                var exitCode = TestUtils.ExecKpm(
+                    krePath,
+                    subcommand: "pack",
+                    arguments: string.Format("--out {0}",
+                        testEnv.PackOutputDirPath),
+                    environment: environment,
+                    workingDir: testEnv.ProjectPath);
+                Assert.Equal(0, exitCode);
+
+                var expectedOutputDir = TestUtils.CreateDirTree(expectedOutputStructure)
+                    .WithFileContents(Path.Combine("approot", "src", testEnv.ProjectName, "project.json"), @"{
+  ""pack-exclude"": [
+    ""FileWithoutExtension"",
+    ""UselessFolder1"",
+    ""UselessFolder2/"",
+    ""UselessFolder3\\"",
+    ""MixFolder/UselessSub1/"",
+    ""MixFolder\\UselessSub2\\"",
+    ""MixFolder/UselessSub3\\"",
+    ""MixFolder/UselessSub4"",
+    ""MixFolder\\UselessSub5"",
+  ]
+}")
+                    .WithFileContents(Path.Combine("approot", "global.json"), @"{
+  ""dependencies"": {},
+  ""packages"": ""packages""
+}");
+                Assert.True(expectedOutputDir.MatchDirectoryOnDisk(testEnv.PackOutputDirPath,
+                    compareFileContents: true));
             }
         }
     }
