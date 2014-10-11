@@ -238,17 +238,14 @@ namespace Microsoft.Framework.DesignTimeHost
                 _filesChanged.WasAssigned ||
                 _rebuild.WasAssigned)
             {
-                if (_rebuild.WasAssigned)
-                {
-                    _namedDependencyProvider.Trigger("BuildOutputs");
-                }
+                bool triggerBuildOutputs = _rebuild.WasAssigned;
 
                 _appPath.ClearAssigned();
                 _configuration.ClearAssigned();
                 _filesChanged.ClearAssigned();
                 _rebuild.ClearAssigned();
 
-                _state.Value = Initialize(_appPath.Value, _configuration.Value);
+                _state.Value = Initialize(_appPath.Value, _configuration.Value, triggerBuildOutputs);
             }
 
             var state = _state.Value;
@@ -530,7 +527,7 @@ namespace Microsoft.Framework.DesignTimeHost
             return !object.Equals(local, remote);
         }
 
-        private State Initialize(string appPath, string configuration)
+        private State Initialize(string appPath, string configuration, bool triggerBuildOutputs)
         {
             var state = new State
             {
@@ -542,6 +539,12 @@ namespace Microsoft.Framework.DesignTimeHost
             if (!Project.TryGetProject(appPath, out project))
             {
                 throw new InvalidOperationException(string.Format("Unable to find project.json in '{0}'", appPath));
+            }
+
+            if (triggerBuildOutputs)
+            {
+                // Trigger the build outputs for this project
+                _namedDependencyProvider.Trigger(project.Name + "_BuildOutputs");
             }
 
             state.Name = project.Name;

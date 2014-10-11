@@ -62,7 +62,10 @@ namespace Microsoft.Framework.Runtime.Roslyn
             {
                 _cacheContextAccessor.Current.Monitor(new FileWriteTimeCacheDependency(project.ProjectFilePath));
 
-                _cacheContextAccessor.Current.Monitor(_namedDependencyProvider.GetNamedDependency("BuildOutputs"));
+                // Monitor the trigger {projectName}_BuildOutputs
+                var buildOutputsName = project.Name + "_BuildOutputs";
+
+                _cacheContextAccessor.Current.Monitor(_namedDependencyProvider.GetNamedDependency(buildOutputsName));
             }
 
             var exportedReferences = incomingReferences.Select(ConvertMetadataReference);
