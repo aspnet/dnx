@@ -20,5 +20,7 @@ namespace Microsoft.Framework.Project
         public bool Symbols { get; set; }
 
         public bool Partial { get; set; }
+
+        public bool Verbose { get; set; }
     }
 }

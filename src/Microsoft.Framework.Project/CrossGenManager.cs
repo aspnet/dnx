@@ -80,7 +80,7 @@ namespace Microsoft.Framework.Project
             p.BeginOutputReadLine();
             p.WaitForExit();
 
-            Console.WriteLine("Exit code for {0}: {1}", assemblyName, p.ExitCode);
+            Log("Exit code for {0}: {1}", assemblyName, p.ExitCode);
 
             if (p.ExitCode == 0)
             {
@@ -96,7 +96,7 @@ namespace Microsoft.Framework.Project
         
             if (assemblyInfo.Closure.Any(a => !a.Generated))
             {
-                Console.WriteLine("Skipping {0}. Because one or more dependencies failed to generate", assemblyInfo.Name);
+                Log("Skipping {0}. Because one or more dependencies failed to generate", assemblyInfo.Name);
                 return false;
             }
 
@@ -104,7 +104,7 @@ namespace Microsoft.Framework.Project
             var closure = assemblyInfo.Closure.Select(d => d.NativeImagePath)
                                       .Concat(new[] { assemblyInfo.AssemblyPath });
 
-            Console.WriteLine("Generating native images for {0}", assemblyInfo.Name);
+            Log("Generating native images for {0}", assemblyInfo.Name);
 
             const string crossgenArgsTemplate = @"/Nologo /in ""{0}"" /out ""{1}"" /MissingDependenciesOK /Trusted_Platform_Assemblies ""{2}""";
 
@@ -142,7 +142,7 @@ namespace Microsoft.Framework.Project
 
             if (_options.Symbols)
             {
-                Console.WriteLine("Generating native pdb for {0}", assemblyInfo.Name);
+                Log("Generating native pdb for {0}", assemblyInfo.Name);
 
                 const string crossgenArgsTemplateCreatePdb = @"/Nologo /CreatePDB ""{0}"" /in ""{1}"" /out ""{2}"" /Trusted_Platform_Assemblies ""{3}""";
 
@@ -180,12 +180,16 @@ namespace Microsoft.Framework.Project
 
         void OnErrorDataReceived(object sender, DataReceivedEventArgs e)
         {
-            Console.Error.WriteLine(e.Data);
+            var msg = e.Data.Trim();
+            if (!string.IsNullOrEmpty(msg))
+            {
+                Console.Error.WriteLine(msg);
+            }
         }
 
         void OnOutputDataReceived(object sender, DataReceivedEventArgs e)
         {
-            Console.WriteLine(e.Data);
+            Log(e.Data);
         }
 
         private static IDictionary<string, AssemblyInformation> BuildUniverse(string runtimePath, IEnumerable<string> paths)
@@ -249,6 +253,14 @@ namespace Microsoft.Framework.Project
             var kreName = kreFullName.Substring(0, kreFullName.IndexOf('.'));
             var arch = kreName.Substring(kreName.LastIndexOf('-') + 1);
             return arch;
+        }
+
+        private void Log(string msg, params object[] args)
+        {
+            if (_options.Verbose)
+            {
+                Console.WriteLine(msg, args);
+            }
         }
     }
 }
