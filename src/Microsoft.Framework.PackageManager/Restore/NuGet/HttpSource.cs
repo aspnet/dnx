@@ -22,10 +22,6 @@ namespace Microsoft.Framework.PackageManager.Restore.NuGet
         private string _userName;
         private string _password;
         private Reports _reports;
-#if ASPNETCORE50
-        private string _proxyUserName;
-        private string _proxyPassword;
-#endif
 
         public HttpSource(
             string baseUri,
@@ -41,49 +37,50 @@ namespace Microsoft.Framework.PackageManager.Restore.NuGet
             var proxy = Environment.GetEnvironmentVariable("http_proxy");
             if (string.IsNullOrEmpty(proxy))
             {
-#if NET45
                 _client = new HttpClient();
-#else
-                _client = new HttpClient(new Microsoft.Net.Http.Client.ManagedHandler());
-#endif
             }
             else
             {
                 // To use an authenticated proxy, the proxy address should be in the form of
                 // "http://user:password@proxyaddress.com:8888"
                 var proxyUriBuilder = new UriBuilder(proxy);
-#if NET45
-                var webProxy = new WebProxy(proxy);
+                ICredentials credentials;
                 if (string.IsNullOrEmpty(proxyUriBuilder.UserName))
                 {
                     // If no credentials were specified we use default credentials
-                    webProxy.Credentials = CredentialCache.DefaultCredentials;
+                    credentials = CredentialCache.DefaultCredentials;
                 }
                 else
                 {
-                    ICredentials credentials = new NetworkCredential(proxyUriBuilder.UserName,
-                        proxyUriBuilder.Password);
-                    webProxy.Credentials = credentials;
+                    credentials = new NetworkCredential(proxyUriBuilder.UserName,
+                                                        proxyUriBuilder.Password);
                 }
 
-                var handler = new HttpClientHandler
+                HttpMessageHandler handler;
+#if NET45
+                var webProxy = new WebProxy(proxy)
+                {
+                    Credentials = credentials
+                };
+
+                handler = new HttpClientHandler
                 {
                     Proxy = webProxy,
                     UseProxy = true
                 };
-                _client = new HttpClient(handler);
 #else
-                if (!string.IsNullOrEmpty(proxyUriBuilder.UserName))
+                var webProxy = new WebProxy(proxyUriBuilder.Uri)
                 {
-                    _proxyUserName = proxyUriBuilder.UserName;
-                    _proxyPassword = proxyUriBuilder.Password;
-                }
+                    Credentials = credentials,
+                };
 
-                _client = new HttpClient(new Microsoft.Net.Http.Client.ManagedHandler()
+                handler = new WinHttpHandler
                 {
-                    ProxyAddress = new Uri(proxy)
-                });
+                    Proxy = webProxy,
+                    UseProxy = true
+                };
 #endif
+                _client = new HttpClient(handler);
             }
         }
 
@@ -107,14 +104,6 @@ namespace Microsoft.Framework.PackageManager.Restore.NuGet
                 var token = Convert.ToBase64String(Encoding.ASCII.GetBytes(_userName + ":" + _password));
                 request.Headers.Authorization = new AuthenticationHeaderValue("Basic", token);
             };
-
-#if ASPNETCORE50
-            if (_proxyUserName != null)
-            {
-                var proxyToken = Convert.ToBase64String(Encoding.ASCII.GetBytes(_proxyUserName + ":" + _proxyPassword));
-                request.Headers.ProxyAuthorization = new AuthenticationHeaderValue("Basic", proxyToken);
-            }
-#endif
 
             var response = await _client.SendAsync(request);
 
