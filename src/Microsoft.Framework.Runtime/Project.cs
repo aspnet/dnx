@@ -292,7 +292,7 @@ namespace Microsoft.Framework.Runtime
             // Source file patterns
             project.SourcePatterns = GetSourcePattern(project, rawProject, "code", _defaultSourcePatterns);
             project.ExcludePatterns = GetSourcePattern(project, rawProject, "exclude", _defaultExcludePatterns);
-            project.PackExcludePatterns = GetSourcePattern(project, rawProject, "pack-exclude", _defaultPackExcludePatterns);
+            project.PackExcludePatterns = GetSourcePattern(project, rawProject, "packExclude", _defaultPackExcludePatterns);
             project.PreprocessPatterns = GetSourcePattern(project, rawProject, "preprocess", _defaultPreprocessPatterns);
             project.SharedPatterns = GetSourcePattern(project, rawProject, "shared", _defaultSharedPatterns);
             project.ResourcesPatterns = GetSourcePattern(project, rawProject, "resources", _defaultResourcesPatterns);

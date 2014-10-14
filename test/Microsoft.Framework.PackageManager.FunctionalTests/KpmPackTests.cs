@@ -73,7 +73,7 @@ namespace Microsoft.Framework.PackageManager
             {
                 TestUtils.CreateDirTree(projectStructure)
                     .WithFileContents("project.json", @"{
-  ""pack-exclude"": ""**.bconfig"",
+  ""packExclude"": ""**.bconfig"",
   ""webroot"": ""to_be_overridden""
 }")
                     .WriteTo(testEnv.ProjectPath);
@@ -94,11 +94,11 @@ namespace Microsoft.Framework.PackageManager
 
                 var expectedOutputDir = TestUtils.CreateDirTree(expectedOutputStructure)
                     .WithFileContents(Path.Combine("approot", "src", testEnv.ProjectName, "project.json"), @"{
-  ""pack-exclude"": ""**.bconfig"",
+  ""packExclude"": ""**.bconfig"",
   ""webroot"": ""WEB_ROOT""
 }".Replace("WEB_ROOT", Path.Combine("..", "..", "..", "wwwroot").Replace(@"\", @"\\")))
                     .WithFileContents(Path.Combine("wwwroot", "project.json"), @"{
-  ""pack-exclude"": ""**.bconfig"",
+  ""packExclude"": ""**.bconfig"",
   ""webroot"": ""to_be_overridden""
 }")
                     .WithFileContents(Path.Combine("wwwroot", "k.ini"), @"KRE_APPBASE=..\approot\src\"
@@ -157,7 +157,7 @@ namespace Microsoft.Framework.PackageManager
             {
                 TestUtils.CreateDirTree(projectStructure)
                     .WithFileContents("project.json", @"{
-  ""pack-exclude"": ""**.useless"",
+  ""packExclude"": ""**.useless"",
   ""webroot"": ""public""
 }")
                     .WriteTo(testEnv.ProjectPath);
@@ -178,7 +178,7 @@ namespace Microsoft.Framework.PackageManager
 
                 var expectedOutputDir = TestUtils.CreateDirTree(expectedOutputStructure)
                     .WithFileContents(Path.Combine("approot", "src", testEnv.ProjectName, "project.json"), @"{
-  ""pack-exclude"": ""**.useless"",
+  ""packExclude"": ""**.useless"",
   ""webroot"": ""WEB_ROOT""
 }".Replace("WEB_ROOT", Path.Combine("..", "..", "..", "wwwroot").Replace(@"\", @"\\")))
                     .WithFileContents(Path.Combine("wwwroot", "k.ini"), @"KRE_APPBASE=..\approot\src\"
@@ -222,7 +222,7 @@ namespace Microsoft.Framework.PackageManager
             {
                 TestUtils.CreateDirTree(projectStructure)
                     .WithFileContents("project.json", @"{
-  ""pack-exclude"": ""Data/Backup/**""
+  ""packExclude"": ""Data/Backup/**""
 }")
                     .WriteTo(testEnv.ProjectPath);
 
@@ -242,7 +242,7 @@ namespace Microsoft.Framework.PackageManager
 
                 var expectedOutputDir = TestUtils.CreateDirTree(expectedOutputStructure)
                     .WithFileContents(Path.Combine("approot", "src", testEnv.ProjectName, "project.json"), @"{
-  ""pack-exclude"": ""Data/Backup/**""
+  ""packExclude"": ""Data/Backup/**""
 }")
                     .WithFileContents(Path.Combine("approot", "global.json"), @"{
   ""dependencies"": {},
@@ -300,7 +300,7 @@ namespace Microsoft.Framework.PackageManager
             {
                 TestUtils.CreateDirTree(projectStructure)
                     .WithFileContents("project.json", @"{
-  ""pack-exclude"": [
+  ""packExclude"": [
     ""FileWithoutExtension"",
     ""UselessFolder1"",
     ""UselessFolder2/"",
@@ -331,7 +331,7 @@ namespace Microsoft.Framework.PackageManager
 
                 var expectedOutputDir = TestUtils.CreateDirTree(expectedOutputStructure)
                     .WithFileContents(Path.Combine("approot", "src", testEnv.ProjectName, "project.json"), @"{
-  ""pack-exclude"": [
+  ""packExclude"": [
     ""FileWithoutExtension"",
     ""UselessFolder1"",
     ""UselessFolder2/"",
@@ -402,7 +402,7 @@ namespace Microsoft.Framework.PackageManager
             {
                 TestUtils.CreateDirTree(projectStructure)
                     .WithFileContents("project.json", @"{
-  ""pack-exclude"": [
+  ""packExclude"": [
     ""UselessFolder1\\**"",
     ""UselessFolder2/**/*"",
     ""UselessFolder3\\**/*.*"",
@@ -428,7 +428,7 @@ namespace Microsoft.Framework.PackageManager
 
                 var expectedOutputDir = TestUtils.CreateDirTree(expectedOutputStructure)
                     .WithFileContents(Path.Combine("approot", "src", testEnv.ProjectName, "project.json"), @"{
-  ""pack-exclude"": [
+  ""packExclude"": [
     ""UselessFolder1\\**"",
     ""UselessFolder2/**/*"",
     ""UselessFolder3\\**/*.*"",
