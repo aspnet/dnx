@@ -69,6 +69,13 @@ namespace Microsoft.Framework.Runtime
 
             var dependencies = project.Dependencies.Concat(targetFrameworkDependencies).ToList();
 
+            var loadableAssemblies = new List<string>();
+
+            if (project.IsLoadable)
+            {
+                loadableAssemblies.Add(project.Name);
+            }
+
             return new LibraryDescription
             {
                 Identity = new Library
@@ -80,6 +87,7 @@ namespace Microsoft.Framework.Runtime
                 Path = project.ProjectFilePath,
                 Framework = targetFrameworkInfo.FrameworkName,
                 Dependencies = dependencies,
+                LoadableAssemblies = loadableAssemblies
             };
         }
 

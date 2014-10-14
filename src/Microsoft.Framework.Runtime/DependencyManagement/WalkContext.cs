@@ -288,7 +288,8 @@ namespace Microsoft.Framework.Runtime
                         Path = entry.Value.Description.Path,
                         Type = entry.Value.Description.Type,
                         Framework = entry.Value.Description.Framework ?? frameworkName,
-                        Dependencies = entry.Value.Dependencies.SelectMany(CorrectDependencyVersion).ToList()
+                        Dependencies = entry.Value.Dependencies.SelectMany(CorrectDependencyVersion).ToList(),
+                        LoadableAssemblies = entry.Value.Description.LoadableAssemblies ?? Enumerable.Empty<string>()
                     };
                 }).ToList();
 

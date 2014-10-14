@@ -171,6 +171,8 @@ namespace Microsoft.Framework.Runtime
                     packageDescription.ContractPath = contractPath;
                 }
 
+                var assemblies = new List<string>();
+
                 foreach (var assemblyInfo in GetPackageAssemblies(packageDescription, targetFramework))
                 {
                     _packageAssemblyLookup[assemblyInfo.Name] = new PackageAssembly()
@@ -179,7 +181,11 @@ namespace Microsoft.Framework.Runtime
                         RelativePath = assemblyInfo.RelativePath,
                         Library = dependency
                     };
+
+                    assemblies.Add(assemblyInfo.Name);
                 }
+
+                dependency.LoadableAssemblies = assemblies;
             }
         }
 

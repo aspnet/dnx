@@ -66,6 +66,7 @@ namespace Microsoft.Framework.Runtime
                         Version = assemblyVersion,
                         IsGacOrFrameworkReference = true
                     },
+                    LoadableAssemblies = new[] { name },
                     Dependencies = Enumerable.Empty<LibraryDependency>()
                 };
             }

@@ -77,6 +77,8 @@ namespace Microsoft.Framework.Runtime
 
         public bool RequireLicenseAcceptance { get; private set; }
 
+        public bool IsLoadable { get; set; }
+
         public string[] Tags { get; private set; }
 
         internal IEnumerable<string> SourcePatterns { get; set; }
@@ -285,6 +287,7 @@ namespace Microsoft.Framework.Runtime
             project.ProjectUrl = GetValue<string>(rawProject, "projectUrl");
             project.RequireLicenseAcceptance = GetValue<bool?>(rawProject, "requireLicenseAcceptance") ?? false;
             project.Tags = tags == null ? new string[] { } : tags.ToObject<string[]>();
+            project.IsLoadable = GetValue<bool?>(rawProject, "loadable") ?? true;
 
             // TODO: Move this to the dependencies node
             project.EmbedInteropTypes = GetValue<bool>(rawProject, "embedInteropTypes");

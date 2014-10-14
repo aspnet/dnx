@@ -3,6 +3,7 @@
 
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 
 namespace Microsoft.Framework.Runtime
 {
@@ -15,6 +16,7 @@ namespace Microsoft.Framework.Runtime
             Path = description.Path;
             Type = description.Type;
             Dependencies = description.Dependencies.Select(d => d.Name);
+            LoadableAssemblies = description.LoadableAssemblies.Select(a => new AssemblyName(a));
         }
 
         public LibraryInformation(string name, IEnumerable<string> dependencies)
@@ -48,6 +50,12 @@ namespace Microsoft.Framework.Runtime
         }
 
         public IEnumerable<string> Dependencies
+        {
+            get;
+            private set;
+        }
+
+        public IEnumerable<AssemblyName> LoadableAssemblies
         {
             get;
             private set;

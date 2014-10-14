@@ -158,6 +158,9 @@ namespace Microsoft.Framework.PackageManager.Packing
                 // Update the project entrypoint
                 jsonObj["entryPoint"] = _libraryDescription.Identity.Name;
 
+                // Set mark this as non loadable
+                jsonObj["loadable"] = false;
+
                 // Update the dependencies node to reference the main project
                 var deps = new JObject();
                 jsonObj["dependencies"] = deps;
