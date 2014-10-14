@@ -534,5 +534,72 @@ namespace Microsoft.Framework.PackageManager
                     compareFileContents: true));
             }
         }
+
+        [Theory]
+        [MemberData("KrePaths")]
+        public void VerifyDefaultPackExcludePatterns(string krePath)
+        {
+            var projectStructure = @"{
+  '.': ['project.json', 'File', '.FileStartingWithDot'],
+  'bin': {
+    'AspNet.Loader.dll': '',
+    'Debug': ['test.exe', 'test.dll']
+  },
+  'obj': {
+    'test.obj': '',
+    'References': ['ref1.dll', 'ref2.dll']
+  },
+  '.git': ['index', 'HEAD', 'log'],
+  'Folder': {
+    '.svn': ['index', 'HEAD', 'log'],
+    'File': '',
+    '.FileStartingWithDot': ''
+  },
+  'packages': {}
+}";
+            var expectedOutputStructure = @"{
+  'approot': {
+    'global.json': '',
+    'src': {
+      'PROJECT_NAME': {
+        '.': ['project.json', 'File', '.FileStartingWithDot'],
+        'Folder': ['File', '.FileStartingWithDot']
+      }
+    }
+  }
+}".Replace("PROJECT_NAME", _projectName);
+
+            using (var testEnv = new KpmTestEnvironment(krePath, _projectName, _outputDirName))
+            {
+                TestUtils.CreateDirTree(projectStructure)
+                    .WithFileContents("project.json", @"{
+}")
+                    .WriteTo(testEnv.ProjectPath);
+
+                var environment = new Dictionary<string, string>()
+                {
+                    { "KRE_PACKAGES", Path.Combine(testEnv.ProjectPath, "packages") }
+                };
+
+                var exitCode = TestUtils.ExecKpm(
+                    krePath,
+                    subcommand: "pack",
+                    arguments: string.Format("--out {0}",
+                        testEnv.PackOutputDirPath),
+                    environment: environment,
+                    workingDir: testEnv.ProjectPath);
+                Assert.Equal(0, exitCode);
+
+                var expectedOutputDir = TestUtils.CreateDirTree(expectedOutputStructure)
+                    .WithFileContents(Path.Combine("approot", "src", testEnv.ProjectName, "project.json"), @"{
+}")
+                    .WithFileContents(Path.Combine("approot", "global.json"), @"{
+  ""dependencies"": {},
+  ""packages"": ""packages""
+}");
+                Assert.True(expectedOutputDir.MatchDirectoryOnDisk(testEnv.PackOutputDirPath,
+                    compareFileContents: true));
+            }
+        }
     }
 }
