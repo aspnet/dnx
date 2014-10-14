@@ -92,6 +92,18 @@ namespace Microsoft.Framework.Runtime
             return information.Path;
         }
 
+        public string GetFrameworkRedistListPath(FrameworkName targetFramework)
+        {
+            var information = _cache.GetOrAdd(targetFramework, GetFrameworkInformation);
+
+            if (information == null)
+            {
+                return null;
+            }
+
+            return information.RedistListPath;
+        }
+
         public static string GetReferenceAssembliesPath()
         {
             // References assemblies are in %ProgramFiles(x86)% on
@@ -223,6 +235,8 @@ namespace Microsoft.Framework.Runtime
 
             if (File.Exists(redistList))
             {
+                frameworkInfo.RedistListPath = redistList;
+
                 using (var stream = File.OpenRead(redistList))
                 {
                     var frameworkList = XDocument.Load(stream);
@@ -282,6 +296,8 @@ namespace Microsoft.Framework.Runtime
             }
 
             public string Path { get; set; }
+
+            public string RedistListPath { get; set; }
 
             public IDictionary<string, string> Assemblies { get; private set; }
 

@@ -265,7 +265,9 @@ namespace Microsoft.Framework.DesignTimeHost
                     // debug/release etc
                     Configurations = state.Configurations,
 
-                    Commands = state.Commands
+                    Commands = state.Commands,
+
+                    ProjectSearchPaths = state.ProjectSearchPaths
                 };
 
                 for (int i = 0; i < state.Projects.Count; i++)
@@ -602,7 +604,8 @@ namespace Microsoft.Framework.DesignTimeHost
                 {
                     ShortName = VersionUtility.GetShortFrameworkName(frameworkName),
                     FrameworkName = frameworkName.ToString(),
-                    FriendlyName = frameworkResolver.GetFriendlyFrameworkName(frameworkName)
+                    FriendlyName = frameworkResolver.GetFriendlyFrameworkName(frameworkName),
+                    RedistListPath = frameworkResolver.GetFrameworkRedistListPath(frameworkName)
                 };
 
                 state.Frameworks.Add(frameworkData);
@@ -648,6 +651,11 @@ namespace Microsoft.Framework.DesignTimeHost
                 projectInfo.Output.EmbeddedReferences = embeddedReferences;
 
                 state.Projects.Add(projectInfo);
+
+                if (state.ProjectSearchPaths == null)
+                {
+                    state.ProjectSearchPaths = applicationHostContext.ProjectResolver.SearchPaths.ToList();
+                }
             }
 
             return state;
@@ -694,6 +702,8 @@ namespace Microsoft.Framework.DesignTimeHost
         private class State
         {
             public string Name { get; set; }
+
+            public IList<string> ProjectSearchPaths { get; set; }
 
             public IList<string> Configurations { get; set; }
 

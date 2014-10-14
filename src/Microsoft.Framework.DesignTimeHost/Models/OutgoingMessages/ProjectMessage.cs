@@ -16,6 +16,8 @@ namespace Microsoft.Framework.DesignTimeHost.Models.OutgoingMessages
 
         public IDictionary<string, string> Commands { get; set; }
 
+        public IList<string> ProjectSearchPaths { get; set; }
+
         public override bool Equals(object obj)
         {
             var other = obj as ProjectMessage;
@@ -24,7 +26,8 @@ namespace Microsoft.Framework.DesignTimeHost.Models.OutgoingMessages
                    string.Equals(Name, other.Name) &&
                    Enumerable.SequenceEqual(Frameworks, other.Frameworks) &&
                    Enumerable.SequenceEqual(Configurations, other.Configurations) &&
-                   Enumerable.SequenceEqual(Commands, other.Commands);
+                   Enumerable.SequenceEqual(Commands, other.Commands) &&
+                   Enumerable.SequenceEqual(ProjectSearchPaths, other.ProjectSearchPaths);
         }
 
         public override int GetHashCode()
