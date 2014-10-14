@@ -64,7 +64,9 @@ bool ScanDirectory(WCHAR* szDirectory, WCHAR* szPattern, LPWSTR pszTrustedPlatfo
                 wcscmp(ffd.cFileName, L"Microsoft.Framework.Project.dll") == 0 ||
                 wcscmp(ffd.cFileName, L"Microsoft.Framework.Project.ni.dll") == 0 ||
                 wcscmp(ffd.cFileName, L"Microsoft.Framework.DesignTimeHost.dll") == 0 ||
-                wcscmp(ffd.cFileName, L"Microsoft.Framework.DesignTimeHost.ni.dll") == 0)
+                wcscmp(ffd.cFileName, L"Microsoft.Framework.DesignTimeHost.ni.dll") == 0 ||
+				wcscmp(ffd.cFileName, L"Newtonsoft.Json.dll") == 0 ||
+				wcscmp(ffd.cFileName, L"Newtonsoft.Json.ni.dll") == 0)
             {
                 // Exclude these assemblies from the TPA list since they need to
                 // be handled by the loader since they depend on assembly neutral
