@@ -7,6 +7,8 @@ using System.IO;
 using System.IO.Compression;
 using System.Linq;
 using System.Security.Cryptography;
+using System.Xml;
+using System.Xml.XPath;
 using Microsoft.Framework.Runtime;
 using Newtonsoft.Json.Linq;
 using NuGet;
@@ -301,9 +303,17 @@ namespace Microsoft.Framework.PackageManager.Packing
             // Copy content files (e.g. html, js and images) of main project into public app folder
             CopyContentFiles(root, project, wwwRootOutPath);
 
-            // Tool dlls including AspNet.Loader.dll go to bin folder under public app folder
-            var wwwRootOutBinPath = Path.Combine(wwwRootOutPath, "bin");
+            GenerateKIniFileForTargetProject(root);
 
+            GenerateKIniFileForWwwrootOut(wwwRootOutPath);
+
+            GenerateWebConfigFileForWwwrootOut(root, wwwRootOutPath);
+
+            CopyAspNetLoaderDll(root, wwwRootOutPath);
+        }
+
+        private void GenerateKIniFileForTargetProject(PackRoot root)
+        {
             var defaultRuntime = root.Runtimes.FirstOrDefault();
             var iniFilePath = Path.Combine(TargetPath, "k.ini");
             if (defaultRuntime != null && !File.Exists(iniFilePath))
@@ -327,10 +337,14 @@ root.Configuration));
                     }
                 }
             }
+        }
 
+        private void GenerateKIniFileForWwwrootOut(string wwwRootOutPath)
+        {
             // Generate k.ini for public app folder
             var wwwRootOutIniFilePath = Path.Combine(wwwRootOutPath, "k.ini");
             var appBaseLine = string.Format("KRE_APPBASE={0}", _applicationBase);
+            var iniFilePath = Path.Combine(TargetPath, "k.ini");
             var iniContents = string.Empty;
             if (File.Exists(iniFilePath))
             {
@@ -338,33 +352,164 @@ root.Configuration));
             }
             File.WriteAllText(wwwRootOutIniFilePath,
                 string.Format("{0}{1}", iniContents, appBaseLine));
+        }
 
-            // Copy Microsoft.AspNet.Loader.IIS.Interop/tools/*.dll into bin to support AspNet.Loader.dll
-            var resolver = new DefaultPackagePathResolver(root.SourcePackagesPath);
-            foreach (var package in root.Packages)
+        private void GenerateWebConfigFileForWwwrootOut(PackRoot root, string wwwRootOutPath)
+        {
+            // Generate k.ini for public app folder
+            var wwwRootOutWebConfigFilePath = Path.Combine(wwwRootOutPath, "web.config");
+            var webConfigFilePath = Path.Combine(TargetPath, "web.config");
+
+            var xmlDoc = new XmlDocument();
+            if (File.Exists(webConfigFilePath))
             {
-                if (!string.Equals(package.Library.Name, "Microsoft.AspNet.Loader.IIS.Interop"))
+                var xmlReader = XmlReader.Create(webConfigFilePath, new XmlReaderSettings
                 {
-                    continue;
+                    ConformanceLevel = ConformanceLevel.Auto
+                });
+                xmlDoc.Load(xmlReader);
+            }
+
+            if (xmlDoc.DocumentElement == null)
+            {
+                GetOrAddElement(xmlDoc, parent: xmlDoc, name: "configuration");
+            }
+
+            if (xmlDoc.DocumentElement.Name != "configuration")
+            {
+                throw new InvalidDataException("'configuration' is the only valid name for root element of web.config file");
+            }
+
+            var appSettingsNode = GetOrAddElement(xmlDoc, parent: xmlDoc.DocumentElement, name: "appSettings");
+
+            var relativePackagesPath = PathUtility.GetRelativePath(wwwRootOutWebConfigFilePath, root.TargetPackagesPath);
+            var defaultRuntime = root.Runtimes.FirstOrDefault();
+
+            var keyValuePairs = new Dictionary<string, string>()
+            {
+                { "kpm-package-path", relativePackagesPath},
+                { "bootstrapper-version", GetBootstrapperVersion(root)},
+                { "kre-package-path", relativePackagesPath},
+                { "kre-version", GetRuntimeVersion(defaultRuntime)},
+                { "kre-clr", GetRuntimeFlavor(defaultRuntime)},
+                { "kre-app-base", _applicationBase},
+            };
+
+            foreach (var pair in keyValuePairs)
+            {
+                var addNode = appSettingsNode.SelectSingleNode(string.Format("add[@key = \"{0}\"]", pair.Key));
+                if (addNode == null)
+                {
+                    addNode = xmlDoc.CreateElement("add");
+                    appSettingsNode.AppendChild(addNode);
                 }
 
-                var packagePath = resolver.GetInstallPath(package.Library.Name, package.Library.Version);
-                var packageToolsPath = Path.Combine(packagePath, "tools");
-                if (Directory.Exists(packageToolsPath))
-                {
-                    foreach (var packageToolFile in Directory.EnumerateFiles(packageToolsPath, "*.dll").Select(Path.GetFileName))
-                    {
-                        if (!Directory.Exists(wwwRootOutBinPath))
-                        {
-                            Directory.CreateDirectory(wwwRootOutBinPath);
-                        }
+                SetOrAddAttribute(xmlDoc, parent: addNode, name: "key", value: pair.Key);
+                SetOrAddAttribute(xmlDoc, parent: addNode, name: "value", value: pair.Value);
+            }
 
-                        // Copy to bin folder under public app folder
-                        File.Copy(
-                            Path.Combine(packageToolsPath, packageToolFile),
-                            Path.Combine(wwwRootOutBinPath, packageToolFile),
-                            true);
+            var xmlWriterSettings = new XmlWriterSettings
+            {
+                Indent = true,
+                ConformanceLevel = ConformanceLevel.Auto
+            };
+
+            using (var xmlWriter = XmlWriter.Create(File.Create(wwwRootOutWebConfigFilePath), xmlWriterSettings))
+            {
+                xmlDoc.WriteTo(xmlWriter);
+            }
+        }
+
+        private static XmlNode GetOrAddElement(XmlDocument xmlDoc, XmlNode parent, string name)
+        {
+            var node = parent.SelectSingleNode(name);
+            if (node == null)
+            {
+                node = xmlDoc.CreateElement(name);
+                parent.AppendChild(node);
+            }
+            return node;
+        }
+
+        private static void SetOrAddAttribute(XmlDocument xmlDoc, XmlNode parent, string name, string value)
+        {
+            var attr = parent.SelectSingleNode("@" + name);
+            if (attr ==  null)
+            {
+                attr = xmlDoc.CreateNode(XmlNodeType.Attribute, name, namespaceURI: null);
+            }
+            attr.Value = value;
+            parent.Attributes.SetNamedItem(attr);
+        }
+
+        private static string GetBootstrapperVersion(PackRoot root)
+        {
+            // Use version of Microsoft.AspNet.Loader.IIS.Interop as version of bootstrapper
+            var package = root.Packages.SingleOrDefault(
+                x => string.Equals(x.Library.Name, "Microsoft.AspNet.Loader.IIS.Interop"));
+            return package == null ? string.Empty : package.Library.Version.ToString();
+        }
+
+        // Expected runtime name format: KRE-{FLAVOR}-{ARCHITECTURE}.{VERSION}
+        // Sample input: KRE-CoreCLR-x86.1.0.0.0
+        // Sample output: CoreCLR
+        private static string GetRuntimeFlavor(PackRuntime runtime)
+        {
+            if (runtime == null)
+            {
+                return string.Empty;
+            }
+
+            var segments = runtime.Name.Split(new[] { '.' }, 2);
+            segments = segments[0].Split(new[] { '-' }, 3);
+            return segments[1];
+        }
+
+        // Expected runtime name format: KRE-{FLAVOR}-{ARCHITECTURE}.{VERSION}
+        // Sample input: KRE-CoreCLR-x86.1.0.0.0
+        // Sample output: 1.0.0.0
+        private static string GetRuntimeVersion(PackRuntime runtime)
+        {
+            if (runtime == null)
+            {
+                return string.Empty;
+            }
+
+            var segments = runtime.Name.Split(new[] { '.' }, 2);
+            return segments[1];
+        }
+
+        private static void CopyAspNetLoaderDll(PackRoot root, string wwwRootOutPath)
+        {
+            // Tool dlls including AspNet.Loader.dll go to bin folder under public app folder
+            var wwwRootOutBinPath = Path.Combine(wwwRootOutPath, "bin");
+
+            // Copy Microsoft.AspNet.Loader.IIS.Interop/tools/*.dll into bin to support AspNet.Loader.dll
+            var package = root.Packages.SingleOrDefault(
+                x => string.Equals(x.Library.Name, "Microsoft.AspNet.Loader.IIS.Interop"));
+            if (package == null)
+            {
+                return;
+            }
+
+            var resolver = new DefaultPackagePathResolver(root.SourcePackagesPath);
+            var packagePath = resolver.GetInstallPath(package.Library.Name, package.Library.Version);
+            var packageToolsPath = Path.Combine(packagePath, "tools");
+            if (Directory.Exists(packageToolsPath))
+            {
+                foreach (var packageToolFile in Directory.EnumerateFiles(packageToolsPath, "*.dll").Select(Path.GetFileName))
+                {
+                    // Create the bin folder only when we need to put something inside it
+                    if (!Directory.Exists(wwwRootOutBinPath))
+                    {
+                        Directory.CreateDirectory(wwwRootOutBinPath);
                     }
+
+                    // Copy to bin folder under public app folder
+                    File.Copy(
+                        Path.Combine(packageToolsPath, packageToolFile),
+                        Path.Combine(wwwRootOutBinPath, packageToolFile),
+                        overwrite: true);
                 }
             }
         }
