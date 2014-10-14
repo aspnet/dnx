@@ -1,6 +1,7 @@
 // Copyright (c) Microsoft Open Technologies, Inc. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
+using System;
 using System.IO;
 using Microsoft.Framework.Runtime;
 using Microsoft.Framework.Runtime.Common.CommandLine;
@@ -39,6 +40,7 @@ namespace Microsoft.Framework.Project
                 var optionRuntimePath = c.Option("--runtimePath <PATH>", "Runtime path", CommandOptionType.SingleValue);
                 var optionSymbols = c.Option("--symbols", "Use symbols", CommandOptionType.NoValue);
                 var optionPartial = c.Option("--partial", "Allow partial NGEN", CommandOptionType.NoValue);
+                var optionVerbose = c.Option("--verbose", "Verbose output", CommandOptionType.NoValue);
                 c.HelpOption("-?|-h|--help");
 
                 c.OnExecute(() =>
@@ -49,13 +51,17 @@ namespace Microsoft.Framework.Project
                     crossgenOptions.CrossgenPath = optionExePath.Value();
                     crossgenOptions.Symbols = optionSymbols.HasValue();
                     crossgenOptions.Partial = optionPartial.HasValue();
+                    crossgenOptions.Verbose = optionVerbose.HasValue();
 
+                    Console.WriteLine("Crossgening runtime: " + crossgenOptions.RuntimePath);
                     var gen = new CrossgenManager(crossgenOptions);
                     if (!gen.GenerateNativeImages())
                     {
+                        Console.WriteLine("Crossgen failed.");
                         return -1;
                     }
 
+                    Console.WriteLine("Crossgen was successful.");
                     return 0;
                 });
             });
