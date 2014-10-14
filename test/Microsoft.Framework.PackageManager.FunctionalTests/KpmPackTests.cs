@@ -349,5 +349,97 @@ namespace Microsoft.Framework.PackageManager
                     compareFileContents: true));
             }
         }
+
+        [Theory]
+        [MemberData("KrePaths")]
+        public void WildcardMatchingFacts(string krePath)
+        {
+            var projectStructure = @"{
+  '.': ['project.json'],
+  'UselessFolder1': {
+    '.': ['uselessfile1.txt', 'uselessfile2'],
+    'SubFolder': ['uselessfile3.js', 'uselessfile4']
+  },
+  'UselessFolder2': {
+    '.': ['uselessfile1.txt', 'uselessfile2'],
+    'SubFolder': ['uselessfile3.js', 'uselessfile4']
+  },
+  'UselessFolder3': {
+    '.': ['uselessfile1.txt', 'uselessfile2'],
+    'SubFolder': ['uselessfile3.js', 'uselessfile4']
+  },
+  'MixFolder1': {
+    '.': ['uselessfile1.txt', 'uselessfile2'],
+    'UsefulSub': ['useful.txt', 'useful']
+  },
+  'MixFolder2': {
+    '.': ['uselessfile1.txt', 'uselessfile2'],
+    'UsefulSub': ['useful.txt', 'useful']
+  },
+  'packages': {}
+}";
+            var expectedOutputStructure = @"{
+  'approot': {
+    'global.json': '',
+    'src': {
+      'PROJECT_NAME': {
+        '.': ['project.json'],
+        'MixFolder1': {
+          'UsefulSub': ['useful.txt', 'useful']
+        },
+        'MixFolder2': {
+          'UsefulSub': ['useful.txt', 'useful']
+        }
+      }
+    }
+  }
+}".Replace("PROJECT_NAME", _projectName);
+
+            using (var testEnv = new KpmTestEnvironment(krePath, _projectName, _outputDirName))
+            {
+                TestUtils.CreateDirTree(projectStructure)
+                    .WithFileContents("project.json", @"{
+  ""pack-exclude"": [
+    ""UselessFolder1\\**"",
+    ""UselessFolder2/**/*"",
+    ""UselessFolder3\\**/*.*"",
+    ""MixFolder1\\*"",
+    ""MixFolder2/*.*""
+  ]
+}")
+                    .WriteTo(testEnv.ProjectPath);
+
+                var environment = new Dictionary<string, string>()
+                {
+                    { "KRE_PACKAGES", Path.Combine(testEnv.ProjectPath, "packages") }
+                };
+
+                var exitCode = TestUtils.ExecKpm(
+                    krePath,
+                    subcommand: "pack",
+                    arguments: string.Format("--out {0}",
+                        testEnv.PackOutputDirPath),
+                    environment: environment,
+                    workingDir: testEnv.ProjectPath);
+                Assert.Equal(0, exitCode);
+
+                var expectedOutputDir = TestUtils.CreateDirTree(expectedOutputStructure)
+                    .WithFileContents(Path.Combine("approot", "src", testEnv.ProjectName, "project.json"), @"{
+  ""pack-exclude"": [
+    ""UselessFolder1\\**"",
+    ""UselessFolder2/**/*"",
+    ""UselessFolder3\\**/*.*"",
+    ""MixFolder1\\*"",
+    ""MixFolder2/*.*""
+  ]
+}")
+                    .WithFileContents(Path.Combine("approot", "global.json"), @"{
+  ""dependencies"": {},
+  ""packages"": ""packages""
+}");
+                Assert.True(expectedOutputDir.MatchDirectoryOnDisk(testEnv.PackOutputDirPath,
+                    compareFileContents: true));
+            }
+        }
     }
 }

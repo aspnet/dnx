@@ -59,6 +59,7 @@ namespace NuGet
                 pattern = pattern
                     .Replace(@"\*\*/", ".*") //For recursive wildcards /**/, include the current directory.
                     .Replace(@"\*\*", ".*") // For recursive wildcards that don't end in a slash e.g. **.txt would be treated as a .txt file at any depth
+                    .Replace(@"\*\.\*", @"\*") // "*.*" is equivalent to "*"
                     .Replace(@"\*", @"[^/]*(/)?") // For non recursive searches, limit it any character that is not a directory separator
                     .Replace(@"\?", "."); // ? translates to a single any character
             }
@@ -70,6 +71,7 @@ namespace NuGet
                     .Replace("/", @"\\") // On Windows, / is treated the same as \.
                     .Replace(@"\*\*\\", ".*") //For recursive wildcards \**\, include the current directory.
                     .Replace(@"\*\*", ".*") // For recursive wildcards that don't end in a slash e.g. **.txt would be treated as a .txt file at any depth
+                    .Replace(@"\*\.\*", @"\*") // "*.*" is equivalent to "*"
                     .Replace(@"\*", @"[^\\]*(\\)?") // For non recursive searches, limit it any character that is not a directory separator
                     .Replace(@"\?", "."); // ? translates to a single any character
             }
