@@ -18,12 +18,15 @@ namespace Microsoft.Framework.DesignTimeHost.Models.OutgoingMessages
 
         public IList<string> ProjectSearchPaths { get; set; }
 
+        public string GlobalJsonPath { get; set; }
+
         public override bool Equals(object obj)
         {
             var other = obj as ProjectMessage;
 
             return other != null &&
                    string.Equals(Name, other.Name) &&
+                   string.Equals(GlobalJsonPath, other.GlobalJsonPath) &&
                    Enumerable.SequenceEqual(Frameworks, other.Frameworks) &&
                    Enumerable.SequenceEqual(Configurations, other.Configurations) &&
                    Enumerable.SequenceEqual(Commands, other.Commands) &&

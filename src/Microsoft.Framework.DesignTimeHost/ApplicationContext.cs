@@ -267,7 +267,9 @@ namespace Microsoft.Framework.DesignTimeHost
 
                     Commands = state.Commands,
 
-                    ProjectSearchPaths = state.ProjectSearchPaths
+                    ProjectSearchPaths = state.ProjectSearchPaths,
+
+                    GlobalJsonPath = state.GlobalJsonPath
                 };
 
                 for (int i = 0; i < state.Projects.Count; i++)
@@ -656,6 +658,15 @@ namespace Microsoft.Framework.DesignTimeHost
                 {
                     state.ProjectSearchPaths = applicationHostContext.ProjectResolver.SearchPaths.ToList();
                 }
+
+                if (state.GlobalJsonPath == null)
+                {
+                    GlobalSettings settings;
+                    if (GlobalSettings.TryGetGlobalSettings(applicationHostContext.RootDirectory, out settings))
+                    {
+                        state.GlobalJsonPath = settings.FilePath;
+                    }
+                }
             }
 
             return state;
@@ -704,6 +715,8 @@ namespace Microsoft.Framework.DesignTimeHost
             public string Name { get; set; }
 
             public IList<string> ProjectSearchPaths { get; set; }
+
+            public string GlobalJsonPath { get; set; }
 
             public IList<string> Configurations { get; set; }
 

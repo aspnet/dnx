@@ -14,18 +14,19 @@ namespace Microsoft.Framework.Runtime
         public const string GlobalFileName = "global.json";
 
         public IList<string> SourcePaths { get; private set; }
-        public string PackagesPath { get; private set; }
         public IDictionary<Library, string> PackageHashes { get; private set; }
+        public string PackagesPath { get; private set; }
+        public string FilePath { get; private set; }
 
-        public static bool TryGetGlobalSettings(string path, out GlobalSettings solution)
+        public static bool TryGetGlobalSettings(string path, out GlobalSettings globalSettings)
         {
-            solution = null;
+            globalSettings = null;
 
-            string solutionPath = null;
+            string globalJsonPath = null;
 
             if (Path.GetFileName(path) == GlobalFileName)
             {
-                solutionPath = path;
+                globalJsonPath = path;
                 path = Path.GetDirectoryName(path);
             }
             else if (!HasGlobalFile(path))
@@ -34,19 +35,20 @@ namespace Microsoft.Framework.Runtime
             }
             else
             {
-                solutionPath = Path.Combine(path, GlobalFileName);
+                globalJsonPath = Path.Combine(path, GlobalFileName);
             }
 
-            solution = new GlobalSettings();
+            globalSettings = new GlobalSettings();
 
-            string json = File.ReadAllText(solutionPath);
+            string json = File.ReadAllText(globalJsonPath);
             var settings = JObject.Parse(json);
             var sources = settings["sources"];
             var dependencies = settings["dependencies"] as JObject;
 
-            solution.SourcePaths = sources == null ? new string[] { } : sources.ToObject<string[]>();
-            solution.PackagesPath = settings.Value<string>("packages");
-            solution.PackageHashes = new Dictionary<Library, string>();
+            globalSettings.SourcePaths = sources == null ? new string[] { } : sources.ToObject<string[]>();
+            globalSettings.PackagesPath = settings.Value<string>("packages");
+            globalSettings.PackageHashes = new Dictionary<Library, string>();
+            globalSettings.FilePath = globalJsonPath;
 
             if (dependencies != null)
             {
@@ -82,7 +84,7 @@ namespace Microsoft.Framework.Runtime
                             property.Name, GlobalFileName));
                     }
 
-                    solution.PackageHashes[library] = shaValue;
+                    globalSettings.PackageHashes[library] = shaValue;
                 }
             }
 
