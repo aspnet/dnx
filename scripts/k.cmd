@@ -15,7 +15,9 @@ REM </dev>
 IF EXIST "%~dp0k-%1.cmd" (
   "%~dp0k-%1.cmd" %2 %3 %4 %5 %6 %7 %8 %9 
 ) ELSE (
-  CALL "%~dp0KLR.cmd" "Microsoft.Framework.ApplicationHost" %*
+  SET ARGS=%*
+  IF NOT "%ARGS%"=="" SET ARGS=%ARGS:/?="/?"%
+  CALL "%~dp0KLR.cmd" "Microsoft.Framework.ApplicationHost" %ARGS%
 )
 
 exit /b %ERRORLEVEL%
