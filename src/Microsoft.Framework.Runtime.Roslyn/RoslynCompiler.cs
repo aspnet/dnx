@@ -13,6 +13,7 @@ using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.Text;
 using Microsoft.Framework.Runtime.Common.DependencyInjection;
+using Microsoft.Framework.Runtime.Roslyn.Services;
 
 namespace Microsoft.Framework.Runtime.Roslyn
 {
@@ -263,14 +264,19 @@ namespace Microsoft.Framework.Runtime.Roslyn
             // The cache key needs to take the parseOptions into account
             var cacheKey = sourcePath + string.Join(",", parseOptions.PreprocessorSymbolNames) + parseOptions.LanguageVersion;
 
-            return _cache.Get<SyntaxTree>(cacheKey, ctx =>
+            return _cache.Get<SyntaxTree>(cacheKey, (ctx, oldValue) =>
             {
-                ctx.Monitor(new FileWriteTimeCacheDependency(sourcePath));
-
-                using (var stream = File.OpenRead(sourcePath))
+                var sourceTextService = (ISourceTextService) _services.GetService(typeof(ISourceTextService));
+                if (sourceTextService == null) {
+                    sourceTextService = new SourceTextService(_cache);     
+                }
+                var sourceText = sourceTextService.GetSourceText(sourcePath);
+                if (oldValue != null)
                 {
-                    var sourceText = SourceText.From(stream, encoding: Encoding.UTF8);
-
+                    return oldValue.WithChangedText(sourceText);
+                }
+                else
+                {
                     return CSharpSyntaxTree.ParseText(sourceText, options: parseOptions, path: sourcePath);
                 }
             });
