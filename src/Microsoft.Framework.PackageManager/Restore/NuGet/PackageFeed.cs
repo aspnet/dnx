@@ -7,6 +7,7 @@ using System.IO;
 using System.IO.Compression;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Xml;
 using System.Xml.Linq;
 using NuGet;
 
@@ -95,31 +96,40 @@ namespace Microsoft.Framework.PackageManager.Restore.NuGet
                         string.Format("list_{0}_page{1}", id, page),
                         retry == 0 ? _cacheAgeLimitList : TimeSpan.Zero))
                         {
-                            var doc = XDocument.Load(data.Stream);
-
-                            var result = doc.Root
-                                .Elements(_xnameEntry)
-                                .Select(x => BuildModel(id, x));
-
-                            results.AddRange(result);
-
-                            // Example of what this looks like in the odata feed:
-                            // <link rel="next" href="{nextLink}" />
-                            var nextUri = (from e in doc.Root.Elements(_xnameLink)
-                                           let attr = e.Attribute("rel")
-                                           where attr != null && string.Equals(attr.Value, "next", StringComparison.OrdinalIgnoreCase)
-                                           select e.Attribute("href") into nextLink
-                                           where nextLink != null
-                                           select nextLink.Value).FirstOrDefault();
-
-                            // Stop if there's nothing else to GET
-                            if (string.IsNullOrEmpty(nextUri))
+                            try
                             {
-                                break;
-                            }
+                                var doc = XDocument.Load(data.Stream);
 
-                            uri = nextUri;
-                            page++;
+                                var result = doc.Root
+                                    .Elements(_xnameEntry)
+                                    .Select(x => BuildModel(id, x));
+
+                                results.AddRange(result);
+
+                                // Example of what this looks like in the odata feed:
+                                // <link rel="next" href="{nextLink}" />
+                                var nextUri = (from e in doc.Root.Elements(_xnameLink)
+                                               let attr = e.Attribute("rel")
+                                               where attr != null && string.Equals(attr.Value, "next", StringComparison.OrdinalIgnoreCase)
+                                               select e.Attribute("href") into nextLink
+                                               where nextLink != null
+                                               select nextLink.Value).FirstOrDefault();
+
+                                // Stop if there's nothing else to GET
+                                if (string.IsNullOrEmpty(nextUri))
+                                {
+                                    break;
+                                }
+
+                                uri = nextUri;
+                                page++;
+                            }
+                            catch (XmlException)
+                            {
+                                _reports.Information.WriteLine("The XML file {0} is corrupt",
+                                    data.CacheFileName.Yellow().Bold());
+                                throw;
+                            }
                         }
                     }
 
@@ -173,22 +183,34 @@ namespace Microsoft.Framework.PackageManager.Restore.NuGet
         {
             using (var nupkgStream = await OpenNupkgStreamAsync(package))
             {
-                using (var archive = new ZipArchive(nupkgStream, ZipArchiveMode.Read, leaveOpen: true))
-                {
-                    var entry = archive.GetEntryOrdinalIgnoreCase(package.Id + ".nuspec");
-                    using (var entryStream = entry.Open())
+                try {
+                    using (var archive = new ZipArchive(nupkgStream, ZipArchiveMode.Read, leaveOpen: true))
                     {
-                        var nuspecStream = new MemoryStream((int)entry.Length);
+                        var entry = archive.GetEntryOrdinalIgnoreCase(package.Id + ".nuspec");
+                        using (var entryStream = entry.Open())
+                        {
+                            var nuspecStream = new MemoryStream((int)entry.Length);
 #if NET45
-                        await entryStream.CopyToAsync(nuspecStream);
+                            await entryStream.CopyToAsync(nuspecStream);
 #else
-                        // System.IO.Compression.DeflateStream throws exception when multiple
-                        // async readers/writers are working on a single instance of it
-                        entryStream.CopyTo(nuspecStream);
+                            // System.IO.Compression.DeflateStream throws exception when multiple
+                            // async readers/writers are working on a single instance of it
+                            entryStream.CopyTo(nuspecStream);
 #endif
-                        nuspecStream.Seek(0, SeekOrigin.Begin);
-                        return nuspecStream;
+                            nuspecStream.Seek(0, SeekOrigin.Begin);
+                            return nuspecStream;
+                        }
                     }
+                }
+                catch (InvalidDataException)
+                {
+                    var fileStream = nupkgStream as FileStream;
+                    if (fileStream != null)
+                    {
+                        _reports.Information.WriteLine("The ZIP archive {0} is corrupt",
+                            fileStream.Name.Yellow().Bold());
+                    }
+                    throw;
                 }
             }
         }
