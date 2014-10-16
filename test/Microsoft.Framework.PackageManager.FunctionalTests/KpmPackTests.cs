@@ -44,7 +44,7 @@ namespace Microsoft.Framework.PackageManager
 }";
             var expectedOutputStructure = @"{
   'wwwroot': {
-    '.': ['project.json', 'Config.json', 'Program.cs', 'build_config1.bconfig', 'k.ini'],
+    '.': ['project.json', 'Config.json', 'Program.cs', 'build_config1.bconfig', 'k.ini', 'web.config'],
       'Views': {
         'Home': ['index.cshtml'],
         'Shared': ['_Layout.cshtml']
@@ -106,7 +106,17 @@ namespace Microsoft.Framework.PackageManager
                     .WithFileContents(Path.Combine("approot", "global.json"), @"{
   ""dependencies"": {},
   ""packages"": ""packages""
-}");
+}")
+                    .WithFileContents(Path.Combine("wwwroot", "web.config"), @"<configuration>
+  <appSettings>
+    <add key=""kpm-package-path"" value=""..\approot\packages"" />
+    <add key=""bootstrapper-version"" value="""" />
+    <add key=""kre-package-path"" value=""..\approot\packages"" />
+    <add key=""kre-version"" value="""" />
+    <add key=""kre-clr"" value="""" />
+    <add key=""kre-app-base"" value=""..\approot\src\PROJECT_NAME"" />
+  </appSettings>
+</configuration>".Replace("PROJECT_NAME", testEnv.ProjectName));
                 Assert.True(expectedOutputDir.MatchDirectoryOnDisk(testEnv.PackOutputDirPath,
                     compareFileContents: true));
             }
@@ -134,6 +144,7 @@ namespace Microsoft.Framework.PackageManager
             var expectedOutputStructure = @"{
   'wwwroot': {
     'k.ini': '',
+    'web.config': '',
     'Scripts': ['bootstrap.js', 'jquery.js'],
     'Images': ['logo.png'],
     'UselessFolder': ['file.useless']
@@ -186,7 +197,17 @@ namespace Microsoft.Framework.PackageManager
                     .WithFileContents(Path.Combine("approot", "global.json"), @"{
   ""dependencies"": {},
   ""packages"": ""packages""
-}");
+}")
+                    .WithFileContents(Path.Combine("wwwroot", "web.config"), @"<configuration>
+  <appSettings>
+    <add key=""kpm-package-path"" value=""..\approot\packages"" />
+    <add key=""bootstrapper-version"" value="""" />
+    <add key=""kre-package-path"" value=""..\approot\packages"" />
+    <add key=""kre-version"" value="""" />
+    <add key=""kre-clr"" value="""" />
+    <add key=""kre-app-base"" value=""..\approot\src\PROJECT_NAME"" />
+  </appSettings>
+</configuration>".Replace("PROJECT_NAME", testEnv.ProjectName));
                 Assert.True(expectedOutputDir.MatchDirectoryOnDisk(testEnv.PackOutputDirPath,
                     compareFileContents: true));
             }
