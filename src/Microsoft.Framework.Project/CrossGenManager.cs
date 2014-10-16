@@ -180,7 +180,10 @@ namespace Microsoft.Framework.Project
 
         void OnErrorDataReceived(object sender, DataReceivedEventArgs e)
         {
-            Console.Error.WriteLine(e.Data);
+            if (!string.IsNullOrEmpty(e.Data))
+            {
+                Console.Error.WriteLine(e.Data);
+            }
         }
 
         void OnOutputDataReceived(object sender, DataReceivedEventArgs e)
