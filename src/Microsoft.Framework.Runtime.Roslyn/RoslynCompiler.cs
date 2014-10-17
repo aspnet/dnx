@@ -7,6 +7,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Reflection.PortableExecutable;
 using System.Text;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
@@ -309,7 +310,11 @@ namespace Microsoft.Framework.Runtime.Roslyn
             {
                 ctx.Monitor(new FileWriteTimeCacheDependency(path));
 
-                return AssemblyMetadata.CreateFromStream(File.OpenRead(path));
+                using (var stream = File.OpenRead(path))
+                {
+                    var moduleMetadata = ModuleMetadata.CreateFromStream(stream, PEStreamOptions.PrefetchMetadata);
+                    return AssemblyMetadata.Create(moduleMetadata);
+                }
             });
 
             return metadata.GetReference();
