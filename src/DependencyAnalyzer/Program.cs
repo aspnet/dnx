@@ -99,8 +99,6 @@ namespace DependencyAnalyzer
 
             var manager = (ILibraryManager)hostContext.ServiceProvider.GetService(typeof(ILibraryManager));
 
-            var packageAssembles = new PackageAssembly();
-
             foreach (var library in manager.GetLibraries())
             {
                 foreach (var assemblyName in library.LoadableAssemblies)
