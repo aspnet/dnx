@@ -22,11 +22,11 @@ namespace Microsoft.Framework.Project
             app.Name = "Microsoft.Framework.Project";
             app.HelpOption("-?|-h|--help");
 
-            // Show help information if no subcommand was specified
+            // Show help information if no subcommand/option was specified
             app.OnExecute(() =>
             {
                 app.ShowHelp();
-                return 0;
+                return 2;
             });
 
             app.Command("crossgen", c =>

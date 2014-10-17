@@ -86,14 +86,17 @@ namespace klr.hosting
             app.VersionOption("--version", GetVersion());
             app.Execute(args);
 
-            if (!app.IsShowingInformation && !app.RemainingArguments.Any())
-            {
-                app.ShowHelp();
-            }
-
+            // Help information was already shown because help option was specified
             if (app.IsShowingInformation)
             {
                 return Task.FromResult(0);
+            }
+
+            // Show help information if no subcommand/option was specified
+            if (!app.IsShowingInformation && !app.RemainingArguments.Any())
+            {
+                app.ShowHelp();
+                return Task.FromResult(2);
             }
 
             // Resolve the lib paths

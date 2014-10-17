@@ -32,10 +32,10 @@ namespace Microsoft.Framework.ApplicationHost
             DefaultHostOptions options;
             string[] programArgs;
 
-            var isShowingInformation = ParseArgs(args, out options, out programArgs);
-            if (isShowingInformation)
+            var exitCode = ParseArgs(args, out options, out programArgs);
+            if (exitCode != 0)
             {
-                return Task.FromResult(0);
+                return Task.FromResult(exitCode);
             }
 
             var host = new DefaultHost(options, _serviceProvider);
@@ -110,7 +110,7 @@ namespace Microsoft.Framework.ApplicationHost
         }
 
 
-        private bool ParseArgs(string[] args, out DefaultHostOptions defaultHostOptions, out string[] outArgs)
+        private int ParseArgs(string[] args, out DefaultHostOptions defaultHostOptions, out string[] outArgs)
         {
             var app = new CommandLineApplication(throwOnUnexpectedArg: false);
             app.Name = "k";
@@ -137,9 +137,13 @@ namespace Microsoft.Framework.ApplicationHost
             throwOnUnexpectedArg: false);
             app.Execute(args);
 
+            // Show help information if no subcommand/option was specified
             if (!(app.IsShowingInformation || app.RemainingArguments.Any() || runCmdExecuted))
             {
-                app.ShowHelp(commandName: null);
+                app.ShowHelp();
+                defaultHostOptions = null;
+                outArgs = null;
+                return 2;
             }
 
             defaultHostOptions = new DefaultHostOptions();
@@ -180,7 +184,7 @@ namespace Microsoft.Framework.ApplicationHost
                 outArgs = remainingArgs.ToArray();
             }
 
-            return app.IsShowingInformation;
+            return 0;
         }
 
         private Task<int> ExecuteMain(DefaultHost host, string applicationName, string[] args)
