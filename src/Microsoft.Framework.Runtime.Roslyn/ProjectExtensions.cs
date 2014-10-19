@@ -28,7 +28,8 @@ namespace Microsoft.Framework.Runtime.Roslyn
             // Disable 1702 until roslyn turns this off by default
             options = options.WithSpecificDiagnosticOptions(new Dictionary<string, ReportDiagnostic>
             {
-                { "CS1702", ReportDiagnostic.Suppress }
+                { "CS1702", ReportDiagnostic.Suppress },
+                { "CS1705", ReportDiagnostic.Suppress }
             });
 
             if (PlatformHelper.IsMono)
