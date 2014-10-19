@@ -2,7 +2,7 @@
     "version": "1.0.0-*",
     "compilationOptions": { "define": [ "LOADER", "TRACE" ], "allowUnsafe": true, "warningsAsErrors": true },
     "dependencies": {
-        "Microsoft.Bcl.Metadata": "1.0.12-alpha",
+        "System.Reflection.Metadata": "1.0.17-beta",
         "Microsoft.Framework.Runtime.Common": "",
         "Microsoft.Framework.Runtime.Interfaces": "",
         "Newtonsoft.Json": "6.0.4"

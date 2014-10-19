@@ -48,9 +48,8 @@ namespace Microsoft.Framework.Runtime
             {
                 // Locate start and end of PE image in unmanaged memory.
                 var block = peReader.GetEntireImage();
-                IntPtr peImageStartAsIntPtr = block.Pointer;
                 int peImageSize = block.Length;
-                byte* peImageStart = (byte*)peImageStartAsIntPtr;
+                byte* peImageStart = block.Pointer;
                 byte* peImageEnd = peImageStart + peImageSize;
                 Debug.Assert(peImageStart != null && peImageSize > 0);
 
