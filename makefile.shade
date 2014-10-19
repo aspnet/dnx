@@ -426,8 +426,8 @@ var MSBUILD = '${Path.Combine(PROGRAM_FILES_X86, "MSBuild", "14.0", "Bin", "MSBu
         var packages = new[] { "Newtonsoft.Json", 
                                "Microsoft.CodeAnalysis.Common", 
                                "Microsoft.CodeAnalysis.CSharp", 
-                               "Microsoft.Bcl.Immutable", 
-                               "Microsoft.Bcl.Metadata" };
+                               "System.Collections.Immutable", 
+                               "System.Reflection.Metadata" };
         
         foreach (var framework in targetFrameworks)
         {
