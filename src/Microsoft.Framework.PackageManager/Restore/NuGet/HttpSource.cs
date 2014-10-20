@@ -175,7 +175,7 @@ namespace Microsoft.Framework.PackageManager.Restore.NuGet
                 return 0;
             });
 
-            _reports.Verbose.WriteLine(string.Format("  {1} {0} {2}ms", uri, response.StatusCode.ToString().Green(), sw.ElapsedMilliseconds.ToString().Bold()));
+            _reports.Quiet.WriteLine(string.Format("  {1} {0} {2}ms", uri, response.StatusCode.ToString().Green(), sw.ElapsedMilliseconds.ToString().Bold()));
 
             return result;
         }

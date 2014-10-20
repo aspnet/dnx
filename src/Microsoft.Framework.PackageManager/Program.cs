@@ -265,7 +265,7 @@ namespace Microsoft.Framework.PackageManager
             {
                 Information = output,
                 Verbose = verbose ? output : new NullReport(),
-                Error = new Report(AnsiConsole.Error),
+                Error = new Report(AnsiConsole.Output),
             };
 
             // If "--verbose" and "--quiet" are specified together, "--verbose" wins
