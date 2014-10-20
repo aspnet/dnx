@@ -6,23 +6,23 @@ using System.IO;
 
 namespace Microsoft.Framework.FunctionalTestUtils
 {
-    public sealed class DisposableDirPath : IDisposable
+    public sealed class DisposableDir : IDisposable
     {
         private readonly string _dirPath;
 
-        public DisposableDirPath(string dirPath)
+        public DisposableDir(string dirPath)
         {
             _dirPath = dirPath;
         }
 
-        public static implicit operator string(DisposableDirPath disposableDirPath)
+        public static implicit operator string(DisposableDir disposableDirPath)
         {
             return disposableDirPath._dirPath;
         }
 
-        public static implicit operator DisposableDirPath(string dirPath)
+        public static implicit operator DisposableDir(string dirPath)
         {
-            return new DisposableDirPath(dirPath);
+            return new DisposableDir(dirPath);
         }
 
         public void Dispose()

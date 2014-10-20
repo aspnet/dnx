@@ -3,6 +3,7 @@
 
 using System.IO;
 using System.Collections.Generic;
+using System.Linq;
 using Microsoft.Framework.FunctionalTestUtils;
 using Xunit;
 
@@ -13,11 +14,29 @@ namespace Microsoft.Framework.PackageManager
         private readonly string _projectName = "TestProject";
         private readonly string _outputDirName = "PackOutput";
 
-        public static IEnumerable<object[]> KrePaths
+        private static readonly string BatchFileTemplate = @"
+@""{0}klr.exe"" --appbase ""%~dp0approot\src\{1}"" Microsoft.Framework.ApplicationHost {2} %*
+";
+
+        private static readonly string BashScriptTemplate = @"#!/bin/bash
+
+SOURCE=""${{BASH_SOURCE[0]}}""
+while [ -h ""$SOURCE"" ]; do # resolve $SOURCE until the file is no longer a symlink
+  DIR=""$( cd -P ""$( dirname ""$SOURCE"" )"" && pwd )""
+  SOURCE=""$(readlink ""$SOURCE"")""
+  [[ $SOURCE != /* ]] && SOURCE=""$DIR/$SOURCE"" # if $SOURCE was a relative symlink, we need to resolve it relative to the path where the symlink file was located
+done
+DIR=""$( cd -P ""$( dirname ""$SOURCE"" )"" && pwd )""
+
+export SET KRE_APPBASE=""$DIR/approot/src/{0}""
+
+""{1}klr"" Microsoft.Framework.ApplicationHost {2} ""$@""".Replace("\r\n", "\n");
+
+        public static IEnumerable<object[]> KreHomeDirs
         {
             get
             {
-                foreach (var path in TestUtils.GetUnpackedKrePaths())
+                foreach (var path in TestUtils.GetKreHomeDirs())
                 {
                     yield return new[] { path };
                 }
@@ -25,8 +44,8 @@ namespace Microsoft.Framework.PackageManager
         }
 
         [Theory]
-        [MemberData("KrePaths")]
-        public void KpmPackWebApp_RootAsPublicFolder(DisposableDirPath krePath)
+        [MemberData("KreHomeDirs")]
+        public void KpmPackWebApp_RootAsPublicFolder(DisposableDir kreHomeDir)
         {
             var projectStructure = @"{
   '.': ['project.json', 'Config.json', 'Program.cs', 'build_config1.bconfig'],
@@ -66,9 +85,9 @@ namespace Microsoft.Framework.PackageManager
   }
 }".Replace("PROJECT_NAME", _projectName);
 
-            using (var testEnv = new KpmTestEnvironment(krePath, _projectName, _outputDirName))
+            using (var testEnv = new KpmTestEnvironment(kreHomeDir, _projectName, _outputDirName))
             {
-                TestUtils.CreateDirTree(projectStructure)
+                DirTree.CreateFromJson(projectStructure)
                     .WithFileContents("project.json", @"{
   ""packExclude"": ""**.bconfig"",
   ""webroot"": ""to_be_overridden""
@@ -81,7 +100,7 @@ namespace Microsoft.Framework.PackageManager
                 };
 
                 var exitCode = KpmTestUtils.ExecKpm(
-                    krePath,
+                    kreHomeDir,
                     subcommand: "pack",
                     arguments: string.Format("--out {0} --wwwroot . --wwwroot-out wwwroot",
                         testEnv.PackOutputDirPath),
@@ -89,7 +108,7 @@ namespace Microsoft.Framework.PackageManager
                     workingDir: testEnv.ProjectPath);
                 Assert.Equal(0, exitCode);
 
-                var expectedOutputDir = TestUtils.CreateDirTree(expectedOutputStructure)
+                var expectedOutputDir = DirTree.CreateFromJson(expectedOutputStructure)
                     .WithFileContents(Path.Combine("approot", "src", testEnv.ProjectName, "project.json"), @"{
   ""packExclude"": ""**.bconfig"",
   ""webroot"": ""../../../wwwroot""
@@ -110,17 +129,17 @@ namespace Microsoft.Framework.PackageManager
     <add key=""kre-package-path"" value=""..\approot\packages"" />
     <add key=""kre-version"" value="""" />
     <add key=""kre-clr"" value="""" />
-    <add key=""kre-app-base"" value=""..\approot\src\PROJECT_NAME"" />
+    <add key=""kre-app-base"" value=""..\approot\src\{0}"" />
   </appSettings>
-</configuration>".Replace("PROJECT_NAME", testEnv.ProjectName));
+</configuration>", testEnv.ProjectName);
                 Assert.True(expectedOutputDir.MatchDirectoryOnDisk(testEnv.PackOutputDirPath,
                     compareFileContents: true));
             }
         }
 
         [Theory]
-        [MemberData("KrePaths")]
-        public void KpmPackWebApp_SubfolderAsPublicFolder(DisposableDirPath krePath)
+        [MemberData("KreHomeDirs")]
+        public void KpmPackWebApp_SubfolderAsPublicFolder(DisposableDir kreHomeDir)
         {
             var projectStructure = @"{
   '.': ['project.json', 'Config.json', 'Program.cs'],
@@ -159,9 +178,9 @@ namespace Microsoft.Framework.PackageManager
   }
 }".Replace("PROJECT_NAME", _projectName);
 
-            using (var testEnv = new KpmTestEnvironment(krePath, _projectName, _outputDirName))
+            using (var testEnv = new KpmTestEnvironment(kreHomeDir, _projectName, _outputDirName))
             {
-                TestUtils.CreateDirTree(projectStructure)
+                DirTree.CreateFromJson(projectStructure)
                     .WithFileContents("project.json", @"{
   ""packExclude"": ""**.useless"",
   ""webroot"": ""public""
@@ -174,7 +193,7 @@ namespace Microsoft.Framework.PackageManager
                 };
 
                 var exitCode = KpmTestUtils.ExecKpm(
-                    krePath,
+                    kreHomeDir,
                     subcommand: "pack",
                     arguments: string.Format("--out {0} --wwwroot-out wwwroot",
                         testEnv.PackOutputDirPath),
@@ -182,7 +201,7 @@ namespace Microsoft.Framework.PackageManager
                     workingDir: testEnv.ProjectPath);
                 Assert.Equal(0, exitCode);
 
-                var expectedOutputDir = TestUtils.CreateDirTree(expectedOutputStructure)
+                var expectedOutputDir = DirTree.CreateFromJson(expectedOutputStructure)
                     .WithFileContents(Path.Combine("approot", "src", testEnv.ProjectName, "project.json"), @"{
   ""packExclude"": ""**.useless"",
   ""webroot"": ""../../../wwwroot""
@@ -199,17 +218,17 @@ namespace Microsoft.Framework.PackageManager
     <add key=""kre-package-path"" value=""..\approot\packages"" />
     <add key=""kre-version"" value="""" />
     <add key=""kre-clr"" value="""" />
-    <add key=""kre-app-base"" value=""..\approot\src\PROJECT_NAME"" />
+    <add key=""kre-app-base"" value=""..\approot\src\{0}"" />
   </appSettings>
-</configuration>".Replace("PROJECT_NAME", testEnv.ProjectName));
+</configuration>", testEnv.ProjectName);
                 Assert.True(expectedOutputDir.MatchDirectoryOnDisk(testEnv.PackOutputDirPath,
                     compareFileContents: true));
             }
         }
 
         [Theory]
-        [MemberData("KrePaths")]
-        public void KpmPackConsoleApp(DisposableDirPath krePath)
+        [MemberData("KreHomeDirs")]
+        public void KpmPackConsoleApp(DisposableDir kreHomeDir)
         {
             var projectStructure = @"{
   '.': ['project.json', 'Config.json', 'Program.cs'],
@@ -233,9 +252,9 @@ namespace Microsoft.Framework.PackageManager
     }
   }".Replace("PROJECT_NAME", _projectName);
 
-            using (var testEnv = new KpmTestEnvironment(krePath, _projectName, _outputDirName))
+            using (var testEnv = new KpmTestEnvironment(kreHomeDir, _projectName, _outputDirName))
             {
-                TestUtils.CreateDirTree(projectStructure)
+                DirTree.CreateFromJson(projectStructure)
                     .WithFileContents("project.json", @"{
   ""packExclude"": ""Data/Backup/**""
 }")
@@ -247,7 +266,7 @@ namespace Microsoft.Framework.PackageManager
                 };
 
                 var exitCode = KpmTestUtils.ExecKpm(
-                    krePath,
+                    kreHomeDir,
                     subcommand: "pack",
                     arguments: string.Format("--out {0}",
                         testEnv.PackOutputDirPath),
@@ -255,7 +274,7 @@ namespace Microsoft.Framework.PackageManager
                     workingDir: testEnv.ProjectPath);
                 Assert.Equal(0, exitCode);
 
-                var expectedOutputDir = TestUtils.CreateDirTree(expectedOutputStructure)
+                var expectedOutputDir = DirTree.CreateFromJson(expectedOutputStructure)
                     .WithFileContents(Path.Combine("approot", "src", testEnv.ProjectName, "project.json"), @"{
   ""packExclude"": ""Data/Backup/**""
 }")
@@ -269,8 +288,8 @@ namespace Microsoft.Framework.PackageManager
         }
 
         [Theory]
-        [MemberData("KrePaths")]
-        public void FoldersAsFilePatternsAutoGlob(DisposableDirPath krePath)
+        [MemberData("KreHomeDirs")]
+        public void FoldersAsFilePatternsAutoGlob(DisposableDir kreHomeDir)
         {
             var projectStructure = @"{
   '.': ['project.json', 'FileWithoutExtension'],
@@ -311,9 +330,9 @@ namespace Microsoft.Framework.PackageManager
   }
 }".Replace("PROJECT_NAME", _projectName);
 
-            using (var testEnv = new KpmTestEnvironment(krePath, _projectName, _outputDirName))
+            using (var testEnv = new KpmTestEnvironment(kreHomeDir, _projectName, _outputDirName))
             {
-                TestUtils.CreateDirTree(projectStructure)
+                DirTree.CreateFromJson(projectStructure)
                     .WithFileContents("project.json", @"{
   ""packExclude"": [
     ""FileWithoutExtension"",
@@ -336,7 +355,7 @@ namespace Microsoft.Framework.PackageManager
                 };
 
                 var exitCode = KpmTestUtils.ExecKpm(
-                    krePath,
+                    kreHomeDir,
                     subcommand: "pack",
                     arguments: string.Format("--out {0}",
                         testEnv.PackOutputDirPath),
@@ -344,7 +363,7 @@ namespace Microsoft.Framework.PackageManager
                     workingDir: testEnv.ProjectPath);
                 Assert.Equal(0, exitCode);
 
-                var expectedOutputDir = TestUtils.CreateDirTree(expectedOutputStructure)
+                var expectedOutputDir = DirTree.CreateFromJson(expectedOutputStructure)
                     .WithFileContents(Path.Combine("approot", "src", testEnv.ProjectName, "project.json"), @"{
   ""packExclude"": [
     ""FileWithoutExtension"",
@@ -369,8 +388,8 @@ namespace Microsoft.Framework.PackageManager
         }
 
         [Theory]
-        [MemberData("KrePaths")]
-        public void WildcardMatchingFacts(DisposableDirPath krePath)
+        [MemberData("KreHomeDirs")]
+        public void WildcardMatchingFacts(DisposableDir kreHomeDir)
         {
             var projectStructure = @"{
   '.': ['project.json'],
@@ -413,9 +432,9 @@ namespace Microsoft.Framework.PackageManager
   }
 }".Replace("PROJECT_NAME", _projectName);
 
-            using (var testEnv = new KpmTestEnvironment(krePath, _projectName, _outputDirName))
+            using (var testEnv = new KpmTestEnvironment(kreHomeDir, _projectName, _outputDirName))
             {
-                TestUtils.CreateDirTree(projectStructure)
+                DirTree.CreateFromJson(projectStructure)
                     .WithFileContents("project.json", @"{
   ""packExclude"": [
     ""UselessFolder1\\**"",
@@ -433,7 +452,7 @@ namespace Microsoft.Framework.PackageManager
                 };
 
                 var exitCode = KpmTestUtils.ExecKpm(
-                    krePath,
+                    kreHomeDir,
                     subcommand: "pack",
                     arguments: string.Format("--out {0}",
                         testEnv.PackOutputDirPath),
@@ -441,7 +460,7 @@ namespace Microsoft.Framework.PackageManager
                     workingDir: testEnv.ProjectPath);
                 Assert.Equal(0, exitCode);
 
-                var expectedOutputDir = TestUtils.CreateDirTree(expectedOutputStructure)
+                var expectedOutputDir = DirTree.CreateFromJson(expectedOutputStructure)
                     .WithFileContents(Path.Combine("approot", "src", testEnv.ProjectName, "project.json"), @"{
   ""packExclude"": [
     ""UselessFolder1\\**"",
@@ -459,10 +478,10 @@ namespace Microsoft.Framework.PackageManager
                     compareFileContents: true));
             }
         }
-        
+
         [Theory]
-        [MemberData("KrePaths")]
-        public void CorrectlyExcludeFoldersStartingWithDots(DisposableDirPath krePath)
+        [MemberData("KreHomeDirs")]
+        public void CorrectlyExcludeFoldersStartingWithDots(DisposableDir kreHomeDir)
         {
             var projectStructure = @"{
   '.': ['project.json', 'File', '.FileStartingWithDot', 'File.Having.Dots'],
@@ -517,9 +536,9 @@ namespace Microsoft.Framework.PackageManager
   }
 }".Replace("PROJECT_NAME", _projectName);
 
-            using (var testEnv = new KpmTestEnvironment(krePath, _projectName, _outputDirName))
+            using (var testEnv = new KpmTestEnvironment(kreHomeDir, _projectName, _outputDirName))
             {
-                TestUtils.CreateDirTree(projectStructure)
+                DirTree.CreateFromJson(projectStructure)
                     .WithFileContents("project.json", @"{
 }")
                     .WriteTo(testEnv.ProjectPath);
@@ -530,7 +549,7 @@ namespace Microsoft.Framework.PackageManager
                 };
 
                 var exitCode = KpmTestUtils.ExecKpm(
-                    krePath,
+                    kreHomeDir,
                     subcommand: "pack",
                     arguments: string.Format("--out {0}",
                         testEnv.PackOutputDirPath),
@@ -538,7 +557,7 @@ namespace Microsoft.Framework.PackageManager
                     workingDir: testEnv.ProjectPath);
                 Assert.Equal(0, exitCode);
 
-                var expectedOutputDir = TestUtils.CreateDirTree(expectedOutputStructure)
+                var expectedOutputDir = DirTree.CreateFromJson(expectedOutputStructure)
                     .WithFileContents(Path.Combine("approot", "src", testEnv.ProjectName, "project.json"), @"{
 }")
                     .WithFileContents(Path.Combine("approot", "global.json"), @"{
@@ -551,8 +570,8 @@ namespace Microsoft.Framework.PackageManager
         }
 
         [Theory]
-        [MemberData("KrePaths")]
-        public void VerifyDefaultPackExcludePatterns(DisposableDirPath krePath)
+        [MemberData("KreHomeDirs")]
+        public void VerifyDefaultPackExcludePatterns(DisposableDir kreHomeDir)
         {
             var projectStructure = @"{
   '.': ['project.json', 'File', '.FileStartingWithDot'],
@@ -584,9 +603,9 @@ namespace Microsoft.Framework.PackageManager
   }
 }".Replace("PROJECT_NAME", _projectName);
 
-            using (var testEnv = new KpmTestEnvironment(krePath, _projectName, _outputDirName))
+            using (var testEnv = new KpmTestEnvironment(kreHomeDir, _projectName, _outputDirName))
             {
-                TestUtils.CreateDirTree(projectStructure)
+                DirTree.CreateFromJson(projectStructure)
                     .WithFileContents("project.json", @"{
 }")
                     .WriteTo(testEnv.ProjectPath);
@@ -597,7 +616,7 @@ namespace Microsoft.Framework.PackageManager
                 };
 
                 var exitCode = KpmTestUtils.ExecKpm(
-                    krePath,
+                    kreHomeDir,
                     subcommand: "pack",
                     arguments: string.Format("--out {0}",
                         testEnv.PackOutputDirPath),
@@ -605,7 +624,7 @@ namespace Microsoft.Framework.PackageManager
                     workingDir: testEnv.ProjectPath);
                 Assert.Equal(0, exitCode);
 
-                var expectedOutputDir = TestUtils.CreateDirTree(expectedOutputStructure)
+                var expectedOutputDir = DirTree.CreateFromJson(expectedOutputStructure)
                     .WithFileContents(Path.Combine("approot", "src", testEnv.ProjectName, "project.json"), @"{
 }")
                     .WithFileContents(Path.Combine("approot", "global.json"), @"{
@@ -618,8 +637,8 @@ namespace Microsoft.Framework.PackageManager
         }
 
         [Theory]
-        [MemberData("KrePaths")]
-        public void KpmPackWebApp_AppendToExistingWebConfig(DisposableDirPath krePath)
+        [MemberData("KreHomeDirs")]
+        public void KpmPackWebApp_AppendToExistingWebConfig(DisposableDir kreHomeDir)
         {
             var projectStructure = @"{
   '.': ['project.json', 'web.config'],
@@ -642,9 +661,9 @@ namespace Microsoft.Framework.PackageManager
   </nonRelatedElement>
 </configuration>";
 
-            using (var testEnv = new KpmTestEnvironment(krePath, _projectName, _outputDirName))
+            using (var testEnv = new KpmTestEnvironment(kreHomeDir, _projectName, _outputDirName))
             {
-                TestUtils.CreateDirTree(projectStructure)
+                DirTree.CreateFromJson(projectStructure)
                     .WithFileContents("project.json", @"{
   ""webroot"": ""public""
 }")
@@ -657,7 +676,7 @@ namespace Microsoft.Framework.PackageManager
                 };
 
                 var exitCode = KpmTestUtils.ExecKpm(
-                    krePath,
+                    kreHomeDir,
                     subcommand: "pack",
                     arguments: string.Format("--out {0} --wwwroot public --wwwroot-out wwwroot",
                         testEnv.PackOutputDirPath),
@@ -665,7 +684,7 @@ namespace Microsoft.Framework.PackageManager
                     workingDir: testEnv.ProjectPath);
                 Assert.Equal(0, exitCode);
 
-                var expectedOutputDir = TestUtils.CreateDirTree(expectedOutputStructure)
+                var expectedOutputDir = DirTree.CreateFromJson(expectedOutputStructure)
                     .WithFileContents(Path.Combine("approot", "src", testEnv.ProjectName, "project.json"), @"{
   ""webroot"": ""../../../wwwroot""
 }")
@@ -685,17 +704,17 @@ namespace Microsoft.Framework.PackageManager
     <add key=""kre-package-path"" value=""..\approot\packages"" />
     <add key=""kre-version"" value="""" />
     <add key=""kre-clr"" value="""" />
-    <add key=""kre-app-base"" value=""..\approot\src\PROJECT_NAME"" />
+    <add key=""kre-app-base"" value=""..\approot\src\{0}"" />
   </appSettings>
-</configuration>".Replace("PROJECT_NAME", testEnv.ProjectName));
+</configuration>", testEnv.ProjectName);
                 Assert.True(expectedOutputDir.MatchDirectoryOnDisk(testEnv.PackOutputDirPath,
                     compareFileContents: true));
             }
         }
 
         [Theory]
-        [MemberData("KrePaths")]
-        public void KpmPackWebApp_UpdateExistingWebConfig(DisposableDirPath krePath)
+        [MemberData("KreHomeDirs")]
+        public void KpmPackWebApp_UpdateExistingWebConfig(DisposableDir kreHomeDir)
         {
             var projectStructure = @"{
   '.': ['project.json', 'web.config'],
@@ -727,9 +746,9 @@ namespace Microsoft.Framework.PackageManager
   </appSettings>
 </configuration>";
 
-            using (var testEnv = new KpmTestEnvironment(krePath, _projectName, _outputDirName))
+            using (var testEnv = new KpmTestEnvironment(kreHomeDir, _projectName, _outputDirName))
             {
-                TestUtils.CreateDirTree(projectStructure)
+                DirTree.CreateFromJson(projectStructure)
                     .WithFileContents("project.json", @"{
   ""webroot"": ""../../../wwwroot""
 }")
@@ -742,7 +761,7 @@ namespace Microsoft.Framework.PackageManager
                 };
 
                 var exitCode = KpmTestUtils.ExecKpm(
-                    krePath,
+                    kreHomeDir,
                     subcommand: "pack",
                     arguments: string.Format("--out {0} --wwwroot public --wwwroot-out wwwroot",
                         testEnv.PackOutputDirPath),
@@ -750,7 +769,7 @@ namespace Microsoft.Framework.PackageManager
                     workingDir: testEnv.ProjectPath);
                 Assert.Equal(0, exitCode);
 
-                var expectedOutputDir = TestUtils.CreateDirTree(expectedOutputStructure)
+                var expectedOutputDir = DirTree.CreateFromJson(expectedOutputStructure)
                     .WithFileContents(Path.Combine("approot", "src", testEnv.ProjectName, "project.json"), @"{
   ""webroot"": ""../../../wwwroot""
 }")
@@ -771,9 +790,181 @@ namespace Microsoft.Framework.PackageManager
     <add key=""kre-package-path"" value=""..\approot\packages"" />
     <add key=""kre-version"" value="""" />
     <add key=""kre-clr"" value="""" />
-    <add key=""kre-app-base"" value=""..\approot\src\PROJECT_NAME"" />
+    <add key=""kre-app-base"" value=""..\approot\src\{0}"" />
   </appSettings>
-</configuration>".Replace("PROJECT_NAME", testEnv.ProjectName));
+</configuration>", testEnv.ProjectName);
+                Assert.True(expectedOutputDir.MatchDirectoryOnDisk(testEnv.PackOutputDirPath,
+                    compareFileContents: true));
+            }
+        }
+
+        [Theory]
+        [MemberData("KreHomeDirs")]
+        public void GenerateBatchFilesAndBashScriptsWithoutPackedRuntime(DisposableDir kreHomeDir)
+        {
+            var projectStructure = @"{
+  '.': ['project.json'],
+  'packages': {}
+}";
+            var expectedOutputStructure = @"{
+  '.': ['run.cmd', 'run', 'kestrel.cmd', 'kestrel'],
+  'approot': {
+    'global.json': '',
+    'src': {
+      'PROJECT_NAME': {
+        '.': ['project.json']
+      }
+    }
+  }
+}".Replace("PROJECT_NAME", _projectName);
+
+            using (var testEnv = new KpmTestEnvironment(kreHomeDir, _projectName, _outputDirName))
+            {
+                DirTree.CreateFromJson(projectStructure)
+                    .WithFileContents("project.json", @"{
+  ""commands"": {
+    ""run"": ""run server.urls=http://localhost:5003"",
+    ""kestrel"": ""Microsoft.AspNet.Hosting --server Kestrel --server.urls http://localhost:5004""
+  },
+  ""frameworks"": {
+    ""aspnet50"": { },
+    ""aspnetcore50"": { }
+  }
+}")
+                    .WriteTo(testEnv.ProjectPath);
+
+                var environment = new Dictionary<string, string>()
+                {
+                    { "KRE_PACKAGES", Path.Combine(testEnv.ProjectPath, "packages") }
+                };
+
+                var exitCode = KpmTestUtils.ExecKpm(
+                    kreHomeDir,
+                    subcommand: "pack",
+                    arguments: string.Format("--out {0}",
+                        testEnv.PackOutputDirPath),
+                    environment: environment,
+                    workingDir: testEnv.ProjectPath);
+                Assert.Equal(0, exitCode);
+
+                var expectedOutputDir = DirTree.CreateFromJson(expectedOutputStructure)
+                    .WithFileContents(Path.Combine("approot", "src", testEnv.ProjectName, "project.json"), @"{
+  ""commands"": {
+    ""run"": ""run server.urls=http://localhost:5003"",
+    ""kestrel"": ""Microsoft.AspNet.Hosting --server Kestrel --server.urls http://localhost:5004""
+  },
+  ""frameworks"": {
+    ""aspnet50"": { },
+    ""aspnetcore50"": { }
+  }
+}")
+                    .WithFileContents(Path.Combine("approot", "global.json"), @"{
+  ""dependencies"": {},
+  ""packages"": ""packages""
+}")
+                    .WithFileContents("run.cmd", BatchFileTemplate, string.Empty, testEnv.ProjectName, "run")
+                    .WithFileContents("kestrel.cmd", BatchFileTemplate, string.Empty, testEnv.ProjectName, "kestrel")
+                    .WithFileContents("run",
+                        BashScriptTemplate, testEnv.ProjectName, string.Empty, "run")
+                    .WithFileContents("kestrel",
+                        BashScriptTemplate, testEnv.ProjectName, string.Empty, "kestrel");
+
+                Assert.True(expectedOutputDir.MatchDirectoryOnDisk(testEnv.PackOutputDirPath,
+                    compareFileContents: true));
+            }
+        }
+
+        [Theory]
+        [MemberData("KreHomeDirs")]
+        public void GenerateBatchFilesAndBashScriptsWithPackedRuntime(DisposableDir kreHomeDir)
+        {
+            // Each KRE home only contains one KRE package, which is the one we are currently testing against
+            var kreRoot = Directory.EnumerateDirectories(Path.Combine(kreHomeDir, "packages"), "KRE-*").First();
+            var kreName = new DirectoryInfo(kreRoot).Name;
+
+            var projectStructure = @"{
+  '.': ['project.json'],
+  'packages': {}
+}";
+            var expectedOutputStructure = @"{
+  '.': ['run.cmd', 'run', 'kestrel.cmd', 'kestrel'],
+  'approot': {
+    'global.json': '',
+    'src': {
+      'PROJECT_NAME': {
+        '.': ['project.json']
+      }
+    },
+    'packages': {
+      'KRE_PACKAGE_NAME': {}
+    }
+  }
+}".Replace("PROJECT_NAME", _projectName).Replace("KRE_PACKAGE_NAME", kreName);
+
+            using (var testEnv = new KpmTestEnvironment(kreHomeDir, _projectName, _outputDirName))
+            {
+                DirTree.CreateFromJson(projectStructure)
+                    .WithFileContents("project.json", @"{
+  ""commands"": {
+    ""run"": ""run server.urls=http://localhost:5003"",
+    ""kestrel"": ""Microsoft.AspNet.Hosting --server Kestrel --server.urls http://localhost:5004""
+  },
+  ""frameworks"": {
+    ""aspnet50"": { },
+    ""aspnetcore50"": { }
+  }
+}")
+                    .WriteTo(testEnv.ProjectPath);
+
+                var environment = new Dictionary<string, string>()
+                {
+                    { "KRE_PACKAGES", Path.Combine(testEnv.ProjectPath, "packages") },
+                    { "KRE_HOME", kreHomeDir },
+                    { "KRE_TRACE", "1" }
+                };
+
+                var exitCode = KpmTestUtils.ExecKpm(
+                    kreHomeDir,
+                    subcommand: "pack",
+                    arguments: string.Format("--out {0} --runtime {1}",
+                        testEnv.PackOutputDirPath, kreName),
+                    environment: environment,
+                    workingDir: testEnv.ProjectPath);
+                Assert.Equal(0, exitCode);
+
+                var kreNupkgSHA = TestUtils.ComputeSHA(Path.Combine(kreRoot, kreName + ".nupkg"));
+                var runtimeSubDir = DirTree.CreateFromDirectory(kreRoot)
+                    .WithFileContents(kreName + ".nupkg.sha512", kreNupkgSHA)
+                    .RemoveFile("[Content_Types].xml")
+                    .RemoveFile(Path.Combine("_rels", ".rels"))
+                    .RemoveSubDir("package");
+
+                var batchFileBinPath = string.Format(@"%~dp0approot\packages\{0}\bin\", kreName);
+                var bashScriptBinPath = string.Format("$DIR/approot/packages/{0}/bin/", kreName);
+
+                var expectedOutputDir = DirTree.CreateFromJson(expectedOutputStructure)
+                    .WithFileContents(Path.Combine("approot", "src", testEnv.ProjectName, "project.json"), @"{
+  ""commands"": {
+    ""run"": ""run server.urls=http://localhost:5003"",
+    ""kestrel"": ""Microsoft.AspNet.Hosting --server Kestrel --server.urls http://localhost:5004""
+  },
+  ""frameworks"": {
+    ""aspnet50"": { },
+    ""aspnetcore50"": { }
+  }
+}")
+                    .WithFileContents(Path.Combine("approot", "global.json"), @"{
+  ""dependencies"": {},
+  ""packages"": ""packages""
+}")
+                    .WithFileContents("run.cmd", BatchFileTemplate, batchFileBinPath, testEnv.ProjectName, "run")
+                    .WithFileContents("kestrel.cmd", BatchFileTemplate, batchFileBinPath, testEnv.ProjectName, "kestrel")
+                    .WithFileContents("run",
+                        BashScriptTemplate, testEnv.ProjectName, bashScriptBinPath, "run")
+                    .WithFileContents("kestrel",
+                        BashScriptTemplate, testEnv.ProjectName, bashScriptBinPath, "kestrel")
+                    .WithSubDir(Path.Combine("approot", "packages", kreName), runtimeSubDir);
+
                 Assert.True(expectedOutputDir.MatchDirectoryOnDisk(testEnv.PackOutputDirPath,
                     compareFileContents: true));
             }
