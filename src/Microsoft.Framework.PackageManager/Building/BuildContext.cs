@@ -38,7 +38,7 @@ namespace Microsoft.Framework.PackageManager
         public void Initialize(IReport report)
         {
             _applicationHostContext.DependencyWalker.Walk(_project.Name, _project.Version, _targetFramework);
-            ShowDependencyInformation(report);
+            //ShowDependencyInformation(report);
         }
 
         public bool Build(IList<string> warnings, IList<string> errors)
