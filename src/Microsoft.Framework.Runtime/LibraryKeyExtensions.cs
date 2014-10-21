@@ -29,5 +29,16 @@ namespace Microsoft.Framework.Runtime
                 Aspect = target.Aspect,
             };
         }
+
+        public static ILibraryKey ChangeAspect(this ILibraryKey target, string aspect)
+        {
+            return new LibraryKey
+            {
+                Name = target.Name,
+                TargetFramework = target.TargetFramework,
+                Configuration = target.Configuration,
+                Aspect = aspect,
+            };
+        }
     }
 }

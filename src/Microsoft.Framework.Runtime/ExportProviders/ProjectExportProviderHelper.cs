@@ -52,7 +52,9 @@ namespace Microsoft.Framework.Runtime
 
                 if (!dependenciesOnly || (dependenciesOnly && !isRoot))
                 {
-                    var libraryExport = libraryExportProvider.GetLibraryExport(target.ChangeName(node.Library.Name));
+                    var libraryExport = libraryExportProvider.GetLibraryExport(target
+                        .ChangeName(node.Library.Name)
+                        .ChangeAspect(null));
 
                     if (libraryExport == null)
                     {
@@ -78,7 +80,7 @@ namespace Microsoft.Framework.Runtime
                 {
                     var childNode = new Node
                     {
-                        Library = manager.GetLibraryInformation(dependency, target.Aspect),
+                        Library = manager.GetLibraryInformation(dependency, null),
                         Parent = node
                     };
 
