@@ -14,17 +14,17 @@ namespace klr.hosting
             return Assembly.LoadFile(path);
         }
 
-        public Assembly LoadStream(Stream assemblyStream, Stream pdbStream)
+        public Assembly LoadStream(Stream assemblyStream, Stream assemblySymbols)
         {
             byte[] assemblyBytes = GetStreamAsByteArray(assemblyStream);
-            byte[] pdbBytes = null;
+            byte[] assemblySymbolBytes = null;
 
-            if (pdbStream != null)
+            if (assemblySymbols != null)
             {
-                pdbBytes = GetStreamAsByteArray(pdbStream);
+                assemblySymbolBytes = GetStreamAsByteArray(assemblySymbols);
             }
 
-            return Assembly.Load(assemblyBytes, pdbBytes);
+            return Assembly.Load(assemblyBytes, assemblySymbolBytes);
         }
 
         private byte[] GetStreamAsByteArray(Stream stream)

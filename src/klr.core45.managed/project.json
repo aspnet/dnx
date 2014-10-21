@@ -2,11 +2,12 @@
     "version": "1.0.0-*",
     "compilationOptions" : { "define" : ["TRACE"], "allowUnsafe": true, "warningsAsErrors": true },
     "dependencies": {
-        "klr.hosting.shared" : "",
-        "Microsoft.Framework.CommandLineUtils" : ""
+        "klr.hosting.shared": "1.0.0-*",
+        "Microsoft.Framework.CommandLineUtils": "1.0.0-*",
+        "Microsoft.Framework.Runtime.Loader": "1.0.0-*"
     },
     "frameworks": {
-        "aspnetcore50" : { 
+        "aspnetcore50": {
             "dependencies": {
                 "System.Collections": "4.0.10-beta-*",
                 "System.Console": "4.0.0-beta-*",
@@ -22,5 +23,11 @@
                 "System.Threading.Tasks": "4.0.10-beta-*"
             }
         }
+    },
+
+    "scripts": {
+        "postbuild": [
+            "xcopy /F /Y /I bin\\Debug\\aspnetcore50\\*.* ..\\..\\artifacts\\build\\KRE-CoreCLR-x86\\bin"
+        ]
     }
 }

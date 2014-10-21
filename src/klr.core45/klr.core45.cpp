@@ -59,6 +59,8 @@ bool ScanDirectory(WCHAR* szDirectory, WCHAR* szPattern, LPWSTR pszTrustedPlatfo
                 wcscmp(ffd.cFileName, L"Microsoft.Framework.ApplicationHost.ni.dll") == 0 ||
                 wcscmp(ffd.cFileName, L"Microsoft.Framework.Runtime.dll") == 0 ||
                 wcscmp(ffd.cFileName, L"Microsoft.Framework.Runtime.ni.dll") == 0 ||
+                wcscmp(ffd.cFileName, L"Microsoft.Framework.Runtime.Loader.dll") == 0 ||
+                wcscmp(ffd.cFileName, L"Microsoft.Framework.Runtime.Loader.ni.dll") == 0 ||
                 wcscmp(ffd.cFileName, L"Microsoft.Framework.Runtime.Roslyn.dll") == 0 ||
                 wcscmp(ffd.cFileName, L"Microsoft.Framework.Runtime.Roslyn.ni.dll") == 0 ||
                 wcscmp(ffd.cFileName, L"Microsoft.Framework.Project.dll") == 0 ||

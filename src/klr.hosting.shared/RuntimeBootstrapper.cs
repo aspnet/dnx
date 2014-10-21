@@ -157,7 +157,7 @@ namespace klr.hosting
             };
 #if ASPNETCORE50
             var loaderImpl = new DelegateAssemblyLoadContext(loaderCallback);
-            loadStream = assemblyStream => loaderImpl.LoadStream(assemblyStream, pdbStream: null);
+            loadStream = assemblyStream => loaderImpl.LoadStream(assemblyStream, assemblySymbols: null);
             loadFile = path => loaderImpl.LoadFile(path);
 
             AssemblyLoadContext.InitializeDefaultContext(loaderImpl);
@@ -168,7 +168,7 @@ namespace klr.hosting
             }
 #else
             var loaderImpl = new LoaderEngine();
-            loadStream = assemblyStream => loaderImpl.LoadStream(assemblyStream, pdbStream: null);
+            loadStream = assemblyStream => loaderImpl.LoadStream(assemblyStream, assemblySymbols: null);
             loadFile = path => loaderImpl.LoadFile(path);
 
             ResolveEventHandler handler = (sender, a) =>
@@ -200,22 +200,18 @@ namespace klr.hosting
                 var assembly = Assembly.Load(new AssemblyName("klr.host"));
 
                 // Loader impl
-                // var loaderEngine = new DefaultLoaderEngine(loaderImpl);
-                var loaderEngineType = assembly.GetType("klr.host.DefaultLoaderEngine");
-                var loaderEngine = Activator.CreateInstance(loaderEngineType, loaderImpl);
-
                 // The following code is doing:
                 // var loaderContainer = new klr.host.LoaderContainer();
-                // var libLoader = new klr.host.PathBasedAssemblyLoader(loaderEngine, searchPaths);
+                // var libLoader = new klr.host.PathBasedAssemblyLoader(searchPaths);
                 // loaderContainer.AddLoader(libLoader);
-                // var bootstrapper = new klr.host.Bootstrapper(loaderContainer, loaderEngine);
+                // var bootstrapper = new klr.host.Bootstrapper(loaderContainer);
                 // bootstrapper.Main(bootstrapperArgs);
 
                 var loaderContainerType = assembly.GetType("klr.host.LoaderContainer");
                 var pathBasedLoaderType = assembly.GetType("klr.host.PathBasedAssemblyLoader");
 
                 var loaderContainer = Activator.CreateInstance(loaderContainerType);
-                var libLoader = Activator.CreateInstance(pathBasedLoaderType, new object[] { loaderEngine, searchPaths });
+                var libLoader = Activator.CreateInstance(pathBasedLoaderType, new object[] { searchPaths });
 
                 MethodInfo addLoaderMethodInfo = loaderContainerType.GetTypeInfo().GetDeclaredMethod("AddLoader");
                 var disposable = (IDisposable)addLoaderMethodInfo.Invoke(loaderContainer, new[] { libLoader });
@@ -225,7 +221,7 @@ namespace klr.hosting
 
                 var bootstrapperType = assembly.GetType("klr.host.Bootstrapper");
                 var mainMethod = bootstrapperType.GetTypeInfo().GetDeclaredMethod("Main");
-                var bootstrapper = Activator.CreateInstance(bootstrapperType, loaderContainer, loaderEngine);
+                var bootstrapper = Activator.CreateInstance(bootstrapperType, loaderContainer);
 
                 try
                 {

@@ -5,7 +5,7 @@ using Microsoft.Framework.Runtime;
 
 namespace Microsoft.Framework.DesignTimeHost
 {
-    public class NonLoadingLoaderEngine : IAssemblyLoaderEngine
+    public class NonLoadingLoadContext : IAssemblyLoadContext
     {
         public Assembly LoadFile(string path)
         {
@@ -27,6 +27,16 @@ namespace Microsoft.Framework.DesignTimeHost
             }
 
             return null;
+        }
+
+        public Assembly Load(string name)
+        {
+            throw new NotSupportedException();
+        }
+
+        public void Dispose()
+        {
+
         }
 
         public byte[] AssemblyBytes { get; set; }

@@ -11,19 +11,17 @@ using Microsoft.Framework.Runtime;
 using Microsoft.Framework.Runtime.Common;
 using Microsoft.Framework.Runtime.Common.DependencyInjection;
 using Microsoft.Framework.Runtime.Infrastructure;
+using Microsoft.Framework.Runtime.Loader;
 
 namespace klr.host
 {
     public class Bootstrapper
     {
         private readonly IAssemblyLoaderContainer _container;
-        private readonly IAssemblyLoaderEngine _loaderEngine;
 
-        public Bootstrapper(IAssemblyLoaderContainer container,
-                            IAssemblyLoaderEngine loaderEngine)
+        public Bootstrapper(IAssemblyLoaderContainer container)
         {
             _container = container;
-            _loaderEngine = loaderEngine;
         }
 
         public Task<int> Main(string[] args)
@@ -77,7 +75,7 @@ namespace klr.host
 
             var serviceProvider = new ServiceProvider();
             serviceProvider.Add(typeof(IAssemblyLoaderContainer), _container);
-            serviceProvider.Add(typeof(IAssemblyLoaderEngine), _loaderEngine);
+            serviceProvider.Add(typeof(IAssemblyLoadContextAccessor), LoadContextAccessor.Instance);
             serviceProvider.Add(typeof(IApplicationEnvironment), applicationEnvironment);
 
             CallContextServiceLocator.Locator.ServiceProvider = serviceProvider;

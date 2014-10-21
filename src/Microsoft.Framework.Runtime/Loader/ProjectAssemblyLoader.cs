@@ -11,18 +11,25 @@ namespace Microsoft.Framework.Runtime.Loader
     {
         private readonly IProjectResolver _projectResolver;
         private readonly ILibraryManager _libraryManager;
-        private readonly IAssemblyLoaderEngine _loaderEngine;
+        private readonly IAssemblyLoadContextAccessor _loadContextAccessor;
 
         public ProjectAssemblyLoader(IProjectResolver projectResovler,
-                                     IAssemblyLoaderEngine loaderEngine,
+                                     IAssemblyLoadContextAccessor loadContextAccessor,
                                      ILibraryManager libraryManager)
         {
             _projectResolver = projectResovler;
-            _loaderEngine = loaderEngine;
+            _loadContextAccessor = loadContextAccessor;
             _libraryManager = libraryManager;
         }
 
         public Assembly Load(string name)
+        {
+            IAssemblyLoadContext loadContext = _loadContextAccessor.GetLoadContext(typeof(ProjectAssemblyLoader).GetTypeInfo().Assembly);
+
+            return Load(name, loadContext);
+        }
+
+        public Assembly Load(string name, IAssemblyLoadContext loadContext)
         {
             // An assembly name like "MyLibrary!alternate!more-text"
             // is parsed into:
@@ -31,7 +38,7 @@ namespace Microsoft.Framework.Runtime.Loader
             // and the more-text may be used to force a recompilation of an aspect that would
             // otherwise have been cached by some layer within Assembly.Load
 
-            String aspect = null;
+            string aspect = null;
             var parts = name.Split(new[] { '!' }, 3);
             if (parts.Length != 1)
             {
@@ -56,7 +63,7 @@ namespace Microsoft.Framework.Runtime.Loader
             {
                 if (string.Equals(projectReference.Name, name, StringComparison.OrdinalIgnoreCase))
                 {
-                    return projectReference.Load(_loaderEngine);
+                    return projectReference.Load(loadContext);
                 }
             }
 
