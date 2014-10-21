@@ -44,7 +44,7 @@ namespace Microsoft.Framework.PackageManager
 }";
             var expectedOutputStructure = @"{
   'wwwroot': {
-    '.': ['project.json', 'Config.json', 'Program.cs', 'build_config1.bconfig', 'k.ini', 'web.config'],
+    '.': ['project.json', 'Config.json', 'Program.cs', 'build_config1.bconfig', 'web.config'],
       'Views': {
         'Home': ['index.cshtml'],
         'Shared': ['_Layout.cshtml']
@@ -101,8 +101,6 @@ namespace Microsoft.Framework.PackageManager
   ""packExclude"": ""**.bconfig"",
   ""webroot"": ""to_be_overridden""
 }")
-                    .WithFileContents(Path.Combine("wwwroot", "k.ini"), @"KRE_APPBASE=..\approot\src\"
-                        + testEnv.ProjectName)
                     .WithFileContents(Path.Combine("approot", "global.json"), @"{
   ""dependencies"": {},
   ""packages"": ""packages""
@@ -144,7 +142,6 @@ namespace Microsoft.Framework.PackageManager
 }";
             var expectedOutputStructure = @"{
   'wwwroot': {
-    'k.ini': '',
     'web.config': '',
     'Scripts': ['bootstrap.js', 'jquery.js'],
     'Images': ['logo.png'],
@@ -193,8 +190,6 @@ namespace Microsoft.Framework.PackageManager
   ""packExclude"": ""**.useless"",
   ""webroot"": ""WEB_ROOT""
 }".Replace("WEB_ROOT", Path.Combine("..", "..", "..", "wwwroot").Replace(@"\", @"\\")))
-                    .WithFileContents(Path.Combine("wwwroot", "k.ini"), @"KRE_APPBASE=..\approot\src\"
-                        + testEnv.ProjectName)
                     .WithFileContents(Path.Combine("approot", "global.json"), @"{
   ""dependencies"": {},
   ""packages"": ""packages""

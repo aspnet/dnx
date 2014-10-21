@@ -305,55 +305,9 @@ namespace Microsoft.Framework.PackageManager.Packing
             // Copy content files (e.g. html, js and images) of main project into public app folder
             CopyContentFiles(root, project, wwwRootOutPath);
 
-            GenerateKIniFileForTargetProject(root);
-
-            GenerateKIniFileForWwwrootOut(wwwRootOutPath);
-
             GenerateWebConfigFileForWwwrootOut(root, wwwRootOutPath);
 
             CopyAspNetLoaderDll(root, wwwRootOutPath);
-        }
-
-        private void GenerateKIniFileForTargetProject(PackRoot root)
-        {
-            var defaultRuntime = root.Runtimes.FirstOrDefault();
-            var iniFilePath = Path.Combine(TargetPath, "k.ini");
-            if (defaultRuntime != null && !File.Exists(iniFilePath))
-            {
-                var parts = defaultRuntime.Name.Split(new[] { '.' }, 2);
-                if (parts.Length == 2)
-                {
-                    var versionNumber = parts[1];
-                    parts = parts[0].Split(new[] { '-' }, 3);
-                    if (parts.Length == 3)
-                    {
-                        var flavor = parts[1];
-                        File.WriteAllText(iniFilePath, string.Format(@"[Runtime]
-KRE_VERSION={0}
-KRE_FLAVOR={1}
-KRE_CONFIGURATION={2}
-",
-versionNumber,
-flavor,
-root.Configuration));
-                    }
-                }
-            }
-        }
-
-        private void GenerateKIniFileForWwwrootOut(string wwwRootOutPath)
-        {
-            // Generate k.ini for public app folder
-            var wwwRootOutIniFilePath = Path.Combine(wwwRootOutPath, "k.ini");
-            var appBaseLine = string.Format("KRE_APPBASE={0}", _applicationBase);
-            var iniFilePath = Path.Combine(TargetPath, "k.ini");
-            var iniContents = string.Empty;
-            if (File.Exists(iniFilePath))
-            {
-                iniContents = File.ReadAllText(iniFilePath);
-            }
-            File.WriteAllText(wwwRootOutIniFilePath,
-                string.Format("{0}{1}", iniContents, appBaseLine));
         }
 
         private void GenerateWebConfigFileForWwwrootOut(PackRoot root, string wwwRootOutPath)
