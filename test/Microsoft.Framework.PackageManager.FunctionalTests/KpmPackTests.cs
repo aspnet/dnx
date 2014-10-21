@@ -619,5 +619,167 @@ namespace Microsoft.Framework.PackageManager
                     compareFileContents: true));
             }
         }
+
+        [Theory]
+        [MemberData("KrePaths")]
+        public void KpmPackWebApp_AppendToExistingWebConfig(string krePath)
+        {
+            var projectStructure = @"{
+  '.': ['project.json', 'web.config'],
+  'public': ['index.html'],
+  'packages': {}
+}";
+            var expectedOutputStructure = @"{
+  'wwwroot': ['web.config', 'index.html'],
+  'approot': {
+    'global.json': '',
+    'src': {
+      'PROJECT_NAME': ['project.json', 'web.config']
+    }
+  }
+}".Replace("PROJECT_NAME", _projectName);
+            var webConfigContents = @"<?xml version=""1.0"" encoding=""utf-8""?>
+<configuration>
+  <nonRelatedElement>
+    <add key=""non-related-key"" value=""non-related-value"" />
+  </nonRelatedElement>
+</configuration>";
+
+            using (var testEnv = new KpmTestEnvironment(krePath, _projectName, _outputDirName))
+            {
+                TestUtils.CreateDirTree(projectStructure)
+                    .WithFileContents("project.json", @"{
+  ""webroot"": ""public""
+}")
+                    .WithFileContents("web.config", webConfigContents)
+                    .WriteTo(testEnv.ProjectPath);
+
+                var environment = new Dictionary<string, string>()
+                {
+                    { "KRE_PACKAGES", Path.Combine(testEnv.ProjectPath, "packages") }
+                };
+
+                var exitCode = TestUtils.ExecKpm(
+                    krePath,
+                    subcommand: "pack",
+                    arguments: string.Format("--out {0} --wwwroot public --wwwroot-out wwwroot",
+                        testEnv.PackOutputDirPath),
+                    environment: environment,
+                    workingDir: testEnv.ProjectPath);
+                Assert.Equal(0, exitCode);
+
+                var expectedOutputDir = TestUtils.CreateDirTree(expectedOutputStructure)
+                    .WithFileContents(Path.Combine("approot", "src", testEnv.ProjectName, "project.json"), @"{
+  ""webroot"": ""WEB_ROOT""
+}".Replace("WEB_ROOT", Path.Combine("..", "..", "..", "wwwroot").Replace(@"\", @"\\")))
+                    .WithFileContents(Path.Combine("approot", "src", testEnv.ProjectName, "web.config"), webConfigContents)
+                    .WithFileContents(Path.Combine("approot", "global.json"), @"{
+  ""dependencies"": {},
+  ""packages"": ""packages""
+}")
+                    .WithFileContents(Path.Combine("wwwroot", "web.config"), @"<?xml version=""1.0"" encoding=""utf-8""?>
+<configuration>
+  <nonRelatedElement>
+    <add key=""non-related-key"" value=""non-related-value"" />
+  </nonRelatedElement>
+  <appSettings>
+    <add key=""kpm-package-path"" value=""..\approot\packages"" />
+    <add key=""bootstrapper-version"" value="""" />
+    <add key=""kre-package-path"" value=""..\approot\packages"" />
+    <add key=""kre-version"" value="""" />
+    <add key=""kre-clr"" value="""" />
+    <add key=""kre-app-base"" value=""..\approot\src\PROJECT_NAME"" />
+  </appSettings>
+</configuration>".Replace("PROJECT_NAME", testEnv.ProjectName));
+                Assert.True(expectedOutputDir.MatchDirectoryOnDisk(testEnv.PackOutputDirPath,
+                    compareFileContents: true));
+            }
+        }
+
+        [Theory]
+        [MemberData("KrePaths")]
+        public void KpmPackWebApp_UpdateExistingWebConfig(string krePath)
+        {
+            var projectStructure = @"{
+  '.': ['project.json', 'web.config'],
+  'public': ['index.html'],
+  'packages': {}
+}";
+            var expectedOutputStructure = @"{
+  'wwwroot': ['web.config', 'index.html'],
+  'approot': {
+    'global.json': '',
+    'src': {
+      'PROJECT_NAME': ['project.json', 'web.config']
+    }
+  }
+}".Replace("PROJECT_NAME", _projectName);
+            var webConfigContents = @"<?xml version=""1.0"" encoding=""utf-8""?>
+<configuration>
+  <nonRelatedElement>
+    <add key=""non-related-key"" value=""OLD_VALUE"" />
+  </nonRelatedElement>
+  <appSettings>
+    <add key=""non-related-key"" value=""OLD_VALUE"" />
+    <add key=""kpm-package-path"" value=""OLD_VALUE"" />
+    <add key=""bootstrapper-version"" value=""OLD_VALUE"" />
+    <add key=""kre-package-path"" value=""OLD_VALUE"" />
+    <add key=""kre-version"" value=""OLD_VALUE"" />
+    <add key=""kre-clr"" value=""OLD_VALUE"" />
+    <add key=""kre-app-base"" value=""OLD_VALUE"" />
+  </appSettings>
+</configuration>";
+
+            using (var testEnv = new KpmTestEnvironment(krePath, _projectName, _outputDirName))
+            {
+                TestUtils.CreateDirTree(projectStructure)
+                    .WithFileContents("project.json", @"{
+  ""webroot"": ""WEB_ROOT""
+}".Replace("WEB_ROOT", Path.Combine("..", "..", "..", "wwwroot").Replace(@"\", @"\\")))
+                    .WithFileContents("web.config", webConfigContents)
+                    .WriteTo(testEnv.ProjectPath);
+
+                var environment = new Dictionary<string, string>()
+                {
+                    { "KRE_PACKAGES", Path.Combine(testEnv.ProjectPath, "packages") }
+                };
+
+                var exitCode = TestUtils.ExecKpm(
+                    krePath,
+                    subcommand: "pack",
+                    arguments: string.Format("--out {0} --wwwroot public --wwwroot-out wwwroot",
+                        testEnv.PackOutputDirPath),
+                    environment: environment,
+                    workingDir: testEnv.ProjectPath);
+                Assert.Equal(0, exitCode);
+
+                var expectedOutputDir = TestUtils.CreateDirTree(expectedOutputStructure)
+                    .WithFileContents(Path.Combine("approot", "src", testEnv.ProjectName, "project.json"), @"{
+  ""webroot"": ""WEB_ROOT""
+}".Replace("WEB_ROOT", Path.Combine("..", "..", "..", "wwwroot").Replace(@"\", @"\\")))
+                    .WithFileContents(Path.Combine("approot", "src", testEnv.ProjectName, "web.config"), webConfigContents)
+                    .WithFileContents(Path.Combine("approot", "global.json"), @"{
+  ""dependencies"": {},
+  ""packages"": ""packages""
+}")
+                    .WithFileContents(Path.Combine("wwwroot", "web.config"), @"<?xml version=""1.0"" encoding=""utf-8""?>
+<configuration>
+  <nonRelatedElement>
+    <add key=""non-related-key"" value=""OLD_VALUE"" />
+  </nonRelatedElement>
+  <appSettings>
+    <add key=""non-related-key"" value=""OLD_VALUE"" />
+    <add key=""kpm-package-path"" value=""..\approot\packages"" />
+    <add key=""bootstrapper-version"" value="""" />
+    <add key=""kre-package-path"" value=""..\approot\packages"" />
+    <add key=""kre-version"" value="""" />
+    <add key=""kre-clr"" value="""" />
+    <add key=""kre-app-base"" value=""..\approot\src\PROJECT_NAME"" />
+  </appSettings>
+</configuration>".Replace("PROJECT_NAME", testEnv.ProjectName));
+                Assert.True(expectedOutputDir.MatchDirectoryOnDisk(testEnv.PackOutputDirPath,
+                    compareFileContents: true));
+            }
+        }
     }
 }
