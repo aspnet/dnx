@@ -8,7 +8,7 @@ using System.IO.Compression;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Xml;
-using System.Xml.XPath;
+using System.Xml.Linq;
 using Microsoft.Framework.Runtime;
 using Newtonsoft.Json.Linq;
 using NuGet;
@@ -362,27 +362,27 @@ root.Configuration));
             var wwwRootOutWebConfigFilePath = Path.Combine(wwwRootOutPath, "web.config");
             var webConfigFilePath = Path.Combine(TargetPath, "web.config");
 
-            var xmlDoc = new XmlDocument();
+            XDocument xDoc;
             if (File.Exists(webConfigFilePath))
             {
-                var xmlReader = XmlReader.Create(webConfigFilePath, new XmlReaderSettings
-                {
-                    ConformanceLevel = ConformanceLevel.Auto
-                });
-                xmlDoc.Load(xmlReader);
+                xDoc = XDocument.Parse(File.ReadAllText(webConfigFilePath));
             }
-
-            if (xmlDoc.DocumentElement == null)
+            else
             {
-                GetOrAddElement(xmlDoc, parent: xmlDoc, name: "configuration");
+                xDoc = new XDocument();
             }
 
-            if (xmlDoc.DocumentElement.Name != "configuration")
+            if (xDoc.Root == null)
+            {
+                xDoc.Add(new XElement("configuration"));
+            }
+
+            if (xDoc.Root.Name != "configuration")
             {
                 throw new InvalidDataException("'configuration' is the only valid name for root element of web.config file");
             }
 
-            var appSettingsNode = GetOrAddElement(xmlDoc, parent: xmlDoc.DocumentElement, name: "appSettings");
+            var appSettingsElement = GetOrAddElement(parent: xDoc.Root, name: "appSettings");
 
             var relativePackagesPath = PathUtility.GetRelativePath(wwwRootOutWebConfigFilePath, root.TargetPackagesPath);
             var defaultRuntime = root.Runtimes.FirstOrDefault();
@@ -399,15 +399,17 @@ root.Configuration));
 
             foreach (var pair in keyValuePairs)
             {
-                var addNode = appSettingsNode.SelectSingleNode(string.Format("add[@key = \"{0}\"]", pair.Key));
-                if (addNode == null)
+                var addElement = appSettingsElement.Elements()
+                    .Where(x => x.Name == "add" && x.Attribute("key").Value == pair.Key)
+                    .SingleOrDefault();
+                if (addElement == null)
                 {
-                    addNode = xmlDoc.CreateElement("add");
-                    appSettingsNode.AppendChild(addNode);
+                    addElement = new XElement("add");
+                    addElement.SetAttributeValue("key", pair.Key);
+                    appSettingsElement.Add(addElement);
                 }
 
-                SetOrAddAttribute(xmlDoc, parent: addNode, name: "key", value: pair.Key);
-                SetOrAddAttribute(xmlDoc, parent: addNode, name: "value", value: pair.Value);
+                addElement.SetAttributeValue("value", pair.Value);
             }
 
             var xmlWriterSettings = new XmlWriterSettings
@@ -418,30 +420,19 @@ root.Configuration));
 
             using (var xmlWriter = XmlWriter.Create(File.Create(wwwRootOutWebConfigFilePath), xmlWriterSettings))
             {
-                xmlDoc.WriteTo(xmlWriter);
+                xDoc.WriteTo(xmlWriter);
             }
         }
 
-        private static XmlNode GetOrAddElement(XmlDocument xmlDoc, XmlNode parent, string name)
+        private static XElement GetOrAddElement(XElement parent, string name)
         {
-            var node = parent.SelectSingleNode(name);
-            if (node == null)
+            var child = parent.Elements().Where(x => x.Name == name).FirstOrDefault();
+            if (child == null)
             {
-                node = xmlDoc.CreateElement(name);
-                parent.AppendChild(node);
+                child = new XElement(name);
+                parent.Add(child);
             }
-            return node;
-        }
-
-        private static void SetOrAddAttribute(XmlDocument xmlDoc, XmlNode parent, string name, string value)
-        {
-            var attr = parent.SelectSingleNode("@" + name);
-            if (attr ==  null)
-            {
-                attr = xmlDoc.CreateNode(XmlNodeType.Attribute, name, namespaceURI: null);
-            }
-            attr.Value = value;
-            parent.Attributes.SetNamedItem(attr);
+            return child;
         }
 
         private static string GetBootstrapperVersion(PackRoot root)

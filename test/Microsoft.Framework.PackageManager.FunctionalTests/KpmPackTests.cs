@@ -107,7 +107,8 @@ namespace Microsoft.Framework.PackageManager
   ""dependencies"": {},
   ""packages"": ""packages""
 }")
-                    .WithFileContents(Path.Combine("wwwroot", "web.config"), @"<configuration>
+                    .WithFileContents(Path.Combine("wwwroot", "web.config"), @"<?xml version=""1.0"" encoding=""utf-8""?>
+<configuration>
   <appSettings>
     <add key=""kpm-package-path"" value=""..\approot\packages"" />
     <add key=""bootstrapper-version"" value="""" />
@@ -198,7 +199,8 @@ namespace Microsoft.Framework.PackageManager
   ""dependencies"": {},
   ""packages"": ""packages""
 }")
-                    .WithFileContents(Path.Combine("wwwroot", "web.config"), @"<configuration>
+                    .WithFileContents(Path.Combine("wwwroot", "web.config"), @"<?xml version=""1.0"" encoding=""utf-8""?>
+<configuration>
   <appSettings>
     <add key=""kpm-package-path"" value=""..\approot\packages"" />
     <add key=""bootstrapper-version"" value="""" />
