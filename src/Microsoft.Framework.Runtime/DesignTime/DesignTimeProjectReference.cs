@@ -37,7 +37,7 @@ namespace Microsoft.Framework.Runtime
             throw new NotSupportedException();
         }
 
-        public Assembly Load(IAssemblyLoaderEngine loaderEngine)
+        public Assembly Load(IAssemblyLoadContext loadContext)
         {
             if(_response.Errors.Any())
             {
@@ -46,15 +46,15 @@ namespace Microsoft.Framework.Runtime
 
             if (_response.AssemblyPath != null)
             {
-                return loaderEngine.LoadFile(_response.AssemblyPath);
+                return loadContext.LoadFile(_response.AssemblyPath);
             }
 
             if (_response.PdbBytes == null)
             {
-                return loaderEngine.LoadStream(new MemoryStream(_response.AssemblyBytes), pdbStream: null);
+                return loadContext.LoadStream(new MemoryStream(_response.AssemblyBytes), assemblySymbols: null);
             }
 
-            return loaderEngine.LoadStream(new MemoryStream(_response.AssemblyBytes),
+            return loadContext.LoadStream(new MemoryStream(_response.AssemblyBytes),
                                            new MemoryStream(_response.PdbBytes));
         }
 

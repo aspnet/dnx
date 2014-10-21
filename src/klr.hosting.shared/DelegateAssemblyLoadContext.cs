@@ -36,14 +36,14 @@ namespace klr.hosting
             return LoadFromAssemblyPath(path);
         }
 
-        public Assembly LoadStream(Stream assemblyStream, Stream pdbStream)
+        public Assembly LoadStream(Stream assemblyStream, Stream assemblySymbols)
         {
-            if (pdbStream == null)
+            if (assemblySymbols == null)
             {
                 return LoadFromStream(assemblyStream);
             }
 
-            return LoadFromStream(assemblyStream, pdbStream);
+            return LoadFromStream(assemblyStream, assemblySymbols);
         }
 
         private string GetNativeImagePath(string ilPath)

@@ -650,7 +650,7 @@ namespace Microsoft.Framework.DesignTimeHost
                 })
                 .ToDictionary(a => a.Name, a => a.Bytes);
 
-                var engine = new NonLoadingLoaderEngine();
+                var engine = new NonLoadingLoadContext();
 
                 if (!metadata.Errors.Any())
                 {

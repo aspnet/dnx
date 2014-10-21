@@ -42,9 +42,9 @@ namespace Microsoft.Framework.Runtime
                                        .ToList();
         }
 
-        public Assembly Load(IAssemblyLoaderEngine loaderEngine)
+        public Assembly Load(IAssemblyLoadContext loadContext)
         {
-            return loaderEngine.LoadFile(_assemblyPath);
+            return loadContext.LoadFile(_assemblyPath);
         }
 
         public void EmitReferenceAssembly(Stream stream)

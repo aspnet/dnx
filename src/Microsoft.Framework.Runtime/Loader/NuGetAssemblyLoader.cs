@@ -2,6 +2,7 @@
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 
+using System;
 using System.Reflection;
 
 namespace Microsoft.Framework.Runtime.Loader
@@ -9,20 +10,28 @@ namespace Microsoft.Framework.Runtime.Loader
     public class NuGetAssemblyLoader : IAssemblyLoader
     {
         private readonly NuGetDependencyResolver _dependencyResolver;
-        private readonly IAssemblyLoaderEngine _loaderEngine;
+        private readonly IAssemblyLoadContextAccessor _loadContextAccessor;
 
-        public NuGetAssemblyLoader(IAssemblyLoaderEngine loaderEngine, NuGetDependencyResolver dependencyResolver)
+        public NuGetAssemblyLoader(IAssemblyLoadContextAccessor loadContextAccessor, 
+                                   NuGetDependencyResolver dependencyResolver)
         {
             _dependencyResolver = dependencyResolver;
-            _loaderEngine = loaderEngine;
+            _loadContextAccessor = loadContextAccessor;
         }
 
         public Assembly Load(string name)
         {
+            IAssemblyLoadContext loadContext = _loadContextAccessor.GetLoadContext(typeof(NuGetAssemblyLoader).GetTypeInfo().Assembly);
+
+            return Load(name, loadContext);
+        }
+
+        public Assembly Load(string name, IAssemblyLoadContext loadContext)
+        {
             PackageAssembly assemblyInfo;
             if (_dependencyResolver.PackageAssemblyLookup.TryGetValue(name, out assemblyInfo))
             {
-                return _loaderEngine.LoadFile(assemblyInfo.Path);
+                return loadContext.LoadFile(assemblyInfo.Path);
             }
 
             return null;

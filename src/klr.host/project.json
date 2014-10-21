@@ -2,12 +2,13 @@
     "version": "1.0.0-*",
     "compilationOptions": { "define": [ "TRACE" ], "warningsAsErrors": true },
     "dependencies": {
-        "Microsoft.Framework.Runtime.Common": "",
-        "Microsoft.Framework.Runtime.Interfaces": ""
+        "Microsoft.Framework.Runtime.Common": "1.0.0-*",
+        "Microsoft.Framework.Runtime.Interfaces": "1.0.0-*",
+        "Microsoft.Framework.Runtime.Loader": "1.0.0-*"
     },
     "frameworks": {
         "net45": {
-            "frameworkAssemblies": { 
+            "frameworkAssemblies": {
                 "System.Runtime": ""
             }
         },
@@ -30,5 +31,12 @@
                 "System.Threading.Tasks": "4.0.10-beta-*"
             }
         }
+    },
+
+    "scripts": {
+        "postbuild": [
+            "xcopy /F /Y /I bin\\Debug\\net45\\*.* ..\\..\\artifacts\\build\\KRE-CLR-x86\\bin",
+            "xcopy /F /Y /I bin\\Debug\\aspnetcore50\\*.* ..\\..\\artifacts\\build\\KRE-CoreCLR-x86\\bin"
+        ]
     }
 }

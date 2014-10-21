@@ -3,8 +3,9 @@
     "compilationOptions": { "define": [ "LOADER", "TRACE" ], "allowUnsafe": true, "warningsAsErrors": true },
     "dependencies": {
         "System.Reflection.Metadata": "1.0.17-beta",
-        "Microsoft.Framework.Runtime.Common": "",
-        "Microsoft.Framework.Runtime.Interfaces": "",
+        "Microsoft.Framework.Runtime.Loader": "1.0.0-*",
+        "Microsoft.Framework.Runtime.Common": { "version": "1.0.0-*", "type": "build" },
+        "Microsoft.Framework.Runtime.Interfaces": { "version": "1.0.0-*", "type": "build" },
         "Newtonsoft.Json": "6.0.4"
     },
     "frameworks": {

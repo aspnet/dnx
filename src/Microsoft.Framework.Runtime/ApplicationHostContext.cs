@@ -2,6 +2,7 @@
 using System.Runtime.Versioning;
 using Microsoft.Framework.Runtime.Common.DependencyInjection;
 using Microsoft.Framework.Runtime.FileSystem;
+using Microsoft.Framework.Runtime.Loader;
 
 namespace Microsoft.Framework.Runtime
 {
@@ -67,6 +68,7 @@ namespace Microsoft.Framework.Runtime
             _serviceProvider.Add(typeof(ICache), cache);
             _serviceProvider.Add(typeof(ICacheContextAccessor), cacheContextAccessor);
             _serviceProvider.Add(typeof(INamedCacheDependencyProvider), namedCacheDependencyProvider);
+            _serviceProvider.Add(typeof(IAssemblyLoadContextFactory), new AssemblyLoadContextFactory(ServiceProvider));
         }
 
         public void AddService(Type type, object instance)

@@ -1,11 +1,18 @@
 {
     "version": "1.0.0-*",
-    "compilationOptions" : { "define" : ["TRACE"], "allowUnsafe": true, "warningsAsErrors": true },
+    "compilationOptions": { "define": [ "TRACE" ], "allowUnsafe": true, "warningsAsErrors": true },
     "dependencies": {
-        "klr.hosting.shared" : "",
-        "Microsoft.Framework.CommandLineUtils" : ""
+        "klr.hosting.shared": "1.0.0-*",
+        "Microsoft.Framework.CommandLineUtils": "1.0.0-*",
+        "Microsoft.Framework.Runtime.Loader": "1.0.0-*"
     },
     "frameworks": {
-        "net45" : { }
+        "net45": { }
+    },
+
+    "scripts": {
+        "postbuild": [
+            "xcopy /F /Y /I bin\\Debug\\net45\\*.* ..\\..\\artifacts\\build\\KRE-CLR-x86\\bin"
+        ]
     }
 }
