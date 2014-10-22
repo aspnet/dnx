@@ -1,5 +1,5 @@
 @Echo OFF
-SETLOCAL
+SETLOCAL ENABLEDELAYEDEXPANSION
 SET ERRORLEVEL=
 :: K [command] [args]
 ::   command :  Required - Name of the command to execute
@@ -12,7 +12,20 @@ IF "%K_APPBASE%"=="" (
   SET "K_APPBASE=%CD%"
 )
 
-"%~dp0klr" --appbase "%K_APPBASE%" %K_OPTIONS% "Microsoft.Framework.ApplicationHost" %*
+SET I=1
+:LOOP
+IF (%1)==() (
+  GOTO END
+) ELSE (
+  SET ARG=%1
+  SET ARGS[!I!]=!ARG:/?="/?"!
+  SET /A I+=1
+  SHIFT
+  GOTO LOOP
+)
+:END
+
+"%~dp0klr" --appbase "%K_APPBASE%" %K_OPTIONS% "Microsoft.Framework.ApplicationHost" !ARGS[1]! !ARGS[2]! !ARGS[3]! !ARGS[4]! !ARGS[5]! !ARGS[6]! !ARGS[7]! !ARGS[8]! !ARGS[9]!
 
 exit /b %ERRORLEVEL%
 ENDLOCAL
