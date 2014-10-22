@@ -352,6 +352,8 @@ namespace Microsoft.Framework.DesignTimeHost
                 _remote.ProjectInformation = _local.ProjectInformation;
             }
 
+            var unprocessedFrameworks = new HashSet<FrameworkName>(_remote.Projects.Keys);
+
             foreach (var pair in _local.Projects)
             {
                 ProjectWorld localProject = pair.Value;
@@ -362,6 +364,8 @@ namespace Microsoft.Framework.DesignTimeHost
                     remoteProject = new ProjectWorld();
                     _remote.Projects[pair.Key] = remoteProject;
                 }
+
+                unprocessedFrameworks.Remove(pair.Key);
 
                 if (IsDifferent(localProject.Dependencies, remoteProject.Dependencies))
                 {
@@ -437,6 +441,12 @@ namespace Microsoft.Framework.DesignTimeHost
             }
 
             SendDiagnostics();
+
+            // Remove all processed frameworks from the remote view
+            foreach (var framework in unprocessedFrameworks)
+            {
+                _remote.Projects.Remove(framework);
+            }
         }
 
         private void SendDiagnostics()
