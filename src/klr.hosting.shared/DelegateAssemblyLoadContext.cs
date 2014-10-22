@@ -3,6 +3,7 @@
 
 #if ASPNETCORE50
 using System;
+using System.Diagnostics;
 using System.IO;
 using System.Reflection;
 using System.Runtime.Loader;
@@ -11,11 +12,13 @@ namespace klr.hosting
 {
     public class DelegateAssemblyLoadContext : AssemblyLoadContext
     {
-        private Func<AssemblyName, Assembly> _loaderCallback;
+        private readonly Func<AssemblyName, Assembly> _loaderCallback;
+        private readonly StartupOptimizer _optimizer;
 
-        public DelegateAssemblyLoadContext(Func<AssemblyName, Assembly> loaderCallback)
+        public DelegateAssemblyLoadContext(Func<AssemblyName, Assembly> loaderCallback, StartupOptimizer optimizer)
         {
             _loaderCallback = loaderCallback;
+            _optimizer = optimizer;
         }
 
         protected override Assembly Load(AssemblyName assemblyName)
@@ -28,12 +31,23 @@ namespace klr.hosting
             // Look for platform specific native image
             string nativeImagePath = GetNativeImagePath(path);
 
+            Assembly assembly;
             if (nativeImagePath != null)
             {
-                return LoadFromNativeImagePath(nativeImagePath, path);
+                assembly = LoadFromNativeImagePath(nativeImagePath, path);
+            }
+            else
+            {
+                assembly = LoadFromAssemblyPath(path);
             }
 
-            return LoadFromAssemblyPath(path);
+            if (assembly != null)
+            {
+                Trace.TraceInformation("[{0}] Recording assembly at LoadFile.DelegateAssemblyLoadContext: {1}", GetType().Name, assembly);
+                _optimizer.RecordAssemblyPath(path);
+            }
+
+            return assembly;
         }
 
         public Assembly LoadStream(Stream assemblyStream, Stream assemblySymbols)

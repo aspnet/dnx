@@ -109,6 +109,7 @@ namespace klr.hosting
             Func<string, Assembly> loader = _ => null;
             Func<Stream, Assembly> loadStream = _ => null;
             Func<string, Assembly> loadFile = _ => null;
+            StartupOptimizer optimizer = new StartupOptimizer();
 
             Func<AssemblyName, Assembly> loaderCallback = assemblyName =>
             {
@@ -149,6 +150,10 @@ namespace klr.hosting
                             ExtractAssemblyNeutralInterfaces(assembly, loadStream);
 #endif
                             _assemblyCache[name] = assembly;
+                            // Is this really needed?
+                            Trace.TraceInformation("[{0}] Recording assembly at cache register {1} : {2}", typeof(RuntimeBootstrapper).Name, assembly.GetName(), StartupProfiler.GetAssemblyLocation(assembly));
+                            optimizer.RecordAssembly(assembly);
+                            optimizer.ScheduleAssembly(assembly);
                         }
                     }
                 }
@@ -159,8 +164,9 @@ namespace klr.hosting
 
                 return assembly;
             };
+
 #if ASPNETCORE50
-            var loaderImpl = new DelegateAssemblyLoadContext(loaderCallback);
+            var loaderImpl = new DelegateAssemblyLoadContext(loaderCallback, optimizer);
             loadStream = assemblyStream => loaderImpl.LoadStream(assemblyStream, assemblySymbols: null);
             loadFile = path => loaderImpl.LoadFile(path);
 
@@ -198,6 +204,7 @@ namespace klr.hosting
                 ExtractAssemblyNeutralInterfaces(loadedArgs.LoadedAssembly, loadStream);
             };
 #endif
+            optimizer.Start(loadFile, loadStream, _assemblyCache);
 
             try
             {
@@ -319,7 +326,7 @@ namespace klr.hosting
                           .Select(Path.GetFullPath);
         }
 
-        private static void ExtractAssemblyNeutralInterfaces(Assembly assembly, Func<Stream, Assembly> load)
+        internal static void ExtractAssemblyNeutralInterfaces(Assembly assembly, Func<Stream, Assembly> load)
         {
             // Embedded assemblies end with .dll
             foreach (var name in assembly.GetManifestResourceNames())
