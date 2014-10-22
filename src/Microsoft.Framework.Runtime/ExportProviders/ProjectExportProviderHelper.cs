@@ -131,7 +131,8 @@ namespace Microsoft.Framework.Runtime
             {
                 var fileReference = reference as IMetadataFileReference;
 
-                if (fileReference != null)
+                if (fileReference != null &&
+                    string.Equals(Path.GetExtension(fileReference.Path), ".dll", StringComparison.OrdinalIgnoreCase))
                 {
                     // We don't use the exact path since that might clash with another key
                     var key = "ANI_" + fileReference.Path;
