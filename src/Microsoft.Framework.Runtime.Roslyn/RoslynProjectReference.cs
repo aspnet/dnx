@@ -221,7 +221,14 @@ namespace Microsoft.Framework.Runtime.Roslyn
                 // Check for the pdb writer component that roslyn uses to generate pdbs
                 const string SymWriterGuid = "0AE2DEB0-F901-478b-BB9F-881EE8066788";
 
-                return Marshal.GetTypeFromCLSID(new Guid(SymWriterGuid)) != null;
+                var type = Marshal.GetTypeFromCLSID(new Guid(SymWriterGuid));
+
+                if (type != null)
+                {
+                    return Activator.CreateInstance(type) != null;
+                }
+
+                return false;
             }
             catch
             {
