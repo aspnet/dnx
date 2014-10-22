@@ -69,9 +69,8 @@ namespace Microsoft.Framework.Project
             var dependencies = new HashSet<string>();
 
             using (var stream = File.OpenRead(AssemblyPath))
+            using (var peReader = new PEReader(stream))
             {
-                var peReader = new PEReader(stream);
-
                 var reader = peReader.GetMetadataReader();
 
                 foreach (var a in reader.AssemblyReferences)
@@ -95,9 +94,8 @@ namespace Microsoft.Framework.Project
             }
 
             using (var stream = File.OpenRead(path))
+            using (var peReader = new PEReader(stream))
             {
-                var peReader = new PEReader(stream);
-
                 return peReader.HasMetadata;
             }
         }

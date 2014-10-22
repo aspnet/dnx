@@ -101,9 +101,8 @@ namespace Microsoft.Framework.Runtime.Roslyn
             var references = new List<string>();
 
             using (var stream = new MemoryStream(buffer))
+            using (var peReader = new PEReader(stream))
             {
-                var peReader = new PEReader(stream);
-
                 var reader = peReader.GetMetadataReader();
 
                 foreach (var a in reader.AssemblyReferences)
