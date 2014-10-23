@@ -6,7 +6,7 @@
         "Microsoft.Framework.Runtime.Loader": "1.0.0-*",
         "Microsoft.Framework.Runtime.Common": { "version": "1.0.0-*", "type": "build" },
         "Microsoft.Framework.Runtime.Interfaces": { "version": "1.0.0-*", "type": "build" },
-        "Newtonsoft.Json": "6.0.4"
+        "Newtonsoft.Json": "6.0.6"
     },
     "frameworks": {
         "net45": {

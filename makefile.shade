@@ -446,7 +446,7 @@ var MSBUILD = '${Path.Combine(PROGRAM_FILES_X86, "MSBuild", "14.0", "Bin", "MSBu
 
                 if (framework == "aspnetcore50")
                 {
-                    candidates = new [] { framework, "netcore45", "win8", "k10" };
+                    candidates = new [] { framework, "windows8+net45+wp8+wpa81", "net45+win8" };
                 }
                 else
                 {
@@ -483,7 +483,7 @@ var MSBUILD = '${Path.Combine(PROGRAM_FILES_X86, "MSBuild", "14.0", "Bin", "MSBu
                         string packageFileDest = Path.Combine(targetDir, fi.Name);
                         File.Copy(fi.FullName, packageFileDest, true);
 
-                        Log.Info("Copying to " + packageFileDest);
+                        Log.Info("Copying from " + fi.FullName + " to " + packageFileDest);
                     }
                 }
             }
@@ -506,7 +506,7 @@ var MSBUILD = '${Path.Combine(PROGRAM_FILES_X86, "MSBuild", "14.0", "Bin", "MSBu
                 continue;
             }
 
-            string[] candidates = new [] { "aspnetcore50", "k10", "netcore45", "win8" };
+            var candidates = new [] { "aspnetcore50", "windows8+net45+wp8+wpa81", "net45+win8" };
 
             var lib = new DirectoryInfo(Path.Combine(packageDir, "lib"));
             var di = candidates.Select(fmk => lib.EnumerateDirectories("*" + fmk+ "*")

@@ -86,19 +86,13 @@ namespace NuGet
 
             { new FrameworkName("Windows, Version=v0.0"), new FrameworkName(".NETCore, Version=v4.5") },
             { new FrameworkName("Windows, Version=v8.0"), new FrameworkName(".NETCore, Version=v4.5") },
-            { new FrameworkName("Windows, Version=v8.1"), new FrameworkName(".NETCore, Version=v4.5.1") },
-            { new FrameworkName(AspNetCoreFrameworkIdentifier, new Version(5, 0)), new FrameworkName("K", new Version(1, 0)) }
+            { new FrameworkName("Windows, Version=v8.1"), new FrameworkName(".NETCore, Version=v4.5.1") }
         };
 
         private static readonly Version MaxVersion = new Version(Int32.MaxValue, Int32.MaxValue, Int32.MaxValue, Int32.MaxValue);
         private static readonly Dictionary<string, FrameworkName> _equivalentProjectFrameworks = new Dictionary<string, FrameworkName>()
         {
-            { AspNetFrameworkIdentifier, new FrameworkName(NetFrameworkIdentifier, MaxVersion) },
-
-            { AspNetCoreFrameworkIdentifier, new FrameworkName(NetCoreFrameworkIdentifier, MaxVersion) },
-
-            // Temporary backwards compatiblity .NETCore
-            { "K", new FrameworkName(NetCoreFrameworkIdentifier, MaxVersion) },
+            { AspNetFrameworkIdentifier, new FrameworkName(NetFrameworkIdentifier, MaxVersion) }
         };
 
         public static Version DefaultTargetFrameworkVersion
@@ -117,17 +111,6 @@ namespace NuGet
             {
                 return new FrameworkName(NetFrameworkIdentifier, DefaultTargetFrameworkVersion);
             }
-        }
-
-        internal static FrameworkName GetEquivalentFramework(FrameworkName targetFramework)
-        {
-            FrameworkName equivalentFramework;
-            if (_equivalentProjectFrameworks.TryGetValue(targetFramework.Identifier, out equivalentFramework))
-            {
-                return equivalentFramework;
-            }
-
-            return null;
         }
 
         public static bool IsDesktop(FrameworkName frameworkName)
@@ -853,7 +836,27 @@ namespace NuGet
             else
             {
                 // this is the case with Portable Library installed into a normal project
-                return targetFrameworkPortableProfile.IsCompatibleWith(frameworkName);
+                bool isCompatible = targetFrameworkPortableProfile.IsCompatibleWith(frameworkName);
+
+                if (!isCompatible)
+                {
+                    // TODO: Remove this logic when out dependencies have moved to ASP.NET Core 5.0
+                    // as this logic is super fuzzy and terrible
+                    if (string.Equals(frameworkName.Identifier, AspNetCoreFrameworkIdentifier, StringComparison.OrdinalIgnoreCase))
+                    {
+                        var frameworkIdentifierLookup = targetFrameworkPortableProfile.SupportedFrameworks
+                                                                                      .Select(NormalizeFrameworkName)
+                                                                                      .ToLookup(f => f.Identifier);
+
+                        if (frameworkIdentifierLookup[NetFrameworkIdentifier].Any(f => f.Version >= new Version(4, 5)) &&
+                            frameworkIdentifierLookup[NetCoreFrameworkIdentifier].Any(f => f.Version >= new Version(4, 5)))
+                        {
+                            return true;
+                        }
+                    }
+                }
+
+                return isCompatible;
             }
         }
 
