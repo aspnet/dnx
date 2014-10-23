@@ -17,14 +17,18 @@ namespace Microsoft.Framework.DesignTimeHost.Models.IncomingMessages
         public int? EndLineNumber { get; set; }
         public int? EndCharacter { get; set; }
 
-        public bool isOffsetBased()
-        {
-            return Start != null && Length != null;
+        public bool isOffsetBased
+        {   
+            get {
+                return Start != null && Length != null;
+            }
         }
 
-        public bool isLineBased()
+        public bool isLineBased
         {
-            return StartLineNumber != null && StartCharacter != null && EndLineNumber != null && EndCharacter != null;
+            get {
+                return StartLineNumber != null && StartCharacter != null && EndLineNumber != null && EndCharacter != null;
+            }
         }
     }
 }
