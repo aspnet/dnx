@@ -31,9 +31,10 @@ namespace Microsoft.Framework.ApplicationHost
         {
             DefaultHostOptions options;
             string[] programArgs;
+            int exitCode;
 
-            var exitCode = ParseArgs(args, out options, out programArgs);
-            if (exitCode != 0)
+            bool shouldExit = ParseArgs(args, out options, out programArgs, out exitCode);
+            if (shouldExit)
             {
                 return Task.FromResult(exitCode);
             }
@@ -110,7 +111,7 @@ namespace Microsoft.Framework.ApplicationHost
         }
 
 
-        private int ParseArgs(string[] args, out DefaultHostOptions defaultHostOptions, out string[] outArgs)
+        private bool ParseArgs(string[] args, out DefaultHostOptions defaultHostOptions, out string[] outArgs, out int exitCode)
         {
             var app = new CommandLineApplication(throwOnUnexpectedArg: false);
             app.Name = "k";
@@ -137,13 +138,22 @@ namespace Microsoft.Framework.ApplicationHost
             throwOnUnexpectedArg: false);
             app.Execute(args);
 
-            // Show help information if no subcommand/option was specified
-            if (!(app.IsShowingInformation || app.RemainingArguments.Any() || runCmdExecuted))
+            defaultHostOptions = null;
+            outArgs = null;
+            exitCode = 0;
+
+            if (app.IsShowingInformation)
             {
+                // If help option or version option was specified, exit immediately with 0 exit code
+                return true;
+            }
+            else if (!(app.RemainingArguments.Any() || runCmdExecuted))
+            {
+                // If no subcommand/option was specified, show help information
+                // and exit immediately with non-zero exit code
                 app.ShowHelp();
-                defaultHostOptions = null;
-                outArgs = null;
-                return 2;
+                exitCode = 2;
+                return true;
             }
 
             defaultHostOptions = new DefaultHostOptions();
@@ -184,7 +194,7 @@ namespace Microsoft.Framework.ApplicationHost
                 outArgs = remainingArgs.ToArray();
             }
 
-            return 0;
+            return false;
         }
 
         private Task<int> ExecuteMain(DefaultHost host, string applicationName, string[] args)
