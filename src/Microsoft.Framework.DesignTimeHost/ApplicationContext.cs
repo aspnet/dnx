@@ -24,6 +24,7 @@ namespace Microsoft.Framework.DesignTimeHost
         private readonly ICache _cache;
         private readonly ICacheContextAccessor _cacheContextAccessor;
         private readonly INamedCacheDependencyProvider _namedDependencyProvider;
+        private readonly IApplicationEnvironment _appEnv;
 
         private readonly Queue<Message> _inbox = new Queue<Message>();
         private readonly object _processingLock = new object();
@@ -49,6 +50,7 @@ namespace Microsoft.Framework.DesignTimeHost
                                   int id)
         {
             _hostServices = services;
+            _appEnv = (IApplicationEnvironment)services.GetService(typeof(IApplicationEnvironment));
             _cache = cache;
             _cacheContextAccessor = cacheContextAccessor;
             _namedDependencyProvider = namedDependencyProvider;
@@ -574,6 +576,18 @@ namespace Microsoft.Framework.DesignTimeHost
                 frameworks.Add(VersionUtility.ParseFrameworkName("aspnet50"));
             }
 
+            // We need to create an app env for the design time host's target framework
+            var dteApplicationHostContext = new ApplicationHostContext(_hostServices,
+                                                                       appPath,
+                                                                       packagesDirectory: null,
+                                                                       configuration: _appEnv.Configuration,
+                                                                       targetFramework: _appEnv.RuntimeFramework,
+                                                                       cache: _cache,
+                                                                       cacheContextAccessor: _cacheContextAccessor,
+                                                                       namedCacheDependencyProvider: _namedDependencyProvider);
+
+            dteApplicationHostContext.DependencyWalker.Walk(project.Name, project.Version, _appEnv.RuntimeFramework);
+
             foreach (var frameworkName in frameworks)
             {
                 var applicationHostContext = new ApplicationHostContext(_hostServices,
@@ -583,11 +597,12 @@ namespace Microsoft.Framework.DesignTimeHost
                                                                         targetFramework: frameworkName,
                                                                         cache: _cache,
                                                                         cacheContextAccessor: _cacheContextAccessor,
-                                                                        namedCacheDependencyProvider: _namedDependencyProvider);
+                                                                        namedCacheDependencyProvider: _namedDependencyProvider,
+                                                                        loadContextFactory: dteApplicationHostContext.AssemblyLoadContextFactory);
 
                 applicationHostContext.DependencyWalker.Walk(project.Name, project.Version, frameworkName);
 
-                var libraryManager = (ILibraryManager)applicationHostContext.ServiceProvider.GetService(typeof(ILibraryManager));
+                var libraryManager = applicationHostContext.LibraryManager;
                 var metadataProvider = applicationHostContext.CreateInstance<ProjectMetadataProvider>();
                 var frameworkResolver = applicationHostContext.FrameworkReferenceResolver;
                 var metadata = metadataProvider.GetProjectMetadata(project.Name);
