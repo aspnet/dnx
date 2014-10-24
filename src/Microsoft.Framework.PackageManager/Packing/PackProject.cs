@@ -39,8 +39,8 @@ namespace Microsoft.Framework.PackageManager.Packing
 
         public void Emit(PackRoot root)
         {
-            root.Reports.Quiet.WriteLine("Using {0} dependency {1} for {2}",
-                _libraryDescription.Type, _libraryDescription.Identity, _libraryDescription.Framework);
+            root.Reports.Quiet.WriteLine("Using {0} dependency {1} for {2}", _libraryDescription.Type,
+                _libraryDescription.Identity, _libraryDescription.Framework.ToString().Yellow().Bold());
 
             if (root.NoSource)
             {
@@ -50,10 +50,14 @@ namespace Microsoft.Framework.PackageManager.Packing
             {
                 EmitSource(root);
             }
+            root.Reports.Quiet.WriteLine();
         }
 
         private void EmitSource(PackRoot root)
         {
+            root.Reports.Quiet.WriteLine("  Copying source code from {0} dependency {1}",
+                _libraryDescription.Type, _libraryDescription.Identity.Name);
+
             Runtime.Project project;
             if (!_projectResolver.TryResolveProject(_libraryDescription.Identity.Name, out project))
             {
@@ -66,8 +70,8 @@ namespace Microsoft.Framework.PackageManager.Packing
             // If root.OutputPath is specified by --out option, it might not be a full path
             TargetPath = Path.GetFullPath(TargetPath);
 
-            root.Reports.Quiet.WriteLine("  Source {0}", _libraryDescription.Path);
-            root.Reports.Quiet.WriteLine("  Target {0}", TargetPath);
+            root.Reports.Quiet.WriteLine("    Source {0}", _libraryDescription.Path.Bold());
+            root.Reports.Quiet.WriteLine("    Target {0}", TargetPath);
 
             root.Operations.Delete(TargetPath);
 
@@ -82,7 +86,7 @@ namespace Microsoft.Framework.PackageManager.Packing
 
         private void EmitNupkg(PackRoot root)
         {
-            root.Reports.Quiet.WriteLine("Packing nupkg from {0} dependency {1}",
+            root.Reports.Quiet.WriteLine("  Packing nupkg from {0} dependency {1}",
                 _libraryDescription.Type, _libraryDescription.Identity.Name);
 
             Runtime.Project project;
@@ -96,8 +100,8 @@ namespace Microsoft.Framework.PackageManager.Packing
             var targetNupkg = resolver.GetPackageFileName(project.Name, project.Version);
             TargetPath = resolver.GetInstallPath(project.Name, project.Version);
 
-            root.Reports.Quiet.WriteLine("  Source {0}", _libraryDescription.Path);
-            root.Reports.Quiet.WriteLine("  Target {0}", TargetPath);
+            root.Reports.Quiet.WriteLine("    Source {0}", _libraryDescription.Path.Bold());
+            root.Reports.Quiet.WriteLine("    Target {0}", TargetPath);
 
             if (Directory.Exists(TargetPath))
             {
