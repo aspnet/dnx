@@ -23,11 +23,13 @@ namespace Microsoft.Framework.PackageManager.Packing
 
         public void Emit(PackRoot root)
         {
+            root.Reports.Quiet.WriteLine("Using {0} dependency {1}", _libraryDescription.Type, Library);
             foreach (var context in root.LibraryDependencyContexts[Library])
             {
-                root.Reports.Quiet.WriteLine("Using {0} dependency {1} for {2}",
-                    _libraryDescription.Type, Library, context.FrameworkName);
+                root.Reports.Quiet.WriteLine("  Copying files for {0}",
+                    context.FrameworkName.ToString().Yellow().Bold());
                 Emit(root, context.PackageAssemblies[Library.Name]);
+                root.Reports.Quiet.WriteLine();
             }
         }
 
@@ -37,19 +39,20 @@ namespace Microsoft.Framework.PackageManager.Packing
 
             TargetPath = resolver.GetInstallPath(Library.Name, Library.Version);
 
-            root.Reports.Quiet.WriteLine("  Source: {0}", _libraryDescription.Path);
-            root.Reports.Quiet.WriteLine("  Target: {0}", TargetPath);
+            root.Reports.Quiet.WriteLine("    Source: {0}", _libraryDescription.Path);
+            root.Reports.Quiet.WriteLine("    Target: {0}", TargetPath);
 
             Directory.CreateDirectory(TargetPath);
 
             // Copy nuspec
             var nuspecName = resolver.GetManifestFileName(Library.Name, Library.Version);
+            root.Reports.Quiet.WriteLine("    File: {0}", nuspecName.Bold());
             CopyFile(root, Path.Combine(_libraryDescription.Path, nuspecName), Path.Combine(TargetPath, nuspecName), root.Overwrite);
 
             // Copy assemblies for current framework
             foreach (var assembly in assemblies)
             {
-                root.Reports.Quiet.WriteLine("  File: {0}", assembly.RelativePath);
+                root.Reports.Quiet.WriteLine("    File: {0}", assembly.RelativePath.Bold());
 
                 var targetAssemblyPath = Path.Combine(TargetPath, assembly.RelativePath);
                 CopyFile(root, assembly.Path, targetAssemblyPath, root.Overwrite);
@@ -80,7 +83,7 @@ namespace Microsoft.Framework.PackageManager.Packing
                 }
                 else
                 {
-                    root.Reports.Quiet.WriteLine("  {0} already exists", targetFolder);
+                    root.Reports.Quiet.WriteLine("    {0} already exists", targetFolder);
                     return;
                 }
             }
@@ -102,7 +105,7 @@ namespace Microsoft.Framework.PackageManager.Packing
                 }
                 else
                 {
-                    root.Reports.Quiet.WriteLine("  {0} already exists", targetPath);
+                    root.Reports.Quiet.WriteLine("    {0} already exists", targetPath);
                     return;
                 }
             }
