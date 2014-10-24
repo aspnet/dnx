@@ -278,24 +278,24 @@ namespace Microsoft.Framework.PackageManager
             var projectStructure = @"{
   '.': ['project.json', 'FileWithoutExtension'],
   'UselessFolder1': {
-    '.': ['file1.txt', 'file2.css'],
-    'SubFolder': ['file3.js', 'file4.html']
+    '.': ['file1.txt', 'file2.css', 'file_without_extension'],
+    'SubFolder': ['file3.js', 'file4.html', 'file_without_extension']
   },
   'UselessFolder2': {
-    '.': ['file1.txt', 'file2.css'],
-    'SubFolder': ['file3.js', 'file4.html']
+    '.': ['file1.txt', 'file2.css', 'file_without_extension'],
+    'SubFolder': ['file3.js', 'file4.html', 'file_without_extension']
   },
   'UselessFolder3': {
-    '.': ['file1.txt', 'file2.css'],
-    'SubFolder': ['file3.js', 'file4.html']
+    '.': ['file1.txt', 'file2.css', 'file_without_extension'],
+    'SubFolder': ['file3.js', 'file4.html', 'file_without_extension']
   },
   'MixFolder': {
-    'UsefulSub': ['useful.txt', 'useful.css'],
-    'UselessSub1': ['file1.js', 'file2.html'],
-    'UselessSub2': ['file1.js', 'file2.html'],
-    'UselessSub3': ['file1.js', 'file2.html'],
-    'UselessSub4': ['file1.js', 'file2.html'],
-    'UselessSub5': ['file1.js', 'file2.html']
+    'UsefulSub': ['useful.txt', 'useful.css', 'file_without_extension'],
+    'UselessSub1': ['file1.js', 'file2.html', 'file_without_extension'],
+    'UselessSub2': ['file1.js', 'file2.html', 'file_without_extension'],
+    'UselessSub3': ['file1.js', 'file2.html', 'file_without_extension'],
+    'UselessSub4': ['file1.js', 'file2.html', 'file_without_extension'],
+    'UselessSub5': ['file1.js', 'file2.html', 'file_without_extension']
   },
   '.git': ['index', 'HEAD', 'log'],
   'packages': {}
@@ -307,7 +307,7 @@ namespace Microsoft.Framework.PackageManager
       'PROJECT_NAME': {
         '.': ['project.json'],
         'MixFolder': {
-          'UsefulSub': ['useful.txt', 'useful.css']
+          'UsefulSub': ['useful.txt', 'useful.css', 'file_without_extension']
         }
       }
     }

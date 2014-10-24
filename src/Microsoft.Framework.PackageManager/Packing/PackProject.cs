@@ -248,9 +248,10 @@ namespace Microsoft.Framework.PackageManager.Packing
             if (!string.IsNullOrEmpty(WwwRoot))
             {
                 wwwRootPath = Path.Combine(project.ProjectDirectory, WwwRoot);
+                wwwRootPath = PathUtility.EnsureTrailingSlash(wwwRootPath);
             }
 
-            root.Operations.Copy(project.ProjectDirectory, targetPath, (isRoot, itemPath) =>
+            root.Operations.Copy(project.ProjectDirectory, targetPath, itemPath =>
             {
                 // If current file/folder is in the exclusion list, we don't copy it
                 if (excludeSet.Contains(itemPath))
@@ -258,9 +259,8 @@ namespace Microsoft.Framework.PackageManager.Packing
                     return false;
                 }
 
-                // If current folder is the public folder, we don't copy it to destination project
-                // All files/folders inside this folder also get ignored if we return false here
-                if (string.Equals(wwwRootPath, itemPath))
+                // If current file is in the public folder, we don't copy it to destination project
+                if (!string.IsNullOrEmpty(wwwRootPath) && itemPath.StartsWith(wwwRootPath))
                 {
                     return false;
                 }
