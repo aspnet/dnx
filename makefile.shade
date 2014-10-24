@@ -28,7 +28,7 @@ var KRE_CLR_TARGETS = '${new [] {KRE_MONO_BIN, KRE_CLR_x86_BIN, KRE_CLR_amd64_BI
 var KRE_CORECLR_TARGETS = '${new [] {KRE_CORECLR_x86_BIN, KRE_CORECLR_amd64_BIN}}'
 var ALL_TARGETS = '${KRE_CLR_TARGETS.Concat(KRE_CORECLR_TARGETS)}'
 var NEW_RUNTIME = '${E("NEW_RUNTIME") == "1"}'
-var CORE_CLR_VERSION = '${E("CORE_CLR_VERSION")}'
+
 var PROGRAM_FILES_X86 = '${Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86)}'
 var MSBUILD = '${Path.Combine(PROGRAM_FILES_X86, "MSBuild", "14.0", "Bin", "MSBuild.exe")}'
 
@@ -536,8 +536,7 @@ var MSBUILD = '${Path.Combine(PROGRAM_FILES_X86, "MSBuild", "14.0", "Bin", "MSBu
     }
 
 #copy-coreclr
-    nuget-install package='CoreCLR' outputDir='packages' extra='-pre -nocache' once='CoreCLR' if='string.IsNullOrEmpty(CORE_CLR_VERSION)'
-    nuget-install package='CoreCLR' packageVersion='${CORE_CLR_VERSION}' outputDir='packages' extra='-pre -nocache' once='CoreCLR' if='!string.IsNullOrEmpty(CORE_CLR_VERSION)'
+    nuget-install package='CoreCLR' outputDir='packages' extra='-pre -nocache' once='CoreCLR'
 
     var CoreCLR_DIR='${""}'
     @{
