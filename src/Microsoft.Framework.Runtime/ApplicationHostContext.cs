@@ -20,7 +20,8 @@ namespace Microsoft.Framework.Runtime
                                       FrameworkName targetFramework,
                                       ICache cache,
                                       ICacheContextAccessor cacheContextAccessor,
-                                      INamedCacheDependencyProvider namedCacheDependencyProvider)
+                                      INamedCacheDependencyProvider namedCacheDependencyProvider,
+                                      IAssemblyLoadContextFactory loadContextFactory = null)
         {
             ProjectDirectory = projectDirectory;
             RootDirectory = Runtime.ProjectResolver.ResolveRootDirectory(ProjectDirectory);
@@ -56,6 +57,8 @@ namespace Microsoft.Framework.Runtime
             LibraryManager = new LibraryManager(targetFramework, configuration, DependencyWalker,
                 compositeDependencyExporter, cache);
 
+            AssemblyLoadContextFactory = loadContextFactory ?? new AssemblyLoadContextFactory(ServiceProvider);
+
             // Default services
             _serviceProvider.Add(typeof(IApplicationEnvironment), new ApplicationEnvironment(Project, targetFramework, configuration));
             _serviceProvider.Add(typeof(ILibraryExportProvider), compositeDependencyExporter);
@@ -68,7 +71,7 @@ namespace Microsoft.Framework.Runtime
             _serviceProvider.Add(typeof(ICache), cache);
             _serviceProvider.Add(typeof(ICacheContextAccessor), cacheContextAccessor);
             _serviceProvider.Add(typeof(INamedCacheDependencyProvider), namedCacheDependencyProvider);
-            _serviceProvider.Add(typeof(IAssemblyLoadContextFactory), new AssemblyLoadContextFactory(ServiceProvider));
+            _serviceProvider.Add(typeof(IAssemblyLoadContextFactory), AssemblyLoadContextFactory);
         }
 
         public void AddService(Type type, object instance)
@@ -101,6 +104,8 @@ namespace Microsoft.Framework.Runtime
                 return null;
             }
         }
+
+        public IAssemblyLoadContextFactory AssemblyLoadContextFactory { get; private set; }
 
         public UnresolvedDependencyProvider UnresolvedDependencyProvider { get; private set; }
 
