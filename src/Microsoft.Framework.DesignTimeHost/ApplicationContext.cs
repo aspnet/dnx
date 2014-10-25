@@ -576,21 +576,33 @@ namespace Microsoft.Framework.DesignTimeHost
                 frameworks.Add(VersionUtility.ParseFrameworkName("aspnet50"));
             }
 
-            // We need to create an app env for the design time host's target framework
-            var dteApplicationHostContext = new ApplicationHostContext(_hostServices,
-                                                                       appPath,
-                                                                       packagesDirectory: null,
-                                                                       configuration: _appEnv.Configuration,
-                                                                       targetFramework: _appEnv.RuntimeFramework,
-                                                                       cache: _cache,
-                                                                       cacheContextAccessor: _cacheContextAccessor,
-                                                                       namedCacheDependencyProvider: _namedDependencyProvider);
+            var appHostContextCache = new Dictionary<Tuple<string, FrameworkName>, ApplicationHostContext>();
 
-            dteApplicationHostContext.DependencyWalker.Walk(project.Name, project.Version, _appEnv.RuntimeFramework);
+            // We need to create an app env for the design time host's target framework
+            var runtimeApplicationHostContext = new ApplicationHostContext(_hostServices,
+                                                                           appPath,
+                                                                           packagesDirectory: null,
+                                                                           configuration: _appEnv.Configuration,
+                                                                           targetFramework: _appEnv.RuntimeFramework,
+                                                                           cache: _cache,
+                                                                           cacheContextAccessor: _cacheContextAccessor,
+                                                                           namedCacheDependencyProvider: _namedDependencyProvider);
+
+            runtimeApplicationHostContext.DependencyWalker.Walk(project.Name, project.Version, _appEnv.RuntimeFramework);
+
+            var runtimeAppHostContextCacheKey = Tuple.Create(_appEnv.Configuration, _appEnv.RuntimeFramework);
+
+            // TODO: Move this caching to the ICache
+            appHostContextCache[runtimeAppHostContextCacheKey] = runtimeApplicationHostContext;
 
             foreach (var frameworkName in frameworks)
             {
-                var applicationHostContext = new ApplicationHostContext(_hostServices,
+                var cacheKey = Tuple.Create(configuration, frameworkName);
+
+                ApplicationHostContext applicationHostContext;
+                if (!appHostContextCache.TryGetValue(cacheKey, out applicationHostContext))
+                {
+                    applicationHostContext = new ApplicationHostContext(_hostServices,
                                                                         appPath,
                                                                         packagesDirectory: null,
                                                                         configuration: configuration,
@@ -598,9 +610,10 @@ namespace Microsoft.Framework.DesignTimeHost
                                                                         cache: _cache,
                                                                         cacheContextAccessor: _cacheContextAccessor,
                                                                         namedCacheDependencyProvider: _namedDependencyProvider,
-                                                                        loadContextFactory: dteApplicationHostContext.AssemblyLoadContextFactory);
+                                                                        loadContextFactory: runtimeApplicationHostContext.AssemblyLoadContextFactory);
 
-                applicationHostContext.DependencyWalker.Walk(project.Name, project.Version, frameworkName);
+                    applicationHostContext.DependencyWalker.Walk(project.Name, project.Version, frameworkName);
+                }
 
                 var libraryManager = applicationHostContext.LibraryManager;
                 var metadataProvider = applicationHostContext.CreateInstance<ProjectMetadataProvider>();
