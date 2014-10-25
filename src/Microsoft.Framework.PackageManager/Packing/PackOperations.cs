@@ -6,6 +6,7 @@ using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
+using NuGet;
 
 namespace Microsoft.Framework.PackageManager.Packing
 {
@@ -39,75 +40,52 @@ namespace Microsoft.Framework.PackageManager.Packing
 
         public void Copy(string sourcePath, string targetPath)
         {
-            CopyRecursive(
+            Copy(
                 sourcePath, 
                 targetPath, 
-                isProjectRootFolder: true, 
-                shouldInclude: (_, __) => true);
+                shouldInclude: _ => true);
         }
 
-        public void Copy(string sourcePath, string targetPath, Func<bool, string, bool> shouldInclude)
+        public void Copy(string sourcePath, string targetPath, Func<string, bool> shouldInclude)
         {
-            CopyRecursive(
-                sourcePath, 
-                targetPath, 
-                isProjectRootFolder: true,
-                shouldInclude: shouldInclude);
-        }
+            sourcePath = PathUtility.EnsureTrailingSlash(sourcePath);
+            targetPath = PathUtility.EnsureTrailingSlash(targetPath);
 
-        private void CopyRecursive(string sourcePath, string targetPath, bool isProjectRootFolder, Func<bool, string, bool> shouldInclude)
-        {
-            foreach (var sourceFilePath in Directory.EnumerateFiles(sourcePath))
+            // Directory.EnumerateFiles(path) throws "path is too long" exception if path is longer than 248 characters
+            // So we flatten the enumeration here with SearchOption.AllDirectories,
+            // instead of calling Directory.EnumerateFiles(path) with SearchOption.TopDirectoryOnly in each subfolder
+            foreach (var sourceFilePath in Directory.EnumerateFiles(sourcePath, "*.*", SearchOption.AllDirectories))
             {
                 var fileName = Path.GetFileName(sourceFilePath);
                 Debug.Assert(fileName != null, "fileName != null");
 
-                if (!shouldInclude(isProjectRootFolder, sourceFilePath))
+                if (!shouldInclude(sourceFilePath))
                 {
                     continue;
                 }
 
+                var targetFilePath = sourceFilePath.Replace(sourcePath, targetPath);
+                var targetFileParentFolder = Path.GetDirectoryName(targetFilePath);
+
                 // Create directory before copying a file
-                if (!Directory.Exists(targetPath))
+                if (!Directory.Exists(targetFileParentFolder))
                 {
-                    Directory.CreateDirectory(targetPath);
+                    Directory.CreateDirectory(targetFileParentFolder);
                 }
 
-                // copy file
-                var fullSourcePath = Path.Combine(sourcePath, fileName);
-                var fullTargetPath = Path.Combine(targetPath, fileName);
-
                 File.Copy(
-                    fullSourcePath,
-                    fullTargetPath,
+                    sourceFilePath,
+                    targetFilePath,
                     overwrite: true);
 
                 // clear read-only bit if set
-                var fileAttributes = File.GetAttributes(fullTargetPath);
+                var fileAttributes = File.GetAttributes(targetFilePath);
                 if ((fileAttributes & FileAttributes.ReadOnly) == FileAttributes.ReadOnly)
                 {
-                    File.SetAttributes(fullTargetPath, fileAttributes & ~FileAttributes.ReadOnly);
+                    File.SetAttributes(targetFilePath, fileAttributes & ~FileAttributes.ReadOnly);
                 }
-            }
-
-            foreach (var sourceFolderPath in Directory.EnumerateDirectories(sourcePath))
-            {
-                var folderName = Path.GetFileName(sourceFolderPath);
-                Debug.Assert(folderName != null, "folderName != null");
-
-                if (!shouldInclude(isProjectRootFolder, sourceFolderPath))
-                {
-                    continue;
-                }
-
-                CopyRecursive(
-                    Path.Combine(sourcePath, folderName),
-                    Path.Combine(targetPath, folderName),
-                    isProjectRootFolder: false,
-                    shouldInclude: shouldInclude);
             }
         }
-
 
         public void ExtractNupkg(ZipArchive archive, string targetPath)
         {
