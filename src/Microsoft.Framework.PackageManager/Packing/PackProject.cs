@@ -251,6 +251,12 @@ namespace Microsoft.Framework.PackageManager.Packing
                 wwwRootPath = PathUtility.EnsureTrailingSlash(wwwRootPath);
             }
 
+            // If project root is used as value of '--wwwroot', we shouldn't exclude it when copying
+            if (string.Equals(wwwRootPath, PathUtility.EnsureTrailingSlash(project.ProjectDirectory)))
+            {
+                wwwRootPath = string.Empty;
+            }
+
             root.Operations.Copy(project.ProjectDirectory, targetPath, itemPath =>
             {
                 // If current file/folder is in the exclusion list, we don't copy it
