@@ -10,6 +10,8 @@ namespace Microsoft.Framework.Runtime.Roslyn
 {
     public class SourceTextWithChanges
     {
+        private readonly object _lock = new object();
+
         private readonly List<TextChange> _changes = new List<TextChange>();
 
         private SourceText _value;
@@ -21,28 +23,34 @@ namespace Microsoft.Framework.Runtime.Roslyn
                 _value = SourceText.From(stream, encoding: Encoding.UTF8);
             };
         }
-        
+
         public int Version { get; private set; }
 
-        public SourceText Value 
+        public SourceText Value
         {
-            get 
+            get
             {
-                // the changes might overlap and cannot 
-                // always be applied in one go
-                foreach(var change in _changes)
+                lock (_lock)
                 {
-                    _value = _value.WithChanges(new TextChange[] { change });
+                    // the changes might overlap and cannot 
+                    // always be applied in one go
+                    foreach (var change in _changes)
+                    {
+                        _value = _value.WithChanges(new TextChange[] { change });
+                    }
+                    _changes.Clear();
+                    return _value;
                 }
-                _changes.Clear();
-                return _value;
             }
         }
 
         public void Record(TextChange change)
         {
-            _changes.Add(change);
-            Version += 1;
+            lock (_lock)
+            {
+                _changes.Add(change);
+                Version += 1;
+            }
         }
     }
 }

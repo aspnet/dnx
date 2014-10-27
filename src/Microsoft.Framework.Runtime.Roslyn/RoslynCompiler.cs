@@ -269,10 +269,11 @@ namespace Microsoft.Framework.Runtime.Roslyn
             return _cache.Get<SyntaxTree>(cacheKey, (ctx, oldValue) =>
             {
                 SourceText sourceText;
-                if (this._sourceTextService != null) {
-                    sourceText = this._sourceTextService.GetSourceText(sourcePath);
+                if (_sourceTextService != null)
+                {
+                    sourceText = _sourceTextService.GetSourceText(sourcePath);
                 }
-                else 
+                else
                 {
                     ctx.Monitor(new FileWriteTimeCacheDependency(sourcePath));
                     using (var stream = File.OpenRead(sourcePath))
@@ -281,7 +282,7 @@ namespace Microsoft.Framework.Runtime.Roslyn
                     }
                 }
 
-                if (oldValue != null && this._sourceTextService != null) 
+                if (oldValue != null && _sourceTextService != null)
                 {
                     return oldValue.WithChangedText(sourceText);
                 }

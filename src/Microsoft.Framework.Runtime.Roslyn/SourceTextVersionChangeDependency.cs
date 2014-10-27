@@ -14,9 +14,9 @@ namespace Microsoft.Framework.Runtime.Roslyn
             _version = sourceText.Version;
         }
 
-        public bool HasChanged 
+        public bool HasChanged
         {
-            get 
+            get
             {
                 return _sourceText.Version != _version;
             }

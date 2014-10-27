@@ -212,17 +212,17 @@ namespace Microsoft.Framework.DesignTimeHost
                 case "SourceTextChanged":
                     {
                         var data = message.Payload.ToObject<SourceTextChangeMessage>();
-                        if(data.isOffsetBased)
+                        if(data.IsOffsetBased)
                         {
                             _sourceTextChanged.Value = default(Void);
-                            this._sourceTextService.RecordTextChange(data.SourcePath, 
+                            _sourceTextService.RecordTextChange(data.SourcePath, 
                                 new TextSpan(data.Start ?? 0, data.Length ?? 0), 
                                 data.NewText);
                         }
-                        else if (data.isLineBased)
+                        else if (data.IsLineBased)
                         {
                             _sourceTextChanged.Value = default(Void);
-                            this._sourceTextService.RecordTextChange(data.SourcePath, 
+                            _sourceTextService.RecordTextChange(data.SourcePath, 
                                 new LinePositionSpan(
                                     new LinePosition(data.StartLineNumber ?? 0, data.StartCharacter ?? 0), 
                                     new LinePosition(data.EndLineNumber ?? 0, data.EndCharacter ?? 0)), 
