@@ -10,11 +10,9 @@ namespace Microsoft.Framework.Runtime.Roslyn
 {
     public class SourceTextWithChanges
     {
-        public int Version { get; private set; }
+        private readonly List<TextChange> _changes = new List<TextChange>();
 
         private SourceText _value;
-
-        private Lazy<List<TextChange>> _changes = new Lazy<List<TextChange>>(() => new List<TextChange>());
 
         public SourceTextWithChanges(string sourcePath)
         {
@@ -23,27 +21,28 @@ namespace Microsoft.Framework.Runtime.Roslyn
                 _value = SourceText.From(stream, encoding: Encoding.UTF8);
             };
         }
+        
+        public int Version { get; private set; }
+
+        public SourceText Value 
+        {
+            get 
+            {
+                // the changes might overlap and cannot 
+                // always be applied in one go
+                foreach(var change in _changes)
+                {
+                    _value = _value.WithChanges(new TextChange[] { change });
+                }
+                _changes.Clear();
+                return _value;
+            }
+        }
 
         public void Record(TextChange change)
         {
-            _changes.Value.Add(change);
+            _changes.Add(change);
             Version += 1;
-        }
-
-        public SourceText Value {
-            get {
-                if (_changes.IsValueCreated)
-                {
-                    // the changes might overlap and cannot 
-                    // always be applied in one go
-                    foreach(var change in _changes.Value)
-                    {
-                        _value = _value.WithChanges(new TextChange[] { change });
-                    }
-                    _changes.Value.Clear();
-                }
-                return _value;
-            }
         }
     }
 }

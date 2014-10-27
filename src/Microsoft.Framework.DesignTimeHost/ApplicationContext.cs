@@ -27,7 +27,7 @@ namespace Microsoft.Framework.DesignTimeHost
         private readonly ICacheContextAccessor _cacheContextAccessor;
         private readonly INamedCacheDependencyProvider _namedDependencyProvider;
         private readonly IApplicationEnvironment _appEnv;
-
+        private readonly ISourceTextService _sourceTextService;
         private readonly Queue<Message> _inbox = new Queue<Message>();
         private readonly object _processingLock = new object();
 
@@ -57,6 +57,7 @@ namespace Microsoft.Framework.DesignTimeHost
             _cache = cache;
             _cacheContextAccessor = cacheContextAccessor;
             _namedDependencyProvider = namedDependencyProvider;
+            _sourceTextService = (ISourceTextService) services.GetService(typeof(ISourceTextService));
             Id = id;
         }
 
@@ -210,19 +211,18 @@ namespace Microsoft.Framework.DesignTimeHost
                     break;
                 case "SourceTextChanged":
                     {
-                        var sourceTextService = (ISourceTextService) _hostServices.GetService(typeof(ISourceTextService));
                         var data = message.Payload.ToObject<SourceTextChangeMessage>();
                         if(data.isOffsetBased)
                         {
                             _sourceTextChanged.Value = default(Void);
-                            sourceTextService.RecordTextChange(data.SourcePath, 
+                            this._sourceTextService.RecordTextChange(data.SourcePath, 
                                 new TextSpan(data.Start ?? 0, data.Length ?? 0), 
                                 data.NewText);
                         }
                         else if (data.isLineBased)
                         {
                             _sourceTextChanged.Value = default(Void);
-                            sourceTextService.RecordTextChange(data.SourcePath, 
+                            this._sourceTextService.RecordTextChange(data.SourcePath, 
                                 new LinePositionSpan(
                                     new LinePosition(data.StartLineNumber ?? 0, data.StartCharacter ?? 0), 
                                     new LinePosition(data.EndLineNumber ?? 0, data.EndCharacter ?? 0)), 

@@ -25,6 +25,7 @@ namespace Microsoft.Framework.Runtime.Roslyn
         private readonly IAssemblyLoadContextFactory _loadContextFactory;
         private readonly IFileWatcher _watcher;
         private readonly IServiceProvider _services;
+        private readonly ISourceTextService _sourceTextService;
 
         public RoslynCompiler(ICache cache,
                               ICacheContextAccessor cacheContextAccessor,
@@ -39,6 +40,7 @@ namespace Microsoft.Framework.Runtime.Roslyn
             _loadContextFactory = loadContextFactory;
             _watcher = watcher;
             _services = services;
+            _sourceTextService = (ISourceTextService) services.GetService(typeof(ISourceTextService));
         }
 
         public CompilationContext CompileProject(
@@ -267,9 +269,8 @@ namespace Microsoft.Framework.Runtime.Roslyn
             return _cache.Get<SyntaxTree>(cacheKey, (ctx, oldValue) =>
             {
                 SourceText sourceText;
-                var sourceTextService = (ISourceTextService) _services.GetService(typeof(ISourceTextService));
-                if (sourceTextService != null) {
-                    sourceText = sourceTextService.GetSourceText(sourcePath);
+                if (this._sourceTextService != null) {
+                    sourceText = this._sourceTextService.GetSourceText(sourcePath);
                 }
                 else 
                 {
@@ -280,7 +281,7 @@ namespace Microsoft.Framework.Runtime.Roslyn
                     }
                 }
 
-                if (oldValue != null && sourceTextService != null)
+                if (oldValue != null && this._sourceTextService != null) 
                 {
                     return oldValue.WithChangedText(sourceText);
                 }

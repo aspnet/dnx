@@ -4,9 +4,9 @@ namespace Microsoft.Framework.Runtime.Roslyn
 {
     public class SourceTextVersionChangeDependency : ICacheDependency
     {
-        private SourceTextWithChanges _sourceText;
+        private readonly SourceTextWithChanges _sourceText;
 
-        private int _version;
+        private readonly int _version;
 
         public SourceTextVersionChangeDependency(SourceTextWithChanges sourceText)
         {
@@ -14,8 +14,10 @@ namespace Microsoft.Framework.Runtime.Roslyn
             _version = sourceText.Version;
         }
 
-        public bool HasChanged {
-            get {
+        public bool HasChanged 
+        {
+            get 
+            {
                 return _sourceText.Version != _version;
             }
         }
