@@ -2,7 +2,7 @@
     "version": "1.0.0-*",
     "compilationOptions" : { "define" : ["TRACE"], "warningsAsErrors": true },
     "dependencies": {
-        "Microsoft.Framework.CommandLineUtils": "1.0.0-*"
+        "Microsoft.Framework.CommandLineUtils": { "version": "1.0.0-*", "type": "build" }
     },
     "shared": "**/*.cs",
     "frameworks" : {
