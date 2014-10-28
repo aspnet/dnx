@@ -2,7 +2,7 @@
     "version": "1.0.0-*",
     "compilationOptions": { "define": [ "TRACE" ], "allowUnsafe": true, "warningsAsErrors": true },
     "dependencies": {
-        "Microsoft.CodeAnalysis.CSharp": "1.0.0-beta1-*",
+        "K.Roslyn" : "1.0.0-*",
         "Microsoft.Framework.Runtime": "1.0.0-*",
         "Microsoft.Framework.Runtime.Common": { "version": "1.0.0-*", "type": "build" },
         "Microsoft.Framework.Runtime.Interfaces": { "version": "1.0.0-*", "type": "build" }
