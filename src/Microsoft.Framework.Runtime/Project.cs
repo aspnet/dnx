@@ -350,7 +350,7 @@ namespace Microsoft.Framework.Runtime
 
             if (project.Version.IsSnapshot)
             {
-                var buildVersion = Environment.GetEnvironmentVariable("K_BUILD_VERSION") ?? "SNAPSHOT";
+                var buildVersion = Environment.GetEnvironmentVariable("K_BUILD_VERSION");
                 project.Version = project.Version.SpecifySnapshot(buildVersion);
             }
 
