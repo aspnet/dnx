@@ -8,15 +8,15 @@ using System.IO;
 using System.Linq;
 using System.Runtime.Versioning;
 using System.Threading;
+using Microsoft.CodeAnalysis.Text;
 using Microsoft.Framework.DesignTimeHost.Models;
 using Microsoft.Framework.DesignTimeHost.Models.IncomingMessages;
 using Microsoft.Framework.DesignTimeHost.Models.OutgoingMessages;
 using Microsoft.Framework.Runtime;
 using Microsoft.Framework.Runtime.Roslyn;
+using Microsoft.Framework.Runtime.Roslyn.Services;
 using Newtonsoft.Json.Linq;
 using NuGet;
-using Microsoft.Framework.Runtime.Roslyn.Services;
-using Microsoft.CodeAnalysis.Text;
 
 namespace Microsoft.Framework.DesignTimeHost
 {

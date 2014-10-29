@@ -1,10 +1,10 @@
 using System;
-using Microsoft.CodeAnalysis.Text;
-using Microsoft.Framework.Runtime.Roslyn.Services;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using Microsoft.CodeAnalysis.CSharp;
+using Microsoft.CodeAnalysis.Text;
+using Microsoft.Framework.Runtime.Roslyn.Services;
 
 namespace Microsoft.Framework.Runtime.Roslyn
 {
