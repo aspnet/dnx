@@ -285,13 +285,13 @@ namespace NuGet
         /// <summary>
         /// The version string is either a simple version or an arithmetic range
         /// e.g.
-        ///      1.0         --> 1.0 ≤ x
-        ///      (,1.0]      --> x ≤ 1.0
+        ///      1.0         --> 1.0 â‰¤ x
+        ///      (,1.0]      --> x â‰¤ 1.0
         ///      (,1.0)      --> x &lt; 1.0
         ///      [1.0]       --> x == 1.0
         ///      (1.0,)      --> 1.0 &lt; x
         ///      (1.0, 2.0)   --> 1.0 &lt; x &lt; 2.0
-        ///      [1.0, 2.0]   --> 1.0 ≤ x ≤ 2.0
+        ///      [1.0, 2.0]   --> 1.0 â‰¤ x â‰¤ 2.0
         /// </summary>
         public static IVersionSpec ParseVersionSpec(string value)
         {
@@ -960,7 +960,7 @@ namespace NuGet
         /// </remarks>
         internal static int GetCompatibilityBetweenPortableLibraryAndPortableLibrary(FrameworkName frameworkName, FrameworkName targetFrameworkName)
         {
-            // Algorithms: Give a score from 0 to N indicating how close *in version* each package platform is the project’s platforms 
+            // Algorithms: Give a score from 0 to N indicating how close *in version* each package platform is the projectâ€™s platforms 
             // and then choose the folder with the lowest score. If the score matches, choose the one with the least platforms.
             // 
             // For example:
@@ -974,7 +974,7 @@ namespace NuGet
             // .NET 4.0 (1) + SL4 (1) + WP71 (0) + Win8 (0)                 == 2
             // .NET 4.0 (1) + SL4 (1) + WP70 (1) + Win8 (0)                 == 3
             // 
-            // Above, there’s two matches with the same result, choose the one with the least amount of platforms.
+            // Above, thereâ€™s two matches with the same result, choose the one with the least amount of platforms.
             // 
             // There will be situations, however, where there is still undefined behavior, such as:
             // 
@@ -1093,7 +1093,7 @@ namespace NuGet
 
         internal static SemanticVersion GetAssemblyVersion(string path)
         {
-#if NET45
+#if ASPNET50
             return new SemanticVersion(AssemblyName.GetAssemblyName(path).Version);
 #else
             return new SemanticVersion(System.Runtime.Loader.AssemblyLoadContext.GetAssemblyName(path).Version);

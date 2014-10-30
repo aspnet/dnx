@@ -50,7 +50,7 @@ namespace Microsoft.Framework.Project
                 FileName = filename,
                 Arguments = arguments,
                 CreateNoWindow = true,
-#if NET45
+#if ASPNET50
                 WindowStyle = ProcessWindowStyle.Hidden,
                 UseShellExecute = false,
 #endif
@@ -61,7 +61,7 @@ namespace Microsoft.Framework.Project
             if (!_options.Partial)
             {
                 // Disable partial NGEN
-#if NET45
+#if ASPNET50
                 options.EnvironmentVariables["COMPLUS_PartialNGen"] = "0";
 #else
                 options.Environment["COMPLUS_PartialNGen"] = "0";
@@ -69,7 +69,7 @@ namespace Microsoft.Framework.Project
             }
 
             var p = Process.Start(options);
-#if NET45
+#if ASPNET50
             p.EnableRaisingEvents = true;
 #endif
 

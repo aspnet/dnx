@@ -3,7 +3,7 @@
     "dependencies": { },
     "shared": "*.cs",
     "frameworks": {
-        "net45": { },
+        "aspnet50": { },
         "aspnet50": { },
         "aspnetcore50": {
             "dependencies": {

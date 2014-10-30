@@ -129,7 +129,7 @@ namespace Microsoft.Framework.Runtime
 
         private void PopulateCache()
         {
-#if NET45
+#if ASPNET50
             if (PlatformHelper.IsMono)
             {
                 var mscorlibLocationOnThisRunningMonoInstance = typeof(object).GetTypeInfo().Assembly.Location;

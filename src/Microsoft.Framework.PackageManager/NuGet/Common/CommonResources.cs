@@ -31,7 +31,7 @@ namespace NuGet
             {
                 if (object.ReferenceEquals(resourceMan, null))
                 {
-#if NET45
+#if ASPNET50
                     var asm = Assembly.GetExecutingAssembly();
 #else
                     var asm = typeof(CommonResources).GetTypeInfo().Assembly;

@@ -60,7 +60,7 @@ namespace Microsoft.Framework.Runtime.Common
 
             instance = null;
             entryPoint = null;
-#if NET45
+#if ASPNET50
             if (assembly.EntryPoint != null)
             {
                 // Add support for console apps

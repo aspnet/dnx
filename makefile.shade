@@ -78,8 +78,8 @@ var MSBUILD = '${Path.Combine(PROGRAM_FILES_X86, "MSBuild", "14.0", "Bin", "MSBu
           var environmentKreTargetOS = Environment.GetEnvironmentVariable("KRE_TARGET_OS");
           var configKreTargetOS = "";
       
-          Exec(MSBUILD, klrProj + " /p:Configuration=" + Configuration2 + ";Platform=Win32;TargetFramework=net45");
-          Exec(MSBUILD, klrProj + " /p:Configuration=" + Configuration2 + ";Platform=x64;TargetFramework=net45");
+          Exec(MSBUILD, klrProj + " /p:Configuration=" + Configuration2 + ";Platform=Win32;TargetFramework=aspnet50");
+          Exec(MSBUILD, klrProj + " /p:Configuration=" + Configuration2 + ";Platform=x64;TargetFramework=aspnet50");
 
           if (environmentKreTargetOS == "WIN7_PLUS_CORESYSTEM")
           {
@@ -126,7 +126,7 @@ var MSBUILD = '${Path.Combine(PROGRAM_FILES_X86, "MSBuild", "14.0", "Bin", "MSBu
     @{
         var cscPath = Path.Combine(Environment.GetEnvironmentVariable("WINDIR"), "Microsoft.NET", "Framework", "v4.0.30319", "csc.exe");
         Log.Info("Using csc path:" + cscPath);
-        Exec(cscPath, @"/target:exe /nologo /unsafe /out:artifacts\build\klr.mono.managed\klr.mono.managed.dll /define:NET45 src\klr.mono.managed\EntryPoint.cs src\klr.hosting.shared\RuntimeBootstrapper.cs src\klr.hosting.shared\LoaderEngine.cs src\Microsoft.Framework.CommandLineUtils\CommandLine\CommandArgument.cs src\Microsoft.Framework.CommandLineUtils\CommandLine\CommandLineApplication.cs src\Microsoft.Framework.CommandLineUtils\CommandLine\CommandOption.cs src\Microsoft.Framework.CommandLineUtils\CommandLine\CommandOptionType.cs");
+        Exec(cscPath, @"/target:exe /nologo /unsafe /out:artifacts\build\klr.mono.managed\klr.mono.managed.dll /define:ASPNET50 src\klr.mono.managed\EntryPoint.cs src\klr.hosting.shared\RuntimeBootstrapper.cs src\klr.hosting.shared\LoaderEngine.cs src\Microsoft.Framework.CommandLineUtils\CommandLine\CommandArgument.cs src\Microsoft.Framework.CommandLineUtils\CommandLine\CommandLineApplication.cs src\Microsoft.Framework.CommandLineUtils\CommandLine\CommandOption.cs src\Microsoft.Framework.CommandLineUtils\CommandLine\CommandOptionType.cs");
     }
 
 #xunit-test target='test' if='Directory.Exists("test")'
@@ -298,13 +298,13 @@ var MSBUILD = '${Path.Combine(PROGRAM_FILES_X86, "MSBuild", "14.0", "Bin", "MSBu
     }
 
     -// KRE-CLR-x86
-    copy sourceDir='${Path.Combine(BUILD_DIR2, "klr", "bin", "Win32", Configuration2, "net45")}' outputDir='${KRE_CLR_x86_BIN}' include='*.exe' overwrite='${true}'
+    copy sourceDir='${Path.Combine(BUILD_DIR2, "klr", "bin", "Win32", Configuration2, "aspnet50")}' outputDir='${KRE_CLR_x86_BIN}' include='*.exe' overwrite='${true}'
     copy sourceDir='${Path.Combine(BUILD_DIR2, "klr.net45", "bin", "Win32", Configuration2)}' outputDir='${KRE_CLR_x86_BIN}' include='*.dll' overwrite='${true}'
     copy sourceDir='${Path.Combine(BUILD_DIR2, "klr.net45", "bin", "Win32", Configuration2)}' outputDir='${KRE_CLR_x86_BIN}' include='*.pdb' overwrite='${true}'
     copy sourceDir='${Path.Combine(ROOT, "src", "klr.net45.managed")}' outputDir='${KRE_CLR_x86_BIN}' include='*.config' overwrite='${true}'
 
     -// KRE-CLR-amd64
-    copy sourceDir='${Path.Combine(BUILD_DIR2, "klr", "bin", "x64", Configuration2, "net45")}' outputDir='${KRE_CLR_amd64_BIN}' include='*.exe' overwrite='${true}'
+    copy sourceDir='${Path.Combine(BUILD_DIR2, "klr", "bin", "x64", Configuration2, "aspnet50")}' outputDir='${KRE_CLR_amd64_BIN}' include='*.exe' overwrite='${true}'
     copy sourceDir='${Path.Combine(BUILD_DIR2, "klr.net45", "bin", "x64", Configuration2)}' outputDir='${KRE_CLR_amd64_BIN}' include='*.dll' overwrite='${true}'
     copy sourceDir='${Path.Combine(BUILD_DIR2, "klr.net45", "bin", "x64", Configuration2)}' outputDir='${KRE_CLR_amd64_BIN}' include='*.pdb' overwrite='${true}'
     copy sourceDir='${Path.Combine(ROOT, "src", "klr.net45.managed")}' outputDir='${KRE_CLR_amd64_BIN}' include='*.config' overwrite='${true}'
@@ -323,7 +323,7 @@ var MSBUILD = '${Path.Combine(PROGRAM_FILES_X86, "MSBuild", "14.0", "Bin", "MSBu
 
     @{
         var hostAspNetCore50 = Path.Combine(BUILD_DIR2, "*", "aspnetcore50", "**.*");
-        var hostnet45 = Path.Combine(BUILD_DIR2, "*", "net45", "**.*");
+        var hostnet45 = Path.Combine(BUILD_DIR2, "*", "aspnet50", "**.*");
         
         var libPackages = new[] { "Microsoft.Framework.Project",
                                   "Microsoft.Framework.PackageManager", 
@@ -421,7 +421,7 @@ var MSBUILD = '${Path.Combine(PROGRAM_FILES_X86, "MSBuild", "14.0", "Bin", "MSBu
 
 #copy-package-dependencies
     @{
-        var targetFrameworks = new [] { "aspnetcore50", "net45" };
+        var targetFrameworks = new [] { "aspnetcore50", "aspnet50" };
 
         var packages = new[] { "Newtonsoft.Json", 
                                "Microsoft.CodeAnalysis.Common", 
@@ -450,7 +450,7 @@ var MSBUILD = '${Path.Combine(PROGRAM_FILES_X86, "MSBuild", "14.0", "Bin", "MSBu
                 }
                 else
                 {
-                    candidates = new [] { framework, "net40", "net35", "net20" };
+                    candidates = new [] { framework, "net451", "net45", "net40", "net35", "net20" };
                 }
 
                 var lib = new DirectoryInfo(Path.Combine(packageDir, "lib"));
@@ -568,7 +568,7 @@ var MSBUILD = '${Path.Combine(PROGRAM_FILES_X86, "MSBuild", "14.0", "Bin", "MSBu
     -// Copy to target
     copy sourceDir='${Path.Combine(CoreCLR_DIR, "Runtime")}' outputDir='${Path.Combine(CORECLR_TARGET_PATH, "Runtime")}' overwrite='${true}'
     
-    -// Copy the CoreCLR to the aspentcore50 builds
+    -// Copy the CoreCLR to the aspnetcore50 builds
     copy sourceDir='${Path.Combine(CORECLR_TARGET_PATH, "Runtime", "x86")}' outputDir='${KRE_CORECLR_x86_BIN}'
     copy sourceDir='${Path.Combine(CORECLR_TARGET_PATH, "Runtime", "amd64")}' outputDir='${KRE_CORECLR_amd64_BIN}'
 

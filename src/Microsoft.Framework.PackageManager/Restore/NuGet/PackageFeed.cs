@@ -190,7 +190,7 @@ namespace Microsoft.Framework.PackageManager.Restore.NuGet
                         using (var entryStream = entry.Open())
                         {
                             var nuspecStream = new MemoryStream((int)entry.Length);
-#if NET45
+#if ASPNET50
                             await entryStream.CopyToAsync(nuspecStream);
 #else
                             // System.IO.Compression.DeflateStream throws exception when multiple

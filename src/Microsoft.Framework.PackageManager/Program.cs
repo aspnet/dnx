@@ -22,7 +22,7 @@ namespace Microsoft.Framework.PackageManager
             _hostServices = hostServices;
             _environment = environment;
 
-#if NET45
+#if ASPNET50
             Thread.GetDomain().SetData(".appDomain", this);
             ServicePointManager.DefaultConnectionLimit = 1024;
 #endif

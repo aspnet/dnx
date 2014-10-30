@@ -104,7 +104,7 @@ namespace NuGet
         {
             // Walk up the tree to find a config file; also look in .nuget subdirectories
             var validSettingFiles = new List<Settings>();
-#if NET45
+#if ASPNET50
             var appData = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
 #else
             var appData = Environment.GetEnvironmentVariable("APPDATA");
@@ -172,7 +172,7 @@ namespace NuGet
             if (configFileName == null)
             {
                 // load %AppData%\NuGet\NuGet.config
-#if NET45
+#if ASPNET50
                 var appDataPath = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
 #else
                 var appDataPath = Environment.GetEnvironmentVariable("APPDATA");

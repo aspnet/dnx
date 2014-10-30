@@ -1,4 +1,4 @@
-﻿using Microsoft.Framework.ApplicationHost.Impl.Syntax;
+using Microsoft.Framework.ApplicationHost.Impl.Syntax;
 using Microsoft.Framework.Runtime;
 using System;
 using System.Collections.Generic;
@@ -44,7 +44,7 @@ namespace Microsoft.Framework.PackageManager
                     FileName = scriptArguments.FirstOrDefault(),
                     Arguments = String.Join(" ", scriptArguments.Skip(1)),
                     WorkingDirectory = project.ProjectDirectory,
-    #if NET45
+    #if ASPNET50
                     UseShellExecute = false,
     #endif
                 };

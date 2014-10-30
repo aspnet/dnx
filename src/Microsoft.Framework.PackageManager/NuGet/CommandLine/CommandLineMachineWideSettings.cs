@@ -15,7 +15,7 @@ namespace NuGet
 
         public CommandLineMachineWideSettings()
         {
-#if NET45
+#if ASPNET50
             var baseDirectory = Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData);
 #else
             var baseDirectory = Environment.GetEnvironmentVariable("ProgramData");

@@ -3,7 +3,7 @@
 
 using System;
 using Microsoft.Framework.Runtime.Infrastructure;
-#if NET45
+#if ASPNET50
 using System.Runtime.Remoting.Messaging;
 using System.Runtime.Remoting;
 #else
@@ -14,7 +14,7 @@ namespace klr.host
 {
     internal class ServiceProviderLocator : IServiceProviderLocator
     {
-#if NET45
+#if ASPNET50
         private const string ServiceProviderDataName = "klr.host.ServiceProviderLocator.ServiceProvider";
 
         public IServiceProvider ServiceProvider

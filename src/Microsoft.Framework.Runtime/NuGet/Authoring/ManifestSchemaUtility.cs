@@ -54,7 +54,7 @@ namespace NuGet
             SchemaVersionV5,
             SchemaVersionV6
         };
-#if NET45
+#if ASPNET50
         private static Dictionary<string, XmlSchemaSet> _manifestSchemaSetCache = new Dictionary<string, XmlSchemaSet>(StringComparer.OrdinalIgnoreCase);
 #endif        
         public static int GetVersionFromNamespace(string @namespace)
@@ -74,7 +74,7 @@ namespace NuGet
             }
             return VersionToSchemaMappings[version - 1];
         }
-#if NET45
+#if ASPNET50
         public static XmlSchemaSet GetManifestSchemaSet(string schemaNamespace)
         {
             return _manifestSchemaSetCache.GetOrAdd(schemaNamespace, schema =>

@@ -21,7 +21,7 @@ namespace NuGet
 
         private static ConfigurationDefaults InitializeInstance()
         {
-#if NET45
+#if ASPNET50
             var commonAppData = Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData);
 #else
             var commonAppData = Environment.GetEnvironmentVariable("ProgramData");

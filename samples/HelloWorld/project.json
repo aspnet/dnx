@@ -10,7 +10,7 @@
         "run": "HelloWorld I can customize the default command"
     },
     "frameworks": {
-        "net45": {
+        "aspnet50": {
             "frameworkAssemblies": {
                 "System.Collections": "",
                 "System.IO": "",

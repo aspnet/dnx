@@ -73,7 +73,7 @@ namespace klr.hosting
         public static Task<int> ExecuteAsync(string[] args)
         {
             var enableTrace = Environment.GetEnvironmentVariable("KRE_TRACE") == "1";
-#if NET45
+#if ASPNET50
             // TODO: Make this pluggable and not limited to the console logger
             if (enableTrace)
             {
@@ -252,7 +252,7 @@ namespace klr.hosting
                         // Dispose the host
                         ((IDisposable)state).Dispose();
 
-#if NET45
+#if ASPNET50
                         AppDomain.CurrentDomain.AssemblyResolve -= handler;
 #endif
                         return await t;
@@ -268,7 +268,7 @@ namespace klr.hosting
             }
             catch
             {
-#if NET45
+#if ASPNET50
                 AppDomain.CurrentDomain.AssemblyResolve -= handler;
 #endif
                 throw;

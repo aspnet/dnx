@@ -26,7 +26,7 @@ namespace NuGet
         /// <returns>the 3 letter language name used to locate localized resources.</returns>
         public static string GetLanguageName()
         {
-#if NET45
+#if ASPNET50
             var culture = Thread.CurrentThread.CurrentUICulture;
             while (!culture.IsNeutralCulture)
             {

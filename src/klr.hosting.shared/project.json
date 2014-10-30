@@ -6,7 +6,7 @@
     },
     "shared": "**/*.cs",
     "frameworks" : {
-        "net45" : { },
+        "aspnet50" : { },
         "aspnetcore50" : { 
             "dependencies": {
                 "System.AppContext": "4.0.0-beta-*",

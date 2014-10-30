@@ -45,7 +45,7 @@ namespace klr.host
                 return Task.FromResult(-1);
             }
 
-#if NET45
+#if ASPNET50
             string applicationBaseDirectory;
             if (PlatformHelper.IsMono)
             {
