@@ -21,8 +21,12 @@ namespace klr.hosting
     {
         private static readonly ConcurrentDictionary<string, object> _assemblyLoadLocks =
                 new ConcurrentDictionary<string, object>(StringComparer.Ordinal);
-        private static readonly Dictionary<string, Assembly> _assemblyCache
-                = new Dictionary<string, Assembly>(StringComparer.Ordinal);
+
+        private static readonly ConcurrentDictionary<string, Assembly> _assemblyCache
+                = new ConcurrentDictionary<string, Assembly>(StringComparer.Ordinal);
+
+        private static readonly ConcurrentDictionary<string, Assembly> _assemblyNeutralInterfaces =
+            new ConcurrentDictionary<string, Assembly>(StringComparer.Ordinal);
 
         private static readonly char[] _libPathSeparator = new[] { ';' };
 
@@ -202,26 +206,37 @@ namespace klr.hosting
                 // Loader impl
                 // The following code is doing:
                 // var loaderContainer = new klr.host.LoaderContainer();
+                // var assemblyNeutralInterfaceCache = new klr.host.AssemblyNeutralInterfaceCache(_assemblyNeutralInterfaces);
+                // var cachedAssemblyLoader = new klr.host.CachedAssemblyLoader(_assemblyCache);
                 // var libLoader = new klr.host.PathBasedAssemblyLoader(searchPaths);
+                // loaderContainer.AddLoader(cachedAssemblyLoader);
                 // loaderContainer.AddLoader(libLoader);
-                // var bootstrapper = new klr.host.Bootstrapper(loaderContainer);
+                // var bootstrapper = new klr.host.Bootstrapper(loaderContainer, assemblyNeutralInterfaceCache);
                 // bootstrapper.Main(bootstrapperArgs);
 
                 var loaderContainerType = assembly.GetType("klr.host.LoaderContainer");
+                var assemblyNeutralInterfaceCacheType = assembly.GetType("klr.host.AssemblyNeutralInterfaceCache");
+                var cachedAssemblyLoaderType = assembly.GetType("klr.host.CachedAssemblyLoader");
                 var pathBasedLoaderType = assembly.GetType("klr.host.PathBasedAssemblyLoader");
 
                 var loaderContainer = Activator.CreateInstance(loaderContainerType);
+                var assemblyNeutralInterfaceCache = Activator.CreateInstance(assemblyNeutralInterfaceCacheType, new object[] { _assemblyNeutralInterfaces });
+                var cachedAssemblyLoader = Activator.CreateInstance(cachedAssemblyLoaderType, new object[] { _assemblyCache });
                 var libLoader = Activator.CreateInstance(pathBasedLoaderType, new object[] { searchPaths });
 
                 MethodInfo addLoaderMethodInfo = loaderContainerType.GetTypeInfo().GetDeclaredMethod("AddLoader");
-                var disposable = (IDisposable)addLoaderMethodInfo.Invoke(loaderContainer, new[] { libLoader });
+                var disposable1 = (IDisposable)addLoaderMethodInfo.Invoke(loaderContainer, new[] { cachedAssemblyLoader });
+                var disposable2 = (IDisposable)addLoaderMethodInfo.Invoke(loaderContainer, new[] { libLoader });
+
+                var disposable = new CombinedDisposable(disposable1, disposable2);
+
                 var loaderContainerLoadMethodInfo = loaderContainerType.GetTypeInfo().GetDeclaredMethod("Load");
 
                 loader = (Func<string, Assembly>)loaderContainerLoadMethodInfo.CreateDelegate(typeof(Func<string, Assembly>), loaderContainer);
 
                 var bootstrapperType = assembly.GetType("klr.host.Bootstrapper");
                 var mainMethod = bootstrapperType.GetTypeInfo().GetDeclaredMethod("Main");
-                var bootstrapper = Activator.CreateInstance(bootstrapperType, loaderContainer);
+                var bootstrapper = Activator.CreateInstance(bootstrapperType, loaderContainer, assemblyNeutralInterfaceCache);
 
                 try
                 {
@@ -321,7 +336,10 @@ namespace klr.hosting
 
                     var neutralAssemblyStream = assembly.GetManifestResourceStream(name);
 
-                    _assemblyCache[assemblyName] = load(neutralAssemblyStream);
+                    var neutralAssembly = load(neutralAssemblyStream);
+
+                    _assemblyCache[assemblyName] = neutralAssembly;
+                    _assemblyNeutralInterfaces[assemblyName] = neutralAssembly;
                 }
             }
         }
@@ -350,6 +368,33 @@ namespace klr.hosting
                 return assembly.GetName().Version.ToString();
             }
             return assemblyInformationalVersionAttribute.InformationalVersion;
+        }
+
+        private class CombinedDisposable : IDisposable
+        {
+            private IDisposable _disposable1;
+            private IDisposable _disposable2;
+
+            public CombinedDisposable(IDisposable disposable1, IDisposable disposable2)
+            {
+                _disposable1 = disposable1;
+                _disposable2 = disposable2;
+            }
+
+            public void Dispose()
+            {
+                if (_disposable2 != null)
+                {
+                    _disposable2.Dispose();
+                    _disposable2 = null;
+                }
+
+                if (_disposable1 != null)
+                {
+                    _disposable1.Dispose();
+                    _disposable1 = null;
+                }
+            }
         }
     }
 }

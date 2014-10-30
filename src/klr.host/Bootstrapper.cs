@@ -18,10 +18,13 @@ namespace klr.host
     public class Bootstrapper
     {
         private readonly IAssemblyLoaderContainer _container;
+        private readonly IAssemblyNeutralInterfaceCache _assemblyNeutralInterfaceCache;
 
-        public Bootstrapper(IAssemblyLoaderContainer container)
+        public Bootstrapper(IAssemblyLoaderContainer container, 
+                            IAssemblyNeutralInterfaceCache  assemblyNeutralInterfaceCache)
         {
             _container = container;
+            _assemblyNeutralInterfaceCache = assemblyNeutralInterfaceCache;
         }
 
         public Task<int> Main(string[] args)
@@ -77,6 +80,7 @@ namespace klr.host
             serviceProvider.Add(typeof(IAssemblyLoaderContainer), _container);
             serviceProvider.Add(typeof(IAssemblyLoadContextAccessor), LoadContextAccessor.Instance);
             serviceProvider.Add(typeof(IApplicationEnvironment), applicationEnvironment);
+            serviceProvider.Add(typeof(IAssemblyNeutralInterfaceCache), _assemblyNeutralInterfaceCache);
 
             CallContextServiceLocator.Locator.ServiceProvider = serviceProvider;
 
