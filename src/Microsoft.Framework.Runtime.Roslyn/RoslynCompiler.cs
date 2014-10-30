@@ -219,7 +219,8 @@ namespace Microsoft.Framework.Runtime.Roslyn
         {
             var trees = new List<SyntaxTree>();
 
-            var dirs = new HashSet<string>();
+            // Enumerate all sub dirs and start from that set of folders incase new folders are added
+            var dirs = new HashSet<string>(Directory.EnumerateDirectories(project.ProjectDirectory, "*.*"));
             dirs.Add(project.ProjectDirectory);
 
             foreach (var sourcePath in sourceFiles)
@@ -252,6 +253,8 @@ namespace Microsoft.Framework.Runtime.Roslyn
             foreach (var d in dirs)
             {
                 ctx.Monitor(new FileWriteTimeCacheDependency(d));
+
+                // TODO: Make the file watcher hand out cache dependencies as well
                 _watcher.WatchDirectory(d, ".cs");
             }
 
