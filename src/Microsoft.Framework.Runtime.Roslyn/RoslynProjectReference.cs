@@ -134,10 +134,19 @@ namespace Microsoft.Framework.Runtime.Roslyn
             var xmlDocPath = Path.Combine(outputPath, Name + ".xml");
 
             // REVIEW: Memory bloat?
+
             using (var xmlDocStream = new MemoryStream())
             using (var pdbStream = new MemoryStream())
             using (var assemblyStream = new MemoryStream())
+            using (var win32resStream = CompilationContext.Compilation.CreateDefaultWin32Resources(
+                versionResource: true,
+                noManifest: false,
+                manifestContents: null,
+                iconInIcoFormat: null))
             {
+                // The default win32resStream extracted from compilation represents a Win32 applicaiton manifest.
+                // It enables the assmebly information to be viewed in Windows Explorer.
+
                 Trace.TraceInformation("[{0}]: Emitting assembly for {1}", GetType().Name, Name);
 
                 var sw = Stopwatch.StartNew();
@@ -147,11 +156,21 @@ namespace Microsoft.Framework.Runtime.Roslyn
                 if (_supportsPdbGeneration.Value)
                 {
                     var options = new EmitOptions(pdbFilePath: pdbPath);
-                    result = CompilationContext.Compilation.Emit(assemblyStream, pdbStream: pdbStream, xmlDocumentationStream: xmlDocStream, manifestResources: resources, options: options);
+                    result = CompilationContext.Compilation.Emit(
+                        assemblyStream,
+                        pdbStream: pdbStream,
+                        xmlDocumentationStream: xmlDocStream,
+                        win32Resources: win32resStream,
+                        manifestResources: resources,
+                        options: options);
                 }
                 else
                 {
-                    result = CompilationContext.Compilation.Emit(assemblyStream, xmlDocumentationStream: xmlDocStream, manifestResources: resources);
+                    result = CompilationContext.Compilation.Emit(
+                        assemblyStream,
+                        xmlDocumentationStream: xmlDocStream,
+                        manifestResources: resources,
+                        win32Resources: win32resStream);
                 }
 
                 sw.Stop();
