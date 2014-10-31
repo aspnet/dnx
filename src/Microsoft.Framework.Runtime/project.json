@@ -1,5 +1,6 @@
 {
     "version": "1.0.0-*",
+    "description": "ASP.NET 5 runtime infrastructure for loading NuGet packages and projects.",
     "compilationOptions": { "define": [ "LOADER", "TRACE" ], "allowUnsafe": true, "warningsAsErrors": true },
     "dependencies": {
         "System.Reflection.Metadata": "1.0.17-beta",
