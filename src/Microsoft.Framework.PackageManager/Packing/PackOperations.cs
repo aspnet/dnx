@@ -14,28 +14,7 @@ namespace Microsoft.Framework.PackageManager.Packing
     {
         public void Delete(string folderPath)
         {
-            // Calling DeleteRecursive rather than Directory.Delete(..., recursive: true)
-            // due to an infrequent exception which can be thrown from that API
-            DeleteRecursive(folderPath);
-        }
-
-        private void DeleteRecursive(string deletePath)
-        {
-            if (!Directory.Exists(deletePath))
-            {
-                return;
-            }
-
-            foreach (var deleteFilePath in Directory.EnumerateFiles(deletePath).Select(Path.GetFileName))
-            {
-                File.Delete(Path.Combine(deletePath, deleteFilePath));
-            }
-
-            foreach (var deleteFolderPath in Directory.EnumerateDirectories(deletePath).Select(Path.GetFileName))
-            {
-                DeleteRecursive(Path.Combine(deletePath, deleteFolderPath));
-                Directory.Delete(Path.Combine(deletePath, deleteFolderPath), recursive: true);
-            }
+            FileOperationUtils.DeleteFolder(folderPath);
         }
 
         public void Copy(string sourcePath, string targetPath)

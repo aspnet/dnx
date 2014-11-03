@@ -34,6 +34,7 @@ namespace Microsoft.Framework.PackageManager
             app.Name = "kpm";
 
             var optionVerbose = app.Option("-v|--verbose", "Show verbose output", CommandOptionType.NoValue);
+            var optionToolsPath = app.Option("--tools-path", "", CommandOptionType.SingleValue);
             app.HelpOption("-?|-h|--help");
             app.VersionOption("--version", GetVersion());
 
@@ -250,6 +251,31 @@ namespace Microsoft.Framework.PackageManager
                     installCmd.Reports = reports;
 
                     var success = await installCmd.ExecuteCommand();
+
+                    return success ? 0 : 1;
+                });
+            });
+
+            app.Command("wrap", c =>
+            {
+                c.Description = "Wrap a csproj into a kproj, which can be referenced by kprojs";
+
+                var argPath = c.Argument("[path]", "Path to csproj to be wrapped");
+                var optConfiguration = c.Option("--configuration <CONFIGURATION>",
+                    "Configuration of wrapped project, default is 'debug'", CommandOptionType.SingleValue);
+                c.HelpOption("-?|-h|--help");
+
+                c.OnExecute(() =>
+                {
+                    var reports = CreateReports(optionVerbose.HasValue(), quiet: false);
+
+                    var command = new WrapCommand();
+                    command.Reports = reports;
+                    command.CsProjectPath = argPath.Value;
+                    command.ToolsPath = optionToolsPath.Value();
+                    command.Configuration = optConfiguration.Value();
+
+                    var success = command.ExecuteCommand();
 
                     return success ? 0 : 1;
                 });

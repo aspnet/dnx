@@ -60,9 +60,17 @@ namespace NuGet
         }
 
         /// <summary>
-        /// Returns path2 relative to path1
+        /// Returns path2 relative to path1, with Path.DirectorySeparatorChar as separator
         /// </summary>
         public static string GetRelativePath(string path1, string path2)
+        {
+            return UriUtility.GetPath(GetRelativeUri(path1, path2));
+        }
+
+        /// <summary>
+        /// Returns path2 relative to path1, with '/' as separator
+        /// </summary>
+        public static Uri GetRelativeUri(string path1, string path2)
         {
             if (path1 == null)
             {
@@ -77,7 +85,7 @@ namespace NuGet
             Uri source = new Uri(path1);
             Uri target = new Uri(path2);
 
-            return UriUtility.GetPath(source.MakeRelativeUri(target));
+            return source.MakeRelativeUri(target);
         }
 
         public static string GetAbsolutePath(string basePath, string relativePath)

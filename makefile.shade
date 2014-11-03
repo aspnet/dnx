@@ -138,6 +138,28 @@ var MONO_MANAGED_PROJECTS = '${FindAllProjects("klr.mono.managed")}'
 
   directory delete='${Path.Combine(BUILD_DIR2, "klr.core45")}'
   copy sourceDir='${Path.Combine(ROOT, "src", "klr.core45")}' include='bin/**/' outputDir='${Path.Combine(BUILD_DIR2, "klr.core45")}' overwrite='${true}'
+  
+#compile-tools target='compile' if='!IsMono'
+  var toolProjects ='${Files.Include(Path.Combine(ROOT, "tools", "**", "*.csproj"))}'
+
+  @{
+      if (toolProjects.Any())
+      {
+        if (!IsMsbuildInstalled(MSBUILD))
+        {
+            Environment.Exit(1);
+        }
+        else
+        {
+            foreach (var project in toolProjects)
+            {
+                Exec(MSBUILD, project + " /p:Configuration=" + Configuration2);
+            }
+        }
+      }
+  }
+
+  copy sourceDir='${Path.GetDirectoryName(project)}' include='bin/**/' outputDir='${Path.Combine(BUILD_DIR2, Path.GetFileNameWithoutExtension(project))}' overwrite='${true}' each='var project in toolProjects'
 
 #build-native-klrnet45 target='native-compile' if='!IsMono'
     var klrNet45Proj ='${Path.Combine(ROOT, "src", "klr.net45", "klr.net45.vcxproj")}'
@@ -184,7 +206,7 @@ var MONO_MANAGED_PROJECTS = '${FindAllProjects("klr.mono.managed")}'
 
 #package-runtime .clean-sdk-dir .copy-bits .tweak-scripts .copy-package-dependencies .copy-coreclr-kpm-dependencies .copy-coreclr .nuget-pack-runtime target='package'
 
-#rebuild-package .build-mono-entrypoint .build-compile .native-compile .package-runtime .xunit-test
+#rebuild-package .build-mono-entrypoint .build-compile .compile-tools .native-compile .package-runtime .xunit-test
 
 #xunit-test target='test' if='Directory.Exists("test")'
     k-test each='var projectFile in Files.Include("test/**/project.json")' if='NEW_RUNTIME'
@@ -377,6 +399,8 @@ var MONO_MANAGED_PROJECTS = '${FindAllProjects("klr.mono.managed")}'
                                   "Microsoft.Framework.PackageManager", 
                                   "Microsoft.Framework.DesignTimeHost" };
 
+        var kpmTools = new[] { "CsprojDumper" };
+
         var sharedSourceAssemblies = new [] { 
             Path.Combine(BUILD_DIR2, "klr.hosting.shared/**/*.*"), 
             Path.Combine(BUILD_DIR2, "Microsoft.Framework.CommandLineUtils/**/*.*"), 
@@ -447,6 +471,38 @@ var MONO_MANAGED_PROJECTS = '${FindAllProjects("klr.mono.managed")}'
             {
                 move(binFolder, libPackage, ".dll");
                 move(binFolder, libPackage, ".pdb");
+            }
+        }
+        
+        Action<string, string, string> copyKpmTool = (binFolder, name, extension) =>
+        {
+            var source = Path.Combine(BUILD_DIR2, name, "bin", Configuration2, name + extension);
+            var target = Path.Combine(binFolder, "lib", "Microsoft.Framework.PackageManager", name + extension);
+            
+            if (File.Exists(source))
+            {
+                if (File.Exists(target))
+                {
+                    File.Delete(target);
+                }
+                
+                File.Copy(source, target);
+
+                Log.Info("Copying " + name + " to " + target);
+            }
+            else
+            {
+                Log.Warn(name + " does not exist in " + binFolder);
+            }
+        };
+        
+        // Copy tools into the lib/ folder
+        foreach (var tool in kpmTools)
+        {
+            foreach(var binFolder in ALL_TARGETS)
+            {
+                copyKpmTool(binFolder, tool, ".exe");
+                copyKpmTool(binFolder, tool, ".pdb");
             }
         }
     }
