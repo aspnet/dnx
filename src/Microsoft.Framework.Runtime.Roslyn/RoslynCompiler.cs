@@ -13,6 +13,7 @@ using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.Text;
 using Microsoft.Framework.Runtime.Common.DependencyInjection;
+using Microsoft.Framework.Runtime.Roslyn.Services;
 
 namespace Microsoft.Framework.Runtime.Roslyn
 {
@@ -24,6 +25,7 @@ namespace Microsoft.Framework.Runtime.Roslyn
         private readonly IAssemblyLoadContextFactory _loadContextFactory;
         private readonly IFileWatcher _watcher;
         private readonly IServiceProvider _services;
+        private readonly ISourceTextService _sourceTextService;
 
         public RoslynCompiler(ICache cache,
                               ICacheContextAccessor cacheContextAccessor,
@@ -38,6 +40,7 @@ namespace Microsoft.Framework.Runtime.Roslyn
             _loadContextFactory = loadContextFactory;
             _watcher = watcher;
             _services = services;
+            _sourceTextService = (ISourceTextService) services.GetService(typeof(ISourceTextService));
         }
 
         public CompilationContext CompileProject(
@@ -266,14 +269,28 @@ namespace Microsoft.Framework.Runtime.Roslyn
             // The cache key needs to take the parseOptions into account
             var cacheKey = sourcePath + string.Join(",", parseOptions.PreprocessorSymbolNames) + parseOptions.LanguageVersion;
 
-            return _cache.Get<SyntaxTree>(cacheKey, ctx =>
+            return _cache.Get<SyntaxTree>(cacheKey, (ctx, oldValue) =>
             {
-                ctx.Monitor(new FileWriteTimeCacheDependency(sourcePath));
-
-                using (var stream = File.OpenRead(sourcePath))
+                SourceText sourceText;
+                if (_sourceTextService != null)
                 {
-                    var sourceText = SourceText.From(stream, encoding: Encoding.UTF8);
+                    sourceText = _sourceTextService.GetSourceText(sourcePath);
+                }
+                else
+                {
+                    ctx.Monitor(new FileWriteTimeCacheDependency(sourcePath));
+                    using (var stream = File.OpenRead(sourcePath))
+                    {
+                        sourceText = SourceText.From(stream, encoding: Encoding.UTF8);
+                    }
+                }
 
+                if (oldValue != null && _sourceTextService != null)
+                {
+                    return oldValue.WithChangedText(sourceText);
+                }
+                else
+                {
                     return CSharpSyntaxTree.ParseText(sourceText, options: parseOptions, path: sourcePath);
                 }
             });

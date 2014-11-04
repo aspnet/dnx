@@ -8,11 +8,13 @@ using System.IO;
 using System.Linq;
 using System.Runtime.Versioning;
 using System.Threading;
+using Microsoft.CodeAnalysis.Text;
 using Microsoft.Framework.DesignTimeHost.Models;
 using Microsoft.Framework.DesignTimeHost.Models.IncomingMessages;
 using Microsoft.Framework.DesignTimeHost.Models.OutgoingMessages;
 using Microsoft.Framework.Runtime;
 using Microsoft.Framework.Runtime.Roslyn;
+using Microsoft.Framework.Runtime.Roslyn.Services;
 using Newtonsoft.Json.Linq;
 using NuGet;
 
@@ -25,7 +27,7 @@ namespace Microsoft.Framework.DesignTimeHost
         private readonly ICacheContextAccessor _cacheContextAccessor;
         private readonly INamedCacheDependencyProvider _namedDependencyProvider;
         private readonly IApplicationEnvironment _appEnv;
-
+        private readonly ISourceTextService _sourceTextService;
         private readonly Queue<Message> _inbox = new Queue<Message>();
         private readonly object _processingLock = new object();
 
@@ -33,6 +35,7 @@ namespace Microsoft.Framework.DesignTimeHost
         private readonly Trigger<string> _configuration = new Trigger<string>();
         private readonly Trigger<Void> _filesChanged = new Trigger<Void>();
         private readonly Trigger<Void> _rebuild = new Trigger<Void>();
+        private readonly Trigger<Void> _sourceTextChanged = new Trigger<Void>();
 
         private readonly Trigger<State> _state = new Trigger<State>();
 
@@ -54,6 +57,7 @@ namespace Microsoft.Framework.DesignTimeHost
             _cache = cache;
             _cacheContextAccessor = cacheContextAccessor;
             _namedDependencyProvider = namedDependencyProvider;
+            _sourceTextService = (ISourceTextService) services.GetService(typeof(ISourceTextService));
             Id = id;
         }
 
@@ -205,6 +209,27 @@ namespace Microsoft.Framework.DesignTimeHost
                         _filesChanged.Value = default(Void);
                     }
                     break;
+                case "SourceTextChanged":
+                    {
+                        var data = message.Payload.ToObject<SourceTextChangeMessage>();
+                        if(data.IsOffsetBased)
+                        {
+                            _sourceTextChanged.Value = default(Void);
+                            _sourceTextService.RecordTextChange(data.SourcePath, 
+                                new TextSpan(data.Start ?? 0, data.Length ?? 0), 
+                                data.NewText);
+                        }
+                        else if (data.IsLineBased)
+                        {
+                            _sourceTextChanged.Value = default(Void);
+                            _sourceTextService.RecordTextChange(data.SourcePath, 
+                                new LinePositionSpan(
+                                    new LinePosition(data.StartLineNumber ?? 0, data.StartCharacter ?? 0), 
+                                    new LinePosition(data.EndLineNumber ?? 0, data.EndCharacter ?? 0)), 
+                                    data.NewText);
+                        }
+                    }
+                    break;
                 case "GetCompiledAssembly":
                     {
                         var libraryKey = message.Payload.ToObject<LibraryKey>();
@@ -238,7 +263,8 @@ namespace Microsoft.Framework.DesignTimeHost
             if (_appPath.WasAssigned ||
                 _configuration.WasAssigned ||
                 _filesChanged.WasAssigned ||
-                _rebuild.WasAssigned)
+                _rebuild.WasAssigned || 
+                _sourceTextChanged.WasAssigned)
             {
                 bool triggerBuildOutputs = _rebuild.WasAssigned;
 
@@ -246,6 +272,7 @@ namespace Microsoft.Framework.DesignTimeHost
                 _configuration.ClearAssigned();
                 _filesChanged.ClearAssigned();
                 _rebuild.ClearAssigned();
+                _sourceTextChanged.ClearAssigned();
 
                 _state.Value = Initialize(_appPath.Value, _configuration.Value, triggerBuildOutputs);
             }

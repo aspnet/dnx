@@ -9,6 +9,9 @@ using System.Net;
 using System.Net.Sockets;
 using System.Threading.Tasks;
 using Microsoft.Framework.Runtime;
+using Microsoft.Framework.Runtime.Common.DependencyInjection;
+using Microsoft.Framework.Runtime.Roslyn.Services;
+using Microsoft.Framework.Runtime.Roslyn;
 
 namespace Microsoft.Framework.DesignTimeHost
 {
@@ -51,6 +54,8 @@ namespace Microsoft.Framework.DesignTimeHost
             var cache = new Cache(cacheContextAccessor);
             var namedDependencyProvider = new NamedCacheDependencyProvider();
             var contexts = new Dictionary<int, ApplicationContext>();
+            var services = new ServiceProvider(_services);
+            services.Add(typeof(ISourceTextService), new SourceTextService(cache));
 
             // This fixes the mono incompatibility but ties it to ipv4 connections
             var listenSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
@@ -69,7 +74,7 @@ namespace Microsoft.Framework.DesignTimeHost
                 var queue = new ProcessingQueue(stream);
                 var connection = new ConnectionContext(
                     contexts, 
-                    _services, 
+                    services, 
                     cache, 
                     cacheContextAccessor,
                     namedDependencyProvider,

@@ -24,6 +24,16 @@ namespace Microsoft.Framework.Runtime
             return entry.Value.Result;
         }
 
+        public object Get(object key, Func<CacheContext, object, object> factory)
+        {
+            var entry = _entries.AddOrUpdate(key,
+                k => AddEntry(k, (ctx) => factory(ctx, null)),
+                (k, oldValue) => UpdateEntry(oldValue, k, (ctx) => factory(ctx, oldValue.Value.Result)));
+
+            return entry.Value.Result;
+        }
+
+
         private Lazy<CacheEntry> AddEntry(object k, Func<CacheContext, object> acquire)
         {
             return new Lazy<CacheEntry>(() =>
