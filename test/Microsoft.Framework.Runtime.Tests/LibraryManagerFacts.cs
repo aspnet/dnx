@@ -66,6 +66,11 @@ namespace Microsoft.Framework.Runtime.Tests
 
         private class EmptyCache : ICache
         {
+            public object Get(object key, Func<CacheContext, object, object> factory)
+            {
+                throw new NotImplementedException();
+            }
+
             public object Get(object key, Func<CacheContext, object> factory)
             {
                 throw new NotImplementedException();

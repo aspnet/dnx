@@ -1,8 +1,8 @@
 {
     "dependencies": {
         "K.Roslyn": "1.0.0-*",
-        "Microsoft.Framework.Runtime.Interfaces": "",
-        "Microsoft.Framework.Runtime.Roslyn": "",
+        "Microsoft.Framework.Runtime.Interfaces": "1.0.0-*",
+        "Microsoft.Framework.Runtime.Roslyn": "1.0.0-*",
         "Xunit.KRunner": "1.0.0-*"
     },
     "frameworks": {
