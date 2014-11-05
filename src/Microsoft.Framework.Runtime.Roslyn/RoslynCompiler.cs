@@ -223,7 +223,7 @@ namespace Microsoft.Framework.Runtime.Roslyn
             var trees = new List<SyntaxTree>();
 
             // Enumerate all sub dirs and start from that set of folders incase new folders are added
-            var dirs = new HashSet<string>(Directory.EnumerateDirectories(project.ProjectDirectory, "*.*"));
+            var dirs = new HashSet<string>(Directory.EnumerateDirectories(project.ProjectDirectory, "*.*", SearchOption.AllDirectories));
             dirs.Add(project.ProjectDirectory);
 
             foreach (var sourcePath in sourceFiles)
