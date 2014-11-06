@@ -3,7 +3,6 @@
 
 using System.Collections.Generic;
 using System.IO;
-using System.IO.Compression;
 using System.Linq;
 using System.Threading.Tasks;
 using NuGet;
@@ -34,20 +33,7 @@ namespace Microsoft.Framework.PackageManager.Restore.NuGet
 
         public async Task<Stream> OpenNuspecStreamAsync(PackageInfo package)
         {
-            using (var nupkgStream = await OpenNupkgStreamAsync(package))
-            {
-                using (var archive = new ZipArchive(nupkgStream, ZipArchiveMode.Read, leaveOpen: true))
-                {
-                    var entry = archive.GetEntryOrdinalIgnoreCase(package.Id + ".nuspec");
-                    using (var entryStream = entry.Open())
-                    {
-                        var nuspecStream = new MemoryStream((int)entry.Length);
-                        await entryStream.CopyToAsync(nuspecStream);
-                        nuspecStream.Seek(0, SeekOrigin.Begin);
-                        return nuspecStream;
-                    }
-                }
-            }
+            return await PackageUtilities.OpenNuspecStreamFromNupkgAsync(package, OpenNupkgStreamAsync, _report);
         }
 
         public Task<Stream> OpenNupkgStreamAsync(PackageInfo package)

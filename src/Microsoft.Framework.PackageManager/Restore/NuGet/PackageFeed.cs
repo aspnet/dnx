@@ -4,7 +4,6 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.IO.Compression;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Xml;
@@ -181,38 +180,7 @@ namespace Microsoft.Framework.PackageManager.Restore.NuGet
 
         public async Task<Stream> OpenNuspecStreamAsync(PackageInfo package)
         {
-            using (var nupkgStream = await OpenNupkgStreamAsync(package))
-            {
-                try {
-                    using (var archive = new ZipArchive(nupkgStream, ZipArchiveMode.Read, leaveOpen: true))
-                    {
-                        var entry = archive.GetEntryOrdinalIgnoreCase(package.Id + ".nuspec");
-                        using (var entryStream = entry.Open())
-                        {
-                            var nuspecStream = new MemoryStream((int)entry.Length);
-#if ASPNET50
-                            await entryStream.CopyToAsync(nuspecStream);
-#else
-                            // System.IO.Compression.DeflateStream throws exception when multiple
-                            // async readers/writers are working on a single instance of it
-                            entryStream.CopyTo(nuspecStream);
-#endif
-                            nuspecStream.Seek(0, SeekOrigin.Begin);
-                            return nuspecStream;
-                        }
-                    }
-                }
-                catch (InvalidDataException)
-                {
-                    var fileStream = nupkgStream as FileStream;
-                    if (fileStream != null)
-                    {
-                        _reports.Information.WriteLine("The ZIP archive {0} is corrupt",
-                            fileStream.Name.Yellow().Bold());
-                    }
-                    throw;
-                }
-            }
+            return await PackageUtilities.OpenNuspecStreamFromNupkgAsync(package, OpenNupkgStreamAsync, _reports.Information);
         }
 
         public async Task<Stream> OpenNupkgStreamAsync(PackageInfo package)
