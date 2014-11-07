@@ -73,7 +73,7 @@ namespace Microsoft.Framework.Runtime.Roslyn
                 IList<ResourceDescription> resources = CompilationContext.Resources;
 
                 Trace.TraceInformation("[{0}]: Emitting assembly for {1}", GetType().Name, Name);
-
+                
                 var sw = Stopwatch.StartNew();
 
                 EmitResult emitResult = null;
@@ -84,6 +84,7 @@ namespace Microsoft.Framework.Runtime.Roslyn
                 }
                 else
                 {
+                    Trace.TraceWarning("PDB generation is not supported on this platform");
                     emitResult = CompilationContext.Compilation.Emit(assemblyStream, manifestResources: resources);
                 }
 
@@ -166,6 +167,7 @@ namespace Microsoft.Framework.Runtime.Roslyn
                 }
                 else
                 {
+                    Trace.TraceWarning("PDB generation is not supported on this platform");
                     result = CompilationContext.Compilation.Emit(
                         assemblyStream,
                         xmlDocumentationStream: xmlDocStream,
