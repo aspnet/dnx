@@ -35,13 +35,18 @@ namespace Microsoft.Framework.DesignTimeHost
             int port = Int32.Parse(args[0]);
             int hostPID = Int32.Parse(args[1]);
 
-            // Add a watch to the host PID. If it goes away we will self terminate
-            var hostProcess = Process.GetProcessById(hostPID);
-            hostProcess.EnableRaisingEvents = true;
-            hostProcess.Exited += (s, e) =>
+            // In mono 3.10, the Exited event fires immediately, so the
+            // caller will need to terminate this process.
+            if (!PlatformHelper.IsMono)
             {
-                Process.GetCurrentProcess().Kill();
-            };
+                // Add a watch to the host PID. If it goes away we will self terminate.
+                var hostProcess = Process.GetProcessById(hostPID);
+                hostProcess.EnableRaisingEvents = true;
+                hostProcess.Exited += (s, e) =>
+                {
+                    Process.GetCurrentProcess().Kill();
+                };
+            }
 
             string hostId = args[2];
 
