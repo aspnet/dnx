@@ -1,6 +1,9 @@
 use assembly="System.Xml.Linq, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089"
 use assembly="System.IO.Compression.FileSystem, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089"
 use import="Environment"
+use namespace="System.IO"
+use namespace="System.Linq"
+use namespace="System.Xml.Linq"
 
 var PRODUCT_VERSION = '1.0.0'
 var AUTHORS='Microsoft Open Technologies, Inc.'
@@ -32,113 +35,167 @@ var NEW_RUNTIME = '${E("NEW_RUNTIME") == "1"}'
 var PROGRAM_FILES_X86 = '${Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86)}'
 var MSBUILD = '${Path.Combine(PROGRAM_FILES_X86, "MSBuild", "14.0", "Bin", "MSBuild.exe")}'
 
-#package-runtime .clean-sdk-dir .copy-bits .tweak-scripts .copy-package-dependencies .copy-coreclr-kpm-dependencies .copy-coreclr .nuget-pack-runtime target='package'
+var MANAGED_PROJECTS = '${FindAllProjects(
+    "klr.host",
+    "klr.hosting.shared",
+    "Microsoft.Framework.ApplicationHost",
+    "Microsoft.Framework.CommandLineUtils",
+    "Microsoft.Framework.DesignTimeHost",
+    "Microsoft.Framework.PackageManager",
+    "Microsoft.Framework.Project",
+    "Microsoft.Framework.Runtime",
+    "Microsoft.Framework.Runtime.Common",
+    "Microsoft.Framework.Runtime.Interfaces",
+    "Microsoft.Framework.Runtime.Loader",
+    "Microsoft.Framework.Runtime.Roslyn")}'
 
-#rebuild-package .build-mono-entrypoint .build-compile .native-compile .package-runtime .xunit-test
+var WIN_NATIVE_PROJECTS = '${FindAllProjects(
+    "klr",
+    "klr.net45",
+    "klr.core45")}'
+
+var WIN_MANAGED_PROJECTS = '${FindAllProjects(
+    "klr.net45.managed",
+    "klr.core45.managed")}'
+
+var MONO_NATIVE_PROJECTS = '${FindAllProjects()}'
+
+var MONO_MANAGED_PROJECTS = '${FindAllProjects("klr.mono.managed")}'
+
+#build-compile target='compile'
 
 #native-compile target='compile' if='!IsMono'
-  var nativeProjects ='${Files.Include(Path.Combine(ROOT, "src", "**", "*.vcxproj"))}'
 
-  @{
-      if (nativeProjects.Any())
-      {
+#build-crossplatfrom-projects target='build-compile'
+    @{ var BUILD_DIR = BUILD_DIR2; }
+    k-build each='var projectFile in MANAGED_PROJECTS' configuration='${Configuration2}'
+    @{
+        foreach (var nupkg in Files.Include(Path.Combine(BUILD_DIR, "*/*.nupkg"))) 
+        {
+            File.Copy(nupkg, Path.Combine(BUILD_DIR, Path.GetFileName(nupkg)), true);
+        }
+    }
+
+#build-winplatform-projects target='build-compile' if='!IsMono'
+    @{ var BUILD_DIR = BUILD_DIR2; }
+    k-build each='var projectFile in WIN_MANAGED_PROJECTS' configuration='${Configuration2}'
+    @{
+        foreach (var nupkg in Files.Include(Path.Combine(BUILD_DIR, "*/*.nupkg"))) 
+        {
+            File.Copy(nupkg, Path.Combine(BUILD_DIR, Path.GetFileName(nupkg)), true);
+        }
+    }
+
+#build-native-klr target='native-compile' if='!IsMono'
+    var klrProj = '${Path.Combine(ROOT, "src", "klr", "klr.vcxproj")}'
+    @{
         if (!IsMsbuildInstalled(MSBUILD))
         {
             Environment.Exit(1);
         }
         else
         {
-            foreach (var project in nativeProjects)
+            var environmentKreTargetOS = Environment.GetEnvironmentVariable("KRE_TARGET_OS");
+            var configKreTargetOS = "";
+        
+            Exec(MSBUILD, klrProj + " /p:Configuration=" + Configuration2 + ";Platform=Win32;TargetFramework=aspnet50");
+            Exec(MSBUILD, klrProj + " /p:Configuration=" + Configuration2 + ";Platform=x64;TargetFramework=aspnet50");
+
+            if (environmentKreTargetOS == "WIN7_PLUS_CORESYSTEM")
             {
-                //Skip redefined targets (compile-klr, compile-klrcore45)
-                if (project.Contains("klr.vcxproj") || project.Contains("klr.core45.vcxproj"))
-                {
-                    continue;
-                }
-                
-                Exec(MSBUILD, project + " /p:Configuration=" + Configuration2 + ";Platform=Win32");
-                Exec(MSBUILD, project + " /p:Configuration=" + Configuration2 + ";Platform=x64");
+                configKreTargetOS = ";KreTargetOS=WIN7_PLUS_CORESYSTEM";
             }
+            
+            Exec(MSBUILD, klrProj + " /p:Configuration=" + Configuration2 + ";Platform=Win32;TargetFramework=aspnetcore50" + configKreTargetOS);
+            Exec(MSBUILD, klrProj + " /p:Configuration=" + Configuration2 + ";Platform=x64;TargetFramework=aspnetcore50" + configKreTargetOS);
         }
-      }
-  }
-
-  copy sourceDir='${Path.GetDirectoryName(project)}' include='bin/**/' outputDir='${Path.Combine(BUILD_DIR2, Path.GetFileNameWithoutExtension(project))}' overwrite='${true}' each='var project in nativeProjects'
-
-#compile-klr target='native-compile' if='!IsMono'
-  var klrProj = '${Path.Combine(ROOT, "src", "klr", "klr.vcxproj")}'
-
-  @{
-      if (!IsMsbuildInstalled(MSBUILD))
-      {
-          Environment.Exit(1);
-      }
-      else
-      {
-          var environmentKreTargetOS = Environment.GetEnvironmentVariable("KRE_TARGET_OS");
-          var configKreTargetOS = "";
-      
-          Exec(MSBUILD, klrProj + " /p:Configuration=" + Configuration2 + ";Platform=Win32;TargetFramework=aspnet50");
-          Exec(MSBUILD, klrProj + " /p:Configuration=" + Configuration2 + ";Platform=x64;TargetFramework=aspnet50");
-
-          if (environmentKreTargetOS == "WIN7_PLUS_CORESYSTEM")
-          {
-            configKreTargetOS = ";KreTargetOS=WIN7_PLUS_CORESYSTEM";
-          }
-          
-          Exec(MSBUILD, klrProj + " /p:Configuration=" + Configuration2 + ";Platform=Win32;TargetFramework=aspnetcore50" + configKreTargetOS);
-          Exec(MSBUILD, klrProj + " /p:Configuration=" + Configuration2 + ";Platform=x64;TargetFramework=aspnetcore50" + configKreTargetOS);
-      }
-  }
+    }
 
   directory delete='${Path.Combine(BUILD_DIR2, "klr")}'
   copy sourceDir='${Path.Combine(ROOT, "src", "klr")}' include='bin/**/' outputDir='${Path.Combine(BUILD_DIR2, "klr")}' overwrite='${true}'
 
-#compile-klrcore45 target='native-compile' if='!IsMono'
-  var klrCore45Proj = '${Path.Combine(ROOT, "src", "klr.core45", "klr.core45.vcxproj")}'
-
-  @{
-      if (!IsMsbuildInstalled(MSBUILD))
-      {
-          Environment.Exit(1);
-      }
-      else
-      {
-          var environmentKreTargetOS = Environment.GetEnvironmentVariable("KRE_TARGET_OS");
-          var configKreTargetOS = "";
-      
-          if (environmentKreTargetOS == "WIN7_PLUS_CORESYSTEM")
-          {
-            configKreTargetOS = ";KreTargetOS=WIN7_PLUS_CORESYSTEM";
-          }
-          
-          Exec(MSBUILD, klrCore45Proj + " /p:Configuration=" + Configuration2 + ";Platform=Win32" + configKreTargetOS);
-          Exec(MSBUILD, klrCore45Proj + " /p:Configuration=" + Configuration2 + ";Platform=x64" + configKreTargetOS);
-      }
-  }
+#build-native-klrcore45 target='native-compile' if='!IsMono'
+    var klrCore45Proj = '${Path.Combine(ROOT, "src", "klr.core45", "klr.core45.vcxproj")}'
+    @{
+        if (!IsMsbuildInstalled(MSBUILD))
+        {
+            Environment.Exit(1);
+        }
+        else
+        {
+            var environmentKreTargetOS = Environment.GetEnvironmentVariable("KRE_TARGET_OS");
+            var configKreTargetOS = "";
+        
+            if (environmentKreTargetOS == "WIN7_PLUS_CORESYSTEM")
+            {
+                configKreTargetOS = ";KreTargetOS=WIN7_PLUS_CORESYSTEM";
+            }
+            
+            Exec(MSBUILD, klrCore45Proj + " /p:Configuration=" + Configuration2 + ";Platform=Win32" + configKreTargetOS);
+            Exec(MSBUILD, klrCore45Proj + " /p:Configuration=" + Configuration2 + ";Platform=x64" + configKreTargetOS);
+        }
+    }
 
   directory delete='${Path.Combine(BUILD_DIR2, "klr.core45")}'
   copy sourceDir='${Path.Combine(ROOT, "src", "klr.core45")}' include='bin/**/' outputDir='${Path.Combine(BUILD_DIR2, "klr.core45")}' overwrite='${true}'
 
-#build-mono-entrypoint target='compile' if='!IsMono'
-    directory create='artifacts/build/klr.mono.managed'
-    
+#build-native-klrnet45 target='native-compile' if='!IsMono'
+    var klrNet45Proj ='${Path.Combine(ROOT, "src", "klr.net45", "klr.net45.vcxproj")}'
     @{
-        var cscPath = Path.Combine(Environment.GetEnvironmentVariable("WINDIR"), "Microsoft.NET", "Framework", "v4.0.30319", "csc.exe");
-        Log.Info("Using csc path:" + cscPath);
-        Exec(cscPath, @"/target:exe /nologo /unsafe /out:artifacts\build\klr.mono.managed\klr.mono.managed.dll /define:ASPNET50 src\klr.mono.managed\EntryPoint.cs src\klr.hosting.shared\RuntimeBootstrapper.cs src\klr.hosting.shared\LoaderEngine.cs src\Microsoft.Framework.CommandLineUtils\CommandLine\CommandArgument.cs src\Microsoft.Framework.CommandLineUtils\CommandLine\CommandLineApplication.cs src\Microsoft.Framework.CommandLineUtils\CommandLine\CommandOption.cs src\Microsoft.Framework.CommandLineUtils\CommandLine\CommandOptionType.cs");
+        if (!IsMsbuildInstalled(MSBUILD))
+        {
+            Environment.Exit(1);
+        }
+        else
+        {
+            Exec(MSBUILD, klrNet45Proj + " /p:Configuration=" + Configuration2 + ";Platform=Win32");
+            Exec(MSBUILD, klrNet45Proj + " /p:Configuration=" + Configuration2 + ";Platform=x64");
+        }
+    }
+    directory delete='${Path.Combine(BUILD_DIR2, "klr.net45")}'
+    copy sourceDir='${Path.Combine(ROOT, "src", "klr.net45")}' include='bin/**/' outputDir='${Path.Combine(BUILD_DIR2, "klr.net45")}' overwrite='${true}' 
+
+#build-mono-entrypoint target='build-compile'
+    var monoManagedOutpath='${Path.Combine(BUILD_DIR2, "klr.mono.managed")}'
+    directory create='${monoManagedOutpath}'
+    @{
+        var sourceFiles = new string[] 
+        {
+            Path.Combine("src", "klr.mono.managed", "EntryPoint.cs"),
+            Path.Combine("src", "klr.hosting.shared", "RuntimeBootstrapper.cs"),
+            Path.Combine("src", "klr.hosting.shared", "LoaderEngine.cs"),
+            Path.Combine("src", "Microsoft.Framework.CommandLineUtils", "CommandLine", "CommandArgument.cs"),
+            Path.Combine("src", "Microsoft.Framework.CommandLineUtils", "CommandLine", "CommandLineApplication.cs"), 
+            Path.Combine("src", "Microsoft.Framework.CommandLineUtils", "CommandLine", "CommandOption.cs"), 
+            Path.Combine("src", "Microsoft.Framework.CommandLineUtils", "CommandLine", "CommandOptionType.cs")
+        };
+
+        var arguments = string.Format(
+            @"/target:exe /nologo /unsafe /out:{0} /define:ASPNET50 {1}",
+            Path.Combine(monoManagedOutpath, "klr.mono.managed.dll"),
+            string.Join(" ", sourceFiles));
+
+        var compiler = IsMono ? "mcs" : Path.Combine(Environment.GetEnvironmentVariable("WINDIR"), "Microsoft.NET", "Framework", "v4.0.30319", "csc.exe");
+
+        Log.Info("Using compiler :" + compiler + " for Mono Entry point executor");
+
+        Exec(compiler, arguments);
     }
 
+#package-runtime .clean-sdk-dir .copy-bits .tweak-scripts .copy-package-dependencies .copy-coreclr-kpm-dependencies .copy-coreclr .nuget-pack-runtime target='package'
+
+#rebuild-package .build-mono-entrypoint .build-compile .native-compile .package-runtime .xunit-test
+
 #xunit-test target='test' if='Directory.Exists("test")'
-  k-test each='var projectFile in Files.Include("test/**/project.json")' if='NEW_RUNTIME'
+    k-test each='var projectFile in Files.Include("test/**/project.json")' if='NEW_RUNTIME'
   
 #test-package
     var helloWorld = '${Path.Combine(SAMPLES_DIR, "HelloWorld")}'
     var kcmd = '${Path.Combine(TEST_RESULTS, "KRE", "tools", "k.cmd")}'
     var aspnetCore50Tools = '${Path.Combine(TEST_RESULTS, "KRE", "tools", "aspnetcore50")}'
-    
 
-    var nupkgPaths = '${new string[] {
+    var nupkgPaths = '${new string[] 
+    {
         Files.Include(Path.Combine(BUILD_DIR2, "KRE-CLR-x86.*.nupkg")).Single(),
         Files.Include(Path.Combine(BUILD_DIR2, "KRE-CLR-amd64.*.nupkg")).Single(),
         Files.Include(Path.Combine(BUILD_DIR2, "KRE-CoreCLR-x86.*.nupkg")).Single(),
@@ -146,21 +203,22 @@ var MSBUILD = '${Path.Combine(PROGRAM_FILES_X86, "MSBuild", "14.0", "Bin", "MSBu
     }}'
 
     for each='var nupkgPath in nupkgPaths' 
-      @{
-        var kreName = Path.GetFileNameWithoutExtension(nupkgPath);
-        var krePath = Path.Combine(TEST_RESULTS, "KRE", kreName);
+        @{
+            var kreName = Path.GetFileNameWithoutExtension(nupkgPath);
+            var krePath = Path.Combine(TEST_RESULTS, "KRE", kreName);
 
-        Log.Info("Unpacking " + nupkgPath);
-        if (Directory.Exists(krePath)) {
-            Directory.Delete(krePath, recursive:true);
+            Log.Info("Unpacking " + nupkgPath);
+            if (Directory.Exists(krePath))
+            {
+                Directory.Delete(krePath, recursive:true);
+            }
+
+            Directory.CreateDirectory(krePath);
+
+            System.IO.Compression.ZipFile.ExtractToDirectory(
+                nupkgPath,
+                krePath);
         }
-
-        Directory.CreateDirectory(krePath);
-
-        System.IO.Compression.ZipFile.ExtractToDirectory(
-            nupkgPath,
-            krePath);
-      }
 
     @{
         Action<string> runWithFramework = nupkgPath => {
@@ -215,18 +273,6 @@ var MSBUILD = '${Path.Combine(PROGRAM_FILES_X86, "MSBuild", "14.0", "Bin", "MSBu
         foreach(var nupkgPath in nupkgPaths) { 
             runWithFramework(nupkgPath);
         }
-        
-        /*
-        // Crossgen
-        crossGen(nupkgPaths[2]);
-        
-        // SKIP amd64 for now to work around error
-        crossGen(nupkgPaths[3]);
-
-        foreach(var nupkgPath in nupkgPaths) { 
-            runWithFramework(nupkgPath);
-        }
-        */
     }
 
 #ensure-latest-package
@@ -279,6 +325,7 @@ var MSBUILD = '${Path.Combine(PROGRAM_FILES_X86, "MSBuild", "14.0", "Bin", "MSBu
     -// KRE-mono45-x86
     copy sourceDir='${SCRIPTS_DIR}' include='*.sh' outputDir='${KRE_MONO_BIN}' overwrite='${true}'
     copy sourceDir='${Path.Combine(BUILD_DIR2, "klr.mono.managed")}' outputDir='${KRE_MONO_BIN}' include='*.dll' overwrite='${true}'
+
     @{
         // Rename all .sh files to remove the sh
         foreach (var shFile in Files.Include(Path.Combine(KRE_MONO_BIN, "*.sh")))
@@ -297,29 +344,30 @@ var MSBUILD = '${Path.Combine(PROGRAM_FILES_X86, "MSBuild", "14.0", "Bin", "MSBu
         }
     }
 
-    -// KRE-CLR-x86
-    copy sourceDir='${Path.Combine(BUILD_DIR2, "klr", "bin", "Win32", Configuration2, "aspnet50")}' outputDir='${KRE_CLR_x86_BIN}' include='*.exe' overwrite='${true}'
-    copy sourceDir='${Path.Combine(BUILD_DIR2, "klr.net45", "bin", "Win32", Configuration2)}' outputDir='${KRE_CLR_x86_BIN}' include='*.dll' overwrite='${true}'
-    copy sourceDir='${Path.Combine(BUILD_DIR2, "klr.net45", "bin", "Win32", Configuration2)}' outputDir='${KRE_CLR_x86_BIN}' include='*.pdb' overwrite='${true}'
-    copy sourceDir='${Path.Combine(ROOT, "src", "klr.net45.managed")}' outputDir='${KRE_CLR_x86_BIN}' include='*.config' overwrite='${true}'
+    test if='!IsMono'
+        -// KRE-CLR-x86
+        copy sourceDir='${Path.Combine(BUILD_DIR2, "klr", "bin", "Win32", Configuration2, "aspnet50")}' outputDir='${KRE_CLR_x86_BIN}' include='*.exe' overwrite='${true}'
+        copy sourceDir='${Path.Combine(BUILD_DIR2, "klr.net45", "bin", "Win32", Configuration2)}' outputDir='${KRE_CLR_x86_BIN}' include='*.dll' overwrite='${true}'
+        copy sourceDir='${Path.Combine(BUILD_DIR2, "klr.net45", "bin", "Win32", Configuration2)}' outputDir='${KRE_CLR_x86_BIN}' include='*.pdb' overwrite='${true}'
+        copy sourceDir='${Path.Combine(ROOT, "src", "klr.net45.managed")}' outputDir='${KRE_CLR_x86_BIN}' include='*.config' overwrite='${true}'
 
-    -// KRE-CLR-amd64
-    copy sourceDir='${Path.Combine(BUILD_DIR2, "klr", "bin", "x64", Configuration2, "aspnet50")}' outputDir='${KRE_CLR_amd64_BIN}' include='*.exe' overwrite='${true}'
-    copy sourceDir='${Path.Combine(BUILD_DIR2, "klr.net45", "bin", "x64", Configuration2)}' outputDir='${KRE_CLR_amd64_BIN}' include='*.dll' overwrite='${true}'
-    copy sourceDir='${Path.Combine(BUILD_DIR2, "klr.net45", "bin", "x64", Configuration2)}' outputDir='${KRE_CLR_amd64_BIN}' include='*.pdb' overwrite='${true}'
-    copy sourceDir='${Path.Combine(ROOT, "src", "klr.net45.managed")}' outputDir='${KRE_CLR_amd64_BIN}' include='*.config' overwrite='${true}'
+        -// KRE-CLR-amd64
+        copy sourceDir='${Path.Combine(BUILD_DIR2, "klr", "bin", "x64", Configuration2, "aspnet50")}' outputDir='${KRE_CLR_amd64_BIN}' include='*.exe' overwrite='${true}'
+        copy sourceDir='${Path.Combine(BUILD_DIR2, "klr.net45", "bin", "x64", Configuration2)}' outputDir='${KRE_CLR_amd64_BIN}' include='*.dll' overwrite='${true}'
+        copy sourceDir='${Path.Combine(BUILD_DIR2, "klr.net45", "bin", "x64", Configuration2)}' outputDir='${KRE_CLR_amd64_BIN}' include='*.pdb' overwrite='${true}'
+        copy sourceDir='${Path.Combine(ROOT, "src", "klr.net45.managed")}' outputDir='${KRE_CLR_amd64_BIN}' include='*.config' overwrite='${true}'
 
-    -// KRE-CoreCLR-x86
-    copy sourceDir='${Path.Combine(BUILD_DIR2, "klr", "bin", "Win32", Configuration2, "aspnetcore50")}' outputDir='${KRE_CORECLR_x86_BIN}' include='*.exe' overwrite='${true}'
-    copy sourceDir='${Path.Combine(BUILD_DIR2, "klr.core45", "bin", "Win32", Configuration2)}' outputDir='${KRE_CORECLR_x86_BIN}' include='*.dll' overwrite='${true}'
-    copy sourceDir='${Path.Combine(BUILD_DIR2, "klr.core45", "bin", "Win32", Configuration2)}' outputDir='${KRE_CORECLR_x86_BIN}' include='*.pdb' overwrite='${true}'
+        -// KRE-CoreCLR-x86
+        copy sourceDir='${Path.Combine(BUILD_DIR2, "klr", "bin", "Win32", Configuration2, "aspnetcore50")}' outputDir='${KRE_CORECLR_x86_BIN}' include='*.exe' overwrite='${true}'
+        copy sourceDir='${Path.Combine(BUILD_DIR2, "klr.core45", "bin", "Win32", Configuration2)}' outputDir='${KRE_CORECLR_x86_BIN}' include='*.dll' overwrite='${true}'
+        copy sourceDir='${Path.Combine(BUILD_DIR2, "klr.core45", "bin", "Win32", Configuration2)}' outputDir='${KRE_CORECLR_x86_BIN}' include='*.pdb' overwrite='${true}'
 
-    -// KRE-CoreCLR-amd64
-    copy sourceDir='${Path.Combine(BUILD_DIR2, "klr", "bin", "x64", Configuration2, "aspnetcore50")}' outputDir='${KRE_CORECLR_amd64_BIN}' include='*.exe' overwrite='${true}'
-    copy sourceDir='${Path.Combine(BUILD_DIR2, "klr.core45", "bin", "x64", Configuration2)}' outputDir='${KRE_CORECLR_amd64_BIN}' include='*.dll' overwrite='${true}'
-    copy sourceDir='${Path.Combine(BUILD_DIR2, "klr.core45", "bin", "x64", Configuration2)}' outputDir='${KRE_CORECLR_amd64_BIN}' include='*.pdb' overwrite='${true}'
+        -// KRE-CoreCLR-amd64
+        copy sourceDir='${Path.Combine(BUILD_DIR2, "klr", "bin", "x64", Configuration2, "aspnetcore50")}' outputDir='${KRE_CORECLR_amd64_BIN}' include='*.exe' overwrite='${true}'
+        copy sourceDir='${Path.Combine(BUILD_DIR2, "klr.core45", "bin", "x64", Configuration2)}' outputDir='${KRE_CORECLR_amd64_BIN}' include='*.dll' overwrite='${true}'
+        copy sourceDir='${Path.Combine(BUILD_DIR2, "klr.core45", "bin", "x64", Configuration2)}' outputDir='${KRE_CORECLR_amd64_BIN}' include='*.pdb' overwrite='${true}'
 
-    copy sourceDir='${SCRIPTS_DIR}' include='*.cmd' overwrite='${true}' each='var outputDir in new[]{ KRE_CLR_x86_BIN, KRE_CLR_amd64_BIN, KRE_CORECLR_x86_BIN, KRE_CORECLR_amd64_BIN }'
+        copy sourceDir='${SCRIPTS_DIR}' include='*.cmd' overwrite='${true}' each='var outputDir in new[]{ KRE_CLR_x86_BIN, KRE_CLR_amd64_BIN, KRE_CORECLR_x86_BIN, KRE_CORECLR_amd64_BIN }'
 
     @{
         var hostAspNetCore50 = Path.Combine(BUILD_DIR2, "*", "aspnetcore50", "**.*");
@@ -402,7 +450,6 @@ var MSBUILD = '${Path.Combine(PROGRAM_FILES_X86, "MSBuild", "14.0", "Bin", "MSBu
             }
         }
     }
-    
 
 #tweak-scripts
     @{
@@ -536,7 +583,7 @@ var MSBUILD = '${Path.Combine(PROGRAM_FILES_X86, "MSBuild", "14.0", "Bin", "MSBu
     }
 
 #copy-coreclr
-    nuget-install package='CoreCLR' outputDir='packages' extra='-pre -nocache' once='CoreCLR'
+    nuget-install package='CoreCLR' outputDir='packages' extra='-pre -nocache' once='CoreCLR' nugetPath='.nuget/nuget.exe'
 
     var CoreCLR_DIR='${""}'
     @{
@@ -573,23 +620,24 @@ var MSBUILD = '${Path.Combine(PROGRAM_FILES_X86, "MSBuild", "14.0", "Bin", "MSBu
     copy sourceDir='${Path.Combine(CORECLR_TARGET_PATH, "Runtime", "amd64")}' outputDir='${KRE_CORECLR_amd64_BIN}'
 
 #nuget-pack-runtime
-    copy sourceDir='${NUSPEC_ROOT}' outputDir='${BUILD_DIR2}' include='*.nuspec' overwrite='${true}'
-    nuget-pack packageVersion='${FULL_VERSION}' outputDir='${BUILD_DIR2}' extra='-NoPackageAnalysis' each='var nuspecFile in Files.Include(Path.Combine(BUILD_DIR2, "*.nuspec"))'
+    @{
+        UpdateAllNuspecs(NUSPEC_ROOT, BUILD_DIR2);
+    }
+    nuget-pack packageVersion='${FULL_VERSION}' outputDir='${BUILD_DIR2}' extra='-NoPackageAnalysis' nugetPath='.nuget/nuget.exe' each='var nuspecFile in Files.Include(Path.Combine(BUILD_DIR2, "*.nuspec"))'
 
 #install-runtime target='install'
-  var matchVersion=''
-  for each='var pattern in new[]{ "CLR-x86", "CoreCLR-x86", "CLR-amd64", "CoreCLR-amd64" }'
-    for each='var runtime in Files.Include(Path.Combine(BUILD_DIR2, "KRE-" + pattern + ".*.nupkg"))'
-      exec program='cmd' commandline='/C kvm install ${runtime}' if='!IsMono'
-      var parts='${Path.GetFileNameWithoutExtension(runtime).Split(".".ToArray(), 2)}'
-      set matchVersion='${parts[1]}' if='matchVersion == ""'
+    var matchVersion=''
+    for each='var pattern in new[]{ "CLR-x86", "CoreCLR-x86", "CLR-amd64", "CoreCLR-amd64" }'
+        for each='var runtime in Files.Include(Path.Combine(BUILD_DIR2, "KRE-" + pattern + ".*.nupkg"))'
+            exec program='cmd' commandline='/C kvm install ${runtime}' if='!IsMono'
+            var parts='${Path.GetFileNameWithoutExtension(runtime).Split(".".ToArray(), 2)}'
+            set matchVersion='${parts[1]}' if='matchVersion == ""'
 
-  exec program='cmd' commandline='/C kvm alias build ${matchVersion}' if='!IsMono && matchVersion != ""' 
-  exec program='cmd' commandline='/C start cmd /K kvm use build' if='!IsMono && matchVersion != ""' 
+    exec program='cmd' commandline='/C kvm alias build ${matchVersion}' if='!IsMono && matchVersion != ""' 
+    exec program='cmd' commandline='/C start cmd /K kvm use build' if='!IsMono && matchVersion != ""' 
   
-
 macro name='NuGetInstall' Package='string' OutputDir='string' Extra='string'
-    nuget-install package='${Package}' outputDir='${OutputDir}' extra='${Extra}'
+    nuget-install package='${Package}' outputDir='${OutputDir}' extra='${Extra}' nugetPath='.nuget/nuget.exe'
 
 functions @{
     string FindPackageDirectory(string name)
@@ -629,5 +677,46 @@ functions @{
         }
     
         return true;
+    }
+
+    string[] FindAllProjects(params string[] folders)
+    {
+      return folders.Select(folder => Path.Combine("src", folder)) 
+                    .Where(folder => Directory.Exists(folder)) 
+                    .SelectMany(folder => Directory.GetFiles(folder, "project.json", SearchOption.AllDirectories)) 
+                    .ToArray();
+    }
+
+    void UpdateAllNuspecs(string sourcePath, string outputPath)
+    {
+        var sourceFiles = Directory.GetFiles(sourcePath, "*.nuspec");
+        foreach (var nuspecFile in sourceFiles)
+        {
+            XDocument xdoc;
+            using (var fs = File.OpenRead(nuspecFile))
+            {
+                xdoc = XDocument.Load(fs);
+            }
+
+            var filesNode = xdoc.Descendants("files").SingleOrDefault();
+
+            foreach (var fileNode in filesNode.Elements("file"))
+            {
+                var srcAttr = fileNode.Attribute("src");
+                if (srcAttr != null)
+                {
+                    srcAttr.Value = srcAttr.Value.Replace("\\", Path.DirectorySeparatorChar.ToString());
+                }
+
+                var excludeAttr = fileNode.Attribute("exclude");
+                if (excludeAttr != null)
+                {
+                    excludeAttr.Value = excludeAttr.Value.Replace("\\", Path.DirectorySeparatorChar.ToString());
+                }
+            }
+
+            var fileWriteTo = Path.Combine(outputPath, Path.GetFileName(nuspecFile));
+            xdoc.Save(fileWriteTo);
+        }
     }
 }

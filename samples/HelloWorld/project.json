@@ -1,6 +1,6 @@
 {
     "version": "0.1-beta-*",
-    "exclude": "more\\*.cs",
+    "exclude": "more/*.cs",
     "dependencies": {
         "HelloShared": { "version": "0.1-beta-*", "type": "build" },
         "K.Roslyn": "1.0.0-*"
