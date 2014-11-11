@@ -128,7 +128,8 @@ public:
 
         _HR(runtimeInfo->SetDefaultStartupFlags(
             STARTUP_LOADER_OPTIMIZATION_MULTI_DOMAIN_HOST |
-            STARTUP_SERVER_GC,
+            STARTUP_SERVER_GC |
+            STARTUP_CONCURRENT_GC,
             _clrConfigFilePath));
 
         ICLRRuntimeHostPtr runtimeHost;
