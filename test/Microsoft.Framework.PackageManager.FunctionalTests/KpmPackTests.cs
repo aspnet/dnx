@@ -1,10 +1,9 @@
 // Copyright (c) Microsoft Open Technologies, Inc. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
-using System;
 using System.IO;
 using System.Collections.Generic;
-using Microsoft.Framework.Runtime;
+using Microsoft.Framework.FunctionalTestUtils;
 using Xunit;
 
 namespace Microsoft.Framework.PackageManager
@@ -18,9 +17,7 @@ namespace Microsoft.Framework.PackageManager
         {
             get
             {
-                var kRuntimeRoot = ProjectResolver.ResolveRootDirectory(Directory.GetCurrentDirectory());
-                var buildArtifactDir = Path.Combine(kRuntimeRoot, "artifacts", "build");
-                foreach (var path in TestUtils.GetUnpackedKrePaths(buildArtifactDir))
+                foreach (var path in TestUtils.GetUnpackedKrePaths())
                 {
                     yield return new[] { path };
                 }
@@ -29,7 +26,7 @@ namespace Microsoft.Framework.PackageManager
 
         [Theory]
         [MemberData("KrePaths")]
-        public void KpmPackWebApp_RootAsPublicFolder(string krePath)
+        public void KpmPackWebApp_RootAsPublicFolder(DisposableDirPath krePath)
         {
             var projectStructure = @"{
   '.': ['project.json', 'Config.json', 'Program.cs', 'build_config1.bconfig'],
@@ -83,7 +80,7 @@ namespace Microsoft.Framework.PackageManager
                     { "KRE_PACKAGES", Path.Combine(testEnv.ProjectPath, "packages") }
                 };
 
-                var exitCode = TestUtils.ExecKpm(
+                var exitCode = KpmTestUtils.ExecKpm(
                     krePath,
                     subcommand: "pack",
                     arguments: string.Format("--out {0} --wwwroot . --wwwroot-out wwwroot",
@@ -123,7 +120,7 @@ namespace Microsoft.Framework.PackageManager
 
         [Theory]
         [MemberData("KrePaths")]
-        public void KpmPackWebApp_SubfolderAsPublicFolder(string krePath)
+        public void KpmPackWebApp_SubfolderAsPublicFolder(DisposableDirPath krePath)
         {
             var projectStructure = @"{
   '.': ['project.json', 'Config.json', 'Program.cs'],
@@ -176,7 +173,7 @@ namespace Microsoft.Framework.PackageManager
                     { "KRE_PACKAGES", Path.Combine(testEnv.ProjectPath, "packages") }
                 };
 
-                var exitCode = TestUtils.ExecKpm(
+                var exitCode = KpmTestUtils.ExecKpm(
                     krePath,
                     subcommand: "pack",
                     arguments: string.Format("--out {0} --wwwroot-out wwwroot",
@@ -212,7 +209,7 @@ namespace Microsoft.Framework.PackageManager
 
         [Theory]
         [MemberData("KrePaths")]
-        public void KpmPackConsoleApp(string krePath)
+        public void KpmPackConsoleApp(DisposableDirPath krePath)
         {
             var projectStructure = @"{
   '.': ['project.json', 'Config.json', 'Program.cs'],
@@ -249,7 +246,7 @@ namespace Microsoft.Framework.PackageManager
                     { "KRE_PACKAGES", Path.Combine(testEnv.ProjectPath, "packages") }
                 };
 
-                var exitCode = TestUtils.ExecKpm(
+                var exitCode = KpmTestUtils.ExecKpm(
                     krePath,
                     subcommand: "pack",
                     arguments: string.Format("--out {0}",
@@ -273,7 +270,7 @@ namespace Microsoft.Framework.PackageManager
 
         [Theory]
         [MemberData("KrePaths")]
-        public void FoldersAsFilePatternsAutoGlob(string krePath)
+        public void FoldersAsFilePatternsAutoGlob(DisposableDirPath krePath)
         {
             var projectStructure = @"{
   '.': ['project.json', 'FileWithoutExtension'],
@@ -338,7 +335,7 @@ namespace Microsoft.Framework.PackageManager
                     { "KRE_PACKAGES", Path.Combine(testEnv.ProjectPath, "packages") }
                 };
 
-                var exitCode = TestUtils.ExecKpm(
+                var exitCode = KpmTestUtils.ExecKpm(
                     krePath,
                     subcommand: "pack",
                     arguments: string.Format("--out {0}",
@@ -373,7 +370,7 @@ namespace Microsoft.Framework.PackageManager
 
         [Theory]
         [MemberData("KrePaths")]
-        public void WildcardMatchingFacts(string krePath)
+        public void WildcardMatchingFacts(DisposableDirPath krePath)
         {
             var projectStructure = @"{
   '.': ['project.json'],
@@ -435,7 +432,7 @@ namespace Microsoft.Framework.PackageManager
                     { "KRE_PACKAGES", Path.Combine(testEnv.ProjectPath, "packages") }
                 };
 
-                var exitCode = TestUtils.ExecKpm(
+                var exitCode = KpmTestUtils.ExecKpm(
                     krePath,
                     subcommand: "pack",
                     arguments: string.Format("--out {0}",
@@ -465,7 +462,7 @@ namespace Microsoft.Framework.PackageManager
         
         [Theory]
         [MemberData("KrePaths")]
-        public void CorrectlyExcludeFoldersStartingWithDots(string krePath)
+        public void CorrectlyExcludeFoldersStartingWithDots(DisposableDirPath krePath)
         {
             var projectStructure = @"{
   '.': ['project.json', 'File', '.FileStartingWithDot', 'File.Having.Dots'],
@@ -532,7 +529,7 @@ namespace Microsoft.Framework.PackageManager
                     { "KRE_PACKAGES", Path.Combine(testEnv.ProjectPath, "packages") }
                 };
 
-                var exitCode = TestUtils.ExecKpm(
+                var exitCode = KpmTestUtils.ExecKpm(
                     krePath,
                     subcommand: "pack",
                     arguments: string.Format("--out {0}",
@@ -555,7 +552,7 @@ namespace Microsoft.Framework.PackageManager
 
         [Theory]
         [MemberData("KrePaths")]
-        public void VerifyDefaultPackExcludePatterns(string krePath)
+        public void VerifyDefaultPackExcludePatterns(DisposableDirPath krePath)
         {
             var projectStructure = @"{
   '.': ['project.json', 'File', '.FileStartingWithDot'],
@@ -599,7 +596,7 @@ namespace Microsoft.Framework.PackageManager
                     { "KRE_PACKAGES", Path.Combine(testEnv.ProjectPath, "packages") }
                 };
 
-                var exitCode = TestUtils.ExecKpm(
+                var exitCode = KpmTestUtils.ExecKpm(
                     krePath,
                     subcommand: "pack",
                     arguments: string.Format("--out {0}",
@@ -622,7 +619,7 @@ namespace Microsoft.Framework.PackageManager
 
         [Theory]
         [MemberData("KrePaths")]
-        public void KpmPackWebApp_AppendToExistingWebConfig(string krePath)
+        public void KpmPackWebApp_AppendToExistingWebConfig(DisposableDirPath krePath)
         {
             var projectStructure = @"{
   '.': ['project.json', 'web.config'],
@@ -659,7 +656,7 @@ namespace Microsoft.Framework.PackageManager
                     { "KRE_PACKAGES", Path.Combine(testEnv.ProjectPath, "packages") }
                 };
 
-                var exitCode = TestUtils.ExecKpm(
+                var exitCode = KpmTestUtils.ExecKpm(
                     krePath,
                     subcommand: "pack",
                     arguments: string.Format("--out {0} --wwwroot public --wwwroot-out wwwroot",
@@ -698,7 +695,7 @@ namespace Microsoft.Framework.PackageManager
 
         [Theory]
         [MemberData("KrePaths")]
-        public void KpmPackWebApp_UpdateExistingWebConfig(string krePath)
+        public void KpmPackWebApp_UpdateExistingWebConfig(DisposableDirPath krePath)
         {
             var projectStructure = @"{
   '.': ['project.json', 'web.config'],
@@ -744,7 +741,7 @@ namespace Microsoft.Framework.PackageManager
                     { "KRE_PACKAGES", Path.Combine(testEnv.ProjectPath, "packages") }
                 };
 
-                var exitCode = TestUtils.ExecKpm(
+                var exitCode = KpmTestUtils.ExecKpm(
                     krePath,
                     subcommand: "pack",
                     arguments: string.Format("--out {0} --wwwroot public --wwwroot-out wwwroot",

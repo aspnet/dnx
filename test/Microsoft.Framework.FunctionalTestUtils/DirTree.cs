@@ -7,7 +7,7 @@ using System.IO;
 using System.Linq;
 using Newtonsoft.Json.Linq;
 
-namespace Microsoft.Framework.PackageManager
+namespace Microsoft.Framework.FunctionalTestUtils
 {
     public class DirTree
     {

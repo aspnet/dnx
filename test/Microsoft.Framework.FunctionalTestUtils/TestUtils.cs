@@ -8,7 +8,7 @@ using System.IO;
 using System.Linq;
 using Microsoft.Framework.Runtime;
 
-namespace Microsoft.Framework.PackageManager
+namespace Microsoft.Framework.FunctionalTestUtils
 {
     public static class TestUtils
     {
@@ -17,33 +17,20 @@ namespace Microsoft.Framework.PackageManager
             return new DirTree(json);
         }
 
-        public static string CreateTempDir()
+        public static DisposableDirPath CreateTempDir()
         {
             var tempDirPath = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
             Directory.CreateDirectory(tempDirPath);
             return tempDirPath;
         }
 
-        public static int ExecKpm(string krePath, string subcommand, string arguments,
-            IDictionary<string, string> environment = null, string workingDir = null)
-        {
-            string program, commandLine;
-            if (PlatformHelper.IsMono)
-            {
-                program = Path.Combine(krePath, "bin", "kpm");
-                commandLine = string.Format("{0} {1}", subcommand, arguments);
-            }
-            else
-            {
-                program = "cmd";
-                var kpmCmdPath = Path.Combine(krePath, "bin", "kpm.cmd");
-                commandLine = string.Format("/C {0} {1} {2}", kpmCmdPath, subcommand, arguments);
-            }
-            return Exec(program, commandLine, environment, workingDir);
-        }
-
-        public static int Exec(string program, string commandLine,
-            IDictionary<string, string> environment = null, string workingDir = null)
+        public static int Exec(
+            string program,
+            string commandLine,
+            out string stdOut,
+            out string stdErr,
+            IDictionary<string, string> environment = null,
+            string workingDir = null)
         {
             var processStartInfo = new ProcessStartInfo()
             {
@@ -51,6 +38,8 @@ namespace Microsoft.Framework.PackageManager
                 WorkingDirectory = workingDir,
                 FileName = program,
                 Arguments = commandLine,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true
             };
 
             if (environment != null)
@@ -62,13 +51,22 @@ namespace Microsoft.Framework.PackageManager
             }
 
             var process = Process.Start(processStartInfo);
+            stdOut = process.StandardOutput.ReadToEnd();
+            stdErr = process.StandardError.ReadToEnd();
             process.WaitForExit();
 
             return process.ExitCode;
         }
 
-        public static IEnumerable<string> GetUnpackedKrePaths(string buildArtifactDir)
+        public static string GetBuildArtifactsFolder()
         {
+            var kRuntimeRoot = ProjectResolver.ResolveRootDirectory(Directory.GetCurrentDirectory());
+            return Path.Combine(kRuntimeRoot, "artifacts", "build");
+        }
+
+        public static IEnumerable<DisposableDirPath> GetUnpackedKrePaths()
+        {
+            var buildArtifactDir = GetBuildArtifactsFolder();
             var kreNupkgs = new List<string>();
             kreNupkgs.Add(Directory.GetFiles(buildArtifactDir, "KRE-CLR-amd64.*.nupkg", SearchOption.TopDirectoryOnly).First());
             kreNupkgs.Add(Directory.GetFiles(buildArtifactDir, "KRE-CLR-x86.*.nupkg", SearchOption.TopDirectoryOnly).First());
@@ -101,6 +99,14 @@ namespace Microsoft.Framework.PackageManager
                     }
                 }
             }
+        }
+
+        public static string GetKreVersion()
+        {
+            var kreNupkg = Directory.EnumerateFiles(GetBuildArtifactsFolder(), "KRE-*.nupkg").FirstOrDefault();
+            var kreName = Path.GetFileNameWithoutExtension(kreNupkg);
+            var segments = kreName.Split(new[] { '.' }, 2);
+            return segments[1];
         }
     }
 }
