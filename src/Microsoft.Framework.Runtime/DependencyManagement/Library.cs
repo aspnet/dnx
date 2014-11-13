@@ -13,6 +13,8 @@ namespace Microsoft.Framework.Runtime
 
         public SemanticVersion Version { get; set; }
 
+        public SemanticVersion MaxVersion { get; set; }
+
         public bool IsGacOrFrameworkReference { get; set; }
 
         public override string ToString()

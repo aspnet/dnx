@@ -40,7 +40,8 @@ namespace Microsoft.Framework.PackageManager
                 if (VersionUtility.ShouldUseConsidering(
                     current: bestResult == null ? null : bestResult.Version,
                     considering: result.Version,
-                    ideal: library.Version))
+                    ideal: library.Version,
+                    maxVersion: library.MaxVersion))
                 {
                     bestResult = result;
                 }

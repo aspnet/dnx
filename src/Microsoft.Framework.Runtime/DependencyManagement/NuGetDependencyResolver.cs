@@ -143,7 +143,7 @@ namespace Microsoft.Framework.Runtime
 
             foreach (var dependency in packages)
             {
-                var package = FindCandidate(dependency.Identity.Name, dependency.Identity.Version);
+                var package = FindCandidate(dependency.Identity.Name, dependency.Identity.Version, dependency.Identity.MaxVersion);
 
                 if (package == null)
                 {
@@ -350,6 +350,10 @@ namespace Microsoft.Framework.Runtime
 
         public IPackage FindCandidate(string name, SemanticVersion version)
         {
+            return FindCandidate(name, version, null);
+        }
+        public IPackage FindCandidate(string name, SemanticVersion version, SemanticVersion maxVersion)
+        {
             var packages = _repository.FindPackagesById(name);
 
             if (version == null)
@@ -371,7 +375,8 @@ namespace Microsoft.Framework.Runtime
                 if (VersionUtility.ShouldUseConsidering(
                     current: bestMatch != null ? bestMatch.Version : null,
                     considering: packageInfo.Version,
-                    ideal: version))
+                    ideal: version,
+                    maxVersion: maxVersion))
                 {
                     bestMatch = packageInfo;
                 }

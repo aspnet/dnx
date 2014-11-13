@@ -1061,7 +1061,8 @@ namespace NuGet
         public static bool ShouldUseConsidering(
             SemanticVersion current,
             SemanticVersion considering,
-            SemanticVersion ideal)
+            SemanticVersion ideal,
+            SemanticVersion maxVersion)
         {
             if (considering == null)
             {
@@ -1082,7 +1083,12 @@ namespace NuGet
                 considering.EqualsSnapshot(ideal))
             {
                 // favor higher version when they both match a snapshot patter
-                return current < considering;
+                if (current < considering)
+                {
+                    //take this version if no max version is specified or it's bellow or the same than the max version
+                    return maxVersion == null || considering <= maxVersion;
+                }
+                return false;
             }
             else
             {

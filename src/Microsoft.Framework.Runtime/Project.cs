@@ -448,6 +448,7 @@ namespace Microsoft.Framework.Runtime
 
                     var dependencyValue = dependency.Value;
                     string dependencyVersionValue = null;
+                    string dependencyMaxVersionValue = null;
                     var dependencyTypeValue = LibraryDependencyType.Default;
                     if (dependencyValue.Type == JTokenType.String)
                     {
@@ -462,6 +463,12 @@ namespace Microsoft.Framework.Runtime
                             {
                                 dependencyVersionValue = dependencyVersionToken.Value<string>();
                             }
+
+                            var dependencyMaxVersionToken = dependencyValue["maxVersion"];
+                            if (dependencyMaxVersionToken != null && dependencyMaxVersionToken.Type == JTokenType.String)
+                            {
+                                dependencyMaxVersionValue = dependencyMaxVersionToken.Value<string>();
+                            }
                         }
 
                         IEnumerable<string> strings;
@@ -472,16 +479,22 @@ namespace Microsoft.Framework.Runtime
                     }
 
                     SemanticVersion dependencyVersion = null;
-                    if (!String.IsNullOrEmpty(dependencyVersionValue))
+                    if (!string.IsNullOrEmpty(dependencyVersionValue))
                     {
                         dependencyVersion = SemanticVersion.Parse(dependencyVersionValue);
+                    }
+                    SemanticVersion dependencyMaxVersion = null;
+                    if (!string.IsNullOrEmpty(dependencyMaxVersionValue))
+                    {
+                        dependencyMaxVersion = SemanticVersion.Parse(dependencyMaxVersionValue);
                     }
 
                     results.Add(new LibraryDependency(
                         name: dependency.Key,
                         version: dependencyVersion,
                         isGacOrFrameworkReference: isGacOrFrameworkReference,
-                        type: dependencyTypeValue
+                        type: dependencyTypeValue,
+                        maxVersion: dependencyMaxVersion
                     ));
                 }
             }

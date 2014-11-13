@@ -59,6 +59,22 @@ namespace Microsoft.Framework.Runtime
                 type)
         {
         }
+        public LibraryDependency(
+            string name,
+            SemanticVersion version,
+            bool isGacOrFrameworkReference,
+            LibraryDependencyType type,
+            SemanticVersion maxVersion) : this(
+                new Library
+                {
+                    Name = name,
+                    Version = version,
+                    IsGacOrFrameworkReference = isGacOrFrameworkReference,
+                    MaxVersion = maxVersion
+                },
+                type)
+        {
+        }
 
         public LibraryDependency(
             Library library) : this(
@@ -87,6 +103,11 @@ namespace Microsoft.Framework.Runtime
             get { return Library.Version; }
         }
 
+        public SemanticVersion MaxVersion
+        {
+            get { return Library.MaxVersion; }
+        }
+
         public bool IsGacOrFrameworkReference
         {
             get { return Library.IsGacOrFrameworkReference; }
@@ -106,6 +127,15 @@ namespace Microsoft.Framework.Runtime
                 version: version,
                 isGacOrFrameworkReference: Library.IsGacOrFrameworkReference,
                 type: Type);
+        }
+        public LibraryDependency ChangeVersion(SemanticVersion version, SemanticVersion maxVersion)
+        {
+            return new LibraryDependency(
+                name: Library.Name,
+                version: version,
+                isGacOrFrameworkReference: Library.IsGacOrFrameworkReference,
+                type: Type,
+                maxVersion: maxVersion);
         }
 
         public bool HasFlag(LibraryDependencyTypeFlag flag)
