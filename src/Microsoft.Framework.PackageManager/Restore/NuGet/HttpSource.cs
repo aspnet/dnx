@@ -117,6 +117,7 @@ namespace Microsoft.Framework.PackageManager.Restore.NuGet
 #endif
 
             var response = await _client.SendAsync(request);
+            response.EnsureSuccessStatusCode();
 
             var newFile = result.CacheFileName + "-new";
 
