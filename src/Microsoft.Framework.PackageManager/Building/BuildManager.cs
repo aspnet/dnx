@@ -44,7 +44,7 @@ namespace Microsoft.Framework.PackageManager
 
             var sw = Stopwatch.StartNew();
 
-            var baseOutputPath = _buildOptions.OutputDir ?? Path.Combine(_buildOptions.ProjectDir, "bin");
+            var baseOutputPath = GetBuildOutputDir(_buildOptions);
             var configurations = _buildOptions.Configurations.DefaultIfEmpty("Debug");
 
             var specifiedFrameworks = _buildOptions.TargetFrameworks
@@ -72,12 +72,7 @@ namespace Microsoft.Framework.PackageManager
                 frameworks = new[] { _applicationEnvironment.RuntimeFramework };
             }
 
-            Func<string, string> getVariable = key =>
-            {
-                return null;
-            };
-
-            ScriptExecutor.Execute(project, "prebuild", getVariable);
+            ScriptExecutor.Execute(project, "prebuild", GetScriptVariable);
 
             var success = true;
 
@@ -196,7 +191,7 @@ namespace Microsoft.Framework.PackageManager
                 }
             }
 
-            ScriptExecutor.Execute(project, "postbuild", getVariable);
+            ScriptExecutor.Execute(project, "postbuild", GetScriptVariable);
 
             sw.Stop();
 
@@ -220,6 +215,16 @@ namespace Microsoft.Framework.PackageManager
             }
 
             return success;
+        }
+
+        private string GetScriptVariable(string key)
+        {
+            if (string.Equals("project:BuildOutputDir", key, StringComparison.OrdinalIgnoreCase))
+            {
+                return GetBuildOutputDir(_buildOptions);
+            }
+
+            return null;
         }
 
         private static void InitializeBuilder(Runtime.Project project, PackageBuilder builder)
@@ -309,6 +314,11 @@ namespace Microsoft.Framework.PackageManager
         {
             string fileName = project.Name + "." + project.Version + (symbols ? ".symbols" : "") + ".nupkg";
             return Path.Combine(outputPath, fileName);
+        }
+
+        private static string GetBuildOutputDir(BuildOptions buildOptions)
+        {
+            return buildOptions.OutputDir ?? Path.Combine(buildOptions.ProjectDir, "bin");
         }
     }
 }
