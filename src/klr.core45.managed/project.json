@@ -27,7 +27,7 @@
 
     "scripts": {
         "postbuild": [
-            "%project:Directory%/../../build/batchcopy %project:Directory%/bin/Debug/aspnetcore50/*.* %project:Directory%/../../artifacts/build/KRE-CoreCLR-x86/bin"
+            "%project:Directory%/../../build/batchcopy %project:BuildOutputDir%/Debug/aspnetcore50/*.* %project:Directory%/../../artifacts/build/KRE-CoreCLR-x86/bin"
         ]
     }
 }

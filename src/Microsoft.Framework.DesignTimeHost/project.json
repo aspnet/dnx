@@ -37,8 +37,8 @@
     },
     "scripts": {
         "postbuild": [
-            "%project:Directory%/../../build/batchcopy %project:Directory%/bin/Debug/aspnet50/*.* %project:Directory%/../../artifacts/build/KRE-CLR-x86/bin/lib/Microsoft.Framework.DesignTimeHost",
-            "%project:Directory%/../../build/batchcopy %project:Directory%/bin/Debug/aspnetcore50/*.* %project:Directory%/../../artifacts/build/KRE-CoreCLR-x86/bin/lib/Microsoft.Framework.DesignTimeHost"
+            "%project:Directory%/../../build/batchcopy %project:BuildOutputDir%/Debug/aspnet50/*.* %project:Directory%/../../artifacts/build/KRE-CLR-x86/bin/lib/Microsoft.Framework.DesignTimeHost",
+            "%project:Directory%/../../build/batchcopy %project:BuildOutputDir%/Debug/aspnetcore50/*.* %project:Directory%/../../artifacts/build/KRE-CoreCLR-x86/bin/lib/Microsoft.Framework.DesignTimeHost"
         ]
     }
 }
