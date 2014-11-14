@@ -13,6 +13,7 @@ k-standard-goals
 
 var Configuration2='${E("Configuration")}'
 var ROOT = '${Directory.GetCurrentDirectory()}'
+var BUILD_TOOLS_DIR = '${Path.Combine(ROOT, "build")}'
 var SCRIPTS_DIR = '${Path.Combine(ROOT, "scripts")}'
 var ARTIFACTS_DIR = '${Path.Combine(ROOT, "artifacts")}'
 var BUILD_DIR2 = '${Path.Combine(ROOT, "artifacts", "build")}'
@@ -61,6 +62,10 @@ var WIN_MANAGED_PROJECTS = '${FindAllProjects(
 var MONO_NATIVE_PROJECTS = '${FindAllProjects()}'
 
 var MONO_MANAGED_PROJECTS = '${FindAllProjects("klr.mono.managed")}'
+
+#initialize-build-tools target='initialize' if='IsMono'
+    var batchcopyScript = '${Path.Combine(BUILD_TOOLS_DIR, "batchcopy")}'
+    @{ Exec("chmod", "+x " + batchcopyScript); }
 
 #build-compile target='compile'
 
