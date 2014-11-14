@@ -38,14 +38,14 @@ namespace Microsoft.Framework.Runtime.Roslyn.Tests
         {
             var project = Project.GetProject(
 @"{
-    ""compilationOptions"": { ""languageVersion"" : ""experimental"" }
+    ""compilationOptions"": { ""languageVersion"" : ""CSharp3"" }
 }",
 "foo",
 @"c\foo\project.json");
 
             var settings = project.GetCompilationSettings("net45");
 
-            Assert.Equal(LanguageVersion.Experimental, settings.LanguageVersion);
+            Assert.Equal(LanguageVersion.CSharp3, settings.LanguageVersion);
         }
 
         [Theory]
