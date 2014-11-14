@@ -139,11 +139,11 @@ var MONO_MANAGED_PROJECTS = '${FindAllProjects("klr.mono.managed")}'
   directory delete='${Path.Combine(BUILD_DIR2, "klr.core45")}'
   copy sourceDir='${Path.Combine(ROOT, "src", "klr.core45")}' include='bin/**/' outputDir='${Path.Combine(BUILD_DIR2, "klr.core45")}' overwrite='${true}'
   
-#compile-tools target='compile' if='!IsMono'
-  var toolProjects ='${Files.Include(Path.Combine(ROOT, "tools", "**", "*.csproj"))}'
+#build-csproj-dumper target='compile' if='!IsMono'
+  var project ='${Path.Combine(ROOT, "src", "CsprojDumper", "CsprojDumper.csproj")}'
 
   @{
-      if (toolProjects.Any())
+      if (File.Exists(project))
       {
         if (!IsMsbuildInstalled(MSBUILD))
         {
@@ -151,15 +151,16 @@ var MONO_MANAGED_PROJECTS = '${FindAllProjects("klr.mono.managed")}'
         }
         else
         {
-            foreach (var project in toolProjects)
-            {
-                Exec(MSBUILD, project + " /p:Configuration=" + Configuration2);
-            }
+            Exec(MSBUILD, project + " /p:Configuration=" + Configuration2);
         }
+      }
+      else
+      {
+        Log.Warn("Cannot locate CsprojDumper project at " + project);
       }
   }
 
-  copy sourceDir='${Path.GetDirectoryName(project)}' include='bin/**/' outputDir='${Path.Combine(BUILD_DIR2, Path.GetFileNameWithoutExtension(project))}' overwrite='${true}' each='var project in toolProjects'
+  copy sourceDir='${Path.GetDirectoryName(project)}' include='bin/**/' outputDir='${Path.Combine(BUILD_DIR2, Path.GetFileNameWithoutExtension(project))}' overwrite='${true}'
 
 #build-native-klrnet45 target='native-compile' if='!IsMono'
     var klrNet45Proj ='${Path.Combine(ROOT, "src", "klr.net45", "klr.net45.vcxproj")}'

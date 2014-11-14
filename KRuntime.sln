@@ -75,9 +75,7 @@ Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Microsoft.Framework.Functio
 EndProject
 Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Microsoft.Framework.ApplicationHost.FunctionalTests", "test\Microsoft.Framework.ApplicationHost.FunctionalTests\Microsoft.Framework.ApplicationHost.FunctionalTests.kproj", "{A296F9FC-B5BE-4C01-ACC1-8F3DD1549B72}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tools", "tools", "{2481A58B-FB6C-47B9-8213-F07B51A78FB0}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CsprojDumper", "tools\CsprojDumper\CsprojDumper.csproj", "{C27664A5-28CB-428F-9002-E7ACC3164247}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CsprojDumper", "src\CsprojDumper\CsprojDumper.csproj", "{C27664A5-28CB-428F-9002-E7ACC3164247}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -530,6 +528,6 @@ Global
 		{462B03CA-FF32-4DBE-AA73-9204F6AAAF66} = {AF391791-F4B7-41AC-8F08-9485DAC543C5}
 		{51E18677-FBF2-4CF1-AA6F-06C79DE619C2} = {C43EE429-DE10-4906-BB09-54E6A080948A}
 		{A296F9FC-B5BE-4C01-ACC1-8F3DD1549B72} = {C43EE429-DE10-4906-BB09-54E6A080948A}
-		{C27664A5-28CB-428F-9002-E7ACC3164247} = {2481A58B-FB6C-47B9-8213-F07B51A78FB0}
+		{C27664A5-28CB-428F-9002-E7ACC3164247} = {AF391791-F4B7-41AC-8F08-9485DAC543C5}
 	EndGlobalSection
 EndGlobal
