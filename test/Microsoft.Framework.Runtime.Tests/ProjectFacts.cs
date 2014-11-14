@@ -62,19 +62,21 @@ namespace Microsoft.Framework.Runtime.Tests
         ""B"": ""1.0-alpha-*"",
         ""C"": ""1.0.0"",
         ""D"": { ""version"": ""2.0.0"" },
-        ""E"": { ""version"": ""2.0.1"", ""maxVersion"": ""2.13.37"" }
+        ""E"": { ""min"": ""2.0.1"", ""max"": ""2.13.37"" },
+        ""F"": ""[1.6.6,2.0.0)"",
     }
 }",
 "foo",
 @"c:\foo\project.json");
 
             Assert.NotNull(project.Dependencies);
-            Assert.Equal(5, project.Dependencies.Count);
+            Assert.Equal(6, project.Dependencies.Count);
             var d1 = project.Dependencies[0];
             var d2 = project.Dependencies[1];
             var d3 = project.Dependencies[2];
             var d4 = project.Dependencies[3];
             var d5 = project.Dependencies[4];
+            var d6 = project.Dependencies[5];
             Assert.Equal("A", d1.Name);
             Assert.Null(d1.Version);
             Assert.Equal("B", d2.Name);
@@ -88,8 +90,13 @@ namespace Microsoft.Framework.Runtime.Tests
             Assert.False(d4.Version.IsSnapshot);
             Assert.Equal("E", d5.Name);
             Assert.Equal(SemanticVersion.Parse("2.0.1"), d5.Version);
-            Assert.Equal(SemanticVersion.Parse("2.13.37"), d5.MaxVersion);
+            Assert.Equal(SemanticVersion.Parse("2.13.37"), d5.Library.MaxVersion);
             Assert.False(d5.Version.IsSnapshot);
+            Assert.Equal("F", d6.Name);
+            Assert.Equal(SemanticVersion.Parse("1.6.6"), d6.Version);
+            Assert.True(d6.Library.IsMinInclusive);
+            Assert.Equal(SemanticVersion.Parse("2.0.0"), d6.Library.MaxVersion);
+            Assert.False(d6.Library.IsMaxInclusive);
         }
 
         [Fact]
@@ -104,7 +111,8 @@ namespace Microsoft.Framework.Runtime.Tests
                 ""B"": ""1.0-alpha-*"",
                 ""C"": ""1.0.0"",
                 ""D"": { ""version"": ""2.0.0"" },
-                ""E"": { ""version"": ""2.0.1"", ""maxVersion"": ""2.13.37"" }
+                ""E"": { ""min"": ""2.0.1"", ""max"": ""2.13.37"" },
+                ""F"": ""[1.6.6,2.0.0)"",
             }
         }
     }
@@ -115,12 +123,13 @@ namespace Microsoft.Framework.Runtime.Tests
             Assert.Empty(project.Dependencies);
             var targetFrameworkInfo = project.GetTargetFrameworks().First();
             Assert.NotNull(targetFrameworkInfo.Dependencies);
-            Assert.Equal(5, targetFrameworkInfo.Dependencies.Count);
+            Assert.Equal(6, targetFrameworkInfo.Dependencies.Count);
             var d1 = targetFrameworkInfo.Dependencies[0];
             var d2 = targetFrameworkInfo.Dependencies[1];
             var d3 = targetFrameworkInfo.Dependencies[2];
             var d4 = targetFrameworkInfo.Dependencies[3];
             var d5 = targetFrameworkInfo.Dependencies[4];
+            var d6 = targetFrameworkInfo.Dependencies[5];
             Assert.Equal("A", d1.Name);
             Assert.Null(d1.Version);
             Assert.Equal("B", d2.Name);
@@ -134,8 +143,13 @@ namespace Microsoft.Framework.Runtime.Tests
             Assert.False(d4.Version.IsSnapshot);
             Assert.Equal("E", d5.Name);
             Assert.Equal(SemanticVersion.Parse("2.0.1"), d5.Version);
-            Assert.Equal(SemanticVersion.Parse("2.13.37"), d5.MaxVersion);
+            Assert.Equal(SemanticVersion.Parse("2.13.37"), d5.Library.MaxVersion);
             Assert.False(d5.Version.IsSnapshot);
+            Assert.Equal("F", d6.Name);
+            Assert.Equal(SemanticVersion.Parse("1.6.6"), d6.Version);
+            Assert.True(d6.Library.IsMinInclusive);
+            Assert.Equal(SemanticVersion.Parse("2.0.0"), d6.Library.MaxVersion);
+            Assert.False(d6.Library.IsMaxInclusive);
         }
 
         [Fact]
@@ -150,7 +164,8 @@ namespace Microsoft.Framework.Runtime.Tests
                 ""B"": ""1.0-alpha-*"",
                 ""C"": ""1.0.0"",
                 ""D"": { ""version"": ""2.0.0"" },
-                ""E"": { ""version"": ""2.0.1"", ""maxVersion"": ""2.13.37"" }
+                ""E"": { ""min"": ""2.0.1"", ""max"": ""2.13.37"" },
+                ""F"": ""[1.6.6,2.0.0)"",
             }
         }
     }
@@ -160,12 +175,13 @@ namespace Microsoft.Framework.Runtime.Tests
 
             Assert.Empty(project.Dependencies);
             var targetFrameworkInfo = project.GetTargetFrameworks().First();
-            Assert.Equal(5, targetFrameworkInfo.Dependencies.Count);
+            Assert.Equal(6, targetFrameworkInfo.Dependencies.Count);
             var d1 = targetFrameworkInfo.Dependencies[0];
             var d2 = targetFrameworkInfo.Dependencies[1];
             var d3 = targetFrameworkInfo.Dependencies[2];
             var d4 = targetFrameworkInfo.Dependencies[3];
             var d5 = targetFrameworkInfo.Dependencies[4];
+            var d6 = targetFrameworkInfo.Dependencies[5];
             Assert.Equal("A", d1.Name);
             Assert.Null(d1.Version);
             Assert.True(d1.IsGacOrFrameworkReference);
@@ -183,8 +199,13 @@ namespace Microsoft.Framework.Runtime.Tests
             Assert.True(d4.IsGacOrFrameworkReference);
             Assert.Equal("E", d5.Name);
             Assert.Equal(SemanticVersion.Parse("2.0.1"), d5.Version);
-            Assert.Equal(SemanticVersion.Parse("2.13.37"), d5.MaxVersion);
+            Assert.Equal(SemanticVersion.Parse("2.13.37"), d5.Library.MaxVersion);
             Assert.False(d5.Version.IsSnapshot);
+            Assert.Equal("F", d6.Name);
+            Assert.Equal(SemanticVersion.Parse("1.6.6"), d6.Version);
+            Assert.True(d6.Library.IsMinInclusive);
+            Assert.Equal(SemanticVersion.Parse("2.0.0"), d6.Library.MaxVersion);
+            Assert.False(d6.Library.IsMaxInclusive);
         }
 
         [Fact]

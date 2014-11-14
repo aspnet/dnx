@@ -176,8 +176,7 @@ namespace Microsoft.Framework.PackageManager
                     if (VersionUtility.ShouldUseConsidering(
                         current: localMatch.Library.Version,
                         considering: remoteMatch.Library.Version,
-                        ideal: library.Version,
-                        maxVersion: library.MaxVersion))
+                        ideal: library))
                     {
                         return remoteMatch;
                     }
@@ -218,8 +217,7 @@ namespace Microsoft.Framework.PackageManager
                 if (VersionUtility.ShouldUseConsidering(
                     current: (bestMatch == null || bestMatch.Library == null) ? null : bestMatch.Library.Version,
                     considering: (match == null || match.Library == null) ? null : match.Library.Version,
-                    ideal: library.Version,
-                    maxVersion: library.MaxVersion))
+                    ideal: library))
                 {
                     bestMatch = match;
                 }
@@ -241,8 +239,7 @@ namespace Microsoft.Framework.PackageManager
                 if (VersionUtility.ShouldUseConsidering(
                     current: (bestMatch == null || bestMatch.Library == null) ? null : bestMatch.Library.Version,
                     considering: (match == null || match.Library == null) ? null : match.Library.Version,
-                    ideal: library.Version,
-                    maxVersion:library.MaxVersion))
+                    ideal: library))
                 {
                     bestMatch = match;
                 }

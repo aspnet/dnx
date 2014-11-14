@@ -7,14 +7,28 @@ using System.Collections.Generic;
 
 namespace Microsoft.Framework.Runtime
 {
-    public class Library : IEquatable<Library>
+    public class Library : VersionSpec,IEquatable<Library>
     {
+        public Library()
+        {
+            IsMinInclusive = true;
+            IsMaxInclusive = true;
+        }
+
+        public Library(VersionSpec version)
+        {
+            if (version == null)
+                return;
+            IsMinInclusive = version.IsMinInclusive;
+            IsMaxInclusive = version.IsMaxInclusive;
+            MinVersion = version.MinVersion;
+            MaxVersion = version.MaxVersion;
+        }
+
         public string Name { get; set; }
 
-        public SemanticVersion Version { get; set; }
-
-        public SemanticVersion MaxVersion { get; set; }
-
+        public SemanticVersion Version { get { return MinVersion; } set { MinVersion = value; } }
+        
         public bool IsGacOrFrameworkReference { get; set; }
 
         public override string ToString()
@@ -28,7 +42,10 @@ namespace Microsoft.Framework.Runtime
             if (ReferenceEquals(null, other)) return false;
             if (ReferenceEquals(this, other)) return true;
             return string.Equals(Name, other.Name) &&
-                Equals(Version, other.Version) &&
+                IsMaxInclusive == other.IsMaxInclusive &&
+                IsMinInclusive == other.IsMinInclusive &&
+                Equals(MinVersion, other.MinVersion) &&
+                Equals(MaxVersion, other.MaxVersion) &&
                 Equals(IsGacOrFrameworkReference, other.IsGacOrFrameworkReference);
         }
 

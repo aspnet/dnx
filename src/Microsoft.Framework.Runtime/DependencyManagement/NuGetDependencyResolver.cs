@@ -376,7 +376,7 @@ namespace Microsoft.Framework.Runtime
                     current: bestMatch != null ? bestMatch.Version : null,
                     considering: packageInfo.Version,
                     ideal: version,
-                    maxVersion: maxVersion))
+                    highest: maxVersion))
                 {
                     bestMatch = packageInfo;
                 }

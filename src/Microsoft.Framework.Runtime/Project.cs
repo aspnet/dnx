@@ -447,12 +447,14 @@ namespace Microsoft.Framework.Runtime
                     // }
 
                     var dependencyValue = dependency.Value;
-                    string dependencyVersionValue = null;
-                    string dependencyMaxVersionValue = null;
+                    IVersionSpec verSpec=null;
                     var dependencyTypeValue = LibraryDependencyType.Default;
                     if (dependencyValue.Type == JTokenType.String)
                     {
-                        dependencyVersionValue = dependencyValue.Value<string>();
+                        //treat version as VersionSpec
+                        var dependencyVersionValue = dependencyValue.Value<string>();
+                        VersionUtility.TryParseVersionSpec(dependencyVersionValue, out verSpec);
+
                     }
                     else
                     {
@@ -461,14 +463,39 @@ namespace Microsoft.Framework.Runtime
                             var dependencyVersionToken = dependencyValue["version"];
                             if (dependencyVersionToken != null && dependencyVersionToken.Type == JTokenType.String)
                             {
-                                dependencyVersionValue = dependencyVersionToken.Value<string>();
+                                //Version inside object found, treat as VersionSpec string
+                                var dependencyVersionValue = dependencyVersionToken.Value<string>();
+                                VersionUtility.TryParseVersionSpec(dependencyVersionValue, out verSpec);
+                            }
+                            else
+                            {
+                                SemanticVersion minVersion=null, maxVersion=null;
+                                var dependencyMinVersionToken = dependencyValue["min"];
+                                if (dependencyMinVersionToken != null && dependencyMinVersionToken.Type == JTokenType.String)
+                                {
+                                    var dependencyMinVersionValue = dependencyMinVersionToken.Value<string>();
+                                    SemanticVersion.TryParse(dependencyMinVersionValue, out minVersion);
+                                }
+
+                                var dependencyMaxVersionToken = dependencyValue["max"];
+                                if (dependencyMaxVersionToken != null && dependencyMaxVersionToken.Type == JTokenType.String)
+                                {
+                                    var dependencyMaxVersionValue = dependencyMaxVersionToken.Value<string>();
+                                    SemanticVersion.TryParse(dependencyMaxVersionValue, out maxVersion);
+                                }
+                                if (minVersion!=null || maxVersion != null)
+                                {
+                                    verSpec = new VersionSpec
+                                    {
+                                        MinVersion = minVersion,
+                                        MaxVersion = maxVersion,
+                                        IsMaxInclusive = true,
+                                        IsMinInclusive = true
+                                    };
+                                }
                             }
 
-                            var dependencyMaxVersionToken = dependencyValue["maxVersion"];
-                            if (dependencyMaxVersionToken != null && dependencyMaxVersionToken.Type == JTokenType.String)
-                            {
-                                dependencyMaxVersionValue = dependencyMaxVersionToken.Value<string>();
-                            }
+
                         }
 
                         IEnumerable<string> strings;
@@ -478,23 +505,11 @@ namespace Microsoft.Framework.Runtime
                         }
                     }
 
-                    SemanticVersion dependencyVersion = null;
-                    if (!string.IsNullOrEmpty(dependencyVersionValue))
-                    {
-                        dependencyVersion = SemanticVersion.Parse(dependencyVersionValue);
-                    }
-                    SemanticVersion dependencyMaxVersion = null;
-                    if (!string.IsNullOrEmpty(dependencyMaxVersionValue))
-                    {
-                        dependencyMaxVersion = SemanticVersion.Parse(dependencyMaxVersionValue);
-                    }
-
                     results.Add(new LibraryDependency(
                         name: dependency.Key,
-                        version: dependencyVersion,
+                        versionSpec: verSpec as VersionSpec,
                         isGacOrFrameworkReference: isGacOrFrameworkReference,
-                        type: dependencyTypeValue,
-                        maxVersion: dependencyMaxVersion
+                        type: dependencyTypeValue
                     ));
                 }
             }

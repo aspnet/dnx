@@ -1,6 +1,9 @@
 {
     "dependencies": {
-        "Microsoft.Framework.Runtime": "1.0.0-*",
+        "Microsoft.Framework.Runtime": {
+            "version": "1.0.0-*",
+            "maxVersion": "7.0.1"
+        },
         "Microsoft.Framework.Runtime.Interfaces": "1.0.0-*",
         "Shouldly": "1.1.1.1",
         "Xunit.KRunner": "1.0.0-*"

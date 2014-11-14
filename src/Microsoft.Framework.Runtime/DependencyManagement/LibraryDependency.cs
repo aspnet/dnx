@@ -39,7 +39,7 @@ namespace Microsoft.Framework.Runtime
                 new Library
                 {
                     Name = name,
-                    Version = version
+                    MinVersion = version,
                 },
                 LibraryDependencyType.Default)
         {
@@ -53,7 +53,7 @@ namespace Microsoft.Framework.Runtime
                 new Library
                 {
                     Name = name,
-                    Version = version,
+                    MinVersion = version,
                     IsGacOrFrameworkReference = isGacOrFrameworkReference
                 },
                 type)
@@ -61,16 +61,13 @@ namespace Microsoft.Framework.Runtime
         }
         public LibraryDependency(
             string name,
-            SemanticVersion version,
+            VersionSpec versionSpec,
             bool isGacOrFrameworkReference,
-            LibraryDependencyType type,
-            SemanticVersion maxVersion) : this(
-                new Library
+            LibraryDependencyType type) : this(
+                new Library(versionSpec)
                 {
                     Name = name,
-                    Version = version,
-                    IsGacOrFrameworkReference = isGacOrFrameworkReference,
-                    MaxVersion = maxVersion
+                    IsGacOrFrameworkReference = isGacOrFrameworkReference
                 },
                 type)
         {
@@ -102,12 +99,7 @@ namespace Microsoft.Framework.Runtime
         {
             get { return Library.Version; }
         }
-
-        public SemanticVersion MaxVersion
-        {
-            get { return Library.MaxVersion; }
-        }
-
+        
         public bool IsGacOrFrameworkReference
         {
             get { return Library.IsGacOrFrameworkReference; }
@@ -128,14 +120,13 @@ namespace Microsoft.Framework.Runtime
                 isGacOrFrameworkReference: Library.IsGacOrFrameworkReference,
                 type: Type);
         }
-        public LibraryDependency ChangeVersion(SemanticVersion version, SemanticVersion maxVersion)
+        public LibraryDependency ChangeVersion(VersionSpec versionSpec)
         {
             return new LibraryDependency(
                 name: Library.Name,
-                version: version,
+                versionSpec: versionSpec,
                 isGacOrFrameworkReference: Library.IsGacOrFrameworkReference,
-                type: Type,
-                maxVersion: maxVersion);
+                type: Type);
         }
 
         public bool HasFlag(LibraryDependencyTypeFlag flag)

@@ -129,8 +129,7 @@ namespace Microsoft.Framework.PackageManager
                 if (VersionUtility.ShouldUseConsidering(
                     current: bestResult.Version,
                     considering: result.Version,
-                    ideal: idealVersion,
-                    maxVersion: null))
+                    ideal: idealVersion))
                 {
                     bestResult = result;
                 }
