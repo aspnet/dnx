@@ -256,30 +256,34 @@ namespace Microsoft.Framework.PackageManager
                 });
             });
 
-            app.Command("wrap", c =>
+            // "kpm wrap" invokes MSBuild, which is not available on *nix
+            if (!PlatformHelper.IsMono)
             {
-                c.Description = "Wrap a csproj into a kproj, which can be referenced by kprojs";
-
-                var argPath = c.Argument("[path]", "Path to csproj to be wrapped");
-                var optConfiguration = c.Option("--configuration <CONFIGURATION>",
-                    "Configuration of wrapped project, default is 'debug'", CommandOptionType.SingleValue);
-                c.HelpOption("-?|-h|--help");
-
-                c.OnExecute(() =>
+                app.Command("wrap", c =>
                 {
-                    var reports = CreateReports(optionVerbose.HasValue(), quiet: false);
+                    c.Description = "Wrap a csproj into a kproj, which can be referenced by kprojs";
 
-                    var command = new WrapCommand();
-                    command.Reports = reports;
-                    command.CsProjectPath = argPath.Value;
-                    command.ToolsPath = optionToolsPath.Value();
-                    command.Configuration = optConfiguration.Value();
+                    var argPath = c.Argument("[path]", "Path to csproj to be wrapped");
+                    var optConfiguration = c.Option("--configuration <CONFIGURATION>",
+                        "Configuration of wrapped project, default is 'debug'", CommandOptionType.SingleValue);
+                    c.HelpOption("-?|-h|--help");
 
-                    var success = command.ExecuteCommand();
+                    c.OnExecute(() =>
+                    {
+                        var reports = CreateReports(optionVerbose.HasValue(), quiet: false);
 
-                    return success ? 0 : 1;
+                        var command = new WrapCommand();
+                        command.Reports = reports;
+                        command.CsProjectPath = argPath.Value;
+                        command.ToolsPath = optionToolsPath.Value();
+                        command.Configuration = optConfiguration.Value();
+
+                        var success = command.ExecuteCommand();
+
+                        return success ? 0 : 1;
+                    });
                 });
-            });
+            }
 
             return app.Execute(args);
         }
