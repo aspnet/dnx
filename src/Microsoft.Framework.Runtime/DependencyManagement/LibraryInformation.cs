@@ -12,7 +12,7 @@ namespace Microsoft.Framework.Runtime
         public LibraryInformation(LibraryDescription description)
         {
             Name = description.Identity.Name;
-            Version = description.Identity.Version.ToString();
+            Version = description.Identity.Version?.ToString();
             Path = description.Path;
             Type = description.Type;
             Dependencies = description.Dependencies.Select(d => d.Name);
