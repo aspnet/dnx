@@ -207,7 +207,7 @@ var MONO_MANAGED_PROJECTS = '${FindAllProjects("klr.mono.managed")}'
 
 #package-runtime .clean-sdk-dir .copy-bits .tweak-scripts .copy-package-dependencies .copy-coreclr-kpm-dependencies .copy-coreclr .nuget-pack-runtime target='package'
 
-#rebuild-package .build-mono-entrypoint .build-compile .compile-tools .native-compile .package-runtime .xunit-test
+#rebuild-package .build-mono-entrypoint .build-compile .build-csproj-dumper .native-compile .package-runtime .xunit-test
 
 #xunit-test target='test' if='Directory.Exists("test")'
     k-test each='var projectFile in Files.Include("test/**/project.json")' if='NEW_RUNTIME'
