@@ -291,6 +291,7 @@ namespace Microsoft.Framework.PackageManager
                 sb.Append(" -> ");
             }
             sb.AppendFormat("{0}.{1}".Red().Bold(), failedNode.Library.Name, failedNode.Library.Version);
+            sb.AppendLine();
             Reports.Error.WriteLine("  " + sb.ToString());
         }
 
