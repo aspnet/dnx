@@ -2,7 +2,6 @@
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 using System;
-using System.Linq;
 using System.Collections.Generic;
 using System.Reflection;
 
@@ -29,6 +28,24 @@ namespace Microsoft.Framework.Runtime.Common.DependencyInjection
             _instances[type] = instance;
         }
 
+        public IServiceManifest BuildManifest()
+        {
+            var services = new HashSet<Type>(_instances.Keys);
+            // Add all fallback services as well
+            if (_fallbackServiceProvider != null)
+            {
+                var manifest = _fallbackServiceProvider.GetService(typeof(IServiceManifest)) as IServiceManifest;
+                if (manifest != null)
+                {
+                    foreach (var service in manifest.Services)
+                    {
+                        services.Add(service);
+                    }
+                }
+            }
+            return new ServiceManifest(services);
+        }
+
         public object GetService(Type serviceType)
         {
             object instance;
@@ -42,6 +59,12 @@ namespace Microsoft.Framework.Runtime.Common.DependencyInjection
             if (serviceArray != null && serviceArray.Length != 0)
             {
                 return serviceArray;
+            }
+
+            if (serviceType == typeof(IServiceManifest))
+            {
+                // REVIEW: Should this cache and invalidate on Add??
+                return new ServiceManifest(_instances.Keys);
             }
 
             if (_fallbackServiceProvider != null)
@@ -75,6 +98,16 @@ namespace Microsoft.Framework.Runtime.Common.DependencyInjection
             }
 
             return null;
+        }
+
+        private class ServiceManifest : IServiceManifest
+        {
+            public ServiceManifest(IEnumerable<Type> services)
+            {
+                Services = services;
+            }
+
+            public IEnumerable<Type> Services { get; private set; }
         }
     }
 }
