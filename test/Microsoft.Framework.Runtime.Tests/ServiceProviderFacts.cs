@@ -53,7 +53,7 @@ namespace Microsoft.Framework.Runtime.Tests
             Assert.NotNull(fallbackManifest);
 
             Assert.NotNull(fallbackManifest.Services.Single(t => t == typeof(IService)));
-            Assert.True(manifest.Services.Any(t => t == typeof(IService)));
+            Assert.True(fallbackManifest.Services.Any(t => t == typeof(IService)));
             Assert.True(manifest.Services.Any(t => t == typeof(Service)));
         }
 
