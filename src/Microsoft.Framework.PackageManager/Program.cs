@@ -34,7 +34,6 @@ namespace Microsoft.Framework.PackageManager
             app.Name = "kpm";
 
             var optionVerbose = app.Option("-v|--verbose", "Show verbose output", CommandOptionType.NoValue);
-            var optionToolsPath = app.Option("--tools-path", "", CommandOptionType.SingleValue);
             app.HelpOption("-?|-h|--help");
             app.VersionOption("--version", GetVersion());
 
@@ -266,6 +265,9 @@ namespace Microsoft.Framework.PackageManager
                     var argPath = c.Argument("[path]", "Path to csproj to be wrapped");
                     var optConfiguration = c.Option("--configuration <CONFIGURATION>",
                         "Configuration of wrapped project, default is 'debug'", CommandOptionType.SingleValue);
+                    var optMsBuildPath = c.Option("--msbuild <PATH>",
+                        @"Path to MSBuild, default is '%ProgramFiles%\MSBuild\14.0\Bin\MSBuild.exe'",
+                        CommandOptionType.SingleValue);
                     c.HelpOption("-?|-h|--help");
 
                     c.OnExecute(() =>
@@ -275,8 +277,8 @@ namespace Microsoft.Framework.PackageManager
                         var command = new WrapCommand();
                         command.Reports = reports;
                         command.CsProjectPath = argPath.Value;
-                        command.ToolsPath = optionToolsPath.Value();
                         command.Configuration = optConfiguration.Value();
+                        command.MsBuildPath = optMsBuildPath.Value();
 
                         var success = command.ExecuteCommand();
 
