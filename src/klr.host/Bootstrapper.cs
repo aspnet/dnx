@@ -80,7 +80,7 @@ namespace klr.host
             serviceProvider.Add(typeof(IAssemblyLoaderContainer), _container);
             serviceProvider.Add(typeof(IAssemblyLoadContextAccessor), LoadContextAccessor.Instance);
             serviceProvider.Add(typeof(IApplicationEnvironment), applicationEnvironment);
-            serviceProvider.Add(typeof(IAssemblyNeutralInterfaceCache), _assemblyNeutralInterfaceCache);
+            serviceProvider.Add(typeof(IAssemblyNeutralInterfaceCache), _assemblyNeutralInterfaceCache, includeInManifest: false);
 
             CallContextServiceLocator.Locator.ServiceProvider = serviceProvider;
 

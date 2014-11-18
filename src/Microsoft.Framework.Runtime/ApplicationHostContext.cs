@@ -61,17 +61,22 @@ namespace Microsoft.Framework.Runtime
 
             // Default services
             _serviceProvider.Add(typeof(IApplicationEnvironment), new ApplicationEnvironment(Project, targetFramework, configuration));
-            _serviceProvider.Add(typeof(ILibraryExportProvider), compositeDependencyExporter);
+            _serviceProvider.Add(typeof(ILibraryExportProvider), compositeDependencyExporter, includeInManifest: false);
             _serviceProvider.Add(typeof(IProjectResolver), ProjectResolver);
             _serviceProvider.Add(typeof(IFileWatcher), NoopWatcher.Instance);
 
-            _serviceProvider.Add(typeof(NuGetDependencyResolver), NuGetDependencyProvider);
-            _serviceProvider.Add(typeof(ProjectReferenceDependencyProvider), ProjectDepencyProvider);
+            _serviceProvider.Add(typeof(NuGetDependencyResolver), NuGetDependencyProvider, includeInManifest: false);
+            _serviceProvider.Add(typeof(ProjectReferenceDependencyProvider), ProjectDepencyProvider, includeInManifest: false);
             _serviceProvider.Add(typeof(ILibraryManager), LibraryManager);
             _serviceProvider.Add(typeof(ICache), cache);
             _serviceProvider.Add(typeof(ICacheContextAccessor), cacheContextAccessor);
-            _serviceProvider.Add(typeof(INamedCacheDependencyProvider), namedCacheDependencyProvider);
+            _serviceProvider.Add(typeof(INamedCacheDependencyProvider), namedCacheDependencyProvider, includeInManifest: false);
             _serviceProvider.Add(typeof(IAssemblyLoadContextFactory), AssemblyLoadContextFactory);
+        }
+
+        public void AddService(Type type, object instance, bool includeInManifest)
+        {
+            _serviceProvider.Add(type, instance, includeInManifest);
         }
 
         public void AddService(Type type, object instance)

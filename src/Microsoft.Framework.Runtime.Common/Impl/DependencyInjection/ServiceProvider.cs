@@ -11,13 +11,13 @@ namespace Microsoft.Framework.Runtime.Common.DependencyInjection
 {
     internal class ServiceProvider : IServiceProvider
     {
-        private readonly Dictionary<Type, object> _instances = new Dictionary<Type, object>();
+        private readonly Dictionary<Type, ServiceEntry> _entries = new Dictionary<Type, ServiceEntry>();
         private readonly IServiceProvider _fallbackServiceProvider;
 
         public ServiceProvider()
         {
-            _instances[typeof(IServiceProvider)] = this;
-            _instances[typeof(IServiceManifest)] = new ServiceManifest(this);
+            Add(typeof(IServiceProvider), this, includeInManifest: false);
+            Add(typeof(IServiceManifest), new ServiceManifest(this), includeInManifest: false);
         }
 
         public ServiceProvider(IServiceProvider fallbackServiceProvider)
@@ -28,15 +28,24 @@ namespace Microsoft.Framework.Runtime.Common.DependencyInjection
 
         public void Add(Type type, object instance)
         {
-            _instances[type] = instance;
+            Add(type, instance, includeInManifest: true);
+        }
+
+        public void Add(Type type, object instance, bool includeInManifest)
+        {
+            _entries[type] = new ServiceEntry
+            {
+                Instance = instance,
+                IncludeInManifest = includeInManifest
+            };
         }
 
         public object GetService(Type serviceType)
         {
-            object instance;
-            if (_instances.TryGetValue(serviceType, out instance))
+            ServiceEntry entry;
+            if (_entries.TryGetValue(serviceType, out entry))
             {
-                return instance;
+                return entry.Instance;
             }
 
             Array serviceArray = GetServiceArrayOrNull(serviceType);
@@ -63,11 +72,11 @@ namespace Microsoft.Framework.Runtime.Common.DependencyInjection
             {
                 var itemType = typeInfo.GenericTypeArguments[0];
 
-                object instance;
-                if (_instances.TryGetValue(itemType, out instance))
+                ServiceEntry entry;
+                if (_entries.TryGetValue(itemType, out entry))
                 {
                     var serviceArray = Array.CreateInstance(itemType, 1);
-                    serviceArray.SetValue(instance, 0);
+                    serviceArray.SetValue(entry.Instance, 0);
                     return serviceArray;
                 }
                 else
@@ -79,9 +88,10 @@ namespace Microsoft.Framework.Runtime.Common.DependencyInjection
             return null;
         }
 
-        private IEnumerable<Type> GetAllServices()
+        private IEnumerable<Type> GetManifestServices()
         {
-            var services = _instances.Keys;
+            var services = _entries.Where(p => p.Value.IncludeInManifest)
+                                   .Select(p => p.Key);
 
             var fallbackManifest = _fallbackServiceProvider?.GetService(typeof(IServiceManifest)) as IServiceManifest;
 
@@ -91,6 +101,12 @@ namespace Microsoft.Framework.Runtime.Common.DependencyInjection
             }
 
             return services;
+        }
+
+        private class ServiceEntry
+        {
+            public object Instance { get; set; }
+            public bool IncludeInManifest { get; set; }
         }
 
         private class ServiceManifest : IServiceManifest
@@ -106,7 +122,7 @@ namespace Microsoft.Framework.Runtime.Common.DependencyInjection
             {
                 get
                 {
-                    return _serviceProvider.GetAllServices().Distinct();
+                    return _serviceProvider.GetManifestServices().Distinct();
                 }
             }
         }
