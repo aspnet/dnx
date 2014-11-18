@@ -5,6 +5,7 @@ using System;
 using System.Linq;
 using System.Collections.Generic;
 using System.Reflection;
+using Microsoft.Framework.DependencyInjection.ServiceLookup;
 
 namespace Microsoft.Framework.Runtime.Common.DependencyInjection
 {
@@ -16,6 +17,7 @@ namespace Microsoft.Framework.Runtime.Common.DependencyInjection
         public ServiceProvider()
         {
             _instances[typeof(IServiceProvider)] = this;
+            _instances[typeof(IServiceManifest)] = new ServiceManifest(this);
         }
 
         public ServiceProvider(IServiceProvider fallbackServiceProvider)
@@ -75,6 +77,38 @@ namespace Microsoft.Framework.Runtime.Common.DependencyInjection
             }
 
             return null;
+        }
+
+        private IEnumerable<Type> GetAllServices()
+        {
+            var services = _instances.Keys;
+
+            var fallbackManifest = _fallbackServiceProvider?.GetService(typeof(IServiceManifest)) as IServiceManifest;
+
+            if (fallbackManifest != null)
+            {
+                return fallbackManifest.Services.Concat(services);
+            }
+
+            return services;
+        }
+
+        private class ServiceManifest : IServiceManifest
+        {
+            private readonly ServiceProvider _serviceProvider;
+
+            public ServiceManifest(ServiceProvider serviceProvider)
+            {
+                _serviceProvider = serviceProvider;
+            }
+
+            public IEnumerable<Type> Services
+            {
+                get
+                {
+                    return _serviceProvider.GetAllServices().Distinct();
+                }
+            }
         }
     }
 }
