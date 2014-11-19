@@ -114,7 +114,21 @@ var MONO_MANAGED_PROJECTS = '${FindAllProjects("klr.mono.managed")}'
   directory delete='${Path.Combine(BUILD_DIR2, "klr")}'
   copy sourceDir='${Path.Combine(ROOT, "src", "klr")}' include='bin/**/' outputDir='${Path.Combine(BUILD_DIR2, "klr")}' overwrite='${true}'
 
-#build-native-klrcore45 target='native-compile' if='!IsMono'
+#build-native-klrcore45 .copy-coreclr target='native-compile' if='!IsMono'
+    @{ 
+        /* Update the tpa.cpp */ 
+        try
+        {
+            var tpacppFile = Path.Combine(ROOT, "src", "klr.core45", "tpa.cpp");
+            Environment.SetEnvironmentVariable("K_APPBASE", Path.Combine(ROOT, "src", "DependencyAnalyzer"));
+            Exec("cmd", "/C k dpa tpa \"" + Path.Combine(CORECLR_TARGET_PATH, "Runtime", "x86") + "\" \"" + tpacppFile + "\"");
+        }
+        finally
+        {
+            Environment.SetEnvironmentVariable("K_APPBASE", null);
+        }
+    }
+
     var klrCore45Proj = '${Path.Combine(ROOT, "src", "klr.core45", "klr.core45.vcxproj")}'
     @{
         if (!IsMsbuildInstalled(MSBUILD))
@@ -182,7 +196,7 @@ var MONO_MANAGED_PROJECTS = '${FindAllProjects("klr.mono.managed")}'
         Exec(compiler, arguments);
     }
 
-#package-runtime .clean-sdk-dir .copy-bits .tweak-scripts .copy-package-dependencies .copy-coreclr-kpm-dependencies .copy-coreclr .nuget-pack-runtime target='package'
+#package-runtime .clean-sdk-dir .copy-bits .tweak-scripts .copy-package-dependencies .copy-coreclr .copy-required-dependencies  .nuget-pack-runtime target='package'
 
 #rebuild-package .build-mono-entrypoint .build-compile .native-compile .package-runtime .xunit-test
 
@@ -537,51 +551,6 @@ var MONO_MANAGED_PROJECTS = '${FindAllProjects("klr.mono.managed")}'
         }
     }
 
-#copy-coreclr-kpm-dependencies
-    @{
-        var packages = new[] { "Microsoft.Net.Http.Client",
-                               "Microsoft.Net.Security" };
-        
-        foreach (var package in packages)
-        {
-            var packageDir = FindPackageDirectory(package);
-
-            if(packageDir == null)
-            {
-                Log.Warn("Unable to find " + package);
-
-                continue;
-            }
-
-            var candidates = new [] { "aspnetcore50", "windows8+net45+wp8+wpa81", "net45+win8" };
-
-            var lib = new DirectoryInfo(Path.Combine(packageDir, "lib"));
-            var di = candidates.Select(fmk => lib.EnumerateDirectories("*" + fmk+ "*")
-                                                 .OrderBy(d => d.Name.Length)
-                                                 .FirstOrDefault())
-                               .FirstOrDefault(d => d != null);
-
-            if(!di.Exists)
-            {
-                Log.Warn("Couldn't find version of " + package + " matching aspnetcore50");
-                continue;
-            }
-
-            foreach(var fi in di.GetFiles("*.dll"))
-            {
-                var targetDirs = KRE_CORECLR_TARGETS.Select(dir => Path.Combine(dir, "lib", "Microsoft.Framework.PackageManager"));
-
-                foreach(var targetDir in targetDirs)
-                {
-                    string packageFileDest = Path.Combine(targetDir, fi.Name);
-                    File.Copy(fi.FullName, packageFileDest, true);
-
-                    Log.Info("Copying to " + packageFileDest);
-                }
-            }
-        }
-    }
-
 #copy-coreclr
     nuget-install package='CoreCLR' outputDir='packages' extra='-pre -nocache' once='CoreCLR' nugetPath='.nuget/nuget.exe'
 
@@ -615,9 +584,88 @@ var MONO_MANAGED_PROJECTS = '${FindAllProjects("klr.mono.managed")}'
     -// Copy to target
     copy sourceDir='${Path.Combine(CoreCLR_DIR, "Runtime")}' outputDir='${Path.Combine(CORECLR_TARGET_PATH, "Runtime")}' overwrite='${true}'
     
+#copy-required-dependencies 
     -// Copy the CoreCLR to the aspnetcore50 builds
     copy sourceDir='${Path.Combine(CORECLR_TARGET_PATH, "Runtime", "x86")}' outputDir='${KRE_CORECLR_x86_BIN}'
     copy sourceDir='${Path.Combine(CORECLR_TARGET_PATH, "Runtime", "amd64")}' outputDir='${KRE_CORECLR_amd64_BIN}'
+
+    @{
+        if (!IsMono)
+        {
+            var dependenciesFile = Path.Combine(BUILD_DIR2, "dependencies.txt");
+            
+            try
+            {
+                Environment.SetEnvironmentVariable("K_APPBASE", Path.Combine(ROOT, "src", "DependencyAnalyzer"));
+                Exec("cmd", string.Format("/C k dpa runtime \"{0}\" \"{1}\"", KRE_CORECLR_x86_BIN, dependenciesFile));
+            }
+            finally
+            {
+                Environment.SetEnvironmentVariable("K_APPBASE", null);
+            }
+            var deps = new Dictionary<string, HashSet<string>>();
+            var list = new HashSet<string>();
+            
+            foreach (var line in File.ReadAllLines(dependenciesFile))
+            { 
+                if (line.StartsWith("-"))
+                {
+                    list = new HashSet<string>();
+                    if (line.Length > 1)
+                    {
+                        deps[line.Substring(1)] = list;
+                    }
+                }
+                else
+                {
+                    list.Add(line);
+                }
+            }
+            
+            // First copy the required dependencies into each lib folder
+            foreach (var pair in deps)
+            {
+                foreach (var targetClr in KRE_CORECLR_TARGETS)
+                {
+                    var targetLibDir = Path.Combine(targetClr, "lib", pair.Key);
+                    
+                    if (!Directory.Exists(targetLibDir)) 
+                    {
+                        continue;
+                    }
+                    
+                    foreach (var dep in pair.Value)
+                    {
+                        var source = Path.Combine(KRE_CORECLR_x86_BIN, dep + ".dll");
+                        
+                        if (!File.Exists(source))
+                        {
+                            continue;
+                        }
+                        
+                        var dest = Path.Combine(targetLibDir, dep + ".dll");
+                        Log.Info("Copying " + source + " to " + dest);
+                        File.Copy(source, dest, true);
+                    }
+                }
+            }
+            
+            var runtimeDeps = deps["Runtime"];
+            
+            foreach(var targetClr in KRE_CORECLR_TARGETS)
+            {
+                foreach(var file in Directory.EnumerateFiles(targetClr, "System.*.dll"))
+                {
+                    var contractImpl = Path.GetFileNameWithoutExtension(file);
+                    if (!runtimeDeps.Contains(contractImpl))
+                    {
+                        Log.Info("Deleting unused contract implementation" + file);
+                        File.Delete(file);
+                    }
+                }
+            }
+        }
+    }
 
 #nuget-pack-runtime
     @{

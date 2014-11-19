@@ -31,7 +31,11 @@ namespace Microsoft.Framework.Runtime.Loader
                 {
                     assembly = LoadAssembly(name);
 
-                    ExtractAssemblyNeutralInterfaces(assembly);
+                    if (assembly != null)
+                    {
+                        _assemblyCache[name] = assembly;
+                        ExtractAssemblyNeutralInterfaces(assembly);
+                    }
                 }
 
                 return assembly;
