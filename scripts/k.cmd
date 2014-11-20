@@ -8,15 +8,11 @@ SET ERRORLEVEL=
 :: e.g. To compile the app in the current folder:
 ::      C:\src\MyApp\>K build
 
-REM <dev>
-@Echo ON
-REM </dev>
-
-IF EXIST "%~dp0k-%1.cmd" (
-  "%~dp0k-%1.cmd" %2 %3 %4 %5 %6 %7 %8 %9 
-) ELSE (
-  CALL "%~dp0KLR.cmd" "Microsoft.Framework.ApplicationHost" %*
+IF "%K_APPBASE%"=="" (
+  SET "K_APPBASE=%CD%"
 )
+
+klr --appbase %K_APPBASE% %K_OPTIONS% "Microsoft.Framework.ApplicationHost" %*
 
 exit /b %ERRORLEVEL%
 ENDLOCAL
