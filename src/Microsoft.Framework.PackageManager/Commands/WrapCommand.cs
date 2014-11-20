@@ -86,22 +86,17 @@ namespace Microsoft.Framework.PackageManager
                 return false;
             }
 
-            var rootDir = ProjectResolver.ResolveRootDirectory(Path.GetDirectoryName(CsProjectPath));
-            var wrapRoot = Path.Combine(rootDir, "wrap");
-
             var xDoc = XDocument.Parse(stdOut);
 
             foreach (var projectElement in xDoc.Root.Elements())
             {
-                EmitProjectWrapper(projectElement, wrapRoot);
+                EmitProjectWrapper(projectElement);
             }
-
-            UpdateGlobalJson(rootDir);
 
             return true;
         }
 
-        private static void UpdateGlobalJson(string rootDir)
+        private static void AddWrapFolderToGlobalJson(string rootDir)
         {
             var globalJsonPath = Path.Combine(rootDir, GlobalSettings.GlobalFileName);
             var rootObj = LoadOrCreateJson(globalJsonPath);
@@ -125,7 +120,7 @@ namespace Microsoft.Framework.PackageManager
             }
         }
 
-        private void EmitProjectWrapper(XElement projectElement, string wrapRoot)
+        private void EmitProjectWrapper(XElement projectElement)
         {
             var projectFile = Path.GetFullPath(projectElement.Attribute("projectFile").Value);
             if (!string.Equals("true", projectElement.Attribute("buildResult").Value))
@@ -134,11 +129,22 @@ namespace Microsoft.Framework.PackageManager
                 return;
             }
 
-            var outputAssemblyPath = GetOutputAssemblyPath(projectElement);
-
             // Name of the wrapper project is output assembly name, instead of .csproj file name
+            var outputAssemblyPath = GetOutputAssemblyPath(projectElement);
+            outputAssemblyPath = GetConfigAgnosticAssemblyPath(outputAssemblyPath);
             var projectName = Path.GetFileNameWithoutExtension(outputAssemblyPath);
-            var targetProjectJson = Path.Combine(wrapRoot, projectName, Runtime.Project.ProjectFileName);
+
+            var projectDir = Path.GetDirectoryName(projectFile);
+            var rootDir = ProjectResolver.ResolveRootDirectory(projectDir);
+            var wrapRoot = Path.Combine(rootDir, "wrap");
+            var projectResolver = new ProjectResolver(projectDir, rootDir);
+            var targetProjectJson = LocateExistingProject(projectResolver, projectName);
+            if (string.IsNullOrEmpty(targetProjectJson))
+            {
+                AddWrapFolderToGlobalJson(rootDir);
+                targetProjectJson = Path.Combine(wrapRoot, projectName, Runtime.Project.ProjectFileName);
+            }
+
             var targetFramework = GetTargetFramework(projectElement);
 
             Reports.Information.WriteLine("Wrapping project '{0}' for '{1}'", projectName, targetFramework);
@@ -158,7 +164,6 @@ namespace Microsoft.Framework.PackageManager
             Reports.Information.WriteLine("    Pdb: {0}", Path.ChangeExtension(relativeAssemblyPath, ".pdb").Bold());
             AddFrameworkBinPaths(projectJson, relativeAssemblyPath, targetFramework, addPdbPath: true);
 
-            var projectDir = Path.GetDirectoryName(projectFile);
             var nugetPackages = ResolveNuGetPackages(projectDir);
             var nugetPackagePaths = nugetPackages.Select(x => x.Path);
 
@@ -206,6 +211,16 @@ namespace Microsoft.Framework.PackageManager
             File.WriteAllText(targetProjectJson, projectJson.ToString());
 
             Reports.Information.WriteLine();
+        }
+
+        private static string LocateExistingProject(IProjectResolver projectResolver, string projectName)
+        {
+            Runtime.Project project;
+            if (projectResolver.TryResolveProject(projectName, out project))
+            {
+                return project.ProjectFilePath;
+            }
+            return string.Empty;
         }
 
         private string GetReferenceProjectOutputName(XElement projectElement, string referenceProjectName)
@@ -295,11 +310,7 @@ namespace Microsoft.Framework.PackageManager
         private static JObject LoadOrCreateProjectJson(string jsonFilePath)
         {
             var projectJson = LoadOrCreateJson(jsonFilePath);
-            var version = projectJson["version"]?.Value<string>();
-            if (string.IsNullOrEmpty(version))
-            {
-                projectJson["version"] = WrapperProjectVersion;
-            }
+            SetPropertyValueIfEmpty(projectJson, "version", WrapperProjectVersion);
             return projectJson;
         }
 
@@ -317,6 +328,16 @@ namespace Microsoft.Framework.PackageManager
                 throw new InvalidDataException(string.Format("'{0}' is missing from MSBuild output", projectOutputItemType));
             }
             return itemElement.Attribute("evaluated").Value;
+        }
+
+        private static string GetConfigAgnosticAssemblyPath(string outputAssemblyPath)
+        {
+            // Convert "obj/Debug/assembly.dll" and "obj/Release/assembly.dll" to
+            // "obj/{configuration}/assembly.dll"
+            var assemblyFile = Path.GetFileName(outputAssemblyPath);
+            var configFolderPath = Path.GetDirectoryName(outputAssemblyPath);
+            var objFolderPath = Path.GetDirectoryName(configFolderPath);
+            return Path.Combine(objFolderPath, "{configuration}", assemblyFile);
         }
 
         private static FrameworkName GetTargetFramework(XElement projectElement)
@@ -342,7 +363,7 @@ namespace Microsoft.Framework.PackageManager
             var frameworksObj = GetOrAddJObject(projectJson, "frameworks");
             var targetFrameworkObj = GetOrAddJObject(frameworksObj, GetShortFrameworkName(targetFramework));
             var dependenciesObj = GetOrAddJObject(targetFrameworkObj, "dependencies");
-            dependenciesObj[projectName] = WrapperProjectVersion;
+            SetPropertyValueIfEmpty(dependenciesObj, projectName, WrapperProjectVersion);
         }
 
         private static string GetShortFrameworkName(FrameworkName targetFramework)
@@ -460,6 +481,14 @@ namespace Microsoft.Framework.PackageManager
                         metadataName, Environment.NewLine, itemElement.ToString()));
             }
             return metadataValue;
+        }
+
+        private static void SetPropertyValueIfEmpty(JObject obj, string name, string value)
+        {
+            if (obj[name] == null)
+            {
+                obj[name] = value;
+            }
         }
 
         private class NuGetPackage
