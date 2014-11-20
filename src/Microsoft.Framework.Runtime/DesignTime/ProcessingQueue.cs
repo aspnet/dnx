@@ -16,6 +16,7 @@ namespace Microsoft.Framework.Runtime
         public event Action<int, CompileResponse> ProjectCompiled;
         public event Action<int> ProjectChanged;
         public event Action Closed;
+        public event Action<IEnumerable<string>> ProjectSources;
 
         public ProcessingQueue(Stream stream)
         {
@@ -76,6 +77,17 @@ namespace Microsoft.Framework.Runtime
                         compileResponse.PdbBytes = _reader.ReadBytes(pdbBytesLength);
 
                         ProjectCompiled(id, compileResponse);
+                    }
+                    else if(messageType == "Sources")
+                    {
+                        int count = _reader.ReadInt32();
+                        var files = new List<string>();
+                        for (int i = 0; i < count; i++)
+                        {
+                            files.Add(_reader.ReadString());
+                        }
+
+                        ProjectSources(files);
                     }
                     else if (messageType == "ProjectContexts")
                     {

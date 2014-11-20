@@ -57,7 +57,7 @@ namespace Microsoft.Framework.DesignTimeHost
             _cache = cache;
             _cacheContextAccessor = cacheContextAccessor;
             _namedDependencyProvider = namedDependencyProvider;
-            _sourceTextService = (ISourceTextService) services.GetService(typeof(ISourceTextService));
+            _sourceTextService = (ISourceTextService)services.GetService(typeof(ISourceTextService));
             Id = id;
         }
 
@@ -212,20 +212,20 @@ namespace Microsoft.Framework.DesignTimeHost
                 case "SourceTextChanged":
                     {
                         var data = message.Payload.ToObject<SourceTextChangeMessage>();
-                        if(data.IsOffsetBased)
+                        if (data.IsOffsetBased)
                         {
                             _sourceTextChanged.Value = default(Void);
-                            _sourceTextService.RecordTextChange(data.SourcePath, 
-                                new TextSpan(data.Start ?? 0, data.Length ?? 0), 
+                            _sourceTextService.RecordTextChange(data.SourcePath,
+                                new TextSpan(data.Start ?? 0, data.Length ?? 0),
                                 data.NewText);
                         }
                         else if (data.IsLineBased)
                         {
                             _sourceTextChanged.Value = default(Void);
-                            _sourceTextService.RecordTextChange(data.SourcePath, 
+                            _sourceTextService.RecordTextChange(data.SourcePath,
                                 new LinePositionSpan(
-                                    new LinePosition(data.StartLineNumber ?? 0, data.StartCharacter ?? 0), 
-                                    new LinePosition(data.EndLineNumber ?? 0, data.EndCharacter ?? 0)), 
+                                    new LinePosition(data.StartLineNumber ?? 0, data.StartCharacter ?? 0),
+                                    new LinePosition(data.EndLineNumber ?? 0, data.EndCharacter ?? 0)),
                                     data.NewText);
                         }
                     }
@@ -263,7 +263,7 @@ namespace Microsoft.Framework.DesignTimeHost
             if (_appPath.WasAssigned ||
                 _configuration.WasAssigned ||
                 _filesChanged.WasAssigned ||
-                _rebuild.WasAssigned || 
+                _rebuild.WasAssigned ||
                 _sourceTextChanged.WasAssigned)
             {
                 bool triggerBuildOutputs = _rebuild.WasAssigned;
@@ -273,6 +273,10 @@ namespace Microsoft.Framework.DesignTimeHost
                 _filesChanged.ClearAssigned();
                 _rebuild.ClearAssigned();
                 _sourceTextChanged.ClearAssigned();
+
+                // Trigger that the project outputs changes in case the runtime process
+                // hasn't died yet
+                TriggerProjectOutputsChanged();
 
                 _state.Value = Initialize(_appPath.Value, _configuration.Value, triggerBuildOutputs);
             }
@@ -349,18 +353,6 @@ namespace Microsoft.Framework.DesignTimeHost
                     };
 
                     _local.Projects[project.FrameworkName] = projectWorld;
-
-                    List<CompiledAssemblyState> waitingForCompiledAssemblies;
-                    if (_waitingForCompiledAssemblies.TryGetValue(project.FrameworkName, out waitingForCompiledAssemblies))
-                    {
-                        foreach (var waitingForCompiledAssembly in waitingForCompiledAssemblies)
-                        {
-                            if (waitingForCompiledAssembly.AssemblySent)
-                            {
-                                waitingForCompiledAssembly.ProjectChanged = true;
-                            }
-                        }
-                    }
                 }
             }
         }
@@ -499,28 +491,15 @@ namespace Microsoft.Framework.DesignTimeHost
             }
         }
 
-        private void SendCompiledAssemblies(ProjectWorld localProject)
+        private void TriggerProjectOutputsChanged()
         {
-            List<CompiledAssemblyState> waitingForCompiledAssemblies;
-            if (_waitingForCompiledAssemblies.TryGetValue(localProject.TargetFramework, out waitingForCompiledAssemblies))
+            foreach (var waitingForCompiledAssemblies in _waitingForCompiledAssemblies.Values)
             {
                 for (int i = waitingForCompiledAssemblies.Count - 1; i >= 0; i--)
                 {
                     var waitingForCompiledAssembly = waitingForCompiledAssemblies[i];
 
-                    if (!waitingForCompiledAssembly.AssemblySent)
-                    {
-                        Trace.TraceInformation("[ApplicationContext]: OnTransmit(Assembly)");
-
-                        waitingForCompiledAssembly.Connection.Transmit(writer =>
-                        {
-                            WriteAssembly(localProject, writer);
-                        });
-
-                        waitingForCompiledAssembly.AssemblySent = true;
-                    }
-
-                    if (waitingForCompiledAssembly.ProjectChanged && !waitingForCompiledAssembly.ProjectChangedSent)
+                    if (waitingForCompiledAssembly.AssemblySent)
                     {
                         Trace.TraceInformation("[ApplicationContext]: OnTransmit(ProjectChanged)");
 
@@ -530,11 +509,42 @@ namespace Microsoft.Framework.DesignTimeHost
                             writer.Write(Id);
                         });
 
-                        waitingForCompiledAssembly.ProjectChangedSent = true;
-
                         waitingForCompiledAssemblies.Remove(waitingForCompiledAssembly);
                     }
                 }
+            }
+        }
+
+        private void SendCompiledAssemblies(ProjectWorld localProject)
+        {
+            List<CompiledAssemblyState> waitingForCompiledAssemblies;
+            if (_waitingForCompiledAssemblies.TryGetValue(localProject.TargetFramework, out waitingForCompiledAssemblies))
+            {
+                foreach (var waitingForCompiledAssembly in waitingForCompiledAssemblies)
+                {
+                    if (!waitingForCompiledAssembly.AssemblySent)
+                    {
+                        Trace.TraceInformation("[ApplicationContext]: OnTransmit(Assembly)");
+
+                        waitingForCompiledAssembly.Connection.Transmit(writer =>
+                        {
+                            WriteProjectSources(localProject, writer);
+                            WriteAssembly(localProject, writer);
+                        });
+
+                        waitingForCompiledAssembly.AssemblySent = true;
+                    }
+                }
+            }
+        }
+
+        private void WriteProjectSources(ProjectWorld project, BinaryWriter writer)
+        {
+            writer.Write("Sources");
+            writer.Write(project.Sources.Files.Count);
+            foreach (var file in project.Sources.Files)
+            {
+                writer.Write(file);
             }
         }
 
@@ -831,10 +841,6 @@ namespace Microsoft.Framework.DesignTimeHost
             public ConnectionContext Connection { get; set; }
 
             public bool AssemblySent { get; set; }
-
-            public bool ProjectChanged { get; set; }
-
-            public bool ProjectChangedSent { get; set; }
         }
 
         private class LibraryKey
