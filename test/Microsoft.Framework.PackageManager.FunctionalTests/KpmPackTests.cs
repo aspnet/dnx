@@ -778,5 +778,67 @@ namespace Microsoft.Framework.PackageManager
                     compareFileContents: true));
             }
         }
+
+        [Theory]
+        [MemberData("KrePaths")]
+        public void KpmPackCanHandleDoubleQuotedProjectPathsWithSpaces(DisposableDirPath krePath)
+        {
+            var projectStructure = @"{
+  '.': ['project.json'],
+  'packages': {}
+}";
+
+            using (var testEnv = new KpmTestEnvironment(krePath, "Project Name With Spaces", _outputDirName))
+            {
+                TestUtils.CreateDirTree(projectStructure)
+                    .WithFileContents("project.json", @"{}")
+                    .WriteTo(testEnv.ProjectPath);
+
+                var environment = new Dictionary<string, string>()
+                {
+                    { "KRE_PACKAGES", Path.Combine(testEnv.ProjectPath, "packages") }
+                };
+
+                var exitCode = KpmTestUtils.ExecKpm(
+                    krePath,
+                    subcommand: "pack",
+                    arguments: string.Format("\"{0}\" --out {1}",
+                        testEnv.ProjectPath,
+                        testEnv.PackOutputDirPath),
+                    environment: environment);
+                Assert.Equal(0, exitCode);
+            }
+        }
+
+        [Theory]
+        [MemberData("KrePaths")]
+        public void KpmPackCanHandleSingleQuotedProjectPathsWithSpaces(DisposableDirPath krePath)
+        {
+            var projectStructure = @"{
+  '.': ['project.json'],
+  'packages': {}
+}";
+
+            using (var testEnv = new KpmTestEnvironment(krePath, "Project Name With Spaces", _outputDirName))
+            {
+                TestUtils.CreateDirTree(projectStructure)
+                    .WithFileContents("project.json", @"{}")
+                    .WriteTo(testEnv.ProjectPath);
+
+                var environment = new Dictionary<string, string>()
+                {
+                    { "KRE_PACKAGES", Path.Combine(testEnv.ProjectPath, "packages") }
+                };
+
+                var exitCode = KpmTestUtils.ExecKpm(
+                    krePath,
+                    subcommand: "pack",
+                    arguments: string.Format("'{0}' --out {1}",
+                        testEnv.ProjectPath,
+                        testEnv.PackOutputDirPath),
+                    environment: environment);
+                Assert.Equal(0, exitCode);
+            }
+        }
     }
 }
