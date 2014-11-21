@@ -9,6 +9,7 @@ using System.Linq;
 using System.Runtime.Versioning;
 using Microsoft.Framework.Runtime;
 using NuGet;
+using Newtonsoft.Json.Linq;
 
 namespace Microsoft.Framework.PackageManager
 {
@@ -164,6 +165,51 @@ namespace Microsoft.Framework.PackageManager
 
                         var root = project.ProjectDirectory;
 
+                        var targetAppFolder = Path.Combine(baseOutputPath, "app");
+                        var targetAppProjectJson = Path.Combine(targetAppFolder, "project.json");
+
+                        Directory.CreateDirectory(targetAppFolder);
+                        File.Copy(project.ProjectFilePath, targetAppProjectJson, overwrite: true);
+                        UpdateJson(targetAppProjectJson, jsonObj =>
+                        {
+                            // Update the project entrypoint
+                            jsonObj["entryPoint"] = project.Name;
+
+                            // Set mark this as non loadable
+                            jsonObj["loadable"] = false;
+
+                            // Update the dependencies node to reference the main project
+                            var deps = new JObject();
+                            jsonObj["dependencies"] = deps;
+
+                            // TODO: clear out framework dependencies
+                            var commands = jsonObj.GetValue("commands") as JObject;
+                            if (commands != null)
+                            {
+                                foreach (var command in commands)
+                                {
+                                    var targetToolsCommandFile = Path.Combine(targetAppFolder, command.Key + ".cmd");
+                                    var targetToolsCommandText = string.Format(
+                                        @"@klr --appbase ""%~dp0."" Microsoft.Framework.ApplicationHost {0} %*
+", command.Key);
+                                    File.WriteAllText(targetToolsCommandFile, targetToolsCommandText);
+                                    packageBuilder.Files.Add(new PhysicalPackageFile
+                                    {
+                                        SourcePath = targetToolsCommandFile,
+                                        TargetPath = Path.Combine("app", command.Key + ".cmd")
+                                    });
+                                }
+                            }
+
+                            deps[project.Name] = project.Version.ToString();
+                        });
+
+                        packageBuilder.Files.Add(new PhysicalPackageFile
+                        {
+                            SourcePath = targetAppProjectJson,
+                            TargetPath = Path.Combine("app", "project.json")
+                        });
+
                         foreach (var path in project.SourceFiles)
                         {
                             var srcFile = new PhysicalPackageFile();
@@ -199,6 +245,13 @@ namespace Microsoft.Framework.PackageManager
 
             _buildOptions.Reports.Information.WriteLine("Time elapsed {0}", sw.Elapsed);
             return success;
+        }
+
+        private static void UpdateJson(string jsonFile, Action<JObject> modifier)
+        {
+            var jsonObj = JObject.Parse(File.ReadAllText(jsonFile));
+            modifier(jsonObj);
+            File.WriteAllText(jsonFile, jsonObj.ToString());
         }
 
         private bool ValidateFrameworks(HashSet<FrameworkName> projectFrameworks, IDictionary<string, FrameworkName> specifiedFrameworks)

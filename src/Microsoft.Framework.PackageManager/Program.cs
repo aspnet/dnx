@@ -9,6 +9,7 @@ using System.Threading;
 using Microsoft.Framework.PackageManager.Packing;
 using Microsoft.Framework.Runtime;
 using Microsoft.Framework.Runtime.Common.CommandLine;
+using Microsoft.Framework.PackageManager.Install;
 
 namespace Microsoft.Framework.PackageManager
 {
@@ -45,23 +46,43 @@ namespace Microsoft.Framework.PackageManager
                 return 2;
             });
 
+            app.Command("inst", c =>
+            {
+                c.Description = "Install tools";
+
+                var argPackage = c.Argument("[package]", "Package Id to restore.");
+                var argVersion = c.Argument("[version]", "Package Version to restore.");
+                var feedOptions = FeedOptions.Add(c);
+                var optQuiet = c.Option("--quiet", "Do not show output such as HTTP request/cache information",
+                    CommandOptionType.NoValue);
+
+                c.HelpOption("-?|-h|--help");
+
+                c.OnExecute(async () =>
+                {
+                    var command = new InstCommand(_environment);
+                    command.FeedOptions = feedOptions;
+                    command.Reports = CreateReports(optionVerbose.HasValue(), optQuiet.HasValue());
+                    command.PackageId = argPackage.Value;
+                    command.PackageVersion = argVersion.Value;
+                    if (feedOptions.Proxy != null)
+                    {
+                        Environment.SetEnvironmentVariable("http_proxy", feedOptions.Proxy);
+                    }
+
+                    var success = await command.ExecuteCommand();
+
+                    return success ? 0 : 1;
+                });
+            });
+
             app.Command("restore", c =>
             {
                 c.Description = "Restore packages";
 
                 var argRoot = c.Argument("[root]", "Root of all projects to restore. It can be a directory, a project.json, or a global.json.");
-                var optSource = c.Option("-s|--source <FEED>", "A list of packages sources to use for this command",
-                    CommandOptionType.MultipleValue);
-                var optFallbackSource = c.Option("-f|--fallbacksource <FEED>",
-                    "A list of packages sources to use as a fallback", CommandOptionType.MultipleValue);
-                var optProxy = c.Option("-p|--proxy <ADDRESS>", "The HTTP proxy to use when retrieving packages",
-                    CommandOptionType.SingleValue);
-                var optNoCache = c.Option("--no-cache", "Do not use local cache", CommandOptionType.NoValue);
-                var optPackageFolder = c.Option("--packages", "Path to restore packages", CommandOptionType.SingleValue);
+                var feedOptions = FeedOptions.Add(c);
                 var optQuiet = c.Option("--quiet", "Do not show output such as HTTP request/cache information",
-                    CommandOptionType.NoValue);
-                var optIgnoreFailedSources = c.Option("--ignore-failed-sources",
-                    "Ignore failed remote sources if there are local packages meeting version requirements",
                     CommandOptionType.NoValue);
                 c.HelpOption("-?|-h|--help");
 
@@ -69,17 +90,11 @@ namespace Microsoft.Framework.PackageManager
                 {
                     var command = new RestoreCommand(_environment);
                     command.Reports = CreateReports(optionVerbose.HasValue(), optQuiet.HasValue());
-
+                    command.FeedOptions = feedOptions;
                     command.RestoreDirectory = argRoot.Value;
-                    command.Sources = optSource.Values;
-                    command.FallbackSources = optFallbackSource.Values;
-                    command.NoCache = optNoCache.HasValue();
-                    command.PackageFolder = optPackageFolder.Value();
-                    command.IgnoreFailedSources = optIgnoreFailedSources.HasValue();
-
-                    if (optProxy.HasValue())
+                    if (feedOptions.Proxy != null)
                     {
-                        Environment.SetEnvironmentVariable("http_proxy", optProxy.Value());
+                        Environment.SetEnvironmentVariable("http_proxy", feedOptions.Proxy);
                     }
 
                     var success = await command.ExecuteCommand();
@@ -168,7 +183,7 @@ namespace Microsoft.Framework.PackageManager
 
                     if (!projectManager.Build())
                     {
-                        return -1;
+                        return 1;
                     }
 
                     return 0;
@@ -207,24 +222,14 @@ namespace Microsoft.Framework.PackageManager
                 var argName = c.Argument("[name]", "Name of the dependency to add");
                 var argVersion = c.Argument("[version]", "Version of the dependency to add, default is the latest version.");
                 var argProject = c.Argument("[project]", "Path to project, default is current directory");
-                var optSource = c.Option("-s|--source <FEED>", "A list of packages sources to use for this command",
-                    CommandOptionType.MultipleValue);
-                var optFallbackSource = c.Option("-f|--fallbacksource <FEED>",
-                    "A list of packages sources to use as a fallback", CommandOptionType.MultipleValue);
-                var optProxy = c.Option("-p|--proxy <ADDRESS>", "The HTTP proxy to use when retrieving packages",
-                    CommandOptionType.SingleValue);
-                var optNoCache = c.Option("--no-cache", "Do not use local cache", CommandOptionType.NoValue);
-                var optPackageFolder = c.Option("--packages", "Path to restore packages", CommandOptionType.SingleValue);
-                var optQuiet = c.Option("--quiet", "Do not show output such as HTTP request/cache information",
-                    CommandOptionType.NoValue);
-                var optIgnoreFailedSources = c.Option("--ignore-failed-sources",
-                    "Ignore failed remote sources if there are local packages meeting version requirements",
+                var feedOptions = FeedOptions.Add(c);
+                var optionQuiet = c.Option("--quiet", "Do not show output such as source/destination of nupkgs",
                     CommandOptionType.NoValue);
                 c.HelpOption("-?|-h|--help");
 
                 c.OnExecute(async () =>
                 {
-                    var reports = CreateReports(optionVerbose.HasValue(), optQuiet.HasValue());
+                    var reports = CreateReports(optionVerbose.HasValue(), optionQuiet.HasValue());
 
                     var addCmd = new AddCommand();
                     addCmd.Reports = reports;
@@ -236,15 +241,11 @@ namespace Microsoft.Framework.PackageManager
                     restoreCmd.Reports = reports;
 
                     restoreCmd.RestoreDirectory = argProject.Value;
-                    restoreCmd.Sources = optSource.Values;
-                    restoreCmd.FallbackSources = optFallbackSource.Values;
-                    restoreCmd.NoCache = optNoCache.HasValue();
-                    restoreCmd.PackageFolder = optPackageFolder.Value();
-                    restoreCmd.IgnoreFailedSources = optIgnoreFailedSources.HasValue();
+                    restoreCmd.FeedOptions = feedOptions;
 
-                    if (optProxy.HasValue())
+                    if (feedOptions.Proxy != null)
                     {
-                        Environment.SetEnvironmentVariable("http_proxy", optProxy.Value());
+                        Environment.SetEnvironmentVariable("http_proxy", feedOptions.Proxy);
                     }
 
                     var installCmd = new InstallCommand(addCmd, restoreCmd);
@@ -310,5 +311,6 @@ namespace Microsoft.Framework.PackageManager
             var assemblyInformationalVersionAttribute = assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>();
             return assemblyInformationalVersionAttribute.InformationalVersion;
         }
+
     }
 }
