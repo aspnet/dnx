@@ -146,6 +146,9 @@ namespace Microsoft.Framework.PackageManager
 
             var projectJson = LoadOrCreateProjectJson(targetProjectJson);
 
+            var relativeCsProjectPath = PathUtility.GetRelativeUri(targetProjectJson, projectFile).ToString();
+            AddWrappedProjectPath(projectJson, relativeCsProjectPath, targetFramework);
+
             // Add 'assembly' and 'pdb' to 'bin' section of the target framework
             var relativeAssemblyPath = PathUtility.GetRelativeUri(targetProjectJson, outputAssemblyPath).ToString();
 
@@ -354,6 +357,13 @@ namespace Microsoft.Framework.PackageManager
             }
 
             return shortName;
+        }
+
+        private static void AddWrappedProjectPath(JObject projectJson, string relativeCsProjectPath, FrameworkName targetFramework)
+        {
+            var frameworksObj = GetOrAddJObject(projectJson, "frameworks");
+            var targetFrameworkObj = GetOrAddJObject(frameworksObj, GetShortFrameworkName(targetFramework));
+            targetFrameworkObj["wrappedProject"] = relativeCsProjectPath;
         }
 
         private static void AddFrameworkBinPaths(JObject projectJson, string assemblyPath, FrameworkName targetFramework, bool addPdbPath)
