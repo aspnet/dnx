@@ -261,7 +261,7 @@ namespace Microsoft.Framework.PackageManager
             {
                 app.Command("wrap", c =>
                 {
-                    c.Description = "Wrap a csproj into a kproj, which can be referenced by kprojs";
+                    c.Description = "Wrap a csproj into a project.json, which can be referenced by project.json files";
 
                     var argPath = c.Argument("[path]", "Path to csproj to be wrapped");
                     var optConfiguration = c.Option("--configuration <CONFIGURATION>",
