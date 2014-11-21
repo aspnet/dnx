@@ -14,6 +14,14 @@ namespace NuGet
         /// </summary>
         internal static string GetPath(Uri uri)
         {
+            return GetPath(uri, Path.DirectorySeparatorChar);
+        }
+
+        /// <summary>
+        /// Converts a uri to a path with given path separator. Only used for local paths.
+        /// </summary>
+        internal static string GetPath(Uri uri, char separator)
+        {
             string path = uri.OriginalString;
             if (path.StartsWith("/", StringComparison.Ordinal))
             {
@@ -21,8 +29,8 @@ namespace NuGet
             }
 
             // Bug 483: We need the unescaped uri string to ensure that all characters are valid for a path.
-            // Change the direction of the slashes to match the filesystem.
-            return Uri.UnescapeDataString(path.Replace('/', Path.DirectorySeparatorChar));
+            // Change the direction of the slashes to match the given separator.
+            return Uri.UnescapeDataString(path.Replace('/', separator));
         }
 
         // Bug 2379: SettingsCredentialProvider does not work

@@ -23,6 +23,7 @@ namespace Microsoft.Framework.PackageManager
 
         private static readonly string CsprojDumperName = "CsprojDumper.exe";
         private static readonly string WrapperProjectVersion = "1.0.0-*";
+        private static readonly char PathSeparator = '/';
 
         public bool ExecuteCommand()
         {
@@ -146,11 +147,11 @@ namespace Microsoft.Framework.PackageManager
 
             var projectJson = LoadOrCreateProjectJson(targetProjectJson);
 
-            var relativeCsProjectPath = PathUtility.GetRelativeUri(targetProjectJson, projectFile).ToString();
+            var relativeCsProjectPath = PathUtility.GetRelativePath(targetProjectJson, projectFile, PathSeparator);
             AddWrappedProjectPath(projectJson, relativeCsProjectPath, targetFramework);
 
             // Add 'assembly' and 'pdb' to 'bin' section of the target framework
-            var relativeAssemblyPath = PathUtility.GetRelativeUri(targetProjectJson, outputAssemblyPath).ToString();
+            var relativeAssemblyPath = PathUtility.GetRelativePath(targetProjectJson, outputAssemblyPath, PathSeparator);
 
             Reports.Information.WriteLine("  Adding bin paths for '{0}'", targetFramework);
             Reports.Information.WriteLine("    Assembly: {0}", relativeAssemblyPath.Bold());
@@ -272,7 +273,7 @@ namespace Microsoft.Framework.PackageManager
             var projectJson = LoadOrCreateProjectJson(targetProjectJson);
 
             // Add 'assembly' to 'bin' section of the target framework
-            var relativeAssemblyPath = PathUtility.GetRelativeUri(targetProjectJson, assemblyPath).ToString();
+            var relativeAssemblyPath = PathUtility.GetRelativePath(targetProjectJson, assemblyPath, PathSeparator);
             AddFrameworkBinPaths(projectJson, relativeAssemblyPath, targetFramework, addPdbPath: false);
 
             PathUtility.EnsureParentDirectory(targetProjectJson);

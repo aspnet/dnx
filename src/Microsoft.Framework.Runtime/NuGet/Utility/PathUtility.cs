@@ -64,7 +64,15 @@ namespace NuGet
         /// </summary>
         public static string GetRelativePath(string path1, string path2)
         {
-            return UriUtility.GetPath(GetRelativeUri(path1, path2));
+            return GetRelativePath(path1, path2, Path.DirectorySeparatorChar);
+        }
+
+        /// <summary>
+        /// Returns path2 relative to path1, with given path separator
+        /// </summary>
+        public static string GetRelativePath(string path1, string path2, char separator)
+        {
+            return UriUtility.GetPath(GetRelativeUri(path1, path2), separator);
         }
 
         /// <summary>
