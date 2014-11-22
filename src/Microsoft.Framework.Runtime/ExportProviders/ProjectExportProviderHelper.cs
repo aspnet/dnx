@@ -7,12 +7,11 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection.PortableExecutable;
-using System.Runtime.Versioning;
 using NuGet;
 
 namespace Microsoft.Framework.Runtime
 {
-    internal static class ProjectExportProviderHelper
+    public static class ProjectExportProviderHelper
     {
         public static ILibraryExport GetExportsRecursive(
             ICache cache,
@@ -20,6 +19,24 @@ namespace Microsoft.Framework.Runtime
             ILibraryExportProvider libraryExportProvider,
             ILibraryKey target,
             bool dependenciesOnly)
+        {
+            return GetExportsRecursive(cache, manager, libraryExportProvider, target, libraryInformation =>
+            {
+                if (dependenciesOnly)
+                {
+                    return !string.Equals(target.Name, libraryInformation.Name);
+                }
+
+                return true;
+            });
+        }
+
+        public static ILibraryExport GetExportsRecursive(
+            ICache cache,
+            ILibraryManager manager,
+            ILibraryExportProvider libraryExportProvider,
+            ILibraryKey target,
+            Func<ILibraryInformation, bool> include)
         {
             var dependencyStopWatch = Stopwatch.StartNew();
             Trace.TraceInformation("[{0}]: Resolving references for '{1}' {2}", typeof(ProjectExportProviderHelper).Name, target.Name, target.Aspect);
@@ -48,9 +65,7 @@ namespace Microsoft.Framework.Runtime
                     continue;
                 }
 
-                bool isRoot = node.Parent == null;
-
-                if (!dependenciesOnly || (dependenciesOnly && !isRoot))
+                if (include(node.Library))
                 {
                     var libraryExport = libraryExportProvider.GetLibraryExport(target
                         .ChangeName(node.Library.Name)

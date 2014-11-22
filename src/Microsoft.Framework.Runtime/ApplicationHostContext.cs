@@ -24,6 +24,7 @@ namespace Microsoft.Framework.Runtime
                                       IAssemblyLoadContextFactory loadContextFactory = null)
         {
             ProjectDirectory = projectDirectory;
+            Configuration = configuration;
             RootDirectory = Runtime.ProjectResolver.ResolveRootDirectory(ProjectDirectory);
             ProjectResolver = new ProjectResolver(ProjectDirectory, RootDirectory);
             FrameworkReferenceResolver = new FrameworkReferenceResolver();
@@ -47,7 +48,7 @@ namespace Microsoft.Framework.Runtime
 
             UnresolvedDependencyProvider.AttemptedProviders = DependencyWalker.DependencyProviders;
 
-            var compositeDependencyExporter = new CompositeLibraryExportProvider(new ILibraryExportProvider[] {
+            LibraryExportProvider = new CompositeLibraryExportProvider(new ILibraryExportProvider[] {
                 new ProjectLibraryExportProvider(ProjectResolver, ServiceProvider),
                 referenceAssemblyDependencyResolver,
                 gacDependencyResolver,
@@ -55,13 +56,13 @@ namespace Microsoft.Framework.Runtime
             });
 
             LibraryManager = new LibraryManager(targetFramework, configuration, DependencyWalker,
-                compositeDependencyExporter, cache);
+                LibraryExportProvider, cache);
 
             AssemblyLoadContextFactory = loadContextFactory ?? new AssemblyLoadContextFactory(ServiceProvider);
 
             // Default services
             _serviceProvider.Add(typeof(IApplicationEnvironment), new ApplicationEnvironment(Project, targetFramework, configuration));
-            _serviceProvider.Add(typeof(ILibraryExportProvider), compositeDependencyExporter, includeInManifest: false);
+            _serviceProvider.Add(typeof(ILibraryExportProvider), LibraryExportProvider, includeInManifest: false);
             _serviceProvider.Add(typeof(IProjectResolver), ProjectResolver);
             _serviceProvider.Add(typeof(IFileWatcher), NoopWatcher.Instance);
 
@@ -119,9 +120,12 @@ namespace Microsoft.Framework.Runtime
         public ProjectReferenceDependencyProvider ProjectDepencyProvider { get; private set; }
 
         public IProjectResolver ProjectResolver { get; private set; }
+        public ILibraryExportProvider LibraryExportProvider { get; private set; }
         public ILibraryManager LibraryManager { get; private set; }
         public DependencyWalker DependencyWalker { get; private set; }
         public FrameworkReferenceResolver FrameworkReferenceResolver { get; private set; }
+
+        public string Configuration { get; private set; }
         public string RootDirectory { get; private set; }
         public string ProjectDirectory { get; private set; }
         public string PackagesDirectory { get; private set; }
