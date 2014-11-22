@@ -45,6 +45,7 @@ namespace Microsoft.Framework.DesignTimeHost
         private readonly Dictionary<FrameworkName, List<CompiledAssemblyState>> _waitingForCompiledAssemblies = new Dictionary<FrameworkName, List<CompiledAssemblyState>>();
         private readonly List<ConnectionContext> _waitingForDiagnostics = new List<ConnectionContext>();
         private readonly Dictionary<FrameworkName, Trigger<Void>> _requiresAssemblies = new Dictionary<FrameworkName, Trigger<Void>>();
+        private readonly Dictionary<FrameworkName, ProjectCompilation> _compilations = new Dictionary<FrameworkName, ProjectCompilation>();
 
         public ApplicationContext(IServiceProvider services,
                                   ICache cache,
@@ -367,25 +368,20 @@ namespace Microsoft.Framework.DesignTimeHost
             foreach (var pair in _local.Projects)
             {
                 var project = pair.Value;
-
+                var projectCompilationChanged = false;
                 ProjectCompilation compilation = null;
-                IDiagnosticResult diagnostics = null;
 
                 if (_requiresCompilation.WasAssigned)
                 {
                     _requiresCompilation.ClearAssigned();
 
-                    compilation = compilation ?? GetProjectCompilation(project);
-                    diagnostics = diagnostics ?? compilation.ProjectReference.GetDiagnostics();
-
-                    var errors = diagnostics.Errors.ToList();
-                    var warnings = diagnostics.Warnings.ToList();
+                    projectCompilationChanged = UpdateProjectCompilation(project, out compilation);
 
                     project.Diagnostics = new DiagnosticsMessage
                     {
                         Framework = project.Sources.Framework,
-                        Errors = errors,
-                        Warnings = warnings
+                        Errors = compilation.Errors,
+                        Warnings = compilation.Warnings
                     };
                 }
 
@@ -395,35 +391,42 @@ namespace Microsoft.Framework.DesignTimeHost
                 {
                     requiresAssemblies.ClearAssigned();
 
-                    compilation = compilation ?? GetProjectCompilation(project);
-                    diagnostics = diagnostics ?? compilation.ProjectReference.GetDiagnostics();
-
-                    var engine = new NonLoadingLoadContext();
-
-                    if (!diagnostics.Errors.Any())
+                    // If we didn't already update the compilation then do it on demand
+                    if (compilation == null)
                     {
+                        projectCompilationChanged = UpdateProjectCompilation(project, out compilation);
+                    }
+
+                    // Only emit the assembly if there are no errors and
+                    // this is the very first time or there were changes
+                    if (!compilation.Errors.Any() && 
+                        (!compilation.HasOutputs || projectCompilationChanged))
+                    {
+                        var engine = new NonLoadingLoadContext();
+
                         compilation.ProjectReference.Load(engine);
+
+                        compilation.AssemblyBytes = engine.AssemblyBytes ?? new byte[0];
+                        compilation.PdbBytes = engine.PdbBytes ?? new byte[0];
+                        compilation.AssemblyPath = engine.AssemblyPath;
                     }
 
                     project.Outputs = new OutputsMessage
                     {
                         FrameworkData = project.Sources.Framework,
-                        AssemblyBytes = engine.AssemblyBytes ?? new byte[0],
-                        PdbBytes = engine.PdbBytes ?? new byte[0],
-                        AssemblyPath = engine.AssemblyPath,
+                        AssemblyBytes = compilation.AssemblyBytes,
+                        PdbBytes = compilation.PdbBytes,
+                        AssemblyPath = compilation.AssemblyPath,
                         EmbeddedReferences = compilation.EmbeddedReferences
                     };
 
                     if (project.Diagnostics == null)
                     {
-                        var errors = diagnostics.Errors.ToList();
-                        var warnings = diagnostics.Warnings.ToList();
-
                         project.Diagnostics = new DiagnosticsMessage
                         {
                             Framework = project.Sources.Framework,
-                            Errors = errors,
-                            Warnings = warnings
+                            Errors = compilation.Errors,
+                            Warnings = compilation.Warnings
                         };
                     }
                 }
@@ -432,27 +435,42 @@ namespace Microsoft.Framework.DesignTimeHost
             return true;
         }
 
-        private ProjectCompilation GetProjectCompilation(ProjectWorld project)
+        private bool UpdateProjectCompilation(ProjectWorld project, out ProjectCompilation compilation)
         {
-            var compilation = new ProjectCompilation();
             var export = project.ApplicationHostContext.LibraryManager.GetLibraryExport(_local.ProjectInformation.Name);
 
-            compilation.EmbeddedReferences = new Dictionary<string, byte[]>();
-            foreach (var reference in export.MetadataReferences)
+            ProjectCompilation oldCompilation;
+            if (!_compilations.TryGetValue(project.TargetFramework, out oldCompilation) ||
+                export != oldCompilation?.Export)
             {
-                if (compilation.ProjectReference == null)
+                compilation = new ProjectCompilation();
+                compilation.Export = export;
+                compilation.EmbeddedReferences = new Dictionary<string, byte[]>();
+                foreach (var reference in compilation.Export.MetadataReferences)
                 {
-                    compilation.ProjectReference = reference as IMetadataProjectReference;
+                    if (compilation.ProjectReference == null)
+                    {
+                        compilation.ProjectReference = reference as IMetadataProjectReference;
+                    }
+
+                    var embedded = reference as IMetadataEmbeddedReference;
+                    if (embedded != null)
+                    {
+                        compilation.EmbeddedReferences[embedded.Name] = embedded.Contents;
+                    }
                 }
 
-                var embedded = reference as IMetadataEmbeddedReference;
-                if (embedded != null)
-                {
-                    compilation.EmbeddedReferences[embedded.Name] = embedded.Contents;
-                }
+                var diagnostics = compilation.ProjectReference.GetDiagnostics();
+                compilation.Errors = diagnostics.Errors.ToList();
+                compilation.Warnings = diagnostics.Warnings.ToList();
+
+                _compilations[project.TargetFramework] = compilation;
+
+                return true;
             }
 
-            return compilation;
+            compilation = oldCompilation;
+            return false;
         }
 
         private void Reconcile()
@@ -546,20 +564,6 @@ namespace Microsoft.Framework.DesignTimeHost
                     });
 
                     remoteProject.Sources = localProject.Sources;
-                }
-
-                if (IsDifferent(localProject.Diagnostics, remoteProject.Diagnostics))
-                {
-                    Trace.TraceInformation("[ApplicationContext]: OnTransmit(Diagnostics)");
-
-                    _initializedContext.Transmit(new Message
-                    {
-                        ContextId = Id,
-                        MessageType = "Diagnostics",
-                        Payload = JToken.FromObject(localProject.Diagnostics)
-                    });
-
-                    remoteProject.Diagnostics = localProject.Diagnostics;
                 }
 
                 SendCompiledAssemblies(localProject);
@@ -1000,8 +1004,25 @@ namespace Microsoft.Framework.DesignTimeHost
 
         private class ProjectCompilation
         {
+            public ILibraryExport Export { get; set; }
             public IMetadataProjectReference ProjectReference { get; set; }
             public IDictionary<string, byte[]> EmbeddedReferences { get; set; }
+
+            public IList<string> Warnings { get; set; }
+            public IList<string> Errors { get; set; }
+
+            public bool HasOutputs
+            {
+                get
+                {
+                    return AssemblyBytes != null || AssemblyPath != null;
+                }
+            }
+
+            public byte[] AssemblyBytes { get; set; }
+            public byte[] PdbBytes { get; set; }
+
+            public string AssemblyPath { get; set; }
         }
 
         private class CompiledAssemblyState
