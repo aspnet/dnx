@@ -37,6 +37,7 @@ namespace Microsoft.Framework.DesignTimeHost
         private readonly Trigger<Void> _rebuild = new Trigger<Void>();
         private readonly Trigger<Void> _sourceTextChanged = new Trigger<Void>();
         private readonly Trigger<Void> _requiresCompilation = new Trigger<Void>();
+        private readonly Trigger<Void> _requiresAssemblies = new Trigger<Void>();
 
         private World _remote = new World();
         private World _local = new World();
@@ -121,14 +122,14 @@ namespace Microsoft.Framework.DesignTimeHost
             while (true)
             {
                 DrainInbox();
-                DoStageOne();
-                Reconcile();
 
-                if (_requiresCompilation.WasAssigned)
+                if (DoStageOne())
                 {
-                    _requiresCompilation.ClearAssigned();
+                    Reconcile();
+                }
 
-                    DoStageTwo();
+                if (DoStageTwo())
+                {
                     Reconcile();
                 }
 
@@ -239,7 +240,7 @@ namespace Microsoft.Framework.DesignTimeHost
                     break;
                 case "GetCompiledAssembly":
                     {
-                        _requiresCompilation.Value = default(Void);
+                        _requiresAssemblies.Value = default(Void);
 
                         var libraryKey = message.Payload.ToObject<RemoteLibraryKey>();
                         var targetFramework = new FrameworkName(libraryKey.TargetFramework);
@@ -269,7 +270,7 @@ namespace Microsoft.Framework.DesignTimeHost
             return true;
         }
 
-        private void DoStageOne()
+        private bool DoStageOne()
         {
             State state = null;
 
@@ -294,66 +295,80 @@ namespace Microsoft.Framework.DesignTimeHost
                 state = DoInitialWork(_appPath.Value, _configuration.Value, triggerBuildOutputs);
             }
 
-            if (state != null)
+            if (state == null)
             {
-                _local = new World();
-                _local.ProjectInformation = new ProjectMessage
+                return false;
+            }
+
+            _local = new World();
+            _local.ProjectInformation = new ProjectMessage
+            {
+                Name = state.Name,
+
+                // All target framework information
+                Frameworks = state.Frameworks,
+
+                // debug/release etc
+                Configurations = state.Configurations,
+
+                Commands = state.Commands,
+
+                ProjectSearchPaths = state.ProjectSearchPaths,
+
+                GlobalJsonPath = state.GlobalJsonPath
+            };
+
+            foreach (var project in state.Projects)
+            {
+                var frameworkData = project.TargetFramework;
+
+                var projectWorld = new ProjectWorld
                 {
-                    Name = state.Name,
-
-                    // All target framework information
-                    Frameworks = state.Frameworks,
-
-                    // debug/release etc
-                    Configurations = state.Configurations,
-
-                    Commands = state.Commands,
-
-                    ProjectSearchPaths = state.ProjectSearchPaths,
-
-                    GlobalJsonPath = state.GlobalJsonPath
+                    ApplicationHostContext = project.DependencyInfo.HostContext,
+                    TargetFramework = project.FrameworkName,
+                    Sources = new SourcesMessage
+                    {
+                        Framework = frameworkData,
+                        Files = project.SourceFiles
+                    },
+                    CompilerOptions = new CompilationOptionsMessage
+                    {
+                        Framework = frameworkData,
+                        CompilationOptions = project.CompilationSettings
+                    },
+                    Dependencies = new DependenciesMessage
+                    {
+                        Framework = frameworkData,
+                        RootDependency = state.Name,
+                        Dependencies = project.DependencyInfo.Dependencies
+                    },
+                    References = new ReferencesMessage
+                    {
+                        Framework = frameworkData,
+                        ProjectReferences = project.DependencyInfo.ProjectReferences,
+                        FileReferences = project.DependencyInfo.References,
+                        RawReferences = project.DependencyInfo.RawReferences
+                    }
                 };
 
-                foreach (var project in state.Projects)
-                {
-                    var frameworkData = project.TargetFramework;
-
-                    var projectWorld = new ProjectWorld
-                    {
-                        ApplicationHostContext = project.DependencyInfo.HostContext,
-                        TargetFramework = project.FrameworkName,
-                        Sources = new SourcesMessage
-                        {
-                            Framework = frameworkData,
-                            Files = project.SourceFiles
-                        },
-                        CompilerOptions = new CompilationOptionsMessage
-                        {
-                            Framework = frameworkData,
-                            CompilationOptions = project.CompilationSettings
-                        },
-                        Dependencies = new DependenciesMessage
-                        {
-                            Framework = frameworkData,
-                            RootDependency = state.Name,
-                            Dependencies = project.DependencyInfo.Dependencies
-                        },
-                        References = new ReferencesMessage
-                        {
-                            Framework = frameworkData,
-                            ProjectReferences = project.DependencyInfo.ProjectReferences,
-                            FileReferences = project.DependencyInfo.References,
-                            RawReferences = project.DependencyInfo.RawReferences
-                        }
-                    };
-
-                    _local.Projects[project.FrameworkName] = projectWorld;
-                }
+                _local.Projects[project.FrameworkName] = projectWorld;
             }
+
+            return true;
         }
 
-        private void DoStageTwo()
+        private bool DoStageTwo()
         {
+            if (_requiresCompilation.WasAssigned ||
+                _requiresAssemblies.WasAssigned)
+            {
+                _requiresCompilation.ClearAssigned();
+            }
+            else
+            {
+                return false;
+            }
+
             foreach (var project in _local.Projects.Values)
             {
                 var export = project.ApplicationHostContext.LibraryManager.GetLibraryExport(_local.ProjectInformation.Name);
@@ -375,18 +390,6 @@ namespace Microsoft.Framework.DesignTimeHost
                     }
                 }
 
-                var result = projectReference.GetDiagnostics();
-
-                var errors = result.Errors.ToList();
-                var warnings = result.Warnings.ToList();
-
-                var engine = new NonLoadingLoadContext();
-
-                if (!errors.Any())
-                {
-                    projectReference.Load(engine);
-                }
-
                 var sourceFiles = projectReference.GetSources()
                                       .OfType<ISourceFileReference>()
                                       .Select(s => s.Path)
@@ -396,6 +399,11 @@ namespace Microsoft.Framework.DesignTimeHost
                 // by the compilation
                 project.Sources.Files = sourceFiles;
 
+                var result = projectReference.GetDiagnostics();
+
+                var errors = result.Errors.ToList();
+                var warnings = result.Warnings.ToList();
+
                 project.Diagnostics = new DiagnosticsMessage
                 {
                     Framework = project.Sources.Framework,
@@ -403,15 +411,29 @@ namespace Microsoft.Framework.DesignTimeHost
                     Warnings = warnings
                 };
 
-                project.Outputs = new OutputsMessage
+                if (_requiresAssemblies.WasAssigned)
                 {
-                    FrameworkData = project.Sources.Framework,
-                    AssemblyBytes = engine.AssemblyBytes ?? new byte[0],
-                    PdbBytes = engine.PdbBytes ?? new byte[0],
-                    AssemblyPath = engine.AssemblyPath,
-                    EmbeddedReferences = embeddedReferences
-                };
+                    _requiresAssemblies.ClearAssigned();
+
+                    var engine = new NonLoadingLoadContext();
+
+                    if (!errors.Any())
+                    {
+                        projectReference.Load(engine);
+                    }
+
+                    project.Outputs = new OutputsMessage
+                    {
+                        FrameworkData = project.Sources.Framework,
+                        AssemblyBytes = engine.AssemblyBytes ?? new byte[0],
+                        PdbBytes = engine.PdbBytes ?? new byte[0],
+                        AssemblyPath = engine.AssemblyPath,
+                        EmbeddedReferences = embeddedReferences
+                    };
+                }
             }
+
+            return true;
         }
 
         private void Reconcile()
