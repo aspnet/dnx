@@ -37,7 +37,6 @@ namespace Microsoft.Framework.DesignTimeHost
         private readonly Trigger<Void> _rebuild = new Trigger<Void>();
         private readonly Trigger<Void> _sourceTextChanged = new Trigger<Void>();
         private readonly Trigger<Void> _requiresCompilation = new Trigger<Void>();
-        private readonly Trigger<Void> _requiresAssemblies = new Trigger<Void>();
 
         private World _remote = new World();
         private World _local = new World();
@@ -45,6 +44,7 @@ namespace Microsoft.Framework.DesignTimeHost
         private ConnectionContext _initializedContext;
         private readonly Dictionary<FrameworkName, List<CompiledAssemblyState>> _waitingForCompiledAssemblies = new Dictionary<FrameworkName, List<CompiledAssemblyState>>();
         private readonly List<ConnectionContext> _waitingForDiagnostics = new List<ConnectionContext>();
+        private readonly Dictionary<FrameworkName, Trigger<Void>> _requiresAssemblies = new Dictionary<FrameworkName, Trigger<Void>>();
 
         public ApplicationContext(IServiceProvider services,
                                   ICache cache,
@@ -240,10 +240,15 @@ namespace Microsoft.Framework.DesignTimeHost
                     break;
                 case "GetCompiledAssembly":
                     {
-                        _requiresAssemblies.Value = default(Void);
-
                         var libraryKey = message.Payload.ToObject<RemoteLibraryKey>();
                         var targetFramework = new FrameworkName(libraryKey.TargetFramework);
+
+                        // Only set this the first time for the project
+                        if (!_requiresAssemblies.ContainsKey(targetFramework))
+                        {
+                            _requiresAssemblies[targetFramework] = new Trigger<Void>();
+                            _requiresAssemblies[targetFramework].Value = default(Void);
+                        }
 
                         List<CompiledAssemblyState> waitingForCompiledAssemblies;
                         if (!_waitingForCompiledAssemblies.TryGetValue(targetFramework, out waitingForCompiledAssemblies))
@@ -359,67 +364,45 @@ namespace Microsoft.Framework.DesignTimeHost
 
         private bool DoStageTwo()
         {
-            if (_requiresCompilation.WasAssigned ||
-                _requiresAssemblies.WasAssigned)
+            foreach (var pair in _local.Projects)
             {
-                _requiresCompilation.ClearAssigned();
-            }
-            else
-            {
-                return false;
-            }
+                var project = pair.Value;
 
-            foreach (var project in _local.Projects.Values)
-            {
-                var export = project.ApplicationHostContext.LibraryManager.GetLibraryExport(_local.ProjectInformation.Name);
+                ProjectCompilation compilation = null;
+                IDiagnosticResult diagnostics = null;
 
-                IMetadataProjectReference projectReference = null;
-                var embeddedReferences = new Dictionary<string, byte[]>();
-
-                foreach (var reference in export.MetadataReferences)
+                if (_requiresCompilation.WasAssigned)
                 {
-                    if (projectReference == null)
-                    {
-                        projectReference = reference as IMetadataProjectReference;
-                    }
+                    _requiresCompilation.ClearAssigned();
 
-                    var embedded = reference as IMetadataEmbeddedReference;
-                    if (embedded != null)
+                    compilation = compilation ?? GetProjectCompilation(project);
+                    diagnostics = diagnostics ?? compilation.ProjectReference.GetDiagnostics();
+
+                    var errors = diagnostics.Errors.ToList();
+                    var warnings = diagnostics.Warnings.ToList();
+
+                    project.Diagnostics = new DiagnosticsMessage
                     {
-                        embeddedReferences[embedded.Name] = embedded.Contents;
-                    }
+                        Framework = project.Sources.Framework,
+                        Errors = errors,
+                        Warnings = warnings
+                    };
                 }
 
-                var sourceFiles = projectReference.GetSources()
-                                      .OfType<ISourceFileReference>()
-                                      .Select(s => s.Path)
-                                      .ToList();
-
-                // Update the source files as more were potentially added
-                // by the compilation
-                project.Sources.Files = sourceFiles;
-
-                var result = projectReference.GetDiagnostics();
-
-                var errors = result.Errors.ToList();
-                var warnings = result.Warnings.ToList();
-
-                project.Diagnostics = new DiagnosticsMessage
+                Trigger<Void> requiresAssemblies;
+                if ((_requiresAssemblies.TryGetValue(pair.Key, out requiresAssemblies) &&
+                    requiresAssemblies.WasAssigned))
                 {
-                    Framework = project.Sources.Framework,
-                    Errors = errors,
-                    Warnings = warnings
-                };
+                    requiresAssemblies.ClearAssigned();
 
-                if (_requiresAssemblies.WasAssigned)
-                {
-                    _requiresAssemblies.ClearAssigned();
+                    compilation = compilation ?? GetProjectCompilation(project);
+                    diagnostics = diagnostics ?? compilation.ProjectReference.GetDiagnostics();
 
                     var engine = new NonLoadingLoadContext();
 
-                    if (!errors.Any())
+                    if (!diagnostics.Errors.Any())
                     {
-                        projectReference.Load(engine);
+                        compilation.ProjectReference.Load(engine);
                     }
 
                     project.Outputs = new OutputsMessage
@@ -428,12 +411,48 @@ namespace Microsoft.Framework.DesignTimeHost
                         AssemblyBytes = engine.AssemblyBytes ?? new byte[0],
                         PdbBytes = engine.PdbBytes ?? new byte[0],
                         AssemblyPath = engine.AssemblyPath,
-                        EmbeddedReferences = embeddedReferences
+                        EmbeddedReferences = compilation.EmbeddedReferences
                     };
+
+                    if (project.Diagnostics == null)
+                    {
+                        var errors = diagnostics.Errors.ToList();
+                        var warnings = diagnostics.Warnings.ToList();
+
+                        project.Diagnostics = new DiagnosticsMessage
+                        {
+                            Framework = project.Sources.Framework,
+                            Errors = errors,
+                            Warnings = warnings
+                        };
+                    }
                 }
             }
 
             return true;
+        }
+
+        private ProjectCompilation GetProjectCompilation(ProjectWorld project)
+        {
+            var compilation = new ProjectCompilation();
+            var export = project.ApplicationHostContext.LibraryManager.GetLibraryExport(_local.ProjectInformation.Name);
+
+            compilation.EmbeddedReferences = new Dictionary<string, byte[]>();
+            foreach (var reference in export.MetadataReferences)
+            {
+                if (compilation.ProjectReference == null)
+                {
+                    compilation.ProjectReference = reference as IMetadataProjectReference;
+                }
+
+                var embedded = reference as IMetadataEmbeddedReference;
+                if (embedded != null)
+                {
+                    compilation.EmbeddedReferences[embedded.Name] = embedded.Contents;
+                }
+            }
+
+            return compilation;
         }
 
         private void Reconcile()
@@ -453,6 +472,7 @@ namespace Microsoft.Framework.DesignTimeHost
             }
 
             var unprocessedFrameworks = new HashSet<FrameworkName>(_remote.Projects.Keys);
+            var allDiagnostics = new List<DiagnosticsMessage>();
 
             foreach (var pair in _local.Projects)
             {
@@ -463,6 +483,11 @@ namespace Microsoft.Framework.DesignTimeHost
                 {
                     remoteProject = new ProjectWorld();
                     _remote.Projects[pair.Key] = remoteProject;
+                }
+
+                if (localProject.Diagnostics != null)
+                {
+                    allDiagnostics.Add(localProject.Diagnostics);
                 }
 
                 unprocessedFrameworks.Remove(pair.Key);
@@ -540,7 +565,7 @@ namespace Microsoft.Framework.DesignTimeHost
                 SendCompiledAssemblies(localProject);
             }
 
-            SendDiagnostics();
+            SendDiagnostics(allDiagnostics);
 
             // Remove all processed frameworks from the remote view
             foreach (var framework in unprocessedFrameworks)
@@ -549,36 +574,35 @@ namespace Microsoft.Framework.DesignTimeHost
             }
         }
 
-        private void SendDiagnostics()
+        private void SendDiagnostics(IList<DiagnosticsMessage> diagnostics)
         {
-            // Send all diagnostics back
-            if (_waitingForDiagnostics.Count > 0)
+            if (diagnostics.Count == 0)
             {
-                var allDiagnostics = _local.Projects.Select(d => d.Value.Diagnostics)
-                                                    .Where(d => d != null)
-                                                    .ToList();
-
-                if (allDiagnostics.Any())
-                {
-                    foreach (var connection in _waitingForDiagnostics)
-                    {
-                        connection.Transmit(new Message
-                        {
-                            ContextId = Id,
-                            MessageType = "AllDiagnostics",
-                            Payload = JToken.FromObject(allDiagnostics)
-                        });
-                    }
-
-                    _waitingForDiagnostics.Clear();
-                }
+                return;
             }
+
+            // Send all diagnostics back
+            foreach (var connection in _waitingForDiagnostics)
+            {
+                connection.Transmit(new Message
+                {
+                    ContextId = Id,
+                    MessageType = "AllDiagnostics",
+                    Payload = JToken.FromObject(diagnostics)
+                });
+            }
+
+            _waitingForDiagnostics.Clear();
         }
 
         private void TriggerProjectOutputsChanged()
         {
-            foreach (var waitingForCompiledAssemblies in _waitingForCompiledAssemblies.Values)
+            foreach (var pair in _waitingForCompiledAssemblies)
             {
+                var waitingForCompiledAssemblies = pair.Value;
+
+                _requiresAssemblies[pair.Key].Value = default(Void);
+
                 for (int i = waitingForCompiledAssemblies.Count - 1; i >= 0; i--)
                 {
                     var waitingForCompiledAssembly = waitingForCompiledAssemblies[i];
@@ -972,6 +996,12 @@ namespace Microsoft.Framework.DesignTimeHost
             public IList<string> References { get; set; }
 
             public IList<ProjectReference> ProjectReferences { get; set; }
+        }
+
+        private class ProjectCompilation
+        {
+            public IMetadataProjectReference ProjectReference { get; set; }
+            public IDictionary<string, byte[]> EmbeddedReferences { get; set; }
         }
 
         private class CompiledAssemblyState

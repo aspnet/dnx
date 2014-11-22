@@ -39,6 +39,10 @@ namespace Microsoft.Framework.DesignTimeHost
                     return true;
                 }
             }
+            catch (IOException)
+            {
+                // Swallow those
+            }
             catch (Exception ex)
             {
                 Trace.TraceInformation("[ProcessingQueue]: Error sending {0}", ex);
@@ -57,6 +61,10 @@ namespace Microsoft.Framework.DesignTimeHost
                     _writer.Write(JsonConvert.SerializeObject(message));
 
                     return true;
+                }
+                catch (IOException)
+                {
+                    // Swallow those
                 }
                 catch (Exception ex)
                 {
@@ -77,6 +85,10 @@ namespace Microsoft.Framework.DesignTimeHost
                     Trace.TraceInformation("[ProcessingQueue]: OnReceive({0})", message);
                     OnReceive(message);
                 }
+            }
+            catch (IOException)
+            {
+                // Swallow those
             }
             catch (Exception ex)
             {
