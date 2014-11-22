@@ -708,11 +708,12 @@ namespace Microsoft.Framework.DesignTimeHost
                 frameworks.Add(VersionUtility.ParseFrameworkName("aspnet50"));
             }
 
-            var sources = project.SourceFiles.ToList();
+            var sourcesProjectWideSources = project.SourceFiles.ToList();
 
             foreach (var frameworkName in frameworks)
             {
                 var dependencyInfo = ResolveProjectDepencies(project, configuration, frameworkName);
+                var dependencySources = new List<string>(sourcesProjectWideSources);
 
                 var frameworkResolver = dependencyInfo.HostContext.FrameworkReferenceResolver;
 
@@ -726,6 +727,16 @@ namespace Microsoft.Framework.DesignTimeHost
 
                 state.Frameworks.Add(frameworkData);
 
+                // Add shared files
+                foreach (var reference in dependencyInfo.ProjectReferences)
+                {
+                    Project referencedProject;
+                    if (Project.TryGetProject(reference.Path, out referencedProject))
+                    {
+                        dependencySources.AddRange(referencedProject.SharedFiles);
+                    }
+                }
+
                 var projectInfo = new ProjectInfo()
                 {
                     Path = appPath,
@@ -734,19 +745,9 @@ namespace Microsoft.Framework.DesignTimeHost
                     FrameworkName = frameworkName,
                     // TODO: This shouldn't be roslyn specific compilation options
                     CompilationSettings = project.GetCompilationSettings(frameworkName, configuration),
-                    SourceFiles = sources,
+                    SourceFiles = dependencySources,
                     DependencyInfo = dependencyInfo
                 };
-
-                // Add shared files
-                foreach (var reference in dependencyInfo.ProjectReferences)
-                {
-                    Project referencedProject;
-                    if (Project.TryGetProject(reference.Path, out referencedProject))
-                    {
-                        sources.AddRange(referencedProject.SharedFiles);
-                    }
-                }
 
                 state.Projects.Add(projectInfo);
 
