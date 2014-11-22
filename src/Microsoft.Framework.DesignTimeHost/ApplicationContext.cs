@@ -36,8 +36,7 @@ namespace Microsoft.Framework.DesignTimeHost
         private readonly Trigger<Void> _filesChanged = new Trigger<Void>();
         private readonly Trigger<Void> _rebuild = new Trigger<Void>();
         private readonly Trigger<Void> _sourceTextChanged = new Trigger<Void>();
-
-        private readonly Trigger<State> _state = new Trigger<State>();
+        private readonly Trigger<Void> _requiresCompilation = new Trigger<Void>();
 
         private World _remote = new World();
         private World _local = new World();
@@ -122,8 +121,16 @@ namespace Microsoft.Framework.DesignTimeHost
             while (true)
             {
                 DrainInbox();
-                Calculate();
+                DoStageOne();
                 Reconcile();
+
+                if (_requiresCompilation.WasAssigned)
+                {
+                    _requiresCompilation.ClearAssigned();
+
+                    DoStageTwo();
+                    Reconcile();
+                }
 
                 lock (_inbox)
                 {
@@ -232,7 +239,9 @@ namespace Microsoft.Framework.DesignTimeHost
                     break;
                 case "GetCompiledAssembly":
                     {
-                        var libraryKey = message.Payload.ToObject<LibraryKey>();
+                        _requiresCompilation.Value = default(Void);
+
+                        var libraryKey = message.Payload.ToObject<RemoteLibraryKey>();
                         var targetFramework = new FrameworkName(libraryKey.TargetFramework);
 
                         List<CompiledAssemblyState> waitingForCompiledAssemblies;
@@ -250,6 +259,8 @@ namespace Microsoft.Framework.DesignTimeHost
                     break;
                 case "GetDiagnostics":
                     {
+                        _requiresCompilation.Value = default(Void);
+
                         _waitingForDiagnostics.Add(message.Sender);
                     }
                     break;
@@ -258,8 +269,10 @@ namespace Microsoft.Framework.DesignTimeHost
             return true;
         }
 
-        private void Calculate()
+        private void DoStageOne()
         {
+            State state = null;
+
             if (_appPath.WasAssigned ||
                 _configuration.WasAssigned ||
                 _filesChanged.WasAssigned ||
@@ -278,15 +291,11 @@ namespace Microsoft.Framework.DesignTimeHost
                 // hasn't died yet
                 TriggerProjectOutputsChanged();
 
-                _state.Value = Initialize(_appPath.Value, _configuration.Value, triggerBuildOutputs);
+                state = DoInitialWork(_appPath.Value, _configuration.Value, triggerBuildOutputs);
             }
 
-            var state = _state.Value;
-
-            if (_state.WasAssigned && state != null)
+            if (state != null)
             {
-                _state.ClearAssigned();
-
                 _local = new World();
                 _local.ProjectInformation = new ProjectMessage
                 {
@@ -305,18 +314,18 @@ namespace Microsoft.Framework.DesignTimeHost
                     GlobalJsonPath = state.GlobalJsonPath
                 };
 
-                for (int i = 0; i < state.Projects.Count; i++)
+                foreach (var project in state.Projects)
                 {
-                    var project = state.Projects[i];
                     var frameworkData = project.TargetFramework;
 
                     var projectWorld = new ProjectWorld
                     {
+                        ApplicationHostContext = project.DependencyInfo.HostContext,
                         TargetFramework = project.FrameworkName,
                         Sources = new SourcesMessage
                         {
                             Framework = frameworkData,
-                            Files = project.Metadata.SourceFiles
+                            Files = project.SourceFiles
                         },
                         CompilerOptions = new CompilationOptionsMessage
                         {
@@ -327,33 +336,81 @@ namespace Microsoft.Framework.DesignTimeHost
                         {
                             Framework = frameworkData,
                             RootDependency = state.Name,
-                            Dependencies = project.Dependencies
+                            Dependencies = project.DependencyInfo.Dependencies
                         },
                         References = new ReferencesMessage
                         {
                             Framework = frameworkData,
-                            ProjectReferences = project.ProjectReferences,
-                            FileReferences = project.Metadata.References,
-                            RawReferences = project.Metadata.RawReferences
-                        },
-                        Diagnostics = new DiagnosticsMessage
-                        {
-                            Framework = frameworkData,
-                            Errors = project.Metadata.Errors,
-                            Warnings = project.Metadata.Warnings
-                        },
-                        Outputs = new OutputsMessage
-                        {
-                            FrameworkData = frameworkData,
-                            AssemblyBytes = project.Output.AssemblyBytes,
-                            PdbBytes = project.Output.PdbBytes,
-                            AssemblyPath = project.Output.AssemblyPath,
-                            EmbeddedReferences = project.Output.EmbeddedReferences
+                            ProjectReferences = project.DependencyInfo.ProjectReferences,
+                            FileReferences = project.DependencyInfo.References,
+                            RawReferences = project.DependencyInfo.RawReferences
                         }
                     };
 
                     _local.Projects[project.FrameworkName] = projectWorld;
                 }
+            }
+        }
+
+        private void DoStageTwo()
+        {
+            foreach (var project in _local.Projects.Values)
+            {
+                var export = project.ApplicationHostContext.LibraryManager.GetLibraryExport(_local.ProjectInformation.Name);
+
+                IMetadataProjectReference projectReference = null;
+                var embeddedReferences = new Dictionary<string, byte[]>();
+
+                foreach (var reference in export.MetadataReferences)
+                {
+                    if (projectReference == null)
+                    {
+                        projectReference = reference as IMetadataProjectReference;
+                    }
+
+                    var embedded = reference as IMetadataEmbeddedReference;
+                    if (embedded != null)
+                    {
+                        embeddedReferences[embedded.Name] = embedded.Contents;
+                    }
+                }
+
+                var result = projectReference.GetDiagnostics();
+
+                var errors = result.Errors.ToList();
+                var warnings = result.Warnings.ToList();
+
+                var engine = new NonLoadingLoadContext();
+
+                if (!errors.Any())
+                {
+                    projectReference.Load(engine);
+                }
+
+                var sourceFiles = projectReference.GetSources()
+                                      .OfType<ISourceFileReference>()
+                                      .Select(s => s.Path)
+                                      .ToList();
+
+                // Update the source files as more were potentially added
+                // by the compilation
+                project.Sources.Files = sourceFiles;
+
+                project.Diagnostics = new DiagnosticsMessage
+                {
+                    Framework = project.Sources.Framework,
+                    Errors = errors,
+                    Warnings = warnings
+                };
+
+                project.Outputs = new OutputsMessage
+                {
+                    FrameworkData = project.Sources.Framework,
+                    AssemblyBytes = engine.AssemblyBytes ?? new byte[0],
+                    PdbBytes = engine.PdbBytes ?? new byte[0],
+                    AssemblyPath = engine.AssemblyPath,
+                    EmbeddedReferences = embeddedReferences
+                };
             }
         }
 
@@ -430,20 +487,6 @@ namespace Microsoft.Framework.DesignTimeHost
                     remoteProject.References = localProject.References;
                 }
 
-                if (IsDifferent(localProject.Diagnostics, remoteProject.Diagnostics))
-                {
-                    Trace.TraceInformation("[ApplicationContext]: OnTransmit(Diagnostics)");
-
-                    _initializedContext.Transmit(new Message
-                    {
-                        ContextId = Id,
-                        MessageType = "Diagnostics",
-                        Payload = JToken.FromObject(localProject.Diagnostics)
-                    });
-
-                    remoteProject.Diagnostics = localProject.Diagnostics;
-                }
-
                 if (IsDifferent(localProject.Sources, remoteProject.Sources))
                 {
                     Trace.TraceInformation("[ApplicationContext]: OnTransmit(Sources)");
@@ -456,6 +499,20 @@ namespace Microsoft.Framework.DesignTimeHost
                     });
 
                     remoteProject.Sources = localProject.Sources;
+                }
+
+                if (IsDifferent(localProject.Diagnostics, remoteProject.Diagnostics))
+                {
+                    Trace.TraceInformation("[ApplicationContext]: OnTransmit(Diagnostics)");
+
+                    _initializedContext.Transmit(new Message
+                    {
+                        ContextId = Id,
+                        MessageType = "Diagnostics",
+                        Payload = JToken.FromObject(localProject.Diagnostics)
+                    });
+
+                    remoteProject.Diagnostics = localProject.Diagnostics;
                 }
 
                 SendCompiledAssemblies(localProject);
@@ -475,19 +532,24 @@ namespace Microsoft.Framework.DesignTimeHost
             // Send all diagnostics back
             if (_waitingForDiagnostics.Count > 0)
             {
-                var allDiagnostics = _local.Projects.Select(d => d.Value.Diagnostics).ToList();
+                var allDiagnostics = _local.Projects.Select(d => d.Value.Diagnostics)
+                                                    .Where(d => d != null)
+                                                    .ToList();
 
-                foreach (var connection in _waitingForDiagnostics)
+                if (allDiagnostics.Any())
                 {
-                    connection.Transmit(new Message
+                    foreach (var connection in _waitingForDiagnostics)
                     {
-                        ContextId = Id,
-                        MessageType = "AllDiagnostics",
-                        Payload = JToken.FromObject(allDiagnostics)
-                    });
-                }
+                        connection.Transmit(new Message
+                        {
+                            ContextId = Id,
+                            MessageType = "AllDiagnostics",
+                            Payload = JToken.FromObject(allDiagnostics)
+                        });
+                    }
 
-                _waitingForDiagnostics.Clear();
+                    _waitingForDiagnostics.Clear();
+                }
             }
         }
 
@@ -517,6 +579,11 @@ namespace Microsoft.Framework.DesignTimeHost
 
         private void SendCompiledAssemblies(ProjectWorld localProject)
         {
+            if (localProject.Outputs == null)
+            {
+                return;
+            }
+
             List<CompiledAssemblyState> waitingForCompiledAssemblies;
             if (_waitingForCompiledAssemblies.TryGetValue(localProject.TargetFramework, out waitingForCompiledAssemblies))
             {
@@ -577,10 +644,16 @@ namespace Microsoft.Framework.DesignTimeHost
 
         private bool IsDifferent<T>(T local, T remote) where T : class
         {
+            // If no value was ever produced, then don't even bother
+            if (local == null)
+            {
+                return false;
+            }
+
             return !object.Equals(local, remote);
         }
 
-        private State Initialize(string appPath, string configuration, bool triggerBuildOutputs)
+        private State DoInitialWork(string appPath, string configuration, bool triggerBuildOutputs)
         {
             var state = new State
             {
@@ -613,71 +686,13 @@ namespace Microsoft.Framework.DesignTimeHost
                 frameworks.Add(VersionUtility.ParseFrameworkName("aspnet50"));
             }
 
-            var appHostContextCache = new Dictionary<Tuple<string, FrameworkName>, ApplicationHostContext>();
-
-            // We need to create an app env for the design time host's target framework
-            var runtimeApplicationHostContext = new ApplicationHostContext(_hostServices,
-                                                                           appPath,
-                                                                           packagesDirectory: null,
-                                                                           configuration: _appEnv.Configuration,
-                                                                           targetFramework: _appEnv.RuntimeFramework,
-                                                                           cache: _cache,
-                                                                           cacheContextAccessor: _cacheContextAccessor,
-                                                                           namedCacheDependencyProvider: _namedDependencyProvider);
-
-            runtimeApplicationHostContext.DependencyWalker.Walk(project.Name, project.Version, _appEnv.RuntimeFramework);
-
-            var runtimeAppHostContextCacheKey = Tuple.Create(_appEnv.Configuration, _appEnv.RuntimeFramework);
-
-            // TODO: Move this caching to the ICache
-            appHostContextCache[runtimeAppHostContextCacheKey] = runtimeApplicationHostContext;
+            var sources = project.SourceFiles.ToList();
 
             foreach (var frameworkName in frameworks)
             {
-                var cacheKey = Tuple.Create(configuration, frameworkName);
+                var dependencyInfo = ResolveProjectDepencies(project, configuration, frameworkName);
 
-                ApplicationHostContext applicationHostContext;
-                if (!appHostContextCache.TryGetValue(cacheKey, out applicationHostContext))
-                {
-                    applicationHostContext = new ApplicationHostContext(_hostServices,
-                                                                        appPath,
-                                                                        packagesDirectory: null,
-                                                                        configuration: configuration,
-                                                                        targetFramework: frameworkName,
-                                                                        cache: _cache,
-                                                                        cacheContextAccessor: _cacheContextAccessor,
-                                                                        namedCacheDependencyProvider: _namedDependencyProvider,
-                                                                        loadContextFactory: runtimeApplicationHostContext.AssemblyLoadContextFactory);
-
-                    applicationHostContext.DependencyWalker.Walk(project.Name, project.Version, frameworkName);
-
-                    appHostContextCache[cacheKey] = applicationHostContext;
-                }
-
-                var libraryManager = applicationHostContext.LibraryManager;
-                var metadataProvider = applicationHostContext.CreateInstance<ProjectMetadataProvider>();
-                var frameworkResolver = applicationHostContext.FrameworkReferenceResolver;
-                var metadata = metadataProvider.GetProjectMetadata(project.Name);
-
-                var dependencies = applicationHostContext.DependencyWalker
-                                                         .Libraries
-                                                         .Select(CreateDependencyDescription)
-                                                         .ToDictionary(d => d.Name);
-
-                var projectReferences = applicationHostContext.DependencyWalker
-                                                              .Libraries
-                                                              .Where(d => string.Equals(d.Type, "Project") && !string.Equals(d.Identity.Name, project.Name))
-                                                              .Select(d => new ProjectReference
-                                                              {
-                                                                  Framework = new FrameworkData
-                                                                  {
-                                                                      ShortName = VersionUtility.GetShortFrameworkName(d.Framework),
-                                                                      FrameworkName = d.Framework.ToString(),
-                                                                      FriendlyName = frameworkResolver.GetFriendlyFrameworkName(d.Framework)
-                                                                  },
-                                                                  Path = d.Path
-                                                              })
-                                                              .ToList();
+                var frameworkResolver = dependencyInfo.HostContext.FrameworkReferenceResolver;
 
                 var frameworkData = new FrameworkData
                 {
@@ -697,49 +712,31 @@ namespace Microsoft.Framework.DesignTimeHost
                     FrameworkName = frameworkName,
                     // TODO: This shouldn't be roslyn specific compilation options
                     CompilationSettings = project.GetCompilationSettings(frameworkName, configuration),
-                    Dependencies = dependencies,
-                    ProjectReferences = projectReferences,
-                    Metadata = metadata,
-                    Output = new ProjectOutput()
+                    SourceFiles = sources,
+                    DependencyInfo = dependencyInfo
                 };
 
-                var export = libraryManager.GetLibraryExport(project.Name);
-                var projectReference = export.MetadataReferences.OfType<IMetadataProjectReference>()
-                                                                .First();
-
-                var embeddedReferences = export.MetadataReferences.OfType<IMetadataEmbeddedReference>().Select(r =>
+                // Add shared files
+                foreach (var reference in dependencyInfo.ProjectReferences)
                 {
-                    return new
+                    Project referencedProject;
+                    if (Project.TryGetProject(reference.Path, out referencedProject))
                     {
-                        Name = r.Name,
-                        Bytes = r.Contents
-                    };
-                })
-                .ToDictionary(a => a.Name, a => a.Bytes);
-
-                var engine = new NonLoadingLoadContext();
-
-                if (!metadata.Errors.Any())
-                {
-                    projectReference.Load(engine);
+                        sources.AddRange(referencedProject.SharedFiles);
+                    }
                 }
-
-                projectInfo.Output.AssemblyBytes = engine.AssemblyBytes ?? new byte[0];
-                projectInfo.Output.PdbBytes = engine.PdbBytes ?? new byte[0];
-                projectInfo.Output.AssemblyPath = engine.AssemblyPath;
-                projectInfo.Output.EmbeddedReferences = embeddedReferences;
 
                 state.Projects.Add(projectInfo);
 
                 if (state.ProjectSearchPaths == null)
                 {
-                    state.ProjectSearchPaths = applicationHostContext.ProjectResolver.SearchPaths.ToList();
+                    state.ProjectSearchPaths = dependencyInfo.HostContext.ProjectResolver.SearchPaths.ToList();
                 }
 
                 if (state.GlobalJsonPath == null)
                 {
                     GlobalSettings settings;
-                    if (GlobalSettings.TryGetGlobalSettings(applicationHostContext.RootDirectory, out settings))
+                    if (GlobalSettings.TryGetGlobalSettings(dependencyInfo.HostContext.RootDirectory, out settings))
                     {
                         state.GlobalJsonPath = settings.FilePath;
                     }
@@ -747,6 +744,125 @@ namespace Microsoft.Framework.DesignTimeHost
             }
 
             return state;
+        }
+
+        private ApplicationHostContext GetApplicationHostContext(Project project, string configuration, FrameworkName frameworkName, bool useRuntimeLoadContextFactory = true)
+        {
+            var cacheKey = Tuple.Create("ApplicationContext", project.Name, configuration, frameworkName);
+
+            IAssemblyLoadContextFactory loadContextFactory = null;
+
+            if (useRuntimeLoadContextFactory)
+            {
+                var runtimeApplicationContext = GetApplicationHostContext(project,
+                                                                          _appEnv.Configuration,
+                                                                          _appEnv.RuntimeFramework,
+                                                                          useRuntimeLoadContextFactory: false);
+
+                loadContextFactory = runtimeApplicationContext.AssemblyLoadContextFactory;
+            }
+
+            return _cache.Get<ApplicationHostContext>(cacheKey, ctx =>
+            {
+                var applicationHostContext = new ApplicationHostContext(_hostServices,
+                                                                        project.ProjectDirectory,
+                                                                        packagesDirectory: null,
+                                                                        configuration: configuration,
+                                                                        targetFramework: frameworkName,
+                                                                        cache: _cache,
+                                                                        cacheContextAccessor: _cacheContextAccessor,
+                                                                        namedCacheDependencyProvider: _namedDependencyProvider,
+                                                                        loadContextFactory: loadContextFactory);
+
+                applicationHostContext.DependencyWalker.Walk(project.Name, project.Version, frameworkName);
+
+                // Watch all projects for project.json changes
+                foreach (var library in applicationHostContext.DependencyWalker.Libraries)
+                {
+                    if (string.Equals(library.Type, "Project"))
+                    {
+                        ctx.Monitor(new FileWriteTimeCacheDependency(library.Path));
+                    }
+                }
+
+                // Add a cache dependency on restore complete to reevaluate dependencies
+                ctx.Monitor(_namedDependencyProvider.GetNamedDependency(project.Name + "_BuildOutputs"));
+
+                return applicationHostContext;
+            });
+        }
+
+        private DependencyInfo ResolveProjectDepencies(Project project, string configuration, FrameworkName frameworkName)
+        {
+            var cacheKey = Tuple.Create("DependencyInfo", project.Name, configuration, frameworkName);
+
+            return _cache.Get<DependencyInfo>(cacheKey, ctx =>
+            {
+                var applicationHostContext = GetApplicationHostContext(project, configuration, frameworkName);
+
+                var libraryManager = applicationHostContext.LibraryManager;
+                var frameworkResolver = applicationHostContext.FrameworkReferenceResolver;
+
+                var info = new DependencyInfo
+                {
+                    Dependencies = new Dictionary<string, DependencyDescription>(),
+                    ProjectReferences = new List<ProjectReference>(),
+                    HostContext = applicationHostContext,
+                    References = new List<string>(),
+                    RawReferences = new Dictionary<string, byte[]>()
+                };
+
+                // Watch all projects for project.json changes
+                foreach (var library in applicationHostContext.DependencyWalker.Libraries)
+                {
+                    var description = CreateDependencyDescription(library);
+                    info.Dependencies[description.Name] = description;
+
+                    if (string.Equals(library.Type, "Project") &&
+                       !string.Equals(library.Identity.Name, project.Name))
+                    {
+                        info.ProjectReferences.Add(new ProjectReference
+                        {
+                            Framework = new FrameworkData
+                            {
+                                ShortName = VersionUtility.GetShortFrameworkName(library.Framework),
+                                FrameworkName = library.Framework.ToString(),
+                                FriendlyName = frameworkResolver.GetFriendlyFrameworkName(library.Framework)
+                            },
+                            Path = library.Path
+                        });
+                    }
+                }
+
+                var exportWithoutProjects = ProjectExportProviderHelper.GetExportsRecursive(
+                     _cache,
+                     applicationHostContext.LibraryManager,
+                     applicationHostContext.LibraryExportProvider,
+                     new LibraryKey
+                     {
+                         Configuration = configuration,
+                         TargetFramework = frameworkName,
+                         Name = project.Name
+                     },
+                     library => library.Type != "Project");
+
+                foreach (var reference in exportWithoutProjects.MetadataReferences)
+                {
+                    var fileReference = reference as IMetadataFileReference;
+                    if (fileReference != null)
+                    {
+                        info.References.Add(fileReference.Path);
+                    }
+
+                    var embedded = reference as IMetadataEmbeddedReference;
+                    if (embedded != null)
+                    {
+                        info.RawReferences[embedded.Name] = embedded.Contents;
+                    }
+                }
+
+                return info;
+            });
         }
 
         private static DependencyDescription CreateDependencyDescription(LibraryDescription library)
@@ -817,23 +933,22 @@ namespace Microsoft.Framework.DesignTimeHost
 
             public CompilationSettings CompilationSettings { get; set; }
 
-            public ProjectMetadata Metadata { get; set; }
+            public IList<string> SourceFiles { get; set; }
+
+            public DependencyInfo DependencyInfo { get; set; }
+        }
+
+        private class DependencyInfo
+        {
+            public ApplicationHostContext HostContext { get; set; }
+
+            public IDictionary<string, byte[]> RawReferences { get; set; }
 
             public IDictionary<string, DependencyDescription> Dependencies { get; set; }
 
+            public IList<string> References { get; set; }
+
             public IList<ProjectReference> ProjectReferences { get; set; }
-
-            public ProjectOutput Output { get; set; }
-        }
-
-        private class ProjectOutput
-        {
-            public IDictionary<string, byte[]> EmbeddedReferences { get; set; }
-
-            public byte[] AssemblyBytes { get; set; }
-            public byte[] PdbBytes { get; set; }
-
-            public string AssemblyPath { get; set; }
         }
 
         private class CompiledAssemblyState
@@ -843,10 +958,18 @@ namespace Microsoft.Framework.DesignTimeHost
             public bool AssemblySent { get; set; }
         }
 
-        private class LibraryKey
+        private class RemoteLibraryKey
         {
             public string Name { get; set; }
             public string TargetFramework { get; set; }
+            public string Configuration { get; set; }
+            public string Aspect { get; set; }
+        }
+
+        private class LibraryKey : ILibraryKey
+        {
+            public string Name { get; set; }
+            public FrameworkName TargetFramework { get; set; }
             public string Configuration { get; set; }
             public string Aspect { get; set; }
         }

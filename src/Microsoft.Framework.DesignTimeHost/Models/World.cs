@@ -4,6 +4,7 @@
 using System.Collections.Generic;
 using System.Runtime.Versioning;
 using Microsoft.Framework.DesignTimeHost.Models.OutgoingMessages;
+using Microsoft.Framework.Runtime;
 
 namespace Microsoft.Framework.DesignTimeHost.Models
 {
@@ -20,6 +21,9 @@ namespace Microsoft.Framework.DesignTimeHost.Models
 
     public class ProjectWorld
     {
+        public ApplicationHostContext ApplicationHostContext { get; set; }
+
+        // State
         public FrameworkName TargetFramework { get; set; }
         public CompilationOptionsMessage CompilerOptions { get; set; }
         public SourcesMessage Sources { get; set; }
