@@ -105,12 +105,22 @@ namespace Microsoft.Framework.DesignTimeHost
                     Message = ex.ToString()
                 };
 
-                _initializedContext.Transmit(new Message
+                var message = new Message
                 {
                     ContextId = Id,
                     MessageType = "Error",
                     Payload = JToken.FromObject(error)
-                });
+                };
+
+                _initializedContext.Transmit(message);
+
+                // Notify anyone waiting for diagnostics
+                foreach (var connection in _waitingForDiagnostics)
+                {
+                    connection.Transmit(message);
+                }
+
+                _waitingForDiagnostics.Clear();
             }
             finally
             {
@@ -399,7 +409,7 @@ namespace Microsoft.Framework.DesignTimeHost
 
                     // Only emit the assembly if there are no errors and
                     // this is the very first time or there were changes
-                    if (!compilation.Errors.Any() && 
+                    if (!compilation.Errors.Any() &&
                         (!compilation.HasOutputs || projectCompilationChanged))
                     {
                         var engine = new NonLoadingLoadContext();
