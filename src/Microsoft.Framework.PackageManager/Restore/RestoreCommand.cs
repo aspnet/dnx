@@ -292,7 +292,7 @@ namespace Microsoft.Framework.PackageManager
             }
             sb.AppendFormat("{0}.{1}".Red().Bold(), failedNode.Library.Name, failedNode.Library.Version);
             sb.AppendLine();
-            Reports.Error.WriteLine("  " + sb.ToString());
+            Reports.Verbose.WriteLine("  " + sb.ToString());
         }
 
         private async Task<bool> RestoreFromGlobalJson(string rootDirectory, string packagesDirectory)
