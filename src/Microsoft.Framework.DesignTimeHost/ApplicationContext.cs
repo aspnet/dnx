@@ -102,7 +102,7 @@ namespace Microsoft.Framework.DesignTimeHost
                 // Unhandled errors
                 var error = new ErrorMessage
                 {
-                    Message = ex.ToString()
+                    Message = ex.Message
                 };
 
                 var message = new Message
