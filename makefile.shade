@@ -625,6 +625,19 @@ var MONO_MANAGED_PROJECTS = '${FindAllProjects("klr.mono.managed")}'
     }
     nuget-pack packageVersion='${FULL_VERSION}' outputDir='${BUILD_DIR2}' extra='-NoPackageAnalysis' nugetPath='.nuget/nuget.exe' each='var nuspecFile in Files.Include(Path.Combine(BUILD_DIR2, "*.nuspec"))'
 
+#dev-install
+    @{
+        InstallDevKRE(KRE_MONO_BIN);
+        
+        if (!IsMono)
+        {
+            InstallDevKRE(KRE_CLR_x86_BIN);
+            InstallDevKRE(KRE_CLR_amd64_BIN);
+            InstallDevKRE(KRE_CORECLR_x86_BIN);
+            InstallDevKRE(KRE_CORECLR_amd64_BIN);
+        }
+    }
+    
 #install-runtime target='install'
     var matchVersion=''
     for each='var pattern in new[]{ "CLR-x86", "CoreCLR-x86", "CLR-amd64", "CoreCLR-amd64" }'
@@ -719,4 +732,67 @@ functions @{
             xdoc.Save(fileWriteTo);
         }
     }
-}
+
+    string FindKREFolder()
+    {
+        var profileDirectory = Environment.GetEnvironmentVariable("USERPROFILE");
+
+        if (string.IsNullOrEmpty(profileDirectory))
+        {
+            profileDirectory = Environment.GetEnvironmentVariable("HOME");
+        }
+
+        return Path.Combine(profileDirectory, ".kre");
+    }
+
+    string FindKREPackagesFolder() 
+    {
+        return Path.Combine(FindKREFolder(), "packages");
+    }
+
+    void InstallDevKRE(string binPath)
+    {
+        var sourceDir = Path.GetDirectoryName(binPath);
+        var sourceKRE = Path.GetFileName(sourceDir);
+        var destinationKRE = sourceKRE + ".1.0.0-dev";
+        var destinationDir = Path.Combine(FindKREPackagesFolder(), destinationKRE);
+    
+        if (Directory.Exists(destinationDir)) 
+        {
+            // Nothing to do, just return
+            return;
+        }
+    
+        // Trim "KRE-" part from alias to keep it short
+        var alias = sourceKRE.Substring(4) + "-dev";
+    
+        var symlinkProgram = "cmd";
+        var symlinkProgramArgs = "/C mklink /J {0} {1}";
+            
+        var kvmProgram = "cmd";
+        var kvmProgramArgs = "/C kvm alias {0} {1}";
+    
+        if (IsMono)
+        {
+            symlinkProgram = "ln";
+            symlinkProgramArgs = "-s {1} {0}";
+            
+            kvmProgram = "bash";
+            kvmProgramArgs =
+                "-c 'source " + 
+                Path.Combine(FindKREFolder(), "kvm", "kvm.sh") + 
+                " && kvm alias {0} {1}'";
+        }
+    
+        symlinkProgramArgs = String.Format(symlinkProgramArgs,
+            destinationDir,
+            sourceDir);
+            
+        kvmProgramArgs = String.Format(kvmProgramArgs,
+            alias,
+            destinationKRE);
+    
+        Exec(symlinkProgram, symlinkProgramArgs);
+        Exec(kvmProgram, kvmProgramArgs);
+    }
+} 
