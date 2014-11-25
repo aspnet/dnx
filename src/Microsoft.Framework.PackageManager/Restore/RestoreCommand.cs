@@ -281,6 +281,7 @@ namespace Microsoft.Framework.PackageManager
 
         private void ShowFailedDependencyChain(Stack<GraphNode> path, GraphNode failedNode, Func<GraphNode, string> getDependencyType)
         {
+            const char rightArrow = '\u2192';
             var sb = new StringBuilder();
             foreach (var node in path.Reverse())
             {
@@ -288,7 +289,7 @@ namespace Microsoft.Framework.PackageManager
                     node.Item.Match.Library.Name,
                     node.Item.Match.Library.Version,
                     getDependencyType(node));
-                sb.Append(" -> ");
+                sb.AppendFormat(" {0} ", rightArrow);
             }
             sb.AppendFormat("{0}.{1}".Red().Bold(), failedNode.Library.Name, failedNode.Library.Version);
             sb.AppendLine();
