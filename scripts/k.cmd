@@ -12,7 +12,7 @@ IF "%K_APPBASE%"=="" (
   SET "K_APPBASE=%CD%"
 )
 
-%~dp0klr --appbase "%K_APPBASE%" %K_OPTIONS% "Microsoft.Framework.ApplicationHost" %*
+"%~dp0klr" --appbase "%K_APPBASE%" %K_OPTIONS% "Microsoft.Framework.ApplicationHost" %*
 
 exit /b %ERRORLEVEL%
 ENDLOCAL
