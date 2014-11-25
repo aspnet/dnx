@@ -39,7 +39,7 @@ namespace Microsoft.Framework.Runtime
                 new Library
                 {
                     Name = name,
-                    Version = version
+                    MinVersion = version,
                 },
                 LibraryDependencyType.Default)
         {
@@ -53,7 +53,20 @@ namespace Microsoft.Framework.Runtime
                 new Library
                 {
                     Name = name,
-                    Version = version,
+                    MinVersion = version,
+                    IsGacOrFrameworkReference = isGacOrFrameworkReference
+                },
+                type)
+        {
+        }
+        public LibraryDependency(
+            string name,
+            VersionSpec versionSpec,
+            bool isGacOrFrameworkReference,
+            LibraryDependencyType type) : this(
+                new Library(versionSpec)
+                {
+                    Name = name,
                     IsGacOrFrameworkReference = isGacOrFrameworkReference
                 },
                 type)
@@ -86,7 +99,7 @@ namespace Microsoft.Framework.Runtime
         {
             get { return Library.Version; }
         }
-
+        
         public bool IsGacOrFrameworkReference
         {
             get { return Library.IsGacOrFrameworkReference; }
@@ -104,6 +117,14 @@ namespace Microsoft.Framework.Runtime
             return new LibraryDependency(
                 name: Library.Name,
                 version: version,
+                isGacOrFrameworkReference: Library.IsGacOrFrameworkReference,
+                type: Type);
+        }
+        public LibraryDependency ChangeVersion(VersionSpec versionSpec)
+        {
+            return new LibraryDependency(
+                name: Library.Name,
+                versionSpec: versionSpec,
                 isGacOrFrameworkReference: Library.IsGacOrFrameworkReference,
                 type: Type);
         }

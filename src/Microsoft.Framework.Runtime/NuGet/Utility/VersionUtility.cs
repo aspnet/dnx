@@ -1063,12 +1063,39 @@ namespace NuGet
             SemanticVersion considering,
             SemanticVersion ideal)
         {
+            var verSpec = new VersionSpec {
+                MinVersion = ideal,
+                IsMinInclusive = true
+            };
+            return ShouldUseConsidering(current, considering, verSpec);
+        }
+        public static bool ShouldUseConsidering(
+            SemanticVersion current,
+            SemanticVersion considering,
+            SemanticVersion ideal,
+            SemanticVersion highest)
+        {
+            var verSpec = new VersionSpec
+            {
+                MinVersion = ideal,
+                IsMinInclusive = true,
+                MaxVersion = highest,
+                IsMaxInclusive = true
+            };
+            return ShouldUseConsidering(current, considering, verSpec);
+        }
+
+        public static bool ShouldUseConsidering(
+            SemanticVersion current,
+            SemanticVersion considering,
+            VersionSpec ideal)
+        {
             if (considering == null)
             {
                 // skip nulls
                 return false;
             }
-            if (!considering.EqualsSnapshot(ideal) && considering < ideal)
+            if (!considering.EqualsSnapshot(ideal.MinVersion) && considering < ideal.MinVersion)
             {
                 // don't use anything that's less than the requested version
                 return false;
@@ -1078,11 +1105,33 @@ namespace NuGet
                 // always use version when it's the first valid
                 return true;
             }
-            if (current.EqualsSnapshot(ideal) &&
-                considering.EqualsSnapshot(ideal))
+            if ((!ideal.IsMinInclusive && considering.Equals(ideal.MinVersion)))
+            {
+                // don't use a package equal to the minimal version, if Minimal is not inclusive
+                return false;
+            }
+            if (current.EqualsSnapshot(ideal.MinVersion) && considering.EqualsSnapshot(ideal.MinVersion))
             {
                 // favor higher version when they both match a snapshot patter
-                return current < considering;
+                if (current < considering)
+                {
+                    if (ideal.MaxVersion == null)
+                    {
+                        // no max version is specified, take the higher version
+                        return true;
+                    }
+
+                    // take the highest allowed version
+                    if (ideal.IsMaxInclusive)
+                    {
+                        return considering <= ideal.MaxVersion;
+                    }
+                    else
+                    {
+                        return considering < ideal.MaxVersion;
+                    }
+                }
+                return false;
             }
             else
             {
