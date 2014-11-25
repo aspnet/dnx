@@ -185,8 +185,11 @@ var MONO_MANAGED_PROJECTS = '${FindAllProjects("klr.mono.managed")}'
         var sourceFiles = new string[] 
         {
             Path.Combine("src", "klr.mono.managed", "EntryPoint.cs"),
-            Path.Combine("src", "klr.hosting.shared", "RuntimeBootstrapper.cs"),
+            Path.Combine("src", "klr.hosting.shared", "AssemblyPreloader.cs"),
             Path.Combine("src", "klr.hosting.shared", "LoaderEngine.cs"),
+            Path.Combine("src", "klr.hosting.shared", "RuntimeBootstrapper.cs"),
+            Path.Combine("src", "klr.hosting.shared", "StartupOptimizer.cs"),
+            Path.Combine("src", "klr.hosting.shared", "StartupProfiler.cs"),
             Path.Combine("src", "Microsoft.Framework.CommandLineUtils", "CommandLine", "CommandArgument.cs"),
             Path.Combine("src", "Microsoft.Framework.CommandLineUtils", "CommandLine", "CommandLineApplication.cs"), 
             Path.Combine("src", "Microsoft.Framework.CommandLineUtils", "CommandLine", "CommandOption.cs"), 
