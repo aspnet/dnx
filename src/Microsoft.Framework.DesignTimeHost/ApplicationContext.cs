@@ -375,16 +375,21 @@ namespace Microsoft.Framework.DesignTimeHost
 
         private bool DoStageTwo()
         {
+            bool calculateDiagnostics = _requiresCompilation.WasAssigned;
+
+            if (calculateDiagnostics)
+            {
+                _requiresCompilation.ClearAssigned();
+            }
+
             foreach (var pair in _local.Projects)
             {
                 var project = pair.Value;
                 var projectCompilationChanged = false;
                 ProjectCompilation compilation = null;
 
-                if (_requiresCompilation.WasAssigned)
+                if (calculateDiagnostics)
                 {
-                    _requiresCompilation.ClearAssigned();
-
                     projectCompilationChanged = UpdateProjectCompilation(project, out compilation);
 
                     project.Diagnostics = new DiagnosticsMessage
