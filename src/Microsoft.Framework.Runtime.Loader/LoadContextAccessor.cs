@@ -27,6 +27,14 @@ namespace Microsoft.Framework.Runtime.Loader
             return assemblyLoadContext as IAssemblyLoadContext ?? new LoadContextWrapper(assemblyLoadContext);
         }
 
+        public IAssemblyLoadContext Default
+        {
+            get
+            {
+                return new LoadContextWrapper(AssemblyLoadContext.Default);
+            }
+        }
+
         // This wrapper assumes there's public methods LoadFile and LoadStream on the
         // assembly load context implementation. This is the case for the DelegateAssemblyLoadContext
         // and all other implementations should implement this interface to play nicely in
@@ -83,6 +91,14 @@ namespace Microsoft.Framework.Runtime.Loader
             get
             {
                 return _instance.Value;
+            }
+        }
+
+        public IAssemblyLoadContext Default
+        {
+            get
+            {
+                return LoadContext.Default;
             }
         }
 

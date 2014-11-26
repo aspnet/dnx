@@ -1,7 +1,6 @@
 // Copyright (c) Microsoft Open Technologies, Inc. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
-
 using System;
 using System.Reflection;
 
@@ -21,9 +20,7 @@ namespace Microsoft.Framework.Runtime.Loader
 
         public Assembly Load(string name)
         {
-            IAssemblyLoadContext loadContext = _loadContextAccessor.GetLoadContext(typeof(NuGetAssemblyLoader).GetTypeInfo().Assembly);
-
-            return Load(name, loadContext);
+            return Load(name, _loadContextAccessor.Default);
         }
 
         public Assembly Load(string name, IAssemblyLoadContext loadContext)

@@ -40,7 +40,7 @@ namespace Microsoft.Framework.Runtime.Roslyn
             _loadContextFactory = loadContextFactory;
             _watcher = watcher;
             _services = services;
-            _sourceTextService = (ISourceTextService) services.GetService(typeof(ISourceTextService));
+            _sourceTextService = (ISourceTextService)services.GetService(typeof(ISourceTextService));
         }
 
         public CompilationContext CompileProject(
@@ -144,7 +144,6 @@ namespace Microsoft.Framework.Runtime.Roslyn
                 project);
 
             var modules = new List<ICompileModule>();
-
 
             using (var childContext = _loadContextFactory.Create())
             {

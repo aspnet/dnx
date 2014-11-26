@@ -24,9 +24,7 @@ namespace Microsoft.Framework.Runtime.Loader
 
         public Assembly Load(string name)
         {
-            IAssemblyLoadContext loadContext = _loadContextAccessor.GetLoadContext(typeof(ProjectAssemblyLoader).GetTypeInfo().Assembly);
-
-            return Load(name, loadContext);
+            return Load(name, _loadContextAccessor.Default);
         }
 
         public Assembly Load(string name, IAssemblyLoadContext loadContext)

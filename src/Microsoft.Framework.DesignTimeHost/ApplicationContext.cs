@@ -13,6 +13,7 @@ using Microsoft.Framework.DesignTimeHost.Models;
 using Microsoft.Framework.DesignTimeHost.Models.IncomingMessages;
 using Microsoft.Framework.DesignTimeHost.Models.OutgoingMessages;
 using Microsoft.Framework.Runtime;
+using Microsoft.Framework.Runtime.Loader;
 using Microsoft.Framework.Runtime.Roslyn;
 using Microsoft.Framework.Runtime.Roslyn.Services;
 using Newtonsoft.Json.Linq;
@@ -825,18 +826,6 @@ namespace Microsoft.Framework.DesignTimeHost
         {
             var cacheKey = Tuple.Create("ApplicationContext", project.Name, configuration, frameworkName);
 
-            IAssemblyLoadContextFactory loadContextFactory = null;
-
-            if (useRuntimeLoadContextFactory)
-            {
-                var runtimeApplicationContext = GetApplicationHostContext(project,
-                                                                          _appEnv.Configuration,
-                                                                          _appEnv.RuntimeFramework,
-                                                                          useRuntimeLoadContextFactory: false);
-
-                loadContextFactory = runtimeApplicationContext.AssemblyLoadContextFactory;
-            }
-
             return _cache.Get<ApplicationHostContext>(cacheKey, ctx =>
             {
                 var applicationHostContext = new ApplicationHostContext(_hostServices,
@@ -847,7 +836,7 @@ namespace Microsoft.Framework.DesignTimeHost
                                                                         cache: _cache,
                                                                         cacheContextAccessor: _cacheContextAccessor,
                                                                         namedCacheDependencyProvider: _namedDependencyProvider,
-                                                                        loadContextFactory: loadContextFactory);
+                                                                        loadContextFactory: GetRuntimeLoadContextFactory(project));
 
                 applicationHostContext.DependencyWalker.Walk(project.Name, project.Version, frameworkName);
 
@@ -865,6 +854,22 @@ namespace Microsoft.Framework.DesignTimeHost
 
                 return applicationHostContext;
             });
+        }
+
+        private IAssemblyLoadContextFactory GetRuntimeLoadContextFactory(Project project)
+        {
+            var applicationHostContext = new ApplicationHostContext(_hostServices,
+                                                                    project.ProjectDirectory,
+                                                                    packagesDirectory: null,
+                                                                    configuration: _appEnv.Configuration,
+                                                                    targetFramework: _appEnv.RuntimeFramework,
+                                                                    cache: _cache,
+                                                                    cacheContextAccessor: _cacheContextAccessor,
+                                                                    namedCacheDependencyProvider: _namedDependencyProvider);
+
+            applicationHostContext.DependencyWalker.Walk(project.Name, project.Version, _appEnv.RuntimeFramework);
+
+            return new AssemblyLoadContextFactory(applicationHostContext.ServiceProvider);
         }
 
         private DependencyInfo ResolveProjectDepencies(Project project, string configuration, FrameworkName frameworkName)

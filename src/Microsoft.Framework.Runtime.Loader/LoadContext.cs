@@ -12,38 +12,26 @@ namespace Microsoft.Framework.Runtime.Loader
     public abstract class LoadContext : AssemblyLoadContext, IAssemblyLoadContext
     {
         private readonly Dictionary<string, Assembly> _assemblyCache = new Dictionary<string, Assembly>(StringComparer.Ordinal);
+        private readonly IAssemblyLoadContext _defaultContext;
 
-        private readonly IAssemblyNeutralInterfaceCache _assemblyNeutralInterfaceCache;
-
-        public LoadContext(IAssemblyNeutralInterfaceCache assemblyNeutralInterfaceCache)
+        public LoadContext(IAssemblyLoadContext defaultContext)
         {
-            _assemblyNeutralInterfaceCache = assemblyNeutralInterfaceCache;
+            _defaultContext = defaultContext;
         }
 
         protected override Assembly Load(AssemblyName assemblyName)
         {
             var name = assemblyName.Name;
 
-            var assembly = _assemblyNeutralInterfaceCache.GetAssembly(name);
-
-            if (assembly != null)
-            {
-                return assembly;
-            }
-
             // TODO: Make this more efficient
             lock (_assemblyCache)
             {
+                Assembly assembly;
                 if (!_assemblyCache.TryGetValue(name, out assembly))
                 {
                     assembly = LoadAssembly(name);
 
-                    if (assembly != null)
-                    {
-                        _assemblyCache[name] = assembly;
-
-                        ExtractAssemblyNeutralInterfaces(assembly);
-                    }
+                    ExtractAssemblyNeutralInterfaces(assembly);
                 }
 
                 return assembly;
@@ -119,15 +107,16 @@ namespace Microsoft.Framework.Runtime.Loader
                 {
                     var assemblyName = Path.GetFileNameWithoutExtension(name);
 
-                    if (_assemblyNeutralInterfaceCache.IsLoaded(assemblyName))
-                    {
-                        continue;
-                    }
-
                     var neutralAssemblyStream = assembly.GetManifestResourceStream(name);
 
-                    // Store this assembly in the global cache so that it's shared across all load contexts
-                    _assemblyNeutralInterfaceCache.AddAssembly(assemblyName, LoadStream(neutralAssemblyStream, assemblySymbols: null));
+                    try
+                    {
+                        _defaultContext.LoadStream(neutralAssemblyStream, assemblySymbols: null);
+                    }
+                    catch (FileLoadException)
+                    {
+                        // Already loaded
+                    }
                 }
             }
         }
@@ -139,12 +128,13 @@ namespace Microsoft.Framework.Runtime.Loader
 
         protected string _contextId;
 
-        public LoadContext(IAssemblyNeutralInterfaceCache assemblyNeutralInterfaceCache)
+        public LoadContext(IAssemblyLoadContext defaultContext)
         {
             _contextId = Guid.NewGuid().ToString();
 
             AppDomain.CurrentDomain.AssemblyResolve += ResolveAssembly;
         }
+
         public void Dispose()
         {
             // TODO: Remove instances of this type from the LoadContextAccessor
@@ -233,7 +223,7 @@ namespace Microsoft.Framework.Runtime.Loader
                 {
                     // Get the relevant load context for the requesting assembly
                     var loadContext = LoadContextAccessor.Instance.GetLoadContext(args.RequestingAssembly);
-                    if (loadContext != null && loadContext != this)
+                    if (loadContext != null && loadContext != this && loadContext != Default)
                     {
                         return loadContext.Load(assemblyName.Name);
                     }
@@ -245,7 +235,7 @@ namespace Microsoft.Framework.Runtime.Loader
 
         private class DefaultLoadContext : LoadContext
         {
-            public DefaultLoadContext() : base(null)
+            public DefaultLoadContext() : base(defaultContext: null)
             {
                 _contextId = null;
             }

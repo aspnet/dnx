@@ -9,7 +9,7 @@ namespace Microsoft.Framework.Runtime.Roslyn
         private readonly RoslynCompiler _compiler;
 
         public RoslynProjectReferenceProvider(
-            ICache cache, 
+            ICache cache,
             ICacheContextAccessor cacheContextAccessor,
             INamedCacheDependencyProvider namedCacheProvider,
             IAssemblyLoadContextFactory loadContextFactory,
@@ -17,11 +17,11 @@ namespace Microsoft.Framework.Runtime.Roslyn
             IServiceProvider services)
         {
             _compiler = new RoslynCompiler(
-                cache, 
-                cacheContextAccessor, 
+                cache,
+                cacheContextAccessor,
                 namedCacheProvider,
                 loadContextFactory,
-                watcher, 
+                watcher,
                 services);
         }
 

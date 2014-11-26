@@ -5,6 +5,7 @@
 
 #include "..\klr\klr.h"
 #include "klr.core45.h"
+#include "tpa.h"
 
 #define TRUSTED_PLATFORM_ASSEMBLIES_STRING_BUFFER_SIZE_CCH (63 * 1024) //32K WCHARs
 #define CHECK_RETURN_VALUE_FAIL_EXIT_VIA_FINISHED(errno) { if (errno) { goto Finished;}}
@@ -22,73 +23,60 @@ void GetModuleDirectory(HMODULE module, LPWSTR szPath)
     szPath[dirLength + 1] = '\0';
 }
 
-bool ScanDirectory(WCHAR* szDirectory, WCHAR* szPattern, LPWSTR pszTrustedPlatformAssemblies, size_t cchTrustedPlatformAssemblies)
+// Generate a list of trusted platform assembiles. 
+bool GetTrustedPlatformAssembliesList(WCHAR* szDirectory, bool bNative, LPWSTR pszTrustedPlatformAssemblies, size_t cchTrustedPlatformAssemblies)
 {
     bool ret = true;
     errno_t errno = 0;
     WIN32_FIND_DATA ffd = {};
-    
-    WCHAR wszPattern[MAX_PATH];
-    wszPattern[0] = L'\0';
-    
-    errno = wcscpy_s(wszPattern, _countof(wszPattern), szDirectory);
-    CHECK_RETURN_VALUE_FAIL_EXIT_VIA_FINISHED_SETSTATE(errno, ret = false);
+    size_t cTpaAssemblyNames = 0;
+    LPWSTR* ppszTpaAssemblyNames = nullptr;
 
-    errno = wcscat_s(wszPattern, _countof(wszPattern), szPattern);
-    CHECK_RETURN_VALUE_FAIL_EXIT_VIA_FINISHED_SETSTATE(errno, ret = false);
-    
-    HANDLE findHandle = FindFirstFile(wszPattern, &ffd);
+    // Build the list of the tpa assemblie 
+    CreateTpaBase(&ppszTpaAssemblyNames, &cTpaAssemblyNames, bNative);
 
-    if (INVALID_HANDLE_VALUE == findHandle)
+    // Scan the directory to see if all the files in TPA list exist
+    for (size_t i = 0; i < cTpaAssemblyNames; ++i)
     {
-        ret = false;
-        goto Finished;
+        WCHAR wszPattern[MAX_PATH];
+        wszPattern[0] = L'\0';
+
+        errno = wcscpy_s(wszPattern, _countof(wszPattern), szDirectory);
+        CHECK_RETURN_VALUE_FAIL_EXIT_VIA_FINISHED_SETSTATE(errno, ret = false);
+
+        errno = wcscat_s(wszPattern, _countof(wszPattern), ppszTpaAssemblyNames[i]);
+        CHECK_RETURN_VALUE_FAIL_EXIT_VIA_FINISHED_SETSTATE(errno, ret = false);
+
+        HANDLE findHandle = FindFirstFile(wszPattern, &ffd);
+
+        if ((findHandle == INVALID_HANDLE_VALUE) ||
+            (ffd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY))
+        {
+            // if file is missing or a directory is found, breaks the loop and
+            // set the missing flag to true
+            ret = false;
+            goto Finished;
+        }
     }
 
-    do
+    for (size_t i = 0; i < cTpaAssemblyNames; ++i)
     {
-        if (ffd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
-        {
-            // Skip directories
-        }
-        else
-        {
-            if (wcscmp(ffd.cFileName, L"klr.host.dll") == 0 || 
-                wcscmp(ffd.cFileName, L"klr.host.ni.dll") == 0 ||
-                wcscmp(ffd.cFileName, L"Microsoft.Framework.ApplicationHost.dll") == 0 ||
-                wcscmp(ffd.cFileName, L"Microsoft.Framework.ApplicationHost.ni.dll") == 0 ||
-                wcscmp(ffd.cFileName, L"Microsoft.Framework.Runtime.dll") == 0 ||
-                wcscmp(ffd.cFileName, L"Microsoft.Framework.Runtime.ni.dll") == 0 ||
-                wcscmp(ffd.cFileName, L"Microsoft.Framework.Runtime.Loader.dll") == 0 ||
-                wcscmp(ffd.cFileName, L"Microsoft.Framework.Runtime.Loader.ni.dll") == 0 ||
-                wcscmp(ffd.cFileName, L"Microsoft.Framework.Runtime.Roslyn.dll") == 0 ||
-                wcscmp(ffd.cFileName, L"Microsoft.Framework.Runtime.Roslyn.ni.dll") == 0 ||
-                wcscmp(ffd.cFileName, L"Microsoft.Framework.Project.dll") == 0 ||
-                wcscmp(ffd.cFileName, L"Microsoft.Framework.Project.ni.dll") == 0 ||
-                wcscmp(ffd.cFileName, L"Microsoft.Framework.DesignTimeHost.dll") == 0 ||
-                wcscmp(ffd.cFileName, L"Microsoft.Framework.DesignTimeHost.ni.dll") == 0 ||
-				wcscmp(ffd.cFileName, L"Newtonsoft.Json.dll") == 0 ||
-				wcscmp(ffd.cFileName, L"Newtonsoft.Json.ni.dll") == 0)
-            {
-                // Exclude these assemblies from the TPA list since they need to
-                // be handled by the loader since they depend on assembly neutral
-                // interfaces
-                continue;
-            }
+        errno = wcscat_s(pszTrustedPlatformAssemblies, cchTrustedPlatformAssemblies, szDirectory);
+        CHECK_RETURN_VALUE_FAIL_EXIT_VIA_FINISHED_SETSTATE(errno, ret = false);
 
-            errno = wcscat_s(pszTrustedPlatformAssemblies, cchTrustedPlatformAssemblies, szDirectory);
-            CHECK_RETURN_VALUE_FAIL_EXIT_VIA_FINISHED_SETSTATE(errno, ret = false);
-            
-            errno = wcscat_s(pszTrustedPlatformAssemblies, cchTrustedPlatformAssemblies, ffd.cFileName);
-            CHECK_RETURN_VALUE_FAIL_EXIT_VIA_FINISHED_SETSTATE(errno, ret = false);
-            
-            errno = wcscat_s(pszTrustedPlatformAssemblies, cchTrustedPlatformAssemblies, L";");
-            CHECK_RETURN_VALUE_FAIL_EXIT_VIA_FINISHED_SETSTATE(errno, ret = false);
-        }
+        errno = wcscat_s(pszTrustedPlatformAssemblies, cchTrustedPlatformAssemblies, ppszTpaAssemblyNames[i]);
+        CHECK_RETURN_VALUE_FAIL_EXIT_VIA_FINISHED_SETSTATE(errno, ret = false);
 
-    } while (FindNextFile(findHandle, &ffd) != 0);
+        errno = wcscat_s(pszTrustedPlatformAssemblies, cchTrustedPlatformAssemblies, L";");
+        CHECK_RETURN_VALUE_FAIL_EXIT_VIA_FINISHED_SETSTATE(errno, ret = false);
+    }
 
 Finished:
+    if (ppszTpaAssemblyNames != nullptr)
+    {
+        FreeTpaBase(ppszTpaAssemblyNames, cTpaAssemblyNames);
+    }
+
     return ret;
 }
 
@@ -443,9 +431,9 @@ extern "C" __declspec(dllexport) bool __stdcall CallApplicationMain(PCALL_APPLIC
     pwszTrustedPlatformAssemblies[0] = L'\0';
     
     // Try native images first
-    if (!ScanDirectory(szCoreClrDirectory, L"*.ni.dll", pwszTrustedPlatformAssemblies, cchTrustedPlatformAssemblies))
+    if (!GetTrustedPlatformAssembliesList(szCoreClrDirectory, true, pwszTrustedPlatformAssemblies, cchTrustedPlatformAssemblies))
     {
-        if (!ScanDirectory(szCoreClrDirectory, L"*.dll", pwszTrustedPlatformAssemblies, cchTrustedPlatformAssemblies))
+        if (!GetTrustedPlatformAssembliesList(szCoreClrDirectory, false, pwszTrustedPlatformAssemblies, cchTrustedPlatformAssemblies))
         {
             printf_s("Failed to find files in the coreclr directory\n");
             return false;
@@ -508,8 +496,8 @@ extern "C" __declspec(dllexport) bool __stdcall CallApplicationMain(PCALL_APPLIC
 
     if (FAILED(hr))
     {
-        wprintf_s(L"TPA      %d %s\n", wcslen(pwszTrustedPlatformAssemblies), pwszTrustedPlatformAssemblies);
-        wprintf_s(L"AppPaths %s\n", wszAppPaths);
+        wprintf_s(L"TPA      %d %S\n", wcslen(pwszTrustedPlatformAssemblies), pwszTrustedPlatformAssemblies);
+        wprintf_s(L"AppPaths %S\n", wszAppPaths);
         printf_s("Failed to create app domain (%d).\n", hr);
         return false;
     }

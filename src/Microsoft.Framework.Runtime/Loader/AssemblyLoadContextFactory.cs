@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using System.Reflection;
 using Microsoft.Framework.Runtime.Common.DependencyInjection;
 
@@ -6,15 +7,14 @@ namespace Microsoft.Framework.Runtime.Loader
 {
     public class AssemblyLoadContextFactory : IAssemblyLoadContextFactory
     {
+        private readonly IAssemblyLoadContext _defaultContext;
         private readonly IServiceProvider _serviceProvider;
-        private readonly IAssemblyLoader _parent;
-        private readonly IAssemblyNeutralInterfaceCache _assemblyNeutralInterfaceCache;
 
         public AssemblyLoadContextFactory(IServiceProvider serviceProvider)
         {
+            var accessor = serviceProvider.GetService(typeof(IAssemblyLoadContextAccessor)) as IAssemblyLoadContextAccessor;
             _serviceProvider = serviceProvider;
-            _parent = serviceProvider.GetService(typeof(IAssemblyLoaderContainer)) as IAssemblyLoader;
-            _assemblyNeutralInterfaceCache = serviceProvider.GetService(typeof(IAssemblyNeutralInterfaceCache)) as IAssemblyNeutralInterfaceCache;
+            _defaultContext = accessor.Default;
         }
 
         public IAssemblyLoadContext Create()
@@ -22,31 +22,39 @@ namespace Microsoft.Framework.Runtime.Loader
             var projectAssemblyLoader = (ProjectAssemblyLoader)ActivatorUtilities.CreateInstance(_serviceProvider, typeof(ProjectAssemblyLoader));
             var nugetAsseblyLoader = (NuGetAssemblyLoader)ActivatorUtilities.CreateInstance(_serviceProvider, typeof(NuGetAssemblyLoader));
 
-            return new LibraryAssemblyLoadContext(projectAssemblyLoader, nugetAsseblyLoader, _parent, _assemblyNeutralInterfaceCache);
+            return new LibraryAssemblyLoadContext(projectAssemblyLoader, nugetAsseblyLoader, _defaultContext);
         }
 
         private class LibraryAssemblyLoadContext : LoadContext
         {
             private readonly ProjectAssemblyLoader _projectAssemblyLoader;
             private readonly NuGetAssemblyLoader _nugetAssemblyLoader;
-            private readonly IAssemblyLoader _parent;
+            private readonly IAssemblyLoadContext _defaultContext;
 
             public LibraryAssemblyLoadContext(ProjectAssemblyLoader projectAssemblyLoader,
                                               NuGetAssemblyLoader nugetAssemblyLoader,
-                                              IAssemblyLoader parent,
-                                              IAssemblyNeutralInterfaceCache assemblyNeutralInterfaceCache) 
-                : base(assemblyNeutralInterfaceCache)
+                                              IAssemblyLoadContext defaultContext) : base(defaultContext)
             {
                 _projectAssemblyLoader = projectAssemblyLoader;
                 _nugetAssemblyLoader = nugetAssemblyLoader;
-                _parent = parent;
+                _defaultContext = defaultContext;
             }
 
             public override Assembly LoadAssembly(string name)
             {
-                return _projectAssemblyLoader.Load(name, this) ??
-                       _nugetAssemblyLoader.Load(name, this) ??
-                       _parent.Load(name);
+                try
+                {
+                    return _defaultContext.Load(name);
+                }
+#if ASPNET50
+                catch (FileNotFoundException)
+#else
+                catch (FileLoadException)
+#endif
+                {
+                    return _projectAssemblyLoader.Load(name, this) ??
+                           _nugetAssemblyLoader.Load(name, this);
+                }
             }
         }
     }

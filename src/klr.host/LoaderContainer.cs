@@ -10,7 +10,7 @@ using System.Diagnostics;
 
 namespace klr.host
 {
-    public class LoaderContainer : IAssemblyLoaderContainer, IAssemblyLoader
+    public class LoaderContainer : IAssemblyLoaderContainer
     {
         private readonly Stack<IAssemblyLoader> _loaders = new Stack<IAssemblyLoader>();
 

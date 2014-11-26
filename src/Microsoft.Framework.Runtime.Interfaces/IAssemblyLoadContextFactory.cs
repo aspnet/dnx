@@ -7,5 +7,4 @@ namespace Microsoft.Framework.Runtime
     {
         IAssemblyLoadContext Create();
     }
-
 }

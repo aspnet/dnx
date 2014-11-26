@@ -7,6 +7,8 @@ namespace Microsoft.Framework.Runtime
     {
         private readonly ConcurrentDictionary<string, NamedCacheDependency> _cache = new ConcurrentDictionary<string, NamedCacheDependency>(StringComparer.OrdinalIgnoreCase);
 
+        public static INamedCacheDependencyProvider Empty = new NoopCacheDependencyProvider();
+
         public ICacheDependency GetNamedDependency(string name)
         {
             return _cache.GetOrAdd(name, key =>
@@ -22,6 +24,31 @@ namespace Microsoft.Framework.Runtime
             if (_cache.TryRemove(name, out dependency))
             {
                 dependency.SetChanged();
+            }
+        }
+
+        private class NoopCacheDependencyProvider : INamedCacheDependencyProvider
+        {
+            private static readonly NoopCacheDependency _dependency = new NoopCacheDependency();
+
+            public ICacheDependency GetNamedDependency(string name)
+            {
+                return _dependency;
+            }
+
+            public void Trigger(string name)
+            {
+            }
+
+            private class NoopCacheDependency : ICacheDependency
+            {
+                public bool HasChanged
+                {
+                    get
+                    {
+                        return false;
+                    }
+                }
             }
         }
     }

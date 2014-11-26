@@ -15,7 +15,6 @@ namespace Microsoft.Framework.PackageManager
     public class BuildManager
     {
         private readonly IServiceProvider _hostServices;
-        private readonly IAssemblyLoaderContainer _loaderContainer;
         private readonly IApplicationEnvironment _applicationEnvironment;
         private readonly BuildOptions _buildOptions;
 
@@ -26,7 +25,6 @@ namespace Microsoft.Framework.PackageManager
             _buildOptions.ProjectDir = Normalize(buildOptions.ProjectDir);
 
             _applicationEnvironment = (IApplicationEnvironment)hostServices.GetService(typeof(IApplicationEnvironment));
-            _loaderContainer = (IAssemblyLoaderContainer)hostServices.GetService(typeof(IAssemblyLoaderContainer));
 
             ScriptExecutor = new ScriptExecutor();
         }
@@ -79,114 +77,102 @@ namespace Microsoft.Framework.PackageManager
             var allErrors = new List<string>();
             var allWarnings = new List<string>();
 
-            // Initialize the default host so that we can load custom project export
-            // providers from nuget packages/projects
-            var host = new DefaultHost(new DefaultHostOptions()
-            {
-                ApplicationBaseDirectory = project.ProjectDirectory,
-                TargetFramework = _applicationEnvironment.RuntimeFramework,
-                Configuration = _applicationEnvironment.Configuration
-            },
-            _hostServices);
-
-            host.Initialize();
-
             var cacheContextAccessor = new CacheContextAccessor();
             var cache = new Cache(cacheContextAccessor);
 
-            using (host.AddLoaders(_loaderContainer))
+            // Build all specified configurations
+            foreach (var configuration in configurations)
             {
-                // Build all specified configurations
-                foreach (var configuration in configurations)
+                // Create a new builder per configuration
+                var packageBuilder = new PackageBuilder();
+                var symbolPackageBuilder = new PackageBuilder();
+
+                InitializeBuilder(project, packageBuilder);
+                InitializeBuilder(project, symbolPackageBuilder);
+
+                var configurationSuccess = true;
+
+                baseOutputPath = Path.Combine(baseOutputPath, configuration);
+
+                // Build all target frameworks a project supports
+                foreach (var targetFramework in frameworks)
                 {
-                    // Create a new builder per configuration
-                    var packageBuilder = new PackageBuilder();
-                    var symbolPackageBuilder = new PackageBuilder();
+                    _buildOptions.Reports.Information.WriteLine();
+                    _buildOptions.Reports.Information.WriteLine("Building {0} for {1}",
+                        project.Name, targetFramework.ToString().Yellow().Bold());
 
-                    InitializeBuilder(project, packageBuilder);
-                    InitializeBuilder(project, symbolPackageBuilder);
+                    var errors = new List<string>();
+                    var warnings = new List<string>();
 
-                    var configurationSuccess = true;
+                    var context = new BuildContext(_hostServices,
+                                                   _applicationEnvironment,
+                                                   cache,
+                                                   cacheContextAccessor,
+                                                   project,
+                                                   targetFramework,
+                                                   configuration,
+                                                   baseOutputPath);
 
-                    baseOutputPath = Path.Combine(baseOutputPath, configuration);
+                    context.Initialize(_buildOptions.Reports.Quiet);
 
-                    // Build all target frameworks a project supports
-                    foreach (var targetFramework in frameworks)
+                    if (context.Build(warnings, errors))
                     {
-                        _buildOptions.Reports.Information.WriteLine();
-                        _buildOptions.Reports.Information.WriteLine("Building {0} for {1}",
-                            project.Name, targetFramework.ToString().Yellow().Bold());
-
-                        var errors = new List<string>();
-                        var warnings = new List<string>();
-
-                        var context = new BuildContext(cache,
-                                                       cacheContextAccessor,
-                                                       project,
-                                                       targetFramework,
-                                                       configuration,
-                                                       baseOutputPath);
-                        context.Initialize(_buildOptions.Reports.Quiet);
-
-                        if (context.Build(warnings, errors))
-                        {
-                            context.PopulateDependencies(packageBuilder);
-                            context.AddLibs(packageBuilder, "*.dll");
-                            context.AddLibs(packageBuilder, "*.xml");
-                            context.AddLibs(symbolPackageBuilder, "*.*");
-                        }
-                        else
-                        {
-                            configurationSuccess = false;
-                        }
-
-                        allErrors.AddRange(errors);
-                        allWarnings.AddRange(warnings);
-
-                        WriteDiagnostics(warnings, errors);
+                        context.PopulateDependencies(packageBuilder);
+                        context.AddLibs(packageBuilder, "*.dll");
+                        context.AddLibs(packageBuilder, "*.xml");
+                        context.AddLibs(symbolPackageBuilder, "*.*");
+                    }
+                    else
+                    {
+                        configurationSuccess = false;
                     }
 
-                    success = success && configurationSuccess;
+                    allErrors.AddRange(errors);
+                    allWarnings.AddRange(warnings);
 
-                    // Create a package per configuration
-                    string nupkg = GetPackagePath(project, baseOutputPath);
-                    string symbolsNupkg = GetPackagePath(project, baseOutputPath, symbols: true);
+                    WriteDiagnostics(warnings, errors);
+                }
 
-                    if (configurationSuccess)
+                success = success && configurationSuccess;
+
+                // Create a package per configuration
+                string nupkg = GetPackagePath(project, baseOutputPath);
+                string symbolsNupkg = GetPackagePath(project, baseOutputPath, symbols: true);
+
+                if (configurationSuccess)
+                {
+                    foreach (var sharedFile in project.SharedFiles)
                     {
-                        foreach (var sharedFile in project.SharedFiles)
+                        var file = new PhysicalPackageFile();
+                        file.SourcePath = sharedFile;
+                        file.TargetPath = String.Format(@"shared\{0}", Path.GetFileName(sharedFile));
+                        packageBuilder.Files.Add(file);
+                    }
+
+                    var root = project.ProjectDirectory;
+
+                    foreach (var path in project.SourceFiles)
+                    {
+                        var srcFile = new PhysicalPackageFile();
+                        srcFile.SourcePath = path;
+                        srcFile.TargetPath = Path.Combine("src", PathUtility.GetRelativePath(root, path));
+                        symbolPackageBuilder.Files.Add(srcFile);
+                    }
+
+                    using (var fs = File.Create(nupkg))
+                    {
+                        packageBuilder.Save(fs);
+                        _buildOptions.Reports.Quiet.WriteLine("{0} -> {1}", project.Name, nupkg);
+                    }
+
+                    if (symbolPackageBuilder.Files.Any())
+                    {
+                        using (var fs = File.Create(symbolsNupkg))
                         {
-                            var file = new PhysicalPackageFile();
-                            file.SourcePath = sharedFile;
-                            file.TargetPath = String.Format(@"shared\{0}", Path.GetFileName(sharedFile));
-                            packageBuilder.Files.Add(file);
+                            symbolPackageBuilder.Save(fs);
                         }
 
-                        var root = project.ProjectDirectory;
-
-                        foreach (var path in project.SourceFiles)
-                        {
-                            var srcFile = new PhysicalPackageFile();
-                            srcFile.SourcePath = path;
-                            srcFile.TargetPath = Path.Combine("src", PathUtility.GetRelativePath(root, path));
-                            symbolPackageBuilder.Files.Add(srcFile);
-                        }
-
-                        using (var fs = File.Create(nupkg))
-                        {
-                            packageBuilder.Save(fs);
-                            _buildOptions.Reports.Quiet.WriteLine("{0} -> {1}", project.Name, nupkg);
-                        }
-
-                        if (symbolPackageBuilder.Files.Any())
-                        {
-                            using (var fs = File.Create(symbolsNupkg))
-                            {
-                                symbolPackageBuilder.Save(fs);
-                            }
-
-                            _buildOptions.Reports.Quiet.WriteLine("{0} -> {1}", project.Name, symbolsNupkg);
-                        }
+                        _buildOptions.Reports.Quiet.WriteLine("{0} -> {1}", project.Name, symbolsNupkg);
                     }
                 }
             }

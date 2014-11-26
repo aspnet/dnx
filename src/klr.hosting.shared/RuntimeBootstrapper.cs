@@ -206,21 +206,18 @@ namespace klr.hosting
                 // Loader impl
                 // The following code is doing:
                 // var loaderContainer = new klr.host.LoaderContainer();
-                // var assemblyNeutralInterfaceCache = new klr.host.AssemblyNeutralInterfaceCache(_assemblyNeutralInterfaces);
                 // var cachedAssemblyLoader = new klr.host.CachedAssemblyLoader(_assemblyCache);
                 // var libLoader = new klr.host.PathBasedAssemblyLoader(searchPaths);
                 // loaderContainer.AddLoader(cachedAssemblyLoader);
                 // loaderContainer.AddLoader(libLoader);
-                // var bootstrapper = new klr.host.Bootstrapper(loaderContainer, assemblyNeutralInterfaceCache);
+                // var bootstrapper = new klr.host.Bootstrapper(loaderContainer);
                 // bootstrapper.Main(bootstrapperArgs);
 
                 var loaderContainerType = assembly.GetType("klr.host.LoaderContainer");
-                var assemblyNeutralInterfaceCacheType = assembly.GetType("klr.host.AssemblyNeutralInterfaceCache");
                 var cachedAssemblyLoaderType = assembly.GetType("klr.host.CachedAssemblyLoader");
                 var pathBasedLoaderType = assembly.GetType("klr.host.PathBasedAssemblyLoader");
 
                 var loaderContainer = Activator.CreateInstance(loaderContainerType);
-                var assemblyNeutralInterfaceCache = Activator.CreateInstance(assemblyNeutralInterfaceCacheType, new object[] { _assemblyNeutralInterfaces });
                 var cachedAssemblyLoader = Activator.CreateInstance(cachedAssemblyLoaderType, new object[] { _assemblyCache });
                 var libLoader = Activator.CreateInstance(pathBasedLoaderType, new object[] { searchPaths });
 
@@ -236,7 +233,7 @@ namespace klr.hosting
 
                 var bootstrapperType = assembly.GetType("klr.host.Bootstrapper");
                 var mainMethod = bootstrapperType.GetTypeInfo().GetDeclaredMethod("Main");
-                var bootstrapper = Activator.CreateInstance(bootstrapperType, loaderContainer, assemblyNeutralInterfaceCache);
+                var bootstrapper = Activator.CreateInstance(bootstrapperType, loaderContainer);
 
                 try
                 {
@@ -339,7 +336,6 @@ namespace klr.hosting
                     var neutralAssembly = load(neutralAssemblyStream);
 
                     _assemblyCache[assemblyName] = neutralAssembly;
-                    _assemblyNeutralInterfaces[assemblyName] = neutralAssembly;
                 }
             }
         }

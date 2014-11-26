@@ -108,6 +108,10 @@
       <AdditionalDependencies Condition="'$(KreTargetOS)'=='WIN7_PLUS_CORESYSTEM'">$(ProgramFiles)\Windows Kits\Win8CoreSystem\sdk\lib\mincore\i386\mincore_fw.lib;$(ProgramFiles)\Windows Kits\Win8CoreSystem\sdk\lib\mincore\i386\msvcrt.lib</AdditionalDependencies>
       <IgnoreAllDefaultLibraries Condition="'$(KreTargetOS)'=='WIN7_PLUS_CORESYSTEM'">true</IgnoreAllDefaultLibraries>
     </Link>
+    <PostBuildEvent>
+      <Command>copy $(OutputPath)\$(AssemblyName).dll $(ProjectDir)..\..\artifacts\build\KRE-CoreCLR-x86\bin\
+copy $(OutputPath)\$(AssemblyName).pdb $(ProjectDir)..\..\artifacts\build\KRE-CoreCLR-x86\bin\</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
@@ -179,6 +183,7 @@
   <ItemGroup>
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="targetver.h" />
+    <ClInclude Include="tpa.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="klr.core45.cpp" />
@@ -202,6 +207,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="tpa.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="exports.def" />

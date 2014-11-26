@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Runtime.Versioning;
 using Microsoft.Framework.Runtime.Common.DependencyInjection;
 using Microsoft.Framework.Runtime.FileSystem;
@@ -6,9 +7,6 @@ using Microsoft.Framework.Runtime.Loader;
 
 namespace Microsoft.Framework.Runtime
 {
-    /// <summary>
-    /// Summary description for ApplicationHostContext
-    /// </summary>
     public class ApplicationHostContext
     {
         private readonly ServiceProvider _serviceProvider;
@@ -56,21 +54,23 @@ namespace Microsoft.Framework.Runtime
             LibraryManager = new LibraryManager(targetFramework, configuration, DependencyWalker,
                 LibraryExportProvider, cache);
 
-            AssemblyLoadContextFactory = loadContextFactory ?? new AssemblyLoadContextFactory(ServiceProvider);
+            AssemblyLoadContextFactory = loadContextFactory ?? new RuntimeLoadContextFactory(ServiceProvider);
+            namedCacheDependencyProvider = namedCacheDependencyProvider ?? NamedCacheDependencyProvider.Empty;
 
             // Default services
             _serviceProvider.Add(typeof(IApplicationEnvironment), new ApplicationEnvironment(Project, targetFramework, configuration));
-            _serviceProvider.Add(typeof(ILibraryExportProvider), LibraryExportProvider, includeInManifest: false);
-            _serviceProvider.Add(typeof(IProjectResolver), ProjectResolver);
             _serviceProvider.Add(typeof(IFileWatcher), NoopWatcher.Instance);
+            _serviceProvider.Add(typeof(ILibraryManager), LibraryManager);
 
+            // Not exposed to the application layer
+            _serviceProvider.Add(typeof(ILibraryExportProvider), LibraryExportProvider, includeInManifest: false);
+            _serviceProvider.Add(typeof(IProjectResolver), ProjectResolver, includeInManifest: false);
             _serviceProvider.Add(typeof(NuGetDependencyResolver), NuGetDependencyProvider, includeInManifest: false);
             _serviceProvider.Add(typeof(ProjectReferenceDependencyProvider), ProjectDepencyProvider, includeInManifest: false);
-            _serviceProvider.Add(typeof(ILibraryManager), LibraryManager);
-            _serviceProvider.Add(typeof(ICache), cache);
-            _serviceProvider.Add(typeof(ICacheContextAccessor), cacheContextAccessor);
+            _serviceProvider.Add(typeof(ICache), cache, includeInManifest: false);
+            _serviceProvider.Add(typeof(ICacheContextAccessor), cacheContextAccessor, includeInManifest: false);
             _serviceProvider.Add(typeof(INamedCacheDependencyProvider), namedCacheDependencyProvider, includeInManifest: false);
-            _serviceProvider.Add(typeof(IAssemblyLoadContextFactory), AssemblyLoadContextFactory);
+            _serviceProvider.Add(typeof(IAssemblyLoadContextFactory), AssemblyLoadContextFactory, includeInManifest: false);
         }
 
         public void AddService(Type type, object instance, bool includeInManifest)

@@ -16,9 +16,9 @@ namespace Microsoft.Framework.Runtime
 
         public TypeInformation ProjectReferenceProvider { get; private set; }
 
-        public static T CreateService<T>(IServiceProvider sp, TypeInformation typeInfo)
+        public static T CreateService<T>(IServiceProvider sp, IAssemblyLoadContext loadContext, TypeInformation typeInfo)
         {
-            var assembly = Assembly.Load(new AssemblyName(typeInfo.AssemblyName));
+            var assembly = loadContext.Load(typeInfo.AssemblyName);
 
             var type = assembly.GetType(typeInfo.TypeName);
 

@@ -23,7 +23,7 @@ namespace klr.host
 
         public Assembly Load(string name)
         {
-            var loadContext = _loadContextAccessor.GetLoadContext(typeof(PathBasedAssemblyLoader).GetTypeInfo().Assembly);
+            var loadContext = _loadContextAccessor.Default;
 
             foreach (var path in _searchPaths)
             {

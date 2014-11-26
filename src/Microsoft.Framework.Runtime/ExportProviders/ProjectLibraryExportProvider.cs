@@ -5,7 +5,6 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using System.Runtime.Versioning;
 
 namespace Microsoft.Framework.Runtime
 {
@@ -14,12 +13,20 @@ namespace Microsoft.Framework.Runtime
         private readonly IProjectResolver _projectResolver;
         private readonly IServiceProvider _serviceProvider;
         private readonly Dictionary<TypeInformation, IProjectReferenceProvider> _projectReferenceProviders = new Dictionary<TypeInformation, IProjectReferenceProvider>();
+        private readonly Lazy<IAssemblyLoadContext> _projectLoadContext;
 
         public ProjectLibraryExportProvider(IProjectResolver projectResolver,
                                             IServiceProvider serviceProvider)
         {
             _projectResolver = projectResolver;
             _serviceProvider = serviceProvider;
+
+            // REVIEW: In the future we should be able to throw this away
+            _projectLoadContext = new Lazy<IAssemblyLoadContext>(() =>
+             {
+                 var factory = (IAssemblyLoadContextFactory)_serviceProvider.GetService(typeof(IAssemblyLoadContextFactory));
+                 return factory.Create();
+             });
         }
 
         public ILibraryExport GetLibraryExport(ILibraryKey target)
@@ -41,10 +48,10 @@ namespace Microsoft.Framework.Runtime
             {
                 target = target.ChangeTargetFramework(targetFrameworkInformation.FrameworkName);
             }
-            
+
             var key = Tuple.Create(
-                target.Name, 
-                target.TargetFramework, 
+                target.Name,
+                target.TargetFramework,
                 target.Configuration,
                 target.Aspect);
 
@@ -71,7 +78,7 @@ namespace Microsoft.Framework.Runtime
                     // Find the default project exporter
                     var projectReferenceProvider = _projectReferenceProviders.GetOrAdd(project.LanguageServices.ProjectReferenceProvider, typeInfo =>
                     {
-                        return LanguageServices.CreateService<IProjectReferenceProvider>(_serviceProvider, typeInfo);
+                        return LanguageServices.CreateService<IProjectReferenceProvider>(_serviceProvider, _projectLoadContext.Value, typeInfo);
                     });
 
                     Trace.TraceInformation("[{0}]: GetProjectReference({1}, {2}, {3}, {4})", project.LanguageServices.ProjectReferenceProvider.TypeName, target.Name, target.TargetFramework, target.Configuration, target.Aspect);
