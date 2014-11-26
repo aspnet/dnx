@@ -58,6 +58,25 @@ namespace Microsoft.Framework.ApplicationHost
 
         [Theory]
         [MemberData("KrePaths")]
+        public void KSlashQuestionMarkDoesNotShowHelpInformationOfCmd(DisposableDirPath krePath)
+        {
+            using (krePath)
+            {
+                string stdOut, stdErr;
+                var exitCode = KCommandTestUtils.ExecKCommand(
+                    krePath,
+                    subcommand: string.Empty,
+                    arguments: "/?",
+                    stdOut: out stdOut,
+                    stdErr: out stdErr);
+
+                // If "k /?" shows help information of cmd.exe, the exit code should be 0
+                Assert.NotEqual(0, exitCode);
+            }
+        }
+
+        [Theory]
+        [MemberData("KrePaths")]
         public void KCommandShowsVersionAndReturnsZeroExitCodeWhenVersionOptionWasGiven(DisposableDirPath krePath)
         {
             using (krePath)
