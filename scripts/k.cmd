@@ -1,4 +1,7 @@
 @Echo OFF
+
+SET "KLR_PATH=%~dp0klr"
+
 SETLOCAL ENABLEDELAYEDEXPANSION
 SET ERRORLEVEL=
 :: K [command] [args]
@@ -25,7 +28,7 @@ IF (%1)==() (
 )
 :END
 
-"%~dp0klr" --appbase "%K_APPBASE%" %K_OPTIONS% "Microsoft.Framework.ApplicationHost" !ARGS[1]! !ARGS[2]! !ARGS[3]! !ARGS[4]! !ARGS[5]! !ARGS[6]! !ARGS[7]! !ARGS[8]! !ARGS[9]!
+"KLR_PATH" --appbase "%K_APPBASE%" %K_OPTIONS% "Microsoft.Framework.ApplicationHost" !ARGS[1]! !ARGS[2]! !ARGS[3]! !ARGS[4]! !ARGS[5]! !ARGS[6]! !ARGS[7]! !ARGS[8]! !ARGS[9]!
 
 exit /b %ERRORLEVEL%
 ENDLOCAL
