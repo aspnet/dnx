@@ -52,9 +52,8 @@ namespace Microsoft.Framework.PackageManager
                     if (!string.IsNullOrEmpty(comSpec))
                     {
                         scriptArguments =
-                            new[] { comSpec, "/C", "\"" }
+                            new[] { comSpec, "/C" }
                             .Concat(scriptArguments)
-                            .Concat(new[] { "\"" })
                             .ToArray();
                     }
                 }

@@ -29,7 +29,9 @@ namespace Microsoft.Framework.ApplicationHost.Impl.Syntax
 
             var unquotedTerm = Rep1(unquotedPiece.Or(specialPiece)).Str();
 
-            var quotedTerm = Ch('\"').And(Rep(quotedPiece.Or(specialPiece)).Str()).And(Ch('\"')).Left().Down();
+            var quotedTerm = Ch('\"').And(Rep(quotedPiece.Or(specialPiece)).Str()).And(Ch('\"'))
+                .Left().Down()
+                .Build(str => "\"" + str + "\"");
 
             var whitespace = Rep(Ch(' '));
 
