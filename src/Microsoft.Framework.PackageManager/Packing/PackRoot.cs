@@ -176,8 +176,9 @@ namespace Microsoft.Framework.PackageManager.Packing
             var applicationRoot = Path.Combine(OutputPath, PackRoot.AppRootName);
 
             rootObject["dependencies"] = dependenciesObj;
-            rootObject["packages"] = PathUtility.GetRelativePath(PathUtility.EnsureTrailingSlash(applicationRoot),
-                                                                 TargetPackagesPath);
+            rootObject["packages"] = PathUtility.GetRelativePath(
+                PathUtility.EnsureTrailingForwardSlash(applicationRoot),
+                TargetPackagesPath, '/');
 
             File.WriteAllText(Path.Combine(applicationRoot, GlobalSettings.GlobalFileName),
                 rootObject.ToString());
