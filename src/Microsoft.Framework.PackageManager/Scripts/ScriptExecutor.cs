@@ -13,7 +13,11 @@ namespace Microsoft.Framework.PackageManager
 {
     public class ScriptExecutor
     {
-        public void Execute(Runtime.Project project, string scriptName, Func<string, string> getVariable)
+        public void Execute(
+            Runtime.Project project,
+            Reports reports,
+            string scriptName,
+            Func<string, string> getVariable)
         {
             IEnumerable<string> scriptCommandLines;
             if (!project.Scripts.TryGetValue(scriptName, out scriptCommandLines))
@@ -64,6 +68,8 @@ namespace Microsoft.Framework.PackageManager
                     }
                 }
 
+                reports.Verbose.WriteLine("Executing '{0}' command:", scriptName.Yellow());
+                reports.Verbose.WriteLine("    {0}", string.Join(" ", scriptArguments));
                 var startInfo = new ProcessStartInfo
                 {
                     FileName = scriptArguments.FirstOrDefault(),
