@@ -18,6 +18,8 @@ namespace Microsoft.Framework.PackageManager
         private readonly IAssemblyLoaderContainer _loaderContainer;
         private readonly IApplicationEnvironment _applicationEnvironment;
         private readonly BuildOptions _buildOptions;
+        private string _configuration;
+        private string _targetFramework;
 
         public BuildManager(IServiceProvider hostServices, BuildOptions buildOptions)
         {
@@ -99,6 +101,9 @@ namespace Microsoft.Framework.PackageManager
                 // Build all specified configurations
                 foreach (var configuration in configurations)
                 {
+                    _configuration = configuration;
+                    ScriptExecutor.Execute(project, _buildOptions.Reports, "prebuild.perconfiguration", GetScriptVariable);
+
                     // Create a new builder per configuration
                     var packageBuilder = new PackageBuilder();
                     var symbolPackageBuilder = new PackageBuilder();
@@ -113,9 +118,13 @@ namespace Microsoft.Framework.PackageManager
                     // Build all target frameworks a project supports
                     foreach (var targetFramework in frameworks)
                     {
+                        _targetFramework = targetFramework.ToString();
+
                         _buildOptions.Reports.Information.WriteLine();
                         _buildOptions.Reports.Information.WriteLine("Building {0} for {1}",
-                            project.Name, targetFramework.ToString().Yellow().Bold());
+                            project.Name, _targetFramework.Yellow().Bold());
+
+                        ScriptExecutor.Execute(project, _buildOptions.Reports, "prebuild.perframework", GetScriptVariable);
 
                         var errors = new List<string>();
                         var warnings = new List<string>();
@@ -144,6 +153,8 @@ namespace Microsoft.Framework.PackageManager
                         allWarnings.AddRange(warnings);
 
                         WriteDiagnostics(warnings, errors);
+
+                        _targetFramework = null;
                     }
 
                     success = success && configurationSuccess;
@@ -191,6 +202,7 @@ namespace Microsoft.Framework.PackageManager
                 }
             }
 
+            _configuration = null;
             ScriptExecutor.Execute(project, _buildOptions.Reports, "postbuild", GetScriptVariable);
 
             sw.Stop();
@@ -219,12 +231,17 @@ namespace Microsoft.Framework.PackageManager
 
         private string GetScriptVariable(string key)
         {
-            if (string.Equals("project:BuildOutputDir", key, StringComparison.OrdinalIgnoreCase))
+            var variables = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
-                return GetBuildOutputDir(_buildOptions);
-            }
+                { "project:BuildOutputDir", GetBuildOutputDir(_buildOptions) },
+                { "project:Configuration", _configuration },
+                { "project:TargetFramework", _targetFramework },
+            };
 
-            return null;
+            string variable;
+            variables.TryGetValue(key, out variable);
+
+            return variable;
         }
 
         private static void InitializeBuilder(Runtime.Project project, PackageBuilder builder)
