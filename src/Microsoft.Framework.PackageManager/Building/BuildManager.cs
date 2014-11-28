@@ -141,6 +141,7 @@ namespace Microsoft.Framework.PackageManager
                         {
                             context.PopulateDependencies(packageBuilder);
                             context.AddLibs(packageBuilder, "*.dll");
+                            context.AddLibs(packageBuilder, "*.exe");
                             context.AddLibs(packageBuilder, "*.xml");
                             context.AddLibs(symbolPackageBuilder, "*.*");
                         }
