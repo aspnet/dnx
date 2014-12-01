@@ -95,9 +95,9 @@ namespace Microsoft.Framework.PackageManager.Packing
                 return null;
             };
 
-            ScriptExecutor.Execute(project, "prepare", getVariable);
+            ScriptExecutor.Execute(project, _options.Reports, "prepare", getVariable);
 
-            ScriptExecutor.Execute(project, "prepack", getVariable);
+            ScriptExecutor.Execute(project, _options.Reports, "prepack", getVariable);
 
             foreach (var runtime in _options.Runtimes)
             {
@@ -236,7 +236,7 @@ namespace Microsoft.Framework.PackageManager.Packing
 
             root.Emit();
 
-            ScriptExecutor.Execute(project, "postpack", getVariable);
+            ScriptExecutor.Execute(project, _options.Reports, "postpack", getVariable);
 
             if (_options.Native && !nativeImageGenerator.BuildNativeImages(root))
             {

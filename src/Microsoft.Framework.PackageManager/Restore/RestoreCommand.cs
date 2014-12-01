@@ -156,7 +156,7 @@ namespace Microsoft.Framework.PackageManager
                 return null;
             };
 
-            ScriptExecutor.Execute(project, "prerestore", getVariable);
+            ScriptExecutor.Execute(project, Reports, "prerestore", getVariable);
 
             var projectDirectory = project.ProjectDirectory;
             var restoreOperations = new RestoreOperations(Reports.Verbose);
@@ -253,9 +253,9 @@ namespace Microsoft.Framework.PackageManager
 
             await InstallPackages(installItems, packagesDirectory, packageFilter: (library, nupkgSHA) => true);
 
-            ScriptExecutor.Execute(project, "postrestore", getVariable);
+            ScriptExecutor.Execute(project, Reports, "postrestore", getVariable);
 
-            ScriptExecutor.Execute(project, "prepare", getVariable);
+            ScriptExecutor.Execute(project, Reports, "prepare", getVariable);
 
             Reports.Information.WriteLine(string.Format("{0}, {1}ms elapsed", "Restore complete".Green().Bold(), sw.ElapsedMilliseconds));
 
