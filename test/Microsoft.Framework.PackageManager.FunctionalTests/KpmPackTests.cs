@@ -92,8 +92,8 @@ namespace Microsoft.Framework.PackageManager
                 var expectedOutputDir = TestUtils.CreateDirTree(expectedOutputStructure)
                     .WithFileContents(Path.Combine("approot", "src", testEnv.ProjectName, "project.json"), @"{
   ""packExclude"": ""**.bconfig"",
-  ""webroot"": ""WEB_ROOT""
-}".Replace("WEB_ROOT", Path.Combine("..", "..", "..", "wwwroot").Replace(@"\", @"\\")))
+  ""webroot"": ""../../../wwwroot""
+}")
                     .WithFileContents(Path.Combine("wwwroot", "project.json"), @"{
   ""packExclude"": ""**.bconfig"",
   ""webroot"": ""to_be_overridden""
@@ -185,8 +185,8 @@ namespace Microsoft.Framework.PackageManager
                 var expectedOutputDir = TestUtils.CreateDirTree(expectedOutputStructure)
                     .WithFileContents(Path.Combine("approot", "src", testEnv.ProjectName, "project.json"), @"{
   ""packExclude"": ""**.useless"",
-  ""webroot"": ""WEB_ROOT""
-}".Replace("WEB_ROOT", Path.Combine("..", "..", "..", "wwwroot").Replace(@"\", @"\\")))
+  ""webroot"": ""../../../wwwroot""
+}")
                     .WithFileContents(Path.Combine("approot", "global.json"), @"{
   ""dependencies"": {},
   ""packages"": ""packages""
@@ -667,8 +667,8 @@ namespace Microsoft.Framework.PackageManager
 
                 var expectedOutputDir = TestUtils.CreateDirTree(expectedOutputStructure)
                     .WithFileContents(Path.Combine("approot", "src", testEnv.ProjectName, "project.json"), @"{
-  ""webroot"": ""WEB_ROOT""
-}".Replace("WEB_ROOT", Path.Combine("..", "..", "..", "wwwroot").Replace(@"\", @"\\")))
+  ""webroot"": ""../../../wwwroot""
+}")
                     .WithFileContents(Path.Combine("approot", "src", testEnv.ProjectName, "web.config"), webConfigContents)
                     .WithFileContents(Path.Combine("approot", "global.json"), @"{
   ""dependencies"": {},
@@ -731,8 +731,8 @@ namespace Microsoft.Framework.PackageManager
             {
                 TestUtils.CreateDirTree(projectStructure)
                     .WithFileContents("project.json", @"{
-  ""webroot"": ""WEB_ROOT""
-}".Replace("WEB_ROOT", Path.Combine("..", "..", "..", "wwwroot").Replace(@"\", @"\\")))
+  ""webroot"": ""../../../wwwroot""
+}")
                     .WithFileContents("web.config", webConfigContents)
                     .WriteTo(testEnv.ProjectPath);
 
@@ -752,8 +752,8 @@ namespace Microsoft.Framework.PackageManager
 
                 var expectedOutputDir = TestUtils.CreateDirTree(expectedOutputStructure)
                     .WithFileContents(Path.Combine("approot", "src", testEnv.ProjectName, "project.json"), @"{
-  ""webroot"": ""WEB_ROOT""
-}".Replace("WEB_ROOT", Path.Combine("..", "..", "..", "wwwroot").Replace(@"\", @"\\")))
+  ""webroot"": ""../../../wwwroot""
+}")
                     .WithFileContents(Path.Combine("approot", "src", testEnv.ProjectName, "web.config"), webConfigContents)
                     .WithFileContents(Path.Combine("approot", "global.json"), @"{
   ""dependencies"": {},
