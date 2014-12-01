@@ -178,7 +178,7 @@ namespace Microsoft.Framework.PackageManager.Packing
             rootObject["dependencies"] = dependenciesObj;
             rootObject["packages"] = PathUtility.GetRelativePath(
                 PathUtility.EnsureTrailingForwardSlash(applicationRoot),
-                TargetPackagesPath, '/');
+                TargetPackagesPath, separator: '/');
 
             File.WriteAllText(Path.Combine(applicationRoot, GlobalSettings.GlobalFileName),
                 rootObject.ToString());

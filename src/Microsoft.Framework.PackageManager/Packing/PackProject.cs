@@ -225,7 +225,7 @@ namespace Microsoft.Framework.PackageManager.Packing
                 UpdateJson(targetProjectJson, jsonObj =>
                 {
                     var targetWebRootPath = Path.Combine(root.OutputPath, WwwRootOut);
-                    jsonObj["webroot"] = PathUtility.GetRelativePath(targetProjectJson, targetWebRootPath, '/');
+                    jsonObj["webroot"] = PathUtility.GetRelativePath(targetProjectJson, targetWebRootPath, separator: '/');
                 });
             }
         }
