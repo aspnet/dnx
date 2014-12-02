@@ -19,6 +19,7 @@ public class DomainManager : AppDomainManager
         if (!string.IsNullOrEmpty(_info.ApplicationBase))
         {
             appDomainInfo.ApplicationBase = _info.ApplicationBase;
+            appDomainInfo.TargetFrameworkName = ".NETFramework,Version=v4.6";
         }
     }
 
