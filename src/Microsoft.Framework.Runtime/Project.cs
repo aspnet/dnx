@@ -656,6 +656,8 @@ namespace Microsoft.Framework.Runtime
 
             targetFrameworkInformation.Dependencies.AddRange(frameworkAssemblies);
 
+            targetFrameworkInformation.WrappedProject = GetValue<string>(properties, "wrappedProject");
+
             var binNode = properties["bin"];
 
             if (binNode != null)

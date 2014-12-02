@@ -14,6 +14,8 @@ namespace Microsoft.Framework.Runtime
 
         public IList<LibraryDependency> Dependencies { get; set; }
 
+        public string WrappedProject { get; set; }
+
         public string AssemblyPath { get; set; }
 
         public string PdbPath { get; set; }
