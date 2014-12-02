@@ -887,16 +887,41 @@ namespace Microsoft.Framework.DesignTimeHost
                     if (string.Equals(library.Type, "Project") &&
                        !string.Equals(library.Identity.Name, project.Name))
                     {
-                        info.ProjectReferences.Add(new ProjectReference
+                        Project referencedProject;
+                        if (!Project.TryGetProject(library.Path, out referencedProject))
                         {
-                            Framework = new FrameworkData
+                            // Should never happen
+                            continue;
+                        }
+
+                        var targetFrameworkInformation = referencedProject.GetTargetFramework(library.Framework);
+
+                        // If this is an assembly reference then treat it like a file reference
+                        if (!string.IsNullOrEmpty(targetFrameworkInformation.AssemblyPath) &&
+                            string.IsNullOrEmpty(targetFrameworkInformation.WrappedProject))
+                        {
+                            info.References.Add(GetProjectRelativeFullPath(referencedProject, targetFrameworkInformation.AssemblyPath));
+                        }
+                        else
+                        {
+                            string projectPath = library.Path;
+
+                            if (!string.IsNullOrEmpty(targetFrameworkInformation.WrappedProject))
                             {
-                                ShortName = VersionUtility.GetShortFrameworkName(library.Framework),
-                                FrameworkName = library.Framework.ToString(),
-                                FriendlyName = frameworkResolver.GetFriendlyFrameworkName(library.Framework)
-                            },
-                            Path = library.Path
-                        });
+                                projectPath = GetProjectRelativeFullPath(referencedProject, targetFrameworkInformation.WrappedProject);
+                            }
+
+                            info.ProjectReferences.Add(new ProjectReference
+                            {
+                                Framework = new FrameworkData
+                                {
+                                    ShortName = VersionUtility.GetShortFrameworkName(library.Framework),
+                                    FrameworkName = library.Framework.ToString(),
+                                    FriendlyName = frameworkResolver.GetFriendlyFrameworkName(library.Framework)
+                                },
+                                Path = projectPath
+                            });
+                        }
                     }
                 }
 
@@ -929,6 +954,11 @@ namespace Microsoft.Framework.DesignTimeHost
 
                 return info;
             });
+        }
+
+        private static string GetProjectRelativeFullPath(Project referencedProject, string path)
+        {
+            return Path.GetFullPath(Path.Combine(referencedProject.ProjectDirectory, path));
         }
 
         private static DependencyDescription CreateDependencyDescription(LibraryDescription library)
