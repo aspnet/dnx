@@ -64,20 +64,52 @@ namespace Microsoft.Framework.FunctionalTestUtils
             return Path.Combine(kRuntimeRoot, "artifacts", "build");
         }
 
-        public static IEnumerable<DisposableDirPath> GetUnpackedKrePaths()
+        public static DisposableDirPath GetUnpackedKrePath(string flavor, string architecture)
         {
             var buildArtifactDir = GetBuildArtifactsFolder();
-            var kreNupkgs = new List<string>();
-            kreNupkgs.Add(Directory.GetFiles(buildArtifactDir, "KRE-CLR-amd64.*.nupkg", SearchOption.TopDirectoryOnly).First());
-            kreNupkgs.Add(Directory.GetFiles(buildArtifactDir, "KRE-CLR-x86.*.nupkg", SearchOption.TopDirectoryOnly).First());
-            kreNupkgs.Add(Directory.GetFiles(buildArtifactDir, "KRE-CoreCLR-amd64.*.nupkg", SearchOption.TopDirectoryOnly).First());
-            kreNupkgs.Add(Directory.GetFiles(buildArtifactDir, "KRE-CoreCLR-x86.*.nupkg", SearchOption.TopDirectoryOnly).First());
-            foreach (var nupkg in kreNupkgs)
+            var kreNupkg = Directory.GetFiles(
+                buildArtifactDir,
+                string.Format("KRE-{0}-{1}.*.nupkg", flavor, architecture),
+                SearchOption.TopDirectoryOnly) .First();
+            var krePath = CreateTempDir();
+            System.IO.Compression.ZipFile.ExtractToDirectory(kreNupkg, krePath);
+            return krePath;
+        }
+
+        public static IEnumerable<DisposableDirPath> GetUnpackedKrePaths()
+        {
+            yield return GetUnpackedKrePath(flavor: "CLR", architecture: "amd64");
+            yield return GetUnpackedKrePath(flavor: "CLR", architecture: "x86");
+            yield return GetUnpackedKrePath(flavor: "CoreCLR", architecture: "amd64");
+            yield return GetUnpackedKrePath(flavor: "CoreCLR", architecture: "x86");
+        }
+
+        public static DisposableDirPath GetTempTestSolution(string name)
+        {
+            var rootDir = ProjectResolver.ResolveRootDirectory(Directory.GetCurrentDirectory());
+            var sourceSolutionPath = Path.Combine(rootDir, "misc", "KpmWrapTestSolutions", name);
+            var targetSolutionPath = CreateTempDir();
+            CopyFolder(sourceSolutionPath, targetSolutionPath);
+            return targetSolutionPath;
+        }
+
+        public static void CopyFolder(string sourceFolder, string targetFolder)
+        {
+            if (!Directory.Exists(targetFolder))
             {
-                var kreName = Path.GetFileNameWithoutExtension(nupkg);
-                var krePath = CreateTempDir();
-                System.IO.Compression.ZipFile.ExtractToDirectory(nupkg, krePath);
-                yield return krePath;
+                Directory.CreateDirectory(targetFolder);
+            }
+
+            foreach (var filePath in Directory.EnumerateFiles(sourceFolder))
+            {
+                var fileName = Path.GetFileName(filePath);
+                File.Copy(filePath, Path.Combine(targetFolder, fileName));
+            }
+
+            foreach (var folderPath in Directory.EnumerateDirectories(sourceFolder))
+            {
+                var folderName = new DirectoryInfo(folderPath).Name;
+                CopyFolder(folderPath, Path.Combine(targetFolder, folderName));
             }
         }
 
@@ -99,6 +131,30 @@ namespace Microsoft.Framework.FunctionalTestUtils
                     }
                 }
             }
+        }
+
+        public static string ResolveMSBuildPath()
+        {
+            var envVal = Environment.GetEnvironmentVariable("KRUNTIME_TESTS_MSBUILD_PATH");
+            if (!string.IsNullOrEmpty(envVal))
+            {
+                return envVal;
+            }
+
+            return GetDefaultMSBuildPath();
+        }
+
+        private static string GetDefaultMSBuildPath()
+        {
+            var programFilesPath = Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86);
+
+            // On 32-bit Windows
+            if (string.IsNullOrEmpty(programFilesPath))
+            {
+                programFilesPath = Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles);
+            }
+
+            return Path.Combine(programFilesPath, "MSBuild", "14.0", "Bin", "MSBuild.exe");
         }
 
         public static string GetKreVersion()

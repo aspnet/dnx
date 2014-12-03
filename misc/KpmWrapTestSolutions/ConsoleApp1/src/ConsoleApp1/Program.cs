@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 
 namespace ConsoleApp1
 {
@@ -6,13 +7,17 @@ namespace ConsoleApp1
     {
         public void Main(string[] args)
         {
-            Console.WriteLine(typeof(LibraryAlpha.Class1).Assembly.Location);
-            Console.WriteLine(typeof(LibraryBeta.PCL.Desktop.Class1).Assembly.Location);
-            Console.WriteLine(typeof(LibraryEpsilon.Class1).Assembly.Location);
-            Console.WriteLine(typeof(LibraryGamma.Class1).Assembly.Location);
-            Console.WriteLine(typeof(System.Data.Entity.Database).Assembly.Location);
-            Console.WriteLine(typeof(System.Data.Entity.SqlServer.SqlFunctions).Assembly.Location);
-            Console.WriteLine(typeof(LibraryDelta.Class1).Assembly.Location);
+            PrintReferencedAssemblyFileName(typeof(LibraryBeta.PCL.Desktop.Class1));
+            PrintReferencedAssemblyFileName(typeof(LibraryEpsilon.Class1));
+            PrintReferencedAssemblyFileName(typeof(LibraryGamma.Class1));
+            PrintReferencedAssemblyFileName(typeof(System.Data.Entity.Database));
+            PrintReferencedAssemblyFileName(typeof(System.Data.Entity.SqlServer.SqlFunctions));
+            PrintReferencedAssemblyFileName(typeof(LibraryDelta.Class1));
+        }
+
+        public void PrintReferencedAssemblyFileName(Type type)
+        {
+            Console.WriteLine("Referencing {0}", Path.GetFileName(type.Assembly.Location));
         }
     }
 }
