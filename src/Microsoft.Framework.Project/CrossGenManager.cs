@@ -122,10 +122,11 @@ namespace Microsoft.Framework.Project
             }
             else
             {
-                args = String.Format(crossgenArgsTemplate,
+                args = String.Format(crossgenArgsTemplate + " /readytorun",
                                      assemblyInfo.AssemblyPath,
                                      assemblyInfo.NativeImagePath,
                                      String.Join(";", closure));
+                Console.WriteLine("args: " + args);
             }
 
             // Make sure the target directory for the native image is there
