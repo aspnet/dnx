@@ -10,7 +10,6 @@ using System.Net;
 using System.Net.Sockets;
 using System.Reflection;
 using System.Runtime.Versioning;
-using System.Text;
 using Microsoft.Framework.Runtime.Common.DependencyInjection;
 using Microsoft.Framework.Runtime.FileSystem;
 using Microsoft.Framework.Runtime.Infrastructure;
@@ -169,7 +168,6 @@ namespace Microsoft.Framework.Runtime
 
             CallContextServiceLocator.Locator.ServiceProvider = ServiceProvider;
         }
-
 
         private static string Normalize(string projectDir)
         {

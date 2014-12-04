@@ -47,7 +47,8 @@ var MANAGED_PROJECTS = '${FindAllProjects(
     "Microsoft.Framework.Runtime.Common",
     "Microsoft.Framework.Runtime.Interfaces",
     "Microsoft.Framework.Runtime.Loader",
-    "Microsoft.Framework.Runtime.Roslyn")}'
+    "Microsoft.Framework.Runtime.Roslyn",
+    "Microsoft.Framework.Runtime.Roslyn.Common")}'
 
 var WIN_NATIVE_PROJECTS = '${FindAllProjects(
     "klr",

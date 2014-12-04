@@ -3,17 +3,15 @@
     "description": "ASP.NET 5 Roslyn compiler implementation.",
     "compilationOptions": { "define": [ "TRACE" ], "allowUnsafe": true, "warningsAsErrors": true },
     "dependencies": {
-        "K.Roslyn" : "1.0.0-*",
         "Microsoft.Framework.Runtime": "1.0.0-*",
         "Microsoft.Framework.Runtime.Common": { "version": "1.0.0-*", "type": "build" },
-        "Microsoft.Framework.Runtime.Interfaces": { "version": "1.0.0-*", "type": "build" }
+        "Microsoft.Framework.Runtime.Interfaces": { "version": "1.0.0-*", "type": "build" },
+        "Microsoft.Framework.Runtime.Roslyn.Common": { "version": "1.0.0-*", "type": "build" }
     },
     "frameworks": {
         "aspnet50": {
             "frameworkAssemblies": {
-                "System.Collections": "",
                 "System.IO": "",
-                "System.Runtime": "",
                 "System.Xml": "",
                 "System.Xml.Linq": "",
                 "System.Threading.Tasks": "",

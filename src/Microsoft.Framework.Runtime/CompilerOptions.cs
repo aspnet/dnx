@@ -6,7 +6,7 @@ using System.Linq;
 
 namespace Microsoft.Framework.Runtime
 {
-    public class CompilerOptions
+    public class CompilerOptions : ICompilerOptions
     {
         public IEnumerable<string> Defines { get; set; }
 
@@ -23,7 +23,6 @@ namespace Microsoft.Framework.Runtime
         public static CompilerOptions Combine(params CompilerOptions[] options)
         {
             var result = new CompilerOptions();
-
             foreach (var option in options)
             {
                 // Skip null options

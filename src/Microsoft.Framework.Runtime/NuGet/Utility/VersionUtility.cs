@@ -113,6 +113,7 @@ namespace NuGet
             }
         }
 
+        // This method must be kep in sync with CompilerOptionsExtensions.IsDesktop
         public static bool IsDesktop(FrameworkName frameworkName)
         {
             return frameworkName.Identifier == NetFrameworkIdentifier ||

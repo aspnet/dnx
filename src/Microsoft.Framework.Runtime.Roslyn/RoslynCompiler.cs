@@ -80,9 +80,8 @@ namespace Microsoft.Framework.Runtime.Roslyn
             Trace.TraceInformation("[{0}]: Compiling '{1}'", GetType().Name, name);
             var sw = Stopwatch.StartNew();
 
-            var compilationSettings = project.GetCompilationSettings(
-                target.TargetFramework,
-                target.Configuration);
+            var compilationSettings = project.GetCompilerOptions(target.TargetFramework, target.Configuration)
+                                             .ToCompilationSettings(target.TargetFramework);
 
             var sourceFiles = Enumerable.Empty<String>();
             if (isMainAspect)

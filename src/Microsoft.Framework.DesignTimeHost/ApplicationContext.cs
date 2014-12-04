@@ -797,7 +797,8 @@ namespace Microsoft.Framework.DesignTimeHost
                     TargetFramework = frameworkData,
                     FrameworkName = frameworkName,
                     // TODO: This shouldn't be roslyn specific compilation options
-                    CompilationSettings = project.GetCompilationSettings(frameworkName, configuration),
+                    CompilationSettings = project.GetCompilerOptions(frameworkName, configuration)
+                                                 .ToCompilationSettings(frameworkName),
                     SourceFiles = dependencySources,
                     DependencyInfo = dependencyInfo
                 };

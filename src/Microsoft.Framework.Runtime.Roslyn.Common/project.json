@@ -1,0 +1,18 @@
+{
+    "version": "1.0.0-*",
+    "description": "ASP.NET 5 Roslyn implementation code shared with libraries performing runtime compilation.",
+    "compilationOptions": { "define": [ "TRACE" ], "allowUnsafe": true, "warningsAsErrors": true },
+    "dependencies": {
+        "K.Roslyn" : "1.0.0-*",
+        "Microsoft.Framework.Runtime.Common": { "version": "1.0.0-*", "type": "build" },
+        "Microsoft.Framework.Runtime.Interfaces": { "version": "1.0.0-*", "type": "build" }
+    },
+    "frameworks": {
+        "aspnet50": {
+            "frameworkAssemblies": {
+                "System.Runtime": ""
+            }
+        },
+        "aspnetcore50": {}
+    }
+}

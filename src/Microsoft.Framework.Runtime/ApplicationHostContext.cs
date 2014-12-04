@@ -1,4 +1,7 @@
-﻿using System;
+﻿// Copyright (c) Microsoft Open Technologies, Inc. All rights reserved.
+// Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
+
+using System;
 using System.Diagnostics;
 using System.Runtime.Versioning;
 using Microsoft.Framework.Runtime.Common.DependencyInjection;
@@ -71,6 +74,9 @@ namespace Microsoft.Framework.Runtime
             _serviceProvider.Add(typeof(ICacheContextAccessor), cacheContextAccessor, includeInManifest: false);
             _serviceProvider.Add(typeof(INamedCacheDependencyProvider), namedCacheDependencyProvider, includeInManifest: false);
             _serviceProvider.Add(typeof(IAssemblyLoadContextFactory), AssemblyLoadContextFactory, includeInManifest: false);
+
+            var compilerOptionsProvider = new CompilerOptionsProvider(ProjectResolver);
+            _serviceProvider.Add(typeof(ICompilerOptionsProvider), compilerOptionsProvider);
         }
 
         public void AddService(Type type, object instance, bool includeInManifest)

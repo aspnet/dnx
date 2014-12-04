@@ -2,28 +2,23 @@
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 using System;
-using System.Linq;
 using System.Collections.Generic;
+using System.Linq;
 using System.Runtime.Versioning;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
-using NuGet;
 
 namespace Microsoft.Framework.Runtime.Roslyn
 {
-    public static class ProjectExtensions
+    public static class CompilerOptionsExtensions
     {
-        public static CompilationSettings GetCompilationSettings(this Project project, FrameworkName targetFramework, string configuration)
+        private const string NetFrameworkIdentifier = ".NETFramework";
+        private const string AspNetFrameworkIdentifier = "Asp.Net";
+
+        public static CompilationSettings ToCompilationSettings(this ICompilerOptions compilerOptions,
+                                                                FrameworkName targetFramework)
         {
-            // Get all project options and combine them
-            var rootOptions = project.GetCompilerOptions();
-            var configurationOptions = project.GetCompilerOptions(configuration);
-            var targetFrameworkOptions = project.GetCompilerOptions(targetFramework);
-
-            // Combine all of the options
-            var resultOptions = CompilerOptions.Combine(rootOptions, configurationOptions, targetFrameworkOptions);
-
-            var options = GetCompilationOptions(resultOptions);
+            var options = GetCompilationOptions(compilerOptions);
 
             // Disable 1702 until roslyn turns this off by default
             options = options.WithSpecificDiagnosticOptions(new Dictionary<string, ReportDiagnostic>
@@ -39,15 +34,15 @@ namespace Microsoft.Framework.Runtime.Roslyn
 
             AssemblyIdentityComparer assemblyIdentityComparer =
 #if ASPNET50
-                VersionUtility.IsDesktop(targetFramework) ?
-                DesktopAssemblyIdentityComparer.Default : 
+                IsDesktop(targetFramework) ?
+                DesktopAssemblyIdentityComparer.Default :
 #endif
                 null;
 
             options = options.WithAssemblyIdentityComparer(assemblyIdentityComparer);
 
             LanguageVersion languageVersion;
-            if (!Enum.TryParse<LanguageVersion>(value: resultOptions.LanguageVersion,
+            if (!Enum.TryParse<LanguageVersion>(value: compilerOptions.LanguageVersion,
                                                 ignoreCase: true,
                                                 result: out languageVersion))
             {
@@ -57,14 +52,14 @@ namespace Microsoft.Framework.Runtime.Roslyn
             var settings = new CompilationSettings
             {
                 LanguageVersion = languageVersion,
-                Defines = resultOptions.Defines ?? Enumerable.Empty<string>(),
+                Defines = compilerOptions.Defines ?? Enumerable.Empty<string>(),
                 CompilationOptions = options
             };
 
             return settings;
         }
 
-        private static CSharpCompilationOptions GetCompilationOptions(CompilerOptions compilerOptions)
+        private static CSharpCompilationOptions GetCompilationOptions(ICompilerOptions compilerOptions)
         {
             var options = new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary);
 
@@ -87,6 +82,12 @@ namespace Microsoft.Framework.Runtime.Roslyn
                           .WithPlatform(platform)
                           .WithGeneralDiagnosticOption(warningOption)
                           .WithOptimizationLevel(optimize ? OptimizationLevel.Release : OptimizationLevel.Debug);
+        }
+
+        private static bool IsDesktop(FrameworkName frameworkName)
+        {
+            return frameworkName.Identifier == NetFrameworkIdentifier ||
+                   frameworkName.Identifier == AspNetFrameworkIdentifier;
         }
     }
 }
