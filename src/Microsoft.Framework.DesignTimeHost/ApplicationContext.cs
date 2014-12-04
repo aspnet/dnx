@@ -429,8 +429,8 @@ namespace Microsoft.Framework.DesignTimeHost
                     project.Outputs = new OutputsMessage
                     {
                         FrameworkData = project.Sources.Framework,
-                        AssemblyBytes = compilation.AssemblyBytes,
-                        PdbBytes = compilation.PdbBytes,
+                        AssemblyBytes = compilation.AssemblyBytes ?? new byte[0],
+                        PdbBytes = compilation.PdbBytes ?? new byte[0],
                         AssemblyPath = compilation.AssemblyPath,
                         EmbeddedReferences = compilation.EmbeddedReferences
                     };
