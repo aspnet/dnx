@@ -44,7 +44,7 @@ namespace Microsoft.Framework.PackageManager
 
             var sw = Stopwatch.StartNew();
 
-            var baseOutputPath = _buildOptions.OutputDir ?? CalculateDefaultOutputPath(project);
+            var baseOutputPath = GetBuildOutputDir(_buildOptions);
             var configurations = _buildOptions.Configurations.DefaultIfEmpty("Debug");
 
             var specifiedFrameworks = _buildOptions.TargetFrameworks

@@ -370,8 +370,8 @@ var MONO_MANAGED_PROJECTS = '${FindAllProjects("klr.mono.managed")}'
         copy sourceDir='${SCRIPTS_DIR}' include='*.cmd' overwrite='${true}' each='var outputDir in new[]{ KRE_CLR_x86_BIN, KRE_CLR_amd64_BIN, KRE_CORECLR_x86_BIN, KRE_CORECLR_amd64_BIN }'
 
     @{
-        var hostAspNetCore50 = Path.Combine(BUILD_DIR2, "*", "aspnetcore50", "**.*");
-        var hostnet45 = Path.Combine(BUILD_DIR2, "*", "aspnet50", "**.*");
+        var hostAspNetCore50 = Path.Combine(BUILD_DIR2, "*", "lib", "aspnetcore50", "**.*");
+        var hostnet45 = Path.Combine(BUILD_DIR2, "*", "lib", "aspnet50", "**.*");
         
         var libPackages = new[] { "Microsoft.Framework.Project",
                                   "Microsoft.Framework.PackageManager", 
