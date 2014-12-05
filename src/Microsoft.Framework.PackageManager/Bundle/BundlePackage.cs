@@ -59,7 +59,14 @@ namespace Microsoft.Framework.PackageManager.Bundle
             }
 
             // Special cases
-            var specialFolders = new[] { "native", "InteropAssemblies", "redist", Path.Combine("lib", "contract") };
+            var specialFolders = new List<string> { "native", "InteropAssemblies", "redist",
+                Path.Combine("lib", "contract") };
+            if (!root.NoSource)
+            {
+                // 'shared' folder is build time dependency, so we only copy it when deploying with source
+                specialFolders.Add("shared");
+            }
+
             foreach (var folder in specialFolders)
             {
                 var srcFolder = Path.Combine(_libraryDescription.Path, folder);
