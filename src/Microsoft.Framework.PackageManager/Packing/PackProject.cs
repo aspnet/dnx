@@ -315,16 +315,17 @@ namespace Microsoft.Framework.PackageManager.Packing
             // Copy content files (e.g. html, js and images) of main project into public app folder
             CopyContentFiles(root, project, wwwRootOutPath);
 
-            GenerateWebConfigFileForWwwrootOut(root, wwwRootOutPath);
+            GenerateWebConfigFileForWwwRootOut(root, project, wwwRootOutPath);
 
             CopyAspNetLoaderDll(root, wwwRootOutPath);
         }
 
-        private void GenerateWebConfigFileForWwwrootOut(PackRoot root, string wwwRootOutPath)
+        private void GenerateWebConfigFileForWwwRootOut(PackRoot root, Runtime.Project project, string wwwRootOutPath)
         {
-            // Generate k.ini for public app folder
+            // Generate web.config for public app folder
             var wwwRootOutWebConfigFilePath = Path.Combine(wwwRootOutPath, "web.config");
-            var webConfigFilePath = Path.Combine(TargetPath, "web.config");
+            var wwwRootSourcePath = GetWwwRootSourcePath(project.ProjectDirectory, WwwRoot);
+            var webConfigFilePath = Path.Combine(wwwRootSourcePath, "web.config");
 
             XDocument xDoc;
             if (File.Exists(webConfigFilePath))
@@ -476,17 +477,22 @@ namespace Microsoft.Framework.PackageManager.Packing
             root.Reports.Quiet.WriteLine("Copying contents of {0} dependency {1} to {2}",
                 _libraryDescription.Type, _libraryDescription.Identity.Name, targetFolderPath);
 
-            var contentSourceFolder = WwwRoot ?? string.Empty;
-            var contentSourcePath = Path.Combine(project.ProjectDirectory, contentSourceFolder);
-
-            // If the value of '--wwwroot' is ".", we need to pack the project root dir
-            // Use Path.GetFullPath() to get rid of the trailing "."
-            contentSourcePath = Path.GetFullPath(contentSourcePath);
+            var contentSourcePath = GetWwwRootSourcePath(project.ProjectDirectory, WwwRoot);
 
             root.Reports.Quiet.WriteLine("  Source {0}", contentSourcePath);
             root.Reports.Quiet.WriteLine("  Target {0}", targetFolderPath);
 
             root.Operations.Copy(contentSourcePath, targetFolderPath);
+        }
+
+        private static string GetWwwRootSourcePath(string projectDirectory, string wwwRoot)
+        {
+            wwwRoot = wwwRoot ?? string.Empty;
+            var wwwRootSourcePath = Path.Combine(projectDirectory, wwwRoot);
+
+            // If the value of '--wwwroot' is ".", we need to pack the project root dir
+            // Use Path.GetFullPath() to get rid of the trailing "."
+            return Path.GetFullPath(wwwRootSourcePath);
         }
 
         private bool IncludeRuntimeFileInBundle(string relativePath, string fileName)

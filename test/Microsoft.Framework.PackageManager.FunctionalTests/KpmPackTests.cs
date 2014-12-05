@@ -641,8 +641,8 @@ export SET KRE_APPBASE=""$DIR/approot/src/{0}""
         public void KpmPackWebApp_AppendToExistingWebConfig(DisposableDir kreHomeDir)
         {
             var projectStructure = @"{
-  '.': ['project.json', 'web.config'],
-  'public': ['index.html'],
+  '.': ['project.json'],
+  'public': ['index.html', 'web.config'],
   'packages': {}
 }";
             var expectedOutputStructure = @"{
@@ -650,7 +650,7 @@ export SET KRE_APPBASE=""$DIR/approot/src/{0}""
   'approot': {
     'global.json': '',
     'src': {
-      'PROJECT_NAME': ['project.json', 'web.config']
+      'PROJECT_NAME': ['project.json']
     }
   }
 }".Replace("PROJECT_NAME", _projectName);
@@ -667,7 +667,7 @@ export SET KRE_APPBASE=""$DIR/approot/src/{0}""
                     .WithFileContents("project.json", @"{
   ""webroot"": ""public""
 }")
-                    .WithFileContents("web.config", webConfigContents)
+                    .WithFileContents(Path.Combine("public", "web.config"), webConfigContents)
                     .WriteTo(testEnv.ProjectPath);
 
                 var environment = new Dictionary<string, string>()
@@ -688,7 +688,6 @@ export SET KRE_APPBASE=""$DIR/approot/src/{0}""
                     .WithFileContents(Path.Combine("approot", "src", testEnv.ProjectName, "project.json"), @"{
   ""webroot"": ""../../../wwwroot""
 }")
-                    .WithFileContents(Path.Combine("approot", "src", testEnv.ProjectName, "web.config"), webConfigContents)
                     .WithFileContents(Path.Combine("approot", "global.json"), @"{
   ""dependencies"": {},
   ""packages"": ""packages""
@@ -717,8 +716,8 @@ export SET KRE_APPBASE=""$DIR/approot/src/{0}""
         public void KpmPackWebApp_UpdateExistingWebConfig(DisposableDir kreHomeDir)
         {
             var projectStructure = @"{
-  '.': ['project.json', 'web.config'],
-  'public': ['index.html'],
+  '.': ['project.json'],
+  'public': ['index.html', 'web.config'],
   'packages': {}
 }";
             var expectedOutputStructure = @"{
@@ -726,7 +725,7 @@ export SET KRE_APPBASE=""$DIR/approot/src/{0}""
   'approot': {
     'global.json': '',
     'src': {
-      'PROJECT_NAME': ['project.json', 'web.config']
+      'PROJECT_NAME': ['project.json']
     }
   }
 }".Replace("PROJECT_NAME", _projectName);
@@ -752,7 +751,7 @@ export SET KRE_APPBASE=""$DIR/approot/src/{0}""
                     .WithFileContents("project.json", @"{
   ""webroot"": ""../../../wwwroot""
 }")
-                    .WithFileContents("web.config", webConfigContents)
+                    .WithFileContents(Path.Combine("public", "web.config"), webConfigContents)
                     .WriteTo(testEnv.ProjectPath);
 
                 var environment = new Dictionary<string, string>()
@@ -773,7 +772,6 @@ export SET KRE_APPBASE=""$DIR/approot/src/{0}""
                     .WithFileContents(Path.Combine("approot", "src", testEnv.ProjectName, "project.json"), @"{
   ""webroot"": ""../../../wwwroot""
 }")
-                    .WithFileContents(Path.Combine("approot", "src", testEnv.ProjectName, "web.config"), webConfigContents)
                     .WithFileContents(Path.Combine("approot", "global.json"), @"{
   ""dependencies"": {},
   ""packages"": ""packages""
