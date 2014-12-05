@@ -93,12 +93,13 @@ namespace Microsoft.Framework.PackageManager
 
                 var argProject = c.Argument("[project]", "Path to project, default is current directory");
                 var optionOut = c.Option("-o|--out <PATH>", "Where does it go", CommandOptionType.SingleValue);
-                var optionConfiguration = c.Option("--configuration <CONFIGURATION>", "The configuration to use for deployment", CommandOptionType.SingleValue);
+                var optionConfiguration = c.Option("--configuration <CONFIGURATION>", "The configuration to use for deployment (Debug|Release|{Custom})",
+                    CommandOptionType.SingleValue);
                 var optionOverwrite = c.Option("--overwrite", "Remove existing files in target folders",
                     CommandOptionType.NoValue);
-                var optionNoSource = c.Option("--no-source", "Don't include sources of project dependencies",
+                var optionNoSource = c.Option("--no-source", "Compiles the source files into Nuget packages",
                     CommandOptionType.NoValue);
-                var optionRuntime = c.Option("--runtime <KRE>", "Names or paths to KRE files to include",
+                var optionRuntime = c.Option("--runtime <KRE>", "Name or full path of the KRE folder to include",
                     CommandOptionType.MultipleValue);
                 var optionNative = c.Option("--native", "Build and include native images. User must provide targeted CoreCLR runtime versions along with this option.",
                     CommandOptionType.NoValue);
