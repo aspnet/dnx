@@ -25,6 +25,7 @@ namespace Microsoft.Framework.PackageManager
         public string CsProjectPath { get; set; }
         public string Configuration { get; set; }
         public string MsBuildPath { get; set; }
+        public bool InPlace { get; set; }
         public Reports Reports { get; set; }
 
         public bool ExecuteCommand()
@@ -226,12 +227,21 @@ namespace Microsoft.Framework.PackageManager
             var projectDir = Path.GetDirectoryName(projectFile);
             var rootDir = ProjectResolver.ResolveRootDirectory(projectDir);
             var wrapRoot = Path.Combine(rootDir, "wrap");
-            var projectResolver = new ProjectResolver(projectDir, rootDir);
-            var targetProjectJson = LocateExistingProject(projectResolver, projectName);
-            if (string.IsNullOrEmpty(targetProjectJson))
+
+            string targetProjectJson;
+            if (InPlace)
             {
-                AddWrapFolderToGlobalJson(rootDir);
-                targetProjectJson = Path.Combine(wrapRoot, projectName, Runtime.Project.ProjectFileName);
+                targetProjectJson = Path.Combine(projectDir, "project.json");
+            }
+            else
+            {
+                var projectResolver = new ProjectResolver(projectDir, rootDir);
+                targetProjectJson = LocateExistingProject(projectResolver, projectName);
+                if (string.IsNullOrEmpty(targetProjectJson))
+                {
+                    AddWrapFolderToGlobalJson(rootDir);
+                    targetProjectJson = Path.Combine(wrapRoot, projectName, Runtime.Project.ProjectFileName);
+                }
             }
 
             var targetFramework = GetTargetFramework(projectElement);
