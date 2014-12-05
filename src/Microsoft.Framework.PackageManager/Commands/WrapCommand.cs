@@ -25,6 +25,7 @@ namespace Microsoft.Framework.PackageManager
         public string CsProjectPath { get; set; }
         public string Configuration { get; set; }
         public string MsBuildPath { get; set; }
+        public bool InPlace { get; set; }
         public Reports Reports { get; set; }
 
         public bool ExecuteCommand()
@@ -194,18 +195,7 @@ namespace Microsoft.Framework.PackageManager
         {
             var globalJsonPath = Path.Combine(rootDir, GlobalSettings.GlobalFileName);
             var rootObj = LoadOrCreateJson(globalJsonPath);
-
-            if (rootObj["sources"] == null)
-            {
-                rootObj["sources"] = new JArray();
-            }
-
-            var sourcesArray = rootObj["sources"] as JArray;
-            if (sourcesArray == null)
-            {
-                throw new InvalidDataException(
-                    string.Format("The value of 'sources' in {0} must be an array", globalJsonPath));
-            }
+            var sourcesArray = GetOrCreateSourcesArray(rootObj);
 
             if (!sourcesArray.Any(x => string.Equals(x.Value<string>(), "wrap", StringComparison.OrdinalIgnoreCase)))
             {
@@ -226,12 +216,21 @@ namespace Microsoft.Framework.PackageManager
             var projectDir = Path.GetDirectoryName(projectFile);
             var rootDir = ProjectResolver.ResolveRootDirectory(projectDir);
             var wrapRoot = Path.Combine(rootDir, "wrap");
-            var projectResolver = new ProjectResolver(projectDir, rootDir);
-            var targetProjectJson = LocateExistingProject(projectResolver, projectName);
-            if (string.IsNullOrEmpty(targetProjectJson))
+
+            string targetProjectJson;
+            if (InPlace)
             {
-                AddWrapFolderToGlobalJson(rootDir);
-                targetProjectJson = Path.Combine(wrapRoot, projectName, Runtime.Project.ProjectFileName);
+                targetProjectJson = Path.Combine(projectDir, Runtime.Project.ProjectFileName);
+            }
+            else
+            {
+                var projectResolver = new ProjectResolver(projectDir, rootDir);
+                targetProjectJson = LocateExistingProject(projectResolver, projectName);
+                if (string.IsNullOrEmpty(targetProjectJson))
+                {
+                    AddWrapFolderToGlobalJson(rootDir);
+                    targetProjectJson = Path.Combine(wrapRoot, projectName, Runtime.Project.ProjectFileName);
+                }
             }
 
             var targetFramework = GetTargetFramework(projectElement);
@@ -294,12 +293,57 @@ namespace Microsoft.Framework.PackageManager
                 Reports.Information.WriteLine("  Adding project dependency '{0}.{1}'",
                     assemblyProjectName, WrapperProjectVersion);
                 AddProjectDependency(projectJson, assemblyProjectName, targetFramework);
+                AddWrapFolderToGlobalJson(rootDir);
             }
 
             PathUtility.EnsureParentDirectory(targetProjectJson);
             File.WriteAllText(targetProjectJson, projectJson.ToString());
 
+            AddToGlobalJsonSources(rootDir, Path.GetDirectoryName(targetProjectJson));
+
             Reports.Information.WriteLine();
+        }
+
+        private static void AddToGlobalJsonSources(string rootDir, string projectDir)
+        {
+            var globalJsonPath = Path.Combine(rootDir, GlobalSettings.GlobalFileName);
+            var rootObj = LoadOrCreateJson(globalJsonPath);
+            var sourcesArray = GetOrCreateSourcesArray(rootObj);
+
+            foreach (var sourceDir in sourcesArray)
+            {
+                var sourceDirPath = Path.Combine(rootDir, sourceDir.Value<string>());
+                if (PathUtility.IsChildOfDirectory(dir: sourceDirPath, candidate: projectDir))
+                {
+                    // If given project dir is already inside a source dir, we don't need to add it
+                    return;
+                }
+            }
+
+            rootDir = PathUtility.EnsureTrailingSlash(rootDir);
+            var projectDirParent = new DirectoryInfo(projectDir).Parent.FullName;
+            projectDirParent = PathUtility.EnsureTrailingSlash(projectDirParent);
+            var newSourceDir = PathUtility.GetRelativePath(rootDir, projectDirParent);
+            // If newSourceDir is an empty string, it means we should add root dir itself as a source dir
+            sourcesArray.Add(string.IsNullOrEmpty(newSourceDir) ? "." : newSourceDir);
+            File.WriteAllText(globalJsonPath, rootObj.ToString());
+        }
+
+        private static JArray GetOrCreateSourcesArray(JObject globalJsonRoot)
+        {
+            if (globalJsonRoot["sources"] == null)
+            {
+                globalJsonRoot["sources"] = new JArray();
+            }
+
+            var sourcesArray = globalJsonRoot["sources"] as JArray;
+            if (sourcesArray == null)
+            {
+                throw new InvalidDataException(
+                    string.Format("The value of 'sources' in {0} must be an array", GlobalSettings.GlobalFileName));
+            }
+
+            return sourcesArray;
         }
 
         private static string LocateExistingProject(IProjectResolver projectResolver, string projectName)
