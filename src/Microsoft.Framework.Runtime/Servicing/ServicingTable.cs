@@ -31,11 +31,15 @@ namespace Microsoft.Framework.Runtime.Servicing
                 var kreServicing = Environment.GetEnvironmentVariable("KRE_SERVICING");
                 if (string.IsNullOrEmpty(kreServicing))
                 {
+                    var servicingRoot = Environment.GetEnvironmentVariable("ProgramFiles") ??
+                                        Environment.GetEnvironmentVariable("HOME");
+
                     kreServicing = Path.Combine(
-                        Environment.GetEnvironmentVariable("ProgramFiles"),
+                        servicingRoot,
                         "KRE",
                         "Servicing");
                 }
+
                 index.Initialize(kreServicing);
                 return index;
             });

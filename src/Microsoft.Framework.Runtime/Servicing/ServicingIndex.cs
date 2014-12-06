@@ -84,8 +84,6 @@ namespace Microsoft.Framework.Runtime.Servicing
 
         public bool TryGetReplacement(string packageId, SemanticVersion packageVersion, string assetPath, out string replacementPath)
         {
-            Trace.TraceInformation("[{0}]: TryGetReplacement {1} {2} {3}", GetType().Name, packageId, packageVersion, assetPath);
-
             Entry entry;
             if (_entries.TryGetValue(new EntryKey(packageId, packageVersion), out entry))
             {
