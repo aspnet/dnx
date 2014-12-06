@@ -223,13 +223,11 @@ namespace Microsoft.Framework.Runtime.Roslyn
             var trees = new List<SyntaxTree>();
 
             // Enumerate all sub dirs and start from that set of folders incase new folders are added
-            var dirs = new HashSet<string>(Directory.EnumerateDirectories(project.ProjectDirectory, "*.*", SearchOption.AllDirectories));
+            var dirs = new HashSet<string>();
             dirs.Add(project.ProjectDirectory);
 
             foreach (var sourcePath in sourceFiles)
             {
-                dirs.Add(Path.GetDirectoryName(sourcePath));
-
                 _watcher.WatchFile(sourcePath);
 
                 var syntaxTree = CreateSyntaxTree(sourcePath, parseOptions);
@@ -240,8 +238,6 @@ namespace Microsoft.Framework.Runtime.Roslyn
             foreach (var sourceFileReference in sourceReferences.OfType<ISourceFileReference>())
             {
                 var sourcePath = sourceFileReference.Path;
-
-                dirs.Add(Path.GetDirectoryName(sourcePath));
 
                 _watcher.WatchFile(sourcePath);
 
