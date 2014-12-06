@@ -175,13 +175,29 @@ namespace Microsoft.Framework.Runtime
 
                 foreach (var assemblyInfo in GetPackageAssemblies(packageDescription, targetFramework))
                 {
-                    _packageAssemblyLookup[assemblyInfo.Name] = new PackageAssembly()
+                    string replacementPath;
+                    if (Servicing.ServicingTable.TryGetReplacement(
+                        package.Id,
+                        package.Version,
+                        assemblyInfo.RelativePath,
+                        out replacementPath))
                     {
-                        Path = assemblyInfo.Path,
-                        RelativePath = assemblyInfo.RelativePath,
-                        Library = dependency
-                    };
-
+                        _packageAssemblyLookup[assemblyInfo.Name] = new PackageAssembly()
+                        {
+                            Path = replacementPath,
+                            RelativePath = assemblyInfo.RelativePath,
+                            Library = dependency
+                        };
+                    }
+                    else
+                    {
+                        _packageAssemblyLookup[assemblyInfo.Name] = new PackageAssembly()
+                        {
+                            Path = assemblyInfo.Path,
+                            RelativePath = assemblyInfo.RelativePath,
+                            Library = dependency
+                        };
+                    }
                     assemblies.Add(assemblyInfo.Name);
                 }
 
