@@ -40,8 +40,15 @@ namespace Microsoft.Framework.Runtime.Servicing
                         {
                             continue;
                         }
-                        var parts = line.Split(new[] { ' ' }, 2, StringSplitOptions.RemoveEmptyEntries);
+                        var parts = line.Split(new[] { '=' }, 2);
                         if (parts.Length != 2)
+                        {
+                            Trace.TraceInformation("[{0}]: {1}({2}): malformed servicing file", GetType().Name, indexFilePath, lineNumber);
+                            continue;
+                        }
+                        parts[0] = parts[0].Trim();
+                        parts[1] = parts[1].Trim();
+                        if (parts[0].Length == 0 || parts[1].Length == 0)
                         {
                             Trace.TraceInformation("[{0}]: {1}({2}): malformed servicing file", GetType().Name, indexFilePath, lineNumber);
                             continue;
