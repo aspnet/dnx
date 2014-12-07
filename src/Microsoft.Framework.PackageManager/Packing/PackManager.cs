@@ -183,11 +183,11 @@ namespace Microsoft.Framework.PackageManager.Packing
             foreach (var dependencyContext in frameworkContexts.Values)
             {
                 // If there's any unresolved dependencies then complain and keep working
-                if (dependencyContext.UnresolvedDependencyProvider.UnresolvedDependencies.Any())
+                if (dependencyContext.DependencyWalker.Libraries.Any(l => !l.Resolved))
                 {
                     anyUnresolvedDependency = true;
                     var message = "Warning: " +
-                        dependencyContext.UnresolvedDependencyProvider.GetMissingDependenciesWarning(
+                        dependencyContext.DependencyWalker.GetMissingDependenciesWarning(
                             dependencyContext.FrameworkName);
                     _options.Reports.Quiet.WriteLine(message.Yellow());
                 }

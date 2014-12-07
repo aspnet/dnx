@@ -60,9 +60,9 @@ namespace Microsoft.Framework.Runtime
             Initialize();
 
             // If there's any unresolved dependencies then complain
-            if (_applicationHostContext.UnresolvedDependencyProvider.UnresolvedDependencies.Any())
+            if (_applicationHostContext.DependencyWalker.Libraries.Any(l => !l.Resolved))
             {
-                var exceptionMsg = _applicationHostContext.UnresolvedDependencyProvider.GetMissingDependenciesWarning(
+                var exceptionMsg = _applicationHostContext.DependencyWalker.GetMissingDependenciesWarning(
                     _targetFramework);
                 throw new InvalidOperationException(exceptionMsg);
             }

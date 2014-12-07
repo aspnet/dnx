@@ -87,7 +87,8 @@ namespace Microsoft.Framework.Runtime
                 Path = project.ProjectFilePath,
                 Framework = targetFrameworkInfo.FrameworkName,
                 Dependencies = dependencies,
-                LoadableAssemblies = loadableAssemblies
+                LoadableAssemblies = loadableAssemblies,
+                Resolved = targetFrameworkInfo.FrameworkName != null
             };
         }
 
