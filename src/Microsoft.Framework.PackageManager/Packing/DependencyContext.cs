@@ -28,7 +28,6 @@ namespace Microsoft.Framework.PackageManager.Packing
             ProjectResolver = applicationHostContext.ProjectResolver;
             NuGetDependencyResolver = applicationHostContext.NuGetDependencyProvider;
             ProjectReferenceDependencyProvider = applicationHostContext.ProjectDepencyProvider;
-            UnresolvedDependencyProvider = applicationHostContext.UnresolvedDependencyProvider;
             DependencyWalker = applicationHostContext.DependencyWalker;
             FrameworkName = targetFramework;
             PackagesDirectory = applicationHostContext.PackagesDirectory;
@@ -37,7 +36,6 @@ namespace Microsoft.Framework.PackageManager.Packing
         public IProjectResolver ProjectResolver { get; set; }
         public NuGetDependencyResolver NuGetDependencyResolver { get; set; }
         public ProjectReferenceDependencyProvider ProjectReferenceDependencyProvider { get; set; }
-        public UnresolvedDependencyProvider UnresolvedDependencyProvider { get; set; }
         public DependencyWalker DependencyWalker { get; set; }
         public FrameworkName FrameworkName { get; set; }
         public ILookup<string, PackageAssembly> PackageAssemblies { get; set; }

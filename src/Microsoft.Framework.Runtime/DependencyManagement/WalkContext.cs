@@ -289,7 +289,8 @@ namespace Microsoft.Framework.Runtime
                         Type = entry.Value.Description.Type,
                         Framework = entry.Value.Description.Framework ?? frameworkName,
                         Dependencies = entry.Value.Dependencies.SelectMany(CorrectDependencyVersion).ToList(),
-                        LoadableAssemblies = entry.Value.Description.LoadableAssemblies ?? Enumerable.Empty<string>()
+                        LoadableAssemblies = entry.Value.Description.LoadableAssemblies ?? Enumerable.Empty<string>(),
+                        Resolved = entry.Value.Description.Resolved
                     };
                 }).ToList();
 

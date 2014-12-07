@@ -887,11 +887,16 @@ namespace Microsoft.Framework.DesignTimeHost
                     RawReferences = new Dictionary<string, byte[]>()
                 };
 
-                // Watch all projects for project.json changes
                 foreach (var library in applicationHostContext.DependencyWalker.Libraries)
                 {
                     var description = CreateDependencyDescription(library);
                     info.Dependencies[description.Name] = description;
+
+                    // Skip unresolved libraries
+                    if (!library.Resolved)
+                    {
+                        continue;
+                    }
 
                     if (string.Equals(library.Type, "Project") &&
                        !string.Equals(library.Identity.Name, project.Name))
@@ -909,7 +914,11 @@ namespace Microsoft.Framework.DesignTimeHost
                         if (!string.IsNullOrEmpty(targetFrameworkInformation.AssemblyPath) &&
                             string.IsNullOrEmpty(targetFrameworkInformation.WrappedProject))
                         {
-                            info.References.Add(GetProjectRelativeFullPath(referencedProject, targetFrameworkInformation.AssemblyPath));
+                            string assemblyPath = GetProjectRelativeFullPath(referencedProject, targetFrameworkInformation.AssemblyPath);
+                            info.References.Add(assemblyPath);
+
+                            description.Path = assemblyPath;
+                            description.Type = "Assembly";
                         }
                         else
                         {
@@ -930,6 +939,8 @@ namespace Microsoft.Framework.DesignTimeHost
                                 },
                                 Path = projectPath
                             });
+
+                            description.Path = projectPath;
                         }
                     }
                 }
@@ -976,7 +987,7 @@ namespace Microsoft.Framework.DesignTimeHost
             {
                 Name = library.Identity.Name,
                 Version = library.Identity.Version == null ? null : library.Identity.Version.ToString(),
-                Type = library.Type ?? "Unresolved",
+                Type = library.Resolved ? library.Type : "Unresolved",
                 Path = library.Path,
                 Dependencies = library.Dependencies.Select(lib => new DependencyItem
                 {
