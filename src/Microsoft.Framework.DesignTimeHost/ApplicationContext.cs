@@ -887,11 +887,16 @@ namespace Microsoft.Framework.DesignTimeHost
                     RawReferences = new Dictionary<string, byte[]>()
                 };
 
-                // Watch all projects for project.json changes
                 foreach (var library in applicationHostContext.DependencyWalker.Libraries)
                 {
                     var description = CreateDependencyDescription(library);
                     info.Dependencies[description.Name] = description;
+
+                    // Skip unresolved libraries
+                    if (!library.Resolved)
+                    {
+                        continue;
+                    }
 
                     if (string.Equals(library.Type, "Project") &&
                        !string.Equals(library.Identity.Name, project.Name))
@@ -909,15 +914,19 @@ namespace Microsoft.Framework.DesignTimeHost
                         if (!string.IsNullOrEmpty(targetFrameworkInformation.AssemblyPath) &&
                             string.IsNullOrEmpty(targetFrameworkInformation.WrappedProject))
                         {
-                            info.References.Add(GetProjectRelativeFullPath(referencedProject, targetFrameworkInformation.AssemblyPath));
+                            string assemblyPath = GetProjectRelativeFullPath(referencedProject, targetFrameworkInformation.AssemblyPath);
+                            info.References.Add(assemblyPath);
+
+                            description.Path = assemblyPath;
+                            description.Type = "Assembly";
                         }
                         else
                         {
-                            string projectPath = library.Path;
+                            string wrappedProjectPath = null;
 
                             if (!string.IsNullOrEmpty(targetFrameworkInformation.WrappedProject))
                             {
-                                projectPath = GetProjectRelativeFullPath(referencedProject, targetFrameworkInformation.WrappedProject);
+                                wrappedProjectPath = GetProjectRelativeFullPath(referencedProject, targetFrameworkInformation.WrappedProject);
                             }
 
                             info.ProjectReferences.Add(new ProjectReference
@@ -928,7 +937,8 @@ namespace Microsoft.Framework.DesignTimeHost
                                     FrameworkName = library.Framework.ToString(),
                                     FriendlyName = frameworkResolver.GetFriendlyFrameworkName(library.Framework)
                                 },
-                                Path = projectPath
+                                Path = library.Path,
+                                WrappedProjectPath = wrappedProjectPath
                             });
                         }
                     }
@@ -976,7 +986,7 @@ namespace Microsoft.Framework.DesignTimeHost
             {
                 Name = library.Identity.Name,
                 Version = library.Identity.Version == null ? null : library.Identity.Version.ToString(),
-                Type = library.Type ?? "Unresolved",
+                Type = library.Resolved ? library.Type : "Unresolved",
                 Path = library.Path,
                 Dependencies = library.Dependencies.Select(lib => new DependencyItem
                 {

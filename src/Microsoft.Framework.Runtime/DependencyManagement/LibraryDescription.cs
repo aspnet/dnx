@@ -14,5 +14,6 @@ namespace Microsoft.Framework.Runtime
         public FrameworkName Framework { get; set; }
         public IEnumerable<LibraryDependency> Dependencies { get; set; }
         public IEnumerable<string> LoadableAssemblies { get; set; }
+        public bool Resolved { get; set; } = true;
     }
 }
