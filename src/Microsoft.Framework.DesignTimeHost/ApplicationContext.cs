@@ -922,11 +922,11 @@ namespace Microsoft.Framework.DesignTimeHost
                         }
                         else
                         {
-                            string projectPath = library.Path;
+                            string wrappedProjectPath = null;
 
                             if (!string.IsNullOrEmpty(targetFrameworkInformation.WrappedProject))
                             {
-                                projectPath = GetProjectRelativeFullPath(referencedProject, targetFrameworkInformation.WrappedProject);
+                                wrappedProjectPath = GetProjectRelativeFullPath(referencedProject, targetFrameworkInformation.WrappedProject);
                             }
 
                             info.ProjectReferences.Add(new ProjectReference
@@ -937,10 +937,9 @@ namespace Microsoft.Framework.DesignTimeHost
                                     FrameworkName = library.Framework.ToString(),
                                     FriendlyName = frameworkResolver.GetFriendlyFrameworkName(library.Framework)
                                 },
-                                Path = projectPath
+                                Path = library.Path,
+                                WrappedProjectPath = wrappedProjectPath
                             });
-
-                            description.Path = projectPath;
                         }
                     }
                 }
