@@ -76,6 +76,11 @@ namespace Microsoft.Framework.Runtime
                 loadableAssemblies.Add(project.Name);
             }
 
+            // Mark the library as unresolved if there were specified frameworks
+            // and none of them resolved
+            bool unresolved = targetFrameworkInfo.FrameworkName == null &&
+                              project.GetTargetFrameworks().Any();
+
             return new LibraryDescription
             {
                 Identity = new Library
@@ -88,7 +93,7 @@ namespace Microsoft.Framework.Runtime
                 Framework = targetFrameworkInfo.FrameworkName,
                 Dependencies = dependencies,
                 LoadableAssemblies = loadableAssemblies,
-                Resolved = targetFrameworkInfo.FrameworkName != null
+                Resolved = !unresolved
             };
         }
 
