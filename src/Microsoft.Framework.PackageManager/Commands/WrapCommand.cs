@@ -231,7 +231,7 @@ namespace Microsoft.Framework.PackageManager
             string targetProjectJson;
             if (InPlace)
             {
-                targetProjectJson = Path.Combine(projectDir, "project.json");
+                targetProjectJson = Path.Combine(projectDir, Runtime.Project.ProjectFileName);
             }
             else
             {
