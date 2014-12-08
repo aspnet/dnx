@@ -97,7 +97,7 @@ namespace Microsoft.Framework.PackageManager
                     CommandOptionType.SingleValue);
                 var optionOverwrite = c.Option("--overwrite", "Remove existing files in target folders",
                     CommandOptionType.NoValue);
-                var optionNoSource = c.Option("--no-source", "Compiles the source files into Nuget packages",
+                var optionNoSource = c.Option("--no-source", "Compiles the source files into NuGet packages",
                     CommandOptionType.NoValue);
                 var optionRuntime = c.Option("--runtime <KRE>", "Name or full path of the KRE folder to include",
                     CommandOptionType.MultipleValue);
