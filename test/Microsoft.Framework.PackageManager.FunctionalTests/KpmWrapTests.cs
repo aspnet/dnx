@@ -213,17 +213,33 @@ namespace Microsoft.Framework.PackageManager
                 File.WriteAllText(consoleApp1ProjectJson, root.ToString());
 
                 string stdOut, stdErr;
-                TestUtils.Exec(
+                var betaBuildExitCode = TestUtils.Exec(
                     program: _msbuildPath,
                     commandLine: string.Format("\"{0}\"", libBetaPclDesktopCsprojPath),
                     stdOut: out stdOut,
                     stdErr: out stdErr);
 
-                TestUtils.Exec(
+                // For diaganostics
+                if (betaBuildExitCode != 0)
+                {
+                    Console.WriteLine("Failed to build LibraryBeta with '{0}'", _msbuildPath);
+                    Console.WriteLine(stdOut);
+                    Console.WriteLine(stdErr);
+                }
+
+                var gammaBuildExitCode = TestUtils.Exec(
                     program: _msbuildPath,
                     commandLine: string.Format("\"{0}\"", libGammaCsprojPath),
                     stdOut: out stdOut,
                     stdErr: out stdErr);
+
+                // For diaganostics
+                if (gammaBuildExitCode != 0)
+                {
+                    Console.WriteLine("Failed to build LibraryGamma with '{0}'", _msbuildPath);
+                    Console.WriteLine(stdOut);
+                    Console.WriteLine(stdErr);
+                }
 
                 var betaDesktopWrapExitCode = KpmTestUtils.ExecKpm(
                     krePath: krePathDir,
@@ -244,8 +260,9 @@ namespace Microsoft.Framework.PackageManager
 
                 Assert.Equal(0, betaDesktopWrapExitCode);
                 Assert.Equal(0, gammaWrapExitCode);
-                Assert.Equal(0, consoleApp1ExitCode);
                 Assert.Equal(expectedConsoleApp1Output, stdOut);
+                Assert.Equal(string.Empty, stdErr);
+                Assert.Equal(0, consoleApp1ExitCode);
             }
         }
     }
