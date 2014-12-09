@@ -256,13 +256,24 @@ namespace Microsoft.Framework.PackageManager
                     commandLine: "run",
                     stdOut: out stdOut,
                     stdErr: out stdErr,
-                    environment: new Dictionary<string, string> { { "K_APPBASE", consoleApp1Folder } });
+                    environment: new Dictionary<string, string>
+                    {
+                        { "K_APPBASE", consoleApp1Folder },
+                        { "KRE_TRACE", null }  // Turn off KRE_TRACE because we need to verify app output
+                    });
+
+                // For diaganostics
+                if (consoleApp1ExitCode != 0)
+                {
+                    Console.WriteLine("Failed to run ConsoleApp1");
+                    Console.WriteLine(stdOut);
+                    Console.WriteLine(stdErr);
+                }
 
                 Assert.Equal(0, betaDesktopWrapExitCode);
                 Assert.Equal(0, gammaWrapExitCode);
-                Assert.Equal(expectedConsoleApp1Output, stdOut);
-                Assert.Equal(string.Empty, stdErr);
                 Assert.Equal(0, consoleApp1ExitCode);
+                Assert.Equal(expectedConsoleApp1Output, stdOut);
             }
         }
     }
