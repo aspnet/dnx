@@ -290,7 +290,7 @@ namespace Microsoft.Framework.Runtime
             bool hasContract = description.ContractPath != null;
             bool hasLib = packageAssemblies.Any();
 
-            if (hasContract && hasLib)
+            if (hasContract && hasLib && !VersionUtility.IsDesktop(targetFramework))
             {
                 paths[description.Library.Identity.Name] = new MetadataFileReference(description.Library.Identity.Name, description.ContractPath);
             }
