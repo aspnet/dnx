@@ -104,9 +104,9 @@ namespace Microsoft.Framework.PackageManager
                 {
                     var properties = new[]
                     {
-                        "/p:CustomAfterMicrosoftCommonTargets=\"\{_referenceResolverPath}\"",
-                        "/p:ResultFilePath=\"\{intermediateResultFile}\"",
-                        "/p:Configuration=\{Configuration}",
+                        string.Format("/p:CustomAfterMicrosoftCommonTargets=\"{0}\"", _referenceResolverPath),
+                        string.Format("/p:ResultFilePath=\"{0}\"", intermediateResultFile),
+                        string.Format("/p:Configuration={0}", Configuration),
                         "/p:DesignTimeBuild=true",
                         "/p:BuildProjectReferences=false",
                         "/p:_ResolveReferenceDependencies=true" // Dump entire assembly reference closure
