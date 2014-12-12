@@ -11,38 +11,100 @@ namespace Microsoft.Framework.FunctionalTestUtils
 {
     public class DirTree
     {
-        private JObject _json;
         private Dictionary<string, string> _pathToContents;
 
-        public DirTree(string json)
+        private DirTree(string jsonStr)
         {
-            _json = JObject.Parse(json);
+            var json = JObject.Parse(jsonStr);
             _pathToContents = new Dictionary<string, string>();
+
+            // Flatten this directory structure into the dictionary _pathToContents
+            FlattenJsonToDictionary(json);
+        }
+
+        public static DirTree CreateFromJson(string jsonStr)
+        {
+            return new DirTree(jsonStr);
+        }
+
+        public static DirTree CreateFromDirectory(string dirPath)
+        {
+            var dirTree = CreateFromJson("{}");
+
+            dirPath = EnsureTrailingSeparator(dirPath);
+
+            var dirFileList = Directory.GetFiles(dirPath, "*.*", SearchOption.AllDirectories)
+                .Select(x => x.Substring(dirPath.Length));
+
+            foreach (var file in dirFileList)
+            {
+                var fullPath = Path.Combine(dirPath, file);
+                var onDiskFileContents = File.ReadAllText(fullPath);
+                dirTree._pathToContents[file] = onDiskFileContents;
+            }
+
+            return dirTree;
         }
 
         public DirTree WithFileContents(string relativePath, string contents)
         {
-            _pathToContents.Add(relativePath, contents);
+            _pathToContents[relativePath] = contents;
+            return this;
+        }
+
+        public DirTree WithFileContents(string relativePath, string contentsFormat, params object[] args)
+        {
+            _pathToContents[relativePath] = string.Format(contentsFormat, args);
+            return this;
+        }
+
+        public DirTree WithSubDir(string relativePath, DirTree subDir)
+        {
+            foreach (var pair in subDir._pathToContents)
+            {
+                var newPath = Path.Combine(relativePath, pair.Key);
+                _pathToContents[newPath] = pair.Value;
+            }
+            return this;
+        }
+
+        public DirTree RemoveFile(string relativePath)
+        {
+            _pathToContents.Remove(relativePath);
+            return this;
+        }
+
+        public DirTree RemoveSubDir(string relativePath)
+        {
+            relativePath = EnsureTrailingSeparator(relativePath);
+            var removedKeys = new List<string>();
+            foreach (var pair in _pathToContents)
+            {
+                if (pair.Key.StartsWith(relativePath))
+                {
+                    removedKeys.Add(pair.Key);
+                }
+            }
+            foreach (var removedKey in removedKeys)
+            {
+                _pathToContents.Remove(removedKey);
+            }
             return this;
         }
 
         public DirTree WriteTo(string rootDirPath)
         {
-            Directory.CreateDirectory(rootDirPath);
-            WriteToCore(_json, rootDirPath);
-
             foreach (var pair in _pathToContents)
             {
                 var path = Path.Combine(rootDirPath, pair.Key);
-                if (File.Exists(path))
+                var parentDir = Path.GetDirectoryName(path);
+
+                if (!Directory.Exists(parentDir))
                 {
-                    File.WriteAllText(path, pair.Value);
+                    Directory.CreateDirectory(parentDir);
                 }
-                else
-                {
-                    var message = string.Format("'{0}' is not in created directory structure.", pair.Key);
-                    throw new Exception(message);
-                }
+
+                File.WriteAllText(path, pair.Value);
             }
 
             return this;
@@ -50,22 +112,21 @@ namespace Microsoft.Framework.FunctionalTestUtils
 
         public bool MatchDirectoryOnDisk(string dirPath, bool compareFileContents = true)
         {
-            // Flatten this directory structure into the dictionary _pathToContents
-            FlattenJsonToDictionary();
-
-            if (!string.IsNullOrEmpty(dirPath))
-            {
-                dirPath = dirPath[dirPath.Length - 1] == Path.DirectorySeparatorChar ?
-                        dirPath : dirPath + Path.DirectorySeparatorChar;
-            }
+            dirPath = EnsureTrailingSeparator(dirPath);
 
             var dirFileList = Directory.GetFiles(dirPath, "*.*", SearchOption.AllDirectories)
                 .Select(x => x.Substring(dirPath.Length));
 
-            if (_pathToContents.Count != dirFileList.Count())
+            var expectedCount = _pathToContents.Count;
+            var actualCount = dirFileList.Count();
+            if (expectedCount != actualCount)
             {
-                Console.WriteLine("Number of files in '{0}' is {1}, while expected number is {2}.",
-                    dirPath, dirFileList.Count(), _pathToContents.Count);
+                Console.Error.WriteLine("Number of files in '{0}' is {1}, while expected number is {2}.",
+                    dirPath, actualCount, expectedCount);
+                Console.Error.WriteLine("Missing files: " +
+                    string.Join(",", _pathToContents.Keys.Except(dirFileList)));
+                Console.Error.WriteLine("Extra files: " +
+                    string.Join(",", dirFileList.Except(_pathToContents.Keys)));
                 return false;
             }
 
@@ -73,7 +134,7 @@ namespace Microsoft.Framework.FunctionalTestUtils
             {
                 if (!_pathToContents.ContainsKey(file))
                 {
-                    Console.WriteLine("Expecting '{0}', which doesn't exist in '{1}'", file, dirPath);
+                    Console.Error.WriteLine("Expecting '{0}', which doesn't exist in '{1}'", file, dirPath);
                     return false;
                 }
 
@@ -81,11 +142,11 @@ namespace Microsoft.Framework.FunctionalTestUtils
                 var onDiskFileContents = File.ReadAllText(fullPath);
                 if (!string.Equals(onDiskFileContents, _pathToContents[file]))
                 {
-                    Console.WriteLine("The contents of '{0}' don't match expected contents.", fullPath);
-                    Console.WriteLine("Expected:");
-                    Console.WriteLine(_pathToContents[file]);
-                    Console.WriteLine("Actual:");
-                    Console.WriteLine(onDiskFileContents);
+                    Console.Error.WriteLine("The contents of '{0}' don't match expected contents.", fullPath);
+                    Console.Error.WriteLine("Expected:");
+                    Console.Error.WriteLine(_pathToContents[file]);
+                    Console.Error.WriteLine("Actual:");
+                    Console.Error.WriteLine(onDiskFileContents);
                     return false;
                 }
             }
@@ -93,9 +154,9 @@ namespace Microsoft.Framework.FunctionalTestUtils
             return true;
         }
 
-        private void FlattenJsonToDictionary()
+        private void FlattenJsonToDictionary(JObject json)
         {
-            FlattenJsonToDictionaryCore(_json, path:  string.Empty);
+            FlattenJsonToDictionaryCore(json, path: string.Empty);
         }
 
         private void FlattenJsonToDictionaryCore(JObject dirObj, string path)
@@ -132,35 +193,14 @@ namespace Microsoft.Framework.FunctionalTestUtils
             }
         }
 
-        private void WriteToCore(JObject dirObj, string path)
+        private static string EnsureTrailingSeparator(string dirPath)
         {
-            foreach (var property in dirObj.Properties())
+            if (!string.IsNullOrEmpty(dirPath))
             {
-                // If value of the property is a string, the name of this property represents
-                // a file and the value represents the contents of the file
-                if (property.Value is JValue)
-                {
-                    File.WriteAllText(Path.Combine(path, property.Name), property.Value.ToString());
-                }
-                // If value of the property is an array, the name of this property represents
-                // a directory and the value represents a list of empty files in the directory
-                else if (property.Value is JArray)
-                {
-                    Directory.CreateDirectory(Path.Combine(path, property.Name));
-                    foreach (var element in (property.Value as JArray))
-                    {
-                        var elementValue = (element as JValue).ToString();
-                        File.WriteAllText(Path.Combine(path, property.Name, elementValue), string.Empty);
-                    }
-                }
-                // If value of the property is an object, the name of this property represents
-                // a directory and the value is processed recursively as a sub-directory
-                else if (property.Value is JObject)
-                {
-                    Directory.CreateDirectory(Path.Combine(path, property.Name));
-                    WriteToCore(property.Value as JObject, Path.Combine(path, property.Name));
-                }
+                dirPath = dirPath[dirPath.Length - 1] == Path.DirectorySeparatorChar ?
+                        dirPath : dirPath + Path.DirectorySeparatorChar;
             }
+            return dirPath;
         }
     }
 }

@@ -9,11 +9,11 @@ namespace Microsoft.Framework.ApplicationHost
 {
     public class KCommandTests
     {
-        public static IEnumerable<object[]> KrePaths
+        public static IEnumerable<object[]> KreHomeDirs
         {
             get
             {
-                foreach (var path in TestUtils.GetUnpackedKrePaths())
+                foreach (var path in TestUtils.GetKreHomeDirs())
                 {
                     yield return new[] { path };
                 }
@@ -21,14 +21,14 @@ namespace Microsoft.Framework.ApplicationHost
         }
 
         [Theory]
-        [MemberData("KrePaths")]
-        public void KCommandReturnsNonZeroExitCodeWhenNoArgumentWasGiven(DisposableDirPath krePath)
+        [MemberData("KreHomeDirs")]
+        public void KCommandReturnsNonZeroExitCodeWhenNoArgumentWasGiven(DisposableDir kreHomeDir)
         {
-            using (krePath)
+            using (kreHomeDir)
             {
                 string stdOut, stdErr;
                 var exitCode = KCommandTestUtils.ExecKCommand(
-                    krePath,
+                    kreHomeDir,
                     subcommand: string.Empty,
                     arguments: string.Empty,
                     stdOut: out stdOut,
@@ -39,14 +39,14 @@ namespace Microsoft.Framework.ApplicationHost
         }
 
         [Theory]
-        [MemberData("KrePaths")]
-        public void KCommandReturnsZeroExitCodeWhenHelpOptionWasGiven(DisposableDirPath krePath)
+        [MemberData("KreHomeDirs")]
+        public void KCommandReturnsZeroExitCodeWhenHelpOptionWasGiven(DisposableDir kreHomeDir)
         {
-            using (krePath)
+            using (kreHomeDir)
             {
                 string stdOut, stdErr;
                 var exitCode = KCommandTestUtils.ExecKCommand(
-                    krePath,
+                    kreHomeDir,
                     subcommand: string.Empty,
                     arguments: "--help",
                     stdOut: out stdOut,
@@ -57,14 +57,14 @@ namespace Microsoft.Framework.ApplicationHost
         }
 
         [Theory]
-        [MemberData("KrePaths")]
-        public void KCommandShowsVersionAndReturnsZeroExitCodeWhenVersionOptionWasGiven(DisposableDirPath krePath)
+        [MemberData("KreHomeDirs")]
+        public void KCommandShowsVersionAndReturnsZeroExitCodeWhenVersionOptionWasGiven(DisposableDir kreHomeDir)
         {
-            using (krePath)
+            using (kreHomeDir)
             {
                 string stdOut, stdErr;
                 var exitCode = KCommandTestUtils.ExecKCommand(
-                    krePath,
+                    kreHomeDir,
                     subcommand: string.Empty,
                     arguments: "--version",
                     stdOut: out stdOut,
@@ -76,15 +76,15 @@ namespace Microsoft.Framework.ApplicationHost
         }
 
         [Theory]
-        [MemberData("KrePaths")]
-        public void KCommandShowsErrorWhenNoProjectJsonWasFound(DisposableDirPath krePath)
+        [MemberData("KreHomeDirs")]
+        public void KCommandShowsErrorWhenNoProjectJsonWasFound(DisposableDir kreHomeDir)
         {
-            using (krePath)
+            using (kreHomeDir)
             using (var emptyFolder = TestUtils.CreateTempDir())
             {
                 string stdOut, stdErr;
                 var exitCode = KCommandTestUtils.ExecKCommand(
-                    krePath,
+                    kreHomeDir,
                     subcommand: "run",
                     arguments: string.Empty,
                     stdOut: out stdOut,
@@ -97,22 +97,22 @@ namespace Microsoft.Framework.ApplicationHost
         }
 
         [Theory]
-        [MemberData("KrePaths")]
-        public void KCommandShowsErrorWhenGivenSubcommandWasNotFoundInProjectJson(DisposableDirPath krePath)
+        [MemberData("KreHomeDirs")]
+        public void KCommandShowsErrorWhenGivenSubcommandWasNotFoundInProjectJson(DisposableDir kreHomeDir)
         {
             var projectStructure = @"{
   'project.json': '{ }'
 }";
 
-            using (krePath)
+            using (kreHomeDir)
             using (var projectPath = TestUtils.CreateTempDir())
             {
 
-                TestUtils.CreateDirTree(projectStructure).WriteTo(projectPath);
+                DirTree.CreateFromJson(projectStructure).WriteTo(projectPath);
 
                 string stdOut, stdErr;
                 var exitCode = KCommandTestUtils.ExecKCommand(
-                    krePath,
+                    kreHomeDir,
                     subcommand: "invalid",
                     arguments: string.Empty,
                     stdOut: out stdOut,
