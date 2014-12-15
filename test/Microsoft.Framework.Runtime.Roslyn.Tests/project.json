@@ -3,12 +3,12 @@
         "K.Roslyn": "1.0.0-*",
         "Microsoft.Framework.Runtime.Interfaces": "1.0.0-*",
         "Microsoft.Framework.Runtime.Roslyn": "1.0.0-*",
-        "Xunit.KRunner": "1.0.0-*"
+        "xunit.runner.kre": "1.0.0-*"
     },
     "frameworks": {
         "aspnet50": { }
     },
     "commands": {
-        "test": "Xunit.KRunner"
+        "test": "xunit.runner.kre"
     }
 }

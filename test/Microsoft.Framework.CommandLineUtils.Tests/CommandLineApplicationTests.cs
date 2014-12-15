@@ -197,7 +197,8 @@ namespace Microsoft.Framework.Runtime.Common.CommandLine
             addHelpCommand: false,
             throwOnUnexpectedArg: false);
 
-            Assert.DoesNotThrow(() => app.Execute("test", unexpectedArg));
+            // (does not throw)
+            app.Execute("test", unexpectedArg);
             Assert.Equal(1, testCmd.RemainingArguments.Count);
             Assert.Equal(unexpectedArg, testCmd.RemainingArguments[0]);
         }
@@ -231,7 +232,8 @@ namespace Microsoft.Framework.Runtime.Common.CommandLine
             addHelpCommand: false,
             throwOnUnexpectedArg: false);
 
-            Assert.DoesNotThrow(() => app.Execute("test", unexpectedOption));
+            // (does not throw)
+            app.Execute("test", unexpectedOption);
             Assert.Equal(1, testCmd.RemainingArguments.Count);
             Assert.Equal(unexpectedOption, testCmd.RemainingArguments[0]);
         }
@@ -265,7 +267,8 @@ namespace Microsoft.Framework.Runtime.Common.CommandLine
             addHelpCommand: false,
             throwOnUnexpectedArg: false);
 
-            Assert.DoesNotThrow(() => app.Execute("test", unexpectedOption));
+            // (does not throw)
+            app.Execute("test", unexpectedOption);
             Assert.Equal(1, testCmd.RemainingArguments.Count);
             Assert.Equal(unexpectedOption, testCmd.RemainingArguments[0]);
         }
@@ -299,7 +302,8 @@ namespace Microsoft.Framework.Runtime.Common.CommandLine
             addHelpCommand: false,
             throwOnUnexpectedArg: false);
 
-            Assert.DoesNotThrow(() => app.Execute("test", unexpectedOption));
+            // (does not throw)
+            app.Execute("test", unexpectedOption);
             Assert.Equal(1, testCmd.RemainingArguments.Count);
             Assert.Equal(unexpectedOption, testCmd.RemainingArguments[0]);
         }
@@ -335,7 +339,8 @@ namespace Microsoft.Framework.Runtime.Common.CommandLine
                 c.OnExecute(() => 0);
             });
 
-            Assert.DoesNotThrow(() => app.Execute("k", "run", unexpectedOption));
+            // (does not throw)
+            app.Execute("k", "run", unexpectedOption);
             Assert.Equal(0, testCmd.RemainingArguments.Count);
             Assert.Equal(1, subCmd.RemainingArguments.Count);
             Assert.Equal(unexpectedOption, subCmd.RemainingArguments[0]);
