@@ -16,7 +16,7 @@
                 "System.Runtime.Loader": "4.0.0-beta-*",
                 "System.IO.FileSystem": "4.0.0-beta-*",
                 "System.AppContext": "4.0.0-beta-*",
-                "System.Threading": "4.0.0-beta-*"
+                "System.Threading": "4.0.10-beta-*"
             }
         }
     },
