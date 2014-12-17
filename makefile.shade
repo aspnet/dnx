@@ -116,22 +116,23 @@ var MONO_MANAGED_PROJECTS = '${FindAllProjects("klr.mono.managed")}'
   copy sourceDir='${Path.Combine(ROOT, "src", "klr")}' include='bin/**/' outputDir='${Path.Combine(BUILD_DIR2, "klr")}' overwrite='${true}'
 
 #build-native-klrcore45 .copy-coreclr target='native-compile' if='!IsMono'
-    @{ 
-        /* Update the tpa.cpp */ 
-        try
-        {
-            var tpacppFile = Path.Combine(ROOT, "src", "klr.core45", "tpa.cpp");
-            Environment.SetEnvironmentVariable("K_APPBASE", Path.Combine(ROOT, "src", "DependencyAnalyzer"));
-            Exec("cmd", "/C k dpa tpa \"" + Path.Combine(CORECLR_TARGET_PATH, "Runtime", "x86") + "\" \"" + tpacppFile + "\"");
-        }
-        finally
-        {
-            Environment.SetEnvironmentVariable("K_APPBASE", null);
-        }
-    }
-
     var klrCore45Proj = '${Path.Combine(ROOT, "src", "klr.core45", "klr.core45.vcxproj")}'
     @{
+        if (NEW_RUNTIME)
+        {
+            /* Update the tpa.cpp */ 
+            try
+            {
+                var tpacppFile = Path.Combine(ROOT, "src", "klr.core45", "tpa.cpp");
+                Environment.SetEnvironmentVariable("K_APPBASE", Path.Combine(ROOT, "src", "DependencyAnalyzer"));
+                Exec("cmd", "/C k dpa tpa \"" + Path.Combine(CORECLR_TARGET_PATH, "Runtime", "x86") + "\" \"" + tpacppFile + "\"");
+            }
+            finally
+            {
+                Environment.SetEnvironmentVariable("K_APPBASE", null);
+            }
+        }
+
         if (!IsMsbuildInstalled(MSBUILD))
         {
             Environment.Exit(1);
@@ -197,7 +198,7 @@ var MONO_MANAGED_PROJECTS = '${FindAllProjects("klr.mono.managed")}'
         Exec(compiler, arguments);
     }
 
-#package-runtime .clean-sdk-dir .copy-bits .tweak-scripts .copy-package-dependencies .copy-coreclr .copy-required-dependencies  .nuget-pack-runtime target='package'
+#package-runtime .clean-sdk-dir .copy-bits .tweak-scripts .copy-package-dependencies .copy-coreclr .copy-required-dependencies .nuget-pack-runtime target='package'
 
 #rebuild-package .build-mono-entrypoint .build-compile .native-compile .package-runtime .xunit-test
 
@@ -315,7 +316,8 @@ var MONO_MANAGED_PROJECTS = '${FindAllProjects("klr.mono.managed")}'
             Log.Info("Adding PATH " + Path.Combine(PACKAGES_DIR, "KRE", "bin"));
             Environment.SetEnvironmentVariable("PATH", Path.Combine(PACKAGES_DIR, "KRE", "bin") + ";" + envPath);
             Environment.SetEnvironmentVariable("NEW_RUNTIME", "1"); 
-            Log.Info("Rebuilding target default"); 
+            Log.Info("Rebuilding target default");
+
             // TODO REMOVE after bootstrapping: We need to restore again because the location changes
             Exec("build.cmd", "initialize");
             Exec("build.cmd", "rebuild-package");
@@ -592,7 +594,7 @@ var MONO_MANAGED_PROJECTS = '${FindAllProjects("klr.mono.managed")}'
     copy sourceDir='${Path.Combine(CORECLR_TARGET_PATH, "Runtime", "amd64")}' outputDir='${KRE_CORECLR_amd64_BIN}'
 
     @{
-        if (!IsMono)
+        if (!IsMono && NEW_RUNTIME)
         {
             var dependenciesFile = Path.Combine(BUILD_DIR2, "dependencies.txt");
             
