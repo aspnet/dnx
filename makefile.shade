@@ -488,6 +488,7 @@ var MONO_MANAGED_PROJECTS = '${FindAllProjects("klr.mono.managed")}'
         var packages = new[] { "Newtonsoft.Json", 
                                "Microsoft.CodeAnalysis.Common", 
                                "Microsoft.CodeAnalysis.CSharp", 
+                               "Microsoft.Net.Http.Client",
                                "System.Collections.Immutable", 
                                "System.Reflection.Metadata" };
         
