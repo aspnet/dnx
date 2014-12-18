@@ -454,7 +454,8 @@ namespace Microsoft.Framework.PackageManager
                         new RemoteWalkProvider(
                             PackageFolderFactory.CreatePackageFolderFromPath(
                                 source.Source,
-                                Reports.Quiet)));
+                                Reports.Quiet),
+                            isHttp: false));
                 }
                 else
                 {
@@ -466,7 +467,8 @@ namespace Microsoft.Framework.PackageManager
                                 source.Password,
                                 NoCache,
                                 Reports,
-                                ignoreFailure: IgnoreFailedSources)));
+                                ignoreFailure: IgnoreFailedSources),
+                            isHttp: true));
                 }
             }
         }

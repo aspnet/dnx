@@ -1,16 +1,13 @@
 // Copyright (c) Microsoft Open Technologies, Inc. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
-using Microsoft.Framework.Runtime;
-using NuGet;
-using NuGet.Common;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.IO;
 using System.Linq;
-using System.Runtime.Versioning;
 using System.Threading.Tasks;
+using Microsoft.Framework.Runtime;
+using NuGet;
 
 namespace Microsoft.Framework.PackageManager
 {
@@ -205,35 +202,29 @@ namespace Microsoft.Framework.PackageManager
 
         private async Task<WalkProviderMatch> FindLibraryBySnapshot(RestoreContext context, Library library, IEnumerable<IWalkProvider> providers)
         {
-            List<Task<WalkProviderMatch>> tasks = new List<Task<WalkProviderMatch>>();
-            foreach (var provider in providers)
-            {
-                tasks.Add(provider.FindLibraryBySnapshot(library, context.FrameworkName));
-            }
-            var matches = await Task.WhenAll(tasks);
-            WalkProviderMatch bestMatch = null;
-            foreach (var match in matches)
-            {
-                if (VersionUtility.ShouldUseConsidering(
-                    current: (bestMatch == null || bestMatch.Library == null) ? null : bestMatch.Library.Version,
-                    considering: (match == null || match.Library == null) ? null : match.Library.Version,
-                    ideal: library.Version))
-                {
-                    bestMatch = match;
-                }
-            }
-            return bestMatch;
+            return await FindLibrary(library, providers.Where(p => !p.IsHttp), provider => provider.FindLibraryBySnapshot(library, context.FrameworkName)) ??
+                   await FindLibrary(library, providers.Where(p => p.IsHttp), provider => provider.FindLibraryBySnapshot(library, context.FrameworkName));
         }
 
         private async Task<WalkProviderMatch> FindLibraryByVersion(RestoreContext context, Library library, IEnumerable<IWalkProvider> providers)
         {
-            List<Task<WalkProviderMatch>> tasks = new List<Task<WalkProviderMatch>>();
+            return await FindLibrary(library, providers.Where(p => !p.IsHttp), provider => provider.FindLibraryByVersion(library, context.FrameworkName)) ??
+                   await FindLibrary(library, providers.Where(p => p.IsHttp), provider => provider.FindLibraryByVersion(library, context.FrameworkName));
+        }
+
+        private static async Task<WalkProviderMatch> FindLibrary(
+            Library library,
+            IEnumerable<IWalkProvider> providers,
+            Func<IWalkProvider, Task<WalkProviderMatch>> action)
+        {
+            var tasks = new List<Task<WalkProviderMatch>>();
             foreach (var provider in providers)
             {
-                tasks.Add(provider.FindLibraryByVersion(library, context.FrameworkName));
+                tasks.Add(action(provider));
             }
-            var matches = await Task.WhenAll(tasks);
+
             WalkProviderMatch bestMatch = null;
+            var matches = await Task.WhenAll(tasks);
             foreach (var match in matches)
             {
                 if (VersionUtility.ShouldUseConsidering(
@@ -244,8 +235,8 @@ namespace Microsoft.Framework.PackageManager
                     bestMatch = match;
                 }
             }
+
             return bestMatch;
         }
     }
-
 }

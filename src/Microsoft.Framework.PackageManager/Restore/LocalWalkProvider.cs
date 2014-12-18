@@ -1,16 +1,13 @@
 // Copyright (c) Microsoft Open Technologies, Inc. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
-using Microsoft.Framework.PackageManager.Restore.NuGet;
-using Microsoft.Framework.Runtime;
-using NuGet;
-using NuGet.Common;
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Runtime.Versioning;
 using System.Threading.Tasks;
+using Microsoft.Framework.Runtime;
+using NuGet;
 
 namespace Microsoft.Framework.PackageManager
 {
@@ -28,6 +25,7 @@ namespace Microsoft.Framework.PackageManager
         Task<WalkProviderMatch> FindLibraryBySnapshot(Library library, FrameworkName targetFramework);
         Task<IEnumerable<LibraryDependency>> GetDependencies(WalkProviderMatch match, FrameworkName targetFramework);
         Task CopyToAsync(WalkProviderMatch match, Stream stream);
+        bool IsHttp { get; }
     }
 
     public class LocalWalkProvider : IWalkProvider
@@ -38,6 +36,8 @@ namespace Microsoft.Framework.PackageManager
         {
             _dependencyProvider = dependencyProvider;
         }
+
+        public bool IsHttp { get; private set; }
 
         public Task<WalkProviderMatch> FindLibraryByName(string name, FrameworkName targetFramework)
         {

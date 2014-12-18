@@ -16,9 +16,15 @@ namespace Microsoft.Framework.PackageManager
     {
         private IPackageFeed _source;
 
-        public RemoteWalkProvider(IPackageFeed source)
+        public RemoteWalkProvider(IPackageFeed source, bool isHttp)
         {
             _source = source;
+            IsHttp = isHttp;
+        }
+
+        public bool IsHttp
+        {
+            get; private set;
         }
 
         public Task<WalkProviderMatch> FindLibraryByName(string name, FrameworkName targetFramework)
@@ -73,7 +79,7 @@ namespace Microsoft.Framework.PackageManager
                     return dependencySet
                         .SelectMany(x => x.Dependencies)
                         .Select(x => new LibraryDependency(name: x.Id,
-                            version: x.VersionSpec != null ? x.VersionSpec.MinVersion : null ))
+                            version: x.VersionSpec != null ? x.VersionSpec.MinVersion : null))
                         .ToList();
                 }
             }
