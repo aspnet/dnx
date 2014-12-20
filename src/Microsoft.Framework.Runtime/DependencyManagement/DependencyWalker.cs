@@ -49,7 +49,7 @@ namespace Microsoft.Framework.Runtime
                 targetFramework);
 
             walkSw.Stop();
-            Trace.TraceInformation("[{0}]: Graph walk took in {1}ms.", GetType().Name, walkSw.ElapsedMilliseconds);
+            Trace.TraceInformation("[{0}]: Graph walk took {1}ms.", GetType().Name, walkSw.ElapsedMilliseconds);
 
             context.Populate(targetFramework, Libraries);
 
