@@ -28,20 +28,21 @@ namespace Microsoft.Framework.Runtime
 
         public bool TryResolveProject(string name, out Project project)
         {
-            project = _searchPaths.Select(path => Path.Combine(path, name))
-                                  .Select(path => GetProject(path))
-                                  .FirstOrDefault(p => p != null);
+            project = null;
 
-            return project != null;
+            foreach (var searchPath in _searchPaths)
+            {
+                var projectPath = Path.Combine(searchPath, name);
+
+                if (Project.TryGetProject(projectPath, out project))
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
-
-        private Project GetProject(string path)
-        {
-            Project project;
-            Project.TryGetProject(path, out project);
-            return project;
-        }
-
+        
         private IEnumerable<string> ResolveSearchPaths(string projectPath, string rootPath)
         {
             var paths = new List<string>

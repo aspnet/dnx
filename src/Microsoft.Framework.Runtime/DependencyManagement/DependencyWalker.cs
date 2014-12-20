@@ -40,11 +40,16 @@ namespace Microsoft.Framework.Runtime
 
             var context = new WalkContext();
 
+            var walkSw = Stopwatch.StartNew();
+
             context.Walk(
                 _dependencyProviders,
                 name,
                 version,
                 targetFramework);
+
+            walkSw.Stop();
+            Trace.TraceInformation("[{0}]: Graph walk took in {1}ms.", GetType().Name, walkSw.ElapsedMilliseconds);
 
             context.Populate(targetFramework, Libraries);
 

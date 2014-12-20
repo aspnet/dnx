@@ -13,7 +13,7 @@ using Xunit;
 
 namespace Loader.Tests
 {
-    public class AssemblyLoaderFacts
+    public class DependencyWalkerFacts
     {
         LibraryDependency[] Dependencies(Action<TestDependencyProvider.Entry> configure)
         {

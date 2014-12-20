@@ -59,6 +59,8 @@ namespace Microsoft.Framework.Runtime
             var resolvers = dependencyResolvers as IDependencyProvider[] ?? dependencyResolvers.ToArray();
             var resolvedItems = new Dictionary<Library, Item>();
 
+            var buildTreeSw = Stopwatch.StartNew();
+
             // Recurse through dependencies optimistically, asking resolvers for dependencies
             // based on best match of each encountered dependency
             ForEach(root, node =>
@@ -87,12 +89,22 @@ namespace Microsoft.Framework.Runtime
                             dependency.Name,
                             StringComparison.OrdinalIgnoreCase);
 
+                        if (eclipsed)
+                        {
+                            break;
+                        }
+
                         foreach (var sideNode in scanNode.InnerNodes)
                         {
                             eclipsed |= string.Equals(
                                 sideNode.Key.Name,
                                 dependency.Name,
                                 StringComparison.OrdinalIgnoreCase);
+
+                            if (eclipsed)
+                            {
+                                break;
+                            }
                         }
                     }
 
@@ -108,6 +120,9 @@ namespace Microsoft.Framework.Runtime
                 }
             });
 
+            buildTreeSw.Stop();
+            Trace.TraceInformation("[{0}]: Graph walk stage 1 took in {1}ms", GetType().Name, buildTreeSw.ElapsedMilliseconds);
+
             // now we walk the tree as often as it takes to determine 
             // which paths are accepted or rejected, based on conflicts occuring
             // between cousin packages
@@ -122,6 +137,8 @@ namespace Microsoft.Framework.Runtime
                 {
                     if (!state || node.Disposition == Disposition.Rejected)
                     {
+                        // Mark all nodes as rejected if they aren't already marked
+                        node.Disposition = Disposition.Rejected;
                         return false;
                     }
                     tracker.Track(node.Item);
@@ -240,13 +257,17 @@ namespace Microsoft.Framework.Runtime
                 return item;
             }
 
-            var hit = resolvers
-                .Select(x => new
+            Tuple<IDependencyProvider, LibraryDescription> hit = null;
+
+            foreach (var resolver in resolvers)
+            {
+                var match = resolver.GetDescription(packageKey, frameworkName);
+                if (match != null)
                 {
-                    Resolver = x,
-                    Details = x.GetDescription(packageKey, frameworkName)
-                })
-                .FirstOrDefault(x => x.Details != null);
+                    hit = Tuple.Create(resolver, match);
+                    break;
+                }
+            }
 
             if (hit == null)
             {
@@ -254,25 +275,27 @@ namespace Microsoft.Framework.Runtime
                 return null;
             }
 
-            if (resolvedItems.TryGetValue(hit.Details.Identity, out item))
+            if (resolvedItems.TryGetValue(hit.Item2.Identity, out item))
             {
                 return item;
             }
 
             item = new Item()
             {
-                Description = hit.Details,
-                Key = hit.Details.Identity,
-                Dependencies = hit.Details.Dependencies,
-                Resolver = hit.Resolver,
+                Description = hit.Item2,
+                Key = hit.Item2.Identity,
+                Dependencies = hit.Item2.Dependencies,
+                Resolver = hit.Item1,
             };
             resolvedItems[packageKey] = item;
-            resolvedItems[hit.Details.Identity] = item;
+            resolvedItems[hit.Item2.Identity] = item;
             return item;
         }
 
         public void Populate(FrameworkName frameworkName, IList<LibraryDescription> libraries)
         {
+            var sw = Stopwatch.StartNew();
+
             foreach (var groupByResolver in _usedItems.GroupBy(x => x.Value.Resolver))
             {
                 var resolver = groupByResolver.Key;
@@ -297,6 +320,9 @@ namespace Microsoft.Framework.Runtime
                 resolver.Initialize(descriptions, frameworkName);
                 libraries.AddRange(descriptions);
             }
+
+            sw.Stop();
+            Trace.TraceInformation("[{0}]: Populate took {1}ms", GetType().Name, sw.ElapsedMilliseconds);
         }
 
         private IEnumerable<LibraryDependency> CorrectDependencyVersion(LibraryDependency dependency)
@@ -322,8 +348,14 @@ namespace Microsoft.Framework.Runtime
             public IList<Node> InnerNodes { get; private set; }
 
             public Disposition Disposition { get; set; }
+
+            public override string ToString()
+            {
+                return (Item?.Key ?? Key) + " " + Disposition;
+            }
         }
 
+        [DebuggerDisplay("{Key}")]
         public class Item
         {
             public LibraryDescription Description { get; set; }
@@ -338,10 +370,10 @@ namespace Microsoft.Framework.Runtime
             {
                 public Entry()
                 {
-                    List = new List<Item>();
+                    List = new HashSet<Item>();
                 }
 
-                public List<Item> List { get; set; }
+                public HashSet<Item> List { get; set; }
 
                 public bool Ambiguous { get; set; }
             }
