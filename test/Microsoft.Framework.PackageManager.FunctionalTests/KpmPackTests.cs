@@ -30,7 +30,7 @@ DIR=""$( cd -P ""$( dirname ""$SOURCE"" )"" && pwd )""
 
 export SET KRE_APPBASE=""$DIR/approot/src/{0}""
 
-""{1}klr"" Microsoft.Framework.ApplicationHost {2} ""$@""".Replace("\r\n", "\n");
+exec ""{1}klr"" Microsoft.Framework.ApplicationHost {2} ""$@""".Replace("\r\n", "\n");
 
         public static IEnumerable<object[]> KreHomeDirs
         {

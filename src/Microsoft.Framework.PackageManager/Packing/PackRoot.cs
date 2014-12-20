@@ -141,7 +141,7 @@ DIR=""$( cd -P ""$( dirname ""$SOURCE"" )"" && pwd )""
 
 export SET KRE_APPBASE=""$DIR/{0}""
 
-""{1}klr"" Microsoft.Framework.ApplicationHost {2} ""$@""";
+exec ""{1}klr"" Microsoft.Framework.ApplicationHost {2} ""$@""";
 
             foreach (var commandName in _project.Commands.Keys)
             {
