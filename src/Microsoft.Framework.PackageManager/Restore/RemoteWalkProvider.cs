@@ -14,7 +14,7 @@ namespace Microsoft.Framework.PackageManager
 {
     public class RemoteWalkProvider : IWalkProvider
     {
-        private IPackageFeed _source;
+        private readonly IPackageFeed _source;
 
         public RemoteWalkProvider(IPackageFeed source, bool isHttp)
         {
@@ -22,10 +22,7 @@ namespace Microsoft.Framework.PackageManager
             IsHttp = isHttp;
         }
 
-        public bool IsHttp
-        {
-            get; private set;
-        }
+        public bool IsHttp { get; private set; }
 
         public Task<WalkProviderMatch> FindLibraryByName(string name, FrameworkName targetFramework)
         {
@@ -51,10 +48,12 @@ namespace Microsoft.Framework.PackageManager
                     bestResult = result;
                 }
             }
+
             if (bestResult == null)
             {
                 return null;
             }
+
             return new WalkProviderMatch
             {
                 Library = new Library { Name = bestResult.Id, Version = bestResult.Version },

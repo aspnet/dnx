@@ -461,7 +461,7 @@ namespace Microsoft.Framework.PackageManager
                 {
                     remoteProviders.Add(
                         new RemoteWalkProvider(
-                            new PackageFeed(
+                            new NuGetv2Feed(
                                 source.Source,
                                 source.UserName,
                                 source.Password,

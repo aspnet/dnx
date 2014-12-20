@@ -11,26 +11,9 @@ using NuGet;
 
 namespace Microsoft.Framework.PackageManager
 {
-    public class WalkProviderMatch
-    {
-        public IWalkProvider Provider { get; set; }
-        public Library Library { get; set; }
-        public string Path { get; set; }
-    }
-
-    public interface IWalkProvider
-    {
-        Task<WalkProviderMatch> FindLibraryByName(string name, FrameworkName targetFramework);
-        Task<WalkProviderMatch> FindLibraryByVersion(Library library, FrameworkName targetFramework);
-        Task<WalkProviderMatch> FindLibraryBySnapshot(Library library, FrameworkName targetFramework);
-        Task<IEnumerable<LibraryDependency>> GetDependencies(WalkProviderMatch match, FrameworkName targetFramework);
-        Task CopyToAsync(WalkProviderMatch match, Stream stream);
-        bool IsHttp { get; }
-    }
-
     public class LocalWalkProvider : IWalkProvider
     {
-        IDependencyProvider _dependencyProvider;
+        private readonly IDependencyProvider _dependencyProvider;
 
         public LocalWalkProvider(IDependencyProvider dependencyProvider)
         {
@@ -48,10 +31,12 @@ namespace Microsoft.Framework.PackageManager
             };
 
             var description = _dependencyProvider.GetDescription(library, targetFramework);
+
             if (description == null)
             {
                 return Task.FromResult<WalkProviderMatch>(null);
             }
+
             return Task.FromResult(new WalkProviderMatch
             {
                 Library = description.Identity,
@@ -67,6 +52,7 @@ namespace Microsoft.Framework.PackageManager
             {
                 return Task.FromResult<WalkProviderMatch>(null);
             }
+
             return Task.FromResult(new WalkProviderMatch
             {
                 Library = description.Identity,
@@ -82,6 +68,7 @@ namespace Microsoft.Framework.PackageManager
             {
                 return Task.FromResult<WalkProviderMatch>(null);
             }
+
             return Task.FromResult(new WalkProviderMatch
             {
                 Library = description.Identity,
@@ -98,6 +85,7 @@ namespace Microsoft.Framework.PackageManager
 
         public Task CopyToAsync(WalkProviderMatch match, Stream stream)
         {
+            // We never call this on local providers
             throw new NotImplementedException();
         }
     }

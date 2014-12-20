@@ -67,7 +67,7 @@ namespace Microsoft.Framework.PackageManager
             return node;
         }
 
-        Func<string, bool> ChainPredicate(Func<string, bool> predicate, GraphItem item, LibraryDependency dependency)
+        private Func<string, bool> ChainPredicate(Func<string, bool> predicate, GraphItem item, LibraryDependency dependency)
         {
             return name =>
             {
@@ -75,10 +75,12 @@ namespace Microsoft.Framework.PackageManager
                 {
                     throw new Exception(string.Format("TODO: Circular dependency references not supported. Package '{0}'.", name));
                 }
+
                 if (item.Dependencies.Any(d => d != dependency && d.Name == name))
                 {
                     return false;
                 }
+
                 return predicate(name);
             };
         }
@@ -93,24 +95,23 @@ namespace Microsoft.Framework.PackageManager
                     task = FindLibraryEntry(context, library);
                     context.FindLibraryCache[library] = task;
                 }
+
                 return task;
             }
         }
 
-        public async Task<GraphItem> FindLibraryEntry(RestoreContext context, Library library)
+        private async Task<GraphItem> FindLibraryEntry(RestoreContext context, Library library)
         {
             _report.WriteLine(string.Format("Attempting to resolve dependency {0} >= {1}", library.Name.Bold(), library.Version));
 
             var match = await FindLibraryMatch(context, library);
+
             if (match == null)
             {
-                //                Report.WriteLine(string.Format("Unable to find '{1}' of package '{0}'", library.Name, library.Version));
                 return null;
             }
 
             var dependencies = await match.Provider.GetDependencies(match, context.FrameworkName);
-
-            //Report.WriteLine(string.Format("Resolved {0} {1}", match.Library.Name, match.Library.Version));
 
             return new GraphItem
             {
@@ -119,7 +120,7 @@ namespace Microsoft.Framework.PackageManager
             };
         }
 
-        public async Task<WalkProviderMatch> FindLibraryMatch(RestoreContext context, Library library)
+        private async Task<WalkProviderMatch> FindLibraryMatch(RestoreContext context, Library library)
         {
             var projectMatch = await FindLibraryByName(context, library.Name, context.ProjectLibraryProviders);
             if (projectMatch != null)
@@ -168,6 +169,7 @@ namespace Microsoft.Framework.PackageManager
                 {
                     localMatch = await FindLibraryByVersion(context, remoteMatch.Library, context.LocalLibraryProviders);
                 }
+
                 if (localMatch != null && remoteMatch != null)
                 {
                     if (VersionUtility.ShouldUseConsidering(
@@ -187,7 +189,7 @@ namespace Microsoft.Framework.PackageManager
             }
         }
 
-        public async Task<WalkProviderMatch> FindLibraryByName(RestoreContext context, string name, IEnumerable<IWalkProvider> providers)
+        private async Task<WalkProviderMatch> FindLibraryByName(RestoreContext context, string name, IEnumerable<IWalkProvider> providers)
         {
             foreach (var provider in providers)
             {

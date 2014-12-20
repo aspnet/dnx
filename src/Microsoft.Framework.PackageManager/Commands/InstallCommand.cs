@@ -61,7 +61,7 @@ namespace Microsoft.Framework.PackageManager
                 }
                 else
                 {
-                    packageFeeds.Add(new PackageFeed(
+                    packageFeeds.Add(new NuGetv2Feed(
                         source.Source, source.UserName, source.Password, _restoreCommand.NoCache, Reports,
                         _restoreCommand.IgnoreFailedSources));
                 }

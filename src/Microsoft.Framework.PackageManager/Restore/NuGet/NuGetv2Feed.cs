@@ -12,15 +12,15 @@ using NuGet;
 
 namespace Microsoft.Framework.PackageManager.Restore.NuGet
 {
-    public class PackageFeed : IPackageFeed
+    public class NuGetv2Feed : IPackageFeed
     {
-        static readonly XName _xnameEntry = XName.Get("entry", "http://www.w3.org/2005/Atom");
-        static readonly XName _xnameTitle = XName.Get("title", "http://www.w3.org/2005/Atom");
-        static readonly XName _xnameContent = XName.Get("content", "http://www.w3.org/2005/Atom");
-        static readonly XName _xnameLink = XName.Get("link", "http://www.w3.org/2005/Atom");
-        static readonly XName _xnameProperties = XName.Get("properties", "http://schemas.microsoft.com/ado/2007/08/dataservices/metadata");
-        static readonly XName _xnameId = XName.Get("Id", "http://schemas.microsoft.com/ado/2007/08/dataservices");
-        static readonly XName _xnameVersion = XName.Get("Version", "http://schemas.microsoft.com/ado/2007/08/dataservices");
+        private static readonly XName _xnameEntry = XName.Get("entry", "http://www.w3.org/2005/Atom");
+        private static readonly XName _xnameTitle = XName.Get("title", "http://www.w3.org/2005/Atom");
+        private static readonly XName _xnameContent = XName.Get("content", "http://www.w3.org/2005/Atom");
+        private static readonly XName _xnameLink = XName.Get("link", "http://www.w3.org/2005/Atom");
+        private static readonly XName _xnameProperties = XName.Get("properties", "http://schemas.microsoft.com/ado/2007/08/dataservices/metadata");
+        private static readonly XName _xnameId = XName.Get("Id", "http://schemas.microsoft.com/ado/2007/08/dataservices");
+        private static readonly XName _xnameVersion = XName.Get("Version", "http://schemas.microsoft.com/ado/2007/08/dataservices");
 
         private readonly string _baseUri;
         private readonly Reports _reports;
@@ -30,7 +30,10 @@ namespace Microsoft.Framework.PackageManager.Restore.NuGet
         private readonly bool _ignoreFailure;
         private bool _ignored;
 
-        public PackageFeed(
+        private readonly Dictionary<string, Task<IEnumerable<PackageInfo>>> _packageVersionsCache = new Dictionary<string, Task<IEnumerable<PackageInfo>>>();
+        private readonly Dictionary<string, Task<NupkgEntry>> _nupkgCache = new Dictionary<string, Task<NupkgEntry>>();
+
+        public NuGetv2Feed(
             string baseUri,
             string userName,
             string password,
@@ -54,19 +57,16 @@ namespace Microsoft.Framework.PackageManager.Restore.NuGet
             }
         }
 
-        Dictionary<string, Task<IEnumerable<PackageInfo>>> _cache = new Dictionary<string, Task<IEnumerable<PackageInfo>>>();
-        Dictionary<string, Task<NupkgEntry>> _cache2 = new Dictionary<string, Task<NupkgEntry>>();
-
         public Task<IEnumerable<PackageInfo>> FindPackagesByIdAsync(string id)
         {
-            lock (_cache)
+            lock (_packageVersionsCache)
             {
                 Task<IEnumerable<PackageInfo>> task;
-                if (_cache.TryGetValue(id, out task))
+                if (_packageVersionsCache.TryGetValue(id, out task))
                 {
                     return task;
                 }
-                return _cache[id] = FindPackagesByIdAsyncCore(id);
+                return _packageVersionsCache[id] = FindPackagesByIdAsyncCore(id);
             }
         }
 
@@ -186,11 +186,11 @@ namespace Microsoft.Framework.PackageManager.Restore.NuGet
         public async Task<Stream> OpenNupkgStreamAsync(PackageInfo package)
         {
             Task<NupkgEntry> task;
-            lock (_cache2)
+            lock (_nupkgCache)
             {
-                if (!_cache2.TryGetValue(package.ContentUri, out task))
+                if (!_nupkgCache.TryGetValue(package.ContentUri, out task))
                 {
-                    task = _cache2[package.ContentUri] = _OpenNupkgStreamAsync(package);
+                    task = _nupkgCache[package.ContentUri] = OpenNupkgStreamAsyncCore(package);
                 }
             }
             var result = await task;
@@ -209,7 +209,7 @@ namespace Microsoft.Framework.PackageManager.Restore.NuGet
             });
         }
 
-        private async Task<NupkgEntry> _OpenNupkgStreamAsync(PackageInfo package)
+        private async Task<NupkgEntry> OpenNupkgStreamAsyncCore(PackageInfo package)
         {
             for (int retry = 0; retry != 3; ++retry)
             {
@@ -241,7 +241,7 @@ namespace Microsoft.Framework.PackageManager.Restore.NuGet
             return null;
         }
 
-        class NupkgEntry
+        private class NupkgEntry
         {
             public string TempFileName { get; set; }
         }
