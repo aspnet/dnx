@@ -383,7 +383,7 @@ namespace Microsoft.Framework.Runtime
             foreach (var packageInfo in packages)
             {
                 if (VersionUtility.ShouldUseConsidering(
-                    current: bestMatch != null ? bestMatch.Version : null,
+                    current: bestMatch?.Version,
                     considering: packageInfo.Version,
                     ideal: version))
                 {

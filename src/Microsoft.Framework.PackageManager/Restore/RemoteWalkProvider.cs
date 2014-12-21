@@ -24,24 +24,14 @@ namespace Microsoft.Framework.PackageManager
 
         public bool IsHttp { get; private set; }
 
-        public Task<WalkProviderMatch> FindLibraryByName(string name, FrameworkName targetFramework)
-        {
-            return Task.FromResult<WalkProviderMatch>(null);
-        }
-
         public async Task<WalkProviderMatch> FindLibraryByVersion(Library library, FrameworkName targetFramework)
-        {
-            return await FindLibraryBySnapshot(library, targetFramework);
-        }
-
-        public async Task<WalkProviderMatch> FindLibraryBySnapshot(Library library, FrameworkName targetFramework)
         {
             var results = await _source.FindPackagesByIdAsync(library.Name);
             PackageInfo bestResult = null;
             foreach (var result in results)
             {
                 if (VersionUtility.ShouldUseConsidering(
-                    current: bestResult == null ? null : bestResult.Version,
+                    current: bestResult?.Version,
                     considering: result.Version,
                     ideal: library.Version))
                 {

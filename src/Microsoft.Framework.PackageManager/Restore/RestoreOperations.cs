@@ -122,7 +122,8 @@ namespace Microsoft.Framework.PackageManager
 
         private async Task<WalkProviderMatch> FindLibraryMatch(RestoreContext context, Library library)
         {
-            var projectMatch = await FindLibraryByName(context, library.Name, context.ProjectLibraryProviders);
+            var projectMatch = await FindProjectMatch(context, library.Name);
+
             if (projectMatch != null)
             {
                 return projectMatch;
@@ -138,40 +139,73 @@ namespace Microsoft.Framework.PackageManager
                 return null;
             }
 
+            // IMPORTANT: Snapshot versions end with -*
+            // If you specify "A": "1.0.0-*", it means that you're looking for
+            // the latest version matching the 1.0.0-* prefix OR the lowest
+            // version NOT matching that prefix. As an example,
+            // Let's say the following versions exist:
+            // 1. A 1.0.0-beta1-0001
+            // 1. A 1.0.0-beta1-0002
+            // 1. A 1.0.0-beta1-0003
+            // Asking for 1.0.0-* means you'll get 1.0.0-beta1-0003
+            // Asking for 1.0.0 means you'll get 1.0.0-beta1-0001
+            // Normal versions are minimums not exact matches. Of course
+            // this means if the exact version exists, you'll get that version.
+
+
             if (library.Version.IsSnapshot)
             {
-                var remoteMatch = await FindLibraryBySnapshot(context, library, context.RemoteLibraryProviders);
+                // For snapshot dependencies, get the version remotely first.
+                var remoteMatch = await FindLibraryByVersion(context, library, context.RemoteLibraryProviders);
                 if (remoteMatch == null)
                 {
-                    var localMatch = await FindLibraryBySnapshot(context, library, context.LocalLibraryProviders);
+                    // If there was nothing remotely, use the local match (if any)
+                    var localMatch = await FindLibraryByVersion(context, library, context.LocalLibraryProviders);
                     return localMatch;
                 }
                 else
                 {
+                    // Try to see if the specific version found on the remote exists locally. This avoids any unnecessary
+                    // remote access incase we already have it in the cache/local packages folder.
                     var localMatch = await FindLibraryByVersion(context, remoteMatch.Library, context.LocalLibraryProviders);
+
                     if (localMatch != null && localMatch.Library.Version.Equals(remoteMatch.Library.Version))
                     {
+                        // If we have a local match, and it matches the version *exactly* then use it.
                         return localMatch;
                     }
+
+                    // We found something locally, but it wasn't an exact match
+                    // for the resolved remote match.
                     return remoteMatch;
                 }
             }
             else
             {
+                // Check for the specific version locally.
                 var localMatch = await FindLibraryByVersion(context, library, context.LocalLibraryProviders);
+
                 if (localMatch != null && localMatch.Library.Version.Equals(library.Version))
                 {
+                    // We have an exact match so use it.
                     return localMatch;
                 }
 
+                // Either we found a local match but it wasn't the exact version, or 
+                // we didn't find a local match.
                 var remoteMatch = await FindLibraryByVersion(context, library, context.RemoteLibraryProviders);
+
                 if (remoteMatch != null && localMatch == null)
                 {
+                    // There wasn't any local match for the specified version but there was a remote match.
+                    // See if that version exists locally.
                     localMatch = await FindLibraryByVersion(context, remoteMatch.Library, context.LocalLibraryProviders);
                 }
 
                 if (localMatch != null && remoteMatch != null)
                 {
+                    // We found a match locally and remotely, so pick the better version
+                    // in relation to the specified version.
                     if (VersionUtility.ShouldUseConsidering(
                         current: localMatch.Library.Version,
                         considering: remoteMatch.Library.Version,
@@ -185,27 +219,30 @@ namespace Microsoft.Framework.PackageManager
                     }
                 }
 
+                // Prefer local over remote generally.
                 return localMatch ?? remoteMatch;
             }
         }
 
-        private async Task<WalkProviderMatch> FindLibraryByName(RestoreContext context, string name, IEnumerable<IWalkProvider> providers)
+        private async Task<WalkProviderMatch> FindProjectMatch(RestoreContext context, string name)
         {
-            foreach (var provider in providers)
+            var library = new Library
             {
-                var match = await provider.FindLibraryByName(name, context.FrameworkName);
+                Name = name,
+                // Versions are ignored for project matches
+                Version = new SemanticVersion(new Version(0, 0))
+            };
+            
+            foreach (var provider in context.ProjectLibraryProviders)
+            {
+                var match = await provider.FindLibraryByVersion(library, context.FrameworkName);
                 if (match != null)
                 {
                     return match;
                 }
             }
-            return null;
-        }
 
-        private async Task<WalkProviderMatch> FindLibraryBySnapshot(RestoreContext context, Library library, IEnumerable<IWalkProvider> providers)
-        {
-            return await FindLibrary(library, providers.Where(p => !p.IsHttp), provider => provider.FindLibraryBySnapshot(library, context.FrameworkName)) ??
-                   await FindLibrary(library, providers.Where(p => p.IsHttp), provider => provider.FindLibraryBySnapshot(library, context.FrameworkName));
+            return null;
         }
 
         private async Task<WalkProviderMatch> FindLibraryByVersion(RestoreContext context, Library library, IEnumerable<IWalkProvider> providers)
@@ -230,8 +267,8 @@ namespace Microsoft.Framework.PackageManager
             foreach (var match in matches)
             {
                 if (VersionUtility.ShouldUseConsidering(
-                    current: (bestMatch == null || bestMatch.Library == null) ? null : bestMatch.Library.Version,
-                    considering: (match == null || match.Library == null) ? null : match.Library.Version,
+                    current: bestMatch?.Library?.Version,
+                    considering: match?.Library?.Version,
                     ideal: library.Version))
                 {
                     bestMatch = match;
