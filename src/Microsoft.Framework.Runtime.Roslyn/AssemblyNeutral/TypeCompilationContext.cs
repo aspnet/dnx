@@ -255,12 +255,12 @@ namespace Microsoft.Framework.Runtime.Roslyn
                         continue;
                     }
 
-                    if (remove.CSharpKind() == SyntaxKind.UsingDirective)
+                    if (remove.IsKind(SyntaxKind.UsingDirective))
                     {
                         continue;
                     }
 
-                    if (parent.CSharpKind() == SyntaxKind.NamespaceDeclaration && (
+                    if (parent.IsKind(SyntaxKind.NamespaceDeclaration) && (
                         (parent as NamespaceDeclarationSyntax).Name == remove))
                     {
                         continue;
