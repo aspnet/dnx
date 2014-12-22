@@ -103,9 +103,12 @@ namespace Microsoft.Framework.PackageManager.Packing
             {
                 var frameworkName = DependencyContext.GetFrameworkNameForRuntime(Path.GetFileName(runtime));
                 var runtimeLocated = TryAddRuntime(root, frameworkName, runtime);
+                List<string> runtimeProbePaths = null;
 
                 if (!runtimeLocated)
                 {
+                    runtimeProbePaths = new List<string>();
+                    runtimeProbePaths.Add(runtime);
                     var kreHome = Environment.GetEnvironmentVariable("KRE_HOME");
                     if (string.IsNullOrEmpty(kreHome))
                     {
@@ -134,12 +137,18 @@ namespace Microsoft.Framework.PackageManager.Packing
                             runtimeLocated = true;
                             break;
                         }
+
+                        runtimeProbePaths.Add(packagesPath);
                     }
                 }
 
                 if (!runtimeLocated)
                 {
                     _options.Reports.Error.WriteLine(string.Format("Unable to locate runtime '{0}'", runtime.Red().Bold()));
+                    if (runtimeProbePaths != null)
+                    {
+                        _options.Reports.Error.WriteLine(string.Format("Locations probed:{0}{1}", Environment.NewLine, string.Join(Environment.NewLine, runtimeProbePaths)));
+                    }
                     return false;
                 }
 
