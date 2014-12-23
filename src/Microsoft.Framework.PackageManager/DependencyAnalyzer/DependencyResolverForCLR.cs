@@ -2,7 +2,6 @@
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 using System.Collections.Generic;
-using Microsoft.Framework.Project;
 using Microsoft.Framework.Runtime;
 
 namespace Microsoft.Framework.PackageManager.DependencyAnalyzer

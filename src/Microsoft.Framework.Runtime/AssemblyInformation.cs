@@ -7,7 +7,7 @@ using System.IO;
 using System.Reflection.PortableExecutable;
 using System.Reflection.Metadata;
 
-namespace Microsoft.Framework.Project
+namespace Microsoft.Framework.Runtime
 {
     public class AssemblyInformation
     {

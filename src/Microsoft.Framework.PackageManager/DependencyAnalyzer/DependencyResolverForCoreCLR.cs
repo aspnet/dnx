@@ -4,9 +4,8 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using Microsoft.Framework.Project;
-using Microsoft.Framework.Runtime;
 using System.Linq;
+using Microsoft.Framework.Runtime;
 using NuGet;
 
 namespace Microsoft.Framework.PackageManager.DependencyAnalyzer
