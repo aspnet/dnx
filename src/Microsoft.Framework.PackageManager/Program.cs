@@ -6,6 +6,7 @@ using System.IO;
 using System.Net;
 using System.Reflection;
 using System.Threading;
+using Microsoft.Framework.PackageManager.DependencyAnalyzer;
 using Microsoft.Framework.PackageManager.Packing;
 using Microsoft.Framework.Runtime;
 using Microsoft.Framework.Runtime.Common.CommandLine;
@@ -253,6 +254,30 @@ namespace Microsoft.Framework.PackageManager
                     var success = await installCmd.ExecuteCommand();
 
                     return success ? 0 : 1;
+                });
+            });
+
+            app.Command("dpa", c =>
+            {
+                c.Description = "Find runtime's dependencies and save to a manifest. By default it generates dependencies for CLR version of KRE.";
+                var kreSourceRoot = c.Argument("[root]", "Root folder to the KRE source codes.");
+                var outputFile = c.Option("--output",
+                    "The path to the file where manifest is saved to. If omit the result is printed to console.",
+                    CommandOptionType.SingleValue);
+                var coreclrRoot = c.Option("--coreclr",
+                    "The folder contains CoreCLR assemblies. If this option is set, the dpa will generate dependencies for CoreCLR version of KRE.",
+                    CommandOptionType.SingleValue);
+                c.HelpOption("-?|-h|--help");
+
+                c.OnExecute(() =>
+                {
+                    var command = new BuildRuntimeCommand(_environment);
+                    command.KreRoot = kreSourceRoot.Value;
+                    command.Output = outputFile.Value();
+                    command.CoreClrRoot = coreclrRoot.Value();
+                    command.Reports = CreateReports(true, quiet: false);
+
+                    return command.Execute();
                 });
             });
 
