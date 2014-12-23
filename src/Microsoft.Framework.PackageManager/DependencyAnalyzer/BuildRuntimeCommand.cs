@@ -4,7 +4,6 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using Microsoft.Framework.Runtime;
 using NuGet;
 
 namespace Microsoft.Framework.PackageManager.DependencyAnalyzer
@@ -13,14 +12,11 @@ namespace Microsoft.Framework.PackageManager.DependencyAnalyzer
     {
         private const string KeyRuntime = "Runtime";
 
-        private readonly IApplicationEnvironment _environment;
         private readonly IEnumerable<string> _runtimeProjects;
         private readonly IEnumerable<string> _sdkProjects;
 
-        public BuildRuntimeCommand(IApplicationEnvironment env)
+        public BuildRuntimeCommand()
         {
-            _environment = env;
-
             _runtimeProjects = new[]
             {
                 "Microsoft.Framework.Runtime.Roslyn",
@@ -109,7 +105,7 @@ namespace Microsoft.Framework.PackageManager.DependencyAnalyzer
 
             if (isCLR)
             {
-                Reports.Information.WriteLine("Using dependency finder for CLR");
+                Reports.Verbose.WriteLine("Using dependency finder for CLR");
                 return new DependencyFinder(KreRoot, VersionUtility.ParseFrameworkName("aspnet50"),
                     hostContext => new DependencyResolverForCLR(hostContext));
             }
@@ -121,7 +117,7 @@ namespace Microsoft.Framework.PackageManager.DependencyAnalyzer
                     return null;
                 }
 
-                Reports.Information.WriteLine("Using dependency finder for CoreCLR");
+                Reports.Verbose.WriteLine("Using dependency finder for CoreCLR");
                 return new DependencyFinder(KreRoot, VersionUtility.ParseFrameworkName("aspnetcore50"),
                     hostContext => new DependencyResolverForCoreCLR(hostContext, CoreClrRoot));
             }

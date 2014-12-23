@@ -259,25 +259,41 @@ namespace Microsoft.Framework.PackageManager
 
             app.Command("dpa", c =>
             {
-                c.Description = "Find runtime's dependencies and save to a manifest. By default it generates dependencies for CLR version of KRE.";
+                c.Description = "Find runtime's dependencies and save to a manifest. By default it generates a dependency list for KRE of CLR framework.";
                 var kreSourceRoot = c.Argument("[root]", "Root folder to the KRE source codes.");
                 var outputFile = c.Option("--output",
                     "The path to the file where manifest is saved to. If omit the result is printed to console.",
                     CommandOptionType.SingleValue);
                 var coreclrRoot = c.Option("--coreclr",
-                    "The folder contains CoreCLR assemblies. If this option is set, the dpa will generate dependencies for CoreCLR version of KRE.",
+                    "The folder contains CoreCLR assemblies. If this option is set, and --tpa is not set, this command generates a dependency list for KRE of CoreCLR framework.",
                     CommandOptionType.SingleValue);
+                var tpa = c.Option("--tpa",
+                    "To build TPA list in the form of a c++ source code file. The --coreclr option is required.",
+                    CommandOptionType.NoValue);
                 c.HelpOption("-?|-h|--help");
 
                 c.OnExecute(() =>
                 {
-                    var command = new BuildRuntimeCommand(_environment);
-                    command.KreRoot = kreSourceRoot.Value;
-                    command.Output = outputFile.Value();
-                    command.CoreClrRoot = coreclrRoot.Value();
-                    command.Reports = CreateReports(true, quiet: false);
+                    if (tpa.HasValue())
+                    {
+                        var command = new BuildTpaCommand();
+                        command.KreRoot = kreSourceRoot.Value;
+                        command.Output = outputFile.Value();
+                        command.CoreClrRoot = coreclrRoot.Value();
+                        command.Reports = CreateReports(true, quiet: false);
 
-                    return command.Execute();
+                        return command.Execute();
+                    }
+                    else
+                    {
+                        var command = new BuildRuntimeCommand();
+                        command.KreRoot = kreSourceRoot.Value;
+                        command.Output = outputFile.Value();
+                        command.CoreClrRoot = coreclrRoot.Value();
+                        command.Reports = CreateReports(true, quiet: false);
+
+                        return command.Execute();
+                    }
                 });
             });
 
