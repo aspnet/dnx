@@ -859,18 +859,7 @@ namespace Microsoft.Framework.DesignTimeHost
 
         private IAssemblyLoadContextFactory GetRuntimeLoadContextFactory(Project project)
         {
-            var applicationHostContext = new ApplicationHostContext(_hostServices,
-                                                                    project.ProjectDirectory,
-                                                                    packagesDirectory: null,
-                                                                    configuration: _appEnv.Configuration,
-                                                                    targetFramework: _appEnv.RuntimeFramework,
-                                                                    cache: _cache,
-                                                                    cacheContextAccessor: _cacheContextAccessor,
-                                                                    namedCacheDependencyProvider: _namedDependencyProvider);
-
-            applicationHostContext.DependencyWalker.Walk(project.Name, project.Version, _appEnv.RuntimeFramework);
-
-            return new AssemblyLoadContextFactory(applicationHostContext.ServiceProvider);
+            return new DesignTimeAssemblyLoadContextFactory(project, _appEnv, _hostServices, _cache, _cacheContextAccessor, _namedDependencyProvider);
         }
 
         private DependencyInfo ResolveProjectDepencies(Project project, string configuration, FrameworkName frameworkName)
