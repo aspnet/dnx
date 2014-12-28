@@ -147,8 +147,8 @@ namespace Microsoft.Framework.PackageManager
             // 1. A 1.0.0-beta1-0001
             // 1. A 1.0.0-beta1-0002
             // 1. A 1.0.0-beta1-0003
-            // Asking for 1.0.0-* means you'll get 1.0.0-beta1-0003
-            // Asking for 1.0.0 means you'll get 1.0.0-beta1-0001
+            // Asking for 1.0.0-beta1-* means you'll get 1.0.0-beta1-0003
+            // Asking for 1.0.0-beta1 means you'll get 1.0.0-beta1-0001
             // Normal versions are minimums not exact matches. Of course
             // this means if the exact version exists, you'll get that version.
 
