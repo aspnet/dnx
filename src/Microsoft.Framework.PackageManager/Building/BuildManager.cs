@@ -70,7 +70,12 @@ namespace Microsoft.Framework.PackageManager
                 frameworks = new[] { _applicationEnvironment.RuntimeFramework };
             }
 
-            ScriptExecutor.Execute(project, "prebuild", GetScriptVariable);
+
+            if (!ScriptExecutor.Execute(project, "prebuild", GetScriptVariable))
+            {
+                WriteError(ScriptExecutor.ErrorMessage);
+                return false;
+            }
 
             var success = true;
 
@@ -177,7 +182,11 @@ namespace Microsoft.Framework.PackageManager
                 }
             }
 
-            ScriptExecutor.Execute(project, "postbuild", GetScriptVariable);
+            if (!ScriptExecutor.Execute(project, "postbuild", GetScriptVariable))
+            {
+                WriteError(ScriptExecutor.ErrorMessage);
+                return false;
+            }
 
             sw.Stop();
 

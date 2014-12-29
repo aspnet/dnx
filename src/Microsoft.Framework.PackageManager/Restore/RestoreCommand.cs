@@ -156,7 +156,11 @@ namespace Microsoft.Framework.PackageManager
                 return null;
             };
 
-            ScriptExecutor.Execute(project, "prerestore", getVariable);
+            if (!ScriptExecutor.Execute(project, "prerestore", getVariable))
+            {
+                Reports.Error.WriteLine(ScriptExecutor.ErrorMessage);
+                return false;
+            }
 
             var projectDirectory = project.ProjectDirectory;
             var restoreOperations = new RestoreOperations(Reports.Verbose);
@@ -223,8 +227,8 @@ namespace Microsoft.Framework.PackageManager
                 }
                 if (node.Item == null || node.Item.Match == null)
                 {
-                    if (!node.Library.IsGacOrFrameworkReference && 
-                         node.Library.Version != null && 
+                    if (!node.Library.IsGacOrFrameworkReference &&
+                         node.Library.Version != null &&
                          missingItems.Add(node.Library))
                     {
                         Reports.Error.WriteLine(string.Format("Unable to locate {0} >= {1}", node.Library.Name.Red().Bold(), node.Library.Version));
@@ -253,9 +257,17 @@ namespace Microsoft.Framework.PackageManager
 
             await InstallPackages(installItems, packagesDirectory, packageFilter: (library, nupkgSHA) => true);
 
-            ScriptExecutor.Execute(project, "postrestore", getVariable);
+            if (!ScriptExecutor.Execute(project, "postrestore", getVariable))
+            {
+                Reports.Error.WriteLine(ScriptExecutor.ErrorMessage);
+                return false;
+            }
 
-            ScriptExecutor.Execute(project, "prepare", getVariable);
+            if (!ScriptExecutor.Execute(project, "prepare", getVariable))
+            {
+                Reports.Error.WriteLine(ScriptExecutor.ErrorMessage);
+                return false;
+            }
 
             Reports.Information.WriteLine(string.Format("{0}, {1}ms elapsed", "Restore complete".Green().Bold(), sw.ElapsedMilliseconds));
 
@@ -484,7 +496,7 @@ namespace Microsoft.Framework.PackageManager
             var frameworkSuffix = string.Format(" [{0}]", frameworkName.ToString());
             Reports.Verbose.WriteLine(root.Item.Match.Library.ToString() + frameworkSuffix);
 
-            Func<GraphNode, bool> isValidDependency = d => 
+            Func<GraphNode, bool> isValidDependency = d =>
                 (d != null && d.Library != null && d.Item != null && d.Item.Match != null);
             var dependencies = root.Dependencies.Where(isValidDependency).ToList();
             var dependencyNum = dependencies.Count;

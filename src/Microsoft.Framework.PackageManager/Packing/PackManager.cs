@@ -95,9 +95,17 @@ namespace Microsoft.Framework.PackageManager.Packing
                 return null;
             };
 
-            ScriptExecutor.Execute(project, "prepare", getVariable);
+            if (!ScriptExecutor.Execute(project, "prepare", getVariable))
+            {
+                _options.Reports.Error.WriteLine(ScriptExecutor.ErrorMessage);
+                return false;
+            }
 
-            ScriptExecutor.Execute(project, "prepack", getVariable);
+            if (!ScriptExecutor.Execute(project, "prepack", getVariable))
+            {
+                _options.Reports.Error.WriteLine(ScriptExecutor.ErrorMessage);
+                return false;
+            }
 
             foreach (var runtime in _options.Runtimes)
             {
@@ -245,7 +253,11 @@ namespace Microsoft.Framework.PackageManager.Packing
 
             root.Emit();
 
-            ScriptExecutor.Execute(project, "postpack", getVariable);
+            if (!ScriptExecutor.Execute(project, "postpack", getVariable))
+            {
+                _options.Reports.Error.WriteLine(ScriptExecutor.ErrorMessage);
+                return false;
+            }
 
             if (_options.Native && !nativeImageGenerator.BuildNativeImages(root))
             {

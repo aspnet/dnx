@@ -13,12 +13,14 @@ namespace Microsoft.Framework.PackageManager
 {
     public class ScriptExecutor
     {
-        public void Execute(Runtime.Project project, string scriptName, Func<string, string> getVariable)
+        private static readonly string ErrorMessageTemplate = "The '{0}' script failed with status code {1}.";
+
+        public bool Execute(Runtime.Project project, string scriptName, Func<string, string> getVariable)
         {
             IEnumerable<string> scriptCommandLines;
             if (!project.Scripts.TryGetValue(scriptName, out scriptCommandLines))
             {
-                return;
+                return true;
             }
 
             foreach (var scriptCommandLine in scriptCommandLines)
@@ -76,8 +78,21 @@ namespace Microsoft.Framework.PackageManager
 
                 var process = Process.Start(startInfo);
                 process.WaitForExit();
+
+                if (process.ExitCode != 0)
+                {
+                    ErrorMessage = string.Format(ErrorMessageTemplate, scriptName, process.ExitCode);
+                    ExitCode = process.ExitCode;
+                    return false;
+                }
             }
+
+            return true;
         }
+
+        public int ExitCode { get; private set; }
+
+        public string ErrorMessage { get; private set; }
 
         private Func<string, string> GetScriptVariable(Runtime.Project project, Func<string, string> getVariable)
         {
