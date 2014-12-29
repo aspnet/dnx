@@ -1,6 +1,7 @@
 ﻿// Copyright (c) Microsoft Open Technologies, Inc. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
+using Microsoft.Framework.Runtime.Loader;
 using Xunit;
 
 namespace Microsoft.Framework.Runtime.Tests
@@ -28,12 +29,14 @@ namespace Microsoft.Framework.Runtime.Tests
         public void GetCompilerOptionsIgnoresTargetFrameworkAndConfigurationIfNull()
         {
             // Arrange
-            var project = Project.GetProject(_projectContent, "TestProj", "project.json");
+            var reader = GetProjectReader();
+            var project = reader.GetProject(_projectContent, "TestProj", "project.json");
 
             // Act
-            var options = project.GetCompilerOptions(targetFramework: null, configurationName: null);
+            var rawOptions = project.GetCompilerOptions(targetFramework: null, configurationName: null);
 
             // Assert
+            var options = Assert.IsType<RoslynCompilerOptions>(rawOptions);
             Assert.Equal(new[] { "GLOBAL" } , options.Defines);
             Assert.Equal(true, options.WarningsAsErrors);
             Assert.Null(options.AllowUnsafe);
@@ -44,13 +47,15 @@ namespace Microsoft.Framework.Runtime.Tests
         public void GetCompilerOptionsCombinesTargetFrameworkIfNotNull()
         {
             // Arrange
-            var project = Project.GetProject(_projectContent, "TestProj", "project.json");
-            var targetFramework = Project.ParseFrameworkName("aspnet50");
+            var reader = GetProjectReader();
+            var project = reader.GetProject(_projectContent, "TestProj", "project.json");
+            var targetFramework = ProjectReader.ParseFrameworkName("aspnet50");
 
             // Act
-            var options = project.GetCompilerOptions(targetFramework, configurationName: null);
+            var rawOptions = project.GetCompilerOptions(targetFramework, configurationName: null);
 
             // Assert
+            var options = Assert.IsType<RoslynCompilerOptions>(rawOptions);
             Assert.Equal(new[] { "GLOBAL", "TEST_ASPNET50", "ASPNET50" }, options.Defines);
             Assert.Equal(true, options.WarningsAsErrors);
             Assert.Null(options.AllowUnsafe);
@@ -61,17 +66,24 @@ namespace Microsoft.Framework.Runtime.Tests
         public void GetCompilerOptionsCombinesConfigurationAndTargetFrameworkfNotNull()
         {
             // Arrange
-            var project = Project.GetProject(_projectContent, "TestProj", "project.json");
-            var targetFramework = Project.ParseFrameworkName("aspnetcore50");
+            var reader = GetProjectReader();
+            var project = reader.GetProject(_projectContent, "TestProj", "project.json");
+            var targetFramework = ProjectReader.ParseFrameworkName("aspnetcore50");
 
             // Act
-            var options = project.GetCompilerOptions(targetFramework, configurationName: "Debug");
+            var rawOptions = project.GetCompilerOptions(targetFramework, configurationName: "Debug");
 
             // Assert
+            var options = Assert.IsType<RoslynCompilerOptions>(rawOptions);
             Assert.Equal(new[] { "GLOBAL", "TEST_DEBUG", "XYZ", "TEST_ASPNETCORE", "ASPNETCORE50" }, options.Defines);
             Assert.Equal(true, options.WarningsAsErrors);
             Assert.Equal(true, options.AllowUnsafe);
             Assert.Equal("x86", options.Platform);
+        }
+
+        private static ProjectReader GetProjectReader()
+        {
+            return new ProjectReader(LoadContextAccessor.Instance.Default);
         }
     }
 }

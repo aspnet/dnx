@@ -26,7 +26,7 @@ namespace Microsoft.Framework.Runtime
                 return project.GetCompilerOptions(targetFramework, configurationName);
             }
 
-            return new CompilerOptions();
+            return null;
         }
     }
 }

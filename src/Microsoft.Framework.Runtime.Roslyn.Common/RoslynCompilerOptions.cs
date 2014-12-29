@@ -1,12 +1,13 @@
 ﻿// Copyright (c) Microsoft Open Technologies, Inc. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
 namespace Microsoft.Framework.Runtime
 {
-    public class CompilerOptions : ICompilerOptions
+    public class RoslynCompilerOptions : ICompilerOptions
     {
         public IEnumerable<string> Defines { get; set; }
 
@@ -20,10 +21,11 @@ namespace Microsoft.Framework.Runtime
 
         public bool? Optimize { get; set; }
 
-        public static CompilerOptions Combine(params CompilerOptions[] options)
+        public ICompilerOptions Merge(ICompilerOptions options)
         {
-            var result = new CompilerOptions();
-            foreach (var option in options)
+            var other = (RoslynCompilerOptions)options;
+            var result = new RoslynCompilerOptions();
+            foreach (var option in new[] { this, other })
             {
                 // Skip null options
                 if (option == null)
@@ -31,11 +33,11 @@ namespace Microsoft.Framework.Runtime
                     continue;
                 }
 
-                // Defines are always combined
                 if (option.Defines != null)
                 {
-                    var existing = result.Defines ?? Enumerable.Empty<string>();
-                    result.Defines = existing.Concat(option.Defines).Distinct();
+                    // Defines are always combined
+                    result.Defines = (result.Defines ?? Enumerable.Empty<string>()).Concat(option.Defines)
+                                                                                   .Distinct(StringComparer.Ordinal);
                 }
 
                 if (option.LanguageVersion != null)

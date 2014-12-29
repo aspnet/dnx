@@ -8,6 +8,7 @@ using System.IO;
 using System.Linq;
 using System.Runtime.Versioning;
 using Microsoft.Framework.Runtime;
+using Microsoft.Framework.Runtime.Loader;
 using NuGet;
 
 namespace Microsoft.Framework.PackageManager
@@ -25,7 +26,6 @@ namespace Microsoft.Framework.PackageManager
             _buildOptions.ProjectDir = Normalize(buildOptions.ProjectDir);
 
             _applicationEnvironment = (IApplicationEnvironment)hostServices.GetService(typeof(IApplicationEnvironment));
-
             ScriptExecutor = new ScriptExecutor();
         }
 
@@ -34,7 +34,8 @@ namespace Microsoft.Framework.PackageManager
         public bool Build()
         {
             Runtime.Project project;
-            if (!Runtime.Project.TryGetProject(_buildOptions.ProjectDir, out project))
+            var projectReader = new ProjectReader(LoadContextAccessor.Instance.Default);
+            if (!projectReader.TryReadProject(_buildOptions.ProjectDir, out project))
             {
                 WriteError(string.Format("Unable to locate {0}.'", Runtime.Project.ProjectFileName));
                 return false;
@@ -46,7 +47,7 @@ namespace Microsoft.Framework.PackageManager
             var configurations = _buildOptions.Configurations.DefaultIfEmpty("Debug");
 
             var specifiedFrameworks = _buildOptions.TargetFrameworks
-                .ToDictionary(f => f, Runtime.Project.ParseFrameworkName);
+                .ToDictionary(f => f, ProjectReader.ParseFrameworkName);
 
             var projectFrameworks = new HashSet<FrameworkName>(
                 project.GetTargetFrameworks()

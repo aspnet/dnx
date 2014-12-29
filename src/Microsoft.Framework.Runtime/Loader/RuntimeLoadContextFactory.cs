@@ -7,8 +7,13 @@ namespace Microsoft.Framework.Runtime.Loader
         private readonly IAssemblyLoadContextAccessor _accessor;
 
         public RuntimeLoadContextFactory(IServiceProvider serviceProvider)
+            : this((IAssemblyLoadContextAccessor)serviceProvider.GetService(typeof(IAssemblyLoadContextAccessor)))
         {
-            _accessor = (IAssemblyLoadContextAccessor)serviceProvider.GetService(typeof(IAssemblyLoadContextAccessor));
+        }
+
+        public RuntimeLoadContextFactory(IAssemblyLoadContextAccessor accessor)
+        {
+            _accessor = accessor;
         }
 
         public IAssemblyLoadContext Create()

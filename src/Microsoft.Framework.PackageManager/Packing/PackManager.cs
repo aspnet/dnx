@@ -8,6 +8,7 @@ using System.IO;
 using System.Linq;
 using System.Runtime.Versioning;
 using Microsoft.Framework.Runtime;
+using Microsoft.Framework.Runtime.Loader;
 
 namespace Microsoft.Framework.PackageManager.Packing
 {
@@ -41,8 +42,9 @@ namespace Microsoft.Framework.PackageManager.Packing
 
         public bool Package()
         {
+            var reader = new ProjectReader(LoadContextAccessor.Instance.Default);
             Runtime.Project project;
-            if (!Runtime.Project.TryGetProject(_options.ProjectDir, out project))
+            if (!reader.TryReadProject(_options.ProjectDir, out project))
             {
                 _options.Reports.Error.WriteLine("Unable to locate {0}.'".Red(), Runtime.Project.ProjectFileName);
                 return false;

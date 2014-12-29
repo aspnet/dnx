@@ -10,10 +10,13 @@ namespace Microsoft.Framework.Runtime
 {
     public class ProjectResolver : IProjectResolver
     {
+        private readonly IProjectReader _projectReader;
         private readonly IList<string> _searchPaths;
 
-        public ProjectResolver(string projectPath, string rootPath)
+        public ProjectResolver(IProjectReader projectReader, string projectPath, string rootPath)
         {
+            _projectReader = projectReader;
+
             // We could find all project.json files in the search paths up front here
             _searchPaths = ResolveSearchPaths(projectPath, rootPath).ToList();
         }
@@ -34,7 +37,7 @@ namespace Microsoft.Framework.Runtime
             {
                 var projectPath = Path.Combine(searchPath, name);
 
-                if (Project.TryGetProject(projectPath, out project))
+                if (_projectReader.TryReadProject(projectPath, out project))
                 {
                     return true;
                 }

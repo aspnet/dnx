@@ -13,6 +13,7 @@ using System.Threading.Tasks;
 using Microsoft.Framework.PackageManager.Packing;
 using Microsoft.Framework.PackageManager.Restore.NuGet;
 using Microsoft.Framework.Runtime;
+using Microsoft.Framework.Runtime.Loader;
 using Newtonsoft.Json.Linq;
 using NuGet;
 
@@ -145,8 +146,9 @@ namespace Microsoft.Framework.PackageManager
             var sw = new Stopwatch();
             sw.Start();
 
+            var reader = new ProjectReader(LoadContextAccessor.Instance.Default);
             Runtime.Project project;
-            if (!Runtime.Project.TryGetProject(projectJsonPath, out project))
+            if (!reader.TryReadProject(projectJsonPath, out project))
             {
                 throw new Exception("TODO: project.json parse error");
             }
@@ -169,6 +171,7 @@ namespace Microsoft.Framework.PackageManager
                 new LocalWalkProvider(
                     new ProjectReferenceDependencyProvider(
                         new ProjectResolver(
+                            new ProjectReader(LoadContextAccessor.Instance.Default),
                             projectDirectory,
                             rootDirectory))));
 
