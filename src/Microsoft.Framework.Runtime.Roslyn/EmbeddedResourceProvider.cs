@@ -20,9 +20,8 @@ namespace Microsoft.Framework.Runtime.Roslyn
             // platform.
 
             return project.ResourceFiles.Select(resourceFile => new ResourceDescription(
-                PathUtility.GetRelativePath(root, resourceFile)
-                           .Replace(Path.DirectorySeparatorChar, '/'),
-                () => new FileStream(resourceFile, FileMode.Open, FileAccess.Read, FileShare.Read),
+                PathUtility.GetRelativePath(root, resourceFile, separator: '/'),
+                () => File.OpenRead(resourceFile),
                 true)).ToList();
 
         }
