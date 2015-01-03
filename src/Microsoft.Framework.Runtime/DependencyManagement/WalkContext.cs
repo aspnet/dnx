@@ -17,34 +17,6 @@ namespace Microsoft.Framework.Runtime
     {
         private readonly IDictionary<string, Item> _usedItems = new Dictionary<string, Item>();
 
-        void ForEach<TState>(Node root, TState state, Func<Node, TState, TState> visitor)
-        {
-            // breadth-first walk of Node tree
-
-            var queue = new Queue<Tuple<Node, TState>>();
-            var patience = 10000;
-            queue.Enqueue(Tuple.Create(root, state));
-            while (!queue.IsEmpty() && --patience != 0)
-            {
-                var work = queue.Dequeue();
-                var innerState = visitor(work.Item1, work.Item2);
-                foreach (var innerNode in work.Item1.InnerNodes)
-                {
-                    queue.Enqueue(Tuple.Create(innerNode, innerState));
-                }
-            }
-        }
-
-        private void ForEach(Node root, Action<Node> visitor)
-        {
-            // breadth-first walk of Node tree, without TState parameter
-            ForEach(root, 0, (node, _) =>
-            {
-                visitor(node);
-                return 0;
-            });
-        }
-
         public void Walk(
             IEnumerable<IDependencyProvider> dependencyResolvers,
             string name,
@@ -133,6 +105,7 @@ namespace Microsoft.Framework.Runtime
             {
                 // Create a picture of what has not been rejected yet
                 var tracker = new Tracker();
+
                 ForEach(root, true, (node, state) =>
                 {
                     if (!state || node.Disposition == Disposition.Rejected)
@@ -141,6 +114,7 @@ namespace Microsoft.Framework.Runtime
                         node.Disposition = Disposition.Rejected;
                         return false;
                     }
+
                     tracker.Track(node.Item);
                     return true;
                 });
@@ -164,14 +138,17 @@ namespace Microsoft.Framework.Runtime
                     {
                         return "Rejected";
                     }
+
                     if (state == "Walking" && tracker.IsDisputed(node.Item))
                     {
                         return "Ambiguous";
                     }
+
                     if (state == "Ambiguous")
                     {
                         tracker.MarkAmbiguous(node.Item);
                     }
+
                     return state;
                 });
 
@@ -182,18 +159,22 @@ namespace Microsoft.Framework.Runtime
                     {
                         return false;
                     }
+
                     if (tracker.IsAmbiguous(node.Item))
                     {
                         return false;
                     }
+
                     if (node.Disposition == Disposition.Acceptable)
                     {
                         node.Disposition = tracker.IsBestVersion(node.Item) ? Disposition.Accepted : Disposition.Rejected;
                     }
+
                     return node.Disposition == Disposition.Accepted;
                 });
 
                 incomplete = false;
+
                 ForEach(root, node => incomplete |= node.Disposition == Disposition.Acceptable);
 
                 // uncomment in case of emergencies: TraceState(root);
@@ -212,6 +193,7 @@ namespace Microsoft.Framework.Runtime
                 {
                     _usedItems[node.Item.Key.Name] = node.Item;
                 }
+
                 return true;
             });
 
@@ -235,10 +217,39 @@ namespace Microsoft.Framework.Runtime
             {
                 elt.WriteTo(writer);
             }
+
             Trace.TraceInformation("[{0}] Current State\r\n{1}", GetType().Name, sb);
         }
 
-        public enum Disposition
+        private static void ForEach<TState>(Node root, TState state, Func<Node, TState, TState> visitor)
+        {
+            // breadth-first walk of Node tree
+
+            var queue = new Queue<Tuple<Node, TState>>();
+            var patience = 10000;
+            queue.Enqueue(Tuple.Create(root, state));
+            while (!queue.IsEmpty() && --patience != 0)
+            {
+                var work = queue.Dequeue();
+                var innerState = visitor(work.Item1, work.Item2);
+                foreach (var innerNode in work.Item1.InnerNodes)
+                {
+                    queue.Enqueue(Tuple.Create(innerNode, innerState));
+                }
+            }
+        }
+
+        private static void ForEach(Node root, Action<Node> visitor)
+        {
+            // breadth-first walk of Node tree, without TState parameter
+            ForEach(root, 0, (node, _) =>
+            {
+                visitor(node);
+                return 0;
+            });
+        }
+
+        private enum Disposition
         {
             Acceptable,
             Rejected,
@@ -287,6 +298,7 @@ namespace Microsoft.Framework.Runtime
                 Dependencies = hit.Item2.Dependencies,
                 Resolver = hit.Item1,
             };
+
             resolvedItems[packageKey] = item;
             resolvedItems[hit.Item2.Identity] = item;
             return item;
@@ -301,7 +313,7 @@ namespace Microsoft.Framework.Runtime
                 var resolver = groupByResolver.Key;
                 var packageKeys = groupByResolver.Select(x => x.Value.Key).ToList();
 
-                Trace.TraceInformation("[{0}]: " + String.Join(", ", packageKeys), resolver.GetType().Name);
+                Trace.TraceInformation("[{0}]: " + string.Join(", ", packageKeys), resolver.GetType().Name);
 
                 var descriptions = groupByResolver.Select(entry =>
                 {
@@ -334,7 +346,7 @@ namespace Microsoft.Framework.Runtime
             }
         }
 
-        public class Node
+        private class Node
         {
             public Node()
             {
@@ -356,7 +368,7 @@ namespace Microsoft.Framework.Runtime
         }
 
         [DebuggerDisplay("{Key}")]
-        public class Item
+        private class Item
         {
             public LibraryDescription Description { get; set; }
             public Library Key { get; set; }
@@ -364,7 +376,7 @@ namespace Microsoft.Framework.Runtime
             public IEnumerable<LibraryDependency> Dependencies { get; set; }
         }
 
-        public class Tracker
+        private class Tracker
         {
             class Entry
             {
