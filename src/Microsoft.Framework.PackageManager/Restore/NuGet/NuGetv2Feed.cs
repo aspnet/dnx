@@ -33,6 +33,8 @@ namespace Microsoft.Framework.PackageManager.Restore.NuGet
         private readonly Dictionary<string, Task<IEnumerable<PackageInfo>>> _packageVersionsCache = new Dictionary<string, Task<IEnumerable<PackageInfo>>>();
         private readonly Dictionary<string, Task<NupkgEntry>> _nupkgCache = new Dictionary<string, Task<NupkgEntry>>();
 
+        public string Source { get; }
+
         public NuGetv2Feed(
             string baseUri,
             string userName,
@@ -55,6 +57,7 @@ namespace Microsoft.Framework.PackageManager.Restore.NuGet
                 _cacheAgeLimitList = TimeSpan.FromMinutes(30);
                 _cacheAgeLimitNupkg = TimeSpan.FromHours(24);
             }
+            Source = baseUri;
         }
 
         public Task<IEnumerable<PackageInfo>> FindPackagesByIdAsync(string id)

@@ -55,15 +55,14 @@ namespace Microsoft.Framework.PackageManager
             var packageFeeds = new List<IPackageFeed>();
             foreach (var source in effectiveSources)
             {
-                if (new Uri(source.Source).IsFile)
+                var feed = PackageSourceUtils.CreatePackageFeed(
+                    source,
+                    _restoreCommand.NoCache,
+                    _restoreCommand.IgnoreFailedSources,
+                    Reports);
+                if (feed != null)
                 {
-                    packageFeeds.Add(PackageFolderFactory.CreatePackageFolderFromPath(source.Source, Reports.Quiet));
-                }
-                else
-                {
-                    packageFeeds.Add(new NuGetv2Feed(
-                        source.Source, source.UserName, source.Password, _restoreCommand.NoCache, Reports,
-                        _restoreCommand.IgnoreFailedSources));
+                    packageFeeds.Add(feed);
                 }
             }
 

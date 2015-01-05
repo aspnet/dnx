@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using NuGet;
+using Microsoft.Framework.PackageManager.Restore.NuGet;
 
 namespace Microsoft.Framework.PackageManager
 {
@@ -23,6 +24,25 @@ namespace Microsoft.Framework.PackageManager
                 value => allSources.FirstOrDefault(source => CorrectName(value, source)) ?? new PackageSource(value));
 
             return enabledSources.Concat(addedSources).Distinct().ToList();
+        }
+
+        public static IPackageFeed CreatePackageFeed(PackageSource source, bool noCache, bool ignoreFailedSources,
+            Reports reports)
+        {
+            if (new Uri(source.Source).IsFile)
+            {
+                return PackageFolderFactory.CreatePackageFolderFromPath(source.Source, ignoreFailedSources, reports);
+            }
+            else
+            {
+                return new NuGetv2Feed(
+                    source.Source,
+                    source.UserName,
+                    source.Password,
+                    noCache,
+                    reports,
+                    ignoreFailedSources);
+            }
         }
 
         private static bool CorrectName(string value, PackageSource source)

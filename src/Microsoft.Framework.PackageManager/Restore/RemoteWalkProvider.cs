@@ -1,6 +1,7 @@
 // Copyright (c) Microsoft Open Technologies, Inc. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -16,10 +17,10 @@ namespace Microsoft.Framework.PackageManager
     {
         private readonly IPackageFeed _source;
 
-        public RemoteWalkProvider(IPackageFeed source, bool isHttp)
+        public RemoteWalkProvider(IPackageFeed source)
         {
             _source = source;
-            IsHttp = isHttp;
+            IsHttp = IsHttpSource(source);
         }
 
         public bool IsHttp { get; private set; }
@@ -86,6 +87,12 @@ namespace Microsoft.Framework.PackageManager
             {
                 await nupkgStream.CopyToAsync(stream);
             }
+        }
+
+        private static bool IsHttpSource(IPackageFeed source)
+        {
+            return source.Source.StartsWith("http://", StringComparison.OrdinalIgnoreCase) ||
+                source.Source.StartsWith("https://", StringComparison.OrdinalIgnoreCase);
         }
     }
 }

@@ -460,27 +460,10 @@ namespace Microsoft.Framework.PackageManager
         {
             foreach (var source in effectiveSources)
             {
-                if (new Uri(source.Source).IsFile)
+                var feed = PackageSourceUtils.CreatePackageFeed(source, NoCache, IgnoreFailedSources, Reports);
+                if (feed != null)
                 {
-                    remoteProviders.Add(
-                        new RemoteWalkProvider(
-                            PackageFolderFactory.CreatePackageFolderFromPath(
-                                source.Source,
-                                Reports.Quiet),
-                            isHttp: false));
-                }
-                else
-                {
-                    remoteProviders.Add(
-                        new RemoteWalkProvider(
-                            new NuGetv2Feed(
-                                source.Source,
-                                source.UserName,
-                                source.Password,
-                                NoCache,
-                                Reports,
-                                ignoreFailure: IgnoreFailedSources),
-                            isHttp: true));
+                    remoteProviders.Add(new RemoteWalkProvider(feed));
                 }
             }
         }

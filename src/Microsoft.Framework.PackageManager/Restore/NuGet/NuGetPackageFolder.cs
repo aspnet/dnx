@@ -11,15 +11,18 @@ namespace Microsoft.Framework.PackageManager.Restore.NuGet
 {
     public class NuGetPackageFolder : IPackageFeed
     {
-        private readonly IReport _report;
+        private readonly Reports _reports;
         private readonly LocalPackageRepository _repository;
+
+        public string Source { get; }
 
         public NuGetPackageFolder(
             string physicalPath,
-            IReport report)
+            Reports reports)
         {
-            _repository = new LocalPackageRepository(physicalPath, report);
-            _report = report;
+            _repository = new LocalPackageRepository(physicalPath, reports.Quiet);
+            _reports = reports;
+            Source = physicalPath;
         }
 
         public Task<IEnumerable<PackageInfo>> FindPackagesByIdAsync(string id)
@@ -33,7 +36,7 @@ namespace Microsoft.Framework.PackageManager.Restore.NuGet
 
         public async Task<Stream> OpenNuspecStreamAsync(PackageInfo package)
         {
-            return await PackageUtilities.OpenNuspecStreamFromNupkgAsync(package, OpenNupkgStreamAsync, _report);
+            return await PackageUtilities.OpenNuspecStreamFromNupkgAsync(package, OpenNupkgStreamAsync, _reports.Quiet);
         }
 
         public Task<Stream> OpenNupkgStreamAsync(PackageInfo package)

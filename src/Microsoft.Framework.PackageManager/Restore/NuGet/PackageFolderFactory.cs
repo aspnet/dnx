@@ -11,19 +11,21 @@ namespace Microsoft.Framework.PackageManager
 {
     internal static class PackageFolderFactory
     {
-        public static IPackageFeed CreatePackageFolderFromPath(string path, IReport report)
+        public static IPackageFeed CreatePackageFolderFromPath(string path, bool ignoreFailedSources, Reports reports)
         {
-            Func<string, bool> containsNupkg = dir => Directory.EnumerateFiles(dir, "*" + Constants.PackageExtension)
+            Func<string, bool> containsNupkg = dir => Directory.Exists(dir) &&
+                Directory.EnumerateFiles(dir, "*" + Constants.PackageExtension)
                 .Where(x => !Path.GetFileNameWithoutExtension(x).EndsWith(".symbols"))
                 .Any();
 
-            if (containsNupkg(path) || Directory.EnumerateDirectories(path).Any(x => containsNupkg(x)))
+            if (Directory.Exists(path) &&
+                (containsNupkg(path) || Directory.EnumerateDirectories(path).Any(x => containsNupkg(x))))
             {
-                return new NuGetPackageFolder(path, report);
+                return new NuGetPackageFolder(path, reports);
             }
             else
             {
-                return new KpmPackageFolder(path, report);
+                return new KpmPackageFolder(path, ignoreFailedSources, reports);
             }
         }
     }

@@ -10,6 +10,7 @@ namespace Microsoft.Framework.PackageManager.Restore.NuGet
 {
     public interface IPackageFeed
     {
+        string Source { get; }
         Task<IEnumerable<PackageInfo>> FindPackagesByIdAsync(string id);
         Task<Stream> OpenNupkgStreamAsync(PackageInfo package);
         Task<Stream> OpenNuspecStreamAsync(PackageInfo package);
