@@ -4,26 +4,19 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using DependencyAnalyzer.Util;
-using Microsoft.Framework.Runtime;
+using NuGet;
 
-namespace DependencyAnalyzer.Commands
+namespace Microsoft.Framework.PackageManager.DependencyAnalyzer
 {
     /// <summary>
     /// Command to build the minimal TPA list
     /// </summary>
     public class BuildTpaCommand
     {
-        private readonly IApplicationEnvironment _environment;
-        private readonly string _assemblyFolder;
-        private readonly string _sourceFile;
-
-        public BuildTpaCommand(IApplicationEnvironment environment, string assemblyFolder, string sourceFile)
-        {
-            _environment = environment;
-            _assemblyFolder = assemblyFolder;
-            _sourceFile = sourceFile;
-        }
+        public string KreRoot { get; internal set; }
+        public string Output { get; internal set; }
+        public string CoreClrRoot { get; internal set; }
+        public Reports Reports { get; internal set; }
 
         /// <summary>
         /// Execute the command 
@@ -31,15 +24,29 @@ namespace DependencyAnalyzer.Commands
         /// <returns>Returns 0 for success, otherwise 1.</returns>
         public int Execute()
         {
-            var accessor = new CacheContextAccessor();
-            var cache = new Cache(accessor);
+            if (string.IsNullOrEmpty(KreRoot) || !Directory.Exists(KreRoot))
+            {
+                Reports.Error.WriteLine("A valid path to the KRE folder is required");
+                return 1;
+            }
 
-            var finder = new DependencyFinder(accessor, cache, _environment, _assemblyFolder);
+            if (string.IsNullOrEmpty(CoreClrRoot) || !Directory.Exists(CoreClrRoot))
+            {
+                Reports.Error.WriteLine("A valid path to the CoreCLR folder is required.");
+                return 1;
+            }
+
+            var finder = new DependencyFinder(
+                KreRoot,
+                VersionUtility.ParseFrameworkName("aspnetcore50"),
+                hostContext => new DependencyResolverForCoreCLR(hostContext, CoreClrRoot));
 
             ICollection<string> tpa = finder.GetDependencies("klr.core45.managed");
 
             // ordering the tpa list make it easier to compare the difference
-            UpdateSourceFile(tpa.OrderBy(one => one).ToArray());
+            UpdateSourceFile(tpa.Select(one => Path.GetFileNameWithoutExtension(one))
+                                .OrderBy(one => one)
+                                .ToArray());
 
             return 0;
         }
@@ -96,7 +103,20 @@ namespace DependencyAnalyzer.Commands
             content.Add("    return true;");
             content.Add("}");
 
-            File.WriteAllLines(_sourceFile, content.ToArray());
+            if (string.IsNullOrEmpty(Output))
+            {
+                Reports.Information.WriteLine("Write TPA to console");
+
+                for (int i = 0; i < content.Count; ++i)
+                {
+                    Reports.Information.WriteLine("{0,-4}{1}", i + 1, content[i]);
+                }
+            }
+            else
+            {
+                Reports.Information.WriteLine("Write TPA to " + Output);
+                File.WriteAllLines(Output, content.ToArray());
+            }
 
             return true;
         }
