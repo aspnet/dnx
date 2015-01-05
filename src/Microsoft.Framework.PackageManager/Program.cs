@@ -7,6 +7,7 @@ using System.Net;
 using System.Reflection;
 using System.Threading;
 using Microsoft.Framework.PackageManager.Packages;
+using Microsoft.Framework.PackageManager.List;
 using Microsoft.Framework.PackageManager.Packing;
 using Microsoft.Framework.Runtime;
 using Microsoft.Framework.Runtime.Common.CommandLine;
@@ -364,6 +365,48 @@ namespace Microsoft.Framework.PackageManager
                         success = pullCommand.Execute();
                         return success ? 0 : 1;
                     });
+                });
+            });
+
+            app.Command("list", c =>
+            {
+                c.Description = "Print the dependencies of a given project.";
+                var showAssemblies = c.Option("-a|--assemblies",
+                    "Show the assembly files that are depended on by given project.",
+                    CommandOptionType.NoValue);
+                var framework = c.Option("--framework",
+                    "Show dependencies for only the given framework.",
+                    CommandOptionType.SingleValue);
+                var runtimeFolder = c.Option("--runtime",
+                    "The folder containing all available framework assemblies.",
+                    CommandOptionType.SingleValue);
+                var argProject = c.Argument("[project]", "The path to project. If omitted, the command will use the project in the current directory.");
+                c.HelpOption("-?|-h|--help");
+
+                c.OnExecute(() =>
+                {
+                    var options = new DependencyListOptions(CreateReports(verbose: true, quiet: false), argProject, framework)
+                    {
+                        ShowAssemblies = showAssemblies.HasValue(),
+                        RuntimeFolder = runtimeFolder.Value(),
+                    };
+
+                    if (!options.Valid)
+                    {
+                        if (options.Project == null)
+                        {
+                            options.Reports.Error.WriteLine(string.Format("A project could not be found in {0}.", options.Path).Red());
+                            return 1;
+                        }
+                        else
+                        {
+                            options.Reports.Error.WriteLine("Invalid options.".Red());
+                            return 2;
+                        }
+                    }
+
+                    var command = new DependencyListCommand(options);
+                    return command.Execute();
                 });
             });
 
