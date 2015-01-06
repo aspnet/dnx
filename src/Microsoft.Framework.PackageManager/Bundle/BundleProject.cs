@@ -15,14 +15,14 @@ using NuGet;
 
 namespace Microsoft.Framework.PackageManager.Packing
 {
-    public class PackProject
+    public class BundleProject
     {
         private readonly ProjectReferenceDependencyProvider _projectReferenceDependencyProvider;
         private readonly IProjectResolver _projectResolver;
         private readonly LibraryDescription _libraryDescription;
         private string _applicationBase;
 
-        public PackProject(
+        public BundleProject(
             ProjectReferenceDependencyProvider projectReferenceDependencyProvider,
             IProjectResolver projectResolver,
             LibraryDescription libraryDescription)
@@ -37,7 +37,7 @@ namespace Microsoft.Framework.PackageManager.Packing
         public string WwwRoot { get; set; }
         public string WwwRootOut { get; set; }
 
-        public void Emit(PackRoot root)
+        public void Emit(BundleRoot root)
         {
             root.Reports.Quiet.WriteLine("Using {0} dependency {1} for {2}", _libraryDescription.Type,
                 _libraryDescription.Identity, _libraryDescription.Framework.ToString().Yellow().Bold());
@@ -53,7 +53,7 @@ namespace Microsoft.Framework.PackageManager.Packing
             root.Reports.Quiet.WriteLine();
         }
 
-        private void EmitSource(PackRoot root)
+        private void EmitSource(BundleRoot root)
         {
             root.Reports.Quiet.WriteLine("  Copying source code from {0} dependency {1}",
                 _libraryDescription.Type, _libraryDescription.Identity.Name);
@@ -65,7 +65,7 @@ namespace Microsoft.Framework.PackageManager.Packing
             }
 
             var targetName = project.Name;
-            TargetPath = Path.Combine(root.OutputPath, PackRoot.AppRootName, "src", targetName);
+            TargetPath = Path.Combine(root.OutputPath, BundleRoot.AppRootName, "src", targetName);
 
             // If root.OutputPath is specified by --out option, it might not be a full path
             TargetPath = Path.GetFullPath(TargetPath);
@@ -81,10 +81,10 @@ namespace Microsoft.Framework.PackageManager.Packing
 
             UpdateWebRoot(root, TargetPath);
 
-            _applicationBase = Path.Combine("..", PackRoot.AppRootName, "src", project.Name);
+            _applicationBase = Path.Combine("..", BundleRoot.AppRootName, "src", project.Name);
         }
 
-        private void EmitNupkg(PackRoot root)
+        private void EmitNupkg(BundleRoot root)
         {
             root.Reports.Quiet.WriteLine("  Packing nupkg from {0} dependency {1}",
                 _libraryDescription.Type, _libraryDescription.Identity.Name);
@@ -176,7 +176,7 @@ namespace Microsoft.Framework.PackageManager.Packing
                 deps[_libraryDescription.Identity.Name] = _libraryDescription.Identity.Version.ToString();
             });
 
-            _applicationBase = Path.Combine("..", PackRoot.AppRootName, "packages", resolver.GetPackageDirectory(_libraryDescription.Identity.Name, _libraryDescription.Identity.Version), "root");
+            _applicationBase = Path.Combine("..", BundleRoot.AppRootName, "packages", resolver.GetPackageDirectory(_libraryDescription.Identity.Name, _libraryDescription.Identity.Version), "root");
         }
 
         private void CopyRelativeSources(Runtime.Project project)
@@ -215,7 +215,7 @@ namespace Microsoft.Framework.PackageManager.Packing
             }
         }
 
-        private void UpdateWebRoot(PackRoot root, string targetPath)
+        private void UpdateWebRoot(BundleRoot root, string targetPath)
         {
             // Update the 'webroot' property, which was specified with '--wwwroot-out' option
             if (!string.IsNullOrEmpty(WwwRootOut))
@@ -237,7 +237,7 @@ namespace Microsoft.Framework.PackageManager.Packing
             File.WriteAllText(jsonFile, jsonObj.ToString());
         }
 
-        private void CopyProject(PackRoot root, Runtime.Project project, string targetPath, bool includeSource)
+        private void CopyProject(BundleRoot root, Runtime.Project project, string targetPath, bool includeSource)
         {
             // A set of excluded files/directories used as a filter when doing copy
             var excludeSet = new HashSet<string>(project.PackExcludeFiles, StringComparer.OrdinalIgnoreCase);
@@ -289,7 +289,7 @@ namespace Microsoft.Framework.PackageManager.Packing
             });
         }
 
-        public void PostProcess(PackRoot root)
+        public void PostProcess(BundleRoot root)
         {
             // If --wwwroot-out doesn't have a non-empty value, we don't need a public app folder in output
             if (string.IsNullOrEmpty(WwwRootOut))
@@ -320,7 +320,7 @@ namespace Microsoft.Framework.PackageManager.Packing
             CopyAspNetLoaderDll(root, wwwRootOutPath);
         }
 
-        private void GenerateWebConfigFileForWwwRootOut(PackRoot root, Runtime.Project project, string wwwRootOutPath)
+        private void GenerateWebConfigFileForWwwRootOut(BundleRoot root, Runtime.Project project, string wwwRootOutPath)
         {
             // Generate web.config for public app folder
             var wwwRootOutWebConfigFilePath = Path.Combine(wwwRootOutPath, "web.config");
@@ -400,7 +400,7 @@ namespace Microsoft.Framework.PackageManager.Packing
             return child;
         }
 
-        private static string GetBootstrapperVersion(PackRoot root)
+        private static string GetBootstrapperVersion(BundleRoot root)
         {
             // Use version of Microsoft.AspNet.Loader.IIS.Interop as version of bootstrapper
             var package = root.Packages.SingleOrDefault(
@@ -411,7 +411,7 @@ namespace Microsoft.Framework.PackageManager.Packing
         // Expected runtime name format: KRE-{FLAVOR}-{ARCHITECTURE}.{VERSION}
         // Sample input: KRE-CoreCLR-x86.1.0.0.0
         // Sample output: CoreCLR
-        private static string GetRuntimeFlavor(PackRuntime runtime)
+        private static string GetRuntimeFlavor(BundleRuntime runtime)
         {
             if (runtime == null)
             {
@@ -426,7 +426,7 @@ namespace Microsoft.Framework.PackageManager.Packing
         // Expected runtime name format: KRE-{FLAVOR}-{ARCHITECTURE}.{VERSION}
         // Sample input: KRE-CoreCLR-x86.1.0.0.0
         // Sample output: 1.0.0.0
-        private static string GetRuntimeVersion(PackRuntime runtime)
+        private static string GetRuntimeVersion(BundleRuntime runtime)
         {
             if (runtime == null)
             {
@@ -437,7 +437,7 @@ namespace Microsoft.Framework.PackageManager.Packing
             return segments[1];
         }
 
-        private static void CopyAspNetLoaderDll(PackRoot root, string wwwRootOutPath)
+        private static void CopyAspNetLoaderDll(BundleRoot root, string wwwRootOutPath)
         {
             // Tool dlls including AspNet.Loader.dll go to bin folder under public app folder
             var wwwRootOutBinPath = Path.Combine(wwwRootOutPath, "bin");
@@ -472,7 +472,7 @@ namespace Microsoft.Framework.PackageManager.Packing
             }
         }
 
-        private void CopyContentFiles(PackRoot root, Runtime.Project project, string targetFolderPath)
+        private void CopyContentFiles(BundleRoot root, Runtime.Project project, string targetFolderPath)
         {
             root.Reports.Quiet.WriteLine("Copying contents of {0} dependency {1} to {2}",
                 _libraryDescription.Type, _libraryDescription.Identity.Name, targetFolderPath);

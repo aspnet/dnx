@@ -87,7 +87,7 @@ namespace Microsoft.Framework.PackageManager
                 });
             });
 
-            app.Command("pack", c =>
+            app.Command("bundle", c =>
             {
                 c.Description = "Bundle application for deployment";
 
@@ -106,15 +106,15 @@ namespace Microsoft.Framework.PackageManager
                 var optionWwwRoot = c.Option("--wwwroot <NAME>", "Name of public folder in the project directory",
                     CommandOptionType.SingleValue);
                 var optionWwwRootOut = c.Option("--wwwroot-out <NAME>",
-                    "Name of public folder in the packed image, can be used only when the '--wwwroot' option or 'webroot' in project.json is specified",
+                    "Name of public folder in the bundle, can be used only when the '--wwwroot' option or 'webroot' in project.json is specified",
                     CommandOptionType.SingleValue);
-                var optionQuiet = c.Option("--quiet", "Do not show output such as source/destination of packed files",
+                var optionQuiet = c.Option("--quiet", "Do not show output such as source/destination of bundled files",
                     CommandOptionType.NoValue);
                 c.HelpOption("-?|-h|--help");
 
                 c.OnExecute(() =>
                 {
-                    var options = new PackOptions
+                    var options = new BundleOptions
                     {
                         OutputDir = optionOut.Value(),
                         ProjectDir = argProject.Value ?? System.IO.Directory.GetCurrentDirectory(),
@@ -132,7 +132,7 @@ namespace Microsoft.Framework.PackageManager
                         Reports = CreateReports(optionVerbose.HasValue(), optionQuiet.HasValue())
                     };
 
-                    var manager = new PackManager(_hostServices, options);
+                    var manager = new BundleManager(_hostServices, options);
                     if (!manager.Package())
                     {
                         return -1;

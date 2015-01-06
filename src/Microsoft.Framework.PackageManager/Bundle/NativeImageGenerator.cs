@@ -21,7 +21,7 @@ namespace Microsoft.Framework.PackageManager.Packing
             _resolverLookup = resolverLookup;
         }
 
-        public bool BuildNativeImages(PackRoot root)
+        public bool BuildNativeImages(BundleRoot root)
         {
             var success = true;
             foreach (var runtime in root.Runtimes)
@@ -57,7 +57,7 @@ namespace Microsoft.Framework.PackageManager.Packing
         /// This is a helper method for looking up directories that directly contains assemblies that would be loaded
         /// given the packed runtime framework. We should run crossgen on these folders
         /// </summary>
-        private IEnumerable<string> ResolveOutputAssemblies(PackRoot root, NuGetDependencyResolver resolver)
+        private IEnumerable<string> ResolveOutputAssemblies(BundleRoot root, NuGetDependencyResolver resolver)
         {
             var outputPathsMap = root.Packages
                 .ToDictionary(
@@ -110,7 +110,7 @@ namespace Microsoft.Framework.PackageManager.Packing
         /// This is the factory method to instantiate a PackNativeManager, if parameters are in invalid state and native
         /// generation cannot be performed, it would return null
         /// </summary>
-        public static NativeImageGenerator Create(PackOptions options, PackRoot root, IEnumerable<DependencyContext> contexts)
+        public static NativeImageGenerator Create(BundleOptions options, BundleRoot root, IEnumerable<DependencyContext> contexts)
         {
             if (options.Runtimes.Count() == 0)
             {

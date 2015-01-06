@@ -6,7 +6,7 @@ using System.Runtime.Versioning;
 
 namespace Microsoft.Framework.PackageManager.Packing
 {
-    public class PackOptions
+    public class BundleOptions
     {
         public string OutputDir { get; set; }
 

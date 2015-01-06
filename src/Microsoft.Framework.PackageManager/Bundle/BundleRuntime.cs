@@ -9,12 +9,12 @@ using System.Security.Cryptography;
 
 namespace Microsoft.Framework.PackageManager.Packing
 {
-    public class PackRuntime
+    public class BundleRuntime
     {
         private readonly FrameworkName _frameworkName;
         private readonly string _kreNupkgPath;
 
-        public PackRuntime(PackRoot root, FrameworkName frameworkName, string kreNupkgPath)
+        public BundleRuntime(BundleRoot root, FrameworkName frameworkName, string kreNupkgPath)
         {
             _frameworkName = frameworkName;
             _kreNupkgPath = kreNupkgPath;
@@ -26,7 +26,7 @@ namespace Microsoft.Framework.PackageManager.Packing
         public string TargetPath { get; private set; }
         public FrameworkName Framework { get { return _frameworkName; } }
 
-        public void Emit(PackRoot root)
+        public void Emit(BundleRoot root)
         {
             root.Reports.Quiet.WriteLine("Packing runtime {0}", Name);
 
