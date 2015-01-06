@@ -163,7 +163,7 @@ namespace Microsoft.Framework.PackageManager.Packing
                 if (!project.GetTargetFrameworks().Any(x => x.FrameworkName == frameworkName))
                 {
                     _options.Reports.Error.WriteLine(
-                        string.Format("'{0}' is not a target framework of the project being packed",
+                        string.Format("'{0}' is not a target framework of the project being bundled",
                         frameworkName.ToString().Red().Bold()));
                     return false;
                 }

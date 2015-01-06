@@ -210,7 +210,7 @@ namespace Microsoft.Framework.PackageManager.Packing
                 else
                 {
                     Console.WriteLine(
-                        string.Format("TODO: Warning: the referenced source file '{0}' is not in solution root and it is not packed to output.", sourceFile));
+                        string.Format("TODO: Warning: the referenced source file '{0}' is not in solution root and it is not bundled to output.", sourceFile));
                 }
             }
         }

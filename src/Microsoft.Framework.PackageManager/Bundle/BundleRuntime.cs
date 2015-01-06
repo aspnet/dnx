@@ -28,7 +28,7 @@ namespace Microsoft.Framework.PackageManager.Packing
 
         public void Emit(BundleRoot root)
         {
-            root.Reports.Quiet.WriteLine("Packing runtime {0}", Name);
+            root.Reports.Quiet.WriteLine("Bundling runtime {0}", Name);
 
             if (Directory.Exists(TargetPath))
             {
