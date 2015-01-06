@@ -94,7 +94,7 @@ namespace Microsoft.Framework.Runtime.Roslyn
             }
 
             var parseOptions = new CSharpParseOptions(languageVersion: compilationSettings.LanguageVersion,
-                                                      preprocessorSymbols: compilationSettings.Defines.AsImmutable());
+                                                      preprocessorSymbols: compilationSettings.Defines);
 
             IList<SyntaxTree> trees = GetSyntaxTrees(
                 project,
