@@ -142,15 +142,48 @@ namespace Microsoft.Framework.PackageManager
                 });
             });
 
-            app.Command("build", c =>
+            app.Command("pack", c =>
             {
-                c.Description = "Build NuGet packages for the project in given directory";
+                c.Description = "Pack NuGet packages for the project in given directory";
 
                 var optionFramework = c.Option("--framework <TARGET_FRAMEWORK>", "A list of target frameworks to build.", CommandOptionType.MultipleValue);
                 var optionConfiguration = c.Option("--configuration <CONFIGURATION>", "A list of configurations to build.", CommandOptionType.MultipleValue);
                 var optionOut = c.Option("--out <OUTPUT_DIR>", "Output directory", CommandOptionType.SingleValue);
                 var optionDependencies = c.Option("--dependencies", "Copy dependencies", CommandOptionType.NoValue);
                 var optionQuiet = c.Option("--quiet", "Do not show output such as source/destination of nupkgs",
+                    CommandOptionType.NoValue);
+                var argProjectDir = c.Argument("[project]", "Project to pack, default is current directory");
+                c.HelpOption("-?|-h|--help");
+
+                c.OnExecute(() =>
+                {
+                    var buildOptions = new BuildOptions();
+                    buildOptions.OutputDir = optionOut.Value();
+                    buildOptions.ProjectDir = argProjectDir.Value ?? Directory.GetCurrentDirectory();
+                    buildOptions.Configurations = optionConfiguration.Values;
+                    buildOptions.TargetFrameworks = optionFramework.Values;
+                    buildOptions.GeneratePackages = true;
+                    buildOptions.Reports = CreateReports(optionVerbose.HasValue(), optionQuiet.HasValue());
+
+                    var projectManager = new BuildManager(_hostServices, buildOptions);
+
+                    if (!projectManager.Build())
+                    {
+                        return -1;
+                    }
+
+                    return 0;
+                });
+            });
+
+            app.Command("build", c =>
+            {
+                c.Description = "Produce assemblies for the project in given directory";
+
+                var optionFramework = c.Option("--framework <TARGET_FRAMEWORK>", "A list of target frameworks to build.", CommandOptionType.MultipleValue);
+                var optionConfiguration = c.Option("--configuration <CONFIGURATION>", "A list of configurations to build.", CommandOptionType.MultipleValue);
+                var optionOut = c.Option("--out <OUTPUT_DIR>", "Output directory", CommandOptionType.SingleValue);
+                var optionQuiet = c.Option("--quiet", "Do not show output such as dependencies in use",
                     CommandOptionType.NoValue);
                 var argProjectDir = c.Argument("[project]", "Project to build, default is current directory");
                 c.HelpOption("-?|-h|--help");
@@ -162,6 +195,7 @@ namespace Microsoft.Framework.PackageManager
                     buildOptions.ProjectDir = argProjectDir.Value ?? Directory.GetCurrentDirectory();
                     buildOptions.Configurations = optionConfiguration.Values;
                     buildOptions.TargetFrameworks = optionFramework.Values;
+                    buildOptions.GeneratePackages = false;
                     buildOptions.Reports = CreateReports(optionVerbose.HasValue(), optionQuiet.HasValue());
 
                     var projectManager = new BuildManager(_hostServices, buildOptions);
