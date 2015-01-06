@@ -9,14 +9,14 @@ using System.Linq;
 using System.Runtime.Versioning;
 using Microsoft.Framework.Runtime;
 
-namespace Microsoft.Framework.PackageManager.Packing
+namespace Microsoft.Framework.PackageManager.Bundle
 {
-    public class PackManager
+    public class BundleManager
     {
         private readonly IServiceProvider _hostServices;
-        private readonly PackOptions _options;
+        private readonly BundleOptions _options;
 
-        public PackManager(IServiceProvider hostServices, PackOptions options)
+        public BundleManager(IServiceProvider hostServices, BundleOptions options)
         {
             _hostServices = hostServices;
             _options = options;
@@ -39,7 +39,7 @@ namespace Microsoft.Framework.PackageManager.Packing
             return Path.GetFullPath(projectDir.TrimEnd(Path.DirectorySeparatorChar));
         }
 
-        public bool Package()
+        public bool Bundle()
         {
             Runtime.Project project;
             if (!Runtime.Project.TryGetProject(_options.ProjectDir, out project))
@@ -67,11 +67,11 @@ namespace Microsoft.Framework.PackageManager.Packing
                 return false;
             }
 
-            if (string.Equals(_options.WwwRootOut, PackRoot.AppRootName, StringComparison.OrdinalIgnoreCase))
+            if (string.Equals(_options.WwwRootOut, BundleRoot.AppRootName, StringComparison.OrdinalIgnoreCase))
             {
                 _options.Reports.Error.WriteLine(
                     "'{0}' is a reserved folder name. Please choose another name for the wwwroot-out folder.".Red(),
-                    PackRoot.AppRootName);
+                    BundleRoot.AppRootName);
                 return false;
             }
 
@@ -83,7 +83,7 @@ namespace Microsoft.Framework.PackageManager.Packing
 
             var frameworkContexts = new Dictionary<FrameworkName, DependencyContext>();
 
-            var root = new PackRoot(project, outputPath, _hostServices, _options.Reports)
+            var root = new BundleRoot(project, outputPath, _hostServices, _options.Reports)
             {
                 Overwrite = _options.Overwrite,
                 Configuration = _options.Configuration,
@@ -101,7 +101,7 @@ namespace Microsoft.Framework.PackageManager.Packing
                 return false;
             }
 
-            if (!ScriptExecutor.Execute(project, "prepack", getVariable))
+            if (!ScriptExecutor.Execute(project, "prebundle", getVariable))
             {
                 _options.Reports.Error.WriteLine(ScriptExecutor.ErrorMessage);
                 return false;
@@ -160,7 +160,7 @@ namespace Microsoft.Framework.PackageManager.Packing
                 if (!project.GetTargetFrameworks().Any(x => x.FrameworkName == frameworkName))
                 {
                     _options.Reports.Error.WriteLine(
-                        string.Format("'{0}' is not a target framework of the project being packed",
+                        string.Format("'{0}' is not a target framework of the project being bundled",
                         frameworkName.ToString().Red().Bold()));
                     return false;
                 }
@@ -172,7 +172,7 @@ namespace Microsoft.Framework.PackageManager.Packing
             }
 
             // If there is no target framework filter specified with '--runtime',
-            // the packed output targets all frameworks specified in project.json
+            // the bundled output targets all frameworks specified in project.json
             if (!_options.Runtimes.Any())
             {
                 foreach (var frameworkInfo in project.GetTargetFrameworks())
@@ -211,7 +211,7 @@ namespace Microsoft.Framework.PackageManager.Packing
                     IList<DependencyContext> contexts;
                     if (!root.LibraryDependencyContexts.TryGetValue(libraryDescription.Identity, out contexts))
                     {
-                        root.Packages.Add(new PackPackage(libraryDescription));
+                        root.Packages.Add(new BundlePackage(libraryDescription));
                         contexts = new List<DependencyContext>();
                         root.LibraryDependencyContexts[libraryDescription.Identity] = contexts;
                     }
@@ -222,17 +222,17 @@ namespace Microsoft.Framework.PackageManager.Packing
                 {
                     if (!root.Projects.Any(p => p.Name == libraryDescription.Identity.Name))
                     {
-                        var packProject = new PackProject(
+                        var bundleProject = new BundleProject(
                             dependencyContext.ProjectReferenceDependencyProvider,
                             dependencyContext.ProjectResolver,
                             libraryDescription);
 
-                        if (packProject.Name == project.Name)
+                        if (bundleProject.Name == project.Name)
                         {
-                            packProject.WwwRoot = _options.WwwRoot;
-                            packProject.WwwRootOut = _options.WwwRootOut;
+                            bundleProject.WwwRoot = _options.WwwRoot;
+                            bundleProject.WwwRootOut = _options.WwwRootOut;
                         }
-                        root.Projects.Add(packProject);
+                        root.Projects.Add(bundleProject);
                     }
                 }
             }
@@ -250,7 +250,7 @@ namespace Microsoft.Framework.PackageManager.Packing
 
             root.Emit();
 
-            if (!ScriptExecutor.Execute(project, "postpack", getVariable))
+            if (!ScriptExecutor.Execute(project, "postbundle", getVariable))
             {
                 _options.Reports.Error.WriteLine(ScriptExecutor.ErrorMessage);
                 return false;
@@ -268,7 +268,7 @@ namespace Microsoft.Framework.PackageManager.Packing
             return !anyUnresolvedDependency;
         }
 
-        bool TryAddRuntime(PackRoot root, FrameworkName frameworkName, string runtimePath)
+        bool TryAddRuntime(BundleRoot root, FrameworkName frameworkName, string runtimePath)
         {
             if (!Directory.Exists(runtimePath))
             {
@@ -282,7 +282,7 @@ namespace Microsoft.Framework.PackageManager.Packing
                 return false;
             }
 
-            root.Runtimes.Add(new PackRuntime(root, frameworkName, runtimeNupkgPath));
+            root.Runtimes.Add(new BundleRuntime(root, frameworkName, runtimeNupkgPath));
             return true;
         }
 

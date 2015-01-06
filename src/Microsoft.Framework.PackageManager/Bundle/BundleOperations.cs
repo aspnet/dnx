@@ -8,9 +8,9 @@ using System.IO.Compression;
 using System.Linq;
 using NuGet;
 
-namespace Microsoft.Framework.PackageManager.Packing
+namespace Microsoft.Framework.PackageManager.Bundle
 {
-    public class PackOperations
+    public class BundleOperations
     {
         public void Delete(string folderPath)
         {

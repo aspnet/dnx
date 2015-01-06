@@ -7,7 +7,7 @@ using Microsoft.Framework.Project;
 using Microsoft.Framework.Runtime;
 using NuGet;
 
-namespace Microsoft.Framework.PackageManager.Packing
+namespace Microsoft.Framework.PackageManager.Bundle
 {
     /// <summary>
     /// Generate native image for packages
@@ -21,7 +21,7 @@ namespace Microsoft.Framework.PackageManager.Packing
             _resolverLookup = resolverLookup;
         }
 
-        public bool BuildNativeImages(PackRoot root)
+        public bool BuildNativeImages(BundleRoot root)
         {
             var success = true;
             foreach (var runtime in root.Runtimes)
@@ -55,9 +55,9 @@ namespace Microsoft.Framework.PackageManager.Packing
 
         /// <summary>
         /// This is a helper method for looking up directories that directly contains assemblies that would be loaded
-        /// given the packed runtime framework. We should run crossgen on these folders
+        /// given the bundled runtime framework. We should run crossgen on these folders
         /// </summary>
-        private IEnumerable<string> ResolveOutputAssemblies(PackRoot root, NuGetDependencyResolver resolver)
+        private IEnumerable<string> ResolveOutputAssemblies(BundleRoot root, NuGetDependencyResolver resolver)
         {
             var outputPathsMap = root.Packages
                 .ToDictionary(
@@ -95,12 +95,12 @@ namespace Microsoft.Framework.PackageManager.Packing
 
             if (libraryNotInOutput.Any())
             {
-                throw new InvalidOperationException(string.Format("Library {0} cannot be found in the packed output.", string.Join(", ", libraryNotInOutput)));
+                throw new InvalidOperationException(string.Format("Library {0} cannot be found in the bundled output.", string.Join(", ", libraryNotInOutput)));
             }
 
             if (missingOutputFolder.Any())
             {
-                throw new InvalidOperationException("Packed output does not contain directory:\n" + string.Join("\n", missingOutputFolder));
+                throw new InvalidOperationException("Bundled output does not contain directory:\n" + string.Join("\n", missingOutputFolder));
             }
 
             return result;
@@ -110,7 +110,7 @@ namespace Microsoft.Framework.PackageManager.Packing
         /// This is the factory method to instantiate a PackNativeManager, if parameters are in invalid state and native
         /// generation cannot be performed, it would return null
         /// </summary>
-        public static NativeImageGenerator Create(PackOptions options, PackRoot root, IEnumerable<DependencyContext> contexts)
+        public static NativeImageGenerator Create(BundleOptions options, BundleRoot root, IEnumerable<DependencyContext> contexts)
         {
             if (options.Runtimes.Count() == 0)
             {

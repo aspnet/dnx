@@ -263,7 +263,7 @@ namespace Microsoft.Framework.Runtime.Tests
 {
     ""code"": ""*.cs;../*.cs"",
     ""exclude"": ""buggy/*.*"",
-    ""packExclude"": ""no_pack/*.*"",
+    ""bundleExclude"": ""no_pack/*.*"",
     ""preprocess"": ""other/**/*.cs;*.cs;*.*"",
     ""shared"": ""shared/**/*.cs"",
     ""resources"": ""a.cs;foo.js""
@@ -273,7 +273,7 @@ namespace Microsoft.Framework.Runtime.Tests
 
             Assert.Equal(new[] { "*.cs", @"../*.cs" }, project.SourcePatterns);
             Assert.Equal(new[] { @"buggy/*.*" }, project.ExcludePatterns);
-            Assert.Equal(new[] { @"no_pack/*.*" }, project.PackExcludePatterns);
+            Assert.Equal(new[] { @"no_pack/*.*" }, project.BundleExcludePatterns);
             Assert.Equal(new[] { @"other/**/*.cs", "*.cs", "*.*" }, project.PreprocessPatterns);
             Assert.Equal(new[] { @"shared/**/*.cs" }, project.SharedPatterns);
             Assert.Equal(new[] { "a.cs", @"foo.js" }, project.ResourcesPatterns);
@@ -286,7 +286,7 @@ namespace Microsoft.Framework.Runtime.Tests
 {
     ""code"": [""*.cs"", ""../*.cs""],
     ""exclude"": [""buggy/*.*""],
-    ""packExclude"": [""no_pack/*.*""],
+    ""bundleExclude"": [""no_pack/*.*""],
     ""preprocess"": [""other/**/*.cs"", ""*.cs"", ""*.*""],
     ""shared"": [""shared/**/*.cs;../../shared/*.cs""],
     ""resources"": [""a.cs"", ""foo.js""]
@@ -296,7 +296,7 @@ namespace Microsoft.Framework.Runtime.Tests
 
             Assert.Equal(new[] { "*.cs", @"../*.cs" }, project.SourcePatterns);
             Assert.Equal(new[] { @"buggy/*.*" }, project.ExcludePatterns);
-            Assert.Equal(new[] { @"no_pack/*.*" }, project.PackExcludePatterns);
+            Assert.Equal(new[] { @"no_pack/*.*" }, project.BundleExcludePatterns);
             Assert.Equal(new[] { @"other/**/*.cs", "*.cs", "*.*" }, project.PreprocessPatterns);
             Assert.Equal(new[] { @"shared/**/*.cs", @"../../shared/*.cs" }, project.SharedPatterns);
             Assert.Equal(new[] { "a.cs", @"foo.js" }, project.ResourcesPatterns);
@@ -313,7 +313,7 @@ namespace Microsoft.Framework.Runtime.Tests
 
             Assert.Equal(Project._defaultSourcePatterns, project.SourcePatterns);
             Assert.Equal(Project._defaultExcludePatterns, project.ExcludePatterns);
-            Assert.Equal(Project._defaultPackExcludePatterns, project.PackExcludePatterns);
+            Assert.Equal(Project._defaultBundleExcludePatterns, project.BundleExcludePatterns);
             Assert.Equal(Project._defaultPreprocessPatterns, project.PreprocessPatterns);
             Assert.Equal(Project._defaultSharedPatterns, project.SharedPatterns);
             Assert.Equal(Project._defaultResourcesPatterns, project.ResourcesPatterns);

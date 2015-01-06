@@ -7,7 +7,7 @@ using System.IO.Compression;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Threading.Tasks;
-using Microsoft.Framework.PackageManager.Packing;
+using Microsoft.Framework.PackageManager.Bundle;
 using Microsoft.Framework.Runtime;
 using NuGet;
 
@@ -106,7 +106,7 @@ namespace Microsoft.Framework.PackageManager
         {
             using (var archive = new ZipArchive(stream, ZipArchiveMode.Read))
             {
-                var packOperations = new PackOperations();
+                var packOperations = new BundleOperations();
                 packOperations.ExtractNupkg(archive, targetPath);
             }
         }

@@ -8,7 +8,7 @@ using System.Reflection;
 using System.Threading;
 using Microsoft.Framework.PackageManager.Packages;
 using Microsoft.Framework.PackageManager.List;
-using Microsoft.Framework.PackageManager.Packing;
+using Microsoft.Framework.PackageManager.Bundle;
 using Microsoft.Framework.Runtime;
 using Microsoft.Framework.Runtime.Common.CommandLine;
 
@@ -89,7 +89,7 @@ namespace Microsoft.Framework.PackageManager
                 });
             });
 
-            app.Command("pack", c =>
+            app.Command("bundle", c =>
             {
                 c.Description = "Bundle application for deployment";
 
@@ -108,15 +108,15 @@ namespace Microsoft.Framework.PackageManager
                 var optionWwwRoot = c.Option("--wwwroot <NAME>", "Name of public folder in the project directory",
                     CommandOptionType.SingleValue);
                 var optionWwwRootOut = c.Option("--wwwroot-out <NAME>",
-                    "Name of public folder in the packed image, can be used only when the '--wwwroot' option or 'webroot' in project.json is specified",
+                    "Name of public folder in the bundle, can be used only when the '--wwwroot' option or 'webroot' in project.json is specified",
                     CommandOptionType.SingleValue);
-                var optionQuiet = c.Option("--quiet", "Do not show output such as source/destination of packed files",
+                var optionQuiet = c.Option("--quiet", "Do not show output such as source/destination of bundled files",
                     CommandOptionType.NoValue);
                 c.HelpOption("-?|-h|--help");
 
                 c.OnExecute(() =>
                 {
-                    var options = new PackOptions
+                    var options = new BundleOptions
                     {
                         OutputDir = optionOut.Value(),
                         ProjectDir = argProject.Value ?? System.IO.Directory.GetCurrentDirectory(),
@@ -134,8 +134,42 @@ namespace Microsoft.Framework.PackageManager
                         Reports = CreateReports(optionVerbose.HasValue(), optionQuiet.HasValue())
                     };
 
-                    var manager = new PackManager(_hostServices, options);
-                    if (!manager.Package())
+                    var manager = new BundleManager(_hostServices, options);
+                    if (!manager.Bundle())
+                    {
+                        return -1;
+                    }
+
+                    return 0;
+                });
+            });
+
+            app.Command("pack", c =>
+            {
+                c.Description = "Build NuGet packages for the project in given directory";
+
+                var optionFramework = c.Option("--framework <TARGET_FRAMEWORK>", "A list of target frameworks to build.", CommandOptionType.MultipleValue);
+                var optionConfiguration = c.Option("--configuration <CONFIGURATION>", "A list of configurations to build.", CommandOptionType.MultipleValue);
+                var optionOut = c.Option("--out <OUTPUT_DIR>", "Output directory", CommandOptionType.SingleValue);
+                var optionDependencies = c.Option("--dependencies", "Copy dependencies", CommandOptionType.NoValue);
+                var optionQuiet = c.Option("--quiet", "Do not show output such as source/destination of nupkgs",
+                    CommandOptionType.NoValue);
+                var argProjectDir = c.Argument("[project]", "Project to pack, default is current directory");
+                c.HelpOption("-?|-h|--help");
+
+                c.OnExecute(() =>
+                {
+                    var buildOptions = new BuildOptions();
+                    buildOptions.OutputDir = optionOut.Value();
+                    buildOptions.ProjectDir = argProjectDir.Value ?? Directory.GetCurrentDirectory();
+                    buildOptions.Configurations = optionConfiguration.Values;
+                    buildOptions.TargetFrameworks = optionFramework.Values;
+                    buildOptions.GeneratePackages = true;
+                    buildOptions.Reports = CreateReports(optionVerbose.HasValue(), optionQuiet.HasValue());
+
+                    var projectManager = new BuildManager(_hostServices, buildOptions);
+
+                    if (!projectManager.Build())
                     {
                         return -1;
                     }
@@ -146,13 +180,12 @@ namespace Microsoft.Framework.PackageManager
 
             app.Command("build", c =>
             {
-                c.Description = "Build NuGet packages for the project in given directory";
+                c.Description = "Produce assemblies for the project in given directory";
 
                 var optionFramework = c.Option("--framework <TARGET_FRAMEWORK>", "A list of target frameworks to build.", CommandOptionType.MultipleValue);
                 var optionConfiguration = c.Option("--configuration <CONFIGURATION>", "A list of configurations to build.", CommandOptionType.MultipleValue);
                 var optionOut = c.Option("--out <OUTPUT_DIR>", "Output directory", CommandOptionType.SingleValue);
-                var optionDependencies = c.Option("--dependencies", "Copy dependencies", CommandOptionType.NoValue);
-                var optionQuiet = c.Option("--quiet", "Do not show output such as source/destination of nupkgs",
+                var optionQuiet = c.Option("--quiet", "Do not show output such as dependencies in use",
                     CommandOptionType.NoValue);
                 var argProjectDir = c.Argument("[project]", "Project to build, default is current directory");
                 c.HelpOption("-?|-h|--help");
@@ -164,6 +197,7 @@ namespace Microsoft.Framework.PackageManager
                     buildOptions.ProjectDir = argProjectDir.Value ?? Directory.GetCurrentDirectory();
                     buildOptions.Configurations = optionConfiguration.Values;
                     buildOptions.TargetFrameworks = optionFramework.Values;
+                    buildOptions.GeneratePackages = false;
                     buildOptions.Reports = CreateReports(optionVerbose.HasValue(), optionQuiet.HasValue());
 
                     var projectManager = new BuildManager(_hostServices, buildOptions);

@@ -70,6 +70,12 @@ namespace Microsoft.Framework.PackageManager
                 frameworks = new[] { _applicationEnvironment.RuntimeFramework };
             }
 
+            if (_buildOptions.GeneratePackages &&
+                !ScriptExecutor.Execute(project, "prepack", GetScriptVariable))
+            {
+                WriteError(ScriptExecutor.ErrorMessage);
+                return false;
+            }
 
             if (!ScriptExecutor.Execute(project, "prebuild", GetScriptVariable))
             {
@@ -85,15 +91,20 @@ namespace Microsoft.Framework.PackageManager
             var cacheContextAccessor = new CacheContextAccessor();
             var cache = new Cache(cacheContextAccessor);
 
+            PackageBuilder packageBuilder = null;
+            PackageBuilder symbolPackageBuilder = null;
+
             // Build all specified configurations
             foreach (var configuration in configurations)
             {
-                // Create a new builder per configuration
-                var packageBuilder = new PackageBuilder();
-                var symbolPackageBuilder = new PackageBuilder();
-
-                InitializeBuilder(project, packageBuilder);
-                InitializeBuilder(project, symbolPackageBuilder);
+                if (_buildOptions.GeneratePackages)
+                {
+                    // Create a new builder per configuration
+                    packageBuilder = new PackageBuilder();
+                    symbolPackageBuilder = new PackageBuilder();
+                    InitializeBuilder(project, packageBuilder);
+                    InitializeBuilder(project, symbolPackageBuilder);
+                }
 
                 var configurationSuccess = true;
 
@@ -122,10 +133,13 @@ namespace Microsoft.Framework.PackageManager
 
                     if (context.Build(warnings, errors))
                     {
-                        context.PopulateDependencies(packageBuilder);
-                        context.AddLibs(packageBuilder, "*.dll");
-                        context.AddLibs(packageBuilder, "*.xml");
-                        context.AddLibs(symbolPackageBuilder, "*.*");
+                        if (_buildOptions.GeneratePackages)
+                        {
+                            context.PopulateDependencies(packageBuilder);
+                            context.AddLibs(packageBuilder, "*.dll");
+                            context.AddLibs(packageBuilder, "*.xml");
+                            context.AddLibs(symbolPackageBuilder, "*.*");
+                        }
                     }
                     else
                     {
@@ -140,49 +154,59 @@ namespace Microsoft.Framework.PackageManager
 
                 success = success && configurationSuccess;
 
-                // Create a package per configuration
-                string nupkg = GetPackagePath(project, baseOutputPath);
-                string symbolsNupkg = GetPackagePath(project, baseOutputPath, symbols: true);
-
-                if (configurationSuccess)
+                if (_buildOptions.GeneratePackages)
                 {
-                    foreach (var sharedFile in project.SharedFiles)
-                    {
-                        var file = new PhysicalPackageFile();
-                        file.SourcePath = sharedFile;
-                        file.TargetPath = String.Format(@"shared\{0}", Path.GetFileName(sharedFile));
-                        packageBuilder.Files.Add(file);
-                    }
+                    // Create a package per configuration
+                    string nupkg = GetPackagePath(project, baseOutputPath);
+                    string symbolsNupkg = GetPackagePath(project, baseOutputPath, symbols: true);
 
-                    var root = project.ProjectDirectory;
-
-                    foreach (var path in project.SourceFiles)
+                    if (configurationSuccess)
                     {
-                        var srcFile = new PhysicalPackageFile();
-                        srcFile.SourcePath = path;
-                        srcFile.TargetPath = Path.Combine("src", PathUtility.GetRelativePath(root, path));
-                        symbolPackageBuilder.Files.Add(srcFile);
-                    }
-
-                    using (var fs = File.Create(nupkg))
-                    {
-                        packageBuilder.Save(fs);
-                        _buildOptions.Reports.Quiet.WriteLine("{0} -> {1}", project.Name, nupkg);
-                    }
-
-                    if (symbolPackageBuilder.Files.Any())
-                    {
-                        using (var fs = File.Create(symbolsNupkg))
+                        foreach (var sharedFile in project.SharedFiles)
                         {
-                            symbolPackageBuilder.Save(fs);
+                            var file = new PhysicalPackageFile();
+                            file.SourcePath = sharedFile;
+                            file.TargetPath = String.Format(@"shared\{0}", Path.GetFileName(sharedFile));
+                            packageBuilder.Files.Add(file);
                         }
 
-                        _buildOptions.Reports.Quiet.WriteLine("{0} -> {1}", project.Name, symbolsNupkg);
+                        var root = project.ProjectDirectory;
+
+                        foreach (var path in project.SourceFiles)
+                        {
+                            var srcFile = new PhysicalPackageFile();
+                            srcFile.SourcePath = path;
+                            srcFile.TargetPath = Path.Combine("src", PathUtility.GetRelativePath(root, path));
+                            symbolPackageBuilder.Files.Add(srcFile);
+                        }
+
+                        using (var fs = File.Create(nupkg))
+                        {
+                            packageBuilder.Save(fs);
+                            _buildOptions.Reports.Quiet.WriteLine("{0} -> {1}", project.Name, nupkg);
+                        }
+
+                        if (symbolPackageBuilder.Files.Any())
+                        {
+                            using (var fs = File.Create(symbolsNupkg))
+                            {
+                                symbolPackageBuilder.Save(fs);
+                            }
+
+                            _buildOptions.Reports.Quiet.WriteLine("{0} -> {1}", project.Name, symbolsNupkg);
+                        }
                     }
                 }
             }
 
             if (!ScriptExecutor.Execute(project, "postbuild", GetScriptVariable))
+            {
+                WriteError(ScriptExecutor.ErrorMessage);
+                return false;
+            }
+
+            if (_buildOptions.GeneratePackages &&
+                !ScriptExecutor.Execute(project, "postpack", GetScriptVariable))
             {
                 WriteError(ScriptExecutor.ErrorMessage);
                 return false;
