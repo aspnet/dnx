@@ -318,7 +318,7 @@ Finished:
     return fSuccess;
 }
 
-extern "C" __declspec(dllexport) bool __stdcall CallApplicationMain(PCALL_APPLICATION_MAIN_DATA data)
+extern "C" __declspec(dllexport) HRESULT __stdcall CallApplicationMain(PCALL_APPLICATION_MAIN_DATA data)
 {
     HRESULT hr = S_OK;
     errno_t errno = 0;
@@ -344,7 +344,7 @@ extern "C" __declspec(dllexport) bool __stdcall CallApplicationMain(PCALL_APPLIC
     if (!hCoreCLRModule)
     {
         printf_s("Failed to locate coreclr.dll.\n");
-        return false;
+        return E_FAIL;
     }
 
     // Get the path to the module
@@ -358,21 +358,21 @@ extern "C" __declspec(dllexport) bool __stdcall CallApplicationMain(PCALL_APPLIC
     if (!::GetModuleHandleExW(GET_MODULE_HANDLE_EX_FLAG_PIN, lpCoreClrModulePath, &ignoreModule))
     {
         printf_s("Failed to pin coreclr.dll.\n");
-        return false;
+        return E_FAIL;
     }
 
     pfnGetCLRRuntimeHost = (FnGetCLRRuntimeHost)::GetProcAddress(hCoreCLRModule, "GetCLRRuntimeHost");
     if (!pfnGetCLRRuntimeHost)
     {
         printf_s("Failed to find export GetCLRRuntimeHost.\n");
-        return false;
+        return E_FAIL;
     }
 
     hr = pfnGetCLRRuntimeHost(IID_ICLRRuntimeHost2, (IUnknown**)&pCLRRuntimeHost);
     if (FAILED(hr))
     {
         printf_s("Failed to get IID_ICLRRuntimeHost2.\n");
-        return false;
+        return hr;
     }
 
     STARTUP_FLAGS dwStartupFlags = (STARTUP_FLAGS)(
@@ -388,7 +388,7 @@ extern "C" __declspec(dllexport) bool __stdcall CallApplicationMain(PCALL_APPLIC
     if (FAILED(hr))
     {
         printf_s("Failed to Authenticate().\n");
-        return false;
+        return hr;
     }
 
     hr = pCLRRuntimeHost->Start();
@@ -396,7 +396,7 @@ extern "C" __declspec(dllexport) bool __stdcall CallApplicationMain(PCALL_APPLIC
     if (FAILED(hr))
     {
         printf_s("Failed to Start().\n");
-        return false;
+        return hr;
     }
 
     const wchar_t* property_keys[] =
@@ -436,7 +436,7 @@ extern "C" __declspec(dllexport) bool __stdcall CallApplicationMain(PCALL_APPLIC
         if (!GetTrustedPlatformAssembliesList(szCoreClrDirectory, false, pwszTrustedPlatformAssemblies, cchTrustedPlatformAssemblies))
         {
             printf_s("Failed to find files in the coreclr directory\n");
-            return false;
+            return E_FAIL;
         }
     }
 
@@ -499,7 +499,7 @@ extern "C" __declspec(dllexport) bool __stdcall CallApplicationMain(PCALL_APPLIC
         wprintf_s(L"TPA      %d %S\n", wcslen(pwszTrustedPlatformAssemblies), pwszTrustedPlatformAssemblies);
         wprintf_s(L"AppPaths %S\n", wszAppPaths);
         printf_s("Failed to create app domain (%d).\n", hr);
-        return false;
+        return hr;
     }
 
     HostMain pHostMain;
@@ -514,7 +514,7 @@ extern "C" __declspec(dllexport) bool __stdcall CallApplicationMain(PCALL_APPLIC
     if (FAILED(hr))
     {
         printf_s("Failed to create main delegate (%d).\n", hr);
-        return false;
+        return hr;
     }
 
     SetEnvironmentVariable(L"KRE_FRAMEWORK", L"aspnetcore50");
@@ -535,10 +535,10 @@ Finished:
 
     if (FAILED(hr))
     {
-        return false;
+        return hr;
     }
     else
     {
-        return true;
+        return S_OK;
     }
 }
