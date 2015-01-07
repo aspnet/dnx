@@ -379,9 +379,9 @@ namespace Microsoft.Framework.PackageManager
             return success;
         }
 
-        private async Task InstallPackages(List<GraphItem> installItems, string packagesDirectory, Func<Library, string, bool> packageFilter)
+        private async Task InstallPackages(List<GraphItem> installItems, string packagesDirectory,
+            Func<Library, string, bool> packageFilter)
         {
-            var packagePathResolver = new DefaultPackagePathResolver(packagesDirectory);
             using (var sha512 = SHA512.Create())
             {
                 foreach (var item in installItems)
@@ -399,59 +399,9 @@ namespace Microsoft.Framework.PackageManager
                         continue;
                     }
 
-                    Reports.Information.WriteLine(string.Format("Installing {0} {1}", library.Name.Bold(), library.Version));
-
-                    var targetPath = packagePathResolver.GetInstallPath(library.Name, library.Version);
-                    var targetNuspec = packagePathResolver.GetManifestFilePath(library.Name, library.Version);
-                    var targetNupkg = packagePathResolver.GetPackageFilePath(library.Name, library.Version);
-                    var hashPath = packagePathResolver.GetHashPath(library.Name, library.Version);
-
-                    // Acquire the lock on a nukpg before we extract it to prevent the race condition when multiple
-                    // processes are extracting to the same destination simultaneously
-                    await ConcurrencyUtilities.ExecuteWithFileLocked(targetNupkg, async createdNewLock =>
-                    {
-                        // If this is the first process trying to install the target nupkg, go ahead
-                        // After this process successfully installs the package, all other processes
-                        // waiting on this lock don't need to install it again
-                        if (createdNewLock)
-                        {
-                            Directory.CreateDirectory(targetPath);
-                            using (var stream = new FileStream(targetNupkg, FileMode.Create, FileAccess.ReadWrite, FileShare.ReadWrite | FileShare.Delete))
-                            {
-                                await item.Match.Provider.CopyToAsync(item.Match, stream);
-                                stream.Seek(0, SeekOrigin.Begin);
-
-                                ExtractPackage(targetPath, stream);
-                            }
-
-                            // Fixup the casing of the nuspec on disk to match what we expect
-                            var nuspecFile = Directory.EnumerateFiles(targetPath, "*" + Constants.ManifestExtension).Single();
-
-                            if (!string.Equals(nuspecFile, targetNuspec, StringComparison.Ordinal))
-                            {
-                                Manifest manifest = null;
-                                using (var stream = File.OpenRead(nuspecFile))
-                                {
-                                    manifest = Manifest.ReadFrom(stream, validateSchema: false);
-                                    manifest.Metadata.Id = library.Name;
-                                }
-
-                                // Delete the previous nuspec file
-                                File.Delete(nuspecFile);
-
-                                // Write the new manifest
-                                using (var stream = File.OpenWrite(targetNuspec))
-                                {
-                                    manifest.Save(stream);
-                                }
-                            }
-
-                            // Ensure the manifest file name matches
-                            File.WriteAllText(hashPath, nupkgSHA);
-                        }
-
-                        return 0;
-                    });
+                    Reports.Information.WriteLine("Installing {0} {1}", library.Name.Bold(), library.Version);
+                    memStream.Seek(0, SeekOrigin.Begin);
+                    await NuGetPackageUtils.InstallFromStream(memStream, library, packagesDirectory, sha512);
                 }
             }
         }
