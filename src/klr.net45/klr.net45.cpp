@@ -8,20 +8,25 @@
 
 IKatanaManagerPtr g_katanaManager;
 
-
 extern "C" __declspec(dllexport) HRESULT __stdcall CallApplicationMain(PCALL_APPLICATION_MAIN_DATA data)
 {
     HRESULT hr = S_OK;
-    
+
     IKatanaManagerPtr manager = new ComObject<KatanaManager, IKatanaManager>();
 
     g_katanaManager = manager;
-    _HR(manager->InitializeRuntime(data->applicationBase));
-    g_katanaManager = NULL;
 
-    _HR(manager->CallApplicationMain(data->argc, data->argv));
-
-    data->exitcode = hr;
+    hr = manager->InitializeRuntime(data->applicationBase);
+    if (SUCCEEDED(hr))
+    {
+        g_katanaManager = NULL;
+        data->exitcode = manager->CallApplicationMain(data->argc, data->argv);
+    }
+    else 
+    {
+        printf_s("Failed to initalize runtime (%x)", hr);
+        data->exitcode = hr;
+    }
 
     return hr;
 }

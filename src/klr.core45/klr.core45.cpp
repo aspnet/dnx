@@ -498,7 +498,7 @@ extern "C" __declspec(dllexport) HRESULT __stdcall CallApplicationMain(PCALL_APP
     {
         wprintf_s(L"TPA      %d %S\n", wcslen(pwszTrustedPlatformAssemblies), pwszTrustedPlatformAssemblies);
         wprintf_s(L"AppPaths %S\n", wszAppPaths);
-        printf_s("Failed to create app domain (%d).\n", hr);
+        printf_s("Failed to create app domain (%x).\n", hr);
         return hr;
     }
 
@@ -513,7 +513,7 @@ extern "C" __declspec(dllexport) HRESULT __stdcall CallApplicationMain(PCALL_APP
 
     if (FAILED(hr))
     {
-        printf_s("Failed to create main delegate (%d).\n", hr);
+        printf_s("Failed to create main delegate (%x).\n", hr);
         return hr;
     }
 
