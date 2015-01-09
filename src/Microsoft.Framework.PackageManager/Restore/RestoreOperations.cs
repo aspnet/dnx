@@ -247,6 +247,12 @@ namespace Microsoft.Framework.PackageManager
 
         private async Task<WalkProviderMatch> FindLibraryByVersion(RestoreContext context, Library library, IEnumerable<IWalkProvider> providers)
         {
+            if (library.Version.IsSnapshot)
+            {
+                // Don't optimize the non http path for snapshot versions or we'll miss things
+                return await FindLibrary(library, providers, provider => provider.FindLibraryByVersion(library, context.FrameworkName));
+            }
+
             return await FindLibrary(library, providers.Where(p => !p.IsHttp), provider => provider.FindLibraryByVersion(library, context.FrameworkName)) ??
                    await FindLibrary(library, providers.Where(p => p.IsHttp), provider => provider.FindLibraryByVersion(library, context.FrameworkName));
         }
