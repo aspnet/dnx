@@ -16,14 +16,19 @@ namespace Microsoft.Framework.Runtime
     {
         private readonly IDictionary<FrameworkName, FrameworkInformation> _cache = new Dictionary<FrameworkName, FrameworkInformation>();
 
-        private static readonly IDictionary<FrameworkName, FrameworkName> _aliases = new Dictionary<FrameworkName, FrameworkName>
+        private static readonly IDictionary<FrameworkName, List<FrameworkName>> _aliases = new Dictionary<FrameworkName, List<FrameworkName>>
         {
-            { new FrameworkName(VersionUtility.AspNetFrameworkIdentifier, new Version(5, 0)), new FrameworkName(VersionUtility.NetFrameworkIdentifier, new Version(4, 5, 3)) }
+            { new FrameworkName(VersionUtility.AspNetFrameworkIdentifier, new Version(5, 0)), new List<FrameworkName> {
+                    new FrameworkName(VersionUtility.NetFrameworkIdentifier, new Version(4, 6)),
+                    new FrameworkName(VersionUtility.NetFrameworkIdentifier, new Version(4, 5, 3))
+                }
+            },
         };
 
         private static readonly IDictionary<FrameworkName, FrameworkName> _monoAliases = new Dictionary<FrameworkName, FrameworkName>
         {
-            { new FrameworkName(VersionUtility.NetFrameworkIdentifier, new Version(4, 5, 3)), new FrameworkName(VersionUtility.AspNetFrameworkIdentifier, new Version(5, 0)) }
+            { new FrameworkName(VersionUtility.NetFrameworkIdentifier, new Version(4, 5, 3)), new FrameworkName(VersionUtility.AspNetFrameworkIdentifier, new Version(5, 0)) },
+            { new FrameworkName(VersionUtility.NetFrameworkIdentifier, new Version(4, 6)), new FrameworkName(VersionUtility.AspNetFrameworkIdentifier, new Version(5, 0)) }
         };
 
         public FrameworkReferenceResolver()
@@ -139,6 +144,7 @@ namespace Microsoft.Framework.Runtime
                 // Mono is a bit inconsistent as .NET 4.5 and .NET 4.5.1 are the
                 // same folder
                 var supportedVersions = new Dictionary<string, string> {
+                    { "4.6", "4.5" },
                     { "4.5.3", "4.5" },
                     { "4.5.1", "4.5" },
                     { "4.5", "4.5" },
@@ -194,12 +200,6 @@ namespace Microsoft.Framework.Runtime
 
         private static FrameworkInformation GetFrameworkInformation(FrameworkName targetFramework)
         {
-            FrameworkName aliasFramework;
-            if (_aliases.TryGetValue(targetFramework, out aliasFramework))
-            {
-                targetFramework = aliasFramework;
-            }
-
             string referenceAssembliesPath = GetReferenceAssembliesPath();
 
             if (string.IsNullOrEmpty(referenceAssembliesPath))
@@ -207,9 +207,32 @@ namespace Microsoft.Framework.Runtime
                 return null;
             }
 
-            string basePath = Path.Combine(referenceAssembliesPath,
-                                           targetFramework.Identifier,
-                                           "v" + targetFramework.Version);
+            List<FrameworkName> candidates;
+            if (_aliases.TryGetValue(targetFramework, out candidates))
+            {
+                foreach (var framework in candidates)
+                {
+                    var information = GetFrameworkInformation(framework, referenceAssembliesPath);
+
+                    if (information != null)
+                    {
+                        return information;
+                    }
+                }
+
+                return null;
+            }
+            else
+            {
+                return GetFrameworkInformation(targetFramework, referenceAssembliesPath);
+            }
+        }
+
+        private static FrameworkInformation GetFrameworkInformation(FrameworkName targetFramework, string referenceAssembliesPath)
+        {
+            var basePath = Path.Combine(referenceAssembliesPath,
+                                        targetFramework.Identifier,
+                                        "v" + targetFramework.Version);
 
             if (!string.IsNullOrEmpty(targetFramework.Profile))
             {
