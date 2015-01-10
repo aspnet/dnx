@@ -780,9 +780,18 @@ namespace Microsoft.Framework.DesignTimeHost
 
                 state.Frameworks.Add(frameworkData);
 
-                // Add shared files
+                // Add shared files packages
+                dependencySources.AddRange(dependencyInfo.ExportedSourcesFiles);
+
+                // Add shared files from projects
                 foreach (var reference in dependencyInfo.ProjectReferences)
                 {
+                    // Only add direct dependencies as sources
+                    if (!project.Dependencies.Any(d => string.Equals(d.Name, reference.Name, StringComparison.OrdinalIgnoreCase)))
+                    {
+                        continue;
+                    }
+
                     Project referencedProject;
                     if (Project.TryGetProject(reference.Path, out referencedProject))
                     {
@@ -879,7 +888,8 @@ namespace Microsoft.Framework.DesignTimeHost
                     ProjectReferences = new List<ProjectReference>(),
                     HostContext = applicationHostContext,
                     References = new List<string>(),
-                    RawReferences = new Dictionary<string, byte[]>()
+                    RawReferences = new Dictionary<string, byte[]>(),
+                    ExportedSourcesFiles = new List<string>()
                 };
 
                 foreach (var library in applicationHostContext.DependencyWalker.Libraries)
@@ -926,6 +936,7 @@ namespace Microsoft.Framework.DesignTimeHost
 
                             info.ProjectReferences.Add(new ProjectReference
                             {
+                                Name = referencedProject.Name,
                                 Framework = new FrameworkData
                                 {
                                     ShortName = VersionUtility.GetShortFrameworkName(library.Framework),
@@ -964,6 +975,11 @@ namespace Microsoft.Framework.DesignTimeHost
                     {
                         info.RawReferences[embedded.Name] = embedded.Contents;
                     }
+                }
+
+                foreach (var sourceFileReference in exportWithoutProjects.SourceReferences.OfType<ISourceFileReference>())
+                {
+                    info.ExportedSourcesFiles.Add(sourceFileReference.Path);
                 }
 
                 return info;
@@ -1059,6 +1075,8 @@ namespace Microsoft.Framework.DesignTimeHost
             public IList<string> References { get; set; }
 
             public IList<ProjectReference> ProjectReferences { get; set; }
+
+            public IList<string> ExportedSourcesFiles { get; set; }
         }
 
         private class ProjectCompilation
