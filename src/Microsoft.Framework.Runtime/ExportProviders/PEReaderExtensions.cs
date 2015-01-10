@@ -22,15 +22,33 @@ namespace Microsoft.Framework.Runtime
                 var resource = mdReader.GetManifestResource(resourceHandle);
                 var resourceName = mdReader.GetString(resource.Name);
 
-                // Embedded interface
+                // Embedded interface (TODO: Check for AssemblyNeutral/ prefix)
                 if (resourceName.EndsWith(".dll", StringComparison.OrdinalIgnoreCase))
                 {
                     var buffer = GetEmbeddedResourceContents(reader, resource);
 
-                    // Remove .dll
-                    var nameWithoutDll = resourceName.Substring(0, resourceName.Length - 4);
+                    using (var nestedPeReader = new PEReader(new MemoryStream(buffer)))
+                    {
+                        try
+                        {
+                            // Skip dlls that aren't managed
+                            if (!nestedPeReader.HasMetadata)
+                            {
+                                continue;
+                            }
+                        }
+                        catch (BadImageFormatException)
+                        {
+                            continue;
+                        }
 
-                    items.Add(new EmbeddedMetadataReference(nameWithoutDll, buffer));
+                        var nestedMdReader = nestedPeReader.GetMetadataReader();
+                        var assemblyDef = nestedMdReader.GetAssemblyDefinition();
+
+                        var assemblyName = nestedMdReader.GetString(assemblyDef.Name);
+
+                        items.Add(new EmbeddedMetadataReference(assemblyName, buffer));
+                    }
                 }
             }
 

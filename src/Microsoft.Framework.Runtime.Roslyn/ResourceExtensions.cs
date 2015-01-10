@@ -13,10 +13,10 @@ namespace Microsoft.Framework.Runtime.Roslyn
         {
             foreach (var reference in references)
             {
-                resources.Add(new ResourceDescription(reference.Name + ".dll", () =>
+                resources.Add(new ResourceDescription("AssemblyNeutral/" + reference.Name + ".dll", () =>
                 {
                     return new MemoryStream(reference.Contents);
-                }, 
+                },
                 isPublic: true));
             }
         }

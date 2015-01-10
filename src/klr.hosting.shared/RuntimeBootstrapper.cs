@@ -322,6 +322,7 @@ namespace klr.hosting
             // Embedded assemblies end with .dll
             foreach (var name in assembly.GetManifestResourceNames())
             {
+                // TODO: Filter on AssemblyNeutral/
                 if (name.EndsWith(".dll"))
                 {
                     var assemblyName = Path.GetFileNameWithoutExtension(name);
@@ -336,7 +337,7 @@ namespace klr.hosting
 
                     var neutralAssembly = load(neutralAssemblyStream);
 
-                    _assemblyCache[assemblyName] = neutralAssembly;
+                    _assemblyCache[neutralAssembly.GetName().Name] = neutralAssembly;
                 }
             }
         }
