@@ -780,7 +780,7 @@ namespace Microsoft.Framework.DesignTimeHost
 
                 state.Frameworks.Add(frameworkData);
 
-                // Add shared files packages
+                // Add shared files from packages
                 dependencySources.AddRange(dependencyInfo.ExportedSourcesFiles);
 
                 // Add shared files from projects
