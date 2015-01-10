@@ -64,7 +64,7 @@ namespace NuGet
         /// <summary>
         /// Determines if the specified version is within the version spec
         /// </summary>
-        public static bool Satisfies(this IVersionSpec versionSpec, SemanticVersion version)
+        public static bool IsSatisfiedBy(this IVersionSpec versionSpec, SemanticVersion version)
         {
             // The range is unbounded so return true
             if (versionSpec == null)
@@ -72,6 +72,17 @@ namespace NuGet
                 return true;
             }
             return versionSpec.ToDelegate<SemanticVersion>(v => v)(version);
+        }
+
+        public static bool EqualsSnapshot(this IVersionSpec versionSpec, SemanticVersion version)
+        {
+            if (versionSpec.IsSnapshot)
+            {
+                return versionSpec.MinVersion.Version == version.Version &&
+                       version.SpecialVersion.StartsWith(versionSpec.MinVersion.SpecialVersion, StringComparison.OrdinalIgnoreCase);
+            }
+
+            return false;
         }
 
         public static IEnumerable<string> GetComparableVersionStrings(this SemanticVersion version)

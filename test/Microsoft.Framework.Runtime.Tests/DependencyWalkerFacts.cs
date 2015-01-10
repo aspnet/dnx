@@ -226,7 +226,19 @@ namespace Loader.Tests
 
         public TestDependencyProvider Package(string name, string version, Action<Entry> configure)
         {
-            var entry = new Entry { Key = new Library { Name = name, Version = new SemanticVersion(version) } };
+            var entry = new Entry
+            {
+                Key = new Library
+                {
+                    Name = name,
+                    RequestedVersion = new VersionSpec
+                    {
+                        IsMinInclusive = true,
+                        MinVersion = new SemanticVersion(version),
+                    }
+                }
+            };
+
             _entries[entry.Key] = entry;
             configure(entry);
             return this;
@@ -244,10 +256,16 @@ namespace Loader.Tests
 
             public Entry Needs(string name, string version)
             {
-                Dependencies.Add(new LibraryDependency(
-                    name: name,
-                    version: new SemanticVersion(version)
-                ));
+                Dependencies.Add(new LibraryDependency(new Library
+                {
+                    Name = name,
+                    RequestedVersion = new VersionSpec
+                    {
+                        IsMinInclusive = true,
+                        MinVersion = new SemanticVersion(version)
+                    }
+                }));
+
                 return this;
             }
         }

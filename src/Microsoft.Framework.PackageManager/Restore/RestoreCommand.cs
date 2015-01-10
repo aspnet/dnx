@@ -197,6 +197,7 @@ namespace Microsoft.Framework.PackageManager
                 };
                 contexts.Add(context);
             }
+
             if (!contexts.Any())
             {
                 contexts.Add(new RestoreContext
@@ -209,9 +210,17 @@ namespace Microsoft.Framework.PackageManager
             }
 
             var tasks = new List<Task<GraphNode>>();
+
             foreach (var context in contexts)
             {
-                tasks.Add(restoreOperations.CreateGraphNode(context, new Library { Name = project.Name, Version = project.Version }, _ => true));
+                var projectLibrary = new Library
+                {
+                    Name = project.Name,
+                    RequestedVersion = new VersionSpec(project.Version),
+                    Version = project.Version
+                };
+
+                tasks.Add(restoreOperations.CreateGraphNode(context, projectLibrary, _ => true));
             }
             var graphs = await Task.WhenAll(tasks);
 
@@ -219,12 +228,14 @@ namespace Microsoft.Framework.PackageManager
 
             var installItems = new List<GraphItem>();
             var missingItems = new HashSet<Library>();
+
             ForEach(graphs, node =>
             {
                 if (node == null || node.Library == null)
                 {
                     return;
                 }
+
                 if (node.Item == null || node.Item.Match == null)
                 {
                     if (!node.Library.IsGacOrFrameworkReference &&
@@ -234,8 +245,10 @@ namespace Microsoft.Framework.PackageManager
                         Reports.Error.WriteLine(string.Format("Unable to locate {0} >= {1}", node.Library.Name.Red().Bold(), node.Library.Version));
                         success = false;
                     }
+
                     return;
                 }
+
                 // "kpm restore" is case-sensitive
                 if (!string.Equals(node.Item.Match.Library.Name, node.Library.Name, StringComparison.Ordinal))
                 {
@@ -243,12 +256,16 @@ namespace Microsoft.Framework.PackageManager
                     {
                         Reports.Error.WriteLine("Unable to locate {0} >= {1}. Do you mean {2}?",
                             node.Library.Name.Red().Bold(), node.Library.Version, node.Item.Match.Library.Name.Bold());
+
                         success = false;
                     }
+
                     return;
                 }
+
                 var isRemote = remoteProviders.Contains(node.Item.Match.Provider);
                 var isAdded = installItems.Any(item => item.Match.Library == node.Item.Match.Library);
+
                 if (!isAdded && isRemote)
                 {
                     installItems.Add(node.Item);
@@ -310,29 +327,23 @@ namespace Microsoft.Framework.PackageManager
                 RemoteLibraryProviders = remoteProviders,
             };
 
-            var dependencies = new Dictionary<Library, string>();
-            JToken dependenciesNode = null;
-            var globalJson = JObject.Parse(File.ReadAllText(GlobalJsonFile));
-            dependenciesNode = globalJson["dependencies"];
-            if (dependenciesNode != null)
-            {
-                dependencies = dependenciesNode
-                    .OfType<JProperty>()
-                    .ToDictionary(d => new Library()
-                    {
-                        Name = d.Name,
-                        Version = SemanticVersion.Parse(d.Value.Value<string>("version"))
-                    },
-                    d => d.Value.Value<string>("sha"));
-            }
+            GlobalSettings globalSettings;
+            GlobalSettings.TryGetGlobalSettings(GlobalJsonFile, out globalSettings);
 
-            var libsToRestore = new List<Library>(dependencies.Keys);
+            var libsToRestore = new List<Library>(globalSettings.PackageHashes.Keys);
+
             var tasks = new List<Task<GraphItem>>();
-            foreach (var lib in libsToRestore)
+
+            foreach (var library in libsToRestore)
             {
                 tasks.Add(restoreOperations.FindLibraryCached(context,
-                    new Library { Name = lib.Name, Version = lib.Version }));
+                    new Library
+                    {
+                        Name = library.Name,
+                        RequestedVersion = library.PreferredRequestedVersion
+                    }));
             }
+
             var resolvedItems = await Task.WhenAll(tasks);
 
             Reports.Information.WriteLine(string.Format("{0}, {1}ms elapsed", "Resolving complete".Green(),
@@ -340,20 +351,26 @@ namespace Microsoft.Framework.PackageManager
 
             var installItems = new List<GraphItem>();
             var missingItems = new List<Library>();
+
             for (int i = 0; i < resolvedItems.Length; i++)
             {
                 var item = resolvedItems[i];
-                var lib = libsToRestore[i];
-                if (item == null || item.Match == null || item.Match.Library.Version != lib.Version)
+                var library = libsToRestore[i];
+
+                if (item == null || item.Match == null || item.Match.Library.Version != library.PreferredVersion)
                 {
-                    missingItems.Add(lib);
+                    missingItems.Add(library);
+
                     Reports.Error.WriteLine(string.Format("Unable to locate {0} {1}",
-                        lib.Name.Red().Bold(), lib.Version));
+                        library.Name.Red().Bold(), library.Version));
+
                     success = false;
                     continue;
                 }
+
                 var isRemote = remoteProviders.Contains(item.Match.Provider);
                 var isAdded = installItems.Any(x => x.Match.Library == item.Match.Library);
+
                 if (!isAdded && isRemote)
                 {
                     installItems.Add(item);
@@ -362,15 +379,18 @@ namespace Microsoft.Framework.PackageManager
 
             await InstallPackages(installItems, packagesDirectory, packageFilter: (library, nupkgSHA) =>
             {
-                string expectedSHA = dependencies[library];
+                string expectedSHA = globalSettings.PackageHashes[library];
+
                 if (!string.Equals(expectedSHA, nupkgSHA, StringComparison.Ordinal))
                 {
                     Reports.Error.WriteLine(
                         string.Format("SHA of downloaded package {0} doesn't match expected value.".Red().Bold(),
                         library.ToString()));
+
                     success = false;
                     return false;
                 }
+
                 return true;
             });
 

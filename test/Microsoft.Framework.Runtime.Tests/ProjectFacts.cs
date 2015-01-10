@@ -61,29 +61,37 @@ namespace Microsoft.Framework.Runtime.Tests
         ""A"": """",
         ""B"": ""1.0-alpha-*"",
         ""C"": ""1.0.0"",
-        ""D"": { ""version"": ""2.0.0"" }
+        ""D"": { ""version"": ""2.0.0"" },
+        ""E"": ""[1.0.0, 1.1.0)""
     }
 }",
 "foo",
 @"c:\foo\project.json");
 
             Assert.NotNull(project.Dependencies);
-            Assert.Equal(4, project.Dependencies.Count);
+            Assert.Equal(5, project.Dependencies.Count);
             var d1 = project.Dependencies[0];
             var d2 = project.Dependencies[1];
             var d3 = project.Dependencies[2];
             var d4 = project.Dependencies[3];
+            var d5 = project.Dependencies[4];
             Assert.Equal("A", d1.Name);
-            Assert.Null(d1.Version);
+            Assert.Null(d1.Library.RequestedVersion);
             Assert.Equal("B", d2.Name);
-            Assert.Equal(SemanticVersion.Parse("1.0-alpha-*"), d2.Version);
-            Assert.True(d2.Version.IsSnapshot);
+            Assert.True(d2.Library.RequestedVersion.IsMinInclusive);
+            Assert.Equal(SemanticVersion.Parse("1.0-alpha"), d2.Library.RequestedVersion.MinVersion);
+            Assert.True(d2.Library.RequestedVersion.IsSnapshot);
             Assert.Equal("C", d3.Name);
-            Assert.Equal(SemanticVersion.Parse("1.0.0"), d3.Version);
-            Assert.False(d3.Version.IsSnapshot);
+            Assert.Equal(SemanticVersion.Parse("1.0.0"), d3.Library.RequestedVersion.MinVersion);
+            Assert.False(d3.Library.RequestedVersion.IsSnapshot);
             Assert.Equal("D", d4.Name);
-            Assert.Equal(SemanticVersion.Parse("2.0.0"), d4.Version);
-            Assert.False(d4.Version.IsSnapshot);
+            Assert.Equal(SemanticVersion.Parse("2.0.0"), d4.Library.RequestedVersion.MinVersion);
+            Assert.False(d4.Library.RequestedVersion.IsSnapshot);
+            Assert.Equal("E", d5.Name);
+            Assert.True(d5.Library.RequestedVersion.IsMinInclusive);
+            Assert.Equal(SemanticVersion.Parse("1.0.0"), d5.Library.RequestedVersion.MinVersion);
+            Assert.Equal(SemanticVersion.Parse("1.1.0"), d5.Library.RequestedVersion.MaxVersion);
+            Assert.False(d5.Library.RequestedVersion.IsMaxInclusive);
         }
 
         [Fact]
@@ -116,14 +124,14 @@ namespace Microsoft.Framework.Runtime.Tests
             Assert.Equal("A", d1.Name);
             Assert.Null(d1.Version);
             Assert.Equal("B", d2.Name);
-            Assert.Equal(SemanticVersion.Parse("1.0-alpha-*"), d2.Version);
-            Assert.True(d2.Version.IsSnapshot);
+            Assert.Equal(SemanticVersion.Parse("1.0-alpha"), d2.Library.RequestedVersion.MinVersion);
+            Assert.True(d2.Library.RequestedVersion.IsSnapshot);
             Assert.Equal("C", d3.Name);
-            Assert.Equal(SemanticVersion.Parse("1.0.0"), d3.Version);
-            Assert.False(d3.Version.IsSnapshot);
+            Assert.Equal(SemanticVersion.Parse("1.0.0"), d3.Library.RequestedVersion.MinVersion);
+            Assert.False(d3.Library.RequestedVersion.IsSnapshot);
             Assert.Equal("D", d4.Name);
-            Assert.Equal(SemanticVersion.Parse("2.0.0"), d4.Version);
-            Assert.False(d4.Version.IsSnapshot);
+            Assert.Equal(SemanticVersion.Parse("2.0.0"), d4.Library.RequestedVersion.MinVersion);
+            Assert.False(d4.Library.RequestedVersion.IsSnapshot);
         }
 
         [Fact]
@@ -156,16 +164,16 @@ namespace Microsoft.Framework.Runtime.Tests
             Assert.Null(d1.Version);
             Assert.True(d1.IsGacOrFrameworkReference);
             Assert.Equal("B", d2.Name);
-            Assert.Equal(SemanticVersion.Parse("1.0-alpha-*"), d2.Version);
-            Assert.True(d2.Version.IsSnapshot);
+            Assert.Equal(SemanticVersion.Parse("1.0-alpha"), d2.Library.RequestedVersion.MinVersion);
+            Assert.True(d2.Library.RequestedVersion.IsSnapshot);
             Assert.True(d2.IsGacOrFrameworkReference);
             Assert.Equal("C", d3.Name);
-            Assert.Equal(SemanticVersion.Parse("1.0.0"), d3.Version);
-            Assert.False(d3.Version.IsSnapshot);
+            Assert.Equal(SemanticVersion.Parse("1.0.0"), d3.Library.RequestedVersion.MinVersion);
+            Assert.False(d3.Library.RequestedVersion.IsSnapshot);
             Assert.True(d3.IsGacOrFrameworkReference);
             Assert.Equal("D", d4.Name);
-            Assert.Equal(SemanticVersion.Parse("2.0.0"), d4.Version);
-            Assert.False(d4.Version.IsSnapshot);
+            Assert.Equal(SemanticVersion.Parse("2.0.0"), d4.Library.RequestedVersion.MinVersion);
+            Assert.False(d4.Library.RequestedVersion.IsSnapshot);
             Assert.True(d4.IsGacOrFrameworkReference);
         }
 

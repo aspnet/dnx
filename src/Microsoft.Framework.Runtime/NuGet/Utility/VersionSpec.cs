@@ -1,6 +1,7 @@
 // Copyright (c) Microsoft Open Technologies, Inc. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
+using System;
 using System.Globalization;
 using System.Text;
 
@@ -14,6 +15,7 @@ namespace NuGet
 
         public VersionSpec(SemanticVersion version)
         {
+            IsSnapshot = false;
             IsMinInclusive = true;
             IsMaxInclusive = true;
             MinVersion = version;
@@ -24,9 +26,15 @@ namespace NuGet
         public bool IsMinInclusive { get; set; }
         public SemanticVersion MaxVersion { get; set; }
         public bool IsMaxInclusive { get; set; }
+        public bool IsSnapshot { get; set; }
 
         public override string ToString()
         {
+            if (IsSnapshot)
+            {
+                return MinVersion + "-*";
+            }
+
             if (MinVersion != null && IsMinInclusive && MaxVersion == null && !IsMaxInclusive)
             {
                 return MinVersion.ToString();

@@ -58,11 +58,8 @@ namespace Microsoft.Framework.Runtime
             {
                 return null;
             }
-
-            var name = library.Name;
-            var version = library.Version;
-
-            var package = FindCandidate(name, version);
+            
+            var package = FindCandidate(library.Name, library.PreferredRequestedVersion);
 
             if (package != null)
             {
@@ -71,6 +68,7 @@ namespace Microsoft.Framework.Runtime
                     Identity = new Library
                     {
                         Name = package.Id,
+                        RequestedVersion = library.RequestedVersion,
                         Version = package.Version
                     },
                     Type = "Package",
@@ -90,11 +88,11 @@ namespace Microsoft.Framework.Runtime
                 {
                     foreach (var d in set.Dependencies)
                     {
-                        yield return new LibraryDependency
-                        (
-                            name: d.Id,
-                            version: d.VersionSpec != null ? d.VersionSpec.MinVersion : null
-                        );
+                        yield return new LibraryDependency(new Library
+                        {
+                            Name = d.Id,
+                            RequestedVersion = d.VersionSpec
+                        });
                     }
                 }
             }
@@ -204,8 +202,8 @@ namespace Microsoft.Framework.Runtime
         }
 
         private string ResolvePackagePath(IPackagePathResolver defaultResolver,
-                                                 IEnumerable<IPackagePathResolver> cacheResolvers,
-                                                 IPackage package)
+                                          IEnumerable<IPackagePathResolver> cacheResolvers,
+                                          IPackage package)
         {
             var defaultHashPath = defaultResolver.GetHashPath(package.Id, package.Version);
             string expectedHash = null;
@@ -362,11 +360,16 @@ namespace Microsoft.Framework.Runtime
             return results;
         }
 
-        public IPackage FindCandidate(string name, SemanticVersion version)
+        private IPackage FindCandidate(string name, SemanticVersion version)
+        {
+            return _repository.FindPackagesById(name).FirstOrDefault(p => p.Version == version)?.Package;
+        }
+
+        private IPackage FindCandidate(string name, IVersionSpec versionSpec)
         {
             var packages = _repository.FindPackagesById(name);
 
-            if (version == null)
+            if (versionSpec == null)
             {
                 // TODO: Disallow null versions for nuget packages
                 var packageInfo = packages.FirstOrDefault();
@@ -385,7 +388,7 @@ namespace Microsoft.Framework.Runtime
                 if (VersionUtility.ShouldUseConsidering(
                     current: bestMatch?.Version,
                     considering: packageInfo.Version,
-                    ideal: version))
+                    ideal: versionSpec))
                 {
                     bestMatch = packageInfo;
                 }

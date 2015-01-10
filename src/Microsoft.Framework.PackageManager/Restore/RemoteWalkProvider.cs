@@ -25,7 +25,7 @@ namespace Microsoft.Framework.PackageManager
 
         public bool IsHttp { get; private set; }
 
-        public async Task<WalkProviderMatch> FindLibraryByVersion(Library library, FrameworkName targetFramework)
+        public async Task<WalkProviderMatch> FindLibrary(Library library, FrameworkName targetFramework)
         {
             var results = await _source.FindPackagesByIdAsync(library.Name);
             PackageInfo bestResult = null;
@@ -34,7 +34,7 @@ namespace Microsoft.Framework.PackageManager
                 if (VersionUtility.ShouldUseConsidering(
                     current: bestResult?.Version,
                     considering: result.Version,
-                    ideal: library.Version))
+                    ideal: library.PreferredRequestedVersion))
                 {
                     bestResult = result;
                 }
@@ -47,7 +47,12 @@ namespace Microsoft.Framework.PackageManager
 
             return new WalkProviderMatch
             {
-                Library = new Library { Name = bestResult.Id, Version = bestResult.Version },
+                Library = new Library
+                {
+                    Name = bestResult.Id,
+                    RequestedVersion = library.RequestedVersion,
+                    Version = bestResult.Version
+                },
                 Path = bestResult.ContentUri,
                 Provider = this,
             };
@@ -67,9 +72,12 @@ namespace Microsoft.Framework.PackageManager
                 if (VersionUtility.TryGetCompatibleItems(targetFramework, metadata.DependencySets, out dependencySet))
                 {
                     return dependencySet
-                        .SelectMany(x => x.Dependencies)
-                        .Select(x => new LibraryDependency(name: x.Id,
-                            version: x.VersionSpec != null ? x.VersionSpec.MinVersion : null))
+                        .SelectMany(ds => ds.Dependencies)
+                        .Select(d => new LibraryDependency(new Library
+                        {
+                            Name = d.Id,
+                            RequestedVersion = d.VersionSpec
+                        }))
                         .ToList();
                 }
             }

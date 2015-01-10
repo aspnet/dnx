@@ -25,7 +25,11 @@ namespace Microsoft.Framework.Runtime
         {
             var root = new Node
             {
-                Key = new Library { Name = name, Version = version }
+                Key = new Library
+                {
+                    Name = name,
+                    RequestedVersion = new VersionSpec(version)
+                }
             };
 
             var resolvers = dependencyResolvers as IDependencyProvider[] ?? dependencyResolvers.ToArray();

@@ -3,7 +3,6 @@
 
 using System;
 using NuGet;
-using System.Collections.Generic;
 
 namespace Microsoft.Framework.Runtime
 {
@@ -11,14 +10,50 @@ namespace Microsoft.Framework.Runtime
     {
         public string Name { get; set; }
 
+        public IVersionSpec RequestedVersion { get; set; }
+
         public SemanticVersion Version { get; set; }
 
         public bool IsGacOrFrameworkReference { get; set; }
 
+        public IVersionSpec PreferredRequestedVersion
+        {
+            get
+            {
+                if (Version != null)
+                {
+                    return new VersionSpec(Version);
+                }
+
+                return RequestedVersion;
+            }
+        }
+
+        public SemanticVersion PreferredVersion
+        {
+            get
+            {
+                // If there's already a resolved version then perfer that
+                if (Version != null)
+                {
+                    return Version;
+                }
+
+                // No idea what the preferred version is for snapshots
+                if (RequestedVersion != null && RequestedVersion.IsSnapshot)
+                {
+                    return null;
+                }
+
+                // We always prefer the minimum in a range
+                return RequestedVersion?.MinVersion;
+            }
+        }
+
         public override string ToString()
         {
-            var name = IsGacOrFrameworkReference ? "gac/" + Name : Name;
-            return name + " " + Version + (Version != null && Version.IsSnapshot ? "-*" : string.Empty);
+            var name = IsGacOrFrameworkReference ? "framework/" + Name : Name;
+            return name + " " + (Version?.ToString() ?? RequestedVersion?.ToString());
         }
 
         public bool Equals(Library other)
@@ -42,7 +77,7 @@ namespace Microsoft.Framework.Runtime
         {
             unchecked
             {
-                return ((Name != null ? Name.GetHashCode() : 0) * 397) ^ 
+                return ((Name != null ? Name.GetHashCode() : 0) * 397) ^
                     (Version != null ? Version.GetHashCode() : 0) ^
                     (IsGacOrFrameworkReference.GetHashCode());
             }
