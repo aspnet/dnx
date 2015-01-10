@@ -253,8 +253,28 @@ namespace Microsoft.Framework.PackageManager
                 return await FindLibrary(library, providers, provider => provider.FindLibraryByVersion(library, context.FrameworkName));
             }
 
-            return await FindLibrary(library, providers.Where(p => !p.IsHttp), provider => provider.FindLibraryByVersion(library, context.FrameworkName)) ??
-                   await FindLibrary(library, providers.Where(p => p.IsHttp), provider => provider.FindLibraryByVersion(library, context.FrameworkName));
+            // Try the non http sources first
+            var nonHttpMatch = await FindLibrary(library, providers.Where(p => !p.IsHttp), provider => provider.FindLibraryByVersion(library, context.FrameworkName));
+
+            // If we found an exact match then use it
+            if (nonHttpMatch != null && nonHttpMatch.Library.Version.Equals(library.Version))
+            {
+                return nonHttpMatch;
+            }
+
+            // Otherwise try the http sources
+            var httpMatch = await FindLibrary(library, providers.Where(p => p.IsHttp), provider => provider.FindLibraryByVersion(library, context.FrameworkName));
+
+            // Pick the best match of the 2
+            if (VersionUtility.ShouldUseConsidering(
+                nonHttpMatch?.Library?.Version,
+                httpMatch?.Library.Version,
+                library.Version))
+            {
+                return httpMatch;
+            }
+
+            return nonHttpMatch;
         }
 
         private static async Task<WalkProviderMatch> FindLibrary(
