@@ -327,6 +327,12 @@ namespace klr.hosting
                 {
                     var assemblyName = Path.GetFileNameWithoutExtension(name);
 
+                    // Fixup the assembly name if it starts with AssemblyNeutral/
+                    if (assemblyName.StartsWith("AssemblyNeutral/"))
+                    {
+                        assemblyName = assemblyName.Substring("AssemblyNeutral/".Length);
+                    }
+
                     if (_assemblyCache.ContainsKey(assemblyName))
                     {
                         continue;
