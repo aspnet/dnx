@@ -54,7 +54,7 @@ namespace Microsoft.Framework.Runtime
 
             if (GlobalSettings.TryGetGlobalSettings(rootPath, out global))
             {
-                foreach (var sourcePath in global.SourcePaths)
+                foreach (var sourcePath in global.ProjectSearchPaths)
                 {
                     paths.Add(Path.Combine(rootPath, sourcePath));
                 }

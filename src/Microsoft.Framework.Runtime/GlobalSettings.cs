@@ -14,7 +14,7 @@ namespace Microsoft.Framework.Runtime
     {
         public const string GlobalFileName = "global.json";
 
-        public IList<string> SourcePaths { get; private set; }
+        public IList<string> ProjectSearchPaths { get; private set; }
         public IDictionary<Library, string> PackageHashes { get; private set; }
         public string PackagesPath { get; private set; }
         public string FilePath { get; private set; }
@@ -53,10 +53,11 @@ namespace Microsoft.Framework.Runtime
                 throw FileFormatException.Create(ex, globalJsonPath);
             }
 
-            var sources = settings["sources"];
+            // TODO: Remove sources
+            var projectSearchPaths = settings["projects"] ?? settings["sources"];
             var dependencies = settings["dependencies"] as JObject;
 
-            globalSettings.SourcePaths = sources == null ? new string[] { } : sources.ToObject<string[]>();
+            globalSettings.ProjectSearchPaths = projectSearchPaths == null ? new string[] { } : projectSearchPaths.ToObject<string[]>();
             globalSettings.PackagesPath = settings.Value<string>("packages");
             globalSettings.PackageHashes = new Dictionary<Library, string>();
             globalSettings.FilePath = globalJsonPath;
