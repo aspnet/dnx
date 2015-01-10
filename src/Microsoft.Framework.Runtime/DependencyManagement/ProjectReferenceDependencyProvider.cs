@@ -34,7 +34,6 @@ namespace Microsoft.Framework.Runtime
             }
 
             var name = library.Name;
-            var version = library.Version;
 
             Project project;
 
@@ -86,6 +85,7 @@ namespace Microsoft.Framework.Runtime
                 Identity = new Library
                 {
                     Name = project.Name,
+                    RequestedVersion = library.RequestedVersion,
                     Version = project.Version
                 },
                 Type = "Project",

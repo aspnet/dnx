@@ -103,22 +103,23 @@ namespace Microsoft.Framework.PackageManager
                 }
                 else
                 {
-                    var dependencyVersion = new VersionSpec()
-                    {
-                        IsMinInclusive = true,
-                        MinVersion = dependency.Version
-                    };
+                    var dependencyVersion = dependency.Library.RequestedVersion;
 
-                    if (dependencyVersion.MinVersion == null || dependencyVersion.MinVersion.IsSnapshot)
+                    if (dependencyVersion == null || dependencyVersion.IsSnapshot)
                     {
                         var actual = _applicationHostContext.DependencyWalker.Libraries
                             .Where(pkg => string.Equals(pkg.Identity.Name, _project.Name, StringComparison.OrdinalIgnoreCase))
                             .SelectMany(pkg => pkg.Dependencies)
                             .SingleOrDefault(dep => string.Equals(dep.Name, dependency.Name, StringComparison.OrdinalIgnoreCase));
 
+
                         if (actual != null)
                         {
-                            dependencyVersion.MinVersion = actual.Version;
+                            dependencyVersion = new VersionSpec
+                            {
+                                IsMinInclusive = true,
+                                MinVersion = actual.Version
+                            };
                         }
                     }
 

@@ -10,7 +10,7 @@ namespace Microsoft.Framework.PackageManager
     {
         bool IsHttp { get; }
 
-        Task<WalkProviderMatch> FindLibraryByVersion(Library library, FrameworkName targetFramework);
+        Task<WalkProviderMatch> FindLibrary(Library library, FrameworkName targetFramework);
         Task<IEnumerable<LibraryDependency>> GetDependencies(WalkProviderMatch match, FrameworkName targetFramework);
         Task CopyToAsync(WalkProviderMatch match, Stream stream);
     }

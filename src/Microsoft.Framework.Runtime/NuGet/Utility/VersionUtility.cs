@@ -314,8 +314,16 @@ namespace NuGet
                 throw new ArgumentNullException("value");
             }
 
-            var versionSpec = new VersionSpec();
             value = value.Trim();
+
+            var isSnapshot = false;
+
+            // Support snapshot versions
+            if (value.EndsWith("-*"))
+            {
+                isSnapshot = true;
+                value = value.Substring(0, value.Length - 2);
+            }
 
             // First, try to parse it as a plain version string
             SemanticVersion version;
@@ -325,7 +333,8 @@ namespace NuGet
                 result = new VersionSpec
                 {
                     MinVersion = version,
-                    IsMinInclusive = true
+                    IsMinInclusive = true,
+                    IsSnapshot = isSnapshot
                 };
 
                 return true;
@@ -341,6 +350,7 @@ namespace NuGet
                 return false;
             }
 
+            var versionSpec = new VersionSpec();
             // The first character must be [ ot (
             switch (value.First())
             {
@@ -1062,34 +1072,35 @@ namespace NuGet
         public static bool ShouldUseConsidering(
             SemanticVersion current,
             SemanticVersion considering,
-            SemanticVersion ideal)
+            IVersionSpec ideal)
         {
             if (considering == null)
             {
                 // skip nulls
                 return false;
             }
-            if (!considering.EqualsSnapshot(ideal) && considering < ideal)
+
+            if (!ideal.EqualsSnapshot(considering) && !ideal.IsSatisfiedBy(considering))
             {
-                // don't use anything that's less than the requested version
+                // Don't use anything that can't be satisfied
                 return false;
             }
+
             if (current == null)
             {
                 // always use version when it's the first valid
                 return true;
             }
-            if (current.EqualsSnapshot(ideal) &&
-                considering.EqualsSnapshot(ideal))
+
+            if (ideal.EqualsSnapshot(current) && 
+                ideal.EqualsSnapshot(considering))
             {
                 // favor higher version when they both match a snapshot patter
                 return current < considering;
             }
-            else
-            {
-                // otherwise favor lower version
-                return current > considering;
-            }
+
+            // Favor lower versions
+            return current > considering;
         }
 
         internal static SemanticVersion GetAssemblyVersion(string path)

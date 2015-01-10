@@ -44,7 +44,7 @@ namespace Microsoft.Framework.Runtime
             }
 
             var name = library.Name;
-            var version = library.Version;
+            var version = library.RequestedVersion?.MinVersion;
 
             string path;
             if (!FrameworkResolver.TryGetAssembly(name, targetFramework, out path))
@@ -64,6 +64,7 @@ namespace Microsoft.Framework.Runtime
                     {
                         Name = name,
                         Version = assemblyVersion,
+                        RequestedVersion = library.RequestedVersion,
                         IsGacOrFrameworkReference = true
                     },
                     LoadableAssemblies = new[] { name },

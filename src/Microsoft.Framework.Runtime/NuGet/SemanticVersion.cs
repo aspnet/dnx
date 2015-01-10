@@ -43,11 +43,11 @@ namespace NuGet
         }
 
         public SemanticVersion(Version version, string specialVersion)
-            : this(version, specialVersion, null, false)
+            : this(version, specialVersion, null)
         {
         }
 
-        private SemanticVersion(Version version, string specialVersion, string originalString, bool isSnapshot)
+        private SemanticVersion(Version version, string specialVersion, string originalString)
         {
             if (version == null)
             {
@@ -55,7 +55,6 @@ namespace NuGet
             }
             Version = NormalizeVersionValue(version);
             SpecialVersion = specialVersion ?? String.Empty;
-            IsSnapshot = isSnapshot;
             _originalString = String.IsNullOrEmpty(originalString) ? version.ToString() + (!String.IsNullOrEmpty(specialVersion) ? '-' + specialVersion : null) : originalString;
         }
 
@@ -64,7 +63,6 @@ namespace NuGet
             _originalString = semVer.ToString();
             Version = semVer.Version;
             SpecialVersion = semVer.SpecialVersion;
-            IsSnapshot = semVer.IsSnapshot;
         }
 
         /// <summary>
@@ -80,15 +78,6 @@ namespace NuGet
         /// Gets the optional special version.
         /// </summary>
         public string SpecialVersion
-        {
-            get;
-            private set;
-        }
-
-        /// <summary>
-        /// Determines if the original string contained a snapshot wildcard
-        /// </summary>
-        public bool IsSnapshot
         {
             get;
             private set;
@@ -179,13 +168,6 @@ namespace NuGet
                 return false;
             }
 
-            var isSnapshot = false;
-            if (version.Trim().EndsWith("-*"))
-            {
-                isSnapshot = true;
-                version = version.Substring(0, version.Length - 2);
-            }
-
             var match = regex.Match(version.Trim());
             Version versionValue;
             if (!match.Success || !Version.TryParse(match.Groups["Version"].Value, out versionValue))
@@ -193,7 +175,7 @@ namespace NuGet
                 return false;
             }
 
-            semVer = new SemanticVersion(NormalizeVersionValue(versionValue), match.Groups["Release"].Value.TrimStart('-'), version.Replace(" ", ""), isSnapshot);
+            semVer = new SemanticVersion(NormalizeVersionValue(versionValue), match.Groups["Release"].Value.TrimStart('-'), version.Replace(" ", ""));
             return true;
         }
 
@@ -214,19 +196,6 @@ namespace NuGet
                                version.Minor,
                                Math.Max(version.Build, 0),
                                Math.Max(version.Revision, 0));
-        }
-
-        public bool EqualsSnapshot(SemanticVersion seekingVersion)
-        {
-            if (seekingVersion.IsSnapshot)
-            {
-                return Version == seekingVersion.Version &&
-                    SpecialVersion.StartsWith(seekingVersion.SpecialVersion, StringComparison.OrdinalIgnoreCase);
-            }
-            else
-            {
-                return Equals(this, seekingVersion);
-            }
         }
 
         public int CompareTo(object obj)
@@ -325,8 +294,7 @@ namespace NuGet
         {
             return !Object.ReferenceEquals(null, other) &&
                    Version.Equals(other.Version) &&
-                   SpecialVersion.Equals(other.SpecialVersion, StringComparison.OrdinalIgnoreCase) &&
-                   IsSnapshot == other.IsSnapshot;
+                   SpecialVersion.Equals(other.SpecialVersion, StringComparison.OrdinalIgnoreCase);
         }
 
         public override bool Equals(object obj)
@@ -344,21 +312,6 @@ namespace NuGet
             }
 
             return hashCode;
-        }
-
-        public SemanticVersion SpecifySnapshot(string snapshotValue)
-        {
-            if (!IsSnapshot)
-            {
-                return new SemanticVersion(this);
-            }
-            var specificString = _originalString.Trim();
-            specificString = specificString.Substring(0, specificString.Length - 2);
-            if (!string.IsNullOrEmpty(snapshotValue))
-            {
-                specificString += "-" + snapshotValue;
-            }
-            return new SemanticVersion(specificString);
         }
     }
 }

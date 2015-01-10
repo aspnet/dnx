@@ -6,6 +6,7 @@ namespace NuGet
 {
     public interface IVersionSpec
     {
+        bool IsSnapshot { get; }
         SemanticVersion MinVersion { get; }
         bool IsMinInclusive { get; }
         SemanticVersion MaxVersion { get; }

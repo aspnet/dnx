@@ -33,9 +33,8 @@ namespace Microsoft.Framework.PackageManager
 
             if (node.Item != null)
             {
-                if (node.Library != null &&
-                    node.Library.Version != null &&
-                    node.Library.Version.IsSnapshot)
+                if (node.Library.RequestedVersion != null &&
+                    node.Library.RequestedVersion.IsSnapshot)
                 {
                     node.Library = node.Item.Match.Library;
                     lock (context.FindLibraryCache)
@@ -56,6 +55,7 @@ namespace Microsoft.Framework.PackageManager
                         tasks.Add(CreateGraphNode(context, dependency.Library, ChainPredicate(predicate, node.Item, dependency)));
                     }
                 }
+
                 while (tasks.Any())
                 {
                     var task = await Task.WhenAny(tasks);
@@ -129,7 +129,7 @@ namespace Microsoft.Framework.PackageManager
                 return projectMatch;
             }
 
-            if (library.Version == null)
+            if (library.RequestedVersion == null)
             {
                 return null;
             }
@@ -153,7 +153,7 @@ namespace Microsoft.Framework.PackageManager
             // this means if the exact version exists, you'll get that version.
 
 
-            if (library.Version.IsSnapshot)
+            if (library.RequestedVersion.IsSnapshot)
             {
                 // For snapshot dependencies, get the version remotely first.
                 var remoteMatch = await FindLibraryByVersion(context, library, context.RemoteLibraryProviders);
@@ -185,7 +185,7 @@ namespace Microsoft.Framework.PackageManager
                 // Check for the specific version locally.
                 var localMatch = await FindLibraryByVersion(context, library, context.LocalLibraryProviders);
 
-                if (localMatch != null && localMatch.Library.Version.Equals(library.Version))
+                if (localMatch != null && localMatch.Library.Version.Equals(library.PreferredVersion))
                 {
                     // We have an exact match so use it.
                     return localMatch;
@@ -209,7 +209,7 @@ namespace Microsoft.Framework.PackageManager
                     if (VersionUtility.ShouldUseConsidering(
                         current: localMatch.Library.Version,
                         considering: remoteMatch.Library.Version,
-                        ideal: library.Version))
+                        ideal: library.PreferredRequestedVersion))
                     {
                         return remoteMatch;
                     }
@@ -228,14 +228,12 @@ namespace Microsoft.Framework.PackageManager
         {
             var library = new Library
             {
-                Name = name,
-                // Versions are ignored for project matches
-                Version = new SemanticVersion(new Version(0, 0))
+                Name = name
             };
-            
+
             foreach (var provider in context.ProjectLibraryProviders)
             {
-                var match = await provider.FindLibraryByVersion(library, context.FrameworkName);
+                var match = await provider.FindLibrary(library, context.FrameworkName);
                 if (match != null)
                 {
                     return match;
@@ -247,29 +245,29 @@ namespace Microsoft.Framework.PackageManager
 
         private async Task<WalkProviderMatch> FindLibraryByVersion(RestoreContext context, Library library, IEnumerable<IWalkProvider> providers)
         {
-            if (library.Version.IsSnapshot)
+            if (library.RequestedVersion.IsSnapshot)
             {
                 // Don't optimize the non http path for snapshot versions or we'll miss things
-                return await FindLibrary(library, providers, provider => provider.FindLibraryByVersion(library, context.FrameworkName));
+                return await FindLibrary(library, providers, provider => provider.FindLibrary(library, context.FrameworkName));
             }
 
             // Try the non http sources first
-            var nonHttpMatch = await FindLibrary(library, providers.Where(p => !p.IsHttp), provider => provider.FindLibraryByVersion(library, context.FrameworkName));
+            var nonHttpMatch = await FindLibrary(library, providers.Where(p => !p.IsHttp), provider => provider.FindLibrary(library, context.FrameworkName));
 
             // If we found an exact match then use it
-            if (nonHttpMatch != null && nonHttpMatch.Library.Version.Equals(library.Version))
+            if (nonHttpMatch != null && nonHttpMatch.Library.Version.Equals(library.PreferredVersion))
             {
                 return nonHttpMatch;
             }
 
             // Otherwise try the http sources
-            var httpMatch = await FindLibrary(library, providers.Where(p => p.IsHttp), provider => provider.FindLibraryByVersion(library, context.FrameworkName));
+            var httpMatch = await FindLibrary(library, providers.Where(p => p.IsHttp), provider => provider.FindLibrary(library, context.FrameworkName));
 
             // Pick the best match of the 2
             if (VersionUtility.ShouldUseConsidering(
                 nonHttpMatch?.Library?.Version,
                 httpMatch?.Library.Version,
-                library.Version))
+                library.PreferredRequestedVersion))
             {
                 return httpMatch;
             }
@@ -295,7 +293,7 @@ namespace Microsoft.Framework.PackageManager
                 if (VersionUtility.ShouldUseConsidering(
                     current: bestMatch?.Library?.Version,
                     considering: match?.Library?.Version,
-                    ideal: library.Version))
+                    ideal: library.PreferredRequestedVersion))
                 {
                     bestMatch = match;
                 }

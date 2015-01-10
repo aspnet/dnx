@@ -101,11 +101,15 @@ namespace Microsoft.Framework.Runtime
 
         public LibraryDependency ChangeVersion(SemanticVersion version)
         {
-            return new LibraryDependency(
-                name: Library.Name,
-                version: version,
-                isGacOrFrameworkReference: Library.IsGacOrFrameworkReference,
-                type: Type);
+            var library = new Library
+            {
+                Name = Library.Name,
+                Version = version,
+                RequestedVersion = Library.RequestedVersion,
+                IsGacOrFrameworkReference = Library.IsGacOrFrameworkReference,
+            };
+
+            return new LibraryDependency(library, Type);
         }
 
         public bool HasFlag(LibraryDependencyTypeFlag flag)

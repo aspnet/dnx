@@ -22,7 +22,7 @@ namespace Microsoft.Framework.PackageManager
 
         public bool IsHttp { get; private set; }
 
-        public Task<WalkProviderMatch> FindLibraryByVersion(Library library, FrameworkName targetFramework)
+        public Task<WalkProviderMatch> FindLibrary(Library library, FrameworkName targetFramework)
         {
             var description = _dependencyProvider.GetDescription(library, targetFramework);
             if (description == null)
