@@ -22,8 +22,8 @@ namespace Microsoft.Framework.Runtime
                 var resource = mdReader.GetManifestResource(resourceHandle);
                 var resourceName = mdReader.GetString(resource.Name);
 
-                // Embedded interface (TODO: Check for AssemblyNeutral/ prefix)
-                if (resourceName.EndsWith(".dll", StringComparison.OrdinalIgnoreCase))
+                if (resourceName.StartsWith("AssemblyNeutral/") && 
+                    resourceName.EndsWith(".dll"))
                 {
                     var buffer = GetEmbeddedResourceContents(reader, resource);
 

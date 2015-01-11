@@ -319,31 +319,23 @@ namespace klr.hosting
 
         private static void ExtractAssemblyNeutralInterfaces(Assembly assembly, Func<Stream, Assembly> load)
         {
-            // Embedded assemblies end with .dll
-            foreach (var name in assembly.GetManifestResourceNames())
+            foreach (var resourceName in assembly.GetManifestResourceNames())
             {
-                // TODO: Filter on AssemblyNeutral/
-                if (name.EndsWith(".dll"))
+                if (resourceName.StartsWith("AssemblyNeutral/") && 
+                    resourceName.EndsWith(".dll"))
                 {
-                    var assemblyName = Path.GetFileNameWithoutExtension(name);
-
-                    // Fixup the assembly name if it starts with AssemblyNeutral/
-                    if (assemblyName.StartsWith("AssemblyNeutral/"))
-                    {
-                        assemblyName = assemblyName.Substring("AssemblyNeutral/".Length);
-                    }
+                    var assemblyName = Path.GetFileNameWithoutExtension(resourceName);
 
                     if (_assemblyCache.ContainsKey(assemblyName))
                     {
                         continue;
                     }
 
-
-                    var neutralAssemblyStream = assembly.GetManifestResourceStream(name);
+                    var neutralAssemblyStream = assembly.GetManifestResourceStream(resourceName);
 
                     var neutralAssembly = load(neutralAssemblyStream);
 
-                    _assemblyCache[neutralAssembly.GetName().Name] = neutralAssembly;
+                    _assemblyCache[assemblyName] = neutralAssembly;
                 }
             }
         }
