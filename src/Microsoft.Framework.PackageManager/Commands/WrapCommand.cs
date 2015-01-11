@@ -257,7 +257,7 @@ namespace Microsoft.Framework.PackageManager
             var nugetPackagePaths = nugetPackages.Select(x => x.Path);
 
             // Add nuget dependency to 'dependencies' section of the target framework
-            foreach(var package in nugetPackages)
+            foreach (var package in nugetPackages)
             {
                 Reports.Information.WriteLine("  Adding package dependency '{0}.{1}'",
                     package.Identity, package.Version);
@@ -265,7 +265,7 @@ namespace Microsoft.Framework.PackageManager
             }
 
             // Add dependency projects to 'dependencies' section of the target framework
-            foreach(var itemElement in GetItemsByType(projectElement, type: "ProjectReference"))
+            foreach (var itemElement in GetItemsByType(projectElement, type: "ProjectReference"))
             {
                 var referenceProjectName = GetMetadataValue(itemElement, "Name");
                 var outputName = GetReferenceProjectOutputName(projectElement, referenceProjectName);
@@ -278,7 +278,7 @@ namespace Microsoft.Framework.PackageManager
             // and add wrapper projects as project references
             foreach (var itemElement in GetItemsByType(projectElement, type: "ReferencePath"))
             {
-                if (IsAssemblyFromProjectReference(itemElement)||
+                if (IsAssemblyFromProjectReference(itemElement) ||
                     IsFrameworkAssembly(itemElement) ||
                     IsAssemblyFromNuGetPackage(itemElement, nugetPackagePaths))
                 {
@@ -343,7 +343,8 @@ namespace Microsoft.Framework.PackageManager
 
         private static bool IsFrameworkAssembly(XElement itemElement)
         {
-            var resolvedFrom = GetMetadataValue(itemElement, "ResolvedFrom");
+            var resolvedFrom = GetMetadataValue(itemElement, "ResolvedFrom", throwsIfNotFound: false);
+
             if (string.Equals("{TargetFrameworkDirectory}", resolvedFrom) ||
                 string.Equals("ImplicitlyExpandDesignTimeFacades", resolvedFrom))
             {
@@ -358,6 +359,12 @@ namespace Microsoft.Framework.PackageManager
 
             var isSystemReference = GetMetadataValue(itemElement, "IsSystemReference", throwsIfNotFound: false);
             if (string.Equals("True", isSystemReference))
+            {
+                return true;
+            }
+
+            var fileName = GetMetadataValue(itemElement, "Filename");
+            if (string.Equals("mscorlib", fileName))
             {
                 return true;
             }
@@ -521,7 +528,7 @@ namespace Microsoft.Framework.PackageManager
                     {
                         Identity = id,
                         Version = version,
-                        TargetFramework = packageElement.Attribute("targetFramework").Value,
+                        TargetFramework = packageElement.Attribute("targetFramework")?.Value,
                         Path = GetNuGetPackagePath(packagesDir, id, version)
                     });
                 }
