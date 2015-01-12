@@ -89,7 +89,7 @@ exec ""{1}klr"" Microsoft.Framework.ApplicationHost {2} ""$@""".Replace("\r\n", 
             {
                 DirTree.CreateFromJson(projectStructure)
                     .WithFileContents("project.json", @"{
-  ""packExclude"": ""**.bconfig"",
+  ""bundleExclude"": ""**.bconfig"",
   ""webroot"": ""to_be_overridden""
 }")
                     .WriteTo(testEnv.ProjectPath);
@@ -110,11 +110,11 @@ exec ""{1}klr"" Microsoft.Framework.ApplicationHost {2} ""$@""".Replace("\r\n", 
 
                 var expectedOutputDir = DirTree.CreateFromJson(expectedOutputStructure)
                     .WithFileContents(Path.Combine("approot", "src", testEnv.ProjectName, "project.json"), @"{
-  ""packExclude"": ""**.bconfig"",
+  ""bundleExclude"": ""**.bconfig"",
   ""webroot"": ""../../../wwwroot""
 }")
                     .WithFileContents(Path.Combine("wwwroot", "project.json"), @"{
-  ""packExclude"": ""**.bconfig"",
+  ""bundleExclude"": ""**.bconfig"",
   ""webroot"": ""to_be_overridden""
 }")
                     .WithFileContents(Path.Combine("approot", "global.json"), @"{
@@ -182,7 +182,7 @@ exec ""{1}klr"" Microsoft.Framework.ApplicationHost {2} ""$@""".Replace("\r\n", 
             {
                 DirTree.CreateFromJson(projectStructure)
                     .WithFileContents("project.json", @"{
-  ""packExclude"": ""**.useless"",
+  ""bundleExclude"": ""**.useless"",
   ""webroot"": ""public""
 }")
                     .WriteTo(testEnv.ProjectPath);
@@ -203,7 +203,7 @@ exec ""{1}klr"" Microsoft.Framework.ApplicationHost {2} ""$@""".Replace("\r\n", 
 
                 var expectedOutputDir = DirTree.CreateFromJson(expectedOutputStructure)
                     .WithFileContents(Path.Combine("approot", "src", testEnv.ProjectName, "project.json"), @"{
-  ""packExclude"": ""**.useless"",
+  ""bundleExclude"": ""**.useless"",
   ""webroot"": ""../../../wwwroot""
 }")
                     .WithFileContents(Path.Combine("approot", "global.json"), @"{
@@ -256,7 +256,7 @@ exec ""{1}klr"" Microsoft.Framework.ApplicationHost {2} ""$@""".Replace("\r\n", 
             {
                 DirTree.CreateFromJson(projectStructure)
                     .WithFileContents("project.json", @"{
-  ""packExclude"": ""Data/Backup/**""
+  ""bundleExclude"": ""Data/Backup/**""
 }")
                     .WriteTo(testEnv.ProjectPath);
 
@@ -276,7 +276,7 @@ exec ""{1}klr"" Microsoft.Framework.ApplicationHost {2} ""$@""".Replace("\r\n", 
 
                 var expectedOutputDir = DirTree.CreateFromJson(expectedOutputStructure)
                     .WithFileContents(Path.Combine("approot", "src", testEnv.ProjectName, "project.json"), @"{
-  ""packExclude"": ""Data/Backup/**""
+  ""bundleExclude"": ""Data/Backup/**""
 }")
                     .WithFileContents(Path.Combine("approot", "global.json"), @"{
   ""dependencies"": {},
@@ -334,7 +334,7 @@ exec ""{1}klr"" Microsoft.Framework.ApplicationHost {2} ""$@""".Replace("\r\n", 
             {
                 DirTree.CreateFromJson(projectStructure)
                     .WithFileContents("project.json", @"{
-  ""packExclude"": [
+  ""bundleExclude"": [
     ""FileWithoutExtension"",
     ""UselessFolder1"",
     ""UselessFolder2/"",
@@ -365,7 +365,7 @@ exec ""{1}klr"" Microsoft.Framework.ApplicationHost {2} ""$@""".Replace("\r\n", 
 
                 var expectedOutputDir = DirTree.CreateFromJson(expectedOutputStructure)
                     .WithFileContents(Path.Combine("approot", "src", testEnv.ProjectName, "project.json"), @"{
-  ""packExclude"": [
+  ""bundleExclude"": [
     ""FileWithoutExtension"",
     ""UselessFolder1"",
     ""UselessFolder2/"",
@@ -436,7 +436,7 @@ exec ""{1}klr"" Microsoft.Framework.ApplicationHost {2} ""$@""".Replace("\r\n", 
             {
                 DirTree.CreateFromJson(projectStructure)
                     .WithFileContents("project.json", @"{
-  ""packExclude"": [
+  ""bundleExclude"": [
     ""UselessFolder1\\**"",
     ""UselessFolder2/**/*"",
     ""UselessFolder3\\**/*.*"",
@@ -462,7 +462,7 @@ exec ""{1}klr"" Microsoft.Framework.ApplicationHost {2} ""$@""".Replace("\r\n", 
 
                 var expectedOutputDir = DirTree.CreateFromJson(expectedOutputStructure)
                     .WithFileContents(Path.Combine("approot", "src", testEnv.ProjectName, "project.json"), @"{
-  ""packExclude"": [
+  ""bundleExclude"": [
     ""UselessFolder1\\**"",
     ""UselessFolder2/**/*"",
     ""UselessFolder3\\**/*.*"",

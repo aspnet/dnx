@@ -101,7 +101,7 @@ namespace Microsoft.Framework.PackageManager.Packing
                 return false;
             }
 
-            if (!ScriptExecutor.Execute(project, "prepack", getVariable))
+            if (!ScriptExecutor.Execute(project, "prebundle", getVariable))
             {
                 _options.Reports.Error.WriteLine(ScriptExecutor.ErrorMessage);
                 return false;
@@ -253,7 +253,7 @@ namespace Microsoft.Framework.PackageManager.Packing
 
             root.Emit();
 
-            if (!ScriptExecutor.Execute(project, "postpack", getVariable))
+            if (!ScriptExecutor.Execute(project, "postbundle", getVariable))
             {
                 _options.Reports.Error.WriteLine(ScriptExecutor.ErrorMessage);
                 return false;
