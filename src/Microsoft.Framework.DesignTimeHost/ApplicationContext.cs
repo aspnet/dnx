@@ -13,9 +13,7 @@ using Microsoft.Framework.DesignTimeHost.Models;
 using Microsoft.Framework.DesignTimeHost.Models.IncomingMessages;
 using Microsoft.Framework.DesignTimeHost.Models.OutgoingMessages;
 using Microsoft.Framework.Runtime;
-using Microsoft.Framework.Runtime.Loader;
 using Microsoft.Framework.Runtime.Roslyn;
-using Microsoft.Framework.Runtime.Roslyn.Services;
 using Newtonsoft.Json.Linq;
 using NuGet;
 
@@ -28,7 +26,6 @@ namespace Microsoft.Framework.DesignTimeHost
         private readonly ICacheContextAccessor _cacheContextAccessor;
         private readonly INamedCacheDependencyProvider _namedDependencyProvider;
         private readonly IApplicationEnvironment _appEnv;
-        private readonly ISourceTextService _sourceTextService;
         private readonly Queue<Message> _inbox = new Queue<Message>();
         private readonly object _processingLock = new object();
 
@@ -60,7 +57,6 @@ namespace Microsoft.Framework.DesignTimeHost
             _cache = cache;
             _cacheContextAccessor = cacheContextAccessor;
             _namedDependencyProvider = namedDependencyProvider;
-            _sourceTextService = (ISourceTextService)services.GetService(typeof(ISourceTextService));
             Id = id;
         }
 
@@ -228,27 +224,6 @@ namespace Microsoft.Framework.DesignTimeHost
                 case "FilesChanged":
                     {
                         _filesChanged.Value = default(Void);
-                    }
-                    break;
-                case "SourceTextChanged":
-                    {
-                        var data = message.Payload.ToObject<SourceTextChangeMessage>();
-                        if (data.IsOffsetBased)
-                        {
-                            _sourceTextChanged.Value = default(Void);
-                            _sourceTextService.RecordTextChange(data.SourcePath,
-                                new TextSpan(data.Start ?? 0, data.Length ?? 0),
-                                data.NewText);
-                        }
-                        else if (data.IsLineBased)
-                        {
-                            _sourceTextChanged.Value = default(Void);
-                            _sourceTextService.RecordTextChange(data.SourcePath,
-                                new LinePositionSpan(
-                                    new LinePosition(data.StartLineNumber ?? 0, data.StartCharacter ?? 0),
-                                    new LinePosition(data.EndLineNumber ?? 0, data.EndCharacter ?? 0)),
-                                    data.NewText);
-                        }
                     }
                     break;
                 case "GetCompiledAssembly":

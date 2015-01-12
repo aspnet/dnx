@@ -14,6 +14,7 @@ namespace Microsoft.Framework.Runtime.Roslyn
             INamedCacheDependencyProvider namedCacheProvider,
             IAssemblyLoadContextFactory loadContextFactory,
             IFileWatcher watcher,
+            IApplicationEnvironment environment,
             IServiceProvider services)
         {
             _compiler = new RoslynCompiler(
@@ -22,6 +23,7 @@ namespace Microsoft.Framework.Runtime.Roslyn
                 namedCacheProvider,
                 loadContextFactory,
                 watcher,
+                environment,
                 services);
         }
 
