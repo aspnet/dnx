@@ -9,6 +9,7 @@ using System.IO.Compression;
 using System.Linq;
 using System.Runtime.Versioning;
 using System.Security.Cryptography;
+using System.Text;
 using System.Threading.Tasks;
 using Microsoft.Framework.PackageManager.Packing;
 using Microsoft.Framework.PackageManager.Restore.NuGet;
@@ -217,9 +218,18 @@ namespace Microsoft.Framework.PackageManager
 
             Reports.Information.WriteLine(string.Format("{0}, {1}ms elapsed", "Resolving complete".Green(), sw.ElapsedMilliseconds));
 
+            Func<GraphNode, string> getDependencyType = node =>
+            {
+                if (projectProviders.Any(x => x == node.Item.Match.Provider))
+                {
+                    return "Project";
+                }
+                return "Package";
+            };
+
             var installItems = new List<GraphItem>();
             var missingItems = new HashSet<Library>();
-            ForEach(graphs, node =>
+            ForEach(graphs, (node, path)=>
             {
                 if (node == null || node.Library == null)
                 {
@@ -232,6 +242,7 @@ namespace Microsoft.Framework.PackageManager
                          missingItems.Add(node.Library))
                     {
                         Reports.Error.WriteLine(string.Format("Unable to locate {0} >= {1}", node.Library.Name.Red().Bold(), node.Library.Version));
+                        ShowFailedDependencyChain(path, node, getDependencyType);
                         success = false;
                     }
                     return;
@@ -243,6 +254,7 @@ namespace Microsoft.Framework.PackageManager
                     {
                         Reports.Error.WriteLine("Unable to locate {0} >= {1}. Do you mean {2}?",
                             node.Library.Name.Red().Bold(), node.Library.Version, node.Item.Match.Library.Name.Bold());
+                        ShowFailedDependencyChain(path, node, getDependencyType);
                         success = false;
                     }
                     return;
@@ -277,6 +289,23 @@ namespace Microsoft.Framework.PackageManager
             }
 
             return success;
+        }
+
+        private void ShowFailedDependencyChain(Stack<GraphNode> path, GraphNode failedNode, Func<GraphNode, string> getDependencyType)
+        {
+            const char rightArrow = '\u2192';
+            var sb = new StringBuilder();
+            foreach (var node in path.Reverse())
+            {
+                sb.AppendFormat("{0}.{1} ({2})",
+                    node.Item.Match.Library.Name,
+                    node.Item.Match.Library.Version,
+                    getDependencyType(node));
+                sb.AppendFormat(" {0} ", rightArrow);
+            }
+            sb.AppendFormat("{0}.{1}".Red().Bold(), failedNode.Library.Name, failedNode.Library.Version);
+            sb.AppendLine();
+            Reports.Verbose.WriteLine("  " + sb.ToString());
         }
 
         private async Task<bool> RestoreFromGlobalJson(string rootDirectory, string packagesDirectory)
@@ -528,12 +557,20 @@ namespace Microsoft.Framework.PackageManager
             }
         }
 
-        void ForEach(IEnumerable<GraphNode> nodes, Action<GraphNode> callback)
+        void ForEach(IEnumerable<GraphNode> nodes, Action<GraphNode, Stack<GraphNode>> callback)
+        {
+            var path = new Stack<GraphNode>();
+            ForEachCore(nodes, path, callback);
+        }
+
+        void ForEachCore(IEnumerable<GraphNode> nodes, Stack<GraphNode> path, Action<GraphNode, Stack<GraphNode>> callback)
         {
             foreach (var node in nodes)
             {
-                callback(node);
-                ForEach(node.Dependencies, callback);
+                callback(node, path);
+                path.Push(node);
+                ForEachCore(node.Dependencies, path, callback);
+                path.Pop();
             }
         }
 
