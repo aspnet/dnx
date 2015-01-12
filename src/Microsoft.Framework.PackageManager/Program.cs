@@ -144,7 +144,7 @@ namespace Microsoft.Framework.PackageManager
 
             app.Command("pack", c =>
             {
-                c.Description = "Pack NuGet packages for the project in given directory";
+                c.Description = "Build NuGet packages for the project in given directory";
 
                 var optionFramework = c.Option("--framework <TARGET_FRAMEWORK>", "A list of target frameworks to build.", CommandOptionType.MultipleValue);
                 var optionConfiguration = c.Option("--configuration <CONFIGURATION>", "A list of configurations to build.", CommandOptionType.MultipleValue);
