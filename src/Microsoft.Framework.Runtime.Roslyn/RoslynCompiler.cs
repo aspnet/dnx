@@ -13,7 +13,6 @@ using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.Text;
 using Microsoft.Framework.Runtime.Common.DependencyInjection;
-using Microsoft.Framework.Runtime.Roslyn.Services;
 
 namespace Microsoft.Framework.Runtime.Roslyn
 {
@@ -24,14 +23,15 @@ namespace Microsoft.Framework.Runtime.Roslyn
         private readonly INamedCacheDependencyProvider _namedDependencyProvider;
         private readonly IAssemblyLoadContextFactory _loadContextFactory;
         private readonly IFileWatcher _watcher;
+        private readonly IApplicationEnvironment _environment;
         private readonly IServiceProvider _services;
-        private readonly ISourceTextService _sourceTextService;
 
         public RoslynCompiler(ICache cache,
                               ICacheContextAccessor cacheContextAccessor,
                               INamedCacheDependencyProvider namedDependencyProvider,
                               IAssemblyLoadContextFactory loadContextFactory,
                               IFileWatcher watcher,
+                              IApplicationEnvironment environment,
                               IServiceProvider services)
         {
             _cache = cache;
@@ -39,8 +39,8 @@ namespace Microsoft.Framework.Runtime.Roslyn
             _namedDependencyProvider = namedDependencyProvider;
             _loadContextFactory = loadContextFactory;
             _watcher = watcher;
+            _environment = environment;
             _services = services;
-            _sourceTextService = (ISourceTextService)services.GetService(typeof(ISourceTextService));
         }
 
         public CompilationContext CompileProject(
@@ -69,10 +69,13 @@ namespace Microsoft.Framework.Runtime.Roslyn
             {
                 _cacheContextAccessor.Current.Monitor(new FileWriteTimeCacheDependency(project.ProjectFilePath));
 
-                // Monitor the trigger {projectName}_BuildOutputs
-                var buildOutputsName = project.Name + "_BuildOutputs";
+                if (isMainAspect)
+                {
+                    // Monitor the trigger {projectName}_BuildOutputs
+                    var buildOutputsName = project.Name + "_BuildOutputs";
 
-                _cacheContextAccessor.Current.Monitor(_namedDependencyProvider.GetNamedDependency(buildOutputsName));
+                    _cacheContextAccessor.Current.Monitor(_namedDependencyProvider.GetNamedDependency(buildOutputsName));
+                }
             }
 
             var exportedReferences = incomingReferences.Select(ConvertMetadataReference);
@@ -100,7 +103,8 @@ namespace Microsoft.Framework.Runtime.Roslyn
                 project,
                 sourceFiles,
                 incomingSourceReferences,
-                parseOptions);
+                parseOptions,
+                isMainAspect);
 
             var embeddedReferences = incomingReferences.OfType<IMetadataEmbeddedReference>()
                                                        .ToDictionary(a => a.Name, ConvertMetadataReference);
@@ -144,55 +148,86 @@ namespace Microsoft.Framework.Runtime.Roslyn
 
             var modules = new List<ICompileModule>();
 
-            using (var childContext = _loadContextFactory.Create())
+            if (isMainAspect && project.PreprocessSourceFiles.Any())
             {
-
-                if (isMainAspect && project.PreprocessSourceFiles.Any())
+                try
                 {
-                    try
+                    modules = GetCompileModules(target).Modules;
+                }
+                catch (Exception ex)
+                {
+                    var compilationException = ex.InnerException as RoslynCompilationException;
+
+                    if (compilationException != null)
                     {
-                        var preprocessAssembly = childContext.Load(project.Name + "!preprocess");
-                        foreach (var preprocessType in preprocessAssembly.ExportedTypes)
+                        // Add diagnostics from the precompile step
+                        foreach (var diag in compilationException.Diagnostics)
                         {
-                            if (preprocessType.GetTypeInfo().ImplementedInterfaces.Contains(typeof(ICompileModule)))
-                            {
-                                var module = (ICompileModule)ActivatorUtilities.CreateInstance(_services, preprocessType);
-                                modules.Add(module);
-                            }
+                            compilationContext.Diagnostics.Add(diag);
                         }
 
+                        Trace.TraceError("[{0}]: Failed loading meta assembly '{1}'", GetType().Name, name);
                     }
-                    catch (Exception ex)
+                    else
                     {
-                        var compilationException = ex.InnerException as RoslynCompilationException;
-
-                        if (compilationException != null)
-                        {
-                            // Add diagnostics from the precompile step
-                            foreach (var diag in compilationException.Diagnostics)
-                            {
-                                compilationContext.Diagnostics.Add(diag);
-                            }
-
-                            Trace.TraceError("[{0}]: Failed loading meta assembly '{1}'", GetType().Name, name);
-                        }
-                        else
-                        {
-                            Trace.TraceError("[{0}]: Failed loading meta assembly '{1}':\n {2}", GetType().Name, name, ex);
-                        }
+                        Trace.TraceError("[{0}]: Failed loading meta assembly '{1}':\n {2}", GetType().Name, name, ex);
                     }
                 }
+            }
 
+            if (modules.Count > 0)
+            {
+                var precompSw = Stopwatch.StartNew();
                 foreach (var module in modules)
                 {
                     module.BeforeCompile(compilationContext);
                 }
+
+                precompSw.Stop();
+                Trace.TraceInformation("[{0}]: Compile modules ran in in {1}ms", GetType().Name, precompSw.ElapsedMilliseconds);
             }
 
             sw.Stop();
             Trace.TraceInformation("[{0}]: Compiled '{1}' in {2}ms", GetType().Name, name, sw.ElapsedMilliseconds);
 
             return compilationContext;
+        }
+
+        private CompilationModules GetCompileModules(ILibraryKey target)
+        {
+            // The only thing that matters is the runtime environment
+            // when loading the compilation modules, so use that as the cache key
+            var key = Tuple.Create(
+                target.Name,
+                _environment.RuntimeFramework,
+                _environment.Configuration,
+                "compilemodules");
+
+            return _cache.Get<CompilationModules>(key, _ =>
+            {
+                var modules = new List<ICompileModule>();
+
+                var childContext = _loadContextFactory.Create();
+
+                var preprocessAssembly = childContext.Load(target.Name + "!preprocess");
+
+                foreach (var preprocessType in preprocessAssembly.ExportedTypes)
+                {
+                    if (preprocessType.GetTypeInfo().ImplementedInterfaces.Contains(typeof(ICompileModule)))
+                    {
+                        var module = (ICompileModule)ActivatorUtilities.CreateInstance(_services, preprocessType);
+                        modules.Add(module);
+                    }
+                }
+
+                // We do this so that the load context is disposed when the cache entry
+                // expires
+                return new CompilationModules
+                {
+                    LoadContext = childContext,
+                    Modules = modules,
+                };
+            });
         }
 
         private static CSharpCompilation ApplyVersionInfo(CSharpCompilation compilation, Project project,
@@ -216,13 +251,17 @@ namespace Microsoft.Framework.Runtime.Roslyn
         private IList<SyntaxTree> GetSyntaxTrees(Project project,
                                                  IEnumerable<string> sourceFiles,
                                                  IEnumerable<ISourceReference> sourceReferences,
-                                                 CSharpParseOptions parseOptions)
+                                                 CSharpParseOptions parseOptions,
+                                                 bool isMainAspect)
         {
             var trees = new List<SyntaxTree>();
 
-            // Enumerate all sub dirs and start from that set of folders incase new folders are added
             var dirs = new HashSet<string>();
-            dirs.Add(project.ProjectDirectory);
+
+            if (isMainAspect)
+            {
+                dirs.Add(project.ProjectDirectory);
+            }
 
             foreach (var sourcePath in sourceFiles)
             {
@@ -263,28 +302,13 @@ namespace Microsoft.Framework.Runtime.Roslyn
             // The cache key needs to take the parseOptions into account
             var cacheKey = sourcePath + string.Join(",", parseOptions.PreprocessorSymbolNames) + parseOptions.LanguageVersion;
 
-            return _cache.Get<SyntaxTree>(cacheKey, (ctx, oldValue) =>
+            return _cache.Get<SyntaxTree>(cacheKey, ctx =>
             {
-                SourceText sourceText;
-                if (_sourceTextService != null)
+                ctx.Monitor(new FileWriteTimeCacheDependency(sourcePath));
+                using (var stream = File.OpenRead(sourcePath))
                 {
-                    sourceText = _sourceTextService.GetSourceText(sourcePath);
-                }
-                else
-                {
-                    ctx.Monitor(new FileWriteTimeCacheDependency(sourcePath));
-                    using (var stream = File.OpenRead(sourcePath))
-                    {
-                        sourceText = SourceText.From(stream, encoding: Encoding.UTF8);
-                    }
-                }
+                    var sourceText = SourceText.From(stream, encoding: Encoding.UTF8);
 
-                if (oldValue != null && _sourceTextService != null)
-                {
-                    return oldValue.WithChangedText(sourceText);
-                }
-                else
-                {
                     return CSharpSyntaxTree.ParseText(sourceText, options: parseOptions, path: sourcePath);
                 }
             });
@@ -341,6 +365,17 @@ namespace Microsoft.Framework.Runtime.Roslyn
             });
 
             return metadata.GetReference();
+        }
+
+        private class CompilationModules : IDisposable
+        {
+            public IAssemblyLoadContext LoadContext { get; set; }
+            public List<ICompileModule> Modules { get; set; }
+
+            public void Dispose()
+            {
+                LoadContext.Dispose();
+            }
         }
     }
 }
