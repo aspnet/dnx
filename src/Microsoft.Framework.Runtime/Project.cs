@@ -6,6 +6,8 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Runtime.Versioning;
+using System.Text;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using NuGet;
 
@@ -253,21 +255,37 @@ namespace Microsoft.Framework.Runtime
                 projectPath = Path.Combine(path, ProjectFileName);
             }
 
-            var json = File.ReadAllText(projectPath);
-
             // Assume the directory name is the project name if none was specified
             var projectName = GetDirectoryName(path);
+            projectPath = Path.GetFullPath(projectPath);
 
-            project = GetProject(json, projectName, projectPath);
+            try
+            {
+                using (var stream = File.OpenRead(projectPath))
+                {
+                    project = GetProject(stream, projectName, projectPath);
+                }
+            }
+            catch (JsonReaderException ex)
+            {
+                throw ProjectFormatException.Create(ex, projectPath);
+            }
 
             return true;
         }
 
         public static Project GetProject(string json, string projectName, string projectPath)
         {
+            var ms = new MemoryStream(Encoding.UTF8.GetBytes(json));
+            return GetProject(ms, projectName, projectPath);
+        }
+
+        public static Project GetProject(Stream stream, string projectName, string projectPath)
+        {
             var project = new Project();
 
-            var rawProject = JObject.Parse(json);
+            var reader = new JsonTextReader(new StreamReader(stream));
+            var rawProject = JObject.Load(reader);
 
             // Metadata properties
             var version = rawProject["version"];
@@ -275,11 +293,29 @@ namespace Microsoft.Framework.Runtime
             var tags = rawProject["tags"];
 
             project.Name = projectName;
-            project.Version = version == null ? new SemanticVersion("1.0.0") : new SemanticVersion(version.Value<string>());
+            project.ProjectFilePath = Path.GetFullPath(projectPath);
+
+            if (version == null)
+            {
+                project.Version = new SemanticVersion("1.0.0");
+            }
+            else
+            {
+                try
+                {
+                    project.Version = new SemanticVersion(version.Value<string>());
+                }
+                catch (Exception ex)
+                {
+                    var lineInfo = (IJsonLineInfo)version;
+
+                    throw ProjectFormatException.Create(ex, version, project.ProjectFilePath);
+                }
+            }
+
             project.Description = GetValue<string>(rawProject, "description");
             project.Authors = authors == null ? new string[] { } : authors.ToObject<string[]>();
             project.Dependencies = new List<LibraryDependency>();
-            project.ProjectFilePath = Path.GetFullPath(projectPath);
             project.WebRoot = GetValue<string>(rawProject, "webroot");
             project.EntryPoint = GetValue<string>(rawProject, "entryPoint");
             project.ProjectUrl = GetValue<string>(rawProject, "projectUrl");
@@ -342,8 +378,10 @@ namespace Microsoft.Framework.Runtime
                     }
                     else
                     {
-                        throw new InvalidDataException(string.Format(
-                            "The value of a script in {0} can only be a string or an array of strings", ProjectFileName));
+                        throw ProjectFormatException.Create(
+                            string.Format("The value of a script in {0} can only be a string or an array of strings", ProjectFileName),
+                            value,
+                            project.ProjectFilePath);
                     }
                 }
             }
@@ -357,6 +395,7 @@ namespace Microsoft.Framework.Runtime
             project.BuildTargetFrameworksAndConfigurations(rawProject);
 
             PopulateDependencies(
+                project.ProjectFilePath,
                 project.Dependencies,
                 rawProject,
                 "dependencies",
@@ -426,6 +465,7 @@ namespace Microsoft.Framework.Runtime
         }
 
         private static void PopulateDependencies(
+            string projectPath,
             IList<LibraryDependency> results,
             JObject settings,
             string propertyName,
@@ -436,9 +476,13 @@ namespace Microsoft.Framework.Runtime
             {
                 foreach (var dependency in dependencies)
                 {
-                    if (String.IsNullOrEmpty(dependency.Key))
+                    if (string.IsNullOrEmpty(dependency.Key))
                     {
-                        throw new InvalidDataException("Unable to resolve dependency ''.");
+
+                        throw ProjectFormatException.Create(
+                            "Unable to resolve dependency ''.",
+                            dependency.Value,
+                            projectPath);
                     }
 
                     // Support 
@@ -447,8 +491,11 @@ namespace Microsoft.Framework.Runtime
                     // }
 
                     var dependencyValue = dependency.Value;
-                    string dependencyVersionValue = null;
                     var dependencyTypeValue = LibraryDependencyType.Default;
+
+                    string dependencyVersionValue = null;
+                    JToken dependencyVersionToken = dependencyValue;
+
                     if (dependencyValue.Type == JTokenType.String)
                     {
                         dependencyVersionValue = dependencyValue.Value<string>();
@@ -457,7 +504,7 @@ namespace Microsoft.Framework.Runtime
                     {
                         if (dependencyValue.Type == JTokenType.Object)
                         {
-                            var dependencyVersionToken = dependencyValue["version"];
+                            dependencyVersionToken = dependencyValue["version"];
                             if (dependencyVersionToken != null && dependencyVersionToken.Type == JTokenType.String)
                             {
                                 dependencyVersionValue = dependencyVersionToken.Value<string>();
@@ -472,9 +519,20 @@ namespace Microsoft.Framework.Runtime
                     }
 
                     SemanticVersion dependencyVersion = null;
-                    if (!String.IsNullOrEmpty(dependencyVersionValue))
+
+                    if (!string.IsNullOrEmpty(dependencyVersionValue))
                     {
-                        dependencyVersion = SemanticVersion.Parse(dependencyVersionValue);
+                        try
+                        {
+                            dependencyVersion = SemanticVersion.Parse(dependencyVersionValue);
+                        }
+                        catch (Exception ex)
+                        {
+                            throw ProjectFormatException.Create(
+                                ex, 
+                                dependencyVersionToken, 
+                                projectPath);
+                        }
                     }
 
                     results.Add(new LibraryDependency(
@@ -601,7 +659,14 @@ namespace Microsoft.Framework.Runtime
             {
                 foreach (var framework in frameworks)
                 {
-                    BuildTargetFrameworkNode(framework);
+                    try
+                    {
+                        BuildTargetFrameworkNode(framework);
+                    }
+                    catch (Exception ex)
+                    {
+                        throw ProjectFormatException.Create(ex, framework.Value, ProjectFilePath);
+                    }
                 }
             }
         }
@@ -642,6 +707,7 @@ namespace Microsoft.Framework.Runtime
             var properties = targetFramework.Value.Value<JObject>();
 
             PopulateDependencies(
+                ProjectFilePath,
                 targetFrameworkInformation.Dependencies,
                 properties,
                 "dependencies",
@@ -649,6 +715,7 @@ namespace Microsoft.Framework.Runtime
 
             var frameworkAssemblies = new List<LibraryDependency>();
             PopulateDependencies(
+                ProjectFilePath,
                 frameworkAssemblies,
                 properties,
                 "frameworkAssemblies",

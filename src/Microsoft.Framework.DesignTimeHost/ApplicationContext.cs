@@ -8,7 +8,6 @@ using System.IO;
 using System.Linq;
 using System.Runtime.Versioning;
 using System.Threading;
-using Microsoft.CodeAnalysis.Text;
 using Microsoft.Framework.DesignTimeHost.Models;
 using Microsoft.Framework.DesignTimeHost.Models.IncomingMessages;
 using Microsoft.Framework.DesignTimeHost.Models.OutgoingMessages;
@@ -102,6 +101,14 @@ namespace Microsoft.Framework.DesignTimeHost
                 {
                     Message = ex.Message
                 };
+
+                var projectFormatException = ex as ProjectFormatException;
+                if (projectFormatException != null)
+                {
+                    error.Path = projectFormatException.Path;
+                    error.Line = projectFormatException.Line;
+                    error.Column = projectFormatException.Column;
+                }
 
                 var message = new Message
                 {
