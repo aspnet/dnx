@@ -1080,7 +1080,7 @@ namespace NuGet
                 return false;
             }
 
-            if (!ideal.EqualsSnapshot(considering) && !ideal.IsSatisfiedBy(considering))
+            if (!ideal.EqualsSnapshot(considering) && considering < ideal.MinVersion)
             {
                 // Don't use anything that can't be satisfied
                 return false;
