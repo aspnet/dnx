@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Threading;
 using Microsoft.Framework.Runtime.Infrastructure;
 using Newtonsoft.Json;
@@ -62,17 +63,15 @@ namespace Microsoft.Framework.Runtime
                             //    "MessageType": "Assembly",
                             //    "ContextId": 1,
                             //    "AssemblyPath": null,
-                            //    "Errors": [],
-                            //    "Warnings": [],
+                            //    "Diagnostics": [],
                             //    "Blobs": 2
                             //}
                             // Embedded Refs (special)
                             // Blob 1
                             // Blob 2
                             var compileResponse = new CompileResponse();
-                            compileResponse.AssemblyPath = obj.Value<string>("AssemblyPath");
-                            compileResponse.Errors = obj.ValueAsStringArray("Errors");
-                            compileResponse.Warnings = obj.ValueAsStringArray("Warnings");
+                            compileResponse.AssemblyPath = obj.Value<string>(nameof(CompileResponse.AssemblyPath));
+                            compileResponse.Diagnostics = ValueAsCompilationMessages(obj, (nameof(CompileResponse.Diagnostics)));
                             int contextId = obj.Value<int>("ContextId");
                             int blobs = obj.Value<int>("Blobs");
 
@@ -106,7 +105,7 @@ namespace Microsoft.Framework.Runtime
                             //    "MessageType": "Sources",
                             //    "Files": [],
                             //}
-                            var files = obj.ValueAsStringArray("Files");
+                            var files = obj.ValueAsArray<string>("Files");
                             ProjectSources(files);
                             break;
                         case "ProjectContexts":
@@ -162,6 +161,22 @@ namespace Microsoft.Framework.Runtime
                 Closed();
                 return;
             }
+        }
+
+        private static List<CompilationMessage> ValueAsCompilationMessages(JObject obj, string key)
+        {
+            var arrayValue = obj.Value<JArray>(key);
+            return arrayValue.Select(item => new CompilationMessage
+            {
+                Message = item.Value<string>(nameof(ICompilationMessage.Message)),
+                FormattedMessage = item.Value<string>(nameof(ICompilationMessage.FormattedMessage)),
+                SourceFilePath = item.Value<string>(nameof(ICompilationMessage.SourceFilePath)),
+                Severity = (CompilationMessageSeverity)item.Value<int>(nameof(ICompilationMessage.Severity)),
+                StartColumn = item.Value<int>(nameof(ICompilationMessage.StartColumn)),
+                StartLine = item.Value<int>(nameof(ICompilationMessage.StartLine)),
+                EndColumn = item.Value<int>(nameof(ICompilationMessage.EndColumn)),
+                EndLine = item.Value<int>(nameof(ICompilationMessage.EndLine)),
+            }).ToList();
         }
     }
 }

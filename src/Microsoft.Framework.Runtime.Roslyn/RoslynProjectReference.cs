@@ -255,15 +255,8 @@ namespace Microsoft.Framework.Runtime.Roslyn
 
         private static DiagnosticResult CreateDiagnosticResult(bool success, IEnumerable<Diagnostic> diagnostics)
         {
-            var formatter = new DiagnosticFormatter();
-
-            var errors = diagnostics.Where(RoslynDiagnosticUtilities.IsError)
-                                .Select(d => formatter.Format(d)).ToList();
-
-            var warnings = diagnostics.Where(d => d.Severity == DiagnosticSeverity.Warning)
-                                  .Select(d => formatter.Format(d)).ToList();
-
-            return new DiagnosticResult(success, warnings, errors);
+            var issues = diagnostics.Where(d => d.Severity == DiagnosticSeverity.Warning || d.Severity == DiagnosticSeverity.Error);
+            return new DiagnosticResult(success, issues.Select(d => new RoslynCompilationMessage(d)));
         }
 
         private static bool SupportsPdbGeneration()

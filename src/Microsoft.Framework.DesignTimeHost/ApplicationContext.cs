@@ -262,8 +262,16 @@ namespace Microsoft.Framework.DesignTimeHost
                     break;
                 case "GetCompiledAssembly":
                     {
-                        var request = message.Payload.ToObject<CompiledAssemblyRequest>();
-                        var targetFramework = new FrameworkName(request.TargetFramework);
+                        var libraryKey = new RemoteLibraryKey
+                        {
+                            Name = GetValue(message.Payload, "Name"),
+                            TargetFramework = GetValue(message.Payload, "TargetFramework"),
+                            Configuration = GetValue(message.Payload, "Configuration"),
+                            Aspect = GetValue(message.Payload, "Aspect"),
+                            Version = GetValue<int>(message.Payload, nameof(RemoteLibraryKey.Version)),
+                        };
+
+                        var targetFramework = new FrameworkName(libraryKey.TargetFramework);
 
                         // Only set this the first time for the project
                         if (!_requiresAssemblies.ContainsKey(targetFramework))
@@ -282,7 +290,7 @@ namespace Microsoft.Framework.DesignTimeHost
                         waitingForCompiledAssemblies.Add(new CompiledAssemblyState
                         {
                             Connection = message.Sender,
-                            Version = request.Version
+                            Version = libraryKey.Version
                         });
                     }
                     break;
@@ -428,8 +436,7 @@ namespace Microsoft.Framework.DesignTimeHost
                     project.Diagnostics = new DiagnosticsMessage
                     {
                         Framework = project.Sources.Framework,
-                        Errors = compilation.Errors,
-                        Warnings = compilation.Warnings
+                        Diagnostics = compilation.Diagnostics
                     };
                 }
 
@@ -447,7 +454,7 @@ namespace Microsoft.Framework.DesignTimeHost
 
                     // Only emit the assembly if there are no errors and
                     // this is the very first time or there were changes
-                    if (!compilation.Errors.Any() &&
+                    if (!compilation.Diagnostics.HasErrors() &&
                         (!compilation.HasOutputs || projectCompilationChanged))
                     {
                         var engine = new NonLoadingLoadContext();
@@ -473,8 +480,7 @@ namespace Microsoft.Framework.DesignTimeHost
                         project.Diagnostics = new DiagnosticsMessage
                         {
                             Framework = project.Sources.Framework,
-                            Errors = compilation.Errors,
-                            Warnings = compilation.Warnings
+                            Diagnostics = compilation.Diagnostics,
                         };
                     }
                 }
@@ -509,8 +515,7 @@ namespace Microsoft.Framework.DesignTimeHost
                 }
 
                 var diagnostics = compilation.ProjectReference.GetDiagnostics();
-                compilation.Errors = diagnostics.Errors.ToList();
-                compilation.Warnings = diagnostics.Warnings.ToList();
+                compilation.Diagnostics = diagnostics.Diagnostics.ToList();
 
                 _compilations[project.TargetFramework] = compilation;
 
@@ -758,12 +763,12 @@ namespace Microsoft.Framework.DesignTimeHost
             {
                 writer.Write("Assembly");
                 writer.Write(Id);
-                writer.Write(project.Diagnostics.Warnings.Count);
+                writer.Write(project.Diagnostics.Warnings.Count());
                 foreach (var warning in project.Diagnostics.Warnings)
                 {
                     writer.Write(warning);
                 }
-                writer.Write(project.Diagnostics.Errors.Count);
+                writer.Write(project.Diagnostics.Errors.Count());
                 foreach (var error in project.Diagnostics.Errors)
                 {
                     writer.Write(error);
@@ -776,13 +781,30 @@ namespace Microsoft.Framework.DesignTimeHost
                 var obj = new JObject();
                 obj["MessageType"] = "Assembly";
                 obj["ContextId"] = Id;
-                obj["Errors"] = new JArray(project.Diagnostics.Errors);
-                obj["Warnings"] = new JArray(project.Diagnostics.Warnings);
+                obj[nameof(CompileResponse.Diagnostics)] = ConvertToJArray(project.Diagnostics.Diagnostics);
+                obj[nameof(CompileResponse.AssemblyPath)] = project.Outputs.AssemblyPath;
                 obj["Blobs"] = 2;
                 writer.Write(obj.ToString(Formatting.None));
 
                 WriteAssembly(project, writer);
             }
+        }
+
+        private static JArray ConvertToJArray(IList<ICompilationMessage> diagnostics)
+        {
+            var values = diagnostics.Select(diagnostic => new JObject
+            {
+                [nameof(ICompilationMessage.SourceFilePath)] = diagnostic.SourceFilePath,
+                [nameof(ICompilationMessage.Message)] = diagnostic.Message,
+                [nameof(ICompilationMessage.FormattedMessage)] = diagnostic.FormattedMessage,
+                [nameof(ICompilationMessage.Severity)] = (int)diagnostic.Severity,
+                [nameof(ICompilationMessage.StartColumn)] = diagnostic.StartColumn,
+                [nameof(ICompilationMessage.StartLine)] = diagnostic.StartLine,
+                [nameof(ICompilationMessage.EndColumn)] = diagnostic.EndColumn,
+                [nameof(ICompilationMessage.EndLine)] = diagnostic.EndLine,
+            });
+
+            return new JArray(values);
         }
 
         private static void WriteAssembly(ProjectWorld project, BinaryWriter writer)
@@ -1103,7 +1125,18 @@ namespace Microsoft.Framework.DesignTimeHost
 
         private static string GetValue(JToken token, string name)
         {
-            return token?[name]?.Value<string>() ?? default(string);
+            return GetValue<string>(token, name);
+        }
+
+        private static TVal GetValue<TVal>(JToken token, string name)
+        {
+            var value = token?[name];
+            if (value != null)
+            {
+                return value.Value<TVal>();
+            }
+
+            return default(TVal);
         }
 
         private class Trigger<TValue>
@@ -1183,9 +1216,7 @@ namespace Microsoft.Framework.DesignTimeHost
             public ILibraryExport Export { get; set; }
             public IMetadataProjectReference ProjectReference { get; set; }
             public IDictionary<string, byte[]> EmbeddedReferences { get; set; }
-
-            public IList<string> Warnings { get; set; }
-            public IList<string> Errors { get; set; }
+            public IList<ICompilationMessage> Diagnostics { get; set; }
 
             public bool HasOutputs
             {
@@ -1208,7 +1239,7 @@ namespace Microsoft.Framework.DesignTimeHost
             public int Version { get; set; }
         }
 
-        private class CompiledAssemblyRequest
+        private class RemoteLibraryKey
         {
             public int Version { get; set; }
             public string Name { get; set; }

@@ -87,9 +87,7 @@ namespace Microsoft.Framework.PackageManager
 
             var success = true;
 
-            var allErrors = new List<string>();
-            var allWarnings = new List<string>();
-
+            var allDiagnostics = new List<ICompilationMessage>();
             var cacheContextAccessor = new CacheContextAccessor();
             var cache = new Cache(cacheContextAccessor);
 
@@ -122,8 +120,7 @@ namespace Microsoft.Framework.PackageManager
                     _buildOptions.Reports.Information.WriteLine("Building {0} for {1}",
                         project.Name, targetFramework.ToString().Yellow().Bold());
 
-                    var errors = new List<string>();
-                    var warnings = new List<string>();
+                    var diagnostics = new List<ICompilationMessage>();
 
                     var context = new BuildContext(_hostServices,
                                                    _applicationEnvironment,
@@ -136,7 +133,7 @@ namespace Microsoft.Framework.PackageManager
 
                     context.Initialize(_buildOptions.Reports.Quiet);
 
-                    if (context.Build(warnings, errors))
+                    if (context.Build(diagnostics))
                     {
                         if (_buildOptions.GeneratePackages)
                         {
@@ -151,10 +148,9 @@ namespace Microsoft.Framework.PackageManager
                         configurationSuccess = false;
                     }
 
-                    allErrors.AddRange(errors);
-                    allWarnings.AddRange(warnings);
+                    allDiagnostics.AddRange(diagnostics);
 
-                    WriteDiagnostics(warnings, errors);
+                    WriteDiagnostics(diagnostics);
                 }
 
                 success = success && configurationSuccess;
@@ -226,7 +222,7 @@ namespace Microsoft.Framework.PackageManager
 
             sw.Stop();
 
-            WriteSummary(allWarnings, allErrors);
+            WriteSummary(allDiagnostics);
 
             _buildOptions.Reports.Information.WriteLine("Time elapsed {0}", sw.Elapsed);
             return success;
@@ -291,11 +287,13 @@ namespace Microsoft.Framework.PackageManager
             }
         }
 
-        private void WriteSummary(List<string> warnings, List<string> errors)
+        private void WriteSummary(List<ICompilationMessage> diagnostics)
         {
             _buildOptions.Reports.Information.WriteLine();
 
-            if (errors.Count > 0)
+            var errorCount = diagnostics.Count(d => d.Severity == CompilationMessageSeverity.Error);
+            var warningCount = diagnostics.Count(d => d.Severity == CompilationMessageSeverity.Warning);
+            if (errorCount > 0)
             {
                 WriteError("Build failed.");
             }
@@ -304,18 +302,23 @@ namespace Microsoft.Framework.PackageManager
                 _buildOptions.Reports.Information.WriteLine("Build succeeded.".Green());
             }
 
-            _buildOptions.Reports.Information.WriteLine("    {0} Warnings(s)", warnings.Count);
-            _buildOptions.Reports.Information.WriteLine("    {0} Error(s)", errors.Count);
+            _buildOptions.Reports.Information.WriteLine("    {0} Warnings(s)", warningCount);
+            _buildOptions.Reports.Information.WriteLine("    {0} Error(s)", errorCount);
 
             _buildOptions.Reports.Information.WriteLine();
         }
 
-        private void WriteDiagnostics(List<string> warnings, List<string> errors)
+        private void WriteDiagnostics(List<ICompilationMessage> diagnostics)
         {
+            var errors = diagnostics.Where(d => d.Severity == CompilationMessageSeverity.Error)
+                                    .Select(d => d.FormattedMessage);
             foreach (var error in errors)
             {
                 WriteError(error);
             }
+
+            var warnings = diagnostics.Where(d => d.Severity == CompilationMessageSeverity.Warning)
+                                      .Select(d => d.FormattedMessage);
 
             foreach (var warning in warnings)
             {

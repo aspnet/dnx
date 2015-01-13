@@ -1,4 +1,7 @@
-﻿using System;
+﻿// Copyright (c) Microsoft Open Technologies, Inc. All rights reserved.
+// Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
+
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -29,7 +32,8 @@ namespace Microsoft.Framework.Runtime
 
         public IDiagnosticResult GetDiagnostics()
         {
-            return new DiagnosticResult(_response.Errors.Any(), _response.Warnings, _response.Errors);
+            bool hasErrors = _response.Diagnostics.HasErrors();
+            return new DiagnosticResult(hasErrors, _response.Diagnostics);
         }
 
         public IList<ISourceReference> GetSources()
@@ -39,9 +43,9 @@ namespace Microsoft.Framework.Runtime
 
         public Assembly Load(IAssemblyLoadContext loadContext)
         {
-            if(_response.Errors.Any())
+            if (_response.Diagnostics.HasErrors())
             {
-                throw new CompilationException(_response.Errors);
+                throw new DesignTimeCompilationException(_response.Diagnostics);
             }
 
             if (_response.AssemblyPath != null)
