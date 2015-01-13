@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 
 namespace Microsoft.Framework.Runtime
 {
@@ -9,8 +7,6 @@ namespace Microsoft.Framework.Runtime
     {
         bool Success { get; }
 
-        IEnumerable<string> Warnings { get; }
-
-        IEnumerable<string> Errors { get; }
+        IEnumerable<ICompilationMessage> Diagnostics { get; }
     }
 }
