@@ -7,17 +7,31 @@ namespace Microsoft.Framework.Runtime
 {
     public static class ProjectExtensions
     {
-        public static CompilerOptions GetCompilerOptions(this Project project,
+        public static ICompilerOptions GetCompilerOptions(this Project project,
                                                          FrameworkName targetFramework,
                                                          string configurationName)
         {
             // Get all project options and combine them
-            var rootOptions = project.GetCompilerOptions();
-            var configurationOptions = configurationName != null ? project.GetCompilerOptions(configurationName) : null;
-            var targetFrameworkOptions = targetFramework != null ? project.GetCompilerOptions(targetFramework) : null;
+            var options = project.GetCompilerOptions();
+            if (configurationName != null)
+            {
+                var configurationOptions = project.GetCompilerOptions(configurationName);
+                if (configurationOptions != null)
+                {
+                    options = options.Merge(configurationOptions);
+                }
+            }
 
-            // Combine all of the options
-            return CompilerOptions.Combine(rootOptions, configurationOptions, targetFrameworkOptions);
+            if (targetFramework != null)
+            {
+                var targetFrameworkOptions = project.GetCompilerOptions(targetFramework);
+                if (targetFrameworkOptions != null)
+                {
+                    options = options.Merge(targetFrameworkOptions);
+                }
+            }
+
+            return options;
         }
     }
 }

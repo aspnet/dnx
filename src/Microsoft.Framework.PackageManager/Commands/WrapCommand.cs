@@ -10,6 +10,7 @@ using System.Reflection;
 using System.Runtime.Versioning;
 using System.Xml.Linq;
 using Microsoft.Framework.Runtime;
+using Microsoft.Framework.Runtime.Loader;
 using Newtonsoft.Json.Linq;
 using NuGet;
 
@@ -226,7 +227,8 @@ namespace Microsoft.Framework.PackageManager
             var projectDir = Path.GetDirectoryName(projectFile);
             var rootDir = ProjectResolver.ResolveRootDirectory(projectDir);
             var wrapRoot = Path.Combine(rootDir, "wrap");
-            var projectResolver = new ProjectResolver(projectDir, rootDir);
+            var projectReader = new ProjectReader(LoadContextAccessor.Instance.Default);
+            var projectResolver = new ProjectResolver(projectReader, projectDir, rootDir);
             var targetProjectJson = LocateExistingProject(projectResolver, projectName);
             if (string.IsNullOrEmpty(targetProjectJson))
             {

@@ -7,6 +7,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using Microsoft.Framework.Runtime;
+using Microsoft.Framework.Runtime.Loader;
 using Newtonsoft.Json.Linq;
 using NuGet;
 
@@ -182,7 +183,9 @@ exec ""{1}klr"" Microsoft.Framework.ApplicationHost {2} ""$@""";
         private void WriteGlobalJson()
         {
             var rootDirectory = ProjectResolver.ResolveRootDirectory(_project.ProjectDirectory);
-            var projectResolver = new ProjectResolver(_project.ProjectDirectory, rootDirectory);
+            var projectResolver = new ProjectResolver(new ProjectReader(LoadContextAccessor.Instance.Default),
+                                                      _project.ProjectDirectory,
+                                                      rootDirectory);
             var packagesDir = NuGetDependencyResolver.ResolveRepositoryPath(rootDirectory);
             var pathResolver = new DefaultPackagePathResolver(packagesDir);
             var dependenciesObj = new JObject();

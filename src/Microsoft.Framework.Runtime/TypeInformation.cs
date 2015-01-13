@@ -1,4 +1,8 @@
-﻿using System;
+﻿// Copyright (c) Microsoft Open Technologies, Inc. All rights reserved.
+// Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
+
+using System;
+using Microsoft.Framework.Runtime.Common.DependencyInjection;
 
 namespace Microsoft.Framework.Runtime
 {
@@ -37,6 +41,15 @@ namespace Microsoft.Framework.Runtime
             var li = obj as TypeInformation;
 
             return li != null && li._tuple.Equals(_tuple);
+        }
+
+        public TInstance CreateInstance<TInstance>(IAssemblyLoadContext loadContext, IServiceProvider serviceProvider)
+        {
+            var assembly = loadContext.Load(AssemblyName);
+
+            var type = assembly.GetType(TypeName);
+
+            return (TInstance)ActivatorUtilities.CreateInstance(serviceProvider, type);
         }
     }
 }

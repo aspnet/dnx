@@ -12,6 +12,8 @@ namespace Microsoft.Framework.Runtime
     {
         public FrameworkName FrameworkName { get; set; }
 
+        public ICompilerOptions CompilerOptions { get; set; }
+
         public IList<LibraryDependency> Dependencies { get; set; }
 
         public string WrappedProject { get; set; }

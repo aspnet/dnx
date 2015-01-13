@@ -2,7 +2,6 @@
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 using System;
-using System.Diagnostics;
 using System.Runtime.Versioning;
 using Microsoft.Framework.Runtime.Common.DependencyInjection;
 using Microsoft.Framework.Runtime.FileSystem;
@@ -27,9 +26,29 @@ namespace Microsoft.Framework.Runtime
             ProjectDirectory = projectDirectory;
             Configuration = configuration;
             RootDirectory = Runtime.ProjectResolver.ResolveRootDirectory(ProjectDirectory);
-            ProjectResolver = new ProjectResolver(ProjectDirectory, RootDirectory);
             FrameworkReferenceResolver = new FrameworkReferenceResolver();
             _serviceProvider = new ServiceProvider(serviceProvider);
+
+            if (loadContextFactory == null)
+            {
+                if (serviceProvider != null)
+                {
+                    loadContextFactory = new RuntimeLoadContextFactory(_serviceProvider);
+                }
+                else
+                {
+                    loadContextFactory = new RuntimeLoadContextFactory(LoadContextAccessor.Instance);
+                }
+            }
+
+            AssemblyLoadContextFactory = loadContextFactory;
+            var projectReader = new ProjectReader(AssemblyLoadContextFactory.Create());
+
+            Project project;
+            projectReader.TryReadProject(ProjectDirectory, out project);
+            Project = project;
+
+            ProjectResolver = new ProjectResolver(projectReader, ProjectDirectory, RootDirectory);
 
             PackagesDirectory = packagesDirectory ?? NuGetDependencyResolver.ResolveRepositoryPath(RootDirectory);
 
@@ -57,11 +76,10 @@ namespace Microsoft.Framework.Runtime
             LibraryManager = new LibraryManager(targetFramework, configuration, DependencyWalker,
                 LibraryExportProvider, cache);
 
-            AssemblyLoadContextFactory = loadContextFactory ?? new RuntimeLoadContextFactory(ServiceProvider);
             namedCacheDependencyProvider = namedCacheDependencyProvider ?? NamedCacheDependencyProvider.Empty;
 
             // Default services
-            _serviceProvider.Add(typeof(IApplicationEnvironment), new ApplicationEnvironment(Project, targetFramework, configuration));
+            _serviceProvider.Add(typeof(IApplicationEnvironment), new ApplicationEnvironment(project, targetFramework, configuration));
             _serviceProvider.Add(typeof(IFileWatcher), NoopWatcher.Instance);
             _serviceProvider.Add(typeof(ILibraryManager), LibraryManager);
 
@@ -74,6 +92,7 @@ namespace Microsoft.Framework.Runtime
             _serviceProvider.Add(typeof(ICacheContextAccessor), cacheContextAccessor, includeInManifest: false);
             _serviceProvider.Add(typeof(INamedCacheDependencyProvider), namedCacheDependencyProvider, includeInManifest: false);
             _serviceProvider.Add(typeof(IAssemblyLoadContextFactory), AssemblyLoadContextFactory, includeInManifest: false);
+            _serviceProvider.Add(typeof(IProjectReader), projectReader, includeInManifest: false);
 
             var compilerOptionsProvider = new CompilerOptionsProvider(ProjectResolver);
             _serviceProvider.Add(typeof(ICompilerOptionsProvider), compilerOptionsProvider);
@@ -102,18 +121,7 @@ namespace Microsoft.Framework.Runtime
             }
         }
 
-        public Project Project
-        {
-            get
-            {
-                Project project;
-                if (Project.TryGetProject(ProjectDirectory, out project))
-                {
-                    return project;
-                }
-                return null;
-            }
-        }
+        public Project Project { get; }
 
         public IAssemblyLoadContextFactory AssemblyLoadContextFactory { get; private set; }
 

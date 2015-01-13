@@ -22,6 +22,7 @@ namespace Microsoft.Framework.DesignTimeHost
     public class ApplicationContext
     {
         private readonly IServiceProvider _hostServices;
+        private readonly IProjectReader _projectReader;
         private readonly ICache _cache;
         private readonly ICacheContextAccessor _cacheContextAccessor;
         private readonly INamedCacheDependencyProvider _namedDependencyProvider;
@@ -54,6 +55,7 @@ namespace Microsoft.Framework.DesignTimeHost
         {
             _hostServices = services;
             _appEnv = (IApplicationEnvironment)services.GetService(typeof(IApplicationEnvironment));
+            _projectReader = (IProjectReader)services.GetService(typeof(IProjectReader));
             _cache = cache;
             _cacheContextAccessor = cacheContextAccessor;
             _namedDependencyProvider = namedDependencyProvider;
@@ -707,7 +709,7 @@ namespace Microsoft.Framework.DesignTimeHost
             };
 
             Project project;
-            if (!Project.TryGetProject(appPath, out project))
+            if (!_projectReader.TryReadProject(appPath, out project))
             {
                 throw new InvalidOperationException(string.Format("Unable to find project.json in '{0}'", appPath));
             }
@@ -768,7 +770,7 @@ namespace Microsoft.Framework.DesignTimeHost
                     }
 
                     Project referencedProject;
-                    if (Project.TryGetProject(reference.Path, out referencedProject))
+                    if (_projectReader.TryReadProject(reference.Path, out referencedProject))
                     {
                         dependencySources.AddRange(referencedProject.SharedFiles);
                     }
@@ -882,7 +884,7 @@ namespace Microsoft.Framework.DesignTimeHost
                        !string.Equals(library.Identity.Name, project.Name))
                     {
                         Project referencedProject;
-                        if (!Project.TryGetProject(library.Path, out referencedProject))
+                        if (!_projectReader.TryReadProject(library.Path, out referencedProject))
                         {
                             // Should never happen
                             continue;

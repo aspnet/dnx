@@ -3,26 +3,24 @@
 
 using System.IO;
 using System.Linq;
-using Xunit;
+using System.Reflection;
+using System.Runtime.Versioning;
+using Microsoft.Framework.Runtime.Loader;
 using NuGet;
+using Xunit;
 
 namespace Microsoft.Framework.Runtime.Tests
 {
-    public class Program
-    {
-        public void Main(string[] args)
-        {
-            new ProjectFacts().DependenciesAreSet();
-        }
-    }
-
     public class ProjectFacts
     {
         [Fact]
         public void NameIsIgnoredIsSpecified()
         {
-            // Arrange & Act
-            var project = Project.GetProject(@"{ ""name"": ""hello"" }", @"foo", @"c:\foo\project.json");
+            // Arrange
+            var reader = GetProjectReader();
+
+            // Act
+            var project = reader.GetProject(@"{ ""name"": ""hello"" }", @"foo", @"c:\foo\project.json");
 
             // Assert
             Assert.Equal("foo", project.Name);
@@ -31,7 +29,11 @@ namespace Microsoft.Framework.Runtime.Tests
         [Fact]
         public void GetProjectNormalizesPaths()
         {
-            var project = Project.GetProject(@"{}", "name", "../../foo");
+            // Arrange
+            var reader = GetProjectReader();
+
+            // Act
+            var project = reader.GetProject(@"{}", "name", "../../foo");
 
             Assert.True(Path.IsPathRooted(project.ProjectFilePath));
         }
@@ -39,7 +41,11 @@ namespace Microsoft.Framework.Runtime.Tests
         [Fact]
         public void CommandsAreSet()
         {
-            var project = Project.GetProject(@"
+            // Arrange
+            var reader = GetProjectReader();
+
+            // Act
+            var project = reader.GetProject(@"
 {
     ""commands"": { ""web"": ""Microsoft.AspNet.Hosting something"" }
 }",
@@ -55,7 +61,11 @@ namespace Microsoft.Framework.Runtime.Tests
         [Fact]
         public void DependenciesAreSet()
         {
-            var project = Project.GetProject(@"
+            // Arrange
+            var reader = GetProjectReader();
+
+            // Act
+            var project = reader.GetProject(@"
 {
     ""dependencies"": {  
         ""A"": """",
@@ -89,7 +99,11 @@ namespace Microsoft.Framework.Runtime.Tests
         [Fact]
         public void DependenciesAreSetPerTargetFramework()
         {
-            var project = Project.GetProject(@"
+            // Arrange
+            var reader = GetProjectReader();
+
+            // Act
+            var project = reader.GetProject(@"
 {
     ""frameworks"": {
         ""net45"": {
@@ -129,7 +143,11 @@ namespace Microsoft.Framework.Runtime.Tests
         [Fact]
         public void FrameworkAssembliesAreSet()
         {
-            var project = Project.GetProject(@"
+            // Arrange
+            var reader = GetProjectReader();
+
+            // Act
+            var project = reader.GetProject(@"
 {
     ""frameworks"": {
         ""net45"": {
@@ -172,14 +190,18 @@ namespace Microsoft.Framework.Runtime.Tests
         [Fact]
         public void CompilerOptionsAreSet()
         {
-            var project = Project.GetProject(@"
+            // Arrange
+            var reader = GetProjectReader();
+
+            // Act
+            var project = reader.GetProject(@"
 {
     ""compilationOptions"": { ""allowUnsafe"": true, ""define"": [""X"", ""y""], ""platform"": ""x86"", ""warningsAsErrors"": true, ""optimize"": true }
 }",
 "foo",
 @"c:\foo\project.json");
 
-            var compilerOptions = project.GetCompilerOptions();
+            var compilerOptions = Assert.IsType<RoslynCompilerOptions>(project.GetCompilerOptions());
             Assert.NotNull(compilerOptions);
             Assert.True(compilerOptions.AllowUnsafe.Value);
             Assert.Equal(new[] { "X", "y" }, compilerOptions.Defines);
@@ -191,12 +213,16 @@ namespace Microsoft.Framework.Runtime.Tests
         [Fact]
         public void CompilerOptionsAreNotNullIfNotSpecified()
         {
-            var project = Project.GetProject(@"
+            // Arrange
+            var reader = GetProjectReader();
+
+            // Act
+            var project = reader.GetProject(@"
 {}",
 "foo",
 @"c:\foo\project.json");
 
-            var compilerOptions = project.GetCompilerOptions();
+            var compilerOptions = Assert.IsType<RoslynCompilerOptions>(project.GetCompilerOptions());
             Assert.NotNull(compilerOptions);
             Assert.Null(compilerOptions.Defines);
         }
@@ -204,7 +230,11 @@ namespace Microsoft.Framework.Runtime.Tests
         [Fact]
         public void CompilerOptionsAreSetPerConfiguration()
         {
-            var project = Project.GetProject(@"
+            // Arrange
+            var reader = GetProjectReader();
+
+            // Act
+            var project = reader.GetProject(@"
 {
     ""frameworks"" : {
         ""net45"":  {
@@ -224,25 +254,29 @@ namespace Microsoft.Framework.Runtime.Tests
 "foo",
 @"c:\foo\project.json");
 
-            var compilerOptions = project.GetCompilerOptions();
+            var compilerOptions = Assert.IsType<RoslynCompilerOptions>(project.GetCompilerOptions());
             Assert.NotNull(compilerOptions);
-            var net45Options = project.GetCompilerOptions(Project.ParseFrameworkName("net45"));
+            var net45Options = Assert.IsType<RoslynCompilerOptions>(
+                project.GetCompilerOptions(ProjectReader.ParseFrameworkName("net45")));
             Assert.NotNull(net45Options);
             Assert.True(net45Options.AllowUnsafe.Value);
             Assert.Equal(new[] { "X", "y", "NET45" }, net45Options.Defines);
             Assert.True(net45Options.WarningsAsErrors.Value);
             Assert.Equal("x86", net45Options.Platform);
 
-            var aspnet50Options = project.GetCompilerOptions(Project.ParseFrameworkName("aspnet50"));
+            var aspnet50Options = Assert.IsType<RoslynCompilerOptions>(
+                project.GetCompilerOptions(ProjectReader.ParseFrameworkName("aspnet50")));
             Assert.NotNull(aspnet50Options);
             Assert.Equal(new[] { "ASPNET50" }, aspnet50Options.Defines);
 
-            var aspnetCore50Options = project.GetCompilerOptions(Project.ParseFrameworkName("aspnetcore50"));
+            var aspnetCore50Options = Assert.IsType<RoslynCompilerOptions>(
+                project.GetCompilerOptions(ProjectReader.ParseFrameworkName("aspnetcore50")));
             Assert.NotNull(aspnetCore50Options);
             Assert.Equal(new[] { "X", "ASPNETCORE50" }, aspnetCore50Options.Defines);
             Assert.True(aspnetCore50Options.WarningsAsErrors.Value);
 
-            var k10Options = project.GetCompilerOptions(Project.ParseFrameworkName("k10"));
+            var k10Options = Assert.IsType<RoslynCompilerOptions>(
+                project.GetCompilerOptions(ProjectReader.ParseFrameworkName("k10")));
             Assert.NotNull(k10Options);
             Assert.Null(k10Options.AllowUnsafe);
             Assert.Equal(new[] { "K10" }, k10Options.Defines);
@@ -253,7 +287,11 @@ namespace Microsoft.Framework.Runtime.Tests
         [Fact]
         public void SourcePatternsAreSet()
         {
-            var project = Project.GetProject(@"
+            // Arrange
+            var reader = GetProjectReader();
+
+            // Act
+            var project = reader.GetProject(@"
 {
     ""code"": ""*.cs;../*.cs"",
     ""exclude"": ""buggy/*.*"",
@@ -276,7 +314,11 @@ namespace Microsoft.Framework.Runtime.Tests
         [Fact]
         public void SourcePatternsWorkForArraysAreSet()
         {
-            var project = Project.GetProject(@"
+            // Arrange
+            var reader = GetProjectReader();
+
+            // Act
+            var project = reader.GetProject(@"
 {
     ""code"": [""*.cs"", ""../*.cs""],
     ""exclude"": [""buggy/*.*""],
@@ -299,24 +341,32 @@ namespace Microsoft.Framework.Runtime.Tests
         [Fact]
         public void DefaultSourcePatternsAreUsedIfNoneSpecified()
         {
-            var project = Project.GetProject(@"
+            // Arrange
+            var reader = GetProjectReader();
+
+            // Act
+            var project = reader.GetProject(@"
 {
 }",
 "foo",
 @"c:\foo\project.json");
 
-            Assert.Equal(Project._defaultSourcePatterns, project.SourcePatterns);
-            Assert.Equal(Project._defaultExcludePatterns, project.ExcludePatterns);
-            Assert.Equal(Project._defaultPackExcludePatterns, project.PackExcludePatterns);
-            Assert.Equal(Project._defaultPreprocessPatterns, project.PreprocessPatterns);
-            Assert.Equal(Project._defaultSharedPatterns, project.SharedPatterns);
-            Assert.Equal(Project._defaultResourcesPatterns, project.ResourcesPatterns);
+            Assert.Equal(ProjectReader._defaultSourcePatterns, project.SourcePatterns);
+            Assert.Equal(ProjectReader._defaultExcludePatterns, project.ExcludePatterns);
+            Assert.Equal(ProjectReader._defaultPackExcludePatterns, project.PackExcludePatterns);
+            Assert.Equal(ProjectReader._defaultPreprocessPatterns, project.PreprocessPatterns);
+            Assert.Equal(ProjectReader._defaultSharedPatterns, project.SharedPatterns);
+            Assert.Equal(ProjectReader._defaultResourcesPatterns, project.ResourcesPatterns);
         }
 
         [Fact]
         public void NullSourcePatternReturnsEmptySet()
         {
-            var project = Project.GetProject(@"
+            // Arrange
+            var reader = GetProjectReader();
+
+            // Act
+            var project = reader.GetProject(@"
 {
     ""code"": null
 }",
@@ -329,7 +379,11 @@ namespace Microsoft.Framework.Runtime.Tests
         [Fact]
         public void EmptyStringAndNullElementsAreIgnored()
         {
-            var project = Project.GetProject(@"
+            // Arrange
+            var reader = GetProjectReader();
+
+            // Act
+            var project = reader.GetProject(@"
 {
     ""code"": [""a.cs"", """", ""b.cs;;;"", ""c.cs"", null],
     ""exclude"": ""a.cs;;;;""
@@ -344,7 +398,11 @@ namespace Microsoft.Framework.Runtime.Tests
         [Fact]
         public void ProjectUrlIsSet()
         {
-            var project = Project.GetProject(@"
+            // Arrange
+            var reader = GetProjectReader();
+
+            // Act
+            var project = reader.GetProject(@"
 {
     ""projectUrl"": ""https://github.com/aspnet/KRuntime""
 }",
@@ -357,7 +415,11 @@ namespace Microsoft.Framework.Runtime.Tests
         [Fact]
         public void RequireLicenseAcceptanceIsSet()
         {
-            var project = Project.GetProject(@"
+            // Arrange
+            var reader = GetProjectReader();
+
+            // Act
+            var project = reader.GetProject(@"
 {
     ""requireLicenseAcceptance"": ""true""
 }",
@@ -370,7 +432,11 @@ namespace Microsoft.Framework.Runtime.Tests
         [Fact]
         public void RequireLicenseAcceptanceDefaultValueIsFalse()
         {
-            var project = Project.GetProject(@" { }", "foo", @"c:\foo\project.json");
+            // Arrange
+            var reader = GetProjectReader();
+
+            // Act
+            var project = reader.GetProject(@" { }", "foo", @"c:\foo\project.json");
 
             Assert.False(project.RequireLicenseAcceptance);
         }
@@ -378,7 +444,11 @@ namespace Microsoft.Framework.Runtime.Tests
         [Fact]
         public void TagsAreSet()
         {
-            var project = Project.GetProject(@"
+            // Arrange
+            var reader = GetProjectReader();
+
+            // Act
+            var project = reader.GetProject(@"
 {
     ""tags"": [""awesome"", ""fantastic"", ""aspnet""]
 }",
@@ -395,10 +465,102 @@ namespace Microsoft.Framework.Runtime.Tests
         [Fact]
         public void EmptyTagsListWhenNotSpecified()
         {
-            var project = Project.GetProject(@" { }", "foo", @"c:\foo\project.json");
+            // Arrange
+            var reader = GetProjectReader();
+
+            // Act
+            var project = reader.GetProject(@" { }", "foo", @"c:\foo\project.json");
 
             Assert.NotNull(project.Tags);
             Assert.Equal(0, project.Tags.Count());
+        }
+
+        [Fact]
+        public void GetProject_UsesSpecifiedCompilerOptionsReader()
+        {
+            // Arrange
+            var content =
+@"{
+    compilationOptions: { globalkey: 'globalvalue' },
+    language: {
+       assembly: '" + typeof(TestCompilerOptionsReader).GetTypeInfo().Assembly.FullName + @"',
+       compilerOptionsReaderType: '" + typeof(TestCompilerOptionsReader).GetTypeInfo().FullName + @"'
+    },
+    frameworks: {
+        aspnet50: {
+            compilationOptions: { aspnet50Key: 'aspnet50value' }
+       }
+    },
+    configurations: {
+       release: {
+            compilationOptions: { release_key: 'releasevalue' }
+       }
+    }
+}";
+
+            var reader = GetProjectReader();
+
+            // Act
+            var project = reader.GetProject(content, "testproject", "testpath");
+
+            // Assert
+            var options = Assert.IsType<TestCompilerOptions>(project.GetCompilerOptions());
+            Assert.Equal(
+@"{
+  ""globalkey"": ""globalvalue""
+}", options.Json);
+
+            options = Assert.IsType<TestCompilerOptions>(project.GetCompilerOptions(ProjectReader.ParseFrameworkName("aspnet50")));
+            Assert.Equal(
+
+@"{
+  ""aspnet50Key"": ""aspnet50value""
+}", options.Json);
+
+            options = Assert.IsType<TestCompilerOptions>(project.GetCompilerOptions("release"));
+            Assert.Equal(
+
+@"{
+  ""release_key"": ""releasevalue""
+}", options.Json);
+        }
+
+        private static ProjectReader GetProjectReader()
+        {
+            return new ProjectReader(LoadContextAccessor.Instance.Default);
+        }
+
+        private sealed class TestCompilerOptionsReader : ICompilerOptionsReader
+        {
+            public ICompilerOptions ReadCompilerOptions(string json)
+            {
+                return new TestCompilerOptions(json);
+            }
+
+            public ICompilerOptions ReadConfigurationCompilerOptions(string json, string configuration)
+            {
+                return new TestCompilerOptions(json);
+            }
+
+            public ICompilerOptions ReadFrameworkCompilerOptions(string json, string shortName, FrameworkName targetFramework)
+            {
+                return new TestCompilerOptions(json);
+            }
+        }
+
+        private class TestCompilerOptions : ICompilerOptions
+        {
+            public TestCompilerOptions(string json)
+            {
+                Json = json;
+            }
+
+            public string Json { get; }
+
+            public ICompilerOptions Merge(ICompilerOptions options)
+            {
+                return new TestCompilerOptions(Json + "|" + ((TestCompilerOptions)options).Json);
+            }
         }
     }
 }

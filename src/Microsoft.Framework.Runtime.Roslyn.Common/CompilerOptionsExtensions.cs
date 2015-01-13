@@ -18,7 +18,8 @@ namespace Microsoft.Framework.Runtime.Roslyn
         public static CompilationSettings ToCompilationSettings(this ICompilerOptions compilerOptions,
                                                                 FrameworkName targetFramework)
         {
-            var options = GetCompilationOptions(compilerOptions);
+            var roslynCompilerOptions = (RoslynCompilerOptions)compilerOptions;
+            var options = GetCompilationOptions(roslynCompilerOptions);
 
             // Disable 1702 until roslyn turns this off by default
             options = options.WithSpecificDiagnosticOptions(new Dictionary<string, ReportDiagnostic>
@@ -42,9 +43,9 @@ namespace Microsoft.Framework.Runtime.Roslyn
             options = options.WithAssemblyIdentityComparer(assemblyIdentityComparer);
 
             LanguageVersion languageVersion;
-            if (!Enum.TryParse<LanguageVersion>(value: compilerOptions.LanguageVersion,
-                                                ignoreCase: true,
-                                                result: out languageVersion))
+            if (!Enum.TryParse(roslynCompilerOptions.LanguageVersion,
+                               ignoreCase: true,
+                               result: out languageVersion))
             {
                 languageVersion = LanguageVersion.CSharp6;
             }
@@ -52,14 +53,14 @@ namespace Microsoft.Framework.Runtime.Roslyn
             var settings = new CompilationSettings
             {
                 LanguageVersion = languageVersion,
-                Defines = compilerOptions.Defines ?? Enumerable.Empty<string>(),
+                Defines = roslynCompilerOptions.Defines,
                 CompilationOptions = options
             };
 
             return settings;
         }
 
-        private static CSharpCompilationOptions GetCompilationOptions(ICompilerOptions compilerOptions)
+        private static CSharpCompilationOptions GetCompilationOptions(RoslynCompilerOptions compilerOptions)
         {
             var options = new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary);
 
@@ -69,14 +70,14 @@ namespace Microsoft.Framework.Runtime.Roslyn
             bool warningsAsErrors = compilerOptions.WarningsAsErrors ?? false;
 
             Platform platform;
-            if (!Enum.TryParse<Platform>(value: platformValue,
-                                         ignoreCase: true,
-                                         result: out platform))
+            if (!Enum.TryParse(value: platformValue,
+                               ignoreCase: true,
+                               result: out platform))
             {
                 platform = Platform.AnyCpu;
             }
 
-            ReportDiagnostic warningOption = warningsAsErrors ? ReportDiagnostic.Error : ReportDiagnostic.Default;
+            var warningOption = warningsAsErrors ? ReportDiagnostic.Error : ReportDiagnostic.Default;
 
             return options.WithAllowUnsafe(allowUnsafe)
                           .WithPlatform(platform)

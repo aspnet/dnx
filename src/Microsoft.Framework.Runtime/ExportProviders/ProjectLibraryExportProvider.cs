@@ -78,7 +78,7 @@ namespace Microsoft.Framework.Runtime
                     // Find the default project exporter
                     var projectReferenceProvider = _projectReferenceProviders.GetOrAdd(project.LanguageServices.ProjectReferenceProvider, typeInfo =>
                     {
-                        return LanguageServices.CreateService<IProjectReferenceProvider>(_serviceProvider, _projectLoadContext.Value, typeInfo);
+                        return typeInfo.CreateInstance<IProjectReferenceProvider>(_projectLoadContext.Value, _serviceProvider);
                     });
 
                     Trace.TraceInformation("[{0}]: GetProjectReference({1}, {2}, {3}, {4})", project.LanguageServices.ProjectReferenceProvider.TypeName, target.Name, target.TargetFramework, target.Configuration, target.Aspect);

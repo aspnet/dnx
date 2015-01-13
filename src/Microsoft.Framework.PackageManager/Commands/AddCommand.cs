@@ -2,6 +2,8 @@
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 using System.IO;
+using Microsoft.Framework.Runtime;
+using Microsoft.Framework.Runtime.Loader;
 using Newtonsoft.Json.Linq;
 using NuGet;
 
@@ -33,8 +35,9 @@ namespace Microsoft.Framework.PackageManager
 
             ProjectDir = ProjectDir ?? Directory.GetCurrentDirectory();
 
+            var reader = new ProjectReader(LoadContextAccessor.Instance.Default);
             Runtime.Project project;
-            if (!Runtime.Project.TryGetProject(ProjectDir, out project))
+            if (!reader.TryReadProject(ProjectDir, out project))
             {
                 Reports.Error.WriteLine("Unable to locate {0}.".Red(), Runtime.Project.ProjectFileName);
                 return false;
