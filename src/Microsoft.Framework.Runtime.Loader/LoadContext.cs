@@ -105,13 +105,14 @@ namespace Microsoft.Framework.Runtime.Loader
         private void ExtractAssemblyNeutralInterfaces(Assembly assembly)
         {
             // Embedded assemblies end with .dll
-            foreach (var name in assembly.GetManifestResourceNames())
+            foreach (var resourceName in assembly.GetManifestResourceNames())
             {
-                if (name.EndsWith(".dll"))
+                if (resourceName.StartsWith("AssemblyNeutral/") &&
+                    resourceName.EndsWith(".dll"))
                 {
-                    var assemblyName = Path.GetFileNameWithoutExtension(name);
+                    var assemblyName = Path.GetFileNameWithoutExtension(resourceName);
 
-                    var neutralAssemblyStream = assembly.GetManifestResourceStream(name);
+                    var neutralAssemblyStream = assembly.GetManifestResourceStream(resourceName);
 
                     try
                     {
