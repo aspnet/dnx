@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Runtime.Versioning;
@@ -97,15 +98,16 @@ namespace Microsoft.Framework.PackageManager
                     continue;
                 }
 
-                if (dependency.Library.IsGacOrFrameworkReference)
+                if (dependency.LibraryRange.IsGacOrFrameworkReference)
                 {
                     packageBuilder.FrameworkReferences.Add(new FrameworkAssemblyReference(dependency.Name, new[] { _targetFramework }));
                 }
                 else
                 {
-                    var dependencyVersion = dependency.Library.RequestedVersion;
+                    IVersionSpec dependencyVersion = null;
 
-                    if (dependencyVersion == null || dependencyVersion.IsSnapshot)
+                    if (dependency.LibraryRange.VersionRange == null ||
+                        dependency.LibraryRange.VersionRange.VersionFloatBehavior != SemanticVersionFloatBehavior.None)
                     {
                         var actual = _applicationHostContext.DependencyWalker.Libraries
                             .Where(pkg => string.Equals(pkg.Identity.Name, _project.Name, StringComparison.OrdinalIgnoreCase))
@@ -118,9 +120,21 @@ namespace Microsoft.Framework.PackageManager
                             dependencyVersion = new VersionSpec
                             {
                                 IsMinInclusive = true,
-                                MinVersion = actual.Version
+                                MinVersion = actual.Library.Version
                             };
                         }
+                    }
+                    else
+                    {
+                        var versionRange = dependency.LibraryRange.VersionRange;
+
+                        dependencyVersion = new VersionSpec
+                        {
+                            IsMinInclusive = true,
+                            MinVersion = versionRange.MinVersion,
+                            MaxVersion = versionRange.MaxVersion,
+                            IsMaxInclusive = versionRange.IsMaxInclusive
+                        };
                     }
 
                     dependencies.Add(new PackageDependency(dependency.Name, dependencyVersion));

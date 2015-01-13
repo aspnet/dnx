@@ -25,15 +25,15 @@ namespace Microsoft.Framework.Runtime
         {
             var root = new Node
             {
-                Key = new Library
+                Key = new LibraryRange
                 {
                     Name = name,
-                    RequestedVersion = new VersionSpec(version)
+                    VersionRange = new SemanticVersionRange(version)
                 }
             };
 
             var resolvers = dependencyResolvers as IDependencyProvider[] ?? dependencyResolvers.ToArray();
-            var resolvedItems = new Dictionary<Library, Item>();
+            var resolvedItems = new Dictionary<LibraryRange, Item>();
 
             var buildTreeSw = Stopwatch.StartNew();
 
@@ -89,8 +89,9 @@ namespace Microsoft.Framework.Runtime
                         var innerNode = new Node
                         {
                             OuterNode = node,
-                            Key = dependency.Library,
+                            Key = dependency.LibraryRange
                         };
+
                         node.InnerNodes.Add(innerNode);
                     }
                 }
@@ -210,7 +211,7 @@ namespace Microsoft.Framework.Runtime
             ForEach(root, elt, (node, parent) =>
             {
                 var child = new XElement(node.Key.Name,
-                    new XAttribute("version", node.Key.Version == null ? "null" : node.Key.Version.ToString()),
+                    new XAttribute("version", node.Key.VersionRange?.ToString() ?? "null"),
                     new XAttribute("disposition", node.Disposition.ToString()));
                 parent.Add(child);
                 return child;
@@ -261,9 +262,9 @@ namespace Microsoft.Framework.Runtime
         }
 
         private Item Resolve(
-            Dictionary<Library, Item> resolvedItems,
-            IEnumerable<IDependencyProvider> resolvers,
-            Library packageKey,
+            Dictionary<LibraryRange, Item> resolvedItems,
+            IEnumerable<IDependencyProvider> providers,
+            LibraryRange packageKey,
             FrameworkName frameworkName)
         {
             Item item;
@@ -274,12 +275,12 @@ namespace Microsoft.Framework.Runtime
 
             Tuple<IDependencyProvider, LibraryDescription> hit = null;
 
-            foreach (var resolver in resolvers)
+            foreach (var dependencyProvider in providers)
             {
-                var match = resolver.GetDescription(packageKey, frameworkName);
+                var match = dependencyProvider.GetDescription(packageKey, frameworkName);
                 if (match != null)
                 {
-                    hit = Tuple.Create(resolver, match);
+                    hit = Tuple.Create(dependencyProvider, match);
                     break;
                 }
             }
@@ -290,21 +291,24 @@ namespace Microsoft.Framework.Runtime
                 return null;
             }
 
-            if (resolvedItems.TryGetValue(hit.Item2.Identity, out item))
+            var provider = hit.Item1;
+            var libraryDescripton = hit.Item2;
+
+            if (resolvedItems.TryGetValue(libraryDescripton.Identity, out item))
             {
                 return item;
             }
 
             item = new Item()
             {
-                Description = hit.Item2,
-                Key = hit.Item2.Identity,
-                Dependencies = hit.Item2.Dependencies,
-                Resolver = hit.Item1,
+                Description = libraryDescripton,
+                Key = libraryDescripton.Identity,
+                Dependencies = libraryDescripton.Dependencies,
+                Resolver = provider,
             };
 
             resolvedItems[packageKey] = item;
-            resolvedItems[hit.Item2.Identity] = item;
+            resolvedItems[libraryDescripton.Identity] = item;
             return item;
         }
 
@@ -323,11 +327,12 @@ namespace Microsoft.Framework.Runtime
                 {
                     return new LibraryDescription
                     {
+                        LibraryRange = entry.Value.Description.LibraryRange,
                         Identity = entry.Value.Key,
                         Path = entry.Value.Description.Path,
                         Type = entry.Value.Description.Type,
                         Framework = entry.Value.Description.Framework ?? frameworkName,
-                        Dependencies = entry.Value.Dependencies.SelectMany(CorrectDependencyVersion).ToList(),
+                        Dependencies = entry.Value.Dependencies.Select(CorrectDependencyVersion).ToList(),
                         LoadableAssemblies = entry.Value.Description.LoadableAssemblies ?? Enumerable.Empty<string>(),
                         Resolved = entry.Value.Description.Resolved
                     };
@@ -341,13 +346,15 @@ namespace Microsoft.Framework.Runtime
             Trace.TraceInformation("[{0}]: Populate took {1}ms", GetType().Name, sw.ElapsedMilliseconds);
         }
 
-        private IEnumerable<LibraryDependency> CorrectDependencyVersion(LibraryDependency dependency)
+        private LibraryDependency CorrectDependencyVersion(LibraryDependency dependency)
         {
             Item item;
             if (_usedItems.TryGetValue(dependency.Name, out item))
             {
-                yield return dependency.ChangeVersion(item.Key.Version);
+                dependency.Library = item.Key;
             }
+
+            return dependency;
         }
 
         private class Node
@@ -358,7 +365,7 @@ namespace Microsoft.Framework.Runtime
                 Disposition = Disposition.Acceptable;
             }
 
-            public Library Key { get; set; }
+            public LibraryRange Key { get; set; }
             public Item Item { get; set; }
             public Node OuterNode { get; set; }
             public IList<Node> InnerNodes { get; private set; }

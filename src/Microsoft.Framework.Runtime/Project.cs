@@ -531,32 +531,33 @@ namespace Microsoft.Framework.Runtime
                         }
                     }
 
-                    SemanticVersion dependencyVersion = null;
+                    SemanticVersionRange dependencyVersionRange = null;
 
                     if (!string.IsNullOrEmpty(dependencyVersionValue))
                     {
                         try
                         {
-                            dependencyVersion = VersionUtility.ParseVersionSpec(dependencyVersionValue);
+                            dependencyVersionRange = VersionUtility.ParseVersionRange(dependencyVersionValue);
                         }
                         catch (Exception ex)
                         {
                             throw ProjectFormatException.Create(
-                                ex, 
-                                dependencyVersionToken, 
+                                ex,
+                                dependencyVersionToken,
                                 projectPath);
                         }
                     }
 
-                    results.Add(new LibraryDependency(
-                        library: new Library
+                    results.Add(new LibraryDependency
+                    {
+                        LibraryRange = new LibraryRange
                         {
                             Name = dependency.Key,
-                            RequestedVersion = dependencyVersion,
+                            VersionRange = dependencyVersionRange,
                             IsGacOrFrameworkReference = isGacOrFrameworkReference,
                         },
-                        type: dependencyTypeValue
-                    ));
+                        Type = dependencyTypeValue
+                    });
                 }
             }
         }

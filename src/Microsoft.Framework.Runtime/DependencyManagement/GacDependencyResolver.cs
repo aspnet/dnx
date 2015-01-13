@@ -30,9 +30,9 @@ namespace Microsoft.Framework.Runtime
             return GetGacSearchPaths().Select(p => Path.Combine(p, "{name}", "{version}", "{name}.dll"));
         }
 
-        public LibraryDescription GetDescription(Library library, FrameworkName targetFramework)
+        public LibraryDescription GetDescription(LibraryRange libraryRange, FrameworkName targetFramework)
         {
-            if (!library.IsGacOrFrameworkReference)
+            if (!libraryRange.IsGacOrFrameworkReference)
             {
                 return null;
             }
@@ -47,8 +47,8 @@ namespace Microsoft.Framework.Runtime
                 return null;
             }
 
-            var name = library.Name;
-            var version = library.RequestedVersion?.MinVersion;
+            var name = libraryRange.Name;
+            var version = libraryRange.VersionRange?.MinVersion;
 
             string path;
             if (!TryResolvePartialName(name, out path))
@@ -64,11 +64,11 @@ namespace Microsoft.Framework.Runtime
 
                 return new LibraryDescription
                 {
+                    LibraryRange = libraryRange,
                     Identity = new Library
                     {
                         Name = name,
                         Version = assemblyVersion,
-                        RequestedVersion = library.RequestedVersion,
                         IsGacOrFrameworkReference = true
                     },
                     LoadableAssemblies = new[] { name },

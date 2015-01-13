@@ -15,7 +15,6 @@ namespace NuGet
 
         public VersionSpec(SemanticVersion version)
         {
-            IsSnapshot = false;
             IsMinInclusive = true;
             IsMaxInclusive = true;
             MinVersion = version;
@@ -26,15 +25,9 @@ namespace NuGet
         public bool IsMinInclusive { get; set; }
         public SemanticVersion MaxVersion { get; set; }
         public bool IsMaxInclusive { get; set; }
-        public bool IsSnapshot { get; set; }
 
         public override string ToString()
         {
-            if (IsSnapshot)
-            {
-                return MinVersion + "-*";
-            }
-
             if (MinVersion != null && IsMinInclusive && MaxVersion == null && !IsMaxInclusive)
             {
                 return MinVersion.ToString();

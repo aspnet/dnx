@@ -978,13 +978,13 @@ namespace Microsoft.Framework.DesignTimeHost
             return new DependencyDescription
             {
                 Name = library.Identity.Name,
-                Version = library.Identity.Version == null ? null : library.Identity.Version.ToString(),
+                Version = library.Identity.Version?.ToString(),
                 Type = library.Resolved ? library.Type : "Unresolved",
                 Path = library.Path,
-                Dependencies = library.Dependencies.Select(lib => new DependencyItem
+                Dependencies = library.Dependencies.Select(dependency => new DependencyItem
                 {
-                    Name = lib.Name,
-                    Version = lib.Version == null ? null : lib.Version.ToString()
+                    Name = dependency.Name,
+                    Version = dependency.Library?.Version?.ToString()
                 })
             };
         }

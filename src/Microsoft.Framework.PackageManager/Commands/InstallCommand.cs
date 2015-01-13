@@ -76,7 +76,7 @@ namespace Microsoft.Framework.PackageManager
             }
             else
             {
-                result = await FindBestMatch(packageFeeds, _addCommand.Name, new VersionSpec(version));
+                result = await FindBestMatch(packageFeeds, _addCommand.Name, new SemanticVersionRange(version));
             }
 
             if (result == null)
@@ -121,7 +121,7 @@ namespace Microsoft.Framework.PackageManager
         }
 
         private static async Task<PackageInfo> FindBestMatch(IEnumerable<IPackageFeed> packageFeeds, string packageName,
-            IVersionSpec idealVersion)
+            SemanticVersionRange idealVersion)
         {
             var tasks = new List<Task<IEnumerable<PackageInfo>>>();
 
