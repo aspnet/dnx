@@ -1,6 +1,7 @@
 ﻿// Copyright (c) Microsoft Open Technologies, Inc. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
+using System.Text;
 using NuGet;
 
 namespace Microsoft.Framework.Runtime
@@ -23,7 +24,18 @@ namespace Microsoft.Framework.Runtime
 
         public override string ToString()
         {
-            return (Library?.ToString() ?? LibraryRange.ToString()) + " " + Type;
+            var sb = new StringBuilder();
+            sb.Append(LibraryRange);
+            sb.Append(" ");
+
+            if (Library != null)
+            {
+                sb.Append("(" + Library + ")");
+                sb.Append(" ");
+            }
+
+            sb.Append(Type);
+            return sb.ToString();
         }
 
         public bool HasFlag(LibraryDependencyTypeFlag flag)

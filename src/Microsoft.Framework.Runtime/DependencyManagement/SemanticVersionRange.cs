@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Text;
 using NuGet;
 
 namespace Microsoft.Framework.Runtime
@@ -26,6 +27,49 @@ namespace Microsoft.Framework.Runtime
         public SemanticVersion MaxVersion { get; set; }
         public SemanticVersionFloatBehavior VersionFloatBehavior { get; set; }
         public bool IsMaxInclusive { get; set; }
+
+        public override string ToString()
+        {
+            var sb = new StringBuilder();
+            sb.Append(">= ");
+            switch (VersionFloatBehavior)
+            {
+                case SemanticVersionFloatBehavior.None:
+                    sb.Append(MinVersion);
+                    break;
+                case SemanticVersionFloatBehavior.Prerelease:
+                    sb.AppendFormat("{0}-*", MinVersion);
+                    break;
+                case SemanticVersionFloatBehavior.Revision:
+                    sb.AppendFormat("{0}.{1}.{2}.*",
+                        MinVersion.Version.Major,
+                        MinVersion.Version.Minor,
+                        MinVersion.Version.Build);
+                    break;
+                case SemanticVersionFloatBehavior.Build:
+                    sb.AppendFormat("{0}.{1}.*",
+                        MinVersion.Version.Major,
+                        MinVersion.Version.Minor);
+                    break;
+                case SemanticVersionFloatBehavior.Minor:
+                    sb.AppendFormat("{0}.{1}.*",
+                        MinVersion.Version.Major);
+                    break;
+                case SemanticVersionFloatBehavior.Major:
+                    sb.AppendFormat("*");
+                    break;
+                default:
+                    break;
+            }
+
+            if (MaxVersion != null)
+            {
+                sb.Append(IsMaxInclusive ? "<= " : "< ");
+                sb.Append(MaxVersion);
+            }
+
+            return sb.ToString();
+        }
 
         public bool Equals(SemanticVersionRange other)
         {
