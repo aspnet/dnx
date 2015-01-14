@@ -84,10 +84,27 @@ namespace klr.hosting
 #endif
             var app = new CommandLineApplication(throwOnUnexpectedArg: false);
             app.Name = "klr";
+
+            // RuntimeBootstrapper doesn't need to consume '--appbase' option because
+            // klr/klr.cpp consumes the option value before invoking RuntimeBootstrapper
+            // This is only for showing help info and swallowing useless '--appbase' option
+            var optionAppbase = app.Option("--appbase <PATH>", "Application base directory path",
+                CommandOptionType.SingleValue);
             var optionLib = app.Option("--lib <LIB_PATHS>", "Paths used for library look-up",
                 CommandOptionType.MultipleValue);
             app.HelpOption("-?|-h|--help");
             app.VersionOption("--version", GetVersion());
+
+            // Options below are only for help info display
+            // They will be forwarded to Microsoft.Framework.ApplicationHost
+            var optionsToForward = new[]
+            {
+                app.Option("--watch", "Watch file changes", CommandOptionType.NoValue),
+                app.Option("--packages <PACKAGE_DIR>", "Directory containing packages", CommandOptionType.SingleValue),
+                app.Option("--configuration <CONFIGURATION>", "The configuration to run under", CommandOptionType.SingleValue),
+                app.Option("--port <PORT>", "The port to the compilation server", CommandOptionType.SingleValue)
+            };
+
             app.Execute(args);
 
             // Help information was already shown because help option was specified
@@ -101,6 +118,40 @@ namespace klr.hosting
             {
                 app.ShowHelp();
                 return Task.FromResult(2);
+            }
+
+            // Some options should be forwarded to Microsoft.Framework.ApplicationHost
+            var appHostName = "Microsoft.Framework.ApplicationHost";
+            var appHostIndex = app.RemainingArguments.FindIndex(s =>
+                string.Equals(s, appHostName, StringComparison.OrdinalIgnoreCase));
+            foreach (var option in optionsToForward)
+            {
+                if (option.HasValue())
+                {
+                    if (appHostIndex < 0)
+                    {
+                        Console.WriteLine("The option '--{0}' can only be used with {1}", option.LongName, appHostName);
+                        return Task.FromResult(1);
+                    }
+
+                    if (option.OptionType == CommandOptionType.NoValue)
+                    {
+                        app.RemainingArguments.Insert(appHostIndex + 1, "--" + option.LongName);
+                    }
+                    else if (option.OptionType == CommandOptionType.SingleValue)
+                    {
+                        app.RemainingArguments.Insert(appHostIndex + 1, "--" + option.LongName);
+                        app.RemainingArguments.Insert(appHostIndex + 2, option.Value());
+                    }
+                    else if (option.OptionType == CommandOptionType.MultipleValue)
+                    {
+                        foreach (var value in option.Values)
+                        {
+                            app.RemainingArguments.Insert(appHostIndex + 1, "--" + option.LongName);
+                            app.RemainingArguments.Insert(appHostIndex + 2, value);
+                        }
+                    }
+                }
             }
 
             // Resolve the lib paths
@@ -300,7 +351,7 @@ namespace klr.hosting
                     extension.Equals(".exe", StringComparison.OrdinalIgnoreCase))
                 {
                     // Add the directory to the list of search paths
-                    searchPaths.Add(Path.GetDirectoryName(application));
+                    searchPaths.Add(Path.GetDirectoryName(Path.GetFullPath(application)));
 
                     // Modify the argument to be the dll/exe name
                     remainingArgs[0] = Path.GetFileNameWithoutExtension(application);

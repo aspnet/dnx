@@ -114,7 +114,7 @@ namespace Microsoft.Framework.ApplicationHost
         private bool ParseArgs(string[] args, out DefaultHostOptions defaultHostOptions, out string[] outArgs, out int exitCode)
         {
             var app = new CommandLineApplication(throwOnUnexpectedArg: false);
-            app.Name = "k";
+            app.Name = "Microsoft.Framework.ApplicationHost";
             var optionWatch = app.Option("--watch", "Watch file changes", CommandOptionType.NoValue);
             var optionPackages = app.Option("--packages <PACKAGE_DIR>", "Directory containing packages",
                 CommandOptionType.SingleValue);
@@ -149,9 +149,9 @@ namespace Microsoft.Framework.ApplicationHost
             }
             else if (!(app.RemainingArguments.Any() || runCmdExecuted))
             {
-                // If no subcommand/option was specified, show help information
+                // If no subcommand was specified, show error message
                 // and exit immediately with non-zero exit code
-                app.ShowHelp();
+                Console.WriteLine("Please specify the command to run");
                 exitCode = 2;
                 return true;
             }
