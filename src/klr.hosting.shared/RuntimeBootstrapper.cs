@@ -165,11 +165,10 @@ namespace klr.hosting
             loadFile = path => loaderImpl.LoadFile(path);
 
             AssemblyLoadContext.InitializeDefaultContext(loaderImpl);
+            DelegateAssemblyLoadContext.Global = loaderImpl;
 
-            if (loaderImpl.EnableMultiCoreJit())
-            {
-                loaderImpl.StartMultiCoreJitProfile("startup.prof");
-            }
+            loaderImpl.EnableMultiCoreJit();
+            //Note: MCJ start deferred to after DependencyWalker.Walk completed
 #else
             var loaderImpl = new LoaderEngine();
             loadStream = assemblyStream => loaderImpl.LoadStream(assemblyStream, assemblySymbols: null);

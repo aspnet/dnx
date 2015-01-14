@@ -72,7 +72,33 @@ namespace Microsoft.Framework.Runtime
         public void Initialize()
         {
             _applicationHostContext.DependencyWalker.Walk(Project.Name, Project.Version, _targetFramework);
+            
+#if ASPNETCORE50
+            TriggerStartMultiCoreJitProfile();
+#endif
         }
+
+#if ASPNETCORE50
+        public void TriggerStartMultiCoreJitProfile()
+        {
+            var assembly = Assembly.Load(new AssemblyName("klr.core45.managed, Version=1.0.0.0"));
+            if (assembly == null) return;
+            
+            var type = assembly.GetType("klr.hosting.DelegateAssemblyLoadContext");
+            if (type == null) return;
+            
+            var propertyInfo = type.GetTypeInfo().GetDeclaredProperty("Global");
+            if (propertyInfo == null) return;
+            
+            var contextObject = propertyInfo.GetValue(null);
+            if (contextObject == null) return;
+            
+            var methodInfo = contextObject.GetType().GetTypeInfo().GetDeclaredMethod("StartMultiCoreJitProfile");
+            if (methodInfo == null) return;
+
+            methodInfo.Invoke(contextObject, new object[] {"startup.prof"});
+        }
+#endif
 
         public IDisposable AddLoaders(IAssemblyLoaderContainer container)
         {

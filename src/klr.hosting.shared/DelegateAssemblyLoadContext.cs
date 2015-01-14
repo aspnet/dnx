@@ -13,6 +13,20 @@ namespace klr.hosting
     {
         private Func<AssemblyName, Assembly> _loaderCallback;
 
+        private static DelegateAssemblyLoadContext _global = null;
+        
+        public static DelegateAssemblyLoadContext Global
+        {
+            get 
+            {
+                return _global;
+            }
+            set 
+            {
+                _global = value;
+            }
+        }
+
         public DelegateAssemblyLoadContext(Func<AssemblyName, Assembly> loaderCallback)
         {
             _loaderCallback = loaderCallback;
