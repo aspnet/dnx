@@ -25,16 +25,16 @@ namespace Microsoft.Framework.PackageManager
 
         public bool IsHttp { get; private set; }
 
-        public async Task<WalkProviderMatch> FindLibrary(Library library, FrameworkName targetFramework)
+        public async Task<WalkProviderMatch> FindLibrary(LibraryRange libraryRange, FrameworkName targetFramework)
         {
-            var results = await _source.FindPackagesByIdAsync(library.Name);
+            var results = await _source.FindPackagesByIdAsync(libraryRange.Name);
             PackageInfo bestResult = null;
             foreach (var result in results)
             {
                 if (VersionUtility.ShouldUseConsidering(
                     current: bestResult?.Version,
                     considering: result.Version,
-                    ideal: library.PreferredRequestedVersion))
+                    ideal: libraryRange.VersionRange))
                 {
                     bestResult = result;
                 }
@@ -50,7 +50,6 @@ namespace Microsoft.Framework.PackageManager
                 Library = new Library
                 {
                     Name = bestResult.Id,
-                    RequestedVersion = library.RequestedVersion,
                     Version = bestResult.Version
                 },
                 Path = bestResult.ContentUri,
@@ -73,11 +72,14 @@ namespace Microsoft.Framework.PackageManager
                 {
                     return dependencySet
                         .SelectMany(ds => ds.Dependencies)
-                        .Select(d => new LibraryDependency(new Library
+                        .Select(d => new LibraryDependency
                         {
-                            Name = d.Id,
-                            RequestedVersion = d.VersionSpec
-                        }))
+                            LibraryRange = new LibraryRange
+                            {
+                                Name = d.Id,
+                                VersionRange = new SemanticVersionRange(d.VersionSpec)
+                            }
+                        })
                         .ToList();
                 }
             }

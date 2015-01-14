@@ -9,11 +9,11 @@ namespace Microsoft.Framework.Runtime
 {
     public class UnresolvedDependencyProvider : IDependencyProvider
     {
-        public LibraryDescription GetDescription(Library library, FrameworkName targetFramework)
+        public LibraryDescription GetDescription(LibraryRange libraryRange, FrameworkName targetFramework)
         {
             return new LibraryDescription
             {
-                Identity = library,
+                LibraryRange = libraryRange,
                 Dependencies = Enumerable.Empty<LibraryDependency>(),
                 Resolved = false
             };

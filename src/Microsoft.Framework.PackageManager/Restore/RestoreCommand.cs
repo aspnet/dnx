@@ -213,11 +213,10 @@ namespace Microsoft.Framework.PackageManager
 
             foreach (var context in contexts)
             {
-                var projectLibrary = new Library
+                var projectLibrary = new LibraryRange
                 {
                     Name = project.Name,
-                    RequestedVersion = new VersionSpec(project.Version),
-                    Version = project.Version
+                    VersionRange = new SemanticVersionRange(project.Version)
                 };
 
                 tasks.Add(restoreOperations.CreateGraphNode(context, projectLibrary, _ => true));
@@ -227,22 +226,22 @@ namespace Microsoft.Framework.PackageManager
             Reports.Information.WriteLine(string.Format("{0}, {1}ms elapsed", "Resolving complete".Green(), sw.ElapsedMilliseconds));
 
             var installItems = new List<GraphItem>();
-            var missingItems = new HashSet<Library>();
+            var missingItems = new HashSet<LibraryRange>();
 
             ForEach(graphs, node =>
             {
-                if (node == null || node.Library == null)
+                if (node == null || node.LibraryRange == null)
                 {
                     return;
                 }
 
                 if (node.Item == null || node.Item.Match == null)
                 {
-                    if (!node.Library.IsGacOrFrameworkReference &&
-                         node.Library.Version != null &&
-                         missingItems.Add(node.Library))
+                    if (!node.LibraryRange.IsGacOrFrameworkReference &&
+                         node.LibraryRange.VersionRange != null &&
+                         missingItems.Add(node.LibraryRange))
                     {
-                        Reports.Error.WriteLine(string.Format("Unable to locate {0} >= {1}", node.Library.Name.Red().Bold(), node.Library.Version));
+                        Reports.Error.WriteLine(string.Format("Unable to locate {0} {1}", node.LibraryRange.Name.Red().Bold(), node.LibraryRange.VersionRange));
                         success = false;
                     }
 
@@ -250,12 +249,12 @@ namespace Microsoft.Framework.PackageManager
                 }
 
                 // "kpm restore" is case-sensitive
-                if (!string.Equals(node.Item.Match.Library.Name, node.Library.Name, StringComparison.Ordinal))
+                if (!string.Equals(node.Item.Match.Library.Name, node.LibraryRange.Name, StringComparison.Ordinal))
                 {
-                    if (missingItems.Add(node.Library))
+                    if (missingItems.Add(node.LibraryRange))
                     {
-                        Reports.Error.WriteLine("Unable to locate {0} >= {1}. Do you mean {2}?",
-                            node.Library.Name.Red().Bold(), node.Library.Version, node.Item.Match.Library.Name.Bold());
+                        Reports.Error.WriteLine("Unable to locate {0} {1}. Do you mean {2}?",
+                            node.LibraryRange.Name.Red().Bold(), node.LibraryRange.VersionRange, node.Item.Match.Library.Name.Bold());
 
                         success = false;
                     }
@@ -330,18 +329,13 @@ namespace Microsoft.Framework.PackageManager
             GlobalSettings globalSettings;
             GlobalSettings.TryGetGlobalSettings(GlobalJsonFile, out globalSettings);
 
-            var libsToRestore = new List<Library>(globalSettings.PackageHashes.Keys);
+            var libsToRestore = globalSettings.PackageHashes.Keys.ToList();
 
             var tasks = new List<Task<GraphItem>>();
 
             foreach (var library in libsToRestore)
             {
-                tasks.Add(restoreOperations.FindLibraryCached(context,
-                    new Library
-                    {
-                        Name = library.Name,
-                        RequestedVersion = library.PreferredRequestedVersion
-                    }));
+                tasks.Add(restoreOperations.FindLibraryCached(context, library));
             }
 
             var resolvedItems = await Task.WhenAll(tasks);
@@ -357,7 +351,9 @@ namespace Microsoft.Framework.PackageManager
                 var item = resolvedItems[i];
                 var library = libsToRestore[i];
 
-                if (item == null || item.Match == null || item.Match.Library.Version != library.PreferredVersion)
+                if (item == null || 
+                    item.Match == null || 
+                    item.Match.Library.Version != library.Version)
                 {
                     missingItems.Add(library);
 
@@ -450,7 +446,7 @@ namespace Microsoft.Framework.PackageManager
             Reports.Verbose.WriteLine(root.Item.Match.Library.ToString() + frameworkSuffix);
 
             Func<GraphNode, bool> isValidDependency = d =>
-                (d != null && d.Library != null && d.Item != null && d.Item.Match != null);
+                (d != null && d.LibraryRange != null && d.Item != null && d.Item.Match != null);
             var dependencies = root.Dependencies.Where(isValidDependency).ToList();
             var dependencyNum = dependencies.Count;
             for (int i = 0; i < dependencyNum; i++)
@@ -494,7 +490,7 @@ namespace Microsoft.Framework.PackageManager
         {
             foreach (var node in graphs)
             {
-                Reports.Information.WriteLine(indent + node.Library.Name + "@" + node.Library.Version);
+                Reports.Information.WriteLine(indent + node.Item.Match.Library.Name + "@" + node.Item.Match.Library.Version);
                 Display(indent + " ", node.Dependencies);
             }
         }

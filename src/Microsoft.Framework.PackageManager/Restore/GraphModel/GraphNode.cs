@@ -13,7 +13,7 @@ namespace Microsoft.Framework.PackageManager
             Dependencies = new List<GraphNode>();
         }
 
-        public Library Library { get; set; }
+        public LibraryRange LibraryRange { get; set; }
         public List<GraphNode> Dependencies { get; private set; }
         public GraphItem Item { get; set; }
     }

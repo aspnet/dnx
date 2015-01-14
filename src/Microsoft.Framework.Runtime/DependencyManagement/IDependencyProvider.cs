@@ -3,13 +3,12 @@
 
 using System.Collections.Generic;
 using System.Runtime.Versioning;
-using NuGet;
 
 namespace Microsoft.Framework.Runtime
 {
     public interface IDependencyProvider
     {
-        LibraryDescription GetDescription(Library library, FrameworkName targetFramework);
+        LibraryDescription GetDescription(LibraryRange libraryRange, FrameworkName targetFramework);
 
         void Initialize(IEnumerable<LibraryDescription> dependencies, FrameworkName targetFramework);
 

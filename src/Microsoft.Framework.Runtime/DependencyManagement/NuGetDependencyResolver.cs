@@ -52,23 +52,23 @@ namespace Microsoft.Framework.Runtime
             };
         }
 
-        public LibraryDescription GetDescription(Library library, FrameworkName targetFramework)
+        public LibraryDescription GetDescription(LibraryRange libraryRange, FrameworkName targetFramework)
         {
-            if (library.IsGacOrFrameworkReference)
+            if (libraryRange.IsGacOrFrameworkReference)
             {
                 return null;
             }
-            
-            var package = FindCandidate(library.Name, library.PreferredRequestedVersion);
+
+            var package = FindCandidate(libraryRange.Name, libraryRange.VersionRange);
 
             if (package != null)
             {
                 return new LibraryDescription
                 {
+                    LibraryRange = libraryRange,
                     Identity = new Library
                     {
                         Name = package.Id,
-                        RequestedVersion = library.RequestedVersion,
                         Version = package.Version
                     },
                     Type = "Package",
@@ -88,11 +88,14 @@ namespace Microsoft.Framework.Runtime
                 {
                     foreach (var d in set.Dependencies)
                     {
-                        yield return new LibraryDependency(new Library
+                        yield return new LibraryDependency
                         {
-                            Name = d.Id,
-                            RequestedVersion = d.VersionSpec
-                        });
+                            LibraryRange = new LibraryRange
+                            {
+                                Name = d.Id,
+                                VersionRange = new SemanticVersionRange(d.VersionSpec)
+                            }
+                        };
                     }
                 }
             }
@@ -122,10 +125,14 @@ namespace Microsoft.Framework.Runtime
                         continue;
                     }
 
-                    yield return new LibraryDependency(
-                        name: assemblyReference.AssemblyName,
-                        isGacOrFrameworkReference: true
-                    );
+                    yield return new LibraryDependency
+                    {
+                        LibraryRange = new LibraryRange
+                        {
+                            Name = assemblyReference.AssemblyName,
+                            IsGacOrFrameworkReference = true
+                        }
+                    };
                 }
             }
         }
@@ -365,11 +372,11 @@ namespace Microsoft.Framework.Runtime
             return _repository.FindPackagesById(name).FirstOrDefault(p => p.Version == version)?.Package;
         }
 
-        private IPackage FindCandidate(string name, IVersionSpec versionSpec)
+        private IPackage FindCandidate(string name, SemanticVersionRange versionRange)
         {
             var packages = _repository.FindPackagesById(name);
 
-            if (versionSpec == null)
+            if (versionRange == null)
             {
                 // TODO: Disallow null versions for nuget packages
                 var packageInfo = packages.FirstOrDefault();
@@ -388,7 +395,7 @@ namespace Microsoft.Framework.Runtime
                 if (VersionUtility.ShouldUseConsidering(
                     current: bestMatch?.Version,
                     considering: packageInfo.Version,
-                    ideal: versionSpec))
+                    ideal: versionRange))
                 {
                     bestMatch = packageInfo;
                 }
