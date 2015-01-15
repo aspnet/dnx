@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Runtime.Versioning;
@@ -105,7 +106,7 @@ namespace Microsoft.Framework.PackageManager
                 {
                     IVersionSpec dependencyVersion = null;
 
-                    if (dependency.LibraryRange == null ||
+                    if (dependency.LibraryRange.VersionRange == null ||
                         dependency.LibraryRange.VersionRange.VersionFloatBehavior != SemanticVersionFloatBehavior.None)
                     {
                         var actual = _applicationHostContext.DependencyWalker.Libraries

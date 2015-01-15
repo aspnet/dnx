@@ -10,7 +10,7 @@ namespace Microsoft.Framework.Runtime
     {
         public LibraryRange LibraryRange { get; set; }
 
-        public LibraryDependencyType Type { get; set; }
+        public LibraryDependencyType Type { get; set; } = LibraryDependencyType.Default;
 
         public Library Library { get; set; }
 
