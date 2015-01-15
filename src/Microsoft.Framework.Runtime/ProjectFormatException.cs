@@ -56,8 +56,8 @@ namespace Microsoft.Framework.Runtime
             return new ProjectFormatException(exception.Message, exception)
             {
                 Path = path,
-                Column = exception.LineNumber,
-                Line = exception.LinePosition
+                Column = exception.LinePosition,
+                Line = exception.LineNumber
             };
         }
     }
