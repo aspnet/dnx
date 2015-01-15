@@ -293,6 +293,7 @@ namespace Microsoft.Framework.PackageManager
                 Reports.Information.WriteLine("  Adding project dependency '{0}.{1}'",
                     assemblyProjectName, WrapperProjectVersion);
                 AddProjectDependency(projectJson, assemblyProjectName, targetFramework);
+                AddWrapFolderToGlobalJson(rootDir);
             }
 
             PathUtility.EnsureParentDirectory(targetProjectJson);

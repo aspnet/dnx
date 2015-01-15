@@ -176,5 +176,86 @@ namespace Microsoft.Framework.PackageManager
                 Assert.Equal(expectedLibDeltaProjectJson, File.ReadAllText(libDeltaJsonPath));
             }
         }
+        
+        [Theory]
+        [MemberData("KrePaths")]
+        public void KpmWrapInPlaceCreateCsprojWrappersInPlace(DisposableDir kreHomeDir)
+        {
+            if (PlatformHelper.IsMono)
+            {
+                return;
+            }
+
+            var expectedLibGammaProjectJson = @"{
+  ""version"": ""1.0.0-*"",
+  ""frameworks"": {
+    ""net45"": {
+      ""wrappedProject"": ""LibraryGamma.csproj"",
+      ""bin"": {
+        ""assembly"": ""obj/{configuration}/LibraryGamma.dll"",
+        ""pdb"": ""obj/{configuration}/LibraryGamma.pdb""
+      },
+      ""dependencies"": {
+        ""EntityFramework"": ""6.1.2-beta1"",
+        ""LibraryEpsilon"": ""1.0.0-*"",
+        ""LibraryDelta"": ""1.0.0-*""
+      }
+    }
+  }
+}";
+            var expectedLibEpsilonProjectJson = @"{
+  ""version"": ""1.0.0-*"",
+  ""frameworks"": {
+    ""net45"": {
+      ""wrappedProject"": ""LibraryEpsilon.csproj"",
+      ""bin"": {
+        ""assembly"": ""obj/{configuration}/LibraryEpsilon.dll"",
+        ""pdb"": ""obj/{configuration}/LibraryEpsilon.pdb""
+      }
+    }
+  }
+}";
+            var expectedLibDeltaProjectJson = @"{
+  ""version"": ""1.0.0-*"",
+  ""frameworks"": {
+    ""net45"": {
+      ""bin"": {
+        ""assembly"": ""../../ExternalAssemblies/LibraryDelta.dll""
+      }
+    }
+  }
+}";
+            var expectedGlobalJson = @"{
+  ""sources"": [
+    ""src"",
+    ""test"",
+    ""wrap"",
+    "".""
+  ]
+}";
+            using (kreHomeDir)
+            using (var testSolutionDir = TestUtils.GetTempTestSolution("ConsoleApp1"))
+            {
+                var libGammaCsprojPath = Path.Combine(testSolutionDir, "LibraryGamma", "LibraryGamma.csproj");
+                var globalJsonPath = Path.Combine(testSolutionDir, "global.json");
+                var wrapFolderPath = Path.Combine(testSolutionDir, "wrap");
+                var libGammaJsonPath = Path.Combine(testSolutionDir, "LibraryGamma", "project.json");
+                var libEpsilonJsonPath = Path.Combine(testSolutionDir, "LibraryEpsilon", "project.json");
+                var libDeltaJsonPath = Path.Combine(wrapFolderPath, "LibraryDelta", "project.json");
+
+                var exitCode = KpmTestUtils.ExecKpm(
+                    kreHomeDir,
+                    subcommand: "wrap",
+                    arguments: string.Format("\"{0}\" --in-place --msbuild \"{1}\"", libGammaCsprojPath, _msbuildPath));
+
+                Assert.Equal(0, exitCode);
+                Assert.Equal(expectedGlobalJson, File.ReadAllText(globalJsonPath));
+                Assert.True(Directory.Exists(wrapFolderPath));
+                Assert.Equal(1, Directory.EnumerateDirectories(wrapFolderPath).Count());
+                Assert.Equal(expectedLibGammaProjectJson, File.ReadAllText(libGammaJsonPath));
+                Assert.Equal(expectedLibEpsilonProjectJson, File.ReadAllText(libEpsilonJsonPath));
+                Assert.Equal(expectedLibDeltaProjectJson, File.ReadAllText(libDeltaJsonPath));
+            }
+        }
     }
 }
