@@ -291,6 +291,7 @@ namespace Microsoft.Framework.Runtime
             var version = rawProject["version"];
             var authors = rawProject["authors"];
             var tags = rawProject["tags"];
+            var buildVersion = Environment.GetEnvironmentVariable("K_BUILD_VERSION");
 
             project.Name = projectName;
             project.ProjectFilePath = Path.GetFullPath(projectPath);
@@ -303,7 +304,7 @@ namespace Microsoft.Framework.Runtime
             {
                 try
                 {
-                    project.Version = new SemanticVersion(version.Value<string>());
+                    project.Version = SpecifySnapshot(version.Value<string>(), buildVersion);
                 }
                 catch (Exception ex)
                 {
@@ -386,12 +387,6 @@ namespace Microsoft.Framework.Runtime
                 }
             }
 
-            if (project.Version.IsSnapshot)
-            {
-                var buildVersion = Environment.GetEnvironmentVariable("K_BUILD_VERSION");
-                project.Version = project.Version.SpecifySnapshot(buildVersion);
-            }
-
             project.BuildTargetFrameworksAndConfigurations(rawProject);
 
             PopulateDependencies(
@@ -403,6 +398,24 @@ namespace Microsoft.Framework.Runtime
 
             return project;
         }
+
+        private static SemanticVersion SpecifySnapshot(string version, string snapshotValue)
+        {
+            if (version.EndsWith("-*"))
+            {
+                if (string.IsNullOrEmpty(snapshotValue))
+                {
+                    version = version.Substring(0, version.Length - 2);
+                }
+                else
+                {
+                    version = version.Substring(0, version.Length - 1) + snapshotValue;
+                }
+            }
+
+            return new SemanticVersion(version);
+        }
+
         private static IEnumerable<string> GetSourcePattern(Project project, JObject rawProject, string propertyName,
             string[] defaultPatterns)
         {
@@ -518,29 +531,33 @@ namespace Microsoft.Framework.Runtime
                         }
                     }
 
-                    SemanticVersion dependencyVersion = null;
+                    SemanticVersionRange dependencyVersionRange = null;
 
                     if (!string.IsNullOrEmpty(dependencyVersionValue))
                     {
                         try
                         {
-                            dependencyVersion = SemanticVersion.Parse(dependencyVersionValue);
+                            dependencyVersionRange = VersionUtility.ParseVersionRange(dependencyVersionValue);
                         }
                         catch (Exception ex)
                         {
                             throw ProjectFormatException.Create(
-                                ex, 
-                                dependencyVersionToken, 
+                                ex,
+                                dependencyVersionToken,
                                 projectPath);
                         }
                     }
 
-                    results.Add(new LibraryDependency(
-                        name: dependency.Key,
-                        version: dependencyVersion,
-                        isGacOrFrameworkReference: isGacOrFrameworkReference,
-                        type: dependencyTypeValue
-                    ));
+                    results.Add(new LibraryDependency
+                    {
+                        LibraryRange = new LibraryRange
+                        {
+                            Name = dependency.Key,
+                            VersionRange = dependencyVersionRange,
+                            IsGacOrFrameworkReference = isGacOrFrameworkReference,
+                        },
+                        Type = dependencyTypeValue
+                    });
                 }
             }
         }

@@ -181,7 +181,7 @@ namespace Loader.Tests
 
     public class TestDependencyProvider : IDependencyProvider
     {
-        private readonly IDictionary<Library, Entry> _entries = new Dictionary<Library, Entry>();
+        private readonly IDictionary<LibraryRange, Entry> _entries = new Dictionary<LibraryRange, Entry>();
         public IEnumerable<LibraryDependency> Dependencies { get; set; }
         public FrameworkName FrameworkName { get; set; }
 
@@ -190,11 +190,11 @@ namespace Loader.Tests
             return null;
         }
 
-        public LibraryDescription GetDescription(Library library, FrameworkName frameworkName)
+        public LibraryDescription GetDescription(LibraryRange libraryRange, FrameworkName frameworkName)
         {
-            Trace.WriteLine(string.Format("StubAssemblyLoader.GetDependencies {0} {1} {2}", library.Name, library.Version, frameworkName));
+            Trace.WriteLine(string.Format("StubAssemblyLoader.GetDependencies {0} {1} {2}", libraryRange.Name, libraryRange.VersionRange, frameworkName));
             Entry entry;
-            if (!_entries.TryGetValue(library, out entry))
+            if (!_entries.TryGetValue(libraryRange, out entry))
             {
                 return null;
             }
@@ -204,19 +204,32 @@ namespace Loader.Tests
 
             return new LibraryDescription
             {
-                Identity = new Library { Name = library.Name, Version = library.Version },
+                Identity = new Library { Name = libraryRange.Name, Version = libraryRange.VersionRange.MinVersion },
                 Dependencies = entry.Dependencies
             };
         }
 
         public void Initialize(IEnumerable<LibraryDescription> packages, FrameworkName frameworkName)
         {
-            var d = packages.Select(package => new LibraryDependency(package.Identity)).ToArray();
+            var d = packages.Select(CreateDependency).ToArray();
 
             Trace.WriteLine(string.Format("StubAssemblyLoader.Initialize {0} {1}", d.Aggregate("", (a, b) => a + " " + b), frameworkName));
 
             Dependencies = d;
             FrameworkName = frameworkName;
+        }
+
+        private static LibraryDependency CreateDependency(LibraryDescription libraryDescription)
+        {
+            return new LibraryDependency
+            {
+                LibraryRange = new LibraryRange
+                {
+                    Name = libraryDescription.Identity.Name,
+                    IsGacOrFrameworkReference = libraryDescription.Identity.IsGacOrFrameworkReference,
+                    VersionRange = new SemanticVersionRange(libraryDescription.Identity.Version)
+                }
+            };
         }
 
         public TestDependencyProvider Package(string name, string version)
@@ -226,7 +239,15 @@ namespace Loader.Tests
 
         public TestDependencyProvider Package(string name, string version, Action<Entry> configure)
         {
-            var entry = new Entry { Key = new Library { Name = name, Version = new SemanticVersion(version) } };
+            var entry = new Entry
+            {
+                Key = new Library
+                {
+                    Name = name,
+                    Version = new SemanticVersion(version)
+                }
+            };
+
             _entries[entry.Key] = entry;
             configure(entry);
             return this;
@@ -244,10 +265,15 @@ namespace Loader.Tests
 
             public Entry Needs(string name, string version)
             {
-                Dependencies.Add(new LibraryDependency(
-                    name: name,
-                    version: new SemanticVersion(version)
-                ));
+                Dependencies.Add(new LibraryDependency
+                {
+                    LibraryRange = new LibraryRange
+                    {
+                        Name = name,
+                        VersionRange = new SemanticVersionRange(new SemanticVersion(version))
+                    }
+                });
+
                 return this;
             }
         }

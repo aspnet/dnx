@@ -12,7 +12,7 @@ namespace Microsoft.Framework.PackageManager
     {
         public RestoreContext()
         {
-            FindLibraryCache = new Dictionary<Library, Task<GraphItem>>();
+            FindLibraryCache = new Dictionary<LibraryRange, Task<GraphItem>>();
         }
 
         public FrameworkName FrameworkName { get; set; }
@@ -21,6 +21,6 @@ namespace Microsoft.Framework.PackageManager
         public IList<IWalkProvider> LocalLibraryProviders { get; set; }
         public IList<IWalkProvider> RemoteLibraryProviders { get; set; }
 
-        public Dictionary<Library, Task<GraphItem>> FindLibraryCache { get; private set; }
+        public Dictionary<LibraryRange, Task<GraphItem>> FindLibraryCache { get; private set; }
     }
 }

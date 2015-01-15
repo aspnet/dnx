@@ -26,15 +26,14 @@ namespace Microsoft.Framework.Runtime
             return _projectResolver.SearchPaths.Select(p => Path.Combine(p, "{name}", "project.json"));
         }
 
-        public LibraryDescription GetDescription(Library library, FrameworkName targetFramework)
+        public LibraryDescription GetDescription(LibraryRange libraryRange, FrameworkName targetFramework)
         {
-            if (library.IsGacOrFrameworkReference)
+            if (libraryRange.IsGacOrFrameworkReference)
             {
                 return null;
             }
 
-            var name = library.Name;
-            var version = library.Version;
+            string name = libraryRange.Name;
 
             Project project;
 
@@ -50,21 +49,41 @@ namespace Microsoft.Framework.Runtime
 
             if (VersionUtility.IsDesktop(targetFramework))
             {
-                targetFrameworkDependencies.Add(new LibraryDependency(
-                    name: "mscorlib",
-                    isGacOrFrameworkReference: true));
+                targetFrameworkDependencies.Add(new LibraryDependency
+                {
+                    LibraryRange = new LibraryRange
+                    {
+                        Name = "mscorlib",
+                        IsGacOrFrameworkReference = true
+                    }
+                });
 
-                targetFrameworkDependencies.Add(new LibraryDependency(
-                    name: "System",
-                    isGacOrFrameworkReference: true));
+                targetFrameworkDependencies.Add(new LibraryDependency
+                {
+                    LibraryRange = new LibraryRange
+                    {
+                        Name = "System",
+                        IsGacOrFrameworkReference = true
+                    }
+                });
 
-                targetFrameworkDependencies.Add(new LibraryDependency(
-                    name: "System.Core",
-                    isGacOrFrameworkReference: true));
+                targetFrameworkDependencies.Add(new LibraryDependency
+                {
+                    LibraryRange = new LibraryRange
+                    {
+                        Name = "System.Core",
+                        IsGacOrFrameworkReference = true
+                    }
+                });
 
-                targetFrameworkDependencies.Add(new LibraryDependency(
-                    name: "Microsoft.CSharp",
-                    isGacOrFrameworkReference: true));
+                targetFrameworkDependencies.Add(new LibraryDependency
+                {
+                    LibraryRange = new LibraryRange
+                    {
+                        Name = "Microsoft.CSharp",
+                        IsGacOrFrameworkReference = true
+                    }
+                });
             }
 
             var dependencies = project.Dependencies.Concat(targetFrameworkDependencies).ToList();
@@ -83,6 +102,7 @@ namespace Microsoft.Framework.Runtime
 
             return new LibraryDescription
             {
+                LibraryRange = libraryRange,
                 Identity = new Library
                 {
                     Name = project.Name,

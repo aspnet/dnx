@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using Microsoft.Framework.Runtime;
 
 namespace NuGet
 {
@@ -64,7 +65,7 @@ namespace NuGet
         /// <summary>
         /// Determines if the specified version is within the version spec
         /// </summary>
-        public static bool Satisfies(this IVersionSpec versionSpec, SemanticVersion version)
+        public static bool IsSatisfiedBy(this IVersionSpec versionSpec, SemanticVersion version)
         {
             // The range is unbounded so return true
             if (versionSpec == null)
@@ -72,6 +73,39 @@ namespace NuGet
                 return true;
             }
             return versionSpec.ToDelegate<SemanticVersion>(v => v)(version);
+        }
+
+        public static bool EqualsFloating(this SemanticVersionRange versionRange, SemanticVersion version)
+        {
+            switch (versionRange.VersionFloatBehavior)
+            {
+                case SemanticVersionFloatBehavior.Prerelease:
+                    return versionRange.MinVersion.Version == version.Version &&
+                           version.SpecialVersion.StartsWith(versionRange.MinVersion.SpecialVersion, StringComparison.OrdinalIgnoreCase);
+
+                case SemanticVersionFloatBehavior.Revision:
+                    return versionRange.MinVersion.Version.Major == version.Version.Major &&
+                           versionRange.MinVersion.Version.Minor == version.Version.Minor &&
+                           versionRange.MinVersion.Version.Build == version.Version.Build &&
+                           versionRange.MinVersion.Version.Revision == version.Version.Revision;
+
+                case SemanticVersionFloatBehavior.Build:
+                    return versionRange.MinVersion.Version.Major == version.Version.Major &&
+                           versionRange.MinVersion.Version.Minor == version.Version.Minor &&
+                           versionRange.MinVersion.Version.Build == version.Version.Build;
+
+                case SemanticVersionFloatBehavior.Minor:
+                    return versionRange.MinVersion.Version.Major == version.Version.Major &&
+                           versionRange.MinVersion.Version.Minor == version.Version.Minor;
+
+                case SemanticVersionFloatBehavior.Major:
+                    return versionRange.MinVersion.Version.Major == version.Version.Major;
+
+                case SemanticVersionFloatBehavior.None:
+                    return versionRange.MinVersion == version;
+                default:
+                    return false;
+            }
         }
 
         public static IEnumerable<string> GetComparableVersionStrings(this SemanticVersion version)

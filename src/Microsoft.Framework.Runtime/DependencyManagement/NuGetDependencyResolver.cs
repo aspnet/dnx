@@ -52,22 +52,20 @@ namespace Microsoft.Framework.Runtime
             };
         }
 
-        public LibraryDescription GetDescription(Library library, FrameworkName targetFramework)
+        public LibraryDescription GetDescription(LibraryRange libraryRange, FrameworkName targetFramework)
         {
-            if (library.IsGacOrFrameworkReference)
+            if (libraryRange.IsGacOrFrameworkReference)
             {
                 return null;
             }
 
-            var name = library.Name;
-            var version = library.Version;
-
-            var package = FindCandidate(name, version);
+            var package = FindCandidate(libraryRange.Name, libraryRange.VersionRange);
 
             if (package != null)
             {
                 return new LibraryDescription
                 {
+                    LibraryRange = libraryRange,
                     Identity = new Library
                     {
                         Name = package.Id,
@@ -91,10 +89,13 @@ namespace Microsoft.Framework.Runtime
                     foreach (var d in set.Dependencies)
                     {
                         yield return new LibraryDependency
-                        (
-                            name: d.Id,
-                            version: d.VersionSpec != null ? d.VersionSpec.MinVersion : null
-                        );
+                        {
+                            LibraryRange = new LibraryRange
+                            {
+                                Name = d.Id,
+                                VersionRange = new SemanticVersionRange(d.VersionSpec)
+                            }
+                        };
                     }
                 }
             }
@@ -124,10 +125,14 @@ namespace Microsoft.Framework.Runtime
                         continue;
                     }
 
-                    yield return new LibraryDependency(
-                        name: assemblyReference.AssemblyName,
-                        isGacOrFrameworkReference: true
-                    );
+                    yield return new LibraryDependency
+                    {
+                        LibraryRange = new LibraryRange
+                        {
+                            Name = assemblyReference.AssemblyName,
+                            IsGacOrFrameworkReference = true
+                        }
+                    };
                 }
             }
         }
@@ -204,8 +209,8 @@ namespace Microsoft.Framework.Runtime
         }
 
         private string ResolvePackagePath(IPackagePathResolver defaultResolver,
-                                                 IEnumerable<IPackagePathResolver> cacheResolvers,
-                                                 IPackage package)
+                                          IEnumerable<IPackagePathResolver> cacheResolvers,
+                                          IPackage package)
         {
             var defaultHashPath = defaultResolver.GetHashPath(package.Id, package.Version);
             string expectedHash = null;
@@ -362,11 +367,16 @@ namespace Microsoft.Framework.Runtime
             return results;
         }
 
-        public IPackage FindCandidate(string name, SemanticVersion version)
+        private IPackage FindCandidate(string name, SemanticVersion version)
+        {
+            return _repository.FindPackagesById(name).FirstOrDefault(p => p.Version == version)?.Package;
+        }
+
+        private IPackage FindCandidate(string name, SemanticVersionRange versionRange)
         {
             var packages = _repository.FindPackagesById(name);
 
-            if (version == null)
+            if (versionRange == null)
             {
                 // TODO: Disallow null versions for nuget packages
                 var packageInfo = packages.FirstOrDefault();
@@ -385,7 +395,7 @@ namespace Microsoft.Framework.Runtime
                 if (VersionUtility.ShouldUseConsidering(
                     current: bestMatch?.Version,
                     considering: packageInfo.Version,
-                    ideal: version))
+                    ideal: versionRange))
                 {
                     bestMatch = packageInfo;
                 }

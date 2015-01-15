@@ -11,6 +11,7 @@ using System.Reflection;
 using System.Runtime.Versioning;
 using System.Text;
 using System.Text.RegularExpressions;
+using Microsoft.Framework.Runtime;
 using NuGet.Resources;
 using CompatibilityMapping = System.Collections.Generic.Dictionary<string, string[]>;
 
@@ -283,6 +284,25 @@ namespace NuGet
             return version;
         }
 
+        public static SemanticVersionRange ParseVersionRange(string value)
+        {
+            var floatBehavior = SemanticVersionFloatBehavior.None;
+
+            // Support snapshot versions
+            if (value.EndsWith("-*"))
+            {
+                floatBehavior = SemanticVersionFloatBehavior.Prerelease;
+                value = value.Substring(0, value.Length - 2);
+            }
+
+            var spec = ParseVersionSpec(value);
+
+            return new SemanticVersionRange(spec)
+            {
+                VersionFloatBehavior = floatBehavior
+            };
+        }
+
         /// <summary>
         /// The version string is either a simple version or an arithmetic range
         /// e.g.
@@ -314,7 +334,6 @@ namespace NuGet
                 throw new ArgumentNullException("value");
             }
 
-            var versionSpec = new VersionSpec();
             value = value.Trim();
 
             // First, try to parse it as a plain version string
@@ -341,6 +360,7 @@ namespace NuGet
                 return false;
             }
 
+            var versionSpec = new VersionSpec();
             // The first character must be [ ot (
             switch (value.First())
             {
@@ -1062,34 +1082,41 @@ namespace NuGet
         public static bool ShouldUseConsidering(
             SemanticVersion current,
             SemanticVersion considering,
-            SemanticVersion ideal)
+            SemanticVersionRange ideal)
         {
             if (considering == null)
             {
                 // skip nulls
                 return false;
             }
-            if (!considering.EqualsSnapshot(ideal) && considering < ideal)
+
+            if (!ideal.EqualsFloating(considering) && considering < ideal.MinVersion)
             {
-                // don't use anything that's less than the requested version
+                // Don't use anything that can't be satisfied
                 return false;
             }
+
+            if (ideal.VersionFloatBehavior == SemanticVersionFloatBehavior.None &&
+                considering != ideal.MinVersion)
+            {
+                return false;
+            }
+
             if (current == null)
             {
                 // always use version when it's the first valid
                 return true;
             }
-            if (current.EqualsSnapshot(ideal) &&
-                considering.EqualsSnapshot(ideal))
+
+            if (ideal.EqualsFloating(current) &&
+                ideal.EqualsFloating(considering))
             {
-                // favor higher version when they both match a snapshot patter
+                // favor higher version when they both match a floating pattern
                 return current < considering;
             }
-            else
-            {
-                // otherwise favor lower version
-                return current > considering;
-            }
+
+            // Favor lower versions
+            return current > considering;
         }
 
         internal static SemanticVersion GetAssemblyVersion(string path)
