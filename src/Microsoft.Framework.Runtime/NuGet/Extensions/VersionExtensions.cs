@@ -102,6 +102,7 @@ namespace NuGet
                     return versionRange.MinVersion.Version.Major == version.Version.Major;
 
                 case SemanticVersionFloatBehavior.None:
+                    return versionRange.MinVersion == version;
                 default:
                     return false;
             }

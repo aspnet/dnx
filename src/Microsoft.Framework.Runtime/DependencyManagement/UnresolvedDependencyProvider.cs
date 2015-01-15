@@ -14,6 +14,12 @@ namespace Microsoft.Framework.Runtime
             return new LibraryDescription
             {
                 LibraryRange = libraryRange,
+                Identity = new Library
+                {
+                    Name = libraryRange.Name,
+                    IsGacOrFrameworkReference = libraryRange.IsGacOrFrameworkReference,
+                    Version = libraryRange.VersionRange.MinVersion
+                },
                 Dependencies = Enumerable.Empty<LibraryDependency>(),
                 Resolved = false
             };

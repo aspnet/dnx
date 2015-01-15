@@ -1096,6 +1096,12 @@ namespace NuGet
                 return false;
             }
 
+            if (ideal.VersionFloatBehavior == SemanticVersionFloatBehavior.None &&
+                considering != ideal.MinVersion)
+            {
+                return false;
+            }
+
             if (current == null)
             {
                 // always use version when it's the first valid
