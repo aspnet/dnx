@@ -40,7 +40,7 @@ namespace Microsoft.Framework.Runtime.Tests
             Assert.Empty(Directory.GetFiles(TempFolderPath));
 
             var breadcrumbs = new Servicing.Breadcrumbs(TempFolderPath);
-            breadcrumbs.LeaveBreadcrumb("Test", new NuGet.SemanticVersion("1.0.0"));
+            breadcrumbs.CreateBreadcrumb("Test", new NuGet.SemanticVersion("1.0.0"));
 
             Assert.True(File.Exists(Path.Combine(TempFolderPath, "Test")));
             Assert.True(File.Exists(Path.Combine(TempFolderPath, "Test.1.0.0")));
@@ -58,7 +58,7 @@ namespace Microsoft.Framework.Runtime.Tests
             directory.SetAccessControl(security);
 
             var breadcrumbs = new Servicing.Breadcrumbs(TempFolderPath);
-            breadcrumbs.LeaveBreadcrumb("Test", new NuGet.SemanticVersion("1.0.0"));
+            breadcrumbs.CreateBreadcrumb("Test", new NuGet.SemanticVersion("1.0.0"));
 
             Assert.Empty(Directory.GetFiles(TempFolderPath));
         }
@@ -74,7 +74,7 @@ namespace Microsoft.Framework.Runtime.Tests
             }
 
             var breadcrumbs = new Servicing.Breadcrumbs(nonExistingBreadcrumbsFolder);
-            breadcrumbs.LeaveBreadcrumb("Test", new NuGet.SemanticVersion("1.0.0"));
+            breadcrumbs.CreateBreadcrumb("Test", new NuGet.SemanticVersion("1.0.0"));
 
             Assert.False(Directory.Exists(nonExistingBreadcrumbsFolder));
         }

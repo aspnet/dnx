@@ -30,7 +30,7 @@ namespace Microsoft.Framework.Runtime.Servicing
             return false;
         }
 
-        public void LeaveBreadcrumb(string packageId, SemanticVersion packageVersion)
+        public void CreateBreadcrumb(string packageId, SemanticVersion packageVersion)
         {
             if (string.IsNullOrWhiteSpace(_breadcrumbsFolder))
             {
@@ -58,7 +58,7 @@ namespace Microsoft.Framework.Runtime.Servicing
             {
                 var semanticVersion = new SemanticVersion(version);
 
-                LeaveBreadcrumb(runtimeAssembly.GetName().Name, semanticVersion);
+                CreateBreadcrumb(runtimeAssembly.GetName().Name, semanticVersion);
             }
         }
 

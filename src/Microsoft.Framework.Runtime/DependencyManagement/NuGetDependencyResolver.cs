@@ -181,7 +181,7 @@ namespace Microsoft.Framework.Runtime
 
                 if (Servicing.Breadcrumbs.IsPackageServiceable(packageDescription.Package))
                 {
-                    breadcrumbs.LeaveBreadcrumb(package.Id, package.Version);
+                    breadcrumbs.CreateBreadcrumb(package.Id, package.Version);
                 }
 
                 foreach (var assemblyInfo in GetPackageAssemblies(packageDescription, targetFramework))
