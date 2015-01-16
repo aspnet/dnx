@@ -18,7 +18,7 @@ int CallFirmwareProcessMain(int argc, wchar_t* argv[])
     if (m_fVerboseTrace)
     {
         szKreTrace[1] = L'\0';
-        m_fVerboseTrace = (_tcscmp(szKreTrace, L"1") == 0);
+        m_fVerboseTrace = (_wcsnicmp(szKreTrace, L"1", 1) == 0);
     }
 
     bool fSuccess = true;
