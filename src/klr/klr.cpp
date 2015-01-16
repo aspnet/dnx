@@ -12,8 +12,15 @@ void GetModuleDirectory(HMODULE module, LPWSTR szPath)
 
 int CallFirmwareProcessMain(int argc, wchar_t* argv[])
 {
-    TCHAR szKreTrace[1];
-    bool m_fVerboseTrace = GetEnvironmentVariableW(L"KRE_TRACE", szKreTrace, 1) > 0;
+    TCHAR szKreTrace[2];
+    DWORD nEnvTraceSize = GetEnvironmentVariableW(L"KRE_TRACE", szKreTrace, 2);
+    bool m_fVerboseTrace = (nEnvTraceSize == 1);
+    if (m_fVerboseTrace)
+    {
+        szKreTrace[1] = L'\0';
+        m_fVerboseTrace = (_tcscmp(szKreTrace, L"1") == 0);
+    }
+
     bool fSuccess = true;
     HMODULE m_hHostModule = nullptr;
 #if CORECLR
@@ -121,7 +128,7 @@ Finished:
         {
             fSuccess = false;
         }
-        
+
         m_hHostModule = nullptr;
     }
 
