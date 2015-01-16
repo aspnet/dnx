@@ -144,7 +144,7 @@ namespace Microsoft.Framework.Runtime
             var cacheResolvers = GetCacheResolvers();
             var defaultResolver = new DefaultPackagePathResolver(_repository.RepositoryRoot);
 
-            Servicing.ServicingBreadcrumbs breadcrumbs = new Servicing.ServicingBreadcrumbs();
+            Servicing.Breadcrumbs breadcrumbs = new Servicing.Breadcrumbs();
 
             foreach (var dependency in packages)
             {
@@ -178,7 +178,7 @@ namespace Microsoft.Framework.Runtime
 
                 var assemblies = new List<string>();
 
-                if (Servicing.ServicingBreadcrumbs.IsPackageServiceable(packageDescription.Package))
+                if (Servicing.Breadcrumbs.IsPackageServiceable(packageDescription.Package))
                 {
                     breadcrumbs.LeaveBreadcrumb(package.Id, package.Version);
                 }

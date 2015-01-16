@@ -27,7 +27,7 @@ namespace Microsoft.Framework.Runtime.Tests
         {
             Assert.Empty(Directory.GetFiles(TempFolderPath));
 
-            Servicing.ServicingBreadcrumbs breadcrumbs = new Servicing.ServicingBreadcrumbs(TempFolderPath);
+            Servicing.Breadcrumbs breadcrumbs = new Servicing.Breadcrumbs(TempFolderPath);
             breadcrumbs.LeaveBreadcrumb("Test", new NuGet.SemanticVersion("1.0.0"));
 
             Assert.True(File.Exists(Path.Combine(TempFolderPath, "Test")));
@@ -44,7 +44,7 @@ namespace Microsoft.Framework.Runtime.Tests
             security.AddAccessRule(new FileSystemAccessRule(userName, FileSystemRights.Write, AccessControlType.Deny));
             directory.SetAccessControl(security);
 
-            Servicing.ServicingBreadcrumbs breadcrumbs = new Servicing.ServicingBreadcrumbs(TempFolderPath);
+            Servicing.Breadcrumbs breadcrumbs = new Servicing.Breadcrumbs(TempFolderPath);
             breadcrumbs.LeaveBreadcrumb("Test", new NuGet.SemanticVersion("1.0.0"));
 
             Assert.Empty(Directory.GetFiles(TempFolderPath));
@@ -59,7 +59,7 @@ namespace Microsoft.Framework.Runtime.Tests
                 Directory.Delete(nonExistingBreadcrumbsFolder);
             }
 
-            Servicing.ServicingBreadcrumbs breadcrumbs = new Servicing.ServicingBreadcrumbs(nonExistingBreadcrumbsFolder);
+            Servicing.Breadcrumbs breadcrumbs = new Servicing.Breadcrumbs(nonExistingBreadcrumbsFolder);
             breadcrumbs.LeaveBreadcrumb("Test", new NuGet.SemanticVersion("1.0.0"));
 
             Assert.False(Directory.Exists(nonExistingBreadcrumbsFolder));

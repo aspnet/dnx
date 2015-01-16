@@ -7,26 +7,26 @@ using NuGet;
 
 namespace Microsoft.Framework.Runtime.Servicing
 {
-    internal class ServicingBreadcrumbs
+    internal class Breadcrumbs
     {
         private readonly string _breadcrumbsFolder;
 
-        public ServicingBreadcrumbs()
+        public Breadcrumbs()
             : this(ResolveBreadcrumbsFolder())
         {
         }
 
-        internal ServicingBreadcrumbs(string breadcrumbsFolder)
+        internal Breadcrumbs(string breadcrumbsFolder)
         {
             // If the directory doesn't exist, don't create it because it
             // needs special permissions on it
-            _breadcrumbsFolder = Directory.Exists(breadcrumbsFolder) ? breadcrumbsFolder : null; ;
+            _breadcrumbsFolder = Directory.Exists(breadcrumbsFolder) ? breadcrumbsFolder : null;
         }
 
         public static bool IsPackageServiceable(IPackage package)
         {
             // TODO: Figure out what makes a package serviceable
-            return true;
+            return false;
         }
 
         public void LeaveBreadcrumb(string packageId, SemanticVersion packageVersion)
