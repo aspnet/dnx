@@ -62,6 +62,7 @@ namespace Microsoft.Framework.Runtime
             return new LibraryRange
             {
                 Name = library.Name,
+                IsGacOrFrameworkReference = library.IsGacOrFrameworkReference,
                 VersionRange = new SemanticVersionRange
                 {
                     MinVersion = library.Version,

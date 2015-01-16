@@ -332,7 +332,7 @@ namespace Microsoft.Framework.Runtime
                         Path = entry.Value.Description.Path,
                         Type = entry.Value.Description.Type,
                         Framework = entry.Value.Description.Framework ?? frameworkName,
-                        Dependencies = entry.Value.Dependencies.Select(CorrectDependencyVersion).ToList(),
+                        Dependencies = entry.Value.Dependencies.SelectMany(CorrectDependencyVersion).ToList(),
                         LoadableAssemblies = entry.Value.Description.LoadableAssemblies ?? Enumerable.Empty<string>(),
                         Resolved = entry.Value.Description.Resolved
                     };
@@ -346,15 +346,14 @@ namespace Microsoft.Framework.Runtime
             Trace.TraceInformation("[{0}]: Populate took {1}ms", GetType().Name, sw.ElapsedMilliseconds);
         }
 
-        private LibraryDependency CorrectDependencyVersion(LibraryDependency dependency)
+        private IEnumerable<LibraryDependency> CorrectDependencyVersion(LibraryDependency dependency)
         {
             Item item;
             if (_usedItems.TryGetValue(dependency.Name, out item))
             {
                 dependency.Library = item.Key;
+                yield return dependency;
             }
-
-            return dependency;
         }
 
         private class Node
