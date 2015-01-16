@@ -231,9 +231,8 @@ namespace Microsoft.Framework.Runtime
             // breadth-first walk of Node tree
 
             var queue = new Queue<Tuple<Node, TState>>();
-            var patience = 10000;
             queue.Enqueue(Tuple.Create(root, state));
-            while (!queue.IsEmpty() && --patience != 0)
+            while (!queue.IsEmpty())
             {
                 var work = queue.Dequeue();
                 var innerState = visitor(work.Item1, work.Item2);
@@ -319,7 +318,7 @@ namespace Microsoft.Framework.Runtime
             foreach (var groupByResolver in _usedItems.GroupBy(x => x.Value.Resolver))
             {
                 var resolver = groupByResolver.Key;
-                var packageKeys = groupByResolver.Select(x => x.Value.Key).ToList();
+                var packageKeys = groupByResolver.Select(x => x.Value.Key).OrderBy(x => x.Name).ToList();
 
                 Trace.TraceInformation("[{0}]: " + string.Join(", ", packageKeys), resolver.GetType().Name);
 
