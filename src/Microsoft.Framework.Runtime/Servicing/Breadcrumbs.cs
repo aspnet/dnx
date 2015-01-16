@@ -3,11 +3,12 @@
 
 using System;
 using System.IO;
+using System.Reflection;
 using NuGet;
 
 namespace Microsoft.Framework.Runtime.Servicing
 {
-    internal class Breadcrumbs
+    public class Breadcrumbs
     {
         private readonly string _breadcrumbsFolder;
 
@@ -16,7 +17,7 @@ namespace Microsoft.Framework.Runtime.Servicing
         {
         }
 
-        internal Breadcrumbs(string breadcrumbsFolder)
+        public Breadcrumbs(string breadcrumbsFolder)
         {
             // If the directory doesn't exist, don't create it because it
             // needs special permissions on it
@@ -39,6 +40,26 @@ namespace Microsoft.Framework.Runtime.Servicing
             // Create both files for now until we get clear instructions about the format of the name
             CreateBreadcrumbfile(packageId);
             CreateBreadcrumbfile(packageId + "." + packageVersion);
+        }
+
+        public void CreateRuntimeBreadcrumb()
+        {
+#if ASPNET50
+            var runtimeAssembly = typeof(Breadcrumbs).Assembly;
+#else
+            var runtimeAssembly = typeof(Breadcrumbs).GetTypeInfo().Assembly;
+#endif
+
+            var version = runtimeAssembly
+                ?.GetCustomAttribute<AssemblyInformationalVersionAttribute>()
+                ?.InformationalVersion;
+
+            if (!string.IsNullOrWhiteSpace(version))
+            {
+                var semanticVersion = new SemanticVersion(version);
+
+                LeaveBreadcrumb(runtimeAssembly.GetName().Name, semanticVersion);
+            }
         }
 
         private static string ResolveBreadcrumbsFolder()

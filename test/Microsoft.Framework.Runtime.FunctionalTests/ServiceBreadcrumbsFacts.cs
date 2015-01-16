@@ -3,6 +3,7 @@
 
 using System.IO;
 using System.Security.AccessControl;
+using Microsoft.AspNet.Testing.xunit;
 using Xunit;
 
 namespace Microsoft.Framework.Runtime.Tests
@@ -21,44 +22,58 @@ namespace Microsoft.Framework.Runtime.Tests
             Directory.CreateDirectory(TempFolderPath);
         }
 
-        [Fact]
+        [ConditionalFact]
+        [OSSkipCondition(OperatingSystems.MacOSX | OperatingSystems.Unix)]
+        public void RuntimeBreadcrumbIsCreated()
+        {
+            var breadcrumbs = new Servicing.Breadcrumbs(TempFolderPath);
+            breadcrumbs.CreateRuntimeBreadcrumb();
+
+            var runtimeBreadcrumbFile = typeof(Servicing.Breadcrumbs).Assembly.GetName().Name;
+            Assert.True(File.Exists(Path.Combine(TempFolderPath, runtimeBreadcrumbFile)));
+        }
+
+        [ConditionalFact]
+        [OSSkipCondition(OperatingSystems.MacOSX | OperatingSystems.Unix)]
         public void BreadcrumbsAreCreatedSuccessfully()
         {
             Assert.Empty(Directory.GetFiles(TempFolderPath));
 
-            Servicing.Breadcrumbs breadcrumbs = new Servicing.Breadcrumbs(TempFolderPath);
+            var breadcrumbs = new Servicing.Breadcrumbs(TempFolderPath);
             breadcrumbs.LeaveBreadcrumb("Test", new NuGet.SemanticVersion("1.0.0"));
 
             Assert.True(File.Exists(Path.Combine(TempFolderPath, "Test")));
             Assert.True(File.Exists(Path.Combine(TempFolderPath, "Test.1.0.0")));
         }
 
-        [Fact]
+        [ConditionalFact]
+        [OSSkipCondition(OperatingSystems.MacOSX | OperatingSystems.Unix)]
         public void BreadcrumbsCreationDoesNotFailWhenAccessDenied()
         {
-            string userName = System.Security.Principal.WindowsIdentity.GetCurrent().Name;
+            var userName = System.Security.Principal.WindowsIdentity.GetCurrent().Name;
 
-            DirectoryInfo directory = new DirectoryInfo(TempFolderPath);
-            DirectorySecurity security = new DirectorySecurity();
+            var directory = new DirectoryInfo(TempFolderPath);
+            var security = new DirectorySecurity();
             security.AddAccessRule(new FileSystemAccessRule(userName, FileSystemRights.Write, AccessControlType.Deny));
             directory.SetAccessControl(security);
 
-            Servicing.Breadcrumbs breadcrumbs = new Servicing.Breadcrumbs(TempFolderPath);
+            var breadcrumbs = new Servicing.Breadcrumbs(TempFolderPath);
             breadcrumbs.LeaveBreadcrumb("Test", new NuGet.SemanticVersion("1.0.0"));
 
             Assert.Empty(Directory.GetFiles(TempFolderPath));
         }
 
-        [Fact]
+        [ConditionalFact]
+        [OSSkipCondition(OperatingSystems.MacOSX | OperatingSystems.Unix)]
         public void BreadcrumbsFolderNotCreatedIfDoesntExist()
         {
-            string nonExistingBreadcrumbsFolder = Path.Combine(Path.GetTempPath(), "fake_breadcrumbs");
+            var nonExistingBreadcrumbsFolder = Path.Combine(Path.GetTempPath(), "fake_breadcrumbs");
             if (Directory.Exists(nonExistingBreadcrumbsFolder))
             {
                 Directory.Delete(nonExistingBreadcrumbsFolder);
             }
 
-            Servicing.Breadcrumbs breadcrumbs = new Servicing.Breadcrumbs(nonExistingBreadcrumbsFolder);
+            var breadcrumbs = new Servicing.Breadcrumbs(nonExistingBreadcrumbsFolder);
             breadcrumbs.LeaveBreadcrumb("Test", new NuGet.SemanticVersion("1.0.0"));
 
             Assert.False(Directory.Exists(nonExistingBreadcrumbsFolder));

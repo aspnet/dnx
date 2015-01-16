@@ -145,6 +145,7 @@ namespace Microsoft.Framework.Runtime
             var defaultResolver = new DefaultPackagePathResolver(_repository.RepositoryRoot);
 
             Servicing.Breadcrumbs breadcrumbs = new Servicing.Breadcrumbs();
+            breadcrumbs.CreateRuntimeBreadcrumb();
 
             foreach (var dependency in packages)
             {
