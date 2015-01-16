@@ -31,8 +31,8 @@ namespace Microsoft.Framework.Runtime.Servicing
                 var kreServicing = Environment.GetEnvironmentVariable("KRE_SERVICING");
                 if (string.IsNullOrEmpty(kreServicing))
                 {
-                    var servicingRoot = Environment.GetEnvironmentVariable("ProgramFiles") ??
-                                        Environment.GetEnvironmentVariable("HOME");
+                    var servicingRoot = Environment.GetEnvironmentVariable("PROGRAMFILES(X86)") ??
+                                        Environment.GetEnvironmentVariable("PROGRAMFILES");
 
                     kreServicing = Path.Combine(
                         servicingRoot,
