@@ -1,18 +1,17 @@
 ﻿// Copyright (c) Microsoft Open Technologies, Inc. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
-using System;
 using System.IO;
 using System.Security.AccessControl;
 using Xunit;
 
 namespace Microsoft.Framework.Runtime.Tests
 {
-    public class ServicingFacts
+    public class ServicingBreadcrumbsFacts
     {
         private readonly string TempFolderPath = Path.Combine(Path.GetTempPath(), "breadcrumbs_test");
 
-        public ServicingFacts()
+        public ServicingBreadcrumbsFacts()
         {
             if (Directory.Exists(TempFolderPath))
             {
