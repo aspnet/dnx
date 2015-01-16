@@ -77,7 +77,7 @@ namespace Microsoft.Framework.PackageManager
                             LibraryRange = new LibraryRange
                             {
                                 Name = d.Id,
-                                VersionRange = new SemanticVersionRange(d.VersionSpec)
+                                VersionRange = d.VersionSpec == null ? null : new SemanticVersionRange(d.VersionSpec)
                             }
                         })
                         .ToList();
