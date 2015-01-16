@@ -53,7 +53,7 @@ namespace Microsoft.Framework.Runtime.Servicing
                 programDataFolder,
                 "Microsoft",
                 "KRE",
-                "breadcrumbs");
+                "BreadcrumbsStore");
 
             return breadcrumbsFolder;
         }
