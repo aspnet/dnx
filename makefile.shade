@@ -1,6 +1,7 @@
 use assembly="System.Xml.Linq, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089"
 use assembly="System.IO.Compression.FileSystem, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089"
 use import="Environment"
+use import="Regex"
 use namespace="System.IO"
 use namespace="System.Linq"
 use namespace="System.Xml.Linq"
@@ -63,6 +64,8 @@ var MONO_NATIVE_PROJECTS = '${FindAllProjects()}'
 
 var MONO_MANAGED_PROJECTS = '${FindAllProjects("klr.mono.managed")}'
 
+var RC_FILES = '${FindAllFiles("Resource.rc", "klr", "klr.net45", "klr.core45")}'
+
 #build-compile target='compile'
 
 #native-compile target='compile' if='!IsMono'
@@ -87,7 +90,29 @@ var MONO_MANAGED_PROJECTS = '${FindAllProjects("klr.mono.managed")}'
         }
     }
 
-#build-native-klr target='native-compile' if='!IsMono'
+#update-rc-files if='!IsMono'
+    for each='var rcfile in RC_FILES'
+        @{
+            var digitVer = PRODUCT_VERSION.Replace(".", ",") + ",0";
+
+            var productVersionStructMatcher = @"PRODUCTVERSION \d+,\d+,\d+,\d+";
+            var productVersionValueMatcher = @"VALUE ""ProductVersion"", ""[^""]+""";
+            var productVersionStruct = "PRODUCTVERSION " + digitVer;
+            var productVersionValue = "VALUE \"ProductVersion\", \"" + FULL_VERSION + "\"";
+
+            var fileVersionStructMatcher = @"FILEVERSION \d+,\d+,\d+,\d+";
+            var fileVersionValueMatcher = @"VALUE ""FileVersion"", ""[^""]+""";
+            var fileVersionStruct = "FILEVERSION " + digitVer;
+            var fileVersionValue = "VALUE \"FileVersion\", \"" + FULL_VERSION + "\"";
+        }
+        update-file updateFile="${rcfile}" @{
+            updateText = RegexReplace(updateText, productVersionStructMatcher, productVersionStruct);
+            updateText = RegexReplace(updateText, productVersionValueMatcher, productVersionValue);
+            updateText = RegexReplace(updateText, fileVersionStructMatcher, fileVersionStruct);
+            updateText = RegexReplace(updateText, fileVersionValueMatcher, fileVersionValue);
+        }
+
+#build-native-klr .update-rc-files target='native-compile' if='!IsMono'
     var klrProj = '${Path.Combine(ROOT, "src", "klr", "klr.vcxproj")}'
     @{
         if (!IsMsbuildInstalled(MSBUILD))
@@ -746,9 +771,14 @@ functions @{
 
     string[] FindAllProjects(params string[] folders)
     {
+      return FindAllFiles("project.json", folders);
+    }
+
+    string[] FindAllFiles(string fileName, params string[] folders)
+    {
       return folders.Select(folder => Path.Combine("src", folder)) 
                     .Where(folder => Directory.Exists(folder)) 
-                    .SelectMany(folder => Directory.GetFiles(folder, "project.json", SearchOption.AllDirectories)) 
+                    .SelectMany(folder => Directory.GetFiles(folder, fileName, SearchOption.AllDirectories)) 
                     .ToArray();
     }
 
