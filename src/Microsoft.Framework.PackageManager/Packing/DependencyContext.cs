@@ -54,7 +54,7 @@ namespace Microsoft.Framework.PackageManager.Packing
             {
                 return null;
             }
-            parts = parts[0].Split(new[] { '-' }, 3);
+            parts = parts[0].Split(new[] { '-' }, 4);
             if (parts.Length < 2)
             {
                 return null;

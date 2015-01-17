@@ -12,13 +12,13 @@ namespace Microsoft.Framework.PackageManager.Packing
     public class PackRuntime
     {
         private readonly FrameworkName _frameworkName;
-        private readonly string _kreNupkgPath;
+        private readonly string _runtimeNupkgPath;
 
-        public PackRuntime(PackRoot root, FrameworkName frameworkName, string kreNupkgPath)
+        public PackRuntime(PackRoot root, FrameworkName frameworkName, string runtimeNupkgPath)
         {
             _frameworkName = frameworkName;
-            _kreNupkgPath = kreNupkgPath;
-            Name = Path.GetFileName(Path.GetDirectoryName(_kreNupkgPath));
+            _runtimeNupkgPath = runtimeNupkgPath;
+            Name = Path.GetFileName(Path.GetDirectoryName(_runtimeNupkgPath));
             TargetPath = Path.Combine(root.TargetPackagesPath, Name);
         }
 
@@ -42,14 +42,14 @@ namespace Microsoft.Framework.PackageManager.Packing
             }
 
             var targetNupkgPath = Path.Combine(TargetPath, Name + ".nupkg");
-            using (var sourceStream = File.OpenRead(_kreNupkgPath))
+            using (var sourceStream = File.OpenRead(_runtimeNupkgPath))
             {
                 using (var archive = new ZipArchive(sourceStream, ZipArchiveMode.Read))
                 {
                     root.Operations.ExtractNupkg(archive, TargetPath);
                 }
             }
-            using (var sourceStream = File.OpenRead(_kreNupkgPath))
+            using (var sourceStream = File.OpenRead(_runtimeNupkgPath))
             {
                 using (var targetStream = new FileStream(targetNupkgPath, FileMode.Create, FileAccess.Write, FileShare.None))
                 {

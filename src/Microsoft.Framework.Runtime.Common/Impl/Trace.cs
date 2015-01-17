@@ -37,7 +37,8 @@ namespace System.Diagnostics
         {
             get
             {
-                return Environment.GetEnvironmentVariable("KRE_TRACE") == "1";
+                // TODO: remove KRE_ env var
+                return (Environment.GetEnvironmentVariable("DOTNET_TRACE") ?? Environment.GetEnvironmentVariable("KRE_TRACE")) == "1";
             }
         }
     }

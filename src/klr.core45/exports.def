@@ -1,3 +1,0 @@
-LIBRARY   klr.core45.dll 
-EXPORTS 
-    CallApplicationMain   @1 

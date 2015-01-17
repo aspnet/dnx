@@ -36,7 +36,7 @@ namespace DependencyAnalyzer.Commands
 
             var finder = new DependencyFinder(accessor, cache, _environment, _assemblyFolder);
 
-            ICollection<string> tpa = finder.GetDependencies("klr.core45.managed");
+            ICollection<string> tpa = finder.GetDependencies("dotnet.core45.managed");
 
             // ordering the tpa list make it easier to compare the difference
             UpdateSourceFile(tpa.OrderBy(one => one).ToArray());

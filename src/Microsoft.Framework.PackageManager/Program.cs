@@ -101,7 +101,7 @@ namespace Microsoft.Framework.PackageManager
                     CommandOptionType.NoValue);
                 var optionNoSource = c.Option("--no-source", "Compiles the source files into NuGet packages",
                     CommandOptionType.NoValue);
-                var optionRuntime = c.Option("--runtime <KRE>", "Name or full path of the KRE folder to include",
+                var optionRuntime = c.Option("--runtime <RUNTIME>", "Name or full path of the runtime folder to include",
                     CommandOptionType.MultipleValue);
                 var optionNative = c.Option("--native", "Build and include native images. User must provide targeted CoreCLR runtime versions along with this option.",
                     CommandOptionType.NoValue);

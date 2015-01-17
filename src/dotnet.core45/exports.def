@@ -1,0 +1,3 @@
+LIBRARY   dotnet.core45.dll 
+EXPORTS 
+    CallApplicationMain   @1 

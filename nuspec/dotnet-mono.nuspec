@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<package>
+    <metadata>
+        <id>dotnet-mono</id>
+        <version>0.0.1-pre</version>
+        <authors>Microsoft</authors>
+        <requireLicenseAcceptance>false</requireLicenseAcceptance>
+        <description>The .NET Runtime Environment for Mono</description>
+    </metadata>
+    <files>
+        <file src="dotnet-mono\bin\**" exclude="**\*.pdb;**\*.xml" target="bin" />
+    </files>
+</package>

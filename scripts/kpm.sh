@@ -9,4 +9,4 @@ done
 DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
 
 
-exec $DIR/klr $DIR/lib/Microsoft.Framework.PackageManager/Microsoft.Framework.PackageManager.dll "$@"
+exec $DIR/dotnet $DIR/lib/Microsoft.Framework.PackageManager/Microsoft.Framework.PackageManager.dll "$@"

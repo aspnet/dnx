@@ -249,9 +249,9 @@ namespace Microsoft.Framework.Project
 
         public static string ResolveProcessorArchitecture(string runtimePath)
         {
-            var kreFullName = new DirectoryInfo(runtimePath).Name;
-            var kreName = kreFullName.Substring(0, kreFullName.IndexOf('.'));
-            var arch = kreName.Substring(kreName.LastIndexOf('-') + 1);
+            var runtimeFullName = new DirectoryInfo(runtimePath).Name;
+            var runtimeName = runtimeFullName.Substring(0, runtimeFullName.IndexOf('.'));
+            var arch = runtimeName.Substring(runtimeName.LastIndexOf('-') + 1);
             return arch;
         }
     }

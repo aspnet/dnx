@@ -30,8 +30,8 @@ namespace DependencyAnalyzer.Commands
             {
                 "Microsoft.Framework.Runtime.Roslyn",
                 "Microsoft.Framework.ApplicationHost",
-                "klr.host",
-                "klr.core45.managed"
+                "dotnet.host",
+                "dotnet.core45.managed"
             };
 
             // TODO: Unhard coded this?

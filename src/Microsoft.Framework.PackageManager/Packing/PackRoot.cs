@@ -99,20 +99,20 @@ namespace Microsoft.Framework.PackageManager.Packing
             }
 
             const string template = @"
-@""{0}klr.exe"" --appbase ""%~dp0{1}"" Microsoft.Framework.ApplicationHost {2} %*
+@""{0}dotnet.exe"" --appbase ""%~dp0{1}"" Microsoft.Framework.ApplicationHost {2} %*
 ";
 
             foreach (var commandName in _project.Commands.Keys)
             {
-                var klrFolder = string.Empty;
+                var runtimeFolder = string.Empty;
                 if (Runtimes.Any())
                 {
-                    klrFolder = string.Format(@"%~dp0{0}\packages\{1}\bin\", AppRootName, Runtimes.First().Name);
+                    runtimeFolder = string.Format(@"%~dp0{0}\packages\{1}\bin\", AppRootName, Runtimes.First().Name);
                 }
 
                 File.WriteAllText(
                     Path.Combine(OutputPath, commandName + ".cmd"),
-                    string.Format(template, klrFolder, relativeAppBase, commandName));
+                    string.Format(template, runtimeFolder, relativeAppBase, commandName));
             }
         }
 
@@ -139,22 +139,22 @@ while [ -h ""$SOURCE"" ]; do # resolve $SOURCE until the file is no longer a sym
 done
 DIR=""$( cd -P ""$( dirname ""$SOURCE"" )"" && pwd )""
 
-export SET KRE_APPBASE=""$DIR/{0}""
+export SET DOTNET_APPBASE=""$DIR/{0}""
 
-exec ""{1}klr"" Microsoft.Framework.ApplicationHost {2} ""$@""";
+exec ""{1}dotnet"" Microsoft.Framework.ApplicationHost {2} ""$@""";
 
             foreach (var commandName in _project.Commands.Keys)
             {
-                var klrFolder = string.Empty;
+                var runtimeFolder = string.Empty;
                 if (Runtimes.Any())
                 {
-                    klrFolder = string.Format(@"$DIR/{0}/packages/{1}/bin/",
+                    runtimeFolder = string.Format(@"$DIR/{0}/packages/{1}/bin/",
                         AppRootName, Runtimes.First().Name);
                 }
 
                 var scriptPath = Path.Combine(OutputPath, commandName);
                 File.WriteAllText(scriptPath,
-                    string.Format(template, relativeAppBase, klrFolder, commandName).Replace("\r\n", "\n"));
+                    string.Format(template, relativeAppBase, runtimeFolder, commandName).Replace("\r\n", "\n"));
                 if (PlatformHelper.IsMono)
                 {
                     MarkExecutable(scriptPath);

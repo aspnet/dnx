@@ -163,7 +163,8 @@ namespace Microsoft.Framework.ApplicationHost
             defaultHostOptions.TargetFramework = _environment.RuntimeFramework;
             defaultHostOptions.Configuration = optionConfiguration.Value() ?? _environment.Configuration ?? "Debug";
             defaultHostOptions.ApplicationBaseDirectory = _environment.ApplicationBasePath;
-            var portValue = optionCompilationServer.Value() ?? Environment.GetEnvironmentVariable("KRE_COMPILATION_SERVER_PORT");
+            // TODO: remove KRE_ env var
+            var portValue = optionCompilationServer.Value() ?? Environment.GetEnvironmentVariable("DOTNET_COMPILATION_SERVER_PORT") ?? Environment.GetEnvironmentVariable("KRE_COMPILATION_SERVER_PORT");
 
             int port;
             if (!string.IsNullOrEmpty(portValue) && int.TryParse(portValue, out port))

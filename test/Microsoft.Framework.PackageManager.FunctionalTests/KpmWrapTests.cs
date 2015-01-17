@@ -14,19 +14,19 @@ namespace Microsoft.Framework.PackageManager
 {
     public class KpmWrapTests
     {
-        public static IEnumerable<object[]> KrePaths
+        public static IEnumerable<object[]> DotnetHomeDirs
         {
             get
             {
-                return TestUtils.GetKreHomeDirs().Select(path => new[] { path });
+                return TestUtils.GetDotnetHomeDirs().Select(path => new[] { path });
             }
         }
 
         public static readonly string _msbuildPath = TestUtils.ResolveMSBuildPath();
 
         [Theory]
-        [MemberData("KrePaths")]
-        public void KpmWrapUpdatesExistingProjectJson(DisposableDir kreHomeDir)
+        [MemberData("DotnetHomeDirs")]
+        public void KpmWrapUpdatesExistingProjectJson(DisposableDir runtimeHomeDir)
         {
             if (PlatformHelper.IsMono)
             {
@@ -63,7 +63,7 @@ namespace Microsoft.Framework.PackageManager
             var expectedGlobalJson = @"{
     ""sources"": [ ""src"", ""test"" ]
 }";
-            using (kreHomeDir)
+            using (runtimeHomeDir)
             using (var testSolutionDir = TestUtils.GetTempTestSolution("ConsoleApp1"))
             {
                 var libBetaPclCsprojPath = Path.Combine(testSolutionDir, "LibraryBeta.PCL", "LibraryBeta.PCL.csproj");
@@ -75,17 +75,17 @@ namespace Microsoft.Framework.PackageManager
                 var globalJsonPath = Path.Combine(testSolutionDir, "global.json");
 
                 var betaPclExitCode = KpmTestUtils.ExecKpm(
-                    kreHomeDir,
+                    runtimeHomeDir,
                     subcommand: "wrap",
                     arguments: string.Format("\"{0}\" --msbuild \"{1}\"", libBetaPclCsprojPath, _msbuildPath));
 
                 var betaDesktopExitCode = KpmTestUtils.ExecKpm(
-                    kreHomeDir,
+                    runtimeHomeDir,
                     subcommand: "wrap",
                     arguments: string.Format("\"{0}\" --msbuild \"{1}\"", libBetaPclDesktopCsprojPath, _msbuildPath));
 
                 var betaPhoneExitCode = KpmTestUtils.ExecKpm(
-                    kreHomeDir,
+                    runtimeHomeDir,
                     subcommand: "wrap",
                     arguments: string.Format("\"{0}\" --msbuild \"{1}\"", libBetaPclPhoneCsprojPath, _msbuildPath));
 
@@ -99,8 +99,8 @@ namespace Microsoft.Framework.PackageManager
         }
 
         [Theory]
-        [MemberData("KrePaths")]
-        public void KpmWrapMaintainsAllKindsOfReferences(DisposableDir kreHomeDir)
+        [MemberData("DotnetHomeDirs")]
+        public void KpmWrapMaintainsAllKindsOfReferences(DisposableDir runtimeHomeDir)
         {
             if (PlatformHelper.IsMono)
             {
@@ -153,7 +153,7 @@ namespace Microsoft.Framework.PackageManager
     ""wrap""
   ]
 }";
-            using (kreHomeDir)
+            using (runtimeHomeDir)
             using (var testSolutionDir = TestUtils.GetTempTestSolution("ConsoleApp1"))
             {
                 var libGammaCsprojPath = Path.Combine(testSolutionDir, "LibraryGamma", "LibraryGamma.csproj");
@@ -164,7 +164,7 @@ namespace Microsoft.Framework.PackageManager
                 var libDeltaJsonPath = Path.Combine(wrapFolderPath, "LibraryDelta", "project.json");
 
                 var exitCode = KpmTestUtils.ExecKpm(
-                    kreHomeDir,
+                    runtimeHomeDir,
                     subcommand: "wrap",
                     arguments: string.Format("\"{0}\" --msbuild \"{1}\"", libGammaCsprojPath, _msbuildPath));
 

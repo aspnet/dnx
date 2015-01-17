@@ -2,7 +2,7 @@
 SETLOCAL
 SET ERRORLEVEL=
 
-"%~dp0klr" --appbase "%CD%" %K_OPTIONS% --lib "%~dp0lib\Microsoft.Framework.PackageManager" Microsoft.Framework.PackageManager %*
+"%~dp0dotnet" %DOTNET_OPTIONS% "%~dp0lib\Microsoft.Framework.PackageManager\Microsoft.Framework.PackageManager.dll" %*
 
 exit /b %ERRORLEVEL%
 ENDLOCAL

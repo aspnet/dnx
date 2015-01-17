@@ -356,10 +356,10 @@ namespace Microsoft.Framework.PackageManager.Packing
             {
                 { "kpm-package-path", relativePackagesPath},
                 { "bootstrapper-version", GetBootstrapperVersion(root)},
-                { "kre-package-path", relativePackagesPath},
-                { "kre-version", GetRuntimeVersion(defaultRuntime)},
-                { "kre-clr", GetRuntimeFlavor(defaultRuntime)},
-                { "kre-app-base", _applicationBase},
+                { "packages-path", relativePackagesPath},
+                { "dotnet-version", GetRuntimeVersion(defaultRuntime)},
+                { "dotnet-clr", GetRuntimeFlavor(defaultRuntime)},
+                { "dotnet-app-base", _applicationBase},
             };
 
             foreach (var pair in keyValuePairs)
@@ -408,9 +408,9 @@ namespace Microsoft.Framework.PackageManager.Packing
             return package == null ? string.Empty : package.Library.Version.ToString();
         }
 
-        // Expected runtime name format: KRE-{FLAVOR}-{ARCHITECTURE}.{VERSION}
-        // Sample input: KRE-CoreCLR-x86.1.0.0.0
-        // Sample output: CoreCLR
+        // Expected runtime name format: dotnet-{FLAVOR}-{OS}-{ARCHITECTURE}.{VERSION}
+        // Sample input: dotnet-coreclr-win-x86.1.0.0.0
+        // Sample output: coreclr
         private static string GetRuntimeFlavor(PackRuntime runtime)
         {
             if (runtime == null)
@@ -419,12 +419,12 @@ namespace Microsoft.Framework.PackageManager.Packing
             }
 
             var segments = runtime.Name.Split(new[] { '.' }, 2);
-            segments = segments[0].Split(new[] { '-' }, 3);
+            segments = segments[0].Split(new[] { '-' }, 4);
             return segments[1];
         }
 
-        // Expected runtime name format: KRE-{FLAVOR}-{ARCHITECTURE}.{VERSION}
-        // Sample input: KRE-CoreCLR-x86.1.0.0.0
+        // Expected runtime name format: dotnet-{FLAVOR}-{OS}-{ARCHITECTURE}.{VERSION}
+        // Sample input: dotnet-coreclr-win-x86.1.0.0.0
         // Sample output: 1.0.0.0
         private static string GetRuntimeVersion(PackRuntime runtime)
         {

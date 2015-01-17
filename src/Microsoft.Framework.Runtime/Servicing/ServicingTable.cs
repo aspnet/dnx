@@ -28,19 +28,20 @@ namespace Microsoft.Framework.Runtime.Servicing
             return LazyInitializer.EnsureInitialized(ref _index, ref _indexInitialized, ref _indexSync, () =>
             {
                 var index = new ServicingIndex();
-                var kreServicing = Environment.GetEnvironmentVariable("KRE_SERVICING");
-                if (string.IsNullOrEmpty(kreServicing))
+                // TODO: remove KRE_ env var
+                var dotnetServicing = Environment.GetEnvironmentVariable("DOTNET_SERVICING") ?? Environment.GetEnvironmentVariable("KRE_SERVICING");
+                if (string.IsNullOrEmpty(dotnetServicing))
                 {
                     var servicingRoot = Environment.GetEnvironmentVariable("ProgramFiles") ??
                                         Environment.GetEnvironmentVariable("HOME");
 
-                    kreServicing = Path.Combine(
+                    dotnetServicing = Path.Combine(
                         servicingRoot,
-                        "KRE",
+                        "dotnet",
                         "Servicing");
                 }
 
-                index.Initialize(kreServicing);
+                index.Initialize(dotnetServicing);
                 return index;
             });
         }

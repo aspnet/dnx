@@ -60,27 +60,27 @@ namespace Microsoft.Framework.FunctionalTestUtils
             return Path.Combine(kRuntimeRoot, "artifacts", "build");
         }
 
-        public static DisposableDir GetKreHomeDir(string flavor, string architecture)
+        public static DisposableDir GetRuntimeHomeDir(string flavor, string os, string architecture)
         {
             var buildArtifactDir = GetBuildArtifactsFolder();
-            var kreNupkg = Directory.GetFiles(
+            var runtimeNupkg = Directory.GetFiles(
                 buildArtifactDir,
-                string.Format("KRE-{0}-{1}.*.nupkg", flavor, architecture),
+                string.Format("dotnet-{0}-{1}-{2}.*.nupkg", flavor, os, architecture),
                 SearchOption.TopDirectoryOnly) .First();
-            var kreHomePath = CreateTempDir();
-            var kreName = Path.GetFileNameWithoutExtension(kreNupkg);
-            var kreRoot = Path.Combine(kreHomePath, "packages", kreName);
-            System.IO.Compression.ZipFile.ExtractToDirectory(kreNupkg, kreRoot);
-            File.Copy(kreNupkg, Path.Combine(kreRoot, kreName + ".nupkg"));
-            return kreHomePath;
+            var dotnetHomePath = CreateTempDir();
+            var runtimeName = Path.GetFileNameWithoutExtension(runtimeNupkg);
+            var runtimeRoot = Path.Combine(dotnetHomePath, "runtimes", runtimeName);
+            System.IO.Compression.ZipFile.ExtractToDirectory(runtimeNupkg, runtimeRoot);
+            File.Copy(runtimeNupkg, Path.Combine(runtimeRoot, runtimeName + ".nupkg"));
+            return dotnetHomePath;
         }
 
-        public static IEnumerable<DisposableDir> GetKreHomeDirs()
+        public static IEnumerable<DisposableDir> GetDotnetHomeDirs()
         {
-            yield return GetKreHomeDir(flavor: "CLR", architecture: "amd64");
-            yield return GetKreHomeDir(flavor: "CLR", architecture: "x86");
-            yield return GetKreHomeDir(flavor: "CoreCLR", architecture: "amd64");
-            yield return GetKreHomeDir(flavor: "CoreCLR", architecture: "x86");
+            yield return GetRuntimeHomeDir(flavor: "clr", os: "win", architecture: "x64");
+            yield return GetRuntimeHomeDir(flavor: "clr", os: "win", architecture: "x86");
+            yield return GetRuntimeHomeDir(flavor: "coreclr", os: "win", architecture: "x64");
+            yield return GetRuntimeHomeDir(flavor: "coreclr", os: "win", architecture: "x86");
         }
 
         public static DisposableDir GetTempTestSolution(string name)
@@ -156,11 +156,11 @@ namespace Microsoft.Framework.FunctionalTestUtils
             return Path.Combine(programFilesPath, "MSBuild", "14.0", "Bin", "MSBuild.exe");
         }
 
-        public static string GetKreVersion()
+        public static string GetRuntimeVersion()
         {
-            var kreNupkg = Directory.EnumerateFiles(GetBuildArtifactsFolder(), "KRE-*.nupkg").FirstOrDefault();
-            var kreName = Path.GetFileNameWithoutExtension(kreNupkg);
-            var segments = kreName.Split(new[] { '.' }, 2);
+            var runtimeNupkg = Directory.EnumerateFiles(GetBuildArtifactsFolder(), "dotnet-*.nupkg").FirstOrDefault();
+            var runtimeName = Path.GetFileNameWithoutExtension(runtimeNupkg);
+            var segments = runtimeName.Split(new[] { '.' }, 2);
             return segments[1];
         }
 

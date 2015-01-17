@@ -117,27 +117,24 @@ namespace Microsoft.Framework.PackageManager.Packing
                 {
                     runtimeProbePaths = new List<string>();
                     runtimeProbePaths.Add(runtime);
-                    var kreHome = Environment.GetEnvironmentVariable("KRE_HOME");
-                    if (string.IsNullOrEmpty(kreHome))
+                    // TODO: remove KRE_ env var
+                    var dotnetHome = Environment.GetEnvironmentVariable("DOTNET_HOME") ?? Environment.GetEnvironmentVariable("KRE_HOME");
+                    if (string.IsNullOrEmpty(dotnetHome))
                     {
+                        var dotnetGlobalPath = Environment.GetEnvironmentVariable("DOTNET_GLOBAL_PATH");
 #if ASPNETCORE50
-                        kreHome = Environment.GetEnvironmentVariable("ProgramFiles") + @"\KRE;%USERPROFILE%\.kre";
+                        dotnetHome = @"%USERPROFILE%\.dotnet;" + dotnetGlobalPath;
 #else
                         var userProfile = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
-                        kreHome = Path.Combine(userProfile, ".kre");
-                        if (!PlatformHelper.IsMono)
-                        {
-                            var programFilesPath = Environment.GetEnvironmentVariable("ProgramFiles");
-                            kreHome = Path.Combine(programFilesPath, "KRE") + ";" + kreHome;
-                        }
+                        dotnetHome = Path.Combine(userProfile, ".dotnet") + ";" + dotnetGlobalPath;
 #endif
                     }
 
-                    foreach (var portion in kreHome.Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries))
+                    foreach (var portion in dotnetHome.Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries))
                     {
                         var packagesPath = Path.Combine(
                             Environment.ExpandEnvironmentVariables(portion),
-                            "packages",
+                            "runtimes",
                             runtime);
 
                         if (TryAddRuntime(root, frameworkName, packagesPath))
@@ -190,7 +187,7 @@ namespace Microsoft.Framework.PackageManager.Packing
 
             if (!frameworkContexts.Any())
             {
-                var frameworkName = DependencyContext.GetFrameworkNameForRuntime("KRE-CLR-x86.*");
+                var frameworkName = DependencyContext.GetFrameworkNameForRuntime("dotnet-clr-win-x86.*");
                 frameworkContexts[frameworkName] = CreateDependencyContext(project, frameworkName);
             }
 
@@ -271,21 +268,21 @@ namespace Microsoft.Framework.PackageManager.Packing
             return !anyUnresolvedDependency;
         }
 
-        bool TryAddRuntime(PackRoot root, FrameworkName frameworkName, string krePath)
+        bool TryAddRuntime(PackRoot root, FrameworkName frameworkName, string runtimePath)
         {
-            if (!Directory.Exists(krePath))
+            if (!Directory.Exists(runtimePath))
             {
                 return false;
             }
 
-            var kreName = Path.GetFileName(Path.GetDirectoryName(Path.Combine(krePath, ".")));
-            var kreNupkgPath = Path.Combine(krePath, kreName + ".nupkg");
-            if (!File.Exists(kreNupkgPath))
+            var runtimeName = Path.GetFileName(Path.GetDirectoryName(Path.Combine(runtimePath, ".")));
+            var runtimeNupkgPath = Path.Combine(runtimePath, runtimeName + ".nupkg");
+            if (!File.Exists(runtimeNupkgPath))
             {
                 return false;
             }
 
-            root.Runtimes.Add(new PackRuntime(root, frameworkName, kreNupkgPath));
+            root.Runtimes.Add(new PackRuntime(root, frameworkName, runtimeNupkgPath));
             return true;
         }
 
