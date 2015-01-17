@@ -8,8 +8,12 @@ while [ -h "$SOURCE" ]; do # resolve $SOURCE until the file is no longer a symli
 done
 DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
 
+if [ -z "$KRE_APPBASE" ]; then
+    KRE_APPBASE=`pwd`
+fi
+
 if [ -f "$DIR/k-$1" ]; then
     exec $DIR/k-$1 "$@"
 else
-    exec $DIR/klr Microsoft.Framework.ApplicationHost "$@"  
+    exec $DIR/klr --appbase "$KRE_APPBASE" Microsoft.Framework.ApplicationHost "$@"  
 fi
