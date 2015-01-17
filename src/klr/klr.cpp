@@ -12,7 +12,7 @@ void GetModuleDirectory(HMODULE module, LPWSTR szPath)
 
 int LastIndexOfChar(LPCWSTR const pszStr, WCHAR c)
 {
-    int nIndex = lstrlen(pszStr) - 1;
+    int nIndex = wcsnlen_s(pszStr, MAX_PATH) - 1;
     do
     {
         if (pszStr[nIndex] == c)
@@ -31,8 +31,8 @@ bool StringsEqual(LPCWSTR const pszStrA, LPCWSTR const pszStrB)
 
 bool StringEndsWith(LPCWSTR const pszStr, LPCWSTR const pszSuffix)
 {
-    int nStrLen = lstrlen(pszStr);
-    int nSuffixLen = lstrlen(pszSuffix);
+    int nStrLen = wcsnlen_s(pszStr, MAX_PATH);
+    int nSuffixLen = wcsnlen_s(pszSuffix, MAX_PATH);
     int nOffset = nStrLen - nSuffixLen;
 
     if (nOffset < 0)
