@@ -102,12 +102,12 @@ namespace Microsoft.Framework.DesignTimeHost
                     Message = ex.Message
                 };
 
-                var projectFormatException = ex as ProjectFormatException;
-                if (projectFormatException != null)
+                var fileFormatException = ex as FileFormatException;
+                if (fileFormatException != null)
                 {
-                    error.Path = projectFormatException.Path;
-                    error.Line = projectFormatException.Line;
-                    error.Column = projectFormatException.Column;
+                    error.Path = fileFormatException.Path;
+                    error.Line = fileFormatException.Line;
+                    error.Column = fileFormatException.Column;
                 }
 
                 var message = new Message

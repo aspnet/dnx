@@ -268,7 +268,7 @@ namespace Microsoft.Framework.Runtime
             }
             catch (JsonReaderException ex)
             {
-                throw ProjectFormatException.Create(ex, projectPath);
+                throw FileFormatException.Create(ex, projectPath);
             }
 
             return true;
@@ -310,7 +310,7 @@ namespace Microsoft.Framework.Runtime
                 {
                     var lineInfo = (IJsonLineInfo)version;
 
-                    throw ProjectFormatException.Create(ex, version, project.ProjectFilePath);
+                    throw FileFormatException.Create(ex, version, project.ProjectFilePath);
                 }
             }
 
@@ -379,7 +379,7 @@ namespace Microsoft.Framework.Runtime
                     }
                     else
                     {
-                        throw ProjectFormatException.Create(
+                        throw FileFormatException.Create(
                             string.Format("The value of a script in {0} can only be a string or an array of strings", ProjectFileName),
                             value,
                             project.ProjectFilePath);
@@ -492,7 +492,7 @@ namespace Microsoft.Framework.Runtime
                     if (string.IsNullOrEmpty(dependency.Key))
                     {
 
-                        throw ProjectFormatException.Create(
+                        throw FileFormatException.Create(
                             "Unable to resolve dependency ''.",
                             dependency.Value,
                             projectPath);
@@ -541,7 +541,7 @@ namespace Microsoft.Framework.Runtime
                         }
                         catch (Exception ex)
                         {
-                            throw ProjectFormatException.Create(
+                            throw FileFormatException.Create(
                                 ex,
                                 dependencyVersionToken,
                                 projectPath);
@@ -682,7 +682,7 @@ namespace Microsoft.Framework.Runtime
                     }
                     catch (Exception ex)
                     {
-                        throw ProjectFormatException.Create(ex, framework.Value, ProjectFilePath);
+                        throw FileFormatException.Create(ex, framework.Value, ProjectFilePath);
                     }
                 }
             }

@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using NuGet;
 
@@ -41,7 +42,17 @@ namespace Microsoft.Framework.Runtime
             globalSettings = new GlobalSettings();
 
             string json = File.ReadAllText(globalJsonPath);
-            var settings = JObject.Parse(json);
+            JObject settings = null;
+
+            try
+            {
+                settings = JObject.Parse(json);
+            }
+            catch (JsonReaderException ex)
+            {
+                throw FileFormatException.Create(ex, globalJsonPath);
+            }
+
             var sources = settings["sources"];
             var dependencies = settings["dependencies"] as JObject;
 
@@ -57,16 +68,19 @@ namespace Microsoft.Framework.Runtime
                     var dependencyValue = dependencies[property.Name] as JObject;
                     if (dependencyValue == null)
                     {
-                        throw new InvalidDataException(string.Format(
-                            "The value of '{0}' in {1} must be an object", property.Name, GlobalFileName));
+                        throw FileFormatException.Create(string.Format(
+                            "The value of '{0}' in {1} must be an object", property.Name, GlobalFileName), property, globalJsonPath);
                     }
 
+                    var versionToken = dependencyValue["version"];
+                    var versionValue = versionToken?.ToString();
+
                     SemanticVersion version;
-                    if (!SemanticVersion.TryParse(dependencyValue["version"]?.ToString(), out version))
+                    if (!SemanticVersion.TryParse(versionValue, out version))
                     {
-                        throw new InvalidDataException(string.Format(
+                        throw FileFormatException.Create(string.Format(
                             "The dependency '{0}' in {1} doesn't have valid version information",
-                            property.Name, GlobalFileName));
+                            property.Name, GlobalFileName), versionToken, globalJsonPath);
                     }
 
                     var library = new Library()
@@ -75,13 +89,14 @@ namespace Microsoft.Framework.Runtime
                         Version = version
                     };
 
-                    var shaValue = dependencyValue["sha"]?.ToString();
+                    var shaToken = dependencyValue["sha"];
+                    var shaValue = shaToken?.ToString();
 
                     if (string.IsNullOrEmpty(shaValue))
                     {
-                        throw new InvalidDataException(string.Format(
+                        throw FileFormatException.Create(string.Format(
                             "The dependency '{0}' in {1} doesn't have a valid SHA value",
-                            property.Name, GlobalFileName));
+                            property.Name, GlobalFileName), shaToken, globalJsonPath);
                     }
 
                     globalSettings.PackageHashes[library] = shaValue;
