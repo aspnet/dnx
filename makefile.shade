@@ -551,14 +551,15 @@ var RC_FILES = '${FindAllFiles("Resource.rc", "klr", "klr.net45", "klr.core45")}
 
 #copy-required-dependencies
     @{
-        if (!IsMono)
+        if (true)
         {
             var targets = new[]
             {
-                new { TargetFolder = KRE_CLR_x86_BIN,       Framework = "aspnet50",     Arch = "x86" },
-                new { TargetFolder = KRE_CLR_amd64_BIN,     Framework = "aspnet50",     Arch = "amd64" },
-                new { TargetFolder = KRE_CORECLR_x86_BIN,   Framework = "aspnetcore50", Arch = "x86" },
-                new { TargetFolder = KRE_CORECLR_amd64_BIN, Framework = "aspnetcore50", Arch = "amd64" },
+                new { TargetFolder = KRE_CLR_x86_BIN,       Framework = "aspnet50",     Arch = "x86",   Mono = false},
+                new { TargetFolder = KRE_CLR_amd64_BIN,     Framework = "aspnet50",     Arch = "amd64", Mono = false},
+                new { TargetFolder = KRE_MONO_BIN,          Framework = "aspnet50",     Arch = "x86",   Mono = true},
+                new { TargetFolder = KRE_CORECLR_x86_BIN,   Framework = "aspnetcore50", Arch = "x86",   Mono = false},
+                new { TargetFolder = KRE_CORECLR_amd64_BIN, Framework = "aspnetcore50", Arch = "amd64", Mono = false},
             };
 
             var runtimeProjects = new[]
@@ -578,6 +579,11 @@ var RC_FILES = '${FindAllFiles("Resource.rc", "klr", "klr.net45", "klr.core45")}
 
             foreach (var target in targets)
             {
+                if (IsMono && !target.Mono)
+                {
+                    continue;
+                }
+                
                 var coreclrFolder = Path.Combine(CORECLR_TARGET_PATH, "Runtime", target.Arch);
 
                 // parse and copy runtime assemblies
@@ -588,15 +594,22 @@ var RC_FILES = '${FindAllFiles("Resource.rc", "klr", "klr.net45", "klr.core45")}
                         continue;
 
                     var tmpFile = Path.GetTempFileName();
-                    var argument = string.Format("/c kpm list {0} --framework {1} --assemblies", Path.Combine(ROOT, "src", each), target.Framework);
+                    var argument = string.Format("list {0} --framework {1} --assemblies", Path.Combine(ROOT, "src", each), target.Framework);
 
                     if (target.Framework == "aspnetcore50")
                     {
                         argument += (" --runtime " + coreclrFolder);
                     }
 
-                    argument += (" >> " + tmpFile);
-                    Exec("cmd", argument);
+                    if (!IsMono)
+                    {
+                        argument = string.Format("/C kpm {0} > {1}", argument, tmpFile);
+                        Exec("cmd", argument);
+                    }
+                    else 
+                    {
+                        ExecuteAndRedirectOutput("kpm", argument, tmpFile);
+                    }
 
                     try
                     {
@@ -619,32 +632,36 @@ var RC_FILES = '${FindAllFiles("Resource.rc", "klr", "klr.net45", "klr.core45")}
                 // parse and copy lib assemblies
                 foreach (var each in sdkProjects)
                 {
-                    var projectAssemblies = new HashSet<string>();
-
                     var tmpFile = Path.GetTempFileName();
-                    var argument = string.Format("/c kpm list {0} --framework {1} --assemblies", Path.Combine(ROOT, "src", each), target.Framework);
+                    var argument = string.Format("list {0} --framework {1} --assemblies", Path.Combine(ROOT, "src", each), target.Framework);
 
                     if (target.Framework == "aspnetcore50")
                     {
                         argument += (" --runtime " + coreclrFolder);
                     }
 
-                    argument += (" >> " + tmpFile);
-                    Exec("cmd", argument);
+                    if (!IsMono)
+                    {
+                        argument = string.Format("/C kpm {0} > {1}", argument, tmpFile);
+                        Exec("cmd", argument);
+                    }
+                    else 
+                    {
+                        ExecuteAndRedirectOutput("kpm", argument, tmpFile);
+                    }
 
+                    HashSet<string> projectAssemblies;
                     try
                     {
-                        foreach (var file in File.ReadAllLines(tmpFile).Where(l => File.Exists(l) && !runtimeAssemblies.Contains(l)))
-                        {
-                            projectAssemblies.Add(file);
-                        }
+                        projectAssemblies = new HashSet<string>(File.ReadAllLines(tmpFile).Where(l => File.Exists(l)));
+                        projectAssemblies.ExceptWith(runtimeAssemblies);
                     }
                     catch (Exception)
                     {
                         throw new InvalidOperationException(string.Format("Fail to parse assemblies list for {0}.", each));
                     }
 
-                    var targetLibDir = Path.Combine(target.TargetFolder, "bin", each);
+                    var targetLibDir = Path.Combine(target.TargetFolder, "lib", each);
                     if (Directory.Exists(targetLibDir))
                     {
                         foreach (var file in projectAssemblies)
@@ -704,6 +721,27 @@ macro name='NuGetInstall' Package='string' OutputDir='string' Extra='string'
     nuget-install package='${Package}' outputDir='${OutputDir}' extra='${Extra}' nugetPath='.nuget/nuget.exe'
 
 functions @{
+    int ExecuteAndRedirectOutput(string command, string argument, string outputFile)
+    {
+        var procStartInfo = new ProcessStartInfo 
+        {
+            FileName = command, 
+            Arguments = argument, 
+            WorkingDirectory = Directory.GetCurrentDirectory(),
+            UseShellExecute = false
+        };
+        procStartInfo.EnvironmentVariables["KRE_TRACE"] = "0";
+        procStartInfo.RedirectStandardOutput = true;
+
+        var process = Process.Start(procStartInfo);
+        var content = process.StandardOutput.ReadToEnd();
+        process.WaitForExit();
+
+        File.WriteAllText(outputFile, content);
+
+        return process.ExitCode;
+    }
+
     string FindPackageDirectory(string name)
     {
         var packagesDir = Environment.GetEnvironmentVariable("KRE_PACKAGES");
