@@ -12,22 +12,22 @@ using NuGet;
 
 namespace Microsoft.Framework.PackageManager.Packing
 {
-    public class PackRoot
+    public class BundleRoot
     {
         private readonly Runtime.Project _project;
         public static readonly string AppRootName = "approot";
 
-        public PackRoot(Runtime.Project project, string outputPath, IServiceProvider hostServices, Reports reports)
+        public BundleRoot(Runtime.Project project, string outputPath, IServiceProvider hostServices, Reports reports)
         {
             _project = project;
             Reports = reports;
-            Projects = new List<PackProject>();
-            Packages = new List<PackPackage>();
-            Runtimes = new List<PackRuntime>();
+            Projects = new List<BundleProject>();
+            Packages = new List<BundlePackage>();
+            Runtimes = new List<BundleRuntime>();
             OutputPath = outputPath;
             HostServices = hostServices;
             TargetPackagesPath = Path.Combine(outputPath, AppRootName, "packages");
-            Operations = new PackOperations();
+            Operations = new BundleOperations();
             LibraryDependencyContexts = new Dictionary<Library, IList<DependencyContext>>();
         }
 
@@ -39,13 +39,13 @@ namespace Microsoft.Framework.PackageManager.Packing
         public bool NoSource { get; set; }
         public string Configuration { get; set; }
 
-        public IList<PackRuntime> Runtimes { get; set; }
-        public IList<PackProject> Projects { get; private set; }
-        public IList<PackPackage> Packages { get; private set; }
+        public IList<BundleRuntime> Runtimes { get; set; }
+        public IList<BundleProject> Projects { get; private set; }
+        public IList<BundlePackage> Packages { get; private set; }
         public IDictionary<Library, IList<DependencyContext>> LibraryDependencyContexts { get; private set; }
 
         public Reports Reports { get; private set; }
-        public PackOperations Operations { get; private set; }
+        public BundleOperations Operations { get; private set; }
 
         public IServiceProvider HostServices { get; private set; }
 
@@ -244,7 +244,7 @@ exec ""{1}klr"" Microsoft.Framework.ApplicationHost {2} ""$@""";
                 rootObject = new JObject();
             }
 
-            var applicationRoot = Path.Combine(OutputPath, PackRoot.AppRootName);
+            var applicationRoot = Path.Combine(OutputPath, BundleRoot.AppRootName);
 
             rootObject["dependencies"] = dependenciesObj;
             rootObject["packages"] = PathUtility.GetRelativePath(

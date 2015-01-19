@@ -10,7 +10,7 @@ using NuGet;
 
 namespace Microsoft.Framework.PackageManager.Packing
 {
-    public class PackOperations
+    public class BundleOperations
     {
         public void Delete(string folderPath)
         {

@@ -8,11 +8,11 @@ using NuGet;
 
 namespace Microsoft.Framework.PackageManager.Packing
 {
-    public class PackPackage
+    public class BundlePackage
     {
         private readonly LibraryDescription _libraryDescription;
 
-        public PackPackage(LibraryDescription libraryDescription)
+        public BundlePackage(LibraryDescription libraryDescription)
         {
             _libraryDescription = libraryDescription;
         }
@@ -21,7 +21,7 @@ namespace Microsoft.Framework.PackageManager.Packing
 
         public string TargetPath { get; private set; }
 
-        public void Emit(PackRoot root)
+        public void Emit(BundleRoot root)
         {
             root.Reports.Quiet.WriteLine("Using {0} dependency {1}", _libraryDescription.Type, Library);
             foreach (var context in root.LibraryDependencyContexts[Library])
@@ -33,7 +33,7 @@ namespace Microsoft.Framework.PackageManager.Packing
             }
         }
 
-        private void Emit(PackRoot root, IEnumerable<PackageAssembly> assemblies)
+        private void Emit(BundleRoot root, IEnumerable<PackageAssembly> assemblies)
         {
             var resolver = new DefaultPackagePathResolver(root.TargetPackagesPath);
 
@@ -68,7 +68,7 @@ namespace Microsoft.Framework.PackageManager.Packing
             }
         }
 
-        private void CopyFolder(PackRoot root, string srcFolder, string targetFolder)
+        private void CopyFolder(BundleRoot root, string srcFolder, string targetFolder)
         {
             if (!Directory.Exists(srcFolder))
             {
@@ -92,7 +92,7 @@ namespace Microsoft.Framework.PackageManager.Packing
             root.Operations.Copy(srcFolder, targetFolder);
         }
 
-        private void CopyFile(PackRoot root, string srcPath, string targetPath, bool overwrite)
+        private void CopyFile(BundleRoot root, string srcPath, string targetPath, bool overwrite)
         {
             var targetFolder = Path.GetDirectoryName(targetPath);
             Directory.CreateDirectory(targetFolder);

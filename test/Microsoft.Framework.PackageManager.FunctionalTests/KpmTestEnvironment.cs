@@ -39,7 +39,7 @@ namespace Microsoft.Framework.PackageManager
             }
         }
 
-        public string PackOutputDirName
+        public string BundleOutputDirName
         {
             get
             {
@@ -47,11 +47,11 @@ namespace Microsoft.Framework.PackageManager
             }
         }
 
-        public string PackOutputDirPath
+        public string BundleOutputDirPath
         {
             get
             {
-                return Path.Combine(RootDir, PackOutputDirName);
+                return Path.Combine(RootDir, BundleOutputDirName);
             }
         }
 

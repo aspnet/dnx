@@ -263,7 +263,7 @@ namespace Microsoft.Framework.Runtime.Tests
 {
     ""code"": ""*.cs;../*.cs"",
     ""exclude"": ""buggy/*.*"",
-    ""packExclude"": ""no_pack/*.*"",
+    ""bundleExclude"": ""no_pack/*.*"",
     ""preprocess"": ""other/**/*.cs;*.cs;*.*"",
     ""shared"": ""shared/**/*.cs"",
     ""resources"": ""a.cs;foo.js""
@@ -286,7 +286,7 @@ namespace Microsoft.Framework.Runtime.Tests
 {
     ""code"": [""*.cs"", ""../*.cs""],
     ""exclude"": [""buggy/*.*""],
-    ""packExclude"": [""no_pack/*.*""],
+    ""bundleExclude"": [""no_pack/*.*""],
     ""preprocess"": [""other/**/*.cs"", ""*.cs"", ""*.*""],
     ""shared"": [""shared/**/*.cs;../../shared/*.cs""],
     ""resources"": [""a.cs"", ""foo.js""]
