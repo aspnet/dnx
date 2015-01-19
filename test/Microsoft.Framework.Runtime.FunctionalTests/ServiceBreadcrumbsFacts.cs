@@ -3,7 +3,6 @@
 
 using System.IO;
 using System.Security.AccessControl;
-using Microsoft.AspNet.Testing.xunit;
 using Xunit;
 
 namespace Microsoft.Framework.Runtime.Tests
@@ -22,8 +21,7 @@ namespace Microsoft.Framework.Runtime.Tests
             Directory.CreateDirectory(TempFolderPath);
         }
 
-        [ConditionalFact]
-        [OSSkipCondition(OperatingSystems.MacOSX | OperatingSystems.Unix)]
+        [Fact]
         public void RuntimeBreadcrumbIsCreated()
         {
             var breadcrumbs = new Servicing.Breadcrumbs(TempFolderPath);
@@ -33,8 +31,7 @@ namespace Microsoft.Framework.Runtime.Tests
             Assert.True(File.Exists(Path.Combine(TempFolderPath, runtimeBreadcrumbFile)));
         }
 
-        [ConditionalFact]
-        [OSSkipCondition(OperatingSystems.MacOSX | OperatingSystems.Unix)]
+        [Fact]
         public void BreadcrumbsAreCreatedSuccessfully()
         {
             Assert.Empty(Directory.GetFiles(TempFolderPath));
@@ -46,8 +43,7 @@ namespace Microsoft.Framework.Runtime.Tests
             Assert.True(File.Exists(Path.Combine(TempFolderPath, "Test.1.0.0")));
         }
 
-        [ConditionalFact]
-        [OSSkipCondition(OperatingSystems.MacOSX | OperatingSystems.Unix)]
+        [Fact]
         public void BreadcrumbsCreationDoesNotFailWhenAccessDenied()
         {
             var userName = System.Security.Principal.WindowsIdentity.GetCurrent().Name;
@@ -63,8 +59,7 @@ namespace Microsoft.Framework.Runtime.Tests
             Assert.Empty(Directory.GetFiles(TempFolderPath));
         }
 
-        [ConditionalFact]
-        [OSSkipCondition(OperatingSystems.MacOSX | OperatingSystems.Unix)]
+        [Fact]
         public void BreadcrumbsFolderNotCreatedIfDoesntExist()
         {
             var nonExistingBreadcrumbsFolder = Path.Combine(Path.GetTempPath(), "fake_breadcrumbs");

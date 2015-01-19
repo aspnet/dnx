@@ -2,6 +2,7 @@
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 using System;
+using System.Diagnostics;
 using System.IO;
 using System.Reflection;
 using NuGet;
@@ -21,7 +22,10 @@ namespace Microsoft.Framework.Runtime.Servicing
         {
             // If the directory doesn't exist, don't create it because it
             // needs special permissions on it
-            _breadcrumbsFolder = Directory.Exists(breadcrumbsFolder) ? breadcrumbsFolder : null;
+            if (Directory.Exists(breadcrumbsFolder))
+            {
+                _breadcrumbsFolder = breadcrumbsFolder;
+            }
         }
 
         public static bool IsPackageServiceable(IPackage package)
@@ -88,14 +92,22 @@ namespace Microsoft.Framework.Runtime.Servicing
                 if (!File.Exists(fullFilePath))
                 {
                     File.Create(fullFilePath).Dispose();
+                    Trace.TraceInformation("Wrote servicing breadcrumb for {0}", fileName);
                 }
             }
-            catch (UnauthorizedAccessException)
+            catch (UnauthorizedAccessException exception)
             {
+                LogBreadcrumbsCreationFailure(fileName, exception);
             }
-            catch (DirectoryNotFoundException)
+            catch (DirectoryNotFoundException exception)
             {
+                LogBreadcrumbsCreationFailure(fileName, exception);
             }
+        }
+
+        private static void LogBreadcrumbsCreationFailure(string fileName, Exception exception)
+        {
+            Trace.TraceInformation("Failed to write servicing breadcrumb for {0} because of {1}", fileName, exception);
         }
     }
 }
