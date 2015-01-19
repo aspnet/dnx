@@ -26,6 +26,10 @@ namespace Microsoft.Framework.Runtime.Servicing
             {
                 _breadcrumbsFolder = breadcrumbsFolder;
             }
+            else
+            {
+                Trace.TraceInformation("Breadcrumbs for servicing will not be written because the breadcrumbs folder ({0}) does not exist.", breadcrumbsFolder);
+            }
         }
 
         public static bool IsPackageServiceable(IPackage package)
