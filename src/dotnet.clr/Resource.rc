@@ -67,11 +67,11 @@ BEGIN
         BLOCK "040904b0"
         BEGIN
             VALUE "CompanyName", "Microsoft Corporation"
-            VALUE "FileVersion", "1.0.0-t150118213232"
-            VALUE "InternalName", "dotnet.net45.dll"
+            VALUE "FileVersion", "1.0.0-t150120195640"
+            VALUE "InternalName", "dotnet.clr.dll"
             VALUE "LegalCopyright", "\251 Microsoft Corporation. All rights reserved."
-            VALUE "OriginalFilename", "dotnet.net45.dll"
-            VALUE "ProductVersion", "1.0.0-t150118213232"
+            VALUE "OriginalFilename", "dotnet.clr.dll"
+            VALUE "ProductVersion", "1.0.0-t150120195640"
         END
     END
     BLOCK "VarFileInfo"

@@ -31,7 +31,7 @@ namespace DependencyAnalyzer.Commands
                 "Microsoft.Framework.Runtime.Roslyn",
                 "Microsoft.Framework.ApplicationHost",
                 "dotnet.host",
-                "dotnet.core45.managed"
+                "dotnet.coreclr.managed"
             };
 
             // TODO: Unhard coded this?

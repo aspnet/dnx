@@ -6,7 +6,7 @@ using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using dotnet.hosting;
 
-namespace dotnet.net45.managed
+namespace dotnet.clr.managed
 {
     [ComImport]
     [InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]

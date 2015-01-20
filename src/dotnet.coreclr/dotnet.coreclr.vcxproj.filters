@@ -4,7 +4,7 @@
     <ClCompile Include="dllmain.cpp" />
     <ClCompile Include="stdafx.cpp" />
     <ClCompile Include="tpa.cpp" />
-    <ClCompile Include="dotnet.core45.cpp" />
+    <ClCompile Include="dotnet.coreclr.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h" />

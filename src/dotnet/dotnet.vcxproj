@@ -197,8 +197,8 @@
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
   <Target Name="CopyManagedForDebuggingLocally" AfterTargets="Build" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <Copy SourceFiles="$(ProjectDir)..\dotnet.core45.managed\bin\$(Configuration)\aspnetcore50\dotnet.core45.managed.dll" DestinationFolder="$(SolutionDir)\bin\$(Platform)\$(Configuration)" Condition="Exists('$(ProjectDir)..\dotnet.core45.managed\bin\$(Configuration)\aspnetcore50\dotnet.core45.managed.dll')" />
-    <Copy SourceFiles="$(ProjectDir)..\dotnet.net45.managed\bin\$(Configuration)\aspnet50\dotnet.net45.managed.dll" DestinationFolder="$(SolutionDir)\bin\$(Platform)\$(Configuration)" Condition="Exists('$(ProjectDir)..\dotnet.net45.managed\bin\$(Configuration)\aspnet50\dotnet.net45.managed.dll')" />
-    <Copy SourceFiles="$(ProjectDir)..\dotnet.net45.managed\dotnet.net45.config" DestinationFolder="$(SolutionDir)\bin\$(Platform)\$(Configuration)" />
+    <Copy SourceFiles="$(ProjectDir)..\dotnet.coreclr.managed\bin\$(Configuration)\aspnetcore50\dotnet.coreclr.managed.dll" DestinationFolder="$(SolutionDir)\bin\$(Platform)\$(Configuration)" Condition="Exists('$(ProjectDir)..\dotnet.coreclr.managed\bin\$(Configuration)\aspnetcore50\dotnet.coreclr.managed.dll')" />
+    <Copy SourceFiles="$(ProjectDir)..\dotnet.clr.managed\bin\$(Configuration)\aspnet50\dotnet.clr.managed.dll" DestinationFolder="$(SolutionDir)\bin\$(Platform)\$(Configuration)" Condition="Exists('$(ProjectDir)..\dotnet.clr.managed\bin\$(Configuration)\aspnet50\dotnet.clr.managed.dll')" />
+    <Copy SourceFiles="$(ProjectDir)..\dotnet.clr.managed\dotnet.clr.config" DestinationFolder="$(SolutionDir)\bin\$(Platform)\$(Configuration)" />
   </Target>
 </Project>

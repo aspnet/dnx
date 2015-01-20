@@ -41,7 +41,7 @@
     <ClCompile Include="dllmain.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="dotnet.net45.cpp">
+    <ClCompile Include="dotnet.clr.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -51,7 +51,7 @@
     </ResourceCompile>
   </ItemGroup>
   <ItemGroup>
-    <None Include="dotnet.net45.def">
+    <None Include="dotnet.clr.def">
       <Filter>Source Files</Filter>
     </None>
   </ItemGroup>

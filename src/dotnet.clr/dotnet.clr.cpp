@@ -1,4 +1,4 @@
-// dotnet.net45.cpp : Defines the exported functions for the DLL application.
+// dotnet.clr.cpp : Defines the exported functions for the DLL application.
 //
 
 #include "stdafx.h"

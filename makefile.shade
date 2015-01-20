@@ -53,18 +53,18 @@ var MANAGED_PROJECTS = '${FindAllProjects(
 
 var WIN_NATIVE_PROJECTS = '${FindAllProjects(
     "dotnet",
-    "dotnet.net45",
-    "dotnet.core45")}'
+    "dotnet.clr",
+    "dotnet.coreclr")}'
 
 var WIN_MANAGED_PROJECTS = '${FindAllProjects(
-    "dotnet.net45.managed",
-    "dotnet.core45.managed")}'
+    "dotnet.clr.managed",
+    "dotnet.coreclr.managed")}'
 
 var MONO_NATIVE_PROJECTS = '${FindAllProjects()}'
 
 var MONO_MANAGED_PROJECTS = '${FindAllProjects("dotnet.mono.managed")}'
 
-var RC_FILES = '${FindAllFiles("Resource.rc", "dotnet", "dotnet.net45", "dotnet.core45")}'
+var RC_FILES = '${FindAllFiles("Resource.rc", "dotnet", "dotnet.clr", "dotnet.coreclr")}'
 
 #build-compile target='compile'
 
@@ -142,14 +142,14 @@ var RC_FILES = '${FindAllFiles("Resource.rc", "dotnet", "dotnet.net45", "dotnet.
   copy sourceDir='${Path.Combine(ROOT, "src", "dotnet")}' include='bin/**/' outputDir='${Path.Combine(BUILD_DIR2, "dotnet")}' overwrite='${true}'
 
 #build-native-dotnetcore45 .copy-coreclr target='native-compile' if='!IsMono'
-    var dotnetCore45Proj = '${Path.Combine(ROOT, "src", "dotnet.core45", "dotnet.core45.vcxproj")}'
+    var dotnetCore45Proj = '${Path.Combine(ROOT, "src", "dotnet.coreclr", "dotnet.coreclr.vcxproj")}'
     @{
         if (NEW_RUNTIME)
         {
             /* Update the tpa.cpp */ 
             try
             {
-                var tpacppFile = Path.Combine(ROOT, "src", "dotnet.core45", "tpa.cpp");
+                var tpacppFile = Path.Combine(ROOT, "src", "dotnet.coreclr", "tpa.cpp");
                 Environment.SetEnvironmentVariable("DOTNET_APPBASE", Path.Combine(ROOT, "src", "DependencyAnalyzer"));
                 Exec("cmd", "/C k dpa tpa \"" + Path.Combine(CORECLR_TARGET_PATH, "Runtime", "x86") + "\" \"" + tpacppFile + "\"");
             }
@@ -179,11 +179,11 @@ var RC_FILES = '${FindAllFiles("Resource.rc", "dotnet", "dotnet.net45", "dotnet.
         }
     }
 
-  directory delete='${Path.Combine(BUILD_DIR2, "dotnet.core45")}'
-  copy sourceDir='${Path.Combine(ROOT, "src", "dotnet.core45")}' include='bin/**/' outputDir='${Path.Combine(BUILD_DIR2, "dotnet.core45")}' overwrite='${true}'
+  directory delete='${Path.Combine(BUILD_DIR2, "dotnet.coreclr")}'
+  copy sourceDir='${Path.Combine(ROOT, "src", "dotnet.coreclr")}' include='bin/**/' outputDir='${Path.Combine(BUILD_DIR2, "dotnet.coreclr")}' overwrite='${true}'
 
 #build-native-dotnetnet45 target='native-compile' if='!IsMono'
-    var dotnetNet45Proj ='${Path.Combine(ROOT, "src", "dotnet.net45", "dotnet.net45.vcxproj")}'
+    var dotnetNet45Proj ='${Path.Combine(ROOT, "src", "dotnet.clr", "dotnet.clr.vcxproj")}'
     @{
         if (!IsMsbuildInstalled(MSBUILD))
         {
@@ -195,8 +195,8 @@ var RC_FILES = '${FindAllFiles("Resource.rc", "dotnet", "dotnet.net45", "dotnet.
             Exec(MSBUILD, dotnetNet45Proj + " /p:Configuration=" + Configuration2 + ";Platform=x64");
         }
     }
-    directory delete='${Path.Combine(BUILD_DIR2, "dotnet.net45")}'
-    copy sourceDir='${Path.Combine(ROOT, "src", "dotnet.net45")}' include='bin/**/' outputDir='${Path.Combine(BUILD_DIR2, "dotnet.net45")}' overwrite='${true}' 
+    directory delete='${Path.Combine(BUILD_DIR2, "dotnet.clr")}'
+    copy sourceDir='${Path.Combine(ROOT, "src", "dotnet.clr")}' include='bin/**/' outputDir='${Path.Combine(BUILD_DIR2, "dotnet.clr")}' overwrite='${true}' 
 
 #build-mono-entrypoint target='build-compile'
     var monoManagedOutpath='${Path.Combine(BUILD_DIR2, "dotnet.mono.managed")}'
@@ -389,25 +389,25 @@ var RC_FILES = '${FindAllFiles("Resource.rc", "dotnet", "dotnet.net45", "dotnet.
     test if='!IsMono'
         -// dotnet-clr-win-x86
         copy sourceDir='${Path.Combine(BUILD_DIR2, "dotnet", "bin", "Win32", Configuration2, "aspnet50")}' outputDir='${DOTNET_CLR_WIN_x86_BIN}' include='*.exe' overwrite='${true}'
-        copy sourceDir='${Path.Combine(BUILD_DIR2, "dotnet.net45", "bin", "Win32", Configuration2)}' outputDir='${DOTNET_CLR_WIN_x86_BIN}' include='*.dll' overwrite='${true}'
-        copy sourceDir='${Path.Combine(BUILD_DIR2, "dotnet.net45", "bin", "Win32", Configuration2)}' outputDir='${DOTNET_CLR_WIN_x86_BIN}' include='*.pdb' overwrite='${true}'
-        copy sourceDir='${Path.Combine(ROOT, "src", "dotnet.net45.managed")}' outputDir='${DOTNET_CLR_WIN_x86_BIN}' include='*.config' overwrite='${true}'
+        copy sourceDir='${Path.Combine(BUILD_DIR2, "dotnet.clr", "bin", "Win32", Configuration2)}' outputDir='${DOTNET_CLR_WIN_x86_BIN}' include='*.dll' overwrite='${true}'
+        copy sourceDir='${Path.Combine(BUILD_DIR2, "dotnet.clr", "bin", "Win32", Configuration2)}' outputDir='${DOTNET_CLR_WIN_x86_BIN}' include='*.pdb' overwrite='${true}'
+        copy sourceDir='${Path.Combine(ROOT, "src", "dotnet.clr.managed")}' outputDir='${DOTNET_CLR_WIN_x86_BIN}' include='*.config' overwrite='${true}'
 
         -// dotnet-clr-win-x64
         copy sourceDir='${Path.Combine(BUILD_DIR2, "dotnet", "bin", "x64", Configuration2, "aspnet50")}' outputDir='${DOTNET_CLR_WIN_x64_BIN}' include='*.exe' overwrite='${true}'
-        copy sourceDir='${Path.Combine(BUILD_DIR2, "dotnet.net45", "bin", "x64", Configuration2)}' outputDir='${DOTNET_CLR_WIN_x64_BIN}' include='*.dll' overwrite='${true}'
-        copy sourceDir='${Path.Combine(BUILD_DIR2, "dotnet.net45", "bin", "x64", Configuration2)}' outputDir='${DOTNET_CLR_WIN_x64_BIN}' include='*.pdb' overwrite='${true}'
-        copy sourceDir='${Path.Combine(ROOT, "src", "dotnet.net45.managed")}' outputDir='${DOTNET_CLR_WIN_x64_BIN}' include='*.config' overwrite='${true}'
+        copy sourceDir='${Path.Combine(BUILD_DIR2, "dotnet.clr", "bin", "x64", Configuration2)}' outputDir='${DOTNET_CLR_WIN_x64_BIN}' include='*.dll' overwrite='${true}'
+        copy sourceDir='${Path.Combine(BUILD_DIR2, "dotnet.clr", "bin", "x64", Configuration2)}' outputDir='${DOTNET_CLR_WIN_x64_BIN}' include='*.pdb' overwrite='${true}'
+        copy sourceDir='${Path.Combine(ROOT, "src", "dotnet.clr.managed")}' outputDir='${DOTNET_CLR_WIN_x64_BIN}' include='*.config' overwrite='${true}'
 
         -// dotnet-coreclr-win-x86
         copy sourceDir='${Path.Combine(BUILD_DIR2, "dotnet", "bin", "Win32", Configuration2, "aspnetcore50")}' outputDir='${DOTNET_CORECLR_WIN_x86_BIN}' include='*.exe' overwrite='${true}'
-        copy sourceDir='${Path.Combine(BUILD_DIR2, "dotnet.core45", "bin", "Win32", Configuration2)}' outputDir='${DOTNET_CORECLR_WIN_x86_BIN}' include='*.dll' overwrite='${true}'
-        copy sourceDir='${Path.Combine(BUILD_DIR2, "dotnet.core45", "bin", "Win32", Configuration2)}' outputDir='${DOTNET_CORECLR_WIN_x86_BIN}' include='*.pdb' overwrite='${true}'
+        copy sourceDir='${Path.Combine(BUILD_DIR2, "dotnet.coreclr", "bin", "Win32", Configuration2)}' outputDir='${DOTNET_CORECLR_WIN_x86_BIN}' include='*.dll' overwrite='${true}'
+        copy sourceDir='${Path.Combine(BUILD_DIR2, "dotnet.coreclr", "bin", "Win32", Configuration2)}' outputDir='${DOTNET_CORECLR_WIN_x86_BIN}' include='*.pdb' overwrite='${true}'
 
         -// dotnet-coreclr-win-x64
         copy sourceDir='${Path.Combine(BUILD_DIR2, "dotnet", "bin", "x64", Configuration2, "aspnetcore50")}' outputDir='${DOTNET_CORECLR_WIN_x64_BIN}' include='*.exe' overwrite='${true}'
-        copy sourceDir='${Path.Combine(BUILD_DIR2, "dotnet.core45", "bin", "x64", Configuration2)}' outputDir='${DOTNET_CORECLR_WIN_x64_BIN}' include='*.dll' overwrite='${true}'
-        copy sourceDir='${Path.Combine(BUILD_DIR2, "dotnet.core45", "bin", "x64", Configuration2)}' outputDir='${DOTNET_CORECLR_WIN_x64_BIN}' include='*.pdb' overwrite='${true}'
+        copy sourceDir='${Path.Combine(BUILD_DIR2, "dotnet.coreclr", "bin", "x64", Configuration2)}' outputDir='${DOTNET_CORECLR_WIN_x64_BIN}' include='*.dll' overwrite='${true}'
+        copy sourceDir='${Path.Combine(BUILD_DIR2, "dotnet.coreclr", "bin", "x64", Configuration2)}' outputDir='${DOTNET_CORECLR_WIN_x64_BIN}' include='*.pdb' overwrite='${true}'
 
         copy sourceDir='${SCRIPTS_DIR}' include='*.cmd' overwrite='${true}' each='var outputDir in new[]{ DOTNET_CLR_WIN_x86_BIN, DOTNET_CLR_WIN_x64_BIN, DOTNET_CORECLR_WIN_x86_BIN, DOTNET_CORECLR_WIN_x64_BIN }'
 
@@ -445,7 +445,7 @@ var RC_FILES = '${FindAllFiles("Resource.rc", "dotnet", "dotnet.net45", "dotnet.
         }
 
         // Clean up net45.managed from mono (it's never used)
-        File.Delete(Path.Combine(DOTNET_MONO_BIN, "dotnet.net45.managed.dll"));
+        File.Delete(Path.Combine(DOTNET_MONO_BIN, "dotnet.clr.managed.dll"));
 
         // Remove k-crossgen.cmd from the net45 build
         foreach (var net45Target in DOTNET_CLR_TARGETS)

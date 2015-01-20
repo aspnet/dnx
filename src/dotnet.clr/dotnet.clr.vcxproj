@@ -19,10 +19,10 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{1F31D08E-DE21-48F6-ADE3-315EA6268DD1}</ProjectGuid>
+    <ProjectGuid>{0E4CB542-5E58-4D24-9CAE-DAC83D932DBE}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
-    <RootNamespace>KSys</RootNamespace>
-    <ProjectName>dotnet.core45</ProjectName>
+    <RootNamespace>dotnetnet45</RootNamespace>
+    <ProjectName>dotnet.clr</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -71,42 +71,34 @@
     <LinkIncremental>true</LinkIncremental>
     <OutDir>$(SolutionDir)bin\$(Platform)\$(Configuration)\</OutDir>
     <IntDir>bin\$(Platform)\$(Configuration)\</IntDir>
-    <IncludePath Condition="'$(DotnetTargetOS)' == 'WIN7_PLUS_CORESYSTEM'">$(ProgramFiles)\Windows Kits\Win8CoreSystem\inc\crt;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
-    <IntDir>bin\$(Platform)\$(Configuration)\</IntDir>
     <OutDir>$(SolutionDir)bin\$(Platform)\$(Configuration)\</OutDir>
-    <IncludePath Condition="'$(DotnetTargetOS)' == 'WIN7_PLUS_CORESYSTEM'">$(ProgramFiles)\Windows Kits\Win8CoreSystem\inc\crt;$(IncludePath)</IncludePath>
+    <IntDir>bin\$(Platform)\$(Configuration)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
     <OutDir>$(SolutionDir)bin\$(Platform)\$(Configuration)\</OutDir>
     <IntDir>bin\$(Platform)\$(Configuration)\</IntDir>
-    <IncludePath Condition="'$(DotnetTargetOS)' == 'WIN7_PLUS_CORESYSTEM'">$(ProgramFiles)\Windows Kits\Win8CoreSystem\inc\crt;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
     <OutDir>$(SolutionDir)bin\$(Platform)\$(Configuration)\</OutDir>
     <IntDir>bin\$(Platform)\$(Configuration)\</IntDir>
-    <IncludePath Condition="'$(DotnetTargetOS)' == 'WIN7_PLUS_CORESYSTEM'">$(ProgramFiles)\Windows Kits\Win8CoreSystem\inc\crt;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_USRDLL;DOTNETNET45_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
-      <BasicRuntimeChecks>Default</BasicRuntimeChecks>
-      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <ModuleDefinitionFile>exports.def</ModuleDefinitionFile>
-      <AdditionalDependencies Condition="'$(DotnetTargetOS)'=='WIN7_PLUS_CORESYSTEM'">$(ProgramFiles)\Windows Kits\Win8CoreSystem\sdk\lib\mincore\i386\mincore_fw.lib;$(ProgramFiles)\Windows Kits\Win8CoreSystem\sdk\lib\mincore\i386\msvcrt.lib</AdditionalDependencies>
-      <IgnoreAllDefaultLibraries Condition="'$(DotnetTargetOS)'=='WIN7_PLUS_CORESYSTEM'">true</IgnoreAllDefaultLibraries>
+      <ModuleDefinitionFile>dotnet.clr.def</ModuleDefinitionFile>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -114,21 +106,14 @@
       <PrecompiledHeader>Use</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>AMD64;_DEBUG;_WINDOWS;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_USRDLL;DOTNETNET45_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
-      <BasicRuntimeChecks>Default</BasicRuntimeChecks>
-      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <ModuleDefinitionFile>exports.def</ModuleDefinitionFile>
-      <AdditionalDependencies Condition="'$(DotnetTargetOS)'=='WIN7_PLUS_CORESYSTEM'">$(ProgramFiles)\Windows Kits\Win8CoreSystem\sdk\lib\mincore\amd64\mincore_fw.lib;$(ProgramFiles)\Windows Kits\Win8CoreSystem\sdk\lib\mincore\amd64\msvcrt.lib</AdditionalDependencies>
-      <IgnoreAllDefaultLibraries Condition="'$(DotnetTargetOS)'=='WIN7_PLUS_CORESYSTEM'">true</IgnoreAllDefaultLibraries>
+      <ModuleDefinitionFile>dotnet.clr.def</ModuleDefinitionFile>
     </Link>
-    <ProjectReference>
-      <LinkLibraryDependencies>false</LinkLibraryDependencies>
-    </ProjectReference>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
@@ -137,19 +122,16 @@
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_USRDLL;DOTNETNET45_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
-      <BasicRuntimeChecks>Default</BasicRuntimeChecks>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <ModuleDefinitionFile>exports.def</ModuleDefinitionFile>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalDependencies Condition="'$(DotnetTargetOS)'=='WIN7_PLUS_CORESYSTEM'">$(ProgramFiles)\Windows Kits\Win8CoreSystem\sdk\lib\mincore\i386\mincore_fw.lib;$(ProgramFiles)\Windows Kits\Win8CoreSystem\sdk\lib\mincore\i386\msvcrt.lib</AdditionalDependencies>
-      <IgnoreAllDefaultLibraries Condition="'$(DotnetTargetOS)'=='WIN7_PLUS_CORESYSTEM'">true</IgnoreAllDefaultLibraries>
+      <ModuleDefinitionFile>dotnet.clr.def</ModuleDefinitionFile>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -159,31 +141,27 @@
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <PreprocessorDefinitions>AMD64;NDEBUG;_WINDOWS;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_USRDLL;DOTNETNET45_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <ModuleDefinitionFile>exports.def</ModuleDefinitionFile>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalDependencies Condition="'$(DotnetTargetOS)'=='WIN7_PLUS_CORESYSTEM'">$(ProgramFiles)\Windows Kits\Win8CoreSystem\sdk\lib\mincore\amd64\mincore_fw.lib;$(ProgramFiles)\Windows Kits\Win8CoreSystem\sdk\lib\mincore\amd64\msvcrt.lib</AdditionalDependencies>
-      <IgnoreAllDefaultLibraries Condition="'$(DotnetTargetOS)'=='WIN7_PLUS_CORESYSTEM'">true</IgnoreAllDefaultLibraries>
+      <ModuleDefinitionFile>dotnet.clr.def</ModuleDefinitionFile>
     </Link>
-    <ProjectReference>
-      <LinkLibraryDependencies>false</LinkLibraryDependencies>
-    </ProjectReference>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="resource.h" />
+    <ClInclude Include="ComObject.h" />
+    <ClInclude Include="CriticalSection.h" />
+    <ClInclude Include="FileStream.h" />
+    <ClInclude Include="KatanaManager.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="targetver.h" />
-    <ClInclude Include="tpa.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="dotnet.core45.cpp" />
     <ClCompile Include="dllmain.cpp">
       <CompileAsManaged Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</CompileAsManaged>
       <CompileAsManaged Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</CompileAsManaged>
@@ -198,16 +176,16 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
       </PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="dotnet.clr.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="tpa.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="exports.def" />
+    <None Include="dotnet.clr.def" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Resource.rc" />

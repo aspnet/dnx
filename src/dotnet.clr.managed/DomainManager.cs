@@ -27,7 +27,7 @@ public class DomainManager : AppDomainManager
         return RuntimeBootstrapper.Execute(argv);
     }
 
-    [DllImport("dotnet.net45.dll")]
+    [DllImport("dotnet.clr.dll")]
     private extern static void BindApplicationMain(ref ApplicationMainInfo info);
 
     [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode, Pack = 1)]

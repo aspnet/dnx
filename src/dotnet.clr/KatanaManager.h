@@ -52,7 +52,7 @@ class KatanaManager :
 public:
     KatanaManager()
     {
-        LPWSTR configFileName = L"dotnet.net45.config";
+        LPWSTR configFileName = L"dotnet.clr.config";
         TCHAR szPath[MAX_PATH];
         DWORD length = GetModuleFileName(NULL, szPath, MAX_PATH);
 

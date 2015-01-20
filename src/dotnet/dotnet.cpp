@@ -231,9 +231,9 @@ int CallFirmwareProcessMain(int argc, wchar_t* argv[])
     bool fSuccess = true;
     HMODULE m_hHostModule = nullptr;
 #if CORECLR
-    LPCWSTR pwzHostModuleName = L"dotnet.core45.dll";
+    LPCWSTR pwzHostModuleName = L"dotnet.coreclr.dll";
 #else
-    LPCWSTR pwzHostModuleName = L"dotnet.net45.dll";
+    LPCWSTR pwzHostModuleName = L"dotnet.clr.dll";
 #endif
 
     // Note: need to keep as ASCII as GetProcAddress function takes ASCII params

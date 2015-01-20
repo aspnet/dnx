@@ -1,10 +1,10 @@
-// dotnet.core45.cpp : Defines the exported functions for the DLL application.
+// dotnet.coreclr.cpp : Defines the exported functions for the DLL application.
 //
 
 #include "stdafx.h"
 
 #include "..\dotnet\dotnet.h"
-#include "dotnet.core45.h"
+#include "dotnet.coreclr.h"
 #include "tpa.h"
 
 #define TRUSTED_PLATFORM_ASSEMBLIES_STRING_BUFFER_SIZE_CCH (63 * 1024) //32K WCHARs
@@ -457,7 +457,7 @@ extern "C" __declspec(dllexport) HRESULT __stdcall CallApplicationMain(PCALL_APP
     errno = wcscat_s(pwszTrustedPlatformAssemblies, cchTrustedPlatformAssemblies, szCurrentDirectory);
     CHECK_RETURN_VALUE_FAIL_EXIT_VIA_FINISHED(errno);
 
-    errno = wcscat_s(pwszTrustedPlatformAssemblies, cchTrustedPlatformAssemblies, L"dotnet.core45.managed.dll");
+    errno = wcscat_s(pwszTrustedPlatformAssemblies, cchTrustedPlatformAssemblies, L"dotnet.coreclr.managed.dll");
     CHECK_RETURN_VALUE_FAIL_EXIT_VIA_FINISHED(errno);
 
     //wstring appPaths(szCurrentDirectory);
@@ -490,14 +490,14 @@ extern "C" __declspec(dllexport) HRESULT __stdcall CallApplicationMain(PCALL_APP
         APPDOMAIN_ENABLE_PLATFORM_SPECIFIC_APPS |
         APPDOMAIN_ENABLE_PINVOKE_AND_CLASSIC_COMINTEROP;
 
-    LPCWSTR szAssemblyName = L"dotnet.core45.managed, Version=0.1.0.0";
+    LPCWSTR szAssemblyName = L"dotnet.coreclr.managed, Version=0.1.0.0";
     LPCWSTR szEntryPointTypeName = L"DomainManager";
     LPCWSTR szMainMethodName = L"Execute";
 
     int nprops = sizeof(property_keys) / sizeof(wchar_t*);
 
     hr = pCLRRuntimeHost->CreateAppDomainWithManager(
-        L"dotnet.core45.managed",
+        L"dotnet.coreclr.managed",
         dwFlagsAppDomain,
         NULL,
         NULL,
