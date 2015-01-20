@@ -111,7 +111,7 @@ namespace Microsoft.Framework.Runtime.Servicing
 
         private static void LogBreadcrumbsCreationFailure(string fileName, Exception exception)
         {
-            Trace.TraceInformation("Failed to write servicing breadcrumb for {0} because of {1}", fileName, exception);
+            Trace.TraceInformation("Failed to write servicing breadcrumb for {0} because an exception was thrown: {1}", fileName, exception);
         }
     }
 }
