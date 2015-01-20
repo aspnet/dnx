@@ -654,13 +654,13 @@ var RC_FILES = '${FindAllFiles("Resource.rc", "dotnet", "dotnet.clr", "dotnet.co
 
 #update-tpa
     @{
-        var envKreTrace = Environment.GetEnvironmentVariable("KRE_TRACE");
+        var envKreTrace = Environment.GetEnvironmentVariable("DOTNET_TRACE");
 
         try
         {
             var dotnetcore45DependencyList = Path.Combine(BUILD_DIR2, "dotnetcore45-dependencies.txt");
             var tpacppFile = Path.Combine(ROOT, "src", "dotnet.core45", "tpa.cpp");
-            Environment.SetEnvironmentVariable("KRE_TRACE", "0");
+            Environment.SetEnvironmentVariable("DOTNET_TRACE", "0");
             Exec("cmd", string.Format(@"/C kpm list {0} --assemblies --runtime {1} > {2}",
                 Path.Combine(ROOT, "src", "dotnet.core45.managed"),
                 Path.Combine(CORECLR_TARGET_PATH, "Runtime", "x86"),
@@ -670,7 +670,7 @@ var RC_FILES = '${FindAllFiles("Resource.rc", "dotnet", "dotnet.clr", "dotnet.co
         }
         finally
         {
-            Environment.SetEnvironmentVariable("KRE_TRACE", envKreTrace);
+            Environment.SetEnvironmentVariable("DOTNET_TRACE", envKreTrace);
         }
     }
   
@@ -687,7 +687,7 @@ functions @{
             WorkingDirectory = Directory.GetCurrentDirectory(),
             UseShellExecute = false
         };
-        procStartInfo.EnvironmentVariables["KRE_TRACE"] = "0";
+        procStartInfo.EnvironmentVariables["DOTNET_TRACE"] = "0";
         procStartInfo.RedirectStandardOutput = true;
 
         var process = Process.Start(procStartInfo);
