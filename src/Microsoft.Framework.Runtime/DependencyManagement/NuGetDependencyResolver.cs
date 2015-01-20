@@ -416,7 +416,7 @@ namespace Microsoft.Framework.Runtime
             // 1. DOTNET_PACKAGES environment variable
             // 2. global.json { "packages": "..." }
             // 3. NuGet.config repositoryPath (maybe)?
-            // 4. %userprofile%\.kpm\packages
+            // 4. %userprofile%\.dotnet\packages
 
             // TODO: remove KRE_ env var
             var dotnetPackages = Environment.GetEnvironmentVariable("DOTNET_PACKAGES") ?? Environment.GetEnvironmentVariable("KRE_PACKAGES");
@@ -440,7 +440,7 @@ namespace Microsoft.Framework.Runtime
                 profileDirectory = Environment.GetEnvironmentVariable("HOME");
             }
 
-            return Path.Combine(profileDirectory, ".kpm", "packages");
+            return Path.Combine(profileDirectory, ".dotnet", "packages");
         }
 
         private class PackageDescription

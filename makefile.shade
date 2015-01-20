@@ -744,7 +744,7 @@ functions @{
                 profileDirectory = Environment.GetEnvironmentVariable("HOME");
             }
 
-            packagesDir = Path.Combine(profileDirectory, ".kpm", "packages");
+            packagesDir = Path.Combine(profileDirectory, ".dotnet", "packages");
         }
         
         var packageMetadataDir = Path.Combine(packagesDir, name);
