@@ -551,137 +551,134 @@ var RC_FILES = '${FindAllFiles("Resource.rc", "klr", "klr.net45", "klr.core45")}
 
 #copy-required-dependencies
     @{
-        if (true)
+        var targets = new[]
         {
-            var targets = new[]
-            {
-                new { TargetFolder = KRE_CLR_x86_BIN,       Framework = "aspnet50",     Arch = "x86",   Mono = false},
-                new { TargetFolder = KRE_CLR_amd64_BIN,     Framework = "aspnet50",     Arch = "amd64", Mono = false},
-                new { TargetFolder = KRE_MONO_BIN,          Framework = "aspnet50",     Arch = "x86",   Mono = true},
-                new { TargetFolder = KRE_CORECLR_x86_BIN,   Framework = "aspnetcore50", Arch = "x86",   Mono = false},
-                new { TargetFolder = KRE_CORECLR_amd64_BIN, Framework = "aspnetcore50", Arch = "amd64", Mono = false},
-            };
+            new { TargetFolder = KRE_CLR_x86_BIN,       Framework = "aspnet50",     Arch = "x86",   Mono = false},
+            new { TargetFolder = KRE_CLR_amd64_BIN,     Framework = "aspnet50",     Arch = "amd64", Mono = false},
+            new { TargetFolder = KRE_MONO_BIN,          Framework = "aspnet50",     Arch = "x86",   Mono = true},
+            new { TargetFolder = KRE_CORECLR_x86_BIN,   Framework = "aspnetcore50", Arch = "x86",   Mono = false},
+            new { TargetFolder = KRE_CORECLR_amd64_BIN, Framework = "aspnetcore50", Arch = "amd64", Mono = false},
+        };
 
-            var runtimeProjects = new[]
-            {
-                "Microsoft.Framework.Runtime.Roslyn",
-                "Microsoft.Framework.ApplicationHost",
-                "klr.host",
-                "klr.core45.managed"
-            };
+        var runtimeProjects = new[]
+        {
+            "Microsoft.Framework.Runtime.Roslyn",
+            "Microsoft.Framework.ApplicationHost",
+            "klr.host",
+            "klr.core45.managed"
+        };
 
-            var sdkProjects = new[]
-            {
-                "Microsoft.Framework.DesignTimeHost",
-                "Microsoft.Framework.PackageManager",
-                "Microsoft.Framework.Project"
-            };
+        var sdkProjects = new[]
+        {
+            "Microsoft.Framework.DesignTimeHost",
+            "Microsoft.Framework.PackageManager",
+            "Microsoft.Framework.Project"
+        };
 
-            foreach (var target in targets)
+        foreach (var target in targets)
+        {
+            if (IsMono && !target.Mono)
             {
-                if (IsMono && !target.Mono)
-                {
+                continue;
+            }
+            
+            var coreclrFolder = Path.Combine(CORECLR_TARGET_PATH, "Runtime", target.Arch);
+
+            // parse and copy runtime assemblies
+            var runtimeAssemblies = new HashSet<string>();
+            foreach (var each in runtimeProjects)
+            {
+                if (each == "klr.core45.managed" && target.Framework == "aspnet50")
                     continue;
-                }
-                
-                var coreclrFolder = Path.Combine(CORECLR_TARGET_PATH, "Runtime", target.Arch);
 
-                // parse and copy runtime assemblies
-                var runtimeAssemblies = new HashSet<string>();
-                foreach (var each in runtimeProjects)
+                var tmpFile = Path.GetTempFileName();
+                var argument = string.Format("list {0} --framework {1} --assemblies", Path.Combine(ROOT, "src", each), target.Framework);
+
+                if (target.Framework == "aspnetcore50")
                 {
-                    if (each == "klr.core45.managed" && target.Framework == "aspnet50")
-                        continue;
-
-                    var tmpFile = Path.GetTempFileName();
-                    var argument = string.Format("list {0} --framework {1} --assemblies", Path.Combine(ROOT, "src", each), target.Framework);
-
-                    if (target.Framework == "aspnetcore50")
-                    {
-                        argument += (" --runtime " + coreclrFolder);
-                    }
-
-                    if (!IsMono)
-                    {
-                        argument = string.Format("/C kpm {0} > {1}", argument, tmpFile);
-                        Exec("cmd", argument);
-                    }
-                    else 
-                    {
-                        ExecuteAndRedirectOutput("kpm", argument, tmpFile);
-                    }
-
-                    try
-                    {
-                        foreach (var file in File.ReadAllLines(tmpFile).Where(l => File.Exists(l)))
-                        {
-                            if (runtimeAssemblies.Add(file))
-                            {
-                                var targetFilePath = Path.Combine(target.TargetFolder, Path.GetFileName(file));
-                                Log.Info("Copying " + file + " to " + targetFilePath);
-                                File.Copy(file, targetFilePath, true);
-                            }
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        throw new InvalidOperationException(string.Format("Fail to copy runtime assemblies [{0}]", ex.Message));
-                    }
+                    argument += (" --runtime " + coreclrFolder);
                 }
 
-                // parse and copy lib assemblies
-                foreach (var each in sdkProjects)
+                if (!IsMono)
                 {
-                    var tmpFile = Path.GetTempFileName();
-                    var argument = string.Format("list {0} --framework {1} --assemblies", Path.Combine(ROOT, "src", each), target.Framework);
+                    argument = string.Format("/C kpm {0} > {1}", argument, tmpFile);
+                    Exec("cmd", argument);
+                }
+                else 
+                {
+                    ExecuteAndRedirectOutput("kpm", argument, tmpFile);
+                }
 
-                    if (target.Framework == "aspnetcore50")
+                try
+                {
+                    foreach (var file in File.ReadAllLines(tmpFile).Where(l => File.Exists(l)))
                     {
-                        argument += (" --runtime " + coreclrFolder);
-                    }
-
-                    if (!IsMono)
-                    {
-                        argument = string.Format("/C kpm {0} > {1}", argument, tmpFile);
-                        Exec("cmd", argument);
-                    }
-                    else 
-                    {
-                        ExecuteAndRedirectOutput("kpm", argument, tmpFile);
-                    }
-
-                    HashSet<string> projectAssemblies;
-                    try
-                    {
-                        projectAssemblies = new HashSet<string>(File.ReadAllLines(tmpFile).Where(l => File.Exists(l)));
-                        projectAssemblies.ExceptWith(runtimeAssemblies);
-                    }
-                    catch (Exception)
-                    {
-                        throw new InvalidOperationException(string.Format("Fail to parse assemblies list for {0}.", each));
-                    }
-
-                    var targetLibDir = Path.Combine(target.TargetFolder, "lib", each);
-                    if (Directory.Exists(targetLibDir))
-                    {
-                        foreach (var file in projectAssemblies)
+                        if (runtimeAssemblies.Add(file))
                         {
-                            var targetFilePath = Path.Combine(targetLibDir, Path.GetFileName(file));
+                            var targetFilePath = Path.Combine(target.TargetFolder, Path.GetFileName(file));
                             Log.Info("Copying " + file + " to " + targetFilePath);
                             File.Copy(file, targetFilePath, true);
                         }
                     }
                 }
+                catch (Exception ex)
+                {
+                    throw new InvalidOperationException(string.Format("Fail to copy runtime assemblies [{0}]", ex.Message));
+                }
+            }
 
-                // copy required CoreCLR assemblies
+            // parse and copy lib assemblies
+            foreach (var each in sdkProjects)
+            {
+                var tmpFile = Path.GetTempFileName();
+                var argument = string.Format("list {0} --framework {1} --assemblies", Path.Combine(ROOT, "src", each), target.Framework);
+
                 if (target.Framework == "aspnetcore50")
                 {
-                    foreach (var file in Directory.GetFiles(coreclrFolder).Where(f => !Path.GetFileName(f).StartsWith("System")))
+                    argument += (" --runtime " + coreclrFolder);
+                }
+
+                if (!IsMono)
+                {
+                    argument = string.Format("/C kpm {0} > {1}", argument, tmpFile);
+                    Exec("cmd", argument);
+                }
+                else 
+                {
+                    ExecuteAndRedirectOutput("kpm", argument, tmpFile);
+                }
+
+                HashSet<string> projectAssemblies;
+                try
+                {
+                    projectAssemblies = new HashSet<string>(File.ReadAllLines(tmpFile).Where(l => File.Exists(l)));
+                    projectAssemblies.ExceptWith(runtimeAssemblies);
+                }
+                catch (Exception)
+                {
+                    throw new InvalidOperationException(string.Format("Fail to parse assemblies list for {0}.", each));
+                }
+
+                var targetLibDir = Path.Combine(target.TargetFolder, "lib", each);
+                if (Directory.Exists(targetLibDir))
+                {
+                    foreach (var file in projectAssemblies)
                     {
-                        var targetFilePath = Path.Combine(target.TargetFolder, Path.GetFileName(file));
+                        var targetFilePath = Path.Combine(targetLibDir, Path.GetFileName(file));
                         Log.Info("Copying " + file + " to " + targetFilePath);
                         File.Copy(file, targetFilePath, true);
                     }
+                }
+            }
+
+            // copy required CoreCLR assemblies
+            if (target.Framework == "aspnetcore50")
+            {
+                foreach (var file in Directory.GetFiles(coreclrFolder).Where(f => !Path.GetFileName(f).StartsWith("System")))
+                {
+                    var targetFilePath = Path.Combine(target.TargetFolder, Path.GetFileName(file));
+                    Log.Info("Copying " + file + " to " + targetFilePath);
+                    File.Copy(file, targetFilePath, true);
                 }
             }
         }
