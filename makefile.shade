@@ -91,26 +91,27 @@ var RC_FILES = '${FindAllFiles("Resource.rc", "dotnet", "dotnet.clr", "dotnet.co
     }
 
 #update-rc-files if='!IsMono'
-    for each='var rcfile in RC_FILES'
-        @{
-            var digitVer = PRODUCT_VERSION.Replace(".", ",") + ",0";
+    if condition='IsTeamCity'
+        for each='var rcfile in RC_FILES'
+            @{
+                var digitVer = PRODUCT_VERSION.Replace(".", ",") + ",0";
 
-            var productVersionStructMatcher = @"PRODUCTVERSION \d+,\d+,\d+,\d+";
-            var productVersionValueMatcher = @"VALUE ""ProductVersion"", ""[^""]+""";
-            var productVersionStruct = "PRODUCTVERSION " + digitVer;
-            var productVersionValue = "VALUE \"ProductVersion\", \"" + FULL_VERSION + "\"";
+                var productVersionStructMatcher = @"PRODUCTVERSION \d+,\d+,\d+,\d+";
+                var productVersionValueMatcher = @"VALUE ""ProductVersion"", ""[^""]+""";
+                var productVersionStruct = "PRODUCTVERSION " + digitVer;
+                var productVersionValue = "VALUE \"ProductVersion\", \"" + FULL_VERSION + "\"";
 
-            var fileVersionStructMatcher = @"FILEVERSION \d+,\d+,\d+,\d+";
-            var fileVersionValueMatcher = @"VALUE ""FileVersion"", ""[^""]+""";
-            var fileVersionStruct = "FILEVERSION " + digitVer;
-            var fileVersionValue = "VALUE \"FileVersion\", \"" + FULL_VERSION + "\"";
-        }
-        update-file updateFile="${rcfile}" @{
-            updateText = RegexReplace(updateText, productVersionStructMatcher, productVersionStruct);
-            updateText = RegexReplace(updateText, productVersionValueMatcher, productVersionValue);
-            updateText = RegexReplace(updateText, fileVersionStructMatcher, fileVersionStruct);
-            updateText = RegexReplace(updateText, fileVersionValueMatcher, fileVersionValue);
-        }
+                var fileVersionStructMatcher = @"FILEVERSION \d+,\d+,\d+,\d+";
+                var fileVersionValueMatcher = @"VALUE ""FileVersion"", ""[^""]+""";
+                var fileVersionStruct = "FILEVERSION " + digitVer;
+                var fileVersionValue = "VALUE \"FileVersion\", \"" + FULL_VERSION + "\"";
+            }
+            update-file updateFile="${rcfile}" @{
+                updateText = RegexReplace(updateText, productVersionStructMatcher, productVersionStruct);
+                updateText = RegexReplace(updateText, productVersionValueMatcher, productVersionValue);
+                updateText = RegexReplace(updateText, fileVersionStructMatcher, fileVersionStruct);
+                updateText = RegexReplace(updateText, fileVersionValueMatcher, fileVersionValue);
+            }
 
 #build-native-dotnet .update-rc-files target='native-compile' if='!IsMono'
     var dotnetProj = '${Path.Combine(ROOT, "src", "dotnet", "dotnet.vcxproj")}'

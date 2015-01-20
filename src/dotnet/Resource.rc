@@ -68,11 +68,11 @@ BEGIN
         BLOCK "040904b0"
         BEGIN
             VALUE "CompanyName", "Microsoft Corporation"
-            VALUE "FileVersion", "1.0.0-t150120195640"
+            VALUE "FileVersion", "1.0.0"
             VALUE "InternalName", "dotnet.exe"
             VALUE "LegalCopyright", "\251 Microsoft Corporation. All rights reserved."
             VALUE "OriginalFilename", "dotnet.exe"
-            VALUE "ProductVersion", "1.0.0-t150120195640"
+            VALUE "ProductVersion", "1.0.0"
         END
     END
     BLOCK "VarFileInfo"
