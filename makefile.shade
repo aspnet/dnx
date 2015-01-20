@@ -565,7 +565,7 @@ var RC_FILES = '${FindAllFiles("Resource.rc", "dotnet", "dotnet.clr", "dotnet.co
             var runtimeAssemblies = new HashSet<string>();
             foreach (var project in runtimeProjects)
             {
-                if (project == "klr.core45.managed" && target.Framework == "aspnet50")
+                if (project == "dotnet.core45.managed" && target.Framework == "aspnet50")
                     continue;
 
                 var projectFolder = Path.Combine(ROOT, "src", project);
