@@ -142,24 +142,9 @@ var RC_FILES = '${FindAllFiles("Resource.rc", "dotnet", "dotnet.clr", "dotnet.co
   directory delete='${Path.Combine(BUILD_DIR2, "dotnet")}'
   copy sourceDir='${Path.Combine(ROOT, "src", "dotnet")}' include='bin/**/' outputDir='${Path.Combine(BUILD_DIR2, "dotnet")}' overwrite='${true}'
 
-#build-native-dotnetcore45 .copy-coreclr target='native-compile' if='!IsMono'
+#build-native-dotnetcore45 .copy-coreclr .update-tpa target='native-compile' if='!IsMono'
     var dotnetCore45Proj = '${Path.Combine(ROOT, "src", "dotnet.coreclr", "dotnet.coreclr.vcxproj")}'
     @{
-        if (NEW_RUNTIME)
-        {
-            /* Update the tpa.cpp */ 
-            try
-            {
-                var tpacppFile = Path.Combine(ROOT, "src", "dotnet.coreclr", "tpa.cpp");
-                Environment.SetEnvironmentVariable("DOTNET_APPBASE", Path.Combine(ROOT, "src", "DependencyAnalyzer"));
-                Exec("cmd", "/C k dpa tpa \"" + Path.Combine(CORECLR_TARGET_PATH, "Runtime", "x86") + "\" \"" + tpacppFile + "\"");
-            }
-            finally
-            {
-                Environment.SetEnvironmentVariable("DOTNET_APPBASE", null);
-            }
-        }
-
         if (!IsMsbuildInstalled(MSBUILD))
         {
             Environment.Exit(1);
@@ -226,7 +211,7 @@ var RC_FILES = '${FindAllFiles("Resource.rc", "dotnet", "dotnet.clr", "dotnet.co
         Exec(compiler, arguments);
     }
 
-#package-runtime .clean-sdk-dir .copy-bits .tweak-scripts .copy-package-dependencies .copy-coreclr .copy-required-dependencies .nuget-pack-runtime target='package'
+#package-runtime .clean-sdk-dir .copy-bits .tweak-scripts .copy-coreclr .copy-required-dependencies .nuget-pack-runtime target='package'
 
 #rebuild-package .build-mono-entrypoint .build-compile .native-compile .package-runtime .xunit-test
 
@@ -509,78 +494,6 @@ var RC_FILES = '${FindAllFiles("Resource.rc", "dotnet", "dotnet.clr", "dotnet.co
         }
     }
 
-#copy-package-dependencies
-    @{
-        var targetFrameworks = new [] { "aspnetcore50", "aspnet50" };
-
-        var packages = new[] { "Newtonsoft.Json", 
-                               "Microsoft.CodeAnalysis.Common", 
-                               "Microsoft.CodeAnalysis.CSharp", 
-                               "Microsoft.Net.Http.Client",
-                               "System.Collections.Immutable", 
-                               "System.Reflection.Metadata" };
-        
-        foreach (var framework in targetFrameworks)
-        {
-            foreach (var package in packages)
-            {
-                var packageDir = FindPackageDirectory(package);
-
-                if(packageDir == null)
-                {
-                    Log.Warn("Unable to find " + package);
-
-                    continue;
-                }
-
-                string[] candidates = null;
-
-                if (framework == "aspnetcore50")
-                {
-                    candidates = new [] { framework, "windows8+net45+wp8+wpa81", "net45+win8" };
-                }
-                else
-                {
-                    candidates = new [] { framework, "net451", "net45", "net40", "net35", "net20" };
-                }
-
-                var lib = new DirectoryInfo(Path.Combine(packageDir, "lib"));
-                var di = candidates.Select(fmk => lib.EnumerateDirectories("*" + fmk+ "*")
-                                                     .OrderBy(d => d.Name.Length)
-                                                     .FirstOrDefault())
-                                   .FirstOrDefault(d => d != null);
-
-                if(!di.Exists)
-                {
-                    Log.Warn("Couldn't find version of " + package + " matching " + framework);
-                    continue;
-                }
-
-                foreach(var fi in di.GetFiles("*.dll"))
-                {
-                    string[] targetDirs = null;
-
-                    if (framework == "aspnetcore50")
-                    {
-                        targetDirs = DOTNET_CORECLR_TARGETS;
-                    }
-                    else
-                    {
-                        targetDirs = DOTNET_CLR_TARGETS;
-                    }
-
-                    foreach(var targetDir in targetDirs)
-                    {
-                        string packageFileDest = Path.Combine(targetDir, fi.Name);
-                        File.Copy(fi.FullName, packageFileDest, true);
-
-                        Log.Info("Copying from " + fi.FullName + " to " + packageFileDest);
-                    }
-                }
-            }
-        }
-    }
-
 #copy-coreclr
     nuget-install package='CoreCLR' outputDir='packages' extra='-pre -nocache' once='CoreCLR' nugetPath='.nuget/nuget.exe'
 
@@ -613,85 +526,97 @@ var RC_FILES = '${FindAllFiles("Resource.rc", "dotnet", "dotnet.clr", "dotnet.co
     
     -// Copy to target
     copy sourceDir='${Path.Combine(CoreCLR_DIR, "Runtime")}' outputDir='${Path.Combine(CORECLR_TARGET_PATH, "Runtime")}' overwrite='${true}'
-    
-#copy-required-dependencies 
-    -// Copy the CoreCLR to the aspnetcore50 builds
-    copy sourceDir='${Path.Combine(CORECLR_TARGET_PATH, "Runtime", "x86")}' outputDir='${DOTNET_CORECLR_WIN_x86_BIN}'
-    copy sourceDir='${Path.Combine(CORECLR_TARGET_PATH, "Runtime", "amd64")}' outputDir='${DOTNET_CORECLR_WIN_x64_BIN}'
 
-    @{
-        if (!IsMono && NEW_RUNTIME)
+#copy-required-dependencies
+     @{
+        var targets = new[]
         {
-            var dependenciesFile = Path.Combine(BUILD_DIR2, "dependencies.txt");
-            
-            try
+            new { TargetFolder = DOTNET_CLR_WIN_x86_BIN,        Framework = "aspnet50",     Arch = "x86",   Mono = false},
+            new { TargetFolder = DOTNET_CLR_WIN_x64_BIN,        Framework = "aspnet50",     Arch = "amd64", Mono = false},
+            new { TargetFolder = DOTNET_MONO_BIN,               Framework = "aspnet50",     Arch = "x86",   Mono = true},
+            new { TargetFolder = DOTNET_CORECLR_WIN_x86_BIN,    Framework = "aspnetcore50", Arch = "x86",   Mono = false},
+            new { TargetFolder = DOTNET_CORECLR_WIN_x64_BIN,    Framework = "aspnetcore50", Arch = "amd64", Mono = false},
+        };
+
+        var runtimeProjects = new[]
+        {
+            "Microsoft.Framework.Runtime.Roslyn",
+            "Microsoft.Framework.ApplicationHost",
+            "dotnet.host",
+            "dotnet.core45.managed"
+        };
+
+        var sdkProjects = new[]
+        {
+            "Microsoft.Framework.DesignTimeHost",
+            "Microsoft.Framework.PackageManager",
+            "Microsoft.Framework.Project"
+        };
+
+        foreach (var target in targets)
+        {
+            if (IsMono && !target.Mono)
             {
-                Environment.SetEnvironmentVariable("DOTNET_APPBASE", Path.Combine(ROOT, "src", "DependencyAnalyzer"));
-                Exec("cmd", string.Format("/C k dpa runtime \"{0}\" \"{1}\"", DOTNET_CORECLR_WIN_x86_BIN, dependenciesFile));
+                continue;
             }
-            finally
+            var coreclrFolder = Path.Combine(CORECLR_TARGET_PATH, "Runtime", target.Arch);
+
+            // parse and copy runtime assemblies
+            var runtimeAssemblies = new HashSet<string>();
+            foreach (var project in runtimeProjects)
             {
-                Environment.SetEnvironmentVariable("DOTNET_APPBASE", null);
-            }
-            var deps = new Dictionary<string, HashSet<string>>();
-            var list = new HashSet<string>();
-            
-            foreach (var line in File.ReadAllLines(dependenciesFile))
-            { 
-                if (line.StartsWith("-"))
+                if (project == "klr.core45.managed" && target.Framework == "aspnet50")
+                    continue;
+
+                var projectFolder = Path.Combine(ROOT, "src", project);
+                var projectAssemblies = ListDependencyAssemblies(projectFolder, target.Framework, target.Framework == "aspnetcore50" ? coreclrFolder : null);
+
+                try
                 {
-                    list = new HashSet<string>();
-                    if (line.Length > 1)
+                    foreach (var file in projectAssemblies)
                     {
-                        deps[line.Substring(1)] = list;
-                    }
-                }
-                else
-                {
-                    list.Add(line);
-                }
-            }
-            
-            // First copy the required dependencies into each lib folder
-            foreach (var pair in deps)
-            {
-                foreach (var targetClr in DOTNET_CORECLR_TARGETS)
-                {
-                    var targetLibDir = Path.Combine(targetClr, "lib", pair.Key);
-                    
-                    if (!Directory.Exists(targetLibDir)) 
-                    {
-                        continue;
-                    }
-                    
-                    foreach (var dep in pair.Value)
-                    {
-                        var source = Path.Combine(DOTNET_CORECLR_WIN_x86_BIN, dep + ".dll");
-                        
-                        if (!File.Exists(source))
+                        if (runtimeAssemblies.Add(file))
                         {
-                            continue;
+                            var targetFilePath = Path.Combine(target.TargetFolder, Path.GetFileName(file));
+                            Log.Info("Copying " + file + " to " + targetFilePath);
+                            File.Copy(file, targetFilePath, true);
                         }
-                        
-                        var dest = Path.Combine(targetLibDir, dep + ".dll");
-                        Log.Info("Copying " + source + " to " + dest);
-                        File.Copy(source, dest, true);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    throw new InvalidOperationException(string.Format("Fail to copy runtime assemblies [{0}]", ex.Message));
+                }
+            }
+
+            // parse and copy lib assemblies
+            foreach (var project in sdkProjects)
+            {
+                var projectFolder = Path.Combine(ROOT, "src", project);
+                var projectAssemblies = ListDependencyAssemblies(projectFolder, target.Framework, target.Framework == "aspnetcore50" ? coreclrFolder : null);
+
+                projectAssemblies.ExceptWith(runtimeAssemblies);
+
+                var targetLibDir = Path.Combine(target.TargetFolder, "lib", project);
+                if (Directory.Exists(targetLibDir))
+                {
+                    foreach (var file in projectAssemblies)
+                    {
+                        var targetFilePath = Path.Combine(targetLibDir, Path.GetFileName(file));
+                        Log.Info("Copying " + file + " to " + targetFilePath);
+                        File.Copy(file, targetFilePath, true);
                     }
                 }
             }
-            
-            var runtimeDeps = deps["Runtime"];
-            
-            foreach(var targetClr in DOTNET_CORECLR_TARGETS)
+
+            // copy required CoreCLR assemblies
+            if (target.Framework == "aspnetcore50")
             {
-                foreach(var file in Directory.EnumerateFiles(targetClr, "System.*.dll"))
+                foreach (var file in Directory.GetFiles(coreclrFolder).Where(f => !Path.GetFileName(f).StartsWith("System")))
                 {
-                    var contractImpl = Path.GetFileNameWithoutExtension(file);
-                    if (!runtimeDeps.Contains(contractImpl))
-                    {
-                        Log.Info("Deleting unused contract implementation" + file);
-                        File.Delete(file);
-                    }
+                    var targetFilePath = Path.Combine(target.TargetFolder, Path.GetFileName(file));
+                    Log.Info("Copying " + file + " to " + targetFilePath);
+                    File.Copy(file, targetFilePath, true);
                 }
             }
         }
@@ -726,11 +651,89 @@ var RC_FILES = '${FindAllFiles("Resource.rc", "dotnet", "dotnet.clr", "dotnet.co
 
     exec program='cmd' commandline='/C dotnetsdk alias build ${matchVersion}' if='!IsMono && matchVersion != ""' 
     exec program='cmd' commandline='/C start cmd /K dotnetsdk use build' if='!IsMono && matchVersion != ""' 
+
+#update-tpa
+    @{
+        var envKreTrace = Environment.GetEnvironmentVariable("KRE_TRACE");
+
+        try
+        {
+            var dotnetcore45DependencyList = Path.Combine(BUILD_DIR2, "dotnetcore45-dependencies.txt");
+            var tpacppFile = Path.Combine(ROOT, "src", "dotnet.core45", "tpa.cpp");
+            Environment.SetEnvironmentVariable("KRE_TRACE", "0");
+            Exec("cmd", string.Format(@"/C kpm list {0} --assemblies --runtime {1} > {2}",
+                Path.Combine(ROOT, "src", "dotnet.core45.managed"),
+                Path.Combine(CORECLR_TARGET_PATH, "Runtime", "x86"),
+                dotnetcore45DependencyList ));
+
+            UpdateTpa(dotnetcore45DependencyList , tpacppFile);
+        }
+        finally
+        {
+            Environment.SetEnvironmentVariable("KRE_TRACE", envKreTrace);
+        }
+    }
   
 macro name='NuGetInstall' Package='string' OutputDir='string' Extra='string'
     nuget-install package='${Package}' outputDir='${OutputDir}' extra='${Extra}' nugetPath='.nuget/nuget.exe'
 
 functions @{
+    int ExecuteAndRedirectOutput(string command, string argument, string outputFile)
+    {
+        var procStartInfo = new ProcessStartInfo 
+        {
+            FileName = command, 
+            Arguments = argument, 
+            WorkingDirectory = Directory.GetCurrentDirectory(),
+            UseShellExecute = false
+        };
+        procStartInfo.EnvironmentVariables["KRE_TRACE"] = "0";
+        procStartInfo.RedirectStandardOutput = true;
+
+        var process = Process.Start(procStartInfo);
+        var content = process.StandardOutput.ReadToEnd();
+        process.WaitForExit();
+
+        File.WriteAllText(outputFile, content);
+
+        return process.ExitCode;
+    }
+
+    HashSet<string> ListDependencyAssemblies(string projectFolder, string framework, string coreclrFolder = null)
+    {
+        var tmpFile = Path.GetTempFileName();
+        var argument = string.Format("list {0} --framework {1} --assemblies", projectFolder, framework);
+
+        if (coreclrFolder != null)
+        {
+            argument += (" --runtime " + coreclrFolder);
+        }
+
+        int result;
+        if (!IsMono)
+        {
+            result = ExecuteAndRedirectOutput("cmd", string.Format("/C kpm {0}", argument), tmpFile);
+        }
+        else 
+        {
+            result = ExecuteAndRedirectOutput("kpm", argument, tmpFile);
+        }
+
+        if (result != 0)
+        {
+            throw new InvalidOperationException(string.Format("Return value for the command listing assemblies for project under {0} is not zero ({1}).", projectFolder, result));
+        }
+
+        try
+        {
+            return new HashSet<string>(File.ReadAllLines(tmpFile).Where(l => File.Exists(l)));
+        }
+        catch (Exception ex)
+        {
+            throw new InvalidOperationException(string.Format("Unexpected exception thrown while parsing assemblies list for project under {0}. ({1})", projectFolder, ex.Message));
+        }
+    }
+
     string FindPackageDirectory(string name)
     {
         // TODO: remove KRE_ env var
@@ -878,5 +881,66 @@ functions @{
     
         Exec(symlinkProgram, symlinkProgramArgs);
         Exec(dotnetSdkProgram, dotnetSdkProgramArgs);
+    }
+
+    void UpdateTpa(string input, string output)
+    {
+        var tpa = File.ReadAllLines(input)
+                      .Where(l => File.Exists(l))
+                      .Select(l => Path.GetFileNameWithoutExtension(l))
+                      .OrderBy(s => s)
+                      .ToArray();
+
+        var content = new List<string>();
+
+        content.Add(@"// This file will be dynamically updated during build to generate a ");
+        content.Add(@"// minimal trusted platform assemblies list");
+        content.Add(string.Empty);
+        content.Add("#include \"stdafx.h\"");
+        content.Add("#include \"tpa.h\"");
+        content.Add(string.Empty);
+        content.Add("BOOL CreateTpaBase(LPWSTR** ppNames, size_t* pcNames, bool bNative)");
+        content.Add("{");
+        content.Add("    const size_t count = " + tpa.Length + ";");
+        content.Add("    LPWSTR* pArray = new LPWSTR[count];");
+        content.Add(string.Empty);
+        content.Add("    if (bNative)");
+        content.Add("    {");
+
+        for (int i = 0; i < tpa.Length; ++i)
+        {
+            content.Add(string.Format("        pArray[{0}] = _wcsdup(L\"{1}{2}\");", i, tpa[i], ".ni.dll"));
+        }
+
+        content.Add("    }");
+        content.Add("    else");
+        content.Add("    {");
+
+        for (int i = 0; i < tpa.Length; ++i)
+        {
+            content.Add(string.Format("        pArray[{0}] = _wcsdup(L\"{1}{2}\");", i, tpa[i], ".dll"));
+        }
+
+        content.Add("    }");
+        content.Add(string.Empty);
+        content.Add("    *ppNames = pArray;");
+        content.Add("    *pcNames = count;");
+        content.Add(string.Empty);
+        content.Add("    return true;");
+        content.Add("}");
+        content.Add(string.Empty);
+        content.Add("BOOL FreeTpaBase(const LPWSTR* values, const size_t count)");
+        content.Add("{");
+        content.Add("    for (size_t idx = 0; idx < count; ++idx)");
+        content.Add("    {");
+        content.Add("        delete[] values[idx];");
+        content.Add("    }");
+        content.Add(string.Empty);
+        content.Add("    delete[] values;");
+        content.Add(string.Empty);
+        content.Add("    return true;");
+        content.Add("}");
+
+        File.WriteAllLines(output, content);
     }
 } 
