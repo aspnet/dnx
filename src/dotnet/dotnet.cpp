@@ -294,6 +294,23 @@ int CallFirmwareProcessMain(int argc, wchar_t* argv[])
         data.applicationBase = szCurrentDirectory;
     }
 
+    // Prevent coreclr native bootstrapper from failing with relative appbase
+    WCHAR szFullAppBase[MAX_PATH];
+    DWORD dwFullAppBase = GetFullPathNameW(data.applicationBase, MAX_PATH, szFullAppBase, nullptr);
+    if (!dwFullAppBase)
+    {
+        ::wprintf_s(L"Failed to get full path of application base: %S\r\n", data.applicationBase);
+        exitCode = 1;
+        goto Finished;
+    }
+    else if (dwFullAppBase > MAX_PATH)
+    {
+        ::wprintf_s(L"Full path of application base is too long\r\n");
+        exitCode = 1;
+        goto Finished;
+    }
+    data.applicationBase = szFullAppBase;
+
     m_hHostModule = ::LoadLibraryExW(pwzHostModuleName, NULL, LOAD_LIBRARY_SEARCH_DEFAULT_DIRS);
     if (!m_hHostModule)
     {
