@@ -719,12 +719,12 @@ var RC_FILES = '${FindAllFiles("Resource.rc", "dotnet", "dotnet.net45", "dotnet.
     var matchVersion=''
     for each='var pattern in new[]{ "clr-win-x86", "coreclr-win-x86", "clr-win-x64", "coreclr-win-x64" }'
         for each='var runtime in Files.Include(Path.Combine(BUILD_DIR2, "dotnet-" + pattern + ".*.nupkg"))'
-            exec program='cmd' commandline='/C kvm install ${runtime}' if='!IsMono'
+            exec program='cmd' commandline='/C dotnetsdk install ${runtime}' if='!IsMono'
             var parts='${Path.GetFileNameWithoutExtension(runtime).Split(".".ToArray(), 2)}'
             set matchVersion='${parts[1]}' if='matchVersion == ""'
 
-    exec program='cmd' commandline='/C kvm alias build ${matchVersion}' if='!IsMono && matchVersion != ""' 
-    exec program='cmd' commandline='/C start cmd /K kvm use build' if='!IsMono && matchVersion != ""' 
+    exec program='cmd' commandline='/C dotnetsdk alias build ${matchVersion}' if='!IsMono && matchVersion != ""' 
+    exec program='cmd' commandline='/C start cmd /K dotnetsdk use build' if='!IsMono && matchVersion != ""' 
   
 macro name='NuGetInstall' Package='string' OutputDir='string' Extra='string'
     nuget-install package='${Package}' outputDir='${OutputDir}' extra='${Extra}' nugetPath='.nuget/nuget.exe'
@@ -852,30 +852,30 @@ functions @{
         var symlinkProgram = "cmd";
         var symlinkProgramArgs = "/C mklink /J {0} {1}";
             
-        var kvmProgram = "cmd";
-        var kvmProgramArgs = "/C kvm alias {0} {1}";
+        var dotnetSdkProgram = "cmd";
+        var dotnetSdkProgramArgs = "/C dotnetsdk alias {0} {1}";
     
         if (IsMono)
         {
             symlinkProgram = "ln";
             symlinkProgramArgs = "-s {1} {0}";
             
-            kvmProgram = "bash";
-            kvmProgramArgs =
+            dotnetSdkProgram = "bash";
+            dotnetSdkProgramArgs =
                 "-c 'source " + 
-                Path.Combine(FindRuntimeFolder(), "kvm", "kvm.sh") + 
-                " && kvm alias {0} {1}'";
+                Path.Combine(FindRuntimeFolder(), "dotnetsdk", "dotnetsdk.sh") +
+                " && dotnetsdk alias {0} {1}'";
         }
     
         symlinkProgramArgs = String.Format(symlinkProgramArgs,
             destinationDir,
             sourceDir);
             
-        kvmProgramArgs = String.Format(kvmProgramArgs,
+        dotnetSdkProgramArgs = String.Format(dotnetSdkProgramArgs,
             alias,
             destinationRuntime);
     
         Exec(symlinkProgram, symlinkProgramArgs);
-        Exec(kvmProgram, kvmProgramArgs);
+        Exec(dotnetSdkProgram, dotnetSdkProgramArgs);
     }
 } 
