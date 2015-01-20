@@ -586,32 +586,21 @@ var RC_FILES = '${FindAllFiles("Resource.rc", "klr", "klr.net45", "klr.core45")}
 
             // parse and copy runtime assemblies
             var runtimeAssemblies = new HashSet<string>();
-            foreach (var each in runtimeProjects)
+            foreach (var project in runtimeProjects)
             {
-                if (each == "klr.core45.managed" && target.Framework == "aspnet50")
+                if (project == "klr.core45.managed" && target.Framework == "aspnet50")
                     continue;
 
-                var tmpFile = Path.GetTempFileName();
-                var argument = string.Format("list {0} --framework {1} --assemblies", Path.Combine(ROOT, "src", each), target.Framework);
-
-                if (target.Framework == "aspnetcore50")
+                var projectFolder = Path.Combine(ROOT, "src", project);
+                var projectAssemblies = ListDependencyAssemblies(projectFolder, target.Framework, target.Framework == "aspnetcore50" ? coreclrFolder : null);
+                if (projectAssemblies == null)
                 {
-                    argument += (" --runtime " + coreclrFolder);
-                }
-
-                if (!IsMono)
-                {
-                    argument = string.Format("/C kpm {0} > {1}", argument, tmpFile);
-                    Exec("cmd", argument);
-                }
-                else 
-                {
-                    ExecuteAndRedirectOutput("kpm", argument, tmpFile);
+                    throw new InvalidOperationException(string.Format("Fail to parse assemblies list for {0}.", project));
                 }
 
                 try
                 {
-                    foreach (var file in File.ReadAllLines(tmpFile).Where(l => File.Exists(l)))
+                    foreach (var file in projectAssemblies)
                     {
                         if (runtimeAssemblies.Add(file))
                         {
@@ -628,38 +617,18 @@ var RC_FILES = '${FindAllFiles("Resource.rc", "klr", "klr.net45", "klr.core45")}
             }
 
             // parse and copy lib assemblies
-            foreach (var each in sdkProjects)
+            foreach (var project in sdkProjects)
             {
-                var tmpFile = Path.GetTempFileName();
-                var argument = string.Format("list {0} --framework {1} --assemblies", Path.Combine(ROOT, "src", each), target.Framework);
-
-                if (target.Framework == "aspnetcore50")
+                var projectFolder = Path.Combine(ROOT, "src", project);
+                var projectAssemblies = ListDependencyAssemblies(projectFolder, target.Framework, target.Framework == "aspnetcore50" ? coreclrFolder : null);
+                if (projectAssemblies == null)
                 {
-                    argument += (" --runtime " + coreclrFolder);
+                    throw new InvalidOperationException(string.Format("Fail to parse assemblies list for {0}.", project));
                 }
 
-                if (!IsMono)
-                {
-                    argument = string.Format("/C kpm {0} > {1}", argument, tmpFile);
-                    Exec("cmd", argument);
-                }
-                else 
-                {
-                    ExecuteAndRedirectOutput("kpm", argument, tmpFile);
-                }
+                projectAssemblies.ExceptWith(runtimeAssemblies);
 
-                HashSet<string> projectAssemblies;
-                try
-                {
-                    projectAssemblies = new HashSet<string>(File.ReadAllLines(tmpFile).Where(l => File.Exists(l)));
-                    projectAssemblies.ExceptWith(runtimeAssemblies);
-                }
-                catch (Exception)
-                {
-                    throw new InvalidOperationException(string.Format("Fail to parse assemblies list for {0}.", each));
-                }
-
-                var targetLibDir = Path.Combine(target.TargetFolder, "lib", each);
+                var targetLibDir = Path.Combine(target.TargetFolder, "lib", project);
                 if (Directory.Exists(targetLibDir))
                 {
                     foreach (var file in projectAssemblies)
@@ -737,6 +706,36 @@ functions @{
         File.WriteAllText(outputFile, content);
 
         return process.ExitCode;
+    }
+
+    HashSet<string> ListDependencyAssemblies(string projectFolder, string framework, string coreclrFolder = null)
+    {
+        var tmpFile = Path.GetTempFileName();
+        var argument = string.Format("list {0} --framework {1} --assemblies", projectFolder, framework);
+
+        if (coreclrFolder != null)
+        {
+            argument += (" --runtime " + coreclrFolder);
+        }
+
+        int result;
+        if (!IsMono)
+        {
+            result = ExecuteAndRedirectOutput("cmd", string.Format("/C kpm {0}", argument), tmpFile);
+        }
+        else 
+        {
+            result = ExecuteAndRedirectOutput("kpm", argument, tmpFile);
+        }
+
+        if (result == 0)
+        {
+            return new HashSet<string>(File.ReadAllLines(tmpFile).Where(l => File.Exists(l)));
+        }
+        else 
+        {
+            return null;
+        }
     }
 
     string FindPackageDirectory(string name)
