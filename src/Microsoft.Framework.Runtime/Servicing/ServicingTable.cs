@@ -40,13 +40,13 @@ namespace Microsoft.Framework.Runtime.Servicing
 
                     if (string.IsNullOrEmpty(servicingRoot))
                     {
-                        // Nothing to do, no variables are set. Just return the uninitialized index.
+                        // Nothing to do, we don't have Program Files. Just return the uninitialized index.
                         return index;
                     }
 
                     dotnetServicing = Path.Combine(
                         servicingRoot,
-                        "dotnet",
+                        "Microsoft .NET Cross-Platform SDK",
                         "Servicing");
                 }
 
