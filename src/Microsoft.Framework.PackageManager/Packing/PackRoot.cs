@@ -141,7 +141,7 @@ DIR=""$( cd -P ""$( dirname ""$SOURCE"" )"" && pwd )""
 
 export SET DOTNET_APPBASE=""$DIR/{0}""
 
-exec ""{1}dotnet"" Microsoft.Framework.ApplicationHost {2} ""$@""";
+exec ""{1}dotnet"" --appbase ""$DOTNET_APPBASE"" Microsoft.Framework.ApplicationHost {2} ""$@""";
 
             foreach (var commandName in _project.Commands.Keys)
             {
