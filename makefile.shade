@@ -543,7 +543,7 @@ var RC_FILES = '${FindAllFiles("Resource.rc", "dotnet", "dotnet.clr", "dotnet.co
             "Microsoft.Framework.Runtime.Roslyn",
             "Microsoft.Framework.ApplicationHost",
             "dotnet.host",
-            "dotnet.core45.managed"
+            "dotnet.coreclr.managed"
         };
 
         var sdkProjects = new[]
@@ -658,15 +658,15 @@ var RC_FILES = '${FindAllFiles("Resource.rc", "dotnet", "dotnet.clr", "dotnet.co
 
         try
         {
-            var dotnetcore45DependencyList = Path.Combine(BUILD_DIR2, "dotnetcore45-dependencies.txt");
-            var tpacppFile = Path.Combine(ROOT, "src", "dotnet.core45", "tpa.cpp");
+            var dotnetcoreclrDepFile = Path.Combine(BUILD_DIR2, "dotnetcoreclr-dependencies.txt");
+            var tpacppFile = Path.Combine(ROOT, "src", "dotnet.coreclr", "tpa.cpp");
             Environment.SetEnvironmentVariable("DOTNET_TRACE", "0");
             Exec("cmd", string.Format(@"/C kpm list {0} --assemblies --runtime {1} > {2}",
-                Path.Combine(ROOT, "src", "dotnet.core45.managed"),
+                Path.Combine(ROOT, "src", "dotnet.coreclr.managed"),
                 Path.Combine(CORECLR_TARGET_PATH, "Runtime", "x86"),
-                dotnetcore45DependencyList ));
+                dotnetcoreclrDepFile ));
 
-            UpdateTpa(dotnetcore45DependencyList , tpacppFile);
+            UpdateTpa(dotnetcoreclrDepFile , tpacppFile);
         }
         finally
         {
