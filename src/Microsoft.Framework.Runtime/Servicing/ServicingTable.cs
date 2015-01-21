@@ -38,6 +38,12 @@ namespace Microsoft.Framework.Runtime.Servicing
                         Environment.GetEnvironmentVariable("PROGRAMFILES");
                     }
 
+                    if (string.IsNullOrEmpty(servicingRoot))
+                    {
+                        // Nothing to do, no variables are set. Just return the uninitialized index.
+                        return index;
+                    }
+
                     dotnetServicing = Path.Combine(
                         servicingRoot,
                         "dotnet",
