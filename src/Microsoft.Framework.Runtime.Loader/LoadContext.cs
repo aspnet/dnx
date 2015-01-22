@@ -236,7 +236,7 @@ namespace Microsoft.Framework.Runtime.Loader
 
                 if (Microsoft.Framework.Runtime.PlatformHelper.IsMono &&
                     requestingAssembly == null &&
-                    !assemblyName.Name.Contains("!"))
+                    !assemblyName.Name.Contains("!preprocess"))
                 {
                     // See if this loading is for !preprocess.
                     var domain = (AppDomain)sender;
