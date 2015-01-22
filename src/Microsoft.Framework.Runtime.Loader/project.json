@@ -4,10 +4,10 @@
     "dependencies": {
         "Microsoft.Framework.Runtime.Interfaces": { "version": "1.0.0-*", "type": "build" }
     },
-
     "frameworks": {
         "aspnet50": {
             "dependencies": {
+                "Microsoft.Framework.Runtime.Common": ""
             }
         },
         "aspnetcore50": {
@@ -20,7 +20,6 @@
             }
         }
     },
-
     "scripts": {
         "postbuild": [
             "%project:Directory%/../../build/batchcopy %project:BuildOutputDir%/Debug/aspnet50/*.* %project:Directory%/../../artifacts/build/dotnet-clr-win-x86/bin",
