@@ -13,7 +13,7 @@ using Microsoft.Framework.Runtime;
 using Newtonsoft.Json.Linq;
 using NuGet;
 
-namespace Microsoft.Framework.PackageManager.Packing
+namespace Microsoft.Framework.PackageManager.Bundle
 {
     public class BundleProject
     {
@@ -122,6 +122,7 @@ namespace Microsoft.Framework.PackageManager.Packing
             buildOptions.OutputDir = Path.Combine(project.ProjectDirectory, "bin");
             buildOptions.Configurations.Add(root.Configuration);
             buildOptions.Reports = root.Reports;
+            buildOptions.GeneratePackages = true;
             var buildManager = new BuildManager(root.HostServices, buildOptions);
             if (!buildManager.Build())
             {
@@ -240,7 +241,7 @@ namespace Microsoft.Framework.PackageManager.Packing
         private void CopyProject(BundleRoot root, Runtime.Project project, string targetPath, bool includeSource)
         {
             // A set of excluded files/directories used as a filter when doing copy
-            var excludeSet = new HashSet<string>(project.PackExcludeFiles, StringComparer.OrdinalIgnoreCase);
+            var excludeSet = new HashSet<string>(project.BundleExcludeFiles, StringComparer.OrdinalIgnoreCase);
             var contentFiles = new HashSet<string>(project.ContentFiles, StringComparer.OrdinalIgnoreCase);
 
             // If a public folder is specified with 'webroot' or '--wwwroot', we ignore it when copying project files
@@ -490,7 +491,7 @@ namespace Microsoft.Framework.PackageManager.Packing
             wwwRoot = wwwRoot ?? string.Empty;
             var wwwRootSourcePath = Path.Combine(projectDirectory, wwwRoot);
 
-            // If the value of '--wwwroot' is ".", we need to pack the project root dir
+            // If the value of '--wwwroot' is ".", we need to bundle the project root dir
             // Use Path.GetFullPath() to get rid of the trailing "."
             return Path.GetFullPath(wwwRootSourcePath);
         }

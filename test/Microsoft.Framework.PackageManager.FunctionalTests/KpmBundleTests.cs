@@ -9,7 +9,7 @@ using Xunit;
 
 namespace Microsoft.Framework.PackageManager
 {
-    public class KpmPackTests
+    public class KpmBundleTests
     {
         private readonly string _projectName = "TestProject";
         private readonly string _outputDirName = "BundleOutput";

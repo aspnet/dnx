@@ -10,7 +10,7 @@ using System.Linq;
 using System.Runtime.Versioning;
 using System.Security.Cryptography;
 using System.Threading.Tasks;
-using Microsoft.Framework.PackageManager.Packing;
+using Microsoft.Framework.PackageManager.Bundle;
 using Microsoft.Framework.PackageManager.Restore.NuGet;
 using Microsoft.Framework.Runtime;
 using Newtonsoft.Json.Linq;

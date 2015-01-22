@@ -6,7 +6,7 @@ using System.IO;
 using System.Net;
 using System.Reflection;
 using System.Threading;
-using Microsoft.Framework.PackageManager.Packing;
+using Microsoft.Framework.PackageManager.Bundle;
 using Microsoft.Framework.Runtime;
 using Microsoft.Framework.Runtime.Common.CommandLine;
 
@@ -133,7 +133,7 @@ namespace Microsoft.Framework.PackageManager
                     };
 
                     var manager = new BundleManager(_hostServices, options);
-                    if (!manager.Package())
+                    if (!manager.Bundle())
                     {
                         return -1;
                     }

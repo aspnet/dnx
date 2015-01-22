@@ -7,7 +7,7 @@ using Microsoft.Framework.Project;
 using Microsoft.Framework.Runtime;
 using NuGet;
 
-namespace Microsoft.Framework.PackageManager.Packing
+namespace Microsoft.Framework.PackageManager.Bundle
 {
     /// <summary>
     /// Generate native image for packages
@@ -55,7 +55,7 @@ namespace Microsoft.Framework.PackageManager.Packing
 
         /// <summary>
         /// This is a helper method for looking up directories that directly contains assemblies that would be loaded
-        /// given the packed runtime framework. We should run crossgen on these folders
+        /// given the bundled runtime framework. We should run crossgen on these folders
         /// </summary>
         private IEnumerable<string> ResolveOutputAssemblies(BundleRoot root, NuGetDependencyResolver resolver)
         {
@@ -95,12 +95,12 @@ namespace Microsoft.Framework.PackageManager.Packing
 
             if (libraryNotInOutput.Any())
             {
-                throw new InvalidOperationException(string.Format("Library {0} cannot be found in the packed output.", string.Join(", ", libraryNotInOutput)));
+                throw new InvalidOperationException(string.Format("Library {0} cannot be found in the bundled output.", string.Join(", ", libraryNotInOutput)));
             }
 
             if (missingOutputFolder.Any())
             {
-                throw new InvalidOperationException("Packed output does not contain directory:\n" + string.Join("\n", missingOutputFolder));
+                throw new InvalidOperationException("Bundled output does not contain directory:\n" + string.Join("\n", missingOutputFolder));
             }
 
             return result;

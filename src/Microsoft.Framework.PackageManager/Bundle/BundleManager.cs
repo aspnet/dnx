@@ -9,7 +9,7 @@ using System.Linq;
 using System.Runtime.Versioning;
 using Microsoft.Framework.Runtime;
 
-namespace Microsoft.Framework.PackageManager.Packing
+namespace Microsoft.Framework.PackageManager.Bundle
 {
     public class BundleManager
     {
@@ -39,7 +39,7 @@ namespace Microsoft.Framework.PackageManager.Packing
             return Path.GetFullPath(projectDir.TrimEnd(Path.DirectorySeparatorChar));
         }
 
-        public bool Package()
+        public bool Bundle()
         {
             Runtime.Project project;
             if (!Runtime.Project.TryGetProject(_options.ProjectDir, out project))
@@ -175,7 +175,7 @@ namespace Microsoft.Framework.PackageManager.Packing
             }
 
             // If there is no target framework filter specified with '--runtime',
-            // the packed output targets all frameworks specified in project.json
+            // the bundled output targets all frameworks specified in project.json
             if (!_options.Runtimes.Any())
             {
                 foreach (var frameworkInfo in project.GetTargetFrameworks())
@@ -225,17 +225,17 @@ namespace Microsoft.Framework.PackageManager.Packing
                 {
                     if (!root.Projects.Any(p => p.Name == libraryDescription.Identity.Name))
                     {
-                        var packProject = new BundleProject(
+                        var bundleProject = new BundleProject(
                             dependencyContext.ProjectReferenceDependencyProvider,
                             dependencyContext.ProjectResolver,
                             libraryDescription);
 
-                        if (packProject.Name == project.Name)
+                        if (bundleProject.Name == project.Name)
                         {
-                            packProject.WwwRoot = _options.WwwRoot;
-                            packProject.WwwRootOut = _options.WwwRootOut;
+                            bundleProject.WwwRoot = _options.WwwRoot;
+                            bundleProject.WwwRootOut = _options.WwwRootOut;
                         }
-                        root.Projects.Add(packProject);
+                        root.Projects.Add(bundleProject);
                     }
                 }
             }

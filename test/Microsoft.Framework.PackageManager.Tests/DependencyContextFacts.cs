@@ -1,8 +1,8 @@
 ﻿using System;
-using Microsoft.Framework.PackageManager.Packing;
+using Microsoft.Framework.PackageManager.Bundle;
 using Xunit;
 
-namespace Microsoft.Framework.PackageManager.Packing.Tests
+namespace Microsoft.Framework.PackageManager.Bundle.Tests
 {
     public class DependencyContextFacts
     {

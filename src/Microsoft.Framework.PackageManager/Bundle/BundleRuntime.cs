@@ -7,7 +7,7 @@ using System.IO.Compression;
 using System.Runtime.Versioning;
 using System.Security.Cryptography;
 
-namespace Microsoft.Framework.PackageManager.Packing
+namespace Microsoft.Framework.PackageManager.Bundle
 {
     public class BundleRuntime
     {

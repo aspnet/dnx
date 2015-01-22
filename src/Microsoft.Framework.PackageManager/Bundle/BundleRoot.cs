@@ -10,7 +10,7 @@ using Microsoft.Framework.Runtime;
 using Newtonsoft.Json.Linq;
 using NuGet;
 
-namespace Microsoft.Framework.PackageManager.Packing
+namespace Microsoft.Framework.PackageManager.Bundle
 {
     public class BundleRoot
     {

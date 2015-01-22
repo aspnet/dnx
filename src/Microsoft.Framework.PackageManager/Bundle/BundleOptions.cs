@@ -4,7 +4,7 @@
 using System.Collections.Generic;
 using System.Runtime.Versioning;
 
-namespace Microsoft.Framework.PackageManager.Packing
+namespace Microsoft.Framework.PackageManager.Bundle
 {
     public class BundleOptions
     {
