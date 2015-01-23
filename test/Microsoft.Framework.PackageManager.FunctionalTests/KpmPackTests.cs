@@ -30,7 +30,7 @@ DIR=""$( cd -P ""$( dirname ""$SOURCE"" )"" && pwd )""
 
 export SET DOTNET_APPBASE=""$DIR/approot/src/{0}""
 
-exec ""{1}dotnet"" Microsoft.Framework.ApplicationHost {2} ""$@""".Replace("\r\n", "\n");
+exec ""{1}dotnet"" --appbase ""$DOTNET_APPBASE"" Microsoft.Framework.ApplicationHost {2} ""$@""".Replace("\r\n", "\n");
 
         public static IEnumerable<object[]> DotnetHomeDirs
         {
