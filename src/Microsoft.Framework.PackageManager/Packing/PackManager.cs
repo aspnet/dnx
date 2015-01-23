@@ -109,7 +109,7 @@ namespace Microsoft.Framework.PackageManager.Packing
 
             foreach (var runtime in _options.Runtimes)
             {
-                var frameworkName = DependencyContext.GetFrameworkNameForRuntime(Path.GetFileName(runtime));
+                var frameworkName = DependencyContext.GetFrameworkNameForRuntime(new DirectoryInfo(runtime).Name);
                 var runtimeLocated = TryAddRuntime(root, frameworkName, runtime);
                 List<string> runtimeProbePaths = null;
 
