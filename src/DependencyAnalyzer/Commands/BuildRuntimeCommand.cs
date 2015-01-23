@@ -38,8 +38,7 @@ namespace DependencyAnalyzer.Commands
             _sdkProjects = new[]
             {
                 "Microsoft.Framework.DesignTimeHost",
-                "Microsoft.Framework.PackageManager",
-                "Microsoft.Framework.Project"
+                "Microsoft.Framework.PackageManager"
             };
 
             _assemblyFolder = assemblyFolder;

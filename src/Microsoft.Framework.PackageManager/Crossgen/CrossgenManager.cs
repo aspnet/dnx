@@ -1,4 +1,4 @@
-// Copyright (c) Microsoft Open Technologies, Inc. All rights reserved.
+﻿// Copyright (c) Microsoft Open Technologies, Inc. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 using System;
@@ -8,7 +8,7 @@ using System.IO;
 using System.Linq;
 using Microsoft.Framework.Runtime;
 
-namespace Microsoft.Framework.Project
+namespace Microsoft.Framework.PackageManager.Crossgen
 {
     public class CrossgenManager
     {
@@ -40,10 +40,10 @@ namespace Microsoft.Framework.Project
             {
                 success = success && GenerateNativeImage(assemblyInfo);
             }
-            
+
             return success;
         }
-        
+
         private bool ExecuteCrossgen(string filename, string arguments, string assemblyName)
         {
             var options = new ProcessStartInfo
@@ -87,14 +87,14 @@ namespace Microsoft.Framework.Project
             {
                 return true;
             }
-            
+
             return false;
         }
 
         private bool GenerateNativeImage(AssemblyInformation assemblyInfo)
         {
             var retCrossgen = false;
-        
+
             if (assemblyInfo.Closure.Any(a => !a.Generated))
             {
                 Console.WriteLine("Skipping {0}. Because one or more dependencies failed to generate", assemblyInfo.Name);
@@ -130,7 +130,7 @@ namespace Microsoft.Framework.Project
 
             // Make sure the target directory for the native image is there
             Directory.CreateDirectory(Path.GetDirectoryName(assemblyInfo.NativeImagePath));
-            
+
             retCrossgen = ExecuteCrossgen(_options.CrossgenPath, args, assemblyInfo.Name);
             if (retCrossgen)
             {
@@ -172,7 +172,7 @@ namespace Microsoft.Framework.Project
                                          assemblyInfo.NativePdbPath,
                                          String.Join(";", closurePdb));
                 }
-            
+
                 retCrossgen = ExecuteCrossgen(_options.CrossgenPath, argsPdb, assemblyInfo.Name);
             }
 

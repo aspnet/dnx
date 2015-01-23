@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Runtime.Versioning;
-using Microsoft.Framework.Project;
+using Microsoft.Framework.PackageManager.Crossgen;
 using Microsoft.Framework.Runtime;
 using NuGet;
 
