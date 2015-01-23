@@ -19,6 +19,7 @@ IF EXIST packages\KoreBuild goto run
 .nuget\NuGet.exe install KoreBuild -ExcludeVersion -o packages -nocache -pre
 .nuget\NuGet.exe install Sake -version 0.2 -o packages -ExcludeVersion
 
+IF "%SKIP_DOTNET_INSTALL%"=="1" goto run
 IF NOT "%1" == "rebuild-package" CALL packages\KoreBuild\build\dotnetsdk.cmd upgrade -runtime CLR -x86
 
 :run
