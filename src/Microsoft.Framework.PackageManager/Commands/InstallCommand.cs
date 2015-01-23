@@ -51,7 +51,7 @@ namespace Microsoft.Framework.PackageManager
             var sourceProvider = PackageSourceBuilder.CreateSourceProvider(settings);
 
             var effectiveSources = PackageSourceUtils.GetEffectivePackageSources(sourceProvider,
-                _restoreCommand.Sources, _restoreCommand.FallbackSources);
+                _restoreCommand.FeedOptions.Sources, _restoreCommand.FeedOptions.FallbackSources);
 
             var packageFeeds = new List<IPackageFeed>();
 
@@ -59,8 +59,8 @@ namespace Microsoft.Framework.PackageManager
             {
                 var feed = PackageSourceUtils.CreatePackageFeed(
                     source,
-                    _restoreCommand.NoCache,
-                    _restoreCommand.IgnoreFailedSources,
+                    _restoreCommand.FeedOptions.NoCache,
+                    _restoreCommand.FeedOptions.IgnoreFailedSources,
                     Reports);
                 if (feed != null)
                 {
