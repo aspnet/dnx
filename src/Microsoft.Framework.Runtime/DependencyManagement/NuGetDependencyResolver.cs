@@ -144,6 +144,9 @@ namespace Microsoft.Framework.Runtime
             var cacheResolvers = GetCacheResolvers();
             var defaultResolver = new DefaultPackagePathResolver(_repository.RepositoryRoot);
 
+            Servicing.Breadcrumbs breadcrumbs = new Servicing.Breadcrumbs(); 
+            breadcrumbs.CreateRuntimeBreadcrumb(); 
+
             foreach (var dependency in packages)
             {
                 var package = FindCandidate(dependency.Identity.Name, dependency.Identity.Version);
@@ -173,6 +176,11 @@ namespace Microsoft.Framework.Runtime
                 {
                     packageDescription.ContractPath = contractPath;
                 }
+
+                if (Servicing.Breadcrumbs.IsPackageServiceable(packageDescription.Package)) 
+                { 
+                    breadcrumbs.CreateBreadcrumb(package.Id, package.Version); 
+                } 
 
                 var assemblies = new List<string>();
 
