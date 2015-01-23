@@ -19,16 +19,14 @@ namespace Microsoft.Framework.Runtime
         private static readonly IDictionary<FrameworkName, List<FrameworkName>> _aliases = new Dictionary<FrameworkName, List<FrameworkName>>
         {
             { new FrameworkName(VersionUtility.AspNetFrameworkIdentifier, new Version(5, 0)), new List<FrameworkName> {
-                    new FrameworkName(VersionUtility.NetFrameworkIdentifier, new Version(4, 6)),
-                    new FrameworkName(VersionUtility.NetFrameworkIdentifier, new Version(4, 5, 3))
+                    new FrameworkName(VersionUtility.NetFrameworkIdentifier, new Version(4, 5, 1))
                 }
             },
         };
 
         private static readonly IDictionary<FrameworkName, FrameworkName> _monoAliases = new Dictionary<FrameworkName, FrameworkName>
         {
-            { new FrameworkName(VersionUtility.NetFrameworkIdentifier, new Version(4, 5, 3)), new FrameworkName(VersionUtility.AspNetFrameworkIdentifier, new Version(5, 0)) },
-            { new FrameworkName(VersionUtility.NetFrameworkIdentifier, new Version(4, 6)), new FrameworkName(VersionUtility.AspNetFrameworkIdentifier, new Version(5, 0)) }
+            { new FrameworkName(VersionUtility.NetFrameworkIdentifier, new Version(4, 5, 1)), new FrameworkName(VersionUtility.AspNetFrameworkIdentifier, new Version(5, 0)) },
         };
 
         public FrameworkReferenceResolver()
