@@ -423,6 +423,9 @@ namespace Microsoft.Framework.PackageManager
                     var optMsBuildPath = c.Option("--msbuild <PATH>",
                         @"Path to MSBuild, default is '%ProgramFiles%\MSBuild\14.0\Bin\MSBuild.exe'",
                         CommandOptionType.SingleValue);
+                    var optInPlace = c.Option("-i|--in-place",
+                        "Generate or update project.json files in project directories of csprojs",
+                        CommandOptionType.NoValue);
                     c.HelpOption("-?|-h|--help");
 
                     c.OnExecute(() =>
@@ -434,6 +437,7 @@ namespace Microsoft.Framework.PackageManager
                         command.CsProjectPath = argPath.Value;
                         command.Configuration = optConfiguration.Value();
                         command.MsBuildPath = optMsBuildPath.Value();
+                        command.InPlace = optInPlace.HasValue();
 
                         var success = command.ExecuteCommand();
 
