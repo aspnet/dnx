@@ -45,7 +45,10 @@ namespace Microsoft.Framework.PackageManager.Bundle
             {
                 // Executable permissions on klr lost on copy. 
                 var klrPath = Path.Combine(TargetPath, "bin", "klr");
-                FileOperationUtils.MarkExecutable(klrPath, root.Reports);
+                if (!FileOperationUtils.MarkExecutable(klrPath))
+                {
+                    root.Reports.Information.WriteLine("Failed to mark {0} as executable".Yellow(), klrPath);
+                }
             }
         }
     }

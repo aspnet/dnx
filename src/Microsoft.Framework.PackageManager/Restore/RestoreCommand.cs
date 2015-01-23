@@ -12,6 +12,7 @@ using System.Security.Cryptography;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Framework.PackageManager.Bundle;
+using Microsoft.Framework.PackageManager.Restore.NuGet;
 using Microsoft.Framework.Runtime;
 using NuGet;
 
@@ -24,19 +25,19 @@ namespace Microsoft.Framework.PackageManager
             ApplicationEnvironment = env;
             FileSystem = new PhysicalFileSystem(Directory.GetCurrentDirectory());
             MachineWideSettings = new CommandLineMachineWideSettings();
-            Sources = Enumerable.Empty<string>();
-            FallbackSources = Enumerable.Empty<string>();
             ScriptExecutor = new ScriptExecutor();
         }
 
+        public FeedOptions FeedOptions { get; set; }
+
         public string RestoreDirectory { get; set; }
         public string NuGetConfigFile { get; set; }
-        public IEnumerable<string> Sources { get; set; }
-        public IEnumerable<string> FallbackSources { get; set; }
-        public bool NoCache { get; set; }
-        public string PackageFolder { get; set; }
         public string GlobalJsonFile { get; set; }
-        public bool IgnoreFailedSources { get; set; }
+
+        public string RestorePackageId { get; set; } 
+        public string RestorePackageVersion { get; set; }
+
+        public string AppInstallPath { get; private set; }
 
         public ScriptExecutor ScriptExecutor { get; private set; }
 
@@ -81,9 +82,9 @@ namespace Microsoft.Framework.PackageManager
                 var rootDirectory = ProjectResolver.ResolveRootDirectory(restoreDirectory);
                 ReadSettings(rootDirectory);
 
-                string packagesDirectory = PackageFolder;
+                string packagesDirectory = FeedOptions.TargetPackagesFolder;
 
-                if (string.IsNullOrEmpty(PackageFolder))
+                if (string.IsNullOrEmpty(packagesDirectory))
                 {
                     packagesDirectory = NuGetDependencyResolver.ResolveRepositoryPath(rootDirectory);
                 }
@@ -94,7 +95,16 @@ namespace Microsoft.Framework.PackageManager
                 int restoreCount = 0;
                 int successCount = 0;
 
-                if (string.IsNullOrEmpty(GlobalJsonFile))
+                if (!string.IsNullOrEmpty(RestorePackageId))
+                {
+                    var success = await RestoreForInstall(packagesDirectory);
+                    if (success)
+                    {
+                        successCount = 1;
+                        restoreCount = 1;
+                    }
+                }
+                else if (string.IsNullOrEmpty(GlobalJsonFile))
                 {
                     var projectJsonFiles = Directory.EnumerateFiles(restoreDirectory, "project.json", SearchOption.AllDirectories);
                     Func<string, Task> restorePackage = async projectJsonPath =>
@@ -151,6 +161,136 @@ namespace Microsoft.Framework.PackageManager
             }
         }
 
+        private async Task<bool> RestoreForInstall(string packagesDirectory)
+        {
+            var success = true;
+
+            var sw = new Stopwatch();
+            sw.Start();
+
+            var restoreOperations = new RestoreOperations(Reports.Verbose);
+            var projectProviders = new List<IWalkProvider>();
+            var localProviders = new List<IWalkProvider>();
+            var remoteProviders = new List<IWalkProvider>();
+
+            localProviders.Add(
+                new LocalWalkProvider(
+                    new NuGetDependencyResolver(
+                        packagesDirectory)));
+
+            var effectiveSources = PackageSourceUtils.GetEffectivePackageSources(
+                SourceProvider,
+                FeedOptions.Sources,
+                FeedOptions.FallbackSources);
+
+            AddRemoteProvidersFromSources(remoteProviders, effectiveSources);
+
+            var restoreContext = new RestoreContext()
+            {
+                FrameworkName = ApplicationEnvironment.RuntimeFramework,
+                ProjectLibraryProviders = projectProviders,
+                LocalLibraryProviders = localProviders,
+                RemoteLibraryProviders = remoteProviders
+            };
+
+            if (RestorePackageVersion == null)
+            {
+                var packageFeeds = new List<IPackageFeed>();
+
+                foreach (var source in effectiveSources)
+                {
+                    var feed = PackageSourceUtils.CreatePackageFeed(
+                        source,
+                        FeedOptions.NoCache,
+                        FeedOptions.IgnoreFailedSources,
+                        Reports);
+                    if (feed != null)
+                    {
+                        packageFeeds.Add(feed);
+                    }
+                }
+
+                var package = await PackageSourceUtils.FindLatestPackage(packageFeeds, RestorePackageId);
+
+                if (package == null)
+                {
+                    Reports.Error.WriteLine("Unable to locate the package {0}".Red(), RestorePackageId);
+                    return false;
+                }
+                RestorePackageVersion = package.Version.ToString();
+            }
+
+            Reports.Information.WriteLine("Installing package {0} {1}", RestorePackageId.Bold(), RestorePackageVersion.Bold());
+
+            var graphNode = await restoreOperations.CreateGraphNode(
+                restoreContext,
+                new Library()
+                {
+                    Name = RestorePackageId,
+                    Version = SemanticVersion.Parse(RestorePackageVersion)
+                }, 
+                _ => true);
+
+            Reports.Information.WriteLine(string.Format("{0}, {1}ms elapsed", "Resolving complete".Green(), sw.ElapsedMilliseconds));
+
+            var installItems = new List<GraphItem>();
+            var missingItems = new HashSet<LibraryRange>();
+
+            ForEach(new GraphNode[] { graphNode }, node =>
+            {
+                if (node == null || node.LibraryRange == null)
+                {
+                    return;
+                }
+                if (node.Item == null || node.Item.Match == null)
+                {
+                    if (!node.LibraryRange.IsGacOrFrameworkReference &&
+                         node.LibraryRange.VersionRange != null &&
+                         missingItems.Add(node.LibraryRange))
+                    {
+                        Reports.Error.WriteLine(string.Format("Unable to locate {0} >= {1}", node.LibraryRange.Name.Red().Bold(), node.LibraryRange.VersionRange));
+                        success = false;
+                    }
+                    return;
+                }
+                // "kpm restore" is case-sensitive
+                if (!string.Equals(node.Item.Match.Library.Name, node.LibraryRange.Name, StringComparison.Ordinal))
+                {
+                    if (missingItems.Add(node.LibraryRange))
+                    {
+                        Reports.Error.WriteLine(
+                            "Unable to locate {0} >= {1}. Do you mean {2}?",
+                            node.LibraryRange.Name.Red().Bold(),
+                            node.LibraryRange.VersionRange, 
+                            node.Item.Match.Library.Name.Bold());
+                        success = false;
+                    }
+                    return;
+                }
+                var isRemote = remoteProviders.Contains(node.Item.Match.Provider);
+                var isAdded = installItems.Any(item => item.Match.Library == node.Item.Match.Library);
+                if (!isAdded && isRemote)
+                {
+                    installItems.Add(node.Item);
+                }
+            });
+
+            await InstallPackages(installItems, packagesDirectory, packageFilter: (library, nupkgSHA) => true);
+
+            Reports.Information.WriteLine("{0}, {1}ms elapsed", "Install complete".Green().Bold(), sw.ElapsedMilliseconds);
+
+            Library appLib = graphNode?.Item?.Match?.Library;
+            if (appLib != null) 
+            {
+                DefaultPackagePathResolver resolver = new DefaultPackagePathResolver(packagesDirectory);
+                
+                // The call to GetFullPath is important because GetInstallPath returns a path with a "\.\" in it
+                AppInstallPath = Path.GetFullPath(resolver.GetInstallPath(appLib.Name, appLib.Version));
+            }
+
+            return success;
+        }
+
         private async Task<bool> RestoreForProject(string projectJsonPath, string rootDirectory, string packagesDirectory)
         {
             var success = true;
@@ -196,8 +336,10 @@ namespace Microsoft.Framework.PackageManager
                     new NuGetDependencyResolver(
                         packagesDirectory)));
 
-            var effectiveSources = PackageSourceUtils.GetEffectivePackageSources(SourceProvider,
-                Sources, FallbackSources);
+            var effectiveSources = PackageSourceUtils.GetEffectivePackageSources(
+                SourceProvider,
+                FeedOptions.Sources,
+                FeedOptions.FallbackSources);
 
             AddRemoteProvidersFromSources(remoteProviders, effectiveSources);
 
@@ -323,8 +465,10 @@ namespace Microsoft.Framework.PackageManager
                     new NuGetDependencyResolver(
                         packagesDirectory)));
 
-            var effectiveSources = PackageSourceUtils.GetEffectivePackageSources(SourceProvider,
-                Sources, FallbackSources);
+            var effectiveSources = PackageSourceUtils.GetEffectivePackageSources(
+                SourceProvider,
+                FeedOptions.Sources,
+                FeedOptions.FallbackSources);
 
             AddRemoteProvidersFromSources(remoteProviders, effectiveSources);
 
@@ -436,7 +580,11 @@ namespace Microsoft.Framework.PackageManager
         {
             foreach (var source in effectiveSources)
             {
-                var feed = PackageSourceUtils.CreatePackageFeed(source, NoCache, IgnoreFailedSources, Reports);
+                var feed = PackageSourceUtils.CreatePackageFeed(
+                    source,
+                    FeedOptions.NoCache,
+                    FeedOptions.IgnoreFailedSources,
+                    Reports);
                 if (feed != null)
                 {
                     remoteProviders.Add(new RemoteWalkProvider(feed));

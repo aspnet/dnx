@@ -8,6 +8,7 @@ using System.IO;
 using System.Linq;
 using System.Runtime.Versioning;
 using Microsoft.Framework.Runtime;
+using Newtonsoft.Json.Linq;
 using NuGet;
 
 namespace Microsoft.Framework.PackageManager
@@ -93,6 +94,7 @@ namespace Microsoft.Framework.PackageManager
 
             PackageBuilder packageBuilder = null;
             PackageBuilder symbolPackageBuilder = null;
+            InstallBuilder installBuilder = null;
 
             // Build all specified configurations
             foreach (var configuration in configurations)
@@ -104,6 +106,8 @@ namespace Microsoft.Framework.PackageManager
                     symbolPackageBuilder = new PackageBuilder();
                     InitializeBuilder(project, packageBuilder);
                     InitializeBuilder(project, symbolPackageBuilder);
+
+                    installBuilder = new InstallBuilder(project, packageBuilder, _buildOptions.Reports);
                 }
 
                 var configurationSuccess = true;
@@ -159,6 +163,13 @@ namespace Microsoft.Framework.PackageManager
                     // Create a package per configuration
                     string nupkg = GetPackagePath(project, baseOutputPath);
                     string symbolsNupkg = GetPackagePath(project, baseOutputPath, symbols: true);
+
+                    if (configurationSuccess)
+                    {
+                        // Generates the application package only if this is an application packages
+                        configurationSuccess = installBuilder.Build(baseOutputPath);
+                        success = success && configurationSuccess;
+                    }
 
                     if (configurationSuccess)
                     {
@@ -219,6 +230,8 @@ namespace Microsoft.Framework.PackageManager
             _buildOptions.Reports.Information.WriteLine("Time elapsed {0}", sw.Elapsed);
             return success;
         }
+
+        
 
         private bool ValidateFrameworks(HashSet<FrameworkName> projectFrameworks, IDictionary<string, FrameworkName> specifiedFrameworks)
         {

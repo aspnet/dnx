@@ -42,7 +42,6 @@
     },
 
     "commands": {
-        "kpm": "Microsoft.Framework.PackageManager"
     },
 
     "scripts": {

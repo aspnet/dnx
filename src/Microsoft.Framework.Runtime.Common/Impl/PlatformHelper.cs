@@ -16,5 +16,14 @@ namespace Microsoft.Framework.Runtime
                 return _isMono.Value;
             }
         }
+
+        public static bool IsWindows
+        {
+            get
+            {
+                // For now assume Windows = not Mono
+                return !IsMono;
+            }
+        }
     }
 }

@@ -25,3 +25,4 @@ nuget.exe
 /KRuntime.sln.ide
 /*.vspx
 *.metaproj*
+debugSettings.json

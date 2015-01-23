@@ -216,6 +216,18 @@ namespace NuGet
             return Enumerable.Empty<string>();
         }
 
+        public IFileSystem GetDirectory(string path)
+        {
+            var fullPath = GetFullPath(path);
+
+            if (!Directory.Exists(fullPath))
+            {
+                throw new DirectoryNotFoundException();
+            }
+
+            return new PhysicalFileSystem(fullPath);
+        }
+
         public virtual DateTimeOffset GetLastModified(string path)
         {
             path = GetFullPath(path);

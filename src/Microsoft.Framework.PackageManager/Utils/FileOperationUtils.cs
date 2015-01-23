@@ -4,6 +4,7 @@
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using Microsoft.Framework.Runtime;
 
 namespace Microsoft.Framework.PackageManager
 {
@@ -35,21 +36,25 @@ namespace Microsoft.Framework.PackageManager
             }
         }
 
-        public static void MarkExecutable(string scriptPath, Reports reports)
+        public static bool MarkExecutable(string file)
         {
+            if (PlatformHelper.IsWindows)
+            {
+                // This makes sense only on non Windows machines
+                return false;
+            }
+
             var processStartInfo = new ProcessStartInfo()
             {
                 UseShellExecute = false,
                 FileName = "chmod",
-                Arguments = "+x " + scriptPath
+                Arguments = string.Format("+x \"{0}\"", file)
             };
 
             var process = Process.Start(processStartInfo);
             process.WaitForExit();
-            if (process.ExitCode != 0)
-            {
-                reports.Information.WriteLine("Failed to mark {0} as executable".Yellow(), scriptPath);
-            }
+
+            return process.ExitCode == 0;
         }
     }
 }

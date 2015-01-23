@@ -51,7 +51,7 @@ namespace Microsoft.Framework.PackageManager
             var sourceProvider = PackageSourceBuilder.CreateSourceProvider(settings);
 
             var effectiveSources = PackageSourceUtils.GetEffectivePackageSources(sourceProvider,
-                _restoreCommand.Sources, _restoreCommand.FallbackSources);
+                _restoreCommand.FeedOptions.Sources, _restoreCommand.FeedOptions.FallbackSources);
 
             var packageFeeds = new List<IPackageFeed>();
 
@@ -59,8 +59,8 @@ namespace Microsoft.Framework.PackageManager
             {
                 var feed = PackageSourceUtils.CreatePackageFeed(
                     source,
-                    _restoreCommand.NoCache,
-                    _restoreCommand.IgnoreFailedSources,
+                    _restoreCommand.FeedOptions.NoCache,
+                    _restoreCommand.FeedOptions.IgnoreFailedSources,
                     Reports);
                 if (feed != null)
                 {
@@ -72,11 +72,11 @@ namespace Microsoft.Framework.PackageManager
 
             if (version == null)
             {
-                result = await FindLatestVersion(packageFeeds, _addCommand.Name);
+                result = await PackageSourceUtils.FindLatestPackage(packageFeeds, _addCommand.Name);
             }
             else
             {
-                result = await FindBestMatch(packageFeeds, _addCommand.Name, new SemanticVersionRange(version));
+                result = await PackageSourceUtils.FindBestMatchPackage(packageFeeds, _addCommand.Name, new SemanticVersionRange(version));
             }
 
             if (result == null)
@@ -92,59 +92,6 @@ namespace Microsoft.Framework.PackageManager
             }
 
             return _addCommand.ExecuteCommand() && (await _restoreCommand.ExecuteCommand());
-        }
-
-        private static async Task<PackageInfo> FindLatestVersion(IEnumerable<IPackageFeed> packageFeeds, string packageName)
-        {
-            var tasks = new List<Task<IEnumerable<PackageInfo>>>();
-
-            foreach (var feed in packageFeeds)
-            {
-                tasks.Add(feed.FindPackagesByIdAsync(packageName));
-            }
-
-            var results = (await Task.WhenAll(tasks)).SelectMany(x => x);
-
-            return GetMaxVersion(results);
-        }
-
-        private static PackageInfo GetMaxVersion(IEnumerable<PackageInfo> packageInfos)
-        {
-            var max = packageInfos.FirstOrDefault();
-
-            foreach (var packageInfo in packageInfos)
-            {
-                max = max.Version > packageInfo.Version ? max : packageInfo;
-            }
-
-            return max;
-        }
-
-        private static async Task<PackageInfo> FindBestMatch(IEnumerable<IPackageFeed> packageFeeds, string packageName,
-            SemanticVersionRange idealVersion)
-        {
-            var tasks = new List<Task<IEnumerable<PackageInfo>>>();
-
-            foreach (var feed in packageFeeds)
-            {
-                tasks.Add(feed.FindPackagesByIdAsync(packageName));
-            }
-
-            var results = (await Task.WhenAll(tasks)).SelectMany(x => x);
-            PackageInfo bestResult = null;
-
-            foreach (var result in results)
-            {
-                if (VersionUtility.ShouldUseConsidering(
-                    current: bestResult?.Version,
-                    considering: result.Version,
-                    ideal: idealVersion))
-                {
-                    bestResult = result;
-                }
-            }
-
-            return bestResult;
         }
     }
 }

@@ -10,14 +10,22 @@ namespace NuGet
 {
     public class PackageRepository
     {
-        private readonly Dictionary<string, IEnumerable<PackageInfo>> _cache = new Dictionary<string, IEnumerable<PackageInfo>>(StringComparer.OrdinalIgnoreCase);
+        private readonly Dictionary<string, IEnumerable<PackageInfo>> _cache;
         private readonly IFileSystem _repositoryRoot;
         private readonly bool _checkPackageIdCase;
 
-        public PackageRepository(string path, bool checkPackageIdCase)
+        public PackageRepository(string path, bool caseSensitivePackagesName)
+            : this(new PhysicalFileSystem(path), caseSensitivePackagesName)
         {
-            _repositoryRoot = new PhysicalFileSystem(path);
-            _checkPackageIdCase = checkPackageIdCase;
+        }
+
+        public PackageRepository(IFileSystem root, bool caseSensitivePackagesName)
+        {
+            _repositoryRoot = root;
+            _checkPackageIdCase = caseSensitivePackagesName;
+
+            _cache = new Dictionary<string, IEnumerable<PackageInfo>>(
+                caseSensitivePackagesName ? StringComparer.Ordinal : StringComparer.OrdinalIgnoreCase);
         }
 
         public IFileSystem RepositoryRoot
@@ -28,9 +36,22 @@ namespace NuGet
             }
         }
 
+        public IDictionary<string, IEnumerable<PackageInfo>> GetAllPackages()
+        {
+            foreach (var packageDir in _repositoryRoot.GetDirectories("."))
+            {
+                var packageId = Path.GetFileName(packageDir);
+
+                // This call add the package to the cache
+                FindPackagesById(packageId);
+            }
+
+            return _cache;
+        }
+
         public IEnumerable<PackageInfo> FindPackagesById(string packageId)
         {
-            if (String.IsNullOrEmpty(packageId))
+            if (string.IsNullOrEmpty(packageId))
             {
                 throw new ArgumentNullException("packageId");
             }
@@ -79,6 +100,26 @@ namespace NuGet
 
                 return packages;
             });
+        }
+
+        public void RemovePackage(PackageInfo package)
+        {
+            string packageName = package.Id;
+            string packageVersion = package.Version.ToString();
+
+            string folderToDelete;
+            if (RepositoryRoot.GetDirectories(packageName).Count() >1)
+            {
+                // There is more than one version of this package so we can only
+                // remove the version folder without risking to break something else
+                folderToDelete = Path.Combine(packageName, packageVersion);
+            }
+            else
+            {
+                folderToDelete = packageName;
+            }
+
+            RepositoryRoot.DeleteDirectory(folderToDelete, recursive: true);
         }
     }
 }

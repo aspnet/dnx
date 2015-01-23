@@ -8,16 +8,21 @@ namespace Microsoft.Framework.FunctionalTestUtils
 {
     public sealed class DisposableDir : IDisposable
     {
-        private readonly string _dirPath;
+        public DisposableDir()
+            :this(CreateTemporaryDirectory())
+        {
+        }
 
         public DisposableDir(string dirPath)
         {
-            _dirPath = dirPath;
+            DirPath = dirPath;
         }
+
+        public string DirPath { get; private set; }
 
         public static implicit operator string(DisposableDir disposableDirPath)
         {
-            return disposableDirPath._dirPath;
+            return disposableDirPath.DirPath;
         }
 
         public static implicit operator DisposableDir(string dirPath)
@@ -27,10 +32,17 @@ namespace Microsoft.Framework.FunctionalTestUtils
 
         public void Dispose()
         {
-            if (Directory.Exists(_dirPath))
+            if (Directory.Exists(DirPath))
             {
-                TestUtils.DeleteFolder(_dirPath);
+                TestUtils.DeleteFolder(DirPath);
             }
+        }
+
+        private static string CreateTemporaryDirectory()
+        {
+            string tempDirectory = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
+            Directory.CreateDirectory(tempDirectory);
+            return tempDirectory;
         }
     }
 }

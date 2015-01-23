@@ -7,6 +7,8 @@ using System.IO;
 using System.Linq;
 using NuGet;
 using Microsoft.Framework.PackageManager.Restore.NuGet;
+using System.Threading.Tasks;
+using Microsoft.Framework.Runtime;
 
 namespace Microsoft.Framework.PackageManager
 {
@@ -43,6 +45,61 @@ namespace Microsoft.Framework.PackageManager
                     reports,
                     ignoreFailedSources);
             }
+        }
+
+        public static async Task<PackageInfo> FindLatestPackage(IEnumerable<IPackageFeed> packageFeeds, string packageName)
+        {
+            var tasks = new List<Task<IEnumerable<PackageInfo>>>();
+
+            foreach (var feed in packageFeeds)
+            {
+                tasks.Add(feed.FindPackagesByIdAsync(packageName));
+            }
+
+            var results = (await Task.WhenAll(tasks)).SelectMany(x => x);
+
+            return GetMaxVersion(results);
+        }
+
+        private static PackageInfo GetMaxVersion(IEnumerable<PackageInfo> packageInfos)
+        {
+            var max = packageInfos.FirstOrDefault();
+
+            foreach (var packageInfo in packageInfos)
+            {
+                max = max.Version > packageInfo.Version ? max : packageInfo;
+            }
+
+            return max;
+        }
+
+        public static async Task<PackageInfo> FindBestMatchPackage(
+            IEnumerable<IPackageFeed> packageFeeds, 
+            string packageName,
+            SemanticVersionRange idealVersion)
+        {
+            var tasks = new List<Task<IEnumerable<PackageInfo>>>();
+
+            foreach (var feed in packageFeeds)
+            {
+                tasks.Add(feed.FindPackagesByIdAsync(packageName));
+            }
+
+            var results = (await Task.WhenAll(tasks)).SelectMany(x => x);
+            PackageInfo bestResult = null;
+
+            foreach (var result in results)
+            {
+                if (VersionUtility.ShouldUseConsidering(
+                    current: bestResult?.Version,
+                    considering: result.Version,
+                    ideal: idealVersion))
+                {
+                    bestResult = result;
+                }
+            }
+
+            return bestResult;
         }
 
         private static bool CorrectName(string value, PackageSource source)
