@@ -7,14 +7,14 @@ using System.IO.Compression;
 using System.Runtime.Versioning;
 using System.Security.Cryptography;
 
-namespace Microsoft.Framework.PackageManager.Packing
+namespace Microsoft.Framework.PackageManager.Bundle
 {
-    public class PackRuntime
+    public class BundleRuntime
     {
         private readonly FrameworkName _frameworkName;
         private readonly string _runtimeNupkgPath;
 
-        public PackRuntime(PackRoot root, FrameworkName frameworkName, string runtimeNupkgPath)
+        public BundleRuntime(BundleRoot root, FrameworkName frameworkName, string runtimeNupkgPath)
         {
             _frameworkName = frameworkName;
             _runtimeNupkgPath = runtimeNupkgPath;
@@ -26,9 +26,9 @@ namespace Microsoft.Framework.PackageManager.Packing
         public string TargetPath { get; private set; }
         public FrameworkName Framework { get { return _frameworkName; } }
 
-        public void Emit(PackRoot root)
+        public void Emit(BundleRoot root)
         {
-            root.Reports.Quiet.WriteLine("Packing runtime {0}", Name);
+            root.Reports.Quiet.WriteLine("Bundling runtime {0}", Name);
 
             if (Directory.Exists(TargetPath))
             {

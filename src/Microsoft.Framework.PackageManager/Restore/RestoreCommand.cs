@@ -10,7 +10,7 @@ using System.Linq;
 using System.Runtime.Versioning;
 using System.Security.Cryptography;
 using System.Threading.Tasks;
-using Microsoft.Framework.PackageManager.Packing;
+using Microsoft.Framework.PackageManager.Bundle;
 using Microsoft.Framework.PackageManager.Restore.NuGet;
 using Microsoft.Framework.Runtime;
 using Newtonsoft.Json.Linq;
@@ -472,7 +472,7 @@ namespace Microsoft.Framework.PackageManager
         {
             using (var archive = new ZipArchive(stream, ZipArchiveMode.Read))
             {
-                var packOperations = new PackOperations();
+                var packOperations = new BundleOperations();
                 packOperations.ExtractNupkg(archive, targetPath);
             }
         }
