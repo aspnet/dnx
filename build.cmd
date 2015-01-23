@@ -19,8 +19,14 @@ IF EXIST packages\KoreBuild goto run
 .nuget\NuGet.exe install KoreBuild -ExcludeVersion -o packages -nocache -pre
 .nuget\NuGet.exe install Sake -version 0.2 -o packages -ExcludeVersion
 
-IF "%SKIP_DOTNET_INSTALL%"=="1" goto run
-IF NOT "%1" == "rebuild-package" CALL packages\KoreBuild\build\dotnetsdk.cmd upgrade -runtime CLR -x86
+IF "%1" == "rebuild-package" goto run
+
+IF "%SKIP_DOTNET_INSTALL%"=="1" (
+	REM On the CI, don't upgrade since the previous installed XRE is already there.
+	CALL packages\KoreBuild\build\dotnetsdk use default -runtime CLR -x86
+) ELSE (
+    CALL packages\KoreBuild\build\dotnetsdk.cmd upgrade -runtime CLR -x86
+)
 
 :run
 packages\Sake\tools\Sake.exe -I packages\KoreBuild\build -f makefile.shade %*
