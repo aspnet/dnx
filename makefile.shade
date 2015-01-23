@@ -72,7 +72,7 @@ var RC_FILES = '${FindAllFiles("Resource.rc", "dotnet", "dotnet.clr", "dotnet.co
 
 #build-crossplatfrom-projects target='build-compile'
     @{ var BUILD_DIR = BUILD_DIR2; }
-    kpm-pack each='var projectFile in MANAGED_PROJECTS' configuration='${Configuration2}'
+    k-build each='var projectFile in MANAGED_PROJECTS' configuration='${Configuration2}'
     @{
         foreach (var nupkg in Files.Include(Path.Combine(BUILD_DIR, "*/*.nupkg"))) 
         {
@@ -82,7 +82,7 @@ var RC_FILES = '${FindAllFiles("Resource.rc", "dotnet", "dotnet.clr", "dotnet.co
 
 #build-winplatform-projects target='build-compile' if='!IsMono'
     @{ var BUILD_DIR = BUILD_DIR2; }
-    kpm-pack each='var projectFile in WIN_MANAGED_PROJECTS' configuration='${Configuration2}'
+    k-build each='var projectFile in WIN_MANAGED_PROJECTS' configuration='${Configuration2}'
     @{
         foreach (var nupkg in Files.Include(Path.Combine(BUILD_DIR, "*/*.nupkg"))) 
         {
@@ -355,7 +355,7 @@ var RC_FILES = '${FindAllFiles("Resource.rc", "dotnet", "dotnet.clr", "dotnet.co
         }
     }
     
-#verify-package .ensure-latest-package .test-package target='verify'
+
 
 #clean-sdk-dir
     directory each='var delete in ALL_TARGETS'
