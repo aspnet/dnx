@@ -7,6 +7,8 @@ using System.Runtime.Versioning;
 using Microsoft.Framework.Runtime.Common.DependencyInjection;
 using Microsoft.Framework.Runtime.FileSystem;
 using Microsoft.Framework.Runtime.Loader;
+using Microsoft.Framework.Runtime.DependencyManagement;
+using System.IO;
 
 namespace Microsoft.Framework.Runtime
 {
@@ -38,6 +40,14 @@ namespace Microsoft.Framework.Runtime
             var gacDependencyResolver = new GacDependencyResolver();
             ProjectDepencyProvider = new ProjectReferenceDependencyProvider(ProjectResolver);
             var unresolvedDependencyProvider = new UnresolvedDependencyProvider();
+
+            var projectLockJsonPath = Path.Combine(ProjectDirectory, LockFileFormat.LockFileName);
+            if (File.Exists(projectLockJsonPath))
+            {
+                var lockFileFormat = new LockFileFormat();
+                var lockFile = lockFileFormat.Read(projectLockJsonPath);
+                NuGetDependencyProvider.ApplyLockFile(lockFile);
+            }
 
             DependencyWalker = new DependencyWalker(new IDependencyProvider[] {
                 ProjectDepencyProvider,

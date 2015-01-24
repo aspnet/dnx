@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Runtime.Versioning;
+using Microsoft.Framework.Runtime.DependencyManagement;
 using NuGet;
 
 namespace Microsoft.Framework.Runtime
@@ -44,6 +45,11 @@ namespace Microsoft.Framework.Runtime
 
         public IEnumerable<LibraryDescription> Dependencies { get; private set; }
 
+        public void ApplyLockFile(LockFile lockFile)
+        {
+            _repository.ApplyLockFile(lockFile);
+        }
+
         public IEnumerable<string> GetAttemptedPaths(FrameworkName targetFramework)
         {
             return new[]
@@ -74,6 +80,26 @@ namespace Microsoft.Framework.Runtime
                     Type = "Package",
                     Dependencies = GetDependencies(package, targetFramework)
                 };
+            }
+
+            return null;
+        }
+
+
+        public LockFileLibrary GetLockFileLibrary(Library library)
+        {
+            var package = FindCandidate(library.Name, library.Version);
+
+            if (package != null)
+            {
+                var result = new LockFileLibrary();
+                result.Name = package.Id;
+                result.Version = package.Version;
+                result.DependencySets = package.DependencySets.ToList();
+                result.FrameworkAssemblies = package.FrameworkAssemblies.ToList();
+                result.PackageAssemblyReferences = package.PackageAssemblyReferences.ToList();
+                result.Files = package.GetFiles().ToList();
+                return result;
             }
 
             return null;

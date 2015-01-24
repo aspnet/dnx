@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using Microsoft.Framework.Runtime.DependencyManagement;
 
 namespace NuGet
 {
@@ -13,6 +14,7 @@ namespace NuGet
         private readonly Dictionary<string, IEnumerable<PackageInfo>> _cache;
         private readonly IFileSystem _repositoryRoot;
         private readonly bool _checkPackageIdCase;
+        private LockFile _lockFile;
 
         public PackageRepository(string path, bool caseSensitivePackagesName)
             : this(new PhysicalFileSystem(path), caseSensitivePackagesName)
@@ -49,6 +51,11 @@ namespace NuGet
             return _cache;
         }
 
+        public void ApplyLockFile(LockFile lockFile)
+        {
+            _lockFile = lockFile;
+        }
+
         public IEnumerable<PackageInfo> FindPackagesById(string packageId)
         {
             if (string.IsNullOrEmpty(packageId))
@@ -61,41 +68,63 @@ namespace NuGet
             {
                 var packages = new List<PackageInfo>();
 
-                foreach (var versionDir in _repositoryRoot.GetDirectories(id))
+                if (_lockFile != null)
                 {
-                    // versionDir = {packageId}\{version}
-                    var folders = versionDir.Split(new[] { Path.DirectorySeparatorChar }, 2);
-
-                    // Unknown format
-                    if (folders.Length < 2)
+                    foreach(var lockFileLibrary in _lockFile.Libraries)
                     {
-                        continue;
+                        var stringComparison = _checkPackageIdCase ? StringComparison.Ordinal : StringComparison.OrdinalIgnoreCase;
+
+                        if (lockFileLibrary.Name.Equals(packageId, stringComparison))
+                        {
+                            packages.Add(new PackageInfo(
+                                _repositoryRoot,
+                                lockFileLibrary.Name,
+                                lockFileLibrary.Version,
+                                Path.Combine(
+                                    lockFileLibrary.Name,
+                                    lockFileLibrary.Version.ToString()),
+                                lockFileLibrary));
+                        }
                     }
-
-                    var versionPart = folders[1];
-
-                    // Get the version part and parse it
-                    SemanticVersion version;
-                    if (!SemanticVersion.TryParse(versionPart, out version))
+                }
+                else
+                {
+                    foreach (var versionDir in _repositoryRoot.GetDirectories(id))
                     {
-                        continue;
-                    }
+                        // versionDir = {packageId}\{version}
+                        var folders = versionDir.Split(new[] { Path.DirectorySeparatorChar }, 2);
 
-                    // If we need to help ensure case-sensitivity, we try to get
-                    // the package id in accurate casing by extracting the name of nuspec file
-                    // Otherwise we just use the passed in package id for efficiency
-                    if (_checkPackageIdCase)
-                    {
-                        var manifestFileName = Path.GetFileName(
-                            _repositoryRoot.GetFiles(versionDir, "*" + Constants.ManifestExtension).FirstOrDefault());
-                        if (string.IsNullOrEmpty(manifestFileName))
+                        // Unknown format
+                        if (folders.Length < 2)
                         {
                             continue;
                         }
-                        id = Path.GetFileNameWithoutExtension(manifestFileName);
-                    }
 
-                    packages.Add(new PackageInfo(_repositoryRoot, id, version, versionDir));
+                        var versionPart = folders[1];
+
+                        // Get the version part and parse it
+                        SemanticVersion version;
+                        if (!SemanticVersion.TryParse(versionPart, out version))
+                        {
+                            continue;
+                        }
+
+                        // If we need to help ensure case-sensitivity, we try to get
+                        // the package id in accurate casing by extracting the name of nuspec file
+                        // Otherwise we just use the passed in package id for efficiency
+                        if (_checkPackageIdCase)
+                        {
+                            var manifestFileName = Path.GetFileName(
+                                _repositoryRoot.GetFiles(versionDir, "*" + Constants.ManifestExtension).FirstOrDefault());
+                            if (string.IsNullOrEmpty(manifestFileName))
+                            {
+                                continue;
+                            }
+                            id = Path.GetFileNameWithoutExtension(manifestFileName);
+                        }
+
+                        packages.Add(new PackageInfo(_repositoryRoot, id, version, versionDir));
+                    }
                 }
 
                 return packages;

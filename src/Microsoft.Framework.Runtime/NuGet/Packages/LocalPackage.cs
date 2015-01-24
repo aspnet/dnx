@@ -198,7 +198,7 @@ namespace NuGet
         public ICollection<PackageReferenceSet> PackageAssemblyReferences
         {
             get;
-            private set;
+            set;
         }
 
         public virtual IEnumerable<FrameworkName> GetSupportedFrameworks()

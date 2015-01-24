@@ -7,6 +7,7 @@ using System.IO;
 using System.Runtime.Versioning;
 using System.Threading.Tasks;
 using Microsoft.Framework.Runtime;
+using Microsoft.Framework.Runtime.DependencyManagement;
 using NuGet;
 
 namespace Microsoft.Framework.PackageManager
@@ -45,6 +46,17 @@ namespace Microsoft.Framework.PackageManager
 
             return Task.FromResult(description.Dependencies);
         }
+
+        public Task<LockFileLibrary> GetLockFileLibrary(WalkProviderMatch match)
+        {
+            var nugetProvider = _dependencyProvider as NuGetDependencyResolver;
+            if (nugetProvider != null)
+            {
+                return Task.FromResult(nugetProvider.GetLockFileLibrary(match.Library));
+            }
+            return Task.FromResult(default(LockFileLibrary));
+        }
+
 
         public Task CopyToAsync(WalkProviderMatch match, Stream stream)
         {

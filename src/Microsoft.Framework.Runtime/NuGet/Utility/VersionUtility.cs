@@ -1099,6 +1099,18 @@ namespace NuGet
                 return false;
             }
 
+            if (ideal.MaxVersion != null)
+            {
+                if (ideal.IsMaxInclusive && considering > ideal.MaxVersion)
+                {
+                    return false;
+                }
+                else if (ideal.IsMaxInclusive == false && considering >= ideal.MaxVersion)
+                {
+                    return false;
+                }
+            }
+
             /*
             Come back to this later
             if (ideal.VersionFloatBehavior == SemanticVersionFloatBehavior.None &&
