@@ -33,6 +33,12 @@ namespace Microsoft.Framework.PackageManager
 
         public string RestoreDirectory { get; set; }
         public string NuGetConfigFile { get; set; }
+        public IEnumerable<string> Sources { get; set; }
+        public IEnumerable<string> FallbackSources { get; set; }
+        public bool NoCache { get; set; }
+        public bool Lock { get; set; }
+        public bool Unlock { get; set; }
+        public string PackageFolder { get; set; }
         public string GlobalJsonFile { get; set; }
 
         public string RestorePackageId { get; set; } 
@@ -311,7 +317,15 @@ namespace Microsoft.Framework.PackageManager
             }
 
             var lockFile = await ReadLockFile(projectLockFilePath);
-            var isLocked = lockFile?.Islocked ?? false;
+
+            var useLockFile = false;
+            if (Lock == false && 
+                Unlock == false && 
+                lockFile != null &&
+                lockFile.Islocked)
+            {
+                useLockFile = true;
+            }
 
             Func<string, string> getVariable = key =>
             {
@@ -352,7 +366,7 @@ namespace Microsoft.Framework.PackageManager
 
             var tasks = new List<Task<GraphNode>>();
 
-            if (isLocked)
+            if (useLockFile)
             {
                 Reports.Information.WriteLine(string.Format("Following lock file {0}", projectLockFilePath.White().Bold()));
 
@@ -475,7 +489,7 @@ namespace Microsoft.Framework.PackageManager
 
             await InstallPackages(installItems, packagesDirectory, packageFilter: (library, nupkgSHA) => true);
 
-            if (success && !isLocked)
+            if (success && !useLockFile)
             {
                 Reports.Information.WriteLine(string.Format("Writing lock file {0}", projectLockFilePath.White().Bold()));
                 await WriteLockFile(projectLockFilePath, graphItems);
@@ -640,6 +654,7 @@ namespace Microsoft.Framework.PackageManager
         private async Task WriteLockFile(string projectLockFilePath, List<GraphItem> graphItems)
         {
             var lockFile = new LockFile();
+            lockFile.Islocked = Lock;
             foreach (var item in graphItems.OrderBy(x => x.Match.Library, new LibraryComparer()))
             {
                 var library = await item.Match.Provider.GetLockFileLibrary(item.Match);

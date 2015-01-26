@@ -102,9 +102,9 @@ namespace Microsoft.Framework.Runtime.DependencyManagement
         private JProperty WriteLibrary(LockFileLibrary library)
         {
             var json = new JObject();
-            json["dependencySets"] = WriteObject(library.DependencySets, WritePackageDependencySet);
-            json["frameworkAssemblies"] = WriteFrameworkAssemblies(library.FrameworkAssemblies);
-            json["packageAssemblyReferences"] = WriteArray(library.PackageAssemblyReferences, WritePackageReferenceSet);
+            WriteObject(json, "dependencySets", library.DependencySets, WritePackageDependencySet);
+            WriteFrameworkAssemblies(json, "frameworkAssemblies", library.FrameworkAssemblies);
+            WriteArray(json, "packageAssemblyReferences", library.PackageAssemblyReferences, WritePackageReferenceSet);
             json["contents"] = WriteObject(library.Files, WritePackageFile);
             return new JProperty(
                 library.Name + "/" + library.Version.ToString(),
@@ -131,6 +131,14 @@ namespace Microsoft.Framework.Runtime.DependencyManagement
                     return frameworkSet.AssemblyNames.Select(name => new FrameworkAssemblyReference(name, supportedFrameworks));
                 }
             }).ToList();
+        }
+
+        private void WriteFrameworkAssemblies(JToken json, string property, IList<FrameworkAssemblyReference> frameworkAssemblies)
+        {
+            if (frameworkAssemblies.Any())
+            {
+                json[property] = WriteFrameworkAssemblies(frameworkAssemblies);
+            }
         }
 
         private JToken WriteFrameworkAssemblies(IList<FrameworkAssemblyReference> frameworkAssemblies)
@@ -236,7 +244,7 @@ namespace Microsoft.Framework.Runtime.DependencyManagement
         {
             if (json == null)
             {
-                return null;
+                return new List<TItem>();
             }
             var items = new List<TItem>();
             foreach (var child in json)
@@ -244,6 +252,14 @@ namespace Microsoft.Framework.Runtime.DependencyManagement
                 items.Add(readItem(child));
             }
             return items;
+        }
+
+        private void WriteArray<TItem>(JToken json, string property, IEnumerable<TItem> items, Func<TItem, JToken> writeItem)
+        {
+            if (items.Any())
+            {
+                json[property] = WriteArray(items, writeItem);
+            }
         }
 
         private JArray WriteArray<TItem>(IEnumerable<TItem> items, Func<TItem, JToken> writeItem)
@@ -260,7 +276,7 @@ namespace Microsoft.Framework.Runtime.DependencyManagement
         {
             if (json == null)
             {
-                return null;
+                return new List<TItem>();
             }
             var items = new List<TItem>();
             foreach (var child in json)
@@ -268,6 +284,14 @@ namespace Microsoft.Framework.Runtime.DependencyManagement
                 items.Add(readItem(child.Key, child.Value));
             }
             return items;
+        }
+
+        private void WriteObject<TItem>(JToken json, string property, IEnumerable<TItem> items, Func<TItem, JProperty> writeItem)
+        {
+            if (items.Any())
+            {
+                json[property] = WriteObject(items, writeItem);
+            }
         }
 
         private JObject WriteObject<TItem>(IEnumerable<TItem> items, Func<TItem, JProperty> writeItem)

@@ -51,9 +51,13 @@ namespace Microsoft.Framework.PackageManager
                 c.Description = "Restore packages";
 
                 var argRoot = c.Argument("[root]", "Root of all projects to restore. It can be a directory, a project.json, or a global.json.");
-
                 var feedOptions = FeedOptions.Add(c);
-
+                var optLock = c.Option("--lock",
+                    "Creates dependencies file with locked property set to true. Overwrites file if it exists.",
+                    CommandOptionType.NoValue);
+                var optUnlock = c.Option("--unlock",
+                    "Creates dependencies file with locked property set to false. Overwrites file if it exists.",
+                    CommandOptionType.NoValue);
                 c.HelpOption("-?|-h|--help");
 
                 c.OnExecute(async () =>
@@ -62,6 +66,8 @@ namespace Microsoft.Framework.PackageManager
                     command.Reports = CreateReports(optionVerbose.HasValue(), feedOptions.Quiet);
                     command.RestoreDirectory = argRoot.Value;
                     command.FeedOptions = feedOptions;
+                    command.Lock = optLock.HasValue();
+                    command.Unlock = optUnlock.HasValue();
 
                     if (feedOptions.ProxyOptions.HasValue())
                     {
