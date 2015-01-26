@@ -15,6 +15,7 @@ namespace Microsoft.Framework.Runtime
             MinVersion = versionSpec.MinVersion;
             MaxVersion = versionSpec.MaxVersion;
             VersionFloatBehavior = SemanticVersionFloatBehavior.None;
+            IsMaxInclusive = versionSpec.IsMaxInclusive;
         }
 
         public SemanticVersionRange(SemanticVersion version)
