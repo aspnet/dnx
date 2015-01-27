@@ -38,13 +38,14 @@ namespace Microsoft.Framework.PackageManager.Bundle
         public string TargetPath { get; private set; }
         public string WwwRoot { get; set; }
         public string WwwRootOut { get; set; }
+        public bool IsPackage { get; private set; }
 
         public void Emit(BundleRoot root)
         {
             root.Reports.Quiet.WriteLine("Using {0} dependency {1} for {2}", _libraryDescription.Type,
                 _libraryDescription.Identity, _libraryDescription.Framework.ToString().Yellow().Bold());
 
-            if (root.NoSource)
+            if (root.NoSource || IsWrappingAssembly())
             {
                 EmitNupkg(root);
             }
@@ -86,9 +87,10 @@ namespace Microsoft.Framework.PackageManager.Bundle
             root.Reports.Quiet.WriteLine("  Packing nupkg from {0} dependency {1}",
                 _libraryDescription.Type, _libraryDescription.Identity.Name);
 
+            IsPackage = true;
+
             var project = GetCurrentProject();
             var resolver = new DefaultPackagePathResolver(root.TargetPackagesPath);
-
             var targetNupkg = resolver.GetPackageFileName(project.Name, project.Version);
             TargetPath = resolver.GetInstallPath(project.Name, project.Version);
 
@@ -284,12 +286,9 @@ namespace Microsoft.Framework.PackageManager.Bundle
 
         public void PostProcess(BundleRoot root)
         {
-            if (root.NoSource)
-            {
-                // At this point, all nupkgs generated from dependency projects are available in packages folder
-                // So we can add them to lockfile now
-                UpdateLockFile(root);
-            }
+            // At this point, all nupkgs generated from dependency projects are available in packages folder
+            // So we can add them to lockfile now
+            UpdateLockFile(root);
 
             // If --wwwroot-out doesn't have a non-empty value, we don't need a public app folder in output
             if (string.IsNullOrEmpty(WwwRootOut))
@@ -319,16 +318,20 @@ namespace Microsoft.Framework.PackageManager.Bundle
         private void UpdateLockFile(BundleRoot root)
         {
             var lockFileFormat = new LockFileFormat();
-            var lockFilePath = Path.Combine(TargetPath, "root", LockFileFormat.LockFileName);
+            string lockFilePath;
+            if (root.NoSource)
+            {
+                lockFilePath = Path.Combine(TargetPath, "root", LockFileFormat.LockFileName);
+            }
+            else
+            {
+                lockFilePath = Path.Combine(TargetPath, LockFileFormat.LockFileName);
+            }
 
             LockFile lockFile;
             if (File.Exists(lockFilePath))
             {
                 lockFile = lockFileFormat.Read(lockFilePath);
-
-                // Correct 'projectFileDependencyGroups' in lockfile to ensure output can pass lockfile validation
-                // Remove the dependency group shared by all frameworks because it is not valid anymore
-                lockFile.ProjectFileDependencyGroups.RemoveAll(g => string.IsNullOrEmpty(g.FrameworkName));
             }
             else
             {
@@ -339,7 +342,10 @@ namespace Microsoft.Framework.PackageManager.Bundle
 
                 var project = GetCurrentProject();
 
-                // Keep the dependency groups for specific frameworks
+                // Restore dependency groups for future lockfile validation
+                lockFile.ProjectFileDependencyGroups.Add(new ProjectFileDependencyGroup(
+                    string.Empty,
+                    project.Dependencies.Select(x => x.LibraryRange.ToString())));
                 foreach (var frameworkInfo in project.GetTargetFrameworks())
                 {
                     lockFile.ProjectFileDependencyGroups.Add(new ProjectFileDependencyGroup(
@@ -348,19 +354,23 @@ namespace Microsoft.Framework.PackageManager.Bundle
                 }
             }
 
-            // The dependency group shared by all frameworks should only contain the main nupkg (i.e. entrypoint)
-            lockFile.ProjectFileDependencyGroups.Add(new ProjectFileDependencyGroup(
-                string.Empty,
-                new[] { _libraryDescription.LibraryRange.ToString() }));
+            if (root.NoSource)
+            {
+                // The dependency group shared by all frameworks should only contain the main nupkg (i.e. entrypoint)
+                lockFile.ProjectFileDependencyGroups.RemoveAll(g => string.IsNullOrEmpty(g.FrameworkName));
+                lockFile.ProjectFileDependencyGroups.Add(new ProjectFileDependencyGroup(
+                    string.Empty,
+                    new[] { _libraryDescription.LibraryRange.ToString() }));
+            }
 
             var repository = new PackageRepository(root.TargetPackagesPath);
             var resolver = new DefaultPackagePathResolver(root.TargetPackagesPath);
 
-            // All dependency projects are bundled to nupkgs
+            // For dependency projects that were bundled to nupkgs
             // Add them to lockfile to ensure the contents of lockfile are still valid
             using (var sha512 = SHA512.Create())
             {
-                foreach (var bundleProject in root.Projects)
+                foreach (var bundleProject in root.Projects.Where(p => p.IsPackage))
                 {
                     var packageInfo = repository.FindPackagesById(bundleProject.Name)
                         .SingleOrDefault();
@@ -582,6 +592,22 @@ namespace Microsoft.Framework.PackageManager.Bundle
                 throw new Exception("TODO: unable to resolve project named " + _libraryDescription.Identity.Name);
             }
             return project;
+        }
+
+        private bool IsWrappingAssembly()
+        {
+            /* If this project is wrapping an assembly, the project.json has the format like:
+            {
+              "frameworks": {
+                "dnx451": {
+                  "bin": {
+                    "assembly": "relative/path/to/ClassLibrary1.dll"
+                  }
+                }
+              }
+            } */
+            var project = GetCurrentProject();
+            return project.GetTargetFrameworks().Any(f => !string.IsNullOrEmpty(f.AssemblyPath));
         }
     }
 }

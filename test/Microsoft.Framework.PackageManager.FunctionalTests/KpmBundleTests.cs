@@ -34,6 +34,15 @@ export SET {0}=""$DIR/approot/src/{1}""
 
 exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@""".Replace("\r\n", "\n");
 
+        private static readonly string BasicLockFile = @"{
+  ""locked"": false,
+  ""version"": LOCKFILEFORMAT_VERSION,
+  ""projectFileDependencyGroups"": {
+    """": []
+  },
+  ""libraries"": {}
+}".Replace("LOCKFILEFORMAT_VERSION", LockFileFormat.Version.ToString());
+
         public static IEnumerable<object[]> RuntimeHomeDirs
         {
             get
@@ -75,7 +84,7 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
     'global.json': '',
     'src': {
       'PROJECT_NAME': {
-        '.': ['project.json', 'Config.json', 'Program.cs'],
+        '.': ['project.json', 'project.lock.json', 'Config.json', 'Program.cs'],
           'Views': {
             'Home': ['index.cshtml'],
             'Shared': ['_Layout.cshtml']
@@ -132,6 +141,8 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
   ""bundleExclude"": ""**.bconfig"",
   ""webroot"": ""../../../wwwroot""
 }")
+                    .WithFileContents(Path.Combine("approot", "src", testEnv.ProjectName, "project.lock.json"),
+                        BasicLockFile)
                     .WithFileContents(Path.Combine("wwwroot", "project.json"), @"{
   ""bundleExclude"": ""**.bconfig"",
   ""webroot"": ""to_be_overridden""
@@ -175,7 +186,7 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
     'global.json': '',
     'src': {
       'PROJECT_NAME': {
-        '.': ['project.json', 'Config.json', 'Program.cs'],
+        '.': ['project.json', 'project.lock.json', 'Config.json', 'Program.cs'],
           'Views': {
             'Home': ['index.cshtml'],
             'Shared': ['_Layout.cshtml']
@@ -230,6 +241,8 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
   ""bundleExclude"": ""**.useless"",
   ""webroot"": ""../../../wwwroot""
 }")
+                    .WithFileContents(Path.Combine("approot", "src", testEnv.ProjectName, "project.lock.json"),
+                        BasicLockFile)
                     .WithFileContents(Path.Combine("approot", "global.json"), @"{
   ""packages"": ""packages""
 }")
@@ -256,7 +269,7 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
     'global.json': '',
     'src': {
       'PROJECT_NAME': {
-        '.': ['project.json', 'Config.json', 'Program.cs'],
+        '.': ['project.json', 'project.lock.json', 'Config.json', 'Program.cs'],
           'Data': {
             'Input': ['data1.dat', 'data2.dat']
           }
@@ -291,6 +304,8 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
                     .WithFileContents(Path.Combine("approot", "src", testEnv.ProjectName, "project.json"), @"{
   ""bundleExclude"": ""Data/Backup/**""
 }")
+                    .WithFileContents(Path.Combine("approot", "src", testEnv.ProjectName, "project.lock.json"),
+                        BasicLockFile)
                     .WithFileContents(Path.Combine("approot", "global.json"), @"{
   ""packages"": ""packages""
 }");
@@ -333,7 +348,7 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
     'global.json': '',
     'src': {
       'PROJECT_NAME': {
-        '.': ['project.json'],
+        '.': ['project.json', 'project.lock.json'],
         'MixFolder': {
           'UsefulSub': ['useful.txt', 'useful.css', 'file_without_extension']
         }
@@ -390,6 +405,8 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
     "".git""
   ]
 }")
+                    .WithFileContents(Path.Combine("approot", "src", testEnv.ProjectName, "project.lock.json"),
+                        BasicLockFile)
                     .WithFileContents(Path.Combine("approot", "global.json"), @"{
   ""packages"": ""packages""
 }");
@@ -431,7 +448,7 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
     'global.json': '',
     'src': {
       'PROJECT_NAME': {
-        '.': ['project.json'],
+        '.': ['project.json', 'project.lock.json'],
         'MixFolder1': {
           'UsefulSub': ['useful.txt', 'useful']
         },
@@ -481,6 +498,8 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
     ""MixFolder2/*.*""
   ]
 }")
+                    .WithFileContents(Path.Combine("approot", "src", testEnv.ProjectName, "project.lock.json"),
+                        BasicLockFile)
                     .WithFileContents(Path.Combine("approot", "global.json"), @"{
   ""packages"": ""packages""
 }");
@@ -526,7 +545,7 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
     'global.json': '',
     'src': {
       'PROJECT_NAME': {
-        '.': ['project.json', 'File', '.FileStartingWithDot', 'File.Having.Dots'],
+        '.': ['project.json', 'project.lock.json', 'File', '.FileStartingWithDot', 'File.Having.Dots'],
         'Folder': {
           'SubFolder': ['File', '.FileStartingWithDot', 'File.Having.Dots'],
           'SubFolder.Having.Dots': ['File', '.FileStartingWithDot', 'File.Having.Dots'],
@@ -570,6 +589,8 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
                 var expectedOutputDir = DirTree.CreateFromJson(expectedOutputStructure)
                     .WithFileContents(Path.Combine("approot", "src", testEnv.ProjectName, "project.json"), @"{
 }")
+                    .WithFileContents(Path.Combine("approot", "src", testEnv.ProjectName, "project.lock.json"),
+                        BasicLockFile)
                     .WithFileContents(Path.Combine("approot", "global.json"), @"{
   ""packages"": ""packages""
 }");
@@ -605,7 +626,7 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
     'global.json': '',
     'src': {
       'PROJECT_NAME': {
-        '.': ['project.json', 'File', '.FileStartingWithDot'],
+        '.': ['project.json', 'project.lock.json', 'File', '.FileStartingWithDot'],
         'Folder': ['File', '.FileStartingWithDot']
       }
     }
@@ -636,6 +657,8 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
                 var expectedOutputDir = DirTree.CreateFromJson(expectedOutputStructure)
                     .WithFileContents(Path.Combine("approot", "src", testEnv.ProjectName, "project.json"), @"{
 }")
+                    .WithFileContents(Path.Combine("approot", "src", testEnv.ProjectName, "project.lock.json"),
+                        BasicLockFile)
                     .WithFileContents(Path.Combine("approot", "global.json"), @"{
   ""packages"": ""packages""
 }");
@@ -658,7 +681,7 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
   'approot': {
     'global.json': '',
     'src': {
-      'PROJECT_NAME': ['project.json']
+      'PROJECT_NAME': ['project.json', 'project.lock.json']
     }
   }
 }".Replace("PROJECT_NAME", _projectName);
@@ -715,6 +738,8 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
                     .WithFileContents(Path.Combine("approot", "src", testEnv.ProjectName, "project.json"), @"{
   ""webroot"": ""../../../wwwroot""
 }")
+                    .WithFileContents(Path.Combine("approot", "src", testEnv.ProjectName, "project.lock.json"),
+                        BasicLockFile)
                     .WithFileContents(Path.Combine("approot", "global.json"), @"{
   ""packages"": ""packages""
 }")
@@ -738,7 +763,7 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
   'approot': {
     'global.json': '',
     'src': {
-      'PROJECT_NAME': ['project.json']
+      'PROJECT_NAME': ['project.json', 'project.lock.json']
     }
   }
 }".Replace("PROJECT_NAME", _projectName);
@@ -811,6 +836,8 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
                     .WithFileContents(Path.Combine("approot", "src", testEnv.ProjectName, "project.json"), @"{
   ""webroot"": ""../../../wwwroot""
 }")
+                    .WithFileContents(Path.Combine("approot", "src", testEnv.ProjectName, "project.lock.json"),
+                        BasicLockFile)
                     .WithFileContents(Path.Combine("approot", "global.json"), @"{
   ""packages"": ""packages""
 }")
@@ -834,7 +861,7 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
     'global.json': '',
     'src': {
       'PROJECT_NAME': {
-        '.': ['project.json']
+        '.': ['project.json', 'project.lock.json']
       }
     }
   }
@@ -880,6 +907,16 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
     ""dnxcore50"": { }
   }
 }")
+                    .WithFileContents(Path.Combine("approot", "src", testEnv.ProjectName, "project.lock.json"), @"{
+  ""locked"": false,
+  ""version"": LOCKFILEFORMAT_VERSION,
+  ""projectFileDependencyGroups"": {
+    """": [],
+    ""DNX,Version=v4.5.1"": [],
+    ""DNXCore,Version=v5.0"": []
+  },
+  ""libraries"": {}
+}".Replace("LOCKFILEFORMAT_VERSION", LockFileFormat.Version.ToString()))
                     .WithFileContents(Path.Combine("approot", "global.json"), @"{
   ""packages"": ""packages""
 }")
@@ -913,7 +950,7 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
     'global.json': '',
     'src': {
       'PROJECT_NAME': {
-        '.': ['project.json']
+        '.': ['project.json', 'project.lock.json']
       }
     },
     'packages': {
@@ -971,6 +1008,16 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
     ""dnxcore50"": { }
   }
 }")
+                    .WithFileContents(Path.Combine("approot", "src", testEnv.ProjectName, "project.lock.json"), @"{
+  ""locked"": false,
+  ""version"": LOCKFILEFORMAT_VERSION,
+  ""projectFileDependencyGroups"": {
+    """": [],
+    ""DNX,Version=v4.5.1"": [],
+    ""DNXCore,Version=v5.0"": []
+  },
+  ""libraries"": {}
+}".Replace("LOCKFILEFORMAT_VERSION", LockFileFormat.Version.ToString()))
                     .WithFileContents(Path.Combine("approot", "global.json"), @"{
   ""packages"": ""packages""
 }")
