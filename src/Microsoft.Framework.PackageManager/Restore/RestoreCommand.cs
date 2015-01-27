@@ -287,11 +287,6 @@ namespace Microsoft.Framework.PackageManager
 
             Reports.Information.WriteLine(string.Format("{0}, {1}ms elapsed", "Restore complete".Green().Bold(), sw.ElapsedMilliseconds));
 
-            for (int i = 0; i < contexts.Count; i++)
-            {
-                PrintDependencyGraph(graphs[i], contexts[i].FrameworkName);
-            }
-
             return success;
         }
 
@@ -432,40 +427,6 @@ namespace Microsoft.Framework.PackageManager
                     remoteProviders.Add(new RemoteWalkProvider(feed));
                 }
             }
-        }
-
-        private void PrintDependencyGraph(GraphNode root, FrameworkName frameworkName)
-        {
-            // Box Drawing Unicode characters:
-            // http://www.unicode.org/charts/PDF/U2500.pdf
-            const char LIGHT_HORIZONTAL = '\u2500';
-            const char LIGHT_UP_AND_RIGHT = '\u2514';
-            const char LIGHT_VERTICAL_AND_RIGHT = '\u251C';
-
-            var frameworkSuffix = string.Format(" [{0}]", frameworkName.ToString());
-            Reports.Verbose.WriteLine(root.Item.Match.Library.ToString() + frameworkSuffix);
-
-            Func<GraphNode, bool> isValidDependency = d =>
-                (d != null && d.LibraryRange != null && d.Item != null && d.Item.Match != null);
-            var dependencies = root.Dependencies.Where(isValidDependency).ToList();
-            var dependencyNum = dependencies.Count;
-            for (int i = 0; i < dependencyNum; i++)
-            {
-                var branchChar = LIGHT_VERTICAL_AND_RIGHT;
-                if (i == dependencyNum - 1)
-                {
-                    branchChar = LIGHT_UP_AND_RIGHT;
-                }
-
-                var name = dependencies[i].Item.Match.Library.ToString();
-                var dependencyListStr = string.Join(", ", dependencies[i].Dependencies
-                    .Where(isValidDependency)
-                    .Select(d => d.Item.Match.Library.ToString()));
-                var format = string.IsNullOrEmpty(dependencyListStr) ? "{0}{1} {2}{3}" : "{0}{1} {2} ({3})";
-                Reports.Verbose.WriteLine(string.Format(format,
-                    branchChar, LIGHT_HORIZONTAL, name, dependencyListStr));
-            }
-            Reports.Verbose.WriteLine();
         }
 
         private static void ExtractPackage(string targetPath, FileStream stream)
