@@ -187,7 +187,7 @@ namespace Microsoft.Framework.PackageManager.Bundle
 
             if (!frameworkContexts.Any())
             {
-                var frameworkName = DependencyContext.GetFrameworkNameForRuntime("dotnet-clr-win-x86.*");
+                var frameworkName = DependencyContext.GetFrameworkNameForRuntime("kre-clr-win-x86.*");
                 frameworkContexts[frameworkName] = CreateDependencyContext(project, frameworkName);
             }
 

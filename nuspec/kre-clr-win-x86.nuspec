@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <package>
     <metadata>
-        <id>dotnet-coreclr-win-x64</id>
+        <id>kre-clr-win-x86</id>
         <version>0.0.1-pre</version>
         <authors>Microsoft</authors>
         <requireLicenseAcceptance>false</requireLicenseAcceptance>
-        <description>The .NET Runtime Environment for CoreCLR on Windows x64</description>
+        <description>The .NET Runtime Environment for Desktop CLR on Windows x86</description>
     </metadata>
     <files>
-        <file src="dotnet-coreclr-win-x64\bin\**" exclude="**\*.pdb;**\*.xml" target="bin" />
+        <file src="kre-clr-win-x86\bin\**" exclude="**\*.pdb;**\*.xml" target="bin" />
     </files>
 </package>

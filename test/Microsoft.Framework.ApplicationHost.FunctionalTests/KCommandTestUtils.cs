@@ -20,7 +20,7 @@ namespace Microsoft.Framework.ApplicationHost
             IDictionary<string, string> environment = null,
             string workingDir = null)
         {
-            var runtimeRoot = Directory.EnumerateDirectories(Path.Combine(dotnetHomePath, "runtimes"), "dotnet-*").First();
+            var runtimeRoot = Directory.EnumerateDirectories(Path.Combine(dotnetHomePath, "runtimes"), "kre-*").First();
             string program, commandLine;
             if (PlatformHelper.IsMono)
             {

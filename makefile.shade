@@ -23,14 +23,14 @@ var TEST_RESULTS = '${Path.Combine(ROOT, "artifacts", "TestResults")}'
 var SAMPLES_DIR = '${Path.Combine(ROOT, "samples")}'
 var FULL_VERSION = '${PRODUCT_VERSION + "-" + E("K_BUILD_VERSION")}'
 var CORECLR_TARGET_PATH = '${Path.Combine(BUILD_DIR2, "CoreCLR")}'
-var DOTNET_MONO_BIN='${Path.Combine(BUILD_DIR2, "dotnet-mono", "bin")}'
-var DOTNET_CLR_WIN_x86_BIN='${Path.Combine(BUILD_DIR2, "dotnet-clr-win-x86", "bin")}'
-var DOTNET_CLR_WIN_x64_BIN='${Path.Combine(BUILD_DIR2, "dotnet-clr-win-x64", "bin")}'
-var DOTNET_CORECLR_WIN_x86_BIN='${Path.Combine(BUILD_DIR2, "dotnet-coreclr-win-x86", "bin")}'
-var DOTNET_CORECLR_WIN_x64_BIN='${Path.Combine(BUILD_DIR2, "dotnet-coreclr-win-x64", "bin")}'
-var DOTNET_CLR_TARGETS = '${new [] {DOTNET_MONO_BIN, DOTNET_CLR_WIN_x86_BIN, DOTNET_CLR_WIN_x64_BIN}}'
-var DOTNET_CORECLR_TARGETS = '${new [] {DOTNET_CORECLR_WIN_x86_BIN, DOTNET_CORECLR_WIN_x64_BIN}}'
-var ALL_TARGETS = '${DOTNET_CLR_TARGETS.Concat(DOTNET_CORECLR_TARGETS)}'
+var KRE_MONO_BIN='${Path.Combine(BUILD_DIR2, "kre-mono", "bin")}'
+var KRE_CLR_WIN_x86_BIN='${Path.Combine(BUILD_DIR2, "kre-clr-win-x86", "bin")}'
+var KRE_CLR_WIN_x64_BIN='${Path.Combine(BUILD_DIR2, "kre-clr-win-x64", "bin")}'
+var KRE_CORECLR_WIN_x86_BIN='${Path.Combine(BUILD_DIR2, "kre-coreclr-win-x86", "bin")}'
+var KRE_CORECLR_WIN_x64_BIN='${Path.Combine(BUILD_DIR2, "kre-coreclr-win-x64", "bin")}'
+var KRE_CLR_TARGETS = '${new [] {KRE_MONO_BIN, KRE_CLR_WIN_x86_BIN, KRE_CLR_WIN_x64_BIN}}'
+var KRE_CORECLR_TARGETS = '${new [] {KRE_CORECLR_WIN_x86_BIN, KRE_CORECLR_WIN_x64_BIN}}'
+var ALL_TARGETS = '${KRE_CLR_TARGETS.Concat(KRE_CORECLR_TARGETS)}'
 var NEW_RUNTIME = '${E("NEW_RUNTIME") == "1"}'
 
 var PROGRAM_FILES_X86 = '${Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86)}'
@@ -239,10 +239,10 @@ var RC_FILES = '${FindAllFiles("Resource.rc", "dotnet", "dotnet.clr", "dotnet.co
 
     var nupkgPaths = '${new string[] 
     {
-        Files.Include(Path.Combine(BUILD_DIR2, "dotnet-clr-win-x86.*.nupkg")).Single(),
-        Files.Include(Path.Combine(BUILD_DIR2, "dotnet-clr-win-x64.*.nupkg")).Single(),
-        Files.Include(Path.Combine(BUILD_DIR2, "dotnet-coreclr-win-x86.*.nupkg")).Single(),
-        Files.Include(Path.Combine(BUILD_DIR2, "dotnet-coreclr-win-x64.*.nupkg")).Single(),
+        Files.Include(Path.Combine(BUILD_DIR2, "kre-clr-win-x86.*.nupkg")).Single(),
+        Files.Include(Path.Combine(BUILD_DIR2, "kre-clr-win-x64.*.nupkg")).Single(),
+        Files.Include(Path.Combine(BUILD_DIR2, "kre-coreclr-win-x86.*.nupkg")).Single(),
+        Files.Include(Path.Combine(BUILD_DIR2, "kre-coreclr-win-x64.*.nupkg")).Single(),
     }}'
 
     for each='var nupkgPath in nupkgPaths' 
@@ -321,7 +321,7 @@ var RC_FILES = '${FindAllFiles("Resource.rc", "dotnet", "dotnet.clr", "dotnet.co
     @{
         // We need to re-run the build using the current output
 
-        var nupkgPath = Files.Include(Path.Combine(BUILD_DIR2, "dotnet-clr-win-x86.*.nupkg")).Single();
+        var nupkgPath = Files.Include(Path.Combine(BUILD_DIR2, "kre-clr-win-x86.*.nupkg")).Single();
         Log.Info("Unpacking " + nupkgPath);
         if (Directory.Exists(Path.Combine(PACKAGES_DIR, "dotnet"))) {
             Directory.Delete(Path.Combine(PACKAGES_DIR, "dotnet"), recursive:true);
@@ -365,13 +365,13 @@ var RC_FILES = '${FindAllFiles("Resource.rc", "dotnet", "dotnet.clr", "dotnet.co
     var x86Target="x86"
     var x64Target="amd64"
 
-    -// dotnet-mono45-x86
-    copy sourceDir='${SCRIPTS_DIR}' include='*.sh' outputDir='${DOTNET_MONO_BIN}' overwrite='${true}'
-    copy sourceDir='${Path.Combine(BUILD_DIR2, "dotnet.mono.managed")}' outputDir='${DOTNET_MONO_BIN}' include='*.dll' overwrite='${true}'
+    -// kre-mono
+    copy sourceDir='${SCRIPTS_DIR}' include='*.sh' outputDir='${KRE_MONO_BIN}' overwrite='${true}'
+    copy sourceDir='${Path.Combine(BUILD_DIR2, "dotnet.mono.managed")}' outputDir='${KRE_MONO_BIN}' include='*.dll' overwrite='${true}'
 
     @{
         // Rename all .sh files to remove the sh
-        foreach (var shFile in Files.Include(Path.Combine(DOTNET_MONO_BIN, "*.sh")))
+        foreach (var shFile in Files.Include(Path.Combine(KRE_MONO_BIN, "*.sh")))
         {
             var targetShFile = Path.Combine(Path.GetDirectoryName(shFile), 
                                             Path.GetFileNameWithoutExtension(shFile));
@@ -388,29 +388,29 @@ var RC_FILES = '${FindAllFiles("Resource.rc", "dotnet", "dotnet.clr", "dotnet.co
     }
 
     test if='!IsMono'
-        -// dotnet-clr-win-x86
-        copy sourceDir='${Path.Combine(BUILD_DIR2, "dotnet", "bin", "Win32", Configuration2, "aspnet50")}' outputDir='${DOTNET_CLR_WIN_x86_BIN}' include='*.exe' overwrite='${true}'
-        copy sourceDir='${Path.Combine(BUILD_DIR2, "dotnet.clr", "bin", "Win32", Configuration2)}' outputDir='${DOTNET_CLR_WIN_x86_BIN}' include='*.dll' overwrite='${true}'
-        copy sourceDir='${Path.Combine(BUILD_DIR2, "dotnet.clr", "bin", "Win32", Configuration2)}' outputDir='${DOTNET_CLR_WIN_x86_BIN}' include='*.pdb' overwrite='${true}'
-        copy sourceDir='${Path.Combine(ROOT, "src", "dotnet.clr.managed")}' outputDir='${DOTNET_CLR_WIN_x86_BIN}' include='*.config' overwrite='${true}'
+        -// kre-clr-win-x86
+        copy sourceDir='${Path.Combine(BUILD_DIR2, "dotnet", "bin", "Win32", Configuration2, "aspnet50")}' outputDir='${KRE_CLR_WIN_x86_BIN}' include='*.exe' overwrite='${true}'
+        copy sourceDir='${Path.Combine(BUILD_DIR2, "dotnet.clr", "bin", "Win32", Configuration2)}' outputDir='${KRE_CLR_WIN_x86_BIN}' include='*.dll' overwrite='${true}'
+        copy sourceDir='${Path.Combine(BUILD_DIR2, "dotnet.clr", "bin", "Win32", Configuration2)}' outputDir='${KRE_CLR_WIN_x86_BIN}' include='*.pdb' overwrite='${true}'
+        copy sourceDir='${Path.Combine(ROOT, "src", "dotnet.clr.managed")}' outputDir='${KRE_CLR_WIN_x86_BIN}' include='*.config' overwrite='${true}'
 
-        -// dotnet-clr-win-x64
-        copy sourceDir='${Path.Combine(BUILD_DIR2, "dotnet", "bin", "x64", Configuration2, "aspnet50")}' outputDir='${DOTNET_CLR_WIN_x64_BIN}' include='*.exe' overwrite='${true}'
-        copy sourceDir='${Path.Combine(BUILD_DIR2, "dotnet.clr", "bin", "x64", Configuration2)}' outputDir='${DOTNET_CLR_WIN_x64_BIN}' include='*.dll' overwrite='${true}'
-        copy sourceDir='${Path.Combine(BUILD_DIR2, "dotnet.clr", "bin", "x64", Configuration2)}' outputDir='${DOTNET_CLR_WIN_x64_BIN}' include='*.pdb' overwrite='${true}'
-        copy sourceDir='${Path.Combine(ROOT, "src", "dotnet.clr.managed")}' outputDir='${DOTNET_CLR_WIN_x64_BIN}' include='*.config' overwrite='${true}'
+        -// kre-clr-win-x64
+        copy sourceDir='${Path.Combine(BUILD_DIR2, "dotnet", "bin", "x64", Configuration2, "aspnet50")}' outputDir='${KRE_CLR_WIN_x64_BIN}' include='*.exe' overwrite='${true}'
+        copy sourceDir='${Path.Combine(BUILD_DIR2, "dotnet.clr", "bin", "x64", Configuration2)}' outputDir='${KRE_CLR_WIN_x64_BIN}' include='*.dll' overwrite='${true}'
+        copy sourceDir='${Path.Combine(BUILD_DIR2, "dotnet.clr", "bin", "x64", Configuration2)}' outputDir='${KRE_CLR_WIN_x64_BIN}' include='*.pdb' overwrite='${true}'
+        copy sourceDir='${Path.Combine(ROOT, "src", "dotnet.clr.managed")}' outputDir='${KRE_CLR_WIN_x64_BIN}' include='*.config' overwrite='${true}'
 
-        -// dotnet-coreclr-win-x86
-        copy sourceDir='${Path.Combine(BUILD_DIR2, "dotnet", "bin", "Win32", Configuration2, "aspnetcore50")}' outputDir='${DOTNET_CORECLR_WIN_x86_BIN}' include='*.exe' overwrite='${true}'
-        copy sourceDir='${Path.Combine(BUILD_DIR2, "dotnet.coreclr", "bin", "Win32", Configuration2)}' outputDir='${DOTNET_CORECLR_WIN_x86_BIN}' include='*.dll' overwrite='${true}'
-        copy sourceDir='${Path.Combine(BUILD_DIR2, "dotnet.coreclr", "bin", "Win32", Configuration2)}' outputDir='${DOTNET_CORECLR_WIN_x86_BIN}' include='*.pdb' overwrite='${true}'
+        -// kre-coreclr-win-x86
+        copy sourceDir='${Path.Combine(BUILD_DIR2, "dotnet", "bin", "Win32", Configuration2, "aspnetcore50")}' outputDir='${KRE_CORECLR_WIN_x86_BIN}' include='*.exe' overwrite='${true}'
+        copy sourceDir='${Path.Combine(BUILD_DIR2, "dotnet.coreclr", "bin", "Win32", Configuration2)}' outputDir='${KRE_CORECLR_WIN_x86_BIN}' include='*.dll' overwrite='${true}'
+        copy sourceDir='${Path.Combine(BUILD_DIR2, "dotnet.coreclr", "bin", "Win32", Configuration2)}' outputDir='${KRE_CORECLR_WIN_x86_BIN}' include='*.pdb' overwrite='${true}'
 
-        -// dotnet-coreclr-win-x64
-        copy sourceDir='${Path.Combine(BUILD_DIR2, "dotnet", "bin", "x64", Configuration2, "aspnetcore50")}' outputDir='${DOTNET_CORECLR_WIN_x64_BIN}' include='*.exe' overwrite='${true}'
-        copy sourceDir='${Path.Combine(BUILD_DIR2, "dotnet.coreclr", "bin", "x64", Configuration2)}' outputDir='${DOTNET_CORECLR_WIN_x64_BIN}' include='*.dll' overwrite='${true}'
-        copy sourceDir='${Path.Combine(BUILD_DIR2, "dotnet.coreclr", "bin", "x64", Configuration2)}' outputDir='${DOTNET_CORECLR_WIN_x64_BIN}' include='*.pdb' overwrite='${true}'
+        -// kre-coreclr-win-x64
+        copy sourceDir='${Path.Combine(BUILD_DIR2, "dotnet", "bin", "x64", Configuration2, "aspnetcore50")}' outputDir='${KRE_CORECLR_WIN_x64_BIN}' include='*.exe' overwrite='${true}'
+        copy sourceDir='${Path.Combine(BUILD_DIR2, "dotnet.coreclr", "bin", "x64", Configuration2)}' outputDir='${KRE_CORECLR_WIN_x64_BIN}' include='*.dll' overwrite='${true}'
+        copy sourceDir='${Path.Combine(BUILD_DIR2, "dotnet.coreclr", "bin", "x64", Configuration2)}' outputDir='${KRE_CORECLR_WIN_x64_BIN}' include='*.pdb' overwrite='${true}'
 
-        copy sourceDir='${SCRIPTS_DIR}' include='*.cmd' overwrite='${true}' each='var outputDir in new[]{ DOTNET_CLR_WIN_x86_BIN, DOTNET_CLR_WIN_x64_BIN, DOTNET_CORECLR_WIN_x86_BIN, DOTNET_CORECLR_WIN_x64_BIN }'
+        copy sourceDir='${SCRIPTS_DIR}' include='*.cmd' overwrite='${true}' each='var outputDir in new[]{ KRE_CLR_WIN_x86_BIN, KRE_CLR_WIN_x64_BIN, KRE_CORECLR_WIN_x86_BIN, KRE_CORECLR_WIN_x64_BIN }'
 
     @{
         var hostAspNetCore50 = Path.Combine(BUILD_DIR2, "*", "aspnetcore50", "**.*");
@@ -429,7 +429,7 @@ var RC_FILES = '${FindAllFiles("Resource.rc", "dotnet", "dotnet.clr", "dotnet.co
         
         foreach(var file in Files.Include(hostAspNetCore50).Exclude(sharedSourceAssemblies))
         {
-            foreach(var aspNetCore50Target in DOTNET_CORECLR_TARGETS)
+            foreach(var aspNetCore50Target in KRE_CORECLR_TARGETS)
             {
                 string dest = Path.Combine(aspNetCore50Target, Path.GetFileName(file));
                 File.Copy(file, dest, true);
@@ -438,7 +438,7 @@ var RC_FILES = '${FindAllFiles("Resource.rc", "dotnet", "dotnet.clr", "dotnet.co
         
         foreach(var file in Files.Include(hostnet45).Exclude(sharedSourceAssemblies))
         {
-            foreach(var net45Target in DOTNET_CLR_TARGETS)
+            foreach(var net45Target in KRE_CLR_TARGETS)
             {
                 string dest = Path.Combine(net45Target, Path.GetFileName(file));
                 File.Copy(file, dest, true);
@@ -446,10 +446,10 @@ var RC_FILES = '${FindAllFiles("Resource.rc", "dotnet", "dotnet.clr", "dotnet.co
         }
 
         // Clean up net45.managed from mono (it's never used)
-        File.Delete(Path.Combine(DOTNET_MONO_BIN, "dotnet.clr.managed.dll"));
+        File.Delete(Path.Combine(KRE_MONO_BIN, "dotnet.clr.managed.dll"));
 
         // Remove k-crossgen.cmd from the net45 build
-        foreach (var net45Target in DOTNET_CLR_TARGETS)
+        foreach (var net45Target in KRE_CLR_TARGETS)
         {
             var crossgen = Path.Combine(net45Target, "k-crossgen.cmd");
             if(File.Exists(crossgen))
@@ -496,7 +496,7 @@ var RC_FILES = '${FindAllFiles("Resource.rc", "dotnet", "dotnet.clr", "dotnet.co
 
 #tweak-scripts
     @{
-        foreach(var targetDir in new[] { DOTNET_CLR_WIN_x86_BIN, DOTNET_CLR_WIN_x64_BIN, DOTNET_CORECLR_WIN_x86_BIN, DOTNET_CORECLR_WIN_x64_BIN })
+        foreach(var targetDir in new[] { KRE_CLR_WIN_x86_BIN, KRE_CLR_WIN_x64_BIN, KRE_CORECLR_WIN_x86_BIN, KRE_CORECLR_WIN_x64_BIN })
         {
             foreach(var file in Files.Include(Path.Combine(targetDir, "*.cmd")))
             {
@@ -562,11 +562,11 @@ var RC_FILES = '${FindAllFiles("Resource.rc", "dotnet", "dotnet.clr", "dotnet.co
 
                     if (framework == "aspnetcore50")
                     {
-                        targetDirs = DOTNET_CORECLR_TARGETS;
+                        targetDirs = KRE_CORECLR_TARGETS;
                     }
                     else
                     {
-                        targetDirs = DOTNET_CLR_TARGETS;
+                        targetDirs = KRE_CLR_TARGETS;
                     }
 
                     foreach(var targetDir in targetDirs)
@@ -616,8 +616,8 @@ var RC_FILES = '${FindAllFiles("Resource.rc", "dotnet", "dotnet.clr", "dotnet.co
     
 #copy-required-dependencies 
     -// Copy the CoreCLR to the aspnetcore50 builds
-    copy sourceDir='${Path.Combine(CORECLR_TARGET_PATH, "Runtime", "x86")}' outputDir='${DOTNET_CORECLR_WIN_x86_BIN}'
-    copy sourceDir='${Path.Combine(CORECLR_TARGET_PATH, "Runtime", "amd64")}' outputDir='${DOTNET_CORECLR_WIN_x64_BIN}'
+    copy sourceDir='${Path.Combine(CORECLR_TARGET_PATH, "Runtime", "x86")}' outputDir='${KRE_CORECLR_WIN_x86_BIN}'
+    copy sourceDir='${Path.Combine(CORECLR_TARGET_PATH, "Runtime", "amd64")}' outputDir='${KRE_CORECLR_WIN_x64_BIN}'
 
     @{
         if (!IsMono && NEW_RUNTIME)
@@ -627,7 +627,7 @@ var RC_FILES = '${FindAllFiles("Resource.rc", "dotnet", "dotnet.clr", "dotnet.co
             try
             {
                 Environment.SetEnvironmentVariable("DOTNET_APPBASE", Path.Combine(ROOT, "src", "DependencyAnalyzer"));
-                Exec("cmd", string.Format("/C k dpa runtime \"{0}\" \"{1}\"", DOTNET_CORECLR_WIN_x86_BIN, dependenciesFile));
+                Exec("cmd", string.Format("/C k dpa runtime \"{0}\" \"{1}\"", KRE_CORECLR_WIN_x86_BIN, dependenciesFile));
             }
             finally
             {
@@ -655,7 +655,7 @@ var RC_FILES = '${FindAllFiles("Resource.rc", "dotnet", "dotnet.clr", "dotnet.co
             // First copy the required dependencies into each lib folder
             foreach (var pair in deps)
             {
-                foreach (var targetClr in DOTNET_CORECLR_TARGETS)
+                foreach (var targetClr in KRE_CORECLR_TARGETS)
                 {
                     var targetLibDir = Path.Combine(targetClr, "lib", pair.Key);
                     
@@ -666,7 +666,7 @@ var RC_FILES = '${FindAllFiles("Resource.rc", "dotnet", "dotnet.clr", "dotnet.co
                     
                     foreach (var dep in pair.Value)
                     {
-                        var source = Path.Combine(DOTNET_CORECLR_WIN_x86_BIN, dep + ".dll");
+                        var source = Path.Combine(KRE_CORECLR_WIN_x86_BIN, dep + ".dll");
                         
                         if (!File.Exists(source))
                         {
@@ -682,7 +682,7 @@ var RC_FILES = '${FindAllFiles("Resource.rc", "dotnet", "dotnet.clr", "dotnet.co
             
             var runtimeDeps = deps["Runtime"];
             
-            foreach(var targetClr in DOTNET_CORECLR_TARGETS)
+            foreach(var targetClr in KRE_CORECLR_TARGETS)
             {
                 foreach(var file in Directory.EnumerateFiles(targetClr, "System.*.dll"))
                 {
@@ -705,21 +705,21 @@ var RC_FILES = '${FindAllFiles("Resource.rc", "dotnet", "dotnet.clr", "dotnet.co
 
 #dev-install
     @{
-        InstallDevRuntime(DOTNET_MONO_BIN);
+        InstallDevRuntime(KRE_MONO_BIN);
         
         if (!IsMono)
         {
-            InstallDevRuntime(DOTNET_CLR_WIN_x86_BIN);
-            InstallDevRuntime(DOTNET_CLR_WIN_x64_BIN);
-            InstallDevRuntime(DOTNET_CORECLR_WIN_x86_BIN);
-            InstallDevRuntime(DOTNET_CORECLR_WIN_x64_BIN);
+            InstallDevRuntime(KRE_CLR_WIN_x86_BIN);
+            InstallDevRuntime(KRE_CLR_WIN_x64_BIN);
+            InstallDevRuntime(KRE_CORECLR_WIN_x86_BIN);
+            InstallDevRuntime(KRE_CORECLR_WIN_x64_BIN);
         }
     }
     
 #install-runtime target='install'
     var matchVersion=''
     for each='var pattern in new[]{ "clr-win-x86", "coreclr-win-x86", "clr-win-x64", "coreclr-win-x64" }'
-        for each='var runtime in Files.Include(Path.Combine(BUILD_DIR2, "dotnet-" + pattern + ".*.nupkg"))'
+        for each='var runtime in Files.Include(Path.Combine(BUILD_DIR2, "kre-" + pattern + ".*.nupkg"))'
             exec program='cmd' commandline='/C dotnetsdk install ${runtime}' if='!IsMono'
             var parts='${Path.GetFileNameWithoutExtension(runtime).Split(".".ToArray(), 2)}'
             set matchVersion='${parts[1]}' if='matchVersion == ""'
@@ -847,8 +847,8 @@ functions @{
             return;
         }
     
-        // Trim "dotnet-" part from alias to keep it short
-        var alias = sourceRuntime.Substring(7) + "-dev";
+        // Trim "kre-" part from alias to keep it short
+        var alias = sourceRuntime.Substring(4) + "-dev";
     
         var symlinkProgram = "cmd";
         var symlinkProgramArgs = "/C mklink /J {0} {1}";

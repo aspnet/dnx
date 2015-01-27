@@ -65,7 +65,7 @@ namespace Microsoft.Framework.FunctionalTestUtils
             var buildArtifactDir = GetBuildArtifactsFolder();
             var runtimeNupkg = Directory.GetFiles(
                 buildArtifactDir,
-                string.Format("dotnet-{0}-{1}-{2}.*.nupkg", flavor, os, architecture),
+                string.Format("kre-{0}-{1}-{2}.*.nupkg", flavor, os, architecture),
                 SearchOption.TopDirectoryOnly) .First();
             var dotnetHomePath = CreateTempDir();
             var runtimeName = Path.GetFileNameWithoutExtension(runtimeNupkg);
@@ -158,7 +158,7 @@ namespace Microsoft.Framework.FunctionalTestUtils
 
         public static string GetRuntimeVersion()
         {
-            var runtimeNupkg = Directory.EnumerateFiles(GetBuildArtifactsFolder(), "dotnet-*.nupkg").FirstOrDefault();
+            var runtimeNupkg = Directory.EnumerateFiles(GetBuildArtifactsFolder(), "kre-*.nupkg").FirstOrDefault();
             var runtimeName = Path.GetFileNameWithoutExtension(runtimeNupkg);
             var segments = runtimeName.Split(new[] { '.' }, 2);
             return segments[1];
