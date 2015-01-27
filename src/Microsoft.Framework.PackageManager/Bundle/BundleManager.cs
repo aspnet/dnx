@@ -123,10 +123,10 @@ namespace Microsoft.Framework.PackageManager.Bundle
                     {
                         var dotnetGlobalPath = Environment.GetEnvironmentVariable("DOTNET_GLOBAL_PATH");
 #if ASPNETCORE50
-                        dotnetHome = @"%USERPROFILE%\.dotnet;" + dotnetGlobalPath;
+                        dotnetHome = @"%USERPROFILE%\.k;" + dotnetGlobalPath;
 #else
                         var userProfile = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
-                        dotnetHome = Path.Combine(userProfile, ".dotnet") + ";" + dotnetGlobalPath;
+                        dotnetHome = Path.Combine(userProfile, ".k") + ";" + dotnetGlobalPath;
 #endif
                     }
 

@@ -746,7 +746,7 @@ functions @{
                 profileDirectory = Environment.GetEnvironmentVariable("HOME");
             }
 
-            packagesDir = Path.Combine(profileDirectory, ".dotnet", "packages");
+            packagesDir = Path.Combine(profileDirectory, ".k", "packages");
         }
         
         var packageMetadataDir = Path.Combine(packagesDir, name);
@@ -827,7 +827,7 @@ functions @{
             profileDirectory = Environment.GetEnvironmentVariable("HOME");
         }
 
-        return Path.Combine(profileDirectory, ".dotnet");
+        return Path.Combine(profileDirectory, ".k");
     }
 
     string FindRuntimePackagesFolder() 

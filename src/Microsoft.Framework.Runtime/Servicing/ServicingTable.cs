@@ -46,7 +46,7 @@ namespace Microsoft.Framework.Runtime.Servicing
 
                     dotnetServicing = Path.Combine(
                         servicingRoot,
-                        "Microsoft .NET Cross-Platform SDK",
+                        "KRE",
                         "Servicing");
                 }
 
