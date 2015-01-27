@@ -12,7 +12,7 @@ IF "%DOTNET_APPBASE%"=="" (
   SET "DOTNET_APPBASE=%CD%"
 )
 
-"%~dp0dotnet" --appbase "%DOTNET_APPBASE%" %DOTNET_OPTIONS% "Microsoft.Framework.ApplicationHost" %*
+"%~dp0klr" --appbase "%DOTNET_APPBASE%" %DOTNET_OPTIONS% "Microsoft.Framework.ApplicationHost" %*
 
 exit /b %ERRORLEVEL%
 ENDLOCAL

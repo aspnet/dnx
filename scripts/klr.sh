@@ -8,17 +8,8 @@ while [ -h "$SOURCE" ]; do # resolve $SOURCE until the file is no longer a symli
 done
 DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
 
-#TODO: remove KRE_ var env
-if [ -z "$DOTNET_APPBASE" ]; then
-    DOTNET_APPBASE="$KRE_APPBASE"
-fi
-
-if [ -z "$DOTNET_APPBASE" ]; then
-    DOTNET_APPBASE=`pwd`
-fi
-
-if [ -f "$DIR/k-$1" ]; then
-    exec $DIR/k-$1 "$@"
+if [ -f "$DIR/mono" ]; then
+  exec "$DIR/mono" $MONO_OPTIONS "$DIR/kre.mono.managed.dll" "$@"
 else
-    exec $DIR/klr --appbase "$DOTNET_APPBASE" Microsoft.Framework.ApplicationHost "$@"  
+  exec mono $MONO_OPTIONS "$DIR/kre.mono.managed.dll" "$@"
 fi
