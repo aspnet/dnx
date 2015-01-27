@@ -23,22 +23,37 @@ var TEST_RESULTS = '${Path.Combine(ROOT, "artifacts", "TestResults")}'
 var SAMPLES_DIR = '${Path.Combine(ROOT, "samples")}'
 var FULL_VERSION = '${PRODUCT_VERSION + "-" + E("K_BUILD_VERSION")}'
 var CORECLR_TARGET_PATH = '${Path.Combine(BUILD_DIR2, "CoreCLR")}'
-var DOTNET_MONO_BIN='${Path.Combine(BUILD_DIR2, "dotnet-mono", "bin")}'
-var DOTNET_CLR_WIN_x86_BIN='${Path.Combine(BUILD_DIR2, "dotnet-clr-win-x86", "bin")}'
-var DOTNET_CLR_WIN_x64_BIN='${Path.Combine(BUILD_DIR2, "dotnet-clr-win-x64", "bin")}'
-var DOTNET_CORECLR_WIN_x86_BIN='${Path.Combine(BUILD_DIR2, "dotnet-coreclr-win-x86", "bin")}'
-var DOTNET_CORECLR_WIN_x64_BIN='${Path.Combine(BUILD_DIR2, "dotnet-coreclr-win-x64", "bin")}'
-var DOTNET_CLR_TARGETS = '${new [] {DOTNET_MONO_BIN, DOTNET_CLR_WIN_x86_BIN, DOTNET_CLR_WIN_x64_BIN}}'
-var DOTNET_CORECLR_TARGETS = '${new [] {DOTNET_CORECLR_WIN_x86_BIN, DOTNET_CORECLR_WIN_x64_BIN}}'
-var ALL_TARGETS = '${DOTNET_CLR_TARGETS.Concat(DOTNET_CORECLR_TARGETS)}'
+var RUNTIME_NAME_PREFIX = 'kre-'
+var RUNTIME_MONO_NAME = '${RUNTIME_NAME_PREFIX + "mono"}'
+var RUNTIME_CLR_WIN_x86_NAME = '${RUNTIME_NAME_PREFIX + "clr-win-x86"}'
+var RUNTIME_CLR_WIN_x64_NAME = '${RUNTIME_NAME_PREFIX + "clr-win-x64"}'
+var RUNTIME_CORECLR_WIN_x86_NAME = '${RUNTIME_NAME_PREFIX + "coreclr-win-x86"}'
+var RUNTIME_CORECLR_WIN_x64_NAME = '${RUNTIME_NAME_PREFIX + "coreclr-win-x64"}'
+var RUNTIME_MONO_BIN = '${Path.Combine(BUILD_DIR2, RUNTIME_MONO_NAME, "bin")}'
+var RUNTIME_CLR_WIN_x86_BIN = '${Path.Combine(BUILD_DIR2, RUNTIME_CLR_WIN_x86_NAME, "bin")}'
+var RUNTIME_CLR_WIN_x64_BIN = '${Path.Combine(BUILD_DIR2, RUNTIME_CLR_WIN_x64_NAME, "bin")}'
+var RUNTIME_CORECLR_WIN_x86_BIN = '${Path.Combine(BUILD_DIR2, RUNTIME_CORECLR_WIN_x86_NAME, "bin")}'
+var RUNTIME_CORECLR_WIN_x64_BIN = '${Path.Combine(BUILD_DIR2, RUNTIME_CORECLR_WIN_x64_NAME, "bin")}'
+var RUNTIME_CLR_TARGETS = '${new [] {RUNTIME_MONO_BIN, RUNTIME_CLR_WIN_x86_BIN, RUNTIME_CLR_WIN_x64_BIN}}'
+var RUNTIME_CORECLR_TARGETS = '${new [] {RUNTIME_CORECLR_WIN_x86_BIN, RUNTIME_CORECLR_WIN_x64_BIN}}'
+var ALL_TARGETS = '${RUNTIME_CLR_TARGETS.Concat(RUNTIME_CORECLR_TARGETS)}'
 var NEW_RUNTIME = '${E("NEW_RUNTIME") == "1"}'
+var RUNTIME_COMMON_NAME = 'KRE'
+var BOOTSTRAPPER_EXE_NAME = 'klr'
+var BOOTSTRAPPER_CLR_NAME = 'kre.clr'
+var BOOTSTRAPPER_CORECLR_NAME = 'kre.coreclr'
+var BOOTSTRAPPER_CLR_MANAGED_NAME = '${BOOTSTRAPPER_CLR_NAME + ".managed"}'
+var BOOTSTRAPPER_CORECLR_MANAGED_NAME = '${BOOTSTRAPPER_CORECLR_NAME + ".managed"}'
+var BOOTSTRAPPER_MONO_MANAGED_NAME = 'kre.mono.managed'
+var BOOTSTRAPPER_HOST_NAME = 'kre.host'
+var BOOTSTRAPPER_HOST_SHARED_NAME = 'kre.hosting.shared'
 
 var PROGRAM_FILES_X86 = '${Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86)}'
 var MSBUILD = '${Path.Combine(PROGRAM_FILES_X86, "MSBuild", "14.0", "Bin", "MSBuild.exe")}'
 
 var MANAGED_PROJECTS = '${FindAllProjects(
-    "dotnet.host",
-    "dotnet.hosting.shared",
+    BOOTSTRAPPER_HOST_NAME,
+    BOOTSTRAPPER_HOST_SHARED_NAME,
     "Microsoft.Framework.ApplicationHost",
     "Microsoft.Framework.CommandLineUtils",
     "Microsoft.Framework.DesignTimeHost",
@@ -52,19 +67,19 @@ var MANAGED_PROJECTS = '${FindAllProjects(
     "Microsoft.Framework.Runtime.Roslyn.Common")}'
 
 var WIN_NATIVE_PROJECTS = '${FindAllProjects(
-    "dotnet",
-    "dotnet.clr",
-    "dotnet.coreclr")}'
+    BOOTSTRAPPER_EXE_NAME,
+    BOOTSTRAPPER_CLR_NAME,
+    BOOTSTRAPPER_CORECLR_NAME)}'
 
 var WIN_MANAGED_PROJECTS = '${FindAllProjects(
-    "dotnet.clr.managed",
-    "dotnet.coreclr.managed")}'
+    BOOTSTRAPPER_CLR_MANAGED_NAME,
+    BOOTSTRAPPER_CORECLR_MANAGED_NAME)}'
 
 var MONO_NATIVE_PROJECTS = '${FindAllProjects()}'
 
-var MONO_MANAGED_PROJECTS = '${FindAllProjects("dotnet.mono.managed")}'
+var MONO_MANAGED_PROJECTS = '${FindAllProjects(BOOTSTRAPPER_MONO_MANAGED_NAME)}'
 
-var RC_FILES = '${FindAllFiles("Resource.rc", "dotnet", "dotnet.clr", "dotnet.coreclr")}'
+var RC_FILES = '${FindAllFiles("Resource.rc", BOOTSTRAPPER_EXE_NAME, BOOTSTRAPPER_CLR_NAME, BOOTSTRAPPER_CORECLR_NAME)}'
 
 #build-compile target='compile'
 
@@ -113,8 +128,8 @@ var RC_FILES = '${FindAllFiles("Resource.rc", "dotnet", "dotnet.clr", "dotnet.co
                 updateText = RegexReplace(updateText, fileVersionValueMatcher, fileVersionValue);
             }
 
-#build-native-dotnet .update-rc-files target='native-compile' if='!IsMono'
-    var dotnetProj = '${Path.Combine(ROOT, "src", "dotnet", "dotnet.vcxproj")}'
+#build-native-bootstrapper .update-rc-files target='native-compile' if='!IsMono'
+    var bootstrapperProj = '${Path.Combine(ROOT, "src", BOOTSTRAPPER_EXE_NAME, BOOTSTRAPPER_EXE_NAME + ".vcxproj")}'
     @{
         if (!IsMsbuildInstalled(MSBUILD))
         {
@@ -122,41 +137,40 @@ var RC_FILES = '${FindAllFiles("Resource.rc", "dotnet", "dotnet.clr", "dotnet.co
         }
         else
         {
-            // TODO: remove KRE_ env var
-            var environmentDotnetTargetOS = string.IsNullOrEmpty(Environment.GetEnvironmentVariable("DOTNET_TARGET_OS")) ? Environment.GetEnvironmentVariable("KRE_TARGET_OS") : Environment.GetEnvironmentVariable("DOTNET_TARGET_OS");
-            var configDotnetTargetOS = "";
+            var environmentRuntimeTargetOS = Environment.GetEnvironmentVariable("RUNTIME_TARGET_OS");
+            var configRuntimeTargetOS = "";
         
-            Exec(MSBUILD, dotnetProj + " /p:Configuration=" + Configuration2 + ";Platform=Win32;TargetFramework=aspnet50");
-            Exec(MSBUILD, dotnetProj + " /p:Configuration=" + Configuration2 + ";Platform=x64;TargetFramework=aspnet50");
+            Exec(MSBUILD, bootstrapperProj + " /p:Configuration=" + Configuration2 + ";Platform=Win32;TargetFramework=aspnet50");
+            Exec(MSBUILD, bootstrapperProj + " /p:Configuration=" + Configuration2 + ";Platform=x64;TargetFramework=aspnet50");
 
-            if (environmentDotnetTargetOS == "WIN7_PLUS_CORESYSTEM")
+            if (environmentRuntimeTargetOS == "WIN7_PLUS_CORESYSTEM")
             {
-                configDotnetTargetOS = ";DotnetTargetOS=WIN7_PLUS_CORESYSTEM";
+                configRuntimeTargetOS = ";RuntimeTargetOS=WIN7_PLUS_CORESYSTEM";
             }
             
-            Exec(MSBUILD, dotnetProj + " /p:Configuration=" + Configuration2 + ";Platform=Win32;TargetFramework=aspnetcore50" + configDotnetTargetOS);
-            Exec(MSBUILD, dotnetProj + " /p:Configuration=" + Configuration2 + ";Platform=x64;TargetFramework=aspnetcore50" + configDotnetTargetOS);
+            Exec(MSBUILD, bootstrapperProj + " /p:Configuration=" + Configuration2 + ";Platform=Win32;TargetFramework=aspnetcore50" + configRuntimeTargetOS);
+            Exec(MSBUILD, bootstrapperProj + " /p:Configuration=" + Configuration2 + ";Platform=x64;TargetFramework=aspnetcore50" + configRuntimeTargetOS);
         }
     }
 
-  directory delete='${Path.Combine(BUILD_DIR2, "dotnet")}'
-  copy sourceDir='${Path.Combine(ROOT, "src", "dotnet")}' include='bin/**/' outputDir='${Path.Combine(BUILD_DIR2, "dotnet")}' overwrite='${true}'
+  directory delete='${Path.Combine(BUILD_DIR2, BOOTSTRAPPER_EXE_NAME)}'
+  copy sourceDir='${Path.Combine(ROOT, "src", BOOTSTRAPPER_EXE_NAME)}' include='bin/**/' outputDir='${Path.Combine(BUILD_DIR2, BOOTSTRAPPER_EXE_NAME)}' overwrite='${true}'
 
-#build-native-dotnetcore45 .copy-coreclr target='native-compile' if='!IsMono'
-    var dotnetCore45Proj = '${Path.Combine(ROOT, "src", "dotnet.coreclr", "dotnet.coreclr.vcxproj")}'
+#build-native-bootstrapper-core45 .copy-coreclr target='native-compile' if='!IsMono'
+    var bootstrapperCore45Proj = '${Path.Combine(ROOT, "src", BOOTSTRAPPER_CORECLR_NAME, BOOTSTRAPPER_CORECLR_NAME + ".vcxproj")}'
     @{
         if (NEW_RUNTIME)
         {
             /* Update the tpa.cpp */ 
             try
             {
-                var tpacppFile = Path.Combine(ROOT, "src", "dotnet.coreclr", "tpa.cpp");
-                Environment.SetEnvironmentVariable("DOTNET_APPBASE", Path.Combine(ROOT, "src", "DependencyAnalyzer"));
+                var tpacppFile = Path.Combine(ROOT, "src", BOOTSTRAPPER_CORECLR_NAME, "tpa.cpp");
+                Environment.SetEnvironmentVariable("KRE_APPBASE", Path.Combine(ROOT, "src", "DependencyAnalyzer"));
                 Exec("cmd", "/C k dpa tpa \"" + Path.Combine(CORECLR_TARGET_PATH, "Runtime", "x86") + "\" \"" + tpacppFile + "\"");
             }
             finally
             {
-                Environment.SetEnvironmentVariable("DOTNET_APPBASE", null);
+                Environment.SetEnvironmentVariable("KRE_APPBASE", null);
             }
         }
 
@@ -166,25 +180,24 @@ var RC_FILES = '${FindAllFiles("Resource.rc", "dotnet", "dotnet.clr", "dotnet.co
         }
         else
         {
-            // TODO: remove KRE_ env var
-            var environmentDotnetTargetOS = string.IsNullOrEmpty(Environment.GetEnvironmentVariable("DOTNET_TARGET_OS")) ? Environment.GetEnvironmentVariable("KRE_TARGET_OS") : Environment.GetEnvironmentVariable("DOTNET_TARGET_OS");
-            var configDotnetTargetOS = "";
+            var environmentRuntimeTargetOS = Environment.GetEnvironmentVariable("RUNTIME_TARGET_OS");
+            var configRuntimeTargetOS = "";
         
-            if (environmentDotnetTargetOS == "WIN7_PLUS_CORESYSTEM")
+            if (environmentRuntimeTargetOS == "WIN7_PLUS_CORESYSTEM")
             {
-                configDotnetTargetOS = ";DotnetTargetOS=WIN7_PLUS_CORESYSTEM";
+                configRuntimeTargetOS = ";RuntimeTargetOS=WIN7_PLUS_CORESYSTEM";
             }
             
-            Exec(MSBUILD, dotnetCore45Proj + " /p:Configuration=" + Configuration2 + ";Platform=Win32" + configDotnetTargetOS);
-            Exec(MSBUILD, dotnetCore45Proj + " /p:Configuration=" + Configuration2 + ";Platform=x64" + configDotnetTargetOS);
+            Exec(MSBUILD, bootstrapperCore45Proj + " /p:Configuration=" + Configuration2 + ";Platform=Win32" + configRuntimeTargetOS);
+            Exec(MSBUILD, bootstrapperCore45Proj + " /p:Configuration=" + Configuration2 + ";Platform=x64" + configRuntimeTargetOS);
         }
     }
 
-  directory delete='${Path.Combine(BUILD_DIR2, "dotnet.coreclr")}'
-  copy sourceDir='${Path.Combine(ROOT, "src", "dotnet.coreclr")}' include='bin/**/' outputDir='${Path.Combine(BUILD_DIR2, "dotnet.coreclr")}' overwrite='${true}'
+  directory delete='${Path.Combine(BUILD_DIR2, BOOTSTRAPPER_CORECLR_NAME)}'
+  copy sourceDir='${Path.Combine(ROOT, "src", BOOTSTRAPPER_CORECLR_NAME)}' include='bin/**/' outputDir='${Path.Combine(BUILD_DIR2, BOOTSTRAPPER_CORECLR_NAME)}' overwrite='${true}'
 
-#build-native-dotnetnet45 target='native-compile' if='!IsMono'
-    var dotnetNet45Proj ='${Path.Combine(ROOT, "src", "dotnet.clr", "dotnet.clr.vcxproj")}'
+#build-native-bootstrapper-net45 target='native-compile' if='!IsMono'
+    var bootstrapperNet45Proj ='${Path.Combine(ROOT, "src", BOOTSTRAPPER_CLR_NAME, BOOTSTRAPPER_CLR_NAME + ".vcxproj")}'
     @{
         if (!IsMsbuildInstalled(MSBUILD))
         {
@@ -192,31 +205,33 @@ var RC_FILES = '${FindAllFiles("Resource.rc", "dotnet", "dotnet.clr", "dotnet.co
         }
         else
         {
-            Exec(MSBUILD, dotnetNet45Proj + " /p:Configuration=" + Configuration2 + ";Platform=Win32");
-            Exec(MSBUILD, dotnetNet45Proj + " /p:Configuration=" + Configuration2 + ";Platform=x64");
+            Exec(MSBUILD, bootstrapperNet45Proj + " /p:Configuration=" + Configuration2 + ";Platform=Win32");
+            Exec(MSBUILD, bootstrapperNet45Proj + " /p:Configuration=" + Configuration2 + ";Platform=x64");
         }
     }
-    directory delete='${Path.Combine(BUILD_DIR2, "dotnet.clr")}'
-    copy sourceDir='${Path.Combine(ROOT, "src", "dotnet.clr")}' include='bin/**/' outputDir='${Path.Combine(BUILD_DIR2, "dotnet.clr")}' overwrite='${true}' 
+    directory delete='${Path.Combine(BUILD_DIR2, BOOTSTRAPPER_CLR_NAME)}'
+    copy sourceDir='${Path.Combine(ROOT, "src", BOOTSTRAPPER_CLR_NAME)}' include='bin/**/' outputDir='${Path.Combine(BUILD_DIR2, BOOTSTRAPPER_CLR_NAME)}' overwrite='${true}' 
 
 #build-mono-entrypoint target='build-compile'
-    var monoManagedOutpath='${Path.Combine(BUILD_DIR2, "dotnet.mono.managed")}'
+    var monoManagedOutpath='${Path.Combine(BUILD_DIR2, BOOTSTRAPPER_MONO_MANAGED_NAME)}'
     directory create='${monoManagedOutpath}'
     @{
         var sourceFiles = new string[] 
         {
-            Path.Combine("src", "dotnet.mono.managed", "EntryPoint.cs"),
-            Path.Combine("src", "dotnet.hosting.shared", "RuntimeBootstrapper.cs"),
-            Path.Combine("src", "dotnet.hosting.shared", "LoaderEngine.cs"),
+            Path.Combine("src", BOOTSTRAPPER_MONO_MANAGED_NAME, "EntryPoint.cs"),
+            Path.Combine("src", BOOTSTRAPPER_HOST_SHARED_NAME, "RuntimeBootstrapper.cs"),
+            Path.Combine("src", BOOTSTRAPPER_HOST_SHARED_NAME, "LoaderEngine.cs"),
             Path.Combine("src", "Microsoft.Framework.CommandLineUtils", "CommandLine", "CommandArgument.cs"),
             Path.Combine("src", "Microsoft.Framework.CommandLineUtils", "CommandLine", "CommandLineApplication.cs"), 
             Path.Combine("src", "Microsoft.Framework.CommandLineUtils", "CommandLine", "CommandOption.cs"), 
-            Path.Combine("src", "Microsoft.Framework.CommandLineUtils", "CommandLine", "CommandOptionType.cs")
+            Path.Combine("src", "Microsoft.Framework.CommandLineUtils", "CommandLine", "CommandOptionType.cs"),
+			Path.Combine("src", "Microsoft.Framework.Runtime.Common", "Impl", "EnvironmentNames.cs"),
+			Path.Combine("src", "Microsoft.Framework.Runtime.Common", "Impl", "Constants.cs")
         };
 
         var arguments = string.Format(
             @"/target:exe /nologo /unsafe /out:{0} /define:ASPNET50 {1}",
-            Path.Combine(monoManagedOutpath, "dotnet.mono.managed.dll"),
+            Path.Combine(monoManagedOutpath, BOOTSTRAPPER_MONO_MANAGED_NAME + ".dll"),
             string.Join(" ", sourceFiles));
 
         var compiler = IsMono ? "mcs" : Path.Combine(Environment.GetEnvironmentVariable("WINDIR"), "Microsoft.NET", "Framework", "v4.0.30319", "csc.exe");
@@ -235,20 +250,20 @@ var RC_FILES = '${FindAllFiles("Resource.rc", "dotnet", "dotnet.clr", "dotnet.co
   
 #test-package
     var helloWorld = '${Path.Combine(SAMPLES_DIR, "HelloWorld")}'
-    var aspnetCore50Tools = '${Path.Combine(TEST_RESULTS, "dotnet", "tools", "aspnetcore50")}'
+    var aspnetCore50Tools = '${Path.Combine(TEST_RESULTS, RUNTIME_COMMON_NAME, "tools", "aspnetcore50")}'
 
     var nupkgPaths = '${new string[] 
     {
-        Files.Include(Path.Combine(BUILD_DIR2, "dotnet-clr-win-x86.*.nupkg")).Single(),
-        Files.Include(Path.Combine(BUILD_DIR2, "dotnet-clr-win-x64.*.nupkg")).Single(),
-        Files.Include(Path.Combine(BUILD_DIR2, "dotnet-coreclr-win-x86.*.nupkg")).Single(),
-        Files.Include(Path.Combine(BUILD_DIR2, "dotnet-coreclr-win-x64.*.nupkg")).Single(),
+        Files.Include(Path.Combine(BUILD_DIR2, RUNTIME_CLR_WIN_x86_NAME + ".*.nupkg")).Single(),
+        Files.Include(Path.Combine(BUILD_DIR2, RUNTIME_CLR_WIN_x64_NAME + ".*.nupkg")).Single(),
+        Files.Include(Path.Combine(BUILD_DIR2, RUNTIME_CORECLR_WIN_x86_NAME + ".*.nupkg")).Single(),
+        Files.Include(Path.Combine(BUILD_DIR2, RUNTIME_CORECLR_WIN_x64_NAME + ".*.nupkg")).Single(),
     }}'
 
     for each='var nupkgPath in nupkgPaths' 
         @{
             var runtimeName = Path.GetFileNameWithoutExtension(nupkgPath);
-            var runtimePath = Path.Combine(TEST_RESULTS, "dotnet", runtimeName);
+            var runtimePath = Path.Combine(TEST_RESULTS, RUNTIME_COMMON_NAME, runtimeName);
 
             Log.Info("Unpacking " + nupkgPath);
             if (Directory.Exists(runtimePath))
@@ -269,15 +284,15 @@ var RC_FILES = '${FindAllFiles("Resource.rc", "dotnet", "dotnet.clr", "dotnet.co
             try
             {
                 var runtimeName = Path.GetFileNameWithoutExtension(nupkgPath);
-                var runtimePath = Path.Combine(TEST_RESULTS, "dotnet", runtimeName);
+                var runtimePath = Path.Combine(TEST_RESULTS, RUNTIME_COMMON_NAME, runtimeName);
 
-                var dotnetPath = Path.Combine(runtimePath, "bin", "dotnet");
+                var bootstrapperPath = Path.Combine(runtimePath, "bin", BOOTSTRAPPER_EXE_NAME);
                 var kpmPath = Path.Combine(runtimePath, "bin", "kpm");
 
                 Log.Info("runtimeName = " + runtimeName);
-                Log.Info("DOTNET_APPBASE = " + helloWorld);
+                Log.Info("KRE_APPBASE = " + helloWorld);
 
-                Exec(dotnetPath, helloWorld + " run");
+                Exec(bootstrapperPath, helloWorld + " run");
 
                 var commands = new [] { "build" };
                 foreach(var cmd in commands)
@@ -289,13 +304,13 @@ var RC_FILES = '${FindAllFiles("Resource.rc", "dotnet", "dotnet.clr", "dotnet.co
             finally
             {
                 Environment.SetEnvironmentVariable("PATH", envPath);
-                Environment.SetEnvironmentVariable("DOTNET_APPBASE", null);
+                Environment.SetEnvironmentVariable("KRE_APPBASE", null);
             }
         };
         
         Action<string> crossGen = nupkgPath => {        
             var runtimeName = Path.GetFileNameWithoutExtension(nupkgPath);
-            var runtimePath = Path.Combine(TEST_RESULTS, "dotnet", runtimeName);
+            var runtimePath = Path.Combine(TEST_RESULTS, RUNTIME_COMMON_NAME, runtimeName);
 
             var kPath = Path.Combine(runtimePath, "bin", "k");
 
@@ -321,17 +336,17 @@ var RC_FILES = '${FindAllFiles("Resource.rc", "dotnet", "dotnet.clr", "dotnet.co
     @{
         // We need to re-run the build using the current output
 
-        var nupkgPath = Files.Include(Path.Combine(BUILD_DIR2, "dotnet-clr-win-x86.*.nupkg")).Single();
+        var nupkgPath = Files.Include(Path.Combine(BUILD_DIR2, RUNTIME_CLR_WIN_x86_NAME + ".*.nupkg")).Single();
         Log.Info("Unpacking " + nupkgPath);
-        if (Directory.Exists(Path.Combine(PACKAGES_DIR, "dotnet"))) {
-            Directory.Delete(Path.Combine(PACKAGES_DIR, "dotnet"), recursive:true);
+        if (Directory.Exists(Path.Combine(PACKAGES_DIR, RUNTIME_COMMON_NAME))) {
+            Directory.Delete(Path.Combine(PACKAGES_DIR, RUNTIME_COMMON_NAME), recursive:true);
         }
 
-        Directory.CreateDirectory(Path.Combine(PACKAGES_DIR, "dotnet"));
+        Directory.CreateDirectory(Path.Combine(PACKAGES_DIR, RUNTIME_COMMON_NAME));
 
         System.IO.Compression.ZipFile.ExtractToDirectory(
             Path.Combine(nupkgPath),
-            Path.Combine(PACKAGES_DIR, "dotnet"));
+            Path.Combine(PACKAGES_DIR, RUNTIME_COMMON_NAME));
 
         // Delete the build dir
         Directory.Delete(BUILD_DIR2, recursive: true); 
@@ -339,8 +354,8 @@ var RC_FILES = '${FindAllFiles("Resource.rc", "dotnet", "dotnet.clr", "dotnet.co
         var envPath = Environment.GetEnvironmentVariable("PATH");
         try
         {
-            Log.Info("Adding PATH " + Path.Combine(PACKAGES_DIR, "dotnet", "bin"));
-            Environment.SetEnvironmentVariable("PATH", Path.Combine(PACKAGES_DIR, "dotnet", "bin") + ";" + envPath);
+            Log.Info("Adding PATH " + Path.Combine(PACKAGES_DIR, RUNTIME_COMMON_NAME, "bin"));
+            Environment.SetEnvironmentVariable("PATH", Path.Combine(PACKAGES_DIR, RUNTIME_COMMON_NAME, "bin") + ";" + envPath);
             Environment.SetEnvironmentVariable("NEW_RUNTIME", "1"); 
             Log.Info("Rebuilding target default");
 
@@ -365,13 +380,13 @@ var RC_FILES = '${FindAllFiles("Resource.rc", "dotnet", "dotnet.clr", "dotnet.co
     var x86Target="x86"
     var x64Target="amd64"
 
-    -// dotnet-mono45-x86
-    copy sourceDir='${SCRIPTS_DIR}' include='*.sh' outputDir='${DOTNET_MONO_BIN}' overwrite='${true}'
-    copy sourceDir='${Path.Combine(BUILD_DIR2, "dotnet.mono.managed")}' outputDir='${DOTNET_MONO_BIN}' include='*.dll' overwrite='${true}'
+    -// Runtime for mono
+    copy sourceDir='${SCRIPTS_DIR}' include='*.sh' outputDir='${RUNTIME_MONO_BIN}' overwrite='${true}'
+    copy sourceDir='${Path.Combine(BUILD_DIR2, BOOTSTRAPPER_MONO_MANAGED_NAME)}' outputDir='${RUNTIME_MONO_BIN}' include='*.dll' overwrite='${true}'
 
     @{
         // Rename all .sh files to remove the sh
-        foreach (var shFile in Files.Include(Path.Combine(DOTNET_MONO_BIN, "*.sh")))
+        foreach (var shFile in Files.Include(Path.Combine(RUNTIME_MONO_BIN, "*.sh")))
         {
             var targetShFile = Path.Combine(Path.GetDirectoryName(shFile), 
                                             Path.GetFileNameWithoutExtension(shFile));
@@ -388,29 +403,29 @@ var RC_FILES = '${FindAllFiles("Resource.rc", "dotnet", "dotnet.clr", "dotnet.co
     }
 
     test if='!IsMono'
-        -// dotnet-clr-win-x86
-        copy sourceDir='${Path.Combine(BUILD_DIR2, "dotnet", "bin", "Win32", Configuration2, "aspnet50")}' outputDir='${DOTNET_CLR_WIN_x86_BIN}' include='*.exe' overwrite='${true}'
-        copy sourceDir='${Path.Combine(BUILD_DIR2, "dotnet.clr", "bin", "Win32", Configuration2)}' outputDir='${DOTNET_CLR_WIN_x86_BIN}' include='*.dll' overwrite='${true}'
-        copy sourceDir='${Path.Combine(BUILD_DIR2, "dotnet.clr", "bin", "Win32", Configuration2)}' outputDir='${DOTNET_CLR_WIN_x86_BIN}' include='*.pdb' overwrite='${true}'
-        copy sourceDir='${Path.Combine(ROOT, "src", "dotnet.clr.managed")}' outputDir='${DOTNET_CLR_WIN_x86_BIN}' include='*.config' overwrite='${true}'
+        -// Runtime for clr-win-x86
+        copy sourceDir='${Path.Combine(BUILD_DIR2, BOOTSTRAPPER_EXE_NAME, "bin", "Win32", Configuration2, "aspnet50")}' outputDir='${RUNTIME_CLR_WIN_x86_BIN}' include='*.exe' overwrite='${true}'
+        copy sourceDir='${Path.Combine(BUILD_DIR2, BOOTSTRAPPER_CLR_NAME, "bin", "Win32", Configuration2)}' outputDir='${RUNTIME_CLR_WIN_x86_BIN}' include='*.dll' overwrite='${true}'
+        copy sourceDir='${Path.Combine(BUILD_DIR2, BOOTSTRAPPER_CLR_NAME, "bin", "Win32", Configuration2)}' outputDir='${RUNTIME_CLR_WIN_x86_BIN}' include='*.pdb' overwrite='${true}'
+        copy sourceDir='${Path.Combine(ROOT, "src", BOOTSTRAPPER_CLR_MANAGED_NAME)}' outputDir='${RUNTIME_CLR_WIN_x86_BIN}' include='*.config' overwrite='${true}'
 
-        -// dotnet-clr-win-x64
-        copy sourceDir='${Path.Combine(BUILD_DIR2, "dotnet", "bin", "x64", Configuration2, "aspnet50")}' outputDir='${DOTNET_CLR_WIN_x64_BIN}' include='*.exe' overwrite='${true}'
-        copy sourceDir='${Path.Combine(BUILD_DIR2, "dotnet.clr", "bin", "x64", Configuration2)}' outputDir='${DOTNET_CLR_WIN_x64_BIN}' include='*.dll' overwrite='${true}'
-        copy sourceDir='${Path.Combine(BUILD_DIR2, "dotnet.clr", "bin", "x64", Configuration2)}' outputDir='${DOTNET_CLR_WIN_x64_BIN}' include='*.pdb' overwrite='${true}'
-        copy sourceDir='${Path.Combine(ROOT, "src", "dotnet.clr.managed")}' outputDir='${DOTNET_CLR_WIN_x64_BIN}' include='*.config' overwrite='${true}'
+        -// Runtime for clr-win-x64
+        copy sourceDir='${Path.Combine(BUILD_DIR2, BOOTSTRAPPER_EXE_NAME, "bin", "x64", Configuration2, "aspnet50")}' outputDir='${RUNTIME_CLR_WIN_x64_BIN}' include='*.exe' overwrite='${true}'
+        copy sourceDir='${Path.Combine(BUILD_DIR2, BOOTSTRAPPER_CLR_NAME, "bin", "x64", Configuration2)}' outputDir='${RUNTIME_CLR_WIN_x64_BIN}' include='*.dll' overwrite='${true}'
+        copy sourceDir='${Path.Combine(BUILD_DIR2, BOOTSTRAPPER_CLR_NAME, "bin", "x64", Configuration2)}' outputDir='${RUNTIME_CLR_WIN_x64_BIN}' include='*.pdb' overwrite='${true}'
+        copy sourceDir='${Path.Combine(ROOT, "src", BOOTSTRAPPER_CLR_MANAGED_NAME)}' outputDir='${RUNTIME_CLR_WIN_x64_BIN}' include='*.config' overwrite='${true}'
 
-        -// dotnet-coreclr-win-x86
-        copy sourceDir='${Path.Combine(BUILD_DIR2, "dotnet", "bin", "Win32", Configuration2, "aspnetcore50")}' outputDir='${DOTNET_CORECLR_WIN_x86_BIN}' include='*.exe' overwrite='${true}'
-        copy sourceDir='${Path.Combine(BUILD_DIR2, "dotnet.coreclr", "bin", "Win32", Configuration2)}' outputDir='${DOTNET_CORECLR_WIN_x86_BIN}' include='*.dll' overwrite='${true}'
-        copy sourceDir='${Path.Combine(BUILD_DIR2, "dotnet.coreclr", "bin", "Win32", Configuration2)}' outputDir='${DOTNET_CORECLR_WIN_x86_BIN}' include='*.pdb' overwrite='${true}'
+        -// Runtime for coreclr-win-x86
+        copy sourceDir='${Path.Combine(BUILD_DIR2, BOOTSTRAPPER_EXE_NAME, "bin", "Win32", Configuration2, "aspnetcore50")}' outputDir='${RUNTIME_CORECLR_WIN_x86_BIN}' include='*.exe' overwrite='${true}'
+        copy sourceDir='${Path.Combine(BUILD_DIR2, BOOTSTRAPPER_CORECLR_NAME, "bin", "Win32", Configuration2)}' outputDir='${RUNTIME_CORECLR_WIN_x86_BIN}' include='*.dll' overwrite='${true}'
+        copy sourceDir='${Path.Combine(BUILD_DIR2, BOOTSTRAPPER_CORECLR_NAME, "bin", "Win32", Configuration2)}' outputDir='${RUNTIME_CORECLR_WIN_x86_BIN}' include='*.pdb' overwrite='${true}'
 
-        -// dotnet-coreclr-win-x64
-        copy sourceDir='${Path.Combine(BUILD_DIR2, "dotnet", "bin", "x64", Configuration2, "aspnetcore50")}' outputDir='${DOTNET_CORECLR_WIN_x64_BIN}' include='*.exe' overwrite='${true}'
-        copy sourceDir='${Path.Combine(BUILD_DIR2, "dotnet.coreclr", "bin", "x64", Configuration2)}' outputDir='${DOTNET_CORECLR_WIN_x64_BIN}' include='*.dll' overwrite='${true}'
-        copy sourceDir='${Path.Combine(BUILD_DIR2, "dotnet.coreclr", "bin", "x64", Configuration2)}' outputDir='${DOTNET_CORECLR_WIN_x64_BIN}' include='*.pdb' overwrite='${true}'
+        -// Runtime for coreclr-win-x64
+        copy sourceDir='${Path.Combine(BUILD_DIR2, BOOTSTRAPPER_EXE_NAME, "bin", "x64", Configuration2, "aspnetcore50")}' outputDir='${RUNTIME_CORECLR_WIN_x64_BIN}' include='*.exe' overwrite='${true}'
+        copy sourceDir='${Path.Combine(BUILD_DIR2, BOOTSTRAPPER_CORECLR_NAME, "bin", "x64", Configuration2)}' outputDir='${RUNTIME_CORECLR_WIN_x64_BIN}' include='*.dll' overwrite='${true}'
+        copy sourceDir='${Path.Combine(BUILD_DIR2, BOOTSTRAPPER_CORECLR_NAME, "bin", "x64", Configuration2)}' outputDir='${RUNTIME_CORECLR_WIN_x64_BIN}' include='*.pdb' overwrite='${true}'
 
-        copy sourceDir='${SCRIPTS_DIR}' include='*.cmd' overwrite='${true}' each='var outputDir in new[]{ DOTNET_CLR_WIN_x86_BIN, DOTNET_CLR_WIN_x64_BIN, DOTNET_CORECLR_WIN_x86_BIN, DOTNET_CORECLR_WIN_x64_BIN }'
+        copy sourceDir='${SCRIPTS_DIR}' include='*.cmd' overwrite='${true}' each='var outputDir in new[]{ RUNTIME_CLR_WIN_x86_BIN, RUNTIME_CLR_WIN_x64_BIN, RUNTIME_CORECLR_WIN_x86_BIN, RUNTIME_CORECLR_WIN_x64_BIN }'
 
     @{
         var hostAspNetCore50 = Path.Combine(BUILD_DIR2, "*", "aspnetcore50", "**.*");
@@ -421,7 +436,7 @@ var RC_FILES = '${FindAllFiles("Resource.rc", "dotnet", "dotnet.clr", "dotnet.co
                                   "Microsoft.Framework.DesignTimeHost" };
 
         var sharedSourceAssemblies = new [] { 
-            Path.Combine(BUILD_DIR2, "dotnet.hosting.shared/**/*.*"), 
+            Path.Combine(BUILD_DIR2, BOOTSTRAPPER_HOST_SHARED_NAME + "/**/*.*"), 
             Path.Combine(BUILD_DIR2, "Microsoft.Framework.CommandLineUtils/**/*.*"), 
             Path.Combine(BUILD_DIR2, "Microsoft.Framework.Runtime.Common/**/*.*"),
             Path.Combine(BUILD_DIR2, "Microsoft.Framework.Runtime.Interfaces/**/*.*")
@@ -429,7 +444,7 @@ var RC_FILES = '${FindAllFiles("Resource.rc", "dotnet", "dotnet.clr", "dotnet.co
         
         foreach(var file in Files.Include(hostAspNetCore50).Exclude(sharedSourceAssemblies))
         {
-            foreach(var aspNetCore50Target in DOTNET_CORECLR_TARGETS)
+            foreach(var aspNetCore50Target in RUNTIME_CORECLR_TARGETS)
             {
                 string dest = Path.Combine(aspNetCore50Target, Path.GetFileName(file));
                 File.Copy(file, dest, true);
@@ -438,7 +453,7 @@ var RC_FILES = '${FindAllFiles("Resource.rc", "dotnet", "dotnet.clr", "dotnet.co
         
         foreach(var file in Files.Include(hostnet45).Exclude(sharedSourceAssemblies))
         {
-            foreach(var net45Target in DOTNET_CLR_TARGETS)
+            foreach(var net45Target in RUNTIME_CLR_TARGETS)
             {
                 string dest = Path.Combine(net45Target, Path.GetFileName(file));
                 File.Copy(file, dest, true);
@@ -446,10 +461,10 @@ var RC_FILES = '${FindAllFiles("Resource.rc", "dotnet", "dotnet.clr", "dotnet.co
         }
 
         // Clean up net45.managed from mono (it's never used)
-        File.Delete(Path.Combine(DOTNET_MONO_BIN, "dotnet.clr.managed.dll"));
+        File.Delete(Path.Combine(RUNTIME_MONO_BIN, BOOTSTRAPPER_CLR_MANAGED_NAME + ".dll"));
 
         // Remove k-crossgen.cmd from the net45 build
-        foreach (var net45Target in DOTNET_CLR_TARGETS)
+        foreach (var net45Target in RUNTIME_CLR_TARGETS)
         {
             var crossgen = Path.Combine(net45Target, "k-crossgen.cmd");
             if(File.Exists(crossgen))
@@ -496,7 +511,7 @@ var RC_FILES = '${FindAllFiles("Resource.rc", "dotnet", "dotnet.clr", "dotnet.co
 
 #tweak-scripts
     @{
-        foreach(var targetDir in new[] { DOTNET_CLR_WIN_x86_BIN, DOTNET_CLR_WIN_x64_BIN, DOTNET_CORECLR_WIN_x86_BIN, DOTNET_CORECLR_WIN_x64_BIN })
+        foreach(var targetDir in new[] { RUNTIME_CLR_WIN_x86_BIN, RUNTIME_CLR_WIN_x64_BIN, RUNTIME_CORECLR_WIN_x86_BIN, RUNTIME_CORECLR_WIN_x64_BIN })
         {
             foreach(var file in Files.Include(Path.Combine(targetDir, "*.cmd")))
             {
@@ -562,11 +577,11 @@ var RC_FILES = '${FindAllFiles("Resource.rc", "dotnet", "dotnet.clr", "dotnet.co
 
                     if (framework == "aspnetcore50")
                     {
-                        targetDirs = DOTNET_CORECLR_TARGETS;
+                        targetDirs = RUNTIME_CORECLR_TARGETS;
                     }
                     else
                     {
-                        targetDirs = DOTNET_CLR_TARGETS;
+                        targetDirs = RUNTIME_CLR_TARGETS;
                     }
 
                     foreach(var targetDir in targetDirs)
@@ -616,8 +631,8 @@ var RC_FILES = '${FindAllFiles("Resource.rc", "dotnet", "dotnet.clr", "dotnet.co
     
 #copy-required-dependencies 
     -// Copy the CoreCLR to the aspnetcore50 builds
-    copy sourceDir='${Path.Combine(CORECLR_TARGET_PATH, "Runtime", "x86")}' outputDir='${DOTNET_CORECLR_WIN_x86_BIN}'
-    copy sourceDir='${Path.Combine(CORECLR_TARGET_PATH, "Runtime", "amd64")}' outputDir='${DOTNET_CORECLR_WIN_x64_BIN}'
+    copy sourceDir='${Path.Combine(CORECLR_TARGET_PATH, "Runtime", "x86")}' outputDir='${RUNTIME_CORECLR_WIN_x86_BIN}'
+    copy sourceDir='${Path.Combine(CORECLR_TARGET_PATH, "Runtime", "amd64")}' outputDir='${RUNTIME_CORECLR_WIN_x64_BIN}'
 
     @{
         if (!IsMono && NEW_RUNTIME)
@@ -626,12 +641,12 @@ var RC_FILES = '${FindAllFiles("Resource.rc", "dotnet", "dotnet.clr", "dotnet.co
             
             try
             {
-                Environment.SetEnvironmentVariable("DOTNET_APPBASE", Path.Combine(ROOT, "src", "DependencyAnalyzer"));
-                Exec("cmd", string.Format("/C k dpa runtime \"{0}\" \"{1}\"", DOTNET_CORECLR_WIN_x86_BIN, dependenciesFile));
+                Environment.SetEnvironmentVariable("KRE_APPBASE", Path.Combine(ROOT, "src", "DependencyAnalyzer"));
+                Exec("cmd", string.Format("/C k dpa runtime \"{0}\" \"{1}\"", RUNTIME_CORECLR_WIN_x86_BIN, dependenciesFile));
             }
             finally
             {
-                Environment.SetEnvironmentVariable("DOTNET_APPBASE", null);
+                Environment.SetEnvironmentVariable("KRE_APPBASE", null);
             }
             var deps = new Dictionary<string, HashSet<string>>();
             var list = new HashSet<string>();
@@ -655,7 +670,7 @@ var RC_FILES = '${FindAllFiles("Resource.rc", "dotnet", "dotnet.clr", "dotnet.co
             // First copy the required dependencies into each lib folder
             foreach (var pair in deps)
             {
-                foreach (var targetClr in DOTNET_CORECLR_TARGETS)
+                foreach (var targetClr in RUNTIME_CORECLR_TARGETS)
                 {
                     var targetLibDir = Path.Combine(targetClr, "lib", pair.Key);
                     
@@ -666,7 +681,7 @@ var RC_FILES = '${FindAllFiles("Resource.rc", "dotnet", "dotnet.clr", "dotnet.co
                     
                     foreach (var dep in pair.Value)
                     {
-                        var source = Path.Combine(DOTNET_CORECLR_WIN_x86_BIN, dep + ".dll");
+                        var source = Path.Combine(RUNTIME_CORECLR_WIN_x86_BIN, dep + ".dll");
                         
                         if (!File.Exists(source))
                         {
@@ -682,7 +697,7 @@ var RC_FILES = '${FindAllFiles("Resource.rc", "dotnet", "dotnet.clr", "dotnet.co
             
             var runtimeDeps = deps["Runtime"];
             
-            foreach(var targetClr in DOTNET_CORECLR_TARGETS)
+            foreach(var targetClr in RUNTIME_CORECLR_TARGETS)
             {
                 foreach(var file in Directory.EnumerateFiles(targetClr, "System.*.dll"))
                 {
@@ -701,25 +716,25 @@ var RC_FILES = '${FindAllFiles("Resource.rc", "dotnet", "dotnet.clr", "dotnet.co
     @{
         UpdateAllNuspecs(NUSPEC_ROOT, BUILD_DIR2);
     }
-    nuget-pack packageVersion='${FULL_VERSION}' outputDir='${BUILD_DIR2}' extra='-NoPackageAnalysis' nugetPath='.nuget/nuget.exe' each='var nuspecFile in Files.Include(Path.Combine(BUILD_DIR2, "*.nuspec"))'
+    nuget-pack packageVersion='${FULL_VERSION}' outputDir='${BUILD_DIR2}' extra='-NoPackageAnalysis -Properties RuntimeNamePrefix=${RUNTIME_NAME_PREFIX}' nugetPath='.nuget/nuget.exe' each='var nuspecFile in Files.Include(Path.Combine(BUILD_DIR2, "*.nuspec"))'
 
 #dev-install
     @{
-        InstallDevRuntime(DOTNET_MONO_BIN);
+        InstallDevRuntime(RUNTIME_MONO_BIN);
         
         if (!IsMono)
         {
-            InstallDevRuntime(DOTNET_CLR_WIN_x86_BIN);
-            InstallDevRuntime(DOTNET_CLR_WIN_x64_BIN);
-            InstallDevRuntime(DOTNET_CORECLR_WIN_x86_BIN);
-            InstallDevRuntime(DOTNET_CORECLR_WIN_x64_BIN);
+            InstallDevRuntime(RUNTIME_CLR_WIN_x86_BIN);
+            InstallDevRuntime(RUNTIME_CLR_WIN_x64_BIN);
+            InstallDevRuntime(RUNTIME_CORECLR_WIN_x86_BIN);
+            InstallDevRuntime(RUNTIME_CORECLR_WIN_x64_BIN);
         }
     }
     
 #install-runtime target='install'
     var matchVersion=''
-    for each='var pattern in new[]{ "clr-win-x86", "coreclr-win-x86", "clr-win-x64", "coreclr-win-x64" }'
-        for each='var runtime in Files.Include(Path.Combine(BUILD_DIR2, "dotnet-" + pattern + ".*.nupkg"))'
+    for each='var name in new[]{ RUNTIME_CLR_WIN_x86_NAME, RUNTIME_CORECLR_WIN_x86_NAME, RUNTIME_CLR_WIN_x64_NAME, RUNTIME_CORECLR_WIN_x64_NAME }'
+        for each='var runtime in Files.Include(Path.Combine(BUILD_DIR2, name + ".*.nupkg"))'
             exec program='cmd' commandline='/C dotnetsdk install ${runtime}' if='!IsMono'
             var parts='${Path.GetFileNameWithoutExtension(runtime).Split(".".ToArray(), 2)}'
             set matchVersion='${parts[1]}' if='matchVersion == ""'
@@ -731,10 +746,14 @@ macro name='NuGetInstall' Package='string' OutputDir='string' Extra='string'
     nuget-install package='${Package}' outputDir='${OutputDir}' extra='${Extra}' nugetPath='.nuget/nuget.exe'
 
 functions @{
+
+    private static readonly string _defaultLocalRuntimeHomeDir = ".k";
+    private static readonly string _packagesSubDir = "packages";
+    private static readonly string _runtimesSubDir = "runtimes";
+
     string FindPackageDirectory(string name)
     {
-        // TODO: remove KRE_ env var
-        var packagesDir = string.IsNullOrEmpty(Environment.GetEnvironmentVariable("DOTNET_PACKAGES")) ? Environment.GetEnvironmentVariable("KRE_PACKAGES") : Environment.GetEnvironmentVariable("DOTNET_PACKAGES");
+        var packagesDir = Environment.GetEnvironmentVariable("KRE_PACKAGES");
 
         if (string.IsNullOrEmpty(packagesDir))
         {
@@ -745,7 +764,7 @@ functions @{
                 profileDirectory = Environment.GetEnvironmentVariable("HOME");
             }
 
-            packagesDir = Path.Combine(profileDirectory, ".dotnet", "packages");
+            packagesDir = Path.Combine(profileDirectory, _defaultLocalRuntimeHomeDir, _packagesSubDir);
         }
         
         var packageMetadataDir = Path.Combine(packagesDir, name);
@@ -826,12 +845,12 @@ functions @{
             profileDirectory = Environment.GetEnvironmentVariable("HOME");
         }
 
-        return Path.Combine(profileDirectory, ".dotnet");
+        return Path.Combine(profileDirectory, _defaultLocalRuntimeHomeDir);
     }
 
     string FindRuntimePackagesFolder() 
     {
-        return Path.Combine(FindRuntimeFolder(), "runtimes");
+        return Path.Combine(FindRuntimeFolder(), _runtimesSubDir);
     }
 
     void InstallDevRuntime(string binPath)
@@ -847,8 +866,8 @@ functions @{
             return;
         }
     
-        // Trim "dotnet-" part from alias to keep it short
-        var alias = sourceRuntime.Substring(7) + "-dev";
+        // Trim runtime name prefix part from alias to keep it short
+        var alias = sourceRuntime.Substring(sourceRuntime.IndexOf('-') + 1) + "-dev";
     
         var symlinkProgram = "cmd";
         var symlinkProgramArgs = "/C mklink /J {0} {1}";

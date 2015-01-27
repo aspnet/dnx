@@ -1,5 +1,6 @@
 ﻿using System;
 using Microsoft.Framework.PackageManager.Bundle;
+using Microsoft.Framework.Runtime;
 using Xunit;
 
 namespace Microsoft.Framework.PackageManager.Bundle.Tests
@@ -7,16 +8,16 @@ namespace Microsoft.Framework.PackageManager.Bundle.Tests
     public class DependencyContextFacts
     {
         [Theory]
-        [InlineData("dotnet-clr-win-x86.1.0.0", "Asp.Net")]
-        [InlineData("dotnet-clr-win-x64.1.0.0", "Asp.Net")]
-        [InlineData("dotnet-coreclr-win-x86.1.0.0", "Asp.NetCore")]
-        [InlineData("dotnet-coreclr-win-x64.1.0.0", "Asp.NetCore")]
-        [InlineData("dotnet-mono.1.0.0", "Asp.Net")]  // Absence of architecture component is allowed for mono runtime
-        [InlineData("dotnet-mono-x86.1.0.0", "Asp.Net")]
-        [InlineData("dotnet-clr.1.0.0", null)]
-        [InlineData("dotnet-coreclr-win-x86", null)]
-        [InlineData("dotnet-mono", null)]
-        [InlineData("dotnet", null)]
+        [InlineData(Constants.RuntimeNamePrefix + "clr-win-x86.1.0.0", "Asp.Net")]
+        [InlineData(Constants.RuntimeNamePrefix + "clr-win-x64.1.0.0", "Asp.Net")]
+        [InlineData(Constants.RuntimeNamePrefix + "coreclr-win-x86.1.0.0", "Asp.NetCore")]
+        [InlineData(Constants.RuntimeNamePrefix + "coreclr-win-x64.1.0.0", "Asp.NetCore")]
+        [InlineData(Constants.RuntimeNamePrefix + "mono.1.0.0", "Asp.Net")]  // Absence of architecture component is allowed for mono runtime
+        [InlineData(Constants.RuntimeNamePrefix + "mono-x86.1.0.0", "Asp.Net")]
+        [InlineData(Constants.RuntimeNamePrefix + "clr.1.0.0", null)]
+        [InlineData(Constants.RuntimeNamePrefix + "coreclr-win-x86", null)]
+        [InlineData(Constants.RuntimeNamePrefix + "mono", null)]
+        [InlineData(Constants.RuntimeNamePrefix, null)]
         public void GetCorrectFrameworkNameForRuntimes(string runtimeName, string frameworkIdentifier)
         {
             var frameworkName = DependencyContext.GetFrameworkNameForRuntime(runtimeName);

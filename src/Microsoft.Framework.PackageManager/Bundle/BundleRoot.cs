@@ -99,7 +99,7 @@ namespace Microsoft.Framework.PackageManager.Bundle
             }
 
             const string template = @"
-@""{0}dotnet.exe"" --appbase ""%~dp0{1}"" Microsoft.Framework.ApplicationHost {2} %*
+@""{0}{1}.exe"" --appbase ""%~dp0{2}"" Microsoft.Framework.ApplicationHost {3} %*
 ";
 
             foreach (var commandName in _project.Commands.Keys)
@@ -112,7 +112,7 @@ namespace Microsoft.Framework.PackageManager.Bundle
 
                 File.WriteAllText(
                     Path.Combine(OutputPath, commandName + ".cmd"),
-                    string.Format(template, runtimeFolder, relativeAppBase, commandName));
+                    string.Format(template, runtimeFolder, Runtime.Constants.BootstrapperExeName, relativeAppBase, commandName));
             }
         }
 
@@ -139,9 +139,9 @@ while [ -h ""$SOURCE"" ]; do # resolve $SOURCE until the file is no longer a sym
 done
 DIR=""$( cd -P ""$( dirname ""$SOURCE"" )"" && pwd )""
 
-export SET DOTNET_APPBASE=""$DIR/{0}""
+export SET {0}=""$DIR/{1}""
 
-exec ""{1}dotnet"" --appbase ""$DOTNET_APPBASE"" Microsoft.Framework.ApplicationHost {2} ""$@""";
+exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@""";
 
             foreach (var commandName in _project.Commands.Keys)
             {
@@ -154,7 +154,7 @@ exec ""{1}dotnet"" --appbase ""$DOTNET_APPBASE"" Microsoft.Framework.Application
 
                 var scriptPath = Path.Combine(OutputPath, commandName);
                 File.WriteAllText(scriptPath,
-                    string.Format(template, relativeAppBase, runtimeFolder, commandName).Replace("\r\n", "\n"));
+                    string.Format(template, EnvironmentNames.AppBase, relativeAppBase, runtimeFolder, Runtime.Constants.BootstrapperExeName, commandName).Replace("\r\n", "\n"));
                 if (PlatformHelper.IsMono)
                 {
                     MarkExecutable(scriptPath);
