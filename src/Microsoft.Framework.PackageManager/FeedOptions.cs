@@ -11,8 +11,7 @@ namespace Microsoft.Framework.PackageManager
         public IList<string> FallbackSources
         {
             get
-            
-{
+            {
                 return FallbackSourceOptions.Values;
             }
         }

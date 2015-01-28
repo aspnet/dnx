@@ -94,7 +94,7 @@ namespace Microsoft.Framework.PackageManager
 
             PackageBuilder packageBuilder = null;
             PackageBuilder symbolPackageBuilder = null;
-            InstallBuilder appBuilder = null;
+            InstallBuilder installBuilder = null;
 
             // Build all specified configurations
             foreach (var configuration in configurations)
@@ -107,7 +107,7 @@ namespace Microsoft.Framework.PackageManager
                     InitializeBuilder(project, packageBuilder);
                     InitializeBuilder(project, symbolPackageBuilder);
 
-                    appBuilder = new InstallBuilder(project, packageBuilder, _buildOptions.Reports);
+                    installBuilder = new InstallBuilder(project, packageBuilder, _buildOptions.Reports);
                 }
 
                 var configurationSuccess = true;
@@ -164,10 +164,10 @@ namespace Microsoft.Framework.PackageManager
                     string nupkg = GetPackagePath(project, baseOutputPath);
                     string symbolsNupkg = GetPackagePath(project, baseOutputPath, symbols: true);
 
-                    // Generate the application package, if this is an application packages
                     if (configurationSuccess)
                     {
-                        configurationSuccess = appBuilder.Build(baseOutputPath);
+                        // Generates the application package only if this is an application packages
+                        configurationSuccess = installBuilder.Build(baseOutputPath);
                         success = success && configurationSuccess;
                     }
 

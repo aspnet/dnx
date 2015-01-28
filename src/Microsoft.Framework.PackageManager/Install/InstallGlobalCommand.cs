@@ -97,7 +97,7 @@ namespace Microsoft.Framework.PackageManager
 
             if (!Directory.Exists(commandsFolder))
             {
-                WriteError("The specified package is not an application. The package was added but not commands were installed.");
+                WriteError("The specified package is not an application. The package was added but no commands were installed.");
                 return false;
             }
 

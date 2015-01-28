@@ -62,7 +62,7 @@ namespace Microsoft.Framework.PackageManager
             {
                 _buildReport.Error.WriteLine(
                     string.Format(
-                        "The following names are not valid for exported commands: {0}.",
+                        "The following names are not allowed as commands: {0}.",
                         string.Join(", ", invalidExportedCommands))
                     .Red());
 
