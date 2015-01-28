@@ -134,6 +134,43 @@ namespace Something
         }
 
         [Fact]
+        public void GenericAndNonGenericWithSameName()
+        {
+            var worker = DoAssemblyNeutralCompilation(
+@"
+namespace Something
+{
+    [AssemblyNeutral]
+    public interface ILogger { void Log(string message); }
+}",
+@"
+
+namespace Something
+{
+    [AssemblyNeutral]
+    public interface ILogger<T> : ILogger 
+    {
+    }
+}",
+@"
+namespace Something
+{
+    [AssemblyNeutral]
+    public class AssemblyNeutralAttribute : System.Attribute { }
+}
+");
+
+            var diagnostics = worker.GenerateTypeCompilations();
+            var compilations = worker.TypeCompilations.OrderBy(c => c.AssemblyName).ToList();
+
+            Assert.Equal(0, diagnostics.Count);
+            Assert.Equal(3, compilations.Count());
+            Assert.Equal("Something.AssemblyNeutralAttribute", compilations[0].AssemblyName);
+            Assert.Equal("Something.ILogger", compilations[1].AssemblyName);
+            Assert.Equal("Something.ILogger`1", compilations[2].AssemblyName);
+        }
+
+        [Fact]
         public void GenericAssemblyNeutralMembersWithPrimitiveTypeParams()
         {
             var worker = DoAssemblyNeutralCompilation(
@@ -182,9 +219,9 @@ namespace Something
             Assert.Equal(0, diagnostics.Count);
             Assert.Equal(4, compilations.Count());
             Assert.Equal("Something.AssemblyNeutralAttribute", compilations[0].AssemblyName);
-            Assert.Equal("Something.IDataObject", compilations[1].AssemblyName);
+            Assert.Equal("Something.IDataObject`1", compilations[1].AssemblyName);
             Assert.Equal("Something.IDataObjectProvider", compilations[2].AssemblyName);
-            Assert.Equal("Something.IDataValue", compilations[3].AssemblyName);
+            Assert.Equal("Something.IDataValue`1", compilations[3].AssemblyName);
         }
 
         private AssemblyNeutralWorker DoAssemblyNeutralCompilation(params string[] fileContents)

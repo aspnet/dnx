@@ -33,8 +33,7 @@ namespace Microsoft.Framework.Runtime.Roslyn
         {
             get
             {
-                // TODO: Fix this to generate proper names (seems that the generic type's arity isn't captured here)
-                return TypeSymbol.ContainingNamespace + "." + TypeSymbol.Name;
+                return TypeSymbol.ContainingNamespace + "." + TypeSymbol.MetadataName;
             }
         }
 
