@@ -12,7 +12,7 @@ namespace Microsoft.Framework.ApplicationHost
     public static class KCommandTestUtils
     {
         public static int ExecKCommand(
-            string dotnetHomePath,
+            string runtimeHomePath,
             string subcommand,
             string arguments,
             out string stdOut,
@@ -20,7 +20,7 @@ namespace Microsoft.Framework.ApplicationHost
             IDictionary<string, string> environment = null,
             string workingDir = null)
         {
-            var runtimeRoot = Directory.EnumerateDirectories(Path.Combine(dotnetHomePath, "runtimes"), "dotnet-*").First();
+            var runtimeRoot = Directory.EnumerateDirectories(Path.Combine(runtimeHomePath, "runtimes"), "kre-*").First();
             string program, commandLine;
             if (PlatformHelper.IsMono)
             {

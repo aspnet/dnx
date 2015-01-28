@@ -1,0 +1,3 @@
+LIBRARY   kre.coreclr.dll 
+EXPORTS 
+    CallApplicationMain   @1 

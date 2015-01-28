@@ -5,6 +5,7 @@ using System.IO;
 using System.Collections.Generic;
 using System.Linq;
 using Microsoft.Framework.FunctionalTestUtils;
+using Microsoft.Framework.Runtime;
 using Xunit;
 
 namespace Microsoft.Framework.PackageManager
@@ -15,7 +16,7 @@ namespace Microsoft.Framework.PackageManager
         private readonly string _outputDirName = "BundleOutput";
 
         private static readonly string BatchFileTemplate = @"
-@""{0}dotnet.exe"" --appbase ""%~dp0approot\src\{1}"" Microsoft.Framework.ApplicationHost {2} %*
+@""{0}klr.exe"" --appbase ""%~dp0approot\src\{1}"" Microsoft.Framework.ApplicationHost {2} %*
 ";
 
         private static readonly string BashScriptTemplate = @"#!/bin/bash
@@ -28,15 +29,15 @@ while [ -h ""$SOURCE"" ]; do # resolve $SOURCE until the file is no longer a sym
 done
 DIR=""$( cd -P ""$( dirname ""$SOURCE"" )"" && pwd )""
 
-export SET DOTNET_APPBASE=""$DIR/approot/src/{0}""
+export SET {0}=""$DIR/approot/src/{1}""
 
-exec ""{1}dotnet"" --appbase ""$DOTNET_APPBASE"" Microsoft.Framework.ApplicationHost {2} ""$@""".Replace("\r\n", "\n");
+exec ""{2}klr"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {3} ""$@""".Replace("\r\n", "\n");
 
-        public static IEnumerable<object[]> DotnetHomeDirs
+        public static IEnumerable<object[]> RuntimeHomeDirs
         {
             get
             {
-                foreach (var path in TestUtils.GetDotnetHomeDirs())
+                foreach (var path in TestUtils.GetRuntimeHomeDirs())
                 {
                     yield return new[] { path };
                 }
@@ -44,8 +45,8 @@ exec ""{1}dotnet"" --appbase ""$DOTNET_APPBASE"" Microsoft.Framework.Application
         }
 
         [Theory]
-        [MemberData("DotnetHomeDirs")]
-        public void KpmBundleWebApp_RootAsPublicFolder(DisposableDir dotnetHomeDir)
+        [MemberData("RuntimeHomeDirs")]
+        public void KpmBundleWebApp_RootAsPublicFolder(DisposableDir runtimeHomeDir)
         {
             var projectStructure = @"{
   '.': ['project.json', 'Config.json', 'Program.cs', 'build_config1.bconfig'],
@@ -85,7 +86,7 @@ exec ""{1}dotnet"" --appbase ""$DOTNET_APPBASE"" Microsoft.Framework.Application
   }
 }".Replace("PROJECT_NAME", _projectName);
 
-            using (var testEnv = new KpmTestEnvironment(dotnetHomeDir, _projectName, _outputDirName))
+            using (var testEnv = new KpmTestEnvironment(runtimeHomeDir, _projectName, _outputDirName))
             {
                 DirTree.CreateFromJson(projectStructure)
                     .WithFileContents("project.json", @"{
@@ -96,11 +97,11 @@ exec ""{1}dotnet"" --appbase ""$DOTNET_APPBASE"" Microsoft.Framework.Application
 
                 var environment = new Dictionary<string, string>()
                 {
-                    { "DOTNET_PACKAGES", Path.Combine(testEnv.ProjectPath, "packages") }
+                    { EnvironmentNames.Packages, Path.Combine(testEnv.ProjectPath, "packages") }
                 };
 
                 var exitCode = KpmTestUtils.ExecKpm(
-                    dotnetHomeDir,
+                    runtimeHomeDir,
                     subcommand: "bundle",
                     arguments: string.Format("--out {0} --wwwroot . --wwwroot-out wwwroot",
                         testEnv.BundleOutputDirPath),
@@ -127,9 +128,9 @@ exec ""{1}dotnet"" --appbase ""$DOTNET_APPBASE"" Microsoft.Framework.Application
     <add key=""kpm-package-path"" value=""..\approot\packages"" />
     <add key=""bootstrapper-version"" value="""" />
     <add key=""packages-path"" value=""..\approot\packages"" />
-    <add key=""dotnet-version"" value="""" />
-    <add key=""dotnet-clr"" value="""" />
-    <add key=""dotnet-app-base"" value=""..\approot\src\{0}"" />
+    <add key=""kre-version"" value="""" />
+    <add key=""kre-clr"" value="""" />
+    <add key=""kre-app-base"" value=""..\approot\src\{0}"" />
   </appSettings>
 </configuration>", testEnv.ProjectName);
                 Assert.True(expectedOutputDir.MatchDirectoryOnDisk(testEnv.BundleOutputDirPath,
@@ -138,8 +139,8 @@ exec ""{1}dotnet"" --appbase ""$DOTNET_APPBASE"" Microsoft.Framework.Application
         }
 
         [Theory]
-        [MemberData("DotnetHomeDirs")]
-        public void KpmBundleWebApp_SubfolderAsPublicFolder(DisposableDir dotnetHomeDir)
+        [MemberData("RuntimeHomeDirs")]
+        public void KpmBundleWebApp_SubfolderAsPublicFolder(DisposableDir runtimeHomeDir)
         {
             var projectStructure = @"{
   '.': ['project.json', 'Config.json', 'Program.cs'],
@@ -178,7 +179,7 @@ exec ""{1}dotnet"" --appbase ""$DOTNET_APPBASE"" Microsoft.Framework.Application
   }
 }".Replace("PROJECT_NAME", _projectName);
 
-            using (var testEnv = new KpmTestEnvironment(dotnetHomeDir, _projectName, _outputDirName))
+            using (var testEnv = new KpmTestEnvironment(runtimeHomeDir, _projectName, _outputDirName))
             {
                 DirTree.CreateFromJson(projectStructure)
                     .WithFileContents("project.json", @"{
@@ -189,11 +190,11 @@ exec ""{1}dotnet"" --appbase ""$DOTNET_APPBASE"" Microsoft.Framework.Application
 
                 var environment = new Dictionary<string, string>()
                 {
-                    { "DOTNET_PACKAGES", Path.Combine(testEnv.ProjectPath, "packages") }
+                    { EnvironmentNames.Packages, Path.Combine(testEnv.ProjectPath, "packages") }
                 };
 
                 var exitCode = KpmTestUtils.ExecKpm(
-                    dotnetHomeDir,
+                    runtimeHomeDir,
                     subcommand: "bundle",
                     arguments: string.Format("--out {0} --wwwroot-out wwwroot",
                         testEnv.BundleOutputDirPath),
@@ -216,9 +217,9 @@ exec ""{1}dotnet"" --appbase ""$DOTNET_APPBASE"" Microsoft.Framework.Application
     <add key=""kpm-package-path"" value=""..\approot\packages"" />
     <add key=""bootstrapper-version"" value="""" />
     <add key=""packages-path"" value=""..\approot\packages"" />
-    <add key=""dotnet-version"" value="""" />
-    <add key=""dotnet-clr"" value="""" />
-    <add key=""dotnet-app-base"" value=""..\approot\src\{0}"" />
+    <add key=""kre-version"" value="""" />
+    <add key=""kre-clr"" value="""" />
+    <add key=""kre-app-base"" value=""..\approot\src\{0}"" />
   </appSettings>
 </configuration>", testEnv.ProjectName);
                 Assert.True(expectedOutputDir.MatchDirectoryOnDisk(testEnv.BundleOutputDirPath,
@@ -227,8 +228,8 @@ exec ""{1}dotnet"" --appbase ""$DOTNET_APPBASE"" Microsoft.Framework.Application
         }
 
         [Theory]
-        [MemberData("DotnetHomeDirs")]
-        public void KpmBundleConsoleApp(DisposableDir dotnetHomeDir)
+        [MemberData("RuntimeHomeDirs")]
+        public void KpmBundleConsoleApp(DisposableDir runtimeHomeDir)
         {
             var projectStructure = @"{
   '.': ['project.json', 'Config.json', 'Program.cs'],
@@ -252,7 +253,7 @@ exec ""{1}dotnet"" --appbase ""$DOTNET_APPBASE"" Microsoft.Framework.Application
     }
   }".Replace("PROJECT_NAME", _projectName);
 
-            using (var testEnv = new KpmTestEnvironment(dotnetHomeDir, _projectName, _outputDirName))
+            using (var testEnv = new KpmTestEnvironment(runtimeHomeDir, _projectName, _outputDirName))
             {
                 DirTree.CreateFromJson(projectStructure)
                     .WithFileContents("project.json", @"{
@@ -262,11 +263,11 @@ exec ""{1}dotnet"" --appbase ""$DOTNET_APPBASE"" Microsoft.Framework.Application
 
                 var environment = new Dictionary<string, string>()
                 {
-                    { "DOTNET_PACKAGES", Path.Combine(testEnv.ProjectPath, "packages") }
+                    { EnvironmentNames.Packages, Path.Combine(testEnv.ProjectPath, "packages") }
                 };
 
                 var exitCode = KpmTestUtils.ExecKpm(
-                    dotnetHomeDir,
+                    runtimeHomeDir,
                     subcommand: "bundle",
                     arguments: string.Format("--out {0}",
                         testEnv.BundleOutputDirPath),
@@ -288,8 +289,8 @@ exec ""{1}dotnet"" --appbase ""$DOTNET_APPBASE"" Microsoft.Framework.Application
         }
 
         [Theory]
-        [MemberData("DotnetHomeDirs")]
-        public void FoldersAsFilePatternsAutoGlob(DisposableDir dotnetHomeDir)
+        [MemberData("RuntimeHomeDirs")]
+        public void FoldersAsFilePatternsAutoGlob(DisposableDir runtimeHomeDir)
         {
             var projectStructure = @"{
   '.': ['project.json', 'FileWithoutExtension'],
@@ -330,7 +331,7 @@ exec ""{1}dotnet"" --appbase ""$DOTNET_APPBASE"" Microsoft.Framework.Application
   }
 }".Replace("PROJECT_NAME", _projectName);
 
-            using (var testEnv = new KpmTestEnvironment(dotnetHomeDir, _projectName, _outputDirName))
+            using (var testEnv = new KpmTestEnvironment(runtimeHomeDir, _projectName, _outputDirName))
             {
                 DirTree.CreateFromJson(projectStructure)
                     .WithFileContents("project.json", @"{
@@ -351,11 +352,11 @@ exec ""{1}dotnet"" --appbase ""$DOTNET_APPBASE"" Microsoft.Framework.Application
 
                 var environment = new Dictionary<string, string>()
                 {
-                    { "DOTNET_PACKAGES", Path.Combine(testEnv.ProjectPath, "packages") }
+                    { EnvironmentNames.Packages, Path.Combine(testEnv.ProjectPath, "packages") }
                 };
 
                 var exitCode = KpmTestUtils.ExecKpm(
-                    dotnetHomeDir,
+                    runtimeHomeDir,
                     subcommand: "bundle",
                     arguments: string.Format("--out {0}",
                         testEnv.BundleOutputDirPath),
@@ -388,8 +389,8 @@ exec ""{1}dotnet"" --appbase ""$DOTNET_APPBASE"" Microsoft.Framework.Application
         }
 
         [Theory]
-        [MemberData("DotnetHomeDirs")]
-        public void WildcardMatchingFacts(DisposableDir dotnetHomeDir)
+        [MemberData("RuntimeHomeDirs")]
+        public void WildcardMatchingFacts(DisposableDir runtimeHomeDir)
         {
             var projectStructure = @"{
   '.': ['project.json'],
@@ -432,7 +433,7 @@ exec ""{1}dotnet"" --appbase ""$DOTNET_APPBASE"" Microsoft.Framework.Application
   }
 }".Replace("PROJECT_NAME", _projectName);
 
-            using (var testEnv = new KpmTestEnvironment(dotnetHomeDir, _projectName, _outputDirName))
+            using (var testEnv = new KpmTestEnvironment(runtimeHomeDir, _projectName, _outputDirName))
             {
                 DirTree.CreateFromJson(projectStructure)
                     .WithFileContents("project.json", @"{
@@ -448,11 +449,11 @@ exec ""{1}dotnet"" --appbase ""$DOTNET_APPBASE"" Microsoft.Framework.Application
 
                 var environment = new Dictionary<string, string>()
                 {
-                    { "DOTNET_PACKAGES", Path.Combine(testEnv.ProjectPath, "packages") }
+                    { EnvironmentNames.Packages, Path.Combine(testEnv.ProjectPath, "packages") }
                 };
 
                 var exitCode = KpmTestUtils.ExecKpm(
-                    dotnetHomeDir,
+                    runtimeHomeDir,
                     subcommand: "bundle",
                     arguments: string.Format("--out {0}",
                         testEnv.BundleOutputDirPath),
@@ -480,8 +481,8 @@ exec ""{1}dotnet"" --appbase ""$DOTNET_APPBASE"" Microsoft.Framework.Application
         }
 
         [Theory]
-        [MemberData("DotnetHomeDirs")]
-        public void CorrectlyExcludeFoldersStartingWithDots(DisposableDir dotnetHomeDir)
+        [MemberData("RuntimeHomeDirs")]
+        public void CorrectlyExcludeFoldersStartingWithDots(DisposableDir runtimeHomeDir)
         {
             var projectStructure = @"{
   '.': ['project.json', 'File', '.FileStartingWithDot', 'File.Having.Dots'],
@@ -536,7 +537,7 @@ exec ""{1}dotnet"" --appbase ""$DOTNET_APPBASE"" Microsoft.Framework.Application
   }
 }".Replace("PROJECT_NAME", _projectName);
 
-            using (var testEnv = new KpmTestEnvironment(dotnetHomeDir, _projectName, _outputDirName))
+            using (var testEnv = new KpmTestEnvironment(runtimeHomeDir, _projectName, _outputDirName))
             {
                 DirTree.CreateFromJson(projectStructure)
                     .WithFileContents("project.json", @"{
@@ -545,11 +546,11 @@ exec ""{1}dotnet"" --appbase ""$DOTNET_APPBASE"" Microsoft.Framework.Application
 
                 var environment = new Dictionary<string, string>()
                 {
-                    { "DOTNET_PACKAGES", Path.Combine(testEnv.ProjectPath, "packages") }
+                    { EnvironmentNames.Packages, Path.Combine(testEnv.ProjectPath, "packages") }
                 };
 
                 var exitCode = KpmTestUtils.ExecKpm(
-                    dotnetHomeDir,
+                    runtimeHomeDir,
                     subcommand: "bundle",
                     arguments: string.Format("--out {0}",
                         testEnv.BundleOutputDirPath),
@@ -570,8 +571,8 @@ exec ""{1}dotnet"" --appbase ""$DOTNET_APPBASE"" Microsoft.Framework.Application
         }
 
         [Theory]
-        [MemberData("DotnetHomeDirs")]
-        public void VerifyDefaultBundleExcludePatterns(DisposableDir dotnetHomeDir)
+        [MemberData("RuntimeHomeDirs")]
+        public void VerifyDefaultBundleExcludePatterns(DisposableDir runtimeHomeDir)
         {
             var projectStructure = @"{
   '.': ['project.json', 'File', '.FileStartingWithDot'],
@@ -603,7 +604,7 @@ exec ""{1}dotnet"" --appbase ""$DOTNET_APPBASE"" Microsoft.Framework.Application
   }
 }".Replace("PROJECT_NAME", _projectName);
 
-            using (var testEnv = new KpmTestEnvironment(dotnetHomeDir, _projectName, _outputDirName))
+            using (var testEnv = new KpmTestEnvironment(runtimeHomeDir, _projectName, _outputDirName))
             {
                 DirTree.CreateFromJson(projectStructure)
                     .WithFileContents("project.json", @"{
@@ -612,11 +613,11 @@ exec ""{1}dotnet"" --appbase ""$DOTNET_APPBASE"" Microsoft.Framework.Application
 
                 var environment = new Dictionary<string, string>()
                 {
-                    { "DOTNET_PACKAGES", Path.Combine(testEnv.ProjectPath, "packages") }
+                    { EnvironmentNames.Packages, Path.Combine(testEnv.ProjectPath, "packages") }
                 };
 
                 var exitCode = KpmTestUtils.ExecKpm(
-                    dotnetHomeDir,
+                    runtimeHomeDir,
                     subcommand: "bundle",
                     arguments: string.Format("--out {0}",
                         testEnv.BundleOutputDirPath),
@@ -637,8 +638,8 @@ exec ""{1}dotnet"" --appbase ""$DOTNET_APPBASE"" Microsoft.Framework.Application
         }
 
         [Theory]
-        [MemberData("DotnetHomeDirs")]
-        public void KpmBundleWebApp_AppendToExistingWebConfig(DisposableDir dotnetHomeDir)
+        [MemberData("RuntimeHomeDirs")]
+        public void KpmBundleWebApp_AppendToExistingWebConfig(DisposableDir runtimeHomeDir)
         {
             var projectStructure = @"{
   '.': ['project.json'],
@@ -661,7 +662,7 @@ exec ""{1}dotnet"" --appbase ""$DOTNET_APPBASE"" Microsoft.Framework.Application
   </nonRelatedElement>
 </configuration>";
 
-            using (var testEnv = new KpmTestEnvironment(dotnetHomeDir, _projectName, _outputDirName))
+            using (var testEnv = new KpmTestEnvironment(runtimeHomeDir, _projectName, _outputDirName))
             {
                 DirTree.CreateFromJson(projectStructure)
                     .WithFileContents("project.json", @"{
@@ -672,11 +673,11 @@ exec ""{1}dotnet"" --appbase ""$DOTNET_APPBASE"" Microsoft.Framework.Application
 
                 var environment = new Dictionary<string, string>()
                 {
-                    { "DOTNET_PACKAGES", Path.Combine(testEnv.ProjectPath, "packages") }
+                    { EnvironmentNames.Packages, Path.Combine(testEnv.ProjectPath, "packages") }
                 };
 
                 var exitCode = KpmTestUtils.ExecKpm(
-                    dotnetHomeDir,
+                    runtimeHomeDir,
                     subcommand: "bundle",
                     arguments: string.Format("--out {0} --wwwroot public --wwwroot-out wwwroot",
                         testEnv.BundleOutputDirPath),
@@ -701,9 +702,9 @@ exec ""{1}dotnet"" --appbase ""$DOTNET_APPBASE"" Microsoft.Framework.Application
     <add key=""kpm-package-path"" value=""..\approot\packages"" />
     <add key=""bootstrapper-version"" value="""" />
     <add key=""packages-path"" value=""..\approot\packages"" />
-    <add key=""dotnet-version"" value="""" />
-    <add key=""dotnet-clr"" value="""" />
-    <add key=""dotnet-app-base"" value=""..\approot\src\{0}"" />
+    <add key=""kre-version"" value="""" />
+    <add key=""kre-clr"" value="""" />
+    <add key=""kre-app-base"" value=""..\approot\src\{0}"" />
   </appSettings>
 </configuration>", testEnv.ProjectName);
                 Assert.True(expectedOutputDir.MatchDirectoryOnDisk(testEnv.BundleOutputDirPath,
@@ -712,8 +713,8 @@ exec ""{1}dotnet"" --appbase ""$DOTNET_APPBASE"" Microsoft.Framework.Application
         }
 
         [Theory]
-        [MemberData("DotnetHomeDirs")]
-        public void KpmBundleWebApp_UpdateExistingWebConfig(DisposableDir dotnetHomeDir)
+        [MemberData("RuntimeHomeDirs")]
+        public void KpmBundleWebApp_UpdateExistingWebConfig(DisposableDir runtimeHomeDir)
         {
             var projectStructure = @"{
   '.': ['project.json'],
@@ -739,13 +740,13 @@ exec ""{1}dotnet"" --appbase ""$DOTNET_APPBASE"" Microsoft.Framework.Application
     <add key=""kpm-package-path"" value=""OLD_VALUE"" />
     <add key=""bootstrapper-version"" value=""OLD_VALUE"" />
     <add key=""packages-path"" value=""OLD_VALUE"" />
-    <add key=""dotnet-version"" value=""OLD_VALUE"" />
-    <add key=""dotnet-clr"" value=""OLD_VALUE"" />
-    <add key=""dotnet-app-base"" value=""OLD_VALUE"" />
+    <add key=""kre-version"" value=""OLD_VALUE"" />
+    <add key=""kre-clr"" value=""OLD_VALUE"" />
+    <add key=""kre-app-base"" value=""OLD_VALUE"" />
   </appSettings>
 </configuration>";
 
-            using (var testEnv = new KpmTestEnvironment(dotnetHomeDir, _projectName, _outputDirName))
+            using (var testEnv = new KpmTestEnvironment(runtimeHomeDir, _projectName, _outputDirName))
             {
                 DirTree.CreateFromJson(projectStructure)
                     .WithFileContents("project.json", @"{
@@ -756,11 +757,11 @@ exec ""{1}dotnet"" --appbase ""$DOTNET_APPBASE"" Microsoft.Framework.Application
 
                 var environment = new Dictionary<string, string>()
                 {
-                    { "DOTNET_PACKAGES", Path.Combine(testEnv.ProjectPath, "packages") }
+                    { EnvironmentNames.Packages, Path.Combine(testEnv.ProjectPath, "packages") }
                 };
 
                 var exitCode = KpmTestUtils.ExecKpm(
-                    dotnetHomeDir,
+                    runtimeHomeDir,
                     subcommand: "bundle",
                     arguments: string.Format("--out {0} --wwwroot public --wwwroot-out wwwroot",
                         testEnv.BundleOutputDirPath),
@@ -786,9 +787,9 @@ exec ""{1}dotnet"" --appbase ""$DOTNET_APPBASE"" Microsoft.Framework.Application
     <add key=""kpm-package-path"" value=""..\approot\packages"" />
     <add key=""bootstrapper-version"" value="""" />
     <add key=""packages-path"" value=""..\approot\packages"" />
-    <add key=""dotnet-version"" value="""" />
-    <add key=""dotnet-clr"" value="""" />
-    <add key=""dotnet-app-base"" value=""..\approot\src\{0}"" />
+    <add key=""kre-version"" value="""" />
+    <add key=""kre-clr"" value="""" />
+    <add key=""kre-app-base"" value=""..\approot\src\{0}"" />
   </appSettings>
 </configuration>", testEnv.ProjectName);
                 Assert.True(expectedOutputDir.MatchDirectoryOnDisk(testEnv.BundleOutputDirPath,
@@ -797,8 +798,8 @@ exec ""{1}dotnet"" --appbase ""$DOTNET_APPBASE"" Microsoft.Framework.Application
         }
 
         [Theory]
-        [MemberData("DotnetHomeDirs")]
-        public void GenerateBatchFilesAndBashScriptsWithoutBundledRuntime(DisposableDir dotnetHomeDir)
+        [MemberData("RuntimeHomeDirs")]
+        public void GenerateBatchFilesAndBashScriptsWithoutBundledRuntime(DisposableDir runtimeHomeDir)
         {
             var projectStructure = @"{
   '.': ['project.json'],
@@ -816,7 +817,7 @@ exec ""{1}dotnet"" --appbase ""$DOTNET_APPBASE"" Microsoft.Framework.Application
   }
 }".Replace("PROJECT_NAME", _projectName);
 
-            using (var testEnv = new KpmTestEnvironment(dotnetHomeDir, _projectName, _outputDirName))
+            using (var testEnv = new KpmTestEnvironment(runtimeHomeDir, _projectName, _outputDirName))
             {
                 DirTree.CreateFromJson(projectStructure)
                     .WithFileContents("project.json", @"{
@@ -833,11 +834,11 @@ exec ""{1}dotnet"" --appbase ""$DOTNET_APPBASE"" Microsoft.Framework.Application
 
                 var environment = new Dictionary<string, string>()
                 {
-                    { "DOTNET_PACKAGES", Path.Combine(testEnv.ProjectPath, "packages") }
+                    { EnvironmentNames.Packages, Path.Combine(testEnv.ProjectPath, "packages") }
                 };
 
                 var exitCode = KpmTestUtils.ExecKpm(
-                    dotnetHomeDir,
+                    runtimeHomeDir,
                     subcommand: "bundle",
                     arguments: string.Format("--out {0}",
                         testEnv.BundleOutputDirPath),
@@ -863,9 +864,9 @@ exec ""{1}dotnet"" --appbase ""$DOTNET_APPBASE"" Microsoft.Framework.Application
                     .WithFileContents("run.cmd", BatchFileTemplate, string.Empty, testEnv.ProjectName, "run")
                     .WithFileContents("kestrel.cmd", BatchFileTemplate, string.Empty, testEnv.ProjectName, "kestrel")
                     .WithFileContents("run",
-                        BashScriptTemplate, testEnv.ProjectName, string.Empty, "run")
+                        BashScriptTemplate, EnvironmentNames.AppBase, testEnv.ProjectName, string.Empty, "run")
                     .WithFileContents("kestrel",
-                        BashScriptTemplate, testEnv.ProjectName, string.Empty, "kestrel");
+                        BashScriptTemplate, EnvironmentNames.AppBase, testEnv.ProjectName, string.Empty, "kestrel");
 
                 Assert.True(expectedOutputDir.MatchDirectoryOnDisk(testEnv.BundleOutputDirPath,
                     compareFileContents: true));
@@ -873,11 +874,11 @@ exec ""{1}dotnet"" --appbase ""$DOTNET_APPBASE"" Microsoft.Framework.Application
         }
 
         [Theory]
-        [MemberData("DotnetHomeDirs")]
-        public void GenerateBatchFilesAndBashScriptsWithBundledRuntime(DisposableDir dotnetHomeDir)
+        [MemberData("RuntimeHomeDirs")]
+        public void GenerateBatchFilesAndBashScriptsWithBundledRuntime(DisposableDir runtimeHomeDir)
         {
             // Each runtime home only contains one runtime package, which is the one we are currently testing against
-            var runtimeRoot = Directory.EnumerateDirectories(Path.Combine(dotnetHomeDir, "runtimes"), "dotnet-*").First();
+            var runtimeRoot = Directory.EnumerateDirectories(Path.Combine(runtimeHomeDir, "runtimes"), "kre-*").First();
             var runtimeName = new DirectoryInfo(runtimeRoot).Name;
 
             var projectStructure = @"{
@@ -899,7 +900,7 @@ exec ""{1}dotnet"" --appbase ""$DOTNET_APPBASE"" Microsoft.Framework.Application
   }
 }".Replace("PROJECT_NAME", _projectName).Replace("RUNTIME_PACKAGE_NAME", runtimeName);
 
-            using (var testEnv = new KpmTestEnvironment(dotnetHomeDir, _projectName, _outputDirName))
+            using (var testEnv = new KpmTestEnvironment(runtimeHomeDir, _projectName, _outputDirName))
             {
                 DirTree.CreateFromJson(projectStructure)
                     .WithFileContents("project.json", @"{
@@ -916,13 +917,13 @@ exec ""{1}dotnet"" --appbase ""$DOTNET_APPBASE"" Microsoft.Framework.Application
 
                 var environment = new Dictionary<string, string>()
                 {
-                    { "DOTNET_PACKAGES", Path.Combine(testEnv.ProjectPath, "packages") },
-                    { "DOTNET_HOME", dotnetHomeDir },
-                    { "DOTNET_TRACE", "1" }
+                    { EnvironmentNames.Packages, Path.Combine(testEnv.ProjectPath, "packages") },
+                    { EnvironmentNames.Home, runtimeHomeDir },
+                    { EnvironmentNames.Trace, "1" }
                 };
 
                 var exitCode = KpmTestUtils.ExecKpm(
-                    dotnetHomeDir,
+                    runtimeHomeDir,
                     subcommand: "bundle",
                     arguments: string.Format("--out {0} --runtime {1}",
                         testEnv.BundleOutputDirPath, runtimeName),
@@ -960,9 +961,9 @@ exec ""{1}dotnet"" --appbase ""$DOTNET_APPBASE"" Microsoft.Framework.Application
                     .WithFileContents("run.cmd", BatchFileTemplate, batchFileBinPath, testEnv.ProjectName, "run")
                     .WithFileContents("kestrel.cmd", BatchFileTemplate, batchFileBinPath, testEnv.ProjectName, "kestrel")
                     .WithFileContents("run",
-                        BashScriptTemplate, testEnv.ProjectName, bashScriptBinPath, "run")
+                        BashScriptTemplate, EnvironmentNames.AppBase, testEnv.ProjectName, bashScriptBinPath, "run")
                     .WithFileContents("kestrel",
-                        BashScriptTemplate, testEnv.ProjectName, bashScriptBinPath, "kestrel")
+                        BashScriptTemplate, EnvironmentNames.AppBase, testEnv.ProjectName, bashScriptBinPath, "kestrel")
                     .WithSubDir(Path.Combine("approot", "packages", runtimeName), runtimeSubDir);
 
                 Assert.True(expectedOutputDir.MatchDirectoryOnDisk(testEnv.BundleOutputDirPath,

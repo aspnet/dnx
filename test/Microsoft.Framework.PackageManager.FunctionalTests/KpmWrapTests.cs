@@ -14,18 +14,18 @@ namespace Microsoft.Framework.PackageManager
 {
     public class KpmWrapTests
     {
-        public static IEnumerable<object[]> DotnetHomeDirs
+        public static IEnumerable<object[]> RuntimeHomeDirs
         {
             get
             {
-                return TestUtils.GetDotnetHomeDirs().Select(path => new[] { path });
+                return TestUtils.GetRuntimeHomeDirs().Select(path => new[] { path });
             }
         }
 
         public static readonly string _msbuildPath = TestUtils.ResolveMSBuildPath();
 
         [Theory]
-        [MemberData("DotnetHomeDirs")]
+        [MemberData("RuntimeHomeDirs")]
         public void KpmWrapUpdatesExistingProjectJson(DisposableDir runtimeHomeDir)
         {
             if (PlatformHelper.IsMono)
@@ -99,7 +99,7 @@ namespace Microsoft.Framework.PackageManager
         }
 
         [Theory]
-        [MemberData("DotnetHomeDirs")]
+        [MemberData("RuntimeHomeDirs")]
         public void KpmWrapMaintainsAllKindsOfReferences(DisposableDir runtimeHomeDir)
         {
             if (PlatformHelper.IsMono)

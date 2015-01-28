@@ -4,6 +4,7 @@
 #if ASPNETCORE50
 using System;
 using System.Reflection;
+using Microsoft.Framework.Runtime;
 
 namespace System.Diagnostics
 {
@@ -37,8 +38,7 @@ namespace System.Diagnostics
         {
             get
             {
-                // TODO: remove KRE_ env var
-                return (Environment.GetEnvironmentVariable("DOTNET_TRACE") ?? Environment.GetEnvironmentVariable("KRE_TRACE")) == "1";
+                return Environment.GetEnvironmentVariable(EnvironmentNames.Trace) == "1";
             }
         }
     }
