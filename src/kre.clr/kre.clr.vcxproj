@@ -21,7 +21,7 @@
   <PropertyGroup Label="Globals">
     <ProjectGuid>{0E4CB542-5E58-4D24-9CAE-DAC83D932DBE}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
-    <RootNamespace>dotnetnet45</RootNamespace>
+    <RootNamespace>krenet45</RootNamespace>
     <ProjectName>kre.clr</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />

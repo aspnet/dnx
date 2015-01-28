@@ -76,7 +76,7 @@ void GetFileName(LPCWSTR const pszPath, LPWSTR const pszFileName)
     StringCchCopyW(pszFileName, MAX_PATH, pszPath + nLastSeparatorIndex + 1);
 }
 
-int DotnetOptionValueNum(LPCWSTR pszCandidate)
+int BootstrapperOptionValueNum(LPCWSTR pszCandidate)
 {
     if (StringsEqual(pszCandidate, L"--appbase") ||
         StringsEqual(pszCandidate, L"--lib") ||
@@ -95,7 +95,7 @@ int DotnetOptionValueNum(LPCWSTR pszCandidate)
         return 0;
     }
 
-    // It isn't a dotnet option
+    // It isn't a bootstrapper option
     return -1;
 }
 
@@ -134,9 +134,9 @@ bool ExpandCommandLineArguments(int nArgc, LPWSTR* ppszArgv, int& nExpandedArgc,
     int nOptValNum;
     while (++nPathArgIndex < nArgc)
     {
-        nOptValNum = DotnetOptionValueNum(ppszArgv[nPathArgIndex]);
+        nOptValNum = BootstrapperOptionValueNum(ppszArgv[nPathArgIndex]);
 
-        // It isn't a dotnet option, we treat it as the project.json/assembly path
+        // It isn't a bootstrapper option, we treat it as the project.json/assembly path
         if (nOptValNum < 0)
         {
             break;
@@ -167,8 +167,8 @@ bool ExpandCommandLineArguments(int nArgc, LPWSTR* ppszArgv, int& nExpandedArgc,
         ppszExpandedArgv[i] = new WCHAR[MAX_PATH];
     }
 
-    // "dotnet /path/App.dll arg1" --> "dotnet --appbase /path/ /path/App.dll arg1"
-    // "dotnet /path/App.exe arg1" --> "dotnet --appbase /path/ /path/App.exe arg1"
+    // "klr /path/App.dll arg1" --> "klr --appbase /path/ /path/App.dll arg1"
+    // "klr /path/App.exe arg1" --> "klr --appbase /path/ /path/App.exe arg1"
     LPWSTR pszPathArg = ppszArgv[nPathArgIndex];
     if (StringEndsWith(pszPathArg, L".exe") || StringEndsWith(pszPathArg, L".dll"))
     {
@@ -186,8 +186,8 @@ bool ExpandCommandLineArguments(int nArgc, LPWSTR* ppszArgv, int& nExpandedArgc,
         return true;
     }
 
-    // "dotnet /path/project.json run" --> "dotnet --appbase /path/ Microsoft.Framework.ApplicationHost run"
-    // "dotnet /path/ run" --> "dotnet --appbase /path/ Microsoft.Framework.ApplicationHost run"
+    // "klr /path/project.json run" --> "klr --appbase /path/ Microsoft.Framework.ApplicationHost run"
+    // "klr /path/ run" --> "klr --appbase /path/ Microsoft.Framework.ApplicationHost run"
     WCHAR szFileName[MAX_PATH];
     GetFileName(pszPathArg, szFileName);
     if (StringsEqual(szFileName, L"project.json"))
@@ -214,17 +214,17 @@ bool ExpandCommandLineArguments(int nArgc, LPWSTR* ppszArgv, int& nExpandedArgc,
 
 int CallFirmwareProcessMain(int argc, wchar_t* argv[])
 {
-    TCHAR szDotnetTrace[2];
-    DWORD nEnvTraceSize = GetEnvironmentVariableW(L"KRE_TRACE", szDotnetTrace, 2);
+    TCHAR szTrace[2];
+    DWORD nEnvTraceSize = GetEnvironmentVariableW(L"KRE_TRACE", szTrace, 2);
     if (nEnvTraceSize == 0)
     {
-        nEnvTraceSize = GetEnvironmentVariableW(L"KRE_TRACE", szDotnetTrace, 2);
+        nEnvTraceSize = GetEnvironmentVariableW(L"KRE_TRACE", szTrace, 2);
     }
     bool m_fVerboseTrace = (nEnvTraceSize == 1);
     if (m_fVerboseTrace)
     {
-        szDotnetTrace[1] = L'\0';
-        m_fVerboseTrace = (_wcsnicmp(szDotnetTrace, L"1", 1) == 0);
+        szTrace[1] = L'\0';
+        m_fVerboseTrace = (_wcsnicmp(szTrace, L"1", 1) == 0);
     }
 
     bool fSuccess = true;

@@ -33,11 +33,11 @@ export SET {0}=""$DIR/approot/src/{1}""
 
 exec ""{2}klr"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {3} ""$@""".Replace("\r\n", "\n");
 
-        public static IEnumerable<object[]> DotnetHomeDirs
+        public static IEnumerable<object[]> RuntimeHomeDirs
         {
             get
             {
-                foreach (var path in TestUtils.GetDotnetHomeDirs())
+                foreach (var path in TestUtils.GetRuntimeHomeDirs())
                 {
                     yield return new[] { path };
                 }
@@ -45,8 +45,8 @@ exec ""{2}klr"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {3} ""$@"
         }
 
         [Theory]
-        [MemberData("DotnetHomeDirs")]
-        public void KpmBundleWebApp_RootAsPublicFolder(DisposableDir dotnetHomeDir)
+        [MemberData("RuntimeHomeDirs")]
+        public void KpmBundleWebApp_RootAsPublicFolder(DisposableDir runtimeHomeDir)
         {
             var projectStructure = @"{
   '.': ['project.json', 'Config.json', 'Program.cs', 'build_config1.bconfig'],
@@ -86,7 +86,7 @@ exec ""{2}klr"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {3} ""$@"
   }
 }".Replace("PROJECT_NAME", _projectName);
 
-            using (var testEnv = new KpmTestEnvironment(dotnetHomeDir, _projectName, _outputDirName))
+            using (var testEnv = new KpmTestEnvironment(runtimeHomeDir, _projectName, _outputDirName))
             {
                 DirTree.CreateFromJson(projectStructure)
                     .WithFileContents("project.json", @"{
@@ -101,7 +101,7 @@ exec ""{2}klr"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {3} ""$@"
                 };
 
                 var exitCode = KpmTestUtils.ExecKpm(
-                    dotnetHomeDir,
+                    runtimeHomeDir,
                     subcommand: "bundle",
                     arguments: string.Format("--out {0} --wwwroot . --wwwroot-out wwwroot",
                         testEnv.BundleOutputDirPath),
@@ -139,8 +139,8 @@ exec ""{2}klr"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {3} ""$@"
         }
 
         [Theory]
-        [MemberData("DotnetHomeDirs")]
-        public void KpmBundleWebApp_SubfolderAsPublicFolder(DisposableDir dotnetHomeDir)
+        [MemberData("RuntimeHomeDirs")]
+        public void KpmBundleWebApp_SubfolderAsPublicFolder(DisposableDir runtimeHomeDir)
         {
             var projectStructure = @"{
   '.': ['project.json', 'Config.json', 'Program.cs'],
@@ -179,7 +179,7 @@ exec ""{2}klr"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {3} ""$@"
   }
 }".Replace("PROJECT_NAME", _projectName);
 
-            using (var testEnv = new KpmTestEnvironment(dotnetHomeDir, _projectName, _outputDirName))
+            using (var testEnv = new KpmTestEnvironment(runtimeHomeDir, _projectName, _outputDirName))
             {
                 DirTree.CreateFromJson(projectStructure)
                     .WithFileContents("project.json", @"{
@@ -194,7 +194,7 @@ exec ""{2}klr"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {3} ""$@"
                 };
 
                 var exitCode = KpmTestUtils.ExecKpm(
-                    dotnetHomeDir,
+                    runtimeHomeDir,
                     subcommand: "bundle",
                     arguments: string.Format("--out {0} --wwwroot-out wwwroot",
                         testEnv.BundleOutputDirPath),
@@ -228,8 +228,8 @@ exec ""{2}klr"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {3} ""$@"
         }
 
         [Theory]
-        [MemberData("DotnetHomeDirs")]
-        public void KpmBundleConsoleApp(DisposableDir dotnetHomeDir)
+        [MemberData("RuntimeHomeDirs")]
+        public void KpmBundleConsoleApp(DisposableDir runtimeHomeDir)
         {
             var projectStructure = @"{
   '.': ['project.json', 'Config.json', 'Program.cs'],
@@ -253,7 +253,7 @@ exec ""{2}klr"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {3} ""$@"
     }
   }".Replace("PROJECT_NAME", _projectName);
 
-            using (var testEnv = new KpmTestEnvironment(dotnetHomeDir, _projectName, _outputDirName))
+            using (var testEnv = new KpmTestEnvironment(runtimeHomeDir, _projectName, _outputDirName))
             {
                 DirTree.CreateFromJson(projectStructure)
                     .WithFileContents("project.json", @"{
@@ -267,7 +267,7 @@ exec ""{2}klr"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {3} ""$@"
                 };
 
                 var exitCode = KpmTestUtils.ExecKpm(
-                    dotnetHomeDir,
+                    runtimeHomeDir,
                     subcommand: "bundle",
                     arguments: string.Format("--out {0}",
                         testEnv.BundleOutputDirPath),
@@ -289,8 +289,8 @@ exec ""{2}klr"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {3} ""$@"
         }
 
         [Theory]
-        [MemberData("DotnetHomeDirs")]
-        public void FoldersAsFilePatternsAutoGlob(DisposableDir dotnetHomeDir)
+        [MemberData("RuntimeHomeDirs")]
+        public void FoldersAsFilePatternsAutoGlob(DisposableDir runtimeHomeDir)
         {
             var projectStructure = @"{
   '.': ['project.json', 'FileWithoutExtension'],
@@ -331,7 +331,7 @@ exec ""{2}klr"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {3} ""$@"
   }
 }".Replace("PROJECT_NAME", _projectName);
 
-            using (var testEnv = new KpmTestEnvironment(dotnetHomeDir, _projectName, _outputDirName))
+            using (var testEnv = new KpmTestEnvironment(runtimeHomeDir, _projectName, _outputDirName))
             {
                 DirTree.CreateFromJson(projectStructure)
                     .WithFileContents("project.json", @"{
@@ -356,7 +356,7 @@ exec ""{2}klr"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {3} ""$@"
                 };
 
                 var exitCode = KpmTestUtils.ExecKpm(
-                    dotnetHomeDir,
+                    runtimeHomeDir,
                     subcommand: "bundle",
                     arguments: string.Format("--out {0}",
                         testEnv.BundleOutputDirPath),
@@ -389,8 +389,8 @@ exec ""{2}klr"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {3} ""$@"
         }
 
         [Theory]
-        [MemberData("DotnetHomeDirs")]
-        public void WildcardMatchingFacts(DisposableDir dotnetHomeDir)
+        [MemberData("RuntimeHomeDirs")]
+        public void WildcardMatchingFacts(DisposableDir runtimeHomeDir)
         {
             var projectStructure = @"{
   '.': ['project.json'],
@@ -433,7 +433,7 @@ exec ""{2}klr"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {3} ""$@"
   }
 }".Replace("PROJECT_NAME", _projectName);
 
-            using (var testEnv = new KpmTestEnvironment(dotnetHomeDir, _projectName, _outputDirName))
+            using (var testEnv = new KpmTestEnvironment(runtimeHomeDir, _projectName, _outputDirName))
             {
                 DirTree.CreateFromJson(projectStructure)
                     .WithFileContents("project.json", @"{
@@ -453,7 +453,7 @@ exec ""{2}klr"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {3} ""$@"
                 };
 
                 var exitCode = KpmTestUtils.ExecKpm(
-                    dotnetHomeDir,
+                    runtimeHomeDir,
                     subcommand: "bundle",
                     arguments: string.Format("--out {0}",
                         testEnv.BundleOutputDirPath),
@@ -481,8 +481,8 @@ exec ""{2}klr"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {3} ""$@"
         }
 
         [Theory]
-        [MemberData("DotnetHomeDirs")]
-        public void CorrectlyExcludeFoldersStartingWithDots(DisposableDir dotnetHomeDir)
+        [MemberData("RuntimeHomeDirs")]
+        public void CorrectlyExcludeFoldersStartingWithDots(DisposableDir runtimeHomeDir)
         {
             var projectStructure = @"{
   '.': ['project.json', 'File', '.FileStartingWithDot', 'File.Having.Dots'],
@@ -537,7 +537,7 @@ exec ""{2}klr"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {3} ""$@"
   }
 }".Replace("PROJECT_NAME", _projectName);
 
-            using (var testEnv = new KpmTestEnvironment(dotnetHomeDir, _projectName, _outputDirName))
+            using (var testEnv = new KpmTestEnvironment(runtimeHomeDir, _projectName, _outputDirName))
             {
                 DirTree.CreateFromJson(projectStructure)
                     .WithFileContents("project.json", @"{
@@ -550,7 +550,7 @@ exec ""{2}klr"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {3} ""$@"
                 };
 
                 var exitCode = KpmTestUtils.ExecKpm(
-                    dotnetHomeDir,
+                    runtimeHomeDir,
                     subcommand: "bundle",
                     arguments: string.Format("--out {0}",
                         testEnv.BundleOutputDirPath),
@@ -571,8 +571,8 @@ exec ""{2}klr"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {3} ""$@"
         }
 
         [Theory]
-        [MemberData("DotnetHomeDirs")]
-        public void VerifyDefaultBundleExcludePatterns(DisposableDir dotnetHomeDir)
+        [MemberData("RuntimeHomeDirs")]
+        public void VerifyDefaultBundleExcludePatterns(DisposableDir runtimeHomeDir)
         {
             var projectStructure = @"{
   '.': ['project.json', 'File', '.FileStartingWithDot'],
@@ -604,7 +604,7 @@ exec ""{2}klr"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {3} ""$@"
   }
 }".Replace("PROJECT_NAME", _projectName);
 
-            using (var testEnv = new KpmTestEnvironment(dotnetHomeDir, _projectName, _outputDirName))
+            using (var testEnv = new KpmTestEnvironment(runtimeHomeDir, _projectName, _outputDirName))
             {
                 DirTree.CreateFromJson(projectStructure)
                     .WithFileContents("project.json", @"{
@@ -617,7 +617,7 @@ exec ""{2}klr"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {3} ""$@"
                 };
 
                 var exitCode = KpmTestUtils.ExecKpm(
-                    dotnetHomeDir,
+                    runtimeHomeDir,
                     subcommand: "bundle",
                     arguments: string.Format("--out {0}",
                         testEnv.BundleOutputDirPath),
@@ -638,8 +638,8 @@ exec ""{2}klr"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {3} ""$@"
         }
 
         [Theory]
-        [MemberData("DotnetHomeDirs")]
-        public void KpmBundleWebApp_AppendToExistingWebConfig(DisposableDir dotnetHomeDir)
+        [MemberData("RuntimeHomeDirs")]
+        public void KpmBundleWebApp_AppendToExistingWebConfig(DisposableDir runtimeHomeDir)
         {
             var projectStructure = @"{
   '.': ['project.json'],
@@ -662,7 +662,7 @@ exec ""{2}klr"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {3} ""$@"
   </nonRelatedElement>
 </configuration>";
 
-            using (var testEnv = new KpmTestEnvironment(dotnetHomeDir, _projectName, _outputDirName))
+            using (var testEnv = new KpmTestEnvironment(runtimeHomeDir, _projectName, _outputDirName))
             {
                 DirTree.CreateFromJson(projectStructure)
                     .WithFileContents("project.json", @"{
@@ -677,7 +677,7 @@ exec ""{2}klr"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {3} ""$@"
                 };
 
                 var exitCode = KpmTestUtils.ExecKpm(
-                    dotnetHomeDir,
+                    runtimeHomeDir,
                     subcommand: "bundle",
                     arguments: string.Format("--out {0} --wwwroot public --wwwroot-out wwwroot",
                         testEnv.BundleOutputDirPath),
@@ -713,8 +713,8 @@ exec ""{2}klr"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {3} ""$@"
         }
 
         [Theory]
-        [MemberData("DotnetHomeDirs")]
-        public void KpmBundleWebApp_UpdateExistingWebConfig(DisposableDir dotnetHomeDir)
+        [MemberData("RuntimeHomeDirs")]
+        public void KpmBundleWebApp_UpdateExistingWebConfig(DisposableDir runtimeHomeDir)
         {
             var projectStructure = @"{
   '.': ['project.json'],
@@ -746,7 +746,7 @@ exec ""{2}klr"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {3} ""$@"
   </appSettings>
 </configuration>";
 
-            using (var testEnv = new KpmTestEnvironment(dotnetHomeDir, _projectName, _outputDirName))
+            using (var testEnv = new KpmTestEnvironment(runtimeHomeDir, _projectName, _outputDirName))
             {
                 DirTree.CreateFromJson(projectStructure)
                     .WithFileContents("project.json", @"{
@@ -761,7 +761,7 @@ exec ""{2}klr"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {3} ""$@"
                 };
 
                 var exitCode = KpmTestUtils.ExecKpm(
-                    dotnetHomeDir,
+                    runtimeHomeDir,
                     subcommand: "bundle",
                     arguments: string.Format("--out {0} --wwwroot public --wwwroot-out wwwroot",
                         testEnv.BundleOutputDirPath),
@@ -798,8 +798,8 @@ exec ""{2}klr"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {3} ""$@"
         }
 
         [Theory]
-        [MemberData("DotnetHomeDirs")]
-        public void GenerateBatchFilesAndBashScriptsWithoutBundledRuntime(DisposableDir dotnetHomeDir)
+        [MemberData("RuntimeHomeDirs")]
+        public void GenerateBatchFilesAndBashScriptsWithoutBundledRuntime(DisposableDir runtimeHomeDir)
         {
             var projectStructure = @"{
   '.': ['project.json'],
@@ -817,7 +817,7 @@ exec ""{2}klr"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {3} ""$@"
   }
 }".Replace("PROJECT_NAME", _projectName);
 
-            using (var testEnv = new KpmTestEnvironment(dotnetHomeDir, _projectName, _outputDirName))
+            using (var testEnv = new KpmTestEnvironment(runtimeHomeDir, _projectName, _outputDirName))
             {
                 DirTree.CreateFromJson(projectStructure)
                     .WithFileContents("project.json", @"{
@@ -838,7 +838,7 @@ exec ""{2}klr"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {3} ""$@"
                 };
 
                 var exitCode = KpmTestUtils.ExecKpm(
-                    dotnetHomeDir,
+                    runtimeHomeDir,
                     subcommand: "bundle",
                     arguments: string.Format("--out {0}",
                         testEnv.BundleOutputDirPath),
@@ -874,11 +874,11 @@ exec ""{2}klr"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {3} ""$@"
         }
 
         [Theory]
-        [MemberData("DotnetHomeDirs")]
-        public void GenerateBatchFilesAndBashScriptsWithBundledRuntime(DisposableDir dotnetHomeDir)
+        [MemberData("RuntimeHomeDirs")]
+        public void GenerateBatchFilesAndBashScriptsWithBundledRuntime(DisposableDir runtimeHomeDir)
         {
             // Each runtime home only contains one runtime package, which is the one we are currently testing against
-            var runtimeRoot = Directory.EnumerateDirectories(Path.Combine(dotnetHomeDir, "runtimes"), "kre-*").First();
+            var runtimeRoot = Directory.EnumerateDirectories(Path.Combine(runtimeHomeDir, "runtimes"), "kre-*").First();
             var runtimeName = new DirectoryInfo(runtimeRoot).Name;
 
             var projectStructure = @"{
@@ -900,7 +900,7 @@ exec ""{2}klr"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {3} ""$@"
   }
 }".Replace("PROJECT_NAME", _projectName).Replace("RUNTIME_PACKAGE_NAME", runtimeName);
 
-            using (var testEnv = new KpmTestEnvironment(dotnetHomeDir, _projectName, _outputDirName))
+            using (var testEnv = new KpmTestEnvironment(runtimeHomeDir, _projectName, _outputDirName))
             {
                 DirTree.CreateFromJson(projectStructure)
                     .WithFileContents("project.json", @"{
@@ -918,12 +918,12 @@ exec ""{2}klr"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {3} ""$@"
                 var environment = new Dictionary<string, string>()
                 {
                     { EnvironmentNames.Packages, Path.Combine(testEnv.ProjectPath, "packages") },
-                    { EnvironmentNames.Home, dotnetHomeDir },
+                    { EnvironmentNames.Home, runtimeHomeDir },
                     { EnvironmentNames.Trace, "1" }
                 };
 
                 var exitCode = KpmTestUtils.ExecKpm(
-                    dotnetHomeDir,
+                    runtimeHomeDir,
                     subcommand: "bundle",
                     arguments: string.Format("--out {0} --runtime {1}",
                         testEnv.BundleOutputDirPath, runtimeName),

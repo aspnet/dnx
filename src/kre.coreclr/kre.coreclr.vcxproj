@@ -71,25 +71,25 @@
     <LinkIncremental>true</LinkIncremental>
     <OutDir>$(SolutionDir)bin\$(Platform)\$(Configuration)\</OutDir>
     <IntDir>bin\$(Platform)\$(Configuration)\</IntDir>
-    <IncludePath Condition="'$(DotnetTargetOS)' == 'WIN7_PLUS_CORESYSTEM'">$(ProgramFiles)\Windows Kits\Win8CoreSystem\inc\crt;$(IncludePath)</IncludePath>
+    <IncludePath Condition="'$(RuntimeTargetOS)' == 'WIN7_PLUS_CORESYSTEM'">$(ProgramFiles)\Windows Kits\Win8CoreSystem\inc\crt;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
     <IntDir>bin\$(Platform)\$(Configuration)\</IntDir>
     <OutDir>$(SolutionDir)bin\$(Platform)\$(Configuration)\</OutDir>
-    <IncludePath Condition="'$(DotnetTargetOS)' == 'WIN7_PLUS_CORESYSTEM'">$(ProgramFiles)\Windows Kits\Win8CoreSystem\inc\crt;$(IncludePath)</IncludePath>
+    <IncludePath Condition="'$(RuntimeTargetOS)' == 'WIN7_PLUS_CORESYSTEM'">$(ProgramFiles)\Windows Kits\Win8CoreSystem\inc\crt;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
     <OutDir>$(SolutionDir)bin\$(Platform)\$(Configuration)\</OutDir>
     <IntDir>bin\$(Platform)\$(Configuration)\</IntDir>
-    <IncludePath Condition="'$(DotnetTargetOS)' == 'WIN7_PLUS_CORESYSTEM'">$(ProgramFiles)\Windows Kits\Win8CoreSystem\inc\crt;$(IncludePath)</IncludePath>
+    <IncludePath Condition="'$(RuntimeTargetOS)' == 'WIN7_PLUS_CORESYSTEM'">$(ProgramFiles)\Windows Kits\Win8CoreSystem\inc\crt;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
     <OutDir>$(SolutionDir)bin\$(Platform)\$(Configuration)\</OutDir>
     <IntDir>bin\$(Platform)\$(Configuration)\</IntDir>
-    <IncludePath Condition="'$(DotnetTargetOS)' == 'WIN7_PLUS_CORESYSTEM'">$(ProgramFiles)\Windows Kits\Win8CoreSystem\inc\crt;$(IncludePath)</IncludePath>
+    <IncludePath Condition="'$(RuntimeTargetOS)' == 'WIN7_PLUS_CORESYSTEM'">$(ProgramFiles)\Windows Kits\Win8CoreSystem\inc\crt;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -105,8 +105,8 @@
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <ModuleDefinitionFile>exports.def</ModuleDefinitionFile>
-      <AdditionalDependencies Condition="'$(DotnetTargetOS)'=='WIN7_PLUS_CORESYSTEM'">$(ProgramFiles)\Windows Kits\Win8CoreSystem\sdk\lib\mincore\i386\mincore_fw.lib;$(ProgramFiles)\Windows Kits\Win8CoreSystem\sdk\lib\mincore\i386\msvcrt.lib</AdditionalDependencies>
-      <IgnoreAllDefaultLibraries Condition="'$(DotnetTargetOS)'=='WIN7_PLUS_CORESYSTEM'">true</IgnoreAllDefaultLibraries>
+      <AdditionalDependencies Condition="'$(RuntimeTargetOS)'=='WIN7_PLUS_CORESYSTEM'">$(ProgramFiles)\Windows Kits\Win8CoreSystem\sdk\lib\mincore\i386\mincore_fw.lib;$(ProgramFiles)\Windows Kits\Win8CoreSystem\sdk\lib\mincore\i386\msvcrt.lib</AdditionalDependencies>
+      <IgnoreAllDefaultLibraries Condition="'$(RuntimeTargetOS)'=='WIN7_PLUS_CORESYSTEM'">true</IgnoreAllDefaultLibraries>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -123,8 +123,8 @@
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <ModuleDefinitionFile>exports.def</ModuleDefinitionFile>
-      <AdditionalDependencies Condition="'$(DotnetTargetOS)'=='WIN7_PLUS_CORESYSTEM'">$(ProgramFiles)\Windows Kits\Win8CoreSystem\sdk\lib\mincore\amd64\mincore_fw.lib;$(ProgramFiles)\Windows Kits\Win8CoreSystem\sdk\lib\mincore\amd64\msvcrt.lib</AdditionalDependencies>
-      <IgnoreAllDefaultLibraries Condition="'$(DotnetTargetOS)'=='WIN7_PLUS_CORESYSTEM'">true</IgnoreAllDefaultLibraries>
+      <AdditionalDependencies Condition="'$(RuntimeTargetOS)'=='WIN7_PLUS_CORESYSTEM'">$(ProgramFiles)\Windows Kits\Win8CoreSystem\sdk\lib\mincore\amd64\mincore_fw.lib;$(ProgramFiles)\Windows Kits\Win8CoreSystem\sdk\lib\mincore\amd64\msvcrt.lib</AdditionalDependencies>
+      <IgnoreAllDefaultLibraries Condition="'$(RuntimeTargetOS)'=='WIN7_PLUS_CORESYSTEM'">true</IgnoreAllDefaultLibraries>
     </Link>
     <ProjectReference>
       <LinkLibraryDependencies>false</LinkLibraryDependencies>
@@ -148,8 +148,8 @@
       <ModuleDefinitionFile>exports.def</ModuleDefinitionFile>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalDependencies Condition="'$(DotnetTargetOS)'=='WIN7_PLUS_CORESYSTEM'">$(ProgramFiles)\Windows Kits\Win8CoreSystem\sdk\lib\mincore\i386\mincore_fw.lib;$(ProgramFiles)\Windows Kits\Win8CoreSystem\sdk\lib\mincore\i386\msvcrt.lib</AdditionalDependencies>
-      <IgnoreAllDefaultLibraries Condition="'$(DotnetTargetOS)'=='WIN7_PLUS_CORESYSTEM'">true</IgnoreAllDefaultLibraries>
+      <AdditionalDependencies Condition="'$(RuntimeTargetOS)'=='WIN7_PLUS_CORESYSTEM'">$(ProgramFiles)\Windows Kits\Win8CoreSystem\sdk\lib\mincore\i386\mincore_fw.lib;$(ProgramFiles)\Windows Kits\Win8CoreSystem\sdk\lib\mincore\i386\msvcrt.lib</AdditionalDependencies>
+      <IgnoreAllDefaultLibraries Condition="'$(RuntimeTargetOS)'=='WIN7_PLUS_CORESYSTEM'">true</IgnoreAllDefaultLibraries>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -169,8 +169,8 @@
       <ModuleDefinitionFile>exports.def</ModuleDefinitionFile>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalDependencies Condition="'$(DotnetTargetOS)'=='WIN7_PLUS_CORESYSTEM'">$(ProgramFiles)\Windows Kits\Win8CoreSystem\sdk\lib\mincore\amd64\mincore_fw.lib;$(ProgramFiles)\Windows Kits\Win8CoreSystem\sdk\lib\mincore\amd64\msvcrt.lib</AdditionalDependencies>
-      <IgnoreAllDefaultLibraries Condition="'$(DotnetTargetOS)'=='WIN7_PLUS_CORESYSTEM'">true</IgnoreAllDefaultLibraries>
+      <AdditionalDependencies Condition="'$(RuntimeTargetOS)'=='WIN7_PLUS_CORESYSTEM'">$(ProgramFiles)\Windows Kits\Win8CoreSystem\sdk\lib\mincore\amd64\mincore_fw.lib;$(ProgramFiles)\Windows Kits\Win8CoreSystem\sdk\lib\mincore\amd64\msvcrt.lib</AdditionalDependencies>
+      <IgnoreAllDefaultLibraries Condition="'$(RuntimeTargetOS)'=='WIN7_PLUS_CORESYSTEM'">true</IgnoreAllDefaultLibraries>
     </Link>
     <ProjectReference>
       <LinkLibraryDependencies>false</LinkLibraryDependencies>

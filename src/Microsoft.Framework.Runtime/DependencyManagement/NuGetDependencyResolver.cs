@@ -425,11 +425,11 @@ namespace Microsoft.Framework.Runtime
             // 3. NuGet.config repositoryPath (maybe)?
             // 4. %userprofile%\.k\packages
 
-            var dotnetPackages = Environment.GetEnvironmentVariable(EnvironmentNames.Packages);
+            var runtimePackages = Environment.GetEnvironmentVariable(EnvironmentNames.Packages);
 
-            if (!string.IsNullOrEmpty(dotnetPackages))
+            if (!string.IsNullOrEmpty(runtimePackages))
             {
-                return dotnetPackages;
+                return runtimePackages;
             }
 
             GlobalSettings settings;

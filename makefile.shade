@@ -115,7 +115,7 @@ var RC_FILES = '${FindAllFiles("Resource.rc", "klr", "kre.clr", "kre.coreclr")}'
             }
 
 #build-native-bootstrapper .update-rc-files target='native-compile' if='!IsMono'
-    var dotnetProj = '${Path.Combine(ROOT, "src", "klr", "klr.vcxproj")}'
+    var bootstrapperProj = '${Path.Combine(ROOT, "src", "klr", "klr.vcxproj")}'
     @{
         if (!IsMsbuildInstalled(MSBUILD))
         {
@@ -123,19 +123,19 @@ var RC_FILES = '${FindAllFiles("Resource.rc", "klr", "kre.clr", "kre.coreclr")}'
         }
         else
         {
-            var environmentDotnetTargetOS = Environment.GetEnvironmentVariable("KRE_TARGET_OS");
-            var configDotnetTargetOS = "";
+            var environmentRuntimeTargetOS = Environment.GetEnvironmentVariable("KRE_TARGET_OS");
+            var configRuntimeTargetOS = "";
         
-            Exec(MSBUILD, dotnetProj + " /p:Configuration=" + Configuration2 + ";Platform=Win32;TargetFramework=aspnet50");
-            Exec(MSBUILD, dotnetProj + " /p:Configuration=" + Configuration2 + ";Platform=x64;TargetFramework=aspnet50");
+            Exec(MSBUILD, bootstrapperProj + " /p:Configuration=" + Configuration2 + ";Platform=Win32;TargetFramework=aspnet50");
+            Exec(MSBUILD, bootstrapperProj + " /p:Configuration=" + Configuration2 + ";Platform=x64;TargetFramework=aspnet50");
 
-            if (environmentDotnetTargetOS == "WIN7_PLUS_CORESYSTEM")
+            if (environmentRuntimeTargetOS == "WIN7_PLUS_CORESYSTEM")
             {
-                configDotnetTargetOS = ";DotnetTargetOS=WIN7_PLUS_CORESYSTEM";
+                configRuntimeTargetOS = ";RuntimeTargetOS=WIN7_PLUS_CORESYSTEM";
             }
             
-            Exec(MSBUILD, dotnetProj + " /p:Configuration=" + Configuration2 + ";Platform=Win32;TargetFramework=aspnetcore50" + configDotnetTargetOS);
-            Exec(MSBUILD, dotnetProj + " /p:Configuration=" + Configuration2 + ";Platform=x64;TargetFramework=aspnetcore50" + configDotnetTargetOS);
+            Exec(MSBUILD, bootstrapperProj + " /p:Configuration=" + Configuration2 + ";Platform=Win32;TargetFramework=aspnetcore50" + configRuntimeTargetOS);
+            Exec(MSBUILD, bootstrapperProj + " /p:Configuration=" + Configuration2 + ";Platform=x64;TargetFramework=aspnetcore50" + configRuntimeTargetOS);
         }
     }
 
@@ -143,7 +143,7 @@ var RC_FILES = '${FindAllFiles("Resource.rc", "klr", "kre.clr", "kre.coreclr")}'
   copy sourceDir='${Path.Combine(ROOT, "src", "klr")}' include='bin/**/' outputDir='${Path.Combine(BUILD_DIR2, "klr")}' overwrite='${true}'
 
 #build-native-bootstrapper-core45 .copy-coreclr target='native-compile' if='!IsMono'
-    var dotnetCore45Proj = '${Path.Combine(ROOT, "src", "kre.coreclr", "kre.coreclr.vcxproj")}'
+    var bootstrapperCore45Proj = '${Path.Combine(ROOT, "src", "kre.coreclr", "kre.coreclr.vcxproj")}'
     @{
         if (NEW_RUNTIME)
         {
@@ -166,16 +166,16 @@ var RC_FILES = '${FindAllFiles("Resource.rc", "klr", "kre.clr", "kre.coreclr")}'
         }
         else
         {
-            var environmentDotnetTargetOS = Environment.GetEnvironmentVariable("KRE_TARGET_OS");
-            var configDotnetTargetOS = "";
+            var environmentRuntimeTargetOS = Environment.GetEnvironmentVariable("KRE_TARGET_OS");
+            var configRuntimeTargetOS = "";
         
-            if (environmentDotnetTargetOS == "WIN7_PLUS_CORESYSTEM")
+            if (environmentRuntimeTargetOS == "WIN7_PLUS_CORESYSTEM")
             {
-                configDotnetTargetOS = ";DotnetTargetOS=WIN7_PLUS_CORESYSTEM";
+                configRuntimeTargetOS = ";RuntimeTargetOS=WIN7_PLUS_CORESYSTEM";
             }
             
-            Exec(MSBUILD, dotnetCore45Proj + " /p:Configuration=" + Configuration2 + ";Platform=Win32" + configDotnetTargetOS);
-            Exec(MSBUILD, dotnetCore45Proj + " /p:Configuration=" + Configuration2 + ";Platform=x64" + configDotnetTargetOS);
+            Exec(MSBUILD, bootstrapperCore45Proj + " /p:Configuration=" + Configuration2 + ";Platform=Win32" + configRuntimeTargetOS);
+            Exec(MSBUILD, bootstrapperCore45Proj + " /p:Configuration=" + Configuration2 + ";Platform=x64" + configRuntimeTargetOS);
         }
     }
 
@@ -183,7 +183,7 @@ var RC_FILES = '${FindAllFiles("Resource.rc", "klr", "kre.clr", "kre.coreclr")}'
   copy sourceDir='${Path.Combine(ROOT, "src", "kre.coreclr")}' include='bin/**/' outputDir='${Path.Combine(BUILD_DIR2, "kre.coreclr")}' overwrite='${true}'
 
 #build-native-bootstrapper-net45 target='native-compile' if='!IsMono'
-    var dotnetNet45Proj ='${Path.Combine(ROOT, "src", "kre.clr", "kre.clr.vcxproj")}'
+    var bootstrapperNet45Proj ='${Path.Combine(ROOT, "src", "kre.clr", "kre.clr.vcxproj")}'
     @{
         if (!IsMsbuildInstalled(MSBUILD))
         {
@@ -191,8 +191,8 @@ var RC_FILES = '${FindAllFiles("Resource.rc", "klr", "kre.clr", "kre.coreclr")}'
         }
         else
         {
-            Exec(MSBUILD, dotnetNet45Proj + " /p:Configuration=" + Configuration2 + ";Platform=Win32");
-            Exec(MSBUILD, dotnetNet45Proj + " /p:Configuration=" + Configuration2 + ";Platform=x64");
+            Exec(MSBUILD, bootstrapperNet45Proj + " /p:Configuration=" + Configuration2 + ";Platform=Win32");
+            Exec(MSBUILD, bootstrapperNet45Proj + " /p:Configuration=" + Configuration2 + ";Platform=x64");
         }
     }
     directory delete='${Path.Combine(BUILD_DIR2, "kre.clr")}'

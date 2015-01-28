@@ -38,7 +38,7 @@
     <ClCompile Include="stdafx.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="dotnet.cpp">
+    <ClCompile Include="klr.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

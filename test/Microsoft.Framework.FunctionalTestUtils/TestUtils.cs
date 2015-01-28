@@ -67,15 +67,15 @@ namespace Microsoft.Framework.FunctionalTestUtils
                 buildArtifactDir,
                 string.Format("kre-{0}-{1}-{2}.*.nupkg", flavor, os, architecture),
                 SearchOption.TopDirectoryOnly) .First();
-            var dotnetHomePath = CreateTempDir();
+            var runtimeHomePath = CreateTempDir();
             var runtimeName = Path.GetFileNameWithoutExtension(runtimeNupkg);
-            var runtimeRoot = Path.Combine(dotnetHomePath, "runtimes", runtimeName);
+            var runtimeRoot = Path.Combine(runtimeHomePath, "runtimes", runtimeName);
             System.IO.Compression.ZipFile.ExtractToDirectory(runtimeNupkg, runtimeRoot);
             File.Copy(runtimeNupkg, Path.Combine(runtimeRoot, runtimeName + ".nupkg"));
-            return dotnetHomePath;
+            return runtimeHomePath;
         }
 
-        public static IEnumerable<DisposableDir> GetDotnetHomeDirs()
+        public static IEnumerable<DisposableDir> GetRuntimeHomeDirs()
         {
             yield return GetRuntimeHomeDir(flavor: "clr", os: "win", architecture: "x64");
             yield return GetRuntimeHomeDir(flavor: "clr", os: "win", architecture: "x86");

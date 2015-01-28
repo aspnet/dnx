@@ -45,9 +45,9 @@ public class EntryPoint
         var pathArgIndex = -1;
         while (++pathArgIndex < arguments.Length)
         {
-            var optionValNum = DotnetOptionValueNum(arguments[pathArgIndex]);
+            var optionValNum = BootstrapperOptionValueNum(arguments[pathArgIndex]);
 
-            // It isn't a dotnet option, we treat it as the project.json/assembly path
+            // It isn't a bootstrapper option, we treat it as the project.json/assembly path
             if (optionValNum < 0)
             {
                 break;
@@ -76,8 +76,8 @@ public class EntryPoint
         if (pathArg.EndsWith(".exe", StringComparison.OrdinalIgnoreCase) ||
             pathArg.EndsWith(".dll", StringComparison.OrdinalIgnoreCase))
         {
-            // "dotnet /path/App.dll arg1" --> "dotnet --appbase /path/ /path/App.dll arg1"
-            // "dotnet /path/App.exe arg1" --> "dotnet --appbase /path/ /path/App.exe arg1"
+            // "klr /path/App.dll arg1" --> "klr --appbase /path/ /path/App.dll arg1"
+            // "klr /path/App.exe arg1" --> "klr --appbase /path/ /path/App.exe arg1"
             expandedArgs.Add(Path.GetDirectoryName(Path.GetFullPath(pathArg)));
             expandedArgs.AddRange(arguments.Skip(pathArgIndex));
         }
@@ -86,12 +86,12 @@ public class EntryPoint
             var fileName = Path.GetFileName(pathArg);
             if (string.Equals(fileName, "project.json", StringComparison.OrdinalIgnoreCase))
             {
-                // "dotnet /path/project.json run" --> "dotnet --appbase /path/ Microsoft.Framework.ApplicationHost run"
+                // "klr /path/project.json run" --> "klr --appbase /path/ Microsoft.Framework.ApplicationHost run"
                 expandedArgs.Add(Path.GetDirectoryName(Path.GetFullPath(pathArg)));
             }
             else
             {
-                // "dotnet /path/ run" --> "dotnet --appbase /path/ Microsoft.Framework.ApplicationHost run"
+                // "klr /path/ run" --> "klr --appbase /path/ Microsoft.Framework.ApplicationHost run"
                 expandedArgs.Add(pathArg);
             }
 
@@ -102,7 +102,7 @@ public class EntryPoint
         return expandedArgs.ToArray();
     }
 
-    private static int DotnetOptionValueNum(string candidate)
+    private static int BootstrapperOptionValueNum(string candidate)
     {
         if (string.Equals(candidate, "--appbase", StringComparison.OrdinalIgnoreCase) ||
             string.Equals(candidate, "--lib", StringComparison.OrdinalIgnoreCase) ||
@@ -121,7 +121,7 @@ public class EntryPoint
             return 0;
         }
 
-        // It isn't a dotnet option
+        // It isn't a bootstrapper option
         return -1;
     }
 }

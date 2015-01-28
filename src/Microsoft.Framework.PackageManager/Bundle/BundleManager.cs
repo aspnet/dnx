@@ -117,19 +117,19 @@ namespace Microsoft.Framework.PackageManager.Bundle
                 {
                     runtimeProbePaths = new List<string>();
                     runtimeProbePaths.Add(runtime);
-                    var dotnetHome = Environment.GetEnvironmentVariable(EnvironmentNames.Home);
-                    if (string.IsNullOrEmpty(dotnetHome))
+                    var runtimeHome = Environment.GetEnvironmentVariable(EnvironmentNames.Home);
+                    if (string.IsNullOrEmpty(runtimeHome))
                     {
-                        var dotnetGlobalPath = Environment.GetEnvironmentVariable(EnvironmentNames.GlobalPath);
+                        var runtimeGlobalPath = Environment.GetEnvironmentVariable(EnvironmentNames.GlobalPath);
 #if ASPNETCORE50
-                        dotnetHome = @"%USERPROFILE%\.k;" + dotnetGlobalPath;
+                        runtimeHome = @"%USERPROFILE%\.k;" + runtimeGlobalPath;
 #else
                         var userProfile = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
-                        dotnetHome = Path.Combine(userProfile, ".k") + ";" + dotnetGlobalPath;
+                        runtimeHome = Path.Combine(userProfile, ".k") + ";" + runtimeGlobalPath;
 #endif
                     }
 
-                    foreach (var portion in dotnetHome.Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries))
+                    foreach (var portion in runtimeHome.Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries))
                     {
                         var packagesPath = Path.Combine(
                             Environment.ExpandEnvironmentVariables(portion),

@@ -28,8 +28,8 @@ namespace Microsoft.Framework.Runtime.Servicing
             return LazyInitializer.EnsureInitialized(ref _index, ref _indexInitialized, ref _indexSync, () =>
             {
                 var index = new ServicingIndex();
-                var dotnetServicing = Environment.GetEnvironmentVariable(EnvironmentNames.Servicing);
-                if (string.IsNullOrEmpty(dotnetServicing))
+                var runtimeServicing = Environment.GetEnvironmentVariable(EnvironmentNames.Servicing);
+                if (string.IsNullOrEmpty(runtimeServicing))
                 {
                     var servicingRoot = Environment.GetEnvironmentVariable("PROGRAMFILES(X86)");
                     if (string.IsNullOrEmpty(servicingRoot))
@@ -43,13 +43,13 @@ namespace Microsoft.Framework.Runtime.Servicing
                         return index;
                     }
 
-                    dotnetServicing = Path.Combine(
+                    runtimeServicing = Path.Combine(
                         servicingRoot,
                         "KRE",
                         "Servicing");
                 }
 
-                index.Initialize(dotnetServicing);
+                index.Initialize(runtimeServicing);
                 return index;
             });
         }

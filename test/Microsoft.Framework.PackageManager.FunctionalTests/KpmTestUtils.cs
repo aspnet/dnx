@@ -11,10 +11,10 @@ namespace Microsoft.Framework.PackageManager
 {
     public static class KpmTestUtils
     {
-        public static int ExecKpm(string dotnetHomePath, string subcommand, string arguments,
+        public static int ExecKpm(string runtimeHomePath, string subcommand, string arguments,
             IDictionary<string, string> environment = null, string workingDir = null)
         {
-            var runtimeRoot = Directory.EnumerateDirectories(Path.Combine(dotnetHomePath, "runtimes"), "kre-*").First();
+            var runtimeRoot = Directory.EnumerateDirectories(Path.Combine(runtimeHomePath, "runtimes"), "kre-*").First();
             string program, commandLine;
             if (PlatformHelper.IsMono)
             {

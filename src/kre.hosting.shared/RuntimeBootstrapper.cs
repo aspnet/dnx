@@ -87,7 +87,7 @@ namespace kre.hosting
             app.Name = "klr";
 
             // RuntimeBootstrapper doesn't need to consume '--appbase' option because
-            // dotnet/dotnet.cpp consumes the option value before invoking RuntimeBootstrapper
+            // klr/klr.cpp consumes the option value before invoking RuntimeBootstrapper
             // This is only for showing help info and swallowing useless '--appbase' option
             var optionAppbase = app.Option("--appbase <PATH>", "Application base directory path",
                 CommandOptionType.SingleValue);
