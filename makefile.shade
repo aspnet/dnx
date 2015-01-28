@@ -43,7 +43,6 @@ var MANAGED_PROJECTS = '${FindAllProjects(
     "Microsoft.Framework.CommandLineUtils",
     "Microsoft.Framework.DesignTimeHost",
     "Microsoft.Framework.PackageManager",
-    "Microsoft.Framework.Project",
     "Microsoft.Framework.Runtime",
     "Microsoft.Framework.Runtime.Common",
     "Microsoft.Framework.Runtime.Interfaces",
@@ -300,7 +299,6 @@ var RC_FILES = '${FindAllFiles("Resource.rc", "dotnet", "dotnet.clr", "dotnet.co
             var kPath = Path.Combine(runtimePath, "bin", "k");
 
             var kTools = new[] {
-                Path.Combine(runtimePath, "bin", "lib", "Microsoft.Framework.Project"),
                 Path.Combine(runtimePath, "bin", "lib", "Microsoft.Framework.PackageManager"),
                 Path.Combine(runtimePath, "bin", "lib", "Microsoft.Framework.DesignTimeHost"),
             };
@@ -416,8 +414,7 @@ var RC_FILES = '${FindAllFiles("Resource.rc", "dotnet", "dotnet.clr", "dotnet.co
         var hostAspNetCore50 = Path.Combine(BUILD_DIR2, "*", "aspnetcore50", "**.*");
         var hostnet45 = Path.Combine(BUILD_DIR2, "*", "aspnet50", "**.*");
         
-        var libPackages = new[] { "Microsoft.Framework.Project",
-                                  "Microsoft.Framework.PackageManager", 
+        var libPackages = new[] { "Microsoft.Framework.PackageManager",
                                   "Microsoft.Framework.DesignTimeHost" };
 
         var sharedSourceAssemblies = new [] { 
