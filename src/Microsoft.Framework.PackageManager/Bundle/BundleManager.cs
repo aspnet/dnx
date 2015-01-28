@@ -117,11 +117,10 @@ namespace Microsoft.Framework.PackageManager.Bundle
                 {
                     runtimeProbePaths = new List<string>();
                     runtimeProbePaths.Add(runtime);
-                    // TODO: remove KRE_ env var
-                    var dotnetHome = Environment.GetEnvironmentVariable("DOTNET_HOME") ?? Environment.GetEnvironmentVariable("KRE_HOME");
+                    var dotnetHome = Environment.GetEnvironmentVariable(EnvironmentNames.Home);
                     if (string.IsNullOrEmpty(dotnetHome))
                     {
-                        var dotnetGlobalPath = Environment.GetEnvironmentVariable("DOTNET_GLOBAL_PATH");
+                        var dotnetGlobalPath = Environment.GetEnvironmentVariable(EnvironmentNames.GlobalPath);
 #if ASPNETCORE50
                         dotnetHome = @"%USERPROFILE%\.k;" + dotnetGlobalPath;
 #else

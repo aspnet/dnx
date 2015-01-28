@@ -28,8 +28,7 @@ namespace Microsoft.Framework.Runtime.Servicing
             return LazyInitializer.EnsureInitialized(ref _index, ref _indexInitialized, ref _indexSync, () =>
             {
                 var index = new ServicingIndex();
-                // TODO: remove KRE_ env var
-                var dotnetServicing = Environment.GetEnvironmentVariable("DOTNET_SERVICING") ?? Environment.GetEnvironmentVariable("KRE_SERVICING");
+                var dotnetServicing = Environment.GetEnvironmentVariable(EnvironmentNames.Servicing);
                 if (string.IsNullOrEmpty(dotnetServicing))
                 {
                     var servicingRoot = Environment.GetEnvironmentVariable("PROGRAMFILES(X86)");

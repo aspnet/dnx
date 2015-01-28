@@ -46,8 +46,7 @@ namespace kre.host
             string applicationBaseDirectory;
             if (PlatformHelper.IsMono)
             {
-                // TODO: remove KRE_ env var
-                applicationBaseDirectory = Environment.GetEnvironmentVariable("DOTNET_APPBASE") ?? Environment.GetEnvironmentVariable("KRE_APPBASE");
+                applicationBaseDirectory = Environment.GetEnvironmentVariable(EnvironmentNames.AppBase);
                 
                 if (string.IsNullOrEmpty(applicationBaseDirectory))
                 {
@@ -62,10 +61,8 @@ namespace kre.host
             string applicationBaseDirectory = AppContext.BaseDirectory;
 #endif
 
-            // TODO: remove KRE_ env var
-            var framework = Environment.GetEnvironmentVariable("TARGET_FRAMEWORK") ?? Environment.GetEnvironmentVariable("DOTNET_FRAMEWORK") ?? Environment.GetEnvironmentVariable("KRE_FRAMEWORK");
-            // TODO: remove KRE_ env var
-            var configuration = Environment.GetEnvironmentVariable("TARGET_CONFIGURATION") ?? Environment.GetEnvironmentVariable("DOTNET_CONFIGURATION")  ?? Environment.GetEnvironmentVariable("KRE_CONFIGURATION") ?? "Debug";
+            var framework = Environment.GetEnvironmentVariable("TARGET_FRAMEWORK") ?? Environment.GetEnvironmentVariable(EnvironmentNames.Framework);
+            var configuration = Environment.GetEnvironmentVariable("TARGET_CONFIGURATION") ?? Environment.GetEnvironmentVariable(EnvironmentNames.Configuration) ?? "Debug";
 
             // TODO: Support the highest installed version
             var targetFramework = FrameworkNameUtility.ParseFrameworkName(framework ?? "aspnet50");

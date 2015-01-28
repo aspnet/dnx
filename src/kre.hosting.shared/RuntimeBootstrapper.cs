@@ -13,6 +13,7 @@ using System.Threading;
 using System.Runtime.Loader;
 #endif
 using System.Threading.Tasks;
+using Microsoft.Framework.Runtime;
 using Microsoft.Framework.Runtime.Common.CommandLine;
 
 namespace kre.hosting
@@ -33,8 +34,7 @@ namespace kre.hosting
         public static int Execute(string[] args)
         {
             // If we're a console host then print exceptions to stderr
-            // TODO: remove KRE_ env var
-            var printExceptionsToStdError = (Environment.GetEnvironmentVariable("DOTNET_CONSOLE_HOST") ?? Environment.GetEnvironmentVariable("KRE_CONSOLE_HOST")) == "1";
+            var printExceptionsToStdError = Environment.GetEnvironmentVariable(EnvironmentNames.ConsoleHost) == "1";
 
             try
             {
@@ -73,8 +73,7 @@ namespace kre.hosting
 
         public static Task<int> ExecuteAsync(string[] args)
         {
-            // TODO: remove KRE_ env var
-            var enableTrace = (Environment.GetEnvironmentVariable("DOTNET_TRACE") ?? Environment.GetEnvironmentVariable("KRE_TRACE")) == "1";
+            var enableTrace = Environment.GetEnvironmentVariable(EnvironmentNames.Trace) == "1";
 #if ASPNET50
             // TODO: Make this pluggable and not limited to the console logger
             if (enableTrace)
@@ -85,7 +84,7 @@ namespace kre.hosting
             }
 #endif
             var app = new CommandLineApplication(throwOnUnexpectedArg: false);
-            app.Name = "dotnet";
+            app.Name = "klr";
 
             // RuntimeBootstrapper doesn't need to consume '--appbase' option because
             // dotnet/dotnet.cpp consumes the option value before invoking RuntimeBootstrapper
@@ -330,8 +329,7 @@ namespace kre.hosting
         {
             var searchPaths = new List<string>();
 
-            // TODO: remove KRE_ env var
-            var defaultLibPath = Environment.GetEnvironmentVariable("DOTNET_DEFAULT_LIB") ?? Environment.GetEnvironmentVariable("KRE_DEFAULT_LIB");
+            var defaultLibPath = Environment.GetEnvironmentVariable(EnvironmentNames.DefaultLib);
 
             if (!string.IsNullOrEmpty(defaultLibPath))
             {

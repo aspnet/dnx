@@ -4,6 +4,7 @@
     "dependencies": {
         "kre.hosting.shared": "1.0.0-*",
         "Microsoft.Framework.CommandLineUtils": { "version": "1.0.0-*", "type": "build" },
+        "Microsoft.Framework.Runtime.Common": "1.0.0-*",
         "Microsoft.Framework.Runtime.Loader": "1.0.0-*"
     },
     "frameworks": {

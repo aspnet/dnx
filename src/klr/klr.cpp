@@ -215,8 +215,7 @@ bool ExpandCommandLineArguments(int nArgc, LPWSTR* ppszArgv, int& nExpandedArgc,
 int CallFirmwareProcessMain(int argc, wchar_t* argv[])
 {
     TCHAR szDotnetTrace[2];
-    // TODO: remove KRE_ env var
-    DWORD nEnvTraceSize = GetEnvironmentVariableW(L"DOTNET_TRACE", szDotnetTrace, 2);
+    DWORD nEnvTraceSize = GetEnvironmentVariableW(L"KRE_TRACE", szDotnetTrace, 2);
     if (nEnvTraceSize == 0)
     {
         nEnvTraceSize = GetEnvironmentVariableW(L"KRE_TRACE", szDotnetTrace, 2);
@@ -246,11 +245,11 @@ int CallFirmwareProcessMain(int argc, wchar_t* argv[])
 
     // Set the DEFAULT_LIB environment variable to be the same directory
     // as the exe
-    SetEnvironmentVariable(L"DOTNET_DEFAULT_LIB", szCurrentDirectory);
+    SetEnvironmentVariable(L"KRE_DEFAULT_LIB", szCurrentDirectory);
 
-    // Set the DOTNET_CONOSLE_HOST flag which will print exceptions
+    // Set the KRE_CONOSLE_HOST flag which will print exceptions
     // to stderr instead of throwing
-    SetEnvironmentVariable(L"DOTNET_CONSOLE_HOST", L"1");
+    SetEnvironmentVariable(L"KRE_CONSOLE_HOST", L"1");
 
     CALL_APPLICATION_MAIN_DATA data = { 0 };
     int nExpandedArgc = -1;
@@ -267,11 +266,10 @@ int CallFirmwareProcessMain(int argc, wchar_t* argv[])
         data.argv = const_cast<LPCWSTR*>(&argv[1]);
     }
 
-    // Get application base from DOTNET_APPBASE environment variable
+    // Get application base from KRE_APPBASE environment variable
     // Note: this value can be overriden by --appbase option
     TCHAR szAppBase[MAX_PATH];
-    // TODO: remove KRE_ env var
-    DWORD dwAppBase = GetEnvironmentVariableW(L"DOTNET_APPBASE", szAppBase, MAX_PATH);
+    DWORD dwAppBase = GetEnvironmentVariableW(L"KRE_APPBASE", szAppBase, MAX_PATH);
     if (dwAppBase == 0)
     {
         dwAppBase = GetEnvironmentVariableW(L"KRE_APPBASE", szAppBase, MAX_PATH);

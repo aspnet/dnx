@@ -3,6 +3,7 @@
 
 using System.Collections.Generic;
 using Microsoft.Framework.FunctionalTestUtils;
+using Microsoft.Framework.Runtime;
 using Xunit;
 
 namespace Microsoft.Framework.ApplicationHost
@@ -89,7 +90,7 @@ namespace Microsoft.Framework.ApplicationHost
                     arguments: string.Empty,
                     stdOut: out stdOut,
                     stdErr: out stdErr,
-                    environment: new Dictionary<string, string> { { "DOTNET_APPBASE", emptyFolder } });
+                    environment: new Dictionary<string, string> { { EnvironmentNames.AppBase, emptyFolder } });
 
                 Assert.NotEqual(0, exitCode);
                 Assert.Contains("Unable to locate project.json", stdErr);
@@ -117,7 +118,7 @@ namespace Microsoft.Framework.ApplicationHost
                     arguments: string.Empty,
                     stdOut: out stdOut,
                     stdErr: out stdErr,
-                    environment: new Dictionary<string, string> { { "DOTNET_APPBASE", projectPath } });
+                    environment: new Dictionary<string, string> { { EnvironmentNames.AppBase, projectPath } });
 
                 Assert.NotEqual(0, exitCode);
                 Assert.Contains("Unable to load application or execute command 'invalid'.", stdErr);

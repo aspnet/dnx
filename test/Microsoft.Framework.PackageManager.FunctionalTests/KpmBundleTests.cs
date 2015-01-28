@@ -5,6 +5,7 @@ using System.IO;
 using System.Collections.Generic;
 using System.Linq;
 using Microsoft.Framework.FunctionalTestUtils;
+using Microsoft.Framework.Runtime;
 using Xunit;
 
 namespace Microsoft.Framework.PackageManager
@@ -15,7 +16,7 @@ namespace Microsoft.Framework.PackageManager
         private readonly string _outputDirName = "BundleOutput";
 
         private static readonly string BatchFileTemplate = @"
-@""{0}dotnet.exe"" --appbase ""%~dp0approot\src\{1}"" Microsoft.Framework.ApplicationHost {2} %*
+@""{0}klr.exe"" --appbase ""%~dp0approot\src\{1}"" Microsoft.Framework.ApplicationHost {2} %*
 ";
 
         private static readonly string BashScriptTemplate = @"#!/bin/bash
@@ -28,9 +29,9 @@ while [ -h ""$SOURCE"" ]; do # resolve $SOURCE until the file is no longer a sym
 done
 DIR=""$( cd -P ""$( dirname ""$SOURCE"" )"" && pwd )""
 
-export SET DOTNET_APPBASE=""$DIR/approot/src/{0}""
+export SET {0}=""$DIR/approot/src/{1}""
 
-exec ""{1}dotnet"" --appbase ""$DOTNET_APPBASE"" Microsoft.Framework.ApplicationHost {2} ""$@""".Replace("\r\n", "\n");
+exec ""{2}klr"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {3} ""$@""".Replace("\r\n", "\n");
 
         public static IEnumerable<object[]> DotnetHomeDirs
         {
@@ -96,7 +97,7 @@ exec ""{1}dotnet"" --appbase ""$DOTNET_APPBASE"" Microsoft.Framework.Application
 
                 var environment = new Dictionary<string, string>()
                 {
-                    { "DOTNET_PACKAGES", Path.Combine(testEnv.ProjectPath, "packages") }
+                    { EnvironmentNames.Packages, Path.Combine(testEnv.ProjectPath, "packages") }
                 };
 
                 var exitCode = KpmTestUtils.ExecKpm(
@@ -189,7 +190,7 @@ exec ""{1}dotnet"" --appbase ""$DOTNET_APPBASE"" Microsoft.Framework.Application
 
                 var environment = new Dictionary<string, string>()
                 {
-                    { "DOTNET_PACKAGES", Path.Combine(testEnv.ProjectPath, "packages") }
+                    { EnvironmentNames.Packages, Path.Combine(testEnv.ProjectPath, "packages") }
                 };
 
                 var exitCode = KpmTestUtils.ExecKpm(
@@ -262,7 +263,7 @@ exec ""{1}dotnet"" --appbase ""$DOTNET_APPBASE"" Microsoft.Framework.Application
 
                 var environment = new Dictionary<string, string>()
                 {
-                    { "DOTNET_PACKAGES", Path.Combine(testEnv.ProjectPath, "packages") }
+                    { EnvironmentNames.Packages, Path.Combine(testEnv.ProjectPath, "packages") }
                 };
 
                 var exitCode = KpmTestUtils.ExecKpm(
@@ -351,7 +352,7 @@ exec ""{1}dotnet"" --appbase ""$DOTNET_APPBASE"" Microsoft.Framework.Application
 
                 var environment = new Dictionary<string, string>()
                 {
-                    { "DOTNET_PACKAGES", Path.Combine(testEnv.ProjectPath, "packages") }
+                    { EnvironmentNames.Packages, Path.Combine(testEnv.ProjectPath, "packages") }
                 };
 
                 var exitCode = KpmTestUtils.ExecKpm(
@@ -448,7 +449,7 @@ exec ""{1}dotnet"" --appbase ""$DOTNET_APPBASE"" Microsoft.Framework.Application
 
                 var environment = new Dictionary<string, string>()
                 {
-                    { "DOTNET_PACKAGES", Path.Combine(testEnv.ProjectPath, "packages") }
+                    { EnvironmentNames.Packages, Path.Combine(testEnv.ProjectPath, "packages") }
                 };
 
                 var exitCode = KpmTestUtils.ExecKpm(
@@ -545,7 +546,7 @@ exec ""{1}dotnet"" --appbase ""$DOTNET_APPBASE"" Microsoft.Framework.Application
 
                 var environment = new Dictionary<string, string>()
                 {
-                    { "DOTNET_PACKAGES", Path.Combine(testEnv.ProjectPath, "packages") }
+                    { EnvironmentNames.Packages, Path.Combine(testEnv.ProjectPath, "packages") }
                 };
 
                 var exitCode = KpmTestUtils.ExecKpm(
@@ -612,7 +613,7 @@ exec ""{1}dotnet"" --appbase ""$DOTNET_APPBASE"" Microsoft.Framework.Application
 
                 var environment = new Dictionary<string, string>()
                 {
-                    { "DOTNET_PACKAGES", Path.Combine(testEnv.ProjectPath, "packages") }
+                    { EnvironmentNames.Packages, Path.Combine(testEnv.ProjectPath, "packages") }
                 };
 
                 var exitCode = KpmTestUtils.ExecKpm(
@@ -672,7 +673,7 @@ exec ""{1}dotnet"" --appbase ""$DOTNET_APPBASE"" Microsoft.Framework.Application
 
                 var environment = new Dictionary<string, string>()
                 {
-                    { "DOTNET_PACKAGES", Path.Combine(testEnv.ProjectPath, "packages") }
+                    { EnvironmentNames.Packages, Path.Combine(testEnv.ProjectPath, "packages") }
                 };
 
                 var exitCode = KpmTestUtils.ExecKpm(
@@ -756,7 +757,7 @@ exec ""{1}dotnet"" --appbase ""$DOTNET_APPBASE"" Microsoft.Framework.Application
 
                 var environment = new Dictionary<string, string>()
                 {
-                    { "DOTNET_PACKAGES", Path.Combine(testEnv.ProjectPath, "packages") }
+                    { EnvironmentNames.Packages, Path.Combine(testEnv.ProjectPath, "packages") }
                 };
 
                 var exitCode = KpmTestUtils.ExecKpm(
@@ -833,7 +834,7 @@ exec ""{1}dotnet"" --appbase ""$DOTNET_APPBASE"" Microsoft.Framework.Application
 
                 var environment = new Dictionary<string, string>()
                 {
-                    { "DOTNET_PACKAGES", Path.Combine(testEnv.ProjectPath, "packages") }
+                    { EnvironmentNames.Packages, Path.Combine(testEnv.ProjectPath, "packages") }
                 };
 
                 var exitCode = KpmTestUtils.ExecKpm(
@@ -863,9 +864,9 @@ exec ""{1}dotnet"" --appbase ""$DOTNET_APPBASE"" Microsoft.Framework.Application
                     .WithFileContents("run.cmd", BatchFileTemplate, string.Empty, testEnv.ProjectName, "run")
                     .WithFileContents("kestrel.cmd", BatchFileTemplate, string.Empty, testEnv.ProjectName, "kestrel")
                     .WithFileContents("run",
-                        BashScriptTemplate, testEnv.ProjectName, string.Empty, "run")
+                        BashScriptTemplate, EnvironmentNames.AppBase, testEnv.ProjectName, string.Empty, "run")
                     .WithFileContents("kestrel",
-                        BashScriptTemplate, testEnv.ProjectName, string.Empty, "kestrel");
+                        BashScriptTemplate, EnvironmentNames.AppBase, testEnv.ProjectName, string.Empty, "kestrel");
 
                 Assert.True(expectedOutputDir.MatchDirectoryOnDisk(testEnv.BundleOutputDirPath,
                     compareFileContents: true));
@@ -916,9 +917,9 @@ exec ""{1}dotnet"" --appbase ""$DOTNET_APPBASE"" Microsoft.Framework.Application
 
                 var environment = new Dictionary<string, string>()
                 {
-                    { "DOTNET_PACKAGES", Path.Combine(testEnv.ProjectPath, "packages") },
-                    { "DOTNET_HOME", dotnetHomeDir },
-                    { "DOTNET_TRACE", "1" }
+                    { EnvironmentNames.Packages, Path.Combine(testEnv.ProjectPath, "packages") },
+                    { EnvironmentNames.Home, dotnetHomeDir },
+                    { EnvironmentNames.Trace, "1" }
                 };
 
                 var exitCode = KpmTestUtils.ExecKpm(
@@ -960,9 +961,9 @@ exec ""{1}dotnet"" --appbase ""$DOTNET_APPBASE"" Microsoft.Framework.Application
                     .WithFileContents("run.cmd", BatchFileTemplate, batchFileBinPath, testEnv.ProjectName, "run")
                     .WithFileContents("kestrel.cmd", BatchFileTemplate, batchFileBinPath, testEnv.ProjectName, "kestrel")
                     .WithFileContents("run",
-                        BashScriptTemplate, testEnv.ProjectName, bashScriptBinPath, "run")
+                        BashScriptTemplate, EnvironmentNames.AppBase, testEnv.ProjectName, bashScriptBinPath, "run")
                     .WithFileContents("kestrel",
-                        BashScriptTemplate, testEnv.ProjectName, bashScriptBinPath, "kestrel")
+                        BashScriptTemplate, EnvironmentNames.AppBase, testEnv.ProjectName, bashScriptBinPath, "kestrel")
                     .WithSubDir(Path.Combine("approot", "packages", runtimeName), runtimeSubDir);
 
                 Assert.True(expectedOutputDir.MatchDirectoryOnDisk(testEnv.BundleOutputDirPath,

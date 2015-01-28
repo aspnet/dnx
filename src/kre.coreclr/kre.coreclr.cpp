@@ -136,12 +136,7 @@ HMODULE LoadCoreClr()
     errno_t errno = 0;
     bool fSuccess = true;
     TCHAR szDotnetTrace[1] = {};
-    // TODO: remove KRE_ env var
-    DWORD dwRet = GetEnvironmentVariableW(L"DOTNET_TRACE", szDotnetTrace, 1);
-    if (dwRet == 0)
-    {
-        dwRet = GetEnvironmentVariableW(L"KRE_TRACE", szDotnetTrace, 1);
-    }
+    DWORD dwRet = GetEnvironmentVariableW(L"KRE_TRACE", szDotnetTrace, 1);
     bool m_fVerboseTrace = dwRet > 0;
     LPWSTR rgwzOSLoaderModuleNames[] = {
                         L"api-ms-win-core-libraryloader-l1-1-1.dll", 
@@ -255,7 +250,7 @@ Finished:
 
 /*
     Win2KDisable : DisallowWin32kSystemCalls
-    SET DOTNET_WIN32K_DISABLE=1
+    SET KRE_WIN32K_DISABLE=1
 */
 
 bool Win32KDisable()
@@ -271,12 +266,7 @@ bool Win32KDisable()
     PROCESS_MITIGATION_SYSTEM_CALL_DISABLE_POLICY systemCallDisablePolicy = {};
     systemCallDisablePolicy.DisallowWin32kSystemCalls = 1;
 
-    // TODO: remove KRE_ env var
-    DWORD dwRet = GetEnvironmentVariableW(L"DOTNET_WIN32K_DISABLE", szDotnetWin32KDisable, _countof(szDotnetWin32KDisable));
-    if (dwRet == 0)
-    {
-        dwRet = GetEnvironmentVariableW(L"KRE_WIN32K_DISABLE", szDotnetWin32KDisable, _countof(szDotnetWin32KDisable));
-    }
+    DWORD dwRet = GetEnvironmentVariableW(L"KRE_WIN32K_DISABLE", szDotnetWin32KDisable, _countof(szDotnetWin32KDisable));
     fSuccess = dwRet > 0;
     if (!fSuccess)
     {
@@ -311,7 +301,7 @@ bool Win32KDisable()
               sizeof(systemCallDisablePolicy)  //_In_  SIZE_T dwLength
             ))
     {
-        printf_s("DOTNET_WIN32K_DISABLE successful.\n");
+        printf_s("KRE_WIN32K_DISABLE successful.\n");
     }
 
 Finished:
@@ -529,7 +519,7 @@ extern "C" __declspec(dllexport) HRESULT __stdcall CallApplicationMain(PCALL_APP
         return hr;
     }
 
-    SetEnvironmentVariable(L"DOTNET_FRAMEWORK", L"aspnetcore50");
+    SetEnvironmentVariable(L"KRE_FRAMEWORK", L"aspnetcore50");
 
     // Call main
     data->exitcode = pHostMain(data->argc, data->argv);

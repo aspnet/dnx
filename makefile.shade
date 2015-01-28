@@ -123,8 +123,7 @@ var RC_FILES = '${FindAllFiles("Resource.rc", "klr", "kre.clr", "kre.coreclr")}'
         }
         else
         {
-            // TODO: remove KRE_ env var
-            var environmentDotnetTargetOS = string.IsNullOrEmpty(Environment.GetEnvironmentVariable("DOTNET_TARGET_OS")) ? Environment.GetEnvironmentVariable("KRE_TARGET_OS") : Environment.GetEnvironmentVariable("DOTNET_TARGET_OS");
+            var environmentDotnetTargetOS = Environment.GetEnvironmentVariable("KRE_TARGET_OS");
             var configDotnetTargetOS = "";
         
             Exec(MSBUILD, dotnetProj + " /p:Configuration=" + Configuration2 + ";Platform=Win32;TargetFramework=aspnet50");
@@ -152,12 +151,12 @@ var RC_FILES = '${FindAllFiles("Resource.rc", "klr", "kre.clr", "kre.coreclr")}'
             try
             {
                 var tpacppFile = Path.Combine(ROOT, "src", "kre.coreclr", "tpa.cpp");
-                Environment.SetEnvironmentVariable("DOTNET_APPBASE", Path.Combine(ROOT, "src", "DependencyAnalyzer"));
+                Environment.SetEnvironmentVariable("KRE_APPBASE", Path.Combine(ROOT, "src", "DependencyAnalyzer"));
                 Exec("cmd", "/C k dpa tpa \"" + Path.Combine(CORECLR_TARGET_PATH, "Runtime", "x86") + "\" \"" + tpacppFile + "\"");
             }
             finally
             {
-                Environment.SetEnvironmentVariable("DOTNET_APPBASE", null);
+                Environment.SetEnvironmentVariable("KRE_APPBASE", null);
             }
         }
 
@@ -167,8 +166,7 @@ var RC_FILES = '${FindAllFiles("Resource.rc", "klr", "kre.clr", "kre.coreclr")}'
         }
         else
         {
-            // TODO: remove KRE_ env var
-            var environmentDotnetTargetOS = string.IsNullOrEmpty(Environment.GetEnvironmentVariable("DOTNET_TARGET_OS")) ? Environment.GetEnvironmentVariable("KRE_TARGET_OS") : Environment.GetEnvironmentVariable("DOTNET_TARGET_OS");
+            var environmentDotnetTargetOS = Environment.GetEnvironmentVariable("KRE_TARGET_OS");
             var configDotnetTargetOS = "";
         
             if (environmentDotnetTargetOS == "WIN7_PLUS_CORESYSTEM")
@@ -212,7 +210,8 @@ var RC_FILES = '${FindAllFiles("Resource.rc", "klr", "kre.clr", "kre.coreclr")}'
             Path.Combine("src", "Microsoft.Framework.CommandLineUtils", "CommandLine", "CommandArgument.cs"),
             Path.Combine("src", "Microsoft.Framework.CommandLineUtils", "CommandLine", "CommandLineApplication.cs"), 
             Path.Combine("src", "Microsoft.Framework.CommandLineUtils", "CommandLine", "CommandOption.cs"), 
-            Path.Combine("src", "Microsoft.Framework.CommandLineUtils", "CommandLine", "CommandOptionType.cs")
+            Path.Combine("src", "Microsoft.Framework.CommandLineUtils", "CommandLine", "CommandOptionType.cs"),
+			Path.Combine("src", "Microsoft.Framework.Runtime.Common", "Impl", "EnvironmentNames.cs")
         };
 
         var arguments = string.Format(
@@ -276,7 +275,7 @@ var RC_FILES = '${FindAllFiles("Resource.rc", "klr", "kre.clr", "kre.coreclr")}'
                 var kpmPath = Path.Combine(runtimePath, "bin", "kpm");
 
                 Log.Info("runtimeName = " + runtimeName);
-                Log.Info("DOTNET_APPBASE = " + helloWorld);
+                Log.Info("KRE_APPBASE = " + helloWorld);
 
                 Exec(bootstrapperPath, helloWorld + " run");
 
@@ -290,7 +289,7 @@ var RC_FILES = '${FindAllFiles("Resource.rc", "klr", "kre.clr", "kre.coreclr")}'
             finally
             {
                 Environment.SetEnvironmentVariable("PATH", envPath);
-                Environment.SetEnvironmentVariable("DOTNET_APPBASE", null);
+                Environment.SetEnvironmentVariable("KRE_APPBASE", null);
             }
         };
         
@@ -627,12 +626,12 @@ var RC_FILES = '${FindAllFiles("Resource.rc", "klr", "kre.clr", "kre.coreclr")}'
             
             try
             {
-                Environment.SetEnvironmentVariable("DOTNET_APPBASE", Path.Combine(ROOT, "src", "DependencyAnalyzer"));
+                Environment.SetEnvironmentVariable("KRE_APPBASE", Path.Combine(ROOT, "src", "DependencyAnalyzer"));
                 Exec("cmd", string.Format("/C k dpa runtime \"{0}\" \"{1}\"", KRE_CORECLR_WIN_x86_BIN, dependenciesFile));
             }
             finally
             {
-                Environment.SetEnvironmentVariable("DOTNET_APPBASE", null);
+                Environment.SetEnvironmentVariable("KRE_APPBASE", null);
             }
             var deps = new Dictionary<string, HashSet<string>>();
             var list = new HashSet<string>();
@@ -734,8 +733,7 @@ macro name='NuGetInstall' Package='string' OutputDir='string' Extra='string'
 functions @{
     string FindPackageDirectory(string name)
     {
-        // TODO: remove KRE_ env var
-        var packagesDir = string.IsNullOrEmpty(Environment.GetEnvironmentVariable("DOTNET_PACKAGES")) ? Environment.GetEnvironmentVariable("KRE_PACKAGES") : Environment.GetEnvironmentVariable("DOTNET_PACKAGES");
+        var packagesDir = Environment.GetEnvironmentVariable("KRE_PACKAGES");
 
         if (string.IsNullOrEmpty(packagesDir))
         {

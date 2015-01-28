@@ -13,8 +13,8 @@ public class EntryPoint
     public static int Main(string[] arguments)
     {
         // Set the default lib path to be next to the entry point location
-        Environment.SetEnvironmentVariable("DOTNET_DEFAULT_LIB", Path.GetDirectoryName(typeof(EntryPoint).Assembly.Location));
-        Environment.SetEnvironmentVariable("DOTNET_CONSOLE_HOST", "1");
+        Environment.SetEnvironmentVariable("KRE_DEFAULT_LIB", Path.GetDirectoryName(typeof(EntryPoint).Assembly.Location));
+        Environment.SetEnvironmentVariable("KRE_CONSOLE_HOST", "1");
 
         arguments = ExpandCommandLineArguments(arguments);
 
@@ -23,7 +23,7 @@ public class EntryPoint
             string.Equals(arg, "--appbase", StringComparison.OrdinalIgnoreCase));
         if (appbaseIndex >= 0 && (appbaseIndex < arguments.Length - 1))
         {
-            Environment.SetEnvironmentVariable("DOTNET_APPBASE", arguments[appbaseIndex + 1]);
+            Environment.SetEnvironmentVariable("KRE_APPBASE", arguments[appbaseIndex + 1]);
         }
 
         return RuntimeBootstrapper.Execute(arguments);
