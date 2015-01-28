@@ -259,8 +259,7 @@ namespace Microsoft.Framework.Runtime
 
         private static IEnumerable<IPackagePathResolver> GetCacheResolvers()
         {
-            // TODO: remove KRE_ env var
-            var packageCachePathValue = Environment.GetEnvironmentVariable("DOTNET_PACKAGES_CACHE") ?? Environment.GetEnvironmentVariable("KRE_PACKAGES_CACHE");
+            var packageCachePathValue = Environment.GetEnvironmentVariable(EnvironmentNames.PackagesCache);
 
             if (string.IsNullOrEmpty(packageCachePathValue))
             {
@@ -421,17 +420,16 @@ namespace Microsoft.Framework.Runtime
         public static string ResolveRepositoryPath(string rootDirectory)
         {
             // Order
-            // 1. DOTNET_PACKAGES environment variable
+            // 1. EnvironmentNames.Packages environment variable
             // 2. global.json { "packages": "..." }
             // 3. NuGet.config repositoryPath (maybe)?
-            // 4. %userprofile%\.dotnet\packages
+            // 4. %userprofile%\.k\packages
 
-            // TODO: remove KRE_ env var
-            var dotnetPackages = Environment.GetEnvironmentVariable("DOTNET_PACKAGES") ?? Environment.GetEnvironmentVariable("KRE_PACKAGES");
+            var runtimePackages = Environment.GetEnvironmentVariable(EnvironmentNames.Packages);
 
-            if (!string.IsNullOrEmpty(dotnetPackages))
+            if (!string.IsNullOrEmpty(runtimePackages))
             {
-                return dotnetPackages;
+                return runtimePackages;
             }
 
             GlobalSettings settings;
@@ -448,7 +446,7 @@ namespace Microsoft.Framework.Runtime
                 profileDirectory = Environment.GetEnvironmentVariable("HOME");
             }
 
-            return Path.Combine(profileDirectory, ".dotnet", "packages");
+            return Path.Combine(profileDirectory, ".k", "packages");
         }
 
         private class PackageDescription

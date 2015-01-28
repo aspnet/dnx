@@ -358,9 +358,9 @@ namespace Microsoft.Framework.PackageManager.Bundle
                 { "kpm-package-path", relativePackagesPath},
                 { "bootstrapper-version", GetBootstrapperVersion(root)},
                 { "packages-path", relativePackagesPath},
-                { "dotnet-version", GetRuntimeVersion(defaultRuntime)},
-                { "dotnet-clr", GetRuntimeFlavor(defaultRuntime)},
-                { "dotnet-app-base", _applicationBase},
+                { "kre-version", GetRuntimeVersion(defaultRuntime)},
+                { "kre-clr", GetRuntimeFlavor(defaultRuntime)},
+                { "kre-app-base", _applicationBase},
             };
 
             foreach (var pair in keyValuePairs)
@@ -409,8 +409,8 @@ namespace Microsoft.Framework.PackageManager.Bundle
             return package == null ? string.Empty : package.Library.Version.ToString();
         }
 
-        // Expected runtime name format: dotnet-{FLAVOR}-{OS}-{ARCHITECTURE}.{VERSION}
-        // Sample input: dotnet-coreclr-win-x86.1.0.0.0
+        // Expected runtime name format: kre-{FLAVOR}-{OS}-{ARCHITECTURE}.{VERSION}
+        // Sample input: kre-coreclr-win-x86.1.0.0.0
         // Sample output: coreclr
         private static string GetRuntimeFlavor(BundleRuntime runtime)
         {
@@ -424,8 +424,8 @@ namespace Microsoft.Framework.PackageManager.Bundle
             return segments[1];
         }
 
-        // Expected runtime name format: dotnet-{FLAVOR}-{OS}-{ARCHITECTURE}.{VERSION}
-        // Sample input: dotnet-coreclr-win-x86.1.0.0.0
+        // Expected runtime name format: kre-{FLAVOR}-{OS}-{ARCHITECTURE}.{VERSION}
+        // Sample input: kre-coreclr-win-x86.1.0.0.0
         // Sample output: 1.0.0.0
         private static string GetRuntimeVersion(BundleRuntime runtime)
         {
