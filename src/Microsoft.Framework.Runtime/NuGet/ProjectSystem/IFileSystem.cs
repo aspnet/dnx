@@ -14,6 +14,7 @@ namespace NuGet
         void DeleteDirectory(string path, bool recursive);
         IEnumerable<string> GetFiles(string path, string filter, bool recursive);
         IEnumerable<string> GetDirectories(string path);
+        IFileSystem GetDirectory(string path);
         string GetFullPath(string path);
         void DeleteFile(string path);
         bool FileExists(string path);

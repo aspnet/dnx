@@ -34,5 +34,23 @@ namespace NuGet
                 return _package;
             }
         }
+
+        public override bool Equals(object obj)
+        {
+            PackageInfo other = obj as PackageInfo;
+            return !object.ReferenceEquals(null, other) && Equals(other);
+        }
+
+        public bool Equals(PackageInfo other)
+        {
+            return !object.ReferenceEquals(null, other) &&
+                   string.Equals(Id, other.Id) &&
+                   Version.Equals(other.Version);
+        }
+
+        public override int GetHashCode()
+        {
+            return Id.GetHashCode() ^ Version.GetHashCode();
+        }
     }
 }

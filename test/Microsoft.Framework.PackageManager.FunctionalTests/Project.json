@@ -2,6 +2,7 @@
     "dependencies": {
         "Microsoft.Framework.FunctionalTestUtils": "1.0.0-*",
         "Microsoft.Framework.Runtime.Common": "1.0.0-*",
+        "Microsoft.Framework.PackageManager": "1.0.0-*",
         "xunit.runner.kre": "1.0.0-*"
     },
 

@@ -27,7 +27,7 @@ namespace Microsoft.Framework.PackageManager.Restore.NuGet
         {
             // We need to help "kpm restore" to ensure case-sensitivity here
             // Turn on the flag to get package ids in accurate casing
-            _repository = new PackageRepository(physicalPath, checkPackageIdCase: true);
+            _repository = new PackageRepository(physicalPath, caseSensitivePackagesName: true);
             _fileSystem = new PhysicalFileSystem(physicalPath);
             _pathResolver = new DefaultPackagePathResolver(_fileSystem);
             _reports = reports;
