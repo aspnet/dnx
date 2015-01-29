@@ -10,13 +10,16 @@ using Microsoft.Framework.Runtime;
 
 namespace Microsoft.Framework.PackageManager
 {
-    public class InstallGlobalCommand
+    internal class InstallGlobalCommand
     {
-        private const string TargetPackagesFolderName = "packages";
+        public const string TargetPackagesFolderName = "packages";
 
-        public InstallGlobalCommand(IApplicationEnvironment env)
+        private readonly IAppCommandsRepository _commandsRepository;
+
+        public InstallGlobalCommand(IApplicationEnvironment env, IAppCommandsRepository commandsRepository)
         {
             RestoreCommand = new RestoreCommand(env);
+            _commandsRepository = commandsRepository;
         }
 
         public RestoreCommand RestoreCommand { get; private set; }
@@ -33,65 +36,38 @@ namespace Microsoft.Framework.PackageManager
             set { RestoreCommand.FeedOptions = value; }
         }
 
-        public string PackageId
-        {
-            get { return RestoreCommand.RestorePackageId; }
-            set { RestoreCommand.RestorePackageId = value; }
-        }
-
-        public string PackageVersion
-        {
-            get { return RestoreCommand.RestorePackageVersion; }
-            set { RestoreCommand.RestorePackageVersion = value; }
-        }
-
         public bool OverwriteCommands { get; set; }
 
-        public async Task<bool> Install()
+        public async Task<bool> Execute(string packageId, string packageVersion)
         {
             if (string.IsNullOrEmpty(FeedOptions.TargetPackagesFolder))
             {
-                var binFolder = PathUtilities.DotNetBinFolder;
-                var installPackagesFolder = Path.Combine(binFolder, TargetPackagesFolderName);
-                var installGlobalJsonPath = Path.Combine(installPackagesFolder, "global.json");
-
-                if (!File.Exists(installGlobalJsonPath))
-                {
-                    Directory.CreateDirectory(installPackagesFolder);
-                    File.WriteAllText(installGlobalJsonPath, @"{""packages"":"".""}");
-                }
-
-                FeedOptions.TargetPackagesFolderOptions.Values.Add(installPackagesFolder);
+                FeedOptions.TargetPackagesFolderOptions.Values.Add(_commandsRepository.PackagesRoot.Root);
             }
 
-            if (PackageId != null &&
-                PackageId.EndsWith(".nupkg", StringComparison.OrdinalIgnoreCase) &&
-                File.Exists(PackageId))
+            if (packageId != null &&
+                packageId.EndsWith(".nupkg", StringComparison.OrdinalIgnoreCase) &&
+                File.Exists(packageId))
             {
-                var packagePath = Path.GetFullPath(PackageId);
+                var packagePath = Path.GetFullPath(packageId);
                 var packageDirectory = Path.GetDirectoryName(packagePath);
                 var zipPackage = new NuGet.ZipPackage(packagePath);
                 FeedOptions.FallbackSourceOptions.Values.Add(packageDirectory);
-                PackageId = zipPackage.Id;
-                PackageVersion = zipPackage.Version.ToString();
+                packageId = zipPackage.Id;
+                packageVersion = zipPackage.Version.ToString();
             }
-
-            //RestoreCommand.RestoreDirectory = FeedOptions.PackageFolder;
 
             var installPath = Directory.GetParent(FeedOptions.TargetPackagesFolder).FullName;
 
+            RestoreCommand.RestorePackageId = packageId;
+            RestoreCommand.RestorePackageVersion = packageVersion;
+
             return 
                 await RestoreCommand.ExecuteCommand() && 
-                InstallCommands(installPath, RestoreCommand.AppInstallPath);
+                InstallCommands(packageId, RestoreCommand.AppInstallPath);
         }
 
-        /// <summary>
-        /// Installs the commands for a particular app
-        /// </summary>
-        /// <param name="installPath">Install location</param>
-        /// <param name="appPath">Application path</param>
-        /// <returns></returns>
-        private bool InstallCommands(string installPath, string appPath)
+        private bool InstallCommands(string packageId, string appPath)
         {
             string commandsFolder = Path.Combine(appPath, InstallBuilder.CommandsFolderName);
 
@@ -100,9 +76,6 @@ namespace Microsoft.Framework.PackageManager
                 WriteError("The specified package is not an application. The package was added but no commands were installed.");
                 return false;
             }
-
-            AppCommandsFolderStore commandsStore = new AppCommandsFolderStore(installPath);
-            commandsStore.Load();
 
             var allAppCommandsFiles = Directory.EnumerateFiles(commandsFolder, "*.cmd");
             var allAppCommands = allAppCommandsFiles
@@ -119,9 +92,9 @@ namespace Microsoft.Framework.PackageManager
                 // Conflicting commands are only the commands not owned by this application
                 conflictingCommands = allAppCommands.Where(appCmd =>
                 {
-                    string commandOwner = commandsStore.FindCommandOwner(appCmd);
-                    return !string.IsNullOrEmpty(commandOwner) &&
-                        !PackageId.Equals(commandOwner, StringComparison.OrdinalIgnoreCase);
+                    var commandOwner = _commandsRepository.FindCommandOwner(appCmd);
+                    return commandOwner !=null &&
+                        !packageId.Equals(commandOwner.Id, StringComparison.OrdinalIgnoreCase);
                 });
             }
 
@@ -134,6 +107,7 @@ namespace Microsoft.Framework.PackageManager
                 return false;
             }
 
+            var installPath = Path.GetFullPath(_commandsRepository.Root.Root);
             foreach (string commandFileFullPath in allAppCommandsFiles)
             {
                 string commandFileName = Path.GetFileName(commandFileFullPath);

@@ -25,7 +25,7 @@ namespace Microsoft.Framework.Runtime
         public NuGetDependencyResolver(string packagesPath, string rootDir = null)
         {
             // Runtime already ensures case-sensitivity, so we don't need package ids in accurate casing here
-            _repository = new PackageRepository(packagesPath, checkPackageIdCase: false);
+            _repository = new PackageRepository(packagesPath, caseSensitivePackagesName: false);
             Dependencies = Enumerable.Empty<LibraryDescription>();
 
             if (!string.IsNullOrEmpty(rootDir))

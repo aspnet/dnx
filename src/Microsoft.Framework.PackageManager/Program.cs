@@ -430,12 +430,14 @@ namespace Microsoft.Framework.PackageManager
 
                 c.OnExecute(async () =>
                 {
-                    var command = new InstallGlobalCommand(_environment);
+                    var command = new InstallGlobalCommand(
+                            _environment,
+                            string.IsNullOrEmpty(feedOptions.TargetPackagesFolder) ?
+                                AppCommandsFolderRepository.CreateDefault() :
+                                AppCommandsFolderRepository.Create(feedOptions.TargetPackagesFolder));
 
                     command.FeedOptions = feedOptions;
                     command.Reports = CreateReports(optionVerbose.HasValue(), feedOptions.Quiet);
-                    command.PackageId = argPackage.Value;
-                    command.PackageVersion = argVersion.Value;
                     command.OverwriteCommands = optOverwrite.HasValue();
 
                     if (feedOptions.Proxy != null)
@@ -443,10 +445,33 @@ namespace Microsoft.Framework.PackageManager
                         Environment.SetEnvironmentVariable("http_proxy", feedOptions.Proxy);
                     }
 
-                    var success = await command.Install();
+                    var success = await command.Execute(argPackage.Value, argVersion.Value);
                     return success ? 0 : 1;
                 });
+            });
 
+            app.Command("uninstall-g", c =>
+            {
+                c.Description = "Uninstalls a command";
+
+                var argCommand = c.Argument("[command]", "The name of the command to uninstall");
+
+                var optNoPurge = c.Option("--no-purge", "Do not try to remove orphaned packages", CommandOptionType.NoValue);
+
+                c.HelpOption("-?|-h|--help");
+
+                c.OnExecute(async () =>
+                {
+                    var command = new UninstallCommand(
+                        _environment,
+                        AppCommandsFolderRepository.CreateDefault(),
+                        reports: CreateReports(optionVerbose.HasValue(), quiet: false));
+
+                    command.NoPurge = optNoPurge.HasValue();
+
+                    var success = await command.Execute(argCommand.Value);
+                    return success ? 0 : 1;
+                });
             });
 
             // "kpm wrap" invokes MSBuild, which is not available on *nix
