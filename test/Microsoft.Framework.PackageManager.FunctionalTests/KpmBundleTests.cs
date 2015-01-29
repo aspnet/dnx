@@ -962,14 +962,9 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
                     workingDir: testEnv.ProjectPath);
                 Assert.Equal(0, exitCode);
 
-                var runtimeNupkgSHA = TestUtils.ComputeSHA(Path.Combine(runtimeRoot, runtimeName + ".nupkg"));
                 var runtimeSubDir = DirTree.CreateFromDirectory(runtimeRoot)
-                    .WithFileContents(runtimeName + ".nupkg.sha512", runtimeNupkgSHA)
-                    .RemoveFile("[Content_Types].xml")
-                    .RemoveFile(Path.Combine("_rels", ".rels"))
                     .RemoveFile(Path.Combine("bin", "lib", "Microsoft.Framework.PackageManager",
-                        "bin", "profile", "startup.prof"))
-                    .RemoveSubDir("package");
+                        "bin", "profile", "startup.prof"));
 
                 var batchFileBinPath = string.Format(@"%~dp0approot\packages\{0}\bin\", runtimeName);
                 var bashScriptBinPath = string.Format("$DIR/approot/packages/{0}/bin/", runtimeName);

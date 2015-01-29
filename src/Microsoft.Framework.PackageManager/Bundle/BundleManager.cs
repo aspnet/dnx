@@ -274,14 +274,7 @@ namespace Microsoft.Framework.PackageManager.Bundle
                 return false;
             }
 
-            var runtimeName = Path.GetFileName(Path.GetDirectoryName(Path.Combine(runtimePath, ".")));
-            var runtimeNupkgPath = Path.Combine(runtimePath, runtimeName + ".nupkg");
-            if (!File.Exists(runtimeNupkgPath))
-            {
-                return false;
-            }
-
-            root.Runtimes.Add(new BundleRuntime(root, frameworkName, runtimeNupkgPath));
+            root.Runtimes.Add(new BundleRuntime(root, frameworkName, runtimePath));
             return true;
         }
 

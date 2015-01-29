@@ -71,7 +71,6 @@ namespace Microsoft.Framework.FunctionalTestUtils
             var runtimeName = Path.GetFileNameWithoutExtension(runtimeNupkg);
             var runtimeRoot = Path.Combine(runtimeHomePath, "runtimes", runtimeName);
             System.IO.Compression.ZipFile.ExtractToDirectory(runtimeNupkg, runtimeRoot);
-            File.Copy(runtimeNupkg, Path.Combine(runtimeRoot, runtimeName + ".nupkg"));
             return runtimeHomePath;
         }
 

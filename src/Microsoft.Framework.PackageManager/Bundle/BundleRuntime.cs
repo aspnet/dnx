@@ -12,13 +12,13 @@ namespace Microsoft.Framework.PackageManager.Bundle
     public class BundleRuntime
     {
         private readonly FrameworkName _frameworkName;
-        private readonly string _runtimeNupkgPath;
+        private readonly string _runtimePath;
 
-        public BundleRuntime(BundleRoot root, FrameworkName frameworkName, string runtimeNupkgPath)
+        public BundleRuntime(BundleRoot root, FrameworkName frameworkName, string runtimePath)
         {
             _frameworkName = frameworkName;
-            _runtimeNupkgPath = runtimeNupkgPath;
-            Name = Path.GetFileName(Path.GetDirectoryName(_runtimeNupkgPath));
+            _runtimePath = runtimePath;
+            Name = new DirectoryInfo(_runtimePath).Name;
             TargetPath = Path.Combine(root.TargetPackagesPath, Name);
         }
 
@@ -41,25 +41,7 @@ namespace Microsoft.Framework.PackageManager.Bundle
                 Directory.CreateDirectory(TargetPath);
             }
 
-            var targetNupkgPath = Path.Combine(TargetPath, Name + ".nupkg");
-            using (var sourceStream = File.OpenRead(_runtimeNupkgPath))
-            {
-                using (var archive = new ZipArchive(sourceStream, ZipArchiveMode.Read))
-                {
-                    root.Operations.ExtractNupkg(archive, TargetPath);
-                }
-            }
-            using (var sourceStream = File.OpenRead(_runtimeNupkgPath))
-            {
-                using (var targetStream = new FileStream(targetNupkgPath, FileMode.Create, FileAccess.Write, FileShare.None))
-                {
-                    sourceStream.CopyTo(targetStream);
-                }
-
-                sourceStream.Seek(0, SeekOrigin.Begin);
-                var sha512Bytes = SHA512.Create().ComputeHash(sourceStream);
-                File.WriteAllText(targetNupkgPath + ".sha512", Convert.ToBase64String(sha512Bytes));
-            }
+            new BundleOperations().Copy(_runtimePath, TargetPath);
         }
     }
 }
