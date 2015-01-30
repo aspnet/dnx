@@ -3,17 +3,18 @@
 
 using System.Collections.Generic;
 using Microsoft.Framework.FunctionalTestUtils;
+using Microsoft.Framework.Runtime;
 using Xunit;
 
 namespace Microsoft.Framework.ApplicationHost
 {
     public class KCommandTests
     {
-        public static IEnumerable<object[]> DotnetHomeDirs
+        public static IEnumerable<object[]> RuntimeHomeDirs
         {
             get
             {
-                foreach (var path in TestUtils.GetDotnetHomeDirs())
+                foreach (var path in TestUtils.GetRuntimeHomeDirs())
                 {
                     yield return new[] { path };
                 }
@@ -21,14 +22,14 @@ namespace Microsoft.Framework.ApplicationHost
         }
 
         [Theory]
-        [MemberData("DotnetHomeDirs")]
-        public void KCommandReturnsNonZeroExitCodeWhenNoArgumentWasGiven(DisposableDir dotnetHomeDir)
+        [MemberData("RuntimeHomeDirs")]
+        public void KCommandReturnsNonZeroExitCodeWhenNoArgumentWasGiven(DisposableDir runtimeHomeDir)
         {
-            using (dotnetHomeDir)
+            using (runtimeHomeDir)
             {
                 string stdOut, stdErr;
                 var exitCode = KCommandTestUtils.ExecKCommand(
-                    dotnetHomeDir,
+                    runtimeHomeDir,
                     subcommand: string.Empty,
                     arguments: string.Empty,
                     stdOut: out stdOut,
@@ -39,14 +40,14 @@ namespace Microsoft.Framework.ApplicationHost
         }
 
         [Theory]
-        [MemberData("DotnetHomeDirs")]
-        public void KCommandReturnsZeroExitCodeWhenHelpOptionWasGiven(DisposableDir dotnetHomeDir)
+        [MemberData("RuntimeHomeDirs")]
+        public void KCommandReturnsZeroExitCodeWhenHelpOptionWasGiven(DisposableDir runtimeHomeDir)
         {
-            using (dotnetHomeDir)
+            using (runtimeHomeDir)
             {
                 string stdOut, stdErr;
                 var exitCode = KCommandTestUtils.ExecKCommand(
-                    dotnetHomeDir,
+                    runtimeHomeDir,
                     subcommand: string.Empty,
                     arguments: "--help",
                     stdOut: out stdOut,
@@ -57,14 +58,14 @@ namespace Microsoft.Framework.ApplicationHost
         }
 
         [Theory]
-        [MemberData("DotnetHomeDirs")]
-        public void KCommandShowsVersionAndReturnsZeroExitCodeWhenVersionOptionWasGiven(DisposableDir dotnetHomeDir)
+        [MemberData("RuntimeHomeDirs")]
+        public void KCommandShowsVersionAndReturnsZeroExitCodeWhenVersionOptionWasGiven(DisposableDir runtimeHomeDir)
         {
-            using (dotnetHomeDir)
+            using (runtimeHomeDir)
             {
                 string stdOut, stdErr;
                 var exitCode = KCommandTestUtils.ExecKCommand(
-                    dotnetHomeDir,
+                    runtimeHomeDir,
                     subcommand: string.Empty,
                     arguments: "--version",
                     stdOut: out stdOut,
@@ -76,20 +77,20 @@ namespace Microsoft.Framework.ApplicationHost
         }
 
         [Theory]
-        [MemberData("DotnetHomeDirs")]
-        public void KCommandShowsErrorWhenNoProjectJsonWasFound(DisposableDir dotnetHomeDir)
+        [MemberData("RuntimeHomeDirs")]
+        public void KCommandShowsErrorWhenNoProjectJsonWasFound(DisposableDir runtimeHomeDir)
         {
-            using (dotnetHomeDir)
+            using (runtimeHomeDir)
             using (var emptyFolder = TestUtils.CreateTempDir())
             {
                 string stdOut, stdErr;
                 var exitCode = KCommandTestUtils.ExecKCommand(
-                    dotnetHomeDir,
+                    runtimeHomeDir,
                     subcommand: "run",
                     arguments: string.Empty,
                     stdOut: out stdOut,
                     stdErr: out stdErr,
-                    environment: new Dictionary<string, string> { { "DOTNET_APPBASE", emptyFolder } });
+                    environment: new Dictionary<string, string> { { EnvironmentNames.AppBase, emptyFolder } });
 
                 Assert.NotEqual(0, exitCode);
                 Assert.Contains("Unable to locate project.json", stdErr);
@@ -97,14 +98,14 @@ namespace Microsoft.Framework.ApplicationHost
         }
 
         [Theory]
-        [MemberData("DotnetHomeDirs")]
-        public void KCommandShowsErrorWhenGivenSubcommandWasNotFoundInProjectJson(DisposableDir dotnetHomeDir)
+        [MemberData("RuntimeHomeDirs")]
+        public void KCommandShowsErrorWhenGivenSubcommandWasNotFoundInProjectJson(DisposableDir runtimeHomeDir)
         {
             var projectStructure = @"{
   'project.json': '{ }'
 }";
 
-            using (dotnetHomeDir)
+            using (runtimeHomeDir)
             using (var projectPath = TestUtils.CreateTempDir())
             {
 
@@ -112,12 +113,12 @@ namespace Microsoft.Framework.ApplicationHost
 
                 string stdOut, stdErr;
                 var exitCode = KCommandTestUtils.ExecKCommand(
-                    dotnetHomeDir,
+                    runtimeHomeDir,
                     subcommand: "invalid",
                     arguments: string.Empty,
                     stdOut: out stdOut,
                     stdErr: out stdErr,
-                    environment: new Dictionary<string, string> { { "DOTNET_APPBASE", projectPath } });
+                    environment: new Dictionary<string, string> { { EnvironmentNames.AppBase, projectPath } });
 
                 Assert.NotEqual(0, exitCode);
                 Assert.Contains("Unable to load application or execute command 'invalid'.", stdErr);

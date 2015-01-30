@@ -65,17 +65,16 @@ namespace Microsoft.Framework.FunctionalTestUtils
             var buildArtifactDir = GetBuildArtifactsFolder();
             var runtimeNupkg = Directory.GetFiles(
                 buildArtifactDir,
-                string.Format("dotnet-{0}-{1}-{2}.*.nupkg", flavor, os, architecture),
+                string.Format(Constants.RuntimeNamePrefix + "{0}-{1}-{2}.*.nupkg", flavor, os, architecture),
                 SearchOption.TopDirectoryOnly) .First();
-            var dotnetHomePath = CreateTempDir();
+            var runtimeHomePath = CreateTempDir();
             var runtimeName = Path.GetFileNameWithoutExtension(runtimeNupkg);
-            var runtimeRoot = Path.Combine(dotnetHomePath, "runtimes", runtimeName);
+            var runtimeRoot = Path.Combine(runtimeHomePath, "runtimes", runtimeName);
             System.IO.Compression.ZipFile.ExtractToDirectory(runtimeNupkg, runtimeRoot);
-            File.Copy(runtimeNupkg, Path.Combine(runtimeRoot, runtimeName + ".nupkg"));
-            return dotnetHomePath;
+            return runtimeHomePath;
         }
 
-        public static IEnumerable<DisposableDir> GetDotnetHomeDirs()
+        public static IEnumerable<DisposableDir> GetRuntimeHomeDirs()
         {
             yield return GetRuntimeHomeDir(flavor: "clr", os: "win", architecture: "x64");
             yield return GetRuntimeHomeDir(flavor: "clr", os: "win", architecture: "x86");
@@ -158,7 +157,7 @@ namespace Microsoft.Framework.FunctionalTestUtils
 
         public static string GetRuntimeVersion()
         {
-            var runtimeNupkg = Directory.EnumerateFiles(GetBuildArtifactsFolder(), "dotnet-*.nupkg").FirstOrDefault();
+            var runtimeNupkg = Directory.EnumerateFiles(GetBuildArtifactsFolder(), Constants.RuntimeNamePrefix + "*.nupkg").FirstOrDefault();
             var runtimeName = Path.GetFileNameWithoutExtension(runtimeNupkg);
             var segments = runtimeName.Split(new[] { '.' }, 2);
             return segments[1];

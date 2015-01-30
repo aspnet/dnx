@@ -44,7 +44,7 @@ namespace Microsoft.Framework.PackageManager
                     }
 
                     // Fixup the casing of the nuspec on disk to match what we expect
-                    var nuspecFile = Directory.EnumerateFiles(targetPath, "*" + Constants.ManifestExtension).Single();
+                    var nuspecFile = Directory.EnumerateFiles(targetPath, "*" + NuGet.Constants.ManifestExtension).Single();
 
                     if (!string.Equals(nuspecFile, targetNuspec, StringComparison.Ordinal))
                     {
@@ -81,7 +81,7 @@ namespace Microsoft.Framework.PackageManager
             {
                 foreach (var entry in archive.Entries)
                 {
-                    if (!entry.Name.EndsWith(Constants.ManifestExtension, StringComparison.OrdinalIgnoreCase))
+                    if (!entry.Name.EndsWith(NuGet.Constants.ManifestExtension, StringComparison.OrdinalIgnoreCase))
                     {
                         continue;
                     }
@@ -98,7 +98,7 @@ namespace Microsoft.Framework.PackageManager
                 }
 
                 throw new FormatException(
-                    string.Format("{0} doesn't contain {1} entry", nupkgPath, Constants.ManifestExtension));
+                    string.Format("{0} doesn't contain {1} entry", nupkgPath, NuGet.Constants.ManifestExtension));
             }
         }
 

@@ -30,8 +30,8 @@ namespace DependencyAnalyzer.Commands
             {
                 "Microsoft.Framework.Runtime.Roslyn",
                 "Microsoft.Framework.ApplicationHost",
-                "dotnet.host",
-                "dotnet.coreclr.managed"
+                Microsoft.Framework.Runtime.Constants.BootstrapperHostName,
+                Microsoft.Framework.Runtime.Constants.BootstrapperCoreclrManagedName
             };
 
             // TODO: Unhard coded this?

@@ -28,9 +28,8 @@ namespace Microsoft.Framework.Runtime.Servicing
             return LazyInitializer.EnsureInitialized(ref _index, ref _indexInitialized, ref _indexSync, () =>
             {
                 var index = new ServicingIndex();
-                // TODO: remove KRE_ env var
-                var dotnetServicing = Environment.GetEnvironmentVariable("DOTNET_SERVICING") ?? Environment.GetEnvironmentVariable("KRE_SERVICING");
-                if (string.IsNullOrEmpty(dotnetServicing))
+                var runtimeServicing = Environment.GetEnvironmentVariable(EnvironmentNames.Servicing);
+                if (string.IsNullOrEmpty(runtimeServicing))
                 {
                     var servicingRoot = Environment.GetEnvironmentVariable("PROGRAMFILES(X86)");
                     if (string.IsNullOrEmpty(servicingRoot))
@@ -44,13 +43,13 @@ namespace Microsoft.Framework.Runtime.Servicing
                         return index;
                     }
 
-                    dotnetServicing = Path.Combine(
+                    runtimeServicing = Path.Combine(
                         servicingRoot,
-                        "Microsoft .NET Cross-Platform SDK",
+                        "KRE",
                         "Servicing");
                 }
 
-                index.Initialize(dotnetServicing);
+                index.Initialize(runtimeServicing);
                 return index;
             });
         }

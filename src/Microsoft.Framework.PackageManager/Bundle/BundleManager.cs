@@ -117,20 +117,19 @@ namespace Microsoft.Framework.PackageManager.Bundle
                 {
                     runtimeProbePaths = new List<string>();
                     runtimeProbePaths.Add(runtime);
-                    // TODO: remove KRE_ env var
-                    var dotnetHome = Environment.GetEnvironmentVariable("DOTNET_HOME") ?? Environment.GetEnvironmentVariable("KRE_HOME");
-                    if (string.IsNullOrEmpty(dotnetHome))
+                    var runtimeHome = Environment.GetEnvironmentVariable(EnvironmentNames.Home);
+                    if (string.IsNullOrEmpty(runtimeHome))
                     {
-                        var dotnetGlobalPath = Environment.GetEnvironmentVariable("DOTNET_GLOBAL_PATH");
+                        var runtimeGlobalPath = Environment.GetEnvironmentVariable(EnvironmentNames.GlobalPath);
 #if ASPNETCORE50
-                        dotnetHome = @"%USERPROFILE%\.dotnet;" + dotnetGlobalPath;
+                        runtimeHome = @"%USERPROFILE%\" + Constants.DefaultLocalRuntimeHomeDir + ";" + runtimeGlobalPath;
 #else
                         var userProfile = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
-                        dotnetHome = Path.Combine(userProfile, ".dotnet") + ";" + dotnetGlobalPath;
+                        runtimeHome = Path.Combine(userProfile, Constants.DefaultLocalRuntimeHomeDir) + ";" + runtimeGlobalPath;
 #endif
                     }
 
-                    foreach (var portion in dotnetHome.Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries))
+                    foreach (var portion in runtimeHome.Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries))
                     {
                         var packagesPath = Path.Combine(
                             Environment.ExpandEnvironmentVariables(portion),
@@ -187,7 +186,7 @@ namespace Microsoft.Framework.PackageManager.Bundle
 
             if (!frameworkContexts.Any())
             {
-                var frameworkName = DependencyContext.GetFrameworkNameForRuntime("dotnet-clr-win-x86.*");
+                var frameworkName = DependencyContext.GetFrameworkNameForRuntime(Constants.RuntimeNamePrefix + "clr-win-x86.*");
                 frameworkContexts[frameworkName] = CreateDependencyContext(project, frameworkName);
             }
 
@@ -275,14 +274,7 @@ namespace Microsoft.Framework.PackageManager.Bundle
                 return false;
             }
 
-            var runtimeName = Path.GetFileName(Path.GetDirectoryName(Path.Combine(runtimePath, ".")));
-            var runtimeNupkgPath = Path.Combine(runtimePath, runtimeName + ".nupkg");
-            if (!File.Exists(runtimeNupkgPath))
-            {
-                return false;
-            }
-
-            root.Runtimes.Add(new BundleRuntime(root, frameworkName, runtimeNupkgPath));
+            root.Runtimes.Add(new BundleRuntime(root, frameworkName, runtimePath));
             return true;
         }
 
