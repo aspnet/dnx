@@ -2,6 +2,9 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
+#if ASPNET50
+using System.Linq;
+#endif
 #if ASPNETCORE50
 using System.Runtime.Loader;
 #endif
@@ -224,10 +227,30 @@ namespace Microsoft.Framework.Runtime.Loader
                     return null;
                 }
 
-                if (args.RequestingAssembly != null)
+                var requestingAssembly = args.RequestingAssembly;
+
+#if ASPNET50
+                // On Mono while loading the !preprocess assembly the ResolveEventArgs.RequestingAssembly is not populated. 
+                // As a result when code in !preprocess references a class library the load fails on the class library.
+                // Below is a work around to try populate the requesting assembly.
+
+                if (Microsoft.Framework.Runtime.PlatformHelper.IsMono &&
+                    requestingAssembly == null &&
+                    !assemblyName.Name.Contains("!preprocess"))
+                {
+                    // See if this loading is for !preprocess.
+                    var domain = (AppDomain)sender;
+
+                    requestingAssembly = domain.GetAssemblies()
+                        .Reverse()
+                        .FirstOrDefault(a => a.FullName.Contains("!preprocess"));
+                }
+#endif
+
+                if (requestingAssembly != null)
                 {
                     // Get the relevant load context for the requesting assembly
-                    var loadContext = LoadContextAccessor.Instance.GetLoadContext(args.RequestingAssembly);
+                    var loadContext = LoadContextAccessor.Instance.GetLoadContext(requestingAssembly);
                     if (loadContext != null && loadContext != this && loadContext != Default)
                     {
                         return loadContext.Load(assemblyName.Name);
@@ -240,7 +263,8 @@ namespace Microsoft.Framework.Runtime.Loader
 
         private class DefaultLoadContext : LoadContext
         {
-            public DefaultLoadContext() : base(defaultContext: null)
+            public DefaultLoadContext()
+                : base(defaultContext: null)
             {
                 _contextId = null;
             }
