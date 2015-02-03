@@ -157,25 +157,8 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
                     string.Format(template, EnvironmentNames.AppBase, relativeAppBase, runtimeFolder, Runtime.Constants.BootstrapperExeName, commandName).Replace("\r\n", "\n"));
                 if (PlatformHelper.IsMono)
                 {
-                    MarkExecutable(scriptPath);
+                    FileOperationUtils.MarkExecutable(scriptPath, Reports);
                 }
-            }
-        }
-
-        private void MarkExecutable(string scriptPath)
-        {
-            var processStartInfo = new ProcessStartInfo()
-            {
-                UseShellExecute = false,
-                FileName = "chmod",
-                Arguments = "+x " + scriptPath
-            };
-
-            var process = Process.Start(processStartInfo);
-            process.WaitForExit();
-            if (process.ExitCode != 0)
-            {
-                Reports.Information.WriteLine("Failed to mark {0} as executable".Yellow(), scriptPath);
             }
         }
 

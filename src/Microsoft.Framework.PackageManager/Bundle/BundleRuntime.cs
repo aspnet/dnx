@@ -1,11 +1,9 @@
 // Copyright (c) Microsoft Open Technologies, Inc. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
-using System;
 using System.IO;
-using System.IO.Compression;
 using System.Runtime.Versioning;
-using System.Security.Cryptography;
+using Microsoft.Framework.Runtime;
 
 namespace Microsoft.Framework.PackageManager.Bundle
 {
@@ -42,6 +40,13 @@ namespace Microsoft.Framework.PackageManager.Bundle
             }
 
             new BundleOperations().Copy(_runtimePath, TargetPath);
+
+            if (PlatformHelper.IsMono)
+            {
+                // Executable permissions on klr lost on copy. 
+                var klrPath = Path.Combine(TargetPath, "bin", "klr");
+                FileOperationUtils.MarkExecutable(klrPath, root.Reports);
+            }
         }
     }
 }

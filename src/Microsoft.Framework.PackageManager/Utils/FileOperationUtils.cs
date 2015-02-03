@@ -1,11 +1,9 @@
 // Copyright (c) Microsoft Open Technologies, Inc. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
-using System;
-using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using NuGet;
 
 namespace Microsoft.Framework.PackageManager
 {
@@ -37,5 +35,21 @@ namespace Microsoft.Framework.PackageManager
             }
         }
 
+        public static void MarkExecutable(string scriptPath, Reports reports)
+        {
+            var processStartInfo = new ProcessStartInfo()
+            {
+                UseShellExecute = false,
+                FileName = "chmod",
+                Arguments = "+x " + scriptPath
+            };
+
+            var process = Process.Start(processStartInfo);
+            process.WaitForExit();
+            if (process.ExitCode != 0)
+            {
+                reports.Information.WriteLine("Failed to mark {0} as executable".Yellow(), scriptPath);
+            }
+        }
     }
 }
