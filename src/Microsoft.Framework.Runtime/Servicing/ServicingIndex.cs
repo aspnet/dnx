@@ -5,7 +5,6 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using NuGet;
-using System.Diagnostics;
 
 namespace Microsoft.Framework.Runtime.Servicing
 {
