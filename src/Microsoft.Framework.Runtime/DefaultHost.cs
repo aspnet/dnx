@@ -119,9 +119,9 @@ namespace Microsoft.Framework.Runtime
                 cacheContextAccessor,
                 namedCacheDependencyProvider);
 
-            Trace.TraceInformation("[{0}]: Project path: {1}", GetType().Name, _projectDirectory);
-            Trace.TraceInformation("[{0}]: Project root: {1}", GetType().Name, _applicationHostContext.RootDirectory);
-            Trace.TraceInformation("[{0}]: Packages path: {1}", GetType().Name, _applicationHostContext.PackagesDirectory);
+            Logger.TraceInformation("[{0}]: Project path: {1}", GetType().Name, _projectDirectory);
+            Logger.TraceInformation("[{0}]: Project root: {1}", GetType().Name, _applicationHostContext.RootDirectory);
+            Logger.TraceInformation("[{0}]: Packages path: {1}", GetType().Name, _applicationHostContext.PackagesDirectory);
 
             _project = _applicationHostContext.Project;
 

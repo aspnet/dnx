@@ -73,16 +73,6 @@ namespace kre.hosting
 
         public static Task<int> ExecuteAsync(string[] args)
         {
-            var enableTrace = Environment.GetEnvironmentVariable(EnvironmentNames.Trace) == "1";
-#if ASPNET50
-            // TODO: Make this pluggable and not limited to the console logger
-            if (enableTrace)
-            {
-                var listener = new ConsoleTraceListener();
-                Trace.Listeners.Add(listener);
-                Trace.AutoFlush = true;
-            }
-#endif
             var app = new CommandLineApplication(throwOnUnexpectedArg: false);
             app.Name = Constants.BootstrapperExeName;
 

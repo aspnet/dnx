@@ -72,7 +72,7 @@ namespace Microsoft.Framework.Runtime.Roslyn
             {
                 IList<ResourceDescription> resources = CompilationContext.Resources;
 
-                Trace.TraceInformation("[{0}]: Emitting assembly for {1}", GetType().Name, Name);
+                Logger.TraceInformation("[{0}]: Emitting assembly for {1}", GetType().Name, Name);
                 
                 var sw = Stopwatch.StartNew();
 
@@ -84,13 +84,13 @@ namespace Microsoft.Framework.Runtime.Roslyn
                 }
                 else
                 {
-                    Trace.TraceWarning("PDB generation is not supported on this platform");
+                    Logger.TraceWarning("PDB generation is not supported on this platform");
                     emitResult = CompilationContext.Compilation.Emit(assemblyStream, manifestResources: resources);
                 }
 
                 sw.Stop();
 
-                Trace.TraceInformation("[{0}]: Emitted {1} in {2}ms", GetType().Name, Name, sw.ElapsedMilliseconds);
+                Logger.TraceInformation("[{0}]: Emitted {1} in {2}ms", GetType().Name, Name, sw.ElapsedMilliseconds);
 
                 var diagnostics = CompilationContext.Diagnostics.Concat(
                     emitResult.Diagnostics);
@@ -148,7 +148,7 @@ namespace Microsoft.Framework.Runtime.Roslyn
                 // The default win32resStream extracted from compilation represents a Win32 applicaiton manifest.
                 // It enables the assmebly information to be viewed in Windows Explorer.
 
-                Trace.TraceInformation("[{0}]: Emitting assembly for {1}", GetType().Name, Name);
+                Logger.TraceInformation("[{0}]: Emitting assembly for {1}", GetType().Name, Name);
 
                 var sw = Stopwatch.StartNew();
 
@@ -167,7 +167,7 @@ namespace Microsoft.Framework.Runtime.Roslyn
                 }
                 else
                 {
-                    Trace.TraceWarning("PDB generation is not supported on this platform");
+                    Logger.TraceWarning("PDB generation is not supported on this platform");
                     result = CompilationContext.Compilation.Emit(
                         assemblyStream,
                         xmlDocumentationStream: xmlDocStream,
@@ -177,7 +177,7 @@ namespace Microsoft.Framework.Runtime.Roslyn
 
                 sw.Stop();
 
-                Trace.TraceInformation("[{0}]: Emitted {1} in {2}ms", GetType().Name, Name, sw.ElapsedMilliseconds);
+                Logger.TraceInformation("[{0}]: Emitted {1} in {2}ms", GetType().Name, Name, sw.ElapsedMilliseconds);
 
                 var diagnostics = new List<Diagnostic>(CompilationContext.Diagnostics);
                 diagnostics.AddRange(result.Diagnostics);

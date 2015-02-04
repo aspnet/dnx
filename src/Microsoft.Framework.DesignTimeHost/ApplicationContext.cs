@@ -94,7 +94,7 @@ namespace Microsoft.Framework.DesignTimeHost
             }
             catch (Exception ex)
             {
-                Trace.TraceError("[ApplicationContext]: Error occured: {0}", ex);
+                Logger.TraceError("[ApplicationContext]: Error occured: {0}", ex);
 
                 // Unhandled errors
                 var error = new ErrorMessage
@@ -186,7 +186,7 @@ namespace Microsoft.Framework.DesignTimeHost
                 }
             }
 
-            Trace.TraceInformation("[ApplicationContext]: Received {0}", message.MessageType);
+            Logger.TraceInformation("[ApplicationContext]: Received {0}", message.MessageType);
 
             switch (message.MessageType)
             {
@@ -203,7 +203,7 @@ namespace Microsoft.Framework.DesignTimeHost
                         }
                         else
                         {
-                            Trace.TraceInformation("[ApplicationContext]: Received Initialize message more than once for {0}", _appPath.Value);
+                            Logger.TraceInformation("[ApplicationContext]: Received Initialize message more than once for {0}", _appPath.Value);
                         }
                     }
                     break;
@@ -479,7 +479,7 @@ namespace Microsoft.Framework.DesignTimeHost
         {
             if (IsDifferent(_local.ProjectInformation, _remote.ProjectInformation))
             {
-                Trace.TraceInformation("[ApplicationContext]: OnTransmit(ProjectInformation)");
+                Logger.TraceInformation("[ApplicationContext]: OnTransmit(ProjectInformation)");
 
                 _initializedContext.Transmit(new Message
                 {
@@ -514,7 +514,7 @@ namespace Microsoft.Framework.DesignTimeHost
 
                 if (IsDifferent(localProject.Dependencies, remoteProject.Dependencies))
                 {
-                    Trace.TraceInformation("[ApplicationContext]: OnTransmit(Dependencies)");
+                    Logger.TraceInformation("[ApplicationContext]: OnTransmit(Dependencies)");
 
                     _initializedContext.Transmit(new Message
                     {
@@ -528,7 +528,7 @@ namespace Microsoft.Framework.DesignTimeHost
 
                 if (IsDifferent(localProject.CompilerOptions, remoteProject.CompilerOptions))
                 {
-                    Trace.TraceInformation("[ApplicationContext]: OnTransmit(CompilerOptions)");
+                    Logger.TraceInformation("[ApplicationContext]: OnTransmit(CompilerOptions)");
 
                     _initializedContext.Transmit(new Message
                     {
@@ -542,7 +542,7 @@ namespace Microsoft.Framework.DesignTimeHost
 
                 if (IsDifferent(localProject.References, remoteProject.References))
                 {
-                    Trace.TraceInformation("[ApplicationContext]: OnTransmit(References)");
+                    Logger.TraceInformation("[ApplicationContext]: OnTransmit(References)");
 
                     _initializedContext.Transmit(new Message
                     {
@@ -556,7 +556,7 @@ namespace Microsoft.Framework.DesignTimeHost
 
                 if (IsDifferent(localProject.Sources, remoteProject.Sources))
                 {
-                    Trace.TraceInformation("[ApplicationContext]: OnTransmit(Sources)");
+                    Logger.TraceInformation("[ApplicationContext]: OnTransmit(Sources)");
 
                     _initializedContext.Transmit(new Message
                     {
@@ -615,7 +615,7 @@ namespace Microsoft.Framework.DesignTimeHost
 
                     if (waitingForCompiledAssembly.AssemblySent)
                     {
-                        Trace.TraceInformation("[ApplicationContext]: OnTransmit(ProjectChanged)");
+                        Logger.TraceInformation("[ApplicationContext]: OnTransmit(ProjectChanged)");
 
                         waitingForCompiledAssembly.Connection.Transmit(writer =>
                         {
@@ -643,7 +643,7 @@ namespace Microsoft.Framework.DesignTimeHost
                 {
                     if (!waitingForCompiledAssembly.AssemblySent)
                     {
-                        Trace.TraceInformation("[ApplicationContext]: OnTransmit(Assembly)");
+                        Logger.TraceInformation("[ApplicationContext]: OnTransmit(Assembly)");
 
                         waitingForCompiledAssembly.Connection.Transmit(writer =>
                         {

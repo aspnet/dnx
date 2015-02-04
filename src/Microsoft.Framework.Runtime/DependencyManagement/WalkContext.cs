@@ -98,7 +98,7 @@ namespace Microsoft.Framework.Runtime
             });
 
             buildTreeSw.Stop();
-            Trace.TraceInformation("[{0}]: Graph walk stage 1 took in {1}ms", GetType().Name, buildTreeSw.ElapsedMilliseconds);
+            Logger.TraceInformation("[{0}]: Graph walk stage 1 took in {1}ms", GetType().Name, buildTreeSw.ElapsedMilliseconds);
 
             // now we walk the tree as often as it takes to determine 
             // which paths are accepted or rejected, based on conflicts occuring
@@ -223,7 +223,7 @@ namespace Microsoft.Framework.Runtime
                 elt.WriteTo(writer);
             }
 
-            Trace.TraceInformation("[{0}] Current State\r\n{1}", GetType().Name, sb);
+            Logger.TraceInformation("[{0}] Current State\r\n{1}", GetType().Name, sb);
         }
 
         private static void ForEach<TState>(Node root, TState state, Func<Node, TState, TState> visitor)
@@ -320,7 +320,7 @@ namespace Microsoft.Framework.Runtime
                 var resolver = groupByResolver.Key;
                 var packageKeys = groupByResolver.Select(x => x.Value.Key).OrderBy(x => x.Name).ToList();
 
-                Trace.TraceInformation("[{0}]: " + string.Join(", ", packageKeys), resolver.GetType().Name);
+                Logger.TraceInformation("[{0}]: " + string.Join(", ", packageKeys), resolver.GetType().Name);
 
                 var descriptions = groupByResolver.Select(entry =>
                 {
@@ -342,7 +342,7 @@ namespace Microsoft.Framework.Runtime
             }
 
             sw.Stop();
-            Trace.TraceInformation("[{0}]: Populate took {1}ms", GetType().Name, sw.ElapsedMilliseconds);
+            Logger.TraceInformation("[{0}]: Populate took {1}ms", GetType().Name, sw.ElapsedMilliseconds);
         }
 
         private IEnumerable<LibraryDependency> CorrectDependencyVersion(LibraryDependency dependency)

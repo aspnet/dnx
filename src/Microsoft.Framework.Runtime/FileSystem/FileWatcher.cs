@@ -101,11 +101,11 @@ namespace Microsoft.Framework.Runtime.FileSystem
             {
                 if (oldPath != null)
                 {
-                    Trace.TraceInformation("{0} -> {1}", oldPath, newPath);
+                    Logger.TraceInformation("{0} -> {1}", oldPath, newPath);
                 }
                 else
                 {
-                    Trace.TraceInformation("{0} -> {1}", changeType, newPath);
+                    Logger.TraceInformation("{0} -> {1}", changeType, newPath);
                 }
 
                 if (OnChanged != null)

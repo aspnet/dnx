@@ -28,7 +28,7 @@ namespace Microsoft.Framework.Runtime.Servicing
             }
             else
             {
-                Trace.TraceInformation("Breadcrumbs for servicing will not be written because the breadcrumbs folder ({0}) does not exist.", breadcrumbsFolder);
+                Logger.TraceInformation("Breadcrumbs for servicing will not be written because the breadcrumbs folder ({0}) does not exist.", breadcrumbsFolder);
             }
         }
 
@@ -96,7 +96,7 @@ namespace Microsoft.Framework.Runtime.Servicing
                 if (!File.Exists(fullFilePath))
                 {
                     File.Create(fullFilePath).Dispose();
-                    Trace.TraceInformation("Wrote servicing breadcrumb for {0}", fileName);
+                    Logger.TraceInformation("Wrote servicing breadcrumb for {0}", fileName);
                 }
             }
             catch (UnauthorizedAccessException exception)
@@ -111,7 +111,7 @@ namespace Microsoft.Framework.Runtime.Servicing
 
         private static void LogBreadcrumbsCreationFailure(string fileName, Exception exception)
         {
-            Trace.TraceInformation("Failed to write servicing breadcrumb for {0} because an exception was thrown: {1}", fileName, exception);
+            Logger.TraceInformation("Failed to write servicing breadcrumb for {0} because an exception was thrown: {1}", fileName, exception);
         }
     }
 }
