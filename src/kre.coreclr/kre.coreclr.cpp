@@ -23,7 +23,7 @@ void GetModuleDirectory(HMODULE module, LPWSTR szPath)
     szPath[dirLength + 1] = '\0';
 }
 
-// Generate a list of trusted platform assembiles. 
+// Generate a list of trusted platform assemblies. 
 bool GetTrustedPlatformAssembliesList(WCHAR* szDirectory, bool bNative, LPWSTR pszTrustedPlatformAssemblies, size_t cchTrustedPlatformAssemblies)
 {
     bool ret = true;
@@ -32,7 +32,7 @@ bool GetTrustedPlatformAssembliesList(WCHAR* szDirectory, bool bNative, LPWSTR p
     size_t cTpaAssemblyNames = 0;
     LPWSTR* ppszTpaAssemblyNames = nullptr;
 
-    // Build the list of the tpa assemblie 
+    // Build the list of the tpa assemblies 
     CreateTpaBase(&ppszTpaAssemblyNames, &cTpaAssemblyNames, bNative);
 
     // Scan the directory to see if all the files in TPA list exist
@@ -498,8 +498,8 @@ extern "C" __declspec(dllexport) HRESULT __stdcall CallApplicationMain(PCALL_APP
 
     if (FAILED(hr))
     {
-        wprintf_s(L"TPA      %d %S\n", wcslen(pwszTrustedPlatformAssemblies), pwszTrustedPlatformAssemblies);
-        wprintf_s(L"AppPaths %S\n", wszAppPaths);
+        wprintf_s(L"TPA      %d %s\n", wcslen(pwszTrustedPlatformAssemblies), pwszTrustedPlatformAssemblies);
+        wprintf_s(L"AppPaths %s\n", wszAppPaths);
         printf_s("Failed to create app domain (%x).\n", hr);
         return hr;
     }
