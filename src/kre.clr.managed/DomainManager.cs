@@ -21,8 +21,10 @@ public class DomainManager : AppDomainManager
 
         if (!string.IsNullOrEmpty(_info.ApplicationBase))
         {
-            appDomainInfo.ApplicationBase = _info.ApplicationBase;
+            Environment.SetEnvironmentVariable(EnvironmentNames.AppBase, _info.ApplicationBase);
         }
+
+        appDomainInfo.ApplicationBase = Environment.GetEnvironmentVariable(EnvironmentNames.DefaultLib);
     }
 
     private int Main(int argc, string[] argv)

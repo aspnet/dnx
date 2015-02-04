@@ -43,19 +43,11 @@ namespace kre.host
             }
 
 #if ASPNET50
-            string applicationBaseDirectory;
-            if (PlatformHelper.IsMono)
+            string applicationBaseDirectory = Environment.GetEnvironmentVariable(EnvironmentNames.AppBase);
+
+            if (string.IsNullOrEmpty(applicationBaseDirectory))
             {
-                applicationBaseDirectory = Environment.GetEnvironmentVariable(EnvironmentNames.AppBase);
-                
-                if (string.IsNullOrEmpty(applicationBaseDirectory))
-                {
-                    applicationBaseDirectory = Directory.GetCurrentDirectory();
-                }
-            }
-            else
-            {
-                applicationBaseDirectory = AppDomain.CurrentDomain.SetupInformation.ApplicationBase;
+                applicationBaseDirectory = Directory.GetCurrentDirectory();
             }
 #else
             string applicationBaseDirectory = AppContext.BaseDirectory;
