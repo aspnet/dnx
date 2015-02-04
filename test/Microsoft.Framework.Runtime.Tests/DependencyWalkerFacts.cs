@@ -162,7 +162,8 @@ namespace Loader.Tests
                 .Package("e", "1.0", that => that.Needs("x", "1.0"))
                 .Package("e", "2.0", that => that.Needs("x", "2.0"))
                 .Package("x", "1.0")
-                .Package("x", "2.0");
+                .Package("x", "2.0")
+                .Package("g", version: null);
 
             var walker = new DependencyWalker(new[] { testProvider });
             walker.Walk("a", new SemanticVersion("1.0"), VersionUtility.ParseFrameworkName("net45"));
@@ -244,7 +245,7 @@ namespace Loader.Tests
                 Key = new Library
                 {
                     Name = name,
-                    Version = new SemanticVersion(version)
+                    Version = version == null ? null : new SemanticVersion(version)
                 }
             };
 

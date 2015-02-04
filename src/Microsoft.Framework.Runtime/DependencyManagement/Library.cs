@@ -63,7 +63,7 @@ namespace Microsoft.Framework.Runtime
             {
                 Name = library.Name,
                 IsGacOrFrameworkReference = library.IsGacOrFrameworkReference,
-                VersionRange = new SemanticVersionRange
+                VersionRange = library.Version == null ? null : new SemanticVersionRange
                 {
                     MinVersion = library.Version,
                     VersionFloatBehavior = SemanticVersionFloatBehavior.None

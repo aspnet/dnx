@@ -18,7 +18,7 @@ namespace Microsoft.Framework.Runtime
                 {
                     Name = libraryRange.Name,
                     IsGacOrFrameworkReference = libraryRange.IsGacOrFrameworkReference,
-                    Version = libraryRange.VersionRange.MinVersion
+                    Version = libraryRange.VersionRange?.MinVersion
                 },
                 Dependencies = Enumerable.Empty<LibraryDependency>(),
                 Resolved = false
