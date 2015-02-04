@@ -297,7 +297,7 @@ int CallFirmwareProcessMain(int argc, wchar_t* argv[])
     DWORD dwFullAppBase = GetFullPathNameW(data.applicationBase, MAX_PATH, szFullAppBase, nullptr);
     if (!dwFullAppBase)
     {
-        ::wprintf_s(L"Failed to get full path of application base: %S\r\n", data.applicationBase);
+        ::wprintf_s(L"Failed to get full path of application base: %s\r\n", data.applicationBase);
         exitCode = 1;
         goto Finished;
     }
@@ -313,18 +313,18 @@ int CallFirmwareProcessMain(int argc, wchar_t* argv[])
     if (!m_hHostModule)
     {
         if (m_fVerboseTrace)
-            ::wprintf_s(L"Failed to load: %S\r\n", pwzHostModuleName);
+            ::wprintf_s(L"Failed to load: %s\r\n", pwzHostModuleName);
         m_hHostModule = nullptr;
         goto Finished;
     }
     if (m_fVerboseTrace)
-        ::wprintf_s(L"Loaded Module: %S\r\n", pwzHostModuleName);
+        ::wprintf_s(L"Loaded Module: %s\r\n", pwzHostModuleName);
 
     pfnCallApplicationMain = (FnCallApplicationMain)::GetProcAddress(m_hHostModule, pszCallApplicationMainName);
     if (!pfnCallApplicationMain)
     {
         if (m_fVerboseTrace)
-            ::wprintf_s(L"Failed to find function %s in %S\n", pszCallApplicationMainName, pwzHostModuleName);
+            ::wprintf_s(L"Failed to find function %S in %s\n", pszCallApplicationMainName, pwzHostModuleName);
         fSuccess = false;
         goto Finished;
     }
