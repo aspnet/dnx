@@ -112,7 +112,7 @@ namespace Microsoft.Framework.Runtime
             }
             catch (Exception ex)
             {
-                Trace.TraceError("[{0}]: Exception occurred: {1}", GetType().Name, ex);
+                Logger.TraceError("[{0}]: Exception occurred: {1}", GetType().Name, ex);
                 Closed();
                 return;
             }

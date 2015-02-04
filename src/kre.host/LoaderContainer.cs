@@ -30,7 +30,7 @@ namespace kre.host
 
         public Assembly Load(string name)
         {
-            Trace.TraceInformation("[{0}]: Load name={1}", GetType().Name, name);
+            Logger.TraceInformation("[{0}]: Load name={1}", GetType().Name, name);
             var sw = Stopwatch.StartNew();
 
             foreach (var loader in _loaders.Reverse())
@@ -38,7 +38,7 @@ namespace kre.host
                 var assembly = loader.Load(name);
                 if (assembly != null)
                 {
-                    Trace.TraceInformation("[{0}]: Loaded name={1} in {2}ms", loader.GetType().Name, name, sw.ElapsedMilliseconds);
+                    Logger.TraceInformation("[{0}]: Loaded name={1} in {2}ms", loader.GetType().Name, name, sw.ElapsedMilliseconds);
                     return assembly;
                 }
             }

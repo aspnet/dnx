@@ -80,7 +80,7 @@ namespace Microsoft.Framework.Runtime.Roslyn
 
             var exportedReferences = incomingReferences.Select(ConvertMetadataReference);
 
-            Trace.TraceInformation("[{0}]: Compiling '{1}'", GetType().Name, name);
+            Logger.TraceInformation("[{0}]: Compiling '{1}'", GetType().Name, name);
             var sw = Stopwatch.StartNew();
 
             var compilationSettings = project.GetCompilerOptions(target.TargetFramework, target.Configuration)
@@ -119,7 +119,7 @@ namespace Microsoft.Framework.Runtime.Roslyn
                 compilationSettings.CompilationOptions);
 
             var aniSw = Stopwatch.StartNew();
-            Trace.TraceInformation("[{0}]: Scanning '{1}' for assembly neutral interfaces", GetType().Name, name);
+            Logger.TraceInformation("[{0}]: Scanning '{1}' for assembly neutral interfaces", GetType().Name, name);
 
             var assemblyNeutralWorker = new AssemblyNeutralWorker(compilation, embeddedReferences);
             assemblyNeutralWorker.FindTypeCompilations(compilation.Assembly.GlobalNamespace);
@@ -130,7 +130,7 @@ namespace Microsoft.Framework.Runtime.Roslyn
             assemblyNeutralWorker.Generate();
 
             aniSw.Stop();
-            Trace.TraceInformation("[{0}]: Found {1} assembly neutral interfaces for '{2}' in {3}ms", GetType().Name, assemblyNeutralWorker.TypeCompilations.Count(), name, aniSw.ElapsedMilliseconds);
+            Logger.TraceInformation("[{0}]: Found {1} assembly neutral interfaces for '{2}' in {3}ms", GetType().Name, assemblyNeutralWorker.TypeCompilations.Count(), name, aniSw.ElapsedMilliseconds);
 
             foreach (var t in assemblyNeutralWorker.TypeCompilations)
             {
@@ -166,11 +166,11 @@ namespace Microsoft.Framework.Runtime.Roslyn
                             compilationContext.Diagnostics.Add(diag);
                         }
 
-                        Trace.TraceError("[{0}]: Failed loading meta assembly '{1}'", GetType().Name, name);
+                        Logger.TraceError("[{0}]: Failed loading meta assembly '{1}'", GetType().Name, name);
                     }
                     else
                     {
-                        Trace.TraceError("[{0}]: Failed loading meta assembly '{1}':\n {2}", GetType().Name, name, ex);
+                        Logger.TraceError("[{0}]: Failed loading meta assembly '{1}':\n {2}", GetType().Name, name, ex);
                     }
                 }
             }
@@ -184,11 +184,11 @@ namespace Microsoft.Framework.Runtime.Roslyn
                 }
 
                 precompSw.Stop();
-                Trace.TraceInformation("[{0}]: Compile modules ran in in {1}ms", GetType().Name, precompSw.ElapsedMilliseconds);
+                Logger.TraceInformation("[{0}]: Compile modules ran in in {1}ms", GetType().Name, precompSw.ElapsedMilliseconds);
             }
 
             sw.Stop();
-            Trace.TraceInformation("[{0}]: Compiled '{1}' in {2}ms", GetType().Name, name, sw.ElapsedMilliseconds);
+            Logger.TraceInformation("[{0}]: Compiled '{1}' in {2}ms", GetType().Name, name, sw.ElapsedMilliseconds);
 
             return compilationContext;
         }

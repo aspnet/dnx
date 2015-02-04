@@ -25,7 +25,7 @@ namespace Microsoft.Framework.Runtime.Roslyn
 
         private static string GetResourceName(string projectName, string resxFilePath)
         {
-            Trace.TraceInformation("[{0}]: Found resource {1}", typeof(ResxResourceProvider).Name, resxFilePath);
+            Logger.TraceInformation("[{0}]: Found resource {1}", typeof(ResxResourceProvider).Name, resxFilePath);
 
             string fileNameWithoutExtension = Path.GetFileNameWithoutExtension(resxFilePath);
 

@@ -36,7 +36,7 @@ namespace Microsoft.Framework.Runtime
         public void Walk(string name, SemanticVersion version, FrameworkName targetFramework)
         {
             var sw = Stopwatch.StartNew();
-            Trace.TraceInformation("[{0}]: Walking dependency graph for '{1} {2}'.", GetType().Name, name, targetFramework);
+            Logger.TraceInformation("[{0}]: Walking dependency graph for '{1} {2}'.", GetType().Name, name, targetFramework);
 
             var context = new WalkContext();
 
@@ -49,12 +49,12 @@ namespace Microsoft.Framework.Runtime
                 targetFramework);
 
             walkSw.Stop();
-            Trace.TraceInformation("[{0}]: Graph walk took {1}ms.", GetType().Name, walkSw.ElapsedMilliseconds);
+            Logger.TraceInformation("[{0}]: Graph walk took {1}ms.", GetType().Name, walkSw.ElapsedMilliseconds);
 
             context.Populate(targetFramework, Libraries);
 
             sw.Stop();
-            Trace.TraceInformation("[{0}]: Resolved dependencies for {1} in {2}ms", GetType().Name, name, sw.ElapsedMilliseconds);
+            Logger.TraceInformation("[{0}]: Resolved dependencies for {1} in {2}ms", GetType().Name, name, sw.ElapsedMilliseconds);
         }
 
         public string GetMissingDependenciesWarning(FrameworkName targetFramework)

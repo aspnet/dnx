@@ -193,7 +193,7 @@ namespace Loader.Tests
 
         public LibraryDescription GetDescription(LibraryRange libraryRange, FrameworkName frameworkName)
         {
-            Trace.WriteLine(string.Format("StubAssemblyLoader.GetDependencies {0} {1} {2}", libraryRange.Name, libraryRange.VersionRange, frameworkName));
+            Logger.TraceInformation("StubAssemblyLoader.GetDependencies {0} {1} {2}", libraryRange.Name, libraryRange.VersionRange, frameworkName);
             Entry entry;
             if (!_entries.TryGetValue(libraryRange, out entry))
             {
@@ -201,7 +201,7 @@ namespace Loader.Tests
             }
 
             var d = entry.Dependencies as LibraryDependency[] ?? entry.Dependencies.ToArray();
-            Trace.WriteLine(string.Format("StubAssemblyLoader.GetDependencies {0} {1}", d.Aggregate("", (a, b) => a + " " + b), frameworkName));
+            Logger.TraceInformation("StubAssemblyLoader.GetDependencies {0} {1}", d.Aggregate("", (a, b) => a + " " + b), frameworkName);
 
             return new LibraryDescription
             {
@@ -214,7 +214,7 @@ namespace Loader.Tests
         {
             var d = packages.Select(CreateDependency).ToArray();
 
-            Trace.WriteLine(string.Format("StubAssemblyLoader.Initialize {0} {1}", d.Aggregate("", (a, b) => a + " " + b), frameworkName));
+            Logger.TraceInformation("StubAssemblyLoader.Initialize {0} {1}", d.Aggregate("", (a, b) => a + " " + b), frameworkName);
 
             Dependencies = d;
             FrameworkName = frameworkName;

@@ -64,7 +64,7 @@ namespace Microsoft.Framework.Runtime
                 }
                 else
                 {
-                    // Trace.TraceInformation("[{0}]: Cache hit for {1}", GetType().Name, k);
+                    // Logger.TraceInformation("[{0}]: Cache hit for {1}", GetType().Name, k);
 
                     // Already evaluated
                     PropagateCacheDependencies(currentEntry.Value);
@@ -108,7 +108,7 @@ namespace Microsoft.Framework.Runtime
                 _accessor.Current = parentContext;
             }
 
-            // Trace.TraceInformation("[{0}]: Cache miss for {1}", GetType().Name, k);
+            // Logger.TraceInformation("[{0}]: Cache miss for {1}", GetType().Name, k);
 
             entry.CompactCacheDependencies();
             return entry;

@@ -38,7 +38,7 @@ namespace Microsoft.Framework.Runtime
                 return null;
             }
 
-            Trace.TraceInformation("[{0}]: GetLibraryExport({1}, {2}, {3}, {4})", GetType().Name, target.Name, target.TargetFramework, target.Configuration, target.Aspect);
+            Logger.TraceInformation("[{0}]: GetLibraryExport({1}, {2}, {3}, {4})", GetType().Name, target.Name, target.TargetFramework, target.Configuration, target.Aspect);
 
             var targetFrameworkInformation = project.GetTargetFramework(target.TargetFramework);
 
@@ -81,7 +81,7 @@ namespace Microsoft.Framework.Runtime
                         return LanguageServices.CreateService<IProjectReferenceProvider>(_serviceProvider, _projectLoadContext.Value, typeInfo);
                     });
 
-                    Trace.TraceInformation("[{0}]: GetProjectReference({1}, {2}, {3}, {4})", project.LanguageServices.ProjectReferenceProvider.TypeName, target.Name, target.TargetFramework, target.Configuration, target.Aspect);
+                    Logger.TraceInformation("[{0}]: GetProjectReference({1}, {2}, {3}, {4})", project.LanguageServices.ProjectReferenceProvider.TypeName, target.Name, target.TargetFramework, target.Configuration, target.Aspect);
 
                     // Get the exports for the project dependencies
                     var projectExport = new Lazy<ILibraryExport>(() => ProjectExportProviderHelper.GetExportsRecursive(

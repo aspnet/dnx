@@ -39,7 +39,7 @@ namespace Microsoft.Framework.Runtime
             Func<ILibraryInformation, bool> include)
         {
             var dependencyStopWatch = Stopwatch.StartNew();
-            Trace.TraceInformation("[{0}]: Resolving references for '{1}' {2}", typeof(ProjectExportProviderHelper).Name, target.Name, target.Aspect);
+            Logger.TraceInformation("[{0}]: Resolving references for '{1}' {2}", typeof(ProjectExportProviderHelper).Name, target.Name, target.Aspect);
 
             var references = new Dictionary<string, IMetadataReference>(StringComparer.OrdinalIgnoreCase);
             var sourceReferences = new Dictionary<string, ISourceReference>(StringComparer.OrdinalIgnoreCase);
@@ -74,7 +74,7 @@ namespace Microsoft.Framework.Runtime
                     if (libraryExport == null)
                     {
                         // TODO: Failed to resolve dependency so do something useful
-                        Trace.TraceInformation("[{0}]: Failed to resolve dependency '{1}'", typeof(ProjectExportProviderHelper).Name, node.Library.Name);
+                        Logger.TraceInformation("[{0}]: Failed to resolve dependency '{1}'", typeof(ProjectExportProviderHelper).Name, node.Library.Name);
                     }
                     else
                     {
@@ -104,7 +104,7 @@ namespace Microsoft.Framework.Runtime
             }
 
             dependencyStopWatch.Stop();
-            Trace.TraceInformation("[{0}]: Resolved {1} references for '{2}' in {3}ms",
+            Logger.TraceInformation("[{0}]: Resolved {1} references for '{2}' in {3}ms",
                                   typeof(ProjectExportProviderHelper).Name,
                                   references.Count,
                                   target.Name,

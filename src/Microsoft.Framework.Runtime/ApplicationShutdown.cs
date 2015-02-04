@@ -40,7 +40,7 @@ namespace Microsoft.Framework.Runtime
                 // Schedule the callback after the debugger has been detached
                 if (Interlocked.Exchange(ref _scheduledDetachCallback, 1) == 0)
                 {
-                    Trace.TraceInformation("[{0}]: Scheduling shutdown request for debugger detach.", GetType().Name);
+                    Logger.TraceInformation("[{0}]: Scheduling shutdown request for debugger detach.", GetType().Name);
                     _debuggerDetachWatcher.ScheduleDetachCallback();
                 }
             }
@@ -54,9 +54,9 @@ namespace Microsoft.Framework.Runtime
         public void RequestShutdown()
         {
             // Trigger the ShutdownRequested to tell the application to unwind
-            Trace.TraceInformation("[{0}]: Requesting shutdown.", GetType().Name);
+            Logger.TraceInformation("[{0}]: Requesting shutdown.", GetType().Name);
             _cts.Cancel();
-            Trace.TraceInformation("[{0}]: Requested shutdown.", GetType().Name);
+            Logger.TraceInformation("[{0}]: Requested shutdown.", GetType().Name);
         }
     }
 }

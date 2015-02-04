@@ -60,20 +60,20 @@ namespace Microsoft.Framework.Runtime.Roslyn
             var resourceProvider = new CompositeResourceProvider(new IResourceProvider[] { resxProvider, embeddedResourceProvider });
 
             var sw = Stopwatch.StartNew();
-            Trace.TraceInformation("[{0}]: Generating resources for {1}", nameof(CompilationContext), context.Project.Name);
+            Logger.TraceInformation("[{0}]: Generating resources for {1}", nameof(CompilationContext), context.Project.Name);
 
             var resources = resourceProvider.GetResources(context.Project);
 
             sw.Stop();
-            Trace.TraceInformation("[{0}]: Generated resources for {1} in {2}ms", nameof(CompilationContext), context.Project.Name, sw.ElapsedMilliseconds);
+            Logger.TraceInformation("[{0}]: Generated resources for {1} in {2}ms", nameof(CompilationContext), context.Project.Name, sw.ElapsedMilliseconds);
 
             sw = Stopwatch.StartNew();
-            Trace.TraceInformation("[{0}]: Resolving required assembly neutral references for {1}", nameof(CompilationContext), context.Project.Name);
+            Logger.TraceInformation("[{0}]: Resolving required assembly neutral references for {1}", nameof(CompilationContext), context.Project.Name);
 
             var embeddedReferences = EmbeddedReferencesHelper.GetRequiredEmbeddedReferences(context);
             resources.AddEmbeddedReferences(embeddedReferences);
 
-            Trace.TraceInformation("[{0}]: Resolved {1} required assembly neutral references for {2} in {3}ms",
+            Logger.TraceInformation("[{0}]: Resolved {1} required assembly neutral references for {2} in {3}ms",
                 nameof(CompilationContext),
                 embeddedReferences.Count,
                 context.Project.Name,

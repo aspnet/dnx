@@ -2,10 +2,10 @@
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 using System;
-using System.Diagnostics;
 using System.IO;
 using System.Threading;
 using Microsoft.Framework.DesignTimeHost.Models;
+using Microsoft.Framework.Runtime;
 using Newtonsoft.Json;
 
 namespace Microsoft.Framework.DesignTimeHost
@@ -25,7 +25,7 @@ namespace Microsoft.Framework.DesignTimeHost
 
         public void Start()
         {
-            Trace.TraceInformation("[ProcessingQueue]: Start()");
+            Logger.TraceInformation("[ProcessingQueue]: Start()");
             new Thread(ReceiveMessages).Start();
         }
 
@@ -45,7 +45,7 @@ namespace Microsoft.Framework.DesignTimeHost
             }
             catch (Exception ex)
             {
-                Trace.TraceInformation("[ProcessingQueue]: Error sending {0}", ex);
+                Logger.TraceInformation("[ProcessingQueue]: Error sending {0}", ex);
             }
 
             return false;
@@ -57,7 +57,7 @@ namespace Microsoft.Framework.DesignTimeHost
             {
                 try
                 {
-                    Trace.TraceInformation("[ProcessingQueue]: Send({0})", message);
+                    Logger.TraceInformation("[ProcessingQueue]: Send({0})", message);
                     _writer.Write(JsonConvert.SerializeObject(message));
 
                     return true;
@@ -68,7 +68,7 @@ namespace Microsoft.Framework.DesignTimeHost
                 }
                 catch (Exception ex)
                 {
-                    Trace.TraceInformation("[ProcessingQueue]: Error sending {0}", ex);
+                    Logger.TraceInformation("[ProcessingQueue]: Error sending {0}", ex);
                 }
             }
 
@@ -82,7 +82,7 @@ namespace Microsoft.Framework.DesignTimeHost
                 while (true)
                 {
                     var message = JsonConvert.DeserializeObject<Message>(_reader.ReadString());
-                    Trace.TraceInformation("[ProcessingQueue]: OnReceive({0})", message);
+                    Logger.TraceInformation("[ProcessingQueue]: OnReceive({0})", message);
                     OnReceive(message);
                 }
             }
@@ -92,7 +92,7 @@ namespace Microsoft.Framework.DesignTimeHost
             }
             catch (Exception ex)
             {
-                Trace.TraceInformation("[ProcessingQueue]: Error occurred: {0}", ex);
+                Logger.TraceInformation("[ProcessingQueue]: Error occurred: {0}", ex);
             }
         }
     }

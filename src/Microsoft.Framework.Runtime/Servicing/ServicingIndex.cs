@@ -20,12 +20,12 @@ namespace Microsoft.Framework.Runtime.Servicing
             var indexFilePath = Path.Combine(folderPath, "index.txt");
             if (!File.Exists(indexFilePath))
             {
-                Trace.TraceInformation("[{0}]: Servicing index not found at {1}", GetType().Name, indexFilePath);
+                Logger.TraceInformation("[{0}]: Servicing index not found at {1}", GetType().Name, indexFilePath);
                 return;
             }
             else
             {
-                Trace.TraceInformation("[{0}]: Servicing index loaded from {1}", GetType().Name, indexFilePath);
+                Logger.TraceInformation("[{0}]: Servicing index loaded from {1}", GetType().Name, indexFilePath);
             }
             using (var stream = new FileStream(indexFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete))
             {
@@ -43,14 +43,14 @@ namespace Microsoft.Framework.Runtime.Servicing
                         var parts = line.Split(new[] { '=' }, 2);
                         if (parts.Length != 2)
                         {
-                            Trace.TraceInformation("[{0}]: {1}({2}): malformed servicing file", GetType().Name, indexFilePath, lineNumber);
+                            Logger.TraceInformation("[{0}]: {1}({2}): malformed servicing file", GetType().Name, indexFilePath, lineNumber);
                             continue;
                         }
                         parts[0] = parts[0].Trim();
                         parts[1] = parts[1].Trim();
                         if (parts[0].Length == 0 || parts[1].Length == 0)
                         {
-                            Trace.TraceInformation("[{0}]: {1}({2}): malformed servicing file", GetType().Name, indexFilePath, lineNumber);
+                            Logger.TraceInformation("[{0}]: {1}({2}): malformed servicing file", GetType().Name, indexFilePath, lineNumber);
                             continue;
                         }
                         var fields = parts[0].Split(new[] { '|' });
@@ -58,20 +58,20 @@ namespace Microsoft.Framework.Runtime.Servicing
                         {
                             if (fields.Length != 4)
                             {
-                                Trace.TraceInformation("[{0}]: {1}({2}): malformed servicing key", GetType().Name, indexFilePath, lineNumber);
+                                Logger.TraceInformation("[{0}]: {1}({2}): malformed servicing key", GetType().Name, indexFilePath, lineNumber);
                                 continue;
                             }
                             SemanticVersion version;
                             if (!SemanticVersion.TryParseStrict(fields[2], out version))
                             {
-                                Trace.TraceInformation("[{0}]: {1}({2}): malformed servicing version ", GetType().Name, indexFilePath, lineNumber);
+                                Logger.TraceInformation("[{0}]: {1}({2}): malformed servicing version ", GetType().Name, indexFilePath, lineNumber);
                                 continue;
                             }
                             var key = new EntryKey(fields[1], version);
                             Entry entry;
                             if (!_entries.TryGetValue(key, out entry))
                             {
-                                Trace.TraceInformation("[{0}]: Adding entry for {1} {2}", GetType().Name, key.Id, key.Version);
+                                Logger.TraceInformation("[{0}]: Adding entry for {1} {2}", GetType().Name, key.Id, key.Version);
                                 entry = new Entry();
                                 _entries.Add(key, entry);
                             }
@@ -93,7 +93,7 @@ namespace Microsoft.Framework.Runtime.Servicing
                     if (string.Equals(normalizedAssetPath, mapping.AssetPath, StringComparison.OrdinalIgnoreCase))
                     {
                         replacementPath = Path.Combine(_folderPath, mapping.ReplacementPath);
-                        Trace.TraceInformation("[{0}]: Using replacement {4} for {1} {2} {3}", GetType().Name, packageId, packageVersion, assetPath, replacementPath);
+                        Logger.TraceInformation("[{0}]: Using replacement {4} for {1} {2} {3}", GetType().Name, packageId, packageVersion, assetPath, replacementPath);
                         return true;
                     }
                 }

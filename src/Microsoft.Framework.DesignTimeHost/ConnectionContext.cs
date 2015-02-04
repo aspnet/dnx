@@ -57,7 +57,7 @@ namespace Microsoft.Framework.DesignTimeHost
             ApplicationContext applicationContext;
             if (!_contexts.TryGetValue(message.ContextId, out applicationContext))
             {
-                Trace.TraceInformation("[ConnectionContext]: Creating new application context for {0}", message.ContextId);
+                Logger.TraceInformation("[ConnectionContext]: Creating new application context for {0}", message.ContextId);
 
                 applicationContext = new ApplicationContext(_services,
                                                             _cache,
