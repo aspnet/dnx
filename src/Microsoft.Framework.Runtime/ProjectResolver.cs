@@ -42,7 +42,7 @@ namespace Microsoft.Framework.Runtime
 
             return false;
         }
-        
+
         private IEnumerable<string> ResolveSearchPaths(string projectPath, string rootPath)
         {
             var paths = new List<string>
@@ -69,8 +69,7 @@ namespace Microsoft.Framework.Runtime
 
             while (di.Parent != null)
             {
-                if (di.EnumerateFiles(GlobalSettings.GlobalFileName).Any() ||
-                    di.EnumerateFiles("*.sln").Any())
+                if (di.EnumerateFiles(GlobalSettings.GlobalFileName).Any())
                 {
                     return di.FullName;
                 }
