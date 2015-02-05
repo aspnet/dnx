@@ -196,7 +196,12 @@ namespace Microsoft.Framework.DesignTimeHost
                         {
                             _initializedContext = message.Sender;
 
-                            var data = message.Payload.ToObject<InitializeMessage>();
+                            var data = new InitializeMessage
+                            {
+                                Configuration = GetValue<string>(message.Payload, "Configuration"),
+                                ProjectFolder = GetValue<string>(message.Payload, "ProjectFolder")
+                            };
+
                             _appPath.Value = data.ProjectFolder;
                             _configuration.Value = data.Configuration ?? "Debug";
                         }
@@ -213,7 +218,10 @@ namespace Microsoft.Framework.DesignTimeHost
                     break;
                 case "ChangeConfiguration":
                     {
-                        var data = message.Payload.ToObject<ChangeConfigurationMessage>();
+                        var data = new ChangeConfigurationMessage
+                        {
+                            Configuration = GetValue<string>(message.Payload, "Configuration")
+                        };
                         _configuration.Value = data.Configuration;
                     }
                     break;
@@ -234,7 +242,14 @@ namespace Microsoft.Framework.DesignTimeHost
                     break;
                 case "GetCompiledAssembly":
                     {
-                        var libraryKey = message.Payload.ToObject<RemoteLibraryKey>();
+                        var libraryKey = new RemoteLibraryKey
+                        {
+                            Name = GetValue<string>(message.Payload, "Name"),
+                            TargetFramework = GetValue<string>(message.Payload, "TargetFramework"),
+                            Configuration = GetValue<string>(message.Payload, "Configuration"),
+                            Aspect = GetValue<string>(message.Payload, "Aspect")
+                        };
+
                         var targetFramework = new FrameworkName(libraryKey.TargetFramework);
 
                         // Only set this the first time for the project
@@ -986,6 +1001,23 @@ namespace Microsoft.Framework.DesignTimeHost
                     Version = dependency.Library?.Version?.ToString()
                 })
             };
+        }
+
+        private static T GetValue<T>(JToken token, string name)
+        {
+            if (token == null)
+            {
+                return default(T);
+            }
+
+            var obj = token[name];
+
+            if (obj == null)
+            {
+                return default(T);
+            }
+
+            return obj.Value<T>();
         }
 
         private class Trigger<TValue>

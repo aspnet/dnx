@@ -1,9 +1,9 @@
 // Copyright (c) Microsoft Open Technologies, Inc. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
-using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using NuGet;
@@ -57,7 +57,9 @@ namespace Microsoft.Framework.Runtime
             var projectSearchPaths = settings["projects"] ?? settings["sources"];
             var dependencies = settings["dependencies"] as JObject;
 
-            globalSettings.ProjectSearchPaths = projectSearchPaths == null ? new string[] { } : projectSearchPaths.ToObject<string[]>();
+            globalSettings.ProjectSearchPaths = projectSearchPaths == null ?
+                new string[] { } :
+                projectSearchPaths.Select(p => p.Value<string>()).ToArray();
             globalSettings.PackagesPath = settings.Value<string>("packages");
             globalSettings.PackageHashes = new Dictionary<Library, string>();
             globalSettings.FilePath = globalJsonPath;
