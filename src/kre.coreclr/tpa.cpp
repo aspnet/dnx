@@ -6,7 +6,7 @@
 
 BOOL CreateTpaBase(LPWSTR** ppNames, size_t* pcNames, bool bNative)
 {
-    const size_t count = 33;
+    const size_t count = 32;
     LPWSTR* pArray = new LPWSTR[count];
 
     if (bNative)
@@ -39,11 +39,10 @@ BOOL CreateTpaBase(LPWSTR** ppNames, size_t* pcNames, bool bNative)
         pArray[25] = _wcsdup(L"System.Runtime.Loader.ni.dll");
         pArray[26] = _wcsdup(L"System.Text.Encoding.ni.dll");
         pArray[27] = _wcsdup(L"System.Text.Encoding.Extensions.ni.dll");
-        pArray[28] = _wcsdup(L"System.Text.RegularExpressions.ni.dll");
-        pArray[29] = _wcsdup(L"System.Threading.ni.dll");
-        pArray[30] = _wcsdup(L"System.Threading.Overlapped.ni.dll");
-        pArray[31] = _wcsdup(L"System.Threading.Tasks.ni.dll");
-        pArray[32] = _wcsdup(L"System.Threading.ThreadPool.ni.dll");
+        pArray[28] = _wcsdup(L"System.Threading.ni.dll");
+        pArray[29] = _wcsdup(L"System.Threading.Overlapped.ni.dll");
+        pArray[30] = _wcsdup(L"System.Threading.Tasks.ni.dll");
+        pArray[31] = _wcsdup(L"System.Threading.ThreadPool.ni.dll");
     }
     else
     {
@@ -75,11 +74,10 @@ BOOL CreateTpaBase(LPWSTR** ppNames, size_t* pcNames, bool bNative)
         pArray[25] = _wcsdup(L"System.Runtime.Loader.dll");
         pArray[26] = _wcsdup(L"System.Text.Encoding.dll");
         pArray[27] = _wcsdup(L"System.Text.Encoding.Extensions.dll");
-        pArray[28] = _wcsdup(L"System.Text.RegularExpressions.dll");
-        pArray[29] = _wcsdup(L"System.Threading.dll");
-        pArray[30] = _wcsdup(L"System.Threading.Overlapped.dll");
-        pArray[31] = _wcsdup(L"System.Threading.Tasks.dll");
-        pArray[32] = _wcsdup(L"System.Threading.ThreadPool.dll");
+        pArray[28] = _wcsdup(L"System.Threading.dll");
+        pArray[29] = _wcsdup(L"System.Threading.Overlapped.dll");
+        pArray[30] = _wcsdup(L"System.Threading.Tasks.dll");
+        pArray[31] = _wcsdup(L"System.Threading.ThreadPool.dll");
     }
 
     *ppNames = pArray;
