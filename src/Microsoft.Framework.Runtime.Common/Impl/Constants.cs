@@ -14,7 +14,7 @@ namespace Microsoft.Framework.Runtime
         public const string WebConfigRuntimeAppBase = RuntimeNamePrefix + "app-base";
         public const string WebConfigKpmPackagePath = "kpm-package-path";
         public const string WebConfigBootstrapperVersion = "bootstrapper-version";
-        public const string WebConfigPackagesPath = "packages-path";
+        public const string WebConfigRuntimePath = "runtime-path";
         public const string BootstrapperHostName = RuntimeShortName + ".host";
         public const string BootstrapperClrName = RuntimeShortName + ".clr";
         public const string BootstrapperCoreclrManagedName = RuntimeShortName + ".coreclr.managed";

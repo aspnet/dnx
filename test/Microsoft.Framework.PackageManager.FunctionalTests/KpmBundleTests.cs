@@ -98,7 +98,7 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
   </appSettings>
 </configuration>", Constants.WebConfigKpmPackagePath,
                 Constants.WebConfigBootstrapperVersion,
-                Constants.WebConfigPackagesPath,
+                Constants.WebConfigRuntimePath,
                 Constants.WebConfigRuntimeVersion,
                 Constants.WebConfigRuntimeFlavor,
                 Constants.WebConfigRuntimeAppBase);
@@ -197,7 +197,7 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
   </appSettings>
 </configuration>", Constants.WebConfigKpmPackagePath,
                 Constants.WebConfigBootstrapperVersion,
-                Constants.WebConfigPackagesPath,
+                Constants.WebConfigRuntimePath,
                 Constants.WebConfigRuntimeVersion,
                 Constants.WebConfigRuntimeFlavor,
                 Constants.WebConfigRuntimeAppBase);
@@ -689,7 +689,7 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
   </appSettings>
 </configuration>", Constants.WebConfigKpmPackagePath,
                 Constants.WebConfigBootstrapperVersion,
-                Constants.WebConfigPackagesPath,
+                Constants.WebConfigRuntimePath,
                 Constants.WebConfigRuntimeVersion,
                 Constants.WebConfigRuntimeFlavor,
                 Constants.WebConfigRuntimeAppBase);
@@ -765,7 +765,7 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
   </appSettings>
 </configuration>", Constants.WebConfigKpmPackagePath,
                 Constants.WebConfigBootstrapperVersion,
-                Constants.WebConfigPackagesPath,
+                Constants.WebConfigRuntimePath,
                 Constants.WebConfigRuntimeVersion,
                 Constants.WebConfigRuntimeFlavor,
                 Constants.WebConfigRuntimeAppBase);
@@ -786,7 +786,7 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
   </appSettings>
 </configuration>", Constants.WebConfigKpmPackagePath,
                 Constants.WebConfigBootstrapperVersion,
-                Constants.WebConfigPackagesPath,
+                Constants.WebConfigRuntimePath,
                 Constants.WebConfigRuntimeVersion,
                 Constants.WebConfigRuntimeFlavor,
                 Constants.WebConfigRuntimeAppBase);
