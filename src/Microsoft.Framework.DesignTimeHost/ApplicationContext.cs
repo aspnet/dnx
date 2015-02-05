@@ -43,6 +43,7 @@ namespace Microsoft.Framework.DesignTimeHost
         private readonly List<ConnectionContext> _waitingForDiagnostics = new List<ConnectionContext>();
         private readonly Dictionary<FrameworkName, Trigger<Void>> _requiresAssemblies = new Dictionary<FrameworkName, Trigger<Void>>();
         private readonly Dictionary<FrameworkName, ProjectCompilation> _compilations = new Dictionary<FrameworkName, ProjectCompilation>();
+        private readonly PluginHandler _pluginHandler;
 
         public ApplicationContext(IServiceProvider services,
                                   ICache cache,
@@ -55,6 +56,8 @@ namespace Microsoft.Framework.DesignTimeHost
             _cache = cache;
             _cacheContextAccessor = cacheContextAccessor;
             _namedDependencyProvider = namedDependencyProvider;
+            _pluginHandler = new PluginHandler(services, SendPluginMessage);
+
             Id = id;
         }
 
@@ -277,6 +280,24 @@ namespace Microsoft.Framework.DesignTimeHost
                         _requiresCompilation.Value = default(Void);
 
                         _waitingForDiagnostics.Add(message.Sender);
+                    }
+                    break;
+                case "Plugin":
+                    {
+                        var pluginData = message.Payload.ToObject<PluginMessage>();
+
+                        Project project;
+                        if (!Project.TryGetProject(_appPath.Value, out project))
+                        {
+                            throw new InvalidOperationException(
+                                Resources.FormatPlugin_UnableToFindProjectJson(_appPath.Value));
+                        }
+
+                        var loadContextFactory = GetRuntimeLoadContextFactory(project);
+
+                        var assemblyLoadContext = loadContextFactory.Create();
+
+                        _pluginHandler.ProcessMessage(pluginData, assemblyLoadContext);
                     }
                     break;
             }
@@ -615,6 +636,23 @@ namespace Microsoft.Framework.DesignTimeHost
             _waitingForDiagnostics.Clear();
         }
 
+        public void SendPluginMessage(object data)
+        {
+            SendMessage(data, messageType: "Plugin");
+        }
+
+        public void SendMessage(object data, string messageType)
+        {
+            var message = new Message()
+            {
+                ContextId = Id,
+                MessageType = messageType,
+                Payload = JToken.FromObject(data)
+            };
+
+            _initializedContext.Transmit(message);
+        }
+
         private void TriggerProjectOutputsChanged()
         {
             foreach (var pair in _waitingForCompiledAssemblies)
@@ -864,7 +902,8 @@ namespace Microsoft.Framework.DesignTimeHost
 
         private IAssemblyLoadContextFactory GetRuntimeLoadContextFactory(Project project)
         {
-            return new DesignTimeAssemblyLoadContextFactory(project, _appEnv, _hostServices, _cache, _cacheContextAccessor, _namedDependencyProvider);
+            return new DesignTimeAssemblyLoadContextFactory(
+                project, _appEnv, _hostServices, _cache, _cacheContextAccessor, _namedDependencyProvider);
         }
 
         private DependencyInfo ResolveProjectDepencies(Project project, string configuration, FrameworkName frameworkName)
