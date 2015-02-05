@@ -10,11 +10,13 @@ namespace Microsoft.Framework.Runtime
     public class DesignTimeHostCompiler : IDesignTimeHostCompiler
     {
         private readonly ProcessingQueue _queue;
+        private readonly IApplicationShutdown _shutdown;
         private readonly ConcurrentDictionary<int, TaskCompletionSource<CompileResponse>> _compileResponses = new ConcurrentDictionary<int, TaskCompletionSource<CompileResponse>>();
         private readonly TaskCompletionSource<Dictionary<string, int>> _projectContexts = new TaskCompletionSource<Dictionary<string, int>>();
 
         public DesignTimeHostCompiler(IApplicationShutdown shutdown, IFileWatcher watcher, Stream stream)
         {
+            _shutdown = shutdown;
             _queue = new ProcessingQueue(stream);
             _queue.ProjectCompiled += OnProjectCompiled;
             _queue.ProjectsInitialized += ProjectContextsInitialized;
@@ -26,15 +28,51 @@ namespace Microsoft.Framework.Runtime
                     watcher.WatchFile(file);
                 }
             };
+            _queue.Error += OnError;
 
             _queue.Closed += OnClosed;
             _queue.Start();
 
+            var obj = new JObject();
+            obj["Version"] = 1;
+
             _queue.Send(new DesignTimeMessage
             {
                 HostId = "Application",
-                MessageType = "EnumerateProjectContexts"
+                MessageType = "EnumerateProjectContexts",
+                Payload = obj
             });
+        }
+
+        private void OnError(int? contextId, string error)
+        {
+            var exception = new InvalidOperationException(error);
+            if (contextId == null || contextId == -1)
+            {
+                _projectContexts.TrySetException(exception);
+                _shutdown.RequestShutdown();
+            }
+            else
+            {
+                _compileResponses.AddOrUpdate(contextId.Value,
+                _ =>
+                {
+                    var tcs = new TaskCompletionSource<CompileResponse>();
+                    tcs.SetException(exception);
+                    return tcs;
+                },
+                (_, existing) =>
+                {
+                    if (!existing.TrySetException(exception))
+                    {
+                        var tcs = new TaskCompletionSource<CompileResponse>();
+                        tcs.TrySetException(exception);
+                        return tcs;
+                    }
+
+                    return existing;
+                });
+            }
         }
 
         public async Task<CompileResponse> Compile(string projectPath, ILibraryKey library)
@@ -53,6 +91,7 @@ namespace Microsoft.Framework.Runtime
             obj["Configuration"] = library.Configuration;
             obj["TargetFramework"] = library.TargetFramework.ToString();
             obj["Aspect"] = library.Aspect;
+            obj["Version"] = 1;
 
             _queue.Send(new DesignTimeMessage
             {
