@@ -1,8 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Threading;
+using Microsoft.Framework.Runtime.Infrastructure;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 namespace Microsoft.Framework.Runtime
 {
@@ -16,6 +19,7 @@ namespace Microsoft.Framework.Runtime
         public event Action<int> ProjectChanged;
         public event Action Closed;
         public event Action<IEnumerable<string>> ProjectSources;
+        public event Action<int?, string> Error;
 
         public ProcessingQueue(Stream stream)
         {
@@ -32,7 +36,12 @@ namespace Microsoft.Framework.Runtime
         {
             lock (_writer)
             {
-                _writer.Write(JsonConvert.SerializeObject(message));
+                var obj = new JObject();
+                obj["ContextId"] = message.ContextId;
+                obj["HostId"] = message.HostId;
+                obj["MessageType"] = message.MessageType;
+                obj["Payload"] = message.Payload;
+                _writer.Write(obj.ToString(Formatting.None));
             }
         }
 
@@ -42,70 +51,108 @@ namespace Microsoft.Framework.Runtime
             {
                 while (true)
                 {
-                    var messageType = _reader.ReadString();
-                    if (messageType == "Assembly")
+                    var metadata = _reader.ReadString();
+                    var obj = JObject.Parse(metadata);
+
+                    var messageType = obj.Value<string>("MessageType");
+                    switch (messageType)
                     {
-                        var compileResponse = new CompileResponse();
-                        var id = _reader.ReadInt32();
-                        var warningsCount = _reader.ReadInt32();
-                        compileResponse.Warnings = new string[warningsCount];
-                        for (int i = 0; i < warningsCount; i++)
-                        {
-                            compileResponse.Warnings[i] = _reader.ReadString();
-                        }
+                        case "Assembly":
+                            //{
+                            //    "MessageType": "Assembly",
+                            //    "ContextId": 1,
+                            //    "AssemblyPath": null,
+                            //    "Errors": [],
+                            //    "Warnings": [],
+                            //    "Blobs": 2
+                            //}
+                            // Embedded Refs (special)
+                            // Blob 1
+                            // Blob 2
+                            var compileResponse = new CompileResponse();
+                            compileResponse.AssemblyPath = obj.Value<string>("AssemblyPath");
+                            compileResponse.Errors = obj.ValueAsStringArray("Errors");
+                            compileResponse.Warnings = obj.ValueAsStringArray("Warnings");
+                            int contextId = obj.Value<int>("ContextId");
+                            int blobs = obj.Value<int>("Blobs");
 
-                        var errorsCount = _reader.ReadInt32();
-                        compileResponse.Errors = new string[errorsCount];
-                        for (int i = 0; i < errorsCount; i++)
-                        {
-                            compileResponse.Errors[i] = _reader.ReadString();
-                        }
-                        var embeddedReferencesCount = _reader.ReadInt32();
-                        compileResponse.EmbeddedReferences = new Dictionary<string, byte[]>();
-                        for (int i = 0; i < embeddedReferencesCount; i++)
-                        {
-                            var key = _reader.ReadString();
-                            int valueLength = _reader.ReadInt32();
-                            var value = _reader.ReadBytes(valueLength);
-                            compileResponse.EmbeddedReferences[key] = value;
-                        }
+                            var embeddedReferencesCount = _reader.ReadInt32();
+                            compileResponse.EmbeddedReferences = new Dictionary<string, byte[]>();
+                            for (int i = 0; i < embeddedReferencesCount; i++)
+                            {
+                                var key = _reader.ReadString();
+                                int valueLength = _reader.ReadInt32();
+                                var value = _reader.ReadBytes(valueLength);
+                                compileResponse.EmbeddedReferences[key] = value;
+                            }
 
-                        var assemblyBytesLength = _reader.ReadInt32();
-                        compileResponse.AssemblyBytes = _reader.ReadBytes(assemblyBytesLength);
-                        var pdbBytesLength = _reader.ReadInt32();
-                        compileResponse.PdbBytes = _reader.ReadBytes(pdbBytesLength);
+                            var assemblyBytesLength = _reader.ReadInt32();
+                            compileResponse.AssemblyBytes = _reader.ReadBytes(assemblyBytesLength);
+                            var pdbBytesLength = _reader.ReadInt32();
+                            compileResponse.PdbBytes = _reader.ReadBytes(pdbBytesLength);
 
-                        ProjectCompiled(id, compileResponse);
-                    }
-                    else if(messageType == "Sources")
-                    {
-                        int count = _reader.ReadInt32();
-                        var files = new List<string>();
-                        for (int i = 0; i < count; i++)
-                        {
-                            files.Add(_reader.ReadString());
-                        }
+                            // Skip over blobs that aren't understood
+                            for (int i = 0; i < blobs - 2; i++)
+                            {
+                                int length = _reader.ReadInt32();
+                                _reader.ReadBytes(length);
+                            }
 
-                        ProjectSources(files);
-                    }
-                    else if (messageType == "ProjectContexts")
-                    {
-                        int count = _reader.ReadInt32();
-                        var projectContexts = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
-                        for (int i = 0; i < count; i++)
-                        {
-                            string key = _reader.ReadString();
-                            int id = _reader.ReadInt32();
+                            ProjectCompiled(contextId, compileResponse);
 
-                            projectContexts[key] = id;
-                        }
+                            break;
+                        case "Sources":
+                            //{
+                            //    "MessageType": "Sources",
+                            //    "Files": [],
+                            //}
+                            var files = obj.ValueAsStringArray("Files");
+                            ProjectSources(files);
+                            break;
+                        case "ProjectContexts":
+                            //{
+                            //    "MessageType": "ProjectContexts",
+                            //    "Projects": { "path": id },
+                            //}
+                            var projects = obj["Projects"] as JObject;
+                            var projectContexts = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+                            foreach (var entry in projects)
+                            {
+                                projectContexts[entry.Key] = entry.Value.Value<int>();
+                            }
 
-                        ProjectsInitialized(projectContexts);
-                    }
-                    else if (messageType == "ProjectChanged")
-                    {
-                        var id = _reader.ReadInt32();
-                        ProjectChanged(id);
+                            ProjectsInitialized(projectContexts);
+                            break;
+                        case "ProjectChanged":
+                            {
+                                //{
+                                //    "MessageType": "ProjectChanged",
+                                //    "ContextId": id,
+                                //}
+                                int id = obj.Value<int>("ContextId");
+                                ProjectChanged(id);
+                            }
+                            break;
+                        case "Error":
+                            //{
+                            //    "MessageType": "Error",
+                            //    "ContextId": id,
+                            //    "Payload": {
+                            //        "Message": "",
+                            //        "Path": "",
+                            //        "Line": 0,
+                            //        "Column": 1
+                            //    }
+                            //}
+                            {
+                                var id = obj["ContextId"]?.Value<int>();
+                                var message = obj["Payload"].Value<string>("Message");
+
+                                Error(id, message);
+                            }
+                            break;
+                        default:
+                            break;
                     }
                 }
             }
