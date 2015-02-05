@@ -3,7 +3,7 @@
     "description": "ASP.NET 5 runtime infrastructure for loading NuGet packages and projects.",
     "compilationOptions": { "define": [ "LOADER", "TRACE" ], "allowUnsafe": true, "warningsAsErrors": true },
     "dependencies": {
-        "System.Reflection.Metadata": "1.0.17-beta",
+        "System.Reflection.Metadata": "1.0.18-beta",
         "Microsoft.Framework.Runtime.Loader": "1.0.0-*",
         "Microsoft.Framework.Runtime.Common": { "version": "1.0.0-*", "type": "build" },
         "Microsoft.Framework.Runtime.Interfaces": { "version": "1.0.0-*", "type": "build" },
