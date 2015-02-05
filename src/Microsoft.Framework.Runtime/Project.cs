@@ -315,13 +315,13 @@ namespace Microsoft.Framework.Runtime
             }
 
             project.Description = GetValue<string>(rawProject, "description");
-            project.Authors = authors == null ? new string[] { } : authors.Select(a => a.Value<string>()).ToArray();
+            project.Authors = authors == null ? new string[] { } : authors.ValueAsArray<string>();
             project.Dependencies = new List<LibraryDependency>();
             project.WebRoot = GetValue<string>(rawProject, "webroot");
             project.EntryPoint = GetValue<string>(rawProject, "entryPoint");
             project.ProjectUrl = GetValue<string>(rawProject, "projectUrl");
             project.RequireLicenseAcceptance = GetValue<bool?>(rawProject, "requireLicenseAcceptance") ?? false;
-            project.Tags = tags == null ? new string[] { } : tags.Select(t => t.Value<string>()).ToArray();
+            project.Tags = tags == null ? new string[] { } : tags.ValueAsArray<string>();
             project.IsLoadable = GetValue<bool?>(rawProject, "loadable") ?? true;
 
             // TODO: Move this to the dependencies node
@@ -375,7 +375,7 @@ namespace Microsoft.Framework.Runtime
                     }
                     else if (value.Type == JTokenType.Array)
                     {
-                        project.Scripts[script.Key] = script.Value.Select(s => s.Value<string>()).ToArray();
+                        project.Scripts[script.Key] = script.Value.ValueAsArray<string>();
                     }
                     else
                     {
@@ -443,7 +443,7 @@ namespace Microsoft.Framework.Runtime
             }
 
             // Assume it's an array (it should explode if it's not)
-            return token.Select(t => t.Value<string>()).SelectMany(GetSourcesSplit);
+            return token.ValueAsArray<string>().SelectMany(GetSourcesSplit);
         }
 
         private static string FolderToPattern(string candidate, string projectDir)
@@ -824,7 +824,7 @@ namespace Microsoft.Framework.Runtime
 
             var options = new CompilerOptions
             {
-                Defines = rawOptions["define"]?.Select(d => d.Value<string>()),
+                Defines = rawOptions.ValueAsArray<string>("define"),
                 LanguageVersion = GetValue<string>(rawOptions, "languageVersion"),
                 AllowUnsafe = GetValue<bool?>(rawOptions, "allowUnsafe"),
                 Platform = GetValue<string>(rawOptions, "platform"),
