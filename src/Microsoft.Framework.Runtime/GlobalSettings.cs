@@ -59,7 +59,7 @@ namespace Microsoft.Framework.Runtime
 
             globalSettings.ProjectSearchPaths = projectSearchPaths == null ?
                 new string[] { } :
-                projectSearchPaths.Select(p => p.Value<string>()).ToArray();
+                projectSearchPaths.ValueAsArray<string>();
             globalSettings.PackagesPath = settings.Value<string>("packages");
             globalSettings.PackageHashes = new Dictionary<Library, string>();
             globalSettings.FilePath = globalJsonPath;
