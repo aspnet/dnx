@@ -357,7 +357,7 @@ namespace Microsoft.Framework.PackageManager.Bundle
             {
                 { Runtime.Constants.WebConfigKpmPackagePath, relativePackagesPath},
                 { Runtime.Constants.WebConfigBootstrapperVersion, GetBootstrapperVersion(root)},
-                { Runtime.Constants.WebConfigPackagesPath, relativePackagesPath},
+                { Runtime.Constants.WebConfigRuntimePath, relativePackagesPath},
                 { Runtime.Constants.WebConfigRuntimeVersion, GetRuntimeVersion(defaultRuntime)},
                 { Runtime.Constants.WebConfigRuntimeFlavor, GetRuntimeFlavor(defaultRuntime)},
                 { Runtime.Constants.WebConfigRuntimeAppBase, _applicationBase},
