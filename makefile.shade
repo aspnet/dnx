@@ -232,90 +232,6 @@ var RC_FILES = '${FindAllFiles("Resource.rc", BOOTSTRAPPER_EXE_NAME, BOOTSTRAPPE
 
 #xunit-test target='test' if='Directory.Exists("test")'
     k-test each='var projectFile in Files.Include("test/**/project.json")' if='NEW_RUNTIME'
-  
-#test-package
-    var helloWorld = '${Path.Combine(SAMPLES_DIR, "HelloWorld")}'
-    var aspnetCore50Tools = '${Path.Combine(TEST_RESULTS, RUNTIME_COMMON_NAME, "tools", "aspnetcore50")}'
-
-    var nupkgPaths = '${new string[] 
-    {
-        Files.Include(Path.Combine(BUILD_DIR2, RUNTIME_CLR_WIN_x86_NAME + ".*.nupkg")).Single(),
-        Files.Include(Path.Combine(BUILD_DIR2, RUNTIME_CLR_WIN_x64_NAME + ".*.nupkg")).Single(),
-        Files.Include(Path.Combine(BUILD_DIR2, RUNTIME_CORECLR_WIN_x86_NAME + ".*.nupkg")).Single(),
-        Files.Include(Path.Combine(BUILD_DIR2, RUNTIME_CORECLR_WIN_x64_NAME + ".*.nupkg")).Single(),
-    }}'
-
-    for each='var nupkgPath in nupkgPaths' 
-        @{
-            var runtimeName = Path.GetFileNameWithoutExtension(nupkgPath);
-            var runtimePath = Path.Combine(TEST_RESULTS, RUNTIME_COMMON_NAME, runtimeName);
-
-            Log.Info("Unpacking " + nupkgPath);
-            if (Directory.Exists(runtimePath))
-            {
-                Directory.Delete(runtimePath, recursive:true);
-            }
-
-            Directory.CreateDirectory(runtimePath);
-
-            System.IO.Compression.ZipFile.ExtractToDirectory(
-                nupkgPath,
-                runtimePath);
-        }
-
-    @{
-        Action<string> runWithFramework = nupkgPath => {
-            var envPath = Environment.GetEnvironmentVariable("PATH");
-            try
-            {
-                var runtimeName = Path.GetFileNameWithoutExtension(nupkgPath);
-                var runtimePath = Path.Combine(TEST_RESULTS, RUNTIME_COMMON_NAME, runtimeName);
-
-                var bootstrapperPath = Path.Combine(runtimePath, "bin", BOOTSTRAPPER_EXE_NAME);
-                var kpmPath = Path.Combine(runtimePath, "bin", "kpm");
-
-                Log.Info("runtimeName = " + runtimeName);
-                Log.Info("KRE_APPBASE = " + helloWorld);
-
-                Exec(bootstrapperPath, helloWorld + " run");
-
-                var commands = new [] { "build" };
-                foreach(var cmd in commands)
-                {
-                    Exec("cmd", "/C " + kpmPath + " " + cmd + " " + helloWorld);
-                    Directory.Delete(Path.Combine(helloWorld, "bin"), true);
-                }
-            }
-            finally
-            {
-                Environment.SetEnvironmentVariable("PATH", envPath);
-                Environment.SetEnvironmentVariable("KRE_APPBASE", null);
-            }
-        };
-        
-        Action<string> crossGen = nupkgPath => {        
-            var runtimeName = Path.GetFileNameWithoutExtension(nupkgPath);
-            var runtimePath = Path.Combine(TEST_RESULTS, RUNTIME_COMMON_NAME, runtimeName);
-
-            var kPath = Path.Combine(runtimePath, "bin", "k");
-
-            var kTools = new[] {
-                Path.Combine(runtimePath, "bin", "lib", "Microsoft.Framework.Project"),
-                Path.Combine(runtimePath, "bin", "lib", "Microsoft.Framework.PackageManager"),
-                Path.Combine(runtimePath, "bin", "lib", "Microsoft.Framework.DesignTimeHost"),
-            };
-
-            Log.Info("runtimeName = " + runtimeName);
-            
-            foreach(var kTool in kTools) {
-                Exec("cmd", string.Format("/C \"\"{0}\" crossgen --in \"{1}\"\"", kPath, kTool));
-            }
-        };
-
-        foreach(var nupkgPath in nupkgPaths) { 
-            runWithFramework(nupkgPath);
-        }
-    }
 
 #ensure-latest-package
     @{
@@ -355,7 +271,7 @@ var RC_FILES = '${FindAllFiles("Resource.rc", BOOTSTRAPPER_EXE_NAME, BOOTSTRAPPE
         }
     }
     
-#verify-package .ensure-latest-package .test-package target='verify'
+#verify-package .ensure-latest-package target='verify'
 
 #clean-sdk-dir
     directory each='var delete in ALL_TARGETS'

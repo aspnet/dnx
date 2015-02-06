@@ -2,6 +2,7 @@
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 using System.Collections.Generic;
+using System.IO;
 using Microsoft.Framework.FunctionalTestUtils;
 using Microsoft.Framework.Runtime;
 using Xunit;
@@ -122,6 +123,49 @@ namespace Microsoft.Framework.ApplicationHost
 
                 Assert.NotEqual(0, exitCode);
                 Assert.Contains("Unable to load application or execute command 'invalid'.", stdErr);
+            }
+        }
+
+        [Theory]
+        [MemberData("RuntimeHomeDirs")]
+        public void KCommandRunsSampleAppGivenAppBase(DisposableDir runtimeHomeDir)
+        {
+            using (runtimeHomeDir)
+            using (var samplePath = TestUtils.GetSamplesFolder())
+            {
+                var sampleAppRoot = Path.Combine(samplePath, "HelloWorld");
+                string stdOut, stdErr;
+                var exitCode = KCommandTestUtils.ExecKCommand(
+                    runtimeHomeDir,
+                    subcommand: "run",
+                    arguments: string.Empty,
+                    stdOut: out stdOut,
+                    stdErr: out stdErr,
+                    environment: new Dictionary<string, string> { { EnvironmentNames.AppBase, sampleAppRoot } });
+
+                Assert.Equal(0, exitCode);
+            }
+        }
+
+        [Theory]
+        [MemberData("RuntimeHomeDirs")]
+        public void KCommandRunsSampleAppUsingDefaultAppBase(DisposableDir runtimeHomeDir)
+        {
+            using (runtimeHomeDir)
+            using (var samplePath = TestUtils.GetSamplesFolder())
+            {
+                var sampleAppRoot = Path.Combine(samplePath, "HelloWorld");
+                string stdOut, stdErr;
+                var exitCode = KCommandTestUtils.ExecKCommand(
+                    runtimeHomeDir,
+                    subcommand: "run",
+                    arguments: string.Empty,
+                    stdOut: out stdOut,
+                    stdErr: out stdErr,
+                    environment: new Dictionary<string, string> { { EnvironmentNames.AppBase, null } },
+                    workingDir: sampleAppRoot);
+
+                Assert.Equal(0, exitCode);
             }
         }
     }

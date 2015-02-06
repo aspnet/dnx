@@ -91,6 +91,15 @@ namespace Microsoft.Framework.FunctionalTestUtils
             return targetSolutionPath;
         }
 
+        public static DisposableDir GetSamplesFolder()
+        {
+            var rootDir = ProjectResolver.ResolveRootDirectory(Directory.GetCurrentDirectory());
+            var sourceFolderPath = Path.Combine(rootDir, "samples");
+            var targetFolderPath = CreateTempDir();
+            CopyFolder(sourceFolderPath, targetFolderPath);
+            return targetFolderPath;
+        }
+
         public static void CopyFolder(string sourceFolder, string targetFolder)
         {
             if (!Directory.Exists(targetFolder))
