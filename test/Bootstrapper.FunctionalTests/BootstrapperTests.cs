@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.IO;
 using Microsoft.Framework.FunctionalTestUtils;
 using Microsoft.Framework.PackageManager;
+using Microsoft.Framework.Runtime;
 using Xunit;
 
 namespace Bootstrapper.FunctionalTests
@@ -87,7 +88,8 @@ namespace Bootstrapper.FunctionalTests
                     runtimeHomeDir,
                     arguments: string.Format("{0} run", sampleAppRoot),
                     stdOut: out stdOut,
-                    stdErr: out stdErr);
+                    stdErr: out stdErr,
+                    environment: new Dictionary<string, string> { { EnvironmentNames.Trace, null } });
 
                 Assert.Equal(0, exitCode);
                 Assert.Equal(@"Hello World!
@@ -122,7 +124,8 @@ command
                     runtimeHomeDir,
                     arguments: Path.Combine(sampleAppRoot, "bin", "Release", "aspnet50", "HelloWorld.dll"),
                     stdOut: out stdOut,
-                    stdErr: out stdErr);
+                    stdErr: out stdErr,
+                    environment: new Dictionary<string, string> { { EnvironmentNames.Trace, null } });
 
                 Assert.Equal(0, exitCode);
                 Assert.Equal(@"Hello World!
@@ -151,7 +154,8 @@ Hello, code!
                     runtimeHomeDir,
                     arguments: Path.Combine(sampleAppRoot, "bin", "Release", "aspnetcore50", "HelloWorld.dll"),
                     stdOut: out stdOut,
-                    stdErr: out stdErr);
+                    stdErr: out stdErr,
+                    environment: new Dictionary<string, string> { { EnvironmentNames.Trace, null } });
 
                 Assert.Equal(0, exitCode);
                 Assert.Equal(@"Hello World!
