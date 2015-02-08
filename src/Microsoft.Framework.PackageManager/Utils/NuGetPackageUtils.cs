@@ -31,16 +31,23 @@ namespace Microsoft.Framework.PackageManager
             {
                 // If this is the first process trying to install the target nupkg, go ahead
                 // After this process successfully installs the package, all other processes
-                // waiting on this lock don't need to install it again
-                if (createdNewLock)
+                // waiting on this lock don't need to install it again.
+                if (createdNewLock && !File.Exists(targetNupkg))
                 {
-                    Directory.CreateDirectory(targetPath);
+                    // Extracting to the {id}/{version} has an issue with concurrent installs - when a package has been partially
+                    // extracted, the Restore Operation can inadvertly conclude the package is available locally and proceed to read
+                    // partially written package contents. To avoid this we'll extract the package to a sibling directory and Move it 
+                    // to the target path.
+                    var extractPath = Path.Combine(targetPath, "..", Path.GetRandomFileName());
+                    Directory.CreateDirectory(extractPath);
+                    targetNupkg = Path.Combine(extractPath, Path.GetFileName(targetNupkg));
                     using (var nupkgStream = new FileStream(targetNupkg, FileMode.Create, FileAccess.ReadWrite, FileShare.ReadWrite | FileShare.Delete))
                     {
                         await stream.CopyToAsync(nupkgStream);
                         nupkgStream.Seek(0, SeekOrigin.Begin);
 
-                        ExtractPackage(targetPath, nupkgStream);
+                        ExtractPackage(extractPath, nupkgStream);
+                        Directory.Move(extractPath, targetPath);
                     }
 
                     // Fixup the casing of the nuspec on disk to match what we expect
