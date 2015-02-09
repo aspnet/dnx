@@ -28,6 +28,8 @@ namespace Microsoft.Framework.PackageManager.Bundle
 
         public bool Native { get; set; }
 
+        public bool OneFolder { get; set; }
+
         public Reports Reports { get; set; }
     }
 }

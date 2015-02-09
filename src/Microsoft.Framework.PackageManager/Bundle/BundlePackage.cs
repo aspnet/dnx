@@ -35,6 +35,17 @@ namespace Microsoft.Framework.PackageManager.Bundle
 
         private void Emit(BundleRoot root, IEnumerable<PackageAssembly> assemblies)
         {
+            if (root.OneFolder)
+            {
+                foreach (var a in assemblies)
+                {
+                    var dest = Path.Combine(root.OutputPath, Path.GetFileName(a.Path));
+                    File.Copy(a.Path, dest, overwrite: true);
+                }
+                
+                return;
+            }
+
             var resolver = new DefaultPackagePathResolver(root.TargetPackagesPath);
 
             TargetPath = resolver.GetInstallPath(Library.Name, Library.Version);

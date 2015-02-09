@@ -37,6 +37,7 @@ namespace Microsoft.Framework.PackageManager.Bundle
 
         public bool Overwrite { get; set; }
         public bool NoSource { get; set; }
+        public bool OneFolder { get; set; }
         public string Configuration { get; set; }
 
         public IList<BundleRuntime> Runtimes { get; set; }
@@ -52,6 +53,8 @@ namespace Microsoft.Framework.PackageManager.Bundle
         public void Emit()
         {
             Reports.Quiet.WriteLine("Copying to output path {0}", OutputPath);
+            
+            Directory.CreateDirectory(OutputPath);
 
             var mainProject = Projects.Single(project => project.Name == _project.Name);
 
@@ -70,15 +73,18 @@ namespace Microsoft.Framework.PackageManager.Bundle
                 deploymentRuntime.Emit(this);
             }
 
-            mainProject.PostProcess(this);
+            if (!OneFolder)
+            {
+                mainProject.PostProcess(this);
 
-            WriteGlobalJson();
+                WriteGlobalJson();
 
-            // Generate .cmd files
-            GenerateBatchFiles();
+                // Generate .cmd files
+                GenerateBatchFiles();
 
-            // Generate executables (bash scripts without .sh extension) for *nix
-            GenerateBashScripts();
+                // Generate executables (bash scripts without .sh extension) for *nix
+                GenerateBashScripts();
+            }
         }
 
         private void GenerateBatchFiles()

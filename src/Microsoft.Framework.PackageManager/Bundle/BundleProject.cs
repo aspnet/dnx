@@ -46,10 +46,15 @@ namespace Microsoft.Framework.PackageManager.Bundle
             {
                 EmitNupkg(root);
             }
+            else if (root.OneFolder)
+            {
+                EmitAssembly(root);
+            }
             else
             {
                 EmitSource(root);
             }
+
             root.Reports.Quiet.WriteLine();
         }
 
@@ -82,6 +87,40 @@ namespace Microsoft.Framework.PackageManager.Bundle
             UpdateWebRoot(root, TargetPath);
 
             _applicationBase = Path.Combine("..", BundleRoot.AppRootName, "src", project.Name);
+        }
+
+        private void EmitAssembly(BundleRoot root)
+        {
+            Runtime.Project project;
+            if (!_projectResolver.TryResolveProject(_libraryDescription.Identity.Name, out project))
+            {
+                throw new Exception("TODO: unable to resolve project named " + _libraryDescription.Identity.Name);
+            }
+
+            var buildOptions = new BuildOptions();
+            buildOptions.ProjectDir = project.ProjectDirectory;
+            buildOptions.OutputDir = Path.Combine(project.ProjectDirectory, "bin");
+            buildOptions.Configurations.Add(root.Configuration);
+            buildOptions.Reports = root.Reports;
+            buildOptions.GeneratePackages = false;
+            var buildManager = new BuildManager(root.HostServices, buildOptions);
+            if (!buildManager.Build())
+            {
+                return;
+            }
+
+            var contexts = root.LibraryDependencyContexts[_libraryDescription.Identity];
+
+            foreach (var context in contexts)
+            {
+                var outputDllPath = Path.Combine(buildOptions.OutputDir, root.Configuration, VersionUtility.GetShortFrameworkName(context.FrameworkName));
+
+                foreach (var path in Directory.EnumerateFiles(outputDllPath, "*.*", SearchOption.AllDirectories))
+                {
+                    var dest = Path.Combine(root.OutputPath, Path.GetFileName(path));
+                    File.Copy(path, dest, overwrite: true);
+                }
+            }
         }
 
         private void EmitNupkg(BundleRoot root)

@@ -101,6 +101,8 @@ namespace Microsoft.Framework.PackageManager
                     CommandOptionType.NoValue);
                 var optionNoSource = c.Option("--no-source", "Compiles the source files into NuGet packages",
                     CommandOptionType.NoValue);
+                var optionOneFolder = c.Option("--one-folder", "Compiles the source files into dlls and copies all of the output into a single folder",
+                    CommandOptionType.NoValue);
                 var optionRuntime = c.Option("--runtime <RUNTIME>", "Name or full path of the runtime folder to include",
                     CommandOptionType.MultipleValue);
                 var optionNative = c.Option("--native", "Build and include native images. User must provide targeted CoreCLR runtime versions along with this option.",
@@ -126,6 +128,7 @@ namespace Microsoft.Framework.PackageManager
                         WwwRootOut = optionWwwRootOut.Value() ?? optionWwwRoot.Value(),
                         Overwrite = optionOverwrite.HasValue(),
                         NoSource = optionNoSource.HasValue(),
+                        OneFolder = optionOneFolder.HasValue(),
                         Runtimes = optionRuntime.HasValue() ?
                             string.Join(";", optionRuntime.Values).
                                 Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries) :

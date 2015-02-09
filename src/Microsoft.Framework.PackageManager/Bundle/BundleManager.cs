@@ -87,7 +87,8 @@ namespace Microsoft.Framework.PackageManager.Bundle
             {
                 Overwrite = _options.Overwrite,
                 Configuration = _options.Configuration,
-                NoSource = _options.NoSource
+                NoSource = _options.NoSource,
+                OneFolder = _options.OneFolder
             };
 
             Func<string, string> getVariable = key =>
@@ -219,7 +220,8 @@ namespace Microsoft.Framework.PackageManager.Bundle
 
                 foreach (var libraryDescription in dependencyContext.ProjectReferenceDependencyProvider.Dependencies)
                 {
-                    if (!root.Projects.Any(p => p.Name == libraryDescription.Identity.Name))
+                    IList<DependencyContext> contexts;
+                    if (!root.LibraryDependencyContexts.TryGetValue(libraryDescription.Identity, out contexts))
                     {
                         var bundleProject = new BundleProject(
                             dependencyContext.ProjectReferenceDependencyProvider,
@@ -231,8 +233,13 @@ namespace Microsoft.Framework.PackageManager.Bundle
                             bundleProject.WwwRoot = _options.WwwRoot;
                             bundleProject.WwwRootOut = _options.WwwRootOut;
                         }
+                        
                         root.Projects.Add(bundleProject);
+                        contexts = new List<DependencyContext>();
+                        root.LibraryDependencyContexts[libraryDescription.Identity] = contexts;
                     }
+                    
+                    contexts.Add(dependencyContext);
                 }
             }
 
