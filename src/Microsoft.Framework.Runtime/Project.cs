@@ -7,6 +7,8 @@ using System.IO;
 using System.Linq;
 using System.Runtime.Versioning;
 using System.Text;
+using Microsoft.Framework.Runtime.FileGlobbing;
+using Microsoft.Framework.Runtime.Helpers;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using NuGet;
@@ -21,15 +23,6 @@ namespace Microsoft.Framework.Runtime
         internal static string DefaultProjectReferenceProviderType = "Microsoft.Framework.Runtime.Roslyn.RoslynProjectReferenceProvider";
 
         private static readonly CompilerOptions _emptyOptions = new CompilerOptions();
-        private static readonly char[] _sourceSeparator = new[] { ';' };
-
-        internal static readonly string[] _defaultSourcePatterns = new[] { @"**\*.cs" };
-        internal static readonly string[] _defaultExcludePatterns = new[] { @"obj", @"bin" };
-        internal static readonly string[] _defaultBundleExcludePatterns = new[] { @"obj", @"bin", @"**\.*\**" };
-        internal static readonly string[] _defaultPreprocessPatterns = new[] { @"compiler\preprocess\**\*.cs" };
-        internal static readonly string[] _defaultSharedPatterns = new[] { @"compiler\shared\**\*.cs" };
-        internal static readonly string[] _defaultResourcesPatterns = new[] { @"compiler\resources\**\*" };
-        internal static readonly string[] _defaultContentsPatterns = new[] { @"**\*" };
 
         private readonly Dictionary<FrameworkName, TargetFrameworkInformation> _targetFrameworks = new Dictionary<FrameworkName, TargetFrameworkInformation>();
         private readonly Dictionary<FrameworkName, CompilerOptions> _compilationOptions = new Dictionary<FrameworkName, CompilerOptions>();
@@ -41,8 +34,6 @@ namespace Microsoft.Framework.Runtime
 
         public Project()
         {
-            Commands = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-            Scripts = new Dictionary<string, IEnumerable<string>>(StringComparer.OrdinalIgnoreCase);
         }
 
         public string ProjectFilePath { get; private set; }
@@ -81,142 +72,11 @@ namespace Microsoft.Framework.Runtime
 
         public string[] Tags { get; private set; }
 
-        internal IEnumerable<string> SourcePatterns { get; set; }
+        public ProjectFilesCollection Files { get; private set; }
 
-        internal IEnumerable<string> ExcludePatterns { get; set; }
+        public IDictionary<string, string> Commands { get; } = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
-        internal IEnumerable<string> BundleExcludePatterns { get; set; }
-
-        internal IEnumerable<string> PreprocessPatterns { get; set; }
-
-        internal IEnumerable<string> SharedPatterns { get; set; }
-
-        internal IEnumerable<string> ResourcesPatterns { get; set; }
-
-        internal IEnumerable<string> ContentsPatterns { get; set; }
-
-        public IEnumerable<string> SourceFiles
-        {
-            get
-            {
-                string path = ProjectDirectory;
-
-                var files = Enumerable.Empty<string>();
-
-                var includeFiles = SourcePatterns
-                    .SelectMany(pattern => PathResolver.PerformWildcardSearch(path, pattern))
-                    .ToArray();
-
-                var excludePatterns = PreprocessPatterns.Concat(SharedPatterns).Concat(ResourcesPatterns).Concat(ExcludePatterns)
-                    .Select(pattern => PathResolver.NormalizeWildcardForExcludedFiles(path, pattern))
-                    .ToArray();
-
-                var excludeFiles = PathResolver.GetMatches(
-                    includeFiles,
-                    x => x,
-                    excludePatterns.Select(x => Path.Combine(path, x)))
-                    .ToArray();
-
-                return files.Concat(includeFiles.Except(excludeFiles)).Distinct().ToArray();
-            }
-        }
-
-        public IEnumerable<string> PreprocessSourceFiles
-        {
-            get
-            {
-                string path = ProjectDirectory;
-
-                var files = Enumerable.Empty<string>();
-
-                var includeFiles = PreprocessPatterns
-                    .SelectMany(pattern => PathResolver.PerformWildcardSearch(path, pattern))
-                    .ToArray();
-
-                var excludePatterns = SharedPatterns.Concat(ResourcesPatterns).Concat(ExcludePatterns)
-                    .Select(pattern => PathResolver.NormalizeWildcardForExcludedFiles(path, pattern))
-                    .ToArray();
-
-                var excludeFiles = PathResolver.GetMatches(
-                    includeFiles,
-                    x => x,
-                    excludePatterns.Select(x => Path.Combine(path, x)))
-                    .ToArray();
-
-                return files.Concat(includeFiles.Except(excludeFiles)).Distinct().ToArray();
-            }
-        }
-
-        public IEnumerable<string> BundleExcludeFiles
-        {
-            get
-            {
-                string path = ProjectDirectory;
-
-                var bundleExcludeFiles = BundleExcludePatterns
-                    .SelectMany(pattern => PathResolver.PerformWildcardSearch(path, pattern))
-                    .ToArray();
-
-                return bundleExcludeFiles;
-            }
-        }
-
-        public IEnumerable<string> ResourceFiles
-        {
-            get
-            {
-                string path = ProjectDirectory;
-
-                var includeFiles = ResourcesPatterns
-                    .SelectMany(pattern => PathResolver.PerformWildcardSearch(path, pattern))
-                    .ToArray();
-
-                return includeFiles;
-            }
-        }
-
-        public IEnumerable<string> SharedFiles
-        {
-            get
-            {
-                string path = ProjectDirectory;
-
-                var includeFiles = SharedPatterns
-                    .SelectMany(pattern => PathResolver.PerformWildcardSearch(path, pattern))
-                    .ToArray();
-
-                return includeFiles;
-            }
-        }
-
-        public IEnumerable<string> ContentFiles
-        {
-            get
-            {
-                string path = ProjectDirectory;
-
-                var includeFiles = ContentsPatterns
-                    .SelectMany(pattern => PathResolver.PerformWildcardSearch(path, pattern))
-                    .ToArray();
-
-                var excludePatterns = PreprocessPatterns.Concat(SharedPatterns).Concat(ResourcesPatterns)
-                    .Concat(BundleExcludePatterns).Concat(SourcePatterns)
-                    .Select(pattern => PathResolver.NormalizeWildcardForExcludedFiles(path, pattern))
-                    .ToArray();
-
-                var excludeFiles = PathResolver.GetMatches(
-                    includeFiles,
-                    x => x,
-                    excludePatterns.Select(x => Path.Combine(path, x)))
-                    .ToArray();
-
-                return includeFiles.Except(excludeFiles).Distinct().ToArray();
-            }
-        }
-
-        public IDictionary<string, string> Commands { get; private set; }
-
-        public IDictionary<string, IEnumerable<string>> Scripts { get; private set; }
+        public IDictionary<string, IEnumerable<string>> Scripts { get; } = new Dictionary<string, IEnumerable<string>>(StringComparer.OrdinalIgnoreCase);
 
         public IEnumerable<TargetFrameworkInformation> GetTargetFrameworks()
         {
@@ -256,14 +116,14 @@ namespace Microsoft.Framework.Runtime
             }
 
             // Assume the directory name is the project name if none was specified
-            var projectName = GetDirectoryName(path);
+            var projectName = PathUtility.GetDirectoryName(path);
             projectPath = Path.GetFullPath(projectPath);
 
             try
             {
                 using (var stream = File.OpenRead(projectPath))
                 {
-                    project = GetProject(stream, projectName, projectPath);
+                    project = GetProjectFromStream(stream, projectName, projectPath);
                 }
             }
             catch (JsonReaderException ex)
@@ -277,17 +137,17 @@ namespace Microsoft.Framework.Runtime
         public static Project GetProject(string json, string projectName, string projectPath)
         {
             var ms = new MemoryStream(Encoding.UTF8.GetBytes(json));
-            return GetProject(ms, projectName, projectPath);
+            return GetProjectFromStream(ms, projectName, projectPath);
         }
 
-        public static Project GetProject(Stream stream, string projectName, string projectPath)
+        internal static Project GetProjectFromStream(Stream stream, string projectName, string projectPath)
         {
             var project = new Project();
 
             var reader = new JsonTextReader(new StreamReader(stream));
             var rawProject = JObject.Load(reader);
 
-            // Metadata properties
+            // Meta-data properties
             var version = rawProject["version"];
             var authors = rawProject["authors"];
             var tags = rawProject["tags"];
@@ -314,27 +174,21 @@ namespace Microsoft.Framework.Runtime
                 }
             }
 
-            project.Description = GetValue<string>(rawProject, "description");
+            project.Description = rawProject.GetValue<string>("description");
             project.Authors = authors == null ? new string[] { } : authors.ValueAsArray<string>();
             project.Dependencies = new List<LibraryDependency>();
-            project.WebRoot = GetValue<string>(rawProject, "webroot");
-            project.EntryPoint = GetValue<string>(rawProject, "entryPoint");
-            project.ProjectUrl = GetValue<string>(rawProject, "projectUrl");
-            project.RequireLicenseAcceptance = GetValue<bool?>(rawProject, "requireLicenseAcceptance") ?? false;
+            project.WebRoot = rawProject.GetValue<string>("webroot");
+            project.EntryPoint = rawProject.GetValue<string>("entryPoint");
+            project.ProjectUrl = rawProject.GetValue<string>("projectUrl");
+            project.RequireLicenseAcceptance = rawProject.GetValue<bool?>("requireLicenseAcceptance") ?? false;
             project.Tags = tags == null ? new string[] { } : tags.ValueAsArray<string>();
-            project.IsLoadable = GetValue<bool?>(rawProject, "loadable") ?? true;
+            project.IsLoadable = rawProject.GetValue<bool?>("loadable") ?? true;
 
             // TODO: Move this to the dependencies node
-            project.EmbedInteropTypes = GetValue<bool>(rawProject, "embedInteropTypes");
+            project.EmbedInteropTypes = rawProject.GetValue<bool>("embedInteropTypes");
 
-            // Source file patterns
-            project.SourcePatterns = GetSourcePattern(project, rawProject, "code", _defaultSourcePatterns);
-            project.ExcludePatterns = GetSourcePattern(project, rawProject, "exclude", _defaultExcludePatterns);
-            project.BundleExcludePatterns = GetSourcePattern(project, rawProject, "bundleExclude", _defaultBundleExcludePatterns);
-            project.PreprocessPatterns = GetSourcePattern(project, rawProject, "preprocess", _defaultPreprocessPatterns);
-            project.SharedPatterns = GetSourcePattern(project, rawProject, "shared", _defaultSharedPatterns);
-            project.ResourcesPatterns = GetSourcePattern(project, rawProject, "resources", _defaultResourcesPatterns);
-            project.ContentsPatterns = GetSourcePattern(project, rawProject, "files", _defaultContentsPatterns);
+            // Project files
+            project.Files = new ProjectFilesCollection(rawProject, project.ProjectDirectory);
 
             // Set the default loader information for projects
             var languageServicesAssembly = DefaultLanguageServicesAssembly;
@@ -345,9 +199,9 @@ namespace Microsoft.Framework.Runtime
 
             if (languageInfo != null)
             {
-                languageName = GetValue<string>(languageInfo, "name");
-                languageServicesAssembly = GetValue<string>(languageInfo, "assembly");
-                projectReferenceProviderType = GetValue<string>(languageInfo, "projectReferenceProviderType");
+                languageName = languageInfo.GetValue<string>("name");
+                languageServicesAssembly = languageInfo.GetValue<string>("assembly");
+                projectReferenceProviderType = languageInfo.GetValue<string>("projectReferenceProviderType");
             }
 
             var libraryExporter = new TypeInformation(languageServicesAssembly, projectReferenceProviderType);
@@ -414,67 +268,6 @@ namespace Microsoft.Framework.Runtime
             }
 
             return new SemanticVersion(version);
-        }
-
-        private static IEnumerable<string> GetSourcePattern(Project project, JObject rawProject, string propertyName,
-            string[] defaultPatterns)
-        {
-            return GetSourcePatternCore(rawProject, propertyName, defaultPatterns)
-                .Select(p => FolderToPattern(p, project.ProjectDirectory));
-        }
-
-        private static IEnumerable<string> GetSourcePatternCore(JObject rawProject, string propertyName, string[] defaultPatterns)
-        {
-            var token = rawProject[propertyName];
-
-            if (token == null)
-            {
-                return defaultPatterns;
-            }
-
-            if (token.Type == JTokenType.Null)
-            {
-                return Enumerable.Empty<string>();
-            }
-
-            if (token.Type == JTokenType.String)
-            {
-                return GetSourcesSplit(token.Value<string>());
-            }
-
-            // Assume it's an array (it should explode if it's not)
-            return token.ValueAsArray<string>().SelectMany(GetSourcesSplit);
-        }
-
-        private static string FolderToPattern(string candidate, string projectDir)
-        {
-            // If it's already a pattern, no change is needed
-            if (candidate.Contains('*'))
-            {
-                return candidate;
-            }
-
-            // If the given string ends with a path separator, or it is an existing directory
-            // we convert this folder name to a pattern matching all files in the folder
-            if (candidate.EndsWith(@"\") ||
-                candidate.EndsWith("/") ||
-                Directory.Exists(Path.Combine(projectDir, candidate)))
-            {
-                return Path.Combine(candidate, "**", "*");
-            }
-
-            // Otherwise, it represents a single file
-            return candidate;
-        }
-
-        private static IEnumerable<string> GetSourcesSplit(string sourceDescription)
-        {
-            if (string.IsNullOrEmpty(sourceDescription))
-            {
-                return Enumerable.Empty<string>();
-            }
-
-            return sourceDescription.Split(_sourceSeparator, StringSplitOptions.RemoveEmptyEntries);
         }
 
         private static void PopulateDependencies(
@@ -613,6 +406,24 @@ namespace Microsoft.Framework.Runtime
             return null;
         }
 
+        public TargetFrameworkInformation GetTargetFramework(FrameworkName targetFramework)
+        {
+            TargetFrameworkInformation targetFrameworkInfo;
+            if (_targetFrameworks.TryGetValue(targetFramework, out targetFrameworkInfo))
+            {
+                return targetFrameworkInfo;
+            }
+
+            IEnumerable<TargetFrameworkInformation> compatibleConfigurations;
+            if (VersionUtility.TryGetCompatibleItems(targetFramework, GetTargetFrameworks(), out compatibleConfigurations) &&
+                compatibleConfigurations.Any())
+            {
+                targetFrameworkInfo = compatibleConfigurations.FirstOrDefault();
+            }
+
+            return targetFrameworkInfo ?? _defaultTargetFrameworkConfiguration;
+        }
+
         private void BuildTargetFrameworksAndConfigurations(JObject rawProject)
         {
             // Get the shared compilationOptions
@@ -694,7 +505,7 @@ namespace Microsoft.Framework.Runtime
             var compilerOptions = GetCompilationOptions(targetFramework.Value) ??
                                   new CompilerOptions();
 
-            var frameworkName = ParseFrameworkName(targetFramework.Key);
+            var frameworkName = FrameworkNameHelper.ParseFrameworkName(targetFramework.Key);
 
             // If it's not unsupported then keep it
             if (frameworkName == VersionUtility.UnsupportedFrameworkName)
@@ -706,7 +517,7 @@ namespace Microsoft.Framework.Runtime
             // Add the target framework specific define
             var defines = new HashSet<string>(compilerOptions.Defines ?? Enumerable.Empty<string>());
             var frameworkDefinition = Tuple.Create(targetFramework.Key, frameworkName);
-            var frameworkDefine = MakeDefaultTargetFrameworkDefine(frameworkDefinition);
+            var frameworkDefine = FrameworkNameHelper.MakeDefaultTargetFrameworkDefine(frameworkDefinition);
 
             if (!string.IsNullOrEmpty(frameworkDefine))
             {
@@ -740,77 +551,20 @@ namespace Microsoft.Framework.Runtime
 
             targetFrameworkInformation.Dependencies.AddRange(frameworkAssemblies);
 
-            targetFrameworkInformation.WrappedProject = GetValue<string>(properties, "wrappedProject");
+            targetFrameworkInformation.WrappedProject = properties.GetValue<string>("wrappedProject");
 
             var binNode = properties["bin"];
 
             if (binNode != null)
             {
-                targetFrameworkInformation.AssemblyPath = GetValue<string>(binNode, "assembly");
-                targetFrameworkInformation.PdbPath = GetValue<string>(binNode, "pdb");
+                targetFrameworkInformation.AssemblyPath = binNode.GetValue<string>("assembly");
+                targetFrameworkInformation.PdbPath = binNode.GetValue<string>("pdb");
             }
 
             _compilationOptions[frameworkName] = compilerOptions;
             _targetFrameworks[frameworkName] = targetFrameworkInformation;
 
             return true;
-        }
-
-        public static FrameworkName ParseFrameworkName(string targetFramework)
-        {
-            if (targetFramework.Contains("+"))
-            {
-                var portableProfile = NetPortableProfile.Parse(targetFramework);
-
-                if (portableProfile != null &&
-                    portableProfile.FrameworkName.Profile != targetFramework)
-                {
-                    return portableProfile.FrameworkName;
-                }
-
-                return VersionUtility.UnsupportedFrameworkName;
-            }
-
-            if (targetFramework.IndexOf(',') != -1)
-            {
-                // Assume it's a framework name if it contains commas
-                // e.g. .NETPortable,Version=v4.5,Profile=Profile78
-                return new FrameworkName(targetFramework);
-            }
-
-            return VersionUtility.ParseFrameworkName(targetFramework);
-        }
-
-
-        public TargetFrameworkInformation GetTargetFramework(FrameworkName targetFramework)
-        {
-            TargetFrameworkInformation targetFrameworkInfo;
-            if (_targetFrameworks.TryGetValue(targetFramework, out targetFrameworkInfo))
-            {
-                return targetFrameworkInfo;
-            }
-
-            IEnumerable<TargetFrameworkInformation> compatibleConfigurations;
-            if (VersionUtility.TryGetCompatibleItems(targetFramework, GetTargetFrameworks(), out compatibleConfigurations) &&
-                compatibleConfigurations.Any())
-            {
-                targetFrameworkInfo = compatibleConfigurations.FirstOrDefault();
-            }
-
-            return targetFrameworkInfo ?? _defaultTargetFrameworkConfiguration;
-        }
-
-        private static string MakeDefaultTargetFrameworkDefine(Tuple<string, FrameworkName> frameworkDefinition)
-        {
-            var shortName = frameworkDefinition.Item1;
-            var targetFramework = frameworkDefinition.Item2;
-
-            if (VersionUtility.IsPortableFramework(targetFramework))
-            {
-                return null;
-            }
-
-            return shortName.ToUpperInvariant();
         }
 
         private CompilerOptions GetCompilationOptions(JToken topLevelOrConfiguration)
@@ -825,37 +579,14 @@ namespace Microsoft.Framework.Runtime
             var options = new CompilerOptions
             {
                 Defines = rawOptions.ValueAsArray<string>("define"),
-                LanguageVersion = GetValue<string>(rawOptions, "languageVersion"),
-                AllowUnsafe = GetValue<bool?>(rawOptions, "allowUnsafe"),
-                Platform = GetValue<string>(rawOptions, "platform"),
-                WarningsAsErrors = GetValue<bool?>(rawOptions, "warningsAsErrors"),
-                Optimize = GetValue<bool?>(rawOptions, "optimize"),
+                LanguageVersion = rawOptions.GetValue<string>("languageVersion"),
+                AllowUnsafe = rawOptions.GetValue<bool?>("allowUnsafe"),
+                Platform = rawOptions.GetValue<string>("platform"),
+                WarningsAsErrors = rawOptions.GetValue<bool?>("warningsAsErrors"),
+                Optimize = rawOptions.GetValue<bool?>("optimize"),
             };
 
             return options;
-        }
-
-        private static T GetValue<T>(JToken token, string name)
-        {
-            if (token == null)
-            {
-                return default(T);
-            }
-
-            var obj = token[name];
-
-            if (obj == null)
-            {
-                return default(T);
-            }
-
-            return obj.Value<T>();
-        }
-
-        private static string GetDirectoryName(string path)
-        {
-            path = path.TrimEnd(Path.DirectorySeparatorChar);
-            return path.Substring(Path.GetDirectoryName(path).Length).Trim(Path.DirectorySeparatorChar);
         }
     }
 }

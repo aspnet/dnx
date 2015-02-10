@@ -38,7 +38,7 @@ namespace Microsoft.Framework.Runtime
 
         public IList<ISourceReference> GetSources()
         {
-            return _project.SourceFiles.Select(p => (ISourceReference)new SourceFileReference(p))
+            return _project.Files.SourceFiles.Select(p => (ISourceReference)new SourceFileReference(p))
                                        .ToList();
         }
 

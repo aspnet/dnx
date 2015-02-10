@@ -8,6 +8,7 @@ using System.IO;
 using System.Linq;
 using System.Runtime.Versioning;
 using Microsoft.Framework.Runtime;
+using Microsoft.Framework.Runtime.Helpers;
 using Newtonsoft.Json.Linq;
 using NuGet;
 
@@ -47,7 +48,7 @@ namespace Microsoft.Framework.PackageManager
             var configurations = _buildOptions.Configurations.DefaultIfEmpty("Debug");
 
             var specifiedFrameworks = _buildOptions.TargetFrameworks
-                .ToDictionary(f => f, Runtime.Project.ParseFrameworkName);
+                .ToDictionary(f => f, FrameworkNameHelper.ParseFrameworkName);
 
             var projectFrameworks = new HashSet<FrameworkName>(
                 project.GetTargetFrameworks()
@@ -173,7 +174,7 @@ namespace Microsoft.Framework.PackageManager
 
                     if (configurationSuccess)
                     {
-                        foreach (var sharedFile in project.SharedFiles)
+                        foreach (var sharedFile in project.Files.SharedFiles)
                         {
                             var file = new PhysicalPackageFile();
                             file.SourcePath = sharedFile;
@@ -183,7 +184,7 @@ namespace Microsoft.Framework.PackageManager
 
                         var root = project.ProjectDirectory;
 
-                        foreach (var path in project.SourceFiles)
+                        foreach (var path in project.Files.SourceFiles)
                         {
                             var srcFile = new PhysicalPackageFile();
                             srcFile.SourcePath = path;

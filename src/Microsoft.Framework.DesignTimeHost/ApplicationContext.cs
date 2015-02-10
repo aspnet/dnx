@@ -757,7 +757,7 @@ namespace Microsoft.Framework.DesignTimeHost
                 frameworks.Add(VersionUtility.ParseFrameworkName("aspnet50"));
             }
 
-            var sourcesProjectWideSources = project.SourceFiles.ToList();
+            var sourcesProjectWideSources = project.Files.SourceFiles.ToList();
 
             foreach (var frameworkName in frameworks)
             {
@@ -791,7 +791,7 @@ namespace Microsoft.Framework.DesignTimeHost
                     Project referencedProject;
                     if (Project.TryGetProject(reference.Path, out referencedProject))
                     {
-                        dependencySources.AddRange(referencedProject.SharedFiles);
+                        dependencySources.AddRange(referencedProject.Files.SharedFiles);
                     }
                 }
 

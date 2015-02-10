@@ -19,7 +19,7 @@ namespace Microsoft.Framework.Runtime.Roslyn
             // and are separated by /. It's always / regardless of the
             // platform.
 
-            return project.ResourceFiles.Select(resourceFile => new ResourceDescription(
+            return project.Files.ResourceFiles.Select(resourceFile => new ResourceDescription(
                 PathUtility.GetRelativePath(root, resourceFile)
                            .Replace(Path.DirectorySeparatorChar, '/'),
                 () => new FileStream(resourceFile, FileMode.Open, FileAccess.Read, FileShare.Read),

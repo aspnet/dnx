@@ -99,7 +99,7 @@ namespace Microsoft.Framework.Runtime
                     metadataReferences.Add(projectReference);
 
                     // Shared sources
-                    foreach (var sharedFile in project.SharedFiles)
+                    foreach (var sharedFile in project.Files.SharedFiles)
                     {
                         sourceReferences.Add(new SourceFileReference(sharedFile));
                     }

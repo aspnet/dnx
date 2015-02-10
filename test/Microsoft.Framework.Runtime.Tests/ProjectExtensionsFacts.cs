@@ -1,6 +1,7 @@
 ﻿// Copyright (c) Microsoft Open Technologies, Inc. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
+using Microsoft.Framework.Runtime.Helpers;
 using Xunit;
 
 namespace Microsoft.Framework.Runtime.Tests
@@ -34,7 +35,7 @@ namespace Microsoft.Framework.Runtime.Tests
             var options = project.GetCompilerOptions(targetFramework: null, configurationName: null);
 
             // Assert
-            Assert.Equal(new[] { "GLOBAL" } , options.Defines);
+            Assert.Equal(new[] { "GLOBAL" }, options.Defines);
             Assert.Equal(true, options.WarningsAsErrors);
             Assert.Null(options.AllowUnsafe);
             Assert.Null(options.Platform);
@@ -45,7 +46,7 @@ namespace Microsoft.Framework.Runtime.Tests
         {
             // Arrange
             var project = Project.GetProject(_projectContent, "TestProj", "project.json");
-            var targetFramework = Project.ParseFrameworkName("aspnet50");
+            var targetFramework = FrameworkNameHelper.ParseFrameworkName("aspnet50");
 
             // Act
             var options = project.GetCompilerOptions(targetFramework, configurationName: null);
@@ -62,7 +63,7 @@ namespace Microsoft.Framework.Runtime.Tests
         {
             // Arrange
             var project = Project.GetProject(_projectContent, "TestProj", "project.json");
-            var targetFramework = Project.ParseFrameworkName("aspnetcore50");
+            var targetFramework = FrameworkNameHelper.ParseFrameworkName("aspnetcore50");
 
             // Act
             var options = project.GetCompilerOptions(targetFramework, configurationName: "Debug");

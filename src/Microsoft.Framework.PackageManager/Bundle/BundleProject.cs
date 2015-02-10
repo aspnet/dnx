@@ -186,7 +186,7 @@ namespace Microsoft.Framework.PackageManager.Bundle
             // e.g. { "code" : "..\\ExternalProject\\**.cs" }
             // So we find out external source files and copy them separately
             var rootDirectory = ProjectResolver.ResolveRootDirectory(project.ProjectDirectory);
-            foreach (var sourceFile in project.SourceFiles)
+            foreach (var sourceFile in project.Files.SourceFiles)
             {
                 // This source file is in project root directory. So it was already copied.
                 if (PathUtility.IsChildOfDirectory(dir: project.ProjectDirectory, candidate: sourceFile))
@@ -241,8 +241,8 @@ namespace Microsoft.Framework.PackageManager.Bundle
         private void CopyProject(BundleRoot root, Runtime.Project project, string targetPath, bool includeSource)
         {
             // A set of excluded files/directories used as a filter when doing copy
-            var excludeSet = new HashSet<string>(project.BundleExcludeFiles, StringComparer.OrdinalIgnoreCase);
-            var contentFiles = new HashSet<string>(project.ContentFiles, StringComparer.OrdinalIgnoreCase);
+            var excludeSet = new HashSet<string>(project.Files.BundleExcludeFiles, StringComparer.OrdinalIgnoreCase);
+            var contentFiles = new HashSet<string>(project.Files.ContentFiles, StringComparer.OrdinalIgnoreCase);
 
             // If a public folder is specified with 'webroot' or '--wwwroot', we ignore it when copying project files
             var wwwRootPath = string.Empty;

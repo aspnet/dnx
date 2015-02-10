@@ -17,5 +17,22 @@ namespace Microsoft.Framework.Runtime
         {
             return jToken?[name]?.ValueAsArray<T>();
         }
+
+        public static T GetValue<T>(this JToken token, string name)
+        {
+            if (token == null)
+            {
+                return default(T);
+            }
+
+            var obj = token[name];
+
+            if (obj == null)
+            {
+                return default(T);
+            }
+
+            return obj.Value<T>();
+        }
     }
 }
