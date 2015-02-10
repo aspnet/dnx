@@ -3,7 +3,6 @@
 
 using System;
 using System.Globalization;
-using System.Text.RegularExpressions;
 using NuGet.Resources;
 
 namespace NuGet
@@ -14,9 +13,6 @@ namespace NuGet
     /// </summary>
     public sealed class SemanticVersion : IComparable, IComparable<SemanticVersion>, IEquatable<SemanticVersion>
     {
-        private const RegexOptions _flags = RegexOptions.IgnoreCase | RegexOptions.ExplicitCapture;
-        private static readonly Regex _semanticVersionRegex = new Regex(@"^(?<Version>\d+(\s*\.\s*\d+){0,3})(?<Release>-[a-z][0-9a-z-]*)?$", _flags);
-        private static readonly Regex _strictSemanticVersionRegex = new Regex(@"^(?<Version>\d+(\.\d+){2})(?<Release>-[a-z][0-9a-z-]*)?$", _flags);
         private readonly string _originalString;
 
         public SemanticVersion(string version)
@@ -149,7 +145,7 @@ namespace NuGet
         /// </summary>
         public static bool TryParse(string version, out SemanticVersion value)
         {
-            return TryParseInternal(version, _semanticVersionRegex, out value);
+            return TryParseInternal(version, strict: false, semVer: out value);
         }
 
         /// <summary>
@@ -157,25 +153,52 @@ namespace NuGet
         /// </summary>
         public static bool TryParseStrict(string version, out SemanticVersion value)
         {
-            return TryParseInternal(version, _strictSemanticVersionRegex, out value);
+            return TryParseInternal(version, strict: true, semVer: out value);
         }
 
-        private static bool TryParseInternal(string version, Regex regex, out SemanticVersion semVer)
+        private static bool TryParseInternal(string version, bool strict, out SemanticVersion semVer)
         {
             semVer = null;
-            if (String.IsNullOrEmpty(version))
+            if (string.IsNullOrEmpty(version))
             {
                 return false;
             }
 
-            var match = regex.Match(version.Trim());
+            version = version.Trim();
+            var versionPart = version;
+
+            string specialVersion = string.Empty;
+            if (version.IndexOf('-') != -1)
+            {
+                var parts = version.Split(new char[] { '-' }, 2, StringSplitOptions.RemoveEmptyEntries);
+                if (parts.Length != 2)
+                {
+                    return false;
+                }
+
+                versionPart = parts[0];
+                specialVersion = parts[1];
+            }
+
             Version versionValue;
-            if (!match.Success || !Version.TryParse(match.Groups["Version"].Value, out versionValue))
+            if (!Version.TryParse(versionPart, out versionValue))
             {
                 return false;
             }
 
-            semVer = new SemanticVersion(NormalizeVersionValue(versionValue), match.Groups["Release"].Value.TrimStart('-'), version.Replace(" ", ""));
+            if (strict)
+            {
+                // Must have major, minor and build only.
+                if (versionValue.Major == -1 ||
+                    versionValue.Minor == -1 ||
+                    versionValue.Build == -1 ||
+                    versionValue.Revision != -1)
+                {
+                    return false;
+                }
+            }
+
+            semVer = new SemanticVersion(NormalizeVersionValue(versionValue), specialVersion, version.Replace(" ", ""));
             return true;
         }
 

@@ -4,7 +4,7 @@
 using System;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
-using System.Text.RegularExpressions;
+using System.Linq;
 
 namespace NuGet
 {
@@ -35,7 +35,10 @@ namespace NuGet
         {
             try
             {
-                return Regex.IsMatch(path.Trim(), @"^[A-Za-z]:\\") && Path.IsPathRooted(path) && (path.IndexOfAny(_invalidPathChars) == -1);
+                return char.IsLetter(path[0]) &&
+                    path.StartsWith(path[0] + ":\\") &&
+                    Path.IsPathRooted(path) &&
+                    (path.IndexOfAny(_invalidPathChars) == -1);
             }
             catch
             {
@@ -59,7 +62,7 @@ namespace NuGet
             try
             {
                 Path.GetFullPath(path);
-                return Regex.IsMatch(path.Trim(), @"^\\\\");
+                return path.Trim().StartsWith("\\\\");
             }
             catch
             {
@@ -78,7 +81,18 @@ namespace NuGet
             Uri result;
 
             // Make sure url starts with protocol:// because Uri.TryCreate() returns true for local and UNC paths even if badly formed.
-            return Regex.IsMatch(url, @"^\w+://", RegexOptions.IgnoreCase) && Uri.TryCreate(url, UriKind.Absolute, out result);
+            var urlParts = url.Split(new string[] { "://" }, 2, StringSplitOptions.None);
+            if (urlParts == null || urlParts.Length != 2)
+            {
+                return false;
+            }
+
+            if (urlParts[0].Any(c => !char.IsLetterOrDigit(c) && c != '_'))
+            {
+                return false;
+            }
+
+            return Uri.TryCreate(url, UriKind.Absolute, out result);
         }
     }
 }

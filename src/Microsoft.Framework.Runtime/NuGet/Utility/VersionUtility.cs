@@ -154,12 +154,17 @@ namespace NuGet
             }
 
             // If we find a version then we try to split the framework name into 2 parts
-            var versionMatch = Regex.Match(frameworkNameAndVersion, @"\d+");
-
-            if (versionMatch.Success)
+            int versionIndex = -1;
+            var versionMatch = frameworkNameAndVersion.FirstOrDefault(c =>
             {
-                identifierPart = frameworkNameAndVersion.Substring(0, versionMatch.Index).Trim();
-                versionPart = frameworkNameAndVersion.Substring(versionMatch.Index).Trim();
+                versionIndex++;
+                return char.IsDigit(c);
+            });
+
+            if (versionMatch != '\0' && versionIndex != -1)
+            {
+                identifierPart = frameworkNameAndVersion.Substring(0, versionIndex).Trim();
+                versionPart = frameworkNameAndVersion.Substring(versionIndex).Trim();
             }
             else
             {
@@ -699,8 +704,6 @@ namespace NuGet
 
             return hasItems;
         }
-
-
 
         internal static Version NormalizeVersion(Version verison)
         {

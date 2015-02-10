@@ -144,8 +144,8 @@ namespace Microsoft.Framework.Runtime
             var cacheResolvers = GetCacheResolvers();
             var defaultResolver = new DefaultPackagePathResolver(_repository.RepositoryRoot);
 
-            Servicing.Breadcrumbs breadcrumbs = new Servicing.Breadcrumbs(); 
-            breadcrumbs.CreateRuntimeBreadcrumb(); 
+            Servicing.Breadcrumbs breadcrumbs = new Servicing.Breadcrumbs();
+            breadcrumbs.CreateRuntimeBreadcrumb();
 
             foreach (var dependency in packages)
             {
@@ -177,10 +177,10 @@ namespace Microsoft.Framework.Runtime
                     packageDescription.ContractPath = contractPath;
                 }
 
-                if (Servicing.Breadcrumbs.IsPackageServiceable(packageDescription.Package)) 
-                { 
-                    breadcrumbs.CreateBreadcrumb(package.Id, package.Version); 
-                } 
+                if (Servicing.Breadcrumbs.IsPackageServiceable(packageDescription.Package))
+                {
+                    breadcrumbs.CreateBreadcrumb(package.Id, package.Version);
+                }
 
                 var assemblies = new List<string>();
 
@@ -220,31 +220,20 @@ namespace Microsoft.Framework.Runtime
                                           IEnumerable<IPackagePathResolver> cacheResolvers,
                                           IPackage package)
         {
-            var defaultHashPath = defaultResolver.GetHashPath(package.Id, package.Version);
             string expectedHash = null;
-            if (File.Exists(defaultHashPath))
-            {
-                expectedHash = File.ReadAllText(defaultHashPath);
-            }
-            else if (_globalSettings != null)
-            {
-                var library = new Library()
-                {
-                    Name = package.Id,
-                    Version = package.Version
-                };
-
-                _globalSettings.PackageHashes.TryGetValue(library, out expectedHash);
-            }
-
-            if (string.IsNullOrEmpty(expectedHash))
-            {
-                return defaultResolver.GetInstallPath(package.Id, package.Version);
-            }
 
             foreach (var resolver in cacheResolvers)
             {
                 var cacheHashFile = resolver.GetHashPath(package.Id, package.Version);
+
+                if (string.IsNullOrEmpty(expectedHash))
+                {
+                    expectedHash = GetExpectedHash(defaultResolver, package);
+                }
+                else
+                {
+                    break;
+                }
 
                 // REVIEW: More efficient compare?
                 if (File.Exists(cacheHashFile) &&
@@ -255,6 +244,19 @@ namespace Microsoft.Framework.Runtime
             }
 
             return defaultResolver.GetInstallPath(package.Id, package.Version);
+        }
+
+        private string GetExpectedHash(IPackagePathResolver defaultResolver, IPackage package)
+        {
+            var defaultHashPath = defaultResolver.GetHashPath(package.Id, package.Version);
+            string expectedHash = null;
+
+            if (File.Exists(defaultHashPath))
+            {
+                expectedHash = File.ReadAllText(defaultHashPath);
+            }
+
+            return expectedHash;
         }
 
         private static IEnumerable<IPackagePathResolver> GetCacheResolvers()
