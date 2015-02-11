@@ -17,6 +17,8 @@ namespace Microsoft.Framework.Runtime
         public const string WebConfigRuntimePath = "runtime-path";
         public const string BootstrapperHostName = RuntimeShortName + ".host";
         public const string BootstrapperClrName = RuntimeShortName + ".clr";
-        public const string BootstrapperCoreclrManagedName = RuntimeShortName + ".coreclr.managed";
+        public const string BootstrapperCoreclrName = RuntimeShortName + ".coreclr";
+        public const string BootstrapperClrManagedName = BootstrapperClrName + ".managed";
+        public const string BootstrapperCoreclrManagedName = BootstrapperCoreclrName + ".managed";
     }
 }

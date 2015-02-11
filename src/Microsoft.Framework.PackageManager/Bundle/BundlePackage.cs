@@ -42,7 +42,7 @@ namespace Microsoft.Framework.PackageManager.Bundle
                     var dest = Path.Combine(root.OutputPath, Path.GetFileName(a.Path));
                     File.Copy(a.Path, dest, overwrite: true);
                 }
-                
+
                 return;
             }
 

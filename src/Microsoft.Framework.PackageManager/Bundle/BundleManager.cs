@@ -52,26 +52,8 @@ namespace Microsoft.Framework.PackageManager.Bundle
             _options.WwwRoot = _options.WwwRoot ?? project.WebRoot;
             _options.WwwRootOut = _options.WwwRootOut ?? _options.WwwRoot;
 
-            if (string.IsNullOrEmpty(_options.WwwRoot) && !string.IsNullOrEmpty(_options.WwwRootOut))
+            if (!CheckOptionUsage(_options, project))
             {
-                _options.Reports.Error.WriteLine(
-                    "'--wwwroot-out' option can be used only when the '--wwwroot' option or 'webroot' in project.json is specified.".Red());
-                return false;
-            }
-
-            if (!string.IsNullOrEmpty(_options.WwwRoot) &&
-                !Directory.Exists(Path.Combine(project.ProjectDirectory, _options.WwwRoot)))
-            {
-                _options.Reports.Error.WriteLine(
-                    "The specified wwwroot folder '{0}' doesn't exist in the project directory.".Red(), _options.WwwRoot);
-                return false;
-            }
-
-            if (string.Equals(_options.WwwRootOut, BundleRoot.AppRootName, StringComparison.OrdinalIgnoreCase))
-            {
-                _options.Reports.Error.WriteLine(
-                    "'{0}' is a reserved folder name. Please choose another name for the wwwroot-out folder.".Red(),
-                    BundleRoot.AppRootName);
                 return false;
             }
 
@@ -274,7 +256,7 @@ namespace Microsoft.Framework.PackageManager.Bundle
             return !anyUnresolvedDependency;
         }
 
-        bool TryAddRuntime(BundleRoot root, FrameworkName frameworkName, string runtimePath)
+        private static bool TryAddRuntime(BundleRoot root, FrameworkName frameworkName, string runtimePath)
         {
             if (!Directory.Exists(runtimePath))
             {
@@ -291,5 +273,54 @@ namespace Microsoft.Framework.PackageManager.Bundle
             dependencyContext.Walk(project.Name, project.Version);
             return dependencyContext;
         }
+
+        private static bool CheckOptionUsage(BundleOptions _options, Runtime.Project project)
+        {
+            if (string.IsNullOrEmpty(_options.WwwRoot) && !string.IsNullOrEmpty(_options.WwwRootOut))
+            {
+                _options.Reports.Error.WriteLine(
+                    "'--wwwroot-out' option can be used only when the '--wwwroot' option or 'webroot' in project.json is specified.".Red());
+                return false;
+            }
+
+            if (!string.IsNullOrEmpty(_options.WwwRoot) &&
+                !Directory.Exists(Path.Combine(project.ProjectDirectory, _options.WwwRoot)))
+            {
+                _options.Reports.Error.WriteLine(
+                    "The specified wwwroot folder '{0}' doesn't exist in the project directory.".Red(), _options.WwwRoot);
+                return false;
+            }
+
+            if (string.Equals(_options.WwwRootOut, BundleRoot.AppRootName, StringComparison.OrdinalIgnoreCase))
+            {
+                _options.Reports.Error.WriteLine(
+                    "'{0}' is a reserved folder name. Please choose another name for the wwwroot-out folder.".Red(),
+                    BundleRoot.AppRootName);
+                return false;
+            }
+
+            if (_options.OneFolder)
+            {
+                if (_options.Runtimes.Count() > 1)
+                {
+                    _options.Reports.Error.WriteLine(
+                        "At most one runtime can be specified when '--one-folder' option is used.".Red());
+                    return false;
+                }
+
+                // If there is no target framework filter specified with '--runtime',
+                // the bundled output targets all frameworks specified in project.json.
+                // However, we can only accept one target framework when '--one-folder' was specified.
+                if (!_options.Runtimes.Any() && project.GetTargetFrameworks().Count() > 1)
+                {
+                    _options.Reports.Error.WriteLine(
+                        "At most one framework can be specified in project.json when '--one-folder' option is used.".Red());
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
     }
 }
