@@ -4,7 +4,6 @@
 
 namespace Microsoft.Framework.Runtime
 {
-    [AssemblyNeutral]
     public interface IMetadataEmbeddedReference : IMetadataReference
     {
         byte[] Contents { get; }

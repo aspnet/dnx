@@ -3,7 +3,7 @@
     "compilationOptions" : { "define" : ["TRACE"], "warningsAsErrors": true },
     "shared": "**/*.cs",
     "dependencies": {
-        "Microsoft.Framework.Runtime.Interfaces" : ""
+        "Microsoft.Framework.Runtime.Hosting.Interfaces" : ""
     },
     "frameworks" : {
         "aspnet50" : { },

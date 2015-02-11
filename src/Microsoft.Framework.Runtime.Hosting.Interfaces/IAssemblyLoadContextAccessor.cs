@@ -2,7 +2,6 @@
 
 namespace Microsoft.Framework.Runtime
 {
-    [AssemblyNeutral]
     public interface IAssemblyLoadContextAccessor
     {
         IAssemblyLoadContext Default { get; }

@@ -3,7 +3,6 @@
 
 namespace Microsoft.Framework.Runtime
 {
-    [AssemblyNeutral]
     public interface ISourceReference
     {
         string Name { get; }
