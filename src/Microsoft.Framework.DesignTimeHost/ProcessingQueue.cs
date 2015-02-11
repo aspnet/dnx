@@ -46,6 +46,7 @@ namespace Microsoft.Framework.DesignTimeHost
             catch (Exception ex)
             {
                 Logger.TraceInformation("[ProcessingQueue]: Error sending {0}", ex);
+                throw;
             }
 
             return false;
@@ -69,6 +70,7 @@ namespace Microsoft.Framework.DesignTimeHost
                 catch (Exception ex)
                 {
                     Logger.TraceInformation("[ProcessingQueue]: Error sending {0}", ex);
+                    throw;
                 }
             }
 

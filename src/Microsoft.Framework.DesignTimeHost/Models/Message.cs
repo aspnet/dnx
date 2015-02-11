@@ -12,7 +12,7 @@ namespace Microsoft.Framework.DesignTimeHost.Models
 
         public string MessageType { get; set; }
 
-        public int ContextId { get; set; }
+        public int ContextId { get; set; } = -1;
 
         public JToken Payload { get; set; }
 

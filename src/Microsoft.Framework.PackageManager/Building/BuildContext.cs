@@ -51,23 +51,18 @@ namespace Microsoft.Framework.PackageManager
             ShowDependencyInformation(report);
         }
 
-        public bool Build(IList<string> warnings, IList<string> errors)
+        public bool Build(List<ICompilationMessage> diagnostics)
         {
             var builder = _applicationHostContext.CreateInstance<ProjectBuilder>();
 
             var result = builder.Build(_project.Name, _outputPath);
 
-            if (result.Errors != null)
+            if (result.Diagnostics != null)
             {
-                errors.AddRange(result.Errors);
+                diagnostics.AddRange(result.Diagnostics);
             }
 
-            if (result.Warnings != null)
-            {
-                warnings.AddRange(result.Warnings);
-            }
-
-            return result.Success && errors.Count == 0;
+            return result.Success && !diagnostics.HasErrors();
         }
 
         public void PopulateDependencies(PackageBuilder packageBuilder)

@@ -205,34 +205,29 @@ namespace Microsoft.Framework.ApplicationHost
             {
                 assembly = host.GetEntryPoint(applicationName);
             }
-            catch (FileLoadException ex)
+            catch (FileLoadException ex) when (new AssemblyName(ex.FileName).Name == applicationName)
             {
-                // FileName is always turned into an assembly name
-                if (new AssemblyName(ex.FileName).Name == applicationName)
+                if (ex.InnerException is ICompilationException)
                 {
-                    ThrowEntryPointNotfoundException(
-                        host,
-                        applicationName,
-                        ex.InnerException);
+                    throw ex.InnerException;
                 }
-                else
-                {
-                    throw;
-                }
+
+                ThrowEntryPointNotfoundException(
+                    host,
+                    applicationName,
+                    ex.InnerException);
             }
-            catch (FileNotFoundException ex)
+            catch (FileNotFoundException ex) when (ex.FileName == applicationName)
             {
-                if (ex.FileName == applicationName)
+                if (ex.InnerException is ICompilationException)
                 {
-                    ThrowEntryPointNotfoundException(
+                    throw ex.InnerException;
+                }
+
+                ThrowEntryPointNotfoundException(
                         host,
                         applicationName,
                         ex.InnerException);
-                }
-                else
-                {
-                    throw;
-                }
             }
 
             if (assembly == null)
@@ -248,15 +243,6 @@ namespace Microsoft.Framework.ApplicationHost
             string applicationName,
             Exception innerException)
         {
-
-            var compilationException = innerException as CompilationException;
-
-            if (compilationException != null)
-            {
-                throw new InvalidOperationException(
-                    string.Join(Environment.NewLine, compilationException.Errors));
-            }
-
             if (host.Project.Commands.Any())
             {
                 // Throw a nicer exception message if the command
