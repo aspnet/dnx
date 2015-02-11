@@ -1,0 +1,35 @@
+{
+    "version": "1.0.0-*",
+    "compilationOptions": { "define": [ "TRACE" ], "warningsAsErrors": true },
+    "dependencies": {
+        "Microsoft.Framework.CommandLineUtils": { "version": "1.0.0-*", "type": "build" },
+        "Microsoft.Framework.Runtime": "1.0.0-*",
+        "Microsoft.Framework.Runtime.Common": { "version": "1.0.0-*", "type": "build" },
+        "Microsoft.Framework.Runtime.Interfaces": { "version": "1.0.0-*", "type": "build" }
+    },
+    "frameworks": {
+        "aspnet50": { },
+        "aspnetcore50": {
+            "dependencies": {
+                "System.Collections": "4.0.10-beta-*",
+                "System.ComponentModel": "4.0.0-beta-*",
+                "System.Console": "4.0.0-beta-*",
+                "System.Diagnostics.Debug": "4.0.10-beta-*",
+                "System.Linq": "4.0.0-beta-*",
+                "System.Reflection": "4.0.10-beta-*",
+                "System.Runtime": "4.0.20-beta-*",
+                "System.Runtime.Extensions": "4.0.10-beta-*",
+                "System.Runtime.InteropServices": "4.0.20-beta-*",
+                "System.Threading.Tasks": "4.0.10-beta-*"
+            }
+        }
+    },
+
+    "scripts": {
+        "postbuild": [
+            "%project:Directory%/../../build/batchcopy %project:BuildOutputDir%/Debug/aspnet50/*.* %project:Directory%/../../artifacts/build/kre-clr-win-x86/bin",
+            "%project:Directory%/../../build/batchcopy %project:BuildOutputDir%/Debug/aspnet50/*.* %project:Directory%/../../artifacts/build/kre-mono/bin",
+            "%project:Directory%/../../build/batchcopy %project:BuildOutputDir%/Debug/aspnetcore50/*.* %project:Directory%/../../artifacts/build/kre-coreclr-win-x86/bin"
+        ]
+    }
+}

@@ -55,6 +55,7 @@ var MANAGED_PROJECTS = '${FindAllProjects(
     BOOTSTRAPPER_HOST_NAME,
     BOOTSTRAPPER_HOST_SHARED_NAME,
     "Microsoft.Framework.ApplicationHost",
+    "Microsoft.Framework.ApplicationHost2",
     "Microsoft.Framework.CommandLineUtils",
     "Microsoft.Framework.DesignTimeHost",
     "Microsoft.Framework.PackageManager",
@@ -250,14 +251,14 @@ var RC_FILES = '${FindAllFiles("Resource.rc", BOOTSTRAPPER_EXE_NAME, BOOTSTRAPPE
             Path.Combine(PACKAGES_DIR, RUNTIME_COMMON_NAME));
 
         // Delete the build dir
-        Directory.Delete(BUILD_DIR2, recursive: true); 
+        Directory.Delete(BUILD_DIR2, recursive: true);
 
         var envPath = Environment.GetEnvironmentVariable("PATH");
         try
         {
             Log.Info("Adding PATH " + Path.Combine(PACKAGES_DIR, RUNTIME_COMMON_NAME, "bin"));
             Environment.SetEnvironmentVariable("PATH", Path.Combine(PACKAGES_DIR, RUNTIME_COMMON_NAME, "bin") + ";" + envPath);
-            Environment.SetEnvironmentVariable("NEW_RUNTIME", "1"); 
+            Environment.SetEnvironmentVariable("NEW_RUNTIME", "1");
             Log.Info("Rebuilding target default");
 
             // TODO REMOVE after bootstrapping: We need to restore again because the location changes
@@ -270,7 +271,7 @@ var RC_FILES = '${FindAllFiles("Resource.rc", BOOTSTRAPPER_EXE_NAME, BOOTSTRAPPE
             Environment.SetEnvironmentVariable("NEW_RUNTIME", null);
         }
     }
-    
+
 #verify-package .ensure-latest-package target='verify'
 
 #clean-sdk-dir
@@ -295,7 +296,7 @@ var RC_FILES = '${FindAllFiles("Resource.rc", BOOTSTRAPPER_EXE_NAME, BOOTSTRAPPE
             {
                 File.Delete(targetShFile);
             }
-            
+
             // Make sure new lines are \n (\r\n messes up the bash script)
             var script = File.ReadAllText(shFile).Replace('\r\n', '\n');
             File.Move(shFile, targetShFile);
