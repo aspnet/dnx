@@ -91,7 +91,7 @@ namespace Microsoft.Framework.PackageManager
             {
                 _referenceResolverPath = Path.Combine(tempDir, ReferenceResolverFileName);
                 var assembly = typeof(WrapCommand).GetTypeInfo().Assembly;
-                var embeddedResourceName = "compiler/resources/" + ReferenceResolverFileName;
+                var embeddedResourceName = "Compiler/Resources/" + ReferenceResolverFileName;
                 using (var stream = assembly.GetManifestResourceStream(embeddedResourceName))
                 {
                     File.WriteAllText(_referenceResolverPath, stream.ReadToEnd());

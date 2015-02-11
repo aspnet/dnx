@@ -6,7 +6,7 @@ public class Program
     {
         System.Console.WriteLine("Hello World!");
 
-        var resourceStream = typeof(Program).GetTypeInfo().Assembly.GetManifestResourceStream("compiler/resources/HTMLPage1.html");
+        var resourceStream = typeof(Program).GetTypeInfo().Assembly.GetManifestResourceStream("Compiler/Resources/HTMLPage1.html");
 
         if (resourceStream == null)
         {
