@@ -6,7 +6,6 @@ using System.Collections.Generic;
 
 namespace Microsoft.Framework.DependencyInjection.ServiceLookup
 {
-    [Microsoft.Framework.Runtime.AssemblyNeutral]
     public interface IServiceManifest
     {
         IEnumerable<Type> Services { get; }

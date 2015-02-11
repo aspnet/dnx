@@ -2,7 +2,6 @@
 
 namespace Microsoft.Framework.Runtime
 {
-    [AssemblyNeutral]
     public interface IApplicationShutdown
     {
         void RequestShutdown();

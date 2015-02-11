@@ -5,7 +5,6 @@ using System.Reflection;
 
 namespace Microsoft.Framework.Runtime
 {
-    [AssemblyNeutral]
     public interface IAssemblyLoader
     {
         Assembly Load(string name);

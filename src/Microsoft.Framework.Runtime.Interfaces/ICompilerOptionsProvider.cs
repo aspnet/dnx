@@ -9,7 +9,6 @@ namespace Microsoft.Framework.Runtime
     /// Specifies the contracts for a type that provides the <see cref="ICompilerOptions"/> for
     /// a <c>project.json</c> file.
     /// </summary>
-    [AssemblyNeutral]
     public interface ICompilerOptionsProvider
     {
         /// <summary>

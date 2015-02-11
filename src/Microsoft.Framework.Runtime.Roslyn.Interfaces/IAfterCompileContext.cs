@@ -8,12 +8,9 @@ using System.Collections.Generic;
 
 namespace Microsoft.Framework.Runtime
 {
-    [AssemblyNeutral]
-    public interface IBeforeCompileContext
+    public interface IAfterCompileContext
     {
         CSharpCompilation CSharpCompilation { get; set; }
-
-        IList<ResourceDescription> Resources { get; }
 
         IList<Diagnostic> Diagnostics { get; }
     }
