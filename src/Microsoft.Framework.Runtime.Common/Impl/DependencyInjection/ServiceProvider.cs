@@ -5,7 +5,6 @@ using System;
 using System.Linq;
 using System.Collections.Generic;
 using System.Reflection;
-using Microsoft.Framework.DependencyInjection.ServiceLookup;
 
 namespace Microsoft.Framework.Runtime.Common.DependencyInjection
 {

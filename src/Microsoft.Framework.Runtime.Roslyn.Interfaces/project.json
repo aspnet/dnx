@@ -1,18 +1,18 @@
 ﻿{
     "version": "1.0.0-*",
     "dependencies": {
-		"Microsoft.Framework.Runtime.Interfaces": "1.0.0-*",
+        "Microsoft.Framework.Runtime.Interfaces": "1.0.0-*",
         "Microsoft.CodeAnalysis.CSharp": "1.0.0-rc1-*"
     },
 
-    "frameworks" : {
-        "aspnet50" : { 
+    "frameworks": {
+        "aspnet50": {
             "dependencies": {
             }
         },
-        "aspnetcore50" : { 
+        "aspnetcore50": {
             "dependencies": {
-                "System.Runtime": "4.0.20-beta-22523"
+                "System.Runtime": "4.0.20-beta-*"
             }
         }
     }

@@ -1,10 +1,7 @@
 {
-	"version": "1.0.0-*",
-	"description": "ASP.NET 5 assembly neutral interfaces to take advantage of capabilities exposed by the runtime. The interfaces are embedded resources that will become part of your ASP.NET 5 application during build.",
-	"compilationOptions": { "warningsAsErrors": true },
-	"dependencies": {
-		"Microsoft.Framework.Runtime.Hosting.Interfaces": "1.0.0-*"
-	},
+    "version": "1.0.0-*",
+    "description": "ASP.NET 5 interfaces to take advantage of capabilities exposed by the runtime.",
+    "compilationOptions": { "warningsAsErrors": true },
     "frameworks": {
         "aspnet50": { },
         "aspnetcore50": {

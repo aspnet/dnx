@@ -2,7 +2,7 @@
     "version": "1.0.0-*",
     "description": "ASP.NET 5 runtime infrastructure for assembly load contexts.",
     "dependencies": {
-        "Microsoft.Framework.Runtime.Hosting.Interfaces": "1.0.0-*"
+        "Microsoft.Framework.Runtime.Interfaces": "1.0.0-*"
     },
 
     "frameworks": {

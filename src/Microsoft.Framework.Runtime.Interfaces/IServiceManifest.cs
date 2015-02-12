@@ -4,7 +4,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace Microsoft.Framework.DependencyInjection.ServiceLookup
+namespace Microsoft.Framework.Runtime
 {
     public interface IServiceManifest
     {
