@@ -296,7 +296,7 @@ namespace Microsoft.Framework.DesignTimeHost
                 _sourceTextChanged.WasAssigned)
             {
                 bool triggerBuildOutputs = _rebuild.WasAssigned || _filesChanged.WasAssigned;
-                bool triggerRestoreComplete = _restoreComplete.WasAssigned;
+                bool triggerDependencies = _restoreComplete.WasAssigned || _rebuild.WasAssigned;
 
                 _appPath.ClearAssigned();
                 _configuration.ClearAssigned();
@@ -309,7 +309,7 @@ namespace Microsoft.Framework.DesignTimeHost
                 // hasn't died yet
                 TriggerProjectOutputsChanged();
 
-                state = DoInitialWork(_appPath.Value, _configuration.Value, triggerBuildOutputs, triggerRestoreComplete);
+                state = DoInitialWork(_appPath.Value, _configuration.Value, triggerBuildOutputs, triggerDependencies);
             }
 
             if (state == null)
@@ -719,7 +719,7 @@ namespace Microsoft.Framework.DesignTimeHost
             return !object.Equals(local, remote);
         }
 
-        private State DoInitialWork(string appPath, string configuration, bool triggerBuildOutputs, bool triggerRestoreComplete)
+        private State DoInitialWork(string appPath, string configuration, bool triggerBuildOutputs, bool triggerDependencies)
         {
             var state = new State
             {
@@ -739,9 +739,9 @@ namespace Microsoft.Framework.DesignTimeHost
                 _namedDependencyProvider.Trigger(project.Name + "_BuildOutputs");
             }
 
-            if (triggerRestoreComplete)
+            if (triggerDependencies)
             {
-                _namedDependencyProvider.Trigger(project.Name + "_RestoreComplete");
+                _namedDependencyProvider.Trigger(project.Name + "_Dependencies");
             }
 
             state.Name = project.Name;
@@ -856,7 +856,7 @@ namespace Microsoft.Framework.DesignTimeHost
                 }
 
                 // Add a cache dependency on restore complete to reevaluate dependencies
-                ctx.Monitor(_namedDependencyProvider.GetNamedDependency(project.Name + "_RestoreComplete"));
+                ctx.Monitor(_namedDependencyProvider.GetNamedDependency(project.Name + "_Dependencies"));
 
                 return applicationHostContext;
             });
