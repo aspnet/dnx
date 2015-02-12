@@ -122,7 +122,17 @@ namespace Microsoft.Framework.Project
             }
             else
             {
-                args = String.Format(crossgenArgsTemplate + " /readytorun",
+                var crossgenArgs = crossgenArgsTemplate;
+                if (assemblyInfo.IsRuntimeAssembly)
+                {
+                    Console.WriteLine(string.Format("{0} is KRE", assemblyInfo.Name));
+                }
+                else
+                {
+                    crossgenArgs += " /readytorun";
+                    Console.WriteLine(string.Format("{0} is library", assemblyInfo.Name));
+                }
+                args = String.Format(crossgenArgs,
                                      assemblyInfo.AssemblyPath,
                                      assemblyInfo.NativeImagePath,
                                      String.Join(";", closure));
