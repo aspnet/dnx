@@ -67,7 +67,7 @@ namespace Microsoft.Framework.Runtime
 
                         if (eclipsed)
                         {
-                            break;
+                            throw new InvalidOperationException(string.Format("Circular dependency detected {0}.", GetChain(node, dependency)));
                         }
 
                         foreach (var sideNode in scanNode.InnerNodes)
@@ -203,6 +203,20 @@ namespace Microsoft.Framework.Runtime
             });
 
             // uncomment in case of emergencies: TraceState(root);
+        }
+
+        private static string GetChain(Node node, LibraryDependency dependency)
+        {
+            var result = dependency.Name;
+            var current = node;
+
+            while (current != null)
+            {
+                result = current.Key.Name + " -> " + result;
+                current = current.OuterNode;
+            }
+
+            return result;
         }
 
         private void TraceState(Node root)
