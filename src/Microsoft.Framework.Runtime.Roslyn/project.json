@@ -6,7 +6,7 @@
         "Microsoft.CodeAnalysis.CSharp": "1.0.0-rc1-*",
         "Microsoft.Framework.Runtime": "1.0.0-*",
         "Microsoft.Framework.Runtime.Common": { "version": "1.0.0-*", "type": "build" },
-        "Microsoft.Framework.Runtime.Interfaces": { "version": "1.0.0-*", "type": "build" },
+        "Microsoft.Framework.Runtime.Interfaces": "1.0.0-*",
         "Microsoft.Framework.Runtime.Roslyn.Common": { "version": "1.0.0-*", "type": "build" },
 		"Microsoft.Framework.Runtime.Roslyn.Interfaces": "1.0.0-*"
     },
