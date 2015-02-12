@@ -87,6 +87,7 @@ int BootstrapperOptionValueNum(LPCWSTR pszCandidate)
         return 1;
     }
     else if (StringsEqual(pszCandidate, L"--watch") ||
+        StringsEqual(pszCandidate, L"--debug") ||
         StringsEqual(pszCandidate, L"--help") ||
         StringsEqual(pszCandidate, L"-h") ||
         StringsEqual(pszCandidate, L"-?") ||
@@ -373,5 +374,26 @@ Finished:
 
 int wmain(int argc, wchar_t* argv[])
 {
+    // Check for the debug flag before doing anything else
+    for (int i = 0; i < argc; i++)
+    {
+        if (StringsEqual(argv[i], L"--debug"))
+        {
+            if (!IsDebuggerPresent())
+            {
+                ::wprintf_s(L"Process Id: %ld\r\n", GetCurrentProcessId());
+                ::wprintf_s(L"Waiting for the debugger to attach...\r\n");
+
+                // Do not use getchar() like in corerun because it doesn't work well with remote sessions
+                while (!IsDebuggerPresent())
+                {
+                    Sleep(250);
+                }
+
+                ::wprintf_s(L"Debugger attached.\r\n");
+            }
+        }
+    }
+
     return CallFirmwareProcessMain(argc, argv);
 }
