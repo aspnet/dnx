@@ -4,7 +4,7 @@
         "Newtonsoft.Json": "6.0.6",
         "Microsoft.Framework.Runtime": "1.0.0-*",
         "Microsoft.Framework.Runtime.Common": { "version": "1.0.0-*", "type": "build" },
-        "Microsoft.Framework.Runtime.Interfaces": { "version": "1.0.0-*", "type": "build" },
+        "Microsoft.Framework.Runtime.Interfaces": "1.0.0-*",
 		"Microsoft.Framework.Runtime.Hosting.Interfaces": "1.0.0-*",
         "Microsoft.Framework.Runtime.Roslyn" : "1.0.0-*"
     },

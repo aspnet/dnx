@@ -6,7 +6,7 @@
         "System.Reflection.Metadata": "1.0.18-beta",
         "Microsoft.Framework.Runtime.Loader": "1.0.0-*",
         "Microsoft.Framework.Runtime.Common": { "version": "1.0.0-*", "type": "build" },
-        "Microsoft.Framework.Runtime.Interfaces": { "version": "1.0.0-*", "type": "build" },
+        "Microsoft.Framework.Runtime.Interfaces": "1.0.0-*",
         "Newtonsoft.Json": "6.0.6"
     },
     "frameworks": {
