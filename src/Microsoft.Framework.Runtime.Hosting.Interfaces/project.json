@@ -1,0 +1,21 @@
+﻿{
+    "version": "1.0.0-*",
+    "dependencies": {
+    },
+
+    "frameworks" : {
+        "aspnet50" : {
+            "frameworkAssemblies": {
+                "System.Runtime": ""
+            }
+        },
+        "aspnetcore50" : {
+            "dependencies": {
+                "System.Reflection": "4.0.10-beta-*",
+                "System.Runtime": "4.0.20-beta-22523",
+                "System.Runtime.Extensions": "4.0.10-beta-*",
+                "System.ComponentModel": "4.0.0-beta-*"
+            }
+        }
+    }
+}

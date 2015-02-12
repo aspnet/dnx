@@ -6,7 +6,6 @@ namespace Microsoft.Framework.Runtime
     /// <summary>
     /// Summary description for ICompileModule
     /// </summary>
-    [AssemblyNeutral]
     public interface ICompileModule
     {
         void BeforeCompile(IBeforeCompileContext context);

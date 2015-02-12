@@ -1,13 +1,12 @@
 // Copyright (c) Microsoft Open Technologies, Inc. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
-using System;
+using Microsoft.CodeAnalysis;
 
-namespace Microsoft.Framework.Runtime.Infrastructure
+namespace Microsoft.Framework.Runtime
 {
-    [AssemblyNeutral]
-    public interface IServiceProviderLocator
+    public interface IRoslynMetadataReference : IMetadataReference
     {
-        IServiceProvider ServiceProvider { get; set; }
+        MetadataReference MetadataReference { get; }
     }
 }

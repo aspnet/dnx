@@ -4,7 +4,6 @@ using System.Reflection;
 
 namespace Microsoft.Framework.Runtime
 {
-    [AssemblyNeutral]
     public interface IAssemblyLoadContext : IDisposable
     {
         Assembly Load(string name);

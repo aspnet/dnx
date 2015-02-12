@@ -6,7 +6,6 @@ using System.Reflection;
 
 namespace Microsoft.Framework.Runtime
 {
-    [AssemblyNeutral]
     public interface ILibraryInformation
     {
         string Name { get; }

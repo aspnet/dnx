@@ -6,7 +6,6 @@ using System;
 
 namespace Microsoft.Framework.Runtime
 {
-    [AssemblyNeutral]
     public interface IFileWatcher : IFileMonitor, IDisposable
     {
         void WatchDirectory(string path, string extension);
