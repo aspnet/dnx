@@ -557,8 +557,15 @@ var RC_FILES = '${FindAllFiles("Resource.rc", BOOTSTRAPPER_EXE_NAME, BOOTSTRAPPE
             // copy runtime interfaces
             var mfriPath = Path.Combine(BUILD_DIR2, "Microsoft.Framework.Runtime.Interfaces", target.Framework, "Microsoft.Framework.Runtime.Interfaces.dll");
             var mfriPdbPath = Path.Combine(BUILD_DIR2, "Microsoft.Framework.Runtime.Interfaces", target.Framework, "Microsoft.Framework.Runtime.Interfaces.pdb");
-            File.Copy(mfriPath, Path.Combine(target.TargetFolder, "Microsoft.Framework.Runtime.Interfaces.dll"), true);
-            File.Copy(mfriPdbPath, Path.Combine(target.TargetFolder, "Microsoft.Framework.Runtime.Interfaces.pdb"), true);
+
+            if(File.Exists(mfriPath))
+            {
+                File.Copy(mfriPath, Path.Combine(target.TargetFolder, "Microsoft.Framework.Runtime.Interfaces.dll"), true);
+            }
+            if(File.Exists(mfriPdbPath))
+            {
+                File.Copy(mfriPdbPath, Path.Combine(target.TargetFolder, "Microsoft.Framework.Runtime.Interfaces.pdb"), true);
+            }
         }
     }
 
