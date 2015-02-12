@@ -49,7 +49,6 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{9B91C1A4-0DDF-4F1A-A353-5E2BF7A824F2}"
 	ProjectSection(SolutionItems) = preProject
 		global.json = global.json
-		makefile.shade = makefile.shade
 	EndProjectSection
 EndProject
 Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Microsoft.Framework.PackageManager.FunctionalTests", "test\Microsoft.Framework.PackageManager.FunctionalTests\Microsoft.Framework.PackageManager.FunctionalTests.kproj", "{C8404BE7-504E-477C-BC29-41A49B1BCBD9}"
