@@ -47,12 +47,12 @@ namespace Microsoft.Framework.PackageManager.Bundle
                         var path = Path.Combine(_runtimeBinPath, fileName);
                         var dest = Path.Combine(root.OutputPath, fileName);
 
-                        // If the assembly is already there, we don't overwrite it.
+                        // If the assembly is already there, we overwrite it.
                         // So if we have two assemblies with exact same name, one from NuGet package and
-                        // the other one from runtime bin folder, we prefer the one from NuGet package.
-                        if (File.Exists(path) && !File.Exists(dest))
+                        // the other one from runtime bin folder, we prefer the one from runtime bin.
+                        if (File.Exists(path))
                         {
-                            File.Copy(path, dest);
+                            File.Copy(path, dest, overwrite: true);
                         }
                     }
                 }
@@ -120,11 +120,23 @@ namespace Microsoft.Framework.PackageManager.Bundle
             var runtimeBasicManagedAssemblyPaths = runtimeBasicManagedAssemblyNames
                 .Select(x => Path.Combine(_runtimeBinPath, x + ".dll"));
 
-            var bundledAppAssemblyPaths = Directory.EnumerateFiles(root.OutputPath, "*.dll");
+            // {project assemblies} UNION {NuGet package assemblies}
+            // They are already copied to the destination
+            var appAssemblyNames = Directory.EnumerateFiles(root.OutputPath, "*.dll").Select(x => Path.GetFileNameWithoutExtension(x));
+
+            // {NuGet package assemblies} INTERSECT {runtime assemblies}
+            // This part of assemblies should be loaded from runtime bin folder because
+            // the ones in output folder will be overwritten
+            var overlapRuntimeAssemblyPaths = appAssemblyNames.Except();
+
+            // ({Project assemblies} UNION {NuGet package assemblies}) EXCEPT {runtime assemblies}
+            // This part of assemblies can be loaded because we won't overwrite them.
+            var nonRuntimeAppAssemblyPaths = appAssemblyNames.Except(assemblyCopyFlag.Keys).Select(x => Path.Combine(root.OutputPath, x + ".dll"));
+
 
             var accessor = root.HostServices.GetService(typeof(IAssemblyLoadContextAccessor)) as IAssemblyLoadContextAccessor;
             var assemblyLoadContext = accessor.Default;
-            foreach (var assemblyPath in runtimeBasicManagedAssemblyPaths.Concat(bundledAppAssemblyPaths))
+            foreach (var assemblyPath in runtimeBasicManagedAssemblyPaths.Concat(nonRuntimeAppAssemblyPaths))
             {
                 MarkAssembliesToCopy(assemblyPath, assemblyCopyFlag, assemblyLoadContext);
             }
