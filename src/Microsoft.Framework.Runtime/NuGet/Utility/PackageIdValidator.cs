@@ -40,12 +40,12 @@ namespace NuGet
             for (int index = 1; index < packageId.Length - 1; index++)
             {
                 var ch = packageId[index];
-                if (!char.IsLetterOrDigit(ch) || ch != '-' || ch != '.')
+                if (!char.IsLetterOrDigit(ch) && ch != '-' && ch != '.')
                 {
                     return false;
                 }
 
-                if (ch == '-' || ch == '.' && ch == packageId[index - 1])
+                if ((ch == '-' || ch == '.') && ch == packageId[index - 1])
                 {
                     // Cannot have two successive '-' or '.' in the name.
                     return false;
