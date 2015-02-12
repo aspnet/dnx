@@ -4,7 +4,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.Versioning;
-using Microsoft.Framework.Runtime.Common.CommandLine;
 
 namespace Microsoft.Framework.PackageManager.List
 {
@@ -20,7 +19,7 @@ namespace Microsoft.Framework.PackageManager.List
         public int Execute()
         {
             var result = 0;
-            _options.Reports.Information.WriteLine("List dependencies for {0} ({1})", _options.Project.Name, _options.Project.ProjectFilePath);
+            _options.Reports.Information.WriteLine("Listing dependencies for {0} ({1})", _options.Project.Name, _options.Project.ProjectFilePath);
 
             var frameworks = new HashSet<FrameworkName>(_options.Project.GetTargetFrameworks().Select(f => f.FrameworkName));
             if (_options.Framework != null)
@@ -39,8 +38,6 @@ namespace Microsoft.Framework.PackageManager.List
 
             foreach (var framework in frameworks)
             {
-                _options.Reports.Information.WriteLine("[Target framework {0}]", framework.Identifier.ToString());
-
                 var operation = new DependencyListOperation(_options, framework);
 
                 if (!operation.Execute())

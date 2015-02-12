@@ -59,6 +59,10 @@ namespace Microsoft.Framework.PackageManager.List
 
         public FrameworkName Framework { get; }
 
+        public bool HideDependents { get; set; }
+
+        public string ResultsFilter { get; set; }
+
         public Reports Reports { get; }
     }
 }

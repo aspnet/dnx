@@ -44,7 +44,7 @@ namespace Microsoft.Framework.PackageManager.Bundle
             Runtime.Project project;
             if (!Runtime.Project.TryGetProject(_options.ProjectDir, out project))
             {
-                _options.Reports.Error.WriteLine("Unable to locate {0}.'".Red(), Runtime.Project.ProjectFileName);
+                _options.Reports.Error.WriteLine("Unable to locate {0}.".Red(), Runtime.Project.ProjectFileName);
                 return false;
             }
 

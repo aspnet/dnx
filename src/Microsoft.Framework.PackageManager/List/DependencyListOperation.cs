@@ -5,6 +5,7 @@ using System.Linq;
 using System.Runtime.Versioning;
 using Microsoft.Framework.PackageManager.Algorithms;
 using Microsoft.Framework.Runtime;
+using NuGet;
 
 namespace Microsoft.Framework.PackageManager.List
 {
@@ -55,8 +56,19 @@ namespace Microsoft.Framework.PackageManager.List
 
         private void Render(IGraphNode<Library> root)
         {
-            var renderer = new LibraryDependencyFlatRenderer(_options.Reports.Information);
-            renderer.Render(root);
+            var renderer = new LibraryDependencyFlatRenderer(_options.HideDependents, _options.ResultsFilter);
+            var content = renderer.GetRenderContent(root);
+
+            if (content.Any())
+            {
+                _options.Reports.Information.WriteLine("\n[Target framework {0} ({1})]\n",
+                    _framework.ToString(), VersionUtility.GetShortFrameworkName(_framework));
+
+                foreach (var line in content)
+                {
+                    _options.Reports.Information.WriteLine(line);
+                }
+            }
         }
 
         private ApplicationHostContext CreateApplicationHostContext()

@@ -375,17 +375,23 @@ namespace Microsoft.Framework.PackageManager
 
             app.Command("list", c =>
             {
-                c.Description = "Print the dependencies of a given project.";
+                c.Description = "Print the dependencies of a given project";
                 var showAssemblies = c.Option("-a|--assemblies",
-                    "Show the assembly files that are depended on by given project.",
+                    "Show the assembly files that are depended on by given project",
                     CommandOptionType.NoValue);
-                var framework = c.Option("--framework",
-                    "Show dependencies for only the given framework.",
+                var framework = c.Option("--framework <NAME>",
+                    "Show dependencies for only the given framework",
                     CommandOptionType.SingleValue);
-                var runtimeFolder = c.Option("--runtime",
-                    "The folder containing all available framework assemblies.",
+                var runtimeFolder = c.Option("--runtime <PATH>",
+                    "The folder containing all available framework assemblies",
                     CommandOptionType.SingleValue);
-                var argProject = c.Argument("[project]", "The path to project. If omitted, the command will use the project in the current directory.");
+                var hideDependents = c.Option("--hide-dependents",
+                    "Hide the immediate dependents of libraries referenced in the project",
+                    CommandOptionType.NoValue);
+                var resultsFilter = c.Option("--filter <PATTERN>",
+                    "Filter the libraries referenced by the project base on their names. The matching pattern supports * and ?",
+                    CommandOptionType.SingleValue);
+                var argProject = c.Argument("[project]", "Path to project, default is current directory");
                 c.HelpOption("-?|-h|--help");
 
                 c.OnExecute(() =>
@@ -394,13 +400,15 @@ namespace Microsoft.Framework.PackageManager
                     {
                         ShowAssemblies = showAssemblies.HasValue(),
                         RuntimeFolder = runtimeFolder.Value(),
+                        HideDependents = hideDependents.HasValue(),
+                        ResultsFilter = resultsFilter.Value()
                     };
 
                     if (!options.Valid)
                     {
                         if (options.Project == null)
                         {
-                            options.Reports.Error.WriteLine(string.Format("A project could not be found in {0}.", options.Path).Red());
+                            options.Reports.Error.WriteLine(string.Format("Unable to locate {0}.".Red(), Runtime.Project.ProjectFileName));
                             return 1;
                         }
                         else
