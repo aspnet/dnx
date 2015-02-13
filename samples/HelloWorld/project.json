@@ -3,7 +3,7 @@
     "exclude": "more/*.cs",
     "dependencies": {
         "HelloShared": { "version": "0.1-beta-*", "type": "build" },
-        "Microsoft.CodeAnalysis.CSharp": "1.0.0-rc1-*"
+        "Microsoft.Framework.Runtime.Roslyn.Interfaces": "1.0.0-*"
     },
     "commands": {
         "hi": "HelloWorld --mode amazing",

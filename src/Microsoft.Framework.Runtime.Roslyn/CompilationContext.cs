@@ -42,12 +42,11 @@ namespace Microsoft.Framework.Runtime.Roslyn
 
         public CompilationContext(CSharpCompilation compilation,
                                   IList<IMetadataReference> metadataReferences,
-                                  IList<Diagnostic> diagnostics,
                                   Project project)
         {
             Compilation = compilation;
             MetadataReferences = metadataReferences;
-            Diagnostics = diagnostics;
+            Diagnostics = new List<Diagnostic>();
             Project = project;
             _resources = new Lazy<IList<ResourceDescription>>(() => GetResources(this));
         }
@@ -66,19 +65,6 @@ namespace Microsoft.Framework.Runtime.Roslyn
 
             sw.Stop();
             Logger.TraceInformation("[{0}]: Generated resources for {1} in {2}ms", nameof(CompilationContext), context.Project.Name, sw.ElapsedMilliseconds);
-
-            sw = Stopwatch.StartNew();
-            Logger.TraceInformation("[{0}]: Resolving required assembly neutral references for {1}", nameof(CompilationContext), context.Project.Name);
-
-            var embeddedReferences = EmbeddedReferencesHelper.GetRequiredEmbeddedReferences(context);
-            resources.AddEmbeddedReferences(embeddedReferences);
-
-            Logger.TraceInformation("[{0}]: Resolved {1} required assembly neutral references for {2} in {3}ms",
-                nameof(CompilationContext),
-                embeddedReferences.Count,
-                context.Project.Name,
-                sw.ElapsedMilliseconds);
-            sw.Stop();
 
             return resources;
         }

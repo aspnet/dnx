@@ -4,10 +4,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.IO;
 using System.Linq;
-using System.Reflection.PortableExecutable;
-using NuGet;
 
 namespace Microsoft.Framework.Runtime
 {
@@ -121,9 +118,7 @@ namespace Microsoft.Framework.Runtime
                                           IDictionary<string, ISourceReference> sourceReferences)
         {
             var references = new List<IMetadataReference>(export.MetadataReferences);
-
-            ExpandEmbeddedReferences(cache, references);
-
+            
             foreach (var reference in references)
             {
                 metadataReferences[reference.Name] = reference;
@@ -136,38 +131,6 @@ namespace Microsoft.Framework.Runtime
                     sourceReferences[sourceReference.Name] = sourceReference;
                 }
             }
-        }
-
-        private static void ExpandEmbeddedReferences(ICache cache, IList<IMetadataReference> references)
-        {
-            var otherReferences = new List<IMetadataReference>();
-
-            foreach (var reference in references)
-            {
-                var fileReference = reference as IMetadataFileReference;
-
-                if (fileReference != null &&
-                    string.Equals(Path.GetExtension(fileReference.Path), ".dll", StringComparison.OrdinalIgnoreCase))
-                {
-                    // We don't use the exact path since that might clash with another key
-                    var key = "ANI_" + fileReference.Path;
-
-                    var embeddedRefs = cache.Get<IList<IMetadataEmbeddedReference>>(key, ctx =>
-                                       {
-                                           ctx.Monitor(new FileWriteTimeCacheDependency(fileReference.Path));
-
-                                           using (var fileStream = File.OpenRead(fileReference.Path))
-                                           using (var reader = new PEReader(fileStream))
-                                           {
-                                               return reader.GetEmbeddedReferences();
-                                           }
-                                       });
-
-                    otherReferences.AddRange(embeddedRefs);
-                }
-            }
-
-            references.AddRange(otherReferences);
         }
 
         private class Node

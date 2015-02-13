@@ -34,7 +34,6 @@ namespace Microsoft.Framework.Runtime.Loader
                     if (assembly != null)
                     {
                         _assemblyCache[name] = assembly;
-                        ExtractAssemblyNeutralInterfaces(assembly);
                     }
                 }
 
@@ -100,30 +99,6 @@ namespace Microsoft.Framework.Runtime.Loader
         public void Dispose()
         {
 
-        }
-
-        private void ExtractAssemblyNeutralInterfaces(Assembly assembly)
-        {
-            // Embedded assemblies end with .dll
-            foreach (var resourceName in assembly.GetManifestResourceNames())
-            {
-                if (resourceName.StartsWith("AssemblyNeutral/") &&
-                    resourceName.EndsWith(".dll"))
-                {
-                    var assemblyName = Path.GetFileNameWithoutExtension(resourceName);
-
-                    var neutralAssemblyStream = assembly.GetManifestResourceStream(resourceName);
-
-                    try
-                    {
-                        _defaultContext.LoadStream(neutralAssemblyStream, assemblySymbols: null);
-                    }
-                    catch (FileLoadException)
-                    {
-                        // Already loaded
-                    }
-                }
-            }
         }
     }
 #else

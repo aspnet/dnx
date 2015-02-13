@@ -2,8 +2,6 @@
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 using System;
-using System.Collections.Generic;
-using System.Runtime.Versioning;
 
 namespace Microsoft.Framework.Runtime
 {
@@ -12,7 +10,6 @@ namespace Microsoft.Framework.Runtime
         IMetadataProjectReference GetProjectReference(
             Project project,
             ILibraryKey target, 
-            Func<ILibraryExport> referenceResolver,
-            IList<IMetadataReference> outgoingReferences);
+            Func<ILibraryExport> referenceResolver);
     }
 }

@@ -26,9 +26,6 @@ namespace kre.hosting
         private static readonly ConcurrentDictionary<string, Assembly> _assemblyCache
                 = new ConcurrentDictionary<string, Assembly>(StringComparer.Ordinal);
 
-        private static readonly ConcurrentDictionary<string, Assembly> _assemblyNeutralInterfaces =
-            new ConcurrentDictionary<string, Assembly>(StringComparer.Ordinal);
-
         private static readonly char[] _libPathSeparator = new[] { ';' };
 
         public static int Execute(string[] args)
@@ -149,7 +146,6 @@ namespace kre.hosting
             string[] searchPaths = ResolveSearchPaths(optionLib.Values, app.RemainingArguments);
 
             Func<string, Assembly> loader = _ => null;
-            Func<Stream, Assembly> loadStream = _ => null;
             Func<string, Assembly> loadFile = _ => null;
 
             Func<AssemblyName, Assembly> loaderCallback = assemblyName =>
@@ -187,9 +183,6 @@ namespace kre.hosting
 
                         if (assembly != null)
                         {
-#if ASPNETCORE50
-                            ExtractAssemblyNeutralInterfaces(assembly, loadStream);
-#endif
                             _assemblyCache[name] = assembly;
                         }
                     }
@@ -203,18 +196,11 @@ namespace kre.hosting
             };
 #if ASPNETCORE50
             var loaderImpl = new DelegateAssemblyLoadContext(loaderCallback);
-            loadStream = assemblyStream => loaderImpl.LoadStream(assemblyStream, assemblySymbols: null);
             loadFile = path => loaderImpl.LoadFile(path);
 
             AssemblyLoadContext.InitializeDefaultContext(loaderImpl);
-
-            if (loaderImpl.EnableMultiCoreJit())
-            {
-                loaderImpl.StartMultiCoreJitProfile("startup.prof");
-            }
 #else
             var loaderImpl = new LoaderEngine();
-            loadStream = assemblyStream => loaderImpl.LoadStream(assemblyStream, assemblySymbols: null);
             loadFile = path => loaderImpl.LoadFile(path);
 
             ResolveEventHandler handler = (sender, a) =>
@@ -230,16 +216,6 @@ namespace kre.hosting
             };
 
             AppDomain.CurrentDomain.AssemblyResolve += handler;
-            AppDomain.CurrentDomain.AssemblyLoad += (object sender, AssemblyLoadEventArgs loadedArgs) =>
-            {
-                // Skip loading interfaces for dynamic assemblies
-                if (loadedArgs.LoadedAssembly.IsDynamic)
-                {
-                    return;
-                }
-
-                ExtractAssemblyNeutralInterfaces(loadedArgs.LoadedAssembly, loadStream);
-            };
 #endif
 
             try
@@ -357,29 +333,6 @@ namespace kre.hosting
             // Expand ; separated arguments
             return libPath.Split(_libPathSeparator, StringSplitOptions.RemoveEmptyEntries)
                           .Select(Path.GetFullPath);
-        }
-
-        private static void ExtractAssemblyNeutralInterfaces(Assembly assembly, Func<Stream, Assembly> load)
-        {
-            foreach (var resourceName in assembly.GetManifestResourceNames())
-            {
-                if (resourceName.StartsWith("AssemblyNeutral/") && 
-                    resourceName.EndsWith(".dll"))
-                {
-                    var assemblyName = Path.GetFileNameWithoutExtension(resourceName);
-
-                    if (_assemblyCache.ContainsKey(assemblyName))
-                    {
-                        continue;
-                    }
-
-                    var neutralAssemblyStream = assembly.GetManifestResourceStream(resourceName);
-
-                    var neutralAssembly = load(neutralAssemblyStream);
-
-                    _assemblyCache[assemblyName] = neutralAssembly;
-                }
-            }
         }
 
         private static Assembly ResolveHostAssembly(Func<string, Assembly> loadFile, IList<string> searchPaths, string name)
