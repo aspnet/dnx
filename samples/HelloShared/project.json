@@ -4,7 +4,6 @@
     "shared": "*.cs",
     "frameworks": {
         "aspnet50": { },
-        "aspnet50": { },
         "aspnetcore50": {
             "dependencies": {
                 "System.Linq": "4.0.0-beta-*",

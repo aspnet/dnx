@@ -21,17 +21,6 @@
                 "System.Text.Encoding": ""
             }
         },
-        "aspnet50": {
-            "frameworkAssemblies": {
-                "System.Collections": "",
-                "System.IO": "",
-                "System.Runtime": "",
-                "System.Xml": "",
-                "System.Xml.Linq": "",
-                "System.Threading.Tasks": "",
-                "System.Text.Encoding": ""
-            }
-        },
         "aspnetcore50": {
             "dependencies": {
                 "System.IO": "4.0.10-beta-*",

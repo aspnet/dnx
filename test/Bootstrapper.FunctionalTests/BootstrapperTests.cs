@@ -2,6 +2,7 @@
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using Microsoft.Framework.FunctionalTestUtils;
 using Microsoft.Framework.PackageManager;
@@ -80,9 +81,8 @@ namespace Bootstrapper.FunctionalTests
         public void BootstrapperInvokesApplicationHostWithInferredAppBase(DisposableDir runtimeHomeDir)
         {
             using (runtimeHomeDir)
-            using (var samplesPath = TestUtils.GetSamplesFolder())
             {
-                var sampleAppRoot = Path.Combine(samplesPath, "HelloWorld");
+                var sampleAppRoot = Path.Combine(TestUtils.GetSamplesFolder(), "HelloWorld");
                 string stdOut, stdErr;
                 var exitCode = BootstrapperTestUtils.ExecBootstrapper(
                     runtimeHomeDir,
@@ -110,19 +110,22 @@ command
         public void BootstrapperInvokesAssemblyWithInferredAppBaseAndLibPathOnClr(string flavor, string os, string architecture)
         {
             using (var runtimeHomeDir = TestUtils.GetRuntimeHomeDir(flavor, os, architecture))
-            using (var samplesPath = TestUtils.GetSamplesFolder())
+            using (var tempDir = TestUtils.CreateTempDir())
             {
+                var samplesPath = TestUtils.GetSamplesFolder();
                 var sampleAppRoot = Path.Combine(samplesPath, "HelloWorld");
 
-                KpmTestUtils.ExecKpm(
+                var exitCode = KpmTestUtils.ExecKpm(
                     runtimeHomeDir,
                     subcommand: "build",
-                    arguments: string.Format("{0} --configuration=Release", sampleAppRoot));
+                    arguments: string.Format("{0} --configuration=Release --out {1}", sampleAppRoot, tempDir.DirPath));
+
+                Assert.Equal(0, exitCode);
 
                 string stdOut, stdErr;
-                var exitCode = BootstrapperTestUtils.ExecBootstrapper(
+                exitCode = BootstrapperTestUtils.ExecBootstrapper(
                     runtimeHomeDir,
-                    arguments: Path.Combine(sampleAppRoot, "bin", "Release", "aspnet50", "HelloWorld.dll"),
+                    arguments: Path.Combine(tempDir, "Release", "aspnet50", "HelloWorld.dll"),
                     stdOut: out stdOut,
                     stdErr: out stdErr,
                     environment: new Dictionary<string, string> { { EnvironmentNames.Trace, null } });
@@ -140,19 +143,22 @@ Hello, code!
         public void BootstrapperInvokesAssemblyWithInferredAppBaseAndLibPathOnCoreClr(string flavor, string os, string architecture)
         {
             using (var runtimeHomeDir = TestUtils.GetRuntimeHomeDir(flavor, os, architecture))
-            using (var samplesPath = TestUtils.GetSamplesFolder())
+            using (var tempDir = TestUtils.CreateTempDir())
             {
+                var samplesPath = TestUtils.GetSamplesFolder();
                 var sampleAppRoot = Path.Combine(samplesPath, "HelloWorld");
 
-                KpmTestUtils.ExecKpm(
+                var exitCode = KpmTestUtils.ExecKpm(
                     runtimeHomeDir,
                     subcommand: "build",
-                    arguments: string.Format("{0} --configuration=Release", sampleAppRoot));
+                    arguments: string.Format("{0} --configuration=Release --out {1}", sampleAppRoot, tempDir.DirPath));
+
+                Assert.Equal(0, exitCode);
 
                 string stdOut, stdErr;
-                var exitCode = BootstrapperTestUtils.ExecBootstrapper(
+                exitCode = BootstrapperTestUtils.ExecBootstrapper(
                     runtimeHomeDir,
-                    arguments: Path.Combine(sampleAppRoot, "bin", "Release", "aspnetcore50", "HelloWorld.dll"),
+                    arguments: Path.Combine(tempDir, "Release", "aspnetcore50", "HelloWorld.dll"),
                     stdOut: out stdOut,
                     stdErr: out stdErr,
                     environment: new Dictionary<string, string> { { EnvironmentNames.Trace, null } });

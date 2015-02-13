@@ -131,9 +131,8 @@ namespace Microsoft.Framework.ApplicationHost
         public void KCommandRunsSampleAppGivenAppBase(DisposableDir runtimeHomeDir)
         {
             using (runtimeHomeDir)
-            using (var samplePath = TestUtils.GetSamplesFolder())
             {
-                var sampleAppRoot = Path.Combine(samplePath, "HelloWorld");
+                var sampleAppRoot = Path.Combine(TestUtils.GetSamplesFolder(), "HelloWorld");
                 string stdOut, stdErr;
                 var exitCode = KCommandTestUtils.ExecKCommand(
                     runtimeHomeDir,
@@ -152,9 +151,8 @@ namespace Microsoft.Framework.ApplicationHost
         public void KCommandRunsSampleAppUsingDefaultAppBase(DisposableDir runtimeHomeDir)
         {
             using (runtimeHomeDir)
-            using (var samplePath = TestUtils.GetSamplesFolder())
             {
-                var sampleAppRoot = Path.Combine(samplePath, "HelloWorld");
+                var sampleAppRoot = Path.Combine(TestUtils.GetSamplesFolder(), "HelloWorld");
                 string stdOut, stdErr;
                 var exitCode = KCommandTestUtils.ExecKCommand(
                     runtimeHomeDir,
