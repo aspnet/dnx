@@ -49,7 +49,7 @@ namespace Microsoft.Framework.PackageManager.Bundle
 
         public IServiceProvider HostServices { get; private set; }
 
-        public void Emit()
+        public bool Emit()
         {
             Reports.Quiet.WriteLine("Copying to output path {0}", OutputPath);
 
@@ -60,9 +60,11 @@ namespace Microsoft.Framework.PackageManager.Bundle
                 deploymentPackage.Emit(this);
             }
 
+            var success = true;
+
             foreach (var deploymentProject in Projects)
             {
-                deploymentProject.Emit(this);
+                success &= deploymentProject.Emit(this);
             }
 
             foreach (var deploymentRuntime in Runtimes)
@@ -79,6 +81,8 @@ namespace Microsoft.Framework.PackageManager.Bundle
 
             // Generate executables (bash scripts without .sh extension) for *nix
             GenerateBashScripts();
+
+            return success;
         }
 
         private void GenerateBatchFiles()

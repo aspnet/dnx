@@ -37,23 +37,27 @@ namespace Microsoft.Framework.PackageManager.Bundle
         public string WwwRoot { get; set; }
         public string WwwRootOut { get; set; }
 
-        public void Emit(BundleRoot root)
+        public bool Emit(BundleRoot root)
         {
             root.Reports.Quiet.WriteLine("Using {0} dependency {1} for {2}", _libraryDescription.Type,
                 _libraryDescription.Identity, _libraryDescription.Framework.ToString().Yellow().Bold());
 
+            var success = false;
+
             if (root.NoSource)
             {
-                EmitNupkg(root);
+                success = EmitNupkg(root);
             }
             else
             {
-                EmitSource(root);
+                success = EmitSource(root);
             }
             root.Reports.Quiet.WriteLine();
+
+            return success;
         }
 
-        private void EmitSource(BundleRoot root)
+        private bool EmitSource(BundleRoot root)
         {
             root.Reports.Quiet.WriteLine("  Copying source code from {0} dependency {1}",
                 _libraryDescription.Type, _libraryDescription.Identity.Name);
@@ -82,9 +86,11 @@ namespace Microsoft.Framework.PackageManager.Bundle
             UpdateWebRoot(root, TargetPath);
 
             _applicationBase = Path.Combine("..", BundleRoot.AppRootName, "src", project.Name);
+
+            return true;
         }
 
-        private void EmitNupkg(BundleRoot root)
+        private bool EmitNupkg(BundleRoot root)
         {
             root.Reports.Quiet.WriteLine("  Packing nupkg from {0} dependency {1}",
                 _libraryDescription.Type, _libraryDescription.Identity.Name);
@@ -112,7 +118,7 @@ namespace Microsoft.Framework.PackageManager.Bundle
                 else
                 {
                     root.Reports.Quiet.WriteLine("  {0} already exists.", TargetPath);
-                    return;
+                    return true;
                 }
             }
 
@@ -126,7 +132,7 @@ namespace Microsoft.Framework.PackageManager.Bundle
             var buildManager = new BuildManager(root.HostServices, buildOptions);
             if (!buildManager.Build())
             {
-                return;
+                return false;
             }
 
             // Extract the generated nupkg to target path
@@ -178,6 +184,8 @@ namespace Microsoft.Framework.PackageManager.Bundle
             });
 
             _applicationBase = Path.Combine("..", BundleRoot.AppRootName, "packages", resolver.GetPackageDirectory(_libraryDescription.Identity.Name, _libraryDescription.Identity.Version), "root");
+
+            return true;
         }
 
         private void CopyRelativeSources(Runtime.Project project)
