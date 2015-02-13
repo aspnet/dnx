@@ -3,7 +3,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using System.Runtime.Versioning;
 using Microsoft.Framework.Runtime;
@@ -95,13 +94,11 @@ namespace Loader.Tests
                 .Package("d", "1.0", that => that.Needs("b", "1.0"));
 
             var walker = new DependencyWalker(new[] { testProvider });
-            walker.Walk("a", new SemanticVersion("1.0"), VersionUtility.ParseFrameworkName("net45"));
 
-            AssertDependencies(testProvider.Dependencies, that => that
-                .Needs("a", "1.0")
-                .Needs("b", "1.0")
-                .Needs("c", "1.0")
-                .Needs("d", "1.0"));
+            Assert.Throws<InvalidOperationException>(() =>
+            {
+                walker.Walk("a", new SemanticVersion("1.0"), VersionUtility.ParseFrameworkName("net45"));
+            });
         }
 
         [Fact]
