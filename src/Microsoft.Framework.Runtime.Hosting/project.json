@@ -1,0 +1,19 @@
+﻿{
+    "version": "1.0.0-*",
+    "description": "The core components necessary to host the K Runtime",
+    "dependencies": {
+        "Microsoft.Framework.Runtime.Hosting.Interfaces": ""
+    },
+
+    "frameworks" : {
+        "aspnet50" : { 
+            "dependencies": {
+            }
+        },
+        "aspnetcore50" : { 
+            "dependencies": {
+                "System.Runtime": "4.0.20-beta-*"
+            }
+        }
+    }
+}
