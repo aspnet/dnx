@@ -1,8 +1,8 @@
 ﻿// Copyright (c) Microsoft Open Technologies, Inc. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
-using System;
 using System.Collections.Generic;
+using System.Linq;
 using Microsoft.Framework.FileSystemGlobbing;
 using Newtonsoft.Json.Linq;
 
@@ -77,32 +77,32 @@ namespace Microsoft.Framework.Runtime.FileGlobbing
 
         public IEnumerable<string> SourceFiles
         {
-            get { return _sourcesMatcher.GetResultsInFullPath(_projectDirectory); }
+            get { return _sourcesMatcher.GetResultsInFullPath(_projectDirectory).Distinct(); }
         }
 
         public IEnumerable<string> PreprocessSourceFiles
         {
-            get { return _preprocessSourcesMatcher.GetResultsInFullPath(_projectDirectory); }
+            get { return _preprocessSourcesMatcher.GetResultsInFullPath(_projectDirectory).Distinct(); }
         }
 
         public IEnumerable<string> BundleExcludeFiles
         {
-            get { return _bundleExcludeFilesMatcher.GetResultsInFullPath(_projectDirectory); }
+            get { return _bundleExcludeFilesMatcher.GetResultsInFullPath(_projectDirectory).Distinct(); }
         }
 
         public IEnumerable<string> ResourceFiles
         {
-            get { return _resourcesMatcher.GetResultsInFullPath(_projectDirectory); }
+            get { return _resourcesMatcher.GetResultsInFullPath(_projectDirectory).Distinct(); }
         }
 
         public IEnumerable<string> SharedFiles
         {
-            get { return _sharedSourceMatcher.GetResultsInFullPath(_projectDirectory); }
+            get { return _sharedSourceMatcher.GetResultsInFullPath(_projectDirectory).Distinct(); }
         }
 
         public IEnumerable<string> ContentFiles
         {
-            get { return _contentFilesMatcher.GetResultsInFullPath(_projectDirectory); }
+            get { return _contentFilesMatcher.GetResultsInFullPath(_projectDirectory).Distinct(); }
         }
 
         public IEnumerable<string> SourcePatterns { get; }
