@@ -38,7 +38,7 @@ namespace Microsoft.Framework.PackageManager
                     // extracted, the Restore Operation can inadvertly conclude the package is available locally and proceed to read
                     // partially written package contents. To avoid this we'll extract the package to a sibling directory and Move it 
                     // to the target path.
-                    var extractPath = Path.Combine(targetPath, "..", Path.GetRandomFileName());
+                    var extractPath = Path.Combine(Path.GetDirectoryName(targetPath), Path.GetRandomFileName());
                     Directory.CreateDirectory(extractPath);
                     targetNupkg = Path.Combine(extractPath, Path.GetFileName(targetNupkg));
                     using (var nupkgStream = new FileStream(targetNupkg, FileMode.Create, FileAccess.ReadWrite, FileShare.ReadWrite | FileShare.Delete))
