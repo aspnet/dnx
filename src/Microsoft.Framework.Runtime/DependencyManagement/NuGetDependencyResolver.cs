@@ -21,18 +21,11 @@ namespace Microsoft.Framework.Runtime
         // All the information required by this package
         private readonly Dictionary<string, PackageDescription> _packageDescriptions = new Dictionary<string, PackageDescription>(StringComparer.OrdinalIgnoreCase);
 
-        private readonly GlobalSettings _globalSettings;
-
-        public NuGetDependencyResolver(string packagesPath, string rootDir = null)
+        public NuGetDependencyResolver(string packagesPath)
         {
             // Runtime already ensures case-sensitivity, so we don't need package ids in accurate casing here
             _repository = new PackageRepository(packagesPath, caseSensitivePackagesName: false);
             Dependencies = Enumerable.Empty<LibraryDescription>();
-
-            if (!string.IsNullOrEmpty(rootDir))
-            {
-                GlobalSettings.TryGetGlobalSettings(rootDir, out _globalSettings);
-            }
         }
 
         public IDictionary<string, PackageAssembly> PackageAssemblyLookup

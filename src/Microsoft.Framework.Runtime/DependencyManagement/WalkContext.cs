@@ -332,9 +332,6 @@ namespace Microsoft.Framework.Runtime
             foreach (var groupByResolver in _usedItems.GroupBy(x => x.Value.Resolver))
             {
                 var resolver = groupByResolver.Key;
-                var packageKeys = groupByResolver.Select(x => x.Value.Key).OrderBy(x => x.Name).ToList();
-
-                Logger.TraceInformation("[{0}]: " + string.Join(", ", packageKeys), resolver.GetType().Name);
 
                 var descriptions = groupByResolver.Select(entry =>
                 {

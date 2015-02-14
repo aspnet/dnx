@@ -11,3 +11,4 @@ if [ ! -d "$dst" ]; then
 fi
 
 cp $src $dst
+rc=$?; if [[ $rc != 0 ]]; then exit $rc; fi

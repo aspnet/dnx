@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Threading;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 namespace Microsoft.Framework.Runtime
 {
@@ -32,7 +33,12 @@ namespace Microsoft.Framework.Runtime
         {
             lock (_writer)
             {
-                _writer.Write(JsonConvert.SerializeObject(message));
+                var obj = new JObject();
+                obj["ContextId"] = message.ContextId;
+                obj["HostId"] = message.HostId;
+                obj["MessageType"] = message.MessageType;
+                obj["Payload"] = message.Payload;
+                _writer.Write(obj.ToString(Formatting.None));
             }
         }
 

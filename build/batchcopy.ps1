@@ -5,3 +5,4 @@ $dst = $dst -replace "/", "\"
 
 Write-Host "run: xcopy /F /Y /I $src $dst"
 xcopy /F /Y /I $src $dst
+exit $LASTEXITCODE

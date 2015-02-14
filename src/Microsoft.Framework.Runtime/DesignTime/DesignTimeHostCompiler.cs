@@ -48,17 +48,17 @@ namespace Microsoft.Framework.Runtime
                 throw new InvalidOperationException();
             }
 
+            var obj = new JObject();
+            obj["Name"] = library.Name;
+            obj["Configuration"] = library.Configuration;
+            obj["TargetFramework"] = library.TargetFramework.ToString();
+            obj["Aspect"] = library.Aspect;
+
             _queue.Send(new DesignTimeMessage
             {
                 HostId = "Application",
                 MessageType = "GetCompiledAssembly",
-                Payload = JToken.FromObject(new LibraryKey
-                {
-                    Name = library.Name,
-                    Configuration = library.Configuration,
-                    TargetFramework = library.TargetFramework.ToString(),
-                    Aspect = library.Aspect
-                }),
+                Payload = obj,
                 ContextId = contextId
             });
 
@@ -99,14 +99,6 @@ namespace Microsoft.Framework.Runtime
 
                     return existing;
                 });
-        }
-
-        private class LibraryKey
-        {
-            public string Name { get; set; }
-            public string TargetFramework { get; set; }
-            public string Configuration { get; set; }
-            public string Aspect { get; set; }
         }
     }
 }

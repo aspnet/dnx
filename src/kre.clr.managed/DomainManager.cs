@@ -3,8 +3,10 @@
 
 using System;
 using System.Collections.Generic;
+using System.Net.Sockets;
 using System.Reflection;
 using System.Runtime.InteropServices;
+using System.Threading;
 using kre.hosting;
 using Microsoft.Framework.Runtime;
 
@@ -25,6 +27,15 @@ public class DomainManager : AppDomainManager
 
     private int Main(int argc, string[] argv)
     {
+        // Create the socket on a new thread to warm up the configuration stack
+        // before any other code starts to run. This allows us to startup up much
+        // faster.
+        ThreadPool.UnsafeQueueUserWorkItem(_ =>
+        {
+            var socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+        },
+        null);
+
         return RuntimeBootstrapper.Execute(argv);
     }
 
