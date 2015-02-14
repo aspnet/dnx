@@ -216,7 +216,10 @@ namespace Microsoft.Framework.Runtime.DependencyManagement
 
         private PackageReferenceSet ReadPackageReferenceSet(JToken json)
         {
-            throw new NotImplementedException();
+            var frameworkName = json["targetFramework"].ToStringSafe();
+            return new PackageReferenceSet(
+                string.IsNullOrEmpty(frameworkName) ? null : new FrameworkName(frameworkName),
+                ReadArray(json["references"] as JArray, ReadString));
         }
 
         private JToken WritePackageReferenceSet(PackageReferenceSet item)
