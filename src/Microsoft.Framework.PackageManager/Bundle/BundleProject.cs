@@ -260,6 +260,12 @@ namespace Microsoft.Framework.PackageManager.Bundle
 
             root.Operations.Copy(project.ProjectDirectory, targetPath, itemPath =>
             {
+                // TODO: this is a temporary workaround to make sure "kpm bundle --no-source" is not broken by lockfile
+                if (string.Equals(Path.GetFileName(itemPath), "project.lock.json", StringComparison.OrdinalIgnoreCase))
+                {
+                    return false;
+                }
+
                 // If current file/folder is in the exclusion list, we don't copy it
                 if (excludeSet.Contains(itemPath))
                 {
