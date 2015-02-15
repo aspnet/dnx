@@ -429,7 +429,16 @@ var RC_FILES = '${FindAllFiles("Resource.rc", BOOTSTRAPPER_EXE_NAME, BOOTSTRAPPE
     }
 
 #copy-coreclr
-    nuget-install package='CoreCLR' outputDir='packages' extra='-pre -nocache' once='CoreCLR' nugetPath='.nuget/nuget.exe'
+    @{
+        var extras = "-pre -nocache";
+        var coreCLRPackageSource = E("CORECLR_PACKAGE_SOURCE");
+        if (!string.IsNullOrEmpty(coreCLRPackageSource))
+        {
+            extras += " -source " + coreCLRPackageSource;
+        }
+    }
+
+    nuget-install package='CoreCLR' outputDir='packages' extra='${extras}' once='CoreCLR' nugetPath='.nuget/nuget.exe'
 
     var CoreCLR_DIR='${""}'
     @{
