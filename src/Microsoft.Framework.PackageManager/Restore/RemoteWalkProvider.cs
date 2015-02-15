@@ -87,31 +87,6 @@ namespace Microsoft.Framework.PackageManager
             return Enumerable.Empty<LibraryDependency>();
         }
 
-        public async Task<LockFileLibrary> GetLockFileLibrary(WalkProviderMatch match)
-        {
-            using (var stream = await _source.OpenNupkgStreamAsync(new PackageInfo
-            {
-                Id = match.Library.Name,
-                Version = match.Library.Version,
-                ContentUri = match.Path
-            }))
-            {
-                if (stream != null)
-                {
-                    var package = new ZipPackage(stream);
-                    var result = new LockFileLibrary();
-                    result.Name = package.Id;
-                    result.Version = package.Version;
-                    result.DependencySets = package.DependencySets.ToList();
-                    result.FrameworkAssemblies = package.FrameworkAssemblies.ToList();
-                    result.PackageAssemblyReferences = package.PackageAssemblyReferences.ToList();
-                    result.Files = package.GetFiles().ToList();
-                    return result;
-                }
-            }
-            return null;
-        }
-
         public async Task CopyToAsync(WalkProviderMatch match, Stream stream)
         {
             using (var nupkgStream = await _source.OpenNupkgStreamAsync(new PackageInfo

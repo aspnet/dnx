@@ -13,7 +13,6 @@ namespace Microsoft.Framework.PackageManager
 
         Task<WalkProviderMatch> FindLibrary(LibraryRange libraryRange, FrameworkName targetFramework);
         Task<IEnumerable<LibraryDependency>> GetDependencies(WalkProviderMatch match, FrameworkName targetFramework);
-        Task<LockFileLibrary> GetLockFileLibrary(WalkProviderMatch match);
         Task CopyToAsync(WalkProviderMatch match, Stream stream);
     }
 

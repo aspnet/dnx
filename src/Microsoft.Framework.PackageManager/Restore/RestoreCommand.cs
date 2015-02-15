@@ -183,7 +183,8 @@ namespace Microsoft.Framework.PackageManager
             localProviders.Add(
                 new LocalWalkProvider(
                     new NuGetDependencyResolver(
-                        packagesDirectory)));
+                        new PackageRepository(
+                            packagesDirectory))));
 
             var effectiveSources = PackageSourceUtils.GetEffectivePackageSources(
                 SourceProvider,
@@ -339,6 +340,7 @@ namespace Microsoft.Framework.PackageManager
             }
 
             var projectDirectory = project.ProjectDirectory;
+            var packageRepository = new PackageRepository(packagesDirectory);
             var restoreOperations = new RestoreOperations(Reports.Verbose);
             var projectProviders = new List<IWalkProvider>();
             var localProviders = new List<IWalkProvider>();
@@ -354,8 +356,7 @@ namespace Microsoft.Framework.PackageManager
 
             localProviders.Add(
                 new LocalWalkProvider(
-                    new NuGetDependencyResolver(
-                        packagesDirectory)));
+                    new NuGetDependencyResolver(packageRepository)));
 
             var effectiveSources = PackageSourceUtils.GetEffectivePackageSources(
                 SourceProvider,
@@ -492,7 +493,7 @@ namespace Microsoft.Framework.PackageManager
             if (success && !useLockFile)
             {
                 Reports.Information.WriteLine(string.Format("Writing lock file {0}", projectLockFilePath.White().Bold()));
-                await WriteLockFile(projectLockFilePath, graphItems);
+                WriteLockFile(projectLockFilePath, graphItems, new PackageRepository(packagesDirectory));
             }
 
             if (!ScriptExecutor.Execute(project, "postrestore", getVariable))
@@ -528,7 +529,8 @@ namespace Microsoft.Framework.PackageManager
             localProviders.Add(
                 new LocalWalkProvider(
                     new NuGetDependencyResolver(
-                        packagesDirectory)));
+                        new PackageRepository(
+                            packagesDirectory))));
 
             var effectiveSources = PackageSourceUtils.GetEffectivePackageSources(
                 SourceProvider,
@@ -651,17 +653,31 @@ namespace Microsoft.Framework.PackageManager
             return Task.FromResult(lockFileFormat.Read(projectLockFilePath));
         }
 
-        private async Task WriteLockFile(string projectLockFilePath, List<GraphItem> graphItems)
+        private void WriteLockFile(string projectLockFilePath, List<GraphItem> graphItems,
+            PackageRepository repository)
         {
             var lockFile = new LockFile();
             lockFile.Islocked = Lock;
             foreach (var item in graphItems.OrderBy(x => x.Match.Library, new LibraryComparer()))
             {
-                var library = await item.Match.Provider.GetLockFileLibrary(item.Match);
-                if (library != null)
+                var library = item.Match.Library;
+                var packageInfo = repository.FindPackagesById(library.Name)
+                    .FirstOrDefault(p => p.Version == library.Version);
+                if (packageInfo == null)
                 {
-                    lockFile.Libraries.Add(library);
+                    continue;
                 }
+
+                var package = packageInfo.Package;
+                var lockFileLib = new LockFileLibrary();
+                lockFileLib.Name = package.Id;
+                lockFileLib.Version = package.Version;
+                lockFileLib.DependencySets = package.DependencySets.ToList();
+                lockFileLib.FrameworkAssemblies = package.FrameworkAssemblies.ToList();
+                lockFileLib.PackageAssemblyReferences = package.PackageAssemblyReferences.ToList();
+                lockFileLib.Files = package.GetFiles().ToList();
+
+                lockFile.Libraries.Add(lockFileLib);
             }
 
             var lockFileFormat = new LockFileFormat();

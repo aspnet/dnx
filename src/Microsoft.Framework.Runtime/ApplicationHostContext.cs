@@ -9,6 +9,7 @@ using Microsoft.Framework.Runtime.FileSystem;
 using Microsoft.Framework.Runtime.Loader;
 using Microsoft.Framework.Runtime.DependencyManagement;
 using System.IO;
+using NuGet;
 
 namespace Microsoft.Framework.Runtime
 {
@@ -36,7 +37,7 @@ namespace Microsoft.Framework.Runtime
             PackagesDirectory = packagesDirectory ?? NuGetDependencyResolver.ResolveRepositoryPath(RootDirectory);
 
             var referenceAssemblyDependencyResolver = new ReferenceAssemblyDependencyResolver(FrameworkReferenceResolver);
-            NuGetDependencyProvider = new NuGetDependencyResolver(PackagesDirectory);
+            NuGetDependencyProvider = new NuGetDependencyResolver(new PackageRepository(PackagesDirectory));
             var gacDependencyResolver = new GacDependencyResolver();
             ProjectDepencyProvider = new ProjectReferenceDependencyProvider(ProjectResolver);
             var unresolvedDependencyProvider = new UnresolvedDependencyProvider();

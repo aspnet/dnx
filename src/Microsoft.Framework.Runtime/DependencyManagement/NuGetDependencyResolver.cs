@@ -21,10 +21,9 @@ namespace Microsoft.Framework.Runtime
         // All the information required by this package
         private readonly Dictionary<string, PackageDescription> _packageDescriptions = new Dictionary<string, PackageDescription>(StringComparer.OrdinalIgnoreCase);
 
-        public NuGetDependencyResolver(string packagesPath)
+        public NuGetDependencyResolver(PackageRepository repository)
         {
-            // Runtime already ensures case-sensitivity, so we don't need package ids in accurate casing here
-            _repository = new PackageRepository(packagesPath, caseSensitivePackagesName: false);
+            _repository = repository;
             Dependencies = Enumerable.Empty<LibraryDescription>();
         }
 
@@ -73,26 +72,6 @@ namespace Microsoft.Framework.Runtime
                     Type = "Package",
                     Dependencies = GetDependencies(package, targetFramework)
                 };
-            }
-
-            return null;
-        }
-
-
-        public LockFileLibrary GetLockFileLibrary(Library library)
-        {
-            var package = FindCandidate(library.Name, library.Version);
-
-            if (package != null)
-            {
-                var result = new LockFileLibrary();
-                result.Name = package.Id;
-                result.Version = package.Version;
-                result.DependencySets = package.DependencySets.ToList();
-                result.FrameworkAssemblies = package.FrameworkAssemblies.ToList();
-                result.PackageAssemblyReferences = package.PackageAssemblyReferences.ToList();
-                result.Files = package.GetFiles().ToList();
-                return result;
             }
 
             return null;

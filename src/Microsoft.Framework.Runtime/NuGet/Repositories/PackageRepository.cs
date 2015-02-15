@@ -16,12 +16,12 @@ namespace NuGet
         private readonly bool _checkPackageIdCase;
         private LockFile _lockFile;
 
-        public PackageRepository(string path, bool caseSensitivePackagesName)
+        public PackageRepository(string path, bool caseSensitivePackagesName = false)
             : this(new PhysicalFileSystem(path), caseSensitivePackagesName)
         {
         }
 
-        public PackageRepository(IFileSystem root, bool caseSensitivePackagesName)
+        public PackageRepository(IFileSystem root, bool caseSensitivePackagesName = false)
         {
             _repositoryRoot = root;
             _checkPackageIdCase = caseSensitivePackagesName;

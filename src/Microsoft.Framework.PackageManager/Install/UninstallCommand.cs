@@ -73,7 +73,8 @@ namespace Microsoft.Framework.PackageManager
                 LocalLibraryProviders = new IWalkProvider[] {
                     new LocalWalkProvider(
                         new NuGetDependencyResolver(
-                            packagesRepo.RepositoryRoot.Root))
+                            new PackageRepository(
+                                packagesRepo.RepositoryRoot.Root)))
                 }
             };
             var operations = new RestoreOperations(_reports.Verbose);
