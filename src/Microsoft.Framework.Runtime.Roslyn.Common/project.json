@@ -1,6 +1,5 @@
 {
     "version": "1.0.0-*",
-    "shared": "**/*.cs",
     "description": "ASP.NET 5 Roslyn implementation code shared with libraries performing runtime compilation.",
     "compilationOptions": { "define": [ "TRACE" ], "allowUnsafe": true, "warningsAsErrors": true },
     "dependencies": {
