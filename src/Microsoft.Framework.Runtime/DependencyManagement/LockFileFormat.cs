@@ -179,9 +179,10 @@ namespace Microsoft.Framework.Runtime.DependencyManagement
 
         private PackageDependency ReadPackageDependency(string property, JToken json)
         {
+            var versionStr = json.Value<string>();
             return new PackageDependency(
                 property,
-                VersionUtility.ParseVersionSpec(json.Value<string>()));
+                versionStr == null ? null : VersionUtility.ParseVersionSpec(versionStr));
         }
 
         private JProperty WritePackageDependency(PackageDependency item)
