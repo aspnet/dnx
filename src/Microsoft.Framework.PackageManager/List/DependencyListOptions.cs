@@ -1,17 +1,15 @@
 ﻿// Copyright (c) Microsoft Open Technologies, Inc. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
-using System;
+using System.Collections.Generic;
 using System.IO;
-using System.Runtime.Versioning;
 using Microsoft.Framework.Runtime.Common.CommandLine;
-using NuGet;
 
 namespace Microsoft.Framework.PackageManager.List
 {
     internal class DependencyListOptions
     {
-        public DependencyListOptions(Reports reports, CommandArgument path, CommandOption framework)
+        public DependencyListOptions(Reports reports, CommandArgument path)
         {
             bool isInputValid = true;
 
@@ -26,24 +24,6 @@ namespace Microsoft.Framework.PackageManager.List
             Path = projectPath;
             Project = projectOption;
 
-            // framework
-            if (framework.HasValue())
-            {
-                try
-                {
-                    Framework = VersionUtility.ParseFrameworkName(framework.Value());
-                }
-                catch (ArgumentException ex)
-                {
-                    Reports.Error.WriteLine("Invalid framework name: {0}. [{1}]", framework.Value(), ex.Message);
-                    isInputValid = false;
-                }
-            }
-            else
-            {
-                Framework = null;
-            }
-
             Valid = isInputValid;
         }
 
@@ -57,7 +37,7 @@ namespace Microsoft.Framework.PackageManager.List
 
         public bool ShowAssemblies { get; set; }
 
-        public FrameworkName Framework { get; }
+        public IEnumerable<string> TargetFrameworks { get; set; }
 
         public bool HideDependents { get; set; }
 

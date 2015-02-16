@@ -3,12 +3,11 @@
 
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
-using NuGet;
-using Microsoft.Framework.PackageManager.Restore.NuGet;
 using System.Threading.Tasks;
+using Microsoft.Framework.PackageManager.Restore.NuGet;
 using Microsoft.Framework.Runtime;
+using NuGet;
 
 namespace Microsoft.Framework.PackageManager
 {

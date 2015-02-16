@@ -385,9 +385,9 @@ namespace Microsoft.Framework.PackageManager
                 var showAssemblies = c.Option("-a|--assemblies",
                     "Show the assembly files that are depended on by given project",
                     CommandOptionType.NoValue);
-                var framework = c.Option("--framework <NAME>",
-                    "Show dependencies for only the given framework",
-                    CommandOptionType.SingleValue);
+                var frameworks = c.Option("--framework <TARGET_FRAMEWORK>",
+                    "Show dependencies for only the given frameworks",
+                    CommandOptionType.MultipleValue);
                 var runtimeFolder = c.Option("--runtime <PATH>",
                     "The folder containing all available framework assemblies",
                     CommandOptionType.SingleValue);
@@ -402,8 +402,9 @@ namespace Microsoft.Framework.PackageManager
 
                 c.OnExecute(() =>
                 {
-                    var options = new DependencyListOptions(CreateReports(verbose: true, quiet: false), argProject, framework)
+                    var options = new DependencyListOptions(CreateReports(verbose: true, quiet: false), argProject)
                     {
+                        TargetFrameworks = frameworks.Values,
                         ShowAssemblies = showAssemblies.HasValue(),
                         RuntimeFolder = runtimeFolder.Value(),
                         HideDependents = hideDependents.HasValue(),
@@ -424,7 +425,7 @@ namespace Microsoft.Framework.PackageManager
                         }
                     }
 
-                    var command = new DependencyListCommand(options);
+                    var command = new DependencyListCommand(options, _environment.RuntimeFramework);
                     return command.Execute();
                 });
             });

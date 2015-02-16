@@ -1,40 +1,36 @@
 ﻿// Copyright (c) Microsoft Open Technologies, Inc. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
-using System.Collections.Generic;
-using System.Linq;
 using System.Runtime.Versioning;
+using Microsoft.Framework.PackageManager.Utils;
 
 namespace Microsoft.Framework.PackageManager.List
 {
     internal class DependencyListCommand
     {
         private readonly DependencyListOptions _options;
+        private readonly FrameworkName _fallbackFramework;
 
-        public DependencyListCommand(DependencyListOptions options)
+        public DependencyListCommand(DependencyListOptions options, FrameworkName fallbackFramewok)
         {
             _options = options;
+            _fallbackFramework = fallbackFramewok;
         }
 
         public int Execute()
         {
-            var result = 0;
             _options.Reports.Information.WriteLine("Listing dependencies for {0} ({1})", _options.Project.Name, _options.Project.ProjectFilePath);
 
-            var frameworks = new HashSet<FrameworkName>(_options.Project.GetTargetFrameworks().Select(f => f.FrameworkName));
-            if (_options.Framework != null)
+            string frameworkSelectionError;
+            var frameworks = FrameworkSelectionHelper.SelectFrameworks(_options.Project, 
+                                                                       _options.TargetFrameworks, 
+                                                                       _fallbackFramework, 
+                                                                       out frameworkSelectionError);
+            if (frameworks == null)
             {
-                if (frameworks.Contains(_options.Framework))
-                {
-                    frameworks.Clear();
-                    frameworks.Add(_options.Framework);
-                }
-                else
-                {
-                    _options.Reports.Error.WriteLine("Project doesn't support framework: {0}", _options.Framework.FullName);
-                    return 0;
-                }
-            }
+                _options.Reports.Error.WriteLine(frameworkSelectionError);
+                return 1;
+            } 
 
             foreach (var framework in frameworks)
             {
@@ -47,7 +43,7 @@ namespace Microsoft.Framework.PackageManager.List
                 }
             }
 
-            return result;
+            return 0;
         }
     }
 }

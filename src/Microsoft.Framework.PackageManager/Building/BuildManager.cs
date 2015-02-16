@@ -6,10 +6,8 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Runtime.Versioning;
+using Microsoft.Framework.PackageManager.Utils;
 using Microsoft.Framework.Runtime;
-using Microsoft.Framework.Runtime.Helpers;
-using Newtonsoft.Json.Linq;
 using NuGet;
 
 namespace Microsoft.Framework.PackageManager
@@ -47,29 +45,16 @@ namespace Microsoft.Framework.PackageManager
             var baseOutputPath = GetBuildOutputDir(_buildOptions);
             var configurations = _buildOptions.Configurations.DefaultIfEmpty("Debug");
 
-            var specifiedFrameworks = _buildOptions.TargetFrameworks
-                .ToDictionary(f => f, FrameworkNameHelper.ParseFrameworkName);
+            string frameworkSelectionError;
+            var frameworks = FrameworkSelectionHelper.SelectFrameworks(project,
+                                                                       _buildOptions.TargetFrameworks,
+                                                                       _applicationEnvironment.RuntimeFramework,
+                                                                       out frameworkSelectionError);
 
-            var projectFrameworks = new HashSet<FrameworkName>(
-                project.GetTargetFrameworks()
-                       .Select(c => c.FrameworkName));
-
-            IEnumerable<FrameworkName> frameworks = null;
-
-            if (projectFrameworks.Count > 0)
+            if (frameworks == null)
             {
-                // Specified target frameworks have to be a subset of
-                // the project frameworks
-                if (!ValidateFrameworks(projectFrameworks, specifiedFrameworks))
-                {
-                    return false;
-                }
-
-                frameworks = specifiedFrameworks.Count > 0 ? specifiedFrameworks.Values : (IEnumerable<FrameworkName>)projectFrameworks;
-            }
-            else
-            {
-                frameworks = new[] { _applicationEnvironment.RuntimeFramework };
+                WriteError(frameworkSelectionError);
+                return false;
             }
 
             if (_buildOptions.GeneratePackages &&
@@ -225,24 +210,6 @@ namespace Microsoft.Framework.PackageManager
             WriteSummary(allDiagnostics);
 
             _buildOptions.Reports.Information.WriteLine("Time elapsed {0}", sw.Elapsed);
-            return success;
-        }
-
-        
-
-        private bool ValidateFrameworks(HashSet<FrameworkName> projectFrameworks, IDictionary<string, FrameworkName> specifiedFrameworks)
-        {
-            bool success = true;
-
-            foreach (var framework in specifiedFrameworks)
-            {
-                if (!projectFrameworks.Contains(framework.Value))
-                {
-                    WriteError(framework.Key + " is not specified in project.json");
-                    success = false;
-                }
-            }
-
             return success;
         }
 
