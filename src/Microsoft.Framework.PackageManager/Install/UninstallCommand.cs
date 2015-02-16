@@ -26,6 +26,12 @@ namespace Microsoft.Framework.PackageManager
 
         public async Task<bool> Execute(string commandName)
         {
+            if (string.IsNullOrEmpty(commandName))
+            {
+                _reports.Error.WriteLine("The name of the command to be uninstalled must be specified.".Red());
+                return false;
+            }
+
             if (!_commandsRepo.Commands.Contains(commandName))
             {
                 _reports.Error.WriteLine("{0} command is not installed.".Red(), commandName);

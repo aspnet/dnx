@@ -41,7 +41,7 @@ namespace Microsoft.Framework.PackageManager
         public string PackageFolder { get; set; }
         public string GlobalJsonFile { get; set; }
 
-        public string RestorePackageId { get; set; } 
+        public string RestorePackageId { get; set; }
         public string RestorePackageVersion { get; set; }
 
         public string AppInstallPath { get; private set; }
@@ -104,11 +104,11 @@ namespace Microsoft.Framework.PackageManager
 
                 if (!string.IsNullOrEmpty(RestorePackageId))
                 {
+                    restoreCount = 1;
                     var success = await RestoreForInstall(packagesDirectory);
                     if (success)
                     {
                         successCount = 1;
-                        restoreCount = 1;
                     }
                 }
                 else if (string.IsNullOrEmpty(GlobalJsonFile))
@@ -236,7 +236,7 @@ namespace Microsoft.Framework.PackageManager
                 {
                     Name = RestorePackageId,
                     Version = SemanticVersion.Parse(RestorePackageVersion)
-                }, 
+                },
                 _ => true);
 
             Reports.Information.WriteLine(string.Format("{0}, {1}ms elapsed", "Resolving complete".Green(), sw.ElapsedMilliseconds));
@@ -269,7 +269,7 @@ namespace Microsoft.Framework.PackageManager
                         Reports.Error.WriteLine(
                             "Unable to locate {0} >= {1}. Do you mean {2}?",
                             node.LibraryRange.Name.Red().Bold(),
-                            node.LibraryRange.VersionRange, 
+                            node.LibraryRange.VersionRange,
                             node.Item.Match.Library.Name.Bold());
                         success = false;
                     }
@@ -288,13 +288,16 @@ namespace Microsoft.Framework.PackageManager
             Reports.Information.WriteLine("{0}, {1}ms elapsed", "Install complete".Green().Bold(), sw.ElapsedMilliseconds);
 
             Library appLib = graphNode?.Item?.Match?.Library;
-            if (appLib != null) 
+
+            if (appLib == null)
             {
-                DefaultPackagePathResolver resolver = new DefaultPackagePathResolver(packagesDirectory);
-                
-                // The call to GetFullPath is important because GetInstallPath returns a path with a "\.\" in it
-                AppInstallPath = Path.GetFullPath(resolver.GetInstallPath(appLib.Name, appLib.Version));
+                return false;
             }
+
+            var resolver = new DefaultPackagePathResolver(packagesDirectory);
+
+            // The call to GetFullPath is important because GetInstallPath returns a path with a "\.\" in it
+            AppInstallPath = Path.GetFullPath(resolver.GetInstallPath(appLib.Name, appLib.Version));
 
             return success;
         }
@@ -320,8 +323,8 @@ namespace Microsoft.Framework.PackageManager
             var lockFile = await ReadLockFile(projectLockFilePath);
 
             var useLockFile = false;
-            if (Lock == false && 
-                Unlock == false && 
+            if (Lock == false &&
+                Unlock == false &&
                 lockFile != null &&
                 lockFile.Islocked)
             {

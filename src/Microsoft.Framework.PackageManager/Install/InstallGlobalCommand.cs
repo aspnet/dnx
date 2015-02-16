@@ -40,6 +40,12 @@ namespace Microsoft.Framework.PackageManager
 
         public async Task<bool> Execute(string packageId, string packageVersion)
         {
+            if (string.IsNullOrEmpty(packageId))
+            {
+                WriteError("The name of the package to be installed was not specified.");
+                return false;
+            }
+
             if (string.IsNullOrEmpty(FeedOptions.TargetPackagesFolder))
             {
                 FeedOptions.TargetPackagesFolderOptions.Values.Add(_commandsRepository.PackagesRoot.Root);
