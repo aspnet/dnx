@@ -12,7 +12,6 @@ namespace NuGet.LibraryModel
         public IEnumerable<LibraryDependency> Dependencies { get; set; }
         public bool Resolved { get; set; } = true;
         public string Path { get; set; }
-        public string Type { get; set; }
 
         /// <summary>
         /// A set of arbitrary properties useful for resolving dependencies on this library and loading the library

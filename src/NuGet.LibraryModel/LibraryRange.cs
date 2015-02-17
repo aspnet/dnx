@@ -9,24 +9,27 @@ namespace NuGet.LibraryModel
 
         public NuGetVersionRange VersionRange { get; }
 
-        public bool IsGacOrFrameworkReference { get; }
+        public string Type { get; }
 
-        public LibraryRange(string name, bool isGacOrFrameworkReference, NuGetVersionRange versionRange)
+        public LibraryRange(string name, string type, NuGetVersionRange versionRange)
         {
             if (string.IsNullOrEmpty(name))
             {
                 throw new ArgumentNullException(nameof(name));
             }
+            if(string.IsNullOrEmpty(type))
+            {
+                throw new ArgumentNullException(type);
+            }
 
             Name = name;
             VersionRange = versionRange;
-            IsGacOrFrameworkReference = isGacOrFrameworkReference;
+            Type = type;
         }
 
         public override string ToString()
         {
-            var name = IsGacOrFrameworkReference ? "framework/" + Name : Name;
-            return name + " " + (VersionRange?.ToString());
+            return Name + " " + (VersionRange?.ToString());
         }
 
         public bool Equals(LibraryRange other)
@@ -35,7 +38,7 @@ namespace NuGet.LibraryModel
             if (ReferenceEquals(this, other)) return true;
             return string.Equals(Name, other.Name) &&
                 Equals(VersionRange, other.VersionRange) &&
-                Equals(IsGacOrFrameworkReference, other.IsGacOrFrameworkReference);
+                Equals(Type, other.Type);
         }
 
         public override bool Equals(object obj)
@@ -52,7 +55,7 @@ namespace NuGet.LibraryModel
             {
                 return ((Name != null ? Name.GetHashCode() : 0) * 397) ^
                     (VersionRange != null ? VersionRange.GetHashCode() : 0) ^
-                    (IsGacOrFrameworkReference.GetHashCode());
+                    (Type != null ? Type.GetHashCode() : 0);
             }
         }
 
@@ -64,7 +67,6 @@ namespace NuGet.LibraryModel
         public static bool operator !=(LibraryRange left, LibraryRange right)
         {
             return !Equals(left, right);
-
         }
     }
 }

@@ -1,12 +1,12 @@
-﻿using System;
-
-namespace NuGet.ProjectModel
+﻿namespace NuGet.LibraryModel
 {
     public static class LibraryTypes
     {
-        public static string Project = "Project";
-        public static string Package = "Package";
-        public static string Assembly = "Assembly";
-        public static string WinMD = "WinMD";
+        public const string Project = "Project";
+        public const string MSBuildProject = "MSBuildProject";
+        public const string Package = "Package";
+        public const string Assembly = "Assembly";
+        public const string FrameworkOrGacAssembly = "FrameworkOrGacAssembly";
+        public const string WinMD = "WinMD";
     }
 }
