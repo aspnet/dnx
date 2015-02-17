@@ -56,7 +56,7 @@ namespace Microsoft.Framework.PackageManager.List
 
         private void Render(IGraphNode<Library> root)
         {
-            var renderer = new LibraryDependencyFlatRenderer(_options.HideDependents, _options.ResultsFilter);
+            var renderer = new LibraryDependencyFlatRenderer(_options.HideDependents, _options.ResultsFilter, _options.Project.Dependencies.Select(dep => dep.LibraryRange.Name));
             var content = renderer.GetRenderContent(root);
 
             if (content.Any())

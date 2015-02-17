@@ -13,11 +13,13 @@ namespace Microsoft.Framework.PackageManager.List
     {
         private readonly bool _hideDependent;
         private readonly string _filterPattern;
+        private readonly HashSet<string> _listedProjects;
 
-        public LibraryDependencyFlatRenderer(bool hideDependent, string filterPattern)
+        public LibraryDependencyFlatRenderer(bool hideDependent, string filterPattern, IEnumerable<string> listedProjects)
         {
             _hideDependent = hideDependent;
             _filterPattern = filterPattern;
+            _listedProjects = new HashSet<string>(listedProjects);
         }
 
         public IEnumerable<string> GetRenderContent(IGraphNode<Library> root)
@@ -71,16 +73,17 @@ namespace Microsoft.Framework.PackageManager.List
 
             foreach (var lib in libraries)
             {
+                var libDisplay = (_listedProjects.Contains(lib.Name) ? "*" : " ") + lib.ToString();
                 if (!_hideDependent)
                 {
-                    results.Add(lib.ToString().Bold());
+                    results.Add(libDisplay.Bold());
 
                     var dependents = string.Join(", ", dependenciesMap[lib].Select(dep => dep.ToString()).OrderBy(name => name));
                     results.Add(string.Format("    -> {0}", dependents));
                 }
                 else
                 {
-                    results.Add(lib.ToString());
+                    results.Add(libDisplay);
                 }
             }
         }
