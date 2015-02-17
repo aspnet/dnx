@@ -9,7 +9,7 @@ using Microsoft.Framework.Runtime;
 
 namespace HelloWorld.Compiler.Preprocess
 {
-    public class HelloMetaProgramming : ICompileModule
+    /*public class HelloMetaProgramming : ICompileModule
     {
         public HelloMetaProgramming(IServiceProvider services)
         {
@@ -17,6 +17,7 @@ namespace HelloWorld.Compiler.Preprocess
 
         public void BeforeCompile(IBeforeCompileContext context)
         {
+            // TODO: Enable
             var options = CSharpParseOptions.Default
                 .WithLanguageVersion(context.CSharpCompilation.LanguageVersion);
             context.CSharpCompilation = context.CSharpCompilation.AddSyntaxTrees(CSharpSyntaxTree.ParseText(@"
@@ -33,5 +34,5 @@ public class Foo
         {
 
         }
-    }
+    }*/
 }

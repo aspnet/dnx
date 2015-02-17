@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Runtime.Versioning;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 
@@ -13,41 +14,27 @@ namespace Microsoft.Framework.Runtime.Roslyn
     {
         private readonly Lazy<IList<ResourceDescription>> _resources;
 
-        /// <summary>
-        /// The project associated with this compilation
-        /// </summary>
         public Project Project { get; private set; }
 
         // Processed information
-        public CSharpCompilation Compilation { get; private set; }
+        public CSharpCompilation Compilation { get; set; }
 
         public IList<Diagnostic> Diagnostics { get; private set; }
 
-        public IList<IMetadataReference> MetadataReferences { get; private set; }
-
         public IList<ResourceDescription> Resources { get { return _resources.Value; } }
 
-        CSharpCompilation IBeforeCompileContext.CSharpCompilation
-        {
-            get
-            {
-                return Compilation;
-            }
-
-            set
-            {
-                Compilation = value;
-            }
-        }
+        public IList<ICompileModule> Modules { get; } = new List<ICompileModule>();
+        
+        public IProjectContext ProjectContext { get; set; }
 
         public CompilationContext(CSharpCompilation compilation,
-                                  IList<IMetadataReference> metadataReferences,
-                                  Project project)
+                                  Project project,
+                                  FrameworkName targetFramework)
         {
             Compilation = compilation;
-            MetadataReferences = metadataReferences;
             Diagnostics = new List<Diagnostic>();
             Project = project;
+            ProjectContext = new ProjectContext(project, targetFramework);
             _resources = new Lazy<IList<ResourceDescription>>(() => GetResources(this));
         }
 
