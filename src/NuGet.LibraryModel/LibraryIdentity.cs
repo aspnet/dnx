@@ -11,11 +11,18 @@ namespace NuGet.LibraryModel
     /// </summary>
     public class LibraryIdentity : IEquatable<LibraryIdentity>
     {
-        public string Name { get; set; }
+        public string Name { get; }
 
-        public NuGetVersion Version { get; set; }
+        public string Type { get; }
 
-        public string Type { get; set; }
+        public NuGetVersion Version { get; }
+
+        public LibraryIdentity(string name, string type, NuGetVersion version)
+        {
+            Name = name;
+            Type = type;
+            Version = version;
+        }
 
         public override string ToString()
         {

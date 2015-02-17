@@ -7,16 +7,28 @@ namespace NuGet.LibraryModel
 {
     public class Library
     {
-        public LibraryRange RequestedRange { get; set; }
-        public LibraryIdentity Identity { get; set; }
-        public IEnumerable<LibraryDependency> Dependencies { get; set; }
-        public bool Resolved { get; set; } = true;
-        public string Path { get; set; }
+        public LibraryRange RequestedRange { get; }
+        public LibraryIdentity Identity { get; }
+        public IEnumerable<LibraryDependency> Dependencies { get; }
+        public bool Resolved { get; } = true;
+        public string Path { get; }
 
         /// <summary>
         /// A set of arbitrary properties useful for resolving dependencies on this library and loading the library
         /// </summary>
         public IDictionary<string, object> Properties { get; } = new Dictionary<string, object>();
+
+        public Library(
+            LibraryRange requestedRange,
+            LibraryIdentity identity,
+            IEnumerable<LibraryDependency> dependencies,
+            string path)
+        {
+            RequestedRange = requestedRange;
+            Identity = identity;
+            Dependencies = dependencies;
+            Path = path;
+        }
 
         public override string ToString()
         {
