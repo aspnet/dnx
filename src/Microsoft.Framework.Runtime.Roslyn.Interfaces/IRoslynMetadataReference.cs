@@ -3,7 +3,7 @@
 
 using Microsoft.CodeAnalysis;
 
-namespace Microsoft.Framework.Runtime
+namespace Microsoft.Framework.Runtime.Roslyn
 {
     public interface IRoslynMetadataReference : IMetadataReference
     {

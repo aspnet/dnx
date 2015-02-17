@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Runtime.Versioning;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 
@@ -13,41 +14,26 @@ namespace Microsoft.Framework.Runtime.Roslyn
     {
         private readonly Lazy<IList<ResourceDescription>> _resources;
 
-        /// <summary>
-        /// The project associated with this compilation
-        /// </summary>
-        public Project Project { get; private set; }
+        public Project Project { get; }
 
         // Processed information
-        public CSharpCompilation Compilation { get; private set; }
+        public CSharpCompilation Compilation { get; set; }
 
-        public IList<Diagnostic> Diagnostics { get; private set; }
-
-        public IList<IMetadataReference> MetadataReferences { get; private set; }
+        public IList<Diagnostic> Diagnostics { get; } = new List<Diagnostic>();
 
         public IList<ResourceDescription> Resources { get { return _resources.Value; } }
 
-        CSharpCompilation IBeforeCompileContext.CSharpCompilation
-        {
-            get
-            {
-                return Compilation;
-            }
+        public IList<ICompileModule> Modules { get; } = new List<ICompileModule>();
 
-            set
-            {
-                Compilation = value;
-            }
-        }
+        public IProjectContext ProjectContext { get; }
 
         public CompilationContext(CSharpCompilation compilation,
-                                  IList<IMetadataReference> metadataReferences,
-                                  Project project)
+                                  Project project,
+                                  FrameworkName targetFramework)
         {
             Compilation = compilation;
-            MetadataReferences = metadataReferences;
-            Diagnostics = new List<Diagnostic>();
             Project = project;
+            ProjectContext = new ProjectContext(project, targetFramework);
             _resources = new Lazy<IList<ResourceDescription>>(() => GetResources(this));
         }
 
@@ -55,16 +41,18 @@ namespace Microsoft.Framework.Runtime.Roslyn
         {
             var resxProvider = new ResxResourceProvider();
             var embeddedResourceProvider = new EmbeddedResourceProvider();
-
-            var resourceProvider = new CompositeResourceProvider(new IResourceProvider[] { resxProvider, embeddedResourceProvider });
+            var resourceProvider = new CompositeResourceProvider(
+                new IResourceProvider[] { resxProvider, embeddedResourceProvider });
 
             var sw = Stopwatch.StartNew();
-            Logger.TraceInformation("[{0}]: Generating resources for {1}", nameof(CompilationContext), context.Project.Name);
+            Logger.TraceInformation("[{0}]: Generating resources for {1}",
+                nameof(CompilationContext), context.Project.Name);
 
             var resources = resourceProvider.GetResources(context.Project);
 
             sw.Stop();
-            Logger.TraceInformation("[{0}]: Generated resources for {1} in {2}ms", nameof(CompilationContext), context.Project.Name, sw.ElapsedMilliseconds);
+            Logger.TraceInformation("[{0}]: Generated resources for {1} in {2}ms",
+                nameof(CompilationContext), context.Project.Name, sw.ElapsedMilliseconds);
 
             return resources;
         }

@@ -15,5 +15,13 @@
                 "System.Runtime": "4.0.20-beta-*"
             }
         }
+    },
+
+    "scripts": {
+        "postbuild": [
+            "%project:Directory%/../../build/batchcopy %project:BuildOutputDir%/Debug/aspnet50/*.* %project:Directory%/../../artifacts/build/kre-clr-win-x86/bin",
+            "%project:Directory%/../../build/batchcopy %project:BuildOutputDir%/Debug/aspnet50/*.* %project:Directory%/../../artifacts/build/kre-mono/bin",
+            "%project:Directory%/../../build/batchcopy %project:BuildOutputDir%/Debug/aspnetcore50/*.* %project:Directory%/../../artifacts/build/kre-coreclr-win-x86/bin"
+        ]
     }
 }
