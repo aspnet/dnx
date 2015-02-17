@@ -178,6 +178,13 @@ namespace Microsoft.Framework.PackageManager.Bundle
             });
 
             _applicationBase = Path.Combine("..", BundleRoot.AppRootName, "packages", resolver.GetPackageDirectory(_libraryDescription.Identity.Name, _libraryDescription.Identity.Version), "root");
+
+            root.Reports.Quiet.WriteLine("Removing {0}", srcNupkgPath);
+            File.Delete(srcNupkgPath);
+
+            srcNupkgPath = Path.ChangeExtension(srcNupkgPath, "symbols.nupkg");
+            root.Reports.Quiet.WriteLine("Removing {0}", srcNupkgPath);
+            File.Delete(srcNupkgPath);
         }
 
         private void CopyRelativeSources(Runtime.Project project)
