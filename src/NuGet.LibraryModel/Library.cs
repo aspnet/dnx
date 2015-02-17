@@ -14,7 +14,10 @@ namespace NuGet.LibraryModel
         public string Path { get; set; }
         public string Type { get; set; }
 
-        public IDictionary<string, object> Items { get; } = new Dictionary<string, object>();
+        /// <summary>
+        /// A set of arbitrary properties useful for resolving dependencies on this library and loading the library
+        /// </summary>
+        public IDictionary<string, object> Properties { get; } = new Dictionary<string, object>();
 
         public override string ToString()
         {
