@@ -155,7 +155,7 @@ namespace Microsoft.Framework.PackageManager.Restore.NuGet
                     }
                 }
 
-                // If the desitnation file doesn't exist, we can safely perform moving operation.
+                // If the destination file doesn't exist, we can safely perform moving operation.
                 // Otherwise, moving operation will fail.
                 if (!File.Exists(result.CacheFileName))
                 {

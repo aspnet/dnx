@@ -41,7 +41,7 @@ namespace Microsoft.Framework.PackageManager
         public string PackageFolder { get; set; }
         public string GlobalJsonFile { get; set; }
 
-        public string RestorePackageId { get; set; }
+        public string RestorePackageId { get; set; } 
         public string RestorePackageVersion { get; set; }
 
         public string AppInstallPath { get; private set; }

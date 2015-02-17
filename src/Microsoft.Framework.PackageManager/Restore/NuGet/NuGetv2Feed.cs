@@ -21,6 +21,10 @@ namespace Microsoft.Framework.PackageManager.Restore.NuGet
         private static readonly XName _xnameProperties = XName.Get("properties", "http://schemas.microsoft.com/ado/2007/08/dataservices/metadata");
         private static readonly XName _xnameId = XName.Get("Id", "http://schemas.microsoft.com/ado/2007/08/dataservices");
         private static readonly XName _xnameVersion = XName.Get("Version", "http://schemas.microsoft.com/ado/2007/08/dataservices");
+        private static readonly XName _xnamePublish = XName.Get("Published", "http://schemas.microsoft.com/ado/2007/08/dataservices");
+
+        // An unlisted package's publish time must be 1900-01-01T00:00:00.
+        private static readonly DateTime _unlistedPublishedTime = new DateTime(1900, 1, 1, 0, 0, 0);
 
         private readonly string _baseUri;
         private readonly Reports _reports;
@@ -89,7 +93,7 @@ namespace Microsoft.Framework.PackageManager.Restore.NuGet
                     var page = 1;
                     while (true)
                     {
-                        // TODO: Pages for a package Id are cahced separately.
+                        // TODO: Pages for a package Id are cached separately.
                         // So we will get inaccurate data when a page shrinks.
                         // However, (1) In most cases the pages grow rather than shrink;
                         // (2) cache for pages is valid for only 30 min.
@@ -104,7 +108,8 @@ namespace Microsoft.Framework.PackageManager.Restore.NuGet
 
                                 var result = doc.Root
                                     .Elements(_xnameEntry)
-                                    .Select(x => BuildModel(id, x));
+                                    .Select(x => BuildModel(id, x))
+                                    .Where(x => x != null);
 
                                 results.AddRange(result);
 
@@ -169,6 +174,16 @@ namespace Microsoft.Framework.PackageManager.Restore.NuGet
             var properties = element.Element(_xnameProperties);
             var idElement = properties.Element(_xnameId);
             var titleElement = element.Element(_xnameTitle);
+
+            var publishElement = properties.Element(_xnamePublish);
+            if (publishElement != null)
+            {
+                DateTime publishDate; 
+                if (DateTime.TryParse(publishElement.Value, out publishDate) && (publishDate == _unlistedPublishedTime))
+                {
+                    return null; 
+                }
+            }
 
             return new PackageInfo
             {
