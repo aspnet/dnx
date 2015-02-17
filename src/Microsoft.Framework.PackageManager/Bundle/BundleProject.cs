@@ -115,7 +115,7 @@ namespace Microsoft.Framework.PackageManager.Bundle
                     return;
                 }
             }
-
+            
             // Generate nupkg from this project dependency
             var buildOptions = new BuildOptions();
             buildOptions.ProjectDir = project.ProjectDirectory;
