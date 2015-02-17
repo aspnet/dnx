@@ -2,10 +2,12 @@
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 using System;
+using System.Diagnostics;
 using System.IO;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Threading;
 using kre.hosting;
 using Microsoft.Framework.Runtime;
 
@@ -13,6 +15,25 @@ public class EntryPoint
 {
     public static int Main(string[] arguments)
     {
+        // Check for the debug flag before doing anything else
+        bool hasDebugWaitFlag = arguments.Any(arg => string.Equals(arg, "--debug", StringComparison.OrdinalIgnoreCase));
+        if (hasDebugWaitFlag)
+        { 
+            if (!Debugger.IsAttached)
+            {
+                Process currentProc = Process.GetCurrentProcess();
+                Console.WriteLine("Process Id: {0}", currentProc.Id);
+                Console.WriteLine("Waiting for the debugger to attach...");
+
+                while (!Debugger.IsAttached)
+                {
+                    Thread.Sleep(250);
+                }
+
+                Console.WriteLine("Debugger attached.");
+            }
+        }
+
         // Set the default lib path to be next to the entry point location
         Environment.SetEnvironmentVariable(EnvironmentNames.DefaultLib, Path.GetDirectoryName(typeof(EntryPoint).Assembly.Location));
         Environment.SetEnvironmentVariable(EnvironmentNames.ConsoleHost, "1");
