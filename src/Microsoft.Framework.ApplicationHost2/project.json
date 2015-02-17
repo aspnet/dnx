@@ -20,6 +20,7 @@
                 "System.Runtime": "4.0.20-beta-*",
                 "System.Runtime.Extensions": "4.0.10-beta-*",
                 "System.Runtime.InteropServices": "4.0.20-beta-*",
+                "System.Reflection.Extensions": "4.0.0-beta-*",
                 "System.Threading.Tasks": "4.0.10-beta-*"
             }
         }

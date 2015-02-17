@@ -7,7 +7,6 @@ using Microsoft.Framework.Runtime;
 using Microsoft.Framework.Runtime.Common.CommandLine;
 using System.Collections.Generic;
 using System.Linq;
-using Microsoft.Framework.ApplicationHost.Impl.Syntax;
 using System.Reflection;
 
 namespace Microsoft.Framework.ApplicationHost
@@ -39,7 +38,7 @@ namespace Microsoft.Framework.ApplicationHost
 
             Logger.TraceVerbose("Application Host Starting");
 
-            
+            return Task.FromResult(0);
         }
 
         private bool ParseArgs(string[] args, out ApplicationHostOptions options, out string[] outArgs, out int exitCode)

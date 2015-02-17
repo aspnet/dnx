@@ -89,7 +89,7 @@ Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Microsoft.Framework.Runtime
 EndProject
 Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Microsoft.Framework.Runtime.Hosting.Interfaces", "src\Microsoft.Framework.Runtime.Hosting.Interfaces\Microsoft.Framework.Runtime.Hosting.Interfaces.kproj", "{423DDC90-8306-4D64-9035-23DDCB2093D3}"
 EndProject
-Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "NuGet.Packaging.Extensions", "src\NuGet.Packaging.Extensions\NuGet.Packaging.Extensions.kproj", "{1B5D6394-B3F0-4CF9-8C23-E98DBB7AD8EF}"
+Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "NuGet.LibraryModel", "src\NuGet.LibraryModel\NuGet.LibraryModel.kproj", "{1B5D6394-B3F0-4CF9-8C23-E98DBB7AD8EF}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
