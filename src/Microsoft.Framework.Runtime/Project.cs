@@ -128,6 +128,7 @@ namespace Microsoft.Framework.Runtime
             }
             catch (JsonReaderException ex)
             {
+                Console.Error.WriteLine(String.Format("Error in {0}", projectPath));
                 throw FileFormatException.Create(ex, projectPath);
             }
 
