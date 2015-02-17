@@ -21,6 +21,12 @@ namespace NuGet.LibraryModel
             }
         }
 
+        public LibraryDependency(LibraryRange range, LibraryDependencyType type)
+        {
+            Range = range;
+            Type = type;
+        }
+
         public override string ToString()
         {
             var sb = new StringBuilder();
