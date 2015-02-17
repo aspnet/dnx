@@ -150,9 +150,27 @@ namespace Microsoft.Framework.PackageManager
                 }
                 else
                 {
+                    // Now check the local repository
+                    var localMatch = await FindLibraryByVersion(context, libraryRange, context.LocalLibraryProviders);
+
+                    if (localMatch != null && remoteMatch != null)
+                    {
+                        // We found a match locally and remotely, so pick the better version
+                        // in relation to the specified version.
+                        if (VersionUtility.ShouldUseConsidering(
+                            current: remoteMatch.Library.Version,
+                            considering: localMatch.Library.Version,
+                            ideal: libraryRange.VersionRange))
+                        {
+                            return localMatch;
+                        }
+
+                        // The remote match is better
+                    }
+
                     // Try to see if the specific version found on the remote exists locally. This avoids any unnecessary
                     // remote access incase we already have it in the cache/local packages folder.
-                    var localMatch = await FindLibraryByVersion(context, remoteMatch.Library, context.LocalLibraryProviders);
+                    localMatch = await FindLibraryByVersion(context, remoteMatch.Library, context.LocalLibraryProviders);
 
                     if (localMatch != null && localMatch.Library.Version.Equals(remoteMatch.Library.Version))
                     {
