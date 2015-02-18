@@ -1,3 +1,6 @@
+[submodule "submodules/FileSystem"]
+	path = submodules/FileSystem
+	url = https://github.com/aspnet/FileSystem.git
 [submodule "submodules/NuGet.Versioning"]
 	path = submodules/NuGet.Versioning
 	url = https://github.com/NuGet/NuGet.Versioning

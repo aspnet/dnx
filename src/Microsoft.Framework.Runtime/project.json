@@ -2,18 +2,28 @@
     "version": "1.0.0-*",
     "description": "ASP.NET 5 runtime infrastructure for loading NuGet packages and projects.",
     "compilationOptions": { "define": [ "LOADER", "TRACE" ], "allowUnsafe": true, "warningsAsErrors": true },
+    "code": [
+        "**/*.cs",
+        "../../submodules/FileSystem/src/Microsoft.Framework.FileSystemGlobbing/**/*.cs"
+    ],
+    "preprocess": [
+        "../../ext/compiler/preprocess/Internalization.cs"
+    ],
     "dependencies": {
         "System.Reflection.Metadata": "1.0.18-beta",
+        "Microsoft.CodeAnalysis.CSharp": "1.0.0-*",
+        "Microsoft.Framework.Runtime.Roslyn.Interfaces": "1.0.0-*",
         "Microsoft.Framework.Runtime.Loader": "1.0.0-*",
         "Microsoft.Framework.Runtime.Common": { "version": "1.0.0-*", "type": "build" },
         "Microsoft.Framework.Runtime.Interfaces": "1.0.0-*",
-        "Microsoft.Framework.FileSystemGlobbing": "1.0.0-*",
         "Newtonsoft.Json": "6.0.6"
     },
     "frameworks": {
         "aspnet50": {
             "frameworkAssemblies": {
                 "System.Collections": "",
+                "System.Text.Encoding": "",
+                "System.Threading.Tasks": "",
                 "System.IO": "",
                 "System.IO.Compression": "",
                 "System.IO.Compression.FileSystem": "",
@@ -34,6 +44,7 @@
                 "System.Net.Sockets": "4.0.0-beta-*",
                 "System.Reflection.Extensions": "4.0.0-beta-*",
                 "System.Resources.ResourceManager": "4.0.0-beta-*",
+                "System.Text.Encoding": "4.0.10-beta-*",
                 "System.Text.RegularExpressions": "4.0.10-beta-*",
                 "System.Threading.Timer": "4.0.0-beta-*",
                 "System.Threading.Tasks": "4.0.10-beta-*",
