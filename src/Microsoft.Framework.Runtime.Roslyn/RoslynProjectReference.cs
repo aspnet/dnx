@@ -114,7 +114,7 @@ namespace Microsoft.Framework.Runtime.Roslyn
 
                 Assembly assembly = null;
 
-                if (afterCompileContext.SymbolStream != null && 
+                if (afterCompileContext.SymbolStream == null || 
                     afterCompileContext.SymbolStream.Length == 0)
                 {
                     assembly = loadContext.LoadStream(afterCompileContext.AssemblyStream, assemblySymbols: null);
