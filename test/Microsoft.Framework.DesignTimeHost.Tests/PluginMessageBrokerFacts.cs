@@ -23,15 +23,16 @@ namespace Microsoft.Framework.DesignTimeHost
         [Fact]
         public void SendMessage_WrapsData()
         {
-            PluginMessageBroker.PluginMessageWrapperData calledWith = null;
+            object calledWithRaw = null;
             var expectedPluginId = "d81b8ad8-306d-474b-b8a9-b25c7f80be7e"; // Random, hardcoded GUID.
             var pluginMessageBroker = new PluginMessageBroker(
                 expectedPluginId,
-                sendMessageMethod: (data) => calledWith = (PluginMessageBroker.PluginMessageWrapperData)data);
+                sendMessageMethod: (data) => calledWithRaw = data);
 
             pluginMessageBroker.SendMessage("Hello World");
 
-            Assert.NotNull(calledWith);
+            Assert.NotNull(calledWithRaw);
+            var calledWith = Assert.IsType<PluginMessageBroker.PluginMessageWrapperData>(calledWithRaw);
             Assert.Equal(expectedPluginId, calledWith.PluginId);
             Assert.Equal("Hello World", (string)calledWith.Data, StringComparer.Ordinal);
         }

@@ -20,7 +20,6 @@ namespace Microsoft.Framework.DesignTimeHost
 
         public void Dispose()
         {
-            throw new NotImplementedException();
         }
 
         public Assembly Load(string name)

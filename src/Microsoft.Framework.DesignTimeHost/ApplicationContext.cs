@@ -643,7 +643,7 @@ namespace Microsoft.Framework.DesignTimeHost
 
         public void SendMessage(object data, string messageType)
         {
-            var message = new Message()
+            var message = new Message
             {
                 ContextId = Id,
                 MessageType = messageType,
@@ -903,7 +903,12 @@ namespace Microsoft.Framework.DesignTimeHost
         private IAssemblyLoadContextFactory GetRuntimeLoadContextFactory(Project project)
         {
             return new DesignTimeAssemblyLoadContextFactory(
-                project, _appEnv, _hostServices, _cache, _cacheContextAccessor, _namedDependencyProvider);
+                project,
+                _appEnv,
+                _hostServices,
+                _cache,
+                _cacheContextAccessor,
+                _namedDependencyProvider);
         }
 
         private DependencyInfo ResolveProjectDepencies(Project project, string configuration, FrameworkName frameworkName)

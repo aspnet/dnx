@@ -81,9 +81,9 @@ namespace Microsoft.Framework.DesignTimeHost
                 { typeof(PluginTypeCreationChecker), creationChecker }
             };
             var serviceProvider = new TestServiceProvider(serviceLookups);
-            PluginMessageBroker.PluginMessageWrapperData messageBrokerData = null;
+            object rawMessageBrokerData = null;
             var pluginHandler = new PluginHandler(
-                serviceProvider, (data) => messageBrokerData = (PluginMessageBroker.PluginMessageWrapperData)data);
+                serviceProvider, (data) => rawMessageBrokerData = data);
             var pluginMessage = new PluginMessage
             {
                 Data = new JObject
@@ -98,7 +98,8 @@ namespace Microsoft.Framework.DesignTimeHost
             pluginHandler.ProcessMessage(pluginMessage, assemblyLoadContext);
 
             Assert.True(creationChecker.Created);
-            Assert.NotNull(messageBrokerData);
+            Assert.NotNull(rawMessageBrokerData);
+            var messageBrokerData = Assert.IsType<PluginMessageBroker.PluginMessageWrapperData>(rawMessageBrokerData);
             Assert.Equal(RandomGuidId, messageBrokerData.PluginId);
             Assert.Equal("Created", messageBrokerData.Data.ToString(), StringComparer.Ordinal);
         }
@@ -108,9 +109,9 @@ namespace Microsoft.Framework.DesignTimeHost
         {
             var assemblyLoadContext = CreateTestAssemblyLoadContext<MessageBrokerCreationTestPlugin>();
             var creationChecker = new PluginTypeCreationChecker();
-            PluginMessageBroker.PluginMessageWrapperData messageBrokerData = null;
+            object rawMessageBrokerData = null;
             var pluginMessageBroker = new PluginMessageBroker(
-                RandomGuidId, (data) => messageBrokerData = (PluginMessageBroker.PluginMessageWrapperData)data);
+                RandomGuidId, (data) => rawMessageBrokerData = data);
             var serviceLookups = new Dictionary<Type, object>
             {
                 { typeof(PluginTypeCreationChecker), creationChecker },
@@ -132,7 +133,8 @@ namespace Microsoft.Framework.DesignTimeHost
             pluginHandler.ProcessMessage(pluginMessage, assemblyLoadContext);
 
             Assert.True(creationChecker.Created);
-            Assert.NotNull(messageBrokerData);
+            Assert.NotNull(rawMessageBrokerData);
+            var messageBrokerData = Assert.IsType<PluginMessageBroker.PluginMessageWrapperData>(rawMessageBrokerData);
             Assert.Equal(RandomGuidId, messageBrokerData.PluginId);
             Assert.Equal("Created", messageBrokerData.Data.ToString(), StringComparer.Ordinal);
         }
@@ -143,9 +145,9 @@ namespace Microsoft.Framework.DesignTimeHost
             var assemblyLoadContext = CreateTestAssemblyLoadContext<AssemblyLoadContextRelayTestPlugin>();
             var serviceLookups = new Dictionary<Type, object>();
             var serviceProvider = new TestServiceProvider(serviceLookups);
-            PluginMessageBroker.PluginMessageWrapperData wrappedData = null;
+            object rawWrappedData = null;
             var pluginHandler = new PluginHandler(
-                serviceProvider, (data) => wrappedData = (PluginMessageBroker.PluginMessageWrapperData)data);
+                serviceProvider, (data) => rawWrappedData = data);
             var pluginMessage = new PluginMessage
             {
                 Data = new JObject
@@ -159,7 +161,8 @@ namespace Microsoft.Framework.DesignTimeHost
 
             pluginHandler.ProcessMessage(pluginMessage, assemblyLoadContext);
 
-            Assert.NotNull(wrappedData);
+            Assert.NotNull(rawWrappedData);
+            var wrappedData = Assert.IsType<PluginMessageBroker.PluginMessageWrapperData>(rawWrappedData);
             Assert.Equal(RandomGuidId, wrappedData.PluginId);
             Assert.Same(assemblyLoadContext, wrappedData.Data);
         }
@@ -308,9 +311,9 @@ namespace Microsoft.Framework.DesignTimeHost
         {
             var assemblyLoadContext = CreateTestAssemblyLoadContext<MessageTestPlugin>();
             var serviceProvider = new TestServiceProvider();
-            PluginMessageBroker.PluginMessageWrapperData messageBrokerData = null;
+            object rawMessageBrokerData = null;
             var pluginHandler = new PluginHandler(
-                serviceProvider, (data) => messageBrokerData = (PluginMessageBroker.PluginMessageWrapperData)data);
+                serviceProvider, (data) => rawMessageBrokerData = data);
             var registerPluginMessage = new PluginMessage
             {
                 Data = new JObject
@@ -334,7 +337,8 @@ namespace Microsoft.Framework.DesignTimeHost
             pluginHandler.ProcessMessage(registerPluginMessage, assemblyLoadContext);
             pluginHandler.ProcessMessage(pluginMessage, assemblyLoadContext);
 
-            Assert.NotNull(messageBrokerData);
+            Assert.NotNull(rawMessageBrokerData);
+            var messageBrokerData = Assert.IsType<PluginMessageBroker.PluginMessageWrapperData>(rawMessageBrokerData);
             Assert.Equal(RandomGuidId, messageBrokerData.PluginId);
             var actualMessage = (string)messageBrokerData.Data;
             Assert.Equal("Hello Plugin!", actualMessage, StringComparer.Ordinal);

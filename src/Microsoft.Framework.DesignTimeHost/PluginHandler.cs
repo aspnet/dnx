@@ -2,6 +2,7 @@
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Reflection;
 using Microsoft.Framework.DesignTimeHost.Models.IncomingMessages;
@@ -20,7 +21,7 @@ namespace Microsoft.Framework.DesignTimeHost
         {
             _sendMessageMethod = sendMessageMethod;
             _hostServices = hostServices;
-            _plugins = new Dictionary<string, IPlugin>(StringComparer.Ordinal);
+            _plugins = new ConcurrentDictionary<string, IPlugin>(StringComparer.Ordinal);
         }
 
         public void ProcessMessage(PluginMessage data, IAssemblyLoadContext assemblyLoadContext)
@@ -55,11 +56,7 @@ namespace Microsoft.Framework.DesignTimeHost
 
         private void ProcessUnregisterMessage(PluginMessage data)
         {
-            if (_plugins.ContainsKey(data.PluginId))
-            {
-                _plugins.Remove(data.PluginId);
-            }
-            else
+            if (!_plugins.Remove(data.PluginId))
             {
                 throw new InvalidOperationException(
                     Resources.FormatPlugin_UnregisteredPluginIdCannotUnregister(data.PluginId));
@@ -80,8 +77,7 @@ namespace Microsoft.Framework.DesignTimeHost
                 var pluginServiceProvider = new PluginServiceProvider(
                     _hostServices,
                     assemblyLoadContext,
-                    messageBroker: new Lazy<PluginMessageBroker>(
-                        () => new PluginMessageBroker(pluginId, _sendMessageMethod)));
+                    messageBroker: new PluginMessageBroker(pluginId, _sendMessageMethod));
 
                 var plugin = ActivatorUtilities.CreateInstance(pluginServiceProvider, pluginType) as IPlugin;
 
@@ -89,7 +85,9 @@ namespace Microsoft.Framework.DesignTimeHost
                 {
                     throw new InvalidOperationException(
                         Resources.FormatPlugin_CannotProcessMessageInvalidPluginType(
-                            pluginId, pluginType.FullName, typeof(IPlugin).FullName));
+                            pluginId,
+                            pluginType.FullName,
+                            typeof(IPlugin).FullName));
                 }
 
                 _plugins[pluginId] = plugin;
@@ -102,12 +100,12 @@ namespace Microsoft.Framework.DesignTimeHost
             private static readonly TypeInfo AssemblyLoadContextTypeInfo = typeof(IAssemblyLoadContext).GetTypeInfo();
             private readonly IServiceProvider _hostServices;
             private readonly IAssemblyLoadContext _assemblyLoadContext;
-            private readonly Lazy<PluginMessageBroker> _messageBroker;
+            private readonly PluginMessageBroker _messageBroker;
 
             public PluginServiceProvider(
-                IServiceProvider hostServices, 
+                IServiceProvider hostServices,
                 IAssemblyLoadContext assemblyLoadContext,
-                Lazy<PluginMessageBroker> messageBroker)
+                PluginMessageBroker messageBroker)
             {
                 _hostServices = hostServices;
                 _assemblyLoadContext = assemblyLoadContext;
@@ -116,7 +114,6 @@ namespace Microsoft.Framework.DesignTimeHost
 
             public object GetService(Type serviceType)
             {
-
                 var hostProvidedService = _hostServices.GetService(serviceType);
 
                 if (hostProvidedService == null)
@@ -125,7 +122,7 @@ namespace Microsoft.Framework.DesignTimeHost
 
                     if (MessageBrokerTypeInfo.IsAssignableFrom(serviceTypeInfo))
                     {
-                        return _messageBroker.Value;
+                        return _messageBroker;
                     }
                     else if (AssemblyLoadContextTypeInfo.IsAssignableFrom(serviceTypeInfo))
                     {
