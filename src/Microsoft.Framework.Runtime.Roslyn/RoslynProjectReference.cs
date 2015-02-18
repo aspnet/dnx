@@ -114,13 +114,22 @@ namespace Microsoft.Framework.Runtime.Roslyn
 
                 Assembly assembly = null;
 
-                if (afterCompileContext.SymbolStream == null || 
+                // If this is null it'll fail anyways, just don't blow up with
+                // a null reference
+                if (afterCompileContext.AssemblyStream != null)
+                {
+                    afterCompileContext.AssemblyStream.Position = 0;
+                }
+
+                if (afterCompileContext.SymbolStream == null ||
                     afterCompileContext.SymbolStream.Length == 0)
                 {
                     assembly = loadContext.LoadStream(afterCompileContext.AssemblyStream, assemblySymbols: null);
                 }
                 else
                 {
+                    afterCompileContext.SymbolStream.Position = 0;
+
                     assembly = loadContext.LoadStream(afterCompileContext.AssemblyStream, afterCompileContext.SymbolStream);
                 }
 
