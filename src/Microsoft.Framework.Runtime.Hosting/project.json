@@ -1,5 +1,6 @@
 ﻿{
     "version": "1.0.0-*",
+    "description": "Core hosting APIs for launching the cross-platform runtime",
     "dependencies": {
     },
 
@@ -10,7 +11,7 @@
         },
         "aspnetcore50" : { 
             "dependencies": {
-                "System.Runtime": "4.0.20-beta-22606"
+                "System.Runtime": "4.0.20-beta-*"
             }
         }
     }

@@ -1,5 +1,6 @@
 ﻿{
     "version": "1.0.0-*",
+    "description": "Core interfaces used to interact with the runtime",
     "dependencies": {
     },
 
@@ -10,7 +11,9 @@
         },
         "aspnetcore50" : { 
             "dependencies": {
-                "System.Runtime": "4.0.20-beta-22606"
+                "System.Runtime": "4.0.20-beta-*",
+                "System.Runtime.Extensions": "4.0.10-beta-*",
+                "System.Reflection": "4.0.10-beta-*"
             }
         }
     }
