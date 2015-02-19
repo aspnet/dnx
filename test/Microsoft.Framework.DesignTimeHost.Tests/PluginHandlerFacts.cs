@@ -168,7 +168,7 @@ namespace Microsoft.Framework.DesignTimeHost
         }
 
         [Fact]
-        public void ProcessMessage_RegisterPlugin_DoesNotThrowOnInvalidPluginTypeNames()
+        public void ProcessMessage_RegisterPlugin_IgnoresInvalidPluginTypeNames()
         {
             var pluginType = typeof(CreationTestPlugin);
             var testAssembly = new TestAssembly();
@@ -232,6 +232,9 @@ namespace Microsoft.Framework.DesignTimeHost
             var assemblyLoadContext = CreateTestAssemblyLoadContext<TestPlugin>();
             var serviceProvider = new TestServiceProvider();
             var pluginHandler = new PluginHandler(serviceProvider, (_) => { });
+            var expectedErrorMessage =
+                $"Message received for unregistered plugin id '{RandomGuidId}'. Plugins must first be registered " +
+                "before they can receive messages.";
             var registerPluginMessage = new PluginMessage
             {
                 Data = new JObject
@@ -247,9 +250,22 @@ namespace Microsoft.Framework.DesignTimeHost
                 MessageName = "UnregisterPlugin",
                 PluginId = RandomGuidId
             };
+            var pluginMessage = new PluginMessage
+            {
+                Data = new JObject
+                {
+                    { "Data", "Hello Plugin" },
+                },
+                MessageName = "PluginMessage",
+                PluginId = RandomGuidId
+            };
 
             pluginHandler.ProcessMessage(registerPluginMessage, assemblyLoadContext);
+            pluginHandler.ProcessMessage(pluginMessage, assemblyLoadContext);
             pluginHandler.ProcessMessage(unregisterPluginMessage, assemblyLoadContext);
+            var error = Assert.Throws<InvalidOperationException>(
+                () => pluginHandler.ProcessMessage(pluginMessage, assemblyLoadContext));
+            Assert.Equal(expectedErrorMessage, error.Message, StringComparer.Ordinal);
         }
 
         [Fact]
@@ -292,7 +308,7 @@ namespace Microsoft.Framework.DesignTimeHost
                 MessageName = "UnregisterPlugin",
                 PluginId = RandomGuidId
             };
-            var expectedErrorMessage = 
+            var expectedErrorMessage =
                 $"No plugin with id '{RandomGuidId}' has been registered. Cannot unregister plugin.";
 
             pluginHandler.ProcessMessage(registerPluginMessage, assemblyLoadContext);
@@ -445,7 +461,6 @@ namespace Microsoft.Framework.DesignTimeHost
         {
             public void ProcessMessage(JObject data)
             {
-                throw new NotImplementedException();
             }
         }
 
@@ -480,7 +495,7 @@ namespace Microsoft.Framework.DesignTimeHost
         private class AssemblyLoadContextRelayTestPlugin : TestPlugin
         {
             public AssemblyLoadContextRelayTestPlugin(
-                IPluginMessageBroker messageBroker, 
+                IPluginMessageBroker messageBroker,
                 IAssemblyLoadContext assemblyLoadContext)
             {
                 messageBroker.SendMessage(assemblyLoadContext);

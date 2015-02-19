@@ -3,7 +3,6 @@
 
 using System;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
 using System.Reflection;
 using Microsoft.Framework.DesignTimeHost.Models.IncomingMessages;
 using Microsoft.Framework.Runtime;
@@ -15,7 +14,7 @@ namespace Microsoft.Framework.DesignTimeHost
     {
         private readonly Action<object> _sendMessageMethod;
         private readonly IServiceProvider _hostServices;
-        private readonly IDictionary<string, IPlugin> _plugins;
+        private readonly ConcurrentDictionary<string, IPlugin> _plugins;
 
         public PluginHandler(IServiceProvider hostServices, Action<object> sendMessageMethod)
         {
@@ -56,7 +55,8 @@ namespace Microsoft.Framework.DesignTimeHost
 
         private void ProcessUnregisterMessage(PluginMessage data)
         {
-            if (!_plugins.Remove(data.PluginId))
+            IPlugin removedPlugin;
+            if (!_plugins.TryRemove(data.PluginId, out removedPlugin))
             {
                 throw new InvalidOperationException(
                     Resources.FormatPlugin_UnregisteredPluginIdCannotUnregister(data.PluginId));
