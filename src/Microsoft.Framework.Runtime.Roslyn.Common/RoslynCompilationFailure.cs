@@ -33,12 +33,12 @@ namespace Microsoft.Framework.Runtime.Roslyn
         public IEnumerable<ICompilationMessage> Messages { get; }
 
         /// <inheritdoc />
-        public string SourceFilePath { get; }
+        public string SourceFilePath { get; set; }
 
         /// <inheritdoc />
-        public string SourceFileContent { get; } = null;
+        public string SourceFileContent { get; set; }
 
         /// <inheritdoc />
-        public string CompiledContent { get; } = null;
+        public string CompiledContent { get; set; }
     }
 }
