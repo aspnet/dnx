@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.Framework.Runtime;
+using Microsoft.Framework.Runtime.Roslyn;
 
 namespace HelloWorld.Compiler.Preprocess
 {
@@ -17,9 +18,10 @@ namespace HelloWorld.Compiler.Preprocess
 
         public void BeforeCompile(IBeforeCompileContext context)
         {
+            // TODO: Enable
             var options = CSharpParseOptions.Default
-                .WithLanguageVersion(context.CSharpCompilation.LanguageVersion);
-            context.CSharpCompilation = context.CSharpCompilation.AddSyntaxTrees(CSharpSyntaxTree.ParseText(@"
+                .WithLanguageVersion(context.Compilation.LanguageVersion);
+            context.Compilation = context.Compilation.AddSyntaxTrees(CSharpSyntaxTree.ParseText(@"
 public class Foo 
 {
     public string Message

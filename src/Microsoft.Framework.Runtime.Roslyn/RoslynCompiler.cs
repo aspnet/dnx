@@ -119,17 +119,17 @@ namespace Microsoft.Framework.Runtime.Roslyn
 
             compilation = ApplyVersionInfo(compilation, project, parseOptions);
 
-            var compilationContext = new CompilationContext(compilation,
-                incomingReferences.ToList(),
-                project);
-
-            var modules = new List<ICompileModule>();
+            var compilationContext = new CompilationContext(compilation, project, target.TargetFramework);
 
             if (isMainAspect && project.Files.PreprocessSourceFiles.Any())
             {
                 try
                 {
-                    modules = GetCompileModules(target).Modules;
+                    var modules = GetCompileModules(target).Modules;
+                    foreach (var module in modules)
+                    {
+                        compilationContext.Modules.Add(module);
+                    }
                 }
                 catch (Exception ex)
                 {
@@ -152,16 +152,16 @@ namespace Microsoft.Framework.Runtime.Roslyn
                 }
             }
 
-            if (modules.Count > 0)
+            if (compilationContext.Modules.Count > 0)
             {
                 var precompSw = Stopwatch.StartNew();
-                foreach (var module in modules)
+                foreach (var module in compilationContext.Modules)
                 {
                     module.BeforeCompile(compilationContext);
                 }
 
                 precompSw.Stop();
-                Logger.TraceInformation("[{0}]: Compile modules ran in in {1}ms", GetType().Name, precompSw.ElapsedMilliseconds);
+                Logger.TraceInformation("[{0}]: Compile modules ran in {1}ms", GetType().Name, precompSw.ElapsedMilliseconds);
             }
 
             sw.Stop();
