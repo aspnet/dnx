@@ -29,6 +29,11 @@ namespace Microsoft.Framework.Runtime.Roslyn
         FrameworkName TargetFramework { get; }
 
         /// <summary>
+        /// The configuration of the project currently being compiled
+        /// </summary>
+        string Configuration { get; }
+
+        /// <summary>
         /// Project version
         /// </summary>
         string Version { get; }

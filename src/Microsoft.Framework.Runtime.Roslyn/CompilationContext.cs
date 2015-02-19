@@ -29,12 +29,13 @@ namespace Microsoft.Framework.Runtime.Roslyn
 
         public CompilationContext(CSharpCompilation compilation,
                                   Project project,
-                                  FrameworkName targetFramework)
+                                  FrameworkName targetFramework,
+                                  string configuration)
         {
             Compilation = compilation;
             Diagnostics = new List<Diagnostic>();
             Project = project;
-            ProjectContext = new ProjectContext(project, targetFramework);
+            ProjectContext = new ProjectContext(project, targetFramework, configuration);
             _resources = new Lazy<IList<ResourceDescription>>(() => GetResources(this));
         }
 

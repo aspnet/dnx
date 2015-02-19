@@ -119,7 +119,7 @@ namespace Microsoft.Framework.Runtime.Roslyn
 
             compilation = ApplyVersionInfo(compilation, project, parseOptions);
 
-            var compilationContext = new CompilationContext(compilation, project, target.TargetFramework);
+            var compilationContext = new CompilationContext(compilation, project, target.TargetFramework, target.Configuration);
 
             if (isMainAspect && project.Files.PreprocessSourceFiles.Any())
             {

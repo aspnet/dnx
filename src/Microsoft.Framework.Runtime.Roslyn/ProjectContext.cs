@@ -5,13 +5,14 @@ namespace Microsoft.Framework.Runtime.Roslyn
 {
     internal class ProjectContext : IProjectContext
     {
-        public ProjectContext(Project project, FrameworkName targetFramework)
+        public ProjectContext(Project project, FrameworkName targetFramework, string configuration)
         {
             Name = project.Name;
             ProjectDirectory = project.ProjectDirectory;
             ProjectFilePath = project.ProjectFilePath;
             TargetFramework = targetFramework;
             Version = project.Version?.ToString();
+            Configuration = configuration;
         }
 
         public string Name { get; }
@@ -19,5 +20,6 @@ namespace Microsoft.Framework.Runtime.Roslyn
         public string ProjectDirectory { get; }
         public string ProjectFilePath { get; }
         public FrameworkName TargetFramework { get; }
+        public string Configuration { get; }
     }
 }
