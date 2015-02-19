@@ -107,6 +107,11 @@ namespace Microsoft.Framework.PackageManager.Bundle
                 return false;
             }
 
+            if (!ResolveActualRuntimeNames(_options.Runtimes))
+            {
+                return false;
+            }
+
             foreach (var runtime in _options.Runtimes)
             {
                 var frameworkName = DependencyContext.GetFrameworkNameForRuntime(Path.GetFileName(runtime));
@@ -283,6 +288,27 @@ namespace Microsoft.Framework.PackageManager.Bundle
             var dependencyContext = new DependencyContext(project.ProjectDirectory, _options.Configuration, frameworkName);
             dependencyContext.Walk(project.Name, project.Version);
             return dependencyContext;
+        }
+
+        private bool ResolveActualRuntimeNames(IList<string> runtimes)
+        {
+            for (int i = 0; i < runtimes.Count(); i++)
+            {
+                if (string.Equals("active", runtimes[i], StringComparison.OrdinalIgnoreCase))
+                {
+                    string activeRuntime = VersionUtils.ActiveRuntimeFullName;
+                    if (string.IsNullOrEmpty(activeRuntime))
+                    {
+                        _options.Reports.Error.WriteLine("Cannot resolve the active runtime name".Red());
+                        return false;
+                    }
+
+                    _options.Reports.Verbose.WriteLine("Resolved the active runtime as {0}", activeRuntime);
+                    runtimes[i] = activeRuntime;
+                }
+            }
+
+            return true;
         }
     }
 }

@@ -1,0 +1,45 @@
+﻿// Copyright (c) Microsoft Open Technologies, Inc. All rights reserved.
+// Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
+
+using System;
+using System.IO;
+using Microsoft.Framework.Runtime;
+
+namespace Microsoft.Framework.PackageManager
+{
+    public static class VersionUtils
+    {
+        private static readonly Lazy<string> _activeRuntime = new Lazy<string>(GetActiveRuntimeName);
+
+        public static string ActiveRuntimeFullName
+        {
+            get
+            {
+                return _activeRuntime.Value;
+            }
+        }
+
+        private static string GetActiveRuntimeName()
+        {
+            string pathVariable = Environment.GetEnvironmentVariable("PATH");
+
+            if (!string.IsNullOrEmpty(pathVariable))
+            {
+                string kpmExecutable = PlatformHelper.IsWindows ? "kpm.cmd" : "kpm";
+
+                foreach (string folder in pathVariable.Split(new char[] { Path.PathSeparator }, StringSplitOptions.RemoveEmptyEntries))
+                {
+                    string kpmPath = Path.Combine(folder, kpmExecutable);
+                    if (File.Exists(kpmPath) &&
+                        string.Equals("bin", Directory.GetParent(kpmPath).Name))
+                    {
+                        // We found it
+                        return Directory.GetParent(folder).Name;
+                    }
+                }
+            }
+
+            return null;
+        }
+    }
+}

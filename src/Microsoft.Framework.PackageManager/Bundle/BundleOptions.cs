@@ -24,7 +24,7 @@ namespace Microsoft.Framework.PackageManager.Bundle
 
         public bool NoSource { get; set; }
 
-        public IEnumerable<string> Runtimes { get; set; }
+        public IList<string> Runtimes { get; set; }
 
         public bool Native { get; set; }
 
