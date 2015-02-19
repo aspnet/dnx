@@ -58,6 +58,7 @@ var MANAGED_PROJECTS = '${FindAllProjects(
     "Microsoft.Framework.ApplicationHost2",
     "Microsoft.Framework.CommandLineUtils",
     "Microsoft.Framework.DesignTimeHost",
+    "Microsoft.Framework.DesignTimeHost.Interfaces",
     "Microsoft.Framework.PackageManager",
     "Microsoft.Framework.Project",
     "Microsoft.Framework.Runtime",
