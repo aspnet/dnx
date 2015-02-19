@@ -59,6 +59,30 @@ namespace Microsoft.Framework.Runtime.Tests
             Assert.Equal(new[] { "a.cs", @"foo.js" }, target.ResourcesPatterns);
         }
 
+
+        [Fact]
+        public void FilePatternsDoNotIncludeComments()
+        {
+            var rawProject = Deserialize(@"
+{
+    ""code"": [""*.cs"", /* FOO */ ""../*.cs""],
+    ""exclude"": [""buggy/*.*"", /* FOO */],
+    ""bundleExclude"": [""no_pack/*.*"", /* FOO */],
+    ""preprocess"": [""other/**/*.cs"", /* FOO */ ""*.cs"", ""*.*""],
+    ""shared"": [""shared/**/*.cs;../../shared/*.cs"", /* FOO */],
+    ""resources"": [""a.cs"", /* FOO */ ""foo.js""]
+}");
+
+            var target = new ProjectFilesCollection(rawProject, string.Empty);
+
+            Assert.Equal(new[] { "*.cs", @"../*.cs" }, target.SourcePatterns);
+            Assert.Equal(new[] { @"buggy/*.*" }, target.ExcludePatterns);
+            Assert.Equal(new[] { @"no_pack/*.*" }, target.BundleExcludePatterns);
+            Assert.Equal(new[] { @"other/**/*.cs", "*.cs", "*.*" }, target.PreprocessPatterns);
+            Assert.Equal(new[] { @"shared/**/*.cs", @"../../shared/*.cs" }, target.SharedPatterns);
+            Assert.Equal(new[] { "a.cs", @"foo.js" }, target.ResourcesPatterns);
+        }
+
         [Fact]
         public void DefaultSourcePatternsAreUsedIfNoneSpecified()
         {
