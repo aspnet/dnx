@@ -39,6 +39,6 @@ namespace NuGet.LibraryModel
         public bool HasFlag(LibraryDependencyTypeFlag flag)
         {
             return Type.Contains(flag);
-        :%s/LibraryModel/DependencyModel/g
-                A:%s/LibraryModel/DependencyModel/g
-                A}
+        }
+    }
+}

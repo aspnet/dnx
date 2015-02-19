@@ -109,7 +109,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{AF8C0E0F-D6F
 EndProject
 Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Microsoft.Framework.Runtime.Hosting", "src\Microsoft.Framework.Runtime.Hosting\Microsoft.Framework.Runtime.Hosting.kproj", "{209FE200-D4E8-4E52-9AEA-7F77A10696A8}"
 EndProject
-Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "NuGet.DependencyModel", "src\NuGet.DependencyModel\NuGet.DependencyModel.kproj", "{1B5D6394-B3F0-4CF9-8C23-E98DBB7AD8EF}"
+Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "NuGet.LibraryModel", "src\NuGet.LibraryModel\NuGet.LibraryModel.kproj", "{1B5D6394-B3F0-4CF9-8C23-E98DBB7AD8EF}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
