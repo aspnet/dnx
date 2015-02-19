@@ -8,24 +8,19 @@ using System.Linq;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
-using Microsoft.Framework.Runtime;
 using Microsoft.Framework.Runtime.Roslyn;
 
 namespace Runtime.Ext.Compiler.Preprocess
 {
     public class Internalization : ICompileModule
     {
-        private readonly string _appBase;
-
         public Internalization(IServiceProvider services)
         {
-            var appEnv = services.GetService(typeof(IApplicationEnvironment)) as IApplicationEnvironment;
-            _appBase = appEnv.ApplicationBasePath;
         }
 
         public void BeforeCompile(IBeforeCompileContext context)
         {
-            var submodulesDir = Path.Combine(_appBase, "..", "..", "submodules");
+            var submodulesDir = Path.Combine(context.ProjectContext.ProjectDirectory, "submodules");
             var replacementDict = new Dictionary<SyntaxTree, SyntaxTree>();
             var removeList = new List<SyntaxTree>();
 
