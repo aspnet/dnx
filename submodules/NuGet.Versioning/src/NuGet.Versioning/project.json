@@ -1,0 +1,23 @@
+{
+    "version": "1.0.0-*",
+    "authors": [ "NuGet" ],
+    "description": "NuGet's implementation of Semantic Versioning.",
+    "copyright": "Copyright Outercurve Foundation. All rights reserved.",
+    "projectUrl": "https://github.com/NuGet/NuGet.Versioning/",
+    "licenseUrl": "https://raw.githubusercontent.com/NuGet/NuGet.Versioning/master/LICENSE",
+    "tags": [ "semver", "semantic versioning" ],
+    "frameworks": {
+        "net45": { },
+        "aspnetcore50": {
+            "dependencies": {
+                "System.Runtime": "4.0.20-beta-*",
+                "System.Runtime.Extensions": "4.0.10-beta-*",
+                "System.Collections": "4.0.10-beta-*",
+                "System.Diagnostics.Tools": "4.0.0-beta-*",
+                "System.Diagnostics.Debug": "4.0.10-beta-*",
+                "System.Linq": "4.0.0-beta-*",
+                "System.Resources.ResourceManager": "4.0.0-beta-*"
+            }
+        }
+    }
+}

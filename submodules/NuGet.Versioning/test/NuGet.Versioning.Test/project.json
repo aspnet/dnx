@@ -1,0 +1,15 @@
+{
+    "dependencies": {
+        "NuGet.Versioning": "1.0.0-*",
+        "xunit.runner.kre": "1.0.0-*",
+        "Moq": "4.2.1408.0717"
+    },
+    "commands": {
+        "run": "xunit.runner.kre",
+        "test": "xunit.runner.kre"
+    },
+    "frameworks": {
+        "aspnetcore50": { },
+        "aspnet50": { }
+    }
+}
