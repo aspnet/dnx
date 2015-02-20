@@ -1,6 +1,6 @@
 ﻿{
     "version": "1.0.0-*",
-    "description": "Core hosting APIs for launching the cross-platform runtime",
+    "description": "The core components necessary to host the K Runtime",
     "dependencies": {
         "Microsoft.Framework.Runtime.Interfaces": ""
     },
