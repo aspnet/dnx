@@ -34,7 +34,7 @@ Active Version           Runtime Architecture Location                          
 
 If you want to remove the symlinks, simply delete them from your user profile's XRE folder.
 
-### Initalize the submodules
+### Initialize the submodules
 
 This repository includes a few submodules. They need to be initialized before build.
 
