@@ -1,0 +1,15 @@
+{
+    "version": "1.0.0-*",
+    "description": "NuGet's dependency resolver within the NuGet.Packaging package",
+    "authors": [ "NuGet" ],
+    "copyright": "Copyright Outercurve Foundation. All rights reserved.",
+    "projectUrl": "https://github.com/NuGet/NuGet.Packaging/",
+    "licenseUrl": "https://raw.githubusercontent.com/NuGet/NuGet.Packaging/master/LICENSE",
+    "dependencies": {
+        "NuGet.Packaging": "1.0.0-*"
+    },
+    "frameworks": {
+        "net45": { },
+        "aspnetcore50": { }
+    }
+}
