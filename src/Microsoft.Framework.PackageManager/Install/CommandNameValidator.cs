@@ -21,6 +21,7 @@ namespace Microsoft.Framework.PackageManager
 
         private static readonly string[] SkippedCommandNames = new string[]
         {
+            "ef",
             "run",
             "test",
             "web"
