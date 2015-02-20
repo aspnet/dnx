@@ -34,5 +34,21 @@ Active Version           Runtime Architecture Location                          
 
 If you want to remove the symlinks, simply delete them from your user profile's XRE folder.
 
-This project is part of ASP.NET 5. You can find samples, documentation and getting started instructions for ASP.NET 5 at the [Home](https://github.com/aspnet/home) repo.
+### Initalize the submodules
 
+This repository includes a few submodules. They need to be initialized before build.
+
+To clone a repository and initialize all the submodules you can run:
+
+```
+git clone --recursive
+```
+
+If you have already cloned the repoistory without `--recursive` option, you can run following commands to initialize the submodules:
+
+```
+git submodule init
+git submodule update
+```
+
+This project is part of ASP.NET 5. You can find samples, documentation and getting started instructions for ASP.NET 5 at the [Home](https://github.com/aspnet/home) repo.
