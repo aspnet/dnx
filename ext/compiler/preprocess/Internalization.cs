@@ -20,7 +20,7 @@ namespace Runtime.Ext.Compiler.Preprocess
 
         public void BeforeCompile(IBeforeCompileContext context)
         {
-            var submodulesDir = Path.Combine(context.ProjectContext.ProjectDirectory, "submodules");
+            var submodulesDir = Path.Combine(context.ProjectContext.ProjectDirectory, "..", "..", "submodules");
             var replacementDict = new Dictionary<SyntaxTree, SyntaxTree>();
             var removeList = new List<SyntaxTree>();
 
