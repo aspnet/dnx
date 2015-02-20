@@ -1,0 +1,16 @@
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<UsingTask AssemblyFile="$(MSBuildStartupDirectory)\tools\xunit\xunit.runner.msbuild.dll" TaskName="Xunit.Runner.MSBuild.xunit" />
+<Target Name="RunTests">
+	<ItemGroup>
+		<Line Include="&lt;configuration&gt;&lt;appSettings&gt;
+&lt;add key=&quot;TargetDir&quot; value=&quot;$(TargetDir)&quot;/&gt;
+&lt;/appSettings&gt;&lt;/configuration&gt;" />
+		</ItemGroup>
+	<WriteLinesToFile
+		File="$(TargetDir)$(AssemblyName).dll.config"
+		Lines="@(Line)"			
+		Overwrite="true"
+		/> 
+    <xunit Assembly="$(TargetDir)$(AssemblyName).dll" />
+</Target>
+</Project>
