@@ -10,6 +10,7 @@ using System.Security.Cryptography;
 using System.Xml;
 using System.Xml.Linq;
 using Microsoft.Framework.Runtime;
+using Microsoft.Framework.Runtime.DependencyManagement;
 using Newtonsoft.Json.Linq;
 using NuGet;
 
@@ -158,6 +159,7 @@ namespace Microsoft.Framework.PackageManager.Bundle
             var rootFolderPath = Path.Combine(TargetPath, "root");
             var rootProjectJson = Path.Combine(rootFolderPath, Runtime.Project.ProjectFileName);
 
+            root.Operations.Delete(rootFolderPath);
             CopyProject(root, project, rootFolderPath, includeSource: false);
 
             UpdateWebRoot(root, rootFolderPath);
@@ -267,12 +269,6 @@ namespace Microsoft.Framework.PackageManager.Bundle
 
             root.Operations.Copy(project.ProjectDirectory, targetPath, itemPath =>
             {
-                // TODO: this is a temporary workaround to make sure "kpm bundle --no-source" is not broken by lockfile
-                if (string.Equals(Path.GetFileName(itemPath), "project.lock.json", StringComparison.OrdinalIgnoreCase))
-                {
-                    return false;
-                }
-
                 // If current file/folder is in the exclusion list, we don't copy it
                 if (excludeSet.Contains(itemPath))
                 {
@@ -332,6 +328,47 @@ namespace Microsoft.Framework.PackageManager.Bundle
             GenerateWebConfigFileForWwwRootOut(root, project, wwwRootOutPath);
 
             CopyAspNetLoaderDll(root, wwwRootOutPath);
+
+            if (root.NoSource)
+            {
+                // Add newly generated packages to lockfile
+                UpdateLockFile(root);
+            }
+        }
+
+        private void UpdateLockFile(BundleRoot root)
+        {
+            var lockFileFormat = new LockFileFormat();
+            var lockFilePath = Path.Combine(TargetPath, "root", LockFileFormat.LockFileName);
+            var lockFile = lockFileFormat.Read(lockFilePath);
+
+            var repository = new PackageRepository(root.TargetPackagesPath);
+
+            foreach (var bundleProject in root.Projects)
+            {
+                var packageInfo = repository.FindPackagesById(bundleProject.Name)
+                    .SingleOrDefault();
+                if (packageInfo == null)
+                {
+                    root.Reports.Information.WriteLine("Unable to locate bundled package {0} in {1}",
+                        bundleProject.Name.Yellow(),
+                        repository.RepositoryRoot);
+                    continue;
+                }
+
+                var package = packageInfo.Package;
+                var lockFileLib = new LockFileLibrary();
+                lockFileLib.Name = package.Id;
+                lockFileLib.Version = package.Version;
+                lockFileLib.DependencySets = package.DependencySets.ToList();
+                lockFileLib.FrameworkAssemblies = package.FrameworkAssemblies.ToList();
+                lockFileLib.PackageAssemblyReferences = package.PackageAssemblyReferences.ToList();
+                lockFileLib.Files = package.GetFiles().ToList();
+
+                lockFile.Libraries.Add(lockFileLib);
+            }
+
+            lockFileFormat.Write(lockFilePath, lockFile);
         }
 
         private void GenerateWebConfigFileForWwwRootOut(BundleRoot root, Runtime.Project project, string wwwRootOutPath)
