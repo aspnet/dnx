@@ -4,24 +4,15 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Threading.Tasks;
-using System.Xml;
-using System.Xml.Linq;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using NuGet;
 
 namespace Microsoft.Framework.PackageManager.Restore.NuGet
 {
     public class NuGetv2Feed : IPackageFeed
     {
-        private static readonly XName _xnameEntry = XName.Get("entry", "http://www.w3.org/2005/Atom");
-        private static readonly XName _xnameTitle = XName.Get("title", "http://www.w3.org/2005/Atom");
-        private static readonly XName _xnameContent = XName.Get("content", "http://www.w3.org/2005/Atom");
-        private static readonly XName _xnameLink = XName.Get("link", "http://www.w3.org/2005/Atom");
-        private static readonly XName _xnameProperties = XName.Get("properties", "http://schemas.microsoft.com/ado/2007/08/dataservices/metadata");
-        private static readonly XName _xnameId = XName.Get("Id", "http://schemas.microsoft.com/ado/2007/08/dataservices");
-        private static readonly XName _xnameVersion = XName.Get("Version", "http://schemas.microsoft.com/ado/2007/08/dataservices");
-
         private readonly string _baseUri;
         private readonly Reports _reports;
         private readonly HttpSource _httpSource;
@@ -84,7 +75,7 @@ namespace Microsoft.Framework.PackageManager.Restore.NuGet
 
                 try
                 {
-                    var uri = _baseUri + "FindPackagesById()?Id='" + id + "'";
+                    var uri = _baseUri + "FindPackagesById()?Id='" + id + "'&$select=Id,Version&$format=json";
                     var results = new List<PackageInfo>();
                     var page = 1;
                     while (true)
@@ -95,27 +86,12 @@ namespace Microsoft.Framework.PackageManager.Restore.NuGet
                         // (2) cache for pages is valid for only 30 min.
                         // So we decide to leave current logic and observe.
                         using (var data = await _httpSource.GetAsync(uri,
-                        string.Format("list_{0}_page{1}", id, page),
+                        string.Format("list_{0}_json_page{1}", id, page),
                         retry == 0 ? _cacheAgeLimitList : TimeSpan.Zero))
                         {
                             try
                             {
-                                var doc = XDocument.Load(data.Stream);
-
-                                var result = doc.Root
-                                    .Elements(_xnameEntry)
-                                    .Select(x => BuildModel(id, x));
-
-                                results.AddRange(result);
-
-                                // Example of what this looks like in the odata feed:
-                                // <link rel="next" href="{nextLink}" />
-                                var nextUri = (from e in doc.Root.Elements(_xnameLink)
-                                               let attr = e.Attribute("rel")
-                                               where attr != null && string.Equals(attr.Value, "next", StringComparison.OrdinalIgnoreCase)
-                                               select e.Attribute("href") into nextLink
-                                               where nextLink != null
-                                               select nextLink.Value).FirstOrDefault();
+                                string nextUri = ParseFeedEntries(id, results, data);
 
                                 // Stop if there's nothing else to GET
                                 if (string.IsNullOrEmpty(nextUri))
@@ -126,9 +102,9 @@ namespace Microsoft.Framework.PackageManager.Restore.NuGet
                                 uri = nextUri;
                                 page++;
                             }
-                            catch (XmlException)
+                            catch (JsonReaderException)
                             {
-                                _reports.Information.WriteLine("The XML file {0} is corrupt",
+                                _reports.Information.WriteLine("The file {0} is corrupt",
                                     data.CacheFileName.Yellow().Bold());
                                 throw;
                             }
@@ -164,21 +140,40 @@ namespace Microsoft.Framework.PackageManager.Restore.NuGet
             return null;
         }
 
-        public PackageInfo BuildModel(string id, XElement element)
+        private string ParseFeedEntries(string id, List<PackageInfo> results, HttpSourceResult data)
         {
-            var properties = element.Element(_xnameProperties);
-            var idElement = properties.Element(_xnameId);
-            var titleElement = element.Element(_xnameTitle);
+            var obj = JObject.Load(new JsonTextReader(new StreamReader(data.Stream)));
 
-            return new PackageInfo
+            var root = obj["d"];
+            var entries = root["results"] as JArray;
+
+            foreach (JObject entry in entries)
+            {
+                results.Add(BuildPackageInfoFromJsonEntry(id, entry));
+            }
+
+            var nextUri = root.Value<string>("__next");
+
+            if (string.IsNullOrEmpty(nextUri))
+            {
+                return null;
+            }
+
+            return nextUri + "&$format=json";
+        }
+
+        private PackageInfo BuildPackageInfoFromJsonEntry(string id, JObject entry)
+        {
+            var info = new PackageInfo
             {
                 // If 'Id' element exist, use its value as accurate package Id
-                // Otherwise, use the value of 'title' if it exist
                 // Use the given Id as final fallback if all elements above don't exist
-                Id = idElement?.Value ?? titleElement?.Value ?? id,
-                Version = SemanticVersion.Parse(properties.Element(_xnameVersion).Value),
-                ContentUri = element.Element(_xnameContent).Attribute("src").Value,
+                Id = entry.Value<string>("Id") ?? id,
+                Version = SemanticVersion.Parse(entry.Value<string>("Version")),
+                ContentUri = entry["__metadata"].Value<string>("media_src")
             };
+
+            return info;
         }
 
         public async Task<Stream> OpenNuspecStreamAsync(PackageInfo package)
