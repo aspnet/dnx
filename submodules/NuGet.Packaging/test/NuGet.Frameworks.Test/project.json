@@ -1,0 +1,14 @@
+{
+    "dependencies": {
+        "NuGet.Frameworks": "1.0.0-*",
+        "xunit.runner.kre": "1.0.0-*"
+    },
+    "commands": {
+        "run": "xunit.runner.kre",
+        "test": "xunit.runner.kre"
+    },
+    "frameworks": {
+        "aspnet50": { },
+        "aspnetcore50": { }
+    }
+}

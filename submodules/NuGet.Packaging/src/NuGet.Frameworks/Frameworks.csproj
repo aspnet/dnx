@@ -1,0 +1,77 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="12.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <MinimumVisualStudioVersion>11.0</MinimumVisualStudioVersion>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{5B5484A1-EC50-41E2-AC5F-51602E8BB6FF}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>NuGet.Frameworks</RootNamespace>
+    <AssemblyName>NuGet.Frameworks</AssemblyName>
+    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+    <TargetFrameworkProfile>Profile7</TargetFrameworkProfile>
+    <FileAlignment>512</FileAlignment>
+    <ProjectTypeGuids>{786C830F-07A1-408B-BD7F-6EE04809D6DB};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
+    <DocumentationFile>bin\$(Configuration)\NuGet.Frameworks.XML</DocumentationFile>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <RunCodeAnalysis>true</RunCodeAnalysis>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="comparers\CompatibilityMappingComparer.cs" />
+    <Compile Include="comparers\NuGetFrameworkNameComparer.cs" />
+    <Compile Include="comparers\NuGetFrameworkFullComparer.cs" />
+    <Compile Include="comparers\NuGetFrameworkProfileComparer.cs" />
+    <Compile Include="FrameworkException.cs" />
+    <Compile Include="FrameworkExpander.cs" />
+    <Compile Include="FrameworkRange.cs" />
+    <Compile Include="OneWayCompatibilityMappingEntry.cs" />
+    <Compile Include="CompatibilityProvider.cs" />
+    <Compile Include="CompatibilityTable.cs" />
+    <Compile Include="DefaultCompatibilityProvider.cs" />
+    <Compile Include="DefaultFrameworkNameProvider.cs" />
+    <Compile Include="DefaultPortableFrameworkMappings.cs" />
+    <Compile Include="def\IFrameworkCompatibilityProvider.cs" />
+    <Compile Include="def\IPortableFrameworkMappings.cs" />
+    <Compile Include="FrameworkConstants.cs" />
+    <Compile Include="CustomFrameworkMappings.cs" />
+    <Compile Include="DefaultFrameworkMappings.cs" />
+    <Compile Include="FrameworkNameHelpers.cs" />
+    <Compile Include="FrameworkNameProvider.cs" />
+    <Compile Include="def\IFrameworkMappings.cs" />
+    <Compile Include="def\IFrameworkNameProvider.cs" />
+    <Compile Include="FrameworkReducer.cs" />
+    <Compile Include="FrameworkSpecificMapping.cs" />
+    <Compile Include="NuGetFramework.cs" />
+    <Compile Include="NuGetFrameworkFactory.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="NuGet.Versioning">
+      <HintPath>..\..\packages\NuGet.Versioning.3.0.0-rc\lib\portable-net40+win\NuGet.Versioning.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="packages.config" />
+  </ItemGroup>
+  <Import Project="$(MSBuildExtensionsPath32)\Microsoft\Portable\$(TargetFrameworkVersion)\Microsoft.Portable.CSharp.targets" />
+  <Import Project="..\..\build\sign.targets" />
+</Project>
