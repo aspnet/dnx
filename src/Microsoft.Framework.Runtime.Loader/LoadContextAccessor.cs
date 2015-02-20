@@ -86,6 +86,8 @@ namespace Microsoft.Framework.Runtime.Loader
 
         private Dictionary<Assembly, IAssemblyLoadContext> _cache = new Dictionary<Assembly, IAssemblyLoadContext>();
 
+        private readonly object _lockObj = new object();
+
         public static LoadContextAccessor Instance
         {
             get
@@ -104,10 +106,13 @@ namespace Microsoft.Framework.Runtime.Loader
 
         public IAssemblyLoadContext GetLoadContext(Assembly assembly)
         {
-            IAssemblyLoadContext context;
-            if (_cache.TryGetValue(assembly, out context))
+            lock (_lockObj)
             {
-                return context;
+                IAssemblyLoadContext context;
+                if (_cache.TryGetValue(assembly, out context))
+                {
+                    return context;
+                }
             }
 
             return LoadContext.Default;
@@ -115,7 +120,10 @@ namespace Microsoft.Framework.Runtime.Loader
 
         public void SetLoadContext(Assembly assembly, IAssemblyLoadContext loadContext)
         {
-            _cache[assembly] = loadContext;
+            lock (_lockObj)
+            {
+                _cache[assembly] = loadContext;
+            }
         }
     }
 #endif
