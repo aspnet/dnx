@@ -13,11 +13,11 @@ namespace Microsoft.Framework.Runtime
     {
         private static ConcurrentDictionary<string, LibraryDependencyTypeKeyword> _keywords = new ConcurrentDictionary<string, LibraryDependencyTypeKeyword>();
 
-        public static LibraryDependencyTypeKeyword Default;
-        public static LibraryDependencyTypeKeyword Build;
-        public static LibraryDependencyTypeKeyword Preprocess;
-        public static LibraryDependencyTypeKeyword Private;
-        public static LibraryDependencyTypeKeyword Dev;
+        public readonly static LibraryDependencyTypeKeyword Default;
+        public readonly static LibraryDependencyTypeKeyword Build;
+        public readonly static LibraryDependencyTypeKeyword Preprocess;
+        public readonly static LibraryDependencyTypeKeyword Private;
+        public readonly static LibraryDependencyTypeKeyword Dev;
 
         private readonly string _value;
         private readonly IEnumerable<LibraryDependencyTypeFlag> _flagsToAdd;

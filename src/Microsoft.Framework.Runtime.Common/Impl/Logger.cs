@@ -64,7 +64,7 @@ namespace Microsoft.Framework.Runtime
                     int newLevel;
                     if (string.IsNullOrWhiteSpace(envVar) || !Int32.TryParse(envVar, out newLevel))
                     {
-                        newLevel = 0;
+                        newLevel = OffLevel;
                     }
                     _traceLevel = newLevel;
                 }

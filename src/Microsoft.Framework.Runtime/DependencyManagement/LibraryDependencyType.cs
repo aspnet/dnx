@@ -13,7 +13,7 @@ namespace Microsoft.Framework.Runtime
     {
         private readonly LibraryDependencyTypeFlag[] _keywords;
 
-        public static LibraryDependencyType Default;
+        public static readonly LibraryDependencyType Default;
 
         static LibraryDependencyType()
         {

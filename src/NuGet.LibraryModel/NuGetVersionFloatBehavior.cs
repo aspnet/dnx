@@ -16,5 +16,4 @@ namespace NuGet.Versioning
         Minor,
         Major
     }
-
 }
