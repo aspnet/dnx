@@ -168,55 +168,6 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
         private void WriteGlobalJson()
         {
             var rootDirectory = ProjectResolver.ResolveRootDirectory(_project.ProjectDirectory);
-            var projectResolver = new ProjectResolver(_project.ProjectDirectory, rootDirectory);
-            var packagesDir = NuGetDependencyResolver.ResolveRepositoryPath(rootDirectory);
-            var pathResolver = new DefaultPackagePathResolver(packagesDir);
-            var dependenciesObj = new JObject();
-
-            // Generate SHAs for all package dependencies
-            foreach (var deploymentPackage in Packages)
-            {
-                var library = deploymentPackage.Library;
-                var shaFilePath = pathResolver.GetHashPath(library.Name, library.Version);
-
-                if (!File.Exists(shaFilePath))
-                {
-                    throw new FileNotFoundException("Expected SHA file doesn't exist", shaFilePath);
-                }
-
-                var sha = File.ReadAllText(shaFilePath);
-
-                var shaObj = new JObject();
-                shaObj["version"] = library.Version.ToString();
-                shaObj["sha"] = sha;
-                dependenciesObj[library.Name] = shaObj;
-            }
-
-            // If "--no-source" is specified, project dependencies are packed to packages
-            // So we also generate SHAs for them in this case
-            foreach (var deploymentProject in Projects)
-            {
-                Runtime.Project project;
-                if (!projectResolver.TryResolveProject(deploymentProject.Name, out project))
-                {
-                    throw new Exception("TODO: unable to resolve project named " + deploymentProject.Name);
-                }
-
-                var shaFilePath = pathResolver.GetHashPath(project.Name, project.Version);
-
-                if (!File.Exists(shaFilePath))
-                {
-                    // This project is not packed to a package
-                    continue;
-                }
-
-                var sha = File.ReadAllText(shaFilePath);
-
-                var shaObj = new JObject();
-                shaObj.Add(new JProperty("version", project.Version.ToString()));
-                shaObj.Add(new JProperty("sha", sha));
-                dependenciesObj.Add(new JProperty(project.Name, shaObj));
-            }
 
             var rootObject = default(JObject);
             if (GlobalSettings.HasGlobalFile(rootDirectory))
@@ -232,7 +183,6 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
 
             var applicationRoot = Path.Combine(OutputPath, BundleRoot.AppRootName);
 
-            rootObject["dependencies"] = dependenciesObj;
             rootObject["packages"] = PathUtility.GetRelativePath(
                 PathUtility.EnsureTrailingForwardSlash(applicationRoot),
                 TargetPackagesPath, separator: '/');

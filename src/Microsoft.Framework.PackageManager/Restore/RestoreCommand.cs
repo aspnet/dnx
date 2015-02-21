@@ -39,7 +39,6 @@ namespace Microsoft.Framework.PackageManager
         public bool Lock { get; set; }
         public bool Unlock { get; set; }
         public string PackageFolder { get; set; }
-        public string GlobalJsonFile { get; set; }
 
         public string RestorePackageId { get; set; } 
         public string RestorePackageVersion { get; set; }
@@ -68,15 +67,6 @@ namespace Microsoft.Framework.PackageManager
                     Path.GetFileName(RestoreDirectory),
                     StringComparison.OrdinalIgnoreCase))
                 {
-                    RestoreDirectory = Path.GetDirectoryName(Path.GetFullPath(RestoreDirectory));
-                }
-                // If the root argument is a global.json file
-                else if (string.Equals(
-                    GlobalSettings.GlobalFileName,
-                    Path.GetFileName(RestoreDirectory),
-                    StringComparison.OrdinalIgnoreCase))
-                {
-                    GlobalJsonFile = RestoreDirectory;
                     RestoreDirectory = Path.GetDirectoryName(Path.GetFullPath(RestoreDirectory));
                 }
                 else if (!Directory.Exists(RestoreDirectory) && !string.IsNullOrEmpty(RestoreDirectory))
@@ -111,9 +101,12 @@ namespace Microsoft.Framework.PackageManager
                         successCount = 1;
                     }
                 }
-                else if (string.IsNullOrEmpty(GlobalJsonFile))
+                else
                 {
-                    var projectJsonFiles = Directory.EnumerateFiles(restoreDirectory, "project.json", SearchOption.AllDirectories);
+                    var projectJsonFiles = Directory.EnumerateFiles(
+                        restoreDirectory,
+                        Runtime.Project.ProjectFileName,
+                        SearchOption.AllDirectories);
                     Func<string, Task> restorePackage = async projectJsonPath =>
                     {
                         Interlocked.Increment(ref restoreCount);
@@ -138,15 +131,6 @@ namespace Microsoft.Framework.PackageManager
                             projectJsonFiles,
                             maxDegreesOfConcurrency: Environment.ProcessorCount,
                             body: restorePackage);
-                    }
-                }
-                else
-                {
-                    restoreCount = 1;
-                    var success = await RestoreFromGlobalJson(rootDirectory, packagesDirectory);
-                    if (success)
-                    {
-                        successCount = 1;
                     }
                 }
 
@@ -510,109 +494,6 @@ namespace Microsoft.Framework.PackageManager
                 Reports.Error.WriteLine(ScriptExecutor.ErrorMessage);
                 return false;
             }
-
-            Reports.Information.WriteLine(string.Format("{0}, {1}ms elapsed", "Restore complete".Green().Bold(), sw.ElapsedMilliseconds));
-
-            return success;
-        }
-
-        private async Task<bool> RestoreFromGlobalJson(string rootDirectory, string packagesDirectory)
-        {
-            var success = true;
-
-            Reports.Information.WriteLine(string.Format("Restoring packages for {0}", Path.GetFullPath(GlobalJsonFile).Bold()));
-
-            var sw = new Stopwatch();
-            sw.Start();
-
-            var restoreOperations = new RestoreOperations(Reports.Information);
-            var localProviders = new List<IWalkProvider>();
-            var remoteProviders = new List<IWalkProvider>();
-
-            localProviders.Add(
-                new LocalWalkProvider(
-                    new NuGetDependencyResolver(
-                        new PackageRepository(
-                            packagesDirectory))));
-
-            var effectiveSources = PackageSourceUtils.GetEffectivePackageSources(
-                SourceProvider,
-                FeedOptions.Sources,
-                FeedOptions.FallbackSources);
-
-            AddRemoteProvidersFromSources(remoteProviders, effectiveSources);
-
-            var context = new RestoreContext
-            {
-                FrameworkName = ApplicationEnvironment.RuntimeFramework,
-                ProjectLibraryProviders = new List<IWalkProvider>(),
-                LocalLibraryProviders = localProviders,
-                RemoteLibraryProviders = remoteProviders,
-            };
-
-            GlobalSettings globalSettings;
-            GlobalSettings.TryGetGlobalSettings(GlobalJsonFile, out globalSettings);
-
-            var libsToRestore = globalSettings.PackageHashes.Keys.ToList();
-
-            var tasks = new List<Task<GraphItem>>();
-
-            foreach (var library in libsToRestore)
-            {
-                tasks.Add(restoreOperations.FindLibraryCached(context, library));
-            }
-
-            var resolvedItems = await Task.WhenAll(tasks);
-
-            Reports.Information.WriteLine(string.Format("{0}, {1}ms elapsed", "Resolving complete".Green(),
-                sw.ElapsedMilliseconds));
-
-            var installItems = new List<GraphItem>();
-            var missingItems = new List<Library>();
-
-            for (int i = 0; i < resolvedItems.Length; i++)
-            {
-                var item = resolvedItems[i];
-                var library = libsToRestore[i];
-
-                if (item == null ||
-                    item.Match == null ||
-                    item.Match.Library.Version != library.Version)
-                {
-                    missingItems.Add(library);
-
-                    Reports.Error.WriteLine(string.Format("Unable to locate {0} {1}",
-                        library.Name.Red().Bold(), library.Version));
-
-                    success = false;
-                    continue;
-                }
-
-                var isRemote = remoteProviders.Contains(item.Match.Provider);
-                var isAdded = installItems.Any(x => x.Match.Library == item.Match.Library);
-
-                if (!isAdded && isRemote)
-                {
-                    installItems.Add(item);
-                }
-            }
-
-            await InstallPackages(installItems, packagesDirectory, packageFilter: (library, nupkgSHA) =>
-            {
-                string expectedSHA = globalSettings.PackageHashes[library];
-
-                if (!string.Equals(expectedSHA, nupkgSHA, StringComparison.Ordinal))
-                {
-                    Reports.Error.WriteLine(
-                        string.Format("SHA of downloaded package {0} doesn't match expected value.".Red().Bold(),
-                        library.ToString()));
-
-                    success = false;
-                    return false;
-                }
-
-                return true;
-            });
 
             Reports.Information.WriteLine(string.Format("{0}, {1}ms elapsed", "Restore complete".Green().Bold(), sw.ElapsedMilliseconds));
 
