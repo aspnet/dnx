@@ -92,6 +92,8 @@ namespace Microsoft.Framework.Runtime.DependencyManagement
             {
                 library.Version = SemanticVersion.Parse(parts[1]);
             }
+            // TODO: temporary null-tolerant operation. Need to change to ReadString() after CI pass.
+            library.Sha = json["sha"]?.ToString();
             library.DependencySets = ReadObject(json["dependencySets"] as JObject, ReadPackageDependencySet);
             library.FrameworkAssemblies = ReadFrameworkAssemblies(json["frameworkAssemblies"] as JObject);
             library.PackageAssemblyReferences = ReadArray(json["packageAssemblyReferences"] as JArray, ReadPackageReferenceSet);
@@ -102,6 +104,7 @@ namespace Microsoft.Framework.Runtime.DependencyManagement
         private JProperty WriteLibrary(LockFileLibrary library)
         {
             var json = new JObject();
+            json["sha"] = WriteString(library.Sha);
             WriteObject(json, "dependencySets", library.DependencySets, WritePackageDependencySet);
             WriteFrameworkAssemblies(json, "frameworkAssemblies", library.FrameworkAssemblies);
             WriteArray(json, "packageAssemblyReferences", library.PackageAssemblyReferences, WritePackageReferenceSet);

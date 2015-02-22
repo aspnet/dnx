@@ -341,31 +341,40 @@ namespace Microsoft.Framework.PackageManager.Bundle
             var lockFileFormat = new LockFileFormat();
             var lockFilePath = Path.Combine(TargetPath, "root", LockFileFormat.LockFileName);
             var lockFile = lockFileFormat.Read(lockFilePath);
-
             var repository = new PackageRepository(root.TargetPackagesPath);
+            var resolver = new DefaultPackagePathResolver(root.TargetPackagesPath);
 
-            foreach (var bundleProject in root.Projects)
+            using (var sha512 = SHA512.Create())
             {
-                var packageInfo = repository.FindPackagesById(bundleProject.Name)
-                    .SingleOrDefault();
-                if (packageInfo == null)
+                foreach (var bundleProject in root.Projects)
                 {
-                    root.Reports.Information.WriteLine("Unable to locate bundled package {0} in {1}",
-                        bundleProject.Name.Yellow(),
-                        repository.RepositoryRoot);
-                    continue;
+                    var packageInfo = repository.FindPackagesById(bundleProject.Name)
+                        .SingleOrDefault();
+                    if (packageInfo == null)
+                    {
+                        root.Reports.Information.WriteLine("Unable to locate bundled package {0} in {1}",
+                            bundleProject.Name.Yellow(),
+                            repository.RepositoryRoot);
+                        continue;
+                    }
+
+                    var package = packageInfo.Package;
+                    var nupkgPath = resolver.GetPackageFilePath(package.Id, package.Version);
+
+                    using (var nupkgStream = File.OpenRead(nupkgPath))
+                    {
+                        var lockFileLib = new LockFileLibrary();
+                        lockFileLib.Name = package.Id;
+                        lockFileLib.Version = package.Version;
+                        lockFileLib.Sha = Convert.ToBase64String(sha512.ComputeHash(nupkgStream));
+                        lockFileLib.DependencySets = package.DependencySets.ToList();
+                        lockFileLib.FrameworkAssemblies = package.FrameworkAssemblies.ToList();
+                        lockFileLib.PackageAssemblyReferences = package.PackageAssemblyReferences.ToList();
+                        lockFileLib.Files = package.GetFiles().ToList();
+
+                        lockFile.Libraries.Add(lockFileLib);
+                    }
                 }
-
-                var package = packageInfo.Package;
-                var lockFileLib = new LockFileLibrary();
-                lockFileLib.Name = package.Id;
-                lockFileLib.Version = package.Version;
-                lockFileLib.DependencySets = package.DependencySets.ToList();
-                lockFileLib.FrameworkAssemblies = package.FrameworkAssemblies.ToList();
-                lockFileLib.PackageAssemblyReferences = package.PackageAssemblyReferences.ToList();
-                lockFileLib.Files = package.GetFiles().ToList();
-
-                lockFile.Libraries.Add(lockFileLib);
             }
 
             lockFileFormat.Write(lockFilePath, lockFile);

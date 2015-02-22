@@ -542,26 +542,36 @@ namespace Microsoft.Framework.PackageManager
         {
             var lockFile = new LockFile();
             lockFile.Islocked = Lock;
-            foreach (var item in graphItems.OrderBy(x => x.Match.Library, new LibraryComparer()))
+
+            using (var sha512 = SHA512.Create())
             {
-                var library = item.Match.Library;
-                var packageInfo = repository.FindPackagesById(library.Name)
-                    .FirstOrDefault(p => p.Version == library.Version);
-                if (packageInfo == null)
+                foreach (var item in graphItems.OrderBy(x => x.Match.Library, new LibraryComparer()))
                 {
-                    continue;
+                    var library = item.Match.Library;
+                    var packageInfo = repository.FindPackagesById(library.Name)
+                        .FirstOrDefault(p => p.Version == library.Version);
+
+                    if (packageInfo == null)
+                    {
+                        continue;
+                    }
+
+                    var package = packageInfo.Package;
+
+                    using (var nupkgStream = package.GetStream())
+                    {
+                        var lockFileLib = new LockFileLibrary();
+                        lockFileLib.Name = package.Id;
+                        lockFileLib.Version = package.Version;
+                        lockFileLib.Sha = Convert.ToBase64String(sha512.ComputeHash(nupkgStream));
+                        lockFileLib.DependencySets = package.DependencySets.ToList();
+                        lockFileLib.FrameworkAssemblies = package.FrameworkAssemblies.ToList();
+                        lockFileLib.PackageAssemblyReferences = package.PackageAssemblyReferences.ToList();
+                        lockFileLib.Files = package.GetFiles().ToList();
+
+                        lockFile.Libraries.Add(lockFileLib);
+                    }
                 }
-
-                var package = packageInfo.Package;
-                var lockFileLib = new LockFileLibrary();
-                lockFileLib.Name = package.Id;
-                lockFileLib.Version = package.Version;
-                lockFileLib.DependencySets = package.DependencySets.ToList();
-                lockFileLib.FrameworkAssemblies = package.FrameworkAssemblies.ToList();
-                lockFileLib.PackageAssemblyReferences = package.PackageAssemblyReferences.ToList();
-                lockFileLib.Files = package.GetFiles().ToList();
-
-                lockFile.Libraries.Add(lockFileLib);
             }
 
             var lockFileFormat = new LockFileFormat();

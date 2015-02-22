@@ -13,6 +13,8 @@ namespace Microsoft.Framework.Runtime.DependencyManagement
 
         public SemanticVersion Version { get; set; }
 
+        public string Sha { get; set; }
+
         public IList<PackageDependencySet> DependencySets { get; set; } = new List<PackageDependencySet>();
 
         public IList<FrameworkAssemblyReference> FrameworkAssemblies { get; set; } = new List<FrameworkAssemblyReference>();

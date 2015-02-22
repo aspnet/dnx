@@ -136,7 +136,6 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
   ""webroot"": ""to_be_overridden""
 }")
                     .WithFileContents(Path.Combine("approot", "global.json"), @"{
-  ""dependencies"": {},
   ""packages"": ""packages""
 }")
                     .WithFileContents(Path.Combine("wwwroot", "web.config"), outputWebConfigTemplate, testEnv.ProjectName);
@@ -231,7 +230,6 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
   ""webroot"": ""../../../wwwroot""
 }")
                     .WithFileContents(Path.Combine("approot", "global.json"), @"{
-  ""dependencies"": {},
   ""packages"": ""packages""
 }")
                     .WithFileContents(Path.Combine("wwwroot", "web.config"), outputWebConfigTemplate, testEnv.ProjectName);
@@ -293,7 +291,6 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
   ""bundleExclude"": ""Data/Backup/**""
 }")
                     .WithFileContents(Path.Combine("approot", "global.json"), @"{
-  ""dependencies"": {},
   ""packages"": ""packages""
 }");
                 Assert.True(expectedOutputDir.MatchDirectoryOnDisk(testEnv.BundleOutputDirPath,
@@ -393,7 +390,6 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
   ]
 }")
                     .WithFileContents(Path.Combine("approot", "global.json"), @"{
-  ""dependencies"": {},
   ""packages"": ""packages""
 }");
                 Assert.True(expectedOutputDir.MatchDirectoryOnDisk(testEnv.BundleOutputDirPath,
@@ -485,7 +481,6 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
   ]
 }")
                     .WithFileContents(Path.Combine("approot", "global.json"), @"{
-  ""dependencies"": {},
   ""packages"": ""packages""
 }");
                 Assert.True(expectedOutputDir.MatchDirectoryOnDisk(testEnv.BundleOutputDirPath,
@@ -575,7 +570,6 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
                     .WithFileContents(Path.Combine("approot", "src", testEnv.ProjectName, "project.json"), @"{
 }")
                     .WithFileContents(Path.Combine("approot", "global.json"), @"{
-  ""dependencies"": {},
   ""packages"": ""packages""
 }");
                 Assert.True(expectedOutputDir.MatchDirectoryOnDisk(testEnv.BundleOutputDirPath,
@@ -642,7 +636,6 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
                     .WithFileContents(Path.Combine("approot", "src", testEnv.ProjectName, "project.json"), @"{
 }")
                     .WithFileContents(Path.Combine("approot", "global.json"), @"{
-  ""dependencies"": {},
   ""packages"": ""packages""
 }");
                 Assert.True(expectedOutputDir.MatchDirectoryOnDisk(testEnv.BundleOutputDirPath,
@@ -722,7 +715,6 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
   ""webroot"": ""../../../wwwroot""
 }")
                     .WithFileContents(Path.Combine("approot", "global.json"), @"{
-  ""dependencies"": {},
   ""packages"": ""packages""
 }")
                     .WithFileContents(Path.Combine("wwwroot", "web.config"), outputWebConfigTemplate, testEnv.ProjectName);
@@ -819,7 +811,6 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
   ""webroot"": ""../../../wwwroot""
 }")
                     .WithFileContents(Path.Combine("approot", "global.json"), @"{
-  ""dependencies"": {},
   ""packages"": ""packages""
 }")
                     .WithFileContents(Path.Combine("wwwroot", "web.config"), outputWebConfigContents, testEnv.ProjectName);
@@ -889,7 +880,6 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
   }
 }")
                     .WithFileContents(Path.Combine("approot", "global.json"), @"{
-  ""dependencies"": {},
   ""packages"": ""packages""
 }")
                     .WithFileContents("run.cmd", BatchFileTemplate, string.Empty, Constants.BootstrapperExeName, testEnv.ProjectName, "run")
@@ -981,7 +971,6 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
   }
 }")
                     .WithFileContents(Path.Combine("approot", "global.json"), @"{
-  ""dependencies"": {},
   ""packages"": ""packages""
 }")
                     .WithFileContents("run.cmd", BatchFileTemplate, batchFileBinPath, Constants.BootstrapperExeName, testEnv.ProjectName, "run")
