@@ -28,7 +28,7 @@ namespace Microsoft.Framework.ApplicationHost
 
         public Task<int> Main(string[] args)
         {
-            RuntimeTrace.TraceInformation("Application Host Starting");
+            Logger.TraceInformation("[ApplicationHost] Application Host Starting");
             ApplicationHostOptions options;
             string[] programArgs;
             int exitCode;
@@ -50,14 +50,13 @@ namespace Microsoft.Framework.ApplicationHost
             if (host.Project == null)
             {
                 // No project was found. We can't start the app.
-                RuntimeTrace.TraceError($"A project.json file was not found in '{options.ApplicationBaseDirectory}'");
+                Logger.TraceError($"[ApplicationHost] A project.json file was not found in '{options.ApplicationBaseDirectory}'");
                 return Task.FromResult(1);
             }
 
             // Get the project and print some information from it
-            RuntimeTrace.TraceInformation($"Project: {host.Project.Metadata.Name} ({host.Project.Metadata.FilePath})");
+            Logger.TraceInformation($"[ApplicationHost] Project: {host.Project.Metadata.Name} ({host.ApplicationBaseDirectory})");
 
-            DumpProperties(host.Project.Metadata.Properties, 1);
             return Task.FromResult(0);
         }
 
@@ -119,7 +118,7 @@ namespace Microsoft.Framework.ApplicationHost
             {
                 // If no subcommand was specified, show error message
                 // and exit immediately with non-zero exit code
-                RuntimeTrace.TraceError("Please specify the command to run");
+                Logger.TraceError("Please specify the command to run");
                 exitCode = 2;
                 return true;
             }
