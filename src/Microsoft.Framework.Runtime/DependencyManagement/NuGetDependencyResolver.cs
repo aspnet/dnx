@@ -147,14 +147,16 @@ namespace Microsoft.Framework.Runtime
 
             foreach (var dependency in packages)
             {
-                var package = FindCandidate(dependency.Identity.Name, dependency.Identity.Version);
+                var packageInfo = _repository.FindPackagesById(dependency.Identity.Name)
+                    .FirstOrDefault(p => p.Version == dependency.Identity.Version);
+                var package = packageInfo?.Package;
 
                 if (package == null)
                 {
                     continue;
                 }
 
-                string packagePath = ResolvePackagePath(defaultResolver, cacheResolvers, package);
+                string packagePath = ResolvePackagePath(defaultResolver, cacheResolvers, packageInfo);
 
                 dependency.Path = packagePath;
 
@@ -216,32 +218,29 @@ namespace Microsoft.Framework.Runtime
 
         private string ResolvePackagePath(IPackagePathResolver defaultResolver,
                                           IEnumerable<IPackagePathResolver> cacheResolvers,
-                                          IPackage package)
+                                          PackageInfo packageInfo)
         {
-            string expectedHash = null;
+            if (packageInfo.LockFileLibrary == null)
+            {
+                throw new InvalidOperationException(
+                    string.Format("{0} must be loaded before resolving package path", LockFileFormat.LockFileName));
+            }
+
+            string expectedHash = packageInfo.LockFileLibrary.Sha;
 
             foreach (var resolver in cacheResolvers)
             {
-                var cacheHashFile = resolver.GetHashPath(package.Id, package.Version);
-
-                if (string.IsNullOrEmpty(expectedHash))
-                {
-                    expectedHash = GetExpectedHash(defaultResolver, package);
-                }
-                else
-                {
-                    break;
-                }
+                var cacheHashFile = resolver.GetHashPath(packageInfo.Id, packageInfo.Version);
 
                 // REVIEW: More efficient compare?
                 if (File.Exists(cacheHashFile) &&
                     File.ReadAllText(cacheHashFile) == expectedHash)
                 {
-                    return resolver.GetInstallPath(package.Id, package.Version);
+                    return resolver.GetInstallPath(packageInfo.Id, packageInfo.Version);
                 }
             }
 
-            return defaultResolver.GetInstallPath(package.Id, package.Version);
+            return defaultResolver.GetInstallPath(packageInfo.Id, packageInfo.Version);
         }
 
         private string GetExpectedHash(IPackagePathResolver defaultResolver, IPackage package)

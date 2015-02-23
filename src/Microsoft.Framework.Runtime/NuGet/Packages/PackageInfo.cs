@@ -8,7 +8,6 @@ namespace NuGet
     {
         private readonly IFileSystem _repositoryRoot;
         private readonly string _versionDir;
-        private readonly LockFileLibrary _lockFileLibrary;
         private IPackage _package;
 
         public PackageInfo(
@@ -22,12 +21,14 @@ namespace NuGet
             Id = packageId;
             Version = version;
             _versionDir = versionDir;
-            _lockFileLibrary = lockFileLibrary;
+            LockFileLibrary = lockFileLibrary;
         }
 
         public string Id { get; private set; }
 
         public SemanticVersion Version { get; private set; }
+
+        public LockFileLibrary LockFileLibrary { get; private set; }
 
         public IPackage Package
         {
@@ -36,13 +37,13 @@ namespace NuGet
                 if (_package == null)
                 {
                     var nuspecPath = Path.Combine(_versionDir, string.Format("{0}.nuspec", Id));
-                    if (_lockFileLibrary == null)
+                    if (LockFileLibrary == null)
                     {
                         _package = new UnzippedPackage(_repositoryRoot, nuspecPath);
                     }
                     else
                     {
-                        _package = new LockFilePackage(_repositoryRoot, nuspecPath, _lockFileLibrary);
+                        _package = new LockFilePackage(_repositoryRoot, nuspecPath, LockFileLibrary);
                     }
                 }
 
