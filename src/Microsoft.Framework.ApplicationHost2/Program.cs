@@ -60,24 +60,6 @@ namespace Microsoft.Framework.ApplicationHost
             return Task.FromResult(0);
         }
 
-        private static void DumpProperties(JObject properties, int indentLevel)
-        {
-            foreach (var prop in properties.Properties())
-            {
-                var indent = new string(' ', indentLevel);
-                if (prop.Value.Type == JTokenType.Object)
-                {
-                    Console.WriteLine(indent + prop.Name + " = {");
-                    DumpProperties((JObject)prop.Value, indentLevel + 1);
-                    Console.WriteLine(indent + "}");
-                }
-                else
-                {
-                    Console.WriteLine(indent + $"{prop.Name} = [{prop.Value.GetType().Name}]\"{prop.Value}\"");
-                }
-            }
-        }
-
         private bool ParseArgs(string[] args, out ApplicationHostOptions options, out string[] outArgs, out int exitCode)
         {
             var app = new CommandLineApplication(throwOnUnexpectedArg: false);
