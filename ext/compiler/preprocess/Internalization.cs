@@ -20,6 +20,11 @@ namespace Runtime.Ext.Compiler.Preprocess
 
         public void BeforeCompile(IBeforeCompileContext context)
         {
+            var candidates = new[] {
+                Path.Combine(context.ProjectContext.ProjectDirectory, "..", "..", "submodules"),
+                Path.Combine(context.ProjectContext.ProjectDirectory, "..", "Microsoft.Framework.Runtime.Hosting"),
+            };
+
             var submodulesDir = Path.Combine(context.ProjectContext.ProjectDirectory, "..", "..", "submodules");
             var replacementDict = new Dictionary<SyntaxTree, SyntaxTree>();
             var removeList = new List<SyntaxTree>();
@@ -27,7 +32,7 @@ namespace Runtime.Ext.Compiler.Preprocess
             foreach (var tree in context.Compilation.SyntaxTrees)
             {
                 if (string.IsNullOrEmpty(tree.FilePath) ||
-                    !IsChildOfDirectory(dir: submodulesDir, candidate: tree.FilePath))
+                    !candidates.Any(c => IsChildOfDirectory(dir: c, candidate: tree.FilePath)))
                 {
                     continue;
                 }

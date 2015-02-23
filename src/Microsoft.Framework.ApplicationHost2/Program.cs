@@ -24,6 +24,9 @@ namespace Microsoft.Framework.ApplicationHost
         {
             Console.WriteLine("I AM APP HOST 2!");
             Console.WriteLine("TODO: Actually do things!");
+
+            
+
             return Task.FromResult(0);
         }
     }

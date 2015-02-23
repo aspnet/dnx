@@ -3,23 +3,57 @@
     "compilationOptions": { "define": [ "TRACE" ], "warningsAsErrors": true },
     "dependencies": {
         "Microsoft.Framework.CommandLineUtils": { "version": "1.0.0-*", "type": "build" },
-        "Microsoft.Framework.Runtime.Hosting": "1.0.0-*",
+        "Newtonsoft.Json": "6.0.6",
+        "Microsoft.Framework.Runtime.Roslyn.Interfaces": "1.0.0-*",
         "Microsoft.Framework.Runtime.Interfaces": "1.0.0-*"
     },
+    "code": [
+        "**/*.cs",
+        "../Microsoft.Framework.Runtime.Hosting/**/*.cs",
+        "../../submodules/FileSystem/src/Microsoft.Framework.FileSystemGlobbing/**/*.cs",
+        "../../submodules/NuGet.Versioning/src/NuGet.Versioning/**/*.cs",
+        "../../submodules/NuGet.Packaging/src/NuGet.Frameworks/**/*.cs",
+        "../../submodules/NuGet.Packaging/src/NuGet.LibraryModel/**/*.cs",
+        "../../submodules/NuGet.Packaging/src/NuGet.Packaging.Core.Types/**/*.cs",
+        "../../submodules/NuGet.Packaging/src/NuGet.Repositories/**/*.cs",
+        "../../submodules/NuGet.Packaging/src/NuGet.DependencyResolver.Core/**/*.cs",
+        "../../submodules/NuGet.Packaging/src/NuGet.ProjectModel/**/*.cs"
+    ],
+    "exclude": [
+        "../../submodules/NuGet.Versioning/src/NuGet.Versioning/compiler/**/*.cs"
+    ],
+    "preprocess": [
+        "../../ext/compiler/preprocess/Internalization.cs"
+    ],
     "frameworks": {
-        "aspnet50": { },
+        "aspnet50": {
+            "frameworkAssemblies": {
+                "System.Collections": "",
+                "System.Text.Encoding": "",
+                "System.Threading.Tasks": "",
+                "System.IO": "",
+                "System.IO.Compression": "",
+                "System.IO.Compression.FileSystem": "",
+                "System.Runtime": "",
+                "System.Xml": "",
+                "System.Xml.Linq": ""
+            }
+        },
         "aspnetcore50": {
             "dependencies": {
-                "System.Collections": "4.0.10-beta-*",
-                "System.ComponentModel": "4.0.0-beta-*",
+                "Microsoft.CodeAnalysis.CSharp": "1.0.0-*",
+                "System.Collections.Concurrent": "4.0.10-beta-*",
                 "System.Console": "4.0.0-beta-*",
-                "System.Diagnostics.Debug": "4.0.10-beta-*",
-                "System.Linq": "4.0.0-beta-*",
-                "System.Reflection": "4.0.10-beta-*",
                 "System.Runtime": "4.0.20-beta-*",
                 "System.Runtime.Extensions": "4.0.10-beta-*",
-                "System.Runtime.InteropServices": "4.0.20-beta-*",
-                "System.Threading.Tasks": "4.0.10-beta-*"
+                "System.Collections": "4.0.10-beta-*",
+                "System.Diagnostics.Tools": "4.0.0-beta-*",
+                "System.Diagnostics.Debug": "4.0.10-beta-*",
+                "System.Dynamic.Runtime": "4.0.10-beta-*",
+                "System.IO.FileSystem": "4.0.0-beta-*",
+                "System.Linq": "4.0.0-beta-*",
+                "System.Resources.ResourceManager": "4.0.0-beta-*",
+                "System.Threading": "4.0.10-beta-*"
             }
         }
     },
