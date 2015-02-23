@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using System.Runtime.CompilerServices;
 
 namespace Microsoft.Framework.Runtime
@@ -8,17 +9,17 @@ namespace Microsoft.Framework.Runtime
     {
         public static void TraceError(string message, [CallerMemberName] string member = null, [CallerFilePath] string file = null, [CallerLineNumber] int line = 0)
         {
-            Logger.TraceError("[{0}] {1}", message, member);
+            Logger.TraceError("[{1}] {0}", message, Path.GetFileNameWithoutExtension(file));
         }
 
         public static void TraceInformation(string message, [CallerMemberName] string member = null, [CallerFilePath] string file = null, [CallerLineNumber] int line = 0)
         {
-            Logger.TraceInformation("[{0}] {1}", message, member);
+            Logger.TraceInformation("[{1}] {0}", message, Path.GetFileNameWithoutExtension(file));
         }
 
         public static void TraceWarning(string message, [CallerMemberName] string member = null, [CallerFilePath] string file = null, [CallerLineNumber] int line = 0)
         {
-            Logger.TraceWarning("[{0}] {1}", message, member);
+            Logger.TraceWarning("[{1}] {0}", message, Path.GetFileNameWithoutExtension(file));
         }
     }
 }
