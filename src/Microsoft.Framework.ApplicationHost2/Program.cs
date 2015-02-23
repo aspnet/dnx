@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
+using Microsoft.Framework.ApplicationHost.Impl.Syntax;
 using Microsoft.Framework.Runtime;
 using Microsoft.Framework.Runtime.Common.CommandLine;
 using Microsoft.Framework.Runtime.Hosting;
@@ -55,9 +56,50 @@ namespace Microsoft.Framework.ApplicationHost
             }
 
             // Get the project and print some information from it
-            Logger.TraceInformation($"[ApplicationHost] Project: {host.Project.Metadata.Name} ({host.ApplicationBaseDirectory})");
+            Logger.TraceInformation($"[ApplicationHost] Project: {host.Project.Name} ({host.ApplicationBaseDirectory})");
+
+            // Determine the command to be executed
+            var command = string.IsNullOrEmpty(options.ApplicationName) ? "run" : options.ApplicationName;
+            string replacementCommand;
+            if(host.Project.Commands.TryGetValue(command, out replacementCommand))
+            {
+                var replacementArgs = CommandGrammar.Process(
+                    replacementCommand,
+                    GetVariable).ToArray();
+                options.ApplicationName = replacementArgs.First();
+                programArgs = replacementArgs.Skip(1).Concat(programArgs).ToArray();
+            }
+
+            if(string.IsNullOrEmpty(options.ApplicationName) ||
+                string.Equals(options.ApplicationName, "run", StringComparison.Ordinal))
+            {
+                options.ApplicationName = host.Project.EntryPoint ?? host.Project.Name;
+            }
+
+            Logger.TraceInformation($"[ApplicationHost] Executing '{options.ApplicationName}' '{string.Join(" ", programArgs)}'");
 
             return Task.FromResult(0);
+        }
+
+        private string GetVariable(string key)
+        {
+            if (string.Equals(key, "env:ApplicationBasePath", StringComparison.OrdinalIgnoreCase))
+            {
+                return _environment.ApplicationBasePath;
+            }
+            if (string.Equals(key, "env:ApplicationName", StringComparison.OrdinalIgnoreCase))
+            {
+                return _environment.ApplicationName;
+            }
+            if (string.Equals(key, "env:Version", StringComparison.OrdinalIgnoreCase))
+            {
+                return _environment.Version;
+            }
+            if (string.Equals(key, "env:TargetFramework", StringComparison.OrdinalIgnoreCase))
+            {
+                return _environment.RuntimeFramework.Identifier;
+            }
+            return Environment.GetEnvironmentVariable(key);
         }
 
         private bool ParseArgs(string[] args, out ApplicationHostOptions options, out string[] outArgs, out int exitCode)
