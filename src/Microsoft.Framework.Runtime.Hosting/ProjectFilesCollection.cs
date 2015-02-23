@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Microsoft.Framework.FileSystemGlobbing;
 using Newtonsoft.Json.Linq;
+using NuGet.ProjectModel;
 
 namespace Microsoft.Framework.Runtime.FileGlobbing
 {

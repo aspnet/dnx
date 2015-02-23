@@ -1,5 +1,8 @@
 {
     "sources": [
-        "src"
+        "src",
+        "submodules/FileSystem/src",
+        "submodules/NuGet.Packaging/src",
+        "submodules/NuGet.Versioning/src"
     ]
 }

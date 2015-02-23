@@ -4,16 +4,15 @@ using NuGet.ProjectModel;
 
 namespace Microsoft.Framework.Runtime.Hosting
 {
-    internal class ProjectWithSources
+    public class Project
     {
-        public ProjectWithSources(Project project)
+        public Project(PackageSpec project)
         {
-           // Metadata = project;
-            Files = new ProjectFilesCollection(null, project.ProjectDirectory);
+            Metadata = project;
+            Files = new ProjectFilesCollection(project.Properties, project.ProjectDirectory);
         }
 
-        // public Project Metadata { get; }
-
         public ProjectFilesCollection Files { get; }
+        public PackageSpec Metadata { get; }
     }
 }
