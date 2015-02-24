@@ -5,10 +5,12 @@ namespace Microsoft.Framework.Runtime.Hosting
     public class RuntimeHostBuilder
     {
         public string ApplicationBaseDirectory { get; }
+        public IAssemblyLoaderContainer LoaderContainer { get; }
 
-        public RuntimeHostBuilder(string applicationBaseDirectory)
+        public RuntimeHostBuilder(string applicationBaseDirectory, IAssemblyLoaderContainer loaderContainer)
         {
             ApplicationBaseDirectory = applicationBaseDirectory;
+            LoaderContainer = loaderContainer;
         }
 
         public RuntimeHost Build()

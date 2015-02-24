@@ -43,7 +43,9 @@ namespace Microsoft.Framework.ApplicationHost
                 }
 
                 // Construct the necessary context for hosting the application
-                var builder = new RuntimeHostBuilder(options.ApplicationBaseDirectory);
+                var builder = new RuntimeHostBuilder(
+                    options.ApplicationBaseDirectory,
+                    _container);
 
                 // Boot the runtime
                 var host = builder.Build();
@@ -52,7 +54,7 @@ namespace Microsoft.Framework.ApplicationHost
                 if (host.Project == null)
                 {
                     // No project was found. We can't start the app.
-                    Logger.TraceError($"[ApplicationHost] A project.json file was not found in '{options.ApplicationBaseDirectory}'");
+                    Console.Error.WriteLine($"A project.json file was not found in '{options.ApplicationBaseDirectory}'");
                     return Task.FromResult(1);
                 }
 
@@ -77,7 +79,10 @@ namespace Microsoft.Framework.ApplicationHost
                     options.ApplicationName = host.Project.EntryPoint ?? host.Project.Name;
                 }
 
-                Logger.TraceInformation($"[ApplicationHost] Executing '{options.ApplicationName}' '{string.Join(" ", programArgs)}'");
+                Logger.TraceInformation($"[ApplicationHost] Created {nameof(RuntimeHost)} for: {host.Project.Name} in {host.ApplicationBaseDirectory}");
+                host.LaunchApplication(
+                    options.ApplicationName,
+                    programArgs);
 
                 return Task.FromResult(0);
             }
@@ -149,7 +154,7 @@ namespace Microsoft.Framework.ApplicationHost
             {
                 // If no subcommand was specified, show error message
                 // and exit immediately with non-zero exit code
-                Logger.TraceError("Please specify the command to run");
+                Console.Error.WriteLine("Please specify the command to run");
                 exitCode = 2;
                 return true;
             }
