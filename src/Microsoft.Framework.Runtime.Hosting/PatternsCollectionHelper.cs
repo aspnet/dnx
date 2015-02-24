@@ -7,36 +7,51 @@ using System.IO;
 using System.Linq;
 using Newtonsoft.Json.Linq;
 
-namespace Microsoft.Framework.Runtime.FileGlobbing
+namespace Microsoft.Framework.Runtime.Hosting
 {
     public static class PatternsCollectionHelper
     {
         private static readonly char[] PatternSeparator = new[] { ';' };
 
-        public static IEnumerable<string> GetPatternsCollection(JObject rawProject, string projectDirectory, string propertyName, string[] defaultPatterns)
+        public static IEnumerable<string> GetPatternsCollection(JObject rawProject, string projectDirectory, string projectFilePath, string propertyName, IEnumerable<string> defaultPatterns = null)
         {
             var token = rawProject[propertyName];
+
+            return GetPatternsCollection(token, projectDirectory,  projectFilePath, defaultPatterns);
+        }
+
+        public static IEnumerable<string> GetPatternsCollection(JToken token, string projectDirectory, string projectFilePath, IEnumerable<string> defaultPatterns = null)
+        {
+            defaultPatterns = defaultPatterns ?? Enumerable.Empty<string>();
+
             if (token == null)
             {
                 return defaultPatterns;
             }
 
-            if (token.Type == JTokenType.Null)
+            try
             {
-                return CreateCollection(projectDirectory);
+                if (token.Type == JTokenType.Null)
+                {
+                    return CreateCollection(projectDirectory);
+                }
+
+                if (token.Type == JTokenType.String)
+                {
+                    return CreateCollection(projectDirectory, token.Value<string>());
+                }
+
+                if (token.Type == JTokenType.Array)
+                {
+                    return CreateCollection(projectDirectory, token.ValueAsArray<string>());
+                }
+            }
+            catch(InvalidOperationException ex)
+            {
+                throw FileFormatException.Create(ex, token, projectFilePath);
             }
 
-            if (token.Type == JTokenType.String)
-            {
-                return CreateCollection(projectDirectory, token.Value<string>());
-            }
-
-            if (token.Type == JTokenType.Array)
-            {
-                return CreateCollection(projectDirectory, token.ValueAsArray<string>());
-            }
-
-            throw new InvalidOperationException("Project json doesn't contain qualified token for property " + propertyName + ".");
+            throw FileFormatException.Create("Value must be either string or array.", token, projectFilePath);
         }
 
         private static IEnumerable<string> CreateCollection(string projectDirectory, params string[] patternsStrings)

@@ -7,7 +7,7 @@ using System.IO;
 using System.Linq;
 using System.Runtime.Versioning;
 using System.Text;
-using Microsoft.Framework.Runtime.FileGlobbing;
+using Microsoft.Framework.Runtime.Hosting;
 using Microsoft.Framework.Runtime.Helpers;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -188,7 +188,7 @@ namespace Microsoft.Framework.Runtime
             project.EmbedInteropTypes = rawProject.GetValue<bool>("embedInteropTypes");
 
             // Project files
-            project.Files = new ProjectFilesCollection(rawProject, project.ProjectDirectory);
+            project.Files = new ProjectFilesCollection(rawProject, project.ProjectDirectory, project.ProjectFilePath);
 
             // Set the default loader information for projects
             var languageServicesAssembly = DefaultLanguageServicesAssembly;

@@ -4,7 +4,11 @@
     "compilationOptions": { "define": [ "LOADER", "TRACE" ], "allowUnsafe": true, "warningsAsErrors": true },
     "code": [
         "**/*.cs",
-        "../../submodules/FileSystem/src/Microsoft.Framework.FileSystemGlobbing/**/*.cs"
+        "../../submodules/FileSystem/src/Microsoft.Framework.FileSystemGlobbing/**/*.cs",
+        "../Microsoft.Framework.Runtime.Hosting/ProjectFilesCollection.cs",
+        "../Microsoft.Framework.Runtime.Hosting/PatternsCollectionHelper.cs",
+        "../Microsoft.Framework.Runtime.Hosting/PatternsGroup.cs",
+        "../Microsoft.Framework.Runtime.Hosting/FileFormatException.cs",
     ],
     "preprocess": [
         "../../ext/compiler/preprocess/Internalization.cs"

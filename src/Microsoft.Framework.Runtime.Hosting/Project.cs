@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
-using Microsoft.Framework.Runtime.FileGlobbing;
 using Newtonsoft.Json.Linq;
 using NuGet.ProjectModel;
 
@@ -12,15 +11,15 @@ namespace Microsoft.Framework.Runtime.Hosting
         public Project(PackageSpec project)
         {
             Metadata = project;
-            Files = new ProjectFilesCollection(project.Properties, project.BaseDirectory);
+            Files = new ProjectFilesCollection(project.Properties, project.BaseDirectory, project.FilePath);
 
             // Load additional metadata from the project json
             EntryPoint = Metadata.Properties.GetValue<string>("entryPoint");
 
             var commands = Metadata.Properties["commands"] as JObject;
-            if(commands != null)
+            if (commands != null)
             {
-                foreach(var command in commands)
+                foreach (var command in commands)
                 {
                     Commands[command.Key] = command.Value.Value<string>();
                 }

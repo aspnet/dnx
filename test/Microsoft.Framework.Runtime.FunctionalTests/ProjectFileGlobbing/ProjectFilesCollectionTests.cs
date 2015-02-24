@@ -3,8 +3,8 @@
 
 using System;
 using System.IO;
-using Microsoft.Framework.Runtime.FileGlobbing;
 using Microsoft.Framework.Runtime.FunctionalTests.Utilities;
+using Microsoft.Framework.Runtime.Hosting;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Xunit;
@@ -28,6 +28,58 @@ namespace Microsoft.Framework.Runtime.FunctionalTests.ProjectFileGlobbing
                 @"src\project\sub\source3.cs",
                 @"src\project\sub2\source4.cs",
                 @"src\project\sub2\source5.cs");
+        }
+
+        [Fact]
+        public void SearchPathForSourcesWithExtraSettings()
+        {
+            var testFilesCollection = CreateFilesCollection(@"
+{ 
+    ""compileExclude"": ""**/*4.cs"",
+    ""compileFiles"": ""../project2/sub/source2.cs""
+}
+", "src\\project");
+
+            VerifyFilePathsCollection(testFilesCollection.SourceFiles,
+                @"src\project\source1.cs",
+                @"src\project\sub\source2.cs",
+                @"src\project\sub\source3.cs",
+                @"src\project\sub2\source5.cs",
+                @"src\project2\sub\source2.cs");
+        }
+
+        [Fact]
+        public void MutlipleCompileFilesInclude()
+        {
+
+            var testFilesCollection = CreateFilesCollection(@"
+{ 
+    ""compile"": """",
+    ""compileExclude"": """",
+    ""compileFiles"": ""source1.cs;sub\\source2.cs""
+}
+", "src\\project");
+
+            VerifyFilePathsCollection(testFilesCollection.SourceFiles,
+                @"src\project\source1.cs",
+                @"src\project\sub\source2.cs");
+        }
+
+        [Fact]
+        public void MutlipleCompileFilesIncludeInArrary()
+        {
+
+            var testFilesCollection = CreateFilesCollection(@"
+{ 
+    ""compile"": """",
+    ""compileExclude"": """",
+    ""compileFiles"": [""source1.cs"", ""sub\\source2.cs""]
+}
+", "src\\project");
+
+            VerifyFilePathsCollection(testFilesCollection.SourceFiles,
+                @"src\project\source1.cs",
+                @"src\project\sub\source2.cs");
         }
 
         [Fact]
@@ -87,6 +139,21 @@ namespace Microsoft.Framework.Runtime.FunctionalTests.ProjectFileGlobbing
         {
             var testFilesCollection = CreateFilesCollection(@"
 {
+    ""compile"": ""../../lib/**/*.cs"",
+}
+", @"src\project");
+
+            VerifyFilePathsCollection(testFilesCollection.SourceFiles,
+                @"src\project\..\..\lib\source6.cs",
+                @"src\project\..\..\lib\sub3\source7.cs",
+                @"src\project\..\..\lib\sub4\source8.cs");
+        }
+
+        [Fact]
+        public void IncludeCodesUpperLevelWithSlashLegacy()
+        {
+            var testFilesCollection = CreateFilesCollection(@"
+{
     ""code"": ""../../lib/**/*.cs"",
 }
 ", @"src\project");
@@ -102,7 +169,7 @@ namespace Microsoft.Framework.Runtime.FunctionalTests.ProjectFileGlobbing
         {
             var testFilesCollection = CreateFilesCollection(@"
 {
-    ""code"": ""..\\..\\lib\\**\\*.cs"",
+    ""compile"": ""..\\..\\lib\\**\\*.cs"",
 }
 ", @"src\project");
 
@@ -114,6 +181,26 @@ namespace Microsoft.Framework.Runtime.FunctionalTests.ProjectFileGlobbing
 
         [Fact]
         public void IncludeCodesUsingUpperLevelAndRecursive()
+        {
+            var testFilesCollection = CreateFilesCollection(@"
+{
+    ""compile"": ""**\\*.cs;..\\..\\lib\\**\\*.cs"",
+}
+", @"src\project");
+
+            VerifyFilePathsCollection(testFilesCollection.SourceFiles,
+                @"src\project\..\..\lib\source6.cs",
+                @"src\project\..\..\lib\sub3\source7.cs",
+                @"src\project\..\..\lib\sub4\source8.cs",
+                @"src\project\source1.cs",
+                @"src\project\sub\source2.cs",
+                @"src\project\sub\source3.cs",
+                @"src\project\sub2\source4.cs",
+                @"src\project\sub2\source5.cs");
+        }
+
+        [Fact]
+        public void IncludeCodesUsingUpperLevelAndRecursiveLegacy()
         {
             var testFilesCollection = CreateFilesCollection(@"
 {
@@ -137,7 +224,7 @@ namespace Microsoft.Framework.Runtime.FunctionalTests.ProjectFileGlobbing
         {
             var testFilesCollection = CreateFilesCollection(@"
 {
-    ""code"": ""**\\*.cs;..\\..\\lib\\*.cs"",
+    ""compile"": ""**\\*.cs;..\\..\\lib\\*.cs"",
 }
 ", @"src\project");
 
@@ -155,7 +242,7 @@ namespace Microsoft.Framework.Runtime.FunctionalTests.ProjectFileGlobbing
         {
             var testFilesCollection = CreateFilesCollection(@"
 {
-    ""code"": ""..\\..\\lib\\sub4\\source8.cs"",
+    ""compile"": ""..\\..\\lib\\sub4\\source8.cs"",
 }
 ", @"src\project");
 
@@ -168,7 +255,7 @@ namespace Microsoft.Framework.Runtime.FunctionalTests.ProjectFileGlobbing
         {
             var testFilesCollection = CreateFilesCollection(@"
 {
-    ""code"": ""**\\*.cs;..\\..\\lib\\sub4\\source8.cs"",
+    ""compile"": ""**\\*.cs;..\\..\\lib\\sub4\\source8.cs"",
 }
 ", @"src\project");
 
@@ -186,7 +273,7 @@ namespace Microsoft.Framework.Runtime.FunctionalTests.ProjectFileGlobbing
         {
             var testFilesCollection = CreateFilesCollection(@"
 {
-    ""code"": ""sub\\""
+    ""compile"": ""sub\\""
 }
 ", @"src\project");
 
@@ -200,7 +287,7 @@ namespace Microsoft.Framework.Runtime.FunctionalTests.ProjectFileGlobbing
         {
             var testFilesCollection = CreateFilesCollection(@"
 {
-    ""code"": ""..\\project2\\""
+    ""compile"": ""..\\project2\\""
 }
 ", @"src\project");
 
@@ -232,7 +319,7 @@ namespace Microsoft.Framework.Runtime.FunctionalTests.ProjectFileGlobbing
         {
             var testFilesCollection = CreateFilesCollection(@"
 {
-    ""code"": ""sub/""
+    ""compile"": ""sub/""
 }
 ", @"src\project");
             VerifyFilePathsCollection(testFilesCollection.SourceFiles,
@@ -245,7 +332,7 @@ namespace Microsoft.Framework.Runtime.FunctionalTests.ProjectFileGlobbing
         {
             var testFilesCollection = CreateFilesCollection(@"
 {
-    ""code"": ""sub""
+    ""compile"": ""sub""
 }
 ", @"src\project");
 
@@ -258,9 +345,9 @@ namespace Microsoft.Framework.Runtime.FunctionalTests.ProjectFileGlobbing
         public void ThrowForAbosolutePath()
         {
             var absolutePath = Path.Combine(_context.RootPath, @"src\project2\sub2\source5.cs");
-            var projectJsonContent = @"{""code"": """ + absolutePath.Replace("\\", "\\\\") + @"""}";
+            var projectJsonContent = @"{""compile"": """ + absolutePath.Replace("\\", "\\\\") + @"""}";
 
-            var exception = Assert.Throws<InvalidOperationException>(() =>
+            var exception = Assert.Throws<FileFormatException>(() =>
             {
                 CreateFilesCollection(projectJsonContent, @"src\project");
             });
@@ -273,7 +360,7 @@ namespace Microsoft.Framework.Runtime.FunctionalTests.ProjectFileGlobbing
         {
             var testFilesCollection = CreateFilesCollection(@"
 {
-    ""code"": "".\\**\\*.cs""
+    ""compile"": "".\\**\\*.cs""
 }
 ", @"src\project");
 
@@ -290,7 +377,7 @@ namespace Microsoft.Framework.Runtime.FunctionalTests.ProjectFileGlobbing
         {
             var testFilesCollection = CreateFilesCollection(@"
 {
-    ""code"": ""..\\..\\lib\\.""
+    ""compile"": ""..\\..\\lib\\.""
 }
 ", @"src\project");
 
@@ -305,7 +392,7 @@ namespace Microsoft.Framework.Runtime.FunctionalTests.ProjectFileGlobbing
         {
             var testFilesCollection = CreateFilesCollection(@"
 {
-    ""code"": ""..\\project2\\"",
+    ""compile"": ""..\\project2\\"",
     ""exclude"": ""..\\project2\\compiler\\**\\*.txt"",
     ""resources"": ""..\\project2\\compiler\\resources\\**\\*.*""
 }
@@ -405,7 +492,7 @@ namespace Microsoft.Framework.Runtime.FunctionalTests.ProjectFileGlobbing
         protected virtual ProjectFilesCollection CreateFilesCollection(string jsonContent, string projectDir)
         {
             var rawProject = JsonConvert.DeserializeObject<JObject>(jsonContent);
-            var filesCollection = new ProjectFilesCollection(rawProject, Path.Combine(_context.RootPath, projectDir));
+            var filesCollection = new ProjectFilesCollection(rawProject, Path.Combine(_context.RootPath, projectDir), string.Empty);
 
             return filesCollection;
         }

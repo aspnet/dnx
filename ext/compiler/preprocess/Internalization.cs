@@ -20,10 +20,14 @@ namespace Runtime.Ext.Compiler.Preprocess
 
         public void BeforeCompile(IBeforeCompileContext context)
         {
-            var candidates = new[] {
-                Path.Combine(context.ProjectContext.ProjectDirectory, "..", "..", "submodules"),
-                Path.Combine(context.ProjectContext.ProjectDirectory, "..", "Microsoft.Framework.Runtime.Hosting"),
-            };
+            var candidates = new List<string>();
+
+            candidates.Add(Path.Combine(context.ProjectContext.ProjectDirectory, "..", "..", "submodules"));
+
+            if (context.ProjectContext.Name != "Microsoft.Framework.Runtime")
+            {
+                candidates.Add(Path.Combine(context.ProjectContext.ProjectDirectory, "..", "Microsoft.Framework.Runtime.Hosting"));
+            }
 
             var submodulesDir = Path.Combine(context.ProjectContext.ProjectDirectory, "..", "..", "submodules");
             var replacementDict = new Dictionary<SyntaxTree, SyntaxTree>();
