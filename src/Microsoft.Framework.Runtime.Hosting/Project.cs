@@ -12,7 +12,7 @@ namespace Microsoft.Framework.Runtime.Hosting
         public Project(PackageSpec project)
         {
             Metadata = project;
-            Files = new ProjectFilesCollection(project.Properties, project.ProjectDirectory);
+            Files = new ProjectFilesCollection(project.Properties, project.BaseDirectory);
 
             // Load additional metadata from the project json
             EntryPoint = Metadata.Properties.GetValue<string>("entryPoint");
