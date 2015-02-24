@@ -48,15 +48,24 @@ namespace Microsoft.Framework.Runtime
                 var lockFileFormat = new LockFileFormat();
                 var lockFile = lockFileFormat.Read(projectLockJsonPath);
                 NuGetDependencyProvider.ApplyLockFile(lockFile);
-            }
 
-            DependencyWalker = new DependencyWalker(new IDependencyProvider[] {
-                ProjectDepencyProvider,
-                NuGetDependencyProvider,
-                referenceAssemblyDependencyResolver,
-                gacDependencyResolver,
-                unresolvedDependencyProvider
-            });
+                DependencyWalker = new DependencyWalker(new IDependencyProvider[] {
+                    ProjectDepencyProvider,
+                    NuGetDependencyProvider,
+                    referenceAssemblyDependencyResolver,
+                    gacDependencyResolver,
+                    unresolvedDependencyProvider
+                });
+            }
+            else
+            {
+                DependencyWalker = new DependencyWalker(new IDependencyProvider[] {
+                    ProjectDepencyProvider,
+                    referenceAssemblyDependencyResolver,
+                    gacDependencyResolver,
+                    unresolvedDependencyProvider
+                });
+            }
 
             LibraryExportProvider = new CompositeLibraryExportProvider(new ILibraryExportProvider[] {
                 new ProjectLibraryExportProvider(ProjectResolver, ServiceProvider),

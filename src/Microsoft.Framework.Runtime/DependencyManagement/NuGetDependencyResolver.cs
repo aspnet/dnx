@@ -220,12 +220,6 @@ namespace Microsoft.Framework.Runtime
                                           IEnumerable<IPackagePathResolver> cacheResolvers,
                                           PackageInfo packageInfo)
         {
-            if (packageInfo.LockFileLibrary == null)
-            {
-                throw new InvalidOperationException(
-                    string.Format("{0} must be loaded before resolving package path", LockFileFormat.LockFileName));
-            }
-
             string expectedHash = packageInfo.LockFileLibrary.Sha;
 
             foreach (var resolver in cacheResolvers)
