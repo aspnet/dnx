@@ -92,8 +92,7 @@ namespace Microsoft.Framework.Runtime.DependencyManagement
             {
                 library.Version = SemanticVersion.Parse(parts[1]);
             }
-            // TODO: temporary null-tolerant operation. Need to change to ReadString() after CI pass.
-            library.Sha = json["sha"]?.ToString();
+            library.Sha = ReadString(json["sha"]);
             library.DependencySets = ReadObject(json["dependencySets"] as JObject, ReadPackageDependencySet);
             library.FrameworkAssemblies = ReadFrameworkAssemblies(json["frameworkAssemblies"] as JObject);
             library.PackageAssemblyReferences = ReadArray(json["packageAssemblyReferences"] as JArray, ReadPackageReferenceSet);
