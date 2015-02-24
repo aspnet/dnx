@@ -135,12 +135,22 @@ namespace Microsoft.Framework.PackageManager
 
         public static AppCommandsFolderRepository CreateDefault()
         {
+            // TODO: use Environment.GetFolderPath(Environment.SpecialFolder.UserProfile) when it's available on CoreCLR
             var userProfileFolder = Environment.GetEnvironmentVariable("USERPROFILE");
             if (string.IsNullOrEmpty(userProfileFolder))
             {
                 userProfileFolder = Environment.GetEnvironmentVariable("HOME");
             }
-            var binFolder = Path.Combine(userProfileFolder, "bin");
+
+            if (string.IsNullOrEmpty(userProfileFolder))
+            {
+                throw new InvalidOperationException("Could not resolve the user profile folder path.");
+            }
+
+            var binFolder = Path.Combine(
+                userProfileFolder, 
+                Runtime.Constants.DefaultLocalRuntimeHomeDir, 
+                "bin");
             Directory.CreateDirectory(binFolder);
 
             return Create(binFolder);
