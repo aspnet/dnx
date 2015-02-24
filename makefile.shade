@@ -92,6 +92,9 @@ var RC_FILES = '${FindAllFiles("Resource.rc", BOOTSTRAPPER_EXE_NAME, BOOTSTRAPPE
 	for each='var projectFile in Files.Include("test/**/project.json")'
 		exec program='cmd' commandline='/C kpm restore' if='!IsMono' workingdir="${Path.GetDirectoryName(projectFile)}"
 		exec program='kpm' commandline='restore' if='IsMono' workingdir="${Path.GetDirectoryName(projectFile)}"
+	for each='var projectFile in Files.Include("samples/**/project.json")'
+		exec program='cmd' commandline='/C kpm restore' if='!IsMono' workingdir="${Path.GetDirectoryName(projectFile)}"
+		exec program='kpm' commandline='restore' if='IsMono' workingdir="${Path.GetDirectoryName(projectFile)}"
 
 #build-compile target='compile'
 
