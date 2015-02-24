@@ -9,7 +9,6 @@ namespace Microsoft.Framework.ApplicationHost
         public string ApplicationName { get; set; }
         public string ApplicationBaseDirectory { get; set; }
         public string PackageDirectory { get; set; }
-        public FrameworkName TargetFramework { get; set; }
         public string Configuration { get; set; }
         public bool WatchFiles { get; set; }
         public int? CompilationServerPort { get; set; }

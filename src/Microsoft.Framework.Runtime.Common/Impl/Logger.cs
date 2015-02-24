@@ -31,7 +31,7 @@ namespace Microsoft.Framework.Runtime
             }
         }
 
-        private static bool IsEnabled
+        public static bool IsEnabled
         {
             get
             {

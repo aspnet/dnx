@@ -4,6 +4,7 @@
     "dependencies": {
         "Newtonsoft.Json": "6.0.6",
         "NuGet.ProjectModel": "3.0.0-*",
+        "NuGet.DependencyResolver.Core":  "3.0.0-*",
         "Microsoft.Framework.FileSystemGlobbing": "1.0.0-*",
         "Microsoft.Framework.Runtime.Interfaces": "1.0.0-*",
         "Microsoft.Framework.Runtime.Common": { "version": "1.0.0-*", "type": "build" }
