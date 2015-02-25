@@ -29,56 +29,63 @@ namespace Microsoft.Framework.ApplicationHost
 
         public Task<int> Main(string[] args)
         {
-            Logger.TraceInformation("[ApplicationHost] Application Host Starting");
-            ApplicationHostOptions options;
-            string[] programArgs;
-            int exitCode;
-
-            bool shouldExit = ParseArgs(args, out options, out programArgs, out exitCode);
-            if (shouldExit)
+            try
             {
-                return Task.FromResult(exitCode);
+                Logger.TraceInformation("[ApplicationHost] Application Host Starting");
+                ApplicationHostOptions options;
+                string[] programArgs;
+                int exitCode;
+
+                bool shouldExit = ParseArgs(args, out options, out programArgs, out exitCode);
+                if (shouldExit)
+                {
+                    return Task.FromResult(exitCode);
+                }
+
+                // Construct the necessary context for hosting the application
+                var builder = new RuntimeHostBuilder(options.ApplicationBaseDirectory);
+
+                // Boot the runtime
+                var host = builder.Build();
+
+                // Check for a project
+                if (host.Project == null)
+                {
+                    // No project was found. We can't start the app.
+                    Logger.TraceError($"[ApplicationHost] A project.json file was not found in '{options.ApplicationBaseDirectory}'");
+                    return Task.FromResult(1);
+                }
+
+                // Get the project and print some information from it
+                Logger.TraceInformation($"[ApplicationHost] Project: {host.Project.Name} ({host.ApplicationBaseDirectory})");
+
+                // Determine the command to be executed
+                var command = string.IsNullOrEmpty(options.ApplicationName) ? "run" : options.ApplicationName;
+                string replacementCommand;
+                if (host.Project.Commands.TryGetValue(command, out replacementCommand))
+                {
+                    var replacementArgs = CommandGrammar.Process(
+                        replacementCommand,
+                        GetVariable).ToArray();
+                    options.ApplicationName = replacementArgs.First();
+                    programArgs = replacementArgs.Skip(1).Concat(programArgs).ToArray();
+                }
+
+                if (string.IsNullOrEmpty(options.ApplicationName) ||
+                    string.Equals(options.ApplicationName, "run", StringComparison.Ordinal))
+                {
+                    options.ApplicationName = host.Project.EntryPoint ?? host.Project.Name;
+                }
+
+                Logger.TraceInformation($"[ApplicationHost] Executing '{options.ApplicationName}' '{string.Join(" ", programArgs)}'");
+
+                return Task.FromResult(0);
             }
-
-
-            // Construct the necessary context for hosting the application
-            var builder = new RuntimeHostBuilder(options.ApplicationBaseDirectory);
-
-            // Boot the runtime
-            var host = builder.Build();
-
-            // Check for a project
-            if (host.Project == null)
+            catch (Exception ex)
             {
-                // No project was found. We can't start the app.
-                Logger.TraceError($"[ApplicationHost] A project.json file was not found in '{options.ApplicationBaseDirectory}'");
-                return Task.FromResult(1);
+                Console.Error.WriteLine($"Error loading project: {ex.Message}");
+                throw;
             }
-
-            // Get the project and print some information from it
-            Logger.TraceInformation($"[ApplicationHost] Project: {host.Project.Name} ({host.ApplicationBaseDirectory})");
-
-            // Determine the command to be executed
-            var command = string.IsNullOrEmpty(options.ApplicationName) ? "run" : options.ApplicationName;
-            string replacementCommand;
-            if(host.Project.Commands.TryGetValue(command, out replacementCommand))
-            {
-                var replacementArgs = CommandGrammar.Process(
-                    replacementCommand,
-                    GetVariable).ToArray();
-                options.ApplicationName = replacementArgs.First();
-                programArgs = replacementArgs.Skip(1).Concat(programArgs).ToArray();
-            }
-
-            if(string.IsNullOrEmpty(options.ApplicationName) ||
-                string.Equals(options.ApplicationName, "run", StringComparison.Ordinal))
-            {
-                options.ApplicationName = host.Project.EntryPoint ?? host.Project.Name;
-            }
-
-            Logger.TraceInformation($"[ApplicationHost] Executing '{options.ApplicationName}' '{string.Join(" ", programArgs)}'");
-
-            return Task.FromResult(0);
         }
 
         private string GetVariable(string key)
