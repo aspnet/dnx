@@ -47,7 +47,14 @@ namespace Microsoft.Framework.Runtime.Hosting
             if(Logger.IsEnabled)
             {
                 Console.WriteLine("Dependency Graph:");
-                result.Dump(s => Console.WriteLine(s));
+                if (result == null || result.Item == null)
+                {
+                    Console.WriteLine("<no dependencies>");
+                }
+                else
+                {
+                    result.Dump(s => Console.WriteLine(s));
+                }
             } 
 
             // Locate the entry point
