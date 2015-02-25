@@ -10,7 +10,8 @@ using Microsoft.Framework.ApplicationHost.Impl.Syntax;
 using Microsoft.Framework.Runtime;
 using Microsoft.Framework.Runtime.Common.CommandLine;
 using Microsoft.Framework.Runtime.Hosting;
-using Newtonsoft.Json.Linq;
+using Microsoft.Framework.Runtime.Hosting.DependencyProviders;
+using NuGet.ProjectModel;
 
 namespace Microsoft.Framework.ApplicationHost
 {
@@ -42,24 +43,29 @@ namespace Microsoft.Framework.ApplicationHost
                     return Task.FromResult(exitCode);
                 }
 
-                // Construct the necessary context for hosting the application
-                var builder = new RuntimeHostBuilder(
-                    options.ApplicationBaseDirectory,
-                    _container);
-
-                // Boot the runtime
-                var host = builder.Build();
-
                 // Check for a project
-                if (host.Project == null)
+                if (!ProjectReader.HasProjectFile(options.ApplicationBaseDirectory))
                 {
                     // No project was found. We can't start the app.
                     Logger.TraceError($"[ApplicationHost] A project.json file was not found in '{options.ApplicationBaseDirectory}'");
                     return Task.FromResult(1);
                 }
 
+                // Construct the necessary context for hosting the application
+                var builder = RuntimeHostBuilder.ForProjectDirectory(
+                    options.ApplicationBaseDirectory,
+                    _environment,
+                    _container);
+                var projectResolver = ProjectResolver.ForProjectDirectory(options.ApplicationBaseDirectory);
+                builder.DependencyProviders.Add(new ProjectReferenceDependencyProvider(projectResolver));
+                var referenceResolver = new FrameworkReferenceResolver();
+                builder.DependencyProviders.Add(new ReferenceAssemblyDependencyProvider(referenceResolver));
+
+                // Boot the runtime
+                var host = builder.Build();
+
                 // Get the project and print some information from it
-                Logger.TraceInformation($"[ApplicationHost] Project: {host.Project.Name} ({host.ApplicationBaseDirectory})");
+                Logger.TraceInformation($"[ApplicationHost] Project: {host.Project.Name} ({host.Project.BaseDirectory})");
 
                 // Determine the command to be executed
                 var command = string.IsNullOrEmpty(options.ApplicationName) ? "run" : options.ApplicationName;

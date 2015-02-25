@@ -15,11 +15,11 @@ using NuGet.Versioning;
 
 namespace Microsoft.Framework.Runtime.Hosting.DependencyProviders
 {
-    public class ReferenceAssemblyDependencyResolver : IDependencyProvider 
+    public class ReferenceAssemblyDependencyProvider : IDependencyProvider 
     {
         private readonly Dictionary<string, string> _resolvedPaths = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
-        public ReferenceAssemblyDependencyResolver(IFrameworkReferenceResolver frameworkReferenceResolver)
+        public ReferenceAssemblyDependencyProvider(IFrameworkReferenceResolver frameworkReferenceResolver)
         {
             FrameworkResolver = frameworkReferenceResolver;
         }

@@ -15,18 +15,16 @@ namespace Microsoft.Framework.Runtime.Hosting
     public class RuntimeHost
     {
         public Project Project { get; }
-        public string ApplicationBaseDirectory { get; }
         public NuGetFramework TargetFramework { get; }
         public IAssemblyLoaderContainer LoaderContainer { get; }
         public IEnumerable<IDependencyProvider> DependencyProviders { get; }
 
-        internal RuntimeHost(RuntimeHostBuilder builder, Project project)
+        internal RuntimeHost(RuntimeHostBuilder builder)
         {
-            Project = project;
+            Project = builder.Project;
 
             // Load properties from the mutable RuntimeHostBuilder into
             // immutable copies on this object
-            ApplicationBaseDirectory = builder.ApplicationBaseDirectory;
             LoaderContainer = builder.LoaderContainer;
             TargetFramework = builder.TargetFramework;
 

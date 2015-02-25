@@ -8,32 +8,54 @@ namespace Microsoft.Framework.Runtime.Hosting
 {
     public class RuntimeHostBuilder
     {
-        public string ApplicationBaseDirectory { get; }
         public IAssemblyLoaderContainer LoaderContainer { get; }
         public IList<IDependencyProvider> DependencyProviders { get; }
-        public string RootDirectory { get; set; }
         public NuGetFramework TargetFramework { get; set; }
+        public Project Project { get; set; }
+        public LockFile LockFile { get; set;  }
 
-        public RuntimeHostBuilder(string applicationBaseDirectory, IAssemblyLoaderContainer loaderContainer)
+        public RuntimeHostBuilder(IAssemblyLoaderContainer loaderContainer)
         {
-            ApplicationBaseDirectory = applicationBaseDirectory;
-            RootDirectory = ProjectResolver.ResolveRootDirectory(ApplicationBaseDirectory);
             LoaderContainer = loaderContainer;
             DependencyProviders = new List<IDependencyProvider>();
         }
 
-        public RuntimeHost Build()
+        /// <summary>
+        /// Create a <see cref="RuntimeHostBuilder"/> for the project in the specified
+        /// <paramref name="projectDirectory"/>.
+        /// </summary>
+        /// <remarks>
+        /// This method will throw if the project.json file cannot be found in the
+        /// specified folder. If a project.lock.json file is present in the directory
+        /// it will be loaded. 
+        /// </remarks>
+        /// <param name="projectDirectory">The directory of the project to host</param>
+        public static RuntimeHostBuilder ForProjectDirectory(string projectDirectory, IApplicationEnvironment applicationEnvironment, IAssemblyLoaderContainer loaderContainer)
         {
-            // Load the Project
-            Project project = null;
+            var hostBuilder = new RuntimeHostBuilder(loaderContainer);
 
-            PackageSpec packageSpec;
-            if (JsonPackageSpecReader.TryReadPackageSpec(ApplicationBaseDirectory, out packageSpec))
+            // Load the Project
+            hostBuilder.Project = ProjectReader.ReadProjectFile(projectDirectory);
+
+            // Load the Lock File if present
+            if (ProjectReader.HasLockFile(projectDirectory))
             {
-                project = new Project(packageSpec);
+                hostBuilder.LockFile = ProjectReader.ReadLockFile(projectDirectory);
             }
 
-            return new RuntimeHost(this, project);
+            // Set the framework
+            hostBuilder.TargetFramework = NuGetFramework.Parse(applicationEnvironment.RuntimeFramework.FullName);
+
+            return hostBuilder;
+        }
+
+        /// <summary>
+        /// Builds a <see cref="RuntimeHost"/> from the parameters specified in this
+        /// object.
+        /// </summary>
+        public RuntimeHost Build()
+        {
+            return new RuntimeHost(this);
         }
     }
 }
