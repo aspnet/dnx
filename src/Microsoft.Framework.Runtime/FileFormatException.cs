@@ -63,5 +63,10 @@ namespace Microsoft.Framework.Runtime
                 Line = exception.LineNumber
             };
         }
+
+        public override string ToString()
+        {
+            return String.Format("Error in {0}\n{1}", Path, base.ToString());
+        }
     }
 }
