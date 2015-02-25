@@ -10,7 +10,7 @@ namespace Microsoft.Framework.Runtime
     {
         public static T[] ValueAsArray<T>(this JToken jToken)
         {
-            return jToken.Select(a => a.Value<T>()).ToArray();
+            return jToken.Where(x => x.Type != JTokenType.Comment).Select(a => a.Value<T>()).ToArray();
         }
 
         public static T[] ValueAsArray<T>(this JToken jToken, string name)
