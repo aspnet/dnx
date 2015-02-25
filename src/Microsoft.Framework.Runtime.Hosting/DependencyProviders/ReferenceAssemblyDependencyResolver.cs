@@ -29,7 +29,7 @@ namespace Microsoft.Framework.Runtime.Hosting.DependencyProviders
         public Library GetDescription(LibraryRange libraryRange, NuGetFramework targetFramework)
         {
             Logger.TraceInformation($"[ReferenceAssemblyDependencyResolver] Resolving {libraryRange.Name} for {targetFramework}");
-            if (!SupportsType(libraryRange.Type))
+            if (!SupportsType(libraryRange.TypeConstraint))
             {
                 return null;
             }
@@ -59,7 +59,7 @@ namespace Microsoft.Framework.Runtime.Hosting.DependencyProviders
                     {
                         Name = name,
                         Version = assemblyVersion,
-                        Type = LibraryTypes.ReferenceAssembly
+                        Type = LibraryTypes.Reference
                     },
                     Dependencies = Enumerable.Empty<LibraryDependency>()
                 };
@@ -72,7 +72,7 @@ namespace Microsoft.Framework.Runtime.Hosting.DependencyProviders
         {
             return string.Equals(
                 libraryType,
-                LibraryTypes.ReferenceAssembly,
+                LibraryTypes.Reference,
                 StringComparison.Ordinal);
         }
 

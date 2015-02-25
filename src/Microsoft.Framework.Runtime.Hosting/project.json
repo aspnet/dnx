@@ -4,13 +4,23 @@
     "dependencies": {
         "Newtonsoft.Json": "6.0.6",
         "NuGet.ProjectModel": "3.0.0-*",
-        "NuGet.DependencyResolver.Core":  "3.0.0-*",
+        "NuGet.DependencyResolver.Core": "3.0.0-*",
         "Microsoft.Framework.FileSystemGlobbing": "1.0.0-*",
         "Microsoft.Framework.Runtime.Interfaces": "1.0.0-*",
         "Microsoft.Framework.Runtime.Common": { "version": "1.0.0-*", "type": "build" }
     },
     "frameworks": {
-        "aspnet50": {},
-        "aspnetcore50": { }
+        "aspnet50": {
+            "frameworkAssemblies": {
+                "System.Xml": "",
+                "System.Xml.Linq": ""
+            }
+        },
+        "aspnetcore50": {
+            "dependencies": {
+                "System.Xml.XDocument": "4.0.10-beta-*",
+                "System.Runtime.Loader": "4.0.0-beta-*"
+            }
+        }
     }
 }
