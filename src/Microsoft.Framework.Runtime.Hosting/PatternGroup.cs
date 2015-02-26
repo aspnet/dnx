@@ -33,7 +33,15 @@ namespace Microsoft.Framework.Runtime.Hosting
             _matcher.AddExcludePatterns(ExcludePatterns);
         }
 
-        public static PatternGroup Build(JObject rawProject, string projectDirectory, string projectFilePath, string name, string legacyName, IEnumerable<string> fallback, IEnumerable<string> buildInExcludePatterns, bool includePatternsOnly = false)
+        public static PatternGroup Build(JObject rawProject,
+                                         string projectDirectory,
+                                         string projectFilePath,
+                                         string name,
+                                         string legacyName,
+                                         IEnumerable<string> fallbackIncluding = null,
+                                         IEnumerable<string> additionalIncluding = null,
+                                         IEnumerable<string> additionalExcluding = null,
+                                         bool includePatternsOnly = false)
         {
             var token = rawProject[name];
             if (legacyName != null)
@@ -45,7 +53,9 @@ namespace Microsoft.Framework.Runtime.Hosting
                 }
             }
 
-            var includePatterns = PatternsCollectionHelper.GetPatternsCollection(token, projectDirectory, projectFilePath, fallback)
+            additionalIncluding = additionalIncluding ?? Enumerable.Empty<string>();
+            var includePatterns = PatternsCollectionHelper.GetPatternsCollection(token, projectDirectory, projectFilePath, defaultPatterns: fallbackIncluding)
+                                                          .Concat(additionalIncluding)
                                                           .Distinct();
 
             if (includePatternsOnly)
@@ -53,11 +63,12 @@ namespace Microsoft.Framework.Runtime.Hosting
                 return new PatternGroup(includePatterns);
             }
 
-            var excludePatterns = PatternsCollectionHelper.GetPatternsCollection(rawProject, projectDirectory, projectFilePath, name + "Exclude")
-                                                          .Concat(buildInExcludePatterns)
+            additionalExcluding = additionalExcluding ?? Enumerable.Empty<string>();
+            var excludePatterns = PatternsCollectionHelper.GetPatternsCollection(rawProject, projectDirectory, projectFilePath, propertyName: name + "Exclude")
+                                                          .Concat(additionalExcluding)
                                                           .Distinct();
 
-            var includeLiterals = PatternsCollectionHelper.GetPatternsCollection(rawProject, projectDirectory, projectFilePath, name + "Files")
+            var includeLiterals = PatternsCollectionHelper.GetPatternsCollection(rawProject, projectDirectory, projectFilePath, propertyName: name + "Files")
                                                           .Distinct();
 
             return new PatternGroup(includePatterns, excludePatterns, includeLiterals);

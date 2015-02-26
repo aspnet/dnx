@@ -1,7 +1,7 @@
 ﻿// Copyright (c) Microsoft Open Technologies, Inc. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
-using System;
+using System.Linq;
 using System.IO;
 using Microsoft.Framework.Runtime.FunctionalTests.Utilities;
 using Microsoft.Framework.Runtime.Hosting;
@@ -49,11 +49,51 @@ namespace Microsoft.Framework.Runtime.FunctionalTests.ProjectFileGlobbing
         }
 
         [Fact]
+        public void CompileRespecifyEquivalence()
+        {
+            var defaultCollection = CreateFilesCollection(@"
+{ 
+    ""compile"": ""**\\*.txt""
+}
+", "src\\project2");
+
+            var respecifyCollection = CreateFilesCollection(@"
+{
+    ""compile"": ""**\\*.cs;**\\*.txt""
+}
+", "src\\project2");
+
+            VerifyFilePathsCollection(defaultCollection.SourceFiles, respecifyCollection.SourceFiles.ToArray());
+        }
+
+        [Theory]
+        [InlineData(@"{""compile"": [""**\\*.cs""]}")]
+        [InlineData(@"{""compile"": [""**/*.cs""]}")]
+        [InlineData(@"{""compileBuiltIn"":"""", ""compile"": [""**/*.cs""]}")]
+        [InlineData(@"{""compileBuiltIn"":"""", ""compile"": [""**\\*.cs""]}")]
+        [InlineData(@"{""compileBuiltIn"":""**\\*.cs"", ""compile"": [""**/*.cs""]}")]
+        [InlineData(@"{""compileBuiltIn"":""**/*.cs"", ""compile"": [""**/*.cs""]}")]
+        [InlineData(@"{""compileBuiltIn"":""**\\*.cs"", ""compile"": [""**\\*.cs""]}")]
+        [InlineData(@"{""compileBuiltIn"":""**/*.cs"", ""compile"": [""**\\*.cs""]}")]
+        public void CompileRespecifyInArrayEquivalence(string projectJsonContent)
+        {
+            var defaultCollection = CreateFilesCollection(@"
+{ 
+}
+", "src\\project2");
+
+            var respecifyCollection = CreateFilesCollection(projectJsonContent, "src/project2");
+
+            VerifyFilePathsCollection(defaultCollection.SourceFiles, respecifyCollection.SourceFiles.ToArray());
+        }
+
+        [Fact]
         public void MutlipleCompileFilesInclude()
         {
 
             var testFilesCollection = CreateFilesCollection(@"
 { 
+    ""compileBuiltIn"": """",
     ""compile"": """",
     ""compileExclude"": """",
     ""compileFiles"": ""source1.cs;sub\\source2.cs""
@@ -71,6 +111,7 @@ namespace Microsoft.Framework.Runtime.FunctionalTests.ProjectFileGlobbing
 
             var testFilesCollection = CreateFilesCollection(@"
 { 
+    ""compileBuiltIn"": """",
     ""compile"": """",
     ""compileExclude"": """",
     ""compileFiles"": [""source1.cs"", ""sub\\source2.cs""]
@@ -139,6 +180,7 @@ namespace Microsoft.Framework.Runtime.FunctionalTests.ProjectFileGlobbing
         {
             var testFilesCollection = CreateFilesCollection(@"
 {
+    ""compileBuiltIn"": """",
     ""compile"": ""../../lib/**/*.cs"",
 }
 ", @"src\project");
@@ -154,6 +196,7 @@ namespace Microsoft.Framework.Runtime.FunctionalTests.ProjectFileGlobbing
         {
             var testFilesCollection = CreateFilesCollection(@"
 {
+    ""compileBuiltIn"": """",
     ""code"": ""../../lib/**/*.cs"",
 }
 ", @"src\project");
@@ -169,6 +212,7 @@ namespace Microsoft.Framework.Runtime.FunctionalTests.ProjectFileGlobbing
         {
             var testFilesCollection = CreateFilesCollection(@"
 {
+    ""compileBuiltIn"": """",
     ""compile"": ""..\\..\\lib\\**\\*.cs"",
 }
 ", @"src\project");
@@ -184,6 +228,7 @@ namespace Microsoft.Framework.Runtime.FunctionalTests.ProjectFileGlobbing
         {
             var testFilesCollection = CreateFilesCollection(@"
 {
+    ""compileBuiltIn"": """",
     ""compile"": ""**\\*.cs;..\\..\\lib\\**\\*.cs"",
 }
 ", @"src\project");
@@ -204,6 +249,7 @@ namespace Microsoft.Framework.Runtime.FunctionalTests.ProjectFileGlobbing
         {
             var testFilesCollection = CreateFilesCollection(@"
 {
+    ""compileBuiltIn"": """",
     ""code"": ""**\\*.cs;..\\..\\lib\\**\\*.cs"",
 }
 ", @"src\project");
@@ -224,6 +270,7 @@ namespace Microsoft.Framework.Runtime.FunctionalTests.ProjectFileGlobbing
         {
             var testFilesCollection = CreateFilesCollection(@"
 {
+    ""compileBuiltIn"": """",
     ""compile"": ""**\\*.cs;..\\..\\lib\\*.cs"",
 }
 ", @"src\project");
@@ -242,6 +289,7 @@ namespace Microsoft.Framework.Runtime.FunctionalTests.ProjectFileGlobbing
         {
             var testFilesCollection = CreateFilesCollection(@"
 {
+    ""compileBuiltIn"": """",
     ""compile"": ""..\\..\\lib\\sub4\\source8.cs"",
 }
 ", @"src\project");
@@ -273,6 +321,7 @@ namespace Microsoft.Framework.Runtime.FunctionalTests.ProjectFileGlobbing
         {
             var testFilesCollection = CreateFilesCollection(@"
 {
+    ""compileBuiltIn"": """",
     ""compile"": ""sub\\""
 }
 ", @"src\project");
@@ -287,6 +336,7 @@ namespace Microsoft.Framework.Runtime.FunctionalTests.ProjectFileGlobbing
         {
             var testFilesCollection = CreateFilesCollection(@"
 {
+    ""compileBuiltIn"": """",
     ""compile"": ""..\\project2\\""
 }
 ", @"src\project");
@@ -319,6 +369,7 @@ namespace Microsoft.Framework.Runtime.FunctionalTests.ProjectFileGlobbing
         {
             var testFilesCollection = CreateFilesCollection(@"
 {
+    ""compileBuiltIn"": """",
     ""compile"": ""sub/""
 }
 ", @"src\project");
@@ -332,6 +383,7 @@ namespace Microsoft.Framework.Runtime.FunctionalTests.ProjectFileGlobbing
         {
             var testFilesCollection = CreateFilesCollection(@"
 {
+    ""compileBuiltIn"": """",
     ""compile"": ""sub""
 }
 ", @"src\project");
@@ -360,6 +412,7 @@ namespace Microsoft.Framework.Runtime.FunctionalTests.ProjectFileGlobbing
         {
             var testFilesCollection = CreateFilesCollection(@"
 {
+    ""compileBuiltIn"": """",
     ""compile"": "".\\**\\*.cs""
 }
 ", @"src\project");
@@ -377,6 +430,7 @@ namespace Microsoft.Framework.Runtime.FunctionalTests.ProjectFileGlobbing
         {
             var testFilesCollection = CreateFilesCollection(@"
 {
+    ""compileBuiltIn"": """",
     ""compile"": ""..\\..\\lib\\.""
 }
 ", @"src\project");
@@ -392,6 +446,7 @@ namespace Microsoft.Framework.Runtime.FunctionalTests.ProjectFileGlobbing
         {
             var testFilesCollection = CreateFilesCollection(@"
 {
+    ""compileBuiltIn"": """",
     ""compile"": ""..\\project2\\"",
     ""exclude"": ""..\\project2\\compiler\\**\\*.txt"",
     ""resources"": ""..\\project2\\compiler\\resources\\**\\*.*""

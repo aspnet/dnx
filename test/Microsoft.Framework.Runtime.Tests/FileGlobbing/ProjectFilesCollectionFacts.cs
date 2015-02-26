@@ -43,7 +43,7 @@ namespace Microsoft.Framework.Runtime.Tests.FileGlobbing
 
             var compileFilesPatternsGroup = target.CompilePatternsGroup;
             Assert.NotNull(compileFilesPatternsGroup);
-            Assert.Equal(ProjectFilesCollection.DefaultCompilePatterns, compileFilesPatternsGroup.IncludePatterns);
+            Assert.Equal(ProjectFilesCollection.DefaultCompileBuiltInPatterns, compileFilesPatternsGroup.IncludePatterns);
             Assert.Equal(ProjectFilesCollection.DefaultBuiltInExcludePatterns, compileFilesPatternsGroup.ExcludePatterns);
             Assert.Equal(0, compileFilesPatternsGroup.IncludeLiterals.Count());
             Assert.Equal(3, compileFilesPatternsGroup.ExcludePatternsGroup.Count());
@@ -70,6 +70,7 @@ namespace Microsoft.Framework.Runtime.Tests.FileGlobbing
         {
             var rawProject = Deserialize(@"
          {
+             ""compileBuiltIn"": """",
              ""compile"": ""*.cs;../*.cs"",
              ""compileExclude"": [""fake*.cs"", ""fake2*.cs""],
              ""compileFiles"": ""signle.cs"",
@@ -86,6 +87,20 @@ namespace Microsoft.Framework.Runtime.Tests.FileGlobbing
             Assert.Equal(new string[] { "signle.cs" }, target.CompilePatternsGroup.IncludeLiterals);
             Assert.Equal(new string[] { "fake*.cs", "fake2*.cs", "buggy/*.*", "bin/**", "obj/**", "**/*.kproj" }, target.CompilePatternsGroup.ExcludePatterns);
             Assert.Equal(new string[] { "buggy/*.*", "bin/**", "obj/**", "**/*.kproj", "no_pack/*.*" }, target.ContentPatternsGroup.ExcludePatterns);
+        }
+
+        [Fact]
+        public void RewriteCompileBuiltIn()
+        {
+            var rawProject = Deserialize(@"
+         {
+             ""compileBuiltIn"": [""**/*.cpp"", ""**/*.h""],
+             ""compile"": ""*.cs;../*.cs"",
+             ""compileExclude"": [""fake*.cs"", ""fake2*.cs""],
+         }");
+
+            var target = new ProjectFilesCollection(rawProject, string.Empty, string.Empty);
+            Assert.Equal(new string[] { "*.cs", "../*.cs", "**/*.cpp", "**/*.h" }, target.CompilePatternsGroup.IncludePatterns);
         }
 
         private JObject Deserialize(string content)

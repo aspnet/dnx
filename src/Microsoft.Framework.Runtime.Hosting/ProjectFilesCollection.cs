@@ -9,7 +9,7 @@ namespace Microsoft.Framework.Runtime.Hosting
 {
     public class ProjectFilesCollection
     {
-        public static readonly string[] DefaultCompilePatterns = new[] { @"**/*.cs" };
+        public static readonly string[] DefaultCompileBuiltInPatterns = new[] { @"**/*.cs" };
         public static readonly string[] DefaultBundleExcludePatterns = new[] { @"obj/**/*.*", @"bin/**/*.*", @"**/.*/**" };
         public static readonly string[] DefaultPreprocessPatterns = new[] { @"compiler/preprocess/**/*.cs" };
         public static readonly string[] DefaultSharedPatterns = new[] { @"compiler/shared/**/*.cs" };
@@ -35,23 +35,24 @@ namespace Microsoft.Framework.Runtime.Hosting
             var excludeBuiltIns = PatternsCollectionHelper.GetPatternsCollection(rawProject, projectDirectory, projectFilePath, "excludeBuiltIn", DefaultBuiltInExcludePatterns);
             var excludePatterns = PatternsCollectionHelper.GetPatternsCollection(rawProject, projectDirectory, projectFilePath, "exclude")
                                                           .Concat(excludeBuiltIns);
+            var compileBuiltIns = PatternsCollectionHelper.GetPatternsCollection(rawProject, projectDirectory, projectFilePath, "compileBuiltIn", DefaultCompileBuiltInPatterns);
 
             var bundleExcludePatterns = PatternsCollectionHelper.GetPatternsCollection(rawProject, projectDirectory, projectFilePath, "bundleExclude", DefaultBundleExcludePatterns);
 
-            _sharedPatternsGroup = PatternGroup.Build(rawProject, projectDirectory, projectFilePath, "shared", legacyName: null, fallback: DefaultSharedPatterns, buildInExcludePatterns: excludePatterns);
+            _sharedPatternsGroup = PatternGroup.Build(rawProject, projectDirectory, projectFilePath, "shared", legacyName: null, fallbackIncluding: DefaultSharedPatterns, additionalExcluding: excludePatterns);
 
-            _resourcePatternsGroup = PatternGroup.Build(rawProject, projectDirectory, projectFilePath, "resource", "resources", DefaultResourcesPatterns, excludePatterns);
+            _resourcePatternsGroup = PatternGroup.Build(rawProject, projectDirectory, projectFilePath, "resource", "resources", fallbackIncluding: DefaultResourcesPatterns, additionalExcluding: excludePatterns);
 
-            _preprocessPatternsGroup = PatternGroup.Build(rawProject, projectDirectory, projectFilePath, "preprocess", legacyName: null, fallback: DefaultPreprocessPatterns, buildInExcludePatterns: excludePatterns)
+            _preprocessPatternsGroup = PatternGroup.Build(rawProject, projectDirectory, projectFilePath, "preprocess", legacyName: null, fallbackIncluding: DefaultPreprocessPatterns, additionalExcluding: excludePatterns)
                 .ExcludeGroup(_sharedPatternsGroup)
                 .ExcludeGroup(_resourcePatternsGroup);
 
-            _compilePatternsGroup = PatternGroup.Build(rawProject, projectDirectory, projectFilePath, "compile", "code", DefaultCompilePatterns, excludePatterns)
+            _compilePatternsGroup = PatternGroup.Build(rawProject, projectDirectory, projectFilePath, "compile", "code", additionalIncluding: compileBuiltIns, additionalExcluding: excludePatterns)
                 .ExcludeGroup(_sharedPatternsGroup)
                 .ExcludeGroup(_preprocessPatternsGroup)
                 .ExcludeGroup(_resourcePatternsGroup);
 
-            _contentPatternsGroup = PatternGroup.Build(rawProject, projectDirectory, projectFilePath, "content", "files", DefaultContentsPatterns, excludePatterns.Concat(bundleExcludePatterns))
+            _contentPatternsGroup = PatternGroup.Build(rawProject, projectDirectory, projectFilePath, "content", "files", fallbackIncluding: DefaultContentsPatterns, additionalExcluding: excludePatterns.Concat(bundleExcludePatterns))
                 .ExcludeGroup(_compilePatternsGroup)
                 .ExcludeGroup(_preprocessPatternsGroup)
                 .ExcludeGroup(_sharedPatternsGroup)
