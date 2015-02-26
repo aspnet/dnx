@@ -8,7 +8,7 @@ namespace Microsoft.Framework.Runtime.Tests.FileGlobbing
 {
     public static class PatternsGroupTestHelper
     {
-        public static bool Equals(PatternsGroup x, PatternsGroup y)
+        public static bool Equals(PatternGroup x, PatternGroup y)
         {
             if (!Enumerable.SequenceEqual(x.IncludePatterns.OrderBy(elem => elem),
                                           y.IncludePatterns.OrderBy(elem => elem)))

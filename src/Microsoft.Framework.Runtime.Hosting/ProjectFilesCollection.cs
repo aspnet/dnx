@@ -17,12 +17,12 @@ namespace Microsoft.Framework.Runtime.Hosting
         public static readonly string[] DefaultContentsPatterns = new[] { @"**/*" };
         public static readonly string[] DefaultBuiltInExcludePatterns = new[] { "bin/**", "obj/**", "**/*.kproj" };
 
-        private readonly PatternsGroup _sharedPatternsGroup;
-        private readonly PatternsGroup _resourcePatternsGroup;
-        private readonly PatternsGroup _preprocessPatternsGroup;
-        private readonly PatternsGroup _compilePatternsGroup;
-        private readonly PatternsGroup _bundleExcludePatternsGroup;
-        private readonly PatternsGroup _contentPatternsGroup;
+        private readonly PatternGroup _sharedPatternsGroup;
+        private readonly PatternGroup _resourcePatternsGroup;
+        private readonly PatternGroup _preprocessPatternsGroup;
+        private readonly PatternGroup _compilePatternsGroup;
+        private readonly PatternGroup _bundleExcludePatternsGroup;
+        private readonly PatternGroup _contentPatternsGroup;
 
         private readonly string _projectDirectory;
         private readonly string _projectFilePath;
@@ -38,26 +38,26 @@ namespace Microsoft.Framework.Runtime.Hosting
 
             var bundleExcludePatterns = PatternsCollectionHelper.GetPatternsCollection(rawProject, projectDirectory, projectFilePath, "bundleExclude", DefaultBundleExcludePatterns);
 
-            _sharedPatternsGroup = PatternsGroup.Build(rawProject, projectDirectory, projectFilePath, "shared", legacyName: null, fallback: DefaultSharedPatterns, buildInExcludePatterns: excludePatterns);
+            _sharedPatternsGroup = PatternGroup.Build(rawProject, projectDirectory, projectFilePath, "shared", legacyName: null, fallback: DefaultSharedPatterns, buildInExcludePatterns: excludePatterns);
 
-            _resourcePatternsGroup = PatternsGroup.Build(rawProject, projectDirectory, projectFilePath, "resource", "resources", DefaultResourcesPatterns, excludePatterns);
+            _resourcePatternsGroup = PatternGroup.Build(rawProject, projectDirectory, projectFilePath, "resource", "resources", DefaultResourcesPatterns, excludePatterns);
 
-            _preprocessPatternsGroup = PatternsGroup.Build(rawProject, projectDirectory, projectFilePath, "preprocess", legacyName: null, fallback: DefaultPreprocessPatterns, buildInExcludePatterns: excludePatterns)
+            _preprocessPatternsGroup = PatternGroup.Build(rawProject, projectDirectory, projectFilePath, "preprocess", legacyName: null, fallback: DefaultPreprocessPatterns, buildInExcludePatterns: excludePatterns)
                 .ExcludeGroup(_sharedPatternsGroup)
                 .ExcludeGroup(_resourcePatternsGroup);
 
-            _compilePatternsGroup = PatternsGroup.Build(rawProject, projectDirectory, projectFilePath, "compile", "code", DefaultCompilePatterns, excludePatterns)
+            _compilePatternsGroup = PatternGroup.Build(rawProject, projectDirectory, projectFilePath, "compile", "code", DefaultCompilePatterns, excludePatterns)
                 .ExcludeGroup(_sharedPatternsGroup)
                 .ExcludeGroup(_preprocessPatternsGroup)
                 .ExcludeGroup(_resourcePatternsGroup);
 
-            _contentPatternsGroup = PatternsGroup.Build(rawProject, projectDirectory, projectFilePath, "content", "files", DefaultContentsPatterns, excludePatterns.Concat(bundleExcludePatterns).Distinct())
+            _contentPatternsGroup = PatternGroup.Build(rawProject, projectDirectory, projectFilePath, "content", "files", DefaultContentsPatterns, excludePatterns.Concat(bundleExcludePatterns))
                 .ExcludeGroup(_compilePatternsGroup)
                 .ExcludeGroup(_preprocessPatternsGroup)
                 .ExcludeGroup(_sharedPatternsGroup)
                 .ExcludeGroup(_resourcePatternsGroup);
 
-            _bundleExcludePatternsGroup = new PatternsGroup(bundleExcludePatterns);
+            _bundleExcludePatternsGroup = new PatternGroup(bundleExcludePatterns);
         }
 
         public IEnumerable<string> SourceFiles
@@ -90,16 +90,16 @@ namespace Microsoft.Framework.Runtime.Hosting
             get { return _contentPatternsGroup.SearchFiles(_projectDirectory).Distinct(); }
         }
 
-        public PatternsGroup CompilePatternsGroup { get { return _compilePatternsGroup; } }
+        internal PatternGroup CompilePatternsGroup { get { return _compilePatternsGroup; } }
 
-        public PatternsGroup SharedPatternsGroup { get { return _sharedPatternsGroup; } }
+        internal PatternGroup SharedPatternsGroup { get { return _sharedPatternsGroup; } }
 
-        public PatternsGroup ResourcePatternsGroup { get { return _resourcePatternsGroup; } }
+        internal PatternGroup ResourcePatternsGroup { get { return _resourcePatternsGroup; } }
 
-        public PatternsGroup PreprocessPatternsGroup { get { return _preprocessPatternsGroup; } }
+        internal PatternGroup PreprocessPatternsGroup { get { return _preprocessPatternsGroup; } }
 
-        public PatternsGroup BundleExcludePatternsGroup { get { return _bundleExcludePatternsGroup; } }
+        internal PatternGroup BundleExcludePatternsGroup { get { return _bundleExcludePatternsGroup; } }
 
-        public PatternsGroup ContentPatternsGroup { get { return _contentPatternsGroup; } }
+        internal PatternGroup ContentPatternsGroup { get { return _contentPatternsGroup; } }
     }
 }

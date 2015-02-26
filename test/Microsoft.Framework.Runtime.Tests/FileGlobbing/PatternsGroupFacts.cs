@@ -12,7 +12,7 @@ namespace Microsoft.Framework.Runtime.Tests.FileGlobbing
         [Fact]
         public void ConstructWithOneParameter()
         {
-            var group = new PatternsGroup(new string[] { "a" });
+            var group = new PatternGroup(new string[] { "a" });
 
             Assert.Equal(new string[] { "a" }, group.IncludePatterns);
             Assert.Equal(0, group.ExcludePatterns.Count());
@@ -23,7 +23,7 @@ namespace Microsoft.Framework.Runtime.Tests.FileGlobbing
         [Fact]
         public void ConstructWithThreeParameters()
         {
-            var group = new PatternsGroup(new string[] { "a", "b" }, new string[] { "C" }, new string[] { "d" });
+            var group = new PatternGroup(new string[] { "a", "b" }, new string[] { "C" }, new string[] { "d" });
 
             Assert.Equal(new string[] { "a", "b" }, group.IncludePatterns);
             Assert.Equal(new string[] { "C" }, group.ExcludePatterns);
@@ -34,8 +34,8 @@ namespace Microsoft.Framework.Runtime.Tests.FileGlobbing
         [Fact]
         public void AddExcludePatternGroup()
         {
-            var group1 = new PatternsGroup(new string[] { "z" });
-            var group2 = new PatternsGroup(new string[] { "a", "b" }, new string[] { "C" }, new string[] { "d" });
+            var group1 = new PatternGroup(new string[] { "z" });
+            var group2 = new PatternGroup(new string[] { "a", "b" }, new string[] { "C" }, new string[] { "d" });
 
             group1.ExcludeGroup(group2);
 
