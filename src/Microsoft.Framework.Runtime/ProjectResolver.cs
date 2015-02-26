@@ -41,7 +41,7 @@ namespace Microsoft.Framework.Runtime
             if (_projects.TryGetValue(name, out projectInfo))
             {
                 project = projectInfo.Project;
-                return true;
+                return project != null;
             }
 
             return false;

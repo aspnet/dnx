@@ -53,7 +53,8 @@ namespace NuGet
 
         public void ApplyLockFile(LockFile lockFile)
         {
-            _lockFileLibraries = lockFile.Libraries.ToLookup(l => l.Name);
+            var stringComparer = _checkPackageIdCase ? StringComparer.Ordinal : StringComparer.OrdinalIgnoreCase;
+            _lockFileLibraries = lockFile.Libraries.ToLookup(l => l.Name, stringComparer);
         }
 
         public IEnumerable<PackageInfo> FindPackagesById(string packageId)
