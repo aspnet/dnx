@@ -213,7 +213,7 @@ bool ExpandCommandLineArguments(int nArgc, LPWSTR* ppszArgv, int& nExpandedArgc,
     return true;
 }
 
-int CallFirmwareProcessMain(int argc, wchar_t* argv[])
+int CallApplicationProcessMain(int argc, wchar_t* argv[])
 {
     TCHAR szTrace[2];
     DWORD nEnvTraceSize = GetEnvironmentVariableW(L"KRE_TRACE", szTrace, 2);
@@ -395,5 +395,5 @@ int wmain(int argc, wchar_t* argv[])
         }
     }
 
-    return CallFirmwareProcessMain(argc, argv);
+    return CallApplicationProcessMain(argc, argv);
 }
