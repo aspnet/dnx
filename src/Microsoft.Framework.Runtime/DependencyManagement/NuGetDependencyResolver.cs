@@ -170,11 +170,11 @@ namespace Microsoft.Framework.Runtime
 
                 // Try to find a contract folder for this package and store that
                 // for compilation
-                string contractPath = Path.Combine(dependency.Path, "lib", "contract",
-                                                   package.Id + ".dll");
-                if (File.Exists(contractPath))
+                string contractPath = Path.Combine("lib", "contract", package.Id + ".dll");
+
+                if (packageInfo.LockFileLibrary.Files.Any(f => f.Path == contractPath))
                 {
-                    packageDescription.ContractPath = contractPath;
+                    packageDescription.ContractPath = Path.Combine(dependency.Path, contractPath);
                 }
 
                 if (Servicing.Breadcrumbs.IsPackageServiceable(packageDescription.Package))
@@ -235,19 +235,6 @@ namespace Microsoft.Framework.Runtime
             }
 
             return defaultResolver.GetInstallPath(packageInfo.Id, packageInfo.Version);
-        }
-
-        private string GetExpectedHash(IPackagePathResolver defaultResolver, IPackage package)
-        {
-            var defaultHashPath = defaultResolver.GetHashPath(package.Id, package.Version);
-            string expectedHash = null;
-
-            if (File.Exists(defaultHashPath))
-            {
-                expectedHash = File.ReadAllText(defaultHashPath);
-            }
-
-            return expectedHash;
         }
 
         private static IEnumerable<IPackagePathResolver> GetCacheResolvers()

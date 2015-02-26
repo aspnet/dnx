@@ -34,23 +34,36 @@ namespace Microsoft.Framework.Runtime
             PopulateCache();
         }
 
-        public bool TryGetAssembly(string name, FrameworkName targetFramework, out string path)
+        public bool TryGetAssembly(string name, FrameworkName targetFramework, out string path, out Version version)
         {
+            path = null;
+            version = null;
+
             var information = _cache.GetOrAdd(targetFramework, GetFrameworkInformation);
 
             if (information == null)
             {
-                path = null;
                 return false;
             }
 
             lock (information.Assemblies)
             {
-                if (information.Assemblies.TryGetValue(name, out path) &&
-                    string.IsNullOrEmpty(path))
+                AssemblyEntry entry;
+                if (information.Assemblies.TryGetValue(name, out entry))
                 {
-                    path = GetAssemblyPath(information.Path, name);
-                    information.Assemblies[name] = path;
+                    if (string.IsNullOrEmpty(entry.Path))
+                    {
+                        entry.Path = GetAssemblyPath(information.Path, name);
+                    }
+
+                    if (!string.IsNullOrEmpty(entry.Path) && entry.Version == null)
+                    {
+                        // This code path should only run on mono
+                        entry.Version = VersionUtility.GetAssemblyVersion(entry.Path).Version;
+                    }
+
+                    path = entry.Path;
+                    version = entry.Version;
                 }
             }
 
@@ -174,7 +187,9 @@ namespace Microsoft.Framework.Runtime
 
                         foreach (var pair in assemblies)
                         {
-                            frameworkInfo.Assemblies[pair.Item1] = pair.Item2;
+                            var entry = new AssemblyEntry();
+                            entry.Path = pair.Item2;
+                            frameworkInfo.Assemblies[pair.Item1] = entry;
                         }
 
                         pathCache[targetFrameworkPath] = frameworkInfo;
@@ -264,8 +279,12 @@ namespace Microsoft.Framework.Runtime
 
                     foreach (var e in frameworkList.Root.Elements())
                     {
-                        string assemblyName = e.Attribute("AssemblyName").Value;
-                        frameworkInfo.Assemblies.Add(assemblyName, null);
+                        var assemblyName = e.Attribute("AssemblyName").Value;
+                        var version = e.Attribute("Version")?.Value;
+
+                        var entry = new AssemblyEntry();
+                        entry.Version = version != null ? Version.Parse(version) : null;
+                        frameworkInfo.Assemblies.Add(assemblyName, entry);
                     }
 
                     var nameAttribute = frameworkList.Root.Attribute("Name");
@@ -313,16 +332,22 @@ namespace Microsoft.Framework.Runtime
         {
             public FrameworkInformation()
             {
-                Assemblies = new Dictionary<string, string>();
+                Assemblies = new Dictionary<string, AssemblyEntry>();
             }
 
             public string Path { get; set; }
 
             public string RedistListPath { get; set; }
 
-            public IDictionary<string, string> Assemblies { get; private set; }
+            public IDictionary<string, AssemblyEntry> Assemblies { get; private set; }
 
             public string Name { get; set; }
+        }
+
+        private class AssemblyEntry
+        {
+            public string Path { get; set; }
+            public Version Version { get; set; }
         }
     }
 }

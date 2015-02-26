@@ -80,6 +80,14 @@ namespace Microsoft.Framework.Runtime
             AssemblyLoadContextFactory = loadContextFactory ?? new RuntimeLoadContextFactory(ServiceProvider);
             namedCacheDependencyProvider = namedCacheDependencyProvider ?? NamedCacheDependencyProvider.Empty;
 
+            var projectName = PathUtility.GetDirectoryName(ProjectDirectory);
+
+            Project project;
+            if (ProjectResolver.TryResolveProject(projectName, out project))
+            {
+                Project = project;
+            }
+
             // Default services
             _serviceProvider.Add(typeof(IApplicationEnvironment), new ApplicationEnvironment(Project, targetFramework, configuration));
             _serviceProvider.Add(typeof(IFileWatcher), NoopWatcher.Instance);
@@ -122,18 +130,7 @@ namespace Microsoft.Framework.Runtime
             }
         }
 
-        public Project Project
-        {
-            get
-            {
-                Project project;
-                if (Project.TryGetProject(ProjectDirectory, out project))
-                {
-                    return project;
-                }
-                return null;
-            }
-        }
+        public Project Project { get; private set; }
 
         public IAssemblyLoadContextFactory AssemblyLoadContextFactory { get; private set; }
 

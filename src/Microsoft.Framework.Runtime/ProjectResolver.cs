@@ -5,17 +5,24 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Threading;
 
 namespace Microsoft.Framework.Runtime
 {
     public class ProjectResolver : IProjectResolver
     {
-        private readonly IList<string> _searchPaths;
+        private readonly HashSet<string> _searchPaths = new HashSet<string>();
+        private readonly Dictionary<string, ProjectInformation> _projects = new Dictionary<string, ProjectInformation>();
+
+        public ProjectResolver(string projectPath)
+        {
+            var rootPath = ResolveRootDirectory(projectPath);
+            Initialize(projectPath, rootPath);
+        }
 
         public ProjectResolver(string projectPath, string rootPath)
         {
-            // We could find all project.json files in the search paths up front here
-            _searchPaths = ResolveSearchPaths(projectPath, rootPath).ToList();
+            Initialize(projectPath, rootPath);
         }
 
         public IEnumerable<string> SearchPaths
@@ -30,25 +37,19 @@ namespace Microsoft.Framework.Runtime
         {
             project = null;
 
-            foreach (var searchPath in _searchPaths)
+            ProjectInformation projectInfo;
+            if (_projects.TryGetValue(name, out projectInfo))
             {
-                var projectPath = Path.Combine(searchPath, name);
-
-                if (Project.TryGetProject(projectPath, out project))
-                {
-                    return true;
-                }
+                project = projectInfo.Project;
+                return true;
             }
 
             return false;
         }
 
-        private IEnumerable<string> ResolveSearchPaths(string projectPath, string rootPath)
+        private void Initialize(string projectPath, string rootPath)
         {
-            var paths = new List<string>
-            {
-                Path.GetDirectoryName(projectPath)
-            };
+            _searchPaths.Add(Path.GetDirectoryName(projectPath));
 
             GlobalSettings global;
 
@@ -56,11 +57,30 @@ namespace Microsoft.Framework.Runtime
             {
                 foreach (var sourcePath in global.ProjectSearchPaths)
                 {
-                    paths.Add(Path.Combine(rootPath, sourcePath));
+                    _searchPaths.Add(Path.Combine(rootPath, sourcePath));
                 }
             }
 
-            return paths.Distinct();
+            // Resolve all of the potential projects
+            foreach (var searchPath in _searchPaths)
+            {
+                var directory = new DirectoryInfo(searchPath);
+
+                if (!directory.Exists)
+                {
+                    continue;
+                }
+
+                foreach (var projectDirectory in directory.EnumerateDirectories())
+                {
+                    // The name of the folder is the project
+                    _projects[projectDirectory.Name] = new ProjectInformation
+                    {
+                        Name = projectDirectory.Name,
+                        FullPath = projectDirectory.FullName
+                    };
+                }
+            }
         }
 
         public static string ResolveRootDirectory(string projectPath)
@@ -69,8 +89,9 @@ namespace Microsoft.Framework.Runtime
 
             while (di.Parent != null)
             {
-                var candidate = Path.Combine(di.FullName, GlobalSettings.GlobalFileName);
-                if (File.Exists(candidate))
+                var globalJsonPath = Path.Combine(di.FullName, GlobalSettings.GlobalFileName);
+
+                if (File.Exists(globalJsonPath))
                 {
                     return di.FullName;
                 }
@@ -80,6 +101,30 @@ namespace Microsoft.Framework.Runtime
 
             // If we don't find any files then make the project folder the root
             return projectPath;
+        }
+
+        private class ProjectInformation
+        {
+            private Project _project;
+            private bool _initialized;
+            private object _lockObj = new object();
+
+            public string Name { get; set; }
+
+            public string FullPath { get; set; }
+
+            public Project Project
+            {
+                get
+                {
+                    return LazyInitializer.EnsureInitialized(ref _project, ref _initialized, ref _lockObj, () =>
+                    {
+                        Project project;
+                        Project.TryGetProject(FullPath, out project);
+                        return project;
+                    });
+                }
+            }
         }
     }
 }

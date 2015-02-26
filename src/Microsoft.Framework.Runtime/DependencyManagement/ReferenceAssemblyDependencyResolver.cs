@@ -47,14 +47,14 @@ namespace Microsoft.Framework.Runtime
             var version = libraryRange.VersionRange?.MinVersion;
 
             string path;
-            if (!FrameworkResolver.TryGetAssembly(name, targetFramework, out path))
+            Version assemblyVersion;
+
+            if (!FrameworkResolver.TryGetAssembly(name, targetFramework, out path, out assemblyVersion))
             {
                 return null;
             }
 
-            SemanticVersion assemblyVersion = VersionUtility.GetAssemblyVersion(path);
-
-            if (version == null || version == assemblyVersion)
+            if (version == null || version.Version == assemblyVersion)
             {
                 _resolvedPaths[name] = path;
 
@@ -64,7 +64,7 @@ namespace Microsoft.Framework.Runtime
                     Identity = new Library
                     {
                         Name = name,
-                        Version = assemblyVersion,
+                        Version = new SemanticVersion(assemblyVersion),
                         IsGacOrFrameworkReference = true
                     },
                     LoadableAssemblies = new[] { name },
@@ -98,7 +98,9 @@ namespace Microsoft.Framework.Runtime
             //  the specific path for the target framework
 
             string path;
-            if (FrameworkResolver.TryGetAssembly(target.Name, target.TargetFramework, out path))
+            Version version;
+
+            if (FrameworkResolver.TryGetAssembly(target.Name, target.TargetFramework, out path, out version))
             {
                 return new LibraryExport(target.Name, path);
             }

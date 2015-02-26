@@ -14,7 +14,7 @@ namespace NuGet
         private readonly Dictionary<string, IEnumerable<PackageInfo>> _cache;
         private readonly IFileSystem _repositoryRoot;
         private readonly bool _checkPackageIdCase;
-        private LockFile _lockFile;
+        private ILookup<string, LockFileLibrary> _lockFileLibraries;
 
         public PackageRepository(string path, bool caseSensitivePackagesName = false)
             : this(new PhysicalFileSystem(path), caseSensitivePackagesName)
@@ -53,7 +53,7 @@ namespace NuGet
 
         public void ApplyLockFile(LockFile lockFile)
         {
-            _lockFile = lockFile;
+            _lockFileLibraries = lockFile.Libraries.ToLookup(l => l.Name);
         }
 
         public IEnumerable<PackageInfo> FindPackagesById(string packageId)
@@ -68,9 +68,9 @@ namespace NuGet
             {
                 var packages = new List<PackageInfo>();
 
-                if (_lockFile != null)
+                if (_lockFileLibraries != null)
                 {
-                    foreach(var lockFileLibrary in _lockFile.Libraries)
+                    foreach (var lockFileLibrary in _lockFileLibraries[packageId])
                     {
                         var stringComparison = _checkPackageIdCase ? StringComparison.Ordinal : StringComparison.OrdinalIgnoreCase;
 
@@ -86,45 +86,45 @@ namespace NuGet
                                 lockFileLibrary));
                         }
                     }
+
+                    return packages;
                 }
-                else
+
+                foreach (var versionDir in _repositoryRoot.GetDirectories(id))
                 {
-                    foreach (var versionDir in _repositoryRoot.GetDirectories(id))
+                    // versionDir = {packageId}\{version}
+                    var folders = versionDir.Split(new[] { Path.DirectorySeparatorChar }, 2);
+
+                    // Unknown format
+                    if (folders.Length < 2)
                     {
-                        // versionDir = {packageId}\{version}
-                        var folders = versionDir.Split(new[] { Path.DirectorySeparatorChar }, 2);
-
-                        // Unknown format
-                        if (folders.Length < 2)
-                        {
-                            continue;
-                        }
-
-                        var versionPart = folders[1];
-
-                        // Get the version part and parse it
-                        SemanticVersion version;
-                        if (!SemanticVersion.TryParse(versionPart, out version))
-                        {
-                            continue;
-                        }
-
-                        // If we need to help ensure case-sensitivity, we try to get
-                        // the package id in accurate casing by extracting the name of nuspec file
-                        // Otherwise we just use the passed in package id for efficiency
-                        if (_checkPackageIdCase)
-                        {
-                            var manifestFileName = Path.GetFileName(
-                                _repositoryRoot.GetFiles(versionDir, "*" + Constants.ManifestExtension).FirstOrDefault());
-                            if (string.IsNullOrEmpty(manifestFileName))
-                            {
-                                continue;
-                            }
-                            id = Path.GetFileNameWithoutExtension(manifestFileName);
-                        }
-
-                        packages.Add(new PackageInfo(_repositoryRoot, id, version, versionDir));
+                        continue;
                     }
+
+                    var versionPart = folders[1];
+
+                    // Get the version part and parse it
+                    SemanticVersion version;
+                    if (!SemanticVersion.TryParse(versionPart, out version))
+                    {
+                        continue;
+                    }
+
+                    // If we need to help ensure case-sensitivity, we try to get
+                    // the package id in accurate casing by extracting the name of nuspec file
+                    // Otherwise we just use the passed in package id for efficiency
+                    if (_checkPackageIdCase)
+                    {
+                        var manifestFileName = Path.GetFileName(
+                            _repositoryRoot.GetFiles(versionDir, "*" + Constants.ManifestExtension).FirstOrDefault());
+                        if (string.IsNullOrEmpty(manifestFileName))
+                        {
+                            continue;
+                        }
+                        id = Path.GetFileNameWithoutExtension(manifestFileName);
+                    }
+
+                    packages.Add(new PackageInfo(_repositoryRoot, id, version, versionDir));
                 }
 
                 return packages;
@@ -137,7 +137,7 @@ namespace NuGet
             string packageVersion = package.Version.ToString();
 
             string folderToDelete;
-            if (RepositoryRoot.GetDirectories(packageName).Count() >1)
+            if (RepositoryRoot.GetDirectories(packageName).Count() > 1)
             {
                 // There is more than one version of this package so we can only
                 // remove the version folder without risking to break something else

@@ -246,7 +246,7 @@ namespace Microsoft.Framework.Runtime
 
             var queue = new Queue<Tuple<Node, TState>>();
             queue.Enqueue(Tuple.Create(root, state));
-            while (!queue.IsEmpty())
+            while (queue.Count > 0)
             {
                 var work = queue.Dequeue();
                 var innerState = visitor(work.Item1, work.Item2);

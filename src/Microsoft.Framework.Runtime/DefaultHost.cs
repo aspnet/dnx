@@ -31,7 +31,7 @@ namespace Microsoft.Framework.Runtime
         public DefaultHost(DefaultHostOptions options,
                            IServiceProvider hostServices)
         {
-            _projectDirectory = Normalize(options.ApplicationBaseDirectory);
+            _projectDirectory = Path.GetFullPath(options.ApplicationBaseDirectory);
             _targetFramework = options.TargetFramework;
 
             Initialize(options, hostServices);
@@ -167,16 +167,6 @@ namespace Microsoft.Framework.Runtime
             }
 
             CallContextServiceLocator.Locator.ServiceProvider = ServiceProvider;
-        }
-
-        private static string Normalize(string projectDir)
-        {
-            if (File.Exists(projectDir))
-            {
-                projectDir = Path.GetDirectoryName(projectDir);
-            }
-
-            return Path.GetFullPath(projectDir.TrimEnd(Path.DirectorySeparatorChar));
         }
     }
 }
