@@ -8,7 +8,9 @@ using Microsoft.Framework.Runtime.Common.DependencyInjection;
 using Microsoft.Framework.Runtime.FileSystem;
 using Microsoft.Framework.Runtime.Loader;
 using Microsoft.Framework.Runtime.DependencyManagement;
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using NuGet;
 
 namespace Microsoft.Framework.Runtime
@@ -42,23 +44,47 @@ namespace Microsoft.Framework.Runtime
             ProjectDepencyProvider = new ProjectReferenceDependencyProvider(ProjectResolver);
             var unresolvedDependencyProvider = new UnresolvedDependencyProvider();
 
-            var projectLockJsonPath = Path.Combine(ProjectDirectory, LockFileFormat.LockFileName);
-            if (File.Exists(projectLockJsonPath))
-            {
-                var lockFileFormat = new LockFileFormat();
-                var lockFile = lockFileFormat.Read(projectLockJsonPath);
-                NuGetDependencyProvider.ApplyLockFile(lockFile);
+            var projectName = PathUtility.GetDirectoryName(ProjectDirectory);
 
-                DependencyWalker = new DependencyWalker(new IDependencyProvider[] {
-                    ProjectDepencyProvider,
-                    NuGetDependencyProvider,
-                    referenceAssemblyDependencyResolver,
-                    gacDependencyResolver,
-                    unresolvedDependencyProvider
-                });
+            Project project;
+            if (ProjectResolver.TryResolveProject(projectName, out project))
+            {
+                Project = project;
             }
             else
             {
+                throw new InvalidOperationException(
+                    string.Format("Unable to resolve project '{0}' from {1}", projectName, ProjectDirectory));
+            }
+
+            var projectLockJsonPath = Path.Combine(ProjectDirectory, LockFileFormat.LockFileName);
+            var lockFileExists = File.Exists(projectLockJsonPath);
+            var validLockFile = false;
+
+            if (lockFileExists)
+            {
+                var lockFileFormat = new LockFileFormat();
+                var lockFile = lockFileFormat.Read(projectLockJsonPath);
+                validLockFile = IsValidLockFile(lockFile);
+
+                if (validLockFile)
+                {
+                    NuGetDependencyProvider.ApplyLockFile(lockFile);
+
+                    DependencyWalker = new DependencyWalker(new IDependencyProvider[] {
+                        ProjectDepencyProvider,
+                        NuGetDependencyProvider,
+                        referenceAssemblyDependencyResolver,
+                        gacDependencyResolver,
+                        unresolvedDependencyProvider
+                    });
+                }
+            }
+
+            if (!lockFileExists || !validLockFile)
+            {
+                // If we are unable to apply the lockfile, we don't add NuGetDependencyProvider to DependencyWalker
+                // It will leave all NuGet packages unresolved and give error message asking users to run "kpm restore"
                 DependencyWalker = new DependencyWalker(new IDependencyProvider[] {
                     ProjectDepencyProvider,
                     referenceAssemblyDependencyResolver,
@@ -80,14 +106,6 @@ namespace Microsoft.Framework.Runtime
             AssemblyLoadContextFactory = loadContextFactory ?? new RuntimeLoadContextFactory(ServiceProvider);
             namedCacheDependencyProvider = namedCacheDependencyProvider ?? NamedCacheDependencyProvider.Empty;
 
-            var projectName = PathUtility.GetDirectoryName(ProjectDirectory);
-
-            Project project;
-            if (ProjectResolver.TryResolveProject(projectName, out project))
-            {
-                Project = project;
-            }
-
             // Default services
             _serviceProvider.Add(typeof(IApplicationEnvironment), new ApplicationEnvironment(Project, targetFramework, configuration));
             _serviceProvider.Add(typeof(IFileWatcher), NoopWatcher.Instance);
@@ -105,6 +123,48 @@ namespace Microsoft.Framework.Runtime
 
             var compilerOptionsProvider = new CompilerOptionsProvider(ProjectResolver);
             _serviceProvider.Add(typeof(ICompilerOptionsProvider), compilerOptionsProvider);
+        }
+
+        private bool IsValidLockFile(LockFile lockFile)
+        {
+            var actualTargetFrameworks = Project.GetTargetFrameworks();
+
+            // The lock file should contain dependencies for each framework plus dependencies shared by all frameworks
+            if (lockFile.ProjectFileDependencyGroups.Count != actualTargetFrameworks.Count() + 1)
+            {
+                return false;
+            }
+
+            foreach (var group in lockFile.ProjectFileDependencyGroups)
+            {
+                IOrderedEnumerable<string> actualDependencies;
+                var expectedDependencies = group.Dependencies.OrderBy(x => x);
+
+                // If the framework name is empty, the associated dependencies are shared by all frameworks
+                if (string.IsNullOrEmpty(group.FrameworkName))
+                {
+                    actualDependencies = Project.Dependencies.Select(x => x.LibraryRange.ToString()).OrderBy(x => x);
+                }
+                else
+                {
+                    var framework = actualTargetFrameworks
+                        .FirstOrDefault(f =>
+                            string.Equals(f.FrameworkName.ToString(), group.FrameworkName, StringComparison.Ordinal));
+                    if (framework == null)
+                    {
+                        return false;
+                    }
+
+                    actualDependencies = framework.Dependencies.Select(d => d.LibraryRange.ToString()).OrderBy(x => x);
+                }
+
+                if (!actualDependencies.SequenceEqual(expectedDependencies))
+                {
+                    return false;
+                }
+            }
+
+            return true;
         }
 
         public void AddService(Type type, object instance, bool includeInManifest)

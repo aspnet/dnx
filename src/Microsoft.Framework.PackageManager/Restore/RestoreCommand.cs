@@ -480,7 +480,7 @@ namespace Microsoft.Framework.PackageManager
             if (success && !useLockFile)
             {
                 Reports.Information.WriteLine(string.Format("Writing lock file {0}", projectLockFilePath.White().Bold()));
-                WriteLockFile(projectLockFilePath, graphItems, new PackageRepository(packagesDirectory));
+                WriteLockFile(projectLockFilePath, project, graphItems, new PackageRepository(packagesDirectory));
             }
 
             if (!ScriptExecutor.Execute(project, "postrestore", getVariable))
@@ -537,7 +537,7 @@ namespace Microsoft.Framework.PackageManager
             return Task.FromResult(lockFileFormat.Read(projectLockFilePath));
         }
 
-        private void WriteLockFile(string projectLockFilePath, List<GraphItem> graphItems,
+        private void WriteLockFile(string projectLockFilePath, Runtime.Project project, List<GraphItem> graphItems,
             PackageRepository repository)
         {
             var lockFile = new LockFile();
@@ -572,6 +572,17 @@ namespace Microsoft.Framework.PackageManager
                         lockFile.Libraries.Add(lockFileLib);
                     }
                 }
+            }
+
+            // Use empty string as the key of dependencies shared by all frameworks
+            lockFile.ProjectFileDependencyGroups.Add(new ProjectFileDependencyGroup(
+                string.Empty,
+                project.Dependencies.Select(x => x.LibraryRange.ToString())));
+            foreach (var frameworkInfo in project.GetTargetFrameworks())
+            {
+                lockFile.ProjectFileDependencyGroups.Add(new ProjectFileDependencyGroup(
+                    frameworkInfo.FrameworkName.ToString(),
+                    frameworkInfo.Dependencies.Select(x => x.LibraryRange.ToString())));
             }
 
             var lockFileFormat = new LockFileFormat();

@@ -9,6 +9,8 @@ namespace Microsoft.Framework.Runtime.DependencyManagement
     public class LockFile
     {
         public bool Islocked { get; set; }
+        public IList<ProjectFileDependencyGroup> ProjectFileDependencyGroups { get; set; } =
+            new List<ProjectFileDependencyGroup>();
         public IList<LockFileLibrary> Libraries { get; set; } = new List<LockFileLibrary>();
     }
 }

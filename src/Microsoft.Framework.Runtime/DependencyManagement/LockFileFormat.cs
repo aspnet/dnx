@@ -70,6 +70,7 @@ namespace Microsoft.Framework.Runtime.DependencyManagement
         {
             var lockFile = new LockFile();
             lockFile.Islocked = ReadBool(cursor, "locked", defaultValue: false);
+            lockFile.ProjectFileDependencyGroups = ReadObject(cursor["projectFileDependencyGroups"] as JObject, ReadProjectFileDependencyGroup);
             lockFile.Libraries = ReadObject(cursor["libraries"] as JObject, ReadLibrary);
             return lockFile;
         }
@@ -79,6 +80,8 @@ namespace Microsoft.Framework.Runtime.DependencyManagement
             var json = new JObject();
             json["locked"] = new JValue(lockFile.Islocked);
             json["version"] = new JValue(1);
+            json["projectFileDependencyGroups"] = WriteObject(lockFile.ProjectFileDependencyGroups,
+                WriteProjectFileDependencyGroup);
             json["libraries"] = WriteObject(lockFile.Libraries, WriteLibrary);
             return json;
         }
@@ -111,6 +114,20 @@ namespace Microsoft.Framework.Runtime.DependencyManagement
             return new JProperty(
                 library.Name + "/" + library.Version.ToString(),
                 json);
+        }
+
+        private ProjectFileDependencyGroup ReadProjectFileDependencyGroup(string property, JToken json)
+        {
+            return new ProjectFileDependencyGroup(
+                property,
+                ReadArray(json as JArray, ReadString));
+        }
+
+        private JProperty WriteProjectFileDependencyGroup(ProjectFileDependencyGroup frameworkInfo)
+        {
+            return new JProperty(
+                frameworkInfo.FrameworkName,
+                WriteArray(frameworkInfo.Dependencies, WriteString));
         }
 
         private IList<FrameworkAssemblyReference> ReadFrameworkAssemblies(JObject json)

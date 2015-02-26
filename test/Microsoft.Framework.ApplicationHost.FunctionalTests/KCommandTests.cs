@@ -94,7 +94,7 @@ namespace Microsoft.Framework.ApplicationHost
                     environment: new Dictionary<string, string> { { EnvironmentNames.AppBase, emptyFolder } });
 
                 Assert.NotEqual(0, exitCode);
-                Assert.Contains("Unable to locate project.json", stdErr);
+                Assert.Contains("Unable to resolve project", stdErr);
             }
         }
 
