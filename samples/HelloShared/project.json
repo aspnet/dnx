@@ -1,15 +1,14 @@
 {
-    "version": "0.1-beta-*",
-    "dependencies": { },
-    "shared": "*.cs",
-    "frameworks": {
-        "aspnet50": { },
-        "aspnet50": { },
-        "aspnetcore50": {
-            "dependencies": {
-                "System.Linq": "4.0.0-beta-*",
-                "System.Runtime": "4.0.20-beta-*"
-            }
-        }
+  "version": "0.1-beta-beta3",
+  "dependencies": {},
+  "shared": "*.cs",
+  "frameworks": {
+    "aspnet50": {},
+    "aspnetcore50": {
+      "dependencies": {
+        "System.Linq": "4.0.0-beta-22605",
+        "System.Runtime": "4.0.20-beta-22605"
+      }
     }
+  }
 }

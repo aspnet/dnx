@@ -1,13 +1,11 @@
-﻿{
-    "version": "1.0.0-*",
-    "dependencies": {
-        "LibraryBeta": "1.0.0-*"
-    },
-
-    "frameworks" : {
-        "aspnet50" : { 
-            "dependencies": {
-            }
-        }
+{
+  "version": "1.0.0-beta3",
+  "dependencies": {
+    "LibraryBeta": "1.0.0-*"
+  },
+  "frameworks": {
+    "aspnet50": {
+      "dependencies": {}
     }
+  }
 }

@@ -1,47 +1,39 @@
 {
-    "version": "0.1-beta-*",
-    "exclude": "more/*.cs",
-    "dependencies": {
-        "HelloShared": { "version": "0.1-beta-*", "type": "build" },
-        "Microsoft.CodeAnalysis.CSharp": "1.0.0-rc1-*"
+  "version": "0.1-beta-beta3",
+  "exclude": "more/*.cs",
+  "dependencies": {
+    "HelloShared": {
+      "version": "0.1-beta-*",
+      "type": "build"
     },
-    "commands": {
-        "hi": "HelloWorld --mode amazing",
-        "run": "HelloWorld I can customize the default command"
+    "Microsoft.CodeAnalysis.CSharp": "1.0.0-rc1"
+  },
+  "commands": {
+    "hi": "HelloWorld --mode amazing",
+    "run": "HelloWorld I can customize the default command"
+  },
+  "frameworks": {
+    "aspnet50": {
+      "frameworkAssemblies": {
+        "System.Collections": "",
+        "System.IO": "",
+        "System.Runtime": "",
+        "System.Xml": "",
+        "System.Xml.Linq": "",
+        "System.Threading.Tasks": "",
+        "System.Text.Encoding": ""
+      }
     },
-    "frameworks": {
-        "aspnet50": {
-            "frameworkAssemblies": {
-                "System.Collections": "",
-                "System.IO": "",
-                "System.Runtime": "",
-                "System.Xml": "",
-                "System.Xml.Linq": "",
-                "System.Threading.Tasks": "",
-                "System.Text.Encoding": ""
-            }
-        },
-        "aspnet50": {
-            "frameworkAssemblies": {
-                "System.Collections": "",
-                "System.IO": "",
-                "System.Runtime": "",
-                "System.Xml": "",
-                "System.Xml.Linq": "",
-                "System.Threading.Tasks": "",
-                "System.Text.Encoding": ""
-            }
-        },
-        "aspnetcore50": {
-            "dependencies": {
-                "System.IO": "4.0.10-beta-*",
-                "System.Console": "4.0.0-beta-*",
-                "System.Linq": "4.0.0-beta-*",
-                "System.Reflection": "4.0.10-beta-*",
-                "System.Runtime": "4.0.20-beta-*",
-                "System.Threading.Tasks": "4.0.10-beta-*",
-                "System.ComponentModel": "4.0.0-beta-*"
-            }
-        }
+    "aspnetcore50": {
+      "dependencies": {
+        "System.IO": "4.0.10-beta-22605",
+        "System.Console": "4.0.0-beta-22605",
+        "System.Linq": "4.0.0-beta-22605",
+        "System.Reflection": "4.0.10-beta-22605",
+        "System.Runtime": "4.0.20-beta-22605",
+        "System.Threading.Tasks": "4.0.10-beta-22605",
+        "System.ComponentModel": "4.0.0-beta-22605"
+      }
     }
+  }
 }

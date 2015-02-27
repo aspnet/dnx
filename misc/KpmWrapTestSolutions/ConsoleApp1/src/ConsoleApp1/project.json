@@ -1,12 +1,12 @@
-﻿{
-    "version": "1.0.0-*",
-    "dependencies": {
-        "LibraryAlpha": "1.0.0-*"
-    },
-    "commands": { 
-        "run" : "run"
-    },
-    "frameworks" : {
-        "aspnet50" : { }
-    }
+{
+  "version": "1.0.0-beta3",
+  "dependencies": {
+    "LibraryAlpha": "1.0.0-*"
+  },
+  "commands": {
+    "run": "run"
+  },
+  "frameworks": {
+    "aspnet50": {}
+  }
 }

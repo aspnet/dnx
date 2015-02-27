@@ -1,19 +1,27 @@
 {
-    "version": "1.0.0-*",
-    "compilationOptions": { "define": [ "TRACE" ], "allowUnsafe": true, "warningsAsErrors": true },
-    "dependencies": {
-        "kre.hosting.shared": "1.0.0-*",
-        "Microsoft.Framework.CommandLineUtils": { "version": "1.0.0-*", "type": "build" },
-        "Microsoft.Framework.Runtime.Common": "1.0.0-*",
-        "Microsoft.Framework.Runtime.Loader": "1.0.0-*"
+  "version": "1.0.0-beta3",
+  "compilationOptions": {
+    "define": [
+      "TRACE"
+    ],
+    "allowUnsafe": true,
+    "warningsAsErrors": true
+  },
+  "dependencies": {
+    "kre.hosting.shared": "1.0.0-beta3",
+    "Microsoft.Framework.CommandLineUtils": {
+      "version": "1.0.0-beta3",
+      "type": "build"
     },
-    "frameworks": {
-        "aspnet50": { }
-    },
-
-    "scripts": {
-        "postbuild": [
-            "%project:Directory%/../../build/batchcopy %project:BuildOutputDir%/Debug/aspnet50/*.* %project:Directory%/../../artifacts/build/kre-clr-win-x86/bin"
-        ]
-    }
+    "Microsoft.Framework.Runtime.Common": "1.0.0-beta3",
+    "Microsoft.Framework.Runtime.Loader": "1.0.0-beta3"
+  },
+  "frameworks": {
+    "aspnet50": {}
+  },
+  "scripts": {
+    "postbuild": [
+      "%project:Directory%/../../build/batchcopy %project:BuildOutputDir%/Debug/aspnet50/*.* %project:Directory%/../../artifacts/build/kre-clr-win-x86/bin"
+    ]
+  }
 }

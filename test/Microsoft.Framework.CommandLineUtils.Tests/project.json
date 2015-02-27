@@ -1,15 +1,13 @@
 {
-    "dependencies": {
-        "Microsoft.Framework.CommandLineUtils": "1.0.0-*",
-        "xunit.runner.kre": "1.0.0-*"
-    },
-
-    "frameworks": {
-        "aspnet50": { }
-    },
-
-    "commands": {
-        "run": "xunit.runner.kre",
-        "test": "xunit.runner.kre"
-    }
+  "dependencies": {
+    "Microsoft.Framework.CommandLineUtils": "1.0.0-beta3",
+    "xunit.runner.kre": "1.0.0-beta3"
+  },
+  "frameworks": {
+    "aspnet50": {}
+  },
+  "commands": {
+    "run": "xunit.runner.kre",
+    "test": "xunit.runner.kre"
+  }
 }

@@ -1,31 +1,31 @@
 {
-    "version": "1.0.0-*",
-    "description": "ASP.NET 5 runtime infrastructure for assembly load contexts.",
-    "dependencies": {
-        "Microsoft.Framework.Runtime.Interfaces": { "version": "1.0.0-*", "type": "build" }
-    },
-
-    "frameworks": {
-        "aspnet50": {
-            "dependencies": {
-            }
-        },
-        "aspnetcore50": {
-            "dependencies": {
-                "System.Collections": "4.0.10-beta-*",
-                "System.Runtime.Loader": "4.0.0-beta-*",
-                "System.IO.FileSystem": "4.0.0-beta-*",
-                "System.AppContext": "4.0.0-beta-*",
-                "System.Threading": "4.0.10-beta-*"
-            }
-        }
-    },
-
-    "scripts": {
-        "postbuild": [
-            "%project:Directory%/../../build/batchcopy %project:BuildOutputDir%/Debug/aspnet50/*.* %project:Directory%/../../artifacts/build/kre-clr-win-x86/bin",
-            "%project:Directory%/../../build/batchcopy %project:BuildOutputDir%/Debug/aspnet50/*.* %project:Directory%/../../artifacts/build/kre-mono/bin",
-            "%project:Directory%/../../build/batchcopy %project:BuildOutputDir%/Debug/aspnetcore50/*.* %project:Directory%/../../artifacts/build/kre-coreclr-win-x86/bin"
-        ]
+  "version": "1.0.0-beta3",
+  "description": "ASP.NET 5 runtime infrastructure for assembly load contexts.",
+  "dependencies": {
+    "Microsoft.Framework.Runtime.Interfaces": {
+      "version": "1.0.0-beta3",
+      "type": "build"
     }
+  },
+  "frameworks": {
+    "aspnet50": {
+      "dependencies": {}
+    },
+    "aspnetcore50": {
+      "dependencies": {
+        "System.Collections": "4.0.10-beta-22605",
+        "System.Runtime.Loader": "4.0.0-beta-22605",
+        "System.IO.FileSystem": "4.0.0-beta-22605",
+        "System.AppContext": "4.0.0-beta-22605",
+        "System.Threading": "4.0.10-beta-22605"
+      }
+    }
+  },
+  "scripts": {
+    "postbuild": [
+      "%project:Directory%/../../build/batchcopy %project:BuildOutputDir%/Debug/aspnet50/*.* %project:Directory%/../../artifacts/build/kre-clr-win-x86/bin",
+      "%project:Directory%/../../build/batchcopy %project:BuildOutputDir%/Debug/aspnet50/*.* %project:Directory%/../../artifacts/build/kre-mono/bin",
+      "%project:Directory%/../../build/batchcopy %project:BuildOutputDir%/Debug/aspnetcore50/*.* %project:Directory%/../../artifacts/build/kre-coreclr-win-x86/bin"
+    ]
+  }
 }

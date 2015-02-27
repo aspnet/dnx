@@ -1,14 +1,17 @@
 {
-    "dependencies": {
-        "Microsoft.Framework.Project": "1.0.0-*",
-        "Microsoft.Framework.Runtime": "1.0.0-*",
-        "Microsoft.Framework.Runtime.Common": "1.0.0-*",
-        "Microsoft.Framework.CommandLineUtils": { "version": "1.0.0-*", "type": "build" }
-    },
-    "commands": {
-        "dpa": "run"
-    },
-    "frameworks": {
-        "aspnet50": { }
+  "dependencies": {
+    "Microsoft.Framework.Project": "1.0.0-beta3",
+    "Microsoft.Framework.Runtime": "1.0.0-beta3",
+    "Microsoft.Framework.Runtime.Common": "1.0.0-beta3",
+    "Microsoft.Framework.CommandLineUtils": {
+      "version": "1.0.0-beta3",
+      "type": "build"
     }
+  },
+  "commands": {
+    "dpa": "run"
+  },
+  "frameworks": {
+    "aspnet50": {}
+  }
 }

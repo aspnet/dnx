@@ -1,18 +1,20 @@
 {
-    "version": "1.0.0-*",
-    "description": "ASP.NET 5 assembly neutral interfaces to take advantage of capabilities exposed by the runtime. The interfaces are embedded resources that will become part of your ASP.NET 5 application during build.",
-    "compilationOptions": { "warningsAsErrors": true },
-    "frameworks": {
-        "aspnet50": { },
-        "aspnetcore50": {
-            "dependencies": {
-                "System.IO": "4.0.10-beta-*",
-                "System.Reflection": "4.0.10-beta-*",
-                "System.Runtime": "4.0.20-beta-*",
-                "System.Runtime.Extensions": "4.0.10-beta-*",
-                "System.Threading.Tasks": "4.0.10-beta-*",
-                "System.ComponentModel": "4.0.0-beta-*"
-            }
-        }
+  "version": "1.0.0-beta3",
+  "description": "ASP.NET 5 assembly neutral interfaces to take advantage of capabilities exposed by the runtime. The interfaces are embedded resources that will become part of your ASP.NET 5 application during build.",
+  "compilationOptions": {
+    "warningsAsErrors": true
+  },
+  "frameworks": {
+    "aspnet50": {},
+    "aspnetcore50": {
+      "dependencies": {
+        "System.IO": "4.0.10-beta-22605",
+        "System.Reflection": "4.0.10-beta-22605",
+        "System.Runtime": "4.0.20-beta-22605",
+        "System.Runtime.Extensions": "4.0.10-beta-22605",
+        "System.Threading.Tasks": "4.0.10-beta-22605",
+        "System.ComponentModel": "4.0.0-beta-22605"
+      }
     }
+  }
 }
