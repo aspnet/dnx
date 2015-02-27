@@ -111,6 +111,7 @@ namespace Microsoft.Framework.Runtime
                     throw new InvalidOperationException(string.Format("Can't find file {0}", literalRelativePath));
                 }
 
+                // TODO: extract utility like NuGet.PathUtility.GetPathWithForwardSlashes()
                 literalIncludedFiles.Add(fullPath.Replace('\\', '/'));
             }
 

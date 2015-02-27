@@ -518,7 +518,7 @@ namespace NuGet
                 return;
             }
 
-            var entry = package.CreateEntry(path.Replace('\\', '/'), CompressionLevel.Optimal);
+            var entry = package.CreateEntry(PathUtility.GetPathWithForwardSlashes(path), CompressionLevel.Optimal);
             using (var stream = entry.Open())
             {
                 sourceStream.CopyTo(stream);

@@ -132,5 +132,27 @@ namespace NuGet
             path = path.TrimEnd(Path.DirectorySeparatorChar);
             return path.Substring(Path.GetDirectoryName(path).Length).Trim(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
         }
+
+        public static string GetPathWithForwardSlashes(string path)
+        {
+            return path.Replace('\\', '/');
+        }
+
+        public static string GetPathWithBackSlashes(string path)
+        {
+            return path.Replace('/', '\\');
+        }
+
+        public static string GetPathWithDirectorySeparator(string path)
+        {
+            if (Path.DirectorySeparatorChar == '/')
+            {
+                return GetPathWithForwardSlashes(path);
+            }
+            else
+            {
+                return GetPathWithBackSlashes(path);
+            }
+        }
     }
 }

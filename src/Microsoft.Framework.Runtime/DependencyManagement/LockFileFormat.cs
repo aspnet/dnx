@@ -14,7 +14,7 @@ namespace Microsoft.Framework.Runtime.DependencyManagement
 {
     public class LockFileFormat
     {
-        public static readonly int Version = -10000;
+        public const int Version = -9999;
         public const string LockFileName = "project.lock.json";
 
         public LockFile Read(string filePath)
@@ -99,7 +99,7 @@ namespace Microsoft.Framework.Runtime.DependencyManagement
             }
             library.Sha = ReadString(json["sha"]);
             library.FrameworkGroups = ReadObject(json["frameworks"] as JObject, ReadFrameworkGroup);
-            library.Files = ReadArray(json["files"] as JArray, ReadString);
+            library.Files = ReadPathArray(json["files"] as JArray, ReadString);
             return library;
         }
 
@@ -108,7 +108,7 @@ namespace Microsoft.Framework.Runtime.DependencyManagement
             var json = new JObject();
             json["sha"] = WriteString(library.Sha);
             WriteObject(json, "frameworks", library.FrameworkGroups, WriteFrameworkGroup);
-            WriteArray(json, "files", library.Files, WriteString);
+            WritePathArray(json, "files", library.Files, WriteString);
             return new JProperty(
                 library.Name + "/" + library.Version.ToString(),
                 json);
@@ -121,8 +121,8 @@ namespace Microsoft.Framework.Runtime.DependencyManagement
             group.TargetFramework = new FrameworkName(property);
             group.Dependencies = ReadObject(json["dependencies"] as JObject, ReadPackageDependency);
             group.FrameworkAssemblies = ReadArray(json["frameworkAssemblies"] as JArray, ReadFrameworkAssemblyReference);
-            group.RuntimeAssemblies = ReadArray(json["runtimeAssemblies"] as JArray, ReadString);
-            group.CompileTimeAssemblies = ReadArray(json["compileAssemblies"] as JArray, ReadString);
+            group.RuntimeAssemblies = ReadPathArray(json["runtimeAssemblies"] as JArray, ReadString);
+            group.CompileTimeAssemblies = ReadPathArray(json["compileAssemblies"] as JArray, ReadString);
 
             return group;
         }
@@ -132,8 +132,8 @@ namespace Microsoft.Framework.Runtime.DependencyManagement
             var json = new JObject();
             json["dependencies"] = WriteObject(group.Dependencies, WritePackageDependency);
             json["frameworkAssemblies"] = WriteArray(group.FrameworkAssemblies, WriteFrameworkAssemblyReference);
-            json["runtimeAssemblies"] = WriteArray(group.RuntimeAssemblies, WriteString);
-            json["compileAssemblies"] = WriteArray(group.CompileTimeAssemblies, WriteString);
+            json["runtimeAssemblies"] = WritePathArray(group.RuntimeAssemblies, WriteString);
+            json["compileAssemblies"] = WritePathArray(group.CompileTimeAssemblies, WriteString);
 
             return new JProperty(group.TargetFramework.FullName, json);
         }
@@ -262,14 +262,14 @@ namespace Microsoft.Framework.Runtime.DependencyManagement
         private IPackageFile ReadPackageFile(string property, JToken json)
         {
             var file = new LockFilePackageFile();
-            file.Path = property;
+            file.Path = PathUtility.GetPathWithDirectorySeparator(property);
             return file;
         }
 
         private JProperty WritePackageFile(IPackageFile item)
         {
             var json = new JObject();
-            return new JProperty(item.Path, new JObject());
+            return new JProperty(PathUtility.GetPathWithForwardSlashes(item.Path), new JObject());
         }
 
         private IList<TItem> ReadArray<TItem>(JArray json, Func<JToken, TItem> readItem)
@@ -286,12 +286,22 @@ namespace Microsoft.Framework.Runtime.DependencyManagement
             return items;
         }
 
+        private IList<string> ReadPathArray(JArray json, Func<JToken, string> readItem)
+        {
+            return ReadArray(json, readItem).Select(f => PathUtility.GetPathWithDirectorySeparator(f)).ToList();
+        }
+
         private void WriteArray<TItem>(JToken json, string property, IEnumerable<TItem> items, Func<TItem, JToken> writeItem)
         {
             if (items.Any())
             {
                 json[property] = WriteArray(items, writeItem);
             }
+        }
+
+        private void WritePathArray(JToken json, string property, IEnumerable<string> items, Func<string, JToken> writeItem)
+        {
+            WriteArray(json, property, items.Select(f => PathUtility.GetPathWithForwardSlashes(f)), writeItem);
         }
 
         private JArray WriteArray<TItem>(IEnumerable<TItem> items, Func<TItem, JToken> writeItem)
@@ -302,6 +312,11 @@ namespace Microsoft.Framework.Runtime.DependencyManagement
                 array.Add(writeItem(item));
             }
             return array;
+        }
+
+        private JArray WritePathArray(IEnumerable<string> items, Func<string, JToken> writeItem)
+        {
+            return WriteArray(items.Select(f => PathUtility.GetPathWithForwardSlashes(f)), writeItem);
         }
 
         private IList<TItem> ReadObject<TItem>(JObject json, Func<string, JToken, TItem> readItem)

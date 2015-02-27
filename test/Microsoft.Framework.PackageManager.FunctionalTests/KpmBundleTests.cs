@@ -993,7 +993,7 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
         public void BundleWithNoSourceOptionGeneratesLockFileOnClr(string flavor, string os, string architecture)
         {
             const string testApp = "NoDependencies";
-            const string expectedOutputStructure = @"{
+            string expectedOutputStructure = @"{
   '.': ['hello', 'hello.cmd'],
   'approot': {
     'global.json': '',
@@ -1002,7 +1002,7 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
         '1.0.0': {
           '.': ['NoDependencies.1.0.0.nupkg', 'NoDependencies.1.0.0.nupkg.sha512', 'NoDependencies.nuspec'],
           'app': ['hello.cmd', 'hello.sh', 'project.json'],
-          'root': ['project.json', 'project.lock.json'],
+          'root': ['project.json', 'LOCKFILE_NAME'],
           'lib': {
             'dnx451': ['NoDependencies.dll', 'NoDependencies.xml']
           }
@@ -1010,10 +1010,10 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
       }
     }
   }
-}";
-            const string expectedLockFileContents = @"{
+}".Replace("LOCKFILE_NAME", LockFileFormat.LockFileName);
+            string expectedLockFileContents = @"{
   ""locked"": false,
-  ""version"": -10000,
+  ""version"": LOCKFILEFORMAT_VERSION,
   ""projectFileDependencyGroups"": {
     ""DNX,Version=v4.5.1"": [],
     """": [
@@ -1033,10 +1033,10 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
             ""Microsoft.CSharp""
           ],
           ""runtimeAssemblies"": [
-            ""lib\\dnx451\\NoDependencies.dll""
+            ""lib/dnx451/NoDependencies.dll""
           ],
           ""compileAssemblies"": [
-            ""lib\\dnx451\\NoDependencies.dll""
+            ""lib/dnx451/NoDependencies.dll""
           ]
         }
       },
@@ -1044,16 +1044,16 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
         ""NoDependencies.1.0.0.nupkg"",
         ""NoDependencies.1.0.0.nupkg.sha512"",
         ""NoDependencies.nuspec"",
-        ""app\\hello.cmd"",
-        ""app\\hello.sh"",
-        ""app\\project.json"",
-        ""lib\\dnx451\\NoDependencies.dll"",
-        ""lib\\dnx451\\NoDependencies.xml"",
-        ""root\\project.json""
+        ""app/hello.cmd"",
+        ""app/hello.sh"",
+        ""app/project.json"",
+        ""lib/dnx451/NoDependencies.dll"",
+        ""lib/dnx451/NoDependencies.xml"",
+        ""root/project.json""
       ]
     }
   }
-}";
+}".Replace("LOCKFILEFORMAT_VERSION", LockFileFormat.Version.ToString());
 
             using (var runtimeHomeDir = TestUtils.GetRuntimeHomeDir(flavor, os, architecture))
             using (var tempDir = TestUtils.CreateTempDir())
@@ -1081,7 +1081,7 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
                     .MatchDirectoryOnDisk(bundleOutputPath, compareFileContents: false));
 
                 var outputLockFilePath = Path.Combine(bundleOutputPath,
-                    "approot", "packages", testApp, "1.0.0", "root", "project.lock.json");
+                    "approot", "packages", testApp, "1.0.0", "root", LockFileFormat.LockFileName);
                 var nupkgSha = File.ReadAllText(Path.Combine(bundleOutputPath,
                     "approot", "packages", testApp, "1.0.0",$"{testApp}.1.0.0.nupkg.sha512"));
 
@@ -1096,7 +1096,7 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
         public void BundleWithNoSourceOptionUpdatesLockFileOnClr(string flavor, string os, string architecture)
         {
             const string testApp = "NoDependencies";
-            const string expectedOutputStructure = @"{
+            string expectedOutputStructure = @"{
   '.': ['hello', 'hello.cmd'],
   'approot': {
     'global.json': '',
@@ -1105,7 +1105,7 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
         '1.0.0': {
           '.': ['NoDependencies.1.0.0.nupkg', 'NoDependencies.1.0.0.nupkg.sha512', 'NoDependencies.nuspec'],
           'app': ['hello.cmd', 'hello.sh', 'project.json'],
-          'root': ['project.json', 'project.lock.json'],
+          'root': ['project.json', 'LOCKFILE_NAME'],
           'lib': {
             'dnx451': ['NoDependencies.dll', 'NoDependencies.xml']
           }
@@ -1113,10 +1113,10 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
       }
     }
   }
-}";
+}".Replace("LOCKFILE_NAME", LockFileFormat.LockFileName);
             var expectedLockFileContents = @"{
   ""locked"": false,
-  ""version"": -10000,
+  ""version"": LOCKFILEFORMAT_VERSION,
   ""projectFileDependencyGroups"": {
     ""DNX,Version=v4.5.1"": [],
     """": [
@@ -1136,10 +1136,10 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
             ""Microsoft.CSharp""
           ],
           ""runtimeAssemblies"": [
-            ""lib\\dnx451\\NoDependencies.dll""
+            ""lib/dnx451/NoDependencies.dll""
           ],
           ""compileAssemblies"": [
-            ""lib\\dnx451\\NoDependencies.dll""
+            ""lib/dnx451/NoDependencies.dll""
           ]
         }
       },
@@ -1147,17 +1147,18 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
         ""NoDependencies.1.0.0.nupkg"",
         ""NoDependencies.1.0.0.nupkg.sha512"",
         ""NoDependencies.nuspec"",
-        ""app\\hello.cmd"",
-        ""app\\hello.sh"",
-        ""app\\project.json"",
-        ""lib\\dnx451\\NoDependencies.dll"",
-        ""lib\\dnx451\\NoDependencies.xml"",
-        ""root\\project.json"",
-        ""root\\project.lock.json""
+        ""app/hello.cmd"",
+        ""app/hello.sh"",
+        ""app/project.json"",
+        ""lib/dnx451/NoDependencies.dll"",
+        ""lib/dnx451/NoDependencies.xml"",
+        ""root/project.json"",
+        ""root/LOCKFILE_NAME""
       ]
     }
   }
-}";
+}".Replace("LOCKFILEFORMAT_VERSION", LockFileFormat.Version.ToString())
+.Replace("LOCKFILE_NAME", LockFileFormat.LockFileName);
 
             using (var runtimeHomeDir = TestUtils.GetRuntimeHomeDir(flavor, os, architecture))
             using (var tempDir = TestUtils.CreateTempDir())
@@ -1189,7 +1190,7 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
                     .MatchDirectoryOnDisk(bundleOutputPath, compareFileContents: false));
 
                 var outputLockFilePath = Path.Combine(bundleOutputPath,
-                    "approot", "packages", testApp, "1.0.0", "root", "project.lock.json");
+                    "approot", "packages", testApp, "1.0.0", "root", LockFileFormat.LockFileName);
                 var nupkgSha = File.ReadAllText(Path.Combine(bundleOutputPath,
                     "approot", "packages", testApp, "1.0.0", $"{testApp}.1.0.0.nupkg.sha512"));
 

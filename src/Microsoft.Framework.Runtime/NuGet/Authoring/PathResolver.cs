@@ -54,7 +54,7 @@ namespace NuGet
 
             if (Path.DirectorySeparatorChar == '/')
             {
-                pattern = Regex.Escape(wildcard.Replace('\\', '/'));
+                pattern = Regex.Escape(PathUtility.GetPathWithForwardSlashes(wildcard));
                 // regex wildcard adjustments for *nix-style file systems
                 pattern = pattern
                     .Replace(@"\*\*/", "(.*/)?") //For recursive wildcards /**/, include the current directory.

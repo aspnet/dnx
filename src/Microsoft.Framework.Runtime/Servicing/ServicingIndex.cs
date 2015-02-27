@@ -93,7 +93,7 @@ namespace Microsoft.Framework.Runtime.Servicing
             Entry entry;
             if (_entries.TryGetValue(new EntryKey(packageId, packageVersion), out entry))
             {
-                var normalizedAssetPath = assetPath.Replace('\\', '/');
+                var normalizedAssetPath = PathUtility.GetPathWithForwardSlashes(assetPath);
 
                 // Use the last entry from the index file
                 for (int i = entry.Mappings.Count - 1; i >= 0; i--)
