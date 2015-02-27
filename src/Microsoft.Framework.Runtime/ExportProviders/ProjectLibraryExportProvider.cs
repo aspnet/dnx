@@ -74,13 +74,15 @@ namespace Microsoft.Framework.Runtime
                 }
                 else
                 {
+                    var provider = project.LanguageServices?.ProjectReferenceProvider ?? Project.DefaultLangaugeService;
+
                     // Find the default project exporter
-                    var projectReferenceProvider = _projectReferenceProviders.GetOrAdd(project.LanguageServices.ProjectReferenceProvider, typeInfo =>
+                    var projectReferenceProvider = _projectReferenceProviders.GetOrAdd(provider, typeInfo =>
                     {
                         return LanguageServices.CreateService<IProjectReferenceProvider>(_serviceProvider, _projectLoadContext.Value, typeInfo);
                     });
 
-                    Logger.TraceInformation("[{0}]: GetProjectReference({1}, {2}, {3}, {4})", project.LanguageServices.ProjectReferenceProvider.TypeName, target.Name, target.TargetFramework, target.Configuration, target.Aspect);
+                    Logger.TraceInformation("[{0}]: GetProjectReference({1}, {2}, {3}, {4})", provider.TypeName, target.Name, target.TargetFramework, target.Configuration, target.Aspect);
 
                     // Get the exports for the project dependencies
                     var projectExport = new Lazy<ILibraryExport>(() => ProjectExportProviderHelper.GetExportsRecursive(

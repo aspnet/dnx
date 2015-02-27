@@ -19,8 +19,7 @@ namespace Microsoft.Framework.Runtime
     {
         public const string ProjectFileName = "project.json";
 
-        internal static string DefaultLanguageServicesAssembly = "Microsoft.Framework.Runtime.Roslyn";
-        internal static string DefaultProjectReferenceProviderType = "Microsoft.Framework.Runtime.Roslyn.RoslynProjectReferenceProvider";
+        internal static TypeInformation DefaultLangaugeService = new TypeInformation("Microsoft.Framework.Runtime.Roslyn", "Microsoft.Framework.Runtime.Roslyn.RoslynProjectReferenceProvider");
 
         private static readonly CompilerOptions _emptyOptions = new CompilerOptions();
 
@@ -190,23 +189,17 @@ namespace Microsoft.Framework.Runtime
             // Project files
             project.Files = new ProjectFilesCollection(rawProject, project.ProjectDirectory, project.ProjectFilePath);
 
-            // Set the default loader information for projects
-            var languageServicesAssembly = DefaultLanguageServicesAssembly;
-            var projectReferenceProviderType = DefaultProjectReferenceProviderType;
-            var languageName = "C#";
-
             var languageInfo = rawProject["language"] as JObject;
 
             if (languageInfo != null)
             {
-                languageName = languageInfo.GetValue<string>("name");
-                languageServicesAssembly = languageInfo.GetValue<string>("assembly");
-                projectReferenceProviderType = languageInfo.GetValue<string>("projectReferenceProviderType");
+                var languageName = languageInfo.GetValue<string>("name") ?? "C#";
+                var languageServicesAssembly = languageInfo.GetValue<string>("assembly");
+                var projectReferenceProviderType = languageInfo.GetValue<string>("projectReferenceProviderType");
+
+                var libraryExporter = new TypeInformation(languageServicesAssembly, projectReferenceProviderType);
+                project.LanguageServices = new LanguageServices(languageName, libraryExporter);
             }
-
-            var libraryExporter = new TypeInformation(languageServicesAssembly, projectReferenceProviderType);
-
-            project.LanguageServices = new LanguageServices(languageName, libraryExporter);
 
             var commands = rawProject["commands"] as JObject;
             if (commands != null)
