@@ -73,19 +73,14 @@ namespace NuGet
                 {
                     foreach (var lockFileLibrary in _lockFileLibraries[packageId])
                     {
-                        var stringComparison = _checkPackageIdCase ? StringComparison.Ordinal : StringComparison.OrdinalIgnoreCase;
-
-                        if (lockFileLibrary.Name.Equals(packageId, stringComparison))
-                        {
-                            packages.Add(new PackageInfo(
-                                _repositoryRoot,
+                        packages.Add(new PackageInfo(
+                            _repositoryRoot,
+                            lockFileLibrary.Name,
+                            lockFileLibrary.Version,
+                            Path.Combine(
                                 lockFileLibrary.Name,
-                                lockFileLibrary.Version,
-                                Path.Combine(
-                                    lockFileLibrary.Name,
-                                    lockFileLibrary.Version.ToString()),
-                                lockFileLibrary));
-                        }
+                                lockFileLibrary.Version.ToString()),
+                            lockFileLibrary));
                     }
 
                     return packages;
