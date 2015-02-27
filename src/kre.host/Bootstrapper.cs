@@ -53,6 +53,11 @@ namespace kre.host
             string applicationBaseDirectory = AppContext.BaseDirectory;
 #endif
 
+#if ASPNETCORE50
+            // Enable flowing of culture across threads using async local
+            AppContext.SetSwitch("Switch.System.Globalization.NoAsyncCurrentCulture", false);
+#endif
+
             var framework = Environment.GetEnvironmentVariable("TARGET_FRAMEWORK") ?? Environment.GetEnvironmentVariable(EnvironmentNames.Framework);
             var configuration = Environment.GetEnvironmentVariable("TARGET_CONFIGURATION") ?? Environment.GetEnvironmentVariable(EnvironmentNames.Configuration) ?? "Debug";
 
