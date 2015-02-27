@@ -14,10 +14,12 @@ namespace Microsoft.Framework.PackageManager.Publish
     /// </summary>
     public class NativeImageGenerator
     {
+        private readonly bool _symbols;
         private readonly IDictionary<FrameworkName, NuGetDependencyResolver> _resolverLookup;
 
-        private NativeImageGenerator(IDictionary<FrameworkName, NuGetDependencyResolver> resolverLookup)
+        private NativeImageGenerator(IDictionary<FrameworkName, NuGetDependencyResolver> resolverLookup, bool symbols)
         {
+            _symbols = symbols;
             _resolverLookup = resolverLookup;
         }
 
@@ -39,7 +41,7 @@ namespace Microsoft.Framework.PackageManager.Publish
                     CrossgenPath = Path.Combine(runtimeBin, "crossgen.exe"),
                     InputPaths = ResolveOutputAssemblies(root, resolver),
                     RuntimePath = runtimeBin,
-                    Symbols = false
+                    Symbols = _symbols
                 };
 
                 var crossgenManager = new CrossgenManager(options);
@@ -149,7 +151,7 @@ namespace Microsoft.Framework.PackageManager.Publish
                 context => context.NuGetDependencyResolver
             );
 
-            return new NativeImageGenerator(contextMap);
+            return new NativeImageGenerator(contextMap, options.Symbols);
         }
     }
 }

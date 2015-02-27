@@ -8,6 +8,8 @@ namespace Microsoft.Framework.PackageManager.Publish
 {
     public class PublishOptions
     {
+        public bool Symbols { get; set; }
+
         public string OutputDir { get; set; }
 
         public string ProjectDir { get; set; }
