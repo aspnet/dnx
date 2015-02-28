@@ -3,8 +3,8 @@
 
 
 using System;
+using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
 using Microsoft.Framework.Runtime;
@@ -17,14 +17,14 @@ namespace kre.host
 {
     public class Bootstrapper
     {
-        private readonly string[] _searchPaths;
+        private readonly IEnumerable<string> _searchPaths;
 
-        public Bootstrapper(string[] searchPaths)
+        public Bootstrapper(IEnumerable<string> searchPaths)
         {
             _searchPaths = searchPaths;
         }
 
-        public Task<int> RunAsync(string[] args)
+        public Task<int> RunAsync(List<string> args)
         {
             var accessor = LoadContextAccessor.Instance;
             var container = new LoaderContainer();
@@ -35,7 +35,8 @@ namespace kre.host
             try
             {
                 var name = args[0];
-                var programArgs = args.Skip(1).ToArray();
+                var programArgs = new string[args.Count - 1];
+                args.CopyTo(1, programArgs, 0, programArgs.Length);
 
                 var assembly = Assembly.Load(new AssemblyName(name));
 
@@ -58,7 +59,6 @@ namespace kre.host
                 var framework = Environment.GetEnvironmentVariable("TARGET_FRAMEWORK") ?? Environment.GetEnvironmentVariable(EnvironmentNames.Framework);
                 var configuration = Environment.GetEnvironmentVariable("TARGET_CONFIGURATION") ?? Environment.GetEnvironmentVariable(EnvironmentNames.Configuration) ?? "Debug";
 
-                // TODO: Support the highest installed version
                 var targetFramework = FrameworkNameUtility.ParseFrameworkName(framework ?? "aspnet50");
 
                 var applicationEnvironment = new ApplicationEnvironment(applicationBaseDirectory,

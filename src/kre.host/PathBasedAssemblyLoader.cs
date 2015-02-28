@@ -1,6 +1,7 @@
 // Copyright (c) Microsoft Open Technologies, Inc. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
+using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
 using Microsoft.Framework.Runtime;
@@ -12,9 +13,9 @@ namespace kre.host
         private static readonly string[] _extensions = new string[] { ".dll", ".exe" };
 
         private readonly IAssemblyLoadContext _loadContext;
-        private readonly string[] _searchPaths;
+        private readonly IEnumerable<string> _searchPaths;
 
-        public PathBasedAssemblyLoader(IAssemblyLoadContextAccessor loadContextAccessor, string[] searchPaths)
+        public PathBasedAssemblyLoader(IAssemblyLoadContextAccessor loadContextAccessor, IEnumerable<string> searchPaths)
         {
             _loadContext = loadContextAccessor.Default;
             _searchPaths = searchPaths;

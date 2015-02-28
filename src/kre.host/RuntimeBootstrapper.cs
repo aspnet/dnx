@@ -4,7 +4,6 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
 using Microsoft.Framework.Runtime;
@@ -90,7 +89,7 @@ namespace kre.host
             }
 
             // Show help information if no subcommand/option was specified
-            if (!app.IsShowingInformation && !app.RemainingArguments.Any())
+            if (!app.IsShowingInformation && app.RemainingArguments.Count == 0)
             {
                 app.ShowHelp();
                 return Task.FromResult(2);
@@ -131,13 +130,13 @@ namespace kre.host
             }
 
             // Resolve the lib paths
-            string[] searchPaths = ResolveSearchPaths(optionLib.Values, app.RemainingArguments);
+            IEnumerable<string> searchPaths = ResolveSearchPaths(optionLib.Values, app.RemainingArguments);
 
             var bootstrapper = new Bootstrapper(searchPaths);
-            return bootstrapper.RunAsync(app.RemainingArguments.ToArray());
+            return bootstrapper.RunAsync(app.RemainingArguments);
         }
 
-        private static string[] ResolveSearchPaths(IEnumerable<string> libPaths, List<string> remainingArgs)
+        private static IEnumerable<string> ResolveSearchPaths(List<string> libPaths, List<string> remainingArgs)
         {
             var searchPaths = new List<string>();
 
@@ -146,15 +145,18 @@ namespace kre.host
             if (!string.IsNullOrEmpty(defaultLibPath))
             {
                 // Add the default lib folder if specified
-                searchPaths.AddRange(ExpandSearchPath(defaultLibPath));
+                ExpandSearchPath(defaultLibPath, searchPaths);
             }
 
             // Add the expanded search libs to the list of paths
-            searchPaths.AddRange(libPaths.SelectMany(ExpandSearchPath));
+            foreach (var libPath in libPaths)
+            {
+                ExpandSearchPath(libPath, searchPaths);
+            }
 
             // If a .dll or .exe is specified then turn this into
             // --lib {path to dll/exe} [dll/exe name]
-            if (remainingArgs.Any())
+            if (remainingArgs.Count > 0)
             {
                 var application = remainingArgs[0];
                 var extension = Path.GetExtension(application);
@@ -171,14 +173,18 @@ namespace kre.host
                 }
             }
 
-            return searchPaths.ToArray();
+            return searchPaths;
         }
 
-        private static IEnumerable<string> ExpandSearchPath(string libPath)
+        private static void ExpandSearchPath(string libPath, List<string> searchPaths)
         {
-            // Expand ; separated arguments
-            return libPath.Split(_libPathSeparator, StringSplitOptions.RemoveEmptyEntries)
-                          .Select(Path.GetFullPath);
+            if (libPath.IndexOf(';') >= 0)
+            {
+                foreach (var path in libPath.Split(_libPathSeparator, StringSplitOptions.RemoveEmptyEntries))
+                {
+                    searchPaths.Add(Path.GetFullPath(path));
+                }
+            }
         }
 
         private static string GetVersion()
