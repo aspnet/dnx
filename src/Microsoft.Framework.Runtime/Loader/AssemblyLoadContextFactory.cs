@@ -33,7 +33,7 @@ namespace Microsoft.Framework.Runtime.Loader
 
             public LibraryAssemblyLoadContext(ProjectAssemblyLoader projectAssemblyLoader,
                                               NuGetAssemblyLoader nugetAssemblyLoader,
-                                              IAssemblyLoadContext defaultContext) : base(defaultContext)
+                                              IAssemblyLoadContext defaultContext)
             {
                 _projectAssemblyLoader = projectAssemblyLoader;
                 _nugetAssemblyLoader = nugetAssemblyLoader;

@@ -122,7 +122,7 @@ namespace Microsoft.Framework.ApplicationHost
             var optionCompilationServer = app.Option("--port <PORT>", "The port to the compilation server", CommandOptionType.SingleValue);
             var runCmdExecuted = false;
             app.HelpOption("-?|-h|--help");
-            app.VersionOption("--version", GetVersion());
+            app.VersionOption("--version", GetVersion);
             var runCmd = app.Command("run", c =>
             {
                 // We don't actually execute "run" command here

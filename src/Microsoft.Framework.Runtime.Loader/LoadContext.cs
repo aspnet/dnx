@@ -1,7 +1,9 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
+using System.Threading;
 #if ASPNETCORE50
 using System.Runtime.Loader;
 #endif
@@ -11,34 +13,13 @@ namespace Microsoft.Framework.Runtime.Loader
 #if ASPNETCORE50
     public abstract class LoadContext : AssemblyLoadContext, IAssemblyLoadContext
     {
-        private readonly Dictionary<string, Assembly> _assemblyCache = new Dictionary<string, Assembly>(StringComparer.Ordinal);
-        private readonly IAssemblyLoadContext _defaultContext;
-
-        public LoadContext(IAssemblyLoadContext defaultContext)
-        {
-            _defaultContext = defaultContext;
-        }
+        private readonly AssemblyLoaderCache _cache = new AssemblyLoaderCache();
 
         protected override Assembly Load(AssemblyName assemblyName)
         {
             var name = assemblyName.Name;
 
-            // TODO: Make this more efficient
-            lock (_assemblyCache)
-            {
-                Assembly assembly;
-                if (!_assemblyCache.TryGetValue(name, out assembly))
-                {
-                    assembly = LoadAssembly(name);
-
-                    if (assembly != null)
-                    {
-                        _assemblyCache[name] = assembly;
-                    }
-                }
-
-                return assembly;
-            }
+            return _cache.GetOrAdd(name, LoadAssembly);
         }
 
         public Assembly Load(string name)
@@ -69,6 +50,11 @@ namespace Microsoft.Framework.Runtime.Loader
             }
 
             return LoadFromStream(assembly, assemblySymbols);
+        }
+
+        public static void InitializeDefaultContext(LoadContext loadContext)
+        {
+            AssemblyLoadContext.InitializeDefaultContext(loadContext);
         }
 
         private string GetNativeImagePath(string ilPath)
@@ -104,21 +90,40 @@ namespace Microsoft.Framework.Runtime.Loader
 #else
     public abstract class LoadContext : IAssemblyLoadContext
     {
-        internal static LoadContext Default = new DefaultLoadContext();
+        private static readonly ConcurrentDictionary<string, LoadContext> _contexts = new ConcurrentDictionary<string, LoadContext>();
 
-        protected string _contextId;
+        internal static LoadContext Default;
 
-        public LoadContext(IAssemblyLoadContext defaultContext)
+        private readonly AssemblyLoaderCache _cache = new AssemblyLoaderCache();
+
+        private string _contextId;
+
+        static LoadContext()
+        {
+            AppDomain.CurrentDomain.AssemblyResolve += ResolveAssembly;
+        }
+
+        public LoadContext()
         {
             _contextId = Guid.NewGuid().ToString();
 
-            AppDomain.CurrentDomain.AssemblyResolve += ResolveAssembly;
+            _contexts.TryAdd(_contextId, this);
+        }
+
+        public static void InitializeDefaultContext(LoadContext loadContext)
+        {
+            var old = Interlocked.CompareExchange(ref Default, loadContext, null);
+            if (old != null)
+            {
+                throw new InvalidOperationException("Default load context already set");
+            }
         }
 
         public void Dispose()
         {
-            // TODO: Remove instances of this type from the LoadContextAccessor
-            AppDomain.CurrentDomain.AssemblyResolve -= ResolveAssembly;
+            LoadContext context;
+            _contexts.TryRemove(_contextId, out context);
+            _contextId = null;
         }
 
         public Assembly Load(string name)
@@ -129,6 +134,11 @@ namespace Microsoft.Framework.Runtime.Loader
             }
 
             return Assembly.Load(_contextId + "$" + name);
+        }
+
+        private Assembly LoadAssemblyImpl(string name)
+        {
+            return _cache.GetOrAdd(name, LoadAssembly);
         }
 
         public abstract Assembly LoadAssembly(string name);
@@ -168,8 +178,10 @@ namespace Microsoft.Framework.Runtime.Loader
             }
         }
 
-        private Assembly ResolveAssembly(object sender, ResolveEventArgs args)
+        private static Assembly ResolveAssembly(object sender, ResolveEventArgs args)
         {
+            var domain = (AppDomain)sender;
+
             // {context}${name}
             var assemblyName = new AssemblyName(args.Name);
 
@@ -180,50 +192,61 @@ namespace Microsoft.Framework.Runtime.Loader
                 string contextId = parts[0];
                 string shortName = parts[1];
 
-                if (string.Equals(contextId, _contextId, StringComparison.OrdinalIgnoreCase))
+                LoadContext context;
+                if (_contexts.TryGetValue(contextId, out context))
                 {
-                    var assembly = LoadAssembly(shortName);
+                    var name = ResolveName(domain, shortName);
+
+                    var assembly = context.LoadAssemblyImpl(name);
 
                     if (assembly != null)
                     {
-                        LoadContextAccessor.Instance.SetLoadContext(assembly, this);
+                        LoadContextAccessor.Instance.SetLoadContext(assembly, context);
 
                         return assembly;
                     }
                 }
             }
+
+            // We don't have a context id so we need to do some magic
+
+            // TODO: Remove this
+            if (assemblyName.Name.EndsWith(".resources"))
+            {
+                return null;
+            }
+
+            // If we have a requesting assembly then try to infer the load context from it
+            if (args.RequestingAssembly != null)
+            {
+                // Get the relevant load context for the requesting assembly
+                var loadContext = LoadContextAccessor.Instance.GetLoadContext(args.RequestingAssembly);
+                if (loadContext != null)
+                {
+                    return loadContext.Load(assemblyName.Name);
+                }
+            }
             else
             {
-                if (assemblyName.Name.EndsWith(".resources"))
-                {
-                    return null;
-                }
+                var name = ResolveName(domain, assemblyName.Name);
 
-                if (args.RequestingAssembly != null)
-                {
-                    // Get the relevant load context for the requesting assembly
-                    var loadContext = LoadContextAccessor.Instance.GetLoadContext(args.RequestingAssembly);
-                    if (loadContext != null && loadContext != this && loadContext != Default)
-                    {
-                        return loadContext.Load(assemblyName.Name);
-                    }
-                }
+                // Nothing worked, use the default load context
+                return Default.LoadAssemblyImpl(name);
             }
 
             return null;
         }
 
-        private class DefaultLoadContext : LoadContext
+        private static string ResolveName(AppDomain domain, string assemblyName)
         {
-            public DefaultLoadContext() : base(defaultContext: null)
+            var afterPolicy = domain.ApplyPolicy(assemblyName);
+
+            if (afterPolicy != assemblyName)
             {
-                _contextId = null;
+                return afterPolicy;
             }
 
-            public override Assembly LoadAssembly(string name)
-            {
-                return null;
-            }
+            return assemblyName;
         }
     }
 #endif

@@ -9,21 +9,19 @@ namespace kre.host
 {
     internal class ApplicationEnvironment : IApplicationEnvironment
     {
+        private readonly Assembly _assembly;
+        private AssemblyName _assemblyName;
+
         public ApplicationEnvironment(string appBase, FrameworkName targetFramework, string configuration, Assembly assembly)
         {
-            var assemblyName = assembly.GetName();
-            ApplicationName = assemblyName.Name;
-            Version = assemblyName.Version.ToString();
+            _assembly = assembly;
+
             ApplicationBasePath = appBase;
             RuntimeFramework = targetFramework;
             Configuration = configuration;
         }
 
-        public string ApplicationName
-        {
-            get;
-            private set;
-        }
+        public string ApplicationName => AssemblyName.Name;
 
         public string Configuration
         {
@@ -31,11 +29,7 @@ namespace kre.host
             private set;
         }
 
-        public string Version
-        {
-            get;
-            private set;
-        }
+        public string Version => AssemblyName.Version.ToString();
 
         public string ApplicationBasePath
         {
@@ -47,6 +41,19 @@ namespace kre.host
         {
             get;
             private set;
+        }
+
+        private AssemblyName AssemblyName
+        {
+            get
+            {
+                if (_assemblyName == null)
+                {
+                    _assemblyName = _assembly.GetName();
+                }
+
+                return _assemblyName;
+            }
         }
     }
 }

@@ -17,63 +17,80 @@ namespace kre.host
 {
     public class Bootstrapper
     {
-        private readonly IAssemblyLoaderContainer _container;
-        
-        public Bootstrapper(IAssemblyLoaderContainer container)
+        private readonly string[] _searchPaths;
+
+        public Bootstrapper(string[] searchPaths)
         {
-            _container = container;
+            _searchPaths = searchPaths;
         }
 
-        public Task<int> Main(string[] args)
+        public Task<int> RunAsync(string[] args)
         {
-            if (args.Length < 1)
+            var accessor = LoadContextAccessor.Instance;
+            var container = new LoaderContainer();
+            LoadContext.InitializeDefaultContext(new DefaultLoadContext(container));
+
+            var disposable = container.AddLoader(new PathBasedAssemblyLoader(accessor, _searchPaths));
+
+            try
             {
-                Console.WriteLine("{app} [arguments]");
-                return Task.FromResult(-1);
-            }
+                var name = args[0];
+                var programArgs = args.Skip(1).ToArray();
 
-            var name = args[0];
-            var programArgs = args.Skip(1).ToArray();
+                var assembly = Assembly.Load(new AssemblyName(name));
 
-            var assembly = Assembly.Load(new AssemblyName(name));
-
-            if (assembly == null)
-            {
-                return Task.FromResult(-1);
-            }
+                if (assembly == null)
+                {
+                    return Task.FromResult(-1);
+                }
 
 #if ASPNET50
-            string applicationBaseDirectory = Environment.GetEnvironmentVariable(EnvironmentNames.AppBase);
+                string applicationBaseDirectory = Environment.GetEnvironmentVariable(EnvironmentNames.AppBase);
 
-            if (string.IsNullOrEmpty(applicationBaseDirectory))
-            {
-                applicationBaseDirectory = Directory.GetCurrentDirectory();
-            }
+                if (string.IsNullOrEmpty(applicationBaseDirectory))
+                {
+                    applicationBaseDirectory = Directory.GetCurrentDirectory();
+                }
 #else
-            string applicationBaseDirectory = AppContext.BaseDirectory;
+                string applicationBaseDirectory = AppContext.BaseDirectory;
 #endif
 
-            var framework = Environment.GetEnvironmentVariable("TARGET_FRAMEWORK") ?? Environment.GetEnvironmentVariable(EnvironmentNames.Framework);
-            var configuration = Environment.GetEnvironmentVariable("TARGET_CONFIGURATION") ?? Environment.GetEnvironmentVariable(EnvironmentNames.Configuration) ?? "Debug";
+                var framework = Environment.GetEnvironmentVariable("TARGET_FRAMEWORK") ?? Environment.GetEnvironmentVariable(EnvironmentNames.Framework);
+                var configuration = Environment.GetEnvironmentVariable("TARGET_CONFIGURATION") ?? Environment.GetEnvironmentVariable(EnvironmentNames.Configuration) ?? "Debug";
 
-            // TODO: Support the highest installed version
-            var targetFramework = FrameworkNameUtility.ParseFrameworkName(framework ?? "aspnet50");
+                // TODO: Support the highest installed version
+                var targetFramework = FrameworkNameUtility.ParseFrameworkName(framework ?? "aspnet50");
 
-            var applicationEnvironment = new ApplicationEnvironment(applicationBaseDirectory,
-                                                                    targetFramework,
-                                                                    configuration,
-                                                                    assembly: assembly);
+                var applicationEnvironment = new ApplicationEnvironment(applicationBaseDirectory,
+                                                                        targetFramework,
+                                                                        configuration,
+                                                                        assembly);
 
-            CallContextServiceLocator.Locator = new ServiceProviderLocator();
+                CallContextServiceLocator.Locator = new ServiceProviderLocator();
 
-            var serviceProvider = new ServiceProvider();
-            serviceProvider.Add(typeof(IAssemblyLoaderContainer), _container);
-            serviceProvider.Add(typeof(IAssemblyLoadContextAccessor), LoadContextAccessor.Instance);
-            serviceProvider.Add(typeof(IApplicationEnvironment), applicationEnvironment);
+                var serviceProvider = new ServiceProvider();
+                serviceProvider.Add(typeof(IAssemblyLoaderContainer), container);
+                serviceProvider.Add(typeof(IAssemblyLoadContextAccessor), accessor);
+                serviceProvider.Add(typeof(IApplicationEnvironment), applicationEnvironment);
 
-            CallContextServiceLocator.Locator.ServiceProvider = serviceProvider;
+                CallContextServiceLocator.Locator.ServiceProvider = serviceProvider;
 
-            return EntryPointExecutor.Execute(assembly, programArgs, serviceProvider);
+                var task = EntryPointExecutor.Execute(assembly, programArgs, serviceProvider);
+
+                return task.ContinueWith(async (t, state) =>
+                {
+                    // Dispose the host
+                    ((IDisposable)state).Dispose();
+
+                    return await t;
+                }, disposable).Unwrap();
+            }
+            catch
+            {
+                disposable.Dispose();
+
+                throw;
+            }
         }
     }
 }

@@ -2,12 +2,10 @@
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 using System;
-using System.Collections.Generic;
 using System.Net.Sockets;
-using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Threading;
-using kre.hosting;
+using kre.host;
 using Microsoft.Framework.Runtime;
 
 public class DomainManager : AppDomainManager

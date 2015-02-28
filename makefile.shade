@@ -46,14 +46,12 @@ var BOOTSTRAPPER_CLR_MANAGED_NAME = '${BOOTSTRAPPER_CLR_NAME + ".managed"}'
 var BOOTSTRAPPER_CORECLR_MANAGED_NAME = '${BOOTSTRAPPER_CORECLR_NAME + ".managed"}'
 var BOOTSTRAPPER_MONO_MANAGED_NAME = 'kre.mono.managed'
 var BOOTSTRAPPER_HOST_NAME = 'kre.host'
-var BOOTSTRAPPER_HOST_SHARED_NAME = 'kre.hosting.shared'
 
 var PROGRAM_FILES_X86 = '${Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86)}'
 var MSBUILD = '${Path.Combine(PROGRAM_FILES_X86, "MSBuild", "14.0", "Bin", "MSBuild.exe")}'
 
 var MANAGED_PROJECTS = '${FindAllProjects(
     BOOTSTRAPPER_HOST_NAME,
-    BOOTSTRAPPER_HOST_SHARED_NAME,
     "Microsoft.Framework.ApplicationHost",
     "Microsoft.Framework.ApplicationHost2",
     "Microsoft.Framework.CommandLineUtils",
@@ -216,22 +214,23 @@ var RC_FILES = '${FindAllFiles("Resource.rc", BOOTSTRAPPER_EXE_NAME, BOOTSTRAPPE
     var monoManagedOutpath='${Path.Combine(BUILD_DIR2, BOOTSTRAPPER_MONO_MANAGED_NAME)}'
     directory create='${monoManagedOutpath}'
     @{
+        var bootstrapperAssembly = Path.Combine(BUILD_DIR2, BOOTSTRAPPER_HOST_NAME, "aspnet50", BOOTSTRAPPER_HOST_NAME + ".dll");
+
         var sourceFiles = new string[] 
         {
             Path.Combine("src", BOOTSTRAPPER_MONO_MANAGED_NAME, "EntryPoint.cs"),
-            Path.Combine("src", BOOTSTRAPPER_HOST_SHARED_NAME, "RuntimeBootstrapper.cs"),
-            Path.Combine("src", BOOTSTRAPPER_HOST_SHARED_NAME, "LoaderEngine.cs"),
             Path.Combine("src", "Microsoft.Framework.CommandLineUtils", "CommandLine", "CommandArgument.cs"),
             Path.Combine("src", "Microsoft.Framework.CommandLineUtils", "CommandLine", "CommandLineApplication.cs"), 
             Path.Combine("src", "Microsoft.Framework.CommandLineUtils", "CommandLine", "CommandOption.cs"), 
             Path.Combine("src", "Microsoft.Framework.CommandLineUtils", "CommandLine", "CommandOptionType.cs"),
-			Path.Combine("src", "Microsoft.Framework.Runtime.Common", "Impl", "EnvironmentNames.cs"),
-			Path.Combine("src", "Microsoft.Framework.Runtime.Common", "Impl", "Constants.cs")
+            Path.Combine("src", "Microsoft.Framework.Runtime.Common", "Impl", "EnvironmentNames.cs"),
+            Path.Combine("src", "Microsoft.Framework.Runtime.Common", "Impl", "Constants.cs")
         };
 
         var arguments = string.Format(
-            @"/target:exe /nologo /unsafe /out:{0} /define:ASPNET50 {1}",
+            @"/target:exe /nologo /unsafe /out:""{0}"" /r:""{1}"" /define:ASPNET50 {2}",
             Path.Combine(monoManagedOutpath, BOOTSTRAPPER_MONO_MANAGED_NAME + ".dll"),
+            bootstrapperAssembly,
             string.Join(" ", sourceFiles));
 
         var compiler = IsMono ? "mcs" : Path.Combine(Environment.GetEnvironmentVariable("WINDIR"), "Microsoft.NET", "Framework", "v4.0.30319", "csc.exe");
@@ -243,7 +242,7 @@ var RC_FILES = '${FindAllFiles("Resource.rc", BOOTSTRAPPER_EXE_NAME, BOOTSTRAPPE
 
 #package-runtime .clean-sdk-dir .copy-bits .tweak-scripts .copy-coreclr .copy-required-dependencies .nuget-pack-runtime target='package'
 
-#rebuild-package .build-mono-entrypoint .build-compile .native-compile .package-runtime .xunit-test
+#rebuild-package .build-compile .build-mono-entrypoint .native-compile .package-runtime .xunit-test
 
 #xunit-test target='test' if='Directory.Exists("test")'
     k-test each='var projectFile in Files.Include("test/**/project.json")' if='NEW_RUNTIME'
@@ -354,7 +353,6 @@ var RC_FILES = '${FindAllFiles("Resource.rc", BOOTSTRAPPER_EXE_NAME, BOOTSTRAPPE
                                   "Microsoft.Framework.DesignTimeHost" };
 
         var sharedSourceAssemblies = new [] { 
-            Path.Combine(BUILD_DIR2, BOOTSTRAPPER_HOST_SHARED_NAME + "/**/*.*"), 
             Path.Combine(BUILD_DIR2, "Microsoft.Framework.CommandLineUtils/**/*.*"), 
             Path.Combine(BUILD_DIR2, "Microsoft.Framework.Runtime.Common/**/*.*"),
         };
@@ -631,11 +629,18 @@ var RC_FILES = '${FindAllFiles("Resource.rc", BOOTSTRAPPER_EXE_NAME, BOOTSTRAPPE
             var tpacppFile = Path.Combine(ROOT, "src", BOOTSTRAPPER_CORECLR_NAME, "tpa.cpp");
             Environment.SetEnvironmentVariable("KRE_TRACE", "0");
             Exec("cmd", string.Format(@"/C kpm list {0} --assemblies --runtime {1} > {2}",
-                Path.Combine(ROOT, "src", BOOTSTRAPPER_CORECLR_MANAGED_NAME),
+                Path.Combine(ROOT, "src", BOOTSTRAPPER_HOST_NAME),
                 Path.Combine(CORECLR_TARGET_PATH, "Runtime", "x86"),
                 dotnetcoreclrDepFile ));
 
-            UpdateTpa(dotnetcoreclrDepFile , tpacppFile);
+            var tpaProjects = new[] {
+                BOOTSTRAPPER_HOST_NAME,
+                BOOTSTRAPPER_CORECLR_MANAGED_NAME,
+                "Microsoft.Framework.Runtime.Interfaces",
+                "Microsoft.Framework.Runtime.Loader"
+            };
+
+            UpdateTpa(dotnetcoreclrDepFile, tpaProjects, tpacppFile);
         }
         finally
         {
@@ -856,11 +861,12 @@ functions @{
         Exec(versionManagerProgram, versionManagerProgramArgs);
     }
 
-    void UpdateTpa(string input, string output)
+    void UpdateTpa(string input, string[] assemblies, string output)
     {
         var tpa = File.ReadAllLines(input)
                       .Where(l => File.Exists(l))
                       .Select(l => Path.GetFileNameWithoutExtension(l))
+                      .Concat(assemblies)
                       .OrderBy(s => s)
                       .ToArray();
 

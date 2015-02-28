@@ -13,6 +13,7 @@
         "aspnetcore50": {
             "dependencies": {
                 "System.Collections": "4.0.10-beta-*",
+                "System.Collections.Concurrent": "4.0.10-beta-*",
                 "System.Runtime.Loader": "4.0.0-beta-*",
                 "System.IO.FileSystem": "4.0.0-beta-*",
                 "System.AppContext": "4.0.0-beta-*",

@@ -215,4 +215,10 @@
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
+    <Target Name="CopyManagedForDebuggingLocally" AfterTargets="Build" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+        <Copy SourceFiles="$(SolutionDir)\bin\$(Platform)\$(Configuration)\kre.coreclr.dll"
+              DestinationFolder="$(SolutionDir)\artifacts\build\kre-coreclr-win-x86\bin" />
+        <Copy SourceFiles="$(SolutionDir)\bin\$(Platform)\$(Configuration)\kre.coreclr.pdb"
+              DestinationFolder="$(SolutionDir)\artifacts\build\kre-coreclr-win-x86\bin" />
+    </Target>
 </Project>

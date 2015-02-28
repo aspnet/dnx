@@ -4,7 +4,6 @@
 using System.IO;
 using System.Reflection;
 using Microsoft.Framework.Runtime;
-using Microsoft.Framework.Runtime.Loader;
 
 namespace kre.host
 {
@@ -12,19 +11,17 @@ namespace kre.host
     {
         private static readonly string[] _extensions = new string[] { ".dll", ".exe" };
 
-        private readonly IAssemblyLoadContextAccessor _loadContextAccessor;
+        private readonly IAssemblyLoadContext _loadContext;
         private readonly string[] _searchPaths;
 
-        public PathBasedAssemblyLoader(string[] searchPaths)
+        public PathBasedAssemblyLoader(IAssemblyLoadContextAccessor loadContextAccessor, string[] searchPaths)
         {
-            _loadContextAccessor = LoadContextAccessor.Instance;
+            _loadContext = loadContextAccessor.Default;
             _searchPaths = searchPaths;
         }
 
         public Assembly Load(string name)
         {
-            var loadContext = _loadContextAccessor.Default;
-
             foreach (var path in _searchPaths)
             {
                 foreach (var extension in _extensions)
@@ -33,7 +30,7 @@ namespace kre.host
 
                     if (File.Exists(filePath))
                     {
-                        return loadContext.LoadFile(filePath);
+                        return _loadContext.LoadFile(filePath);
                     }
                 }
             }

@@ -37,7 +37,7 @@ namespace Microsoft.Framework.Runtime.Common.CommandLine
         public List<string> RemainingArguments { get; private set; }
         public bool IsShowingInformation { get; protected set; }  // Is showing help or version?
         public Func<int> Invoke { get; set; }
-        public string Version { get; set; }
+        public Func<string> VersionGetter { get; set; }
 
         public List<CommandLineApplication> Commands { get; private set; }
 
@@ -287,13 +287,18 @@ namespace Microsoft.Framework.Runtime.Common.CommandLine
             return OptionHelp;
         }
 
+        public CommandOption VersionOption(string template, string version)
+        {
+            return VersionOption(template, () => version);
+        }
+
         // Helper method that adds a version option
-        public CommandOption VersionOption(string template, string versionText)
+        public CommandOption VersionOption(string template, Func<string> versionGetter)
         {
             // Version option is special because we stop parsing once we see it
             // So we store it separately for further use
             OptionVersion = Option(template, "Show version information", CommandOptionType.NoValue);
-            Version = versionText;
+            VersionGetter = versionGetter;
 
             return OptionVersion;
         }
@@ -395,7 +400,7 @@ namespace Microsoft.Framework.Runtime.Common.CommandLine
                 cmd.IsShowingInformation = true;
             }
 
-            Console.WriteLine(Version);
+            Console.WriteLine(VersionGetter());
         }
 
         private bool HasHelpCommand()

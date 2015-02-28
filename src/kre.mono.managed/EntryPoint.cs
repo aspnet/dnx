@@ -8,7 +8,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Threading;
-using kre.hosting;
+using kre.host;
 using Microsoft.Framework.Runtime;
 
 public class EntryPoint

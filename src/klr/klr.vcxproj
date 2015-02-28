@@ -196,9 +196,4 @@
   </PropertyGroup>
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
-  <Target Name="CopyManagedForDebuggingLocally" AfterTargets="Build" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <Copy SourceFiles="$(ProjectDir)..\kre.coreclr.managed\bin\$(Configuration)\aspnetcore50\kre.coreclr.managed.dll" DestinationFolder="$(SolutionDir)\bin\$(Platform)\$(Configuration)" Condition="Exists('$(ProjectDir)..\kre.coreclr.managed\bin\$(Configuration)\aspnetcore50\kre.coreclr.managed.dll')" />
-    <Copy SourceFiles="$(ProjectDir)..\kre.clr.managed\bin\$(Configuration)\aspnet50\kre.clr.managed.dll" DestinationFolder="$(SolutionDir)\bin\$(Platform)\$(Configuration)" Condition="Exists('$(ProjectDir)..\kre.clr.managed\bin\$(Configuration)\aspnet50\kre.clr.managed.dll')" />
-    <Copy SourceFiles="$(ProjectDir)..\kre.clr.managed\kre.clr.config" DestinationFolder="$(SolutionDir)\bin\$(Platform)\$(Configuration)" />
-  </Target>
 </Project>

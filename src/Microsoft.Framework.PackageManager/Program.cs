@@ -37,7 +37,7 @@ namespace Microsoft.Framework.PackageManager
 
             var optionVerbose = app.Option("-v|--verbose", "Show verbose output", CommandOptionType.NoValue);
             app.HelpOption("-?|-h|--help");
-            app.VersionOption("--version", GetVersion());
+            app.VersionOption("--version", GetVersion);
 
             // Show help information if no subcommand/option was specified
             app.OnExecute(() =>

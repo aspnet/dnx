@@ -4,7 +4,7 @@
 using System;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
-using kre.hosting;
+using kre.host;
 
 namespace kre.clr.managed
 {
