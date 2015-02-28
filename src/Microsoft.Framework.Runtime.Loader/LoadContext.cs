@@ -117,6 +117,8 @@ namespace Microsoft.Framework.Runtime.Loader
             {
                 throw new InvalidOperationException("Default load context already set");
             }
+
+            loadContext._contextId = null;
         }
 
         public void Dispose()
