@@ -1,5 +1,0 @@
-LIBRARY "CustomAction"
-
-EXPORTS
-
-ForceEnvironmentRefresh
