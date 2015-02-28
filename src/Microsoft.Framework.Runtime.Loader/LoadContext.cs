@@ -182,6 +182,13 @@ namespace Microsoft.Framework.Runtime.Loader
         {
             var domain = (AppDomain)sender;
 
+            var afterPolicy = domain.ApplyPolicy(args.Name);
+
+            if (afterPolicy != args.Name)
+            {
+                return Assembly.Load(afterPolicy);
+            }
+
             // {context}${name}
             var assemblyName = new AssemblyName(args.Name);
 
@@ -195,9 +202,7 @@ namespace Microsoft.Framework.Runtime.Loader
                 LoadContext context;
                 if (_contexts.TryGetValue(contextId, out context))
                 {
-                    var name = ResolveName(domain, shortName);
-
-                    var assembly = context.LoadAssemblyImpl(name);
+                    var assembly = context.LoadAssemblyImpl(shortName);
 
                     if (assembly != null)
                     {
@@ -228,25 +233,11 @@ namespace Microsoft.Framework.Runtime.Loader
             }
             else
             {
-                var name = ResolveName(domain, assemblyName.Name);
-
                 // Nothing worked, use the default load context
-                return Default.LoadAssemblyImpl(name);
+                return Default.LoadAssemblyImpl(assemblyName.Name);
             }
 
             return null;
-        }
-
-        private static string ResolveName(AppDomain domain, string assemblyName)
-        {
-            var afterPolicy = domain.ApplyPolicy(assemblyName);
-
-            if (afterPolicy != assemblyName)
-            {
-                return afterPolicy;
-            }
-
-            return assemblyName;
         }
     }
 #endif
