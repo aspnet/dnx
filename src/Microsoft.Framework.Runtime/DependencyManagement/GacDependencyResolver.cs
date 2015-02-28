@@ -5,7 +5,6 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Reflection;
 using System.Runtime.Versioning;
 using NuGet;
 
@@ -126,7 +125,8 @@ namespace Microsoft.Framework.Runtime
 
         private static IEnumerable<string> GetGacSearchPaths()
         {
-            var gacFolders = new[] { IntPtr.Size == 4 ? "GAC_32" : "GAC_64", "GAC_MSIL" };
+            var gacFolders = new[] { "GAC_32", "GAC_64", "GAC_MSIL" };
+
             string windowsFolder = Environment.GetEnvironmentVariable("WINDIR");
 
             foreach (var folder in gacFolders)
