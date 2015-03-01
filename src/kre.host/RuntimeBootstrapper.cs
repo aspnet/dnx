@@ -185,6 +185,10 @@ namespace kre.host
                     searchPaths.Add(Path.GetFullPath(path));
                 }
             }
+            else
+            {
+                searchPaths.Add(libPath);
+            }
         }
 
         private static string GetVersion()
