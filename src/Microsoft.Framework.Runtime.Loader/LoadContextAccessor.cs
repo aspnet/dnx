@@ -37,7 +37,7 @@ namespace Microsoft.Framework.Runtime.Loader
 #else
     public class LoadContextAccessor : IAssemblyLoadContextAccessor
     {
-        private static readonly Lazy<LoadContextAccessor> _instance = new Lazy<LoadContextAccessor>();
+        private static readonly LoadContextAccessor _instance = new LoadContextAccessor();
 
         private Dictionary<Assembly, IAssemblyLoadContext> _cache = new Dictionary<Assembly, IAssemblyLoadContext>();
 
@@ -47,7 +47,7 @@ namespace Microsoft.Framework.Runtime.Loader
         {
             get
             {
-                return _instance.Value;
+                return _instance;
             }
         }
 
