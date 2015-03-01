@@ -14,6 +14,12 @@ public class DomainManager : AppDomainManager
 
     public override void InitializeNewDomain(AppDomainSetup appDomainInfo)
     {
+        // Do nothing if this isn't the default app domain
+        if (!AppDomain.CurrentDomain.IsDefaultAppDomain())
+        {
+            return;
+        }
+
         _info.Main = Main;
         BindApplicationMain(ref _info);
 
