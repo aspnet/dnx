@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Runtime.Versioning;
+using Microsoft.Framework.Runtime.Hosting.DependencyProviders;
 using NuGet.DependencyResolver;
 using NuGet.Frameworks;
 using NuGet.ProjectModel;
@@ -45,6 +46,16 @@ namespace Microsoft.Framework.Runtime.Hosting
 
             // Set the framework
             hostBuilder.TargetFramework = NuGetFramework.Parse(applicationEnvironment.RuntimeFramework.FullName);
+
+            var projectResolver = new PackageSpecResolver(projectDirectory);
+            hostBuilder.DependencyProviders.Add(new PackageSpecReferenceDependencyProvider(projectResolver));
+            var referenceResolver = new FrameworkReferenceResolver();
+            hostBuilder.DependencyProviders.Add(new ReferenceAssemblyDependencyProvider(referenceResolver));
+
+            if (hostBuilder.LockFile != null)
+            {
+                hostBuilder.DependencyProviders.Add(new LockFileDependencyProvider(hostBuilder.LockFile));
+            }
 
             return hostBuilder;
         }

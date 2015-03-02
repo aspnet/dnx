@@ -64,15 +64,6 @@ namespace Microsoft.Framework.ApplicationHost
                     options.ApplicationBaseDirectory,
                     _environment,
                     _container);
-                var projectResolver = new PackageSpecResolver(options.ApplicationBaseDirectory);
-                builder.DependencyProviders.Add(new PackageSpecReferenceDependencyProvider(projectResolver));
-                var referenceResolver = new FrameworkReferenceResolver();
-                builder.DependencyProviders.Add(new ReferenceAssemblyDependencyProvider(referenceResolver));
-
-                if (builder.LockFile != null)
-                {
-                    builder.DependencyProviders.Add(new LockFileDependencyProvider(builder.LockFile));
-                }
 
                 // Boot the runtime
                 var host = builder.Build();
