@@ -35,7 +35,7 @@ namespace Microsoft.Framework.Runtime.Hosting
 
         public void LaunchApplication(string applicationName, string[] programArgs)
         {
-            Logger.TraceInformation($"Launching '{applicationName}' '{string.Join(" ", programArgs)}'");
+            Logger.TraceInformation($"[RuntimeHost] Launching '{applicationName}' '{string.Join(" ", programArgs)}'");
 
             // Walk dependencies
             var walker = new DependencyWalker(DependencyProviders);
@@ -44,27 +44,27 @@ namespace Microsoft.Framework.Runtime.Hosting
             // Write the resolved graph
             if(Logger.IsEnabled)
             {
-                Console.WriteLine("Dependency Graph:");
+                Logger.TraceInformation("[RuntimeHost] Dependency Graph:");
                 if (result == null || result.Item == null)
                 {
-                    Console.WriteLine("<no dependencies>");
+                    Logger.TraceInformation("[RuntimeHost] <no dependencies>");
                 }
                 else
                 {
-                    result.Dump(s => Console.WriteLine(s));
+                    result.Dump(s => Logger.TraceInformation($"[RuntimeHost] {s}"));
                 }
             } 
 
             // Locate the entry point
             var entryPoint = LocateEntryPoint(applicationName);
 
-            Logger.TraceInformation($"Executing Entry Point: {entryPoint.GetName().FullName}");
+            Logger.TraceInformation($"[RuntimeHost] Executing Entry Point: {entryPoint.GetName().FullName}");
         }
 
         private Assembly LocateEntryPoint(string applicationName)
         {
             var sw = Stopwatch.StartNew();
-            Logger.TraceInformation($"Locating entry point for {applicationName}");
+            Logger.TraceInformation($"[RuntimeHost] Locating entry point for {applicationName}");
 
             if (Project == null)
             {
