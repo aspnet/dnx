@@ -1,8 +1,6 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.IO;
-using Microsoft.Framework.Runtime.FileGlobbing;
 using Newtonsoft.Json.Linq;
 using NuGet.ProjectModel;
 using NuGet.Versioning;
@@ -15,7 +13,7 @@ namespace Microsoft.Framework.Runtime.Hosting
         {
             BaseDirectory = Path.GetDirectoryName(packageSpec.FilePath);
             Metadata = packageSpec;
-            Files = new ProjectFilesCollection(project.Properties, project.BaseDirectory, project.FilePath);
+            Files = new ProjectFilesCollection(packageSpec.Properties, packageSpec.BaseDirectory, packageSpec.FilePath);
 
             // Load additional metadata from the project json
             EntryPoint = Metadata.Properties.GetValue<string>("entryPoint");
