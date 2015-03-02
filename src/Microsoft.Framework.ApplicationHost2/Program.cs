@@ -56,8 +56,8 @@ namespace Microsoft.Framework.ApplicationHost
                     options.ApplicationBaseDirectory,
                     _environment,
                     _container);
-                var projectResolver = ProjectResolver.ForProjectDirectory(options.ApplicationBaseDirectory);
-                builder.DependencyProviders.Add(new ProjectReferenceDependencyProvider(projectResolver));
+                var projectResolver = PackageSpecResolver.ForPackageSpecDirectory(options.ApplicationBaseDirectory);
+                builder.DependencyProviders.Add(new PackageSpecReferenceDependencyProvider(projectResolver));
                 var referenceResolver = new FrameworkReferenceResolver();
                 builder.DependencyProviders.Add(new ReferenceAssemblyDependencyProvider(referenceResolver));
 
