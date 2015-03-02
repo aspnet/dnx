@@ -69,6 +69,11 @@ namespace Microsoft.Framework.ApplicationHost
                 var referenceResolver = new FrameworkReferenceResolver();
                 builder.DependencyProviders.Add(new ReferenceAssemblyDependencyProvider(referenceResolver));
 
+                if (builder.LockFile != null)
+                {
+                    builder.DependencyProviders.Add(new LockFileDependencyProvider(builder.LockFile));
+                }
+
                 // Boot the runtime
                 var host = builder.Build();
 
