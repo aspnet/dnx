@@ -1,0 +1,9 @@
+{
+    "frameworks": {
+        "aspnet50": {
+            "frameworkAssemblies": {
+                "System.IO": ""
+            }
+        }
+    }
+}

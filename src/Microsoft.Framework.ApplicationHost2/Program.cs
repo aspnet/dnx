@@ -11,6 +11,7 @@ using Microsoft.Framework.Runtime;
 using Microsoft.Framework.Runtime.Common.CommandLine;
 using Microsoft.Framework.Runtime.Hosting;
 using Microsoft.Framework.Runtime.Hosting.DependencyProviders;
+using NuGet.Frameworks;
 using NuGet.ProjectModel;
 
 namespace Microsoft.Framework.ApplicationHost
@@ -30,6 +31,13 @@ namespace Microsoft.Framework.ApplicationHost
 
         public Task<int> Main(string[] args)
         {
+#if DEBUG && ASPNET50
+            if(args.Length > 0 && string.Equals(args[0], "dbg", StringComparison.OrdinalIgnoreCase))
+            {
+                args = args.Skip(1).ToArray();
+                System.Diagnostics.Debugger.Launch();
+            }
+#endif
             try
             {
                 Logger.TraceInformation("[ApplicationHost] Application Host Starting");
@@ -56,7 +64,7 @@ namespace Microsoft.Framework.ApplicationHost
                     options.ApplicationBaseDirectory,
                     _environment,
                     _container);
-                var projectResolver = PackageSpecResolver.ForPackageSpecDirectory(options.ApplicationBaseDirectory);
+                var projectResolver = new PackageSpecResolver(options.ApplicationBaseDirectory);
                 builder.DependencyProviders.Add(new PackageSpecReferenceDependencyProvider(projectResolver));
                 var referenceResolver = new FrameworkReferenceResolver();
                 builder.DependencyProviders.Add(new ReferenceAssemblyDependencyProvider(referenceResolver));

@@ -24,9 +24,6 @@
         "../../submodules/NuGet.Versioning/src/NuGet.Versioning/compiler/**/*.cs",
         "../../submodules/**/AssemblyInfo.cs"
     ],
-    "preprocess": [
-        "../../ext/compiler/preprocess/Internalization.cs"
-    ],
     "frameworks": {
         "aspnet50": {
             "frameworkAssemblies": {
