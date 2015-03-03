@@ -28,26 +28,22 @@ namespace Microsoft.Framework.Runtime.Hosting.DependencyProviders
 
         public Library GetDescription(LibraryRange libraryRange, NuGetFramework targetFramework)
         {
-            Logger.TraceInformation($"[ReferenceAssemblyDependencyResolver] Resolving {libraryRange.Name} for {targetFramework}");
             System.Diagnostics.Debug.Assert(SupportsType(libraryRange.TypeConstraint));
 
             var name = libraryRange.Name;
             var version = libraryRange.VersionRange?.MinVersion;
 
             string path;
-            if (!FrameworkResolver.TryGetAssembly(name, targetFramework, out path))
+            NuGetVersion assemblyVersion;
+
+            if (!FrameworkResolver.TryGetAssembly(name, targetFramework, out path, out assemblyVersion))
             {
-                Logger.TraceWarning($"[ReferenceAssemblyDependencyResolver] Unable to resolve {libraryRange.Name}");
                 return null;
             }
-
-            var assemblyVersion = AssemblyUtils.GetAssemblyVersion(path);
 
             if (version == null || version == assemblyVersion)
             {
                 _resolvedPaths[name] = path;
-
-                Logger.TraceInformation($"[ReferenceAssemblyDependencyResolver] Resolved {libraryRange.Name} to {path}");
 
                 return new Library
                 {

@@ -10,7 +10,7 @@ using System.Runtime.Versioning;
 using System.Xml.Linq;
 using NuGet;
 using NuGet.Frameworks;
-using Microsoft.Framework.Runtime;
+using NuGet.Versioning;
 
 namespace Microsoft.Framework.Runtime.Hosting.DependencyProviders
 {
@@ -18,17 +18,17 @@ namespace Microsoft.Framework.Runtime.Hosting.DependencyProviders
     {
         private readonly IDictionary<NuGetFramework, FrameworkInformation> _cache = new Dictionary<NuGetFramework, FrameworkInformation>();
 
-        private static readonly IDictionary<NuGetFramework, List<NuGetFramework>> _aliases = new Dictionary<NuGetFramework, List<NuGetFramework>>()
+        private static readonly IDictionary<NuGetFramework, List<NuGetFramework>> _aliases = new Dictionary<NuGetFramework, List<NuGetFramework>>
         {
             { FrameworkConstants.CommonFrameworks.AspNet50, new List<NuGetFramework> {
-                    FrameworkConstants.CommonFrameworks.Net451
+                FrameworkConstants.CommonFrameworks.Net451
                 }
             },
         };
 
         private static readonly IDictionary<NuGetFramework, NuGetFramework> _monoAliases = new Dictionary<NuGetFramework, NuGetFramework>
         {
-            { FrameworkConstants.CommonFrameworks.Net451, FrameworkConstants.CommonFrameworks.AspNet50 }
+            { FrameworkConstants.CommonFrameworks.Net451, FrameworkConstants.CommonFrameworks.AspNet50 },
         };
 
         public FrameworkReferenceResolver()
@@ -36,31 +36,43 @@ namespace Microsoft.Framework.Runtime.Hosting.DependencyProviders
             PopulateCache();
         }
 
-        public bool TryGetAssembly(string name, NuGetFramework targetFramework, out string path)
+        public bool TryGetAssembly(string name, NuGetFramework targetFramework, out string path, out NuGetVersion version)
         {
+            path = null;
+            version = null;
+
             var information = _cache.GetOrAdd(targetFramework, GetFrameworkInformation);
 
             if (information == null)
             {
-                path = null;
                 return false;
             }
 
             lock (information.Assemblies)
             {
-                if (information.Assemblies.TryGetValue(name, out path) &&
-                    string.IsNullOrEmpty(path))
+                AssemblyEntry entry;
+                if (information.Assemblies.TryGetValue(name, out entry))
                 {
-                    path = GetAssemblyPath(information.Path, name);
-                    Logger.TraceInformation($"[FrameworkReferenceResolver] Resolved {name} to {path}");
-                    information.Assemblies[name] = path;
+                    if (string.IsNullOrEmpty(entry.Path))
+                    {
+                        entry.Path = GetAssemblyPath(information.Path, name);
+                    }
+
+                    if (!string.IsNullOrEmpty(entry.Path) && entry.Version == null)
+                    {
+                        // This code path should only run on mono
+                        entry.Version = AssemblyUtils.GetAssemblyVersion(entry.Path);
+                    }
+
+                    path = entry.Path;
+                    version = entry.Version;
                 }
             }
 
             return !string.IsNullOrEmpty(path);
         }
 
-        public string GetFriendlyFrameworkName(NuGetFramework targetFramework)
+        public string GetFriendlyNuGetFramework(NuGetFramework targetFramework)
         {
             // We don't have a friendly name for this anywhere on the machine so hard code it
             if (string.Equals(targetFramework.Framework, "K", StringComparison.OrdinalIgnoreCase))
@@ -177,7 +189,9 @@ namespace Microsoft.Framework.Runtime.Hosting.DependencyProviders
 
                         foreach (var pair in assemblies)
                         {
-                            frameworkInfo.Assemblies[pair.Item1] = pair.Item2;
+                            var entry = new AssemblyEntry();
+                            entry.Path = pair.Item2;
+                            frameworkInfo.Assemblies[pair.Item1] = entry;
                         }
 
                         pathCache[targetFrameworkPath] = frameworkInfo;
@@ -186,10 +200,10 @@ namespace Microsoft.Framework.Runtime.Hosting.DependencyProviders
                     var frameworkName = new NuGetFramework(FrameworkConstants.FrameworkIdentifiers.Net, new Version(versionFolderPair.Key));
                     _cache[frameworkName] = frameworkInfo;
 
-                    NuGetFramework aliasFrameworkName;
-                    if (_monoAliases.TryGetValue(frameworkName, out aliasFrameworkName))
+                    NuGetFramework aliasNuGetFramework;
+                    if (_monoAliases.TryGetValue(frameworkName, out aliasNuGetFramework))
                     {
-                        _cache[aliasFrameworkName] = frameworkInfo;
+                        _cache[aliasNuGetFramework] = frameworkInfo;
                     }
                 }
 
@@ -240,22 +254,24 @@ namespace Microsoft.Framework.Runtime.Hosting.DependencyProviders
                 basePath = Path.Combine(basePath, "Profile", targetFramework.Profile);
             }
 
-            Logger.TraceInformation($"[FrameworkReferenceResolver] Loading framework info for {targetFramework} from {basePath}");
-
             var version = new DirectoryInfo(basePath);
             if (!version.Exists)
             {
-                Logger.TraceWarning($"[FrameworkReferenceResolver] Unable to find framework info directory {basePath}");
                 return null;
             }
 
             return GetFrameworkInformation(version, targetFramework);
         }
 
+        // NuGetVersion.ToString() doesn't render the way we want.
+        // .NET Framework folder names are ALWAYS 2-3 digits long, but
+        // NuGetVersion will render the third and fourth digits as
+        // zero when they are not present. For example, NuGetVersion
+        // will render "v4.5.1.0" instead of "v4.5.1" (the actual folder name)
         private static string GetVersionFolderName(Version version)
         {
             var folderName = $"{version.Major}.{version.Minor}";
-            if(version.Revision > 0)
+            if (version.Revision > 0)
             {
                 folderName += $".{version.Revision}";
             }
@@ -264,8 +280,6 @@ namespace Microsoft.Framework.Runtime.Hosting.DependencyProviders
 
         private static FrameworkInformation GetFrameworkInformation(DirectoryInfo directory, NuGetFramework targetFramework)
         {
-            Logger.TraceInformation($"[FrameworkReferenceResolver] Loading framework info from {directory}");
-
             var frameworkInfo = new FrameworkInformation();
             frameworkInfo.Path = directory.FullName;
 
@@ -282,8 +296,12 @@ namespace Microsoft.Framework.Runtime.Hosting.DependencyProviders
 
                     foreach (var e in frameworkList.Root.Elements())
                     {
-                        string assemblyName = e.Attribute("AssemblyName").Value;
-                        frameworkInfo.Assemblies.Add(assemblyName, null);
+                        var assemblyName = e.Attribute("AssemblyName").Value;
+                        var version = e.Attribute("Version")?.Value;
+
+                        var entry = new AssemblyEntry();
+                        entry.Version = version != null ? NuGetVersion.Parse(version) : null;
+                        frameworkInfo.Assemblies.Add(assemblyName, entry);
                     }
 
                     var nameAttribute = frameworkList.Root.Attribute("Name");
@@ -331,16 +349,22 @@ namespace Microsoft.Framework.Runtime.Hosting.DependencyProviders
         {
             public FrameworkInformation()
             {
-                Assemblies = new Dictionary<string, string>();
+                Assemblies = new Dictionary<string, AssemblyEntry>();
             }
 
             public string Path { get; set; }
 
             public string RedistListPath { get; set; }
 
-            public IDictionary<string, string> Assemblies { get; private set; }
+            public IDictionary<string, AssemblyEntry> Assemblies { get; private set; }
 
             public string Name { get; set; }
+        }
+
+        private class AssemblyEntry
+        {
+            public string Path { get; set; }
+            public NuGetVersion Version { get; set; }
         }
     }
 }
