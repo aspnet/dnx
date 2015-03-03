@@ -84,13 +84,13 @@ var RC_FILES = '${FindAllFiles("Resource.rc", BOOTSTRAPPER_EXE_NAME, BOOTSTRAPPE
 
 -//Replace repo-initialize with a less greedy restore
 #repo-initialize target='initialize'
-	for each='var projectFile in Files.Include("src/**/project.json")'
+	for each='var projectFile in Files.Include("src/*/project.json")'
 		exec program='cmd' commandline='/C kpm restore' if='!IsMono' workingdir="${Path.GetDirectoryName(projectFile)}"
 		exec program='kpm' commandline='restore' if='IsMono' workingdir="${Path.GetDirectoryName(projectFile)}"
-	for each='var projectFile in Files.Include("test/**/project.json")'
+	for each='var projectFile in Files.Include("test/*/project.json")'
 		exec program='cmd' commandline='/C kpm restore' if='!IsMono' workingdir="${Path.GetDirectoryName(projectFile)}"
 		exec program='kpm' commandline='restore' if='IsMono' workingdir="${Path.GetDirectoryName(projectFile)}"
-	for each='var projectFile in Files.Include("samples/**/project.json")'
+	for each='var projectFile in Files.Include("samples/*/project.json")'
 		exec program='cmd' commandline='/C kpm restore' if='!IsMono' workingdir="${Path.GetDirectoryName(projectFile)}"
 		exec program='kpm' commandline='restore' if='IsMono' workingdir="${Path.GetDirectoryName(projectFile)}"
 
