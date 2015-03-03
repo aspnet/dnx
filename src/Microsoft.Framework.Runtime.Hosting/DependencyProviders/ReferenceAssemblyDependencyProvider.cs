@@ -17,8 +17,6 @@ namespace Microsoft.Framework.Runtime.Hosting.DependencyProviders
 {
     public class ReferenceAssemblyDependencyProvider : IDependencyProvider 
     {
-        private readonly Dictionary<string, string> _resolvedPaths = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-
         public ReferenceAssemblyDependencyProvider(IFrameworkReferenceResolver frameworkReferenceResolver)
         {
             FrameworkResolver = frameworkReferenceResolver;
@@ -43,8 +41,6 @@ namespace Microsoft.Framework.Runtime.Hosting.DependencyProviders
 
             if (version == null || version == assemblyVersion)
             {
-                _resolvedPaths[name] = path;
-
                 return new Library
                 {
                     LibraryRange = libraryRange,

@@ -68,7 +68,7 @@ namespace Microsoft.Framework.ApplicationHost
                 }
 
                 if (string.IsNullOrEmpty(options.ApplicationName) ||
-                string.Equals(options.ApplicationName, "run", StringComparison.Ordinal))
+                    string.Equals(options.ApplicationName, "run", StringComparison.Ordinal))
                 {
                     options.ApplicationName = host.Project.EntryPoint ?? host.Project.Name;
                 }

@@ -40,7 +40,7 @@ namespace Microsoft.Framework.Runtime.Hosting
             var result = walker.Walk(Project.Name, Project.Version, TargetFramework);
 
             // Write the resolved graph
-            if(Logger.IsEnabled)
+            if (Logger.IsEnabled)
             {
                 Logger.TraceInformation("[RuntimeHost] Dependency Graph:");
                 if (result == null || result.Item == null)
@@ -51,7 +51,7 @@ namespace Microsoft.Framework.Runtime.Hosting
                 {
                     result.Dump(s => Logger.TraceInformation($"[RuntimeHost] {s}"));
                 }
-            } 
+            }
 
             // Locate the entry point
             var entryPoint = LocateEntryPoint(applicationName);
@@ -77,16 +77,16 @@ namespace Microsoft.Framework.Runtime.Hosting
             }
             catch (FileLoadException ex) when (string.Equals(new AssemblyName(ex.FileName).Name, applicationName, StringComparison.Ordinal))
             {
-                if(ex.InnerException is ICompilationException)
+                if (ex.InnerException is ICompilationException)
                 {
                     throw ex.InnerException;
                 }
 
                 ThrowEntryPointNotFoundException(applicationName, ex);
             }
-            catch(FileNotFoundException ex) when (string.Equals(ex.FileName, applicationName, StringComparison.Ordinal))
+            catch (FileNotFoundException ex) when (string.Equals(ex.FileName, applicationName, StringComparison.Ordinal))
             {
-                if(ex.InnerException is ICompilationException)
+                if (ex.InnerException is ICompilationException)
                 {
                     throw ex.InnerException;
                 }

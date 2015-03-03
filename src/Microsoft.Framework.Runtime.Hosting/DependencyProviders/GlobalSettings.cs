@@ -3,22 +3,23 @@
 
 using System.Collections.Generic;
 using System.IO;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
 namespace Microsoft.Framework.Runtime.Hosting.DependencyProviders
 {
+    
     public class GlobalSettings
     {
         public const string GlobalFileName = "global.json";
 
-        public IList<string> ProjectPaths { get; private set; }
+        public IList<string> ProjectSearchPaths { get; private set; }
         public string PackagesPath { get; private set; }
         public string FilePath { get; private set; }
 
         public static bool TryGetGlobalSettings(string path, out GlobalSettings globalSettings)
         {
             globalSettings = null;
-
             string globalJsonPath = null;
 
             if (Path.GetFileName(path) == GlobalFileName)
@@ -38,11 +39,22 @@ namespace Microsoft.Framework.Runtime.Hosting.DependencyProviders
             globalSettings = new GlobalSettings();
 
             string json = File.ReadAllText(globalJsonPath);
-            var settings = JObject.Parse(json);
-            var sources = settings["sources"];
-            var dependencies = settings["dependencies"] as JObject;
+            JObject settings = null;
 
-            globalSettings.ProjectPaths = sources == null ? new string[] { } : sources.ValueAsArray<string>();
+            try
+            {
+                settings = JObject.Parse(json);
+            }
+            catch (JsonReaderException ex)
+            {
+                throw FileFormatException.Create(ex, globalJsonPath);
+            }
+
+            var projectSearchPaths = settings["projects"];
+
+            globalSettings.ProjectSearchPaths = projectSearchPaths == null ?
+                new string[] { } :
+                projectSearchPaths.ValueAsArray<string>();
             globalSettings.PackagesPath = settings.Value<string>("packages");
             globalSettings.FilePath = globalJsonPath;
 
@@ -55,5 +67,6 @@ namespace Microsoft.Framework.Runtime.Hosting.DependencyProviders
 
             return File.Exists(projectPath);
         }
+
     }
 }
