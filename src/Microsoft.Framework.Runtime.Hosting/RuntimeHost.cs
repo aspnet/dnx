@@ -5,6 +5,8 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.Versioning;
+using Microsoft.Framework.Logging;
+using Microsoft.Framework.Runtime.Hosting.Internal;
 using NuGet.DependencyResolver;
 using NuGet.Frameworks;
 using NuGet.LibraryModel;
@@ -14,9 +16,12 @@ namespace Microsoft.Framework.Runtime.Hosting
 {
     public class RuntimeHost
     {
+        private readonly ILogger Log;
+
         public Project Project { get; }
         public NuGetFramework TargetFramework { get; }
         public IEnumerable<IDependencyProvider> DependencyProviders { get; }
+        public ILoggerFactory LoggerFactory { get; }
 
         internal RuntimeHost(RuntimeHostBuilder builder)
         {
@@ -28,6 +33,8 @@ namespace Microsoft.Framework.Runtime.Hosting
             {
                 throw new ArgumentException($"{nameof(RuntimeHostBuilder)} does not contain a valid Project", nameof(builder));
             }
+
+            Log = RuntimeLogging.Logger<RuntimeHost>();
 
             Project = builder.Project;
 
@@ -42,40 +49,43 @@ namespace Microsoft.Framework.Runtime.Hosting
 
         public void ExecuteApplication(string applicationName, string[] programArgs)
         {
-            Logger.TraceInformation($"[RuntimeHost] Launching '{applicationName}' '{string.Join(" ", programArgs)}'");
+            Log.WriteInformation($"Launching '{applicationName}' '{string.Join(" ", programArgs)}'");
 
             // Walk dependencies
             var walker = new DependencyWalker(DependencyProviders);
             var result = walker.Walk(Project.Name, Project.Version, TargetFramework);
 
             // Write the resolved graph
-            if (Logger.IsEnabled)
+            if (Log.IsEnabled(LogLevel.Debug))
             {
-                Logger.TraceInformation("[RuntimeHost] Dependency Graph:");
+                Log.WriteDebug("Dependency Graph:");
                 if (result == null || result.Item == null)
                 {
-                    Logger.TraceInformation("[RuntimeHost] <no dependencies>");
+                    Log.WriteDebug("<no dependencies>");
                 }
                 else
                 {
-                    result.Dump(s => Logger.TraceInformation($"[RuntimeHost] {s}"));
+                    result.Dump(s => Log.WriteDebug($"{s}"));
                 }
             }
 
             // Locate the entry point
             var entryPoint = LocateEntryPoint(applicationName);
 
-            Logger.TraceInformation($"[RuntimeHost] Executing Entry Point: {entryPoint.GetName().FullName}");
+            if (Log.IsEnabled(LogLevel.Information))
+            {
+                Log.WriteInformation($"Executing Entry Point: {entryPoint.GetName().FullName}");
+            }
         }
 
         private Assembly LocateEntryPoint(string applicationName)
         {
             var sw = Stopwatch.StartNew();
-            Logger.TraceInformation($"[RuntimeHost] Locating entry point for {applicationName}");
+            Log.WriteInformation($"Locating entry point for {applicationName}");
 
             if (Project == null)
             {
-                Logger.TraceError("[RuntimeHost] Unable to locate entry point, there is no project");
+                Log.WriteError("Unable to locate entry point, there is no project");
                 return null;
             }
 
@@ -104,7 +114,7 @@ namespace Microsoft.Framework.Runtime.Hosting
             }
 
             sw.Stop();
-            Logger.TraceInformation($"Located entry point in {sw.ElapsedMilliseconds}ms");
+            Log.WriteInformation($"Located entry point in {sw.ElapsedMilliseconds}ms");
 
             return asm;
         }

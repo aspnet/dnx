@@ -7,3 +7,6 @@
 [submodule "submodules/NuGet.Packaging"]
 	path = submodules/NuGet.Packaging
 	url = https://github.com/NuGet/NuGet.Packaging
+[submodule "submodules/Logging"]
+	path = submodules/Logging
+	url = https://github.com/aspnet/Logging

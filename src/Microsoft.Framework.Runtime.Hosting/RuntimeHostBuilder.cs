@@ -1,8 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Runtime.Versioning;
+using Microsoft.Framework.Logging;
 using Microsoft.Framework.Runtime.Hosting.DependencyProviders;
+using Microsoft.Framework.Runtime.Hosting.Internal;
 using NuGet.DependencyResolver;
 using NuGet.Frameworks;
 using NuGet.ProjectModel;
@@ -14,7 +15,7 @@ namespace Microsoft.Framework.Runtime.Hosting
         public IList<IDependencyProvider> DependencyProviders { get; } = new List<IDependencyProvider>();
         public NuGetFramework TargetFramework { get; set; }
         public Project Project { get; set; }
-        public LockFile LockFile { get; set; }
+        public LockFile LockFile { get; set;  }
 
         /// <summary>
         /// Create a <see cref="RuntimeHostBuilder"/> for the project in the specified
@@ -37,6 +38,7 @@ namespace Microsoft.Framework.Runtime.Hosting
                 throw new ArgumentNullException(nameof(runtimeFramework));
             }
 
+            var log = RuntimeLogging.Logger<RuntimeHostBuilder>();
             var hostBuilder = new RuntimeHostBuilder();
 
             // Load the Project
@@ -44,6 +46,7 @@ namespace Microsoft.Framework.Runtime.Hosting
             PackageSpec packageSpec;
             if (projectResolver.TryResolvePackageSpec(GetProjectName(projectDirectory), out packageSpec))
             {
+                log.WriteVerbose($"Loaded project {packageSpec.Name}");
                 hostBuilder.Project = new Project(packageSpec);
             }
 
@@ -51,19 +54,23 @@ namespace Microsoft.Framework.Runtime.Hosting
             LockFile lockFile;
             if (TryReadLockFile(projectDirectory, out lockFile))
             {
+                log.WriteVerbose($"Loaded lock file");
                 hostBuilder.LockFile = lockFile;
             }
 
             // Set the framework
             hostBuilder.TargetFramework = runtimeFramework;
 
+            log.WriteVerbose("Registering PackageSpecReferenceDependencyProvider");
             hostBuilder.DependencyProviders.Add(new PackageSpecReferenceDependencyProvider(projectResolver));
 
             if (hostBuilder.LockFile != null)
             {
+                log.WriteVerbose("Registering LockFileDependencyProvider");
                 hostBuilder.DependencyProviders.Add(new LockFileDependencyProvider(hostBuilder.LockFile));
             }
 
+            log.WriteVerbose("Registering ReferenceAssemblyDependencyProvider");
             var referenceResolver = new FrameworkReferenceResolver();
             hostBuilder.DependencyProviders.Add(new ReferenceAssemblyDependencyProvider(referenceResolver));
 

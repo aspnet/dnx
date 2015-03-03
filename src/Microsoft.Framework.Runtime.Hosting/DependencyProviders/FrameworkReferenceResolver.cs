@@ -5,17 +5,16 @@ using System;
 using System.Reflection;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Runtime.Versioning;
 using System.Xml.Linq;
-using NuGet;
 using NuGet.Frameworks;
 using NuGet.Versioning;
+using Microsoft.Framework.Logging;
 
 namespace Microsoft.Framework.Runtime.Hosting.DependencyProviders
 {
     public class FrameworkReferenceResolver : IFrameworkReferenceResolver
     {
+        private readonly ILogger Log;
         private readonly IDictionary<NuGetFramework, FrameworkInformation> _cache = new Dictionary<NuGetFramework, FrameworkInformation>();
 
         private static readonly IDictionary<NuGetFramework, List<NuGetFramework>> _aliases = new Dictionary<NuGetFramework, List<NuGetFramework>>
@@ -33,6 +32,7 @@ namespace Microsoft.Framework.Runtime.Hosting.DependencyProviders
 
         public FrameworkReferenceResolver()
         {
+            Log = RuntimeLogging.Logger<FrameworkReferenceResolver>();
             PopulateCache();
         }
 
@@ -45,6 +45,7 @@ namespace Microsoft.Framework.Runtime.Hosting.DependencyProviders
 
             if (information == null)
             {
+                Log.WriteWarning($"No framework information found for {targetFramework}");
                 return false;
             }
 
@@ -66,6 +67,12 @@ namespace Microsoft.Framework.Runtime.Hosting.DependencyProviders
 
                     path = entry.Path;
                     version = entry.Version;
+
+                    if (Log.IsEnabled(LogLevel.Verbose))
+                    {
+                        // Trim back the path
+                        Log.WriteVerbose($"Resolved {name} {version} to {path.Substring(information.Path.Length + 1)}");
+                    }
                 }
             }
 
@@ -213,7 +220,7 @@ namespace Microsoft.Framework.Runtime.Hosting.DependencyProviders
 #endif
         }
 
-        private static FrameworkInformation GetFrameworkInformation(NuGetFramework targetFramework)
+        private FrameworkInformation GetFrameworkInformation(NuGetFramework targetFramework)
         {
             string referenceAssembliesPath = GetReferenceAssembliesPath();
 
@@ -243,7 +250,7 @@ namespace Microsoft.Framework.Runtime.Hosting.DependencyProviders
             }
         }
 
-        private static FrameworkInformation GetFrameworkInformation(NuGetFramework targetFramework, string referenceAssembliesPath)
+        private FrameworkInformation GetFrameworkInformation(NuGetFramework targetFramework, string referenceAssembliesPath)
         {
             var basePath = Path.Combine(referenceAssembliesPath,
                                         targetFramework.Framework,
@@ -278,7 +285,7 @@ namespace Microsoft.Framework.Runtime.Hosting.DependencyProviders
             return folderName;
         }
 
-        private static FrameworkInformation GetFrameworkInformation(DirectoryInfo directory, NuGetFramework targetFramework)
+        private FrameworkInformation GetFrameworkInformation(DirectoryInfo directory, NuGetFramework targetFramework)
         {
             var frameworkInfo = new FrameworkInformation();
             frameworkInfo.Path = directory.FullName;
@@ -286,8 +293,15 @@ namespace Microsoft.Framework.Runtime.Hosting.DependencyProviders
             // The redist list contains the list of assemblies for this target framework
             string redistList = Path.Combine(directory.FullName, "RedistList", "FrameworkList.xml");
 
+            Log.WriteVerbose($"Loading Framework Information for {targetFramework}");
+            Log.WriteVerbose($"Scanning {directory.FullName}");
+
             if (File.Exists(redistList))
             {
+                if (Log.IsEnabled(LogLevel.Verbose))
+                {
+                    Log.WriteVerbose($"Reading redist list from {redistList.Substring(directory.FullName.Length + 1)}");
+                }
                 frameworkInfo.RedistListPath = redistList;
 
                 using (var stream = File.OpenRead(redistList))
@@ -302,6 +316,7 @@ namespace Microsoft.Framework.Runtime.Hosting.DependencyProviders
                         var entry = new AssemblyEntry();
                         entry.Version = version != null ? NuGetVersion.Parse(version) : null;
                         frameworkInfo.Assemblies.Add(assemblyName, entry);
+                        Log.WriteDebug($"Found assembly {assemblyName} {entry.Version}, located in {entry.Path}, in redist list");
                     }
 
                     var nameAttribute = frameworkList.Root.Attribute("Name");

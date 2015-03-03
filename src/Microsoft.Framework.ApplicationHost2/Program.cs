@@ -7,6 +7,8 @@ using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
 using Microsoft.Framework.ApplicationHost.Impl.Syntax;
+using Microsoft.Framework.Logging;
+using Microsoft.Framework.Logging.Console;
 using Microsoft.Framework.Runtime;
 using Microsoft.Framework.Runtime.Common.CommandLine;
 using Microsoft.Framework.Runtime.Hosting;
@@ -29,9 +31,13 @@ namespace Microsoft.Framework.ApplicationHost
 
         public Task<int> Main(string[] args)
         {
+
+            // "Program" is a terrible name for a logger and this is the only logger in
+            // this namespace :).
+
+            ILogger log = null;
             try
             {
-                Logger.TraceInformation("[ApplicationHost] Application Host Starting");
                 ApplicationHostOptions options;
                 string[] programArgs;
                 int exitCode;
@@ -41,6 +47,14 @@ namespace Microsoft.Framework.ApplicationHost
                 {
                     return Task.FromResult(exitCode);
                 }
+                string traceConfig =
+                    string.IsNullOrEmpty(options.Trace) ?
+                        Environment.GetEnvironmentVariable(EnvironmentNames.Trace) :
+                        options.Trace;
+                // Reinitialize logging
+                RuntimeLogging.Initialize(traceConfig, ConfigureLogging);
+                log = RuntimeLogging.Logger("Microsoft.Framework.ApplicationHost");
+                log.WriteInformation("Application Host Starting");
 
                 // Construct the necessary context for hosting the application
                 var builder = RuntimeHostBuilder.ForProjectDirectory(
@@ -50,14 +64,14 @@ namespace Microsoft.Framework.ApplicationHost
                 {
                     // Failed to load the project
                     Console.Error.WriteLine("Unable to find a project.json file.");
-                    return Task.FromResult(1);
+                    return Task.FromResult(3);
                 }
 
                 // Boot the runtime
                 var host = builder.Build();
 
                 // Get the project and print some information from it
-                Logger.TraceInformation($"[ApplicationHost] Project: {host.Project.Name} ({host.Project.BaseDirectory})");
+                log.WriteInformation($"Project: {host.Project.Name} ({host.Project.BaseDirectory})");
 
                 // Determine the command to be executed
                 var command = string.IsNullOrEmpty(options.ApplicationName) ? "run" : options.ApplicationName;
@@ -77,7 +91,7 @@ namespace Microsoft.Framework.ApplicationHost
                     options.ApplicationName = host.Project.EntryPoint ?? host.Project.Name;
                 }
 
-                Logger.TraceInformation($"[ApplicationHost] Executing '{options.ApplicationName}' '{string.Join(" ", programArgs)}'");
+                log.WriteInformation($"Executing '{options.ApplicationName}' '{string.Join(" ", programArgs)}'");
                 host.ExecuteApplication(
                     options.ApplicationName,
                     programArgs);
@@ -86,9 +100,20 @@ namespace Microsoft.Framework.ApplicationHost
             }
             catch (Exception ex)
             {
+                if (log != null)
+                {
+                    log.WriteError($"{ex.GetType().FullName} {ex.Message}", ex);
+                }
                 Console.Error.WriteLine($"Error loading project: {ex.Message}");
-                throw;
+                return Task.FromResult(1);
             }
+        }
+
+        private ILoggerFactory ConfigureLogging()
+        {
+            var loggerFactory = new LoggerFactory();
+            loggerFactory.AddConsole(RuntimeLogging.Filter);
+            return loggerFactory;
         }
 
         private string GetVariable(string key)
@@ -121,10 +146,12 @@ namespace Microsoft.Framework.ApplicationHost
                 CommandOptionType.SingleValue);
             var optionConfiguration = app.Option("--configuration <CONFIGURATION>", "The configuration to run under", CommandOptionType.SingleValue);
             var optionCompilationServer = app.Option("--port <PORT>", "The port to the compilation server", CommandOptionType.SingleValue);
+            var optionTrace = app.Option("--trace <TRACE_CONFIG>", $"Configure tracing based on the specified settings (uses the same format as the {EnvironmentNames.Trace} environment variable)", CommandOptionType.SingleValue);
             var runCmdExecuted = false;
             app.HelpOption("-?|-h|--help");
             app.VersionOption("--version", GetVersion);
             var runCmd = app.Command("run", c =>
+
             {
                 // We don't actually execute "run" command here
                 // We are adding this command for the purpose of displaying correct help information
@@ -152,7 +179,7 @@ namespace Microsoft.Framework.ApplicationHost
             {
                 // If no subcommand was specified, show error message
                 // and exit immediately with non-zero exit code
-                Logger.TraceError("Please specify the command to run");
+                Console.Error.WriteLine("Please specify the command to run");
                 exitCode = 2;
                 return true;
             }
@@ -160,6 +187,8 @@ namespace Microsoft.Framework.ApplicationHost
             options = new ApplicationHostOptions();
             options.WatchFiles = optionWatch.HasValue();
             options.PackageDirectory = optionPackages.Value();
+
+            options.Trace = optionTrace.Value();
 
             options.Configuration = optionConfiguration.Value() ?? _environment.Configuration ?? "Debug";
             options.ApplicationBaseDirectory = _environment.ApplicationBasePath;

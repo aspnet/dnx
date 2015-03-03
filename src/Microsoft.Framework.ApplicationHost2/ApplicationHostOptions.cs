@@ -12,5 +12,6 @@ namespace Microsoft.Framework.ApplicationHost
         public string Configuration { get; set; }
         public bool WatchFiles { get; set; }
         public int? CompilationServerPort { get; set; }
+        public string Trace { get; set; }
     }
 }

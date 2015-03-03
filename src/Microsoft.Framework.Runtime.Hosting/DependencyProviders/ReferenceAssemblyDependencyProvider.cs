@@ -7,6 +7,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.Versioning;
+using Microsoft.Framework.Logging;
 using NuGet;
 using NuGet.DependencyResolver;
 using NuGet.Frameworks;
@@ -17,8 +18,11 @@ namespace Microsoft.Framework.Runtime.Hosting.DependencyProviders
 {
     public class ReferenceAssemblyDependencyProvider : IDependencyProvider 
     {
+        private readonly ILogger Log;
+
         public ReferenceAssemblyDependencyProvider(IFrameworkReferenceResolver frameworkReferenceResolver)
         {
+            Log = RuntimeLogging.Logger<ReferenceAssemblyDependencyProvider>();
             FrameworkResolver = frameworkReferenceResolver;
         }
 
@@ -36,6 +40,7 @@ namespace Microsoft.Framework.Runtime.Hosting.DependencyProviders
 
             if (!FrameworkResolver.TryGetAssembly(name, targetFramework, out path, out assemblyVersion))
             {
+                Log.WriteWarning($"Unable to resolve requested assembly {libraryRange.Name}");
                 return null;
             }
 
