@@ -20,6 +20,15 @@ namespace Microsoft.Framework.Runtime.Hosting
 
         internal RuntimeHost(RuntimeHostBuilder builder)
         {
+            if(builder == null)
+            {
+                throw new ArgumentNullException(nameof(builder));
+            }
+            if(builder.Project == null)
+            {
+                throw new ArgumentException($"{nameof(RuntimeHostBuilder)} does not contain a valid Project", nameof(builder));
+            }
+
             Project = builder.Project;
 
             // Load properties from the mutable RuntimeHostBuilder into

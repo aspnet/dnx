@@ -1,4 +1,6 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using System.IO;
 using System.Runtime.Versioning;
 using Microsoft.Framework.Runtime.Hosting.DependencyProviders;
 using NuGet.DependencyResolver;
@@ -9,15 +11,10 @@ namespace Microsoft.Framework.Runtime.Hosting
 {
     public class RuntimeHostBuilder
     {
-        public IList<IDependencyProvider> DependencyProviders { get; }
+        public IList<IDependencyProvider> DependencyProviders { get; } = new List<IDependencyProvider>();
         public NuGetFramework TargetFramework { get; set; }
         public Project Project { get; set; }
-        public LockFile LockFile { get; set;  }
-
-        public RuntimeHostBuilder()
-        {
-            DependencyProviders = new List<IDependencyProvider>();
-        }
+        public LockFile LockFile { get; set; }
 
         /// <summary>
         /// Create a <see cref="RuntimeHostBuilder"/> for the project in the specified
@@ -29,23 +26,37 @@ namespace Microsoft.Framework.Runtime.Hosting
         /// it will be loaded. 
         /// </remarks>
         /// <param name="projectDirectory">The directory of the project to host</param>
-        public static RuntimeHostBuilder ForProjectDirectory(string projectDirectory, IApplicationEnvironment applicationEnvironment)
+        public static RuntimeHostBuilder ForProjectDirectory(string projectDirectory, NuGetFramework runtimeFramework)
         {
+            if (string.IsNullOrEmpty(projectDirectory))
+            {
+                throw new ArgumentNullException(nameof(projectDirectory));
+            }
+            if (runtimeFramework == null)
+            {
+                throw new ArgumentNullException(nameof(runtimeFramework));
+            }
+
             var hostBuilder = new RuntimeHostBuilder();
 
             // Load the Project
-            hostBuilder.Project = ProjectReader.ReadProjectFile(projectDirectory);
+            var projectResolver = new PackageSpecResolver(projectDirectory);
+            PackageSpec packageSpec;
+            if (projectResolver.TryResolvePackageSpec(GetProjectName(projectDirectory), out packageSpec))
+            {
+                hostBuilder.Project = new Project(packageSpec);
+            }
 
             // Load the Lock File if present
-            if (ProjectReader.HasLockFile(projectDirectory))
+            LockFile lockFile;
+            if (TryReadLockFile(projectDirectory, out lockFile))
             {
-                hostBuilder.LockFile = ProjectReader.ReadLockFile(projectDirectory);
+                hostBuilder.LockFile = lockFile;
             }
 
             // Set the framework
-            hostBuilder.TargetFramework = NuGetFramework.Parse(applicationEnvironment.RuntimeFramework.FullName);
+            hostBuilder.TargetFramework = runtimeFramework;
 
-            var projectResolver = new PackageSpecResolver(projectDirectory);
             hostBuilder.DependencyProviders.Add(new PackageSpecReferenceDependencyProvider(projectResolver));
 
             if (hostBuilder.LockFile != null)
@@ -69,5 +80,27 @@ namespace Microsoft.Framework.Runtime.Hosting
         {
             return new RuntimeHost(this);
         }
+
+        private static string GetProjectName(string projectDirectory)
+        {
+            projectDirectory = projectDirectory.TrimEnd(Path.DirectorySeparatorChar);
+            return projectDirectory.Substring(Path.GetDirectoryName(projectDirectory).Length).Trim(Path.DirectorySeparatorChar);
+        }
+
+        private static bool TryReadLockFile(string directory, out LockFile lockFile)
+        {
+            lockFile = null;
+            string file = Path.Combine(directory, LockFileFormat.LockFileName);
+            if (File.Exists(file))
+            {
+                using (var stream = File.OpenRead(file))
+                {
+                    lockFile = LockFileFormat.Read(stream);
+                }
+                return true;
+            }
+            return false;
+        }
+
     }
 }

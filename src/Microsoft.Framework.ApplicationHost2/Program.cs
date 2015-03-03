@@ -10,9 +10,7 @@ using Microsoft.Framework.ApplicationHost.Impl.Syntax;
 using Microsoft.Framework.Runtime;
 using Microsoft.Framework.Runtime.Common.CommandLine;
 using Microsoft.Framework.Runtime.Hosting;
-using Microsoft.Framework.Runtime.Hosting.DependencyProviders;
 using NuGet.Frameworks;
-using NuGet.ProjectModel;
 
 namespace Microsoft.Framework.ApplicationHost
 {
@@ -47,7 +45,13 @@ namespace Microsoft.Framework.ApplicationHost
                 // Construct the necessary context for hosting the application
                 var builder = RuntimeHostBuilder.ForProjectDirectory(
                     options.ApplicationBaseDirectory,
-                    _environment);
+                    NuGetFramework.Parse(_environment.RuntimeFramework.FullName));
+                if(builder.Project == null)
+                {
+                    // Failed to load the project
+                    Console.Error.WriteLine("Unable to find a project.json file.");
+                    return Task.FromResult(1);
+                }
 
                 // Boot the runtime
                 var host = builder.Build();
