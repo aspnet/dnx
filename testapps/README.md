@@ -1,0 +1,2 @@
+# Test Applications
+These are some test apps for using with the new k runtime to check features. They aren't in "test" because we don't want build.cmd to pick them up and try to build them since some of them are intentionally broken (UnresolvedDependencies for example)
