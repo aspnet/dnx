@@ -1,6 +1,5 @@
 ﻿using System;
 using System.IO;
-using Microsoft.Framework.Runtime.Hosting.Internal;
 using NuGet.ProjectModel;
 
 namespace Microsoft.Framework.Runtime.Hosting
@@ -12,20 +11,20 @@ namespace Microsoft.Framework.Runtime.Hosting
         public static bool HasProjectFile(string directory)
         {
             string file = Path.Combine(directory, ProjectFileName);
-            return FileSystem.FileExists(file);
+            return File.Exists(file);
         }
 
         public static bool HasLockFile(string directory)
         {
             string file = Path.Combine(directory, LockFileFormat.LockFileName);
-            return FileSystem.FileExists(file);
+            return File.Exists(file);
         }
 
         public static Project ReadProjectFile(string directory)
         {
             string file = Path.Combine(directory, ProjectFileName);
             PackageSpec packageSpec;
-            using (var stream = FileSystem.OpenRead(file))
+            using (var stream = File.OpenRead(file))
             {
                 packageSpec = JsonPackageSpecReader.GetPackageSpec(
                     stream,
@@ -38,7 +37,7 @@ namespace Microsoft.Framework.Runtime.Hosting
         public static LockFile ReadLockFile(string directory)
         {
             string file = Path.Combine(directory, LockFileFormat.LockFileName);
-            using (var stream = FileSystem.OpenRead(file))
+            using (var stream = File.OpenRead(file))
             {
                 return LockFileFormat.Read(stream);
             }

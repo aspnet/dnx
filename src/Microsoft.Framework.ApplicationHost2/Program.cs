@@ -31,13 +31,6 @@ namespace Microsoft.Framework.ApplicationHost
 
         public Task<int> Main(string[] args)
         {
-#if DEBUG && ASPNET50
-            if(args.Length > 0 && string.Equals(args[0], "dbg", StringComparison.OrdinalIgnoreCase))
-            {
-                args = args.Skip(1).ToArray();
-                System.Diagnostics.Debugger.Launch();
-            }
-#endif
             try
             {
                 Logger.TraceInformation("[ApplicationHost] Application Host Starting");
@@ -51,19 +44,10 @@ namespace Microsoft.Framework.ApplicationHost
                     return Task.FromResult(exitCode);
                 }
 
-                // Check for a project
-                if (!ProjectReader.HasProjectFile(options.ApplicationBaseDirectory))
-                {
-                    // No project was found. We can't start the app.
-                    Logger.TraceError($"[ApplicationHost] A project.json file was not found in '{options.ApplicationBaseDirectory}'");
-                    return Task.FromResult(1);
-                }
-
                 // Construct the necessary context for hosting the application
                 var builder = RuntimeHostBuilder.ForProjectDirectory(
                     options.ApplicationBaseDirectory,
-                    _environment,
-                    _container);
+                    _environment);
 
                 // Boot the runtime
                 var host = builder.Build();
@@ -90,7 +74,7 @@ namespace Microsoft.Framework.ApplicationHost
                 }
 
                 Logger.TraceInformation($"[ApplicationHost] Executing '{options.ApplicationName}' '{string.Join(" ", programArgs)}'");
-                host.LaunchApplication(
+                host.ExecuteApplication(
                     options.ApplicationName,
                     programArgs);
 

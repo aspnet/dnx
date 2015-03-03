@@ -9,15 +9,13 @@ namespace Microsoft.Framework.Runtime.Hosting
 {
     public class RuntimeHostBuilder
     {
-        public IAssemblyLoaderContainer LoaderContainer { get; }
         public IList<IDependencyProvider> DependencyProviders { get; }
         public NuGetFramework TargetFramework { get; set; }
         public Project Project { get; set; }
         public LockFile LockFile { get; set;  }
 
-        public RuntimeHostBuilder(IAssemblyLoaderContainer loaderContainer)
+        public RuntimeHostBuilder()
         {
-            LoaderContainer = loaderContainer;
             DependencyProviders = new List<IDependencyProvider>();
         }
 
@@ -31,9 +29,9 @@ namespace Microsoft.Framework.Runtime.Hosting
         /// it will be loaded. 
         /// </remarks>
         /// <param name="projectDirectory">The directory of the project to host</param>
-        public static RuntimeHostBuilder ForProjectDirectory(string projectDirectory, IApplicationEnvironment applicationEnvironment, IAssemblyLoaderContainer loaderContainer)
+        public static RuntimeHostBuilder ForProjectDirectory(string projectDirectory, IApplicationEnvironment applicationEnvironment)
         {
-            var hostBuilder = new RuntimeHostBuilder(loaderContainer);
+            var hostBuilder = new RuntimeHostBuilder();
 
             // Load the Project
             hostBuilder.Project = ProjectReader.ReadProjectFile(projectDirectory);
@@ -49,13 +47,16 @@ namespace Microsoft.Framework.Runtime.Hosting
 
             var projectResolver = new PackageSpecResolver(projectDirectory);
             hostBuilder.DependencyProviders.Add(new PackageSpecReferenceDependencyProvider(projectResolver));
-            var referenceResolver = new FrameworkReferenceResolver();
-            hostBuilder.DependencyProviders.Add(new ReferenceAssemblyDependencyProvider(referenceResolver));
 
             if (hostBuilder.LockFile != null)
             {
                 hostBuilder.DependencyProviders.Add(new LockFileDependencyProvider(hostBuilder.LockFile));
             }
+
+            var referenceResolver = new FrameworkReferenceResolver();
+            hostBuilder.DependencyProviders.Add(new ReferenceAssemblyDependencyProvider(referenceResolver));
+
+            // GAC resolver goes here! :)
 
             return hostBuilder;
         }

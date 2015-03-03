@@ -16,7 +16,6 @@ namespace Microsoft.Framework.Runtime.Hosting
     {
         public Project Project { get; }
         public NuGetFramework TargetFramework { get; }
-        public IAssemblyLoaderContainer LoaderContainer { get; }
         public IEnumerable<IDependencyProvider> DependencyProviders { get; }
 
         internal RuntimeHost(RuntimeHostBuilder builder)
@@ -25,7 +24,6 @@ namespace Microsoft.Framework.Runtime.Hosting
 
             // Load properties from the mutable RuntimeHostBuilder into
             // immutable copies on this object
-            LoaderContainer = builder.LoaderContainer;
             TargetFramework = builder.TargetFramework;
 
             // Copy the dependency providers so the user can't fiddle with them without our knowledge
@@ -33,7 +31,7 @@ namespace Microsoft.Framework.Runtime.Hosting
             DependencyProviders = list;
         }
 
-        public void LaunchApplication(string applicationName, string[] programArgs)
+        public void ExecuteApplication(string applicationName, string[] programArgs)
         {
             Logger.TraceInformation($"[RuntimeHost] Launching '{applicationName}' '{string.Join(" ", programArgs)}'");
 

@@ -29,10 +29,7 @@ namespace Microsoft.Framework.Runtime.Hosting.DependencyProviders
         public Library GetDescription(LibraryRange libraryRange, NuGetFramework targetFramework)
         {
             Logger.TraceInformation($"[ReferenceAssemblyDependencyResolver] Resolving {libraryRange.Name} for {targetFramework}");
-            if (!SupportsType(libraryRange.TypeConstraint))
-            {
-                return null;
-            }
+            System.Diagnostics.Debug.Assert(SupportsType(libraryRange.TypeConstraint));
 
             var name = libraryRange.Name;
             var version = libraryRange.VersionRange?.MinVersion;
@@ -44,7 +41,7 @@ namespace Microsoft.Framework.Runtime.Hosting.DependencyProviders
                 return null;
             }
 
-            var assemblyVersion = GetAssemblyVersion(path);
+            var assemblyVersion = AssemblyUtils.GetAssemblyVersion(path);
 
             if (version == null || version == assemblyVersion)
             {
@@ -74,15 +71,6 @@ namespace Microsoft.Framework.Runtime.Hosting.DependencyProviders
                 libraryType,
                 LibraryTypes.Reference,
                 StringComparison.Ordinal);
-        }
-
-        internal static NuGetVersion GetAssemblyVersion(string path)
-        {
-#if ASPNET50
-            return new NuGetVersion(AssemblyName.GetAssemblyName(path).Version);
-#else
-            return new NuGetVersion(System.Runtime.Loader.AssemblyLoadContext.GetAssemblyName(path).Version);
-#endif
         }
     }
 }
