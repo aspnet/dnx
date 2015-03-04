@@ -59,12 +59,7 @@ namespace Microsoft.Framework.PackageManager.Bundle
             root.Reports.Quiet.WriteLine("  Copying source code from {0} dependency {1}",
                 _libraryDescription.Type, _libraryDescription.Identity.Name);
 
-            Runtime.Project project;
-            if (!_projectResolver.TryResolveProject(_libraryDescription.Identity.Name, out project))
-            {
-                throw new Exception("TODO: unable to resolve project named " + _libraryDescription.Identity.Name);
-            }
-
+            var project = GetCurrentProject();
             var targetName = project.Name;
             TargetPath = Path.Combine(root.OutputPath, BundleRoot.AppRootName, "src", targetName);
 
@@ -90,12 +85,7 @@ namespace Microsoft.Framework.PackageManager.Bundle
             root.Reports.Quiet.WriteLine("  Packing nupkg from {0} dependency {1}",
                 _libraryDescription.Type, _libraryDescription.Identity.Name);
 
-            Runtime.Project project;
-            if (!_projectResolver.TryResolveProject(_libraryDescription.Identity.Name, out project))
-            {
-                throw new Exception("TODO: unable to resolve project named " + _libraryDescription.Identity.Name);
-            }
-
+            var project = GetCurrentProject();
             var resolver = new DefaultPackagePathResolver(root.TargetPackagesPath);
 
             var targetNupkg = resolver.GetPackageFileName(project.Name, project.Version);
@@ -301,17 +291,20 @@ namespace Microsoft.Framework.PackageManager.Bundle
 
         public void PostProcess(BundleRoot root)
         {
+            if (root.NoSource)
+            {
+                // At this point, all nupkgs generated from dependency projects are available in packages folder
+                // So we can add them to lockfile now
+                UpdateLockFile(root);
+            }
+
             // If --wwwroot-out doesn't have a non-empty value, we don't need a public app folder in output
             if (string.IsNullOrEmpty(WwwRootOut))
             {
                 return;
             }
 
-            Runtime.Project project;
-            if (!_projectResolver.TryResolveProject(_libraryDescription.Identity.Name, out project))
-            {
-                throw new Exception("TODO: unable to resolve project named " + _libraryDescription.Identity.Name);
-            }
+            var project = GetCurrentProject();
 
             // Construct path to public app folder, which contains content files and tool dlls
             // The name of public app folder is specified with "--appfolder" option
@@ -328,22 +321,50 @@ namespace Microsoft.Framework.PackageManager.Bundle
             GenerateWebConfigFileForWwwRootOut(root, project, wwwRootOutPath);
 
             CopyAspNetLoaderDll(root, wwwRootOutPath);
-
-            if (root.NoSource)
-            {
-                // Add newly generated packages to lockfile
-                UpdateLockFile(root);
-            }
         }
 
         private void UpdateLockFile(BundleRoot root)
         {
             var lockFileFormat = new LockFileFormat();
             var lockFilePath = Path.Combine(TargetPath, "root", LockFileFormat.LockFileName);
-            var lockFile = lockFileFormat.Read(lockFilePath);
+
+            LockFile lockFile;
+            if (File.Exists(lockFilePath))
+            {
+                lockFile = lockFileFormat.Read(lockFilePath);
+
+                // Correct 'projectFileDependencyGroups' in lockfile to ensure output can pass lockfile validation
+                // Remove the dependency group shared by all frameworks because it is not valid anymore
+                lockFile.ProjectFileDependencyGroups.RemoveAll(g => string.IsNullOrEmpty(g.FrameworkName));
+            }
+            else
+            {
+                lockFile = new LockFile
+                {
+                    Islocked = false
+                };
+
+                var project = GetCurrentProject();
+
+                // Keep the dependency groups for specific frameworks
+                foreach (var frameworkInfo in project.GetTargetFrameworks())
+                {
+                    lockFile.ProjectFileDependencyGroups.Add(new ProjectFileDependencyGroup(
+                        frameworkInfo.FrameworkName.ToString(),
+                        frameworkInfo.Dependencies.Select(x => x.LibraryRange.ToString())));
+                }
+            }
+
+            // The dependency group shared by all frameworks should only contain the main nupkg (i.e. entrypoint)
+            lockFile.ProjectFileDependencyGroups.Add(new ProjectFileDependencyGroup(
+                string.Empty,
+                new[] { _libraryDescription.LibraryRange.ToString() }));
+
             var repository = new PackageRepository(root.TargetPackagesPath);
             var resolver = new DefaultPackagePathResolver(root.TargetPackagesPath);
 
+            // All dependency projects are bundled to nupkgs
+            // Add them to lockfile to ensure the contents of lockfile are still valid
             using (var sha512 = SHA512.Create())
             {
                 foreach (var bundleProject in root.Projects)
@@ -565,6 +586,16 @@ namespace Microsoft.Framework.PackageManager.Bundle
             var index1 = (relativePath + Path.DirectorySeparatorChar).IndexOf(Path.DirectorySeparatorChar);
             var index2 = (relativePath + Path.AltDirectorySeparatorChar).IndexOf(Path.AltDirectorySeparatorChar);
             return relativePath.Substring(0, Math.Min(index1, index2));
+        }
+
+        private Runtime.Project GetCurrentProject()
+        {
+            Runtime.Project project;
+            if (!_projectResolver.TryResolveProject(_libraryDescription.Identity.Name, out project))
+            {
+                throw new Exception("TODO: unable to resolve project named " + _libraryDescription.Identity.Name);
+            }
+            return project;
         }
     }
 }

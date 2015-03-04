@@ -30,6 +30,11 @@ namespace Microsoft.Framework.FunctionalTestUtils
             return new DisposableDir(dirPath);
         }
 
+        public override string ToString()
+        {
+            return DirPath;
+        }
+
         public void Dispose()
         {
             if (Directory.Exists(DirPath))

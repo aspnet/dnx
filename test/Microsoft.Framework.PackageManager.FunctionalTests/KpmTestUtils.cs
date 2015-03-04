@@ -29,7 +29,8 @@ namespace Microsoft.Framework.PackageManager
             }
 
             string stdOut, stdErr;
-            return TestUtils.Exec(program, commandLine, out stdOut, out stdErr, environment, workingDir);
+            var exitCode = TestUtils.Exec(program, commandLine, out stdOut, out stdErr, environment, workingDir);
+            return exitCode;
         }
     }
 }

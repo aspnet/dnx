@@ -117,12 +117,12 @@ namespace Microsoft.Framework.FunctionalTestUtils
             var dirFileList = Directory.GetFiles(dirPath, "*.*", SearchOption.AllDirectories)
                 .Select(x => x.Substring(dirPath.Length));
 
-            var expectedCount = _pathToContents.Count;
-            var actualCount = dirFileList.Count();
-            if (expectedCount != actualCount)
+            var missingFiles = _pathToContents.Keys.Except(dirFileList);
+            var extraFiles = dirFileList.Except(_pathToContents.Keys);
+            if (missingFiles.Any() || extraFiles.Any())
             {
                 Console.Error.WriteLine("Number of files in '{0}' is {1}, while expected number is {2}.",
-                    dirPath, actualCount, expectedCount);
+                    dirPath, dirFileList.Count(), _pathToContents.Count);
                 Console.Error.WriteLine("Missing files: " +
                     string.Join(",", _pathToContents.Keys.Except(dirFileList)));
                 Console.Error.WriteLine("Extra files: " +
@@ -130,24 +130,21 @@ namespace Microsoft.Framework.FunctionalTestUtils
                 return false;
             }
 
-            foreach (var file in dirFileList)
+            if (compareFileContents)
             {
-                if (!_pathToContents.ContainsKey(file))
+                foreach (var file in dirFileList)
                 {
-                    Console.Error.WriteLine("Expecting '{0}', which doesn't exist in '{1}'", file, dirPath);
-                    return false;
-                }
-
-                var fullPath = Path.Combine(dirPath, file);
-                var onDiskFileContents = File.ReadAllText(fullPath);
-                if (!string.Equals(onDiskFileContents, _pathToContents[file]))
-                {
-                    Console.Error.WriteLine("The contents of '{0}' don't match expected contents.", fullPath);
-                    Console.Error.WriteLine("Expected:");
-                    Console.Error.WriteLine(_pathToContents[file]);
-                    Console.Error.WriteLine("Actual:");
-                    Console.Error.WriteLine(onDiskFileContents);
-                    return false;
+                    var fullPath = Path.Combine(dirPath, file);
+                    var onDiskFileContents = File.ReadAllText(fullPath);
+                    if (!string.Equals(onDiskFileContents, _pathToContents[file]))
+                    {
+                        Console.Error.WriteLine("The contents of '{0}' don't match expected contents.", fullPath);
+                        Console.Error.WriteLine("Expected:");
+                        Console.Error.WriteLine(_pathToContents[file]);
+                        Console.Error.WriteLine("Actual:");
+                        Console.Error.WriteLine(onDiskFileContents);
+                        return false;
+                    }
                 }
             }
 
