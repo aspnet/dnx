@@ -59,12 +59,7 @@ namespace Microsoft.Framework.PackageManager.Bundle
             root.Reports.Quiet.WriteLine("  Copying source code from {0} dependency {1}",
                 _libraryDescription.Type, _libraryDescription.Identity.Name);
 
-            Runtime.Project project;
-            if (!_projectResolver.TryResolveProject(_libraryDescription.Identity.Name, out project))
-            {
-                throw new Exception("TODO: unable to resolve project named " + _libraryDescription.Identity.Name);
-            }
-
+            var project = GetCurrentProject();
             var targetName = project.Name;
             TargetPath = Path.Combine(root.OutputPath, BundleRoot.AppRootName, "src", targetName);
 
@@ -90,12 +85,7 @@ namespace Microsoft.Framework.PackageManager.Bundle
             root.Reports.Quiet.WriteLine("  Packing nupkg from {0} dependency {1}",
                 _libraryDescription.Type, _libraryDescription.Identity.Name);
 
-            Runtime.Project project;
-            if (!_projectResolver.TryResolveProject(_libraryDescription.Identity.Name, out project))
-            {
-                throw new Exception("TODO: unable to resolve project named " + _libraryDescription.Identity.Name);
-            }
-
+            var project = GetCurrentProject();
             var resolver = new DefaultPackagePathResolver(root.TargetPackagesPath);
 
             var targetNupkg = resolver.GetPackageFileName(project.Name, project.Version);
@@ -314,11 +304,7 @@ namespace Microsoft.Framework.PackageManager.Bundle
                 return;
             }
 
-            Runtime.Project project;
-            if (!_projectResolver.TryResolveProject(_libraryDescription.Identity.Name, out project))
-            {
-                throw new Exception("TODO: unable to resolve project named " + _libraryDescription.Identity.Name);
-            }
+            var project = GetCurrentProject();
 
             // Construct path to public app folder, which contains content files and tool dlls
             // The name of public app folder is specified with "--appfolder" option
@@ -358,11 +344,7 @@ namespace Microsoft.Framework.PackageManager.Bundle
                     Islocked = false
                 };
 
-                Runtime.Project project;
-                if (!_projectResolver.TryResolveProject(_libraryDescription.Identity.Name, out project))
-                {
-                    throw new Exception("TODO: unable to resolve project named " + _libraryDescription.Identity.Name);
-                }
+                var project = GetCurrentProject();
 
                 // Keep the dependency groups for specific frameworks
                 foreach (var frameworkInfo in project.GetTargetFrameworks())
@@ -604,6 +586,16 @@ namespace Microsoft.Framework.PackageManager.Bundle
             var index1 = (relativePath + Path.DirectorySeparatorChar).IndexOf(Path.DirectorySeparatorChar);
             var index2 = (relativePath + Path.AltDirectorySeparatorChar).IndexOf(Path.AltDirectorySeparatorChar);
             return relativePath.Substring(0, Math.Min(index1, index2));
+        }
+
+        private Runtime.Project GetCurrentProject()
+        {
+            Runtime.Project project;
+            if (!_projectResolver.TryResolveProject(_libraryDescription.Identity.Name, out project))
+            {
+                throw new Exception("TODO: unable to resolve project named " + _libraryDescription.Identity.Name);
+            }
+            return project;
         }
     }
 }
