@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using Microsoft.Framework.Logging;
+using Microsoft.Framework.Runtime.Dependencies;
 using Microsoft.Framework.Runtime.Internal;
 using NuGet.DependencyResolver;
 using NuGet.Frameworks;
@@ -48,23 +49,11 @@ namespace Microsoft.Framework.Runtime
         {
             Log.WriteInformation($"Launching '{applicationName}' '{string.Join(" ", programArgs)}'");
 
-            // Walk dependencies
-            var walker = new DependencyWalker(DependencyProviders);
-            var result = walker.Walk(Project.Name, Project.Version, TargetFramework);
-
-            // Write the resolved graph
-            if (Log.IsEnabled(LogLevel.Debug))
-            {
-                Log.WriteDebug("Dependency Graph:");
-                if (result == null || result.Item == null)
-                {
-                    Log.WriteDebug("<no dependencies>");
-                }
-                else
-                {
-                    result.Dump(s => Log.WriteDebug($"{s}"));
-                }
-            }
+            var deps = DependencyManager.ResolveDependencies(
+                DependencyProviders,
+                Project.Name,
+                Project.Version,
+                TargetFramework);
 
             // Locate the entry point
             var entryPoint = LocateEntryPoint(applicationName);

@@ -15,7 +15,7 @@ using NuGet.Frameworks;
 using NuGet.LibraryModel;
 using NuGet.Versioning;
 
-namespace Microsoft.Framework.Runtime.Resolution
+namespace Microsoft.Framework.Runtime.Dependencies
 {
     public class ReferenceAssemblyDependencyProvider : IDependencyProvider 
     {

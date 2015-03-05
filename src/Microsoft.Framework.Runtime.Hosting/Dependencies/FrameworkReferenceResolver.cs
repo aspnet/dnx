@@ -11,7 +11,7 @@ using NuGet.Versioning;
 using Microsoft.Framework.Logging;
 using Microsoft.Framework.Runtime.Internal;
 
-namespace Microsoft.Framework.Runtime.Resolution
+namespace Microsoft.Framework.Runtime.Dependencies
 {
     public class FrameworkReferenceResolver : IFrameworkReferenceResolver
     {

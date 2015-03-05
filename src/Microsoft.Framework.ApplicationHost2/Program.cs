@@ -48,7 +48,7 @@ namespace Microsoft.Framework.ApplicationHost
                     string.IsNullOrEmpty(options.Trace) ?
                         Environment.GetEnvironmentVariable(EnvironmentNames.Trace) :
                         options.Trace;
-                // Reinitialize logging
+                // Initialize logging
                 RuntimeLogging.Initialize(traceConfig, ConfigureLogging);
 
                 // "Program" is a terrible name for a logger and this is the only logger in
@@ -114,6 +114,9 @@ namespace Microsoft.Framework.ApplicationHost
         {
             var loggerFactory = new LoggerFactory();
             loggerFactory.AddConsole(RuntimeLogging.Filter);
+#if DEBUG
+            loggerFactory.MinimumLevel = LogLevel.Debug;
+#endif
             return loggerFactory;
         }
 

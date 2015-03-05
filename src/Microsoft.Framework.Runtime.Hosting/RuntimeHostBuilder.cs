@@ -2,8 +2,8 @@
 using System.Collections.Generic;
 using System.IO;
 using Microsoft.Framework.Logging;
+using Microsoft.Framework.Runtime.Dependencies;
 using Microsoft.Framework.Runtime.Internal;
-using Microsoft.Framework.Runtime.Resolution;
 using NuGet.DependencyResolver;
 using NuGet.Frameworks;
 using NuGet.ProjectModel;
