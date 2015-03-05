@@ -4,7 +4,6 @@
 using System.Linq;
 using System.IO;
 using Microsoft.Framework.Runtime.FunctionalTests.Utilities;
-using Microsoft.Framework.Runtime.Hosting;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Xunit;
