@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using Microsoft.Framework.Logging;
+using Microsoft.Framework.Runtime.Dependencies;
 using Microsoft.Framework.Runtime.Internal;
 using NuGet.DependencyResolver;
 using NuGet.Frameworks;
@@ -48,17 +49,11 @@ namespace Microsoft.Framework.Runtime
         {
             Log.WriteInformation($"Launching '{applicationName}' '{string.Join(" ", programArgs)}'");
 
-            var libs = ResolveDependencies();
-
-            if (Log.IsEnabled(LogLevel.Debug))
-            {
-                // Dump the list of libraries
-                Log.WriteDebug("Dependencies:");
-                foreach (var library in libs.Libraries)
-                {
-                    Log.WriteDebug($" {library.Identity}");
-                }
-            }
+            var deps = DependencyManager.ResolveDependencies(
+                DependencyProviders,
+                Project.Name,
+                Project.Version,
+                TargetFramework);
 
             // Locate the entry point
             var entryPoint = LocateEntryPoint(applicationName);
@@ -67,51 +62,6 @@ namespace Microsoft.Framework.Runtime
             {
                 Log.WriteInformation($"Executing Entry Point: {entryPoint.GetName().FullName}");
             }
-        }
-
-        private LibraryCollection ResolveDependencies()
-        {
-            GraphNode<Library> result = ResolveDependencyGraph();
-
-            // Get a flat list of libraries needed for the application
-            var libraries = new List<Library>();
-            result.ForEach(node =>
-            {
-                if (node.Disposition == Disposition.Accepted)
-                {
-                    libraries.Add(node.Item.Data);
-                }
-            });
-            return new LibraryCollection(libraries);
-        }
-
-        private GraphNode<Library> ResolveDependencyGraph()
-        {
-            // Walk dependencies
-            var walker = new DependencyWalker(DependencyProviders);
-            var result = walker.Walk(Project.Name, Project.Version, TargetFramework);
-
-            // Resolve conflicts
-            if (!result.TryResolveConflicts())
-            {
-                throw new InvalidOperationException("Failed to resolve conflicting dependencies!");
-            }
-
-            // Write the graph
-            if (Log.IsEnabled(LogLevel.Debug))
-            {
-                Log.WriteDebug("Dependency Graph:");
-                if (result == null || result.Item == null)
-                {
-                    Log.WriteDebug(" <no dependencies>");
-                }
-                else
-                {
-                    result.Dump(s => Log.WriteDebug($" {s}"));
-                }
-            }
-
-            return result;
         }
 
         private Assembly LocateEntryPoint(string applicationName)
