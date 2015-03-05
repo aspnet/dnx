@@ -49,7 +49,7 @@ namespace Microsoft.Framework.Runtime.Dependencies
                 // Everything should be Accepted or Rejected by now
                 Debug.Assert(node.Disposition != Disposition.Acceptable);
 
-                if(node.Disposition == Disposition.Accepted)
+                if (node.Disposition == Disposition.Accepted)
                 {
                     var library = node.Item.Data;
 
@@ -71,7 +71,7 @@ namespace Microsoft.Framework.Runtime.Dependencies
                     graph.Dump(s => Log.WriteDebug($" {s}"));
                 }
                 Log.WriteDebug("Selected Dependencies");
-                foreach(var library in libraries.Values)
+                foreach (var library in libraries.Values)
                 {
                     Log.WriteDebug($" {library.Identity}");
                 }
