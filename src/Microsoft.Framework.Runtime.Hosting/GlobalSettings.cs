@@ -6,7 +6,7 @@ using System.IO;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
-namespace Microsoft.Framework.Runtime.Hosting.DependencyProviders
+namespace Microsoft.Framework.Runtime
 {
     
     public class GlobalSettings

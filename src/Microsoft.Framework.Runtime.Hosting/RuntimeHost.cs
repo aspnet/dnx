@@ -4,15 +4,12 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-using System.Runtime.Versioning;
 using Microsoft.Framework.Logging;
-using Microsoft.Framework.Runtime.Hosting.Internal;
+using Microsoft.Framework.Runtime.Internal;
 using NuGet.DependencyResolver;
 using NuGet.Frameworks;
-using NuGet.LibraryModel;
-using NuGet.ProjectModel;
 
-namespace Microsoft.Framework.Runtime.Hosting
+namespace Microsoft.Framework.Runtime
 {
     public class RuntimeHost
     {

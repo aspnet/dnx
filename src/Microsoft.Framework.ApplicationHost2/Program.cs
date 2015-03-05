@@ -11,7 +11,7 @@ using Microsoft.Framework.Logging;
 using Microsoft.Framework.Logging.Console;
 using Microsoft.Framework.Runtime;
 using Microsoft.Framework.Runtime.Common.CommandLine;
-using Microsoft.Framework.Runtime.Hosting;
+using Microsoft.Framework.Runtime.Internal;
 using NuGet.Frameworks;
 
 namespace Microsoft.Framework.ApplicationHost
@@ -32,9 +32,6 @@ namespace Microsoft.Framework.ApplicationHost
         public Task<int> Main(string[] args)
         {
 
-            // "Program" is a terrible name for a logger and this is the only logger in
-            // this namespace :).
-
             ILogger log = null;
             try
             {
@@ -53,7 +50,11 @@ namespace Microsoft.Framework.ApplicationHost
                         options.Trace;
                 // Reinitialize logging
                 RuntimeLogging.Initialize(traceConfig, ConfigureLogging);
+
+                // "Program" is a terrible name for a logger and this is the only logger in
+                // this namespace :).
                 log = RuntimeLogging.Logger("Microsoft.Framework.ApplicationHost");
+
                 log.WriteInformation("Application Host Starting");
 
                 // Construct the necessary context for hosting the application

@@ -7,7 +7,6 @@ using System.IO;
 using System.Linq;
 using System.Runtime.Versioning;
 using System.Text;
-using Microsoft.Framework.Runtime.Hosting;
 using Microsoft.Framework.Runtime.Helpers;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;

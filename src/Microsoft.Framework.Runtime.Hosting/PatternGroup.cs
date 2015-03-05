@@ -8,7 +8,7 @@ using System.Linq;
 using Microsoft.Framework.FileSystemGlobbing;
 using Newtonsoft.Json.Linq;
 
-namespace Microsoft.Framework.Runtime.Hosting
+namespace Microsoft.Framework.Runtime
 {
     public class PatternGroup
     {

@@ -8,13 +8,14 @@ using System.Linq;
 using System.Reflection;
 using System.Runtime.Versioning;
 using Microsoft.Framework.Logging;
+using Microsoft.Framework.Runtime.Internal;
 using NuGet;
 using NuGet.DependencyResolver;
 using NuGet.Frameworks;
 using NuGet.LibraryModel;
 using NuGet.Versioning;
 
-namespace Microsoft.Framework.Runtime.Hosting.DependencyProviders
+namespace Microsoft.Framework.Runtime.Resolution
 {
     public class ReferenceAssemblyDependencyProvider : IDependencyProvider 
     {

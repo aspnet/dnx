@@ -4,7 +4,7 @@
 using NuGet.Frameworks;
 using NuGet.Versioning;
 
-namespace Microsoft.Framework.Runtime.Hosting.DependencyProviders
+namespace Microsoft.Framework.Runtime.Resolution
 {
     public interface IFrameworkReferenceResolver
     {

@@ -2,13 +2,13 @@
 using System.Collections.Generic;
 using System.IO;
 using Microsoft.Framework.Logging;
-using Microsoft.Framework.Runtime.Hosting.DependencyProviders;
-using Microsoft.Framework.Runtime.Hosting.Internal;
+using Microsoft.Framework.Runtime.Internal;
+using Microsoft.Framework.Runtime.Resolution;
 using NuGet.DependencyResolver;
 using NuGet.Frameworks;
 using NuGet.ProjectModel;
 
-namespace Microsoft.Framework.Runtime.Hosting
+namespace Microsoft.Framework.Runtime
 {
     public class RuntimeHostBuilder
     {

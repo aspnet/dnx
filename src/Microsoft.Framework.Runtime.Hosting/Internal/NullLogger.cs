@@ -1,7 +1,7 @@
 ﻿using System;
 using Microsoft.Framework.Logging;
 
-namespace Microsoft.Framework.Runtime.Hosting.Internal
+namespace Microsoft.Framework.Runtime.Internal
 {
     internal class NullLoggerFactory : ILoggerFactory
     {

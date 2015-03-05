@@ -9,8 +9,9 @@ using System.Xml.Linq;
 using NuGet.Frameworks;
 using NuGet.Versioning;
 using Microsoft.Framework.Logging;
+using Microsoft.Framework.Runtime.Internal;
 
-namespace Microsoft.Framework.Runtime.Hosting.DependencyProviders
+namespace Microsoft.Framework.Runtime.Resolution
 {
     public class FrameworkReferenceResolver : IFrameworkReferenceResolver
     {

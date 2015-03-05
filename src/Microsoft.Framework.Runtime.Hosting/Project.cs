@@ -5,7 +5,7 @@ using Newtonsoft.Json.Linq;
 using NuGet.ProjectModel;
 using NuGet.Versioning;
 
-namespace Microsoft.Framework.Runtime.Hosting
+namespace Microsoft.Framework.Runtime
 {
     public class Project
     {

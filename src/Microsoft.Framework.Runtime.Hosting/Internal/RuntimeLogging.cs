@@ -2,9 +2,8 @@
 using System.Collections.Generic;
 using System.Linq;
 using Microsoft.Framework.Logging;
-using Microsoft.Framework.Runtime.Hosting.Internal;
 
-namespace Microsoft.Framework.Runtime
+namespace Microsoft.Framework.Runtime.Internal
 {
     public static class RuntimeLogging
     {

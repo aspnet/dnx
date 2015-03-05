@@ -2,7 +2,7 @@
 using System.Reflection;
 using NuGet.Versioning;
 
-namespace Microsoft.Framework.Runtime.Hosting
+namespace Microsoft.Framework.Runtime.Internal
 {
     internal class AssemblyUtils
     {
