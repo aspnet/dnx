@@ -91,6 +91,12 @@ namespace Microsoft.Framework.FunctionalTestUtils
             return targetSolutionPath;
         }
 
+        public static string GetXreTestAppPath(string name)
+        {
+            var rootDir = ProjectResolver.ResolveRootDirectory(Directory.GetCurrentDirectory());
+            return Path.Combine(rootDir, "misc", "XreTestApps", name);
+        }
+
         public static string GetSamplesFolder()
         {
             var rootDir = ProjectResolver.ResolveRootDirectory(Directory.GetCurrentDirectory());
@@ -177,6 +183,5 @@ namespace Microsoft.Framework.FunctionalTestUtils
                 return Convert.ToBase64String(sha512Bytes);
             }
         }
-
     }
 }

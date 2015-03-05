@@ -985,5 +985,86 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
                     compareFileContents: true));
             }
         }
+
+        [Theory]
+        [InlineData("clr", "win", "x86")]
+        [InlineData("clr", "win", "x64")]
+        public void BundleWithNoSourceOptionGeneratesLockFileOnClr(string flavor, string os, string architecture)
+        {
+            var expectedOutputStructure = @"{
+  '.': ['hello', 'hello.cmd'],
+  'approot': {
+    'global.json': '',
+    'packages': {
+      'HelloWorld': {
+        '1.0.0': {
+          '.': ['HelloWorld.1.0.0.nupkg', 'HelloWorld.1.0.0.nupkg.sha512', 'HelloWorld.nuspec'],
+          'app': ['hello.cmd', 'hello.sh', 'project.json'],
+          'root': ['project.json', 'project.lock.json'],
+          'lib': ['HelloWorld.dll', 'HelloWorld.xml']
+        }
+      }
+    }
+  }
+}";
+            var expectedLockFileContents = @"{
+  ""locked"": false,
+  ""version"": 1,
+  ""projectFileDependencyGroups"": {
+    """": [
+      ""HelloWorld >= 1.0.0""
+      ]
+  },
+  ""libraries"": {
+    ""HelloWorld/1.0.0"": {
+      ""sha"": ""NUPKG_SHA_VALUE"",
+      ""frameworkAssemblies"": {
+        ""Asp.Net,Version=v5.0"": [
+          ""mscorlib"",
+          ""System"",
+          ""System.Core"",
+          ""Microsoft.CSharp""
+        ]
+      },
+      ""contents"": {
+        ""HelloWorld.1.0.0.nupkg"": { },
+        ""HelloWorld.1.0.0.nupkg.sha512"": { },
+        ""HelloWorld.nuspec"": { },
+        ""app\\hello.cmd"": { },
+        ""app\\hello.sh"": { },
+        ""app\\project.json"": { },
+        ""lib\\aspnet50\\HelloWorld.dll"": { },
+        ""lib\\aspnet50\\HelloWorld.xml"": { },
+        ""root\\project.json"": { }
+      }
+    }
+  }
+}";
+
+            using (var runtimeHomeDir = TestUtils.GetRuntimeHomeDir(flavor, os, architecture))
+            using (var bundleOutputPath = TestUtils.CreateTempDir())
+            {
+                var helloWorldAppPath = TestUtils.GetXreTestAppPath("HelloWorld");
+                var exitCode = KpmTestUtils.ExecKpm(
+                    runtimeHomeDir,
+                    subcommand: "bundle",
+                    arguments: string.Format("--no-source --out {1}", helloWorldAppPath, bundleOutputPath),
+                    environment: null,
+                    workingDir: helloWorldAppPath);
+
+                Assert.Equal(0, exitCode);
+
+                Assert.True(DirTree.CreateFromJson(expectedOutputStructure)
+                    .MatchDirectoryOnDisk(bundleOutputPath, compareFileContents: false));
+
+                var outputLockFilePath = Path.Combine(bundleOutputPath,
+                    "approot", "packages", "HelloWorld", "1.0.0", "root", "project.lock.json");
+                var nupkgSha = File.ReadAllText(Path.Combine(bundleOutputPath,
+                    "approot", "packages", "HelloWorld", "1.0.0","HelloWorld.1.0.0.nupkg.sha512"));
+
+                Assert.Equal(expectedLockFileContents.Replace("NUPKG_SHA_VALUE", nupkgSha),
+                    File.ReadAllText(outputLockFilePath));
+            }
+        }
     }
 }

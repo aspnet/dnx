@@ -34,7 +34,7 @@ namespace Microsoft.Framework.FunctionalTestUtils
         {
             if (Directory.Exists(DirPath))
             {
-                TestUtils.DeleteFolder(DirPath);
+                //TestUtils.DeleteFolder(DirPath);
             }
         }
 
