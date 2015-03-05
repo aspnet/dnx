@@ -19,12 +19,10 @@ namespace Microsoft.Framework.Runtime.Dependencies
 
         private readonly GraphNode<Library> _graph;
         private readonly Dictionary<LibraryIdentity, Library> _libraries;
-        private readonly Dictionary<string, Library> _nameMap;
 
-        public DependencyManager(GraphNode<Library> graph, Dictionary<string, Library> nameMap, Dictionary<LibraryIdentity, Library> libraries)
+        public DependencyManager(GraphNode<Library> graph, Dictionary<LibraryIdentity, Library> libraries)
         {
             _graph = graph;
-            _nameMap = nameMap;
             _libraries = libraries;
         }
 
@@ -45,7 +43,6 @@ namespace Microsoft.Framework.Runtime.Dependencies
             }
 
             // Build the resolved dependency list
-            var nameMap = new Dictionary<string, Library>();
             var libraries = new Dictionary<LibraryIdentity, Library>();
             graph.ForEach(node =>
             {
@@ -56,14 +53,8 @@ namespace Microsoft.Framework.Runtime.Dependencies
                 {
                     var library = node.Item.Data;
 
-                    // Verify that if we've seen this library name
-                    // before, it was the exact same identity
-                    Debug.Assert(!nameMap.ContainsKey(library.Identity.Name) ||
-                        Equals(nameMap[library.Identity.Name], library.Identity));
-
                     // Add the library to the set
                     libraries[library.Identity] = library;
-                    nameMap[library.Identity.Name] = library;
                 }
             });
 
@@ -87,7 +78,7 @@ namespace Microsoft.Framework.Runtime.Dependencies
             }
 
             // Return the assembled dependency manager
-            return new DependencyManager(graph, nameMap, libraries);
+            return new DependencyManager(graph, libraries);
         }
     }
 }
