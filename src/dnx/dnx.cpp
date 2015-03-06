@@ -10,18 +10,19 @@ void GetModuleDirectory(HMODULE module, LPTSTR szPath)
     szPath[dirLength + 1] = _T('\0');
 }
 
-int LastIndexOfChar(LPCTSTR const pszStr, TCHAR c)
+bool LastIndexOfChar(LPCTSTR const pszStr, TCHAR c, size_t* pIndex)
 {
-    int nIndex = _tcsnlen(pszStr, MAX_PATH) - 1;
-    do
+    size_t nIndex = _tcsnlen(pszStr, MAX_PATH) - 1;
+    for (; nIndex != 0; nIndex--)
     {
         if (pszStr[nIndex] == c)
         {
             break;
         }
-    } while (--nIndex >= 0);
+    }
 
-    return nIndex;
+    *pIndex = nIndex;
+    return pszStr[nIndex] == c;
 }
 
 bool StringsEqual(LPCTSTR const pszStrA, LPCTSTR const pszStrB)
@@ -31,29 +32,46 @@ bool StringsEqual(LPCTSTR const pszStrA, LPCTSTR const pszStrB)
 
 bool StringEndsWith(LPCTSTR const pszStr, LPCTSTR const pszSuffix)
 {
-    int nStrLen = _tcsnlen(pszStr, MAX_PATH);
-    int nSuffixLen = _tcsnlen(pszSuffix, MAX_PATH);
-    int nOffset = nStrLen - nSuffixLen;
+    size_t nStrLen = _tcsnlen(pszStr, MAX_PATH);
+    size_t nSuffixLen = _tcsnlen(pszSuffix, MAX_PATH);
 
-    if (nOffset < 0)
+    if (nSuffixLen > nStrLen)
     {
         return false;
     }
 
+    size_t nOffset = nStrLen - nSuffixLen;
+
     return StringsEqual(pszStr + nOffset, pszSuffix);
 }
 
-int LastPathSeparatorIndex(LPCTSTR const pszPath)
+bool LastPathSeparatorIndex(LPCTSTR const pszPath, size_t* pIndex)
 {
-    int nLastSlashIndex = LastIndexOfChar(pszPath, _T('/'));
-    int nLastBackSlashIndex = LastIndexOfChar(pszPath, _T('\\'));
-    return max(nLastSlashIndex, nLastBackSlashIndex);
+    size_t nLastSlashIndex;
+    size_t nLastBackSlashIndex;
+
+    bool hasLastSlashIndex = LastIndexOfChar(pszPath, _T('/'), &nLastSlashIndex);
+    bool hasLastBackSlashIndex = LastIndexOfChar(pszPath, _T('\\'), &nLastBackSlashIndex);
+
+    if (hasLastSlashIndex && hasLastBackSlashIndex)
+    {
+        *pIndex = max(nLastSlashIndex, nLastBackSlashIndex);
+        return true;
+    }
+
+    if (!hasLastSlashIndex && !hasLastBackSlashIndex)
+    {
+        return false;
+    }
+
+    *pIndex = hasLastSlashIndex ? nLastSlashIndex : nLastBackSlashIndex;
+    return true;
 }
 
 void GetParentDir(LPCTSTR const pszPath, LPTSTR const pszParentDir)
 {
-    int nLastSeparatorIndex = LastPathSeparatorIndex(pszPath);
-    if (nLastSeparatorIndex < 0)
+    size_t nLastSeparatorIndex;
+    if (!LastPathSeparatorIndex(pszPath, &nLastSeparatorIndex))
     {
         _tcscpy_s(pszParentDir, MAX_PATH, _T("."));
         return;
@@ -65,9 +83,9 @@ void GetParentDir(LPCTSTR const pszPath, LPTSTR const pszParentDir)
 
 void GetFileName(LPCTSTR const pszPath, LPTSTR const pszFileName)
 {
-    int nLastSeparatorIndex = LastPathSeparatorIndex(pszPath);
+    size_t nLastSeparatorIndex;
 
-    if (nLastSeparatorIndex < 0)
+    if (!LastPathSeparatorIndex(pszPath, &nLastSeparatorIndex))
     {
         _tcscpy_s(pszFileName, MAX_PATH, pszPath);
         return;
