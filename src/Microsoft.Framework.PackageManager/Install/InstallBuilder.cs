@@ -14,8 +14,6 @@ namespace Microsoft.Framework.PackageManager
     {
         public const string CommandsFolderName = "app";
 
-
-
         private readonly Runtime.Project _project;
         private readonly IPackageBuilder _packageBuilder;
         private readonly Reports _buildReport;
@@ -118,7 +116,7 @@ namespace Microsoft.Framework.PackageManager
             {
                 _buildReport.Information.WriteLine(
                    string.Format(
-                       "The following commands will not be exported: {0}.",
+                       "The following commands will not be exported for global install: {0}.",
                        string.Join(", ", commandsThatWillBeSkipped))
                    .Yellow());
 
@@ -159,7 +157,7 @@ namespace Microsoft.Framework.PackageManager
 
         private void WriteNixScript(string applicationFolder, string commandName)
         {
-            var scriptFileName = commandName + ".sh";
+            var scriptFileName = commandName;
             var scriptFilePath = Path.Combine(applicationFolder, scriptFileName);
             var script = string.Format(
                 Runtime.Constants.BootstrapperExeName + @" --appbase ""$(dirname $0)"" Microsoft.Framework.ApplicationHost {0} $@",

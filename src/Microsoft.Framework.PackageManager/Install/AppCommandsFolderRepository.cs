@@ -13,6 +13,7 @@ namespace Microsoft.Framework.PackageManager
     internal class AppCommandsFolderRepository : IAppCommandsRepository
     {
         private readonly NuGet.IFileSystem _commandsFolder;
+        private readonly DefaultPackagePathResolver _pathResolver;
 
         // Key = command; Value = app name
         private IDictionary<string, NuGet.PackageInfo> _commands = new Dictionary<string, NuGet.PackageInfo>();
@@ -20,6 +21,15 @@ namespace Microsoft.Framework.PackageManager
         public AppCommandsFolderRepository(string commandsFolder)
         {
             _commandsFolder = new NuGet.PhysicalFileSystem(commandsFolder);
+            _pathResolver = new DefaultPackagePathResolver(_commandsFolder);
+        }
+
+        public IPackagePathResolver PathResolver
+        {
+            get
+            {
+                return _pathResolver;
+            }
         }
 
         public IFileSystem Root

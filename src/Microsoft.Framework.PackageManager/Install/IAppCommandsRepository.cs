@@ -8,6 +8,8 @@ namespace Microsoft.Framework.PackageManager
 {
     internal interface IAppCommandsRepository
     {
+        IPackagePathResolver PathResolver { get; }
+
         IFileSystem Root { get; }
 
         IFileSystem PackagesRoot { get; }

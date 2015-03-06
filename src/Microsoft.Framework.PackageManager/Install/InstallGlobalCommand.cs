@@ -7,6 +7,8 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Framework.Runtime;
+using Microsoft.Framework.PackageManager.Restore.NuGet;
+using NuGet;
 
 namespace Microsoft.Framework.PackageManager
 {
@@ -40,66 +42,223 @@ namespace Microsoft.Framework.PackageManager
 
         public async Task<bool> Execute(string packageId, string packageVersion)
         {
-            if (string.IsNullOrEmpty(packageId))
+            // 0. Resolve the actual package id and version
+            var packageIdAndVersion = await ResolvePackageIdAndVersion(packageId, packageVersion);
+
+            if (packageIdAndVersion == null)
             {
-                LogError("The name of the package to be installed was not specified.");
+                WriteError("The name of the package to be installed was not specified.");
                 return false;
             }
+
+            packageId = packageIdAndVersion.Item1;
+            packageVersion = packageIdAndVersion.Item2;
+
+            WriteVerbose("Resolved package id: {0}", packageId);
+            WriteVerbose("Resolved package version: {0}", packageVersion);
+
+            // 1. Get the package without dependencies. We cannot resolve them now because
+            // we don't know the target frameworks that the package supports
 
             if (string.IsNullOrEmpty(FeedOptions.TargetPackagesFolder))
             {
                 FeedOptions.TargetPackagesFolderOptions.Values.Add(_commandsRepository.PackagesRoot.Root);
             }
 
-            if (packageId != null &&
-                packageId.EndsWith(".nupkg", StringComparison.OrdinalIgnoreCase) &&
-                File.Exists(packageId))
+            var temporaryProjectFileFullPath = CreateTemporaryProject(FeedOptions.TargetPackagesFolder, packageId, packageVersion);
+
+            try
             {
+                RestoreCommand.RestoreDirectory = temporaryProjectFileFullPath;
+                if (!await RestoreCommand.ExecuteCommand())
+                {
+                    return false;
+                }
+            }
+            finally
+            {
+                var folderToDelete = Path.GetDirectoryName(temporaryProjectFileFullPath);
+                FileOperationUtils.DeleteFolder(folderToDelete);
+                Directory.Delete(folderToDelete);
+            }
+
+            var packageFullPath = Path.Combine(
+                _commandsRepository.PackagesRoot.Root,
+                _commandsRepository.PathResolver.GetPackageDirectory(packageId, new SemanticVersion(packageVersion)));
+
+            if (!ValidateApplicationPackage(packageFullPath))
+            {
+                return false;
+            }
+
+            var packageAppFolder = Path.Combine(
+                packageFullPath,
+                InstallBuilder.CommandsFolderName);
+
+            // 2. Now, that we have a valid app package, we can resolve its dependecies
+            RestoreCommand.RestoreDirectory = packageAppFolder;
+            if (!await RestoreCommand.ExecuteCommand())
+            {
+                return false;
+            }
+
+            // 3. Dependencies are in place, now let's install the commands
+            if (!InstallCommands(packageId, packageFullPath))
+            {
+                return false;
+            }
+
+            return true;
+        }
+
+        private async Task<Tuple<string, string>> ResolvePackageIdAndVersion(string packageId, string packageVersion)
+        {
+            if (string.IsNullOrEmpty(packageId))
+            {
+                WriteError("The name of the package to be installed was not specified.");
+                return null;
+            }
+
+            // For nupkgs, get the id and version from the package
+            if (packageId.EndsWith(".nupkg", StringComparison.OrdinalIgnoreCase))
+            {
+                if (!File.Exists(packageId))
+                {
+                    WriteError(string.Format("Could not find the file {0}.", packageId));
+                    return null;
+                }
+
                 var packagePath = Path.GetFullPath(packageId);
                 var packageDirectory = Path.GetDirectoryName(packagePath);
                 var zipPackage = new NuGet.ZipPackage(packagePath);
                 FeedOptions.FallbackSourceOptions.Values.Add(packageDirectory);
-                packageId = zipPackage.Id;
-                packageVersion = zipPackage.Version.ToString();
+
+                return new Tuple<string, string>(
+                    zipPackage.Id,
+                    zipPackage.Version.ToString());
             }
 
-            var installPath = Directory.GetParent(FeedOptions.TargetPackagesFolder).FullName;
+            // If the version is missing, try to find the latest version
+            if (string.IsNullOrEmpty(packageVersion))
+            {
+                var rootDirectory = ProjectResolver.ResolveRootDirectory(_commandsRepository.Root.Root);
+                var settings = SettingsUtils.ReadSettings(
+                    rootDirectory,
+                    RestoreCommand.NuGetConfigFile,
+                    RestoreCommand.FileSystem,
+                    RestoreCommand.MachineWideSettings);
 
-            RestoreCommand.RestorePackageId = packageId;
-            RestoreCommand.RestorePackageVersion = packageVersion;
+                var sourceProvier = PackageSourceBuilder.CreateSourceProvider(settings);
 
-            return
-                await RestoreCommand.ExecuteCommand() &&
-                InstallCommands(packageId, RestoreCommand.AppInstallPath);
+                var packageFeeds = new List<IPackageFeed>();
+
+                var effectiveSources = PackageSourceUtils.GetEffectivePackageSources(
+                    sourceProvier,
+                    FeedOptions.Sources,
+                    FeedOptions.FallbackSources);
+
+                foreach (var source in effectiveSources)
+                {
+                    var feed = PackageSourceUtils.CreatePackageFeed(
+                        source,
+                        FeedOptions.NoCache,
+                        FeedOptions.IgnoreFailedSources,
+                        Reports);
+                    if (feed != null)
+                    {
+                        packageFeeds.Add(feed);
+                    }
+                }
+
+                var package = await PackageSourceUtils.FindLatestPackage(packageFeeds, packageId);
+
+                if (package == null)
+                {
+                    Reports.Error.WriteLine("Unable to locate the package {0}".Red(), packageId);
+                    return null;
+                }
+
+                return new Tuple<string, string>(
+                    packageId,
+                    package.Version.ToString());
+            }
+
+            // Otherwise, just assume that what you got is correct
+            return new Tuple<string, string>(packageId, packageVersion);
+        }
+
+        // Creates a temporary project with the specified package as dependency
+        private string CreateTemporaryProject(string installFolder, string packageName, string packageVersion)
+        {
+            var tempFolderName = Guid.NewGuid().ToString("N");
+            var tempFolderFullPath = Path.Combine(installFolder, tempFolderName);
+
+            // Delete if exists already
+            FileOperationUtils.DeleteFolder(tempFolderFullPath);
+            Directory.CreateDirectory(tempFolderFullPath);
+
+            WriteVerbose("Temporary folder name: {0}", tempFolderFullPath);
+            var projectFileFullPath = Path.Combine(tempFolderFullPath, "project.json");
+
+            File.WriteAllText(
+                projectFileFullPath,
+                string.Format(
+        @"{{
+    ""dependencies"":{{
+        ""{0}"":""{1}""
+    }}
+}}", packageName, packageVersion));
+
+            return projectFileFullPath;
+        }
+
+        private bool ValidateApplicationPackage(string appFolderFullPath)
+        {
+            string commandsFolder = Path.Combine(appFolderFullPath, InstallBuilder.CommandsFolderName);
+
+            if (!Directory.Exists(commandsFolder))
+            {
+                WriteError("The specified package is not an application. The package was added but no commands were installed.");
+                return false;
+            }
+
+            var blockedCommands = _commandsRepository.Commands.Where(cmd =>
+                !CommandNameValidator.IsCommandNameValid(cmd) ||
+                CommandNameValidator.ShouldNameBeSkipped(cmd));
+            if (blockedCommands.Any())
+            {
+                WriteError(string.Format(
+                    "The application cannot be installed because the following command names are not allowed: {0}.",
+                    string.Join(", ", blockedCommands)));
+
+                return false;
+            }
+
+            return true;
         }
 
         private bool InstallCommands(string packageId, string appPath)
         {
             string commandsFolder = Path.Combine(appPath, InstallBuilder.CommandsFolderName);
 
-            if (!Directory.Exists(commandsFolder))
+            IEnumerable<string> allAppCommandsFiles;
+
+            if (PlatformHelper.IsWindows)
             {
-                LogError("The specified package is not an application. The package was added but no commands were installed.");
-                return false;
+                allAppCommandsFiles = Directory.EnumerateFiles(commandsFolder, "*.cmd");
+            }
+            else
+            {
+                // We have cmd files and project.*.json files in the same folder
+                allAppCommandsFiles = Directory.EnumerateFiles(commandsFolder, "*.*")
+                    .Where(cmd => !cmd.EndsWith(".cmd") && !cmd.EndsWith(".json"))
+                    .ToList();
             }
 
-            var fileFilter = PlatformHelper.IsWindows ? "*.cmd" : "*.sh";
-            var allAppCommandsFiles = Directory.EnumerateFiles(commandsFolder, fileFilter);
             var allAppCommands = allAppCommandsFiles
                 .Select(cmd => Path.GetFileNameWithoutExtension(cmd))
                 .ToList();
 
-            var blockedCommands = _commandsRepository.Commands.Where(cmd => 
-                !CommandNameValidator.IsCommandNameValid(cmd) ||
-                CommandNameValidator.ShouldNameBeSkipped(cmd));
-            if (blockedCommands.Any())
-            {
-                LogError(string.Format(
-                    "The application cannot be installed because the following command names are not allowed: {0}.",
-                    string.Join(", ", blockedCommands)));
-
-                return false;
-            }
 
             IEnumerable<string> conflictingCommands;
             if (OverwriteCommands)
@@ -119,7 +278,7 @@ namespace Microsoft.Framework.PackageManager
 
             if (conflictingCommands.Any())
             {
-                LogError(string.Format(
+                WriteError(string.Format(
                     "The application commands cannot be installed because the following commands already exist: {0}. No changes were made. Rerun the command with the --overwrite switch to replace the existing commands.",
                     string.Join(", ", conflictingCommands)));
 
@@ -165,12 +324,17 @@ namespace Microsoft.Framework.PackageManager
             return true;
         }
 
+        private void WriteVerbose(string message, params string[] args)
+        {
+            Reports.Verbose.WriteLine(message, args);
+        }
+
         private void WriteInfo(string message)
         {
             Reports.Information.WriteLine(message);
         }
 
-        private void LogError(string message)
+        private void WriteError(string message)
         {
             Reports.Error.WriteLine(message.Red());
         }

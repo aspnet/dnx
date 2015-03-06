@@ -43,11 +43,6 @@ namespace Microsoft.Framework.PackageManager
         public bool Unlock { get; set; }
         public string PackageFolder { get; set; }
 
-        public string RestorePackageId { get; set; }
-        public string RestorePackageVersion { get; set; }
-
-        public string AppInstallPath { get; private set; }
-
         public ScriptExecutor ScriptExecutor { get; private set; }
 
         public IApplicationEnvironment ApplicationEnvironment { get; private set; }
@@ -95,46 +90,34 @@ namespace Microsoft.Framework.PackageManager
                 int restoreCount = 0;
                 int successCount = 0;
 
-                if (!string.IsNullOrEmpty(RestorePackageId))
+                var projectJsonFiles = Directory.EnumerateFiles(
+                    restoreDirectory,
+                    Runtime.Project.ProjectFileName,
+                    SearchOption.AllDirectories);
+                Func<string, Task> restorePackage = async projectJsonPath =>
                 {
-                    restoreCount = 1;
-                    var success = await RestoreForInstall(packagesDirectory);
+                    Interlocked.Increment(ref restoreCount);
+                    var success = await RestoreForProject(projectJsonPath, rootDirectory, packagesDirectory);
                     if (success)
                     {
-                        successCount = 1;
+                        Interlocked.Increment(ref successCount);
+                    }
+                };
+
+                if (PlatformHelper.IsMono)
+                {
+                    // Restoring in parallel on Mono throws native exception
+                    foreach (var projectJsonFile in projectJsonFiles)
+                    {
+                        await restorePackage(projectJsonFile);
                     }
                 }
                 else
                 {
-                    var projectJsonFiles = Directory.EnumerateFiles(
-                        restoreDirectory,
-                        Runtime.Project.ProjectFileName,
-                        SearchOption.AllDirectories);
-                    Func<string, Task> restorePackage = async projectJsonPath =>
-                    {
-                        Interlocked.Increment(ref restoreCount);
-                        var success = await RestoreForProject(projectJsonPath, rootDirectory, packagesDirectory);
-                        if (success)
-                        {
-                            Interlocked.Increment(ref successCount);
-                        }
-                    };
-
-                    if (PlatformHelper.IsMono)
-                    {
-                        // Restoring in parallel on Mono throws native exception
-                        foreach (var projectJsonFile in projectJsonFiles)
-                        {
-                            await restorePackage(projectJsonFile);
-                        }
-                    }
-                    else
-                    {
-                        await ForEachAsync(
-                            projectJsonFiles,
-                            maxDegreesOfConcurrency: Environment.ProcessorCount,
-                            body: restorePackage);
-                    }
+                    await ForEachAsync(
+                        projectJsonFiles,
+                        maxDegreesOfConcurrency: Environment.ProcessorCount,
+                        body: restorePackage);
                 }
 
                 if (restoreCount > 1)
@@ -153,140 +136,6 @@ namespace Microsoft.Framework.PackageManager
                 Reports.Information.WriteLine(ex.Message);
                 return false;
             }
-        }
-
-        private async Task<bool> RestoreForInstall(string packagesDirectory)
-        {
-            var success = true;
-
-            var sw = new Stopwatch();
-            sw.Start();
-
-            var restoreOperations = new RestoreOperations(Reports.Verbose);
-            var projectProviders = new List<IWalkProvider>();
-            var localProviders = new List<IWalkProvider>();
-            var remoteProviders = new List<IWalkProvider>();
-
-            localProviders.Add(
-                new LocalWalkProvider(
-                    new NuGetDependencyResolver(
-                        new PackageRepository(
-                            packagesDirectory))));
-
-            var effectiveSources = PackageSourceUtils.GetEffectivePackageSources(
-                SourceProvider,
-                FeedOptions.Sources,
-                FeedOptions.FallbackSources);
-
-            AddRemoteProvidersFromSources(remoteProviders, effectiveSources);
-
-            var restoreContext = new RestoreContext()
-            {
-                FrameworkName = ApplicationEnvironment.RuntimeFramework,
-                ProjectLibraryProviders = projectProviders,
-                LocalLibraryProviders = localProviders,
-                RemoteLibraryProviders = remoteProviders
-            };
-
-            if (RestorePackageVersion == null)
-            {
-                var packageFeeds = new List<IPackageFeed>();
-
-                foreach (var source in effectiveSources)
-                {
-                    var feed = PackageSourceUtils.CreatePackageFeed(
-                        source,
-                        FeedOptions.NoCache,
-                        FeedOptions.IgnoreFailedSources,
-                        Reports);
-                    if (feed != null)
-                    {
-                        packageFeeds.Add(feed);
-                    }
-                }
-
-                var package = await PackageSourceUtils.FindLatestPackage(packageFeeds, RestorePackageId);
-
-                if (package == null)
-                {
-                    Reports.Error.WriteLine("Unable to locate the package {0}".Red(), RestorePackageId);
-                    return false;
-                }
-                RestorePackageVersion = package.Version.ToString();
-            }
-
-            Reports.Information.WriteLine("Installing package {0} {1}", RestorePackageId.Bold(), RestorePackageVersion.Bold());
-
-            var graphNode = await restoreOperations.CreateGraphNode(
-                restoreContext,
-                new Library()
-                {
-                    Name = RestorePackageId,
-                    Version = SemanticVersion.Parse(RestorePackageVersion)
-                },
-                _ => true);
-
-            Reports.Information.WriteLine(string.Format("{0}, {1}ms elapsed", "Resolving complete".Green(), sw.ElapsedMilliseconds));
-
-            var installItems = new List<GraphItem>();
-            var missingItems = new HashSet<LibraryRange>();
-
-            ForEach(new GraphNode[] { graphNode }, node =>
-            {
-                if (node == null || node.LibraryRange == null)
-                {
-                    return;
-                }
-                if (node.Item == null || node.Item.Match == null)
-                {
-                    if (!node.LibraryRange.IsGacOrFrameworkReference &&
-                         node.LibraryRange.VersionRange != null &&
-                         missingItems.Add(node.LibraryRange))
-                    {
-                        Reports.Error.WriteLine(string.Format("Unable to locate {0} >= {1}", node.LibraryRange.Name.Red().Bold(), node.LibraryRange.VersionRange));
-                        success = false;
-                    }
-                    return;
-                }
-                // "kpm restore" is case-sensitive
-                if (!string.Equals(node.Item.Match.Library.Name, node.LibraryRange.Name, StringComparison.Ordinal))
-                {
-                    if (missingItems.Add(node.LibraryRange))
-                    {
-                        Reports.Error.WriteLine(
-                            "Unable to locate {0} >= {1}. Do you mean {2}?",
-                            node.LibraryRange.Name.Red().Bold(),
-                            node.LibraryRange.VersionRange,
-                            node.Item.Match.Library.Name.Bold());
-                        success = false;
-                    }
-                    return;
-                }
-                var isRemote = remoteProviders.Contains(node.Item.Match.Provider);
-                var isAdded = installItems.Any(item => item.Match.Library == node.Item.Match.Library);
-                if (!isAdded && isRemote)
-                {
-                    installItems.Add(node.Item);
-                }
-            });
-
-            await InstallPackages(installItems, packagesDirectory, packageFilter: (library, nupkgSHA) => true);
-
-            Reports.Information.WriteLine("{0}, {1}ms elapsed", "Install complete".Green().Bold(), sw.ElapsedMilliseconds);
-
-            Library appLib = graphNode?.Item?.Match?.Library;
-
-            if (appLib == null)
-            {
-                return false;
-            }
-
-            var resolver = new DefaultPackagePathResolver(packagesDirectory);
-
-            // The call to GetFullPath is important because GetInstallPath returns a path with a "\.\" in it
-            AppInstallPath = Path.GetFullPath(resolver.GetInstallPath(appLib.Name, appLib.Version));
-
-            return success;
         }
 
         private async Task<bool> RestoreForProject(string projectJsonPath, string rootDirectory, string packagesDirectory)

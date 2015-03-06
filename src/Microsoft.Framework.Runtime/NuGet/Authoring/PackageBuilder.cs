@@ -461,7 +461,14 @@ namespace NuGet
                     try
                     {
                         CreatePart(package, file.Path, stream);
-                        extensions.Add(Path.GetExtension(file.Path).Substring(1));
+
+                        var fileExtension = Path.GetExtension(file.Path);
+
+                        // We have files without extension (e.g. the executables for Nix)
+                        if (!string.IsNullOrEmpty(fileExtension))
+                        {
+                            extensions.Add(fileExtension.Substring(1));
+                        }                        
                     }
                     catch
                     {

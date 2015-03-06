@@ -1,10 +1,10 @@
 ﻿// Copyright (c) Microsoft Open Technologies, Inc. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
-using System.Collections.Generic;
+using System.IO;
 using System.Linq;
-using System.Threading.Tasks;
 using Microsoft.Framework.Runtime;
+using Microsoft.Framework.Runtime.DependencyManagement;
 using NuGet;
 
 namespace Microsoft.Framework.PackageManager
@@ -24,7 +24,7 @@ namespace Microsoft.Framework.PackageManager
 
         public bool NoPurge { get; set; }
 
-        public async Task<bool> Execute(string commandName)
+        public bool Execute(string commandName)
         {
             if (string.IsNullOrEmpty(commandName))
             {
@@ -42,7 +42,7 @@ namespace Microsoft.Framework.PackageManager
 
             if (!NoPurge)
             {
-                await PurgeOrphanPackages();
+                PurgeOrphanPackages();
             }
 
             _reports.Information.WriteLine("{0} command has been uninstalled", commandName);
@@ -50,7 +50,7 @@ namespace Microsoft.Framework.PackageManager
             return true;
         }
 
-        private async Task PurgeOrphanPackages()
+        private void PurgeOrphanPackages()
         {
             _reports.Verbose.WriteLine("Removing orphaned packages...");
 
@@ -64,43 +64,51 @@ namespace Microsoft.Framework.PackageManager
                 _commandsRepo.PackagesRoot,
                 caseSensitivePackagesName: false);
 
-            // Key = package, Value = bool (true if used, false otherwise)
+            // Key = package<id, version>, Value = bool (true if used, false otherwise)
             var usedPackages = packagesRepo
                     .GetAllPackages()
                     .SelectMany(pack => pack.Value)
-                    .ToDictionary(pack => pack, _ => false);
+                    .ToDictionary(
+                        pack => pack, 
+                        _ => false);
 
-            // Find the dependecies of all packages still in use
-            var restoreContext = new RestoreContext()
+            var lockFileFormat = new LockFileFormat();
+            
+            // Mark all the packages still in used by using the dependencies in the lock file
+            foreach(var applicationPackage in applicationPackagesStillUsed)
             {
-                FrameworkName = _environment.RuntimeFramework,
-                ProjectLibraryProviders = new List<IWalkProvider>(),
-                RemoteLibraryProviders = new List<IWalkProvider>(),
-                LocalLibraryProviders = new IWalkProvider[] {
-                    new LocalWalkProvider(
-                        new NuGetDependencyResolver(
-                            new PackageRepository(
-                                packagesRepo.RepositoryRoot.Root)))
+                var appLockFileFullPath = Path.Combine(
+                    _commandsRepo.PathResolver.GetPackageDirectory(applicationPackage.Id, applicationPackage.Version),
+                    InstallBuilder.CommandsFolderName,
+                    LockFileFormat.LockFileName);
+
+                if (!File.Exists(appLockFileFullPath))
+                {
+                    _reports.Verbose.WriteLine("Lock file {0} not found. This package will be removed if it is not used by another application", appLockFileFullPath);
+                    // The lock file is missing, probably the app is not installed correctly
+                    // unless someone else is using it, we'll remove it
+                    continue;
                 }
-            };
-            var operations = new RestoreOperations(_reports.Verbose);
-            var dependencyGraphs = await Task.WhenAll(
-                applicationPackagesStillUsed.Select(appPackage => 
-                    operations.CreateGraphNode(
-                        restoreContext,
-                        new LibraryRange()
-                        {
-                            Name = appPackage.Id,
-                            VersionRange = new SemanticVersionRange(appPackage.Version)
-                        },
-                        _ => true)));
 
-            // Mark and sweep the packages still in use
-            foreach(var graphRoot in dependencyGraphs)
-            {
-                MarkAndSweepUsedPackages(graphRoot, usedPackages);
+                var lockFile = lockFileFormat.Read(appLockFileFullPath);
+                foreach(var dependency in lockFile.Libraries)
+                {
+                    var dependencyPackage = new NuGet.PackageInfo(
+                        _commandsRepo.PackagesRoot,
+                        dependency.Name,
+                        dependency.Version,
+                        null,
+                        null);
+
+                    if (usedPackages.ContainsKey(dependencyPackage))
+                    {
+                        // Mark the dependency as used
+                        usedPackages[dependencyPackage] = true;
+                    }
+                }
             }
 
+            // Now it's time to remove those unused packages
             var unusedPackages = usedPackages
                 .Where(pack => !pack.Value)
                 .Select(pack => pack.Key);
@@ -109,46 +117,6 @@ namespace Microsoft.Framework.PackageManager
             {
                 packagesRepo.RemovePackage(package);
                 _reports.Verbose.WriteLine("Removed orphaned package: {0} {1}", package.Id, package.Version);
-            }
-        }
-
-        private void MarkAndSweepUsedPackages(GraphNode root, IDictionary<NuGet.PackageInfo, bool> usedPackages)
-        {
-            bool alreadyVisited = false;
-
-            var library = root?.Item?.Match?.Library;
-            if (library != null)
-            {
-                var packageInfo = new NuGet.PackageInfo(
-                    repositoryRoot: null,
-                    packageId: library.Name,
-                    version: library.Version,
-                    versionDir: null);
-
-
-                if (usedPackages.ContainsKey(packageInfo))
-                {
-                    alreadyVisited = usedPackages[packageInfo];
-
-                    if (!alreadyVisited)
-                    {
-                        // Mark package as used
-                        usedPackages[packageInfo] = true;
-                    }
-                    else
-                    {
-                        // There is no point to revisit this dependecy since we already did it
-                        return;
-                    }
-                }
-            }
-
-            if (!alreadyVisited && root.Dependencies != null)
-            {
-                foreach(var dependency in root.Dependencies)
-                {
-                    MarkAndSweepUsedPackages(dependency, usedPackages);
-                }
             }
         }
     }

@@ -486,7 +486,7 @@ namespace Microsoft.Framework.PackageManager
 
                     c.HelpOption("-?|-h|--help");
 
-                    c.OnExecute(async () =>
+                    c.OnExecute(() =>
                     {
                         var command = new UninstallCommand(
                             _environment,
@@ -495,7 +495,7 @@ namespace Microsoft.Framework.PackageManager
 
                         command.NoPurge = optNoPurge.HasValue();
 
-                        var success = await command.Execute(argCommand.Value);
+                        var success = command.Execute(argCommand.Value);
                         return success ? 0 : 1;
                     });
                 });

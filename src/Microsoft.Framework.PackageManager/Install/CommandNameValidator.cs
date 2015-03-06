@@ -10,12 +10,13 @@ namespace Microsoft.Framework.PackageManager
     {
         private static readonly string[] BlockedCommandNames = new string[]
         {
+            "dnvm",
+            "dnx",
             "dotnet",
             "dotnetsdk",
+            "ef",
             "k",
-            "dnx",
             "kpm",
-            "dnvm",
             "nuget"
         };
 
