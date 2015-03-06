@@ -14,5 +14,6 @@ namespace Microsoft.Framework.PackageManager.Restore.NuGet
         Task<IEnumerable<PackageInfo>> FindPackagesByIdAsync(string id);
         Task<Stream> OpenNupkgStreamAsync(PackageInfo package);
         Task<Stream> OpenNuspecStreamAsync(PackageInfo package);
+        Task<Stream> OpenRuntimeStreamAsync(PackageInfo package);
     }
 }

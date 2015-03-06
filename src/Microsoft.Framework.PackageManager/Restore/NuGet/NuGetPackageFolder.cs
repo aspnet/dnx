@@ -39,6 +39,11 @@ namespace Microsoft.Framework.PackageManager.Restore.NuGet
             return await PackageUtilities.OpenNuspecStreamFromNupkgAsync(package, OpenNupkgStreamAsync, _reports.Quiet);
         }
 
+        public async Task<Stream> OpenRuntimeStreamAsync(PackageInfo package)
+        {
+            return await PackageUtilities.OpenRuntimeStreamFromNupkgAsync(package, OpenNupkgStreamAsync, _reports.Quiet);
+        }
+
         public Task<Stream> OpenNupkgStreamAsync(PackageInfo package)
         {
             return Task.FromResult(_repository.FindPackage(package.Id, package.Version).GetStream());

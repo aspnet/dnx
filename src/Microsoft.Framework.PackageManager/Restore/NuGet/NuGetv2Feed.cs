@@ -201,6 +201,11 @@ namespace Microsoft.Framework.PackageManager.Restore.NuGet
             return await PackageUtilities.OpenNuspecStreamFromNupkgAsync(package, OpenNupkgStreamAsync, _reports.Information);
         }
 
+        public async Task<Stream> OpenRuntimeStreamAsync(PackageInfo package)
+        {
+            return await PackageUtilities.OpenRuntimeStreamFromNupkgAsync(package, OpenNupkgStreamAsync, _reports.Information);
+        }
+
         public async Task<Stream> OpenNupkgStreamAsync(PackageInfo package)
         {
             Task<NupkgEntry> task;

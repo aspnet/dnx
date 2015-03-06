@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Runtime.Versioning;
 using System.Threading.Tasks;
 using Microsoft.Framework.Runtime;
+using TempRepack.Engine.Model;
 
 namespace Microsoft.Framework.PackageManager
 {
@@ -16,6 +17,9 @@ namespace Microsoft.Framework.PackageManager
         }
 
         public FrameworkName FrameworkName { get; set; }
+
+        public string RuntimeName { get; set; }
+        public IList<RuntimeSpec> RuntimeSpecs { get; set; }
 
         public IList<IWalkProvider> ProjectLibraryProviders { get; set; }
         public IList<IWalkProvider> LocalLibraryProviders { get; set; }

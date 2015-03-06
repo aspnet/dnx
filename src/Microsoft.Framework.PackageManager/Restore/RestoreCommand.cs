@@ -16,6 +16,7 @@ using Microsoft.Framework.PackageManager.Restore.NuGet;
 using Microsoft.Framework.Runtime;
 using NuGet;
 using Microsoft.Framework.Runtime.DependencyManagement;
+using TempRepack.Engine.Model;
 
 namespace Microsoft.Framework.PackageManager
 {
@@ -40,7 +41,7 @@ namespace Microsoft.Framework.PackageManager
         public bool Unlock { get; set; }
         public string PackageFolder { get; set; }
 
-        public string RestorePackageId { get; set; } 
+        public string RestorePackageId { get; set; }
         public string RestorePackageVersion { get; set; }
 
         public string AppInstallPath { get; private set; }
@@ -421,6 +422,69 @@ namespace Microsoft.Framework.PackageManager
                 }
             }
             var graphs = await Task.WhenAll(tasks);
+            foreach(var graph in graphs)
+            {
+                Reduce(graph);
+            }
+
+            if (!useLockFile)
+            {
+                var runtimeFormatter = new RuntimeFileFormatter();
+                var projectRuntimeFile = runtimeFormatter.ReadRuntimeFile(projectJsonPath);
+                if (projectRuntimeFile.Runtimes.Any())
+                {
+                    var runtimeTasks = new List<Task<GraphNode>>();
+
+                    foreach (var pair in contexts.Zip(graphs, (context, graph) => new { context, graph }))
+                    {
+                        var runtimeFileTasks = new List<Task<RuntimeFile>>();
+                        ForEach(pair.graph, node =>
+                        {
+                            var match = node?.Item?.Match;
+                            if (match == null) { return; }
+                            runtimeFileTasks.Add(match.Provider.GetRuntimes(node.Item.Match, pair.context.FrameworkName));
+                        });
+
+                        var libraryRuntimeFiles = await Task.WhenAll(runtimeFileTasks);
+                        var runtimeFiles = new List<RuntimeFile> { projectRuntimeFile };
+                        runtimeFiles.AddRange(libraryRuntimeFiles.Where(file => file != null));
+
+                        foreach (var runtimeName in projectRuntimeFile.Runtimes.Keys)
+                        {
+                            var runtimeSpecs = new List<RuntimeSpec>();
+                            FindRuntimeSpecs(
+                                runtimeName,
+                                runtimeFiles,
+                                runtimeSpecs,
+                                _ => false);
+
+                            var runtimeContext = new RestoreContext
+                            {
+                                FrameworkName = pair.context.FrameworkName,
+                                ProjectLibraryProviders = pair.context.ProjectLibraryProviders,
+                                LocalLibraryProviders = pair.context.LocalLibraryProviders,
+                                RemoteLibraryProviders = pair.context.RemoteLibraryProviders,
+                                RuntimeName = runtimeName,
+                                RuntimeSpecs = runtimeSpecs
+                            };
+                            var projectLibrary = new LibraryRange
+                            {
+                                Name = project.Name,
+                                VersionRange = new SemanticVersionRange(project.Version)
+                            };
+                            Reports.Information.WriteLine(string.Format("Graph for {0} on {1}", runtimeContext.FrameworkName, runtimeContext.RuntimeName));
+                            runtimeTasks.Add(restoreOperations.CreateGraphNode(runtimeContext, projectLibrary, _ => true));
+                        }
+                    }
+
+                    var runtimeGraphs = await Task.WhenAll(runtimeTasks);
+                    foreach (var runtimeGraph in runtimeGraphs)
+                    {
+                        Reduce(runtimeGraph);
+                    }
+                    graphs = graphs.Concat(runtimeGraphs).ToArray();
+                }
+            }
 
             var graphItems = new List<GraphItem>();
             var installItems = new List<GraphItem>();
@@ -498,6 +562,188 @@ namespace Microsoft.Framework.PackageManager
             Reports.Information.WriteLine(string.Format("{0}, {1}ms elapsed", "Restore complete".Green().Bold(), sw.ElapsedMilliseconds));
 
             return success;
+        }
+
+        private void FindRuntimeSpecs(
+            string runtimeName,
+            List<RuntimeFile> runtimeFiles,
+            List<RuntimeSpec> effectiveRuntimeSpecs,
+            Func<string, bool> circularImport)
+        {
+            effectiveRuntimeSpecs.RemoveAll(spec => spec.Name == runtimeName);
+
+            IEnumerable<string> imports = null;
+            foreach (var runtimeFile in runtimeFiles)
+            {
+                RuntimeSpec runtimeSpec;
+                if (runtimeFile.Runtimes.TryGetValue(runtimeName, out runtimeSpec))
+                {
+                    if (runtimeSpec.Import.Any())
+                    {
+                        if (imports != null)
+                        {
+                            throw new Exception(string.Format("More than one runtime.json file has declared imports for {0}", runtimeName));
+                        }
+                        imports = runtimeSpec.Import;
+                    }
+                    effectiveRuntimeSpecs.Add(runtimeSpec);
+                }
+                if (imports != null)
+                {
+                    foreach (var import in imports)
+                    {
+                        if (circularImport(import))
+                        {
+                            if (imports != null)
+                            {
+                                throw new Exception(string.Format("Circular import for {0}", runtimeName));
+                            }
+                        }
+                        FindRuntimeSpecs(
+                            import,
+                            runtimeFiles,
+                            effectiveRuntimeSpecs,
+                            name => string.Equals(name, runtimeName, StringComparison.Ordinal) || circularImport(name));
+                    }
+                }
+            }
+        }
+
+        private void Reduce(GraphNode root)
+        {
+            var patience = 1000;
+            var incomplete = true;
+            while (incomplete && --patience != 0)
+            {
+                var tracker = new Tracker();
+
+                // track non-rejected, apply rejection recursively
+                ForEach(root, true, (node, state) =>
+                {
+                    if (!state || node.Disposition == GraphNode.DispositionType.Rejected)
+                    {
+                        node.Disposition = GraphNode.DispositionType.Rejected;
+                    }
+                    else
+                    {
+                        var lib = node?.Item?.Match?.Library;
+                        if (lib != null)
+                        {
+                            tracker.Track(
+                                lib.Name,
+                                lib.Version);
+                        }
+                    }
+                    return node.Disposition != GraphNode.DispositionType.Rejected;
+                });
+
+                // mark items under disputed nodes as ambiguous
+                ForEach(root, "Walking", (node, state) =>
+                {
+                    if (node.Disposition == GraphNode.DispositionType.Rejected)
+                    {
+                        return "Rejected";
+                    }
+
+                    var lib = node?.Item?.Match?.Library;
+                    if (lib == null)
+                    {
+                        return state;
+                    }
+
+                    if (state == "Walking" && tracker.IsDisputed(node.Item.Match.Library.Name))
+                    {
+                        return "Disputed";
+                    }
+
+                    if (state == "Disputed")
+                    {
+                        tracker.MarkAmbiguous(node.Item.Match.Library.Name);
+                    }
+
+                    return state;
+                });
+
+                // accept or reject nodes that are acceptable and not ambiguous
+                ForEach(root, true, (node, state) =>
+                {
+                    if (!state ||
+                        node.Disposition == GraphNode.DispositionType.Rejected ||
+                        tracker.IsAmbiguous(node?.Item?.Match?.Library?.Name))
+                    {
+                        return false;
+                    }
+
+                    if (node.Disposition == GraphNode.DispositionType.Acceptable)
+                    {
+                        var isBestVersion = tracker.IsBestVersion(
+                            node?.Item?.Match?.Library?.Name,
+                            node?.Item?.Match?.Library?.Version);
+                        node.Disposition = isBestVersion ? GraphNode.DispositionType.Accepted : GraphNode.DispositionType.Rejected;
+                    }
+
+                    return node.Disposition == GraphNode.DispositionType.Accepted;
+                });
+
+                incomplete = false;
+
+                ForEach(root, node => incomplete |= node.Disposition == GraphNode.DispositionType.Acceptable);
+            }
+        }
+
+        class Tracker
+        {
+            Dictionary<string, Entry> _entries = new Dictionary<string, Entry>();
+            class Entry
+            {
+                public SemanticVersion Version { get; set; }
+                public bool IsDisputed { get; set; }
+                public bool IsAmbiguous { get; set; }
+            }
+
+            private Entry GetEntry(string name)
+            {
+                Entry entry;
+                return _entries.TryGetValue(name, out entry) ? entry : _entries[name] = new Entry();
+            }
+
+            internal void Track(string name, SemanticVersion version)
+            {
+                Entry entry;
+                if (_entries.TryGetValue(name, out entry))
+                {
+                    if (entry.Version != version)
+                    {
+                        entry.IsDisputed = true;
+                        if (entry.Version < version)
+                        {
+                            entry.Version = version;
+                        }
+                    }
+                }
+                else
+                {
+                    _entries[name] = new Entry { Version = version };
+                }
+            }
+
+            internal bool IsDisputed(string name)
+            {
+                return name != null && _entries.ContainsKey(name) && _entries[name].IsDisputed;
+            }
+            internal bool IsAmbiguous(string name)
+            {
+                return name != null && _entries.ContainsKey(name) && _entries[name].IsAmbiguous;
+            }
+            internal void MarkAmbiguous(string name)
+            {
+                _entries[name].IsAmbiguous = true;
+            }
+
+            internal bool IsBestVersion(string name, SemanticVersion version)
+            {
+                return name == null || _entries[name].Version <= version;
+            }
         }
 
         private async Task InstallPackages(List<GraphItem> installItems, string packagesDirectory,
@@ -615,12 +861,31 @@ namespace Microsoft.Framework.PackageManager
             }
         }
 
+        void ForEach(GraphNode node, Action<GraphNode> callback)
+        {
+            callback(node);
+            ForEach(node.Dependencies, callback);
+        }
+
         void ForEach(IEnumerable<GraphNode> nodes, Action<GraphNode> callback)
         {
             foreach (var node in nodes)
             {
-                callback(node);
-                ForEach(node.Dependencies, callback);
+                ForEach(node, callback);
+            }
+        }
+
+        void ForEach<TState>(GraphNode node, TState state, Func<GraphNode, TState, TState> callback)
+        {
+            var childState = callback(node, state);
+            ForEach(node.Dependencies, childState, callback);
+        }
+
+        void ForEach<TState>(IEnumerable<GraphNode> nodes, TState state, Func<GraphNode, TState, TState> callback)
+        {
+            foreach (var node in nodes)
+            {
+                ForEach(node, state, callback);
             }
         }
 

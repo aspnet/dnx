@@ -11,6 +11,7 @@ using Microsoft.Framework.PackageManager.Restore.NuGet;
 using Microsoft.Framework.Runtime;
 using Microsoft.Framework.Runtime.DependencyManagement;
 using NuGet;
+using TempRepack.Engine.Model;
 
 namespace Microsoft.Framework.PackageManager
 {
@@ -85,6 +86,27 @@ namespace Microsoft.Framework.PackageManager
                 }
             }
             return Enumerable.Empty<LibraryDependency>();
+        }
+
+        public async Task<RuntimeFile> GetRuntimes(WalkProviderMatch match, FrameworkName targetFramework)
+        {
+            using (var stream = await _source.OpenRuntimeStreamAsync(new PackageInfo
+            {
+                Id = match.Library.Name,
+                Version = match.Library.Version,
+                ContentUri = match.Path
+            }))
+            {
+                if (stream != null)
+                {
+                    var formatter = new RuntimeFileFormatter();
+                    using (var reader = new StreamReader(stream))
+                    {
+                        return formatter.ReadRuntimeFile(reader);
+                    }
+                }
+            }
+            return null;
         }
 
         public async Task CopyToAsync(WalkProviderMatch match, Stream stream)

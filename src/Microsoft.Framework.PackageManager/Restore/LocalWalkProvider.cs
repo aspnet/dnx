@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using Microsoft.Framework.Runtime;
 using Microsoft.Framework.Runtime.DependencyManagement;
 using NuGet;
+using TempRepack.Engine.Model;
 
 namespace Microsoft.Framework.PackageManager
 {
@@ -46,6 +47,13 @@ namespace Microsoft.Framework.PackageManager
 
             return Task.FromResult(description.Dependencies);
         }
+
+        public Task<RuntimeFile> GetRuntimes(WalkProviderMatch match, FrameworkName targetFramework)
+        {
+            // TODO: read runtime.json file from project folder
+            return Task.FromResult<RuntimeFile>(null);
+        }
+
         public Task CopyToAsync(WalkProviderMatch match, Stream stream)
         {
             // We never call this on local providers

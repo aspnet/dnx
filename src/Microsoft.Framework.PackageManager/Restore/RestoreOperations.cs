@@ -8,6 +8,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Framework.Runtime;
 using NuGet;
+using TempRepack.Engine.Model;
 
 namespace Microsoft.Framework.PackageManager
 {
@@ -52,6 +53,29 @@ namespace Microsoft.Framework.PackageManager
                     if (predicate(dependency.Name))
                     {
                         tasks.Add(CreateGraphNode(context, dependency.LibraryRange, ChainPredicate(predicate, node.Item, dependency)));
+
+                        if (context.RuntimeSpecs != null)
+                        {
+                            foreach (var runtimeSpec in context.RuntimeSpecs)
+                            {
+                                DependencySpec dependencyMapping;
+                                if (runtimeSpec.Dependencies.TryGetValue(dependency.Name, out dependencyMapping))
+                                {
+                                    foreach (var dependencyImplementation in dependencyMapping.Implementations.Values)
+                                    {
+                                        tasks.Add(CreateGraphNode(
+                                            context,
+                                            new LibraryRange
+                                            {
+                                                Name = dependencyImplementation.Name,
+                                                VersionRange = VersionUtility.ParseVersionRange(dependencyImplementation.Version)
+                                            },
+                                            ChainPredicate(predicate, node.Item, dependency)));
+                                    }
+                                }
+                                break;
+                            }
+                        }
                     }
                 }
 

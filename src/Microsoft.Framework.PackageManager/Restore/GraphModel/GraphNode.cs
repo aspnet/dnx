@@ -11,11 +11,20 @@ namespace Microsoft.Framework.PackageManager
         public GraphNode()
         {
             Dependencies = new List<GraphNode>();
+            Disposition = DispositionType.Acceptable;
         }
 
         public LibraryRange LibraryRange { get; set; }
         public List<GraphNode> Dependencies { get; private set; }
         public GraphItem Item { get; set; }
+        public DispositionType Disposition { get; set; }
+
+        public enum DispositionType
+        {
+            Acceptable,
+            Rejected,
+            Accepted
+        }
     }
 
 }

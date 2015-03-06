@@ -76,6 +76,18 @@ namespace Microsoft.Framework.PackageManager.Restore.NuGet
             return Task.FromResult<Stream>(File.OpenRead(nuspecPath));
         }
 
+        public Task<Stream> OpenRuntimeStreamAsync(PackageInfo package)
+        {
+            var nuspecPath = _pathResolver.GetManifestFilePath(package.Id, package.Version);
+            var runtimePath = Path.Combine(Path.GetDirectoryName(nuspecPath), "runtime.json");
+            if (File.Exists(runtimePath))
+            {
+                _reports.Quiet.WriteLine(string.Format("  OPEN {0}", _fileSystem.GetFullPath(runtimePath)));
+                return Task.FromResult<Stream>(File.OpenRead(runtimePath));
+            }
+            return Task.FromResult<Stream>(null);
+        }
+
         public Task<Stream> OpenNupkgStreamAsync(PackageInfo package)
         {
             var nuspecPath = _pathResolver.GetManifestFilePath(package.Id, package.Version);
