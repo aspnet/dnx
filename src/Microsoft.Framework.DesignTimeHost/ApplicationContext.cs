@@ -373,8 +373,10 @@ namespace Microsoft.Framework.DesignTimeHost
 
                 ProjectSearchPaths = state.ProjectSearchPaths,
 
-                GlobalJsonPath = state.GlobalJsonPath
+                GlobalJsonPath = state.GlobalJsonPath,
             };
+
+            _local.ProjectFormatWarnings = state.FileFormatWarnings;
 
             foreach (var project in state.Projects)
             {
@@ -434,11 +436,9 @@ namespace Microsoft.Framework.DesignTimeHost
                 {
                     projectCompilationChanged = UpdateProjectCompilation(project, out compilation);
 
-                    project.Diagnostics = new DiagnosticsMessage
-                    {
-                        Framework = project.Sources.Framework,
-                        Diagnostics = compilation.Diagnostics
-                    };
+                    project.Diagnostics = new DiagnosticsMessage(
+                        compilation.Diagnostics,
+                        project.Sources.Framework);
                 }
 
                 Trigger<Void> requiresAssemblies;
@@ -478,11 +478,9 @@ namespace Microsoft.Framework.DesignTimeHost
 
                     if (project.Diagnostics == null)
                     {
-                        project.Diagnostics = new DiagnosticsMessage
-                        {
-                            Framework = project.Sources.Framework,
-                            Diagnostics = compilation.Diagnostics,
-                        };
+                        project.Diagnostics = new DiagnosticsMessage(
+                            compilation.Diagnostics,
+                            project.Sources.Framework);
                     }
                 }
             }
@@ -543,8 +541,15 @@ namespace Microsoft.Framework.DesignTimeHost
                 _remote.ProjectInformation = _local.ProjectInformation;
             }
 
-            var unprocessedFrameworks = new HashSet<FrameworkName>(_remote.Projects.Keys);
+            if (IsDifferent(_local.ProjectFormatWarnings, _remote.ProjectFormatWarnings))
+            {
+                SendProjectFormatWarnings(_local.ProjectFormatWarnings);
+
+                _remote.ProjectFormatWarnings = _local.ProjectFormatWarnings;
+            }
+
             var allDiagnostics = new List<DiagnosticsMessage>();
+            var unprocessedFrameworks = new HashSet<FrameworkName>(_remote.Projects.Keys);
 
             foreach (var pair in _local.Projects)
             {
@@ -630,6 +635,33 @@ namespace Microsoft.Framework.DesignTimeHost
             {
                 _remote.Projects.Remove(framework);
             }
+        }
+
+        private void SendProjectFormatWarnings(IList<FileFormatWarning> projectFormatWarnings)
+        {
+            if (projectFormatWarnings.Count == 0)
+            {
+                return;
+            }
+
+            var message = new DiagnosticsMessage(
+                warnings: projectFormatWarnings.Select(warning => new DiagnosticsInfo
+                {
+                    Message = warning.Message,
+                    Line = warning.Line,
+                    Column = warning.Column,
+                    Path = warning.Path,
+                    FormattedMessage = warning.Message
+                }),
+                errors: null,
+                framework: null);
+
+            _initializedContext.Transmit(new Message
+            {
+                ContextId = Id,
+                MessageType = "Diagnostics",
+                Payload = JToken.FromObject(message)
+            });
         }
 
         private void SendDiagnostics(IList<DiagnosticsMessage> diagnostics)
@@ -767,12 +799,12 @@ namespace Microsoft.Framework.DesignTimeHost
                 writer.Write(project.Diagnostics.Warnings.Count());
                 foreach (var warning in project.Diagnostics.Warnings)
                 {
-                    writer.Write(warning);
+                    writer.Write(warning.FormattedMessage);
                 }
                 writer.Write(project.Diagnostics.Errors.Count());
                 foreach (var error in project.Diagnostics.Errors)
                 {
-                    writer.Write(error);
+                    writer.Write(error.FormattedMessage);
                 }
 
                 WriteAssembly(project, writer);
@@ -782,7 +814,7 @@ namespace Microsoft.Framework.DesignTimeHost
                 var obj = new JObject();
                 obj["MessageType"] = "Assembly";
                 obj["ContextId"] = Id;
-                obj[nameof(CompileResponse.Diagnostics)] = ConvertToJArray(project.Diagnostics.Diagnostics);
+                obj[nameof(CompileResponse.Diagnostics)] = ConvertToJArray(project.Diagnostics.CompilationDiagnostics);
                 obj[nameof(CompileResponse.AssemblyPath)] = project.Outputs.AssemblyPath;
                 obj["Blobs"] = 2;
                 writer.Write(obj.ToString(Formatting.None));
@@ -839,11 +871,12 @@ namespace Microsoft.Framework.DesignTimeHost
             var state = new State
             {
                 Frameworks = new List<FrameworkData>(),
-                Projects = new List<ProjectInfo>()
+                Projects = new List<ProjectInfo>(),
+                FileFormatWarnings = new List<FileFormatWarning>()
             };
 
             Project project;
-            if (!Project.TryGetProject(appPath, out project))
+            if (!Project.TryGetProject(appPath, out project, state.FileFormatWarnings))
             {
                 throw new InvalidOperationException(string.Format("Unable to find project.json in '{0}'", appPath));
             }
@@ -1165,6 +1198,8 @@ namespace Microsoft.Framework.DesignTimeHost
         private class State
         {
             public string Name { get; set; }
+
+            public IList<FileFormatWarning> FileFormatWarnings { get; set; }
 
             public IList<string> ProjectSearchPaths { get; set; }
 
