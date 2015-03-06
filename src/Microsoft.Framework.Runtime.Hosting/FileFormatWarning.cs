@@ -1,6 +1,7 @@
 ﻿// Copyright (c) Microsoft Open Technologies, Inc. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
+using System;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
@@ -44,5 +45,21 @@ namespace Microsoft.Framework.Runtime
         public int EndLine { get; }
 
         public int EndColumn { get; }
+
+        public override bool Equals(object obj)
+        {
+            var other = obj as FileFormatWarning;
+
+            return other != null &&
+                StartLine == other.StartLine &&
+                StartColumn == other.StartColumn &&
+                Message.Equals(other.Message, StringComparison.Ordinal) &&
+                SourceFilePath.Equals(other.SourceFilePath, StringComparison.OrdinalIgnoreCase);
+        }
+
+        public override int GetHashCode()
+        {
+            return base.GetHashCode();
+        }
     }
 }

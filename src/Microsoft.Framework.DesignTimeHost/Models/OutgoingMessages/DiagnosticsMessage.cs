@@ -1,39 +1,65 @@
-// Copyright (c) Microsoft Open Technologies, Inc. All rights reserved.
+﻿// Copyright (c) Microsoft Open Technologies, Inc. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 using System.Collections.Generic;
 using System.Linq;
+using Microsoft.Framework.Internal;
 using Microsoft.Framework.Runtime;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 namespace Microsoft.Framework.DesignTimeHost.Models.OutgoingMessages
 {
     public class DiagnosticsMessage
     {
-        public FrameworkData Framework { get; set; }
+        public DiagnosticsMessage([NotNull] IList<ICompilationMessage> compilationMessages, FrameworkData frameworkData)
+        {
+            CompilationDiagnostics = compilationMessages;
+            Errors = compilationMessages.Where(msg => msg.Severity == CompilationMessageSeverity.Error).ToList();
+            Warnings = compilationMessages.Where(msg => msg.Severity == CompilationMessageSeverity.Warning).ToList();
+            Framework = frameworkData;
+        }
+
+        public FrameworkData Framework { get; }
 
         [JsonIgnore]
-        public IList<ICompilationMessage> Diagnostics { get; set; }
+        public IList<ICompilationMessage> CompilationDiagnostics { get; }
 
-        public IEnumerable<string> Errors => Diagnostics.Where(d => d.Severity == CompilationMessageSeverity.Error)
-                                                        .Select(d => d.FormattedMessage);
+        public IList<ICompilationMessage> Errors { get; }
 
-        public IEnumerable<string> Warnings => Diagnostics.Where(d => d.Severity == CompilationMessageSeverity.Warning)
-                                                        .Select(d => d.FormattedMessage);
+        public IList<ICompilationMessage> Warnings { get; }
+
+        public virtual JToken ConvertToJson(int protocolVersion)
+        {
+            if (protocolVersion <= 1)
+            {
+                var payload = new
+                {
+                    Framework = Framework,
+                    Errors = Errors.Select(e => e.FormattedMessage),
+                    Warnings = Warnings.Select(w => w.FormattedMessage)
+                };
+
+                return JToken.FromObject(payload);
+            }
+            else
+            {
+                return JToken.FromObject(this);
+            }
+        }
 
         public override bool Equals(object obj)
         {
             var other = obj as DiagnosticsMessage;
 
             return other != null &&
-                 Enumerable.SequenceEqual(Warnings, other.Warnings) &&
-                 Enumerable.SequenceEqual(Errors, other.Errors);
+                Enumerable.SequenceEqual(Errors, other.Errors) &&
+                Enumerable.SequenceEqual(Warnings, other.Warnings) &&
+                Framework == other.Framework;
         }
 
         public override int GetHashCode()
         {
-            // These objects are currently POCOs and we're overriding equals
-            // so that things like Enumerable.SequenceEqual just work.
             return base.GetHashCode();
         }
     }

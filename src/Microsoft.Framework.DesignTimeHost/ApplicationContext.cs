@@ -47,6 +47,8 @@ namespace Microsoft.Framework.DesignTimeHost
         private readonly Dictionary<FrameworkName, ProjectCompilation> _compilations = new Dictionary<FrameworkName, ProjectCompilation>();
         private readonly PluginHandler _pluginHandler;
 
+        private int _protocolVersion;
+
         public ApplicationContext(IServiceProvider services,
                                   ICache cache,
                                   ICacheContextAccessor cacheContextAccessor,
@@ -61,11 +63,37 @@ namespace Microsoft.Framework.DesignTimeHost
             _pluginHandler = new PluginHandler(services, SendPluginMessage);
 
             Id = id;
+
+            ProtocolVersion = 1;
         }
 
         public int Id { get; private set; }
 
         public string ApplicationPath { get { return _appPath.Value; } }
+
+        public int ProtocolVersion
+        {
+            get
+            {
+                return _protocolVersion;
+            }
+            set
+            {
+                // protocol 
+                var strProtocol = Environment.GetEnvironmentVariable("DTH_PROTOCOL");
+                int intProtocol;
+                if (!string.IsNullOrEmpty(strProtocol) && Int32.TryParse(strProtocol, out intProtocol))
+                {
+                    Logger.TraceInformation("[{0}]: Set DTH protocol version to {1}. Source is environment variable DTH_PROTOCOL.", GetType().Name, intProtocol);
+                    _protocolVersion = intProtocol;
+                }
+                else
+                {
+                    Logger.TraceInformation("[{0}]: Set DTH protocol version to {1}.", GetType().Name, value);
+                    _protocolVersion = value;
+                }
+            }
+        }
 
         public void OnReceive(Message message)
         {
@@ -221,12 +249,14 @@ namespace Microsoft.Framework.DesignTimeHost
 
                             var data = new InitializeMessage
                             {
+                                Version = GetValue<int>(message.Payload, "Version"),
                                 Configuration = GetValue(message.Payload, "Configuration"),
                                 ProjectFolder = GetValue(message.Payload, "ProjectFolder")
                             };
 
                             _appPath.Value = data.ProjectFolder;
                             _configuration.Value = data.Configuration ?? "Debug";
+                            ProtocolVersion = data.Version;
                         }
                         else
                         {
@@ -373,6 +403,8 @@ namespace Microsoft.Framework.DesignTimeHost
                 GlobalJsonPath = state.GlobalJsonPath
             };
 
+            _local.ProjectWarningMessage = new ProjectWarningsMessage(state.FileFormatWarnings);
+
             foreach (var project in state.Projects)
             {
                 var frameworkData = project.TargetFramework;
@@ -438,11 +470,9 @@ namespace Microsoft.Framework.DesignTimeHost
                 {
                     projectCompilationChanged = UpdateProjectCompilation(project, out compilation);
 
-                    project.Diagnostics = new DiagnosticsMessage
-                    {
-                        Framework = project.Sources.Framework,
-                        Diagnostics = compilation.Diagnostics
-                    };
+                    project.Diagnostics = new DiagnosticsMessage(
+                        compilation.Diagnostics,
+                        project.Sources.Framework);
                 }
 
                 Trigger<Void> requiresAssemblies;
@@ -482,11 +512,9 @@ namespace Microsoft.Framework.DesignTimeHost
 
                     if (project.Diagnostics == null)
                     {
-                        project.Diagnostics = new DiagnosticsMessage
-                        {
-                            Framework = project.Sources.Framework,
-                            Diagnostics = compilation.Diagnostics,
-                        };
+                        project.Diagnostics = new DiagnosticsMessage(
+                            compilation.Diagnostics,
+                            project.Sources.Framework);
                     }
                 }
             }
@@ -575,8 +603,14 @@ namespace Microsoft.Framework.DesignTimeHost
                 _remote.ProjectInformation = _local.ProjectInformation;
             }
 
-            var unprocessedFrameworks = new HashSet<FrameworkName>(_remote.Projects.Keys);
+            if (IsDifferent(_local.ProjectWarningMessage, _remote.ProjectWarningMessage))
+            {
+                SendProjectFormatWarnings(_local.ProjectWarningMessage);
+                _remote.ProjectWarningMessage = _local.ProjectWarningMessage;
+            }
+
             var allDiagnostics = new List<DiagnosticsMessage>();
+            var unprocessedFrameworks = new HashSet<FrameworkName>(_remote.Projects.Keys);
 
             foreach (var pair in _local.Projects)
             {
@@ -664,12 +698,30 @@ namespace Microsoft.Framework.DesignTimeHost
             }
         }
 
+        private void SendProjectFormatWarnings(ProjectWarningsMessage message)
+        {
+            var payload = message.ConvertToJson(ProtocolVersion);
+
+            if (payload != null)
+            {
+                Logger.TraceInformation("[{0}]: Sending project format warnings.", GetType().Name);
+                _initializedContext.Transmit(new Message
+                {
+                    ContextId = Id,
+                    MessageType = "Diagnostics",
+                    Payload = message.ConvertToJson(_protocolVersion)
+                });
+            }
+        }
+
         private void SendDiagnostics(IList<DiagnosticsMessage> diagnostics)
         {
             if (diagnostics.Count == 0)
             {
                 return;
             }
+
+            var payload = JToken.FromObject(diagnostics.Select(d => d.ConvertToJson(ProtocolVersion)));
 
             // Send all diagnostics back
             foreach (var connection in _waitingForDiagnostics)
@@ -678,7 +730,7 @@ namespace Microsoft.Framework.DesignTimeHost
                 {
                     ContextId = Id,
                     MessageType = "AllDiagnostics",
-                    Payload = JToken.FromObject(diagnostics)
+                    Payload = payload
                 });
             }
 
@@ -796,15 +848,17 @@ namespace Microsoft.Framework.DesignTimeHost
             {
                 writer.Write("Assembly");
                 writer.Write(Id);
-                writer.Write(project.Diagnostics.Warnings.Count());
+
+                writer.Write(project.Diagnostics.Warnings.Count);
                 foreach (var warning in project.Diagnostics.Warnings)
                 {
-                    writer.Write(warning);
+                    writer.Write(warning.FormattedMessage);
                 }
-                writer.Write(project.Diagnostics.Errors.Count());
+
+                writer.Write(project.Diagnostics.Errors.Count);
                 foreach (var error in project.Diagnostics.Errors)
                 {
-                    writer.Write(error);
+                    writer.Write(error.FormattedMessage);
                 }
 
                 WriteAssembly(project, writer);
@@ -814,7 +868,7 @@ namespace Microsoft.Framework.DesignTimeHost
                 var obj = new JObject();
                 obj["MessageType"] = "Assembly";
                 obj["ContextId"] = Id;
-                obj[nameof(CompileResponse.Diagnostics)] = ConvertToJArray(project.Diagnostics.Diagnostics);
+                obj[nameof(CompileResponse.Diagnostics)] = ConvertToJArray(project.Diagnostics.CompilationDiagnostics);
                 obj[nameof(CompileResponse.AssemblyPath)] = project.Outputs.AssemblyPath;
                 obj["Blobs"] = 2;
                 writer.Write(obj.ToString(Formatting.None));
@@ -871,11 +925,12 @@ namespace Microsoft.Framework.DesignTimeHost
             var state = new State
             {
                 Frameworks = new List<FrameworkData>(),
-                Projects = new List<ProjectInfo>()
+                Projects = new List<ProjectInfo>(),
+                FileFormatWarnings = new List<FileFormatWarning>()
             };
 
             Project project;
-            if (!Project.TryGetProject(appPath, out project))
+            if (!Project.TryGetProject(appPath, out project, state.FileFormatWarnings))
             {
                 throw new InvalidOperationException(string.Format("Unable to find project.json in '{0}'", appPath));
             }
@@ -1197,6 +1252,8 @@ namespace Microsoft.Framework.DesignTimeHost
         private class State
         {
             public string Name { get; set; }
+
+            public IList<FileFormatWarning> FileFormatWarnings { get; set; }
 
             public IList<string> ProjectSearchPaths { get; set; }
 
