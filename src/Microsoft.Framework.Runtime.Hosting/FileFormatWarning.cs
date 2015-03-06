@@ -44,5 +44,21 @@ namespace Microsoft.Framework.Runtime
         public int EndLine { get; }
 
         public int EndColumn { get; }
+
+        public override bool Equals(object obj)
+        {
+            var other = obj as FileFormatWarning;
+
+            return other != null &&
+                StartLine == other.StartLine &&
+                StartColumn == other.StartColumn &&
+                Message.Equals(other.Message, System.StringComparison.Ordinal) &&
+                SourceFilePath.Equals(other.SourceFilePath, System.StringComparison.OrdinalIgnoreCase);
+        }
+
+        public override int GetHashCode()
+        {
+            return base.GetHashCode();
+        }
     }
 }

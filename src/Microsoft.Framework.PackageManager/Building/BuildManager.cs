@@ -208,7 +208,11 @@ namespace Microsoft.Framework.PackageManager
 
             sw.Stop();
 
-            projectDiagnostics.ForEach(d => LogWarning(d.FormattedMessage));
+            if (projectDiagnostics.Any())
+            {
+                LogWarning("");
+                projectDiagnostics.ForEach(d => LogWarning(d.FormattedMessage));
+            }
 
             allDiagnostics.AddRange(projectDiagnostics);
             WriteSummary(allDiagnostics);
