@@ -93,7 +93,7 @@ namespace Microsoft.Framework.Runtime
             return File.Exists(projectPath);
         }
 
-        public static bool TryGetProject(string path, out Project project)
+        public static bool TryGetProject(string path, out Project project, ICollection<FileFormatWarning> warnings = null)
         {
             project = null;
 
@@ -121,7 +121,7 @@ namespace Microsoft.Framework.Runtime
             {
                 using (var stream = File.OpenRead(projectPath))
                 {
-                    project = GetProjectFromStream(stream, projectName, projectPath);
+                    project = GetProjectFromStream(stream, projectName, projectPath, warnings);
                 }
             }
             catch (JsonReaderException ex)
@@ -132,13 +132,16 @@ namespace Microsoft.Framework.Runtime
             return true;
         }
 
-        public static Project GetProject(string json, string projectName, string projectPath)
+        public static Project GetProject(string json, string projectName, string projectPath, ICollection<FileFormatWarning> warnings = null)
         {
             var ms = new MemoryStream(Encoding.UTF8.GetBytes(json));
-            return GetProjectFromStream(ms, projectName, projectPath);
+
+            var project = GetProjectFromStream(ms, projectName, projectPath, warnings);
+
+            return project;
         }
 
-        internal static Project GetProjectFromStream(Stream stream, string projectName, string projectPath)
+        internal static Project GetProjectFromStream(Stream stream, string projectName, string projectPath, ICollection<FileFormatWarning> warnings = null)
         {
             var project = new Project();
 
@@ -186,7 +189,7 @@ namespace Microsoft.Framework.Runtime
             project.EmbedInteropTypes = rawProject.GetValue<bool>("embedInteropTypes");
 
             // Project files
-            project.Files = new ProjectFilesCollection(rawProject, project.ProjectDirectory, project.ProjectFilePath);
+            project.Files = new ProjectFilesCollection(rawProject, project.ProjectDirectory, project.ProjectFilePath, warnings);
 
             var languageInfo = rawProject["language"] as JObject;
 

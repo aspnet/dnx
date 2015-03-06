@@ -8,7 +8,8 @@
         "../Microsoft.Framework.Runtime.Hosting/ProjectFilesCollection.cs",
         "../Microsoft.Framework.Runtime.Hosting/PatternsCollectionHelper.cs",
         "../Microsoft.Framework.Runtime.Hosting/PatternGroup.cs",
-        "../Microsoft.Framework.Runtime.Hosting/FileFormatException.cs"
+        "../Microsoft.Framework.Runtime.Hosting/FileFormatException.cs",
+        "../Microsoft.Framework.Runtime.Hosting/FileFormatWarning.cs"
     ],
     "preprocess": [
         "../../ext/compiler/preprocess/Internalization.cs"
