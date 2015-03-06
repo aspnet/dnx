@@ -36,19 +36,21 @@ namespace Microsoft.Framework.PackageManager
                 {
                     // Extracting to the {id}/{version} has an issue with concurrent installs - when a package has been partially
                     // extracted, the Restore Operation can inadvertly conclude the package is available locally and proceed to read
-                    // partially written package contents. To avoid this we'll extract the package to a sibling directory and Move it 
+                    // partially written package contents. To avoid this we'll extract the package to a temporary directory and Move it 
                     // to the target path.
-                    var extractPath = Path.Combine(Path.GetDirectoryName(targetPath), Path.GetRandomFileName());
+                    var extractPath = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
                     Directory.CreateDirectory(extractPath);
                     targetNupkg = Path.Combine(extractPath, Path.GetFileName(targetNupkg));
-                    using (var nupkgStream = new FileStream(targetNupkg, FileMode.Create, FileAccess.ReadWrite, FileShare.ReadWrite | FileShare.Delete))
+                    using (var nupkgStream = new FileStream(targetNupkg, FileMode.Create, FileAccess.ReadWrite))
                     {
                         await stream.CopyToAsync(nupkgStream);
                         nupkgStream.Seek(0, SeekOrigin.Begin);
 
                         ExtractPackage(extractPath, nupkgStream);
-                        Directory.Move(extractPath, targetPath);
                     }
+
+                    Directory.CreateDirectory(Path.GetDirectoryName(targetPath));
+                    Directory.Move(extractPath, targetPath);
 
                     // Fixup the casing of the nuspec on disk to match what we expect
                     var nuspecFile = Directory.EnumerateFiles(targetPath, "*" + NuGet.Constants.ManifestExtension).Single();
