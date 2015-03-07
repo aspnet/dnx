@@ -43,11 +43,11 @@ namespace Microsoft.Framework.PackageManager.Bundle
 
             if (PlatformHelper.IsMono)
             {
-                // Executable permissions on klr lost on copy. 
-                var klrPath = Path.Combine(TargetPath, "bin", "klr");
-                if (!FileOperationUtils.MarkExecutable(klrPath))
+                // Executable permissions on dnx lost on copy. 
+                var dnxPath = Path.Combine(TargetPath, "bin", "dnx");
+                if (!FileOperationUtils.MarkExecutable(dnxPath))
                 {
-                    root.Reports.Information.WriteLine("Failed to mark {0} as executable".Yellow(), klrPath);
+                    root.Reports.Information.WriteLine("Failed to mark {0} as executable".Yellow(), dnxPath);
                 }
             }
         }

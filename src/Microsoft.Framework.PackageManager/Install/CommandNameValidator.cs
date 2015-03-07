@@ -13,7 +13,7 @@ namespace Microsoft.Framework.PackageManager
             "dotnet",
             "dotnetsdk",
             "k",
-            "klr",
+            "dnx",
             "kpm",
             "kvm",
             "nuget"

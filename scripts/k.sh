@@ -15,5 +15,5 @@ fi
 if [ -f "$DIR/k-$1" ]; then
     exec $DIR/k-$1 "$@"
 else
-    exec $DIR/klr --appbase "$KRE_APPBASE" Microsoft.Framework.ApplicationHost "$@"  
+    exec $DIR/dnx --appbase "$KRE_APPBASE" Microsoft.Framework.ApplicationHost "$@"  
 fi

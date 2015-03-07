@@ -1,0 +1,3 @@
+LIBRARY   dnx.coreclr.dll 
+EXPORTS 
+    CallApplicationMain   @1 

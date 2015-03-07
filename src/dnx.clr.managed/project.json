@@ -1,0 +1,17 @@
+{
+    "version": "1.0.0-*",
+    "compilationOptions": { "define": [ "TRACE" ], "allowUnsafe": true, "warningsAsErrors": true },
+    "dependencies": {
+        "dnx.host": "1.0.0-*",
+        "Microsoft.Framework.Runtime.Common": { "version": "1.0.0-*", "type": "build" }
+    },
+    "frameworks": {
+        "aspnet50": { }
+    },
+
+    "scripts": {
+        "postbuild": [
+            "%project:Directory%/../../build/batchcopy %project:BuildOutputDir%/Debug/aspnet50/*.* %project:Directory%/../../artifacts/build/dnx-clr-win-x86/bin"
+        ]
+    }
+}

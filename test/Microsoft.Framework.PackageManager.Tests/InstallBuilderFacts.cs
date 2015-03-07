@@ -36,7 +36,7 @@ namespace Microsoft.Framework.PackageManager.Tests
         [Fact]
         public void NotAllowedCommandNamesAreReportedAndTheBuildFails()
         {
-            var project = Runtime.Project.GetProject(@"{ ""commands"" : { ""klr"":""demo"" } }", @"foo", @"c:\foo\project.json");
+            var project = Runtime.Project.GetProject(@"{ ""commands"" : { ""dnx"":""demo"" } }", @"foo", @"c:\foo\project.json");
 
             var errorReport = new MockReport();
             var builder = new InstallBuilder(
@@ -50,7 +50,7 @@ namespace Microsoft.Framework.PackageManager.Tests
             Assert.False(builder.Build(@"c:\foo"));
             Assert.Equal(1, errorReport.WriteLineCallCount);
             // TODO: Once we use resources, assert the full message
-            Assert.True(errorReport.Messages.First().Contains("klr"));
+            Assert.True(errorReport.Messages.First().Contains("dnx"));
         }
 
         private class MockReport : IReport

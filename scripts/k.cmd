@@ -12,7 +12,7 @@ IF "%KRE_APPBASE%"=="" (
   SET "KRE_APPBASE=%CD%"
 )
 
-"%~dp0klr" --appbase "%KRE_APPBASE%" %KRE_OPTIONS% "Microsoft.Framework.ApplicationHost" %*
+"%~dp0dnx" --appbase "%KRE_APPBASE%" %KRE_OPTIONS% "Microsoft.Framework.ApplicationHost" %*
 
 exit /b %ERRORLEVEL%
 ENDLOCAL

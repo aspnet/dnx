@@ -489,8 +489,8 @@ namespace Microsoft.Framework.PackageManager.Bundle
             return package == null ? string.Empty : package.Library.Version.ToString();
         }
 
-        // Expected runtime name format: kre-{FLAVOR}-{OS}-{ARCHITECTURE}.{VERSION}
-        // Sample input: kre-coreclr-win-x86.1.0.0.0
+        // Expected runtime name format: dnx-{FLAVOR}-{OS}-{ARCHITECTURE}.{VERSION}
+        // Sample input: dnx-coreclr-win-x86.1.0.0.0
         // Sample output: coreclr
         private static string GetRuntimeFlavor(BundleRuntime runtime)
         {
@@ -504,8 +504,8 @@ namespace Microsoft.Framework.PackageManager.Bundle
             return segments[1];
         }
 
-        // Expected runtime name format: kre-{FLAVOR}-{OS}-{ARCHITECTURE}.{VERSION}
-        // Sample input: kre-coreclr-win-x86.1.0.0.0
+        // Expected runtime name format: dnx-{FLAVOR}-{OS}-{ARCHITECTURE}.{VERSION}
+        // Sample input: dnx-coreclr-win-x86.1.0.0.0
         // Sample output: 1.0.0.0
         private static string GetRuntimeVersion(BundleRuntime runtime)
         {

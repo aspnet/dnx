@@ -8,5 +8,8 @@ while [ -h "$SOURCE" ]; do # resolve $SOURCE until the file is no longer a symli
 done
 DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
 
-
-exec $DIR/dnx $DIR/lib/Microsoft.Framework.PackageManager/Microsoft.Framework.PackageManager.dll "$@"
+if [ -f "$DIR/mono" ]; then
+  exec "$DIR/mono" $MONO_OPTIONS "$DIR/dnx.mono.managed.dll" "$@"
+else
+  exec mono $MONO_OPTIONS "$DIR/dnx.mono.managed.dll" "$@"
+fi
