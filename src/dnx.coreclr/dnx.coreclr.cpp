@@ -519,7 +519,7 @@ extern "C" __declspec(dllexport) HRESULT __stdcall CallApplicationMain(PCALL_APP
         return hr;
     }
 
-    SetEnvironmentVariable(L"DNX_FRAMEWORK", L"aspnetcore50");
+    SetEnvironmentVariable(L"DNX_FRAMEWORK", L"dnxcore50");
 
     // Call main
     data->exitcode = pHostMain(data->argc, data->argv);

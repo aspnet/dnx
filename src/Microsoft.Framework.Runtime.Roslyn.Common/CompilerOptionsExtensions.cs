@@ -14,6 +14,7 @@ namespace Microsoft.Framework.Runtime.Roslyn
     {
         private const string NetFrameworkIdentifier = ".NETFramework";
         private const string AspNetFrameworkIdentifier = "Asp.Net";
+        private const string DnxFrameworkIdentifier = "DNX";
 
         public static CompilationSettings ToCompilationSettings(this ICompilerOptions compilerOptions,
                                                                 FrameworkName targetFramework)
@@ -87,7 +88,8 @@ namespace Microsoft.Framework.Runtime.Roslyn
         private static bool IsDesktop(FrameworkName frameworkName)
         {
             return frameworkName.Identifier == NetFrameworkIdentifier ||
-                   frameworkName.Identifier == AspNetFrameworkIdentifier;
+                   frameworkName.Identifier == AspNetFrameworkIdentifier ||
+                   frameworkName.Identifier == DnxFrameworkIdentifier;
         }
     }
 }

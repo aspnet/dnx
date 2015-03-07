@@ -3,6 +3,7 @@
 
 using System;
 using System.Runtime.Versioning;
+using Microsoft.Framework.Runtime.Common.Impl;
 
 namespace dnx.host
 {
@@ -10,13 +11,17 @@ namespace dnx.host
     {
         internal static FrameworkName ParseFrameworkName(string frameworkName)
         {
-            if (frameworkName == "aspnet50")
+            if (frameworkName == FrameworkNames.ShortNames.Dnx451)
             {
-                return new FrameworkName("Asp.Net", new Version(5, 0));
+                return new FrameworkName(FrameworkNames.LongNames.Dnx, new Version(4, 5, 1));
             }
-            else if (frameworkName == "aspnetcore50")
+            else if (frameworkName == FrameworkNames.ShortNames.Dnx46)
             {
-                return new FrameworkName("Asp.NetCore", new Version(5, 0));
+                return new FrameworkName(FrameworkNames.LongNames.Dnx, new Version(4, 6));
+            }
+            else if (frameworkName == FrameworkNames.ShortNames.DnxCore50)
+            {
+                return new FrameworkName(FrameworkNames.LongNames.DnxCore, new Version(5, 0));
             }
 
             throw new NotSupportedException();

@@ -11,6 +11,7 @@ using Microsoft.Framework.DesignTimeHost.Models;
 using Microsoft.Framework.DesignTimeHost.Models.IncomingMessages;
 using Microsoft.Framework.DesignTimeHost.Models.OutgoingMessages;
 using Microsoft.Framework.Runtime;
+using Microsoft.Framework.Runtime.Common.Impl;
 using Microsoft.Framework.Runtime.Roslyn;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -868,7 +869,7 @@ namespace Microsoft.Framework.DesignTimeHost
 
             if (!frameworks.Any())
             {
-                frameworks.Add(VersionUtility.ParseFrameworkName("aspnet50"));
+                frameworks.Add(VersionUtility.ParseFrameworkName(FrameworkNames.ShortNames.Dnx451));
             }
 
             var sourcesProjectWideSources = project.Files.SourceFiles.ToList();

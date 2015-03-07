@@ -24,6 +24,11 @@ namespace NuGet
         private const string PortableFrameworkIdentifier = ".NETPortable";
         internal const string AspNetFrameworkIdentifier = "Asp.Net";
         internal const string AspNetCoreFrameworkIdentifier = "Asp.NetCore";
+        internal const string DnxFrameworkIdentifier = "DNX";
+        internal const string DnxCoreFrameworkIdentifier = "DNXCore";
+        internal const string DnxFrameworkShortName = "dnx";
+        internal const string DnxCoreFrameworkShortName = "dnxcore";
+
         private const string LessThanOrEqualTo = "\u2264";
         private const string GreaterThanOrEqualTo = "\u2265";
 
@@ -45,8 +50,11 @@ namespace NuGet
         private static readonly Dictionary<string, string> _identifierToFrameworkFolder = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase) {
             { NetFrameworkIdentifier, "net" },
             { ".NETMicroFramework", "netmf" },
+            { DnxFrameworkIdentifier, DnxFrameworkShortName },
+            { DnxCoreFrameworkIdentifier, DnxCoreFrameworkShortName },
             { AspNetFrameworkIdentifier, "aspnet" },
             { AspNetCoreFrameworkIdentifier, "aspnetcore" },
+
             { "Silverlight", "sl" },
             { ".NETCore", "win"},
             { "Windows", "win"},
@@ -80,6 +88,9 @@ namespace NuGet
         // These aliases allow us to accept 'wp', 'wp70', 'wp71', 'windows', 'windows8' as valid target farmework folders.
         private static readonly Dictionary<FrameworkName, FrameworkName> _frameworkNameAlias = new Dictionary<FrameworkName, FrameworkName>(FrameworkNameEqualityComparer.Default)
         {
+            { new FrameworkName("Asp.Net, Version=v5.0"), new FrameworkName("DNX, Version=v4.5.1") },
+            { new FrameworkName("Asp.NetCore, Version=v5.0"), new FrameworkName("DNXCore, Version=v5.0") },
+
             { new FrameworkName("WindowsPhone, Version=v0.0"), new FrameworkName("Silverlight, Version=v3.0, Profile=WindowsPhone") },
             { new FrameworkName("WindowsPhone, Version=v7.0"), new FrameworkName("Silverlight, Version=v3.0, Profile=WindowsPhone") },
             { new FrameworkName("WindowsPhone, Version=v7.1"), new FrameworkName("Silverlight, Version=v4.0, Profile=WindowsPhone71") },
@@ -93,7 +104,8 @@ namespace NuGet
         private static readonly Version MaxVersion = new Version(Int32.MaxValue, Int32.MaxValue, Int32.MaxValue, Int32.MaxValue);
         private static readonly Dictionary<string, FrameworkName> _equivalentProjectFrameworks = new Dictionary<string, FrameworkName>()
         {
-            { AspNetFrameworkIdentifier, new FrameworkName(NetFrameworkIdentifier, MaxVersion) }
+            { AspNetFrameworkIdentifier, new FrameworkName(NetFrameworkIdentifier, MaxVersion) },
+            { DnxFrameworkIdentifier, new FrameworkName(NetFrameworkIdentifier, MaxVersion) }
         };
 
         public static Version DefaultTargetFrameworkVersion
@@ -118,7 +130,8 @@ namespace NuGet
         public static bool IsDesktop(FrameworkName frameworkName)
         {
             return frameworkName.Identifier == NetFrameworkIdentifier ||
-                   frameworkName.Identifier == AspNetFrameworkIdentifier;
+                   frameworkName.Identifier == AspNetFrameworkIdentifier ||
+                   frameworkName.Identifier == DnxFrameworkIdentifier;
         }
 
         /// <summary>
@@ -202,6 +215,7 @@ namespace NuGet
                 }
 
                 // Make sure it has at least 2 digits so it parses as a valid version
+
                 versionPart = versionPart.PadRight(2, '0');
                 versionPart = String.Join(".", versionPart.ToCharArray());
             }
@@ -866,7 +880,8 @@ namespace NuGet
                 {
                     // TODO: Remove this logic when out dependencies have moved to ASP.NET Core 5.0
                     // as this logic is super fuzzy and terrible
-                    if (string.Equals(frameworkName.Identifier, AspNetCoreFrameworkIdentifier, StringComparison.OrdinalIgnoreCase))
+                    if (string.Equals(frameworkName.Identifier, AspNetCoreFrameworkIdentifier, StringComparison.OrdinalIgnoreCase) ||
+                        string.Equals(frameworkName.Identifier, DnxCoreFrameworkIdentifier, StringComparison.OrdinalIgnoreCase))
                     {
                         var frameworkIdentifierLookup = targetFrameworkPortableProfile.SupportedFrameworks
                                                                                       .Select(NormalizeFrameworkName)
@@ -1149,10 +1164,13 @@ namespace NuGet
         private static IDictionary<string, string> PopulateKnownFrameworks()
         {
             var frameworks = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase) {
+                { DnxFrameworkShortName, DnxFrameworkIdentifier },
+                { DnxCoreFrameworkShortName, DnxCoreFrameworkIdentifier },
                 { "aspnet", AspNetFrameworkIdentifier },
-                { "aspnetcore", AspNetCoreFrameworkIdentifier },
                 { "asp.net", AspNetFrameworkIdentifier },
+                { "aspnetcore", AspNetCoreFrameworkIdentifier },
                 { "asp.netcore", AspNetCoreFrameworkIdentifier },
+
                 { "NET", NetFrameworkIdentifier },
                 { ".NET", NetFrameworkIdentifier },
                 { "NETFramework", NetFrameworkIdentifier },

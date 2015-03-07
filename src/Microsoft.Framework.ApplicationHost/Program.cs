@@ -29,6 +29,7 @@ namespace Microsoft.Framework.ApplicationHost
 
         public Task<int> Main(string[] args)
         {
+            Logger.TraceInformation($"[{nameof(ApplicationHost)}] Launching DNX application on {_environment.RuntimeFramework}");
             DefaultHostOptions options;
             string[] programArgs;
             int exitCode;

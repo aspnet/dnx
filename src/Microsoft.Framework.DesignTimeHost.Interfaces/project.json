@@ -1,4 +1,4 @@
-﻿{
+{
     "version": "1.0.0-*",
     "description": "ASP.NET 5 interfaces to take advantage of capabilities exposed by the design time host.",
     "compilationOptions": { "warningsAsErrors": true },

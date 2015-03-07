@@ -1,7 +1,4 @@
-﻿using Microsoft.CodeAnalysis.Text;
-using System;
-
-namespace Microsoft.Framework.DesignTimeHost.Models.IncomingMessages
+﻿namespace Microsoft.Framework.DesignTimeHost.Models.IncomingMessages
 {
     public class SourceTextChangeMessage
     {

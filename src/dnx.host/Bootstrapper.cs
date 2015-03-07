@@ -10,6 +10,7 @@ using System.Threading.Tasks;
 using Microsoft.Framework.Runtime;
 using Microsoft.Framework.Runtime.Common;
 using Microsoft.Framework.Runtime.Common.DependencyInjection;
+using Microsoft.Framework.Runtime.Common.Impl;
 using Microsoft.Framework.Runtime.Infrastructure;
 using Microsoft.Framework.Runtime.Loader;
 
@@ -59,7 +60,7 @@ namespace dnx.host
                 var framework = Environment.GetEnvironmentVariable("TARGET_FRAMEWORK") ?? Environment.GetEnvironmentVariable(EnvironmentNames.Framework);
                 var configuration = Environment.GetEnvironmentVariable("TARGET_CONFIGURATION") ?? Environment.GetEnvironmentVariable(EnvironmentNames.Configuration) ?? "Debug";
 
-                var targetFramework = FrameworkNameUtility.ParseFrameworkName(framework ?? "aspnet50");
+                var targetFramework = FrameworkNameUtility.ParseFrameworkName(framework ?? FrameworkNames.ShortNames.Dnx451);
 
                 var applicationEnvironment = new ApplicationEnvironment(applicationBaseDirectory,
                                                                         targetFramework,

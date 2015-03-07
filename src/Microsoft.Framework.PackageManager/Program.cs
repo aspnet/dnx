@@ -11,6 +11,7 @@ using Microsoft.Framework.PackageManager.List;
 using Microsoft.Framework.PackageManager.Bundle;
 using Microsoft.Framework.Runtime;
 using Microsoft.Framework.Runtime.Common.CommandLine;
+using System.Linq;
 
 namespace Microsoft.Framework.PackageManager
 {
@@ -32,6 +33,11 @@ namespace Microsoft.Framework.PackageManager
 
         public int Main(string[] args)
         {
+            // Accept and discard the "--debug" switch. The runtime handles it but we
+            // don't want it to confuse us. We also don't want it to appear in help,
+            // so we don't do this via CommandLineApplication
+            args = args.Where(a => a != "--debug").ToArray();
+
             var app = new CommandLineApplication();
             app.Name = "kpm";
 
