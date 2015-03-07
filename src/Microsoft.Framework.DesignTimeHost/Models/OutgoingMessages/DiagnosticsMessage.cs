@@ -1,8 +1,8 @@
 ﻿// Copyright (c) Microsoft Open Technologies, Inc. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
-using System.Linq;
 using System.Collections.Generic;
+using System.Linq;
 using Microsoft.Framework.Runtime;
 using Newtonsoft.Json;
 
@@ -10,10 +10,6 @@ namespace Microsoft.Framework.DesignTimeHost.Models.OutgoingMessages
 {
     public class DiagnosticsMessage
     {
-        private object error;
-        private IEnumerable<DiagnosticsInfo> warnings;
-        private object framework;
-
         public DiagnosticsMessage(IList<ICompilationMessage> compilationMessages, FrameworkData frameworkData)
         {
             var errors = compilationMessages
@@ -57,6 +53,21 @@ namespace Microsoft.Framework.DesignTimeHost.Models.OutgoingMessages
         public IEnumerable<DiagnosticsInfo> Errors { get; }
 
         public IEnumerable<DiagnosticsInfo> Warnings { get; }
+
+        public override bool Equals(object obj)
+        {
+            var other = obj as DiagnosticsMessage;
+
+            return other != null &&
+                Enumerable.SequenceEqual(Errors, other.Errors) &&
+                Enumerable.SequenceEqual(Warnings, other.Warnings) &&
+                Framework == other.Framework;
+        }
+
+        public override int GetHashCode()
+        {
+            return base.GetHashCode();
+        }
     }
 
     public class DiagnosticsInfo
@@ -70,5 +81,21 @@ namespace Microsoft.Framework.DesignTimeHost.Models.OutgoingMessages
         public string Message { get; set; }
 
         public string FormattedMessage { get; set; }
+
+        public override bool Equals(object obj)
+        {
+            var other = obj as DiagnosticsInfo;
+
+            return other != null &&
+                 other.Line == Line && 
+                 other.Column == Column && 
+                 other.Message == Message && 
+                 other.FormattedMessage == FormattedMessage;
+        }
+
+        public override int GetHashCode()
+        {
+            return base.GetHashCode();
+        }
     }
 }
