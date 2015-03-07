@@ -149,7 +149,7 @@ namespace Microsoft.Framework.Runtime
             var version = rawProject["version"];
             var authors = rawProject["authors"];
             var tags = rawProject["tags"];
-            var buildVersion = Environment.GetEnvironmentVariable("K_BUILD_VERSION");
+            var buildVersion = Environment.GetEnvironmentVariable("DNX_BUILD_VERSION");
 
             project.Name = projectName;
             project.ProjectFilePath = Path.GetFullPath(projectPath);
