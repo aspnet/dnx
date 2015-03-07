@@ -6,7 +6,7 @@ namespace Microsoft.Framework.Runtime
     internal static class Constants
     {
         public const string BootstrapperExeName = "dnx";
-        public const string DefaultLocalRuntimeHomeDir = ".k";
+        public const string DefaultLocalRuntimeHomeDir = ".dnx";
         public const string RuntimeShortName = "dnx";
         public const string RuntimeNamePrefix = RuntimeShortName + "-";
         public const string WebConfigRuntimeVersion = RuntimeNamePrefix + "version";
