@@ -18,7 +18,7 @@ namespace Microsoft.Framework.Runtime.Internal
 
         public static void Initialize(string traceConfigurationString, Func<ILoggerFactory> loggerFactoryFactory)
         {
-            // Parse KRE_TRACE
+            // Parse DNX_TRACE
             if (string.IsNullOrEmpty(traceConfigurationString))
             {
                 _loggerFactory = NullLoggerFactory.Instance;
@@ -26,7 +26,7 @@ namespace Microsoft.Framework.Runtime.Internal
             }
             else if (string.Equals(traceConfigurationString, "1", StringComparison.OrdinalIgnoreCase))
             {
-                // Support for legacy KRE_TRACE=1 value
+                // Support for legacy DNX_TRACE=1 value
                 _filter = (_, level) => level >= LogLevel.Information;
             }
             else

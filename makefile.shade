@@ -38,7 +38,7 @@ var RUNTIME_CLR_TARGETS = '${new [] {RUNTIME_MONO_BIN, RUNTIME_CLR_WIN_x86_BIN, 
 var RUNTIME_CORECLR_TARGETS = '${new [] {RUNTIME_CORECLR_WIN_x86_BIN, RUNTIME_CORECLR_WIN_x64_BIN}}'
 var ALL_TARGETS = '${RUNTIME_CLR_TARGETS.Concat(RUNTIME_CORECLR_TARGETS)}'
 var NEW_RUNTIME = '${E("NEW_RUNTIME") == "1"}'
-var RUNTIME_COMMON_NAME = 'KRE'
+var RUNTIME_COMMON_NAME = 'DNX'
 var BOOTSTRAPPER_EXE_NAME = 'dnx'
 var BOOTSTRAPPER_CLR_NAME = 'dnx.clr'
 var BOOTSTRAPPER_CORECLR_NAME = 'dnx.coreclr'
@@ -621,13 +621,13 @@ var RC_FILES = '${FindAllFiles("Resource.rc", BOOTSTRAPPER_EXE_NAME, BOOTSTRAPPE
 
 #update-tpa
     @{
-        var envKreTrace = Environment.GetEnvironmentVariable("KRE_TRACE");
+        var envTrace = Environment.GetEnvironmentVariable("DNX_TRACE");
 
         try
         {
             var dotnetcoreclrDepFile = Path.Combine(BUILD_DIR2, "dotnetcoreclr-dependencies.txt");
             var tpacppFile = Path.Combine(ROOT, "src", BOOTSTRAPPER_CORECLR_NAME, "tpa.cpp");
-            Environment.SetEnvironmentVariable("KRE_TRACE", "0");
+            Environment.SetEnvironmentVariable("DNX_TRACE", "0");
             Exec("cmd", string.Format(@"/C kpm list {0} --assemblies --runtime {1} > {2}",
                 Path.Combine(ROOT, "src", BOOTSTRAPPER_HOST_NAME),
                 Path.Combine(CORECLR_TARGET_PATH, "Runtime", "x86"),
@@ -644,7 +644,7 @@ var RC_FILES = '${FindAllFiles("Resource.rc", BOOTSTRAPPER_EXE_NAME, BOOTSTRAPPE
         }
         finally
         {
-            Environment.SetEnvironmentVariable("KRE_TRACE", envKreTrace);
+            Environment.SetEnvironmentVariable("DNX_TRACE", envTrace);
         }
     }
   
@@ -666,7 +666,7 @@ functions @{
             WorkingDirectory = Directory.GetCurrentDirectory(),
             UseShellExecute = false
         };
-        procStartInfo.EnvironmentVariables["KRE_TRACE"] = "0";
+        procStartInfo.EnvironmentVariables["DNX_TRACE"] = "0";
         procStartInfo.RedirectStandardOutput = true;
 
         var process = Process.Start(procStartInfo);
@@ -715,7 +715,7 @@ functions @{
 
     string FindPackageDirectory(string name)
     {
-        var packagesDir = Environment.GetEnvironmentVariable("KRE_PACKAGES");
+        var packagesDir = Environment.GetEnvironmentVariable("DNX_PACKAGES");
 
         if (string.IsNullOrEmpty(packagesDir))
         {

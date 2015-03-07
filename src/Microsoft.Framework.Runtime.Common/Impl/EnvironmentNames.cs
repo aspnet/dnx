@@ -5,7 +5,7 @@ namespace Microsoft.Framework.Runtime
 {
     internal static class EnvironmentNames
     {
-        public static readonly string CommonPrefix = "KRE_";
+        public static readonly string CommonPrefix = Constants.RuntimeShortName.ToUpper() + "_";
         public static readonly string Packages = CommonPrefix + "PACKAGES";
         public static readonly string PackagesCache = CommonPrefix + "PACKAGES_CACHE";
         public static readonly string Servicing = CommonPrefix + "SERVICING";

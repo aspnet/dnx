@@ -216,10 +216,10 @@ bool ExpandCommandLineArguments(int nArgc, LPWSTR* ppszArgv, int& nExpandedArgc,
 int CallApplicationProcessMain(int argc, wchar_t* argv[])
 {
     TCHAR szTrace[2];
-    DWORD nEnvTraceSize = GetEnvironmentVariableW(L"KRE_TRACE", szTrace, 2);
+    DWORD nEnvTraceSize = GetEnvironmentVariableW(L"DNX_TRACE", szTrace, 2);
     if (nEnvTraceSize == 0)
     {
-        nEnvTraceSize = GetEnvironmentVariableW(L"KRE_TRACE", szTrace, 2);
+        nEnvTraceSize = GetEnvironmentVariableW(L"DNX_TRACE", szTrace, 2);
     }
     bool m_fVerboseTrace = (nEnvTraceSize == 1);
     if (m_fVerboseTrace)
@@ -246,11 +246,11 @@ int CallApplicationProcessMain(int argc, wchar_t* argv[])
 
     // Set the DEFAULT_LIB environment variable to be the same directory
     // as the exe
-    SetEnvironmentVariable(L"KRE_DEFAULT_LIB", szCurrentDirectory);
+    SetEnvironmentVariable(L"DNX_DEFAULT_LIB", szCurrentDirectory);
 
-    // Set the KRE_CONOSLE_HOST flag which will print exceptions
+    // Set the DNX_CONOSLE_HOST flag which will print exceptions
     // to stderr instead of throwing
-    SetEnvironmentVariable(L"KRE_CONSOLE_HOST", L"1");
+    SetEnvironmentVariable(L"DNX_CONSOLE_HOST", L"1");
 
     CALL_APPLICATION_MAIN_DATA data = { 0 };
     int nExpandedArgc = -1;
@@ -267,13 +267,13 @@ int CallApplicationProcessMain(int argc, wchar_t* argv[])
         data.argv = const_cast<LPCWSTR*>(&argv[1]);
     }
 
-    // Get application base from KRE_APPBASE environment variable
+    // Get application base from DNX_APPBASE environment variable
     // Note: this value can be overriden by --appbase option
     TCHAR szAppBase[MAX_PATH];
-    DWORD dwAppBase = GetEnvironmentVariableW(L"KRE_APPBASE", szAppBase, MAX_PATH);
+    DWORD dwAppBase = GetEnvironmentVariableW(L"DNX_APPBASE", szAppBase, MAX_PATH);
     if (dwAppBase == 0)
     {
-        dwAppBase = GetEnvironmentVariableW(L"KRE_APPBASE", szAppBase, MAX_PATH);
+        dwAppBase = GetEnvironmentVariableW(L"DNX_APPBASE", szAppBase, MAX_PATH);
     }
     if (dwAppBase != 0)
     {

@@ -8,11 +8,11 @@ SET ERRORLEVEL=
 :: e.g. To compile the app in the current folder:
 ::      C:\src\MyApp\>K build
 
-IF "%KRE_APPBASE%"=="" (
-  SET "KRE_APPBASE=%CD%"
+IF "%DNX_APPBASE%"=="" (
+  SET "DNX_APPBASE=%CD%"
 )
 
-"%~dp0dnx" --appbase "%KRE_APPBASE%" %KRE_OPTIONS% "Microsoft.Framework.ApplicationHost2" %*
+"%~dp0dnx" --appbase "%DNX_APPBASE%" %DNX_OPTIONS% "Microsoft.Framework.ApplicationHost2" %*
 
 exit /b %ERRORLEVEL%
 ENDLOCAL

@@ -3,6 +3,7 @@
 
 using System;
 using System.IO;
+using Microsoft.Framework.Runtime;
 
 namespace Microsoft.Framework.PackageManager
 {
@@ -33,10 +34,10 @@ namespace Microsoft.Framework.PackageManager
 
         private static string FindRuntimeHome()
         {
-            var runtimeHome = Environment.GetEnvironmentVariable("KRE_HOME");
+            var runtimeHome = Environment.GetEnvironmentVariable(EnvironmentNames.Home);
             if (string.IsNullOrEmpty(runtimeHome))
             {
-                var runtimeGlobalPath = Environment.GetEnvironmentVariable("KRE_GLOBAL_PATH");
+                var runtimeGlobalPath = Environment.GetEnvironmentVariable(EnvironmentNames.GlobalPath);
 
                 var userProfileFolder = Environment.GetEnvironmentVariable("USERPROFILE");
                 if (string.IsNullOrEmpty(userProfileFolder))
