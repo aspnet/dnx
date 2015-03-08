@@ -14,6 +14,7 @@ using System.Text.RegularExpressions;
 using Microsoft.Framework.Runtime;
 using NuGet.Resources;
 using CompatibilityMapping = System.Collections.Generic.Dictionary<string, string[]>;
+using Microsoft.Framework.Runtime.Common.Impl;
 
 namespace NuGet
 {
@@ -88,9 +89,6 @@ namespace NuGet
         // These aliases allow us to accept 'wp', 'wp70', 'wp71', 'windows', 'windows8' as valid target farmework folders.
         private static readonly Dictionary<FrameworkName, FrameworkName> _frameworkNameAlias = new Dictionary<FrameworkName, FrameworkName>(FrameworkNameEqualityComparer.Default)
         {
-            { new FrameworkName("Asp.Net, Version=v5.0"), new FrameworkName("DNX, Version=v4.5.1") },
-            { new FrameworkName("Asp.NetCore, Version=v5.0"), new FrameworkName("DNXCore, Version=v5.0") },
-
             { new FrameworkName("WindowsPhone, Version=v0.0"), new FrameworkName("Silverlight, Version=v3.0, Profile=WindowsPhone") },
             { new FrameworkName("WindowsPhone, Version=v7.0"), new FrameworkName("Silverlight, Version=v3.0, Profile=WindowsPhone") },
             { new FrameworkName("WindowsPhone, Version=v7.1"), new FrameworkName("Silverlight, Version=v4.0, Profile=WindowsPhone71") },
@@ -102,10 +100,17 @@ namespace NuGet
         };
 
         private static readonly Version MaxVersion = new Version(Int32.MaxValue, Int32.MaxValue, Int32.MaxValue, Int32.MaxValue);
+
         private static readonly Dictionary<string, FrameworkName> _equivalentProjectFrameworks = new Dictionary<string, FrameworkName>()
         {
-            { AspNetFrameworkIdentifier, new FrameworkName(NetFrameworkIdentifier, MaxVersion) },
-            { DnxFrameworkIdentifier, new FrameworkName(NetFrameworkIdentifier, MaxVersion) }
+            // Allow an aspnetcore package to be installed in a dnxcore project 
+            { DnxCoreFrameworkIdentifier, new FrameworkName(AspNetCoreFrameworkIdentifier, MaxVersion) },
+
+            // Allow an aspnet package to be installed in a dnx project
+            { DnxFrameworkIdentifier, new FrameworkName(AspNetFrameworkIdentifier, MaxVersion) },
+
+            // Allow a net package to be installed in an aspnet (or dnx, transitively by above) project
+            { AspNetFrameworkIdentifier, new FrameworkName(NetFrameworkIdentifier, MaxVersion) }
         };
 
         public static Version DefaultTargetFrameworkVersion
