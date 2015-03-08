@@ -210,7 +210,7 @@ var RC_FILES = '${FindAllFiles("Resource.rc", BOOTSTRAPPER_EXE_NAME, BOOTSTRAPPE
     directory delete='${Path.Combine(BUILD_DIR2, BOOTSTRAPPER_CLR_NAME)}'
     copy sourceDir='${Path.Combine(ROOT, "src", BOOTSTRAPPER_CLR_NAME)}' include='bin/**/' outputDir='${Path.Combine(BUILD_DIR2, BOOTSTRAPPER_CLR_NAME)}' overwrite='${true}' 
 
-#build-mono-entrypoint target='build-compile' if='IsMono'
+#build-mono-entrypoint target='build-compile'
     var monoManagedOutpath='${Path.Combine(BUILD_DIR2, BOOTSTRAPPER_MONO_MANAGED_NAME)}'
     directory create='${monoManagedOutpath}'
     @{
