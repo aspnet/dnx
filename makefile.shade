@@ -612,12 +612,12 @@ var RC_FILES = '${FindAllFiles("Resource.rc", BOOTSTRAPPER_EXE_NAME, BOOTSTRAPPE
     var matchVersion=''
     for each='var name in new[]{ RUNTIME_CLR_WIN_x86_NAME, RUNTIME_CORECLR_WIN_x86_NAME, RUNTIME_CLR_WIN_x64_NAME, RUNTIME_CORECLR_WIN_x64_NAME }'
         for each='var runtime in Files.Include(Path.Combine(BUILD_DIR2, name + ".*.nupkg"))'
-            exec program='cmd' commandline='/C kvm install ${runtime}' if='!IsMono'
+            exec program='cmd' commandline='/C dnvm install ${runtime}' if='!IsMono'
             var parts='${Path.GetFileNameWithoutExtension(runtime).Split(".".ToArray(), 2)}'
             set matchVersion='${parts[1]}' if='matchVersion == ""'
 
-    exec program='cmd' commandline='/C kvm alias build ${matchVersion}' if='!IsMono && matchVersion != ""' 
-    exec program='cmd' commandline='/C start cmd /K kvm use build' if='!IsMono && matchVersion != ""' 
+    exec program='cmd' commandline='/C dnvm alias build ${matchVersion}' if='!IsMono && matchVersion != ""' 
+    exec program='cmd' commandline='/C start cmd /K dnvm use build' if='!IsMono && matchVersion != ""' 
 
 #update-tpa
     @{
@@ -835,7 +835,7 @@ functions @{
         var symlinkProgramArgs = "/C mklink /J {0} {1}";
             
         var versionManagerProgram = "cmd";
-        var versionManagerProgramArgs = "/C kvm alias {0} {1}";
+        var versionManagerProgramArgs = "/C dnvm alias {0} {1}";
     
         if (IsMono)
         {
@@ -845,8 +845,8 @@ functions @{
             versionManagerProgram = "bash";
             versionManagerProgramArgs =
                 "-c 'source " + 
-                Path.Combine(FindRuntimeFolder(), "kvm", "kvm.sh") +
-                " && kvm alias {0} {1}'";
+                Path.Combine(FindRuntimeFolder(), "dnvm", "dnvm.sh") +
+                " && dnvm alias {0} {1}'";
         }
     
         symlinkProgramArgs = String.Format(symlinkProgramArgs,

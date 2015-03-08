@@ -15,7 +15,7 @@ namespace Microsoft.Framework.PackageManager
             "k",
             "dnx",
             "kpm",
-            "kvm",
+            "dnvm",
             "nuget"
         };
 
