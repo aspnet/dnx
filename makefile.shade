@@ -295,28 +295,6 @@ var RC_FILES = '${FindAllFiles("Resource.rc", BOOTSTRAPPER_EXE_NAME, BOOTSTRAPPE
     var x86Target="x86"
     var x64Target="amd64"
 
-    -// Runtime for mono
-    copy sourceDir='${SCRIPTS_DIR}' include='*.sh' outputDir='${RUNTIME_MONO_BIN}' overwrite='${true}'
-    copy sourceDir='${Path.Combine(BUILD_DIR2, BOOTSTRAPPER_MONO_MANAGED_NAME)}' outputDir='${RUNTIME_MONO_BIN}' include='*.dll' overwrite='${true}'
-
-    @{
-        // Rename all .sh files to remove the sh
-        foreach (var shFile in Files.Include(Path.Combine(RUNTIME_MONO_BIN, "*.sh")))
-        {
-            var targetShFile = Path.Combine(Path.GetDirectoryName(shFile), 
-                                            Path.GetFileNameWithoutExtension(shFile));
-            if (File.Exists(targetShFile))
-            {
-                File.Delete(targetShFile);
-            }
-
-            // Make sure new lines are \n (\r\n messes up the bash script)
-            var script = File.ReadAllText(shFile).Replace('\r\n', '\n');
-            File.Move(shFile, targetShFile);
-            File.WriteAllText(targetShFile, script);
-        }
-    }
-
     test if='!IsMono'
         -// Runtime for clr-win-x86
         copy sourceDir='${Path.Combine(BUILD_DIR2, BOOTSTRAPPER_EXE_NAME, "bin", "Win32", Configuration2, "dnx451")}' outputDir='${RUNTIME_CLR_WIN_x86_BIN}' include='*.exe' overwrite='${true}'
