@@ -3,6 +3,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -13,6 +14,7 @@ using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.Text;
 using Microsoft.Framework.Runtime.Common.DependencyInjection;
+using Microsoft.Framework.Runtime.Roslyn.Common;
 
 namespace Microsoft.Framework.Runtime.Roslyn
 {
@@ -77,8 +79,6 @@ namespace Microsoft.Framework.Runtime.Roslyn
                 }
             }
 
-            var exportedReferences = incomingReferences.Select(ConvertMetadataReference);
-
             Logger.TraceInformation("[{0}]: Compiling '{1}'", GetType().Name, name);
             var sw = Stopwatch.StartNew();
 
@@ -108,8 +108,7 @@ namespace Microsoft.Framework.Runtime.Roslyn
             var embeddedReferences = incomingReferences.OfType<IMetadataEmbeddedReference>()
                                                        .ToDictionary(a => a.Name, ConvertMetadataReference);
 
-            var references = new List<MetadataReference>();
-            references.AddRange(exportedReferences);
+            var references = incomingReferences.Select(ConvertMetadataReference).ToList();
 
             var compilation = CSharpCompilation.Create(
                 name,
@@ -118,6 +117,8 @@ namespace Microsoft.Framework.Runtime.Roslyn
                 compilationSettings.CompilationOptions);
 
             compilation = ApplyVersionInfo(compilation, project, parseOptions);
+
+            compilation = RewriteInternalsVisibleTo(compilation);
 
             var compilationContext = new CompilationContext(compilation, project, target.TargetFramework, target.Configuration);
 
@@ -221,6 +222,43 @@ namespace Microsoft.Framework.Runtime.Roslyn
                     CSharpSyntaxTree.ParseText("[assembly: System.Reflection.AssemblyVersion(\"" + project.Version.Version + "\")]", parseOptions),
                     CSharpSyntaxTree.ParseText("[assembly: System.Reflection.AssemblyInformationalVersion(\"" + project.Version + "\")]", parseOptions)
                 });
+            }
+
+            return compilation;
+        }
+
+        private static CSharpCompilation RewriteInternalsVisibleTo(CSharpCompilation compilation)
+        {
+            var assemblyNames = new List<string>();
+
+            foreach (var attribute in compilation.Assembly.GetAttributes())
+            {
+                if (attribute.AttributeClass.Name == "InternalsVisibleToAttribute")
+                {
+                    var assemblyName = attribute.ConstructorArguments[0].Value.ToString();
+                    assemblyNames.Add(assemblyName);
+
+                    var tree = attribute.ApplicationSyntaxReference.SyntaxTree;
+                    var root = tree.GetRoot();
+                    var newRoot = root.RemoveNodes(new[] { attribute.ApplicationSyntaxReference.GetSyntax() }, SyntaxRemoveOptions.KeepNoTrivia | SyntaxRemoveOptions.KeepUnbalancedDirectives);
+                    var newTree = SyntaxFactory.SyntaxTree(newRoot, options: root.SyntaxTree.Options, path: root.SyntaxTree.FilePath, encoding: Encoding.UTF8);
+
+                    compilation =
+                          compilation.ReplaceSyntaxTree(tree, newTree);
+                }
+            }
+
+            if (assemblyNames.Count > 0)
+            {
+                // TODO: Don't reparse here
+                var sb = new StringBuilder();
+                foreach (var assemblyName in assemblyNames)
+                {
+                    sb.AppendFormat(@"[assembly: System.Runtime.CompilerServices.InternalsVisibleTo(""{0}, PublicKey={1}"")]", assemblyName, CompilationDefaults.PublicKeyHex)
+                      .AppendLine();
+                }
+
+                compilation = compilation.AddSyntaxTrees(CSharpSyntaxTree.ParseText(sb.ToString()));
             }
 
             return compilation;

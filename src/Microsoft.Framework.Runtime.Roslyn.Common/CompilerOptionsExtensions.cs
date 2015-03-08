@@ -3,10 +3,12 @@
 
 using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Linq;
 using System.Runtime.Versioning;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
+using Microsoft.Framework.Runtime.Roslyn.Common;
 
 namespace Microsoft.Framework.Runtime.Roslyn
 {
@@ -39,7 +41,8 @@ namespace Microsoft.Framework.Runtime.Roslyn
 #endif
                 null;
 
-            options = options.WithAssemblyIdentityComparer(assemblyIdentityComparer);
+            options = options.WithAssemblyIdentityComparer(assemblyIdentityComparer)
+                             .WithCryptoPublicKey(CompilationDefaults.PublicKey);
 
             LanguageVersion languageVersion;
             if (!Enum.TryParse<LanguageVersion>(value: compilerOptions.LanguageVersion,
