@@ -89,7 +89,7 @@ namespace Microsoft.Framework.Runtime.Roslyn
         {
             return frameworkName.Identifier == NetFrameworkIdentifier ||
                    frameworkName.Identifier == AspNetFrameworkIdentifier ||
-                   frameworkName.Identifier == FrameworkNames.LongNames.DNX;
+                   frameworkName.Identifier == FrameworkNames.LongNames.Dnx;
         }
     }
 }
