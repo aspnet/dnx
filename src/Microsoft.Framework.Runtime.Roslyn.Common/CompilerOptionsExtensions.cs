@@ -7,6 +7,7 @@ using System.Linq;
 using System.Runtime.Versioning;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
+using Microsoft.Framework.Runtime.Common.Impl;
 
 namespace Microsoft.Framework.Runtime.Roslyn
 {
@@ -14,7 +15,6 @@ namespace Microsoft.Framework.Runtime.Roslyn
     {
         private const string NetFrameworkIdentifier = ".NETFramework";
         private const string AspNetFrameworkIdentifier = "Asp.Net";
-        private const string DnxFrameworkIdentifier = "DNX";
 
         public static CompilationSettings ToCompilationSettings(this ICompilerOptions compilerOptions,
                                                                 FrameworkName targetFramework)
@@ -89,7 +89,7 @@ namespace Microsoft.Framework.Runtime.Roslyn
         {
             return frameworkName.Identifier == NetFrameworkIdentifier ||
                    frameworkName.Identifier == AspNetFrameworkIdentifier ||
-                   frameworkName.Identifier == DnxFrameworkIdentifier;
+                   frameworkName.Identifier == FrameworkNames.LongNames.DNX;
         }
     }
 }

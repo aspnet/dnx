@@ -30,7 +30,7 @@ namespace Microsoft.Framework.Runtime
 
         private static readonly IDictionary<FrameworkName, FrameworkName> _monoAliases = new Dictionary<FrameworkName, FrameworkName>
         {
-            { new FrameworkName(VersionUtility.NetFrameworkIdentifier, new Version(4, 5, 1)), new FrameworkName(VersionUtility.AspNetFrameworkIdentifier, new Version(5, 0)) },
+            { new FrameworkName(VersionUtility.NetFrameworkIdentifier, new Version(4, 5, 1)), new FrameworkName(VersionUtility.DnxFrameworkIdentifier, new Version(4, 5, 1)) },
         };
 
         public FrameworkReferenceResolver()
@@ -95,7 +95,7 @@ namespace Microsoft.Framework.Runtime
             }
             else if(string.Equals(targetFramework.Identifier, VersionUtility.DnxFrameworkIdentifier, StringComparison.OrdinalIgnoreCase))
             {
-                return "DNX 4.5.1";
+                return "DNX " + targetFramework.Version.ToString();
             }
 
             var information = _cache.GetOrAdd(targetFramework, GetFrameworkInformation);
