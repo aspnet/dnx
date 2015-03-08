@@ -1,4 +1,4 @@
-// Copyright (c) Microsoft Open Technologies, Inc. All rights reserved.
+﻿// Copyright (c) Microsoft Open Technologies, Inc. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 using System.Linq;
@@ -67,9 +67,9 @@ namespace Microsoft.Framework.PackageManager.Bundle
             {
                 case "mono":
                 case "clr":
-                    return VersionUtility.ParseFrameworkName("aspnet50");
+                    return VersionUtility.ParseFrameworkName("dnx451");
                 case "coreclr":
-                    return VersionUtility.ParseFrameworkName("aspnetcore50");
+                    return VersionUtility.ParseFrameworkName("dnxcore50");
             }
             return null;
         }

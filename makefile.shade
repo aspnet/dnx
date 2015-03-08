@@ -1,4 +1,4 @@
-use assembly="System.Xml.Linq, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089"
+﻿use assembly="System.Xml.Linq, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089"
 use assembly="System.IO.Compression.FileSystem, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089"
 use import="Environment"
 use import="Regex"
@@ -153,16 +153,16 @@ var RC_FILES = '${FindAllFiles("Resource.rc", BOOTSTRAPPER_EXE_NAME, BOOTSTRAPPE
             var environmentRuntimeTargetOS = Environment.GetEnvironmentVariable("RUNTIME_TARGET_OS");
             var configRuntimeTargetOS = "";
         
-            Exec(MSBUILD, bootstrapperProj + " /p:Configuration=" + Configuration2 + ";Platform=Win32;TargetFramework=aspnet50");
-            Exec(MSBUILD, bootstrapperProj + " /p:Configuration=" + Configuration2 + ";Platform=x64;TargetFramework=aspnet50");
+            Exec(MSBUILD, bootstrapperProj + " /p:Configuration=" + Configuration2 + ";Platform=Win32;TargetFramework=dnx451");
+            Exec(MSBUILD, bootstrapperProj + " /p:Configuration=" + Configuration2 + ";Platform=x64;TargetFramework=dnx451");
 
             if (environmentRuntimeTargetOS == "WIN7_PLUS_CORESYSTEM")
             {
                 configRuntimeTargetOS = ";RuntimeTargetOS=WIN7_PLUS_CORESYSTEM";
             }
             
-            Exec(MSBUILD, bootstrapperProj + " /p:Configuration=" + Configuration2 + ";Platform=Win32;TargetFramework=aspnetcore50" + configRuntimeTargetOS);
-            Exec(MSBUILD, bootstrapperProj + " /p:Configuration=" + Configuration2 + ";Platform=x64;TargetFramework=aspnetcore50" + configRuntimeTargetOS);
+            Exec(MSBUILD, bootstrapperProj + " /p:Configuration=" + Configuration2 + ";Platform=Win32;TargetFramework=dnxcore50" + configRuntimeTargetOS);
+            Exec(MSBUILD, bootstrapperProj + " /p:Configuration=" + Configuration2 + ";Platform=x64;TargetFramework=dnxcore50" + configRuntimeTargetOS);
         }
     }
 
@@ -214,7 +214,7 @@ var RC_FILES = '${FindAllFiles("Resource.rc", BOOTSTRAPPER_EXE_NAME, BOOTSTRAPPE
     var monoManagedOutpath='${Path.Combine(BUILD_DIR2, BOOTSTRAPPER_MONO_MANAGED_NAME)}'
     directory create='${monoManagedOutpath}'
     @{
-        var bootstrapperAssembly = Path.Combine(BUILD_DIR2, BOOTSTRAPPER_HOST_NAME, "aspnet50", BOOTSTRAPPER_HOST_NAME + ".dll");
+        var bootstrapperAssembly = Path.Combine(BUILD_DIR2, BOOTSTRAPPER_HOST_NAME, "dnx451", BOOTSTRAPPER_HOST_NAME + ".dll");
 
         var sourceFiles = new string[] 
         {
@@ -228,7 +228,7 @@ var RC_FILES = '${FindAllFiles("Resource.rc", BOOTSTRAPPER_EXE_NAME, BOOTSTRAPPE
         };
 
         var arguments = string.Format(
-            @"/target:exe /nologo /unsafe /out:""{0}"" /r:""{1}"" /define:ASPNET50 {2}",
+            @"/target:exe /nologo /unsafe /out:""{0}"" /r:""{1}"" /define:DNX451 {2}",
             Path.Combine(monoManagedOutpath, BOOTSTRAPPER_MONO_MANAGED_NAME + ".dll"),
             bootstrapperAssembly,
             string.Join(" ", sourceFiles));
@@ -319,32 +319,32 @@ var RC_FILES = '${FindAllFiles("Resource.rc", BOOTSTRAPPER_EXE_NAME, BOOTSTRAPPE
 
     test if='!IsMono'
         -// Runtime for clr-win-x86
-        copy sourceDir='${Path.Combine(BUILD_DIR2, BOOTSTRAPPER_EXE_NAME, "bin", "Win32", Configuration2, "aspnet50")}' outputDir='${RUNTIME_CLR_WIN_x86_BIN}' include='*.exe' overwrite='${true}'
+        copy sourceDir='${Path.Combine(BUILD_DIR2, BOOTSTRAPPER_EXE_NAME, "bin", "Win32", Configuration2, "dnx451")}' outputDir='${RUNTIME_CLR_WIN_x86_BIN}' include='*.exe' overwrite='${true}'
         copy sourceDir='${Path.Combine(BUILD_DIR2, BOOTSTRAPPER_CLR_NAME, "bin", "Win32", Configuration2)}' outputDir='${RUNTIME_CLR_WIN_x86_BIN}' include='*.dll' overwrite='${true}'
         copy sourceDir='${Path.Combine(BUILD_DIR2, BOOTSTRAPPER_CLR_NAME, "bin", "Win32", Configuration2)}' outputDir='${RUNTIME_CLR_WIN_x86_BIN}' include='*.pdb' overwrite='${true}'
         copy sourceDir='${Path.Combine(ROOT, "src", BOOTSTRAPPER_CLR_MANAGED_NAME)}' outputDir='${RUNTIME_CLR_WIN_x86_BIN}' include='*.config' overwrite='${true}'
 
         -// Runtime for clr-win-x64
-        copy sourceDir='${Path.Combine(BUILD_DIR2, BOOTSTRAPPER_EXE_NAME, "bin", "x64", Configuration2, "aspnet50")}' outputDir='${RUNTIME_CLR_WIN_x64_BIN}' include='*.exe' overwrite='${true}'
+        copy sourceDir='${Path.Combine(BUILD_DIR2, BOOTSTRAPPER_EXE_NAME, "bin", "x64", Configuration2, "dnx451")}' outputDir='${RUNTIME_CLR_WIN_x64_BIN}' include='*.exe' overwrite='${true}'
         copy sourceDir='${Path.Combine(BUILD_DIR2, BOOTSTRAPPER_CLR_NAME, "bin", "x64", Configuration2)}' outputDir='${RUNTIME_CLR_WIN_x64_BIN}' include='*.dll' overwrite='${true}'
         copy sourceDir='${Path.Combine(BUILD_DIR2, BOOTSTRAPPER_CLR_NAME, "bin", "x64", Configuration2)}' outputDir='${RUNTIME_CLR_WIN_x64_BIN}' include='*.pdb' overwrite='${true}'
         copy sourceDir='${Path.Combine(ROOT, "src", BOOTSTRAPPER_CLR_MANAGED_NAME)}' outputDir='${RUNTIME_CLR_WIN_x64_BIN}' include='*.config' overwrite='${true}'
 
         -// Runtime for coreclr-win-x86
-        copy sourceDir='${Path.Combine(BUILD_DIR2, BOOTSTRAPPER_EXE_NAME, "bin", "Win32", Configuration2, "aspnetcore50")}' outputDir='${RUNTIME_CORECLR_WIN_x86_BIN}' include='*.exe' overwrite='${true}'
+        copy sourceDir='${Path.Combine(BUILD_DIR2, BOOTSTRAPPER_EXE_NAME, "bin", "Win32", Configuration2, "dnxcore50")}' outputDir='${RUNTIME_CORECLR_WIN_x86_BIN}' include='*.exe' overwrite='${true}'
         copy sourceDir='${Path.Combine(BUILD_DIR2, BOOTSTRAPPER_CORECLR_NAME, "bin", "Win32", Configuration2)}' outputDir='${RUNTIME_CORECLR_WIN_x86_BIN}' include='*.dll' overwrite='${true}'
         copy sourceDir='${Path.Combine(BUILD_DIR2, BOOTSTRAPPER_CORECLR_NAME, "bin", "Win32", Configuration2)}' outputDir='${RUNTIME_CORECLR_WIN_x86_BIN}' include='*.pdb' overwrite='${true}'
 
         -// Runtime for coreclr-win-x64
-        copy sourceDir='${Path.Combine(BUILD_DIR2, BOOTSTRAPPER_EXE_NAME, "bin", "x64", Configuration2, "aspnetcore50")}' outputDir='${RUNTIME_CORECLR_WIN_x64_BIN}' include='*.exe' overwrite='${true}'
+        copy sourceDir='${Path.Combine(BUILD_DIR2, BOOTSTRAPPER_EXE_NAME, "bin", "x64", Configuration2, "dnxcore50")}' outputDir='${RUNTIME_CORECLR_WIN_x64_BIN}' include='*.exe' overwrite='${true}'
         copy sourceDir='${Path.Combine(BUILD_DIR2, BOOTSTRAPPER_CORECLR_NAME, "bin", "x64", Configuration2)}' outputDir='${RUNTIME_CORECLR_WIN_x64_BIN}' include='*.dll' overwrite='${true}'
         copy sourceDir='${Path.Combine(BUILD_DIR2, BOOTSTRAPPER_CORECLR_NAME, "bin", "x64", Configuration2)}' outputDir='${RUNTIME_CORECLR_WIN_x64_BIN}' include='*.pdb' overwrite='${true}'
 
         copy sourceDir='${SCRIPTS_DIR}' include='*.cmd' overwrite='${true}' each='var outputDir in new[]{ RUNTIME_CLR_WIN_x86_BIN, RUNTIME_CLR_WIN_x64_BIN, RUNTIME_CORECLR_WIN_x86_BIN, RUNTIME_CORECLR_WIN_x64_BIN }'
 
     @{
-        var hostAspNetCore50 = Path.Combine(BUILD_DIR2, "*", "aspnetcore50", "**.*");
-        var hostnet45 = Path.Combine(BUILD_DIR2, "*", "aspnet50", "**.*");
+        var hostAspNetCore50 = Path.Combine(BUILD_DIR2, "*", "dnxcore50", "**.*");
+        var hostnet45 = Path.Combine(BUILD_DIR2, "*", "dnx451", "**.*");
         
         var binPackages = new[] { "Microsoft.Framework.Runtime.Interfaces" };
 
@@ -485,11 +485,11 @@ var RC_FILES = '${FindAllFiles("Resource.rc", BOOTSTRAPPER_EXE_NAME, BOOTSTRAPPE
      @{
         var targets = new[]
         {
-            new { TargetFolder = RUNTIME_CLR_WIN_x86_BIN,        Framework = "aspnet50",     Arch = "x86",   Mono = false},
-            new { TargetFolder = RUNTIME_CLR_WIN_x64_BIN,        Framework = "aspnet50",     Arch = "amd64", Mono = false},
-            new { TargetFolder = RUNTIME_MONO_BIN,               Framework = "aspnet50",     Arch = "x86",   Mono = true},
-            new { TargetFolder = RUNTIME_CORECLR_WIN_x86_BIN,    Framework = "aspnetcore50", Arch = "x86",   Mono = false},
-            new { TargetFolder = RUNTIME_CORECLR_WIN_x64_BIN,    Framework = "aspnetcore50", Arch = "amd64", Mono = false},
+            new { TargetFolder = RUNTIME_CLR_WIN_x86_BIN,        Framework = "dnx451",     Arch = "x86",   Mono = false},
+            new { TargetFolder = RUNTIME_CLR_WIN_x64_BIN,        Framework = "dnx451",     Arch = "amd64", Mono = false},
+            new { TargetFolder = RUNTIME_MONO_BIN,               Framework = "dnx451",     Arch = "x86",   Mono = true},
+            new { TargetFolder = RUNTIME_CORECLR_WIN_x86_BIN,    Framework = "dnxcore50", Arch = "x86",   Mono = false},
+            new { TargetFolder = RUNTIME_CORECLR_WIN_x64_BIN,    Framework = "dnxcore50", Arch = "amd64", Mono = false},
         };
 
         var runtimeProjects = new[]
@@ -519,11 +519,11 @@ var RC_FILES = '${FindAllFiles("Resource.rc", BOOTSTRAPPER_EXE_NAME, BOOTSTRAPPE
             var runtimeAssemblies = new HashSet<string>();
             foreach (var project in runtimeProjects)
             {
-                if (project == BOOTSTRAPPER_CORECLR_MANAGED_NAME && target.Framework == "aspnet50")
+                if (project == BOOTSTRAPPER_CORECLR_MANAGED_NAME && target.Framework == "dnx451")
                     continue;
 
                 var projectFolder = Path.Combine(ROOT, "src", project);
-                var projectAssemblies = ListDependencyAssemblies(projectFolder, target.Framework, target.Framework == "aspnetcore50" ? coreclrFolder : null);
+                var projectAssemblies = ListDependencyAssemblies(projectFolder, target.Framework, target.Framework == "dnxcore50" ? coreclrFolder : null);
 
                 try
                 {
@@ -547,7 +547,7 @@ var RC_FILES = '${FindAllFiles("Resource.rc", BOOTSTRAPPER_EXE_NAME, BOOTSTRAPPE
             foreach (var project in sdkProjects)
             {
                 var projectFolder = Path.Combine(ROOT, "src", project);
-                var projectAssemblies = ListDependencyAssemblies(projectFolder, target.Framework, target.Framework == "aspnetcore50" ? coreclrFolder : null);
+                var projectAssemblies = ListDependencyAssemblies(projectFolder, target.Framework, target.Framework == "dnxcore50" ? coreclrFolder : null);
 
                 projectAssemblies.ExceptWith(runtimeAssemblies);
 
@@ -564,7 +564,7 @@ var RC_FILES = '${FindAllFiles("Resource.rc", BOOTSTRAPPER_EXE_NAME, BOOTSTRAPPE
             }
 
             // copy required CoreCLR assemblies
-            if (target.Framework == "aspnetcore50")
+            if (target.Framework == "dnxcore50")
             {
                 foreach (var file in Directory.GetFiles(coreclrFolder).Where(f => !Path.GetFileName(f).StartsWith("System")))
                 {

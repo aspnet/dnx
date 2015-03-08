@@ -46,7 +46,7 @@ namespace Microsoft.Framework.Runtime.Loader
                 {
                     return _defaultContext.Load(name);
                 }
-#if ASPNET50
+#if DNX451
                 catch (FileNotFoundException)
 #else
                 catch (FileLoadException)

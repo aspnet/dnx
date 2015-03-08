@@ -36,7 +36,7 @@ namespace Microsoft.Framework.PackageManager
                         using (var entryStream = entry.Open())
                         {
                             var nuspecStream = new MemoryStream((int)entry.Length);
-#if ASPNETCORE50
+#if DNXCORE50
                             // System.IO.Compression.DeflateStream throws exception when multiple
                             // async readers/writers are working on a single instance of it
                             entryStream.CopyTo(nuspecStream);
@@ -79,7 +79,7 @@ namespace Microsoft.Framework.PackageManager
                         using (var entryStream = entry.Open())
                         {
                             var runtimeStream = new MemoryStream((int)entry.Length);
-#if ASPNETCORE50
+#if DNXCORE50
                             // System.IO.Compression.DeflateStream throws exception when multiple
                             // async readers/writers are working on a single instance of it
                             entryStream.CopyTo(runtimeStream);

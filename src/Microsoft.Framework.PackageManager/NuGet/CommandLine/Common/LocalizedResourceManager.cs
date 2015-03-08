@@ -1,4 +1,4 @@
-// Copyright (c) Microsoft Open Technologies, Inc. All rights reserved.
+﻿// Copyright (c) Microsoft Open Technologies, Inc. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 using System.Globalization;
@@ -26,7 +26,7 @@ namespace NuGet
         /// <returns>the 3 letter language name used to locate localized resources.</returns>
         public static string GetLanguageName()
         {
-#if ASPNET50
+#if DNX451
             var culture = Thread.CurrentThread.CurrentUICulture;
             while (!culture.IsNeutralCulture)
             {

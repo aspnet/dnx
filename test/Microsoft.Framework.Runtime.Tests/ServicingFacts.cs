@@ -17,9 +17,9 @@ namespace Microsoft.Framework.Runtime.Tests
         {
             ServicingTest(
 @"
-nupkg|PatchedLib|1.0.0|lib/aspnetcore50/PatchedLib.dll=patches/PatchedLib/1.0.0-patch/lib/aspnetcore50/PatchedLib.dll
-nupkg|NonExistingPatch2|1.0.0|lib/aspnetcore50/NonExistingPatch2.dll=patches/NonExistingPatch2/1.0.0-patch/lib/aspnetcore50/NonExistingPatch2.dll
-nupkg|NonExisting|1.0.0|lib/aspnetcore50/NonExisting.dll=patches/NonExisting/1.0.0-patch/lib/aspnetcore50/NonExisting.dll
+nupkg|PatchedLib|1.0.0|lib/dnxcore50/PatchedLib.dll=patches/PatchedLib/1.0.0-patch/lib/dnxcore50/PatchedLib.dll
+nupkg|NonExistingPatch2|1.0.0|lib/dnxcore50/NonExistingPatch2.dll=patches/NonExistingPatch2/1.0.0-patch/lib/dnxcore50/NonExistingPatch2.dll
+nupkg|NonExisting|1.0.0|lib/dnxcore50/NonExisting.dll=patches/NonExisting/1.0.0-patch/lib/dnxcore50/NonExisting.dll
 ",
             (index, patchesFolder) =>
             {
@@ -28,7 +28,7 @@ nupkg|NonExisting|1.0.0|lib/aspnetcore50/NonExisting.dll=patches/NonExisting/1.0
                 bool foundReplacement = index.TryGetReplacement(
                     "NonExistingPatch",
                     new NuGet.SemanticVersion("1.0.0"),
-                    @"lib\aspnetcore50\NonExistingPatch.dll",
+                    @"lib\dnxcore50\NonExistingPatch.dll",
                     out replacementPath);
 
                 Assert.False(foundReplacement);
@@ -40,8 +40,8 @@ nupkg|NonExisting|1.0.0|lib/aspnetcore50/NonExisting.dll=patches/NonExisting/1.0
         {
             ServicingTest(
 @"
-nupkg|PatchedLib|1.0.0|lib/aspnetcore50/PatchedLib.dll=patches/PatchedLib/1.0.0-patch/lib/aspnetcore50/PatchedLib.dll
-nupkg|PatchedLib|1.0.2|lib/aspnetcore50/PatchedLib.dll=patches/PatchedLib/1.0.2-patch/lib/aspnetcore50/PatchedLib.dll
+nupkg|PatchedLib|1.0.0|lib/dnxcore50/PatchedLib.dll=patches/PatchedLib/1.0.0-patch/lib/dnxcore50/PatchedLib.dll
+nupkg|PatchedLib|1.0.2|lib/dnxcore50/PatchedLib.dll=patches/PatchedLib/1.0.2-patch/lib/dnxcore50/PatchedLib.dll
 ",
             (index, patchesFolder) =>
             {
@@ -51,7 +51,7 @@ nupkg|PatchedLib|1.0.2|lib/aspnetcore50/PatchedLib.dll=patches/PatchedLib/1.0.2-
                     "PatchedLib",
                     // The version here doesn't match any patch
                     new NuGet.SemanticVersion("1.1.0"),
-                    @"lib\aspnetcore50\PatchedLib.dll",
+                    @"lib\dnxcore50\PatchedLib.dll",
                     out replacementPath);
 
                 Assert.False(foundReplacement);
@@ -63,7 +63,7 @@ nupkg|PatchedLib|1.0.2|lib/aspnetcore50/PatchedLib.dll=patches/PatchedLib/1.0.2-
         {
             ServicingTest(
 @"#should pick the last matching entry (with version)
-nupkg|PatchedLib|1.0.0|lib/aspnetcore50/PatchedLib.dll=patches/PatchedLib/1.0.0-patch1/lib/aspnetcore50/PatchedLib.dll
+nupkg|PatchedLib|1.0.0|lib/dnxcore50/PatchedLib.dll=patches/PatchedLib/1.0.0-patch1/lib/dnxcore50/PatchedLib.dll
 ",
             (index, patchesFolder) =>
             {
@@ -72,12 +72,12 @@ nupkg|PatchedLib|1.0.0|lib/aspnetcore50/PatchedLib.dll=patches/PatchedLib/1.0.0-
                 bool foundReplacement = index.TryGetReplacement(
                     "PatchedLib",
                     new NuGet.SemanticVersion("1.0.0"),
-                    @"lib\aspnetcore50\PatchedLib.dll",
+                    @"lib\dnxcore50\PatchedLib.dll",
                     out replacementPath);
 
                 Assert.True(foundReplacement);
                 Assert.Equal(
-                    patchesFolder + "patches/PatchedLib/1.0.0-patch1/lib/aspnetcore50/PatchedLib.dll",
+                    patchesFolder + "patches/PatchedLib/1.0.0-patch1/lib/dnxcore50/PatchedLib.dll",
                     replacementPath);
             });
         }
@@ -87,10 +87,10 @@ nupkg|PatchedLib|1.0.0|lib/aspnetcore50/PatchedLib.dll=patches/PatchedLib/1.0.0-
         {
             ServicingTest(
 @"#should pick the last matching entry (with version)
-nupkg|PatchedLib|1.0.0|lib/aspnetcore50/PatchedLib.dll=patches/PatchedLib/1.0.0-patch1/lib/aspnetcore50/PatchedLib.dll
-nupkg|PatchedLib|1.0.0|lib/aspnetcore50/PatchedLib.dll=patches/PatchedLib/1.0.0-patch2/lib/aspnetcore50/PatchedLib.dll
-nupkg|PatchedLib|1.0.1|lib/aspnetcore50/PatchedLib.dll=patches/PatchedLib/1.0.1-patch1/lib/aspnetcore50/PatchedLib.dll
-nupkg|PatchedLib|1.0.1|lib/aspnetcore50/PatchedLib.dll=patches/PatchedLib/1.0.1-patch2/lib/aspnetcore50/PatchedLib.dll
+nupkg|PatchedLib|1.0.0|lib/dnxcore50/PatchedLib.dll=patches/PatchedLib/1.0.0-patch1/lib/dnxcore50/PatchedLib.dll
+nupkg|PatchedLib|1.0.0|lib/dnxcore50/PatchedLib.dll=patches/PatchedLib/1.0.0-patch2/lib/dnxcore50/PatchedLib.dll
+nupkg|PatchedLib|1.0.1|lib/dnxcore50/PatchedLib.dll=patches/PatchedLib/1.0.1-patch1/lib/dnxcore50/PatchedLib.dll
+nupkg|PatchedLib|1.0.1|lib/dnxcore50/PatchedLib.dll=patches/PatchedLib/1.0.1-patch2/lib/dnxcore50/PatchedLib.dll
 ",
             (index, patchesFolder) =>
             {
@@ -99,12 +99,12 @@ nupkg|PatchedLib|1.0.1|lib/aspnetcore50/PatchedLib.dll=patches/PatchedLib/1.0.1-
                 bool foundReplacement = index.TryGetReplacement(
                     "PatchedLib",
                     new NuGet.SemanticVersion("1.0.0"),
-                    @"lib\aspnetcore50\PatchedLib.dll",
+                    @"lib\dnxcore50\PatchedLib.dll",
                     out replacementPath);
 
                 Assert.True(foundReplacement);
                 Assert.Equal(
-                    patchesFolder + "patches/PatchedLib/1.0.0-patch2/lib/aspnetcore50/PatchedLib.dll",
+                    patchesFolder + "patches/PatchedLib/1.0.0-patch2/lib/dnxcore50/PatchedLib.dll",
                     replacementPath);
             });
         }

@@ -1,9 +1,9 @@
-{
+﻿{
     "dependencies": {
         "FlibbleWibbleWoozleWuzzle": "4.5.6"
     },
     "frameworks": {
-        "aspnet50": {
+        "dnx451": {
             "frameworkAssemblies": {
                 "System.Banana": ""
             }

@@ -1,4 +1,4 @@
-// Copyright (c) Microsoft Open Technologies, Inc. All rights reserved.
+﻿// Copyright (c) Microsoft Open Technologies, Inc. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 using System;
@@ -1154,7 +1154,7 @@ namespace NuGet
 
         internal static SemanticVersion GetAssemblyVersion(string path)
         {
-#if ASPNET50
+#if DNX451
             return new SemanticVersion(AssemblyName.GetAssemblyName(path).Version);
 #else
             return new SemanticVersion(System.Runtime.Loader.AssemblyLoadContext.GetAssemblyName(path).Version);

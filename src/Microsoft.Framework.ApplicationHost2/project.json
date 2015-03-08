@@ -1,4 +1,4 @@
-{
+﻿{
     "version": "1.0.0-*",
     "compilationOptions": { "define": [ "TRACE" ], "warningsAsErrors": true },
     "dependencies": {
@@ -29,7 +29,7 @@
         "../../submodules/**/AssemblyInfo.cs"
     ],
     "frameworks": {
-        "aspnet50": {
+        "dnx451": {
             "frameworkAssemblies": {
                 "System.Collections": "",
                 "System.Text.Encoding": "",
@@ -42,7 +42,7 @@
                 "System.Xml.Linq": ""
             }
         },
-        "aspnetcore50": {
+        "dnxcore50": {
             "dependencies": {
                 "Microsoft.CodeAnalysis.CSharp": "1.0.0-*",
                 "System.Collections.Concurrent": "4.0.10-beta-*",

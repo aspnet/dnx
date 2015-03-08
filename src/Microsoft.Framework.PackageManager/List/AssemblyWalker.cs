@@ -13,7 +13,7 @@ namespace Microsoft.Framework.PackageManager.List
 {
     public class AssemblyWalker
     {
-        private readonly static FrameworkName AspNetCore50 = VersionUtility.ParseFrameworkName("aspnetcore50");
+        private readonly static FrameworkName AspNetCore50 = VersionUtility.ParseFrameworkName("dnxcore50");
 
         private readonly FrameworkName _framework;
         private readonly ApplicationHostContext _hostContext;

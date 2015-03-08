@@ -1,4 +1,4 @@
-{
+﻿{
     "version": "0.1-beta-*",
     "exclude": "more/*.cs",
     "dependencies": {
@@ -10,7 +10,7 @@
         "run": "HelloWorld I can customize the default command"
     },
     "frameworks": {
-        "aspnet50": {
+        "dnx451": {
             "frameworkAssemblies": {
                 "System.Collections": "",
                 "System.IO": "",
@@ -21,7 +21,7 @@
                 "System.Text.Encoding": ""
             }
         },
-        "aspnetcore50": {
+        "dnxcore50": {
             "dependencies": {
                 "System.IO": "4.0.10-beta-*",
                 "System.Console": "4.0.0-beta-*",

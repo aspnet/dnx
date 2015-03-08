@@ -2,13 +2,13 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
-#if ASPNETCORE50
+#if DNXCORE50
 using System.Runtime.Loader;
 #endif
 
 namespace Microsoft.Framework.Runtime.Loader
 {
-#if ASPNETCORE50
+#if DNXCORE50
     public class LoadContextAccessor : IAssemblyLoadContextAccessor
     {
         private static readonly LoadContextAccessor _instance = new LoadContextAccessor();

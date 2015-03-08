@@ -1,4 +1,4 @@
-// Copyright (c) Microsoft Open Technologies, Inc. All rights reserved.
+﻿// Copyright (c) Microsoft Open Technologies, Inc. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 using System.IO;
@@ -848,8 +848,8 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
     ""kestrel"": ""Microsoft.AspNet.Hosting --server Kestrel --server.urls http://localhost:5004""
   },
   ""frameworks"": {
-    ""aspnet50"": { },
-    ""aspnetcore50"": { }
+    ""dnx451"": { },
+    ""dnxcore50"": { }
   }
 }")
                     .WriteTo(testEnv.ProjectPath);
@@ -875,8 +875,8 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
     ""kestrel"": ""Microsoft.AspNet.Hosting --server Kestrel --server.urls http://localhost:5004""
   },
   ""frameworks"": {
-    ""aspnet50"": { },
-    ""aspnetcore50"": { }
+    ""dnx451"": { },
+    ""dnxcore50"": { }
   }
 }")
                     .WithFileContents(Path.Combine("approot", "global.json"), @"{
@@ -930,8 +930,8 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
     ""kestrel"": ""Microsoft.AspNet.Hosting --server Kestrel --server.urls http://localhost:5004""
   },
   ""frameworks"": {
-    ""aspnet50"": { },
-    ""aspnetcore50"": { }
+    ""dnx451"": { },
+    ""dnxcore50"": { }
   }
 }")
                     .WriteTo(testEnv.ProjectPath);
@@ -966,8 +966,8 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
     ""kestrel"": ""Microsoft.AspNet.Hosting --server Kestrel --server.urls http://localhost:5004""
   },
   ""frameworks"": {
-    ""aspnet50"": { },
-    ""aspnetcore50"": { }
+    ""dnx451"": { },
+    ""dnxcore50"": { }
   }
 }")
                     .WithFileContents(Path.Combine("approot", "global.json"), @"{
@@ -1002,7 +1002,7 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
           'app': ['hello.cmd', 'hello.sh', 'project.json'],
           'root': ['project.json', 'project.lock.json'],
           'lib': {
-            'aspnet50': ['HelloWorld.dll', 'HelloWorld.xml']
+            'dnx451': ['HelloWorld.dll', 'HelloWorld.xml']
           }
         }
       }
@@ -1035,8 +1035,8 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
         ""app\\hello.cmd"": {},
         ""app\\hello.sh"": {},
         ""app\\project.json"": {},
-        ""lib\\aspnet50\\HelloWorld.dll"": {},
-        ""lib\\aspnet50\\HelloWorld.xml"": {},
+        ""lib\\dnx451\\HelloWorld.dll"": {},
+        ""lib\\dnx451\\HelloWorld.xml"": {},
         ""root\\project.json"": {}
       }
     }
@@ -1088,7 +1088,7 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
           'app': ['hello.cmd', 'hello.sh', 'project.json'],
           'root': ['project.json', 'project.lock.json'],
           'lib': {
-            'aspnet50': ['HelloWorld.dll', 'HelloWorld.xml']
+            'dnx451': ['HelloWorld.dll', 'HelloWorld.xml']
           }
         }
       }
@@ -1121,8 +1121,8 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
         ""app\\hello.cmd"": {},
         ""app\\hello.sh"": {},
         ""app\\project.json"": {},
-        ""lib\\aspnet50\\HelloWorld.dll"": {},
-        ""lib\\aspnet50\\HelloWorld.xml"": {},
+        ""lib\\dnx451\\HelloWorld.dll"": {},
+        ""lib\\dnx451\\HelloWorld.xml"": {},
         ""root\\project.json"": {},
         ""root\\project.lock.json"": {}
       }

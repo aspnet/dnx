@@ -51,7 +51,7 @@ namespace Microsoft.Framework.Runtime.Servicing
 
         public void CreateRuntimeBreadcrumb()
         {
-#if ASPNET50
+#if DNX451
             var runtimeAssembly = typeof(Breadcrumbs).Assembly;
 #else
             var runtimeAssembly = typeof(Breadcrumbs).GetTypeInfo().Assembly;

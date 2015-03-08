@@ -1,4 +1,4 @@
-{
+﻿{
     "version": "1.0.0-*",
     "description": "ASP.NET 5 runtime infrastructure for loading NuGet packages and projects.",
     "compilationOptions": { "define": [ "LOADER", "TRACE" ], "allowUnsafe": true, "warningsAsErrors": true },
@@ -23,7 +23,7 @@
         "Newtonsoft.Json": "6.0.6"
     },
     "frameworks": {
-        "aspnet50": {
+        "dnx451": {
             "frameworkAssemblies": {
                 "System.Collections": "",
                 "System.Text.Encoding": "",
@@ -36,7 +36,7 @@
                 "System.Xml.Linq": ""
             }
         },
-        "aspnetcore50": {
+        "dnxcore50": {
             "dependencies": {
                 "System.Collections.Concurrent": "4.0.10-beta-*",
                 "System.Diagnostics.Tools": "4.0.0-beta-*",

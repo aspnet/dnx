@@ -1,4 +1,4 @@
-// Copyright (c) Microsoft Open Technologies, Inc. All rights reserved.
+﻿// Copyright (c) Microsoft Open Technologies, Inc. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 using System;
@@ -25,7 +25,7 @@ namespace Microsoft.Framework.PackageManager
             _hostServices = hostServices;
             _environment = environment;
 
-#if ASPNET50
+#if DNX451
             Thread.GetDomain().SetData(".appDomain", this);
             ServicePointManager.DefaultConnectionLimit = 1024;
 #endif

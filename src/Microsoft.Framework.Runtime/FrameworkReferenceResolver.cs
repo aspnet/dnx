@@ -1,4 +1,4 @@
-// Copyright (c) Microsoft Open Technologies, Inc. All rights reserved.
+﻿// Copyright (c) Microsoft Open Technologies, Inc. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 using System;
@@ -161,7 +161,7 @@ namespace Microsoft.Framework.Runtime
 
         private void PopulateCache()
         {
-#if ASPNET50
+#if DNX451
             if (PlatformHelper.IsMono)
             {
                 var mscorlibLocationOnThisRunningMonoInstance = typeof(object).GetTypeInfo().Assembly.Location;

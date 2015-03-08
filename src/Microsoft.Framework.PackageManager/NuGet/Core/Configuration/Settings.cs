@@ -1,4 +1,4 @@
-// Copyright (c) Microsoft Open Technologies, Inc. All rights reserved.
+﻿// Copyright (c) Microsoft Open Technologies, Inc. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 using System;
@@ -104,7 +104,7 @@ namespace NuGet
         {
             // Walk up the tree to find a config file; also look in .nuget subdirectories
             var validSettingFiles = new List<Settings>();
-#if ASPNET50
+#if DNX451
             var appData = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
 #else
             var appData = Environment.GetEnvironmentVariable("APPDATA");
@@ -172,7 +172,7 @@ namespace NuGet
             if (configFileName == null)
             {
                 // load %AppData%\NuGet\NuGet.config
-#if ASPNET50
+#if DNX451
                 var appDataPath = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
 #else
                 var appDataPath = Environment.GetEnvironmentVariable("APPDATA");

@@ -1,4 +1,4 @@
-// Copyright (c) Microsoft Open Technologies, Inc. All rights reserved.
+﻿// Copyright (c) Microsoft Open Technologies, Inc. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 using System;
@@ -267,7 +267,7 @@ namespace NuGet
             List<string> creatorInfo = new List<string>();
             var assembly = typeof(PackageBuilder).GetTypeInfo().Assembly;
             creatorInfo.Add(assembly.FullName);
-#if ASPNET50 // CORECLR_TODO: Environment.OSVersion
+#if DNX451 // CORECLR_TODO: Environment.OSVersion
             creatorInfo.Add(Environment.OSVersion.ToString());
 #endif
 

@@ -1,4 +1,4 @@
-{
+﻿{
     "version": "1.0.0-*",
     "compilationOptions": { "warningsAsErrors": true },
     "dependencies": {
@@ -11,7 +11,7 @@
     "code": "**\\*.cs;..\\Microsoft.Framework.ApplicationHost\\Impl\\**\\*.cs",
 
     "frameworks": {
-        "aspnet50": {
+        "dnx451": {
             "frameworkAssemblies": {
                 "System.Collections": "",
                 "System.IO": "",
@@ -24,7 +24,7 @@
                 "System.Xml.Linq": ""
             }
         },
-        "aspnetcore50": {
+        "dnxcore50": {
             "dependencies": {
                 "Microsoft.Net.Http.Client": "1.0.0-*",
                 "System.ObjectModel": "4.0.10-beta-*",

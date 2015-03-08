@@ -1,4 +1,4 @@
-{
+﻿{
     "dependencies": {
         "Microsoft.Framework.Runtime": "1.0.0-*",
         "Microsoft.Framework.Runtime.Common": "1.0.0-*",
@@ -6,7 +6,7 @@
     },
 
     "frameworks": {
-        "aspnet50": { }
+        "dnx451": { }
     },
 
     "commands": {

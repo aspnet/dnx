@@ -1,4 +1,4 @@
-// Copyright (c) Microsoft Open Technologies, Inc. All rights reserved.
+﻿// Copyright (c) Microsoft Open Technologies, Inc. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 using System.Collections.Generic;
@@ -125,7 +125,7 @@ command
                 string stdOut, stdErr;
                 exitCode = BootstrapperTestUtils.ExecBootstrapper(
                     runtimeHomeDir,
-                    arguments: Path.Combine(tempDir, "Release", "aspnet50", "HelloWorld.dll"),
+                    arguments: Path.Combine(tempDir, "Release", "dnx451", "HelloWorld.dll"),
                     stdOut: out stdOut,
                     stdErr: out stdErr,
                     environment: new Dictionary<string, string> { { EnvironmentNames.Trace, null } });
@@ -158,7 +158,7 @@ Hello, code!
                 string stdOut, stdErr;
                 exitCode = BootstrapperTestUtils.ExecBootstrapper(
                     runtimeHomeDir,
-                    arguments: Path.Combine(tempDir, "Release", "aspnetcore50", "HelloWorld.dll"),
+                    arguments: Path.Combine(tempDir, "Release", "dnxcore50", "HelloWorld.dll"),
                     stdOut: out stdOut,
                     stdErr: out stdErr,
                     environment: new Dictionary<string, string> { { EnvironmentNames.Trace, null } });

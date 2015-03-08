@@ -1,4 +1,4 @@
-// Copyright (c) Microsoft Open Technologies, Inc. All rights reserved.
+﻿// Copyright (c) Microsoft Open Technologies, Inc. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 using System;
@@ -22,7 +22,7 @@ namespace Microsoft.Framework.PackageManager.Restore.NuGet
         private string _userName;
         private string _password;
         private Reports _reports;
-#if ASPNETCORE50
+#if DNXCORE50
         private string _proxyUserName;
         private string _proxyPassword;
 #endif
@@ -41,7 +41,7 @@ namespace Microsoft.Framework.PackageManager.Restore.NuGet
             var proxy = Environment.GetEnvironmentVariable("http_proxy");
             if (string.IsNullOrEmpty(proxy))
             {
-#if ASPNET50
+#if DNX451
                 _client = new HttpClient();
 #else
                 _client = new HttpClient(new Microsoft.Net.Http.Client.ManagedHandler());
@@ -52,7 +52,7 @@ namespace Microsoft.Framework.PackageManager.Restore.NuGet
                 // To use an authenticated proxy, the proxy address should be in the form of
                 // "http://user:password@proxyaddress.com:8888"
                 var proxyUriBuilder = new UriBuilder(proxy);
-#if ASPNET50
+#if DNX451
                 var webProxy = new WebProxy(proxy);
                 if (string.IsNullOrEmpty(proxyUriBuilder.UserName))
                 {
@@ -108,7 +108,7 @@ namespace Microsoft.Framework.PackageManager.Restore.NuGet
                 request.Headers.Authorization = new AuthenticationHeaderValue("Basic", token);
             };
 
-#if ASPNETCORE50
+#if DNXCORE50
             if (_proxyUserName != null)
             {
                 var proxyToken = Convert.ToBase64String(Encoding.ASCII.GetBytes(_proxyUserName + ":" + _proxyPassword));
@@ -186,7 +186,7 @@ namespace Microsoft.Framework.PackageManager.Restore.NuGet
             var baseFolderName = RemoveInvalidFileNameChars(ComputeHash(_baseUri));
             var baseFileName = RemoveInvalidFileNameChars(cacheKey) + ".dat";
 
-#if ASPNET50
+#if DNX451
             var localAppDataFolder = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
 #else
             var localAppDataFolder = Environment.GetEnvironmentVariable("LocalAppData");
@@ -206,7 +206,7 @@ namespace Microsoft.Framework.PackageManager.Restore.NuGet
                 if (File.Exists(cacheFile))
                 {
                     var fileInfo = new FileInfo(cacheFile);
-#if ASPNET50
+#if DNX451
                     var age = DateTime.UtcNow.Subtract(fileInfo.LastWriteTimeUtc);
 #else
                     var age = DateTime.Now.Subtract(fileInfo.LastWriteTime);
@@ -278,7 +278,7 @@ namespace Microsoft.Framework.PackageManager.Restore.NuGet
 
         private static FileStream CreateAsyncFileStream(string path, FileMode mode, FileAccess access, FileShare share)
         {
-#if ASPNET50
+#if DNX451
             return new FileStream(path, mode, access, share, bufferSize: 8192, useAsync: true);
 #else
             return new FileStream(path, mode, access, share);

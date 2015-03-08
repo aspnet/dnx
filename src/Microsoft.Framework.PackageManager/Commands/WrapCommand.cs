@@ -1,4 +1,4 @@
-// Copyright (c) Microsoft Open Technologies, Inc. All rights reserved.
+﻿// Copyright (c) Microsoft Open Technologies, Inc. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 using System;
@@ -173,7 +173,7 @@ namespace Microsoft.Framework.PackageManager
 
         private string GetDefaultMSBuildPath()
         {
-#if ASPNET50
+#if DNX451
             var programFilesPath = Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86);
 #else
             var programFilesPath = Environment.GetEnvironmentVariable("PROGRAMFILES(X86)");
@@ -181,7 +181,7 @@ namespace Microsoft.Framework.PackageManager
             // On 32-bit Windows
             if (string.IsNullOrEmpty(programFilesPath))
             {
-#if ASPNET50
+#if DNX451
                 programFilesPath = Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles);
 #else
                 programFilesPath = Environment.GetEnvironmentVariable("PROGRAMFILES");

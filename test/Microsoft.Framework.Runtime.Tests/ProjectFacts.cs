@@ -1,4 +1,4 @@
-// Copyright (c) Microsoft Open Technologies, Inc. All rights reserved.
+﻿// Copyright (c) Microsoft Open Technologies, Inc. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 using System.IO;
@@ -217,10 +217,10 @@ namespace Microsoft.Framework.Runtime.Tests
         ""net45"":  {
             ""compilationOptions"": { ""allowUnsafe"": true, ""define"": [""X"", ""y""], ""platform"": ""x86"", ""warningsAsErrors"": true }
         },
-        ""aspnet50"": {
+        ""dnx451"": {
             
         },
-        ""aspnetcore50"": {
+        ""dnxcore50"": {
             ""compilationOptions"": { ""define"": [""X""], ""warningsAsErrors"": true }
         },
         ""k10"": {
@@ -240,13 +240,13 @@ namespace Microsoft.Framework.Runtime.Tests
             Assert.True(net45Options.WarningsAsErrors.Value);
             Assert.Equal("x86", net45Options.Platform);
 
-            var aspnet50Options = project.GetCompilerOptions(FrameworkNameHelper.ParseFrameworkName("aspnet50"));
-            Assert.NotNull(aspnet50Options);
-            Assert.Equal(new[] { "ASPNET50" }, aspnet50Options.Defines);
+            var dnx451Options = project.GetCompilerOptions(FrameworkNameHelper.ParseFrameworkName("dnx451"));
+            Assert.NotNull(dnx451Options);
+            Assert.Equal(new[] { "DNX451" }, dnx451Options.Defines);
 
-            var aspnetCore50Options = project.GetCompilerOptions(FrameworkNameHelper.ParseFrameworkName("aspnetcore50"));
+            var aspnetCore50Options = project.GetCompilerOptions(FrameworkNameHelper.ParseFrameworkName("dnxcore50"));
             Assert.NotNull(aspnetCore50Options);
-            Assert.Equal(new[] { "X", "ASPNETCORE50" }, aspnetCore50Options.Defines);
+            Assert.Equal(new[] { "X", "DNXCORE50" }, aspnetCore50Options.Defines);
             Assert.True(aspnetCore50Options.WarningsAsErrors.Value);
 
             var k10Options = project.GetCompilerOptions(FrameworkNameHelper.ParseFrameworkName("k10"));

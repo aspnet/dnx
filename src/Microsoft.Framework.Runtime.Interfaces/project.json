@@ -1,10 +1,10 @@
-{
+﻿{
     "version": "1.0.0-*",
     "description": "ASP.NET 5 interfaces to take advantage of capabilities exposed by the runtime.",
     "compilationOptions": { "warningsAsErrors": true },
     "frameworks": {
-        "aspnet50": { },
-        "aspnetcore50": {
+        "dnx451": { },
+        "dnxcore50": {
             "dependencies": {
                 "System.IO": "4.0.10-beta-*",
                 "System.Reflection": "4.0.10-beta-*",

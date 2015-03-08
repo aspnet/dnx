@@ -11,7 +11,7 @@ namespace Microsoft.Framework.Runtime.Internal
     {
         internal static NuGetVersion GetAssemblyVersion(string path)
         {
-#if ASPNET50
+#if DNX451
             return new NuGetVersion(AssemblyName.GetAssemblyName(path).Version);
 #else
             return new NuGetVersion(System.Runtime.Loader.AssemblyLoadContext.GetAssemblyName(path).Version);

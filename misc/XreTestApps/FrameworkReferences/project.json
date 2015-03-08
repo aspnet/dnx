@@ -1,6 +1,6 @@
-{
+﻿{
     "frameworks": {
-        "aspnet50": {
+        "dnx451": {
             "frameworkAssemblies": {
                 "System.IO": ""
             }

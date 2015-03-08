@@ -1,4 +1,4 @@
-// Copyright (c) Microsoft Open Technologies, Inc. All rights reserved.
+﻿// Copyright (c) Microsoft Open Technologies, Inc. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 using System;
@@ -60,7 +60,7 @@ namespace Microsoft.Framework.Runtime.Common
 
             instance = null;
             entryPoint = null;
-#if ASPNET50
+#if DNX451
             if (assembly.EntryPoint != null)
             {
                 // Add support for console apps

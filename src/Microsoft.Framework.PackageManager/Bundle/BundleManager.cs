@@ -1,4 +1,4 @@
-// Copyright (c) Microsoft Open Technologies, Inc. All rights reserved.
+﻿// Copyright (c) Microsoft Open Technologies, Inc. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 using System;
@@ -126,7 +126,7 @@ namespace Microsoft.Framework.PackageManager.Bundle
                     if (string.IsNullOrEmpty(runtimeHome))
                     {
                         var runtimeGlobalPath = Environment.GetEnvironmentVariable(EnvironmentNames.GlobalPath);
-#if ASPNETCORE50
+#if DNXCORE50
                         runtimeHome = @"%USERPROFILE%\" + Constants.DefaultLocalRuntimeHomeDir + ";" + runtimeGlobalPath;
 #else
                         var userProfile = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);

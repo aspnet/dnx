@@ -1,4 +1,4 @@
-// Copyright (c) Microsoft Open Technologies, Inc. All rights reserved.
+﻿// Copyright (c) Microsoft Open Technologies, Inc. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 using System;
@@ -54,7 +54,7 @@ namespace NuGet
             SchemaVersionV5,
             SchemaVersionV6
         };
-#if ASPNET50
+#if DNX451
         private static Dictionary<string, XmlSchemaSet> _manifestSchemaSetCache = new Dictionary<string, XmlSchemaSet>(StringComparer.OrdinalIgnoreCase);
 #endif        
         public static int GetVersionFromNamespace(string @namespace)
@@ -74,7 +74,7 @@ namespace NuGet
             }
             return VersionToSchemaMappings[version - 1];
         }
-#if ASPNET50
+#if DNX451
         public static XmlSchemaSet GetManifestSchemaSet(string schemaNamespace)
         {
             return _manifestSchemaSetCache.GetOrAdd(schemaNamespace, schema =>

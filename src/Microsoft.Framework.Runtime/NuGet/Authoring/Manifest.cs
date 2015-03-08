@@ -1,4 +1,4 @@
-// Copyright (c) Microsoft Open Technologies, Inc. All rights reserved.
+﻿// Copyright (c) Microsoft Open Technologies, Inc. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 using System;
@@ -230,7 +230,7 @@ namespace NuGet
 
         private static void ValidateManifestSchema(XDocument document, string schemaNamespace)
         {
-#if ASPNET50 // CORECLR_TODO: XmlSchema
+#if DNX451 // CORECLR_TODO: XmlSchema
             var schemaSet = ManifestSchemaUtility.GetManifestSchemaSet(schemaNamespace);
 
             document.Validate(schemaSet, (sender, e) =>
@@ -246,7 +246,7 @@ namespace NuGet
 
         private static void CheckSchemaVersion(XDocument document)
         {
-#if ASPNET50 // CORECLR_TODO: XmlSchema
+#if DNX451 // CORECLR_TODO: XmlSchema
             // Get the metadata node and look for the schemaVersion attribute
             XElement metadata = GetMetadataElement(document);
 

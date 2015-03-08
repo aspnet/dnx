@@ -1,4 +1,4 @@
-{
+﻿{
     "version": "1.0.0-*",
     "compilationOptions": { "define": [ "TRACE" ], "allowUnsafe": true, "warningsAsErrors": true },
     "dependencies": {
@@ -6,7 +6,7 @@
         "Microsoft.Framework.Runtime.Common": { "version": "1.0.0-*", "type": "build" }
     },
     "frameworks": {
-        "aspnet50": { }
+        "dnx451": { }
     },
 
     "scripts": {
