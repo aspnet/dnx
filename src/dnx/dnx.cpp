@@ -230,7 +230,7 @@ int CallApplicationProcessMain(int argc, wchar_t* argv[])
 
     bool fSuccess = true;
     HMODULE m_hHostModule = nullptr;
-#if CORECLR
+#if CORECLR_WIN
     LPCWSTR pwzHostModuleName = L"dnx.coreclr.dll";
 #else
     LPCWSTR pwzHostModuleName = L"dnx.clr.dll";
