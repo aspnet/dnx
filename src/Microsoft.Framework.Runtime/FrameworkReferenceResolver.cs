@@ -28,9 +28,13 @@ namespace Microsoft.Framework.Runtime
             }
         };
 
-        private static readonly IDictionary<FrameworkName, FrameworkName> _monoAliases = new Dictionary<FrameworkName, FrameworkName>
+        private static readonly IDictionary<FrameworkName, List<FrameworkName>> _monoAliases = new Dictionary<FrameworkName, List<FrameworkName>>
         {
-            { new FrameworkName(VersionUtility.NetFrameworkIdentifier, new Version(4, 5, 1)), new FrameworkName(VersionUtility.DnxFrameworkIdentifier, new Version(4, 5, 1)) },
+            { new FrameworkName(VersionUtility.NetFrameworkIdentifier, new Version(4, 5, 1)), new List<FrameworkName> {
+                    new FrameworkName(VersionUtility.DnxFrameworkIdentifier, new Version(4, 5, 1)),
+                    new FrameworkName(VersionUtility.AspNetFrameworkIdentifier, new Version(5, 0))
+                }
+            }
         };
 
         public FrameworkReferenceResolver()
@@ -89,11 +93,11 @@ namespace Microsoft.Framework.Runtime
             {
                 return "ASP.NET 5.0";
             }
-            else if(string.Equals(targetFramework.Identifier, VersionUtility.DnxCoreFrameworkIdentifier, StringComparison.OrdinalIgnoreCase))
+            else if (string.Equals(targetFramework.Identifier, VersionUtility.DnxCoreFrameworkIdentifier, StringComparison.OrdinalIgnoreCase))
             {
                 return "DNX Core 5.0";
             }
-            else if(string.Equals(targetFramework.Identifier, VersionUtility.DnxFrameworkIdentifier, StringComparison.OrdinalIgnoreCase))
+            else if (string.Equals(targetFramework.Identifier, VersionUtility.DnxFrameworkIdentifier, StringComparison.OrdinalIgnoreCase))
             {
                 return "DNX " + targetFramework.Version.ToString();
             }
@@ -210,10 +214,13 @@ namespace Microsoft.Framework.Runtime
                     var frameworkName = new FrameworkName(VersionUtility.NetFrameworkIdentifier, new Version(versionFolderPair.Key));
                     _cache[frameworkName] = frameworkInfo;
 
-                    FrameworkName aliasFrameworkName;
-                    if (_monoAliases.TryGetValue(frameworkName, out aliasFrameworkName))
+                    List<FrameworkName> aliases;
+                    if (_monoAliases.TryGetValue(frameworkName, out aliases))
                     {
-                        _cache[aliasFrameworkName] = frameworkInfo;
+                        foreach (var aliasFrameworkName in aliases)
+                        {
+                            _cache[aliasFrameworkName] = frameworkInfo;
+                        }
                     }
                 }
 
