@@ -1,4 +1,4 @@
-﻿{
+{
     "dependencies": {
         "Microsoft.Framework.Runtime.Interfaces": "1.0.0-*",
         "Microsoft.Framework.Runtime.Roslyn": "1.0.0-*",

@@ -1,4 +1,4 @@
-﻿{
+{
     "dependencies": {
         "Microsoft.Framework.FunctionalTestUtils": "1.0.0-*",
         "Microsoft.Framework.PackageManager.FunctionalTests": "1.0.0-*",

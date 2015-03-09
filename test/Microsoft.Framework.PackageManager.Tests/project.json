@@ -1,4 +1,4 @@
-﻿{
+{
     "dependencies": {
         "Microsoft.Framework.PackageManager": "1.0.0-*",
         "Microsoft.Framework.Runtime.Common": "1.0.0-*",

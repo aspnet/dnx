@@ -1,4 +1,4 @@
-﻿{
+{
     "version": "1.0.0-*",
     "description": "Core hosting APIs for launching the cross-platform runtime",
     "dependencies": {

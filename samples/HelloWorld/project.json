@@ -1,4 +1,4 @@
-﻿{
+{
     "version": "0.1-beta-*",
     "exclude": "more/*.cs",
     "dependencies": {
