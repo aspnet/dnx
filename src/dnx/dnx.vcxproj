@@ -19,11 +19,16 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
+    <SolutionDir Condition="'$(SolutionDir)'==''">$([System.IO.Path]::GetFullPath("$(MSBuildProjectDirectory)\..\..\"))</SolutionDir>
     <ProjectGuid>{D0E2FB09-0FEA-478A-9068-D6AA420C6DED}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>dnx</RootNamespace>
     <ProjectName>dnx</ProjectName>
-    <Defines Condition="$(RuntimeType) == 'CORECLR_WIN'">CORECLR_WIN</Defines>
+    <RuntimeType Condition="$(RuntimeType) == ''">clr</RuntimeType>
+    <RuntimeDefine Condition="$(RuntimeType) == 'coreclr-win'">CORECLR_WIN</RuntimeDefine>
+    <RuntimeDefine Condition="$(RuntimeType) == 'coreclr-unix'">CORECLR_UNIX</RuntimeDefine>
+    <RuntimeDefine Condition="$(RuntimeType) == 'coreclr-darwin'">CORECLR_DARWIN</RuntimeDefine>
+    <RuntimeDefine Condition="$(RuntimeType) == 'clr'">CLR</RuntimeDefine>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -70,26 +75,26 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
-    <OutDir>$(SolutionDir)bin\$(Platform)\$(Configuration)\$(TargetFramework)\</OutDir>
-    <IntDir>bin\$(Platform)\$(Configuration)\$(TargetFramework)\</IntDir>
+    <OutDir>$(SolutionDir)bin\$(Platform)\$(Configuration)\$(RuntimeType)\</OutDir>
+    <IntDir>bin\$(Platform)\$(Configuration)\$(RuntimeType)\</IntDir>
     <IncludePath Condition="'$(RuntimeTargetOS)' == 'WIN7_PLUS_CORESYSTEM'">$(ProgramFiles)\Windows Kits\Win8CoreSystem\inc\crt;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
-    <OutDir>$(SolutionDir)bin\$(Platform)\$(Configuration)\$(TargetFramework)\</OutDir>
-    <IntDir>bin\$(Platform)\$(Configuration)\$(TargetFramework)\</IntDir>
+    <OutDir>$(SolutionDir)bin\$(Platform)\$(Configuration)\$(RuntimeType)\</OutDir>
+    <IntDir>bin\$(Platform)\$(Configuration)\$(RuntimeType)\</IntDir>
     <IncludePath Condition="'$(RuntimeTargetOS)' == 'WIN7_PLUS_CORESYSTEM'">$(ProgramFiles)\Windows Kits\Win8CoreSystem\inc\crt;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
-    <OutDir>$(SolutionDir)bin\$(Platform)\$(Configuration)\$(TargetFramework)\</OutDir>
-    <IntDir>bin\$(Platform)\$(Configuration)\$(TargetFramework)\</IntDir>
+    <OutDir>$(SolutionDir)bin\$(Platform)\$(Configuration)\$(RuntimeType)\</OutDir>
+    <IntDir>bin\$(Platform)\$(Configuration)\$(RuntimeType)\</IntDir>
     <IncludePath Condition="'$(RuntimeTargetOS)' == 'WIN7_PLUS_CORESYSTEM'">$(ProgramFiles)\Windows Kits\Win8CoreSystem\inc\crt;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
-    <OutDir>$(SolutionDir)bin\$(Platform)\$(Configuration)\$(TargetFramework)\</OutDir>
-    <IntDir>bin\$(Platform)\$(Configuration)\$(TargetFramework)\</IntDir>
+    <OutDir>$(SolutionDir)bin\$(Platform)\$(Configuration)\$(RuntimeType)\</OutDir>
+    <IntDir>bin\$(Platform)\$(Configuration)\$(RuntimeType)\</IntDir>
     <IncludePath Condition="'$(RuntimeTargetOS)' == 'WIN7_PLUS_CORESYSTEM'">$(ProgramFiles)\Windows Kits\Win8CoreSystem\inc\crt;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
@@ -97,7 +102,7 @@
       <PrecompiledHeader>Use</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions);$(Defines)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions);$(RuntimeDefine)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <BasicRuntimeChecks Condition="'$(RuntimeTargetOS)'=='WIN7_PLUS_CORESYSTEM'">Default</BasicRuntimeChecks>
       <SDLCheck>true</SDLCheck>
@@ -114,7 +119,7 @@
       <PrecompiledHeader>Use</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions);$(Defines)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions);$(RuntimeDefine)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <BasicRuntimeChecks Condition="'$(RuntimeTargetOS)'=='WIN7_PLUS_CORESYSTEM'">Default</BasicRuntimeChecks>
@@ -133,7 +138,7 @@
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions);$(Defines)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions);$(RuntimeDefine)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <BasicRuntimeChecks Condition="'$(RuntimeTargetOS)'=='WIN7_PLUS_CORESYSTEM'">Default</BasicRuntimeChecks>
@@ -154,7 +159,7 @@
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions);$(Defines)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions);$(RuntimeDefine)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <BasicRuntimeChecks Condition="'$(RuntimeTargetOS)'=='WIN7_PLUS_CORESYSTEM'">Default</BasicRuntimeChecks>
@@ -169,12 +174,8 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <Text Include="ReadMe.txt" />
-  </ItemGroup>
-  <ItemGroup>
     <ClInclude Include="dnx.h" />
     <ClInclude Include="resource.h" />
-    <ClInclude Include="resource1.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="targetver.h" />
   </ItemGroup>
@@ -196,4 +197,14 @@
   </PropertyGroup>
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
+  <Target Name="CopyManagedForDebuggingLocally" AfterTargets="Build" Condition="'$(Configuration)'=='Debug'">
+    <PropertyGroup>
+      <_CopyForDebuggingDest Condition="'$(Platform)|$(RuntimeType)'=='Win32|clr'">$(SolutionDir)\artifacts\build\dnx-clr-win-x86\bin</_CopyForDebuggingDest>
+      <_CopyForDebuggingDest Condition="'$(Platform)|$(RuntimeType)'=='x64|clr'">$(SolutionDir)\artifacts\build\dnx-clr-win-x64\bin</_CopyForDebuggingDest>
+      <_CopyForDebuggingDest Condition="'$(Platform)|$(RuntimeType)'=='Win32|coreclr-win'">$(SolutionDir)\artifacts\build\dnx-coreclr-win-x86\bin</_CopyForDebuggingDest>
+      <_CopyForDebuggingDest Condition="'$(Platform)|$(RuntimeType)'=='x64|coreclr-win'">$(SolutionDir)\artifacts\build\dnx-coreclr-win-x64\bin</_CopyForDebuggingDest>
+    </PropertyGroup>
+    <Copy SourceFiles="$(SolutionDir)\bin\$(Platform)\$(Configuration)\$(RuntimeType)\dnx.exe" DestinationFolder="$(_CopyForDebuggingDest)" />
+    <Copy SourceFiles="$(SolutionDir)\bin\$(Platform)\$(Configuration)\$(RuntimeType)\dnx.pdb" DestinationFolder="$(_CopyForDebuggingDest)" />
+  </Target>
 </Project>

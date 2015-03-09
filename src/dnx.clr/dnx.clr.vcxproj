@@ -193,8 +193,12 @@
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
-    <Target Name="CopyManagedForDebuggingLocally" AfterTargets="Build" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-        <Copy SourceFiles="$(SolutionDir)\bin\$(Platform)\$(Configuration)\dnx.clr.dll"
-              DestinationFolder="$(SolutionDir)\artifacts\build\dnx-clr-win-x86\bin" />
-    </Target>
+  <Target Name="CopyForDebuggingLocally" AfterTargets="Build" Condition="'$(Configuration)'=='Debug'">
+    <PropertyGroup>
+      <_CopyForDebuggingDest Condition="'$(Platform)'=='Win32'">$(SolutionDir)\artifacts\build\dnx-clr-win-x86\bin</_CopyForDebuggingDest>
+      <_CopyForDebuggingDest Condition="'$(Platform)'=='x64'">$(SolutionDir)\artifacts\build\dnx-clr-win-x64\bin</_CopyForDebuggingDest>
+    </PropertyGroup>
+    <Copy SourceFiles="$(SolutionDir)\bin\$(Platform)\$(Configuration)\dnx.clr.dll" DestinationFolder="$(_CopyForDebuggingDest)" />
+    <Copy SourceFiles="$(SolutionDir)\bin\$(Platform)\$(Configuration)\dnx.clr.pdb" DestinationFolder="$(_CopyForDebuggingDest)" />
+  </Target>
 </Project>
