@@ -1,4 +1,4 @@
-﻿{
+{
     "version": "1.0.0-*",
     "compilationOptions": { "define": [ "TRACE" ], "allowUnsafe": true, "warningsAsErrors": true },
     "dependencies": {
@@ -11,7 +11,8 @@
 
     "scripts": {
         "postbuild": [
-            "%project:Directory%/../../build/batchcopy %project:BuildOutputDir%/Debug/aspnet50/*.* %project:Directory%/../../artifacts/build/kre-clr-win-x86/bin"
+            "%project:Directory%/../../build/batchcopy %project:BuildOutputDir%/Debug/dnx451/*.* %project:Directory%/../../artifacts/build/dnx-clr-win-x86/bin"
         ]
     }
 }
+

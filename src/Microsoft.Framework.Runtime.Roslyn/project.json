@@ -1,4 +1,4 @@
-﻿{
+{
     "version": "1.0.0-*",
     "description": "ASP.NET 5 Roslyn compiler implementation.",
     "compilationOptions": { "define": [ "TRACE" ], "allowUnsafe": true, "warningsAsErrors": true },
@@ -30,9 +30,10 @@
 
     "scripts": {
         "postbuild": [
-            "%project:Directory%/../../build/batchcopy %project:BuildOutputDir%/Debug/aspnet50/*.* %project:Directory%/../../artifacts/build/dnx-clr-win-x86/bin",
-            "%project:Directory%/../../build/batchcopy %project:BuildOutputDir%/Debug/aspnet50/*.* %project:Directory%/../../artifacts/build/dnx-mono/bin",
-            "%project:Directory%/../../build/batchcopy %project:BuildOutputDir%/Debug/aspnetcore50/*.* %project:Directory%/../../artifacts/build/dnx-coreclr-win-x86/bin"
+            "%project:Directory%/../../build/batchcopy %project:BuildOutputDir%/Debug/dnx451/*.* %project:Directory%/../../artifacts/build/dnx-clr-win-x86/bin",
+            "%project:Directory%/../../build/batchcopy %project:BuildOutputDir%/Debug/dnx451/*.* %project:Directory%/../../artifacts/build/dnx-mono/bin",
+            "%project:Directory%/../../build/batchcopy %project:BuildOutputDir%/Debug/dnxcore50/*.* %project:Directory%/../../artifacts/build/dnx-coreclr-win-x86/bin"
         ]
     }
 }
+
