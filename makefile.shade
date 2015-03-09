@@ -653,7 +653,7 @@ macro name='NuGetInstall' Package='string' OutputDir='string' Extra='string'
 
 functions @{
 
-    private static readonly string _defaultLocalRuntimeHomeDir = ".k";
+    private static readonly string _defaultLocalRuntimeHomeDir = ".dnx";
     private static readonly string _packagesSubDir = "packages";
     private static readonly string _runtimesSubDir = "runtimes";
 
