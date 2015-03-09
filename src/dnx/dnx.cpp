@@ -10,9 +10,9 @@ void GetModuleDirectory(HMODULE module, LPWSTR szPath)
     szPath[dirLength + 1] = L'\0';
 }
 
-int LastIndexOfChar(LPCWSTR const pszStr, WCHAR c)
+size_t LastIndexOfChar(LPCWSTR const pszStr, WCHAR c)
 {
-    int nIndex = wcsnlen_s(pszStr, MAX_PATH) - 1;
+    size_t nIndex = wcsnlen_s(pszStr, MAX_PATH) - 1;
     do
     {
         if (pszStr[nIndex] == c)
@@ -31,9 +31,9 @@ bool StringsEqual(LPCWSTR const pszStrA, LPCWSTR const pszStrB)
 
 bool StringEndsWith(LPCWSTR const pszStr, LPCWSTR const pszSuffix)
 {
-    int nStrLen = wcsnlen_s(pszStr, MAX_PATH);
-    int nSuffixLen = wcsnlen_s(pszSuffix, MAX_PATH);
-    int nOffset = nStrLen - nSuffixLen;
+    size_t nStrLen = wcsnlen_s(pszStr, MAX_PATH);
+    size_t nSuffixLen = wcsnlen_s(pszSuffix, MAX_PATH);
+    size_t nOffset = nStrLen - nSuffixLen;
 
     if (nOffset < 0)
     {
@@ -43,16 +43,16 @@ bool StringEndsWith(LPCWSTR const pszStr, LPCWSTR const pszSuffix)
     return StringsEqual(pszStr + nOffset, pszSuffix);
 }
 
-int LastPathSeparatorIndex(LPCWSTR const pszPath)
+size_t LastPathSeparatorIndex(LPCWSTR const pszPath)
 {
-    int nLastSlashIndex = LastIndexOfChar(pszPath, L'/');
-    int nLastBackSlashIndex = LastIndexOfChar(pszPath, L'\\');
+    size_t nLastSlashIndex = LastIndexOfChar(pszPath, L'/');
+    size_t nLastBackSlashIndex = LastIndexOfChar(pszPath, L'\\');
     return max(nLastSlashIndex, nLastBackSlashIndex);
 }
 
 void GetParentDir(LPCWSTR const pszPath, LPWSTR const pszParentDir)
 {
-    int nLastSeparatorIndex = LastPathSeparatorIndex(pszPath);
+    size_t nLastSeparatorIndex = LastPathSeparatorIndex(pszPath);
     if (nLastSeparatorIndex < 0)
     {
         StringCchCopyW(pszParentDir, MAX_PATH, L".");
@@ -65,7 +65,7 @@ void GetParentDir(LPCWSTR const pszPath, LPWSTR const pszParentDir)
 
 void GetFileName(LPCWSTR const pszPath, LPWSTR const pszFileName)
 {
-    int nLastSeparatorIndex = LastPathSeparatorIndex(pszPath);
+    size_t nLastSeparatorIndex = LastPathSeparatorIndex(pszPath);
 
     if (nLastSeparatorIndex < 0)
     {
@@ -230,10 +230,14 @@ int CallApplicationProcessMain(int argc, wchar_t* argv[])
 
     bool fSuccess = true;
     HMODULE m_hHostModule = nullptr;
-#if CORECLR_WIN
-    LPCWSTR pwzHostModuleName = L"dnx.coreclr.dll";
+
+	// Defined in targetplatform.h based on RuntimeType build parameter
+#if CLR
+	LPCWSTR pwzHostModuleName = L"dnx.clr.dll";
+#elif CORECLR_WIN
+	LPCWSTR pwzHostModuleName = L"dnx.coreclr.win.dll";
 #else
-    LPCWSTR pwzHostModuleName = L"dnx.clr.dll";
+#error Unsupported RuntimeType. Only CLR and CORECLR_WIN are supported.
 #endif
 
     // Note: need to keep as ASCII as GetProcAddress function takes ASCII params
