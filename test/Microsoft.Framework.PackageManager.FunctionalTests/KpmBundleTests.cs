@@ -1021,7 +1021,7 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
     ""HelloWorld/1.0.0"": {
       ""sha"": ""NUPKG_SHA_VALUE"",
       ""frameworkAssemblies"": {
-        ""Asp.Net,Version=v5.0"": [
+        ""DNX,Version=v4.5.1"": [
           ""mscorlib"",
           ""System"",
           ""System.Core"",
@@ -1107,7 +1107,7 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
     ""HelloWorld/1.0.0"": {
       ""sha"": ""NUPKG_SHA_VALUE"",
       ""frameworkAssemblies"": {
-        ""Asp.Net,Version=v5.0"": [
+        ""DNX,Version=v4.5.1"": [
           ""mscorlib"",
           ""System"",
           ""System.Core"",
