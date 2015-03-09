@@ -517,6 +517,9 @@ namespace Microsoft.Framework.PackageManager
                     var optInPlace = c.Option("-i|--in-place",
                         "Generate or update project.json files in project directories of csprojs",
                         CommandOptionType.NoValue);
+                    var optFramework = c.Option("-f|--framework",
+                        "Target framework of assembly to be wrapped",
+                        CommandOptionType.SingleValue);
                     c.HelpOption("-?|-h|--help");
 
                     c.OnExecute(() =>
@@ -525,10 +528,11 @@ namespace Microsoft.Framework.PackageManager
 
                         var command = new WrapCommand();
                         command.Reports = reports;
-                        command.CsProjectPath = argPath.Value;
+                        command.InputFilePath = argPath.Value;
                         command.Configuration = optConfiguration.Value();
                         command.MsBuildPath = optMsBuildPath.Value();
                         command.InPlace = optInPlace.HasValue();
+                        command.Framework = optFramework.Value();
 
                         var success = command.ExecuteCommand();
 

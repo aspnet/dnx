@@ -61,7 +61,7 @@ namespace Microsoft.Framework.PackageManager
   }
 }";
             var expectedGlobalJson = @"{
-    ""sources"": [ ""src"", ""test"" ]
+    ""projects"": [ ""src"", ""test"" ]
 }";
             using (runtimeHomeDir)
             using (var testSolutionDir = TestUtils.GetTempTestSolution("ConsoleApp1"))
@@ -147,7 +147,7 @@ namespace Microsoft.Framework.PackageManager
   }
 }";
             var expectedGlobalJson = @"{
-  ""sources"": [
+  ""projects"": [
     ""src"",
     ""test"",
     ""wrap""
@@ -226,7 +226,7 @@ namespace Microsoft.Framework.PackageManager
   }
 }";
             var expectedGlobalJson = @"{
-  ""sources"": [
+  ""projects"": [
     ""src"",
     ""test"",
     ""wrap"",
