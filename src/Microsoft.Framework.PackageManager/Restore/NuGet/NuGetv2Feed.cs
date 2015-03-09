@@ -151,18 +151,18 @@ namespace Microsoft.Framework.PackageManager.Restore.NuGet
                         {
                             _ignored = true;
                             _reports.Information.WriteLine(
-                                string.Format("Failed to retrieve information from remote source '{0}'".Yellow(),
-                                    _baseUri));
+                                string.Format("Failed to retrieve information from remote source '{0}'",
+                                    _baseUri).Yellow().Bold());
                             return new List<PackageInfo>();
                         }
 
                         _reports.Error.WriteLine(string.Format("Error: FindPackagesById: {1}\r\n  {0}",
-                            ex.Message, id.Red().Bold()));
+                            ex.Message, id).Red().Bold());
                         throw;
                     }
                     else
                     {
-                        _reports.Information.WriteLine(string.Format("Warning: FindPackagesById: {1}\r\n  {0}", ex.Message, id.Yellow().Bold()));
+                        _reports.Information.WriteLine(string.Format("Warning: FindPackagesById: {1}\r\n  {0}", ex.Message, id).Yellow().Bold());
                     }
                 }
             }
