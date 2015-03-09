@@ -153,16 +153,16 @@ var RC_FILES = '${FindAllFiles("Resource.rc", BOOTSTRAPPER_EXE_NAME, BOOTSTRAPPE
             var environmentRuntimeTargetOS = Environment.GetEnvironmentVariable("RUNTIME_TARGET_OS");
             var configRuntimeTargetOS = "";
         
-            Exec(MSBUILD, bootstrapperProj + " /p:Configuration=" + Configuration2 + ";Platform=Win32;RuntimeType=CLR");
-            Exec(MSBUILD, bootstrapperProj + " /p:Configuration=" + Configuration2 + ";Platform=x64;RuntimeType=CLR");
+            Exec(MSBUILD, bootstrapperProj + " /p:Configuration=" + Configuration2 + ";Platform=Win32;TargetFramework=dnx451;RuntimeType=CLR");
+            Exec(MSBUILD, bootstrapperProj + " /p:Configuration=" + Configuration2 + ";Platform=x64;TargetFramework=dnx451;RuntimeType=CLR");
 
             if (environmentRuntimeTargetOS == "WIN7_PLUS_CORESYSTEM")
             {
                 configRuntimeTargetOS = ";RuntimeTargetOS=WIN7_PLUS_CORESYSTEM";
             }
             
-            Exec(MSBUILD, bootstrapperProj + " /p:Configuration=" + Configuration2 + ";Platform=Win32;RuntimeType=CORECLR_WIN" + configRuntimeTargetOS);
-            Exec(MSBUILD, bootstrapperProj + " /p:Configuration=" + Configuration2 + ";Platform=x64;RuntimeType=CORECLR_WIN" + configRuntimeTargetOS);
+            Exec(MSBUILD, bootstrapperProj + " /p:Configuration=" + Configuration2 + ";Platform=Win32;TargetFramework=dnxcore50;RuntimeType=CORECLR_WIN" + configRuntimeTargetOS);
+            Exec(MSBUILD, bootstrapperProj + " /p:Configuration=" + Configuration2 + ";Platform=x64;TargetFramework=dnxcore50;RuntimeType=CORECLR_WIN" + configRuntimeTargetOS);
         }
     }
 
