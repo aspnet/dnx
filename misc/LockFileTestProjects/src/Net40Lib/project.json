@@ -1,0 +1,10 @@
+﻿{
+    "version": "1.0.0-*",
+    "dependencies": {
+        "Newtonsoft.Json": "6.0.6"
+    },
+
+    "frameworks" : {
+        "net40": { }
+    }
+}

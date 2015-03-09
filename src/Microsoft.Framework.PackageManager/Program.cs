@@ -12,6 +12,7 @@ using Microsoft.Framework.PackageManager.Bundle;
 using Microsoft.Framework.Runtime;
 using Microsoft.Framework.Runtime.Common.CommandLine;
 using System.Linq;
+using System.Diagnostics;
 
 namespace Microsoft.Framework.PackageManager
 {
