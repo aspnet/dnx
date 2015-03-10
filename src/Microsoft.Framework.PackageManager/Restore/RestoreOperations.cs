@@ -72,8 +72,8 @@ namespace Microsoft.Framework.PackageManager
                                             },
                                             ChainPredicate(predicate, node.Item, dependency)));
                                     }
+                                    break;
                                 }
-                                break;
                             }
                         }
                     }

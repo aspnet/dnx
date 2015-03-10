@@ -10,6 +10,7 @@ using Microsoft.Framework.Runtime;
 using Microsoft.Framework.Runtime.DependencyManagement;
 using NuGet;
 using TempRepack.Engine.Model;
+using System.Linq;
 
 namespace Microsoft.Framework.PackageManager
 {
@@ -50,7 +51,22 @@ namespace Microsoft.Framework.PackageManager
 
         public Task<RuntimeFile> GetRuntimes(WalkProviderMatch match, FrameworkName targetFramework)
         {
-            // TODO: read runtime.json file from project folder
+            foreach(var path in _dependencyProvider.GetAttemptedPaths(targetFramework))
+            {
+                var runtimeJsonPath = path
+                    .Replace("{name}.nuspec", "runtime.json")
+                    .Replace("project.json", "runtime.json")
+                    .Replace("{name}", match.Library.Name)
+                    .Replace("{version}", match.Library.Version.ToString());
+
+                // Console.WriteLine("*** {0}", runtimeJsonPath);
+                if (File.Exists(runtimeJsonPath))
+                {
+                    Console.WriteLine("*** READING {0}", runtimeJsonPath);
+                    var formatter = new RuntimeFileFormatter();
+                    return Task.FromResult(formatter.ReadRuntimeFile(runtimeJsonPath));
+                }
+            }
             return Task.FromResult<RuntimeFile>(null);
         }
 
