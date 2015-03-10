@@ -47,7 +47,7 @@ namespace Microsoft.Framework.PackageManager.Bundle
             // Copy nuspec
             var nuspecName = resolver.GetManifestFileName(Library.Name, Library.Version);
             root.Reports.Quiet.WriteLine("    File: {0}", nuspecName.Bold());
-            CopyFile(root, Path.Combine(_libraryDescription.Path, nuspecName), Path.Combine(TargetPath, nuspecName), root.Overwrite);
+            CopyFile(root, Path.Combine(_libraryDescription.Path, nuspecName), Path.Combine(TargetPath, nuspecName));
 
             // Copy assemblies for current framework
             foreach (var assembly in assemblies)
@@ -55,7 +55,7 @@ namespace Microsoft.Framework.PackageManager.Bundle
                 root.Reports.Quiet.WriteLine("    File: {0}", assembly.RelativePath.Bold());
 
                 var targetAssemblyPath = Path.Combine(TargetPath, assembly.RelativePath);
-                CopyFile(root, assembly.Path, targetAssemblyPath, root.Overwrite);
+                CopyFile(root, assembly.Path, targetAssemblyPath);
             }
 
             // Special cases
@@ -84,37 +84,21 @@ namespace Microsoft.Framework.PackageManager.Bundle
 
             if (Directory.Exists(targetFolder))
             {
-                if (root.Overwrite)
-                {
-                    root.Operations.Delete(targetFolder);
-                }
-                else
-                {
-                    root.Reports.Quiet.WriteLine("    {0} already exists", targetFolder);
-                    return;
-                }
+                root.Operations.Delete(targetFolder);
             }
 
             Directory.CreateDirectory(targetFolder);
             root.Operations.Copy(srcFolder, targetFolder);
         }
 
-        private void CopyFile(BundleRoot root, string srcPath, string targetPath, bool overwrite)
+        private void CopyFile(BundleRoot root, string srcPath, string targetPath)
         {
             var targetFolder = Path.GetDirectoryName(targetPath);
             Directory.CreateDirectory(targetFolder);
 
             if (File.Exists(targetPath))
             {
-                if (overwrite)
-                {
-                    File.Delete(targetPath);
-                }
-                else
-                {
-                    root.Reports.Quiet.WriteLine("    {0} already exists", targetPath);
-                    return;
-                }
+                File.Delete(targetPath);
             }
 
             File.Copy(srcPath, targetPath);

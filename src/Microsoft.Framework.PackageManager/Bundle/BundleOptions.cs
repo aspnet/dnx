@@ -20,8 +20,6 @@ namespace Microsoft.Framework.PackageManager.Bundle
 
         public FrameworkName RuntimeTargetFramework { get; set; }
 
-        public bool Overwrite { get; set; }
-
         public bool NoSource { get; set; }
 
         public IList<string> Runtimes { get; set; }

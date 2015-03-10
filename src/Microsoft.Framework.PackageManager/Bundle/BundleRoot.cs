@@ -34,8 +34,7 @@ namespace Microsoft.Framework.PackageManager.Bundle
         public string OutputPath { get; private set; }
         public string TargetPackagesPath { get; private set; }
         public string SourcePackagesPath { get; set; }
-
-        public bool Overwrite { get; set; }
+        
         public bool NoSource { get; set; }
         public string Configuration { get; set; }
 
