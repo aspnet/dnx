@@ -162,7 +162,7 @@ namespace Microsoft.Framework.Runtime
                     new DesignTimeHostCompiler(_shutdown, _watcher, networkStream), includeInManifest: false);
 
                 // Change the project reference provider
-                Project.DefaultLangaugeService = new TypeInformation(
+                Project.DefaultLanguageService = new TypeInformation(
                     typeof(DefaultHost).GetTypeInfo().Assembly.GetName().Name,
                     typeof(DesignTimeHostProjectReferenceProvider).FullName);
             }

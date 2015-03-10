@@ -74,7 +74,7 @@ namespace Microsoft.Framework.Runtime
                 }
                 else
                 {
-                    var provider = project.LanguageServices?.ProjectReferenceProvider ?? Project.DefaultLangaugeService;
+                    var provider = project.LanguageServices?.ProjectReferenceProvider ?? Project.DefaultLanguageService;
 
                     // Find the default project exporter
                     var projectReferenceProvider = _projectReferenceProviders.GetOrAdd(provider, typeInfo =>
