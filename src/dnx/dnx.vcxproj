@@ -26,8 +26,6 @@
     <ProjectName>dnx</ProjectName>
     <RuntimeType Condition="$(RuntimeType) == ''">clr</RuntimeType>
     <RuntimeDefine Condition="$(RuntimeType) == 'coreclr-win'">CORECLR_WIN</RuntimeDefine>
-    <RuntimeDefine Condition="$(RuntimeType) == 'coreclr-unix'">CORECLR_UNIX</RuntimeDefine>
-    <RuntimeDefine Condition="$(RuntimeType) == 'coreclr-darwin'">CORECLR_DARWIN</RuntimeDefine>
     <RuntimeDefine Condition="$(RuntimeType) == 'clr'">CLR</RuntimeDefine>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
