@@ -1,7 +1,7 @@
-XRE
+DNX
 ===
 
-The .NET Cross-Platform Runtime SDK (.NET XRE) contains the code required to bootstrap and run an application. This includes things like the compilation system, SDK tools, and the native CLR hosts.
+The .NET Execution Environment contains the code required to bootstrap and run an application. This includes things like the compilation system, SDK tools, and the native CLR hosts.
 
 
 
@@ -17,19 +17,19 @@ The .NET Cross-Platform Runtime SDK (.NET XRE) contains the code required to boo
 
 ### Setting up a development environment for incremental compile
 
-After successfully building the solution using the `build` script, you can create a dev symlink to the built XRE using the `build dev-install` command. The command creates symlinks from your user profile's XRE folder to the compiled binaries so you can do incremental builds without having to manually copy files around.
+After successfully building the solution using the `build` script, you can create a dev symlink to the built DNX using the `build dev-install` command. The command creates symlinks from your user profile's XRE folder to the compiled binaries so you can do incremental builds without having to manually copy files around.
 
 After running `build dev-install` and `dotnetsdk list` you will see a few new runtimes ending with `-dev`. Those are the symlinks created by the build script:
 
 ```
 Active Version           Runtime Architecture Location                           Alias
 ------ -------           ------- ------------ --------                           -----
-  *    1.0.0-beta2-10735 clr     x86          C:\Users\victorhu\.dotnet\runtimes default
-       1.0.0-dev         clr     x64          C:\Users\victorhu\.dotnet\runtimes clr-x64-dev
-       1.0.0-dev         clr     x86          C:\Users\victorhu\.dotnet\runtimes clr-x86-dev
-       1.0.0-dev         coreclr xd64         C:\Users\victorhu\.dotnet\runtimes coreclr-x64-dev
-       1.0.0-dev         coreclr x86          C:\Users\victorhu\.dotnet\runtimes coreclr-x86-dev
-       1.0.0-dev         mono                 C:\Users\victorhu\.dotnet\runtimes mono-dev
+  *    1.0.0-beta2-10735 clr     x86          C:\Users\victorhu\.dnx\runtimes default
+       1.0.0-dev         clr     x64          C:\Users\victorhu\.dnx\runtimes clr-x64-dev
+       1.0.0-dev         clr     x86          C:\Users\victorhu\.dnx\runtimes clr-x86-dev
+       1.0.0-dev         coreclr xd64         C:\Users\victorhu\.dnx\runtimes coreclr-x64-dev
+       1.0.0-dev         coreclr x86          C:\Users\victorhu\.dnx\runtimes coreclr-x86-dev
+       1.0.0-dev         mono                 C:\Users\victorhu\.dnx\runtimes mono-dev
 ```
 
 If you want to remove the symlinks, simply delete them from your user profile's XRE folder.
