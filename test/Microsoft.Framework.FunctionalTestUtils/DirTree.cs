@@ -5,7 +5,6 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using Newtonsoft.Json.Linq;
 
 namespace Microsoft.Framework.FunctionalTestUtils
 {
@@ -13,34 +12,45 @@ namespace Microsoft.Framework.FunctionalTestUtils
     {
         private Dictionary<string, string> _pathToContents;
 
-        private DirTree(string jsonStr)
+        private DirTree(params string[] fileRelativePaths)
         {
-            var json = JObject.Parse(jsonStr);
-            _pathToContents = new Dictionary<string, string>();
-
-            // Flatten this directory structure into the dictionary _pathToContents
-            FlattenJsonToDictionary(json);
+            _pathToContents = fileRelativePaths.ToDictionary(f => f, _ => string.Empty);
         }
 
-        public static DirTree CreateFromJson(string jsonStr)
+        public static DirTree CreateFromList(params string[] fileRelativePaths)
         {
-            return new DirTree(jsonStr);
+            return new DirTree(fileRelativePaths);
         }
 
         public static DirTree CreateFromDirectory(string dirPath)
         {
-            var dirTree = CreateFromJson("{}");
+            var dirTree = new DirTree();
 
-            dirPath = EnsureTrailingSeparator(dirPath);
+            dirPath = EnsureTrailingForwardSlash(dirPath);
 
             var dirFileList = Directory.GetFiles(dirPath, "*.*", SearchOption.AllDirectories)
-                .Select(x => x.Substring(dirPath.Length));
+                .Select(x => x.Substring(dirPath.Length))
+                .Select(x => GetPathWithForwardSlashes(x));
+
+            // If we only generate a list of files, empty dirs will be left out
+            // So we make an empty dir with trailing forward slash (e.g. "path/to/dir/") and put it into the list
+            var dirEmptySubDirList = Directory.GetDirectories(dirPath, "*", SearchOption.AllDirectories)
+                .Where(x => !Directory.GetFileSystemEntries(x).Any())
+                .Select(x => x.Substring(dirPath.Length))
+                .Select(x => GetPathWithForwardSlashes(x))
+                .Select(x => EnsureTrailingForwardSlash(x));
 
             foreach (var file in dirFileList)
             {
                 var fullPath = Path.Combine(dirPath, file);
                 var onDiskFileContents = File.ReadAllText(fullPath);
                 dirTree._pathToContents[file] = onDiskFileContents;
+            }
+
+            foreach (var emptyDir in dirEmptySubDirList)
+            {
+                // Empty dirs don't have contents
+                dirTree._pathToContents[emptyDir] = null;
             }
 
             return dirTree;
@@ -60,9 +70,10 @@ namespace Microsoft.Framework.FunctionalTestUtils
 
         public DirTree WithSubDir(string relativePath, DirTree subDir)
         {
+            // Append a DirTree as a subdir of current DirTree
             foreach (var pair in subDir._pathToContents)
             {
-                var newPath = Path.Combine(relativePath, pair.Key);
+                var newPath = GetPathWithForwardSlashes(Path.Combine(relativePath, pair.Key));
                 _pathToContents[newPath] = pair.Value;
             }
             return this;
@@ -76,7 +87,7 @@ namespace Microsoft.Framework.FunctionalTestUtils
 
         public DirTree RemoveSubDir(string relativePath)
         {
-            relativePath = EnsureTrailingSeparator(relativePath);
+            relativePath = EnsureTrailingForwardSlash(relativePath);
             var removedKeys = new List<string>();
             foreach (var pair in _pathToContents)
             {
@@ -97,6 +108,14 @@ namespace Microsoft.Framework.FunctionalTestUtils
             foreach (var pair in _pathToContents)
             {
                 var path = Path.Combine(rootDirPath, pair.Key);
+
+                if (path.EndsWith("/") && !Directory.Exists(path))
+                {
+                    // Create an empty dir, which is represented as "path/to/dir"
+                    Directory.CreateDirectory(path);
+                    continue;
+                }
+
                 var parentDir = Path.GetDirectoryName(path);
 
                 if (!Directory.Exists(parentDir))
@@ -112,21 +131,33 @@ namespace Microsoft.Framework.FunctionalTestUtils
 
         public bool MatchDirectoryOnDisk(string dirPath, bool compareFileContents = true)
         {
-            dirPath = EnsureTrailingSeparator(dirPath);
+            dirPath = EnsureTrailingForwardSlash(dirPath);
 
             var dirFileList = Directory.GetFiles(dirPath, "*.*", SearchOption.AllDirectories)
-                .Select(x => x.Substring(dirPath.Length));
+                .Select(x => x.Substring(dirPath.Length))
+                .Select(x => GetPathWithForwardSlashes(x));
 
-            var missingFiles = _pathToContents.Keys.Except(dirFileList);
-            var extraFiles = dirFileList.Except(_pathToContents.Keys);
-            if (missingFiles.Any() || extraFiles.Any())
+            var dirEmptySubDirList = Directory.GetDirectories(dirPath, "*", SearchOption.AllDirectories)
+                .Where(x => !Directory.GetFileSystemEntries(x).Any())
+                .Select(x => x.Substring(dirPath.Length))
+                .Select(x => GetPathWithForwardSlashes(x))
+                .Select(x => EnsureTrailingForwardSlash(x));
+
+            var expectedFileList = _pathToContents.Keys.Where(x => !x.EndsWith("/"));
+            var expectedEmptySubDirList = _pathToContents.Keys.Where(x => x.EndsWith("/"));
+
+            var missingFiles = expectedFileList.Except(dirFileList);
+            var extraFiles = dirFileList.Except(expectedFileList);
+            var missingEmptySubDirs = expectedEmptySubDirList.Except(dirEmptySubDirList);
+            var extraEmptySubDirs = dirEmptySubDirList.Except(expectedEmptySubDirList);
+
+            if (missingFiles.Any() || extraFiles.Any() || missingEmptySubDirs.Any() || extraEmptySubDirs.Any())
             {
-                Console.Error.WriteLine("Number of files in '{0}' is {1}, while expected number is {2}.",
-                    dirPath, dirFileList.Count(), _pathToContents.Count);
-                Console.Error.WriteLine("Missing files: " +
-                    string.Join(",", _pathToContents.Keys.Except(dirFileList)));
-                Console.Error.WriteLine("Extra files: " +
-                    string.Join(",", dirFileList.Except(_pathToContents.Keys)));
+                Console.Error.WriteLine("The structure of '{0}' doesn't match expected output structure.", dirPath);
+                Console.Error.WriteLine("Missing items: " +
+                    string.Join(",", missingFiles.Concat(missingEmptySubDirs)));
+                Console.Error.WriteLine("Extra items: " +
+                    string.Join(",", extraFiles.Concat(extraEmptySubDirs)));
                 return false;
             }
 
@@ -151,53 +182,18 @@ namespace Microsoft.Framework.FunctionalTestUtils
             return true;
         }
 
-        private void FlattenJsonToDictionary(JObject json)
-        {
-            FlattenJsonToDictionaryCore(json, path: string.Empty);
-        }
-
-        private void FlattenJsonToDictionaryCore(JObject dirObj, string path)
-        {
-            foreach (var property in dirObj.Properties())
-            {
-                var relativePath = Path.Combine(path, string.Equals(property.Name, ".") ? string.Empty : property.Name);
-
-                if (property.Value is JValue)
-                {
-                    // The contents specified with WithFileContents() override contents in original JSON
-                    // If there are already contents for this file, the contents are specified by WithFileContents()
-                    // So we ignore original contents here
-                    if (!_pathToContents.ContainsKey(relativePath))
-                    {
-                        _pathToContents.Add(relativePath, property.Value.ToString());
-                    }
-                }
-                else if (property.Value is JArray)
-                {
-                    foreach (var element in (property.Value as JArray))
-                    {
-                        var elementFilePath = Path.Combine(relativePath, (element as JValue).Value.ToString());
-                        if (!_pathToContents.ContainsKey(elementFilePath))
-                        {
-                            _pathToContents.Add(elementFilePath, string.Empty);
-                        }
-                    }
-                }
-                else if (property.Value is JObject)
-                {
-                    FlattenJsonToDictionaryCore(property.Value as JObject, relativePath);
-                }
-            }
-        }
-
-        private static string EnsureTrailingSeparator(string dirPath)
+        private static string EnsureTrailingForwardSlash(string dirPath)
         {
             if (!string.IsNullOrEmpty(dirPath))
             {
-                dirPath = dirPath[dirPath.Length - 1] == Path.DirectorySeparatorChar ?
-                        dirPath : dirPath + Path.DirectorySeparatorChar;
+                dirPath = dirPath[dirPath.Length - 1] == '/' ? dirPath : dirPath + '/';
             }
             return dirPath;
+        }
+
+        private static string GetPathWithForwardSlashes(string path)
+        {
+            return path.Replace('\\', '/');
         }
     }
 }
