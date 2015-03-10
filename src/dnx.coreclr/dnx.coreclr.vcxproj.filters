@@ -11,9 +11,8 @@
     <ClInclude Include="targetver.h" />
     <ClInclude Include="tpa.h" />
     <ClInclude Include="resource.h" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="exports.def" />
+    <ClInclude Include="dnx.coreclr.h" />
+    <ClInclude Include="mscoree.h" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Resource.rc" />

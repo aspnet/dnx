@@ -10,9 +10,10 @@ void GetModuleDirectory(HMODULE module, LPWSTR szPath)
     szPath[dirLength + 1] = L'\0';
 }
 
-size_t LastIndexOfChar(LPCWSTR const pszStr, WCHAR c)
+int LastIndexOfChar(LPCWSTR const pszStr, WCHAR c)
 {
-    size_t nIndex = wcsnlen_s(pszStr, MAX_PATH) - 1;
+	// Casting to int is safe here because MAX_PATH (260) always fits in an int
+	int nIndex = static_cast<int>(wcsnlen_s(pszStr, MAX_PATH)) - 1;
     do
     {
         if (pszStr[nIndex] == c)
@@ -31,9 +32,10 @@ bool StringsEqual(LPCWSTR const pszStrA, LPCWSTR const pszStrB)
 
 bool StringEndsWith(LPCWSTR const pszStr, LPCWSTR const pszSuffix)
 {
-    size_t nStrLen = wcsnlen_s(pszStr, MAX_PATH);
-    size_t nSuffixLen = wcsnlen_s(pszSuffix, MAX_PATH);
-    size_t nOffset = nStrLen - nSuffixLen;
+	// Casting to int is safe here because MAX_PATH (260) always fits in an int
+	int nStrLen = static_cast<int>(wcsnlen_s(pszStr, MAX_PATH));
+	int nSuffixLen = static_cast<int>(wcsnlen_s(pszSuffix, MAX_PATH));
+    int nOffset = nStrLen - nSuffixLen;
 
     if (nOffset < 0)
     {
@@ -43,16 +45,16 @@ bool StringEndsWith(LPCWSTR const pszStr, LPCWSTR const pszSuffix)
     return StringsEqual(pszStr + nOffset, pszSuffix);
 }
 
-size_t LastPathSeparatorIndex(LPCWSTR const pszPath)
+int LastPathSeparatorIndex(LPCWSTR const pszPath)
 {
-    size_t nLastSlashIndex = LastIndexOfChar(pszPath, L'/');
-    size_t nLastBackSlashIndex = LastIndexOfChar(pszPath, L'\\');
+    int nLastSlashIndex = LastIndexOfChar(pszPath, L'/');
+    int nLastBackSlashIndex = LastIndexOfChar(pszPath, L'\\');
     return max(nLastSlashIndex, nLastBackSlashIndex);
 }
 
 void GetParentDir(LPCWSTR const pszPath, LPWSTR const pszParentDir)
 {
-    size_t nLastSeparatorIndex = LastPathSeparatorIndex(pszPath);
+    int nLastSeparatorIndex = LastPathSeparatorIndex(pszPath);
     if (nLastSeparatorIndex < 0)
     {
         StringCchCopyW(pszParentDir, MAX_PATH, L".");
@@ -65,7 +67,7 @@ void GetParentDir(LPCWSTR const pszPath, LPWSTR const pszParentDir)
 
 void GetFileName(LPCWSTR const pszPath, LPWSTR const pszFileName)
 {
-    size_t nLastSeparatorIndex = LastPathSeparatorIndex(pszPath);
+    int nLastSeparatorIndex = LastPathSeparatorIndex(pszPath);
 
     if (nLastSeparatorIndex < 0)
     {

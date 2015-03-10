@@ -50,9 +50,4 @@
       <Filter>Resource Files</Filter>
     </ResourceCompile>
   </ItemGroup>
-  <ItemGroup>
-    <None Include="dnx.clr.def">
-      <Filter>Source Files</Filter>
-    </None>
-  </ItemGroup>
 </Project>
