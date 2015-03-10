@@ -91,7 +91,6 @@ namespace Microsoft.Framework.PackageManager.Bundle
 
             var root = new BundleRoot(project, outputPath, _hostServices, _options.Reports)
             {
-                Overwrite = _options.Overwrite,
                 Configuration = _options.Configuration,
                 NoSource = _options.NoSource
             };

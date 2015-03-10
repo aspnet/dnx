@@ -90,8 +90,6 @@ namespace Microsoft.Framework.PackageManager
                 var optionOut = c.Option("-o|--out <PATH>", "Where does it go", CommandOptionType.SingleValue);
                 var optionConfiguration = c.Option("--configuration <CONFIGURATION>", "The configuration to use for deployment (Debug|Release|{Custom})",
                     CommandOptionType.SingleValue);
-                var optionOverwrite = c.Option("--overwrite", "Remove existing files in target folders",
-                    CommandOptionType.NoValue);
                 var optionNoSource = c.Option("--no-source", "Compiles the source files into NuGet packages",
                     CommandOptionType.NoValue);
                 var optionRuntime = c.Option("--runtime <RUNTIME>", "Name or full path of the runtime folder to include, or \"active\" for current runtime on PATH",
@@ -117,7 +115,6 @@ namespace Microsoft.Framework.PackageManager
                         RuntimeTargetFramework = _environment.RuntimeFramework,
                         WwwRoot = optionWwwRoot.Value(),
                         WwwRootOut = optionWwwRootOut.Value() ?? optionWwwRoot.Value(),
-                        Overwrite = optionOverwrite.HasValue(),
                         NoSource = optionNoSource.HasValue(),
                         Runtimes = optionRuntime.HasValue() ?
                             string.Join(";", optionRuntime.Values).

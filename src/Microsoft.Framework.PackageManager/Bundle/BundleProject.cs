@@ -97,15 +97,7 @@ namespace Microsoft.Framework.PackageManager.Bundle
 
             if (Directory.Exists(TargetPath))
             {
-                if (root.Overwrite)
-                {
-                    root.Operations.Delete(TargetPath);
-                }
-                else
-                {
-                    root.Reports.Quiet.WriteLine("  {0} already exists.", TargetPath);
-                    return;
-                }
+                root.Operations.Delete(TargetPath);
             }
 
             // Generate nupkg from this project dependency
