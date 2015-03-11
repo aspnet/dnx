@@ -46,7 +46,7 @@ namespace Microsoft.Framework.Runtime.Dependencies
 
             if (information == null)
             {
-                Log.WriteWarning($"No framework information found for {targetFramework}");
+                Log.LogWarning($"No framework information found for {targetFramework}");
                 return false;
             }
 
@@ -72,7 +72,7 @@ namespace Microsoft.Framework.Runtime.Dependencies
                     if (Log.IsEnabled(LogLevel.Verbose))
                     {
                         // Trim back the path
-                        Log.WriteVerbose($"Resolved {name} {version} to {path.Substring(information.Path.Length + 1)}");
+                        Log.LogVerbose($"Resolved {name} {version} to {path.Substring(information.Path.Length + 1)}");
                     }
                 }
             }
@@ -294,14 +294,14 @@ namespace Microsoft.Framework.Runtime.Dependencies
             // The redist list contains the list of assemblies for this target framework
             string redistList = Path.Combine(directory.FullName, "RedistList", "FrameworkList.xml");
 
-            Log.WriteVerbose($"Loading Framework Information for {targetFramework}");
-            Log.WriteVerbose($"Scanning {directory.FullName}");
+            Log.LogVerbose($"Loading Framework Information for {targetFramework}");
+            Log.LogVerbose($"Scanning {directory.FullName}");
 
             if (File.Exists(redistList))
             {
                 if (Log.IsEnabled(LogLevel.Verbose))
                 {
-                    Log.WriteVerbose($"Reading redist list from {redistList.Substring(directory.FullName.Length + 1)}");
+                    Log.LogVerbose($"Reading redist list from {redistList.Substring(directory.FullName.Length + 1)}");
                 }
                 frameworkInfo.RedistListPath = redistList;
 
@@ -317,7 +317,7 @@ namespace Microsoft.Framework.Runtime.Dependencies
                         var entry = new AssemblyEntry();
                         entry.Version = version != null ? NuGetVersion.Parse(version) : null;
                         frameworkInfo.Assemblies.Add(assemblyName, entry);
-                        Log.WriteDebug($"Found assembly {assemblyName} {entry.Version}, located in {entry.Path}, in redist list");
+                        Log.LogDebug($"Found assembly {assemblyName} {entry.Version}, located in {entry.Path}, in redist list");
                     }
 
                     var nameAttribute = frameworkList.Root.Attribute("Name");

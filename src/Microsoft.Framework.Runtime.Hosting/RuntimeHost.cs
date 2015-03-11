@@ -50,7 +50,7 @@ namespace Microsoft.Framework.Runtime
 
         public void ExecuteApplication(string applicationName, string[] programArgs)
         {
-            Log.WriteInformation($"Launching '{applicationName}' '{string.Join(" ", programArgs)}'");
+            Log.LogInformation($"Launching '{applicationName}' '{string.Join(" ", programArgs)}'");
 
             var deps = DependencyManager.ResolveDependencies(
                 DependencyProviders,
@@ -63,18 +63,18 @@ namespace Microsoft.Framework.Runtime
 
             if (Log.IsEnabled(LogLevel.Information))
             {
-                Log.WriteInformation($"Executing Entry Point: {entryPoint.GetName().FullName}");
+                Log.LogInformation($"Executing Entry Point: {entryPoint.GetName().FullName}");
             }
         }
 
         private Assembly LocateEntryPoint(string applicationName)
         {
             var sw = Stopwatch.StartNew();
-            Log.WriteInformation($"Locating entry point for {applicationName}");
+            Log.LogInformation($"Locating entry point for {applicationName}");
 
             if (Project == null)
             {
-                Log.WriteError("Unable to locate entry point, there is no project");
+                Log.LogError("Unable to locate entry point, there is no project");
                 return null;
             }
 
@@ -103,7 +103,7 @@ namespace Microsoft.Framework.Runtime
             }
 
             sw.Stop();
-            Log.WriteInformation($"Located entry point in {sw.ElapsedMilliseconds}ms");
+            Log.LogInformation($"Located entry point in {sw.ElapsedMilliseconds}ms");
 
             return asm;
         }

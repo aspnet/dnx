@@ -49,7 +49,7 @@ namespace Microsoft.Framework.Runtime
             PackageSpec packageSpec;
             if (projectResolver.TryResolvePackageSpec(GetProjectName(projectDirectory), out packageSpec))
             {
-                log.WriteVerbose($"Loaded project {packageSpec.Name}");
+                log.LogVerbose($"Loaded project {packageSpec.Name}");
                 hostBuilder.Project = new Project(packageSpec);
             }
 
@@ -57,23 +57,23 @@ namespace Microsoft.Framework.Runtime
             LockFile lockFile;
             if (TryReadLockFile(projectDirectory, out lockFile))
             {
-                log.WriteVerbose($"Loaded lock file");
+                log.LogVerbose($"Loaded lock file");
                 hostBuilder.LockFile = lockFile;
             }
 
             // Set the framework
             hostBuilder.TargetFramework = runtimeFramework;
 
-            log.WriteVerbose("Registering PackageSpecReferenceDependencyProvider");
+            log.LogVerbose("Registering PackageSpecReferenceDependencyProvider");
             hostBuilder.DependencyProviders.Add(new PackageSpecReferenceDependencyProvider(projectResolver));
 
             if (hostBuilder.LockFile != null)
             {
-                log.WriteVerbose("Registering LockFileDependencyProvider");
+                log.LogVerbose("Registering LockFileDependencyProvider");
                 hostBuilder.DependencyProviders.Add(new LockFileDependencyProvider(hostBuilder.LockFile));
             }
 
-            log.WriteVerbose("Registering ReferenceAssemblyDependencyProvider");
+            log.LogVerbose("Registering ReferenceAssemblyDependencyProvider");
             var referenceResolver = new FrameworkReferenceResolver();
             hostBuilder.DependencyProviders.Add(new ReferenceAssemblyDependencyProvider(referenceResolver));
 

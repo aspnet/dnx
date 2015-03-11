@@ -42,7 +42,7 @@ namespace Microsoft.Framework.PackageManager
         {
             if (string.IsNullOrEmpty(packageId))
             {
-                WriteError("The name of the package to be installed was not specified.");
+                LogError("The name of the package to be installed was not specified.");
                 return false;
             }
 
@@ -79,7 +79,7 @@ namespace Microsoft.Framework.PackageManager
 
             if (!Directory.Exists(commandsFolder))
             {
-                WriteError("The specified package is not an application. The package was added but no commands were installed.");
+                LogError("The specified package is not an application. The package was added but no commands were installed.");
                 return false;
             }
 
@@ -94,7 +94,7 @@ namespace Microsoft.Framework.PackageManager
                 CommandNameValidator.ShouldNameBeSkipped(cmd));
             if (blockedCommands.Any())
             {
-                WriteError(string.Format(
+                LogError(string.Format(
                     "The application cannot be installed because the following command names are not allowed: {0}.",
                     string.Join(", ", blockedCommands)));
 
@@ -119,7 +119,7 @@ namespace Microsoft.Framework.PackageManager
 
             if (conflictingCommands.Any())
             {
-                WriteError(string.Format(
+                LogError(string.Format(
                     "The application commands cannot be installed because the following commands already exist: {0}. No changes were made. Rerun the command with the --overwrite switch to replace the existing commands.",
                     string.Join(", ", conflictingCommands)));
 
@@ -170,7 +170,7 @@ namespace Microsoft.Framework.PackageManager
             Reports.Information.WriteLine(message);
         }
 
-        private void WriteError(string message)
+        private void LogError(string message)
         {
             Reports.Error.WriteLine(message.Red());
         }

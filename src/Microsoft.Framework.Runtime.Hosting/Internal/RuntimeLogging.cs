@@ -38,12 +38,12 @@ namespace Microsoft.Framework.Runtime.Internal
 
         public static ILogger Logger<T>()
         {
-            return _loggerFactory.Create<T>();
+            return _loggerFactory.CreateLogger<T>();
         }
 
         public static ILogger Logger(string name)
         {
-            return _loggerFactory.Create(name);
+            return _loggerFactory.CreateLogger(name);
         }
 
         private static void ParseTrace(string trace)

@@ -37,7 +37,7 @@ namespace Microsoft.Framework.PackageManager
             Runtime.Project project;
             if (!Runtime.Project.TryGetProject(_buildOptions.ProjectDir, out project, warnings))
             {
-                WriteError(string.Format("Unable to locate {0}.", Runtime.Project.ProjectFileName));
+                LogError(string.Format("Unable to locate {0}.", Runtime.Project.ProjectFileName));
                 return false;
             }
 
@@ -59,20 +59,20 @@ namespace Microsoft.Framework.PackageManager
 
             if (frameworks == null)
             {
-                WriteError(frameworkSelectionError);
+                LogError(frameworkSelectionError);
                 return false;
             }
 
             if (_buildOptions.GeneratePackages &&
                 !ScriptExecutor.Execute(project, "prepack", GetScriptVariable))
             {
-                WriteError(ScriptExecutor.ErrorMessage);
+                LogError(ScriptExecutor.ErrorMessage);
                 return false;
             }
 
             if (!ScriptExecutor.Execute(project, "prebuild", GetScriptVariable))
             {
-                WriteError(ScriptExecutor.ErrorMessage);
+                LogError(ScriptExecutor.ErrorMessage);
                 return false;
             }
 
@@ -200,14 +200,14 @@ namespace Microsoft.Framework.PackageManager
 
             if (!ScriptExecutor.Execute(project, "postbuild", GetScriptVariable))
             {
-                WriteError(ScriptExecutor.ErrorMessage);
+                LogError(ScriptExecutor.ErrorMessage);
                 return false;
             }
 
             if (_buildOptions.GeneratePackages &&
                 !ScriptExecutor.Execute(project, "postpack", GetScriptVariable))
             {
-                WriteError(ScriptExecutor.ErrorMessage);
+                LogError(ScriptExecutor.ErrorMessage);
                 return false;
             }
 
@@ -268,7 +268,7 @@ namespace Microsoft.Framework.PackageManager
             var warningCount = diagnostics.Count(d => d.Severity == CompilationMessageSeverity.Warning);
             if (errorCount > 0)
             {
-                WriteError("Build failed.");
+                LogError("Build failed.");
             }
             else
             {
@@ -287,7 +287,7 @@ namespace Microsoft.Framework.PackageManager
                                     .Select(d => d.FormattedMessage);
             foreach (var error in errors)
             {
-                WriteError(error);
+                LogError(error);
             }
 
             var warnings = diagnostics.Where(d => d.Severity == CompilationMessageSeverity.Warning)
@@ -295,16 +295,16 @@ namespace Microsoft.Framework.PackageManager
 
             foreach (var warning in warnings)
             {
-                WriteWarning(warning);
+                LogWarning(warning);
             }
         }
 
-        private void WriteError(string message)
+        private void LogError(string message)
         {
             _buildOptions.Reports.Error.WriteLine(message.Red());
         }
 
-        private void WriteWarning(string message)
+        private void LogWarning(string message)
         {
             _buildOptions.Reports.Information.WriteLine(message.Yellow());
         }

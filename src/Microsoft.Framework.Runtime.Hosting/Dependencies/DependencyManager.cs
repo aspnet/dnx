@@ -61,19 +61,19 @@ namespace Microsoft.Framework.Runtime.Dependencies
             // Write the graph
             if (Log.IsEnabled(LogLevel.Debug))
             {
-                Log.WriteDebug("Dependency Graph:");
+                Log.LogDebug("Dependency Graph:");
                 if (graph == null || graph.Item == null)
                 {
-                    Log.WriteDebug(" <no dependencies>");
+                    Log.LogDebug(" <no dependencies>");
                 }
                 else
                 {
-                    graph.Dump(s => Log.WriteDebug($" {s}"));
+                    graph.Dump(s => Log.LogDebug($" {s}"));
                 }
-                Log.WriteDebug("Selected Dependencies");
+                Log.LogDebug("Selected Dependencies");
                 foreach (var library in libraries.Values)
                 {
-                    Log.WriteDebug($" {library.Identity}");
+                    Log.LogDebug($" {library.Identity}");
                 }
             }
 

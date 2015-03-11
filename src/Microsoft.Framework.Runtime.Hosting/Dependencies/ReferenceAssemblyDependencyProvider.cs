@@ -41,7 +41,7 @@ namespace Microsoft.Framework.Runtime.Dependencies
 
             if (!FrameworkResolver.TryGetAssembly(name, targetFramework, out path, out assemblyVersion))
             {
-                Log.WriteWarning($"Unable to resolve requested assembly {libraryRange.Name}");
+                Log.LogWarning($"Unable to resolve requested assembly {libraryRange.Name}");
                 return null;
             }
 

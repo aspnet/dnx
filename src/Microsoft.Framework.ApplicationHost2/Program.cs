@@ -55,7 +55,7 @@ namespace Microsoft.Framework.ApplicationHost
                 // this namespace :).
                 log = RuntimeLogging.Logger("Microsoft.Framework.ApplicationHost");
 
-                log.WriteInformation("Application Host Starting");
+                log.LogInformation("Application Host Starting");
 
                 // Construct the necessary context for hosting the application
                 var builder = RuntimeHostBuilder.ForProjectDirectory(
@@ -72,7 +72,7 @@ namespace Microsoft.Framework.ApplicationHost
                 var host = builder.Build();
 
                 // Get the project and print some information from it
-                log.WriteInformation($"Project: {host.Project.Name} ({host.Project.BaseDirectory})");
+                log.LogInformation($"Project: {host.Project.Name} ({host.Project.BaseDirectory})");
 
                 // Determine the command to be executed
                 var command = string.IsNullOrEmpty(options.ApplicationName) ? "run" : options.ApplicationName;
@@ -92,7 +92,7 @@ namespace Microsoft.Framework.ApplicationHost
                     options.ApplicationName = host.Project.EntryPoint ?? host.Project.Name;
                 }
 
-                log.WriteInformation($"Executing '{options.ApplicationName}' '{string.Join(" ", programArgs)}'");
+                log.LogInformation($"Executing '{options.ApplicationName}' '{string.Join(" ", programArgs)}'");
                 host.ExecuteApplication(
                     options.ApplicationName,
                     programArgs);
@@ -103,7 +103,7 @@ namespace Microsoft.Framework.ApplicationHost
             {
                 if (log != null)
                 {
-                    log.WriteError($"{ex.GetType().FullName} {ex.Message}", ex);
+                    log.LogError($"{ex.GetType().FullName} {ex.Message}", ex);
                 }
                 Console.Error.WriteLine($"Error loading project: {ex.Message}");
                 return Task.FromResult(1);

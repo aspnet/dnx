@@ -26,7 +26,8 @@
     ],
     "exclude": [
         "../../submodules/NuGet.Versioning/src/NuGet.Versioning/compiler/**/*.cs",
-        "../../submodules/**/AssemblyInfo.cs"
+        "../../submodules/**/AssemblyInfo.cs",
+        "../../submodules/Logging/src/Microsoft.Framework.Logging/LoggingServiceCollectionExtensions.cs"
     ],
     "frameworks": {
         "dnx451": {
