@@ -1,4 +1,4 @@
-Microsoft Visual Studio Solution File, Format Version 12.00
+﻿Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 14
 VisualStudioVersion = 14.0.22710.0
 MinimumVisualStudioVersion = 10.0.40219.1
@@ -109,7 +109,7 @@ Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Microsoft.Framework.Runtime
 EndProject
 Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "NuGet.Packaging.Core.Types", "submodules\NuGet.Packaging\src\NuGet.Packaging.Core.Types\NuGet.Packaging.Core.Types.xproj", "{46275450-3B62-4E89-8F7E-3FE2EE8513D2}"
 EndProject
-Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "NuGet.ProjectModel", "submodules\NuGet.Packaging\src\NuGet.ProjectModel\NuGet.ProjectModel.kproj", "{18006692-AFCC-49FD-95F6-66E8A0C49E9B}"
+Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "NuGet.ProjectModel", "submodules\NuGet.Packaging\src\NuGet.ProjectModel\NuGet.ProjectModel.xproj", "{18006692-AFCC-49FD-95F6-66E8A0C49E9B}"
 EndProject
 Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "NuGet.LibraryModel", "submodules\NuGet.Packaging\src\NuGet.LibraryModel\NuGet.LibraryModel.xproj", "{13883E8E-7DE1-4EDD-8E4A-C5357BA8CD81}"
 EndProject
