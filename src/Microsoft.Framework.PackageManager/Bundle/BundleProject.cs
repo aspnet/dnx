@@ -9,7 +9,6 @@ using System.Linq;
 using System.Security.Cryptography;
 using System.Xml;
 using System.Xml.Linq;
-using Microsoft.Framework.PackageManager.Utils;
 using Microsoft.Framework.Runtime;
 using Microsoft.Framework.Runtime.DependencyManagement;
 using Newtonsoft.Json.Linq;
@@ -383,12 +382,19 @@ namespace Microsoft.Framework.PackageManager.Bundle
                     var package = packageInfo.Package;
                     var nupkgPath = resolver.GetPackageFilePath(package.Id, package.Version);
 
-                    var project = bundleProject.GetCurrentProject();
-                    lockFile.Libraries.Add(LockFileUtils.CreateLockFileLibraryForProject(
-                        project,
-                        package,
-                        sha512,
-                        project.GetTargetFrameworks().Select(f => f.FrameworkName)));
+                    using (var nupkgStream = File.OpenRead(nupkgPath))
+                    {
+                        var lockFileLib = new LockFileLibrary();
+                        lockFileLib.Name = package.Id;
+                        lockFileLib.Version = package.Version;
+                        lockFileLib.Sha = Convert.ToBase64String(sha512.ComputeHash(nupkgStream));
+                        lockFileLib.DependencySets = package.DependencySets.ToList();
+                        lockFileLib.FrameworkAssemblies = package.FrameworkAssemblies.ToList();
+                        lockFileLib.PackageAssemblyReferences = package.PackageAssemblyReferences.ToList();
+                        lockFileLib.Files = package.GetFiles().ToList();
+
+                        lockFile.Libraries.Add(lockFileLib);
+                    }
                 }
             }
 

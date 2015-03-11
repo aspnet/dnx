@@ -71,7 +71,7 @@ namespace Microsoft.Framework.Runtime
                     if (libraryExport == null)
                     {
                         // TODO: Failed to resolve dependency so do something useful
-                        Logger.TraceError("[{0}]: Failed to resolve dependency '{1}'", typeof(ProjectExportProviderHelper).Name, node.Library.Name);
+                        Logger.TraceInformation("[{0}]: Failed to resolve dependency '{1}'", typeof(ProjectExportProviderHelper).Name, node.Library.Name);
                     }
                     else
                     {

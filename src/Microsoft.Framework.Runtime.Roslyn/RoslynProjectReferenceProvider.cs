@@ -33,11 +33,6 @@ namespace Microsoft.Framework.Runtime.Roslyn
             Func<ILibraryExport> referenceResolver)
         {
             var export = referenceResolver();
-            if (export == null)
-            {
-                return null;
-            }
-
             var incomingReferences = export.MetadataReferences;
             var incomingSourceReferences = export.SourceReferences;
 

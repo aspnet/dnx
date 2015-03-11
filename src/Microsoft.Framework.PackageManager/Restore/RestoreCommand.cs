@@ -17,8 +17,6 @@ using Microsoft.Framework.Runtime;
 using NuGet;
 using Microsoft.Framework.Runtime.DependencyManagement;
 using TempRepack.Engine.Model;
-using System.Runtime.Versioning;
-using Microsoft.Framework.PackageManager.Utils;
 
 namespace Microsoft.Framework.PackageManager
 {
@@ -330,7 +328,6 @@ namespace Microsoft.Framework.PackageManager
             }
 
             var projectDirectory = project.ProjectDirectory;
-            var projectResolver = new ProjectResolver(projectDirectory, rootDirectory);
             var packageRepository = new PackageRepository(packagesDirectory);
             var restoreOperations = new RestoreOperations(Reports.Verbose);
             var projectProviders = new List<IWalkProvider>();
@@ -341,7 +338,9 @@ namespace Microsoft.Framework.PackageManager
             projectProviders.Add(
                 new LocalWalkProvider(
                     new ProjectReferenceDependencyProvider(
-                        projectResolver)));
+                        new ProjectResolver(
+                            projectDirectory,
+                            rootDirectory))));
 
             localProviders.Add(
                 new LocalWalkProvider(
@@ -423,7 +422,7 @@ namespace Microsoft.Framework.PackageManager
                 }
             }
             var graphs = await Task.WhenAll(tasks);
-            foreach (var graph in graphs)
+            foreach(var graph in graphs)
             {
                 Reduce(graph);
             }
@@ -545,19 +544,7 @@ namespace Microsoft.Framework.PackageManager
             if (!useLockFile)
             {
                 Reports.Information.WriteLine(string.Format("Writing lock file {0}", projectLockFilePath.White().Bold()));
-
-                // Collect target frameworks
-                var frameworks = new HashSet<FrameworkName>();
-                foreach (var item in graphItems)
-                {
-                    Runtime.Project dependencyProject;
-                    if (projectProviders.Contains(item.Match.Provider) && projectResolver.TryResolveProject(item.Match.Library.Name, out dependencyProject))
-                    {
-                        frameworks.AddRange(dependencyProject.GetTargetFrameworks().Select(t => t.FrameworkName));
-                    }
-                }
-
-                WriteLockFile(projectLockFilePath, project, graphItems, new PackageRepository(packagesDirectory), frameworks);
+                WriteLockFile(projectLockFilePath, project, graphItems, new PackageRepository(packagesDirectory));
             }
 
             if (!ScriptExecutor.Execute(project, "postrestore", getVariable))
@@ -797,7 +784,7 @@ namespace Microsoft.Framework.PackageManager
         }
 
         private void WriteLockFile(string projectLockFilePath, Runtime.Project project, List<GraphItem> graphItems,
-            PackageRepository repository, IEnumerable<FrameworkName> frameworks)
+            PackageRepository repository)
         {
             var lockFile = new LockFile();
             lockFile.Islocked = Lock;
@@ -816,9 +803,20 @@ namespace Microsoft.Framework.PackageManager
                     }
 
                     var package = packageInfo.Package;
-                    var lockFileLib = LockFileUtils.CreateLockFileLibraryForProject(project, package, sha512, frameworks);
 
-                    lockFile.Libraries.Add(lockFileLib);
+                    using (var nupkgStream = package.GetStream())
+                    {
+                        var lockFileLib = new LockFileLibrary();
+                        lockFileLib.Name = package.Id;
+                        lockFileLib.Version = package.Version;
+                        lockFileLib.Sha = Convert.ToBase64String(sha512.ComputeHash(nupkgStream));
+                        lockFileLib.DependencySets = package.DependencySets.ToList();
+                        lockFileLib.FrameworkAssemblies = package.FrameworkAssemblies.ToList();
+                        lockFileLib.PackageAssemblyReferences = package.PackageAssemblyReferences.ToList();
+                        lockFileLib.Files = package.GetFiles().ToList();
+
+                        lockFile.Libraries.Add(lockFileLib);
+                    }
                 }
             }
 
@@ -826,7 +824,6 @@ namespace Microsoft.Framework.PackageManager
             lockFile.ProjectFileDependencyGroups.Add(new ProjectFileDependencyGroup(
                 string.Empty,
                 project.Dependencies.Select(x => x.LibraryRange.ToString())));
-
             foreach (var frameworkInfo in project.GetTargetFrameworks())
             {
                 lockFile.ProjectFileDependencyGroups.Add(new ProjectFileDependencyGroup(

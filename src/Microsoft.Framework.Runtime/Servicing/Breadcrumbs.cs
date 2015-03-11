@@ -31,7 +31,7 @@ namespace Microsoft.Framework.Runtime.Servicing
             }
         }
 
-        public static bool IsPackageServiceable(PackageInfo package)
+        public static bool IsPackageServiceable(IPackage package)
         {
             // TODO: Figure out what makes a package serviceable
             return false;

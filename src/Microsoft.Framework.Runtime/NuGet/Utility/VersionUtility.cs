@@ -20,14 +20,13 @@ namespace NuGet
 {
     public static class VersionUtility
     {
-        public static readonly string AspNetCoreFrameworkIdentifier = "Asp.NetCore";
-        public static readonly string DnxCoreFrameworkIdentifier = "DNXCore";
-
         internal const string NetFrameworkIdentifier = ".NETFramework";
         private const string NetCoreFrameworkIdentifier = ".NETCore";
         private const string PortableFrameworkIdentifier = ".NETPortable";
         internal const string AspNetFrameworkIdentifier = "Asp.Net";
+        internal const string AspNetCoreFrameworkIdentifier = "Asp.NetCore";
         internal const string DnxFrameworkIdentifier = "DNX";
+        internal const string DnxCoreFrameworkIdentifier = "DNXCore";
         internal const string DnxFrameworkShortName = "dnx";
         internal const string DnxCoreFrameworkShortName = "dnxcore";
 
