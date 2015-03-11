@@ -7,9 +7,10 @@
 #include "dnx.coreclr.h"
 #include "tpa.h"
 
+#undef errno
 #define TRUSTED_PLATFORM_ASSEMBLIES_STRING_BUFFER_SIZE_CCH (63 * 1024) //32K WCHARs
-#define CHECK_RETURN_VALUE_FAIL_EXIT_VIA_FINISHED(errno) { if (errno) { printf_s("Error in file: %s at line: %d error: %d\n", __FILE__, __LINE__ - 1, errno); goto Finished;}}
-#define CHECK_RETURN_VALUE_FAIL_EXIT_VIA_FINISHED_SETSTATE(errno,SET_EXIT_STATE) { if (errno) { printf_s("Error in file: %s at line: %d error: %d\n", __FILE__, __LINE__ - 1, errno); SET_EXIT_STATE; goto Finished;}}
+#define CHECK_RETURN_VALUE_FAIL_EXIT_VIA_FINISHED(errno) { if (errno) { printf_s("Error in file: %s at line: %d error: %s\n", __FILE__, __LINE__ - 1, strerror(errno)); goto Finished;}}
+#define CHECK_RETURN_VALUE_FAIL_EXIT_VIA_FINISHED_SETSTATE(errno,SET_EXIT_STATE) { if (errno) { printf_s("Error in file: %s at line: %d error: %s\n", __FILE__, __LINE__ - 1, strerror(errno)); SET_EXIT_STATE; goto Finished;}}
 
 typedef int (STDMETHODCALLTYPE *HostMain)(
     const int argc,
@@ -319,6 +320,23 @@ Finished:
     return fSuccess;
 }
 
+// The security-enhanced CRT functions validate function parameters
+// and call the invalid parameter handler when an invalid parameter
+// is found. This is our handler that will be called
+void invalid_parameter_handler(
+    const wchar_t *expression,
+    const wchar_t *function,
+    const wchar_t *file,
+    unsigned int line,
+    uintptr_t)
+{
+    if (file != NULL)
+    {
+        ::wprintf_s(L"Invalid parameter in function: %s file: %s line: %d\r\nExpression: %s",
+            function, file, line, expression);
+    }
+}
+
 extern "C" __declspec(dllexport) HRESULT __stdcall CallApplicationMain(PCALL_APPLICATION_MAIN_DATA data)
 {
     HRESULT hr = S_OK;
@@ -330,6 +348,9 @@ extern "C" __declspec(dllexport) HRESULT __stdcall CallApplicationMain(PCALL_APP
     TCHAR lpCoreClrModulePath[MAX_PATH];
     size_t cchTrustedPlatformAssemblies = 0;
     LPWSTR pwszTrustedPlatformAssemblies = nullptr;
+
+    // set handler for security-enhanced CRT functions
+    _set_invalid_parameter_handler(invalid_parameter_handler);
 
     Win32KDisable();
 
@@ -450,6 +471,8 @@ extern "C" __declspec(dllexport) HRESULT __stdcall CallApplicationMain(PCALL_APP
     CHECK_RETURN_VALUE_FAIL_EXIT_VIA_FINISHED(errno);
 
     //wstring appPaths(szCurrentDirectory);
+    //Concatenating two paths and separating by ;
+    //making sure buffer can hold two max length paths
     WCHAR wszAppPaths[(MAX_PATH + 1) * 2];
     wszAppPaths[0] = L'\0';
 
