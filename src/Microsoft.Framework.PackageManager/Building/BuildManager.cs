@@ -198,17 +198,20 @@ namespace Microsoft.Framework.PackageManager
                 }
             }
 
-            if (!ScriptExecutor.Execute(project, "postbuild", GetScriptVariable))
+            if (success)
             {
-                LogError(ScriptExecutor.ErrorMessage);
-                return false;
-            }
+                if (!ScriptExecutor.Execute(project, "postbuild", GetScriptVariable))
+                {
+                    WriteError(ScriptExecutor.ErrorMessage);
+                    success = false;
+                }
 
-            if (_buildOptions.GeneratePackages &&
-                !ScriptExecutor.Execute(project, "postpack", GetScriptVariable))
-            {
-                LogError(ScriptExecutor.ErrorMessage);
-                return false;
+                if (_buildOptions.GeneratePackages &&
+                    !ScriptExecutor.Execute(project, "postpack", GetScriptVariable))
+                {
+                    WriteError(ScriptExecutor.ErrorMessage);
+                    success = false;
+                }
             }
 
             sw.Stop();
