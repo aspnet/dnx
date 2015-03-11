@@ -318,6 +318,15 @@ namespace Microsoft.Framework.PackageManager
                 useLockFile = true;
             }
 
+            if (useLockFile && !lockFile.IsValidForProject(project))
+            {
+                // Exhibit the same behavior as if it has been run with "kpm restore -lock"
+                Reports.Information.WriteLine("Updating the invalid lock file with {0}",
+                    "kpm restore --lock".Yellow().Bold());
+                useLockFile = false;
+                Lock = true;
+            }
+
             Func<string, string> getVariable = key =>
             {
                 return null;
