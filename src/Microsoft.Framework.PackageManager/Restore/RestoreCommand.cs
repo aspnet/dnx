@@ -541,7 +541,7 @@ namespace Microsoft.Framework.PackageManager
 
             await InstallPackages(installItems, packagesDirectory, packageFilter: (library, nupkgSHA) => true);
 
-            if (success && !useLockFile)
+            if (!useLockFile)
             {
                 Reports.Information.WriteLine(string.Format("Writing lock file {0}", projectLockFilePath.White().Bold()));
                 WriteLockFile(projectLockFilePath, project, graphItems, new PackageRepository(packagesDirectory));
