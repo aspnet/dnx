@@ -11,7 +11,7 @@ namespace TempRepack.Engine.Model
     {
         public RuntimeFile ReadRuntimeFile(string filePath)
         {
-            using (var fileStream = new FileStream(filePath, FileMode.Open))
+            using (var fileStream = File.OpenRead(filePath))
             {
                 using (var streamReader = new StreamReader(fileStream))
                 {
