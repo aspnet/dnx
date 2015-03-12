@@ -53,19 +53,19 @@ namespace Microsoft.Framework.PackageManager.Restore.NuGet
             }
 
             var exception = new FileNotFoundException(
-                message: string.Format("The local package source {0} doesn't exist", Source.Bold()),
+                message: string.Format("The local package source {0} doesn't exist", Source),
                 fileName: Source);
 
             if (_ignoreFailure)
             {
                 _reports.Information.WriteLine(string.Format("Warning: FindPackagesById: {1}\r\n  {0}",
-                    exception.Message, id.Yellow().Bold()));
+                    exception.Message, id).Yellow().Bold());
                 _ignored = true;
                 return Task.FromResult(Enumerable.Empty<PackageInfo>());
             }
 
             _reports.Error.WriteLine(string.Format("Error: FindPackagesById: {1}\r\n  {0}",
-                exception.Message, id.Red().Bold()));
+                exception.Message, id).Red().Bold());
             throw exception;
         }
 
