@@ -832,6 +832,7 @@ namespace Microsoft.Framework.PackageManager
             }
 
             // Use empty string as the key of dependencies shared by all frameworks
+
             lockFile.ProjectFileDependencyGroups.Add(new ProjectFileDependencyGroup(
                 string.Empty,
                 project.Dependencies.Select(x => x.LibraryRange.ToString())));

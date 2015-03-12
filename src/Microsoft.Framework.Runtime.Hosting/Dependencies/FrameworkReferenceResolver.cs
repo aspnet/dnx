@@ -18,17 +18,10 @@ namespace Microsoft.Framework.Runtime.Dependencies
         private readonly ILogger Log;
         private readonly IDictionary<NuGetFramework, FrameworkInformation> _cache = new Dictionary<NuGetFramework, FrameworkInformation>();
 
-        private static readonly IDictionary<NuGetFramework, List<NuGetFramework>> _aliases = new Dictionary<NuGetFramework, List<NuGetFramework>>
+        private static readonly ISet<string> _desktopFrameworkNames = new HashSet<string>()
         {
-            { FrameworkConstants.CommonFrameworks.AspNet50, new List<NuGetFramework> {
-                FrameworkConstants.CommonFrameworks.Net451
-                }
-            },
-        };
-
-        private static readonly IDictionary<NuGetFramework, NuGetFramework> _monoAliases = new Dictionary<NuGetFramework, NuGetFramework>
-        {
-            { FrameworkConstants.CommonFrameworks.Net451, FrameworkConstants.CommonFrameworks.AspNet50 },
+            FrameworkConstants.FrameworkIdentifiers.Net,
+            FrameworkConstants.FrameworkIdentifiers.Dnx
         };
 
         public FrameworkReferenceResolver()
@@ -41,6 +34,17 @@ namespace Microsoft.Framework.Runtime.Dependencies
         {
             path = null;
             version = null;
+
+            if(!targetFramework.IsDesktop())
+            {
+                // We only work on desktop frameworks!
+                return false;
+            }
+            // Rewrite the target framework in case it's name was DNX
+            // DNX versions match 1:1 with .NET Framework versions
+            targetFramework = new NuGetFramework(
+                FrameworkConstants.FrameworkIdentifiers.Net,
+                targetFramework.Version); 
 
             var information = _cache.GetOrAdd(targetFramework, GetFrameworkInformation);
 
@@ -83,17 +87,14 @@ namespace Microsoft.Framework.Runtime.Dependencies
         public string GetFriendlyNuGetFramework(NuGetFramework targetFramework)
         {
             // We don't have a friendly name for this anywhere on the machine so hard code it
-            if (string.Equals(targetFramework.Framework, "K", StringComparison.OrdinalIgnoreCase))
+            string friendlyName = targetFramework.Framework;
+            if (Equals(targetFramework.Framework, FrameworkConstants.CommonFrameworks.DnxCore))
             {
-                return ".NET Core Framework 4.5";
+                return "DNX Core " + targetFramework.Version.ToString();
             }
-            else if (Equals(targetFramework, FrameworkConstants.CommonFrameworks.AspNetCore50))
+            else if (Equals(targetFramework.Framework, FrameworkConstants.CommonFrameworks.Dnx))
             {
-                return "ASP.NET Core 5.0";
-            }
-            else if (Equals(targetFramework, FrameworkConstants.CommonFrameworks.AspNet50))
-            {
-                return "ASP.NET 5.0";
+                return "DNX " + targetFramework.Version.ToString(); 
             }
 
             var information = _cache.GetOrAdd(targetFramework, GetFrameworkInformation);
@@ -207,12 +208,6 @@ namespace Microsoft.Framework.Runtime.Dependencies
 
                     var frameworkName = new NuGetFramework(FrameworkConstants.FrameworkIdentifiers.Net, new Version(versionFolderPair.Key));
                     _cache[frameworkName] = frameworkInfo;
-
-                    NuGetFramework aliasNuGetFramework;
-                    if (_monoAliases.TryGetValue(frameworkName, out aliasNuGetFramework))
-                    {
-                        _cache[aliasNuGetFramework] = frameworkInfo;
-                    }
                 }
 
                 // Not needed anymore
@@ -230,25 +225,16 @@ namespace Microsoft.Framework.Runtime.Dependencies
                 return null;
             }
 
-            List<NuGetFramework> candidates;
-            if (_aliases.TryGetValue(targetFramework, out candidates))
+            // Identify the .NET Framework related to this DNX framework
+            if(_desktopFrameworkNames.Contains(targetFramework.Framework))
             {
-                foreach (var framework in candidates)
-                {
-                    var information = GetFrameworkInformation(framework, referenceAssembliesPath);
-
-                    if (information != null)
-                    {
-                        return information;
-                    }
-                }
-
-                return null;
+                // Rewrite the name from DNX -> NET (unless of course the incoming
+                // name was NET, in which case we rewrite from NET -> NET which is harmless)
+                return GetFrameworkInformation(
+                    new NuGetFramework(FrameworkConstants.FrameworkIdentifiers.Net, targetFramework.Version),
+                    referenceAssembliesPath);
             }
-            else
-            {
-                return GetFrameworkInformation(targetFramework, referenceAssembliesPath);
-            }
+            return null;
         }
 
         private FrameworkInformation GetFrameworkInformation(NuGetFramework targetFramework, string referenceAssembliesPath)
@@ -317,7 +303,7 @@ namespace Microsoft.Framework.Runtime.Dependencies
                         var entry = new AssemblyEntry();
                         entry.Version = version != null ? NuGetVersion.Parse(version) : null;
                         frameworkInfo.Assemblies.Add(assemblyName, entry);
-                        Log.LogDebug($"Found assembly {assemblyName} {entry.Version}, located in {entry.Path}, in redist list");
+                        Log.LogDebug($"Found assembly {assemblyName} {entry.Version}, in redist list");
                     }
 
                     var nameAttribute = frameworkList.Root.Attribute("Name");
