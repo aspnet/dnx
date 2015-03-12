@@ -79,7 +79,7 @@ namespace Microsoft.Framework.Runtime.DependencyManagement
         {
             var json = new JObject();
             json["locked"] = new JValue(lockFile.Islocked);
-            json["version"] = new JValue(1);
+            json["version"] = new JValue(-10000);
             json["projectFileDependencyGroups"] = WriteObject(lockFile.ProjectFileDependencyGroups,
                 WriteProjectFileDependencyGroup);
             json["libraries"] = WriteObject(lockFile.Libraries, WriteLibrary);
