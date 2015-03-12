@@ -1116,12 +1116,7 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
   ""locked"": false,
   ""version"": -10000,
   ""projectFileDependencyGroups"": {
-    ""DNX,Version=v4.5.1"": [
-      ""framework/mscorlib "",
-      ""framework/System "",
-      ""framework/System.Core "",
-      ""framework/Microsoft.CSharp ""
-    ],
+    ""DNX,Version=v4.5.1"": [],
     """": [
       ""NoDependencies >= 1.0.0""
     ]
@@ -1155,7 +1150,8 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
         ""app\\project.json"",
         ""lib\\dnx451\\NoDependencies.dll"",
         ""lib\\dnx451\\NoDependencies.xml"",
-        ""root\\project.json""
+        ""root\\project.json"",
+        ""root\\project.lock.json""
       ]
     }
   }
