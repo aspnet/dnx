@@ -1,5 +1,8 @@
 {
     "commands": {
         "hello": "run"
+    },
+    "frameworks": {
+        "dnx451": {}
     }
 }

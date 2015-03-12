@@ -991,54 +991,70 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
         [InlineData("clr", "win", "x64")]
         public void BundleWithNoSourceOptionGeneratesLockFileOnClr(string flavor, string os, string architecture)
         {
-            var expectedOutputStructure = @"{
+            const string testApp = "NoDependencies";
+            const string expectedOutputStructure = @"{
   '.': ['hello', 'hello.cmd'],
   'approot': {
     'global.json': '',
     'packages': {
-      'HelloWorld': {
+      'NoDependencies': {
         '1.0.0': {
-          '.': ['HelloWorld.1.0.0.nupkg', 'HelloWorld.1.0.0.nupkg.sha512', 'HelloWorld.nuspec'],
+          '.': ['NoDependencies.1.0.0.nupkg', 'NoDependencies.1.0.0.nupkg.sha512', 'NoDependencies.nuspec'],
           'app': ['hello.cmd', 'hello.sh', 'project.json'],
           'root': ['project.json', 'project.lock.json'],
           'lib': {
-            'dnx451': ['HelloWorld.dll', 'HelloWorld.xml']
+            'dnx451': ['NoDependencies.dll', 'NoDependencies.xml']
           }
         }
       }
     }
   }
 }";
-            var expectedLockFileContents = @"{
+            const string expectedLockFileContents = @"{
   ""locked"": false,
-  ""version"": 1,
+  ""version"": -10000,
   ""projectFileDependencyGroups"": {
+    ""DNX,Version=v4.5.1"": [
+      ""framework/mscorlib "",
+      ""framework/System "",
+      ""framework/System.Core "",
+      ""framework/Microsoft.CSharp ""
+    ],
     """": [
-      ""HelloWorld >= 1.0.0""
+      ""NoDependencies >= 1.0.0""
     ]
   },
   ""libraries"": {
-    ""HelloWorld/1.0.0"": {
+    ""NoDependencies/1.0.0"": {
       ""sha"": ""NUPKG_SHA_VALUE"",
-      ""frameworkAssemblies"": {
-        ""DNX,Version=v4.5.1"": [
-          ""mscorlib"",
-          ""System"",
-          ""System.Core"",
-          ""Microsoft.CSharp""
-        ]
+      ""frameworks"": {
+        ""DNX,Version=v4.5.1"": {
+          ""dependencies"": {},
+          ""frameworkAssemblies"": [
+            ""mscorlib"",
+            ""System"",
+            ""System.Core"",
+            ""Microsoft.CSharp""
+          ],
+          ""runtimeAssemblies"": [
+            ""lib\\dnx451\\NoDependencies.dll""
+          ],
+          ""compileAssemblies"": [
+            ""lib\\dnx451\\NoDependencies.dll""
+          ]
+        }
       },
-      ""contents"": {
-        ""HelloWorld.1.0.0.nupkg"": {},
-        ""HelloWorld.1.0.0.nupkg.sha512"": {},
-        ""HelloWorld.nuspec"": {},
-        ""app\\hello.cmd"": {},
-        ""app\\hello.sh"": {},
-        ""app\\project.json"": {},
-        ""lib\\dnx451\\HelloWorld.dll"": {},
-        ""lib\\dnx451\\HelloWorld.xml"": {},
-        ""root\\project.json"": {}
-      }
+      ""files"": [
+        ""NoDependencies.1.0.0.nupkg"",
+        ""NoDependencies.1.0.0.nupkg.sha512"",
+        ""NoDependencies.nuspec"",
+        ""app\\hello.cmd"",
+        ""app\\hello.sh"",
+        ""app\\project.json"",
+        ""lib\\dnx451\\NoDependencies.dll"",
+        ""lib\\dnx451\\NoDependencies.xml"",
+        ""root\\project.json""
+      ]
     }
   }
 }";
@@ -1047,15 +1063,15 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
             using (var tempDir = TestUtils.CreateTempDir())
             {
                 var bundleOutputPath = Path.Combine(tempDir, "output");
-                var helloWorldAppPath = Path.Combine(tempDir, "HelloWorld");
-                TestUtils.CopyFolder(TestUtils.GetXreTestAppPath("HelloWorld"), helloWorldAppPath);
+                var appPath = Path.Combine(tempDir, testApp);
+                TestUtils.CopyFolder(TestUtils.GetXreTestAppPath(testApp), appPath);
 
                 var exitCode = KpmTestUtils.ExecKpm(
                     runtimeHomeDir,
                     subcommand: "bundle",
                     arguments: string.Format("--no-source --out {0}", bundleOutputPath),
                     environment: null,
-                    workingDir: helloWorldAppPath);
+                    workingDir: appPath);
 
                 Assert.Equal(0, exitCode);
 
@@ -1063,9 +1079,9 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
                     .MatchDirectoryOnDisk(bundleOutputPath, compareFileContents: false));
 
                 var outputLockFilePath = Path.Combine(bundleOutputPath,
-                    "approot", "packages", "HelloWorld", "1.0.0", "root", "project.lock.json");
+                    "approot", "packages", testApp, "1.0.0", "root", "project.lock.json");
                 var nupkgSha = File.ReadAllText(Path.Combine(bundleOutputPath,
-                    "approot", "packages", "HelloWorld", "1.0.0","HelloWorld.1.0.0.nupkg.sha512"));
+                    "approot", "packages", testApp, "1.0.0",$"{testApp}.1.0.0.nupkg.sha512"));
 
                 Assert.Equal(expectedLockFileContents.Replace("NUPKG_SHA_VALUE", nupkgSha),
                     File.ReadAllText(outputLockFilePath));
@@ -1077,18 +1093,19 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
         [InlineData("clr", "win", "x64")]
         public void BundleWithNoSourceOptionUpdatesLockFileOnClr(string flavor, string os, string architecture)
         {
-            var expectedOutputStructure = @"{
+            const string testApp = "NoDependencies";
+            const string expectedOutputStructure = @"{
   '.': ['hello', 'hello.cmd'],
   'approot': {
     'global.json': '',
     'packages': {
-      'HelloWorld': {
+      'NoDependencies': {
         '1.0.0': {
-          '.': ['HelloWorld.1.0.0.nupkg', 'HelloWorld.1.0.0.nupkg.sha512', 'HelloWorld.nuspec'],
+          '.': ['NoDependencies.1.0.0.nupkg', 'NoDependencies.1.0.0.nupkg.sha512', 'NoDependencies.nuspec'],
           'app': ['hello.cmd', 'hello.sh', 'project.json'],
           'root': ['project.json', 'project.lock.json'],
           'lib': {
-            'dnx451': ['HelloWorld.dll', 'HelloWorld.xml']
+            'dnx451': ['NoDependencies.dll', 'NoDependencies.xml']
           }
         }
       }
@@ -1097,35 +1114,49 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
 }";
             var expectedLockFileContents = @"{
   ""locked"": false,
-  ""version"": 1,
+  ""version"": -10000,
   ""projectFileDependencyGroups"": {
+    ""DNX,Version=v4.5.1"": [
+      ""framework/mscorlib "",
+      ""framework/System "",
+      ""framework/System.Core "",
+      ""framework/Microsoft.CSharp ""
+    ],
     """": [
-      ""HelloWorld >= 1.0.0""
+      ""NoDependencies >= 1.0.0""
     ]
   },
   ""libraries"": {
-    ""HelloWorld/1.0.0"": {
+    ""NoDependencies/1.0.0"": {
       ""sha"": ""NUPKG_SHA_VALUE"",
-      ""frameworkAssemblies"": {
-        ""DNX,Version=v4.5.1"": [
-          ""mscorlib"",
-          ""System"",
-          ""System.Core"",
-          ""Microsoft.CSharp""
-        ]
+      ""frameworks"": {
+        ""DNX,Version=v4.5.1"": {
+          ""dependencies"": {},
+          ""frameworkAssemblies"": [
+            ""mscorlib"",
+            ""System"",
+            ""System.Core"",
+            ""Microsoft.CSharp""
+          ],
+          ""runtimeAssemblies"": [
+            ""lib\\dnx451\\NoDependencies.dll""
+          ],
+          ""compileAssemblies"": [
+            ""lib\\dnx451\\NoDependencies.dll""
+          ]
+        }
       },
-      ""contents"": {
-        ""HelloWorld.1.0.0.nupkg"": {},
-        ""HelloWorld.1.0.0.nupkg.sha512"": {},
-        ""HelloWorld.nuspec"": {},
-        ""app\\hello.cmd"": {},
-        ""app\\hello.sh"": {},
-        ""app\\project.json"": {},
-        ""lib\\dnx451\\HelloWorld.dll"": {},
-        ""lib\\dnx451\\HelloWorld.xml"": {},
-        ""root\\project.json"": {},
-        ""root\\project.lock.json"": {}
-      }
+      ""files"": [
+        ""NoDependencies.1.0.0.nupkg"",
+        ""NoDependencies.1.0.0.nupkg.sha512"",
+        ""NoDependencies.nuspec"",
+        ""app\\hello.cmd"",
+        ""app\\hello.sh"",
+        ""app\\project.json"",
+        ""lib\\dnx451\\NoDependencies.dll"",
+        ""lib\\dnx451\\NoDependencies.xml"",
+        ""root\\project.json""
+      ]
     }
   }
 }";
@@ -1134,8 +1165,8 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
             using (var tempDir = TestUtils.CreateTempDir())
             {
                 var bundleOutputPath = Path.Combine(tempDir, "output");
-                var helloWorldAppPath = Path.Combine(tempDir, "HelloWorld");
-                TestUtils.CopyFolder(TestUtils.GetXreTestAppPath("HelloWorld"), helloWorldAppPath);
+                var appPath = Path.Combine(tempDir, testApp);
+                TestUtils.CopyFolder(TestUtils.GetXreTestAppPath(testApp), appPath);
 
                 // Generate lockfile for the HelloWorld app
                 var exitCode = KpmTestUtils.ExecKpm(
@@ -1143,7 +1174,7 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
                     subcommand: "restore",
                     arguments: string.Empty,
                     environment: null,
-                    workingDir: helloWorldAppPath);
+                    workingDir: appPath);
 
                 Assert.Equal(0, exitCode);
 
@@ -1152,7 +1183,7 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
                     subcommand: "bundle",
                     arguments: string.Format("--no-source --out {0}", bundleOutputPath),
                     environment: null,
-                    workingDir: helloWorldAppPath);
+                    workingDir: appPath);
 
                 Assert.Equal(0, exitCode);
 
@@ -1160,9 +1191,9 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
                     .MatchDirectoryOnDisk(bundleOutputPath, compareFileContents: false));
 
                 var outputLockFilePath = Path.Combine(bundleOutputPath,
-                    "approot", "packages", "HelloWorld", "1.0.0", "root", "project.lock.json");
+                    "approot", "packages", testApp, "1.0.0", "root", "project.lock.json");
                 var nupkgSha = File.ReadAllText(Path.Combine(bundleOutputPath,
-                    "approot", "packages", "HelloWorld", "1.0.0","HelloWorld.1.0.0.nupkg.sha512"));
+                    "approot", "packages", testApp, "1.0.0", $"{testApp}.1.0.0.nupkg.sha512"));
 
                 Assert.Equal(expectedLockFileContents.Replace("NUPKG_SHA_VALUE", nupkgSha),
                     File.ReadAllText(outputLockFilePath));

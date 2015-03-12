@@ -56,11 +56,34 @@ namespace Microsoft.Framework.Runtime
             {
                 return null;
             }
-
+            
             var package = FindCandidate(libraryRange.Name, libraryRange.VersionRange);
-
+            
             if (package != null)
             {
+                LockFileFrameworkGroup group = null;
+                IEnumerable<LibraryDependency> dependencies;
+                bool resolved = true;
+                if(package.LockFileLibrary != null)
+                {
+                    // If we have a lock file, it MUST have an exact match for this target
+                    // framework
+                    group = package.LockFileLibrary.FrameworkGroups.FirstOrDefault(f => f.TargetFramework == targetFramework);
+                    if(group == null)
+                    {
+                        resolved = false;
+                        dependencies = Enumerable.Empty<LibraryDependency>();
+                    }
+                    else
+                    {
+                        dependencies = GetDependencies(package, targetFramework, group);
+                    }
+                }
+                else
+                {
+                    dependencies = GetDependencies(package, targetFramework, lockFileGroup: null);
+                }
+
                 return new LibraryDescription
                 {
                     LibraryRange = libraryRange,
@@ -70,15 +93,49 @@ namespace Microsoft.Framework.Runtime
                         Version = package.Version
                     },
                     Type = "Package",
-                    Dependencies = GetDependencies(package, targetFramework)
+                    Dependencies = dependencies,
+                    Resolved = resolved 
                 };
             }
 
             return null;
         }
 
-        private IEnumerable<LibraryDependency> GetDependencies(IPackage package, FrameworkName targetFramework)
+        private IEnumerable<LibraryDependency> GetDependencies(PackageInfo packageInfo, FrameworkName targetFramework, LockFileFrameworkGroup lockFileGroup)
         {
+            if (lockFileGroup != null)
+            {
+                foreach (var d in lockFileGroup.Dependencies)
+                {
+                    yield return new LibraryDependency
+                    {
+                        LibraryRange = new LibraryRange
+                        {
+                            Name = d.Id,
+                            VersionRange = d.VersionSpec == null ? null : new SemanticVersionRange(d.VersionSpec)
+                        }
+                    };
+                }
+
+                foreach (var fa in lockFileGroup.FrameworkAssemblies)
+                {
+                    yield return new LibraryDependency
+                    {
+                        LibraryRange = new LibraryRange
+                        {
+                            Name = fa.AssemblyName,
+                            IsGacOrFrameworkReference = true
+                        }
+                    };
+                }
+
+                yield break;
+            }
+
+            // If we weren't given a lockFileGroup, there isn't a lock file, so resolve the NuGet way.
+
+            var package = packageInfo.Package;
+
             IEnumerable<PackageDependencySet> dependencySet;
             if (VersionUtility.TryGetCompatibleItems(targetFramework, package.DependencySets, out dependencySet))
             {
@@ -150,9 +207,8 @@ namespace Microsoft.Framework.Runtime
             {
                 var packageInfo = _repository.FindPackagesById(dependency.Identity.Name)
                     .FirstOrDefault(p => p.Version == dependency.Identity.Version);
-                var package = packageInfo?.Package;
 
-                if (package == null)
+                if (packageInfo == null)
                 {
                     continue;
                 }
@@ -164,53 +220,54 @@ namespace Microsoft.Framework.Runtime
                 var packageDescription = new PackageDescription
                 {
                     Library = dependency,
-                    Package = package
+                    Package = packageInfo
                 };
 
-                _packageDescriptions[package.Id] = packageDescription;
-
-                // Try to find a contract folder for this package and store that
-                // for compilation
-                string contractPath = Path.Combine("lib", "contract", package.Id + ".dll");
-
-                if (packageInfo.LockFileLibrary.Files.Any(f => f.Path == contractPath))
-                {
-                    packageDescription.ContractPath = Path.Combine(dependency.Path, contractPath);
-                }
+                _packageDescriptions[packageInfo.Id] = packageDescription;
 
                 if (Servicing.Breadcrumbs.IsPackageServiceable(packageDescription.Package))
                 {
-                    breadcrumbs.CreateBreadcrumb(package.Id, package.Version);
+                    breadcrumbs.CreateBreadcrumb(packageInfo.Id, packageInfo.Version);
+                }
+
+                var group = packageInfo.LockFileLibrary.FrameworkGroups.FirstOrDefault(g => g.TargetFramework == targetFramework);
+                if(group == null)
+                {
+                    continue;
                 }
 
                 var assemblies = new List<string>();
 
-                foreach (var assemblyInfo in GetPackageAssemblies(packageDescription, targetFramework))
+                foreach (var assemblyPath in group.RuntimeAssemblies)
                 {
+                    var name = Path.GetFileNameWithoutExtension(assemblyPath);
+                    var path = Path.Combine(dependency.Path, assemblyPath);
+
                     string replacementPath;
                     if (Servicing.ServicingTable.TryGetReplacement(
-                        package.Id,
-                        package.Version,
-                        assemblyInfo.RelativePath,
+                        packageInfo.Id,
+                        packageInfo.Version,
+                        assemblyPath,
                         out replacementPath))
                     {
-                        _packageAssemblyLookup[assemblyInfo.Name] = new PackageAssembly()
+                        _packageAssemblyLookup[name] = new PackageAssembly()
                         {
                             Path = replacementPath,
-                            RelativePath = assemblyInfo.RelativePath,
+                            RelativePath = assemblyPath,
                             Library = dependency
                         };
                     }
                     else
                     {
-                        _packageAssemblyLookup[assemblyInfo.Name] = new PackageAssembly()
+                        _packageAssemblyLookup[name] = new PackageAssembly()
                         {
-                            Path = assemblyInfo.Path,
-                            RelativePath = assemblyInfo.RelativePath,
+                            Path = path,
+                            RelativePath = assemblyPath,
                             Library = dependency
                         };
                     }
-                    assemblies.Add(assemblyInfo.Name);
+
+                    assemblies.Add(name);
                 }
 
                 dependency.LoadableAssemblies = assemblies;
@@ -261,7 +318,10 @@ namespace Microsoft.Framework.Runtime
 
             var references = new Dictionary<string, IMetadataReference>(StringComparer.OrdinalIgnoreCase);
 
-            PopulateMetadataReferences(description, target.TargetFramework, references);
+            if(!TryPopulateMetadataReferences(description, target.TargetFramework, references))
+            {
+                return null;
+            }
 
             // REVIEW: This requires more design
             var sourceReferences = new List<ISourceReference>();
@@ -274,86 +334,30 @@ namespace Microsoft.Framework.Runtime
             return new LibraryExport(references.Values.ToList(), sourceReferences);
         }
 
-        private void PopulateMetadataReferences(PackageDescription description, FrameworkName targetFramework, IDictionary<string, IMetadataReference> paths)
+        private bool TryPopulateMetadataReferences(PackageDescription description, FrameworkName targetFramework, IDictionary<string, IMetadataReference> paths)
         {
-            var packageAssemblies = GetPackageAssemblies(description, targetFramework);
-
-            // Use contract if both contract and target path are available
-            bool hasContract = description.ContractPath != null;
-            bool hasLib = packageAssemblies.Any();
-
-            if (hasContract && hasLib && !VersionUtility.IsDesktop(targetFramework))
+            var group = description.Package.LockFileLibrary.FrameworkGroups.FirstOrDefault(f => f.TargetFramework == targetFramework);
+            if(group == null)
             {
-                paths[description.Library.Identity.Name] = new MetadataFileReference(description.Library.Identity.Name, description.ContractPath);
+                return false;
             }
-            else if (hasLib)
+
+            foreach (var assemblyPath in group.CompileTimeAssemblies)
             {
-                foreach (var assembly in packageAssemblies)
-                {
-                    paths[assembly.Name] = new MetadataFileReference(assembly.Name, assembly.Path);
-                }
+                var name = Path.GetFileNameWithoutExtension(assemblyPath);
+                var path = Path.Combine(description.Library.Path, assemblyPath);
+                paths[name] = new MetadataFileReference(name, path);
             }
+            return true;
         }
 
 
         private IEnumerable<string> GetSharedSources(PackageDescription description, FrameworkName targetFramework)
         {
             var directory = Path.Combine(description.Library.Path, "shared");
-            if (!Directory.Exists(directory))
-            {
-                return Enumerable.Empty<string>();
-            }
 
-            return Directory.EnumerateFiles(directory, "*.*", SearchOption.AllDirectories);
-        }
-
-        private static List<AssemblyDescription> GetPackageAssemblies(PackageDescription description, FrameworkName targetFramework)
-        {
-            var package = description.Package;
-            var path = description.Library.Path;
-            var results = new List<AssemblyDescription>();
-
-            IEnumerable<IPackageAssemblyReference> compatibleReferences;
-            if (VersionUtility.TryGetCompatibleItems(targetFramework, package.AssemblyReferences, out compatibleReferences))
-            {
-                // Get the list of references for this target framework
-                var references = compatibleReferences.ToList();
-
-                // See if there's a list of specific references defined for this target framework
-                IEnumerable<PackageReferenceSet> referenceSets;
-                if (VersionUtility.TryGetCompatibleItems(targetFramework, package.PackageAssemblyReferences, out referenceSets))
-                {
-                    // Get the first compatible reference set
-                    var referenceSet = referenceSets.FirstOrDefault();
-
-                    if (referenceSet != null)
-                    {
-                        // Remove all assemblies of which names do not appear in the References list
-                        references.RemoveAll(r => !referenceSet.References.Contains(r.Name, StringComparer.OrdinalIgnoreCase));
-                    }
-                }
-
-                foreach (var reference in references)
-                {
-                    // Skip anything that isn't a dll. Unfortunately some packages put random stuff
-                    // in the lib folder and they surface as assembly references
-                    if (!Path.GetExtension(reference.Path).Equals(".dll", StringComparison.OrdinalIgnoreCase))
-                    {
-                        continue;
-                    }
-
-                    string fileName = Path.Combine(path, reference.Path);
-                    results.Add(new AssemblyDescription
-                    {
-                        // Remove the .dll extension
-                        Name = Path.GetFileNameWithoutExtension(reference.Name),
-                        Path = fileName,
-                        RelativePath = reference.Path
-                    });
-                }
-            }
-
-            return results;
+            return description.Package.LockFileLibrary.Files.Where(path => path.StartsWith("shared\\"))
+                                                            .Select(path => Path.Combine(description.Library.Path, path));
         }
 
         private IPackage FindCandidate(string name, SemanticVersion version)
@@ -361,7 +365,7 @@ namespace Microsoft.Framework.Runtime
             return _repository.FindPackagesById(name).FirstOrDefault(p => p.Version == version)?.Package;
         }
 
-        private IPackage FindCandidate(string name, SemanticVersionRange versionRange)
+        private PackageInfo FindCandidate(string name, SemanticVersionRange versionRange)
         {
             var packages = _repository.FindPackagesById(name);
 
@@ -371,7 +375,7 @@ namespace Microsoft.Framework.Runtime
                 var packageInfo = packages.FirstOrDefault();
                 if (packageInfo != null)
                 {
-                    return packageInfo.Package;
+                    return packageInfo;
                 }
 
                 return null;
@@ -395,7 +399,7 @@ namespace Microsoft.Framework.Runtime
                 return null;
             }
 
-            return bestMatch.Package;
+            return bestMatch;
         }
 
         public static string ResolveRepositoryPath(string rootDirectory)
@@ -432,7 +436,7 @@ namespace Microsoft.Framework.Runtime
 
         private class PackageDescription
         {
-            public IPackage Package { get; set; }
+            public PackageInfo Package { get; set; }
 
             public LibraryDescription Library { get; set; }
 

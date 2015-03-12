@@ -41,10 +41,6 @@ namespace NuGet
                     {
                         _package = new UnzippedPackage(_repositoryRoot, nuspecPath);
                     }
-                    else
-                    {
-                        _package = new LockFilePackage(_repositoryRoot, nuspecPath, LockFileLibrary);
-                    }
                 }
 
                 return _package;

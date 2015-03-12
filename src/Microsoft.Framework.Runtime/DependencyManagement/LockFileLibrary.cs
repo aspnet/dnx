@@ -3,6 +3,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Runtime.Versioning;
 using NuGet;
 
 namespace Microsoft.Framework.Runtime.DependencyManagement
@@ -15,12 +16,21 @@ namespace Microsoft.Framework.Runtime.DependencyManagement
 
         public string Sha { get; set; }
 
-        public IList<PackageDependencySet> DependencySets { get; set; } = new List<PackageDependencySet>();
+        public IList<LockFileFrameworkGroup> FrameworkGroups { get; set; } = new List<LockFileFrameworkGroup>();
+
+        public IList<string> Files { get; set; } = new List<string>();
+    }
+
+    public class LockFileFrameworkGroup
+    {
+        public FrameworkName TargetFramework { get; set; }
+
+        public IList<PackageDependency> Dependencies { get; set; } = new List<PackageDependency>();
 
         public IList<FrameworkAssemblyReference> FrameworkAssemblies { get; set; } = new List<FrameworkAssemblyReference>();
 
-        public IList<PackageReferenceSet> PackageAssemblyReferences { get; set; } = new List<PackageReferenceSet>();
+        public IList<string> RuntimeAssemblies { get; set; } = new List<string>();
 
-        public IList<IPackageFile> Files { get; set; } = new List<IPackageFile>();
+        public IList<string> CompileTimeAssemblies { get; set; } = new List<string>();
     }
 }
