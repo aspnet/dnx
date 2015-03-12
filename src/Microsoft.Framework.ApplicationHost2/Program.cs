@@ -21,12 +21,14 @@ namespace Microsoft.Framework.ApplicationHost
         private readonly IAssemblyLoaderContainer _container;
         private readonly IApplicationEnvironment _environment;
         private readonly IServiceProvider _serviceProvider;
+        private readonly IAssemblyLoadContextAccessor _loadContextAccessor;
 
-        public Program(IAssemblyLoaderContainer container, IApplicationEnvironment environment, IServiceProvider serviceProvider)
+        public Program(IAssemblyLoaderContainer container, IApplicationEnvironment environment, IServiceProvider serviceProvider, IAssemblyLoadContextAccessor loadContextAccessor)
         {
             _container = container;
             _environment = environment;
             _serviceProvider = serviceProvider;
+            _loadContextAccessor = loadContextAccessor;
         }
 
         public Task<int> Main(string[] args)
@@ -60,7 +62,9 @@ namespace Microsoft.Framework.ApplicationHost
                 // Construct the necessary context for hosting the application
                 var builder = RuntimeHostBuilder.ForProjectDirectory(
                     options.ApplicationBaseDirectory,
-                    NuGetFramework.Parse(_environment.RuntimeFramework.FullName));
+                    NuGetFramework.Parse(_environment.RuntimeFramework.FullName),
+                    _loadContextAccessor,
+                    _serviceProvider);
                 if(builder.Project == null)
                 {
                     // Failed to load the project
@@ -69,35 +73,34 @@ namespace Microsoft.Framework.ApplicationHost
                 }
 
                 // Boot the runtime
-                var host = builder.Build();
-
-                // Get the project and print some information from it
-                log.LogInformation($"Project: {host.Project.Name} ({host.Project.BaseDirectory})");
-
-                // Determine the command to be executed
-                var command = string.IsNullOrEmpty(options.ApplicationName) ? "run" : options.ApplicationName;
-                string replacementCommand;
-                if (host.Project.Commands.TryGetValue(command, out replacementCommand))
+                using (var host = builder.Build(_container))
                 {
-                    var replacementArgs = CommandGrammar.Process(
-                        replacementCommand,
-                        GetVariable).ToArray();
-                    options.ApplicationName = replacementArgs.First();
-                    programArgs = replacementArgs.Skip(1).Concat(programArgs).ToArray();
+                    // Get the project and print some information from it
+                    log.LogInformation($"Project: {host.Project.Name} ({host.Project.BaseDirectory})");
+
+                    // Determine the command to be executed
+                    var command = string.IsNullOrEmpty(options.ApplicationName) ? "run" : options.ApplicationName;
+                    string replacementCommand;
+                    if (host.Project.Commands.TryGetValue(command, out replacementCommand))
+                    {
+                        var replacementArgs = CommandGrammar.Process(
+                            replacementCommand,
+                            GetVariable).ToArray();
+                        options.ApplicationName = replacementArgs.First();
+                        programArgs = replacementArgs.Skip(1).Concat(programArgs).ToArray();
+                    }
+
+                    if (string.IsNullOrEmpty(options.ApplicationName) ||
+                        string.Equals(options.ApplicationName, "run", StringComparison.Ordinal))
+                    {
+                        options.ApplicationName = host.Project.EntryPoint ?? host.Project.Name;
+                    }
+
+                    log.LogInformation($"Executing '{options.ApplicationName}' '{string.Join(" ", programArgs)}'");
+                    return host.ExecuteApplication(
+                        options.ApplicationName,
+                        programArgs);
                 }
-
-                if (string.IsNullOrEmpty(options.ApplicationName) ||
-                    string.Equals(options.ApplicationName, "run", StringComparison.Ordinal))
-                {
-                    options.ApplicationName = host.Project.EntryPoint ?? host.Project.Name;
-                }
-
-                log.LogInformation($"Executing '{options.ApplicationName}' '{string.Join(" ", programArgs)}'");
-                host.ExecuteApplication(
-                    options.ApplicationName,
-                    programArgs);
-
-                return Task.FromResult(0);
             }
             catch (Exception ex)
             {
@@ -145,6 +148,7 @@ namespace Microsoft.Framework.ApplicationHost
         {
             var app = new CommandLineApplication(throwOnUnexpectedArg: false);
             app.Name = typeof(Program).Namespace;
+            var optionDebug = app.Option("--debug", "Wait for a debugger to attach before executing the application", CommandOptionType.NoValue);
             var optionWatch = app.Option("--watch", "Watch file changes", CommandOptionType.NoValue);
             var optionPackages = app.Option("--packages <PACKAGE_DIR>", "Directory containing packages",
                 CommandOptionType.SingleValue);

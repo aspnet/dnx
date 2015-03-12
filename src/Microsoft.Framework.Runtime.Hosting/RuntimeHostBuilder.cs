@@ -7,6 +7,7 @@ using System.IO;
 using Microsoft.Framework.Logging;
 using Microsoft.Framework.Runtime.Dependencies;
 using Microsoft.Framework.Runtime.Internal;
+using Microsoft.Framework.Runtime.Loader;
 using NuGet.DependencyResolver;
 using NuGet.Frameworks;
 using NuGet.ProjectModel;
@@ -15,10 +16,13 @@ namespace Microsoft.Framework.Runtime
 {
     public class RuntimeHostBuilder
     {
+        public IList<IAssemblyLoader> AssemblyLoaders { get; } = new List<IAssemblyLoader>();
         public IList<IDependencyProvider> DependencyProviders { get; } = new List<IDependencyProvider>();
         public NuGetFramework TargetFramework { get; set; }
         public Project Project { get; set; }
         public LockFile LockFile { get; set;  }
+        public IServiceProvider Services { get; set; }
+
 
         /// <summary>
         /// Create a <see cref="RuntimeHostBuilder"/> for the project in the specified
@@ -30,7 +34,7 @@ namespace Microsoft.Framework.Runtime
         /// it will be loaded. 
         /// </remarks>
         /// <param name="projectDirectory">The directory of the project to host</param>
-        public static RuntimeHostBuilder ForProjectDirectory(string projectDirectory, NuGetFramework runtimeFramework)
+        public static RuntimeHostBuilder ForProjectDirectory(string projectDirectory, NuGetFramework runtimeFramework, IAssemblyLoadContextAccessor loadContextAccessor, IServiceProvider services)
         {
             if (string.IsNullOrEmpty(projectDirectory))
             {
@@ -64,6 +68,8 @@ namespace Microsoft.Framework.Runtime
             // Set the framework
             hostBuilder.TargetFramework = runtimeFramework;
 
+            hostBuilder.Services = services;
+
             log.LogVerbose("Registering PackageSpecReferenceDependencyProvider");
             hostBuilder.DependencyProviders.Add(new PackageSpecReferenceDependencyProvider(projectResolver));
 
@@ -71,6 +77,11 @@ namespace Microsoft.Framework.Runtime
             {
                 log.LogVerbose("Registering LockFileDependencyProvider");
                 hostBuilder.DependencyProviders.Add(new LockFileDependencyProvider(hostBuilder.LockFile));
+                hostBuilder.AssemblyLoaders.Add(new PackageAssemblyLoader(
+                    loadContextAccessor,
+                    hostBuilder.LockFile,
+                    runtimeFramework,
+                    new DefaultPackagePathResolver(ResolveRepositoryPath(projectResolver))));
             }
 
             log.LogVerbose("Registering ReferenceAssemblyDependencyProvider");
@@ -86,9 +97,15 @@ namespace Microsoft.Framework.Runtime
         /// Builds a <see cref="RuntimeHost"/> from the parameters specified in this
         /// object.
         /// </summary>
-        public RuntimeHost Build()
+        public RuntimeHost Build(IAssemblyLoaderContainer loaderContainer)
         {
-            return new RuntimeHost(this);
+            // Apply the loaders
+            var loaderDisposers = new List<IDisposable>();
+            foreach(var loader in AssemblyLoaders)
+            {
+                loaderDisposers.Add(loaderContainer.AddLoader(loader));
+            }
+            return new RuntimeHost(this, loaderDisposers);
         }
 
         private static string GetProjectName(string projectDirectory)
@@ -112,5 +129,34 @@ namespace Microsoft.Framework.Runtime
             return false;
         }
 
+        private static string ResolveRepositoryPath(PackageSpecResolver projectResolver)
+        {
+            // Order
+            // 1. EnvironmentNames.Packages environment variable
+            // 2. global.json { "packages": "..." }
+            // 3. NuGet.config repositoryPath (maybe)?
+            // 4. {DefaultLocalRuntimeHomeDir}\packages
+
+            var runtimePackages = Environment.GetEnvironmentVariable(EnvironmentNames.Packages);
+
+            if (!string.IsNullOrEmpty(runtimePackages))
+            {
+                return runtimePackages;
+            }
+
+            if (!string.IsNullOrEmpty(projectResolver.GlobalSettings?.PackagesPath))
+            {
+                return Path.Combine(projectResolver.RootPath, projectResolver.GlobalSettings.PackagesPath);
+            }
+
+            var profileDirectory = Environment.GetEnvironmentVariable("USERPROFILE");
+
+            if (string.IsNullOrEmpty(profileDirectory))
+            {
+                profileDirectory = Environment.GetEnvironmentVariable("HOME");
+            }
+
+            return Path.Combine(profileDirectory, Constants.DefaultLocalRuntimeHomeDir, "packages");
+        }
     }
 }
