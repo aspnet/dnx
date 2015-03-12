@@ -18,15 +18,17 @@ namespace Microsoft.Framework.ApplicationHost
 {
     public class Program
     {
-        private readonly IAssemblyLoaderContainer _container;
+        private readonly IAssemblyLoaderContainer _loaderContainer;
         private readonly IApplicationEnvironment _environment;
         private readonly IServiceProvider _serviceProvider;
+        private readonly IAssemblyLoadContextAccessor _loadContextAccessor;
 
-        public Program(IAssemblyLoaderContainer container, IApplicationEnvironment environment, IServiceProvider serviceProvider)
+        public Program(IAssemblyLoaderContainer loaderContainer, IApplicationEnvironment environment, IServiceProvider serviceProvider, IAssemblyLoadContextAccessor loadContextAccessor)
         {
-            _container = container;
+            _loaderContainer = loaderContainer;
             _environment = environment;
             _serviceProvider = serviceProvider;
+            _loadContextAccessor = loadContextAccessor;
         }
 
         public Task<int> Main(string[] args)
@@ -60,7 +62,8 @@ namespace Microsoft.Framework.ApplicationHost
                 // Construct the necessary context for hosting the application
                 var builder = RuntimeHostBuilder.ForProjectDirectory(
                     options.ApplicationBaseDirectory,
-                    NuGetFramework.Parse(_environment.RuntimeFramework.FullName));
+                    NuGetFramework.Parse(_environment.RuntimeFramework.FullName),
+                    _serviceProvider);
                 if(builder.Project == null)
                 {
                     // Failed to load the project
@@ -93,11 +96,11 @@ namespace Microsoft.Framework.ApplicationHost
                 }
 
                 log.LogInformation($"Executing '{options.ApplicationName}' '{string.Join(" ", programArgs)}'");
-                host.ExecuteApplication(
+                return host.ExecuteApplication(
+                    _loaderContainer,
+                    _loadContextAccessor,
                     options.ApplicationName,
                     programArgs);
-
-                return Task.FromResult(0);
             }
             catch (Exception ex)
             {

@@ -3,5 +3,9 @@
         "SharedLibrary1": "",
         "SharedLibrary2": "",
         "SharedLibrary3": ""
+    },
+    "frameworks": {
+        "dnx451": {},
+        "dnxcore50": {}
     }
 }

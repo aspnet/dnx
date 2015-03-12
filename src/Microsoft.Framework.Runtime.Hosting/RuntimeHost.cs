@@ -7,11 +7,17 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Threading.Tasks;
 using Microsoft.Framework.Logging;
+using Microsoft.Framework.Runtime.Common;
+using Microsoft.Framework.Runtime.Common.DependencyInjection;
 using Microsoft.Framework.Runtime.Dependencies;
 using Microsoft.Framework.Runtime.Internal;
+using Microsoft.Framework.Runtime.Loader;
 using NuGet.DependencyResolver;
 using NuGet.Frameworks;
+using NuGet.LibraryModel;
+using NuGet.ProjectModel;
 
 namespace Microsoft.Framework.Runtime
 {
@@ -20,9 +26,11 @@ namespace Microsoft.Framework.Runtime
         private readonly ILogger Log;
 
         public Project Project { get; }
+        public GlobalSettings GlobalSettings { get; }
         public NuGetFramework TargetFramework { get; }
         public IEnumerable<IDependencyProvider> DependencyProviders { get; }
         public ILoggerFactory LoggerFactory { get; }
+        public IServiceProvider Services { get; }
 
         internal RuntimeHost(RuntimeHostBuilder builder)
         {
@@ -38,6 +46,9 @@ namespace Microsoft.Framework.Runtime
             Log = RuntimeLogging.Logger<RuntimeHost>();
 
             Project = builder.Project;
+            GlobalSettings = builder.GlobalSettings;
+
+            Services = builder.Services;
 
             // Load properties from the mutable RuntimeHostBuilder into
             // immutable copies on this object
@@ -48,64 +59,82 @@ namespace Microsoft.Framework.Runtime
             DependencyProviders = list;
         }
 
-        public void ExecuteApplication(string applicationName, string[] programArgs)
+        public Task<int> ExecuteApplication(
+            IAssemblyLoaderContainer loaderContainer,
+            IAssemblyLoadContextAccessor loadContextAccessor,
+            string applicationName,
+            string[] programArgs)
         {
             Log.LogInformation($"Launching '{applicationName}' '{string.Join(" ", programArgs)}'");
 
             var deps = DependencyManager.ResolveDependencies(
-                DependencyProviders,
-                Project.Name,
-                Project.Version,
-                TargetFramework);
+                    DependencyProviders,
+                    Project.Name,
+                    Project.Version,
+                    TargetFramework);
 
-            // Locate the entry point
-            var entryPoint = LocateEntryPoint(applicationName);
-
-            if (Log.IsEnabled(LogLevel.Information))
+            using (var loaderCleanup = new DisposableList())
             {
-                Log.LogInformation($"Executing Entry Point: {entryPoint.GetName().FullName}");
+                // Create the package loader.
+                var packageLoader = new PackageAssemblyLoader(
+                    deps.GetLibraries(LibraryTypes.Package),
+                    TargetFramework,
+                    new DefaultPackagePathResolver(ResolveRepositoryPath(GlobalSettings)),
+                    loadContextAccessor);
+
+                // Add it to the container and track it for clean up later. 
+                Log.LogVerbose($"Registering {nameof(PackageAssemblyLoader)}");
+                loaderCleanup.Add(loaderContainer.AddLoader(packageLoader));
+
+                // Locate the entry point
+                var entryPoint = LocateEntryPoint(applicationName);
+
+                if (Log.IsEnabled(LogLevel.Information))
+                {
+                    Log.LogInformation($"Executing Entry Point: {entryPoint.GetName().FullName}");
+                }
+                return EntryPointExecutor.Execute(entryPoint, programArgs, Services);
             }
         }
 
         private Assembly LocateEntryPoint(string applicationName)
         {
-            var sw = Stopwatch.StartNew();
-            Log.LogInformation($"Locating entry point for {applicationName}");
+            using (Log.LogTimedMethod())
+            {
+                Log.LogInformation($"Locating entry point for {applicationName}");
 
-            if (Project == null)
-            {
-                Log.LogError("Unable to locate entry point, there is no project");
-                return null;
-            }
-
-            Assembly asm = null;
-            try
-            {
-                asm = Assembly.Load(new AssemblyName(applicationName));
-            }
-            catch (FileLoadException ex) when (string.Equals(new AssemblyName(ex.FileName).Name, applicationName, StringComparison.Ordinal))
-            {
-                if (ex.InnerException is ICompilationException)
+                if (Project == null)
                 {
-                    throw ex.InnerException;
+                    Log.LogError("Unable to locate entry point, there is no project");
+                    return null;
                 }
 
-                ThrowEntryPointNotFoundException(applicationName, ex);
-            }
-            catch (FileNotFoundException ex) when (string.Equals(ex.FileName, applicationName, StringComparison.Ordinal))
-            {
-                if (ex.InnerException is ICompilationException)
+                Assembly asm = null;
+                try
                 {
-                    throw ex.InnerException;
+                    asm = Assembly.Load(new AssemblyName(applicationName));
+                }
+                catch (FileLoadException ex) when (string.Equals(new AssemblyName(ex.FileName).Name, applicationName, StringComparison.Ordinal))
+                {
+                    if (ex.InnerException is ICompilationException)
+                    {
+                        throw ex.InnerException;
+                    }
+
+                    ThrowEntryPointNotFoundException(applicationName, ex);
+                }
+                catch (FileNotFoundException ex) when (string.Equals(ex.FileName, applicationName, StringComparison.Ordinal))
+                {
+                    if (ex.InnerException is ICompilationException)
+                    {
+                        throw ex.InnerException;
+                    }
+
+                    ThrowEntryPointNotFoundException(applicationName, ex);
                 }
 
-                ThrowEntryPointNotFoundException(applicationName, ex);
+                return asm;
             }
-
-            sw.Stop();
-            Log.LogInformation($"Located entry point in {sw.ElapsedMilliseconds}ms");
-
-            return asm;
         }
 
         private void ThrowEntryPointNotFoundException(
@@ -125,6 +154,47 @@ namespace Microsoft.Framework.Runtime
             throw new InvalidOperationException(
                     string.Format("Unable to load application or execute command '{0}'.",
                     applicationName), innerException);
+        }
+
+        private static string ResolveRepositoryPath(GlobalSettings globalSettings)
+        {
+            // Order
+            // 1. EnvironmentNames.Packages environment variable
+            // 2. global.json { "packages": "..." }
+            // 3. NuGet.config repositoryPath (maybe)?
+            // 4. {DefaultLocalRuntimeHomeDir}\packages
+
+            var runtimePackages = Environment.GetEnvironmentVariable(EnvironmentNames.Packages);
+
+            if (!string.IsNullOrEmpty(runtimePackages))
+            {
+                return runtimePackages;
+            }
+
+            if (!string.IsNullOrEmpty(globalSettings?.PackagesPath))
+            {
+                return Path.Combine(globalSettings.RootPath, globalSettings.PackagesPath);
+            }
+
+            var profileDirectory = Environment.GetEnvironmentVariable("USERPROFILE");
+
+            if (string.IsNullOrEmpty(profileDirectory))
+            {
+                profileDirectory = Environment.GetEnvironmentVariable("HOME");
+            }
+
+            return Path.Combine(profileDirectory, Constants.DefaultLocalRuntimeHomeDir, "packages");
+        }
+
+        private class DisposableList : List<IDisposable>, IDisposable
+        {
+            public void Dispose()
+            {
+                foreach (var item in this)
+                {
+                    item.Dispose();
+                }
+            }
         }
     }
 }

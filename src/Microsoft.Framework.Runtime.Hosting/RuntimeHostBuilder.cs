@@ -7,6 +7,7 @@ using System.IO;
 using Microsoft.Framework.Logging;
 using Microsoft.Framework.Runtime.Dependencies;
 using Microsoft.Framework.Runtime.Internal;
+using Microsoft.Framework.Runtime.Loader;
 using NuGet.DependencyResolver;
 using NuGet.Frameworks;
 using NuGet.ProjectModel;
@@ -19,6 +20,8 @@ namespace Microsoft.Framework.Runtime
         public NuGetFramework TargetFramework { get; set; }
         public Project Project { get; set; }
         public LockFile LockFile { get; set;  }
+        public GlobalSettings GlobalSettings { get; set; }
+        public IServiceProvider Services { get; set; }
 
         /// <summary>
         /// Create a <see cref="RuntimeHostBuilder"/> for the project in the specified
@@ -30,7 +33,7 @@ namespace Microsoft.Framework.Runtime
         /// it will be loaded. 
         /// </remarks>
         /// <param name="projectDirectory">The directory of the project to host</param>
-        public static RuntimeHostBuilder ForProjectDirectory(string projectDirectory, NuGetFramework runtimeFramework)
+        public static RuntimeHostBuilder ForProjectDirectory(string projectDirectory, NuGetFramework runtimeFramework, IServiceProvider services)
         {
             if (string.IsNullOrEmpty(projectDirectory))
             {
@@ -52,6 +55,7 @@ namespace Microsoft.Framework.Runtime
                 log.LogVerbose($"Loaded project {packageSpec.Name}");
                 hostBuilder.Project = new Project(packageSpec);
             }
+            hostBuilder.GlobalSettings = projectResolver.GlobalSettings;
 
             // Load the Lock File if present
             LockFile lockFile;
@@ -63,6 +67,8 @@ namespace Microsoft.Framework.Runtime
 
             // Set the framework
             hostBuilder.TargetFramework = runtimeFramework;
+
+            hostBuilder.Services = services;
 
             log.LogVerbose("Registering PackageSpecReferenceDependencyProvider");
             hostBuilder.DependencyProviders.Add(new PackageSpecReferenceDependencyProvider(projectResolver));
