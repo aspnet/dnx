@@ -628,6 +628,7 @@ var RC_FILES = '${FindAllFiles("Resource.rc", BOOTSTRAPPER_EXE_NAME, BOOTSTRAPPE
         {
             var dotnetcoreclrDepFile = Path.Combine(BUILD_DIR2, "dotnetcoreclr-dependencies.txt");
             var tpacppFile = Path.Combine(ROOT, "src", BOOTSTRAPPER_CORECLR_NAME, "tpa.cpp");
+            var tpacppFileUnix = Path.Combine(ROOT, "src", BOOTSTRAPPER_CORECLR_NAME + ".unix", "tpa.cpp");
             Environment.SetEnvironmentVariable("DNX_TRACE", "0");
             Exec("cmd", string.Format(@"/C kpm list {0} --assemblies --runtime {1} > {2}",
                 Path.Combine(ROOT, "src", BOOTSTRAPPER_HOST_NAME),
@@ -642,6 +643,7 @@ var RC_FILES = '${FindAllFiles("Resource.rc", BOOTSTRAPPER_EXE_NAME, BOOTSTRAPPE
             };
 
             UpdateTpa(dotnetcoreclrDepFile, tpaProjects, tpacppFile);
+            UpdateTpa(dotnetcoreclrDepFile, tpaProjects, tpacppFileUnix);
         }
         finally
         {

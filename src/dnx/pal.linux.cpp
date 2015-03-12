@@ -89,7 +89,7 @@ BOOL SetEnvironmentVariable(LPCTSTR lpName, LPCTSTR lpValue)
 {
     int ret;
 
-    if (lpValue == nullptr)
+    if (lpValue != nullptr)
     {
         ret = setenv(lpName, lpValue, 1);
     }
