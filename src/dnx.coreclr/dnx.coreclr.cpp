@@ -422,6 +422,7 @@ extern "C" __declspec(dllexport) HRESULT __stdcall CallApplicationMain(PCALL_APP
         // NATIVE_DLL_SEARCH_DIRECTORIES
         // - The list of paths that will be probed for native DLLs called by PInvoke
         //
+        L"AppDomainCompatSwitch",
     };
 
     cchTrustedPlatformAssemblies = TRUSTED_PLATFORM_ASSEMBLIES_STRING_BUFFER_SIZE_CCH;
@@ -473,6 +474,8 @@ extern "C" __declspec(dllexport) HRESULT __stdcall CallApplicationMain(PCALL_APP
         pwszTrustedPlatformAssemblies,
         // APP_PATHS
         wszAppPaths,
+        // Use the latest behavior when TFM not specified
+        L"UseLatestBehaviorWhenTFMNotSpecified",
     };
 
     DWORD domainId;

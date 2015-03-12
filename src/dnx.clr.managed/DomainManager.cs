@@ -29,6 +29,7 @@ public class DomainManager : AppDomainManager
         }
 
         appDomainInfo.ApplicationBase = Environment.GetEnvironmentVariable(EnvironmentNames.DefaultLib);
+        appDomainInfo.TargetFrameworkName = ".NETFramework,Version=v4.5.1";
     }
 
     private int Main(int argc, string[] argv)
