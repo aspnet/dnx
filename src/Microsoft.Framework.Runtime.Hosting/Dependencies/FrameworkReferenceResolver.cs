@@ -10,6 +10,7 @@ using NuGet.Frameworks;
 using NuGet.Versioning;
 using Microsoft.Framework.Logging;
 using Microsoft.Framework.Runtime.Internal;
+using System.Diagnostics;
 
 namespace Microsoft.Framework.Runtime.Dependencies
 {
@@ -34,12 +35,8 @@ namespace Microsoft.Framework.Runtime.Dependencies
         {
             path = null;
             version = null;
+            Debug.Assert(targetFramework.IsDesktop());
 
-            if(!targetFramework.IsDesktop())
-            {
-                // We only work on desktop frameworks!
-                return false;
-            }
             // Rewrite the target framework in case its name was DNX
             // DNX versions match 1:1 with .NET Framework versions
             targetFramework = new NuGetFramework(
