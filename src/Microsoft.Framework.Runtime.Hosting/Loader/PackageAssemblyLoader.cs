@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -7,6 +8,7 @@ using Microsoft.Framework.Logging;
 using Microsoft.Framework.Runtime.Dependencies;
 using Microsoft.Framework.Runtime.Internal;
 using NuGet.Frameworks;
+using NuGet.LibraryModel;
 using NuGet.ProjectModel;
 
 namespace Microsoft.Framework.Runtime.Loader
@@ -24,7 +26,7 @@ namespace Microsoft.Framework.Runtime.Loader
         private readonly Dictionary<string, string> _assemblyLookupTable;
 
         public PackageAssemblyLoader(IAssemblyLoadContextAccessor loadContextAccessor,
-            LockFile lockFile,
+            IEnumerable<Library> libraries,
             NuGetFramework targetFramework,
             DefaultPackagePathResolver pathResolver)
         {
@@ -33,7 +35,7 @@ namespace Microsoft.Framework.Runtime.Loader
             Log = RuntimeLogging.Logger<PackageAssemblyLoader>();
 
             // Initialize the assembly lookup table
-            _assemblyLookupTable = InitializeAssemblyLookup(lockFile, targetFramework, pathResolver);
+            _assemblyLookupTable = InitializeAssemblyLookup(libraries, targetFramework, pathResolver);
         }
 
         /// <summary>
@@ -63,19 +65,22 @@ namespace Microsoft.Framework.Runtime.Loader
             return null;
         }
 
-        private Dictionary<string, string> InitializeAssemblyLookup(LockFile lockFile, NuGetFramework targetFramework, DefaultPackagePathResolver pathResolver)
+        private Dictionary<string, string> InitializeAssemblyLookup(IEnumerable<Library> libraries, NuGetFramework targetFramework, DefaultPackagePathResolver pathResolver)
         {
             var lookup = new Dictionary<string, string>();
             var cacheResolvers = GetCacheResolvers();
-            foreach(var lib in lockFile.Libraries)
+            foreach(var library in libraries)
             {
-                Log.LogDebug($"Scanning library {lib.Name} {lib.Version}");
-                var group = lib.FrameworkGroups.FirstOrDefault(f => f.TargetFramework.Equals(targetFramework));
+                Debug.Assert(library.Identity.Type == LibraryTypes.Package);
+
+                Log.LogDebug($"Scanning library {library.Identity.Name} {library.Identity.Version}");
+                var lockFileLib = library.GetRequiredItem<LockFileLibrary>(KnownLibraryProperties.LockFileLibrary);
+                var group = lockFileLib.FirstOrDefault(f => f.TargetFramework.Equals(targetFramework));
                 if(group != null)
                 {
                     foreach(var assembly in group.RuntimeAssemblies)
                     {
-                        Log.LogDebug($"Locating {assembly} in {lib.Name} {lib.Version}");
+                        Log.LogDebug($"Locating {assembly} in {library.Identity.Name} {library.Identity.Version}");
                         string asmName = Path.GetFileNameWithoutExtension(assembly);
                         if(Log.IsEnabled(LogLevel.Warning) && lookup.ContainsKey(asmName))
                         {
@@ -83,7 +88,7 @@ namespace Microsoft.Framework.Runtime.Loader
                         }
 
                         // Locate the package
-                        var packageRoot = ResolvePackagePath(pathResolver, cacheResolvers, lib);
+                        var packageRoot = ResolvePackagePath(pathResolver, cacheResolvers, lockFileLib);
 
                         // Resolve the assembly path
                         var assemblyLocation = Path.Combine(packageRoot, assembly);
@@ -93,7 +98,7 @@ namespace Microsoft.Framework.Runtime.Loader
                 }
                 else
                 {
-                    Log.LogDebug($"No assemblies in {lib.Name} {lib.Version} for {targetFramework}");
+                    Log.LogDebug($"No assemblies in {library.Identity.Name} {library.Identity.Version} for {targetFramework}");
                 }
             }
 

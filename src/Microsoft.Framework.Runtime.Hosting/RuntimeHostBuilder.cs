@@ -79,7 +79,7 @@ namespace Microsoft.Framework.Runtime
                 hostBuilder.DependencyProviders.Add(new LockFileDependencyProvider(hostBuilder.LockFile));
                 hostBuilder.AssemblyLoaders.Add(new PackageAssemblyLoader(
                     loadContextAccessor,
-                    hostBuilder.LockFile,
+                    hostBuilder.LockFile.Libraries,
                     runtimeFramework,
                     new DefaultPackagePathResolver(ResolveRepositoryPath(projectResolver))));
             }
