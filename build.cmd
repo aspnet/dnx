@@ -22,10 +22,10 @@ IF EXIST packages\KoreBuild goto run
 IF "%1" == "rebuild-package" goto run
 
 IF "%SKIP_DNX_INSTALL%"=="1" (
-	REM On the CI, don't upgrade since the previous installed XRE is already there.
-	CALL packages\KoreBuild\build\dnvm use default -runtime CLR -x86
+    REM On the CI, don't upgrade since the previous installed DNVM is already there.
+    CALL packages\KoreBuild\build\dnvm use default -runtime CLR -arch x86
 ) ELSE (
-    CALL packages\KoreBuild\build\dnvm.cmd upgrade -runtime CLR -x86
+    CALL packages\KoreBuild\build\dnvm upgrade -runtime CLR -arch x86
 )
 
 :run
