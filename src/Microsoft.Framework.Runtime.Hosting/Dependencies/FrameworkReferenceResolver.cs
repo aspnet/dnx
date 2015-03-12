@@ -40,7 +40,7 @@ namespace Microsoft.Framework.Runtime.Dependencies
                 // We only work on desktop frameworks!
                 return false;
             }
-            // Rewrite the target framework in case it's name was DNX
+            // Rewrite the target framework in case its name was DNX
             // DNX versions match 1:1 with .NET Framework versions
             targetFramework = new NuGetFramework(
                 FrameworkConstants.FrameworkIdentifiers.Net,
