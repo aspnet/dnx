@@ -1,14 +1,6 @@
-// Defines the entry point for the console application.
-
 #include "stdafx.h"
 #include "dnx.h"
-
-void GetModuleDirectory(HMODULE module, LPTSTR szPath)
-{
-    DWORD dirLength = GetModuleFileName(module, szPath, MAX_PATH);
-    for (dirLength--; dirLength >= 0 && szPath[dirLength] != _T('\\'); dirLength--);
-    szPath[dirLength + 1] = _T('\0');
-}
+#include "pal.h"
 
 bool LastIndexOfChar(LPCTSTR const pszStr, TCHAR c, size_t* pIndex)
 {
@@ -77,7 +69,7 @@ void GetParentDir(LPCTSTR const pszPath, LPTSTR const pszParentDir)
         return;
     }
 
-    CopyMemory(pszParentDir, pszPath, (nLastSeparatorIndex + 1) * sizeof(TCHAR));
+    memcpy(pszParentDir, pszPath, (nLastSeparatorIndex + 1) * sizeof(TCHAR));
     pszParentDir[nLastSeparatorIndex + 1] = _T('\0');
 }
 
@@ -233,18 +225,9 @@ bool ExpandCommandLineArguments(int nArgc, LPTSTR* ppszArgv, int& nExpandedArgc,
 
 int CallApplicationProcessMain(int argc, LPTSTR argv[])
 {
-    TCHAR szTrace[2];
-    DWORD nEnvTraceSize = GetEnvironmentVariable(_T("DNX_TRACE"), szTrace, 2);
-    if (nEnvTraceSize == 0)
-    {
-        nEnvTraceSize = GetEnvironmentVariable(_T("DNX_TRACE"), szTrace, 2);
-    }
-    bool m_fVerboseTrace = (nEnvTraceSize == 1);
-    if (m_fVerboseTrace)
-    {
-        szTrace[1] = _T('\0');
-        m_fVerboseTrace = (_tcsnicmp(szTrace, _T("1"), 1) == 0);
-    }
+    HRESULT hr = S_OK;
+
+    bool m_fVerboseTrace = IsTracingEnabled();
 
     bool fSuccess = true;
     HMODULE m_hHostModule = nullptr;
@@ -260,7 +243,7 @@ int CallApplicationProcessMain(int argc, LPTSTR argv[])
     int exitCode = 0;
 
     TCHAR szCurrentDirectory[MAX_PATH];
-    GetModuleDirectory(NULL, szCurrentDirectory);
+    GetNativeBootstrapperDirectory(szCurrentDirectory);
 
     // Set the DEFAULT_LIB environment variable to be the same directory
     // as the exe
@@ -288,12 +271,7 @@ int CallApplicationProcessMain(int argc, LPTSTR argv[])
     // Get application base from DNX_APPBASE environment variable
     // Note: this value can be overriden by --appbase option
     TCHAR szAppBase[MAX_PATH];
-    DWORD dwAppBase = GetEnvironmentVariable(_T("DNX_APPBASE"), szAppBase, MAX_PATH);
-    if (dwAppBase == 0)
-    {
-        dwAppBase = GetEnvironmentVariable(_T("DNX_APPBASE"), szAppBase, MAX_PATH);
-    }
-    if (dwAppBase != 0)
+    if (GetAppBasePathFromEnvironment(szAppBase))
     {
         data.applicationBase = szAppBase;
     }
@@ -313,22 +291,15 @@ int CallApplicationProcessMain(int argc, LPTSTR argv[])
 
     // Prevent coreclr native bootstrapper from failing with relative appbase
     TCHAR szFullAppBase[MAX_PATH];
-    DWORD dwFullAppBase = GetFullPathName(data.applicationBase, MAX_PATH, szFullAppBase, nullptr);
-    if (!dwFullAppBase)
+    if (!GetFullPath(data.applicationBase, szFullAppBase))
     {
-        ::_tprintf_s(_T("Failed to get full path of application base: %s\r\n"), data.applicationBase);
         exitCode = 1;
         goto Finished;
     }
-    else if (dwFullAppBase > MAX_PATH)
-    {
-        ::_tprintf_s(_T("Full path of application base is too long\r\n"));
-        exitCode = 1;
-        goto Finished;
-    }
+
     data.applicationBase = szFullAppBase;
 
-    m_hHostModule = ::LoadLibraryEx(pwzHostModuleName, NULL, LOAD_LIBRARY_SEARCH_DEFAULT_DIRS);
+    m_hHostModule = LoadNativeHost(pwzHostModuleName);
     if (!m_hHostModule)
     {
         if (m_fVerboseTrace)
@@ -339,7 +310,7 @@ int CallApplicationProcessMain(int argc, LPTSTR argv[])
     if (m_fVerboseTrace)
         ::_tprintf_s(_T("Loaded Module: %s\r\n"), pwzHostModuleName);
 
-    pfnCallApplicationMain = (FnCallApplicationMain)::GetProcAddress(m_hHostModule, pszCallApplicationMainName);
+    pfnCallApplicationMain = (FnCallApplicationMain)GetEntryPointFromHost(m_hHostModule, pszCallApplicationMainName);
     if (!pfnCallApplicationMain)
     {
         if (m_fVerboseTrace)
@@ -350,7 +321,7 @@ int CallApplicationProcessMain(int argc, LPTSTR argv[])
     if (m_fVerboseTrace)
         ::_tprintf_s(_T("Found DLL Export: %s\r\n"), pszCallApplicationMainName);
 
-    HRESULT hr = pfnCallApplicationMain(&data);
+    hr = pfnCallApplicationMain(&data);
     if (SUCCEEDED(hr))
     {
         fSuccess = true;
@@ -370,7 +341,7 @@ Finished:
 
     if (m_hHostModule)
     {
-        if (FreeLibrary(m_hHostModule))
+        if (FreeNativeHost(m_hHostModule))
         {
             fSuccess = true;
         }
@@ -390,26 +361,18 @@ Finished:
     return exitCode;
 }
 
+#if PLATFORM_UNIX
+int main(int argc, char* argv[])
+#else
 int wmain(int argc, wchar_t* argv[])
+#endif
 {
     // Check for the debug flag before doing anything else
     for (int i = 0; i < argc; i++)
     {
         if (StringsEqual(argv[i], _T("--debug")))
         {
-            if (!IsDebuggerPresent())
-            {
-                ::_tprintf_s(_T("Process Id: %ld\r\n"), GetCurrentProcessId());
-                ::_tprintf_s(_T("Waiting for the debugger to attach...\r\n"));
-
-                // Do not use getchar() like in corerun because it doesn't work well with remote sessions
-                while (!IsDebuggerPresent())
-                {
-                    Sleep(250);
-                }
-
-                ::_tprintf_s(_T("Debugger attached.\r\n"));
-            }
+            WaitForDebuggerToAttach();
         }
     }
 
