@@ -541,7 +541,7 @@ namespace Microsoft.Framework.DesignTimeHost
                 _remote.ProjectInformation = _local.ProjectInformation;
             }
 
-            if (IsDifferent(_local.ProjectFormatWarnings, _remote.ProjectFormatWarnings))
+            if (_local.ProjectFormatWarnings != null && (_remote.ProjectFormatWarnings == null || !Enumerable.SequenceEqual(_local.ProjectFormatWarnings, _remote.ProjectFormatWarnings)))
             {
                 SendProjectFormatWarnings(_local.ProjectFormatWarnings);
 
