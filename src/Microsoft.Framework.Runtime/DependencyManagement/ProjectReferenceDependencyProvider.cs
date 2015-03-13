@@ -45,7 +45,7 @@ namespace Microsoft.Framework.Runtime
 
             // This never returns null
             var targetFrameworkInfo = project.GetTargetFramework(targetFramework);
-            var targetFrameworkDependencies = targetFrameworkInfo.Dependencies;
+            var targetFrameworkDependencies = new List<LibraryDependency>(targetFrameworkInfo.Dependencies);
 
             if (VersionUtility.IsDesktop(targetFramework))
             {

@@ -528,10 +528,11 @@ namespace Microsoft.Framework.Runtime
             };
 
             var properties = targetFramework.Value.Value<JObject>();
+            var frameworkDependencies = new List<LibraryDependency>();
 
             PopulateDependencies(
                 ProjectFilePath,
-                targetFrameworkInformation.Dependencies,
+                frameworkDependencies,
                 properties,
                 "dependencies",
                 isGacOrFrameworkReference: false);
@@ -544,7 +545,8 @@ namespace Microsoft.Framework.Runtime
                 "frameworkAssemblies",
                 isGacOrFrameworkReference: true);
 
-            targetFrameworkInformation.Dependencies.AddRange(frameworkAssemblies);
+            frameworkDependencies.AddRange(frameworkAssemblies);
+            targetFrameworkInformation.Dependencies = frameworkDependencies;
 
             targetFrameworkInformation.WrappedProject = properties.GetValue<string>("wrappedProject");
 
