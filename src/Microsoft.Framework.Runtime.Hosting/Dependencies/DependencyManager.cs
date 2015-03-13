@@ -18,17 +18,11 @@ namespace Microsoft.Framework.Runtime.Dependencies
     {
         private static readonly ILogger Log = RuntimeLogging.Logger<DependencyManager>();
 
-        private readonly GraphNode<Library> _graph;
-        private readonly Dictionary<LibraryIdentity, Library> _libraries;
         private readonly Dictionary<string, IList<Library>> _librariesByType = new Dictionary<string, IList<Library>>();
 
         private DependencyManager(
-            GraphNode<Library> graph, 
-            Dictionary<LibraryIdentity, Library> libraries, 
             Dictionary<string, IList<Library>> librariesByType)
         {
-            _graph = graph;
-            _libraries = libraries;
             _librariesByType = librariesByType;
         }
 
@@ -58,7 +52,6 @@ namespace Microsoft.Framework.Runtime.Dependencies
             }
 
             // Build the resolved dependency list
-            var libraries = new Dictionary<LibraryIdentity, Library>();
             var librariesByType = new Dictionary<string, IList<Library>>();
             graph.ForEach(node =>
             {
@@ -70,8 +63,6 @@ namespace Microsoft.Framework.Runtime.Dependencies
                     var library = node.Item.Data;
 
                     // Add the library to the set
-                    libraries[library.Identity] = library;
-
                     librariesByType.GetOrAdd(library.Identity.Type, s => new List<Library>())
                         .Add(library);
                 }
@@ -90,14 +81,14 @@ namespace Microsoft.Framework.Runtime.Dependencies
                     graph.Dump(s => Log.LogDebug($" {s}"));
                 }
                 Log.LogDebug("Selected Dependencies");
-                foreach (var library in libraries.Values)
+                foreach (var library in librariesByType.Values.SelectMany(l => l))
                 {
                     Log.LogDebug($" {library.Identity}");
                 }
             }
 
             // Return the assembled dependency manager
-            return new DependencyManager(graph, libraries, librariesByType);
+            return new DependencyManager(librariesByType);
         }
 
         /// <summary>

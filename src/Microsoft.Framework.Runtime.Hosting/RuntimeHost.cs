@@ -17,7 +17,7 @@ using NuGet.Frameworks;
 
 namespace Microsoft.Framework.Runtime
 {
-    public class RuntimeHost:IDisposable
+    public class RuntimeHost : IDisposable
     {
         private readonly ILogger Log;
 
@@ -30,11 +30,11 @@ namespace Microsoft.Framework.Runtime
 
         internal RuntimeHost(RuntimeHostBuilder builder, IEnumerable<IDisposable> loaderDisposers)
         {
-            if(builder == null)
+            if (builder == null)
             {
                 throw new ArgumentNullException(nameof(builder));
             }
-            if(builder.Project == null)
+            if (builder.Project == null)
             {
                 throw new ArgumentException($"{nameof(RuntimeHostBuilder)} does not contain a valid Project", nameof(builder));
             }
@@ -77,7 +77,7 @@ namespace Microsoft.Framework.Runtime
 
         public void Dispose()
         {
-            foreach(var loaderDisposer in LoaderDisposers)
+            foreach (var loaderDisposer in LoaderDisposers)
             {
                 loaderDisposer.Dispose();
             }

@@ -75,10 +75,10 @@ namespace Microsoft.Framework.Runtime.Loader
 
                 Log.LogDebug($"Scanning library {library.Identity.Name} {library.Identity.Version}");
                 var lockFileLib = library.GetRequiredItem<LockFileLibrary>(KnownLibraryProperties.LockFileLibrary);
-                var group = lockFileLib.FirstOrDefault(f => f.TargetFramework.Equals(targetFramework));
-                if(group != null)
+                var lockFileFrameworkGroup = library.GetItem<LockFileFrameworkGroup>(KnownLibraryProperties.LockFileFrameworkGroup);
+                if(lockFileFrameworkGroup != null)
                 {
-                    foreach(var assembly in group.RuntimeAssemblies)
+                    foreach(var assembly in lockFileFrameworkGroup.RuntimeAssemblies)
                     {
                         Log.LogDebug($"Locating {assembly} in {library.Identity.Name} {library.Identity.Version}");
                         string asmName = Path.GetFileNameWithoutExtension(assembly);
