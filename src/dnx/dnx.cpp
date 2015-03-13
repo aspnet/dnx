@@ -233,6 +233,8 @@ int CallApplicationProcessMain(int argc, LPTSTR argv[])
     HMODULE m_hHostModule = nullptr;
 #if CORECLR_WIN
     LPCTSTR pwzHostModuleName = _T("dnx.coreclr.dll");
+#elif CORECLR_UNIX
+    LPCTSTR pwzHostModuleName = _T("dnx.coreclr.so");
 #else
     LPCTSTR pwzHostModuleName = _T("dnx.clr.dll");
 #endif
