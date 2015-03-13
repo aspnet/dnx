@@ -1,7 +1,7 @@
 {
     "dependencies": {
         "Microsoft.Framework.CommandLineUtils": "1.0.0-*",
-        "xunit.runner.kre": "1.0.0-*"
+        "xunit.runner.aspnet": "2.0.0-aspnet-*"
     },
 
     "frameworks": {
@@ -9,7 +9,7 @@
     },
 
     "commands": {
-        "run": "xunit.runner.kre",
-        "test": "xunit.runner.kre"
+        "run": "xunit.runner.aspnet",
+        "test": "xunit.runner.aspnet"
     }
 }
