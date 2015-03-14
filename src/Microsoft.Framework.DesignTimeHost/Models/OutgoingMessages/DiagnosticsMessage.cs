@@ -1,4 +1,4 @@
-// Copyright (c) Microsoft Open Technologies, Inc. All rights reserved.
+﻿// Copyright (c) Microsoft Open Technologies, Inc. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 using System.Collections.Generic;
@@ -10,30 +10,91 @@ namespace Microsoft.Framework.DesignTimeHost.Models.OutgoingMessages
 {
     public class DiagnosticsMessage
     {
-        public FrameworkData Framework { get; set; }
+        public DiagnosticsMessage(IList<ICompilationMessage> compilationMessages, FrameworkData frameworkData)
+        {
+            var errors = compilationMessages
+                .Where(msg => msg.Severity == CompilationMessageSeverity.Error)
+                .Select(msg => new DiagnosticsInfo
+                {
+                    Path = msg.SourceFilePath,
+                    Line = msg.StartLine,
+                    Column = msg.StartColumn,
+                    Message = msg.Message,
+                    FormattedMessage = msg.FormattedMessage
+                });
+
+            var warnings = compilationMessages
+                .Where(msg => msg.Severity == CompilationMessageSeverity.Warning)
+                .Select(msg => new DiagnosticsInfo
+                {
+                    Path = msg.SourceFilePath,
+                    Line = msg.StartLine,
+                    Column = msg.StartColumn,
+                    Message = msg.Message,
+                    FormattedMessage = msg.FormattedMessage
+                });
+
+            Framework = frameworkData;
+            CompilationDiagnostics = compilationMessages;
+        }
+
+        public DiagnosticsMessage(IEnumerable<DiagnosticsInfo> errors, IEnumerable<DiagnosticsInfo> warnings, FrameworkData framework)
+        {
+            Errors = errors ?? Enumerable.Empty<DiagnosticsInfo>();
+            Warnings = warnings ?? Enumerable.Empty<DiagnosticsInfo>();
+            Framework = framework;
+        }
 
         [JsonIgnore]
-        public IList<ICompilationMessage> Diagnostics { get; set; }
+        public IList<ICompilationMessage> CompilationDiagnostics { get; }
 
-        public IEnumerable<string> Errors => Diagnostics.Where(d => d.Severity == CompilationMessageSeverity.Error)
-                                                        .Select(d => d.FormattedMessage);
+        public FrameworkData Framework { get; }
 
-        public IEnumerable<string> Warnings => Diagnostics.Where(d => d.Severity == CompilationMessageSeverity.Warning)
-                                                        .Select(d => d.FormattedMessage);
+        public IEnumerable<DiagnosticsInfo> Errors { get; }
+
+        public IEnumerable<DiagnosticsInfo> Warnings { get; }
 
         public override bool Equals(object obj)
         {
             var other = obj as DiagnosticsMessage;
 
             return other != null &&
-                 Enumerable.SequenceEqual(Warnings, other.Warnings) &&
-                 Enumerable.SequenceEqual(Errors, other.Errors);
+                Enumerable.SequenceEqual(Errors, other.Errors) &&
+                Enumerable.SequenceEqual(Warnings, other.Warnings) &&
+                Framework == other.Framework;
         }
 
         public override int GetHashCode()
         {
-            // These objects are currently POCOs and we're overriding equals
-            // so that things like Enumerable.SequenceEqual just work.
+            return base.GetHashCode();
+        }
+    }
+
+    public class DiagnosticsInfo
+    {
+        public string Path { get; set; }
+
+        public int Line { get; set; }
+
+        public int Column { get; set; }
+
+        public string Message { get; set; }
+
+        public string FormattedMessage { get; set; }
+
+        public override bool Equals(object obj)
+        {
+            var other = obj as DiagnosticsInfo;
+
+            return other != null &&
+                 other.Line == Line && 
+                 other.Column == Column && 
+                 other.Message == Message && 
+                 other.FormattedMessage == FormattedMessage;
+        }
+
+        public override int GetHashCode()
+        {
             return base.GetHashCode();
         }
     }
