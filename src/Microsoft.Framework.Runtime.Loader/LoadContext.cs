@@ -60,7 +60,7 @@ namespace Microsoft.Framework.Runtime.Loader
         private string GetNativeImagePath(string ilPath)
         {
             var directory = Path.GetDirectoryName(ilPath);
-            var arch = Environment.GetEnvironmentVariable("PROCESSOR_ARCHITECTURE");
+            var arch = IntPtr.Size == 4 ? "x86" : "AMD64";
 
             var nativeImageName = Path.GetFileNameWithoutExtension(ilPath) + ".ni.dll";
             var nativePath = Path.Combine(directory, arch, nativeImageName);
