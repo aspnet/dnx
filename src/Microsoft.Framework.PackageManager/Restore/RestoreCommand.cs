@@ -8,17 +8,17 @@ using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
+using System.Runtime.Versioning;
 using System.Security.Cryptography;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Framework.PackageManager.Bundle;
 using Microsoft.Framework.PackageManager.Restore.NuGet;
-using Microsoft.Framework.Runtime;
-using NuGet;
-using Microsoft.Framework.Runtime.DependencyManagement;
-using TempRepack.Engine.Model;
-using System.Runtime.Versioning;
 using Microsoft.Framework.PackageManager.Utils;
+using Microsoft.Framework.Runtime;
+using Microsoft.Framework.Runtime.DependencyManagement;
+using NuGet;
+using TempRepack.Engine.Model;
 
 namespace Microsoft.Framework.PackageManager
 {
@@ -431,6 +431,7 @@ namespace Microsoft.Framework.PackageManager
                     tasks.Add(restoreOperations.CreateGraphNode(context, projectLibrary, _ => true));
                 }
             }
+            
             var graphs = await Task.WhenAll(tasks);
             foreach (var graph in graphs)
             {
@@ -492,6 +493,7 @@ namespace Microsoft.Framework.PackageManager
                     {
                         Reduce(runtimeGraph);
                     }
+
                     graphs = graphs.Concat(runtimeGraphs).ToArray();
                 }
             }
@@ -502,7 +504,9 @@ namespace Microsoft.Framework.PackageManager
 
             ForEach(graphs, node =>
             {
-                if (node == null || node.LibraryRange == null)
+                if (node == null || 
+                    node.LibraryRange == null || 
+                    node.Disposition == GraphNode.DispositionType.Rejected)
                 {
                     return;
                 }
