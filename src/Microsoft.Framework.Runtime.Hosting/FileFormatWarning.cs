@@ -6,25 +6,43 @@ using Newtonsoft.Json.Linq;
 
 namespace Microsoft.Framework.Runtime
 {
-    public sealed class FileFormatWarning
+    public class FileFormatWarning : ICompilationMessage
     {
+        private static readonly string FormattedMessageTemplate = "{0}({1},{2}): warning: {3}";
+
         public FileFormatWarning(string message, string projectFilePath, JToken token)
         {
             Message = message;
-            Path = projectFilePath;
+            SourceFilePath = projectFilePath;
 
             var lineInfo = (IJsonLineInfo)token;
 
-            Column = lineInfo.LinePosition;
-            Line = lineInfo.LineNumber;
+            StartColumn = lineInfo.LinePosition;
+            EndColumn = StartColumn;
+            StartLine = lineInfo.LineNumber;
+            EndLine = StartLine;
+        }
+
+        public string FormattedMessage
+        {
+            get
+            {
+                return string.Format(FormattedMessageTemplate, SourceFilePath, StartLine, StartColumn, Message);
+            }
         }
 
         public string Message { get; }
 
-        public string Path { get; }
+        public string SourceFilePath { get; }
 
-        public int Line { get; }
+        public CompilationMessageSeverity Severity { get { return CompilationMessageSeverity.Warning; } }
 
-        public int Column { get; }
+        public int StartLine { get; }
+
+        public int StartColumn { get; }
+
+        public int EndLine { get; }
+
+        public int EndColumn { get; }
     }
 }

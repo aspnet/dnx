@@ -51,7 +51,7 @@ namespace Microsoft.Framework.PackageManager.Bundle
 
             foreach (var warning in warnings)
             {
-                _options.Reports.Information.WriteLine(string.Format("Warning: At line {0} - {1}", warning.Line, warning.Message).Yellow());
+                _options.Reports.Information.WriteLine(warning.FormattedMessage.Yellow());
             }
 
             // '--wwwroot' option can override 'webroot' property in project.json

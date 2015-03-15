@@ -33,17 +33,12 @@ namespace Microsoft.Framework.PackageManager
 
         public bool Build()
         {
-            var warnings = new List<FileFormatWarning>();
+            var projectDiagnostics = new List<FileFormatWarning>();
             Runtime.Project project;
-            if (!Runtime.Project.TryGetProject(_buildOptions.ProjectDir, out project, warnings))
+            if (!Runtime.Project.TryGetProject(_buildOptions.ProjectDir, out project, projectDiagnostics))
             {
                 LogError(string.Format("Unable to locate {0}.", Runtime.Project.ProjectFileName));
                 return false;
-            }
-
-            foreach (var warning in warnings)
-            {
-                _buildOptions.Reports.Information.WriteLine(string.Format("Warning: At line {0} - {1}", warning.Line, warning.Message).Yellow());
             }
 
             var sw = Stopwatch.StartNew();
@@ -213,6 +208,9 @@ namespace Microsoft.Framework.PackageManager
 
             sw.Stop();
 
+            projectDiagnostics.ForEach(d => LogWarning(d.FormattedMessage));
+
+            allDiagnostics.AddRange(projectDiagnostics);
             WriteSummary(allDiagnostics);
 
             _buildOptions.Reports.Information.WriteLine("Time elapsed {0}", sw.Elapsed);
