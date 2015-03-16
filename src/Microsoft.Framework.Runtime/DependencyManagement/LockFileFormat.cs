@@ -14,6 +14,7 @@ namespace Microsoft.Framework.Runtime.DependencyManagement
 {
     public class LockFileFormat
     {
+        public static readonly int Version = -10000;
         public const string LockFileName = "project.lock.json";
 
         public LockFile Read(string filePath)
@@ -70,6 +71,7 @@ namespace Microsoft.Framework.Runtime.DependencyManagement
         {
             var lockFile = new LockFile();
             lockFile.Islocked = ReadBool(cursor, "locked", defaultValue: false);
+            lockFile.Version = ReadInt(cursor, "version", defaultValue: int.MaxValue);
             lockFile.ProjectFileDependencyGroups = ReadObject(cursor["projectFileDependencyGroups"] as JObject, ReadProjectFileDependencyGroup);
             lockFile.Libraries = ReadObject(cursor["libraries"] as JObject, ReadLibrary);
             return lockFile;
@@ -79,7 +81,7 @@ namespace Microsoft.Framework.Runtime.DependencyManagement
         {
             var json = new JObject();
             json["locked"] = new JValue(lockFile.Islocked);
-            json["version"] = new JValue(-10000);
+            json["version"] = new JValue(Version);
             json["projectFileDependencyGroups"] = WriteObject(lockFile.ProjectFileDependencyGroups,
                 WriteProjectFileDependencyGroup);
             json["libraries"] = WriteObject(lockFile.Libraries, WriteLibrary);
@@ -342,6 +344,16 @@ namespace Microsoft.Framework.Runtime.DependencyManagement
                 return defaultValue;
             }
             return valueToken.Value<bool>();
+        }
+
+        private int ReadInt(JToken cursor, string property, int defaultValue)
+        {
+            var valueToken = cursor[property];
+            if (valueToken == null)
+            {
+                return defaultValue;
+            }
+            return valueToken.Value<int>();
         }
 
         private string ReadString(JToken json)

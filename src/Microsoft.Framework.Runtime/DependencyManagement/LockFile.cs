@@ -10,12 +10,18 @@ namespace Microsoft.Framework.Runtime.DependencyManagement
     public class LockFile
     {
         public bool Islocked { get; set; }
+        public int Version { get; set; }
         public IList<ProjectFileDependencyGroup> ProjectFileDependencyGroups { get; set; } =
             new List<ProjectFileDependencyGroup>();
         public IList<LockFileLibrary> Libraries { get; set; } = new List<LockFileLibrary>();
 
         public bool IsValidForProject(Project project)
         {
+            if (Version != LockFileFormat.Version)
+            {
+                return false;
+            }
+
             var actualTargetFrameworks = project.GetTargetFrameworks();
 
             // The lock file should contain dependencies for each framework plus dependencies shared by all frameworks
