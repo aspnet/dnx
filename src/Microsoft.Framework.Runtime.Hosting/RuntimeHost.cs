@@ -7,7 +7,9 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Threading.Tasks;
 using Microsoft.Framework.Logging;
+using Microsoft.Framework.Runtime.Common;
 using Microsoft.Framework.Runtime.Dependencies;
 using Microsoft.Framework.Runtime.Internal;
 using NuGet.DependencyResolver;
@@ -15,7 +17,7 @@ using NuGet.Frameworks;
 
 namespace Microsoft.Framework.Runtime
 {
-    public class RuntimeHost
+    public class RuntimeHost:IDisposable
     {
         private readonly ILogger Log;
 
@@ -23,8 +25,10 @@ namespace Microsoft.Framework.Runtime
         public NuGetFramework TargetFramework { get; }
         public IEnumerable<IDependencyProvider> DependencyProviders { get; }
         public ILoggerFactory LoggerFactory { get; }
+        public IEnumerable<IDisposable> LoaderDisposers { get; }
+        public IServiceProvider Services { get; }
 
-        internal RuntimeHost(RuntimeHostBuilder builder)
+        internal RuntimeHost(RuntimeHostBuilder builder, IEnumerable<IDisposable> loaderDisposers)
         {
             if(builder == null)
             {
@@ -38,6 +42,7 @@ namespace Microsoft.Framework.Runtime
             Log = RuntimeLogging.Logger<RuntimeHost>();
 
             Project = builder.Project;
+            Services = builder.Services;
 
             // Load properties from the mutable RuntimeHostBuilder into
             // immutable copies on this object
@@ -46,9 +51,11 @@ namespace Microsoft.Framework.Runtime
             // Copy the dependency providers so the user can't fiddle with them without our knowledge
             var list = new List<IDependencyProvider>(builder.DependencyProviders);
             DependencyProviders = list;
+
+            LoaderDisposers = loaderDisposers;
         }
 
-        public void ExecuteApplication(string applicationName, string[] programArgs)
+        public Task<int> ExecuteApplication(string applicationName, string[] programArgs)
         {
             Log.LogInformation($"Launching '{applicationName}' '{string.Join(" ", programArgs)}'");
 
@@ -64,6 +71,15 @@ namespace Microsoft.Framework.Runtime
             if (Log.IsEnabled(LogLevel.Information))
             {
                 Log.LogInformation($"Executing Entry Point: {entryPoint.GetName().FullName}");
+            }
+            return EntryPointExecutor.Execute(entryPoint, programArgs, Services);
+        }
+
+        public void Dispose()
+        {
+            foreach(var loaderDisposer in LoaderDisposers)
+            {
+                loaderDisposer.Dispose();
             }
         }
 

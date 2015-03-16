@@ -3,6 +3,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -31,7 +32,13 @@ namespace Microsoft.Framework.Runtime.Dependencies
 
         public Library GetDescription(LibraryRange libraryRange, NuGetFramework targetFramework)
         {
-            System.Diagnostics.Debug.Assert(SupportsType(libraryRange.TypeConstraint));
+            Debug.Assert(SupportsType(libraryRange.TypeConstraint));
+
+            if(!targetFramework.IsDesktop())
+            {
+                // This resolver only works on desktop frameworks
+                return null;
+            }
 
             var name = libraryRange.Name;
             var version = libraryRange.VersionRange?.MinVersion;
