@@ -97,43 +97,42 @@ namespace Microsoft.Framework.Runtime
 
         private Assembly LocateEntryPoint(string applicationName)
         {
-            var sw = Stopwatch.StartNew();
-            Log.LogInformation($"Locating entry point for {applicationName}");
+            using (Log.LogTimedMethod())
+            {
+                Log.LogInformation($"Locating entry point for {applicationName}");
 
-            if (Project == null)
-            {
-                Log.LogError("Unable to locate entry point, there is no project");
-                return null;
-            }
-
-            Assembly asm = null;
-            try
-            {
-                asm = Assembly.Load(new AssemblyName(applicationName));
-            }
-            catch (FileLoadException ex) when (string.Equals(new AssemblyName(ex.FileName).Name, applicationName, StringComparison.Ordinal))
-            {
-                if (ex.InnerException is ICompilationException)
+                if (Project == null)
                 {
-                    throw ex.InnerException;
+                    Log.LogError("Unable to locate entry point, there is no project");
+                    return null;
                 }
 
-                ThrowEntryPointNotFoundException(applicationName, ex);
-            }
-            catch (FileNotFoundException ex) when (string.Equals(ex.FileName, applicationName, StringComparison.Ordinal))
-            {
-                if (ex.InnerException is ICompilationException)
+                Assembly asm = null;
+                try
                 {
-                    throw ex.InnerException;
+                    asm = Assembly.Load(new AssemblyName(applicationName));
+                }
+                catch (FileLoadException ex) when (string.Equals(new AssemblyName(ex.FileName).Name, applicationName, StringComparison.Ordinal))
+                {
+                    if (ex.InnerException is ICompilationException)
+                    {
+                        throw ex.InnerException;
+                    }
+
+                    ThrowEntryPointNotFoundException(applicationName, ex);
+                }
+                catch (FileNotFoundException ex) when (string.Equals(ex.FileName, applicationName, StringComparison.Ordinal))
+                {
+                    if (ex.InnerException is ICompilationException)
+                    {
+                        throw ex.InnerException;
+                    }
+
+                    ThrowEntryPointNotFoundException(applicationName, ex);
                 }
 
-                ThrowEntryPointNotFoundException(applicationName, ex);
+                return asm;
             }
-
-            sw.Stop();
-            Log.LogInformation($"Located entry point in {sw.ElapsedMilliseconds}ms");
-
-            return asm;
         }
 
         private void ThrowEntryPointNotFoundException(

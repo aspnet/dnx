@@ -4,7 +4,7 @@ using System.Runtime.CompilerServices;
 
 namespace Microsoft.Framework.Logging
 {
-    public static class LoggerExtensions
+    public static class LogTimedExtensions
     {
         public static IDisposable LogTimedMethod(this ILogger self, [CallerMemberName] string method = null)
         {

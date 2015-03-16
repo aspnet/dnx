@@ -51,61 +51,61 @@ namespace Microsoft.Framework.Runtime.Loader
 
         private Assembly Load(string name, IAssemblyLoadContext loadContext)
         {
-            Debug.Assert(_assemblyLookupTable != null, "SetResolvedLibraries must be called before libraries can be loaded!");
-            if (_assemblyLookupTable == null)
+            using (Log.LogTimedMethod())
             {
-                throw new InvalidOperationException("TODO: SetResolvedLibraries must be called before libraries can be loaded!");
-            }
+                Log.LogVerbose($"Requested load of {name}");
 
-            Log.LogVerbose($"Requested load of {name}");
-
-            string assemblyLocation;
-            if (_assemblyLookupTable.TryGetValue(name, out assemblyLocation))
-            {
-                return loadContext.LoadFile(assemblyLocation);
+                string assemblyLocation;
+                if (_assemblyLookupTable.TryGetValue(name, out assemblyLocation))
+                {
+                    return loadContext.LoadFile(assemblyLocation);
+                }
+                return null;
             }
-            return null;
         }
 
         public Dictionary<string, string> InitializeAssemblyLookupTable(IEnumerable<Library> libraries, NuGetFramework runtimeFramework, DefaultPackagePathResolver pathResolver)
         {
-            Log.LogInformation("Scanning resolved Package libraries for assemblies");
-            var lookup = new Dictionary<string, string>();
-            var cacheResolvers = GetCacheResolvers();
-            foreach (var library in libraries)
+            using (Log.LogTimedMethod())
             {
-                Debug.Assert(library.Identity.Type == LibraryTypes.Package);
-
-                Log.LogDebug($"Scanning library {library.Identity.Name} {library.Identity.Version}");
-                var lockFileLib = library.GetRequiredItem<LockFileLibrary>(KnownLibraryProperties.LockFileLibrary);
-                var lockFileFrameworkGroup = library.GetItem<LockFileFrameworkGroup>(KnownLibraryProperties.LockFileFrameworkGroup);
-                if (lockFileFrameworkGroup != null)
+                Log.LogInformation("Scanning resolved Package libraries for assemblies");
+                var lookup = new Dictionary<string, string>();
+                var cacheResolvers = GetCacheResolvers();
+                foreach (var library in libraries)
                 {
-                    foreach (var assembly in lockFileFrameworkGroup.RuntimeAssemblies)
+                    Debug.Assert(library.Identity.Type == LibraryTypes.Package);
+
+                    Log.LogDebug($"Scanning library {library.Identity.Name} {library.Identity.Version}");
+                    var lockFileLib = library.GetRequiredItem<LockFileLibrary>(KnownLibraryProperties.LockFileLibrary);
+                    var lockFileFrameworkGroup = library.GetItem<LockFileFrameworkGroup>(KnownLibraryProperties.LockFileFrameworkGroup);
+                    if (lockFileFrameworkGroup != null)
                     {
-                        Log.LogDebug($"Locating {assembly} in {library.Identity.Name} {library.Identity.Version}");
-                        string asmName = Path.GetFileNameWithoutExtension(assembly);
-                        if (Log.IsEnabled(LogLevel.Warning) && lookup.ContainsKey(asmName))
+                        foreach (var assembly in lockFileFrameworkGroup.RuntimeAssemblies)
                         {
-                            Log.LogWarning($"{asmName} already exists at {lookup[asmName]}. Overriding!");
+                            Log.LogDebug($"Locating {assembly} in {library.Identity.Name} {library.Identity.Version}");
+                            string asmName = Path.GetFileNameWithoutExtension(assembly);
+                            if (Log.IsEnabled(LogLevel.Warning) && lookup.ContainsKey(asmName))
+                            {
+                                Log.LogWarning($"{asmName} already exists at {lookup[asmName]}. Overriding!");
+                            }
+
+                            // Locate the package
+                            var packageRoot = ResolvePackagePath(pathResolver, cacheResolvers, lockFileLib);
+
+                            // Resolve the assembly path
+                            var assemblyLocation = Path.Combine(packageRoot, assembly);
+
+                            lookup[asmName] = assemblyLocation;
                         }
-
-                        // Locate the package
-                        var packageRoot = ResolvePackagePath(pathResolver, cacheResolvers, lockFileLib);
-
-                        // Resolve the assembly path
-                        var assemblyLocation = Path.Combine(packageRoot, assembly);
-
-                        lookup[asmName] = assemblyLocation;
+                    }
+                    else
+                    {
+                        Log.LogDebug($"No assemblies in {library.Identity.Name} {library.Identity.Version} for {runtimeFramework}");
                     }
                 }
-                else
-                {
-                    Log.LogDebug($"No assemblies in {library.Identity.Name} {library.Identity.Version} for {runtimeFramework}");
-                }
-            }
 
-            return lookup;
+                return lookup;
+            }
         }
 
         private string ResolvePackagePath(DefaultPackagePathResolver defaultResolver,
