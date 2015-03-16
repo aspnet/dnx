@@ -1,4 +1,5 @@
-﻿using System;
+﻿
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -14,28 +15,23 @@ using NuGet.ProjectModel;
 namespace Microsoft.Framework.Runtime.Loader
 {
     /// <summary>
-    /// Loads .NET Assemblies from NuGet Packages
+    /// Loads library assemblies from NuGet Packages
     /// </summary>
     /// <remarks>
     /// This loader REQUIRES that a lock file has been generated for the project.
     /// </remarks>
     public class PackageAssemblyLoader : IAssemblyLoader
     {
-        private readonly IAssemblyLoadContextAccessor _loadContextAccessor;
         private readonly ILogger Log;
-        private readonly Dictionary<string, string> _assemblyLookupTable;
+        private Dictionary<string, string> _assemblyLookupTable = null;
+        private readonly IAssemblyLoadContextAccessor _loadContextAccessor;
 
-        public PackageAssemblyLoader(IAssemblyLoadContextAccessor loadContextAccessor,
-            IEnumerable<Library> libraries,
-            NuGetFramework targetFramework,
-            DefaultPackagePathResolver pathResolver)
+        public PackageAssemblyLoader(IEnumerable<Library> libraries, NuGetFramework runtimeFramework, DefaultPackagePathResolver pathResolver, IAssemblyLoadContextAccessor loadContextAccessor)
         {
+            Log = RuntimeLogging.Logger<PackageAssemblyLoader>();
             _loadContextAccessor = loadContextAccessor;
 
-            Log = RuntimeLogging.Logger<PackageAssemblyLoader>();
-
-            // Initialize the assembly lookup table
-            _assemblyLookupTable = InitializeAssemblyLookup(libraries, targetFramework, pathResolver);
+            _assemblyLookupTable = InitializeAssemblyLookupTable(libraries, runtimeFramework, pathResolver);
         }
 
         /// <summary>
@@ -55,34 +51,41 @@ namespace Microsoft.Framework.Runtime.Loader
 
         private Assembly Load(string name, IAssemblyLoadContext loadContext)
         {
+            Debug.Assert(_assemblyLookupTable != null, "SetResolvedLibraries must be called before libraries can be loaded!");
+            if (_assemblyLookupTable == null)
+            {
+                throw new InvalidOperationException("TODO: SetResolvedLibraries must be called before libraries can be loaded!");
+            }
+
             Log.LogVerbose($"Requested load of {name}");
 
             string assemblyLocation;
-            if(_assemblyLookupTable.TryGetValue(name, out assemblyLocation))
+            if (_assemblyLookupTable.TryGetValue(name, out assemblyLocation))
             {
                 return loadContext.LoadFile(assemblyLocation);
             }
             return null;
         }
 
-        private Dictionary<string, string> InitializeAssemblyLookup(IEnumerable<Library> libraries, NuGetFramework targetFramework, DefaultPackagePathResolver pathResolver)
+        public Dictionary<string, string> InitializeAssemblyLookupTable(IEnumerable<Library> libraries, NuGetFramework runtimeFramework, DefaultPackagePathResolver pathResolver)
         {
+            Log.LogInformation("Scanning resolved Package libraries for assemblies");
             var lookup = new Dictionary<string, string>();
             var cacheResolvers = GetCacheResolvers();
-            foreach(var library in libraries)
+            foreach (var library in libraries)
             {
                 Debug.Assert(library.Identity.Type == LibraryTypes.Package);
 
                 Log.LogDebug($"Scanning library {library.Identity.Name} {library.Identity.Version}");
                 var lockFileLib = library.GetRequiredItem<LockFileLibrary>(KnownLibraryProperties.LockFileLibrary);
                 var lockFileFrameworkGroup = library.GetItem<LockFileFrameworkGroup>(KnownLibraryProperties.LockFileFrameworkGroup);
-                if(lockFileFrameworkGroup != null)
+                if (lockFileFrameworkGroup != null)
                 {
-                    foreach(var assembly in lockFileFrameworkGroup.RuntimeAssemblies)
+                    foreach (var assembly in lockFileFrameworkGroup.RuntimeAssemblies)
                     {
                         Log.LogDebug($"Locating {assembly} in {library.Identity.Name} {library.Identity.Version}");
                         string asmName = Path.GetFileNameWithoutExtension(assembly);
-                        if(Log.IsEnabled(LogLevel.Warning) && lookup.ContainsKey(asmName))
+                        if (Log.IsEnabled(LogLevel.Warning) && lookup.ContainsKey(asmName))
                         {
                             Log.LogWarning($"{asmName} already exists at {lookup[asmName]}. Overriding!");
                         }
@@ -98,7 +101,7 @@ namespace Microsoft.Framework.Runtime.Loader
                 }
                 else
                 {
-                    Log.LogDebug($"No assemblies in {library.Identity.Name} {library.Identity.Version} for {targetFramework}");
+                    Log.LogDebug($"No assemblies in {library.Identity.Name} {library.Identity.Version} for {runtimeFramework}");
                 }
             }
 
@@ -138,6 +141,5 @@ namespace Microsoft.Framework.Runtime.Loader
             return packageCachePathValue.Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries)
                                         .Select(path => new DefaultPackagePathResolver(path));
         }
-
     }
 }

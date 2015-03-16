@@ -10,25 +10,29 @@ using System.Reflection;
 using System.Threading.Tasks;
 using Microsoft.Framework.Logging;
 using Microsoft.Framework.Runtime.Common;
+using Microsoft.Framework.Runtime.Common.DependencyInjection;
 using Microsoft.Framework.Runtime.Dependencies;
 using Microsoft.Framework.Runtime.Internal;
+using Microsoft.Framework.Runtime.Loader;
 using NuGet.DependencyResolver;
 using NuGet.Frameworks;
+using NuGet.LibraryModel;
+using NuGet.ProjectModel;
 
 namespace Microsoft.Framework.Runtime
 {
-    public class RuntimeHost : IDisposable
+    public class RuntimeHost
     {
         private readonly ILogger Log;
 
         public Project Project { get; }
+        public GlobalSettings GlobalSettings { get; }
         public NuGetFramework TargetFramework { get; }
         public IEnumerable<IDependencyProvider> DependencyProviders { get; }
         public ILoggerFactory LoggerFactory { get; }
-        public IEnumerable<IDisposable> LoaderDisposers { get; }
         public IServiceProvider Services { get; }
 
-        internal RuntimeHost(RuntimeHostBuilder builder, IEnumerable<IDisposable> loaderDisposers)
+        internal RuntimeHost(RuntimeHostBuilder builder)
         {
             if (builder == null)
             {
@@ -42,6 +46,8 @@ namespace Microsoft.Framework.Runtime
             Log = RuntimeLogging.Logger<RuntimeHost>();
 
             Project = builder.Project;
+            GlobalSettings = builder.GlobalSettings;
+
             Services = builder.Services;
 
             // Load properties from the mutable RuntimeHostBuilder into
@@ -51,35 +57,41 @@ namespace Microsoft.Framework.Runtime
             // Copy the dependency providers so the user can't fiddle with them without our knowledge
             var list = new List<IDependencyProvider>(builder.DependencyProviders);
             DependencyProviders = list;
-
-            LoaderDisposers = loaderDisposers;
         }
 
-        public Task<int> ExecuteApplication(string applicationName, string[] programArgs)
+        public Task<int> ExecuteApplication(
+            IAssemblyLoaderContainer loaderContainer,
+            IAssemblyLoadContextAccessor loadContextAccessor,
+            string applicationName,
+            string[] programArgs)
         {
             Log.LogInformation($"Launching '{applicationName}' '{string.Join(" ", programArgs)}'");
 
             var deps = DependencyManager.ResolveDependencies(
-                DependencyProviders,
-                Project.Name,
-                Project.Version,
-                TargetFramework);
+                    DependencyProviders,
+                    Project.Name,
+                    Project.Version,
+                    TargetFramework);
 
-            // Locate the entry point
-            var entryPoint = LocateEntryPoint(applicationName);
-
-            if (Log.IsEnabled(LogLevel.Information))
+            using (var loaderCleanup = new DisposableList())
             {
-                Log.LogInformation($"Executing Entry Point: {entryPoint.GetName().FullName}");
-            }
-            return EntryPointExecutor.Execute(entryPoint, programArgs, Services);
-        }
+                // Set up assembly loaders
+                loaderCleanup.Add(
+                    loaderContainer.AddLoader(
+                        new PackageAssemblyLoader(
+                            deps.GetLibraries(LibraryTypes.Package),
+                            TargetFramework,
+                            new DefaultPackagePathResolver(ResolveRepositoryPath(GlobalSettings)),
+                            loadContextAccessor)));
 
-        public void Dispose()
-        {
-            foreach (var loaderDisposer in LoaderDisposers)
-            {
-                loaderDisposer.Dispose();
+                // Locate the entry point
+                var entryPoint = LocateEntryPoint(applicationName);
+
+                if (Log.IsEnabled(LogLevel.Information))
+                {
+                    Log.LogInformation($"Executing Entry Point: {entryPoint.GetName().FullName}");
+                }
+                return EntryPointExecutor.Execute(entryPoint, programArgs, Services);
             }
         }
 
@@ -141,6 +153,47 @@ namespace Microsoft.Framework.Runtime
             throw new InvalidOperationException(
                     string.Format("Unable to load application or execute command '{0}'.",
                     applicationName), innerException);
+        }
+
+        private static string ResolveRepositoryPath(GlobalSettings globalSettings)
+        {
+            // Order
+            // 1. EnvironmentNames.Packages environment variable
+            // 2. global.json { "packages": "..." }
+            // 3. NuGet.config repositoryPath (maybe)?
+            // 4. {DefaultLocalRuntimeHomeDir}\packages
+
+            var runtimePackages = Environment.GetEnvironmentVariable(EnvironmentNames.Packages);
+
+            if (!string.IsNullOrEmpty(runtimePackages))
+            {
+                return runtimePackages;
+            }
+
+            if (!string.IsNullOrEmpty(globalSettings?.PackagesPath))
+            {
+                return Path.Combine(globalSettings.RootPath, globalSettings.PackagesPath);
+            }
+
+            var profileDirectory = Environment.GetEnvironmentVariable("USERPROFILE");
+
+            if (string.IsNullOrEmpty(profileDirectory))
+            {
+                profileDirectory = Environment.GetEnvironmentVariable("HOME");
+            }
+
+            return Path.Combine(profileDirectory, Constants.DefaultLocalRuntimeHomeDir, "packages");
+        }
+
+        private class DisposableList : List<IDisposable>, IDisposable
+        {
+            public void Dispose()
+            {
+                foreach (var item in this)
+                {
+                    item.Dispose();
+                }
+            }
         }
     }
 }

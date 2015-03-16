@@ -41,32 +41,36 @@ namespace Microsoft.Framework.Runtime.Dependencies
             NuGetVersion version,
             NuGetFramework targetFramework)
         {
-            // Walk dependencies
-            var walker = new DependencyWalker(dependencyProviders);
-            var graph = walker.Walk(name, version, targetFramework);
-
-            // Resolve conflicts
-            if (!graph.TryResolveConflicts())
-            {
-                throw new InvalidOperationException("Failed to resolve conflicting dependencies!");
-            }
-
-            // Build the resolved dependency list
+            GraphNode<Library> graph;
             var librariesByType = new Dictionary<string, IList<Library>>();
-            graph.ForEach(node =>
+            using (Log.LogTimedMethod())
             {
-                // Everything should be Accepted or Rejected by now
-                Debug.Assert(node.Disposition != Disposition.Acceptable);
+                // Walk dependencies
+                var walker = new DependencyWalker(dependencyProviders);
+                graph = walker.Walk(name, version, targetFramework);
 
-                if (node.Disposition == Disposition.Accepted)
+                // Resolve conflicts
+                if (!graph.TryResolveConflicts())
                 {
-                    var library = node.Item.Data;
-
-                    // Add the library to the set
-                    librariesByType.GetOrAdd(library.Identity.Type, s => new List<Library>())
-                        .Add(library);
+                    throw new InvalidOperationException("Failed to resolve conflicting dependencies!");
                 }
-            });
+
+                // Build the resolved dependency list
+                graph.ForEach(node =>
+                {
+                    // Everything should be Accepted or Rejected by now
+                    Debug.Assert(node.Disposition != Disposition.Acceptable);
+
+                    if (node.Disposition == Disposition.Accepted)
+                    {
+                        var library = node.Item.Data;
+
+                        // Add the library to the set
+                        librariesByType.GetOrAdd(library.Identity.Type, s => new List<Library>())
+                                .Add(library);
+                    }
+                });
+            }
 
             // Write the graph
             if (Log.IsEnabled(LogLevel.Debug))
@@ -99,7 +103,7 @@ namespace Microsoft.Framework.Runtime.Dependencies
         public IEnumerable<Library> GetLibraries(string type)
         {
             IList<Library> libraries;
-            if(!_librariesByType.TryGetValue(type, out libraries))
+            if (!_librariesByType.TryGetValue(type, out libraries))
             {
                 return Enumerable.Empty<Library>();
             }
