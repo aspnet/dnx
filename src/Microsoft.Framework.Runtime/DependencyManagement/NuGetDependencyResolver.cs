@@ -56,20 +56,20 @@ namespace Microsoft.Framework.Runtime
             {
                 return null;
             }
-            
+
             var package = FindCandidate(libraryRange.Name, libraryRange.VersionRange);
-            
+
             if (package != null)
             {
                 LockFileFrameworkGroup group = null;
                 IEnumerable<LibraryDependency> dependencies;
                 bool resolved = true;
-                if(package.LockFileLibrary != null)
+                if (package.LockFileLibrary != null)
                 {
                     // If we have a lock file, it MUST have an exact match for this target
                     // framework
                     group = package.LockFileLibrary.FrameworkGroups.FirstOrDefault(f => f.TargetFramework == targetFramework);
-                    if(group == null)
+                    if (group == null)
                     {
                         resolved = false;
                         dependencies = Enumerable.Empty<LibraryDependency>();
@@ -94,7 +94,7 @@ namespace Microsoft.Framework.Runtime
                     },
                     Type = "Package",
                     Dependencies = dependencies,
-                    Resolved = resolved 
+                    Resolved = resolved
                 };
             }
 
@@ -231,7 +231,7 @@ namespace Microsoft.Framework.Runtime
                 }
 
                 var group = packageInfo.LockFileLibrary.FrameworkGroups.FirstOrDefault(g => g.TargetFramework == targetFramework);
-                if(group == null)
+                if (group == null)
                 {
                     continue;
                 }
@@ -318,7 +318,7 @@ namespace Microsoft.Framework.Runtime
 
             var references = new Dictionary<string, IMetadataReference>(StringComparer.OrdinalIgnoreCase);
 
-            if(!TryPopulateMetadataReferences(description, target.TargetFramework, references))
+            if (!TryPopulateMetadataReferences(description, target.TargetFramework, references))
             {
                 return null;
             }
@@ -337,7 +337,7 @@ namespace Microsoft.Framework.Runtime
         private bool TryPopulateMetadataReferences(PackageDescription description, FrameworkName targetFramework, IDictionary<string, IMetadataReference> paths)
         {
             var group = description.Package.LockFileLibrary.FrameworkGroups.FirstOrDefault(f => f.TargetFramework == targetFramework);
-            if(group == null)
+            if (group == null)
             {
                 return false;
             }
@@ -356,7 +356,7 @@ namespace Microsoft.Framework.Runtime
         {
             var directory = Path.Combine(description.Library.Path, "shared");
 
-            return description.Package.LockFileLibrary.Files.Where(path => path.StartsWith("shared\\"))
+            return description.Package.LockFileLibrary.Files.Where(path => path.StartsWith("shared" + Path.DirectorySeparatorChar))
                                                             .Select(path => Path.Combine(description.Library.Path, path));
         }
 
