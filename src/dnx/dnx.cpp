@@ -370,11 +370,23 @@ int wmain(int argc, wchar_t* argv[])
 #endif
 {
     // Check for the debug flag before doing anything else
-    for (int i = 0; i < argc; i++)
+    for (int i = 1; i < argc; ++i)
     {
+        //anything without - or -- is appbase or non-dnx command
+        if (argv[i][0] != _T('-'))
+        {
+            break;
+        }
+        if (StringsEqual(argv[i], _T("--appbase")))
+        {
+            //skip path argument
+            ++i;
+            continue;
+        }
         if (StringsEqual(argv[i], _T("--debug")))
         {
             WaitForDebuggerToAttach();
+            break;
         }
     }
 

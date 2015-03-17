@@ -16,9 +16,29 @@ public class EntryPoint
     public static int Main(string[] arguments)
     {
         // Check for the debug flag before doing anything else
-        bool hasDebugWaitFlag = arguments.Any(arg => string.Equals(arg, "--debug", StringComparison.OrdinalIgnoreCase));
+        bool hasDebugWaitFlag = false;
+        for (var i = 0; i < arguments.Length; ++i)
+        {
+            //anything without - or -- is appbase or non-dnx command
+            if (arguments[i][0] != '-')
+            {
+                break;
+            }
+            if (arguments[i] == "--appbase")
+            {
+                //skip path argument
+                ++i;
+                continue;
+            }
+            if (arguments[i] == "--debug")
+            {
+                hasDebugWaitFlag = true;
+                break;
+            }
+        }
+
         if (hasDebugWaitFlag)
-        { 
+        {
             if (!Debugger.IsAttached)
             {
                 Process currentProc = Process.GetCurrentProcess();
@@ -50,7 +70,7 @@ public class EntryPoint
 
         return RuntimeBootstrapper.Execute(arguments);
     }
-    
+
     private static string[] ExpandCommandLineArguments(string[] arguments)
     {
         // If '--appbase' is already given and it has a value, don't need to expand
@@ -135,9 +155,10 @@ public class EntryPoint
             return 1;
         }
         else if (string.Equals(candidate, "--watch", StringComparison.OrdinalIgnoreCase) ||
+            string.Equals(candidate, "--debug", StringComparison.OrdinalIgnoreCase) ||
             string.Equals(candidate, "--help", StringComparison.OrdinalIgnoreCase) ||
-            string.Equals(candidate, "--h", StringComparison.OrdinalIgnoreCase) ||
-            string.Equals(candidate, "--?", StringComparison.OrdinalIgnoreCase) ||
+            string.Equals(candidate, "-h", StringComparison.OrdinalIgnoreCase) ||
+            string.Equals(candidate, "-?", StringComparison.OrdinalIgnoreCase) ||
             string.Equals(candidate, "--version", StringComparison.OrdinalIgnoreCase))
         {
             return 0;
