@@ -1001,7 +1001,7 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
       'NoDependencies': {
         '1.0.0': {
           '.': ['NoDependencies.1.0.0.nupkg', 'NoDependencies.1.0.0.nupkg.sha512', 'NoDependencies.nuspec'],
-          'app': ['hello.cmd', 'hello.sh', 'project.json'],
+          'app': ['hello', 'hello.cmd', 'project.json'],
           'root': ['project.json', 'LOCKFILE_NAME'],
           'lib': {
             'dnx451': ['NoDependencies.dll', 'NoDependencies.xml']
@@ -1044,8 +1044,8 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
         ""NoDependencies.1.0.0.nupkg"",
         ""NoDependencies.1.0.0.nupkg.sha512"",
         ""NoDependencies.nuspec"",
+        ""app/hello"",
         ""app/hello.cmd"",
-        ""app/hello.sh"",
         ""app/project.json"",
         ""lib/dnx451/NoDependencies.dll"",
         ""lib/dnx451/NoDependencies.xml"",
@@ -1104,7 +1104,7 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
       'NoDependencies': {
         '1.0.0': {
           '.': ['NoDependencies.1.0.0.nupkg', 'NoDependencies.1.0.0.nupkg.sha512', 'NoDependencies.nuspec'],
-          'app': ['hello.cmd', 'hello.sh', 'project.json'],
+          'app': ['hello', 'hello.cmd', 'project.json'],
           'root': ['project.json', 'LOCKFILE_NAME'],
           'lib': {
             'dnx451': ['NoDependencies.dll', 'NoDependencies.xml']
@@ -1147,8 +1147,8 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
         ""NoDependencies.1.0.0.nupkg"",
         ""NoDependencies.1.0.0.nupkg.sha512"",
         ""NoDependencies.nuspec"",
+        ""app/hello"",
         ""app/hello.cmd"",
-        ""app/hello.sh"",
         ""app/project.json"",
         ""lib/dnx451/NoDependencies.dll"",
         ""lib/dnx451/NoDependencies.xml"",
