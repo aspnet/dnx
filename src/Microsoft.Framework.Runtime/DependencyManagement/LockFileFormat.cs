@@ -29,18 +29,29 @@ namespace Microsoft.Framework.Runtime.DependencyManagement
         {
             using (var textReader = new StreamReader(stream))
             {
-                using (var jsonReader = new JsonTextReader(textReader))
+                try
                 {
-                    while (jsonReader.TokenType != JsonToken.StartObject)
+                    using (var jsonReader = new JsonTextReader(textReader))
                     {
-                        if (!jsonReader.Read())
+                        while (jsonReader.TokenType != JsonToken.StartObject)
                         {
-                            //TODO: throw exception
-                            return null;
+                            if (!jsonReader.Read())
+                            {
+                                throw new InvalidDataException();
+                            }
                         }
+                        var token = JToken.Load(jsonReader);
+                        return ReadLockFile(token as JObject);
                     }
-                    var token = JToken.Load(jsonReader);
-                    return ReadLockFile(token as JObject);
+                }
+                catch
+                {
+                    // Ran into parsing errors, mark it as unlocked and out-of-date
+                    return new LockFile
+                    {
+                        Islocked = false,
+                        Version = int.MinValue
+                    };
                 }
             }
         }
@@ -71,7 +82,7 @@ namespace Microsoft.Framework.Runtime.DependencyManagement
         {
             var lockFile = new LockFile();
             lockFile.Islocked = ReadBool(cursor, "locked", defaultValue: false);
-            lockFile.Version = ReadInt(cursor, "version", defaultValue: int.MaxValue);
+            lockFile.Version = ReadInt(cursor, "version", defaultValue: int.MinValue);
             lockFile.ProjectFileDependencyGroups = ReadObject(cursor["projectFileDependencyGroups"] as JObject, ReadProjectFileDependencyGroup);
             lockFile.Libraries = ReadObject(cursor["libraries"] as JObject, ReadLibrary);
             return lockFile;
