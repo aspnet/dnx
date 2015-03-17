@@ -6,6 +6,7 @@ typedef const char* LPCSTR;
 #define _T(x) x
 
 #define _tcsnicmp strncasecmp
+#define _tcsicmp strcasecmp
 #define _tcsnlen strnlen
 
 int _tprintf_s(LPCTSTR format, ...);

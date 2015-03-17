@@ -2,7 +2,7 @@
 #include "dnx.h"
 #include "pal.h"
 
-bool LastIndexOfChar(LPCTSTR const pszStr, TCHAR c, size_t* pIndex)
+bool LastIndexOfCharInPath(LPCTSTR const pszStr, TCHAR c, size_t* pIndex)
 {
     size_t nIndex = _tcsnlen(pszStr, MAX_PATH) - 1;
     for (; nIndex != 0; nIndex--)
@@ -19,10 +19,10 @@ bool LastIndexOfChar(LPCTSTR const pszStr, TCHAR c, size_t* pIndex)
 
 bool StringsEqual(LPCTSTR const pszStrA, LPCTSTR const pszStrB)
 {
-    return ::_tcsnicmp(pszStrA, pszStrB, MAX_PATH) == 0;
+    return ::_tcsicmp(pszStrA, pszStrB) == 0;
 }
 
-bool StringEndsWith(LPCTSTR const pszStr, LPCTSTR const pszSuffix)
+bool PathEndsWith(LPCTSTR const pszStr, LPCTSTR const pszSuffix)
 {
     size_t nStrLen = _tcsnlen(pszStr, MAX_PATH);
     size_t nSuffixLen = _tcsnlen(pszSuffix, MAX_PATH);
@@ -34,7 +34,7 @@ bool StringEndsWith(LPCTSTR const pszStr, LPCTSTR const pszSuffix)
 
     size_t nOffset = nStrLen - nSuffixLen;
 
-    return StringsEqual(pszStr + nOffset, pszSuffix);
+    return ::_tcsnicmp(pszStr + nOffset, pszSuffix, MAX_PATH - nOffset) == 0;
 }
 
 bool LastPathSeparatorIndex(LPCTSTR const pszPath, size_t* pIndex)
@@ -42,8 +42,8 @@ bool LastPathSeparatorIndex(LPCTSTR const pszPath, size_t* pIndex)
     size_t nLastSlashIndex;
     size_t nLastBackSlashIndex;
 
-    bool hasLastSlashIndex = LastIndexOfChar(pszPath, _T('/'), &nLastSlashIndex);
-    bool hasLastBackSlashIndex = LastIndexOfChar(pszPath, _T('\\'), &nLastBackSlashIndex);
+    bool hasLastSlashIndex = LastIndexOfCharInPath(pszPath, _T('/'), &nLastSlashIndex);
+    bool hasLastBackSlashIndex = LastIndexOfCharInPath(pszPath, _T('\\'), &nLastBackSlashIndex);
 
     if (hasLastSlashIndex && hasLastBackSlashIndex)
     {
@@ -181,7 +181,7 @@ bool ExpandCommandLineArguments(int nArgc, LPTSTR* ppszArgv, int& nExpandedArgc,
     // "dnx /path/App.dll arg1" --> "dnx --appbase /path/ /path/App.dll arg1"
     // "dnx /path/App.exe arg1" --> "dnx --appbase /path/ /path/App.exe arg1"
     LPTSTR pszPathArg = ppszArgv[nPathArgIndex];
-    if (StringEndsWith(pszPathArg, _T(".exe")) || StringEndsWith(pszPathArg, _T(".dll")))
+    if (PathEndsWith(pszPathArg, _T(".exe")) || PathEndsWith(pszPathArg, _T(".dll")))
     {
         GetParentDir(pszPathArg, szParentDir);
 
