@@ -879,17 +879,17 @@ functions @{
         content.Add("#include \"stdafx.h\"");
         content.Add("#include \"tpa.h\"");
         content.Add(string.Empty);
-        content.Add("BOOL CreateTpaBase(LPWSTR** ppNames, size_t* pcNames, bool bNative)");
+        content.Add("BOOL CreateTpaBase(LPCTSTR** ppNames, size_t* pcNames, bool bNative)");
         content.Add("{");
         content.Add("    const size_t count = " + tpa.Length + ";");
-        content.Add("    LPWSTR* pArray = new LPWSTR[count];");
+        content.Add("    LPCTSTR* pArray = new LPCTSTR[count];");
         content.Add(string.Empty);
         content.Add("    if (bNative)");
         content.Add("    {");
 
         for (int i = 0; i < tpa.Length; ++i)
         {
-            content.Add(string.Format("        pArray[{0}] = _wcsdup(L\"{1}{2}\");", i, tpa[i], ".ni.dll"));
+            content.Add(string.Format("        pArray[{0}] = _T(\"{1}{2}\");", i, tpa[i], ".ni.dll"));
         }
 
         content.Add("    }");
@@ -898,7 +898,7 @@ functions @{
 
         for (int i = 0; i < tpa.Length; ++i)
         {
-            content.Add(string.Format("        pArray[{0}] = _wcsdup(L\"{1}{2}\");", i, tpa[i], ".dll"));
+            content.Add(string.Format("        pArray[{0}] = _T(\"{1}{2}\");", i, tpa[i], ".dll"));
         }
 
         content.Add("    }");
@@ -909,13 +909,8 @@ functions @{
         content.Add("    return true;");
         content.Add("}");
         content.Add(string.Empty);
-        content.Add("BOOL FreeTpaBase(const LPWSTR* values, const size_t count)");
+        content.Add("BOOL FreeTpaBase(const LPCTSTR* values, const size_t count)");
         content.Add("{");
-        content.Add("    for (size_t idx = 0; idx < count; ++idx)");
-        content.Add("    {");
-        content.Add("        delete[] values[idx];");
-        content.Add("    }");
-        content.Add(string.Empty);
         content.Add("    delete[] values;");
         content.Add(string.Empty);
         content.Add("    return true;");

@@ -30,7 +30,7 @@ bool GetTrustedPlatformAssembliesList(WCHAR* szDirectory, bool bNative, LPWSTR p
     errno_t errno = 0;
     WIN32_FIND_DATA ffd = {};
     size_t cTpaAssemblyNames = 0;
-    LPWSTR* ppszTpaAssemblyNames = nullptr;
+    LPCTSTR* ppszTpaAssemblyNames = nullptr;
 
     // Build the list of the tpa assemblies 
     CreateTpaBase(&ppszTpaAssemblyNames, &cTpaAssemblyNames, bNative);
