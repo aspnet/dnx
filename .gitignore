@@ -27,3 +27,6 @@ nuget.exe
 *.metaproj*
 debugSettings.json
 project.lock.json
+
+# Profiler result files, just in case they are left lying around :)
+*.app9results
