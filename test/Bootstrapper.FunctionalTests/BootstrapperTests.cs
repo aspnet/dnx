@@ -2,7 +2,6 @@
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using Microsoft.Framework.FunctionalTestUtils;
 using Microsoft.Framework.PackageManager;
@@ -13,22 +12,19 @@ namespace Bootstrapper.FunctionalTests
 {
     public class BootstrapperTests
     {
-        public static IEnumerable<object[]> RuntimeHomeDirs
+        public static IEnumerable<object[]> RuntimeComponents
         {
             get
             {
-                foreach (var path in TestUtils.GetRuntimeHomeDirs())
-                {
-                    yield return new[] { path };
-                }
+                return TestUtils.GetRuntimeComponentsCombinations();
             }
         }
 
         [Theory]
-        [MemberData("RuntimeHomeDirs")]
-        public void BootstrapperReturnsNonZeroExitCodeWhenNoArgumentWasGiven(DisposableDir runtimeHomeDir)
+        [MemberData("RuntimeComponents")]
+        public void BootstrapperReturnsNonZeroExitCodeWhenNoArgumentWasGiven(string flavor, string os, string architecture)
         {
-            using (runtimeHomeDir)
+            using (var runtimeHomeDir = TestUtils.GetRuntimeHomeDir(flavor, os, architecture))
             {
                 string stdOut, stdErr;
                 var exitCode = BootstrapperTestUtils.ExecBootstrapper(
@@ -42,10 +38,10 @@ namespace Bootstrapper.FunctionalTests
         }
 
         [Theory]
-        [MemberData("RuntimeHomeDirs")]
-        public void BootstrapperReturnsZeroExitCodeWhenHelpOptionWasGiven(DisposableDir runtimeHomeDir)
+        [MemberData("RuntimeComponents")]
+        public void BootstrapperReturnsZeroExitCodeWhenHelpOptionWasGiven(string flavor, string os, string architecture)
         {
-            using (runtimeHomeDir)
+            using (var runtimeHomeDir = TestUtils.GetRuntimeHomeDir(flavor, os, architecture))
             {
                 string stdOut, stdErr;
                 var exitCode = BootstrapperTestUtils.ExecBootstrapper(
@@ -59,10 +55,10 @@ namespace Bootstrapper.FunctionalTests
         }
 
         [Theory]
-        [MemberData("RuntimeHomeDirs")]
-        public void BootstrapperShowsVersionAndReturnsZeroExitCodeWhenVersionOptionWasGiven(DisposableDir runtimeHomeDir)
+        [MemberData("RuntimeComponents")]
+        public void BootstrapperShowsVersionAndReturnsZeroExitCodeWhenVersionOptionWasGiven(string flavor, string os, string architecture)
         {
-            using (runtimeHomeDir)
+            using (var runtimeHomeDir = TestUtils.GetRuntimeHomeDir(flavor, os, architecture))
             {
                 string stdOut, stdErr;
                 var exitCode = BootstrapperTestUtils.ExecBootstrapper(
@@ -77,10 +73,10 @@ namespace Bootstrapper.FunctionalTests
         }
 
         [Theory]
-        [MemberData("RuntimeHomeDirs")]
-        public void BootstrapperInvokesApplicationHostWithInferredAppBase(DisposableDir runtimeHomeDir)
+        [MemberData("RuntimeComponents")]
+        public void BootstrapperInvokesApplicationHostWithInferredAppBase(string flavor, string os, string architecture)
         {
-            using (runtimeHomeDir)
+            using (var runtimeHomeDir = TestUtils.GetRuntimeHomeDir(flavor, os, architecture))
             {
                 var sampleAppRoot = Path.Combine(TestUtils.GetSamplesFolder(), "HelloWorld");
                 string stdOut, stdErr;

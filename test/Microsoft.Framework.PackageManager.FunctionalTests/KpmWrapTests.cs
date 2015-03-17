@@ -7,27 +7,28 @@ using System.Collections.Generic;
 using System.Linq;
 using Microsoft.Framework.FunctionalTestUtils;
 using Microsoft.Framework.Runtime;
-using Newtonsoft.Json.Linq;
 using Xunit;
 
 namespace Microsoft.Framework.PackageManager
 {
     public class KpmWrapTests
     {
-        public static IEnumerable<object[]> RuntimeHomeDirs
+        public static IEnumerable<object[]> RuntimeComponents
         {
             get
             {
-                return TestUtils.GetRuntimeHomeDirs().Select(path => new[] { path });
+                return TestUtils.GetRuntimeComponentsCombinations();
             }
         }
 
         public static readonly string _msbuildPath = TestUtils.ResolveMSBuildPath();
 
         [Theory]
-        [MemberData("RuntimeHomeDirs")]
-        public void KpmWrapUpdatesExistingProjectJson(DisposableDir runtimeHomeDir)
+        [MemberData("RuntimeComponents")]
+        public void KpmWrapUpdatesExistingProjectJson(string flavor, string os, string architecture)
         {
+            var runtimeHomeDir = TestUtils.GetRuntimeHomeDir(flavor, os, architecture);
+
             if (PlatformHelper.IsMono)
             {
                 return;
@@ -99,9 +100,11 @@ namespace Microsoft.Framework.PackageManager
         }
 
         [Theory]
-        [MemberData("RuntimeHomeDirs")]
-        public void KpmWrapMaintainsAllKindsOfReferences(DisposableDir runtimeHomeDir)
+        [MemberData("RuntimeComponents")]
+        public void KpmWrapMaintainsAllKindsOfReferences(string flavor, string os, string architecture)
         {
+            var runtimeHomeDir = TestUtils.GetRuntimeHomeDir(flavor, os, architecture);
+
             if (PlatformHelper.IsMono)
             {
                 return;
@@ -178,9 +181,11 @@ namespace Microsoft.Framework.PackageManager
         }
         
         [Theory]
-        [MemberData("RuntimeHomeDirs")]
-        public void KpmWrapInPlaceCreateCsprojWrappersInPlace(DisposableDir runtimeHomeDir)
+        [MemberData("RuntimeComponents")]
+        public void KpmWrapInPlaceCreateCsprojWrappersInPlace(string flavor, string os, string architecture)
         {
+            var runtimeHomeDir = TestUtils.GetRuntimeHomeDir(flavor, os, architecture);
+
             if (PlatformHelper.IsMono)
             {
                 return;

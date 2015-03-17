@@ -43,21 +43,20 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
   ""libraries"": {}
 }".Replace("LOCKFILEFORMAT_VERSION", LockFileFormat.Version.ToString());
 
-        public static IEnumerable<object[]> RuntimeHomeDirs
+        public static IEnumerable<object[]> RuntimeComponents
         {
             get
             {
-                foreach (var path in TestUtils.GetRuntimeHomeDirs())
-                {
-                    yield return new[] { path };
-                }
+                return TestUtils.GetRuntimeComponentsCombinations();
             }
         }
 
         [Theory]
-        [MemberData("RuntimeHomeDirs")]
-        public void KpmBundleWebApp_RootAsPublicFolder(DisposableDir runtimeHomeDir)
+        [MemberData("RuntimeComponents")]
+        public void KpmBundleWebApp_RootAsPublicFolder(string flavor, string os, string architecture)
         {
+            var runtimeHomeDir = TestUtils.GetRuntimeHomeDir(flavor, os, architecture);
+
             var projectStructure = @"{
   '.': ['project.json', 'Config.json', 'Program.cs', 'build_config1.bconfig'],
   'Views': {
@@ -157,9 +156,11 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
         }
 
         [Theory]
-        [MemberData("RuntimeHomeDirs")]
-        public void KpmBundleWebApp_SubfolderAsPublicFolder(DisposableDir runtimeHomeDir)
+        [MemberData("RuntimeComponents")]
+        public void KpmBundleWebApp_SubfolderAsPublicFolder(string flavor, string os, string architecture)
         {
+            var runtimeHomeDir = TestUtils.GetRuntimeHomeDir(flavor, os, architecture);
+
             var projectStructure = @"{
   '.': ['project.json', 'Config.json', 'Program.cs'],
   'public': {
@@ -253,9 +254,11 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
         }
 
         [Theory]
-        [MemberData("RuntimeHomeDirs")]
-        public void KpmBundleConsoleApp(DisposableDir runtimeHomeDir)
+        [MemberData("RuntimeComponents")]
+        public void KpmBundleConsoleApp(string flavor, string os, string architecture)
         {
+            var runtimeHomeDir = TestUtils.GetRuntimeHomeDir(flavor, os, architecture);
+
             var projectStructure = @"{
   '.': ['project.json', 'Config.json', 'Program.cs'],
   'Data': {
@@ -315,9 +318,11 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
         }
 
         [Theory]
-        [MemberData("RuntimeHomeDirs")]
-        public void FoldersAsFilePatternsAutoGlob(DisposableDir runtimeHomeDir)
+        [MemberData("RuntimeComponents")]
+        public void FoldersAsFilePatternsAutoGlob(string flavor, string os, string architecture)
         {
+            var runtimeHomeDir = TestUtils.GetRuntimeHomeDir(flavor, os, architecture);
+
             var projectStructure = @"{
   '.': ['project.json', 'FileWithoutExtension'],
   'UselessFolder1': {
@@ -416,9 +421,11 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
         }
 
         [Theory]
-        [MemberData("RuntimeHomeDirs")]
-        public void WildcardMatchingFacts(DisposableDir runtimeHomeDir)
+        [MemberData("RuntimeComponents")]
+        public void WildcardMatchingFacts(string flavor, string os, string architecture)
         {
+            var runtimeHomeDir = TestUtils.GetRuntimeHomeDir(flavor, os, architecture);
+
             var projectStructure = @"{
   '.': ['project.json'],
   'UselessFolder1': {
@@ -509,9 +516,11 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
         }
 
         [Theory]
-        [MemberData("RuntimeHomeDirs")]
-        public void CorrectlyExcludeFoldersStartingWithDots(DisposableDir runtimeHomeDir)
+        [MemberData("RuntimeComponents")]
+        public void CorrectlyExcludeFoldersStartingWithDots(string flavor, string os, string architecture)
         {
+            var runtimeHomeDir = TestUtils.GetRuntimeHomeDir(flavor, os, architecture);
+
             var projectStructure = @"{
   '.': ['project.json', 'File', '.FileStartingWithDot', 'File.Having.Dots'],
   '.FolderStaringWithDot': {
@@ -600,9 +609,11 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
         }
 
         [Theory]
-        [MemberData("RuntimeHomeDirs")]
-        public void VerifyDefaultBundleExcludePatterns(DisposableDir runtimeHomeDir)
+        [MemberData("RuntimeComponents")]
+        public void VerifyDefaultBundleExcludePatterns(string flavor, string os, string architecture)
         {
+            var runtimeHomeDir = TestUtils.GetRuntimeHomeDir(flavor, os, architecture);
+
             var projectStructure = @"{
   '.': ['project.json', 'File', '.FileStartingWithDot'],
   'bin': {
@@ -668,9 +679,11 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
         }
 
         [Theory]
-        [MemberData("RuntimeHomeDirs")]
-        public void KpmBundleWebApp_CopyExistingWebConfig(DisposableDir runtimeHomeDir)
+        [MemberData("RuntimeComponents")]
+        public void KpmBundleWebApp_CopyExistingWebConfig(string flavor, string os, string architecture)
         {
+            var runtimeHomeDir = TestUtils.GetRuntimeHomeDir(flavor, os, architecture);
+
             var projectStructure = @"{
   '.': ['project.json'],
   'public': ['index.html', 'web.config'],
@@ -750,9 +763,11 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
         }
 
         [Theory]
-        [MemberData("RuntimeHomeDirs")]
-        public void KpmBundleWebApp_UpdateExistingWebConfig(DisposableDir runtimeHomeDir)
+        [MemberData("RuntimeComponents")]
+        public void KpmBundleWebApp_UpdateExistingWebConfig(string flavor, string os, string architecture)
         {
+            var runtimeHomeDir = TestUtils.GetRuntimeHomeDir(flavor, os, architecture);
+
             var projectStructure = @"{
   '.': ['project.json'],
   'public': ['index.html', 'web.config'],
@@ -848,9 +863,11 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
         }
 
         [Theory]
-        [MemberData("RuntimeHomeDirs")]
-        public void GenerateBatchFilesAndBashScriptsWithoutBundledRuntime(DisposableDir runtimeHomeDir)
+        [MemberData("RuntimeComponents")]
+        public void GenerateBatchFilesAndBashScriptsWithoutBundledRuntime(string flavor, string os, string architecture)
         {
+            var runtimeHomeDir = TestUtils.GetRuntimeHomeDir(flavor, os, architecture);
+
             var projectStructure = @"{
   '.': ['project.json'],
   'packages': {}
@@ -933,9 +950,11 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
         }
 
         [Theory]
-        [MemberData("RuntimeHomeDirs")]
-        public void GenerateBatchFilesAndBashScriptsWithBundledRuntime(DisposableDir runtimeHomeDir)
+        [MemberData("RuntimeComponents")]
+        public void GenerateBatchFilesAndBashScriptsWithBundledRuntime(string flavor, string os, string architecture)
         {
+            var runtimeHomeDir = TestUtils.GetRuntimeHomeDir(flavor, os, architecture);
+
             // Each runtime home only contains one runtime package, which is the one we are currently testing against
             var runtimeRoot = Directory.EnumerateDirectories(Path.Combine(runtimeHomeDir, "runtimes"), Constants.RuntimeNamePrefix + "*").First();
             var runtimeName = new DirectoryInfo(runtimeRoot).Name;

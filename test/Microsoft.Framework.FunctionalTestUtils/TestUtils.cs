@@ -74,12 +74,12 @@ namespace Microsoft.Framework.FunctionalTestUtils
             return runtimeHomePath;
         }
 
-        public static IEnumerable<DisposableDir> GetRuntimeHomeDirs()
+        public static IEnumerable<object[]> GetRuntimeComponentsCombinations()
         {
-            yield return GetRuntimeHomeDir(flavor: "clr", os: "win", architecture: "x64");
-            yield return GetRuntimeHomeDir(flavor: "clr", os: "win", architecture: "x86");
-            yield return GetRuntimeHomeDir(flavor: "coreclr", os: "win", architecture: "x64");
-            yield return GetRuntimeHomeDir(flavor: "coreclr", os: "win", architecture: "x86");
+            yield return new[] { "clr", "win", "x64" };
+            yield return new[] { "clr", "win", "x86" };
+            yield return new[] { "coreclr", "win", "x64" };
+            yield return new[] { "coreclr", "win", "x86" };
         }
 
         public static DisposableDir GetTempTestSolution(string name)

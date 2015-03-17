@@ -11,22 +11,19 @@ namespace Microsoft.Framework.ApplicationHost
 {
     public class KCommandTests
     {
-        public static IEnumerable<object[]> RuntimeHomeDirs
+        public static IEnumerable<object[]> RuntimeComponents
         {
             get
             {
-                foreach (var path in TestUtils.GetRuntimeHomeDirs())
-                {
-                    yield return new[] { path };
-                }
+                return TestUtils.GetRuntimeComponentsCombinations();
             }
         }
 
         [Theory]
-        [MemberData("RuntimeHomeDirs")]
-        public void KCommandReturnsNonZeroExitCodeWhenNoArgumentWasGiven(DisposableDir runtimeHomeDir)
+        [MemberData("RuntimeComponents")]
+        public void KCommandReturnsNonZeroExitCodeWhenNoArgumentWasGiven(string flavor, string os, string architecture)
         {
-            using (runtimeHomeDir)
+            using (var runtimeHomeDir = TestUtils.GetRuntimeHomeDir(flavor, os, architecture))
             {
                 string stdOut, stdErr;
                 var exitCode = KCommandTestUtils.ExecKCommand(
@@ -41,10 +38,10 @@ namespace Microsoft.Framework.ApplicationHost
         }
 
         [Theory]
-        [MemberData("RuntimeHomeDirs")]
-        public void KCommandReturnsZeroExitCodeWhenHelpOptionWasGiven(DisposableDir runtimeHomeDir)
+        [MemberData("RuntimeComponents")]
+        public void KCommandReturnsZeroExitCodeWhenHelpOptionWasGiven(string flavor, string os, string architecture)
         {
-            using (runtimeHomeDir)
+            using (var runtimeHomeDir = TestUtils.GetRuntimeHomeDir(flavor, os, architecture))
             {
                 string stdOut, stdErr;
                 var exitCode = KCommandTestUtils.ExecKCommand(
@@ -59,10 +56,10 @@ namespace Microsoft.Framework.ApplicationHost
         }
 
         [Theory]
-        [MemberData("RuntimeHomeDirs")]
-        public void KCommandShowsVersionAndReturnsZeroExitCodeWhenVersionOptionWasGiven(DisposableDir runtimeHomeDir)
+        [MemberData("RuntimeComponents")]
+        public void KCommandShowsVersionAndReturnsZeroExitCodeWhenVersionOptionWasGiven(string flavor, string os, string architecture)
         {
-            using (runtimeHomeDir)
+            using (var runtimeHomeDir = TestUtils.GetRuntimeHomeDir(flavor, os, architecture))
             {
                 string stdOut, stdErr;
                 var exitCode = KCommandTestUtils.ExecKCommand(
@@ -78,10 +75,10 @@ namespace Microsoft.Framework.ApplicationHost
         }
 
         [Theory]
-        [MemberData("RuntimeHomeDirs")]
-        public void KCommandShowsErrorWhenNoProjectJsonWasFound(DisposableDir runtimeHomeDir)
+        [MemberData("RuntimeComponents")]
+        public void KCommandShowsErrorWhenNoProjectJsonWasFound(string flavor, string os, string architecture)
         {
-            using (runtimeHomeDir)
+            using (var runtimeHomeDir = TestUtils.GetRuntimeHomeDir(flavor, os, architecture))
             using (var emptyFolder = TestUtils.CreateTempDir())
             {
                 string stdOut, stdErr;
@@ -99,9 +96,10 @@ namespace Microsoft.Framework.ApplicationHost
         }
 
         [Theory]
-        [MemberData("RuntimeHomeDirs")]
-        public void KCommandShowsErrorWhenGivenSubcommandWasNotFoundInProjectJson(DisposableDir runtimeHomeDir)
+        [MemberData("RuntimeComponents")]
+        public void KCommandShowsErrorWhenGivenSubcommandWasNotFoundInProjectJson(string flavor, string os, string architecture)
         {
+            var runtimeHomeDir = TestUtils.GetRuntimeHomeDir(flavor, os, architecture);
             var projectStructure = @"{
   'project.json': '{ }'
 }";
@@ -127,10 +125,10 @@ namespace Microsoft.Framework.ApplicationHost
         }
 
         [Theory]
-        [MemberData("RuntimeHomeDirs")]
-        public void KCommandRunsSampleAppGivenAppBase(DisposableDir runtimeHomeDir)
+        [MemberData("RuntimeComponents")]
+        public void KCommandRunsSampleAppGivenAppBase(string flavor, string os, string architecture)
         {
-            using (runtimeHomeDir)
+            using (var runtimeHomeDir = TestUtils.GetRuntimeHomeDir(flavor, os, architecture))
             {
                 var sampleAppRoot = Path.Combine(TestUtils.GetSamplesFolder(), "HelloWorld");
                 string stdOut, stdErr;
@@ -147,10 +145,10 @@ namespace Microsoft.Framework.ApplicationHost
         }
 
         [Theory]
-        [MemberData("RuntimeHomeDirs")]
-        public void KCommandRunsSampleAppUsingDefaultAppBase(DisposableDir runtimeHomeDir)
+        [MemberData("RuntimeComponents")]
+        public void KCommandRunsSampleAppUsingDefaultAppBase(string flavor, string os, string architecture)
         {
-            using (runtimeHomeDir)
+            using (var runtimeHomeDir = TestUtils.GetRuntimeHomeDir(flavor, os, architecture))
             {
                 var sampleAppRoot = Path.Combine(TestUtils.GetSamplesFolder(), "HelloWorld");
                 string stdOut, stdErr;
