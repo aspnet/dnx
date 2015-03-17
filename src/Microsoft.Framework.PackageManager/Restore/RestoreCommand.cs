@@ -30,6 +30,7 @@ namespace Microsoft.Framework.PackageManager
             FileSystem = new PhysicalFileSystem(Directory.GetCurrentDirectory());
             MachineWideSettings = new CommandLineMachineWideSettings();
             ScriptExecutor = new ScriptExecutor();
+            ErrorMessages = new Dictionary<string, List<string>>(StringComparer.Ordinal);
         }
 
         public FeedOptions FeedOptions { get; set; }
@@ -54,6 +55,7 @@ namespace Microsoft.Framework.PackageManager
         public IMachineWideSettings MachineWideSettings { get; set; }
         public IFileSystem FileSystem { get; set; }
         public Reports Reports { get; set; }
+        private Dictionary<string, List<string>> ErrorMessages { get; set; }
 
         protected internal ISettings Settings { get; set; }
         protected internal IPackageSourceProvider SourceProvider { get; set; }
@@ -142,6 +144,15 @@ namespace Microsoft.Framework.PackageManager
                     Reports.Information.WriteLine(string.Format("Total time {0}ms", sw.ElapsedMilliseconds));
                 }
 
+                foreach(var category in ErrorMessages)
+                {
+                    Reports.Error.WriteLine("Errors in {0}".Red().Bold(), category.Key);
+                    foreach (var message in category.Value)
+                    {
+                        Reports.Error.WriteLine("    {0}", message);
+                    }
+                }
+
                 return restoreCount == successCount;
             }
             catch (Exception ex)
@@ -209,7 +220,9 @@ namespace Microsoft.Framework.PackageManager
 
                 if (package == null)
                 {
-                    Reports.Error.WriteLine("Unable to locate the package {0}".Red(), RestorePackageId);
+                    var errorMessage = string.Format("Unable to locate the package {0}".Red(), RestorePackageId);
+                    ErrorMessages.GetOrAdd("Restore", _ => new List<string>()).Add(errorMessage);
+                    Reports.Error.WriteLine(errorMessage);
                     return false;
                 }
                 RestorePackageVersion = package.Version.ToString();
@@ -243,7 +256,9 @@ namespace Microsoft.Framework.PackageManager
                          node.LibraryRange.VersionRange != null &&
                          missingItems.Add(node.LibraryRange))
                     {
-                        Reports.Error.WriteLine(string.Format("Unable to locate {0} >= {1}", node.LibraryRange.Name.Red().Bold(), node.LibraryRange.VersionRange));
+                        var errorMessage = string.Format("Unable to locate {0} >= {1}", node.LibraryRange.Name.Red().Bold(), node.LibraryRange.VersionRange);
+                        ErrorMessages.GetOrAdd("Restore", _ => new List<string>()).Add(errorMessage);
+                        Reports.Error.WriteLine(errorMessage);
                         success = false;
                     }
                     return;
@@ -253,11 +268,13 @@ namespace Microsoft.Framework.PackageManager
                 {
                     if (missingItems.Add(node.LibraryRange))
                     {
-                        Reports.Error.WriteLine(
+                        var errorMessage = string.Format(
                             "Unable to locate {0} >= {1}. Do you mean {2}?",
                             node.LibraryRange.Name.Red().Bold(),
                             node.LibraryRange.VersionRange,
                             node.Item.Match.Library.Name.Bold());
+                        ErrorMessages.GetOrAdd("Restore", _ => new List<string>()).Add(errorMessage);
+                        Reports.Error.WriteLine(errorMessage);
                         success = false;
                     }
                     return;
@@ -334,6 +351,7 @@ namespace Microsoft.Framework.PackageManager
 
             if (!ScriptExecutor.Execute(project, "prerestore", getVariable))
             {
+                ErrorMessages.GetOrAdd("prerestore", _ => new List<string>()).Add(ScriptExecutor.ErrorMessage);
                 Reports.Error.WriteLine(ScriptExecutor.ErrorMessage);
                 return false;
             }
@@ -517,7 +535,11 @@ namespace Microsoft.Framework.PackageManager
                          node.LibraryRange.VersionRange != null &&
                          missingItems.Add(node.LibraryRange))
                     {
-                        Reports.Error.WriteLine(string.Format("Unable to locate {0} {1}", node.LibraryRange.Name.Red().Bold(), node.LibraryRange.VersionRange));
+                        var errorMessage = string.Format("Unable to locate {0} {1}",
+                            node.LibraryRange.Name.Red().Bold(),
+                            node.LibraryRange.VersionRange);
+                        ErrorMessages.GetOrAdd(projectJsonPath, _ => new List<string>()).Add(errorMessage);
+                        Reports.Error.WriteLine(errorMessage);
                         success = false;
                     }
 
@@ -529,9 +551,10 @@ namespace Microsoft.Framework.PackageManager
                 {
                     if (missingItems.Add(node.LibraryRange))
                     {
-                        Reports.Error.WriteLine("Unable to locate {0} {1}. Do you mean {2}?",
+                        var errorMessage = string.Format("Unable to locate {0} {1}. Do you mean {2}?",
                             node.LibraryRange.Name.Red().Bold(), node.LibraryRange.VersionRange, node.Item.Match.Library.Name.Bold());
-
+                        ErrorMessages.GetOrAdd(projectJsonPath, _ => new List<string>()).Add(errorMessage);
+                        Reports.Error.WriteLine(errorMessage);
                         success = false;
                     }
 
@@ -575,12 +598,14 @@ namespace Microsoft.Framework.PackageManager
 
             if (!ScriptExecutor.Execute(project, "postrestore", getVariable))
             {
+                ErrorMessages.GetOrAdd("postrestore", _ => new List<string>()).Add(ScriptExecutor.ErrorMessage);
                 Reports.Error.WriteLine(ScriptExecutor.ErrorMessage);
                 return false;
             }
 
             if (!ScriptExecutor.Execute(project, "prepare", getVariable))
             {
+                ErrorMessages.GetOrAdd("prepare", _ => new List<string>()).Add(ScriptExecutor.ErrorMessage);
                 Reports.Error.WriteLine(ScriptExecutor.ErrorMessage);
                 return false;
             }
