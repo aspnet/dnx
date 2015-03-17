@@ -501,45 +501,41 @@ namespace Microsoft.Framework.PackageManager
                 });
             });
 
-            // "kpm wrap" invokes MSBuild, which is not available on *nix
-            if (!PlatformHelper.IsMono)
+            app.Command("wrap", c =>
             {
-                app.Command("wrap", c =>
+                c.Description = "Wrap a csproj into a project.json, which can be referenced by project.json files";
+
+                var argPath = c.Argument("[path]", "Path to csproj to be wrapped");
+                var optConfiguration = c.Option("--configuration <CONFIGURATION>",
+                    "Configuration of wrapped project, default is 'debug'", CommandOptionType.SingleValue);
+                var optMsBuildPath = c.Option("--msbuild <PATH>",
+                    @"Path to MSBuild, default is '%ProgramFiles%\MSBuild\14.0\Bin\MSBuild.exe'",
+                    CommandOptionType.SingleValue);
+                var optInPlace = c.Option("-i|--in-place",
+                    "Generate or update project.json files in project directories of csprojs",
+                    CommandOptionType.NoValue);
+                var optFramework = c.Option("-f|--framework",
+                    "Target framework of assembly to be wrapped",
+                    CommandOptionType.SingleValue);
+                c.HelpOption("-?|-h|--help");
+
+                c.OnExecute(() =>
                 {
-                    c.Description = "Wrap a csproj into a project.json, which can be referenced by project.json files";
+                    var reports = CreateReports(optionVerbose.HasValue(), quiet: false);
 
-                    var argPath = c.Argument("[path]", "Path to csproj to be wrapped");
-                    var optConfiguration = c.Option("--configuration <CONFIGURATION>",
-                        "Configuration of wrapped project, default is 'debug'", CommandOptionType.SingleValue);
-                    var optMsBuildPath = c.Option("--msbuild <PATH>",
-                        @"Path to MSBuild, default is '%ProgramFiles%\MSBuild\14.0\Bin\MSBuild.exe'",
-                        CommandOptionType.SingleValue);
-                    var optInPlace = c.Option("-i|--in-place",
-                        "Generate or update project.json files in project directories of csprojs",
-                        CommandOptionType.NoValue);
-                    var optFramework = c.Option("-f|--framework",
-                        "Target framework of assembly to be wrapped",
-                        CommandOptionType.SingleValue);
-                    c.HelpOption("-?|-h|--help");
+                    var command = new WrapCommand();
+                    command.Reports = reports;
+                    command.InputFilePath = argPath.Value;
+                    command.Configuration = optConfiguration.Value();
+                    command.MsBuildPath = optMsBuildPath.Value();
+                    command.InPlace = optInPlace.HasValue();
+                    command.Framework = optFramework.Value();
 
-                    c.OnExecute(() =>
-                    {
-                        var reports = CreateReports(optionVerbose.HasValue(), quiet: false);
+                    var success = command.ExecuteCommand();
 
-                        var command = new WrapCommand();
-                        command.Reports = reports;
-                        command.InputFilePath = argPath.Value;
-                        command.Configuration = optConfiguration.Value();
-                        command.MsBuildPath = optMsBuildPath.Value();
-                        command.InPlace = optInPlace.HasValue();
-                        command.Framework = optFramework.Value();
-
-                        var success = command.ExecuteCommand();
-
-                        return success ? 0 : 1;
-                    });
+                    return success ? 0 : 1;
                 });
-            }
+            });
 
             return app.Execute(args);
         }

@@ -47,6 +47,12 @@ namespace Microsoft.Framework.PackageManager
             var extension = Path.GetExtension(InputFilePath);
             if (string.Equals(extension, ".csproj", StringComparison.OrdinalIgnoreCase))
             {
+                if (PlatformHelper.IsMono)
+                {
+                    Reports.Error.WriteLine("Wrapping csproj is not supported on non-Windows platforms");
+                    return false;
+                }
+
                 return WrapCsProject();
             }
             else if (string.Equals(extension, ".dll", StringComparison.OrdinalIgnoreCase))
