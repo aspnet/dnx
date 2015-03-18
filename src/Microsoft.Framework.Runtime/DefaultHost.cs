@@ -71,7 +71,11 @@ namespace Microsoft.Framework.Runtime
 
         public void Initialize()
         {
+            AddRuntimeServiceBreadcrumb();
+
             _applicationHostContext.DependencyWalker.Walk(Project.Name, Project.Version, _targetFramework);
+
+            Servicing.Breadcrumbs.Instance.WriteAllBreadcrumbs(background: true);
         }
 
         public IDisposable AddLoaders(IAssemblyLoaderContainer container)
@@ -169,5 +173,25 @@ namespace Microsoft.Framework.Runtime
 
             CallContextServiceLocator.Locator.ServiceProvider = ServiceProvider;
         }
+
+        private void AddRuntimeServiceBreadcrumb()
+        {
+#if DNX451
+            var runtimeAssembly = typeof(Servicing.Breadcrumbs).Assembly;
+#else
+            var runtimeAssembly = typeof(Servicing.Breadcrumbs).GetTypeInfo().Assembly;
+#endif
+
+            var version = runtimeAssembly
+                ?.GetCustomAttribute<AssemblyInformationalVersionAttribute>()
+                ?.InformationalVersion;
+
+            if (!string.IsNullOrWhiteSpace(version))
+            {
+                var semanticVersion = new NuGet.SemanticVersion(version);
+                Servicing.Breadcrumbs.Instance.AddBreadcrumb(runtimeAssembly.GetName().Name, semanticVersion);
+            }
+        }
+
     }
 }

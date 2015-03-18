@@ -22,22 +22,13 @@ namespace Microsoft.Framework.Runtime.Tests
         }
 
         [Fact]
-        public void RuntimeBreadcrumbIsCreated()
-        {
-            var breadcrumbs = new Servicing.Breadcrumbs(TempFolderPath);
-            breadcrumbs.CreateRuntimeBreadcrumb();
-
-            var runtimeBreadcrumbFile = typeof(Servicing.Breadcrumbs).Assembly.GetName().Name;
-            Assert.True(File.Exists(Path.Combine(TempFolderPath, runtimeBreadcrumbFile)));
-        }
-
-        [Fact]
         public void BreadcrumbsAreCreatedSuccessfully()
         {
             Assert.Empty(Directory.GetFiles(TempFolderPath));
 
             var breadcrumbs = new Servicing.Breadcrumbs(TempFolderPath);
-            breadcrumbs.CreateBreadcrumb("Test", new NuGet.SemanticVersion("1.0.0"));
+            breadcrumbs.AddBreadcrumb("Test", new NuGet.SemanticVersion("1.0.0"));
+            breadcrumbs.WriteAllBreadcrumbs();
 
             Assert.True(File.Exists(Path.Combine(TempFolderPath, "Test")));
             Assert.True(File.Exists(Path.Combine(TempFolderPath, "Test.1.0.0")));
@@ -54,7 +45,8 @@ namespace Microsoft.Framework.Runtime.Tests
             directory.SetAccessControl(security);
 
             var breadcrumbs = new Servicing.Breadcrumbs(TempFolderPath);
-            breadcrumbs.CreateBreadcrumb("Test", new NuGet.SemanticVersion("1.0.0"));
+            breadcrumbs.AddBreadcrumb("Test", new NuGet.SemanticVersion("1.0.0"));
+            breadcrumbs.WriteAllBreadcrumbs();
 
             Assert.Empty(Directory.GetFiles(TempFolderPath));
         }
@@ -69,9 +61,22 @@ namespace Microsoft.Framework.Runtime.Tests
             }
 
             var breadcrumbs = new Servicing.Breadcrumbs(nonExistingBreadcrumbsFolder);
-            breadcrumbs.CreateBreadcrumb("Test", new NuGet.SemanticVersion("1.0.0"));
+            breadcrumbs.AddBreadcrumb("Test", new NuGet.SemanticVersion("1.0.0"));
+            breadcrumbs.WriteAllBreadcrumbs();
 
             Assert.False(Directory.Exists(nonExistingBreadcrumbsFolder));
+        }
+
+        [Fact]
+        public void EnqueueDoesNotWriteToDisk()
+        {
+            Assert.Empty(Directory.GetFiles(TempFolderPath));
+
+            var breadcrumbs = new Servicing.Breadcrumbs(TempFolderPath);
+            breadcrumbs.AddBreadcrumb("Test", new NuGet.SemanticVersion("1.0.0"));
+         
+            Assert.False(File.Exists(Path.Combine(TempFolderPath, "Test")));
+            Assert.False(File.Exists(Path.Combine(TempFolderPath, "Test.1.0.0")));
         }
     }
 }

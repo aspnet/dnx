@@ -200,9 +200,6 @@ namespace Microsoft.Framework.Runtime
             var cacheResolvers = GetCacheResolvers();
             var defaultResolver = new DefaultPackagePathResolver(_repository.RepositoryRoot);
 
-            Servicing.Breadcrumbs breadcrumbs = new Servicing.Breadcrumbs();
-            breadcrumbs.CreateRuntimeBreadcrumb();
-
             foreach (var dependency in packages)
             {
                 var packageInfo = _repository.FindPackagesById(dependency.Identity.Name)
@@ -225,9 +222,9 @@ namespace Microsoft.Framework.Runtime
 
                 _packageDescriptions[packageInfo.Id] = packageDescription;
 
-                if (Servicing.Breadcrumbs.IsPackageServiceable(packageDescription.Package))
+                if (Servicing.Breadcrumbs.Instance.IsPackageServiceable(packageDescription.Package))
                 {
-                    breadcrumbs.CreateBreadcrumb(packageInfo.Id, packageInfo.Version);
+                    Servicing.Breadcrumbs.Instance.AddBreadcrumb(packageInfo.Id, packageInfo.Version);
                 }
 
                 var group = packageInfo.LockFileLibrary.FrameworkGroups.FirstOrDefault(g => g.TargetFramework == targetFramework);
