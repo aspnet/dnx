@@ -120,6 +120,9 @@
   <data name="Plugin_CannotProcessMessageInvalidPluginType" xml:space="preserve">
     <value>Cannot process plugin message. Plugin id '{0}' of type '{1}' must be assignable to type '{2}'.</value>
   </data>
+  <data name="Plugin_EncounteredExceptionWhenProcessingPluginMessage" xml:space="preserve">
+    <value>Plugin '{0}' encountered an exception when processing a message. Exception message: '{1}'</value>
+  </data>
   <data name="Plugin_TypeCouldNotBeLocatedInAssembly" xml:space="preserve">
     <value>Could not locate plugin id '{0}' of type '{1}' in assembly '{2}'.</value>
   </data>

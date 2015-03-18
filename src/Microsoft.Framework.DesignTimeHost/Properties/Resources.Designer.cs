@@ -27,6 +27,22 @@ namespace Microsoft.Framework.DesignTimeHost
         }
 
         /// <summary>
+        /// Plugin '{0}' encountered an exception when processing a message. Exception message: '{1}'
+        /// </summary>
+        internal static string Plugin_EncounteredExceptionWhenProcessingPluginMessage
+        {
+            get { return GetString("Plugin_EncounteredExceptionWhenProcessingPluginMessage"); }
+        }
+
+        /// <summary>
+        /// Plugin '{0}' encountered an exception when processing a message. Exception message: '{1}'
+        /// </summary>
+        internal static string FormatPlugin_EncounteredExceptionWhenProcessingPluginMessage(object p0, object p1)
+        {
+            return string.Format(CultureInfo.CurrentCulture, GetString("Plugin_EncounteredExceptionWhenProcessingPluginMessage"), p0, p1);
+        }
+
+        /// <summary>
         /// Could not locate plugin id '{0}' of type '{1}' in assembly '{2}'.
         /// </summary>
         internal static string Plugin_TypeCouldNotBeLocatedInAssembly

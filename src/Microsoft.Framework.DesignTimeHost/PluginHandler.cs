@@ -21,7 +21,7 @@ namespace Microsoft.Framework.DesignTimeHost
 
         private readonly Action<object> _sendMessageMethod;
         private readonly IServiceProvider _hostServices;
-        private readonly Queue<PluginMessage> _faultedRegisterPluginMessages;
+        private readonly List<PluginMessage> _faultedRegisterPluginMessages;
         private readonly Queue<PluginMessage> _messageQueue;
         private readonly IDictionary<string, IPlugin> _registeredPlugins;
         private readonly IDictionary<string, Assembly> _assemblyCache;
@@ -32,7 +32,7 @@ namespace Microsoft.Framework.DesignTimeHost
             _hostServices = hostServices;
             _sendMessageMethod = sendMessageMethod;
             _messageQueue = new Queue<PluginMessage>();
-            _faultedRegisterPluginMessages = new Queue<PluginMessage>();
+            _faultedRegisterPluginMessages = new List<PluginMessage>();
             _registeredPlugins = new Dictionary<string, IPlugin>(StringComparer.Ordinal);
             _assemblyCache = new Dictionary<string, Assembly>(StringComparer.Ordinal);
             _pluginTypeCache = new Dictionary<string, Type>(StringComparer.Ordinal);
@@ -60,12 +60,13 @@ namespace Microsoft.Framework.DesignTimeHost
 
         public void TryRegisterFaultedPlugins([NotNull] IAssemblyLoadContext assemblyLoadContext)
         {
-            // Capture count here so when we enqueue later on we don't result in an infinite loop below.
-            var faultedCount = _faultedRegisterPluginMessages.Count;
+            // Capture the messages here so we can clear the original list to potentially re-add messages if they
+            // fail to recover.
+            var faultedRegistrations = _faultedRegisterPluginMessages.ToArray();
+            _faultedRegisterPluginMessages.Clear();
 
-            for (var i = faultedCount; i > 0; i--)
+            foreach (var faultedRegisterPluginMessage in faultedRegistrations)
             {
-                var faultedRegisterPluginMessage = _faultedRegisterPluginMessages.Dequeue();
                 var response = RegisterPlugin(faultedRegisterPluginMessage, assemblyLoadContext);
 
                 if (response.Success)
@@ -74,8 +75,8 @@ namespace Microsoft.Framework.DesignTimeHost
                 }
                 else
                 {
-                    // We were unable to recover, re-enqueue the faulted register plugin message.
-                    _faultedRegisterPluginMessages.Enqueue(faultedRegisterPluginMessage);
+                    // We were unable to recover, re-add the faulted register plugin message.
+                    _faultedRegisterPluginMessages.Add(faultedRegisterPluginMessage);
                 }
             }
         }
@@ -107,7 +108,7 @@ namespace Microsoft.Framework.DesignTimeHost
 
             if (!response.Success)
             {
-                _faultedRegisterPluginMessages.Enqueue(message);
+                _faultedRegisterPluginMessages.Add(message);
             }
 
             SendMessage(message.PluginId, response);
@@ -117,21 +118,31 @@ namespace Microsoft.Framework.DesignTimeHost
         {
             if (!_registeredPlugins.Remove(message.PluginId))
             {
-                OnError(
-                    message.PluginId,
-                    UnregisterPluginMessageName,
-                    errorMessage: Resources.FormatPlugin_UnregisteredPluginIdCannotUnregister(message.PluginId));
+                var faultedRegistrationIndex = _faultedRegisterPluginMessages.FindIndex(
+                    faultedMessage => faultedMessage.PluginId == message.PluginId);
+
+                if (faultedRegistrationIndex == -1)
+                {
+                    OnError(
+                        message.PluginId,
+                        UnregisterPluginMessageName,
+                        errorMessage: Resources.FormatPlugin_UnregisteredPluginIdCannotUnregister(message.PluginId));
+
+                    return;
+                }
+                else
+                {
+                    _faultedRegisterPluginMessages.RemoveAt(faultedRegistrationIndex);
+                }
             }
-            else
-            {
-                SendMessage(
-                    message.PluginId,
-                    new PluginResponseMessage
-                    {
-                        MessageName = UnregisterPluginMessageName,
-                        Success = true
-                    });
-            }
+
+            SendMessage(
+                message.PluginId,
+                new PluginResponseMessage
+                {
+                    MessageName = UnregisterPluginMessageName,
+                    Success = true
+                });
         }
 
         private void PluginMessage(PluginMessage message, IAssemblyLoadContext assemblyLoadContext)
@@ -139,7 +150,19 @@ namespace Microsoft.Framework.DesignTimeHost
             IPlugin plugin;
             if (_registeredPlugins.TryGetValue(message.PluginId, out plugin))
             {
-                plugin.ProcessMessage(message.Data, assemblyLoadContext);
+                try
+                {
+                    plugin.ProcessMessage(message.Data, assemblyLoadContext);
+                }
+                catch (Exception exception)
+                {
+                    OnError(
+                        message.PluginId,
+                        PluginMessageMessageName,
+                        errorMessage: Resources.FormatPlugin_EncounteredExceptionWhenProcessingPluginMessage(
+                            message.PluginId,
+                            exception.Message));
+                }
             }
             else
             {

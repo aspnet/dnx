@@ -17,6 +17,67 @@ namespace Microsoft.Framework.DesignTimeHost
         private const string RandomGuidId = "d81b8ad8-306d-474b-b8a9-b25c7f80be7e";
 
         [Fact]
+        public void ProcessMessages_UnregisterPlugin_RemovesFaultedPlugins()
+        {
+            var pluginType = typeof(MessageBrokerCreationTestPlugin);
+            var typeNameLookups = new Dictionary<string, Type>
+            {
+                { pluginType.FullName, pluginType }
+            };
+            var testAssembly = new TestAssembly(typeNameLookups);
+            var assemblyLookups = new Dictionary<string, Assembly>
+            {
+                { "CustomAssembly", testAssembly }
+            };
+            var assemblyLoadContext = new FailureAssemblyLoadContext(assemblyLookups);
+            var creationChecker = new PluginTypeCreationChecker();
+            var serviceLookups = new Dictionary<Type, object>
+            {
+                { typeof(PluginTypeCreationChecker), creationChecker }
+            };
+            var serviceProvider = new TestServiceProvider(serviceLookups);
+            object rawMessageBrokerData = null;
+            var pluginHandler = new PluginHandler(serviceProvider, (data) => rawMessageBrokerData = data);
+            var registerPluginMessage = new PluginMessage
+            {
+                Data = new JObject
+                {
+                    { "AssemblyName", "CustomAssembly" },
+                    { "TypeName", typeof(MessageBrokerCreationTestPlugin).FullName },
+                },
+                MessageName = "RegisterPlugin",
+                PluginId = RandomGuidId
+            };
+            var unregisterPluginMessage = new PluginMessage
+            {
+                MessageName = "UnregisterPlugin",
+                PluginId = RandomGuidId
+            };
+
+            pluginHandler.OnReceive(registerPluginMessage);
+            pluginHandler.ProcessMessages(assemblyLoadContext);
+
+            var messageBrokerData = Assert.IsType<PluginMessageBroker.PluginMessageWrapperData>(rawMessageBrokerData);
+            Assert.Equal(RandomGuidId, messageBrokerData.PluginId);
+            var responseMessage = Assert.IsType<PluginResponseMessage>(messageBrokerData.Data);
+            Assert.False(responseMessage.Success);
+            Assert.Equal("RegisterPlugin", responseMessage.MessageName, StringComparer.Ordinal);
+            Assert.NotEmpty(responseMessage.Error);
+            Assert.False(creationChecker.Created);
+
+            pluginHandler.OnReceive(unregisterPluginMessage);
+            pluginHandler.ProcessMessages(assemblyLoadContext);
+
+            messageBrokerData = Assert.IsType<PluginMessageBroker.PluginMessageWrapperData>(rawMessageBrokerData);
+            Assert.Equal(RandomGuidId, messageBrokerData.PluginId);
+            responseMessage = Assert.IsType<PluginResponseMessage>(messageBrokerData.Data);
+            Assert.True(responseMessage.Success);
+            Assert.Equal("UnregisterPlugin", responseMessage.MessageName, StringComparer.Ordinal);
+            Assert.Null(responseMessage.Error);
+            Assert.False(creationChecker.Created);
+        }
+
+        [Fact]
         public void TryRegisterFaultedPlugins_RecoversFaultedPluginRegistrations()
         {
             var pluginType = typeof(MessageBrokerCreationTestPlugin);
@@ -562,6 +623,52 @@ namespace Microsoft.Framework.DesignTimeHost
         }
 
         [Fact]
+        public void ProcessMessages_PluginMessage_SendsErrorForPluginExceptions()
+        {
+            var assemblyLoadContext = CreateTestAssemblyLoadContext<CreationTestPlugin>();
+            var creationChecker = new PluginTypeCreationChecker();
+            var serviceLookups = new Dictionary<Type, object>
+            {
+                { typeof(PluginTypeCreationChecker), creationChecker }
+            };
+            var serviceProvider = new TestServiceProvider(serviceLookups);
+            object rawWrappedData = null;
+            var pluginHandler = new PluginHandler(serviceProvider, (data) => rawWrappedData = data);
+            var registerPluginMessage = new PluginMessage
+            {
+                Data = new JObject
+                {
+                    { "AssemblyName", "CustomAssembly" },
+                    { "TypeName", typeof(CreationTestPlugin).FullName },
+                },
+                MessageName = "RegisterPlugin",
+                PluginId = RandomGuidId
+            };
+            var pluginMessage = new PluginMessage
+            {
+                Data = new JObject
+                {
+                    { "Data", "Hello Plugin" },
+                },
+                MessageName = "PluginMessage",
+                PluginId = RandomGuidId
+            };
+            var expectedErrorMessage =
+                $"Plugin '{RandomGuidId}' encountered an exception when processing a message. Exception message: 'Cannot process messages.'";
+
+            pluginHandler.OnReceive(registerPluginMessage);
+            pluginHandler.OnReceive(pluginMessage);
+            pluginHandler.ProcessMessages(assemblyLoadContext);
+
+            var messageBrokerData = Assert.IsType<PluginMessageBroker.PluginMessageWrapperData>(rawWrappedData);
+            Assert.Equal(RandomGuidId, messageBrokerData.PluginId);
+            var responseMessage = Assert.IsType<PluginResponseMessage>(messageBrokerData.Data);
+            Assert.False(responseMessage.Success);
+            Assert.Equal("PluginMessage", responseMessage.MessageName, StringComparer.Ordinal);
+            Assert.Equal(expectedErrorMessage, responseMessage.Error, StringComparer.Ordinal);
+        }
+
+        [Fact]
         public void ProcessMessages_PluginMessage_SendsErrorWhenUnregistered()
         {
             var assemblyLoadContext = CreateTestAssemblyLoadContext<MessageTestPlugin>();
@@ -660,7 +767,7 @@ namespace Microsoft.Framework.DesignTimeHost
 
             public virtual void ProcessMessage(JObject data, IAssemblyLoadContext assemblyLoadContext)
             {
-                throw new NotImplementedException();
+                throw new InvalidOperationException("Cannot process messages.");
             }
         }
 
