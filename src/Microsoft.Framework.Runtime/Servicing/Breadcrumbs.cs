@@ -79,8 +79,7 @@ namespace Microsoft.Framework.Runtime.Servicing
 
             string breadcrumbsFolder = Path.Combine(
                 programDataFolder,
-                "Microsoft",
-                ".NET XRE",
+                "Microsoft DNX",
                 "BreadcrumbStore");
 
             return breadcrumbsFolder;
