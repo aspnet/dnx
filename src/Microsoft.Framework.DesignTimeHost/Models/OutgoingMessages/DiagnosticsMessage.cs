@@ -15,11 +15,13 @@ namespace Microsoft.Framework.DesignTimeHost.Models.OutgoingMessages
         [JsonIgnore]
         public IList<ICompilationMessage> Diagnostics { get; set; }
 
-        public IEnumerable<string> Errors => Diagnostics.Where(d => d.Severity == CompilationMessageSeverity.Error)
-                                                        .Select(d => d.FormattedMessage);
+        public IList<string> Errors => Diagnostics.Where(d => d.Severity == CompilationMessageSeverity.Error)
+                                                  .Select(d => d.FormattedMessage)
+                                                  .ToList();
 
-        public IEnumerable<string> Warnings => Diagnostics.Where(d => d.Severity == CompilationMessageSeverity.Warning)
-                                                        .Select(d => d.FormattedMessage);
+        public IList<string> Warnings => Diagnostics.Where(d => d.Severity == CompilationMessageSeverity.Warning)
+                                                    .Select(d => d.FormattedMessage)
+                                                    .ToList();
 
         public override bool Equals(object obj)
         {

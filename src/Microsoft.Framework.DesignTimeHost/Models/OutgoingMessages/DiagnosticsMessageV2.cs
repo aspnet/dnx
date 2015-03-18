@@ -13,8 +13,8 @@ namespace Microsoft.Framework.DesignTimeHost.Models.OutgoingMessages
         public DiagnosticsMessageV2(IEnumerable<ICompilationMessage> compilationMessages, FrameworkData frameworkData)
         {
             CompilationDiagnostics = compilationMessages.ToList();
-            Errors = compilationMessages.Where(msg => msg.Severity == CompilationMessageSeverity.Error);
-            Warnings = compilationMessages.Where(msg => msg.Severity == CompilationMessageSeverity.Warning);
+            Errors = compilationMessages.Where(msg => msg.Severity == CompilationMessageSeverity.Error).ToList();
+            Warnings = compilationMessages.Where(msg => msg.Severity == CompilationMessageSeverity.Warning).ToList();
             Framework = frameworkData;
         }
 
@@ -23,9 +23,9 @@ namespace Microsoft.Framework.DesignTimeHost.Models.OutgoingMessages
         [JsonIgnore]
         public IList<ICompilationMessage> CompilationDiagnostics { get; }
 
-        public IEnumerable<ICompilationMessage> Errors { get; }
+        public IList<ICompilationMessage> Errors { get; }
 
-        public IEnumerable<ICompilationMessage> Warnings { get; }
+        public IList<ICompilationMessage> Warnings { get; }
 
         public override bool Equals(object obj)
         {
