@@ -14,7 +14,6 @@ namespace Microsoft.Framework.PackageManager
             "dnx",
             "dotnet",
             "dotnetsdk",
-            "ef",
             "k",
             "kpm",
             "nuget"
