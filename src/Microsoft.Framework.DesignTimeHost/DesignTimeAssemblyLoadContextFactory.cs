@@ -63,7 +63,7 @@ namespace Microsoft.Framework.DesignTimeHost
                 }
 
                 // Add a cache dependency on restore complete to reevaluate dependencies
-                ctx.Monitor(_namedDependencyProvider.GetNamedDependency(_project.Name + "_RestoreComplete"));
+                ctx.Monitor(_namedDependencyProvider.GetNamedDependency(_project.Name + "_Dependencies"));
 
                 return new AssemblyLoadContextFactory(applicationHostContext.ServiceProvider);
             });
