@@ -20,6 +20,7 @@ namespace Microsoft.Framework.Project
         {
             var app = new CommandLineApplication(throwOnUnexpectedArg: false);
             app.Name = "Microsoft.Framework.Project";
+            app.FullName = app.Name;
             app.HelpOption("-?|-h|--help");
 
             // Show help information if no subcommand/option was specified
