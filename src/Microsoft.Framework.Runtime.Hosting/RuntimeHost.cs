@@ -65,35 +65,38 @@ namespace Microsoft.Framework.Runtime
             string applicationName,
             string[] programArgs)
         {
-            Log.LogInformation($"Launching '{applicationName}' '{string.Join(" ", programArgs)}'");
-
-            var deps = DependencyManager.ResolveDependencies(
-                    DependencyProviders,
-                    Project.Name,
-                    Project.Version,
-                    TargetFramework);
-
-            using (var loaderCleanup = new DisposableList())
+            using (Log.LogTimedMethod())
             {
-                // Create the package loader.
-                var packageLoader = new PackageAssemblyLoader(
-                    deps.GetLibraries(LibraryTypes.Package),
-                    TargetFramework,
-                    new DefaultPackagePathResolver(ResolveRepositoryPath(GlobalSettings)),
-                    loadContextAccessor);
+                Log.LogInformation($"Launching '{applicationName}' '{string.Join(" ", programArgs)}'");
 
-                // Add it to the container and track it for clean up later. 
-                Log.LogVerbose($"Registering {nameof(PackageAssemblyLoader)}");
-                loaderCleanup.Add(loaderContainer.AddLoader(packageLoader));
+                var deps = DependencyManager.ResolveDependencies(
+                        DependencyProviders,
+                        Project.Name,
+                        Project.Version,
+                        TargetFramework);
 
-                // Locate the entry point
-                var entryPoint = LocateEntryPoint(applicationName);
-
-                if (Log.IsEnabled(LogLevel.Information))
+                using (var loaderCleanup = new DisposableList())
                 {
-                    Log.LogInformation($"Executing Entry Point: {entryPoint.GetName().FullName}");
+                    // Create the package loader.
+                    var packageLoader = new PackageAssemblyLoader(
+                        deps.GetLibraries(LibraryTypes.Package),
+                        TargetFramework,
+                        new DefaultPackagePathResolver(ResolveRepositoryPath(GlobalSettings)),
+                        loadContextAccessor);
+
+                    // Add it to the container and track it for clean up later. 
+                    Log.LogVerbose($"Registering {nameof(PackageAssemblyLoader)}");
+                    loaderCleanup.Add(loaderContainer.AddLoader(packageLoader));
+
+                    // Locate the entry point
+                    var entryPoint = LocateEntryPoint(applicationName);
+
+                    if (Log.IsEnabled(LogLevel.Information))
+                    {
+                        Log.LogInformation($"Executing Entry Point: {entryPoint.GetName().FullName}");
+                    }
+                    return EntryPointExecutor.Execute(entryPoint, programArgs, Services);
                 }
-                return EntryPointExecutor.Execute(entryPoint, programArgs, Services);
             }
         }
 

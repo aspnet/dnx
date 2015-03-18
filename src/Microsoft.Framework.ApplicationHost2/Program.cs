@@ -33,83 +33,80 @@ namespace Microsoft.Framework.ApplicationHost
 
         public Task<int> Main(string[] args)
         {
+            // Initialize logging
+            RuntimeLogging.Initialize(Environment.GetEnvironmentVariable(EnvironmentNames.Trace), ConfigureLogging);
 
-            ILogger log = null;
-            try
+            // "Program" is a terrible name for a logger and this is the only logger in
+            // this namespace :).
+            var log = RuntimeLogging.Logger("Microsoft.Framework.ApplicationHost");
+            using (log.LogTimed("Running Application"))
             {
-                ApplicationHostOptions options;
-                string[] programArgs;
-                int exitCode;
-
-                bool shouldExit = ParseArgs(args, out options, out programArgs, out exitCode);
-                if (shouldExit)
+                try
                 {
-                    return Task.FromResult(exitCode);
+                    ApplicationHostOptions options;
+                    string[] programArgs;
+                    int exitCode;
+
+                    bool shouldExit = ParseArgs(args, out options, out programArgs, out exitCode);
+                    if (shouldExit)
+                    {
+                        return Task.FromResult(exitCode);
+                    }
+
+                    log.LogInformation("Application Host Starting");
+
+                    // Construct the necessary context for hosting the application
+                    var builder = RuntimeHostBuilder.ForProjectDirectory(
+                        options.ApplicationBaseDirectory,
+                        NuGetFramework.Parse(_environment.RuntimeFramework.FullName),
+                        _serviceProvider);
+                    if (builder.Project == null)
+                    {
+                        // Failed to load the project
+                        Console.Error.WriteLine("Unable to find a project.json file.");
+                        return Task.FromResult(3);
+                    }
+
+                    // Boot the runtime
+                    var host = builder.Build();
+
+                    // Get the project and print some information from it
+                    log.LogInformation($"Project: {host.Project.Name} ({host.Project.BaseDirectory})");
+
+                    // Determine the command to be executed
+                    var command = string.IsNullOrEmpty(options.ApplicationName) ? "run" : options.ApplicationName;
+                    string replacementCommand;
+                    if (host.Project.Commands.TryGetValue(command, out replacementCommand))
+                    {
+                        var replacementArgs = CommandGrammar.Process(
+                            replacementCommand,
+                            GetVariable).ToArray();
+                        options.ApplicationName = replacementArgs.First();
+                        programArgs = replacementArgs.Skip(1).Concat(programArgs).ToArray();
+                    }
+
+                    if (string.IsNullOrEmpty(options.ApplicationName) ||
+                        string.Equals(options.ApplicationName, "run", StringComparison.Ordinal))
+                    {
+                        options.ApplicationName = host.Project.EntryPoint ?? host.Project.Name;
+                    }
+
+                    log.LogInformation($"Executing '{options.ApplicationName}' '{string.Join(" ", programArgs)}'");
+                    return host.ExecuteApplication(
+                        _loaderContainer,
+                        _loadContextAccessor,
+                        options.ApplicationName,
+                        programArgs);
                 }
-                string traceConfig =
-                    string.IsNullOrEmpty(options.Trace) ?
-                        Environment.GetEnvironmentVariable(EnvironmentNames.Trace) :
-                        options.Trace;
-                // Initialize logging
-                RuntimeLogging.Initialize(traceConfig, ConfigureLogging);
-
-                // "Program" is a terrible name for a logger and this is the only logger in
-                // this namespace :).
-                log = RuntimeLogging.Logger("Microsoft.Framework.ApplicationHost");
-
-                log.LogInformation("Application Host Starting");
-
-                // Construct the necessary context for hosting the application
-                var builder = RuntimeHostBuilder.ForProjectDirectory(
-                    options.ApplicationBaseDirectory,
-                    NuGetFramework.Parse(_environment.RuntimeFramework.FullName),
-                    _serviceProvider);
-                if(builder.Project == null)
+                catch (Exception ex)
                 {
-                    // Failed to load the project
-                    Console.Error.WriteLine("Unable to find a project.json file.");
-                    return Task.FromResult(3);
+                    if (log != null)
+                    {
+                        log.LogError($"{ex.GetType().FullName} {ex.Message}", ex);
+                    }
+                    Console.Error.WriteLine($"Error loading project: {ex.Message}");
+                    return Task.FromResult(1);
                 }
-
-                // Boot the runtime
-                var host = builder.Build();
-
-                // Get the project and print some information from it
-                log.LogInformation($"Project: {host.Project.Name} ({host.Project.BaseDirectory})");
-
-                // Determine the command to be executed
-                var command = string.IsNullOrEmpty(options.ApplicationName) ? "run" : options.ApplicationName;
-                string replacementCommand;
-                if (host.Project.Commands.TryGetValue(command, out replacementCommand))
-                {
-                    var replacementArgs = CommandGrammar.Process(
-                        replacementCommand,
-                        GetVariable).ToArray();
-                    options.ApplicationName = replacementArgs.First();
-                    programArgs = replacementArgs.Skip(1).Concat(programArgs).ToArray();
-                }
-
-                if (string.IsNullOrEmpty(options.ApplicationName) ||
-                    string.Equals(options.ApplicationName, "run", StringComparison.Ordinal))
-                {
-                    options.ApplicationName = host.Project.EntryPoint ?? host.Project.Name;
-                }
-
-                log.LogInformation($"Executing '{options.ApplicationName}' '{string.Join(" ", programArgs)}'");
-                return host.ExecuteApplication(
-                    _loaderContainer,
-                    _loadContextAccessor,
-                    options.ApplicationName,
-                    programArgs);
-            }
-            catch (Exception ex)
-            {
-                if (log != null)
-                {
-                    log.LogError($"{ex.GetType().FullName} {ex.Message}", ex);
-                }
-                Console.Error.WriteLine($"Error loading project: {ex.Message}");
-                return Task.FromResult(1);
             }
         }
 
@@ -153,7 +150,6 @@ namespace Microsoft.Framework.ApplicationHost
                 CommandOptionType.SingleValue);
             var optionConfiguration = app.Option("--configuration <CONFIGURATION>", "The configuration to run under", CommandOptionType.SingleValue);
             var optionCompilationServer = app.Option("--port <PORT>", "The port to the compilation server", CommandOptionType.SingleValue);
-            var optionTrace = app.Option("--trace <TRACE_CONFIG>", $"Configure tracing based on the specified settings (uses the same format as the {EnvironmentNames.Trace} environment variable)", CommandOptionType.SingleValue);
             var runCmdExecuted = false;
             app.HelpOption("-?|-h|--help");
             app.VersionOption("--version", GetVersion);
@@ -194,8 +190,6 @@ namespace Microsoft.Framework.ApplicationHost
             options = new ApplicationHostOptions();
             options.WatchFiles = optionWatch.HasValue();
             options.PackageDirectory = optionPackages.Value();
-
-            options.Trace = optionTrace.Value();
 
             options.Configuration = optionConfiguration.Value() ?? _environment.Configuration ?? "Debug";
             options.ApplicationBaseDirectory = _environment.ApplicationBasePath;

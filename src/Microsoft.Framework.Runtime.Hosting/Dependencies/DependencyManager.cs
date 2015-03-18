@@ -51,12 +51,15 @@ namespace Microsoft.Framework.Runtime.Dependencies
             {
                 // Walk dependencies
                 var walker = new DependencyWalker(dependencyProviders);
-                graph = walker.Walk(name, version, targetFramework);
-
-                // Resolve conflicts
-                if (!graph.TryResolveConflicts())
+                using (Log.LogTimed("Graph Walk"))
                 {
-                    throw new InvalidOperationException("Failed to resolve conflicting dependencies!");
+                    graph = walker.Walk(name, version, targetFramework);
+
+                    // Resolve conflicts
+                    if (!graph.TryResolveConflicts())
+                    {
+                        throw new InvalidOperationException("Failed to resolve conflicting dependencies!");
+                    }
                 }
 
                 // Build the resolved dependency list
