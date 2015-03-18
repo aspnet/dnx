@@ -47,7 +47,8 @@ namespace Microsoft.Framework.PackageManager
                         nupkgStream.Seek(0, SeekOrigin.Begin);
 
                         ExtractPackage(extractPath, nupkgStream);
-                        Directory.Move(extractPath, targetPath);
+                        FileOperationUtils.Copy(extractPath, targetPath);
+                        FileOperationUtils.DeleteFolder(extractPath);
                     }
 
                     // Fixup the casing of the nuspec on disk to match what we expect
