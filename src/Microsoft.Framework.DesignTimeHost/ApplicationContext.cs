@@ -36,7 +36,6 @@ namespace Microsoft.Framework.DesignTimeHost
         private readonly Trigger<Void> _filesChanged = new Trigger<Void>();
         private readonly Trigger<Void> _rebuild = new Trigger<Void>();
         private readonly Trigger<Void> _refreshDependencies = new Trigger<Void>();
-        private readonly Trigger<Void> _sourceTextChanged = new Trigger<Void>();
         private readonly Trigger<Void> _requiresCompilation = new Trigger<Void>();
 
         private World _remote = new World();
@@ -317,6 +316,7 @@ namespace Microsoft.Framework.DesignTimeHost
                         {
                             case PluginHandlerOnReceiveResult.ResolveDependencies:
                                 _pluginRegistration.Value = default(Void);
+                                _refreshDependencies.Value = default(Void);
                                 break;
                             case PluginHandlerOnReceiveResult.Default:
                                 _pluginWorkNeeded.Value = default(Void);
@@ -337,9 +337,7 @@ namespace Microsoft.Framework.DesignTimeHost
                 _configuration.WasAssigned ||
                 _filesChanged.WasAssigned ||
                 _rebuild.WasAssigned ||
-                _refreshDependencies.WasAssigned ||
-                _sourceTextChanged.WasAssigned ||
-                _pluginRegistration.WasAssigned)
+                _refreshDependencies.WasAssigned)
             {
                 bool triggerBuildOutputs = _rebuild.WasAssigned || _filesChanged.WasAssigned;
                 bool triggerDependencies = _refreshDependencies.WasAssigned || _rebuild.WasAssigned;
@@ -348,7 +346,6 @@ namespace Microsoft.Framework.DesignTimeHost
                 _configuration.ClearAssigned();
                 _filesChanged.ClearAssigned();
                 _rebuild.ClearAssigned();
-                _sourceTextChanged.ClearAssigned();
                 _refreshDependencies.ClearAssigned();
 
                 // Trigger that the project outputs changes in case the runtime process
