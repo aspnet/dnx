@@ -47,7 +47,7 @@ namespace Microsoft.Framework.Runtime.Dependencies
 
             var information = _cache.GetOrAdd(targetFramework, GetFrameworkInformation);
 
-            if (information == null)
+            if (information == null || !information.Exists)
             {
                 Log.LogWarning($"No framework information found for {targetFramework}");
                 return false;
@@ -70,7 +70,7 @@ namespace Microsoft.Framework.Runtime.Dependencies
                     }
 
                     path = entry.Path;
-                    version = entry.Version;
+                    version = new NuGetVersion(entry.Version);
 
                     if (Log.IsEnabled(LogLevel.Verbose))
                     {
@@ -93,7 +93,7 @@ namespace Microsoft.Framework.Runtime.Dependencies
             }
             else if (Equals(targetFramework.Framework, FrameworkConstants.CommonFrameworks.Dnx))
             {
-                return "DNX " + targetFramework.Version.ToString(); 
+                return "DNX " + targetFramework.Version.ToString();
             }
 
             var information = _cache.GetOrAdd(targetFramework, GetFrameworkInformation);
@@ -110,7 +110,7 @@ namespace Microsoft.Framework.Runtime.Dependencies
         {
             var information = _cache.GetOrAdd(targetFramework, GetFrameworkInformation);
 
-            if (information == null)
+            if (information == null || !information.Exists)
             {
                 return null;
             }
@@ -122,7 +122,7 @@ namespace Microsoft.Framework.Runtime.Dependencies
         {
             var information = _cache.GetOrAdd(targetFramework, GetFrameworkInformation);
 
-            if (information == null)
+            if (information == null || !information.Exists)
             {
                 return null;
             }
@@ -224,15 +224,21 @@ namespace Microsoft.Framework.Runtime.Dependencies
                 return null;
             }
 
+            FrameworkInformation frameworkInfo;
+            if (FrameworkDefinitions.TryPopulateFrameworkFastPath(targetFramework.Framework, targetFramework.Version, referenceAssembliesPath, out frameworkInfo))
+            {
+                return frameworkInfo;
+            }
+
             // Identify the .NET Framework related to this DNX framework
-            if(_desktopFrameworkNames.Contains(targetFramework.Framework))
+            if (_desktopFrameworkNames.Contains(targetFramework.Framework))
             {
                 // Rewrite the name from DNX -> NET (unless of course the incoming
                 // name was NET, in which case we rewrite from NET -> NET which is harmless)
                 return GetFrameworkInformation(
-                    new NuGetFramework(FrameworkConstants.FrameworkIdentifiers.Net, targetFramework.Version),
-                    referenceAssembliesPath);
+                    new NuGetFramework(FrameworkConstants.FrameworkIdentifiers.Net, targetFramework.Version));
             }
+
             return null;
         }
 
@@ -300,7 +306,7 @@ namespace Microsoft.Framework.Runtime.Dependencies
                         var version = e.Attribute("Version")?.Value;
 
                         var entry = new AssemblyEntry();
-                        entry.Version = version != null ? NuGetVersion.Parse(version) : null;
+                        entry.Version = version != null ? Version.Parse(version) : null;
                         frameworkInfo.Assemblies.Add(assemblyName, entry);
                         Log.LogDebug($"Found assembly {assemblyName} {entry.Version}, in redist list");
                     }
@@ -344,28 +350,6 @@ namespace Microsoft.Framework.Runtime.Dependencies
             }
 
             return null;
-        }
-
-        private class FrameworkInformation
-        {
-            public FrameworkInformation()
-            {
-                Assemblies = new Dictionary<string, AssemblyEntry>();
-            }
-
-            public string Path { get; set; }
-
-            public string RedistListPath { get; set; }
-
-            public IDictionary<string, AssemblyEntry> Assemblies { get; private set; }
-
-            public string Name { get; set; }
-        }
-
-        private class AssemblyEntry
-        {
-            public string Path { get; set; }
-            public NuGetVersion Version { get; set; }
         }
     }
 }

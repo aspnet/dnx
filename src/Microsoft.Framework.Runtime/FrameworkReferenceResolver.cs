@@ -5,7 +5,6 @@ using System;
 using System.Reflection;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Runtime.Versioning;
 using System.Xml.Linq;
 using NuGet;
@@ -24,7 +23,7 @@ namespace Microsoft.Framework.Runtime
             },
             { new FrameworkName(VersionUtility.DnxFrameworkIdentifier, new Version(4, 5, 1)), new List<FrameworkName> {
                     new FrameworkName(VersionUtility.NetFrameworkIdentifier, new Version(4, 5, 1))
-                } 
+                }
             }
         };
 
@@ -49,7 +48,7 @@ namespace Microsoft.Framework.Runtime
 
             var information = _cache.GetOrAdd(targetFramework, GetFrameworkInformation);
 
-            if (information == null)
+            if (information == null || !information.Exists)
             {
                 return false;
             }
@@ -116,7 +115,7 @@ namespace Microsoft.Framework.Runtime
         {
             var information = _cache.GetOrAdd(targetFramework, GetFrameworkInformation);
 
-            if (information == null)
+            if (information == null || !information.Exists)
             {
                 return null;
             }
@@ -128,7 +127,7 @@ namespace Microsoft.Framework.Runtime
         {
             var information = _cache.GetOrAdd(targetFramework, GetFrameworkInformation);
 
-            if (information == null)
+            if (information == null || !information.Exists)
             {
                 return null;
             }
@@ -239,12 +238,18 @@ namespace Microsoft.Framework.Runtime
                 return null;
             }
 
+            FrameworkInformation frameworkInfo;
+            if (FrameworkDefinitions.TryPopulateFrameworkFastPath(targetFramework.Identifier, targetFramework.Version, referenceAssembliesPath, out frameworkInfo))
+            {
+                return frameworkInfo;
+            }
+
             List<FrameworkName> candidates;
             if (_aliases.TryGetValue(targetFramework, out candidates))
             {
                 foreach (var framework in candidates)
                 {
-                    var information = GetFrameworkInformation(framework, referenceAssembliesPath);
+                    var information = GetFrameworkInformation(framework);
 
                     if (information != null)
                     {
@@ -283,6 +288,7 @@ namespace Microsoft.Framework.Runtime
         private static FrameworkInformation GetFrameworkInformation(DirectoryInfo directory, FrameworkName targetFramework)
         {
             var frameworkInfo = new FrameworkInformation();
+            frameworkInfo.Exists = true;
             frameworkInfo.Path = directory.FullName;
 
             // The redist list contains the list of assemblies for this target framework
@@ -345,28 +351,6 @@ namespace Microsoft.Framework.Runtime
             }
 
             return null;
-        }
-
-        private class FrameworkInformation
-        {
-            public FrameworkInformation()
-            {
-                Assemblies = new Dictionary<string, AssemblyEntry>();
-            }
-
-            public string Path { get; set; }
-
-            public string RedistListPath { get; set; }
-
-            public IDictionary<string, AssemblyEntry> Assemblies { get; private set; }
-
-            public string Name { get; set; }
-        }
-
-        private class AssemblyEntry
-        {
-            public string Path { get; set; }
-            public Version Version { get; set; }
         }
     }
 }

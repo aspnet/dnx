@@ -9,12 +9,12 @@ namespace Microsoft.Framework.Runtime.Internal
 {
     internal class AssemblyUtils
     {
-        internal static NuGetVersion GetAssemblyVersion(string path)
+        internal static Version GetAssemblyVersion(string path)
         {
 #if DNX451
-            return new NuGetVersion(AssemblyName.GetAssemblyName(path).Version);
+            return AssemblyName.GetAssemblyName(path).Version;
 #else
-            return new NuGetVersion(System.Runtime.Loader.AssemblyLoadContext.GetAssemblyName(path).Version);
+            return System.Runtime.Loader.AssemblyLoadContext.GetAssemblyName(path).Version;
 #endif
         }
     }
