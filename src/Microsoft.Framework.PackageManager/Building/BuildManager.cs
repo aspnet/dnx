@@ -230,6 +230,7 @@ namespace Microsoft.Framework.PackageManager
         private static void InitializeBuilder(Runtime.Project project, PackageBuilder builder)
         {
             builder.Authors.AddRange(project.Authors);
+            builder.Owners.AddRange(project.Owners);
 
             if (builder.Authors.Count == 0)
             {
@@ -248,13 +249,23 @@ namespace Microsoft.Framework.PackageManager
             builder.Description = project.Description ?? project.Name;
             builder.Id = project.Name;
             builder.Version = project.Version;
-            builder.Title = project.Name;
+            builder.Title = project.Title;
             builder.RequireLicenseAcceptance = project.RequireLicenseAcceptance;
             builder.Tags.AddRange(project.Tags);
+
+            if (!string.IsNullOrEmpty(project.IconUrl))
+            {
+                builder.IconUrl = new Uri(project.IconUrl);
+            }
 
             if (!string.IsNullOrEmpty(project.ProjectUrl))
             {
                 builder.ProjectUrl = new Uri(project.ProjectUrl);
+            }
+
+            if (!string.IsNullOrEmpty(project.LicenseUrl))
+            {
+                builder.LicenseUrl = new Uri(project.LicenseUrl);
             }
         }
 

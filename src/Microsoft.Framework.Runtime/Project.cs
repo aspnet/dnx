@@ -46,9 +46,13 @@ namespace Microsoft.Framework.Runtime
 
         public string Name { get; private set; }
 
+        public string Title { get; set; }
+
         public string Description { get; private set; }
 
         public string[] Authors { get; private set; }
+
+        public string[] Owners { get; private set; }
 
         public bool EmbedInteropTypes { get; set; }
 
@@ -64,11 +68,15 @@ namespace Microsoft.Framework.Runtime
 
         public string ProjectUrl { get; private set; }
 
+        public string LicenseUrl { get; set; }
+
+        public string IconUrl { get; set; }
+
         public bool RequireLicenseAcceptance { get; private set; }
 
-        public bool IsLoadable { get; set; }
-
         public string[] Tags { get; private set; }
+
+        public bool IsLoadable { get; set; }
 
         public ProjectFilesCollection Files { get; private set; }
 
@@ -151,6 +159,7 @@ namespace Microsoft.Framework.Runtime
             // Meta-data properties
             var version = rawProject["version"];
             var authors = rawProject["authors"];
+            var owners = rawProject["owners"];
             var tags = rawProject["tags"];
             var buildVersion = Environment.GetEnvironmentVariable("DNX_BUILD_VERSION");
 
@@ -176,11 +185,15 @@ namespace Microsoft.Framework.Runtime
             }
 
             project.Description = rawProject.GetValue<string>("description");
+            project.Title = rawProject.GetValue<string>("title");
             project.Authors = authors == null ? new string[] { } : authors.ValueAsArray<string>();
+            project.Owners = owners == null ? new string[] { } : owners.ValueAsArray<string>();
             project.Dependencies = new List<LibraryDependency>();
             project.WebRoot = rawProject.GetValue<string>("webroot");
             project.EntryPoint = rawProject.GetValue<string>("entryPoint");
             project.ProjectUrl = rawProject.GetValue<string>("projectUrl");
+            project.LicenseUrl = rawProject.GetValue<string>("licenseUrl");
+            project.IconUrl = rawProject.GetValue<string>("iconUrl");
             project.RequireLicenseAcceptance = rawProject.GetValue<bool?>("requireLicenseAcceptance") ?? false;
             project.Tags = tags == null ? new string[] { } : tags.ValueAsArray<string>();
             project.IsLoadable = rawProject.GetValue<bool?>("loadable") ?? true;
