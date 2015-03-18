@@ -2,9 +2,12 @@
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 using System;
-using System.Collections.Concurrent;
+using System.Collections.Generic;
+using System.Diagnostics;
 using System.Reflection;
 using Microsoft.Framework.DesignTimeHost.Models.IncomingMessages;
+using Microsoft.Framework.DesignTimeHost.Models.OutgoingMessages;
+using Microsoft.Framework.Internal;
 using Microsoft.Framework.Runtime;
 using Microsoft.Framework.Runtime.Common.DependencyInjection;
 
@@ -12,103 +15,245 @@ namespace Microsoft.Framework.DesignTimeHost
 {
     public class PluginHandler
     {
+        private const string RegisterPluginMessageName = "RegisterPlugin";
+        private const string UnregisterPluginMessageName = "UnregisterPlugin";
+        private const string PluginMessageMessageName = "PluginMessage";
+
         private readonly Action<object> _sendMessageMethod;
         private readonly IServiceProvider _hostServices;
-        private readonly ConcurrentDictionary<string, IPlugin> _plugins;
+        private readonly Queue<PluginMessage> _faultedRegisterPluginMessages;
+        private readonly Queue<PluginMessage> _messageQueue;
+        private readonly IDictionary<string, IPlugin> _registeredPlugins;
+        private readonly IDictionary<string, Assembly> _assemblyCache;
+        private readonly IDictionary<string, Type> _pluginTypeCache;
 
-        public PluginHandler(IServiceProvider hostServices, Action<object> sendMessageMethod)
+        public PluginHandler([NotNull] IServiceProvider hostServices, [NotNull] Action<object> sendMessageMethod)
         {
-            _sendMessageMethod = sendMessageMethod;
             _hostServices = hostServices;
-            _plugins = new ConcurrentDictionary<string, IPlugin>(StringComparer.Ordinal);
+            _sendMessageMethod = sendMessageMethod;
+            _messageQueue = new Queue<PluginMessage>();
+            _faultedRegisterPluginMessages = new Queue<PluginMessage>();
+            _registeredPlugins = new Dictionary<string, IPlugin>(StringComparer.Ordinal);
+            _assemblyCache = new Dictionary<string, Assembly>(StringComparer.Ordinal);
+            _pluginTypeCache = new Dictionary<string, Type>(StringComparer.Ordinal);
         }
 
-        public void ProcessMessage(PluginMessage data, IAssemblyLoadContext assemblyLoadContext)
+        public bool FaultedPluginRegistrations
         {
-            switch (data.MessageName)
+            get
             {
-                case "RegisterPlugin":
-                    ProcessRegisterMessage(data, assemblyLoadContext);
-                    break;
-                case "UnregisterPlugin":
-                    ProcessUnregisterMessage(data);
-                    break;
-                case "PluginMessage":
-                    ProcessPluginMessage(data);
-                    break;
+                return _faultedRegisterPluginMessages.Count > 0;
             }
         }
 
-        private void ProcessPluginMessage(PluginMessage data)
+        public PluginHandlerOnReceiveResult OnReceive([NotNull] PluginMessage message)
         {
-            IPlugin plugin;
-            if (_plugins.TryGetValue(data.PluginId, out plugin))
+            _messageQueue.Enqueue(message);
+
+            if (message.MessageName == RegisterPluginMessageName)
             {
-                plugin.ProcessMessage(data.Data);
+                return PluginHandlerOnReceiveResult.ResolveDependencies;
+            }
+
+            return PluginHandlerOnReceiveResult.Default;
+        }
+
+        public void TryRegisterFaultedPlugins([NotNull] IAssemblyLoadContext assemblyLoadContext)
+        {
+            // Capture count here so when we enqueue later on we don't result in an infinite loop below.
+            var faultedCount = _faultedRegisterPluginMessages.Count;
+
+            for (var i = faultedCount; i > 0; i--)
+            {
+                var faultedRegisterPluginMessage = _faultedRegisterPluginMessages.Dequeue();
+                var response = RegisterPlugin(faultedRegisterPluginMessage, assemblyLoadContext);
+
+                if (response.Success)
+                {
+                    SendMessage(faultedRegisterPluginMessage.PluginId, response);
+                }
+                else
+                {
+                    // We were unable to recover, re-enqueue the faulted register plugin message.
+                    _faultedRegisterPluginMessages.Enqueue(faultedRegisterPluginMessage);
+                }
+            }
+        }
+
+        public void ProcessMessages([NotNull] IAssemblyLoadContext assemblyLoadContext)
+        {
+            while (_messageQueue.Count > 0)
+            {
+                var message = _messageQueue.Dequeue();
+
+                switch (message.MessageName)
+                {
+                    case RegisterPluginMessageName:
+                        RegisterMessage(message, assemblyLoadContext);
+                        break;
+                    case UnregisterPluginMessageName:
+                        UnregisterMessage(message);
+                        break;
+                    case PluginMessageMessageName:
+                        PluginMessage(message, assemblyLoadContext);
+                        break;
+                }
+            }
+        }
+
+        private void RegisterMessage(PluginMessage message, IAssemblyLoadContext assemblyLoadContext)
+        {
+            var response = RegisterPlugin(message, assemblyLoadContext);
+
+            if (!response.Success)
+            {
+                _faultedRegisterPluginMessages.Enqueue(message);
+            }
+
+            SendMessage(message.PluginId, response);
+        }
+
+        private void UnregisterMessage(PluginMessage message)
+        {
+            if (!_registeredPlugins.Remove(message.PluginId))
+            {
+                OnError(
+                    message.PluginId,
+                    UnregisterPluginMessageName,
+                    errorMessage: Resources.FormatPlugin_UnregisteredPluginIdCannotUnregister(message.PluginId));
             }
             else
             {
-                throw new InvalidOperationException(
-                    Resources.FormatPlugin_UnregisteredPluginIdCannotReceiveMessages(data.PluginId));
+                SendMessage(
+                    message.PluginId,
+                    new PluginResponseMessage
+                    {
+                        MessageName = UnregisterPluginMessageName,
+                        Success = true
+                    });
             }
         }
 
-        private void ProcessUnregisterMessage(PluginMessage data)
+        private void PluginMessage(PluginMessage message, IAssemblyLoadContext assemblyLoadContext)
         {
-            IPlugin removedPlugin;
-            if (!_plugins.TryRemove(data.PluginId, out removedPlugin))
+            IPlugin plugin;
+            if (_registeredPlugins.TryGetValue(message.PluginId, out plugin))
             {
-                throw new InvalidOperationException(
-                    Resources.FormatPlugin_UnregisteredPluginIdCannotUnregister(data.PluginId));
+                plugin.ProcessMessage(message.Data, assemblyLoadContext);
+            }
+            else
+            {
+                OnError(
+                    message.PluginId,
+                    PluginMessageMessageName,
+                    errorMessage: Resources.FormatPlugin_UnregisteredPluginIdCannotReceiveMessages(message.PluginId));
             }
         }
 
-        private void ProcessRegisterMessage(PluginMessage data, IAssemblyLoadContext assemblyLoadContext)
+        private PluginResponseMessage RegisterPlugin(
+            PluginMessage message,
+            IAssemblyLoadContext assemblyLoadContext)
         {
-            var pluginId = data.PluginId;
-            var registerData = data.Data.ToObject<PluginRegisterData>();
-            var assembly = assemblyLoadContext.Load(registerData.AssemblyName);
-            var pluginType = assembly.GetType(registerData.TypeName);
-
-            if (pluginType != null)
+            var registerData = message.Data.ToObject<PluginRegisterData>();
+            var response = new PluginResponseMessage
             {
-                // We build out a custom plugin service provider to add a PluginMessageBroker to the potential
-                // services that can be used to construct an IPlugin.
+                MessageName = RegisterPluginMessageName
+            };
+
+            var pluginId = message.PluginId;
+            var registerDataTypeCacheKey = registerData.GetFullTypeCacheKey();
+            IPlugin plugin;
+            Type pluginType;
+
+            if (!_pluginTypeCache.TryGetValue(registerDataTypeCacheKey, out pluginType))
+            {
+                try
+                {
+                    Assembly assembly;
+                    if (!_assemblyCache.TryGetValue(registerData.AssemblyName, out assembly))
+                    {
+                        assembly = assemblyLoadContext.Load(registerData.AssemblyName);
+                    }
+
+                    pluginType = assembly.GetType(registerData.TypeName);
+                }
+                catch (Exception exception)
+                {
+                    response.Error = exception.Message;
+
+                    return response;
+                }
+            }
+
+            if (pluginType == null)
+            {
+                response.Error = Resources.FormatPlugin_TypeCouldNotBeLocatedInAssembly(
+                    pluginId,
+                    registerData.TypeName,
+                    registerData.AssemblyName);
+
+                return response;
+            }
+            else
+            {
+                // We build out a custom plugin service provider to add a PluginMessageBroker and 
+                // IAssemblyLoadContext to the potential services that can be used to construct an IPlugin.
                 var pluginServiceProvider = new PluginServiceProvider(
                     _hostServices,
-                    assemblyLoadContext,
                     messageBroker: new PluginMessageBroker(pluginId, _sendMessageMethod));
 
-                var plugin = ActivatorUtilities.CreateInstance(pluginServiceProvider, pluginType) as IPlugin;
+                plugin = ActivatorUtilities.CreateInstance(pluginServiceProvider, pluginType) as IPlugin;
 
                 if (plugin == null)
                 {
-                    throw new InvalidOperationException(
-                        Resources.FormatPlugin_CannotProcessMessageInvalidPluginType(
-                            pluginId,
-                            pluginType.FullName,
-                            typeof(IPlugin).FullName));
-                }
+                    response.Error = Resources.FormatPlugin_CannotProcessMessageInvalidPluginType(
+                        pluginId,
+                        pluginType.FullName,
+                        typeof(IPlugin).FullName);
 
-                _plugins[pluginId] = plugin;
+                    return response;
+                }
             }
+
+            Debug.Assert(plugin != null);
+
+            _registeredPlugins[pluginId] = plugin;
+
+            response.Success = true;
+
+            return response;
+        }
+
+        private void SendMessage(string pluginId, PluginResponseMessage message)
+        {
+            var messageBroker = new PluginMessageBroker(pluginId, _sendMessageMethod);
+
+            messageBroker.SendMessage(message);
+        }
+
+        private void OnError(string pluginId, string messageName, string errorMessage)
+        {
+            SendMessage(
+                pluginId,
+                message: new PluginResponseMessage
+                {
+                    MessageName = messageName,
+                    Error = errorMessage,
+                    Success = false
+                });
         }
 
         private class PluginServiceProvider : IServiceProvider
         {
             private static readonly TypeInfo MessageBrokerTypeInfo = typeof(IPluginMessageBroker).GetTypeInfo();
-            private static readonly TypeInfo AssemblyLoadContextTypeInfo = typeof(IAssemblyLoadContext).GetTypeInfo();
             private readonly IServiceProvider _hostServices;
-            private readonly IAssemblyLoadContext _assemblyLoadContext;
             private readonly PluginMessageBroker _messageBroker;
 
             public PluginServiceProvider(
                 IServiceProvider hostServices,
-                IAssemblyLoadContext assemblyLoadContext,
                 PluginMessageBroker messageBroker)
             {
                 _hostServices = hostServices;
-                _assemblyLoadContext = assemblyLoadContext;
                 _messageBroker = messageBroker;
             }
 
@@ -124,10 +269,6 @@ namespace Microsoft.Framework.DesignTimeHost
                     {
                         return _messageBroker;
                     }
-                    else if (AssemblyLoadContextTypeInfo.IsAssignableFrom(serviceTypeInfo))
-                    {
-                        return _assemblyLoadContext;
-                    }
                 }
 
                 return hostProvidedService;
@@ -138,6 +279,11 @@ namespace Microsoft.Framework.DesignTimeHost
         {
             public string AssemblyName { get; set; }
             public string TypeName { get; set; }
+
+            public string GetFullTypeCacheKey()
+            {
+                return $"{TypeName}, {AssemblyName}";
+            }
         }
     }
 }

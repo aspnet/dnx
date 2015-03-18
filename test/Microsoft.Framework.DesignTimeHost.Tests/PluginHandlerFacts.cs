@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Reflection;
 using Microsoft.Framework.DesignTimeHost.Models.IncomingMessages;
+using Microsoft.Framework.DesignTimeHost.Models.OutgoingMessages;
 using Microsoft.Framework.Runtime;
 using Newtonsoft.Json.Linq;
 using Xunit;
@@ -16,7 +17,126 @@ namespace Microsoft.Framework.DesignTimeHost
         private const string RandomGuidId = "d81b8ad8-306d-474b-b8a9-b25c7f80be7e";
 
         [Fact]
-        public void ProcessMessage_RegisterPlugin_CreatesPlugin()
+        public void TryRegisterFaultedPlugins_RecoversFaultedPluginRegistrations()
+        {
+            var pluginType = typeof(MessageBrokerCreationTestPlugin);
+            var typeNameLookups = new Dictionary<string, Type>
+            {
+                { pluginType.FullName, pluginType }
+            };
+            var testAssembly = new TestAssembly(typeNameLookups);
+            var assemblyLookups = new Dictionary<string, Assembly>
+            {
+                { "CustomAssembly", testAssembly }
+            };
+            var assemblyLoadContext = new FailureAssemblyLoadContext(assemblyLookups);
+            var creationChecker = new PluginTypeCreationChecker();
+            var serviceLookups = new Dictionary<Type, object>
+            {
+                { typeof(PluginTypeCreationChecker), creationChecker }
+            };
+            var serviceProvider = new TestServiceProvider(serviceLookups);
+            object rawMessageBrokerData = null;
+            var pluginHandler = new PluginHandler(serviceProvider, (data) => rawMessageBrokerData = data);
+            var registerPluginMessage = new PluginMessage
+            {
+                Data = new JObject
+                {
+                    { "AssemblyName", "CustomAssembly" },
+                    { "TypeName", typeof(MessageBrokerCreationTestPlugin).FullName },
+                },
+                MessageName = "RegisterPlugin",
+                PluginId = RandomGuidId
+            };
+
+            pluginHandler.OnReceive(registerPluginMessage);
+            pluginHandler.ProcessMessages(assemblyLoadContext);
+
+            var messageBrokerData = Assert.IsType<PluginMessageBroker.PluginMessageWrapperData>(rawMessageBrokerData);
+            Assert.Equal(RandomGuidId, messageBrokerData.PluginId);
+            var responseMessage = Assert.IsType<PluginResponseMessage>(messageBrokerData.Data);
+            Assert.False(responseMessage.Success);
+            Assert.Equal("RegisterPlugin", responseMessage.MessageName, StringComparer.Ordinal);
+            Assert.NotEmpty(responseMessage.Error);
+            Assert.False(creationChecker.Created);
+
+            pluginHandler.TryRegisterFaultedPlugins(assemblyLoadContext);
+
+            messageBrokerData = Assert.IsType<PluginMessageBroker.PluginMessageWrapperData>(rawMessageBrokerData);
+            Assert.Equal(RandomGuidId, messageBrokerData.PluginId);
+            responseMessage = Assert.IsType<PluginResponseMessage>(messageBrokerData.Data);
+            Assert.True(responseMessage.Success);
+            Assert.Equal("RegisterPlugin", responseMessage.MessageName, StringComparer.Ordinal);
+            Assert.Null(responseMessage.Error);
+            Assert.True(creationChecker.Created);
+        }
+
+        [Fact]
+        public void ProcessMessages_NoOpsWithoutMessagesEnqueued()
+        {
+            var assemblyLoadContext = CreateTestAssemblyLoadContext<TestPlugin>();
+            var serviceProvider = new TestServiceProvider();
+            object rawMessageBrokerData = null;
+            var pluginHandler = new PluginHandler(serviceProvider, (data) => rawMessageBrokerData = data);
+
+            pluginHandler.ProcessMessages(assemblyLoadContext);
+
+            Assert.Null(rawMessageBrokerData);
+        }
+
+        [Fact]
+        public void TryRegisterFaultedPlugins_NoOpsWithoutMessagesEnqueued()
+        {
+            var assemblyLoadContext = CreateTestAssemblyLoadContext<CreationTestPlugin>();
+            var serviceProvider = new TestServiceProvider();
+            object rawMessageBrokerData = null;
+            var pluginHandler = new PluginHandler(serviceProvider, (data) => rawMessageBrokerData = data);
+
+            pluginHandler.TryRegisterFaultedPlugins(assemblyLoadContext);
+
+            Assert.Null(rawMessageBrokerData);
+        }
+
+        [Fact]
+        public void OnReceive_DoesNotProcessMessages()
+        {
+            object rawMessageBrokerData = null;
+            var serviceProvider = new TestServiceProvider();
+            var pluginHandler = new PluginHandler(serviceProvider, (data) => rawMessageBrokerData = data);
+            var registerPluginMessage = new PluginMessage
+            {
+                Data = new JObject
+                {
+                    { "AssemblyName", "CustomAssembly" },
+                    { "TypeName", typeof(TestPlugin).FullName },
+                },
+                MessageName = "RegisterPlugin",
+                PluginId = RandomGuidId
+            };
+            var unregisterPluginMessage = new PluginMessage
+            {
+                MessageName = "UnregisterPlugin",
+                PluginId = RandomGuidId
+            };
+            var pluginMessage = new PluginMessage
+            {
+                Data = new JObject
+                {
+                    { "Data", "Hello Plugin" },
+                },
+                MessageName = "PluginMessage",
+                PluginId = RandomGuidId
+            };
+
+            pluginHandler.OnReceive(registerPluginMessage);
+            pluginHandler.OnReceive(pluginMessage);
+            pluginHandler.OnReceive(unregisterPluginMessage);
+
+            Assert.Null(rawMessageBrokerData);
+        }
+
+        [Fact]
+        public void ProcessMessages_RegisterPlugin_CreatesPlugin()
         {
             var assemblyLoadContext = CreateTestAssemblyLoadContext<CreationTestPlugin>();
             var creationChecker = new PluginTypeCreationChecker();
@@ -37,13 +157,14 @@ namespace Microsoft.Framework.DesignTimeHost
                 PluginId = RandomGuidId
             };
 
-            pluginHandler.ProcessMessage(pluginMessage, assemblyLoadContext);
+            pluginHandler.OnReceive(pluginMessage);
+            pluginHandler.ProcessMessages(assemblyLoadContext);
 
             Assert.True(creationChecker.Created);
         }
 
         [Fact]
-        public void ProcessMessage_RegisterPlugin_DoesNotCacheCreatedPlugin()
+        public void ProcessMessages_RegisterPlugin_DoesNotCacheCreatedPlugin()
         {
             var assemblyLoadContext = CreateTestAssemblyLoadContext<CreationTestPlugin>();
             var creationChecker = new PluginTypeCreationChecker();
@@ -64,15 +185,17 @@ namespace Microsoft.Framework.DesignTimeHost
                 PluginId = RandomGuidId
             };
 
-            pluginHandler.ProcessMessage(pluginMessage, assemblyLoadContext);
+            pluginHandler.OnReceive(pluginMessage);
+            pluginHandler.ProcessMessages(assemblyLoadContext);
             Assert.True(creationChecker.Created);
             creationChecker.Created = false;
-            pluginHandler.ProcessMessage(pluginMessage, assemblyLoadContext);
+            pluginHandler.OnReceive(pluginMessage);
+            pluginHandler.ProcessMessages(assemblyLoadContext);
             Assert.True(creationChecker.Created);
         }
 
         [Fact]
-        public void ProcessMessage_RegisterPlugin_CreatesPluginWithDefaultMessageBroker()
+        public void ProcessMessages_RegisterPlugin_CreatesPluginWithDefaultMessageBroker()
         {
             var assemblyLoadContext = CreateTestAssemblyLoadContext<MessageBrokerCreationTestPlugin>();
             var creationChecker = new PluginTypeCreationChecker();
@@ -95,23 +218,26 @@ namespace Microsoft.Framework.DesignTimeHost
                 PluginId = RandomGuidId
             };
 
-            pluginHandler.ProcessMessage(pluginMessage, assemblyLoadContext);
+            pluginHandler.OnReceive(pluginMessage);
+            pluginHandler.ProcessMessages(assemblyLoadContext);
 
             Assert.True(creationChecker.Created);
             Assert.NotNull(rawMessageBrokerData);
             var messageBrokerData = Assert.IsType<PluginMessageBroker.PluginMessageWrapperData>(rawMessageBrokerData);
             Assert.Equal(RandomGuidId, messageBrokerData.PluginId);
-            Assert.Equal("Created", messageBrokerData.Data.ToString(), StringComparer.Ordinal);
+            var responseMessage = Assert.IsType<PluginResponseMessage>(messageBrokerData.Data);
+            Assert.True(responseMessage.Success);
+            Assert.Equal("RegisterPlugin", responseMessage.MessageName, StringComparer.Ordinal);
+            Assert.Null(responseMessage.Error);
         }
 
         [Fact]
-        public void ProcessMessage_RegisterPlugin_CreatesPluginWithCustomMessageBroker()
+        public void ProcessMessages_RegisterPlugin_CreatesPluginWithCustomMessageBroker()
         {
             var assemblyLoadContext = CreateTestAssemblyLoadContext<MessageBrokerCreationTestPlugin>();
             var creationChecker = new PluginTypeCreationChecker();
             object rawMessageBrokerData = null;
-            var pluginMessageBroker = new PluginMessageBroker(
-                RandomGuidId, (data) => rawMessageBrokerData = data);
+            var pluginMessageBroker = new PluginMessageBroker(RandomGuidId, (data) => rawMessageBrokerData = data);
             var serviceLookups = new Dictionary<Type, object>
             {
                 { typeof(PluginTypeCreationChecker), creationChecker },
@@ -119,7 +245,7 @@ namespace Microsoft.Framework.DesignTimeHost
             };
             var serviceProvider = new TestServiceProvider(serviceLookups);
             var pluginHandler = new PluginHandler(serviceProvider, (_) => { });
-            var pluginMessage = new PluginMessage
+            var registerPluginMessage = new PluginMessage
             {
                 Data = new JObject
                 {
@@ -129,8 +255,19 @@ namespace Microsoft.Framework.DesignTimeHost
                 MessageName = "RegisterPlugin",
                 PluginId = RandomGuidId
             };
+            var pluginMessage = new PluginMessage
+            {
+                Data = new JObject
+                {
+                    { "Data", "Hello Plugin" },
+                },
+                MessageName = "PluginMessage",
+                PluginId = RandomGuidId
+            };
 
-            pluginHandler.ProcessMessage(pluginMessage, assemblyLoadContext);
+            pluginHandler.OnReceive(registerPluginMessage);
+            pluginHandler.OnReceive(pluginMessage);
+            pluginHandler.ProcessMessages(assemblyLoadContext);
 
             Assert.True(creationChecker.Created);
             Assert.NotNull(rawMessageBrokerData);
@@ -140,7 +277,7 @@ namespace Microsoft.Framework.DesignTimeHost
         }
 
         [Fact]
-        public void ProcessMessage_RegisterPlugin_CreatesPluginWithAssemblyLoadContext()
+        public void ProcessMessages_RegisterPlugin_CreatesPluginWithAssemblyLoadContext()
         {
             var assemblyLoadContext = CreateTestAssemblyLoadContext<AssemblyLoadContextRelayTestPlugin>();
             var serviceLookups = new Dictionary<Type, object>();
@@ -148,7 +285,7 @@ namespace Microsoft.Framework.DesignTimeHost
             object rawWrappedData = null;
             var pluginHandler = new PluginHandler(
                 serviceProvider, (data) => rawWrappedData = data);
-            var pluginMessage = new PluginMessage
+            var registerPluginMessage = new PluginMessage
             {
                 Data = new JObject
                 {
@@ -158,8 +295,19 @@ namespace Microsoft.Framework.DesignTimeHost
                 MessageName = "RegisterPlugin",
                 PluginId = RandomGuidId
             };
+            var pluginMessage = new PluginMessage
+            {
+                Data = new JObject
+                {
+                    { "Data", "Hello Plugin" },
+                },
+                MessageName = "PluginMessage",
+                PluginId = RandomGuidId
+            };
 
-            pluginHandler.ProcessMessage(pluginMessage, assemblyLoadContext);
+            pluginHandler.OnReceive(registerPluginMessage);
+            pluginHandler.OnReceive(pluginMessage);
+            pluginHandler.ProcessMessages(assemblyLoadContext);
 
             Assert.NotNull(rawWrappedData);
             var wrappedData = Assert.IsType<PluginMessageBroker.PluginMessageWrapperData>(rawWrappedData);
@@ -168,44 +316,44 @@ namespace Microsoft.Framework.DesignTimeHost
         }
 
         [Fact]
-        public void ProcessMessage_RegisterPlugin_IgnoresInvalidPluginTypeNames()
+        public void ProcessMessages_RegisterPlugin_SendsErrorWhenUnableToLocatePluginType()
         {
-            var pluginType = typeof(CreationTestPlugin);
-            var testAssembly = new TestAssembly();
-            var assemblyLookups = new Dictionary<string, Assembly>
-            {
-                { "CustomAssembly", testAssembly }
-            };
-            var assemblyLoadContext = new TestAssemblyLoadContext(assemblyLookups);
-            var creationChecker = new PluginTypeCreationChecker();
-            var serviceLookups = new Dictionary<Type, object>
-            {
-                { typeof(PluginTypeCreationChecker), creationChecker }
-            };
-            var serviceProvider = new TestServiceProvider(serviceLookups);
-            var pluginHandler = new PluginHandler(serviceProvider, (_) => { });
+            var assemblyLoadContext = CreateTestAssemblyLoadContext<TestPlugin>();
+            var serviceProvider = new TestServiceProvider();
+            object rawWrappedData = null;
+            var pluginHandler = new PluginHandler(serviceProvider, (data) => rawWrappedData = data);
             var pluginMessage = new PluginMessage
             {
                 Data = new JObject
                 {
                     { "AssemblyName", "CustomAssembly" },
-                    { "TypeName", pluginType.FullName },
+                    { "TypeName", typeof(TestPlugin).FullName + "_" },
                 },
                 MessageName = "RegisterPlugin",
                 PluginId = RandomGuidId
             };
+            var expectedErrorMessage =
+                $"Could not locate plugin id '{RandomGuidId}' of type '{typeof(TestPlugin).FullName + "_"}' " +
+                "in assembly 'CustomAssembly'.";
 
-            pluginHandler.ProcessMessage(pluginMessage, assemblyLoadContext);
+            pluginHandler.OnReceive(pluginMessage);
+            pluginHandler.ProcessMessages(assemblyLoadContext);
 
-            Assert.False(creationChecker.Created);
+            var messageBrokerData = Assert.IsType<PluginMessageBroker.PluginMessageWrapperData>(rawWrappedData);
+            Assert.Equal(RandomGuidId, messageBrokerData.PluginId);
+            var responseMessage = Assert.IsType<PluginResponseMessage>(messageBrokerData.Data);
+            Assert.False(responseMessage.Success);
+            Assert.Equal("RegisterPlugin", responseMessage.MessageName, StringComparer.Ordinal);
+            Assert.Equal(expectedErrorMessage, responseMessage.Error, StringComparer.Ordinal);
         }
 
         [Fact]
-        public void ProcessMessage_RegisterPlugin_ThrowsOnInvalidPluginTypes()
+        public void ProcessMessages_RegisterPlugin_SendsErrorOnInvalidPluginTypes()
         {
             var assemblyLoadContext = CreateTestAssemblyLoadContext<InvalidTestPlugin>();
             var serviceProvider = new TestServiceProvider();
-            var pluginHandler = new PluginHandler(serviceProvider, (_) => { });
+            object rawWrappedData = null;
+            var pluginHandler = new PluginHandler(serviceProvider, (data) => rawWrappedData = data);
             var pluginMessage = new PluginMessage
             {
                 Data = new JObject
@@ -221,17 +369,24 @@ namespace Microsoft.Framework.DesignTimeHost
                 "'Microsoft.Framework.DesignTimeHost.PluginHandlerFacts+InvalidTestPlugin' must be assignable " +
                 "to type 'Microsoft.Framework.DesignTimeHost.IPlugin'.";
 
-            var error = Assert.Throws<InvalidOperationException>(
-                () => pluginHandler.ProcessMessage(pluginMessage, assemblyLoadContext));
-            Assert.Equal(expectedErrorMessage, error.Message, StringComparer.Ordinal);
+            pluginHandler.OnReceive(pluginMessage);
+            pluginHandler.ProcessMessages(assemblyLoadContext);
+
+            var messageBrokerData = Assert.IsType<PluginMessageBroker.PluginMessageWrapperData>(rawWrappedData);
+            Assert.Equal(RandomGuidId, messageBrokerData.PluginId);
+            var responseMessage = Assert.IsType<PluginResponseMessage>(messageBrokerData.Data);
+            Assert.False(responseMessage.Success);
+            Assert.Equal("RegisterPlugin", responseMessage.MessageName, StringComparer.Ordinal);
+            Assert.Equal(expectedErrorMessage, responseMessage.Error, StringComparer.Ordinal);
         }
 
         [Fact]
-        public void ProcessMessage_UnregisterPlugin_UnregistersPlugin()
+        public void ProcessMessages_UnregisterPlugin_UnregistersPlugin()
         {
             var assemblyLoadContext = CreateTestAssemblyLoadContext<TestPlugin>();
             var serviceProvider = new TestServiceProvider();
-            var pluginHandler = new PluginHandler(serviceProvider, (_) => { });
+            object rawWrappedData = null;
+            var pluginHandler = new PluginHandler(serviceProvider, (data) => rawWrappedData = data);
             var expectedErrorMessage =
                 $"Message received for unregistered plugin id '{RandomGuidId}'. Plugins must first be registered " +
                 "before they can receive messages.";
@@ -260,20 +415,26 @@ namespace Microsoft.Framework.DesignTimeHost
                 PluginId = RandomGuidId
             };
 
-            pluginHandler.ProcessMessage(registerPluginMessage, assemblyLoadContext);
-            pluginHandler.ProcessMessage(pluginMessage, assemblyLoadContext);
-            pluginHandler.ProcessMessage(unregisterPluginMessage, assemblyLoadContext);
-            var error = Assert.Throws<InvalidOperationException>(
-                () => pluginHandler.ProcessMessage(pluginMessage, assemblyLoadContext));
-            Assert.Equal(expectedErrorMessage, error.Message, StringComparer.Ordinal);
+            pluginHandler.OnReceive(registerPluginMessage);
+            pluginHandler.OnReceive(pluginMessage);
+            pluginHandler.OnReceive(unregisterPluginMessage);
+            pluginHandler.ProcessMessages(assemblyLoadContext);
+
+            var messageBrokerData = Assert.IsType<PluginMessageBroker.PluginMessageWrapperData>(rawWrappedData);
+            Assert.Equal(RandomGuidId, messageBrokerData.PluginId);
+            var responseMessage = Assert.IsType<PluginResponseMessage>(messageBrokerData.Data);
+            Assert.True(responseMessage.Success);
+            Assert.Equal("UnregisterPlugin", responseMessage.MessageName, StringComparer.Ordinal);
+            Assert.Null(responseMessage.Error);
         }
 
         [Fact]
-        public void ProcessMessage_UnregisterPlugin_ThrowsWhenUnregisteringUnknownPlugin()
+        public void ProcessMessages_UnregisterPlugin_SendsErrorWhenUnregisteringUnknownPlugin()
         {
             var assemblyLoadContext = CreateTestAssemblyLoadContext<TestPlugin>();
             var serviceProvider = new TestServiceProvider();
-            var pluginHandler = new PluginHandler(serviceProvider, (_) => { });
+            object rawWrappedData = null;
+            var pluginHandler = new PluginHandler(serviceProvider, (data) => rawWrappedData = data);
             var unregisterPluginMessage = new PluginMessage
             {
                 MessageName = "UnregisterPlugin",
@@ -282,17 +443,24 @@ namespace Microsoft.Framework.DesignTimeHost
             var expectedErrorMessage =
                 $"No plugin with id '{RandomGuidId}' has been registered. Cannot unregister plugin.";
 
-            var error = Assert.Throws<InvalidOperationException>(
-                () => pluginHandler.ProcessMessage(unregisterPluginMessage, assemblyLoadContext));
-            Assert.Equal(expectedErrorMessage, error.Message, StringComparer.Ordinal);
+            pluginHandler.OnReceive(unregisterPluginMessage);
+            pluginHandler.ProcessMessages(assemblyLoadContext);
+
+            var messageBrokerData = Assert.IsType<PluginMessageBroker.PluginMessageWrapperData>(rawWrappedData);
+            Assert.Equal(RandomGuidId, messageBrokerData.PluginId);
+            var responseMessage = Assert.IsType<PluginResponseMessage>(messageBrokerData.Data);
+            Assert.False(responseMessage.Success);
+            Assert.Equal("UnregisterPlugin", responseMessage.MessageName, StringComparer.Ordinal);
+            Assert.Equal(expectedErrorMessage, responseMessage.Error, StringComparer.Ordinal);
         }
 
         [Fact]
-        public void ProcessMessage_UnregisterPlugin_ThrowsWhenUnregisteringPluginMoreThanOnce()
+        public void ProcessMessages_UnregisterPlugin_SendsErrorWhenUnregisteringPluginMoreThanOnce()
         {
             var assemblyLoadContext = CreateTestAssemblyLoadContext<TestPlugin>();
             var serviceProvider = new TestServiceProvider();
-            var pluginHandler = new PluginHandler(serviceProvider, (_) => { });
+            object rawWrappedData = null;
+            var pluginHandler = new PluginHandler(serviceProvider, (data) => rawWrappedData = data);
             var registerPluginMessage = new PluginMessage
             {
                 Data = new JObject
@@ -311,25 +479,26 @@ namespace Microsoft.Framework.DesignTimeHost
             var expectedErrorMessage =
                 $"No plugin with id '{RandomGuidId}' has been registered. Cannot unregister plugin.";
 
-            pluginHandler.ProcessMessage(registerPluginMessage, assemblyLoadContext);
-            pluginHandler.ProcessMessage(unregisterPluginMessage, assemblyLoadContext);
+            pluginHandler.OnReceive(registerPluginMessage);
+            pluginHandler.OnReceive(unregisterPluginMessage);
+            pluginHandler.OnReceive(unregisterPluginMessage);
+            pluginHandler.ProcessMessages(assemblyLoadContext);
 
-            var error = Assert.Throws<InvalidOperationException>(
-                () => pluginHandler.ProcessMessage(unregisterPluginMessage, assemblyLoadContext));
-            Assert.Equal(expectedErrorMessage, error.Message, StringComparer.Ordinal);
-            error = Assert.Throws<InvalidOperationException>(
-                () => pluginHandler.ProcessMessage(unregisterPluginMessage, assemblyLoadContext));
-            Assert.Equal(expectedErrorMessage, error.Message, StringComparer.Ordinal);
+            var messageBrokerData = Assert.IsType<PluginMessageBroker.PluginMessageWrapperData>(rawWrappedData);
+            Assert.Equal(RandomGuidId, messageBrokerData.PluginId);
+            var responseMessage = Assert.IsType<PluginResponseMessage>(messageBrokerData.Data);
+            Assert.False(responseMessage.Success);
+            Assert.Equal("UnregisterPlugin", responseMessage.MessageName, StringComparer.Ordinal);
+            Assert.Equal(expectedErrorMessage, responseMessage.Error, StringComparer.Ordinal);
         }
 
         [Fact]
-        public void ProcessMessage_PluginMessage_ProcessesMessages()
+        public void ProcessMessages_PluginMessage_ProcessesMessages()
         {
             var assemblyLoadContext = CreateTestAssemblyLoadContext<MessageTestPlugin>();
             var serviceProvider = new TestServiceProvider();
             object rawMessageBrokerData = null;
-            var pluginHandler = new PluginHandler(
-                serviceProvider, (data) => rawMessageBrokerData = data);
+            var pluginHandler = new PluginHandler(serviceProvider, (data) => rawMessageBrokerData = data);
             var registerPluginMessage = new PluginMessage
             {
                 Data = new JObject
@@ -350,8 +519,9 @@ namespace Microsoft.Framework.DesignTimeHost
                 PluginId = RandomGuidId
             };
 
-            pluginHandler.ProcessMessage(registerPluginMessage, assemblyLoadContext);
-            pluginHandler.ProcessMessage(pluginMessage, assemblyLoadContext);
+            pluginHandler.OnReceive(registerPluginMessage);
+            pluginHandler.OnReceive(pluginMessage);
+            pluginHandler.ProcessMessages(assemblyLoadContext);
 
             Assert.NotNull(rawMessageBrokerData);
             var messageBrokerData = Assert.IsType<PluginMessageBroker.PluginMessageWrapperData>(rawMessageBrokerData);
@@ -361,11 +531,12 @@ namespace Microsoft.Framework.DesignTimeHost
         }
 
         [Fact]
-        public void ProcessMessage_PluginMessage_ThrowsWhenPluginNotRegistered()
+        public void ProcessMessages_PluginMessage_SendsErrorWhenPluginNotRegistered()
         {
-            var assemblyLoadContext = CreateTestAssemblyLoadContext<MessageTestPlugin>();
+            var assemblyLoadContext = CreateTestAssemblyLoadContext<TestPlugin>();
             var serviceProvider = new TestServiceProvider();
-            var pluginHandler = new PluginHandler(serviceProvider, (_) => { });
+            object rawWrappedData = null;
+            var pluginHandler = new PluginHandler(serviceProvider, (data) => rawWrappedData = data);
             var pluginMessage = new PluginMessage
             {
                 Data = new JObject
@@ -379,17 +550,24 @@ namespace Microsoft.Framework.DesignTimeHost
                 $"Message received for unregistered plugin id '{RandomGuidId}'. Plugins must first be registered " +
                 "before they can receive messages.";
 
-            var error = Assert.Throws<InvalidOperationException>(
-                () => pluginHandler.ProcessMessage(pluginMessage, assemblyLoadContext));
-            Assert.Equal(expectedErrorMessage, error.Message, StringComparer.Ordinal);
+            pluginHandler.OnReceive(pluginMessage);
+            pluginHandler.ProcessMessages(assemblyLoadContext);
+
+            var messageBrokerData = Assert.IsType<PluginMessageBroker.PluginMessageWrapperData>(rawWrappedData);
+            Assert.Equal(RandomGuidId, messageBrokerData.PluginId);
+            var responseMessage = Assert.IsType<PluginResponseMessage>(messageBrokerData.Data);
+            Assert.False(responseMessage.Success);
+            Assert.Equal("PluginMessage", responseMessage.MessageName, StringComparer.Ordinal);
+            Assert.Equal(expectedErrorMessage, responseMessage.Error, StringComparer.Ordinal);
         }
 
         [Fact]
-        public void ProcessMessage_PluginMessage_ThrowsWhenUnregistered()
+        public void ProcessMessages_PluginMessage_SendsErrorWhenUnregistered()
         {
             var assemblyLoadContext = CreateTestAssemblyLoadContext<MessageTestPlugin>();
             var serviceProvider = new TestServiceProvider();
-            var pluginHandler = new PluginHandler(serviceProvider, (_) => { });
+            object rawWrappedData = null;
+            var pluginHandler = new PluginHandler(serviceProvider, (data) => rawWrappedData = data);
             var registerPluginMessage = new PluginMessage
             {
                 Data = new JObject
@@ -418,12 +596,17 @@ namespace Microsoft.Framework.DesignTimeHost
                 $"Message received for unregistered plugin id '{RandomGuidId}'. Plugins must first be registered " +
                 "before they can receive messages.";
 
-            pluginHandler.ProcessMessage(registerPluginMessage, assemblyLoadContext);
-            pluginHandler.ProcessMessage(unregisterPluginMessage, assemblyLoadContext);
+            pluginHandler.OnReceive(registerPluginMessage);
+            pluginHandler.OnReceive(unregisterPluginMessage);
+            pluginHandler.OnReceive(pluginMessage);
+            pluginHandler.ProcessMessages(assemblyLoadContext);
 
-            var error = Assert.Throws<InvalidOperationException>(
-                () => pluginHandler.ProcessMessage(pluginMessage, assemblyLoadContext));
-            Assert.Equal(expectedErrorMessage, error.Message, StringComparer.Ordinal);
+            var messageBrokerData = Assert.IsType<PluginMessageBroker.PluginMessageWrapperData>(rawWrappedData);
+            Assert.Equal(RandomGuidId, messageBrokerData.PluginId);
+            var responseMessage = Assert.IsType<PluginResponseMessage>(messageBrokerData.Data);
+            Assert.False(responseMessage.Success);
+            Assert.Equal("PluginMessage", responseMessage.MessageName, StringComparer.Ordinal);
+            Assert.Equal(expectedErrorMessage, responseMessage.Error, StringComparer.Ordinal);
         }
 
         private static IAssemblyLoadContext CreateTestAssemblyLoadContext<TPlugin>()
@@ -451,7 +634,7 @@ namespace Microsoft.Framework.DesignTimeHost
                 _messageBroker = messageBroker;
             }
 
-            public void ProcessMessage(JObject data)
+            public void ProcessMessage(JObject data, IAssemblyLoadContext assemblyLoadContext)
             {
                 _messageBroker.SendMessage(data["Data"].ToString() + "!");
             }
@@ -459,7 +642,7 @@ namespace Microsoft.Framework.DesignTimeHost
 
         private class TestPlugin : IPlugin
         {
-            public void ProcessMessage(JObject data)
+            public virtual void ProcessMessage(JObject data, IAssemblyLoadContext assemblyLoadContext)
             {
             }
         }
@@ -475,7 +658,7 @@ namespace Microsoft.Framework.DesignTimeHost
                 creationChecker.Created = true;
             }
 
-            public void ProcessMessage(JObject data)
+            public virtual void ProcessMessage(JObject data, IAssemblyLoadContext assemblyLoadContext)
             {
                 throw new NotImplementedException();
             }
@@ -483,28 +666,63 @@ namespace Microsoft.Framework.DesignTimeHost
 
         private class MessageBrokerCreationTestPlugin : CreationTestPlugin
         {
+            private readonly IPluginMessageBroker _messageBroker;
+
             public MessageBrokerCreationTestPlugin(
                 IPluginMessageBroker messageBroker,
                 PluginTypeCreationChecker creationChecker)
                 : base(creationChecker)
             {
-                messageBroker.SendMessage("Created");
+                _messageBroker = messageBroker;
+            }
+
+            public override void ProcessMessage(JObject data, IAssemblyLoadContext assemblyLoadContext)
+            {
+                _messageBroker.SendMessage("Created");
             }
         }
 
         private class AssemblyLoadContextRelayTestPlugin : TestPlugin
         {
+            private readonly IPluginMessageBroker _messageBroker;
+
             public AssemblyLoadContextRelayTestPlugin(
-                IPluginMessageBroker messageBroker,
-                IAssemblyLoadContext assemblyLoadContext)
+                IPluginMessageBroker messageBroker)
             {
-                messageBroker.SendMessage(assemblyLoadContext);
+                _messageBroker = messageBroker;
+            }
+
+            public override void ProcessMessage(JObject data, IAssemblyLoadContext assemblyLoadContext)
+            {
+                _messageBroker.SendMessage(assemblyLoadContext);
             }
         }
 
         private class PluginTypeCreationChecker
         {
             public bool Created { get; set; }
+        }
+
+        private class FailureAssemblyLoadContext : TestAssemblyLoadContext
+        {
+            public bool _firstLoad;
+
+            public FailureAssemblyLoadContext(IReadOnlyDictionary<string, Assembly> assemblyNameLookups)
+                : base(assemblyNameLookups)
+            {
+            }
+
+            public override Assembly Load(string name)
+            {
+                if (!_firstLoad)
+                {
+                    _firstLoad = true;
+
+                    throw new InvalidOperationException();
+                }
+
+                return base.Load(name);
+            }
         }
     }
 }

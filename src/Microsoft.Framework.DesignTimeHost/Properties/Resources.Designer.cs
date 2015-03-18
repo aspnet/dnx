@@ -27,6 +27,22 @@ namespace Microsoft.Framework.DesignTimeHost
         }
 
         /// <summary>
+        /// Could not locate plugin id '{0}' of type '{1}' in assembly '{2}'.
+        /// </summary>
+        internal static string Plugin_TypeCouldNotBeLocatedInAssembly
+        {
+            get { return GetString("Plugin_TypeCouldNotBeLocatedInAssembly"); }
+        }
+
+        /// <summary>
+        /// Could not locate plugin id '{0}' of type '{1}' in assembly '{2}'.
+        /// </summary>
+        internal static string FormatPlugin_TypeCouldNotBeLocatedInAssembly(object p0, object p1, object p2)
+        {
+            return string.Format(CultureInfo.CurrentCulture, GetString("Plugin_TypeCouldNotBeLocatedInAssembly"), p0, p1, p2);
+        }
+
+        /// <summary>
         /// Unable to find project.json in '{0}'.
         /// </summary>
         internal static string Plugin_UnableToFindProjectJson
