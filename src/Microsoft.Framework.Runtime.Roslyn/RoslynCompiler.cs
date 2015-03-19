@@ -75,6 +75,8 @@ namespace Microsoft.Framework.Runtime.Roslyn
 
                     _cacheContextAccessor.Current.Monitor(_namedDependencyProvider.GetNamedDependency(buildOutputsName));
                 }
+
+                _cacheContextAccessor.Current.Monitor(_namedDependencyProvider.GetNamedDependency(project.Name + "_Dependencies"));
             }
 
             var exportedReferences = incomingReferences.Select(ConvertMetadataReference);

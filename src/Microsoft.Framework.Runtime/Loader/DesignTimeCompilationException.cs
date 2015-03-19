@@ -10,7 +10,7 @@ namespace Microsoft.Framework.Runtime
     internal class DesignTimeCompilationException : Exception, ICompilationException
     {
         public DesignTimeCompilationException(IList<CompilationMessage> compileResponseErrors)
-            : base(string.Join(Environment.NewLine, compileResponseErrors.SelectMany(e => e.FormattedMessage)))
+            : base(string.Join(Environment.NewLine, compileResponseErrors.Select(e => e.FormattedMessage)))
         {
             CompilationFailures = compileResponseErrors.GroupBy(g => g.SourceFilePath, StringComparer.OrdinalIgnoreCase)
                                                        .Select(g => new CompilationFailure
