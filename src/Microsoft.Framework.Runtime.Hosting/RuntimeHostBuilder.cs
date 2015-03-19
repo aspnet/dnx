@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using Microsoft.Framework.Logging;
 using Microsoft.Framework.Runtime.Dependencies;
 using Microsoft.Framework.Runtime.Internal;
@@ -17,20 +18,22 @@ namespace Microsoft.Framework.Runtime
     public class RuntimeHostBuilder
     {
         public IList<IDependencyProvider> DependencyProviders { get; } = new List<IDependencyProvider>();
+        public IList<IAssemblyLoaderFactory> Loaders { get; } = new List<IAssemblyLoaderFactory>();
         public NuGetFramework TargetFramework { get; set; }
         public Project Project { get; set; }
         public LockFile LockFile { get; set;  }
         public GlobalSettings GlobalSettings { get; set; }
         public IServiceProvider Services { get; set; }
+        public PackagePathResolver PackagePathResolver { get; set; }
 
         /// <summary>
         /// Create a <see cref="RuntimeHostBuilder"/> for the project in the specified
-        /// <paramref name="projectDirectory"/>.
+        /// <paramref name="projectDirectory"/>, using the default configuration.
         /// </summary>
         /// <remarks>
         /// This method will throw if the project.json file cannot be found in the
         /// specified folder. If a project.lock.json file is present in the directory
-        /// it will be loaded. 
+        /// it will be loaded.
         /// </remarks>
         /// <param name="projectDirectory">The directory of the project to host</param>
         public static RuntimeHostBuilder ForProjectDirectory(string projectDirectory, NuGetFramework runtimeFramework, IServiceProvider services)
@@ -65,10 +68,12 @@ namespace Microsoft.Framework.Runtime
                 hostBuilder.LockFile = lockFile;
             }
 
-            // Set the framework
+            // Set the framework and other components
             hostBuilder.TargetFramework = runtimeFramework;
-
             hostBuilder.Services = services;
+            hostBuilder.PackagePathResolver = new PackagePathResolver(
+                ResolveRepositoryPath(hostBuilder.GlobalSettings), 
+                GetCachePaths());
 
             log.LogVerbose("Registering PackageSpecReferenceDependencyProvider");
             hostBuilder.DependencyProviders.Add(new PackageSpecReferenceDependencyProvider(projectResolver));
@@ -95,6 +100,48 @@ namespace Microsoft.Framework.Runtime
         public RuntimeHost Build()
         {
             return new RuntimeHost(this);
+        }
+
+        private static string ResolveRepositoryPath(GlobalSettings globalSettings)
+        {
+            // Order
+            // 1. EnvironmentNames.Packages environment variable
+            // 2. global.json { "packages": "..." }
+            // 3. NuGet.config repositoryPath (maybe)?
+            // 4. {DefaultLocalRuntimeHomeDir}\packages
+
+            var runtimePackages = Environment.GetEnvironmentVariable(EnvironmentNames.Packages);
+
+            if (!string.IsNullOrEmpty(runtimePackages))
+            {
+                return runtimePackages;
+            }
+
+            if (!string.IsNullOrEmpty(globalSettings?.PackagesPath))
+            {
+                return Path.Combine(globalSettings.RootPath, globalSettings.PackagesPath);
+            }
+
+            var profileDirectory = Environment.GetEnvironmentVariable("USERPROFILE");
+
+            if (string.IsNullOrEmpty(profileDirectory))
+            {
+                profileDirectory = Environment.GetEnvironmentVariable("HOME");
+            }
+
+            return Path.Combine(profileDirectory, Constants.DefaultLocalRuntimeHomeDir, "packages");
+        }
+
+        private static IEnumerable<string> GetCachePaths()
+        {
+            var packageCachePathValue = Environment.GetEnvironmentVariable(EnvironmentNames.PackagesCache);
+
+            if (string.IsNullOrEmpty(packageCachePathValue))
+            {
+                return Enumerable.Empty<string>();
+            }
+
+            return packageCachePathValue.Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries);
         }
 
         private static string GetProjectName(string projectDirectory)

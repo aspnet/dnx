@@ -1,0 +1,20 @@
+﻿{
+    "version": "1.0.0-*",
+    "description": "Contains components for loading .NET assemblies from source by compiling on-demand",
+    "dependencies": {
+        "Microsoft.Framework.Runtime.Hosting": "1.0.0-*",
+        "Microsoft.Framework.Runtime.Common": { "version": "1.0.0-*", "type": "build" }
+    },
+
+    "frameworks" : {
+        "dnx451" : { 
+            "dependencies": {
+            }
+        },
+        "dnxcore50" : { 
+            "dependencies": {
+                "System.Runtime": "4.0.20-beta-22709"
+            }
+        }
+    }
+}

@@ -60,13 +60,15 @@ namespace dnx.host
             var app = new CommandLineApplication(throwOnUnexpectedArg: false);
             app.Name = Constants.BootstrapperExeName;
 
-            // RuntimeBootstrapper doesn't need to consume '--appbase' option because
-            // dnx/dnx.cpp consumes the option value before invoking RuntimeBootstrapper
-            // This is only for showing help info and swallowing useless '--appbase' option
+            // These options were handled in the native code, but got passed through here.
+            // We just need to capture them and clean them up.
             var optionAppbase = app.Option("--appbase <PATH>", "Application base directory path",
                 CommandOptionType.SingleValue);
             var optionLib = app.Option("--lib <LIB_PATHS>", "Paths used for library look-up",
                 CommandOptionType.MultipleValue);
+            var optionDebug = app.Option("--debug", "Waits for the debugger to attach before beginning execution.",
+                CommandOptionType.NoValue);
+
             app.HelpOption("-?|-h|--help");
             app.VersionOption("--version", GetVersion);
 

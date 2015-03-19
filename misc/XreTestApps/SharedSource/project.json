@@ -1,0 +1,6 @@
+{
+    "shared": "**/*.cs",
+    "frameworks": {
+        "dnx451": {}
+    }
+}
