@@ -5,12 +5,14 @@ using System;
 using System.Net.Sockets;
 using System.Runtime.InteropServices;
 using System.Threading;
+using dnx.clr.managed;
 using dnx.host;
 using Microsoft.Framework.Runtime;
 
 public class DomainManager : AppDomainManager
 {
     private ApplicationMainInfo _info;
+    private HostExecutionContextManager _hostExecutionContextManager;
 
     public override void InitializeNewDomain(AppDomainSetup appDomainInfo)
     {
@@ -30,6 +32,19 @@ public class DomainManager : AppDomainManager
 
         appDomainInfo.ApplicationBase = Environment.GetEnvironmentVariable(EnvironmentNames.DefaultLib);
         appDomainInfo.TargetFrameworkName = ".NETFramework,Version=v4.5.1";
+    }
+
+    public override HostExecutionContextManager HostExecutionContextManager
+    {
+        get
+        {
+            if (_hostExecutionContextManager == null)
+            {
+                _hostExecutionContextManager = new DnxHostExecutionContextManager();
+            }
+
+            return _hostExecutionContextManager;
+        }
     }
 
     private int Main(int argc, string[] argv)
