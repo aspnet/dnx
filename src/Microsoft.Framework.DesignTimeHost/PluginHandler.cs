@@ -52,7 +52,7 @@ namespace Microsoft.Framework.DesignTimeHost
 
             if (message.MessageName == RegisterPluginMessageName)
             {
-                return PluginHandlerOnReceiveResult.ResolveDependencies;
+                return PluginHandlerOnReceiveResult.RefreshDependencies;
             }
 
             return PluginHandlerOnReceiveResult.Default;

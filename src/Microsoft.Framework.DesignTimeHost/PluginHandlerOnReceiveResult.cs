@@ -6,6 +6,6 @@ namespace Microsoft.Framework.DesignTimeHost
     public enum PluginHandlerOnReceiveResult
     {
         Default,
-        ResolveDependencies,
+        RefreshDependencies,
     }
 }

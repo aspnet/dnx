@@ -31,7 +31,6 @@ namespace Microsoft.Framework.DesignTimeHost
 
         private readonly Trigger<string> _appPath = new Trigger<string>();
         private readonly Trigger<string> _configuration = new Trigger<string>();
-        private readonly Trigger<Void> _pluginRegistration = new Trigger<Void>();
         private readonly Trigger<Void> _pluginWorkNeeded = new Trigger<Void>();
         private readonly Trigger<Void> _filesChanged = new Trigger<Void>();
         private readonly Trigger<Void> _rebuild = new Trigger<Void>();
@@ -309,18 +308,14 @@ namespace Microsoft.Framework.DesignTimeHost
                 case "Plugin":
                     {
                         var pluginMessage = message.Payload.ToObject<PluginMessage>();
-
                         var result = _pluginHandler.OnReceive(pluginMessage);
 
-                        switch (result)
-                        {
-                            case PluginHandlerOnReceiveResult.ResolveDependencies:
-                                _pluginRegistration.Value = default(Void);
                                 _refreshDependencies.Value = default(Void);
-                                break;
-                            case PluginHandlerOnReceiveResult.Default:
-                                _pluginWorkNeeded.Value = default(Void);
-                                break;
+                        _pluginWorkNeeded.Value = default(Void);
+
+                        if (result == PluginHandlerOnReceiveResult.RefreshDependencies)
+                        {
+                            _refreshDependencies.Value = default(Void);
                         }
                     }
                     break;
@@ -501,10 +496,8 @@ namespace Microsoft.Framework.DesignTimeHost
 
         private void PerformPluginWork()
         {
-            if (_pluginRegistration.WasAssigned ||
-                _pluginWorkNeeded.WasAssigned)
+            if (_pluginWorkNeeded.WasAssigned)
             {
-                _pluginRegistration.ClearAssigned();
                 _pluginWorkNeeded.ClearAssigned();
 
                 var assemblyLoadContext = GetAppRuntimeLoadContext();
