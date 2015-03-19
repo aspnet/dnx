@@ -250,6 +250,8 @@ namespace Microsoft.Framework.PackageManager
             builder.Id = project.Name;
             builder.Version = project.Version;
             builder.Title = project.Title;
+            builder.Summary = project.Summary;
+            builder.Copyright = project.Copyright;
             builder.RequireLicenseAcceptance = project.RequireLicenseAcceptance;
             builder.Tags.AddRange(project.Tags);
 

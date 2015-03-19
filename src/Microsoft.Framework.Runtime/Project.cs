@@ -50,6 +50,10 @@ namespace Microsoft.Framework.Runtime
 
         public string Description { get; private set; }
 
+        public string Copyright { get; set; }
+
+        public string Summary { get; set; }
+
         public string[] Authors { get; private set; }
 
         public string[] Owners { get; private set; }
@@ -185,6 +189,8 @@ namespace Microsoft.Framework.Runtime
             }
 
             project.Description = rawProject.GetValue<string>("description");
+            project.Summary = rawProject.GetValue<string>("summary");
+            project.Copyright = rawProject.GetValue<string>("copyright");
             project.Title = rawProject.GetValue<string>("title");
             project.Authors = authors == null ? new string[] { } : authors.ValueAsArray<string>();
             project.Owners = owners == null ? new string[] { } : owners.ValueAsArray<string>();
