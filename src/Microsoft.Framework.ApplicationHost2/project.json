@@ -11,7 +11,9 @@
     },
     "code": [
         "**/*.cs",
+        "../Microsoft.Framework.Runtime/Helpers/DictionaryExtensions.cs",
         "../Microsoft.Framework.Runtime.Hosting/**/*.cs",
+        "../Microsoft.Framework.Runtime.Compilation/**/*.cs",
         "../../submodules/FileSystem/src/Microsoft.Framework.FileSystemGlobbing/**/*.cs",
         "../../submodules/NuGet.Versioning/src/NuGet.Versioning/**/*.cs",
         "../../submodules/NuGet.Packaging/src/NuGet.Frameworks/**/*.cs",
@@ -25,7 +27,6 @@
         "../../submodules/Logging/src/Microsoft.Framework.Logging.Interfaces/**/*.cs"
     ],
     "exclude": [
-        "../../submodules/NuGet.Versioning/src/NuGet.Versioning/compiler/**/*.cs",
         "../../submodules/**/AssemblyInfo.cs",
         "../../submodules/Logging/src/Microsoft.Framework.Logging/LoggingServiceCollectionExtensions.cs"
     ],

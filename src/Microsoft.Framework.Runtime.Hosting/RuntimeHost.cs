@@ -24,6 +24,7 @@ namespace Microsoft.Framework.Runtime
     public class RuntimeHost
     {
         private readonly ILogger Log;
+        private readonly IEnumerable<IAssemblyLoaderFactory> _loaderFactories;
 
         public Project Project { get; }
         public GlobalSettings GlobalSettings { get; }
@@ -47,6 +48,7 @@ namespace Microsoft.Framework.Runtime
 
             Project = builder.Project;
             GlobalSettings = builder.GlobalSettings;
+            _loaderFactories = builder.Loaders;
 
             Services = builder.Services;
 
@@ -73,19 +75,9 @@ namespace Microsoft.Framework.Runtime
                     Project.Version,
                     TargetFramework);
 
-            using (var loaderCleanup = new DisposableList())
+            // Create loaders
+            using (var loaderCleanup = CreateLoaders(loaderContainer, loadContextAccessor, deps))
             {
-                // Create the package loader.
-                var packageLoader = new PackageAssemblyLoader(
-                    deps.GetLibraries(LibraryTypes.Package),
-                    TargetFramework,
-                    new DefaultPackagePathResolver(ResolveRepositoryPath(GlobalSettings)),
-                    loadContextAccessor);
-
-                // Add it to the container and track it for clean up later. 
-                Log.LogVerbose($"Registering {nameof(PackageAssemblyLoader)}");
-                loaderCleanup.Add(loaderContainer.AddLoader(packageLoader));
-
                 // Locate the entry point
                 var entryPoint = LocateEntryPoint(applicationName);
 
@@ -95,6 +87,28 @@ namespace Microsoft.Framework.Runtime
                 }
                 return EntryPointExecutor.Execute(entryPoint, programArgs, Services);
             }
+        }
+
+        private IDisposable CreateLoaders(IAssemblyLoaderContainer loaderContainer, IAssemblyLoadContextAccessor loadContextAccessor, DependencyManager dependencies)
+        {
+            var loaderCleanup = new DisposableList();
+
+            foreach(var loaderFactory in _loaderFactories)
+            {
+                // Create the loader
+                var loader = loaderFactory.Create(
+                    TargetFramework,
+                    loadContextAccessor,
+                    dependencies);
+
+                // Attach it to the container and track it for clean-up
+                if (Log.IsEnabled(LogLevel.Verbose))
+                {
+                    Log.LogVerbose($"Registering {loader.GetType().Name}");
+                }
+                loaderCleanup.Add(loaderContainer.AddLoader(loader));
+            }
+            return loaderCleanup;
         }
 
         private Assembly LocateEntryPoint(string applicationName)
@@ -156,41 +170,11 @@ namespace Microsoft.Framework.Runtime
                     applicationName), innerException);
         }
 
-        private static string ResolveRepositoryPath(GlobalSettings globalSettings)
-        {
-            // Order
-            // 1. EnvironmentNames.Packages environment variable
-            // 2. global.json { "packages": "..." }
-            // 3. NuGet.config repositoryPath (maybe)?
-            // 4. {DefaultLocalRuntimeHomeDir}\packages
-
-            var runtimePackages = Environment.GetEnvironmentVariable(EnvironmentNames.Packages);
-
-            if (!string.IsNullOrEmpty(runtimePackages))
-            {
-                return runtimePackages;
-            }
-
-            if (!string.IsNullOrEmpty(globalSettings?.PackagesPath))
-            {
-                return Path.Combine(globalSettings.RootPath, globalSettings.PackagesPath);
-            }
-
-            var profileDirectory = Environment.GetEnvironmentVariable("USERPROFILE");
-
-            if (string.IsNullOrEmpty(profileDirectory))
-            {
-                profileDirectory = Environment.GetEnvironmentVariable("HOME");
-            }
-
-            return Path.Combine(profileDirectory, Constants.DefaultLocalRuntimeHomeDir, "packages");
-        }
-
         private class DisposableList : List<IDisposable>, IDisposable
         {
             public void Dispose()
             {
-                foreach (var item in this)
+                foreach (var item in Enumerable.Reverse(this))
                 {
                     item.Dispose();
                 }

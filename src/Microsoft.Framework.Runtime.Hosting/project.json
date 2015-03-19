@@ -10,6 +10,10 @@
         "Microsoft.Framework.Runtime.Common": { "version": "1.0.0-*", "type": "build" },
         "Microsoft.Framework.Logging.Interfaces": "1.0.0-*"
     },
+    "code": [
+        "**/*.cs",
+        "../Microsoft.Framework.Runtime/Helpers/DictionaryExtensions.cs"
+    ],
     "frameworks": {
         "dnx451": {
             "frameworkAssemblies": {

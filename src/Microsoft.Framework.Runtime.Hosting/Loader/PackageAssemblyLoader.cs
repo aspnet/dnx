@@ -14,6 +14,29 @@ using NuGet.ProjectModel;
 namespace Microsoft.Framework.Runtime.Loader
 {
     /// <summary>
+    /// Creates <see cref="PackageAssemblyLoader"/> objects based on the specified
+    /// package path resolver.
+    /// </summary>
+    public class PackageAssemblyLoaderFactory : IAssemblyLoaderFactory
+    {
+        private readonly PackagePathResolver _packagePathResolver;
+
+        public PackageAssemblyLoaderFactory(PackagePathResolver packagePathResolver)
+        {
+            _packagePathResolver = packagePathResolver;
+        }
+
+        public IAssemblyLoader Create(NuGetFramework runtimeFramework, IAssemblyLoadContextAccessor loadContextAccessor, DependencyManager dependencies)
+        {
+            return new PackageAssemblyLoader(
+                runtimeFramework,
+                loadContextAccessor,
+                dependencies.GetLibraries(LibraryTypes.Package),
+                _packagePathResolver);
+        }
+    }
+
+    /// <summary>
     /// Loads library assemblies from NuGet Packages
     /// </summary>
     /// <remarks>
@@ -25,7 +48,7 @@ namespace Microsoft.Framework.Runtime.Loader
         private readonly Dictionary<string, string> _assemblyLookupTable;
         private readonly IAssemblyLoadContextAccessor _loadContextAccessor;
 
-        public PackageAssemblyLoader(IEnumerable<Library> libraries, NuGetFramework runtimeFramework, DefaultPackagePathResolver pathResolver, IAssemblyLoadContextAccessor loadContextAccessor)
+        public PackageAssemblyLoader(NuGetFramework runtimeFramework, IAssemblyLoadContextAccessor loadContextAccessor, IEnumerable<Library> libraries, PackagePathResolver pathResolver)
         {
             Log = RuntimeLogging.Logger<PackageAssemblyLoader>();
             _loadContextAccessor = loadContextAccessor;
@@ -50,26 +73,25 @@ namespace Microsoft.Framework.Runtime.Loader
 
         private Assembly Load(string name, IAssemblyLoadContext loadContext)
         {
-            using (Log.LogTimedMethod())
+            string assemblyLocation;
+            if (_assemblyLookupTable.TryGetValue(name, out assemblyLocation))
             {
-                Log.LogVerbose($"Requested load of {name}");
-
-                string assemblyLocation;
-                if (_assemblyLookupTable.TryGetValue(name, out assemblyLocation))
+                using (Log.LogTimedMethod())
                 {
+                    Log.LogVerbose($"Requested load of {name}");
+
                     return loadContext.LoadFile(assemblyLocation);
                 }
-                return null;
             }
+            return null;
         }
 
-        public Dictionary<string, string> InitializeAssemblyLookupTable(IEnumerable<Library> libraries, NuGetFramework runtimeFramework, DefaultPackagePathResolver pathResolver)
+        private Dictionary<string, string> InitializeAssemblyLookupTable(IEnumerable<Library> libraries, NuGetFramework runtimeFramework, PackagePathResolver pathResolver)
         {
             using (Log.LogTimedMethod())
             {
                 Log.LogInformation("Scanning resolved Package libraries for assemblies");
                 var lookup = new Dictionary<string, string>();
-                var cacheResolvers = GetCacheResolvers();
                 foreach (var library in libraries)
                 {
                     Debug.Assert(library.Identity.Type == LibraryTypes.Package);
@@ -89,7 +111,7 @@ namespace Microsoft.Framework.Runtime.Loader
                             }
 
                             // Locate the package
-                            var packageRoot = ResolvePackagePath(pathResolver, cacheResolvers, lockFileLib);
+                            var packageRoot = pathResolver.ResolvePackagePath(lockFileLib.Sha, lockFileLib.Name, lockFileLib.Version);
 
                             // Resolve the assembly path
                             var assemblyLocation = Path.Combine(packageRoot, assembly);
@@ -105,40 +127,6 @@ namespace Microsoft.Framework.Runtime.Loader
 
                 return lookup;
             }
-        }
-
-        private string ResolvePackagePath(DefaultPackagePathResolver defaultResolver,
-                                          IEnumerable<DefaultPackagePathResolver> cacheResolvers,
-                                          LockFileLibrary lib)
-        {
-            string expectedHash = lib.Sha;
-
-            foreach (var resolver in cacheResolvers)
-            {
-                var cacheHashFile = resolver.GetHashPath(lib.Name, lib.Version);
-
-                // REVIEW: More efficient compare?
-                if (File.Exists(cacheHashFile) &&
-                    File.ReadAllText(cacheHashFile) == expectedHash)
-                {
-                    return resolver.GetInstallPath(lib.Name, lib.Version);
-                }
-            }
-
-            return defaultResolver.GetInstallPath(lib.Name, lib.Version);
-        }
-
-        private static IEnumerable<DefaultPackagePathResolver> GetCacheResolvers()
-        {
-            var packageCachePathValue = Environment.GetEnvironmentVariable(EnvironmentNames.PackagesCache);
-
-            if (string.IsNullOrEmpty(packageCachePathValue))
-            {
-                return Enumerable.Empty<DefaultPackagePathResolver>();
-            }
-
-            return packageCachePathValue.Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries)
-                                        .Select(path => new DefaultPackagePathResolver(path));
         }
     }
 }

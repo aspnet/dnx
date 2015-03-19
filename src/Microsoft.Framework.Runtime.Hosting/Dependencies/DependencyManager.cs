@@ -19,15 +19,47 @@ namespace Microsoft.Framework.Runtime.Dependencies
         private static readonly ILogger Log = RuntimeLogging.Logger<DependencyManager>();
 
         private readonly GraphNode<Library> _graph;
-        private readonly Dictionary<string, IList<Library>> _librariesByType = new Dictionary<string, IList<Library>>();
+        private readonly Dictionary<string, Library> _librariesByName = new Dictionary<string, Library>();
+        private readonly Dictionary<string, ISet<Library>> _librariesByType = new Dictionary<string, ISet<Library>>();
 
         private DependencyManager(
-            GraphNode<Library> graph, 
-            Dictionary<string, IList<Library>> librariesByType)
+            GraphNode<Library> graph,
+            Dictionary<string, Library> librariesByName,
+            Dictionary<string, ISet<Library>> librariesByType)
         {
             _graph = graph;
+            _librariesByName = librariesByName;
             _librariesByType = librariesByType;
         }
+
+        /// <summary>
+        /// Tries to retrieve the library with the specified name and type.
+        /// </summary>
+        /// <param name="name">The name of the library to retrieve</param>
+        /// <param name="library">Receives the library if the operation was successful</param>
+        /// <returns>true if the library could be found, false if not</returns>
+        public bool TryGetLibrary(string name, out Library library)
+        {
+            return _librariesByName.TryGetValue(name, out library);
+        }
+
+        // Not optimized yet. Definitely could use some caching :)
+        public IEnumerable<Library> EnumerateAllDependencies(Library library)
+        {
+            foreach(var dependency in library.Dependencies)
+            {
+                Library dependencyLib;
+                if(TryGetLibrary(dependency.Name, out dependencyLib))
+                {
+                    yield return dependencyLib;
+                    foreach(var subdependency in EnumerateAllDependencies(dependencyLib))
+                    {
+                        yield return subdependency;
+                    }
+                }
+            }
+        }
+
 
         /// <summary>
         /// The dependency graph for the specified project and returns a <see cref="DependencyManager"/>
@@ -45,7 +77,8 @@ namespace Microsoft.Framework.Runtime.Dependencies
             NuGetFramework targetFramework)
         {
             GraphNode<Library> graph;
-            var librariesByType = new Dictionary<string, IList<Library>>();
+            var librariesByType = new Dictionary<string, ISet<Library>>();
+            var librariesByName = new Dictionary<string, Library>();
             var libraries = new Dictionary<string, Library>();
             using (Log.LogTimedMethod())
             {
@@ -69,8 +102,10 @@ namespace Microsoft.Framework.Runtime.Dependencies
                     {
                         var library = node.Item.Data;
 
-                        // Add the library to the set
-                        librariesByType.GetOrAdd(library.Identity.Type, s => new List<Library>())
+                        // Add the library to the sets
+                        librariesByName[node.Item.Data.Identity.Name] = node.Item.Data;
+                        librariesByType.GetOrAdd(library.Identity.Type, 
+                            s => new HashSet<Library>(Library.IdentityComparer))
                                 .Add(library);
                     }
                 });
@@ -96,7 +131,7 @@ namespace Microsoft.Framework.Runtime.Dependencies
             }
 
             // Return the assembled dependency manager
-            return new DependencyManager(graph, librariesByType);
+            return new DependencyManager(graph, librariesByName, librariesByType);
         }
 
         /// <summary>
@@ -106,7 +141,7 @@ namespace Microsoft.Framework.Runtime.Dependencies
         /// <returns></returns>
         public IEnumerable<Library> GetLibraries(string type)
         {
-            IList<Library> libraries;
+            ISet<Library> libraries;
             if (!_librariesByType.TryGetValue(type, out libraries))
             {
                 return Enumerable.Empty<Library>();

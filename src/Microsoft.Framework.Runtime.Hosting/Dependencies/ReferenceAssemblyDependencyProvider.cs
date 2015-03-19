@@ -57,7 +57,9 @@ namespace Microsoft.Framework.Runtime.Dependencies
                         Version = assemblyVersion,
                         Type = LibraryTypes.Reference
                     },
-                    Dependencies = Enumerable.Empty<LibraryDependency>()
+                    Dependencies = Enumerable.Empty<LibraryDependency>(),
+
+                    [KnownLibraryProperties.AssemblyPath] = path
                 };
             }
 

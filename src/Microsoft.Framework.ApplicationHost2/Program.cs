@@ -8,10 +8,11 @@ using System.Reflection;
 using System.Threading.Tasks;
 using Microsoft.Framework.ApplicationHost.Impl.Syntax;
 using Microsoft.Framework.Logging;
-using Microsoft.Framework.Logging.Console;
 using Microsoft.Framework.Runtime;
 using Microsoft.Framework.Runtime.Common.CommandLine;
+using Microsoft.Framework.Runtime.Compilation;
 using Microsoft.Framework.Runtime.Internal;
+using Microsoft.Framework.Runtime.Loader;
 using NuGet.Frameworks;
 
 namespace Microsoft.Framework.ApplicationHost
@@ -33,7 +34,6 @@ namespace Microsoft.Framework.ApplicationHost
 
         public Task<int> Main(string[] args)
         {
-
             ILogger log = null;
             try
             {
@@ -64,6 +64,14 @@ namespace Microsoft.Framework.ApplicationHost
                     options.ApplicationBaseDirectory,
                     NuGetFramework.Parse(_environment.RuntimeFramework.FullName),
                     _serviceProvider);
+
+                // Configure assembly loading
+                builder.Loaders.Add(new ProjectAssemblyLoaderFactory(
+                    new LibraryExporter(
+                        builder.TargetFramework, 
+                        builder.PackagePathResolver)));
+                builder.Loaders.Add(new PackageAssemblyLoaderFactory(builder.PackagePathResolver));
+
                 if(builder.Project == null)
                 {
                     // Failed to load the project
@@ -148,6 +156,7 @@ namespace Microsoft.Framework.ApplicationHost
         {
             var app = new CommandLineApplication(throwOnUnexpectedArg: false);
             app.Name = typeof(Program).Namespace;
+
             var optionWatch = app.Option("--watch", "Watch file changes", CommandOptionType.NoValue);
             var optionPackages = app.Option("--packages <PACKAGE_DIR>", "Directory containing packages",
                 CommandOptionType.SingleValue);
@@ -158,7 +167,6 @@ namespace Microsoft.Framework.ApplicationHost
             app.HelpOption("-?|-h|--help");
             app.VersionOption("--version", GetVersion);
             var runCmd = app.Command("run", c =>
-
             {
                 // We don't actually execute "run" command here
                 // We are adding this command for the purpose of displaying correct help information
