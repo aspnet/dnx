@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.IO;
 using Microsoft.Framework.DesignTimeHost.Models;
 using Microsoft.Framework.Runtime;
+using Microsoft.Framework.Runtime.Caching;
 
 namespace Microsoft.Framework.DesignTimeHost
 {
@@ -69,6 +70,5 @@ namespace Microsoft.Framework.DesignTimeHost
 
             applicationContext.OnReceive(message);
         }
-
     }
 }

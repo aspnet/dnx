@@ -3,6 +3,7 @@
 
 using System;
 using Microsoft.Framework.Runtime;
+using Microsoft.Framework.Runtime.Caching;
 using Microsoft.Framework.Runtime.Loader;
 
 namespace Microsoft.Framework.DesignTimeHost
@@ -16,11 +17,11 @@ namespace Microsoft.Framework.DesignTimeHost
         private readonly IServiceProvider _hostServices;
         private readonly INamedCacheDependencyProvider _namedDependencyProvider;
 
-        public DesignTimeAssemblyLoadContextFactory(Project project, 
-                                                    IApplicationEnvironment appEnv, 
-                                                    IServiceProvider hostServices, 
-                                                    ICache cache, 
-                                                    ICacheContextAccessor cacheContextAccessor, 
+        public DesignTimeAssemblyLoadContextFactory(Project project,
+                                                    IApplicationEnvironment appEnv,
+                                                    IServiceProvider hostServices,
+                                                    ICache cache,
+                                                    ICacheContextAccessor cacheContextAccessor,
                                                     INamedCacheDependencyProvider namedDependencyProvider)
         {
             _project = project;

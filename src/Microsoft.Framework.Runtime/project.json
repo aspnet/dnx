@@ -21,6 +21,8 @@
         "Microsoft.CodeAnalysis.CSharp": "1.0.0-*",
         "Microsoft.Framework.Runtime.Roslyn.Interfaces": "1.0.0-*",
         "Microsoft.Framework.Runtime.Loader": "1.0.0-*",
+        "Microsoft.Framework.Runtime.Caching": "1.0.0-*",
+        "Microsoft.Framework.Runtime.Compilation.Common": "1.0.0-*",
         "Microsoft.Framework.Runtime.Common": { "version": "1.0.0-*", "type": "build" },
         "Microsoft.Framework.Runtime.Interfaces": "1.0.0-*",
         "Newtonsoft.Json": "6.0.6"

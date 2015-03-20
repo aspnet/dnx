@@ -543,7 +543,7 @@ namespace Microsoft.Framework.Runtime.FunctionalTests.ProjectFileGlobbing
             return context;
         }
 
-        protected virtual ProjectFilesCollection CreateFilesCollection(string jsonContent, string projectDir)
+        protected virtual IProjectFilesCollection CreateFilesCollection(string jsonContent, string projectDir)
         {
             var rawProject = JsonConvert.DeserializeObject<JObject>(jsonContent);
             var filesCollection = new ProjectFilesCollection(rawProject, Path.Combine(_context.RootPath, projectDir), string.Empty);

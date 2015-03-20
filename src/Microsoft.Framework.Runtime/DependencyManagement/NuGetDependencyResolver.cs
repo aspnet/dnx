@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Runtime.Versioning;
+using Microsoft.Framework.Runtime.Compilation;
 using Microsoft.Framework.Runtime.DependencyManagement;
 using NuGet;
 
@@ -171,7 +172,7 @@ namespace Microsoft.Framework.Runtime
                     if (!assemblyReference.SupportedFrameworks.Any() &&
                         !VersionUtility.IsDesktop(targetFramework))
                     {
-                        // REVIEW: This isn't 100% correct since none *can* mean 
+                        // REVIEW: This isn't 100% correct since none *can* mean
                         // any in theory, but in practice it means .NET full reference assembly
                         // If there's no supported target frameworks and we're not targeting
                         // the desktop framework then skip it.
@@ -347,7 +348,6 @@ namespace Microsoft.Framework.Runtime
             }
             return true;
         }
-
 
         private IEnumerable<string> GetSharedSources(PackageDescription description, FrameworkName targetFramework)
         {

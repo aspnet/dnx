@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using Microsoft.Framework.Runtime.Compilation;
 
 namespace Microsoft.Framework.Runtime.FileSystem
 {
@@ -16,7 +17,6 @@ namespace Microsoft.Framework.Runtime.FileSystem
 
         internal FileWatcher()
         {
-
         }
 
         public FileWatcher(string path)
@@ -211,7 +211,6 @@ namespace Microsoft.Framework.Runtime.FileSystem
 
         private NoopWatcher()
         {
-
         }
 
         public bool WatchFile(string path)
@@ -219,9 +218,11 @@ namespace Microsoft.Framework.Runtime.FileSystem
             return true;
         }
 
-// Suppressing warning CS0067: The event 'Microsoft.Framework.Runtime.FileSystem.NoopWatcher.OnChanged' is never used
+        // Suppressing warning CS0067: The event 'Microsoft.Framework.Runtime.FileSystem.NoopWatcher.OnChanged' is never used
 #pragma warning disable 0067
+
         public event Action<string> OnChanged;
+
 #pragma warning restore 0067
 
         public void WatchDirectory(string path, string extension)
@@ -234,7 +235,6 @@ namespace Microsoft.Framework.Runtime.FileSystem
 
         public void WatchProject(string path)
         {
-
         }
     }
 }

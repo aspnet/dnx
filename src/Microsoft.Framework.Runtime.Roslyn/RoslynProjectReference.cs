@@ -10,6 +10,7 @@ using System.Reflection;
 using System.Runtime.InteropServices;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Emit;
+using Microsoft.Framework.Runtime.Compilation;
 
 namespace Microsoft.Framework.Runtime.Roslyn
 {
@@ -253,7 +254,7 @@ namespace Microsoft.Framework.Runtime.Roslyn
             }
         }
 
-        private static DiagnosticResult CreateDiagnosticResult(bool success, IEnumerable<Diagnostic> diagnostics)
+        private static IDiagnosticResult CreateDiagnosticResult(bool success, IEnumerable<Diagnostic> diagnostics)
         {
             var issues = diagnostics.Where(d => d.Severity == DiagnosticSeverity.Warning || d.Severity == DiagnosticSeverity.Error);
             return new DiagnosticResult(success, issues.Select(d => new RoslynCompilationMessage(d)));

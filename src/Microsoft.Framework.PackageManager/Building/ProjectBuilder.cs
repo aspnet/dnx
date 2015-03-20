@@ -2,6 +2,7 @@
 using System.Linq;
 using System.Runtime.Versioning;
 using Microsoft.Framework.Runtime;
+using Microsoft.Framework.Runtime.Compilation;
 
 namespace Microsoft.Framework.PackageManager
 {

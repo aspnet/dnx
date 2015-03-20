@@ -4,17 +4,17 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Reflection;
+using Microsoft.Framework.Runtime.Compilation;
 
 namespace Microsoft.Framework.Runtime
 {
     internal class DesignTimeProjectReference : IMetadataProjectReference
     {
-        private readonly Project _project;
+        private readonly ICompilationProject _project;
         private readonly CompileResponse _response;
 
-        public DesignTimeProjectReference(Project project, CompileResponse response)
+        public DesignTimeProjectReference(ICompilationProject project, CompileResponse response)
         {
             _project = project;
             _response = response;

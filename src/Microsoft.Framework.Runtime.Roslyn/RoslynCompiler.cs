@@ -12,7 +12,9 @@ using System.Text;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.Text;
+using Microsoft.Framework.Runtime.Caching;
 using Microsoft.Framework.Runtime.Common.DependencyInjection;
+using Microsoft.Framework.Runtime.Compilation;
 
 namespace Microsoft.Framework.Runtime.Roslyn
 {
@@ -44,7 +46,7 @@ namespace Microsoft.Framework.Runtime.Roslyn
         }
 
         public CompilationContext CompileProject(
-            Project project,
+            ICompilationProject project,
             ILibraryKey target,
             IEnumerable<IMetadataReference> incomingReferences,
             IEnumerable<ISourceReference> incomingSourceReferences,
@@ -221,7 +223,7 @@ namespace Microsoft.Framework.Runtime.Roslyn
             });
         }
 
-        private static CSharpCompilation ApplyVersionInfo(CSharpCompilation compilation, Project project,
+        private static CSharpCompilation ApplyVersionInfo(CSharpCompilation compilation, ICompilationProject project,
             CSharpParseOptions parseOptions)
         {
             var emptyVersion = new Version(0, 0, 0, 0);
@@ -231,7 +233,7 @@ namespace Microsoft.Framework.Runtime.Roslyn
             {
                 return compilation.AddSyntaxTrees(new[]
                 {
-                    CSharpSyntaxTree.ParseText("[assembly: System.Reflection.AssemblyVersion(\"" + project.Version.Version + "\")]", parseOptions),
+                    CSharpSyntaxTree.ParseText("[assembly: System.Reflection.AssemblyVersion(\"" + GetSystemVersion(project.Version) + "\")]", parseOptions),
                     CSharpSyntaxTree.ParseText("[assembly: System.Reflection.AssemblyInformationalVersion(\"" + project.Version + "\")]", parseOptions)
                 });
             }
@@ -239,7 +241,23 @@ namespace Microsoft.Framework.Runtime.Roslyn
             return compilation;
         }
 
-        private IList<SyntaxTree> GetSyntaxTrees(Project project,
+        private static string GetSystemVersion(string version)
+        {
+            // Simple reparse of the version string (because we don't want to pull in NuGet stuff
+            // here because we're in an old-runtime/new-runtime limbo)
+
+            var dashIdx = version.IndexOf('-');
+            if (dashIdx < 0)
+            {
+                return version;
+            }
+            else
+            {
+                return version.Substring(0, dashIdx);
+            }
+        }
+
+        private IList<SyntaxTree> GetSyntaxTrees(ICompilationProject project,
                                                  IEnumerable<string> sourceFiles,
                                                  IEnumerable<ISourceReference> sourceReferences,
                                                  CSharpParseOptions parseOptions,
@@ -361,6 +379,7 @@ namespace Microsoft.Framework.Runtime.Roslyn
         private class CompilationModules : IDisposable
         {
             public IAssemblyLoadContext LoadContext { get; set; }
+
             public List<ICompileModule> Modules { get; set; }
 
             public void Dispose()

@@ -2,15 +2,14 @@
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 using System;
-using System.Diagnostics;
+using System.IO;
 using System.Runtime.Versioning;
+using Microsoft.Framework.Runtime.Caching;
 using Microsoft.Framework.Runtime.Common.DependencyInjection;
+using Microsoft.Framework.Runtime.Compilation;
+using Microsoft.Framework.Runtime.DependencyManagement;
 using Microsoft.Framework.Runtime.FileSystem;
 using Microsoft.Framework.Runtime.Loader;
-using Microsoft.Framework.Runtime.DependencyManagement;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
 using NuGet;
 
 namespace Microsoft.Framework.Runtime
@@ -158,14 +157,21 @@ namespace Microsoft.Framework.Runtime
         public ProjectReferenceDependencyProvider ProjectDepencyProvider { get; private set; }
 
         public IProjectResolver ProjectResolver { get; private set; }
+
         public ILibraryExportProvider LibraryExportProvider { get; private set; }
+
         public ILibraryManager LibraryManager { get; private set; }
+
         public DependencyWalker DependencyWalker { get; private set; }
+
         public FrameworkReferenceResolver FrameworkReferenceResolver { get; private set; }
 
         public string Configuration { get; private set; }
+
         public string RootDirectory { get; private set; }
+
         public string ProjectDirectory { get; private set; }
+
         public string PackagesDirectory { get; private set; }
     }
 }
