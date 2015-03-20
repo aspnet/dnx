@@ -1,10 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Runtime.Versioning;
 using Microsoft.Framework.Runtime;
+using Microsoft.Framework.Runtime.Caching;
+using Microsoft.Framework.Runtime.Compilation;
 using Microsoft.Framework.Runtime.Loader;
 using NuGet;
 
@@ -108,7 +109,6 @@ namespace Microsoft.Framework.PackageManager
                             .Where(pkg => string.Equals(pkg.Identity.Name, _project.Name, StringComparison.OrdinalIgnoreCase))
                             .SelectMany(pkg => pkg.Dependencies)
                             .SingleOrDefault(dep => string.Equals(dep.Name, dependency.Name, StringComparison.OrdinalIgnoreCase));
-
 
                         if (actual != null)
                         {

@@ -5,6 +5,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.Versioning;
+using Microsoft.Framework.Runtime.Caching;
+using Microsoft.Framework.Runtime.Compilation;
 using Xunit;
 
 namespace Microsoft.Framework.Runtime.Tests
@@ -55,11 +57,10 @@ namespace Microsoft.Framework.Runtime.Tests
                 new LibraryInformation("Hosting", new[] { "DI"}),
                 new LibraryInformation("Config", Enumerable.Empty<String>()),
                 new LibraryInformation("MyApp", new[] { "DI", "Hosting", "Mvc", "HttpAbstractions" })
-
             };
-            return new LibraryManager(frameworkName, 
-                                      "Debug", 
-                                      () => libraryInfo, 
+            return new LibraryManager(frameworkName,
+                                      "Debug",
+                                      () => libraryInfo,
                                       new CompositeLibraryExportProvider(Enumerable.Empty<ILibraryExportProvider>()),
                                       new EmptyCache());
         }

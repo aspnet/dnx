@@ -7,6 +7,7 @@ using System.IO;
 using System.Linq;
 using System.Runtime.Versioning;
 using System.Text;
+using Microsoft.Framework.Runtime.Compilation;
 using Microsoft.Framework.Runtime.Helpers;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -14,11 +15,11 @@ using NuGet;
 
 namespace Microsoft.Framework.Runtime
 {
-    public class Project
+    public class Project : ICompilationProject
     {
         public const string ProjectFileName = "project.json";
 
-        internal static TypeInformation DefaultLanguageService = new TypeInformation("Microsoft.Framework.Runtime.Roslyn", "Microsoft.Framework.Runtime.Roslyn.RoslynProjectReferenceProvider");
+        internal static TypeInformation DefaultLanguageService = new TypeInformation("Microsoft.Framework.Runtime.Roslyn", "Microsoft.Framework.Runtime.Roslyn.RoslynProjectCompiler");
 
         private static readonly CompilerOptions _emptyOptions = new CompilerOptions();
 
@@ -62,6 +63,8 @@ namespace Microsoft.Framework.Runtime
 
         public SemanticVersion Version { get; private set; }
 
+        // Temporary while old and new runtime are separate
+        string ICompilationProject.Version { get { return Version?.ToString(); } }
         public IList<LibraryDependency> Dependencies { get; private set; }
 
         public LanguageServices LanguageServices { get; private set; }
@@ -82,7 +85,7 @@ namespace Microsoft.Framework.Runtime
 
         public bool IsLoadable { get; set; }
 
-        public ProjectFilesCollection Files { get; private set; }
+        public IProjectFilesCollection Files { get; private set; }
 
         public IDictionary<string, string> Commands { get; } = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
@@ -420,6 +423,18 @@ namespace Microsoft.Framework.Runtime
             return null;
         }
 
+        public ICompilerOptions GetCompilerOptions(FrameworkName targetFramework,
+                                                  string configurationName)
+        {
+            // Get all project options and combine them
+            var rootOptions = GetCompilerOptions();
+            var configurationOptions = configurationName != null ? GetCompilerOptions(configurationName) : null;
+            var targetFrameworkOptions = targetFramework != null ? GetCompilerOptions(targetFramework) : null;
+
+            // Combine all of the options
+            return CompilerOptions.Combine(rootOptions, configurationOptions, targetFrameworkOptions);
+        }
+
         public TargetFrameworkInformation GetTargetFramework(FrameworkName targetFramework)
         {
             TargetFrameworkInformation targetFrameworkInfo;
@@ -592,7 +607,7 @@ namespace Microsoft.Framework.Runtime
                 return null;
             }
 
-            var options = new CompilerOptions
+            return new CompilerOptions()
             {
                 Defines = rawOptions.ValueAsArray<string>("define"),
                 LanguageVersion = rawOptions.GetValue<string>("languageVersion"),
@@ -601,8 +616,6 @@ namespace Microsoft.Framework.Runtime
                 WarningsAsErrors = rawOptions.GetValue<bool?>("warningsAsErrors"),
                 Optimize = rawOptions.GetValue<bool?>("optimize"),
             };
-
-            return options;
         }
     }
 }

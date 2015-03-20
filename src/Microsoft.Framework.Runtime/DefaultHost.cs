@@ -10,7 +10,9 @@ using System.Net;
 using System.Net.Sockets;
 using System.Reflection;
 using System.Runtime.Versioning;
+using Microsoft.Framework.Runtime.Caching;
 using Microsoft.Framework.Runtime.Common.DependencyInjection;
+using Microsoft.Framework.Runtime.Compilation;
 using Microsoft.Framework.Runtime.FileSystem;
 using Microsoft.Framework.Runtime.Infrastructure;
 using Microsoft.Framework.Runtime.Loader;
@@ -168,7 +170,7 @@ namespace Microsoft.Framework.Runtime
                 // Change the project reference provider
                 Project.DefaultLanguageService = new TypeInformation(
                     typeof(DefaultHost).GetTypeInfo().Assembly.GetName().Name,
-                    typeof(DesignTimeHostProjectReferenceProvider).FullName);
+                    typeof(DesignTimeHostProjectCompiler).FullName);
             }
 
             CallContextServiceLocator.Locator.ServiceProvider = ServiceProvider;

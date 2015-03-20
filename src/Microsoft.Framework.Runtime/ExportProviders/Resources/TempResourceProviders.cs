@@ -10,12 +10,13 @@ using System.Linq;
 using System.Resources;
 using System.Xml.Linq;
 using NuGet;
+using Microsoft.Framework.Runtime.Compilation;
 
 namespace Microsoft.Framework.Runtime
 {
     public class OldEmbeddedResourceProvider : IResourceProvider
     {
-        public IList<ResourceDescriptor> GetResources(Project project)
+        public IList<ResourceDescriptor> GetResources(ICompilationProject project)
         {
             string root = PathUtility.EnsureTrailingSlash(project.ProjectDirectory);
 
@@ -36,7 +37,7 @@ namespace Microsoft.Framework.Runtime
 
     public class OldResxResourceProvider : IResourceProvider
     {
-        public IList<ResourceDescriptor> GetResources(Project project)
+        public IList<ResourceDescriptor> GetResources(ICompilationProject project)
         {
             return Directory.EnumerateFiles(project.ProjectDirectory, "*.resx", SearchOption.AllDirectories)
                             .Select(resxFilePath =>

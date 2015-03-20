@@ -4,13 +4,14 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using Microsoft.Framework.Runtime.Compilation;
 using NuGet;
 
 namespace Microsoft.Framework.Runtime
 {
     public class EmbeddedResourceProvider : IResourceProvider
     {
-        public IList<ResourceDescriptor> GetResources(Project project)
+        public IList<ResourceDescriptor> GetResources(ICompilationProject project)
         {
             string root = PathUtility.EnsureTrailingSlash(project.ProjectDirectory);
             return project

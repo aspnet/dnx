@@ -1,11 +1,12 @@
 ﻿using System;
 using System.Runtime.Versioning;
+using Microsoft.Framework.Runtime.Compilation;
 
 namespace Microsoft.Framework.Runtime.Roslyn
 {
     internal class ProjectContext : IProjectContext
     {
-        public ProjectContext(Project project, FrameworkName targetFramework, string configuration)
+        public ProjectContext(ICompilationProject project, FrameworkName targetFramework, string configuration)
         {
             Name = project.Name;
             ProjectDirectory = project.ProjectDirectory;

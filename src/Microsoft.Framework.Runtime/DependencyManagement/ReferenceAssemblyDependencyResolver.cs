@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Runtime.Versioning;
+using Microsoft.Framework.Runtime.Compilation;
 using NuGet;
 
 namespace Microsoft.Framework.Runtime
@@ -93,7 +94,7 @@ namespace Microsoft.Framework.Runtime
             }
 
             // We can't use resolved paths since it might be different to the target framework
-            // being passed in here. After we know this resolver is handling the 
+            // being passed in here. After we know this resolver is handling the
             // requested name, we can call back into the FrameworkResolver to figure out
             //  the specific path for the target framework
 
@@ -102,7 +103,7 @@ namespace Microsoft.Framework.Runtime
 
             if (FrameworkResolver.TryGetAssembly(target.Name, target.TargetFramework, out path, out version))
             {
-                return new LibraryExport(target.Name, path);
+                return new LibraryExport(new MetadataFileReference(target.Name, path));
             }
 
             return null;

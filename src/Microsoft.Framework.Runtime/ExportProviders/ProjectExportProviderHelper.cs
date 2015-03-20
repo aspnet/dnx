@@ -5,6 +5,8 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using Microsoft.Framework.Runtime.Caching;
+using Microsoft.Framework.Runtime.Compilation;
 
 namespace Microsoft.Framework.Runtime
 {
@@ -118,7 +120,7 @@ namespace Microsoft.Framework.Runtime
                                           IDictionary<string, ISourceReference> sourceReferences)
         {
             var references = new List<IMetadataReference>(export.MetadataReferences);
-            
+
             foreach (var reference in references)
             {
                 metadataReferences[reference.Name] = reference;

@@ -5,6 +5,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.Versioning;
+using Microsoft.Framework.Runtime.Caching;
+using Microsoft.Framework.Runtime.Compilation;
 
 namespace Microsoft.Framework.Runtime
 {
@@ -233,11 +235,9 @@ namespace Microsoft.Framework.Runtime
                     libraryDependents = Enumerable.Empty<ILibraryInformation>();
                 }
                 _inverse[info.Name] = libraryDependents;
-
             }
             AddRange(parentDependents, libraryDependents);
         }
-
 
         private static Func<IEnumerable<ILibraryInformation>> GetLibraryInfoThunk(DependencyWalker dependencyWalker)
         {

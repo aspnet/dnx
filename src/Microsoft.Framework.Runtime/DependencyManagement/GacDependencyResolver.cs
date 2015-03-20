@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Runtime.Versioning;
+using Microsoft.Framework.Runtime.Compilation;
 using NuGet;
 
 namespace Microsoft.Framework.Runtime
@@ -92,7 +93,7 @@ namespace Microsoft.Framework.Runtime
             string assemblyPath;
             if (_resolvedPaths.TryGetValue(target.Name, out assemblyPath))
             {
-                return new LibraryExport(target.Name, assemblyPath);
+                return new LibraryExport(new MetadataFileReference(target.Name, assemblyPath));
             }
 
             return null;

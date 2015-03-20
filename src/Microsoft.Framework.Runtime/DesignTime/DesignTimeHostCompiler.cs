@@ -3,6 +3,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
+using Microsoft.Framework.Runtime.Compilation;
 using Newtonsoft.Json.Linq;
 
 namespace Microsoft.Framework.Runtime

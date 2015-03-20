@@ -5,6 +5,7 @@ using System.Linq;
 using System.Runtime.Versioning;
 using Microsoft.Framework.PackageManager.Algorithms;
 using Microsoft.Framework.Runtime;
+using Microsoft.Framework.Runtime.Caching;
 using NuGet;
 
 namespace Microsoft.Framework.PackageManager.List

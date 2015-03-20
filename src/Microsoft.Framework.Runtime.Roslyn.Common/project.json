@@ -13,10 +13,7 @@
                 "System.Runtime": ""
             }
         },
-        "dnxcore50": {
-            "dependencies": {
-            }
-        }
+        "dnxcore50": { }
     },
 
     "scripts": {

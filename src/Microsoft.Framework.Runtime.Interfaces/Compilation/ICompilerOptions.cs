@@ -5,6 +5,10 @@ using System.Collections.Generic;
 
 namespace Microsoft.Framework.Runtime
 {
+    /// <summary>
+    /// Provides an interface to well-known Compiler Options like "defines" and "optimize", as well as a
+    /// general-purpose interface for reading from the 'compilerOptions' section.
+    /// </summary>
     public interface ICompilerOptions
     {
         IEnumerable<string> Defines { get; }

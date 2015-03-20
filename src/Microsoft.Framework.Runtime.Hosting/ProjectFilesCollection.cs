@@ -7,7 +7,7 @@ using Newtonsoft.Json.Linq;
 
 namespace Microsoft.Framework.Runtime
 {
-    public class ProjectFilesCollection
+    public class ProjectFilesCollection : IProjectFilesCollection
     {
         public static readonly string[] DefaultCompileBuiltInPatterns = new[] { @"**/*.cs" };
         public static readonly string[] DefaultBundleExcludePatterns = new[] { @"obj/**/*.*", @"bin/**/*.*", @"**/.*/**" };

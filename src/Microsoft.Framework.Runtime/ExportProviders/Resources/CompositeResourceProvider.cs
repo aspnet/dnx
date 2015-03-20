@@ -4,12 +4,13 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Microsoft.Framework.Runtime.Compilation;
 
 namespace Microsoft.Framework.Runtime
 {
     public class CompositeResourceProvider : IResourceProvider
     {
-        private static readonly Lazy<CompositeResourceProvider> _default = new Lazy<CompositeResourceProvider>(() => 
+        private static readonly Lazy<CompositeResourceProvider> _default = new Lazy<CompositeResourceProvider>(() =>
             new CompositeResourceProvider(new IResourceProvider[]
             {
                 new OldEmbeddedResourceProvider(),
@@ -25,7 +26,7 @@ namespace Microsoft.Framework.Runtime
             _providers = providers;
         }
 
-        public IList<ResourceDescriptor> GetResources(Project project)
+        public IList<ResourceDescriptor> GetResources(ICompilationProject project)
         {
             // Keep only the distinct names to prevent compilation errors (TEMPORARY BOOTSTRAP HACK)
             return _providers

@@ -10,6 +10,7 @@ using System.Net.Sockets;
 using System.Threading.Tasks;
 using Microsoft.Framework.DesignTimeHost.Models;
 using Microsoft.Framework.Runtime;
+using Microsoft.Framework.Runtime.Caching;
 using Microsoft.Framework.Runtime.Common.DependencyInjection;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
