@@ -14,7 +14,10 @@ namespace Microsoft.Framework.Runtime.DependencyManagement
 
         public SemanticVersion Version { get; set; }
 
+        public bool Serviceable { get; set; }
+
         public string Sha { get; set; }
+
 
         public IList<LockFileFrameworkGroup> FrameworkGroups { get; set; } = new List<LockFileFrameworkGroup>();
 

@@ -697,7 +697,12 @@ namespace Microsoft.Framework.PackageManager
                     }
 
                     var package = packageInfo.Package;
-                    var lockFileLib = LockFileUtils.CreateLockFileLibraryForProject(project, package, sha512, frameworks);
+                    var lockFileLib = LockFileUtils.CreateLockFileLibraryForProject(
+                        project,
+                        package,
+                        sha512,
+                        frameworks,
+                        new DefaultPackagePathResolver(repository.RepositoryRoot));
 
                     lockFile.Libraries.Add(lockFileLib);
                 }

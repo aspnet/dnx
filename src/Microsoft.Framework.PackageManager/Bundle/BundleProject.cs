@@ -390,7 +390,8 @@ namespace Microsoft.Framework.PackageManager.Bundle
                         project,
                         package,
                         sha512,
-                        project.GetTargetFrameworks().Select(f => f.FrameworkName)));
+                        project.GetTargetFrameworks().Select(f => f.FrameworkName),
+                        resolver));
                 }
             }
 
