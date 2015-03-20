@@ -68,11 +68,11 @@ namespace Microsoft.Framework.ApplicationHost
                 // Configure assembly loading
                 builder.Loaders.Add(new ProjectAssemblyLoaderFactory(
                     new LibraryExporter(
-                        builder.TargetFramework, 
+                        builder.TargetFramework,
                         builder.PackagePathResolver)));
                 builder.Loaders.Add(new PackageAssemblyLoaderFactory(builder.PackagePathResolver));
 
-                if(builder.Project == null)
+                if (builder.Project == null)
                 {
                     // Failed to load the project
                     Console.Error.WriteLine("Unable to find a project.json file.");

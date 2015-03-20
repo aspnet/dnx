@@ -46,20 +46,19 @@ namespace Microsoft.Framework.Runtime.Dependencies
         // Not optimized yet. Definitely could use some caching :)
         public IEnumerable<Library> EnumerateAllDependencies(Library library)
         {
-            foreach(var dependency in library.Dependencies)
+            foreach (var dependency in library.Dependencies)
             {
                 Library dependencyLib;
-                if(TryGetLibrary(dependency.Name, out dependencyLib))
+                if (TryGetLibrary(dependency.Name, out dependencyLib))
                 {
                     yield return dependencyLib;
-                    foreach(var subdependency in EnumerateAllDependencies(dependencyLib))
+                    foreach (var subdependency in EnumerateAllDependencies(dependencyLib))
                     {
                         yield return subdependency;
                     }
                 }
             }
         }
-
 
         /// <summary>
         /// The dependency graph for the specified project and returns a <see cref="DependencyManager"/>
@@ -104,7 +103,7 @@ namespace Microsoft.Framework.Runtime.Dependencies
 
                         // Add the library to the sets
                         librariesByName[node.Item.Data.Identity.Name] = node.Item.Data;
-                        librariesByType.GetOrAdd(library.Identity.Type, 
+                        librariesByType.GetOrAdd(library.Identity.Type,
                             s => new HashSet<Library>(Library.IdentityComparer))
                                 .Add(library);
                     }

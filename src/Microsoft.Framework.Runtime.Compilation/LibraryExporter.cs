@@ -20,7 +20,7 @@ namespace Microsoft.Framework.Runtime.Compilation
         private readonly PackagePathResolver _packagePathResolver;
 
         public LibraryExporter(
-            NuGetFramework targetFramework, 
+            NuGetFramework targetFramework,
             PackagePathResolver packagePathResolver)
         {
             _targetFramework = targetFramework;
@@ -47,9 +47,11 @@ namespace Microsoft.Framework.Runtime.Compilation
                 case LibraryTypes.Package:
                     export = ExportPackageLibrary(library);
                     break;
+
                 case LibraryTypes.Project:
                     export = ExportProjectLibrary(library, dependencies);
                     break;
+
                 default:
                     export = ExportOtherLibrary(library);
                     break;
@@ -120,10 +122,10 @@ namespace Microsoft.Framework.Runtime.Compilation
 
         private void LogExport(Library library, ILibraryExport export)
         {
-            if(Log.IsEnabled(LogLevel.Debug))
+            if (Log.IsEnabled(LogLevel.Debug))
             {
                 Log.LogDebug($"    Exporting {library.Identity}");
-                foreach(var reference in Enumerable.Concat<object>(export.MetadataReferences, export.SourceReferences).Where(o => o != null))
+                foreach (var reference in Enumerable.Concat<object>(export.MetadataReferences, export.SourceReferences).Where(o => o != null))
                 {
                     Log.LogDebug($"      {reference}");
                 }
