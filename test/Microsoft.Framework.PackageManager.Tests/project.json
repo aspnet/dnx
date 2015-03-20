@@ -1,6 +1,8 @@
 {
     "dependencies": {
+        "Microsoft.Framework.FunctionalTestUtils": "1.0.0-*",
         "Microsoft.Framework.PackageManager": "1.0.0-*",
+        "Microsoft.Framework.PackageManager.FunctionalTests": "1.0.0-*",
         "Microsoft.Framework.Runtime.Common": "1.0.0-*",
         "xunit.runner.aspnet": "2.0.0-aspnet-*"
     },
