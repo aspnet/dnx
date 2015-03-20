@@ -1,8 +1,9 @@
 ﻿// Copyright (c) Microsoft Open Technologies, Inc. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
-using System.Linq;
 using System.Collections.Generic;
+using System.Linq;
+using Microsoft.Framework.Internal;
 using Microsoft.Framework.Runtime;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -11,7 +12,7 @@ namespace Microsoft.Framework.DesignTimeHost.Models.OutgoingMessages
 {
     public class DiagnosticsMessage
     {
-        public DiagnosticsMessage(IEnumerable<ICompilationMessage> compilationMessages, FrameworkData frameworkData)
+        public DiagnosticsMessage([NotNull] IEnumerable<ICompilationMessage> compilationMessages, FrameworkData frameworkData)
         {
             CompilationDiagnostics = compilationMessages.ToList();
             Errors = compilationMessages.Where(msg => msg.Severity == CompilationMessageSeverity.Error).ToList();
@@ -28,22 +29,22 @@ namespace Microsoft.Framework.DesignTimeHost.Models.OutgoingMessages
 
         public IList<ICompilationMessage> Warnings { get; }
 
-        public static JToken ConvertToJson(int protocolVersion, IList<DiagnosticsMessage> messages)
+        public JToken ConvertToJson(int protocolVersion)
         {
             if (protocolVersion <= 1)
             {
-                var list = messages.Select(message => new
+                var payload = new
                 {
-                    Framework = message.Framework,
-                    Errors = message.Errors.Select(e => e.FormattedMessage).ToList(),
-                    Warnings = message.Warnings.Select(w => w.FormattedMessage).ToList()
-                }).ToList();
+                    Framework = Framework,
+                    Errors = Errors.Select(e => e.FormattedMessage).ToList(),
+                    Warnings = Warnings.Select(w => w.FormattedMessage).ToList()
+                };
 
-                return JToken.FromObject(list);
+                return JToken.FromObject(payload);
             }
             else
             {
-                return JToken.FromObject(messages);
+                return JToken.FromObject(this);
             }
         }
 
