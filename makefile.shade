@@ -911,7 +911,7 @@ functions @{
         content.Add("    return true;");
         content.Add("}");
         content.Add(string.Empty);
-        content.Add("BOOL FreeTpaBase(const LPCTSTR* values, const size_t count)");
+        content.Add("BOOL FreeTpaBase(const LPCTSTR* values)");
         content.Add("{");
         content.Add("    delete[] values;");
         content.Add(string.Empty);

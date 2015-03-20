@@ -90,7 +90,7 @@ BOOL CreateTpaBase(LPCTSTR** ppNames, size_t* pcNames, bool bNative)
     return true;
 }
 
-BOOL FreeTpaBase(const LPCTSTR* values, const size_t count)
+BOOL FreeTpaBase(const LPCTSTR* values)
 {
     delete[] values;
 
