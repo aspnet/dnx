@@ -11,6 +11,7 @@ using NuGet.Versioning;
 using Microsoft.Framework.Logging;
 using Microsoft.Framework.Runtime.Internal;
 using System.Diagnostics;
+using System.Threading.Tasks;
 
 namespace Microsoft.Framework.Runtime.Dependencies
 {
@@ -158,13 +159,15 @@ namespace Microsoft.Framework.Runtime.Dependencies
 #if DNX451
             if (PlatformHelper.IsMono)
             {
-                var mscorlibLocationOnThisRunningMonoInstance = typeof(object).GetTypeInfo().Assembly.Location;
+                using (Log.LogTimedMethod())
+                {
+                    var mscorlibLocationOnThisRunningMonoInstance = typeof(object).GetTypeInfo().Assembly.Location;
 
-                var libPath = Path.GetDirectoryName(Path.GetDirectoryName(mscorlibLocationOnThisRunningMonoInstance));
+                    var libPath = Path.GetDirectoryName(Path.GetDirectoryName(mscorlibLocationOnThisRunningMonoInstance));
 
-                // Mono is a bit inconsistent as .NET 4.5 and .NET 4.5.1 are the
-                // same folder
-                var supportedVersions = new Dictionary<string, string> {
+                    // Mono is a bit inconsistent as .NET 4.5 and .NET 4.5.1 are the
+                    // same folder
+                    var supportedVersions = new Dictionary<string, string> {
                     { "4.6", "4.5" },
                     { "4.5.3", "4.5" },
                     { "4.5.1", "4.5" },
@@ -172,45 +175,46 @@ namespace Microsoft.Framework.Runtime.Dependencies
                     { "4.0", "4.0" }
                 };
 
-                // Temporary cache while enumerating assemblies in directories
-                var pathCache = new Dictionary<string, FrameworkInformation>();
+                    // Temporary cache while enumerating assemblies in directories
+                    var pathCache = new Dictionary<string, FrameworkInformation>();
 
-                foreach (var versionFolderPair in supportedVersions)
-                {
-                    var targetFrameworkPath = Path.Combine(libPath, versionFolderPair.Value);
-
-                    if (!Directory.Exists(targetFrameworkPath))
+                    foreach (var versionFolderPair in supportedVersions)
                     {
-                        continue;
-                    }
+                        var targetFrameworkPath = Path.Combine(libPath, versionFolderPair.Value);
 
-                    FrameworkInformation frameworkInfo;
-                    if (!pathCache.TryGetValue(targetFrameworkPath, out frameworkInfo))
-                    {
-                        frameworkInfo = new FrameworkInformation();
-                        frameworkInfo.Path = targetFrameworkPath;
-
-                        var assemblies = new List<Tuple<string, string>>();
-
-                        PopulateAssemblies(assemblies, targetFrameworkPath);
-                        PopulateAssemblies(assemblies, Path.Combine(targetFrameworkPath, "Facades"));
-
-                        foreach (var pair in assemblies)
+                        if (!Directory.Exists(targetFrameworkPath))
                         {
-                            var entry = new AssemblyEntry();
-                            entry.Path = pair.Item2;
-                            frameworkInfo.Assemblies[pair.Item1] = entry;
+                            continue;
                         }
 
-                        pathCache[targetFrameworkPath] = frameworkInfo;
+                        FrameworkInformation frameworkInfo;
+                        if (!pathCache.TryGetValue(targetFrameworkPath, out frameworkInfo))
+                        {
+                            frameworkInfo = new FrameworkInformation();
+                            frameworkInfo.Path = targetFrameworkPath;
+
+                            var assemblies = new List<Tuple<string, string>>();
+
+                            PopulateAssemblies(assemblies, targetFrameworkPath);
+                            PopulateAssemblies(assemblies, Path.Combine(targetFrameworkPath, "Facades"));
+
+                            foreach (var pair in assemblies)
+                            {
+                                var entry = new AssemblyEntry();
+                                entry.Path = pair.Item2;
+                                frameworkInfo.Assemblies[pair.Item1] = entry;
+                            }
+
+                            pathCache[targetFrameworkPath] = frameworkInfo;
+                        }
+
+                        var frameworkName = new NuGetFramework(FrameworkConstants.FrameworkIdentifiers.Net, new Version(versionFolderPair.Key));
+                        _cache[frameworkName] = frameworkInfo;
                     }
 
-                    var frameworkName = new NuGetFramework(FrameworkConstants.FrameworkIdentifiers.Net, new Version(versionFolderPair.Key));
-                    _cache[frameworkName] = frameworkInfo;
+                    // Not needed anymore
+                    pathCache.Clear();
                 }
-
-                // Not needed anymore
-                pathCache.Clear();
             }
 #endif
         }
@@ -231,10 +235,9 @@ namespace Microsoft.Framework.Runtime.Dependencies
             }
 
             // Identify the .NET Framework related to this DNX framework
-            if (_desktopFrameworkNames.Contains(targetFramework.Framework))
+            if(targetFramework.Framework.Equals(FrameworkConstants.FrameworkIdentifiers.Dnx))
             {
-                // Rewrite the name from DNX -> NET (unless of course the incoming
-                // name was NET, in which case we rewrite from NET -> NET which is harmless)
+                // Rewrite the name from DNX -> NET
                 return GetFrameworkInformation(
                     new NuGetFramework(FrameworkConstants.FrameworkIdentifiers.Net, targetFramework.Version));
             }
@@ -279,45 +282,52 @@ namespace Microsoft.Framework.Runtime.Dependencies
 
         private FrameworkInformation GetFrameworkInformation(DirectoryInfo directory, NuGetFramework targetFramework)
         {
-            var frameworkInfo = new FrameworkInformation();
-            frameworkInfo.Path = directory.FullName;
-
-            // The redist list contains the list of assemblies for this target framework
-            string redistList = Path.Combine(directory.FullName, "RedistList", "FrameworkList.xml");
-
-            Log.LogVerbose($"Loading Framework Information for {targetFramework}");
-            Log.LogVerbose($"Scanning {directory.FullName}");
-
-            if (File.Exists(redistList))
+            using (Log.LogTimed($"GetFrameworkInformation({targetFramework})"))
             {
+                var frameworkInfo = new FrameworkInformation();
+                frameworkInfo.Exists = true;
+                frameworkInfo.Path = directory.FullName;
+
+                // The redist list contains the list of assemblies for this target framework
+                string redistList = Path.Combine(directory.FullName, "RedistList", "FrameworkList.xml");
+
                 if (Log.IsEnabled(LogLevel.Verbose))
                 {
-                    Log.LogVerbose($"Reading redist list from {redistList.Substring(directory.FullName.Length + 1)}");
+                    Log.LogVerbose($"Loading Framework Information for {targetFramework}");
+                    Log.LogVerbose($"Scanning {directory.FullName}");
                 }
-                frameworkInfo.RedistListPath = redistList;
 
-                using (var stream = File.OpenRead(redistList))
+                if (File.Exists(redistList))
                 {
-                    var frameworkList = XDocument.Load(stream);
-
-                    foreach (var e in frameworkList.Root.Elements())
+                    if (Log.IsEnabled(LogLevel.Verbose))
                     {
-                        var assemblyName = e.Attribute("AssemblyName").Value;
-                        var version = e.Attribute("Version")?.Value;
-
-                        var entry = new AssemblyEntry();
-                        entry.Version = version != null ? Version.Parse(version) : null;
-                        frameworkInfo.Assemblies.Add(assemblyName, entry);
-                        Log.LogDebug($"Found assembly {assemblyName} {entry.Version}, in redist list");
+                        Log.LogVerbose($"Reading redist list from {redistList.Substring(directory.FullName.Length + 1)}");
                     }
+                    frameworkInfo.RedistListPath = redistList;
 
-                    var nameAttribute = frameworkList.Root.Attribute("Name");
+                    using (var stream = File.OpenRead(redistList))
+                    {
+                        var frameworkList = XDocument.Load(stream);
 
-                    frameworkInfo.Name = nameAttribute == null ? null : nameAttribute.Value;
+                        foreach (var e in frameworkList.Root.Elements())
+                        {
+                            var assemblyName = e.Attribute("AssemblyName").Value;
+                            var version = e.Attribute("Version")?.Value;
+
+                            var entry = new AssemblyEntry();
+                            entry.Version = version != null ? Version.Parse(version) : null;
+                            frameworkInfo.Assemblies.Add(assemblyName, entry);
+                            Log.LogDebug($"Found assembly {assemblyName} {entry.Version}, in redist list");
+                        }
+
+                        var nameAttribute = frameworkList.Root.Attribute("Name");
+
+                        frameworkInfo.Name = nameAttribute == null ? null : nameAttribute.Value;
+                    }
                 }
-            }
 
-            return frameworkInfo;
+                return frameworkInfo;
+            }
         }
 
         private static void PopulateAssemblies(List<Tuple<string, string>> assemblies, string path)

@@ -18,7 +18,7 @@ using NuGet.Versioning;
 
 namespace Microsoft.Framework.Runtime.Dependencies
 {
-    public class ReferenceAssemblyDependencyProvider : IDependencyProvider 
+    public class ReferenceAssemblyDependencyProvider : IDependencyProvider
     {
         private readonly ILogger Log;
 
@@ -60,7 +60,6 @@ namespace Microsoft.Framework.Runtime.Dependencies
                     Dependencies = Enumerable.Empty<LibraryDependency>()
                 };
             }
-
             return null;
         }
 

@@ -50,17 +50,17 @@ namespace Microsoft.Framework.Runtime.Loader
 
         private Assembly Load(string name, IAssemblyLoadContext loadContext)
         {
-            using (Log.LogTimedMethod())
-            {
-                Log.LogVerbose($"Requested load of {name}");
+            Log.LogVerbose($"Requested load of {name}");
 
-                string assemblyLocation;
-                if (_assemblyLookupTable.TryGetValue(name, out assemblyLocation))
+            string assemblyLocation;
+            if (_assemblyLookupTable.TryGetValue(name, out assemblyLocation))
+            {
+                using (Log.LogTimed("Loading Assembly"))
                 {
                     return loadContext.LoadFile(assemblyLocation);
                 }
-                return null;
             }
+            return null;
         }
 
         public Dictionary<string, string> InitializeAssemblyLookupTable(IEnumerable<Library> libraries, NuGetFramework runtimeFramework, DefaultPackagePathResolver pathResolver)
