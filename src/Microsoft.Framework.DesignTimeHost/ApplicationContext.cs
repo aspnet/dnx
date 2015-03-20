@@ -470,7 +470,9 @@ namespace Microsoft.Framework.DesignTimeHost
                 {
                     projectCompilationChanged = UpdateProjectCompilation(project, out compilation);
 
-                    project.CompilationDiagnostics = compilation.Diagnostics;
+                    project.CompilationDiagnostics = new DiagnosticsMessage(
+                        compilation.Diagnostics,
+                        project.Sources.Framework);
                 }
 
                 Trigger<Void> requiresAssemblies;
@@ -510,7 +512,9 @@ namespace Microsoft.Framework.DesignTimeHost
 
                     if (project.CompilationDiagnostics == null)
                     {
-                        project.CompilationDiagnostics = compilation.Diagnostics;
+                        project.CompilationDiagnostics = new DiagnosticsMessage(
+                            compilation.Diagnostics,
+                            project.Sources.Framework);
                     }
                 }
             }
@@ -606,7 +610,7 @@ namespace Microsoft.Framework.DesignTimeHost
                 _remote.ProjectFormatWarnings = _local.ProjectFormatWarnings;
             }
 
-            var allDiagnostics = new List<Tuple<FrameworkData, IEnumerable<ICompilationMessage>>>();
+            var allDiagnostics = new List<DiagnosticsMessage>();
             var unprocessedFrameworks = new HashSet<FrameworkName>(_remote.Projects.Keys);
 
             foreach (var pair in _local.Projects)
@@ -622,7 +626,7 @@ namespace Microsoft.Framework.DesignTimeHost
 
                 if (localProject.CompilationDiagnostics != null)
                 {
-                    allDiagnostics.Add(Tuple.Create(localProject.Sources.Framework, localProject.CompilationDiagnostics));
+                    allDiagnostics.Add(localProject.CompilationDiagnostics);
                 }
 
                 unprocessedFrameworks.Remove(pair.Key);
@@ -708,7 +712,7 @@ namespace Microsoft.Framework.DesignTimeHost
                 return;
             }
 
-            var message = new DiagnosticsMessageV2(projectFormatWarnings.Cast<ICompilationMessage>(), frameworkData: null);
+            var message = new DiagnosticsMessage(projectFormatWarnings.Cast<ICompilationMessage>(), frameworkData: null);
 
             Logger.TraceInformation("[{0}]: Sending project format warnings.", GetType().Name);
             _initializedContext.Transmit(new Message
@@ -719,32 +723,11 @@ namespace Microsoft.Framework.DesignTimeHost
             });
         }
 
-        private void SendDiagnostics(IEnumerable<Tuple<FrameworkData, IEnumerable<ICompilationMessage>>> diagnostics)
+        private void SendDiagnostics(IList<DiagnosticsMessage> diagnostics)
         {
             if (diagnostics.Count() == 0)
             {
                 return;
-            }
-
-            JToken payload;
-            if (ProtocolVersion <= 1)
-            {
-                Logger.TraceInformation("[{0}]: Send diagnostics in message format v1.", GetType().Name);
-
-                var data = diagnostics.Select(d => new DiagnosticsMessage
-                {
-                    Framework = d.Item1,
-                    Diagnostics = d.Item2.ToList()
-                }).ToList();
-
-                payload = JToken.FromObject(data);
-            }
-            else
-            {
-                Logger.TraceInformation("[{0}]: Send diagnostics in message format v2.", GetType().Name);
-
-                var data = diagnostics.Select(d => new DiagnosticsMessageV2(d.Item2, d.Item1));
-                payload = JToken.FromObject(data);
             }
 
             // Send all diagnostics back
@@ -754,7 +737,7 @@ namespace Microsoft.Framework.DesignTimeHost
                 {
                     ContextId = Id,
                     MessageType = "AllDiagnostics",
-                    Payload = payload
+                    Payload = DiagnosticsMessage.ConvertToJson(ProtocolVersion, diagnostics)
                 });
             }
 
@@ -873,16 +856,14 @@ namespace Microsoft.Framework.DesignTimeHost
                 writer.Write("Assembly");
                 writer.Write(Id);
 
-                var warnings = project.CompilationDiagnostics.Where(d => d.Severity == CompilationMessageSeverity.Warning);
-                writer.Write(warnings.Count());
-                foreach (var warning in warnings)
+                writer.Write(project.CompilationDiagnostics.Warnings.Count());
+                foreach (var warning in project.CompilationDiagnostics.Warnings)
                 {
                     writer.Write(warning.FormattedMessage);
                 }
 
-                var errors = project.CompilationDiagnostics.Where(d => d.Severity == CompilationMessageSeverity.Error);
-                writer.Write(errors.Count());
-                foreach (var error in errors)
+                writer.Write(project.CompilationDiagnostics.Errors.Count());
+                foreach (var error in project.CompilationDiagnostics.Errors)
                 {
                     writer.Write(error.FormattedMessage);
                 }
@@ -894,7 +875,7 @@ namespace Microsoft.Framework.DesignTimeHost
                 var obj = new JObject();
                 obj["MessageType"] = "Assembly";
                 obj["ContextId"] = Id;
-                obj[nameof(CompileResponse.Diagnostics)] = ConvertToJArray(project.CompilationDiagnostics.ToList());
+                obj[nameof(CompileResponse.Diagnostics)] = ConvertToJArray(project.CompilationDiagnostics.CompilationDiagnostics);
                 obj[nameof(CompileResponse.AssemblyPath)] = project.Outputs.AssemblyPath;
                 obj["Blobs"] = 2;
                 writer.Write(obj.ToString(Formatting.None));

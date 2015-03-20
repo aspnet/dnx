@@ -33,7 +33,7 @@ namespace Microsoft.Framework.DesignTimeHost.Models
         public SourcesMessage Sources { get; set; }
         public ReferencesMessage References { get; set; }
         public DependenciesMessage Dependencies { get; set; }
-        public IEnumerable<ICompilationMessage> CompilationDiagnostics { get; set; }
+        public DiagnosticsMessage CompilationDiagnostics { get; set; }
         public OutputsMessage Outputs { get; set; }
     }
 }
