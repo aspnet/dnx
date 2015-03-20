@@ -74,7 +74,7 @@ bool GetTrustedPlatformAssembliesList(WCHAR* szDirectory, bool bNative, LPWSTR p
 Finished:
     if (ppszTpaAssemblyNames != nullptr)
     {
-        FreeTpaBase(ppszTpaAssemblyNames, cTpaAssemblyNames);
+        FreeTpaBase(ppszTpaAssemblyNames);
     }
 
     return ret;

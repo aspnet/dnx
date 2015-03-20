@@ -60,7 +60,7 @@ bool GetTrustedPlatformAssembliesList(const std::string& tpaDirectory, bool isNa
 
     if (ppszTpaAssemblyNames)
     {
-        FreeTpaBase(ppszTpaAssemblyNames, cTpaAssemblyNames);
+        FreeTpaBase(ppszTpaAssemblyNames);
     }
 
     return true;
