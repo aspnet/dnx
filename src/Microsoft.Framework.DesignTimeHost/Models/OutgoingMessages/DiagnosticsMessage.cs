@@ -28,10 +28,6 @@ namespace Microsoft.Framework.DesignTimeHost.Models.OutgoingMessages
 
         public IList<ICompilationMessage> Warnings { get; }
 
-        public IList<string> FormattedErrors => Errors.Select(e => e.FormattedMessage).ToList();
-
-        public IList<string> FormattedWarnings => Warnings.Select(w => w.FormattedMessage).ToList();
-
         public static JToken ConvertToJson(int protocolVersion, IList<DiagnosticsMessage> messages)
         {
             if (protocolVersion <= 1)

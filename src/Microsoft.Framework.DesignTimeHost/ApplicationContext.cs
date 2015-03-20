@@ -470,7 +470,7 @@ namespace Microsoft.Framework.DesignTimeHost
                 {
                     projectCompilationChanged = UpdateProjectCompilation(project, out compilation);
 
-                    project.CompilationDiagnostics = new DiagnosticsMessage(
+                    project.Diagnostics = new DiagnosticsMessage(
                         compilation.Diagnostics,
                         project.Sources.Framework);
                 }
@@ -510,9 +510,9 @@ namespace Microsoft.Framework.DesignTimeHost
                         EmbeddedReferences = compilation.EmbeddedReferences
                     };
 
-                    if (project.CompilationDiagnostics == null)
+                    if (project.Diagnostics == null)
                     {
-                        project.CompilationDiagnostics = new DiagnosticsMessage(
+                        project.Diagnostics = new DiagnosticsMessage(
                             compilation.Diagnostics,
                             project.Sources.Framework);
                     }
@@ -624,9 +624,9 @@ namespace Microsoft.Framework.DesignTimeHost
                     _remote.Projects[pair.Key] = remoteProject;
                 }
 
-                if (localProject.CompilationDiagnostics != null)
+                if (localProject.Diagnostics != null)
                 {
-                    allDiagnostics.Add(localProject.CompilationDiagnostics);
+                    allDiagnostics.Add(localProject.Diagnostics);
                 }
 
                 unprocessedFrameworks.Remove(pair.Key);
@@ -856,14 +856,14 @@ namespace Microsoft.Framework.DesignTimeHost
                 writer.Write("Assembly");
                 writer.Write(Id);
 
-                writer.Write(project.CompilationDiagnostics.Warnings.Count());
-                foreach (var warning in project.CompilationDiagnostics.Warnings)
+                writer.Write(project.Diagnostics.Warnings.Count());
+                foreach (var warning in project.Diagnostics.Warnings)
                 {
                     writer.Write(warning.FormattedMessage);
                 }
 
-                writer.Write(project.CompilationDiagnostics.Errors.Count());
-                foreach (var error in project.CompilationDiagnostics.Errors)
+                writer.Write(project.Diagnostics.Errors.Count());
+                foreach (var error in project.Diagnostics.Errors)
                 {
                     writer.Write(error.FormattedMessage);
                 }
@@ -875,7 +875,7 @@ namespace Microsoft.Framework.DesignTimeHost
                 var obj = new JObject();
                 obj["MessageType"] = "Assembly";
                 obj["ContextId"] = Id;
-                obj[nameof(CompileResponse.Diagnostics)] = ConvertToJArray(project.CompilationDiagnostics.CompilationDiagnostics);
+                obj[nameof(CompileResponse.Diagnostics)] = ConvertToJArray(project.Diagnostics.CompilationDiagnostics);
                 obj[nameof(CompileResponse.AssemblyPath)] = project.Outputs.AssemblyPath;
                 obj["Blobs"] = 2;
                 writer.Write(obj.ToString(Formatting.None));
