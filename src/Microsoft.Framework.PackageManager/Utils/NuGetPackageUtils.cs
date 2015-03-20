@@ -47,8 +47,18 @@ namespace Microsoft.Framework.PackageManager
                         nupkgStream.Seek(0, SeekOrigin.Begin);
 
                         ExtractPackage(extractPath, nupkgStream);
-                        FileOperationUtils.Copy(extractPath, targetPath);
-                        FileOperationUtils.DeleteFolder(extractPath);
+                        for (var i = 0; i < 2; ++i)
+                        {
+                            try
+                            {
+                                Directory.Move(extractPath, targetPath);
+                                break;
+                            }
+                            //Directory.Move sometimes throws
+                            catch (IOException)
+                            {
+                            }
+                        }
                     }
 
                     // Fixup the casing of the nuspec on disk to match what we expect
