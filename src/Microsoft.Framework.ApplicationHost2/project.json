@@ -11,7 +11,6 @@
     },
     "code": [
         "**/*.cs",
-        "../Microsoft.Framework.Runtime/Helpers/DictionaryExtensions.cs",
         "../Microsoft.Framework.Runtime.Hosting/**/*.cs",
         "../Microsoft.Framework.Runtime.Compilation/**/*.cs",
         "../../submodules/FileSystem/src/Microsoft.Framework.FileSystemGlobbing/**/*.cs",
@@ -76,4 +75,3 @@
         ]
     }
 }
-
