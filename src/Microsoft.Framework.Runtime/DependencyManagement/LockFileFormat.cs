@@ -14,7 +14,7 @@ namespace Microsoft.Framework.Runtime.DependencyManagement
 {
     public class LockFileFormat
     {
-        public const int Version = -9999;
+        public const int Version = -9998;
         public const string LockFileName = "project.lock.json";
 
         public LockFile Read(string filePath)
@@ -108,7 +108,7 @@ namespace Microsoft.Framework.Runtime.DependencyManagement
             {
                 library.Version = SemanticVersion.Parse(parts[1]);
             }
-            library.Serviceable = ReadBool(json, "serviceable", defaultValue: false);
+            library.IsServiceable = ReadBool(json, "serviceable", defaultValue: false);
             library.Sha = ReadString(json["sha"]);
             library.FrameworkGroups = ReadObject(json["frameworks"] as JObject, ReadFrameworkGroup);
             library.Files = ReadPathArray(json["files"] as JArray, ReadString);
@@ -118,7 +118,7 @@ namespace Microsoft.Framework.Runtime.DependencyManagement
         private JProperty WriteLibrary(LockFileLibrary library)
         {
             var json = new JObject();
-            WriteBool(json, "serviceable", library.Serviceable);
+            WriteBool(json, "serviceable", library.IsServiceable);
             json["sha"] = WriteString(library.Sha);
             WriteObject(json, "frameworks", library.FrameworkGroups, WriteFrameworkGroup);
             WritePathArray(json, "files", library.Files, WriteString);

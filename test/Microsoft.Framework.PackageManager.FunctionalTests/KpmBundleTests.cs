@@ -1088,6 +1088,7 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
   },
   ""libraries"": {
     ""NoDependencies/1.0.0"": {
+      ""serviceable"": false,
       ""sha"": ""NUPKG_SHA_VALUE"",
       ""frameworks"": {
         ""DNX,Version=v4.5.1"": {
@@ -1191,6 +1192,7 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
   },
   ""libraries"": {
     ""NoDependencies/1.0.0"": {
+      ""serviceable"": false,
       ""sha"": ""NUPKG_SHA_VALUE"",
       ""frameworks"": {
         ""DNX,Version=v4.5.1"": {

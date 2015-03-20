@@ -98,7 +98,7 @@ namespace Microsoft.Framework.PackageManager.Utils
                 var assemblyPath = Path.Combine(installPath, assembly);
                 if (IsAssemblyServiceable(assemblyPath))
                 {
-                    lockFileLib.Serviceable = true;
+                    lockFileLib.IsServiceable = true;
                     break;
                 }
             }
@@ -148,6 +148,11 @@ namespace Microsoft.Framework.PackageManager.Utils
 
         private static bool IsAssemblyServiceable(string assemblyPath)
         {
+            if (!File.Exists(assemblyPath))
+            {
+                return false;
+            }
+
             using (var stream = File.OpenRead(assemblyPath))
             using (var peReader = new PEReader(stream))
             {

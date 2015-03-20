@@ -33,7 +33,7 @@ namespace Microsoft.Framework.Runtime.Servicing
 
         public static bool IsPackageServiceable(PackageInfo package)
         {
-            return package.LockFileLibrary.Serviceable;
+            return package.LockFileLibrary.IsServiceable;
         }
 
         public void CreateBreadcrumb(string packageId, SemanticVersion packageVersion)
