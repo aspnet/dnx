@@ -36,6 +36,12 @@ namespace Microsoft.Framework.PackageManager
             }
             else
             {
+                // TODO: temporarily ignore NuGet v3 feeds
+                if (source.Source.EndsWith(".json"))
+                {
+                    return null;
+                }
+
                 return new NuGetv2Feed(
                     source.Source,
                     source.UserName,
