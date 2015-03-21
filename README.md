@@ -32,7 +32,7 @@ Active Version           Runtime Architecture Location                          
        1.0.0-dev         mono                 C:\Users\victorhu\.dnx\runtimes mono-dev
 ```
 
-If you want to remove the symlinks, simply delete them from your user profile's XRE folder.
+If you want to remove the symlinks, simply delete them from your user profile's DNX folder.
 
 ### Initialize the submodules
 
