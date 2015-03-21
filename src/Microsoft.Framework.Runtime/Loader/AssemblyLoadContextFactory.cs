@@ -46,11 +46,7 @@ namespace Microsoft.Framework.Runtime.Loader
                 {
                     return _defaultContext.Load(name);
                 }
-#if DNX451
                 catch (FileNotFoundException)
-#else
-                catch (FileLoadException)
-#endif
                 {
                     return _projectAssemblyLoader.Load(name, this) ??
                            _nugetAssemblyLoader.Load(name, this);
