@@ -12,9 +12,9 @@ namespace Microsoft.Framework.DesignTimeHost.Models.OutgoingMessages
 {
     public class DiagnosticsMessage
     {
-        public DiagnosticsMessage([NotNull] IEnumerable<ICompilationMessage> compilationMessages, FrameworkData frameworkData)
+        public DiagnosticsMessage([NotNull] IList<ICompilationMessage> compilationMessages, FrameworkData frameworkData)
         {
-            CompilationDiagnostics = compilationMessages.ToList();
+            CompilationDiagnostics = compilationMessages;
             Errors = compilationMessages.Where(msg => msg.Severity == CompilationMessageSeverity.Error).ToList();
             Warnings = compilationMessages.Where(msg => msg.Severity == CompilationMessageSeverity.Warning).ToList();
             Framework = frameworkData;
@@ -29,7 +29,7 @@ namespace Microsoft.Framework.DesignTimeHost.Models.OutgoingMessages
 
         public IList<ICompilationMessage> Warnings { get; }
 
-        public JToken ConvertToJson(int protocolVersion)
+        public virtual JToken ConvertToJson(int protocolVersion)
         {
             if (protocolVersion <= 1)
             {

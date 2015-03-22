@@ -12,7 +12,7 @@ namespace Microsoft.Framework.DesignTimeHost.Models
     {
         public ProjectMessage ProjectInformation { get; set; }
 
-        public IList<FileFormatWarning> ProjectFormatWarnings { get; set; }
+        public ProjectWarningsMessage ProjectWarningMessage { get; set; }
 
         public Dictionary<FrameworkName, ProjectWorld> Projects { get; set; }
 

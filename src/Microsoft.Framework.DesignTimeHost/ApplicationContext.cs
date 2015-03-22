@@ -403,7 +403,7 @@ namespace Microsoft.Framework.DesignTimeHost
                 GlobalJsonPath = state.GlobalJsonPath
             };
 
-            _local.ProjectFormatWarnings = state.FileFormatWarnings;
+            _local.ProjectWarningMessage = new ProjectWarningsMessage(state.FileFormatWarnings);
 
             foreach (var project in state.Projects)
             {
@@ -603,11 +603,10 @@ namespace Microsoft.Framework.DesignTimeHost
                 _remote.ProjectInformation = _local.ProjectInformation;
             }
 
-            if (_remote.ProjectFormatWarnings == null ||
-                !Enumerable.SequenceEqual(_local.ProjectFormatWarnings.OrderBy(w => w), _remote.ProjectFormatWarnings.OrderBy(w => w)))
+            if (IsDifferent(_local.ProjectWarningMessage, _remote.ProjectWarningMessage))
             {
-                SendProjectFormatWarnings(_local.ProjectFormatWarnings);
-                _remote.ProjectFormatWarnings = _local.ProjectFormatWarnings;
+                SendProjectFormatWarnings(_local.ProjectWarningMessage);
+                _remote.ProjectWarningMessage = _local.ProjectWarningMessage;
             }
 
             var allDiagnostics = new List<DiagnosticsMessage>();
@@ -699,28 +698,25 @@ namespace Microsoft.Framework.DesignTimeHost
             }
         }
 
-        private void SendProjectFormatWarnings(IList<FileFormatWarning> projectFormatWarnings)
+        private void SendProjectFormatWarnings(ProjectWarningsMessage message)
         {
             if (ProtocolVersion < 2)
             {
-                Logger.TraceInformation("[{0}]: Skip sending project format warnings.", GetType().Name);
                 return;
             }
 
-            if (projectFormatWarnings.Count == 0)
+            var payload = message.ConvertToJson(ProtocolVersion);
+
+            if (payload != null)
             {
-                return;
+                Logger.TraceInformation("[{0}]: Sending project format warnings.", GetType().Name);
+                _initializedContext.Transmit(new Message
+                {
+                    ContextId = Id,
+                    MessageType = "Diagnostics",
+                    Payload = message.ConvertToJson(_protocolVersion)
+                });
             }
-
-            var message = new DiagnosticsMessage(projectFormatWarnings.Cast<ICompilationMessage>(), frameworkData: null);
-
-            Logger.TraceInformation("[{0}]: Sending project format warnings.", GetType().Name);
-            _initializedContext.Transmit(new Message
-            {
-                ContextId = Id,
-                MessageType = "Diagnostics",
-                Payload = message.ConvertToJson(_protocolVersion)
-            });
         }
 
         private void SendDiagnostics(IList<DiagnosticsMessage> diagnostics)
