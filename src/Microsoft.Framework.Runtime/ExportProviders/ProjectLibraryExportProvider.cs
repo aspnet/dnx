@@ -96,7 +96,8 @@ namespace Microsoft.Framework.Runtime
                     IMetadataProjectReference projectReference = projectReferenceProvider.GetProjectReference(
                         project,
                         target,
-                        () => projectExport.Value);
+                        () => projectExport.Value,
+                        () => CompositeResourceProvider.Default.GetResources(project));
 
                     metadataReferences.Add(projectReference);
 

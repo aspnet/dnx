@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.Runtime.Versioning;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
@@ -24,37 +25,31 @@ namespace Microsoft.Framework.Runtime.Roslyn
         public IList<ResourceDescription> Resources { get { return _resources.Value; } }
 
         public IList<ICompileModule> Modules { get; } = new List<ICompileModule>();
-        
+
         public IProjectContext ProjectContext { get; set; }
 
         public CompilationContext(CSharpCompilation compilation,
                                   Project project,
                                   FrameworkName targetFramework,
-                                  string configuration)
+                                  string configuration,
+                                  Func<IList<ResourceDescription>> resourcesResolver)
         {
             Compilation = compilation;
             Diagnostics = new List<Diagnostic>();
             Project = project;
             ProjectContext = new ProjectContext(project, targetFramework, configuration);
-            _resources = new Lazy<IList<ResourceDescription>>(() => GetResources(this));
-        }
+            _resources = new Lazy<IList<ResourceDescription>>(() =>
+            {
+                var sw = Stopwatch.StartNew();
+                Logger.TraceInformation("[{0}]: Generating resources for {1}", nameof(CompilationContext), Project.Name);
 
-        private static IList<ResourceDescription> GetResources(CompilationContext context)
-        {
-            var resxProvider = new ResxResourceProvider();
-            var embeddedResourceProvider = new EmbeddedResourceProvider();
+                var resources = resourcesResolver();
 
-            var resourceProvider = new CompositeResourceProvider(new IResourceProvider[] { resxProvider, embeddedResourceProvider });
+                sw.Stop();
+                Logger.TraceInformation("[{0}]: Generated resources for {1} in {2}ms", nameof(CompilationContext), Project.Name, sw.ElapsedMilliseconds);
 
-            var sw = Stopwatch.StartNew();
-            Logger.TraceInformation("[{0}]: Generating resources for {1}", nameof(CompilationContext), context.Project.Name);
-
-            var resources = resourceProvider.GetResources(context.Project);
-
-            sw.Stop();
-            Logger.TraceInformation("[{0}]: Generated resources for {1} in {2}ms", nameof(CompilationContext), context.Project.Name, sw.ElapsedMilliseconds);
-
-            return resources;
+                return resources;
+            });
         }
     }
 }

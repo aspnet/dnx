@@ -1,6 +1,6 @@
-﻿using System;
+﻿using Microsoft.CodeAnalysis;
+using System;
 using System.Collections.Generic;
-using System.Runtime.Versioning;
 
 namespace Microsoft.Framework.Runtime.Roslyn
 {
@@ -30,7 +30,8 @@ namespace Microsoft.Framework.Runtime.Roslyn
         public IMetadataProjectReference GetProjectReference(
             Project project,
             ILibraryKey target,
-            Func<ILibraryExport> referenceResolver)
+            Func<ILibraryExport> referenceResolver,
+            Func<IList<ResourceDescriptor>> resourcesResolver)
         {
             var export = referenceResolver();
             if (export == null)
@@ -45,7 +46,8 @@ namespace Microsoft.Framework.Runtime.Roslyn
                 project,
                 target,
                 incomingReferences,
-                incomingSourceReferences);
+                incomingSourceReferences,
+                resourcesResolver);
 
             if (compliationContext == null)
             {

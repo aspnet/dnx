@@ -1,0 +1,27 @@
+﻿{
+    "version": "1.0.0-*",
+    "dependencies": {
+    },
+
+    "frameworks": {
+        "dnx451": {
+            "dependencies": {
+            }
+        },
+        "dnxcore50": {
+            "dependencies": {
+                "System.Runtime": "4.0.20-beta-*",
+                "System.Reflection": "4.0.0-beta-*",
+                "System.Console": "4.0.0-beta-*"
+            }
+        }
+    },
+    "resource": [
+        "*.resx",
+        "subfolder/*.resx",
+        "*.txt",
+        "subfolder/*.txt",
+        "../someresources/*.resx",
+        "../someresources/*.txt",
+    ]
+}

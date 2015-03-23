@@ -13,7 +13,7 @@ namespace Microsoft.Framework.Runtime
         public static readonly string[] DefaultBundleExcludePatterns = new[] { @"obj/**/*.*", @"bin/**/*.*", @"**/.*/**" };
         public static readonly string[] DefaultPreprocessPatterns = new[] { @"compiler/preprocess/**/*.cs" };
         public static readonly string[] DefaultSharedPatterns = new[] { @"compiler/shared/**/*.cs" };
-        public static readonly string[] DefaultResourcesPatterns = new[] { @"compiler/resources/**/*" };
+        public static readonly string[] DefaultResourcesPatterns = new[] { @"compiler/resources/**/*", "**/*.resx" };
         public static readonly string[] DefaultContentsPatterns = new[] { @"**/*" };
         public static readonly string[] DefaultBuiltInExcludePatterns = new[] { "bin/**", "obj/**", "**/*.kproj" };
 

@@ -1,5 +1,7 @@
-// Copyright (c) Microsoft Open Technologies, Inc. All rights reserved.
+﻿// Copyright (c) Microsoft Open Technologies, Inc. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
+
+// TEMPORARY FILE USED TO SOLVE BOOTSTRAPING ISSUES. WILL BE REMOVED
 
 using System;
 using System.Collections.Generic;
@@ -7,19 +9,42 @@ using System.IO;
 using System.Linq;
 using System.Resources;
 using System.Xml.Linq;
-using Microsoft.CodeAnalysis;
+using NuGet;
 
-namespace Microsoft.Framework.Runtime.Roslyn
+namespace Microsoft.Framework.Runtime
 {
-    public class ResxResourceProvider : IResourceProvider
+    public class OldEmbeddedResourceProvider : IResourceProvider
     {
-        public IList<ResourceDescription> GetResources(Project project)
+        public IList<ResourceDescriptor> GetResources(Project project)
+        {
+            string root = PathUtility.EnsureTrailingSlash(project.ProjectDirectory);
+
+            // Resources have the relative path from the project root
+            // and are separated by /. It's always / regardless of the
+            // platform.
+
+            return project.Files.ResourceFiles.Select(resourceFile => new ResourceDescriptor()
+            {
+                Name = PathUtility.GetRelativePath(root, resourceFile)
+                           .Replace(Path.DirectorySeparatorChar, '/'),
+                StreamFactory = () => new FileStream(resourceFile, FileMode.Open, FileAccess.Read, FileShare.Read)
+            })
+            .ToList();
+
+        }
+    }
+
+    public class OldResxResourceProvider : IResourceProvider
+    {
+        public IList<ResourceDescriptor> GetResources(Project project)
         {
             return Directory.EnumerateFiles(project.ProjectDirectory, "*.resx", SearchOption.AllDirectories)
                             .Select(resxFilePath =>
-                                new ResourceDescription(GetResourceName(project.Name, resxFilePath),
-                                                        () => GetResourceStream(resxFilePath),
-                                                        isPublic: true)).ToList();
+                                new ResourceDescriptor()
+                                {
+                                    Name = GetResourceName(project.Name, resxFilePath),
+                                    StreamFactory = () => GetResourceStream(resxFilePath)
+                                }).ToList();
         }
 
         private static string GetResourceName(string projectName, string resxFilePath)
@@ -62,3 +87,4 @@ namespace Microsoft.Framework.Runtime.Roslyn
         }
     }
 }
+

@@ -47,7 +47,8 @@ namespace Microsoft.Framework.Runtime.Roslyn
             Project project,
             ILibraryKey target,
             IEnumerable<IMetadataReference> incomingReferences,
-            IEnumerable<ISourceReference> incomingSourceReferences)
+            IEnumerable<ISourceReference> incomingSourceReferences,
+            Func<IList<ResourceDescriptor>> resourcesResolver)
         {
             var path = project.ProjectDirectory;
             var name = project.Name;
@@ -121,7 +122,17 @@ namespace Microsoft.Framework.Runtime.Roslyn
 
             compilation = ApplyVersionInfo(compilation, project, parseOptions);
 
-            var compilationContext = new CompilationContext(compilation, project, target.TargetFramework, target.Configuration);
+            var compilationContext = new CompilationContext(
+                compilation,
+                project, 
+                target.TargetFramework, 
+                target.Configuration,
+                () => resourcesResolver()
+                    .Select(res => new ResourceDescription(
+                        res.Name, 
+                        res.StreamFactory, 
+                        isPublic: true))
+                    .ToList());
 
             if (isMainAspect && project.Files.PreprocessSourceFiles.Any())
             {
