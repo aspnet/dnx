@@ -40,7 +40,7 @@ namespace Microsoft.Framework.Runtime.Loader
                 _defaultContext = defaultContext;
             }
 
-            public override Assembly LoadAssembly(string name)
+            public override Assembly LoadAssembly(AssemblyName name)
             {
                 try
                 {

@@ -1,6 +1,7 @@
 {
     "version": "0.1-beta-*",
     "exclude": "more/*.cs",
+    "resources": "**/*.resx",
     "dependencies": {
         "HelloShared": { "version": "0.1-beta-*", "type": "build" },
         "Microsoft.Framework.Runtime.Roslyn.Interfaces": "1.0.0-*"

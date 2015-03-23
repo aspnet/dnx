@@ -15,7 +15,7 @@ namespace dnx.host
             _loaderContainer = loaderContainer;
         }
 
-        public override Assembly LoadAssembly(string name)
+        public override Assembly LoadAssembly(AssemblyName name)
         {
             return _loaderContainer.Load(name);
         }

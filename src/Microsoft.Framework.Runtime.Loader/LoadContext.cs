@@ -19,15 +19,20 @@ namespace Microsoft.Framework.Runtime.Loader
         {
             var name = assemblyName.Name;
 
-            return _cache.GetOrAdd(name, LoadAssembly);
+            return _cache.GetOrAdd(assemblyName, LoadAssembly);
         }
 
-        public Assembly Load(string name)
+        Assembly IAssemblyLoadContext.Load(string name)
         {
             return LoadFromAssemblyName(new AssemblyName(name));
         }
 
-        public abstract Assembly LoadAssembly(string name);
+        Assembly IAssemblyLoadContext.Load(AssemblyName name)
+        {
+            return LoadFromAssemblyName(name);
+        }
+
+        public abstract Assembly LoadAssembly(AssemblyName name);
 
         public Assembly LoadFile(string path)
         {
@@ -130,20 +135,46 @@ namespace Microsoft.Framework.Runtime.Loader
 
         public Assembly Load(string name)
         {
-            if (string.IsNullOrEmpty(_contextId))
+            try
             {
-                return Assembly.Load(name);
+                if (string.IsNullOrEmpty(_contextId))
+                {
+                    return Assembly.Load(name);
+                }
+
+                return Assembly.Load(_contextId + "$" + name);
             }
-
-            return Assembly.Load(_contextId + "$" + name);
+            catch (FileNotFoundException)
+            {
+                return null;
+            }
         }
 
-        private Assembly LoadAssemblyImpl(string name)
+        public Assembly Load(AssemblyName assemblyName)
         {
-            return _cache.GetOrAdd(name, LoadAssembly);
+            try
+            {
+                if (string.IsNullOrEmpty(_contextId))
+                {
+                    return Assembly.Load(assemblyName);
+                }
+
+                var contextIdAssemblyName = (AssemblyName)assemblyName.Clone();
+                contextIdAssemblyName.Name = _contextId + "$" + assemblyName.Name;
+                return Assembly.Load(contextIdAssemblyName);
+            }
+            catch (FileNotFoundException)
+            {
+                return null;
+            }
         }
 
-        public abstract Assembly LoadAssembly(string name);
+        private Assembly LoadAssemblyImpl(AssemblyName assemblyName)
+        {
+            return _cache.GetOrAdd(assemblyName, LoadAssembly);
+        }
+
+        public abstract Assembly LoadAssembly(AssemblyName name);
 
         public Assembly LoadFile(string assemblyPath)
         {
@@ -204,7 +235,9 @@ namespace Microsoft.Framework.Runtime.Loader
                 LoadContext context;
                 if (_contexts.TryGetValue(contextId, out context))
                 {
-                    var assembly = context.LoadAssemblyImpl(shortName);
+                    var shortAssemblyName = (AssemblyName)assemblyName.Clone();
+                    shortAssemblyName.Name = shortName;
+                    var assembly = context.LoadAssemblyImpl(shortAssemblyName);
 
                     if (assembly != null)
                     {
@@ -217,11 +250,6 @@ namespace Microsoft.Framework.Runtime.Loader
 
             // We don't have a context id so we need to do some magic
 
-            // TODO: Remove this
-            if (assemblyName.Name.EndsWith(".resources"))
-            {
-                return null;
-            }
 
             // If we have a requesting assembly then try to infer the load context from it
             if (args.RequestingAssembly != null)
@@ -230,13 +258,13 @@ namespace Microsoft.Framework.Runtime.Loader
                 var loadContext = LoadContextAccessor.Instance.GetLoadContext(args.RequestingAssembly);
                 if (loadContext != null)
                 {
-                    return loadContext.Load(assemblyName.Name);
+                    return loadContext.Load(assemblyName);
                 }
             }
             else
             {
                 // Nothing worked, use the default load context
-                return Default.LoadAssemblyImpl(assemblyName.Name);
+                return Default.LoadAssemblyImpl(assemblyName);
             }
 
             return null;

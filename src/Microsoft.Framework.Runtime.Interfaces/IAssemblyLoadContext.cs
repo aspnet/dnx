@@ -14,7 +14,10 @@ namespace Microsoft.Framework.Runtime
         /// </summary>
         /// <param name="name">The name of the assembly.</param>
         /// <returns>The loaded assembly.</returns>
+        //LOUDO: [Obsolete("Use IAssemblyLoadContext.Load(AssemblyName)")]
         Assembly Load(string name);
+
+        Assembly Load(AssemblyName name);
 
         /// <summary>
         /// Loads the assembly located at the provided file system path.

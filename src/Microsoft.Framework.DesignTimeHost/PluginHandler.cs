@@ -195,7 +195,7 @@ namespace Microsoft.Framework.DesignTimeHost
                     Assembly assembly;
                     if (!_assemblyCache.TryGetValue(registerData.AssemblyName, out assembly))
                     {
-                        assembly = assemblyLoadContext.Load(registerData.AssemblyName);
+                        assembly = assemblyLoadContext.Load(new AssemblyName(registerData.AssemblyName));
                     }
 
                     pluginType = assembly.GetType(registerData.TypeName);
