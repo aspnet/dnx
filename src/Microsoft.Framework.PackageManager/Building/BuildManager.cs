@@ -210,7 +210,9 @@ namespace Microsoft.Framework.PackageManager
 
             if (projectDiagnostics.Any())
             {
-                LogWarning("");
+                // Add a new line to separate the project diagnostics information from compilation diagnostics
+                _buildOptions.Reports.Information.WriteLine();
+
                 projectDiagnostics.ForEach(d => LogWarning(d.FormattedMessage));
             }
 
