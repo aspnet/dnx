@@ -13,7 +13,7 @@ namespace Microsoft.Framework.DesignTimeHost.Models.OutgoingMessages
         private readonly IList<FileFormatWarning> _fileFormatWarnings;
 
         public ProjectWarningsMessage(IList<FileFormatWarning> fileFormatWarnings)
-            : base(compilationMessages: fileFormatWarnings.Cast<ICompilationMessage>(), frameworkData: null)
+            : base(compilationMessages: fileFormatWarnings.Cast<ICompilationMessage>().ToList(), frameworkData: null)
         {
             _fileFormatWarnings = fileFormatWarnings;
         }

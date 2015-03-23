@@ -36,8 +36,8 @@ namespace Microsoft.Framework.DesignTimeHost.Models.OutgoingMessages
                 var payload = new
                 {
                     Framework = Framework,
-                    Errors = Errors.Select(e => e.FormattedMessage).ToList(),
-                    Warnings = Warnings.Select(w => w.FormattedMessage).ToList()
+                    Errors = Errors.Select(e => e.FormattedMessage),
+                    Warnings = Warnings.Select(w => w.FormattedMessage)
                 };
 
                 return JToken.FromObject(payload);

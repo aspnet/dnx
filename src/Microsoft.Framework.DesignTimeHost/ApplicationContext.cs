@@ -700,11 +700,6 @@ namespace Microsoft.Framework.DesignTimeHost
 
         private void SendProjectFormatWarnings(ProjectWarningsMessage message)
         {
-            if (ProtocolVersion < 2)
-            {
-                return;
-            }
-
             var payload = message.ConvertToJson(ProtocolVersion);
 
             if (payload != null)
@@ -721,10 +716,12 @@ namespace Microsoft.Framework.DesignTimeHost
 
         private void SendDiagnostics(IList<DiagnosticsMessage> diagnostics)
         {
-            if (diagnostics.Count() == 0)
+            if (diagnostics.Count == 0)
             {
                 return;
             }
+
+            var payload = JToken.FromObject(diagnostics.Select(d => d.ConvertToJson(ProtocolVersion)));
 
             // Send all diagnostics back
             foreach (var connection in _waitingForDiagnostics)
@@ -733,7 +730,7 @@ namespace Microsoft.Framework.DesignTimeHost
                 {
                     ContextId = Id,
                     MessageType = "AllDiagnostics",
-                    Payload = JToken.FromObject(diagnostics.Select(d => d.ConvertToJson(_protocolVersion)).ToList())
+                    Payload = payload
                 });
             }
 
@@ -852,13 +849,13 @@ namespace Microsoft.Framework.DesignTimeHost
                 writer.Write("Assembly");
                 writer.Write(Id);
 
-                writer.Write(project.Diagnostics.Warnings.Count());
+                writer.Write(project.Diagnostics.Warnings.Count);
                 foreach (var warning in project.Diagnostics.Warnings)
                 {
                     writer.Write(warning.FormattedMessage);
                 }
 
-                writer.Write(project.Diagnostics.Errors.Count());
+                writer.Write(project.Diagnostics.Errors.Count);
                 foreach (var error in project.Diagnostics.Errors)
                 {
                     writer.Write(error.FormattedMessage);
