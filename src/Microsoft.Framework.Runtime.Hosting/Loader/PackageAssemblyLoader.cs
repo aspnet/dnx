@@ -45,7 +45,7 @@ namespace Microsoft.Framework.Runtime.Loader
     public class PackageAssemblyLoader : IAssemblyLoader
     {
         private readonly ILogger Log;
-        private readonly Dictionary<string, string> _assemblyLookupTable;
+        private readonly Dictionary<AssemblyName, string> _assemblyLookupTable;
         private readonly IAssemblyLoadContextAccessor _loadContextAccessor;
 
         public PackageAssemblyLoader(NuGetFramework runtimeFramework, IAssemblyLoadContextAccessor loadContextAccessor, IEnumerable<Library> libraries, PackagePathResolver pathResolver)
@@ -68,10 +68,25 @@ namespace Microsoft.Framework.Runtime.Loader
         /// <returns>An <see cref="Assembly"/>, or null if the assembly could not be found</returns>
         public Assembly Load(string name)
         {
+            return Load(new AssemblyName(name), _loadContextAccessor.Default);
+        }
+
+        /// <summary>
+        /// Loads an assembly from a NuGet package
+        /// </summary>
+        /// <remarks>
+        /// Note that the Package name is never used when loading assemblies.
+        /// If multiple packages provide the same assembly name, it is UNDEFINED
+        /// which assembly will be loaded.
+        /// </remarks>
+        /// <param name="name">The name of the assembly to load</param>
+        /// <returns>An <see cref="Assembly"/>, or null if the assembly could not be found</returns>
+        public Assembly Load(AssemblyName name)
+        {
             return Load(name, _loadContextAccessor.Default);
         }
 
-        private Assembly Load(string name, IAssemblyLoadContext loadContext)
+        private Assembly Load(AssemblyName name, IAssemblyLoadContext loadContext)
         {
             string assemblyLocation;
             if (_assemblyLookupTable.TryGetValue(name, out assemblyLocation))
@@ -86,12 +101,12 @@ namespace Microsoft.Framework.Runtime.Loader
             return null;
         }
 
-        private Dictionary<string, string> InitializeAssemblyLookupTable(IEnumerable<Library> libraries, NuGetFramework runtimeFramework, PackagePathResolver pathResolver)
+        private Dictionary<AssemblyName, string> InitializeAssemblyLookupTable(IEnumerable<Library> libraries, NuGetFramework runtimeFramework, PackagePathResolver pathResolver)
         {
             using (Log.LogTimedMethod())
             {
                 Log.LogInformation("Scanning resolved Package libraries for assemblies");
-                var lookup = new Dictionary<string, string>();
+                var lookup = new Dictionary<AssemblyName, string>();
                 foreach (var library in libraries)
                 {
                     Debug.Assert(library.Identity.Type == LibraryTypes.Package);
@@ -101,22 +116,35 @@ namespace Microsoft.Framework.Runtime.Loader
                     var lockFileFrameworkGroup = library.GetItem<LockFileFrameworkGroup>(KnownLibraryProperties.LockFileFrameworkGroup);
                     if (lockFileFrameworkGroup != null)
                     {
-                        foreach (var assembly in lockFileFrameworkGroup.RuntimeAssemblies)
+                        foreach (var assemblyPath in lockFileFrameworkGroup.RuntimeAssemblies)
                         {
-                            Log.LogDebug($"Locating {assembly} in {library.Identity.Name} {library.Identity.Version}");
-                            string asmName = Path.GetFileNameWithoutExtension(assembly);
-                            if (Log.IsEnabled(LogLevel.Warning) && lookup.ContainsKey(asmName))
+                            Log.LogDebug($"Locating {assemblyPath} in {library.Identity.Name} {library.Identity.Version}");
+                            var name = Path.GetFileNameWithoutExtension(assemblyPath);
+                            var assemblyName = new AssemblyName(name);
+                            if (name.EndsWith(".resources", StringComparison.OrdinalIgnoreCase))
                             {
-                                Log.LogWarning($"{asmName} already exists at {lookup[asmName]}. Overriding!");
+                                var cultureName = Path.GetFileName(Path.GetDirectoryName(assemblyPath));
+#if DNXCORE50
+                                assemblyName.CultureName = cultureName;
+#elif DNX451
+                                assemblyName.CultureInfo = new System.Globalization.CultureInfo(cultureName);
+#else
+#error Unhandled target framework
+#endif
+                            }
+
+                            if (Log.IsEnabled(LogLevel.Warning) && lookup.ContainsKey(assemblyName))
+                            {
+                                Log.LogWarning($"{assemblyName} already exists at {lookup[assemblyName]}. Overriding!");
                             }
 
                             // Locate the package
                             var packageRoot = pathResolver.ResolvePackagePath(lockFileLib.Sha, lockFileLib.Name, lockFileLib.Version);
 
                             // Resolve the assembly path
-                            var assemblyLocation = Path.Combine(packageRoot, assembly);
+                            var assemblyLocation = Path.Combine(packageRoot, assemblyPath);
 
-                            lookup[asmName] = assemblyLocation;
+                            lookup[assemblyName] = assemblyLocation;
                         }
                     }
                     else

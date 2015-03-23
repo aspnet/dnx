@@ -233,7 +233,7 @@ namespace Microsoft.Framework.Runtime.Roslyn
 
                 var childContext = _loadContextFactory.Create();
 
-                var preprocessAssembly = childContext.Load(target.Name + "!preprocess");
+                var preprocessAssembly = childContext.Load(new AssemblyName(target.Name + "!preprocess"));
 
                 foreach (var preprocessType in preprocessAssembly.ExportedTypes)
                 {

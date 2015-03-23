@@ -9,6 +9,7 @@ using System.Runtime.Versioning;
 using Microsoft.Framework.PackageManager.Algorithms;
 using Microsoft.Framework.Runtime;
 using NuGet;
+using System.Reflection;
 
 namespace Microsoft.Framework.PackageManager.List
 {
@@ -152,7 +153,7 @@ namespace Microsoft.Framework.PackageManager.List
 
             // Look into the NuGets then.
             PackageAssembly assembly;
-            if (_hostContext.NuGetDependencyProvider.PackageAssemblyLookup.TryGetValue(assemblyName, out assembly))
+            if (_hostContext.NuGetDependencyProvider.PackageAssemblyLookup.TryGetValue(new AssemblyName(assemblyName), out assembly))
             {
                 return assembly.Path;
             }
