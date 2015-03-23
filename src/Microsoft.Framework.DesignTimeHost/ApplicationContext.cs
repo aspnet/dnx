@@ -81,11 +81,11 @@ namespace Microsoft.Framework.DesignTimeHost
             {
                 // protocol 
                 var strProtocol = Environment.GetEnvironmentVariable("DTH_PROTOCOL");
-                int intProtocal;
-                if (!string.IsNullOrEmpty(strProtocol) && Int32.TryParse(strProtocol, out intProtocal))
+                int intProtocol;
+                if (!string.IsNullOrEmpty(strProtocol) && Int32.TryParse(strProtocol, out intProtocol))
                 {
-                    Logger.TraceInformation("[{0}]: Set DTH protocol version to {1}. Source is environment variable DTH_PROTOCOL.", GetType().Name, intProtocal);
-                    _protocolVersion = intProtocal;
+                    Logger.TraceInformation("[{0}]: Set DTH protocol version to {1}. Source is environment variable DTH_PROTOCOL.", GetType().Name, intProtocol);
+                    _protocolVersion = intProtocol;
                 }
                 else
                 {
