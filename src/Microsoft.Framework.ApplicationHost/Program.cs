@@ -205,7 +205,19 @@ namespace Microsoft.Framework.ApplicationHost
             {
                 assembly = host.GetEntryPoint(applicationName);
             }
-            catch (FileNotFoundException ex) when (new AssemblyName(ex.FileName).Name == applicationName)
+            catch (FileLoadException ex) when (new AssemblyName(ex.FileName).Name == applicationName)
+            {
+                if (ex.InnerException is ICompilationException)
+                {
+                    throw ex.InnerException;
+                }
+
+                ThrowEntryPointNotfoundException(
+                    host,
+                    applicationName,
+                    ex.InnerException);
+            }
+            catch (FileNotFoundException ex) when (ex.FileName == applicationName)
             {
                 if (ex.InnerException is ICompilationException)
                 {
