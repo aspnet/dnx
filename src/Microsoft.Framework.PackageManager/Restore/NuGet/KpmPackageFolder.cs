@@ -9,7 +9,7 @@ using NuGet;
 
 namespace Microsoft.Framework.PackageManager.Restore.NuGet
 {
-    public class KpmPackageFolder : IPackageFeed
+    public class PackageFolder : IPackageFeed
     {
         private bool _ignored;
         private readonly bool _ignoreFailure;
@@ -20,12 +20,12 @@ namespace Microsoft.Framework.PackageManager.Restore.NuGet
 
         public string Source { get; }
 
-        public KpmPackageFolder(
+        public PackageFolder(
             string physicalPath,
             bool ignoreFailure,
             Reports reports)
         {
-            // We need to help "kpm restore" to ensure case-sensitivity here
+            // We need to help restore operation to ensure case-sensitivity here
             // Turn on the flag to get package ids in accurate casing
             _repository = new PackageRepository(physicalPath, caseSensitivePackagesName: true);
             _fileSystem = new PhysicalFileSystem(physicalPath);

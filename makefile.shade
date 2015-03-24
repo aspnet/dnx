@@ -86,14 +86,14 @@ var RC_FILES = '${FindAllFiles("Resource.rc", BOOTSTRAPPER_EXE_NAME, BOOTSTRAPPE
 #repo-initialize target='initialize'
 	git gitCommand="submodule update --init"	
 	for each='var projectFile in Files.Include("src/*/project.json")'
-		exec program='cmd' commandline='/C kpm restore' if='!IsMono' workingdir="${Path.GetDirectoryName(projectFile)}"
-		exec program='kpm' commandline='restore' if='IsMono' workingdir="${Path.GetDirectoryName(projectFile)}"
+		exec program='cmd' commandline='/C dnu restore' if='!IsMono' workingdir="${Path.GetDirectoryName(projectFile)}"
+		exec program='dnu' commandline='restore' if='IsMono' workingdir="${Path.GetDirectoryName(projectFile)}"
 	for each='var projectFile in Files.Include("test/*/project.json")'
-		exec program='cmd' commandline='/C kpm restore' if='!IsMono' workingdir="${Path.GetDirectoryName(projectFile)}"
-		exec program='kpm' commandline='restore' if='IsMono' workingdir="${Path.GetDirectoryName(projectFile)}"
+		exec program='cmd' commandline='/C dnu restore' if='!IsMono' workingdir="${Path.GetDirectoryName(projectFile)}"
+		exec program='dnu' commandline='restore' if='IsMono' workingdir="${Path.GetDirectoryName(projectFile)}"
 	for each='var projectFile in Files.Include("samples/*/project.json")'
-		exec program='cmd' commandline='/C kpm restore' if='!IsMono' workingdir="${Path.GetDirectoryName(projectFile)}"
-		exec program='kpm' commandline='restore' if='IsMono' workingdir="${Path.GetDirectoryName(projectFile)}"
+		exec program='cmd' commandline='/C dnu restore' if='!IsMono' workingdir="${Path.GetDirectoryName(projectFile)}"
+		exec program='dnu' commandline='restore' if='IsMono' workingdir="${Path.GetDirectoryName(projectFile)}"
 
 #build-compile target='compile'
 
@@ -629,7 +629,7 @@ var RC_FILES = '${FindAllFiles("Resource.rc", BOOTSTRAPPER_EXE_NAME, BOOTSTRAPPE
             var dotnetcoreclrDepFile = Path.Combine(BUILD_DIR2, "dotnetcoreclr-dependencies.txt");
             var tpacppFile = Path.Combine(ROOT, "src", BOOTSTRAPPER_CORECLR_NAME, "tpa.cpp");
             Environment.SetEnvironmentVariable("DNX_TRACE", "0");
-            Exec("cmd", string.Format(@"/C kpm list {0} --assemblies --runtime {1} > {2}",
+            Exec("cmd", string.Format(@"/C dnu list {0} --assemblies --runtime {1} > {2}",
                 Path.Combine(ROOT, "src", BOOTSTRAPPER_HOST_NAME),
                 Path.Combine(CORECLR_TARGET_PATH, "Runtime", "x86"),
                 dotnetcoreclrDepFile ));
@@ -692,11 +692,11 @@ functions @{
         int result;
         if (!IsMono)
         {
-            result = ExecuteAndRedirectOutput("cmd", string.Format("/C kpm {0}", argument), tmpFile);
+            result = ExecuteAndRedirectOutput("cmd", string.Format("/C dnu {0}", argument), tmpFile);
         }
         else 
         {
-            result = ExecuteAndRedirectOutput("kpm", argument, tmpFile);
+            result = ExecuteAndRedirectOutput("dnu", argument, tmpFile);
         }
 
         if (result != 0)

@@ -7,13 +7,13 @@ using Microsoft.Framework.FunctionalTestUtils;
 
 namespace Microsoft.Framework.PackageManager
 {
-    public class KpmTestEnvironment : IDisposable
+    public class DnuTestEnvironment : IDisposable
     {
         private readonly string _projectName;
         private readonly string _outputDirName;
         private readonly string _runtimePath;
 
-        public KpmTestEnvironment(string runtimePath, string projectName = null, string outputDirName = null)
+        public DnuTestEnvironment(string runtimePath, string projectName = null, string outputDirName = null)
         {
             _projectName = projectName ?? "ProjectName";
             _outputDirName = outputDirName ?? "OutputDirName";

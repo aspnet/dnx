@@ -11,7 +11,7 @@ using Xunit;
 
 namespace Microsoft.Framework.PackageManager
 {
-    public class KpmWrapTests
+    public class DnuWrapTests
     {
         public static IEnumerable<object[]> RuntimeComponents
         {
@@ -25,7 +25,7 @@ namespace Microsoft.Framework.PackageManager
 
         [Theory]
         [MemberData("RuntimeComponents")]
-        public void KpmWrapUpdatesExistingProjectJson(string flavor, string os, string architecture)
+        public void DnuWrapUpdatesExistingProjectJson(string flavor, string os, string architecture)
         {
             var runtimeHomeDir = TestUtils.GetRuntimeHomeDir(flavor, os, architecture);
 
@@ -75,17 +75,17 @@ namespace Microsoft.Framework.PackageManager
                 var libBetaJsonPath = Path.Combine(testSolutionDir, "src", "LibraryBeta", "project.json");
                 var globalJsonPath = Path.Combine(testSolutionDir, "global.json");
 
-                var betaPclExitCode = KpmTestUtils.ExecKpm(
+                var betaPclExitCode = DnuTestUtils.ExecDnu(
                     runtimeHomeDir,
                     subcommand: "wrap",
                     arguments: string.Format("\"{0}\" --msbuild \"{1}\"", libBetaPclCsprojPath, _msbuildPath));
 
-                var betaDesktopExitCode = KpmTestUtils.ExecKpm(
+                var betaDesktopExitCode = DnuTestUtils.ExecDnu(
                     runtimeHomeDir,
                     subcommand: "wrap",
                     arguments: string.Format("\"{0}\" --msbuild \"{1}\"", libBetaPclDesktopCsprojPath, _msbuildPath));
 
-                var betaPhoneExitCode = KpmTestUtils.ExecKpm(
+                var betaPhoneExitCode = DnuTestUtils.ExecDnu(
                     runtimeHomeDir,
                     subcommand: "wrap",
                     arguments: string.Format("\"{0}\" --msbuild \"{1}\"", libBetaPclPhoneCsprojPath, _msbuildPath));
@@ -101,7 +101,7 @@ namespace Microsoft.Framework.PackageManager
 
         [Theory]
         [MemberData("RuntimeComponents")]
-        public void KpmWrapMaintainsAllKindsOfReferences(string flavor, string os, string architecture)
+        public void DnuWrapMaintainsAllKindsOfReferences(string flavor, string os, string architecture)
         {
             var runtimeHomeDir = TestUtils.GetRuntimeHomeDir(flavor, os, architecture);
 
@@ -166,7 +166,7 @@ namespace Microsoft.Framework.PackageManager
                 var libEpsilonJsonPath = Path.Combine(wrapFolderPath, "LibraryEpsilon", "project.json");
                 var libDeltaJsonPath = Path.Combine(wrapFolderPath, "LibraryDelta", "project.json");
 
-                var exitCode = KpmTestUtils.ExecKpm(
+                var exitCode = DnuTestUtils.ExecDnu(
                     runtimeHomeDir,
                     subcommand: "wrap",
                     arguments: string.Format("\"{0}\" --msbuild \"{1}\"", libGammaCsprojPath, _msbuildPath));
@@ -182,7 +182,7 @@ namespace Microsoft.Framework.PackageManager
         
         [Theory]
         [MemberData("RuntimeComponents")]
-        public void KpmWrapInPlaceCreateCsprojWrappersInPlace(string flavor, string os, string architecture)
+        public void DnuWrapInPlaceCreateCsprojWrappersInPlace(string flavor, string os, string architecture)
         {
             var runtimeHomeDir = TestUtils.GetRuntimeHomeDir(flavor, os, architecture);
 
@@ -248,7 +248,7 @@ namespace Microsoft.Framework.PackageManager
                 var libEpsilonJsonPath = Path.Combine(testSolutionDir, "LibraryEpsilon", "project.json");
                 var libDeltaJsonPath = Path.Combine(wrapFolderPath, "LibraryDelta", "project.json");
 
-                var exitCode = KpmTestUtils.ExecKpm(
+                var exitCode = DnuTestUtils.ExecDnu(
                     runtimeHomeDir,
                     subcommand: "wrap",
                     arguments: string.Format("\"{0}\" --in-place --msbuild \"{1}\"", libGammaCsprojPath, _msbuildPath));

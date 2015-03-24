@@ -191,7 +191,7 @@ namespace Microsoft.Framework.PackageManager.Restore.NuGet
 #else
             var localAppDataFolder = Environment.GetEnvironmentVariable("LocalAppData");
 #endif
-            var cacheFolder = Path.Combine(localAppDataFolder, "kpm", "cache", baseFolderName);
+            var cacheFolder = Path.Combine(localAppDataFolder, "dnu", "cache", baseFolderName);
             var cacheFile = Path.Combine(cacheFolder, baseFileName);
 
             if (!Directory.Exists(cacheFolder) && !cacheAgeLimit.Equals(TimeSpan.Zero))

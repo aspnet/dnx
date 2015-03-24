@@ -111,7 +111,7 @@ command
                 var samplesPath = TestUtils.GetSamplesFolder();
                 var sampleAppRoot = Path.Combine(samplesPath, "HelloWorld");
 
-                var exitCode = KpmTestUtils.ExecKpm(
+                var exitCode = DnuTestUtils.ExecDnu(
                     runtimeHomeDir,
                     subcommand: "build",
                     arguments: string.Format("{0} --configuration=Release --out {1}", sampleAppRoot, tempDir.DirPath));
@@ -144,7 +144,7 @@ Hello, code!
                 var samplesPath = TestUtils.GetSamplesFolder();
                 var sampleAppRoot = Path.Combine(samplesPath, "HelloWorld");
 
-                var exitCode = KpmTestUtils.ExecKpm(
+                var exitCode = DnuTestUtils.ExecDnu(
                     runtimeHomeDir,
                     subcommand: "build",
                     arguments: string.Format("{0} --configuration=Release --out {1}", sampleAppRoot, tempDir.DirPath));

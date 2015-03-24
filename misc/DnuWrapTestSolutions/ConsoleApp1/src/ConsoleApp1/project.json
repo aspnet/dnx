@@ -1,0 +1,12 @@
+{
+    "version": "1.0.0-*",
+    "dependencies": {
+        "LibraryAlpha": "1.0.0-*"
+    },
+    "commands": { 
+        "run" : "run"
+    },
+    "frameworks" : {
+        "dnx451" : { }
+    }
+}

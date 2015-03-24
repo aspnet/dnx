@@ -85,7 +85,7 @@ namespace Microsoft.Framework.FunctionalTestUtils
         public static DisposableDir GetTempTestSolution(string name)
         {
             var rootDir = ProjectResolver.ResolveRootDirectory(Directory.GetCurrentDirectory());
-            var sourceSolutionPath = Path.Combine(rootDir, "misc", "KpmWrapTestSolutions", name);
+            var sourceSolutionPath = Path.Combine(rootDir, "misc", "DnuWrapTestSolutions", name);
             var targetSolutionPath = CreateTempDir();
             CopyFolder(sourceSolutionPath, targetSolutionPath);
             return targetSolutionPath;

@@ -80,7 +80,7 @@ namespace Microsoft.Framework.Runtime
             }
 
             sb.AppendLine();
-            sb.AppendLine("Try running 'kpm restore'.");
+            sb.AppendLine("Try running 'dnu restore'.");
 
             return sb.ToString();
         }

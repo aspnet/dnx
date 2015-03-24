@@ -25,13 +25,13 @@ namespace Microsoft.Framework.PackageManager
 
             if (!string.IsNullOrEmpty(pathVariable))
             {
-                string kpmExecutable = PlatformHelper.IsWindows ? "kpm.cmd" : "kpm";
+                string dnuExecutable = PlatformHelper.IsWindows ? "dnu.cmd" : "dnu";
 
                 foreach (string folder in pathVariable.Split(new char[] { Path.PathSeparator }, StringSplitOptions.RemoveEmptyEntries))
                 {
-                    string kpmPath = Path.Combine(folder, kpmExecutable);
-                    if (File.Exists(kpmPath) &&
-                        string.Equals("bin", Directory.GetParent(kpmPath).Name))
+                    string dnuPath = Path.Combine(folder, dnuExecutable);
+                    if (File.Exists(dnuPath) &&
+                        string.Equals("bin", Directory.GetParent(dnuPath).Name))
                     {
                         // We found it
                         return Directory.GetParent(folder).Name;

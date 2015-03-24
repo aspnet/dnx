@@ -35,7 +35,7 @@ namespace Microsoft.Framework.PackageManager
         public int Main(string[] args)
         {
             var app = new CommandLineApplication();
-            app.Name = "kpm";
+            app.Name = "dnu";
 
             var optionVerbose = app.Option("-v|--verbose", "Show verbose output", CommandOptionType.NoValue);
             app.HelpOption("-?|-h|--help");

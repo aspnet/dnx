@@ -180,9 +180,9 @@ namespace Microsoft.Framework.PackageManager
 
             if (useLockFile && !lockFile.IsValidForProject(project))
             {
-                // Exhibit the same behavior as if it has been run with "kpm restore -lock"
+                // Exhibit the same behavior as if it has been run with "dnu restore --lock"
                 Reports.Information.WriteLine("Updating the invalid lock file with {0}",
-                    "kpm restore --lock".Yellow().Bold());
+                    "dnu restore --lock".Yellow().Bold());
                 useLockFile = false;
                 Lock = true;
             }
@@ -389,7 +389,7 @@ namespace Microsoft.Framework.PackageManager
                     return;
                 }
 
-                // "kpm restore" is case-sensitive
+                // "dnu restore" is case-sensitive
                 if (!string.Equals(node.Item.Match.Library.Name, node.LibraryRange.Name, StringComparison.Ordinal))
                 {
                     if (missingItems.Add(node.LibraryRange))

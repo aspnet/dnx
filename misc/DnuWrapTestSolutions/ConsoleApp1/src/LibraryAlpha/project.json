@@ -1,0 +1,13 @@
+{
+    "version": "1.0.0-*",
+    "dependencies": {
+        "LibraryBeta": "1.0.0-*"
+    },
+
+    "frameworks" : {
+        "dnx451" : { 
+            "dependencies": {
+            }
+        }
+    }
+}

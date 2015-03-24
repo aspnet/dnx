@@ -26,7 +26,7 @@ namespace Microsoft.Framework.PackageManager.Tests
             {
                 var buildOutpuDir = Path.Combine(tempDir, "output");
 
-                KpmTestUtils.ExecKpm(
+                DnuTestUtils.ExecDnu(
                     runtimeHomeDir,
                     "pack",
                     $"{projectDir} --out {buildOutpuDir} --configuration {configuration}");

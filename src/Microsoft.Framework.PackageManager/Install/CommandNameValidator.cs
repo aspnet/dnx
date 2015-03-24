@@ -15,7 +15,7 @@ namespace Microsoft.Framework.PackageManager
             "dotnet",
             "dotnetsdk",
             "k",
-            "kpm",
+            "dnu",
             "nuget"
         };
 

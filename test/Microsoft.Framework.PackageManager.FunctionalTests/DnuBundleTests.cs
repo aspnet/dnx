@@ -11,7 +11,7 @@ using Xunit;
 
 namespace Microsoft.Framework.PackageManager
 {
-    public class KpmBundleTests
+    public class DnuBundleTests
     {
         private readonly string _projectName = "TestProject";
         private readonly string _outputDirName = "BundleOutput";
@@ -53,7 +53,7 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
 
         [Theory]
         [MemberData("RuntimeComponents")]
-        public void KpmBundleWebApp_RootAsPublicFolder(string flavor, string os, string architecture)
+        public void DnuBundleWebApp_RootAsPublicFolder(string flavor, string os, string architecture)
         {
             var runtimeHomeDir = TestUtils.GetRuntimeHomeDir(flavor, os, architecture);
 
@@ -105,14 +105,14 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
     <add key=""{4}"" value="""" />
     <add key=""{5}"" value=""..\approot\src\{{0}}"" />
   </appSettings>
-</configuration>", Constants.WebConfigKpmPackagePath,
+</configuration>", Constants.WebConfigPackagePath,
                 Constants.WebConfigBootstrapperVersion,
                 Constants.WebConfigRuntimePath,
                 Constants.WebConfigRuntimeVersion,
                 Constants.WebConfigRuntimeFlavor,
                 Constants.WebConfigRuntimeAppBase);
 
-            using (var testEnv = new KpmTestEnvironment(runtimeHomeDir, _projectName, _outputDirName))
+            using (var testEnv = new DnuTestEnvironment(runtimeHomeDir, _projectName, _outputDirName))
             {
                 DirTree.CreateFromJson(projectStructure)
                     .WithFileContents("project.json", @"{
@@ -126,7 +126,7 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
                     { EnvironmentNames.Packages, Path.Combine(testEnv.ProjectPath, "packages") }
                 };
 
-                var exitCode = KpmTestUtils.ExecKpm(
+                var exitCode = DnuTestUtils.ExecDnu(
                     runtimeHomeDir,
                     subcommand: "bundle",
                     arguments: string.Format("--out {0} --wwwroot . --wwwroot-out wwwroot",
@@ -157,7 +157,7 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
 
         [Theory]
         [MemberData("RuntimeComponents")]
-        public void KpmBundleWebApp_SubfolderAsPublicFolder(string flavor, string os, string architecture)
+        public void DnuBundleWebApp_SubfolderAsPublicFolder(string flavor, string os, string architecture)
         {
             var runtimeHomeDir = TestUtils.GetRuntimeHomeDir(flavor, os, architecture);
 
@@ -207,14 +207,14 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
     <add key=""{4}"" value="""" />
     <add key=""{5}"" value=""..\approot\src\{{0}}"" />
   </appSettings>
-</configuration>", Constants.WebConfigKpmPackagePath,
+</configuration>", Constants.WebConfigPackagePath,
                 Constants.WebConfigBootstrapperVersion,
                 Constants.WebConfigRuntimePath,
                 Constants.WebConfigRuntimeVersion,
                 Constants.WebConfigRuntimeFlavor,
                 Constants.WebConfigRuntimeAppBase);
 
-            using (var testEnv = new KpmTestEnvironment(runtimeHomeDir, _projectName, _outputDirName))
+            using (var testEnv = new DnuTestEnvironment(runtimeHomeDir, _projectName, _outputDirName))
             {
                 DirTree.CreateFromJson(projectStructure)
                     .WithFileContents("project.json", @"{
@@ -228,7 +228,7 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
                     { EnvironmentNames.Packages, Path.Combine(testEnv.ProjectPath, "packages") }
                 };
 
-                var exitCode = KpmTestUtils.ExecKpm(
+                var exitCode = DnuTestUtils.ExecDnu(
                     runtimeHomeDir,
                     subcommand: "bundle",
                     arguments: string.Format("--out {0} --wwwroot-out wwwroot",
@@ -255,7 +255,7 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
 
         [Theory]
         [MemberData("RuntimeComponents")]
-        public void KpmBundleConsoleApp(string flavor, string os, string architecture)
+        public void DnuBundleConsoleApp(string flavor, string os, string architecture)
         {
             var runtimeHomeDir = TestUtils.GetRuntimeHomeDir(flavor, os, architecture);
 
@@ -281,7 +281,7 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
     }
   }".Replace("PROJECT_NAME", _projectName);
 
-            using (var testEnv = new KpmTestEnvironment(runtimeHomeDir, _projectName, _outputDirName))
+            using (var testEnv = new DnuTestEnvironment(runtimeHomeDir, _projectName, _outputDirName))
             {
                 DirTree.CreateFromJson(projectStructure)
                     .WithFileContents("project.json", @"{
@@ -294,7 +294,7 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
                     { EnvironmentNames.Packages, Path.Combine(testEnv.ProjectPath, "packages") }
                 };
 
-                var exitCode = KpmTestUtils.ExecKpm(
+                var exitCode = DnuTestUtils.ExecDnu(
                     runtimeHomeDir,
                     subcommand: "bundle",
                     arguments: string.Format("--out {0}",
@@ -362,7 +362,7 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
   }
 }".Replace("PROJECT_NAME", _projectName);
 
-            using (var testEnv = new KpmTestEnvironment(runtimeHomeDir, _projectName, _outputDirName))
+            using (var testEnv = new DnuTestEnvironment(runtimeHomeDir, _projectName, _outputDirName))
             {
                 DirTree.CreateFromJson(projectStructure)
                     .WithFileContents("project.json", @"{
@@ -386,7 +386,7 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
                     { EnvironmentNames.Packages, Path.Combine(testEnv.ProjectPath, "packages") }
                 };
 
-                var exitCode = KpmTestUtils.ExecKpm(
+                var exitCode = DnuTestUtils.ExecDnu(
                     runtimeHomeDir,
                     subcommand: "bundle",
                     arguments: string.Format("--out {0}",
@@ -467,7 +467,7 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
   }
 }".Replace("PROJECT_NAME", _projectName);
 
-            using (var testEnv = new KpmTestEnvironment(runtimeHomeDir, _projectName, _outputDirName))
+            using (var testEnv = new DnuTestEnvironment(runtimeHomeDir, _projectName, _outputDirName))
             {
                 DirTree.CreateFromJson(projectStructure)
                     .WithFileContents("project.json", @"{
@@ -486,7 +486,7 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
                     { EnvironmentNames.Packages, Path.Combine(testEnv.ProjectPath, "packages") }
                 };
 
-                var exitCode = KpmTestUtils.ExecKpm(
+                var exitCode = DnuTestUtils.ExecDnu(
                     runtimeHomeDir,
                     subcommand: "bundle",
                     arguments: string.Format("--out {0}",
@@ -574,7 +574,7 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
   }
 }".Replace("PROJECT_NAME", _projectName);
 
-            using (var testEnv = new KpmTestEnvironment(runtimeHomeDir, _projectName, _outputDirName))
+            using (var testEnv = new DnuTestEnvironment(runtimeHomeDir, _projectName, _outputDirName))
             {
                 DirTree.CreateFromJson(projectStructure)
                     .WithFileContents("project.json", @"{
@@ -586,7 +586,7 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
                     { EnvironmentNames.Packages, Path.Combine(testEnv.ProjectPath, "packages") }
                 };
 
-                var exitCode = KpmTestUtils.ExecKpm(
+                var exitCode = DnuTestUtils.ExecDnu(
                     runtimeHomeDir,
                     subcommand: "bundle",
                     arguments: string.Format("--out {0}",
@@ -644,7 +644,7 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
   }
 }".Replace("PROJECT_NAME", _projectName);
 
-            using (var testEnv = new KpmTestEnvironment(runtimeHomeDir, _projectName, _outputDirName))
+            using (var testEnv = new DnuTestEnvironment(runtimeHomeDir, _projectName, _outputDirName))
             {
                 DirTree.CreateFromJson(projectStructure)
                     .WithFileContents("project.json", @"{
@@ -656,7 +656,7 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
                     { EnvironmentNames.Packages, Path.Combine(testEnv.ProjectPath, "packages") }
                 };
 
-                var exitCode = KpmTestUtils.ExecKpm(
+                var exitCode = DnuTestUtils.ExecDnu(
                     runtimeHomeDir,
                     subcommand: "bundle",
                     arguments: string.Format("--out {0}",
@@ -680,7 +680,7 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
 
         [Theory]
         [MemberData("RuntimeComponents")]
-        public void KpmBundleWebApp_CopyExistingWebConfig(string flavor, string os, string architecture)
+        public void DnuBundleWebApp_CopyExistingWebConfig(string flavor, string os, string architecture)
         {
             var runtimeHomeDir = TestUtils.GetRuntimeHomeDir(flavor, os, architecture);
 
@@ -717,14 +717,14 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
     <add key=""{4}"" value="""" />
     <add key=""{5}"" value=""..\approot\src\{{0}}"" />
   </appSettings>
-</configuration>", Constants.WebConfigKpmPackagePath,
+</configuration>", Constants.WebConfigPackagePath,
                 Constants.WebConfigBootstrapperVersion,
                 Constants.WebConfigRuntimePath,
                 Constants.WebConfigRuntimeVersion,
                 Constants.WebConfigRuntimeFlavor,
                 Constants.WebConfigRuntimeAppBase);
 
-            using (var testEnv = new KpmTestEnvironment(runtimeHomeDir, _projectName, _outputDirName))
+            using (var testEnv = new DnuTestEnvironment(runtimeHomeDir, _projectName, _outputDirName))
             {
                 DirTree.CreateFromJson(projectStructure)
                     .WithFileContents("project.json", @"{
@@ -738,7 +738,7 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
                     { EnvironmentNames.Packages, Path.Combine(testEnv.ProjectPath, "packages") }
                 };
 
-                var exitCode = KpmTestUtils.ExecKpm(
+                var exitCode = DnuTestUtils.ExecDnu(
                     runtimeHomeDir,
                     subcommand: "bundle",
                     arguments: string.Format("--out {0} --wwwroot public --wwwroot-out wwwroot",
@@ -764,7 +764,7 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
 
         [Theory]
         [MemberData("RuntimeComponents")]
-        public void KpmBundleWebApp_UpdateExistingWebConfig(string flavor, string os, string architecture)
+        public void DnuBundleWebApp_UpdateExistingWebConfig(string flavor, string os, string architecture)
         {
             var runtimeHomeDir = TestUtils.GetRuntimeHomeDir(flavor, os, architecture);
 
@@ -796,7 +796,7 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
     <add key=""{4}"" value=""OLD_VALUE"" />
     <add key=""{5}"" value=""OLD_VALUE"" />
   </appSettings>
-</configuration>", Constants.WebConfigKpmPackagePath,
+</configuration>", Constants.WebConfigPackagePath,
                 Constants.WebConfigBootstrapperVersion,
                 Constants.WebConfigRuntimePath,
                 Constants.WebConfigRuntimeVersion,
@@ -817,14 +817,14 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
     <add key=""{4}"" value="""" />
     <add key=""{5}"" value=""..\approot\src\{{0}}"" />
   </appSettings>
-</configuration>", Constants.WebConfigKpmPackagePath,
+</configuration>", Constants.WebConfigPackagePath,
                 Constants.WebConfigBootstrapperVersion,
                 Constants.WebConfigRuntimePath,
                 Constants.WebConfigRuntimeVersion,
                 Constants.WebConfigRuntimeFlavor,
                 Constants.WebConfigRuntimeAppBase);
 
-            using (var testEnv = new KpmTestEnvironment(runtimeHomeDir, _projectName, _outputDirName))
+            using (var testEnv = new DnuTestEnvironment(runtimeHomeDir, _projectName, _outputDirName))
             {
                 DirTree.CreateFromJson(projectStructure)
                     .WithFileContents("project.json", @"{
@@ -838,7 +838,7 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
                     { EnvironmentNames.Packages, Path.Combine(testEnv.ProjectPath, "packages") }
                 };
 
-                var exitCode = KpmTestUtils.ExecKpm(
+                var exitCode = DnuTestUtils.ExecDnu(
                     runtimeHomeDir,
                     subcommand: "bundle",
                     arguments: string.Format("--out {0} --wwwroot public --wwwroot-out wwwroot",
@@ -884,7 +884,7 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
   }
 }".Replace("PROJECT_NAME", _projectName);
 
-            using (var testEnv = new KpmTestEnvironment(runtimeHomeDir, _projectName, _outputDirName))
+            using (var testEnv = new DnuTestEnvironment(runtimeHomeDir, _projectName, _outputDirName))
             {
                 DirTree.CreateFromJson(projectStructure)
                     .WithFileContents("project.json", @"{
@@ -904,7 +904,7 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
                     { EnvironmentNames.Packages, Path.Combine(testEnv.ProjectPath, "packages") }
                 };
 
-                var exitCode = KpmTestUtils.ExecKpm(
+                var exitCode = DnuTestUtils.ExecDnu(
                     runtimeHomeDir,
                     subcommand: "bundle",
                     arguments: string.Format("--out {0}",
@@ -978,7 +978,7 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
   }
 }".Replace("PROJECT_NAME", _projectName).Replace("RUNTIME_PACKAGE_NAME", runtimeName);
 
-            using (var testEnv = new KpmTestEnvironment(runtimeHomeDir, _projectName, _outputDirName))
+            using (var testEnv = new DnuTestEnvironment(runtimeHomeDir, _projectName, _outputDirName))
             {
                 DirTree.CreateFromJson(projectStructure)
                     .WithFileContents("project.json", @"{
@@ -1000,7 +1000,7 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
                     { EnvironmentNames.Trace, "1" }
                 };
 
-                var exitCode = KpmTestUtils.ExecKpm(
+                var exitCode = DnuTestUtils.ExecDnu(
                     runtimeHomeDir,
                     subcommand: "bundle",
                     arguments: string.Format("--out {0} --runtime {1}",
@@ -1135,7 +1135,7 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
                     File.Delete(lockFilePath);
                 }
 
-                var exitCode = KpmTestUtils.ExecKpm(
+                var exitCode = DnuTestUtils.ExecDnu(
                     runtimeHomeDir,
                     subcommand: "bundle",
                     arguments: string.Format("--no-source --out {0}", bundleOutputPath),
@@ -1236,7 +1236,7 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
                 TestUtils.CopyFolder(TestUtils.GetXreTestAppPath(testApp), appPath);
 
                 // Generate lockfile for the HelloWorld app
-                var exitCode = KpmTestUtils.ExecKpm(
+                var exitCode = DnuTestUtils.ExecDnu(
                     runtimeHomeDir,
                     subcommand: "restore",
                     arguments: string.Empty,
@@ -1245,7 +1245,7 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
 
                 Assert.Equal(0, exitCode);
 
-                exitCode = KpmTestUtils.ExecKpm(
+                exitCode = DnuTestUtils.ExecDnu(
                     runtimeHomeDir,
                     subcommand: "bundle",
                     arguments: string.Format("--no-source --out {0}", bundleOutputPath),

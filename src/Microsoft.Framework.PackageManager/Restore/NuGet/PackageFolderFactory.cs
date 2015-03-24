@@ -25,7 +25,7 @@ namespace Microsoft.Framework.PackageManager
             }
             else
             {
-                return new KpmPackageFolder(path, ignoreFailedSources, reports);
+                return new PackageFolder(path, ignoreFailedSources, reports);
             }
         }
     }

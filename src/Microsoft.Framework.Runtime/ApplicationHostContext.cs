@@ -85,7 +85,7 @@ namespace Microsoft.Framework.Runtime
             if (!validLockFile && !skipLockFileValidation)
             {
                 // We don't add NuGetDependencyProvider to DependencyWalker
-                // It will leave all NuGet packages unresolved and give error message asking users to run "kpm restore"
+                // It will leave all NuGet packages unresolved and give error message asking users to run "dnu restore"
                 DependencyWalker = new DependencyWalker(new IDependencyProvider[] {
                     ProjectDepencyProvider,
                     referenceAssemblyDependencyResolver,
