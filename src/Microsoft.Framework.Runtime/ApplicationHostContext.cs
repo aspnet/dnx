@@ -82,7 +82,7 @@ namespace Microsoft.Framework.Runtime
                 }
             }
 
-            if (!validLockFile && !skipLockFileValidation)
+            if ((!validLockFile && !skipLockFileValidation) || !lockFileExists)
             {
                 // We don't add NuGetDependencyProvider to DependencyWalker
                 // It will leave all NuGet packages unresolved and give error message asking users to run "dnu restore"
