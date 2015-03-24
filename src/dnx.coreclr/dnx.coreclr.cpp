@@ -481,7 +481,8 @@ extern "C" __declspec(dllexport) HRESULT __stdcall CallApplicationMain(PCALL_APP
     DWORD domainId;
     DWORD dwFlagsAppDomain =
         APPDOMAIN_ENABLE_PLATFORM_SPECIFIC_APPS |
-        APPDOMAIN_ENABLE_PINVOKE_AND_CLASSIC_COMINTEROP;
+        APPDOMAIN_ENABLE_PINVOKE_AND_CLASSIC_COMINTEROP | 
+        APPDOMAIN_DISABLE_TRANSPARENCY_ENFORCEMENT;
 
     LPCWSTR szAssemblyName = L"dnx.coreclr.managed, Version=0.1.0.0";
     LPCWSTR szEntryPointTypeName = L"DomainManager";
