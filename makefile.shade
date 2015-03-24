@@ -60,6 +60,7 @@ var MANAGED_PROJECTS = '${FindAllProjects(
     "Microsoft.Framework.PackageManager",
     "Microsoft.Framework.Project",
     "Microsoft.Framework.Runtime",
+	"Microsoft.Framework.Runtime.Caching",
     "Microsoft.Framework.Runtime.Interfaces",
     "Microsoft.Framework.Runtime.Common",
     "Microsoft.Framework.Runtime.Loader",

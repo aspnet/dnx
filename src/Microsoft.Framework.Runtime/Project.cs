@@ -19,7 +19,7 @@ namespace Microsoft.Framework.Runtime
     {
         public const string ProjectFileName = "project.json";
 
-        internal static TypeInformation DefaultLanguageService = new TypeInformation("Microsoft.Framework.Runtime.Roslyn", "Microsoft.Framework.Runtime.Roslyn.RoslynProjectReferenceProvider");
+        internal static TypeInformation DefaultLanguageService = new TypeInformation("Microsoft.Framework.Runtime.Roslyn", "Microsoft.Framework.Runtime.Roslyn.RoslynProjectCompiler");
 
         private static readonly CompilerOptions _emptyOptions = new CompilerOptions();
 
