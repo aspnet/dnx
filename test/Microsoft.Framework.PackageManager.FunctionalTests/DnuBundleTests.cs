@@ -98,15 +98,13 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
             var outputWebConfigTemplate = string.Format(@"<?xml version=""1.0"" encoding=""utf-8""?>
 <configuration>
   <appSettings>
-    <add key=""{0}"" value=""..\approot\packages"" />
-    <add key=""{1}"" value="""" />
-    <add key=""{2}"" value=""..\approot\packages"" />
+    <add key=""{0}"" value="""" />
+    <add key=""{1}"" value=""..\approot\packages"" />
+    <add key=""{2}"" value="""" />
     <add key=""{3}"" value="""" />
-    <add key=""{4}"" value="""" />
-    <add key=""{5}"" value=""..\approot\src\{{0}}"" />
+    <add key=""{4}"" value=""..\approot\src\{{0}}"" />
   </appSettings>
-</configuration>", Constants.WebConfigPackagePath,
-                Constants.WebConfigBootstrapperVersion,
+</configuration>", Constants.WebConfigBootstrapperVersion,
                 Constants.WebConfigRuntimePath,
                 Constants.WebConfigRuntimeVersion,
                 Constants.WebConfigRuntimeFlavor,
@@ -200,15 +198,13 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
             var outputWebConfigTemplate = string.Format(@"<?xml version=""1.0"" encoding=""utf-8""?>
 <configuration>
   <appSettings>
-    <add key=""{0}"" value=""..\approot\packages"" />
-    <add key=""{1}"" value="""" />
-    <add key=""{2}"" value=""..\approot\packages"" />
+    <add key=""{0}"" value="""" />
+    <add key=""{1}"" value=""..\approot\packages"" />
+    <add key=""{2}"" value="""" />
     <add key=""{3}"" value="""" />
-    <add key=""{4}"" value="""" />
-    <add key=""{5}"" value=""..\approot\src\{{0}}"" />
+    <add key=""{4}"" value=""..\approot\src\{{0}}"" />
   </appSettings>
-</configuration>", Constants.WebConfigPackagePath,
-                Constants.WebConfigBootstrapperVersion,
+</configuration>", Constants.WebConfigBootstrapperVersion,
                 Constants.WebConfigRuntimePath,
                 Constants.WebConfigRuntimeVersion,
                 Constants.WebConfigRuntimeFlavor,
@@ -710,15 +706,13 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
     <add key=""non-related-key"" value=""non-related-value"" />
   </nonRelatedElement>
   <appSettings>
-    <add key=""{0}"" value=""..\approot\packages"" />
-    <add key=""{1}"" value="""" />
-    <add key=""{2}"" value=""..\approot\packages"" />
+    <add key=""{0}"" value="""" />
+    <add key=""{1}"" value=""..\approot\packages"" />
+    <add key=""{2}"" value="""" />
     <add key=""{3}"" value="""" />
-    <add key=""{4}"" value="""" />
-    <add key=""{5}"" value=""..\approot\src\{{0}}"" />
+    <add key=""{4}"" value=""..\approot\src\{{0}}"" />
   </appSettings>
-</configuration>", Constants.WebConfigPackagePath,
-                Constants.WebConfigBootstrapperVersion,
+</configuration>", Constants.WebConfigBootstrapperVersion,
                 Constants.WebConfigRuntimePath,
                 Constants.WebConfigRuntimeVersion,
                 Constants.WebConfigRuntimeFlavor,
@@ -794,10 +788,8 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
     <add key=""{2}"" value=""OLD_VALUE"" />
     <add key=""{3}"" value=""OLD_VALUE"" />
     <add key=""{4}"" value=""OLD_VALUE"" />
-    <add key=""{5}"" value=""OLD_VALUE"" />
   </appSettings>
-</configuration>", Constants.WebConfigPackagePath,
-                Constants.WebConfigBootstrapperVersion,
+</configuration>", Constants.WebConfigBootstrapperVersion,
                 Constants.WebConfigRuntimePath,
                 Constants.WebConfigRuntimeVersion,
                 Constants.WebConfigRuntimeFlavor,
@@ -810,15 +802,13 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
   </nonRelatedElement>
   <appSettings>
     <add key=""non-related-key"" value=""OLD_VALUE"" />
-    <add key=""{0}"" value=""..\approot\packages"" />
-    <add key=""{1}"" value="""" />
-    <add key=""{2}"" value=""..\approot\packages"" />
+    <add key=""{0}"" value="""" />
+    <add key=""{1}"" value=""..\approot\packages"" />
+    <add key=""{2}"" value="""" />
     <add key=""{3}"" value="""" />
-    <add key=""{4}"" value="""" />
-    <add key=""{5}"" value=""..\approot\src\{{0}}"" />
+    <add key=""{4}"" value=""..\approot\src\{{0}}"" />
   </appSettings>
-</configuration>", Constants.WebConfigPackagePath,
-                Constants.WebConfigBootstrapperVersion,
+</configuration>", Constants.WebConfigBootstrapperVersion,
                 Constants.WebConfigRuntimePath,
                 Constants.WebConfigRuntimeVersion,
                 Constants.WebConfigRuntimeFlavor,

@@ -439,7 +439,6 @@ namespace Microsoft.Framework.PackageManager.Bundle
 
             var keyValuePairs = new Dictionary<string, string>()
             {
-                { Runtime.Constants.WebConfigPackagePath, relativePackagesPath},
                 { Runtime.Constants.WebConfigBootstrapperVersion, GetBootstrapperVersion(root)},
                 { Runtime.Constants.WebConfigRuntimePath, relativePackagesPath},
                 { Runtime.Constants.WebConfigRuntimeVersion, GetRuntimeVersion(defaultRuntime)},
