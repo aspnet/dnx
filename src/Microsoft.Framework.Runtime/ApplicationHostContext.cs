@@ -27,7 +27,8 @@ namespace Microsoft.Framework.Runtime
                                       ICache cache,
                                       ICacheContextAccessor cacheContextAccessor,
                                       INamedCacheDependencyProvider namedCacheDependencyProvider,
-                                      IAssemblyLoadContextFactory loadContextFactory = null)
+                                      IAssemblyLoadContextFactory loadContextFactory = null,
+                                      bool skipLockFileValidation = false)
         {
             ProjectDirectory = projectDirectory;
             Configuration = configuration;
@@ -67,7 +68,7 @@ namespace Microsoft.Framework.Runtime
                 var lockFile = lockFileFormat.Read(projectLockJsonPath);
                 validLockFile = lockFile.IsValidForProject(Project);
 
-                if (validLockFile)
+                if (validLockFile || skipLockFileValidation)
                 {
                     NuGetDependencyProvider.ApplyLockFile(lockFile);
 
@@ -81,9 +82,9 @@ namespace Microsoft.Framework.Runtime
                 }
             }
 
-            if (!lockFileExists || !validLockFile)
+            if (!validLockFile && !skipLockFileValidation)
             {
-                // If we are unable to apply the lockfile, we don't add NuGetDependencyProvider to DependencyWalker
+                // We don't add NuGetDependencyProvider to DependencyWalker
                 // It will leave all NuGet packages unresolved and give error message asking users to run "kpm restore"
                 DependencyWalker = new DependencyWalker(new IDependencyProvider[] {
                     ProjectDepencyProvider,

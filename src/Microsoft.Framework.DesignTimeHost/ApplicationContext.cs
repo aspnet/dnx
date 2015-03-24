@@ -1044,7 +1044,8 @@ namespace Microsoft.Framework.DesignTimeHost
                                                                         cache: _cache,
                                                                         cacheContextAccessor: _cacheContextAccessor,
                                                                         namedCacheDependencyProvider: _namedDependencyProvider,
-                                                                        loadContextFactory: GetRuntimeLoadContextFactory(project));
+                                                                        loadContextFactory: GetRuntimeLoadContextFactory(project),
+                                                                        skipLockFileValidation: true);
 
                 applicationHostContext.DependencyWalker.Walk(project.Name, project.Version, frameworkName);
 
