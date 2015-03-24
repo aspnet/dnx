@@ -17,7 +17,7 @@ The .NET Execution Environment contains the code required to bootstrap and run a
 
 ### Setting up a development environment for incremental compile
 
-After successfully building the solution using the `build` script, you can create a dev symlink to the built DNX using the `build dev-install` command. The command creates symlinks from your user profile's XRE folder to the compiled binaries so you can do incremental builds without having to manually copy files around.
+After successfully building the solution using the `build` script, you can create a dev symlink to the built DNX using the `build dev-install` command. The command creates symlinks from your user profile's DNX folder to the compiled binaries so you can do incremental builds without having to manually copy files around.
 
 After running `build dev-install` and `dnvm list` you will see a few new runtimes ending with `-dev`. Those are the symlinks created by the build script:
 
@@ -32,7 +32,7 @@ Active Version           Runtime Architecture Location                          
        1.0.0-dev         mono                 C:\Users\victorhu\.dnx\runtimes mono-dev
 ```
 
-If you want to remove the symlinks, simply delete them from your user profile's XRE folder.
+If you want to remove the symlinks, simply delete them from your user profile's DNX folder.
 
 ### Initialize the submodules
 
