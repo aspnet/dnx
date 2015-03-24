@@ -40,20 +40,25 @@ namespace Microsoft.Framework.PackageManager.Bundle
         public string WwwRootOut { get; set; }
         public bool IsPackage { get; private set; }
 
-        public void Emit(BundleRoot root)
+        public bool Emit(BundleRoot root)
         {
             root.Reports.Quiet.WriteLine("Using {0} dependency {1} for {2}", _libraryDescription.Type,
                 _libraryDescription.Identity, _libraryDescription.Framework.ToString().Yellow().Bold());
 
+            var success = true;
+
             if (root.NoSource || IsWrappingAssembly())
             {
-                EmitNupkg(root);
+                success = EmitNupkg(root);
             }
             else
             {
                 EmitSource(root);
             }
+
             root.Reports.Quiet.WriteLine();
+
+            return success;
         }
 
         private void EmitSource(BundleRoot root)
@@ -82,7 +87,7 @@ namespace Microsoft.Framework.PackageManager.Bundle
             _applicationBase = Path.Combine("..", BundleRoot.AppRootName, "src", project.Name);
         }
 
-        private void EmitNupkg(BundleRoot root)
+        private bool EmitNupkg(BundleRoot root)
         {
             root.Reports.Quiet.WriteLine("  Packing nupkg from {0} dependency {1}",
                 _libraryDescription.Type, _libraryDescription.Identity.Name);
@@ -112,7 +117,7 @@ namespace Microsoft.Framework.PackageManager.Bundle
             var buildManager = new BuildManager(root.HostServices, buildOptions);
             if (!buildManager.Build())
             {
-                return;
+                return false;
             }
 
             // Extract the generated nupkg to target path
@@ -172,6 +177,8 @@ namespace Microsoft.Framework.PackageManager.Bundle
             srcNupkgPath = Path.ChangeExtension(srcNupkgPath, "symbols.nupkg");
             root.Reports.Quiet.WriteLine("Removing {0}", srcNupkgPath);
             File.Delete(srcNupkgPath);
+
+            return true;
         }
 
         private void CopyRelativeSources(Runtime.Project project)

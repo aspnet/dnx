@@ -257,7 +257,7 @@ namespace Microsoft.Framework.PackageManager.Bundle
                 }
             }
 
-            root.Emit();
+            var success = root.Emit();
 
             if (!ScriptExecutor.Execute(project, "postbundle", getVariable))
             {
@@ -274,7 +274,7 @@ namespace Microsoft.Framework.PackageManager.Bundle
             sw.Stop();
 
             _options.Reports.Information.WriteLine("Time elapsed {0}", sw.Elapsed);
-            return !anyUnresolvedDependency;
+            return !anyUnresolvedDependency && success;
         }
 
         bool TryAddRuntime(BundleRoot root, FrameworkName frameworkName, string runtimePath)
