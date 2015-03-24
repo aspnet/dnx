@@ -28,6 +28,7 @@ namespace Microsoft.Framework.Runtime.Common.CommandLine
 
         public CommandLineApplication Parent { get; set; }
         public string Name { get; set; }
+        public string FullName { get; set; }
         public string Syntax { get; set; }
         public string Description { get; set; }
         public List<CommandOption> Options { get; private set; }
@@ -322,7 +323,6 @@ namespace Microsoft.Framework.Runtime.Common.CommandLine
                 headerBuilder.Insert(6, string.Format(" {0}", cmd.Name));
             }
 
-            var version = string.Format("Microsoft .NET Execution environment v{0}{1}{1}", VersionGetter(), Environment.NewLine);
             CommandLineApplication target;
 
             if (commandName == null || string.Equals(Name, commandName, StringComparison.OrdinalIgnoreCase))
@@ -391,7 +391,7 @@ namespace Microsoft.Framework.Runtime.Common.CommandLine
                 }
             }
             headerBuilder.AppendLine();
-            Console.Write("{0}{1}{2}{3}{4}", version, headerBuilder, argumentsBuilder, optionsBuilder, commandsBuilder);
+            Console.Write("{0}{1}{1}{2}{3}{4}{5}", FullName, Environment.NewLine, headerBuilder, argumentsBuilder, optionsBuilder, commandsBuilder);
         }
 
         public void ShowVersion()

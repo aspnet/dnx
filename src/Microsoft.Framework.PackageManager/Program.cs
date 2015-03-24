@@ -36,6 +36,7 @@ namespace Microsoft.Framework.PackageManager
         {
             var app = new CommandLineApplication();
             app.Name = "dnu";
+            app.FullName = string.Format("Microsoft .NET Utility v{0}", GetVersion());
 
             var optionVerbose = app.Option("-v|--verbose", "Show verbose output", CommandOptionType.NoValue);
             app.HelpOption("-?|-h|--help");

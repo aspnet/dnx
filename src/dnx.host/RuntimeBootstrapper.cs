@@ -59,6 +59,7 @@ namespace dnx.host
         {
             var app = new CommandLineApplication(throwOnUnexpectedArg: false);
             app.Name = Constants.BootstrapperExeName;
+            app.FullName = string.Format("{0} v{1}", Constants.BootstrapperFullName, GetVersion());
 
             // These options were handled in the native code, but got passed through here.
             // We just need to capture them and clean them up.
