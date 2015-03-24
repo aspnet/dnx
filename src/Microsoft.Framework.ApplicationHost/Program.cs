@@ -115,7 +115,7 @@ namespace Microsoft.Framework.ApplicationHost
         {
             var app = new CommandLineApplication(throwOnUnexpectedArg: false);
             app.Name = "Microsoft.Framework.ApplicationHost";
-            app.FullName = string.Format("Microsoft.Framework.ApplicationHost v{0}", GetVersion());
+            app.FullName = app.Name;
             var optionWatch = app.Option("--watch", "Watch file changes", CommandOptionType.NoValue);
             var optionPackages = app.Option("--packages <PACKAGE_DIR>", "Directory containing packages",
                 CommandOptionType.SingleValue);

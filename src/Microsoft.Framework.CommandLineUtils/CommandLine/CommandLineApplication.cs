@@ -105,7 +105,7 @@ namespace Microsoft.Framework.Runtime.Common.CommandLine
         {
             Invoke = invoke;
         }
-        
+
         public void OnExecute(Func<Task<int>> invoke)
         {
             Invoke = () => invoke().Result;
@@ -391,7 +391,9 @@ namespace Microsoft.Framework.Runtime.Common.CommandLine
                 }
             }
             headerBuilder.AppendLine();
-            Console.Write("{0}{1}{1}{2}{3}{4}{5}", FullName, Environment.NewLine, headerBuilder, argumentsBuilder, optionsBuilder, commandsBuilder);
+
+            var VersionAndName = string.Format("{0} v{1}{2}{2}", FullName, VersionGetter(), Environment.NewLine);
+            Console.Write("{0}{1}{2}{3}{4}", VersionAndName, headerBuilder, argumentsBuilder, optionsBuilder, commandsBuilder);
         }
 
         public void ShowVersion()
