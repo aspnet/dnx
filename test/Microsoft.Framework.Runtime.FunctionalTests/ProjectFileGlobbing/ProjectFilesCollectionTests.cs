@@ -123,17 +123,6 @@ namespace Microsoft.Framework.Runtime.FunctionalTests.ProjectFileGlobbing
         }
 
         [Fact]
-        public void DefaultSearchPathForContents()
-        {
-            var testFilesCollection = CreateFilesCollection(@"{}", "src\\project");
-            VerifyFilePathsCollection(testFilesCollection.ContentFiles,
-                @"src\project\content1.txt",
-                @"src\project\compiler\preprocess\sub\sub\preprocess-source3.txt",
-                @"src\project\compiler\shared\shared1.txt",
-                @"src\project\compiler\shared\sub\shared2.txt");
-        }
-
-        [Fact]
         public void DefaultSearchPathForResources()
         {
             var testFilesCollection = CreateFilesCollection(@"{}", "src\\project");
@@ -161,17 +150,6 @@ namespace Microsoft.Framework.Runtime.FunctionalTests.ProjectFileGlobbing
                 @"src\project\compiler\shared\shared1.cs",
                 @"src\project\compiler\shared\sub\shared2.cs",
                 @"src\project\compiler\shared\sub\sub\sharedsub.cs");
-        }
-
-        [Fact]
-        public void DefaultSearchPathForBundleExcludeFiles()
-        {
-            var testFilesCollection = CreateFilesCollection(@"{}", "src\\project");
-            VerifyFilePathsCollection(testFilesCollection.BundleExcludeFiles,
-                @"src\project\bin\object",
-                @"src\project\obj\object.o",
-                @"src\project\.hidden/file1.hid",
-                @"src\project\.hidden/sub/file2.hid");
         }
 
         [Fact]
@@ -467,22 +445,6 @@ namespace Microsoft.Framework.Runtime.FunctionalTests.ProjectFileGlobbing
                 @"src\project2\sub\source3.cs",
                 @"src\project2\sub2\source4.cs",
                 @"src\project2\sub2\source5.cs");
-        }
-
-        [Fact]
-        public void IncludeRecursivelyWithExtension()
-        {
-            var testFilesCollection = CreateFilesCollection(@"
-{
-    ""bundleExclude"": ""**.txt""
-}
-", @"src\project");
-
-            VerifyFilePathsCollection(testFilesCollection.BundleExcludeFiles,
-                "src/project/compiler/preprocess/sub/sub/preprocess-source3.txt",
-                "src/project/compiler/shared/shared1.txt",
-                "src/project/compiler/shared/sub/shared2.txt",
-                "src/project/content1.txt");
         }
 
         protected override DisposableProjectContext CreateContext()

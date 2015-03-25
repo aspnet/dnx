@@ -2,6 +2,7 @@
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
@@ -17,15 +18,45 @@ namespace Microsoft.Framework.PackageManager.Bundle
             FileOperationUtils.DeleteFolder(folderPath);
         }
 
-        public void Copy(string sourcePath, string targetPath)
+        public void Copy(IEnumerable<string> sourceFiles, string sourceDirectory, string targetDirectory)
         {
-            Copy(
-                sourcePath, 
-                targetPath, 
-                shouldInclude: _ => true);
-        }
+            if (sourceFiles == null)
+            {
+                throw new ArgumentNullException(nameof(sourceFiles));
+            }
 
-        public void Copy(string sourcePath, string targetPath, Func<string, bool> shouldInclude)
+            sourceDirectory = PathUtility.EnsureTrailingSlash(sourceDirectory);
+            targetDirectory = PathUtility.EnsureTrailingSlash(targetDirectory);
+
+            foreach (var sourceFilePath in sourceFiles)
+            {
+                var fileName = Path.GetFileName(sourceFilePath);
+                Debug.Assert(fileName != null, "fileName != null");
+
+                var targetFilePath = sourceFilePath.Replace(sourceDirectory, targetDirectory);
+                var targetFileParentFolder = Path.GetDirectoryName(targetFilePath);
+
+                // Create directory before copying a file
+                if (!Directory.Exists(targetFileParentFolder))
+                {
+                    Directory.CreateDirectory(targetFileParentFolder);
+                }
+
+                File.Copy(
+                    sourceFilePath,
+                    targetFilePath,
+                    overwrite: true);
+
+                // clear read-only bit if set
+                var fileAttributes = File.GetAttributes(targetFilePath);
+                if ((fileAttributes & FileAttributes.ReadOnly) == FileAttributes.ReadOnly)
+                {
+                    File.SetAttributes(targetFilePath, fileAttributes & ~FileAttributes.ReadOnly);
+                }
+            }
+        }
+        
+        public void Copy(string sourcePath, string targetPath)
         {
             sourcePath = PathUtility.EnsureTrailingSlash(sourcePath);
             targetPath = PathUtility.EnsureTrailingSlash(targetPath);
@@ -37,11 +68,6 @@ namespace Microsoft.Framework.PackageManager.Bundle
             {
                 var fileName = Path.GetFileName(sourceFilePath);
                 Debug.Assert(fileName != null, "fileName != null");
-
-                if (!shouldInclude(sourceFilePath))
-                {
-                    continue;
-                }
 
                 var targetFilePath = sourceFilePath.Replace(sourcePath, targetPath);
                 var targetFileParentFolder = Path.GetDirectoryName(targetFilePath);
