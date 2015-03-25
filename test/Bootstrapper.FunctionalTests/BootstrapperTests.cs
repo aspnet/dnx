@@ -74,7 +74,7 @@ namespace Bootstrapper.FunctionalTests
 
         [Theory]
         [MemberData("RuntimeComponents")]
-        public void BootstrapperInvokesApplicationHostWithInferredAppBase(string flavor, string os, string architecture)
+        public void BootstrapperInvokesApplicationHostWithInferredAppBase_ProjectDirAsArgument(string flavor, string os, string architecture)
         {
             using (var runtimeHomeDir = TestUtils.GetRuntimeHomeDir(flavor, os, architecture))
             {
@@ -83,6 +83,34 @@ namespace Bootstrapper.FunctionalTests
                 var exitCode = BootstrapperTestUtils.ExecBootstrapper(
                     runtimeHomeDir,
                     arguments: string.Format("{0} run", sampleAppRoot),
+                    stdOut: out stdOut,
+                    stdErr: out stdErr,
+                    environment: new Dictionary<string, string> { { EnvironmentNames.Trace, null } });
+
+                Assert.Equal(0, exitCode);
+                Assert.Equal(@"Hello World!
+Hello, code!
+I
+can
+customize
+the
+default
+command
+", stdOut);
+            }
+        }
+
+        [Theory]
+        [MemberData("RuntimeComponents")]
+        public void BootstrapperInvokesApplicationHostWithInferredAppBase_ProjectFileAsArgument(string flavor, string os, string architecture)
+        {
+            using (var runtimeHomeDir = TestUtils.GetRuntimeHomeDir(flavor, os, architecture))
+            {
+                var sampleAppProjectFile = Path.Combine(TestUtils.GetSamplesFolder(), "HelloWorld", Project.ProjectFileName);
+                string stdOut, stdErr;
+                var exitCode = BootstrapperTestUtils.ExecBootstrapper(
+                    runtimeHomeDir,
+                    arguments: string.Format("{0} run", sampleAppProjectFile),
                     stdOut: out stdOut,
                     stdErr: out stdErr,
                     environment: new Dictionary<string, string> { { EnvironmentNames.Trace, null } });

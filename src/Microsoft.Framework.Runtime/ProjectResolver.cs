@@ -49,7 +49,7 @@ namespace Microsoft.Framework.Runtime
 
         private void Initialize(string projectPath, string rootPath)
         {
-            _searchPaths.Add(Path.GetDirectoryName(projectPath));
+            _searchPaths.Add(new DirectoryInfo(projectPath).Parent.FullName);
 
             GlobalSettings global;
 
