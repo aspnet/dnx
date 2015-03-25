@@ -392,8 +392,15 @@ namespace Microsoft.Framework.Runtime.Common.CommandLine
             }
             headerBuilder.AppendLine();
 
-            var VersionAndName = string.Format("{0} v{1}{2}{2}", FullName, VersionGetter(), Environment.NewLine);
-            Console.Write("{0}{1}{2}{3}{4}", VersionAndName, headerBuilder, argumentsBuilder, optionsBuilder, commandsBuilder);
+            var versionAndName = new StringBuilder(FullName);
+            if (VersionGetter != null)
+            {
+                versionAndName.Append(string.Format(" v{0}", VersionGetter()));
+                versionAndName.AppendLine();
+            }
+            versionAndName.AppendLine();
+
+            Console.Write("{0}{1}{2}{3}{4}", versionAndName, headerBuilder, argumentsBuilder, optionsBuilder, commandsBuilder);
         }
 
         public void ShowVersion()
