@@ -321,7 +321,7 @@ int CallApplicationProcessMain(int argc, LPTSTR argv[])
         goto Finished;
     }
     if (m_fVerboseTrace)
-        ::_tprintf_s(_T("Found DLL Export: %s\r\n"), pszCallApplicationMainName);
+        printf_s("Found DLL Export: %s\r\n", pszCallApplicationMainName);
 
     hr = pfnCallApplicationMain(&data);
     if (SUCCEEDED(hr))

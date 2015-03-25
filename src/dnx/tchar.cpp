@@ -1,7 +1,7 @@
 #include "stdafx.h"
 #include "errno.h"
 
-int _tprintf_s(LPCTSTR format, ...)
+int printf_s(LPCTSTR format, ...)
 {
     va_list args;
     va_start(args, format);
