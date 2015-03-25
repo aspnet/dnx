@@ -24,13 +24,13 @@ public class EntryPoint
             {
                 break;
             }
-            if(arguments[i] == "--appbase")
+            if (arguments[i] == "--appbase")
             {
                 //skip path argument
                 ++i;
                 continue;
             }
-            if(arguments[i] == "--debug")
+            if (arguments[i] == "--debug")
             {
                 hasDebugWaitFlag = true;
                 break;

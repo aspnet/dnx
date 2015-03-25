@@ -65,7 +65,6 @@ namespace dnx.host
             // We just need to capture them and clean them up.
             var optionAppbase = app.Option("--appbase <PATH>", "Application base directory path",
                 CommandOptionType.SingleValue);
-            var optionDebug = app.Option("--debug", "Wait for debugger to attach", CommandOptionType.NoValue);
             var optionLib = app.Option("--lib <LIB_PATHS>", "Paths used for library look-up",
                 CommandOptionType.MultipleValue);
             var optionDebug = app.Option("--debug", "Waits for the debugger to attach before beginning execution.",
