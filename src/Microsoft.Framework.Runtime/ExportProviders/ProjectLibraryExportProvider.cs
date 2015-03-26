@@ -13,7 +13,7 @@ namespace Microsoft.Framework.Runtime
     {
         private readonly IProjectResolver _projectResolver;
         private readonly IServiceProvider _serviceProvider;
-        private readonly Dictionary<TypeInformation, IProjectCompiler> _projectReferenceProviders = new Dictionary<TypeInformation, IProjectCompiler>();
+        private readonly Dictionary<TypeInformation, IProjectCompiler> _projectCompilers = new Dictionary<TypeInformation, IProjectCompiler>();
         private readonly Lazy<IAssemblyLoadContext> _projectLoadContext;
 
         public ProjectLibraryExportProvider(IProjectResolver projectResolver,
@@ -79,7 +79,7 @@ namespace Microsoft.Framework.Runtime
                     var provider = project.LanguageServices?.ProjectReferenceProvider ?? Project.DefaultLanguageService;
 
                     // Find the default project exporter
-                    var projectReferenceProvider = _projectReferenceProviders.GetOrAdd(provider, typeInfo =>
+                    var projectCompiler = _projectCompilers.GetOrAdd(provider, typeInfo =>
                     {
                         return LanguageServices.CreateService<IProjectCompiler>(_serviceProvider, _projectLoadContext.Value, typeInfo);
                     });
@@ -95,7 +95,7 @@ namespace Microsoft.Framework.Runtime
                         dependenciesOnly: true));
 
                     // Resolve the project export
-                    IMetadataProjectReference projectReference = projectReferenceProvider.CompileProject(
+                    IMetadataProjectReference projectReference = projectCompiler.CompileProject(
                         project,
                         target,
                         () => projectExport.Value,

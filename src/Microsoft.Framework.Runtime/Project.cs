@@ -64,8 +64,7 @@ namespace Microsoft.Framework.Runtime
         public SemanticVersion Version { get; private set; }
 
         // Temporary while old and new runtime are separate
-        string ICompilationProject.Version { get { return Version == null ? null : Version.ToString(); } }
-
+        string ICompilationProject.Version { get { return Version?.ToString(); } }
         public IList<LibraryDependency> Dependencies { get; private set; }
 
         public LanguageServices LanguageServices { get; private set; }

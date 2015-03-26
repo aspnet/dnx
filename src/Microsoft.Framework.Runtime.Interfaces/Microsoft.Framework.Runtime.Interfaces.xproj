@@ -10,9 +10,6 @@
     <BaseIntermediateOutputPath Condition="'$(BaseIntermediateOutputPath)'=='' ">..\..\artifacts\obj\$(MSBuildProjectName)</BaseIntermediateOutputPath>
     <OutputPath Condition="'$(OutputPath)'=='' ">..\..\artifacts\bin\$(MSBuildProjectName)\</OutputPath>
   </PropertyGroup>
-  <PropertyGroup Label="Configuration" Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
-    <AssemblyName>Microsoft.Framework.Runtime.Interfaces</AssemblyName>
-  </PropertyGroup>
   <PropertyGroup Label="Configuration">
     <RootNamespace>Microsoft.Framework.Runtime</RootNamespace>
   </PropertyGroup>

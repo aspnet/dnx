@@ -2,6 +2,9 @@
 
 namespace Microsoft.Framework.Runtime
 {
+    /// <summary>
+    /// Do not use this! It is going to go away soon!
+    /// </summary>
     public interface IProjectFilesCollection
     {
         IEnumerable<string> BundleExcludeFiles { get; }

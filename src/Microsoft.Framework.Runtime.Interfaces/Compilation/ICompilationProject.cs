@@ -3,6 +3,10 @@ using System.Runtime.Versioning;
 
 namespace Microsoft.Framework.Runtime.Compilation
 {
+    /// <summary>
+    /// DO NOT USE. Provides a (temporary) interface to abstract between old runtime Project and new runtime Project.
+    /// Eventually the Project class itself will move into this assembly!
+    /// </summary>
     public interface ICompilationProject
     {
         string Name { get; }

@@ -233,7 +233,7 @@ namespace Microsoft.Framework.Runtime.Roslyn
             {
                 return compilation.AddSyntaxTrees(new[]
                 {
-                    CSharpSyntaxTree.ParseText("[assembly: System.Reflection.AssemblyVersion(\"" + GetSystemVersion(project.Version) + "\")]", parseOptions),
+                    CSharpSyntaxTree.ParseText("[assembly: System.Reflection.AssemblyVersion(\"" + RemovePrereleaseTag(project.Version) + "\")]", parseOptions),
                     CSharpSyntaxTree.ParseText("[assembly: System.Reflection.AssemblyInformationalVersion(\"" + project.Version + "\")]", parseOptions)
                 });
             }
@@ -241,7 +241,7 @@ namespace Microsoft.Framework.Runtime.Roslyn
             return compilation;
         }
 
-        private static string GetSystemVersion(string version)
+        private static string RemovePrereleaseTag(string version)
         {
             // Simple reparse of the version string (because we don't want to pull in NuGet stuff
             // here because we're in an old-runtime/new-runtime limbo)
