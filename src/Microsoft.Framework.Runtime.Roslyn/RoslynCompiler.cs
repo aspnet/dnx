@@ -126,13 +126,13 @@ namespace Microsoft.Framework.Runtime.Roslyn
 
             var compilationContext = new CompilationContext(
                 compilation,
-                project, 
-                target.TargetFramework, 
+                project,
+                target.TargetFramework,
                 target.Configuration,
                 () => resourcesResolver()
                     .Select(res => new ResourceDescription(
-                        res.Name, 
-                        res.StreamFactory, 
+                        res.Name,
+                        res.StreamFactory,
                         isPublic: true))
                     .ToList());
 
