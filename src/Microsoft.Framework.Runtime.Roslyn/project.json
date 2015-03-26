@@ -15,8 +15,6 @@
             "frameworkAssemblies": {
                 "System.Collections": "",
                 "System.IO": "",
-                "System.Xml": "",
-                "System.Xml.Linq": "",
                 "System.Threading.Tasks": "",
                 "System.Text.Encoding": ""
             }
@@ -26,8 +24,7 @@
                 "System.Collections.Concurrent": "4.0.10-beta-*",
                 "System.Resources.ResourceWriter": "4.0.0-beta-*",
                 "System.Runtime.InteropServices": "4.0.20-beta-*",
-                "System.IO.FileSystem": "4.0.0-beta-*",
-                "System.Xml.XDocument": "4.0.10-beta-*"
+                "System.IO.FileSystem": "4.0.0-beta-*"
             }
         }
     },
