@@ -44,7 +44,7 @@ To clone a repository and initialize all the submodules you can run:
 git clone --recursive
 ```
 
-If you have already cloned the repoistory without `--recursive` option, you can run following commands to initialize the submodules:
+If you have already cloned the repository without `--recursive` option, you can run following commands to initialize the submodules:
 
 ```
 git submodule init
