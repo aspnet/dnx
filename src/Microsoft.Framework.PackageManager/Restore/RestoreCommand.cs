@@ -13,7 +13,6 @@ using System.Security.Cryptography;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Framework.PackageManager.Bundle;
-using Microsoft.Framework.PackageManager.Restore.NuGet;
 using Microsoft.Framework.PackageManager.Utils;
 using Microsoft.Framework.Runtime;
 using Microsoft.Framework.Runtime.DependencyManagement;
@@ -43,6 +42,11 @@ namespace Microsoft.Framework.PackageManager
         public bool Lock { get; set; }
         public bool Unlock { get; set; }
         public string PackageFolder { get; set; }
+
+        /// <summary>
+        /// Gets or sets a flag that determines if restore is performed on multiple project.json files in parallel.
+        /// </summary>
+        public bool Parallel { get; set; }
 
         public ScriptExecutor ScriptExecutor { get; private set; }
 
@@ -106,7 +110,7 @@ namespace Microsoft.Framework.PackageManager
                     }
                 };
 
-                if (PlatformHelper.IsMono)
+                if (!Parallel || PlatformHelper.IsMono)
                 {
                     // Restoring in parallel on Mono throws native exception
                     foreach (var projectJsonFile in projectJsonFiles)
@@ -127,7 +131,7 @@ namespace Microsoft.Framework.PackageManager
                     Reports.Information.WriteLine(string.Format("Total time {0}ms", sw.ElapsedMilliseconds));
                 }
 
-                foreach(var category in ErrorMessages)
+                foreach (var category in ErrorMessages)
                 {
                     Reports.Error.WriteLine("Errors in {0}".Red().Bold(), category.Key);
                     foreach (var message in category.Value)
@@ -292,7 +296,7 @@ namespace Microsoft.Framework.PackageManager
                     tasks.Add(restoreOperations.CreateGraphNode(context, projectLibrary, _ => true));
                 }
             }
-            
+
             var graphs = await Task.WhenAll(tasks);
             foreach (var graph in graphs)
             {
@@ -365,8 +369,8 @@ namespace Microsoft.Framework.PackageManager
 
             ForEach(graphs, node =>
             {
-                if (node == null || 
-                    node.LibraryRange == null || 
+                if (node == null ||
+                    node.LibraryRange == null ||
                     node.Disposition == GraphNode.DispositionType.Rejected)
                 {
                     return;
@@ -825,6 +829,7 @@ namespace Microsoft.Framework.PackageManager
 
             return Task.WhenAll(tasks);
         }
+
         class LibraryComparer : IComparer<Library>
         {
             public int Compare(Library x, Library y)
