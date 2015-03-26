@@ -16,7 +16,7 @@ namespace Microsoft.Framework.Runtime
 {
     public class OldEmbeddedResourceProvider : IResourceProvider
     {
-        public IList<ResourceDescriptor> GetResources(Project project)
+        public IList<ResourceDescriptor> GetResources(ICompilationProject project)
         {
             string root = PathUtility.EnsureTrailingSlash(project.ProjectDirectory);
 

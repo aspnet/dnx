@@ -4,7 +4,7 @@
 using System;
 using System.IO;
 
-namespace Microsoft.Framework.Runtime
+namespace Microsoft.Framework.Runtime.Compilation
 {
     public class ResourceDescriptor
     {
