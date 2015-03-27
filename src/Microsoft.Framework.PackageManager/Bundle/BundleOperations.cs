@@ -2,11 +2,9 @@
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 using System;
-using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
-using NuGet;
 
 namespace Microsoft.Framework.PackageManager.Bundle
 {
@@ -15,55 +13,6 @@ namespace Microsoft.Framework.PackageManager.Bundle
         public void Delete(string folderPath)
         {
             FileOperationUtils.DeleteFolder(folderPath);
-        }
-
-        public void Copy(string sourcePath, string targetPath)
-        {
-            Copy(
-                sourcePath, 
-                targetPath, 
-                shouldInclude: _ => true);
-        }
-
-        public void Copy(string sourcePath, string targetPath, Func<string, bool> shouldInclude)
-        {
-            sourcePath = PathUtility.EnsureTrailingSlash(sourcePath);
-            targetPath = PathUtility.EnsureTrailingSlash(targetPath);
-
-            // Directory.EnumerateFiles(path) throws "path is too long" exception if path is longer than 248 characters
-            // So we flatten the enumeration here with SearchOption.AllDirectories,
-            // instead of calling Directory.EnumerateFiles(path) with SearchOption.TopDirectoryOnly in each subfolder
-            foreach (var sourceFilePath in Directory.EnumerateFiles(sourcePath, "*.*", SearchOption.AllDirectories))
-            {
-                var fileName = Path.GetFileName(sourceFilePath);
-                Debug.Assert(fileName != null, "fileName != null");
-
-                if (!shouldInclude(sourceFilePath))
-                {
-                    continue;
-                }
-
-                var targetFilePath = sourceFilePath.Replace(sourcePath, targetPath);
-                var targetFileParentFolder = Path.GetDirectoryName(targetFilePath);
-
-                // Create directory before copying a file
-                if (!Directory.Exists(targetFileParentFolder))
-                {
-                    Directory.CreateDirectory(targetFileParentFolder);
-                }
-
-                File.Copy(
-                    sourceFilePath,
-                    targetFilePath,
-                    overwrite: true);
-
-                // clear read-only bit if set
-                var fileAttributes = File.GetAttributes(targetFilePath);
-                if ((fileAttributes & FileAttributes.ReadOnly) == FileAttributes.ReadOnly)
-                {
-                    File.SetAttributes(targetFilePath, fileAttributes & ~FileAttributes.ReadOnly);
-                }
-            }
         }
 
         public void ExtractNupkg(ZipArchive archive, string targetPath)

@@ -39,7 +39,7 @@ namespace Microsoft.Framework.PackageManager.Bundle
                 Directory.CreateDirectory(TargetPath);
             }
 
-            new BundleOperations().Copy(_runtimePath, TargetPath);
+            FileOperationUtils.Copy(_runtimePath, TargetPath);
 
             if (PlatformHelper.IsMono)
             {

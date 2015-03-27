@@ -259,7 +259,7 @@ namespace Microsoft.Framework.PackageManager.Bundle
                 wwwRootPath = string.Empty;
             }
 
-            root.Operations.Copy(project.ProjectDirectory, targetPath, itemPath =>
+            FileOperationUtils.Copy(project.ProjectDirectory, targetPath, itemPath =>
             {
                 // If current file/folder is in the exclusion list, we don't copy it
                 if (excludeSet.Contains(itemPath))
@@ -566,7 +566,7 @@ namespace Microsoft.Framework.PackageManager.Bundle
             root.Reports.Quiet.WriteLine("  Source {0}", contentSourcePath);
             root.Reports.Quiet.WriteLine("  Target {0}", targetFolderPath);
 
-            root.Operations.Copy(contentSourcePath, targetFolderPath);
+            FileOperationUtils.Copy(contentSourcePath, targetFolderPath);
         }
 
         private static string GetWwwRootSourcePath(string projectDirectory, string wwwRoot)

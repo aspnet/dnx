@@ -88,7 +88,7 @@ namespace Microsoft.Framework.PackageManager.Bundle
             }
 
             Directory.CreateDirectory(targetFolder);
-            root.Operations.Copy(srcFolder, targetFolder);
+            FileOperationUtils.Copy(srcFolder, targetFolder);
         }
 
         private void CopyFile(BundleRoot root, string srcPath, string targetPath)
