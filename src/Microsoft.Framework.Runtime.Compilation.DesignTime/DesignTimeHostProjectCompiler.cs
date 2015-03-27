@@ -3,6 +3,8 @@
 
 using System;
 using System.Collections.Generic;
+using System.Net;
+using System.Net.Sockets;
 using Microsoft.Framework.Runtime.Compilation;
 
 namespace Microsoft.Framework.Runtime
@@ -11,9 +13,16 @@ namespace Microsoft.Framework.Runtime
     {
         private readonly IDesignTimeHostCompiler _compiler;
 
-        public DesignTimeHostProjectCompiler(IDesignTimeHostCompiler compiler)
+        public DesignTimeHostProjectCompiler(IApplicationShutdown shutdown, IFileWatcher watcher, IRuntimeOptions runtimeOptions)
         {
-            _compiler = compiler;
+            // Using this ctor because it works on mono, this is hard coded to ipv4
+            // right now. Mono will eventually have the dualmode overload
+            var socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+            socket.Connect(new IPEndPoint(IPAddress.Loopback, runtimeOptions.CompilationServerPort.Value));
+
+            var networkStream = new NetworkStream(socket);
+            
+            _compiler = new DesignTimeHostCompiler(shutdown, watcher, networkStream);
         }
 
         public IMetadataProjectReference CompileProject(

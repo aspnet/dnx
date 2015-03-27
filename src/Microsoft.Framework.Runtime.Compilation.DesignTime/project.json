@@ -1,0 +1,25 @@
+﻿{
+    "version": "1.0.0-*",
+    "dependencies": {
+        "Newtonsoft.Json": "6.0.6",
+        "Microsoft.Framework.Runtime.Common": { "version": "1.0.0-*", "type": "build" },
+        "Microsoft.Framework.Runtime.Compilation.Common": { "version": "1.0.0-*", "type": "build" },
+        "Microsoft.Framework.Runtime.Interfaces": "1.0.0-*"
+    },
+    "compile": [ "../Microsoft.Framework.Runtime.Hosting/JTokenExtensions.cs" ],
+    "frameworks": {
+        "dnx451": {
+            "dependencies": {
+            }
+        },
+        "dnxcore50": {
+            "dependencies": {
+                "System.Net.Sockets": "4.0.0-beta-*",
+                "System.Dynamic.Runtime": "4.0.10-beta-*",
+                "System.IO.FileSystem": "4.0.0-beta-*",
+                "System.Collections.Concurrent": "4.0.10-beta-*",
+                "System.Threading.Thread": "4.0.0-beta-*"
+            }
+        }
+    }
+}

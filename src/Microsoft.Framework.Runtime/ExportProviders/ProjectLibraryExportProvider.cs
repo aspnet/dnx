@@ -76,12 +76,12 @@ namespace Microsoft.Framework.Runtime
                 }
                 else
                 {
-                    var provider = project.LanguageServices?.ProjectReferenceProvider ?? Project.DefaultLanguageService;
+                    var provider = project.CompilerServices?.ProjectCompiler ?? Project.DefaultCompiler;
 
                     // Find the default project exporter
                     var projectCompiler = _projectCompilers.GetOrAdd(provider, typeInfo =>
                     {
-                        return LanguageServices.CreateService<IProjectCompiler>(_serviceProvider, _projectLoadContext.Value, typeInfo);
+                        return CompilerServices.CreateService<IProjectCompiler>(_serviceProvider, _projectLoadContext.Value, typeInfo);
                     });
 
                     Logger.TraceInformation("[{0}]: GetProjectReference({1}, {2}, {3}, {4})", provider.TypeName, target.Name, target.TargetFramework, target.Configuration, target.Aspect);

@@ -1,20 +1,19 @@
 ﻿using System;
-using System.Reflection;
 using Microsoft.Framework.Runtime.Common.DependencyInjection;
 
 namespace Microsoft.Framework.Runtime
 {
-    public class LanguageServices
+    public class CompilerServices
     {
-        public LanguageServices(string name, TypeInformation projectExportProvider)
+        public CompilerServices(string name, TypeInformation compiler)
         {
             Name = name;
-            ProjectReferenceProvider = projectExportProvider;
+            ProjectCompiler = compiler;
         }
 
         public string Name { get; private set; }
 
-        public TypeInformation ProjectReferenceProvider { get; private set; }
+        public TypeInformation ProjectCompiler { get; private set; }
 
         public static T CreateService<T>(IServiceProvider sp, IAssemblyLoadContext loadContext, TypeInformation typeInfo)
         {
