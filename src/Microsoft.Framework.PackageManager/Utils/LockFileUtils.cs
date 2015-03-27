@@ -18,10 +18,15 @@ namespace Microsoft.Framework.PackageManager.Utils
             IPackage package,
             SHA512 sha512,
             IEnumerable<FrameworkName> frameworks,
-            IPackagePathResolver resolver)
+            IPackagePathResolver resolver,
+            string correctedPackageName = null)
         {
             var lockFileLib = new LockFileLibrary();
-            lockFileLib.Name = package.Id;
+
+            // package.Id is read from nuspec and it might be in wrong casing.
+            // correctedPackageName should be the package name used by dependency graph and
+            // it has the correct casing that runtime needs during dependency resolution.
+            lockFileLib.Name = correctedPackageName ?? package.Id;
             lockFileLib.Version = package.Version;
 
             using (var nupkgStream = package.GetStream())
