@@ -50,10 +50,10 @@ var BOOTSTRAPPER_HOST_NAME = 'dnx.host'
 var PROGRAM_FILES_X86 = '${Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86)}'
 var MSBUILD = '${Path.Combine(PROGRAM_FILES_X86, "MSBuild", "14.0", "Bin", "MSBuild.exe")}'
 
+-//    "Microsoft.Framework.ApplicationHost2",   Disabled on release branch
 var MANAGED_PROJECTS = '${FindAllProjects(
     BOOTSTRAPPER_HOST_NAME,
     "Microsoft.Framework.ApplicationHost",
-    "Microsoft.Framework.ApplicationHost2",
     "Microsoft.Framework.CommandLineUtils",
     "Microsoft.Framework.DesignTimeHost",
     "Microsoft.Framework.DesignTimeHost.Interfaces",
