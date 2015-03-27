@@ -15,13 +15,13 @@ namespace Microsoft.Framework.Runtime
         private readonly ConcurrentDictionary<int, TaskCompletionSource<CompileResponse>> _compileResponses = new ConcurrentDictionary<int, TaskCompletionSource<CompileResponse>>();
         private readonly TaskCompletionSource<Dictionary<string, int>> _projectContexts = new TaskCompletionSource<Dictionary<string, int>>();
 
-        public DesignTimeHostCompiler(ApplicationShutdown shutdown, IFileWatcher watcher, Stream stream)
+        public DesignTimeHostCompiler(IApplicationShutdown shutdown, IFileWatcher watcher, Stream stream)
         {
             _shutdown = shutdown;
             _queue = new ProcessingQueue(stream);
             _queue.ProjectCompiled += OnProjectCompiled;
             _queue.ProjectsInitialized += ProjectContextsInitialized;
-            _queue.ProjectChanged += _ => shutdown.RequestShutdownWaitForDebugger();
+            _queue.ProjectChanged += _ => { };
             _queue.ProjectSources += files =>
             {
                 foreach (var file in files)

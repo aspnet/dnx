@@ -19,7 +19,10 @@ namespace Microsoft.Framework.Runtime
     {
         public const string ProjectFileName = "project.json";
 
-        internal static TypeInformation DefaultLanguageService = new TypeInformation("Microsoft.Framework.Runtime.Roslyn", "Microsoft.Framework.Runtime.Roslyn.RoslynProjectCompiler");
+        internal static readonly TypeInformation DefaultRuntimeCompiler = new TypeInformation("Microsoft.Framework.Runtime.Roslyn", "Microsoft.Framework.Runtime.Roslyn.RoslynProjectCompiler");
+        internal static readonly TypeInformation DefaultDesignTimeCompiler = new TypeInformation("Microsoft.Framework.Runtime.Compilation.DesignTime", "Microsoft.Framework.Runtime.DesignTimeHostProjectCompiler");
+
+        internal static TypeInformation DefaultCompiler = DefaultRuntimeCompiler;
 
         private static readonly CompilerOptions _emptyOptions = new CompilerOptions();
 
@@ -67,7 +70,7 @@ namespace Microsoft.Framework.Runtime
         string ICompilationProject.Version { get { return Version?.ToString(); } }
         public IList<LibraryDependency> Dependencies { get; private set; }
 
-        public LanguageServices LanguageServices { get; private set; }
+        public CompilerServices CompilerServices { get; private set; }
 
         public string WebRoot { get; private set; }
 
@@ -213,16 +216,16 @@ namespace Microsoft.Framework.Runtime
             // Project files
             project.Files = new ProjectFilesCollection(rawProject, project.ProjectDirectory, project.ProjectFilePath, warnings);
 
-            var languageInfo = rawProject["language"] as JObject;
+            var compilerInfo = rawProject["compiler"] as JObject;
 
-            if (languageInfo != null)
+            if (compilerInfo != null)
             {
-                var languageName = languageInfo.GetValue<string>("name") ?? "C#";
-                var languageServicesAssembly = languageInfo.GetValue<string>("assembly");
-                var projectReferenceProviderType = languageInfo.GetValue<string>("projectReferenceProviderType");
+                var languageName = compilerInfo.GetValue<string>("name") ?? "C#";
+                var compilerAssembly = compilerInfo.GetValue<string>("compilerAssembly");
+                var compilerType = compilerInfo.GetValue<string>("compilerType");
 
-                var libraryExporter = new TypeInformation(languageServicesAssembly, projectReferenceProviderType);
-                project.LanguageServices = new LanguageServices(languageName, libraryExporter);
+                var compiler = new TypeInformation(compilerAssembly, compilerType);
+                project.CompilerServices = new CompilerServices(languageName, compiler);
             }
 
             var commands = rawProject["commands"] as JObject;

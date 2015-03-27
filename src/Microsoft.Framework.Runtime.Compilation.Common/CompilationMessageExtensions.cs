@@ -6,7 +6,7 @@ using System.Linq;
 
 namespace Microsoft.Framework.Runtime
 {
-    public static class CompilationMessageExtensions
+    internal static class CompilationMessageExtensions
     {
         /// <summary>
         /// Returns true if <paramref name="messages"/> has at least one message with <see cref="CompilationMessageSeverity.Error"/>.

@@ -6,8 +6,6 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Net;
-using System.Net.Sockets;
 using System.Reflection;
 using System.Runtime.Versioning;
 using Microsoft.Framework.Runtime.Caching;
@@ -151,26 +149,16 @@ namespace Microsoft.Framework.Runtime
             }
 
             _applicationHostContext.AddService(typeof(IApplicationShutdown), _shutdown);
+            _applicationHostContext.AddService(typeof(IRuntimeOptions), options);
+
             // TODO: Get rid of this and just use the IFileWatcher
             _applicationHostContext.AddService(typeof(IFileMonitor), _watcher);
             _applicationHostContext.AddService(typeof(IFileWatcher), _watcher);
 
             if (options.CompilationServerPort.HasValue)
             {
-                // Using this ctor because it works on mono, this is hard coded to ipv4
-                // right now. Mono will eventually have the dualmode overload
-                var socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-                socket.Connect(new IPEndPoint(IPAddress.Loopback, options.CompilationServerPort.Value));
-
-                var networkStream = new NetworkStream(socket);
-
-                _applicationHostContext.AddService(typeof(IDesignTimeHostCompiler),
-                    new DesignTimeHostCompiler(_shutdown, _watcher, networkStream), includeInManifest: false);
-
                 // Change the project reference provider
-                Project.DefaultLanguageService = new TypeInformation(
-                    typeof(DefaultHost).GetTypeInfo().Assembly.GetName().Name,
-                    typeof(DesignTimeHostProjectCompiler).FullName);
+                Project.DefaultCompiler = Project.DefaultDesignTimeCompiler;
             }
 
             CallContextServiceLocator.Locator.ServiceProvider = ServiceProvider;

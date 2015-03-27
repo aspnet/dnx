@@ -5,7 +5,7 @@ using System.Runtime.Versioning;
 
 namespace Microsoft.Framework.Runtime
 {
-    public class DefaultHostOptions
+    public class DefaultHostOptions : IRuntimeOptions
     {
         public string ApplicationName { get; set; }
 
