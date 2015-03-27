@@ -36,21 +36,22 @@ namespace Microsoft.Framework.PackageManager.List
                 return true;
             }
 
-            // 2. Walk the local dependencies
-            var assemblyWalker = new AssemblyWalker(_framework, _hostContext, _options.RuntimeFolder);
-            var assemblies = assemblyWalker.Walk(root);
-
-            foreach (var assemblyName in assemblies.OrderBy(assemblyName => assemblyName))
-            {
-                _options.Reports.Information.WriteLine(assemblyName);
-            }
+            // 2. Walk the local dependencies and print the assemblies list
+            var assemblyWalker = new AssemblyWalker(_framework,
+                                                    _hostContext,
+                                                    _options.RuntimeFolder,
+                                                    _options.HideDependents,
+                                                    _options.Reports);
+            assemblyWalker.Walk(root);
 
             return true;
         }
 
         private void Render(IGraphNode<LibraryDescription> root)
         {
-            var renderer = new LibraryDependencyFlatRenderer(_options.HideDependents, _options.ResultsFilter, _options.Project.Dependencies.Select(dep => dep.LibraryRange.Name));
+            var renderer = new LibraryDependencyFlatRenderer(_options.HideDependents,
+                                                             _options.ResultsFilter,
+                                                             _options.Project.Dependencies.Select(dep => dep.LibraryRange.Name));
             var content = renderer.GetRenderContent(root);
 
             if (content.Any())

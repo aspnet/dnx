@@ -18,38 +18,74 @@ namespace Microsoft.Framework.PackageManager.List
         private readonly FrameworkName _framework;
         private readonly ApplicationHostContext _hostContext;
         private readonly string _runtimeFolder;
+        private readonly bool _hideDependents;
+        private readonly Reports _reports;
+
+        private HashSet<string> _assemblyFilePaths;
+        private Dictionary<string, HashSet<string>> _dependencyAssemblySources;
+        private Dictionary<string, HashSet<string>> _dependencyPackageSources;
 
         public AssemblyWalker(
             FrameworkName framework,
             ApplicationHostContext hostContext,
-            string runtimeFolder)
+            string runtimeFolder,
+            bool hideDependents,
+            Reports reports)
         {
             _framework = framework;
             _hostContext = hostContext;
             _runtimeFolder = runtimeFolder;
+            _hideDependents = hideDependents;
+            _reports = reports;
         }
 
-        public ISet<string> Walk(IGraphNode<LibraryDescription> root)
+        public void Walk(IGraphNode<LibraryDescription> root)
         {
-            var assemblies = new HashSet<string>();
-            var libraries = new HashSet<LibraryDescription>();
-            root.DepthFirstPreOrderWalk(visitNode: (node, _) => VisitLibrary(node, _, libraries, assemblies));
+            _assemblyFilePaths = new HashSet<string>();
+            _dependencyAssemblySources = new Dictionary<string, HashSet<string>>();
+            _dependencyPackageSources = new Dictionary<string, HashSet<string>>();
 
-            return assemblies;
+            var libraries = new HashSet<LibraryDescription>();
+            root.DepthFirstPreOrderWalk(visitNode: (node, _) => VisitLibrary(node, _, libraries));
+
+            _reports.Information.WriteLine("\n[Target framework {0} ({1})]\n",
+                _framework.ToString(), VersionUtility.GetShortFrameworkName(_framework));
+
+            foreach (var assemblyFilePath in _assemblyFilePaths.OrderBy(assemblyName => assemblyName))
+            {
+                _reports.Information.WriteLine(assemblyFilePath);
+                if (!_hideDependents)
+                {
+                    var assemblyName = Path.GetFileNameWithoutExtension(assemblyFilePath);
+
+                    HashSet<string> packagesSources;
+                    if (_dependencyPackageSources.TryGetValue(assemblyName, out packagesSources) && packagesSources.Any())
+                    {
+                        _reports.Information.WriteLine("    from package: {0}", string.Join(", ", packagesSources.ToArray()));
+                    }
+
+                    HashSet<string> assemblySources;
+                    if (_dependencyAssemblySources.TryGetValue(assemblyName, out assemblySources) && assemblySources.Any())
+                    {
+                        _reports.Information.WriteLine("    from assembly: {0}", string.Join(", ", assemblySources.ToArray()));
+                    }
+                }
+            }
         }
 
         private bool VisitLibrary(IGraphNode<LibraryDescription> node,
                                   IEnumerable<IGraphNode<LibraryDescription>> ancestors,
-                                  ISet<LibraryDescription> visitedLibraries,
-                                  ISet<string> assemblies)
+                                  ISet<LibraryDescription> visitedLibraries)
         {
             if (visitedLibraries.Add(node.Item))
             {
                 foreach (var loadableAssembly in node.Item.LoadableAssemblies)
                 {
+                    AddDependencySource(_dependencyPackageSources, loadableAssembly, node.Item.Identity.Name);
+
                     DepthFirstGraphTraversal.PreOrderWalk(
                         root: loadableAssembly,
-                        visitNode: (assemblyNode, assemblyAncestors) => VisitAssembly(assemblyNode, assemblyAncestors, assemblies),
+                        visitNode: (assemblyName, assemblyAncestors) => VisitAssembly(assemblyName, assemblyAncestors),
                         getChildren: GetAssemblyDependencies);
                 }
 
@@ -65,7 +101,14 @@ namespace Microsoft.Framework.PackageManager.List
             if (filepath != null && File.Exists(filepath))
             {
                 var assemblyInfo = new AssemblyInformation(filepath, processorArchitecture: null);
-                return assemblyInfo.GetDependencies();
+                var dependencies = assemblyInfo.GetDependencies();
+
+                foreach (var dependency in dependencies)
+                {
+                    AddDependencySource(_dependencyAssemblySources, dependency, assemblyName);
+                }
+
+                return dependencies;
             }
             else
             {
@@ -73,23 +116,23 @@ namespace Microsoft.Framework.PackageManager.List
             }
         }
 
-        private bool VisitAssembly(string assembly, IEnumerable<string> ancestors, ISet<string> assemblies)
+        private bool VisitAssembly(string assemblyName, IEnumerable<string> ancestors)
         {
             // determine if keep walking down the path
-            if (ancestors.Any(a => a == assembly))
+            if (ancestors.Any(a => a == assemblyName))
             {
                 // break the reference loop
                 return false;
             }
 
-            var filepath = ResolveAssemblyFilePath(assembly);
+            var filepath = ResolveAssemblyFilePath(assemblyName);
             if (filepath == null)
             {
                 return false;
             }
 
             filepath = Path.GetFullPath(filepath);
-            assemblies.Add(filepath);
+            _assemblyFilePaths.Add(filepath);
 
             return true;
         }
@@ -114,6 +157,18 @@ namespace Microsoft.Framework.PackageManager.List
             }
 
             return null;
+        }
+
+        private static void AddDependencySource(Dictionary<string, HashSet<string>> dependencySources, string dependency, string source)
+        {
+            HashSet<string> sources;
+            if (!dependencySources.TryGetValue(dependency, out sources))
+            {
+                sources = new HashSet<string>();
+                dependencySources.Add(dependency, sources);
+            }
+
+            sources.Add(source);
         }
     }
 }
