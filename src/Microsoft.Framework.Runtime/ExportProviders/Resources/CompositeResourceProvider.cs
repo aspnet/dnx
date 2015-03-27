@@ -28,7 +28,7 @@ namespace Microsoft.Framework.Runtime
 
         public IList<ResourceDescriptor> GetResources(ICompilationProject project)
         {
-            // Keep only the distinct names to prevent compilation errors (TEMPORARY BOOTSTRAP HACK)
+            // Keep only the distinct names to prevent compilation errors (TEMPORARY BOOTSTRAP WORKAROUND)
             return _providers
                 .SelectMany(provider => provider.GetResources(project))
                 .GroupBy(res => res.Name)
