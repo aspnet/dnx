@@ -12,8 +12,10 @@ public class Program
         {
             return 1;
         }
-        // System.Console.WriteLine(new Foo().Message);
+
+        System.Console.WriteLine(new Foo().Message);
         System.Console.WriteLine(HelloShared.HelloSharedCode.SharedMethod());
+
         foreach (var arg in args)
         {
             System.Console.WriteLine(arg);
