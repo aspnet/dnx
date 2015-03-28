@@ -62,6 +62,8 @@ namespace Microsoft.Framework.Runtime
 
         public SemanticVersion Version { get; private set; }
 
+        public Version AssemblyFileVersion { get; private set; }
+
         public IList<LibraryDependency> Dependencies { get; private set; }
 
         public LanguageServices LanguageServices { get; private set; }
@@ -188,6 +190,23 @@ namespace Microsoft.Framework.Runtime
                 }
             }
 
+            var fileVersion = Environment.GetEnvironmentVariable("DNX_ASSEMBLY_FILE_VERSION");
+            if (string.IsNullOrWhiteSpace(fileVersion))
+            {
+                project.AssemblyFileVersion = project.Version.Version;
+            }
+            else
+            {
+                try
+                {
+                    project.AssemblyFileVersion = SpecifyFileVersionSnapshot(version?.Value<string>(), fileVersion);
+                }
+                catch (FormatException ex)
+                {
+                    throw new FormatException("The assembly file version is invalid: " + fileVersion, ex);
+                }
+            }
+
             project.Description = rawProject.GetValue<string>("description");
             project.Summary = rawProject.GetValue<string>("summary");
             project.Copyright = rawProject.GetValue<string>("copyright");
@@ -282,6 +301,20 @@ namespace Microsoft.Framework.Runtime
             }
 
             return new SemanticVersion(version);
+        }
+
+        private static Version SpecifyFileVersionSnapshot(string version, string fileSnapshotValue)
+        {
+            if (string.IsNullOrEmpty(version))
+            {
+                version = "1.0.0." + fileSnapshotValue;
+            }
+            else if (version.EndsWith("-*"))
+            {
+                version = version.Substring(0, version.Length - 2) + "." + fileSnapshotValue;
+            }
+
+            return new Version(version);
         }
 
         private static void PopulateDependencies(
