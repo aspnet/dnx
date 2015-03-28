@@ -389,19 +389,10 @@ namespace Microsoft.Framework.PackageManager
                     return;
                 }
 
-                // "dnu restore" is case-sensitive
                 if (!string.Equals(node.Item.Match.Library.Name, node.LibraryRange.Name, StringComparison.Ordinal))
                 {
-                    if (missingItems.Add(node.LibraryRange))
-                    {
-                        var errorMessage = string.Format("Unable to locate {0} {1}. Do you mean {2}?",
-                            node.LibraryRange.Name.Red().Bold(), node.LibraryRange.VersionRange, node.Item.Match.Library.Name.Bold());
-                        ErrorMessages.GetOrAdd(projectJsonPath, _ => new List<string>()).Add(errorMessage);
-                        Reports.Error.WriteLine(errorMessage);
-                        success = false;
-                    }
-
-                    return;
+                    // Fix casing of the library name to be installed
+                    node.Item.Match.Library.Name = node.LibraryRange.Name;
                 }
 
                 var isRemote = remoteProviders.Contains(node.Item.Match.Provider);
@@ -702,7 +693,8 @@ namespace Microsoft.Framework.PackageManager
                         package,
                         sha512,
                         frameworks,
-                        new DefaultPackagePathResolver(repository.RepositoryRoot));
+                        new DefaultPackagePathResolver(repository.RepositoryRoot),
+                        correctedPackageName: library.Name);
 
                     lockFile.Libraries.Add(lockFileLib);
                 }
