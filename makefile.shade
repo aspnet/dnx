@@ -499,6 +499,7 @@ var RC_FILES = '${FindAllFiles("Resource.rc", BOOTSTRAPPER_EXE_NAME, BOOTSTRAPPE
         {
             "Microsoft.Framework.Runtime.Roslyn",
             "Microsoft.Framework.ApplicationHost",
+            "Microsoft.Framework.Runtime.Compilation.DesignTime",
             BOOTSTRAPPER_HOST_NAME, 
             BOOTSTRAPPER_CORECLR_MANAGED_NAME 
         };
