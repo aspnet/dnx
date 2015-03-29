@@ -7,14 +7,27 @@ using Newtonsoft.Json.Linq;
 
 namespace Microsoft.Framework.Runtime
 {
-    public class FileFormatWarning : ICompilationMessage
+    public class FileFormatMessage : ICompilationMessage
     {
-        private static readonly string FormattedMessageTemplate = "{0}({1},{2}): warning: {3}";
+        private static readonly string FormattedMessageTemplate = "{0}({1},{2}): {3}: {4}";
 
-        public FileFormatWarning(string message, string projectFilePath, JToken token)
+        public FileFormatMessage(string message,
+                                 string projectFilePath,
+                                 CompilationMessageSeverity severity)
         {
             Message = message;
             SourceFilePath = projectFilePath;
+            Severity = severity;
+        }
+
+        public FileFormatMessage(string message,
+                                 string projectFilePath,
+                                 CompilationMessageSeverity severity,
+                                 JToken token)
+        {
+            Message = message;
+            SourceFilePath = projectFilePath;
+            Severity = severity;
 
             var lineInfo = (IJsonLineInfo)token;
 
@@ -28,7 +41,7 @@ namespace Microsoft.Framework.Runtime
         {
             get
             {
-                return string.Format(FormattedMessageTemplate, SourceFilePath, StartLine, StartColumn, Message);
+                return string.Format(FormattedMessageTemplate, SourceFilePath, StartLine, StartColumn, Severity.ToString().ToLower(), Message);
             }
         }
 
@@ -36,19 +49,19 @@ namespace Microsoft.Framework.Runtime
 
         public string SourceFilePath { get; }
 
-        public CompilationMessageSeverity Severity { get { return CompilationMessageSeverity.Warning; } }
+        public CompilationMessageSeverity Severity { get; }
 
-        public int StartLine { get; }
+        public int StartLine { get; set; }
 
-        public int StartColumn { get; }
+        public int StartColumn { get; set; }
 
-        public int EndLine { get; }
+        public int EndLine { get; set; }
 
-        public int EndColumn { get; }
+        public int EndColumn { get; set; }
 
         public override bool Equals(object obj)
         {
-            var other = obj as FileFormatWarning;
+            var other = obj as FileFormatMessage;
 
             return other != null &&
                 StartLine == other.StartLine &&

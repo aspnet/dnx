@@ -1,6 +1,7 @@
 // Copyright (c) Microsoft Open Technologies, Inc. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -55,6 +56,45 @@ namespace Microsoft.Framework.Runtime
 
             sw.Stop();
             Logger.TraceInformation("[{0}]: Resolved dependencies for {1} in {2}ms", GetType().Name, name, sw.ElapsedMilliseconds);
+        }
+
+        public IList<ICompilationMessage> GetDependencyDiagnostics(string projectFilePath)
+        {
+            var messages = new List<ICompilationMessage>();
+            foreach (var library in Libraries)
+            {
+                string projectPath = library.LibraryRange.FileName ?? projectFilePath;
+
+                if (!library.Resolved)
+                {
+                    var message = string.Format("Dependency {0} could not be resolved", library.LibraryRange);
+
+                    messages.Add(new FileFormatMessage(message, projectPath, CompilationMessageSeverity.Error)
+                    {
+                        StartLine = library.LibraryRange.Line,
+                        StartColumn = library.LibraryRange.Column
+                    });
+                }
+                else
+                {
+                    // If we ended up with a version that isn't the minimum and we're not floating
+                    // add a warning. e.g. "A": "1.0" resulting in "A": "4.0"
+                    if (library.LibraryRange.VersionRange != null &&
+                        !string.IsNullOrEmpty(library.LibraryRange.FileName) &&
+                        library.LibraryRange.VersionRange.VersionFloatBehavior == SemanticVersionFloatBehavior.None &&
+                        library.LibraryRange.VersionRange.MinVersion != library.Identity.Version)
+                    {
+                        var message = string.Format("Dependency specified was {0} but ended up with {1}.", library.LibraryRange, library.Identity);
+                        messages.Add(new FileFormatMessage(message, projectPath, CompilationMessageSeverity.Warning)
+                        {
+                            StartLine = library.LibraryRange.Line,
+                            StartColumn = library.LibraryRange.Column
+                        });
+                    }
+                }
+            }
+
+            return messages;
         }
 
         public string GetMissingDependenciesWarning(FrameworkName targetFramework)

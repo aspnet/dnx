@@ -12,18 +12,23 @@ namespace Microsoft.Framework.DesignTimeHost.Models.OutgoingMessages
 {
     public class DiagnosticsMessage
     {
-        public DiagnosticsMessage([NotNull] IList<ICompilationMessage> compilationMessages, FrameworkData frameworkData)
+        public DiagnosticsMessage([NotNull] IList<ICompilationMessage> diagnostics) :
+            this(diagnostics, frameworkData: null)
         {
-            CompilationDiagnostics = compilationMessages;
-            Errors = compilationMessages.Where(msg => msg.Severity == CompilationMessageSeverity.Error).ToList();
-            Warnings = compilationMessages.Where(msg => msg.Severity == CompilationMessageSeverity.Warning).ToList();
+        }
+
+        public DiagnosticsMessage([NotNull] IList<ICompilationMessage> diagnostics, FrameworkData frameworkData)
+        {
+            Diagnostics = diagnostics;
+            Errors = diagnostics.Where(msg => msg.Severity == CompilationMessageSeverity.Error).ToList();
+            Warnings = diagnostics.Where(msg => msg.Severity == CompilationMessageSeverity.Warning).ToList();
             Framework = frameworkData;
         }
 
         public FrameworkData Framework { get; }
 
         [JsonIgnore]
-        public IList<ICompilationMessage> CompilationDiagnostics { get; }
+        public IList<ICompilationMessage> Diagnostics { get; }
 
         public IList<ICompilationMessage> Errors { get; }
 
@@ -35,7 +40,7 @@ namespace Microsoft.Framework.DesignTimeHost.Models.OutgoingMessages
             {
                 var payload = new
                 {
-                    Framework = Framework,
+                    Framework = Framework ?? new FrameworkData { },
                     Errors = Errors.Select(e => e.FormattedMessage),
                     Warnings = Warnings.Select(w => w.FormattedMessage)
                 };

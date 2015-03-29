@@ -105,7 +105,7 @@ namespace Microsoft.Framework.Runtime
             return File.Exists(projectPath);
         }
 
-        public static bool TryGetProject(string path, out Project project, ICollection<FileFormatWarning> warnings = null)
+        public static bool TryGetProject(string path, out Project project, ICollection<ICompilationMessage> diagnostics = null)
         {
             project = null;
 
@@ -133,7 +133,7 @@ namespace Microsoft.Framework.Runtime
             {
                 using (var stream = File.OpenRead(projectPath))
                 {
-                    project = GetProjectFromStream(stream, projectName, projectPath, warnings);
+                    project = GetProjectFromStream(stream, projectName, projectPath, diagnostics);
                 }
             }
             catch (JsonReaderException ex)
@@ -144,16 +144,16 @@ namespace Microsoft.Framework.Runtime
             return true;
         }
 
-        public static Project GetProject(string json, string projectName, string projectPath, ICollection<FileFormatWarning> warnings = null)
+        public static Project GetProject(string json, string projectName, string projectPath, ICollection<ICompilationMessage> diagnostics = null)
         {
             var ms = new MemoryStream(Encoding.UTF8.GetBytes(json));
 
-            var project = GetProjectFromStream(ms, projectName, projectPath, warnings);
+            var project = GetProjectFromStream(ms, projectName, projectPath, diagnostics);
 
             return project;
         }
 
-        internal static Project GetProjectFromStream(Stream stream, string projectName, string projectPath, ICollection<FileFormatWarning> warnings = null)
+        internal static Project GetProjectFromStream(Stream stream, string projectName, string projectPath, ICollection<ICompilationMessage> diagnostics = null)
         {
             var project = new Project();
 
@@ -208,7 +208,7 @@ namespace Microsoft.Framework.Runtime
             project.EmbedInteropTypes = rawProject.GetValue<bool>("embedInteropTypes");
 
             // Project files
-            project.Files = new ProjectFilesCollection(rawProject, project.ProjectDirectory, project.ProjectFilePath, warnings);
+            project.Files = new ProjectFilesCollection(rawProject, project.ProjectDirectory, project.ProjectFilePath, diagnostics);
 
             var languageInfo = rawProject["language"] as JObject;
 
@@ -294,14 +294,14 @@ namespace Microsoft.Framework.Runtime
             var dependencies = settings[propertyName] as JObject;
             if (dependencies != null)
             {
-                foreach (var dependency in dependencies)
+                foreach (var dependency in dependencies.Properties())
                 {
-                    if (string.IsNullOrEmpty(dependency.Key))
+                    if (string.IsNullOrEmpty(dependency.Name))
                     {
 
                         throw FileFormatException.Create(
                             "Unable to resolve dependency ''.",
-                            dependency.Value,
+                            dependency,
                             projectPath);
                     }
 
@@ -355,13 +355,18 @@ namespace Microsoft.Framework.Runtime
                         }
                     }
 
+                    var dependencyLineInfo = (IJsonLineInfo)dependency;
+
                     results.Add(new LibraryDependency
                     {
                         LibraryRange = new LibraryRange
                         {
-                            Name = dependency.Key,
+                            Name = dependency.Name,
                             VersionRange = dependencyVersionRange,
                             IsGacOrFrameworkReference = isGacOrFrameworkReference,
+                            FileName = projectPath,
+                            Line = dependencyLineInfo.LineNumber,
+                            Column = dependencyLineInfo.LinePosition
                         },
                         Type = dependencyTypeValue
                     });

@@ -33,7 +33,7 @@ namespace Microsoft.Framework.PackageManager
 
         public bool Build()
         {
-            var projectDiagnostics = new List<FileFormatWarning>();
+            var projectDiagnostics = new List<ICompilationMessage>();
             Runtime.Project project;
             if (!Runtime.Project.TryGetProject(_buildOptions.ProjectDir, out project, projectDiagnostics))
             {

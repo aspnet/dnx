@@ -62,6 +62,9 @@ namespace Microsoft.Framework.PackageManager
                 diagnostics.AddRange(result.Diagnostics);
             }
 
+            var errors = _applicationHostContext.DependencyWalker.GetDependencyDiagnostics(_project.ProjectFilePath);
+            diagnostics.AddRange(errors);
+
             return result.Success && !diagnostics.HasErrors();
         }
 
