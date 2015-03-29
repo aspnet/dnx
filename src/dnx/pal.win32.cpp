@@ -38,6 +38,16 @@ bool IsTracingEnabled()
     return false;
 }
 
+void SetConsoleHost()
+{
+    TCHAR szConsoleHost[2];
+    DWORD nEnvConsoleHostSize = GetEnvironmentVariable(_T("DNX_CONSOLE_HOST"), szConsoleHost, 2);
+    if (nEnvConsoleHostSize == 0)
+    {
+        SetEnvironmentVariable(_T("DNX_CONSOLE_HOST"), _T("1"));
+    }
+}
+
 BOOL GetAppBasePathFromEnvironment(LPTSTR pszAppBase)
 {
     DWORD dwAppBase = GetEnvironmentVariable(_T("DNX_APPBASE"), pszAppBase, MAX_PATH);

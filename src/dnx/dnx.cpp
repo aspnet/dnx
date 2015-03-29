@@ -253,7 +253,7 @@ int CallApplicationProcessMain(int argc, LPTSTR argv[])
 
     // Set the DNX_CONOSLE_HOST flag which will print exceptions
     // to stderr instead of throwing
-    SetEnvironmentVariable(_T("DNX_CONSOLE_HOST"), _T("1"));
+    SetConsoleHost();
 
     CALL_APPLICATION_MAIN_DATA data = { 0 };
     int nExpandedArgc = -1;

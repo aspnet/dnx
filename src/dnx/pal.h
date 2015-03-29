@@ -1,6 +1,7 @@
 void GetNativeBootstrapperDirectory(LPTSTR szPath);
 void WaitForDebuggerToAttach();
 bool IsTracingEnabled();
+void SetConsoleHost();
 BOOL GetAppBasePathFromEnvironment(LPTSTR szPath);
 BOOL GetFullPath(LPCTSTR szPath, LPTSTR szFullPath);
 HMODULE LoadNativeHost(LPCTSTR szHostModuleName);

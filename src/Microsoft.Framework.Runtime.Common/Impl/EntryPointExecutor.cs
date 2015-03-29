@@ -4,6 +4,7 @@
 using System;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.ExceptionServices;
 using System.Threading.Tasks;
 using Microsoft.Framework.Runtime.Common.DependencyInjection;
 
@@ -24,13 +25,25 @@ namespace Microsoft.Framework.Runtime.Common
             object result = null;
             var parameters = entryPoint.GetParameters();
 
-            if (parameters.Length == 0)
+            try
             {
-                result = entryPoint.Invoke(instance, null);
+                if (parameters.Length == 0)
+                {
+                    result = entryPoint.Invoke(instance, null);
+                }
+                else if (parameters.Length == 1)
+                {
+                    result = entryPoint.Invoke(instance, new object[] { args });
+                }
             }
-            else if (parameters.Length == 1)
+            catch (Exception ex)
             {
-                result = entryPoint.Invoke(instance, new object[] { args });
+                if (ex is TargetInvocationException)
+                {
+                    ExceptionDispatchInfo.Capture(ex.InnerException).Throw();
+                }
+
+                throw;
             }
 
             if (result is int)
