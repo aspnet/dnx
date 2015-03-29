@@ -41,7 +41,7 @@ namespace Microsoft.Framework.PackageManager.Bundle
 
         public bool Bundle()
         {
-            var warnings = new List<FileFormatWarning>();
+            var warnings = new List<ICompilationMessage>();
             Runtime.Project project;
             if (!Runtime.Project.TryGetProject(_options.ProjectDir, out project, warnings))
             {
