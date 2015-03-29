@@ -42,7 +42,7 @@ namespace Microsoft.Framework.Runtime
                                          IEnumerable<string> additionalIncluding = null,
                                          IEnumerable<string> additionalExcluding = null,
                                          bool includePatternsOnly = false,
-                                         ICollection<FileFormatWarning> warnings = null)
+                                         ICollection<ICompilationMessage> warnings = null)
         {
             var token = rawProject[name];
             if (legacyName != null)
@@ -53,9 +53,10 @@ namespace Microsoft.Framework.Runtime
                     token = legacyToken;
                     if (warnings != null)
                     {
-                        warnings.Add(new FileFormatWarning(
+                        warnings.Add(new FileFormatMessage(
                             string.Format("Property \"{0}\" is deprecated. It is replaced by \"{1}\".", legacyName, name),
                             projectFilePath,
+                            CompilationMessageSeverity.Warning,
                             token));
                     }
                 }
