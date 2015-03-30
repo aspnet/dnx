@@ -15,8 +15,11 @@ namespace Microsoft.Framework.PackageManager
 {
     internal static class NuGetPackageUtils
     {
-        internal static async Task InstallFromStream(Stream stream, Library library, string packagesDirectory,
-            SHA512 sha512)
+        internal static async Task InstallFromStream(Stream stream,
+            Library library,
+            string packagesDirectory,
+            SHA512 sha512,
+            bool performingParallelInstalls = false)
         {
             var packagePathResolver = new DefaultPackagePathResolver(packagesDirectory);
 
@@ -34,20 +37,30 @@ namespace Microsoft.Framework.PackageManager
                 // waiting on this lock don't need to install it again.
                 if (createdNewLock && !File.Exists(targetNupkg))
                 {
-                    // Extracting to the {id}/{version} has an issue with concurrent installs - when a package has been partially
-                    // extracted, the Restore Operation can inadvertly conclude the package is available locally and proceed to read
-                    // partially written package contents. To avoid this we'll extract the package to a sibling directory and Move it 
-                    // to the target path.
-                    var extractPath = Path.Combine(Path.GetDirectoryName(targetPath), Path.GetRandomFileName());
-                    Directory.CreateDirectory(extractPath);
-                    targetNupkg = Path.Combine(extractPath, Path.GetFileName(targetNupkg));
-                    using (var nupkgStream = new FileStream(targetNupkg, FileMode.Create, FileAccess.ReadWrite, FileShare.ReadWrite | FileShare.Delete))
+                    var extractPath = targetPath;
+                    if (performingParallelInstalls)
+                    {
+                        // Extracting to the {id}/{version} has an issue with concurrent installs - when a package has been partially
+                        // extracted, the Restore Operation can inadvertly conclude the package is available locally and proceed to read
+                        // partially written package contents. To avoid this we'll extract the package to a sibling directory and Move it 
+                        // to the target path.
+                        extractPath = Path.Combine(Path.GetDirectoryName(targetPath), Path.GetRandomFileName());
+                        targetNupkg = Path.Combine(extractPath, Path.GetFileName(targetNupkg));
+                    }
+
+                    var extractDirectory = Directory.CreateDirectory(extractPath);
+                    using (var nupkgStream = new FileStream(
+                        targetNupkg,
+                        FileMode.Create,
+                        FileAccess.ReadWrite,
+                        FileShare.ReadWrite | FileShare.Delete,
+                        bufferSize: 4096,
+                        useAsync: true))
                     {
                         await stream.CopyToAsync(nupkgStream);
                         nupkgStream.Seek(0, SeekOrigin.Begin);
 
                         ExtractPackage(extractPath, nupkgStream);
-                        Directory.Move(extractPath, targetPath);
                     }
 
                     // Fixup the casing of the nuspec on disk to match what we expect
@@ -75,6 +88,11 @@ namespace Microsoft.Framework.PackageManager
                     stream.Seek(0, SeekOrigin.Begin);
                     var nupkgSHA = Convert.ToBase64String(sha512.ComputeHash(stream));
                     File.WriteAllText(hashPath, nupkgSHA);
+
+                    if (performingParallelInstalls)
+                    {
+                        extractDirectory.MoveTo(targetPath);
+                    }
                 }
 
                 return 0;

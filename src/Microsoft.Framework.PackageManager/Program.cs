@@ -61,6 +61,9 @@ namespace Microsoft.Framework.PackageManager
                 var optUnlock = c.Option("--unlock",
                     "Creates dependencies file with locked property set to false. Overwrites file if it exists.",
                     CommandOptionType.NoValue);
+                var optParallel = c.Option("--parallel",
+                    "Restores in parallel when more than one project.json is discovered.",
+                    CommandOptionType.NoValue);
                 c.HelpOption("-?|-h|--help");
 
                 c.OnExecute(async () =>
@@ -71,6 +74,7 @@ namespace Microsoft.Framework.PackageManager
                     command.FeedOptions = feedOptions;
                     command.Lock = optLock.HasValue();
                     command.Unlock = optUnlock.HasValue();
+                    command.Parallel = optParallel.HasValue();
 
                     if (feedOptions.ProxyOptions.HasValue())
                     {
