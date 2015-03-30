@@ -656,7 +656,7 @@ namespace Microsoft.Framework.DesignTimeHost
                     {
                         ContextId = Id,
                         MessageType = "DependencyDiagnostics",
-                        Payload = JToken.FromObject(localProject.DependencyDiagnostics)
+                        Payload = localProject.DependencyDiagnostics.ConvertToJson(ProtocolVersion)
                     });
 
                     remoteProject.DependencyDiagnostics = localProject.DependencyDiagnostics;
