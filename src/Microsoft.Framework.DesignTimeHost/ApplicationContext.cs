@@ -340,7 +340,7 @@ namespace Microsoft.Framework.DesignTimeHost
                         var pluginMessage = message.Payload.ToObject<PluginMessage>();
                         var result = _pluginHandler.OnReceive(pluginMessage);
 
-                                _refreshDependencies.Value = default(Void);
+                        _refreshDependencies.Value = default(Void);
                         _pluginWorkNeeded.Value = default(Void);
 
                         if (result == PluginHandlerOnReceiveResult.RefreshDependencies)
@@ -737,7 +737,17 @@ namespace Microsoft.Framework.DesignTimeHost
                 return;
             }
 
-            var payload = JToken.FromObject(diagnostics.Select(d => d.ConvertToJson(ProtocolVersion)));
+            // Group all of the diagnostics into group by target framework
+
+            var messages = new List<DiagnosticsMessage>();
+
+            foreach (var g in diagnostics.GroupBy(g => g.Framework))
+            {
+                var messageGroup = g.SelectMany(d => d.Diagnostics).ToList();
+                messages.Add(new DiagnosticsMessage(messageGroup, g.Key));
+            }
+
+            var payload = JToken.FromObject(messages.Select(d => d.ConvertToJson(ProtocolVersion)));
 
             // Send all diagnostics back
             foreach (var connection in _waitingForDiagnostics)
