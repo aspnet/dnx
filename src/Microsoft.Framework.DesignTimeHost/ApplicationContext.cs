@@ -405,7 +405,7 @@ namespace Microsoft.Framework.DesignTimeHost
                 GlobalJsonPath = state.GlobalJsonPath
             };
 
-            _local.ProjectWarningMessage = new ProjectWarningsMessage(state.FileFormatWarnings);
+            _local.ProjectDiagnostics = new DiagnosticsMessage(state.Diagnostics);
 
             foreach (var project in state.Projects)
             {
@@ -437,7 +437,8 @@ namespace Microsoft.Framework.DesignTimeHost
                         ProjectReferences = project.DependencyInfo.ProjectReferences,
                         FileReferences = project.DependencyInfo.References,
                         RawReferences = project.DependencyInfo.RawReferences
-                    }
+                    },
+                    DependencyDiagnostics = new DiagnosticsMessage(project.Diagnostics, frameworkData)
                 };
 
                 _local.Projects[project.FrameworkName] = projectWorld;
@@ -472,7 +473,7 @@ namespace Microsoft.Framework.DesignTimeHost
                 {
                     projectCompilationChanged = UpdateProjectCompilation(project, out compilation);
 
-                    project.Diagnostics = new DiagnosticsMessage(
+                    project.CompilationDiagnostics = new DiagnosticsMessage(
                         compilation.Diagnostics,
                         project.Sources.Framework);
                 }
@@ -512,9 +513,9 @@ namespace Microsoft.Framework.DesignTimeHost
                         EmbeddedReferences = compilation.EmbeddedReferences
                     };
 
-                    if (project.Diagnostics == null)
+                    if (project.CompilationDiagnostics == null)
                     {
-                        project.Diagnostics = new DiagnosticsMessage(
+                        project.CompilationDiagnostics = new DiagnosticsMessage(
                             compilation.Diagnostics,
                             project.Sources.Framework);
                     }
@@ -605,13 +606,25 @@ namespace Microsoft.Framework.DesignTimeHost
                 _remote.ProjectInformation = _local.ProjectInformation;
             }
 
-            if (IsDifferent(_local.ProjectWarningMessage, _remote.ProjectWarningMessage))
+            var allDiagnostics = new List<DiagnosticsMessage>();
+
+            if (_local.ProjectDiagnostics != null)
             {
-                SendProjectFormatWarnings(_local.ProjectWarningMessage);
-                _remote.ProjectWarningMessage = _local.ProjectWarningMessage;
+                allDiagnostics.Add(_local.ProjectDiagnostics);
             }
 
-            var allDiagnostics = new List<DiagnosticsMessage>();
+            if (IsDifferent(_local.ProjectDiagnostics, _remote.ProjectDiagnostics))
+            {
+                _initializedContext.Transmit(new Message
+                {
+                    ContextId = Id,
+                    MessageType = "Diagnostics",
+                    Payload = _local.ProjectDiagnostics.ConvertToJson(ProtocolVersion)
+                });
+
+                _remote.ProjectDiagnostics = _local.ProjectDiagnostics;
+            }
+
             var unprocessedFrameworks = new HashSet<FrameworkName>(_remote.Projects.Keys);
 
             foreach (var pair in _local.Projects)
@@ -625,12 +638,31 @@ namespace Microsoft.Framework.DesignTimeHost
                     _remote.Projects[pair.Key] = remoteProject;
                 }
 
-                if (localProject.Diagnostics != null)
+                if (localProject.DependencyDiagnostics != null)
                 {
-                    allDiagnostics.Add(localProject.Diagnostics);
+                    allDiagnostics.Add(localProject.DependencyDiagnostics);
+                }
+
+                if (localProject.CompilationDiagnostics != null)
+                {
+                    allDiagnostics.Add(localProject.CompilationDiagnostics);
                 }
 
                 unprocessedFrameworks.Remove(pair.Key);
+
+                if (IsDifferent(localProject.DependencyDiagnostics, remoteProject.DependencyDiagnostics))
+                {
+                    Logger.TraceInformation("[ApplicationContext]: OnTransmit(DependencyDiagnostics)");
+
+                    _initializedContext.Transmit(new Message
+                    {
+                        ContextId = Id,
+                        MessageType = "DependencyDiagnostics",
+                        Payload = localProject.DependencyDiagnostics.ConvertToJson(ProtocolVersion)
+                    });
+
+                    remoteProject.DependencyDiagnostics = localProject.DependencyDiagnostics;
+                }
 
                 if (IsDifferent(localProject.Dependencies, remoteProject.Dependencies))
                 {
@@ -700,22 +732,6 @@ namespace Microsoft.Framework.DesignTimeHost
             }
         }
 
-        private void SendProjectFormatWarnings(ProjectWarningsMessage message)
-        {
-            var payload = message.ConvertToJson(ProtocolVersion);
-
-            if (payload != null)
-            {
-                Logger.TraceInformation("[{0}]: Sending project format warnings.", GetType().Name);
-                _initializedContext.Transmit(new Message
-                {
-                    ContextId = Id,
-                    MessageType = "Diagnostics",
-                    Payload = message.ConvertToJson(_protocolVersion)
-                });
-            }
-        }
-
         private void SendDiagnostics(IList<DiagnosticsMessage> diagnostics)
         {
             if (diagnostics.Count == 0)
@@ -723,7 +739,17 @@ namespace Microsoft.Framework.DesignTimeHost
                 return;
             }
 
-            var payload = JToken.FromObject(diagnostics.Select(d => d.ConvertToJson(ProtocolVersion)));
+            // Group all of the diagnostics into group by target framework
+
+            var messages = new List<DiagnosticsMessage>();
+
+            foreach (var g in diagnostics.GroupBy(g => g.Framework))
+            {
+                var messageGroup = g.SelectMany(d => d.Diagnostics).ToList();
+                messages.Add(new DiagnosticsMessage(messageGroup, g.Key));
+            }
+
+            var payload = JToken.FromObject(messages.Select(d => d.ConvertToJson(ProtocolVersion)));
 
             // Send all diagnostics back
             foreach (var connection in _waitingForDiagnostics)
@@ -851,14 +877,14 @@ namespace Microsoft.Framework.DesignTimeHost
                 writer.Write("Assembly");
                 writer.Write(Id);
 
-                writer.Write(project.Diagnostics.Warnings.Count);
-                foreach (var warning in project.Diagnostics.Warnings)
+                writer.Write(project.CompilationDiagnostics.Warnings.Count);
+                foreach (var warning in project.CompilationDiagnostics.Warnings)
                 {
                     writer.Write(warning.FormattedMessage);
                 }
 
-                writer.Write(project.Diagnostics.Errors.Count);
-                foreach (var error in project.Diagnostics.Errors)
+                writer.Write(project.CompilationDiagnostics.Errors.Count);
+                foreach (var error in project.CompilationDiagnostics.Errors)
                 {
                     writer.Write(error.FormattedMessage);
                 }
@@ -870,7 +896,7 @@ namespace Microsoft.Framework.DesignTimeHost
                 var obj = new JObject();
                 obj["MessageType"] = "Assembly";
                 obj["ContextId"] = Id;
-                obj[nameof(CompileResponse.Diagnostics)] = ConvertToJArray(project.Diagnostics.CompilationDiagnostics);
+                obj[nameof(CompileResponse.Diagnostics)] = ConvertToJArray(project.CompilationDiagnostics.Diagnostics);
                 obj[nameof(CompileResponse.AssemblyPath)] = project.Outputs.AssemblyPath;
                 obj["Blobs"] = 2;
                 writer.Write(obj.ToString(Formatting.None));
@@ -928,11 +954,11 @@ namespace Microsoft.Framework.DesignTimeHost
             {
                 Frameworks = new List<FrameworkData>(),
                 Projects = new List<ProjectInfo>(),
-                FileFormatWarnings = new List<FileFormatWarning>()
+                Diagnostics = new List<ICompilationMessage>()
             };
 
             Project project;
-            if (!Project.TryGetProject(appPath, out project, state.FileFormatWarnings))
+            if (!Project.TryGetProject(appPath, out project, state.Diagnostics))
             {
                 throw new InvalidOperationException(string.Format("Unable to find project.json in '{0}'", appPath));
             }
@@ -1009,6 +1035,7 @@ namespace Microsoft.Framework.DesignTimeHost
                     CompilationSettings = project.GetCompilerOptions(frameworkName, configuration)
                                                  .ToCompilationSettings(frameworkName),
                     SourceFiles = dependencySources,
+                    Diagnostics = dependencyInfo.HostContext.DependencyWalker.GetDependencyDiagnostics(project.ProjectFilePath),
                     DependencyInfo = dependencyInfo
                 };
 
@@ -1256,8 +1283,6 @@ namespace Microsoft.Framework.DesignTimeHost
         {
             public string Name { get; set; }
 
-            public IList<FileFormatWarning> FileFormatWarnings { get; set; }
-
             public IList<string> ProjectSearchPaths { get; set; }
 
             public string GlobalJsonPath { get; set; }
@@ -1269,6 +1294,8 @@ namespace Microsoft.Framework.DesignTimeHost
             public IDictionary<string, string> Commands { get; set; }
 
             public IList<ProjectInfo> Projects { get; set; }
+
+            public IList<ICompilationMessage> Diagnostics { get; set; }
         }
 
         // Represents a project that should be used for intellisense
@@ -1285,6 +1312,8 @@ namespace Microsoft.Framework.DesignTimeHost
             public CompilationSettings CompilationSettings { get; set; }
 
             public IList<string> SourceFiles { get; set; }
+
+            public IList<ICompilationMessage> Diagnostics { get; set; }
 
             public DependencyInfo DependencyInfo { get; set; }
         }

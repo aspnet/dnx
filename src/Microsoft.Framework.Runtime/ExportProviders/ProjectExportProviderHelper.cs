@@ -70,12 +70,7 @@ namespace Microsoft.Framework.Runtime
                         .ChangeName(node.Library.Name)
                         .ChangeAspect(null));
 
-                    if (libraryExport == null)
-                    {
-                        // TODO: Failed to resolve dependency so do something useful
-                        Logger.TraceError("[{0}]: Failed to resolve dependency '{1}'", typeof(ProjectExportProviderHelper).Name, node.Library.Name);
-                    }
-                    else
+                    if (libraryExport != null)
                     {
                         if (node.Parent == rootNode)
                         {
