@@ -1256,7 +1256,7 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
         }
 
 
-        [Theory]
+        [Theory(Skip = "Creating long path file failed on Windows Server 2012 R2")]
         [MemberData("RuntimeComponents")]
         public void BundleExcludeWithLongPath(string flavor, string os, string architecture)
         {
