@@ -77,12 +77,26 @@ namespace Microsoft.Framework.Runtime
                 }
                 else
                 {
-                    // If we ended up with a version that isn't the minimum and we're not floating
-                    // add a warning. e.g. "A": "1.0" resulting in "A": "4.0"
-                    if (library.LibraryRange.VersionRange != null &&
-                        !string.IsNullOrEmpty(library.LibraryRange.FileName) &&
-                        library.LibraryRange.VersionRange.VersionFloatBehavior == SemanticVersionFloatBehavior.None &&
-                        library.LibraryRange.VersionRange.MinVersion != library.Identity.Version)
+                    // Skip libraries that aren't specified in a project.json
+                    if (string.IsNullOrEmpty(library.LibraryRange.FileName))
+                    {
+                        continue;
+                    }
+
+                    if (library.LibraryRange.VersionRange == null)
+                    {
+                        // TODO: Show errors/warnings for things without versions
+                        continue;
+                    }
+
+                    // If we ended up with a declared version that isn't what was asked for directly
+                    // then report a warning
+                    // Case 1: Non floating version and the minimum doesn't match what was specified
+                    // Case 2: Floating version that fell outside of the range
+                    if ((library.LibraryRange.VersionRange.VersionFloatBehavior == SemanticVersionFloatBehavior.None &&
+                         library.LibraryRange.VersionRange.MinVersion != library.Identity.Version) ||
+                        (library.LibraryRange.VersionRange.VersionFloatBehavior != SemanticVersionFloatBehavior.None &&
+                         !library.LibraryRange.VersionRange.EqualsFloating(library.Identity.Version)))
                     {
                         var message = string.Format("Dependency specified was {0} but ended up with {1}.", library.LibraryRange, library.Identity);
                         messages.Add(new FileFormatMessage(message, projectPath, CompilationMessageSeverity.Warning)
