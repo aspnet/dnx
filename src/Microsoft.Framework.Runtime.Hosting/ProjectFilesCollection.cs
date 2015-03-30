@@ -21,11 +21,12 @@ namespace Microsoft.Framework.Runtime
         private readonly PatternGroup _resourcePatternsGroup;
         private readonly PatternGroup _preprocessPatternsGroup;
         private readonly PatternGroup _compilePatternsGroup;
-        private readonly PatternGroup _bundleExcludePatternsGroup;
         private readonly PatternGroup _contentPatternsGroup;
 
         private readonly string _projectDirectory;
         private readonly string _projectFilePath;
+
+        private readonly IEnumerable<string> _bundleExcludePatterns;
 
         public ProjectFilesCollection(JObject rawProject, string projectDirectory, string projectFilePath, ICollection<ICompilationMessage> warnings = null)
         {
@@ -37,7 +38,7 @@ namespace Microsoft.Framework.Runtime
                                                           .Concat(excludeBuiltIns);
             var compileBuiltIns = PatternsCollectionHelper.GetPatternsCollection(rawProject, projectDirectory, projectFilePath, "compileBuiltIn", DefaultCompileBuiltInPatterns);
 
-            var bundleExcludePatterns = PatternsCollectionHelper.GetPatternsCollection(rawProject, projectDirectory, projectFilePath, "bundleExclude", DefaultBundleExcludePatterns);
+            _bundleExcludePatterns = PatternsCollectionHelper.GetPatternsCollection(rawProject, projectDirectory, projectFilePath, "bundleExclude", DefaultBundleExcludePatterns);
 
             // The legacy names will be retired in the future.
 
@@ -54,13 +55,11 @@ namespace Microsoft.Framework.Runtime
                 .ExcludeGroup(_preprocessPatternsGroup)
                 .ExcludeGroup(_resourcePatternsGroup);
 
-            _contentPatternsGroup = PatternGroup.Build(rawProject, projectDirectory, projectFilePath, "content", "files", warnings: warnings, fallbackIncluding: DefaultContentsPatterns, additionalExcluding: excludePatterns.Concat(bundleExcludePatterns))
+            _contentPatternsGroup = PatternGroup.Build(rawProject, projectDirectory, projectFilePath, "content", "files", warnings: warnings, fallbackIncluding: DefaultContentsPatterns, additionalExcluding: excludePatterns.Concat(_bundleExcludePatterns))
                 .ExcludeGroup(_compilePatternsGroup)
                 .ExcludeGroup(_preprocessPatternsGroup)
                 .ExcludeGroup(_sharedPatternsGroup)
                 .ExcludeGroup(_resourcePatternsGroup);
-
-            _bundleExcludePatternsGroup = new PatternGroup(bundleExcludePatterns);
         }
 
         public IEnumerable<string> SourceFiles
@@ -73,11 +72,6 @@ namespace Microsoft.Framework.Runtime
             get { return _preprocessPatternsGroup.SearchFiles(_projectDirectory).Distinct(); }
         }
 
-        public IEnumerable<string> BundleExcludeFiles
-        {
-            get { return _bundleExcludePatternsGroup.SearchFiles(_projectDirectory).Distinct(); }
-        }
-
         public IEnumerable<string> ResourceFiles
         {
             get { return _resourcePatternsGroup.SearchFiles(_projectDirectory).Distinct(); }
@@ -88,9 +82,20 @@ namespace Microsoft.Framework.Runtime
             get { return _sharedPatternsGroup.SearchFiles(_projectDirectory).Distinct(); }
         }
 
-        public IEnumerable<string> ContentFiles
+        public IEnumerable<string> GetFilesForBundling(bool includeSource, IEnumerable<string> additionalExcludePatterns)
         {
-            get { return _contentPatternsGroup.SearchFiles(_projectDirectory).Distinct(); }
+            var patternGroup = new PatternGroup(ContentPatternsGroup.IncludePatterns,
+                                                ContentPatternsGroup.ExcludePatterns.Concat(additionalExcludePatterns),
+                                                ContentPatternsGroup.IncludeLiterals);
+            if (!includeSource)
+            {
+                foreach (var excludedGroup in ContentPatternsGroup.ExcludePatternsGroup)
+                {
+                    patternGroup.ExcludeGroup(excludedGroup);
+                }
+            }
+
+            return patternGroup.SearchFiles(_projectDirectory);
         }
 
         internal PatternGroup CompilePatternsGroup { get { return _compilePatternsGroup; } }
@@ -100,8 +105,6 @@ namespace Microsoft.Framework.Runtime
         internal PatternGroup ResourcePatternsGroup { get { return _resourcePatternsGroup; } }
 
         internal PatternGroup PreprocessPatternsGroup { get { return _preprocessPatternsGroup; } }
-
-        internal PatternGroup BundleExcludePatternsGroup { get { return _bundleExcludePatternsGroup; } }
 
         internal PatternGroup ContentPatternsGroup { get { return _contentPatternsGroup; } }
     }

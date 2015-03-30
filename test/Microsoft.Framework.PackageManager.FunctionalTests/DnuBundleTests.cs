@@ -453,9 +453,11 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
       'PROJECT_NAME': {
         '.': ['project.json', 'project.lock.json'],
         'MixFolder1': {
+          '.': ['uselessfile1.txt', 'uselessfile2'],
           'UsefulSub': ['useful.txt', 'useful']
         },
         'MixFolder2': {
+          '.': ['uselessfile1.txt', 'uselessfile2'],
           'UsefulSub': ['useful.txt', 'useful']
         }
       }
@@ -470,9 +472,7 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
   ""bundleExclude"": [
     ""UselessFolder1\\**"",
     ""UselessFolder2/**/*"",
-    ""UselessFolder3\\**/*.*"",
-    ""MixFolder1\\*"",
-    ""MixFolder2/*.*""
+    ""UselessFolder3\\**/*.*""
   ]
 }")
                     .WriteTo(testEnv.ProjectPath);
@@ -496,9 +496,7 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
   ""bundleExclude"": [
     ""UselessFolder1\\**"",
     ""UselessFolder2/**/*"",
-    ""UselessFolder3\\**/*.*"",
-    ""MixFolder1\\*"",
-    ""MixFolder2/*.*""
+    ""UselessFolder3\\**/*.*""
   ]
 }")
                     .WithFileContents(Path.Combine("approot", "src", testEnv.ProjectName, "project.lock.json"),
@@ -1140,7 +1138,7 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
                 var outputLockFilePath = Path.Combine(bundleOutputPath,
                     "approot", "packages", testApp, "1.0.0", "root", LockFileFormat.LockFileName);
                 var nupkgSha = File.ReadAllText(Path.Combine(bundleOutputPath,
-                    "approot", "packages", testApp, "1.0.0",$"{testApp}.1.0.0.nupkg.sha512"));
+                    "approot", "packages", testApp, "1.0.0", $"{testApp}.1.0.0.nupkg.sha512"));
 
                 Assert.Equal(expectedLockFileContents.Replace("NUPKG_SHA_VALUE", nupkgSha),
                     File.ReadAllText(outputLockFilePath));
@@ -1255,6 +1253,112 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
                 Assert.Equal(expectedLockFileContents.Replace("NUPKG_SHA_VALUE", nupkgSha),
                     File.ReadAllText(outputLockFilePath));
             }
+        }
+
+
+        [Theory(Skip = "Creating long path file failed on Windows Server 2012 R2")]
+        [MemberData("RuntimeComponents")]
+        public void BundleExcludeWithLongPath(string flavor, string os, string architecture)
+        {
+            var runtimeHomeDir = TestUtils.GetRuntimeHomeDir(flavor, os, architecture);
+
+            var projectStructure = @"{
+  '.': ['project.json', 'Config.json', 'Program.cs'],
+  'Data': {
+    'Input': ['data1.dat', 'data2.dat'],
+    'Backup': ['backup1.dat', 'backup2.dat']
+  },
+  'packages': {}
+}";
+            var expectedOutputStructure = @"{
+  'approot': {
+    'global.json': '',
+    'src': {
+      'PROJECT_NAME': {
+        '.': ['project.json', 'project.lock.json', 'Config.json', 'Program.cs'],
+          'Data': {
+            'Input': ['data1.dat', 'data2.dat']
+          }
+        }
+      }
+    }
+  }".Replace("PROJECT_NAME", _projectName);
+
+            using (var testEnv = new DnuTestEnvironment(runtimeHomeDir, _projectName, _outputDirName))
+            {
+                DirTree.CreateFromJson(projectStructure)
+                    .WithFileContents("project.json", @"{
+  ""bundleExclude"": ""Data/Backup/**"",
+  ""exclude"": ""node_modules""
+}")
+                    .WriteTo(testEnv.ProjectPath);
+
+                BuildLongPath(Path.Combine(testEnv.ProjectPath, "node_modules"));
+
+                var environment = new Dictionary<string, string>()
+                {
+                    { EnvironmentNames.Packages, Path.Combine(testEnv.ProjectPath, "packages") }
+                };
+
+                var exitCode = DnuTestUtils.ExecDnu(
+                    runtimeHomeDir,
+                    subcommand: "bundle",
+                    arguments: string.Format("--out {0}",
+                        testEnv.BundleOutputDirPath),
+                    environment: environment,
+                    workingDir: testEnv.ProjectPath);
+                Assert.Equal(0, exitCode);
+
+                var expectedOutputDir = DirTree.CreateFromJson(expectedOutputStructure)
+                    .WithFileContents(Path.Combine("approot", "src", testEnv.ProjectName, "project.json"), @"{
+  ""bundleExclude"": ""Data/Backup/**"",
+  ""exclude"": ""node_modules""
+}")
+                    .WithFileContents(Path.Combine("approot", "src", testEnv.ProjectName, "project.lock.json"),
+                        BasicLockFile)
+                    .WithFileContents(Path.Combine("approot", "global.json"), @"{
+  ""packages"": ""packages""
+}");
+                Assert.True(expectedOutputDir.MatchDirectoryOnDisk(testEnv.BundleOutputDirPath,
+                    compareFileContents: true));
+            }
+        }
+
+        private string BuildLongPath(string baseDir)
+        {
+            const int maxPath = 248;
+            var resultPath = baseDir;
+
+            string randomFilename;
+            string newpath;
+            while (true)
+            {
+                randomFilename = Path.GetRandomFileName();
+                newpath = string.Format("{0}{1}{2}", resultPath, Path.DirectorySeparatorChar, randomFilename);
+
+                if (newpath.Length > maxPath)
+                {
+                    break;
+                }
+                else
+                {
+                    resultPath = newpath;
+                }
+            }
+
+            var currentDirectory = Directory.GetCurrentDirectory();
+            try
+            {
+                Directory.CreateDirectory(resultPath);
+                Directory.SetCurrentDirectory(resultPath);
+                File.WriteAllText(randomFilename, "wow");
+            }
+            finally
+            {
+                Directory.SetCurrentDirectory(currentDirectory);
+            }
+
+            return resultPath;
         }
     }
 }

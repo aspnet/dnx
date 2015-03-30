@@ -47,13 +47,6 @@ namespace Microsoft.Framework.Runtime.Tests.FileGlobbing
             Assert.Equal(0, compileFilesPatternsGroup.IncludeLiterals.Count());
             Assert.Equal(3, compileFilesPatternsGroup.ExcludePatternsGroup.Count());
 
-            var bundleExcludePatternsGroup = target.BundleExcludePatternsGroup;
-            Assert.NotNull(bundleExcludePatternsGroup);
-            Assert.Equal(ProjectFilesCollection.DefaultBundleExcludePatterns, bundleExcludePatternsGroup.IncludePatterns);
-            Assert.Equal(0, bundleExcludePatternsGroup.ExcludePatterns.Count());
-            Assert.Equal(0, bundleExcludePatternsGroup.IncludeLiterals.Count());
-            Assert.Equal(0, bundleExcludePatternsGroup.ExcludePatternsGroup.Count());
-
             var contentFilePatternsGroup = target.ContentPatternsGroup;
             Assert.NotNull(contentFilePatternsGroup);
             Assert.Equal(ProjectFilesCollection.DefaultContentsPatterns, contentFilePatternsGroup.IncludePatterns);
