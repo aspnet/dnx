@@ -199,7 +199,11 @@ namespace Microsoft.Framework.Runtime
             {
                 try
                 {
-                    project.AssemblyFileVersion = SpecifyFileVersionSnapshot(version?.Value<string>(), fileVersion);
+                    var simpleVersion = project.Version.Version;
+                    project.AssemblyFileVersion = new Version(simpleVersion.Major,
+                        simpleVersion.Minor,
+                        simpleVersion.Build,
+                        int.Parse(fileVersion));
                 }
                 catch (FormatException ex)
                 {
@@ -301,20 +305,6 @@ namespace Microsoft.Framework.Runtime
             }
 
             return new SemanticVersion(version);
-        }
-
-        private static Version SpecifyFileVersionSnapshot(string version, string fileSnapshotValue)
-        {
-            if (string.IsNullOrEmpty(version))
-            {
-                version = "1.0.0." + fileSnapshotValue;
-            }
-            else if (version.EndsWith("-*"))
-            {
-                version = version.Substring(0, version.Length - 2) + "." + fileSnapshotValue;
-            }
-
-            return new Version(version);
         }
 
         private static void PopulateDependencies(
