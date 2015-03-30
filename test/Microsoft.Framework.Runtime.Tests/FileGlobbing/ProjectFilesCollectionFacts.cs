@@ -51,7 +51,7 @@ namespace Microsoft.Framework.Runtime.Tests.FileGlobbing
             Assert.NotNull(contentFilePatternsGroup);
             Assert.Equal(ProjectFilesCollection.DefaultContentsPatterns, contentFilePatternsGroup.IncludePatterns);
             Assert.Equal(
-                ProjectFilesCollection.DefaultBuiltInExcludePatterns.Concat(ProjectFilesCollection.DefaultBundleExcludePatterns).Distinct().OrderBy(elem => elem),
+                ProjectFilesCollection.DefaultBuiltInExcludePatterns.Concat(ProjectFilesCollection.DefaultPublishExcludePatterns).Distinct().OrderBy(elem => elem),
                 contentFilePatternsGroup.ExcludePatterns.OrderBy(elem => elem));
             Assert.Equal(0, contentFilePatternsGroup.IncludeLiterals.Count());
             Assert.Equal(4, contentFilePatternsGroup.ExcludePatternsGroup.Count());
@@ -69,7 +69,7 @@ namespace Microsoft.Framework.Runtime.Tests.FileGlobbing
              ""shared"": ""shared/**/*.cs"",
              ""sharedExclude"": ""excludeShared*.cs"",
              ""sharedFiles"": ""**/*.cs"",
-             ""bundleExclude"": ""no_pack/*.*"",
+             ""publishExclude"": ""no_pack/*.*"",
              ""exclude"": ""buggy/*.*"",
          }");
 

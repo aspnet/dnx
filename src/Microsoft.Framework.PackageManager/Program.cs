@@ -8,7 +8,7 @@ using System.Reflection;
 using System.Threading;
 using Microsoft.Framework.PackageManager.Packages;
 using Microsoft.Framework.PackageManager.List;
-using Microsoft.Framework.PackageManager.Bundle;
+using Microsoft.Framework.PackageManager.Publish;
 using Microsoft.Framework.Runtime;
 using Microsoft.Framework.Runtime.Common.CommandLine;
 using System.Linq;
@@ -87,58 +87,6 @@ namespace Microsoft.Framework.PackageManager
                 });
             });
 
-            app.Command("bundle", c =>
-            {
-                c.Description = "Bundle application for deployment";
-
-                var argProject = c.Argument("[project]", "Path to project, default is current directory");
-                var optionOut = c.Option("-o|--out <PATH>", "Where does it go", CommandOptionType.SingleValue);
-                var optionConfiguration = c.Option("--configuration <CONFIGURATION>", "The configuration to use for deployment (Debug|Release|{Custom})",
-                    CommandOptionType.SingleValue);
-                var optionNoSource = c.Option("--no-source", "Compiles the source files into NuGet packages",
-                    CommandOptionType.NoValue);
-                var optionRuntime = c.Option("--runtime <RUNTIME>", "Name or full path of the runtime folder to include, or \"active\" for current runtime on PATH",
-                    CommandOptionType.MultipleValue);
-                var optionNative = c.Option("--native", "Build and include native images. User must provide targeted CoreCLR runtime versions along with this option.",
-                    CommandOptionType.NoValue);
-                var optionWwwRoot = c.Option("--wwwroot <NAME>", "Name of public folder in the project directory",
-                    CommandOptionType.SingleValue);
-                var optionWwwRootOut = c.Option("--wwwroot-out <NAME>",
-                    "Name of public folder in the bundle, can be used only when the '--wwwroot' option or 'webroot' in project.json is specified",
-                    CommandOptionType.SingleValue);
-                var optionQuiet = c.Option("--quiet", "Do not show output such as source/destination of bundled files",
-                    CommandOptionType.NoValue);
-                c.HelpOption("-?|-h|--help");
-
-                c.OnExecute(() =>
-                {
-                    var options = new BundleOptions
-                    {
-                        OutputDir = optionOut.Value(),
-                        ProjectDir = argProject.Value ?? System.IO.Directory.GetCurrentDirectory(),
-                        Configuration = optionConfiguration.Value() ?? "Debug",
-                        RuntimeTargetFramework = _environment.RuntimeFramework,
-                        WwwRoot = optionWwwRoot.Value(),
-                        WwwRootOut = optionWwwRootOut.Value() ?? optionWwwRoot.Value(),
-                        NoSource = optionNoSource.HasValue(),
-                        Runtimes = optionRuntime.HasValue() ?
-                            string.Join(";", optionRuntime.Values).
-                                Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries) :
-                            new string[0],
-                        Native = optionNative.HasValue(),
-                        Reports = CreateReports(optionVerbose.HasValue(), optionQuiet.HasValue())
-                    };
-
-                    var manager = new BundleManager(_hostServices, options);
-                    if (!manager.Bundle())
-                    {
-                        return -1;
-                    }
-
-                    return 0;
-                });
-            });
-
             app.Command("publish", c =>
             {
                 c.Description = "Publish application for deployment";
@@ -156,15 +104,15 @@ namespace Microsoft.Framework.PackageManager
                 var optionWwwRoot = c.Option("--wwwroot <NAME>", "Name of public folder in the project directory",
                     CommandOptionType.SingleValue);
                 var optionWwwRootOut = c.Option("--wwwroot-out <NAME>",
-                    "Name of public folder in the bundle, can be used only when the '--wwwroot' option or 'webroot' in project.json is specified",
+                    "Name of public folder in the output, can be used only when the '--wwwroot' option or 'webroot' in project.json is specified",
                     CommandOptionType.SingleValue);
-                var optionQuiet = c.Option("--quiet", "Do not show output such as source/destination of bundled files",
+                var optionQuiet = c.Option("--quiet", "Do not show output such as source/destination of published files",
                     CommandOptionType.NoValue);
                 c.HelpOption("-?|-h|--help");
 
                 c.OnExecute(() =>
                 {
-                    var options = new BundleOptions
+                    var options = new PublishOptions
                     {
                         OutputDir = optionOut.Value(),
                         ProjectDir = argProject.Value ?? System.IO.Directory.GetCurrentDirectory(),
@@ -181,8 +129,8 @@ namespace Microsoft.Framework.PackageManager
                         Reports = CreateReports(optionVerbose.HasValue(), optionQuiet.HasValue())
                     };
 
-                    var manager = new BundleManager(_hostServices, options);
-                    if (!manager.Bundle())
+                    var manager = new PublishManager(_hostServices, options);
+                    if (!manager.Publish())
                     {
                         return -1;
                     }

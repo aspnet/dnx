@@ -12,7 +12,7 @@ using System.Runtime.Versioning;
 using System.Security.Cryptography;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.Framework.PackageManager.Bundle;
+using Microsoft.Framework.PackageManager.Publish;
 using Microsoft.Framework.PackageManager.Utils;
 using Microsoft.Framework.Runtime;
 using Microsoft.Framework.Runtime.DependencyManagement;
@@ -741,7 +741,7 @@ namespace Microsoft.Framework.PackageManager
         {
             using (var archive = new ZipArchive(stream, ZipArchiveMode.Read))
             {
-                var packOperations = new BundleOperations();
+                var packOperations = new PublishOperations();
                 packOperations.ExtractNupkg(archive, targetPath);
             }
         }

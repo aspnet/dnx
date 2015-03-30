@@ -10,7 +10,7 @@ namespace Microsoft.Framework.Runtime
     public class ProjectFilesCollection
     {
         public static readonly string[] DefaultCompileBuiltInPatterns = new[] { @"**/*.cs" };
-        public static readonly string[] DefaultBundleExcludePatterns = new[] { @"obj/**/*.*", @"bin/**/*.*", @"**/.*/**" };
+        public static readonly string[] DefaultPublishExcludePatterns = new[] { @"obj/**/*.*", @"bin/**/*.*", @"**/.*/**" };
         public static readonly string[] DefaultPreprocessPatterns = new[] { @"compiler/preprocess/**/*.cs" };
         public static readonly string[] DefaultSharedPatterns = new[] { @"compiler/shared/**/*.cs" };
         public static readonly string[] DefaultResourcesPatterns = new[] { @"compiler/resources/**/*" };
@@ -26,7 +26,7 @@ namespace Microsoft.Framework.Runtime
         private readonly string _projectDirectory;
         private readonly string _projectFilePath;
 
-        private readonly IEnumerable<string> _bundleExcludePatterns;
+        private readonly IEnumerable<string> _publishExcludePatterns;
 
         public ProjectFilesCollection(JObject rawProject, string projectDirectory, string projectFilePath, ICollection<ICompilationMessage> warnings = null)
         {
@@ -38,9 +38,25 @@ namespace Microsoft.Framework.Runtime
                                                           .Concat(excludeBuiltIns);
             var compileBuiltIns = PatternsCollectionHelper.GetPatternsCollection(rawProject, projectDirectory, projectFilePath, "compileBuiltIn", DefaultCompileBuiltInPatterns);
 
-            _bundleExcludePatterns = PatternsCollectionHelper.GetPatternsCollection(rawProject, projectDirectory, projectFilePath, "bundleExclude", DefaultBundleExcludePatterns);
-
-            // The legacy names will be retired in the future.
+            // TODO: The legacy names will be retired in the future.
+            var legacyPublishExcludePatternName = "bundleExclude";
+            var legacyPublishExcludePatternToken = rawProject[legacyPublishExcludePatternName];
+            if (legacyPublishExcludePatternToken != null)
+            {
+                _publishExcludePatterns = PatternsCollectionHelper.GetPatternsCollection(rawProject, projectDirectory, projectFilePath, legacyPublishExcludePatternName, DefaultPublishExcludePatterns);
+                if (warnings != null)
+                {
+                    warnings.Add(new FileFormatMessage(
+                        string.Format("Property \"{0}\" is deprecated. It is replaced by \"{1}\".", legacyPublishExcludePatternName, "publishExclude"),
+                        projectFilePath,
+                        CompilationMessageSeverity.Warning,
+                        legacyPublishExcludePatternToken));
+                }
+            }
+            else
+            {
+                _publishExcludePatterns = PatternsCollectionHelper.GetPatternsCollection(rawProject, projectDirectory, projectFilePath, "publishExclude", DefaultPublishExcludePatterns);
+            }
 
             _sharedPatternsGroup = PatternGroup.Build(rawProject, projectDirectory, projectFilePath, "shared", legacyName: null, warnings: warnings, fallbackIncluding: DefaultSharedPatterns, additionalExcluding: excludePatterns);
 
@@ -55,7 +71,7 @@ namespace Microsoft.Framework.Runtime
                 .ExcludeGroup(_preprocessPatternsGroup)
                 .ExcludeGroup(_resourcePatternsGroup);
 
-            _contentPatternsGroup = PatternGroup.Build(rawProject, projectDirectory, projectFilePath, "content", "files", warnings: warnings, fallbackIncluding: DefaultContentsPatterns, additionalExcluding: excludePatterns.Concat(_bundleExcludePatterns))
+            _contentPatternsGroup = PatternGroup.Build(rawProject, projectDirectory, projectFilePath, "content", "files", warnings: warnings, fallbackIncluding: DefaultContentsPatterns, additionalExcluding: excludePatterns.Concat(_publishExcludePatterns))
                 .ExcludeGroup(_compilePatternsGroup)
                 .ExcludeGroup(_preprocessPatternsGroup)
                 .ExcludeGroup(_sharedPatternsGroup)

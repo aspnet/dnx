@@ -4,9 +4,9 @@
 using System.Collections.Generic;
 using System.Runtime.Versioning;
 
-namespace Microsoft.Framework.PackageManager.Bundle
+namespace Microsoft.Framework.PackageManager.Publish
 {
-    public class BundleOptions
+    public class PublishOptions
     {
         public string OutputDir { get; set; }
 

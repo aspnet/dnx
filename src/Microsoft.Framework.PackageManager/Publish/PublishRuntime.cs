@@ -5,14 +5,14 @@ using System.IO;
 using System.Runtime.Versioning;
 using Microsoft.Framework.Runtime;
 
-namespace Microsoft.Framework.PackageManager.Bundle
+namespace Microsoft.Framework.PackageManager.Publish
 {
-    public class BundleRuntime
+    public class PublishRuntime
     {
         private readonly FrameworkName _frameworkName;
         private readonly string _runtimePath;
 
-        public BundleRuntime(BundleRoot root, FrameworkName frameworkName, string runtimePath)
+        public PublishRuntime(PublishRoot root, FrameworkName frameworkName, string runtimePath)
         {
             _frameworkName = frameworkName;
             _runtimePath = runtimePath;
@@ -24,7 +24,7 @@ namespace Microsoft.Framework.PackageManager.Bundle
         public string TargetPath { get; private set; }
         public FrameworkName Framework { get { return _frameworkName; } }
 
-        public void Emit(BundleRoot root)
+        public void Emit(PublishRoot root)
         {
             root.Reports.Quiet.WriteLine("Bundling runtime {0}", Name);
 
@@ -39,7 +39,7 @@ namespace Microsoft.Framework.PackageManager.Bundle
                 Directory.CreateDirectory(TargetPath);
             }
 
-            new BundleOperations().Copy(_runtimePath, TargetPath);
+            new PublishOperations().Copy(_runtimePath, TargetPath);
 
             if (PlatformHelper.IsMono)
             {

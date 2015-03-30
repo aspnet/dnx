@@ -6,7 +6,7 @@ using System.Runtime.Versioning;
 using Microsoft.Framework.Runtime;
 using NuGet;
 
-namespace Microsoft.Framework.PackageManager.Bundle
+namespace Microsoft.Framework.PackageManager.Publish
 {
     public class DependencyContext
     {

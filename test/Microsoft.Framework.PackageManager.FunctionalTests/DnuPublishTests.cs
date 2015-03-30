@@ -11,10 +11,10 @@ using Xunit;
 
 namespace Microsoft.Framework.PackageManager
 {
-    public class DnuBundleTests
+    public class DnuPublishTests
     {
         private readonly string _projectName = "TestProject";
-        private readonly string _outputDirName = "BundleOutput";
+        private readonly string _outputDirName = "PublishOutput";
 
         private static readonly string BatchFileTemplate = @"
 @""{0}{1}.exe"" --appbase ""%~dp0approot\src\{2}"" Microsoft.Framework.ApplicationHost {3} %*
@@ -53,7 +53,7 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
 
         [Theory]
         [MemberData("RuntimeComponents")]
-        public void DnuBundleWebApp_RootAsPublicFolder(string flavor, string os, string architecture)
+        public void DnuPublishWebApp_RootAsPublicFolder(string flavor, string os, string architecture)
         {
             var runtimeHomeDir = TestUtils.GetRuntimeHomeDir(flavor, os, architecture);
 
@@ -114,7 +114,7 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
             {
                 DirTree.CreateFromJson(projectStructure)
                     .WithFileContents("project.json", @"{
-  ""bundleExclude"": ""**.bconfig"",
+  ""publishExclude"": ""**.bconfig"",
   ""webroot"": ""to_be_overridden""
 }")
                     .WriteTo(testEnv.ProjectPath);
@@ -126,36 +126,36 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
 
                 var exitCode = DnuTestUtils.ExecDnu(
                     runtimeHomeDir,
-                    subcommand: "bundle",
+                    subcommand: "publish",
                     arguments: string.Format("--out {0} --wwwroot . --wwwroot-out wwwroot",
-                        testEnv.BundleOutputDirPath),
+                        testEnv.PublishOutputDirPath),
                     environment: environment,
                     workingDir: testEnv.ProjectPath);
                 Assert.Equal(0, exitCode);
 
                 var expectedOutputDir = DirTree.CreateFromJson(expectedOutputStructure)
                     .WithFileContents(Path.Combine("approot", "src", testEnv.ProjectName, "project.json"), @"{
-  ""bundleExclude"": ""**.bconfig"",
+  ""publishExclude"": ""**.bconfig"",
   ""webroot"": ""../../../wwwroot""
 }")
                     .WithFileContents(Path.Combine("approot", "src", testEnv.ProjectName, "project.lock.json"),
                         BasicLockFile)
                     .WithFileContents(Path.Combine("wwwroot", "project.json"), @"{
-  ""bundleExclude"": ""**.bconfig"",
+  ""publishExclude"": ""**.bconfig"",
   ""webroot"": ""to_be_overridden""
 }")
                     .WithFileContents(Path.Combine("approot", "global.json"), @"{
   ""packages"": ""packages""
 }")
                     .WithFileContents(Path.Combine("wwwroot", "web.config"), outputWebConfigTemplate, testEnv.ProjectName);
-                Assert.True(expectedOutputDir.MatchDirectoryOnDisk(testEnv.BundleOutputDirPath,
+                Assert.True(expectedOutputDir.MatchDirectoryOnDisk(testEnv.PublishOutputDirPath,
                     compareFileContents: true));
             }
         }
 
         [Theory]
         [MemberData("RuntimeComponents")]
-        public void DnuBundleWebApp_SubfolderAsPublicFolder(string flavor, string os, string architecture)
+        public void DnuPublishWebApp_SubfolderAsPublicFolder(string flavor, string os, string architecture)
         {
             var runtimeHomeDir = TestUtils.GetRuntimeHomeDir(flavor, os, architecture);
 
@@ -214,7 +214,7 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
             {
                 DirTree.CreateFromJson(projectStructure)
                     .WithFileContents("project.json", @"{
-  ""bundleExclude"": ""**.useless"",
+  ""publishExclude"": ""**.useless"",
   ""webroot"": ""public""
 }")
                     .WriteTo(testEnv.ProjectPath);
@@ -226,16 +226,16 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
 
                 var exitCode = DnuTestUtils.ExecDnu(
                     runtimeHomeDir,
-                    subcommand: "bundle",
+                    subcommand: "publish",
                     arguments: string.Format("--out {0} --wwwroot-out wwwroot",
-                        testEnv.BundleOutputDirPath),
+                        testEnv.PublishOutputDirPath),
                     environment: environment,
                     workingDir: testEnv.ProjectPath);
                 Assert.Equal(0, exitCode);
 
                 var expectedOutputDir = DirTree.CreateFromJson(expectedOutputStructure)
                     .WithFileContents(Path.Combine("approot", "src", testEnv.ProjectName, "project.json"), @"{
-  ""bundleExclude"": ""**.useless"",
+  ""publishExclude"": ""**.useless"",
   ""webroot"": ""../../../wwwroot""
 }")
                     .WithFileContents(Path.Combine("approot", "src", testEnv.ProjectName, "project.lock.json"),
@@ -244,14 +244,14 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
   ""packages"": ""packages""
 }")
                     .WithFileContents(Path.Combine("wwwroot", "web.config"), outputWebConfigTemplate, testEnv.ProjectName);
-                Assert.True(expectedOutputDir.MatchDirectoryOnDisk(testEnv.BundleOutputDirPath,
+                Assert.True(expectedOutputDir.MatchDirectoryOnDisk(testEnv.PublishOutputDirPath,
                     compareFileContents: true));
             }
         }
 
         [Theory]
         [MemberData("RuntimeComponents")]
-        public void DnuBundleConsoleApp(string flavor, string os, string architecture)
+        public void DnuPublishConsoleApp(string flavor, string os, string architecture)
         {
             var runtimeHomeDir = TestUtils.GetRuntimeHomeDir(flavor, os, architecture);
 
@@ -281,7 +281,7 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
             {
                 DirTree.CreateFromJson(projectStructure)
                     .WithFileContents("project.json", @"{
-  ""bundleExclude"": ""Data/Backup/**""
+  ""publishExclude"": ""Data/Backup/**""
 }")
                     .WriteTo(testEnv.ProjectPath);
 
@@ -292,23 +292,23 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
 
                 var exitCode = DnuTestUtils.ExecDnu(
                     runtimeHomeDir,
-                    subcommand: "bundle",
+                    subcommand: "publish",
                     arguments: string.Format("--out {0}",
-                        testEnv.BundleOutputDirPath),
+                        testEnv.PublishOutputDirPath),
                     environment: environment,
                     workingDir: testEnv.ProjectPath);
                 Assert.Equal(0, exitCode);
 
                 var expectedOutputDir = DirTree.CreateFromJson(expectedOutputStructure)
                     .WithFileContents(Path.Combine("approot", "src", testEnv.ProjectName, "project.json"), @"{
-  ""bundleExclude"": ""Data/Backup/**""
+  ""publishExclude"": ""Data/Backup/**""
 }")
                     .WithFileContents(Path.Combine("approot", "src", testEnv.ProjectName, "project.lock.json"),
                         BasicLockFile)
                     .WithFileContents(Path.Combine("approot", "global.json"), @"{
   ""packages"": ""packages""
 }");
-                Assert.True(expectedOutputDir.MatchDirectoryOnDisk(testEnv.BundleOutputDirPath,
+                Assert.True(expectedOutputDir.MatchDirectoryOnDisk(testEnv.PublishOutputDirPath,
                     compareFileContents: true));
             }
         }
@@ -362,7 +362,7 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
             {
                 DirTree.CreateFromJson(projectStructure)
                     .WithFileContents("project.json", @"{
-  ""bundleExclude"": [
+  ""publishExclude"": [
     ""FileWithoutExtension"",
     ""UselessFolder1"",
     ""UselessFolder2/"",
@@ -384,16 +384,16 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
 
                 var exitCode = DnuTestUtils.ExecDnu(
                     runtimeHomeDir,
-                    subcommand: "bundle",
+                    subcommand: "publish",
                     arguments: string.Format("--out {0}",
-                        testEnv.BundleOutputDirPath),
+                        testEnv.PublishOutputDirPath),
                     environment: environment,
                     workingDir: testEnv.ProjectPath);
                 Assert.Equal(0, exitCode);
 
                 var expectedOutputDir = DirTree.CreateFromJson(expectedOutputStructure)
                     .WithFileContents(Path.Combine("approot", "src", testEnv.ProjectName, "project.json"), @"{
-  ""bundleExclude"": [
+  ""publishExclude"": [
     ""FileWithoutExtension"",
     ""UselessFolder1"",
     ""UselessFolder2/"",
@@ -411,7 +411,7 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
                     .WithFileContents(Path.Combine("approot", "global.json"), @"{
   ""packages"": ""packages""
 }");
-                Assert.True(expectedOutputDir.MatchDirectoryOnDisk(testEnv.BundleOutputDirPath,
+                Assert.True(expectedOutputDir.MatchDirectoryOnDisk(testEnv.PublishOutputDirPath,
                     compareFileContents: true));
             }
         }
@@ -469,7 +469,7 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
             {
                 DirTree.CreateFromJson(projectStructure)
                     .WithFileContents("project.json", @"{
-  ""bundleExclude"": [
+  ""publishExclude"": [
     ""UselessFolder1\\**"",
     ""UselessFolder2/**/*"",
     ""UselessFolder3\\**/*.*""
@@ -484,16 +484,16 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
 
                 var exitCode = DnuTestUtils.ExecDnu(
                     runtimeHomeDir,
-                    subcommand: "bundle",
+                    subcommand: "publish",
                     arguments: string.Format("--out {0}",
-                        testEnv.BundleOutputDirPath),
+                        testEnv.PublishOutputDirPath),
                     environment: environment,
                     workingDir: testEnv.ProjectPath);
                 Assert.Equal(0, exitCode);
 
                 var expectedOutputDir = DirTree.CreateFromJson(expectedOutputStructure)
                     .WithFileContents(Path.Combine("approot", "src", testEnv.ProjectName, "project.json"), @"{
-  ""bundleExclude"": [
+  ""publishExclude"": [
     ""UselessFolder1\\**"",
     ""UselessFolder2/**/*"",
     ""UselessFolder3\\**/*.*""
@@ -504,7 +504,7 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
                     .WithFileContents(Path.Combine("approot", "global.json"), @"{
   ""packages"": ""packages""
 }");
-                Assert.True(expectedOutputDir.MatchDirectoryOnDisk(testEnv.BundleOutputDirPath,
+                Assert.True(expectedOutputDir.MatchDirectoryOnDisk(testEnv.PublishOutputDirPath,
                     compareFileContents: true));
             }
         }
@@ -582,9 +582,9 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
 
                 var exitCode = DnuTestUtils.ExecDnu(
                     runtimeHomeDir,
-                    subcommand: "bundle",
+                    subcommand: "publish",
                     arguments: string.Format("--out {0}",
-                        testEnv.BundleOutputDirPath),
+                        testEnv.PublishOutputDirPath),
                     environment: environment,
                     workingDir: testEnv.ProjectPath);
                 Assert.Equal(0, exitCode);
@@ -597,14 +597,14 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
                     .WithFileContents(Path.Combine("approot", "global.json"), @"{
   ""packages"": ""packages""
 }");
-                Assert.True(expectedOutputDir.MatchDirectoryOnDisk(testEnv.BundleOutputDirPath,
+                Assert.True(expectedOutputDir.MatchDirectoryOnDisk(testEnv.PublishOutputDirPath,
                     compareFileContents: true));
             }
         }
 
         [Theory]
         [MemberData("RuntimeComponents")]
-        public void VerifyDefaultBundleExcludePatterns(string flavor, string os, string architecture)
+        public void VerifyDefaultPublishExcludePatterns(string flavor, string os, string architecture)
         {
             var runtimeHomeDir = TestUtils.GetRuntimeHomeDir(flavor, os, architecture);
 
@@ -652,9 +652,9 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
 
                 var exitCode = DnuTestUtils.ExecDnu(
                     runtimeHomeDir,
-                    subcommand: "bundle",
+                    subcommand: "publish",
                     arguments: string.Format("--out {0}",
-                        testEnv.BundleOutputDirPath),
+                        testEnv.PublishOutputDirPath),
                     environment: environment,
                     workingDir: testEnv.ProjectPath);
                 Assert.Equal(0, exitCode);
@@ -667,14 +667,14 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
                     .WithFileContents(Path.Combine("approot", "global.json"), @"{
   ""packages"": ""packages""
 }");
-                Assert.True(expectedOutputDir.MatchDirectoryOnDisk(testEnv.BundleOutputDirPath,
+                Assert.True(expectedOutputDir.MatchDirectoryOnDisk(testEnv.PublishOutputDirPath,
                     compareFileContents: true));
             }
         }
 
         [Theory]
         [MemberData("RuntimeComponents")]
-        public void DnuBundleWebApp_CopyExistingWebConfig(string flavor, string os, string architecture)
+        public void DnuPublishWebApp_CopyExistingWebConfig(string flavor, string os, string architecture)
         {
             var runtimeHomeDir = TestUtils.GetRuntimeHomeDir(flavor, os, architecture);
 
@@ -732,9 +732,9 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
 
                 var exitCode = DnuTestUtils.ExecDnu(
                     runtimeHomeDir,
-                    subcommand: "bundle",
+                    subcommand: "publish",
                     arguments: string.Format("--out {0} --wwwroot public --wwwroot-out wwwroot",
-                        testEnv.BundleOutputDirPath),
+                        testEnv.PublishOutputDirPath),
                     environment: environment,
                     workingDir: testEnv.ProjectPath);
                 Assert.Equal(0, exitCode);
@@ -749,14 +749,14 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
   ""packages"": ""packages""
 }")
                     .WithFileContents(Path.Combine("wwwroot", "web.config"), outputWebConfigTemplate, testEnv.ProjectName);
-                Assert.True(expectedOutputDir.MatchDirectoryOnDisk(testEnv.BundleOutputDirPath,
+                Assert.True(expectedOutputDir.MatchDirectoryOnDisk(testEnv.PublishOutputDirPath,
                     compareFileContents: true));
             }
         }
 
         [Theory]
         [MemberData("RuntimeComponents")]
-        public void DnuBundleWebApp_UpdateExistingWebConfig(string flavor, string os, string architecture)
+        public void DnuPublishWebApp_UpdateExistingWebConfig(string flavor, string os, string architecture)
         {
             var runtimeHomeDir = TestUtils.GetRuntimeHomeDir(flavor, os, architecture);
 
@@ -828,9 +828,9 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
 
                 var exitCode = DnuTestUtils.ExecDnu(
                     runtimeHomeDir,
-                    subcommand: "bundle",
+                    subcommand: "publish",
                     arguments: string.Format("--out {0} --wwwroot public --wwwroot-out wwwroot",
-                        testEnv.BundleOutputDirPath),
+                        testEnv.PublishOutputDirPath),
                     environment: environment,
                     workingDir: testEnv.ProjectPath);
                 Assert.Equal(0, exitCode);
@@ -845,14 +845,14 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
   ""packages"": ""packages""
 }")
                     .WithFileContents(Path.Combine("wwwroot", "web.config"), outputWebConfigContents, testEnv.ProjectName);
-                Assert.True(expectedOutputDir.MatchDirectoryOnDisk(testEnv.BundleOutputDirPath,
+                Assert.True(expectedOutputDir.MatchDirectoryOnDisk(testEnv.PublishOutputDirPath,
                     compareFileContents: true));
             }
         }
 
         [Theory]
         [MemberData("RuntimeComponents")]
-        public void GenerateBatchFilesAndBashScriptsWithoutBundledRuntime(string flavor, string os, string architecture)
+        public void GenerateBatchFilesAndBashScriptsWithoutPublishedRuntime(string flavor, string os, string architecture)
         {
             var runtimeHomeDir = TestUtils.GetRuntimeHomeDir(flavor, os, architecture);
 
@@ -894,9 +894,9 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
 
                 var exitCode = DnuTestUtils.ExecDnu(
                     runtimeHomeDir,
-                    subcommand: "bundle",
+                    subcommand: "publish",
                     arguments: string.Format("--out {0}",
-                        testEnv.BundleOutputDirPath),
+                        testEnv.PublishOutputDirPath),
                     environment: environment,
                     workingDir: testEnv.ProjectPath);
                 Assert.Equal(0, exitCode);
@@ -932,14 +932,14 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
                     .WithFileContents("kestrel",
                         BashScriptTemplate, EnvironmentNames.AppBase, testEnv.ProjectName, string.Empty, Constants.BootstrapperExeName, "kestrel");
 
-                Assert.True(expectedOutputDir.MatchDirectoryOnDisk(testEnv.BundleOutputDirPath,
+                Assert.True(expectedOutputDir.MatchDirectoryOnDisk(testEnv.PublishOutputDirPath,
                     compareFileContents: true));
             }
         }
 
         [Theory]
         [MemberData("RuntimeComponents")]
-        public void GenerateBatchFilesAndBashScriptsWithBundledRuntime(string flavor, string os, string architecture)
+        public void GenerateBatchFilesAndBashScriptsWithPublishedRuntime(string flavor, string os, string architecture)
         {
             var runtimeHomeDir = TestUtils.GetRuntimeHomeDir(flavor, os, architecture);
 
@@ -990,9 +990,9 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
 
                 var exitCode = DnuTestUtils.ExecDnu(
                     runtimeHomeDir,
-                    subcommand: "bundle",
+                    subcommand: "publish",
                     arguments: string.Format("--out {0} --runtime {1}",
-                        testEnv.BundleOutputDirPath, runtimeName),
+                        testEnv.PublishOutputDirPath, runtimeName),
                     environment: environment,
                     workingDir: testEnv.ProjectPath);
                 Assert.Equal(0, exitCode);
@@ -1036,7 +1036,7 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
                         BashScriptTemplate, EnvironmentNames.AppBase, testEnv.ProjectName, bashScriptBinPath, Constants.BootstrapperExeName, "kestrel")
                     .WithSubDir(Path.Combine("approot", "packages", runtimeName), runtimeSubDir);
 
-                Assert.True(expectedOutputDir.MatchDirectoryOnDisk(testEnv.BundleOutputDirPath,
+                Assert.True(expectedOutputDir.MatchDirectoryOnDisk(testEnv.PublishOutputDirPath,
                     compareFileContents: true));
             }
         }
@@ -1044,7 +1044,7 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
         [Theory]
         [InlineData("clr", "win", "x86")]
         [InlineData("clr", "win", "x64")]
-        public void BundleWithNoSourceOptionGeneratesLockFileOnClr(string flavor, string os, string architecture)
+        public void PublishWithNoSourceOptionGeneratesLockFileOnClr(string flavor, string os, string architecture)
         {
             const string testApp = "NoDependencies";
             string expectedOutputStructure = @"{
@@ -1113,7 +1113,7 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
             using (var runtimeHomeDir = TestUtils.GetRuntimeHomeDir(flavor, os, architecture))
             using (var tempDir = TestUtils.CreateTempDir())
             {
-                var bundleOutputPath = Path.Combine(tempDir, "output");
+                var publishOutputPath = Path.Combine(tempDir, "output");
                 var appPath = Path.Combine(tempDir, testApp);
                 TestUtils.CopyFolder(TestUtils.GetXreTestAppPath(testApp), appPath);
 
@@ -1125,19 +1125,19 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
 
                 var exitCode = DnuTestUtils.ExecDnu(
                     runtimeHomeDir,
-                    subcommand: "bundle",
-                    arguments: string.Format("--no-source --out {0}", bundleOutputPath),
+                    subcommand: "publish",
+                    arguments: string.Format("--no-source --out {0}", publishOutputPath),
                     environment: null,
                     workingDir: appPath);
 
                 Assert.Equal(0, exitCode);
 
                 Assert.True(DirTree.CreateFromJson(expectedOutputStructure)
-                    .MatchDirectoryOnDisk(bundleOutputPath, compareFileContents: false));
+                    .MatchDirectoryOnDisk(publishOutputPath, compareFileContents: false));
 
-                var outputLockFilePath = Path.Combine(bundleOutputPath,
+                var outputLockFilePath = Path.Combine(publishOutputPath,
                     "approot", "packages", testApp, "1.0.0", "root", LockFileFormat.LockFileName);
-                var nupkgSha = File.ReadAllText(Path.Combine(bundleOutputPath,
+                var nupkgSha = File.ReadAllText(Path.Combine(publishOutputPath,
                     "approot", "packages", testApp, "1.0.0", $"{testApp}.1.0.0.nupkg.sha512"));
 
                 Assert.Equal(expectedLockFileContents.Replace("NUPKG_SHA_VALUE", nupkgSha),
@@ -1148,7 +1148,7 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
         [Theory]
         [InlineData("clr", "win", "x86")]
         [InlineData("clr", "win", "x64")]
-        public void BundleWithNoSourceOptionUpdatesLockFileOnClr(string flavor, string os, string architecture)
+        public void PublishWithNoSourceOptionUpdatesLockFileOnClr(string flavor, string os, string architecture)
         {
             const string testApp = "NoDependencies";
             string expectedOutputStructure = @"{
@@ -1219,7 +1219,7 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
             using (var runtimeHomeDir = TestUtils.GetRuntimeHomeDir(flavor, os, architecture))
             using (var tempDir = TestUtils.CreateTempDir())
             {
-                var bundleOutputPath = Path.Combine(tempDir, "output");
+                var publishOutputPath = Path.Combine(tempDir, "output");
                 var appPath = Path.Combine(tempDir, testApp);
                 TestUtils.CopyFolder(TestUtils.GetXreTestAppPath(testApp), appPath);
 
@@ -1235,19 +1235,19 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
 
                 exitCode = DnuTestUtils.ExecDnu(
                     runtimeHomeDir,
-                    subcommand: "bundle",
-                    arguments: string.Format("--no-source --out {0}", bundleOutputPath),
+                    subcommand: "publish",
+                    arguments: string.Format("--no-source --out {0}", publishOutputPath),
                     environment: null,
                     workingDir: appPath);
 
                 Assert.Equal(0, exitCode);
 
                 Assert.True(DirTree.CreateFromJson(expectedOutputStructure)
-                    .MatchDirectoryOnDisk(bundleOutputPath, compareFileContents: false));
+                    .MatchDirectoryOnDisk(publishOutputPath, compareFileContents: false));
 
-                var outputLockFilePath = Path.Combine(bundleOutputPath,
+                var outputLockFilePath = Path.Combine(publishOutputPath,
                     "approot", "packages", testApp, "1.0.0", "root", LockFileFormat.LockFileName);
-                var nupkgSha = File.ReadAllText(Path.Combine(bundleOutputPath,
+                var nupkgSha = File.ReadAllText(Path.Combine(publishOutputPath,
                     "approot", "packages", testApp, "1.0.0", $"{testApp}.1.0.0.nupkg.sha512"));
 
                 Assert.Equal(expectedLockFileContents.Replace("NUPKG_SHA_VALUE", nupkgSha),
@@ -1258,7 +1258,7 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
 
         [Theory(Skip = "Creating long path file failed on Windows Server 2012 R2")]
         [MemberData("RuntimeComponents")]
-        public void BundleExcludeWithLongPath(string flavor, string os, string architecture)
+        public void PublishExcludeWithLongPath(string flavor, string os, string architecture)
         {
             var runtimeHomeDir = TestUtils.GetRuntimeHomeDir(flavor, os, architecture);
 
@@ -1288,7 +1288,7 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
             {
                 DirTree.CreateFromJson(projectStructure)
                     .WithFileContents("project.json", @"{
-  ""bundleExclude"": ""Data/Backup/**"",
+  ""publishExclude"": ""Data/Backup/**"",
   ""exclude"": ""node_modules""
 }")
                     .WriteTo(testEnv.ProjectPath);
@@ -1302,16 +1302,16 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
 
                 var exitCode = DnuTestUtils.ExecDnu(
                     runtimeHomeDir,
-                    subcommand: "bundle",
+                    subcommand: "publish",
                     arguments: string.Format("--out {0}",
-                        testEnv.BundleOutputDirPath),
+                        testEnv.PublishOutputDirPath),
                     environment: environment,
                     workingDir: testEnv.ProjectPath);
                 Assert.Equal(0, exitCode);
 
                 var expectedOutputDir = DirTree.CreateFromJson(expectedOutputStructure)
                     .WithFileContents(Path.Combine("approot", "src", testEnv.ProjectName, "project.json"), @"{
-  ""bundleExclude"": ""Data/Backup/**"",
+  ""publishExclude"": ""Data/Backup/**"",
   ""exclude"": ""node_modules""
 }")
                     .WithFileContents(Path.Combine("approot", "src", testEnv.ProjectName, "project.lock.json"),
@@ -1319,7 +1319,7 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
                     .WithFileContents(Path.Combine("approot", "global.json"), @"{
   ""packages"": ""packages""
 }");
-                Assert.True(expectedOutputDir.MatchDirectoryOnDisk(testEnv.BundleOutputDirPath,
+                Assert.True(expectedOutputDir.MatchDirectoryOnDisk(testEnv.PublishOutputDirPath,
                     compareFileContents: true));
             }
         }

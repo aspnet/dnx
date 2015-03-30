@@ -2,11 +2,11 @@
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 using System;
-using Microsoft.Framework.PackageManager.Bundle;
+using Microsoft.Framework.PackageManager.Publish;
 using Microsoft.Framework.Runtime;
 using Xunit;
 
-namespace Microsoft.Framework.PackageManager.Bundle.Tests
+namespace Microsoft.Framework.PackageManager.Publish.Tests
 {
     public class DependencyContextFacts
     {
