@@ -9,14 +9,14 @@ using System.Linq;
 using System.Runtime.Versioning;
 using Microsoft.Framework.Runtime;
 
-namespace Microsoft.Framework.PackageManager.Bundle
+namespace Microsoft.Framework.PackageManager.Publish
 {
-    public class BundleManager
+    public class PublishManager
     {
         private readonly IServiceProvider _hostServices;
-        private readonly BundleOptions _options;
+        private readonly PublishOptions _options;
 
-        public BundleManager(IServiceProvider hostServices, BundleOptions options)
+        public PublishManager(IServiceProvider hostServices, PublishOptions options)
         {
             _hostServices = hostServices;
             _options = options;
@@ -39,7 +39,7 @@ namespace Microsoft.Framework.PackageManager.Bundle
             return Path.GetFullPath(projectDir.TrimEnd(Path.DirectorySeparatorChar));
         }
 
-        public bool Bundle()
+        public bool Publish()
         {
             var warnings = new List<ICompilationMessage>();
             Runtime.Project project;
@@ -73,11 +73,11 @@ namespace Microsoft.Framework.PackageManager.Bundle
                 return false;
             }
 
-            if (string.Equals(_options.WwwRootOut, BundleRoot.AppRootName, StringComparison.OrdinalIgnoreCase))
+            if (string.Equals(_options.WwwRootOut, PublishRoot.AppRootName, StringComparison.OrdinalIgnoreCase))
             {
                 _options.Reports.Error.WriteLine(
                     "'{0}' is a reserved folder name. Please choose another name for the wwwroot-out folder.".Red(),
-                    BundleRoot.AppRootName);
+                    PublishRoot.AppRootName);
                 return false;
             }
 
@@ -89,7 +89,7 @@ namespace Microsoft.Framework.PackageManager.Bundle
 
             var frameworkContexts = new Dictionary<FrameworkName, DependencyContext>();
 
-            var root = new BundleRoot(project, outputPath, _hostServices, _options.Reports)
+            var root = new PublishRoot(project, outputPath, _hostServices, _options.Reports)
             {
                 Configuration = _options.Configuration,
                 NoSource = _options.NoSource
@@ -106,7 +106,7 @@ namespace Microsoft.Framework.PackageManager.Bundle
                 return false;
             }
 
-            if (!ScriptExecutor.Execute(project, "prebundle", getVariable))
+            if (!ScriptExecutor.Execute(project, "prepublish", getVariable))
             {
                 _options.Reports.Error.WriteLine(ScriptExecutor.ErrorMessage);
                 return false;
@@ -169,7 +169,7 @@ namespace Microsoft.Framework.PackageManager.Bundle
                 if (!project.GetTargetFrameworks().Any(x => x.FrameworkName == frameworkName))
                 {
                     _options.Reports.Error.WriteLine(
-                        string.Format("'{0}' is not a target framework of the project being bundled",
+                        string.Format("'{0}' is not a target framework of the project being published",
                         frameworkName.ToString().Red().Bold()));
                     return false;
                 }
@@ -181,7 +181,7 @@ namespace Microsoft.Framework.PackageManager.Bundle
             }
 
             // If there is no target framework filter specified with '--runtime',
-            // the bundled output targets all frameworks specified in project.json
+            // the published output targets all frameworks specified in project.json
             if (!_options.Runtimes.Any())
             {
                 foreach (var frameworkInfo in project.GetTargetFrameworks())
@@ -220,7 +220,7 @@ namespace Microsoft.Framework.PackageManager.Bundle
                     IList<DependencyContext> contexts;
                     if (!root.LibraryDependencyContexts.TryGetValue(libraryDescription.Identity, out contexts))
                     {
-                        root.Packages.Add(new BundlePackage(libraryDescription));
+                        root.Packages.Add(new PublishPackage(libraryDescription));
                         contexts = new List<DependencyContext>();
                         root.LibraryDependencyContexts[libraryDescription.Identity] = contexts;
                     }
@@ -231,17 +231,17 @@ namespace Microsoft.Framework.PackageManager.Bundle
                 {
                     if (!root.Projects.Any(p => p.Name == libraryDescription.Identity.Name))
                     {
-                        var bundleProject = new BundleProject(
+                        var publishProject = new PublishProject(
                             dependencyContext.ProjectReferenceDependencyProvider,
                             dependencyContext.ProjectResolver,
                             libraryDescription);
 
-                        if (bundleProject.Name == project.Name)
+                        if (publishProject.Name == project.Name)
                         {
-                            bundleProject.WwwRoot = _options.WwwRoot;
-                            bundleProject.WwwRootOut = _options.WwwRootOut;
+                            publishProject.WwwRoot = _options.WwwRoot;
+                            publishProject.WwwRootOut = _options.WwwRootOut;
                         }
-                        root.Projects.Add(bundleProject);
+                        root.Projects.Add(publishProject);
                     }
                 }
             }
@@ -259,7 +259,7 @@ namespace Microsoft.Framework.PackageManager.Bundle
 
             var success = root.Emit();
 
-            if (!ScriptExecutor.Execute(project, "postbundle", getVariable))
+            if (!ScriptExecutor.Execute(project, "postpublish", getVariable))
             {
                 _options.Reports.Error.WriteLine(ScriptExecutor.ErrorMessage);
                 return false;
@@ -277,14 +277,14 @@ namespace Microsoft.Framework.PackageManager.Bundle
             return !anyUnresolvedDependency && success;
         }
 
-        bool TryAddRuntime(BundleRoot root, FrameworkName frameworkName, string runtimePath)
+        bool TryAddRuntime(PublishRoot root, FrameworkName frameworkName, string runtimePath)
         {
             if (!Directory.Exists(runtimePath))
             {
                 return false;
             }
 
-            root.Runtimes.Add(new BundleRuntime(root, frameworkName, runtimePath));
+            root.Runtimes.Add(new PublishRuntime(root, frameworkName, runtimePath));
             return true;
         }
 

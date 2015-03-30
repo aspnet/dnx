@@ -15,16 +15,16 @@ using Microsoft.Framework.Runtime.DependencyManagement;
 using Newtonsoft.Json.Linq;
 using NuGet;
 
-namespace Microsoft.Framework.PackageManager.Bundle
+namespace Microsoft.Framework.PackageManager.Publish
 {
-    public class BundleProject
+    public class PublishProject
     {
         private readonly ProjectReferenceDependencyProvider _projectReferenceDependencyProvider;
         private readonly IProjectResolver _projectResolver;
         private readonly LibraryDescription _libraryDescription;
         private string _applicationBase;
 
-        public BundleProject(
+        public PublishProject(
             ProjectReferenceDependencyProvider projectReferenceDependencyProvider,
             IProjectResolver projectResolver,
             LibraryDescription libraryDescription)
@@ -40,7 +40,7 @@ namespace Microsoft.Framework.PackageManager.Bundle
         public string WwwRootOut { get; set; }
         public bool IsPackage { get; private set; }
 
-        public bool Emit(BundleRoot root)
+        public bool Emit(PublishRoot root)
         {
             root.Reports.Quiet.WriteLine("Using {0} dependency {1} for {2}", _libraryDescription.Type,
                 _libraryDescription.Identity, _libraryDescription.Framework.ToString().Yellow().Bold());
@@ -61,14 +61,14 @@ namespace Microsoft.Framework.PackageManager.Bundle
             return success;
         }
 
-        private void EmitSource(BundleRoot root)
+        private void EmitSource(PublishRoot root)
         {
             root.Reports.Quiet.WriteLine("  Copying source code from {0} dependency {1}",
                 _libraryDescription.Type, _libraryDescription.Identity.Name);
 
             var project = GetCurrentProject();
             var targetName = project.Name;
-            TargetPath = Path.Combine(root.OutputPath, BundleRoot.AppRootName, "src", targetName);
+            TargetPath = Path.Combine(root.OutputPath, PublishRoot.AppRootName, "src", targetName);
 
             // If root.OutputPath is specified by --out option, it might not be a full path
             TargetPath = Path.GetFullPath(TargetPath);
@@ -84,10 +84,10 @@ namespace Microsoft.Framework.PackageManager.Bundle
 
             UpdateWebRoot(root, TargetPath);
 
-            _applicationBase = Path.Combine("..", BundleRoot.AppRootName, "src", project.Name);
+            _applicationBase = Path.Combine("..", PublishRoot.AppRootName, "src", project.Name);
         }
 
-        private bool EmitNupkg(BundleRoot root)
+        private bool EmitNupkg(PublishRoot root)
         {
             root.Reports.Quiet.WriteLine("  Packing nupkg from {0} dependency {1}",
                 _libraryDescription.Type, _libraryDescription.Identity.Name);
@@ -169,7 +169,7 @@ namespace Microsoft.Framework.PackageManager.Bundle
                 deps[_libraryDescription.Identity.Name] = _libraryDescription.Identity.Version.ToString();
             });
 
-            _applicationBase = Path.Combine("..", BundleRoot.AppRootName, "packages", resolver.GetPackageDirectory(_libraryDescription.Identity.Name, _libraryDescription.Identity.Version), "root");
+            _applicationBase = Path.Combine("..", PublishRoot.AppRootName, "packages", resolver.GetPackageDirectory(_libraryDescription.Identity.Name, _libraryDescription.Identity.Version), "root");
 
             root.Reports.Quiet.WriteLine("Removing {0}", srcNupkgPath);
             File.Delete(srcNupkgPath);
@@ -212,12 +212,12 @@ namespace Microsoft.Framework.PackageManager.Bundle
                 else
                 {
                     Console.WriteLine(
-                        string.Format("TODO: Warning: the referenced source file '{0}' is not in solution root and it is not bundled to output.", sourceFile));
+                        string.Format("TODO: Warning: the referenced source file '{0}' is not in solution root and it is not published to output.", sourceFile));
                 }
             }
         }
 
-        private void UpdateWebRoot(BundleRoot root, string targetPath)
+        private void UpdateWebRoot(PublishRoot root, string targetPath)
         {
             // Update the 'webroot' property, which was specified with '--wwwroot-out' option
             if (!string.IsNullOrEmpty(WwwRootOut))
@@ -239,7 +239,7 @@ namespace Microsoft.Framework.PackageManager.Bundle
             File.WriteAllText(jsonFile, jsonObj.ToString());
         }
 
-        private void CopyProject(BundleRoot root, Runtime.Project project, string targetPath, bool includeSource)
+        private void CopyProject(PublishRoot root, Runtime.Project project, string targetPath, bool includeSource)
         {
             var additionalExcluding = new List<string>();
 
@@ -266,7 +266,7 @@ namespace Microsoft.Framework.PackageManager.Bundle
             root.Operations.Copy(sourceFiles, project.ProjectDirectory, targetPath);
         }
 
-        public void PostProcess(BundleRoot root)
+        public void PostProcess(PublishRoot root)
         {
             // At this point, all nupkgs generated from dependency projects are available in packages folder
             // So we can add them to lockfile now
@@ -297,7 +297,7 @@ namespace Microsoft.Framework.PackageManager.Bundle
             CopyAspNetLoaderDll(root, wwwRootOutPath);
         }
 
-        private void UpdateLockFile(BundleRoot root)
+        private void UpdateLockFile(PublishRoot root)
         {
             var lockFileFormat = new LockFileFormat();
             string lockFilePath;
@@ -348,18 +348,18 @@ namespace Microsoft.Framework.PackageManager.Bundle
             var repository = new PackageRepository(root.TargetPackagesPath);
             var resolver = new DefaultPackagePathResolver(root.TargetPackagesPath);
 
-            // For dependency projects that were bundled to nupkgs
+            // For dependency projects that were published to nupkgs
             // Add them to lockfile to ensure the contents of lockfile are still valid
             using (var sha512 = SHA512.Create())
             {
-                foreach (var bundleProject in root.Projects.Where(p => p.IsPackage))
+                foreach (var publishProject in root.Projects.Where(p => p.IsPackage))
                 {
-                    var packageInfo = repository.FindPackagesById(bundleProject.Name)
+                    var packageInfo = repository.FindPackagesById(publishProject.Name)
                         .SingleOrDefault();
                     if (packageInfo == null)
                     {
-                        root.Reports.Information.WriteLine("Unable to locate bundled package {0} in {1}",
-                            bundleProject.Name.Yellow(),
+                        root.Reports.Information.WriteLine("Unable to locate published package {0} in {1}",
+                            publishProject.Name.Yellow(),
                             repository.RepositoryRoot);
                         continue;
                     }
@@ -367,7 +367,7 @@ namespace Microsoft.Framework.PackageManager.Bundle
                     var package = packageInfo.Package;
                     var nupkgPath = resolver.GetPackageFilePath(package.Id, package.Version);
 
-                    var project = bundleProject.GetCurrentProject();
+                    var project = publishProject.GetCurrentProject();
                     lockFile.Libraries.Add(LockFileUtils.CreateLockFileLibraryForProject(
                         project,
                         package,
@@ -380,7 +380,7 @@ namespace Microsoft.Framework.PackageManager.Bundle
             lockFileFormat.Write(lockFilePath, lockFile);
         }
 
-        private void GenerateWebConfigFileForWwwRootOut(BundleRoot root, Runtime.Project project, string wwwRootOutPath)
+        private void GenerateWebConfigFileForWwwRootOut(PublishRoot root, Runtime.Project project, string wwwRootOutPath)
         {
             // Generate web.config for public app folder
             var wwwRootOutWebConfigFilePath = Path.Combine(wwwRootOutPath, "web.config");
@@ -459,7 +459,7 @@ namespace Microsoft.Framework.PackageManager.Bundle
             return child;
         }
 
-        private static string GetBootstrapperVersion(BundleRoot root)
+        private static string GetBootstrapperVersion(PublishRoot root)
         {
             // Use version of Microsoft.AspNet.Loader.IIS.Interop as version of bootstrapper
             var package = root.Packages.SingleOrDefault(
@@ -470,7 +470,7 @@ namespace Microsoft.Framework.PackageManager.Bundle
         // Expected runtime name format: dnx-{FLAVOR}-{OS}-{ARCHITECTURE}.{VERSION}
         // Sample input: dnx-coreclr-win-x86.1.0.0.0
         // Sample output: coreclr
-        private static string GetRuntimeFlavor(BundleRuntime runtime)
+        private static string GetRuntimeFlavor(PublishRuntime runtime)
         {
             if (runtime == null)
             {
@@ -485,7 +485,7 @@ namespace Microsoft.Framework.PackageManager.Bundle
         // Expected runtime name format: dnx-{FLAVOR}-{OS}-{ARCHITECTURE}.{VERSION}
         // Sample input: dnx-coreclr-win-x86.1.0.0.0
         // Sample output: 1.0.0.0
-        private static string GetRuntimeVersion(BundleRuntime runtime)
+        private static string GetRuntimeVersion(PublishRuntime runtime)
         {
             if (runtime == null)
             {
@@ -496,7 +496,7 @@ namespace Microsoft.Framework.PackageManager.Bundle
             return segments[1];
         }
 
-        private static void CopyAspNetLoaderDll(BundleRoot root, string wwwRootOutPath)
+        private static void CopyAspNetLoaderDll(PublishRoot root, string wwwRootOutPath)
         {
             // Tool dlls including AspNet.Loader.dll go to bin folder under public app folder
             var wwwRootOutBinPath = Path.Combine(wwwRootOutPath, "bin");
@@ -531,7 +531,7 @@ namespace Microsoft.Framework.PackageManager.Bundle
             }
         }
 
-        private void CopyContentFiles(BundleRoot root, Runtime.Project project, string targetFolderPath)
+        private void CopyContentFiles(PublishRoot root, Runtime.Project project, string targetFolderPath)
         {
             root.Reports.Quiet.WriteLine("Copying contents of {0} dependency {1} to {2}",
                 _libraryDescription.Type, _libraryDescription.Identity.Name, targetFolderPath);
@@ -549,12 +549,12 @@ namespace Microsoft.Framework.PackageManager.Bundle
             wwwRoot = wwwRoot ?? string.Empty;
             var wwwRootSourcePath = Path.Combine(projectDirectory, wwwRoot);
 
-            // If the value of '--wwwroot' is ".", we need to bundle the project root dir
+            // If the value of '--wwwroot' is ".", we need to publish the project root dir
             // Use Path.GetFullPath() to get rid of the trailing "."
             return Path.GetFullPath(wwwRootSourcePath);
         }
 
-        private bool IncludeRuntimeFileInBundle(string relativePath, string fileName)
+        private bool IncludeRuntimeFileInOutput(string relativePath, string fileName)
         {
             return true;
         }

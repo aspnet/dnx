@@ -10,24 +10,24 @@ using Microsoft.Framework.Runtime;
 using Newtonsoft.Json.Linq;
 using NuGet;
 
-namespace Microsoft.Framework.PackageManager.Bundle
+namespace Microsoft.Framework.PackageManager.Publish
 {
-    public class BundleRoot
+    public class PublishRoot
     {
         private readonly Runtime.Project _project;
         public static readonly string AppRootName = "approot";
 
-        public BundleRoot(Runtime.Project project, string outputPath, IServiceProvider hostServices, Reports reports)
+        public PublishRoot(Runtime.Project project, string outputPath, IServiceProvider hostServices, Reports reports)
         {
             _project = project;
             Reports = reports;
-            Projects = new List<BundleProject>();
-            Packages = new List<BundlePackage>();
-            Runtimes = new List<BundleRuntime>();
+            Projects = new List<PublishProject>();
+            Packages = new List<PublishPackage>();
+            Runtimes = new List<PublishRuntime>();
             OutputPath = outputPath;
             HostServices = hostServices;
             TargetPackagesPath = Path.Combine(outputPath, AppRootName, "packages");
-            Operations = new BundleOperations();
+            Operations = new PublishOperations();
             LibraryDependencyContexts = new Dictionary<Library, IList<DependencyContext>>();
         }
 
@@ -38,13 +38,13 @@ namespace Microsoft.Framework.PackageManager.Bundle
         public bool NoSource { get; set; }
         public string Configuration { get; set; }
 
-        public IList<BundleRuntime> Runtimes { get; set; }
-        public IList<BundleProject> Projects { get; private set; }
-        public IList<BundlePackage> Packages { get; private set; }
+        public IList<PublishRuntime> Runtimes { get; set; }
+        public IList<PublishProject> Projects { get; private set; }
+        public IList<PublishPackage> Packages { get; private set; }
         public IDictionary<Library, IList<DependencyContext>> LibraryDependencyContexts { get; private set; }
 
         public Reports Reports { get; private set; }
-        public BundleOperations Operations { get; private set; }
+        public PublishOperations Operations { get; private set; }
 
         public IServiceProvider HostServices { get; private set; }
 
@@ -184,7 +184,7 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
                 rootObject = new JObject();
             }
 
-            var applicationRoot = Path.Combine(OutputPath, BundleRoot.AppRootName);
+            var applicationRoot = Path.Combine(OutputPath, PublishRoot.AppRootName);
 
             rootObject["packages"] = PathUtility.GetRelativePath(
                 PathUtility.EnsureTrailingForwardSlash(applicationRoot),

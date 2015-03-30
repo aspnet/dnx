@@ -6,13 +6,13 @@ using System.IO;
 using Microsoft.Framework.Runtime;
 using NuGet;
 
-namespace Microsoft.Framework.PackageManager.Bundle
+namespace Microsoft.Framework.PackageManager.Publish
 {
-    public class BundlePackage
+    public class PublishPackage
     {
         private readonly LibraryDescription _libraryDescription;
 
-        public BundlePackage(LibraryDescription libraryDescription)
+        public PublishPackage(LibraryDescription libraryDescription)
         {
             _libraryDescription = libraryDescription;
         }
@@ -21,7 +21,7 @@ namespace Microsoft.Framework.PackageManager.Bundle
 
         public string TargetPath { get; private set; }
 
-        public void Emit(BundleRoot root)
+        public void Emit(PublishRoot root)
         {
             root.Reports.Quiet.WriteLine("Using {0} dependency {1}", _libraryDescription.Type, Library);
             foreach (var context in root.LibraryDependencyContexts[Library])
@@ -33,7 +33,7 @@ namespace Microsoft.Framework.PackageManager.Bundle
             }
         }
 
-        private void Emit(BundleRoot root, IEnumerable<PackageAssembly> assemblies)
+        private void Emit(PublishRoot root, IEnumerable<PackageAssembly> assemblies)
         {
             var resolver = new DefaultPackagePathResolver(root.TargetPackagesPath);
 
@@ -75,7 +75,7 @@ namespace Microsoft.Framework.PackageManager.Bundle
             }
         }
 
-        private void CopyFolder(BundleRoot root, string srcFolder, string targetFolder)
+        private void CopyFolder(PublishRoot root, string srcFolder, string targetFolder)
         {
             if (!Directory.Exists(srcFolder))
             {
@@ -91,7 +91,7 @@ namespace Microsoft.Framework.PackageManager.Bundle
             root.Operations.Copy(srcFolder, targetFolder);
         }
 
-        private void CopyFile(BundleRoot root, string srcPath, string targetPath)
+        private void CopyFile(PublishRoot root, string srcPath, string targetPath)
         {
             var targetFolder = Path.GetDirectoryName(targetPath);
             Directory.CreateDirectory(targetFolder);

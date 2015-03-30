@@ -7,7 +7,7 @@ using Microsoft.Framework.Runtime;
 using Microsoft.Framework.Runtime.Caching;
 using NuGet;
 
-namespace Microsoft.Framework.PackageManager.Bundle
+namespace Microsoft.Framework.PackageManager.Publish
 {
     public class DependencyContext
     {
