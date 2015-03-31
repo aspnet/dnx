@@ -214,7 +214,7 @@ namespace Microsoft.Framework.Runtime.Roslyn
             CSharpParseOptions parseOptions)
         {
             const string assemblyFileVersionName = "System.Reflection.AssemblyFileVersionAttribute";
-            const string assemblyVersionName = "System.Reflection.AssemblyVersion";
+            const string assemblyVersionName = "System.Reflection.AssemblyVersionAttribute";
             const string assemblyInformationalVersion = "System.Reflection.AssemblyInformationalVersion";
             
             var assemblyAttributes = compilation.Assembly.GetAttributes();
