@@ -68,6 +68,10 @@ namespace Microsoft.Framework.Runtime
 
         // Temporary while old and new runtime are separate
         string ICompilationProject.Version { get { return Version?.ToString(); } }
+        string ICompilationProject.AssemblyFileVersion { get { return AssemblyFileVersion?.ToString(); } }
+
+        public Version AssemblyFileVersion { get; private set; }
+
         public IList<LibraryDependency> Dependencies { get; private set; }
 
         public CompilerServices CompilerServices { get; private set; }
@@ -191,6 +195,27 @@ namespace Microsoft.Framework.Runtime
                     var lineInfo = (IJsonLineInfo)version;
 
                     throw FileFormatException.Create(ex, version, project.ProjectFilePath);
+                }
+            }
+
+            var fileVersion = Environment.GetEnvironmentVariable("DNX_ASSEMBLY_FILE_VERSION");
+            if (string.IsNullOrWhiteSpace(fileVersion))
+            {
+                project.AssemblyFileVersion = project.Version.Version;
+            }
+            else
+            {
+                try
+                {
+                    var simpleVersion = project.Version.Version;
+                    project.AssemblyFileVersion = new Version(simpleVersion.Major,
+                        simpleVersion.Minor,
+                        simpleVersion.Build,
+                        int.Parse(fileVersion));
+                }
+                catch (FormatException ex)
+                {
+                    throw new FormatException("The assembly file version is invalid: " + fileVersion, ex);
                 }
             }
 

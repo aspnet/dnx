@@ -226,15 +226,55 @@ namespace Microsoft.Framework.Runtime.Roslyn
         private static CSharpCompilation ApplyVersionInfo(CSharpCompilation compilation, ICompilationProject project,
             CSharpParseOptions parseOptions)
         {
-            var emptyVersion = new Version(0, 0, 0, 0);
+            const string assemblyFileVersionName = "System.Reflection.AssemblyFileVersionAttribute";
+            const string assemblyVersionName = "System.Reflection.AssemblyVersionAttribute";
+            const string assemblyInformationalVersion = "System.Reflection.AssemblyInformationalVersionAttribute";
 
-            // If the assembly version is empty then set the version
-            if (compilation.Assembly.Identity.Version == emptyVersion)
+            var assemblyAttributes = compilation.Assembly.GetAttributes();
+
+            var foundAssemblyFileVersion = false;
+            var foundAssemblyVersion = false;
+            var foundAssemblyInformationalVersion = false;
+
+            foreach (var assembly in assemblyAttributes)
             {
-                return compilation.AddSyntaxTrees(new[]
+                string attributeName = assembly.AttributeClass.ToString();
+
+                if (string.Equals(attributeName, assemblyFileVersionName, StringComparison.Ordinal))
                 {
-                    CSharpSyntaxTree.ParseText("[assembly: System.Reflection.AssemblyVersion(\"" + RemovePrereleaseTag(project.Version) + "\")]", parseOptions),
-                    CSharpSyntaxTree.ParseText("[assembly: System.Reflection.AssemblyInformationalVersion(\"" + project.Version + "\")]", parseOptions)
+                    foundAssemblyFileVersion = true;
+                }
+                else if (string.Equals(attributeName, assemblyVersionName, StringComparison.Ordinal))
+                {
+                    foundAssemblyVersion = true;
+                }
+                else if (string.Equals(attributeName, assemblyInformationalVersion, StringComparison.Ordinal))
+                {
+                    foundAssemblyInformationalVersion = true;
+                }
+            }
+
+            var versionAttributes = new StringBuilder();
+            if (!foundAssemblyFileVersion)
+            {
+                versionAttributes.AppendLine($"[assembly:{assemblyFileVersionName}(\"{project.AssemblyFileVersion}\")]");
+            }
+
+            if (!foundAssemblyVersion)
+            {
+                versionAttributes.AppendLine($"[assembly:{assemblyVersionName}(\"{RemovePrereleaseTag(project.Version)}\")]");
+            }
+
+            if (!foundAssemblyInformationalVersion)
+            {
+                versionAttributes.AppendLine($"[assembly:{assemblyInformationalVersion}(\"{project.Version}\")]");
+            }
+
+            if (versionAttributes.Length != 0)
+            {
+                compilation = compilation.AddSyntaxTrees(new[]
+                {
+                    CSharpSyntaxTree.ParseText(versionAttributes.ToString(), parseOptions)
                 });
             }
 

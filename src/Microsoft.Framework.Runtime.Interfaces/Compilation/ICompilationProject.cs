@@ -14,6 +14,7 @@ namespace Microsoft.Framework.Runtime.Compilation
         string ProjectFilePath { get; }
         IProjectFilesCollection Files { get; }
         string Version { get; }
+        string AssemblyFileVersion { get; }
 
         // Unfortunately we have to do this for now... we'll need a more general compilation options system :(
         bool EmbedInteropTypes { get; set; }
