@@ -15,7 +15,7 @@ namespace Microsoft.Framework.Runtime
         public static readonly string[] DefaultSharedPatterns = new[] { @"compiler/shared/**/*.cs" };
         public static readonly string[] DefaultResourcesPatterns = new[] { @"compiler/resources/**/*", "**/*.resx" };
         public static readonly string[] DefaultContentsPatterns = new[] { @"**/*" };
-        public static readonly string[] DefaultBuiltInExcludePatterns = new[] { "bin/**", "obj/**", "**/*.kproj" };
+        public static readonly string[] DefaultBuiltInExcludePatterns = new[] { "bin/**", "obj/**", "**/*.xproj" };
 
         private readonly PatternGroup _sharedPatternsGroup;
         private readonly PatternGroup _resourcePatternsGroup;
