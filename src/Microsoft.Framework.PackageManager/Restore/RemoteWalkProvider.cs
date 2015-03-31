@@ -11,7 +11,7 @@ using Microsoft.Framework.PackageManager.Restore.NuGet;
 using Microsoft.Framework.Runtime;
 using Microsoft.Framework.Runtime.DependencyManagement;
 using NuGet;
-using TempRepack.Engine.Model;
+using Microsoft.Framework.PackageManager.Restore.RuntimeModel;
 
 namespace Microsoft.Framework.PackageManager
 {

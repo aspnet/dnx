@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 using Microsoft.Framework.Runtime;
 using Microsoft.Framework.Runtime.DependencyManagement;
 using NuGet;
-using TempRepack.Engine.Model;
+using Microsoft.Framework.PackageManager.Restore.RuntimeModel;
 using System.Linq;
 
 namespace Microsoft.Framework.PackageManager

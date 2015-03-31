@@ -1,10 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace TempRepack.Engine.Model
+namespace Microsoft.Framework.PackageManager.Restore.RuntimeModel
 {
-
-
     public class RuntimeFile
     {
         public Dictionary<string, RuntimeSpec> Runtimes { get; set; } = new Dictionary<string, RuntimeSpec>();

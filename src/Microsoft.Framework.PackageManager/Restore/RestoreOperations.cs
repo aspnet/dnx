@@ -8,7 +8,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Framework.Runtime;
 using NuGet;
-using TempRepack.Engine.Model;
+using Microsoft.Framework.PackageManager.Restore.RuntimeModel;
 
 namespace Microsoft.Framework.PackageManager
 {

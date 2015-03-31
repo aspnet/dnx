@@ -4,7 +4,7 @@ using System.Runtime.Versioning;
 using System.Threading.Tasks;
 using Microsoft.Framework.Runtime;
 using Microsoft.Framework.Runtime.DependencyManagement;
-using TempRepack.Engine.Model;
+using Microsoft.Framework.PackageManager.Restore.RuntimeModel;
 
 namespace Microsoft.Framework.PackageManager
 {

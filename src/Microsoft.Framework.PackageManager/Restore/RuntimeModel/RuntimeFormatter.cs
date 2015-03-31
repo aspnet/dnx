@@ -5,7 +5,7 @@ using Newtonsoft.Json;
 using System.Linq;
 using Newtonsoft.Json.Linq;
 
-namespace TempRepack.Engine.Model
+namespace Microsoft.Framework.PackageManager.Restore.RuntimeModel
 {
     public class RuntimeFileFormatter
     {
