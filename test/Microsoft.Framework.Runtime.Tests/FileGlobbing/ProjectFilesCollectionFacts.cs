@@ -77,8 +77,8 @@ namespace Microsoft.Framework.Runtime.Tests.FileGlobbing
 
             Assert.Equal(new string[] { "*.cs", "../*.cs" }, target.CompilePatternsGroup.IncludePatterns);
             Assert.Equal(new string[] { "signle.cs" }, target.CompilePatternsGroup.IncludeLiterals);
-            Assert.Equal(new string[] { "fake*.cs", "fake2*.cs", "buggy/*.*", "bin/**", "obj/**", "**/*.kproj" }, target.CompilePatternsGroup.ExcludePatterns);
-            Assert.Equal(new string[] { "buggy/*.*", "bin/**", "obj/**", "**/*.kproj", "no_pack/*.*" }, target.ContentPatternsGroup.ExcludePatterns);
+            Assert.Equal(new string[] { "fake*.cs", "fake2*.cs", "buggy/*.*", "bin/**", "obj/**", "**/*.xproj" }, target.CompilePatternsGroup.ExcludePatterns);
+            Assert.Equal(new string[] { "buggy/*.*", "bin/**", "obj/**", "**/*.xproj", "no_pack/*.*" }, target.ContentPatternsGroup.ExcludePatterns);
         }
 
         [Fact]
