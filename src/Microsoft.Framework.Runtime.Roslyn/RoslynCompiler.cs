@@ -215,7 +215,7 @@ namespace Microsoft.Framework.Runtime.Roslyn
         {
             const string assemblyFileVersionName = "System.Reflection.AssemblyFileVersionAttribute";
             const string assemblyVersionName = "System.Reflection.AssemblyVersionAttribute";
-            const string assemblyInformationalVersion = "System.Reflection.AssemblyInformationalVersion";
+            const string assemblyInformationalVersion = "System.Reflection.AssemblyInformationalVersionAttribute";
             
             var assemblyAttributes = compilation.Assembly.GetAttributes();
 
