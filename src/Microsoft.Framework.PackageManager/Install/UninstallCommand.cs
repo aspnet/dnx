@@ -12,12 +12,10 @@ namespace Microsoft.Framework.PackageManager
     internal class UninstallCommand
     {
         private readonly IAppCommandsRepository _commandsRepo;
-        private readonly IApplicationEnvironment _environment;
         private readonly Reports _reports;
 
-        public UninstallCommand(IApplicationEnvironment applicationEnvironment, IAppCommandsRepository commandsRepo, Reports reports)
+        public UninstallCommand(IAppCommandsRepository commandsRepo, Reports reports)
         {
-            _environment = applicationEnvironment;
             _commandsRepo = commandsRepo;
             _reports = reports;
         }
@@ -78,6 +76,7 @@ namespace Microsoft.Framework.PackageManager
             foreach(var applicationPackage in applicationPackagesStillUsed)
             {
                 var appLockFileFullPath = Path.Combine(
+                    _commandsRepo.PackagesRoot.Root,
                     _commandsRepo.PathResolver.GetPackageDirectory(applicationPackage.Id, applicationPackage.Version),
                     InstallBuilder.CommandsFolderName,
                     LockFileFormat.LockFileName);

@@ -477,7 +477,6 @@ namespace Microsoft.Framework.PackageManager
                     c.OnExecute(() =>
                     {
                         var command = new UninstallCommand(
-                            _environment,
                             AppCommandsFolderRepository.CreateDefault(),
                             reports: CreateReports(optionVerbose.HasValue(), quiet: false));
 
