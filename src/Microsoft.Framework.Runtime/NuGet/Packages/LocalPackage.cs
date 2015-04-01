@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Runtime.Versioning;
 
 namespace NuGet
@@ -17,6 +18,7 @@ namespace NuGet
             ".ni.dll"             // NativeImage
         };
         private IList<IPackageAssemblyReference> _assemblyReferences;
+        private IList<IPackageAssemblyReference> _resourceReferences;
 
         protected LocalPackage()
         {
@@ -195,6 +197,19 @@ namespace NuGet
             }
         }
 
+        public IEnumerable<IPackageAssemblyReference> ResourceReferences
+        {
+            get
+            {
+                if (_resourceReferences == null)
+                {
+                    _resourceReferences = GetResourceReferencesCore().ToList();
+                }
+
+                return _resourceReferences;
+            }
+        }
+
         public ICollection<PackageReferenceSet> PackageAssemblyReferences
         {
             get;
@@ -216,6 +231,8 @@ namespace NuGet
         protected abstract IEnumerable<IPackageFile> GetFilesBase();
 
         protected abstract IEnumerable<IPackageAssemblyReference> GetAssemblyReferencesCore();
+
+        protected abstract IEnumerable<IPackageAssemblyReference> GetResourceReferencesCore();
 
         protected void ReadManifest(Stream manifestStream)
         {
@@ -269,6 +286,27 @@ namespace NuGet
 
             // Assembly reference must have a .dll|.exe|.winmd extension and is not a resource or native assembly;
             return !ExcludedExtensions.Any(ext => filePath.EndsWith(ext, StringComparison.OrdinalIgnoreCase)) &&
+                Constants.AssemblyReferencesExtensions.Contains(Path.GetExtension(filePath), StringComparer.OrdinalIgnoreCase);
+        }
+
+        internal protected static bool IsResourcesReference(string filePath)
+        {
+            // assembly reference must be under lib/
+            if (!filePath.StartsWith(Constants.LibDirectory + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase))
+            {
+                return false;
+            }
+
+            var fileName = Path.GetFileName(filePath);
+
+            // if it's an empty folder, yes
+            if (fileName == Constants.PackageEmptyFileName)
+            {
+                return true;
+            }
+
+            // Assembly reference must have a .dll|.exe|.winmd extension and is not a resource or native assembly;
+            return filePath.EndsWith(".resources.dll", StringComparison.OrdinalIgnoreCase) &&
                 Constants.AssemblyReferencesExtensions.Contains(Path.GetExtension(filePath), StringComparer.OrdinalIgnoreCase);
         }
 

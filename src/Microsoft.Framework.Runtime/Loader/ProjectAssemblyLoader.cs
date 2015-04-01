@@ -5,6 +5,7 @@ using System;
 using System.Linq;
 using System.Reflection;
 using Microsoft.Framework.Runtime.Compilation;
+using System.IO;
 
 namespace Microsoft.Framework.Runtime.Loader
 {
@@ -49,11 +50,18 @@ namespace Microsoft.Framework.Runtime.Loader
 
             string name = assemblyName.Name;
             string aspect = null;
+
             var parts = name.Split(new[] { '!' }, 3);
             if (parts.Length != 1)
             {
                 name = parts[0];
                 aspect = parts[1];
+            }
+
+            if (!string.IsNullOrEmpty(assemblyName.CultureName) &&
+                Path.GetExtension(name).Equals(".resources", StringComparison.OrdinalIgnoreCase))
+            {
+                name = Path.GetFileNameWithoutExtension(name);
             }
 
             Project project;
@@ -73,11 +81,11 @@ namespace Microsoft.Framework.Runtime.Loader
             {
                 if (string.Equals(projectReference.Name, name, StringComparison.OrdinalIgnoreCase))
                 {
-                    return projectReference.Load(loadContext);
+                    return projectReference.Load(assemblyName, loadContext);
                 }
             }
 
             return null;
-        }
+       }
     }
 }

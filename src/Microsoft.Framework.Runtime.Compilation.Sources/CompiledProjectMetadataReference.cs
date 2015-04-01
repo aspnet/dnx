@@ -42,8 +42,9 @@ namespace Microsoft.Framework.Runtime.Compilation
                                        .ToList();
         }
 
-        public Assembly Load(IAssemblyLoadContext loadContext)
+        public Assembly Load(AssemblyName assemblyName, IAssemblyLoadContext loadContext)
         {
+            // LOUDO: put culturename into path
             return loadContext.LoadFile(_assemblyPath);
         }
 
