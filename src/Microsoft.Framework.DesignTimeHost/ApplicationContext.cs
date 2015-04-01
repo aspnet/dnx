@@ -18,6 +18,7 @@ using Microsoft.Framework.Runtime.Roslyn;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using NuGet;
+using System.Reflection;
 
 namespace Microsoft.Framework.DesignTimeHost
 {
@@ -497,7 +498,7 @@ namespace Microsoft.Framework.DesignTimeHost
                     {
                         var engine = new NonLoadingLoadContext();
 
-                        compilation.ProjectReference.Load(engine);
+                        compilation.ProjectReference.Load(new AssemblyName(_local.ProjectInformation.Name), engine);
 
                         compilation.AssemblyBytes = engine.AssemblyBytes ?? new byte[0];
                         compilation.PdbBytes = engine.PdbBytes ?? new byte[0];

@@ -1,10 +1,11 @@
 {
     "version": "0.1-beta-*",
     "exclude": "more/*.cs",
-    "resources": "**/*.resx",
+    "resource": [ "**/*.resx", "compiler/resources/**/*"],
     "dependencies": {
         "HelloShared": { "version": "0.1-beta-*", "type": "build" },
-        "Microsoft.Framework.Runtime.Roslyn.Interfaces": "1.0.0-*"
+        "Microsoft.Framework.Runtime.Roslyn.Interfaces": "1.0.0-*",
+        "Microsoft.Data.Edm": "5.6.3"
     },
     "commands": {
         "hi": "HelloWorld --mode amazing",
@@ -30,7 +31,8 @@
                 "System.Reflection": "4.0.10-beta-*",
                 "System.Runtime": "4.0.20-beta-*",
                 "System.Threading.Tasks": "4.0.10-beta-*",
-                "System.ComponentModel": "4.0.0-beta-*"
+                "System.ComponentModel": "4.0.0-beta-*",
+                "System.Resources.ResourceManager": "4.0.0-beta-*"
             }
         }
     }

@@ -41,8 +41,9 @@ namespace Microsoft.Framework.Runtime
             throw new NotSupportedException();
         }
 
-        public Assembly Load(IAssemblyLoadContext loadContext)
+        public Assembly Load(AssemblyName assemblyName, IAssemblyLoadContext loadContext)
         {
+            // LOUDO: switch on CultureName
             if (_response.Diagnostics.HasErrors())
             {
                 throw new DesignTimeCompilationException(_response.Diagnostics);

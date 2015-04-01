@@ -21,6 +21,8 @@ namespace NuGet
 
         IEnumerable<IPackageAssemblyReference> AssemblyReferences { get; }
 
+        IEnumerable<IPackageAssemblyReference> ResourceReferences { get; }
+
         [SuppressMessage("Microsoft.Design", "CA1024:UsePropertiesWhereAppropriate", Justification = "This might be expensive")]
         IEnumerable<IPackageFile> GetFiles();
 

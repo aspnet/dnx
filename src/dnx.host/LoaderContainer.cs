@@ -46,6 +46,24 @@ namespace dnx.host
             return null;
         }
 
+        public Assembly Load(AssemblyName name)
+        {
+            Logger.TraceInformation("[{0}]: Load name={1}", GetType().Name, name);
+            var sw = Stopwatch.StartNew();
+
+            foreach (var loader in _loaders.Reverse())
+            {
+                var assembly = loader.Load(name);
+                if (assembly != null)
+                {
+                    Logger.TraceInformation("[{0}]: Loaded name={1} in {2}ms", loader.GetType().Name, name, sw.ElapsedMilliseconds);
+                    return assembly;
+                }
+            }
+
+            return null;
+        }
+
         private class DisposableAction : IDisposable
         {
             private readonly Action _action;

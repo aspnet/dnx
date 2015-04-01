@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Reflection;
 using Microsoft.Framework.Runtime.Common.DependencyInjection;
 
 namespace Microsoft.Framework.Runtime

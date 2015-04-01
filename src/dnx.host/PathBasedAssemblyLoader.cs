@@ -23,11 +23,21 @@ namespace dnx.host
 
         public Assembly Load(string name)
         {
-            foreach (var path in _searchPaths)
+            return Load(new AssemblyName(name));
+        }
+
+        public Assembly Load(AssemblyName assemblyName)
+        {
+            foreach (var searchPath in _searchPaths)
             {
+                var path = searchPath;
+                if (!string.IsNullOrEmpty(assemblyName.CultureName))
+                {
+                    path = Path.Combine(path, assemblyName.CultureName);
+                }
                 foreach (var extension in _extensions)
                 {
-                    var filePath = Path.Combine(path, name + extension);
+                    var filePath = Path.Combine(path, assemblyName.Name + extension);
 
                     if (File.Exists(filePath))
                     {

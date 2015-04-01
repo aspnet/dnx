@@ -93,6 +93,13 @@ namespace Microsoft.Framework.PackageManager.Utils
 
                 // Add framework assemblies with empty supported frameworks
                 AddFrameworkReferences(lockFileLib, framework, package.FrameworkAssemblies.Where(f => !f.SupportedFrameworks.Any()));
+/* LOUDO: rebase merge error
+                group.RuntimeAssemblies = group.RuntimeAssemblies
+                    .Concat(GetPackageResources(package, framework))
+                    .ToList();
+
+                lockFileLib.FrameworkGroups.Add(group);
+*/
             }
 
             var patterns = new PatternDefinitions();
@@ -217,6 +224,32 @@ namespace Microsoft.Framework.PackageManager.Utils
                     // Skip anything that isn't a dll. Unfortunately some packages put random stuff
                     // in the lib folder and they surface as assembly references
                     if (!Path.GetExtension(reference.Path).Equals(".dll", StringComparison.OrdinalIgnoreCase))
+                    {
+                        continue;
+                    }
+
+                    results.Add(reference.Path);
+                }
+            }
+
+            return results;
+        }
+
+        private static List<string> GetPackageResources(IPackage package, FrameworkName targetFramework)
+        {
+            var results = new List<string>();
+
+            IEnumerable<IPackageAssemblyReference> compatibleReferences;
+            if (VersionUtility.TryGetCompatibleItems(targetFramework, package.ResourceReferences, out compatibleReferences))
+            {
+                // Get the list of references for this target framework
+                var references = compatibleReferences.ToList();
+                
+                foreach (var reference in references)
+                {
+                    // Skip anything that isn't a dll. Unfortunately some packages put random stuff
+                    // in the lib folder and they surface as assembly references
+                    if (!reference.Path.EndsWith(".resources.dll", StringComparison.OrdinalIgnoreCase))
                     {
                         continue;
                     }

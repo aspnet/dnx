@@ -66,7 +66,7 @@ namespace Microsoft.Framework.Runtime.Roslyn
                                      .ToList();
         }
 
-        public Assembly Load(IAssemblyLoadContext loadContext)
+        public Assembly Load(AssemblyName assemblyName, IAssemblyLoadContext loadContext)
         {
             using (var pdbStream = new MemoryStream())
             using (var assemblyStream = new MemoryStream())
