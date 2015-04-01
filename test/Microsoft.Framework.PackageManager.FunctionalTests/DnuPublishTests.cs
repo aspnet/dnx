@@ -51,6 +51,22 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
             }
         }
 
+        public static IEnumerable<object[]> ClrRuntimeComponents
+        {
+            get
+            {
+                return TestUtils.GetClrRuntimeComponents();
+            }
+        }
+
+        public static IEnumerable<object[]> CoreClrRuntimeComponents
+        {
+            get
+            {
+                return TestUtils.GetCoreClrRuntimeComponents();
+            }
+        }
+
         [Theory]
         [MemberData("RuntimeComponents")]
         public void DnuPublishWebApp_RootAsPublicFolder(string flavor, string os, string architecture)
@@ -360,6 +376,8 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
 
             using (var testEnv = new DnuTestEnvironment(runtimeHomeDir, _projectName, _outputDirName))
             {
+                // REVIEW: Paths with \ don't work on *nix so we put both in here for now
+                // We need a good strategy to test \\ and / on windows and / on *nix and osx
                 DirTree.CreateFromJson(projectStructure)
                     .WithFileContents("project.json", @"{
   ""publishExclude"": [
@@ -367,11 +385,15 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
     ""UselessFolder1"",
     ""UselessFolder2/"",
     ""UselessFolder3\\"",
+    ""UselessFolder3/"",
     ""MixFolder/UselessSub1/"",
     ""MixFolder\\UselessSub2\\"",
+    ""MixFolder/UselessSub2/"",
     ""MixFolder/UselessSub3\\"",
+    ""MixFolder/UselessSub3/"",
     ""MixFolder/UselessSub4"",
     ""MixFolder\\UselessSub5"",
+    ""MixFolder/UselessSub5"",
     "".git""
   ]
 }")
@@ -398,11 +420,15 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
     ""UselessFolder1"",
     ""UselessFolder2/"",
     ""UselessFolder3\\"",
+    ""UselessFolder3/"",
     ""MixFolder/UselessSub1/"",
     ""MixFolder\\UselessSub2\\"",
+    ""MixFolder/UselessSub2/"",
     ""MixFolder/UselessSub3\\"",
+    ""MixFolder/UselessSub3/"",
     ""MixFolder/UselessSub4"",
     ""MixFolder\\UselessSub5"",
+    ""MixFolder/UselessSub5"",
     "".git""
   ]
 }")
@@ -1042,8 +1068,7 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
         }
 
         [Theory]
-        [InlineData("clr", "win", "x86")]
-        [InlineData("clr", "win", "x64")]
+        [MemberData("ClrRuntimeComponents")]
         public void PublishWithNoSourceOptionGeneratesLockFileOnClr(string flavor, string os, string architecture)
         {
             const string testApp = "NoDependencies";
@@ -1146,8 +1171,7 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
         }
 
         [Theory]
-        [InlineData("clr", "win", "x86")]
-        [InlineData("clr", "win", "x64")]
+        [MemberData("ClrRuntimeComponents")]
         public void PublishWithNoSourceOptionUpdatesLockFileOnClr(string flavor, string os, string architecture)
         {
             const string testApp = "NoDependencies";

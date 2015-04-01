@@ -123,10 +123,11 @@ namespace Microsoft.Framework.FunctionalTestUtils
             {
                 Console.Error.WriteLine("Number of files in '{0}' is {1}, while expected number is {2}.",
                     dirPath, dirFileList.Count(), _pathToContents.Count);
-                Console.Error.WriteLine("Missing files: " +
-                    string.Join(",", _pathToContents.Keys.Except(dirFileList)));
-                Console.Error.WriteLine("Extra files: " +
-                    string.Join(",", dirFileList.Except(_pathToContents.Keys)));
+                Console.Error.WriteLine("Missing files: \n\n    " +
+                    string.Join("\n    ", _pathToContents.Keys.Except(dirFileList)));
+                Console.Error.WriteLine("Extra files: \n\n    " +
+                    string.Join("\n    ", dirFileList.Except(_pathToContents.Keys)));
+                Console.Error.WriteLine();
                 return false;
             }
 
@@ -136,7 +137,8 @@ namespace Microsoft.Framework.FunctionalTestUtils
                 {
                     var fullPath = Path.Combine(dirPath, file);
                     var onDiskFileContents = File.ReadAllText(fullPath);
-                    if (!string.Equals(onDiskFileContents, _pathToContents[file]))
+                    // Ignore new lines for compare
+                    if (!string.Equals(onDiskFileContents.Replace("\r\n", "\n"), _pathToContents[file].Replace("\r\n", "\n")))
                     {
                         Console.Error.WriteLine("The contents of '{0}' don't match expected contents.", fullPath);
                         Console.Error.WriteLine("Expected:");

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using NuGet;
 using Xunit;
 
@@ -9,9 +10,9 @@ namespace Microsoft.Framework.Runtime.Tests
         [Fact]
         public void IsChildOfDirectoryWorksWithRelativePath()
         {
-            var baseDir = @"..\BaseDir\";
-            var childPath = @"..\BaseDir\ChildFile";
-            var nonChildPath = @"..\AnotherBaseDir\NonChildFile";
+            var baseDir = Path.Combine("..", "BaseDir") + Path.DirectorySeparatorChar;
+            var childPath = Path.Combine("..", "BaseDir", "ChildFile");
+            var nonChildPath = Path.Combine("..", "AnotherBaseDir", "NonChildFile");
 
             Assert.True(PathUtility.IsChildOfDirectory(baseDir, childPath));
             Assert.False(PathUtility.IsChildOfDirectory(baseDir, nonChildPath));
@@ -20,9 +21,9 @@ namespace Microsoft.Framework.Runtime.Tests
         [Fact]
         public void IsChildOfDirectoryWorksWithAbsolutePath()
         {
-            var baseDir = @"C:\Test\BaseDir\";
-            var childPath = @"C:\Test\BaseDir\ChildFile";
-            var nonChildPath = @"C:\Test\AnotherBaseDir\NonChildFile";
+            var baseDir = PathHelpers.GetRootedPath("Test", "BaseDir") + Path.DirectorySeparatorChar;
+            var childPath = PathHelpers.GetRootedPath("Test", "BaseDir", "ChildFile");
+            var nonChildPath = PathHelpers.GetRootedPath("Test", "AnotherBaseDir", "NonChildFile");
 
             Assert.True(PathUtility.IsChildOfDirectory(baseDir, childPath));
             Assert.False(PathUtility.IsChildOfDirectory(baseDir, nonChildPath));
@@ -31,9 +32,9 @@ namespace Microsoft.Framework.Runtime.Tests
         [Fact]
         public void IsChildOfDirectoryWorksOnBaseDirWithoutTrailingPathSeparator()
         {
-            var baseDir = @"..\foo";
-            var childPath = @"..\foo\ChildFile";
-            var nonChildPath = @"..\food\NonChildFile";
+            var baseDir = Path.Combine("..", "foo");
+            var childPath = Path.Combine("..", "foo", "ChildFile");
+            var nonChildPath = Path.Combine("..", "food", "NonChildFile");
 
             Assert.True(PathUtility.IsChildOfDirectory(baseDir, childPath));
             Assert.False(PathUtility.IsChildOfDirectory(baseDir, nonChildPath));

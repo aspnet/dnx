@@ -20,6 +20,19 @@ namespace Microsoft.Framework.FunctionalTestUtils
             return tempDirPath;
         }
 
+        public static int Exec(string program, string commandLine)
+        {
+            string stdOut;
+            string stdErr;
+            int code = Exec(program,  commandLine, out stdOut, out stdErr);
+            if (code != 0)
+            {
+                throw new InvalidOperationException($"{program} returned exit code {code}.\n{stdErr}");
+            }
+
+            return code;
+        }
+
         public static int Exec(
             string program,
             string commandLine,
@@ -65,21 +78,59 @@ namespace Microsoft.Framework.FunctionalTestUtils
             var buildArtifactDir = GetBuildArtifactsFolder();
             var runtimeNupkg = Directory.GetFiles(
                 buildArtifactDir,
-                string.Format(Constants.RuntimeNamePrefix + "{0}-{1}-{2}.*.nupkg", flavor, os, architecture),
+                GetRuntimeFilePattern(flavor, os, architecture),
                 SearchOption.TopDirectoryOnly) .First();
             var runtimeHomePath = CreateTempDir();
             var runtimeName = Path.GetFileNameWithoutExtension(runtimeNupkg);
             var runtimeRoot = Path.Combine(runtimeHomePath, "runtimes", runtimeName);
-            System.IO.Compression.ZipFile.ExtractToDirectory(runtimeNupkg, runtimeRoot);
+
+            if (!PlatformHelper.IsMono)
+            {
+                System.IO.Compression.ZipFile.ExtractToDirectory(runtimeNupkg, runtimeRoot);
+            }
+            else
+            {
+                Directory.CreateDirectory(runtimeRoot);
+                Exec("unzip", runtimeNupkg + " -d " + runtimeRoot);
+                // We need to mark these files because unzip doesn't preserve the exec bit
+                Exec("chmod", "+x " + Path.Combine(runtimeRoot, "bin", "dnx"));
+                Exec("chmod", "+x " + Path.Combine(runtimeRoot, "bin", "dnu"));
+            }
+
             return runtimeHomePath;
         }
 
         public static IEnumerable<object[]> GetRuntimeComponentsCombinations()
         {
-            yield return new[] { "clr", "win", "x64" };
-            yield return new[] { "clr", "win", "x86" };
-            yield return new[] { "coreclr", "win", "x64" };
-            yield return new[] { "coreclr", "win", "x86" };
+            return GetCoreClrRuntimeComponents().Concat(GetClrRuntimeComponents());
+        }
+
+        public static IEnumerable<object[]> GetClrRuntimeComponents()
+        {
+            if (IsWindows())
+            {
+                yield return new[] { "clr", "win", "x64" };
+                yield return new[] { "clr", "win", "x86" };
+                yield break;
+            }
+
+            yield return new[] { "mono", null, null };
+        }
+
+        public static IEnumerable<object[]> GetCoreClrRuntimeComponents()
+        {
+            if (IsWindows())
+            {
+                yield return new[] { "coreclr", "win", "x64" };
+                yield return new[] { "coreclr", "win", "x86" };
+                yield break;
+            }
+
+            // Coming soon!
+            // yield return new[] { "coreclr", "linix", "x64" };
+            // yield return new[] { "coreclr", "linix", "x86" };
+            // yield return new[] { "coreclr", "darwin", "x64" };
+            // yield return new[] { "coreclr", "darin", "x86" };
         }
 
         public static DisposableDir GetTempTestSolution(string name)
@@ -182,6 +233,23 @@ namespace Microsoft.Framework.FunctionalTestUtils
                 var sha512Bytes = SHA512.Create().ComputeHash(sourceStream);
                 return Convert.ToBase64String(sha512Bytes);
             }
+        }
+
+        private static string GetRuntimeFilePattern(string flavor, string os, string architecture)
+        {
+            // Mono ignores os and architecture
+            if (string.Equals(flavor, "mono", StringComparison.OrdinalIgnoreCase))
+            {
+                return string.Format("{0}mono.*.nupkg", Constants.RuntimeNamePrefix, flavor);
+            }
+
+            return string.Format("{0}{1}-{2}-{3}.*.nupkg", Constants.RuntimeNamePrefix, flavor, os, architecture);
+        }
+
+        private static bool IsWindows()
+        {
+            var p = (int)Environment.OSVersion.Platform;
+            return (p != 4) && (p != 6) && (p != 128);
         }
     }
 }
