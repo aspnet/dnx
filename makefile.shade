@@ -268,8 +268,10 @@ var RC_FILES = '${FindAllFiles("Resource.rc", BOOTSTRAPPER_EXE_NAME, BOOTSTRAPPE
             // System.IO.Compression gives weird errors on mono to do with invalid dates
             // we're going to use unzip instead
             Exec("unzip", Path.Combine(nupkgPath) + " -d " + Path.Combine(PACKAGES_DIR, RUNTIME_COMMON_NAME));
+            Exec("chmod", "+x " + Path.Combine(PACKAGES_DIR, RUNTIME_COMMON_NAME, "bin", "dnx"));
+            Exec("chmod", "+x " + Path.Combine(PACKAGES_DIR, RUNTIME_COMMON_NAME, "bin", "dnu"));
         }
-        else 
+        else
         {
             System.IO.Compression.ZipFile.ExtractToDirectory(
                 Path.Combine(nupkgPath),
