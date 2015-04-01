@@ -20,6 +20,22 @@ namespace Bootstrapper.FunctionalTests
             }
         }
 
+        public static IEnumerable<object[]> ClrRuntimeComponents
+        {
+            get
+            {
+                return TestUtils.GetClrRuntimeComponents();
+            }
+        }
+
+        public static IEnumerable<object[]> CoreClrRuntimeComponents
+        {
+            get
+            {
+                return TestUtils.GetCoreClrRuntimeComponents();
+            }
+        }
+
         [Theory]
         [MemberData("RuntimeComponents")]
         public void BootstrapperReturnsNonZeroExitCodeWhenNoArgumentWasGiven(string flavor, string os, string architecture)
@@ -129,10 +145,11 @@ command
         }
 
         [Theory]
-        [InlineData("clr", "win", "x86")]
-        [InlineData("clr", "win", "x64")]
+        [MemberData("RuntimeComponents")]
         public void BootstrapperInvokesAssemblyWithInferredAppBaseAndLibPathOnClr(string flavor, string os, string architecture)
         {
+            var outputFolder = flavor == "coreclr" ? "dnxcore50" : "dnx451";
+
             using (var runtimeHomeDir = TestUtils.GetRuntimeHomeDir(flavor, os, architecture))
             using (var tempDir = TestUtils.CreateTempDir())
             {
@@ -149,40 +166,7 @@ command
                 string stdOut, stdErr;
                 exitCode = BootstrapperTestUtils.ExecBootstrapper(
                     runtimeHomeDir,
-                    arguments: Path.Combine(tempDir, "Release", "dnx451", "HelloWorld.dll"),
-                    stdOut: out stdOut,
-                    stdErr: out stdErr,
-                    environment: new Dictionary<string, string> { { EnvironmentNames.Trace, null } });
-
-                Assert.Equal(0, exitCode);
-                Assert.Equal(@"Hello World!
-Hello, code!
-", stdOut);
-            }
-        }
-
-        [Theory]
-        [InlineData("coreclr", "win", "x86")]
-        [InlineData("coreclr", "win", "x64")]
-        public void BootstrapperInvokesAssemblyWithInferredAppBaseAndLibPathOnCoreClr(string flavor, string os, string architecture)
-        {
-            using (var runtimeHomeDir = TestUtils.GetRuntimeHomeDir(flavor, os, architecture))
-            using (var tempDir = TestUtils.CreateTempDir())
-            {
-                var samplesPath = TestUtils.GetSamplesFolder();
-                var sampleAppRoot = Path.Combine(samplesPath, "HelloWorld");
-
-                var exitCode = DnuTestUtils.ExecDnu(
-                    runtimeHomeDir,
-                    subcommand: "build",
-                    arguments: string.Format("{0} --configuration=Release --out {1}", sampleAppRoot, tempDir.DirPath));
-
-                Assert.Equal(0, exitCode);
-
-                string stdOut, stdErr;
-                exitCode = BootstrapperTestUtils.ExecBootstrapper(
-                    runtimeHomeDir,
-                    arguments: Path.Combine(tempDir, "Release", "dnxcore50", "HelloWorld.dll"),
+                    arguments: Path.Combine(tempDir, "Release", outputFolder, "HelloWorld.dll"),
                     stdOut: out stdOut,
                     stdErr: out stdErr,
                     environment: new Dictionary<string, string> { { EnvironmentNames.Trace, null } });

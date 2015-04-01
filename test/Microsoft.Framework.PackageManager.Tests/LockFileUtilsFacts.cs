@@ -2,6 +2,7 @@
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 using System.IO;
+using System.Linq;
 using Microsoft.Framework.Runtime;
 using Microsoft.Framework.FunctionalTestUtils;
 using Microsoft.Framework.PackageManager.Utils;
@@ -21,7 +22,12 @@ namespace Microsoft.Framework.PackageManager.Tests
             var projectDir = Path.Combine(rootDir, "misc", "ServicingTestProjects", projectName);
             const string configuration = "Debug";
 
-            using (var runtimeHomeDir = TestUtils.GetRuntimeHomeDir(flavor: "clr", os: "win", architecture: "x86"))
+            var components = TestUtils.GetRuntimeComponentsCombinations().First();
+            var flavor = (string)components[0];
+            var os = (string)components[1];
+            var architecture = (string)components[2];
+
+            using (var runtimeHomeDir = TestUtils.GetRuntimeHomeDir(flavor, os, architecture))
             using (var tempDir = new DisposableDir())
             {
                 var buildOutpuDir = Path.Combine(tempDir, "output");

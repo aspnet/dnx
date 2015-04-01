@@ -1,8 +1,10 @@
 // Copyright (c) Microsoft Open Technologies, Inc. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
+using System.Collections.Generic;
 using System.IO;
 using Microsoft.Framework.Runtime.FileSystem;
+using Microsoft.Framework.Runtime.Tests;
 using Xunit;
 
 namespace Loader.Tests
@@ -13,10 +15,10 @@ namespace Loader.Tests
         public void FileChangesAreDetected()
         {
             var watcher = new FileWatcher();
-            watcher.WatchFile(@"c:\foo.cs");
-            watcher.WatchFile(@"c:\bar.cs");
+            watcher.WatchFile(PathHelpers.GetRootedPath("foo.cs"));
+            watcher.WatchFile(PathHelpers.GetRootedPath("bar.cs"));
 
-            var changed = watcher.ReportChange(@"c:\foo.cs", WatcherChangeTypes.Changed);
+            var changed = watcher.ReportChange(PathHelpers.GetRootedPath("foo.cs"), WatcherChangeTypes.Changed);
 
             Assert.True(changed);
         }
@@ -25,10 +27,10 @@ namespace Loader.Tests
         public void FileDeletionsAreDetected()
         {
             var watcher = new FileWatcher();
-            watcher.WatchFile(@"c:\foo.cs");
-            watcher.WatchFile(@"c:\bar.cs");
+            watcher.WatchFile(PathHelpers.GetRootedPath("foo.cs"));
+            watcher.WatchFile(PathHelpers.GetRootedPath("bar.cs"));
 
-            var changed = watcher.ReportChange(@"c:\foo.cs", WatcherChangeTypes.Deleted);
+            var changed = watcher.ReportChange(PathHelpers.GetRootedPath("foo.cs"), WatcherChangeTypes.Deleted);
 
             Assert.True(changed);
         }
@@ -37,8 +39,8 @@ namespace Loader.Tests
         public void FileAdditionsAreDetected()
         {
             var watcher = new FileWatcher();
-            watcher.WatchDirectory(@"c:\", ".cs");
-            var changed = watcher.ReportChange(@"c:\foo.cs", WatcherChangeTypes.Created);
+            watcher.WatchDirectory(PathHelpers.GetRootedPath(), ".cs");
+            var changed = watcher.ReportChange(PathHelpers.GetRootedPath("foo.cs"), WatcherChangeTypes.Created);
 
             Assert.True(changed);
         }
@@ -47,8 +49,8 @@ namespace Loader.Tests
         public void FileAdditionsForUnwatchedExtensionsAreNotDetected()
         {
             var watcher = new FileWatcher();
-            watcher.WatchDirectory(@"c:\", ".cs");
-            var changed = watcher.ReportChange(@"c:\foo.cshtml", WatcherChangeTypes.Created);
+            watcher.WatchDirectory(PathHelpers.GetRootedPath(), ".cs");
+            var changed = watcher.ReportChange(PathHelpers.GetRootedPath("foo.cshtml"), WatcherChangeTypes.Created);
 
             Assert.False(changed);
         }
@@ -57,8 +59,8 @@ namespace Loader.Tests
         public void NewDirectoryDoesNotReportChange()
         {
             var watcher = new FileWatcher();
-            watcher.WatchDirectory(@"c:\", ".cs");
-            var changed = watcher.ReportChange(@"c:\foo", WatcherChangeTypes.Created);
+            watcher.WatchDirectory(PathHelpers.GetRootedPath(), ".cs");
+            var changed = watcher.ReportChange(PathHelpers.GetRootedPath("foo"), WatcherChangeTypes.Created);
 
             Assert.False(changed);
         }
@@ -67,10 +69,10 @@ namespace Loader.Tests
         public void DeletedDirectoryReportsChange()
         {
             var watcher = new FileWatcher();
-            watcher.WatchDirectory(@"c:\", ".cs");
-            watcher.WatchDirectory(@"c:\foo", ".cs");
+            watcher.WatchDirectory(PathHelpers.GetRootedPath(), ".cs");
+            watcher.WatchDirectory(PathHelpers.GetRootedPath("foo"), ".cs");
 
-            var changed = watcher.ReportChange(@"c:\foo", WatcherChangeTypes.Deleted);
+            var changed = watcher.ReportChange(PathHelpers.GetRootedPath("foo"), WatcherChangeTypes.Deleted);
 
             Assert.True(changed);
         }
@@ -79,9 +81,9 @@ namespace Loader.Tests
         public void RenamedFileIsDetected()
         {
             var watcher = new FileWatcher();
-            watcher.WatchDirectory(@"c:\", ".cs");
+            watcher.WatchDirectory(PathHelpers.GetRootedPath(), ".cs");
 
-            var changed = watcher.ReportChange(@"c:\foo.cshtml", @"c:\foo.cs", WatcherChangeTypes.Renamed);
+            var changed = watcher.ReportChange(PathHelpers.GetRootedPath("foo.cshtml"), PathHelpers.GetRootedPath("foo.cs"), WatcherChangeTypes.Renamed);
 
             Assert.True(changed);
         }
@@ -90,10 +92,12 @@ namespace Loader.Tests
         public void RenamedFromWatchedExtensionIsDetected()
         {
             var watcher = new FileWatcher();
-            watcher.WatchDirectory(@"c:\foo", ".cs");
-            watcher.WatchFile(@"c:\foo\foo.cs");
+            watcher.WatchDirectory(PathHelpers.GetRootedPath("foo"), ".cs");
+            watcher.WatchFile(PathHelpers.GetRootedPath("foo", "foo.cs"));
 
-            var changed = watcher.ReportChange(@"c:\foo\foo.cs", @"c:\foo.cshtml", WatcherChangeTypes.Renamed);
+            var changed = watcher.ReportChange(PathHelpers.GetRootedPath("foo", "foo.cs"), 
+                                               PathHelpers.GetRootedPath("foo.cshtml"), 
+                                               WatcherChangeTypes.Renamed);
 
             Assert.True(changed);
         }
@@ -102,13 +106,15 @@ namespace Loader.Tests
         public void NewFolderAndRenameToWatchedExtension()
         {
             var watcher = new FileWatcher();
-            watcher.WatchDirectory(@"c:\", ".cs");
+            watcher.WatchDirectory(PathHelpers.GetRootedPath(), ".cs");
 
             // Create a folder
-            watcher.ReportChange(@"c:\foo", WatcherChangeTypes.Created);
+            watcher.ReportChange(PathHelpers.GetRootedPath("foo"), WatcherChangeTypes.Created);
 
             // Rename a file in that folder
-            var changed = watcher.ReportChange(@"c:\foo\foo.cshtml", @"c:\foo\foo.cs", WatcherChangeTypes.Renamed);
+            var changed = watcher.ReportChange(PathHelpers.GetRootedPath("foo", "foo.cshtml"), 
+                                               PathHelpers.GetRootedPath("foo", "foo.cs"), 
+                                               WatcherChangeTypes.Renamed);
 
             Assert.True(changed);
         }
@@ -117,16 +123,17 @@ namespace Loader.Tests
         public void NewFolderRenamedWithNewFileAdded()
         {
             var watcher = new FileWatcher();
-            watcher.WatchDirectory(@"c:\", ".cs");
+            watcher.WatchDirectory(PathHelpers.GetRootedPath(), ".cs");
 
             // Create a folder
-            watcher.ReportChange(@"c:\foo", WatcherChangeTypes.Created);
+            watcher.ReportChange(PathHelpers.GetRootedPath("foo"), WatcherChangeTypes.Created);
 
             // Rename that folder
-            watcher.ReportChange(@"c:\foo", @"c:\bar", WatcherChangeTypes.Renamed);
+            watcher.ReportChange(PathHelpers.GetRootedPath("foo"), 
+                                 PathHelpers.GetRootedPath("bar"), WatcherChangeTypes.Renamed);
 
             // Create a file in that folder
-            var changed = watcher.ReportChange(@"c:\bar\foo.cs", WatcherChangeTypes.Created);
+            var changed = watcher.ReportChange(PathHelpers.GetRootedPath("bar", "foo.cs"), WatcherChangeTypes.Created);
 
             Assert.True(changed);
         }
@@ -135,13 +142,13 @@ namespace Loader.Tests
         public void NewFolderNewFileIsDetected()
         {
             var watcher = new FileWatcher();
-            watcher.WatchDirectory(@"c:\", ".cs");
+            watcher.WatchDirectory(PathHelpers.GetRootedPath(), ".cs");
 
             // Create a folder
-            watcher.ReportChange(@"c:\foo", WatcherChangeTypes.Created);
+            watcher.ReportChange(PathHelpers.GetRootedPath("foo"), WatcherChangeTypes.Created);
 
             // Add a file
-            var changed = watcher.ReportChange(@"c:\foo\foo.cs", WatcherChangeTypes.Created);
+            var changed = watcher.ReportChange(PathHelpers.GetRootedPath("foo", "foo.cs"), WatcherChangeTypes.Created);
 
             Assert.True(changed);
         }
@@ -150,16 +157,16 @@ namespace Loader.Tests
         public void NestedFolderCreationAndFileCreationOnFolderUp()
         {
             var watcher = new FileWatcher();
-            watcher.WatchDirectory(@"c:\", ".cs");
+            watcher.WatchDirectory(PathHelpers.GetRootedPath(), ".cs");
 
             // Create a folder
-            watcher.ReportChange(@"c:\foo", WatcherChangeTypes.Created);
+            watcher.ReportChange(PathHelpers.GetRootedPath("foo"), WatcherChangeTypes.Created);
 
             // Create a nested folder
-            watcher.ReportChange(@"c:\foo\bar", WatcherChangeTypes.Created);
+            watcher.ReportChange(PathHelpers.GetRootedPath("foo", "bar"), WatcherChangeTypes.Created);
 
             // Add a file
-            var changed = watcher.ReportChange(@"c:\foo\foo.cs", WatcherChangeTypes.Created);
+            var changed = watcher.ReportChange(PathHelpers.GetRootedPath("foo", "foo.cs"), WatcherChangeTypes.Created);
 
             Assert.True(changed);
         }
@@ -168,35 +175,42 @@ namespace Loader.Tests
         public void NestedFoldersAndFileCreationOnFolderUp()
         {
             var watcher = new FileWatcher();
-            watcher.WatchDirectory(@"c:\", ".cs");
-            watcher.WatchDirectory(@"c:\a", ".cs");
-            watcher.WatchDirectory(@"c:\a\b", ".cs");
-            watcher.WatchFile(@"c:\project.json");
+            watcher.WatchDirectory(PathHelpers.GetRootedPath(), ".cs");
+            watcher.WatchDirectory(PathHelpers.GetRootedPath("a"), ".cs");
+            watcher.WatchDirectory(PathHelpers.GetRootedPath("a", "b"), ".cs");
+            watcher.WatchFile(PathHelpers.GetRootedPath("project.json"));
 
             // Add a file
-            var changed = watcher.ReportChange(@"c:\a\foo.cs", WatcherChangeTypes.Created);
+            var changed = watcher.ReportChange(PathHelpers.GetRootedPath("a", "foo.cs"), WatcherChangeTypes.Created);
 
             Assert.True(changed);
         }
 
         [Theory]
-        [InlineData(@"c:\myprojects\foo", true)]
-        [InlineData(@"c:\myprojects\foo\b\c\d.txt", true)]
-        [InlineData(@"c:\myprojects\", false)]
-        [InlineData(@"c:\myprojects", false)]
-        [InlineData(@"c:\myprojects\anotherproject", false)]
-        [InlineData(@"c:\myprojects\foos\", false)]
-        [InlineData(@"c:\myprojects\foos", false)]
-        [InlineData(null, false)]
-        [InlineData("", false)]
+        [MemberData("TestPaths")]
         public void IsAlreadyWatched(string newPath, bool expectedResult)
         {
             var watcher = new FileWatcher();
-            watcher.AddWatcher(new WatcherRoot(@"c:\myprojects\foo"));
+            watcher.AddWatcher(new WatcherRoot(PathHelpers.GetRootedPath("myprojects", "foo")));
 
             var isAlreadyWatched = watcher.IsAlreadyWatched(newPath);
 
             Assert.Equal(expectedResult, isAlreadyWatched);
+        }
+
+        public static IEnumerable<object[]> TestPaths
+        {
+            get {
+                yield return new object [] { PathHelpers.GetRootedPath("myprojects", "foo"), true  };
+                yield return new object [] { PathHelpers.GetRootedPath("myprojects", "foo", "b", "c", "d.txt"), true  };
+                yield return new object [] { PathHelpers.GetRootedPath("myprojects") + Path.DirectorySeparatorChar, false  };
+                yield return new object [] { PathHelpers.GetRootedPath("myprojects"), false  };
+                yield return new object [] { PathHelpers.GetRootedPath("myprojects", "anotherproject"), false };
+                yield return new object [] { PathHelpers.GetRootedPath("myprojects", "foos") + Path.DirectorySeparatorChar, false };
+                yield return new object [] { PathHelpers.GetRootedPath("myprojects", "foos"), false };
+                yield return new object [] { null, false };
+                yield return new object [] { "", false };
+            }
         }
 
         private class WatcherRoot : IWatcherRoot

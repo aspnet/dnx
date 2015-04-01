@@ -409,16 +409,20 @@ namespace Microsoft.Framework.PackageManager.Publish
 
             var appSettingsElement = GetOrAddElement(parent: xDoc.Root, name: "appSettings");
 
-            var relativePackagesPath = PathUtility.GetRelativePath(wwwRootOutWebConfigFilePath, root.TargetPackagesPath);
+            // Always generate \ since web.config is a IIS thing only
+            var relativePackagesPath = PathUtility.GetRelativePath(wwwRootOutWebConfigFilePath, root.TargetPackagesPath)
+                                                  .Replace(Path.DirectorySeparatorChar, '\\');
+
             var defaultRuntime = root.Runtimes.FirstOrDefault();
+            var appBase = _applicationBase.Replace(Path.DirectorySeparatorChar, '\\');
 
             var keyValuePairs = new Dictionary<string, string>()
             {
-                { Runtime.Constants.WebConfigBootstrapperVersion, GetBootstrapperVersion(root)},
-                { Runtime.Constants.WebConfigRuntimePath, relativePackagesPath},
-                { Runtime.Constants.WebConfigRuntimeVersion, GetRuntimeVersion(defaultRuntime)},
-                { Runtime.Constants.WebConfigRuntimeFlavor, GetRuntimeFlavor(defaultRuntime)},
-                { Runtime.Constants.WebConfigRuntimeAppBase, _applicationBase},
+                { Runtime.Constants.WebConfigBootstrapperVersion, GetBootstrapperVersion(root) },
+                { Runtime.Constants.WebConfigRuntimePath, relativePackagesPath },
+                { Runtime.Constants.WebConfigRuntimeVersion, GetRuntimeVersion(defaultRuntime) },
+                { Runtime.Constants.WebConfigRuntimeFlavor, GetRuntimeFlavor(defaultRuntime) },
+                { Runtime.Constants.WebConfigRuntimeAppBase, appBase },
             };
 
             foreach (var pair in keyValuePairs)
