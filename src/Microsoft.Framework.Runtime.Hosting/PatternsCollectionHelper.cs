@@ -17,7 +17,7 @@ namespace Microsoft.Framework.Runtime
         {
             var token = rawProject[propertyName];
 
-            return GetPatternsCollection(token, projectDirectory,  projectFilePath, defaultPatterns);
+            return GetPatternsCollection(token, projectDirectory, projectFilePath, defaultPatterns);
         }
 
         public static IEnumerable<string> GetPatternsCollection(JToken token, string projectDirectory, string projectFilePath, IEnumerable<string> defaultPatterns = null)
@@ -46,7 +46,7 @@ namespace Microsoft.Framework.Runtime
                     return CreateCollection(projectDirectory, token.ValueAsArray<string>());
                 }
             }
-            catch(InvalidOperationException ex)
+            catch (InvalidOperationException ex)
             {
                 throw FileFormatException.Create(ex, token, projectFilePath);
             }
@@ -56,7 +56,8 @@ namespace Microsoft.Framework.Runtime
 
         private static IEnumerable<string> CreateCollection(string projectDirectory, params string[] patternsStrings)
         {
-            var patterns = patternsStrings.SelectMany(patternsString => GetSourcesSplit(patternsString));
+            var patterns = patternsStrings.SelectMany(patternsString => GetSourcesSplit(patternsString))
+                                          .Select(patternString => patternString.Replace('/', Path.DirectorySeparatorChar).Replace('\\', Path.DirectorySeparatorChar));
 
             foreach (var pattern in patterns)
             {

@@ -106,8 +106,7 @@ namespace Microsoft.Framework.Runtime
             var literalIncludedFiles = new List<string>();
             foreach (var literalRelativePath in IncludeLiterals)
             {
-                var fullPath = Path.GetFullPath(Path.Combine(rootPath,
-                    literalRelativePath.Replace('\\', Path.DirectorySeparatorChar).Replace('/', Path.DirectorySeparatorChar)));
+                var fullPath = Path.GetFullPath(Path.Combine(rootPath, literalRelativePath));
 
                 if (!File.Exists(fullPath))
                 {
