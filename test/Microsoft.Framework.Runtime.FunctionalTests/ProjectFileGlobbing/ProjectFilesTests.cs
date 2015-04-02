@@ -6,7 +6,7 @@ using Microsoft.Framework.Runtime.FunctionalTests.Utilities;
 
 namespace Microsoft.Framework.Runtime.FunctionalTests.ProjectFileGlobbing
 {
-    public class ProjectFileTests : ProjectFilesCollectionTests
+    public class ProjectFilesTests : ProjectFilesCollectionTests
     {
         protected override IProjectFilesCollection CreateFilesCollection(string jsonContent, string projectDir)
         {
