@@ -18,5 +18,7 @@ namespace Microsoft.Framework.Runtime
         public static readonly string Configuration = CommonPrefix + "CONFIGURATION";
         public static readonly string ConsoleHost = CommonPrefix + "CONSOLE_HOST";
         public static readonly string DefaultLib = CommonPrefix + "DEFAULT_LIB";
+        public static readonly string BuildKeyFile = CommonPrefix + "BUILD_KEY_FILE";
+        public static readonly string BuildDelaySign = CommonPrefix + "BUILD_DELAY_SIGN";
     }
 }
