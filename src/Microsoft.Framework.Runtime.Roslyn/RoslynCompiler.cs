@@ -122,6 +122,9 @@ namespace Microsoft.Framework.Runtime.Roslyn
                 references,
                 compilationSettings.CompilationOptions);
 
+            // Apply strong-name settings
+            compilation = ApplyStrongNameSettings(compilation);
+
             compilation = ApplyVersionInfo(compilation, project, parseOptions);
 
             var compilationContext = new CompilationContext(
@@ -184,6 +187,29 @@ namespace Microsoft.Framework.Runtime.Roslyn
             Logger.TraceInformation("[{0}]: Compiled '{1}' in {2}ms", GetType().Name, name, sw.ElapsedMilliseconds);
 
             return compilationContext;
+        }
+
+        private CSharpCompilation ApplyStrongNameSettings(CSharpCompilation compilation)
+        {
+#if DNX451
+            // This is temporary, eventually we'll want a project.json feature for this
+            var keyFile = Environment.GetEnvironmentVariable(EnvironmentNames.BuildKeyFile);
+            if(!string.IsNullOrEmpty(keyFile))
+            {
+                var delaySignString = Environment.GetEnvironmentVariable(EnvironmentNames.BuildDelaySign);
+                var delaySign = !string.IsNullOrEmpty(delaySignString) && (
+                    string.Equals(delaySignString, "true", StringComparison.OrdinalIgnoreCase) ||
+                    string.Equals(delaySignString, "1", StringComparison.OrdinalIgnoreCase));
+
+                var strongNameProvider = new DesktopStrongNameProvider();
+                var newOptions = compilation.Options
+                    .WithStrongNameProvider(strongNameProvider)
+                    .WithCryptoKeyFile(keyFile)
+                    .WithDelaySign(!string.IsNullOrEmpty(delaySignString) && string.Equals("true", delaySignString, StringComparison.OrdinalIgnoreCase));
+                return compilation.WithOptions(newOptions);
+            }
+#endif
+            return compilation;
         }
 
         private CompilationModules GetCompileModules(ILibraryKey target)
