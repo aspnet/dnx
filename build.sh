@@ -27,7 +27,7 @@ if test ! -d packages/KoreBuild; then
     mono .nuget/nuget.exe install Sake -version 0.2 -o packages -ExcludeVersion
 fi
 
-if [ "$1" == "rebuild-package" ]; then
+if [ "$1" != "rebuild-package" ]; then
 
     if ! type dnvm > /dev/null 2>&1; then
         source packages/KoreBuild/build/dnvm.sh
