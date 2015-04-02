@@ -388,7 +388,7 @@ namespace Microsoft.Framework.Runtime.FunctionalTests.ProjectFileGlobbing
         [Fact]
         public void ThrowForAbosolutePath()
         {
-            var absolutePath = Path.Combine(_context.RootPath, @"src\project2\sub2\source5.cs");
+            var absolutePath = Path.Combine(_context.RootPath, @"source5.cs");
             var projectJsonContent = @"{""compile"": """ + absolutePath.Replace("\\", "\\\\") + @"""}";
 
             var exception = Assert.Throws<FileFormatException>(() =>
