@@ -299,6 +299,21 @@ namespace Microsoft.Framework.Runtime.FunctionalTests.ProjectFileGlobbing
             var testFilesCollection = CreateFilesCollection(@"
 {
     ""compileBuiltIn"": """",
+    ""compile"": ""sub/""
+}
+", @"src\project");
+
+            VerifyFilePathsCollection(testFilesCollection.SourceFiles,
+                @"src\project\sub\source2.cs",
+                @"src\project\sub\source3.cs");
+        }
+
+        [Fact]
+        public void IncludeCodeFolderBackSlash()
+        {
+            var testFilesCollection = CreateFilesCollection(@"
+{
+    ""compileBuiltIn"": """",
     ""compile"": ""sub\\""
 }
 ", @"src\project");
