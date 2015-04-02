@@ -106,7 +106,9 @@ namespace Microsoft.Framework.Runtime
             var literalIncludedFiles = new List<string>();
             foreach (var literalRelativePath in IncludeLiterals)
             {
-                var fullPath = Path.GetFullPath(Path.Combine(rootPath, literalRelativePath));
+                var fullPath = Path.GetFullPath(Path.Combine(rootPath,
+                    literalRelativePath.Replace('\\', Path.DirectorySeparatorChar).Replace('/', Path.DirectorySeparatorChar)));
+
                 if (!File.Exists(fullPath))
                 {
                     throw new InvalidOperationException(string.Format("Can't find file {0}", literalRelativePath));
