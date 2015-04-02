@@ -126,7 +126,7 @@ namespace Microsoft.Framework.Runtime.FunctionalTests.ProjectFileGlobbing
         public void DefaultSearchPathForResources()
         {
             var testFilesCollection = CreateFilesCollection(@"{}", "src\\project");
-            VerifyFilePathsCollection(testFilesCollection.ResourceFiles,
+            VerifyFilePathsCollection(testFilesCollection.ResourceFiles.Keys,
                 @"src\project\compiler\resources\resource.res",
                 @"src\project\compiler\resources\sub\resource2.res",
                 @"src\project\compiler\resources\sub\sub\resource3.res");

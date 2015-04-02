@@ -16,15 +16,30 @@ namespace Microsoft.Framework.Runtime
             string root = PathUtility.EnsureTrailingSlash(project.ProjectDirectory);
             return project
                    .Files.ResourceFiles
-                   .Where(res => !ResxResourceProvider.IsResxResourceFile(res))
-                   .Select(resourceFile => 
-                       new ResourceDescriptor()
+                   .Where(res => !ResxResourceProvider.IsResxResourceFile(res.Key))
+                   .Select(resourceFile =>
+                   {
+                       string resourceName;
+                       string rootNamespace;
+
+                       if (string.IsNullOrEmpty(resourceFile.Value))
                        {
-                           Name = CreateCSharpManifestResourceName.CreateManifestName(
-                                ResourcePathUtility.GetResourceName(root, resourceFile),
-                                project.Name),
-                           StreamFactory = () => new FileStream(resourceFile, FileMode.Open, FileAccess.Read, FileShare.Read)
-                       })
+                           // No logical name, so use the file name
+                           resourceName = ResourcePathUtility.GetResourceName(root, resourceFile.Key);
+                           rootNamespace = project.Name;
+                       }
+                       else
+                       {
+                           resourceName = CreateCSharpManifestResourceName.EnsureResourceExtension(resourceFile.Value, resourceFile.Key);
+                           rootNamespace = null;
+                       }
+
+                       return new ResourceDescriptor()
+                       {
+                           Name = CreateCSharpManifestResourceName.CreateManifestName(resourceName, rootNamespace),
+                           StreamFactory = () => new FileStream(resourceFile.Key, FileMode.Open, FileAccess.Read, FileShare.Read)
+                       };
+                   })
                    .ToList();
         }
     }

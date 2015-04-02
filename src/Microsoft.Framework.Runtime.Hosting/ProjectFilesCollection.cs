@@ -22,6 +22,7 @@ namespace Microsoft.Framework.Runtime
         private readonly PatternGroup _preprocessPatternsGroup;
         private readonly PatternGroup _compilePatternsGroup;
         private readonly PatternGroup _contentPatternsGroup;
+        private readonly IDictionary<string, string> _namedResources;
 
         private readonly string _projectDirectory;
         private readonly string _projectFilePath;
@@ -76,6 +77,8 @@ namespace Microsoft.Framework.Runtime
                 .ExcludeGroup(_preprocessPatternsGroup)
                 .ExcludeGroup(_sharedPatternsGroup)
                 .ExcludeGroup(_resourcePatternsGroup);
+
+            _namedResources = NamedResourceReader.ReadNamedResources(rawProject, projectFilePath);
         }
 
         public IEnumerable<string> SourceFiles
@@ -88,9 +91,18 @@ namespace Microsoft.Framework.Runtime
             get { return _preprocessPatternsGroup.SearchFiles(_projectDirectory).Distinct(); }
         }
 
-        public IEnumerable<string> ResourceFiles
+        public IDictionary<string, string> ResourceFiles
         {
-            get { return _resourcePatternsGroup.SearchFiles(_projectDirectory).Distinct(); }
+            get {
+                var resources = _resourcePatternsGroup
+                    .SearchFiles(_projectDirectory)
+                    .Distinct()
+                    .ToDictionary(res => res, res => (string)null);
+
+                NamedResourceReader.ApplyNamedResources(_namedResources, resources);
+
+                return resources;
+            }
         }
 
         public IEnumerable<string> SharedFiles

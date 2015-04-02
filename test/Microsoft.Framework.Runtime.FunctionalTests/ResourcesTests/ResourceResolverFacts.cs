@@ -44,5 +44,52 @@ namespace Microsoft.Framework.Runtime.FunctionalTests.ResourcesTests
             Assert.Equal("testproject.subfolder.nestedresource.resources", embeddedResource[1].Name);
             Assert.Equal("testproject.OtherResources.resources", embeddedResource[2].Name);
         }
+
+        [Fact]
+        public void ResolveRenamedResxResources()
+        {
+            var rootDir = ProjectResolver.ResolveRootDirectory(Directory.GetCurrentDirectory());
+            var testProjectFolder = Path.Combine(rootDir, "misc", "ResourcesTestProjects", "testproject");
+
+            Project project = Project.GetProject(@"
+{
+    ""namedResource"": {
+        ""renamedResource"": ""subfolder/nestedresource.resx""
+    }
+}", 
+                "testproject", 
+                Path.Combine(testProjectFolder, "project.json"));
+
+            var resolver = new ResxResourceProvider();
+            var embeddedResource = resolver.GetResources(project);
+
+            Assert.Equal("testproject.OwnResources.resources", embeddedResource[0].Name);
+            
+            // This resource should get a new name instead of "testproject.subfolder.nestedresource.resources"
+            Assert.Equal("renamedResource.resources", embeddedResource[1].Name);
+        }
+
+        [Fact]
+        public void ResolveNewNamedResxResources()
+        {
+            var rootDir = ProjectResolver.ResolveRootDirectory(Directory.GetCurrentDirectory());
+            var testProjectFolder = Path.Combine(rootDir, "misc", "ResourcesTestProjects", "testproject");
+
+            Project project = Project.GetProject(@"
+{
+    ""namedResource"": {
+        ""thisIs.New.Resource"": ""../someresources/OtherResources.resx ""
+    }
+}",
+                "testproject",
+                Path.Combine(testProjectFolder, "project.json"));
+
+            var resolver = new ResxResourceProvider();
+            var embeddedResource = resolver.GetResources(project);
+
+            Assert.Equal("testproject.OwnResources.resources", embeddedResource[0].Name);
+            Assert.Equal("testproject.subfolder.nestedresource.resources", embeddedResource[1].Name);
+            Assert.Equal("thisIs.New.Resource.resources", embeddedResource[2].Name);
+        }
     }
 }

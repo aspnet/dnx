@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using Microsoft.Framework.Runtime.Compilation;
 
 namespace Microsoft.Framework.Runtime
 {
@@ -8,7 +9,7 @@ namespace Microsoft.Framework.Runtime
     public interface IProjectFilesCollection
     {
         IEnumerable<string> PreprocessSourceFiles { get; }
-        IEnumerable<string> ResourceFiles { get; }
+        IDictionary<string, string> ResourceFiles { get; }
         IEnumerable<string> SharedFiles { get; }
         IEnumerable<string> SourceFiles { get; }
         IEnumerable<string> GetFilesForBundling(bool includeSource, IEnumerable<string> additionalExcludePatterns);

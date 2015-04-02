@@ -19,15 +19,30 @@ namespace Microsoft.Framework.Runtime
             string root = PathUtility.EnsureTrailingSlash(project.ProjectDirectory);
             return project
                    .Files.ResourceFiles
-                   .Where(res => IsResxResourceFile(res))
-                   .Select(resxFilePath =>
-                        new ResourceDescriptor()
-                        {
-                            Name = CreateCSharpManifestResourceName.CreateManifestName(
-                                 ResourcePathUtility.GetResourceName(root, resxFilePath),
-                                 project.Name),
-                            StreamFactory = () => GetResourceStream(resxFilePath),
-                        })
+                   .Where(res => IsResxResourceFile(res.Key))
+                   .Select(resourceFile =>
+                   {
+                       string resourceName;
+                       string rootNamespace;
+
+                       if (string.IsNullOrEmpty(resourceFile.Value))
+                       {
+                           // No logical name, so use the file name
+                           resourceName = ResourcePathUtility.GetResourceName(root, resourceFile.Key);
+                           rootNamespace = project.Name;
+                       }
+                       else
+                       {
+                           resourceName = CreateCSharpManifestResourceName.EnsureResourceExtension(resourceFile.Value, resourceFile.Key);
+                           rootNamespace = null;
+                       }
+
+                       return new ResourceDescriptor()
+                       {
+                           Name = CreateCSharpManifestResourceName.CreateManifestName(resourceName, rootNamespace),
+                           StreamFactory = () => GetResourceStream(resourceFile.Key),
+                       };
+                   })
                    .ToList();
         }
 
@@ -45,7 +60,7 @@ namespace Microsoft.Framework.Runtime
         {
             var ext = Path.GetExtension(resxFilePath);
 
-            return string.Equals(ext, ".resx", StringComparison.OrdinalIgnoreCase)?
+            return string.Equals(ext, ".resx", StringComparison.OrdinalIgnoreCase) ?
                 GetResxResourceStream(resxFilePath) :
                 new FileStream(resxFilePath, FileMode.Open, FileAccess.Read, FileShare.Read);
         }
