@@ -10,8 +10,7 @@
         "Microsoft.Framework.Runtime.Common": { "version": "1.0.0-*", "type": "build" },
         "Microsoft.Framework.Logging.Interfaces": "1.0.0-*"
     },
-    "code": [
-        "**/*.cs",
+    "compile": [
         "../Microsoft.Framework.Runtime/Helpers/DictionaryExtensions.cs"
     ],
     "frameworks": {

@@ -2,8 +2,7 @@
     "version": "1.0.0-*",
     "description": "ASP.NET 5 runtime infrastructure for loading NuGet packages and projects.",
     "compilationOptions": { "define": [ "LOADER", "TRACE" ], "allowUnsafe": true, "warningsAsErrors": true },
-    "code": [
-        "**/*.cs",
+    "compile": [
         "../../submodules/FileSystem/src/Microsoft.Framework.FileSystemGlobbing/**/*.cs",
         "../Microsoft.Framework.Runtime.Hosting/ProjectFilesCollection.cs",
         "../Microsoft.Framework.Runtime.Hosting/PatternsCollectionHelper.cs",

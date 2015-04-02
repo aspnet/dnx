@@ -9,8 +9,7 @@
         "Microsoft.Framework.Runtime.Interfaces": "1.0.0-*",
         "Microsoft.Framework.NotNullAttribute.Internal": { "type": "build", "version": "1.0.0-*" }
     },
-    "code": [
-        "**/*.cs",
+    "compile": [
         "../Microsoft.Framework.Runtime.Hosting/**/*.cs",
         "../Microsoft.Framework.Runtime.Compilation/**/*.cs",
         "../Microsoft.Framework.Runtime.Compilation.Common/**/*.cs",
