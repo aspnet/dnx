@@ -3,6 +3,7 @@
 
 using System.IO;
 using System.Security.AccessControl;
+using Microsoft.AspNet.Testing.xunit;
 using Xunit;
 
 namespace Microsoft.Framework.Runtime.Tests
@@ -34,7 +35,8 @@ namespace Microsoft.Framework.Runtime.Tests
             Assert.True(File.Exists(Path.Combine(TempFolderPath, "Test.1.0.0")));
         }
 
-        [Fact]
+        [ConditionalFact]
+        [FrameworkSkipCondition(RuntimeFrameworks.Mono)]
         public void BreadcrumbsCreationDoesNotFailWhenAccessDenied()
         {
             var userName = System.Security.Principal.WindowsIdentity.GetCurrent().Name;
