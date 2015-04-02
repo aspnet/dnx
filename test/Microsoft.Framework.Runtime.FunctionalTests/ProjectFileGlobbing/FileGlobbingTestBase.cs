@@ -20,6 +20,8 @@ namespace Microsoft.Framework.Runtime.FunctionalTests.ProjectFileGlobbing
 
         protected abstract DisposableProjectContext CreateContext();
 
+        protected abstract IProjectFilesCollection CreateFilesCollection(string jsonContent, string projectDir);
+
         protected void VerifyFilePathsCollection(IEnumerable<string> actualFiles, params string[] expectFiles)
         {
             var expectFilesInFullpath = expectFiles.Select(relativePath =>

@@ -505,7 +505,7 @@ namespace Microsoft.Framework.Runtime.FunctionalTests.ProjectFileGlobbing
             return context;
         }
 
-        protected virtual IProjectFilesCollection CreateFilesCollection(string jsonContent, string projectDir)
+        protected override IProjectFilesCollection CreateFilesCollection(string jsonContent, string projectDir)
         {
             var rawProject = JsonConvert.DeserializeObject<JObject>(jsonContent);
 
