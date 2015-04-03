@@ -1,5 +1,6 @@
 build_script:
   - build.cmd verify
 clone_depth: 1
+os: Visual Studio 2015 CTP
 test: off
 deploy: off

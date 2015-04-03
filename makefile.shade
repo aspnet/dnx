@@ -773,7 +773,7 @@ functions @{
     {
         if (!File.Exists(msBuildPath))
         {
-            Log.Warn("msbuild version 12 not found. Please ensure you have the VS 2013 C++ SDK installed.");
+            Log.Warn("msbuild version 14 not found. Please ensure you have the VS 2015 C++ SDK installed.");
             return false;
         }
     
