@@ -1,6 +1,8 @@
 ﻿// Copyright (c) Microsoft Open Technologies, Inc. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
+using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -75,10 +77,10 @@ namespace Microsoft.Framework.Runtime.Tests.FileGlobbing
 
             var target = new ProjectFilesCollection(rawProject, string.Empty, string.Empty);
 
-            Assert.Equal(new string[] { "*.cs", "../*.cs" }, target.CompilePatternsGroup.IncludePatterns);
-            Assert.Equal(new string[] { "signle.cs" }, target.CompilePatternsGroup.IncludeLiterals);
-            Assert.Equal(new string[] { "fake*.cs", "fake2*.cs", "buggy/*.*", "bin/**", "obj/**", "**/*.xproj" }, target.CompilePatternsGroup.ExcludePatterns);
-            Assert.Equal(new string[] { "buggy/*.*", "bin/**", "obj/**", "**/*.xproj", "no_pack/*.*" }, target.ContentPatternsGroup.ExcludePatterns);
+            Assert.Equal(NormalizePatterns("*.cs", "../*.cs"), target.CompilePatternsGroup.IncludePatterns);
+            Assert.Equal(NormalizePatterns("signle.cs"), target.CompilePatternsGroup.IncludeLiterals);
+            Assert.Equal(NormalizePatterns("fake*.cs", "fake2*.cs", "buggy/*.*", "bin/**", "obj/**", "**/*.xproj"), target.CompilePatternsGroup.ExcludePatterns);
+            Assert.Equal(NormalizePatterns("buggy/*.*", "bin/**", "obj/**", "**/*.xproj", "no_pack/*.*"), target.ContentPatternsGroup.ExcludePatterns);
         }
 
         [Fact]
@@ -92,12 +94,17 @@ namespace Microsoft.Framework.Runtime.Tests.FileGlobbing
          }");
 
             var target = new ProjectFilesCollection(rawProject, string.Empty, string.Empty);
-            Assert.Equal(new string[] { "*.cs", "../*.cs", "**/*.cpp", "**/*.h" }, target.CompilePatternsGroup.IncludePatterns);
+            Assert.Equal(NormalizePatterns("*.cs", "../*.cs", "**/*.cpp", "**/*.h"), target.CompilePatternsGroup.IncludePatterns);
         }
 
         private JObject Deserialize(string content)
         {
             return JsonConvert.DeserializeObject<JObject>(content);
+        }
+
+        private IEnumerable<string> NormalizePatterns(params string[] patterns)
+        {
+            return patterns.Select(pattern => pattern.Replace('/', Path.DirectorySeparatorChar));
         }
     }
 }
