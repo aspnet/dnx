@@ -212,6 +212,13 @@ namespace Microsoft.Framework.Runtime
 
                 string packagePath = ResolvePackagePath(defaultResolver, cacheResolvers, packageInfo);
 
+                // If the package path doesn't exist then mark this dependency as unresolved
+                if (!Directory.Exists(packagePath))
+                {
+                    dependency.Resolved = false;
+                    continue;
+                }
+
                 dependency.Path = packagePath;
 
                 var packageDescription = new PackageDescription
