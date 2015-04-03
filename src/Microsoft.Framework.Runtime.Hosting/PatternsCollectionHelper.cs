@@ -26,7 +26,7 @@ namespace Microsoft.Framework.Runtime
 
             if (token == null)
             {
-                return defaultPatterns;
+                return CreateCollection(projectDirectory, defaultPatterns.ToArray());
             }
 
             try
