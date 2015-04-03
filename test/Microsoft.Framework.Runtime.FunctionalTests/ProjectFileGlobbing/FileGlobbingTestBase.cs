@@ -2,10 +2,10 @@
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 using System;
-using System.Linq;
 using System.Collections.Generic;
-using Microsoft.Framework.Runtime.FunctionalTests.Utilities;
 using System.IO;
+using System.Linq;
+using Microsoft.Framework.Runtime.FunctionalTests.Utilities;
 
 namespace Microsoft.Framework.Runtime.FunctionalTests.ProjectFileGlobbing
 {
@@ -20,10 +20,15 @@ namespace Microsoft.Framework.Runtime.FunctionalTests.ProjectFileGlobbing
 
         protected abstract DisposableProjectContext CreateContext();
 
+        protected abstract IProjectFilesCollection CreateFilesCollection(string jsonContent, string projectDir);
+
         protected void VerifyFilePathsCollection(IEnumerable<string> actualFiles, params string[] expectFiles)
         {
-            var expectFilesInFullpath = expectFiles.Select(relativePath => Path.GetFullPath(Path.Combine(_context.RootPath, relativePath)));
-            var actualFilesInFullpath = actualFiles.Select(filePath => Path.GetFullPath(filePath));
+            var expectFilesInFullpath = expectFiles.Select(relativePath =>
+                Path.GetFullPath(Path.Combine(_context.RootPath, PathHelper.NormalizeSeparator(relativePath))));
+
+            var actualFilesInFullpath = actualFiles.Select(filePath =>
+                Path.GetFullPath(filePath));
 
             AssertHelpers.SortAndEqual(expectFilesInFullpath, actualFilesInFullpath, StringComparer.InvariantCultureIgnoreCase);
         }

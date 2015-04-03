@@ -1,8 +1,8 @@
 ﻿// Copyright (c) Microsoft Open Technologies, Inc. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
-using System.Linq;
 using System.IO;
+using System.Linq;
 using Microsoft.Framework.Runtime.FunctionalTests.Utilities;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -299,6 +299,21 @@ namespace Microsoft.Framework.Runtime.FunctionalTests.ProjectFileGlobbing
             var testFilesCollection = CreateFilesCollection(@"
 {
     ""compileBuiltIn"": """",
+    ""compile"": ""sub/""
+}
+", @"src\project");
+
+            VerifyFilePathsCollection(testFilesCollection.SourceFiles,
+                @"src\project\sub\source2.cs",
+                @"src\project\sub\source3.cs");
+        }
+
+        [Fact]
+        public void IncludeCodeFolderBackSlash()
+        {
+            var testFilesCollection = CreateFilesCollection(@"
+{
+    ""compileBuiltIn"": """",
     ""compile"": ""sub\\""
 }
 ", @"src\project");
@@ -373,7 +388,7 @@ namespace Microsoft.Framework.Runtime.FunctionalTests.ProjectFileGlobbing
         [Fact]
         public void ThrowForAbosolutePath()
         {
-            var absolutePath = Path.Combine(_context.RootPath, @"src\project2\sub2\source5.cs");
+            var absolutePath = Path.Combine(_context.RootPath, @"source5.cs");
             var projectJsonContent = @"{""compile"": """ + absolutePath.Replace("\\", "\\\\") + @"""}";
 
             var exception = Assert.Throws<FileFormatException>(() =>
@@ -505,10 +520,12 @@ namespace Microsoft.Framework.Runtime.FunctionalTests.ProjectFileGlobbing
             return context;
         }
 
-        protected virtual IProjectFilesCollection CreateFilesCollection(string jsonContent, string projectDir)
+        protected override IProjectFilesCollection CreateFilesCollection(string jsonContent, string projectDir)
         {
             var rawProject = JsonConvert.DeserializeObject<JObject>(jsonContent);
-            var filesCollection = new ProjectFilesCollection(rawProject, Path.Combine(_context.RootPath, projectDir), string.Empty);
+
+            projectDir = Path.Combine(_context.RootPath, PathHelper.NormalizeSeparator(projectDir));
+            var filesCollection = new ProjectFilesCollection(rawProject, projectDir, string.Empty);
 
             return filesCollection;
         }

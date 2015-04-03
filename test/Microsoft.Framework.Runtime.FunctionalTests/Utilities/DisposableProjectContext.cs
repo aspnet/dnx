@@ -21,25 +21,6 @@ namespace Microsoft.Framework.Runtime.FunctionalTests.Utilities
 
         public string RootPath { get; }
 
-        public string ProjectJsonPath { get; private set; }
-
-        public DisposableProjectContext AddProjectJson(string relativePath, string content)
-        {
-            if (ProjectJsonPath == null)
-            {
-                var filePath = Path.Combine(RootPath, relativePath, "project.json");
-                File.WriteAllText(filePath, content);
-
-                ProjectJsonPath = filePath;
-            }
-            else
-            {
-                throw new InvalidOperationException("project.json was added.");
-            }
-
-            return this;
-        }
-
         public DisposableProjectContext AddFiles(params string[] fileRelativePaths)
         {
             foreach (var path in fileRelativePaths)

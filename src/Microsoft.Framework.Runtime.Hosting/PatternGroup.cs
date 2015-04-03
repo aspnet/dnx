@@ -107,6 +107,7 @@ namespace Microsoft.Framework.Runtime
             foreach (var literalRelativePath in IncludeLiterals)
             {
                 var fullPath = Path.GetFullPath(Path.Combine(rootPath, literalRelativePath));
+
                 if (!File.Exists(fullPath))
                 {
                     throw new InvalidOperationException(string.Format("Can't find file {0}", literalRelativePath));
