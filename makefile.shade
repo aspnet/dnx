@@ -509,7 +509,7 @@ var RC_FILES = '${FindAllFiles("Resource.rc", BOOTSTRAPPER_EXE_NAME, BOOTSTRAPPE
         {
             new { TargetFolder = RUNTIME_CLR_WIN_x86_BIN,        Framework = "dnx451",     Arch = "x86", OS = "win" , Mono = false },
             new { TargetFolder = RUNTIME_CLR_WIN_x64_BIN,        Framework = "dnx451",     Arch = "x64", OS = "win" , Mono = false },
-            new { TargetFolder = RUNTIME_MONO_BIN,               Framework = "dnx451",     Arch = "x86", OS = (string)null , Mono = true },
+            new { TargetFolder = RUNTIME_MONO_BIN,               Framework = "dnx451",     Arch = "x86", OS = "any" , Mono = true },
             new { TargetFolder = RUNTIME_CORECLR_WIN_x86_BIN,    Framework = "dnxcore50",  Arch = "x86", OS = "win" , Mono = false },
             new { TargetFolder = RUNTIME_CORECLR_WIN_x64_BIN,    Framework = "dnxcore50",  Arch = "x64", OS = "win" , Mono = false },
         };
@@ -536,10 +536,10 @@ var RC_FILES = '${FindAllFiles("Resource.rc", BOOTSTRAPPER_EXE_NAME, BOOTSTRAPPE
             {
                 continue;
             }
-
+            
             var candidates = new[] { 
                 Path.Combine(CORECLR_TARGET_PATH, "Runtime", target.OS, target.Arch),
-                Path.Combine(CORECLR_TARGET_PATH, "Runtime", target.Arch) // Legacy
+                Path.Combine(CORECLR_TARGET_PATH, "Runtime", target.Arch == "x64" ? "amd64" : target.Arch) // Legacy
             };
             
             var coreclrFolder = target.Framework == "dnxcore50" ? candidates.First(Directory.Exists) : null;
