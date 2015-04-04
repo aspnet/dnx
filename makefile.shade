@@ -536,7 +536,13 @@ var RC_FILES = '${FindAllFiles("Resource.rc", BOOTSTRAPPER_EXE_NAME, BOOTSTRAPPE
             {
                 continue;
             }
-            var coreclrFolder = target.Framework == "dnxcore50" ? Path.Combine(CORECLR_TARGET_PATH, "Runtime", target.OS, target.Arch) : null;
+
+            var candidates = new[] { 
+                Path.Combine(CORECLR_TARGET_PATH, "Runtime", target.OS, target.Arch),
+                Path.Combine(CORECLR_TARGET_PATH, "Runtime", target.Arch) // Legacy
+            };
+            
+            var coreclrFolder = target.Framework == "dnxcore50" ? candidates.First(Directory.Exists) : null;
 
             // parse and copy runtime assemblies
             var runtimeAssemblies = new HashSet<string>();
