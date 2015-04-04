@@ -30,7 +30,7 @@ namespace Microsoft.Framework.Runtime.Internal
 
         private NullLogger() { }
 
-        public IDisposable BeginScope(object state)
+        public IDisposable BeginScopeImpl(object state)
         {
             return null;
         }
