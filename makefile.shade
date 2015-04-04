@@ -661,10 +661,15 @@ var RC_FILES = '${FindAllFiles("Resource.rc", BOOTSTRAPPER_EXE_NAME, BOOTSTRAPPE
             var dotnetcoreclrDepFile = Path.Combine(BUILD_DIR2, "dotnetcoreclr-dependencies.txt");
             var tpacppFile = Path.Combine(ROOT, "src", BOOTSTRAPPER_CORECLR_NAME, "tpa.cpp");
             var tpacppFileUnix = Path.Combine(ROOT, "src", BOOTSTRAPPER_CORECLR_NAME + ".unix", "tpa.cpp");
+            var runtimeCandidates = new[] {
+                Path.Combine(CORECLR_TARGET_PATH, "Runtime", "win", "x86"),
+                Path.Combine(CORECLR_TARGET_PATH, "Runtime", "x86") // Legacy
+            };
+            
             Environment.SetEnvironmentVariable("DNX_TRACE", "0");
             Exec("cmd", string.Format(@"/C dnu list {0} --assemblies --runtime {1} > {2}",
                 Path.Combine(ROOT, "src", BOOTSTRAPPER_HOST_NAME),
-                Path.Combine(CORECLR_TARGET_PATH, "Runtime", "win", "x86"),
+                runtimeCandidates.First(Directory.Exists),
                 dotnetcoreclrDepFile ));
 
             var tpaProjects = new[] {
