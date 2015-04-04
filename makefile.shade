@@ -29,11 +29,15 @@ var RUNTIME_CLR_WIN_x86_NAME = '${RUNTIME_NAME_PREFIX + "clr-win-x86"}'
 var RUNTIME_CLR_WIN_x64_NAME = '${RUNTIME_NAME_PREFIX + "clr-win-x64"}'
 var RUNTIME_CORECLR_WIN_x86_NAME = '${RUNTIME_NAME_PREFIX + "coreclr-win-x86"}'
 var RUNTIME_CORECLR_WIN_x64_NAME = '${RUNTIME_NAME_PREFIX + "coreclr-win-x64"}'
+var RUNTIME_CORECLR_DARWIN_x64_NAME = '${RUNTIME_NAME_PREFIX + "coreclr-darwin-x64"}'
+var RUNTIME_CORECLR_LINUX_x64_NAME = '${RUNTIME_NAME_PREFIX + "coreclr-linux-x64"}'
 var RUNTIME_MONO_BIN = '${Path.Combine(BUILD_DIR2, RUNTIME_MONO_NAME, "bin")}'
 var RUNTIME_CLR_WIN_x86_BIN = '${Path.Combine(BUILD_DIR2, RUNTIME_CLR_WIN_x86_NAME, "bin")}'
 var RUNTIME_CLR_WIN_x64_BIN = '${Path.Combine(BUILD_DIR2, RUNTIME_CLR_WIN_x64_NAME, "bin")}'
 var RUNTIME_CORECLR_WIN_x86_BIN = '${Path.Combine(BUILD_DIR2, RUNTIME_CORECLR_WIN_x86_NAME, "bin")}'
 var RUNTIME_CORECLR_WIN_x64_BIN = '${Path.Combine(BUILD_DIR2, RUNTIME_CORECLR_WIN_x64_NAME, "bin")}'
+var RUNTIME_CORECLR_DARWIN_x64_BIN = '${Path.Combine(BUILD_DIR2, RUNTIME_CORECLR_DARWIN_x64_NAME, "bin")}'
+var RUNTIME_CORECLR_LINUX_x64_BIN = '${Path.Combine(BUILD_DIR2, RUNTIME_CORECLR_LINUX_x64_NAME, "bin")}'
 var RUNTIME_CLR_TARGETS = '${new [] {RUNTIME_MONO_BIN, RUNTIME_CLR_WIN_x86_BIN, RUNTIME_CLR_WIN_x64_BIN}}'
 var RUNTIME_CORECLR_TARGETS = '${new [] {RUNTIME_CORECLR_WIN_x86_BIN, RUNTIME_CORECLR_WIN_x64_BIN}}'
 var ALL_TARGETS = '${RUNTIME_CLR_TARGETS.Concat(RUNTIME_CORECLR_TARGETS)}'
@@ -84,7 +88,7 @@ var MONO_MANAGED_PROJECTS = '${FindAllProjects(BOOTSTRAPPER_MONO_MANAGED_NAME)}'
 
 var RC_FILES = '${FindAllFiles("Resource.rc", BOOTSTRAPPER_EXE_NAME, BOOTSTRAPPER_CLR_NAME, BOOTSTRAPPER_CORECLR_NAME)}'
 
--//Replace repo-initialize with a less greedy restore
+-// Replace repo-initialize with a less greedy restore
 #repo-initialize target='initialize'
 	git gitCommand="submodule update --init"	
 	for each='var projectFile in Files.Include("src/*/project.json")'
@@ -315,9 +319,6 @@ var RC_FILES = '${FindAllFiles("Resource.rc", BOOTSTRAPPER_EXE_NAME, BOOTSTRAPPE
     directory each='var create in ALL_TARGETS'
 
 #copy-bits
-    var x86Target="x86"
-    var x64Target="amd64"
-
     -// Runtime for mono
     copy sourceDir='${SCRIPTS_DIR}' include='*.sh' outputDir='${RUNTIME_MONO_BIN}' overwrite='${true}'
     copy sourceDir='${Path.Combine(BUILD_DIR2, BOOTSTRAPPER_MONO_MANAGED_NAME)}' outputDir='${RUNTIME_MONO_BIN}' include='*.dll' overwrite='${true}'
@@ -368,8 +369,6 @@ var RC_FILES = '${FindAllFiles("Resource.rc", BOOTSTRAPPER_EXE_NAME, BOOTSTRAPPE
     @{
         var hostAspNetCore50 = Path.Combine(BUILD_DIR2, "*", "dnxcore50", "**.*");
         var hostnet45 = Path.Combine(BUILD_DIR2, "*", "dnx451", "**.*");
-        
-        var binPackages = new[] { "Microsoft.Framework.Runtime.Interfaces" };
 
         var libPackages = new[] { "Microsoft.Framework.Project",
                                   "Microsoft.Framework.PackageManager", 
@@ -508,11 +507,11 @@ var RC_FILES = '${FindAllFiles("Resource.rc", BOOTSTRAPPER_EXE_NAME, BOOTSTRAPPE
      @{
         var targets = new[]
         {
-            new { TargetFolder = RUNTIME_CLR_WIN_x86_BIN,        Framework = "dnx451",     Arch = "x86",   Mono = false},
-            new { TargetFolder = RUNTIME_CLR_WIN_x64_BIN,        Framework = "dnx451",     Arch = "amd64", Mono = false},
-            new { TargetFolder = RUNTIME_MONO_BIN,               Framework = "dnx451",     Arch = "x86",   Mono = true},
-            new { TargetFolder = RUNTIME_CORECLR_WIN_x86_BIN,    Framework = "dnxcore50", Arch = "x86",   Mono = false},
-            new { TargetFolder = RUNTIME_CORECLR_WIN_x64_BIN,    Framework = "dnxcore50", Arch = "amd64", Mono = false},
+            new { TargetFolder = RUNTIME_CLR_WIN_x86_BIN,        Framework = "dnx451",     Arch = "x86", OS = "win" , Mono = false },
+            new { TargetFolder = RUNTIME_CLR_WIN_x64_BIN,        Framework = "dnx451",     Arch = "x64", OS = "win" , Mono = false },
+            new { TargetFolder = RUNTIME_MONO_BIN,               Framework = "dnx451",     Arch = "x86", OS = (string)null , Mono = true },
+            new { TargetFolder = RUNTIME_CORECLR_WIN_x86_BIN,    Framework = "dnxcore50",  Arch = "x86", OS = "win" , Mono = false },
+            new { TargetFolder = RUNTIME_CORECLR_WIN_x64_BIN,    Framework = "dnxcore50",  Arch = "x64", OS = "win" , Mono = false },
         };
 
         var runtimeProjects = new[]
@@ -537,17 +536,19 @@ var RC_FILES = '${FindAllFiles("Resource.rc", BOOTSTRAPPER_EXE_NAME, BOOTSTRAPPE
             {
                 continue;
             }
-            var coreclrFolder = Path.Combine(CORECLR_TARGET_PATH, "Runtime", target.Arch);
+            var coreclrFolder = target.Framework == "dnxcore50" ? Path.Combine(CORECLR_TARGET_PATH, "Runtime", target.OS, target.Arch) : null;
 
             // parse and copy runtime assemblies
             var runtimeAssemblies = new HashSet<string>();
             foreach (var project in runtimeProjects)
             {
                 if (project == BOOTSTRAPPER_CORECLR_MANAGED_NAME && target.Framework == "dnx451")
+                {
                     continue;
+                }
 
                 var projectFolder = Path.Combine(ROOT, "src", project);
-                var projectAssemblies = ListDependencyAssemblies(projectFolder, target.Framework, target.Framework == "dnxcore50" ? coreclrFolder : null);
+                var projectAssemblies = ListDependencyAssemblies(projectFolder, target.Framework, coreclrFolder);
 
                 try
                 {
