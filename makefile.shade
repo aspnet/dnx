@@ -90,16 +90,16 @@ var RC_FILES = '${FindAllFiles("Resource.rc", BOOTSTRAPPER_EXE_NAME, BOOTSTRAPPE
 
 -// Replace repo-initialize with a less greedy restore
 #repo-initialize target='initialize'
-	git gitCommand="submodule update --init"	
-	for each='var projectFile in Files.Include("src/*/project.json")'
-		exec program='cmd' commandline='/C dnu restore' if='!IsMono' workingdir="${Path.GetDirectoryName(projectFile)}"
-		exec program='dnu' commandline='restore' if='IsMono' workingdir="${Path.GetDirectoryName(projectFile)}"
-	for each='var projectFile in Files.Include("test/*/project.json")'
-		exec program='cmd' commandline='/C dnu restore' if='!IsMono' workingdir="${Path.GetDirectoryName(projectFile)}"
-		exec program='dnu' commandline='restore' if='IsMono' workingdir="${Path.GetDirectoryName(projectFile)}"
-	for each='var projectFile in Files.Include("samples/*/project.json")'
-		exec program='cmd' commandline='/C dnu restore' if='!IsMono' workingdir="${Path.GetDirectoryName(projectFile)}"
-		exec program='dnu' commandline='restore' if='IsMono' workingdir="${Path.GetDirectoryName(projectFile)}"
+    git gitCommand="submodule update --init"
+    for each='var projectFile in Files.Include("src/*/project.json")'
+        exec program='cmd' commandline='/C dnu restore' if='!IsMono' workingdir="${Path.GetDirectoryName(projectFile)}"
+        exec program='dnu' commandline='restore' if='IsMono' workingdir="${Path.GetDirectoryName(projectFile)}"
+    for each='var projectFile in Files.Include("test/*/project.json")'
+        exec program='cmd' commandline='/C dnu restore' if='!IsMono' workingdir="${Path.GetDirectoryName(projectFile)}"
+        exec program='dnu' commandline='restore' if='IsMono' workingdir="${Path.GetDirectoryName(projectFile)}"
+    for each='var projectFile in Files.Include("samples/*/project.json")'
+        exec program='cmd' commandline='/C dnu restore' if='!IsMono' workingdir="${Path.GetDirectoryName(projectFile)}"
+        exec program='dnu' commandline='restore' if='IsMono' workingdir="${Path.GetDirectoryName(projectFile)}"
 
 #build-compile target='compile'
 
@@ -536,7 +536,7 @@ var RC_FILES = '${FindAllFiles("Resource.rc", BOOTSTRAPPER_EXE_NAME, BOOTSTRAPPE
             {
                 continue;
             }
-            
+
             var candidates = new[] { 
                 Path.Combine(CORECLR_TARGET_PATH, "Runtime", target.OS, target.Arch),
                 Path.Combine(CORECLR_TARGET_PATH, "Runtime", target.Arch == "x64" ? "amd64" : target.Arch) // Legacy
@@ -598,7 +598,7 @@ var RC_FILES = '${FindAllFiles("Resource.rc", BOOTSTRAPPER_EXE_NAME, BOOTSTRAPPE
             if (target.Framework == "dnxcore50")
             {
                 var assemblyExceptions = new[] { "System.Private.DataContractSerialization.dll", "System.Private.Networking.dll" };
-				
+
                 foreach (var file in Directory.GetFiles(coreclrFolder).Where(filePath => !Path.GetFileName(filePath).StartsWith("System") || assemblyExceptions.Contains(Path.GetFileName(filePath), StringComparer.Ordinal)))
                 {
                     var targetFilePath = Path.Combine(target.TargetFolder, Path.GetFileName(file));
@@ -664,7 +664,7 @@ var RC_FILES = '${FindAllFiles("Resource.rc", BOOTSTRAPPER_EXE_NAME, BOOTSTRAPPE
             Environment.SetEnvironmentVariable("DNX_TRACE", "0");
             Exec("cmd", string.Format(@"/C dnu list {0} --assemblies --runtime {1} > {2}",
                 Path.Combine(ROOT, "src", BOOTSTRAPPER_HOST_NAME),
-                Path.Combine(CORECLR_TARGET_PATH, "Runtime", "x86"),
+                Path.Combine(CORECLR_TARGET_PATH, "Runtime", "win", "x86"),
                 dotnetcoreclrDepFile ));
 
             var tpaProjects = new[] {
