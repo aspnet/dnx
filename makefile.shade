@@ -84,24 +84,24 @@ var RUNTIME_TARGETS='${new List<RuntimeTarget>()}'
 
 @{
     // Always build mono
-    RUNTIME_TARGETS.Add(new RuntimeTarget { TargetFolder = RUNTIME_MONO_BIN,                 Framework = "dnx451",     Arch = "x86", OS = "any", Flavor = "mono" });
+    RUNTIME_TARGETS.Add(new RuntimeTarget { Name = RUNTIME_MONO_NAME, TargetFolder = RUNTIME_MONO_BIN,                 Framework = "dnx451",     Arch = "x86", OS = "any", Flavor = "mono" });
 
     if (CanBuildForWindows)
     {
-        RUNTIME_TARGETS.Add(new RuntimeTarget { TargetFolder = RUNTIME_CLR_WIN_x86_BIN,          Framework = "dnx451",     Arch = "x86", OS = "win", Flavor = "clr" });
-        RUNTIME_TARGETS.Add(new RuntimeTarget { TargetFolder = RUNTIME_CLR_WIN_x64_BIN,          Framework = "dnx451",     Arch = "x64", OS = "win", Flavor = "clr" });
-        RUNTIME_TARGETS.Add(new RuntimeTarget { TargetFolder = RUNTIME_CORECLR_WIN_x86_BIN,      Framework = "dnxcore50",  Arch = "x86", OS = "win", Flavor = "coreclr" });
-        RUNTIME_TARGETS.Add(new RuntimeTarget { TargetFolder = RUNTIME_CORECLR_WIN_x64_BIN,      Framework = "dnxcore50",  Arch = "x64", OS = "win", Flavor = "coreclr" });
+        RUNTIME_TARGETS.Add(new RuntimeTarget { Name = RUNTIME_CLR_WIN_x86_NAME,     TargetFolder = RUNTIME_CLR_WIN_x86_BIN,          Framework = "dnx451",     Arch = "x86", OS = "win", Flavor = "clr" });
+        RUNTIME_TARGETS.Add(new RuntimeTarget { Name = RUNTIME_CLR_WIN_x64_NAME,     TargetFolder = RUNTIME_CLR_WIN_x64_BIN,          Framework = "dnx451",     Arch = "x64", OS = "win", Flavor = "clr" });
+        RUNTIME_TARGETS.Add(new RuntimeTarget { Name = RUNTIME_CORECLR_WIN_x86_NAME, TargetFolder = RUNTIME_CORECLR_WIN_x86_BIN,      Framework = "dnxcore50",  Arch = "x86", OS = "win", Flavor = "coreclr" });
+        RUNTIME_TARGETS.Add(new RuntimeTarget { Name = RUNTIME_CORECLR_WIN_x64_NAME,  TargetFolder = RUNTIME_CORECLR_WIN_x64_BIN,      Framework = "dnxcore50",  Arch = "x64", OS = "win", Flavor = "coreclr" });
     }
 
     if (CanBuildForLinux)
     {
-        RUNTIME_TARGETS.Add(new RuntimeTarget { TargetFolder = RUNTIME_CORECLR_LINUX_x64_BIN,    Framework = "dnxcore50",  Arch = "x64", OS = "win", Flavor = "coreclr" });
+        RUNTIME_TARGETS.Add(new RuntimeTarget { Name = RUNTIME_CORECLR_LINUX_x64_NAME, TargetFolder = RUNTIME_CORECLR_LINUX_x64_BIN,    Framework = "dnxcore50",  Arch = "x64", OS = "linux", Flavor = "coreclr" });
     }
 
     if (CanBuildForDarwin)
     {
-        RUNTIME_TARGETS.Add(new RuntimeTarget { TargetFolder = RUNTIME_CORECLR_DARWIN_x64_BIN,   Framework = "dnxcore50",  Arch = "x64", OS = "win", Flavor = "coreclr" });
+        RUNTIME_TARGETS.Add(new RuntimeTarget { Name = RUNTIME_CORECLR_DARWIN_x64_NAME, TargetFolder = RUNTIME_CORECLR_DARWIN_x64_BIN,   Framework = "dnxcore50",  Arch = "x64", OS = "darwin", Flavor = "coreclr" });
     }
 }
 
@@ -193,7 +193,7 @@ var RUNTIME_TARGETS='${new List<RuntimeTarget>()}'
     }
 
 #clean-sdk-dir
-    directory each='var delete in ALL_TARGETS'
+    directory each='var delete in ALL_TARGETS.Select(t => Path.GetDirectoryName(t))'
     directory each='var create in RUNTIME_TARGETS.Select(t => t.TargetFolder)'
 
 - // ===================== WINDOWS ===================== 
@@ -284,7 +284,9 @@ var RUNTIME_TARGETS='${new List<RuntimeTarget>()}'
 
 - // ===================== LINUX ===================== 
 
-#build-dnx-coreclr-bootstrapper .ensure-clang .update-tpa target='build-linux'
+#build-dnx-coreclr-linux-bootstrapper .ensure-clang .update-tpa target='build-linux'
+    var soOutputDir = '${Path.Combine(ROOT, "src", BOOTSTRAPPER_CORECLR_NAME + ".unix", "bin")}'
+    var soOutputPath = '${Path.Combine(soOutputDir, BOOTSTRAPPER_CORECLR_NAME + ".so")}'
     @{
         var sourceFiles = new string[] 
         {
@@ -292,11 +294,31 @@ var RUNTIME_TARGETS='${new List<RuntimeTarget>()}'
             Path.Combine("src", BOOTSTRAPPER_CORECLR_NAME + ".unix", BOOTSTRAPPER_CORECLR_NAME + ".cpp")
         };
 
-        // Exec("clang++-3.5", string.Format("-fPIC -shared {0} -g -o {1}.so --std=c++11 -ldl", string.Join(" ", sourceFiles) BOOTSTRAPPER_CORECLR_NAME));
-        File.WriteAllText(Path.Combine("src", BOOTSTRAPPER_CORECLR_NAME + ".unix", BOOTSTRAPPER_CORECLR_NAME + ".so"), "");
+        Directory.CreateDirectory(soOutputDir);
+
+        Exec("clang++-3.5", string.Format("-fPIC -shared {0} -g -o {1} --std=c++11 -ldl", string.Join(" ", sourceFiles), soOutputPath));
     }
 
-    copy sourceDir='${Path.Combine(ROOT, "src", BOOTSTRAPPER_CORECLR_NAME + ".unix")}' include='*.so' outputDir='${Path.Combine(BUILD_DIR2, BOOTSTRAPPER_CORECLR_NAME + ".unix")}' overwrite='${true}'
+    copy sourceDir='${soOutputDir}' include='*.so' outputDir='${Path.Combine(BUILD_DIR2, BOOTSTRAPPER_CORECLR_NAME + ".unix")}' overwrite='${true}'
+
+#build-dnx-linux-bootstrapper .ensure-clang target='build-linux'
+    var soOutputDir = '${Path.Combine(ROOT, "src", BOOTSTRAPPER_EXE_NAME, "bin", "x64")}'
+    var soOutputPath = '${Path.Combine(soOutputDir, BOOTSTRAPPER_EXE_NAME)}'
+    @{
+        var sourceFiles = new string[] 
+        {
+            Path.Combine("src", BOOTSTRAPPER_EXE_NAME, BOOTSTRAPPER_EXE_NAME + ".cpp"),
+            Path.Combine("src", BOOTSTRAPPER_EXE_NAME, "pal.linux.cpp"),
+            Path.Combine("src", BOOTSTRAPPER_EXE_NAME, "tchar.cpp"),
+        };
+
+        Directory.CreateDirectory(soOutputDir);
+
+        Exec("clang++-3.5", string.Format("{0} -g -o {1} -DCORECLR_UNIX -DPLATFORM_UNIX -std=c++11 -ldl", string.Join(" ", sourceFiles), soOutputPath));
+    }
+
+    copy sourceDir='${soOutputDir}' include='*' outputDir='${Path.Combine(BUILD_DIR2, BOOTSTRAPPER_EXE_NAME, "bin", "linux", "x64")}' overwrite='${true}'
+
 
 - // ===================== DARWIN (OSX) ===================== 
 
@@ -506,7 +528,7 @@ var RUNTIME_TARGETS='${new List<RuntimeTarget>()}'
             }
             else
             {
-                Log.Warn(name + " does not exist in " + binFolder);
+                Log.Warn(source + " does not exist in " + binFolder);
             }
         };
         
@@ -516,7 +538,10 @@ var RUNTIME_TARGETS='${new List<RuntimeTarget>()}'
             foreach (var runtimeTarget in RUNTIME_TARGETS)
             {
                 move(runtimeTarget.TargetFolder, libPackage, ".dll");
-                move(runtimeTarget.TargetFolder, libPackage, ".pdb");
+                if (!IsMono)
+                {
+                    move(runtimeTarget.TargetFolder, libPackage, ".pdb");
+                }
             }
         }
     }
@@ -550,6 +575,7 @@ var RUNTIME_TARGETS='${new List<RuntimeTarget>()}'
 
 #copy-linux-bits target='package-linux'
     copy sourceDir='${Path.Combine(BUILD_DIR2, BOOTSTRAPPER_CORECLR_NAME + ".unix")}' include='*.so' outputDir='${RUNTIME_CORECLR_LINUX_x64_BIN}' overwrite='${true}'
+    copy sourceDir='${Path.Combine(BUILD_DIR2, BOOTSTRAPPER_EXE_NAME, "bin", "linux", "x64")}' include='dnx' outputDir='${RUNTIME_CORECLR_LINUX_x64_BIN}' overwrite='${true}'
     copy sourceDir='${SCRIPTS_DIR}' include='dnu.sh' outputDir='${RUNTIME_CORECLR_LINUX_x64_BIN}' overwrite='${true}'
     @{
         FixShFiles(RUNTIME_CORECLR_LINUX_x64_BIN);
@@ -564,7 +590,7 @@ var RUNTIME_TARGETS='${new List<RuntimeTarget>()}'
 
 #nuget-pack-runtime target='package'
     @{
-        UpdateAllNuspecs(NUSPEC_ROOT, BUILD_DIR2);
+        UpdateAllNuspecs(RUNTIME_TARGETS, NUSPEC_ROOT, BUILD_DIR2);
     }
     nuget-pack packageVersion='${FULL_VERSION}' outputDir='${BUILD_DIR2}' extra='-NoPackageAnalysis -Properties RuntimeNamePrefix=${RUNTIME_NAME_PREFIX}' nugetPath='.nuget/nuget.exe' each='var nuspecFile in Files.Include(Path.Combine(BUILD_DIR2, "*.nuspec"))'
 
@@ -585,10 +611,22 @@ var RUNTIME_TARGETS='${new List<RuntimeTarget>()}'
             };
             
             Environment.SetEnvironmentVariable("DNX_TRACE", "0");
-            Exec("cmd", string.Format(@"/C dnu list {0} --assemblies --runtime {1} > {2}",
-                Path.Combine(ROOT, "src", BOOTSTRAPPER_HOST_NAME),
-                runtimeCandidates.First(Directory.Exists),
-                dotnetcoreclrDepFile ));
+
+            if (IsMono)
+            {
+                var args = string.Format(@"list {0} --assemblies --runtime {1}",
+                                        Path.Combine(ROOT, "src", BOOTSTRAPPER_HOST_NAME), 
+                                        runtimeCandidates.First(Directory.Exists));
+
+                ExecuteAndRedirectOutput("dnu", args, dotnetcoreclrDepFile);
+            }
+            else
+            {
+                var args = string.Format(@"/C dnu list {0} --assemblies --runtime {1}",
+                                        Path.Combine(ROOT, "src", BOOTSTRAPPER_HOST_NAME),
+                                        runtimeCandidates.First(Directory.Exists));
+                ExecuteAndRedirectOutput("cmd", args, dotnetcoreclrDepFile);
+            }
 
             var tpaProjects = new[] {
                 BOOTSTRAPPER_HOST_NAME,
@@ -659,11 +697,12 @@ functions @{
         }
     }
 
-    void UpdateAllNuspecs(string sourcePath, string outputPath)
+    void UpdateAllNuspecs(List<RuntimeTarget> targets, string sourcePath, string outputPath)
     {
-        var sourceFiles = Directory.GetFiles(sourcePath, "*.nuspec");
-        foreach (var nuspecFile in sourceFiles)
+        foreach (var target in targets)
         {
+            var nuspecFile = Path.Combine(sourcePath, target.Name + ".nuspec");
+
             XDocument xdoc;
             using (var fs = File.OpenRead(nuspecFile))
             {
@@ -902,6 +941,7 @@ functions @{
 
     public class RuntimeTarget
     {
+        public string Name { get; set; }
         public string TargetFolder { get; set; }
         public string Framework { get; set; }
         public string Arch { get; set; }
