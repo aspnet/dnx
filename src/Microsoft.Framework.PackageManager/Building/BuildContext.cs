@@ -54,14 +54,14 @@ namespace Microsoft.Framework.PackageManager
 
         public bool Build(List<ICompilationMessage> diagnostics)
         {
+            var allProjectDiagnostics = DiagnosticsUtils.GetAllReferenceProjectDiagnostics(
+                _applicationHostContext.LibraryManager,
+                _project.Name);
+            diagnostics.AddRange(allProjectDiagnostics);
+
             var builder = _applicationHostContext.CreateInstance<ProjectBuilder>();
 
             var result = builder.Build(_project.Name, _outputPath);
-
-            if (result.Diagnostics != null)
-            {
-                diagnostics.AddRange(result.Diagnostics);
-            }
 
             var errors = _applicationHostContext.DependencyWalker.GetDependencyDiagnostics(_project.ProjectFilePath);
             diagnostics.AddRange(errors);
