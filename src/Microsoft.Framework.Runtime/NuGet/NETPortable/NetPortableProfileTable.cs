@@ -119,7 +119,6 @@ namespace NuGet
             string profileName = Path.GetFileName(profileDirectory);
 
             string supportedFrameworkDirectory = Path.Combine(profileDirectory, "SupportedFrameworks");
-
             if (!Directory.Exists(supportedFrameworkDirectory))
             {
                 return null;
