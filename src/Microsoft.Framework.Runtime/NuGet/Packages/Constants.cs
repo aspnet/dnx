@@ -14,11 +14,16 @@ namespace NuGet
         /// Represents the ".nupkg" extension.
         /// </summary>
         public static readonly string PackageExtension = ".nupkg";
-        
+
         /// <summary>
         /// Represents the ".nuspec" extension.
         /// </summary>
         public static readonly string ManifestExtension = ".nuspec";
+
+        /// <summary>
+        /// Represents the ".nupkg.sha512" extension.
+        /// </summary>
+        public static readonly string HashFileExtension = ".nupkg.sha512";
 
         /// <summary>
         /// Represents the content directory in the package.

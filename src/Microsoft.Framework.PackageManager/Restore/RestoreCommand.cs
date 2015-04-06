@@ -13,16 +13,18 @@ using System.Security.Cryptography;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Framework.PackageManager.Publish;
+using Microsoft.Framework.PackageManager.Restore.RuntimeModel;
 using Microsoft.Framework.PackageManager.Utils;
 using Microsoft.Framework.Runtime;
 using Microsoft.Framework.Runtime.DependencyManagement;
 using NuGet;
-using Microsoft.Framework.PackageManager.Restore.RuntimeModel;
 
 namespace Microsoft.Framework.PackageManager
 {
     public class RestoreCommand
     {
+        private static readonly int MaxDegreesOfConcurrency = Environment.ProcessorCount;
+
         public RestoreCommand(IApplicationEnvironment env)
         {
             ApplicationEnvironment = env;
@@ -110,7 +112,7 @@ namespace Microsoft.Framework.PackageManager
                     }
                 };
 
-                if (!Parallel || PlatformHelper.IsMono)
+                if (!RestoringInParallel())
                 {
                     // Restoring in parallel on Mono throws native exception
                     foreach (var projectJsonFile in projectJsonFiles)
@@ -122,8 +124,8 @@ namespace Microsoft.Framework.PackageManager
                 {
                     await ForEachAsync(
                         projectJsonFiles,
-                        maxDegreesOfConcurrency: Environment.ProcessorCount,
-                        body: restorePackage);
+                        MaxDegreesOfConcurrency,
+                        restorePackage);
                 }
 
                 if (restoreCount > 1)
@@ -414,7 +416,7 @@ namespace Microsoft.Framework.PackageManager
                 }
             });
 
-            await InstallPackages(installItems, packagesDirectory, packageFilter: (library, nupkgSHA) => true);
+            await InstallPackages(installItems, packagesDirectory);
 
             if (!useLockFile)
             {
@@ -635,30 +637,33 @@ namespace Microsoft.Framework.PackageManager
             }
         }
 
-        private async Task InstallPackages(List<GraphItem> installItems, string packagesDirectory,
-            Func<Library, string, bool> packageFilter)
+        private async Task InstallPackages(List<GraphItem> installItems, string packagesDirectory)
         {
-            using (var sha512 = SHA512.Create())
+            if (RestoringInParallel())
+            {
+                await ForEachAsync(
+                    installItems,
+                    MaxDegreesOfConcurrency,
+                    item => InstallPackageCore(item, packagesDirectory));
+            }
+            else
             {
                 foreach (var item in installItems)
                 {
-                    var library = item.Match.Library;
-
-                    var memStream = new MemoryStream();
-                    await item.Match.Provider.CopyToAsync(item.Match, memStream);
-                    memStream.Seek(0, SeekOrigin.Begin);
-                    var nupkgSHA = Convert.ToBase64String(sha512.ComputeHash(memStream));
-
-                    bool shouldInstall = packageFilter(library, nupkgSHA);
-                    if (!shouldInstall)
-                    {
-                        continue;
-                    }
-
-                    Reports.Information.WriteLine("Installing {0} {1}", library.Name.Bold(), library.Version);
-                    memStream.Seek(0, SeekOrigin.Begin);
-                    await NuGetPackageUtils.InstallFromStream(memStream, library, packagesDirectory, sha512);
+                    await InstallPackageCore(item, packagesDirectory);
                 }
+            }
+        }
+
+        private async Task InstallPackageCore(GraphItem installItem, string packagesDirectory)
+        {
+            using (var memoryStream = new MemoryStream())
+            {
+                var match = installItem.Match;
+                await match.Provider.CopyToAsync(installItem.Match, memoryStream);
+
+                memoryStream.Seek(0, SeekOrigin.Begin);
+                await NuGetPackageUtils.InstallFromStream(memoryStream, match.Library, packagesDirectory, Reports.Information);
             }
         }
 
@@ -798,6 +803,11 @@ namespace Microsoft.Framework.PackageManager
         {
             path = FileSystem.GetFullPath(path);
             return new PhysicalFileSystem(path);
+        }
+
+        private bool RestoringInParallel()
+        {
+            return Parallel && !PlatformHelper.IsMono;
         }
 
         // Based on http://blogs.msdn.com/b/pfxteam/archive/2012/03/05/10278165.aspx
