@@ -36,11 +36,6 @@ namespace Microsoft.Framework.Runtime
             }
         };
 
-        public FrameworkReferenceResolver()
-        {
-            PopulateCache();
-        }
-
         public bool TryGetAssembly(string name, FrameworkName targetFramework, out string path, out Version version)
         {
             path = null;
@@ -137,6 +132,17 @@ namespace Microsoft.Framework.Runtime
 
         public static string GetReferenceAssembliesPath()
         {
+#if DNX451            
+            if (PlatformHelper.IsMono)
+            {
+                var mscorlibLocationOnThisRunningMonoInstance = typeof(object).GetTypeInfo().Assembly.Location;
+
+                var libPath = Path.GetDirectoryName(Path.GetDirectoryName(mscorlibLocationOnThisRunningMonoInstance));
+
+                return Path.Combine(libPath, "xbuild-frameworks");
+            }
+#endif 
+
             // References assemblies are in %ProgramFiles(x86)% on
             // 64 bit machines
             var programFiles = Environment.GetEnvironmentVariable("ProgramFiles(x86)");
@@ -157,78 +163,7 @@ namespace Microsoft.Framework.Runtime
                     programFiles,
                     "Reference Assemblies", "Microsoft", "Framework");
         }
-
-        private void PopulateCache()
-        {
-#if DNX451
-            if (PlatformHelper.IsMono)
-            {
-                var mscorlibLocationOnThisRunningMonoInstance = typeof(object).GetTypeInfo().Assembly.Location;
-
-                var libPath = Path.GetDirectoryName(Path.GetDirectoryName(mscorlibLocationOnThisRunningMonoInstance));
-
-                // Mono is a bit inconsistent as .NET 4.5 and .NET 4.5.1 are the
-                // same folder
-                var supportedVersions = new Dictionary<string, string> {
-                    { "4.6", "4.5" },
-                    { "4.5.3", "4.5" },
-                    { "4.5.1", "4.5" },
-                    { "4.5", "4.5" },
-                    { "4.0", "4.0" }
-                };
-
-                // Temporary cache while enumerating assemblies in directories
-                var pathCache = new Dictionary<string, FrameworkInformation>();
-
-                foreach (var versionFolderPair in supportedVersions)
-                {
-                    var targetFrameworkPath = Path.Combine(libPath, versionFolderPair.Value);
-
-                    if (!Directory.Exists(targetFrameworkPath))
-                    {
-                        continue;
-                    }
-
-                    FrameworkInformation frameworkInfo;
-                    if (!pathCache.TryGetValue(targetFrameworkPath, out frameworkInfo))
-                    {
-                        frameworkInfo = new FrameworkInformation();
-                        frameworkInfo.Path = targetFrameworkPath;
-
-                        var assemblies = new List<Tuple<string, string>>();
-
-                        PopulateAssemblies(assemblies, targetFrameworkPath);
-                        PopulateAssemblies(assemblies, Path.Combine(targetFrameworkPath, "Facades"));
-
-                        foreach (var pair in assemblies)
-                        {
-                            var entry = new AssemblyEntry();
-                            entry.Path = pair.Item2;
-                            frameworkInfo.Assemblies[pair.Item1] = entry;
-                        }
-
-                        pathCache[targetFrameworkPath] = frameworkInfo;
-                    }
-
-                    var frameworkName = new FrameworkName(VersionUtility.NetFrameworkIdentifier, new Version(versionFolderPair.Key));
-                    _cache[frameworkName] = frameworkInfo;
-
-                    List<FrameworkName> aliases;
-                    if (_monoAliases.TryGetValue(frameworkName, out aliases))
-                    {
-                        foreach (var aliasFrameworkName in aliases)
-                        {
-                            _cache[aliasFrameworkName] = frameworkInfo;
-                        }
-                    }
-                }
-
-                // Not needed anymore
-                pathCache.Clear();
-            }
-#endif
-        }
-
+        
         private static FrameworkInformation GetFrameworkInformation(FrameworkName targetFramework)
         {
             string referenceAssembliesPath = GetReferenceAssembliesPath();
@@ -239,7 +174,10 @@ namespace Microsoft.Framework.Runtime
             }
 
             FrameworkInformation frameworkInfo;
-            if (FrameworkDefinitions.TryPopulateFrameworkFastPath(targetFramework.Identifier, targetFramework.Version, referenceAssembliesPath, out frameworkInfo))
+
+            // Skip this on mono since it has a slightly different set of reference assemblies at a different
+            // location
+            if (!PlatformHelper.IsMono && FrameworkDefinitions.TryPopulateFrameworkFastPath(targetFramework.Identifier, targetFramework.Version, referenceAssembliesPath, out frameworkInfo))
             {
                 return frameworkInfo;
             }
@@ -302,14 +240,36 @@ namespace Microsoft.Framework.Runtime
                 {
                     var frameworkList = XDocument.Load(stream);
 
-                    foreach (var e in frameworkList.Root.Elements())
-                    {
-                        var assemblyName = e.Attribute("AssemblyName").Value;
-                        var version = e.Attribute("Version")?.Value;
+                    // On mono, the RedistList.xml has an entry pointing to the TargetFrameworkDirectory
+                    // It basically uses the GAC as the reference assemblies for all .NET framework
+                    // profiles
+                    var targetFrameworkDirectory = frameworkList.Root.Attribute("TargetFrameworkDirectory")?.Value;
 
-                        var entry = new AssemblyEntry();
-                        entry.Version = version != null ? Version.Parse(version) : null;
-                        frameworkInfo.Assemblies.Add(assemblyName, entry);
+                    if (!string.IsNullOrEmpty(targetFrameworkDirectory))
+                    {
+                        // For some odd reason, the paths are actually listed as \ so normalize them here
+                        targetFrameworkDirectory = targetFrameworkDirectory.Replace('\\', Path.DirectorySeparatorChar);
+
+                        // The specified path is the relative path from the RedistList.xml itself
+                        var resovledPath = Path.GetFullPath(Path.Combine(Path.GetDirectoryName(redistList), targetFrameworkDirectory));
+
+                        // Update the path to the framework
+                        frameworkInfo.Path = resovledPath;
+
+                        PopulateAssemblies(frameworkInfo.Assemblies, resovledPath);
+                        PopulateAssemblies(frameworkInfo.Assemblies, Path.Combine(resovledPath, "Facades"));
+                    }
+                    else
+                    {
+                        foreach (var e in frameworkList.Root.Elements())
+                        {
+                            var assemblyName = e.Attribute("AssemblyName").Value;
+                            var version = e.Attribute("Version")?.Value;
+
+                            var entry = new AssemblyEntry();
+                            entry.Version = version != null ? Version.Parse(version) : null;
+                            frameworkInfo.Assemblies.Add(assemblyName, entry);
+                        }
                     }
 
                     var nameAttribute = frameworkList.Root.Attribute("Name");
@@ -321,7 +281,7 @@ namespace Microsoft.Framework.Runtime
             return frameworkInfo;
         }
 
-        private static void PopulateAssemblies(List<Tuple<string, string>> assemblies, string path)
+        private static void PopulateAssemblies(IDictionary<string, AssemblyEntry> assemblies, string path)
         {
             if (!Directory.Exists(path))
             {
@@ -330,7 +290,10 @@ namespace Microsoft.Framework.Runtime
 
             foreach (var assemblyPath in Directory.GetFiles(path, "*.dll"))
             {
-                assemblies.Add(Tuple.Create(Path.GetFileNameWithoutExtension(assemblyPath), assemblyPath));
+                var name = Path.GetFileNameWithoutExtension(assemblyPath);
+                var entry = new AssemblyEntry();
+                entry.Path = assemblyPath;
+                assemblies[name] = entry;
             }
         }
 
