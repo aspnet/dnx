@@ -79,7 +79,7 @@ namespace NuGet
                 {
                     foreach (string versionDir in Directory.EnumerateDirectories(portableRootDirectory, "v*", SearchOption.TopDirectoryOnly))
                     {
-                        string profileFilesPath = versionDir + @"\Profile\";
+                        string profileFilesPath = Path.Combine(versionDir, "Profile");
                         profileCollection.AddRange(LoadProfilesFromFramework(versionDir, profileFilesPath));
                     }
                 }
