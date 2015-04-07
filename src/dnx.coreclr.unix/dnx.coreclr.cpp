@@ -142,7 +142,7 @@ extern "C" HRESULT CallApplicationMain(PCALL_APPLICATION_MAIN_DATA data)
     if (!coreClr)
     {
         char* error = dlerror();
-        fprintf(stderr, "failed to locate coreclr.dll with error %s\n", error);
+        fprintf(stderr, "failed to locate coreclr.so with error %s\n", error);
         return E_FAIL;
     }
 

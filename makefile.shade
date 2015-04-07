@@ -61,6 +61,7 @@ var MSBUILD = '${Path.Combine(PROGRAM_FILES_X86, "MSBuild", "14.0", "Bin", "MSBu
 
 var MANAGED_PROJECTS = '${FindAllProjects(
     BOOTSTRAPPER_HOST_NAME,
+    BOOTSTRAPPER_CORECLR_MANAGED_NAME,
     "Microsoft.Framework.ApplicationHost",
     "Microsoft.Framework.CommandLineUtils",
     "Microsoft.Framework.DesignTimeHost",
@@ -78,8 +79,7 @@ var MANAGED_PROJECTS = '${FindAllProjects(
     "Microsoft.Framework.Runtime.Roslyn.Common")}'
 
 var WIN_MANAGED_PROJECTS = '${FindAllProjects(
-    BOOTSTRAPPER_CLR_MANAGED_NAME,
-    BOOTSTRAPPER_CORECLR_MANAGED_NAME)}'
+    BOOTSTRAPPER_CLR_MANAGED_NAME)}'
 
 var RC_FILES = '${FindAllFiles("Resource.rc", BOOTSTRAPPER_EXE_NAME, BOOTSTRAPPER_CLR_NAME, BOOTSTRAPPER_CORECLR_NAME)}'
 
@@ -786,7 +786,7 @@ functions @{
     {
         get 
         {
-            return IsMono;
+            return string.Equals(Uname(), "Linux");
         }
     }
     
@@ -794,7 +794,7 @@ functions @{
     {
         get 
         {
-            return IsMono;
+            return string.Equals(Uname(), "Darwin");
         }
     }
 
@@ -802,8 +802,15 @@ functions @{
     {
         get 
         {
-            return !IsMono;
+            return string.IsNullOrEmpty(Uname());
         }
+    }
+
+    public string Uname()
+    {    
+        string uname;
+        ExecuteAndRedirectOutput("uname", "", out uname);
+        return string.IsNullOrEmpty(uname) ? null : uname.Trim();
     }
 
     void UpdateAllNuspecs(List<RuntimeTarget> targets, string sourcePath, string outputPath)
@@ -922,7 +929,7 @@ functions @{
         }
     }
 
-    int ExecuteAndRedirectOutput(string command, string argument, string outputFile)
+    int ExecuteAndRedirectOutput(string command, string argument, out string content)
     {
         var procStartInfo = new ProcessStartInfo 
         {
@@ -935,12 +942,20 @@ functions @{
         procStartInfo.RedirectStandardOutput = true;
 
         var process = Process.Start(procStartInfo);
-        var content = process.StandardOutput.ReadToEnd();
+        content = process.StandardOutput.ReadToEnd();
         process.WaitForExit();
+
+        return process.ExitCode;
+    }
+
+    int ExecuteAndRedirectOutput(string command, string argument, string outputFile)
+    {
+        string content;
+        int exitCode = ExecuteAndRedirectOutput(command, argument, out content);
 
         File.WriteAllText(outputFile, content);
 
-        return process.ExitCode;
+        return exitCode;
     }
 
     HashSet<string> ListDependencyAssemblies(string projectFolder, string framework, string coreclrFolder = null)
