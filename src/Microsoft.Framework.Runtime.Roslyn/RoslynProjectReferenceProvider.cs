@@ -37,20 +37,20 @@ namespace Microsoft.Framework.Runtime.Roslyn
             var incomingReferences = export.MetadataReferences;
             var incomingSourceReferences = export.SourceReferences;
 
-            var compliationContext = _compiler.CompileProject(
+            var compilationContext = _compiler.CompileProject(
                 project,
                 target,
                 incomingReferences,
                 incomingSourceReferences,
                 outgoingReferences);
 
-            if (compliationContext == null)
+            if (compilationContext == null)
             {
                 return null;
             }
 
             // Project reference
-            return new RoslynProjectReference(compliationContext);
+            return new RoslynProjectReference(compilationContext);
         }
     }
 }
