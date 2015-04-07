@@ -1,6 +1,7 @@
 ﻿// Copyright (c) Microsoft Open Technologies, Inc. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -119,7 +120,7 @@ namespace Microsoft.Framework.PackageManager.List
         private bool VisitAssembly(string assemblyName, IEnumerable<string> ancestors)
         {
             // determine if keep walking down the path
-            if (ancestors.Any(a => a == assemblyName))
+            if (ancestors.Any(a => string.Equals(a, assemblyName, StringComparison.Ordinal)))
             {
                 // break the reference loop
                 return false;
