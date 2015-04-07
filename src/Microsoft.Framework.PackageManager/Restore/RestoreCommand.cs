@@ -16,8 +16,11 @@ using Microsoft.Framework.PackageManager.Publish;
 using Microsoft.Framework.PackageManager.Utils;
 using Microsoft.Framework.Runtime;
 using Microsoft.Framework.Runtime.DependencyManagement;
-using NuGet;
 using Microsoft.Framework.PackageManager.Restore.RuntimeModel;
+using Microsoft.Framework.PackageManager.NuGetUtils;
+using NuGet.Configuration;
+using NuGet.Packaging;
+using NuGet.Repositories;
 
 namespace Microsoft.Framework.PackageManager
 {
@@ -26,7 +29,6 @@ namespace Microsoft.Framework.PackageManager
         public RestoreCommand(IApplicationEnvironment env)
         {
             ApplicationEnvironment = env;
-            FileSystem = new PhysicalFileSystem(Directory.GetCurrentDirectory());
             MachineWideSettings = new CommandLineMachineWideSettings();
             ScriptExecutor = new ScriptExecutor();
             ErrorMessages = new Dictionary<string, List<string>>(StringComparer.Ordinal);
@@ -52,7 +54,6 @@ namespace Microsoft.Framework.PackageManager
 
         public IApplicationEnvironment ApplicationEnvironment { get; private set; }
         public IMachineWideSettings MachineWideSettings { get; set; }
-        public IFileSystem FileSystem { get; set; }
         public Reports Reports { get; set; }
         private Dictionary<string, List<string>> ErrorMessages { get; set; }
 
@@ -205,7 +206,7 @@ namespace Microsoft.Framework.PackageManager
 
             var projectDirectory = project.ProjectDirectory;
             var projectResolver = new ProjectResolver(projectDirectory, rootDirectory);
-            var packageRepository = new PackageRepository(packagesDirectory);
+            var packageRepository = new NuGetv3LocalRepository(packagesDirectory, checkPackageIdCase: false);
             var restoreOperations = new RestoreOperations(Reports.Verbose);
             var projectProviders = new List<IWalkProvider>();
             var localProviders = new List<IWalkProvider>();
@@ -786,7 +787,7 @@ namespace Microsoft.Framework.PackageManager
 
         private void ReadSettings(string solutionDirectory)
         {
-            Settings = SettingsUtils.ReadSettings(solutionDirectory, NuGetConfigFile, FileSystem, MachineWideSettings);
+            Settings = SettingsUtils.ReadSettings(solutionDirectory, NuGetConfigFile, RootDirectory, MachineWideSettings);
 
             // Recreate the source provider and credential provider
             SourceProvider = PackageSourceBuilder.CreateSourceProvider(Settings);
@@ -796,7 +797,7 @@ namespace Microsoft.Framework.PackageManager
 
         private IFileSystem CreateFileSystem(string path)
         {
-            path = FileSystem.GetFullPath(path);
+            path = RootDirectory.GetFullPath(path);
             return new PhysicalFileSystem(path);
         }
 
