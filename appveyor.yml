@@ -1,7 +1,7 @@
 init:
   - git config --global core.autocrlf true
 build_script:
-  - build.cmd verify
+  - build.cmd --quiet verify
 clone_depth: 1
 os: Visual Studio 2015 CTP
 test: off
