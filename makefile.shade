@@ -597,9 +597,14 @@ var RC_FILES = '${FindAllFiles("Resource.rc", BOOTSTRAPPER_EXE_NAME, BOOTSTRAPPE
             // copy required CoreCLR assemblies
             if (target.Framework == "dnxcore50")
             {
-                var assemblyExceptions = new[] { "System.Private.DataContractSerialization.dll", "System.Private.Networking.dll" };
+                var extraBinaries = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+                {
+                    "System.Private.DataContractSerialization.dll",
+                    "System.Private.Networking.dll",
+                    "System.Private.ServiceModel.dll"
+                };
 
-                foreach (var file in Directory.GetFiles(coreclrFolder).Where(filePath => !Path.GetFileName(filePath).StartsWith("System") || assemblyExceptions.Contains(Path.GetFileName(filePath), StringComparer.Ordinal)))
+                foreach (var file in Directory.GetFiles(coreclrFolder).Where(f => extraBinaries.Contains(Path.GetFileName(f)) || !Path.GetFileName(f).StartsWith("System")))
                 {
                     var targetFilePath = Path.Combine(target.TargetFolder, Path.GetFileName(file));
                     Log.Info("Copying " + file + " to " + targetFilePath);
