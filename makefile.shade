@@ -18,7 +18,6 @@ var SCRIPTS_DIR = '${Path.Combine(ROOT, "scripts")}'
 var ARTIFACTS_DIR = '${Path.Combine(ROOT, "artifacts")}'
 var BUILD_DIR2 = '${Path.Combine(ROOT, "artifacts", "build")}'
 var NUSPEC_ROOT = '${Path.Combine(ROOT, "nuspec")}'
-var PACKAGES_DIR = '${Path.Combine(ROOT, "packages")}'
 var TEST_RESULTS = '${Path.Combine(ROOT, "artifacts", "TestResults")}'
 var SAMPLES_DIR = '${Path.Combine(ROOT, "samples")}'
 var FULL_VERSION = '${PRODUCT_VERSION + "-" + E("DNX_BUILD_VERSION")}'
@@ -607,7 +606,7 @@ var RUNTIME_TARGETS='${new List<RuntimeTarget>()}'
             var nupkgPath = Files.Include(Path.Combine(BUILD_DIR2, target.Name + ".*.nupkg")).Single();
             // This is bizzare because it needs to be predictable for the functional tests
             // Each runtime must exist in it's own unique root
-            var unpackagePath = Path.Combine(PACKAGES_DIR, target.Name, "runtimes", Path.GetFileNameWithoutExtension(nupkgPath));
+            var unpackagePath = Path.Combine(ARTIFACTS_DIR, "test", target.Name, "runtimes", Path.GetFileNameWithoutExtension(nupkgPath));
             var binPath = Path.Combine(unpackagePath, "bin");
 
             Log.Info("Unpacking " + nupkgPath + " to " + unpackagePath);

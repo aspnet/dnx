@@ -73,30 +73,28 @@ namespace Microsoft.Framework.FunctionalTestUtils
             return Path.Combine(kRuntimeRoot, "artifacts", "build");
         }
 
-        public static string GetPackagesDirectory()
+        public static string GetTestArtifactsFolder()
         {
             var kRuntimeRoot = ProjectResolver.ResolveRootDirectory(Directory.GetCurrentDirectory());
-            return Path.Combine(kRuntimeRoot, "packages");
+            return Path.Combine(kRuntimeRoot, "artifacts", "test");
         }
+
 
         public static DisposableDir GetRuntimeHomeDir(string flavor, string os, string architecture)
         {
             // The build script creates an unzipped image that can be reused
-            var packagesDir = GetPackagesDirectory();
+            var testArtifactDir = GetTestArtifactsFolder();
             var runtimeName = GetRuntimeName(flavor, os, architecture);
-            var runtimeHomePath = Path.Combine(packagesDir, runtimeName);
+            var runtimeHomePath = Path.Combine(testArtifactDir, runtimeName);
             var runtimePath = Path.Combine(runtimeHomePath, "runtimes");
 
             if (Directory.Exists(runtimePath))
             {
-                Console.WriteLine("Using shared runtime path: {0}", runtimePath);
-
                 // Don't dispose this because it's shared across all functional tests
                 return new DisposableDir(runtimeHomePath, deleteOnDispose: false);
             }
 
             // We're running an individual tests
-
             var buildArtifactDir = GetBuildArtifactsFolder();
             var runtimeNupkg = Directory.GetFiles(
                 buildArtifactDir,
