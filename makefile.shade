@@ -299,7 +299,7 @@ var RUNTIME_TARGETS='${new List<RuntimeTarget>()}'
 
         Directory.CreateDirectory(soOutputDir);
 
-        Exec("clang++-3.5", string.Format("-fPIC -shared {0} -g -o {1} --std=c++11 -ldl", string.Join(" ", sourceFiles), soOutputPath));
+        Clang(string.Format("-fPIC -shared {0} -g -o {1} --std=c++11 -ldl", string.Join(" ", sourceFiles), soOutputPath));
     }
 
     copy sourceDir='${soOutputDir}' include='*.so' outputDir='${Path.Combine(BUILD_DIR2, BOOTSTRAPPER_CORECLR_NAME + ".unix")}' overwrite='${true}'
@@ -317,7 +317,7 @@ var RUNTIME_TARGETS='${new List<RuntimeTarget>()}'
 
         Directory.CreateDirectory(soOutputDir);
 
-        Exec("clang++-3.5", string.Format("{0} -g -o {1} -DCORECLR_UNIX -DPLATFORM_UNIX -std=c++11 -ldl", string.Join(" ", sourceFiles), soOutputPath));
+        Clang(string.Format("{0} -g -o {1} -DCORECLR_UNIX -DPLATFORM_UNIX -std=c++11 -ldl", string.Join(" ", sourceFiles), soOutputPath));
     }
 
     copy sourceDir='${soOutputDir}' include='*' outputDir='${Path.Combine(BUILD_DIR2, BOOTSTRAPPER_EXE_NAME, "bin", "linux", "x64")}' overwrite='${true}'
@@ -811,6 +811,19 @@ functions @{
         string uname;
         ExecuteAndRedirectOutput("uname", "", out uname);
         return string.IsNullOrEmpty(uname) ? null : uname.Trim();
+    }
+
+    public void Clang(string args)
+    {
+        var travis = Environment.GetEnvironmentVariable("TRAVIS");
+        if (string.Equals(travis, "TRUE"))
+        {
+            Exec("clang++-3.4", args);   
+        }
+        else
+        {
+            Exec("clang++-3.5", args);
+        }
     }
 
     void UpdateAllNuspecs(List<RuntimeTarget> targets, string sourcePath, string outputPath)
