@@ -599,7 +599,45 @@ var RUNTIME_TARGETS='${new List<RuntimeTarget>()}'
     - // We want to run functional tests on both CLR flavors (wrt the RUNTIME_TARGETS)
     - // We want to separate function tests from unit tests
     @{
+        var binPaths = new Dictionary<string, string>();
+
         // Unzip all runtime targets
+        foreach (var target in RUNTIME_TARGETS)
+        {
+            var nupkgPath = Files.Include(Path.Combine(BUILD_DIR2, target.Name + ".*.nupkg")).Single();
+            // This is bizzare because it needs to be predictable for the functional tests
+            // Each runtime must exist in it's own unique root
+            var unpackagePath = Path.Combine(PACKAGES_DIR, target.Name, "runtimes", Path.GetFileNameWithoutExtension(nupkgPath));
+            var binPath = Path.Combine(unpackagePath, "bin");
+
+            Log.Info("Unpacking " + nupkgPath + " to " + unpackagePath);
+
+            binPaths[target.Name] = binPath;
+
+            // Nuke any previously installed package
+            if (Directory.Exists(unpackagePath)) 
+            {
+                Directory.Delete(Path.GetDirectoryName(unpackagePath), recursive:true);
+            }
+
+            Directory.CreateDirectory(unpackagePath);
+
+            if (IsMono)
+            {
+                // System.IO.Compression gives weird errors on mono to do with invalid dates
+                // we're going to use unzip instead
+                Exec("unzip", nupkgPath + " -d " + unpackagePath);
+                Exec("chmod", "+x " + Path.Combine(binPath, "dnx"));
+                Exec("chmod", "+x " + Path.Combine(binPath, "dnu"));
+            }
+            else
+            {
+                System.IO.Compression.ZipFile.ExtractToDirectory(
+                    nupkgPath,
+                    unpackagePath);
+            }
+        }
+
         // Group by operation system since we only want to run unit tests on a single bitness
         // any = [dnx-mono]
         // win = [dnx-clr-win-x86, dnx-clr-win-x64, dnx-coreclr-win-x86, dnx-coreclr-win-x64]
@@ -639,36 +677,8 @@ var RUNTIME_TARGETS='${new List<RuntimeTarget>()}'
                     continue;
                 }
 
-                var nupkgPath = Files.Include(Path.Combine(BUILD_DIR2, target.Name + ".*.nupkg")).Single();
-                var unpackagePath = Path.Combine(PACKAGES_DIR, target.Name);
-                var binPath = Path.Combine(unpackagePath, "bin");
-
-                Log.Info("Unpacking " + nupkgPath + " to " + unpackagePath);
-
-                // Nuke any previously installed package
-                if (Directory.Exists(unpackagePath)) 
-                {
-                    Directory.Delete(unpackagePath, recursive:true);
-                }
-
-                Directory.CreateDirectory(unpackagePath);
-
-                if (IsMono)
-                {
-                    // System.IO.Compression gives weird errors on mono to do with invalid dates
-                    // we're going to use unzip instead
-                    Exec("unzip", nupkgPath + " -d " + unpackagePath);
-                    Exec("chmod", "+x " + Path.Combine(binPath, "dnx"));
-                    Exec("chmod", "+x " + Path.Combine(binPath, "dnu"));
-                }
-                else
-                {
-                    System.IO.Compression.ZipFile.ExtractToDirectory(
-                        nupkgPath,
-                        unpackagePath);
-                }
-
                 var envPath = Environment.GetEnvironmentVariable("PATH");
+                var binPath = binPaths[target.Name];
 
                 try
                 {
