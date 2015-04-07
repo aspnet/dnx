@@ -759,10 +759,10 @@ var RUNTIME_TARGETS='${new List<RuntimeTarget>()}'
                     continue;
                 }
 
-                // TODO: Port tests to CoreCLR
+                // k-test runs tests for all frameworks in project.json
+                // so we only need to run once per architecture/os pair
                 if (target.Flavor == "coreclr")
                 {
-                    Log.Warn("Skipping unit tests on " + target.Name);
                     continue;
                 }
                 
