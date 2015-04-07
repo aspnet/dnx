@@ -6,7 +6,12 @@
     },
 
     "frameworks": {
-        "dnx451": { }
+        "dnx451": { },
+        "dnxcore50": {
+            "dependencies": {
+                "System.IO.Compression.ZipFile": "4.0.0-*"
+            }
+        }
     },
 
     "commands": {

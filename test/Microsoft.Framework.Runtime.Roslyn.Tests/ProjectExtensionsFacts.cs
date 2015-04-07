@@ -27,7 +27,11 @@ namespace Microsoft.Framework.Runtime.Roslyn.Tests
             Assert.NotNull(settings.Defines);
             Assert.Equal(new[] { "DEBUG", "TRACE" }, settings.Defines);
             Assert.Equal(LanguageVersion.CSharp6, settings.LanguageVersion);
+#if DNX451
             Assert.IsType<DesktopAssemblyIdentityComparer>(settings.CompilationOptions.AssemblyIdentityComparer);
+#else
+            Assert.IsType<AssemblyIdentityComparer>(settings.CompilationOptions.AssemblyIdentityComparer);
+#endif
             Assert.Equal(OutputKind.DynamicallyLinkedLibrary, settings.CompilationOptions.OutputKind);
         }
 

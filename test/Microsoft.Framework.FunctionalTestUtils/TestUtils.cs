@@ -55,7 +55,11 @@ namespace Microsoft.Framework.FunctionalTestUtils
             {
                 foreach (var pair in environment)
                 {
+#if DNX451
                     processStartInfo.EnvironmentVariables[pair.Key] = pair.Value;
+#else
+                    processStartInfo.Environment.Add(pair);
+#endif
                 }
             }
 
@@ -227,12 +231,20 @@ namespace Microsoft.Framework.FunctionalTestUtils
 
         private static string GetDefaultMSBuildPath()
         {
+#if DNX451
             var programFilesPath = Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86);
+#else
+            var programFilesPath = Environment.GetEnvironmentVariable("PROGRAMFILES(X86)");
+#endif
 
             // On 32-bit Windows
             if (string.IsNullOrEmpty(programFilesPath))
             {
+#if DNX451
                 programFilesPath = Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles);
+#else
+                programFilesPath = Environment.GetEnvironmentVariable("PROGRAMFILES");
+#endif
             }
 
             return Path.Combine(programFilesPath, "MSBuild", "14.0", "Bin", "MSBuild.exe");
@@ -273,8 +285,12 @@ namespace Microsoft.Framework.FunctionalTestUtils
 
         private static bool IsWindows()
         {
+#if DNX451
             var p = (int)Environment.OSVersion.Platform;
             return (p != 4) && (p != 6) && (p != 128);
+#else
+            return PlatformHelper.IsWindows;
+#endif
         }
     }
 }

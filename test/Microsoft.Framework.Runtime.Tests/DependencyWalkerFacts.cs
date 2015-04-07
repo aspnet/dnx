@@ -7,7 +7,6 @@ using System.Linq;
 using System.Runtime.Versioning;
 using Microsoft.Framework.Runtime;
 using NuGet;
-using Shouldly;
 using Xunit;
 
 namespace Loader.Tests
@@ -28,9 +27,7 @@ namespace Loader.Tests
             var builder = new TestDependencyProvider.Entry();
             expected(builder);
 
-            actual.Select(d => d.Library).ShouldBe(
-                builder.Dependencies.Select(d => d.Library)
-            );
+            Assert.Equal(builder.Dependencies.Select(d => d.Library), actual.Select(d => d.Library));
         }
 
         [Fact]

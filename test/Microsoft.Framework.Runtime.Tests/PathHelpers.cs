@@ -15,7 +15,7 @@ namespace Microsoft.Framework.Runtime.Tests
         {
             string root = "/root";
 
-            if (IsWindows())
+            if (PlatformHelper.IsWindows)
             {
                 root = @"C:\";
             }
@@ -25,13 +25,7 @@ namespace Microsoft.Framework.Runtime.Tests
                 return root;
             }
 
-            return Path.Combine(root, paths.Aggregate(Path.Combine));
-        }
-
-        private static bool IsWindows()
-        {
-            var p = (int)Environment.OSVersion.Platform;
-            return (p != 4) && (p != 6) && (p != 128);
+            return Path.Combine(root, paths.Aggregate((path1, path2) => Path.Combine(path1, path2)));
         }
     }
 }
