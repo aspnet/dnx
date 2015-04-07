@@ -30,7 +30,7 @@ namespace Microsoft.Framework.Runtime
         CompilationMessageSeverity Severity { get; }
 
         /// <summary>
-        /// Gets the zero-based line index for the start of the compilation error.
+        /// Gets the one-based line index for the start of the compilation error.
         /// </summary>
         int StartLine { get; }
 
@@ -40,7 +40,7 @@ namespace Microsoft.Framework.Runtime
         int StartColumn { get; }
 
         /// <summary>
-        /// Gets the zero-based line index for the end of the compilation error.
+        /// Gets the one-based line index for the end of the compilation error.
         /// </summary>
         int EndLine { get; }
 
