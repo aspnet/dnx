@@ -32,10 +32,12 @@ namespace Microsoft.Framework.PackageManager.Tests
             {
                 var buildOutpuDir = Path.Combine(tempDir, "output");
 
-                DnuTestUtils.ExecDnu(
+                int exitCode = DnuTestUtils.ExecDnu(
                     runtimeHomeDir,
                     "pack",
                     $"{projectDir} --out {buildOutpuDir} --configuration {configuration}");
+
+                Assert.Equal(0, exitCode);
 
                 var assemblyPath = Path.Combine(buildOutpuDir, configuration, "dnx451", $"{projectName}.dll");
                 Assert.Equal(expectedServiceability, LockFileUtils.IsAssemblyServiceable(assemblyPath));

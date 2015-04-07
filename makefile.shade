@@ -24,6 +24,9 @@ var SAMPLES_DIR = '${Path.Combine(ROOT, "samples")}'
 var FULL_VERSION = '${PRODUCT_VERSION + "-" + E("DNX_BUILD_VERSION")}'
 var CORECLR_TARGET_PATH = '${Path.Combine(BUILD_DIR2, "CoreCLR")}'
 var RUNTIME_NAME_PREFIX = 'dnx-'
+
+- // Runtime names
+
 var RUNTIME_MONO_NAME = '${RUNTIME_NAME_PREFIX + "mono"}'
 var RUNTIME_CLR_WIN_x86_NAME = '${RUNTIME_NAME_PREFIX + "clr-win-x86"}'
 var RUNTIME_CLR_WIN_x64_NAME = '${RUNTIME_NAME_PREFIX + "clr-win-x64"}'
@@ -31,6 +34,8 @@ var RUNTIME_CORECLR_WIN_x86_NAME = '${RUNTIME_NAME_PREFIX + "coreclr-win-x86"}'
 var RUNTIME_CORECLR_WIN_x64_NAME = '${RUNTIME_NAME_PREFIX + "coreclr-win-x64"}'
 var RUNTIME_CORECLR_DARWIN_x64_NAME = '${RUNTIME_NAME_PREFIX + "coreclr-darwin-x64"}'
 var RUNTIME_CORECLR_LINUX_x64_NAME = '${RUNTIME_NAME_PREFIX + "coreclr-linux-x64"}'
+
+- // Runtime paths
 var RUNTIME_MONO_BIN = '${Path.Combine(BUILD_DIR2, RUNTIME_MONO_NAME, "bin")}'
 var RUNTIME_CLR_WIN_x86_BIN = '${Path.Combine(BUILD_DIR2, RUNTIME_CLR_WIN_x86_NAME, "bin")}'
 var RUNTIME_CLR_WIN_x64_BIN = '${Path.Combine(BUILD_DIR2, RUNTIME_CLR_WIN_x64_NAME, "bin")}'
@@ -43,7 +48,6 @@ var RUNTIME_CLR_TARGETS = '${new [] {RUNTIME_MONO_BIN, RUNTIME_CLR_WIN_x86_BIN, 
 var RUNTIME_CORECLR_TARGETS = '${new [] {RUNTIME_CORECLR_WIN_x86_BIN, RUNTIME_CORECLR_WIN_x64_BIN, RUNTIME_CORECLR_DARWIN_x64_BIN, RUNTIME_CORECLR_LINUX_x64_BIN}}'
 var ALL_TARGETS = '${RUNTIME_CLR_TARGETS.Concat(RUNTIME_CORECLR_TARGETS)}'
 
-var NEW_RUNTIME = '${E("NEW_RUNTIME") == "1"}'
 var RUNTIME_COMMON_NAME = 'DNX'
 var BOOTSTRAPPER_EXE_NAME = 'dnx'
 var BOOTSTRAPPER_CLR_NAME = 'dnx.clr'
@@ -84,24 +88,24 @@ var RUNTIME_TARGETS='${new List<RuntimeTarget>()}'
 
 @{
     // Always build mono
-    RUNTIME_TARGETS.Add(new RuntimeTarget { Name = RUNTIME_MONO_NAME, TargetFolder = RUNTIME_MONO_BIN,                 Framework = "dnx451",     Arch = "x86", OS = "any", Flavor = "mono" });
+    RUNTIME_TARGETS.Add(new RuntimeTarget { Name = RUNTIME_MONO_NAME, TargetFolder = RUNTIME_MONO_BIN, Framework = "dnx451", Arch = "any", OS = "any", Flavor = "mono" });
 
     if (CanBuildForWindows)
     {
-        RUNTIME_TARGETS.Add(new RuntimeTarget { Name = RUNTIME_CLR_WIN_x86_NAME,     TargetFolder = RUNTIME_CLR_WIN_x86_BIN,          Framework = "dnx451",     Arch = "x86", OS = "win", Flavor = "clr" });
-        RUNTIME_TARGETS.Add(new RuntimeTarget { Name = RUNTIME_CLR_WIN_x64_NAME,     TargetFolder = RUNTIME_CLR_WIN_x64_BIN,          Framework = "dnx451",     Arch = "x64", OS = "win", Flavor = "clr" });
-        RUNTIME_TARGETS.Add(new RuntimeTarget { Name = RUNTIME_CORECLR_WIN_x86_NAME, TargetFolder = RUNTIME_CORECLR_WIN_x86_BIN,      Framework = "dnxcore50",  Arch = "x86", OS = "win", Flavor = "coreclr" });
-        RUNTIME_TARGETS.Add(new RuntimeTarget { Name = RUNTIME_CORECLR_WIN_x64_NAME,  TargetFolder = RUNTIME_CORECLR_WIN_x64_BIN,      Framework = "dnxcore50",  Arch = "x64", OS = "win", Flavor = "coreclr" });
+        RUNTIME_TARGETS.Add(new RuntimeTarget { Name = RUNTIME_CLR_WIN_x86_NAME,     TargetFolder = RUNTIME_CLR_WIN_x86_BIN,     Framework = "dnx451",     Arch = "x86", OS = "win", Flavor = "clr" });
+        RUNTIME_TARGETS.Add(new RuntimeTarget { Name = RUNTIME_CLR_WIN_x64_NAME,     TargetFolder = RUNTIME_CLR_WIN_x64_BIN,     Framework = "dnx451",     Arch = "x64", OS = "win", Flavor = "clr" });
+        RUNTIME_TARGETS.Add(new RuntimeTarget { Name = RUNTIME_CORECLR_WIN_x86_NAME, TargetFolder = RUNTIME_CORECLR_WIN_x86_BIN, Framework = "dnxcore50",  Arch = "x86", OS = "win", Flavor = "coreclr" });
+        RUNTIME_TARGETS.Add(new RuntimeTarget { Name = RUNTIME_CORECLR_WIN_x64_NAME, TargetFolder = RUNTIME_CORECLR_WIN_x64_BIN, Framework = "dnxcore50",  Arch = "x64", OS = "win", Flavor = "coreclr" });
     }
 
     if (CanBuildForLinux)
     {
-        RUNTIME_TARGETS.Add(new RuntimeTarget { Name = RUNTIME_CORECLR_LINUX_x64_NAME, TargetFolder = RUNTIME_CORECLR_LINUX_x64_BIN,    Framework = "dnxcore50",  Arch = "x64", OS = "linux", Flavor = "coreclr" });
+        RUNTIME_TARGETS.Add(new RuntimeTarget { Name = RUNTIME_CORECLR_LINUX_x64_NAME, TargetFolder = RUNTIME_CORECLR_LINUX_x64_BIN,  Framework = "dnxcore50",  Arch = "x64", OS = "linux", Flavor = "coreclr" });
     }
 
     if (CanBuildForDarwin)
     {
-        RUNTIME_TARGETS.Add(new RuntimeTarget { Name = RUNTIME_CORECLR_DARWIN_x64_NAME, TargetFolder = RUNTIME_CORECLR_DARWIN_x64_BIN,   Framework = "dnxcore50",  Arch = "x64", OS = "darwin", Flavor = "coreclr" });
+        RUNTIME_TARGETS.Add(new RuntimeTarget { Name = RUNTIME_CORECLR_DARWIN_x64_NAME, TargetFolder = RUNTIME_CORECLR_DARWIN_x64_BIN, Framework = "dnxcore50",  Arch = "x64", OS = "darwin", Flavor = "coreclr" });
     }
 }
 
@@ -391,12 +395,7 @@ var RUNTIME_TARGETS='${new List<RuntimeTarget>()}'
 
         foreach (var target in RUNTIME_TARGETS)
         {
-            var candidates = new[] { 
-                Path.Combine(CORECLR_TARGET_PATH, "Runtime", target.OS, target.Arch),
-                Path.Combine(CORECLR_TARGET_PATH, "Runtime", target.Arch == "x64" ? "amd64" : target.Arch) // Legacy
-            };
-            
-            var coreclrFolder = target.Flavor == "coreclr" ? candidates.First(Directory.Exists) : null;
+            var coreclrFolder = target.Flavor == "coreclr" ? Path.Combine(CORECLR_TARGET_PATH, "Runtime", target.OS, target.Arch) : null;
 
             // Parse and copy runtime assemblies
             var runtimeAssemblies = new HashSet<string>();
@@ -438,14 +437,14 @@ var RUNTIME_TARGETS='${new List<RuntimeTarget>()}'
                 projectAssemblies.ExceptWith(runtimeAssemblies);
 
                 var targetLibDir = Path.Combine(target.TargetFolder, "lib", project);
-                if (Directory.Exists(targetLibDir))
+
+                Directory.CreateDirectory(targetLibDir);
+
+                foreach (var file in projectAssemblies)
                 {
-                    foreach (var file in projectAssemblies)
-                    {
-                        var targetFilePath = Path.Combine(targetLibDir, Path.GetFileName(file));
-                        Log.Info("Copying " + file + " to " + targetFilePath);
-                        File.Copy(file, targetFilePath, true);
-                    }
+                    var targetFilePath = Path.Combine(targetLibDir, Path.GetFileName(file));
+                    Log.Info("Copying " + file + " to " + targetFilePath);
+                    File.Copy(file, targetFilePath, true);
                 }
             }
 
@@ -594,6 +593,105 @@ var RUNTIME_TARGETS='${new List<RuntimeTarget>()}'
     }
     nuget-pack packageVersion='${FULL_VERSION}' outputDir='${BUILD_DIR2}' extra='-NoPackageAnalysis -Properties RuntimeNamePrefix=${RUNTIME_NAME_PREFIX}' nugetPath='.nuget/nuget.exe' each='var nuspecFile in Files.Include(Path.Combine(BUILD_DIR2, "*.nuspec"))'
 
+- // ===================== TESTING ===================== 
+
+#test-package target='integration-test'
+    - // We want to run functional tests on both CLR flavors (wrt the RUNTIME_TARGETS)
+    - // We want to separate function tests from unit tests
+    @{
+        // Unzip all runtime targets
+        // Group by operation system since we only want to run unit tests on a single bitness
+        // any = [dnx-mono]
+        // win = [dnx-clr-win-x86, dnx-clr-win-x64, dnx-coreclr-win-x86, dnx-coreclr-win-x64]
+        // darwin = [dnx-coreclr-darwin-x64]
+        // linux = [dnx-coreclr-linux-x64]
+        foreach (var group in RUNTIME_TARGETS.GroupBy(t => t.OS))
+        {
+            // TODO: Port unit tests to CoreCLR
+            
+            // Group by architecture since we only care about a single one for unit tests
+            // any
+            // any = [dnx-mono]
+
+            // win
+            
+            // x86 = [dnx-clr-win-x86, dnx-coreclr-win-x86]
+            // x64 = [dnx-clr-win-x64, dnx-coreclr-win-x64]
+
+            // linux
+            // x64 = [dnx-coreclr-linux-x64]
+
+            // darwin
+            // x64 [dnx-coreclr-darwin-x64]
+
+            foreach (var target in group.GroupBy(t => t.Arch).First())
+            {
+                // Skip mono if we're not running on mono
+                if (!IsMono && target.Flavor == "mono")
+                {
+                    continue;
+                }
+
+                // TODO: Port tests to CoreCLR
+                if (target.Flavor == "coreclr")
+                {
+                    Log.Warn("Skipping unit tests on " + target.Name);
+                    continue;
+                }
+
+                var nupkgPath = Files.Include(Path.Combine(BUILD_DIR2, target.Name + ".*.nupkg")).Single();
+                var unpackagePath = Path.Combine(PACKAGES_DIR, target.Name);
+                var binPath = Path.Combine(unpackagePath, "bin");
+
+                Log.Info("Unpacking " + nupkgPath + " to " + unpackagePath);
+
+                // Nuke any previously installed package
+                if (Directory.Exists(unpackagePath)) 
+                {
+                    Directory.Delete(unpackagePath, recursive:true);
+                }
+
+                Directory.CreateDirectory(unpackagePath);
+
+                if (IsMono)
+                {
+                    // System.IO.Compression gives weird errors on mono to do with invalid dates
+                    // we're going to use unzip instead
+                    Exec("unzip", nupkgPath + " -d " + unpackagePath);
+                    Exec("chmod", "+x " + Path.Combine(binPath, "dnx"));
+                    Exec("chmod", "+x " + Path.Combine(binPath, "dnu"));
+                }
+                else
+                {
+                    System.IO.Compression.ZipFile.ExtractToDirectory(
+                        nupkgPath,
+                        unpackagePath);
+                }
+
+                var envPath = Environment.GetEnvironmentVariable("PATH");
+
+                try
+                {
+                    // We want to run unit tests against all runtime targets
+                    Environment.SetEnvironmentVariable("PATH", binPath + Path.PathSeparator + envPath);
+                    Log.Info("Adding " + binPath + " to the PATH");
+
+                    foreach(var projectFile in Files.Include("test/*.Tests/project.json"))
+                    {
+                        KTest(projectFile);
+                    }
+                }
+                finally
+                {
+                    Environment.SetEnvironmentVariable("PATH", envPath);
+                }
+            }
+        }
+    }
+
+    -// Doesn't matter what runtime we run the functional tests on as they do their own unzipping
+    k-test each='var projectFile in Files.Include("test/*.FunctionalTests/project.json")'
+
 - // ===================== SHARED UTILITIES ===================== 
 
 #update-tpa .copy-coreclr
@@ -607,7 +705,6 @@ var RUNTIME_TARGETS='${new List<RuntimeTarget>()}'
             var tpacppFileUnix = Path.Combine(ROOT, "src", BOOTSTRAPPER_CORECLR_NAME + ".unix", "tpa.cpp");
             var runtimeCandidates = new[] {
                 Path.Combine(CORECLR_TARGET_PATH, "Runtime", "win", "x86"),
-                Path.Combine(CORECLR_TARGET_PATH, "Runtime", "x86") // Legacy
             };
             
             Environment.SetEnvironmentVariable("DNX_TRACE", "0");
@@ -668,6 +765,9 @@ var RUNTIME_TARGETS='${new List<RuntimeTarget>()}'
         }
     }
 
+macro name='KTest' projectFile='string'
+    k-test
+ 
 
 functions @{
     private static readonly string _defaultLocalRuntimeHomeDir = ".dnx";
