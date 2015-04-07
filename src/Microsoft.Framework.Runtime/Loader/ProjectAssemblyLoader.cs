@@ -13,11 +13,11 @@ namespace Microsoft.Framework.Runtime.Loader
         private readonly ILibraryManager _libraryManager;
         private readonly IAssemblyLoadContextAccessor _loadContextAccessor;
 
-        public ProjectAssemblyLoader(IProjectResolver projectResovler,
+        public ProjectAssemblyLoader(IProjectResolver projectResolver,
                                      IAssemblyLoadContextAccessor loadContextAccessor,
                                      ILibraryManager libraryManager)
         {
-            _projectResolver = projectResovler;
+            _projectResolver = projectResolver;
             _loadContextAccessor = loadContextAccessor;
             _libraryManager = libraryManager;
         }
