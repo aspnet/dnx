@@ -20,6 +20,7 @@ using Microsoft.Framework.PackageManager.Restore.RuntimeModel;
 using Microsoft.Framework.PackageManager.NuGetUtils;
 using NuGet.Configuration;
 using NuGet.Frameworks;
+using NuGet.LibraryModel;
 using NuGet.Packaging;
 using NuGet.ProjectModel;
 using NuGet.Repositories;
@@ -438,7 +439,7 @@ namespace Microsoft.Framework.PackageManager
                     }
                 }
 
-                WriteLockFile(projectLockFilePath, project, graphItems, new PackageRepository(packagesDirectory), frameworks);
+                WriteLockFile(projectLockFilePath, project, graphItems, new NuGetv3LocalRepository(packagesDirectory), frameworks);
             }
 
             if (!ScriptExecutor.Execute(project, "postrestore", getVariable))
@@ -687,9 +688,9 @@ namespace Microsoft.Framework.PackageManager
 
             using (var sha512 = SHA512.Create())
             {
-                foreach (var item in graphItems.OrderBy(x => x.Match.Library, new LibraryComparer()))
+                foreach (var item in graphItems.OrderBy(x => x.Match.Library.Identity, new LibraryIdentityComparer()))
                 {
-                    var library = item.Match.Library;
+                    var library = item.Match.Library.Identity;
                     var packageInfo = repository.FindPackagesById(library.Name)
                         .FirstOrDefault(p => p.Version == library.Version);
 
@@ -698,12 +699,11 @@ namespace Microsoft.Framework.PackageManager
                         continue;
                     }
 
-                    var package = packageInfo.Package;
                     var lockFileLib = LockFileUtils.CreateLockFileLibraryForProject(
                         project,
-                        package,
+                        packageInfo,
                         sha512,
-                        frameworks,
+                        frameworks.Select(f => f.ToNuGetFramework()),
                         new DefaultPackagePathResolver(repository.RepositoryRoot),
                         correctedPackageName: library.Name);
 
@@ -829,9 +829,9 @@ namespace Microsoft.Framework.PackageManager
             return Task.WhenAll(tasks);
         }
 
-        class LibraryComparer : IComparer<Library>
+        class LibraryIdentityComparer : IComparer<LibraryIdentity>
         {
-            public int Compare(Library x, Library y)
+            public int Compare(LibraryIdentity x, LibraryIdentity y)
             {
                 int compare = string.Compare(x.Name, y.Name);
                 if (compare == 0)

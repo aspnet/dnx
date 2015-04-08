@@ -5,9 +5,10 @@ using System.Linq;
 using System.IO;
 using System.Reflection.Metadata;
 using System.Reflection.PortableExecutable;
-using System.Runtime.Versioning;
-using NuGet;
-using Microsoft.Framework.Runtime.DependencyManagement;
+using NuGet.Frameworks;
+using NuGet.Packaging;
+using NuGet.Repositories;
+using NuGet.ProjectModel;
 
 namespace Microsoft.Framework.PackageManager.Utils
 {
@@ -15,10 +16,10 @@ namespace Microsoft.Framework.PackageManager.Utils
     {
         public static LockFileLibrary CreateLockFileLibraryForProject(
             Runtime.Project project,
-            IPackage package,
+            LocalPackageInfo packageInfo,
             SHA512 sha512,
-            IEnumerable<FrameworkName> frameworks,
-            IPackagePathResolver resolver,
+            IEnumerable<NuGetFramework> frameworks,
+            DefaultPackagePathResolver resolver,
             string correctedPackageName = null)
         {
             var lockFileLib = new LockFileLibrary();
@@ -26,14 +27,16 @@ namespace Microsoft.Framework.PackageManager.Utils
             // package.Id is read from nuspec and it might be in wrong casing.
             // correctedPackageName should be the package name used by dependency graph and
             // it has the correct casing that runtime needs during dependency resolution.
-            lockFileLib.Name = correctedPackageName ?? package.Id;
-            lockFileLib.Version = package.Version;
+            lockFileLib.Name = correctedPackageName ?? packageInfo.Id;
+            lockFileLib.Version = packageInfo.Version;
 
-            using (var nupkgStream = package.GetStream())
+            using (var nupkgStream = File.OpenRead(packageInfo.ZipPath))
             {
                 lockFileLib.Sha = Convert.ToBase64String(sha512.ComputeHash(nupkgStream));
+                nupkgStream.Seek(0, SeekOrigin.Begin);
+                var packageReader = new PackageReader(nupkgStream);
+                lockFileLib.Files = packageReader.GetFiles().ToList();
             }
-            lockFileLib.Files = package.GetFiles().Select(p => p.Path).ToList();
 
             foreach (var framework in frameworks)
             {
