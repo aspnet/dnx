@@ -1,6 +1,7 @@
 ﻿// Copyright (c) Microsoft Open Technologies, Inc. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
@@ -22,29 +23,29 @@ namespace Microsoft.Framework.PackageManager.List
             _listedProjects = new HashSet<string>(listedProjects);
         }
 
-        public IEnumerable<string> GetRenderContent(IGraphNode<Library> root)
+        public IEnumerable<string> GetRenderContent(IGraphNode<LibraryDescription> root)
         {
             var dict = FindImmediateDependent(root);
-            var libraries = dict.Keys.OrderBy(library => library.Name);
+            var libraries = dict.Keys.OrderBy(description => description.Identity.Name);
             var results = new List<string>();
 
-            RenderLibraries(libraries.Where(library => library.IsGacOrFrameworkReference), dict, results);
-            RenderLibraries(libraries.Where(library => !library.IsGacOrFrameworkReference), dict, results);
+            RenderLibraries(libraries.Where(library => library.Identity.IsGacOrFrameworkReference), dict, results);
+            RenderLibraries(libraries.Where(library => !library.Identity.IsGacOrFrameworkReference), dict, results);
 
             return results;
         }
 
-        private IDictionary<Library, ISet<Library>> FindImmediateDependent(IGraphNode<Library> root)
+        private IDictionary<LibraryDescription, ISet<LibraryDescription>> FindImmediateDependent(IGraphNode<LibraryDescription> root)
         {
-            var result = new Dictionary<Library, ISet<Library>>();
+            var result = new Dictionary<LibraryDescription, ISet<LibraryDescription>>();
 
             root.DepthFirstPreOrderWalk(
                 visitNode: (node, ancestors) =>
                 {
-                    ISet<Library> slot;
+                    ISet<LibraryDescription> slot;
                     if (!result.TryGetValue(node.Item, out slot))
                     {
-                        slot = new HashSet<Library>();
+                        slot = new HashSet<LibraryDescription>();
                         result.Add(node.Item, slot);
                     }
 
@@ -63,27 +64,33 @@ namespace Microsoft.Framework.PackageManager.List
             return result;
         }
 
-        private void RenderLibraries(IEnumerable<Library> libraries, IDictionary<Library, ISet<Library>> dependenciesMap, List<string> results)
+        private void RenderLibraries(IEnumerable<LibraryDescription> descriptions,
+                                     IDictionary<LibraryDescription, ISet<LibraryDescription>> dependenciesMap,
+                                     IList<string> results)
         {
             if (!string.IsNullOrEmpty(_filterPattern))
             {
                 var regex = new Regex("^" + Regex.Escape(_filterPattern).Replace(@"\*", ".*").Replace(@"\?", ".") + "$", RegexOptions.IgnoreCase);
-                libraries = libraries.Where(library => regex.IsMatch(library.Name));
+                descriptions = descriptions.Where(library => regex.IsMatch(library.Identity.Name));
             }
 
-            foreach (var lib in libraries)
+            foreach (var description in descriptions)
             {
-                var libDisplay = (_listedProjects.Contains(lib.Name) ? "*" : " ") + lib.ToString();
-                if (!_hideDependent)
-                {
-                    results.Add(libDisplay.Bold());
+                var libDisplay = (_listedProjects.Contains(description.Identity.Name) ? "*" : " ") + description.Identity.ToString();
 
-                    var dependents = string.Join(", ", dependenciesMap[lib].Select(dep => dep.ToString()).OrderBy(name => name));
-                    results.Add(string.Format("    -> {0}", dependents));
+                if (description.Resolved)
+                {
+                    results.Add(libDisplay);
                 }
                 else
                 {
-                    results.Add(libDisplay);
+                    results.Add(string.Format("{0} - Unresolved", libDisplay).Red().Bold());
+                }
+
+                if (!_hideDependent)
+                {
+                    var dependents = string.Join(", ", dependenciesMap[description].Select(dep => dep.ToString()).OrderBy(name => name));
+                    results.Add(string.Format("    -> {0}", dependents));
                 }
             }
         }

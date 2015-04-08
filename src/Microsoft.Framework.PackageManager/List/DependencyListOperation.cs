@@ -27,15 +27,8 @@ namespace Microsoft.Framework.PackageManager.List
 
         public bool Execute()
         {
-            var libDictionary = _hostContext.DependencyWalker.Libraries.ToDictionary(desc => desc.Identity);
-
             // 1. Walk the graph of library dependencies
-            var librariesTreeBuilder = new LibraryDependencyFinder(libDictionary);
-            var root = librariesTreeBuilder.Build(new Library
-            {
-                Name = _options.Project.Name,
-                Version = _options.Project.Version
-            });
+            var root = LibraryDependencyFinder.Build(_hostContext.DependencyWalker.Libraries, _options.Project);
 
             if (!_options.ShowAssemblies)
             {
@@ -44,7 +37,7 @@ namespace Microsoft.Framework.PackageManager.List
             }
 
             // 2. Walk the local dependencies
-            var assemblyWalker = new AssemblyWalker(_framework, _hostContext, libDictionary, _options.RuntimeFolder);
+            var assemblyWalker = new AssemblyWalker(_framework, _hostContext, _options.RuntimeFolder);
             var assemblies = assemblyWalker.Walk(root);
 
             foreach (var assemblyName in assemblies.OrderBy(assemblyName => assemblyName))
@@ -55,7 +48,7 @@ namespace Microsoft.Framework.PackageManager.List
             return true;
         }
 
-        private void Render(IGraphNode<Library> root)
+        private void Render(IGraphNode<LibraryDescription> root)
         {
             var renderer = new LibraryDependencyFlatRenderer(_options.HideDependents, _options.ResultsFilter, _options.Project.Dependencies.Select(dep => dep.LibraryRange.Name));
             var content = renderer.GetRenderContent(root);

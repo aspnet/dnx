@@ -3,6 +3,7 @@
     "compilationOptions": { "warningsAsErrors": true },
     "dependencies": {
         "Microsoft.Framework.CommandLineUtils": { "version": "1.0.0-*", "type": "build" },
+        "Microsoft.Framework.NotNullAttribute.Internal": { "version": "1.0.0-*", "type": "build" },
         "Microsoft.Framework.Project": "1.0.0-*",
         "Microsoft.Framework.Runtime": "1.0.0-*",
         "Microsoft.Framework.Runtime.Compilation.Common": { "version": "1.0.0-*", "type": "build" },

@@ -17,47 +17,40 @@ namespace Microsoft.Framework.PackageManager.List
 
         private readonly FrameworkName _framework;
         private readonly ApplicationHostContext _hostContext;
-        private readonly IDictionary<Library, LibraryDescription> _libDictionary;
         private readonly string _runtimeFolder;
 
         public AssemblyWalker(
             FrameworkName framework,
             ApplicationHostContext hostContext,
-            IDictionary<Library, LibraryDescription> libDictionary,
             string runtimeFolder)
         {
             _framework = framework;
             _hostContext = hostContext;
             _runtimeFolder = runtimeFolder;
-            _libDictionary = libDictionary;
         }
 
-        public ISet<string> Walk(IGraphNode<Library> root)
+        public ISet<string> Walk(IGraphNode<LibraryDescription> root)
         {
             var assemblies = new HashSet<string>();
-            var libraries = new HashSet<Library>();
+            var libraries = new HashSet<LibraryDescription>();
             root.DepthFirstPreOrderWalk(visitNode: (node, _) => VisitLibrary(node, _, libraries, assemblies));
 
             return assemblies;
         }
 
-        private bool VisitLibrary(IGraphNode<Library> node,
-                                  IEnumerable<IGraphNode<Library>> ancestors,
-                                  ISet<Library> visitedLibraries,
+        private bool VisitLibrary(IGraphNode<LibraryDescription> node,
+                                  IEnumerable<IGraphNode<LibraryDescription>> ancestors,
+                                  ISet<LibraryDescription> visitedLibraries,
                                   ISet<string> assemblies)
         {
             if (visitedLibraries.Add(node.Item))
             {
-                LibraryDescription desc;
-                if (_libDictionary.TryGetValue(node.Item, out desc))
+                foreach (var loadableAssembly in node.Item.LoadableAssemblies)
                 {
-                    foreach (var loadableAssembly in desc.LoadableAssemblies)
-                    {
-                        DepthFirstGraphTraversal.PreOrderWalk(
-                            root: loadableAssembly,
-                            visitNode: (assemblyNode, assemblyAncestors) => VisitAssembly(assemblyNode, assemblyAncestors, assemblies),
-                            getChildren: GetAssemblyDependencies);
-                    }
+                    DepthFirstGraphTraversal.PreOrderWalk(
+                        root: loadableAssembly,
+                        visitNode: (assemblyNode, assemblyAncestors) => VisitAssembly(assemblyNode, assemblyAncestors, assemblies),
+                        getChildren: GetAssemblyDependencies);
                 }
 
                 return true;
