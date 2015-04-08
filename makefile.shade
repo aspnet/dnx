@@ -340,12 +340,36 @@ var RUNTIME_TARGETS='${new List<RuntimeTarget>()}'
         {
             extras += " -nocache";
         }
+
+        var downloadComplete = false;
+        // Travis ci has a timelimit for no activity and the CoreCLR pacakge is
+        // about 51MB. We're going to print to the console while this is happening 
+        // so the build doesn't timeout
+        if (Travis)
+        {
+            new System.Threading.Thread(() => 
+            {
+                while (!downloadComplete)
+                {
+                    Console.Write(".");
+                    System.Threading.Thread.Sleep(1000);
+                }
+
+                Console.WriteLine();
+            }) 
+            {
+                IsBackground = true
+            }
+            .Start();
+        }
     }
 
     nuget-install package='CoreCLR' outputDir='packages' extra='${extras}' once='CoreCLR' nugetPath='.nuget/nuget.exe' if='!Directory.Exists(CORECLR_TARGET_PATH)'
 
     var CoreCLR_DIR='${""}'
     @{
+        downloadComplete = true;
+
         Func<string, long> getVersion = version => {
         var dash = version.LastIndexOf('-');
 
@@ -812,6 +836,15 @@ functions @{
         }
     }
 
+    bool IsTravis 
+    {
+        get
+        {
+            var travis = Environment.GetEnvironmentVariable("TRAVIS");
+            return string.Equals(travis, "TRUE");
+        }
+    }
+
     public string Uname()
     {    
         string uname;
@@ -821,8 +854,7 @@ functions @{
 
     public void Clang(string args)
     {
-        var travis = Environment.GetEnvironmentVariable("TRAVIS");
-        if (string.Equals(travis, "TRUE"))
+        if (IsTravis)
         {
             Exec("clang++-3.4", args);   
         }
