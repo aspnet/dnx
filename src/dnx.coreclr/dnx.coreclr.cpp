@@ -1,5 +1,7 @@
+// Copyright (c) Microsoft Open Technologies, Inc. All rights reserved.
+// Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
+
 // dnx.coreclr.cpp : Defines the exported functions for the DLL application.
-//
 
 #include "stdafx.h"
 
@@ -23,7 +25,7 @@ void GetModuleDirectory(HMODULE module, LPWSTR szPath)
     szPath[dirLength + 1] = '\0';
 }
 
-// Generate a list of trusted platform assemblies. 
+// Generate a list of trusted platform assemblies.
 bool GetTrustedPlatformAssembliesList(WCHAR* szDirectory, bool bNative, LPWSTR pszTrustedPlatformAssemblies, size_t cchTrustedPlatformAssemblies)
 {
     bool ret = true;
@@ -32,7 +34,7 @@ bool GetTrustedPlatformAssembliesList(WCHAR* szDirectory, bool bNative, LPWSTR p
     size_t cTpaAssemblyNames = 0;
     LPCTSTR* ppszTpaAssemblyNames = nullptr;
 
-    // Build the list of the tpa assemblies 
+    // Build the list of the tpa assemblies
     CreateTpaBase(&ppszTpaAssemblyNames, &cTpaAssemblyNames, bNative);
 
     // Scan the directory to see if all the files in TPA list exist
@@ -81,19 +83,19 @@ Finished:
 }
 
 bool KlrLoadLibraryExWAndGetProcAddress(
-            LPWSTR   pwszModuleFileName, 
-            LPCSTR   pszFunctionName, 
-            HMODULE* phModule, 
+            LPWSTR   pwszModuleFileName,
+            LPCSTR   pszFunctionName,
+            HMODULE* phModule,
             FARPROC* ppFunction)
 {
     bool fSuccess = true;
-    HMODULE hModule = nullptr; 
+    HMODULE hModule = nullptr;
     FARPROC pFunction = nullptr;
-    
+
     //Clear out params
     *phModule = nullptr;
     *(FARPROC*)ppFunction = nullptr;
-    
+
     //Load module and look for require DLL export
     hModule = ::LoadLibraryExW(pwszModuleFileName, NULL, LOAD_LIBRARY_SEARCH_DEFAULT_DIRS);
     if (!hModule)
@@ -103,7 +105,7 @@ bool KlrLoadLibraryExWAndGetProcAddress(
         fSuccess = false;
         goto Finished;
     }
-    
+
     pFunction = ::GetProcAddress(hModule, pszFunctionName);
     if (!pFunction)
     {
@@ -139,8 +141,8 @@ HMODULE LoadCoreClr()
     DWORD dwRet = GetEnvironmentVariableW(L"DNX_TRACE", szTrace, 1);
     bool m_fVerboseTrace = dwRet > 0;
     LPWSTR rgwzOSLoaderModuleNames[] = {
-                        L"api-ms-win-core-libraryloader-l1-1-1.dll", 
-                        L"kernel32.dll", 
+                        L"api-ms-win-core-libraryloader-l1-1-1.dll",
+                        L"kernel32.dll",
                         NULL
     };
     LPWSTR rgwszModuleFileName = NULL;
@@ -181,23 +183,23 @@ HMODULE LoadCoreClr()
         while (rgwszModuleFileName != NULL)
         {
             fSuccess = KlrLoadLibraryExWAndGetProcAddress(
-                            rgwszModuleFileName, 
-                            pszAddDllDirectoryName, 
-                            &hOSLoaderModule, 
+                            rgwszModuleFileName,
+                            pszAddDllDirectoryName,
+                            &hOSLoaderModule,
                             (FARPROC*)&pFnAddDllDirectory);
             if (fSuccess)
                 break;
-            
+
             dwModuleFileName++;
             rgwszModuleFileName = rgwzOSLoaderModuleNames[dwModuleFileName];
          }
-         
+
         if (!hOSLoaderModule || !pFnAddDllDirectory)
         {
             fSuccess = false;
             goto Finished;
         }
-         
+
         //Find the second DLL export
         pFnSetDefaultDllDirectories = (FnSetDefaultDllDirectories)::GetProcAddress(hOSLoaderModule, pszSetDefaultDllDirectoriesName);
         if (!pFnSetDefaultDllDirectories)
@@ -215,11 +217,11 @@ HMODULE LoadCoreClr()
             fSuccess = false;
             goto Finished;
         }
-        
+
         pFnAddDllDirectory(szCoreClrDirectory);
         // Modify the default dll flags so that dependencies can be found in this path
         pFnSetDefaultDllDirectories(LOAD_LIBRARY_SEARCH_DEFAULT_DIRS | LOAD_LIBRARY_SEARCH_USER_DIRS);
-        
+
         fSuccess = true;
 
         // Continue loading as usual
@@ -272,7 +274,7 @@ bool Win32KDisable()
     {
         goto Finished;
     }
-    
+
     if (wcscmp(szWin32KDisable, L"1") != 0)
     {
         fSuccess = false;
@@ -280,15 +282,15 @@ bool Win32KDisable()
     }
 
     fSuccess = KlrLoadLibraryExWAndGetProcAddress(
-                    lpwszModuleFileName, 
-                    pszSetProcessMitigationPolicy, 
-                    &hProcessThreadsModule, 
+                    lpwszModuleFileName,
+                    pszSetProcessMitigationPolicy,
+                    &hProcessThreadsModule,
                     (FARPROC*)&pFnSetProcessMitigationPolicy);
     if (!fSuccess)
     {
         goto Finished;
     }
-    
+
     if (!hProcessThreadsModule || !pFnSetProcessMitigationPolicy)
     {
         fSuccess = false;
@@ -310,7 +312,7 @@ Finished:
     {
         pFnSetProcessMitigationPolicy = nullptr;
     }
-    
+
     if (hProcessThreadsModule)
     {
         FreeLibrary(hProcessThreadsModule);
@@ -385,7 +387,7 @@ extern "C" __declspec(dllexport) HRESULT __stdcall CallApplicationMain(PCALL_APP
 
     pCLRRuntimeHost->SetStartupFlags(dwStartupFlags);
 
-    // Authenticate with either CORECLR_HOST_AUTHENTICATION_KEY or CORECLR_HOST_AUTHENTICATION_KEY_NONGEN 
+    // Authenticate with either CORECLR_HOST_AUTHENTICATION_KEY or CORECLR_HOST_AUTHENTICATION_KEY_NONGEN
     hr = pCLRRuntimeHost->Authenticate(CORECLR_HOST_AUTHENTICATION_KEY);
     if (FAILED(hr))
     {
@@ -432,7 +434,7 @@ extern "C" __declspec(dllexport) HRESULT __stdcall CallApplicationMain(PCALL_APP
         goto Finished;
     }
     pwszTrustedPlatformAssemblies[0] = L'\0';
-    
+
     // Try native images first
     if (!GetTrustedPlatformAssembliesList(szCoreClrDirectory, true, pwszTrustedPlatformAssemblies, cchTrustedPlatformAssemblies))
     {
@@ -481,7 +483,7 @@ extern "C" __declspec(dllexport) HRESULT __stdcall CallApplicationMain(PCALL_APP
     DWORD domainId;
     DWORD dwFlagsAppDomain =
         APPDOMAIN_ENABLE_PLATFORM_SPECIFIC_APPS |
-        APPDOMAIN_ENABLE_PINVOKE_AND_CLASSIC_COMINTEROP | 
+        APPDOMAIN_ENABLE_PINVOKE_AND_CLASSIC_COMINTEROP |
         APPDOMAIN_DISABLE_TRANSPARENCY_ENFORCEMENT;
 
     LPCWSTR szAssemblyName = L"dnx.coreclr.managed, Version=0.1.0.0";
@@ -531,8 +533,8 @@ extern "C" __declspec(dllexport) HRESULT __stdcall CallApplicationMain(PCALL_APP
     pCLRRuntimeHost->UnloadAppDomain(domainId, true);
 
     pCLRRuntimeHost->Stop();
-    
-Finished:    
+
+Finished:
     if (pwszTrustedPlatformAssemblies != NULL)
     {
         free(pwszTrustedPlatformAssemblies);

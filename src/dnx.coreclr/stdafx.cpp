@@ -1,7 +1,4 @@
-// stdafx.cpp : source file that includes just the standard includes
-// KSys.pch will be the pre-compiled header
-// stdafx.obj will contain the pre-compiled type information
+// Copyright (c) Microsoft Open Technologies, Inc. All rights reserved.
+// Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 #include "stdafx.h"
-
-// Note: Reference any additional headers you need in STDAFX.H and NOT in this file

@@ -1,8 +1,10 @@
+// Copyright (c) Microsoft Open Technologies, Inc. All rights reserved.
+// Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 #pragma once
 
 template<class T, class TUnknown = IUnknown>
-class ComObject : 
+class ComObject :
     public T
 {
     DWORD m_dwRef;
@@ -12,7 +14,7 @@ public:
         m_dwRef = 0;
     }
 
-    STDMETHODIMP QueryInterface( 
+    STDMETHODIMP QueryInterface(
                 /* [in] */ REFIID riid,
                 /* [iid_is][out] */ __RPC__deref_out void __RPC_FAR *__RPC_FAR *ppvObject)
     {

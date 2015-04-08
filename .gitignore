@@ -22,6 +22,7 @@ nuget.exe
 *.ncrunchsolution
 *.*sdf
 *.ipch
+*.aps
 /KRuntime.sln.ide
 /*.vspx
 *.metaproj*

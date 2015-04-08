@@ -1,3 +1,5 @@
+// Copyright (c) Microsoft Open Technologies, Inc. All rights reserved.
+// Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 #pragma once
 
@@ -18,9 +20,9 @@ public:
 
     IUnknown* CastInterface(REFIID riid)
     {
-        if (riid == __uuidof(IStream)) 
+        if (riid == __uuidof(IStream))
             return static_cast<IStream*>(this);
-        if (riid == __uuidof(ISequentialStream)) 
+        if (riid == __uuidof(ISequentialStream))
             return static_cast<ISequentialStream*>(this);
         return NULL;
     }
@@ -32,8 +34,8 @@ public:
         _handle = ::CreateFile(
             fileName,
             GENERIC_READ,
-            FILE_SHARE_READ | 
-            FILE_SHARE_WRITE | 
+            FILE_SHARE_READ |
+            FILE_SHARE_WRITE |
             FILE_SHARE_DELETE,
             NULL,
             OPEN_EXISTING,
@@ -60,11 +62,11 @@ public:
     ////////////////////////////
     // ISequentialStream
 
-        STDMETHODIMP Read( 
-            /* [annotation] */ 
+        STDMETHODIMP Read(
+            /* [annotation] */
             __out_bcount_part(cb, *pcbRead)  void *pv,
             /* [in] */ ULONG cb,
-            /* [annotation] */ 
+            /* [annotation] */
             __out_opt  ULONG *pcbRead)
         {
             BOOL result = ReadFile(
@@ -81,12 +83,12 @@ public:
 
             return (cb == *pcbRead) ? S_OK : S_FALSE;
         }
-        
-        STDMETHODIMP Write( 
-            /* [annotation] */ 
+
+        STDMETHODIMP Write(
+            /* [annotation] */
             __in_bcount(cb)  const void *pv,
             /* [in] */ ULONG cb,
-            /* [annotation] */ 
+            /* [annotation] */
             __out_opt  ULONG *pcbWritten)
         {
             return E_NOTIMPL;
@@ -95,44 +97,43 @@ public:
     ////////////////////////////
     // IStream
 
-        STDMETHODIMP Seek( 
+        STDMETHODIMP Seek(
             /* [in] */ LARGE_INTEGER dlibMove,
             /* [in] */ DWORD dwOrigin,
-            /* [annotation] */ 
+            /* [annotation] */
             __out_opt  ULARGE_INTEGER *plibNewPosition) { return E_NOTIMPL; }
-        
-        STDMETHODIMP SetSize( 
+
+        STDMETHODIMP SetSize(
             /* [in] */ ULARGE_INTEGER libNewSize) { return E_NOTIMPL; }
-        
-        STDMETHODIMP CopyTo( 
+
+        STDMETHODIMP CopyTo(
             /* [unique][in] */ IStream *pstm,
             /* [in] */ ULARGE_INTEGER cb,
-            /* [annotation] */ 
+            /* [annotation] */
             __out_opt  ULARGE_INTEGER *pcbRead,
-            /* [annotation] */ 
+            /* [annotation] */
             __out_opt  ULARGE_INTEGER *pcbWritten) { return E_NOTIMPL; }
-        
-        STDMETHODIMP Commit( 
+
+        STDMETHODIMP Commit(
             /* [in] */ DWORD grfCommitFlags) { return E_NOTIMPL; }
-        
+
         STDMETHODIMP Revert( void) { return E_NOTIMPL; }
-        
-        STDMETHODIMP LockRegion( 
+
+        STDMETHODIMP LockRegion(
             /* [in] */ ULARGE_INTEGER libOffset,
             /* [in] */ ULARGE_INTEGER cb,
             /* [in] */ DWORD dwLockType) { return E_NOTIMPL; }
-        
-        STDMETHODIMP UnlockRegion( 
+
+        STDMETHODIMP UnlockRegion(
             /* [in] */ ULARGE_INTEGER libOffset,
             /* [in] */ ULARGE_INTEGER cb,
             /* [in] */ DWORD dwLockType) { return E_NOTIMPL; }
-        
-        STDMETHODIMP Stat( 
+
+        STDMETHODIMP Stat(
             /* [out] */ __RPC__out STATSTG *pstatstg,
             /* [in] */ DWORD grfStatFlag) { return E_NOTIMPL; }
-        
-        STDMETHODIMP Clone( 
-            /* [out] */ __RPC__deref_out_opt IStream **ppstm) { return E_NOTIMPL; }
-        
-};
 
+        STDMETHODIMP Clone(
+            /* [out] */ __RPC__deref_out_opt IStream **ppstm) { return E_NOTIMPL; }
+
+};

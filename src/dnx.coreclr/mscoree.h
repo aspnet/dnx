@@ -1,4 +1,5 @@
-
+// Copyright (c) Microsoft Open Technologies, Inc. All rights reserved.
+// Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 /* this ALWAYS GENERATED file contains the definitions for the interfaces */
 
@@ -33,7 +34,7 @@
 #pragma once
 #endif
 
-/* Forward Declarations */ 
+/* Forward Declarations */
 
 #ifndef __IDebuggerThreadControl_FWD_DEFINED__
 #define __IDebuggerThreadControl_FWD_DEFINED__
@@ -216,13 +217,13 @@ typedef interface ICLRAppDomainResourceMonitor ICLRAppDomainResourceMonitor;
 
 #ifdef __cplusplus
 extern "C"{
-#endif 
+#endif
 
 
 /* interface __MIDL_itf_mscoree_0000_0000 */
-/* [local] */ 
+/* [local] */
 
-#define DECLARE_DEPRECATED 
+#define DECLARE_DEPRECATED
 #define DEPRECATED_CLR_STDAPI STDAPI
 
 #define	CLR_MAJOR_VERSION	( 4 )
@@ -277,7 +278,7 @@ DEPRECATED_CLR_STDAPI LockClrVersion(FLockClrVersionCallback hostCallback,FLockC
 DEPRECATED_CLR_STDAPI CreateDebuggingInterfaceFromVersion(int iDebuggerVersion, LPCWSTR szDebuggeeVersion, IUnknown ** ppCordb);
 DEPRECATED_CLR_STDAPI GetVersionFromProcess(HANDLE hProcess, _Out_writes_to_(cchBuffer, *pdwLength) LPWSTR pVersion, DWORD cchBuffer, _Out_ DWORD* dwLength);
 typedef HRESULT  (STDAPICALLTYPE *FnGetCLRRuntimeHost)(REFIID riid, IUnknown **pUnk);
-typedef /* [public] */ 
+typedef /* [public] */
 enum __MIDL___MIDL_itf_mscoree_0000_0000_0001
     {
         HOST_TYPE_DEFAULT	= 0,
@@ -286,10 +287,10 @@ enum __MIDL___MIDL_itf_mscoree_0000_0000_0001
     } 	HOST_TYPE;
 
 STDAPI CorLaunchApplication(HOST_TYPE dwClickOnceHost, LPCWSTR pwzAppFullName, DWORD dwManifestPaths, LPCWSTR* ppwzManifestPaths, DWORD dwActivationData, LPCWSTR* ppwzActivationData, LPPROCESS_INFORMATION lpProcessInformation);
-typedef HRESULT ( __stdcall *FExecuteInAppDomainCallback )( 
+typedef HRESULT ( __stdcall *FExecuteInAppDomainCallback )(
     void *cookie);
 
-typedef /* [public][public] */ 
+typedef /* [public][public] */
 enum __MIDL___MIDL_itf_mscoree_0000_0000_0002
     {
         STARTUP_CONCURRENT_GC	= 0x1,
@@ -311,14 +312,14 @@ enum __MIDL___MIDL_itf_mscoree_0000_0000_0002
         STARTUP_SINGLE_APPDOMAIN	= 0x800000
     } 	STARTUP_FLAGS;
 
-typedef /* [public] */ 
+typedef /* [public] */
 enum __MIDL___MIDL_itf_mscoree_0000_0000_0003
     {
         CLSID_RESOLUTION_DEFAULT	= 0,
         CLSID_RESOLUTION_REGISTERED	= 0x1
     } 	CLSID_RESOLUTION_FLAGS;
 
-typedef /* [public] */ 
+typedef /* [public] */
 enum __MIDL___MIDL_itf_mscoree_0000_0000_0004
     {
         RUNTIME_INFO_UPGRADE_VERSION	= 0x1,
@@ -331,7 +332,7 @@ enum __MIDL___MIDL_itf_mscoree_0000_0000_0004
         RUNTIME_INFO_IGNORE_ERROR_MODE	= 0x1000
     } 	RUNTIME_INFO_FLAGS;
 
-typedef /* [public] */ 
+typedef /* [public] */
 enum __MIDL___MIDL_itf_mscoree_0000_0000_0005
     {
         APPDOMAIN_SECURITY_DEFAULT	= 0,
@@ -357,55 +358,55 @@ extern RPC_IF_HANDLE __MIDL_itf_mscoree_0000_0000_v0_0_s_ifspec;
 #define __IDebuggerThreadControl_INTERFACE_DEFINED__
 
 /* interface IDebuggerThreadControl */
-/* [object][local][unique][helpstring][version][uuid] */ 
+/* [object][local][unique][helpstring][version][uuid] */
 
 
 EXTERN_C const IID IID_IDebuggerThreadControl;
 
 #if defined(__cplusplus) && !defined(CINTERFACE)
-    
+
     MIDL_INTERFACE("23D86786-0BB5-4774-8FB5-E3522ADD6246")
     IDebuggerThreadControl : public IUnknown
     {
     public:
         virtual HRESULT STDMETHODCALLTYPE ThreadIsBlockingForDebugger( void) = 0;
-        
+
         virtual HRESULT STDMETHODCALLTYPE ReleaseAllRuntimeThreads( void) = 0;
-        
-        virtual HRESULT STDMETHODCALLTYPE StartBlockingForDebugger( 
+
+        virtual HRESULT STDMETHODCALLTYPE StartBlockingForDebugger(
             DWORD dwUnused) = 0;
-        
+
     };
-    
-    
+
+
 #else 	/* C style interface */
 
     typedef struct IDebuggerThreadControlVtbl
     {
         BEGIN_INTERFACE
-        
-        HRESULT ( STDMETHODCALLTYPE *QueryInterface )( 
+
+        HRESULT ( STDMETHODCALLTYPE *QueryInterface )(
             IDebuggerThreadControl * This,
             /* [in] */ REFIID riid,
-            /* [annotation][iid_is][out] */ 
+            /* [annotation][iid_is][out] */
             _COM_Outptr_  void **ppvObject);
-        
-        ULONG ( STDMETHODCALLTYPE *AddRef )( 
+
+        ULONG ( STDMETHODCALLTYPE *AddRef )(
             IDebuggerThreadControl * This);
-        
-        ULONG ( STDMETHODCALLTYPE *Release )( 
+
+        ULONG ( STDMETHODCALLTYPE *Release )(
             IDebuggerThreadControl * This);
-        
-        HRESULT ( STDMETHODCALLTYPE *ThreadIsBlockingForDebugger )( 
+
+        HRESULT ( STDMETHODCALLTYPE *ThreadIsBlockingForDebugger )(
             IDebuggerThreadControl * This);
-        
-        HRESULT ( STDMETHODCALLTYPE *ReleaseAllRuntimeThreads )( 
+
+        HRESULT ( STDMETHODCALLTYPE *ReleaseAllRuntimeThreads )(
             IDebuggerThreadControl * This);
-        
-        HRESULT ( STDMETHODCALLTYPE *StartBlockingForDebugger )( 
+
+        HRESULT ( STDMETHODCALLTYPE *StartBlockingForDebugger )(
             IDebuggerThreadControl * This,
             DWORD dwUnused);
-        
+
         END_INTERFACE
     } IDebuggerThreadControlVtbl;
 
@@ -414,29 +415,29 @@ EXTERN_C const IID IID_IDebuggerThreadControl;
         CONST_VTBL struct IDebuggerThreadControlVtbl *lpVtbl;
     };
 
-    
+
 
 #ifdef COBJMACROS
 
 
 #define IDebuggerThreadControl_QueryInterface(This,riid,ppvObject)	\
-    ( (This)->lpVtbl -> QueryInterface(This,riid,ppvObject) ) 
+    ( (This)->lpVtbl -> QueryInterface(This,riid,ppvObject) )
 
 #define IDebuggerThreadControl_AddRef(This)	\
-    ( (This)->lpVtbl -> AddRef(This) ) 
+    ( (This)->lpVtbl -> AddRef(This) )
 
 #define IDebuggerThreadControl_Release(This)	\
-    ( (This)->lpVtbl -> Release(This) ) 
+    ( (This)->lpVtbl -> Release(This) )
 
 
 #define IDebuggerThreadControl_ThreadIsBlockingForDebugger(This)	\
-    ( (This)->lpVtbl -> ThreadIsBlockingForDebugger(This) ) 
+    ( (This)->lpVtbl -> ThreadIsBlockingForDebugger(This) )
 
 #define IDebuggerThreadControl_ReleaseAllRuntimeThreads(This)	\
-    ( (This)->lpVtbl -> ReleaseAllRuntimeThreads(This) ) 
+    ( (This)->lpVtbl -> ReleaseAllRuntimeThreads(This) )
 
 #define IDebuggerThreadControl_StartBlockingForDebugger(This,dwUnused)	\
-    ( (This)->lpVtbl -> StartBlockingForDebugger(This,dwUnused) ) 
+    ( (This)->lpVtbl -> StartBlockingForDebugger(This,dwUnused) )
 
 #endif /* COBJMACROS */
 
@@ -450,7 +451,7 @@ EXTERN_C const IID IID_IDebuggerThreadControl;
 
 
 /* interface __MIDL_itf_mscoree_0000_0001 */
-/* [local] */ 
+/* [local] */
 
 EXTERN_GUID(IID_IDebuggerInfo, 0xbf24142d, 0xa47d, 0x4d24, 0xa6, 0x6d, 0x8c, 0x21, 0x41, 0x94, 0x4e, 0x44);
 
@@ -462,45 +463,45 @@ extern RPC_IF_HANDLE __MIDL_itf_mscoree_0000_0001_v0_0_s_ifspec;
 #define __IDebuggerInfo_INTERFACE_DEFINED__
 
 /* interface IDebuggerInfo */
-/* [object][local][unique][helpstring][version][uuid] */ 
+/* [object][local][unique][helpstring][version][uuid] */
 
 
 EXTERN_C const IID IID_IDebuggerInfo;
 
 #if defined(__cplusplus) && !defined(CINTERFACE)
-    
+
     MIDL_INTERFACE("BF24142D-A47D-4d24-A66D-8C2141944E44")
     IDebuggerInfo : public IUnknown
     {
     public:
-        virtual HRESULT STDMETHODCALLTYPE IsDebuggerAttached( 
+        virtual HRESULT STDMETHODCALLTYPE IsDebuggerAttached(
             /* [out] */ BOOL *pbAttached) = 0;
-        
+
     };
-    
-    
+
+
 #else 	/* C style interface */
 
     typedef struct IDebuggerInfoVtbl
     {
         BEGIN_INTERFACE
-        
-        HRESULT ( STDMETHODCALLTYPE *QueryInterface )( 
+
+        HRESULT ( STDMETHODCALLTYPE *QueryInterface )(
             IDebuggerInfo * This,
             /* [in] */ REFIID riid,
-            /* [annotation][iid_is][out] */ 
+            /* [annotation][iid_is][out] */
             _COM_Outptr_  void **ppvObject);
-        
-        ULONG ( STDMETHODCALLTYPE *AddRef )( 
+
+        ULONG ( STDMETHODCALLTYPE *AddRef )(
             IDebuggerInfo * This);
-        
-        ULONG ( STDMETHODCALLTYPE *Release )( 
+
+        ULONG ( STDMETHODCALLTYPE *Release )(
             IDebuggerInfo * This);
-        
-        HRESULT ( STDMETHODCALLTYPE *IsDebuggerAttached )( 
+
+        HRESULT ( STDMETHODCALLTYPE *IsDebuggerAttached )(
             IDebuggerInfo * This,
             /* [out] */ BOOL *pbAttached);
-        
+
         END_INTERFACE
     } IDebuggerInfoVtbl;
 
@@ -509,23 +510,23 @@ EXTERN_C const IID IID_IDebuggerInfo;
         CONST_VTBL struct IDebuggerInfoVtbl *lpVtbl;
     };
 
-    
+
 
 #ifdef COBJMACROS
 
 
 #define IDebuggerInfo_QueryInterface(This,riid,ppvObject)	\
-    ( (This)->lpVtbl -> QueryInterface(This,riid,ppvObject) ) 
+    ( (This)->lpVtbl -> QueryInterface(This,riid,ppvObject) )
 
 #define IDebuggerInfo_AddRef(This)	\
-    ( (This)->lpVtbl -> AddRef(This) ) 
+    ( (This)->lpVtbl -> AddRef(This) )
 
 #define IDebuggerInfo_Release(This)	\
-    ( (This)->lpVtbl -> Release(This) ) 
+    ( (This)->lpVtbl -> Release(This) )
 
 
 #define IDebuggerInfo_IsDebuggerAttached(This,pbAttached)	\
-    ( (This)->lpVtbl -> IsDebuggerAttached(This,pbAttached) ) 
+    ( (This)->lpVtbl -> IsDebuggerAttached(This,pbAttached) )
 
 #endif /* COBJMACROS */
 
@@ -539,11 +540,11 @@ EXTERN_C const IID IID_IDebuggerInfo;
 
 
 /* interface __MIDL_itf_mscoree_0000_0002 */
-/* [local] */ 
+/* [local] */
 
 typedef void *HDOMAINENUM;
 
-typedef /* [public] */ 
+typedef /* [public] */
 enum __MIDL___MIDL_itf_mscoree_0000_0002_0001
     {
         eMemoryAvailableLow	= 1,
@@ -551,7 +552,7 @@ enum __MIDL___MIDL_itf_mscoree_0000_0002_0001
         eMemoryAvailableHigh	= 3
     } 	EMemoryAvailable;
 
-typedef /* [public] */ 
+typedef /* [public] */
 enum __MIDL___MIDL_itf_mscoree_0000_0002_0002
     {
         eTaskCritical	= 0,
@@ -559,7 +560,7 @@ enum __MIDL___MIDL_itf_mscoree_0000_0002_0002
         eProcessCritical	= 2
     } 	EMemoryCriticalLevel;
 
-typedef /* [public] */ 
+typedef /* [public] */
 enum __MIDL___MIDL_itf_mscoree_0000_0002_0003
     {
         WAIT_MSGPUMP	= 0x1,
@@ -571,7 +572,7 @@ typedef UINT64 TASKID;
 
 typedef DWORD CONNID;
 
-typedef 
+typedef
 enum ETaskType
     {
         TT_DEBUGGERHELPER	= 0x1,
@@ -587,7 +588,7 @@ enum ETaskType
         TT_UNKNOWN	= 0x80000000
     } 	ETaskType;
 
-typedef /* [public] */ 
+typedef /* [public] */
 enum __MIDL___MIDL_itf_mscoree_0000_0002_0004
     {
         eSymbolReadingNever	= 0,
@@ -595,7 +596,7 @@ enum __MIDL___MIDL_itf_mscoree_0000_0002_0004
         eSymbolReadingFullTrustOnly	= 2
     } 	ESymbolReadingPolicy;
 
-typedef /* [public][public] */ 
+typedef /* [public][public] */
 enum __MIDL___MIDL_itf_mscoree_0000_0002_0005
     {
         DUMP_FLAVOR_Mini	= 0,
@@ -604,7 +605,7 @@ enum __MIDL___MIDL_itf_mscoree_0000_0002_0005
         DUMP_FLAVOR_Default	= DUMP_FLAVOR_Mini
     } 	ECustomDumpFlavor;
 
-typedef /* [public][public][public] */ 
+typedef /* [public][public][public] */
 enum __MIDL___MIDL_itf_mscoree_0000_0002_0006
     {
         DUMP_ITEM_None	= 0
@@ -613,7 +614,7 @@ enum __MIDL___MIDL_itf_mscoree_0000_0002_0006
 typedef /* [public][public] */ struct __MIDL___MIDL_itf_mscoree_0000_0002_0007
     {
     ECustomDumpItemKind itemKind;
-    union 
+    union
         {
         UINT_PTR pReserved;
         } 	;
@@ -623,7 +624,7 @@ typedef /* [public][public] */ struct __MIDL___MIDL_itf_mscoree_0000_0002_0007
 
 #define	BucketParamLength	( 255 )
 
-typedef /* [public] */ 
+typedef /* [public] */
 enum __MIDL___MIDL_itf_mscoree_0000_0002_0009
     {
         Parameter1	= 0,
@@ -635,7 +636,7 @@ enum __MIDL___MIDL_itf_mscoree_0000_0002_0009
         Parameter7	= ( Parameter6 + 1 ) ,
         Parameter8	= ( Parameter7 + 1 ) ,
         Parameter9	= ( Parameter8 + 1 ) ,
-        InvalidBucketParamIndex	= ( Parameter9 + 1 ) 
+        InvalidBucketParamIndex	= ( Parameter9 + 1 )
     } 	BucketParameterIndex;
 
 typedef struct _BucketParameters
@@ -654,63 +655,63 @@ extern RPC_IF_HANDLE __MIDL_itf_mscoree_0000_0002_v0_0_s_ifspec;
 #define __ICLRErrorReportingManager_INTERFACE_DEFINED__
 
 /* interface ICLRErrorReportingManager */
-/* [object][local][unique][helpstring][version][uuid] */ 
+/* [object][local][unique][helpstring][version][uuid] */
 
 
 EXTERN_C const IID IID_ICLRErrorReportingManager;
 
 #if defined(__cplusplus) && !defined(CINTERFACE)
-    
+
     MIDL_INTERFACE("980D2F1A-BF79-4c08-812A-BB9778928F78")
     ICLRErrorReportingManager : public IUnknown
     {
     public:
-        virtual HRESULT STDMETHODCALLTYPE GetBucketParametersForCurrentException( 
+        virtual HRESULT STDMETHODCALLTYPE GetBucketParametersForCurrentException(
             /* [out] */ BucketParameters *pParams) = 0;
-        
-        virtual HRESULT STDMETHODCALLTYPE BeginCustomDump( 
+
+        virtual HRESULT STDMETHODCALLTYPE BeginCustomDump(
             /* [in] */ ECustomDumpFlavor dwFlavor,
             /* [in] */ DWORD dwNumItems,
             /* [length_is][size_is][in] */ CustomDumpItem *items,
             DWORD dwReserved) = 0;
-        
+
         virtual HRESULT STDMETHODCALLTYPE EndCustomDump( void) = 0;
-        
+
     };
-    
-    
+
+
 #else 	/* C style interface */
 
     typedef struct ICLRErrorReportingManagerVtbl
     {
         BEGIN_INTERFACE
-        
-        HRESULT ( STDMETHODCALLTYPE *QueryInterface )( 
+
+        HRESULT ( STDMETHODCALLTYPE *QueryInterface )(
             ICLRErrorReportingManager * This,
             /* [in] */ REFIID riid,
-            /* [annotation][iid_is][out] */ 
+            /* [annotation][iid_is][out] */
             _COM_Outptr_  void **ppvObject);
-        
-        ULONG ( STDMETHODCALLTYPE *AddRef )( 
+
+        ULONG ( STDMETHODCALLTYPE *AddRef )(
             ICLRErrorReportingManager * This);
-        
-        ULONG ( STDMETHODCALLTYPE *Release )( 
+
+        ULONG ( STDMETHODCALLTYPE *Release )(
             ICLRErrorReportingManager * This);
-        
-        HRESULT ( STDMETHODCALLTYPE *GetBucketParametersForCurrentException )( 
+
+        HRESULT ( STDMETHODCALLTYPE *GetBucketParametersForCurrentException )(
             ICLRErrorReportingManager * This,
             /* [out] */ BucketParameters *pParams);
-        
-        HRESULT ( STDMETHODCALLTYPE *BeginCustomDump )( 
+
+        HRESULT ( STDMETHODCALLTYPE *BeginCustomDump )(
             ICLRErrorReportingManager * This,
             /* [in] */ ECustomDumpFlavor dwFlavor,
             /* [in] */ DWORD dwNumItems,
             /* [length_is][size_is][in] */ CustomDumpItem *items,
             DWORD dwReserved);
-        
-        HRESULT ( STDMETHODCALLTYPE *EndCustomDump )( 
+
+        HRESULT ( STDMETHODCALLTYPE *EndCustomDump )(
             ICLRErrorReportingManager * This);
-        
+
         END_INTERFACE
     } ICLRErrorReportingManagerVtbl;
 
@@ -719,29 +720,29 @@ EXTERN_C const IID IID_ICLRErrorReportingManager;
         CONST_VTBL struct ICLRErrorReportingManagerVtbl *lpVtbl;
     };
 
-    
+
 
 #ifdef COBJMACROS
 
 
 #define ICLRErrorReportingManager_QueryInterface(This,riid,ppvObject)	\
-    ( (This)->lpVtbl -> QueryInterface(This,riid,ppvObject) ) 
+    ( (This)->lpVtbl -> QueryInterface(This,riid,ppvObject) )
 
 #define ICLRErrorReportingManager_AddRef(This)	\
-    ( (This)->lpVtbl -> AddRef(This) ) 
+    ( (This)->lpVtbl -> AddRef(This) )
 
 #define ICLRErrorReportingManager_Release(This)	\
-    ( (This)->lpVtbl -> Release(This) ) 
+    ( (This)->lpVtbl -> Release(This) )
 
 
 #define ICLRErrorReportingManager_GetBucketParametersForCurrentException(This,pParams)	\
-    ( (This)->lpVtbl -> GetBucketParametersForCurrentException(This,pParams) ) 
+    ( (This)->lpVtbl -> GetBucketParametersForCurrentException(This,pParams) )
 
 #define ICLRErrorReportingManager_BeginCustomDump(This,dwFlavor,dwNumItems,items,dwReserved)	\
-    ( (This)->lpVtbl -> BeginCustomDump(This,dwFlavor,dwNumItems,items,dwReserved) ) 
+    ( (This)->lpVtbl -> BeginCustomDump(This,dwFlavor,dwNumItems,items,dwReserved) )
 
 #define ICLRErrorReportingManager_EndCustomDump(This)	\
-    ( (This)->lpVtbl -> EndCustomDump(This) ) 
+    ( (This)->lpVtbl -> EndCustomDump(This) )
 
 #endif /* COBJMACROS */
 
@@ -755,9 +756,9 @@ EXTERN_C const IID IID_ICLRErrorReportingManager;
 
 
 /* interface __MIDL_itf_mscoree_0000_0003 */
-/* [local] */ 
+/* [local] */
 
-typedef /* [public][public] */ 
+typedef /* [public][public] */
 enum __MIDL___MIDL_itf_mscoree_0000_0003_0001
     {
         ApplicationID	= 0x1,
@@ -773,70 +774,70 @@ extern RPC_IF_HANDLE __MIDL_itf_mscoree_0000_0003_v0_0_s_ifspec;
 #define __ICLRErrorReportingManager2_INTERFACE_DEFINED__
 
 /* interface ICLRErrorReportingManager2 */
-/* [object][local][unique][helpstring][version][uuid] */ 
+/* [object][local][unique][helpstring][version][uuid] */
 
 
 EXTERN_C const IID IID_ICLRErrorReportingManager2;
 
 #if defined(__cplusplus) && !defined(CINTERFACE)
-    
+
     MIDL_INTERFACE("C68F63B1-4D8B-4E0B-9564-9D2EFE2FA18C")
     ICLRErrorReportingManager2 : public ICLRErrorReportingManager
     {
     public:
-        virtual HRESULT STDMETHODCALLTYPE SetApplicationData( 
+        virtual HRESULT STDMETHODCALLTYPE SetApplicationData(
             /* [in] */ ApplicationDataKey key,
             /* [in] */ const WCHAR *pValue) = 0;
-        
-        virtual HRESULT STDMETHODCALLTYPE SetBucketParametersForUnhandledException( 
+
+        virtual HRESULT STDMETHODCALLTYPE SetBucketParametersForUnhandledException(
             /* [in] */ const BucketParameters *pBucketParams,
             /* [out] */ DWORD *pCountParams) = 0;
-        
+
     };
-    
-    
+
+
 #else 	/* C style interface */
 
     typedef struct ICLRErrorReportingManager2Vtbl
     {
         BEGIN_INTERFACE
-        
-        HRESULT ( STDMETHODCALLTYPE *QueryInterface )( 
+
+        HRESULT ( STDMETHODCALLTYPE *QueryInterface )(
             ICLRErrorReportingManager2 * This,
             /* [in] */ REFIID riid,
-            /* [annotation][iid_is][out] */ 
+            /* [annotation][iid_is][out] */
             _COM_Outptr_  void **ppvObject);
-        
-        ULONG ( STDMETHODCALLTYPE *AddRef )( 
+
+        ULONG ( STDMETHODCALLTYPE *AddRef )(
             ICLRErrorReportingManager2 * This);
-        
-        ULONG ( STDMETHODCALLTYPE *Release )( 
+
+        ULONG ( STDMETHODCALLTYPE *Release )(
             ICLRErrorReportingManager2 * This);
-        
-        HRESULT ( STDMETHODCALLTYPE *GetBucketParametersForCurrentException )( 
+
+        HRESULT ( STDMETHODCALLTYPE *GetBucketParametersForCurrentException )(
             ICLRErrorReportingManager2 * This,
             /* [out] */ BucketParameters *pParams);
-        
-        HRESULT ( STDMETHODCALLTYPE *BeginCustomDump )( 
+
+        HRESULT ( STDMETHODCALLTYPE *BeginCustomDump )(
             ICLRErrorReportingManager2 * This,
             /* [in] */ ECustomDumpFlavor dwFlavor,
             /* [in] */ DWORD dwNumItems,
             /* [length_is][size_is][in] */ CustomDumpItem *items,
             DWORD dwReserved);
-        
-        HRESULT ( STDMETHODCALLTYPE *EndCustomDump )( 
+
+        HRESULT ( STDMETHODCALLTYPE *EndCustomDump )(
             ICLRErrorReportingManager2 * This);
-        
-        HRESULT ( STDMETHODCALLTYPE *SetApplicationData )( 
+
+        HRESULT ( STDMETHODCALLTYPE *SetApplicationData )(
             ICLRErrorReportingManager2 * This,
             /* [in] */ ApplicationDataKey key,
             /* [in] */ const WCHAR *pValue);
-        
-        HRESULT ( STDMETHODCALLTYPE *SetBucketParametersForUnhandledException )( 
+
+        HRESULT ( STDMETHODCALLTYPE *SetBucketParametersForUnhandledException )(
             ICLRErrorReportingManager2 * This,
             /* [in] */ const BucketParameters *pBucketParams,
             /* [out] */ DWORD *pCountParams);
-        
+
         END_INTERFACE
     } ICLRErrorReportingManager2Vtbl;
 
@@ -845,36 +846,36 @@ EXTERN_C const IID IID_ICLRErrorReportingManager2;
         CONST_VTBL struct ICLRErrorReportingManager2Vtbl *lpVtbl;
     };
 
-    
+
 
 #ifdef COBJMACROS
 
 
 #define ICLRErrorReportingManager2_QueryInterface(This,riid,ppvObject)	\
-    ( (This)->lpVtbl -> QueryInterface(This,riid,ppvObject) ) 
+    ( (This)->lpVtbl -> QueryInterface(This,riid,ppvObject) )
 
 #define ICLRErrorReportingManager2_AddRef(This)	\
-    ( (This)->lpVtbl -> AddRef(This) ) 
+    ( (This)->lpVtbl -> AddRef(This) )
 
 #define ICLRErrorReportingManager2_Release(This)	\
-    ( (This)->lpVtbl -> Release(This) ) 
+    ( (This)->lpVtbl -> Release(This) )
 
 
 #define ICLRErrorReportingManager2_GetBucketParametersForCurrentException(This,pParams)	\
-    ( (This)->lpVtbl -> GetBucketParametersForCurrentException(This,pParams) ) 
+    ( (This)->lpVtbl -> GetBucketParametersForCurrentException(This,pParams) )
 
 #define ICLRErrorReportingManager2_BeginCustomDump(This,dwFlavor,dwNumItems,items,dwReserved)	\
-    ( (This)->lpVtbl -> BeginCustomDump(This,dwFlavor,dwNumItems,items,dwReserved) ) 
+    ( (This)->lpVtbl -> BeginCustomDump(This,dwFlavor,dwNumItems,items,dwReserved) )
 
 #define ICLRErrorReportingManager2_EndCustomDump(This)	\
-    ( (This)->lpVtbl -> EndCustomDump(This) ) 
+    ( (This)->lpVtbl -> EndCustomDump(This) )
 
 
 #define ICLRErrorReportingManager2_SetApplicationData(This,key,pValue)	\
-    ( (This)->lpVtbl -> SetApplicationData(This,key,pValue) ) 
+    ( (This)->lpVtbl -> SetApplicationData(This,key,pValue) )
 
 #define ICLRErrorReportingManager2_SetBucketParametersForUnhandledException(This,pBucketParams,pCountParams)	\
-    ( (This)->lpVtbl -> SetBucketParametersForUnhandledException(This,pBucketParams,pCountParams) ) 
+    ( (This)->lpVtbl -> SetBucketParametersForUnhandledException(This,pBucketParams,pCountParams) )
 
 #endif /* COBJMACROS */
 
@@ -888,9 +889,9 @@ EXTERN_C const IID IID_ICLRErrorReportingManager2;
 
 
 /* interface __MIDL_itf_mscoree_0000_0004 */
-/* [local] */ 
+/* [local] */
 
-typedef /* [public][public][public][public][public] */ 
+typedef /* [public][public][public][public][public] */
 enum __MIDL___MIDL_itf_mscoree_0000_0004_0001
     {
         OPR_ThreadAbort	= 0,
@@ -900,10 +901,10 @@ enum __MIDL___MIDL_itf_mscoree_0000_0004_0001
         OPR_AppDomainRudeUnload	= ( OPR_AppDomainUnload + 1 ) ,
         OPR_ProcessExit	= ( OPR_AppDomainRudeUnload + 1 ) ,
         OPR_FinalizerRun	= ( OPR_ProcessExit + 1 ) ,
-        MaxClrOperation	= ( OPR_FinalizerRun + 1 ) 
+        MaxClrOperation	= ( OPR_FinalizerRun + 1 )
     } 	EClrOperation;
 
-typedef /* [public][public] */ 
+typedef /* [public][public] */
 enum __MIDL___MIDL_itf_mscoree_0000_0004_0002
     {
         FAIL_NonCriticalResource	= 0,
@@ -913,17 +914,17 @@ enum __MIDL___MIDL_itf_mscoree_0000_0004_0002
         FAIL_StackOverflow	= ( FAIL_OrphanedLock + 1 ) ,
         FAIL_AccessViolation	= ( FAIL_StackOverflow + 1 ) ,
         FAIL_CodeContract	= ( FAIL_AccessViolation + 1 ) ,
-        MaxClrFailure	= ( FAIL_CodeContract + 1 ) 
+        MaxClrFailure	= ( FAIL_CodeContract + 1 )
     } 	EClrFailure;
 
-typedef /* [public][public] */ 
+typedef /* [public][public] */
 enum __MIDL___MIDL_itf_mscoree_0000_0004_0003
     {
         eRuntimeDeterminedPolicy	= 0,
-        eHostDeterminedPolicy	= ( eRuntimeDeterminedPolicy + 1 ) 
+        eHostDeterminedPolicy	= ( eRuntimeDeterminedPolicy + 1 )
     } 	EClrUnhandledException;
 
-typedef /* [public][public][public][public][public] */ 
+typedef /* [public][public][public][public][public] */
 enum __MIDL___MIDL_itf_mscoree_0000_0004_0004
     {
         eNoAction	= 0,
@@ -936,7 +937,7 @@ enum __MIDL___MIDL_itf_mscoree_0000_0004_0004
         eFastExitProcess	= ( eExitProcess + 1 ) ,
         eRudeExitProcess	= ( eFastExitProcess + 1 ) ,
         eDisableRuntime	= ( eRudeExitProcess + 1 ) ,
-        MaxPolicyAction	= ( eDisableRuntime + 1 ) 
+        MaxPolicyAction	= ( eDisableRuntime + 1 )
     } 	EPolicyAction;
 
 
@@ -948,92 +949,92 @@ extern RPC_IF_HANDLE __MIDL_itf_mscoree_0000_0004_v0_0_s_ifspec;
 #define __ICLRPolicyManager_INTERFACE_DEFINED__
 
 /* interface ICLRPolicyManager */
-/* [object][local][unique][helpstring][version][uuid] */ 
+/* [object][local][unique][helpstring][version][uuid] */
 
 
 EXTERN_C const IID IID_ICLRPolicyManager;
 
 #if defined(__cplusplus) && !defined(CINTERFACE)
-    
+
     MIDL_INTERFACE("7D290010-D781-45da-A6F8-AA5D711A730E")
     ICLRPolicyManager : public IUnknown
     {
     public:
-        virtual HRESULT STDMETHODCALLTYPE SetDefaultAction( 
+        virtual HRESULT STDMETHODCALLTYPE SetDefaultAction(
             /* [in] */ EClrOperation operation,
             /* [in] */ EPolicyAction action) = 0;
-        
-        virtual HRESULT STDMETHODCALLTYPE SetTimeout( 
+
+        virtual HRESULT STDMETHODCALLTYPE SetTimeout(
             /* [in] */ EClrOperation operation,
             /* [in] */ DWORD dwMilliseconds) = 0;
-        
-        virtual HRESULT STDMETHODCALLTYPE SetActionOnTimeout( 
+
+        virtual HRESULT STDMETHODCALLTYPE SetActionOnTimeout(
             /* [in] */ EClrOperation operation,
             /* [in] */ EPolicyAction action) = 0;
-        
-        virtual HRESULT STDMETHODCALLTYPE SetTimeoutAndAction( 
+
+        virtual HRESULT STDMETHODCALLTYPE SetTimeoutAndAction(
             /* [in] */ EClrOperation operation,
             /* [in] */ DWORD dwMilliseconds,
             /* [in] */ EPolicyAction action) = 0;
-        
-        virtual HRESULT STDMETHODCALLTYPE SetActionOnFailure( 
+
+        virtual HRESULT STDMETHODCALLTYPE SetActionOnFailure(
             /* [in] */ EClrFailure failure,
             /* [in] */ EPolicyAction action) = 0;
-        
-        virtual HRESULT STDMETHODCALLTYPE SetUnhandledExceptionPolicy( 
+
+        virtual HRESULT STDMETHODCALLTYPE SetUnhandledExceptionPolicy(
             /* [in] */ EClrUnhandledException policy) = 0;
-        
+
     };
-    
-    
+
+
 #else 	/* C style interface */
 
     typedef struct ICLRPolicyManagerVtbl
     {
         BEGIN_INTERFACE
-        
-        HRESULT ( STDMETHODCALLTYPE *QueryInterface )( 
+
+        HRESULT ( STDMETHODCALLTYPE *QueryInterface )(
             ICLRPolicyManager * This,
             /* [in] */ REFIID riid,
-            /* [annotation][iid_is][out] */ 
+            /* [annotation][iid_is][out] */
             _COM_Outptr_  void **ppvObject);
-        
-        ULONG ( STDMETHODCALLTYPE *AddRef )( 
+
+        ULONG ( STDMETHODCALLTYPE *AddRef )(
             ICLRPolicyManager * This);
-        
-        ULONG ( STDMETHODCALLTYPE *Release )( 
+
+        ULONG ( STDMETHODCALLTYPE *Release )(
             ICLRPolicyManager * This);
-        
-        HRESULT ( STDMETHODCALLTYPE *SetDefaultAction )( 
+
+        HRESULT ( STDMETHODCALLTYPE *SetDefaultAction )(
             ICLRPolicyManager * This,
             /* [in] */ EClrOperation operation,
             /* [in] */ EPolicyAction action);
-        
-        HRESULT ( STDMETHODCALLTYPE *SetTimeout )( 
+
+        HRESULT ( STDMETHODCALLTYPE *SetTimeout )(
             ICLRPolicyManager * This,
             /* [in] */ EClrOperation operation,
             /* [in] */ DWORD dwMilliseconds);
-        
-        HRESULT ( STDMETHODCALLTYPE *SetActionOnTimeout )( 
+
+        HRESULT ( STDMETHODCALLTYPE *SetActionOnTimeout )(
             ICLRPolicyManager * This,
             /* [in] */ EClrOperation operation,
             /* [in] */ EPolicyAction action);
-        
-        HRESULT ( STDMETHODCALLTYPE *SetTimeoutAndAction )( 
+
+        HRESULT ( STDMETHODCALLTYPE *SetTimeoutAndAction )(
             ICLRPolicyManager * This,
             /* [in] */ EClrOperation operation,
             /* [in] */ DWORD dwMilliseconds,
             /* [in] */ EPolicyAction action);
-        
-        HRESULT ( STDMETHODCALLTYPE *SetActionOnFailure )( 
+
+        HRESULT ( STDMETHODCALLTYPE *SetActionOnFailure )(
             ICLRPolicyManager * This,
             /* [in] */ EClrFailure failure,
             /* [in] */ EPolicyAction action);
-        
-        HRESULT ( STDMETHODCALLTYPE *SetUnhandledExceptionPolicy )( 
+
+        HRESULT ( STDMETHODCALLTYPE *SetUnhandledExceptionPolicy )(
             ICLRPolicyManager * This,
             /* [in] */ EClrUnhandledException policy);
-        
+
         END_INTERFACE
     } ICLRPolicyManagerVtbl;
 
@@ -1042,38 +1043,38 @@ EXTERN_C const IID IID_ICLRPolicyManager;
         CONST_VTBL struct ICLRPolicyManagerVtbl *lpVtbl;
     };
 
-    
+
 
 #ifdef COBJMACROS
 
 
 #define ICLRPolicyManager_QueryInterface(This,riid,ppvObject)	\
-    ( (This)->lpVtbl -> QueryInterface(This,riid,ppvObject) ) 
+    ( (This)->lpVtbl -> QueryInterface(This,riid,ppvObject) )
 
 #define ICLRPolicyManager_AddRef(This)	\
-    ( (This)->lpVtbl -> AddRef(This) ) 
+    ( (This)->lpVtbl -> AddRef(This) )
 
 #define ICLRPolicyManager_Release(This)	\
-    ( (This)->lpVtbl -> Release(This) ) 
+    ( (This)->lpVtbl -> Release(This) )
 
 
 #define ICLRPolicyManager_SetDefaultAction(This,operation,action)	\
-    ( (This)->lpVtbl -> SetDefaultAction(This,operation,action) ) 
+    ( (This)->lpVtbl -> SetDefaultAction(This,operation,action) )
 
 #define ICLRPolicyManager_SetTimeout(This,operation,dwMilliseconds)	\
-    ( (This)->lpVtbl -> SetTimeout(This,operation,dwMilliseconds) ) 
+    ( (This)->lpVtbl -> SetTimeout(This,operation,dwMilliseconds) )
 
 #define ICLRPolicyManager_SetActionOnTimeout(This,operation,action)	\
-    ( (This)->lpVtbl -> SetActionOnTimeout(This,operation,action) ) 
+    ( (This)->lpVtbl -> SetActionOnTimeout(This,operation,action) )
 
 #define ICLRPolicyManager_SetTimeoutAndAction(This,operation,dwMilliseconds,action)	\
-    ( (This)->lpVtbl -> SetTimeoutAndAction(This,operation,dwMilliseconds,action) ) 
+    ( (This)->lpVtbl -> SetTimeoutAndAction(This,operation,dwMilliseconds,action) )
 
 #define ICLRPolicyManager_SetActionOnFailure(This,failure,action)	\
-    ( (This)->lpVtbl -> SetActionOnFailure(This,failure,action) ) 
+    ( (This)->lpVtbl -> SetActionOnFailure(This,failure,action) )
 
 #define ICLRPolicyManager_SetUnhandledExceptionPolicy(This,policy)	\
-    ( (This)->lpVtbl -> SetUnhandledExceptionPolicy(This,policy) ) 
+    ( (This)->lpVtbl -> SetUnhandledExceptionPolicy(This,policy) )
 
 #endif /* COBJMACROS */
 
@@ -1087,16 +1088,16 @@ EXTERN_C const IID IID_ICLRPolicyManager;
 
 
 /* interface __MIDL_itf_mscoree_0000_0005 */
-/* [local] */ 
+/* [local] */
 
-typedef /* [public] */ 
+typedef /* [public] */
 enum __MIDL___MIDL_itf_mscoree_0000_0005_0001
     {
         Event_DomainUnload	= 0,
         Event_ClrDisabled	= ( Event_DomainUnload + 1 ) ,
         Event_MDAFired	= ( Event_ClrDisabled + 1 ) ,
         Event_StackOverflow	= ( Event_MDAFired + 1 ) ,
-        MaxClrEvent	= ( Event_StackOverflow + 1 ) 
+        MaxClrEvent	= ( Event_StackOverflow + 1 )
     } 	EClrEvent;
 
 typedef struct _MDAInfo
@@ -1106,12 +1107,12 @@ typedef struct _MDAInfo
     LPCWSTR lpStackTrace;
     } 	MDAInfo;
 
-typedef /* [public] */ 
+typedef /* [public] */
 enum __MIDL___MIDL_itf_mscoree_0000_0005_0002
     {
         SO_Managed	= 0,
         SO_ClrEngine	= ( SO_Managed + 1 ) ,
-        SO_Other	= ( SO_ClrEngine + 1 ) 
+        SO_Other	= ( SO_ClrEngine + 1 )
     } 	StackOverflowType;
 
 typedef struct _StackOverflowInfo
@@ -1128,61 +1129,61 @@ extern RPC_IF_HANDLE __MIDL_itf_mscoree_0000_0005_v0_0_s_ifspec;
 #define __ICLRGCManager_INTERFACE_DEFINED__
 
 /* interface ICLRGCManager */
-/* [object][local][unique][version][uuid] */ 
+/* [object][local][unique][version][uuid] */
 
 
 EXTERN_C const IID IID_ICLRGCManager;
 
 #if defined(__cplusplus) && !defined(CINTERFACE)
-    
+
     MIDL_INTERFACE("54D9007E-A8E2-4885-B7BF-F998DEEE4F2A")
     ICLRGCManager : public IUnknown
     {
     public:
-        virtual HRESULT STDMETHODCALLTYPE Collect( 
+        virtual HRESULT STDMETHODCALLTYPE Collect(
             /* [in] */ LONG Generation) = 0;
-        
-        virtual HRESULT STDMETHODCALLTYPE GetStats( 
+
+        virtual HRESULT STDMETHODCALLTYPE GetStats(
             /* [out][in] */ COR_GC_STATS *pStats) = 0;
-        
-        virtual HRESULT STDMETHODCALLTYPE SetGCStartupLimits( 
+
+        virtual HRESULT STDMETHODCALLTYPE SetGCStartupLimits(
             /* [in] */ DWORD SegmentSize,
             /* [in] */ DWORD MaxGen0Size) = 0;
-        
+
     };
-    
-    
+
+
 #else 	/* C style interface */
 
     typedef struct ICLRGCManagerVtbl
     {
         BEGIN_INTERFACE
-        
-        HRESULT ( STDMETHODCALLTYPE *QueryInterface )( 
+
+        HRESULT ( STDMETHODCALLTYPE *QueryInterface )(
             ICLRGCManager * This,
             /* [in] */ REFIID riid,
-            /* [annotation][iid_is][out] */ 
+            /* [annotation][iid_is][out] */
             _COM_Outptr_  void **ppvObject);
-        
-        ULONG ( STDMETHODCALLTYPE *AddRef )( 
+
+        ULONG ( STDMETHODCALLTYPE *AddRef )(
             ICLRGCManager * This);
-        
-        ULONG ( STDMETHODCALLTYPE *Release )( 
+
+        ULONG ( STDMETHODCALLTYPE *Release )(
             ICLRGCManager * This);
-        
-        HRESULT ( STDMETHODCALLTYPE *Collect )( 
+
+        HRESULT ( STDMETHODCALLTYPE *Collect )(
             ICLRGCManager * This,
             /* [in] */ LONG Generation);
-        
-        HRESULT ( STDMETHODCALLTYPE *GetStats )( 
+
+        HRESULT ( STDMETHODCALLTYPE *GetStats )(
             ICLRGCManager * This,
             /* [out][in] */ COR_GC_STATS *pStats);
-        
-        HRESULT ( STDMETHODCALLTYPE *SetGCStartupLimits )( 
+
+        HRESULT ( STDMETHODCALLTYPE *SetGCStartupLimits )(
             ICLRGCManager * This,
             /* [in] */ DWORD SegmentSize,
             /* [in] */ DWORD MaxGen0Size);
-        
+
         END_INTERFACE
     } ICLRGCManagerVtbl;
 
@@ -1191,29 +1192,29 @@ EXTERN_C const IID IID_ICLRGCManager;
         CONST_VTBL struct ICLRGCManagerVtbl *lpVtbl;
     };
 
-    
+
 
 #ifdef COBJMACROS
 
 
 #define ICLRGCManager_QueryInterface(This,riid,ppvObject)	\
-    ( (This)->lpVtbl -> QueryInterface(This,riid,ppvObject) ) 
+    ( (This)->lpVtbl -> QueryInterface(This,riid,ppvObject) )
 
 #define ICLRGCManager_AddRef(This)	\
-    ( (This)->lpVtbl -> AddRef(This) ) 
+    ( (This)->lpVtbl -> AddRef(This) )
 
 #define ICLRGCManager_Release(This)	\
-    ( (This)->lpVtbl -> Release(This) ) 
+    ( (This)->lpVtbl -> Release(This) )
 
 
 #define ICLRGCManager_Collect(This,Generation)	\
-    ( (This)->lpVtbl -> Collect(This,Generation) ) 
+    ( (This)->lpVtbl -> Collect(This,Generation) )
 
 #define ICLRGCManager_GetStats(This,pStats)	\
-    ( (This)->lpVtbl -> GetStats(This,pStats) ) 
+    ( (This)->lpVtbl -> GetStats(This,pStats) )
 
 #define ICLRGCManager_SetGCStartupLimits(This,SegmentSize,MaxGen0Size)	\
-    ( (This)->lpVtbl -> SetGCStartupLimits(This,SegmentSize,MaxGen0Size) ) 
+    ( (This)->lpVtbl -> SetGCStartupLimits(This,SegmentSize,MaxGen0Size) )
 
 #endif /* COBJMACROS */
 
@@ -1230,60 +1231,60 @@ EXTERN_C const IID IID_ICLRGCManager;
 #define __ICLRGCManager2_INTERFACE_DEFINED__
 
 /* interface ICLRGCManager2 */
-/* [object][local][unique][version][uuid] */ 
+/* [object][local][unique][version][uuid] */
 
 
 EXTERN_C const IID IID_ICLRGCManager2;
 
 #if defined(__cplusplus) && !defined(CINTERFACE)
-    
+
     MIDL_INTERFACE("0603B793-A97A-4712-9CB4-0CD1C74C0F7C")
     ICLRGCManager2 : public ICLRGCManager
     {
     public:
-        virtual HRESULT STDMETHODCALLTYPE SetGCStartupLimitsEx( 
+        virtual HRESULT STDMETHODCALLTYPE SetGCStartupLimitsEx(
             /* [in] */ SIZE_T SegmentSize,
             /* [in] */ SIZE_T MaxGen0Size) = 0;
-        
+
     };
-    
-    
+
+
 #else 	/* C style interface */
 
     typedef struct ICLRGCManager2Vtbl
     {
         BEGIN_INTERFACE
-        
-        HRESULT ( STDMETHODCALLTYPE *QueryInterface )( 
+
+        HRESULT ( STDMETHODCALLTYPE *QueryInterface )(
             ICLRGCManager2 * This,
             /* [in] */ REFIID riid,
-            /* [annotation][iid_is][out] */ 
+            /* [annotation][iid_is][out] */
             _COM_Outptr_  void **ppvObject);
-        
-        ULONG ( STDMETHODCALLTYPE *AddRef )( 
+
+        ULONG ( STDMETHODCALLTYPE *AddRef )(
             ICLRGCManager2 * This);
-        
-        ULONG ( STDMETHODCALLTYPE *Release )( 
+
+        ULONG ( STDMETHODCALLTYPE *Release )(
             ICLRGCManager2 * This);
-        
-        HRESULT ( STDMETHODCALLTYPE *Collect )( 
+
+        HRESULT ( STDMETHODCALLTYPE *Collect )(
             ICLRGCManager2 * This,
             /* [in] */ LONG Generation);
-        
-        HRESULT ( STDMETHODCALLTYPE *GetStats )( 
+
+        HRESULT ( STDMETHODCALLTYPE *GetStats )(
             ICLRGCManager2 * This,
             /* [out][in] */ COR_GC_STATS *pStats);
-        
-        HRESULT ( STDMETHODCALLTYPE *SetGCStartupLimits )( 
+
+        HRESULT ( STDMETHODCALLTYPE *SetGCStartupLimits )(
             ICLRGCManager2 * This,
             /* [in] */ DWORD SegmentSize,
             /* [in] */ DWORD MaxGen0Size);
-        
-        HRESULT ( STDMETHODCALLTYPE *SetGCStartupLimitsEx )( 
+
+        HRESULT ( STDMETHODCALLTYPE *SetGCStartupLimitsEx )(
             ICLRGCManager2 * This,
             /* [in] */ SIZE_T SegmentSize,
             /* [in] */ SIZE_T MaxGen0Size);
-        
+
         END_INTERFACE
     } ICLRGCManager2Vtbl;
 
@@ -1292,33 +1293,33 @@ EXTERN_C const IID IID_ICLRGCManager2;
         CONST_VTBL struct ICLRGCManager2Vtbl *lpVtbl;
     };
 
-    
+
 
 #ifdef COBJMACROS
 
 
 #define ICLRGCManager2_QueryInterface(This,riid,ppvObject)	\
-    ( (This)->lpVtbl -> QueryInterface(This,riid,ppvObject) ) 
+    ( (This)->lpVtbl -> QueryInterface(This,riid,ppvObject) )
 
 #define ICLRGCManager2_AddRef(This)	\
-    ( (This)->lpVtbl -> AddRef(This) ) 
+    ( (This)->lpVtbl -> AddRef(This) )
 
 #define ICLRGCManager2_Release(This)	\
-    ( (This)->lpVtbl -> Release(This) ) 
+    ( (This)->lpVtbl -> Release(This) )
 
 
 #define ICLRGCManager2_Collect(This,Generation)	\
-    ( (This)->lpVtbl -> Collect(This,Generation) ) 
+    ( (This)->lpVtbl -> Collect(This,Generation) )
 
 #define ICLRGCManager2_GetStats(This,pStats)	\
-    ( (This)->lpVtbl -> GetStats(This,pStats) ) 
+    ( (This)->lpVtbl -> GetStats(This,pStats) )
 
 #define ICLRGCManager2_SetGCStartupLimits(This,SegmentSize,MaxGen0Size)	\
-    ( (This)->lpVtbl -> SetGCStartupLimits(This,SegmentSize,MaxGen0Size) ) 
+    ( (This)->lpVtbl -> SetGCStartupLimits(This,SegmentSize,MaxGen0Size) )
 
 
 #define ICLRGCManager2_SetGCStartupLimitsEx(This,SegmentSize,MaxGen0Size)	\
-    ( (This)->lpVtbl -> SetGCStartupLimitsEx(This,SegmentSize,MaxGen0Size) ) 
+    ( (This)->lpVtbl -> SetGCStartupLimitsEx(This,SegmentSize,MaxGen0Size) )
 
 #endif /* COBJMACROS */
 
@@ -1332,9 +1333,9 @@ EXTERN_C const IID IID_ICLRGCManager2;
 
 
 /* interface __MIDL_itf_mscoree_0000_0007 */
-/* [local] */ 
+/* [local] */
 
-typedef /* [public] */ 
+typedef /* [public] */
 enum __MIDL___MIDL_itf_mscoree_0000_0007_0001
     {
         ePolicyLevelNone	= 0,
@@ -1362,7 +1363,7 @@ typedef struct _ModuleBindInfo
     LPCWSTR lpModuleName;
     } 	ModuleBindInfo;
 
-typedef 
+typedef
 enum _HostApplicationPolicy
     {
         HOST_APPLICATION_BINDING_POLICY	= 1
@@ -1379,56 +1380,56 @@ extern RPC_IF_HANDLE __MIDL_itf_mscoree_0000_0007_v0_0_s_ifspec;
 #define __IHostControl_INTERFACE_DEFINED__
 
 /* interface IHostControl */
-/* [object][local][unique][helpstring][version][uuid] */ 
+/* [object][local][unique][helpstring][version][uuid] */
 
 
 EXTERN_C const IID IID_IHostControl;
 
 #if defined(__cplusplus) && !defined(CINTERFACE)
-    
+
     MIDL_INTERFACE("02CA073C-7079-4860-880A-C2F7A449C991")
     IHostControl : public IUnknown
     {
     public:
-        virtual HRESULT STDMETHODCALLTYPE GetHostManager( 
+        virtual HRESULT STDMETHODCALLTYPE GetHostManager(
             /* [in] */ REFIID riid,
             /* [out] */ void **ppObject) = 0;
-        
-        virtual HRESULT STDMETHODCALLTYPE SetAppDomainManager( 
+
+        virtual HRESULT STDMETHODCALLTYPE SetAppDomainManager(
             /* [in] */ DWORD dwAppDomainID,
             /* [in] */ IUnknown *pUnkAppDomainManager) = 0;
-        
+
     };
-    
-    
+
+
 #else 	/* C style interface */
 
     typedef struct IHostControlVtbl
     {
         BEGIN_INTERFACE
-        
-        HRESULT ( STDMETHODCALLTYPE *QueryInterface )( 
+
+        HRESULT ( STDMETHODCALLTYPE *QueryInterface )(
             IHostControl * This,
             /* [in] */ REFIID riid,
-            /* [annotation][iid_is][out] */ 
+            /* [annotation][iid_is][out] */
             _COM_Outptr_  void **ppvObject);
-        
-        ULONG ( STDMETHODCALLTYPE *AddRef )( 
+
+        ULONG ( STDMETHODCALLTYPE *AddRef )(
             IHostControl * This);
-        
-        ULONG ( STDMETHODCALLTYPE *Release )( 
+
+        ULONG ( STDMETHODCALLTYPE *Release )(
             IHostControl * This);
-        
-        HRESULT ( STDMETHODCALLTYPE *GetHostManager )( 
+
+        HRESULT ( STDMETHODCALLTYPE *GetHostManager )(
             IHostControl * This,
             /* [in] */ REFIID riid,
             /* [out] */ void **ppObject);
-        
-        HRESULT ( STDMETHODCALLTYPE *SetAppDomainManager )( 
+
+        HRESULT ( STDMETHODCALLTYPE *SetAppDomainManager )(
             IHostControl * This,
             /* [in] */ DWORD dwAppDomainID,
             /* [in] */ IUnknown *pUnkAppDomainManager);
-        
+
         END_INTERFACE
     } IHostControlVtbl;
 
@@ -1437,26 +1438,26 @@ EXTERN_C const IID IID_IHostControl;
         CONST_VTBL struct IHostControlVtbl *lpVtbl;
     };
 
-    
+
 
 #ifdef COBJMACROS
 
 
 #define IHostControl_QueryInterface(This,riid,ppvObject)	\
-    ( (This)->lpVtbl -> QueryInterface(This,riid,ppvObject) ) 
+    ( (This)->lpVtbl -> QueryInterface(This,riid,ppvObject) )
 
 #define IHostControl_AddRef(This)	\
-    ( (This)->lpVtbl -> AddRef(This) ) 
+    ( (This)->lpVtbl -> AddRef(This) )
 
 #define IHostControl_Release(This)	\
-    ( (This)->lpVtbl -> Release(This) ) 
+    ( (This)->lpVtbl -> Release(This) )
 
 
 #define IHostControl_GetHostManager(This,riid,ppObject)	\
-    ( (This)->lpVtbl -> GetHostManager(This,riid,ppObject) ) 
+    ( (This)->lpVtbl -> GetHostManager(This,riid,ppObject) )
 
 #define IHostControl_SetAppDomainManager(This,dwAppDomainID,pUnkAppDomainManager)	\
-    ( (This)->lpVtbl -> SetAppDomainManager(This,dwAppDomainID,pUnkAppDomainManager) ) 
+    ( (This)->lpVtbl -> SetAppDomainManager(This,dwAppDomainID,pUnkAppDomainManager) )
 
 #endif /* COBJMACROS */
 
@@ -1470,7 +1471,7 @@ EXTERN_C const IID IID_IHostControl;
 
 
 /* interface __MIDL_itf_mscoree_0000_0008 */
-/* [local] */ 
+/* [local] */
 
 EXTERN_GUID(IID_ICLRControl, 0x9065597E, 0xD1A1, 0x4fb2, 0xB6, 0xBA, 0x7E, 0x1F, 0xCE, 0x23, 0x0F, 0x61);
 
@@ -1482,56 +1483,56 @@ extern RPC_IF_HANDLE __MIDL_itf_mscoree_0000_0008_v0_0_s_ifspec;
 #define __ICLRControl_INTERFACE_DEFINED__
 
 /* interface ICLRControl */
-/* [object][local][unique][helpstring][version][uuid] */ 
+/* [object][local][unique][helpstring][version][uuid] */
 
 
 EXTERN_C const IID IID_ICLRControl;
 
 #if defined(__cplusplus) && !defined(CINTERFACE)
-    
+
     MIDL_INTERFACE("9065597E-D1A1-4fb2-B6BA-7E1FCE230F61")
     ICLRControl : public IUnknown
     {
     public:
-        virtual HRESULT STDMETHODCALLTYPE GetCLRManager( 
+        virtual HRESULT STDMETHODCALLTYPE GetCLRManager(
             /* [in] */ REFIID riid,
             /* [out] */ void **ppObject) = 0;
-        
-        virtual HRESULT STDMETHODCALLTYPE SetAppDomainManagerType( 
+
+        virtual HRESULT STDMETHODCALLTYPE SetAppDomainManagerType(
             /* [in] */ LPCWSTR pwzAppDomainManagerAssembly,
             /* [in] */ LPCWSTR pwzAppDomainManagerType) = 0;
-        
+
     };
-    
-    
+
+
 #else 	/* C style interface */
 
     typedef struct ICLRControlVtbl
     {
         BEGIN_INTERFACE
-        
-        HRESULT ( STDMETHODCALLTYPE *QueryInterface )( 
+
+        HRESULT ( STDMETHODCALLTYPE *QueryInterface )(
             ICLRControl * This,
             /* [in] */ REFIID riid,
-            /* [annotation][iid_is][out] */ 
+            /* [annotation][iid_is][out] */
             _COM_Outptr_  void **ppvObject);
-        
-        ULONG ( STDMETHODCALLTYPE *AddRef )( 
+
+        ULONG ( STDMETHODCALLTYPE *AddRef )(
             ICLRControl * This);
-        
-        ULONG ( STDMETHODCALLTYPE *Release )( 
+
+        ULONG ( STDMETHODCALLTYPE *Release )(
             ICLRControl * This);
-        
-        HRESULT ( STDMETHODCALLTYPE *GetCLRManager )( 
+
+        HRESULT ( STDMETHODCALLTYPE *GetCLRManager )(
             ICLRControl * This,
             /* [in] */ REFIID riid,
             /* [out] */ void **ppObject);
-        
-        HRESULT ( STDMETHODCALLTYPE *SetAppDomainManagerType )( 
+
+        HRESULT ( STDMETHODCALLTYPE *SetAppDomainManagerType )(
             ICLRControl * This,
             /* [in] */ LPCWSTR pwzAppDomainManagerAssembly,
             /* [in] */ LPCWSTR pwzAppDomainManagerType);
-        
+
         END_INTERFACE
     } ICLRControlVtbl;
 
@@ -1540,26 +1541,26 @@ EXTERN_C const IID IID_ICLRControl;
         CONST_VTBL struct ICLRControlVtbl *lpVtbl;
     };
 
-    
+
 
 #ifdef COBJMACROS
 
 
 #define ICLRControl_QueryInterface(This,riid,ppvObject)	\
-    ( (This)->lpVtbl -> QueryInterface(This,riid,ppvObject) ) 
+    ( (This)->lpVtbl -> QueryInterface(This,riid,ppvObject) )
 
 #define ICLRControl_AddRef(This)	\
-    ( (This)->lpVtbl -> AddRef(This) ) 
+    ( (This)->lpVtbl -> AddRef(This) )
 
 #define ICLRControl_Release(This)	\
-    ( (This)->lpVtbl -> Release(This) ) 
+    ( (This)->lpVtbl -> Release(This) )
 
 
 #define ICLRControl_GetCLRManager(This,riid,ppObject)	\
-    ( (This)->lpVtbl -> GetCLRManager(This,riid,ppObject) ) 
+    ( (This)->lpVtbl -> GetCLRManager(This,riid,ppObject) )
 
 #define ICLRControl_SetAppDomainManagerType(This,pwzAppDomainManagerAssembly,pwzAppDomainManagerType)	\
-    ( (This)->lpVtbl -> SetAppDomainManagerType(This,pwzAppDomainManagerAssembly,pwzAppDomainManagerType) ) 
+    ( (This)->lpVtbl -> SetAppDomainManagerType(This,pwzAppDomainManagerAssembly,pwzAppDomainManagerType) )
 
 #endif /* COBJMACROS */
 
@@ -1576,105 +1577,105 @@ EXTERN_C const IID IID_ICLRControl;
 #define __ICLRRuntimeHost_INTERFACE_DEFINED__
 
 /* interface ICLRRuntimeHost */
-/* [object][local][unique][helpstring][version][uuid] */ 
+/* [object][local][unique][helpstring][version][uuid] */
 
 
 EXTERN_C const IID IID_ICLRRuntimeHost;
 
 #if defined(__cplusplus) && !defined(CINTERFACE)
-    
+
     MIDL_INTERFACE("90F1A06C-7712-4762-86B5-7A5EBA6BDB02")
     ICLRRuntimeHost : public IUnknown
     {
     public:
         virtual HRESULT STDMETHODCALLTYPE Start( void) = 0;
-        
+
         virtual HRESULT STDMETHODCALLTYPE Stop( void) = 0;
-        
-        virtual HRESULT STDMETHODCALLTYPE SetHostControl( 
+
+        virtual HRESULT STDMETHODCALLTYPE SetHostControl(
             /* [in] */ IHostControl *pHostControl) = 0;
-        
-        virtual HRESULT STDMETHODCALLTYPE GetCLRControl( 
+
+        virtual HRESULT STDMETHODCALLTYPE GetCLRControl(
             /* [out] */ ICLRControl **pCLRControl) = 0;
-        
-        virtual HRESULT STDMETHODCALLTYPE UnloadAppDomain( 
+
+        virtual HRESULT STDMETHODCALLTYPE UnloadAppDomain(
             /* [in] */ DWORD dwAppDomainId,
             /* [in] */ BOOL fWaitUntilDone) = 0;
-        
-        virtual HRESULT STDMETHODCALLTYPE ExecuteInAppDomain( 
+
+        virtual HRESULT STDMETHODCALLTYPE ExecuteInAppDomain(
             /* [in] */ DWORD dwAppDomainId,
             /* [in] */ FExecuteInAppDomainCallback pCallback,
             /* [in] */ void *cookie) = 0;
-        
-        virtual HRESULT STDMETHODCALLTYPE GetCurrentAppDomainId( 
+
+        virtual HRESULT STDMETHODCALLTYPE GetCurrentAppDomainId(
             /* [out] */ DWORD *pdwAppDomainId) = 0;
-        
-        virtual HRESULT STDMETHODCALLTYPE ExecuteApplication( 
+
+        virtual HRESULT STDMETHODCALLTYPE ExecuteApplication(
             /* [in] */ LPCWSTR pwzAppFullName,
             /* [in] */ DWORD dwManifestPaths,
             /* [in] */ LPCWSTR *ppwzManifestPaths,
             /* [in] */ DWORD dwActivationData,
             /* [in] */ LPCWSTR *ppwzActivationData,
             /* [out] */ int *pReturnValue) = 0;
-        
-        virtual HRESULT STDMETHODCALLTYPE ExecuteInDefaultAppDomain( 
+
+        virtual HRESULT STDMETHODCALLTYPE ExecuteInDefaultAppDomain(
             /* [in] */ LPCWSTR pwzAssemblyPath,
             /* [in] */ LPCWSTR pwzTypeName,
             /* [in] */ LPCWSTR pwzMethodName,
             /* [in] */ LPCWSTR pwzArgument,
             /* [out] */ DWORD *pReturnValue) = 0;
-        
+
     };
-    
-    
+
+
 #else 	/* C style interface */
 
     typedef struct ICLRRuntimeHostVtbl
     {
         BEGIN_INTERFACE
-        
-        HRESULT ( STDMETHODCALLTYPE *QueryInterface )( 
+
+        HRESULT ( STDMETHODCALLTYPE *QueryInterface )(
             ICLRRuntimeHost * This,
             /* [in] */ REFIID riid,
-            /* [annotation][iid_is][out] */ 
+            /* [annotation][iid_is][out] */
             _COM_Outptr_  void **ppvObject);
-        
-        ULONG ( STDMETHODCALLTYPE *AddRef )( 
+
+        ULONG ( STDMETHODCALLTYPE *AddRef )(
             ICLRRuntimeHost * This);
-        
-        ULONG ( STDMETHODCALLTYPE *Release )( 
+
+        ULONG ( STDMETHODCALLTYPE *Release )(
             ICLRRuntimeHost * This);
-        
-        HRESULT ( STDMETHODCALLTYPE *Start )( 
+
+        HRESULT ( STDMETHODCALLTYPE *Start )(
             ICLRRuntimeHost * This);
-        
-        HRESULT ( STDMETHODCALLTYPE *Stop )( 
+
+        HRESULT ( STDMETHODCALLTYPE *Stop )(
             ICLRRuntimeHost * This);
-        
-        HRESULT ( STDMETHODCALLTYPE *SetHostControl )( 
+
+        HRESULT ( STDMETHODCALLTYPE *SetHostControl )(
             ICLRRuntimeHost * This,
             /* [in] */ IHostControl *pHostControl);
-        
-        HRESULT ( STDMETHODCALLTYPE *GetCLRControl )( 
+
+        HRESULT ( STDMETHODCALLTYPE *GetCLRControl )(
             ICLRRuntimeHost * This,
             /* [out] */ ICLRControl **pCLRControl);
-        
-        HRESULT ( STDMETHODCALLTYPE *UnloadAppDomain )( 
+
+        HRESULT ( STDMETHODCALLTYPE *UnloadAppDomain )(
             ICLRRuntimeHost * This,
             /* [in] */ DWORD dwAppDomainId,
             /* [in] */ BOOL fWaitUntilDone);
-        
-        HRESULT ( STDMETHODCALLTYPE *ExecuteInAppDomain )( 
+
+        HRESULT ( STDMETHODCALLTYPE *ExecuteInAppDomain )(
             ICLRRuntimeHost * This,
             /* [in] */ DWORD dwAppDomainId,
             /* [in] */ FExecuteInAppDomainCallback pCallback,
             /* [in] */ void *cookie);
-        
-        HRESULT ( STDMETHODCALLTYPE *GetCurrentAppDomainId )( 
+
+        HRESULT ( STDMETHODCALLTYPE *GetCurrentAppDomainId )(
             ICLRRuntimeHost * This,
             /* [out] */ DWORD *pdwAppDomainId);
-        
-        HRESULT ( STDMETHODCALLTYPE *ExecuteApplication )( 
+
+        HRESULT ( STDMETHODCALLTYPE *ExecuteApplication )(
             ICLRRuntimeHost * This,
             /* [in] */ LPCWSTR pwzAppFullName,
             /* [in] */ DWORD dwManifestPaths,
@@ -1682,15 +1683,15 @@ EXTERN_C const IID IID_ICLRRuntimeHost;
             /* [in] */ DWORD dwActivationData,
             /* [in] */ LPCWSTR *ppwzActivationData,
             /* [out] */ int *pReturnValue);
-        
-        HRESULT ( STDMETHODCALLTYPE *ExecuteInDefaultAppDomain )( 
+
+        HRESULT ( STDMETHODCALLTYPE *ExecuteInDefaultAppDomain )(
             ICLRRuntimeHost * This,
             /* [in] */ LPCWSTR pwzAssemblyPath,
             /* [in] */ LPCWSTR pwzTypeName,
             /* [in] */ LPCWSTR pwzMethodName,
             /* [in] */ LPCWSTR pwzArgument,
             /* [out] */ DWORD *pReturnValue);
-        
+
         END_INTERFACE
     } ICLRRuntimeHostVtbl;
 
@@ -1699,47 +1700,47 @@ EXTERN_C const IID IID_ICLRRuntimeHost;
         CONST_VTBL struct ICLRRuntimeHostVtbl *lpVtbl;
     };
 
-    
+
 
 #ifdef COBJMACROS
 
 
 #define ICLRRuntimeHost_QueryInterface(This,riid,ppvObject)	\
-    ( (This)->lpVtbl -> QueryInterface(This,riid,ppvObject) ) 
+    ( (This)->lpVtbl -> QueryInterface(This,riid,ppvObject) )
 
 #define ICLRRuntimeHost_AddRef(This)	\
-    ( (This)->lpVtbl -> AddRef(This) ) 
+    ( (This)->lpVtbl -> AddRef(This) )
 
 #define ICLRRuntimeHost_Release(This)	\
-    ( (This)->lpVtbl -> Release(This) ) 
+    ( (This)->lpVtbl -> Release(This) )
 
 
 #define ICLRRuntimeHost_Start(This)	\
-    ( (This)->lpVtbl -> Start(This) ) 
+    ( (This)->lpVtbl -> Start(This) )
 
 #define ICLRRuntimeHost_Stop(This)	\
-    ( (This)->lpVtbl -> Stop(This) ) 
+    ( (This)->lpVtbl -> Stop(This) )
 
 #define ICLRRuntimeHost_SetHostControl(This,pHostControl)	\
-    ( (This)->lpVtbl -> SetHostControl(This,pHostControl) ) 
+    ( (This)->lpVtbl -> SetHostControl(This,pHostControl) )
 
 #define ICLRRuntimeHost_GetCLRControl(This,pCLRControl)	\
-    ( (This)->lpVtbl -> GetCLRControl(This,pCLRControl) ) 
+    ( (This)->lpVtbl -> GetCLRControl(This,pCLRControl) )
 
 #define ICLRRuntimeHost_UnloadAppDomain(This,dwAppDomainId,fWaitUntilDone)	\
-    ( (This)->lpVtbl -> UnloadAppDomain(This,dwAppDomainId,fWaitUntilDone) ) 
+    ( (This)->lpVtbl -> UnloadAppDomain(This,dwAppDomainId,fWaitUntilDone) )
 
 #define ICLRRuntimeHost_ExecuteInAppDomain(This,dwAppDomainId,pCallback,cookie)	\
-    ( (This)->lpVtbl -> ExecuteInAppDomain(This,dwAppDomainId,pCallback,cookie) ) 
+    ( (This)->lpVtbl -> ExecuteInAppDomain(This,dwAppDomainId,pCallback,cookie) )
 
 #define ICLRRuntimeHost_GetCurrentAppDomainId(This,pdwAppDomainId)	\
-    ( (This)->lpVtbl -> GetCurrentAppDomainId(This,pdwAppDomainId) ) 
+    ( (This)->lpVtbl -> GetCurrentAppDomainId(This,pdwAppDomainId) )
 
 #define ICLRRuntimeHost_ExecuteApplication(This,pwzAppFullName,dwManifestPaths,ppwzManifestPaths,dwActivationData,ppwzActivationData,pReturnValue)	\
-    ( (This)->lpVtbl -> ExecuteApplication(This,pwzAppFullName,dwManifestPaths,ppwzManifestPaths,dwActivationData,ppwzActivationData,pReturnValue) ) 
+    ( (This)->lpVtbl -> ExecuteApplication(This,pwzAppFullName,dwManifestPaths,ppwzManifestPaths,dwActivationData,ppwzActivationData,pReturnValue) )
 
 #define ICLRRuntimeHost_ExecuteInDefaultAppDomain(This,pwzAssemblyPath,pwzTypeName,pwzMethodName,pwzArgument,pReturnValue)	\
-    ( (This)->lpVtbl -> ExecuteInDefaultAppDomain(This,pwzAssemblyPath,pwzTypeName,pwzMethodName,pwzArgument,pReturnValue) ) 
+    ( (This)->lpVtbl -> ExecuteInDefaultAppDomain(This,pwzAssemblyPath,pwzTypeName,pwzMethodName,pwzArgument,pReturnValue) )
 
 #endif /* COBJMACROS */
 
@@ -1753,7 +1754,7 @@ EXTERN_C const IID IID_ICLRRuntimeHost;
 
 
 /* interface __MIDL_itf_mscoree_0000_0010 */
-/* [local] */ 
+/* [local] */
 
 #define CORECLR_HOST_AUTHENTICATION_KEY 0x1C6CA6F94025800LL
 #define CORECLR_HOST_AUTHENTICATION_KEY_NONGEN 0x1C6CA6F94025801LL
@@ -1766,18 +1767,18 @@ extern RPC_IF_HANDLE __MIDL_itf_mscoree_0000_0010_v0_0_s_ifspec;
 #define __ICLRRuntimeHost2_INTERFACE_DEFINED__
 
 /* interface ICLRRuntimeHost2 */
-/* [local][unique][helpstring][version][uuid][object] */ 
+/* [local][unique][helpstring][version][uuid][object] */
 
 
 EXTERN_C const IID IID_ICLRRuntimeHost2;
 
 #if defined(__cplusplus) && !defined(CINTERFACE)
-    
+
     MIDL_INTERFACE("712AB73F-2C22-4807-AD7E-F501D7B72C2D")
     ICLRRuntimeHost2 : public ICLRRuntimeHost
     {
     public:
-        virtual HRESULT STDMETHODCALLTYPE CreateAppDomainWithManager( 
+        virtual HRESULT STDMETHODCALLTYPE CreateAppDomainWithManager(
             /* [in] */ LPCWSTR wszFriendlyName,
             /* [in] */ DWORD dwFlags,
             /* [in] */ LPCWSTR wszAppDomainManagerAssemblyName,
@@ -1786,73 +1787,73 @@ EXTERN_C const IID IID_ICLRRuntimeHost2;
             /* [in] */ LPCWSTR *pPropertyNames,
             /* [in] */ LPCWSTR *pPropertyValues,
             /* [out] */ DWORD *pAppDomainID) = 0;
-        
-        virtual HRESULT STDMETHODCALLTYPE CreateDelegate( 
+
+        virtual HRESULT STDMETHODCALLTYPE CreateDelegate(
             /* [in] */ DWORD appDomainID,
             /* [in] */ LPCWSTR wszAssemblyName,
             /* [in] */ LPCWSTR wszClassName,
             /* [in] */ LPCWSTR wszMethodName,
             /* [out] */ INT_PTR *fnPtr) = 0;
-        
-        virtual HRESULT STDMETHODCALLTYPE Authenticate( 
+
+        virtual HRESULT STDMETHODCALLTYPE Authenticate(
             /* [in] */ ULONGLONG authKey) = 0;
-        
+
         virtual HRESULT STDMETHODCALLTYPE RegisterMacEHPort( void) = 0;
-        
-        virtual HRESULT STDMETHODCALLTYPE SetStartupFlags( 
+
+        virtual HRESULT STDMETHODCALLTYPE SetStartupFlags(
             /* [in] */ STARTUP_FLAGS dwFlags) = 0;
-        
+
     };
-    
-    
+
+
 #else 	/* C style interface */
 
     typedef struct ICLRRuntimeHost2Vtbl
     {
         BEGIN_INTERFACE
-        
-        HRESULT ( STDMETHODCALLTYPE *QueryInterface )( 
+
+        HRESULT ( STDMETHODCALLTYPE *QueryInterface )(
             ICLRRuntimeHost2 * This,
             /* [in] */ REFIID riid,
-            /* [annotation][iid_is][out] */ 
+            /* [annotation][iid_is][out] */
             _COM_Outptr_  void **ppvObject);
-        
-        ULONG ( STDMETHODCALLTYPE *AddRef )( 
+
+        ULONG ( STDMETHODCALLTYPE *AddRef )(
             ICLRRuntimeHost2 * This);
-        
-        ULONG ( STDMETHODCALLTYPE *Release )( 
+
+        ULONG ( STDMETHODCALLTYPE *Release )(
             ICLRRuntimeHost2 * This);
-        
-        HRESULT ( STDMETHODCALLTYPE *Start )( 
+
+        HRESULT ( STDMETHODCALLTYPE *Start )(
             ICLRRuntimeHost2 * This);
-        
-        HRESULT ( STDMETHODCALLTYPE *Stop )( 
+
+        HRESULT ( STDMETHODCALLTYPE *Stop )(
             ICLRRuntimeHost2 * This);
-        
-        HRESULT ( STDMETHODCALLTYPE *SetHostControl )( 
+
+        HRESULT ( STDMETHODCALLTYPE *SetHostControl )(
             ICLRRuntimeHost2 * This,
             /* [in] */ IHostControl *pHostControl);
-        
-        HRESULT ( STDMETHODCALLTYPE *GetCLRControl )( 
+
+        HRESULT ( STDMETHODCALLTYPE *GetCLRControl )(
             ICLRRuntimeHost2 * This,
             /* [out] */ ICLRControl **pCLRControl);
-        
-        HRESULT ( STDMETHODCALLTYPE *UnloadAppDomain )( 
+
+        HRESULT ( STDMETHODCALLTYPE *UnloadAppDomain )(
             ICLRRuntimeHost2 * This,
             /* [in] */ DWORD dwAppDomainId,
             /* [in] */ BOOL fWaitUntilDone);
-        
-        HRESULT ( STDMETHODCALLTYPE *ExecuteInAppDomain )( 
+
+        HRESULT ( STDMETHODCALLTYPE *ExecuteInAppDomain )(
             ICLRRuntimeHost2 * This,
             /* [in] */ DWORD dwAppDomainId,
             /* [in] */ FExecuteInAppDomainCallback pCallback,
             /* [in] */ void *cookie);
-        
-        HRESULT ( STDMETHODCALLTYPE *GetCurrentAppDomainId )( 
+
+        HRESULT ( STDMETHODCALLTYPE *GetCurrentAppDomainId )(
             ICLRRuntimeHost2 * This,
             /* [out] */ DWORD *pdwAppDomainId);
-        
-        HRESULT ( STDMETHODCALLTYPE *ExecuteApplication )( 
+
+        HRESULT ( STDMETHODCALLTYPE *ExecuteApplication )(
             ICLRRuntimeHost2 * This,
             /* [in] */ LPCWSTR pwzAppFullName,
             /* [in] */ DWORD dwManifestPaths,
@@ -1860,16 +1861,16 @@ EXTERN_C const IID IID_ICLRRuntimeHost2;
             /* [in] */ DWORD dwActivationData,
             /* [in] */ LPCWSTR *ppwzActivationData,
             /* [out] */ int *pReturnValue);
-        
-        HRESULT ( STDMETHODCALLTYPE *ExecuteInDefaultAppDomain )( 
+
+        HRESULT ( STDMETHODCALLTYPE *ExecuteInDefaultAppDomain )(
             ICLRRuntimeHost2 * This,
             /* [in] */ LPCWSTR pwzAssemblyPath,
             /* [in] */ LPCWSTR pwzTypeName,
             /* [in] */ LPCWSTR pwzMethodName,
             /* [in] */ LPCWSTR pwzArgument,
             /* [out] */ DWORD *pReturnValue);
-        
-        HRESULT ( STDMETHODCALLTYPE *CreateAppDomainWithManager )( 
+
+        HRESULT ( STDMETHODCALLTYPE *CreateAppDomainWithManager )(
             ICLRRuntimeHost2 * This,
             /* [in] */ LPCWSTR wszFriendlyName,
             /* [in] */ DWORD dwFlags,
@@ -1879,26 +1880,26 @@ EXTERN_C const IID IID_ICLRRuntimeHost2;
             /* [in] */ LPCWSTR *pPropertyNames,
             /* [in] */ LPCWSTR *pPropertyValues,
             /* [out] */ DWORD *pAppDomainID);
-        
-        HRESULT ( STDMETHODCALLTYPE *CreateDelegate )( 
+
+        HRESULT ( STDMETHODCALLTYPE *CreateDelegate )(
             ICLRRuntimeHost2 * This,
             /* [in] */ DWORD appDomainID,
             /* [in] */ LPCWSTR wszAssemblyName,
             /* [in] */ LPCWSTR wszClassName,
             /* [in] */ LPCWSTR wszMethodName,
             /* [out] */ INT_PTR *fnPtr);
-        
-        HRESULT ( STDMETHODCALLTYPE *Authenticate )( 
+
+        HRESULT ( STDMETHODCALLTYPE *Authenticate )(
             ICLRRuntimeHost2 * This,
             /* [in] */ ULONGLONG authKey);
-        
-        HRESULT ( STDMETHODCALLTYPE *RegisterMacEHPort )( 
+
+        HRESULT ( STDMETHODCALLTYPE *RegisterMacEHPort )(
             ICLRRuntimeHost2 * This);
-        
-        HRESULT ( STDMETHODCALLTYPE *SetStartupFlags )( 
+
+        HRESULT ( STDMETHODCALLTYPE *SetStartupFlags )(
             ICLRRuntimeHost2 * This,
             /* [in] */ STARTUP_FLAGS dwFlags);
-        
+
         END_INTERFACE
     } ICLRRuntimeHost2Vtbl;
 
@@ -1907,63 +1908,63 @@ EXTERN_C const IID IID_ICLRRuntimeHost2;
         CONST_VTBL struct ICLRRuntimeHost2Vtbl *lpVtbl;
     };
 
-    
+
 
 #ifdef COBJMACROS
 
 
 #define ICLRRuntimeHost2_QueryInterface(This,riid,ppvObject)	\
-    ( (This)->lpVtbl -> QueryInterface(This,riid,ppvObject) ) 
+    ( (This)->lpVtbl -> QueryInterface(This,riid,ppvObject) )
 
 #define ICLRRuntimeHost2_AddRef(This)	\
-    ( (This)->lpVtbl -> AddRef(This) ) 
+    ( (This)->lpVtbl -> AddRef(This) )
 
 #define ICLRRuntimeHost2_Release(This)	\
-    ( (This)->lpVtbl -> Release(This) ) 
+    ( (This)->lpVtbl -> Release(This) )
 
 
 #define ICLRRuntimeHost2_Start(This)	\
-    ( (This)->lpVtbl -> Start(This) ) 
+    ( (This)->lpVtbl -> Start(This) )
 
 #define ICLRRuntimeHost2_Stop(This)	\
-    ( (This)->lpVtbl -> Stop(This) ) 
+    ( (This)->lpVtbl -> Stop(This) )
 
 #define ICLRRuntimeHost2_SetHostControl(This,pHostControl)	\
-    ( (This)->lpVtbl -> SetHostControl(This,pHostControl) ) 
+    ( (This)->lpVtbl -> SetHostControl(This,pHostControl) )
 
 #define ICLRRuntimeHost2_GetCLRControl(This,pCLRControl)	\
-    ( (This)->lpVtbl -> GetCLRControl(This,pCLRControl) ) 
+    ( (This)->lpVtbl -> GetCLRControl(This,pCLRControl) )
 
 #define ICLRRuntimeHost2_UnloadAppDomain(This,dwAppDomainId,fWaitUntilDone)	\
-    ( (This)->lpVtbl -> UnloadAppDomain(This,dwAppDomainId,fWaitUntilDone) ) 
+    ( (This)->lpVtbl -> UnloadAppDomain(This,dwAppDomainId,fWaitUntilDone) )
 
 #define ICLRRuntimeHost2_ExecuteInAppDomain(This,dwAppDomainId,pCallback,cookie)	\
-    ( (This)->lpVtbl -> ExecuteInAppDomain(This,dwAppDomainId,pCallback,cookie) ) 
+    ( (This)->lpVtbl -> ExecuteInAppDomain(This,dwAppDomainId,pCallback,cookie) )
 
 #define ICLRRuntimeHost2_GetCurrentAppDomainId(This,pdwAppDomainId)	\
-    ( (This)->lpVtbl -> GetCurrentAppDomainId(This,pdwAppDomainId) ) 
+    ( (This)->lpVtbl -> GetCurrentAppDomainId(This,pdwAppDomainId) )
 
 #define ICLRRuntimeHost2_ExecuteApplication(This,pwzAppFullName,dwManifestPaths,ppwzManifestPaths,dwActivationData,ppwzActivationData,pReturnValue)	\
-    ( (This)->lpVtbl -> ExecuteApplication(This,pwzAppFullName,dwManifestPaths,ppwzManifestPaths,dwActivationData,ppwzActivationData,pReturnValue) ) 
+    ( (This)->lpVtbl -> ExecuteApplication(This,pwzAppFullName,dwManifestPaths,ppwzManifestPaths,dwActivationData,ppwzActivationData,pReturnValue) )
 
 #define ICLRRuntimeHost2_ExecuteInDefaultAppDomain(This,pwzAssemblyPath,pwzTypeName,pwzMethodName,pwzArgument,pReturnValue)	\
-    ( (This)->lpVtbl -> ExecuteInDefaultAppDomain(This,pwzAssemblyPath,pwzTypeName,pwzMethodName,pwzArgument,pReturnValue) ) 
+    ( (This)->lpVtbl -> ExecuteInDefaultAppDomain(This,pwzAssemblyPath,pwzTypeName,pwzMethodName,pwzArgument,pReturnValue) )
 
 
 #define ICLRRuntimeHost2_CreateAppDomainWithManager(This,wszFriendlyName,dwFlags,wszAppDomainManagerAssemblyName,wszAppDomainManagerTypeName,nProperties,pPropertyNames,pPropertyValues,pAppDomainID)	\
-    ( (This)->lpVtbl -> CreateAppDomainWithManager(This,wszFriendlyName,dwFlags,wszAppDomainManagerAssemblyName,wszAppDomainManagerTypeName,nProperties,pPropertyNames,pPropertyValues,pAppDomainID) ) 
+    ( (This)->lpVtbl -> CreateAppDomainWithManager(This,wszFriendlyName,dwFlags,wszAppDomainManagerAssemblyName,wszAppDomainManagerTypeName,nProperties,pPropertyNames,pPropertyValues,pAppDomainID) )
 
 #define ICLRRuntimeHost2_CreateDelegate(This,appDomainID,wszAssemblyName,wszClassName,wszMethodName,fnPtr)	\
-    ( (This)->lpVtbl -> CreateDelegate(This,appDomainID,wszAssemblyName,wszClassName,wszMethodName,fnPtr) ) 
+    ( (This)->lpVtbl -> CreateDelegate(This,appDomainID,wszAssemblyName,wszClassName,wszMethodName,fnPtr) )
 
 #define ICLRRuntimeHost2_Authenticate(This,authKey)	\
-    ( (This)->lpVtbl -> Authenticate(This,authKey) ) 
+    ( (This)->lpVtbl -> Authenticate(This,authKey) )
 
 #define ICLRRuntimeHost2_RegisterMacEHPort(This)	\
-    ( (This)->lpVtbl -> RegisterMacEHPort(This) ) 
+    ( (This)->lpVtbl -> RegisterMacEHPort(This) )
 
 #define ICLRRuntimeHost2_SetStartupFlags(This,dwFlags)	\
-    ( (This)->lpVtbl -> SetStartupFlags(This,dwFlags) ) 
+    ( (This)->lpVtbl -> SetStartupFlags(This,dwFlags) )
 
 #endif /* COBJMACROS */
 
@@ -1980,54 +1981,54 @@ EXTERN_C const IID IID_ICLRRuntimeHost2;
 #define __ICLRExecutionManager_INTERFACE_DEFINED__
 
 /* interface ICLRExecutionManager */
-/* [object][local][unique][helpstring][version][uuid] */ 
+/* [object][local][unique][helpstring][version][uuid] */
 
 
 EXTERN_C const IID IID_ICLRExecutionManager;
 
 #if defined(__cplusplus) && !defined(CINTERFACE)
-    
+
     MIDL_INTERFACE("1000A3E7-B420-4620-AE30-FB19B587AD1D")
     ICLRExecutionManager : public IUnknown
     {
     public:
-        virtual HRESULT STDMETHODCALLTYPE Pause( 
+        virtual HRESULT STDMETHODCALLTYPE Pause(
             /* [in] */ DWORD dwAppDomainId,
             /* [in] */ DWORD dwFlags) = 0;
-        
-        virtual HRESULT STDMETHODCALLTYPE Resume( 
+
+        virtual HRESULT STDMETHODCALLTYPE Resume(
             /* [in] */ DWORD dwAppDomainId) = 0;
-        
+
     };
-    
-    
+
+
 #else 	/* C style interface */
 
     typedef struct ICLRExecutionManagerVtbl
     {
         BEGIN_INTERFACE
-        
-        HRESULT ( STDMETHODCALLTYPE *QueryInterface )( 
+
+        HRESULT ( STDMETHODCALLTYPE *QueryInterface )(
             ICLRExecutionManager * This,
             /* [in] */ REFIID riid,
-            /* [annotation][iid_is][out] */ 
+            /* [annotation][iid_is][out] */
             _COM_Outptr_  void **ppvObject);
-        
-        ULONG ( STDMETHODCALLTYPE *AddRef )( 
+
+        ULONG ( STDMETHODCALLTYPE *AddRef )(
             ICLRExecutionManager * This);
-        
-        ULONG ( STDMETHODCALLTYPE *Release )( 
+
+        ULONG ( STDMETHODCALLTYPE *Release )(
             ICLRExecutionManager * This);
-        
-        HRESULT ( STDMETHODCALLTYPE *Pause )( 
+
+        HRESULT ( STDMETHODCALLTYPE *Pause )(
             ICLRExecutionManager * This,
             /* [in] */ DWORD dwAppDomainId,
             /* [in] */ DWORD dwFlags);
-        
-        HRESULT ( STDMETHODCALLTYPE *Resume )( 
+
+        HRESULT ( STDMETHODCALLTYPE *Resume )(
             ICLRExecutionManager * This,
             /* [in] */ DWORD dwAppDomainId);
-        
+
         END_INTERFACE
     } ICLRExecutionManagerVtbl;
 
@@ -2036,26 +2037,26 @@ EXTERN_C const IID IID_ICLRExecutionManager;
         CONST_VTBL struct ICLRExecutionManagerVtbl *lpVtbl;
     };
 
-    
+
 
 #ifdef COBJMACROS
 
 
 #define ICLRExecutionManager_QueryInterface(This,riid,ppvObject)	\
-    ( (This)->lpVtbl -> QueryInterface(This,riid,ppvObject) ) 
+    ( (This)->lpVtbl -> QueryInterface(This,riid,ppvObject) )
 
 #define ICLRExecutionManager_AddRef(This)	\
-    ( (This)->lpVtbl -> AddRef(This) ) 
+    ( (This)->lpVtbl -> AddRef(This) )
 
 #define ICLRExecutionManager_Release(This)	\
-    ( (This)->lpVtbl -> Release(This) ) 
+    ( (This)->lpVtbl -> Release(This) )
 
 
 #define ICLRExecutionManager_Pause(This,dwAppDomainId,dwFlags)	\
-    ( (This)->lpVtbl -> Pause(This,dwAppDomainId,dwFlags) ) 
+    ( (This)->lpVtbl -> Pause(This,dwAppDomainId,dwFlags) )
 
 #define ICLRExecutionManager_Resume(This,dwAppDomainId)	\
-    ( (This)->lpVtbl -> Resume(This,dwAppDomainId) ) 
+    ( (This)->lpVtbl -> Resume(This,dwAppDomainId) )
 
 #endif /* COBJMACROS */
 
@@ -2072,52 +2073,52 @@ EXTERN_C const IID IID_ICLRExecutionManager;
 #define __IHostNetCFDebugControlManager_INTERFACE_DEFINED__
 
 /* interface IHostNetCFDebugControlManager */
-/* [object][local][unique][helpstring][version][uuid] */ 
+/* [object][local][unique][helpstring][version][uuid] */
 
 
 EXTERN_C const IID IID_IHostNetCFDebugControlManager;
 
 #if defined(__cplusplus) && !defined(CINTERFACE)
-    
+
     MIDL_INTERFACE("F2833A0C-F944-48d8-940E-F59425EDBFCF")
     IHostNetCFDebugControlManager : public IUnknown
     {
     public:
-        virtual HRESULT STDMETHODCALLTYPE NotifyPause( 
+        virtual HRESULT STDMETHODCALLTYPE NotifyPause(
             DWORD dwReserved) = 0;
-        
-        virtual HRESULT STDMETHODCALLTYPE NotifyResume( 
+
+        virtual HRESULT STDMETHODCALLTYPE NotifyResume(
             DWORD dwReserved) = 0;
-        
+
     };
-    
-    
+
+
 #else 	/* C style interface */
 
     typedef struct IHostNetCFDebugControlManagerVtbl
     {
         BEGIN_INTERFACE
-        
-        HRESULT ( STDMETHODCALLTYPE *QueryInterface )( 
+
+        HRESULT ( STDMETHODCALLTYPE *QueryInterface )(
             IHostNetCFDebugControlManager * This,
             /* [in] */ REFIID riid,
-            /* [annotation][iid_is][out] */ 
+            /* [annotation][iid_is][out] */
             _COM_Outptr_  void **ppvObject);
-        
-        ULONG ( STDMETHODCALLTYPE *AddRef )( 
+
+        ULONG ( STDMETHODCALLTYPE *AddRef )(
             IHostNetCFDebugControlManager * This);
-        
-        ULONG ( STDMETHODCALLTYPE *Release )( 
+
+        ULONG ( STDMETHODCALLTYPE *Release )(
             IHostNetCFDebugControlManager * This);
-        
-        HRESULT ( STDMETHODCALLTYPE *NotifyPause )( 
+
+        HRESULT ( STDMETHODCALLTYPE *NotifyPause )(
             IHostNetCFDebugControlManager * This,
             DWORD dwReserved);
-        
-        HRESULT ( STDMETHODCALLTYPE *NotifyResume )( 
+
+        HRESULT ( STDMETHODCALLTYPE *NotifyResume )(
             IHostNetCFDebugControlManager * This,
             DWORD dwReserved);
-        
+
         END_INTERFACE
     } IHostNetCFDebugControlManagerVtbl;
 
@@ -2126,26 +2127,26 @@ EXTERN_C const IID IID_IHostNetCFDebugControlManager;
         CONST_VTBL struct IHostNetCFDebugControlManagerVtbl *lpVtbl;
     };
 
-    
+
 
 #ifdef COBJMACROS
 
 
 #define IHostNetCFDebugControlManager_QueryInterface(This,riid,ppvObject)	\
-    ( (This)->lpVtbl -> QueryInterface(This,riid,ppvObject) ) 
+    ( (This)->lpVtbl -> QueryInterface(This,riid,ppvObject) )
 
 #define IHostNetCFDebugControlManager_AddRef(This)	\
-    ( (This)->lpVtbl -> AddRef(This) ) 
+    ( (This)->lpVtbl -> AddRef(This) )
 
 #define IHostNetCFDebugControlManager_Release(This)	\
-    ( (This)->lpVtbl -> Release(This) ) 
+    ( (This)->lpVtbl -> Release(This) )
 
 
 #define IHostNetCFDebugControlManager_NotifyPause(This,dwReserved)	\
-    ( (This)->lpVtbl -> NotifyPause(This,dwReserved) ) 
+    ( (This)->lpVtbl -> NotifyPause(This,dwReserved) )
 
 #define IHostNetCFDebugControlManager_NotifyResume(This,dwReserved)	\
-    ( (This)->lpVtbl -> NotifyResume(This,dwReserved) ) 
+    ( (This)->lpVtbl -> NotifyResume(This,dwReserved) )
 
 #endif /* COBJMACROS */
 
@@ -2159,9 +2160,9 @@ EXTERN_C const IID IID_IHostNetCFDebugControlManager;
 
 
 /* interface __MIDL_itf_mscoree_0000_0013 */
-/* [local] */ 
+/* [local] */
 
-typedef /* [public] */ 
+typedef /* [public] */
 enum __MIDL___MIDL_itf_mscoree_0000_0013_0001
     {
         eNoChecks	= 0,
@@ -2177,7 +2178,7 @@ enum __MIDL___MIDL_itf_mscoree_0000_0013_0001
         eAll	= 0x1ff
     } 	EApiCategories;
 
-typedef /* [public] */ 
+typedef /* [public] */
 enum __MIDL___MIDL_itf_mscoree_0000_0013_0002
     {
         eInitializeNewDomainFlags_None	= 0,
@@ -2194,7 +2195,7 @@ extern RPC_IF_HANDLE __MIDL_itf_mscoree_0000_0013_v0_0_s_ifspec;
 #define __mscoree_LIBRARY_DEFINED__
 
 /* library mscoree */
-/* [helpstring][version][uuid] */ 
+/* [helpstring][version][uuid] */
 
 
 EXTERN_C const IID LIBID_mscoree;
@@ -2203,99 +2204,99 @@ EXTERN_C const IID LIBID_mscoree;
 #define __ITypeName_INTERFACE_DEFINED__
 
 /* interface ITypeName */
-/* [unique][helpstring][uuid][oleautomation][object] */ 
+/* [unique][helpstring][uuid][oleautomation][object] */
 
 
 EXTERN_C const IID IID_ITypeName;
 
 #if defined(__cplusplus) && !defined(CINTERFACE)
-    
+
     MIDL_INTERFACE("B81FF171-20F3-11d2-8DCC-00A0C9B00522")
     ITypeName : public IUnknown
     {
     public:
-        virtual HRESULT STDMETHODCALLTYPE GetNameCount( 
+        virtual HRESULT STDMETHODCALLTYPE GetNameCount(
             /* [retval][out] */ DWORD *pCount) = 0;
-        
-        virtual HRESULT STDMETHODCALLTYPE GetNames( 
+
+        virtual HRESULT STDMETHODCALLTYPE GetNames(
             /* [in] */ DWORD count,
             /* [out] */ BSTR *rgbszNames,
             /* [retval][out] */ DWORD *pCount) = 0;
-        
-        virtual HRESULT STDMETHODCALLTYPE GetTypeArgumentCount( 
+
+        virtual HRESULT STDMETHODCALLTYPE GetTypeArgumentCount(
             /* [retval][out] */ DWORD *pCount) = 0;
-        
-        virtual HRESULT STDMETHODCALLTYPE GetTypeArguments( 
+
+        virtual HRESULT STDMETHODCALLTYPE GetTypeArguments(
             /* [in] */ DWORD count,
             /* [out] */ ITypeName **rgpArguments,
             /* [retval][out] */ DWORD *pCount) = 0;
-        
-        virtual HRESULT STDMETHODCALLTYPE GetModifierLength( 
+
+        virtual HRESULT STDMETHODCALLTYPE GetModifierLength(
             /* [retval][out] */ DWORD *pCount) = 0;
-        
-        virtual HRESULT STDMETHODCALLTYPE GetModifiers( 
+
+        virtual HRESULT STDMETHODCALLTYPE GetModifiers(
             /* [in] */ DWORD count,
             /* [out] */ DWORD *rgModifiers,
             /* [retval][out] */ DWORD *pCount) = 0;
-        
-        virtual HRESULT STDMETHODCALLTYPE GetAssemblyName( 
+
+        virtual HRESULT STDMETHODCALLTYPE GetAssemblyName(
             /* [retval][out] */ BSTR *rgbszAssemblyNames) = 0;
-        
+
     };
-    
-    
+
+
 #else 	/* C style interface */
 
     typedef struct ITypeNameVtbl
     {
         BEGIN_INTERFACE
-        
-        HRESULT ( STDMETHODCALLTYPE *QueryInterface )( 
+
+        HRESULT ( STDMETHODCALLTYPE *QueryInterface )(
             ITypeName * This,
             /* [in] */ REFIID riid,
-            /* [annotation][iid_is][out] */ 
+            /* [annotation][iid_is][out] */
             _COM_Outptr_  void **ppvObject);
-        
-        ULONG ( STDMETHODCALLTYPE *AddRef )( 
+
+        ULONG ( STDMETHODCALLTYPE *AddRef )(
             ITypeName * This);
-        
-        ULONG ( STDMETHODCALLTYPE *Release )( 
+
+        ULONG ( STDMETHODCALLTYPE *Release )(
             ITypeName * This);
-        
-        HRESULT ( STDMETHODCALLTYPE *GetNameCount )( 
+
+        HRESULT ( STDMETHODCALLTYPE *GetNameCount )(
             ITypeName * This,
             /* [retval][out] */ DWORD *pCount);
-        
-        HRESULT ( STDMETHODCALLTYPE *GetNames )( 
+
+        HRESULT ( STDMETHODCALLTYPE *GetNames )(
             ITypeName * This,
             /* [in] */ DWORD count,
             /* [out] */ BSTR *rgbszNames,
             /* [retval][out] */ DWORD *pCount);
-        
-        HRESULT ( STDMETHODCALLTYPE *GetTypeArgumentCount )( 
+
+        HRESULT ( STDMETHODCALLTYPE *GetTypeArgumentCount )(
             ITypeName * This,
             /* [retval][out] */ DWORD *pCount);
-        
-        HRESULT ( STDMETHODCALLTYPE *GetTypeArguments )( 
+
+        HRESULT ( STDMETHODCALLTYPE *GetTypeArguments )(
             ITypeName * This,
             /* [in] */ DWORD count,
             /* [out] */ ITypeName **rgpArguments,
             /* [retval][out] */ DWORD *pCount);
-        
-        HRESULT ( STDMETHODCALLTYPE *GetModifierLength )( 
+
+        HRESULT ( STDMETHODCALLTYPE *GetModifierLength )(
             ITypeName * This,
             /* [retval][out] */ DWORD *pCount);
-        
-        HRESULT ( STDMETHODCALLTYPE *GetModifiers )( 
+
+        HRESULT ( STDMETHODCALLTYPE *GetModifiers )(
             ITypeName * This,
             /* [in] */ DWORD count,
             /* [out] */ DWORD *rgModifiers,
             /* [retval][out] */ DWORD *pCount);
-        
-        HRESULT ( STDMETHODCALLTYPE *GetAssemblyName )( 
+
+        HRESULT ( STDMETHODCALLTYPE *GetAssemblyName )(
             ITypeName * This,
             /* [retval][out] */ BSTR *rgbszAssemblyNames);
-        
+
         END_INTERFACE
     } ITypeNameVtbl;
 
@@ -2304,41 +2305,41 @@ EXTERN_C const IID IID_ITypeName;
         CONST_VTBL struct ITypeNameVtbl *lpVtbl;
     };
 
-    
+
 
 #ifdef COBJMACROS
 
 
 #define ITypeName_QueryInterface(This,riid,ppvObject)	\
-    ( (This)->lpVtbl -> QueryInterface(This,riid,ppvObject) ) 
+    ( (This)->lpVtbl -> QueryInterface(This,riid,ppvObject) )
 
 #define ITypeName_AddRef(This)	\
-    ( (This)->lpVtbl -> AddRef(This) ) 
+    ( (This)->lpVtbl -> AddRef(This) )
 
 #define ITypeName_Release(This)	\
-    ( (This)->lpVtbl -> Release(This) ) 
+    ( (This)->lpVtbl -> Release(This) )
 
 
 #define ITypeName_GetNameCount(This,pCount)	\
-    ( (This)->lpVtbl -> GetNameCount(This,pCount) ) 
+    ( (This)->lpVtbl -> GetNameCount(This,pCount) )
 
 #define ITypeName_GetNames(This,count,rgbszNames,pCount)	\
-    ( (This)->lpVtbl -> GetNames(This,count,rgbszNames,pCount) ) 
+    ( (This)->lpVtbl -> GetNames(This,count,rgbszNames,pCount) )
 
 #define ITypeName_GetTypeArgumentCount(This,pCount)	\
-    ( (This)->lpVtbl -> GetTypeArgumentCount(This,pCount) ) 
+    ( (This)->lpVtbl -> GetTypeArgumentCount(This,pCount) )
 
 #define ITypeName_GetTypeArguments(This,count,rgpArguments,pCount)	\
-    ( (This)->lpVtbl -> GetTypeArguments(This,count,rgpArguments,pCount) ) 
+    ( (This)->lpVtbl -> GetTypeArguments(This,count,rgpArguments,pCount) )
 
 #define ITypeName_GetModifierLength(This,pCount)	\
-    ( (This)->lpVtbl -> GetModifierLength(This,pCount) ) 
+    ( (This)->lpVtbl -> GetModifierLength(This,pCount) )
 
 #define ITypeName_GetModifiers(This,count,rgModifiers,pCount)	\
-    ( (This)->lpVtbl -> GetModifiers(This,count,rgModifiers,pCount) ) 
+    ( (This)->lpVtbl -> GetModifiers(This,count,rgModifiers,pCount) )
 
 #define ITypeName_GetAssemblyName(This,rgbszAssemblyNames)	\
-    ( (This)->lpVtbl -> GetAssemblyName(This,rgbszAssemblyNames) ) 
+    ( (This)->lpVtbl -> GetAssemblyName(This,rgbszAssemblyNames) )
 
 #endif /* COBJMACROS */
 
@@ -2355,106 +2356,106 @@ EXTERN_C const IID IID_ITypeName;
 #define __ITypeNameBuilder_INTERFACE_DEFINED__
 
 /* interface ITypeNameBuilder */
-/* [unique][helpstring][uuid][oleautomation][object] */ 
+/* [unique][helpstring][uuid][oleautomation][object] */
 
 
 EXTERN_C const IID IID_ITypeNameBuilder;
 
 #if defined(__cplusplus) && !defined(CINTERFACE)
-    
+
     MIDL_INTERFACE("B81FF171-20F3-11d2-8DCC-00A0C9B00523")
     ITypeNameBuilder : public IUnknown
     {
     public:
         virtual HRESULT STDMETHODCALLTYPE OpenGenericArguments( void) = 0;
-        
+
         virtual HRESULT STDMETHODCALLTYPE CloseGenericArguments( void) = 0;
-        
+
         virtual HRESULT STDMETHODCALLTYPE OpenGenericArgument( void) = 0;
-        
+
         virtual HRESULT STDMETHODCALLTYPE CloseGenericArgument( void) = 0;
-        
-        virtual HRESULT STDMETHODCALLTYPE AddName( 
+
+        virtual HRESULT STDMETHODCALLTYPE AddName(
             /* [in] */ LPCWSTR szName) = 0;
-        
+
         virtual HRESULT STDMETHODCALLTYPE AddPointer( void) = 0;
-        
+
         virtual HRESULT STDMETHODCALLTYPE AddByRef( void) = 0;
-        
+
         virtual HRESULT STDMETHODCALLTYPE AddSzArray( void) = 0;
-        
-        virtual HRESULT STDMETHODCALLTYPE AddArray( 
+
+        virtual HRESULT STDMETHODCALLTYPE AddArray(
             /* [in] */ DWORD rank) = 0;
-        
-        virtual HRESULT STDMETHODCALLTYPE AddAssemblySpec( 
+
+        virtual HRESULT STDMETHODCALLTYPE AddAssemblySpec(
             /* [in] */ LPCWSTR szAssemblySpec) = 0;
-        
-        virtual HRESULT STDMETHODCALLTYPE ToString( 
+
+        virtual HRESULT STDMETHODCALLTYPE ToString(
             /* [retval][out] */ BSTR *pszStringRepresentation) = 0;
-        
+
         virtual HRESULT STDMETHODCALLTYPE Clear( void) = 0;
-        
+
     };
-    
-    
+
+
 #else 	/* C style interface */
 
     typedef struct ITypeNameBuilderVtbl
     {
         BEGIN_INTERFACE
-        
-        HRESULT ( STDMETHODCALLTYPE *QueryInterface )( 
+
+        HRESULT ( STDMETHODCALLTYPE *QueryInterface )(
             ITypeNameBuilder * This,
             /* [in] */ REFIID riid,
-            /* [annotation][iid_is][out] */ 
+            /* [annotation][iid_is][out] */
             _COM_Outptr_  void **ppvObject);
-        
-        ULONG ( STDMETHODCALLTYPE *AddRef )( 
+
+        ULONG ( STDMETHODCALLTYPE *AddRef )(
             ITypeNameBuilder * This);
-        
-        ULONG ( STDMETHODCALLTYPE *Release )( 
+
+        ULONG ( STDMETHODCALLTYPE *Release )(
             ITypeNameBuilder * This);
-        
-        HRESULT ( STDMETHODCALLTYPE *OpenGenericArguments )( 
+
+        HRESULT ( STDMETHODCALLTYPE *OpenGenericArguments )(
             ITypeNameBuilder * This);
-        
-        HRESULT ( STDMETHODCALLTYPE *CloseGenericArguments )( 
+
+        HRESULT ( STDMETHODCALLTYPE *CloseGenericArguments )(
             ITypeNameBuilder * This);
-        
-        HRESULT ( STDMETHODCALLTYPE *OpenGenericArgument )( 
+
+        HRESULT ( STDMETHODCALLTYPE *OpenGenericArgument )(
             ITypeNameBuilder * This);
-        
-        HRESULT ( STDMETHODCALLTYPE *CloseGenericArgument )( 
+
+        HRESULT ( STDMETHODCALLTYPE *CloseGenericArgument )(
             ITypeNameBuilder * This);
-        
-        HRESULT ( STDMETHODCALLTYPE *AddName )( 
+
+        HRESULT ( STDMETHODCALLTYPE *AddName )(
             ITypeNameBuilder * This,
             /* [in] */ LPCWSTR szName);
-        
-        HRESULT ( STDMETHODCALLTYPE *AddPointer )( 
+
+        HRESULT ( STDMETHODCALLTYPE *AddPointer )(
             ITypeNameBuilder * This);
-        
-        HRESULT ( STDMETHODCALLTYPE *AddByRef )( 
+
+        HRESULT ( STDMETHODCALLTYPE *AddByRef )(
             ITypeNameBuilder * This);
-        
-        HRESULT ( STDMETHODCALLTYPE *AddSzArray )( 
+
+        HRESULT ( STDMETHODCALLTYPE *AddSzArray )(
             ITypeNameBuilder * This);
-        
-        HRESULT ( STDMETHODCALLTYPE *AddArray )( 
+
+        HRESULT ( STDMETHODCALLTYPE *AddArray )(
             ITypeNameBuilder * This,
             /* [in] */ DWORD rank);
-        
-        HRESULT ( STDMETHODCALLTYPE *AddAssemblySpec )( 
+
+        HRESULT ( STDMETHODCALLTYPE *AddAssemblySpec )(
             ITypeNameBuilder * This,
             /* [in] */ LPCWSTR szAssemblySpec);
-        
-        HRESULT ( STDMETHODCALLTYPE *ToString )( 
+
+        HRESULT ( STDMETHODCALLTYPE *ToString )(
             ITypeNameBuilder * This,
             /* [retval][out] */ BSTR *pszStringRepresentation);
-        
-        HRESULT ( STDMETHODCALLTYPE *Clear )( 
+
+        HRESULT ( STDMETHODCALLTYPE *Clear )(
             ITypeNameBuilder * This);
-        
+
         END_INTERFACE
     } ITypeNameBuilderVtbl;
 
@@ -2463,56 +2464,56 @@ EXTERN_C const IID IID_ITypeNameBuilder;
         CONST_VTBL struct ITypeNameBuilderVtbl *lpVtbl;
     };
 
-    
+
 
 #ifdef COBJMACROS
 
 
 #define ITypeNameBuilder_QueryInterface(This,riid,ppvObject)	\
-    ( (This)->lpVtbl -> QueryInterface(This,riid,ppvObject) ) 
+    ( (This)->lpVtbl -> QueryInterface(This,riid,ppvObject) )
 
 #define ITypeNameBuilder_AddRef(This)	\
-    ( (This)->lpVtbl -> AddRef(This) ) 
+    ( (This)->lpVtbl -> AddRef(This) )
 
 #define ITypeNameBuilder_Release(This)	\
-    ( (This)->lpVtbl -> Release(This) ) 
+    ( (This)->lpVtbl -> Release(This) )
 
 
 #define ITypeNameBuilder_OpenGenericArguments(This)	\
-    ( (This)->lpVtbl -> OpenGenericArguments(This) ) 
+    ( (This)->lpVtbl -> OpenGenericArguments(This) )
 
 #define ITypeNameBuilder_CloseGenericArguments(This)	\
-    ( (This)->lpVtbl -> CloseGenericArguments(This) ) 
+    ( (This)->lpVtbl -> CloseGenericArguments(This) )
 
 #define ITypeNameBuilder_OpenGenericArgument(This)	\
-    ( (This)->lpVtbl -> OpenGenericArgument(This) ) 
+    ( (This)->lpVtbl -> OpenGenericArgument(This) )
 
 #define ITypeNameBuilder_CloseGenericArgument(This)	\
-    ( (This)->lpVtbl -> CloseGenericArgument(This) ) 
+    ( (This)->lpVtbl -> CloseGenericArgument(This) )
 
 #define ITypeNameBuilder_AddName(This,szName)	\
-    ( (This)->lpVtbl -> AddName(This,szName) ) 
+    ( (This)->lpVtbl -> AddName(This,szName) )
 
 #define ITypeNameBuilder_AddPointer(This)	\
-    ( (This)->lpVtbl -> AddPointer(This) ) 
+    ( (This)->lpVtbl -> AddPointer(This) )
 
 #define ITypeNameBuilder_AddByRef(This)	\
-    ( (This)->lpVtbl -> AddByRef(This) ) 
+    ( (This)->lpVtbl -> AddByRef(This) )
 
 #define ITypeNameBuilder_AddSzArray(This)	\
-    ( (This)->lpVtbl -> AddSzArray(This) ) 
+    ( (This)->lpVtbl -> AddSzArray(This) )
 
 #define ITypeNameBuilder_AddArray(This,rank)	\
-    ( (This)->lpVtbl -> AddArray(This,rank) ) 
+    ( (This)->lpVtbl -> AddArray(This,rank) )
 
 #define ITypeNameBuilder_AddAssemblySpec(This,szAssemblySpec)	\
-    ( (This)->lpVtbl -> AddAssemblySpec(This,szAssemblySpec) ) 
+    ( (This)->lpVtbl -> AddAssemblySpec(This,szAssemblySpec) )
 
 #define ITypeNameBuilder_ToString(This,pszStringRepresentation)	\
-    ( (This)->lpVtbl -> ToString(This,pszStringRepresentation) ) 
+    ( (This)->lpVtbl -> ToString(This,pszStringRepresentation) )
 
 #define ITypeNameBuilder_Clear(This)	\
-    ( (This)->lpVtbl -> Clear(This) ) 
+    ( (This)->lpVtbl -> Clear(This) )
 
 #endif /* COBJMACROS */
 
@@ -2529,56 +2530,56 @@ EXTERN_C const IID IID_ITypeNameBuilder;
 #define __ITypeNameFactory_INTERFACE_DEFINED__
 
 /* interface ITypeNameFactory */
-/* [unique][helpstring][uuid][oleautomation][object] */ 
+/* [unique][helpstring][uuid][oleautomation][object] */
 
 
 EXTERN_C const IID IID_ITypeNameFactory;
 
 #if defined(__cplusplus) && !defined(CINTERFACE)
-    
+
     MIDL_INTERFACE("B81FF171-20F3-11d2-8DCC-00A0C9B00521")
     ITypeNameFactory : public IUnknown
     {
     public:
-        virtual HRESULT STDMETHODCALLTYPE ParseTypeName( 
+        virtual HRESULT STDMETHODCALLTYPE ParseTypeName(
             /* [in] */ LPCWSTR szName,
             /* [out] */ DWORD *pError,
             /* [retval][out] */ ITypeName **ppTypeName) = 0;
-        
-        virtual HRESULT STDMETHODCALLTYPE GetTypeNameBuilder( 
+
+        virtual HRESULT STDMETHODCALLTYPE GetTypeNameBuilder(
             /* [retval][out] */ ITypeNameBuilder **ppTypeBuilder) = 0;
-        
+
     };
-    
-    
+
+
 #else 	/* C style interface */
 
     typedef struct ITypeNameFactoryVtbl
     {
         BEGIN_INTERFACE
-        
-        HRESULT ( STDMETHODCALLTYPE *QueryInterface )( 
+
+        HRESULT ( STDMETHODCALLTYPE *QueryInterface )(
             ITypeNameFactory * This,
             /* [in] */ REFIID riid,
-            /* [annotation][iid_is][out] */ 
+            /* [annotation][iid_is][out] */
             _COM_Outptr_  void **ppvObject);
-        
-        ULONG ( STDMETHODCALLTYPE *AddRef )( 
+
+        ULONG ( STDMETHODCALLTYPE *AddRef )(
             ITypeNameFactory * This);
-        
-        ULONG ( STDMETHODCALLTYPE *Release )( 
+
+        ULONG ( STDMETHODCALLTYPE *Release )(
             ITypeNameFactory * This);
-        
-        HRESULT ( STDMETHODCALLTYPE *ParseTypeName )( 
+
+        HRESULT ( STDMETHODCALLTYPE *ParseTypeName )(
             ITypeNameFactory * This,
             /* [in] */ LPCWSTR szName,
             /* [out] */ DWORD *pError,
             /* [retval][out] */ ITypeName **ppTypeName);
-        
-        HRESULT ( STDMETHODCALLTYPE *GetTypeNameBuilder )( 
+
+        HRESULT ( STDMETHODCALLTYPE *GetTypeNameBuilder )(
             ITypeNameFactory * This,
             /* [retval][out] */ ITypeNameBuilder **ppTypeBuilder);
-        
+
         END_INTERFACE
     } ITypeNameFactoryVtbl;
 
@@ -2587,26 +2588,26 @@ EXTERN_C const IID IID_ITypeNameFactory;
         CONST_VTBL struct ITypeNameFactoryVtbl *lpVtbl;
     };
 
-    
+
 
 #ifdef COBJMACROS
 
 
 #define ITypeNameFactory_QueryInterface(This,riid,ppvObject)	\
-    ( (This)->lpVtbl -> QueryInterface(This,riid,ppvObject) ) 
+    ( (This)->lpVtbl -> QueryInterface(This,riid,ppvObject) )
 
 #define ITypeNameFactory_AddRef(This)	\
-    ( (This)->lpVtbl -> AddRef(This) ) 
+    ( (This)->lpVtbl -> AddRef(This) )
 
 #define ITypeNameFactory_Release(This)	\
-    ( (This)->lpVtbl -> Release(This) ) 
+    ( (This)->lpVtbl -> Release(This) )
 
 
 #define ITypeNameFactory_ParseTypeName(This,szName,pError,ppTypeName)	\
-    ( (This)->lpVtbl -> ParseTypeName(This,szName,pError,ppTypeName) ) 
+    ( (This)->lpVtbl -> ParseTypeName(This,szName,pError,ppTypeName) )
 
 #define ITypeNameFactory_GetTypeNameBuilder(This,ppTypeBuilder)	\
-    ( (This)->lpVtbl -> GetTypeNameBuilder(This,ppTypeBuilder) ) 
+    ( (This)->lpVtbl -> GetTypeNameBuilder(This,ppTypeBuilder) )
 
 #endif /* COBJMACROS */
 
@@ -2623,56 +2624,56 @@ EXTERN_C const IID IID_ITypeNameFactory;
 #define __IManagedObject_INTERFACE_DEFINED__
 
 /* interface IManagedObject */
-/* [proxy][unique][helpstring][uuid][oleautomation][object] */ 
+/* [proxy][unique][helpstring][uuid][oleautomation][object] */
 
 
 EXTERN_C const IID IID_IManagedObject;
 
 #if defined(__cplusplus) && !defined(CINTERFACE)
-    
+
     MIDL_INTERFACE("C3FCC19E-A970-11d2-8B5A-00A0C9B7C9C4")
     IManagedObject : public IUnknown
     {
     public:
-        virtual HRESULT STDMETHODCALLTYPE GetSerializedBuffer( 
+        virtual HRESULT STDMETHODCALLTYPE GetSerializedBuffer(
             /* [out] */ BSTR *pBSTR) = 0;
-        
-        virtual HRESULT STDMETHODCALLTYPE GetObjectIdentity( 
+
+        virtual HRESULT STDMETHODCALLTYPE GetObjectIdentity(
             /* [out] */ BSTR *pBSTRGUID,
             /* [out] */ int *AppDomainID,
             /* [out] */ int *pCCW) = 0;
-        
+
     };
-    
-    
+
+
 #else 	/* C style interface */
 
     typedef struct IManagedObjectVtbl
     {
         BEGIN_INTERFACE
-        
-        HRESULT ( STDMETHODCALLTYPE *QueryInterface )( 
+
+        HRESULT ( STDMETHODCALLTYPE *QueryInterface )(
             IManagedObject * This,
             /* [in] */ REFIID riid,
-            /* [annotation][iid_is][out] */ 
+            /* [annotation][iid_is][out] */
             _COM_Outptr_  void **ppvObject);
-        
-        ULONG ( STDMETHODCALLTYPE *AddRef )( 
+
+        ULONG ( STDMETHODCALLTYPE *AddRef )(
             IManagedObject * This);
-        
-        ULONG ( STDMETHODCALLTYPE *Release )( 
+
+        ULONG ( STDMETHODCALLTYPE *Release )(
             IManagedObject * This);
-        
-        HRESULT ( STDMETHODCALLTYPE *GetSerializedBuffer )( 
+
+        HRESULT ( STDMETHODCALLTYPE *GetSerializedBuffer )(
             IManagedObject * This,
             /* [out] */ BSTR *pBSTR);
-        
-        HRESULT ( STDMETHODCALLTYPE *GetObjectIdentity )( 
+
+        HRESULT ( STDMETHODCALLTYPE *GetObjectIdentity )(
             IManagedObject * This,
             /* [out] */ BSTR *pBSTRGUID,
             /* [out] */ int *AppDomainID,
             /* [out] */ int *pCCW);
-        
+
         END_INTERFACE
     } IManagedObjectVtbl;
 
@@ -2681,26 +2682,26 @@ EXTERN_C const IID IID_IManagedObject;
         CONST_VTBL struct IManagedObjectVtbl *lpVtbl;
     };
 
-    
+
 
 #ifdef COBJMACROS
 
 
 #define IManagedObject_QueryInterface(This,riid,ppvObject)	\
-    ( (This)->lpVtbl -> QueryInterface(This,riid,ppvObject) ) 
+    ( (This)->lpVtbl -> QueryInterface(This,riid,ppvObject) )
 
 #define IManagedObject_AddRef(This)	\
-    ( (This)->lpVtbl -> AddRef(This) ) 
+    ( (This)->lpVtbl -> AddRef(This) )
 
 #define IManagedObject_Release(This)	\
-    ( (This)->lpVtbl -> Release(This) ) 
+    ( (This)->lpVtbl -> Release(This) )
 
 
 #define IManagedObject_GetSerializedBuffer(This,pBSTR)	\
-    ( (This)->lpVtbl -> GetSerializedBuffer(This,pBSTR) ) 
+    ( (This)->lpVtbl -> GetSerializedBuffer(This,pBSTR) )
 
 #define IManagedObject_GetObjectIdentity(This,pBSTRGUID,AppDomainID,pCCW)	\
-    ( (This)->lpVtbl -> GetObjectIdentity(This,pBSTRGUID,AppDomainID,pCCW) ) 
+    ( (This)->lpVtbl -> GetObjectIdentity(This,pBSTRGUID,AppDomainID,pCCW) )
 
 #endif /* COBJMACROS */
 
@@ -2747,9 +2748,9 @@ TypeNameFactory;
 #endif /* __mscoree_LIBRARY_DEFINED__ */
 
 /* interface __MIDL_itf_mscoree_0000_0014 */
-/* [local] */ 
+/* [local] */
 
-typedef /* [public] */ 
+typedef /* [public] */
 enum __MIDL___MIDL_itf_mscoree_0000_0014_0001
     {
         eCurrentContext	= 0,
@@ -2765,67 +2766,67 @@ extern RPC_IF_HANDLE __MIDL_itf_mscoree_0000_0014_v0_0_s_ifspec;
 #define __ICLRAppDomainResourceMonitor_INTERFACE_DEFINED__
 
 /* interface ICLRAppDomainResourceMonitor */
-/* [object][local][unique][helpstring][uuid][version] */ 
+/* [object][local][unique][helpstring][uuid][version] */
 
 
 EXTERN_C const IID IID_ICLRAppDomainResourceMonitor;
 
 #if defined(__cplusplus) && !defined(CINTERFACE)
-    
+
     MIDL_INTERFACE("c62de18c-2e23-4aea-8423-b40c1fc59eae")
     ICLRAppDomainResourceMonitor : public IUnknown
     {
     public:
-        virtual HRESULT STDMETHODCALLTYPE GetCurrentAllocated( 
+        virtual HRESULT STDMETHODCALLTYPE GetCurrentAllocated(
             /* [in] */ DWORD dwAppDomainId,
             /* [out] */ ULONGLONG *pBytesAllocated) = 0;
-        
-        virtual HRESULT STDMETHODCALLTYPE GetCurrentSurvived( 
+
+        virtual HRESULT STDMETHODCALLTYPE GetCurrentSurvived(
             /* [in] */ DWORD dwAppDomainId,
             /* [out] */ ULONGLONG *pAppDomainBytesSurvived,
             /* [out] */ ULONGLONG *pTotalBytesSurvived) = 0;
-        
-        virtual HRESULT STDMETHODCALLTYPE GetCurrentCpuTime( 
+
+        virtual HRESULT STDMETHODCALLTYPE GetCurrentCpuTime(
             /* [in] */ DWORD dwAppDomainId,
             /* [out] */ ULONGLONG *pMilliseconds) = 0;
-        
+
     };
-    
-    
+
+
 #else 	/* C style interface */
 
     typedef struct ICLRAppDomainResourceMonitorVtbl
     {
         BEGIN_INTERFACE
-        
-        HRESULT ( STDMETHODCALLTYPE *QueryInterface )( 
+
+        HRESULT ( STDMETHODCALLTYPE *QueryInterface )(
             ICLRAppDomainResourceMonitor * This,
             /* [in] */ REFIID riid,
-            /* [annotation][iid_is][out] */ 
+            /* [annotation][iid_is][out] */
             _COM_Outptr_  void **ppvObject);
-        
-        ULONG ( STDMETHODCALLTYPE *AddRef )( 
+
+        ULONG ( STDMETHODCALLTYPE *AddRef )(
             ICLRAppDomainResourceMonitor * This);
-        
-        ULONG ( STDMETHODCALLTYPE *Release )( 
+
+        ULONG ( STDMETHODCALLTYPE *Release )(
             ICLRAppDomainResourceMonitor * This);
-        
-        HRESULT ( STDMETHODCALLTYPE *GetCurrentAllocated )( 
+
+        HRESULT ( STDMETHODCALLTYPE *GetCurrentAllocated )(
             ICLRAppDomainResourceMonitor * This,
             /* [in] */ DWORD dwAppDomainId,
             /* [out] */ ULONGLONG *pBytesAllocated);
-        
-        HRESULT ( STDMETHODCALLTYPE *GetCurrentSurvived )( 
+
+        HRESULT ( STDMETHODCALLTYPE *GetCurrentSurvived )(
             ICLRAppDomainResourceMonitor * This,
             /* [in] */ DWORD dwAppDomainId,
             /* [out] */ ULONGLONG *pAppDomainBytesSurvived,
             /* [out] */ ULONGLONG *pTotalBytesSurvived);
-        
-        HRESULT ( STDMETHODCALLTYPE *GetCurrentCpuTime )( 
+
+        HRESULT ( STDMETHODCALLTYPE *GetCurrentCpuTime )(
             ICLRAppDomainResourceMonitor * This,
             /* [in] */ DWORD dwAppDomainId,
             /* [out] */ ULONGLONG *pMilliseconds);
-        
+
         END_INTERFACE
     } ICLRAppDomainResourceMonitorVtbl;
 
@@ -2834,29 +2835,29 @@ EXTERN_C const IID IID_ICLRAppDomainResourceMonitor;
         CONST_VTBL struct ICLRAppDomainResourceMonitorVtbl *lpVtbl;
     };
 
-    
+
 
 #ifdef COBJMACROS
 
 
 #define ICLRAppDomainResourceMonitor_QueryInterface(This,riid,ppvObject)	\
-    ( (This)->lpVtbl -> QueryInterface(This,riid,ppvObject) ) 
+    ( (This)->lpVtbl -> QueryInterface(This,riid,ppvObject) )
 
 #define ICLRAppDomainResourceMonitor_AddRef(This)	\
-    ( (This)->lpVtbl -> AddRef(This) ) 
+    ( (This)->lpVtbl -> AddRef(This) )
 
 #define ICLRAppDomainResourceMonitor_Release(This)	\
-    ( (This)->lpVtbl -> Release(This) ) 
+    ( (This)->lpVtbl -> Release(This) )
 
 
 #define ICLRAppDomainResourceMonitor_GetCurrentAllocated(This,dwAppDomainId,pBytesAllocated)	\
-    ( (This)->lpVtbl -> GetCurrentAllocated(This,dwAppDomainId,pBytesAllocated) ) 
+    ( (This)->lpVtbl -> GetCurrentAllocated(This,dwAppDomainId,pBytesAllocated) )
 
 #define ICLRAppDomainResourceMonitor_GetCurrentSurvived(This,dwAppDomainId,pAppDomainBytesSurvived,pTotalBytesSurvived)	\
-    ( (This)->lpVtbl -> GetCurrentSurvived(This,dwAppDomainId,pAppDomainBytesSurvived,pTotalBytesSurvived) ) 
+    ( (This)->lpVtbl -> GetCurrentSurvived(This,dwAppDomainId,pAppDomainBytesSurvived,pTotalBytesSurvived) )
 
 #define ICLRAppDomainResourceMonitor_GetCurrentCpuTime(This,dwAppDomainId,pMilliseconds)	\
-    ( (This)->lpVtbl -> GetCurrentCpuTime(This,dwAppDomainId,pMilliseconds) ) 
+    ( (This)->lpVtbl -> GetCurrentCpuTime(This,dwAppDomainId,pMilliseconds) )
 
 #endif /* COBJMACROS */
 
@@ -2870,7 +2871,7 @@ EXTERN_C const IID IID_ICLRAppDomainResourceMonitor;
 
 
 /* interface __MIDL_itf_mscoree_0000_0015 */
-/* [local] */ 
+/* [local] */
 
 #undef DEPRECATED_CLR_STDAPI
 #undef DECLARE_DEPRECATED
@@ -2889,5 +2890,3 @@ extern RPC_IF_HANDLE __MIDL_itf_mscoree_0000_0015_v0_0_s_ifspec;
 #endif
 
 #endif
-
-

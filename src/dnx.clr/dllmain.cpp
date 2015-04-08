@@ -1,4 +1,6 @@
-// dllmain.cpp : Defines the entry point for the DLL application.
+// Copyright (c) Microsoft Open Technologies, Inc. All rights reserved.
+// Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
+
 #include "stdafx.h"
 
 BOOL APIENTRY DllMain( HMODULE hModule,
@@ -16,4 +18,3 @@ BOOL APIENTRY DllMain( HMODULE hModule,
     }
     return TRUE;
 }
-

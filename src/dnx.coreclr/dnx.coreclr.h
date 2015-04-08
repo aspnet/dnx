@@ -1,3 +1,6 @@
+// Copyright (c) Microsoft Open Technologies, Inc. All rights reserved.
+// Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
+
 /*
     AddDllDirectory
     See: http://msdn.microsoft.com/en-us/library/windows/desktop/hh310513(v=vs.85).aspx
@@ -15,7 +18,7 @@
     );
 */
 
-typedef PVOID DLL_DIRECTORY_COOKIE, *PDLL_DIRECTORY_COOKIE;  
+typedef PVOID DLL_DIRECTORY_COOKIE, *PDLL_DIRECTORY_COOKIE;
 
 typedef DLL_DIRECTORY_COOKIE (WINAPI *FnAddDllDirectory)(
     _In_  PCWSTR NewDirectory
@@ -39,7 +42,7 @@ typedef BOOL (WINAPI *FnSetDefaultDllDirectories)(
       };
     } PROCESS_MITIGATION_SYSTEM_CALL_DISABLE_POLICY, *PPROCESS_MITIGATION_SYSTEM_CALL_DISABLE_POLICY;
 
-    typedef enum _PROCESS_MITIGATION_POLICY { 
+    typedef enum _PROCESS_MITIGATION_POLICY {
       ProcessDEPPolicy                  = 0,
       ProcessASLRPolicy                 = 1,
       ProcessReserved1MitigationPolicy  = 2,
