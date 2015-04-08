@@ -46,7 +46,7 @@ namespace Microsoft.Framework.Runtime.Roslyn
         public CompilationMessageSeverity Severity { get; }
 
         /// <inheritdoc />
-        public int EndColumn => _mappedLineSpan.EndLinePosition.Character;
+        public int EndColumn => _mappedLineSpan.EndLinePosition.Character + 1;
 
         /// <inheritdoc />
         public int EndLine => _mappedLineSpan.EndLinePosition.Line + 1;
@@ -58,7 +58,7 @@ namespace Microsoft.Framework.Runtime.Roslyn
         public string FormattedMessage => CSharpDiagnosticFormatter.Instance.Format(_diagnostic);
 
         /// <inheritdoc />
-        public int StartColumn => _mappedLineSpan.StartLinePosition.Character;
+        public int StartColumn => _mappedLineSpan.StartLinePosition.Character + 1;
 
         /// <inheritdoc />
         public int StartLine => _mappedLineSpan.StartLinePosition.Line + 1;
