@@ -345,7 +345,7 @@ var RUNTIME_TARGETS='${new List<RuntimeTarget>()}'
         // Travis ci has a timelimit for no activity and the CoreCLR pacakge is
         // about 51MB. We're going to print to the console while this is happening 
         // so the build doesn't timeout
-        if (Travis)
+        if (IsTravis)
         {
             new System.Threading.Thread(() => 
             {
