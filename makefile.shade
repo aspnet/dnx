@@ -856,7 +856,7 @@ functions @{
     {
         if (IsTravis)
         {
-            Exec("clang++-3.4", args);   
+            Exec("clang", args);
         }
         else
         {
