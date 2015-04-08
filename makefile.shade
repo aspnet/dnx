@@ -18,12 +18,14 @@ var SCRIPTS_DIR = '${Path.Combine(ROOT, "scripts")}'
 var ARTIFACTS_DIR = '${Path.Combine(ROOT, "artifacts")}'
 var BUILD_DIR2 = '${Path.Combine(ROOT, "artifacts", "build")}'
 var NUSPEC_ROOT = '${Path.Combine(ROOT, "nuspec")}'
-var PACKAGES_DIR = '${Path.Combine(ROOT, "packages")}'
 var TEST_RESULTS = '${Path.Combine(ROOT, "artifacts", "TestResults")}'
 var SAMPLES_DIR = '${Path.Combine(ROOT, "samples")}'
 var FULL_VERSION = '${PRODUCT_VERSION + "-" + E("DNX_BUILD_VERSION")}'
 var CORECLR_TARGET_PATH = '${Path.Combine(BUILD_DIR2, "CoreCLR")}'
 var RUNTIME_NAME_PREFIX = 'dnx-'
+
+- // Runtime names
+
 var RUNTIME_MONO_NAME = '${RUNTIME_NAME_PREFIX + "mono"}'
 var RUNTIME_CLR_WIN_x86_NAME = '${RUNTIME_NAME_PREFIX + "clr-win-x86"}'
 var RUNTIME_CLR_WIN_x64_NAME = '${RUNTIME_NAME_PREFIX + "clr-win-x64"}'
@@ -31,6 +33,8 @@ var RUNTIME_CORECLR_WIN_x86_NAME = '${RUNTIME_NAME_PREFIX + "coreclr-win-x86"}'
 var RUNTIME_CORECLR_WIN_x64_NAME = '${RUNTIME_NAME_PREFIX + "coreclr-win-x64"}'
 var RUNTIME_CORECLR_DARWIN_x64_NAME = '${RUNTIME_NAME_PREFIX + "coreclr-darwin-x64"}'
 var RUNTIME_CORECLR_LINUX_x64_NAME = '${RUNTIME_NAME_PREFIX + "coreclr-linux-x64"}'
+
+- // Runtime paths
 var RUNTIME_MONO_BIN = '${Path.Combine(BUILD_DIR2, RUNTIME_MONO_NAME, "bin")}'
 var RUNTIME_CLR_WIN_x86_BIN = '${Path.Combine(BUILD_DIR2, RUNTIME_CLR_WIN_x86_NAME, "bin")}'
 var RUNTIME_CLR_WIN_x64_BIN = '${Path.Combine(BUILD_DIR2, RUNTIME_CLR_WIN_x64_NAME, "bin")}'
@@ -38,10 +42,11 @@ var RUNTIME_CORECLR_WIN_x86_BIN = '${Path.Combine(BUILD_DIR2, RUNTIME_CORECLR_WI
 var RUNTIME_CORECLR_WIN_x64_BIN = '${Path.Combine(BUILD_DIR2, RUNTIME_CORECLR_WIN_x64_NAME, "bin")}'
 var RUNTIME_CORECLR_DARWIN_x64_BIN = '${Path.Combine(BUILD_DIR2, RUNTIME_CORECLR_DARWIN_x64_NAME, "bin")}'
 var RUNTIME_CORECLR_LINUX_x64_BIN = '${Path.Combine(BUILD_DIR2, RUNTIME_CORECLR_LINUX_x64_NAME, "bin")}'
+
 var RUNTIME_CLR_TARGETS = '${new [] {RUNTIME_MONO_BIN, RUNTIME_CLR_WIN_x86_BIN, RUNTIME_CLR_WIN_x64_BIN}}'
-var RUNTIME_CORECLR_TARGETS = '${new [] {RUNTIME_CORECLR_WIN_x86_BIN, RUNTIME_CORECLR_WIN_x64_BIN}}'
+var RUNTIME_CORECLR_TARGETS = '${new [] {RUNTIME_CORECLR_WIN_x86_BIN, RUNTIME_CORECLR_WIN_x64_BIN, RUNTIME_CORECLR_DARWIN_x64_BIN, RUNTIME_CORECLR_LINUX_x64_BIN}}'
 var ALL_TARGETS = '${RUNTIME_CLR_TARGETS.Concat(RUNTIME_CORECLR_TARGETS)}'
-var NEW_RUNTIME = '${E("NEW_RUNTIME") == "1"}'
+
 var RUNTIME_COMMON_NAME = 'DNX'
 var BOOTSTRAPPER_EXE_NAME = 'dnx'
 var BOOTSTRAPPER_CLR_NAME = 'dnx.clr'
@@ -54,9 +59,9 @@ var BOOTSTRAPPER_HOST_NAME = 'dnx.host'
 var PROGRAM_FILES_X86 = '${Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86)}'
 var MSBUILD = '${Path.Combine(PROGRAM_FILES_X86, "MSBuild", "14.0", "Bin", "MSBuild.exe")}'
 
--//    "Microsoft.Framework.ApplicationHost2",   Disabled on release branch
 var MANAGED_PROJECTS = '${FindAllProjects(
     BOOTSTRAPPER_HOST_NAME,
+    BOOTSTRAPPER_CORECLR_MANAGED_NAME,
     "Microsoft.Framework.ApplicationHost",
     "Microsoft.Framework.CommandLineUtils",
     "Microsoft.Framework.DesignTimeHost",
@@ -73,20 +78,35 @@ var MANAGED_PROJECTS = '${FindAllProjects(
     "Microsoft.Framework.Runtime.Roslyn.Interfaces",
     "Microsoft.Framework.Runtime.Roslyn.Common")}'
 
-var WIN_NATIVE_PROJECTS = '${FindAllProjects(
-    BOOTSTRAPPER_EXE_NAME,
-    BOOTSTRAPPER_CLR_NAME,
-    BOOTSTRAPPER_CORECLR_NAME)}'
-
 var WIN_MANAGED_PROJECTS = '${FindAllProjects(
-    BOOTSTRAPPER_CLR_MANAGED_NAME,
-    BOOTSTRAPPER_CORECLR_MANAGED_NAME)}'
-
-var MONO_NATIVE_PROJECTS = '${FindAllProjects()}'
-
-var MONO_MANAGED_PROJECTS = '${FindAllProjects(BOOTSTRAPPER_MONO_MANAGED_NAME)}'
+    BOOTSTRAPPER_CLR_MANAGED_NAME)}'
 
 var RC_FILES = '${FindAllFiles("Resource.rc", BOOTSTRAPPER_EXE_NAME, BOOTSTRAPPER_CLR_NAME, BOOTSTRAPPER_CORECLR_NAME)}'
+
+var RUNTIME_TARGETS='${new List<RuntimeTarget>()}'
+
+@{
+    // Always build mono
+    RUNTIME_TARGETS.Add(new RuntimeTarget { Name = RUNTIME_MONO_NAME, TargetFolder = RUNTIME_MONO_BIN, Framework = "dnx451", Arch = "any", OS = "any", Flavor = "mono" });
+
+    if (CanBuildForWindows)
+    {
+        RUNTIME_TARGETS.Add(new RuntimeTarget { Name = RUNTIME_CLR_WIN_x86_NAME,     TargetFolder = RUNTIME_CLR_WIN_x86_BIN,     Framework = "dnx451",     Arch = "x86", OS = "win", Flavor = "clr" });
+        RUNTIME_TARGETS.Add(new RuntimeTarget { Name = RUNTIME_CLR_WIN_x64_NAME,     TargetFolder = RUNTIME_CLR_WIN_x64_BIN,     Framework = "dnx451",     Arch = "x64", OS = "win", Flavor = "clr" });
+        RUNTIME_TARGETS.Add(new RuntimeTarget { Name = RUNTIME_CORECLR_WIN_x86_NAME, TargetFolder = RUNTIME_CORECLR_WIN_x86_BIN, Framework = "dnxcore50",  Arch = "x86", OS = "win", Flavor = "coreclr" });
+        RUNTIME_TARGETS.Add(new RuntimeTarget { Name = RUNTIME_CORECLR_WIN_x64_NAME, TargetFolder = RUNTIME_CORECLR_WIN_x64_BIN, Framework = "dnxcore50",  Arch = "x64", OS = "win", Flavor = "coreclr" });
+    }
+
+    if (CanBuildForLinux)
+    {
+        RUNTIME_TARGETS.Add(new RuntimeTarget { Name = RUNTIME_CORECLR_LINUX_x64_NAME, TargetFolder = RUNTIME_CORECLR_LINUX_x64_BIN,  Framework = "dnxcore50",  Arch = "x64", OS = "linux", Flavor = "coreclr" });
+    }
+
+    if (CanBuildForDarwin)
+    {
+        RUNTIME_TARGETS.Add(new RuntimeTarget { Name = RUNTIME_CORECLR_DARWIN_x64_NAME, TargetFolder = RUNTIME_CORECLR_DARWIN_x64_BIN, Framework = "dnxcore50",  Arch = "x64", OS = "darwin", Flavor = "coreclr" });
+    }
+}
 
 -// Replace repo-initialize with a less greedy restore
 #repo-initialize target='initialize'
@@ -101,12 +121,42 @@ var RC_FILES = '${FindAllFiles("Resource.rc", BOOTSTRAPPER_EXE_NAME, BOOTSTRAPPE
         exec program='cmd' commandline='/C dnu restore' if='!IsMono' workingdir="${Path.GetDirectoryName(projectFile)}"
         exec program='dnu' commandline='restore' if='IsMono' workingdir="${Path.GetDirectoryName(projectFile)}"
 
+- // k-standard-goal overrides
+#native-compile
+
 #build-compile target='compile'
+#package-runtime .clean-sdk-dir target='package'
 
-#native-compile target='compile' if='!IsMono'
-#native-compile if='IsMono'
+#xunit-test
 
-#build-crossplatfrom-projects target='build-compile'
+-// Specific to building the dnx
+#build-common target='build-compile'
+#package-common target='package-runtime'
+
+-// Define platform specific builds as a n00p if the current platform can't produce a build
+#build-darwin target='build-compile' if='CanBuildForDarwin'
+#build-darwin if='!CanBuildForDarwin'
+
+#package-darwin target='package-runtime' if='CanBuildForDarwin'
+#package-darwin if='!CanBuildForDarwin'
+
+#build-linux target='build-compile' if='CanBuildForLinux'
+#build-linux if='!CanBuildForLinux'
+
+#package-linux target='package-runtime' if='CanBuildForLinux'
+#package-linux if='CanBuildForLinux'
+
+#build-windows target='build-compile' if='CanBuildForWindows'
+#build-windows if='!CanBuildForWindows'
+
+#package-windows target='package-runtime' if='CanBuildForWindows'
+#package-windows if='!CanBuildForWindows'
+
+- // ===================== BUILD ===================== 
+
+- // ===================== COMMON ===================== 
+
+#build-managed-projects target='build-common'
     @{ var BUILD_DIR = BUILD_DIR2; }
     kpm-pack each='var projectFile in MANAGED_PROJECTS' configuration='${Configuration2}'
     @{
@@ -116,109 +166,8 @@ var RC_FILES = '${FindAllFiles("Resource.rc", BOOTSTRAPPER_EXE_NAME, BOOTSTRAPPE
         }
     }
 
-#build-winplatform-projects target='build-compile' if='!IsMono'
-    @{ var BUILD_DIR = BUILD_DIR2; }
-    kpm-pack each='var projectFile in WIN_MANAGED_PROJECTS' configuration='${Configuration2}'
-    @{
-        foreach (var nupkg in Files.Include(Path.Combine(BUILD_DIR, "*/*.nupkg"))) 
-        {
-            File.Copy(nupkg, Path.Combine(BUILD_DIR, Path.GetFileName(nupkg)), true);
-        }
-    }
-
-#update-rc-files if='!IsMono'
-    if condition='IsTeamCity'
-        for each='var rcfile in RC_FILES'
-            @{
-                var digitVer = PRODUCT_VERSION.Replace(".", ",") + ",0";
-
-                var productVersionStructMatcher = @"PRODUCTVERSION \d+,\d+,\d+,\d+";
-                var productVersionValueMatcher = @"VALUE ""ProductVersion"", ""[^""]+""";
-                var productVersionStruct = "PRODUCTVERSION " + digitVer;
-                var productVersionValue = "VALUE \"ProductVersion\", \"" + FULL_VERSION + "\"";
-
-                var fileVersionStructMatcher = @"FILEVERSION \d+,\d+,\d+,\d+";
-                var fileVersionValueMatcher = @"VALUE ""FileVersion"", ""[^""]+""";
-                var fileVersionStruct = "FILEVERSION " + digitVer;
-                var fileVersionValue = "VALUE \"FileVersion\", \"" + FULL_VERSION + "\"";
-            }
-            update-file updateFile="${rcfile}" @{
-                updateText = RegexReplace(updateText, productVersionStructMatcher, productVersionStruct);
-                updateText = RegexReplace(updateText, productVersionValueMatcher, productVersionValue);
-                updateText = RegexReplace(updateText, fileVersionStructMatcher, fileVersionStruct);
-                updateText = RegexReplace(updateText, fileVersionValueMatcher, fileVersionValue);
-            }
-
-#build-native-bootstrapper .update-rc-files target='native-compile' if='!IsMono'
-    var bootstrapperProj = '${Path.Combine(ROOT, "src", BOOTSTRAPPER_EXE_NAME, BOOTSTRAPPER_EXE_NAME + ".vcxproj")}'
-    @{
-        if (!IsMsbuildInstalled(MSBUILD))
-        {
-            Environment.Exit(1);
-        }
-        else
-        {
-            var environmentRuntimeTargetOS = Environment.GetEnvironmentVariable("RUNTIME_TARGET_OS");
-            var configRuntimeTargetOS = "";
-        
-            Exec(MSBUILD, bootstrapperProj + " /p:Configuration=" + Configuration2 + ";Platform=Win32;TargetFramework=dnx451;RuntimeType=CLR");
-            Exec(MSBUILD, bootstrapperProj + " /p:Configuration=" + Configuration2 + ";Platform=x64;TargetFramework=dnx451;RuntimeType=CLR");
-
-            if (environmentRuntimeTargetOS == "WIN7_PLUS_CORESYSTEM")
-            {
-                configRuntimeTargetOS = ";RuntimeTargetOS=WIN7_PLUS_CORESYSTEM";
-            }
-            
-            Exec(MSBUILD, bootstrapperProj + " /p:Configuration=" + Configuration2 + ";Platform=Win32;TargetFramework=dnxcore50;RuntimeType=CORECLR_WIN" + configRuntimeTargetOS);
-            Exec(MSBUILD, bootstrapperProj + " /p:Configuration=" + Configuration2 + ";Platform=x64;TargetFramework=dnxcore50;RuntimeType=CORECLR_WIN" + configRuntimeTargetOS);
-        }
-    }
-
-  directory delete='${Path.Combine(BUILD_DIR2, BOOTSTRAPPER_EXE_NAME)}'
-  copy sourceDir='${Path.Combine(ROOT, "src", BOOTSTRAPPER_EXE_NAME)}' include='bin/**/' outputDir='${Path.Combine(BUILD_DIR2, BOOTSTRAPPER_EXE_NAME)}' overwrite='${true}'
-
-#build-native-bootstrapper-core45 .copy-coreclr .update-tpa target='native-compile' if='!IsMono'
-    var bootstrapperCore45Proj = '${Path.Combine(ROOT, "src", BOOTSTRAPPER_CORECLR_NAME, BOOTSTRAPPER_CORECLR_NAME + ".vcxproj")}'
-    @{
-        if (!IsMsbuildInstalled(MSBUILD))
-        {
-            Environment.Exit(1);
-        }
-        else
-        {
-            var environmentRuntimeTargetOS = Environment.GetEnvironmentVariable("RUNTIME_TARGET_OS");
-            var configRuntimeTargetOS = "";
-        
-            if (environmentRuntimeTargetOS == "WIN7_PLUS_CORESYSTEM")
-            {
-                configRuntimeTargetOS = ";RuntimeTargetOS=WIN7_PLUS_CORESYSTEM";
-            }
-            
-            Exec(MSBUILD, bootstrapperCore45Proj + " /p:Configuration=" + Configuration2 + ";Platform=Win32" + configRuntimeTargetOS);
-            Exec(MSBUILD, bootstrapperCore45Proj + " /p:Configuration=" + Configuration2 + ";Platform=x64" + configRuntimeTargetOS);
-        }
-    }
-
-  directory delete='${Path.Combine(BUILD_DIR2, BOOTSTRAPPER_CORECLR_NAME)}'
-  copy sourceDir='${Path.Combine(ROOT, "src", BOOTSTRAPPER_CORECLR_NAME)}' include='bin/**/' outputDir='${Path.Combine(BUILD_DIR2, BOOTSTRAPPER_CORECLR_NAME)}' overwrite='${true}'
-
-#build-native-bootstrapper-net45 target='native-compile' if='!IsMono'
-    var bootstrapperNet45Proj ='${Path.Combine(ROOT, "src", BOOTSTRAPPER_CLR_NAME, BOOTSTRAPPER_CLR_NAME + ".vcxproj")}'
-    @{
-        if (!IsMsbuildInstalled(MSBUILD))
-        {
-            Environment.Exit(1);
-        }
-        else
-        {
-            Exec(MSBUILD, bootstrapperNet45Proj + " /p:Configuration=" + Configuration2 + ";Platform=Win32");
-            Exec(MSBUILD, bootstrapperNet45Proj + " /p:Configuration=" + Configuration2 + ";Platform=x64");
-        }
-    }
-    directory delete='${Path.Combine(BUILD_DIR2, BOOTSTRAPPER_CLR_NAME)}'
-    copy sourceDir='${Path.Combine(ROOT, "src", BOOTSTRAPPER_CLR_NAME)}' include='bin/**/' outputDir='${Path.Combine(BUILD_DIR2, BOOTSTRAPPER_CLR_NAME)}' overwrite='${true}' 
-
-#build-mono-entrypoint target='build-compile'
+-// This target's build-cmmon since mono is built on all platforms
+#build-dnx-mono-bootstrapper target='build-common'
     var monoManagedOutpath='${Path.Combine(BUILD_DIR2, BOOTSTRAPPER_MONO_MANAGED_NAME)}'
     directory create='${monoManagedOutpath}'
     @{
@@ -243,238 +192,184 @@ var RC_FILES = '${FindAllFiles("Resource.rc", BOOTSTRAPPER_EXE_NAME, BOOTSTRAPPE
 
         var compiler = IsMono ? "mcs" : Path.Combine(Environment.GetEnvironmentVariable("WINDIR"), "Microsoft.NET", "Framework", "v4.0.30319", "csc.exe");
 
-        Log.Info("Using compiler :" + compiler + " for Mono Entry point executor");
-
         Exec(compiler, arguments);
     }
 
-#package-runtime .clean-sdk-dir .copy-bits .tweak-scripts .copy-coreclr .copy-required-dependencies .nuget-pack-runtime target='package'
-
-#rebuild-package .build-compile .build-mono-entrypoint .native-compile .package-runtime .xunit-test
-
-#xunit-test target='test' if='Directory.Exists("test")'
-    k-test each='var projectFile in Files.Include("test/**/project.json")' if='NEW_RUNTIME'
-
-#ensure-latest-package
-    @{
-        // We need to re-run the build using the current output
-
-        var nupkgPath = Files.Include(Path.Combine(BUILD_DIR2, (IsMono ? RUNTIME_MONO_NAME : RUNTIME_CLR_WIN_x86_NAME) + ".*.nupkg")).Single();
-        Log.Info("Unpacking " + nupkgPath);
-        if (Directory.Exists(Path.Combine(PACKAGES_DIR, RUNTIME_COMMON_NAME))) {
-            Directory.Delete(Path.Combine(PACKAGES_DIR, RUNTIME_COMMON_NAME), recursive:true);
-        }
-
-        Directory.CreateDirectory(Path.Combine(PACKAGES_DIR, RUNTIME_COMMON_NAME));
-
-        if (IsMono)
-        {
-            // System.IO.Compression gives weird errors on mono to do with invalid dates
-            // we're going to use unzip instead
-            Exec("unzip", Path.Combine(nupkgPath) + " -d " + Path.Combine(PACKAGES_DIR, RUNTIME_COMMON_NAME));
-            Exec("chmod", "+x " + Path.Combine(PACKAGES_DIR, RUNTIME_COMMON_NAME, "bin", "dnx"));
-            Exec("chmod", "+x " + Path.Combine(PACKAGES_DIR, RUNTIME_COMMON_NAME, "bin", "dnu"));
-        }
-        else
-        {
-            System.IO.Compression.ZipFile.ExtractToDirectory(
-                Path.Combine(nupkgPath),
-                Path.Combine(PACKAGES_DIR, RUNTIME_COMMON_NAME));
-        }
-
-        // Delete the build dir
-        Directory.Delete(BUILD_DIR2, recursive: true);
-
-        var envPath = Environment.GetEnvironmentVariable("PATH");
-        try
-        {
-            Log.Info("Adding PATH " + Path.Combine(PACKAGES_DIR, RUNTIME_COMMON_NAME, "bin"));
-            Environment.SetEnvironmentVariable("PATH", Path.Combine(PACKAGES_DIR, RUNTIME_COMMON_NAME, "bin") + Path.PathSeparator + envPath);
-            Environment.SetEnvironmentVariable("NEW_RUNTIME", "1");
-            Log.Info("Rebuilding target default");
-
-            // TODO REMOVE after bootstrapping: We need to restore again because the location changes
-            if (IsMono)
-            {
-                Exec("build.sh", "initialize");
-                Exec("build.sh", "rebuild-package");
-            }
-            else
-            {
-                Exec("build.cmd", "initialize");
-                Exec("build.cmd", "rebuild-package");
-            }
-        }
-        finally
-        {
-            Environment.SetEnvironmentVariable("PATH", envPath);
-            Environment.SetEnvironmentVariable("NEW_RUNTIME", null);
-        }
-    }
-
-#verify-package .ensure-latest-package target='verify'
-
 #clean-sdk-dir
-    directory each='var delete in ALL_TARGETS'
-    directory each='var create in ALL_TARGETS'
+    directory each='var delete in ALL_TARGETS.Select(t => Path.GetDirectoryName(t))'
+    directory each='var create in RUNTIME_TARGETS.Select(t => t.TargetFolder)'
 
-#copy-bits
-    -// Runtime for mono
-    copy sourceDir='${SCRIPTS_DIR}' include='*.sh' outputDir='${RUNTIME_MONO_BIN}' overwrite='${true}'
-    copy sourceDir='${Path.Combine(BUILD_DIR2, BOOTSTRAPPER_MONO_MANAGED_NAME)}' outputDir='${RUNTIME_MONO_BIN}' include='*.dll' overwrite='${true}'
+- // ===================== WINDOWS ===================== 
 
+#build-win-managed-projects target='build-windows'
+    @{ var BUILD_DIR = BUILD_DIR2; }
+    kpm-pack each='var projectFile in WIN_MANAGED_PROJECTS' configuration='${Configuration2}'
     @{
-        // Rename all .sh files to remove the sh
-        foreach (var shFile in Files.Include(Path.Combine(RUNTIME_MONO_BIN, "*.sh")))
+        foreach (var nupkg in Files.Include(Path.Combine(BUILD_DIR, "*/*.nupkg"))) 
         {
-            var targetShFile = Path.Combine(Path.GetDirectoryName(shFile), 
-                                            Path.GetFileNameWithoutExtension(shFile));
-            if (File.Exists(targetShFile))
-            {
-                File.Delete(targetShFile);
-            }
-
-            // Make sure new lines are \n (\r\n messes up the bash script)
-            var script = File.ReadAllText(shFile).Replace('\r\n', '\n');
-            File.Move(shFile, targetShFile);
-            File.WriteAllText(targetShFile, script);
+            File.Copy(nupkg, Path.Combine(BUILD_DIR, Path.GetFileName(nupkg)), true);
         }
     }
 
-    test if='!IsMono'
-        -// Runtime for clr-win-x86
-        copy sourceDir='${Path.Combine(BUILD_DIR2, BOOTSTRAPPER_EXE_NAME, "bin", "Win32", Configuration2, "dnx451")}' outputDir='${RUNTIME_CLR_WIN_x86_BIN}' include='*.exe' overwrite='${true}'
-        copy sourceDir='${Path.Combine(BUILD_DIR2, BOOTSTRAPPER_CLR_NAME, "bin", "Win32", Configuration2)}' outputDir='${RUNTIME_CLR_WIN_x86_BIN}' include='*.dll' overwrite='${true}'
-        copy sourceDir='${Path.Combine(BUILD_DIR2, BOOTSTRAPPER_CLR_NAME, "bin", "Win32", Configuration2)}' outputDir='${RUNTIME_CLR_WIN_x86_BIN}' include='*.pdb' overwrite='${true}'
-        copy sourceDir='${Path.Combine(ROOT, "src", BOOTSTRAPPER_CLR_MANAGED_NAME)}' outputDir='${RUNTIME_CLR_WIN_x86_BIN}' include='*.config' overwrite='${true}'
-
-        -// Runtime for clr-win-x64
-        copy sourceDir='${Path.Combine(BUILD_DIR2, BOOTSTRAPPER_EXE_NAME, "bin", "x64", Configuration2, "dnx451")}' outputDir='${RUNTIME_CLR_WIN_x64_BIN}' include='*.exe' overwrite='${true}'
-        copy sourceDir='${Path.Combine(BUILD_DIR2, BOOTSTRAPPER_CLR_NAME, "bin", "x64", Configuration2)}' outputDir='${RUNTIME_CLR_WIN_x64_BIN}' include='*.dll' overwrite='${true}'
-        copy sourceDir='${Path.Combine(BUILD_DIR2, BOOTSTRAPPER_CLR_NAME, "bin", "x64", Configuration2)}' outputDir='${RUNTIME_CLR_WIN_x64_BIN}' include='*.pdb' overwrite='${true}'
-        copy sourceDir='${Path.Combine(ROOT, "src", BOOTSTRAPPER_CLR_MANAGED_NAME)}' outputDir='${RUNTIME_CLR_WIN_x64_BIN}' include='*.config' overwrite='${true}'
-
-        -// Runtime for coreclr-win-x86
-        copy sourceDir='${Path.Combine(BUILD_DIR2, BOOTSTRAPPER_EXE_NAME, "bin", "Win32", Configuration2, "dnxcore50")}' outputDir='${RUNTIME_CORECLR_WIN_x86_BIN}' include='*.exe' overwrite='${true}'
-        copy sourceDir='${Path.Combine(BUILD_DIR2, BOOTSTRAPPER_CORECLR_NAME, "bin", "Win32", Configuration2)}' outputDir='${RUNTIME_CORECLR_WIN_x86_BIN}' include='*.dll' overwrite='${true}'
-        copy sourceDir='${Path.Combine(BUILD_DIR2, BOOTSTRAPPER_CORECLR_NAME, "bin", "Win32", Configuration2)}' outputDir='${RUNTIME_CORECLR_WIN_x86_BIN}' include='*.pdb' overwrite='${true}'
-
-        -// Runtime for coreclr-win-x64
-        copy sourceDir='${Path.Combine(BUILD_DIR2, BOOTSTRAPPER_EXE_NAME, "bin", "x64", Configuration2, "dnxcore50")}' outputDir='${RUNTIME_CORECLR_WIN_x64_BIN}' include='*.exe' overwrite='${true}'
-        copy sourceDir='${Path.Combine(BUILD_DIR2, BOOTSTRAPPER_CORECLR_NAME, "bin", "x64", Configuration2)}' outputDir='${RUNTIME_CORECLR_WIN_x64_BIN}' include='*.dll' overwrite='${true}'
-        copy sourceDir='${Path.Combine(BUILD_DIR2, BOOTSTRAPPER_CORECLR_NAME, "bin", "x64", Configuration2)}' outputDir='${RUNTIME_CORECLR_WIN_x64_BIN}' include='*.pdb' overwrite='${true}'
-
-        copy sourceDir='${SCRIPTS_DIR}' include='*.cmd' overwrite='${true}' each='var outputDir in new[]{ RUNTIME_CLR_WIN_x86_BIN, RUNTIME_CLR_WIN_x64_BIN, RUNTIME_CORECLR_WIN_x86_BIN, RUNTIME_CORECLR_WIN_x64_BIN }'
-
+#build-dnx-win .ensure-msbuild .update-rc-files target='build-windows'
+    var bootstrapperProj = '${Path.Combine(ROOT, "src", BOOTSTRAPPER_EXE_NAME, BOOTSTRAPPER_EXE_NAME + ".vcxproj")}'
     @{
-        var hostAspNetCore50 = Path.Combine(BUILD_DIR2, "*", "dnxcore50", "**.*");
-        var hostnet45 = Path.Combine(BUILD_DIR2, "*", "dnx451", "**.*");
-
-        var libPackages = new[] { "Microsoft.Framework.Project",
-                                  "Microsoft.Framework.PackageManager", 
-                                  "Microsoft.Framework.DesignTimeHost" };
-
-        var sharedSourceAssemblies = new [] { 
-            Path.Combine(BUILD_DIR2, "Microsoft.Framework.CommandLineUtils/**/*.*"), 
-            Path.Combine(BUILD_DIR2, "Microsoft.Framework.Runtime.Common/**/*.*"),
-        };
+        var environmentRuntimeTargetOS = Environment.GetEnvironmentVariable("RUNTIME_TARGET_OS");
+        var configRuntimeTargetOS = "";
         
-        foreach(var file in Files.Include(hostAspNetCore50).Exclude(sharedSourceAssemblies))
-        {
-            foreach(var aspNetCore50Target in RUNTIME_CORECLR_TARGETS)
-            {
-                string dest = Path.Combine(aspNetCore50Target, Path.GetFileName(file));
-                File.Copy(file, dest, true);
-            }
-        }
-        
-        foreach(var file in Files.Include(hostnet45).Exclude(sharedSourceAssemblies))
-        {
-            foreach(var net45Target in RUNTIME_CLR_TARGETS)
-            {
-                string dest = Path.Combine(net45Target, Path.GetFileName(file));
-                File.Copy(file, dest, true);
-            }
-        }
+        Exec(MSBUILD, bootstrapperProj + " /p:Configuration=" + Configuration2 + ";Platform=Win32;TargetFramework=dnx451;RuntimeType=CLR");
+        Exec(MSBUILD, bootstrapperProj + " /p:Configuration=" + Configuration2 + ";Platform=x64;TargetFramework=dnx451;RuntimeType=CLR");
 
-        // Clean up net45.managed from mono (it's never used)
-        File.Delete(Path.Combine(RUNTIME_MONO_BIN, BOOTSTRAPPER_CLR_MANAGED_NAME + ".dll"));
-
-        // Remove k-crossgen.cmd from the net45 build
-        foreach (var net45Target in RUNTIME_CLR_TARGETS)
+        if (environmentRuntimeTargetOS == "WIN7_PLUS_CORESYSTEM")
         {
-            var crossgen = Path.Combine(net45Target, "k-crossgen.cmd");
-            if(File.Exists(crossgen))
-            {
-                File.Delete(crossgen);
-                Log.Info("Deleting crossgen from " + crossgen);
-            }
+            configRuntimeTargetOS = ";RuntimeTargetOS=WIN7_PLUS_CORESYSTEM";
         }
-
-        Action<string, string, string> move = (binFolder, name, extension) =>
-        {
-            var libPath = Path.Combine(binFolder, "lib", name);
-            var source = Path.Combine(binFolder, name + extension);
-            var target = Path.Combine(libPath, name + extension);
             
-            if (File.Exists(source))
-            {
-                if (File.Exists(target))
-                {
-                    File.Delete(target);
-                }
-                
-                Directory.CreateDirectory(libPath);
-                File.Move(source, target);
-
-                Log.Info("Moving " + name + " to " + target);
-            }
-            else
-            {
-                Log.Warn(name + " does not exist in " + binFolder);
-            }
-        };
-        
-        // Move some packages into the lib/ folder
-        foreach (var libPackage in libPackages)
-        {
-            foreach(var binFolder in ALL_TARGETS)
-            {
-                move(binFolder, libPackage, ".dll");
-                move(binFolder, libPackage, ".pdb");
-            }
-        }
+        Exec(MSBUILD, bootstrapperProj + " /p:Configuration=" + Configuration2 + ";Platform=Win32;TargetFramework=dnxcore50;RuntimeType=CORECLR_WIN" + configRuntimeTargetOS);
+        Exec(MSBUILD, bootstrapperProj + " /p:Configuration=" + Configuration2 + ";Platform=x64;TargetFramework=dnxcore50;RuntimeType=CORECLR_WIN" + configRuntimeTargetOS);
     }
 
-#tweak-scripts
+    directory delete='${Path.Combine(BUILD_DIR2, BOOTSTRAPPER_EXE_NAME)}'
+    copy sourceDir='${Path.Combine(ROOT, "src", BOOTSTRAPPER_EXE_NAME)}' include='bin/**/' outputDir='${Path.Combine(BUILD_DIR2, BOOTSTRAPPER_EXE_NAME)}' overwrite='${true}'
+
+#build-dnx-coreclr-win-bootstrapper .ensure-msbuild .update-tpa .update-rc-files target='build-windows'
+    var bootstrapperCoreClrProj = '${Path.Combine(ROOT, "src", BOOTSTRAPPER_CORECLR_NAME, BOOTSTRAPPER_CORECLR_NAME + ".vcxproj")}'
+
     @{
-        foreach(var targetDir in new[] { RUNTIME_CLR_WIN_x86_BIN, RUNTIME_CLR_WIN_x64_BIN, RUNTIME_CORECLR_WIN_x86_BIN, RUNTIME_CORECLR_WIN_x64_BIN })
+        var environmentRuntimeTargetOS = Environment.GetEnvironmentVariable("RUNTIME_TARGET_OS");
+        var configRuntimeTargetOS = "";
+        
+        if (environmentRuntimeTargetOS == "WIN7_PLUS_CORESYSTEM")
         {
-            foreach(var file in Files.Include(Path.Combine(targetDir, "*.cmd")))
-            {
-                var script = File.ReadAllText(file);
-
-                script = Regex.Replace(script, @"REM \<dev\>(.*?)REM \<\/dev\>(\s*)", @"", RegexOptions.Singleline);
-
-                File.WriteAllText(file, script);
-            }
+            configRuntimeTargetOS = ";RuntimeTargetOS=WIN7_PLUS_CORESYSTEM";
         }
+
+        Exec(MSBUILD, bootstrapperCoreClrProj + " /p:Configuration=" + Configuration2 + ";Platform=Win32" + configRuntimeTargetOS);
+        Exec(MSBUILD, bootstrapperCoreClrProj + " /p:Configuration=" + Configuration2 + ";Platform=x64" + configRuntimeTargetOS);
     }
+
+    directory delete='${Path.Combine(BUILD_DIR2, BOOTSTRAPPER_CORECLR_NAME)}'
+    copy sourceDir='${Path.Combine(ROOT, "src", BOOTSTRAPPER_CORECLR_NAME)}' include='bin/**/' outputDir='${Path.Combine(BUILD_DIR2, BOOTSTRAPPER_CORECLR_NAME)}' overwrite='${true}'
+
+#build-dnx-clr-win-bootstrapper .ensure-msbuild .update-rc-files target='build-windows'
+    var bootstrapperClrProj ='${Path.Combine(ROOT, "src", BOOTSTRAPPER_CLR_NAME, BOOTSTRAPPER_CLR_NAME + ".vcxproj")}'
+
+    @{
+        Exec(MSBUILD, bootstrapperClrProj + " /p:Configuration=" + Configuration2 + ";Platform=Win32");
+        Exec(MSBUILD, bootstrapperClrProj + " /p:Configuration=" + Configuration2 + ";Platform=x64");
+    }
+
+    directory delete='${Path.Combine(BUILD_DIR2, BOOTSTRAPPER_CLR_NAME)}'
+    copy sourceDir='${Path.Combine(ROOT, "src", BOOTSTRAPPER_CLR_NAME)}' include='bin/**/' outputDir='${Path.Combine(BUILD_DIR2, BOOTSTRAPPER_CLR_NAME)}' overwrite='${true}' 
+
+#update-rc-files if='!IsMono'
+    if condition='IsTeamCity'
+        for each='var rcfile in RC_FILES'
+            @{
+                var digitVer = PRODUCT_VERSION.Replace(".", ",") + ",0";
+
+                var productVersionStructMatcher = @"PRODUCTVERSION \d+,\d+,\d+,\d+";
+                var productVersionValueMatcher = @"VALUE ""ProductVersion"", ""[^""]+""";
+                var productVersionStruct = "PRODUCTVERSION " + digitVer;
+                var productVersionValue = "VALUE \"ProductVersion\", \"" + FULL_VERSION + "\"";
+
+                var fileVersionStructMatcher = @"FILEVERSION \d+,\d+,\d+,\d+";
+                var fileVersionValueMatcher = @"VALUE ""FileVersion"", ""[^""]+""";
+                var fileVersionStruct = "FILEVERSION " + digitVer;
+                var fileVersionValue = "VALUE \"FileVersion\", \"" + FULL_VERSION + "\"";
+            }
+            update-file updateFile="${rcfile}" @{
+                updateText = RegexReplace(updateText, productVersionStructMatcher, productVersionStruct);
+                updateText = RegexReplace(updateText, productVersionValueMatcher, productVersionValue);
+                updateText = RegexReplace(updateText, fileVersionStructMatcher, fileVersionStruct);
+                updateText = RegexReplace(updateText, fileVersionValueMatcher, fileVersionValue);
+            }
+
+- // ===================== LINUX ===================== 
+
+#build-dnx-coreclr-linux-bootstrapper .ensure-clang .update-tpa target='build-linux'
+    var soOutputDir = '${Path.Combine(ROOT, "src", BOOTSTRAPPER_CORECLR_NAME + ".unix", "bin")}'
+    var soOutputPath = '${Path.Combine(soOutputDir, BOOTSTRAPPER_CORECLR_NAME + ".so")}'
+    @{
+        var sourceFiles = new string[] 
+        {
+            Path.Combine("src", BOOTSTRAPPER_CORECLR_NAME + ".unix", "tpa.cpp"),
+            Path.Combine("src", BOOTSTRAPPER_CORECLR_NAME + ".unix", BOOTSTRAPPER_CORECLR_NAME + ".cpp")
+        };
+
+        Directory.CreateDirectory(soOutputDir);
+
+        Clang(string.Format("-fPIC -shared {0} -g -o {1} --std=c++11 -ldl", string.Join(" ", sourceFiles), soOutputPath));
+    }
+
+    copy sourceDir='${soOutputDir}' include='*.so' outputDir='${Path.Combine(BUILD_DIR2, BOOTSTRAPPER_CORECLR_NAME + ".unix")}' overwrite='${true}'
+
+#build-dnx-linux-bootstrapper .ensure-clang target='build-linux'
+    var soOutputDir = '${Path.Combine(ROOT, "src", BOOTSTRAPPER_EXE_NAME, "bin", "x64")}'
+    var soOutputPath = '${Path.Combine(soOutputDir, BOOTSTRAPPER_EXE_NAME)}'
+    @{
+        var sourceFiles = new string[] 
+        {
+            Path.Combine("src", BOOTSTRAPPER_EXE_NAME, BOOTSTRAPPER_EXE_NAME + ".cpp"),
+            Path.Combine("src", BOOTSTRAPPER_EXE_NAME, "pal.linux.cpp"),
+            Path.Combine("src", BOOTSTRAPPER_EXE_NAME, "tchar.cpp"),
+        };
+
+        Directory.CreateDirectory(soOutputDir);
+
+        Clang(string.Format("{0} -g -o {1} -DCORECLR_UNIX -DPLATFORM_UNIX -std=c++11 -ldl", string.Join(" ", sourceFiles), soOutputPath));
+    }
+
+    copy sourceDir='${soOutputDir}' include='*' outputDir='${Path.Combine(BUILD_DIR2, BOOTSTRAPPER_EXE_NAME, "bin", "linux", "x64")}' overwrite='${true}'
+
+
+- // ===================== DARWIN (OSX) ===================== 
+
+- // ===================== PACKAGE ===================== 
 
 #copy-coreclr
     @{
-        var extras = "-pre -nocache";
+        var extras = "-pre";
         var coreCLRPackageSource = E("CORECLR_PACKAGE_SOURCE");
         if (!string.IsNullOrEmpty(coreCLRPackageSource))
         {
             extras += " -source " + coreCLRPackageSource;
         }
+
+        if (IsTeamCity)
+        {
+            extras += " -nocache";
+        }
+
+        var downloadComplete = false;
+        // Travis ci has a timelimit for no activity and the CoreCLR pacakge is
+        // about 51MB. We're going to print to the console while this is happening 
+        // so the build doesn't timeout
+        if (IsTravis)
+        {
+            new System.Threading.Thread(() => 
+            {
+                while (!downloadComplete)
+                {
+                    Console.Write(".");
+                    System.Threading.Thread.Sleep(1000);
+                }
+
+                Console.WriteLine();
+            }) 
+            {
+                IsBackground = true
+            }
+            .Start();
+        }
     }
 
-    nuget-install package='CoreCLR' outputDir='packages' extra='${extras}' once='CoreCLR' nugetPath='.nuget/nuget.exe'
+    nuget-install package='CoreCLR' outputDir='packages' extra='${extras}' once='CoreCLR' nugetPath='.nuget/nuget.exe' if='!Directory.Exists(CORECLR_TARGET_PATH)'
 
     var CoreCLR_DIR='${""}'
     @{
+        downloadComplete = true;
+
         Func<string, long> getVersion = version => {
         var dash = version.LastIndexOf('-');
 
@@ -501,19 +396,10 @@ var RC_FILES = '${FindAllFiles("Resource.rc", BOOTSTRAPPER_EXE_NAME, BOOTSTRAPPE
     }
     
     -// Copy to target
-    copy sourceDir='${Path.Combine(CoreCLR_DIR, "Runtime")}' outputDir='${Path.Combine(CORECLR_TARGET_PATH, "Runtime")}' overwrite='${true}'
+    copy sourceDir='${Path.Combine(CoreCLR_DIR, "Runtime")}' outputDir='${Path.Combine(CORECLR_TARGET_PATH, "Runtime")}' overwrite='${true}' if='!Directory.Exists(CORECLR_TARGET_PATH)'
 
 #copy-required-dependencies
      @{
-        var targets = new[]
-        {
-            new { TargetFolder = RUNTIME_CLR_WIN_x86_BIN,        Framework = "dnx451",     Arch = "x86", OS = "win" , Mono = false },
-            new { TargetFolder = RUNTIME_CLR_WIN_x64_BIN,        Framework = "dnx451",     Arch = "x64", OS = "win" , Mono = false },
-            new { TargetFolder = RUNTIME_MONO_BIN,               Framework = "dnx451",     Arch = "x86", OS = "any" , Mono = true },
-            new { TargetFolder = RUNTIME_CORECLR_WIN_x86_BIN,    Framework = "dnxcore50",  Arch = "x86", OS = "win" , Mono = false },
-            new { TargetFolder = RUNTIME_CORECLR_WIN_x64_BIN,    Framework = "dnxcore50",  Arch = "x64", OS = "win" , Mono = false },
-        };
-
         var runtimeProjects = new[]
         {
             "Microsoft.Framework.Runtime.Roslyn",
@@ -530,25 +416,16 @@ var RC_FILES = '${FindAllFiles("Resource.rc", BOOTSTRAPPER_EXE_NAME, BOOTSTRAPPE
             "Microsoft.Framework.Project"
         };
 
-        foreach (var target in targets)
+        foreach (var target in RUNTIME_TARGETS)
         {
-            if (IsMono && !target.Mono)
-            {
-                continue;
-            }
+            var coreclrFolder = target.Flavor == "coreclr" ? Path.Combine(CORECLR_TARGET_PATH, "Runtime", target.OS, target.Arch) : null;
 
-            var candidates = new[] { 
-                Path.Combine(CORECLR_TARGET_PATH, "Runtime", target.OS, target.Arch),
-                Path.Combine(CORECLR_TARGET_PATH, "Runtime", target.Arch == "x64" ? "amd64" : target.Arch) // Legacy
-            };
-            
-            var coreclrFolder = target.Framework == "dnxcore50" ? candidates.First(Directory.Exists) : null;
-
-            // parse and copy runtime assemblies
+            // Parse and copy runtime assemblies
             var runtimeAssemblies = new HashSet<string>();
+
             foreach (var project in runtimeProjects)
             {
-                if (project == BOOTSTRAPPER_CORECLR_MANAGED_NAME && target.Framework == "dnx451")
+                if (project == BOOTSTRAPPER_CORECLR_MANAGED_NAME && target.Flavor != "coreclr")
                 {
                     continue;
                 }
@@ -574,28 +451,28 @@ var RC_FILES = '${FindAllFiles("Resource.rc", BOOTSTRAPPER_EXE_NAME, BOOTSTRAPPE
                 }
             }
 
-            // parse and copy lib assemblies
+            // Parse and copy lib assemblies
             foreach (var project in sdkProjects)
             {
                 var projectFolder = Path.Combine(ROOT, "src", project);
-                var projectAssemblies = ListDependencyAssemblies(projectFolder, target.Framework, target.Framework == "dnxcore50" ? coreclrFolder : null);
+                var projectAssemblies = ListDependencyAssemblies(projectFolder, target.Framework, coreclrFolder);
 
                 projectAssemblies.ExceptWith(runtimeAssemblies);
 
                 var targetLibDir = Path.Combine(target.TargetFolder, "lib", project);
-                if (Directory.Exists(targetLibDir))
+
+                Directory.CreateDirectory(targetLibDir);
+
+                foreach (var file in projectAssemblies)
                 {
-                    foreach (var file in projectAssemblies)
-                    {
-                        var targetFilePath = Path.Combine(targetLibDir, Path.GetFileName(file));
-                        Log.Info("Copying " + file + " to " + targetFilePath);
-                        File.Copy(file, targetFilePath, true);
-                    }
+                    var targetFilePath = Path.Combine(targetLibDir, Path.GetFileName(file));
+                    Log.Info("Copying " + file + " to " + targetFilePath);
+                    File.Copy(file, targetFilePath, true);
                 }
             }
 
-            // copy required CoreCLR assemblies
-            if (target.Framework == "dnxcore50")
+            // Copy required CoreCLR assemblies
+            if (target.Flavor == "coreclr")
             {
                 var extraBinaries = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
                 {
@@ -611,53 +488,251 @@ var RC_FILES = '${FindAllFiles("Resource.rc", BOOTSTRAPPER_EXE_NAME, BOOTSTRAPPE
                     File.Copy(file, targetFilePath, true);
                 }
             }
+        }
+    }
 
-            // copy runtime interfaces
-            var mfriPath = Path.Combine(BUILD_DIR2, "Microsoft.Framework.Runtime.Interfaces", target.Framework, "Microsoft.Framework.Runtime.Interfaces.dll");
-            var mfriPdbPath = Path.Combine(BUILD_DIR2, "Microsoft.Framework.Runtime.Interfaces", target.Framework, "Microsoft.Framework.Runtime.Interfaces.pdb");
 
-            if(File.Exists(mfriPath))
+#copy-common .copy-coreclr .copy-required-dependencies target='package-common'
+    copy sourceDir='${SCRIPTS_DIR}' include='*.sh' outputDir='${RUNTIME_MONO_BIN}' overwrite='${true}'
+    copy sourceDir='${Path.Combine(BUILD_DIR2, BOOTSTRAPPER_MONO_MANAGED_NAME)}' outputDir='${RUNTIME_MONO_BIN}' include='*.dll' overwrite='${true}'
+    @{
+        FixShFiles(RUNTIME_MONO_BIN);
+    }
+    
+    -// Copy built projects to the appropriate locations
+
+    @{
+        var dnxCore50Pattern = Path.Combine(BUILD_DIR2, "*", "dnxcore50", "**.*");
+        var dnx451Pattern = Path.Combine(BUILD_DIR2, "*", "dnx451", "**.*");
+
+        var libPackages = new[] { "Microsoft.Framework.Project",
+                                  "Microsoft.Framework.PackageManager", 
+                                  "Microsoft.Framework.DesignTimeHost" };
+
+        var sharedSourceAssemblies = new [] { 
+            Path.Combine(BUILD_DIR2, "Microsoft.Framework.CommandLineUtils/**/*.*"), 
+            Path.Combine(BUILD_DIR2, "Microsoft.Framework.Runtime.Common/**/*.*"),
+        };
+        
+        foreach (var file in Files.Include(dnxCore50Pattern).Exclude(sharedSourceAssemblies))
+        {
+            foreach (var runtimeTarget in RUNTIME_TARGETS.Where(t => t.Flavor == "coreclr"))
             {
-                File.Copy(mfriPath, Path.Combine(target.TargetFolder, "Microsoft.Framework.Runtime.Interfaces.dll"), true);
+                string dest = Path.Combine(runtimeTarget.TargetFolder, Path.GetFileName(file));
+                File.Copy(file, dest, true);
             }
-            if(File.Exists(mfriPdbPath))
+        }
+        
+        foreach (var file in Files.Include(dnx451Pattern).Exclude(sharedSourceAssemblies))
+        {
+            foreach (var runtimeTarget in RUNTIME_TARGETS.Where(t => t.Flavor != "coreclr"))
             {
-                File.Copy(mfriPdbPath, Path.Combine(target.TargetFolder, "Microsoft.Framework.Runtime.Interfaces.pdb"), true);
+                string dest = Path.Combine(runtimeTarget.TargetFolder, Path.GetFileName(file));
+                File.Copy(file, dest, true);
+            }
+        }
+
+        // Clean up net45.managed from mono (it's never used)
+        File.Delete(Path.Combine(RUNTIME_MONO_BIN, BOOTSTRAPPER_CLR_MANAGED_NAME + ".dll"));
+
+        Action<string, string, string> move = (binFolder, name, extension) =>
+        {
+            var libPath = Path.Combine(binFolder, "lib", name);
+            var source = Path.Combine(binFolder, name + extension);
+            var target = Path.Combine(libPath, name + extension);
+            
+            if (File.Exists(source))
+            {
+                if (File.Exists(target))
+                {
+                    File.Delete(target);
+                }
+                
+                Directory.CreateDirectory(libPath);
+                File.Move(source, target);
+
+                Log.Info("Moving " + name + " to " + target);
+            }
+            else
+            {
+                Log.Warn(source + " does not exist in " + binFolder);
+            }
+        };
+        
+        // Move some packages into the lib/ folder
+        foreach (var libPackage in libPackages)
+        {
+            foreach (var runtimeTarget in RUNTIME_TARGETS)
+            {
+                move(runtimeTarget.TargetFolder, libPackage, ".dll");
+                if (!IsMono)
+                {
+                    move(runtimeTarget.TargetFolder, libPackage, ".pdb");
+                }
             }
         }
     }
 
-#nuget-pack-runtime
+#copy-windows-bits target='package-windows'
+    -// Runtime for clr-win-x86
+    copy sourceDir='${Path.Combine(BUILD_DIR2, BOOTSTRAPPER_EXE_NAME, "bin", "Win32", Configuration2, "dnx451")}' outputDir='${RUNTIME_CLR_WIN_x86_BIN}' include='*.exe' overwrite='${true}'
+    copy sourceDir='${Path.Combine(BUILD_DIR2, BOOTSTRAPPER_CLR_NAME, "bin", "Win32", Configuration2)}' outputDir='${RUNTIME_CLR_WIN_x86_BIN}' include='*.dll' overwrite='${true}'
+    copy sourceDir='${Path.Combine(BUILD_DIR2, BOOTSTRAPPER_CLR_NAME, "bin", "Win32", Configuration2)}' outputDir='${RUNTIME_CLR_WIN_x86_BIN}' include='*.pdb' overwrite='${true}'
+    copy sourceDir='${Path.Combine(ROOT, "src", BOOTSTRAPPER_CLR_MANAGED_NAME)}' outputDir='${RUNTIME_CLR_WIN_x86_BIN}' include='*.config' overwrite='${true}'
+
+    -// Runtime for clr-win-x64
+    copy sourceDir='${Path.Combine(BUILD_DIR2, BOOTSTRAPPER_EXE_NAME, "bin", "x64", Configuration2, "dnx451")}' outputDir='${RUNTIME_CLR_WIN_x64_BIN}' include='*.exe' overwrite='${true}'
+    copy sourceDir='${Path.Combine(BUILD_DIR2, BOOTSTRAPPER_CLR_NAME, "bin", "x64", Configuration2)}' outputDir='${RUNTIME_CLR_WIN_x64_BIN}' include='*.dll' overwrite='${true}'
+    copy sourceDir='${Path.Combine(BUILD_DIR2, BOOTSTRAPPER_CLR_NAME, "bin", "x64", Configuration2)}' outputDir='${RUNTIME_CLR_WIN_x64_BIN}' include='*.pdb' overwrite='${true}'
+    copy sourceDir='${Path.Combine(ROOT, "src", BOOTSTRAPPER_CLR_MANAGED_NAME)}' outputDir='${RUNTIME_CLR_WIN_x64_BIN}' include='*.config' overwrite='${true}'
+
+    -// Runtime for coreclr-win-x86
+    copy sourceDir='${Path.Combine(BUILD_DIR2, BOOTSTRAPPER_EXE_NAME, "bin", "Win32", Configuration2, "dnxcore50")}' outputDir='${RUNTIME_CORECLR_WIN_x86_BIN}' include='*.exe' overwrite='${true}'
+    copy sourceDir='${Path.Combine(BUILD_DIR2, BOOTSTRAPPER_CORECLR_NAME, "bin", "Win32", Configuration2)}' outputDir='${RUNTIME_CORECLR_WIN_x86_BIN}' include='*.dll' overwrite='${true}'
+    copy sourceDir='${Path.Combine(BUILD_DIR2, BOOTSTRAPPER_CORECLR_NAME, "bin", "Win32", Configuration2)}' outputDir='${RUNTIME_CORECLR_WIN_x86_BIN}' include='*.pdb' overwrite='${true}'
+
+    -// Runtime for coreclr-win-x64
+    copy sourceDir='${Path.Combine(BUILD_DIR2, BOOTSTRAPPER_EXE_NAME, "bin", "x64", Configuration2, "dnxcore50")}' outputDir='${RUNTIME_CORECLR_WIN_x64_BIN}' include='*.exe' overwrite='${true}'
+    copy sourceDir='${Path.Combine(BUILD_DIR2, BOOTSTRAPPER_CORECLR_NAME, "bin", "x64", Configuration2)}' outputDir='${RUNTIME_CORECLR_WIN_x64_BIN}' include='*.dll' overwrite='${true}'
+    copy sourceDir='${Path.Combine(BUILD_DIR2, BOOTSTRAPPER_CORECLR_NAME, "bin", "x64", Configuration2)}' outputDir='${RUNTIME_CORECLR_WIN_x64_BIN}' include='*.pdb' overwrite='${true}'
+
+    -// Copy cmd files
+    copy sourceDir='${SCRIPTS_DIR}' include='*.cmd' exclude='k-crossgen.cmd' overwrite='${true}' each='var outputDir in new[]{ RUNTIME_CLR_WIN_x86_BIN, RUNTIME_CLR_WIN_x64_BIN}'
+    copy sourceDir='${SCRIPTS_DIR}' include='*.cmd' overwrite='${true}' each='var outputDir in new[]{ RUNTIME_CORECLR_WIN_x86_BIN, RUNTIME_CORECLR_WIN_x64_BIN }'
+
+#copy-linux-bits target='package-linux'
+    copy sourceDir='${Path.Combine(BUILD_DIR2, BOOTSTRAPPER_CORECLR_NAME + ".unix")}' include='*.so' outputDir='${RUNTIME_CORECLR_LINUX_x64_BIN}' overwrite='${true}'
+    copy sourceDir='${Path.Combine(BUILD_DIR2, BOOTSTRAPPER_EXE_NAME, "bin", "linux", "x64")}' include='dnx' outputDir='${RUNTIME_CORECLR_LINUX_x64_BIN}' overwrite='${true}'
+    copy sourceDir='${SCRIPTS_DIR}' include='dnu.sh' outputDir='${RUNTIME_CORECLR_LINUX_x64_BIN}' overwrite='${true}'
     @{
-        UpdateAllNuspecs(NUSPEC_ROOT, BUILD_DIR2);
+        FixShFiles(RUNTIME_CORECLR_LINUX_x64_BIN);
+    }
+
+#copy-darwin-bits target='package-darwin'
+    copy sourceDir='${Path.Combine(BUILD_DIR2, BOOTSTRAPPER_CORECLR_NAME + ".unix")}' include='*.dylib' outputDir='${RUNTIME_CORECLR_DARWIN_x64_BIN}' overwrite='${true}'
+    copy sourceDir='${SCRIPTS_DIR}' include='dnu.sh' outputDir='${RUNTIME_CORECLR_DARWIN_x64_BIN}' overwrite='${true}'
+    @{
+        FixShFiles(RUNTIME_CORECLR_DARWIN_x64_BIN);
+    }
+
+#nuget-pack-runtime target='package'
+    @{
+        UpdateAllNuspecs(RUNTIME_TARGETS, NUSPEC_ROOT, BUILD_DIR2);
     }
     nuget-pack packageVersion='${FULL_VERSION}' outputDir='${BUILD_DIR2}' extra='-NoPackageAnalysis -Properties RuntimeNamePrefix=${RUNTIME_NAME_PREFIX}' nugetPath='.nuget/nuget.exe' each='var nuspecFile in Files.Include(Path.Combine(BUILD_DIR2, "*.nuspec"))'
 
-#dev-install
+- // ===================== TESTING ===================== 
+
+#test-package target='integration-test'
+    - // We want to run functional tests on both CLR flavors (wrt the RUNTIME_TARGETS)
+    - // We want to separate function tests from unit tests
     @{
-        InstallDevRuntime(RUNTIME_MONO_BIN);
-        
-        if (!IsMono)
+        var binPaths = new Dictionary<string, string>();
+
+        // Unzip all runtime targets
+        foreach (var target in RUNTIME_TARGETS)
         {
-            InstallDevRuntime(RUNTIME_CLR_WIN_x86_BIN);
-            InstallDevRuntime(RUNTIME_CLR_WIN_x64_BIN);
-            InstallDevRuntime(RUNTIME_CORECLR_WIN_x86_BIN);
-            InstallDevRuntime(RUNTIME_CORECLR_WIN_x64_BIN);
+            var nupkgPath = Files.Include(Path.Combine(BUILD_DIR2, target.Name + ".*.nupkg")).Single();
+            // This is bizzare because it needs to be predictable for the functional tests
+            // Each runtime must exist in it's own unique root
+            var unpackagePath = Path.Combine(ARTIFACTS_DIR, "test", target.Name, "runtimes", Path.GetFileNameWithoutExtension(nupkgPath));
+            var binPath = Path.Combine(unpackagePath, "bin");
+
+            Log.Info("Unpacking " + nupkgPath + " to " + unpackagePath);
+
+            binPaths[target.Name] = binPath;
+
+            // Nuke any previously installed package
+            if (Directory.Exists(unpackagePath)) 
+            {
+                Directory.Delete(Path.GetDirectoryName(unpackagePath), recursive:true);
+            }
+
+            Directory.CreateDirectory(unpackagePath);
+
+            if (IsMono)
+            {
+                // System.IO.Compression gives weird errors on mono to do with invalid dates
+                // we're going to use unzip instead
+                Exec("unzip", nupkgPath + " -d " + unpackagePath);
+                Exec("chmod", "+x " + Path.Combine(binPath, "dnx"));
+                Exec("chmod", "+x " + Path.Combine(binPath, "dnu"));
+            }
+            else
+            {
+                System.IO.Compression.ZipFile.ExtractToDirectory(
+                    nupkgPath,
+                    unpackagePath);
+            }
+        }
+
+        // Group by operation system since we only want to run unit tests on a single bitness
+        // any = [dnx-mono]
+        // win = [dnx-clr-win-x86, dnx-clr-win-x64, dnx-coreclr-win-x86, dnx-coreclr-win-x64]
+        // darwin = [dnx-coreclr-darwin-x64]
+        // linux = [dnx-coreclr-linux-x64]
+        foreach (var group in RUNTIME_TARGETS.GroupBy(t => t.OS))
+        {
+            // TODO: Port unit tests to CoreCLR
+            
+            // Group by architecture since we only care about a single one for unit tests
+            // any
+            // any = [dnx-mono]
+
+            // win
+            
+            // x86 = [dnx-clr-win-x86, dnx-coreclr-win-x86]
+            // x64 = [dnx-clr-win-x64, dnx-coreclr-win-x64]
+
+            // linux
+            // x64 = [dnx-coreclr-linux-x64]
+
+            // darwin
+            // x64 [dnx-coreclr-darwin-x64]
+
+            foreach (var target in group.GroupBy(t => t.Arch).First())
+            {
+                // Skip mono if we're not running on mono
+                if (!IsMono && target.Flavor == "mono")
+                {
+                    continue;
+                }
+
+                // TODO: Port tests to CoreCLR
+                if (target.Flavor == "coreclr")
+                {
+                    Log.Warn("Skipping unit tests on " + target.Name);
+                    continue;
+                }
+
+                var envPath = Environment.GetEnvironmentVariable("PATH");
+                var binPath = binPaths[target.Name];
+
+                try
+                {
+                    // We want to run unit tests against all runtime targets
+                    Environment.SetEnvironmentVariable("PATH", binPath + Path.PathSeparator + envPath);
+                    Log.Info("Adding " + binPath + " to the PATH");
+
+                    foreach(var projectFile in Files.Include("test/*.Tests/project.json"))
+                    {
+                        KTest(projectFile);
+                    }
+                }
+                finally
+                {
+                    Environment.SetEnvironmentVariable("PATH", envPath);
+                }
+            }
         }
     }
-    
-#install-runtime target='install'
-    var matchVersion=''
-    for each='var name in new[]{ RUNTIME_CLR_WIN_x86_NAME, RUNTIME_CORECLR_WIN_x86_NAME, RUNTIME_CLR_WIN_x64_NAME, RUNTIME_CORECLR_WIN_x64_NAME }'
-        for each='var runtime in Files.Include(Path.Combine(BUILD_DIR2, name + ".*.nupkg"))'
-            exec program='cmd' commandline='/C dnvm install ${runtime}' if='!IsMono'
-            var parts='${Path.GetFileNameWithoutExtension(runtime).Split(".".ToArray(), 2)}'
-            set matchVersion='${parts[1]}' if='matchVersion == ""'
 
-    exec program='cmd' commandline='/C dnvm alias build ${matchVersion}' if='!IsMono && matchVersion != ""' 
-    exec program='cmd' commandline='/C start cmd /K dnvm use build' if='!IsMono && matchVersion != ""' 
+    -// Doesn't matter what runtime we run the functional tests on as they do their own unzipping
+    k-test each='var projectFile in Files.Include("test/*.FunctionalTests/project.json")'
 
-#update-tpa
+- // ===================== SHARED UTILITIES ===================== 
+
+#update-tpa .copy-coreclr
     @{
         var envTrace = Environment.GetEnvironmentVariable("DNX_TRACE");
 
@@ -668,14 +743,25 @@ var RC_FILES = '${FindAllFiles("Resource.rc", BOOTSTRAPPER_EXE_NAME, BOOTSTRAPPE
             var tpacppFileUnix = Path.Combine(ROOT, "src", BOOTSTRAPPER_CORECLR_NAME + ".unix", "tpa.cpp");
             var runtimeCandidates = new[] {
                 Path.Combine(CORECLR_TARGET_PATH, "Runtime", "win", "x86"),
-                Path.Combine(CORECLR_TARGET_PATH, "Runtime", "x86") // Legacy
             };
             
             Environment.SetEnvironmentVariable("DNX_TRACE", "0");
-            Exec("cmd", string.Format(@"/C dnu list {0} --assemblies --runtime {1} > {2}",
-                Path.Combine(ROOT, "src", BOOTSTRAPPER_HOST_NAME),
-                runtimeCandidates.First(Directory.Exists),
-                dotnetcoreclrDepFile ));
+
+            if (IsMono)
+            {
+                var args = string.Format(@"list {0} --assemblies --runtime {1}",
+                                        Path.Combine(ROOT, "src", BOOTSTRAPPER_HOST_NAME), 
+                                        runtimeCandidates.First(Directory.Exists));
+
+                ExecuteAndRedirectOutput("dnu", args, dotnetcoreclrDepFile);
+            }
+            else
+            {
+                var args = string.Format(@"/C dnu list {0} --assemblies --runtime {1}",
+                                        Path.Combine(ROOT, "src", BOOTSTRAPPER_HOST_NAME),
+                                        runtimeCandidates.First(Directory.Exists));
+                ExecuteAndRedirectOutput("cmd", args, dotnetcoreclrDepFile);
+            }
 
             var tpaProjects = new[] {
                 BOOTSTRAPPER_HOST_NAME,
@@ -693,128 +779,97 @@ var RC_FILES = '${FindAllFiles("Resource.rc", BOOTSTRAPPER_EXE_NAME, BOOTSTRAPPE
         }
     }
   
-macro name='NuGetInstall' Package='string' OutputDir='string' Extra='string'
-    nuget-install package='${Package}' outputDir='${OutputDir}' extra='${Extra}' nugetPath='.nuget/nuget.exe'
 
-functions @{
 
-    private static readonly string _defaultLocalRuntimeHomeDir = ".dnx";
-    private static readonly string _packagesSubDir = "packages";
-    private static readonly string _runtimesSubDir = "runtimes";
-
-    int ExecuteAndRedirectOutput(string command, string argument, string outputFile)
-    {
-        var procStartInfo = new ProcessStartInfo 
-        {
-            FileName = command, 
-            Arguments = argument, 
-            WorkingDirectory = Directory.GetCurrentDirectory(),
-            UseShellExecute = false
-        };
-        procStartInfo.EnvironmentVariables["DNX_TRACE"] = "0";
-        procStartInfo.RedirectStandardOutput = true;
-
-        var process = Process.Start(procStartInfo);
-        var content = process.StandardOutput.ReadToEnd();
-        process.WaitForExit();
-
-        File.WriteAllText(outputFile, content);
-
-        return process.ExitCode;
+#ensure-clang
+    @{
+        // TODO: Check for clang 3.5 on the path
     }
 
-    HashSet<string> ListDependencyAssemblies(string projectFolder, string framework, string coreclrFolder = null)
-    {
-        var tmpFile = Path.GetTempFileName();
-        var argument = string.Format("list {0} --framework {1} --assemblies", projectFolder, framework);
-
-        if (coreclrFolder != null)
-        {
-            argument += (" --runtime " + coreclrFolder);
-        }
-
-        int result;
-        if (!IsMono)
-        {
-            result = ExecuteAndRedirectOutput("cmd", string.Format("/C dnu {0}", argument), tmpFile);
-        }
-        else 
-        {
-            result = ExecuteAndRedirectOutput("dnu", argument, tmpFile);
-        }
-
-        if (result != 0)
-        {
-            throw new InvalidOperationException(string.Format("Return value for the command listing assemblies for project under {0} is not zero ({1}).", projectFolder, result));
-        }
-
-        try
-        {
-            return new HashSet<string>(File.ReadAllLines(tmpFile).Where(l => File.Exists(l)));
-        }
-        catch (Exception ex)
-        {
-            throw new InvalidOperationException(string.Format("Unexpected exception thrown while parsing assemblies list for project under {0}. ({1})", projectFolder, ex.Message));
-        }
-    }
-
-    string FindPackageDirectory(string name)
-    {
-        var packagesDir = Environment.GetEnvironmentVariable("DNX_PACKAGES");
-
-        if (string.IsNullOrEmpty(packagesDir))
-        {
-            var profileDirectory = Environment.GetEnvironmentVariable("USERPROFILE");
-
-            if (string.IsNullOrEmpty(profileDirectory))
-            {
-                profileDirectory = Environment.GetEnvironmentVariable("HOME");
-            }
-
-            packagesDir = Path.Combine(profileDirectory, _defaultLocalRuntimeHomeDir, _packagesSubDir);
-        }
-        
-        var packageMetadataDir = Path.Combine(packagesDir, name);
-        
-        if (!Directory.Exists(packageMetadataDir))
-        {
-            return null;
-        }
-        
-        return Directory.GetDirectories(packageMetadataDir)
-                        .OrderByDescending(d => d)
-                        .FirstOrDefault();
-    }
-    
-    bool IsMsbuildInstalled(string msBuildPath)
-    {
-        if (!File.Exists(msBuildPath))
+#ensure-msbuild
+    @{
+        if (!File.Exists(MSBUILD))
         {
             Log.Warn("msbuild version 14 not found. Please ensure you have the VS 2015 C++ SDK installed.");
-            return false;
+            Environment.Exit(1);
         }
-    
-        return true;
     }
 
-    string[] FindAllProjects(params string[] folders)
-    {
-      return FindAllFiles("project.json", folders);
-    }
-
-    string[] FindAllFiles(string fileName, params string[] folders)
-    {
-      return folders.Select(folder => Path.Combine("src", folder)) 
-                    .Where(folder => Directory.Exists(folder)) 
-                    .SelectMany(folder => Directory.GetFiles(folder, fileName, SearchOption.AllDirectories)) 
-                    .ToArray();
-    }
-
-    void UpdateAllNuspecs(string sourcePath, string outputPath)
-    {
-        var sourceFiles = Directory.GetFiles(sourcePath, "*.nuspec");
-        foreach (var nuspecFile in sourceFiles)
+#dev-install
+    @{
+        foreach (var target in RUNTIME_TARGETS)
         {
+            InstallDevRuntime(target.TargetFolder);
+        }
+    }
+
+macro name='KTest' projectFile='string'
+    k-test
+ 
+
+functions @{
+    private static readonly string _defaultLocalRuntimeHomeDir = ".dnx";
+    private static readonly string _runtimesSubDir = "runtimes";
+
+    bool CanBuildForLinux
+    {
+        get 
+        {
+            return string.Equals(Uname(), "Linux");
+        }
+    }
+    
+    bool CanBuildForDarwin
+    {
+        get 
+        {
+            return string.Equals(Uname(), "Darwin");
+        }
+    }
+
+    bool CanBuildForWindows
+    {
+        get 
+        {
+            var p = (int)Environment.OSVersion.Platform;
+            return (p != 4) && (p != 6) && (p != 128);
+        }
+    }
+
+    bool IsTravis 
+    {
+        get
+        {
+            var travis = Environment.GetEnvironmentVariable("TRAVIS");
+            return string.Equals(travis, "true");
+        }
+    }
+
+    public string Uname()
+    {    
+        string uname;
+        ExecuteAndRedirectOutput("uname", "", out uname);
+        return string.IsNullOrEmpty(uname) ? null : uname.Trim();
+    }
+
+    public void Clang(string args)
+    {
+        if (IsTravis)
+        {
+            Exec("clang++", args);
+        }
+        else
+        {
+            Exec("clang++-3.5", args);
+        }
+    }
+
+    void UpdateAllNuspecs(List<RuntimeTarget> targets, string sourcePath, string outputPath)
+    {
+        foreach (var target in targets)
+        {
+            var nuspecFile = Path.Combine(sourcePath, target.Name + ".nuspec");
+
             XDocument xdoc;
             using (var fs = File.OpenRead(nuspecFile))
             {
@@ -906,6 +961,102 @@ functions @{
         Exec(versionManagerProgram, versionManagerProgramArgs);
     }
 
+    void FixShFiles(string directory)
+    {
+        // Rename all .sh files to remove the sh
+        foreach (var shFile in Files.Include(Path.Combine(directory, "*.sh")))
+        {
+            var targetShFile = Path.Combine(Path.GetDirectoryName(shFile), 
+                                            Path.GetFileNameWithoutExtension(shFile));
+            if (File.Exists(targetShFile))
+            {
+                File.Delete(targetShFile);
+            }
+
+            // Make sure new lines are \n (\r\n messes up the bash script)
+            var script = File.ReadAllText(shFile).Replace('\r\n', '\n');
+            File.Move(shFile, targetShFile);
+            File.WriteAllText(targetShFile, script);
+        }
+    }
+
+    int ExecuteAndRedirectOutput(string command, string argument, out string content)
+    {
+        var procStartInfo = new ProcessStartInfo 
+        {
+            FileName = command, 
+            Arguments = argument, 
+            WorkingDirectory = Directory.GetCurrentDirectory(),
+            UseShellExecute = false
+        };
+        procStartInfo.EnvironmentVariables["DNX_TRACE"] = "0";
+        procStartInfo.RedirectStandardOutput = true;
+
+        var process = Process.Start(procStartInfo);
+        content = process.StandardOutput.ReadToEnd();
+        process.WaitForExit();
+
+        return process.ExitCode;
+    }
+
+    int ExecuteAndRedirectOutput(string command, string argument, string outputFile)
+    {
+        string content;
+        int exitCode = ExecuteAndRedirectOutput(command, argument, out content);
+
+        File.WriteAllText(outputFile, content);
+
+        return exitCode;
+    }
+
+    HashSet<string> ListDependencyAssemblies(string projectFolder, string framework, string coreclrFolder = null)
+    {
+        var tmpFile = Path.GetTempFileName();
+        var argument = string.Format("list {0} --framework {1} --assemblies", projectFolder, framework);
+
+        if (coreclrFolder != null)
+        {
+            argument += (" --runtime " + coreclrFolder);
+        }
+
+        int result;
+        if (!IsMono)
+        {
+            result = ExecuteAndRedirectOutput("cmd", string.Format("/C dnu {0}", argument), tmpFile);
+        }
+        else 
+        {
+            result = ExecuteAndRedirectOutput("dnu", argument, tmpFile);
+        }
+
+        if (result != 0)
+        {
+            throw new InvalidOperationException(string.Format("Return value for the command listing assemblies for project under {0} is not zero ({1}). Results are in temp file {2}.", projectFolder, result, tmpFile));
+        }
+
+        try
+        {
+            return new HashSet<string>(File.ReadAllLines(tmpFile).Where(l => File.Exists(l)));
+        }
+        catch (Exception ex)
+        {
+            throw new InvalidOperationException(string.Format("Unexpected exception thrown while parsing assemblies list for project under {0}. ({1})", projectFolder, ex.Message));
+        }
+    }
+
+    string[] FindAllProjects(params string[] folders)
+    {
+      return FindAllFiles("project.json", folders);
+    }
+
+    string[] FindAllFiles(string fileName, params string[] folders)
+    {
+      return folders.Select(folder => Path.Combine("src", folder)) 
+                    .Where(folder => Directory.Exists(folder)) 
+                    .SelectMany(folder => Directory.GetFiles(folder, fileName, SearchOption.AllDirectories)) 
+                    .ToArray();
+    }
+
     void UpdateTpa(string input, string[] assemblies, string output)
     {
         var tpa = File.ReadAllLines(input)
@@ -965,4 +1116,14 @@ functions @{
 
         File.WriteAllLines(output, content);
     }
-} 
+
+    public class RuntimeTarget
+    {
+        public string Name { get; set; }
+        public string TargetFolder { get; set; }
+        public string Framework { get; set; }
+        public string Arch { get; set; }
+        public string OS { get; set; }
+        public string Flavor { get; set; }
+    }
+}

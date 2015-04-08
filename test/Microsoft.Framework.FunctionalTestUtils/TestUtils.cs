@@ -24,7 +24,7 @@ namespace Microsoft.Framework.FunctionalTestUtils
         {
             string stdOut;
             string stdErr;
-            int code = Exec(program,  commandLine, out stdOut, out stdErr);
+            int code = Exec(program, commandLine, out stdOut, out stdErr);
             if (code != 0)
             {
                 throw new InvalidOperationException($"{program} returned exit code {code}.\n{stdErr}");
@@ -73,15 +73,35 @@ namespace Microsoft.Framework.FunctionalTestUtils
             return Path.Combine(kRuntimeRoot, "artifacts", "build");
         }
 
+        public static string GetTestArtifactsFolder()
+        {
+            var kRuntimeRoot = ProjectResolver.ResolveRootDirectory(Directory.GetCurrentDirectory());
+            return Path.Combine(kRuntimeRoot, "artifacts", "test");
+        }
+
+
         public static DisposableDir GetRuntimeHomeDir(string flavor, string os, string architecture)
         {
+            // The build script creates an unzipped image that can be reused
+            var testArtifactDir = GetTestArtifactsFolder();
+            var runtimeName = GetRuntimeName(flavor, os, architecture);
+            var runtimeHomePath = Path.Combine(testArtifactDir, runtimeName);
+            var runtimePath = Path.Combine(runtimeHomePath, "runtimes");
+
+            if (Directory.Exists(runtimePath))
+            {
+                // Don't dispose this because it's shared across all functional tests
+                return new DisposableDir(runtimeHomePath, deleteOnDispose: false);
+            }
+
+            // We're running an individual tests
             var buildArtifactDir = GetBuildArtifactsFolder();
             var runtimeNupkg = Directory.GetFiles(
                 buildArtifactDir,
                 GetRuntimeFilePattern(flavor, os, architecture),
-                SearchOption.TopDirectoryOnly) .First();
-            var runtimeHomePath = CreateTempDir();
-            var runtimeName = Path.GetFileNameWithoutExtension(runtimeNupkg);
+                SearchOption.TopDirectoryOnly).First();
+            runtimeHomePath = CreateTempDir();
+            runtimeName = Path.GetFileNameWithoutExtension(runtimeNupkg);
             var runtimeRoot = Path.Combine(runtimeHomePath, "runtimes", runtimeName);
 
             if (!PlatformHelper.IsMono)
@@ -235,15 +255,20 @@ namespace Microsoft.Framework.FunctionalTestUtils
             }
         }
 
-        private static string GetRuntimeFilePattern(string flavor, string os, string architecture)
+        private static string GetRuntimeName(string flavor, string os, string architecture)
         {
             // Mono ignores os and architecture
             if (string.Equals(flavor, "mono", StringComparison.OrdinalIgnoreCase))
             {
-                return string.Format("{0}mono.*.nupkg", Constants.RuntimeNamePrefix, flavor);
+                return string.Format("{0}mono", Constants.RuntimeNamePrefix);
             }
 
-            return string.Format("{0}{1}-{2}-{3}.*.nupkg", Constants.RuntimeNamePrefix, flavor, os, architecture);
+            return string.Format("{0}{1}-{2}-{3}", Constants.RuntimeNamePrefix, flavor, os, architecture);
+        }
+
+        private static string GetRuntimeFilePattern(string flavor, string os, string architecture)
+        {
+            return GetRuntimeName(flavor, os, architecture) + ".*.nupkg";
         }
 
         private static bool IsWindows()
