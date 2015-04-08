@@ -5,7 +5,7 @@
 #include "dnx.h"
 #include "pal.h"
 
-bool LastIndexOfCharInPath(LPCTSTR const pszStr, TCHAR c, size_t* pIndex)
+bool LastIndexOfCharInPath(LPCTSTR pszStr, TCHAR c, size_t* pIndex)
 {
     size_t nIndex = _tcsnlen(pszStr, MAX_PATH) - 1;
     for (; nIndex != 0; nIndex--)
@@ -20,12 +20,12 @@ bool LastIndexOfCharInPath(LPCTSTR const pszStr, TCHAR c, size_t* pIndex)
     return pszStr[nIndex] == c;
 }
 
-bool StringsEqual(LPCTSTR const pszStrA, LPCTSTR const pszStrB)
+bool StringsEqual(LPCTSTR pszStrA, LPCTSTR pszStrB)
 {
     return ::_tcsicmp(pszStrA, pszStrB) == 0;
 }
 
-bool PathEndsWith(LPCTSTR const pszStr, LPCTSTR const pszSuffix)
+bool PathEndsWith(LPCTSTR pszStr, LPCTSTR pszSuffix)
 {
     size_t nStrLen = _tcsnlen(pszStr, MAX_PATH);
     size_t nSuffixLen = _tcsnlen(pszSuffix, MAX_PATH);
@@ -40,7 +40,7 @@ bool PathEndsWith(LPCTSTR const pszStr, LPCTSTR const pszSuffix)
     return ::_tcsnicmp(pszStr + nOffset, pszSuffix, MAX_PATH - nOffset) == 0;
 }
 
-bool LastPathSeparatorIndex(LPCTSTR const pszPath, size_t* pIndex)
+bool LastPathSeparatorIndex(LPCTSTR pszPath, size_t* pIndex)
 {
     size_t nLastSlashIndex;
     size_t nLastBackSlashIndex;
@@ -63,7 +63,7 @@ bool LastPathSeparatorIndex(LPCTSTR const pszPath, size_t* pIndex)
     return true;
 }
 
-void GetParentDir(LPCTSTR const pszPath, LPTSTR const pszParentDir)
+void GetParentDir(LPCTSTR pszPath, LPTSTR pszParentDir)
 {
     size_t nLastSeparatorIndex;
     if (!LastPathSeparatorIndex(pszPath, &nLastSeparatorIndex))
@@ -76,7 +76,7 @@ void GetParentDir(LPCTSTR const pszPath, LPTSTR const pszParentDir)
     pszParentDir[nLastSeparatorIndex + 1] = _T('\0');
 }
 
-void GetFileName(LPCTSTR const pszPath, LPTSTR const pszFileName)
+void GetFileName(LPCTSTR pszPath, LPTSTR pszFileName)
 {
     size_t nLastSeparatorIndex;
 
@@ -228,23 +228,10 @@ bool ExpandCommandLineArguments(int nArgc, LPTSTR* ppszArgv, int& nExpandedArgc,
 
 int CallApplicationProcessMain(int argc, LPTSTR argv[])
 {
-    HRESULT hr = S_OK;
-
-    bool m_fVerboseTrace = IsTracingEnabled();
-
-    bool fSuccess = true;
-    HMODULE m_hHostModule = nullptr;
-#if CORECLR_WIN
-    LPCTSTR pwzHostModuleName = _T("dnx.coreclr.dll");
-#elif CORECLR_UNIX
-    LPCTSTR pwzHostModuleName = _T("dnx.coreclr.so");
-#else
-    LPCTSTR pwzHostModuleName = _T("dnx.clr.dll");
-#endif
+    bool fVerboseTrace = IsTracingEnabled();
 
     // Note: need to keep as ASCII as GetProcAddress function takes ASCII params
     LPCSTR pszCallApplicationMainName = "CallApplicationMain";
-    FnCallApplicationMain pfnCallApplicationMain = nullptr;
     int exitCode = 0;
 
     TCHAR szCurrentDirectory[MAX_PATH];
@@ -304,58 +291,61 @@ int CallApplicationProcessMain(int argc, LPTSTR argv[])
 
     data.applicationBase = szFullAppBase;
 
-    m_hHostModule = LoadNativeHost(pwzHostModuleName);
-    if (!m_hHostModule)
+#if CORECLR_WIN
+    LPCTSTR pwzHostModuleName = _T("dnx.coreclr.dll");
+#elif CORECLR_UNIX
+    LPCTSTR pwzHostModuleName = _T("dnx.coreclr.so");
+#else
+    LPCTSTR pwzHostModuleName = _T("dnx.clr.dll");
+#endif
+
+    HMODULE hostModule = LoadNativeHost(pwzHostModuleName);
+    if (!hostModule)
     {
-        if (m_fVerboseTrace)
+        if (fVerboseTrace)
+        {
             ::_tprintf_s(_T("Failed to load: %s\r\n"), pwzHostModuleName);
-        m_hHostModule = nullptr;
+        }
+
+        hostModule = nullptr;
         goto Finished;
     }
-    if (m_fVerboseTrace)
-        ::_tprintf_s(_T("Loaded Module: %s\r\n"), pwzHostModuleName);
 
-    pfnCallApplicationMain = (FnCallApplicationMain)GetEntryPointFromHost(m_hHostModule, pszCallApplicationMainName);
+    if (fVerboseTrace)
+    {
+        ::_tprintf_s(_T("Loaded Module: %s\r\n"), pwzHostModuleName);
+    }
+
+    auto pfnCallApplicationMain = (FnCallApplicationMain)GetEntryPointFromHost(hostModule, pszCallApplicationMainName);
     if (!pfnCallApplicationMain)
     {
-        if (m_fVerboseTrace)
+        if (fVerboseTrace)
+        {
             ::_tprintf_s(_T("Failed to find function %S in %s\n"), pszCallApplicationMainName, pwzHostModuleName);
-        fSuccess = false;
+        }
         goto Finished;
     }
-    if (m_fVerboseTrace)
-        printf_s("Found DLL Export: %s\r\n", pszCallApplicationMainName);
 
-    hr = pfnCallApplicationMain(&data);
+    if (fVerboseTrace)
+    {
+        printf_s("Found DLL Export: %s\r\n", pszCallApplicationMainName);
+    }
+
+    HRESULT hr = pfnCallApplicationMain(&data);
     if (SUCCEEDED(hr))
     {
-        fSuccess = true;
         exitCode = data.exitcode;
     }
     else
     {
-        fSuccess = false;
         exitCode = hr;
     }
 
 Finished:
-    if (pfnCallApplicationMain)
-    {
-        pfnCallApplicationMain = nullptr;
-    }
 
-    if (m_hHostModule)
+    if (hostModule)
     {
-        if (FreeNativeHost(m_hHostModule))
-        {
-            fSuccess = true;
-        }
-        else
-        {
-            fSuccess = false;
-        }
-
-        m_hHostModule = nullptr;
+        FreeNativeHost(hostModule);
     }
 
     if (bExpanded)
