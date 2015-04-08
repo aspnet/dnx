@@ -49,7 +49,7 @@ namespace Microsoft.Framework.Runtime.Roslyn
         public int EndColumn => _mappedLineSpan.EndLinePosition.Character;
 
         /// <inheritdoc />
-        public int EndLine => _mappedLineSpan.EndLinePosition.Line;
+        public int EndLine => _mappedLineSpan.EndLinePosition.Line + 1;
 
         /// <inheritdoc />
         public string Message => _diagnostic.GetMessage();
@@ -61,7 +61,7 @@ namespace Microsoft.Framework.Runtime.Roslyn
         public int StartColumn => _mappedLineSpan.StartLinePosition.Character;
 
         /// <inheritdoc />
-        public int StartLine => _mappedLineSpan.StartLinePosition.Line;
+        public int StartLine => _mappedLineSpan.StartLinePosition.Line + 1;
 
         /// <inheritdoc />
         public override string ToString()
