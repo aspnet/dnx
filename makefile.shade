@@ -841,7 +841,7 @@ functions @{
         get
         {
             var travis = Environment.GetEnvironmentVariable("TRAVIS");
-            return string.Equals(travis, "TRUE");
+            return string.Equals(travis, "true");
         }
     }
 
