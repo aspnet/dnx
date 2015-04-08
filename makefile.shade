@@ -836,6 +836,7 @@ functions @{
         get
         {
             var travis = Environment.GetEnvironmentVariable("TRAVIS");
+            Log.Info("TRAVIS = " + travis);
             return string.Equals(travis, "true");
         }
     }
@@ -849,6 +850,8 @@ functions @{
 
     public void Clang(string args)
     {
+        Log.Info("using Travis ci? " + IsTravis);
+
         if (IsTravis)
         {
             Exec("clang", args);
