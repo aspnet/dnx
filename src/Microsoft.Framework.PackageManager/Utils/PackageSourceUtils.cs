@@ -7,7 +7,8 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Framework.PackageManager.Restore.NuGet;
 using Microsoft.Framework.Runtime;
-using NuGet;
+using NuGet.Configuration;
+using VersionUtility = NuGet.VersionUtility;
 
 namespace Microsoft.Framework.PackageManager
 {

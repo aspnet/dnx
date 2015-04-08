@@ -145,7 +145,7 @@ namespace Microsoft.Framework.PackageManager
                 var settings = SettingsUtils.ReadSettings(
                     rootDirectory,
                     RestoreCommand.NuGetConfigFile,
-                    RestoreCommand.FileSystem,
+                    RestoreCommand.RootDirectory,
                     RestoreCommand.MachineWideSettings);
 
                 var sourceProvier = PackageSourceBuilder.CreateSourceProvider(settings);

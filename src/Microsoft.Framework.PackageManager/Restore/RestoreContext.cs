@@ -2,10 +2,10 @@
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 using System.Collections.Generic;
-using System.Runtime.Versioning;
 using System.Threading.Tasks;
 using Microsoft.Framework.Runtime;
 using Microsoft.Framework.PackageManager.Restore.RuntimeModel;
+using NuGet.Frameworks;
 
 namespace Microsoft.Framework.PackageManager
 {
@@ -16,7 +16,7 @@ namespace Microsoft.Framework.PackageManager
             FindLibraryCache = new Dictionary<LibraryRange, Task<GraphItem>>();
         }
 
-        public FrameworkName FrameworkName { get; set; }
+        public NuGetFramework FrameworkName { get; set; }
 
         public string RuntimeName { get; set; }
         public IList<RuntimeSpec> RuntimeSpecs { get; set; }

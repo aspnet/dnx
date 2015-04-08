@@ -10,7 +10,9 @@
         "Microsoft.Framework.Runtime.Interfaces": "1.0.0-*",
         "NuGet.Configuration": "3.0.0-*",
         "NuGet.Packaging": "3.0.0-*",
-        "NuGet.Repositories": "3.0.0-*"
+        "NuGet.Repositories": "3.0.0-*",
+        "NuGet.DependencyResolver": "3.0.0-*",
+        "NuGet.ProjectModel": "3.0.0-*"
     },
     "compile": "..\\Microsoft.Framework.ApplicationHost\\Impl\\**\\*.cs",
 

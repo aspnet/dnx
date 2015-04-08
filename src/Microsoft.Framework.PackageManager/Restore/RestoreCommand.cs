@@ -19,8 +19,13 @@ using Microsoft.Framework.Runtime.DependencyManagement;
 using Microsoft.Framework.PackageManager.Restore.RuntimeModel;
 using Microsoft.Framework.PackageManager.NuGetUtils;
 using NuGet.Configuration;
+using NuGet.Frameworks;
 using NuGet.Packaging;
+using NuGet.ProjectModel;
 using NuGet.Repositories;
+using NuGetDependencyResolver = NuGet.DependencyResolver.NuGetDependencyResolver;
+using LockFileFormat = NuGet.ProjectModel.LockFileFormat;
+using LockFile = NuGet.ProjectModel.LockFile;
 
 namespace Microsoft.Framework.PackageManager
 {
@@ -88,7 +93,7 @@ namespace Microsoft.Framework.PackageManager
 
                 if (string.IsNullOrEmpty(packagesDirectory))
                 {
-                    packagesDirectory = NuGetDependencyResolver.ResolveRepositoryPath(rootDirectory);
+                    packagesDirectory = NuGetRepositoryUtils.ResolveRepositoryPath(rootDirectory);
                 }
 
                 var packagesFolderFileSystem = CreateFileSystem(packagesDirectory);
@@ -205,8 +210,8 @@ namespace Microsoft.Framework.PackageManager
             }
 
             var projectDirectory = project.ProjectDirectory;
-            var projectResolver = new ProjectResolver(projectDirectory, rootDirectory);
-            var packageRepository = new NuGetv3LocalRepository(packagesDirectory, checkPackageIdCase: false);
+            var packageSpecResolver = new PackageSpecResolver(projectDirectory, rootDirectory);
+            var v3LocalRepository = new NuGetv3LocalRepository(packagesDirectory, checkPackageIdCase: false);
             var restoreOperations = new RestoreOperations(Reports.Verbose);
             var projectProviders = new List<IWalkProvider>();
             var localProviders = new List<IWalkProvider>();
@@ -215,12 +220,12 @@ namespace Microsoft.Framework.PackageManager
 
             projectProviders.Add(
                 new LocalWalkProvider(
-                    new ProjectReferenceDependencyProvider(
-                        projectResolver)));
+                    new PackageSpecReferenceDependencyProvider(
+                        packageSpecResolver)));
 
             localProviders.Add(
                 new LocalWalkProvider(
-                    new NuGetDependencyResolver(packageRepository)));
+                    new NuGetDependencyResolver(v3LocalRepository)));
 
             var effectiveSources = PackageSourceUtils.GetEffectivePackageSources(
                 SourceProvider,
@@ -237,7 +242,7 @@ namespace Microsoft.Framework.PackageManager
 
                 var context = new RestoreContext
                 {
-                    FrameworkName = ApplicationEnvironment.RuntimeFramework,
+                    FrameworkName = ApplicationEnvironment.RuntimeFramework.ToNuGetFramework(),
                     ProjectLibraryProviders = projectProviders,
                     LocalLibraryProviders = localProviders,
                     RemoteLibraryProviders = remoteProviders,
@@ -267,7 +272,7 @@ namespace Microsoft.Framework.PackageManager
                 {
                     var context = new RestoreContext
                     {
-                        FrameworkName = configuration.FrameworkName,
+                        FrameworkName = configuration.FrameworkName.ToNuGetFramework(),
                         ProjectLibraryProviders = projectProviders,
                         LocalLibraryProviders = localProviders,
                         RemoteLibraryProviders = remoteProviders,
@@ -279,7 +284,7 @@ namespace Microsoft.Framework.PackageManager
                 {
                     contexts.Add(new RestoreContext
                     {
-                        FrameworkName = ApplicationEnvironment.RuntimeFramework,
+                        FrameworkName =  ApplicationEnvironment.RuntimeFramework.ToNuGetFramework(),
                         ProjectLibraryProviders = projectProviders,
                         LocalLibraryProviders = localProviders,
                         RemoteLibraryProviders = remoteProviders,
@@ -394,10 +399,10 @@ namespace Microsoft.Framework.PackageManager
                     return;
                 }
 
-                if (!string.Equals(node.Item.Match.Library.Name, node.LibraryRange.Name, StringComparison.Ordinal))
+                if (!string.Equals(node.Item.Match.Library.Identity.Name, node.LibraryRange.Name, StringComparison.Ordinal))
                 {
                     // Fix casing of the library name to be installed
-                    node.Item.Match.Library.Name = node.LibraryRange.Name;
+                    node.Item.Match.Library.Identity.Name = node.LibraryRange.Name;
                 }
 
                 var isRemote = remoteProviders.Contains(node.Item.Match.Provider);
@@ -422,13 +427,14 @@ namespace Microsoft.Framework.PackageManager
                 Reports.Information.WriteLine(string.Format("Writing lock file {0}", projectLockFilePath.White().Bold()));
 
                 // Collect target frameworks
-                var frameworks = new HashSet<FrameworkName>();
+                var frameworks = new HashSet<NuGetFramework>();
                 foreach (var item in graphItems)
                 {
-                    Runtime.Project dependencyProject;
-                    if (projectProviders.Contains(item.Match.Provider) && projectResolver.TryResolveProject(item.Match.Library.Name, out dependencyProject))
+                    PackageSpec dependencyProject;
+                    if (projectProviders.Contains(item.Match.Provider) &&
+                        packageSpecResolver.TryResolvePackageSpec(item.Match.Library.Identity.Name, out dependencyProject))
                     {
-                        frameworks.AddRange(dependencyProject.GetTargetFrameworks().Select(t => t.FrameworkName));
+                        frameworks.AddRange(dependencyProject.TargetFrameworks.Select(t => t.FrameworkName));
                     }
                 }
 
@@ -674,7 +680,7 @@ namespace Microsoft.Framework.PackageManager
         }
 
         private void WriteLockFile(string projectLockFilePath, Runtime.Project project, List<GraphItem> graphItems,
-            PackageRepository repository, IEnumerable<FrameworkName> frameworks)
+            NuGetv3LocalRepository repository, IEnumerable<FrameworkName> frameworks)
         {
             var lockFile = new LockFile();
             lockFile.Islocked = Lock;

@@ -7,10 +7,11 @@ using System.IO;
 using System.Runtime.Versioning;
 using System.Threading.Tasks;
 using Microsoft.Framework.Runtime;
-using Microsoft.Framework.Runtime.DependencyManagement;
-using NuGet;
 using Microsoft.Framework.PackageManager.Restore.RuntimeModel;
-using System.Linq;
+using NuGet.Frameworks;
+using IDependencyProvider = NuGet.DependencyResolver.IDependencyProvider;
+using LibraryRange = NuGet.LibraryModel.LibraryRange;
+using LibraryDependency = NuGet.LibraryModel.LibraryDependency;
 
 namespace Microsoft.Framework.PackageManager
 {
@@ -25,7 +26,7 @@ namespace Microsoft.Framework.PackageManager
 
         public bool IsHttp { get; private set; }
 
-        public Task<WalkProviderMatch> FindLibrary(LibraryRange libraryRange, FrameworkName targetFramework)
+        public Task<WalkProviderMatch> FindLibrary(LibraryRange libraryRange, NuGetFramework targetFramework)
         {
             var description = _dependencyProvider.GetDescription(libraryRange, targetFramework);
 
@@ -36,28 +37,28 @@ namespace Microsoft.Framework.PackageManager
 
             return Task.FromResult(new WalkProviderMatch
             {
-                Library = description.Identity,
+                Library = description,
                 Path = description.Path,
                 Provider = this,
             });
         }
 
-        public Task<IEnumerable<LibraryDependency>> GetDependencies(WalkProviderMatch match, FrameworkName targetFramework)
+        public Task<IEnumerable<LibraryDependency>> GetDependencies(WalkProviderMatch match, NuGetFramework targetFramework)
         {
-            var description = _dependencyProvider.GetDescription(match.Library, targetFramework);
+            var description = _dependencyProvider.GetDescription(match.Library.LibraryRange, targetFramework);
 
             return Task.FromResult(description.Dependencies);
         }
 
-        public Task<RuntimeFile> GetRuntimes(WalkProviderMatch match, FrameworkName targetFramework)
+        public Task<RuntimeFile> GetRuntimes(WalkProviderMatch match, NuGetFramework targetFramework)
         {
             foreach(var path in _dependencyProvider.GetAttemptedPaths(targetFramework))
             {
                 var runtimeJsonPath = path
                     .Replace("{name}.nuspec", "runtime.json")
                     .Replace("project.json", "runtime.json")
-                    .Replace("{name}", match.Library.Name)
-                    .Replace("{version}", match.Library.Version.ToString());
+                    .Replace("{name}", match.Library.Identity.Name)
+                    .Replace("{version}", match.Library.Identity.Version.ToString());
 
                 // Console.WriteLine("*** {0}", runtimeJsonPath);
                 if (File.Exists(runtimeJsonPath))
