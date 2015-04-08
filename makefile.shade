@@ -846,10 +846,17 @@ functions @{
     }
 
     public string Uname()
-    {    
-        string uname;
-        ExecuteAndRedirectOutput("uname", "", out uname);
-        return string.IsNullOrEmpty(uname) ? null : uname.Trim();
+    {
+        try
+        {
+            string uname;
+            ExecuteAndRedirectOutput("uname", "", out uname);
+            return string.IsNullOrEmpty(uname) ? null : uname.Trim();
+        }
+        catch 
+        {
+            return null;
+        }
     }
 
     public void Clang(string args)
