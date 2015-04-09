@@ -15,7 +15,6 @@ using System.Threading.Tasks;
 using Microsoft.Framework.PackageManager.Publish;
 using Microsoft.Framework.PackageManager.Utils;
 using Microsoft.Framework.Runtime;
-using Microsoft.Framework.Runtime.DependencyManagement;
 using Microsoft.Framework.PackageManager.Restore.RuntimeModel;
 using Microsoft.Framework.PackageManager.NuGetUtils;
 using NuGet.Configuration;
@@ -175,13 +174,6 @@ namespace Microsoft.Framework.PackageManager
             var projectFolder = Path.GetDirectoryName(projectJsonPath);
             var projectLockFilePath = Path.Combine(projectFolder, LockFileFormat.LockFileName);
 
-            Runtime.Project project;
-            if (!Runtime.Project.TryGetProject(projectJsonPath, out project))
-            {
-                throw new Exception("TODO: project.json parse error");
-            }
-
-            // TODO: PackageSpec.FromProject(project)
             PackageSpec packageSpec;
             using (var stream = File.OpenRead(projectJsonPath))
             {
@@ -214,14 +206,14 @@ namespace Microsoft.Framework.PackageManager
                 return null;
             };
 
-            if (!ScriptExecutor.Execute(project, "prerestore", getVariable))
+            if (!ScriptExecutor.Execute(packageSpec, "prerestore", getVariable))
             {
                 ErrorMessages.GetOrAdd("prerestore", _ => new List<string>()).Add(ScriptExecutor.ErrorMessage);
                 Reports.Error.WriteLine(ScriptExecutor.ErrorMessage);
                 return false;
             }
 
-            var projectDirectory = project.ProjectDirectory;
+            var projectDirectory = packageSpec.BaseDirectory;
             var packageSpecResolver = new PackageSpecResolver(projectDirectory, rootDirectory);
             var v3LocalRepository = new NuGetv3LocalRepository(packagesDirectory, checkPackageIdCase: false);
             var restoreOperations = new RestoreOperations(Reports.Verbose);
@@ -278,11 +270,11 @@ namespace Microsoft.Framework.PackageManager
             }
             else
             {
-                foreach (var configuration in project.GetTargetFrameworks())
+                foreach (var configuration in packageSpec.TargetFrameworks)
                 {
                     var context = new RestoreContext
                     {
-                        FrameworkName = configuration.FrameworkName.ToNuGetFramework(),
+                        FrameworkName = configuration.FrameworkName,
                         ProjectLibraryProviders = projectProviders,
                         LocalLibraryProviders = localProviders,
                         RemoteLibraryProviders = remoteProviders,
@@ -305,8 +297,8 @@ namespace Microsoft.Framework.PackageManager
                 {
                     var projectLibrary = new LibraryRange
                     {
-                        Name = project.Name,
-                        VersionRange = new SemanticVersionRange(project.Version)
+                        Name = packageSpec.Name,
+                        VersionRange = new VersionRange(packageSpec.Version)
                     };
 
                     tasks.Add(restoreOperations.CreateGraphNode(context, projectLibrary, _ => true));
@@ -361,8 +353,8 @@ namespace Microsoft.Framework.PackageManager
                             };
                             var projectLibrary = new LibraryRange
                             {
-                                Name = project.Name,
-                                VersionRange = new SemanticVersionRange(project.Version)
+                                Name = packageSpec.Name,
+                                VersionRange = new VersionRange(packageSpec.Version)
                             };
                             Reports.Information.WriteLine(string.Format("Graph for {0} on {1}", runtimeContext.FrameworkName, runtimeContext.RuntimeName));
                             runtimeTasks.Add(restoreOperations.CreateGraphNode(runtimeContext, projectLibrary, _ => true));
@@ -394,7 +386,7 @@ namespace Microsoft.Framework.PackageManager
 
                 if (node.Item == null || node.Item.Match == null)
                 {
-                    if (!node.LibraryRange.IsGacOrFrameworkReference &&
+                    if (node.LibraryRange.TypeConstraint != LibraryTypes.Reference &&
                          node.LibraryRange.VersionRange != null &&
                          missingItems.Add(node.LibraryRange))
                     {
@@ -430,7 +422,7 @@ namespace Microsoft.Framework.PackageManager
                 }
             });
 
-            await InstallPackages(installItems, packagesDirectory, packageFilter: (library, nupkgSHA) => true);
+            await InstallPackages(installItems, packagesDirectory);
 
             if (!useLockFile)
             {
@@ -448,17 +440,18 @@ namespace Microsoft.Framework.PackageManager
                     }
                 }
 
-                WriteLockFile(projectLockFilePath, project, graphItems, new NuGetv3LocalRepository(packagesDirectory), frameworks);
+                WriteLockFile(projectLockFilePath, packageSpec, graphItems,
+                    new NuGetv3LocalRepository(packagesDirectory, checkPackageIdCase: false), frameworks);
             }
 
-            if (!ScriptExecutor.Execute(project, "postrestore", getVariable))
+            if (!ScriptExecutor.Execute(packageSpec, "postrestore", getVariable))
             {
                 ErrorMessages.GetOrAdd("postrestore", _ => new List<string>()).Add(ScriptExecutor.ErrorMessage);
                 Reports.Error.WriteLine(ScriptExecutor.ErrorMessage);
                 return false;
             }
 
-            if (!ScriptExecutor.Execute(project, "prepare", getVariable))
+            if (!ScriptExecutor.Execute(packageSpec, "prepare", getVariable))
             {
                 ErrorMessages.GetOrAdd("prepare", _ => new List<string>()).Add(ScriptExecutor.ErrorMessage);
                 Reports.Error.WriteLine(ScriptExecutor.ErrorMessage);
@@ -536,8 +529,8 @@ namespace Microsoft.Framework.PackageManager
                         if (lib != null)
                         {
                             tracker.Track(
-                                lib.Name,
-                                lib.Version);
+                                lib.Identity.Name,
+                                lib.Identity.Version);
                         }
                     }
                     return node.Disposition != GraphNode.DispositionType.Rejected;
@@ -557,14 +550,14 @@ namespace Microsoft.Framework.PackageManager
                         return state;
                     }
 
-                    if (state == "Walking" && tracker.IsDisputed(node.Item.Match.Library.Name))
+                    if (state == "Walking" && tracker.IsDisputed(node.Item.Match.Library.Identity.Name))
                     {
                         return "Disputed";
                     }
 
                     if (state == "Disputed")
                     {
-                        tracker.MarkAmbiguous(node.Item.Match.Library.Name);
+                        tracker.MarkAmbiguous(node.Item.Match.Library.Identity.Name);
                     }
 
                     return state;
@@ -575,7 +568,7 @@ namespace Microsoft.Framework.PackageManager
                 {
                     if (!state ||
                         node.Disposition == GraphNode.DispositionType.Rejected ||
-                        tracker.IsAmbiguous(node?.Item?.Match?.Library?.Name))
+                        tracker.IsAmbiguous(node?.Item?.Match?.Library?.Identity.Name))
                     {
                         return false;
                     }
@@ -583,8 +576,8 @@ namespace Microsoft.Framework.PackageManager
                     if (node.Disposition == GraphNode.DispositionType.Acceptable)
                     {
                         var isBestVersion = tracker.IsBestVersion(
-                            node?.Item?.Match?.Library?.Name,
-                            node?.Item?.Match?.Library?.Version);
+                            node?.Item?.Match?.Library?.Identity.Name,
+                            node?.Item?.Match?.Library?.Identity.Version);
                         node.Disposition = isBestVersion ? GraphNode.DispositionType.Accepted : GraphNode.DispositionType.Rejected;
                     }
 
@@ -652,27 +645,16 @@ namespace Microsoft.Framework.PackageManager
             }
         }
 
-        private async Task InstallPackages(List<GraphItem> installItems, string packagesDirectory,
-            Func<Library, string, bool> packageFilter)
+        private async Task InstallPackages(List<GraphItem> installItems, string packagesDirectory)
         {
             using (var sha512 = SHA512.Create())
             {
                 foreach (var item in installItems)
                 {
-                    var library = item.Match.Library;
+                    var library = item.Match.Library.Identity;
 
                     var memStream = new MemoryStream();
                     await item.Match.Provider.CopyToAsync(item.Match, memStream);
-                    memStream.Seek(0, SeekOrigin.Begin);
-                    var nupkgSHA = Convert.ToBase64String(sha512.ComputeHash(memStream));
-
-                    bool shouldInstall = packageFilter(library, nupkgSHA);
-                    if (!shouldInstall)
-                    {
-                        continue;
-                    }
-
-                    Reports.Information.WriteLine("Installing {0} {1}", library.Name.Bold(), library.Version);
                     memStream.Seek(0, SeekOrigin.Begin);
                     await NuGetPackageUtils.InstallFromStream(memStream, library, packagesDirectory, sha512);
                 }
@@ -689,8 +671,8 @@ namespace Microsoft.Framework.PackageManager
             return Task.FromResult(lockFileFormat.Read(projectLockFilePath));
         }
 
-        private void WriteLockFile(string projectLockFilePath, Runtime.Project project, List<GraphItem> graphItems,
-            NuGetv3LocalRepository repository, IEnumerable<FrameworkName> frameworks)
+        private void WriteLockFile(string projectLockFilePath, PackageSpec packageSpec, List<GraphItem> graphItems,
+            NuGetv3LocalRepository repository, IEnumerable<NuGetFramework> frameworks)
         {
             var lockFile = new LockFile();
             lockFile.Islocked = Lock;
