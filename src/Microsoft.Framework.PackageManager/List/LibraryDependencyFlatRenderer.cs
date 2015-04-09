@@ -76,7 +76,7 @@ namespace Microsoft.Framework.PackageManager.List
 
             foreach (var description in descriptions)
             {
-                var libDisplay = (_listedProjects.Contains(description.Identity.Name) ? "*" : " ") + description.Identity.ToString();
+                var libDisplay = (_listedProjects.Contains(description.Identity.Name) ? "* " : "  ") + description.Identity.ToString();
 
                 if (description.Resolved)
                 {
