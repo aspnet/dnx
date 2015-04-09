@@ -89,7 +89,7 @@ namespace Microsoft.Framework.Runtime.FunctionalTests.ResourcesTests
             Project project = Project.GetProject(@"
 {
     ""namedResource"": {
-        ""thisIs.New.Resource"": ""../someresources/OtherResources.resx ""
+        ""thisIs.New.Resource"": ""../someresources/OtherResources.resx""
     }
 }",
                 "testproject",
