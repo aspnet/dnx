@@ -4,6 +4,7 @@
 #include "stdafx.h"
 #include "dnx.h"
 #include "pal.h"
+#include "utils.h"
 
 bool LastIndexOfCharInPath(LPCTSTR pszStr, TCHAR c, size_t* pIndex)
 {
@@ -226,10 +227,60 @@ bool ExpandCommandLineArguments(int nArgc, LPTSTR* ppszArgv, int& nExpandedArgc,
     return true;
 }
 
-int CallApplicationProcessMain(int argc, LPTSTR argv[])
+dnx::char_t* GetAppBaseParameterValue(int argc, dnx::char_t* argv[])
 {
-    HRESULT hr = S_OK;
-    HMODULE m_hHostModule = nullptr;
+    for (int i = 0; i < argc; ++i)
+    {
+        if ((i < argc - 1) && StringsEqual(argv[i], _X("--appbase")))
+        {
+            return argv[i + 1];
+        }
+    }
+
+    return nullptr;
+}
+
+bool GetApplicationBase(const dnx::xstring_t& currentDirectory, int argc, dnx::char_t* argv[], /*out*/ dnx::char_t* fullAppBasePath)
+{
+    dnx::char_t buffer[MAX_PATH];
+    const dnx::char_t* appBase = GetAppBaseParameterValue(argc, argv);
+
+    // Note: We use application base from DNX_APPBASE environment variable only if --appbase
+    // did not exist. if neither --appBase nor DNX_APPBASE existed we use current directory
+    if (!appBase)
+    {
+        appBase = GetAppBasePathFromEnvironment(buffer) ? buffer : currentDirectory.c_str();
+    }
+
+    // Prevent coreclr native bootstrapper from failing with relative appbase
+    return GetFullPath(appBase, fullAppBasePath) != 0;
+}
+
+int CallApplicationProcessMain(int argc, dnx::char_t* argv[], TraceWriter traceWriter)
+{
+    // Set the DNX_CONOSLE_HOST flag which will print exceptions to stderr instead of throwing
+    SetConsoleHost();
+
+    auto currentDirectory = GetNativeBootstrapperDirectory();
+
+    // Set the DEFAULT_LIB environment variable to be the same directory as the exe
+    SetEnvironmentVariable(_T("DNX_DEFAULT_LIB"), currentDirectory.c_str());
+
+    CALL_APPLICATION_MAIN_DATA data = { 0 };
+    data.argc = argc;
+    data.argv = const_cast<const dnx::char_t**>(argv);
+
+    dnx::char_t appBaseBuffer[MAX_PATH];
+    if (!GetApplicationBase(currentDirectory, argc, argv, appBaseBuffer))
+    {
+        return 1;
+    }
+
+    data.applicationBase = appBaseBuffer;
+
+    try
+    {
+        dnx::char_t* hostModuleName =
 #if CORECLR_WIN
 #if ONECORE
         LPCTSTR pwzHostModuleName = _T("dnx.onecore.coreclr.dll");
@@ -243,128 +294,15 @@ int CallApplicationProcessMain(int argc, LPTSTR argv[])
 #else
     LPCTSTR pwzHostModuleName = _T("dnx.clr.dll");
 #endif
-    bool fVerboseTrace = IsTracingEnabled();
 
-    // Note: need to keep as ASCII as GetProcAddress function takes ASCII params
-    LPCSTR pszCallApplicationMainName = "CallApplicationMain";
-    int exitCode = 0;
-
-    LPTSTR szCurrentDirectory = GetNativeBootstrapperDirectory();
-
-    // Set the DEFAULT_LIB environment variable to be the same directory
-    // as the exe
-    SetEnvironmentVariable(_T("DNX_DEFAULT_LIB"), szCurrentDirectory);
-
-    // Set the DNX_CONOSLE_HOST flag which will print exceptions
-    // to stderr instead of throwing
-    SetConsoleHost();
-
-    CALL_APPLICATION_MAIN_DATA data = { 0 };
-    int nExpandedArgc = -1;
-    LPTSTR* ppszExpandedArgv = nullptr;
-    bool bExpanded = ExpandCommandLineArguments(argc - 1, &(argv[1]), nExpandedArgc, ppszExpandedArgv);
-    if (bExpanded)
-    {
-        data.argc = nExpandedArgc;
-        data.argv = const_cast<LPCTSTR*>(ppszExpandedArgv);
+        // Note: need to keep as ASCII as GetProcAddress function takes ASCII params
+        return CallApplicationMain(hostModuleName, "CallApplicationMain", &data, traceWriter);
     }
-    else
+    catch (const std::exception& ex)
     {
-        data.argc = argc - 1;
-        data.argv = const_cast<LPCTSTR*>(&argv[1]);
+        xout << dnx::utils::to_xstring_t(ex.what()) << std::endl;
+        return 1;
     }
-
-    // Get application base from DNX_APPBASE environment variable
-    // Note: this value can be overriden by --appbase option
-    TCHAR szAppBase[MAX_PATH];
-    if (GetAppBasePathFromEnvironment(szAppBase))
-    {
-        data.applicationBase = szAppBase;
-    }
-
-    for (int i = 0; i < data.argc; ++i)
-    {
-        if ((i < data.argc - 1) && StringsEqual(data.argv[i], _T("--appbase")))
-        {
-            data.applicationBase = data.argv[i + 1];
-        }
-    }
-
-    if (!data.applicationBase)
-    {
-        data.applicationBase = szCurrentDirectory;
-    }
-
-    // Prevent coreclr native bootstrapper from failing with relative appbase
-    TCHAR szFullAppBase[MAX_PATH];
-    if (!GetFullPath(data.applicationBase, szFullAppBase))
-    {
-        exitCode = 1;
-        goto Finished;
-    }
-
-    data.applicationBase = szFullAppBase;
-
-    HMODULE hostModule = LoadNativeHost(pwzHostModuleName);
-    if (!hostModule)
-    {
-        if (fVerboseTrace)
-        {
-            ::_tprintf_s(_T("Failed to load: %s\r\n"), pwzHostModuleName);
-        }
-
-        hostModule = nullptr;
-        goto Finished;
-    }
-
-    if (fVerboseTrace)
-    {
-        ::_tprintf_s(_T("Loaded Module: %s\r\n"), pwzHostModuleName);
-    }
-
-    auto pfnCallApplicationMain = (FnCallApplicationMain)GetEntryPointFromHost(hostModule, pszCallApplicationMainName);
-    if (!pfnCallApplicationMain)
-    {
-        if (fVerboseTrace)
-        {
-            ::_tprintf_s(_T("Failed to find function %S in %s\n"), pszCallApplicationMainName, pwzHostModuleName);
-        }
-        goto Finished;
-    }
-
-    if (fVerboseTrace)
-    {
-        printf_s("Found DLL Export: %s\r\n", pszCallApplicationMainName);
-    }
-
-    HRESULT hr = pfnCallApplicationMain(&data);
-    if (SUCCEEDED(hr))
-    {
-        exitCode = data.exitcode;
-    }
-    else
-    {
-        exitCode = hr;
-    }
-
-Finished:
-
-    if (hostModule)
-    {
-        FreeNativeHost(hostModule);
-    }
-
-    if (bExpanded)
-    {
-        FreeExpandedCommandLineArguments(nExpandedArgc, ppszExpandedArgv);
-    }
-
-    if (szCurrentDirectory)
-    {
-        delete [] szCurrentDirectory;
-    }
-
-    return exitCode;
 }
 
 #if PLATFORM_UNIX
@@ -377,22 +315,34 @@ extern "C" int __stdcall DnxMain(int argc, wchar_t* argv[])
     for (int i = 1; i < argc; ++i)
     {
         //anything without - or -- is appbase or non-dnx command
-        if (argv[i][0] != _T('-'))
+        if (argv[i][0] != _X('-'))
         {
             break;
         }
-        if (StringsEqual(argv[i], _T("--appbase")))
+        if (StringsEqual(argv[i], _X("--appbase")))
         {
             //skip path argument
             ++i;
             continue;
         }
-        if (StringsEqual(argv[i], _T("--debug")))
+        if (StringsEqual(argv[i], _X("--debug")))
         {
             WaitForDebuggerToAttach();
             break;
         }
     }
 
-    return CallApplicationProcessMain(argc, argv);
+    int nExpandedArgc = -1;
+    LPTSTR* ppszExpandedArgv = nullptr;
+    auto expanded = ExpandCommandLineArguments(argc - 1, &(argv[1]), nExpandedArgc, ppszExpandedArgv);
+
+    auto traceWriter = TraceWriter{ IsTracingEnabled() };
+    if (!expanded)
+    {
+        return CallApplicationProcessMain(argc - 1, &argv[1], traceWriter);
+    }
+
+    auto exitCode = CallApplicationProcessMain(nExpandedArgc, ppszExpandedArgv, traceWriter);
+    FreeExpandedCommandLineArguments(nExpandedArgc, ppszExpandedArgv);
+    return exitCode;
 }

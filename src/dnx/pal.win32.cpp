@@ -2,14 +2,19 @@
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 #include "stdafx.h"
+#include "dnx.h"
+#include "xplat.h"
+#include "TraceWriter.h"
+#include "utils.h"
+#include <sstream>
 
-LPTSTR GetNativeBootstrapperDirectory()
+std::wstring GetNativeBootstrapperDirectory()
 {
-    LPTSTR szPath = new TCHAR[MAX_PATH];
-    DWORD dirLength = GetModuleFileName(NULL, szPath, MAX_PATH);
-    for (dirLength--; dirLength >= 0 && szPath[dirLength] != _T('\\'); dirLength--);
-    szPath[dirLength + 1] = _T('\0');
-    return szPath;
+    wchar_t buffer[MAX_PATH];
+    DWORD dirLength = GetModuleFileName(NULL, buffer, MAX_PATH);
+    for (dirLength--; dirLength >= 0 && buffer[dirLength] != _T('\\'); dirLength--);
+    buffer[dirLength + 1] = _T('\0');
+    return std::wstring(buffer);
 }
 
 void WaitForDebuggerToAttach()
@@ -76,17 +81,43 @@ BOOL GetFullPath(LPCTSTR szPath, LPTSTR pszNormalizedPath)
     return TRUE;
 }
 
-HMODULE LoadNativeHost(LPCTSTR pszHostModuleName)
+int CallApplicationMain(const wchar_t* moduleName, const char* functionName, CALL_APPLICATION_MAIN_DATA* data, TraceWriter traceWriter)
 {
-    return LoadLibraryEx(pszHostModuleName, NULL, LOAD_LIBRARY_SEARCH_DEFAULT_DIRS);
-}
+    bool fVerboseTrace = true;
 
-BOOL FreeNativeHost(HMODULE hHost)
-{
-    return FreeLibrary(hHost);
-}
+    HMODULE hostModule;
+    try
+    {
+        hostModule = LoadLibraryEx(moduleName, NULL, LOAD_LIBRARY_SEARCH_DEFAULT_DIRS);
+        if (!hostModule)
+        {
+            throw std::runtime_error(std::string("Failed to load: ")
+                .append(dnx::utils::to_string(moduleName)));
+        }
 
-FARPROC GetEntryPointFromHost(HMODULE hHost, LPCSTR lpProcName)
-{
-    return GetProcAddress(hHost, lpProcName);
+        traceWriter.Write(std::wstring(L"Loaded module: ").append(moduleName), true);
+
+        auto pfnCallApplicationMain = (FnCallApplicationMain)GetProcAddress(hostModule, functionName);
+        if (!pfnCallApplicationMain)
+        {
+            std::ostringstream oss;
+            oss << "Failed to find export '" << functionName << "' in " << dnx::utils::to_string(moduleName);
+            throw std::runtime_error(oss.str());
+        }
+
+        traceWriter.Write(std::wstring(L"Found export: ").append(moduleName), true);
+
+        HRESULT hr = pfnCallApplicationMain(data);
+        FreeLibrary(hostModule);
+        return SUCCEEDED(hr) ? data->exitcode : hr;
+    }
+    catch (...)
+    {
+        if (hostModule)
+        {
+            FreeLibrary(hostModule);
+        }
+
+        throw;
+    }
 }

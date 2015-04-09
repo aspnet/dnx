@@ -11,5 +11,4 @@ typedef struct CALL_APPLICATION_MAIN_DATA
 } *PCALL_APPLICATION_MAIN_DATA;
 
 typedef HRESULT (STDAPICALLTYPE *FnCallApplicationMain)(
-    PCALL_APPLICATION_MAIN_DATA pCallApplicationMainData
-    );
+    PCALL_APPLICATION_MAIN_DATA pCallApplicationMainData);
