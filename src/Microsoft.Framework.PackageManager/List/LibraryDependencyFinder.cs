@@ -20,7 +20,7 @@ namespace Microsoft.Framework.PackageManager.List
             LibraryDescription root;
             if (!libDictionary.TryGetValue(new Library { Name = project.Name, Version = project.Version }, out root))
             {
-                throw new InvalidOperationException(string.Format("Fail to retrieve {0} of project {1} - {2}", typeof(LibraryDependency).Name, project.Name, project.Version));
+                throw new InvalidOperationException(string.Format("Failed to retrieve {0} of project {1} - {2}", typeof(LibraryDependency).Name, project.Name, project.Version));
             }
 
             // build a tree of LibraryDescriptions of the given project root
