@@ -3,9 +3,9 @@
 
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using Microsoft.Framework.Runtime;
 using Microsoft.Framework.PackageManager.Restore.RuntimeModel;
 using NuGet.Frameworks;
+using NuGet.LibraryModel;
 
 namespace Microsoft.Framework.PackageManager
 {

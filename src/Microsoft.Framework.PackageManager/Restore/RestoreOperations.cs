@@ -6,9 +6,9 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
-using Microsoft.Framework.Runtime;
-using NuGet;
 using Microsoft.Framework.PackageManager.Restore.RuntimeModel;
+using NuGet.LibraryModel;
+using NuGet.Versioning;
 
 namespace Microsoft.Framework.PackageManager
 {
@@ -35,7 +35,7 @@ namespace Microsoft.Framework.PackageManager
             if (node.Item != null)
             {
                 if (node.LibraryRange.VersionRange != null &&
-                    node.LibraryRange.VersionRange.VersionFloatBehavior != SemanticVersionFloatBehavior.None)
+                    node.LibraryRange.VersionRange.IsFloating)
                 {
                     lock (context.FindLibraryCache)
                     {
@@ -68,7 +68,7 @@ namespace Microsoft.Framework.PackageManager
                                             new LibraryRange
                                             {
                                                 Name = dependencyImplementation.Name,
-                                                VersionRange = VersionUtility.ParseVersionRange(dependencyImplementation.Version)
+                                                VersionRange = VersionRange.Parse(dependencyImplementation.Version)
                                             },
                                             ChainPredicate(predicate, node.Item, dependency)));
                                     }
@@ -94,7 +94,7 @@ namespace Microsoft.Framework.PackageManager
         {
             return name =>
             {
-                if (item.Match.Library.Name == name)
+                if (item.Match.Library.Identity.Name == name)
                 {
                     throw new Exception(string.Format("TODO: Circular dependency references not supported. Package '{0}'.", name));
                 }
@@ -157,12 +157,12 @@ namespace Microsoft.Framework.PackageManager
                 return null;
             }
 
-            if (libraryRange.IsGacOrFrameworkReference)
+            if (libraryRange.TypeConstraint == LibraryTypes.Reference)
             {
                 return null;
             }
 
-            if (libraryRange.VersionRange.VersionFloatBehavior != SemanticVersionFloatBehavior.None)
+            if (libraryRange.VersionRange.IsFloating)
             {
                 // For snapshot dependencies, get the version remotely first.
                 var remoteMatch = await FindLibraryByVersion(context, libraryRange, context.RemoteLibraryProviders);
@@ -181,10 +181,9 @@ namespace Microsoft.Framework.PackageManager
                     {
                         // We found a match locally and remotely, so pick the better version
                         // in relation to the specified version.
-                        if (VersionUtility.ShouldUseConsidering(
-                            current: remoteMatch.Library.Version,
-                            considering: localMatch.Library.Version,
-                            ideal: libraryRange.VersionRange))
+                        if (libraryRange.VersionRange.IsBetter(
+                            current: remoteMatch.Library.Identity.Version,
+                            considering: localMatch.Library.Identity.Version))
                         {
                             return localMatch;
                         }
@@ -192,11 +191,13 @@ namespace Microsoft.Framework.PackageManager
                         // The remote match is better
                     }
 
-                    // Try to see if the specific version found on the remote exists locally. This avoids any unnecessary
-                    // remote access incase we already have it in the cache/local packages folder.
-                    localMatch = await FindLibraryByVersion(context, remoteMatch.Library, context.LocalLibraryProviders);
+                    // Try to see if the specific version found on the remote exists locally. This avoids any
+                    // unnecessary remote access incase we already have it in the cache/local packages folder.
+                    localMatch = await FindLibraryByVersion(context, remoteMatch.Library.Identity,
+                        context.LocalLibraryProviders);
 
-                    if (localMatch != null && localMatch.Library.Version.Equals(remoteMatch.Library.Version))
+                    if (localMatch != null &&
+                        localMatch.Library.Identity.Version.Equals(remoteMatch.Library.Identity.Version))
                     {
                         // If we have a local match, and it matches the version *exactly* then use it.
                         return localMatch;
@@ -212,7 +213,8 @@ namespace Microsoft.Framework.PackageManager
                 // Check for the specific version locally.
                 var localMatch = await FindLibraryByVersion(context, libraryRange, context.LocalLibraryProviders);
 
-                if (localMatch != null && localMatch.Library.Version.Equals(libraryRange.VersionRange.MinVersion))
+                if (localMatch != null &&
+                    localMatch.Library.Identity.Version.Equals(libraryRange.VersionRange.MinVersion))
                 {
                     // We have an exact match so use it.
                     return localMatch;
@@ -226,17 +228,17 @@ namespace Microsoft.Framework.PackageManager
                 {
                     // There wasn't any local match for the specified version but there was a remote match.
                     // See if that version exists locally.
-                    localMatch = await FindLibraryByVersion(context, remoteMatch.Library, context.LocalLibraryProviders);
+                    localMatch = await FindLibraryByVersion(context, remoteMatch.Library.Identity,
+                        context.LocalLibraryProviders);
                 }
 
                 if (localMatch != null && remoteMatch != null)
                 {
                     // We found a match locally and remotely, so pick the better version
                     // in relation to the specified version.
-                    if (VersionUtility.ShouldUseConsidering(
-                        current: localMatch.Library.Version,
-                        considering: remoteMatch.Library.Version,
-                        ideal: libraryRange.VersionRange))
+                    if (libraryRange.VersionRange.IsBetter(
+                        current: localMatch.Library.Identity.Version,
+                        considering: remoteMatch.Library.Identity.Version))
                     {
                         return remoteMatch;
                     }
@@ -272,7 +274,7 @@ namespace Microsoft.Framework.PackageManager
 
         private async Task<WalkProviderMatch> FindLibraryByVersion(RestoreContext context, LibraryRange libraryRange, IEnumerable<IWalkProvider> providers)
         {
-            if (libraryRange.VersionRange.VersionFloatBehavior != SemanticVersionFloatBehavior.None)
+            if (libraryRange.VersionRange.IsFloating)
             {
                 // Don't optimize the non http path for floating versions or we'll miss things
                 return await FindLibrary(libraryRange, providers, provider => provider.FindLibrary(libraryRange, context.FrameworkName));
@@ -282,7 +284,7 @@ namespace Microsoft.Framework.PackageManager
             var nonHttpMatch = await FindLibrary(libraryRange, providers.Where(p => !p.IsHttp), provider => provider.FindLibrary(libraryRange, context.FrameworkName));
 
             // If we found an exact match then use it
-            if (nonHttpMatch != null && nonHttpMatch.Library.Version.Equals(libraryRange.VersionRange.MinVersion))
+            if (nonHttpMatch != null && nonHttpMatch.Library.Identity.Version.Equals(libraryRange.VersionRange.MinVersion))
             {
                 return nonHttpMatch;
             }
@@ -291,10 +293,9 @@ namespace Microsoft.Framework.PackageManager
             var httpMatch = await FindLibrary(libraryRange, providers.Where(p => p.IsHttp), provider => provider.FindLibrary(libraryRange, context.FrameworkName));
 
             // Pick the best match of the 2
-            if (VersionUtility.ShouldUseConsidering(
-                nonHttpMatch?.Library?.Version,
-                httpMatch?.Library.Version,
-                libraryRange.VersionRange))
+            if (libraryRange.VersionRange.IsBetter(
+                current: nonHttpMatch?.Library?.Identity.Version,
+                considering: httpMatch?.Library.Identity.Version))
             {
                 return httpMatch;
             }
@@ -317,10 +318,9 @@ namespace Microsoft.Framework.PackageManager
             var matches = await Task.WhenAll(tasks);
             foreach (var match in matches)
             {
-                if (VersionUtility.ShouldUseConsidering(
-                    current: bestMatch?.Library?.Version,
-                    considering: match?.Library?.Version,
-                    ideal: libraryRange.VersionRange))
+                if (libraryRange.VersionRange.IsBetter(
+                    current: bestMatch?.Library?.Identity.Version,
+                    considering: match?.Library?.Identity.Version))
                 {
                     bestMatch = match;
                 }

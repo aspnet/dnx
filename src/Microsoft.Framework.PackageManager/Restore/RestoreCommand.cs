@@ -24,9 +24,12 @@ using NuGet.LibraryModel;
 using NuGet.Packaging;
 using NuGet.ProjectModel;
 using NuGet.Repositories;
+using NuGet.Versioning;
 using NuGetDependencyResolver = NuGet.DependencyResolver.NuGetDependencyResolver;
 using LockFileFormat = NuGet.ProjectModel.LockFileFormat;
 using LockFile = NuGet.ProjectModel.LockFile;
+using ProjectFileDependencyGroup = NuGet.ProjectModel.ProjectFileDependencyGroup;
+using LibraryRange = NuGet.LibraryModel.LibraryRange;
 
 namespace Microsoft.Framework.PackageManager
 {
@@ -178,6 +181,14 @@ namespace Microsoft.Framework.PackageManager
                 throw new Exception("TODO: project.json parse error");
             }
 
+            // TODO: PackageSpec.FromProject(project)
+            PackageSpec packageSpec;
+            using (var stream = File.OpenRead(projectJsonPath))
+            {
+                packageSpec = JsonPackageSpecReader.GetPackageSpec(stream, name: null,
+                    packageSpecPath: projectJsonPath);
+            }
+
             var lockFile = await ReadLockFile(projectLockFilePath);
 
             var useLockFile = false;
@@ -189,7 +200,7 @@ namespace Microsoft.Framework.PackageManager
                 useLockFile = true;
             }
 
-            if (useLockFile && !lockFile.IsValidForProject(project))
+            if (useLockFile && !lockFile.IsValidForPackageSpec(packageSpec))
             {
                 // Exhibit the same behavior as if it has been run with "dnu restore --lock"
                 Reports.Information.WriteLine("Updating the invalid lock file with {0}",
@@ -256,13 +267,11 @@ namespace Microsoft.Framework.PackageManager
                     var projectLibrary = new LibraryRange
                     {
                         Name = lockFileLibrary.Name,
-                        VersionRange = new SemanticVersionRange
-                        {
-                            MinVersion = lockFileLibrary.Version,
-                            MaxVersion = lockFileLibrary.Version,
-                            IsMaxInclusive = true,
-                            VersionFloatBehavior = SemanticVersionFloatBehavior.None,
-                        }
+                        VersionRange = new VersionRange(
+                            minVersion: lockFileLibrary.Version,
+                            includeMinVersion: true,
+                            maxVersion: lockFileLibrary.Version,
+                            includeMaxVersion: true)
                     };
                     tasks.Add(restoreOperations.CreateGraphNode(context, projectLibrary, _ => false));
                 }
