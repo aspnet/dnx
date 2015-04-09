@@ -19,7 +19,7 @@ namespace Microsoft.Framework.PackageManager.List
         private readonly FrameworkName _framework;
         private readonly ApplicationHostContext _hostContext;
         private readonly string _runtimeFolder;
-        private readonly bool _hideDependents;
+        private readonly bool _showDetails;
         private readonly Reports _reports;
 
         private HashSet<string> _assemblyFilePaths;
@@ -30,13 +30,13 @@ namespace Microsoft.Framework.PackageManager.List
             FrameworkName framework,
             ApplicationHostContext hostContext,
             string runtimeFolder,
-            bool hideDependents,
+            bool showDetails,
             Reports reports)
         {
             _framework = framework;
             _hostContext = hostContext;
             _runtimeFolder = runtimeFolder;
-            _hideDependents = hideDependents;
+            _showDetails = showDetails;
             _reports = reports;
         }
 
@@ -55,7 +55,7 @@ namespace Microsoft.Framework.PackageManager.List
             foreach (var assemblyFilePath in _assemblyFilePaths.OrderBy(assemblyName => assemblyName))
             {
                 _reports.Information.WriteLine(assemblyFilePath);
-                if (!_hideDependents)
+                if (_showDetails)
                 {
                     var assemblyName = Path.GetFileNameWithoutExtension(assemblyFilePath);
 

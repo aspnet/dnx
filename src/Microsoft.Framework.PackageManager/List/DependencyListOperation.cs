@@ -40,7 +40,7 @@ namespace Microsoft.Framework.PackageManager.List
             var assemblyWalker = new AssemblyWalker(_framework,
                                                     _hostContext,
                                                     _options.RuntimeFolder,
-                                                    _options.HideDependents,
+                                                    _options.Details,
                                                     _options.Reports);
             assemblyWalker.Walk(root);
 
@@ -49,7 +49,7 @@ namespace Microsoft.Framework.PackageManager.List
 
         private void Render(IGraphNode<LibraryDescription> root)
         {
-            var renderer = new LibraryDependencyFlatRenderer(_options.HideDependents,
+            var renderer = new LibraryDependencyFlatRenderer(_options.Details,
                                                              _options.ResultsFilter,
                                                              _options.Project.Dependencies.Select(dep => dep.LibraryRange.Name));
             var content = renderer.GetRenderContent(root);

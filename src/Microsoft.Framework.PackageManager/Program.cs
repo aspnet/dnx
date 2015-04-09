@@ -6,13 +6,11 @@ using System.IO;
 using System.Net;
 using System.Reflection;
 using System.Threading;
-using Microsoft.Framework.PackageManager.Packages;
 using Microsoft.Framework.PackageManager.List;
+using Microsoft.Framework.PackageManager.Packages;
 using Microsoft.Framework.PackageManager.Publish;
 using Microsoft.Framework.Runtime;
 using Microsoft.Framework.Runtime.Common.CommandLine;
-using System.Linq;
-using System.Diagnostics;
 
 namespace Microsoft.Framework.PackageManager
 {
@@ -370,8 +368,8 @@ namespace Microsoft.Framework.PackageManager
                 var runtimeFolder = c.Option("--runtime <PATH>",
                     "The folder containing all available framework assemblies",
                     CommandOptionType.SingleValue);
-                var hideDependents = c.Option("--hide-dependents",
-                    "Hide the immediate dependents of libraries referenced in the project",
+                var details = c.Option("--details",
+                    "Show the details of how each dependency is introduced",
                     CommandOptionType.NoValue);
                 var resultsFilter = c.Option("--filter <PATTERN>",
                     "Filter the libraries referenced by the project base on their names. The matching pattern supports * and ?",
@@ -386,7 +384,7 @@ namespace Microsoft.Framework.PackageManager
                         TargetFrameworks = frameworks.Values,
                         ShowAssemblies = showAssemblies.HasValue(),
                         RuntimeFolder = runtimeFolder.Value(),
-                        HideDependents = hideDependents.HasValue(),
+                        Details = details.HasValue(),
                         ResultsFilter = resultsFilter.Value()
                     };
 

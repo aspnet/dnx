@@ -12,13 +12,13 @@ namespace Microsoft.Framework.PackageManager.List
 {
     public class LibraryDependencyFlatRenderer
     {
-        private readonly bool _hideDependent;
+        private readonly bool _showDetails;
         private readonly string _filterPattern;
         private readonly HashSet<string> _listedProjects;
 
-        public LibraryDependencyFlatRenderer(bool hideDependent, string filterPattern, IEnumerable<string> listedProjects)
+        public LibraryDependencyFlatRenderer(bool showDetails, string filterPattern, IEnumerable<string> listedProjects)
         {
-            _hideDependent = hideDependent;
+            _showDetails = showDetails;
             _filterPattern = filterPattern;
             _listedProjects = new HashSet<string>(listedProjects);
         }
@@ -87,7 +87,7 @@ namespace Microsoft.Framework.PackageManager.List
                     results.Add(string.Format("{0} - Unresolved", libDisplay).Red().Bold());
                 }
 
-                if (!_hideDependent)
+                if (_showDetails)
                 {
                     var dependents = string.Join(", ", dependenciesMap[description].Select(dep => dep.Identity.ToString()).OrderBy(name => name));
                     results.Add(string.Format("    -> {0}", dependents));

@@ -39,7 +39,7 @@ namespace Microsoft.Framework.PackageManager.List
 
         public IEnumerable<string> TargetFrameworks { get; set; }
 
-        public bool HideDependents { get; set; }
+        public bool Details { get; set; }
 
         public string ResultsFilter { get; set; }
 
