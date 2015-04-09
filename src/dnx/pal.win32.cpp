@@ -3,11 +3,13 @@
 
 #include "stdafx.h"
 
-void GetNativeBootstrapperDirectory(LPTSTR szPath)
+LPTSTR GetNativeBootstrapperDirectory()
 {
+    LPTSTR szPath = new TCHAR[MAX_PATH];
     DWORD dirLength = GetModuleFileName(NULL, szPath, MAX_PATH);
     for (dirLength--; dirLength >= 0 && szPath[dirLength] != _T('\\'); dirLength--);
     szPath[dirLength + 1] = _T('\0');
+    return szPath;
 }
 
 void WaitForDebuggerToAttach()

@@ -3,17 +3,14 @@
 
 #include "stdafx.h"
 #include <assert.h>
-#include <dlfcn.h>
+#include <libproc.h>
 
 LPTSTR GetNativeBootstrapperDirectory()
 {
-    LPTSTR szPath = new TCHAR[PATH_MAX + 1];
-    ssize_t ret = readlink("/proc/self/exe", szPath, PATH_MAX);
+    LPTSTR szPath = new TCHAR[PROC_PIDPATHINFO_MAXSIZE];
+    ssize_t ret = proc_pidpath(getpid(), szPath, PROC_PIDPATHINFO_MAXSIZE);
 
     assert(ret != -1);
-
-    // readlink does not null terminate the path
-    szPath[ret] = _T('\0');
 
     for (; ret > 0 && szPath[ret] != _T('/'); ret--);
     szPath[ret] = _T('\0');
@@ -23,5 +20,5 @@ LPTSTR GetNativeBootstrapperDirectory()
 
 void WaitForDebuggerToAttach()
 {
-    // TODO: Implement this.  procfs will be able to tell us this.
+    // TODO: Implement this.
 }

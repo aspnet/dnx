@@ -38,6 +38,30 @@ typedef HRESULT (*ExecuteAssemblyFunction)(
 const HRESULT S_OK = 0;
 const HRESULT E_FAIL = -1;
 
+#ifdef PLATFORM_DARWIN
+const LPCSTR LIBCORECLR_NAME = "libcoreclr.dylib";
+#else
+const LPCSTR LIBCORECLR_NAME = "libcoreclr.so";
+#endif
+
+std::string GetPathToBootstrapper()
+{
+#ifdef PLATFORM_DARWIN
+    char pathToBootstrapper[PROC_PIDPATHINFO_MAXSIZE];
+    ssize_t pathLen = proc_pidpath(getpid(), pathToBootstrapper, sizeof(pathToBootstrapper));
+#else
+    char pathToBootstrapper[PATH_MAX + 1];
+    ssize_t pathLen = readlink("/proc/self/exe", pathToBootstrapper, PATH_MAX);
+#endif
+    assert(pathLen > 0);
+
+    // ensure pathToBootstrapper is null terminated, readlink for example
+    // will not null terminate it.
+    pathToBootstrapper[pathLen] = '\0';
+
+    return std::string(pathToBootstrapper);
+}
+
 bool GetTrustedPlatformAssembliesList(const std::string& tpaDirectory, bool isNative, std::string& trustedPlatformAssemblies)
 {
     size_t cTpaAssemblyNames = 0;
@@ -82,7 +106,7 @@ void* LoadCoreClr(std::string& runtimeDirectory)
 
         std::string coreClrDllPath = runtimeDirectory;
         coreClrDllPath.append("/");
-        coreClrDllPath.append("libcoreclr.so");
+        coreClrDllPath.append(LIBCORECLR_NAME);
 
         ret = dlopen(coreClrDllPath.c_str(), RTLD_NOW | RTLD_GLOBAL);
     }
@@ -90,27 +114,20 @@ void* LoadCoreClr(std::string& runtimeDirectory)
     if (!ret)
     {
         // Try to load coreclr from application path.
-        char pathToBootstrapper[PATH_MAX];
-        ssize_t pathLen = readlink("/proc/self/exe", pathToBootstrapper, PATH_MAX - 1);
 
-        if (pathLen != -1)
-        {
-            pathToBootstrapper[pathLen] = '\0';
-            runtimeDirectory.assign(pathToBootstrapper);
+        runtimeDirectory = GetPathToBootstrapper();
 
-            size_t lastSlash = runtimeDirectory.rfind('/');
+        size_t lastSlash = runtimeDirectory.rfind('/');
 
-            if (lastSlash != std::string::npos)
-            {
-                runtimeDirectory.erase(lastSlash);
+        assert(lastSlash != std::string::npos);
 
-                std::string coreClrDllPath = runtimeDirectory;
-                coreClrDllPath.append("/");
-                coreClrDllPath.append("libcoreclr.so");
+        runtimeDirectory.erase(lastSlash);
 
-                ret = dlopen(coreClrDllPath.c_str(), RTLD_NOW | RTLD_GLOBAL);
-            }
-        }
+        std::string coreClrDllPath = runtimeDirectory;
+        coreClrDllPath.append("/");
+        coreClrDllPath.append(LIBCORECLR_NAME);
+
+        ret = dlopen(coreClrDllPath.c_str(), RTLD_NOW | RTLD_GLOBAL);
     }
 
     return ret;
@@ -145,7 +162,7 @@ extern "C" HRESULT CallApplicationMain(PCALL_APPLICATION_MAIN_DATA data)
     if (!coreClr)
     {
         char* error = dlerror();
-        fprintf(stderr, "failed to locate coreclr.so with error %s\n", error);
+        fprintf(stderr, "failed to locate libcoreclr with error %s\n", error);
         return E_FAIL;
     }
 
@@ -200,20 +217,11 @@ extern "C" HRESULT CallApplicationMain(PCALL_APPLICATION_MAIN_DATA data)
 
     std::string coreClrDllPath(coreClrDirectory);
     coreClrDllPath.append("/");
-    coreClrDllPath.append("libcoreclr.so");
+    coreClrDllPath.append(LIBCORECLR_NAME);
 
-    char pathToBootstrapper[PATH_MAX];
-    ssize_t pathLen = readlink("/proc/self/exe", pathToBootstrapper, PATH_MAX - 1);
+    std::string pathToBootstrapper = GetPathToBootstrapper();
 
-    if (pathLen == -1)
-    {
-        fprintf(stderr, "Could not locate full bootstrapper path.\n");
-        return E_FAIL;
-    }
-
-    pathToBootstrapper[pathLen] = '\0';
-
-    hr = executeAssembly(pathToBootstrapper,
+    hr = executeAssembly(pathToBootstrapper.c_str(),
                          coreClrDllPath.c_str(),
                          "dnx.coreclr.managed",
                          sizeof(property_keys) / sizeof(property_keys[0]),

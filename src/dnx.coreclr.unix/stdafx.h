@@ -9,10 +9,11 @@
 #include <string>
 #include <unistd.h>
 
+#if PLATFORM_DARWIN
+#include <libproc.h>
+#endif
+
 typedef int BOOL;
 typedef const char* LPCTSTR;
-
-const BOOL TRUE = 1;
-const BOOL FALSE = 0;
 
 #define _T(str) str
