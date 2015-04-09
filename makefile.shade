@@ -673,8 +673,6 @@ var RUNTIME_TARGETS='${new List<RuntimeTarget>()}'
         // linux = [dnx-coreclr-linux-x64]
         foreach (var group in RUNTIME_TARGETS.GroupBy(t => t.OS))
         {
-            // TODO: Port unit tests to CoreCLR
-            
             // Group by architecture since we only care about a single one for unit tests
             // any
             // any = [dnx-mono]
@@ -704,31 +702,33 @@ var RUNTIME_TARGETS='${new List<RuntimeTarget>()}'
                     Log.Warn("Skipping unit tests on " + target.Name);
                     continue;
                 }
-
-                var envPath = Environment.GetEnvironmentVariable("PATH");
+                
                 var binPath = binPaths[target.Name];
-
-                try
+                
+                ExecuteWithPath(binPath, () =>
                 {
-                    // We want to run unit tests against all runtime targets
-                    Environment.SetEnvironmentVariable("PATH", binPath + Path.PathSeparator + envPath);
-                    Log.Info("Adding " + binPath + " to the PATH");
-
                     foreach(var projectFile in Files.Include("test/*.Tests/project.json"))
                     {
                         KTest(projectFile);
                     }
-                }
-                finally
+                });
+                
+                // Functional tests dont work on linux and osx yet
+                if (target.OS == "darwin" || target.OS == "linux")
                 {
-                    Environment.SetEnvironmentVariable("PATH", envPath);
+                    continue;
                 }
+                
+                ExecuteWithPath(binPath, () =>
+                {
+                    foreach(var projectFile in Files.Include("test/*.FunctionalTests/project.json"))
+                    {
+                        KTest(projectFile);
+                    }
+                });
             }
         }
     }
-
-    -// Doesn't matter what runtime we run the functional tests on as they do their own unzipping
-    k-test each='var projectFile in Files.Include("test/*.FunctionalTests/project.json")'
 
 - // ===================== SHARED UTILITIES ===================== 
 
@@ -868,6 +868,24 @@ functions @{
         else
         {
             Exec("clang++-3.5", args);
+        }
+    }
+    
+    public void ExecuteWithPath(string binPath, Action action)
+    {
+        var envPath = Environment.GetEnvironmentVariable("PATH");
+
+        try
+        {
+            // We want to run unit tests against all runtime targets
+            Environment.SetEnvironmentVariable("PATH", binPath + Path.PathSeparator + envPath);
+            Log.Info("Adding " + binPath + " to the PATH");
+
+            action();
+        }
+        finally
+        {
+            Environment.SetEnvironmentVariable("PATH", envPath);
         }
     }
 
