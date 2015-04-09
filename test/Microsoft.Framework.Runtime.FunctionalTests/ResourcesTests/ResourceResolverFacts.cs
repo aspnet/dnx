@@ -3,6 +3,7 @@
 
 using System;
 using System.IO;
+using System.Linq;
 using Xunit;
 
 namespace Microsoft.Framework.Runtime.FunctionalTests.ResourcesTests
@@ -30,6 +31,12 @@ namespace Microsoft.Framework.Runtime.FunctionalTests.ResourcesTests
         [Fact]
         public void ResolveResxResources()
         {
+            var expected = new[]
+            {
+                "testproject.OwnResources.resources",
+                "testproject.subfolder.nestedresource.resources",
+                "testproject.OtherResources.resources"
+            };
             var rootDir = ProjectResolver.ResolveRootDirectory(Directory.GetCurrentDirectory());
             var testProjectFolder = Path.Combine(rootDir, "misc", "ResourcesTestProjects", "testproject");
 
@@ -38,11 +45,9 @@ namespace Microsoft.Framework.Runtime.FunctionalTests.ResourcesTests
             Assert.True(projectFound);
 
             var resolver = new ResxResourceProvider();
-            var embeddedResource = resolver.GetResources(project);
+            var embeddedResources = resolver.GetResources(project).Select(resource => resource.Name).ToArray();
 
-            Assert.Equal("testproject.OwnResources.resources", embeddedResource[0].Name);
-            Assert.Equal("testproject.subfolder.nestedresource.resources", embeddedResource[1].Name);
-            Assert.Equal("testproject.OtherResources.resources", embeddedResource[2].Name);
+            Assert.Equal(expected, embeddedResources);
         }
 
         [Fact]
@@ -72,6 +77,12 @@ namespace Microsoft.Framework.Runtime.FunctionalTests.ResourcesTests
         [Fact]
         public void ResolveNewNamedResxResources()
         {
+            var expected = new[]
+            {
+                "testproject.OwnResources.resources",
+                "testproject.subfolder.nestedresource.resources",
+                "thisIs.New.Resource.resources"
+            };
             var rootDir = ProjectResolver.ResolveRootDirectory(Directory.GetCurrentDirectory());
             var testProjectFolder = Path.Combine(rootDir, "misc", "ResourcesTestProjects", "testproject");
 
@@ -85,11 +96,9 @@ namespace Microsoft.Framework.Runtime.FunctionalTests.ResourcesTests
                 Path.Combine(testProjectFolder, "project.json"));
 
             var resolver = new ResxResourceProvider();
-            var embeddedResource = resolver.GetResources(project);
+            var embeddedResources = resolver.GetResources(project).Select(resource => resource.Name).ToArray();
 
-            Assert.Equal("testproject.OwnResources.resources", embeddedResource[0].Name);
-            Assert.Equal("testproject.subfolder.nestedresource.resources", embeddedResource[1].Name);
-            Assert.Equal("thisIs.New.Resource.resources", embeddedResource[2].Name);
+            Assert.Equal(expected, embeddedResources);
         }
     }
 }
