@@ -228,10 +228,6 @@ bool ExpandCommandLineArguments(int nArgc, LPTSTR* ppszArgv, int& nExpandedArgc,
 
 int CallApplicationProcessMain(int argc, LPTSTR argv[])
 {
-    bool fVerboseTrace = IsTracingEnabled();
-
-    // Note: need to keep as ASCII as GetProcAddress function takes ASCII params
-    LPCSTR pszCallApplicationMainName = "CallApplicationMain";
     int exitCode = 0;
 
     TCHAR szCurrentDirectory[MAX_PATH];
@@ -281,6 +277,8 @@ int CallApplicationProcessMain(int argc, LPTSTR argv[])
         data.applicationBase = szCurrentDirectory;
     }
 
+    TraceWriter tracer(IsTracingEnabled());
+
     // Prevent coreclr native bootstrapper from failing with relative appbase
     TCHAR szFullAppBase[MAX_PATH];
     if (!GetFullPath(data.applicationBase, szFullAppBase))
@@ -291,62 +289,27 @@ int CallApplicationProcessMain(int argc, LPTSTR argv[])
 
     data.applicationBase = szFullAppBase;
 
+    try
+    {
 #if CORECLR_WIN
-    LPCTSTR pwzHostModuleName = _T("dnx.coreclr.dll");
+        const dnx::char_t* hostModuleName = _T("dnx.coreclr.dll");
 #elif CORECLR_UNIX
-    LPCTSTR pwzHostModuleName = _T("dnx.coreclr.so");
+        const dnx::char_t* hostModuleName = _T("dnx.coreclr.so");
 #else
-    LPCTSTR pwzHostModuleName = _T("dnx.clr.dll");
+        const dnx::char_t* hostModuleName = _T("dnx.clr.dll");
 #endif
 
-    HMODULE hostModule = LoadNativeHost(pwzHostModuleName);
-    if (!hostModule)
-    {
-        if (fVerboseTrace)
-        {
-            ::_tprintf_s(_T("Failed to load: %s\r\n"), pwzHostModuleName);
-        }
-
-        hostModule = nullptr;
-        goto Finished;
+        // Note: need to keep as ASCII as GetProcAddress function takes ASCII params
+        exitCode = CallApplicationMain(hostModuleName, "CallApplicationMain", &data, tracer);
     }
-
-    if (fVerboseTrace)
+    catch (const std::exception& ex)
     {
-        ::_tprintf_s(_T("Loaded Module: %s\r\n"), pwzHostModuleName);
-    }
-
-    auto pfnCallApplicationMain = (FnCallApplicationMain)GetEntryPointFromHost(hostModule, pszCallApplicationMainName);
-    if (!pfnCallApplicationMain)
-    {
-        if (fVerboseTrace)
-        {
-            ::_tprintf_s(_T("Failed to find function %S in %s\n"), pszCallApplicationMainName, pwzHostModuleName);
-        }
-        goto Finished;
-    }
-
-    if (fVerboseTrace)
-    {
-        printf_s("Found DLL Export: %s\r\n", pszCallApplicationMainName);
-    }
-
-    HRESULT hr = pfnCallApplicationMain(&data);
-    if (SUCCEEDED(hr))
-    {
-        exitCode = data.exitcode;
-    }
-    else
-    {
-        exitCode = hr;
+        // TODO: fix - technically it's illegal
+        std::cout << ex.what() << std::endl;
+        exitCode = 1;
     }
 
 Finished:
-
-    if (hostModule)
-    {
-        FreeNativeHost(hostModule);
-    }
 
     if (bExpanded)
     {
