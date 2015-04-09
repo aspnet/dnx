@@ -4,6 +4,7 @@
 #pragma once
 
 #include <stdio.h>
+#include <stdlib.h>
 
 #ifndef PLATFORM_UNIX
 #include "targetver.h"
@@ -18,7 +19,6 @@
 #include <stdarg.h>
 #include <stddef.h>
 #include <stdint.h>
-#include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 

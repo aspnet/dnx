@@ -58,6 +58,7 @@ var BOOTSTRAPPER_HOST_NAME = 'dnx.host'
 
 var PROGRAM_FILES_X86 = '${Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86)}'
 var MSBUILD = '${Path.Combine(PROGRAM_FILES_X86, "MSBuild", "14.0", "Bin", "MSBuild.exe")}'
+var CLANG = '${SearchForClang()}'
 
 var MANAGED_PROJECTS = '${FindAllProjects(
     BOOTSTRAPPER_HOST_NAME,
@@ -299,7 +300,7 @@ var RUNTIME_TARGETS='${new List<RuntimeTarget>()}'
 
         Directory.CreateDirectory(soOutputDir);
 
-        Clang(string.Format("-fPIC -shared {0} -g -o {1} --std=c++11 -ldl", string.Join(" ", sourceFiles), soOutputPath));
+        Exec(CLANG, string.Format("-fPIC -shared {0} -g -o {1} -DPLATFORM_LINUX --std=c++11 -ldl", string.Join(" ", sourceFiles), soOutputPath));
     }
 
     copy sourceDir='${soOutputDir}' include='*.so' outputDir='${Path.Combine(BUILD_DIR2, BOOTSTRAPPER_CORECLR_NAME + ".unix")}' overwrite='${true}'
@@ -311,19 +312,56 @@ var RUNTIME_TARGETS='${new List<RuntimeTarget>()}'
         var sourceFiles = new string[] 
         {
             Path.Combine("src", BOOTSTRAPPER_EXE_NAME, BOOTSTRAPPER_EXE_NAME + ".cpp"),
+            Path.Combine("src", BOOTSTRAPPER_EXE_NAME, "pal.unix.cpp"),
             Path.Combine("src", BOOTSTRAPPER_EXE_NAME, "pal.linux.cpp"),
             Path.Combine("src", BOOTSTRAPPER_EXE_NAME, "tchar.cpp"),
         };
 
         Directory.CreateDirectory(soOutputDir);
 
-        Clang(string.Format("{0} -g -o {1} -DCORECLR_UNIX -DPLATFORM_UNIX -std=c++11 -ldl", string.Join(" ", sourceFiles), soOutputPath));
+        Exec(CLANG, string.Format("{0} -g -o {1} -DCORECLR_LINUX -DPLATFORM_UNIX -std=c++11 -ldl", string.Join(" ", sourceFiles), soOutputPath));
     }
 
     copy sourceDir='${soOutputDir}' include='*' outputDir='${Path.Combine(BUILD_DIR2, BOOTSTRAPPER_EXE_NAME, "bin", "linux", "x64")}' overwrite='${true}'
 
 
 - // ===================== DARWIN (OSX) ===================== 
+
+#build-dnx-coreclr-darwin-bootstrapper .ensure-clang .update-tpa target='build-darwin'
+    var soOutputDir = '${Path.Combine(ROOT, "src", BOOTSTRAPPER_CORECLR_NAME + ".unix", "bin")}'
+    var soOutputPath = '${Path.Combine(soOutputDir, BOOTSTRAPPER_CORECLR_NAME + ".dylib")}'
+    @{
+        var sourceFiles = new string[]
+        {
+            Path.Combine("src", BOOTSTRAPPER_CORECLR_NAME + ".unix", "tpa.cpp"),
+            Path.Combine("src", BOOTSTRAPPER_CORECLR_NAME + ".unix", BOOTSTRAPPER_CORECLR_NAME + ".cpp")
+        };
+
+        Directory.CreateDirectory(soOutputDir);
+
+        Exec(CLANG, string.Format("-fPIC -shared {0} -g -o {1} -DPLATFORM_DARWIN --std=c++11 -ldl", string.Join(" ", sourceFiles), soOutputPath));
+    }
+
+    copy sourceDir='${soOutputDir}' include='*.dylib' outputDir='${Path.Combine(BUILD_DIR2, BOOTSTRAPPER_CORECLR_NAME + ".unix")}' overwrite='${true}'
+
+#build-dnx-darwin-bootstrapper .ensure-clang target='build-darwin'
+    var soOutputDir = '${Path.Combine(ROOT, "src", BOOTSTRAPPER_EXE_NAME, "bin", "x64")}'
+    var soOutputPath = '${Path.Combine(soOutputDir, BOOTSTRAPPER_EXE_NAME)}'
+    @{
+        var sourceFiles = new string[]
+        {
+            Path.Combine("src", BOOTSTRAPPER_EXE_NAME, BOOTSTRAPPER_EXE_NAME + ".cpp"),
+            Path.Combine("src", BOOTSTRAPPER_EXE_NAME, "pal.unix.cpp"),
+            Path.Combine("src", BOOTSTRAPPER_EXE_NAME, "pal.darwin.cpp"),
+            Path.Combine("src", BOOTSTRAPPER_EXE_NAME, "tchar.cpp"),
+        };
+
+        Directory.CreateDirectory(soOutputDir);
+
+        Exec(CLANG, string.Format("{0} -g -o {1} -DCORECLR_DARWIN -DPLATFORM_UNIX -std=c++11 -ldl", string.Join(" ", sourceFiles), soOutputPath));
+    }
+
+    copy sourceDir='${soOutputDir}' include='*' outputDir='${Path.Combine(BUILD_DIR2, BOOTSTRAPPER_EXE_NAME, "bin", "darwin", "x64")}' overwrite='${true}'
 
 - // ===================== PACKAGE ===================== 
 
@@ -634,6 +672,7 @@ var RUNTIME_TARGETS='${new List<RuntimeTarget>()}'
 
 #copy-darwin-bits target='package-darwin'
     copy sourceDir='${Path.Combine(BUILD_DIR2, BOOTSTRAPPER_CORECLR_NAME + ".unix")}' include='*.dylib' outputDir='${RUNTIME_CORECLR_DARWIN_x64_BIN}' overwrite='${true}'
+    copy sourceDir='${Path.Combine(BUILD_DIR2, BOOTSTRAPPER_EXE_NAME, "bin", "darwin", "x64")}' include='dnx' outputDir='${RUNTIME_CORECLR_DARWIN_x64_BIN}' overwrite='${true}'
     copy sourceDir='${SCRIPTS_DIR}' include='dnu.sh' outputDir='${RUNTIME_CORECLR_DARWIN_x64_BIN}' overwrite='${true}'
     @{
         FixShFiles(RUNTIME_CORECLR_DARWIN_x64_BIN);
@@ -803,11 +842,13 @@ var RUNTIME_TARGETS='${new List<RuntimeTarget>()}'
         }
     }
   
-
-
 #ensure-clang
     @{
-        // TODO: Check for clang 3.5 on the path
+        if (CLANG == null || !File.Exists(CLANG))
+        {
+            Log.Warn("clang++ not found. Please ensure you have clang++ or clang++3.5 on the path or set CXX to a path to clang++.");
+            Environment.Exit(1);
+        }
     }
 
 #ensure-msbuild
@@ -883,16 +924,28 @@ functions @{
         }
     }
 
-    public void Clang(string args)
+    public string SearchForClang()
     {
-        if (IsTravis)
+        var CXX = Environment.GetEnvironmentVariable("CXX");
+
+        if (!string.IsNullOrEmpty(CXX))
         {
-            Exec("clang++", args);
+            return CXX;
         }
-        else
+
+        foreach(var dir in Environment.GetEnvironmentVariable("PATH").Split(Path.PathSeparator))
         {
-            Exec("clang++-3.5", args);
+            if (File.Exists(Path.Combine(dir, "clang++")))
+            {
+                return Path.Combine(dir, "clang++");
+            }
+            else if (File.Exists(Path.Combine(dir, "clang++-3.5")))
+            {
+                return Path.Combine(dir, "clang++-3.5");
+            }
         }
+
+        return null;
     }
     
     public void ExecuteWithPath(string binPath, Action action)

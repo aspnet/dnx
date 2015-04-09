@@ -236,7 +236,9 @@ int CallApplicationProcessMain(int argc, LPTSTR argv[])
     HMODULE m_hHostModule = nullptr;
 #if CORECLR_WIN
     LPCTSTR pwzHostModuleName = _T("dnx.coreclr.dll");
-#elif CORECLR_UNIX
+#elif CORECLR_DARWIN
+    LPCTSTR pwzHostModuleName = _T("dnx.coreclr.dylib");
+#elif CORECLR_LINUX
     LPCTSTR pwzHostModuleName = _T("dnx.coreclr.so");
 #else
     LPCTSTR pwzHostModuleName = _T("dnx.clr.dll");
@@ -247,8 +249,7 @@ int CallApplicationProcessMain(int argc, LPTSTR argv[])
     FnCallApplicationMain pfnCallApplicationMain = nullptr;
     int exitCode = 0;
 
-    TCHAR szCurrentDirectory[MAX_PATH];
-    GetNativeBootstrapperDirectory(szCurrentDirectory);
+    LPTSTR szCurrentDirectory = GetNativeBootstrapperDirectory();
 
     // Set the DEFAULT_LIB environment variable to be the same directory
     // as the exe
@@ -361,6 +362,11 @@ Finished:
     if (bExpanded)
     {
         FreeExpandedCommandLineArguments(nExpandedArgc, ppszExpandedArgv);
+    }
+
+    if (szCurrentDirectory)
+    {
+        free(szCurrentDirectory);
     }
 
     return exitCode;
