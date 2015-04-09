@@ -483,9 +483,26 @@ var RUNTIME_TARGETS='${new List<RuntimeTarget>()}'
 
                 if (target.OS != "win")
                 {
-                    // Platform specific binaries
+                    // For now, we ship cross platform specific binaries as part of DNX for Linux and Darwin, since
+                    // the versions in NuGet are Windows specific.
+
+                    extraBinaries.Add("Microsoft.Win32.Primitives.dll");
+                    extraBinaries.Add("System.Console.dll");
+                    extraBinaries.Add("System.Diagnostics.Debug.dll");
+                    extraBinaries.Add("System.Diagnostics.FileVersionInfo.dll");
+                    extraBinaries.Add("System.Diagnostics.Process.dll");
+                    extraBinaries.Add("System.Diagnostics.TraceSource.dll");
+                    extraBinaries.Add("System.Globalization.Extensions.dll");
+                    extraBinaries.Add("System.IO.FileSystem.DriveInfo.dll");
+                    extraBinaries.Add("System.IO.FileSystem.Watcher.dll");
+                    extraBinaries.Add("System.IO.FileSystem.dll");
+                    extraBinaries.Add("System.IO.MemoryMappedFiles.dll");
+                    extraBinaries.Add("System.IO.Pipes.dll");
+                    extraBinaries.Add("System.Runtime.Extensions.dll");
                     extraBinaries.Add("System.Security.Cryptography.Hashing.dll");
                     extraBinaries.Add("System.Security.Cryptography.Hashing.Algorithms.dll");
+                    extraBinaries.Add("System.Security.Cryptography.RandomNumberGenerator.dll");
+                    extraBinaries.Add("System.Text.Encoding.CodePages.dll");
                 }
 
                 foreach (var file in Directory.GetFiles(coreclrFolder).Where(f => extraBinaries.Contains(Path.GetFileName(f)) || !Path.GetFileName(f).StartsWith("System")))
