@@ -366,7 +366,7 @@ Finished:
 
     if (szCurrentDirectory)
     {
-        free(szCurrentDirectory);
+        delete [] szCurrentDirectory;
     }
 
     return exitCode;

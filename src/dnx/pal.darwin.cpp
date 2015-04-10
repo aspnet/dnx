@@ -7,22 +7,13 @@
 
 LPTSTR GetNativeBootstrapperDirectory()
 {
-    LPTSTR szPath = (LPTSTR)calloc(PROC_PIDPATHINFO_MAXSIZE, sizeof(TCHAR));
+    LPTSTR szPath = new TCHAR[PROC_PIDPATHINFO_MAXSIZE];
     ssize_t ret = proc_pidpath(getpid(), szPath, PROC_PIDPATHINFO_MAXSIZE);
 
     assert(ret != -1);
 
-    size_t lastSlash = 0;
-
-    for (size_t i = 0; szPath[i] != _T('\0'); i++)
-    {
-        if (szPath[i] == _T('/'))
-        {
-            lastSlash = i;
-        }
-    }
-
-    szPath[lastSlash] = _T('\0');
+    for (; ret > 0 && szPath[ret] != _T('/'); ret--);
+    szPath[ret] = _T('\0');
 
     return szPath;
 }

@@ -5,7 +5,7 @@
 
 LPTSTR GetNativeBootstrapperDirectory()
 {
-    LPTSTR szPath = (LPTSTR)calloc(MAX_PATH, sizeof(TCHAR));
+    LPTSTR szPath = new TCHAR[MAX_PATH];
     DWORD dirLength = GetModuleFileName(NULL, szPath, MAX_PATH);
     for (dirLength--; dirLength >= 0 && szPath[dirLength] != _T('\\'); dirLength--);
     szPath[dirLength + 1] = _T('\0');
