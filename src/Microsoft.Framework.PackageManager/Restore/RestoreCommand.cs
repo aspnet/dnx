@@ -99,9 +99,6 @@ namespace Microsoft.Framework.PackageManager
                     packagesDirectory = NuGetRepositoryUtils.ResolveRepositoryPath(rootDirectory);
                 }
 
-                var packagesFolderFileSystem = CreateFileSystem(packagesDirectory);
-                var pathResolver = new DefaultPackagePathResolver(packagesFolderFileSystem, useSideBySidePaths: true);
-
                 int restoreCount = 0;
                 int successCount = 0;
 
@@ -440,8 +437,12 @@ namespace Microsoft.Framework.PackageManager
                     }
                 }
 
-                WriteLockFile(projectLockFilePath, packageSpec, graphItems,
-                    new NuGetv3LocalRepository(packagesDirectory, checkPackageIdCase: false), frameworks);
+                WriteLockFile(
+                    projectLockFilePath,
+                    packageSpec,
+                    graphItems,
+                    new NuGetv3LocalRepository(packagesDirectory, checkPackageIdCase: false),
+                    frameworks);
             }
 
             if (!ScriptExecutor.Execute(packageSpec, "postrestore", getVariable))
@@ -671,7 +672,7 @@ namespace Microsoft.Framework.PackageManager
             return Task.FromResult(lockFileFormat.Read(projectLockFilePath));
         }
 
-        private void WriteLockFile(string projectLockFilePath, List<GraphItem> graphItems,
+        private void WriteLockFile(string projectLockFilePath, PackageSpec packageSpec, List<GraphItem> graphItems,
             NuGetv3LocalRepository repository, IEnumerable<NuGetFramework> frameworks)
         {
             var lockFile = new LockFile();
@@ -703,9 +704,9 @@ namespace Microsoft.Framework.PackageManager
             // Use empty string as the key of dependencies shared by all frameworks
             lockFile.ProjectFileDependencyGroups.Add(new ProjectFileDependencyGroup(
                 string.Empty,
-                project.Dependencies.Select(x => x.LibraryRange.ToString())));
+                packageSpec.Dependencies.Select(x => x.LibraryRange.ToString())));
 
-            foreach (var frameworkInfo in project.GetTargetFrameworks())
+            foreach (var frameworkInfo in packageSpec.TargetFrameworks)
             {
                 lockFile.ProjectFileDependencyGroups.Add(new ProjectFileDependencyGroup(
                     frameworkInfo.FrameworkName.ToString(),
@@ -774,7 +775,8 @@ namespace Microsoft.Framework.PackageManager
         {
             foreach (var node in graphs)
             {
-                Reports.Information.WriteLine(indent + node.Item.Match.Library.Name + "@" + node.Item.Match.Library.Version);
+                Reports.Information.WriteLine(indent +
+                    node.Item.Match.Library.Identity.Name + "@" + node.Item.Match.Library.Identity.Version);
                 Display(indent + " ", node.Dependencies);
             }
         }
@@ -788,12 +790,6 @@ namespace Microsoft.Framework.PackageManager
             SourceProvider = PackageSourceBuilder.CreateSourceProvider(Settings);
             //HttpClient.DefaultCredentialProvider = new SettingsCredentialProvider(new ConsoleCredentialProvider(Console), SourceProvider, Console);
 
-        }
-
-        private IFileSystem CreateFileSystem(string path)
-        {
-            path = RootDirectory.GetFullPath(path);
-            return new PhysicalFileSystem(path);
         }
 
         // Based on http://blogs.msdn.com/b/pfxteam/archive/2012/03/05/10278165.aspx
