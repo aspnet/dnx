@@ -5,7 +5,7 @@
 #include "dnx.h"
 #include "pal.h"
 
-bool LastIndexOfCharInPath(LPCTSTR const pszStr, TCHAR c, size_t* pIndex)
+bool LastIndexOfCharInPath(LPCTSTR pszStr, TCHAR c, size_t* pIndex)
 {
     size_t nIndex = _tcsnlen(pszStr, MAX_PATH) - 1;
     for (; nIndex != 0; nIndex--)
@@ -20,12 +20,12 @@ bool LastIndexOfCharInPath(LPCTSTR const pszStr, TCHAR c, size_t* pIndex)
     return pszStr[nIndex] == c;
 }
 
-bool StringsEqual(LPCTSTR const pszStrA, LPCTSTR const pszStrB)
+bool StringsEqual(LPCTSTR pszStrA, LPCTSTR pszStrB)
 {
     return ::_tcsicmp(pszStrA, pszStrB) == 0;
 }
 
-bool PathEndsWith(LPCTSTR const pszStr, LPCTSTR const pszSuffix)
+bool PathEndsWith(LPCTSTR pszStr, LPCTSTR pszSuffix)
 {
     size_t nStrLen = _tcsnlen(pszStr, MAX_PATH);
     size_t nSuffixLen = _tcsnlen(pszSuffix, MAX_PATH);
@@ -40,7 +40,7 @@ bool PathEndsWith(LPCTSTR const pszStr, LPCTSTR const pszSuffix)
     return ::_tcsnicmp(pszStr + nOffset, pszSuffix, MAX_PATH - nOffset) == 0;
 }
 
-bool LastPathSeparatorIndex(LPCTSTR const pszPath, size_t* pIndex)
+bool LastPathSeparatorIndex(LPCTSTR pszPath, size_t* pIndex)
 {
     size_t nLastSlashIndex;
     size_t nLastBackSlashIndex;
@@ -63,7 +63,7 @@ bool LastPathSeparatorIndex(LPCTSTR const pszPath, size_t* pIndex)
     return true;
 }
 
-void GetParentDir(LPCTSTR const pszPath, LPTSTR const pszParentDir)
+void GetParentDir(LPCTSTR pszPath, LPTSTR pszParentDir)
 {
     size_t nLastSeparatorIndex;
     if (!LastPathSeparatorIndex(pszPath, &nLastSeparatorIndex))
@@ -76,7 +76,7 @@ void GetParentDir(LPCTSTR const pszPath, LPTSTR const pszParentDir)
     pszParentDir[nLastSeparatorIndex + 1] = _T('\0');
 }
 
-void GetFileName(LPCTSTR const pszPath, LPTSTR const pszFileName)
+void GetFileName(LPCTSTR pszPath, LPTSTR pszFileName)
 {
     size_t nLastSeparatorIndex;
 
@@ -228,23 +228,6 @@ bool ExpandCommandLineArguments(int nArgc, LPTSTR* ppszArgv, int& nExpandedArgc,
 
 int CallApplicationProcessMain(int argc, LPTSTR argv[])
 {
-    HRESULT hr = S_OK;
-
-    bool m_fVerboseTrace = IsTracingEnabled();
-
-    bool fSuccess = true;
-    HMODULE m_hHostModule = nullptr;
-#if CORECLR_WIN
-    LPCTSTR pwzHostModuleName = _T("dnx.coreclr.dll");
-#elif CORECLR_UNIX
-    LPCTSTR pwzHostModuleName = _T("dnx.coreclr.so");
-#else
-    LPCTSTR pwzHostModuleName = _T("dnx.clr.dll");
-#endif
-
-    // Note: need to keep as ASCII as GetProcAddress function takes ASCII params
-    LPCSTR pszCallApplicationMainName = "CallApplicationMain";
-    FnCallApplicationMain pfnCallApplicationMain = nullptr;
     int exitCode = 0;
 
     TCHAR szCurrentDirectory[MAX_PATH];
@@ -294,6 +277,8 @@ int CallApplicationProcessMain(int argc, LPTSTR argv[])
         data.applicationBase = szCurrentDirectory;
     }
 
+    TraceWriter tracer(IsTracingEnabled());
+
     // Prevent coreclr native bootstrapper from failing with relative appbase
     TCHAR szFullAppBase[MAX_PATH];
     if (!GetFullPath(data.applicationBase, szFullAppBase))
@@ -304,59 +289,27 @@ int CallApplicationProcessMain(int argc, LPTSTR argv[])
 
     data.applicationBase = szFullAppBase;
 
-    m_hHostModule = LoadNativeHost(pwzHostModuleName);
-    if (!m_hHostModule)
+    try
     {
-        if (m_fVerboseTrace)
-            ::_tprintf_s(_T("Failed to load: %s\r\n"), pwzHostModuleName);
-        m_hHostModule = nullptr;
-        goto Finished;
-    }
-    if (m_fVerboseTrace)
-        ::_tprintf_s(_T("Loaded Module: %s\r\n"), pwzHostModuleName);
+#if CORECLR_WIN
+        const dnx::char_t* hostModuleName = _T("dnx.coreclr.dll");
+#elif CORECLR_UNIX
+        const dnx::char_t* hostModuleName = _T("dnx.coreclr.so");
+#else
+        const dnx::char_t* hostModuleName = _T("dnx.clr.dll");
+#endif
 
-    pfnCallApplicationMain = (FnCallApplicationMain)GetEntryPointFromHost(m_hHostModule, pszCallApplicationMainName);
-    if (!pfnCallApplicationMain)
-    {
-        if (m_fVerboseTrace)
-            ::_tprintf_s(_T("Failed to find function %S in %s\n"), pszCallApplicationMainName, pwzHostModuleName);
-        fSuccess = false;
-        goto Finished;
+        // Note: need to keep as ASCII as GetProcAddress function takes ASCII params
+        exitCode = CallApplicationMain(hostModuleName, "CallApplicationMain", &data, tracer);
     }
-    if (m_fVerboseTrace)
-        printf_s("Found DLL Export: %s\r\n", pszCallApplicationMainName);
-
-    hr = pfnCallApplicationMain(&data);
-    if (SUCCEEDED(hr))
+    catch (const std::exception& ex)
     {
-        fSuccess = true;
-        exitCode = data.exitcode;
-    }
-    else
-    {
-        fSuccess = false;
-        exitCode = hr;
+        // TODO: fix - technically it's illegal
+        std::cout << ex.what() << std::endl;
+        exitCode = 1;
     }
 
 Finished:
-    if (pfnCallApplicationMain)
-    {
-        pfnCallApplicationMain = nullptr;
-    }
-
-    if (m_hHostModule)
-    {
-        if (FreeNativeHost(m_hHostModule))
-        {
-            fSuccess = true;
-        }
-        else
-        {
-            fSuccess = false;
-        }
-
-        m_hHostModule = nullptr;
-    }
 
     if (bExpanded)
     {

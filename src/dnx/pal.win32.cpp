@@ -2,6 +2,11 @@
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 #include "stdafx.h"
+#include "dnx.h"
+#include "xplat.h"
+#include "TraceWriter.h"
+#include "utils.h"
+#include <sstream>
 
 void GetNativeBootstrapperDirectory(LPTSTR szPath)
 {
@@ -74,17 +79,43 @@ BOOL GetFullPath(LPCTSTR szPath, LPTSTR pszNormalizedPath)
     return TRUE;
 }
 
-HMODULE LoadNativeHost(LPCTSTR pszHostModuleName)
+int CallApplicationMain(const dnx::char_t* moduleName, const char* functionName, CALL_APPLICATION_MAIN_DATA* data, TraceWriter traceWriter)
 {
-    return LoadLibraryEx(pszHostModuleName, NULL, LOAD_LIBRARY_SEARCH_DEFAULT_DIRS);
-}
+    bool fVerboseTrace = true;
 
-BOOL FreeNativeHost(HMODULE hHost)
-{
-    return FreeLibrary(hHost);
-}
+    HMODULE hostModule;
+    try
+    {
+        hostModule = LoadLibraryEx(moduleName, NULL, LOAD_LIBRARY_SEARCH_DEFAULT_DIRS);
+        if (!hostModule)
+        {
+            throw std::runtime_error(std::string("Failed to load: ")
+                .append(dnx::utils::to_std_string(moduleName)));
+        }
 
-FARPROC GetEntryPointFromHost(HMODULE hHost, LPCSTR lpProcName)
-{
-    return GetProcAddress(hHost, lpProcName);
+        traceWriter.Write(dnx::xstring(_X("Loaded module: ")).append(moduleName), true);
+
+        auto pfnCallApplicationMain = (FnCallApplicationMain)GetProcAddress(hostModule, functionName);
+        if (!pfnCallApplicationMain)
+        {
+            std::ostringstream oss;
+            oss << "Failed to find function " << functionName << "in" << dnx::utils::to_std_string(moduleName);
+            throw std::runtime_error(oss.str());
+        }
+
+        traceWriter.Write(dnx::xstring(_X("Found export: ")).append(moduleName), true);
+
+        HRESULT hr = pfnCallApplicationMain(data);
+        FreeLibrary(hostModule);
+        return SUCCEEDED(hr) ? data->exitcode : hr;
+    }
+    catch (...)
+    {
+        if (hostModule)
+        {
+            FreeLibrary(hostModule);
+        }
+
+        throw;
+    }
 }
