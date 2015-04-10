@@ -5,6 +5,7 @@ using System.Linq;
 using System.IO;
 using System.Reflection.Metadata;
 using System.Reflection.PortableExecutable;
+using Microsoft.Framework.PackageManager.NuGetUtils;
 using NuGet.Frameworks;
 using NuGet.Packaging;
 using NuGet.Repositories;
@@ -14,12 +15,10 @@ namespace Microsoft.Framework.PackageManager.Utils
 {
     internal static class LockFileUtils
     {
-        public static LockFileLibrary CreateLockFileLibraryForProject(
-            Runtime.Project project,
+        public static LockFileLibrary CreateLockFileLibrary(
             LocalPackageInfo packageInfo,
             SHA512 sha512,
             IEnumerable<NuGetFramework> frameworks,
-            DefaultPackagePathResolver resolver,
             string correctedPackageName = null)
         {
             var lockFileLib = new LockFileLibrary();
@@ -34,76 +33,41 @@ namespace Microsoft.Framework.PackageManager.Utils
             {
                 lockFileLib.Sha = Convert.ToBase64String(sha512.ComputeHash(nupkgStream));
                 nupkgStream.Seek(0, SeekOrigin.Begin);
+
                 var packageReader = new PackageReader(nupkgStream);
                 lockFileLib.Files = packageReader.GetFiles().ToList();
+
+                foreach (var framework in frameworks)
+                {
+                    var group = new LockFileFrameworkGroup();
+                    group.TargetFramework = framework;
+                    group.Dependencies = packageReader.GetPackageDependencies()
+                        .FirstOrDefault(x => x.TargetFramework == framework)?.Packages.ToList();
+                    group.FrameworkAssemblies = packageReader.GetFrameworkItems()
+                        .FirstOrDefault(x => x.TargetFramework == framework)?.Items.ToList();
+                    group.RuntimeAssemblies = packageReader.GetReferenceItems()
+                        .FirstOrDefault(x => x.TargetFramework == framework)?.Items.ToList();
+
+                    string contractPath = Path.Combine("lib", "contract", packageInfo.Id + ".dll");
+                    var hasContract = lockFileLib.Files.Any(path => path == contractPath);
+                    var hasLib = group.RuntimeAssemblies.Any();
+
+                    if (hasContract && hasLib && !framework.IsDesktop())
+                    {
+                        group.CompileTimeAssemblies.Add(contractPath);
+                    }
+                    else if (hasLib)
+                    {
+                        group.CompileTimeAssemblies.AddRange(group.RuntimeAssemblies);
+                    }
+
+                    lockFileLib.FrameworkGroups.Add(group);
+                }
             }
 
-            foreach (var framework in frameworks)
-            {
-                var group = new LockFileFrameworkGroup();
-                group.TargetFramework = framework;
-
-                IEnumerable<PackageDependencySet> dependencySet;
-                if (VersionUtility.TryGetCompatibleItems(framework, package.DependencySets, out dependencySet))
-                {
-                    var set = dependencySet.FirstOrDefault()?.Dependencies?.ToList();
-
-                    if (set != null)
-                    {
-                        group.Dependencies = set;
-                    }
-                }
-
-                // TODO: Remove this when we do #596
-                // ASP.NET Core isn't compatible with generic PCL profiles
-                if (!string.Equals(framework.Identifier, VersionUtility.AspNetCoreFrameworkIdentifier, StringComparison.OrdinalIgnoreCase) &&
-                    !string.Equals(framework.Identifier, VersionUtility.DnxCoreFrameworkIdentifier, StringComparison.OrdinalIgnoreCase))
-                {
-                    IEnumerable<FrameworkAssemblyReference> frameworkAssemblies;
-                    if (VersionUtility.TryGetCompatibleItems(framework, package.FrameworkAssemblies, out frameworkAssemblies))
-                    {
-                        foreach (var assemblyReference in frameworkAssemblies)
-                        {
-                            if (!assemblyReference.SupportedFrameworks.Any() &&
-                                !VersionUtility.IsDesktop(framework))
-                            {
-                                // REVIEW: This isn't 100% correct since none *can* mean 
-                                // any in theory, but in practice it means .NET full reference assembly
-                                // If there's no supported target frameworks and we're not targeting
-                                // the desktop framework then skip it.
-
-                                // To do this properly we'll need all reference assemblies supported
-                                // by each supported target framework which isn't always available.
-                                continue;
-                            }
-
-                            group.FrameworkAssemblies.Add(assemblyReference);
-                        }
-                    }
-                }
-
-                group.RuntimeAssemblies = GetPackageAssemblies(package, framework);
-
-                string contractPath = Path.Combine("lib", "contract", package.Id + ".dll");
-                var hasContract = lockFileLib.Files.Any(path => path == contractPath);
-                var hasLib = group.RuntimeAssemblies.Any();
-
-                if (hasContract && hasLib && !VersionUtility.IsDesktop(framework))
-                {
-                    group.CompileTimeAssemblies.Add(contractPath);
-                }
-                else if (hasLib)
-                {
-                    group.CompileTimeAssemblies.AddRange(group.RuntimeAssemblies);
-                }
-
-                lockFileLib.FrameworkGroups.Add(group);
-            }
-
-            var installPath = resolver.GetInstallPath(package.Id, package.Version);
             foreach (var assembly in lockFileLib.FrameworkGroups.SelectMany(f => f.RuntimeAssemblies))
             {
-                var assemblyPath = Path.Combine(installPath, assembly);
+                var assemblyPath = Path.Combine(packageInfo.ExpandedPath, assembly);
                 if (IsAssemblyServiceable(assemblyPath))
                 {
                     lockFileLib.IsServiceable = true;
@@ -112,46 +76,6 @@ namespace Microsoft.Framework.PackageManager.Utils
             }
 
             return lockFileLib;
-        }
-
-        private static List<string> GetPackageAssemblies(IPackage package, FrameworkName targetFramework)
-        {
-            var results = new List<string>();
-
-            IEnumerable<IPackageAssemblyReference> compatibleReferences;
-            if (VersionUtility.TryGetCompatibleItems(targetFramework, package.AssemblyReferences, out compatibleReferences))
-            {
-                // Get the list of references for this target framework
-                var references = compatibleReferences.ToList();
-
-                // See if there's a list of specific references defined for this target framework
-                IEnumerable<PackageReferenceSet> referenceSets;
-                if (VersionUtility.TryGetCompatibleItems(targetFramework, package.PackageAssemblyReferences, out referenceSets))
-                {
-                    // Get the first compatible reference set
-                    var referenceSet = referenceSets.FirstOrDefault();
-
-                    if (referenceSet != null)
-                    {
-                        // Remove all assemblies of which names do not appear in the References list
-                        references.RemoveAll(r => !referenceSet.References.Contains(r.Name, StringComparer.OrdinalIgnoreCase));
-                    }
-                }
-
-                foreach (var reference in references)
-                {
-                    // Skip anything that isn't a dll. Unfortunately some packages put random stuff
-                    // in the lib folder and they surface as assembly references
-                    if (!Path.GetExtension(reference.Path).Equals(".dll", StringComparison.OrdinalIgnoreCase))
-                    {
-                        continue;
-                    }
-
-                    results.Add(reference.Path);
-                }
-            }
-
-            return results;
         }
 
         internal static bool IsAssemblyServiceable(string assemblyPath)

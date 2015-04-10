@@ -671,7 +671,7 @@ namespace Microsoft.Framework.PackageManager
             return Task.FromResult(lockFileFormat.Read(projectLockFilePath));
         }
 
-        private void WriteLockFile(string projectLockFilePath, PackageSpec packageSpec, List<GraphItem> graphItems,
+        private void WriteLockFile(string projectLockFilePath, List<GraphItem> graphItems,
             NuGetv3LocalRepository repository, IEnumerable<NuGetFramework> frameworks)
         {
             var lockFile = new LockFile();
@@ -690,12 +690,10 @@ namespace Microsoft.Framework.PackageManager
                         continue;
                     }
 
-                    var lockFileLib = LockFileUtils.CreateLockFileLibraryForProject(
-                        project,
+                    var lockFileLib = LockFileUtils.CreateLockFileLibrary(
                         packageInfo,
                         sha512,
-                        frameworks.Select(f => f.ToNuGetFramework()),
-                        new DefaultPackagePathResolver(repository.RepositoryRoot),
+                        frameworks,
                         correctedPackageName: library.Name);
 
                     lockFile.Libraries.Add(lockFileLib);
