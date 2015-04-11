@@ -66,8 +66,9 @@ namespace Microsoft.Framework.PackageManager
 
                 c.OnExecute(async () =>
                 {
-                    var command = new RestoreCommand(_environment);
+                    var command = new RestoreCommand();
                     command.Reports = CreateReports(optionVerbose.HasValue(), feedOptions.Quiet);
+                    command.Logger = new AnsiConsoleLogger(optionVerbose.HasValue(), feedOptions.Quiet);
                     command.RestoreDirectory = argRoot.Value;
                     command.FeedOptions = feedOptions;
                     command.Lock = optLock.HasValue();
@@ -219,6 +220,7 @@ namespace Microsoft.Framework.PackageManager
                 c.OnExecute(async () =>
                 {
                     var reports = CreateReports(optionVerbose.HasValue(), feedOptions.Quiet);
+                    var logger = new AnsiConsoleLogger(optionVerbose.HasValue(), feedOptions.Quiet);
 
                     var addCmd = new AddCommand();
                     addCmd.Reports = reports;
@@ -226,8 +228,9 @@ namespace Microsoft.Framework.PackageManager
                     addCmd.Version = argVersion.Value;
                     addCmd.ProjectDir = argProject.Value;
 
-                    var restoreCmd = new RestoreCommand(_environment);
+                    var restoreCmd = new RestoreCommand();
                     restoreCmd.Reports = reports;
+                    restoreCmd.Logger = logger;
                     restoreCmd.FeedOptions = feedOptions;
 
                     restoreCmd.RestoreDirectory = argProject.Value;
@@ -238,7 +241,7 @@ namespace Microsoft.Framework.PackageManager
                     }
 
                     var installCmd = new InstallCommand(addCmd, restoreCmd);
-                    installCmd.Reports = reports;
+                    installCmd.Logger = logger;
 
                     var success = await installCmd.ExecuteCommand();
 
@@ -407,7 +410,7 @@ namespace Microsoft.Framework.PackageManager
                 });
             });
 
-            app.Command("commands", cmd =>
+            app.Command("commands", (Action<CommandLineApplication>)(cmd =>
             {
                 cmd.Description = "Commands related to managing application commands (add, remove)";
                 cmd.HelpOption("-?|-h|--help");
@@ -417,7 +420,7 @@ namespace Microsoft.Framework.PackageManager
                     return 2;
                 });
 
-                cmd.Command("install", c =>
+                cmd.Command("install", (Action<CommandLineApplication>)(c =>
                 {
                     c.Description = "Installs application commands";
 
@@ -430,7 +433,7 @@ namespace Microsoft.Framework.PackageManager
 
                     c.HelpOption("-?|-h|--help");
 
-                    c.OnExecute(async () =>
+                    c.OnExecute((Func<System.Threading.Tasks.Task<int>>)(async () =>
                     {
                         var command = new InstallGlobalCommand(
                                 _environment,
@@ -439,7 +442,7 @@ namespace Microsoft.Framework.PackageManager
                                     AppCommandsFolderRepository.Create(feedOptions.TargetPackagesFolder));
 
                         command.FeedOptions = feedOptions;
-                        command.Reports = CreateReports(optionVerbose.HasValue(), feedOptions.Quiet);
+                        command.Logger = new AnsiConsoleLogger(optionVerbose.HasValue(), feedOptions.Quiet);
                         command.OverwriteCommands = optOverwrite.HasValue();
 
                         if (feedOptions.Proxy != null)
@@ -449,10 +452,10 @@ namespace Microsoft.Framework.PackageManager
 
                         var success = await command.Execute(argPackage.Value, argVersion.Value);
                         return success ? 0 : 1;
-                    });
+                    }));
 
 
-                });
+                }));
 
                 cmd.Command("uninstall", c =>
                 {
@@ -477,7 +480,7 @@ namespace Microsoft.Framework.PackageManager
                         return success ? 0 : 1;
                     });
                 });
-            });
+            }));
 
             app.Command("wrap", c =>
             {

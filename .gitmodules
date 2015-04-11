@@ -10,3 +10,6 @@
 [submodule "submodules/Logging"]
 	path = submodules/Logging
 	url = https://github.com/aspnet/Logging
+[submodule "submodules/NuGet.Configuration"]
+	path = submodules/NuGet.Configuration
+	url = https://github.com/NuGet/NuGet.Configuration.git

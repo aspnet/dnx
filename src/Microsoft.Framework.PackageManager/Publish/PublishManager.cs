@@ -8,6 +8,7 @@ using System.IO;
 using System.Linq;
 using System.Runtime.Versioning;
 using Microsoft.Framework.Runtime;
+using NuGet.ProjectModel;
 
 namespace Microsoft.Framework.PackageManager.Publish
 {
@@ -42,6 +43,17 @@ namespace Microsoft.Framework.PackageManager.Publish
         public bool Publish()
         {
             var warnings = new List<ICompilationMessage>();
+
+            var resolver = new PackageSpecResolver(_options.ProjectDir);
+            var projectName = new DirectoryInfo(_options.ProjectDir).Name;
+            PackageSpec packageSpec;
+            if (!resolver.TryResolvePackageSpec(projectName, out packageSpec))
+            {
+                _options.Reports.Error.WriteLine(string.Format("Unable to locate {0}.", PackageSpec.PackageSpecFileName));
+                return false;
+            }
+
+            // DNU REFACTORING TODO: leave this for incremental refactoring
             Runtime.Project project;
             if (!Runtime.Project.TryGetProject(_options.ProjectDir, out project, warnings))
             {
@@ -100,13 +112,13 @@ namespace Microsoft.Framework.PackageManager.Publish
                 return null;
             };
 
-            if (!ScriptExecutor.Execute(project, "prepare", getVariable))
+            if (!ScriptExecutor.Execute(packageSpec, "prepare", getVariable))
             {
                 _options.Reports.Error.WriteLine(ScriptExecutor.ErrorMessage);
                 return false;
             }
 
-            if (!ScriptExecutor.Execute(project, "prepublish", getVariable))
+            if (!ScriptExecutor.Execute(packageSpec, "prepublish", getVariable))
             {
                 _options.Reports.Error.WriteLine(ScriptExecutor.ErrorMessage);
                 return false;
@@ -259,7 +271,7 @@ namespace Microsoft.Framework.PackageManager.Publish
 
             var success = root.Emit();
 
-            if (!ScriptExecutor.Execute(project, "postpublish", getVariable))
+            if (!ScriptExecutor.Execute(packageSpec, "postpublish", getVariable))
             {
                 _options.Reports.Error.WriteLine(ScriptExecutor.ErrorMessage);
                 return false;

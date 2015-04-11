@@ -9,7 +9,11 @@ using System.Security.Cryptography;
 using System.Threading.Tasks;
 using Microsoft.Framework.PackageManager.Publish;
 using Microsoft.Framework.Runtime;
-using NuGet;
+using NuGet.LibraryModel;
+using NuGet.Packaging;
+using NuGet.Packaging.Build;
+using DefaultPackagePathResolver = NuGet.Packaging.DefaultPackagePathResolver;
+using Library = Microsoft.Framework.Runtime.Library;
 
 namespace Microsoft.Framework.PackageManager
 {
@@ -17,7 +21,7 @@ namespace Microsoft.Framework.PackageManager
     {
         internal static async Task InstallFromStream(
             Stream stream,
-            Library library,
+            LibraryIdentity library,
             string packagesDirectory,
             IReport information)
         {
@@ -54,16 +58,19 @@ namespace Microsoft.Framework.PackageManager
                         ExtractPackage(targetPath, nupkgStream);
                     }
 
+                    // DNU REFACTORING TODO: bring this back after we have implementation of NuSpecFormatter.Read()
                     // Fixup the casing of the nuspec on disk to match what we expect
-                    var nuspecFile = Directory.EnumerateFiles(targetPath, "*" + NuGet.Constants.ManifestExtension).Single();
+                    /*var nuspecFile = Directory.EnumerateFiles(targetPath, "*" + NuGet.Constants.ManifestExtension).Single();
 
                     if (!string.Equals(nuspecFile, targetNuspec, StringComparison.Ordinal))
                     {
-                        Manifest manifest = null;
+                        MetadataBuilder metadataBuilder = null;
+                        var nuspecFormatter = new NuSpecFormatter();
                         using (var nuspecStream = File.OpenRead(nuspecFile))
                         {
-                            manifest = Manifest.ReadFrom(nuspecStream, validateSchema: false);
-                            manifest.Metadata.Id = library.Name;
+                            metadataBuilder = nuspecFormatter.Read(nuspecStream);
+                            // REVIEW: any way better hardcoding "id"?
+                            metadataBuilder.SetMetadataValue("id", library.Name);
                         }
 
                         // Delete the previous nuspec file
@@ -72,9 +79,9 @@ namespace Microsoft.Framework.PackageManager
                         // Write the new manifest
                         using (var targetNuspecStream = File.OpenWrite(targetNuspec))
                         {
-                            manifest.Save(targetNuspecStream);
+                            nuspecFormatter.Save(metadataBuilder, targetNuspecStream);
                         }
-                    }
+                    }*/
 
                     stream.Seek(0, SeekOrigin.Begin);
                     string packageHash;
@@ -92,7 +99,7 @@ namespace Microsoft.Framework.PackageManager
             });
         }
 
-        internal static Library CreateLibraryFromNupkg(string nupkgPath)
+        internal static LibraryIdentity CreateLibraryFromNupkg(string nupkgPath)
         {
             using (var fileStream = File.OpenRead(nupkgPath))
             using (var archive = new ZipArchive(fileStream))
@@ -106,11 +113,12 @@ namespace Microsoft.Framework.PackageManager
 
                     using (var entryStream = entry.Open())
                     {
-                        var manifest = Manifest.ReadFrom(entryStream, validateSchema: false);
-                        return new Library()
+                        var reader = new NuspecReader(entryStream);
+                        return new LibraryIdentity()
                         {
-                            Name = manifest.Metadata.Id,
-                            Version = SemanticVersion.Parse(manifest.Metadata.Version)
+                            Name = reader.GetId(),
+                            Version = reader.GetVersion(),
+                            Type = LibraryTypes.Package
                         };
                     }
                 }

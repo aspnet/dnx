@@ -5,8 +5,10 @@ using System;
 using System.IO;
 using System.IO.Compression;
 using System.Threading.Tasks;
+using NuGet.Client;
+using NuGet.Common;
 
-namespace Microsoft.Framework.PackageManager
+namespace NuGet
 {
     internal static class PackageUtilities
     {
@@ -25,7 +27,7 @@ namespace Microsoft.Framework.PackageManager
 
         internal static async Task<Stream> OpenNuspecStreamFromNupkgAsync(PackageInfo package,
             Func<PackageInfo, Task<Stream>> openNupkgStreamAsync,
-            IReport report)
+            ILogger report)
         {
             using (var nupkgStream = await openNupkgStreamAsync(package))
             {
@@ -53,51 +55,8 @@ namespace Microsoft.Framework.PackageManager
                     var fileStream = nupkgStream as FileStream;
                     if (fileStream != null)
                     {
-                        report.WriteLine("The ZIP archive {0} is corrupt",
-                            fileStream.Name.Yellow().Bold());
-                    }
-                    throw;
-                }
-            }
-        }
-
-        internal static async Task<Stream> OpenRuntimeStreamFromNupkgAsync(PackageInfo package,
-            Func<PackageInfo, Task<Stream>> openNupkgStreamAsync,
-            IReport report)
-        {
-            using (var nupkgStream = await openNupkgStreamAsync(package))
-            {
-                try
-                {
-                    using (var archive = new ZipArchive(nupkgStream, ZipArchiveMode.Read, leaveOpen: true))
-                    {
-                        var entry = archive.GetEntryOrdinalIgnoreCase("runtime.json");
-                        if (entry == null)
-                        {
-                            return null;
-                        }
-                        using (var entryStream = entry.Open())
-                        {
-                            var runtimeStream = new MemoryStream((int)entry.Length);
-#if DNXCORE50
-                            // System.IO.Compression.DeflateStream throws exception when multiple
-                            // async readers/writers are working on a single instance of it
-                            entryStream.CopyTo(runtimeStream);
-#else
-                            await entryStream.CopyToAsync(runtimeStream);
-#endif
-                            runtimeStream.Seek(0, SeekOrigin.Begin);
-                            return runtimeStream;
-                        }
-                    }
-                }
-                catch (InvalidDataException)
-                {
-                    var fileStream = nupkgStream as FileStream;
-                    if (fileStream != null)
-                    {
-                        report.WriteLine("The ZIP archive {0} is corrupt",
-                            fileStream.Name.Yellow().Bold());
+                        report.WriteError(string.Format("The ZIP archive {0} is corrupt",
+                            fileStream.Name.Yellow().Bold()));
                     }
                     throw;
                 }

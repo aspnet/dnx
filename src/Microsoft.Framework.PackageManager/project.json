@@ -8,7 +8,14 @@
         "Microsoft.Framework.Runtime": "1.0.0-*",
         "Microsoft.Framework.Runtime.Compilation.Common": { "version": "1.0.0-*", "type": "build" },
         "Microsoft.Framework.Runtime.Common": { "version": "1.0.0-*", "type": "build" },
-        "Microsoft.Framework.Runtime.Interfaces": "1.0.0-*"
+        "Microsoft.Framework.Runtime.Interfaces": "1.0.0-*",
+        "NuGet.Configuration": "3.0.0-*",
+        "NuGet.Client": "3.0.0-*",
+        "NuGet.DependencyResolver": "3.0.0-*",
+        "NuGet.Packaging": "3.0.0-*",
+        "NuGet.Packaging.Build": "3.0.0-*",
+        "NuGet.Repositories": "3.0.0-*",
+        "NuGet.ProjectModel": "3.0.0-*"
     },
     "compile": "..\\Microsoft.Framework.ApplicationHost\\Impl\\**\\*.cs",
 

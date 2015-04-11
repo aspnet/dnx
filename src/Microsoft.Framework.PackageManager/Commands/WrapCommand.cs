@@ -12,6 +12,8 @@ using System.Xml.Linq;
 using Microsoft.Framework.Runtime;
 using Newtonsoft.Json.Linq;
 using NuGet;
+using NuGet.Configuration;
+using Settings = NuGet.Configuration.Settings;
 
 namespace Microsoft.Framework.PackageManager
 {
@@ -693,12 +695,11 @@ namespace Microsoft.Framework.PackageManager
         private static string ResolvePackagesDirectory(string projectDir)
         {
             var rootDir = ProjectResolver.ResolveRootDirectory(projectDir);
-            var settings = SettingsUtils.ReadSettings(
-                solutionDir: rootDir,
-                nugetConfigFile: null,
-                fileSystem: new PhysicalFileSystem(projectDir),
+            var settings = Settings.LoadDefaultSettings(
+                rootDir,
+                configFileName: null,
                 machineWideSettings: new CommandLineMachineWideSettings());
-            var packagesDir = settings.GetRepositoryPath();
+            var packagesDir = SettingsUtility.GetRepositoryPath(settings);
 
             // If 'repositoryPath' is not specified in NuGet.config, use {SolutionRoot}/packages as default
             if (string.IsNullOrEmpty(packagesDir))

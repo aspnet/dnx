@@ -44,7 +44,7 @@ namespace Microsoft.Framework.Runtime.DependencyManagement
                 {
                     var framework = actualTargetFrameworks
                         .FirstOrDefault(f =>
-                            string.Equals(f.FrameworkName.ToString(), group.FrameworkName, StringComparison.Ordinal));
+                            string.Equals(f.FrameworkName.ToString(), group.FrameworkName, StringComparison.OrdinalIgnoreCase));
                     if (framework == null)
                     {
                         return false;

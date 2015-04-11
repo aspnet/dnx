@@ -7,8 +7,11 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Framework.Runtime;
-using Microsoft.Framework.PackageManager.Restore.NuGet;
-using NuGet;
+using NuGet.Configuration;
+using NuGet.Client;
+using Settings = NuGet.Configuration.Settings;
+// DNU REFACOTRING TODO: for incremental refactoring
+using SemanticVersion = NuGet.SemanticVersion;
 
 namespace Microsoft.Framework.PackageManager
 {
@@ -20,16 +23,16 @@ namespace Microsoft.Framework.PackageManager
 
         public InstallGlobalCommand(IApplicationEnvironment env, IAppCommandsRepository commandsRepository)
         {
-            RestoreCommand = new RestoreCommand(env);
+            RestoreCommand = new RestoreCommand();
             _commandsRepository = commandsRepository;
         }
 
         public RestoreCommand RestoreCommand { get; private set; }
 
-        public Reports Reports
+        public ILogger Logger
         {
-            get { return RestoreCommand.Reports; }
-            set { RestoreCommand.Reports = value; }
+            get { return RestoreCommand.Logger; }
+            set { RestoreCommand.Logger = value; }
         }
 
         public FeedOptions FeedOptions
@@ -141,11 +144,10 @@ namespace Microsoft.Framework.PackageManager
             if (string.IsNullOrEmpty(packageVersion))
             {
                 var rootDirectory = ProjectResolver.ResolveRootDirectory(_commandsRepository.Root.Root);
-                var settings = SettingsUtils.ReadSettings(
+                var settings = Settings.LoadDefaultSettings(
                     rootDirectory,
-                    RestoreCommand.NuGetConfigFile,
-                    RestoreCommand.FileSystem,
-                    RestoreCommand.MachineWideSettings);
+                    configFileName: null,
+                    machineWideSettings: RestoreCommand.MachineWideSettings);
 
                 var sourceProvier = PackageSourceBuilder.CreateSourceProvider(settings);
 
@@ -162,7 +164,7 @@ namespace Microsoft.Framework.PackageManager
                         source,
                         FeedOptions.NoCache,
                         FeedOptions.IgnoreFailedSources,
-                        Reports);
+                        Logger);
                     if (feed != null)
                     {
                         packageFeeds.Add(feed);
@@ -173,7 +175,7 @@ namespace Microsoft.Framework.PackageManager
 
                 if (package == null)
                 {
-                    Reports.Error.WriteLine("Unable to locate the package {0}".Red(), packageId);
+                    Logger.WriteError("Unable to locate the package {0}".Red(), packageId);
                     return null;
                 }
 
@@ -325,17 +327,17 @@ namespace Microsoft.Framework.PackageManager
 
         private void WriteVerbose(string message, params string[] args)
         {
-            Reports.Verbose.WriteLine(message, args);
+            Logger.WriteVerbose(message, args);
         }
 
         private void WriteInfo(string message)
         {
-            Reports.Information.WriteLine(message);
+            Logger.WriteInformation(message);
         }
 
         private void WriteError(string message)
         {
-            Reports.Error.WriteLine(message.Red());
+            Logger.WriteError(message.Red());
         }
     }
 }

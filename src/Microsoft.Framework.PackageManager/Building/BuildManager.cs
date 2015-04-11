@@ -10,6 +10,7 @@ using Microsoft.Framework.PackageManager.Utils;
 using Microsoft.Framework.Runtime;
 using Microsoft.Framework.Runtime.Caching;
 using NuGet;
+using NuGet.ProjectModel;
 
 namespace Microsoft.Framework.PackageManager
 {
@@ -34,7 +35,17 @@ namespace Microsoft.Framework.PackageManager
 
         public bool Build()
         {
+            var resolver = new PackageSpecResolver(_buildOptions.ProjectDir);
+            var projectName = new DirectoryInfo(_buildOptions.ProjectDir).Name;
+            PackageSpec packageSpec;
+            if (!resolver.TryResolvePackageSpec(projectName, out packageSpec))
+            {
+                LogError(string.Format("Unable to locate {0}.", PackageSpec.PackageSpecFileName));
+                return false;
+            }
+
             var projectDiagnostics = new List<ICompilationMessage>();
+            // DNU REFACTORING TODO: leave this for incremental refactoring
             Runtime.Project project;
             if (!Runtime.Project.TryGetProject(_buildOptions.ProjectDir, out project, projectDiagnostics))
             {
@@ -60,13 +71,13 @@ namespace Microsoft.Framework.PackageManager
             }
 
             if (_buildOptions.GeneratePackages &&
-                !ScriptExecutor.Execute(project, "prepack", GetScriptVariable))
+                !ScriptExecutor.Execute(packageSpec, "prepack", GetScriptVariable))
             {
                 LogError(ScriptExecutor.ErrorMessage);
                 return false;
             }
 
-            if (!ScriptExecutor.Execute(project, "prebuild", GetScriptVariable))
+            if (!ScriptExecutor.Execute(packageSpec, "prebuild", GetScriptVariable))
             {
                 LogError(ScriptExecutor.ErrorMessage);
                 return false;
@@ -194,14 +205,14 @@ namespace Microsoft.Framework.PackageManager
                 }
             }
 
-            if (!ScriptExecutor.Execute(project, "postbuild", GetScriptVariable))
+            if (!ScriptExecutor.Execute(packageSpec, "postbuild", GetScriptVariable))
             {
                 LogError(ScriptExecutor.ErrorMessage);
                 return false;
             }
 
             if (_buildOptions.GeneratePackages &&
-                !ScriptExecutor.Execute(project, "postpack", GetScriptVariable))
+                !ScriptExecutor.Execute(packageSpec, "postpack", GetScriptVariable))
             {
                 LogError(ScriptExecutor.ErrorMessage);
                 return false;

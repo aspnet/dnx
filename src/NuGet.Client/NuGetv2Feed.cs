@@ -9,8 +9,10 @@ using System.Threading.Tasks;
 using System.Xml;
 using System.Xml.Linq;
 using NuGet;
+using NuGet.Common;
+using NuGet.Versioning;
 
-namespace Microsoft.Framework.PackageManager.Restore.NuGet
+namespace NuGet.Client
 {
     public class NuGetv2Feed : IPackageFeed
     {
@@ -21,13 +23,8 @@ namespace Microsoft.Framework.PackageManager.Restore.NuGet
         private static readonly XName _xnameProperties = XName.Get("properties", "http://schemas.microsoft.com/ado/2007/08/dataservices/metadata");
         private static readonly XName _xnameId = XName.Get("Id", "http://schemas.microsoft.com/ado/2007/08/dataservices");
         private static readonly XName _xnameVersion = XName.Get("Version", "http://schemas.microsoft.com/ado/2007/08/dataservices");
-        private static readonly XName _xnamePublish = XName.Get("Published", "http://schemas.microsoft.com/ado/2007/08/dataservices");
-
-        // An unlisted package's publish time must be 1900-01-01T00:00:00.
-        private static readonly DateTime _unlistedPublishedTime = new DateTime(1900, 1, 1, 0, 0, 0);
 
         private readonly string _baseUri;
-        private readonly Reports _reports;
         private readonly HttpSource _httpSource;
         private readonly TimeSpan _cacheAgeLimitList;
         private readonly TimeSpan _cacheAgeLimitNupkg;
@@ -39,17 +36,19 @@ namespace Microsoft.Framework.PackageManager.Restore.NuGet
 
         public string Source { get; }
 
+        private readonly ILogger _reports;
+
         public NuGetv2Feed(
             string baseUri,
             string userName,
             string password,
             bool noCache,
-            Reports reports,
-            bool ignoreFailure)
+            bool ignoreFailure,
+            ILogger report)
         {
+            _reports = report;
             _baseUri = baseUri.EndsWith("/") ? baseUri : (baseUri + "/");
-            _reports = reports;
-            _httpSource = new HttpSource(baseUri, userName, password, reports);
+            _httpSource = new HttpSource(baseUri, userName, password, report);
             _ignoreFailure = ignoreFailure;
             if (noCache)
             {
@@ -93,7 +92,7 @@ namespace Microsoft.Framework.PackageManager.Restore.NuGet
                     var page = 1;
                     while (true)
                     {
-                        // TODO: Pages for a package Id are cached separately.
+                        // TODO: Pages for a package Id are cahced separately.
                         // So we will get inaccurate data when a page shrinks.
                         // However, (1) In most cases the pages grow rather than shrink;
                         // (2) cache for pages is valid for only 30 min.
@@ -108,8 +107,7 @@ namespace Microsoft.Framework.PackageManager.Restore.NuGet
 
                                 var result = doc.Root
                                     .Elements(_xnameEntry)
-                                    .Select(x => BuildModel(id, x))
-                                    .Where(x => x != null);
+                                    .Select(x => BuildModel(id, x));
 
                                 results.AddRange(result);
 
@@ -133,8 +131,8 @@ namespace Microsoft.Framework.PackageManager.Restore.NuGet
                             }
                             catch (XmlException)
                             {
-                                _reports.Information.WriteLine("The XML file {0} is corrupt",
-                                    data.CacheFileName.Yellow().Bold());
+                                //_reports.Information.WriteLine("The XML file {0} is corrupt",
+                                //    data.CacheFileName.Yellow().Bold());
                                 throw;
                             }
                         }
@@ -150,19 +148,19 @@ namespace Microsoft.Framework.PackageManager.Restore.NuGet
                         if (_ignoreFailure)
                         {
                             _ignored = true;
-                            _reports.Information.WriteLine(
-                                string.Format("Failed to retrieve information from remote source '{0}'",
-                                    _baseUri).Yellow().Bold());
+                            _reports.WriteInformation(
+                                string.Format("Failed to retrieve information from remote source '{0}'".Yellow(),
+                                    _baseUri));
                             return new List<PackageInfo>();
                         }
 
-                        _reports.Error.WriteLine(string.Format("Error: FindPackagesById: {1}\r\n  {0}",
-                            ex.Message, id).Red().Bold());
+                        _reports.WriteError(string.Format("Error: FindPackagesById: {1}\r\n  {0}",
+                            ex.Message, id.Red().Bold()));
                         throw;
                     }
                     else
                     {
-                        _reports.Information.WriteLine(string.Format("Warning: FindPackagesById: {1}\r\n  {0}", ex.Message, id).Yellow().Bold());
+                        _reports.WriteInformation(string.Format("Warning: FindPackagesById: {1}\r\n  {0}", ex.Message, id.Yellow().Bold()));
                     }
                 }
             }
@@ -175,35 +173,20 @@ namespace Microsoft.Framework.PackageManager.Restore.NuGet
             var idElement = properties.Element(_xnameId);
             var titleElement = element.Element(_xnameTitle);
 
-            var publishElement = properties.Element(_xnamePublish);
-            if (publishElement != null)
-            {
-                DateTime publishDate; 
-                if (DateTime.TryParse(publishElement.Value, out publishDate) && (publishDate == _unlistedPublishedTime))
-                {
-                    return null; 
-                }
-            }
-
             return new PackageInfo
             {
                 // If 'Id' element exist, use its value as accurate package Id
                 // Otherwise, use the value of 'title' if it exist
                 // Use the given Id as final fallback if all elements above don't exist
                 Id = idElement?.Value ?? titleElement?.Value ?? id,
-                Version = SemanticVersion.Parse(properties.Element(_xnameVersion).Value),
+                Version = NuGetVersion.Parse(properties.Element(_xnameVersion).Value),
                 ContentUri = element.Element(_xnameContent).Attribute("src").Value,
             };
         }
 
         public async Task<Stream> OpenNuspecStreamAsync(PackageInfo package)
         {
-            return await PackageUtilities.OpenNuspecStreamFromNupkgAsync(package, OpenNupkgStreamAsync, _reports.Information);
-        }
-
-        public async Task<Stream> OpenRuntimeStreamAsync(PackageInfo package)
-        {
-            return await PackageUtilities.OpenRuntimeStreamFromNupkgAsync(package, OpenNupkgStreamAsync, _reports.Information);
+            return await PackageUtilities.OpenNuspecStreamFromNupkgAsync(package, OpenNupkgStreamAsync, _reports);
         }
 
         public async Task<Stream> OpenNupkgStreamAsync(PackageInfo package)
@@ -253,11 +236,11 @@ namespace Microsoft.Framework.PackageManager.Restore.NuGet
                 {
                     if (retry == 2)
                     {
-                        _reports.Error.WriteLine(string.Format("Error: DownloadPackageAsync: {1}\r\n  {0}", ex.Message, package.ContentUri.Red().Bold()));
+                        _reports.WriteError(string.Format("Error: DownloadPackageAsync: {1}\r\n  {0}", ex.Message, package.ContentUri.Red().Bold()));
                     }
                     else
                     {
-                        _reports.Information.WriteLine(string.Format("Warning: DownloadPackageAsync: {1}\r\n  {0}".Yellow().Bold(), ex.Message, package.ContentUri.Yellow().Bold()));
+                        _reports.WriteInformation(string.Format("Warning: DownloadPackageAsync: {1}\r\n  {0}".Yellow().Bold(), ex.Message, package.ContentUri.Yellow().Bold()));
                     }
                 }
             }

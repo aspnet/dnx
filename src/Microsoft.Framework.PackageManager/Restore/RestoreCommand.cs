@@ -6,18 +6,26 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using System.IO.Compression;
 using System.Linq;
-using System.Runtime.Versioning;
 using System.Security.Cryptography;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.Framework.PackageManager.Publish;
-using Microsoft.Framework.PackageManager.Restore.RuntimeModel;
 using Microsoft.Framework.PackageManager.Utils;
 using Microsoft.Framework.Runtime;
-using Microsoft.Framework.Runtime.DependencyManagement;
-using NuGet;
+using Microsoft.Framework.PackageManager.Restore.RuntimeModel;
+using NuGet.Configuration;
+using NuGet.Client;
+using NuGet.DependencyResolver;
+using NuGet.Frameworks;
+using NuGet.LibraryModel;
+using NuGet.ProjectModel;
+using NuGet.Repositories;
+using NuGet.Versioning;
+using NuGetDependencyResolver = NuGet.DependencyResolver.NuGetDependencyResolver;
+using LockFileFormat = NuGet.ProjectModel.LockFileFormat;
+using LockFile = NuGet.ProjectModel.LockFile;
+using ProjectFileDependencyGroup = NuGet.ProjectModel.ProjectFileDependencyGroup;
+using LibraryRange = NuGet.LibraryModel.LibraryRange;
 
 namespace Microsoft.Framework.PackageManager
 {
@@ -25,10 +33,8 @@ namespace Microsoft.Framework.PackageManager
     {
         private static readonly int MaxDegreesOfConcurrency = Environment.ProcessorCount;
 
-        public RestoreCommand(IApplicationEnvironment env)
+        public RestoreCommand()
         {
-            ApplicationEnvironment = env;
-            FileSystem = new PhysicalFileSystem(Directory.GetCurrentDirectory());
             MachineWideSettings = new CommandLineMachineWideSettings();
             ScriptExecutor = new ScriptExecutor();
             ErrorMessages = new Dictionary<string, List<string>>(StringComparer.Ordinal);
@@ -37,9 +43,6 @@ namespace Microsoft.Framework.PackageManager
         public FeedOptions FeedOptions { get; set; }
 
         public string RestoreDirectory { get; set; }
-        public string NuGetConfigFile { get; set; }
-        public IEnumerable<string> Sources { get; set; }
-        public IEnumerable<string> FallbackSources { get; set; }
         public bool NoCache { get; set; }
         public bool Lock { get; set; }
         public bool Unlock { get; set; }
@@ -52,9 +55,8 @@ namespace Microsoft.Framework.PackageManager
 
         public ScriptExecutor ScriptExecutor { get; private set; }
 
-        public IApplicationEnvironment ApplicationEnvironment { get; private set; }
         public IMachineWideSettings MachineWideSettings { get; set; }
-        public IFileSystem FileSystem { get; set; }
+        public ILogger Logger { get; set; }
         public Reports Reports { get; set; }
         private Dictionary<string, List<string>> ErrorMessages { get; set; }
 
@@ -69,7 +71,7 @@ namespace Microsoft.Framework.PackageManager
 
                 // If the root argument is a project.json file
                 if (string.Equals(
-                    Runtime.Project.ProjectFileName,
+                    PackageSpec.PackageSpecFileName,
                     Path.GetFileName(RestoreDirectory),
                     StringComparison.OrdinalIgnoreCase))
                 {
@@ -89,18 +91,15 @@ namespace Microsoft.Framework.PackageManager
 
                 if (string.IsNullOrEmpty(packagesDirectory))
                 {
-                    packagesDirectory = NuGetDependencyResolver.ResolveRepositoryPath(rootDirectory);
+                    packagesDirectory = NuGetRepositoryUtils.ResolveRepositoryPath(rootDirectory);
                 }
-
-                var packagesFolderFileSystem = CreateFileSystem(packagesDirectory);
-                var pathResolver = new DefaultPackagePathResolver(packagesFolderFileSystem, useSideBySidePaths: true);
 
                 int restoreCount = 0;
                 int successCount = 0;
 
                 var projectJsonFiles = Directory.EnumerateFiles(
                     restoreDirectory,
-                    Runtime.Project.ProjectFileName,
+                    PackageSpec.PackageSpecFileName,
                     SearchOption.AllDirectories);
                 Func<string, Task> restorePackage = async projectJsonPath =>
                 {
@@ -130,15 +129,15 @@ namespace Microsoft.Framework.PackageManager
 
                 if (restoreCount > 1)
                 {
-                    Reports.Information.WriteLine(string.Format("Total time {0}ms", sw.ElapsedMilliseconds));
+                    Logger.WriteInformation(string.Format("Total time {0}ms", sw.ElapsedMilliseconds));
                 }
 
                 foreach (var category in ErrorMessages)
                 {
-                    Reports.Error.WriteLine("Errors in {0}".Red().Bold(), category.Key);
+                    Logger.WriteError("Errors in {0}".Red().Bold(), category.Key);
                     foreach (var message in category.Value)
                     {
-                        Reports.Error.WriteLine("    {0}", message);
+                        Logger.WriteError("    {0}", message);
                     }
                 }
 
@@ -146,11 +145,11 @@ namespace Microsoft.Framework.PackageManager
             }
             catch (Exception ex)
             {
-                Reports.Information.WriteLine("----------");
-                Reports.Information.WriteLine(ex.ToString());
-                Reports.Information.WriteLine("----------");
-                Reports.Information.WriteLine("Restore failed");
-                Reports.Information.WriteLine(ex.Message);
+                Logger.WriteInformation("----------");
+                Logger.WriteInformation(ex.ToString());
+                Logger.WriteInformation("----------");
+                Logger.WriteInformation("Restore failed");
+                Logger.WriteInformation(ex.Message);
                 return false;
             }
         }
@@ -159,18 +158,19 @@ namespace Microsoft.Framework.PackageManager
         {
             var success = true;
 
-            Reports.Information.WriteLine(string.Format("Restoring packages for {0}", projectJsonPath.Bold()));
+            Logger.WriteInformation(string.Format("Restoring packages for {0}", projectJsonPath.Bold()));
 
             var sw = new Stopwatch();
             sw.Start();
 
             var projectFolder = Path.GetDirectoryName(projectJsonPath);
+            var projectName = new DirectoryInfo(projectFolder).Name;
             var projectLockFilePath = Path.Combine(projectFolder, LockFileFormat.LockFileName);
 
-            Runtime.Project project;
-            if (!Runtime.Project.TryGetProject(projectJsonPath, out project))
+            PackageSpec packageSpec;
+            using (var stream = File.OpenRead(projectJsonPath))
             {
-                throw new Exception("TODO: project.json parse error");
+                packageSpec = JsonPackageSpecReader.GetPackageSpec(stream, projectName, projectJsonPath);
             }
 
             var lockFile = await ReadLockFile(projectLockFilePath);
@@ -184,10 +184,10 @@ namespace Microsoft.Framework.PackageManager
                 useLockFile = true;
             }
 
-            if (useLockFile && !lockFile.IsValidForProject(project))
+            if (useLockFile && !lockFile.IsValidForPackageSpec(packageSpec))
             {
                 // Exhibit the same behavior as if it has been run with "dnu restore --lock"
-                Reports.Information.WriteLine("Updating the invalid lock file with {0}",
+                Logger.WriteInformation("Updating the invalid lock file with {0}",
                     "dnu restore --lock".Yellow().Bold());
                 useLockFile = false;
                 Lock = true;
@@ -198,259 +198,171 @@ namespace Microsoft.Framework.PackageManager
                 return null;
             };
 
-            if (!ScriptExecutor.Execute(project, "prerestore", getVariable))
+            if (!ScriptExecutor.Execute(packageSpec, "prerestore", getVariable))
             {
                 ErrorMessages.GetOrAdd("prerestore", _ => new List<string>()).Add(ScriptExecutor.ErrorMessage);
-                Reports.Error.WriteLine(ScriptExecutor.ErrorMessage);
+                Logger.WriteError(ScriptExecutor.ErrorMessage);
                 return false;
             }
 
-            var projectDirectory = project.ProjectDirectory;
-            var projectResolver = new ProjectResolver(projectDirectory, rootDirectory);
-            var packageRepository = new PackageRepository(packagesDirectory);
-            var restoreOperations = new RestoreOperations(Reports.Verbose);
-            var projectProviders = new List<IWalkProvider>();
-            var localProviders = new List<IWalkProvider>();
-            var remoteProviders = new List<IWalkProvider>();
-            var contexts = new List<RestoreContext>();
+            var projectDirectory = packageSpec.BaseDirectory;
+            var packageSpecResolver = new PackageSpecResolver(projectDirectory, rootDirectory);
+            var nugetRepository = new NuGetv3LocalRepository(packagesDirectory, checkPackageIdCase: true);
 
-            projectProviders.Add(
-                new LocalWalkProvider(
-                    new ProjectReferenceDependencyProvider(
-                        projectResolver)));
+            var context = new RemoteWalkContext();
 
-            localProviders.Add(
-                new LocalWalkProvider(
-                    new NuGetDependencyResolver(packageRepository)));
+            context.ProjectLibraryProviders.Add(new LocalDependencyProvider(
+                new PackageSpecReferenceDependencyProvider(packageSpecResolver)));
 
-            var effectiveSources = PackageSourceUtils.GetEffectivePackageSources(
-                SourceProvider,
-                FeedOptions.Sources,
-                FeedOptions.FallbackSources);
+            context.LocalLibraryProviders.Add(
+                new LocalDependencyProvider(
+                    new NuGetDependencyResolver(nugetRepository)));
 
-            AddRemoteProvidersFromSources(remoteProviders, effectiveSources);
+            var effectiveSources = PackageSourceUtils.GetEffectivePackageSources(SourceProvider,
+                FeedOptions.Sources, FeedOptions.FallbackSources);
 
-            var tasks = new List<Task<GraphNode>>();
+            AddRemoteProvidersFromSources(context.RemoteLibraryProviders, effectiveSources);
+
+            var remoteWalker = new RemoteDependencyWalker(context);
+
+            var tasks = new List<Task<GraphNode<RemoteResolveResult>>>();
 
             if (useLockFile)
             {
-                Reports.Information.WriteLine(string.Format("Following lock file {0}", projectLockFilePath.White().Bold()));
-
-                var context = new RestoreContext
-                {
-                    FrameworkName = ApplicationEnvironment.RuntimeFramework,
-                    ProjectLibraryProviders = projectProviders,
-                    LocalLibraryProviders = localProviders,
-                    RemoteLibraryProviders = remoteProviders,
-                };
-
-                contexts.Add(context);
+                Logger.WriteInformation(string.Format("Following lock file {0}", projectLockFilePath.White().Bold()));
 
                 foreach (var lockFileLibrary in lockFile.Libraries)
                 {
                     var projectLibrary = new LibraryRange
                     {
                         Name = lockFileLibrary.Name,
-                        VersionRange = new SemanticVersionRange
-                        {
-                            MinVersion = lockFileLibrary.Version,
-                            MaxVersion = lockFileLibrary.Version,
-                            IsMaxInclusive = true,
-                            VersionFloatBehavior = SemanticVersionFloatBehavior.None,
-                        }
+                        VersionRange = new VersionRange(minVersion: lockFileLibrary.Version,
+                            floatRange: new FloatRange(NuGetVersionFloatBehavior.None))
                     };
-                    tasks.Add(restoreOperations.CreateGraphNode(context, projectLibrary, _ => false));
+                    // DNU REFACTORING TODO: replace the hardcoded framework name with IRuntimeEnvironment.RuntimeFramework
+                    tasks.Add(remoteWalker.Walk(projectLibrary, new NuGetFramework("DNX,Version=v4.5.1")));
                 }
             }
             else
             {
-                foreach (var configuration in project.GetTargetFrameworks())
+                foreach (var framework in packageSpec.TargetFrameworks)
                 {
-                    var context = new RestoreContext
+                    var library = new LibraryRange
                     {
-                        FrameworkName = configuration.FrameworkName,
-                        ProjectLibraryProviders = projectProviders,
-                        LocalLibraryProviders = localProviders,
-                        RemoteLibraryProviders = remoteProviders,
-                    };
-                    contexts.Add(context);
-                }
-
-                if (!contexts.Any())
-                {
-                    contexts.Add(new RestoreContext
-                    {
-                        FrameworkName = ApplicationEnvironment.RuntimeFramework,
-                        ProjectLibraryProviders = projectProviders,
-                        LocalLibraryProviders = localProviders,
-                        RemoteLibraryProviders = remoteProviders,
-                    });
-                }
-
-                foreach (var context in contexts)
-                {
-                    var projectLibrary = new LibraryRange
-                    {
-                        Name = project.Name,
-                        VersionRange = new SemanticVersionRange(project.Version)
+                        Name = packageSpec.Name,
+                        VersionRange = new VersionRange(packageSpec.Version),
+                        TypeConstraint = LibraryTypes.Project
                     };
 
-                    tasks.Add(restoreOperations.CreateGraphNode(context, projectLibrary, _ => true));
+                    tasks.Add(remoteWalker.Walk(library, framework.FrameworkName));
                 }
             }
 
             var graphs = await Task.WhenAll(tasks);
-            foreach (var graph in graphs)
-            {
-                Reduce(graph);
-            }
+
+            Logger.WriteInformation(string.Format("{0}, {1}ms elapsed", "Resolving complete".Green(), sw.ElapsedMilliseconds));
 
             if (!useLockFile)
             {
-                var runtimeFormatter = new RuntimeFileFormatter();
-                var projectRuntimeFile = runtimeFormatter.ReadRuntimeFile(projectJsonPath);
-                if (projectRuntimeFile.Runtimes.Any())
-                {
-                    var runtimeTasks = new List<Task<GraphNode>>();
-
-                    foreach (var pair in contexts.Zip(graphs, (context, graph) => new { context, graph }))
-                    {
-                        var runtimeFileTasks = new List<Task<RuntimeFile>>();
-                        ForEach(pair.graph, node =>
-                        {
-                            var match = node?.Item?.Match;
-                            if (match == null) { return; }
-                            runtimeFileTasks.Add(match.Provider.GetRuntimes(node.Item.Match, pair.context.FrameworkName));
-                        });
-
-                        var libraryRuntimeFiles = await Task.WhenAll(runtimeFileTasks);
-                        var runtimeFiles = new List<RuntimeFile> { projectRuntimeFile };
-                        runtimeFiles.AddRange(libraryRuntimeFiles.Where(file => file != null));
-
-                        foreach (var runtimeName in projectRuntimeFile.Runtimes.Keys)
-                        {
-                            var runtimeSpecs = new List<RuntimeSpec>();
-                            FindRuntimeSpecs(
-                                runtimeName,
-                                runtimeFiles,
-                                runtimeSpecs,
-                                _ => false);
-
-                            var runtimeContext = new RestoreContext
-                            {
-                                FrameworkName = pair.context.FrameworkName,
-                                ProjectLibraryProviders = pair.context.ProjectLibraryProviders,
-                                LocalLibraryProviders = pair.context.LocalLibraryProviders,
-                                RemoteLibraryProviders = pair.context.RemoteLibraryProviders,
-                                RuntimeName = runtimeName,
-                                RuntimeSpecs = runtimeSpecs
-                            };
-                            var projectLibrary = new LibraryRange
-                            {
-                                Name = project.Name,
-                                VersionRange = new SemanticVersionRange(project.Version)
-                            };
-                            Reports.Information.WriteLine(string.Format("Graph for {0} on {1}", runtimeContext.FrameworkName, runtimeContext.RuntimeName));
-                            runtimeTasks.Add(restoreOperations.CreateGraphNode(runtimeContext, projectLibrary, _ => true));
-                        }
-                    }
-
-                    var runtimeGraphs = await Task.WhenAll(runtimeTasks);
-                    foreach (var runtimeGraph in runtimeGraphs)
-                    {
-                        Reduce(runtimeGraph);
-                    }
-
-                    graphs = graphs.Concat(runtimeGraphs).ToArray();
-                }
+                // DNU REFACTORING TODO: parse 'runtimes' property in project.json
             }
 
-            var graphItems = new List<GraphItem>();
-            var installItems = new List<GraphItem>();
+            var libraries = new HashSet<LibraryIdentity>();
+            var installItems = new List<GraphItem<RemoteResolveResult>>();
             var missingItems = new HashSet<LibraryRange>();
+            var graphItems = new List<GraphItem<RemoteResolveResult>>();
 
-            ForEach(graphs, node =>
+            foreach (var g in graphs)
             {
-                if (node == null ||
-                    node.LibraryRange == null ||
-                    node.Disposition == GraphNode.DispositionType.Rejected)
+                g.ForEach(node =>
                 {
-                    return;
-                }
-
-                if (node.Item == null || node.Item.Match == null)
-                {
-                    if (!node.LibraryRange.IsGacOrFrameworkReference &&
-                         node.LibraryRange.VersionRange != null &&
-                         missingItems.Add(node.LibraryRange))
+                    if (node == null || node.Key == null)
                     {
-                        var errorMessage = string.Format("Unable to locate {0} {1}",
-                            node.LibraryRange.Name.Red().Bold(),
-                            node.LibraryRange.VersionRange);
-                        ErrorMessages.GetOrAdd(projectJsonPath, _ => new List<string>()).Add(errorMessage);
-                        Reports.Error.WriteLine(errorMessage);
-                        success = false;
+                        return;
                     }
 
-                    return;
-                }
+                    if (node.Item == null || node.Item.Data.Match == null)
+                    {
+                        if (node.Key.TypeConstraint != LibraryTypes.Reference &&
+                            node.Key.VersionRange != null &&
+                            missingItems.Add(node.Key))
+                        {
+                            var errorMessage = string.Format("Unable to locate {0} {1}",
+                                node.Key.Name.Red().Bold(),
+                                node.Key.VersionRange);
+                            ErrorMessages.GetOrAdd(projectJsonPath, _ => new List<string>()).Add(errorMessage);
+                            Logger.WriteError(errorMessage);
+                            success = false;
+                        }
 
-                if (!string.Equals(node.Item.Match.Library.Name, node.LibraryRange.Name, StringComparison.Ordinal))
-                {
-                    // Fix casing of the library name to be installed
-                    node.Item.Match.Library.Name = node.LibraryRange.Name;
-                }
+                        return;
+                    }
 
-                var isRemote = remoteProviders.Contains(node.Item.Match.Provider);
-                var isInstallItem = installItems.Any(item => item.Match.Library == node.Item.Match.Library);
+                    if (!string.Equals(node.Item.Data.Match.Library.Name, node.Key.Name, StringComparison.Ordinal))
+                    {
+                        // Fix casing of the library name to be installed
+                        node.Item.Data.Match.Library.Name = node.Key.Name;
+                    }
 
-                if (!isInstallItem && isRemote)
-                {
-                    installItems.Add(node.Item);
-                }
+                    var isRemote = context.RemoteLibraryProviders.Contains(node.Item.Data.Match.Provider);
+                    var isAdded = installItems.Any(item => item.Data.Match.Library == node.Item.Data.Match.Library);
 
-                var isGraphItem = graphItems.Any(item => item.Match.Library == node.Item.Match.Library);
-                if (!isGraphItem)
-                {
-                    graphItems.Add(node.Item);
-                }
-            });
+                    if (!isAdded && isRemote)
+                    {
+                        installItems.Add(node.Item);
+                    }
+
+                    var isGraphItem = graphItems.Any(item => item.Data.Match.Library == node.Item.Data.Match.Library);
+                    if (!isGraphItem)
+                    {
+                        graphItems.Add(node.Item);
+                    }
+
+                    libraries.Add(node.Item.Key);
+                });
+            }
 
             await InstallPackages(installItems, packagesDirectory);
 
             if (!useLockFile)
             {
-                Reports.Information.WriteLine(string.Format("Writing lock file {0}", projectLockFilePath.White().Bold()));
+                Logger.WriteInformation(string.Format("Writing lock file {0}", projectLockFilePath.White().Bold()));
 
                 // Collect target frameworks
-                var frameworks = new HashSet<FrameworkName>();
+                var frameworks = new HashSet<NuGetFramework>();
                 foreach (var item in graphItems)
                 {
-                    Runtime.Project dependencyProject;
-                    if (projectProviders.Contains(item.Match.Provider) && projectResolver.TryResolveProject(item.Match.Library.Name, out dependencyProject))
+                    PackageSpec dependencyProject;
+                    if (context.ProjectLibraryProviders.Contains(item.Data.Match.Provider) &&
+                        packageSpecResolver.TryResolvePackageSpec(item.Data.Match.Library.Name, out dependencyProject))
                     {
-                        frameworks.AddRange(dependencyProject.GetTargetFrameworks().Select(t => t.FrameworkName));
+                        frameworks.AddRange(dependencyProject.TargetFrameworks.Select(t => t.FrameworkName));
                     }
                 }
 
-                WriteLockFile(projectLockFilePath, project, graphItems, new PackageRepository(packagesDirectory), frameworks);
+                WriteLockFile(
+                    projectLockFilePath,
+                    packageSpec,
+                    libraries,
+                    new NuGetv3LocalRepository(packagesDirectory, checkPackageIdCase: true),
+                    frameworks);
             }
 
-            if (!ScriptExecutor.Execute(project, "postrestore", getVariable))
+            if (!ScriptExecutor.Execute(packageSpec, "postrestore", getVariable))
             {
                 ErrorMessages.GetOrAdd("postrestore", _ => new List<string>()).Add(ScriptExecutor.ErrorMessage);
-                Reports.Error.WriteLine(ScriptExecutor.ErrorMessage);
+                Logger.WriteError(ScriptExecutor.ErrorMessage);
                 return false;
             }
 
-            if (!ScriptExecutor.Execute(project, "prepare", getVariable))
+            if (!ScriptExecutor.Execute(packageSpec, "prepare", getVariable))
             {
                 ErrorMessages.GetOrAdd("prepare", _ => new List<string>()).Add(ScriptExecutor.ErrorMessage);
-                Reports.Error.WriteLine(ScriptExecutor.ErrorMessage);
+                Logger.WriteError(ScriptExecutor.ErrorMessage);
                 return false;
             }
 
-            Reports.Information.WriteLine(string.Format("{0}, {1}ms elapsed", "Restore complete".Green().Bold(), sw.ElapsedMilliseconds));
+            Logger.WriteInformation(string.Format("{0}, {1}ms elapsed", "Restore complete".Green().Bold(), sw.ElapsedMilliseconds));
 
             return success;
         }
@@ -500,144 +412,7 @@ namespace Microsoft.Framework.PackageManager
             }
         }
 
-        private void Reduce(GraphNode root)
-        {
-            var patience = 1000;
-            var incomplete = true;
-            while (incomplete && --patience != 0)
-            {
-                var tracker = new Tracker();
-
-                // track non-rejected, apply rejection recursively
-                ForEach(root, true, (node, state) =>
-                {
-                    if (!state || node.Disposition == GraphNode.DispositionType.Rejected)
-                    {
-                        node.Disposition = GraphNode.DispositionType.Rejected;
-                    }
-                    else
-                    {
-                        var lib = node?.Item?.Match?.Library;
-                        if (lib != null)
-                        {
-                            tracker.Track(
-                                lib.Name,
-                                lib.Version);
-                        }
-                    }
-                    return node.Disposition != GraphNode.DispositionType.Rejected;
-                });
-
-                // mark items under disputed nodes as ambiguous
-                ForEach(root, "Walking", (node, state) =>
-                {
-                    if (node.Disposition == GraphNode.DispositionType.Rejected)
-                    {
-                        return "Rejected";
-                    }
-
-                    var lib = node?.Item?.Match?.Library;
-                    if (lib == null)
-                    {
-                        return state;
-                    }
-
-                    if (state == "Walking" && tracker.IsDisputed(node.Item.Match.Library.Name))
-                    {
-                        return "Disputed";
-                    }
-
-                    if (state == "Disputed")
-                    {
-                        tracker.MarkAmbiguous(node.Item.Match.Library.Name);
-                    }
-
-                    return state;
-                });
-
-                // accept or reject nodes that are acceptable and not ambiguous
-                ForEach(root, true, (node, state) =>
-                {
-                    if (!state ||
-                        node.Disposition == GraphNode.DispositionType.Rejected ||
-                        tracker.IsAmbiguous(node?.Item?.Match?.Library?.Name))
-                    {
-                        return false;
-                    }
-
-                    if (node.Disposition == GraphNode.DispositionType.Acceptable)
-                    {
-                        var isBestVersion = tracker.IsBestVersion(
-                            node?.Item?.Match?.Library?.Name,
-                            node?.Item?.Match?.Library?.Version);
-                        node.Disposition = isBestVersion ? GraphNode.DispositionType.Accepted : GraphNode.DispositionType.Rejected;
-                    }
-
-                    return node.Disposition == GraphNode.DispositionType.Accepted;
-                });
-
-                incomplete = false;
-
-                ForEach(root, node => incomplete |= node.Disposition == GraphNode.DispositionType.Acceptable);
-            }
-        }
-
-        class Tracker
-        {
-            Dictionary<string, Entry> _entries = new Dictionary<string, Entry>();
-            class Entry
-            {
-                public SemanticVersion Version { get; set; }
-                public bool IsDisputed { get; set; }
-                public bool IsAmbiguous { get; set; }
-            }
-
-            private Entry GetEntry(string name)
-            {
-                Entry entry;
-                return _entries.TryGetValue(name, out entry) ? entry : _entries[name] = new Entry();
-            }
-
-            internal void Track(string name, SemanticVersion version)
-            {
-                Entry entry;
-                if (_entries.TryGetValue(name, out entry))
-                {
-                    if (entry.Version != version)
-                    {
-                        entry.IsDisputed = true;
-                        if (entry.Version < version)
-                        {
-                            entry.Version = version;
-                        }
-                    }
-                }
-                else
-                {
-                    _entries[name] = new Entry { Version = version };
-                }
-            }
-
-            internal bool IsDisputed(string name)
-            {
-                return name != null && _entries.ContainsKey(name) && _entries[name].IsDisputed;
-            }
-            internal bool IsAmbiguous(string name)
-            {
-                return name != null && _entries.ContainsKey(name) && _entries[name].IsAmbiguous;
-            }
-            internal void MarkAmbiguous(string name)
-            {
-                _entries[name].IsAmbiguous = true;
-            }
-
-            internal bool IsBestVersion(string name, SemanticVersion version)
-            {
-                return name == null || _entries[name].Version <= version;
-            }
-        }
-
-        private async Task InstallPackages(List<GraphItem> installItems, string packagesDirectory)
+        private async Task InstallPackages(List<GraphItem<RemoteResolveResult>> installItems, string packagesDirectory)
         {
             if (RestoringInParallel())
             {
@@ -655,12 +430,12 @@ namespace Microsoft.Framework.PackageManager
             }
         }
 
-        private async Task InstallPackageCore(GraphItem installItem, string packagesDirectory)
+        private async Task InstallPackageCore(GraphItem<RemoteResolveResult> installItem, string packagesDirectory)
         {
             using (var memoryStream = new MemoryStream())
             {
-                var match = installItem.Match;
-                await match.Provider.CopyToAsync(installItem.Match, memoryStream);
+                var match = installItem.Data.Match;
+                await match.Provider.CopyToAsync(installItem.Data.Match, memoryStream);
 
                 memoryStream.Seek(0, SeekOrigin.Begin);
                 await NuGetPackageUtils.InstallFromStream(memoryStream, match.Library, packagesDirectory, Reports.Information);
@@ -677,17 +452,20 @@ namespace Microsoft.Framework.PackageManager
             return Task.FromResult(lockFileFormat.Read(projectLockFilePath));
         }
 
-        private void WriteLockFile(string projectLockFilePath, Runtime.Project project, List<GraphItem> graphItems,
-            PackageRepository repository, IEnumerable<FrameworkName> frameworks)
+        private void WriteLockFile(
+            string projectLockFilePath,
+            PackageSpec packageSpec,
+            IEnumerable<LibraryIdentity> libraries,
+            NuGetv3LocalRepository repository,
+            IEnumerable<NuGetFramework> frameworks)
         {
             var lockFile = new LockFile();
             lockFile.Islocked = Lock;
 
             using (var sha512 = SHA512.Create())
             {
-                foreach (var item in graphItems.OrderBy(x => x.Match.Library, new LibraryComparer()))
+                foreach (var library in libraries.OrderBy(x => x, new LibraryIdentityComparer()))
                 {
-                    var library = item.Match.Library;
                     var packageInfo = repository.FindPackagesById(library.Name)
                         .FirstOrDefault(p => p.Version == library.Version);
 
@@ -696,13 +474,10 @@ namespace Microsoft.Framework.PackageManager
                         continue;
                     }
 
-                    var package = packageInfo.Package;
-                    var lockFileLib = LockFileUtils.CreateLockFileLibraryForProject(
-                        project,
-                        package,
+                    var lockFileLib = LockFileUtils.CreateLockFileLibrary(
+                        packageInfo,
                         sha512,
                         frameworks,
-                        new DefaultPackagePathResolver(repository.RepositoryRoot),
                         correctedPackageName: library.Name);
 
                     lockFile.Libraries.Add(lockFileLib);
@@ -712,21 +487,46 @@ namespace Microsoft.Framework.PackageManager
             // Use empty string as the key of dependencies shared by all frameworks
             lockFile.ProjectFileDependencyGroups.Add(new ProjectFileDependencyGroup(
                 string.Empty,
-                project.Dependencies.Select(x => x.LibraryRange.ToString())));
+                packageSpec.Dependencies.Select(x => RuntimeStyleLibraryRangeToString(x.LibraryRange))));
 
-            foreach (var frameworkInfo in project.GetTargetFrameworks())
+            foreach (var frameworkInfo in packageSpec.TargetFrameworks)
             {
                 lockFile.ProjectFileDependencyGroups.Add(new ProjectFileDependencyGroup(
                     frameworkInfo.FrameworkName.ToString(),
-                    frameworkInfo.Dependencies.Select(x => x.LibraryRange.ToString())));
+                    frameworkInfo.Dependencies.Select(x => RuntimeStyleLibraryRangeToString(x.LibraryRange))));
             }
 
             var lockFileFormat = new LockFileFormat();
             lockFileFormat.Write(projectLockFilePath, lockFile);
         }
 
+        // DNU REFACTORING TODO: temp hack to make generated lockfile work with runtime lockfile validation
+        private static string RuntimeStyleLibraryRangeToString(LibraryRange libraryRange)
+        {
+            var minVersion = libraryRange.VersionRange.MinVersion;
+            var maxVersion = libraryRange.VersionRange.MaxVersion;
+            var sb = new System.Text.StringBuilder();
+            sb.Append(libraryRange.Name);
+            sb.Append(" >= ");
+            if (libraryRange.VersionRange.IsFloating)
+            {
+                sb.Append(libraryRange.VersionRange.Float.ToString());
+            }
+            else
+            {
+                sb.Append(minVersion.ToString());
+            }
 
-        private void AddRemoteProvidersFromSources(List<IWalkProvider> remoteProviders, List<PackageSource> effectiveSources)
+            if (maxVersion != null)
+            {
+                sb.Append(libraryRange.VersionRange.IsMaxInclusive ? "<= " : "< ");
+                sb.Append(maxVersion.Version.ToString());
+            }
+
+            return sb.ToString();
+        }
+
+        private void AddRemoteProvidersFromSources(IList<IRemoteDependencyProvider> remoteProviders, List<PackageSource> effectiveSources)
         {
             foreach (var source in effectiveSources)
             {
@@ -734,30 +534,21 @@ namespace Microsoft.Framework.PackageManager
                     source,
                     FeedOptions.NoCache,
                     FeedOptions.IgnoreFailedSources,
-                    Reports);
+                    Logger);
                 if (feed != null)
                 {
-                    remoteProviders.Add(new RemoteWalkProvider(feed));
+                    remoteProviders.Add(new RemoteDependencyProvider(feed));
                 }
             }
         }
 
-        private static void ExtractPackage(string targetPath, FileStream stream)
-        {
-            using (var archive = new ZipArchive(stream, ZipArchiveMode.Read))
-            {
-                var packOperations = new PublishOperations();
-                packOperations.ExtractNupkg(archive, targetPath);
-            }
-        }
-
-        void ForEach(GraphNode node, Action<GraphNode> callback)
+        void ForEach(GraphNode<RemoteResolveResult> node, Action<GraphNode<RemoteResolveResult>> callback)
         {
             callback(node);
-            ForEach(node.Dependencies, callback);
+            ForEach(node.InnerNodes, callback);
         }
 
-        void ForEach(IEnumerable<GraphNode> nodes, Action<GraphNode> callback)
+        void ForEach(IEnumerable<GraphNode<RemoteResolveResult>> nodes, Action<GraphNode<RemoteResolveResult>> callback)
         {
             foreach (var node in nodes)
             {
@@ -765,49 +556,19 @@ namespace Microsoft.Framework.PackageManager
             }
         }
 
-        void ForEach<TState>(GraphNode node, TState state, Func<GraphNode, TState, TState> callback)
+        private void ReadSettings(string rootDirectory)
         {
-            var childState = callback(node, state);
-            ForEach(node.Dependencies, childState, callback);
-        }
-
-        void ForEach<TState>(IEnumerable<GraphNode> nodes, TState state, Func<GraphNode, TState, TState> callback)
-        {
-            foreach (var node in nodes)
-            {
-                ForEach(node, state, callback);
-            }
-        }
-
-        void Display(string indent, IEnumerable<GraphNode> graphs)
-        {
-            foreach (var node in graphs)
-            {
-                Reports.Information.WriteLine(indent + node.Item.Match.Library.Name + "@" + node.Item.Match.Library.Version);
-                Display(indent + " ", node.Dependencies);
-            }
-        }
-
-
-        private void ReadSettings(string solutionDirectory)
-        {
-            Settings = SettingsUtils.ReadSettings(solutionDirectory, NuGetConfigFile, FileSystem, MachineWideSettings);
-
-            // Recreate the source provider and credential provider
+            Settings = NuGet.Configuration.Settings.LoadDefaultSettings(rootDirectory, configFileName: null,
+                machineWideSettings: MachineWideSettings);
             SourceProvider = PackageSourceBuilder.CreateSourceProvider(Settings);
-            //HttpClient.DefaultCredentialProvider = new SettingsCredentialProvider(new ConsoleCredentialProvider(Console), SourceProvider, Console);
-
-        }
-
-        private IFileSystem CreateFileSystem(string path)
-        {
-            path = FileSystem.GetFullPath(path);
-            return new PhysicalFileSystem(path);
         }
 
         private bool RestoringInParallel()
         {
-            return Parallel && !PlatformHelper.IsMono;
+            // DNU REFACTORING TODO: enable this after reintroduce the fix:
+            // https://github.com/aspnet/dnx/commit/8b032219f737afa2cb436a15fc37580c2df2c6ab
+            //return Parallel && !PlatformHelper.IsMono;
+            return false;
         }
 
         // Based on http://blogs.msdn.com/b/pfxteam/archive/2012/03/05/10278165.aspx
@@ -832,9 +593,9 @@ namespace Microsoft.Framework.PackageManager
             return Task.WhenAll(tasks);
         }
 
-        class LibraryComparer : IComparer<Library>
+        class LibraryIdentityComparer : IComparer<LibraryIdentity>
         {
-            public int Compare(Library x, Library y)
+            public int Compare(LibraryIdentity x, LibraryIdentity y)
             {
                 int compare = string.Compare(x.Name, y.Name);
                 if (compare == 0)

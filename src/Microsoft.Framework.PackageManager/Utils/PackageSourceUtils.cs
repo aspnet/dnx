@@ -5,9 +5,9 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Microsoft.Framework.PackageManager.Restore.NuGet;
-using Microsoft.Framework.Runtime;
-using NuGet;
+using NuGet.Client;
+using NuGet.Versioning;
+using NuGet.Configuration;
 
 namespace Microsoft.Framework.PackageManager
 {
@@ -27,29 +27,9 @@ namespace Microsoft.Framework.PackageManager
             return enabledSources.Concat(addedSources).Distinct().ToList();
         }
 
-        public static IPackageFeed CreatePackageFeed(PackageSource source, bool noCache, bool ignoreFailedSources,
-            Reports reports)
+        public static IPackageFeed CreatePackageFeed(PackageSource source, bool noCache, bool ignoreFailedSources, ILogger logger)
         {
-            if (new Uri(source.Source).IsFile)
-            {
-                return PackageFolderFactory.CreatePackageFolderFromPath(source.Source, ignoreFailedSources, reports);
-            }
-            else
-            {
-                // TODO: temporarily ignore NuGet v3 feeds
-                if (source.Source.EndsWith(".json"))
-                {
-                    return null;
-                }
-
-                return new NuGetv2Feed(
-                    source.Source,
-                    source.UserName,
-                    source.Password,
-                    noCache,
-                    reports,
-                    ignoreFailedSources);
-            }
+            return PackageFeedFactory.CreateFeed(source.Source, source.UserName, source.Password, noCache, ignoreFailedSources, logger);
         }
 
         public static async Task<PackageInfo> FindLatestPackage(IEnumerable<IPackageFeed> packageFeeds, string packageName)
@@ -81,7 +61,7 @@ namespace Microsoft.Framework.PackageManager
         public static async Task<PackageInfo> FindBestMatchPackage(
             IEnumerable<IPackageFeed> packageFeeds, 
             string packageName,
-            SemanticVersionRange idealVersion)
+            NuGetVersion idealVersion)
         {
             var tasks = new List<Task<IEnumerable<PackageInfo>>>();
 
@@ -91,20 +71,8 @@ namespace Microsoft.Framework.PackageManager
             }
 
             var results = (await Task.WhenAll(tasks)).SelectMany(x => x);
-            PackageInfo bestResult = null;
 
-            foreach (var result in results)
-            {
-                if (VersionUtility.ShouldUseConsidering(
-                    current: bestResult?.Version,
-                    considering: result.Version,
-                    ideal: idealVersion))
-                {
-                    bestResult = result;
-                }
-            }
-
-            return bestResult;
+            return results.FindBestMatch(new VersionRange(idealVersion), p => p.Version);
         }
 
         private static bool CorrectName(string value, PackageSource source)
