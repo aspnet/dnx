@@ -676,6 +676,28 @@ var RUNTIME_TARGETS='${new List<RuntimeTarget>()}'
         FixShFiles(RUNTIME_CORECLR_LINUX_x64_BIN);
     }
 
+var CI_LINUX_DROP_PATH = '${Environment.GetEnvironmentVariable("CI_LINUX_DROP_PATH")}'
+
+#copy-ci-linux-bits target='package-runtime' if='!string.IsNullOrEmpty(CI_LINUX_DROP_PATH)'
+    @{
+        var extractDirectory = Path.Combine(ARTIFACTS_DIR, "Dnx.Linux");
+    }
+
+    copy sourceDir='${CI_LINUX_DROP_PATH}' outputDir='${extractDirectory}' include='*.nupkg' overwrite='${true}'
+
+    @{
+        foreach (var package in Directory.EnumerateFiles(extractDirectory, "*.nupkg"))
+        {
+            var unpackagePath = Path.Combine(extractDirectory, Path.GetFileNameWithoutExtension(package));
+            UnzipPackage(package, unpackagePath);
+
+            File.Delete(Path.Combine(unpackagePath, "[Content_Types].xml"));
+            Directory.Delete(Path.Combine(unpackagePath, "_rels"), recursive: true);
+        }
+    }
+
+    nuget-pack packageVersion='${FULL_VERSION}' outputDir='${BUILD_DIR2}' extra='-NoPackageAnalysis' nugetPath='.nuget/nuget.exe' each='var nuspecFile in Files.Include(Path.Combine(extractDirectory, "**", "*.nuspec"))'
+
 #copy-darwin-bits target='package-darwin'
     copy sourceDir='${Path.Combine(BUILD_DIR2, BOOTSTRAPPER_CORECLR_NAME + ".unix")}' include='*.dylib' outputDir='${RUNTIME_CORECLR_DARWIN_x64_BIN}' overwrite='${true}'
     copy sourceDir='${Path.Combine(BUILD_DIR2, BOOTSTRAPPER_EXE_NAME, "bin", "darwin", "x64")}' include='dnx' outputDir='${RUNTIME_CORECLR_DARWIN_x64_BIN}' overwrite='${true}'
@@ -712,28 +734,14 @@ var RUNTIME_TARGETS='${new List<RuntimeTarget>()}'
             binPaths[target.Name] = binPath;
 
             // Nuke any previously installed package
-            if (Directory.Exists(unpackagePath)) 
-            {
-                Directory.Delete(Path.GetDirectoryName(unpackagePath), recursive:true);
-            }
-
-            Directory.CreateDirectory(unpackagePath);
+            UnzipPackage(nupkgPath, unpackagePath);
 
             if (IsMono)
             {
-                // System.IO.Compression gives weird errors on mono to do with invalid dates
-                // we're going to use unzip instead
-                Exec("unzip", nupkgPath + " -d " + unpackagePath);
                 Exec("chmod", "+x " + Path.Combine(binPath, "dnx"));
                 Exec("chmod", "+x " + Path.Combine(binPath, "dnu"));
             }
-            else
-            {
-                System.IO.Compression.ZipFile.ExtractToDirectory(
-                    nupkgPath,
-                    unpackagePath);
             }
-        }
 
         // Group by operation system since we only want to run unit tests on a single bitness
         // any = [dnx-mono]
@@ -1111,6 +1119,30 @@ functions @{
             var script = File.ReadAllText(shFile).Replace('\r\n', '\n');
             File.Move(shFile, targetShFile);
             File.WriteAllText(targetShFile, script);
+        }
+    }
+
+    void UnzipPackage(string nupkgPath, string unpackagePath)
+    {
+        if (Directory.Exists(unpackagePath))
+        {
+            Log.Info("Deleting " + Path.GetDirectoryName(unpackagePath));
+            Directory.Delete(Path.GetDirectoryName(unpackagePath), recursive:true);
+        }
+
+        Directory.CreateDirectory(unpackagePath);
+
+        if (IsMono)
+        {
+            // System.IO.Compression gives weird errors on mono to do with invalid dates
+            // we're going to use unzip instead
+            Exec("unzip", nupkgPath + " -d " + unpackagePath);
+        }
+        else
+        {
+            System.IO.Compression.ZipFile.ExtractToDirectory(
+                nupkgPath,
+                unpackagePath);
         }
     }
 
