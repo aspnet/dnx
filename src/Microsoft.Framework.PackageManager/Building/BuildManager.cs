@@ -178,7 +178,7 @@ namespace Microsoft.Framework.PackageManager
                         using (var fs = File.Create(nupkg))
                         {
                             packageBuilder.Save(fs);
-                            _buildOptions.Reports.Quiet.WriteLine("{0} -> {1}", project.Name, nupkg);
+                            _buildOptions.Reports.Quiet.WriteLine("{0} -> {1}", project.Name, Path.GetFullPath(nupkg));
                         }
 
                         if (symbolPackageBuilder.Files.Any())
@@ -186,9 +186,8 @@ namespace Microsoft.Framework.PackageManager
                             using (var fs = File.Create(symbolsNupkg))
                             {
                                 symbolPackageBuilder.Save(fs);
+                                _buildOptions.Reports.Quiet.WriteLine("{0} -> {1}", project.Name, Path.GetFullPath(symbolsNupkg));
                             }
-
-                            _buildOptions.Reports.Quiet.WriteLine("{0} -> {1}", project.Name, symbolsNupkg);
                         }
                     }
                 }
