@@ -12,8 +12,6 @@ PublishProfiles/
 *.docstates
 _ReSharper.*
 nuget.exe
-*net45.csproj
-*k10.csproj
 *.psess
 *.vsp
 *.pidb
