@@ -12,8 +12,6 @@ PublishProfiles/
 *.docstates
 _ReSharper.*
 nuget.exe
-*net45.csproj
-*k10.csproj
 *.psess
 *.vsp
 *.pidb
@@ -23,7 +21,6 @@ nuget.exe
 *.*sdf
 *.ipch
 *.aps
-/KRuntime.sln.ide
 /*.vspx
 *.metaproj*
 debugSettings.json
