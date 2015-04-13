@@ -21,7 +21,6 @@ nuget.exe
 *.*sdf
 *.ipch
 *.aps
-/KRuntime.sln.ide
 /*.vspx
 *.metaproj*
 debugSettings.json
