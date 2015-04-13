@@ -89,7 +89,7 @@ namespace Microsoft.Framework.PackageManager.List
 
                 if (!_hideDependent)
                 {
-                    var dependents = string.Join(", ", dependenciesMap[description].Select(dep => dep.ToString()).OrderBy(name => name));
+                    var dependents = string.Join(", ", dependenciesMap[description].Select(dep => dep.Identity.ToString()).OrderBy(name => name));
                     results.Add(string.Format("    -> {0}", dependents));
                 }
             }
