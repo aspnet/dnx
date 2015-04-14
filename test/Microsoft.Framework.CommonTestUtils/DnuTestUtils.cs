@@ -4,7 +4,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using Microsoft.Framework.FunctionalTestUtils;
+using Microsoft.Framework.CommonTestUtils;
 using Microsoft.Framework.Runtime;
 
 namespace Microsoft.Framework.PackageManager

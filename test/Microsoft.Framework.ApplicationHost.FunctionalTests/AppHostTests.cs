@@ -4,7 +4,7 @@
 using System.Collections.Generic;
 using System.IO;
 using Bootstrapper.FunctionalTests;
-using Microsoft.Framework.FunctionalTestUtils;
+using Microsoft.Framework.CommonTestUtils;
 using Microsoft.Framework.Runtime;
 using Xunit;
 

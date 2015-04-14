@@ -3,9 +3,9 @@
 
 using System.IO;
 using System.Linq;
-using Microsoft.Framework.Runtime;
-using Microsoft.Framework.FunctionalTestUtils;
+using Microsoft.Framework.CommonTestUtils;
 using Microsoft.Framework.PackageManager.Utils;
+using Microsoft.Framework.Runtime;
 using Xunit;
 
 namespace Microsoft.Framework.PackageManager.Tests

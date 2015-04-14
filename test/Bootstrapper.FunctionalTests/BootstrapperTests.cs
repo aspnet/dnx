@@ -3,7 +3,7 @@
 
 using System.Collections.Generic;
 using System.IO;
-using Microsoft.Framework.FunctionalTestUtils;
+using Microsoft.Framework.CommonTestUtils;
 using Microsoft.Framework.PackageManager;
 using Microsoft.Framework.Runtime;
 using Xunit;

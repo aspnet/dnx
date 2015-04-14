@@ -9,7 +9,7 @@ using System.Linq;
 using System.Security.Cryptography;
 using Microsoft.Framework.Runtime;
 
-namespace Microsoft.Framework.FunctionalTestUtils
+namespace Microsoft.Framework.CommonTestUtils
 {
     public static class TestUtils
     {

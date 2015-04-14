@@ -4,7 +4,7 @@
 using System;
 using System.IO;
 
-namespace Microsoft.Framework.FunctionalTestUtils
+namespace Microsoft.Framework.CommonTestUtils
 {
     public sealed class DisposableDir : IDisposable
     {

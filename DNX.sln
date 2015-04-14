@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 14
-VisualStudioVersion = 14.0.22710.0
+VisualStudioVersion = 14.0.22806.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "scripts", "scripts", "{189961D1-DFF4-406A-9D42-39B61221A73A}"
 	ProjectSection(SolutionItems) = preProject
@@ -56,7 +56,7 @@ Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Microsoft.Framework.Package
 EndProject
 Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Microsoft.Framework.Runtime.Loader", "src\Microsoft.Framework.Runtime.Loader\Microsoft.Framework.Runtime.Loader.xproj", "{462B03CA-FF32-4DBE-AA73-9204F6AAAF66}"
 EndProject
-Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Microsoft.Framework.FunctionalTestUtils", "test\Microsoft.Framework.FunctionalTestUtils\Microsoft.Framework.FunctionalTestUtils.xproj", "{51E18677-FBF2-4CF1-AA6F-06C79DE619C2}"
+Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Microsoft.Framework.CommonTestUtils", "test\Microsoft.Framework.CommonTestUtils\Microsoft.Framework.CommonTestUtils.xproj", "{51E18677-FBF2-4CF1-AA6F-06C79DE619C2}"
 EndProject
 Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Microsoft.Framework.ApplicationHost.FunctionalTests", "test\Microsoft.Framework.ApplicationHost.FunctionalTests\Microsoft.Framework.ApplicationHost.FunctionalTests.xproj", "{A296F9FC-B5BE-4C01-ACC1-8F3DD1549B72}"
 EndProject
