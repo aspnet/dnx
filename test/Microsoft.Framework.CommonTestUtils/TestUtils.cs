@@ -85,10 +85,9 @@ namespace Microsoft.Framework.CommonTestUtils
 
         public static DisposableDir GetRuntimeHomeDir(string flavor, string os, string architecture)
         {
-            var runtimeName = GetRuntimeName(flavor, os, architecture);
-
             // The build script creates an unzipped image that can be reused
             var testArtifactDir = GetTestArtifactsFolder();
+            var runtimeName = GetRuntimeName(flavor, os, architecture);
             var runtimeHomePath = Path.Combine(testArtifactDir, runtimeName);
             var runtimePath = Path.Combine(runtimeHomePath, "runtimes");
 
@@ -121,7 +120,7 @@ namespace Microsoft.Framework.CommonTestUtils
                 Exec("chmod", "+x " + Path.Combine(runtimeRoot, "bin", "dnu"));
             }
 
-            return new DisposableDir(runtimeHomePath, false);
+            return runtimeHomePath;
         }
 
         public static IEnumerable<object[]> GetRuntimeComponentsCombinations()
