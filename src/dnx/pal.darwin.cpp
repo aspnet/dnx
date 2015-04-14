@@ -2,20 +2,23 @@
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 #include "stdafx.h"
+#include <string>
 #include <assert.h>
 #include <libproc.h>
 
-LPTSTR GetNativeBootstrapperDirectory()
+std::string GetNativeBootstrapperDirectory()
 {
-    LPTSTR szPath = new TCHAR[PROC_PIDPATHINFO_MAXSIZE];
-    ssize_t ret = proc_pidpath(getpid(), szPath, PROC_PIDPATHINFO_MAXSIZE);
+    char buffer[PROC_PIDPATHINFO_MAXSIZE];
+    ssize_t ret = proc_pidpath(getpid(), buffer, PROC_PIDPATHINFO_MAXSIZE);
 
     assert(ret != -1);
 
-    for (; ret > 0 && szPath[ret] != _T('/'); ret--);
-    szPath[ret] = _T('\0');
+    for (; ret > 0 && buffer[ret] != '/'; ret--)
+        ;
 
-    return szPath;
+    buffer[ret] = '\0';
+
+    return std::string(buffer);
 }
 
 void WaitForDebuggerToAttach()

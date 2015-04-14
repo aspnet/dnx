@@ -83,8 +83,6 @@ BOOL GetFullPath(LPCTSTR szPath, LPTSTR pszNormalizedPath)
 
 int CallApplicationMain(const wchar_t* moduleName, const char* functionName, CALL_APPLICATION_MAIN_DATA* data, TraceWriter traceWriter)
 {
-    bool fVerboseTrace = true;
-
     HMODULE hostModule;
     try
     {

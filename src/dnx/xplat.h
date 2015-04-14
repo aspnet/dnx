@@ -19,7 +19,7 @@ typedef std::wstring xstring_t;
 #else // PLATFORM_UNIX
 
 typedef char char_t;
-typedef xstring std::string_t;
+typedef std::string xstring_t;
 #define xout std::cout
 #define _X(s) s
 

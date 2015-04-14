@@ -280,7 +280,7 @@ int CallApplicationProcessMain(int argc, dnx::char_t* argv[], TraceWriter traceW
 
     try
     {
-        dnx::char_t* hostModuleName =
+        const dnx::char_t* hostModuleName =
 #if CORECLR_WIN
 #if ONECORE
         LPCTSTR pwzHostModuleName = _T("dnx.onecore.coreclr.dll");

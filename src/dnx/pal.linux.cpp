@@ -2,23 +2,26 @@
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 #include "stdafx.h"
+#include <string>
 #include <assert.h>
 #include <dlfcn.h>
 
-LPTSTR GetNativeBootstrapperDirectory()
+std::string GetNativeBootstrapperDirectory()
 {
-    LPTSTR szPath = new TCHAR[PATH_MAX + 1];
-    ssize_t ret = readlink("/proc/self/exe", szPath, PATH_MAX);
+    char buffer[PATH_MAX + 1];
+    ssize_t ret = readlink("/proc/self/exe", buffer, PATH_MAX);
 
     assert(ret != -1);
 
     // readlink does not null terminate the path
-    szPath[ret] = _T('\0');
+    buffer[ret] = '\0';
 
-    for (; ret > 0 && szPath[ret] != _T('/'); ret--);
-    szPath[ret] = _T('\0');
+    for (; ret > 0 && buffer[ret] != '/'; ret--)
+        ;
 
-    return szPath;
+    buffer[ret] = '\0';
+
+    return std::string(buffer);
 }
 
 void WaitForDebuggerToAttach()

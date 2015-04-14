@@ -2,10 +2,15 @@
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 #include "stdafx.h"
+#include <string>
+#include <sstream>
+#include <stdexcept>
 #include <assert.h>
 #include <dlfcn.h>
+#include "dnx.h"
+#include "TraceWriter.h"
 
-LPTSTR GetNativeBootstrapperDirectory();
+std::string GetNativeBootstrapperDirectory();
 
 bool IsTracingEnabled()
 {
@@ -47,33 +52,44 @@ BOOL GetFullPath(LPCTSTR szPath, LPTSTR szNormalizedPath)
     return TRUE;
 }
 
-HMODULE LoadNativeHost(LPCTSTR szHostModuleName)
+int CallApplicationMain(const char* moduleName, const char* functionName, CALL_APPLICATION_MAIN_DATA* data, TraceWriter traceWriter)
 {
-    LPTSTR localPath = GetNativeBootstrapperDirectory();
+    auto localPath =  GetNativeBootstrapperDirectory().append("/").append(moduleName);
 
-    strcat(localPath, "/");
-    strcat(localPath, szHostModuleName);
-
-    HMODULE hHost = dlopen(localPath, RTLD_NOW | RTLD_GLOBAL);
-
-    free(localPath);
-
-    return hHost;
-}
-
-BOOL FreeNativeHost(HMODULE hModule)
-{
-    if (hModule != nullptr)
+    void* host = nullptr;
+    try
     {
-        return dlclose(hModule);
+        host = dlopen(localPath.c_str(), RTLD_NOW | RTLD_GLOBAL);
+        if (!host)
+        {
+            throw std::runtime_error(std::string("Failed to load: ").append(moduleName));
+        }
+
+        traceWriter.Write(std::string("Loaded module: ").append(moduleName), true);
+
+        auto pfnCallApplicationMain = (FnCallApplicationMain)dlsym(host, functionName);
+        if (!pfnCallApplicationMain)
+        {
+            std::ostringstream oss;
+            oss << "Failed to find export '" << functionName << "' in " << moduleName;
+            throw std::runtime_error(oss.str());
+        }
+
+        traceWriter.Write(dnx::xstring_t(_X("Found export: ")).append(moduleName), true);
+
+        auto result  = pfnCallApplicationMain(data);
+        dlclose(host);
+        return result == 0 ? data->exitcode : result;
     }
+    catch(const std::exception& ex)
+    {
+        if(host)
+        {
+            dlclose(host);
+        }
 
-    return TRUE;
-}
-
-FARPROC GetEntryPointFromHost(HMODULE hModule, LPCSTR lpProcName)
-{
-    return dlsym(hModule, lpProcName);
+        throw;
+    }
 }
 
 BOOL SetEnvironmentVariable(LPCTSTR lpName, LPCTSTR lpValue)
