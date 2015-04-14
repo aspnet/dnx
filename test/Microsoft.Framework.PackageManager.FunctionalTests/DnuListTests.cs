@@ -18,6 +18,7 @@ namespace Microsoft.Framework.PackageManager.FunctionalTests
         public DnuListTests(DnuListTestContext context)
         {
             _context = context;
+            _workingDir = TestUtils.CreateTempDir();
         }
 
         public static IEnumerable<object[]> RuntimeComponents

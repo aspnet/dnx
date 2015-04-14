@@ -42,9 +42,9 @@ namespace Microsoft.Framework.PackageManager.List
 
         public void Walk(IGraphNode<LibraryDescription> root)
         {
-            _assemblyFilePaths = new HashSet<string>();
-            _dependencyAssemblySources = new Dictionary<string, HashSet<string>>();
-            _dependencyPackageSources = new Dictionary<string, HashSet<string>>();
+            _assemblyFilePaths = new HashSet<string>(StringComparer.Ordinal);
+            _dependencyAssemblySources = new Dictionary<string, HashSet<string>>(StringComparer.Ordinal);
+            _dependencyPackageSources = new Dictionary<string, HashSet<string>>(StringComparer.Ordinal);
 
             var libraries = new HashSet<LibraryDescription>();
             root.DepthFirstPreOrderWalk(visitNode: (node, _) => VisitLibrary(node, _, libraries));
