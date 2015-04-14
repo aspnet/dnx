@@ -31,19 +31,9 @@ namespace NuGet
             {
                 if (object.ReferenceEquals(resourceMan, null))
                 {
-#if DNX451
-                    var asm = Assembly.GetExecutingAssembly();
-#else
                     var asm = typeof(CommonResources).GetTypeInfo().Assembly;
-#endif
-                    // Find the CommonResources.resources file's full resource name in this assembly
-                    string commonResourcesName = asm.GetManifestResourceNames().Single(s => s.EndsWith("CommonResources.resources", StringComparison.OrdinalIgnoreCase));
-
-                    // Trim off the ".resources"
-                    commonResourcesName = commonResourcesName.Substring(0, commonResourcesName.Length - 10);
-
                     // Load the resource manager
-                    global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager(commonResourcesName, typeof(CommonResources).GetTypeInfo().Assembly);
+                    global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("Microsoft.Framework.PackageManager.NuGet.Common.CommonResources", typeof(CommonResources).GetTypeInfo().Assembly);
                     resourceMan = temp;
                 }
                 return resourceMan;

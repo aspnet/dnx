@@ -46,7 +46,7 @@ namespace NuGet.Resources
             {
                 if (object.ReferenceEquals(resourceMan, null))
                 {
-                    global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("Microsoft.Framework.Runtime.NuGetResources", typeof(NuGetResources).GetTypeInfo().Assembly);
+                    global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("Microsoft.Framework.Runtime.NuGet.Resources.NuGetResources", typeof(NuGetResources).GetTypeInfo().Assembly);
                     resourceMan = temp;
                 }
                 return resourceMan;
