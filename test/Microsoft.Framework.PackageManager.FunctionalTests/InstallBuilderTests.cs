@@ -5,7 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
-using Microsoft.Framework.FunctionalTestUtils;
+using Microsoft.Framework.CommonTestUtils;
 using NuGet;
 using Xunit;
 

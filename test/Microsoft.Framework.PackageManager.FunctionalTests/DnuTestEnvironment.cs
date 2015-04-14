@@ -3,7 +3,7 @@
 
 using System;
 using System.IO;
-using Microsoft.Framework.FunctionalTestUtils;
+using Microsoft.Framework.CommonTestUtils;
 
 namespace Microsoft.Framework.PackageManager
 {

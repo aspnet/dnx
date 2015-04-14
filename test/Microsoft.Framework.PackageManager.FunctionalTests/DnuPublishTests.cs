@@ -4,7 +4,7 @@
 using System.IO;
 using System.Collections.Generic;
 using System.Linq;
-using Microsoft.Framework.FunctionalTestUtils;
+using Microsoft.Framework.CommonTestUtils;
 using Microsoft.Framework.Runtime;
 using Microsoft.Framework.Runtime.DependencyManagement;
 using Xunit;
