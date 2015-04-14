@@ -12,15 +12,12 @@ namespace Microsoft.Framework.PackageManager.FunctionalTests
 {
     public class DnuListTests : IClassFixture<DnuTestContext>, IDisposable
     {
-        private DnuTestContext _context;
-        private DnuListTestEnvironment _testEnvironment;
+        private readonly DnuTestContext _context;
+        private readonly DisposableDir _workingDir;
 
         public DnuListTests(DnuTestContext context)
         {
             _context = context;
-            _testEnvironment = new DnuListTestEnvironment();
-
-            Console.WriteLine("Running test at {0}", _testEnvironment.RootDir);
         }
 
         public static IEnumerable<object[]> RuntimeComponents
@@ -30,7 +27,7 @@ namespace Microsoft.Framework.PackageManager.FunctionalTests
 
         public void Dispose()
         {
-            _testEnvironment.Dispose();
+            _workingDir.Dispose();
         }
 
         [Theory]
@@ -39,11 +36,11 @@ namespace Microsoft.Framework.PackageManager.FunctionalTests
         {
             var runtimeHomePath = _context.GetRuntimeHome(flavor, os, architecture);
 
-            var projectJson = Path.Combine(_testEnvironment.RootDir, "project.json");
+            var projectJson = Path.Combine(_workingDir.DirPath, "project.json");
             File.WriteAllText(projectJson, @"{}");
 
             string stdOut, stdErr;
-            Assert.Equal(0, DnuTestUtils.ExecDnu(runtimeHomePath, "list", "", out stdOut, out stdErr, environment: null, workingDir: _testEnvironment.RootDir));
+            Assert.Equal(0, DnuTestUtils.ExecDnu(runtimeHomePath, "list", "", out stdOut, out stdErr, environment: null, workingDir: _workingDir.DirPath));
         }
 
         [Theory]
@@ -51,10 +48,10 @@ namespace Microsoft.Framework.PackageManager.FunctionalTests
         public void DnuList_EmptyProject_Details(string flavor, string os, string architecture)
         {
             var runtimeHomePath = _context.GetRuntimeHome(flavor, os, architecture);
-            var projectJson = Path.Combine(_testEnvironment.RootDir, "project.json");
+            var projectJson = Path.Combine(_workingDir.DirPath, "project.json");
             File.WriteAllText(projectJson, @"{}");
 
-            Assert.Equal(0, DnuTestUtils.ExecDnu(runtimeHomePath, "list", "--details", environment: null, workingDir: _testEnvironment.RootDir));
+            Assert.Equal(0, DnuTestUtils.ExecDnu(runtimeHomePath, "list", "--details", environment: null, workingDir: _workingDir.DirPath));
         }
 
         [Theory]
@@ -62,7 +59,7 @@ namespace Microsoft.Framework.PackageManager.FunctionalTests
         public void DnuList_SingleDependencyProject(string flavor, string os, string architecture)
         {
             var runtimeHomePath = _context.GetRuntimeHome(flavor, os, architecture);
-            var projectJson = Path.Combine(_testEnvironment.RootDir, "project.json");
+            var projectJson = Path.Combine(_workingDir.DirPath, "project.json");
             File.WriteAllText(projectJson, @"{
   ""dependencies"": {
     ""alpha"": ""0.1.0""
@@ -73,10 +70,10 @@ namespace Microsoft.Framework.PackageManager.FunctionalTests
   }
 }");
 
-            Assert.Equal(0, DnuTestUtils.ExecDnu(runtimeHomePath, "restore", "--source " + _context.PackageSource, workingDir: _testEnvironment.RootDir));
+            Assert.Equal(0, DnuTestUtils.ExecDnu(runtimeHomePath, "restore", "--source " + _context.PackageSource, workingDir: _workingDir.DirPath));
 
             string stdOut, stdErr;
-            Assert.Equal(0, DnuTestUtils.ExecDnu(runtimeHomePath, "list", "", out stdOut, out stdErr, environment: null, workingDir: _testEnvironment.RootDir));
+            Assert.Equal(0, DnuTestUtils.ExecDnu(runtimeHomePath, "list", "", out stdOut, out stdErr, environment: null, workingDir: _workingDir.DirPath));
 
             var hits = stdOut.Split('\n').Where(line => line.Contains("* alpha 0.1.0"))
                                          .Where(line => !line.Contains("Unresolved"));
@@ -88,7 +85,7 @@ namespace Microsoft.Framework.PackageManager.FunctionalTests
         public void DnuList_SingleDependencyProject_Detailed(string flavor, string os, string architecture)
         {
             var runtimeHomePath = _context.GetRuntimeHome(flavor, os, architecture);
-            var projectJson = Path.Combine(_testEnvironment.RootDir, "project.json");
+            var projectJson = Path.Combine(_workingDir.DirPath, "project.json");
             File.WriteAllText(projectJson, @"{
   ""dependencies"": {
     ""alpha"": ""0.1.0""
@@ -99,12 +96,12 @@ namespace Microsoft.Framework.PackageManager.FunctionalTests
   }
 }");
 
-            var projectName = Path.GetFileName(_testEnvironment.RootDir);
+            var projectName = Path.GetFileName(_workingDir.DirPath);
 
-            Assert.Equal(0, DnuTestUtils.ExecDnu(runtimeHomePath, "restore", "--source " + _context.PackageSource, workingDir: _testEnvironment.RootDir));
+            Assert.Equal(0, DnuTestUtils.ExecDnu(runtimeHomePath, "restore", "--source " + _context.PackageSource, workingDir: _workingDir.DirPath));
 
             string[] stdOut, stdErr;
-            Assert.Equal(0, DnuTestUtils.ExecDnu(runtimeHomePath, "list", "--details", out stdOut, out stdErr, environment: null, workingDir: _testEnvironment.RootDir));
+            Assert.Equal(0, DnuTestUtils.ExecDnu(runtimeHomePath, "list", "--details", out stdOut, out stdErr, environment: null, workingDir: _workingDir.DirPath));
 
             Console.WriteLine(string.Join("\n", stdOut));
             Console.WriteLine(string.Join("\n", stdErr));
@@ -124,7 +121,7 @@ namespace Microsoft.Framework.PackageManager.FunctionalTests
         public void DnuList_Unresolved(string flavor, string os, string architecture)
         {
             var runtimeHomePath = _context.GetRuntimeHome(flavor, os, architecture);
-            var projectJson = Path.Combine(_testEnvironment.RootDir, "project.json");
+            var projectJson = Path.Combine(_workingDir.DirPath, "project.json");
             File.WriteAllText(projectJson, @"{
   ""dependencies"": {
     ""alpha"": ""0.1.0""
@@ -135,10 +132,10 @@ namespace Microsoft.Framework.PackageManager.FunctionalTests
   }
 }");
 
-            var projectName = Path.GetFileName(_testEnvironment.RootDir);
+            var projectName = Path.GetFileName(_workingDir.DirPath);
 
             string stdOut, stdErr;
-            Assert.Equal(0, DnuTestUtils.ExecDnu(runtimeHomePath, "list", "", out stdOut, out stdErr, environment: null, workingDir: _testEnvironment.RootDir));
+            Assert.Equal(0, DnuTestUtils.ExecDnu(runtimeHomePath, "list", "", out stdOut, out stdErr, environment: null, workingDir: _workingDir.DirPath));
 
             var hits = stdOut.Split('\n').Where(line => line.Contains("* alpha 0.1.0") && line.Contains("Unresolved"));
             Assert.Equal(2, hits.Count());
@@ -209,8 +206,7 @@ namespace Microsoft.Framework.PackageManager.FunctionalTests
                 each.Dispose();
             }
 
-            // TODO: uncomment
-            //_contextDir.Dispose();
+            _contextDir.Dispose();
         }
     }
 }
