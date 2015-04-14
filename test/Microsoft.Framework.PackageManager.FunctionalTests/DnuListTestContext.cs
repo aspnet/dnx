@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using Microsoft.Framework.FunctionalTestUtils;
 
 namespace Microsoft.Framework.PackageManager.FunctionalTests
@@ -22,8 +23,6 @@ namespace Microsoft.Framework.PackageManager.FunctionalTests
             Directory.CreateDirectory(PackageSource);
 
             CreateNewPackage("alpha", "0.1.0");
-
-            Console.WriteLine("[{0}] context directory {1}", nameof(DnuListTestContext), _contextDir.DirPath);
         }
 
         public string GetRuntimeHome(string flavor, string os, string architecture)
@@ -42,9 +41,15 @@ namespace Microsoft.Framework.PackageManager.FunctionalTests
 
         private void CreateNewPackage(string name, string version)
         {
-            Console.WriteLine("[{0}:{1}] Create package {2}", nameof(DnuListTestContext), nameof(CreateNewPackage), name);
+            var runtimeForPacking = TestUtils.GetClrRuntimeComponents().FirstOrDefault();
+            if (runtimeForPacking == null)
+            {
+                throw new InvalidOperationException("Can't find a CLR runtime to pack test packages.");
+            }
 
-            var runtimeHomePath = GetRuntimeHome("clr", "win", "x86");
+            var runtimeHomePath = GetRuntimeHome((string)runtimeForPacking[0],
+                                                 (string)runtimeForPacking[1],
+                                                 (string)runtimeForPacking[2]);
 
             using (var tempdir = TestUtils.CreateTempDir())
             {
