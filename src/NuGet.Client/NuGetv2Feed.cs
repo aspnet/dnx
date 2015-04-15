@@ -92,7 +92,7 @@ namespace NuGet.Client
                     var page = 1;
                     while (true)
                     {
-                        // TODO: Pages for a package Id are cahced separately.
+                        // TODO: Pages for a package Id are cached separately.
                         // So we will get inaccurate data when a page shrinks.
                         // However, (1) In most cases the pages grow rather than shrink;
                         // (2) cache for pages is valid for only 30 min.

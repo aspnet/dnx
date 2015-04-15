@@ -2,7 +2,7 @@
     "projects": [
         "src",
         "submodules/FileSystem/src",
-		"submodules/NuGet.Configuration/src",
+        "submodules/NuGet.Configuration/src",
         "submodules/NuGet.Packaging/src",
         "submodules/NuGet.Versioning/src",
         "submodules/Logging/src"

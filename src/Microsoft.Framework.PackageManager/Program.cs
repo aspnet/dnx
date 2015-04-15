@@ -410,7 +410,7 @@ namespace Microsoft.Framework.PackageManager
                 });
             });
 
-            app.Command("commands", (Action<CommandLineApplication>)(cmd =>
+            app.Command("commands", cmd =>
             {
                 cmd.Description = "Commands related to managing application commands (add, remove)";
                 cmd.HelpOption("-?|-h|--help");
@@ -420,7 +420,7 @@ namespace Microsoft.Framework.PackageManager
                     return 2;
                 });
 
-                cmd.Command("install", (Action<CommandLineApplication>)(c =>
+                cmd.Command("install", c =>
                 {
                     c.Description = "Installs application commands";
 
@@ -433,7 +433,7 @@ namespace Microsoft.Framework.PackageManager
 
                     c.HelpOption("-?|-h|--help");
 
-                    c.OnExecute((Func<System.Threading.Tasks.Task<int>>)(async () =>
+                    c.OnExecute(async () =>
                     {
                         var command = new InstallGlobalCommand(
                                 _environment,
@@ -452,10 +452,8 @@ namespace Microsoft.Framework.PackageManager
 
                         var success = await command.Execute(argPackage.Value, argVersion.Value);
                         return success ? 0 : 1;
-                    }));
-
-
-                }));
+                    });
+                });
 
                 cmd.Command("uninstall", c =>
                 {
@@ -480,7 +478,7 @@ namespace Microsoft.Framework.PackageManager
                         return success ? 0 : 1;
                     });
                 });
-            }));
+            });
 
             app.Command("wrap", c =>
             {
