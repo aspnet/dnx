@@ -95,7 +95,7 @@ int CallApplicationMain(const wchar_t* moduleName, const char* functionName, CAL
 
         traceWriter.Write(std::wstring(L"Loaded module: ").append(moduleName), true);
 
-        auto pfnCallApplicationMain = (FnCallApplicationMain)GetProcAddress(hostModule, functionName);
+        auto pfnCallApplicationMain = reinterpret_cast<FnCallApplicationMain>(GetProcAddress(hostModule, functionName));
         if (!pfnCallApplicationMain)
         {
             std::ostringstream oss;
@@ -103,7 +103,7 @@ int CallApplicationMain(const wchar_t* moduleName, const char* functionName, CAL
             throw std::runtime_error(oss.str());
         }
 
-        traceWriter.Write(std::wstring(L"Found export: ").append(moduleName), true);
+        traceWriter.Write(std::wstring(L"Found export: ").append(dnx::utils::to_wstring(functionName)), true);
 
         HRESULT hr = pfnCallApplicationMain(data);
         FreeLibrary(hostModule);

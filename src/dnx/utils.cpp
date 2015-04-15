@@ -46,6 +46,11 @@ namespace dnx
         {
             return s;
         }
+
+        std::wstring to_wstring(const std::string& s)
+        {
+            return to_xstring_t(s);
+        }
 #endif
     }
 }

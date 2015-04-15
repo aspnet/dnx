@@ -54,7 +54,7 @@ BOOL GetFullPath(LPCTSTR szPath, LPTSTR szNormalizedPath)
 
 int CallApplicationMain(const char* moduleName, const char* functionName, CALL_APPLICATION_MAIN_DATA* data, TraceWriter traceWriter)
 {
-    auto localPath =  GetNativeBootstrapperDirectory().append("/").append(moduleName);
+    auto localPath = GetNativeBootstrapperDirectory().append("/").append(moduleName);
 
     void* host = nullptr;
     try
@@ -67,7 +67,7 @@ int CallApplicationMain(const char* moduleName, const char* functionName, CALL_A
 
         traceWriter.Write(std::string("Loaded module: ").append(moduleName), true);
 
-        auto pfnCallApplicationMain = (FnCallApplicationMain)dlsym(host, functionName);
+        auto pfnCallApplicationMain = reinterpret_cast<FnCallApplicationMain>(dlsym(host, functionName));
         if (!pfnCallApplicationMain)
         {
             std::ostringstream oss;
@@ -75,9 +75,9 @@ int CallApplicationMain(const char* moduleName, const char* functionName, CALL_A
             throw std::runtime_error(oss.str());
         }
 
-        traceWriter.Write(dnx::xstring_t(_X("Found export: ")).append(moduleName), true);
+        traceWriter.Write(std::string("Found export: ").append(functionName), true);
 
-        auto result  = pfnCallApplicationMain(data);
+        auto result = pfnCallApplicationMain(data);
         dlclose(host);
         return result == 0 ? data->exitcode : result;
     }
