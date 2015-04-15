@@ -134,7 +134,8 @@ namespace Microsoft.Framework.Runtime.Roslyn
                         res.Name,
                         res.StreamFactory,
                         isPublic: true))
-                    .ToList());
+                    .ToList(),
+                incomingReferences);
 
             // Apply strong-name settings
             ApplyStrongNameSettings(compilationContext);
