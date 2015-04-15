@@ -115,7 +115,6 @@ namespace Microsoft.Framework.PackageManager
         {
             if (string.IsNullOrEmpty(packageId))
             {
-                WriteError("The name of the package to be installed was not specified.");
                 return null;
             }
 

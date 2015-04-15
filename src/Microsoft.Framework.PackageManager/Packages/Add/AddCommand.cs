@@ -3,7 +3,6 @@
 
 using System.Diagnostics;
 using System.IO;
-using System.Security.Cryptography;
 using System.Threading.Tasks;
 using Microsoft.Framework.Runtime;
 
@@ -32,11 +31,9 @@ namespace Microsoft.Framework.PackageManager.Packages
 
             var library = NuGetPackageUtils.CreateLibraryFromNupkg(Options.NuGetPackage);
 
-            using (var sha512 = SHA512.Create())
             using (var stream = File.OpenRead(Options.NuGetPackage))
             {
-                Reports.Information.WriteLine("Installing {0} {1}", library.Name.Bold(), library.Version);
-                await NuGetPackageUtils.InstallFromStream(stream, library, LocalPackages, sha512);
+                await NuGetPackageUtils.InstallFromStream(stream, library, LocalPackages, Reports.Information);
             }
 
             Reports.Information.WriteLine(

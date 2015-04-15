@@ -31,7 +31,7 @@ namespace NuGet
             _useSideBySidePaths = useSideBySidePaths;
             if (fileSystem == null)
             {
-                throw new ArgumentNullException("fileSystem");
+                throw new ArgumentNullException(nameof(fileSystem));
             }
             _fileSystem = fileSystem;
         }
@@ -56,7 +56,7 @@ namespace NuGet
         public string GetHashPath(string packageId, SemanticVersion version)
         {
             return Path.Combine(GetInstallPath(packageId, version),
-                                string.Format("{0}.{1}.nupkg.sha512", packageId, version));
+                                $"{packageId}.{version}{Constants.HashFileExtension}");
         }
 
         public virtual string GetPackageDirectory(string packageId, SemanticVersion version)
