@@ -23,6 +23,6 @@ namespace Microsoft.Framework.Runtime.Roslyn
 
         IList<Diagnostic> Diagnostics { get; }
 
-        IEnumerable<IMetadataReference> References { get; }
+        IList<IMetadataReference> References { get; }
     }
 }

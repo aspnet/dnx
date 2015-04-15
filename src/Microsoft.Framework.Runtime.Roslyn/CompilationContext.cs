@@ -29,14 +29,14 @@ namespace Microsoft.Framework.Runtime.Roslyn
 
         public IProjectContext ProjectContext { get; set; }
 
-        public IEnumerable<IMetadataReference> References { get; set; }
+        public IList<IMetadataReference> References { get; set; }
 
         public CompilationContext(CSharpCompilation compilation,
                                   ICompilationProject project,
                                   FrameworkName targetFramework,
                                   string configuration,
                                   Func<IList<ResourceDescription>> resourcesResolver,
-                                  IEnumerable<IMetadataReference> incomingReferences)
+                                  IList<IMetadataReference> incomingReferences)
         {
             References = incomingReferences;
             Compilation = compilation;

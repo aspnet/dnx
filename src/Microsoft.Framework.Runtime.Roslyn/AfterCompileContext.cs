@@ -50,6 +50,6 @@ namespace Microsoft.Framework.Runtime.Roslyn
 
         public IList<Diagnostic> Diagnostics { get; }
 
-        public IEnumerable<IMetadataReference> References { get { return _context.References; } }
+        public IList<IMetadataReference> References { get { return _context.References; } }
     }
 }
