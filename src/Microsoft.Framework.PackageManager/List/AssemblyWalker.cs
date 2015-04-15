@@ -62,13 +62,13 @@ namespace Microsoft.Framework.PackageManager.List
                     HashSet<string> packagesSources;
                     if (_dependencyPackageSources.TryGetValue(assemblyName, out packagesSources) && packagesSources.Any())
                     {
-                        _reports.Information.WriteLine("    from package: {0}", string.Join(", ", packagesSources.ToArray()));
+                        _reports.Information.WriteLine("    from package: {0}", string.Join(", ", packagesSources));
                     }
 
                     HashSet<string> assemblySources;
                     if (_dependencyAssemblySources.TryGetValue(assemblyName, out assemblySources) && assemblySources.Any())
                     {
-                        _reports.Information.WriteLine("    from assembly: {0}", string.Join(", ", assemblySources.ToArray()));
+                        _reports.Information.WriteLine("    from assembly: {0}", string.Join(", ", assemblySources));
                     }
                 }
             }
@@ -86,7 +86,7 @@ namespace Microsoft.Framework.PackageManager.List
 
                     DepthFirstGraphTraversal.PreOrderWalk(
                         root: loadableAssembly,
-                        visitNode: (assemblyName, assemblyAncestors) => VisitAssembly(assemblyName, assemblyAncestors),
+                        visitNode: VisitAssembly,
                         getChildren: GetAssemblyDependencies);
                 }
 

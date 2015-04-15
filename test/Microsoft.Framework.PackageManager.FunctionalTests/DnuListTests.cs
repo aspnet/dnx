@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Microsoft.Framework.FunctionalTestUtils;
+using Newtonsoft.Json;
 using Xunit;
 
 namespace Microsoft.Framework.PackageManager.FunctionalTests
@@ -35,47 +36,71 @@ namespace Microsoft.Framework.PackageManager.FunctionalTests
         [MemberData("RuntimeComponents")]
         public void DnuList_EmptyProject_Default(string flavor, string os, string architecture)
         {
-            var runtimeHomePath = _context.GetRuntimeHome(flavor, os, architecture);
-
-            var projectJson = Path.Combine(_workingDir.DirPath, "project.json");
-            File.WriteAllText(projectJson, @"{}");
-
             string stdOut, stdErr;
+            var runtimeHomePath = _context.GetRuntimeHome(flavor, os, architecture);
+            var expectedTitle = string.Format(
+                @"Listing dependencies for {0} ({1})",
+                Path.GetFileName(_workingDir.DirPath),
+                Path.Combine(_workingDir, "project.json"));
+
+            CreateProjectJson(@"{}");
+
+            // run dnu list
             Assert.Equal(0, DnuTestUtils.ExecDnu(runtimeHomePath, "list", "", out stdOut, out stdErr, environment: null, workingDir: _workingDir.DirPath));
+
+            // assert
+            Assert.True(string.IsNullOrEmpty(stdErr));
+            Assert.True(stdOut.Contains(expectedTitle));
         }
 
         [Theory]
         [MemberData("RuntimeComponents")]
         public void DnuList_EmptyProject_Details(string flavor, string os, string architecture)
         {
+            string stdOut, stdErr;
             var runtimeHomePath = _context.GetRuntimeHome(flavor, os, architecture);
-            var projectJson = Path.Combine(_workingDir.DirPath, "project.json");
-            File.WriteAllText(projectJson, @"{}");
+            var expectedTitle = string.Format(
+                @"Listing dependencies for {0} ({1})",
+                Path.GetFileName(_workingDir.DirPath),
+                Path.Combine(_workingDir, "project.json"));
 
-            Assert.Equal(0, DnuTestUtils.ExecDnu(runtimeHomePath, "list", "--details", environment: null, workingDir: _workingDir.DirPath));
+            CreateProjectJson(@"{}");
+
+            // run dnu list
+            Assert.Equal(0, DnuTestUtils.ExecDnu(runtimeHomePath, "list", "--details", out stdOut, out stdErr, environment: null, workingDir: _workingDir.DirPath));
+
+            // assert
+            Assert.True(string.IsNullOrEmpty(stdErr));
+            Assert.True(stdOut.Contains(expectedTitle));
         }
 
         [Theory]
         [MemberData("RuntimeComponents")]
         public void DnuList_SingleDependencyProject(string flavor, string os, string architecture)
         {
+            string stdOut, stdErr;
             var runtimeHomePath = _context.GetRuntimeHome(flavor, os, architecture);
-            var projectJson = Path.Combine(_workingDir.DirPath, "project.json");
-            File.WriteAllText(projectJson, @"{
-  ""dependencies"": {
-    ""alpha"": ""0.1.0""
-  },
-  ""frameworks"": {
-    ""dnx451"": {},
-    ""dnxcore50"": {}
-  }
-}");
 
+            CreateProjectJson(new
+            {
+                dependencies = new
+                {
+                    alpha = "0.1.0"
+                },
+                frameworks = new
+                {
+                    dnx451 = new { },
+                    dnxcore50 = new { }
+                }
+            });
+
+            // restore the packages
             Assert.Equal(0, DnuTestUtils.ExecDnu(runtimeHomePath, "restore", "--source " + _context.PackageSource, workingDir: _workingDir.DirPath));
 
-            string stdOut, stdErr;
+            // run dnu list
             Assert.Equal(0, DnuTestUtils.ExecDnu(runtimeHomePath, "list", "", out stdOut, out stdErr, environment: null, workingDir: _workingDir.DirPath));
 
+            // there should be 2 and only 2 dependencies of alpha
             var hits = stdOut.Split('\n').Where(line => line.Contains("* alpha 0.1.0"))
                                          .Where(line => !line.Contains("Unresolved"));
             Assert.Equal(2, hits.Count());
@@ -85,33 +110,41 @@ namespace Microsoft.Framework.PackageManager.FunctionalTests
         [MemberData("RuntimeComponents")]
         public void DnuList_SingleDependencyProject_Detailed(string flavor, string os, string architecture)
         {
+            string stdOut, stdErr;
             var runtimeHomePath = _context.GetRuntimeHome(flavor, os, architecture);
-            var projectJson = Path.Combine(_workingDir.DirPath, "project.json");
-            File.WriteAllText(projectJson, @"{
-  ""dependencies"": {
-    ""alpha"": ""0.1.0""
-  },
-  ""frameworks"": {
-    ""dnx451"": {},
-    ""dnxcore50"": {}
-  }
-}");
-
             var projectName = Path.GetFileName(_workingDir.DirPath);
 
+            CreateProjectJson(new
+            {
+                dependencies = new
+                {
+                    alpha = "0.1.0"
+                },
+                frameworks = new
+                {
+                    dnx451 = new { },
+                    dnxcore50 = new { }
+                }
+            });
+
+            // restore the packages
             Assert.Equal(0, DnuTestUtils.ExecDnu(runtimeHomePath, "restore", "--source " + _context.PackageSource, workingDir: _workingDir.DirPath));
 
-            string stdOut, stdErr;
+            // run dnu list
             Assert.Equal(0, DnuTestUtils.ExecDnu(runtimeHomePath, "list", "--details", out stdOut, out stdErr, environment: null, workingDir: _workingDir.DirPath));
 
+            // assert - in the output of the dnu list, alpha 0.1.0 is listed as resolved, its source is listed on the second line.
             string[] outputLines = stdOut.Split(Environment.NewLine[0]);
-
+            Assert.True(outputLines.Length > 0);
             for (int i = 0; i < outputLines.Length; ++i)
             {
                 if (outputLines[i].Contains("* alpha 0.1.0"))
                 {
                     Assert.False(outputLines[i].Contains("Unresolved"), "Dnu list reports unresolved package");
-                    Assert.True(outputLines[i + 1].Contains(projectName));
+
+                    // the following line should list the dependency's source
+                    Assert.True(++i < outputLines.Length);
+                    Assert.True(outputLines[i].Contains(projectName));
                 }
             }
         }
@@ -120,25 +153,49 @@ namespace Microsoft.Framework.PackageManager.FunctionalTests
         [MemberData("RuntimeComponents")]
         public void DnuList_Unresolved(string flavor, string os, string architecture)
         {
+            string stdOut, stdErr;
             var runtimeHomePath = _context.GetRuntimeHome(flavor, os, architecture);
-            var projectJson = Path.Combine(_workingDir.DirPath, "project.json");
-            File.WriteAllText(projectJson, @"{
-  ""dependencies"": {
-    ""alpha"": ""0.1.0""
-  },
-  ""frameworks"": {
-    ""dnx451"": {},
-    ""dnxcore50"": {}
-  }
-}");
-
             var projectName = Path.GetFileName(_workingDir.DirPath);
 
-            string stdOut, stdErr;
+            CreateProjectJson(new
+            {
+                dependencies = new
+                {
+                    alpha = "0.1.0",
+                    beta = "0.2.0"
+                },
+                frameworks = new
+                {
+                    dnx451 = new { },
+                    dnxcore50 = new { }
+                }
+            });
+
+            // restore the packages, it should fail because missing package beta
+            Assert.Equal(1, DnuTestUtils.ExecDnu(runtimeHomePath, "restore", "--source " + _context.PackageSource, workingDir: _workingDir.DirPath));
+
+            // run dnu list
             Assert.Equal(0, DnuTestUtils.ExecDnu(runtimeHomePath, "list", "", out stdOut, out stdErr, environment: null, workingDir: _workingDir.DirPath));
 
-            var hits = stdOut.Split('\n').Where(line => line.Contains("* alpha 0.1.0") && line.Contains("Unresolved"));
+            // the beta package is not resolved
+            var hits = SplitLines(stdOut).Where(line => line.Contains("* beta 0.2.0 - Unresolved"));
             Assert.Equal(2, hits.Count());
+        }
+
+        private string[] SplitLines(string content)
+        {
+            return content.Split(Environment.NewLine[0]);
+        }
+
+        private void CreateProjectJson(string content)
+        {
+            var projectJson = Path.Combine(_workingDir.DirPath, "project.json");
+            File.WriteAllText(projectJson, content);
+        }
+
+        private void CreateProjectJson(object content)
+        {
+            CreateProjectJson(JsonConvert.SerializeObject(content));
         }
     }
 }

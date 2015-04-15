@@ -58,9 +58,7 @@ namespace Microsoft.Framework.PackageManager.FunctionalTests
                 var outputDir = dir.CreateSubdirectory("output");
                 var projectJson = Path.Combine(projectDir.FullName, "project.json");
 
-                File.WriteAllText(projectJson, @"{
-    ""version"": ""_version_""
-}".Replace("_version_", version));
+                File.WriteAllText(projectJson, "{\"version\": \"" + version + "\"}");
                 DnuTestUtils.ExecDnu(runtimeHomePath, "pack", projectJson + " --out " + outputDir.FullName, environment: null, workingDir: null);
 
                 var packageName = string.Format("{0}.{1}.nupkg", name, version);
