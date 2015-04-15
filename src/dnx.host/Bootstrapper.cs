@@ -73,6 +73,7 @@ namespace dnx.host
                 serviceProvider.Add(typeof(IAssemblyLoaderContainer), container);
                 serviceProvider.Add(typeof(IAssemblyLoadContextAccessor), accessor);
                 serviceProvider.Add(typeof(IApplicationEnvironment), applicationEnvironment);
+                serviceProvider.Add(typeof(IRuntimeEnvironment), new RuntimeEnvironment());
 
                 CallContextServiceLocator.Locator.ServiceProvider = serviceProvider;
 
