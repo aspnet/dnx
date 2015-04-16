@@ -764,13 +764,6 @@ var RUNTIME_TARGETS='${new List<RuntimeTarget>()}'
                 {
                     continue;
                 }
-
-                // k-test runs tests for all frameworks in project.json
-                // so we only need to run once per architecture/os pair
-                if (target.Flavor == "coreclr")
-                {
-                    continue;
-                }
                 
                 var binPath = binPaths[target.Name];
                 
@@ -778,9 +771,39 @@ var RUNTIME_TARGETS='${new List<RuntimeTarget>()}'
                 {
                     foreach(var projectFile in Files.Include("test/*.Tests/project.json"))
                     {
-                        KTest(projectFile);
+                        var serializer = new JavaScriptSerializer();
+                        var projectText = File.ReadAllText(projectFile);
+                        var project = (Dictionary<string, object>)serializer.DeserializeObject(projectText);
+    
+                        object configsObject;
+                        var configs = project.TryGetValue("frameworks", out configsObject)
+                            ? (Dictionary<string, object>)configsObject
+                            : new Dictionary<string, object>
+                            {
+                                { "dnx451", new Dictionary<string, object>() } // Assume dnx451 only if none specified
+                            };
+                        var targetFrameworks = configs.Keys.Where(k => k.StartsWith("dnx", StringComparison.OrdinalIgnoreCase));
+                        foreach (var framework in targetFrameworks)
+                        {
+                            if(framework == target.Framework)
+                            {
+                                KTest(projectFile);
+                                break;
+                            }
+                            else
+                            {
+                                continue;
+                            }
+                        }
                     }
                 });
+                
+                // Functional tests run there own dnx versions
+                // we only need to kick them off with Desktop CLR once
+                if (target.Flavor == "coreclr")
+                {
+                    continue;
+                }
                 
                 // Functional tests dont work on linux and osx yet
                 if (target.OS == "darwin" || target.OS == "linux")
@@ -874,13 +897,16 @@ var RUNTIME_TARGETS='${new List<RuntimeTarget>()}'
         }
     }
 
-macro name='KTest' projectFile='string'
-    k-test
- 
-
 functions @{
     private static readonly string _defaultLocalRuntimeHomeDir = ".dnx";
     private static readonly string _runtimesSubDir = "runtimes";
+
+    void KTest(string projectFolder)
+    {
+        projectFolder = Path.GetDirectoryName(projectFolder);
+        var testArgs = IsMono ? " -parallel none" : "";
+        K(("test" + testArgs), projectFolder, "");
+    }
 
     bool CanBuildForLinux
     {
