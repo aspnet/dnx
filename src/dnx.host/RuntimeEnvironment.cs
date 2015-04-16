@@ -9,6 +9,8 @@ namespace Microsoft.Framework.Runtime
 {
     public class RuntimeEnvironment : IRuntimeEnvironment
     {
+        private string _osVersion;
+
         private string _runtimeVersion;
 
         public RuntimeEnvironment()
@@ -22,25 +24,32 @@ namespace Microsoft.Framework.Runtime
 #endif
 
             string uname = NativeMethods.Uname();
-            if (!string.IsNullOrEmpty(uname))
-            {
-                OperatingSystem = uname;
-                OperatingSystemVersion = null;
-            }
-            else
-            {
-                OperatingSystem = "Windows";
-#if DNXCORE50
-                OperatingSystemVersion = NativeMethods.OSVersion.ToString();
-#else
-                OperatingSystemVersion = Environment.OSVersion.Version.ToString();
-#endif
-            }
+            OperatingSystem = string.IsNullOrEmpty(uname) ? "Windows" : uname;
         }
 
         public string OperatingSystem { get; private set; }
 
-        public string OperatingSystemVersion { get; private set; }
+        public string OperatingSystemVersion
+        {
+            get
+            {
+                if (OperatingSystem != "Windows")
+                {
+                    return null;
+                }
+
+                if (_osVersion == null)
+                {
+#if DNXCORE50
+                    _osVersion = NativeMethods.OSVersion.ToString();
+#else
+                    _osVersion = Environment.OSVersion.Version.ToString();
+#endif
+                }
+
+                return _osVersion;
+            }
+        }
 
         public string RuntimeType { get; private set; }
 

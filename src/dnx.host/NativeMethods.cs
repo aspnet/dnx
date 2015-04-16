@@ -49,10 +49,18 @@ namespace Microsoft.Framework.Runtime
             {
                 return GetVersion_ApiSet();
             }
-            catch (DllNotFoundException)
+            catch
             {
-                return GetVersion_Kernel32();
+                try
+                {
+                    return GetVersion_Kernel32();
+                }
+                catch
+                {
+                    return 0;
+                }
             }
+
         }
 
         // The API set is required by OneCore based systems
