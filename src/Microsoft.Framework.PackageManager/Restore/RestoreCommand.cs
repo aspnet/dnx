@@ -487,13 +487,17 @@ namespace Microsoft.Framework.PackageManager
             // Use empty string as the key of dependencies shared by all frameworks
             lockFile.ProjectFileDependencyGroups.Add(new ProjectFileDependencyGroup(
                 string.Empty,
-                packageSpec.Dependencies.Select(x => RuntimeStyleLibraryRangeToString(x.LibraryRange))));
+                packageSpec.Dependencies
+                    .Where(x => x.LibraryRange.TypeConstraint == LibraryTypes.Package)
+                    .Select(x => RuntimeStyleLibraryRangeToString(x.LibraryRange))));
 
             foreach (var frameworkInfo in packageSpec.TargetFrameworks)
             {
                 lockFile.ProjectFileDependencyGroups.Add(new ProjectFileDependencyGroup(
                     frameworkInfo.FrameworkName.ToString(),
-                    frameworkInfo.Dependencies.Select(x => RuntimeStyleLibraryRangeToString(x.LibraryRange))));
+                    frameworkInfo.Dependencies
+                        .Where(x => x.LibraryRange.TypeConstraint == LibraryTypes.Package)
+                        .Select(x => RuntimeStyleLibraryRangeToString(x.LibraryRange))));
             }
 
             var lockFileFormat = new LockFileFormat();
