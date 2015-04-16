@@ -58,11 +58,16 @@ namespace Microsoft.Framework.PackageManager
                         ExtractPackage(targetPath, nupkgStream);
                     }
 
-                    // DNU REFACTORING TODO: bring this back after we have implementation of NuSpecFormatter.Read()
+                    // DNU REFACTORING TODO: delete the hacky FixNuSpecIdCasing() and uncomment logic below after we
+                    // have implementation of NuSpecFormatter.Read()
                     // Fixup the casing of the nuspec on disk to match what we expect
-                    /*var nuspecFile = Directory.EnumerateFiles(targetPath, "*" + NuGet.Constants.ManifestExtension).Single();
+                    var nuspecFile = Directory.EnumerateFiles(targetPath, "*" + NuGet.Constants.ManifestExtension).Single();
+                    FixNuSpecIdCasing(nuspecFile, targetNuspec, library.Name);
 
-                    if (!string.Equals(nuspecFile, targetNuspec, StringComparison.Ordinal))
+                    /*var actualNuSpecName = Path.GetFileName(nuspecFile);
+                    var expectedNuSpecName = Path.GetFileName(targetNuspec);
+
+                    if (!string.Equals(actualNuSpecName, expectedNuSpecName, StringComparison.Ordinal))
                     {
                         MetadataBuilder metadataBuilder = null;
                         var nuspecFormatter = new NuSpecFormatter();
@@ -97,6 +102,29 @@ namespace Microsoft.Framework.PackageManager
 
                 return 0;
             });
+        }
+
+        // DNU REFACTORING TODO: delete this temporary workaround after we have NuSpecFormatter.Read()
+        private static void FixNuSpecIdCasing(string nuspecFile, string targetNuspec, string correctedId)
+        {
+            var actualNuSpecName = Path.GetFileName(nuspecFile);
+            var expectedNuSpecName = Path.GetFileName(targetNuspec);
+
+            if (!string.Equals(actualNuSpecName, expectedNuSpecName, StringComparison.Ordinal))
+            {
+                var xDoc = System.Xml.Linq.XDocument.Parse(File.ReadAllText(nuspecFile),
+                    System.Xml.Linq.LoadOptions.PreserveWhitespace);
+                var metadataNode = xDoc.Root.Elements().Where(e => StringComparer.Ordinal.Equals(e.Name.LocalName, "metadata")).First();
+                var node = metadataNode.Elements(System.Xml.Linq.XName.Get("id", metadataNode.GetDefaultNamespace().NamespaceName)).First();
+                node.Value = correctedId;
+
+                File.Delete(nuspecFile);
+
+                using (var stream = File.OpenWrite(targetNuspec))
+                {
+                    xDoc.Save(stream);
+                }
+            }
         }
 
         internal static LibraryIdentity CreateLibraryFromNupkg(string nupkgPath)
