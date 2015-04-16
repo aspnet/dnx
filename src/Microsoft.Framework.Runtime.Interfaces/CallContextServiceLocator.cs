@@ -3,8 +3,14 @@
 
 namespace Microsoft.Framework.Runtime.Infrastructure
 {
+    /// <summary>
+    /// A class that exposes the ambient service provider.
+    /// </summary>
     public static class CallContextServiceLocator
     {
+        /// <summary>
+        /// Provides access to the <see cref="IServiceProviderLocator"/>.
+        /// </summary>
         public static IServiceProviderLocator Locator;
     }
 }

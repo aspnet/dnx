@@ -6,8 +6,14 @@ using System.Collections.Generic;
 
 namespace Microsoft.Framework.Runtime
 {
+    /// <summary>
+    /// Provides a list of service types exposed by the runtime.
+    /// </summary>
     public interface IServiceManifest
     {
+        /// <summary>
+        /// Gets the list of exposed service types.
+        /// </summary>
         IEnumerable<Type> Services { get; }
     }
 }

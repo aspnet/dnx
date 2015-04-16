@@ -6,6 +6,9 @@ using Microsoft.Framework.Runtime.Compilation;
 
 namespace Microsoft.Framework.Runtime
 {
+    /// <summary>
+    /// Provides access to the rich application dependency graph.
+    /// </summary>
     public interface ILibraryManager
     {
         ILibraryExport GetLibraryExport(string name);
