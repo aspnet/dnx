@@ -68,18 +68,15 @@ namespace Microsoft.Framework.PackageManager
             }))
             {
                 var nuspecReader = new NuspecReader(stream);
-                var reducer = new FrameworkReducer();
 
-                var groups = nuspecReader.GetDependencyGroups()
-                                         .ToDictionary(g => g.TargetFramework,
-                                                       g => g.Packages);
+                var nearestGroup = NuGetFrameworkUtility.GetNearest(
+                    nuspecReader.GetDependencyGroups(),
+                    targetFramework,
+                    x => x.TargetFramework);
 
-
-                var nearest = reducer.GetNearest(targetFramework, groups.Keys);
-
-                if (nearest != null)
+                if (nearestGroup != null)
                 {
-                    return groups[nearest].Select(p => new LibraryDependency
+                    return nearestGroup.Packages.Select(p => new LibraryDependency
                     {
                         LibraryRange = new LibraryRange
                         {
