@@ -30,7 +30,7 @@ namespace Microsoft.Framework.Runtime.Tests.FileGlobbing
 
             var resourceFilesPatternsGroup = target.ResourcePatternsGroup;
             Assert.NotNull(resourceFilesPatternsGroup);
-            Assert.Equal(NormalizePatterns(ProjectFilesCollection.DefaultResourcesPatterns), resourceFilesPatternsGroup.IncludePatterns);
+            Assert.Equal(NormalizePatterns(ProjectFilesCollection.DefaultResourcesBuiltInPatterns), resourceFilesPatternsGroup.IncludePatterns);
             Assert.Equal(NormalizePatterns(ProjectFilesCollection.DefaultBuiltInExcludePatterns), resourceFilesPatternsGroup.ExcludePatterns);
             Assert.Equal(0, resourceFilesPatternsGroup.IncludeLiterals.Count());
             Assert.Equal(0, resourceFilesPatternsGroup.ExcludePatternsGroup.Count());
@@ -51,7 +51,7 @@ namespace Microsoft.Framework.Runtime.Tests.FileGlobbing
 
             var contentFilePatternsGroup = target.ContentPatternsGroup;
             Assert.NotNull(contentFilePatternsGroup);
-            Assert.Equal(NormalizePatterns(ProjectFilesCollection.DefaultContentsPatterns), contentFilePatternsGroup.IncludePatterns);
+            Assert.Equal(NormalizePatterns(ProjectFilesCollection.DefaultContentsBuiltInPatterns), contentFilePatternsGroup.IncludePatterns);
             Assert.Equal(
                 NormalizePatterns(ProjectFilesCollection.DefaultBuiltInExcludePatterns.Concat(ProjectFilesCollection.DefaultPublishExcludePatterns).Distinct().OrderBy(elem => elem).ToArray()),
                 contentFilePatternsGroup.ExcludePatterns.OrderBy(elem => elem));
@@ -71,6 +71,14 @@ namespace Microsoft.Framework.Runtime.Tests.FileGlobbing
              ""shared"": ""shared/**/*.cs"",
              ""sharedExclude"": ""excludeShared*.cs"",
              ""sharedFiles"": ""**/*.cs"",
+             ""contentBuiltIn"": """",
+             ""content"": ""**/*.content"",
+             ""contentExclude"": ""excludecontent"",
+             ""contentFiles"": [""additional.file"", ""another.file""],
+             ""resourceBuiltIn"": ""resource/builtin/*.resx"",
+             ""resource"": ""resx/**/*.content"",
+             ""resourceExclude"": ""resx/exclude/**/*.content"",
+             ""resourceFiles"": ""one-resource.file"",
              ""publishExclude"": ""no_pack/*.*"",
              ""exclude"": ""buggy/*.*"",
          }");
@@ -80,7 +88,14 @@ namespace Microsoft.Framework.Runtime.Tests.FileGlobbing
             Assert.Equal(NormalizePatterns("*.cs", "../*.cs"), target.CompilePatternsGroup.IncludePatterns);
             Assert.Equal(NormalizePatterns("signle.cs"), target.CompilePatternsGroup.IncludeLiterals);
             Assert.Equal(NormalizePatterns("fake*.cs", "fake2*.cs", "buggy/*.*", "bin/**", "obj/**", "**/*.xproj"), target.CompilePatternsGroup.ExcludePatterns);
-            Assert.Equal(NormalizePatterns("buggy/*.*", "bin/**", "obj/**", "**/*.xproj", "no_pack/*.*"), target.ContentPatternsGroup.ExcludePatterns);
+
+            Assert.Equal(NormalizePatterns("excludecontent", "buggy/*.*", "bin/**", "obj/**", "**/*.xproj", "no_pack/*.*"), target.ContentPatternsGroup.ExcludePatterns);
+            Assert.Equal(NormalizePatterns("**/*.content"), target.ContentPatternsGroup.IncludePatterns);
+            Assert.Equal(NormalizePatterns("additional.file", "another.file"), target.ContentPatternsGroup.IncludeLiterals);
+
+            Assert.Equal(NormalizePatterns("resx/**/*.content", "resource/builtin/*.resx"), target.ResourcePatternsGroup.IncludePatterns);
+            Assert.Equal(NormalizePatterns("resx/exclude/**/*.content", "buggy/*.*", "bin/**", "obj/**", "**/*.xproj"), target.ResourcePatternsGroup.ExcludePatterns);
+            Assert.Equal(NormalizePatterns("one-resource.file"), target.ResourcePatternsGroup.IncludeLiterals);
         }
 
         [Fact]

@@ -13,8 +13,9 @@ namespace Microsoft.Framework.Runtime
         public static readonly string[] DefaultPublishExcludePatterns = new[] { @"obj/**/*.*", @"bin/**/*.*", @"**/.*/**" };
         public static readonly string[] DefaultPreprocessPatterns = new[] { @"compiler/preprocess/**/*.cs" };
         public static readonly string[] DefaultSharedPatterns = new[] { @"compiler/shared/**/*.cs" };
-        public static readonly string[] DefaultResourcesPatterns = new[] { @"compiler/resources/**/*", "**/*.resx" };
-        public static readonly string[] DefaultContentsPatterns = new[] { @"**/*" };
+        public static readonly string[] DefaultResourcesBuiltInPatterns = new[] { @"compiler/resources/**/*", "**/*.resx" };
+        public static readonly string[] DefaultContentsBuiltInPatterns = new[] { @"**/*" };
+
         public static readonly string[] DefaultBuiltInExcludePatterns = new[] { "bin/**", "obj/**", "**/*.xproj" };
 
         private readonly PatternGroup _sharedPatternsGroup;
@@ -37,7 +38,9 @@ namespace Microsoft.Framework.Runtime
             var excludeBuiltIns = PatternsCollectionHelper.GetPatternsCollection(rawProject, projectDirectory, projectFilePath, "excludeBuiltIn", DefaultBuiltInExcludePatterns);
             var excludePatterns = PatternsCollectionHelper.GetPatternsCollection(rawProject, projectDirectory, projectFilePath, "exclude")
                                                           .Concat(excludeBuiltIns);
+            var contentBuiltIns = PatternsCollectionHelper.GetPatternsCollection(rawProject, projectDirectory, projectFilePath, "contentBuiltIn", DefaultContentsBuiltInPatterns);
             var compileBuiltIns = PatternsCollectionHelper.GetPatternsCollection(rawProject, projectDirectory, projectFilePath, "compileBuiltIn", DefaultCompileBuiltInPatterns);
+            var resourceBuiltIns = PatternsCollectionHelper.GetPatternsCollection(rawProject, projectDirectory, projectFilePath, "resourceBuiltIn", DefaultResourcesBuiltInPatterns);
 
             // TODO: The legacy names will be retired in the future.
             var legacyPublishExcludePatternName = "bundleExclude";
@@ -61,7 +64,7 @@ namespace Microsoft.Framework.Runtime
 
             _sharedPatternsGroup = PatternGroup.Build(rawProject, projectDirectory, projectFilePath, "shared", legacyName: null, warnings: warnings, fallbackIncluding: DefaultSharedPatterns, additionalExcluding: excludePatterns);
 
-            _resourcePatternsGroup = PatternGroup.Build(rawProject, projectDirectory, projectFilePath, "resource", "resources", warnings: warnings, fallbackIncluding: DefaultResourcesPatterns, additionalExcluding: excludePatterns);
+            _resourcePatternsGroup = PatternGroup.Build(rawProject, projectDirectory, projectFilePath, "resource", "resources", warnings: warnings, additionalIncluding: resourceBuiltIns, additionalExcluding: excludePatterns);
 
             _preprocessPatternsGroup = PatternGroup.Build(rawProject, projectDirectory, projectFilePath, "preprocess", legacyName: null, warnings: warnings, fallbackIncluding: DefaultPreprocessPatterns, additionalExcluding: excludePatterns)
                 .ExcludeGroup(_sharedPatternsGroup)
@@ -72,7 +75,7 @@ namespace Microsoft.Framework.Runtime
                 .ExcludeGroup(_preprocessPatternsGroup)
                 .ExcludeGroup(_resourcePatternsGroup);
 
-            _contentPatternsGroup = PatternGroup.Build(rawProject, projectDirectory, projectFilePath, "content", "files", warnings: warnings, fallbackIncluding: DefaultContentsPatterns, additionalExcluding: excludePatterns.Concat(_publishExcludePatterns))
+            _contentPatternsGroup = PatternGroup.Build(rawProject, projectDirectory, projectFilePath, "content", "files", warnings: warnings, additionalIncluding: contentBuiltIns, additionalExcluding: excludePatterns.Concat(_publishExcludePatterns))
                 .ExcludeGroup(_compilePatternsGroup)
                 .ExcludeGroup(_preprocessPatternsGroup)
                 .ExcludeGroup(_sharedPatternsGroup)
@@ -93,7 +96,8 @@ namespace Microsoft.Framework.Runtime
 
         public IDictionary<string, string> ResourceFiles
         {
-            get {
+            get
+            {
                 var resources = _resourcePatternsGroup
                     .SearchFiles(_projectDirectory)
                     .Distinct()
