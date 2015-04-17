@@ -16,12 +16,12 @@ namespace Microsoft.Framework.Runtime
         string ApplicationName { get; }
 
         /// <summary>
-        /// Gets the version of the application. The version described in project.json.
+        /// Gets the version of the application, as specified in the project.json file.
         /// </summary>
         string Version { get; }
 
         /// <summary>
-        /// Gets the base directory of the application. The path where the project.json file exists.
+        /// Gets the base directory of the application, defined as the path to the directory containing the project.json file.
         /// </summary>
         string ApplicationBasePath { get; }
 
@@ -31,7 +31,7 @@ namespace Microsoft.Framework.Runtime
         string Configuration { get; }
 
         /// <summary>
-        /// Gets the target version and profile of the .NET Framework for the application domain.
+        /// Gets the target version and profile of the .NET Framework for the application.
         /// </summary>
         FrameworkName RuntimeFramework { get; }
     }

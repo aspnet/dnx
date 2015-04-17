@@ -4,7 +4,7 @@
 namespace Microsoft.Framework.Runtime.Infrastructure
 {
     /// <summary>
-    /// A class that exposes the ambient service provider.
+    /// Exposes the ambient service provider.
     /// </summary>
     public static class CallContextServiceLocator
     {
