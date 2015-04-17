@@ -487,7 +487,7 @@ namespace Microsoft.Framework.PackageManager
             lockFile.ProjectFileDependencyGroups.Add(new ProjectFileDependencyGroup(
                 string.Empty,
                 packageSpec.Dependencies
-                    .Where(x => x.LibraryRange.TypeConstraint == LibraryTypes.Package)
+                    .Where(x => x.LibraryRange.TypeConstraint != LibraryTypes.Reference)
                     .Select(x => RuntimeStyleLibraryRangeToString(x.LibraryRange))));
 
             foreach (var frameworkInfo in packageSpec.TargetFrameworks)
@@ -495,7 +495,7 @@ namespace Microsoft.Framework.PackageManager
                 lockFile.ProjectFileDependencyGroups.Add(new ProjectFileDependencyGroup(
                     frameworkInfo.FrameworkName.ToString(),
                     frameworkInfo.Dependencies
-                        .Where(x => x.LibraryRange.TypeConstraint == LibraryTypes.Package)
+                        .Where(x => x.LibraryRange.TypeConstraint != LibraryTypes.Reference)
                         .Select(x => RuntimeStyleLibraryRangeToString(x.LibraryRange))));
             }
 
