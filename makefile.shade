@@ -531,16 +531,22 @@ var RUNTIME_TARGETS='${new List<RuntimeTarget>()}'
                     extraBinaries.Add("System.Diagnostics.Process.dll");
                     extraBinaries.Add("System.Diagnostics.TraceSource.dll");
                     extraBinaries.Add("System.Globalization.Extensions.dll");
+                    extraBinaries.Add("System.IO.Compression.dll");
+                    extraBinaries.Add("System.IO.FileSystem.dll");
                     extraBinaries.Add("System.IO.FileSystem.DriveInfo.dll");
                     extraBinaries.Add("System.IO.FileSystem.Watcher.dll");
-                    extraBinaries.Add("System.IO.FileSystem.dll");
                     extraBinaries.Add("System.IO.MemoryMappedFiles.dll");
                     extraBinaries.Add("System.IO.Pipes.dll");
                     extraBinaries.Add("System.Runtime.Extensions.dll");
+                    extraBinaries.Add("System.Security.Cryptography.Encoding.dll");
+                    extraBinaries.Add("System.Security.Cryptography.Encryption.dll");
+                    extraBinaries.Add("System.Security.Cryptography.Encryption.Aes.dll");
                     extraBinaries.Add("System.Security.Cryptography.Hashing.dll");
                     extraBinaries.Add("System.Security.Cryptography.Hashing.Algorithms.dll");
                     extraBinaries.Add("System.Security.Cryptography.RandomNumberGenerator.dll");
+                    extraBinaries.Add("System.Security.SecureString.dll");
                     extraBinaries.Add("System.Text.Encoding.CodePages.dll");
+                    extraBinaries.Add("System.Threading.dll");
                 }
 
                 foreach (var file in Directory.GetFiles(coreclrFolder).Where(f => extraBinaries.Contains(Path.GetFileName(f)) || !Path.GetFileName(f).StartsWith("System")))
