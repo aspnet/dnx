@@ -12,10 +12,10 @@ namespace Microsoft.Framework.Runtime
     public interface IAssemblyLoaderContainer
     {
         /// <summary>
-        /// Adds an <see cref="IAssemblyLoader"/> to the list of loaders.
+        /// Adds an <see cref="IAssemblyLoader"/> to the runtime.
         /// </summary>
         /// <param name="loader">The loader to add.</param>
-        /// <returns>A disposable representing the registration of the loader. Disposing it removes the loader from the list.</returns>
+        /// <returns>A disposable object representing the registration of the loader. Disposing it removes the loader from the runtime.</returns>
         IDisposable AddLoader(IAssemblyLoader loader);
     }
 }

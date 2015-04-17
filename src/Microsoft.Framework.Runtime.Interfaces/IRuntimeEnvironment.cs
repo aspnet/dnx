@@ -12,7 +12,7 @@ namespace Microsoft.Framework.Runtime
     public interface IRuntimeEnvironment
     {
         /// <summary>
-        /// Gets the current operating system.
+        /// Gets the current operating system name.
         /// </summary>
         string OperatingSystem { get; }
 
@@ -22,12 +22,12 @@ namespace Microsoft.Framework.Runtime
         string OperatingSystemVersion { get; }
 
         /// <summary>
-        /// Gets the runtime type. Common values are CLR, CoreCLR and Mono.
+        /// Gets the runtime type. Common values include CLR, CoreCLR and Mono.
         /// </summary>
         string RuntimeType { get; }
 
         /// <summary>
-        /// Gets the runtime architecture. Common values are x86 and x64.
+        /// Gets the runtime architecture. Common values include x86 and x64.
         /// </summary>
         string RuntimeArchitecture { get; }
 

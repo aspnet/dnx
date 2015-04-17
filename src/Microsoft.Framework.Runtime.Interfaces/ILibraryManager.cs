@@ -7,7 +7,7 @@ using Microsoft.Framework.Runtime.Compilation;
 namespace Microsoft.Framework.Runtime
 {
     /// <summary>
-    /// Provides access to the rich application dependency graph.
+    /// Provides access to the complete graph of dependencies for the application.
     /// </summary>
     public interface ILibraryManager
     {

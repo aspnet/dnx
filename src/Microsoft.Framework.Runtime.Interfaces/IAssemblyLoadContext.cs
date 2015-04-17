@@ -17,7 +17,7 @@ namespace Microsoft.Framework.Runtime
         Assembly Load(string name);
 
         /// <summary>
-        /// Loads the contents of an assembly file on the specified path. 
+        /// Loads the assembly located at the provided file system path.
         /// </summary>
         /// <param name="path">The fully qualified path of the file to load.</param>
         /// <returns>The loaded assembly.</returns>

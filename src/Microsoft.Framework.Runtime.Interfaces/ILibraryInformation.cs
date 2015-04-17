@@ -22,22 +22,22 @@ namespace Microsoft.Framework.Runtime
         string Version { get; }
 
         /// <summary>
-        /// Gets the path to the library. For projects, this is a project.json file.
+        /// Gets the path to the library. For projects, this is a path to the project.json file.
         /// </summary>
         string Path { get; }
 
         /// <summary>
-        /// Gets the type of library. Common values are Project, Package, and Assembly.
+        /// Gets the type of library. Common values include Project, Package, and Assembly.
         /// </summary>
         string Type { get; }
 
         /// <summary>
-        /// Gets the list of dependencies for the library.
+        /// Gets a list of dependencies for the library. The dependencies are names are other <see cref="ILibraryInformation"/> objects.
         /// </summary>
         IEnumerable<string> Dependencies { get; }
 
         /// <summary>
-        /// Gets the list of assembly names from the library that can be loaded. Packages can contain multiple assemblies.
+        /// Gets a list of assembly names from the library that can be loaded. Packages can contain multiple assemblies.
         /// </summary>
         IEnumerable<AssemblyName> LoadableAssemblies { get; }
     }
