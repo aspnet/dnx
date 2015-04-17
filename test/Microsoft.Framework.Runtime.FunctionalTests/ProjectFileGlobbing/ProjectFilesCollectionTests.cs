@@ -388,7 +388,7 @@ namespace Microsoft.Framework.Runtime.FunctionalTests.ProjectFileGlobbing
         [Fact]
         public void ThrowForAbosolutePath()
         {
-            var absolutePath = Path.Combine(_context.RootPath, @"source5.cs");
+            var absolutePath = Path.Combine(Root.DirPath, @"source5.cs");
             var projectJsonContent = @"{""compile"": """ + absolutePath.Replace("\\", "\\\\") + @"""}";
 
             var exception = Assert.Throws<FileFormatException>(() =>
@@ -462,10 +462,9 @@ namespace Microsoft.Framework.Runtime.FunctionalTests.ProjectFileGlobbing
                 @"src\project2\sub2\source5.cs");
         }
 
-        protected override DisposableProjectContext CreateContext()
+        protected override void CreateContext()
         {
-            var context = new DisposableProjectContext();
-            context.AddFiles(
+            AddFiles(
                     "src/project/source1.cs",
                     "src/project/sub/source2.cs",
                     "src/project/sub/source3.cs",
@@ -516,15 +515,13 @@ namespace Microsoft.Framework.Runtime.FunctionalTests.ProjectFileGlobbing
                     "res/resource3.text",
                     ".hidden/file1.hid",
                     ".hidden/sub/file2.hid");
-
-            return context;
         }
 
         protected override IProjectFilesCollection CreateFilesCollection(string jsonContent, string projectDir)
         {
             var rawProject = JsonConvert.DeserializeObject<JObject>(jsonContent);
 
-            projectDir = Path.Combine(_context.RootPath, PathHelper.NormalizeSeparator(projectDir));
+            projectDir = Path.Combine(Root.DirPath, PathHelper.NormalizeSeparator(projectDir));
             var filesCollection = new ProjectFilesCollection(rawProject, projectDir, string.Empty);
 
             return filesCollection;

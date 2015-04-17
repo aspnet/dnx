@@ -13,7 +13,7 @@ namespace Microsoft.Framework.Runtime.FunctionalTests.ProjectFileGlobbing
             var project = Project.GetProject(
                 jsonContent,
                 "testproject",
-                Path.Combine(_context.RootPath, PathHelper.NormalizeSeparator(projectDir), "project.json"));
+                Path.Combine(Root.DirPath, PathHelper.NormalizeSeparator(projectDir), "project.json"));
 
             return project.Files;
         }

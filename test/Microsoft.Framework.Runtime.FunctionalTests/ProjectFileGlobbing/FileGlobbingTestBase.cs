@@ -5,27 +5,38 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using Microsoft.Framework.CommonTestUtils;
 using Microsoft.Framework.Runtime.FunctionalTests.Utilities;
 
 namespace Microsoft.Framework.Runtime.FunctionalTests.ProjectFileGlobbing
 {
     public abstract class FileGlobbingTestBase : IDisposable
     {
-        protected readonly DisposableProjectContext _context;
-
         public FileGlobbingTestBase()
         {
-            _context = CreateContext();
+            Root = new DisposableDir();
+            CreateContext();
         }
 
-        protected abstract DisposableProjectContext CreateContext();
+        protected DisposableDir Root { get; private set; }
+
+        public void Dispose()
+        {
+            if (Root != null)
+            {
+                Root.Dispose();
+                Root = null;
+            }
+        }
+
+        protected abstract void CreateContext();
 
         protected abstract IProjectFilesCollection CreateFilesCollection(string jsonContent, string projectDir);
 
         protected void VerifyFilePathsCollection(IEnumerable<string> actualFiles, params string[] expectFiles)
         {
             var expectFilesInFullpath = expectFiles.Select(relativePath =>
-                Path.GetFullPath(Path.Combine(_context.RootPath, PathHelper.NormalizeSeparator(relativePath))));
+                Path.GetFullPath(Path.Combine(Root.DirPath, PathHelper.NormalizeSeparator(relativePath))));
 
             var actualFilesInFullpath = actualFiles.Select(filePath =>
                 Path.GetFullPath(filePath));
@@ -33,11 +44,18 @@ namespace Microsoft.Framework.Runtime.FunctionalTests.ProjectFileGlobbing
             AssertHelpers.SortAndEqual(expectFilesInFullpath, actualFilesInFullpath, StringComparer.InvariantCultureIgnoreCase);
         }
 
-        public void Dispose()
+        protected void AddFiles(params string[] fileRelativePaths)
         {
-            if (_context != null)
+            foreach (var path in fileRelativePaths)
             {
-                _context.Dispose();
+                var fullPath = Path.Combine(Root.DirPath, path);
+                Directory.CreateDirectory(Path.GetDirectoryName(fullPath));
+
+                File.WriteAllText(
+                    fullPath,
+                    string.Format("Automatically generated for testing on {0} {1}",
+                        DateTime.Now.ToLongDateString(),
+                        DateTime.Now.ToLongTimeString()));
             }
         }
     }
