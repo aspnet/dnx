@@ -41,7 +41,7 @@ namespace Microsoft.Framework.PackageManager
 
         public void WriteQuiet(string message)
         {
-            if (!_verbose && _quiet)
+            if (!_quiet || _verbose)
             {
                 WriteLine(message);
             }
