@@ -436,7 +436,6 @@ namespace Microsoft.Framework.PackageManager
                     c.OnExecute(async () =>
                     {
                         var command = new InstallGlobalCommand(
-                                _environment,
                                 string.IsNullOrEmpty(feedOptions.TargetPackagesFolder) ?
                                     AppCommandsFolderRepository.CreateDefault() :
                                     AppCommandsFolderRepository.Create(feedOptions.TargetPackagesFolder));
