@@ -38,6 +38,9 @@ typedef HRESULT (*ExecuteAssemblyFunction)(
 const HRESULT S_OK = 0;
 const HRESULT E_FAIL = -1;
 
+namespace
+{
+
 #ifdef PLATFORM_DARWIN
 const char* LIBCORECLR_NAME = "libcoreclr.dylib";
 const char* LIBCORECLRPAL_NAME = "libcoreclrpal.dylib";
@@ -98,6 +101,23 @@ bool GetTrustedPlatformAssembliesList(const std::string& tpaDirectory, bool isNa
 void* pLibCoreClr = nullptr;
 void* pLibCoreClrPal = nullptr;
 
+bool LoadCoreClrAtPath(const std::string loadPath, void** ppLibCoreClr, void** ppLibCoreClrPal)
+{
+    std::string coreClrDllPath = loadPath;
+    std::string coreClrPalPath = loadPath;
+
+    coreClrDllPath.append("/");
+    coreClrDllPath.append(LIBCORECLR_NAME);
+
+    coreClrPalPath.append("/");
+    coreClrPalPath.append(LIBCORECLRPAL_NAME);
+
+    *ppLibCoreClrPal = dlopen(coreClrPalPath.c_str(), RTLD_NOW | RTLD_GLOBAL);
+    *ppLibCoreClr = dlopen(coreClrDllPath.c_str(), RTLD_NOW | RTLD_GLOBAL);
+
+    return *ppLibCoreClrPal != nullptr && *ppLibCoreClr != nullptr;
+}
+
 // libcoreclr has a dependency on libcoreclrpal, which is commonly not on LD_LIBRARY_PATH, so for every 
 // location we try to load libcoreclr from, we first try to load libcoreclrpal so when we load coreclr
 // itself the linker is happy.
@@ -115,23 +135,14 @@ void LoadCoreClr(std::string& runtimeDirectory)
     {
         runtimeDirectory = coreClrEnvVar;
 
-        std::string coreClrDllPath = runtimeDirectory;
-        std::string coreClrPalPath = runtimeDirectory;
-
-        coreClrDllPath.append("/");
-        coreClrDllPath.append(LIBCORECLR_NAME);
-
-        coreClrPalPath.append("/");
-        coreClrPalPath.append(LIBCORECLRPAL_NAME);
-
-        pLibCoreClrPal = dlopen(coreClrPalPath.c_str(), RTLD_NOW | RTLD_GLOBAL);
-        pLibCoreClr = dlopen(coreClrDllPath.c_str(), RTLD_NOW | RTLD_GLOBAL);
+        LoadCoreClrAtPath(runtimeDirectory, &pLibCoreClr, &pLibCoreClrPal);
 
         if (!pLibCoreClr && pLibCoreClrPal)
         {
             // The PAL loaded but CoreCLR did not.  We are going to try other places, so let's
             // unload this PAL.
             dlclose(pLibCoreClrPal);
+            pLibCoreClrPal = nullptr;
         }
     }
 
@@ -147,17 +158,7 @@ void LoadCoreClr(std::string& runtimeDirectory)
 
         runtimeDirectory.erase(lastSlash);
 
-        std::string coreClrDllPath = runtimeDirectory;
-        std::string coreClrPalPath = runtimeDirectory;
-
-        coreClrDllPath.append("/");
-        coreClrDllPath.append(LIBCORECLR_NAME);
-
-        coreClrPalPath.append("/");
-        coreClrPalPath.append(LIBCORECLRPAL_NAME);
-
-        pLibCoreClrPal = dlopen(coreClrPalPath.c_str(), RTLD_NOW | RTLD_GLOBAL);
-        pLibCoreClr = dlopen(coreClrDllPath.c_str(), RTLD_NOW | RTLD_GLOBAL);
+        LoadCoreClrAtPath(runtimeDirectory, &pLibCoreClr, &pLibCoreClrPal);
     }
 }
 
@@ -166,12 +167,15 @@ void FreeCoreClr()
     if (pLibCoreClr)
     {
         dlclose(pLibCoreClr);
+        pLibCoreClr = nullptr;
     }
 
     if (pLibCoreClrPal)
     {
         dlclose(pLibCoreClrPal);
+        pLibCoreClrPal = nullptr;
     }
+}
 }
 
 extern "C" HRESULT CallApplicationMain(PCALL_APPLICATION_MAIN_DATA data)
@@ -204,6 +208,8 @@ extern "C" HRESULT CallApplicationMain(PCALL_APPLICATION_MAIN_DATA data)
     {
         char* error = dlerror();
         fprintf(stderr, "failed to locate libcoreclr with error %s\n", error);
+
+        FreeCoreClr();
         return E_FAIL;
     }
 
@@ -222,8 +228,9 @@ extern "C" HRESULT CallApplicationMain(PCALL_APPLICATION_MAIN_DATA data)
         if (!GetTrustedPlatformAssembliesList(coreClrDirectory.c_str(), false, trustedPlatformAssemblies))
         {
             fprintf(stderr, "Failed to find files in the coreclr directory\n");
-            hr = E_FAIL;
-            return hr;
+
+            FreeCoreClr();
+            return E_FAIL;
         }
     }
 
@@ -251,6 +258,8 @@ extern "C" HRESULT CallApplicationMain(PCALL_APPLICATION_MAIN_DATA data)
     if (!executeAssembly)
     {
         fprintf(stderr, "Could not find ExecuteAssembly entrypoint in coreclr.\n");
+
+        FreeCoreClr();
         return E_FAIL;
     }
 
