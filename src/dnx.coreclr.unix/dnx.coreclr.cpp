@@ -39,9 +39,11 @@ const HRESULT S_OK = 0;
 const HRESULT E_FAIL = -1;
 
 #ifdef PLATFORM_DARWIN
-const LPCSTR LIBCORECLR_NAME = "libcoreclr.dylib";
+const char* LIBCORECLR_NAME = "libcoreclr.dylib";
+const char* LIBCORECLRPAL_NAME = "libcoreclrpal.dylib";
 #else
-const LPCSTR LIBCORECLR_NAME = "libcoreclr.so";
+const char* LIBCORECLR_NAME = "libcoreclr.so";
+const char* LIBCORECLRPAL_NAME = "libcoreclrpal.so";
 #endif
 
 std::string GetPathToBootstrapper()
@@ -93,8 +95,17 @@ bool GetTrustedPlatformAssembliesList(const std::string& tpaDirectory, bool isNa
     return true;
 }
 
-// TODO: Figure out if runtimeDirectory should have a trailing "/".  Need to look at what happens on Windows.
-void* LoadCoreClr(std::string& runtimeDirectory)
+void* pLibCoreClr = nullptr;
+void* pLibCoreClrPal = nullptr;
+
+// libcoreclr has a dependency on libcoreclrpal, which is commonly not on LD_LIBRARY_PATH, so for every 
+// location we try to load libcoreclr from, we first try to load libcoreclrpal so when we load coreclr
+// itself the linker is happy.
+//
+// NOTE: The code here is structured in a way such that it is OK if the load of libcoreclrpal fails,
+// because depending on the version of the coreclr DNX has, the PAL may still be staticlly linked
+// into coreclr and we want to be able to load coreclr's that have been built this way.
+void LoadCoreClr(std::string& runtimeDirectory)
 {
     void* ret = nullptr;
 
@@ -105,13 +116,26 @@ void* LoadCoreClr(std::string& runtimeDirectory)
         runtimeDirectory = coreClrEnvVar;
 
         std::string coreClrDllPath = runtimeDirectory;
+        std::string coreClrPalPath = runtimeDirectory;
+
         coreClrDllPath.append("/");
         coreClrDllPath.append(LIBCORECLR_NAME);
 
-        ret = dlopen(coreClrDllPath.c_str(), RTLD_NOW | RTLD_GLOBAL);
+        coreClrPalPath.append("/");
+        coreClrPalPath.append(LIBCORECLRPAL_NAME);
+
+        pLibCoreClrPal = dlopen(coreClrPalPath.c_str(), RTLD_NOW | RTLD_GLOBAL);
+        pLibCoreClr = dlopen(coreClrDllPath.c_str(), RTLD_NOW | RTLD_GLOBAL);
+
+        if (!pLibCoreClr && pLibCoreClrPal)
+        {
+            // The PAL loaded but CoreCLR did not.  We are going to try other places, so let's
+            // unload this PAL.
+            dlclose(pLibCoreClrPal);
+        }
     }
 
-    if (!ret)
+    if (!pLibCoreClr)
     {
         // Try to load coreclr from application path.
 
@@ -124,13 +148,30 @@ void* LoadCoreClr(std::string& runtimeDirectory)
         runtimeDirectory.erase(lastSlash);
 
         std::string coreClrDllPath = runtimeDirectory;
+        std::string coreClrPalPath = runtimeDirectory;
+
         coreClrDllPath.append("/");
         coreClrDllPath.append(LIBCORECLR_NAME);
 
-        ret = dlopen(coreClrDllPath.c_str(), RTLD_NOW | RTLD_GLOBAL);
+        coreClrPalPath.append("/");
+        coreClrPalPath.append(LIBCORECLRPAL_NAME);
+
+        pLibCoreClrPal = dlopen(coreClrPalPath.c_str(), RTLD_NOW | RTLD_GLOBAL);
+        pLibCoreClr = dlopen(coreClrDllPath.c_str(), RTLD_NOW | RTLD_GLOBAL);
+    }
+}
+
+void FreeCoreClr()
+{
+    if (pLibCoreClr)
+    {
+        dlclose(pLibCoreClr);
     }
 
-    return ret;
+    if (pLibCoreClrPal)
+    {
+        dlclose(pLibCoreClrPal);
+    }
 }
 
 extern "C" HRESULT CallApplicationMain(PCALL_APPLICATION_MAIN_DATA data)
@@ -157,9 +198,9 @@ extern "C" HRESULT CallApplicationMain(PCALL_APPLICATION_MAIN_DATA data)
     }
 
     std::string coreClrDirectory;
-    void* coreClr = LoadCoreClr(coreClrDirectory);
+    LoadCoreClr(coreClrDirectory);
 
-    if (!coreClr)
+    if (!pLibCoreClr)
     {
         char* error = dlerror();
         fprintf(stderr, "failed to locate libcoreclr with error %s\n", error);
@@ -205,7 +246,7 @@ extern "C" HRESULT CallApplicationMain(PCALL_APPLICATION_MAIN_DATA data)
         appPaths.c_str(),
     };
 
-    ExecuteAssemblyFunction executeAssembly = (ExecuteAssemblyFunction)dlsym(coreClr, "ExecuteAssembly");
+    ExecuteAssemblyFunction executeAssembly = (ExecuteAssemblyFunction)dlsym(pLibCoreClr, "ExecuteAssembly");
 
     if (!executeAssembly)
     {
@@ -235,8 +276,7 @@ extern "C" HRESULT CallApplicationMain(PCALL_APPLICATION_MAIN_DATA data)
                          "Execute",
                          (DWORD*)&(data->exitcode));
 
-
-    dlclose(coreClr);
+    FreeCoreClr();
 
     return hr;
 }
