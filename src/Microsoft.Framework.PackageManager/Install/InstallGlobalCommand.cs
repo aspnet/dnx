@@ -21,7 +21,7 @@ namespace Microsoft.Framework.PackageManager
 
         private readonly IAppCommandsRepository _commandsRepository;
 
-        public InstallGlobalCommand(IApplicationEnvironment env, IAppCommandsRepository commandsRepository)
+        public InstallGlobalCommand(IAppCommandsRepository commandsRepository)
         {
             RestoreCommand = new RestoreCommand();
             _commandsRepository = commandsRepository;

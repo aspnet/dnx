@@ -36,7 +36,7 @@ namespace NuGet.Client
 
         public string Source { get; }
 
-        private readonly ILogger _reports;
+        private readonly ILogger _logger;
 
         public NuGetv2Feed(
             string baseUri,
@@ -46,7 +46,7 @@ namespace NuGet.Client
             bool ignoreFailure,
             ILogger report)
         {
-            _reports = report;
+            _logger = report;
             _baseUri = baseUri.EndsWith("/") ? baseUri : (baseUri + "/");
             _httpSource = new HttpSource(baseUri, userName, password, report);
             _ignoreFailure = ignoreFailure;
@@ -131,8 +131,8 @@ namespace NuGet.Client
                             }
                             catch (XmlException)
                             {
-                                //_reports.Information.WriteLine("The XML file {0} is corrupt",
-                                //    data.CacheFileName.Yellow().Bold());
+                                _logger.WriteError("The XML file {0} is corrupt",
+                                    data.CacheFileName.Yellow().Bold());
                                 throw;
                             }
                         }
@@ -148,19 +148,19 @@ namespace NuGet.Client
                         if (_ignoreFailure)
                         {
                             _ignored = true;
-                            _reports.WriteInformation(
+                            _logger.WriteInformation(
                                 string.Format("Failed to retrieve information from remote source '{0}'".Yellow(),
                                     _baseUri));
                             return new List<PackageInfo>();
                         }
 
-                        _reports.WriteError(string.Format("Error: FindPackagesById: {1}\r\n  {0}",
+                        _logger.WriteError(string.Format("Error: FindPackagesById: {1}\r\n  {0}",
                             ex.Message, id.Red().Bold()));
                         throw;
                     }
                     else
                     {
-                        _reports.WriteInformation(string.Format("Warning: FindPackagesById: {1}\r\n  {0}", ex.Message, id.Yellow().Bold()));
+                        _logger.WriteInformation(string.Format("Warning: FindPackagesById: {1}\r\n  {0}", ex.Message, id.Yellow().Bold()));
                     }
                 }
             }
@@ -186,7 +186,7 @@ namespace NuGet.Client
 
         public async Task<Stream> OpenNuspecStreamAsync(PackageInfo package)
         {
-            return await PackageUtilities.OpenNuspecStreamFromNupkgAsync(package, OpenNupkgStreamAsync, _reports);
+            return await PackageUtilities.OpenNuspecStreamFromNupkgAsync(package, OpenNupkgStreamAsync, _logger);
         }
 
         public async Task<Stream> OpenNupkgStreamAsync(PackageInfo package)
@@ -236,11 +236,11 @@ namespace NuGet.Client
                 {
                     if (retry == 2)
                     {
-                        _reports.WriteError(string.Format("Error: DownloadPackageAsync: {1}\r\n  {0}", ex.Message, package.ContentUri.Red().Bold()));
+                        _logger.WriteError(string.Format("Error: DownloadPackageAsync: {1}\r\n  {0}", ex.Message, package.ContentUri.Red().Bold()));
                     }
                     else
                     {
-                        _reports.WriteInformation(string.Format("Warning: DownloadPackageAsync: {1}\r\n  {0}".Yellow().Bold(), ex.Message, package.ContentUri.Yellow().Bold()));
+                        _logger.WriteInformation(string.Format("Warning: DownloadPackageAsync: {1}\r\n  {0}".Yellow().Bold(), ex.Message, package.ContentUri.Yellow().Bold()));
                     }
                 }
             }

@@ -27,7 +27,7 @@ namespace NuGet
 
         internal static async Task<Stream> OpenNuspecStreamFromNupkgAsync(PackageInfo package,
             Func<PackageInfo, Task<Stream>> openNupkgStreamAsync,
-            ILogger report)
+            ILogger logger)
         {
             using (var nupkgStream = await openNupkgStreamAsync(package))
             {
@@ -55,7 +55,7 @@ namespace NuGet
                     var fileStream = nupkgStream as FileStream;
                     if (fileStream != null)
                     {
-                        report.WriteError(string.Format("The ZIP archive {0} is corrupt",
+                        logger.WriteError(string.Format("The ZIP archive {0} is corrupt",
                             fileStream.Name.Yellow().Bold()));
                     }
                     throw;

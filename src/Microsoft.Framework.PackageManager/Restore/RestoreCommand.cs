@@ -239,8 +239,7 @@ namespace Microsoft.Framework.PackageManager
                         VersionRange = new VersionRange(minVersion: lockFileLibrary.Version,
                             floatRange: new FloatRange(NuGetVersionFloatBehavior.None))
                     };
-                    // DNU REFACTORING TODO: replace the hardcoded framework name with IRuntimeEnvironment.RuntimeFramework
-                    tasks.Add(remoteWalker.Walk(projectLibrary, new NuGetFramework("DNX,Version=v4.5.1")));
+                    tasks.Add(remoteWalker.Walk(projectLibrary, FrameworkConstants.CommonFrameworks.Dnx451));
                 }
             }
             else

@@ -74,7 +74,7 @@ namespace NuGet.Client
         {
             var parentDir = Path.GetDirectoryName(package.ContentUri);
             var nuspecPath = Path.Combine(parentDir, $"{package.Id}.nuspec");
-            _logger.WriteInformation(string.Format("  OPEN {0}", nuspecPath));
+            _logger.WriteQuiet(string.Format("  OPEN {0}", nuspecPath));
             return Task.FromResult<Stream>(File.OpenRead(nuspecPath));
         }
 

@@ -78,18 +78,18 @@ var MANAGED_PROJECTS = '${FindAllProjects(
     "Microsoft.Framework.Runtime.Roslyn",
     "Microsoft.Framework.Runtime.Roslyn.Interfaces",
     "Microsoft.Framework.Runtime.Roslyn.Common",
-	"NuGet.Client",
-	"../submodules/NuGet.Configuration/src/NuGet.Configuration",
-	"../submodules/NuGet.Versioning/src/NuGet.Versioning",
-	"../submodules/NuGet.Packaging/src/NuGet.DependencyResolver",
-	"../submodules/NuGet.Packaging/src/NuGet.DependencyResolver.Core",
-	"../submodules/NuGet.Packaging/src/NuGet.Frameworks",
-	"../submodules/NuGet.Packaging/src/NuGet.LibraryModel",
-	"../submodules/NuGet.Packaging/src/NuGet.Packaging",
-	"../submodules/NuGet.Packaging/src/NuGet.Packaging.Core",
-	"../submodules/NuGet.Packaging/src/NuGet.Packaging.Core.Types",
-	"../submodules/NuGet.Packaging/src/NuGet.ProjectModel",
-	"../submodules/NuGet.Packaging/src/NuGet.Repositories")}'
+    "NuGet.Client",
+    "../submodules/NuGet.Configuration/src/NuGet.Configuration",
+    "../submodules/NuGet.Versioning/src/NuGet.Versioning",
+    "../submodules/NuGet.Packaging/src/NuGet.DependencyResolver",
+    "../submodules/NuGet.Packaging/src/NuGet.DependencyResolver.Core",
+    "../submodules/NuGet.Packaging/src/NuGet.Frameworks",
+    "../submodules/NuGet.Packaging/src/NuGet.LibraryModel",
+    "../submodules/NuGet.Packaging/src/NuGet.Packaging",
+    "../submodules/NuGet.Packaging/src/NuGet.Packaging.Core",
+    "../submodules/NuGet.Packaging/src/NuGet.Packaging.Core.Types",
+    "../submodules/NuGet.Packaging/src/NuGet.ProjectModel",
+    "../submodules/NuGet.Packaging/src/NuGet.Repositories")}'
 
 var WIN_MANAGED_PROJECTS = '${FindAllProjects(
     BOOTSTRAPPER_CLR_MANAGED_NAME)}'

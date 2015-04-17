@@ -96,11 +96,11 @@ namespace NuGet.Client
             var result = await TryCache(uri, cacheKey, cacheAgeLimit);
             if (result.Stream != null)
             {
-                _logger.WriteInformation(string.Format("  {0} {1}", "CACHE".Green(), uri));
+                _logger.WriteQuiet(string.Format("  {0} {1}", "CACHE".Green(), uri));
                 return result;
             }
 
-            _logger.WriteInformation(string.Format("  {0} {1}.", "GET".Yellow(), uri));
+            _logger.WriteQuiet(string.Format("  {0} {1}.", "GET".Yellow(), uri));
 
             var request = new HttpRequestMessage(HttpMethod.Get, uri);
             if (_userName != null)
@@ -156,7 +156,7 @@ namespace NuGet.Client
                     }
                 }
 
-                // If the desitnation file doesn't exist, we can safely perform moving operation.
+                // If the destination file doesn't exist, we can safely perform moving operation.
                 // Otherwise, moving operation will fail.
                 if (!File.Exists(result.CacheFileName))
                 {
@@ -192,7 +192,7 @@ namespace NuGet.Client
 #else
             var localAppDataFolder = Environment.GetEnvironmentVariable("LocalAppData");
 #endif
-            var cacheFolder = Path.Combine(localAppDataFolder, "kpm", "cache", baseFolderName);
+            var cacheFolder = Path.Combine(localAppDataFolder, "dnu", "cache", baseFolderName);
             var cacheFile = Path.Combine(cacheFolder, baseFileName);
 
             if (!Directory.Exists(cacheFolder) && !cacheAgeLimit.Equals(TimeSpan.Zero))

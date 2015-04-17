@@ -37,7 +37,7 @@ namespace NuGet.Client
 
         public async Task<Stream> OpenNuspecStreamAsync(PackageInfo package)
         {
-            _logger.WriteInformation(string.Format("  OPEN {0}", package.ContentUri));
+            _logger.WriteQuiet(string.Format("  OPEN {0}", package.ContentUri));
             return await PackageUtilities.OpenNuspecStreamFromNupkgAsync(package, OpenNupkgStreamAsync, _logger);
         }
 
