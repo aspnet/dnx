@@ -29,8 +29,23 @@ namespace Microsoft.Framework.PackageManager.List
             var libraries = dict.Keys.OrderBy(description => description.Identity.Name);
             var results = new List<string>();
 
-            RenderLibraries(libraries.Where(library => library.Identity.IsGacOrFrameworkReference), dict, results);
-            RenderLibraries(libraries.Where(library => !library.Identity.IsGacOrFrameworkReference), dict, results);
+            var gacOrFrameworkReferences = libraries.Where(library => library.Identity.IsGacOrFrameworkReference);
+
+            if (gacOrFrameworkReferences.Any())
+            {
+                results.Add("Framework references:");
+                RenderLibraries(gacOrFrameworkReferences, dict, results);
+                results.Add(string.Empty);
+            }
+
+            var otherReferences = libraries.Where(library => !library.Identity.IsGacOrFrameworkReference);
+            var referencesGroups = otherReferences.GroupBy(reference => reference.Type);
+            foreach (var group in referencesGroups)
+            {
+                results.Add(string.Format("{0} references:", group.Key));
+                RenderLibraries(group, dict, results);
+                results.Add(string.Empty);
+            }
 
             return results;
         }
@@ -89,8 +104,12 @@ namespace Microsoft.Framework.PackageManager.List
 
                 if (_showDetails)
                 {
-                    var dependents = string.Join(", ", dependenciesMap[description].Select(dep => dep.Identity.ToString()).OrderBy(name => name));
-                    results.Add(string.Format("    -> {0}", dependents));
+                    var dependenciesInGroup = dependenciesMap[description].GroupBy(dep => dep.Type);
+                    foreach (var group in dependenciesInGroup)
+                    {
+                        results.Add(string.Format("    by {0}: {1}", group.Key, string.Join(", ", group.Select(desc => desc.Identity.ToString()).OrderBy(name => name))));
+                    }
+                    results.Add(string.Empty);
                 }
             }
         }
