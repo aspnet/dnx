@@ -348,7 +348,7 @@ namespace Microsoft.Framework.Runtime
                     };
                 }).ToList();
 
-                resolver.Initialize(descriptions, frameworkName);
+                resolver.Initialize(descriptions, frameworkName, runtimeIdentifier: null);
                 libraries.AddRange(descriptions);
             }
 

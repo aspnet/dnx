@@ -57,13 +57,12 @@ namespace Microsoft.Framework.Runtime
                 target.Aspect);
 
             var cache = (ICache)_serviceProvider.GetService(typeof(ICache));
+            var cacheContextAccessor = (ICacheContextAccessor)_serviceProvider.GetService(typeof(ICacheContextAccessor));
+            var namedCacheDependencyProvider = (INamedCacheDependencyProvider)_serviceProvider.GetService(typeof(INamedCacheDependencyProvider));
+            var loadContextFactory = (IAssemblyLoadContextFactory)_serviceProvider.GetService(typeof(IAssemblyLoadContextFactory));
 
             return cache.Get<ILibraryExport>(key, ctx =>
             {
-                // Get the composite library export provider
-                var exportProvider = (ILibraryExportProvider)_serviceProvider.GetService(typeof(ILibraryExportProvider));
-                var libraryManager = (ILibraryManager)_serviceProvider.GetService(typeof(ILibraryManager));
-
                 var metadataReferences = new List<IMetadataReference>();
                 var sourceReferences = new List<ISourceReference>();
 
@@ -87,12 +86,28 @@ namespace Microsoft.Framework.Runtime
                     Logger.TraceInformation("[{0}]: GetProjectReference({1}, {2}, {3}, {4})", provider.TypeName, target.Name, target.TargetFramework, target.Configuration, target.Aspect);
 
                     // Get the exports for the project dependencies
-                    var projectExport = new Lazy<ILibraryExport>(() => ProjectExportProviderHelper.GetExportsRecursive(
-                        cache,
-                        libraryManager,
-                        exportProvider,
-                        target,
-                        dependenciesOnly: true));
+                    var projectExport = new Lazy<ILibraryExport>(() =>
+                    {
+                        // TODO: Cache?
+                        var context = new ApplicationHostContext(_serviceProvider,
+                                                                project.ProjectDirectory,
+                                                                packagesDirectory: null,
+                                                                configuration: target.Configuration,
+                                                                targetFramework: target.TargetFramework,
+                                                                cache: cache,
+                                                                cacheContextAccessor: cacheContextAccessor,
+                                                                namedCacheDependencyProvider: namedCacheDependencyProvider,
+                                                                loadContextFactory: loadContextFactory);
+
+                        context.DependencyWalker.Walk(project.Name, project.Version, target.TargetFramework);
+
+                        return ProjectExportProviderHelper.GetExportsRecursive(
+                          cache,
+                          context.LibraryManager,
+                          context.LibraryExportProvider,
+                          target,
+                          dependenciesOnly: true);
+                    });
 
                     // Resolve the project export
                     IMetadataProjectReference projectReference = projectCompiler.CompileProject(

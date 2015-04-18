@@ -112,15 +112,9 @@ var RUNTIME_TARGETS='${new List<RuntimeTarget>()}'
 -// Replace repo-initialize with a less greedy restore
 #repo-initialize target='initialize'
     git gitCommand="submodule update --init"
-    for each='var projectFile in Files.Include("src/*/project.json")'
-        exec program='cmd' commandline='/C dnu restore' if='!IsMono' workingdir="${Path.GetDirectoryName(projectFile)}"
-        exec program='dnu' commandline='restore' if='IsMono' workingdir="${Path.GetDirectoryName(projectFile)}"
-    for each='var projectFile in Files.Include("test/*/project.json")'
-        exec program='cmd' commandline='/C dnu restore' if='!IsMono' workingdir="${Path.GetDirectoryName(projectFile)}"
-        exec program='dnu' commandline='restore' if='IsMono' workingdir="${Path.GetDirectoryName(projectFile)}"
-    for each='var projectFile in Files.Include("samples/*/project.json")'
-        exec program='cmd' commandline='/C dnu restore' if='!IsMono' workingdir="${Path.GetDirectoryName(projectFile)}"
-        exec program='dnu' commandline='restore' if='IsMono' workingdir="${Path.GetDirectoryName(projectFile)}"
+    @{
+        DoRestore();
+    }
 
 - // k-standard-goal overrides
 #native-compile
@@ -789,6 +783,24 @@ var CI_DARWIN_DROP_PATH = '${Environment.GetEnvironmentVariable("CI_DARWIN_DROP_
             }
         }
 
+        // We need to run restore with the new runtime (just one of them)
+        // On windows, grab a random windows target, otherwise use mono
+        string path = null;
+        
+        if (CanBuildForWindows)
+        {
+            path = binPaths[RUNTIME_CLR_WIN_x86_NAME];
+        }
+        else
+        {
+            path = binPaths[RUNTIME_MONO_NAME];
+        }
+        
+        ExecuteWithPath(path, () => 
+        {
+            DoRestore();
+        });
+
         // Group by operation system since we only want to run unit tests on a single bitness
         // any = [dnx-mono]
         // win = [dnx-clr-win-x86, dnx-clr-win-x64, dnx-coreclr-win-x86, dnx-coreclr-win-x64]
@@ -883,6 +895,16 @@ var CI_DARWIN_DROP_PATH = '${Environment.GetEnvironmentVariable("CI_DARWIN_DROP_
     }
 
 - // ===================== SHARED UTILITIES ===================== 
+macro name='DoRestore'
+    for each='var projectFile in Files.Include("src/*/project.json")'
+        exec program='cmd' commandline='/C dnu restore' if='!IsMono' workingdir="${Path.GetDirectoryName(projectFile)}"
+        exec program='dnu' commandline='restore' if='IsMono' workingdir="${Path.GetDirectoryName(projectFile)}"
+    for each='var projectFile in Files.Include("test/*/project.json")'
+        exec program='cmd' commandline='/C dnu restore' if='!IsMono' workingdir="${Path.GetDirectoryName(projectFile)}"
+        exec program='dnu' commandline='restore' if='IsMono' workingdir="${Path.GetDirectoryName(projectFile)}"
+    for each='var projectFile in Files.Include("samples/*/project.json")'
+        exec program='cmd' commandline='/C dnu restore' if='!IsMono' workingdir="${Path.GetDirectoryName(projectFile)}"
+        exec program='dnu' commandline='restore' if='IsMono' workingdir="${Path.GetDirectoryName(projectFile)}"
 
 #update-tpa .copy-coreclr
     @{
@@ -964,16 +986,6 @@ functions @{
     void KTest(string projectFolder)
     {
         projectFolder = Path.GetDirectoryName(projectFolder);
-
-        // Make sure we use the newly built runtime to generate lock file for tests
-        if (IsMono)
-        {
-            Exec("dnu", string.Format("restore {0}", projectFolder));
-        }
-        else
-        {
-            Exec("cmd", string.Format("/C dnu restore {0}", projectFolder));
-        }
 
         var testArgs = IsMono ? " -parallel none" : "";
         K(("test" + testArgs), projectFolder, "");

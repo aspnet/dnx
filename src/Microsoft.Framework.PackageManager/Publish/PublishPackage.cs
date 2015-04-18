@@ -24,84 +24,18 @@ namespace Microsoft.Framework.PackageManager.Publish
         public void Emit(PublishRoot root)
         {
             root.Reports.Quiet.WriteLine("Using {0} dependency {1}", _libraryDescription.Type, Library);
-            foreach (var context in root.LibraryDependencyContexts[Library])
+
+            var srcNupkgPath = Path.Combine(_libraryDescription.Path, Library.Name + "." + Library.Version + ".nupkg");
+
+            var options = new Microsoft.Framework.PackageManager.Packages.AddOptions
             {
-                root.Reports.Quiet.WriteLine("  Copying files for {0}",
-                    context.FrameworkName.ToString().Yellow().Bold());
-                Emit(root, context.PackageAssemblies[Library.Name]);
-                root.Reports.Quiet.WriteLine();
-            }
-        }
+                NuGetPackage = srcNupkgPath,
+                SourcePackages = root.TargetPackagesPath,
+                Reports = root.Reports
+            };
 
-        private void Emit(PublishRoot root, IEnumerable<PackageAssembly> assemblies)
-        {
-            var resolver = new DefaultPackagePathResolver(root.TargetPackagesPath);
-
-            TargetPath = resolver.GetInstallPath(Library.Name, Library.Version);
-
-            root.Reports.Quiet.WriteLine("    Source: {0}", _libraryDescription.Path);
-            root.Reports.Quiet.WriteLine("    Target: {0}", TargetPath);
-
-            Directory.CreateDirectory(TargetPath);
-
-            // Copy nuspec
-            var nuspecName = resolver.GetManifestFileName(Library.Name, Library.Version);
-            root.Reports.Quiet.WriteLine("    File: {0}", nuspecName.Bold());
-            CopyFile(root, Path.Combine(_libraryDescription.Path, nuspecName), Path.Combine(TargetPath, nuspecName));
-
-            // Copy assemblies for current framework
-            foreach (var assembly in assemblies)
-            {
-                root.Reports.Quiet.WriteLine("    File: {0}", assembly.RelativePath.Bold());
-
-                var targetAssemblyPath = Path.Combine(TargetPath, assembly.RelativePath);
-                CopyFile(root, assembly.Path, targetAssemblyPath);
-            }
-
-            // Special cases
-            var specialFolders = new List<string> { "native", "InteropAssemblies", "redist",
-                Path.Combine("lib", "contract") };
-            if (!root.NoSource)
-            {
-                // 'shared' folder is build time dependency, so we only copy it when deploying with source
-                specialFolders.Add("shared");
-            }
-
-            foreach (var folder in specialFolders)
-            {
-                var srcFolder = Path.Combine(_libraryDescription.Path, folder);
-                var targetFolder = Path.Combine(TargetPath, folder);
-                CopyFolder(root, srcFolder, targetFolder);
-            }
-        }
-
-        private void CopyFolder(PublishRoot root, string srcFolder, string targetFolder)
-        {
-            if (!Directory.Exists(srcFolder))
-            {
-                return;
-            }
-
-            if (Directory.Exists(targetFolder))
-            {
-                root.Operations.Delete(targetFolder);
-            }
-
-            Directory.CreateDirectory(targetFolder);
-            root.Operations.Copy(srcFolder, targetFolder);
-        }
-
-        private void CopyFile(PublishRoot root, string srcPath, string targetPath)
-        {
-            var targetFolder = Path.GetDirectoryName(targetPath);
-            Directory.CreateDirectory(targetFolder);
-
-            if (File.Exists(targetPath))
-            {
-                File.Delete(targetPath);
-            }
-
-            File.Copy(srcPath, targetPath);
+            var packagesAddCommand = new Microsoft.Framework.PackageManager.Packages.AddCommand(options);
+            packagesAddCommand.Execute().GetAwaiter().GetResult();
         }
     }
 }

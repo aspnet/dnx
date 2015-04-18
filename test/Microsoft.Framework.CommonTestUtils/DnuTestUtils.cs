@@ -1,6 +1,7 @@
 // Copyright (c) Microsoft Open Technologies, Inc. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -19,8 +20,20 @@ namespace Microsoft.Framework.PackageManager
                                   IDictionary<string, string> environment = null,
                                   string workingDir = null)
         {
-            string program, commandLine;
-            var runtimeRoot = Directory.EnumerateDirectories(Path.Combine(runtimeHomePath, "runtimes"), Constants.RuntimeNamePrefix + "*").First();
+            string program;
+            string commandLine;
+            string runtimeRoot;
+
+            var dnxDev = Environment.GetEnvironmentVariable("DNX_DEV");
+            if (string.Equals(dnxDev, "1"))
+            {
+                runtimeRoot = runtimeHomePath;
+            }
+            else
+            {
+                runtimeRoot = Directory.EnumerateDirectories(Path.Combine(runtimeHomePath, "runtimes"), Constants.RuntimeNamePrefix + "*").First();
+            }
+
             if (PlatformHelper.IsMono)
             {
                 program = Path.Combine(runtimeRoot, "bin", "dnu");

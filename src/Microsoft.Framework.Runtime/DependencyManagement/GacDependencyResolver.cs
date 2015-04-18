@@ -79,7 +79,7 @@ namespace Microsoft.Framework.Runtime
             return null;
         }
 
-        public void Initialize(IEnumerable<LibraryDescription> dependencies, FrameworkName targetFramework)
+        public void Initialize(IEnumerable<LibraryDescription> dependencies, FrameworkName targetFramework, string runtimeIdentifier)
         {
             foreach (var d in dependencies)
             {

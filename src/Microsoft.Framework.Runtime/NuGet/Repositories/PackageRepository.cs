@@ -30,6 +30,8 @@ namespace NuGet
                 caseSensitivePackagesName ? StringComparer.Ordinal : StringComparer.OrdinalIgnoreCase);
         }
 
+        public bool CheckHashFile { get; set; }
+
         public IFileSystem RepositoryRoot
         {
             get
@@ -106,7 +108,7 @@ namespace NuGet
                         continue;
                     }
 
-                    if (!_repositoryRoot.GetFiles(versionDir, "*" + Constants.HashFileExtension).Any())
+                    if (CheckHashFile && !_repositoryRoot.GetFiles(versionDir, "*" + Constants.HashFileExtension).Any())
                     {
                         // Writing the marker file is the last operation performed by NuGetPackageUtils.InstallFromStream. We'll use the
                         // presence of the file to denote the package was successfully installed.

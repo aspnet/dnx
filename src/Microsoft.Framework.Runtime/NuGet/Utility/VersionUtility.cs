@@ -22,6 +22,7 @@ namespace NuGet
     {
         public static readonly string AspNetCoreFrameworkIdentifier = "Asp.NetCore";
         public static readonly string DnxCoreFrameworkIdentifier = "DNXCore";
+        public static readonly string CoreFrameworkIdentifier = "Core";
 
         internal const string NetFrameworkIdentifier = ".NETFramework";
         private const string NetCoreFrameworkIdentifier = ".NETCore";
@@ -781,7 +782,7 @@ namespace NuGet
         /// </summary>
         /// <param name="frameworkName">The project's framework</param>
         /// <param name="targetFrameworkName">The package's target framework</param>
-        internal static bool IsCompatible(FrameworkName frameworkName, FrameworkName targetFrameworkName)
+        public static bool IsCompatible(FrameworkName frameworkName, FrameworkName targetFrameworkName)
         {
             if (frameworkName == null)
             {
@@ -797,7 +798,7 @@ namespace NuGet
             targetFrameworkName = NormalizeFrameworkName(targetFrameworkName);
             frameworkName = NormalizeFrameworkName(frameworkName);
 
-            check:
+        check:
 
             if (!frameworkName.Identifier.Equals(targetFrameworkName.Identifier, StringComparison.OrdinalIgnoreCase))
             {
@@ -1176,6 +1177,7 @@ namespace NuGet
                 { "asp.net", AspNetFrameworkIdentifier },
                 { "aspnetcore", AspNetCoreFrameworkIdentifier },
                 { "asp.netcore", AspNetCoreFrameworkIdentifier },
+                { "core", CoreFrameworkIdentifier },
 
                 { "NET", NetFrameworkIdentifier },
                 { ".NET", NetFrameworkIdentifier },

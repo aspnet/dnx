@@ -62,7 +62,7 @@ namespace Microsoft.Framework.PackageManager
 
             if (string.IsNullOrEmpty(FeedOptions.TargetPackagesFolder))
             {
-                FeedOptions.TargetPackagesFolderOptions.Values.Add(_commandsRepository.PackagesRoot.Root);
+                FeedOptions.Sources.Add(_commandsRepository.PackagesRoot.Root);
             }
 
             var temporaryProjectFileFullPath = CreateTemporaryProject(FeedOptions.TargetPackagesFolder, packageId, packageVersion);
@@ -130,7 +130,7 @@ namespace Microsoft.Framework.PackageManager
                 var packagePath = Path.GetFullPath(packageId);
                 var packageDirectory = Path.GetDirectoryName(packagePath);
                 var zipPackage = new NuGet.ZipPackage(packagePath);
-                FeedOptions.FallbackSourceOptions.Values.Add(packageDirectory);
+                FeedOptions.FallbackSources.Add(packageDirectory);
 
                 return new Tuple<string, string>(
                     zipPackage.Id,

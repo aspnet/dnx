@@ -25,7 +25,7 @@ namespace Microsoft.Framework.Runtime
             };
         }
 
-        public void Initialize(IEnumerable<LibraryDescription> dependencies, FrameworkName targetFramework)
+        public void Initialize(IEnumerable<LibraryDescription> dependencies, FrameworkName targetFramework, string runtimeIdentifier)
         {
         }
 

@@ -25,37 +25,49 @@ namespace Microsoft.Framework.PackageManager
     {
         private static readonly int MaxDegreesOfConcurrency = Environment.ProcessorCount;
 
-        public RestoreCommand(IApplicationEnvironment env)
+        public RestoreCommand() :
+            this(fallbackFramework: null)
         {
-            ApplicationEnvironment = env;
+        }
+
+        public RestoreCommand(IApplicationEnvironment env) :
+            this(env.RuntimeFramework)
+        {
+        }
+
+        public RestoreCommand(FrameworkName fallbackFramework)
+        {
+            FallbackFramework = fallbackFramework;
             FileSystem = new PhysicalFileSystem(Directory.GetCurrentDirectory());
             MachineWideSettings = new CommandLineMachineWideSettings();
             ScriptExecutor = new ScriptExecutor();
             ErrorMessages = new Dictionary<string, List<string>>(StringComparer.Ordinal);
+            Reports = new Reports
+            {
+                Information = new NullReport(),
+                Error = new NullReport(),
+                Quiet = new NullReport(),
+                Verbose = new NullReport()
+            };
         }
 
         public FeedOptions FeedOptions { get; set; }
 
         public string RestoreDirectory { get; set; }
         public string NuGetConfigFile { get; set; }
-        public IEnumerable<string> Sources { get; set; }
-        public IEnumerable<string> FallbackSources { get; set; }
-        public bool NoCache { get; set; }
         public bool Lock { get; set; }
         public bool Unlock { get; set; }
-        public string PackageFolder { get; set; }
-
-        /// <summary>
-        /// Gets or sets a flag that determines if restore is performed on multiple project.json files in parallel.
-        /// </summary>
-        public bool Parallel { get; set; }
 
         public ScriptExecutor ScriptExecutor { get; private set; }
 
-        public IApplicationEnvironment ApplicationEnvironment { get; private set; }
+        public List<FrameworkName> TargetFrameworks { get; set; } = new List<FrameworkName>();
+        public FrameworkName FallbackFramework { get; set; }
         public IMachineWideSettings MachineWideSettings { get; set; }
         public IFileSystem FileSystem { get; set; }
         public Reports Reports { get; set; }
+        public bool CheckHashFile { get; set; } = true;
+        public bool SkipInstall { get; set; }
+
         private Dictionary<string, List<string>> ErrorMessages { get; set; }
 
         protected internal ISettings Settings { get; set; }
@@ -207,7 +219,10 @@ namespace Microsoft.Framework.PackageManager
 
             var projectDirectory = project.ProjectDirectory;
             var projectResolver = new ProjectResolver(projectDirectory, rootDirectory);
-            var packageRepository = new PackageRepository(packagesDirectory);
+            var packageRepository = new PackageRepository(packagesDirectory)
+            {
+                CheckHashFile = CheckHashFile
+            };
             var restoreOperations = new RestoreOperations(Reports.Verbose);
             var projectProviders = new List<IWalkProvider>();
             var localProviders = new List<IWalkProvider>();
@@ -230,7 +245,7 @@ namespace Microsoft.Framework.PackageManager
 
             AddRemoteProvidersFromSources(remoteProviders, effectiveSources);
 
-            var tasks = new List<Task<GraphNode>>();
+            var tasks = new List<Task<TargetContext>>();
 
             if (useLockFile)
             {
@@ -238,7 +253,7 @@ namespace Microsoft.Framework.PackageManager
 
                 var context = new RestoreContext
                 {
-                    FrameworkName = ApplicationEnvironment.RuntimeFramework,
+                    FrameworkName = FallbackFramework,
                     ProjectLibraryProviders = projectProviders,
                     LocalLibraryProviders = localProviders,
                     RemoteLibraryProviders = remoteProviders,
@@ -259,16 +274,19 @@ namespace Microsoft.Framework.PackageManager
                             VersionFloatBehavior = SemanticVersionFloatBehavior.None,
                         }
                     };
-                    tasks.Add(restoreOperations.CreateGraphNode(context, projectLibrary, _ => false));
+
+                    tasks.Add(CreateGraphNode(restoreOperations, context, projectLibrary, _ => false));
                 }
             }
             else
             {
-                foreach (var configuration in project.GetTargetFrameworks())
+                var frameworks = TargetFrameworks.Count == 0 ? project.GetTargetFrameworks().Select(f => f.FrameworkName) : TargetFrameworks;
+
+                foreach (var frameworkName in frameworks)
                 {
                     var context = new RestoreContext
                     {
-                        FrameworkName = configuration.FrameworkName,
+                        FrameworkName = frameworkName,
                         ProjectLibraryProviders = projectProviders,
                         LocalLibraryProviders = localProviders,
                         RemoteLibraryProviders = remoteProviders,
@@ -280,7 +298,7 @@ namespace Microsoft.Framework.PackageManager
                 {
                     contexts.Add(new RestoreContext
                     {
-                        FrameworkName = ApplicationEnvironment.RuntimeFramework,
+                        FrameworkName = FallbackFramework,
                         ProjectLibraryProviders = projectProviders,
                         LocalLibraryProviders = localProviders,
                         RemoteLibraryProviders = remoteProviders,
@@ -295,14 +313,14 @@ namespace Microsoft.Framework.PackageManager
                         VersionRange = new SemanticVersionRange(project.Version)
                     };
 
-                    tasks.Add(restoreOperations.CreateGraphNode(context, projectLibrary, _ => true));
+                    tasks.Add(CreateGraphNode(restoreOperations, context, projectLibrary, _ => true));
                 }
             }
 
-            var graphs = await Task.WhenAll(tasks);
-            foreach (var graph in graphs)
+            var targetContexts = await Task.WhenAll(tasks);
+            foreach (var targetContext in targetContexts)
             {
-                Reduce(graph);
+                Reduce(targetContext.Root);
             }
 
             if (!useLockFile)
@@ -311,12 +329,12 @@ namespace Microsoft.Framework.PackageManager
                 var projectRuntimeFile = runtimeFormatter.ReadRuntimeFile(projectJsonPath);
                 if (projectRuntimeFile.Runtimes.Any())
                 {
-                    var runtimeTasks = new List<Task<GraphNode>>();
+                    var runtimeTasks = new List<Task<TargetContext>>();
 
-                    foreach (var pair in contexts.Zip(graphs, (context, graph) => new { context, graph }))
+                    foreach (var pair in contexts.Zip(targetContexts, (context, graph) => new { context, graph }))
                     {
                         var runtimeFileTasks = new List<Task<RuntimeFile>>();
-                        ForEach(pair.graph, node =>
+                        ForEach(pair.graph.Root, node =>
                         {
                             var match = node?.Item?.Match;
                             if (match == null) { return; }
@@ -351,17 +369,17 @@ namespace Microsoft.Framework.PackageManager
                                 VersionRange = new SemanticVersionRange(project.Version)
                             };
                             Reports.Information.WriteLine(string.Format("Graph for {0} on {1}", runtimeContext.FrameworkName, runtimeContext.RuntimeName));
-                            runtimeTasks.Add(restoreOperations.CreateGraphNode(runtimeContext, projectLibrary, _ => true));
+                            runtimeTasks.Add(CreateGraphNode(restoreOperations, runtimeContext, projectLibrary, _ => true));
                         }
                     }
 
-                    var runtimeGraphs = await Task.WhenAll(runtimeTasks);
-                    foreach (var runtimeGraph in runtimeGraphs)
+                    var runtimeTragetContexts = await Task.WhenAll(runtimeTasks);
+                    foreach (var runtimeTargetContext in runtimeTragetContexts)
                     {
-                        Reduce(runtimeGraph);
+                        Reduce(runtimeTargetContext.Root);
                     }
 
-                    graphs = graphs.Concat(runtimeGraphs).ToArray();
+                    targetContexts = targetContexts.Concat(runtimeTragetContexts).ToArray();
                 }
             }
 
@@ -369,71 +387,73 @@ namespace Microsoft.Framework.PackageManager
             var installItems = new List<GraphItem>();
             var missingItems = new HashSet<LibraryRange>();
 
-            ForEach(graphs, node =>
+            foreach (var context in targetContexts)
             {
-                if (node == null ||
+                ForEach(context.Root, node =>
+                {
+                    if (node == null ||
                     node.LibraryRange == null ||
                     node.Disposition == GraphNode.DispositionType.Rejected)
-                {
-                    return;
-                }
-
-                if (node.Item == null || node.Item.Match == null)
-                {
-                    if (!node.LibraryRange.IsGacOrFrameworkReference &&
-                         node.LibraryRange.VersionRange != null &&
-                         missingItems.Add(node.LibraryRange))
                     {
-                        var errorMessage = string.Format("Unable to locate {0} {1}",
-                            node.LibraryRange.Name.Red().Bold(),
-                            node.LibraryRange.VersionRange);
-                        ErrorMessages.GetOrAdd(projectJsonPath, _ => new List<string>()).Add(errorMessage);
-                        Reports.Error.WriteLine(errorMessage);
-                        success = false;
+                        return;
                     }
 
-                    return;
-                }
+                    if (node.Item == null || node.Item.Match == null)
+                    {
+                        if (!node.LibraryRange.IsGacOrFrameworkReference &&
+                             node.LibraryRange.VersionRange != null &&
+                             missingItems.Add(node.LibraryRange))
+                        {
+                            var errorMessage = string.Format("Unable to locate {0} {1}",
+                                node.LibraryRange.Name.Red().Bold(),
+                                node.LibraryRange.VersionRange);
+                            ErrorMessages.GetOrAdd(projectJsonPath, _ => new List<string>()).Add(errorMessage);
+                            Reports.Error.WriteLine(errorMessage);
+                            success = false;
+                        }
 
-                if (!string.Equals(node.Item.Match.Library.Name, node.LibraryRange.Name, StringComparison.Ordinal))
-                {
-                    // Fix casing of the library name to be installed
-                    node.Item.Match.Library.Name = node.LibraryRange.Name;
-                }
+                        return;
+                    }
 
-                var isRemote = remoteProviders.Contains(node.Item.Match.Provider);
-                var isInstallItem = installItems.Any(item => item.Match.Library == node.Item.Match.Library);
+                    if (!string.Equals(node.Item.Match.Library.Name, node.LibraryRange.Name, StringComparison.Ordinal))
+                    {
+                        // Fix casing of the library name to be installed
+                        node.Item.Match.Library.Name = node.LibraryRange.Name;
+                    }
 
-                if (!isInstallItem && isRemote)
-                {
-                    installItems.Add(node.Item);
-                }
+                    var isRemote = remoteProviders.Contains(node.Item.Match.Provider);
+                    var isInstallItem = installItems.Any(item => item.Match.Library == node.Item.Match.Library);
 
-                var isGraphItem = graphItems.Any(item => item.Match.Library == node.Item.Match.Library);
-                if (!isGraphItem)
-                {
-                    graphItems.Add(node.Item);
-                }
-            });
+                    if (!isInstallItem && isRemote)
+                    {
+                        installItems.Add(node.Item);
+                    }
 
-            await InstallPackages(installItems, packagesDirectory);
+                    var isGraphItem = graphItems.Any(item => item.Match.Library == node.Item.Match.Library);
+                    if (!isGraphItem)
+                    {
+                        graphItems.Add(node.Item);
+                    }
+
+                    context.Libraries.Add(node.Item.Match.Library);
+                });
+            }
+
+            if (!SkipInstall)
+            {
+                await InstallPackages(installItems, packagesDirectory);
+            }
 
             if (!useLockFile)
             {
                 Reports.Information.WriteLine(string.Format("Writing lock file {0}", projectLockFilePath.White().Bold()));
 
-                // Collect target frameworks
-                var frameworks = new HashSet<FrameworkName>();
-                foreach (var item in graphItems)
-                {
-                    Runtime.Project dependencyProject;
-                    if (projectProviders.Contains(item.Match.Provider) && projectResolver.TryResolveProject(item.Match.Library.Name, out dependencyProject))
-                    {
-                        frameworks.AddRange(dependencyProject.GetTargetFrameworks().Select(t => t.FrameworkName));
-                    }
-                }
-
-                WriteLockFile(projectLockFilePath, project, graphItems, new PackageRepository(packagesDirectory), frameworks);
+                var repository = new PackageRepository(packagesDirectory);
+                WriteLockFile(projectLockFilePath,
+                              project,
+                              graphItems,
+                              repository,
+                              targetContexts);
             }
 
             if (!ScriptExecutor.Execute(project, "postrestore", getVariable))
@@ -453,6 +473,16 @@ namespace Microsoft.Framework.PackageManager
             Reports.Information.WriteLine(string.Format("{0}, {1}ms elapsed", "Restore complete".Green().Bold(), sw.ElapsedMilliseconds));
 
             return success;
+        }
+
+        private async Task<TargetContext> CreateGraphNode(RestoreOperations restoreOperations, RestoreContext context, LibraryRange libraryRange, Func<object, bool> predicate)
+        {
+            var node = await restoreOperations.CreateGraphNode(context, libraryRange, predicate);
+            return new TargetContext
+            {
+                RestoreContext = context,
+                Root = node
+            };
         }
 
         private void FindRuntimeSpecs(
@@ -677,9 +707,14 @@ namespace Microsoft.Framework.PackageManager
             return Task.FromResult(lockFileFormat.Read(projectLockFilePath));
         }
 
-        private void WriteLockFile(string projectLockFilePath, Runtime.Project project, List<GraphItem> graphItems,
-            PackageRepository repository, IEnumerable<FrameworkName> frameworks)
+        private void WriteLockFile(string projectLockFilePath,
+                                   Runtime.Project project,
+                                   List<GraphItem> graphItems,
+                                   PackageRepository repository,
+                                   IEnumerable<TargetContext> contexts)
         {
+            var resolver = new DefaultPackagePathResolver(repository.RepositoryRoot);
+
             var lockFile = new LockFile();
             lockFile.Islocked = Lock;
 
@@ -697,12 +732,10 @@ namespace Microsoft.Framework.PackageManager
                     }
 
                     var package = packageInfo.Package;
-                    var lockFileLib = LockFileUtils.CreateLockFileLibraryForProject(
-                        project,
+                    var lockFileLib = LockFileUtils.CreateLockFileLibrary(
+                        resolver,
                         package,
                         sha512,
-                        frameworks,
-                        new DefaultPackagePathResolver(repository.RepositoryRoot),
                         correctedPackageName: library.Name);
 
                     lockFile.Libraries.Add(lockFileLib);
@@ -719,6 +752,36 @@ namespace Microsoft.Framework.PackageManager
                 lockFile.ProjectFileDependencyGroups.Add(new ProjectFileDependencyGroup(
                     frameworkInfo.FrameworkName.ToString(),
                     frameworkInfo.Dependencies.Select(x => x.LibraryRange.ToString())));
+            }
+
+            // Add the contexts
+            foreach (var context in contexts)
+            {
+                var target = new LockFileTarget();
+                target.TargetFramework = context.RestoreContext.FrameworkName;
+                target.RuntimeIdentifier = context.RestoreContext.RuntimeName;
+
+                foreach (var library in context.Libraries.OrderBy(x => x, new LibraryComparer()))
+                {
+                    var packageInfo = repository.FindPackagesById(library.Name)
+                        .FirstOrDefault(p => p.Version == library.Version);
+
+                    if (packageInfo == null)
+                    {
+                        continue;
+                    }
+
+                    var package = packageInfo.Package;
+
+                    var targetLibrary = LockFileUtils.CreateLockFileTargetLibrary(
+                        package,
+                        context.RestoreContext,
+                        correctedPackageName: library.Name);
+
+                    target.Libraries.Add(targetLibrary);
+                }
+
+                lockFile.Targets.Add(target);
             }
 
             var lockFileFormat = new LockFileFormat();
@@ -807,7 +870,7 @@ namespace Microsoft.Framework.PackageManager
 
         private bool RestoringInParallel()
         {
-            return Parallel && !PlatformHelper.IsMono;
+            return FeedOptions.Parallel && !PlatformHelper.IsMono;
         }
 
         // Based on http://blogs.msdn.com/b/pfxteam/archive/2012/03/05/10278165.aspx
@@ -858,6 +921,15 @@ namespace Microsoft.Framework.PackageManager
                 }
                 return compare;
             }
+        }
+
+        private class TargetContext
+        {
+            public RestoreContext RestoreContext { get; set; }
+
+            public HashSet<Library> Libraries { get; set; } = new HashSet<Library>();
+
+            public GraphNode Root { get; set; }
         }
     }
 }

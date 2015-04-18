@@ -68,12 +68,14 @@ namespace Microsoft.Framework.PackageManager.Publish
 
             foreach (var deploymentRuntime in Runtimes)
             {
-                deploymentRuntime.Emit(this);
+                success &= deploymentRuntime.Emit(this);
             }
 
-            mainProject.PostProcess(this);
-
+            // Order matters here, we write out the global.json first
+            // so that post process can find things
             WriteGlobalJson();
+
+            success &= mainProject.PostProcess(this);
 
             // Generate .cmd files
             GenerateBatchFiles();

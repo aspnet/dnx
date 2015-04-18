@@ -117,7 +117,7 @@ namespace Microsoft.Framework.Runtime
             };
         }
 
-        public virtual void Initialize(IEnumerable<LibraryDescription> dependencies, FrameworkName targetFramework)
+        public virtual void Initialize(IEnumerable<LibraryDescription> dependencies, FrameworkName targetFramework, string runtimeIdentifier)
         {
             Dependencies = dependencies;
         }

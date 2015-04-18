@@ -18,6 +18,24 @@ namespace Microsoft.Framework.PackageManager.Publish
             FileOperationUtils.DeleteFolder(folderPath);
         }
 
+        public void DeleteEmptyFolders(string packageDir)
+        {
+            DeleteEmptyFolders(new DirectoryInfo(packageDir));
+        }
+
+        private void DeleteEmptyFolders(DirectoryInfo directoryInfo)
+        {
+            foreach (var directory in directoryInfo.EnumerateDirectories())
+            {
+                DeleteEmptyFolders(directory);
+            }
+
+            if (!directoryInfo.EnumerateFileSystemInfos().Any())
+            {
+                directoryInfo.Delete();
+            }
+        }
+
         public void Copy(IEnumerable<string> sourceFiles, string sourceDirectory, string targetDirectory)
         {
             if (sourceFiles == null)
@@ -55,7 +73,7 @@ namespace Microsoft.Framework.PackageManager.Publish
                 }
             }
         }
-        
+
         public void Copy(string sourcePath, string targetPath)
         {
             sourcePath = PathUtility.EnsureTrailingSlash(sourcePath);
@@ -95,8 +113,8 @@ namespace Microsoft.Framework.PackageManager.Publish
         public void ExtractNupkg(ZipArchive archive, string targetPath)
         {
             ExtractFiles(
-                archive, 
-                targetPath, 
+                archive,
+                targetPath,
                 shouldInclude: NupkgFilter);
         }
 
@@ -173,9 +191,9 @@ namespace Microsoft.Framework.PackageManager.Publish
         public void AddFiles(ZipArchive archive, string sourcePath, string targetPath, Func<string, string, bool> shouldInclude)
         {
             AddFilesRecursive(
-                archive, 
-                sourcePath, 
-                "", 
+                archive,
+                sourcePath,
+                "",
                 targetPath,
                 shouldInclude);
         }

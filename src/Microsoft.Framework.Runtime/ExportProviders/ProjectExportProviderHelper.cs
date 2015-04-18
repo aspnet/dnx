@@ -44,7 +44,7 @@ namespace Microsoft.Framework.Runtime
             var sourceReferences = new Dictionary<string, ISourceReference>(StringComparer.OrdinalIgnoreCase);
 
             // Walk the dependency tree and resolve the library export for all references to this project
-            var stack = new Queue<Node>();
+            var queue = new Queue<Node>();
             var processed = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
             var rootNode = new Node
@@ -52,11 +52,11 @@ namespace Microsoft.Framework.Runtime
                 Library = manager.GetLibraryInformation(target.Name, target.Aspect)
             };
 
-            stack.Enqueue(rootNode);
+            queue.Enqueue(rootNode);
 
-            while (stack.Count > 0)
+            while (queue.Count > 0)
             {
-                var node = stack.Dequeue();
+                var node = queue.Dequeue();
 
                 // Skip it if we've already seen it
                 if (!processed.Add(node.Library.Name))
@@ -93,7 +93,7 @@ namespace Microsoft.Framework.Runtime
                         Parent = node
                     };
 
-                    stack.Enqueue(childNode);
+                    queue.Enqueue(childNode);
                 }
             }
 

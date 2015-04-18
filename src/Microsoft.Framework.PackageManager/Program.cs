@@ -52,29 +52,27 @@ namespace Microsoft.Framework.PackageManager
                 c.Description = "Restore packages";
 
                 var argRoot = c.Argument("[root]", "Root of all projects to restore. It can be a directory, a project.json, or a global.json.");
-                var feedOptions = FeedOptions.Add(c);
+                var feedCommandLineOptions = FeedCommandLineOptions.Add(c);
                 var optLock = c.Option("--lock",
                     "Creates dependencies file with locked property set to true. Overwrites file if it exists.",
                     CommandOptionType.NoValue);
                 var optUnlock = c.Option("--unlock",
                     "Creates dependencies file with locked property set to false. Overwrites file if it exists.",
                     CommandOptionType.NoValue);
-                var optParallel = c.Option("--parallel",
-                    "Restores in parallel when more than one project.json is discovered.",
-                    CommandOptionType.NoValue);
+
                 c.HelpOption("-?|-h|--help");
 
                 c.OnExecute(async () =>
                 {
+                    var feedOptions = feedCommandLineOptions.GetOptions();
                     var command = new RestoreCommand(_environment);
                     command.Reports = CreateReports(optionVerbose.HasValue(), feedOptions.Quiet);
                     command.RestoreDirectory = argRoot.Value;
                     command.FeedOptions = feedOptions;
                     command.Lock = optLock.HasValue();
                     command.Unlock = optUnlock.HasValue();
-                    command.Parallel = optParallel.HasValue();
 
-                    if (feedOptions.ProxyOptions.HasValue())
+                    if (!string.IsNullOrEmpty(feedOptions.Proxy))
                     {
                         Environment.SetEnvironmentVariable("http_proxy", feedOptions.Proxy);
                     }
@@ -212,12 +210,13 @@ namespace Microsoft.Framework.PackageManager
                 var argVersion = c.Argument("[version]", "Version of the dependency to add, default is the latest version.");
                 var argProject = c.Argument("[project]", "Path to project, default is current directory");
 
-                var feedOptions = FeedOptions.Add(c);
+                var feedCommandLineOptions = FeedCommandLineOptions.Add(c);
 
                 c.HelpOption("-?|-h|--help");
 
                 c.OnExecute(async () =>
                 {
+                    var feedOptions = feedCommandLineOptions.GetOptions();
                     var reports = CreateReports(optionVerbose.HasValue(), feedOptions.Quiet);
 
                     var addCmd = new AddCommand();
@@ -232,7 +231,7 @@ namespace Microsoft.Framework.PackageManager
 
                     restoreCmd.RestoreDirectory = argProject.Value;
 
-                    if (feedOptions.ProxyOptions.HasValue())
+                    if (!string.IsNullOrEmpty(feedOptions.Proxy))
                     {
                         Environment.SetEnvironmentVariable("http_proxy", feedOptions.Proxy);
                     }
@@ -426,12 +425,13 @@ namespace Microsoft.Framework.PackageManager
 
                     var optOverwrite = c.Option("-o|--overwrite", "Overwrites conflicting commands", CommandOptionType.NoValue);
 
-                    var feedOptions = FeedOptions.Add(c);
+                    var feedCommandLineOptions = FeedCommandLineOptions.Add(c);
 
                     c.HelpOption("-?|-h|--help");
 
                     c.OnExecute(async () =>
                     {
+                        var feedOptions = feedCommandLineOptions.GetOptions();
                         var command = new InstallGlobalCommand(
                                 _environment,
                                 string.IsNullOrEmpty(feedOptions.TargetPackagesFolder) ?

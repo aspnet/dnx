@@ -3,10 +3,12 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
 using System.Security.Cryptography;
+using System.Threading.Tasks;
 using System.Xml;
 using System.Xml.Linq;
 using Microsoft.Framework.PackageManager.Utils;
@@ -22,7 +24,7 @@ namespace Microsoft.Framework.PackageManager.Publish
         private readonly ProjectReferenceDependencyProvider _projectReferenceDependencyProvider;
         private readonly IProjectResolver _projectResolver;
         private readonly LibraryDescription _libraryDescription;
-        private string _applicationBase;
+        private string _relativeAppBase;
 
         public PublishProject(
             ProjectReferenceDependencyProvider projectReferenceDependencyProvider,
@@ -34,6 +36,7 @@ namespace Microsoft.Framework.PackageManager.Publish
             _libraryDescription = libraryDescription;
         }
 
+        public string ApplicationBasePath { get; set; }
         public string Name { get { return _libraryDescription.Identity.Name; } }
         public string TargetPath { get; private set; }
         public string WwwRoot { get; set; }
@@ -84,7 +87,10 @@ namespace Microsoft.Framework.PackageManager.Publish
 
             UpdateWebRoot(root, TargetPath);
 
-            _applicationBase = Path.Combine("..", PublishRoot.AppRootName, "src", project.Name);
+            var appBase = Path.Combine(PublishRoot.AppRootName, "src", project.Name);
+
+            _relativeAppBase = Path.Combine("..", appBase);
+            ApplicationBasePath = Path.Combine(root.OutputPath, appBase);
         }
 
         private bool EmitNupkg(PublishRoot root)
@@ -122,28 +128,16 @@ namespace Microsoft.Framework.PackageManager.Publish
 
             // Extract the generated nupkg to target path
             var srcNupkgPath = Path.Combine(buildOptions.OutputDir, root.Configuration, targetNupkg);
-            var targetNupkgPath = resolver.GetPackageFilePath(project.Name, project.Version);
-            var hashFile = resolver.GetHashPath(project.Name, project.Version);
 
-            using (var sourceStream = new FileStream(srcNupkgPath, FileMode.Open, FileAccess.Read))
+            var options = new Microsoft.Framework.PackageManager.Packages.AddOptions
             {
-                using (var archive = new ZipArchive(sourceStream, ZipArchiveMode.Read))
-                {
-                    root.Operations.ExtractNupkg(archive, TargetPath);
-                }
-            }
+                NuGetPackage = srcNupkgPath,
+                SourcePackages = root.TargetPackagesPath,
+                Reports = root.Reports
+            };
 
-            using (var sourceStream = new FileStream(srcNupkgPath, FileMode.Open, FileAccess.Read))
-            {
-                using (var targetStream = new FileStream(targetNupkgPath, FileMode.Create, FileAccess.Write, FileShare.None))
-                {
-                    sourceStream.CopyTo(targetStream);
-                }
-
-                sourceStream.Seek(0, SeekOrigin.Begin);
-                var sha512Bytes = SHA512.Create().ComputeHash(sourceStream);
-                File.WriteAllText(hashFile, Convert.ToBase64String(sha512Bytes));
-            }
+            var packagesAddCommand = new Microsoft.Framework.PackageManager.Packages.AddCommand(options);
+            packagesAddCommand.Execute().GetAwaiter().GetResult();
 
             // Copy content files (e.g. html, js and images) of main project into "root" folder of the exported package
             var rootFolderPath = Path.Combine(TargetPath, "root");
@@ -169,7 +163,10 @@ namespace Microsoft.Framework.PackageManager.Publish
                 deps[_libraryDescription.Identity.Name] = _libraryDescription.Identity.Version.ToString();
             });
 
-            _applicationBase = Path.Combine("..", PublishRoot.AppRootName, "packages", resolver.GetPackageDirectory(_libraryDescription.Identity.Name, _libraryDescription.Identity.Version), "root");
+            var appBase = Path.Combine(PublishRoot.AppRootName, "packages", resolver.GetPackageDirectory(_libraryDescription.Identity.Name, _libraryDescription.Identity.Version), "root");
+
+            _relativeAppBase = Path.Combine("..", appBase);
+            ApplicationBasePath = Path.Combine(root.OutputPath, appBase);
 
             root.Reports.Quiet.WriteLine("Removing {0}", srcNupkgPath);
             File.Delete(srcNupkgPath);
@@ -266,16 +263,25 @@ namespace Microsoft.Framework.PackageManager.Publish
             root.Operations.Copy(sourceFiles, project.ProjectDirectory, targetPath);
         }
 
-        public void PostProcess(PublishRoot root)
+        public bool PostProcess(PublishRoot root)
         {
             // At this point, all nupkgs generated from dependency projects are available in packages folder
             // So we can add them to lockfile now
-            UpdateLockFile(root);
+            if (!UpdateLockFile(root))
+            {
+                return false;
+            }
+
+            // Prune the packages folder only leaving things that are required
+            if (!PrunePackages(root))
+            {
+                return false;
+            }
 
             // If --wwwroot-out doesn't have a non-empty value, we don't need a public app folder in output
             if (string.IsNullOrEmpty(WwwRootOut))
             {
-                return;
+                return true;
             }
 
             var project = GetCurrentProject();
@@ -295,89 +301,124 @@ namespace Microsoft.Framework.PackageManager.Publish
             GenerateWebConfigFileForWwwRootOut(root, project, wwwRootOutPath);
 
             CopyAspNetLoaderDll(root, wwwRootOutPath);
+
+            return true;
         }
 
-        private void UpdateLockFile(PublishRoot root)
+        private bool PrunePackages(PublishRoot root)
         {
-            var lockFileFormat = new LockFileFormat();
-            string lockFilePath;
-            if (root.NoSource)
-            {
-                lockFilePath = Path.Combine(TargetPath, "root", LockFileFormat.LockFileName);
-            }
-            else
-            {
-                lockFilePath = Path.Combine(TargetPath, LockFileFormat.LockFileName);
-            }
-
-            LockFile lockFile;
-            if (File.Exists(lockFilePath))
-            {
-                lockFile = lockFileFormat.Read(lockFilePath);
-            }
-            else
-            {
-                lockFile = new LockFile
-                {
-                    Islocked = false
-                };
-
-                var project = GetCurrentProject();
-
-                // Restore dependency groups for future lockfile validation
-                lockFile.ProjectFileDependencyGroups.Add(new ProjectFileDependencyGroup(
-                    string.Empty,
-                    project.Dependencies.Select(x => x.LibraryRange.ToString())));
-                foreach (var frameworkInfo in project.GetTargetFrameworks())
-                {
-                    lockFile.ProjectFileDependencyGroups.Add(new ProjectFileDependencyGroup(
-                        frameworkInfo.FrameworkName.ToString(),
-                        frameworkInfo.Dependencies.Select(x => x.LibraryRange.ToString())));
-                }
-            }
-
-            if (root.NoSource)
-            {
-                // The dependency group shared by all frameworks should only contain the main nupkg (i.e. entrypoint)
-                lockFile.ProjectFileDependencyGroups.RemoveAll(g => string.IsNullOrEmpty(g.FrameworkName));
-                lockFile.ProjectFileDependencyGroups.Add(new ProjectFileDependencyGroup(
-                    string.Empty,
-                    new[] { _libraryDescription.LibraryRange.ToString() }));
-            }
-
-            var repository = new PackageRepository(root.TargetPackagesPath);
             var resolver = new DefaultPackagePathResolver(root.TargetPackagesPath);
 
-            // For dependency projects that were published to nupkgs
-            // Add them to lockfile to ensure the contents of lockfile are still valid
-            using (var sha512 = SHA512.Create())
+            // Special cases (for backwards compat)
+            var specialFolders = new List<string> {
+                "native",
+                "InteropAssemblies",
+                "redist"
+            };
+
+            if (!root.NoSource)
             {
-                foreach (var publishProject in root.Projects.Where(p => p.IsPackage))
+                // 'shared' folder is build time dependency, so we only copy it when deploying with source
+                specialFolders.Add("shared");
+            }
+
+            var keep = new HashSet<string>();
+
+            foreach (var project in root.Projects)
+            {
+                var lockFilePath = Path.GetFullPath(Path.Combine(ApplicationBasePath, LockFileFormat.LockFileName));
+                var format = new LockFileFormat();
+                var lockFile = format.Read(lockFilePath);
+
+                foreach (var target in lockFile.Targets)
                 {
-                    var packageInfo = repository.FindPackagesById(publishProject.Name)
-                        .SingleOrDefault();
-                    if (packageInfo == null)
+                    foreach (var library in target.Libraries)
                     {
-                        root.Reports.Information.WriteLine("Unable to locate published package {0} in {1}",
-                            publishProject.Name.Yellow(),
-                            repository.RepositoryRoot);
-                        continue;
+                        var packagesDir = resolver.GetInstallPath(library.Name, library.Version);
+                        var manifest = resolver.GetManifestFilePath(library.Name, library.Version);
+
+                        keep.Add(manifest);
+
+                        foreach (var path in library.RuntimeAssemblies)
+                        {
+                            keep.Add(Path.Combine(packagesDir, path));
+                        }
+
+                        foreach (var path in library.CompileTimeAssemblies)
+                        {
+                            keep.Add(Path.Combine(packagesDir, path));
+                        }
+
+                        foreach (var path in library.NativeLibraries)
+                        {
+                            keep.Add(Path.Combine(packagesDir, path));
+                        }
+
+                        foreach (var specialFolder in specialFolders)
+                        {
+                            var specialFolderPath = Path.Combine(packagesDir, specialFolder);
+
+                            if (!Directory.Exists(specialFolderPath))
+                            {
+                                continue;
+                            }
+
+                            keep.AddRange(Directory.EnumerateFiles(specialFolderPath, "*.*", SearchOption.AllDirectories));
+                        }
                     }
-
-                    var package = packageInfo.Package;
-                    var nupkgPath = resolver.GetPackageFilePath(package.Id, package.Version);
-
-                    var project = publishProject.GetCurrentProject();
-                    lockFile.Libraries.Add(LockFileUtils.CreateLockFileLibraryForProject(
-                        project,
-                        package,
-                        sha512,
-                        project.GetTargetFrameworks().Select(f => f.FrameworkName),
-                        resolver));
                 }
             }
 
-            lockFileFormat.Write(lockFilePath, lockFile);
+            foreach (var package in root.Packages)
+            {
+                var packageDir = resolver.GetInstallPath(package.Library.Name, package.Library.Version);
+                var packageFiles = Directory.EnumerateFiles(packageDir, "*.*", SearchOption.AllDirectories);
+
+                foreach (var file in packageFiles)
+                {
+                    if (!keep.Contains(file))
+                    {
+                        File.Delete(file);
+                    }
+                }
+
+                root.Operations.DeleteEmptyFolders(packageDir);
+            }
+
+            return true;
+        }
+
+        private bool UpdateLockFile(PublishRoot root)
+        {
+            var appEnv = (IApplicationEnvironment)root.HostServices.GetService(typeof(IApplicationEnvironment));
+
+            var feedOptions = new FeedOptions();
+            feedOptions.IgnoreFailedSources = true;
+            feedOptions.Sources.Add(root.TargetPackagesPath);
+            feedOptions.TargetPackagesFolder = root.TargetPackagesPath;
+
+            var tasks = new Task<bool>[root.Projects.Count];
+            for (int i = 0; i < root.Projects.Count; i++)
+            {
+                var project = root.Projects[i];
+                var restoreCommand = new RestoreCommand(appEnv);
+
+                foreach (var runtime in root.Runtimes)
+                {
+                    restoreCommand.TargetFrameworks.Add(runtime.Framework);
+                }
+
+                restoreCommand.SkipInstall = true;
+                restoreCommand.CheckHashFile = false;
+                restoreCommand.RestoreDirectory = project.IsPackage ? Path.Combine(project.TargetPath, "root") : project.TargetPath;
+                restoreCommand.FeedOptions = feedOptions;
+                restoreCommand.Reports = root.Reports;
+                tasks[i] = restoreCommand.ExecuteCommand();
+            }
+
+            Task.WaitAll(tasks);
+
+            return tasks.All(t => t.Result);
         }
 
         private void GenerateWebConfigFileForWwwRootOut(PublishRoot root, Runtime.Project project, string wwwRootOutPath)
@@ -414,7 +455,7 @@ namespace Microsoft.Framework.PackageManager.Publish
                                                   .Replace(Path.DirectorySeparatorChar, '\\');
 
             var defaultRuntime = root.Runtimes.FirstOrDefault();
-            var appBase = _applicationBase.Replace(Path.DirectorySeparatorChar, '\\');
+            var appBase = _relativeAppBase.Replace(Path.DirectorySeparatorChar, '\\');
 
             var keyValuePairs = new Dictionary<string, string>()
             {

@@ -14,6 +14,7 @@ namespace Microsoft.Framework.Runtime
 {
     public class NuGetDependencyResolver : IDependencyProvider, ILibraryExportProvider
     {
+        private IDictionary<Tuple<string, FrameworkName, string, SemanticVersion>, LockFileTargetLibrary> _lookup;
         private readonly PackageRepository _repository;
 
         // Assembly name and path lifted from the appropriate lib folder
@@ -40,6 +41,16 @@ namespace Microsoft.Framework.Runtime
 
         public void ApplyLockFile(LockFile lockFile)
         {
+            _lookup = new Dictionary<Tuple<string, FrameworkName, string, SemanticVersion>, LockFileTargetLibrary>();
+
+            foreach (var t in lockFile.Targets)
+            {
+                foreach (var library in t.Libraries)
+                {
+                    _lookup[Tuple.Create(t.RuntimeIdentifier, t.TargetFramework, library.Name, library.Version)] = library;
+                }
+            }
+
             _repository.ApplyLockFile(lockFile);
         }
 
@@ -62,27 +73,26 @@ namespace Microsoft.Framework.Runtime
 
             if (package != null)
             {
-                LockFileFrameworkGroup group = null;
                 IEnumerable<LibraryDependency> dependencies;
                 bool resolved = true;
                 if (package.LockFileLibrary != null)
                 {
-                    // If we have a lock file, it MUST have an exact match for this target
-                    // framework
-                    group = package.LockFileLibrary.FrameworkGroups.FirstOrDefault(f => f.TargetFramework == targetFramework);
-                    if (group == null)
+                    var lookupKey = Tuple.Create((string)null, targetFramework, package.LockFileLibrary.Name, package.LockFileLibrary.Version);
+
+                    LockFileTargetLibrary targetLibrary;
+                    if (_lookup.TryGetValue(lookupKey, out targetLibrary))
+                    {
+                        dependencies = GetDependencies(package, targetFramework, targetLibrary);
+                    }
+                    else
                     {
                         resolved = false;
                         dependencies = Enumerable.Empty<LibraryDependency>();
                     }
-                    else
-                    {
-                        dependencies = GetDependencies(package, targetFramework, group);
-                    }
                 }
                 else
                 {
-                    dependencies = GetDependencies(package, targetFramework, lockFileGroup: null);
+                    dependencies = GetDependencies(package, targetFramework, targetLibrary: null);
                 }
 
                 return new LibraryDescription
@@ -102,11 +112,11 @@ namespace Microsoft.Framework.Runtime
             return null;
         }
 
-        private IEnumerable<LibraryDependency> GetDependencies(PackageInfo packageInfo, FrameworkName targetFramework, LockFileFrameworkGroup lockFileGroup)
+        private IEnumerable<LibraryDependency> GetDependencies(PackageInfo packageInfo, FrameworkName targetFramework, LockFileTargetLibrary targetLibrary)
         {
-            if (lockFileGroup != null)
+            if (targetLibrary != null)
             {
-                foreach (var d in lockFileGroup.Dependencies)
+                foreach (var d in targetLibrary.Dependencies)
                 {
                     yield return new LibraryDependency
                     {
@@ -118,7 +128,7 @@ namespace Microsoft.Framework.Runtime
                     };
                 }
 
-                foreach (var fa in lockFileGroup.FrameworkAssemblies)
+                foreach (var fa in targetLibrary.FrameworkAssemblies)
                 {
                     yield return new LibraryDependency
                     {
@@ -194,7 +204,7 @@ namespace Microsoft.Framework.Runtime
             }
         }
 
-        public void Initialize(IEnumerable<LibraryDescription> packages, FrameworkName targetFramework)
+        public void Initialize(IEnumerable<LibraryDescription> packages, FrameworkName targetFramework, string runtimeIdentifier)
         {
             Dependencies = packages;
 
@@ -235,15 +245,22 @@ namespace Microsoft.Framework.Runtime
                     Servicing.Breadcrumbs.Instance.AddBreadcrumb(packageInfo.Id, packageInfo.Version);
                 }
 
-                var group = packageInfo.LockFileLibrary.FrameworkGroups.FirstOrDefault(g => g.TargetFramework == targetFramework);
-                if (group == null)
+                var lookupKey = Tuple.Create(runtimeIdentifier, targetFramework, packageInfo.LockFileLibrary.Name, packageInfo.LockFileLibrary.Version);
+
+                if (_lookup == null)
+                {
+                    continue;
+                }
+
+                LockFileTargetLibrary targetLibrary;
+                if (!_lookup.TryGetValue(lookupKey, out targetLibrary))
                 {
                     continue;
                 }
 
                 var assemblies = new List<string>();
 
-                foreach (var assemblyPath in group.RuntimeAssemblies)
+                foreach (var assemblyPath in targetLibrary.RuntimeAssemblies)
                 {
                     var name = Path.GetFileNameWithoutExtension(assemblyPath);
                     var path = Path.Combine(dependency.Path, assemblyPath);
@@ -283,7 +300,7 @@ namespace Microsoft.Framework.Runtime
                                           IEnumerable<IPackagePathResolver> cacheResolvers,
                                           PackageInfo packageInfo)
         {
-            string expectedHash = packageInfo.LockFileLibrary.Sha;
+            string expectedHash = packageInfo.LockFileLibrary.Sha512;
 
             foreach (var resolver in cacheResolvers)
             {
@@ -341,18 +358,26 @@ namespace Microsoft.Framework.Runtime
 
         private bool TryPopulateMetadataReferences(PackageDescription description, FrameworkName targetFramework, IDictionary<string, IMetadataReference> paths)
         {
-            var group = description.Package.LockFileLibrary.FrameworkGroups.FirstOrDefault(f => f.TargetFramework == targetFramework);
-            if (group == null)
+            if (_lookup == null)
             {
                 return false;
             }
 
-            foreach (var assemblyPath in group.CompileTimeAssemblies)
+            var lookupKey = Tuple.Create((string)null, targetFramework, description.Package.LockFileLibrary.Name, description.Package.LockFileLibrary.Version);
+
+            LockFileTargetLibrary targetLibrary;
+            if (!_lookup.TryGetValue(lookupKey, out targetLibrary))
+            {
+                return false;
+            }
+
+            foreach (var assemblyPath in targetLibrary.CompileTimeAssemblies)
             {
                 var name = Path.GetFileNameWithoutExtension(assemblyPath);
                 var path = Path.Combine(description.Library.Path, assemblyPath);
                 paths[name] = new MetadataFileReference(name, path);
             }
+
             return true;
         }
 

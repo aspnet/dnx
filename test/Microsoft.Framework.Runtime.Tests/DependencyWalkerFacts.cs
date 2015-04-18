@@ -204,11 +204,11 @@ namespace Loader.Tests
             };
         }
 
-        public void Initialize(IEnumerable<LibraryDescription> packages, FrameworkName frameworkName)
+        public void Initialize(IEnumerable<LibraryDescription> packages, FrameworkName frameworkName, string runtimeIdentifier)
         {
             var d = packages.Select(CreateDependency).ToArray();
 
-            Logger.TraceInformation("StubAssemblyLoader.Initialize {0} {1}", d.Aggregate("", (a, b) => a + " " + b), frameworkName);
+            Logger.TraceInformation("StubAssemblyLoader.Initialize {0} {1} {2}", d.Aggregate("", (a, b) => a + " " + b), frameworkName, runtimeIdentifier);
 
             Dependencies = d;
             FrameworkName = frameworkName;

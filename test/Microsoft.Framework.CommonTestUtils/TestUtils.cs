@@ -7,6 +7,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Security.Cryptography;
+using System.Text;
 using Microsoft.Framework.Runtime;
 
 namespace Microsoft.Framework.CommonTestUtils
@@ -64,9 +65,35 @@ namespace Microsoft.Framework.CommonTestUtils
             }
 
             var process = Process.Start(processStartInfo);
-            stdOut = process.StandardOutput.ReadToEnd();
-            stdErr = process.StandardError.ReadToEnd();
+            process.EnableRaisingEvents = true;
+
+            var stdoutBuilder = new StringBuilder();
+            var stderrBuilder = new StringBuilder();
+
+            process.OutputDataReceived += (sender, args) =>
+            {
+                if (!string.IsNullOrEmpty(args.Data))
+                {
+                    Console.WriteLine(args.Data);
+                    stdoutBuilder.AppendLine(args.Data);
+                }
+            };
+
+            process.ErrorDataReceived += (sender, args) =>
+            {
+                if (!string.IsNullOrEmpty(args.Data))
+                {
+                    Console.WriteLine(args.Data);
+                    stderrBuilder.AppendLine(args.Data);
+                }
+            };
+
+            process.BeginOutputReadLine();
+            process.BeginErrorReadLine();
+
             process.WaitForExit();
+            stdOut = stdoutBuilder.ToString();
+            stdErr = stderrBuilder.ToString();
 
             return process.ExitCode;
         }
@@ -85,9 +112,20 @@ namespace Microsoft.Framework.CommonTestUtils
 
         public static DisposableDir GetRuntimeHomeDir(string flavor, string os, string architecture)
         {
+            var useDevBuild = Environment.GetEnvironmentVariable("DNX_DEV");
+            var buildArtifactDir = GetBuildArtifactsFolder();
+            var runtimeName = GetRuntimeName(flavor, os, architecture);
+
+            // For rapid development, allow using in place dev builds
+            if (string.Equals(useDevBuild, "1"))
+            {
+                var artifacts = GetBuildArtifactsFolder();
+
+                return new DisposableDir(Path.Combine(artifacts, runtimeName), deleteOnDispose: false);
+            }
+
             // The build script creates an unzipped image that can be reused
             var testArtifactDir = GetTestArtifactsFolder();
-            var runtimeName = GetRuntimeName(flavor, os, architecture);
             var runtimeHomePath = Path.Combine(testArtifactDir, runtimeName);
             var runtimePath = Path.Combine(runtimeHomePath, "runtimes");
 
@@ -98,7 +136,6 @@ namespace Microsoft.Framework.CommonTestUtils
             }
 
             // We're running an individual tests
-            var buildArtifactDir = GetBuildArtifactsFolder();
             var runtimeNupkg = Directory.GetFiles(
                 buildArtifactDir,
                 GetRuntimeFilePattern(flavor, os, architecture),

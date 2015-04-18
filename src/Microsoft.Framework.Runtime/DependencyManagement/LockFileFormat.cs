@@ -14,7 +14,7 @@ namespace Microsoft.Framework.Runtime.DependencyManagement
 {
     public class LockFileFormat
     {
-        public const int Version = -9998;
+        public const int Version = -9997;
         public const string LockFileName = "project.lock.json";
 
         public LockFile Read(string filePath)
@@ -83,8 +83,9 @@ namespace Microsoft.Framework.Runtime.DependencyManagement
             var lockFile = new LockFile();
             lockFile.Islocked = ReadBool(cursor, "locked", defaultValue: false);
             lockFile.Version = ReadInt(cursor, "version", defaultValue: int.MinValue);
-            lockFile.ProjectFileDependencyGroups = ReadObject(cursor["projectFileDependencyGroups"] as JObject, ReadProjectFileDependencyGroup);
             lockFile.Libraries = ReadObject(cursor["libraries"] as JObject, ReadLibrary);
+            lockFile.Targets = ReadObject(cursor["targets"] as JObject, ReadTarget);
+            lockFile.ProjectFileDependencyGroups = ReadObject(cursor["projectFileDependencyGroups"] as JObject, ReadProjectFileDependencyGroup);
             return lockFile;
         }
 
@@ -93,9 +94,9 @@ namespace Microsoft.Framework.Runtime.DependencyManagement
             var json = new JObject();
             json["locked"] = new JValue(lockFile.Islocked);
             json["version"] = new JValue(Version);
-            json["projectFileDependencyGroups"] = WriteObject(lockFile.ProjectFileDependencyGroups,
-                WriteProjectFileDependencyGroup);
+            json["targets"] = WriteObject(lockFile.Targets, WriteTarget);
             json["libraries"] = WriteObject(lockFile.Libraries, WriteLibrary);
+            json["projectFileDependencyGroups"] = WriteObject(lockFile.ProjectFileDependencyGroups, WriteProjectFileDependencyGroup);
             return json;
         }
 
@@ -109,8 +110,7 @@ namespace Microsoft.Framework.Runtime.DependencyManagement
                 library.Version = SemanticVersion.Parse(parts[1]);
             }
             library.IsServiceable = ReadBool(json, "serviceable", defaultValue: false);
-            library.Sha = ReadString(json["sha"]);
-            library.FrameworkGroups = ReadObject(json["frameworks"] as JObject, ReadFrameworkGroup);
+            library.Sha512 = ReadString(json["sha512"]);
             library.Files = ReadPathArray(json["files"] as JArray, ReadString);
             return library;
         }
@@ -118,37 +118,91 @@ namespace Microsoft.Framework.Runtime.DependencyManagement
         private JProperty WriteLibrary(LockFileLibrary library)
         {
             var json = new JObject();
-            WriteBool(json, "serviceable", library.IsServiceable);
-            json["sha"] = WriteString(library.Sha);
-            WriteObject(json, "frameworks", library.FrameworkGroups, WriteFrameworkGroup);
+            if (library.IsServiceable)
+            {
+                WriteBool(json, "serviceable", library.IsServiceable);
+            }
+            json["sha512"] = WriteString(library.Sha512);
             WritePathArray(json, "files", library.Files, WriteString);
             return new JProperty(
                 library.Name + "/" + library.Version.ToString(),
                 json);
         }
 
-        private LockFileFrameworkGroup ReadFrameworkGroup(string property, JToken json)
+        private JProperty WriteTarget(LockFileTarget target)
         {
-            var group = new LockFileFrameworkGroup();
+            var json = WriteObject(target.Libraries, WriteTargetLibrary);
 
-            group.TargetFramework = new FrameworkName(property);
-            group.Dependencies = ReadObject(json["dependencies"] as JObject, ReadPackageDependency);
-            group.FrameworkAssemblies = ReadArray(json["frameworkAssemblies"] as JArray, ReadFrameworkAssemblyReference);
-            group.RuntimeAssemblies = ReadPathArray(json["runtimeAssemblies"] as JArray, ReadString);
-            group.CompileTimeAssemblies = ReadPathArray(json["compileAssemblies"] as JArray, ReadString);
+            var key = target.TargetFramework + (target.RuntimeIdentifier == null ? "" : "/" + target.RuntimeIdentifier);
 
-            return group;
+            return new JProperty(key, json);
         }
 
-        private JProperty WriteFrameworkGroup(LockFileFrameworkGroup group)
+        private LockFileTarget ReadTarget(string property, JToken json)
+        {
+            var target = new LockFileTarget();
+            var parts = property.Split(new[] { '/' }, 2);
+            target.TargetFramework = new FrameworkName(parts[0]);
+            if (parts.Length == 2)
+            {
+                target.RuntimeIdentifier = parts[1];
+            }
+
+            target.Libraries = ReadObject(json as JObject, ReadTargetLibrary);
+
+            return target;
+        }
+
+        private LockFileTargetLibrary ReadTargetLibrary(string property, JToken json)
+        {
+            var library = new LockFileTargetLibrary();
+
+            var parts = property.Split(new[] { '/' }, 2);
+            library.Name = parts[0];
+            if (parts.Length == 2)
+            {
+                library.Version = SemanticVersion.Parse(parts[1]);
+            }
+
+            library.Dependencies = ReadObject(json["dependencies"] as JObject, ReadPackageDependency);
+            library.FrameworkAssemblies = ReadArray(json["frameworkAssemblies"] as JArray, ReadFrameworkAssemblyReference);
+            library.RuntimeAssemblies = ReadPathArray(json["runtime"] as JArray, ReadString);
+            library.CompileTimeAssemblies = ReadPathArray(json["compile"] as JArray, ReadString);
+            library.NativeLibraries = ReadPathArray(json["native"] as JArray, ReadString);
+
+            return library;
+        }
+
+        private JProperty WriteTargetLibrary(LockFileTargetLibrary library)
         {
             var json = new JObject();
-            json["dependencies"] = WriteObject(group.Dependencies, WritePackageDependency);
-            json["frameworkAssemblies"] = WriteArray(group.FrameworkAssemblies, WriteFrameworkAssemblyReference);
-            json["runtimeAssemblies"] = WritePathArray(group.RuntimeAssemblies, WriteString);
-            json["compileAssemblies"] = WritePathArray(group.CompileTimeAssemblies, WriteString);
 
-            return new JProperty(group.TargetFramework.FullName, json);
+            if (library.Dependencies.Count > 0)
+            {
+                json["dependencies"] = WriteObject(library.Dependencies, WritePackageDependency);
+            }
+
+            if (library.FrameworkAssemblies.Count > 0)
+            {
+                json["frameworkAssemblies"] = WriteArray(library.FrameworkAssemblies, WriteFrameworkAssemblyReference);
+            }
+
+            if (library.CompileTimeAssemblies.Count > 0)
+            {
+                json["compile"] = WritePathArray(library.CompileTimeAssemblies, WriteString);
+            }
+
+            if (library.RuntimeAssemblies.Count > 0)
+            {
+                json["runtime"] = WritePathArray(library.RuntimeAssemblies, WriteString);
+            }
+
+            if (library.NativeLibraries.Count > 0)
+            {
+                json["native"] = WritePathArray(library.NativeLibraries, WriteString);
+            }
+
+            return new JProperty(library.Name + "/" + library.Version, json);
         }
 
         private ProjectFileDependencyGroup ReadProjectFileDependencyGroup(string property, JToken json)

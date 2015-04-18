@@ -37,10 +37,14 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
         private static readonly string BasicLockFile = @"{
   ""locked"": false,
   ""version"": LOCKFILEFORMAT_VERSION,
-  ""projectFileDependencyGroups"": {
-    """": []
+  ""targets"": {
+    ""DNX,Version=v4.5.1"": {}
   },
-  ""libraries"": {}
+  ""libraries"": {},
+  ""projectFileDependencyGroups"": {
+    """": [],
+    ""DNX,Version=v4.5.1"": []
+  }
 }".Replace("LOCKFILEFORMAT_VERSION", LockFileFormat.Version.ToString());
 
         public static IEnumerable<object[]> RuntimeComponents
@@ -131,7 +135,10 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
                 DirTree.CreateFromJson(projectStructure)
                     .WithFileContents("project.json", @"{
   ""publishExclude"": ""**.bconfig"",
-  ""webroot"": ""to_be_overridden""
+  ""webroot"": ""to_be_overridden"",
+  ""frameworks"": {
+    ""dnx451"": {}
+  }
 }")
                     .WriteTo(testEnv.ProjectPath);
 
@@ -152,13 +159,19 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
                 var expectedOutputDir = DirTree.CreateFromJson(expectedOutputStructure)
                     .WithFileContents(Path.Combine("approot", "src", testEnv.ProjectName, "project.json"), @"{
   ""publishExclude"": ""**.bconfig"",
-  ""webroot"": ""../../../wwwroot""
+  ""webroot"": ""../../../wwwroot"",
+  ""frameworks"": {
+    ""dnx451"": {}
+  }
 }")
                     .WithFileContents(Path.Combine("approot", "src", testEnv.ProjectName, "project.lock.json"),
                         BasicLockFile)
                     .WithFileContents(Path.Combine("wwwroot", "project.json"), @"{
   ""publishExclude"": ""**.bconfig"",
-  ""webroot"": ""to_be_overridden""
+  ""webroot"": ""to_be_overridden"",
+  ""frameworks"": {
+    ""dnx451"": {}
+  }
 }")
                     .WithFileContents(Path.Combine("approot", "global.json"), @"{
   ""packages"": ""packages""
@@ -231,7 +244,10 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
                 DirTree.CreateFromJson(projectStructure)
                     .WithFileContents("project.json", @"{
   ""publishExclude"": ""**.useless"",
-  ""webroot"": ""public""
+  ""webroot"": ""public"",
+  ""frameworks"": {
+    ""dnx451"": {}
+  }
 }")
                     .WriteTo(testEnv.ProjectPath);
 
@@ -252,7 +268,10 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
                 var expectedOutputDir = DirTree.CreateFromJson(expectedOutputStructure)
                     .WithFileContents(Path.Combine("approot", "src", testEnv.ProjectName, "project.json"), @"{
   ""publishExclude"": ""**.useless"",
-  ""webroot"": ""../../../wwwroot""
+  ""webroot"": ""../../../wwwroot"",
+  ""frameworks"": {
+    ""dnx451"": {}
+  }
 }")
                     .WithFileContents(Path.Combine("approot", "src", testEnv.ProjectName, "project.lock.json"),
                         BasicLockFile)
@@ -297,7 +316,10 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
             {
                 DirTree.CreateFromJson(projectStructure)
                     .WithFileContents("project.json", @"{
-  ""publishExclude"": ""Data/Backup/**""
+  ""publishExclude"": ""Data/Backup/**"",
+  ""frameworks"": {
+    ""dnx451"": {}
+  }
 }")
                     .WriteTo(testEnv.ProjectPath);
 
@@ -317,7 +339,10 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
 
                 var expectedOutputDir = DirTree.CreateFromJson(expectedOutputStructure)
                     .WithFileContents(Path.Combine("approot", "src", testEnv.ProjectName, "project.json"), @"{
-  ""publishExclude"": ""Data/Backup/**""
+  ""publishExclude"": ""Data/Backup/**"",
+  ""frameworks"": {
+    ""dnx451"": {}
+  }
 }")
                     .WithFileContents(Path.Combine("approot", "src", testEnv.ProjectName, "project.lock.json"),
                         BasicLockFile)
@@ -380,6 +405,9 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
                 // We need a good strategy to test \\ and / on windows and / on *nix and osx
                 DirTree.CreateFromJson(projectStructure)
                     .WithFileContents("project.json", @"{
+  ""frameworks"": {
+    ""dnx451"": {}
+  },
   ""publishExclude"": [
     ""FileWithoutExtension"",
     ""UselessFolder1"",
@@ -415,6 +443,9 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
 
                 var expectedOutputDir = DirTree.CreateFromJson(expectedOutputStructure)
                     .WithFileContents(Path.Combine("approot", "src", testEnv.ProjectName, "project.json"), @"{
+  ""frameworks"": {
+    ""dnx451"": {}
+  },
   ""publishExclude"": [
     ""FileWithoutExtension"",
     ""UselessFolder1"",
@@ -495,6 +526,9 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
             {
                 DirTree.CreateFromJson(projectStructure)
                     .WithFileContents("project.json", @"{
+  ""frameworks"": {
+    ""dnx451"": {}
+  },
   ""publishExclude"": [
     ""UselessFolder1\\**"",
     ""UselessFolder2/**/*"",
@@ -519,6 +553,9 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
 
                 var expectedOutputDir = DirTree.CreateFromJson(expectedOutputStructure)
                     .WithFileContents(Path.Combine("approot", "src", testEnv.ProjectName, "project.json"), @"{
+  ""frameworks"": {
+    ""dnx451"": {}
+  },
   ""publishExclude"": [
     ""UselessFolder1\\**"",
     ""UselessFolder2/**/*"",
@@ -598,6 +635,9 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
             {
                 DirTree.CreateFromJson(projectStructure)
                     .WithFileContents("project.json", @"{
+  ""frameworks"": {
+    ""dnx451"": {}
+  }
 }")
                     .WriteTo(testEnv.ProjectPath);
 
@@ -617,6 +657,9 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
 
                 var expectedOutputDir = DirTree.CreateFromJson(expectedOutputStructure)
                     .WithFileContents(Path.Combine("approot", "src", testEnv.ProjectName, "project.json"), @"{
+  ""frameworks"": {
+    ""dnx451"": {}
+  }
 }")
                     .WithFileContents(Path.Combine("approot", "src", testEnv.ProjectName, "project.lock.json"),
                         BasicLockFile)
@@ -668,6 +711,9 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
             {
                 DirTree.CreateFromJson(projectStructure)
                     .WithFileContents("project.json", @"{
+  ""frameworks"": {
+    ""dnx451"": {}
+  }
 }")
                     .WriteTo(testEnv.ProjectPath);
 
@@ -687,6 +733,9 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
 
                 var expectedOutputDir = DirTree.CreateFromJson(expectedOutputStructure)
                     .WithFileContents(Path.Combine("approot", "src", testEnv.ProjectName, "project.json"), @"{
+  ""frameworks"": {
+    ""dnx451"": {}
+  }
 }")
                     .WithFileContents(Path.Combine("approot", "src", testEnv.ProjectName, "project.lock.json"),
                         BasicLockFile)
@@ -746,7 +795,10 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
             {
                 DirTree.CreateFromJson(projectStructure)
                     .WithFileContents("project.json", @"{
-  ""webroot"": ""public""
+  ""webroot"": ""public"",
+  ""frameworks"": {
+    ""dnx451"": {}
+  }
 }")
                     .WithFileContents(Path.Combine("public", "web.config"), originalWebConfigContents)
                     .WriteTo(testEnv.ProjectPath);
@@ -767,7 +819,10 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
 
                 var expectedOutputDir = DirTree.CreateFromJson(expectedOutputStructure)
                     .WithFileContents(Path.Combine("approot", "src", testEnv.ProjectName, "project.json"), @"{
-  ""webroot"": ""../../../wwwroot""
+  ""webroot"": ""../../../wwwroot"",
+  ""frameworks"": {
+    ""dnx451"": {}
+  }
 }")
                     .WithFileContents(Path.Combine("approot", "src", testEnv.ProjectName, "project.lock.json"),
                         BasicLockFile)
@@ -842,7 +897,10 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
             {
                 DirTree.CreateFromJson(projectStructure)
                     .WithFileContents("project.json", @"{
-  ""webroot"": ""../../../wwwroot""
+  ""webroot"": ""../../../wwwroot"",
+  ""frameworks"": {
+    ""dnx451"": {}
+  }
 }")
                     .WithFileContents(Path.Combine("public", "web.config"), originalWebConfigContents)
                     .WriteTo(testEnv.ProjectPath);
@@ -863,7 +921,10 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
 
                 var expectedOutputDir = DirTree.CreateFromJson(expectedOutputStructure)
                     .WithFileContents(Path.Combine("approot", "src", testEnv.ProjectName, "project.json"), @"{
-  ""webroot"": ""../../../wwwroot""
+  ""webroot"": ""../../../wwwroot"",
+  ""frameworks"": {
+    ""dnx451"": {}
+  }
 }")
                     .WithFileContents(Path.Combine("approot", "src", testEnv.ProjectName, "project.lock.json"),
                         BasicLockFile)
@@ -941,12 +1002,16 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
                     .WithFileContents(Path.Combine("approot", "src", testEnv.ProjectName, "project.lock.json"), @"{
   ""locked"": false,
   ""version"": LOCKFILEFORMAT_VERSION,
+  ""targets"": {
+    ""DNX,Version=v4.5.1"": {},
+    ""DNXCore,Version=v5.0"": {}
+  },
+  ""libraries"": {},
   ""projectFileDependencyGroups"": {
     """": [],
     ""DNX,Version=v4.5.1"": [],
     ""DNXCore,Version=v5.0"": []
-  },
-  ""libraries"": {}
+  }
 }".Replace("LOCKFILEFORMAT_VERSION", LockFileFormat.Version.ToString()))
                     .WithFileContents(Path.Combine("approot", "global.json"), @"{
   ""packages"": ""packages""
@@ -1044,13 +1109,17 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
                     .WithFileContents(Path.Combine("approot", "src", testEnv.ProjectName, "project.lock.json"), @"{
   ""locked"": false,
   ""version"": LOCKFILEFORMAT_VERSION,
+  ""targets"": {
+    ""RUNTIME_TARGET"": {}
+  },
+  ""libraries"": {},
   ""projectFileDependencyGroups"": {
     """": [],
     ""DNX,Version=v4.5.1"": [],
     ""DNXCore,Version=v5.0"": []
-  },
-  ""libraries"": {}
-}".Replace("LOCKFILEFORMAT_VERSION", LockFileFormat.Version.ToString()))
+  }
+}".Replace("LOCKFILEFORMAT_VERSION", LockFileFormat.Version.ToString())
+  .Replace("RUNTIME_TARGET", flavor == "coreclr" ? "DNXCore,Version=v5.0" : "DNX,Version=v4.5.1"))
                     .WithFileContents(Path.Combine("approot", "global.json"), @"{
   ""packages"": ""packages""
 }")
@@ -1093,33 +1162,27 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
             string expectedLockFileContents = @"{
   ""locked"": false,
   ""version"": LOCKFILEFORMAT_VERSION,
-  ""projectFileDependencyGroups"": {
-    ""DNX,Version=v4.5.1"": [],
-    """": [
-      ""NoDependencies >= 1.0.0""
-    ]
+  ""targets"": {
+    ""DNX,Version=v4.5.1"": {
+      ""NoDependencies/1.0.0"": {
+        ""frameworkAssemblies"": [
+          ""mscorlib"",
+          ""System"",
+          ""System.Core"",
+          ""Microsoft.CSharp""
+        ],
+        ""compile"": [
+          ""lib/dnx451/NoDependencies.dll""
+        ],
+        ""runtime"": [
+          ""lib/dnx451/NoDependencies.dll""
+        ]
+      }
+    }
   },
   ""libraries"": {
     ""NoDependencies/1.0.0"": {
-      ""serviceable"": false,
-      ""sha"": ""NUPKG_SHA_VALUE"",
-      ""frameworks"": {
-        ""DNX,Version=v4.5.1"": {
-          ""dependencies"": {},
-          ""frameworkAssemblies"": [
-            ""mscorlib"",
-            ""System"",
-            ""System.Core"",
-            ""Microsoft.CSharp""
-          ],
-          ""runtimeAssemblies"": [
-            ""lib/dnx451/NoDependencies.dll""
-          ],
-          ""compileAssemblies"": [
-            ""lib/dnx451/NoDependencies.dll""
-          ]
-        }
-      },
+      ""sha512"": ""NUPKG_SHA_VALUE"",
       ""files"": [
         ""NoDependencies.1.0.0.nupkg"",
         ""NoDependencies.1.0.0.nupkg.sha512"",
@@ -1132,6 +1195,12 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
         ""root/project.json""
       ]
     }
+  },
+  ""projectFileDependencyGroups"": {
+    """": [
+      ""NoDependencies >= 1.0.0""
+    ],
+    ""DNX,Version=v4.5.1"": []
   }
 }".Replace("LOCKFILEFORMAT_VERSION", LockFileFormat.Version.ToString());
 
@@ -1196,33 +1265,27 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
             var expectedLockFileContents = @"{
   ""locked"": false,
   ""version"": LOCKFILEFORMAT_VERSION,
-  ""projectFileDependencyGroups"": {
-    ""DNX,Version=v4.5.1"": [],
-    """": [
-      ""NoDependencies >= 1.0.0""
-    ]
+  ""targets"": {
+    ""DNX,Version=v4.5.1"": {
+      ""NoDependencies/1.0.0"": {
+        ""frameworkAssemblies"": [
+          ""mscorlib"",
+          ""System"",
+          ""System.Core"",
+          ""Microsoft.CSharp""
+        ],
+        ""compile"": [
+          ""lib/dnx451/NoDependencies.dll""
+        ],
+        ""runtime"": [
+          ""lib/dnx451/NoDependencies.dll""
+        ]
+      }
+    }
   },
   ""libraries"": {
     ""NoDependencies/1.0.0"": {
-      ""serviceable"": false,
-      ""sha"": ""NUPKG_SHA_VALUE"",
-      ""frameworks"": {
-        ""DNX,Version=v4.5.1"": {
-          ""dependencies"": {},
-          ""frameworkAssemblies"": [
-            ""mscorlib"",
-            ""System"",
-            ""System.Core"",
-            ""Microsoft.CSharp""
-          ],
-          ""runtimeAssemblies"": [
-            ""lib/dnx451/NoDependencies.dll""
-          ],
-          ""compileAssemblies"": [
-            ""lib/dnx451/NoDependencies.dll""
-          ]
-        }
-      },
+      ""sha512"": ""NUPKG_SHA_VALUE"",
       ""files"": [
         ""NoDependencies.1.0.0.nupkg"",
         ""NoDependencies.1.0.0.nupkg.sha512"",
@@ -1233,9 +1296,15 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
         ""lib/dnx451/NoDependencies.dll"",
         ""lib/dnx451/NoDependencies.xml"",
         ""root/project.json"",
-        ""root/LOCKFILE_NAME""
+        ""root/project.lock.json""
       ]
     }
+  },
+  ""projectFileDependencyGroups"": {
+    """": [
+      ""NoDependencies >= 1.0.0""
+    ],
+    ""DNX,Version=v4.5.1"": []
   }
 }".Replace("LOCKFILEFORMAT_VERSION", LockFileFormat.Version.ToString())
 .Replace("LOCKFILE_NAME", LockFileFormat.LockFileName);

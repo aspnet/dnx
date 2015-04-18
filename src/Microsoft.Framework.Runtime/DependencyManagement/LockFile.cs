@@ -11,9 +11,9 @@ namespace Microsoft.Framework.Runtime.DependencyManagement
     {
         public bool Islocked { get; set; }
         public int Version { get; set; }
-        public IList<ProjectFileDependencyGroup> ProjectFileDependencyGroups { get; set; } =
-            new List<ProjectFileDependencyGroup>();
+        public IList<ProjectFileDependencyGroup> ProjectFileDependencyGroups { get; set; } = new List<ProjectFileDependencyGroup>();
         public IList<LockFileLibrary> Libraries { get; set; } = new List<LockFileLibrary>();
+        public IList<LockFileTarget> Targets { get; set; } = new List<LockFileTarget>();
 
         public bool IsValidForProject(Project project)
         {
