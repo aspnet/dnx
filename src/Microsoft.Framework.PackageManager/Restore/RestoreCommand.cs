@@ -506,11 +506,20 @@ namespace Microsoft.Framework.PackageManager
         // DNU REFACTORING TODO: temp hack to make generated lockfile work with runtime lockfile validation
         private static string RuntimeStyleLibraryRangeToString(LibraryRange libraryRange)
         {
-            var minVersion = libraryRange.VersionRange.MinVersion;
-            var maxVersion = libraryRange.VersionRange.MaxVersion;
             var sb = new System.Text.StringBuilder();
             sb.Append(libraryRange.Name);
-            sb.Append(" >= ");
+            sb.Append(" ");
+
+            if (libraryRange.VersionRange == null)
+            {
+                return sb.ToString();
+            }
+
+            var minVersion = libraryRange.VersionRange.MinVersion;
+            var maxVersion = libraryRange.VersionRange.MaxVersion;
+
+            sb.Append(">= ");
+
             if (libraryRange.VersionRange.IsFloating)
             {
                 sb.Append(libraryRange.VersionRange.Float.ToString());
