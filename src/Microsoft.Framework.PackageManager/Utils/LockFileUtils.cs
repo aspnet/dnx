@@ -178,21 +178,11 @@ namespace Microsoft.Framework.PackageManager.Utils
 
                 foreach (var framework in frameworks)
                 {
-                    var dependencies = NuGetFrameworkUtility.GetNearest(packageReader.GetPackageDependencies(),
+                    var dependencies = DnuFrameworkUtils.GetNearest(packageReader.GetPackageDependencies(),
                         framework, item => item.TargetFramework)?.Packages.ToList();
-                    var runtimeAssemblies = NuGetFrameworkUtility.GetNearest(packageReader.GetReferenceItems(),
+                    var runtimeAssemblies = DnuFrameworkUtils.GetNearest(packageReader.GetReferenceItems(),
                         framework, item => item.TargetFramework)?.Items.ToList();
-
-                    // The compatibility mapping "dnxcore50 -> portable-net45+win8" is missing in NuGet core libs
-                    // We need to do that check here
-                    if (runtimeAssemblies == null &&
-                        framework == FrameworkConstants.CommonFrameworks.DnxCore50)
-                    {
-                        runtimeAssemblies = packageReader.GetReferenceItems()
-                            .FirstOrDefault(x => string.Equals(x.TargetFramework.Profile, "Profile7"))?.Items.ToList();
-                    }
-
-                    var frameworkAssembliesGroup = NuGetFrameworkUtility.GetNearest(packageReader.GetFrameworkItems(),
+                    var frameworkAssembliesGroup = DnuFrameworkUtils.GetNearest(packageReader.GetFrameworkItems(),
                         framework, item => item.TargetFramework);
 
                     var group = new LockFileFrameworkGroup();
