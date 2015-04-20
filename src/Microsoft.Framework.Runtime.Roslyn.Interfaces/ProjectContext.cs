@@ -1,4 +1,6 @@
-﻿using System;
+﻿// Copyright (c) Microsoft Open Technologies, Inc. All rights reserved.
+// Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
+
 using System.Runtime.Versioning;
 
 namespace Microsoft.Framework.Runtime.Roslyn
@@ -6,36 +8,36 @@ namespace Microsoft.Framework.Runtime.Roslyn
     /// <summary>
     /// Stores information about the project
     /// </summary>
-    public interface IProjectContext
+    public class ProjectContext
     {
         /// <summary>
         /// Path to the project directory
         /// </summary>
-        string ProjectDirectory { get; }
+        public string ProjectDirectory { get; set; }
 
         /// <summary>
         /// Path to the project file
         /// </summary>
-        string ProjectFilePath { get; }
+        public string ProjectFilePath { get; set; }
 
         /// <summary>
         /// The name of the project
         /// </summary>
-        string Name { get; }
+        public string Name { get; set; }
 
         /// <summary>
         /// The target framework of the project currently being compiled
         /// </summary>
-        FrameworkName TargetFramework { get; }
+        public FrameworkName TargetFramework { get; set; }
 
         /// <summary>
         /// The configuration of the project currently being compiled
         /// </summary>
-        string Configuration { get; }
+        public string Configuration { get; set; }
 
         /// <summary>
         /// Project version
         /// </summary>
-        string Version { get; }
+        public string Version { get; set; }
     }
 }

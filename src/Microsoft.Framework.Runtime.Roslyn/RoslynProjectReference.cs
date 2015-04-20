@@ -96,10 +96,13 @@ namespace Microsoft.Framework.Runtime.Roslyn
                 var diagnostics = CompilationContext.Diagnostics.Concat(
                     emitResult.Diagnostics);
 
-                var afterCompileContext = new AfterCompileContext(CompilationContext, diagnostics)
+                var afterCompileContext = new AfterCompileContext
                 {
+                    ProjectContext = CompilationContext.ProjectContext,
+                    Compilation = CompilationContext.Compilation,
                     AssemblyStream = assemblyStream,
-                    SymbolStream = pdbStream
+                    SymbolStream = pdbStream,
+                    Diagnostics = new List<Diagnostic>(diagnostics)
                 };
 
                 foreach (var m in CompilationContext.Modules)
@@ -191,8 +194,11 @@ namespace Microsoft.Framework.Runtime.Roslyn
 
                 Logger.TraceInformation("[{0}]: Emitted {1} in {2}ms", GetType().Name, Name, sw.ElapsedMilliseconds);
 
-                var afterCompileContext = new AfterCompileContext(CompilationContext, emitResult.Diagnostics)
+                var afterCompileContext = new AfterCompileContext
                 {
+                    ProjectContext = CompilationContext.ProjectContext,
+                    Compilation = CompilationContext.Compilation,
+                    Diagnostics = new List<Diagnostic>(emitResult.Diagnostics),
                     AssemblyStream = assemblyStream,
                     SymbolStream = pdbStream,
                     XmlDocStream = xmlDocStream

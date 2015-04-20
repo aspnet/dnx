@@ -2,27 +2,22 @@
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 using System.Collections.Generic;
-using System.IO;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.Framework.Runtime.Compilation;
 
 namespace Microsoft.Framework.Runtime.Roslyn
 {
-    public interface IAfterCompileContext
+    public class BeforeCompileContext
     {
-        IProjectContext ProjectContext { get; }
+        public CSharpCompilation Compilation { get; set; }
 
-        CSharpCompilation Compilation { get; set; }
+        public ProjectContext ProjectContext { get; set; }
 
-        Stream AssemblyStream { get; set; }
+        public IList<ResourceDescription> Resources { get; set; }
 
-        Stream SymbolStream { get; set; }
+        public IList<Diagnostic> Diagnostics { get; set; }
 
-        Stream XmlDocStream { get; set; }
-
-        IList<Diagnostic> Diagnostics { get; }
-
-        IList<IMetadataReference> References { get; }
+        public IList<IMetadataReference> MetadataReferences { get; set; }
     }
 }

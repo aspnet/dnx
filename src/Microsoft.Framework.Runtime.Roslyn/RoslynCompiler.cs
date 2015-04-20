@@ -82,8 +82,7 @@ namespace Microsoft.Framework.Runtime.Roslyn
                 _cacheContextAccessor.Current.Monitor(_namedDependencyProvider.GetNamedDependency(project.Name + "_Dependencies"));
             }
 
-            var incomingReferencesList = incomingReferences.ToList();
-            var exportedReferences = incomingReferencesList.Select(ConvertMetadataReference);
+            var exportedReferences = incomingReferences.Select(ConvertMetadataReference);
 
             Logger.TraceInformation("[{0}]: Compiling '{1}'", GetType().Name, name);
             var sw = Stopwatch.StartNew();
@@ -111,7 +110,7 @@ namespace Microsoft.Framework.Runtime.Roslyn
                 parseOptions,
                 isMainAspect);
 
-            var embeddedReferences = incomingReferencesList.OfType<IMetadataEmbeddedReference>()
+            var embeddedReferences = incomingReferences.OfType<IMetadataEmbeddedReference>()
                                                        .ToDictionary(a => a.Name, ConvertMetadataReference);
 
             var references = new List<MetadataReference>();
@@ -130,13 +129,13 @@ namespace Microsoft.Framework.Runtime.Roslyn
                 project,
                 target.TargetFramework,
                 target.Configuration,
+                incomingReferences,
                 () => resourcesResolver()
                     .Select(res => new ResourceDescription(
                         res.Name,
                         res.StreamFactory,
                         isPublic: true))
-                    .ToList(),
-                incomingReferencesList);
+                    .ToList());
 
             // Apply strong-name settings
             ApplyStrongNameSettings(compilationContext);
@@ -178,7 +177,7 @@ namespace Microsoft.Framework.Runtime.Roslyn
                 var precompSw = Stopwatch.StartNew();
                 foreach (var module in compilationContext.Modules)
                 {
-                    module.BeforeCompile(compilationContext);
+                    module.BeforeCompile(compilationContext.BeforeCompileContext);
                 }
 
                 precompSw.Stop();

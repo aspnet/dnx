@@ -12,13 +12,13 @@ namespace Microsoft.Framework.Runtime.Roslyn
         /// Runs after the roslyn compilation is created but before anything is emitted
         /// </summary>
         /// <param name="context"></param>
-        void BeforeCompile(IBeforeCompileContext context);
+        void BeforeCompile(BeforeCompileContext context);
 
         /// <summary>
         /// Runs after the compilation is emitted. Changing the compilation will not have any effect at this point
         /// but the assembly can be changed before it is saved on disk or loaded into memory.
         /// </summary>
         /// <param name="context"></param>
-        void AfterCompile(IAfterCompileContext context);
+        void AfterCompile(AfterCompileContext context);
     }
 }

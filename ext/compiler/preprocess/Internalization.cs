@@ -18,7 +18,7 @@ namespace Runtime.Ext.Compiler.Preprocess
         {
         }
 
-        public void BeforeCompile(IBeforeCompileContext context)
+        public void BeforeCompile(BeforeCompileContext context)
         {
             var candidates = new List<string>();
 
@@ -89,7 +89,7 @@ namespace Runtime.Ext.Compiler.Preprocess
             }
         }
 
-        public void AfterCompile(IAfterCompileContext context)
+        public void AfterCompile(AfterCompileContext context)
         {
 
         }
