@@ -38,7 +38,10 @@ namespace Microsoft.Framework.Runtime.DependencyManagement
                 // If the framework name is empty, the associated dependencies are shared by all frameworks
                 if (string.IsNullOrEmpty(group.FrameworkName))
                 {
-                    actualDependencies = project.Dependencies.Select(x => x.LibraryRange.ToString()).OrderBy(x => x);
+                    actualDependencies = project.Dependencies
+                        .Where(x => !x.LibraryRange.IsGacOrFrameworkReference)
+                        .Select(x => x.LibraryRange.ToString())
+                        .OrderBy(x => x);
                 }
                 else
                 {
@@ -50,7 +53,10 @@ namespace Microsoft.Framework.Runtime.DependencyManagement
                         return false;
                     }
 
-                    actualDependencies = framework.Dependencies.Select(d => d.LibraryRange.ToString()).OrderBy(x => x);
+                    actualDependencies = framework.Dependencies
+                        .Where(x => !x.LibraryRange.IsGacOrFrameworkReference)
+                        .Select(d => d.LibraryRange.ToString())
+                        .OrderBy(x => x);
                 }
 
                 if (!actualDependencies.SequenceEqual(expectedDependencies))

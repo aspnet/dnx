@@ -213,7 +213,7 @@ namespace Microsoft.Framework.PackageManager.Utils
                         }
                     }
 
-                    string contractPath = Path.Combine("lib", "contract", packageInfo.Id + ".dll");
+                    string contractPath = string.Join("/", new string[] { "lib", "contract", packageInfo.Id + ".dll" });
                     var hasContract = lockFileLib.Files.Any(path => path == contractPath);
                     var hasLib = group.RuntimeAssemblies.Any();
 
