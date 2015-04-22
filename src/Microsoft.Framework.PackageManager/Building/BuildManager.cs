@@ -293,7 +293,7 @@ namespace Microsoft.Framework.PackageManager
                 _buildOptions.Reports.Information.WriteLine("Build succeeded.".Green());
             }
 
-            _buildOptions.Reports.Information.WriteLine("    {0} Warnings(s)", warningCount);
+            _buildOptions.Reports.Information.WriteLine("    {0} Warning(s)", warningCount);
             _buildOptions.Reports.Information.WriteLine("    {0} Error(s)", errorCount);
 
             _buildOptions.Reports.Information.WriteLine();
