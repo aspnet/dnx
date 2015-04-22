@@ -174,7 +174,9 @@ namespace Microsoft.Framework.PackageManager.Utils
                 nupkgStream.Seek(0, SeekOrigin.Begin);
 
                 var packageReader = new PackageReader(nupkgStream);
-                lockFileLib.Files = packageReader.GetFiles().ToList();
+
+                // Get package files, excluding directory entries
+                lockFileLib.Files = packageReader.GetFiles().Where(x => !x.EndsWith("/")).ToList();
 
                 foreach (var framework in frameworks)
                 {
