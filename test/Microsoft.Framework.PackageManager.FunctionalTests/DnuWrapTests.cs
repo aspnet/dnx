@@ -15,6 +15,11 @@ namespace Microsoft.Framework.PackageManager.FunctionalTests
     {
         private readonly PackageManagerFunctionalTestFixture _fixture;
 
+        public DnuWrapTests(PackageManagerFunctionalTestFixture fixture)
+        {
+            _fixture = fixture;
+        }
+
         public static IEnumerable<object[]> RuntimeComponents
         {
             get
@@ -25,18 +30,13 @@ namespace Microsoft.Framework.PackageManager.FunctionalTests
 
         public static readonly string _msbuildPath = TestUtils.ResolveMSBuildPath();
 
-        public DnuWrapTests(PackageManagerFunctionalTestFixture fixture)
-        {
-            _fixture = fixture;
-        }
-
         [Theory]
         [MemberData(nameof(RuntimeComponents))]
         public void DnuWrapUpdatesExistingProjectJson(string flavor, string os, string architecture)
         {
             var runtimeHomeDir = _fixture.GetRuntimeHomeDir(flavor, os, architecture);
 
-            if (PlatformHelper.IsMono)
+            if (RuntimeEnvironmentHelper.IsMono)
             {
                 return;
             }
@@ -112,7 +112,7 @@ namespace Microsoft.Framework.PackageManager.FunctionalTests
         {
             var runtimeHomeDir = _fixture.GetRuntimeHomeDir(flavor, os, architecture);
 
-            if (PlatformHelper.IsMono)
+            if (RuntimeEnvironmentHelper.IsMono)
             {
                 return;
             }
@@ -186,14 +186,14 @@ namespace Microsoft.Framework.PackageManager.FunctionalTests
                 Assert.Equal(expectedLibDeltaProjectJson, File.ReadAllText(libDeltaJsonPath));
             }
         }
-        
+
         [Theory]
         [MemberData(nameof(RuntimeComponents))]
         public void DnuWrapInPlaceCreateCsprojWrappersInPlace(string flavor, string os, string architecture)
         {
             var runtimeHomeDir = _fixture.GetRuntimeHomeDir(flavor, os, architecture);
 
-            if (PlatformHelper.IsMono)
+            if (RuntimeEnvironmentHelper.IsMono)
             {
                 return;
             }
@@ -276,7 +276,7 @@ namespace Microsoft.Framework.PackageManager.FunctionalTests
         {
             var runtimeHomeDir = TestUtils.GetRuntimeHomeDir(flavor, os, architecture);
 
-            if (PlatformHelper.IsMono)
+            if (RuntimeEnvironmentHelper.IsMono)
             {
                 return;
             }

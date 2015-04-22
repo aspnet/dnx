@@ -21,7 +21,7 @@ namespace Microsoft.Framework.Runtime
             socket.Connect(new IPEndPoint(IPAddress.Loopback, runtimeOptions.CompilationServerPort.Value));
 
             var networkStream = new NetworkStream(socket);
-            
+
             _compiler = new DesignTimeHostCompiler(shutdown, watcher, networkStream);
         }
 

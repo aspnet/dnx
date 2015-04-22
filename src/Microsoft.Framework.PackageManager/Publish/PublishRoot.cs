@@ -35,7 +35,7 @@ namespace Microsoft.Framework.PackageManager.Publish
         public string TargetPackagesPath { get; private set; }
         public string TargetRuntimesPath { get; private set; }
         public string SourcePackagesPath { get; set; }
-        
+
         public bool NoSource { get; set; }
         public bool IncludeSymbols { get; set; }
         public string Configuration { get; set; }
@@ -162,7 +162,8 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
                 var scriptPath = Path.Combine(OutputPath, commandName);
                 File.WriteAllText(scriptPath,
                     string.Format(template, EnvironmentNames.AppBase, relativeAppBase, runtimeFolder, Runtime.Constants.BootstrapperExeName, commandName).Replace("\r\n", "\n"));
-                if (PlatformHelper.IsMono)
+
+                if (!RuntimeEnvironmentHelper.IsWindows)
                 {
                     if (!FileOperationUtils.MarkExecutable(scriptPath))
                     {

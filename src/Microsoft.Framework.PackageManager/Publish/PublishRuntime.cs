@@ -43,7 +43,7 @@ namespace Microsoft.Framework.PackageManager.Publish
 
             new PublishOperations().Copy(_runtimePath, TargetPath);
 
-            if (PlatformHelper.IsMono)
+            if (!RuntimeEnvironmentHelper.IsWindows)
             {
                 // Executable permissions on dnx lost on copy. 
                 var dnxPath = Path.Combine(TargetPath, "bin", "dnx");

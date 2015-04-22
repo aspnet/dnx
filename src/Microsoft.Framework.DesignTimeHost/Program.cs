@@ -39,7 +39,7 @@ namespace Microsoft.Framework.DesignTimeHost
 
             // In mono 3.10, the Exited event fires immediately, so the
             // caller will need to terminate this process.
-            if (!PlatformHelper.IsMono)
+            if (!RuntimeEnvironmentHelper.IsMono)
             {
                 // Add a watch to the host PID. If it goes away we will self terminate.
                 var hostProcess = Process.GetProcessById(hostPID);

@@ -18,7 +18,8 @@ namespace Microsoft.Framework.PackageManager
 
         private readonly IAppCommandsRepository _commandsRepository;
 
-        public InstallGlobalCommand(IApplicationEnvironment env, IAppCommandsRepository commandsRepository)
+        public InstallGlobalCommand(IApplicationEnvironment env,
+                                    IAppCommandsRepository commandsRepository)
         {
             RestoreCommand = new RestoreCommand(env);
             _commandsRepository = commandsRepository;
@@ -247,7 +248,7 @@ namespace Microsoft.Framework.PackageManager
 
             IEnumerable<string> allAppCommandsFiles;
 
-            if (PlatformHelper.IsWindows)
+            if (RuntimeEnvironmentHelper.IsWindows)
             {
                 allAppCommandsFiles = Directory.EnumerateFiles(commandsFolder, "*.cmd");
             }
@@ -293,13 +294,13 @@ namespace Microsoft.Framework.PackageManager
             foreach (string commandFileFullPath in allAppCommandsFiles)
             {
                 string commandFileName =
-                    PlatformHelper.IsWindows ?
+                    RuntimeEnvironmentHelper.IsWindows ?
                     Path.GetFileName(commandFileFullPath) :
                     Path.GetFileNameWithoutExtension(commandFileFullPath);
 
                 string commandScript;
 
-                if (PlatformHelper.IsWindows)
+                if (RuntimeEnvironmentHelper.IsWindows)
                 {
                     commandScript = string.Format(
                         "@\"%~dp0{0}\" %*",
@@ -315,7 +316,7 @@ namespace Microsoft.Framework.PackageManager
                 string scriptFilePath = Path.Combine(installPath, commandFileName);
                 File.WriteAllText(scriptFilePath, commandScript);
 
-                if (!PlatformHelper.IsWindows)
+                if (!RuntimeEnvironmentHelper.IsWindows)
                 {
                     FileOperationUtils.MarkExecutable(commandFileFullPath);
                     FileOperationUtils.MarkExecutable(scriptFilePath);

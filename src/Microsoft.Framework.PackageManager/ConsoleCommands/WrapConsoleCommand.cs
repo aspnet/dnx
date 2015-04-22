@@ -43,7 +43,7 @@ namespace Microsoft.Framework.PackageManager
                     command.InPlace = optInPlace.HasValue();
                     command.Framework = optFramework.Value();
 
-                    var success = command.ExecuteCommand();
+                    var success = command.Execute();
 
                     return success ? 0 : 1;
                 });

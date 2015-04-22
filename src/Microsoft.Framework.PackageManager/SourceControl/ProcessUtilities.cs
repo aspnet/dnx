@@ -15,7 +15,7 @@ namespace Microsoft.Framework.PackageManager.SourceControl
         public static bool ExecutableExists(string executableName)
         {
             string whereApp;
-            if (PlatformHelper.IsWindows)
+            if (RuntimeEnvironmentHelper.IsWindows)
             {
                 whereApp = "where";
             }

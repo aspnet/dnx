@@ -164,7 +164,7 @@ namespace Microsoft.Framework.CommonTestUtils
             runtimeName = Path.GetFileNameWithoutExtension(runtimeNupkg);
             var runtimeRoot = Path.Combine(runtimeHomePath, "runtimes", runtimeName);
 
-            if (!PlatformHelper.IsMono)
+            if (!RuntimeEnvironmentHelper.IsMono)
             {
                 System.IO.Compression.ZipFile.ExtractToDirectory(runtimeNupkg, runtimeRoot);
             }
@@ -399,12 +399,7 @@ namespace Microsoft.Framework.CommonTestUtils
 
         private static bool IsWindows()
         {
-#if DNX451
-            var p = (int)Environment.OSVersion.Platform;
-            return (p != 4) && (p != 6) && (p != 128);
-#else
-            return PlatformHelper.IsWindows;
-#endif
+            return RuntimeEnvironmentHelper.IsWindows;
         }
 
         private static string RemoveAnsiColorCodes(string text)

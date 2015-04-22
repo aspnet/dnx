@@ -5,7 +5,7 @@ using System.Text;
 
 namespace Microsoft.Framework.Runtime
 {
-    internal static class RuntimeEnvironmentHelper
+    internal static class RuntimeEnvironmentExtensions
     {
         public static string GetFullVersion(this IRuntimeEnvironment env)
         {

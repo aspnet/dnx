@@ -141,7 +141,7 @@ namespace Microsoft.Framework.Runtime
         public static string GetReferenceAssembliesPath()
         {
 #if DNX451
-            if (PlatformHelper.IsMono)
+            if (RuntimeEnvironmentHelper.IsMono)
             {
                 var mscorlibLocationOnThisRunningMonoInstance = typeof(object).GetTypeInfo().Assembly.Location;
 
@@ -185,7 +185,8 @@ namespace Microsoft.Framework.Runtime
 
             // Skip this on mono since it has a slightly different set of reference assemblies at a different
             // location
-            if (!PlatformHelper.IsMono && FrameworkDefinitions.TryPopulateFrameworkFastPath(targetFramework.Identifier, targetFramework.Version, referenceAssembliesPath, out frameworkInfo))
+            if (!RuntimeEnvironmentHelper.IsMono
+                && FrameworkDefinitions.TryPopulateFrameworkFastPath(targetFramework.Identifier, targetFramework.Version, referenceAssembliesPath, out frameworkInfo))
             {
                 return frameworkInfo;
             }

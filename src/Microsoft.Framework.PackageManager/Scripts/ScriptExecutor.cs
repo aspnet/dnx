@@ -48,7 +48,7 @@ namespace Microsoft.Framework.PackageManager
                     continue;
                 }
 
-                if (!PlatformHelper.IsMono)
+                if (RuntimeEnvironmentHelper.IsWindows)
                 {
                     // Only forward slashes are used in script blocks. Replace with backslashes to correctly
                     // locate the script. The directory separator is platform-specific.

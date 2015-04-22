@@ -1,4 +1,4 @@
-// Copyright (c) .NET Foundation. All rights reserved.
+﻿// Copyright (c) .NET Foundation. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 using System;
@@ -30,7 +30,7 @@ namespace Microsoft.Framework.PackageManager
             // Work around a Mono issue that makes restore unbearably slow,
             // due to some form of contention when requests are processed
             // concurrently. Restoring sequentially is *much* faster in this case.
-            if (PlatformHelper.IsMono)
+            if (RuntimeEnvironmentHelper.IsMono)
             {
                 ServicePointManager.DefaultConnectionLimit = 1;
             }

@@ -75,6 +75,13 @@ namespace dnx.host
                 serviceProvider.Add(typeof(IRuntimeEnvironment), env);
 
                 CallContextServiceLocator.Locator.ServiceProvider = serviceProvider;
+#if DNX451
+                if (RuntimeEnvironmentHelper.IsMono)
+                {
+                    // Setting this value because of a Execution Context bug in older versions of Mono
+                    AppDomain.CurrentDomain.SetData("DNX_SERVICEPROVIDER", serviceProvider);
+                }
+#endif
 
                 var task = EntryPointExecutor.Execute(assembly, programArgs, serviceProvider);
 

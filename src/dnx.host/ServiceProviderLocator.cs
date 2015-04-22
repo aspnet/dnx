@@ -26,7 +26,8 @@ namespace dnx.host
 
                 if (handle == null)
                 {
-                    return null;
+                    // Using AppDomain because of an Execution Context bug in older versions of Mono
+                    return (IServiceProvider)AppDomain.CurrentDomain.GetData("DNX_SERVICEPROVIDER");
                 }
 
                 return handle.Unwrap() as IServiceProvider;

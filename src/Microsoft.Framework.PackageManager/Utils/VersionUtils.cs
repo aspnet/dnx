@@ -25,7 +25,7 @@ namespace Microsoft.Framework.PackageManager
 
             if (!string.IsNullOrEmpty(pathVariable))
             {
-                string dnuExecutable = PlatformHelper.IsWindows ? "dnu.cmd" : "dnu";
+                string dnuExecutable = RuntimeEnvironmentHelper.IsWindows ? "dnu.cmd" : "dnu";
 
                 foreach (string folder in pathVariable.Split(new char[] { Path.PathSeparator }, StringSplitOptions.RemoveEmptyEntries))
                 {

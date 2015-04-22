@@ -34,7 +34,7 @@ namespace Microsoft.Framework.PackageManager
                 runtimeRoot = Directory.EnumerateDirectories(Path.Combine(runtimeHomePath, "runtimes"), Constants.RuntimeNamePrefix + "*").First();
             }
 
-            if (TestUtils.CurrentRuntimeEnvironment.OperatingSystem != "Windows")
+            if (!RuntimeEnvironmentHelper.IsWindows)
             {
                 program = "bash";
                 commandLine = string.Format("{0} {1} {2}", Path.Combine(runtimeRoot, "bin", "dnu"), subcommand, arguments);

@@ -38,9 +38,8 @@ namespace Microsoft.Framework.PackageManager
 
         public static bool MarkExecutable(string file)
         {
-            if (PlatformHelper.IsWindows)
+            if (RuntimeEnvironmentHelper.IsWindows)
             {
-                // This makes sense only on non Windows machines
                 return false;
             }
 

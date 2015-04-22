@@ -65,8 +65,8 @@ namespace Microsoft.Framework.PackageManager
 
         public void Remove(string commandName)
         {
-            string commandFileName = commandName +
-                (PlatformHelper.IsWindows ? ".cmd" : string.Empty);
+            var commandFileName = commandName +
+                (RuntimeEnvironmentHelper.IsWindows ? ".cmd" : string.Empty);
 
             _commands.Remove(commandName);
             _commandsFolder.DeleteFile(commandFileName);
@@ -76,7 +76,7 @@ namespace Microsoft.Framework.PackageManager
         {
             _commands = new Dictionary<string, NuGet.PackageInfo>();
 
-            string pathFilter = PlatformHelper.IsWindows ? "*.cmd" : "*.*";
+            var pathFilter = RuntimeEnvironmentHelper.IsWindows ? "*.cmd" : "*.*";
 
             var allCommandFiles = _commandsFolder
                     .GetFiles(".", pathFilter, recursive: false)

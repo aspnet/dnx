@@ -30,7 +30,7 @@ namespace Microsoft.Framework.Runtime.Roslyn
                 { "CS1705", ReportDiagnostic.Suppress }
             });
 
-            if (PlatformHelper.IsMono)
+            if (RuntimeEnvironmentHelper.IsMono)
             {
                 options = options.WithConcurrentBuild(concurrentBuild: false);
             }
