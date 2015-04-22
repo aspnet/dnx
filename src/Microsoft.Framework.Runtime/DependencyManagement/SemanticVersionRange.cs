@@ -6,16 +6,19 @@ namespace Microsoft.Framework.Runtime
 {
     public class SemanticVersionRange : IEquatable<SemanticVersionRange>
     {
+        private readonly string _originalString;
+
         public SemanticVersionRange()
         {
         }
 
-        public SemanticVersionRange(IVersionSpec versionSpec)
+        public SemanticVersionRange(IVersionSpec versionSpec, string originalString = null)
         {
             MinVersion = versionSpec.MinVersion;
             MaxVersion = versionSpec.MaxVersion;
             VersionFloatBehavior = SemanticVersionFloatBehavior.None;
             IsMaxInclusive = versionSpec.IsMaxInclusive;
+            _originalString = originalString;
         }
 
         public SemanticVersionRange(SemanticVersion version)
@@ -28,6 +31,13 @@ namespace Microsoft.Framework.Runtime
         public SemanticVersion MaxVersion { get; set; }
         public SemanticVersionFloatBehavior VersionFloatBehavior { get; set; }
         public bool IsMaxInclusive { get; set; }
+        public string OriginalString
+        {
+            get
+            {
+                return _originalString;
+            }
+        }
 
         public override string ToString()
         {

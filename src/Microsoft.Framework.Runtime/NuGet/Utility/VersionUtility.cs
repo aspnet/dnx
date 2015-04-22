@@ -311,6 +311,7 @@ namespace NuGet
 
         public static SemanticVersionRange ParseVersionRange(string value)
         {
+            var originalString = value;
             var floatBehavior = SemanticVersionFloatBehavior.None;
 
             // Support snapshot versions
@@ -322,7 +323,7 @@ namespace NuGet
 
             var spec = ParseVersionSpec(value);
 
-            return new SemanticVersionRange(spec)
+            return new SemanticVersionRange(spec, originalString)
             {
                 VersionFloatBehavior = floatBehavior
             };

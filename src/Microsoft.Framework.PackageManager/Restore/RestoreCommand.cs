@@ -26,6 +26,7 @@ using LockFileFormat = NuGet.ProjectModel.LockFileFormat;
 using LockFile = NuGet.ProjectModel.LockFile;
 using ProjectFileDependencyGroup = NuGet.ProjectModel.ProjectFileDependencyGroup;
 using LibraryRange = NuGet.LibraryModel.LibraryRange;
+using LibraryDependency = NuGet.LibraryModel.LibraryDependency;
 
 namespace Microsoft.Framework.PackageManager
 {
@@ -487,55 +488,29 @@ namespace Microsoft.Framework.PackageManager
             lockFile.ProjectFileDependencyGroups.Add(new ProjectFileDependencyGroup(
                 string.Empty,
                 packageSpec.Dependencies
-                    .Where(x => x.LibraryRange.TypeConstraint != LibraryTypes.Reference)
-                    .Select(x => RuntimeStyleLibraryRangeToString(x.LibraryRange))));
+                    .Where(d => d.LibraryRange.TypeConstraint != LibraryTypes.Reference)
+                    .Select(d => DependencyToString(d))
+                    .OrderBy(s => s)));
 
             foreach (var frameworkInfo in packageSpec.TargetFrameworks)
             {
                 lockFile.ProjectFileDependencyGroups.Add(new ProjectFileDependencyGroup(
                     frameworkInfo.FrameworkName.ToString(),
                     frameworkInfo.Dependencies
-                        .Where(x => x.LibraryRange.TypeConstraint != LibraryTypes.Reference)
-                        .Select(x => RuntimeStyleLibraryRangeToString(x.LibraryRange))));
+                        .Where(d => d.LibraryRange.TypeConstraint != LibraryTypes.Reference)
+                        .Select(d => DependencyToString(d))
+                        .OrderBy(s => s)));
             }
 
             var lockFileFormat = new LockFileFormat();
             lockFileFormat.Write(projectLockFilePath, lockFile);
         }
 
-        // DNU REFACTORING TODO: temp hack to make generated lockfile work with runtime lockfile validation
-        private static string RuntimeStyleLibraryRangeToString(LibraryRange libraryRange)
+        private static string DependencyToString(LibraryDependency dependency)
         {
-            var sb = new System.Text.StringBuilder();
-            sb.Append(libraryRange.Name);
-            sb.Append(" ");
-
-            if (libraryRange.VersionRange == null)
-            {
-                return sb.ToString();
-            }
-
-            var minVersion = libraryRange.VersionRange.MinVersion;
-            var maxVersion = libraryRange.VersionRange.MaxVersion;
-
-            sb.Append(">= ");
-
-            if (libraryRange.VersionRange.IsFloating)
-            {
-                sb.Append(libraryRange.VersionRange.Float.ToString());
-            }
-            else
-            {
-                sb.Append(minVersion.ToString());
-            }
-
-            if (maxVersion != null)
-            {
-                sb.Append(libraryRange.VersionRange.IsMaxInclusive ? "<= " : "< ");
-                sb.Append(maxVersion.Version.ToString());
-            }
-
-            return sb.ToString();
+            return string.Format("{0} {1}",
+                dependency.Name,
+                dependency.LibraryRange.VersionRange.OriginalString);
         }
 
         private void AddRemoteProvidersFromSources(IList<IRemoteDependencyProvider> remoteProviders, List<PackageSource> effectiveSources)

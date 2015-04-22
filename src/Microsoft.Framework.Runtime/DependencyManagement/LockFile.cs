@@ -39,9 +39,9 @@ namespace Microsoft.Framework.Runtime.DependencyManagement
                 if (string.IsNullOrEmpty(group.FrameworkName))
                 {
                     actualDependencies = project.Dependencies
-                        .Where(x => !x.LibraryRange.IsGacOrFrameworkReference)
-                        .Select(x => x.LibraryRange.ToString())
-                        .OrderBy(x => x);
+                        .Where(d => !d.LibraryRange.IsGacOrFrameworkReference)
+                        .Select(d => DependencyToString(d))
+                        .OrderBy(s => s);
                 }
                 else
                 {
@@ -54,9 +54,9 @@ namespace Microsoft.Framework.Runtime.DependencyManagement
                     }
 
                     actualDependencies = framework.Dependencies
-                        .Where(x => !x.LibraryRange.IsGacOrFrameworkReference)
-                        .Select(d => d.LibraryRange.ToString())
-                        .OrderBy(x => x);
+                        .Where(d => !d.LibraryRange.IsGacOrFrameworkReference)
+                        .Select(d => DependencyToString(d))
+                        .OrderBy(s => s);
                 }
 
                 if (!actualDependencies.SequenceEqual(expectedDependencies))
@@ -66,6 +66,13 @@ namespace Microsoft.Framework.Runtime.DependencyManagement
             }
 
             return true;
+        }
+
+        private static string DependencyToString(LibraryDependency dependency)
+        {
+            return string.Format("{0} {1}",
+                dependency.Name,
+                dependency.LibraryRange.VersionRange.OriginalString);
         }
     }
 }
