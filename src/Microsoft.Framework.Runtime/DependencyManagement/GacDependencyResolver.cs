@@ -51,32 +51,25 @@ namespace Microsoft.Framework.Runtime
             var version = libraryRange.VersionRange?.MinVersion;
 
             string path;
-            if (!TryResolvePartialName(name, out path))
+            if (!TryResolvePartialName(name, version, out path))
             {
                 return null;
             }
 
-            SemanticVersion assemblyVersion = VersionUtility.GetAssemblyVersion(path);
+            _resolvedPaths[name] = path;
 
-            if (version == null || version == assemblyVersion)
+            return new LibraryDescription
             {
-                _resolvedPaths[name] = path;
-
-                return new LibraryDescription
+                LibraryRange = libraryRange,
+                Identity = new Library
                 {
-                    LibraryRange = libraryRange,
-                    Identity = new Library
-                    {
-                        Name = name,
-                        Version = assemblyVersion,
-                        IsGacOrFrameworkReference = true
-                    },
-                    LoadableAssemblies = new[] { name },
-                    Dependencies = Enumerable.Empty<LibraryDependency>()
-                };
-            }
-
-            return null;
+                    Name = name,
+                    Version = version,
+                    IsGacOrFrameworkReference = true
+                },
+                LoadableAssemblies = new[] { name },
+                Dependencies = Enumerable.Empty<LibraryDependency>()
+            };
         }
 
         public void Initialize(IEnumerable<LibraryDescription> dependencies, FrameworkName targetFramework, string runtimeIdentifier)
@@ -99,7 +92,7 @@ namespace Microsoft.Framework.Runtime
             return null;
         }
 
-        private bool TryResolvePartialName(string name, out string assemblyLocation)
+        private bool TryResolvePartialName(string name, SemanticVersion version, out string assemblyLocation)
         {
             foreach (var gacPath in GetGacSearchPaths())
             {
@@ -110,13 +103,19 @@ namespace Microsoft.Framework.Runtime
                     continue;
                 }
 
-                var match = di.EnumerateFiles("*.dll", SearchOption.AllDirectories)
-                                .FirstOrDefault(d => Path.GetFileNameWithoutExtension(d.Name).Equals(name, StringComparison.OrdinalIgnoreCase));
-
-                if (match != null)
+                foreach (var assemblyFile in di.EnumerateFiles("*.dll", SearchOption.AllDirectories))
                 {
-                    assemblyLocation = match.FullName;
-                    return true;
+                    if (!Path.GetFileNameWithoutExtension(assemblyFile.Name).Equals(name, StringComparison.OrdinalIgnoreCase))
+                    {
+                        continue;
+                    }
+
+                    SemanticVersion assemblyVersion = VersionUtility.GetAssemblyVersion(assemblyFile.FullName);
+                    if (version == null || assemblyVersion == version)
+                    {
+                        assemblyLocation = assemblyFile.FullName;
+                        return true;
+                    }
                 }
             }
 
