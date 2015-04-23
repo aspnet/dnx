@@ -9,12 +9,14 @@ using Microsoft.Framework.Runtime;
 using Microsoft.Framework.Runtime.DependencyManagement;
 using Xunit;
 
-namespace Microsoft.Framework.PackageManager
+namespace Microsoft.Framework.PackageManager.FunctionalTests
 {
+    [Collection(nameof(PackageManagerFunctionalTestCollection))]
     public class DnuPublishTests
     {
         private readonly string _projectName = "TestProject";
         private readonly string _outputDirName = "PublishOutput";
+        private readonly PackageManagerFunctionalTestFixture _fixture;
 
         private static readonly string BatchFileTemplate = @"
 @""{0}{1}.exe"" --appbase ""%~dp0approot\src\{2}"" Microsoft.Framework.ApplicationHost {3} %*
@@ -47,6 +49,11 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
   }
 }".Replace("LOCKFILEFORMAT_VERSION", LockFileFormat.Version.ToString());
 
+        public DnuPublishTests(PackageManagerFunctionalTestFixture fixture)
+        {
+            _fixture = fixture;
+        }
+
         public static IEnumerable<object[]> RuntimeComponents
         {
             get
@@ -75,7 +82,6 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
         [MemberData("RuntimeComponents")]
         public void DnuPublishWebApp_RootAsPublicFolder(string flavor, string os, string architecture)
         {
-            var runtimeHomeDir = TestUtils.GetRuntimeHomeDir(flavor, os, architecture);
 
             var projectStructure = @"{
   '.': ['project.json', 'Config.json', 'Program.cs', 'build_config1.bconfig'],
@@ -129,6 +135,8 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
                 Constants.WebConfigRuntimeVersion,
                 Constants.WebConfigRuntimeFlavor,
                 Constants.WebConfigRuntimeAppBase);
+
+            string runtimeHomeDir = _fixture.GetRuntimeHomeDir(flavor, os, architecture);
 
             using (var testEnv = new DnuTestEnvironment(runtimeHomeDir, _projectName, _outputDirName))
             {
@@ -186,7 +194,7 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
         [MemberData("RuntimeComponents")]
         public void DnuPublishWebApp_SubfolderAsPublicFolder(string flavor, string os, string architecture)
         {
-            var runtimeHomeDir = TestUtils.GetRuntimeHomeDir(flavor, os, architecture);
+            var runtimeHomeDir = _fixture.GetRuntimeHomeDir(flavor, os, architecture);
 
             var projectStructure = @"{
   '.': ['project.json', 'Config.json', 'Program.cs'],
@@ -288,7 +296,7 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
         [MemberData("RuntimeComponents")]
         public void DnuPublishConsoleApp(string flavor, string os, string architecture)
         {
-            var runtimeHomeDir = TestUtils.GetRuntimeHomeDir(flavor, os, architecture);
+            var runtimeHomeDir = _fixture.GetRuntimeHomeDir(flavor, os, architecture);
 
             var projectStructure = @"{
   '.': ['project.json', 'Config.json', 'Program.cs'],
@@ -358,7 +366,7 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
         [MemberData("RuntimeComponents")]
         public void FoldersAsFilePatternsAutoGlob(string flavor, string os, string architecture)
         {
-            var runtimeHomeDir = TestUtils.GetRuntimeHomeDir(flavor, os, architecture);
+            var runtimeHomeDir = _fixture.GetRuntimeHomeDir(flavor, os, architecture);
 
             var projectStructure = @"{
   '.': ['project.json', 'FileWithoutExtension'],
@@ -477,7 +485,7 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
         [MemberData("RuntimeComponents")]
         public void WildcardMatchingFacts(string flavor, string os, string architecture)
         {
-            var runtimeHomeDir = TestUtils.GetRuntimeHomeDir(flavor, os, architecture);
+            var runtimeHomeDir = _fixture.GetRuntimeHomeDir(flavor, os, architecture);
 
             var projectStructure = @"{
   '.': ['project.json'],
@@ -576,7 +584,7 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
         [MemberData("RuntimeComponents")]
         public void CorrectlyExcludeFoldersStartingWithDots(string flavor, string os, string architecture)
         {
-            var runtimeHomeDir = TestUtils.GetRuntimeHomeDir(flavor, os, architecture);
+            var runtimeHomeDir = _fixture.GetRuntimeHomeDir(flavor, os, architecture);
 
             var projectStructure = @"{
   '.': ['project.json', 'File', '.FileStartingWithDot', 'File.Having.Dots'],
@@ -675,7 +683,7 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
         [MemberData("RuntimeComponents")]
         public void VerifyDefaultPublishExcludePatterns(string flavor, string os, string architecture)
         {
-            var runtimeHomeDir = TestUtils.GetRuntimeHomeDir(flavor, os, architecture);
+            var runtimeHomeDir = _fixture.GetRuntimeHomeDir(flavor, os, architecture);
 
             var projectStructure = @"{
   '.': ['project.json', 'File', '.FileStartingWithDot'],
@@ -751,7 +759,7 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
         [MemberData("RuntimeComponents")]
         public void DnuPublishWebApp_CopyExistingWebConfig(string flavor, string os, string architecture)
         {
-            var runtimeHomeDir = TestUtils.GetRuntimeHomeDir(flavor, os, architecture);
+            var runtimeHomeDir = _fixture.GetRuntimeHomeDir(flavor, os, architecture);
 
             var projectStructure = @"{
   '.': ['project.json'],
@@ -839,7 +847,7 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
         [MemberData("RuntimeComponents")]
         public void DnuPublishWebApp_UpdateExistingWebConfig(string flavor, string os, string architecture)
         {
-            var runtimeHomeDir = TestUtils.GetRuntimeHomeDir(flavor, os, architecture);
+            var runtimeHomeDir = _fixture.GetRuntimeHomeDir(flavor, os, architecture);
 
             var projectStructure = @"{
   '.': ['project.json'],
@@ -941,7 +949,7 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
         [MemberData("RuntimeComponents")]
         public void GenerateBatchFilesAndBashScriptsWithoutPublishedRuntime(string flavor, string os, string architecture)
         {
-            var runtimeHomeDir = TestUtils.GetRuntimeHomeDir(flavor, os, architecture);
+            var runtimeHomeDir = _fixture.GetRuntimeHomeDir(flavor, os, architecture);
 
             var projectStructure = @"{
   '.': ['project.json'],
@@ -1032,7 +1040,7 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
         [MemberData("RuntimeComponents")]
         public void GenerateBatchFilesAndBashScriptsWithPublishedRuntime(string flavor, string os, string architecture)
         {
-            var runtimeHomeDir = TestUtils.GetRuntimeHomeDir(flavor, os, architecture);
+            var runtimeHomeDir = _fixture.GetRuntimeHomeDir(flavor, os, architecture);
 
             // Each runtime home only contains one runtime package, which is the one we are currently testing against
             var runtimeRoot = Directory.EnumerateDirectories(Path.Combine(runtimeHomeDir, "runtimes"), Constants.RuntimeNamePrefix + "*").First();
@@ -1204,7 +1212,8 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
   }
 }".Replace("LOCKFILEFORMAT_VERSION", LockFileFormat.Version.ToString());
 
-            using (var runtimeHomeDir = TestUtils.GetRuntimeHomeDir(flavor, os, architecture))
+            var runtimeHomeDir = _fixture.GetRuntimeHomeDir(flavor, os, architecture);
+
             using (var tempDir = TestUtils.CreateTempDir())
             {
                 var publishOutputPath = Path.Combine(tempDir, "output");
@@ -1309,7 +1318,8 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
 }".Replace("LOCKFILEFORMAT_VERSION", LockFileFormat.Version.ToString())
 .Replace("LOCKFILE_NAME", LockFileFormat.LockFileName);
 
-            using (var runtimeHomeDir = TestUtils.GetRuntimeHomeDir(flavor, os, architecture))
+            var runtimeHomeDir = _fixture.GetRuntimeHomeDir(flavor, os, architecture);
+
             using (var tempDir = TestUtils.CreateTempDir())
             {
                 var publishOutputPath = Path.Combine(tempDir, "output");
@@ -1353,7 +1363,7 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
         [MemberData("RuntimeComponents")]
         public void PublishExcludeWithLongPath(string flavor, string os, string architecture)
         {
-            var runtimeHomeDir = TestUtils.GetRuntimeHomeDir(flavor, os, architecture);
+            var runtimeHomeDir = _fixture.GetRuntimeHomeDir(flavor, os, architecture);
 
             var projectStructure = @"{
   '.': ['project.json', 'Config.json', 'Program.cs'],

@@ -11,14 +11,15 @@ using Xunit;
 
 namespace Microsoft.Framework.PackageManager.FunctionalTests
 {
-    public class DnuListTests : IClassFixture<DnuListTestContext>, IDisposable
+    [Collection(nameof(PackageManagerFunctionalTestCollection))]
+    public class DnuListTests : IDisposable
     {
-        private readonly DnuListTestContext _context;
+        private readonly PackageManagerFunctionalTestFixture _fixture;
         private readonly DisposableDir _workingDir;
 
-        public DnuListTests(DnuListTestContext context)
+        public DnuListTests(PackageManagerFunctionalTestFixture fixture)
         {
-            _context = context;
+            _fixture = fixture;
             _workingDir = TestUtils.CreateTempDir();
         }
 
@@ -37,7 +38,7 @@ namespace Microsoft.Framework.PackageManager.FunctionalTests
         public void DnuList_EmptyProject_Default(string flavor, string os, string architecture)
         {
             string stdOut, stdErr;
-            var runtimeHomePath = _context.GetRuntimeHome(flavor, os, architecture);
+            var runtimeHomePath = _fixture.GetRuntimeHomeDir(flavor, os, architecture);
             var expectedTitle = string.Format(
                 @"Listing dependencies for {0} ({1})",
                 Path.GetFileName(_workingDir.DirPath),
@@ -58,7 +59,7 @@ namespace Microsoft.Framework.PackageManager.FunctionalTests
         public void DnuList_EmptyProject_Details(string flavor, string os, string architecture)
         {
             string stdOut, stdErr;
-            var runtimeHomePath = _context.GetRuntimeHome(flavor, os, architecture);
+            var runtimeHomePath = _fixture.GetRuntimeHomeDir(flavor, os, architecture);
             var expectedTitle = string.Format(
                 @"Listing dependencies for {0} ({1})",
                 Path.GetFileName(_workingDir.DirPath),
@@ -79,7 +80,7 @@ namespace Microsoft.Framework.PackageManager.FunctionalTests
         public void DnuList_SingleDependencyProject(string flavor, string os, string architecture)
         {
             string stdOut, stdErr;
-            var runtimeHomePath = _context.GetRuntimeHome(flavor, os, architecture);
+            var runtimeHomePath = _fixture.GetRuntimeHomeDir(flavor, os, architecture);
 
             CreateProjectJson(new
             {
@@ -95,7 +96,7 @@ namespace Microsoft.Framework.PackageManager.FunctionalTests
             });
 
             // restore the packages
-            Assert.Equal(0, DnuTestUtils.ExecDnu(runtimeHomePath, "restore", "--source " + _context.PackageSource, workingDir: _workingDir.DirPath));
+            Assert.Equal(0, DnuTestUtils.ExecDnu(runtimeHomePath, "restore", "--source " + _fixture.PackageSource, workingDir: _workingDir.DirPath));
 
             // run dnu list
             Assert.Equal(0, DnuTestUtils.ExecDnu(runtimeHomePath, "list", "", out stdOut, out stdErr, environment: null, workingDir: _workingDir.DirPath));
@@ -111,7 +112,7 @@ namespace Microsoft.Framework.PackageManager.FunctionalTests
         public void DnuList_SingleDependencyProject_Detailed(string flavor, string os, string architecture)
         {
             string stdOut, stdErr;
-            var runtimeHomePath = _context.GetRuntimeHome(flavor, os, architecture);
+            var runtimeHomePath = _fixture.GetRuntimeHomeDir(flavor, os, architecture);
             var projectName = Path.GetFileName(_workingDir.DirPath);
 
             CreateProjectJson(new
@@ -128,7 +129,7 @@ namespace Microsoft.Framework.PackageManager.FunctionalTests
             });
 
             // restore the packages
-            Assert.Equal(0, DnuTestUtils.ExecDnu(runtimeHomePath, "restore", "--source " + _context.PackageSource, workingDir: _workingDir.DirPath));
+            Assert.Equal(0, DnuTestUtils.ExecDnu(runtimeHomePath, "restore", "--source " + _fixture.PackageSource, workingDir: _workingDir.DirPath));
 
             // run dnu list
             Assert.Equal(0, DnuTestUtils.ExecDnu(runtimeHomePath, "list", "--details", out stdOut, out stdErr, environment: null, workingDir: _workingDir.DirPath));
@@ -154,7 +155,7 @@ namespace Microsoft.Framework.PackageManager.FunctionalTests
         public void DnuList_Unresolved(string flavor, string os, string architecture)
         {
             string stdOut, stdErr;
-            var runtimeHomePath = _context.GetRuntimeHome(flavor, os, architecture);
+            var runtimeHomePath = _fixture.GetRuntimeHomeDir(flavor, os, architecture);
             var projectName = Path.GetFileName(_workingDir.DirPath);
 
             CreateProjectJson(new
@@ -172,7 +173,7 @@ namespace Microsoft.Framework.PackageManager.FunctionalTests
             });
 
             // restore the packages, it should fail because missing package beta
-            Assert.Equal(1, DnuTestUtils.ExecDnu(runtimeHomePath, "restore", "--source " + _context.PackageSource, workingDir: _workingDir.DirPath));
+            Assert.Equal(1, DnuTestUtils.ExecDnu(runtimeHomePath, "restore", "--source " + _fixture.PackageSource, workingDir: _workingDir.DirPath));
 
             // run dnu list
             Assert.Equal(0, DnuTestUtils.ExecDnu(runtimeHomePath, "list", "", out stdOut, out stdErr, environment: null, workingDir: _workingDir.DirPath));

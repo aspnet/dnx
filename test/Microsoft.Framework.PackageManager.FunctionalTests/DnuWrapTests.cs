@@ -1,18 +1,20 @@
 // Copyright (c) .NET Foundation. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
-using System;
-using System.IO;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using Microsoft.Framework.CommonTestUtils;
 using Microsoft.Framework.Runtime;
 using Xunit;
 
-namespace Microsoft.Framework.PackageManager
+namespace Microsoft.Framework.PackageManager.FunctionalTests
 {
+    [Collection(nameof(PackageManagerFunctionalTestCollection))]
     public class DnuWrapTests
     {
+        private readonly PackageManagerFunctionalTestFixture _fixture;
+
         public static IEnumerable<object[]> RuntimeComponents
         {
             get
@@ -23,11 +25,16 @@ namespace Microsoft.Framework.PackageManager
 
         public static readonly string _msbuildPath = TestUtils.ResolveMSBuildPath();
 
+        public DnuWrapTests(PackageManagerFunctionalTestFixture fixture)
+        {
+            _fixture = fixture;
+        }
+
         [Theory]
         [MemberData("RuntimeComponents")]
         public void DnuWrapUpdatesExistingProjectJson(string flavor, string os, string architecture)
         {
-            var runtimeHomeDir = TestUtils.GetRuntimeHomeDir(flavor, os, architecture);
+            var runtimeHomeDir = _fixture.GetRuntimeHomeDir(flavor, os, architecture);
 
             if (PlatformHelper.IsMono)
             {
@@ -64,7 +71,7 @@ namespace Microsoft.Framework.PackageManager
             var expectedGlobalJson = @"{
     ""projects"": [ ""src"", ""test"" ]
 }";
-            using (runtimeHomeDir)
+
             using (var testSolutionDir = TestUtils.GetTempTestSolution("ConsoleApp1"))
             {
                 var libBetaPclCsprojPath = Path.Combine(testSolutionDir, "LibraryBeta.PCL", "LibraryBeta.PCL.csproj");
@@ -103,7 +110,7 @@ namespace Microsoft.Framework.PackageManager
         [MemberData("RuntimeComponents")]
         public void DnuWrapMaintainsAllKindsOfReferences(string flavor, string os, string architecture)
         {
-            var runtimeHomeDir = TestUtils.GetRuntimeHomeDir(flavor, os, architecture);
+            var runtimeHomeDir = _fixture.GetRuntimeHomeDir(flavor, os, architecture);
 
             if (PlatformHelper.IsMono)
             {
@@ -156,7 +163,7 @@ namespace Microsoft.Framework.PackageManager
     ""wrap""
   ]
 }";
-            using (runtimeHomeDir)
+
             using (var testSolutionDir = TestUtils.GetTempTestSolution("ConsoleApp1"))
             {
                 var libGammaCsprojPath = Path.Combine(testSolutionDir, "LibraryGamma", "LibraryGamma.csproj");
@@ -184,7 +191,7 @@ namespace Microsoft.Framework.PackageManager
         [MemberData("RuntimeComponents")]
         public void DnuWrapInPlaceCreateCsprojWrappersInPlace(string flavor, string os, string architecture)
         {
-            var runtimeHomeDir = TestUtils.GetRuntimeHomeDir(flavor, os, architecture);
+            var runtimeHomeDir = _fixture.GetRuntimeHomeDir(flavor, os, architecture);
 
             if (PlatformHelper.IsMono)
             {
@@ -238,7 +245,7 @@ namespace Microsoft.Framework.PackageManager
     "".""
   ]
 }";
-            using (runtimeHomeDir)
+
             using (var testSolutionDir = TestUtils.GetTempTestSolution("ConsoleApp1"))
             {
                 var libGammaCsprojPath = Path.Combine(testSolutionDir, "LibraryGamma", "LibraryGamma.csproj");

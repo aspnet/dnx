@@ -11,8 +11,16 @@ using Xunit;
 
 namespace Bootstrapper.FunctionalTests
 {
+    [Collection("BootstrapperTestCollection")]
     public class BootstrapperTests
     {
+        private readonly DnxRuntimeFixture _fixture;
+
+        public BootstrapperTests(DnxRuntimeFixture fixture)
+        {
+            _fixture = fixture;
+        }
+
         public static IEnumerable<object[]> RuntimeComponents
         {
             get
@@ -41,59 +49,58 @@ namespace Bootstrapper.FunctionalTests
         [MemberData("RuntimeComponents")]
         public void BootstrapperReturnsNonZeroExitCodeWhenNoArgumentWasGiven(string flavor, string os, string architecture)
         {
-            using (var runtimeHomeDir = TestUtils.GetRuntimeHomeDir(flavor, os, architecture))
-            {
-                string stdOut, stdErr;
-                var exitCode = BootstrapperTestUtils.ExecBootstrapper(
-                    runtimeHomeDir,
-                    arguments: string.Empty,
-                    stdOut: out stdOut,
-                    stdErr: out stdErr);
+            var runtimeHomeDir = _fixture.GetRuntimeHomeDir(flavor, os, architecture);
 
-                Assert.NotEqual(0, exitCode);
-            }
+            string stdOut, stdErr;
+            var exitCode = BootstrapperTestUtils.ExecBootstrapper(
+                runtimeHomeDir,
+                arguments: string.Empty,
+                stdOut: out stdOut,
+                stdErr: out stdErr);
+
+            Assert.NotEqual(0, exitCode);
         }
 
         [Theory]
         [MemberData("RuntimeComponents")]
         public void BootstrapperReturnsZeroExitCodeWhenHelpOptionWasGiven(string flavor, string os, string architecture)
         {
-            using (var runtimeHomeDir = TestUtils.GetRuntimeHomeDir(flavor, os, architecture))
-            {
-                string stdOut, stdErr;
-                var exitCode = BootstrapperTestUtils.ExecBootstrapper(
-                    runtimeHomeDir,
-                    arguments: "--help",
-                    stdOut: out stdOut,
-                    stdErr: out stdErr);
+            var runtimeHomeDir = _fixture.GetRuntimeHomeDir(flavor, os, architecture);
 
-                Assert.Equal(0, exitCode);
-            }
+            string stdOut, stdErr;
+            var exitCode = BootstrapperTestUtils.ExecBootstrapper(
+                runtimeHomeDir,
+                arguments: "--help",
+                stdOut: out stdOut,
+                stdErr: out stdErr);
+
+            Assert.Equal(0, exitCode);
         }
 
         [Theory]
         [MemberData("RuntimeComponents")]
         public void BootstrapperShowsVersionAndReturnsZeroExitCodeWhenVersionOptionWasGiven(string flavor, string os, string architecture)
         {
-            using (var runtimeHomeDir = TestUtils.GetRuntimeHomeDir(flavor, os, architecture))
-            {
-                string stdOut, stdErr;
-                var exitCode = BootstrapperTestUtils.ExecBootstrapper(
-                    runtimeHomeDir,
-                    arguments: "--version",
-                    stdOut: out stdOut,
-                    stdErr: out stdErr);
+            var runtimeHomeDir = _fixture.GetRuntimeHomeDir(flavor, os, architecture);
 
-                Assert.Equal(0, exitCode);
-                Assert.Contains(TestUtils.GetRuntimeVersion(), stdOut);
-            }
+            string stdOut, stdErr;
+            var exitCode = BootstrapperTestUtils.ExecBootstrapper(
+                runtimeHomeDir,
+                arguments: "--version",
+                stdOut: out stdOut,
+                stdErr: out stdErr);
+
+            Assert.Equal(0, exitCode);
+            Assert.Contains(TestUtils.GetRuntimeVersion(), stdOut);
+
         }
 
         [Theory]
         [MemberData("RuntimeComponents")]
         public void BootstrapperInvokesApplicationHostWithInferredAppBase_ProjectDirAsArgument(string flavor, string os, string architecture)
         {
-            using (var runtimeHomeDir = TestUtils.GetRuntimeHomeDir(flavor, os, architecture))
+            var runtimeHomeDir = TestUtils.GetRuntimeHomeDir(flavor, os, architecture);
+
             using (var tempSamplesDir = BootstrapperTestUtils.PrepareTemporarySamplesFolder(runtimeHomeDir))
             {
                 var testAppPath = Path.Combine(tempSamplesDir, "HelloWorld");
@@ -123,7 +130,8 @@ command
         [MemberData("RuntimeComponents")]
         public void BootstrapperInvokesApplicationHostWithInferredAppBase_ProjectFileAsArgument(string flavor, string os, string architecture)
         {
-            using (var runtimeHomeDir = TestUtils.GetRuntimeHomeDir(flavor, os, architecture))
+            var runtimeHomeDir = TestUtils.GetRuntimeHomeDir(flavor, os, architecture);
+
             using (var tempSamplesDir = BootstrapperTestUtils.PrepareTemporarySamplesFolder(runtimeHomeDir))
             {
                 var testAppPath = Path.Combine(tempSamplesDir, "HelloWorld");
@@ -155,8 +163,8 @@ command
         public void BootstrapperInvokesAssemblyWithInferredAppBaseAndLibPathOnClr(string flavor, string os, string architecture)
         {
             var outputFolder = flavor == "coreclr" ? "dnxcore50" : "dnx451";
+            var runtimeHomeDir = _fixture.GetRuntimeHomeDir(flavor, os, architecture);
 
-            using (var runtimeHomeDir = TestUtils.GetRuntimeHomeDir(flavor, os, architecture))
             using (var tempSamplesDir = BootstrapperTestUtils.PrepareTemporarySamplesFolder(runtimeHomeDir))
             using (var tempDir = TestUtils.CreateTempDir())
             {

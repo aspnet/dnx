@@ -2,39 +2,23 @@
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Microsoft.Framework.CommonTestUtils;
 
 namespace Microsoft.Framework.PackageManager.FunctionalTests
 {
-    public class DnuListTestContext : IDisposable
+    public class PackageManagerFunctionalTestFixture : DnxRuntimeFixture
     {
-        private readonly IDictionary<Tuple<string, string, string>, DisposableDir> _runtimeHomeDirs =
-            new Dictionary<Tuple<string, string, string>, DisposableDir>();
-
         private readonly DisposableDir _contextDir;
 
-        public DnuListTestContext()
+        public PackageManagerFunctionalTestFixture() : base()
         {
             _contextDir = TestUtils.CreateTempDir();
             PackageSource = Path.Combine(_contextDir.DirPath, "packages");
             Directory.CreateDirectory(PackageSource);
 
             CreateNewPackage("alpha", "0.1.0");
-        }
-
-        public string GetRuntimeHome(string flavor, string os, string architecture)
-        {
-            DisposableDir result;
-            if (!_runtimeHomeDirs.TryGetValue(Tuple.Create(flavor, os, architecture), out result))
-            {
-                result = TestUtils.GetRuntimeHomeDir(flavor, os, architecture);
-                _runtimeHomeDirs.Add(Tuple.Create(flavor, os, architecture), result);
-            }
-
-            return result.DirPath;
         }
 
         public string PackageSource { get; }
@@ -47,9 +31,9 @@ namespace Microsoft.Framework.PackageManager.FunctionalTests
                 throw new InvalidOperationException("Can't find a CLR runtime to pack test packages.");
             }
 
-            var runtimeHomePath = GetRuntimeHome((string)runtimeForPacking[0],
-                                                 (string)runtimeForPacking[1],
-                                                 (string)runtimeForPacking[2]);
+            var runtimeHomePath = base.GetRuntimeHomeDir((string)runtimeForPacking[0],
+                                                         (string)runtimeForPacking[1],
+                                                         (string)runtimeForPacking[2]);
 
             using (var tempdir = TestUtils.CreateTempDir())
             {
@@ -68,12 +52,9 @@ namespace Microsoft.Framework.PackageManager.FunctionalTests
             }
         }
 
-        public void Dispose()
+        public override void Dispose()
         {
-            foreach (var each in _runtimeHomeDirs.Values)
-            {
-                each.Dispose();
-            }
+            base.Dispose();
 
             _contextDir.Dispose();
         }

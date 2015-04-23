@@ -11,9 +11,9 @@ namespace Microsoft.Framework.PackageManager
     {
         private readonly string _projectName;
         private readonly string _outputDirName;
-        private readonly DisposableDir _runtimePath;
+        private readonly string _runtimePath;
 
-        public DnuTestEnvironment(DisposableDir runtimePath, string projectName = null, string outputDirName = null)
+        public DnuTestEnvironment(string runtimePath, string projectName = null, string outputDirName = null)
         {
             _projectName = projectName ?? "ProjectName";
             _outputDirName = outputDirName ?? "OutputDirName";
@@ -58,8 +58,6 @@ namespace Microsoft.Framework.PackageManager
         public void Dispose()
         {
             TestUtils.DeleteFolder(RootDir);
-
-            _runtimePath?.Dispose();
         }
     }
 }

@@ -14,8 +14,16 @@ using Xunit;
 
 namespace Microsoft.Framework.ApplicationHost
 {
+    [Collection("ApplicationHostTestCollection")]
     public class AppHostTests
     {
+        private readonly DnxRuntimeFixture _fixture;
+
+        public AppHostTests(DnxRuntimeFixture fixture)
+        {
+            _fixture = fixture;
+        }
+
         public static IEnumerable<object[]> RuntimeComponents
         {
             get
@@ -28,59 +36,57 @@ namespace Microsoft.Framework.ApplicationHost
         [MemberData("RuntimeComponents")]
         public void AppHostReturnsNonZeroExitCodeWhenNoSubCommandWasGiven(string flavor, string os, string architecture)
         {
-            using (var runtimeHomeDir = TestUtils.GetRuntimeHomeDir(flavor, os, architecture))
-            {
-                string stdOut, stdErr;
-                var exitCode = BootstrapperTestUtils.ExecBootstrapper(
-                    runtimeHomeDir,
-                    arguments: ".",
-                    stdOut: out stdOut,
-                    stdErr: out stdErr);
+            var runtimeHomeDir = _fixture.GetRuntimeHomeDir(flavor, os, architecture);
 
-                Assert.NotEqual(0, exitCode);
-            }
+            string stdOut, stdErr;
+            var exitCode = BootstrapperTestUtils.ExecBootstrapper(
+                runtimeHomeDir,
+                arguments: ".",
+                stdOut: out stdOut,
+                stdErr: out stdErr);
+
+            Assert.NotEqual(0, exitCode);
         }
 
         [Theory]
         [MemberData("RuntimeComponents")]
         public void AppHostReturnsZeroExitCodeWhenHelpOptionWasGiven(string flavor, string os, string architecture)
         {
-            using (var runtimeHomeDir = TestUtils.GetRuntimeHomeDir(flavor, os, architecture))
-            {
-                string stdOut, stdErr;
-                var exitCode = BootstrapperTestUtils.ExecBootstrapper(
-                    runtimeHomeDir,
-                    arguments: ". --help",
-                    stdOut: out stdOut,
-                    stdErr: out stdErr);
+            var runtimeHomeDir = _fixture.GetRuntimeHomeDir(flavor, os, architecture);
 
-                Assert.Equal(0, exitCode);
-            }
+            string stdOut, stdErr;
+            var exitCode = BootstrapperTestUtils.ExecBootstrapper(
+                runtimeHomeDir,
+                arguments: ". --help",
+                stdOut: out stdOut,
+                stdErr: out stdErr);
+
+            Assert.Equal(0, exitCode);
         }
 
         [Theory]
         [MemberData("RuntimeComponents")]
         public void AppHostShowsVersionAndReturnsZeroExitCodeWhenVersionOptionWasGiven(string flavor, string os, string architecture)
         {
-            using (var runtimeHomeDir = TestUtils.GetRuntimeHomeDir(flavor, os, architecture))
-            {
-                string stdOut, stdErr;
-                var exitCode = BootstrapperTestUtils.ExecBootstrapper(
-                    runtimeHomeDir,
-                    arguments: ". --version",
-                    stdOut: out stdOut,
-                    stdErr: out stdErr);
+            var runtimeHomeDir = _fixture.GetRuntimeHomeDir(flavor, os, architecture);
 
-                Assert.Equal(0, exitCode);
-                Assert.Contains(TestUtils.GetRuntimeVersion(), stdOut);
-            }
+            string stdOut, stdErr;
+            var exitCode = BootstrapperTestUtils.ExecBootstrapper(
+                runtimeHomeDir,
+                arguments: ". --version",
+                stdOut: out stdOut,
+                stdErr: out stdErr);
+
+            Assert.Equal(0, exitCode);
+            Assert.Contains(TestUtils.GetRuntimeVersion(), stdOut);
         }
 
         [Theory]
         [MemberData("RuntimeComponents")]
         public void AppHostShowsErrorWhenNoProjectJsonWasFound(string flavor, string os, string architecture)
         {
-            using (var runtimeHomeDir = TestUtils.GetRuntimeHomeDir(flavor, os, architecture))
+            var runtimeHomeDir = _fixture.GetRuntimeHomeDir(flavor, os, architecture);
+
             using (var emptyFolder = TestUtils.CreateTempDir())
             {
                 string stdOut, stdErr;
@@ -99,12 +105,11 @@ namespace Microsoft.Framework.ApplicationHost
         [MemberData("RuntimeComponents")]
         public void AppHostShowsErrorWhenGivenSubcommandWasNotFoundInProjectJson(string flavor, string os, string architecture)
         {
-            var runtimeHomeDir = TestUtils.GetRuntimeHomeDir(flavor, os, architecture);
+            var runtimeHomeDir = _fixture.GetRuntimeHomeDir(flavor, os, architecture);
             var projectStructure = @"{
   'project.json': '{ }'
 }";
 
-            using (runtimeHomeDir)
             using (var projectPath = TestUtils.CreateTempDir())
             {
                 DirTree.CreateFromJson(projectStructure).WriteTo(projectPath);
