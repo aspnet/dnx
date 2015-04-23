@@ -62,21 +62,6 @@ namespace Microsoft.Framework.Runtime
                                            new MemoryStream(_response.PdbBytes));
         }
 
-        public void EmitReferenceAssembly(Stream stream)
-        {
-            if (_response.AssemblyPath != null)
-            {
-                using (var fs = File.OpenRead(_response.AssemblyPath))
-                {
-                    fs.CopyTo(stream);
-                }
-            }
-            else
-            {
-                stream.Write(_response.AssemblyBytes, 0, _response.AssemblyBytes.Length);
-            }
-        }
-
         public IDiagnosticResult EmitAssembly(string outputPath)
         {
             throw new NotSupportedException();
