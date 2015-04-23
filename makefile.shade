@@ -934,6 +934,17 @@ functions @{
     void KTest(string projectFolder)
     {
         projectFolder = Path.GetDirectoryName(projectFolder);
+
+        // Make sure we use the newly built runtime to generate lock file for tests
+        if (IsMono)
+        {
+            Exec("dnu", string.Format("restore {0}", projectFolder));
+        }
+        else
+        {
+            Exec("cmd", string.Format("/C dnu restore {0}", projectFolder));
+        }
+
         var testArgs = IsMono ? " -parallel none" : "";
         K(("test" + testArgs), projectFolder, "");
     }

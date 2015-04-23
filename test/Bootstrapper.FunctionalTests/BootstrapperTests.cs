@@ -1,6 +1,7 @@
 ﻿// Copyright (c) Microsoft Open Technologies, Inc. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
+using System;
 using System.Collections.Generic;
 using System.IO;
 using Microsoft.Framework.CommonTestUtils;
@@ -93,12 +94,14 @@ namespace Bootstrapper.FunctionalTests
         public void BootstrapperInvokesApplicationHostWithInferredAppBase_ProjectDirAsArgument(string flavor, string os, string architecture)
         {
             using (var runtimeHomeDir = TestUtils.GetRuntimeHomeDir(flavor, os, architecture))
+            using (var tempSamplesDir = BootstrapperTestUtils.PrepareTemporarySamplesFolder(runtimeHomeDir))
             {
-                var sampleAppRoot = Path.Combine(TestUtils.GetSamplesFolder(), "HelloWorld");
+                var testAppPath = Path.Combine(tempSamplesDir, "HelloWorld");
+
                 string stdOut, stdErr;
                 var exitCode = BootstrapperTestUtils.ExecBootstrapper(
                     runtimeHomeDir,
-                    arguments: string.Format("{0} run", sampleAppRoot),
+                    arguments: string.Format("{0} run", testAppPath),
                     stdOut: out stdOut,
                     stdErr: out stdErr,
                     environment: new Dictionary<string, string> { { EnvironmentNames.Trace, null } });
@@ -121,12 +124,15 @@ command
         public void BootstrapperInvokesApplicationHostWithInferredAppBase_ProjectFileAsArgument(string flavor, string os, string architecture)
         {
             using (var runtimeHomeDir = TestUtils.GetRuntimeHomeDir(flavor, os, architecture))
+            using (var tempSamplesDir = BootstrapperTestUtils.PrepareTemporarySamplesFolder(runtimeHomeDir))
             {
-                var sampleAppProjectFile = Path.Combine(TestUtils.GetSamplesFolder(), "HelloWorld", Project.ProjectFileName);
+                var testAppPath = Path.Combine(tempSamplesDir, "HelloWorld");
+                var testAppProjectFile = Path.Combine(testAppPath, Project.ProjectFileName);
+
                 string stdOut, stdErr;
                 var exitCode = BootstrapperTestUtils.ExecBootstrapper(
                     runtimeHomeDir,
-                    arguments: string.Format("{0} run", sampleAppProjectFile),
+                    arguments: string.Format("{0} run", testAppProjectFile),
                     stdOut: out stdOut,
                     stdErr: out stdErr,
                     environment: new Dictionary<string, string> { { EnvironmentNames.Trace, null } });
@@ -151,19 +157,25 @@ command
             var outputFolder = flavor == "coreclr" ? "dnxcore50" : "dnx451";
 
             using (var runtimeHomeDir = TestUtils.GetRuntimeHomeDir(flavor, os, architecture))
+            using (var tempSamplesDir = BootstrapperTestUtils.PrepareTemporarySamplesFolder(runtimeHomeDir))
             using (var tempDir = TestUtils.CreateTempDir())
             {
-                var samplesPath = TestUtils.GetSamplesFolder();
-                var sampleAppRoot = Path.Combine(samplesPath, "HelloWorld");
+                var sampleAppRoot = Path.Combine(tempSamplesDir, "HelloWorld");
 
+                string stdOut, stdErr;
                 var exitCode = DnuTestUtils.ExecDnu(
                     runtimeHomeDir,
                     subcommand: "build",
-                    arguments: string.Format("{0} --configuration=Release --out {1}", sampleAppRoot, tempDir.DirPath));
+                    arguments: string.Format("{0} --configuration=Release --out {1}", sampleAppRoot, tempDir),
+                    stdOut: out stdOut,
+                    stdErr: out stdErr);
 
-                Assert.Equal(0, exitCode);
+                if (exitCode != 0)
+                {
+                    Console.WriteLine(stdOut);
+                    Console.WriteLine(stdErr);
+                }
 
-                string stdOut, stdErr;
                 exitCode = BootstrapperTestUtils.ExecBootstrapper(
                     runtimeHomeDir,
                     arguments: Path.Combine(tempDir, "Release", outputFolder, "HelloWorld.dll"),
