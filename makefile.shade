@@ -139,7 +139,7 @@ var RUNTIME_TARGETS='${new List<RuntimeTarget>()}'
 #build-darwin if='!CanBuildForDarwin'
 
 #package-darwin target='package-runtime' if='CanBuildForDarwin'
-#package-darwin if='!CanBuildForDarwin'
+#package-darwin if='CanBuildForDarwin'
 
 #build-linux target='build-compile' if='CanBuildForLinux'
 #build-linux if='!CanBuildForLinux'
@@ -705,6 +705,28 @@ var CI_LINUX_DROP_PATH = '${Environment.GetEnvironmentVariable("CI_LINUX_DROP_PA
     @{
         FixShFiles(RUNTIME_CORECLR_DARWIN_x64_BIN);
     }
+
+var CI_DARWIN_DROP_PATH = '${Environment.GetEnvironmentVariable("CI_DARWIN_DROP_PATH")}'
+
+#copy-ci-darwin-bits target='package-runtime' if='!string.IsNullOrEmpty(CI_DARWIN_DROP_PATH)'
+    @{
+        var extractDirectory = Path.Combine(ARTIFACTS_DIR, "Dnx.Darwin");
+    }
+
+    copy sourceDir='${CI_DARWIN_DROP_PATH}' outputDir='${extractDirectory}' include='*.nupkg' overwrite='${true}'
+
+    @{
+        foreach (var package in Directory.EnumerateFiles(extractDirectory, "*.nupkg"))
+        {
+            var unpackagePath = Path.Combine(extractDirectory, Path.GetFileNameWithoutExtension(package));
+            UnzipPackage(package, unpackagePath);
+
+            File.Delete(Path.Combine(unpackagePath, "[Content_Types].xml"));
+            Directory.Delete(Path.Combine(unpackagePath, "_rels"), recursive: true);
+        }
+    }
+
+    nuget-pack packageVersion='${FULL_VERSION}' outputDir='${BUILD_DIR2}' extra='-NoPackageAnalysis' nugetPath='.nuget/nuget.exe' each='var nuspecFile in Files.Include(Path.Combine(extractDirectory, "**", "*.nuspec"))'
 
 #nuget-pack-runtime target='package'
     @{

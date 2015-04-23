@@ -5,7 +5,7 @@
         <version>0.0.1-pre</version>
         <authors>Microsoft</authors>
         <requireLicenseAcceptance>false</requireLicenseAcceptance>
-        <description>Microsoft .NET Execution environment for CoreCLR on Linux x64</description>
+        <description>Microsoft .NET Execution environment for CoreCLR on Darwin(OSX) x64</description>
     </metadata>
     <files>
         <file src="$RuntimeNamePrefix$coreclr-darwin-x64\bin\**" exclude="**\*.pdb;**\*.xml" target="bin" />
