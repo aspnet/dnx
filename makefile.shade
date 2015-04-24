@@ -781,7 +781,7 @@ var CI_DARWIN_DROP_PATH = '${Environment.GetEnvironmentVariable("CI_DARWIN_DROP_
                 Exec("chmod", "+x " + Path.Combine(binPath, "dnx"));
                 Exec("chmod", "+x " + Path.Combine(binPath, "dnu"));
             }
-            }
+        }
 
         // Group by operation system since we only want to run unit tests on a single bitness
         // any = [dnx-mono]
@@ -809,6 +809,12 @@ var CI_DARWIN_DROP_PATH = '${Environment.GetEnvironmentVariable("CI_DARWIN_DROP_
             {
                 // Skip mono if we're not running on mono
                 if (!IsMono && target.Flavor == "mono")
+                {
+                    continue;
+                }
+                
+                // TODO: enable tests on darwin after we get rid of ansi console color issue on CoreCLR
+                if (target.OS == "darwin")
                 {
                     continue;
                 }
