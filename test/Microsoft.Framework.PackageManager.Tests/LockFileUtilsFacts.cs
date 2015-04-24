@@ -22,7 +22,7 @@ namespace Microsoft.Framework.PackageManager.Tests
             var projectDir = Path.Combine(rootDir, "misc", "ServicingTestProjects", projectName);
             const string configuration = "Debug";
 
-            var components = TestUtils.GetRuntimeComponentsCombinations().Last();
+            var components = TestUtils.GetRuntimeComponentsCombinations().First();
             var flavor = (string)components[0];
             var os = (string)components[1];
             var architecture = (string)components[2];
