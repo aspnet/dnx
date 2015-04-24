@@ -4,7 +4,7 @@
 using System;
 using System.IO;
 
-namespace Microsoft.Framework.PackageManager.Restore.NuGet
+namespace NuGet.Client
 {
     internal class HttpSourceResult : IDisposable
     {

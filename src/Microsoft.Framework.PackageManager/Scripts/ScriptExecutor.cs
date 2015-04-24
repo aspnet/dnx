@@ -8,6 +8,7 @@ using System.IO;
 using System.Linq;
 using Microsoft.Framework.ApplicationHost.Impl.Syntax;
 using Microsoft.Framework.Runtime;
+using NuGet.ProjectModel;
 
 namespace Microsoft.Framework.PackageManager
 {
@@ -15,10 +16,10 @@ namespace Microsoft.Framework.PackageManager
     {
         private static readonly string ErrorMessageTemplate = "The '{0}' script failed with status code {1}.";
 
-        public bool Execute(Runtime.Project project, string scriptName, Func<string, string> getVariable)
+        public bool Execute(PackageSpec packageSpec, string scriptName, Func<string, string> getVariable)
         {
             IEnumerable<string> scriptCommandLines;
-            if (!project.Scripts.TryGetValue(scriptName, out scriptCommandLines))
+            if (!packageSpec.Scripts.TryGetValue(scriptName, out scriptCommandLines))
             {
                 return true;
             }
@@ -27,7 +28,7 @@ namespace Microsoft.Framework.PackageManager
             {
                 var scriptArguments = CommandGrammar.Process(
                     scriptCommandLine,
-                    GetScriptVariable(project, getVariable));
+                    GetScriptVariable(packageSpec, getVariable));
 
                 // Ensure the array won't be empty and the first element won't be null or empty string.
                 scriptArguments = scriptArguments.Where(argument => !string.IsNullOrEmpty(argument)).ToArray();
@@ -70,7 +71,7 @@ namespace Microsoft.Framework.PackageManager
                 {
                     FileName = scriptArguments.FirstOrDefault(),
                     Arguments = String.Join(" ", scriptArguments.Skip(1)),
-                    WorkingDirectory = project.ProjectDirectory,
+                    WorkingDirectory = packageSpec.BaseDirectory,
 #if DNX451
                     UseShellExecute = false
 #endif
@@ -94,13 +95,13 @@ namespace Microsoft.Framework.PackageManager
 
         public string ErrorMessage { get; private set; }
 
-        private Func<string, string> GetScriptVariable(Runtime.Project project, Func<string, string> getVariable)
+        private Func<string, string> GetScriptVariable(PackageSpec packageSpec, Func<string, string> getVariable)
         {
             var keys = new Dictionary<string, Func<string>>(StringComparer.OrdinalIgnoreCase)
             {
-                { "project:Directory", () => project.ProjectDirectory },
-                { "project:Name", () => project.Name },
-                { "project:Version", () => project.Version.ToString() },
+                { "project:Directory", () => packageSpec.BaseDirectory },
+                { "project:Name", () => packageSpec.Name },
+                { "project:Version", () => packageSpec.Version.ToString() },
             };
 
             return key =>

@@ -38,19 +38,25 @@ namespace Microsoft.Framework.Runtime.DependencyManagement
                 // If the framework name is empty, the associated dependencies are shared by all frameworks
                 if (string.IsNullOrEmpty(group.FrameworkName))
                 {
-                    actualDependencies = project.Dependencies.Select(x => x.LibraryRange.ToString()).OrderBy(x => x);
+                    actualDependencies = project.Dependencies
+                        .Where(d => !d.LibraryRange.IsGacOrFrameworkReference)
+                        .Select(d => DependencyToString(d))
+                        .OrderBy(s => s);
                 }
                 else
                 {
                     var framework = actualTargetFrameworks
                         .FirstOrDefault(f =>
-                            string.Equals(f.FrameworkName.ToString(), group.FrameworkName, StringComparison.Ordinal));
+                            string.Equals(f.FrameworkName.ToString(), group.FrameworkName, StringComparison.OrdinalIgnoreCase));
                     if (framework == null)
                     {
                         return false;
                     }
 
-                    actualDependencies = framework.Dependencies.Select(d => d.LibraryRange.ToString()).OrderBy(x => x);
+                    actualDependencies = framework.Dependencies
+                        .Where(d => !d.LibraryRange.IsGacOrFrameworkReference)
+                        .Select(d => DependencyToString(d))
+                        .OrderBy(s => s);
                 }
 
                 if (!actualDependencies.SequenceEqual(expectedDependencies))
@@ -60,6 +66,13 @@ namespace Microsoft.Framework.Runtime.DependencyManagement
             }
 
             return true;
+        }
+
+        private static string DependencyToString(LibraryDependency dependency)
+        {
+            return string.Format("{0} {1}",
+                dependency.Name,
+                dependency.LibraryRange.VersionRange.OriginalString);
         }
     }
 }

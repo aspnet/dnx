@@ -6,7 +6,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
 
-namespace Microsoft.Framework.PackageManager.Restore.NuGet
+namespace NuGet.Client
 {
     public interface IPackageFeed
     {
@@ -14,6 +14,5 @@ namespace Microsoft.Framework.PackageManager.Restore.NuGet
         Task<IEnumerable<PackageInfo>> FindPackagesByIdAsync(string id);
         Task<Stream> OpenNupkgStreamAsync(PackageInfo package);
         Task<Stream> OpenNuspecStreamAsync(PackageInfo package);
-        Task<Stream> OpenRuntimeStreamAsync(PackageInfo package);
     }
 }

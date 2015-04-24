@@ -1,4 +1,4 @@
-﻿// Copyright (c) Microsoft Open Technologies, Inc. All rights reserved.
+// Copyright (c) Microsoft Open Technologies, Inc. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 using System;
@@ -11,8 +11,9 @@ using System.Net.Http.Headers;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
+using NuGet.Common;
 
-namespace Microsoft.Framework.PackageManager.Restore.NuGet
+namespace NuGet.Client
 {
     internal class HttpSource
     {
@@ -21,7 +22,7 @@ namespace Microsoft.Framework.PackageManager.Restore.NuGet
         private string _baseUri;
         private string _userName;
         private string _password;
-        private Reports _reports;
+        private ILogger _logger;
 #if DNXCORE50
         private string _proxyUserName;
         private string _proxyPassword;
@@ -31,12 +32,12 @@ namespace Microsoft.Framework.PackageManager.Restore.NuGet
             string baseUri,
             string userName,
             string password,
-            Reports reports)
+            ILogger logger)
         {
             _baseUri = baseUri + (baseUri.EndsWith("/") ? "" : "/");
             _userName = userName;
             _password = password;
-            _reports = reports;
+            _logger = logger;
 
             var proxy = Environment.GetEnvironmentVariable("http_proxy");
             if (string.IsNullOrEmpty(proxy))
@@ -95,11 +96,11 @@ namespace Microsoft.Framework.PackageManager.Restore.NuGet
             var result = await TryCache(uri, cacheKey, cacheAgeLimit);
             if (result.Stream != null)
             {
-                _reports.Quiet.WriteLine(string.Format("  {0} {1}", "CACHE".Green(), uri));
+                _logger.WriteQuiet(string.Format("  {0} {1}", "CACHE".Green(), uri));
                 return result;
             }
 
-            _reports.Quiet.WriteLine(string.Format("  {0} {1}.", "GET".Yellow(), uri));
+            _logger.WriteQuiet(string.Format("  {0} {1}.", "GET".Yellow(), uri));
 
             var request = new HttpRequestMessage(HttpMethod.Get, uri);
             if (_userName != null)
@@ -176,7 +177,7 @@ namespace Microsoft.Framework.PackageManager.Restore.NuGet
                 return 0;
             });
 
-            _reports.Quiet.WriteLine(string.Format("  {1} {0} {2}ms", uri, response.StatusCode.ToString().Green(), sw.ElapsedMilliseconds.ToString().Bold()));
+            _logger.WriteQuiet(string.Format("  {1} {0} {2}ms", uri, response.StatusCode.ToString().Green(), sw.ElapsedMilliseconds.ToString().Bold()));
 
             return result;
         }
