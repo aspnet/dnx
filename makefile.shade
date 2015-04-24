@@ -555,6 +555,24 @@ var RUNTIME_TARGETS='${new List<RuntimeTarget>()}'
                     Log.Info("Copying " + file + " to " + targetFilePath);
                     File.Copy(file, targetFilePath, true);
                 }
+
+                // Copy the managed resources the runtime needs for Linux
+                if (target.OS == "linux")
+                {
+                    foreach (var file in Files.BasePath(coreclrFolder).Include("**/*.mo"))
+                    {
+                        var sourceFile = Path.Combine(coreclrFolder, file);
+                        var outputFile = Path.Combine(target.TargetFolder, file);
+
+                        if (!Directory.Exists(Path.GetDirectoryName(outputFile)))
+                        {
+                            Directory.CreateDirectory(Path.GetDirectoryName(outputFile));
+                        }
+
+                        Log.Info("Copying " + sourceFile + " to " + outputFile);
+                        File.Copy(sourceFile, outputFile, true);
+                    }
+                }
             }
         }
     }
