@@ -283,6 +283,8 @@ namespace Microsoft.Framework.PackageManager
                     var argRemote = c.Argument("[remote]", "Path to remote packages folder");
                     var argSource = c.Argument("[source]",
                         "Path to source packages folder, default is current directory");
+                    var optionKey = c.Option("--key <BASE64>", "API key to modify remote packages folder", CommandOptionType.SingleValue);
+
                     c.HelpOption("-?|-h|--help");
 
                     c.OnExecute(() =>
@@ -306,7 +308,8 @@ namespace Microsoft.Framework.PackageManager
                         {
                             Reports = reports,
                             SourcePackages = argSource.Value,
-                            RemotePackages = argRemote.Value
+                            RemotePackages = argRemote.Value,
+                            RemoteKey = optionKey.Value()
                         };
                         var pushCommand = new PushCommand(pushOptions);
                         success = pushCommand.Execute();
@@ -320,6 +323,7 @@ namespace Microsoft.Framework.PackageManager
                     var argRemote = c.Argument("[remote]", "Path to remote packages folder");
                     var argSource = c.Argument("[source]",
                         "Path to source packages folder, default is current directory");
+                    var optionKey = c.Option("--key <BASE64>", "API key to modify remote packages folder", CommandOptionType.SingleValue);
                     c.HelpOption("-?|-h|--help");
 
                     c.OnExecute(() =>
@@ -347,7 +351,8 @@ namespace Microsoft.Framework.PackageManager
                         {
                             Reports = reports,
                             SourcePackages = argSource.Value,
-                            RemotePackages = argRemote.Value
+                            RemotePackages = argRemote.Value,
+                            RemoteKey = optionKey.Value()
                         };
                         var pullCommand = new PullCommand(pullOptions);
                         success = pullCommand.Execute();

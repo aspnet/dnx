@@ -11,5 +11,7 @@ namespace Microsoft.Framework.PackageManager.Packages
     public class PullOptions : PackagesOptions
     {
         public string RemotePackages { get; set; }
+
+        public string RemoteKey { get; set; }
     }
 }

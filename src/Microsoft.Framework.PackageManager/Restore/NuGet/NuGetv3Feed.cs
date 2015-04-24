@@ -9,23 +9,14 @@ using System.Threading.Tasks;
 using System.Xml;
 using System.Xml.Linq;
 using NuGet;
+using Newtonsoft.Json.Linq;
+using Newtonsoft.Json;
+using System.Net.Http;
 
 namespace Microsoft.Framework.PackageManager.Restore.NuGet
 {
-    internal class NuGetv2Feed : IPackageFeed
+    internal class NuGetv3Feed : IPackageFeed
     {
-        private static readonly XName _xnameEntry = XName.Get("entry", "http://www.w3.org/2005/Atom");
-        private static readonly XName _xnameTitle = XName.Get("title", "http://www.w3.org/2005/Atom");
-        private static readonly XName _xnameContent = XName.Get("content", "http://www.w3.org/2005/Atom");
-        private static readonly XName _xnameLink = XName.Get("link", "http://www.w3.org/2005/Atom");
-        private static readonly XName _xnameProperties = XName.Get("properties", "http://schemas.microsoft.com/ado/2007/08/dataservices/metadata");
-        private static readonly XName _xnameId = XName.Get("Id", "http://schemas.microsoft.com/ado/2007/08/dataservices");
-        private static readonly XName _xnameVersion = XName.Get("Version", "http://schemas.microsoft.com/ado/2007/08/dataservices");
-        private static readonly XName _xnamePublish = XName.Get("Published", "http://schemas.microsoft.com/ado/2007/08/dataservices");
-
-        // An unlisted package's publish time must be 1900-01-01T00:00:00.
-        private static readonly DateTime _unlistedPublishedTime = new DateTime(1900, 1, 1, 0, 0, 0);
-
         private readonly string _baseUri;
         private readonly Reports _reports;
         private readonly HttpSource _httpSource;
@@ -39,14 +30,14 @@ namespace Microsoft.Framework.PackageManager.Restore.NuGet
 
         public string Source { get; }
 
-        internal NuGetv2Feed(
+        internal NuGetv3Feed(
             HttpSource httpSource,
             bool noCache,
             Reports reports,
             bool ignoreFailure)
         {
             var baseUri = httpSource.BaseUri;
-            _baseUri = baseUri.EndsWith("/") ? baseUri : (baseUri + "/");
+            _baseUri = baseUri.EndsWith("/index.json") ? baseUri.Substring(0, baseUri.Length - "index.json".Length) : baseUri;
             _reports = reports;
             _httpSource = httpSource;
             _ignoreFailure = ignoreFailure;
@@ -61,6 +52,46 @@ namespace Microsoft.Framework.PackageManager.Restore.NuGet
                 _cacheAgeLimitNupkg = TimeSpan.FromHours(24);
             }
             Source = baseUri;
+        }
+
+        internal static bool DetectNuGetV3(HttpSource httpSource, out Uri packageBaseAddress)
+        {
+            try
+            {
+                var result = httpSource.GetAsync(httpSource.BaseUri, "index_json", TimeSpan.FromHours(6)).Result;
+                using (var reader = new StreamReader(result.Stream))
+                {
+                    var content = reader.ReadToEnd();
+                    var indexJson = JObject.Parse(content);
+                    foreach (var resource in indexJson["resources"])
+                    {
+                        var type = resource.Value<string>("@type");
+                        var id = resource.Value<string>("@id");
+
+                        if (id != null && string.Equals(type, "PackageBaseAddress/3.0.0"))
+                        {
+                            try
+                            {
+                                packageBaseAddress = new Uri(id);
+                                return true;
+                            }
+                            catch (UriFormatException)
+                            {
+                                packageBaseAddress = new Uri(new Uri(httpSource.BaseUri), id);
+                                return true;
+                            }
+                        }
+                    }
+                }
+                packageBaseAddress = null;
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.ToString());
+            }
+            packageBaseAddress = null;
+            return false;
         }
 
         public Task<IEnumerable<PackageInfo>> FindPackagesByIdAsync(string id)
@@ -87,55 +118,37 @@ namespace Microsoft.Framework.PackageManager.Restore.NuGet
 
                 try
                 {
-                    var uri = _baseUri + "FindPackagesById()?Id='" + id + "'";
+                    var uri = _baseUri + id.ToLowerInvariant() + "/index.json";
                     var results = new List<PackageInfo>();
-                    var page = 1;
-                    while (true)
+                    using (var data = await _httpSource.GetAsync(uri,
+                        string.Format("list_{0}", id),
+                        retry == 0 ? _cacheAgeLimitList : TimeSpan.Zero,
+                        throwNotFound: false))
                     {
-                        // TODO: Pages for a package Id are cached separately.
-                        // So we will get inaccurate data when a page shrinks.
-                        // However, (1) In most cases the pages grow rather than shrink;
-                        // (2) cache for pages is valid for only 30 min.
-                        // So we decide to leave current logic and observe.
-                        using (var data = await _httpSource.GetAsync(uri,
-                        string.Format("list_{0}_page{1}", id, page),
-                        retry == 0 ? _cacheAgeLimitList : TimeSpan.Zero))
+                        if (data.Stream == null)
                         {
-                            try
+                            return Enumerable.Empty<PackageInfo>();
+                        }
+
+                        try
+                        {
+                            JObject doc;
+                            using (var reader = new StreamReader(data.Stream))
                             {
-                                var doc = XDocument.Load(data.Stream);
-
-                                var result = doc.Root
-                                    .Elements(_xnameEntry)
-                                    .Select(x => BuildModel(id, x))
-                                    .Where(x => x != null);
-
-                                results.AddRange(result);
-
-                                // Example of what this looks like in the odata feed:
-                                // <link rel="next" href="{nextLink}" />
-                                var nextUri = (from e in doc.Root.Elements(_xnameLink)
-                                               let attr = e.Attribute("rel")
-                                               where attr != null && string.Equals(attr.Value, "next", StringComparison.OrdinalIgnoreCase)
-                                               select e.Attribute("href") into nextLink
-                                               where nextLink != null
-                                               select nextLink.Value).FirstOrDefault();
-
-                                // Stop if there's nothing else to GET
-                                if (string.IsNullOrEmpty(nextUri))
-                                {
-                                    break;
-                                }
-
-                                uri = nextUri;
-                                page++;
+                                doc = JObject.Load(new JsonTextReader(reader));
                             }
-                            catch (XmlException)
-                            {
-                                _reports.Information.WriteLine("The XML file {0} is corrupt",
-                                    data.CacheFileName.Yellow().Bold());
-                                throw;
-                            }
+
+                            var result = doc["versions"]
+                                .Select(x => BuildModel(id, x.ToString()))
+                                .Where(x => x != null);
+
+                            results.AddRange(result);
+                        }
+                        catch
+                        {
+                            _reports.Information.WriteLine("The file {0} is corrupt",
+                                data.CacheFileName.Yellow().Bold());
+                            throw;
                         }
                     }
 
@@ -168,30 +181,16 @@ namespace Microsoft.Framework.PackageManager.Restore.NuGet
             return null;
         }
 
-        public PackageInfo BuildModel(string id, XElement element)
+        public PackageInfo BuildModel(string id, string version)
         {
-            var properties = element.Element(_xnameProperties);
-            var idElement = properties.Element(_xnameId);
-            var titleElement = element.Element(_xnameTitle);
-
-            var publishElement = properties.Element(_xnamePublish);
-            if (publishElement != null)
-            {
-                DateTime publishDate; 
-                if (DateTime.TryParse(publishElement.Value, out publishDate) && (publishDate == _unlistedPublishedTime))
-                {
-                    return null; 
-                }
-            }
-
             return new PackageInfo
             {
                 // If 'Id' element exist, use its value as accurate package Id
                 // Otherwise, use the value of 'title' if it exist
                 // Use the given Id as final fallback if all elements above don't exist
-                Id = idElement?.Value ?? titleElement?.Value ?? id,
-                Version = SemanticVersion.Parse(properties.Element(_xnameVersion).Value),
-                ContentUri = element.Element(_xnameContent).Attribute("src").Value,
+                Id = id,
+                Version = SemanticVersion.Parse(version),
+                ContentUri = _baseUri + id.ToLowerInvariant() + "/" + version.ToLowerInvariant() + "/" + id.ToLowerInvariant() + "." + version.ToLowerInvariant() + ".nupkg",
             };
         }
 

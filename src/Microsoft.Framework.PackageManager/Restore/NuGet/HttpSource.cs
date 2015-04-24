@@ -33,7 +33,7 @@ namespace Microsoft.Framework.PackageManager.Restore.NuGet
             string password,
             Reports reports)
         {
-            _baseUri = baseUri + (baseUri.EndsWith("/") ? "" : "/");
+            _baseUri = baseUri + ((baseUri.EndsWith("/") || baseUri.EndsWith("index.json")) ? "" : "/");
             _userName = userName;
             _password = password;
             _reports = reports;
@@ -87,7 +87,9 @@ namespace Microsoft.Framework.PackageManager.Restore.NuGet
             }
         }
 
-        internal async Task<HttpSourceResult> GetAsync(string uri, string cacheKey, TimeSpan cacheAgeLimit)
+        public string BaseUri { get { return _baseUri; } }
+
+        internal async Task<HttpSourceResult> GetAsync(string uri, string cacheKey, TimeSpan cacheAgeLimit, bool throwNotFound = true)
         {
             Stopwatch sw = new Stopwatch();
             sw.Start();
@@ -99,7 +101,7 @@ namespace Microsoft.Framework.PackageManager.Restore.NuGet
                 return result;
             }
 
-            _reports.Quiet.WriteLine(string.Format("  {0} {1}.", "GET".Yellow(), uri));
+            _reports.Quiet.WriteLine(string.Format("  {0} {1}", "GET".Yellow(), uri));
 
             var request = new HttpRequestMessage(HttpMethod.Get, uri);
             if (_userName != null)
@@ -117,6 +119,13 @@ namespace Microsoft.Framework.PackageManager.Restore.NuGet
 #endif
 
             var response = await _client.SendAsync(request);
+
+            if (throwNotFound == false && response.StatusCode == HttpStatusCode.NotFound)
+            {
+                _reports.Quiet.WriteLine(string.Format("  {1} {0} {2}ms", uri, response.StatusCode.ToString().Green(), sw.ElapsedMilliseconds.ToString().Bold()));
+                return new HttpSourceResult();
+            }
+
             response.EnsureSuccessStatusCode();
 
             var newFile = result.CacheFileName + "-new";

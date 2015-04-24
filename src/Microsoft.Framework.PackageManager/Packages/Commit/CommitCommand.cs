@@ -48,7 +48,7 @@ namespace Microsoft.Framework.PackageManager.Packages
             }
 
             // Read file system
-            var artifacts = local.EnumerateArtifacts(FolderPredicate, FilePredicate);
+            var artifacts = local.EnumerateArtifacts(FolderPredicate, FilePredicate).Select(x => x.ToLowerInvariant());
 
             // Determine difference of index and file system
             var record = new RepositoryChangeRecord

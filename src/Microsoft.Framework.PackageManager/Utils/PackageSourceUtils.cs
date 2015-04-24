@@ -32,20 +32,45 @@ namespace Microsoft.Framework.PackageManager
         {
             if (new Uri(source.Source).IsFile)
             {
+                reports.Information.WriteLine("File system feed {0}", source.Source.Bold());
                 return PackageFolderFactory.CreatePackageFolderFromPath(source.Source, ignoreFailedSources, reports);
             }
             else
             {
-                // TODO: temporarily ignore NuGet v3 feeds
-                if (source.Source.EndsWith(".json"))
-                {
-                    return null;
-                }
-
-                return new NuGetv2Feed(
+                var httpSource = new HttpSource(
                     source.Source,
                     source.UserName,
                     source.Password,
+                    reports);
+
+                Uri packageBaseAddress;
+                if (NuGetv3Feed.DetectNuGetV3(httpSource, out packageBaseAddress))
+                {
+                    reports.Information.WriteLine("NuGet v3 feed {0}", source.Source.Bold());
+
+                    if (packageBaseAddress == null)
+                    {
+                        reports.Error.WriteLine("No PackageBaseAddress resource provided");
+                        return null;
+                    }
+
+                    httpSource = new HttpSource(
+                        packageBaseAddress.AbsoluteUri,
+                        source.UserName,
+                        source.Password,
+                        reports);
+
+                    return new NuGetv3Feed(
+                        httpSource,
+                        noCache,
+                        reports,
+                        ignoreFailedSources);
+                }
+
+                reports.Information.WriteLine("NuGet v2 feed {0}", source.Source.Bold());
+
+                return new NuGetv2Feed(
+                    httpSource,
                     noCache,
                     reports,
                     ignoreFailedSources);
@@ -79,7 +104,7 @@ namespace Microsoft.Framework.PackageManager
         }
 
         public static async Task<PackageInfo> FindBestMatchPackage(
-            IEnumerable<IPackageFeed> packageFeeds, 
+            IEnumerable<IPackageFeed> packageFeeds,
             string packageName,
             SemanticVersionRange idealVersion)
         {
