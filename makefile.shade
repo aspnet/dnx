@@ -526,6 +526,7 @@ var RUNTIME_TARGETS='${new List<RuntimeTarget>()}'
 
                     extraBinaries.Add("Microsoft.Win32.Primitives.dll");
                     extraBinaries.Add("System.Console.dll");
+                    extraBinaries.Add("System.Data.SqlClient.dll");
                     extraBinaries.Add("System.Diagnostics.Debug.dll");
                     extraBinaries.Add("System.Diagnostics.FileVersionInfo.dll");
                     extraBinaries.Add("System.Diagnostics.Process.dll");
@@ -537,6 +538,7 @@ var RUNTIME_TARGETS='${new List<RuntimeTarget>()}'
                     extraBinaries.Add("System.IO.FileSystem.Watcher.dll");
                     extraBinaries.Add("System.IO.MemoryMappedFiles.dll");
                     extraBinaries.Add("System.IO.Pipes.dll");
+                    extraBinaries.Add("System.Net.Security.dll");
                     extraBinaries.Add("System.Runtime.Extensions.dll");
                     extraBinaries.Add("System.Security.Cryptography.Encoding.dll");
                     extraBinaries.Add("System.Security.Cryptography.Encryption.dll");
@@ -547,6 +549,10 @@ var RUNTIME_TARGETS='${new List<RuntimeTarget>()}'
                     extraBinaries.Add("System.Security.SecureString.dll");
                     extraBinaries.Add("System.Text.Encoding.CodePages.dll");
                     extraBinaries.Add("System.Threading.dll");
+
+                    var nativeExtension = target.OS == "linux" ? ".so" : ".dylib";
+
+                    extraBinaries.Add("System.Security.Cryptography.Native" + nativeExtension);
                 }
 
                 foreach (var file in Directory.GetFiles(coreclrFolder).Where(f => extraBinaries.Contains(Path.GetFileName(f)) || !Path.GetFileName(f).StartsWith("System")))
