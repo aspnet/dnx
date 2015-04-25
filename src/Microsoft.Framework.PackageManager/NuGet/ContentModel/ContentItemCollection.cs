@@ -21,7 +21,7 @@ namespace NuGet.ContentModel
         public IEnumerable<ContentItemGroup> FindItemGroups(ContentPatternDefinition definition)
         {
             var groupPatterns = definition.GroupPatterns
-                .Select(pattern => new Infrastructure.PatternExpression(pattern))
+                .Select(pattern => Tuple.Create(pattern, new Infrastructure.PatternExpression(pattern.Pattern)))
                 .ToList();
 
             var groupAssets = new List<Tuple<ContentItem, Asset>>();
@@ -29,9 +29,13 @@ namespace NuGet.ContentModel
             {
                 foreach (var groupParser in groupPatterns)
                 {
-                    ContentItem item = groupParser.Match(asset.Path, definition.PropertyDefinitions);
+                    ContentItem item = groupParser.Item2.Match(asset.Path, definition.PropertyDefinitions);
                     if (item != null)
                     {
+                        foreach (var pair in groupParser.Item1.Defaults)
+                        {
+                            item.Properties[pair.Key] = pair.Value;
+                        }
                         groupAssets.Add(Tuple.Create(item, asset));
                     }
                 }
@@ -155,16 +159,20 @@ namespace NuGet.ContentModel
         private IEnumerable<ContentItem> FindItemsImplementation(ContentPatternDefinition definition, IEnumerable<Asset> assets)
         {
             var pathPatterns = definition.PathPatterns
-                .Select(pattern => new Infrastructure.PatternExpression(pattern))
+                .Select(pattern => Tuple.Create(pattern, new Infrastructure.PatternExpression(pattern.Pattern)))
                 .ToList();
 
             foreach (var asset in assets)
             {
                 foreach (var pathPattern in pathPatterns)
                 {
-                    ContentItem contentItem = pathPattern.Match(asset.Path, definition.PropertyDefinitions);
+                    ContentItem contentItem = pathPattern.Item2.Match(asset.Path, definition.PropertyDefinitions);
                     if (contentItem != null)
                     {
+                        foreach (var pair in pathPattern.Item1.Defaults)
+                        {
+                            contentItem.Properties[pair.Key] = pair.Value;
+                        }
                         yield return contentItem;
                         break;
                     }
