@@ -443,15 +443,33 @@ namespace Microsoft.Framework.PackageManager.Utils
                     GroupPatterns =
                     {
                         "runtimes/{rid}/lib/{tfm}/{any?}",
-                        "lib/{tfm}/{any?}",
+                        "lib/{tfm}/{any?}"
                     },
                     PathPatterns =
                     {
                         "runtimes/{rid}/lib/{tfm}/{assembly}",
-                        "lib/{tfm}/{assembly}",
+                        "lib/{tfm}/{assembly}"
                     },
-                    PropertyDefinitions = Properties.Definitions,
+                    PropertyDefinitions = Properties.Definitions
                 };
+
+                ManagedAssemblies.GroupPatterns.Add(new PatternDefinition
+                {
+                    Pattern = "lib/{any?}",
+                    Defaults = new Dictionary<string, object>
+                    {
+                        {  "tfm", VersionUtility.ParseFrameworkName("net") }
+                    }
+                });
+
+                ManagedAssemblies.PathPatterns.Add(new PatternDefinition
+                {
+                    Pattern = "lib/{assembly}",
+                    Defaults = new Dictionary<string, object>
+                    {
+                        {  "tfm", VersionUtility.ParseFrameworkName("net") }
+                    }
+                });
 
                 CompileTimeAssemblies = new ContentPatternDefinition
                 {
