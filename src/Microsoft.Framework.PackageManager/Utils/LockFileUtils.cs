@@ -149,6 +149,21 @@ namespace Microsoft.Framework.PackageManager.Utils
                 lockFileLib.CompileTimeAssemblies.Add(contractPath);
             }
 
+            // See if there's a list of specific references defined for this target framework
+            IEnumerable<PackageReferenceSet> referenceSets;
+            if (VersionUtility.TryGetCompatibleItems(framework, package.PackageAssemblyReferences, out referenceSets))
+            {
+                // Get the first compatible reference set
+                var referenceSet = referenceSets.FirstOrDefault();
+
+                if (referenceSet != null)
+                {
+                    // Remove all assemblies of which names do not appear in the References list
+                    lockFileLib.RuntimeAssemblies.RemoveAll(path => path.StartsWith("lib/") && !referenceSet.References.Contains(Path.GetFileName(path), StringComparer.OrdinalIgnoreCase));
+                    lockFileLib.CompileTimeAssemblies.RemoveAll(path => path.StartsWith("lib/") && !referenceSet.References.Contains(Path.GetFileName(path), StringComparer.OrdinalIgnoreCase));
+                }
+            }
+
             return lockFileLib;
         }
 
