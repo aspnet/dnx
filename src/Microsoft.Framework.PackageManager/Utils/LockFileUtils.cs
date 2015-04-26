@@ -455,7 +455,7 @@ namespace Microsoft.Framework.PackageManager.Utils
 
                 ManagedAssemblies.GroupPatterns.Add(new PatternDefinition
                 {
-                    Pattern = "lib/{any?}",
+                    Pattern = "lib/{assembly?}",
                     Defaults = new Dictionary<string, object>
                     {
                         {  "tfm", VersionUtility.ParseFrameworkName("net") }
