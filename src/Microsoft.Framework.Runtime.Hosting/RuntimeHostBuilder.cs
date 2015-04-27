@@ -153,12 +153,12 @@ namespace Microsoft.Framework.Runtime
         private static bool TryReadLockFile(string directory, out LockFile lockFile)
         {
             lockFile = null;
-            string file = Path.Combine(directory, LockFileFormat.LockFileName);
+            string file = Path.Combine(directory, LockFileReader.LockFileName);
             if (File.Exists(file))
             {
                 using (var stream = File.OpenRead(file))
                 {
-                    lockFile = LockFileFormat.Read(stream);
+                    lockFile = LockFileReader.Read(stream);
                 }
                 return true;
             }

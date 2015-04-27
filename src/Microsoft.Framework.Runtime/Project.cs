@@ -9,8 +9,7 @@ using System.Runtime.Versioning;
 using System.Text;
 using Microsoft.Framework.Runtime.Compilation;
 using Microsoft.Framework.Runtime.Helpers;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
+using Microsoft.Framework.Runtime.Json;
 using NuGet;
 
 namespace Microsoft.Framework.Runtime
@@ -23,8 +22,6 @@ namespace Microsoft.Framework.Runtime
         internal static readonly TypeInformation DefaultDesignTimeCompiler = new TypeInformation("Microsoft.Framework.Runtime.Compilation.DesignTime", "Microsoft.Framework.Runtime.DesignTimeHostProjectCompiler");
 
         internal static TypeInformation DefaultCompiler = DefaultRuntimeCompiler;
-
-        private static readonly CompilerOptions _emptyOptions = new CompilerOptions();
 
         private readonly Dictionary<FrameworkName, TargetFrameworkInformation> _targetFrameworks = new Dictionary<FrameworkName, TargetFrameworkInformation>();
         private readonly Dictionary<FrameworkName, CompilerOptions> _compilationOptions = new Dictionary<FrameworkName, CompilerOptions>();
@@ -125,7 +122,7 @@ namespace Microsoft.Framework.Runtime
 
             string projectPath = null;
 
-            if (String.Equals(Path.GetFileName(path), ProjectFileName, StringComparison.OrdinalIgnoreCase))
+            if (string.Equals(Path.GetFileName(path), ProjectFileName, StringComparison.OrdinalIgnoreCase))
             {
                 projectPath = path;
                 path = Path.GetDirectoryName(path);
@@ -150,7 +147,7 @@ namespace Microsoft.Framework.Runtime
                     project = GetProjectFromStream(stream, projectName, projectPath, diagnostics);
                 }
             }
-            catch (JsonReaderException ex)
+            catch (Exception ex)
             {
                 throw FileFormatException.Create(ex, projectPath);
             }
@@ -171,19 +168,20 @@ namespace Microsoft.Framework.Runtime
         {
             var project = new Project();
 
-            var reader = new JsonTextReader(new StreamReader(stream));
-            var rawProject = JObject.Load(reader);
+            var reader = new StreamReader(stream);
+            var rawProject = JsonDeserializer.Deserialize(reader) as JsonObject;
+            if (rawProject == null)
+            {
+                throw FileFormatException.Create(
+                    "The JSON file can't be deserialized to a Json object.",
+                    projectPath);
+            }
 
             // Meta-data properties
-            var version = rawProject["version"];
-            var authors = rawProject["authors"];
-            var owners = rawProject["owners"];
-            var tags = rawProject["tags"];
-            var buildVersion = Environment.GetEnvironmentVariable("DNX_BUILD_VERSION");
-
             project.Name = projectName;
             project.ProjectFilePath = Path.GetFullPath(projectPath);
 
+            var version = rawProject.Value("version") as JsonString;
             if (version == null)
             {
                 project.Version = new SemanticVersion("1.0.0");
@@ -192,12 +190,11 @@ namespace Microsoft.Framework.Runtime
             {
                 try
                 {
-                    project.Version = SpecifySnapshot(version.Value<string>(), buildVersion);
+                    var buildVersion = Environment.GetEnvironmentVariable("DNX_BUILD_VERSION");
+                    project.Version = SpecifySnapshot(version, buildVersion);
                 }
                 catch (Exception ex)
                 {
-                    var lineInfo = (IJsonLineInfo)version;
-
                     throw FileFormatException.Create(ex, version, project.ProjectFilePath);
                 }
             }
@@ -223,72 +220,83 @@ namespace Microsoft.Framework.Runtime
                 }
             }
 
-            project.Description = rawProject.GetValue<string>("description");
-            project.Summary = rawProject.GetValue<string>("summary");
-            project.Copyright = rawProject.GetValue<string>("copyright");
-            project.Title = rawProject.GetValue<string>("title");
-            project.Authors = authors == null ? new string[] { } : authors.ValueAsArray<string>();
-            project.Owners = owners == null ? new string[] { } : owners.ValueAsArray<string>();
-            project.Dependencies = new List<LibraryDependency>();
-            project.WebRoot = rawProject.GetValue<string>("webroot");
-            project.EntryPoint = rawProject.GetValue<string>("entryPoint");
-            project.ProjectUrl = rawProject.GetValue<string>("projectUrl");
-            project.LicenseUrl = rawProject.GetValue<string>("licenseUrl");
-            project.IconUrl = rawProject.GetValue<string>("iconUrl");
-            project.RequireLicenseAcceptance = rawProject.GetValue<bool?>("requireLicenseAcceptance") ?? false;
-            project.Tags = tags == null ? new string[] { } : tags.ValueAsArray<string>();
-            project.Language = rawProject.GetValue<string>("language");
-            project.ReleaseNotes = rawProject.GetValue<string>("releaseNotes");
-            project.IsLoadable = rawProject.GetValue<bool?>("loadable") ?? true;
+            project.Description = rawProject.ValueAsString("description");
+            project.Summary = rawProject.ValueAsString("summary");
+            project.Copyright = rawProject.ValueAsString("copyright");
+            project.Title = rawProject.ValueAsString("title");
+            project.WebRoot = rawProject.ValueAsString("webroot");
+            project.EntryPoint = rawProject.ValueAsString("entryPoint");
+            project.ProjectUrl = rawProject.ValueAsString("projectUrl");
+            project.LicenseUrl = rawProject.ValueAsString("licenseUrl");
+            project.IconUrl = rawProject.ValueAsString("iconUrl");
 
+            project.Authors = rawProject.ValueAsStringArray("authors") ?? new string[] { };
+            project.Owners = rawProject.ValueAsStringArray("owners") ?? new string[] { };
+            project.Tags = rawProject.ValueAsStringArray("tags") ?? new string[] { };
+
+            project.Language = rawProject.ValueAsString("language");
+            project.ReleaseNotes = rawProject.ValueAsString("releaseNotes");
+
+            project.RequireLicenseAcceptance = rawProject.ValueAsBoolean("requireLicenseAcceptance", defaultValue: false);
+            project.IsLoadable = rawProject.ValueAsBoolean("loadable", defaultValue: true);
             // TODO: Move this to the dependencies node
-            project.EmbedInteropTypes = rawProject.GetValue<bool>("embedInteropTypes");
+            project.EmbedInteropTypes = rawProject.ValueAsBoolean("embedInteropTypes", defaultValue: false);
+
+            project.Dependencies = new List<LibraryDependency>();
 
             // Project files
-            project.Files = new ProjectFilesCollection(rawProject, project.ProjectDirectory, project.ProjectFilePath, diagnostics);
+            project.Files = new ProjectFilesCollection(rawProject,
+                                                       project.ProjectDirectory,
+                                                       project.ProjectFilePath,
+                                                       diagnostics);
 
-            var compilerInfo = rawProject["compiler"] as JObject;
-
+            var compilerInfo = rawProject.ValueAsJsonObject("compiler");
             if (compilerInfo != null)
             {
-                var languageName = compilerInfo.GetValue<string>("name") ?? "C#";
-                var compilerAssembly = compilerInfo.GetValue<string>("compilerAssembly");
-                var compilerType = compilerInfo.GetValue<string>("compilerType");
+                var languageName = compilerInfo.ValueAsString("name") ?? "C#";
+                var compilerAssembly = compilerInfo.ValueAsString("compilerAssembly");
+                var compilerType = compilerInfo.ValueAsString("compilerType");
 
                 var compiler = new TypeInformation(compilerAssembly, compilerType);
                 project.CompilerServices = new CompilerServices(languageName, compiler);
             }
 
-            var commands = rawProject["commands"] as JObject;
+            var commands = rawProject.Value("commands") as JsonObject;
             if (commands != null)
             {
-                foreach (var command in commands)
+                foreach (var key in commands.Keys)
                 {
-                    project.Commands[command.Key] = command.Value.Value<string>();
+                    var value = commands.ValueAsString(key);
+                    if (value != null)
+                    {
+                        project.Commands[key] = value;
+                    }
                 }
             }
 
-            var scripts = rawProject["scripts"] as JObject;
+            var scripts = rawProject.Value("scripts") as JsonObject;
             if (scripts != null)
             {
-                foreach (var script in scripts)
+                foreach (var key in scripts.Keys)
                 {
-                    var value = script.Value;
-                    if (value.Type == JTokenType.String)
+                    var stringValue = scripts.ValueAsString(key);
+                    if (stringValue != null)
                     {
-                        project.Scripts[script.Key] = new string[] { value.Value<string>() };
+                        project.Scripts[key] = new string[] { stringValue };
+                        continue;
                     }
-                    else if (value.Type == JTokenType.Array)
+
+                    var arrayValue = scripts.ValueAsStringArray(key);
+                    if (arrayValue != null)
                     {
-                        project.Scripts[script.Key] = script.Value.ValueAsArray<string>();
+                        project.Scripts[key] = arrayValue;
+                        continue;
                     }
-                    else
-                    {
-                        throw FileFormatException.Create(
-                            string.Format("The value of a script in {0} can only be a string or an array of strings", ProjectFileName),
-                            value,
-                            project.ProjectFilePath);
-                    }
+
+                    throw FileFormatException.Create(
+                        string.Format("The value of a script in {0} can only be a string or an array of strings", ProjectFileName),
+                        scripts.Value(key),
+                        project.ProjectFilePath);
                 }
             }
 
@@ -324,86 +332,78 @@ namespace Microsoft.Framework.Runtime
         private static void PopulateDependencies(
             string projectPath,
             IList<LibraryDependency> results,
-            JObject settings,
+            JsonObject settings,
             string propertyName,
             bool isGacOrFrameworkReference)
         {
-            var dependencies = settings[propertyName] as JObject;
+            var dependencies = settings.ValueAsJsonObject(propertyName);
             if (dependencies != null)
             {
-                foreach (var dependency in dependencies.Properties())
+                foreach (var dependencyKey in dependencies.Keys)
                 {
-                    if (string.IsNullOrEmpty(dependency.Name))
+                    if (string.IsNullOrEmpty(dependencyKey))
                     {
-
                         throw FileFormatException.Create(
                             "Unable to resolve dependency ''.",
-                            dependency,
+                            dependencies.Value(dependencyKey),
                             projectPath);
                     }
 
-                    // Support 
-                    // "dependencies" : {
-                    //    "Name" : "1.0"
-                    // }
-
-                    var dependencyValue = dependency.Value;
+                    var dependencyValue = dependencies.Value(dependencyKey);
                     var dependencyTypeValue = LibraryDependencyType.Default;
+                    JsonString dependencyVersionAsString = null;
 
-                    string dependencyVersionValue = null;
-                    JToken dependencyVersionToken = dependencyValue;
-
-                    if (dependencyValue.Type == JTokenType.String)
+                    if (dependencyValue is JsonObject)
                     {
-                        dependencyVersionValue = dependencyValue.Value<string>();
-                    }
-                    else
-                    {
-                        if (dependencyValue.Type == JTokenType.Object)
-                        {
-                            dependencyVersionToken = dependencyValue["version"];
-                            if (dependencyVersionToken != null && dependencyVersionToken.Type == JTokenType.String)
-                            {
-                                dependencyVersionValue = dependencyVersionToken.Value<string>();
-                            }
-                        }
+                        // "dependencies" : { "Name" : { "version": "1.0", "type": "build" } }
+                        var dependencyValueAsObject = (JsonObject)dependencyValue;
+                        dependencyVersionAsString = dependencyValueAsObject.ValueAsString("version");
 
                         IEnumerable<string> strings;
-                        if (TryGetStringEnumerable(dependencyValue["type"], out strings))
+                        if (TryGetStringEnumerable(dependencyValueAsObject, "type", out strings))
                         {
                             dependencyTypeValue = LibraryDependencyType.Parse(strings);
                         }
                     }
+                    else if (dependencyValue is JsonString)
+                    {
+                        // "dependencies" : { "Name" : "1.0" }
+                        dependencyVersionAsString = (JsonString)dependencyValue;
+                    }
+                    else
+                    {
+                        throw FileFormatException.Create(
+                            string.Format("Invalid dependency version: {0}. The format is not recognizable.", dependencyKey),
+                            dependencyValue,
+                            projectPath);
+                    }
 
                     SemanticVersionRange dependencyVersionRange = null;
-
-                    if (!string.IsNullOrEmpty(dependencyVersionValue))
+                    if (!string.IsNullOrEmpty(dependencyVersionAsString.Value))
                     {
                         try
                         {
-                            dependencyVersionRange = VersionUtility.ParseVersionRange(dependencyVersionValue);
+                            dependencyVersionRange = VersionUtility.ParseVersionRange(dependencyVersionAsString.Value);
                         }
                         catch (Exception ex)
                         {
                             throw FileFormatException.Create(
                                 ex,
-                                dependencyVersionToken,
+                                dependencyValue,
                                 projectPath);
                         }
                     }
-
-                    var dependencyLineInfo = (IJsonLineInfo)dependency;
 
                     results.Add(new LibraryDependency
                     {
                         LibraryRange = new LibraryRange
                         {
-                            Name = dependency.Name,
+                            Name = dependencyKey,
                             VersionRange = dependencyVersionRange,
                             IsGacOrFrameworkReference = isGacOrFrameworkReference,
                             FileName = projectPath,
-                            Line = dependencyLineInfo.LineNumber,
-                            Column = dependencyLineInfo.LinePosition
+                            Line = dependencyValue.Line,
+                            Column = dependencyValue.Column
                         },
                         Type = dependencyTypeValue
                     });
@@ -411,27 +411,29 @@ namespace Microsoft.Framework.Runtime
             }
         }
 
-        private static bool TryGetStringEnumerable(JToken token, out IEnumerable<string> result)
+        private static bool TryGetStringEnumerable(JsonObject parent, string property, out IEnumerable<string> result)
         {
-            IEnumerable<string> values;
-            if (token == null)
+            var collection = new List<string>();
+            var valueInString = parent.ValueAsString(property);
+            if (valueInString != null)
             {
-                result = null;
-                return false;
-            }
-            else if (token.Type == JTokenType.String)
-            {
-                values = new[]
-                {
-                    token.Value<string>()
-                };
+                collection.Add(valueInString);
             }
             else
             {
-                values = token.Value<string[]>();
+                var valueInArray = parent.ValueAsStringArray(property);
+                if (valueInArray != null)
+                {
+                    collection.AddRange(valueInArray);
+                }
+                else
+                {
+                    result = null;
+                    return false;
+                }
             }
-            result = values
-                .SelectMany(value => value.Split(new[] { ' ', ',' }, StringSplitOptions.RemoveEmptyEntries));
+
+            result = collection.SelectMany(value => value.Split(new[] { ' ', ',' }, StringSplitOptions.RemoveEmptyEntries));
             return true;
         }
 
@@ -492,10 +494,10 @@ namespace Microsoft.Framework.Runtime
             return targetFrameworkInfo ?? _defaultTargetFrameworkConfiguration;
         }
 
-        private void BuildTargetFrameworksAndConfigurations(JObject rawProject)
+        private void BuildTargetFrameworksAndConfigurations(JsonObject projectJsonObject)
         {
             // Get the shared compilationOptions
-            _defaultCompilerOptions = GetCompilationOptions(rawProject) ?? _emptyOptions;
+            _defaultCompilerOptions = GetCompilationOptions(projectJsonObject) ?? new CompilerOptions();
 
             _defaultTargetFrameworkConfiguration = new TargetFrameworkInformation
             {
@@ -526,15 +528,16 @@ namespace Microsoft.Framework.Runtime
                     }
                 }
             */
-            var configurations = rawProject["configurations"] as JObject;
+
+            var configurations = projectJsonObject.ValueAsJsonObject("configurations");
             if (configurations != null)
             {
-                foreach (var configuration in configurations)
+                foreach (var configKey in configurations.Keys)
                 {
-                    var compilerOptions = GetCompilationOptions(configuration.Value);
+                    var compilerOptions = GetCompilationOptions(configurations.ValueAsJsonObject(configKey));
 
                     // Only use this as a configuration if it's not a target framework
-                    _configurations[configuration.Key] = compilerOptions;
+                    _configurations[configKey] = compilerOptions;
                 }
             }
 
@@ -550,30 +553,36 @@ namespace Microsoft.Framework.Runtime
                 }
             */
 
-            var frameworks = rawProject["frameworks"] as JObject;
+            var frameworks = projectJsonObject.ValueAsJsonObject("frameworks");
             if (frameworks != null)
             {
-                foreach (var framework in frameworks)
+                foreach (var frameworkKey in frameworks.Keys)
                 {
                     try
                     {
-                        BuildTargetFrameworkNode(framework);
+                        BuildTargetFrameworkNode(frameworkKey, frameworks.ValueAsJsonObject(frameworkKey));
                     }
                     catch (Exception ex)
                     {
-                        throw FileFormatException.Create(ex, framework.Value, ProjectFilePath);
+                        throw FileFormatException.Create(ex, frameworks.Value(frameworkKey), ProjectFilePath);
                     }
                 }
             }
         }
 
-        private bool BuildTargetFrameworkNode(KeyValuePair<string, JToken> targetFramework)
+        /// <summary>
+        /// Parse a Json object which represents project configuration for a specified framework
+        /// </summary>
+        /// <param name="frameworkKey">The name of the framework</param>
+        /// <param name="frameworkValue">The Json object represent the settings</param>
+        /// <returns>Returns true if it successes.</returns>
+        private bool BuildTargetFrameworkNode(string frameworkKey, JsonObject frameworkValue)
         {
             // If no compilation options are provided then figure them out from the node
-            var compilerOptions = GetCompilationOptions(targetFramework.Value) ??
+            var compilerOptions = GetCompilationOptions(frameworkValue) ??
                                   new CompilerOptions();
 
-            var frameworkName = FrameworkNameHelper.ParseFrameworkName(targetFramework.Key);
+            var frameworkName = FrameworkNameHelper.ParseFrameworkName(frameworkKey);
 
             // If it's not unsupported then keep it
             if (frameworkName == VersionUtility.UnsupportedFrameworkName)
@@ -584,7 +593,7 @@ namespace Microsoft.Framework.Runtime
 
             // Add the target framework specific define
             var defines = new HashSet<string>(compilerOptions.Defines ?? Enumerable.Empty<string>());
-            var frameworkDefinition = Tuple.Create(targetFramework.Key, frameworkName);
+            var frameworkDefinition = Tuple.Create(frameworkKey, frameworkName);
             var frameworkDefine = FrameworkNameHelper.MakeDefaultTargetFrameworkDefine(frameworkDefinition);
 
             if (!string.IsNullOrEmpty(frameworkDefine))
@@ -600,13 +609,12 @@ namespace Microsoft.Framework.Runtime
                 Dependencies = new List<LibraryDependency>()
             };
 
-            var properties = targetFramework.Value.Value<JObject>();
             var frameworkDependencies = new List<LibraryDependency>();
 
             PopulateDependencies(
                 ProjectFilePath,
                 frameworkDependencies,
-                properties,
+                frameworkValue,
                 "dependencies",
                 isGacOrFrameworkReference: false);
 
@@ -614,21 +622,20 @@ namespace Microsoft.Framework.Runtime
             PopulateDependencies(
                 ProjectFilePath,
                 frameworkAssemblies,
-                properties,
+                frameworkValue,
                 "frameworkAssemblies",
                 isGacOrFrameworkReference: true);
 
             frameworkDependencies.AddRange(frameworkAssemblies);
             targetFrameworkInformation.Dependencies = frameworkDependencies;
 
-            targetFrameworkInformation.WrappedProject = properties.GetValue<string>("wrappedProject");
+            targetFrameworkInformation.WrappedProject = frameworkValue.ValueAsString("wrappedProject");
 
-            var binNode = properties["bin"];
-
+            var binNode = frameworkValue.ValueAsJsonObject("bin");
             if (binNode != null)
             {
-                targetFrameworkInformation.AssemblyPath = binNode.GetValue<string>("assembly");
-                targetFrameworkInformation.PdbPath = binNode.GetValue<string>("pdb");
+                targetFrameworkInformation.AssemblyPath = binNode.ValueAsString("assembly");
+                targetFrameworkInformation.PdbPath = binNode.ValueAsString("pdb");
             }
 
             _compilationOptions[frameworkName] = compilerOptions;
@@ -637,23 +644,22 @@ namespace Microsoft.Framework.Runtime
             return true;
         }
 
-        private CompilerOptions GetCompilationOptions(JToken topLevelOrConfiguration)
+        private static CompilerOptions GetCompilationOptions(JsonObject rawObject)
         {
-            var rawOptions = topLevelOrConfiguration["compilationOptions"];
-
+            var rawOptions = rawObject.ValueAsJsonObject("compilationOptions");
             if (rawOptions == null)
             {
                 return null;
             }
 
-            return new CompilerOptions()
+            return new CompilerOptions
             {
-                Defines = rawOptions.ValueAsArray<string>("define"),
-                LanguageVersion = rawOptions.GetValue<string>("languageVersion"),
-                AllowUnsafe = rawOptions.GetValue<bool?>("allowUnsafe"),
-                Platform = rawOptions.GetValue<string>("platform"),
-                WarningsAsErrors = rawOptions.GetValue<bool?>("warningsAsErrors"),
-                Optimize = rawOptions.GetValue<bool?>("optimize"),
+                Defines = rawOptions.ValueAsStringArray("define"),
+                LanguageVersion = rawOptions.ValueAsString("languageVersion"),
+                AllowUnsafe = rawOptions.ValueAsNullableBoolean("allowUnsafe"),
+                Platform = rawOptions.ValueAsString("platform"),
+                WarningsAsErrors = rawOptions.ValueAsNullableBoolean("warningsAsErrors"),
+                Optimize = rawOptions.ValueAsNullableBoolean("optimize"),
             };
         }
     }

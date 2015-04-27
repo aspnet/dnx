@@ -1,16 +1,17 @@
 // Copyright (c) .NET Foundation. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Runtime.Versioning;
+using Microsoft.Framework.Runtime.DependencyManagement;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using System;
-using System.IO;
-using System.Collections.Generic;
 using NuGet;
-using System.Runtime.Versioning;
-using System.Linq;
 
-namespace Microsoft.Framework.Runtime.DependencyManagement
+namespace Microsoft.Framework.PackageManager
 {
     public class LockFileFormat
     {
@@ -271,7 +272,7 @@ namespace Microsoft.Framework.Runtime.DependencyManagement
 
             return WriteObject(groups, group =>
             {
-                return new JProperty(group.Key.ToStringSafe() ?? "*", group.Select(x => new JValue(x.AssemblyName)));
+                return new JProperty(group.Key?.ToString() ?? "*", group.Select(x => new JValue(x.AssemblyName)));
             });
         }
 
@@ -286,7 +287,7 @@ namespace Microsoft.Framework.Runtime.DependencyManagement
         private JProperty WritePackageDependencySet(PackageDependencySet item)
         {
             return new JProperty(
-                item.TargetFramework.ToStringSafe() ?? "*",
+                item.TargetFramework?.ToString() ?? "*",
                 WriteObject(item.Dependencies, WritePackageDependency));
         }
 
@@ -303,7 +304,7 @@ namespace Microsoft.Framework.Runtime.DependencyManagement
         {
             return new JProperty(
                 item.Id,
-                WriteString(item.VersionSpec.ToStringSafe()));
+                WriteString(item.VersionSpec?.ToString()));
         }
 
         private LockFileItem ReadFileItem(string property, JToken json)
@@ -335,7 +336,7 @@ namespace Microsoft.Framework.Runtime.DependencyManagement
 
         private PackageReferenceSet ReadPackageReferenceSet(JToken json)
         {
-            var frameworkName = json["targetFramework"].ToStringSafe();
+            var frameworkName = json["targetFramework"]?.ToString();
             return new PackageReferenceSet(
                 string.IsNullOrEmpty(frameworkName) ? null : new FrameworkName(frameworkName),
                 ReadArray(json["references"] as JArray, ReadString));
@@ -344,7 +345,7 @@ namespace Microsoft.Framework.Runtime.DependencyManagement
         private JToken WritePackageReferenceSet(PackageReferenceSet item)
         {
             var json = new JObject();
-            json["targetFramework"] = item.TargetFramework.ToStringSafe();
+            json["targetFramework"] = item.TargetFramework?.ToString();
             json["references"] = WriteArray(item.References, WriteString);
             return json;
         }

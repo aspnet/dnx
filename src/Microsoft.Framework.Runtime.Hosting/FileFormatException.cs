@@ -2,69 +2,118 @@
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 using System;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
+using Microsoft.Framework.Runtime.Json;
 
 namespace Microsoft.Framework.Runtime
 {
     public sealed class FileFormatException : Exception
     {
-        public FileFormatException(string message) :
+        private FileFormatException(string message) :
             base(message)
         {
         }
 
-        public FileFormatException(string message, Exception innerException) :
+        private FileFormatException(string message, Exception innerException) :
             base(message, innerException)
         {
-
         }
 
         public string Path { get; private set; }
         public int Line { get; private set; }
         public int Column { get; private set; }
 
-        private FileFormatException WithLineInfo(IJsonLineInfo lineInfo)
+        internal static FileFormatException Create(Exception exception, string filePath)
         {
-            if (lineInfo != null)
+            if (exception is JsonDeserializerException)
             {
-                Line = lineInfo.LineNumber;
-                Column = lineInfo.LinePosition;
+                return new FileFormatException(exception.Message, exception)
+                   .WithFilePath(filePath)
+                   .WithLineInfo((JsonDeserializerException)exception);
             }
+            else
+            {
+                return new FileFormatException(exception.Message, exception)
+                    .WithFilePath(filePath);
+            }
+        }
+
+        internal static FileFormatException Create(Exception exception, JsonValue jsonValue, string filePath)
+        {
+            var result = Create(exception, jsonValue)
+                .WithFilePath(filePath);
+
+            return result;
+        }
+
+        internal static FileFormatException Create(Exception exception, JsonValue jsonValue)
+        {
+            var result = new FileFormatException(exception.Message, exception)
+                .WithLineInfo(jsonValue);
+
+            return result;
+        }
+
+        internal static FileFormatException Create(string message, JsonValue jsonValue, string filePath)
+        {
+            var result = Create(message, jsonValue)
+                .WithFilePath(filePath);
+
+            return result;
+        }
+
+        internal static FileFormatException Create(string message, string filePath)
+        {
+            var result = new FileFormatException(message)
+                .WithFilePath(filePath);
+
+            return result;
+        }
+
+
+        internal static FileFormatException Create(string message, JsonValue jsonValue)
+        {
+            var result = new FileFormatException(message)
+                .WithLineInfo(jsonValue);
+
+            return result;
+        }
+
+        internal FileFormatException WithFilePath(string path)
+        {
+            if (path == null)
+            {
+                throw new ArgumentNullException(nameof(path));
+            }
+
+            Path = path;
 
             return this;
         }
 
-        public static FileFormatException Create(Exception exception, JToken value, string path)
+        private FileFormatException WithLineInfo(JsonValue value)
         {
-            var lineInfo = (IJsonLineInfo)value;
-
-            return new FileFormatException(exception.Message, exception)
+            if (value == null)
             {
-                Path = path
+                throw new ArgumentNullException(nameof(value));
             }
-            .WithLineInfo(lineInfo);
+
+            Line = value.Line;
+            Column = value.Column;
+
+            return this;
         }
 
-        public static FileFormatException Create(string message, JToken value, string path)
+        private FileFormatException WithLineInfo(JsonDeserializerException exception)
         {
-            var lineInfo = (IJsonLineInfo)value;
-
-            return new FileFormatException(message)
+            if (exception == null)
             {
-                Path = path
+                throw new ArgumentNullException(nameof(exception));
             }
-            .WithLineInfo(lineInfo);
-        }
 
-        internal static FileFormatException Create(JsonReaderException exception, string path)
-        {
-            return new FileFormatException(exception.Message, exception)
-            {
-                Path = path,
-                Column = exception.LinePosition,
-                Line = exception.LineNumber
-            };
+            Line = exception.Line;
+            Column = exception.Column;
+
+            return this;
         }
     }
 }

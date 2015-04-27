@@ -107,7 +107,7 @@ namespace Microsoft.Framework.ApplicationHost
         {
             var runtimeHomeDir = _fixture.GetRuntimeHomeDir(flavor, os, architecture);
             var projectStructure = @"{
-  'project.json': '{ }'
+  ""project.json"": ""{ }""
 }";
 
             using (var projectPath = TestUtils.CreateTempDir())
@@ -138,8 +138,8 @@ namespace Microsoft.Framework.ApplicationHost
             runtimeType = PlatformHelper.IsMono ? "Mono" : runtimeType;
             var runtimeHomeDir = TestUtils.GetRuntimeHomeDir(flavor, os, architecture);
             var projectJsonContents = @"{
-  'frameworks': {
-    'FRAMEWORK_NAME': { }
+  ""frameworks"": {
+    ""FRAMEWORK_NAME"": { }
   }
 }".Replace("FRAMEWORK_NAME", flavor == "coreclr" ? "dnx451" : "dnxcore50");
 

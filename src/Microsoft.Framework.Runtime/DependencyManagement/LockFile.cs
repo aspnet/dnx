@@ -17,7 +17,7 @@ namespace Microsoft.Framework.Runtime.DependencyManagement
 
         public bool IsValidForProject(Project project)
         {
-            if (Version != LockFileFormat.Version)
+            if (Version != LockFileReader.Version)
             {
                 return false;
             }

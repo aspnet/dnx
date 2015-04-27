@@ -57,14 +57,14 @@ namespace Microsoft.Framework.Runtime
                     string.Format("Unable to resolve project '{0}' from {1}", projectName, ProjectDirectory));
             }
 
-            var projectLockJsonPath = Path.Combine(ProjectDirectory, LockFileFormat.LockFileName);
+            var projectLockJsonPath = Path.Combine(ProjectDirectory, LockFileReader.LockFileName);
             var lockFileExists = File.Exists(projectLockJsonPath);
             var validLockFile = false;
 
             if (lockFileExists)
             {
-                var lockFileFormat = new LockFileFormat();
-                var lockFile = lockFileFormat.Read(projectLockJsonPath);
+                var lockFileReader = new LockFileReader();
+                var lockFile = lockFileReader.Read(projectLockJsonPath);
                 validLockFile = lockFile.IsValidForProject(Project);
 
                 if (validLockFile || skipLockFileValidation)

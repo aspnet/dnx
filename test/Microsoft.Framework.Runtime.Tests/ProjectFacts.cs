@@ -1,8 +1,10 @@
 // Copyright (c) .NET Foundation. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
+using System;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using Microsoft.Framework.Runtime.Helpers;
 using NuGet;
 using Xunit;
@@ -19,6 +21,192 @@ namespace Microsoft.Framework.Runtime.Tests
 
     public class ProjectFacts
     {
+        [Fact]
+        public void VersionIsSet()
+        {
+            var project = Project.GetProject(@"{ ""version"": ""1.2.3"" }", @"foo", @"C:\Foo\Project.json");
+
+            Assert.Equal(new SemanticVersion("1.2.3"), project.Version);
+        }
+
+        [Fact]
+        public void AuthorsAreSet()
+        {
+            var project = Project.GetProject(@"{ ""authors"": [""Bob"", ""Dean""] }", @"foo", @"C:\Foo\Project.json");
+
+            Assert.Equal("Bob", project.Authors[0]);
+            Assert.Equal("Dean", project.Authors[1]);
+        }
+
+        [Fact]
+        public void OwnersAreSet()
+        {
+            var project = Project.GetProject(@"{ ""owners"": [""Alice"", ""Chi""] }", @"foo", @"C:\Foo\Project.json");
+
+            Assert.Equal("Alice", project.Owners[0]);
+            Assert.Equal("Chi", project.Owners[1]);
+        }
+
+        [Theory]
+        [InlineData("summary", nameof(Project.Summary))]
+        [InlineData("description", nameof(Project.Description))]
+        [InlineData("copyright", nameof(Project.Copyright))]
+        [InlineData("title", nameof(Project.Title))]
+        [InlineData("webroot", nameof(Project.WebRoot))]
+        [InlineData("entryPoint", nameof(Project.EntryPoint))]
+        [InlineData("projectUrl", nameof(Project.ProjectUrl))]
+        [InlineData("licenseUrl", nameof(Project.LicenseUrl))]
+        [InlineData("iconUrl", nameof(Project.IconUrl))]
+        public void CommonStringPropertiesAreSet(string jsonPropertyName, string objectPropertyName)
+        {
+            var propertyInfo = typeof(Project).GetTypeInfo().GetDeclaredProperty(objectPropertyName);
+            Assert.NotNull(propertyInfo);
+
+            var expectValue = string.Format("this is a fake {0} at {1}", jsonPropertyName, DateTime.Now.Ticks);
+            var projectContent = string.Format("{{ \"{0}\": \"{1}\" }}", jsonPropertyName, expectValue);
+            var project = Project.GetProject(projectContent, @"foo", @"C:\Foo\Project.json");
+
+            var propertyValue = (string)propertyInfo.GetValue(project);
+            Assert.Equal(expectValue, propertyValue);
+        }
+
+        [Theory]
+        [InlineData("requireLicenseAcceptance", null, nameof(Project.RequireLicenseAcceptance), false)]
+        [InlineData("requireLicenseAcceptance", "false", nameof(Project.RequireLicenseAcceptance), false)]
+        [InlineData("requireLicenseAcceptance", "true", nameof(Project.RequireLicenseAcceptance), true)]
+        [InlineData("loadable", null, nameof(Project.IsLoadable), true)]
+        [InlineData("loadable", "false", nameof(Project.IsLoadable), false)]
+        [InlineData("loadable", "true", nameof(Project.IsLoadable), true)]
+        [InlineData("embedInteropTypes", null, nameof(Project.EmbedInteropTypes), false)]
+        [InlineData("embedInteropTypes", "false", nameof(Project.EmbedInteropTypes), false)]
+        [InlineData("embedInteropTypes", "true", nameof(Project.EmbedInteropTypes), true)]
+        public void CommonBooleanPropertiesAreSet(string jsonPropertyName,
+                                                  string jsonPropertyValue,
+                                                  string objectPropertyName,
+                                                  bool expectResult)
+        {
+            var propertyInfo = typeof(Project).GetTypeInfo().GetDeclaredProperty(objectPropertyName);
+            Assert.NotNull(propertyInfo);
+
+            string projectContent;
+            if (jsonPropertyValue != null)
+            {
+                projectContent = string.Format("{{ \"{0}\": {1} }}", jsonPropertyName, jsonPropertyValue);
+            }
+            else
+            {
+                projectContent = @"{}";
+            }
+
+            var project = Project.GetProject(projectContent, @"foo", @"C:\Foo\Project.json");
+
+            var propertyValue = (bool)propertyInfo.GetValue(project);
+            Assert.Equal(expectResult, propertyValue);
+        }
+
+        [Fact]
+        public void CompilerServicesIsNullByDefault()
+        {
+            var projectContent = @"{}";
+            var project = Project.GetProject(projectContent, @"foo", @"C:\Foo\Project.json");
+            Assert.Null(project.CompilerServices);
+        }
+
+        [Fact]
+        public void CompilerServicesDefaultValues()
+        {
+            var projectContent = @"{""compiler"": {} }";
+            var project = Project.GetProject(projectContent, @"foo", @"C:\Foo\Project.json");
+
+            Assert.NotNull(project.CompilerServices);
+            Assert.Equal("C#", project.CompilerServices.Name);
+            Assert.Null(project.CompilerServices.ProjectCompiler.AssemblyName);
+            Assert.Null(project.CompilerServices.ProjectCompiler.TypeName);
+        }
+
+        [Fact]
+        public void CompilerServicesValuesAreSet()
+        {
+            var projectContent = @"
+{
+    ""compiler"": {
+        ""name"": ""Zulu#"",
+        ""compilerAssembly"": ""Zulu.Compiler.dll"",
+        ""compilerType"": ""Zulu.Compilation.Compiler""
+    }
+}";
+            var project = Project.GetProject(projectContent, @"foo", @"C:\Foo\Project.json");
+
+            Assert.NotNull(project.CompilerServices);
+            Assert.Equal("Zulu#", project.CompilerServices.Name);
+            Assert.Equal("Zulu.Compiler.dll", project.CompilerServices.ProjectCompiler.AssemblyName);
+            Assert.Equal("Zulu.Compilation.Compiler", project.CompilerServices.ProjectCompiler.TypeName);
+        }
+
+        [Fact]
+        public void CommandsSetIsEmptyByDefault()
+        {
+            var projectContent = @"{}";
+            var project = Project.GetProject(projectContent, @"foo", @"C:\Foo\Project.json");
+            Assert.NotNull(project.Commands);
+            Assert.Equal(0, project.Commands.Count);
+        }
+
+        [Fact]
+        public void CommandsSetIsSet()
+        {
+            var projectContent = @"
+{
+    ""commands"": {
+        ""cmd1"": ""cmd1value"",
+        ""cmd2"": ""cmd2value"",
+        ""cmd3"": ""cmd3value""
+    }
+}";
+            var project = Project.GetProject(projectContent, @"foo", @"C:\Foo\Project.json");
+            Assert.NotNull(project.Commands);
+            Assert.Equal(3, project.Commands.Count);
+        }
+
+        [Fact]
+        public void ScriptsSetIsEmptyByDefault()
+        {
+            var projectContent = @"{}";
+            var project = Project.GetProject(projectContent, @"foo", @"C:\Foo\Project.json");
+            Assert.NotNull(project.Scripts);
+            Assert.Equal(0, project.Scripts.Count);
+        }
+
+        [Fact]
+        public void ScriptsSetIsSet()
+        {
+            var projectContent = @"
+{
+    ""scripts"": {
+        ""GroupA"": ""GroupA first command"",
+        ""GroupB"": [
+            ""GroupeB first command"",
+            ""GroupeB second command"",
+            ""GroupeB third command""
+        ]
+    }
+}";
+            var project = Project.GetProject(projectContent, @"foo", @"C:\Foo\Project.json");
+
+            Assert.NotNull(project.Scripts);
+            Assert.Equal(2, project.Scripts.Count);
+
+            var scriptGroupA = project.Scripts["GroupA"];
+            Assert.Equal(1, scriptGroupA.Count());
+            Assert.Equal("GroupA first command", scriptGroupA.First());
+
+            var scriptGroupB = project.Scripts["GroupB"];
+            Assert.Equal(3, scriptGroupB.Count());
+            Assert.Equal("GroupeB first command", scriptGroupB.ElementAt(0));
+            Assert.Equal("GroupeB second command", scriptGroupB.ElementAt(1));
+            Assert.Equal("GroupeB third command", scriptGroupB.ElementAt(2));
+        }
+
         [Fact]
         public void NameIsIgnoredIsSpecified()
         {
@@ -243,6 +431,7 @@ namespace Microsoft.Framework.Runtime.Tests
             var dnx451Options = project.GetCompilerOptions(FrameworkNameHelper.ParseFrameworkName("dnx451"));
             Assert.NotNull(dnx451Options);
             Assert.Equal(new[] { "DNX451" }, dnx451Options.Defines);
+            Assert.Null(dnx451Options.AllowUnsafe);
 
             var aspnetCore50Options = project.GetCompilerOptions(FrameworkNameHelper.ParseFrameworkName("dnxcore50"));
             Assert.NotNull(aspnetCore50Options);
@@ -268,27 +457,6 @@ namespace Microsoft.Framework.Runtime.Tests
 @"c:\foo\project.json");
 
             Assert.Equal("https://github.com/aspnet/KRuntime", project.ProjectUrl);
-        }
-
-        [Fact]
-        public void RequireLicenseAcceptanceIsSet()
-        {
-            var project = Project.GetProject(@"
-{
-    ""requireLicenseAcceptance"": ""true""
-}",
-"foo",
-@"c:\foo\project.json");
-
-            Assert.True(project.RequireLicenseAcceptance);
-        }
-
-        [Fact]
-        public void RequireLicenseAcceptanceDefaultValueIsFalse()
-        {
-            var project = Project.GetProject(@" { }", "foo", @"c:\foo\project.json");
-
-            Assert.False(project.RequireLicenseAcceptance);
         }
 
         [Fact]

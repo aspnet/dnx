@@ -3,7 +3,7 @@
 
 using System.Collections.Generic;
 using System.Linq;
-using Newtonsoft.Json.Linq;
+using Microsoft.Framework.Runtime.Json;
 
 namespace Microsoft.Framework.Runtime
 {
@@ -30,7 +30,10 @@ namespace Microsoft.Framework.Runtime
 
         private readonly IEnumerable<string> _publishExcludePatterns;
 
-        public ProjectFilesCollection(JObject rawProject, string projectDirectory, string projectFilePath, ICollection<ICompilationMessage> warnings = null)
+        internal ProjectFilesCollection(JsonObject rawProject,
+                                        string projectDirectory,
+                                        string projectFilePath,
+                                        ICollection<ICompilationMessage> warnings = null)
         {
             _projectDirectory = projectDirectory;
             _projectFilePath = projectFilePath;
@@ -44,7 +47,7 @@ namespace Microsoft.Framework.Runtime
 
             // TODO: The legacy names will be retired in the future.
             var legacyPublishExcludePatternName = "bundleExclude";
-            var legacyPublishExcludePatternToken = rawProject[legacyPublishExcludePatternName];
+            var legacyPublishExcludePatternToken = rawProject.ValueAsJsonObject(legacyPublishExcludePatternName);
             if (legacyPublishExcludePatternToken != null)
             {
                 _publishExcludePatterns = PatternsCollectionHelper.GetPatternsCollection(rawProject, projectDirectory, projectFilePath, legacyPublishExcludePatternName, DefaultPublishExcludePatterns);
