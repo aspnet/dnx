@@ -16,15 +16,40 @@ namespace Microsoft.Framework.PackageManager
 
             if (nearest == null)
             {
-                // The compatibility mapping "dnxcore50 -> portable-net45+win8" is missing in NuGet core libs
+                // Compatibility mapping "aspnetcore/dnxcore -> portable-net45+win8" is missing in NuGet core libs
                 // So we need to do that check here
-                if (nearest == null && framework == FrameworkConstants.CommonFrameworks.DnxCore50)
+                if (string.Equals(framework.Framework, FrameworkConstants.FrameworkIdentifiers.AspNetCore, StringComparison.OrdinalIgnoreCase) ||
+                    string.Equals(framework.Framework, FrameworkConstants.FrameworkIdentifiers.DnxCore, StringComparison.OrdinalIgnoreCase))
                 {
-                    nearest = items.FirstOrDefault(x => string.Equals(selector(x).Profile, "Profile7"));
+                    nearest = items.FirstOrDefault(x => IsPortableSupportingNet45OrAboveAndWindows(selector(x)));
                 }
             }
 
             return nearest;
+        }
+
+        private static bool IsPortableSupportingNet45OrAboveAndWindows(NuGetFramework framework)
+        {
+            if (!framework.IsPCL)
+            {
+                return false;
+            }
+
+            var frameworkNameProvider = DefaultFrameworkNameProvider.Instance;
+            IEnumerable<NuGetFramework> supportedFrameworks;
+            if (!frameworkNameProvider.TryGetPortableFrameworks(framework.Profile, out supportedFrameworks))
+            {
+                return false;
+            }
+
+            var supportNet45OrAbove = supportedFrameworks
+                .Any(f => string.Equals(f.Framework, FrameworkConstants.FrameworkIdentifiers.Net) &&
+                    f.Version >= new Version(4, 5));
+
+            var supportWindows = supportedFrameworks
+                .Any(f => string.Equals(f.Framework, FrameworkConstants.FrameworkIdentifiers.Windows));
+
+            return supportNet45OrAbove && supportWindows;
         }
     }
 }
