@@ -1,10 +1,10 @@
 // Copyright (c) .NET Foundation. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
+using System;
 using System.Collections.Generic;
 using System.IO;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
+using Microsoft.Framework.Runtime.Json;
 
 namespace Microsoft.Framework.Runtime
 {
@@ -37,26 +37,31 @@ namespace Microsoft.Framework.Runtime
 
             globalSettings = new GlobalSettings();
 
-            string json = File.ReadAllText(globalJsonPath);
-            JObject settings = null;
-
             try
             {
-                settings = JObject.Parse(json);
+                using (var fs = File.OpenRead(globalJsonPath))
+                {
+                    var deserializer = new JsonDeserializer();
+                    var jobject = deserializer.Deserialize(fs) as JsonObject;
+
+                    if (jobject == null)
+                    {
+                        throw new InvalidOperationException("The json file can't be deserialized to a Json object.");
+                    }
+
+                    var projectSearchPaths = jobject.ValueAsStringArray("projects") ??
+                                             jobject.ValueAsStringArray("sources") ??
+                                             new string[] { };
+
+                    globalSettings.ProjectSearchPaths = projectSearchPaths;
+                    globalSettings.PackagesPath = jobject.ValueAsString("packages");
+                    globalSettings.FilePath = globalJsonPath;
+                }
             }
-            catch (JsonReaderException ex)
+            catch (Exception ex)
             {
                 throw FileFormatException.Create(ex, globalJsonPath);
             }
-
-            // TODO: Remove sources
-            var projectSearchPaths = settings["projects"] ?? settings["sources"];
-
-            globalSettings.ProjectSearchPaths = projectSearchPaths == null ?
-                new string[] { } :
-                projectSearchPaths.ValueAsArray<string>();
-            globalSettings.PackagesPath = settings.Value<string>("packages");
-            globalSettings.FilePath = globalJsonPath;
 
             return true;
         }

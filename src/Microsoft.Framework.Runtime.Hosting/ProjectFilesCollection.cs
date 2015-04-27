@@ -3,6 +3,7 @@
 
 using System.Collections.Generic;
 using System.Linq;
+using Microsoft.Framework.Runtime.Json;
 using Newtonsoft.Json.Linq;
 
 namespace Microsoft.Framework.Runtime
@@ -30,7 +31,18 @@ namespace Microsoft.Framework.Runtime
 
         private readonly IEnumerable<string> _publishExcludePatterns;
 
-        public ProjectFilesCollection(JObject rawProject, string projectDirectory, string projectFilePath, ICollection<ICompilationMessage> warnings = null)
+        public ProjectFilesCollection(JObject project,
+                                      string projectDirectory,
+                                      string projectFilePath,
+                                      ICollection<ICompilationMessage> warnings = null)
+        {
+            throw new System.NotImplementedException();
+        }
+
+        internal ProjectFilesCollection(JsonObject rawProject,
+                                        string projectDirectory,
+                                        string projectFilePath,
+                                        ICollection<ICompilationMessage> warnings = null)
         {
             _projectDirectory = projectDirectory;
             _projectFilePath = projectFilePath;
@@ -44,7 +56,7 @@ namespace Microsoft.Framework.Runtime
 
             // TODO: The legacy names will be retired in the future.
             var legacyPublishExcludePatternName = "bundleExclude";
-            var legacyPublishExcludePatternToken = rawProject[legacyPublishExcludePatternName];
+            var legacyPublishExcludePatternToken = rawProject.ValueAsJsonObject(legacyPublishExcludePatternName);
             if (legacyPublishExcludePatternToken != null)
             {
                 _publishExcludePatterns = PatternsCollectionHelper.GetPatternsCollection(rawProject, projectDirectory, projectFilePath, legacyPublishExcludePatternName, DefaultPublishExcludePatterns);
@@ -53,8 +65,9 @@ namespace Microsoft.Framework.Runtime
                     warnings.Add(new FileFormatMessage(
                         string.Format("Property \"{0}\" is deprecated. It is replaced by \"{1}\".", legacyPublishExcludePatternName, "publishExclude"),
                         projectFilePath,
-                        CompilationMessageSeverity.Warning,
-                        legacyPublishExcludePatternToken));
+                        CompilationMessageSeverity.Warning));
+
+                    // TODO: add json object information in error message
                 }
             }
             else

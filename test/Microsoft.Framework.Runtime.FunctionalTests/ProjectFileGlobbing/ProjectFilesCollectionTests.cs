@@ -1,11 +1,11 @@
 // Copyright (c) .NET Foundation. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Microsoft.Framework.Runtime.FunctionalTests.Utilities;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
+using Microsoft.Framework.Runtime.Json;
 using Xunit;
 
 namespace Microsoft.Framework.Runtime.FunctionalTests.ProjectFileGlobbing
@@ -158,7 +158,7 @@ namespace Microsoft.Framework.Runtime.FunctionalTests.ProjectFileGlobbing
             var testFilesCollection = CreateFilesCollection(@"
 {
     ""compileBuiltIn"": """",
-    ""compile"": ""../../lib/**/*.cs"",
+    ""compile"": ""../../lib/**/*.cs""
 }
 ", @"src\project");
 
@@ -174,7 +174,7 @@ namespace Microsoft.Framework.Runtime.FunctionalTests.ProjectFileGlobbing
             var testFilesCollection = CreateFilesCollection(@"
 {
     ""compileBuiltIn"": """",
-    ""code"": ""../../lib/**/*.cs"",
+    ""code"": ""../../lib/**/*.cs""
 }
 ", @"src\project");
 
@@ -190,7 +190,7 @@ namespace Microsoft.Framework.Runtime.FunctionalTests.ProjectFileGlobbing
             var testFilesCollection = CreateFilesCollection(@"
 {
     ""compileBuiltIn"": """",
-    ""compile"": ""..\\..\\lib\\**\\*.cs"",
+    ""compile"": ""..\\..\\lib\\**\\*.cs""
 }
 ", @"src\project");
 
@@ -206,7 +206,7 @@ namespace Microsoft.Framework.Runtime.FunctionalTests.ProjectFileGlobbing
             var testFilesCollection = CreateFilesCollection(@"
 {
     ""compileBuiltIn"": """",
-    ""compile"": ""**\\*.cs;..\\..\\lib\\**\\*.cs"",
+    ""compile"": ""**\\*.cs;..\\..\\lib\\**\\*.cs""
 }
 ", @"src\project");
 
@@ -227,7 +227,7 @@ namespace Microsoft.Framework.Runtime.FunctionalTests.ProjectFileGlobbing
             var testFilesCollection = CreateFilesCollection(@"
 {
     ""compileBuiltIn"": """",
-    ""code"": ""**\\*.cs;..\\..\\lib\\**\\*.cs"",
+    ""code"": ""**\\*.cs;..\\..\\lib\\**\\*.cs""
 }
 ", @"src\project");
 
@@ -248,7 +248,7 @@ namespace Microsoft.Framework.Runtime.FunctionalTests.ProjectFileGlobbing
             var testFilesCollection = CreateFilesCollection(@"
 {
     ""compileBuiltIn"": """",
-    ""compile"": ""**\\*.cs;..\\..\\lib\\*.cs"",
+    ""compile"": ""**\\*.cs;..\\..\\lib\\*.cs""
 }
 ", @"src\project");
 
@@ -267,7 +267,7 @@ namespace Microsoft.Framework.Runtime.FunctionalTests.ProjectFileGlobbing
             var testFilesCollection = CreateFilesCollection(@"
 {
     ""compileBuiltIn"": """",
-    ""compile"": ""..\\..\\lib\\sub4\\source8.cs"",
+    ""compile"": ""..\\..\\lib\\sub4\\source8.cs""
 }
 ", @"src\project");
 
@@ -280,7 +280,7 @@ namespace Microsoft.Framework.Runtime.FunctionalTests.ProjectFileGlobbing
         {
             var testFilesCollection = CreateFilesCollection(@"
 {
-    ""compile"": ""**\\*.cs;..\\..\\lib\\sub4\\source8.cs"",
+    ""compile"": ""**\\*.cs;..\\..\\lib\\sub4\\source8.cs""
 }
 ", @"src\project");
 
@@ -519,7 +519,8 @@ namespace Microsoft.Framework.Runtime.FunctionalTests.ProjectFileGlobbing
 
         protected override IProjectFilesCollection CreateFilesCollection(string jsonContent, string projectDir)
         {
-            var rawProject = JsonConvert.DeserializeObject<JObject>(jsonContent);
+            var deserializer = new JsonDeserializer();
+            var rawProject = deserializer.Deserialize(jsonContent) as JsonObject;
 
             projectDir = Path.Combine(Root.DirPath, PathHelper.NormalizeSeparator(projectDir));
             var filesCollection = new ProjectFilesCollection(rawProject, projectDir, string.Empty);

@@ -13,13 +13,12 @@ namespace Microsoft.Framework.Runtime.Tests
     ""configurations"": { 
         ""Debug"": {
             ""compilationOptions"": { ""define"": [""TEST_DEBUG"", ""XYZ""], ""allowUnsafe"": true, ""warningsAsErrors"": true }
-        },
+        }
     },
     ""frameworks"" : {
         ""dnx451"": {
             ""compilationOptions"": { ""define"": [""TEST_DNX451"" ], ""platform"": ""x86"", ""warningsAsErrors"": true }
         },
-        
         ""dnxcore50"": {
             ""compilationOptions"": { ""allowUnsafe"": true, ""define"": [""TEST_ASPNETCORE""], ""platform"": ""x86"", ""warningsAsErrors"": true }
         }

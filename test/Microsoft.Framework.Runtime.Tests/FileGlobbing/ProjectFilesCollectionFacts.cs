@@ -4,8 +4,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
+using Microsoft.Framework.Runtime.Json;
 using Xunit;
 
 namespace Microsoft.Framework.Runtime.Tests.FileGlobbing
@@ -80,7 +79,7 @@ namespace Microsoft.Framework.Runtime.Tests.FileGlobbing
              ""resourceExclude"": ""resx/exclude/**/*.content"",
              ""resourceFiles"": ""one-resource.file"",
              ""publishExclude"": ""no_pack/*.*"",
-             ""exclude"": ""buggy/*.*"",
+             ""exclude"": ""buggy/*.*""
          }");
 
             var target = new ProjectFilesCollection(rawProject, string.Empty, string.Empty);
@@ -105,16 +104,17 @@ namespace Microsoft.Framework.Runtime.Tests.FileGlobbing
          {
              ""compileBuiltIn"": [""**/*.cpp"", ""**/*.h""],
              ""compile"": ""*.cs;../*.cs"",
-             ""compileExclude"": [""fake*.cs"", ""fake2*.cs""],
+             ""compileExclude"": [""fake*.cs"", ""fake2*.cs""]
          }");
 
             var target = new ProjectFilesCollection(rawProject, string.Empty, string.Empty);
             Assert.Equal(NormalizePatterns("*.cs", "../*.cs", "**/*.cpp", "**/*.h"), target.CompilePatternsGroup.IncludePatterns);
         }
 
-        private JObject Deserialize(string content)
+        private JsonObject Deserialize(string content)
         {
-            return JsonConvert.DeserializeObject<JObject>(content);
+            var deserializer = new JsonDeserializer();
+            return deserializer.Deserialize(content) as JsonObject;
         }
 
         private IEnumerable<string> NormalizePatterns(params string[] patterns)

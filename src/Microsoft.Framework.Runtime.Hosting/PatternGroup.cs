@@ -6,7 +6,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Microsoft.Framework.FileSystemGlobbing;
-using Newtonsoft.Json.Linq;
+using Microsoft.Framework.Runtime.Json;
 
 namespace Microsoft.Framework.Runtime
 {
@@ -33,37 +33,35 @@ namespace Microsoft.Framework.Runtime
             _matcher.AddExcludePatterns(ExcludePatterns);
         }
 
-        public static PatternGroup Build(JObject rawProject,
-                                         string projectDirectory,
-                                         string projectFilePath,
-                                         string name,
-                                         string legacyName,
-                                         IEnumerable<string> fallbackIncluding = null,
-                                         IEnumerable<string> additionalIncluding = null,
-                                         IEnumerable<string> additionalExcluding = null,
-                                         bool includePatternsOnly = false,
-                                         ICollection<ICompilationMessage> warnings = null)
+        internal static PatternGroup Build(JsonObject rawProject,
+                                           string projectDirectory,
+                                           string projectFilePath,
+                                           string name,
+                                           string legacyName,
+                                           IEnumerable<string> fallbackIncluding = null,
+                                           IEnumerable<string> additionalIncluding = null,
+                                           IEnumerable<string> additionalExcluding = null,
+                                           bool includePatternsOnly = false,
+                                           ICollection<ICompilationMessage> warnings = null)
         {
-            var token = rawProject[name];
-            if (legacyName != null)
+            string includePropertyName = name;
+
+            if (!rawProject.Keys.Contains(name) &&
+                legacyName != null &&
+                rawProject.Keys.Contains(legacyName))
             {
-                var legacyToken = rawProject[legacyName];
-                if (legacyToken != null && token == null)
+                includePropertyName = legacyName;
+                if (warnings != null)
                 {
-                    token = legacyToken;
-                    if (warnings != null)
-                    {
-                        warnings.Add(new FileFormatMessage(
-                            string.Format("Property \"{0}\" is deprecated. It is replaced by \"{1}\".", legacyName, name),
-                            projectFilePath,
-                            CompilationMessageSeverity.Warning,
-                            token));
-                    }
+                    warnings.Add(new FileFormatMessage(
+                        string.Format("Property \"{0}\" is deprecated. It is replaced by \"{1}\".", legacyName, name),
+                        projectFilePath,
+                        CompilationMessageSeverity.Warning));
                 }
             }
 
             additionalIncluding = additionalIncluding ?? Enumerable.Empty<string>();
-            var includePatterns = PatternsCollectionHelper.GetPatternsCollection(token, projectDirectory, projectFilePath, defaultPatterns: fallbackIncluding)
+            var includePatterns = PatternsCollectionHelper.GetPatternsCollection(rawProject, projectDirectory, projectFilePath, includePropertyName, defaultPatterns: fallbackIncluding)
                                                           .Concat(additionalIncluding)
                                                           .Distinct();
 

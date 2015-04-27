@@ -11,7 +11,8 @@
         "../Microsoft.Framework.Runtime.Hosting/FileFormatException.cs",
         "../Microsoft.Framework.Runtime.Hosting/FileFormatMessage.cs",
         "../Microsoft.Framework.Runtime.Hosting/Dependencies/FrameworkDefinitions.cs",
-        "../Microsoft.Framework.Runtime.Hosting/Dependencies/FrameworkInformation.cs"
+        "../Microsoft.Framework.Runtime.Hosting/Dependencies/FrameworkInformation.cs",
+        "../Microsoft.Framework.Runtime.Hosting/Json/*.cs"
     ],
     "preprocess": [
         "../../ext/compiler/preprocess/Internalization.cs"
