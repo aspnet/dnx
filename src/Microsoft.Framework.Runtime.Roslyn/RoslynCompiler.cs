@@ -82,7 +82,8 @@ namespace Microsoft.Framework.Runtime.Roslyn
                 _cacheContextAccessor.Current.Monitor(_namedDependencyProvider.GetNamedDependency(project.Name + "_Dependencies"));
             }
 
-            var exportedReferences = incomingReferences.Select(ConvertMetadataReference);
+            var incomingReferencesList = incomingReferences.ToList();
+            var exportedReferences = incomingReferencesList.Select(ConvertMetadataReference);
 
             Logger.TraceInformation("[{0}]: Compiling '{1}'", GetType().Name, name);
             var sw = Stopwatch.StartNew();
@@ -110,7 +111,7 @@ namespace Microsoft.Framework.Runtime.Roslyn
                 parseOptions,
                 isMainAspect);
 
-            var embeddedReferences = incomingReferences.OfType<IMetadataEmbeddedReference>()
+            var embeddedReferences = incomingReferencesList.OfType<IMetadataEmbeddedReference>()
                                                        .ToDictionary(a => a.Name, ConvertMetadataReference);
 
             var references = new List<MetadataReference>();
@@ -134,7 +135,8 @@ namespace Microsoft.Framework.Runtime.Roslyn
                         res.Name,
                         res.StreamFactory,
                         isPublic: true))
-                    .ToList());
+                    .ToList(),
+                incomingReferencesList);
 
             // Apply strong-name settings
             ApplyStrongNameSettings(compilationContext);

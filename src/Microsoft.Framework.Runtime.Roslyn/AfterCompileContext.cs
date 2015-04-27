@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
+using Microsoft.Framework.Runtime.Compilation;
 
 namespace Microsoft.Framework.Runtime.Roslyn
 {
@@ -17,6 +18,7 @@ namespace Microsoft.Framework.Runtime.Roslyn
             diagnostics.AddRange(emitDiagnostics);
 
             Diagnostics = diagnostics;
+
         }
 
         public IProjectContext ProjectContext
@@ -47,5 +49,7 @@ namespace Microsoft.Framework.Runtime.Roslyn
         }
 
         public IList<Diagnostic> Diagnostics { get; }
+
+        public IList<IMetadataReference> References { get { return _context.References; } }
     }
 }

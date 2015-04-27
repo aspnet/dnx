@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.IO;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
+using Microsoft.Framework.Runtime.Compilation;
 
 namespace Microsoft.Framework.Runtime.Roslyn
 {
@@ -21,5 +22,7 @@ namespace Microsoft.Framework.Runtime.Roslyn
         Stream XmlDocStream { get; set; }
 
         IList<Diagnostic> Diagnostics { get; }
+
+        IList<IMetadataReference> References { get; }
     }
 }

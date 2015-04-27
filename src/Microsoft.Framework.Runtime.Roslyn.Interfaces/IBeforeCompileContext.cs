@@ -4,6 +4,7 @@
 using System.Collections.Generic;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
+using Microsoft.Framework.Runtime.Compilation;
 
 namespace Microsoft.Framework.Runtime.Roslyn
 {
@@ -16,5 +17,7 @@ namespace Microsoft.Framework.Runtime.Roslyn
         IList<ResourceDescription> Resources { get; }
 
         IList<Diagnostic> Diagnostics { get; }
+
+        IList<IMetadataReference> References { get; }
     }
 }
