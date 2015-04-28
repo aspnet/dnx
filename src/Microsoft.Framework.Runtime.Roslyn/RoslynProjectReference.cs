@@ -139,6 +139,13 @@ namespace Microsoft.Framework.Runtime.Roslyn
 
                 return assembly;
             }
+        } 
+
+        public void EmitReferenceAssembly(Stream stream) 
+        {
+            var emitOptions = new EmitOptions(metadataOnly: true); 
+            
+            CompilationContext.Compilation.Emit(stream, options: emitOptions); 
         }
 
         public IDiagnosticResult EmitAssembly(string outputPath)

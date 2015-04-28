@@ -2,6 +2,7 @@
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 using System.Collections.Generic;
+using System.IO;
 using System.Reflection;
 
 namespace Microsoft.Framework.Runtime.Compilation
@@ -14,7 +15,9 @@ namespace Microsoft.Framework.Runtime.Compilation
 
         IList<ISourceReference> GetSources();
 
-        Assembly Load(IAssemblyLoadContext loadContext);
+        Assembly Load(IAssemblyLoadContext loadContext); 
+
+        void EmitReferenceAssembly(Stream stream);
 
         IDiagnosticResult EmitAssembly(string outputPath);
     }

@@ -415,9 +415,20 @@ namespace Microsoft.Framework.Runtime.Roslyn
             if (fileMetadataReference != null)
             {
                 return GetMetadataReference(fileMetadataReference.Path);
-            }
+            } 
 
-            throw new NotSupportedException();
+            var projectReference = metadataReference as IMetadataProjectReference; 
+            if (projectReference != null) 
+            {
+                using (var ms = new MemoryStream()) 
+                {
+                    projectReference.EmitReferenceAssembly(ms); 
+
+                    return MetadataReference.CreateFromImage(ms.ToArray()); 
+                } 
+            } 
+            
+            throw new NotSupportedException(); 
         }
 
         private MetadataReference GetMetadataReference(string path)
