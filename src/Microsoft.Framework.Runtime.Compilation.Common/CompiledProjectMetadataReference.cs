@@ -47,6 +47,14 @@ namespace Microsoft.Framework.Runtime.Compilation
             return loadContext.LoadFile(_assemblyPath);
         }
 
+        public void EmitReferenceAssembly(Stream stream) 
+        {
+            using (var fs = File.OpenRead(_assemblyPath)) 
+            {
+                fs.CopyTo(stream); 
+            } 
+        }
+
         public IDiagnosticResult EmitAssembly(string outputPath)
         {
             Copy(_assemblyPath, outputPath);
