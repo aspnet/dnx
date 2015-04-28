@@ -9,34 +9,28 @@ namespace Microsoft.Framework.Runtime.Common.CommandLine
 {
     internal class AnsiConsole
     {
-        private AnsiConsole(TextWriter writer, IRuntimeEnvironment runtimeEnv)
+        private AnsiConsole(TextWriter writer, bool useConsoleColor)
         {
             Writer = writer;
 
-            var useColors = runtimeEnv.OperatingSystem == "Windows" || runtimeEnv.RuntimeType == "Mono";
-
-            if (useColors)
+            _useConsoleColor = useConsoleColor;
+            if (_useConsoleColor)
             {
-                WriteLine = WriteLineParse;
                 OriginalForegroundColor = Console.ForegroundColor;
             }
-            else
-            {
-                WriteLine = WriteLineNoParse;
-            }
         }
 
-        public Action<string> WriteLine { get; private set; }
         private int _boldRecursion;
+        private bool _useConsoleColor;
 
-        public static AnsiConsole GetOutput(IRuntimeEnvironment runtimeEnv)
+        public static AnsiConsole GetOutput(bool useConsoleColor)
         {
-            return new AnsiConsole(Console.Out, runtimeEnv);
+            return new AnsiConsole(Console.Out, useConsoleColor);
         }
 
-        public static AnsiConsole GetError(IRuntimeEnvironment runtimeEnv)
+        public static AnsiConsole GetError(bool useConsoleColor)
         {
-            return new AnsiConsole(Console.Error, runtimeEnv);
+            return new AnsiConsole(Console.Error, useConsoleColor);
         }
 
         public TextWriter Writer { get; }
@@ -59,13 +53,14 @@ namespace Microsoft.Framework.Runtime.Common.CommandLine
             Console.ForegroundColor = (ConsoleColor)((int)Console.ForegroundColor ^ 0x08);
         }
 
-        private void WriteLineNoParse(string message)
+        public void WriteLine(string message)
         {
-            Writer.WriteLine(message);
-        }
+            if (!_useConsoleColor)
+            {
+                Writer.WriteLine(message);
+                return;
+            }
 
-        private void WriteLineParse(string message)
-        {
             var sb = new StringBuilder();
             var escapeScan = 0;
             for (; ;)
