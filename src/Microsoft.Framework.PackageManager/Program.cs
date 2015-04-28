@@ -18,11 +18,13 @@ namespace Microsoft.Framework.PackageManager
     {
         private readonly IServiceProvider _hostServices;
         private readonly IApplicationEnvironment _environment;
+        private readonly IRuntimeEnvironment _runtimeEnv;
 
-        public Program(IServiceProvider hostServices, IApplicationEnvironment environment)
+        public Program(IServiceProvider hostServices, IApplicationEnvironment environment, IRuntimeEnvironment runtimeEnv)
         {
             _hostServices = hostServices;
             _environment = environment;
+            _runtimeEnv = runtimeEnv;
 
 #if DNX451
             Thread.GetDomain().SetData(".appDomain", this);
@@ -520,12 +522,12 @@ namespace Microsoft.Framework.PackageManager
 
         private Reports CreateReports(bool verbose, bool quiet)
         {
-            IReport output = new Report(AnsiConsole.Output);
+            IReport output = new Report(AnsiConsole.GetOutput(_runtimeEnv));
             var reports = new Reports()
             {
                 Information = output,
                 Verbose = verbose ? output : new NullReport(),
-                Error = new Report(AnsiConsole.Output),
+                Error = new Report(AnsiConsole.GetError(_runtimeEnv)),
             };
 
             // If "--verbose" and "--quiet" are specified together, "--verbose" wins

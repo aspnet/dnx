@@ -9,22 +9,40 @@ namespace Microsoft.Framework.Runtime.Common.CommandLine
 {
     internal class AnsiConsole
     {
-        private AnsiConsole(TextWriter writer)
+        private AnsiConsole(TextWriter writer, IRuntimeEnvironment runtimeEnv)
         {
             Writer = writer;
-            OriginalForegroundColor = Console.ForegroundColor;
+
+            var useColors = runtimeEnv.OperatingSystem == "Windows" || runtimeEnv.RuntimeType == "Mono";
+
+            if (useColors)
+            {
+                WriteLine = WriteLineParse;
+                OriginalForegroundColor = Console.ForegroundColor;
+            }
+            else
+            {
+                WriteLine = WriteLineNoParse;
+            }
         }
 
+        public Action<string> WriteLine { get; private set; }
         private int _boldRecursion;
 
-        public static AnsiConsole Output = new AnsiConsole(Console.Out);
+        public static AnsiConsole GetOutput(IRuntimeEnvironment runtimeEnv)
+        {
+            return new AnsiConsole(Console.Out, runtimeEnv);
+        }
 
-        public static AnsiConsole Error = new AnsiConsole(Console.Error);
+        public static AnsiConsole GetError(IRuntimeEnvironment runtimeEnv)
+        {
+            return new AnsiConsole(Console.Error, runtimeEnv);
+        }
 
         public TextWriter Writer { get; }
 
         public ConsoleColor OriginalForegroundColor { get; }
-        
+
         private void SetColor(ConsoleColor color)
         {
             Console.ForegroundColor = (ConsoleColor)(((int)Console.ForegroundColor & 0x08) | ((int)color & 0x07));
@@ -41,7 +59,12 @@ namespace Microsoft.Framework.Runtime.Common.CommandLine
             Console.ForegroundColor = (ConsoleColor)((int)Console.ForegroundColor ^ 0x08);
         }
 
-        public void WriteLine(string message)
+        private void WriteLineNoParse(string message)
+        {
+            Writer.WriteLine(message);
+        }
+
+        private void WriteLineParse(string message)
         {
             var sb = new StringBuilder();
             var escapeScan = 0;
