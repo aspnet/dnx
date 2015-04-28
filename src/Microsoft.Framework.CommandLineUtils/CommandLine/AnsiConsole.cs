@@ -9,22 +9,34 @@ namespace Microsoft.Framework.Runtime.Common.CommandLine
 {
     internal class AnsiConsole
     {
-        private AnsiConsole(TextWriter writer)
+        private AnsiConsole(TextWriter writer, bool useConsoleColor)
         {
             Writer = writer;
-            OriginalForegroundColor = Console.ForegroundColor;
+
+            _useConsoleColor = useConsoleColor;
+            if (_useConsoleColor)
+            {
+                OriginalForegroundColor = Console.ForegroundColor;
+            }
         }
 
         private int _boldRecursion;
+        private bool _useConsoleColor;
 
-        public static AnsiConsole Output = new AnsiConsole(Console.Out);
+        public static AnsiConsole GetOutput(bool useConsoleColor)
+        {
+            return new AnsiConsole(Console.Out, useConsoleColor);
+        }
 
-        public static AnsiConsole Error = new AnsiConsole(Console.Error);
+        public static AnsiConsole GetError(bool useConsoleColor)
+        {
+            return new AnsiConsole(Console.Error, useConsoleColor);
+        }
 
         public TextWriter Writer { get; }
 
         public ConsoleColor OriginalForegroundColor { get; }
-        
+
         private void SetColor(ConsoleColor color)
         {
             Console.ForegroundColor = (ConsoleColor)(((int)Console.ForegroundColor & 0x08) | ((int)color & 0x07));
@@ -43,6 +55,12 @@ namespace Microsoft.Framework.Runtime.Common.CommandLine
 
         public void WriteLine(string message)
         {
+            if (!_useConsoleColor)
+            {
+                Writer.WriteLine(message);
+                return;
+            }
+
             var sb = new StringBuilder();
             var escapeScan = 0;
             for (; ;)
