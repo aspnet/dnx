@@ -111,7 +111,10 @@ var RUNTIME_TARGETS='${new List<RuntimeTarget>()}'
 
 -// Replace repo-initialize with a less greedy restore
 #repo-initialize target='initialize'
-    git gitCommand="submodule update --init"
+    -// On Windows, if git is a CMD file (some installers do this), it has to be run with CMD. Until Universe is updated, we'll
+    -// hack around that
+    exec program='cmd' commandline='/C git submodule update --init' if='!IsMono'
+    git gitCommand="submodule update --init" if='IsMono'
     @{
         DoRestore();
     }

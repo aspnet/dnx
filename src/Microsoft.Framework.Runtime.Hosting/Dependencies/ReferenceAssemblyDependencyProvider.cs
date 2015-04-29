@@ -30,7 +30,13 @@ namespace Microsoft.Framework.Runtime.Dependencies
 
         private IFrameworkReferenceResolver FrameworkResolver { get; set; }
 
-        public Library GetDescription(LibraryRange libraryRange, NuGetFramework targetFramework)
+        public IEnumerable<string> GetAttemptedPaths(NuGetFramework targetFramework)
+        {
+            // No attempted paths for reference assemblies
+            return Enumerable.Empty<string>();
+        }
+
+        public Library GetLibrary(LibraryRange libraryRange, NuGetFramework targetFramework)
         {
             Debug.Assert(SupportsType(libraryRange.TypeConstraint));
 
