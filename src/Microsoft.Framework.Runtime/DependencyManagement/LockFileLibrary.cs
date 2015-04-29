@@ -40,10 +40,25 @@ namespace Microsoft.Framework.Runtime.DependencyManagement
 
         public IList<FrameworkAssemblyReference> FrameworkAssemblies { get; set; } = new List<FrameworkAssemblyReference>();
 
-        public IList<string> RuntimeAssemblies { get; set; } = new List<string>();
+        public IList<LockFileItem> RuntimeAssemblies { get; set; } = new List<LockFileItem>();
 
-        public IList<string> CompileTimeAssemblies { get; set; } = new List<string>();
+        public IList<LockFileItem> CompileTimeAssemblies { get; set; } = new List<LockFileItem>();
 
-        public IList<string> NativeLibraries { get; set; } = new List<string>();
+        public IList<LockFileItem> ResourceAssemblies { get; set; } = new List<LockFileItem>();
+
+        public IList<LockFileItem> NativeLibraries { get; set; } = new List<LockFileItem>();
+    }
+
+    public class LockFileItem
+    {
+        public string Path { get; set; }
+
+        public IDictionary<string, string> Properties { get; } = new Dictionary<string, string>();
+
+        public static implicit operator string (LockFileItem item) => item.Path;
+
+        public static implicit operator LockFileItem(string path) => new LockFileItem { Path = path };
+
+        public override string ToString() => Path;
     }
 }
