@@ -20,7 +20,6 @@
         "../../submodules/NuGet/src/NuGet.Repositories/**/*.cs",
         "../../submodules/NuGet/src/NuGet.DependencyResolver.Core/**/*.cs",
         "../../submodules/NuGet/src/NuGet.ProjectModel/**/*.cs",
-        "../../submodules/NuGet/src/NuGet.RuntimeModel/**/*.cs",
         "../../submodules/FileSystem/src/Microsoft.Framework.FileSystemGlobbing/**/*.cs",
         "../../submodules/Logging/src/Microsoft.Framework.Logging/**/*.cs",
         "../../submodules/Logging/src/Microsoft.Framework.Logging.Console/**/*.cs",
