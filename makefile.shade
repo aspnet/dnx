@@ -455,20 +455,31 @@ var RC_FILES = '${FindAllFiles("Resource.rc", BOOTSTRAPPER_EXE_NAME, BOOTSTRAPPE
     var CoreCLR_DIR='${""}'
     @{
         Func<string, long> getVersion = version => {
-        var dash = version.LastIndexOf('-');
+            var dash = version.LastIndexOf('-');
+            var parsedVersion = Int64.MaxValue;
 
             if(dash != -1)
             {
                 var lastToken = version.Substring(dash + 1);
+                var flag = false;
 
                 if(lastToken.StartsWith("t"))
                 {
-                    return Int64.Parse(lastToken.Substring(1));
+                    flag = Int64.TryParse(lastToken.Substring(1), out parsedVersion);
+                }
+                else
+                {
+                    flag = Int64.TryParse(lastToken, out parsedVersion);
                 }
 
-                return Int64.Parse(lastToken);
+                if(!flag)
+                {
+                    Log.Info(string.Format("Version does not have build number: {0}", version));
+                    parsedVersion = Int64.MaxValue;
+                }
             }
-            return Int64.MaxValue;
+            
+            return parsedVersion;
         };
 
         string packagesDir = Path.Combine(Directory.GetCurrentDirectory(), "packages");
