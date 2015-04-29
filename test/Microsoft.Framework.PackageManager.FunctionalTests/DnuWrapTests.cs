@@ -262,5 +262,39 @@ namespace Microsoft.Framework.PackageManager
                 Assert.Equal(expectedLibDeltaProjectJson, File.ReadAllText(libDeltaJsonPath));
             }
         }
+
+        [Theory]
+        [MemberData("RuntimeComponents")]
+        public void DnuWrapCreatesGlobalJsonIfSolutionRootDoesNotHaveOne(string flavor, string os, string architecture)
+        {
+            var runtimeHomeDir = TestUtils.GetRuntimeHomeDir(flavor, os, architecture);
+
+            if (PlatformHelper.IsMono)
+            {
+                return;
+            }
+
+            var expectedGlobalJson = @"{
+  ""projects"": [
+    ""wrap""
+  ]
+}";
+            using (runtimeHomeDir)
+            using (var testSolutionDir = TestUtils.GetTempTestSolution("ConsoleApp1"))
+            {
+                var libGammaCsprojPath = Path.Combine(testSolutionDir, "LibraryGamma", "LibraryGamma.csproj");
+                var globalJsonPath = Path.Combine(testSolutionDir, "global.json");
+                File.Delete(globalJsonPath);
+
+                var exitCode = DnuTestUtils.ExecDnu(
+                    runtimeHomeDir,
+                    subcommand: "wrap",
+                    arguments: string.Format("\"{0}\" --msbuild \"{1}\"", libGammaCsprojPath, _msbuildPath));
+
+                Assert.Equal(0, exitCode);
+                Assert.True(File.Exists(globalJsonPath));
+                Assert.Equal(expectedGlobalJson, File.ReadAllText(globalJsonPath));
+            }
+        }
     }
 }

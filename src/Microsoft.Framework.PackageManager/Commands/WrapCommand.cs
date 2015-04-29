@@ -104,7 +104,7 @@ namespace Microsoft.Framework.PackageManager
                 return false;
             }
 
-            var rootDir = ProjectResolver.ResolveRootDirectory(Directory.GetCurrentDirectory());
+            var rootDir = ResolveRootDirectory(Directory.GetCurrentDirectory());
             var wrapRoot = Path.Combine(rootDir, WrapRootName);
             EmitAssemblyWrapper(wrapRoot, frameworkName, InputFilePath);
 
@@ -255,7 +255,7 @@ namespace Microsoft.Framework.PackageManager
             var projectName = Path.GetFileNameWithoutExtension(outputAssemblyPath);
 
             var projectDir = Path.GetDirectoryName(projectFile);
-            var rootDir = ProjectResolver.ResolveRootDirectory(projectDir);
+            var rootDir = ResolveRootDirectory(projectDir);
             var wrapRoot = Path.Combine(rootDir, WrapRootName);
 
             string targetProjectJson;
@@ -692,7 +692,7 @@ namespace Microsoft.Framework.PackageManager
 
         private static string ResolvePackagesDirectory(string projectDir)
         {
-            var rootDir = ProjectResolver.ResolveRootDirectory(projectDir);
+            var rootDir = ResolveRootDirectory(projectDir);
             var settings = SettingsUtils.ReadSettings(
                 solutionDir: rootDir,
                 nugetConfigFile: null,
@@ -729,6 +729,33 @@ namespace Microsoft.Framework.PackageManager
             {
                 obj[name] = value;
             }
+        }
+
+        private static string ResolveRootDirectory(string projectPath)
+        {
+            var di = new DirectoryInfo(projectPath);
+
+            while (di.Parent != null)
+            {
+                if (di.EnumerateFiles(GlobalSettings.GlobalFileName).Any() ||
+                    di.EnumerateFiles("*.sln").Any())
+                {
+                    // If we locate the root dir with a .sln file and there is no global.json,
+                    // we create an empty global.json for future use
+                    var globalFilePath = Path.Combine(di.FullName, GlobalSettings.GlobalFileName);
+                    if (!File.Exists(globalFilePath))
+                    {
+                        File.WriteAllText(globalFilePath, new JObject().ToString());
+                    }
+
+                    return di.FullName;
+                }
+
+                di = di.Parent;
+            }
+
+            // If we don't find any files then make the project folder the root
+            return projectPath;
         }
 
         private class NuGetPackage
