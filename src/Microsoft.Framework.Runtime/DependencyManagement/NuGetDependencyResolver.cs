@@ -281,13 +281,46 @@ namespace Microsoft.Framework.Runtime
                 {
                     var name = Path.GetFileNameWithoutExtension(assemblyPath);
                     var assemblyName = new AssemblyName(name);
-                    if (name.EndsWith(".resources", StringComparison.OrdinalIgnoreCase))
+                    var path = Path.Combine(dependency.Path, assemblyPath);
+
+                    string replacementPath;
+                    if (Servicing.ServicingTable.TryGetReplacement(
+                        packageInfo.Id,
+                        packageInfo.Version,
+                        assemblyPath,
+                        out replacementPath))
                     {
-                        var cultureName = Path.GetFileName(Path.GetDirectoryName(assemblyPath));
+                        _packageAssemblyLookup[assemblyName] = new PackageAssembly()
+                        {
+                            Path = replacementPath,
+                            RelativePath = assemblyPath,
+                            Library = dependency
+                        };
+                    }
+                    else
+                    {
+                        _packageAssemblyLookup[assemblyName] = new PackageAssembly()
+                        {
+                            Path = path,
+                            RelativePath = assemblyPath,
+                            Library = dependency
+                        };
+                    }
+
+                    assemblies.Add(name);
+                }
+
+                foreach (var assemblyPath in targetLibrary.ResourceAssemblies)
+                {
+                    var name = Path.GetFileNameWithoutExtension(assemblyPath);
+                    var assemblyName = new AssemblyName(name);
+                    string locale;
+                    if (assemblyPath.Properties.TryGetValue("locale", out locale))
+                    {
 #if DNXCORE50
-                        assemblyName.CultureName = cultureName;
+                        assemblyName.CultureName = locale;
 #elif DNX451
-                        assemblyName.CultureInfo = new System.Globalization.CultureInfo(cultureName);
+                        assemblyName.CultureInfo = new System.Globalization.CultureInfo(locale);
 #else
 #error Unhandled target framework
 #endif

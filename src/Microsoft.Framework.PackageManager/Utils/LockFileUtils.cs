@@ -93,13 +93,6 @@ namespace Microsoft.Framework.PackageManager.Utils
 
                 // Add framework assemblies with empty supported frameworks
                 AddFrameworkReferences(lockFileLib, framework, package.FrameworkAssemblies.Where(f => !f.SupportedFrameworks.Any()));
-/* LOUDO: rebase merge error
-                group.RuntimeAssemblies = group.RuntimeAssemblies
-                    .Concat(GetPackageResources(package, framework))
-                    .ToList();
-
-                lockFileLib.FrameworkGroups.Add(group);
-*/
             }
 
             var patterns = PatternDefinitions.DotNetPatterns;
@@ -261,7 +254,7 @@ namespace Microsoft.Framework.PackageManager.Utils
             {
                 // Get the list of references for this target framework
                 var references = compatibleReferences.ToList();
-                
+
                 foreach (var reference in references)
                 {
                     // Skip anything that isn't a dll. Unfortunately some packages put random stuff
