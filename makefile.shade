@@ -66,17 +66,17 @@ var MANAGED_PROJECTS = '${FindAllProjects(
     "Microsoft.Framework.ApplicationHost",
     "Microsoft.Framework.CommandLineUtils",
     "Microsoft.Framework.DesignTimeHost",
-    "Microsoft.Framework.DesignTimeHost.Interfaces",
+    "Microsoft.Framework.DesignTimeHost.Abstractions",
     "Microsoft.Framework.PackageManager",
     "Microsoft.Framework.Project",
     "Microsoft.Framework.Runtime",
     "Microsoft.Framework.Runtime.Caching",
-    "Microsoft.Framework.Runtime.Interfaces",
+    "Microsoft.Framework.Runtime.Abstractions",
     "Microsoft.Framework.Runtime.Compilation.DesignTime",
     "Microsoft.Framework.Runtime.Common",
     "Microsoft.Framework.Runtime.Loader",
     "Microsoft.Framework.Runtime.Roslyn",
-    "Microsoft.Framework.Runtime.Roslyn.Interfaces",
+    "Microsoft.Framework.Runtime.Roslyn.Abstractions",
     "Microsoft.Framework.Runtime.Roslyn.Common")}'
 
 var WIN_MANAGED_PROJECTS = '${FindAllProjects(
@@ -940,7 +940,7 @@ macro name='DoRestore'
             var tpaProjects = new[] {
                 BOOTSTRAPPER_HOST_NAME,
                 BOOTSTRAPPER_CORECLR_MANAGED_NAME,
-                "Microsoft.Framework.Runtime.Interfaces",
+                "Microsoft.Framework.Runtime.Abstractions",
                 "Microsoft.Framework.Runtime.Loader"
             };
 
