@@ -5,8 +5,8 @@
         "Microsoft.Framework.CommandLineUtils": { "version": "1.0.0-*", "type": "build" },
         "Microsoft.Framework.Runtime.Common": { "version": "1.0.0-*", "type": "build" },
         "Newtonsoft.Json": "6.0.6",
-        "Microsoft.Framework.Runtime.Roslyn.Abstractions": "1.0.0-*",
-        "Microsoft.Framework.Runtime.Abstractions": "1.0.0-*",
+        "Microsoft.Framework.Runtime.Roslyn.Interfaces": "1.0.0-*",
+        "Microsoft.Framework.Runtime.Interfaces": "1.0.0-*",
         "Microsoft.Framework.NotNullAttribute.Internal": { "type": "build", "version": "1.0.0-*" }
     },
     "compile": [

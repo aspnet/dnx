@@ -1,7 +1,7 @@
 {
     "dependencies": {
         "Microsoft.Framework.DesignTimeHost": "1.0.0-*",
-        "Microsoft.Framework.DesignTimeHost.Abstractions": "1.0.0-*",
+        "Microsoft.Framework.DesignTimeHost.Interfaces": "1.0.0-*",
         "xunit.runner.aspnet": "2.0.0-aspnet-*"
     },
     "frameworks": {

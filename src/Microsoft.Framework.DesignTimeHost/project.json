@@ -1,13 +1,13 @@
 {
     "version": "1.0.0-*",
     "dependencies": {
-        "Microsoft.Framework.DesignTimeHost.Abstractions": "1.0.0-*",
+        "Microsoft.Framework.DesignTimeHost.Interfaces": "1.0.0-*",
         "Microsoft.Framework.NotNullAttribute.Internal": { "version": "1.0.0-*", "type": "build" },
         "Microsoft.Framework.Runtime": "1.0.0-*",
         "Microsoft.Framework.Runtime.Compilation.DesignTime": "1.0.0-*",
         "Microsoft.Framework.Runtime.Compilation.Common": { "version": "1.0.0-*", "type": "build" },
         "Microsoft.Framework.Runtime.Common": { "version": "1.0.0-*", "type": "build" },
-        "Microsoft.Framework.Runtime.Abstractions": "1.0.0-*",
+        "Microsoft.Framework.Runtime.Interfaces": "1.0.0-*",
         "Microsoft.Framework.Runtime.Roslyn": "1.0.0-*",
         "Newtonsoft.Json": "6.0.6"
     },

@@ -3,7 +3,7 @@
     "description": "ASP.NET 5 interfaces to take advantage of capabilities exposed by the design time host.",
     "compilationOptions": { "warningsAsErrors": true },
     "dependencies": {
-        "Microsoft.Framework.Runtime.Abstractions": "1.0.0-*",
+        "Microsoft.Framework.Runtime.Interfaces": "1.0.0-*",
         "Newtonsoft.Json": "6.0.6"
     },
     "frameworks": {
