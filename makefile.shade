@@ -71,7 +71,7 @@ var MANAGED_PROJECTS = '${FindAllProjects(
     "Microsoft.Framework.Project",
     "Microsoft.Framework.Runtime",
     "Microsoft.Framework.Runtime.Caching",
-    "Microsoft.Framework.Runtime.Abstractions",
+    "Microsoft.Framework.Runtime.Interfaces",
     "Microsoft.Framework.Runtime.Compilation.DesignTime",
     "Microsoft.Framework.Runtime.Common",
     "Microsoft.Framework.Runtime.Loader",
@@ -940,7 +940,7 @@ macro name='DoRestore'
             var tpaProjects = new[] {
                 BOOTSTRAPPER_HOST_NAME,
                 BOOTSTRAPPER_CORECLR_MANAGED_NAME,
-                "Microsoft.Framework.Runtime.Abstractions",
+                "Microsoft.Framework.Runtime.Interfaces",
                 "Microsoft.Framework.Runtime.Loader"
             };
 
