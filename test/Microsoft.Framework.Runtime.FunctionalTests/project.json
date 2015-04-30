@@ -2,7 +2,7 @@
     "dependencies": {
         "Microsoft.Framework.CommonTestUtils": "1.0.0-*",
         "Microsoft.Framework.Runtime": "1.0.0-*",
-        "Microsoft.Framework.Runtime.Interfaces": "1.0.0-*",
+        "Microsoft.Framework.Runtime.Abstractions": "1.0.0-*",
         "Microsoft.AspNet.Testing": "1.0.0-*",
         "xunit.runner.aspnet": "2.0.0-aspnet-*"
     },

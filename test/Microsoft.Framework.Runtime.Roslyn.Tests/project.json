@@ -1,6 +1,6 @@
 {
     "dependencies": {
-        "Microsoft.Framework.Runtime.Interfaces": "1.0.0-*",
+        "Microsoft.Framework.Runtime.Abstractions": "1.0.0-*",
         "Microsoft.Framework.Runtime.Roslyn": "1.0.0-*",
         "xunit.runner.aspnet": "2.0.0-aspnet-*"
     },

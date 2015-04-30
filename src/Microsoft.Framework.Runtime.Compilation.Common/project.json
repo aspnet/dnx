@@ -3,7 +3,7 @@
     "description": "(Temporary) Central place for common classes used in compilation. These will live in Microsoft.Framework.Runtime.Compilation",
     "shared": "**/*.cs",
     "dependencies": {
-        "Microsoft.Framework.Runtime.Interfaces": "1.0.0-*"
+        "Microsoft.Framework.Runtime.Abstractions": "1.0.0-*"
     },
 
     "frameworks": {
