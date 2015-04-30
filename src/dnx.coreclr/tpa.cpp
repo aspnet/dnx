@@ -16,7 +16,7 @@ BOOL CreateTpaBase(LPCTSTR** ppNames, size_t* pcNames, bool bNative)
     {
         pArray[0] = _T("dnx.coreclr.managed.ni.dll");
         pArray[1] = _T("dnx.host.ni.dll");
-        pArray[2] = _T("Microsoft.Framework.Runtime.Interfaces.ni.dll");
+        pArray[2] = _T("Microsoft.Framework.Runtime.Abstractions.ni.dll");
         pArray[3] = _T("Microsoft.Framework.Runtime.Loader.ni.dll");
         pArray[4] = _T("mscorlib.ni.dll");
         pArray[5] = _T("System.AppContext.ni.dll");
@@ -52,7 +52,7 @@ BOOL CreateTpaBase(LPCTSTR** ppNames, size_t* pcNames, bool bNative)
     {
         pArray[0] = _T("dnx.coreclr.managed.dll");
         pArray[1] = _T("dnx.host.dll");
-        pArray[2] = _T("Microsoft.Framework.Runtime.Interfaces.dll");
+        pArray[2] = _T("Microsoft.Framework.Runtime.Abstractions.dll");
         pArray[3] = _T("Microsoft.Framework.Runtime.Loader.dll");
         pArray[4] = _T("mscorlib.dll");
         pArray[5] = _T("System.AppContext.dll");
