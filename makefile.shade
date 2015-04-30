@@ -153,7 +153,7 @@ var RUNTIME_TARGETS='${new List<RuntimeTarget>()}'
 
 #build-managed-projects target='build-common'
     @{ var BUILD_DIR = BUILD_DIR2; }
-    kpm-pack each='var projectFile in MANAGED_PROJECTS' configuration='${Configuration2}'
+    kpm-pack each='var projectFile in MANAGED_PROJECTS' configuration='${Configuration2}' kpmPackOutputDir='${BUILD_DIR}'
     @{
         foreach (var nupkg in Files.Include(Path.Combine(BUILD_DIR, "*/*.nupkg"))) 
         {
@@ -198,7 +198,7 @@ var RUNTIME_TARGETS='${new List<RuntimeTarget>()}'
 
 #build-win-managed-projects target='build-windows'
     @{ var BUILD_DIR = BUILD_DIR2; }
-    kpm-pack each='var projectFile in WIN_MANAGED_PROJECTS' configuration='${Configuration2}'
+    kpm-pack each='var projectFile in WIN_MANAGED_PROJECTS' configuration='${Configuration2}' kpmPackOutputDir='${BUILD_DIR}'
     @{
         foreach (var nupkg in Files.Include(Path.Combine(BUILD_DIR, "*/*.nupkg"))) 
         {
