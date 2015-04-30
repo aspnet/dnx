@@ -10,10 +10,12 @@ using System.Reflection;
 using System.Runtime.Versioning;
 using Microsoft.Framework.Runtime.Caching;
 using Microsoft.Framework.Runtime.Common.DependencyInjection;
+using Microsoft.Framework.Runtime.Common.Impl;
 using Microsoft.Framework.Runtime.Compilation;
 using Microsoft.Framework.Runtime.FileSystem;
 using Microsoft.Framework.Runtime.Infrastructure;
 using Microsoft.Framework.Runtime.Loader;
+using NuGet;
 
 namespace Microsoft.Framework.Runtime
 {
@@ -58,11 +60,34 @@ namespace Microsoft.Framework.Runtime
 
             Initialize();
 
+            var unresolvedLibs = _applicationHostContext.DependencyWalker.Libraries.Where(l => !l.Resolved);
+
             // If there's any unresolved dependencies then complain
-            if (_applicationHostContext.DependencyWalker.Libraries.Any(l => !l.Resolved))
+            if (unresolvedLibs.Any())
             {
-                var exceptionMsg = _applicationHostContext.DependencyWalker.GetMissingDependenciesWarning(
-                    _targetFramework);
+                string exceptionMsg;
+
+                // If the main project cannot be resolved, it means the app doesn't support current target framework
+                // (i.e. project.json doesn't contain a framework that is compatible with target framework of current runtime)
+                if (unresolvedLibs.Any(l => string.Equals(l.Identity.Name, Project.Name)))
+                {
+                    var runtimeEnv = ServiceProvider.GetService(typeof(IRuntimeEnvironment)) as IRuntimeEnvironment;
+                    var shortName = VersionUtility.GetShortFrameworkName(_targetFramework);
+                    exceptionMsg = $@"The current runtime target framework is not compatible with '{Project.Name}'.
+
+Current runtime Target Framework: '{_targetFramework} ({shortName})'
+  Type: {runtimeEnv.RuntimeType}
+  Architecture: {runtimeEnv.RuntimeArchitecture}
+  Version: {runtimeEnv.RuntimeVersion}
+
+Please make sure the runtime matches a framework specified in {Project.ProjectFileName}";
+                }
+                else
+                {
+                    exceptionMsg = _applicationHostContext.DependencyWalker.GetMissingDependenciesWarning(
+                        _targetFramework);
+                }
+
                 throw new InvalidOperationException(exceptionMsg);
             }
 

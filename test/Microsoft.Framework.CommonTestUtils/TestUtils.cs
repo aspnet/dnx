@@ -72,7 +72,9 @@ namespace Microsoft.Framework.CommonTestUtils
 
             process.OutputDataReceived += (sender, args) =>
             {
-                if (!string.IsNullOrEmpty(args.Data))
+                // If it is not EOF, we always write out a line
+                // This should preserve blank lines
+                if (args.Data != null)
                 {
                     Console.WriteLine(args.Data);
                     stdoutBuilder.AppendLine(args.Data);
@@ -81,7 +83,7 @@ namespace Microsoft.Framework.CommonTestUtils
 
             process.ErrorDataReceived += (sender, args) =>
             {
-                if (!string.IsNullOrEmpty(args.Data))
+                if (args.Data != null)
                 {
                     Console.WriteLine(args.Data);
                     stderrBuilder.AppendLine(args.Data);
@@ -300,6 +302,19 @@ namespace Microsoft.Framework.CommonTestUtils
             {
                 var sha512Bytes = SHA512.Create().ComputeHash(sourceStream);
                 return Convert.ToBase64String(sha512Bytes);
+            }
+        }
+
+        public static string GetCurrentRuntimeArchitecture()
+        {
+            switch (IntPtr.Size)
+            {
+                case 4:
+                    return "x86";
+                case 8:
+                    return "x64";
+                default:
+                    return "Unknown";
             }
         }
 
