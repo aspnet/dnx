@@ -14,10 +14,11 @@ namespace Microsoft.Framework.PackageManager.Restore.NuGet
 {
     public class NuGetv2Feed : IPackageFeed
     {
-        private static readonly XName _xnameEntry = XName.Get("entry", "http://www.w3.org/2005/Atom");
-        private static readonly XName _xnameTitle = XName.Get("title", "http://www.w3.org/2005/Atom");
-        private static readonly XName _xnameContent = XName.Get("content", "http://www.w3.org/2005/Atom");
-        private static readonly XName _xnameLink = XName.Get("link", "http://www.w3.org/2005/Atom");
+        private static readonly string _defaultNamespace = "http://www.w3.org/2005/Atom";
+        private static readonly XName _xnameEntry = XName.Get("entry", _defaultNamespace);
+        private static readonly XName _xnameTitle = XName.Get("title", _defaultNamespace);
+        private static readonly XName _xnameContent = XName.Get("content", _defaultNamespace);
+        private static readonly XName _xnameLink = XName.Get("link", _defaultNamespace);
         private static readonly XName _xnameProperties = XName.Get("properties", "http://schemas.microsoft.com/ado/2007/08/dataservices/metadata");
         private static readonly XName _xnameId = XName.Get("Id", "http://schemas.microsoft.com/ado/2007/08/dataservices");
         private static readonly XName _xnameVersion = XName.Get("Version", "http://schemas.microsoft.com/ado/2007/08/dataservices");
@@ -91,6 +92,7 @@ namespace Microsoft.Framework.PackageManager.Restore.NuGet
                     var uri = _baseUri + "FindPackagesById()?Id='" + id + "'";
                     var results = new List<PackageInfo>();
                     var page = 1;
+                    var cacheKey = string.Format("list_{0}_page{1}", id, page);
                     while (true)
                     {
                         // TODO: Pages for a package Id are cached separately.
@@ -98,13 +100,15 @@ namespace Microsoft.Framework.PackageManager.Restore.NuGet
                         // However, (1) In most cases the pages grow rather than shrink;
                         // (2) cache for pages is valid for only 30 min.
                         // So we decide to leave current logic and observe.
-                        using (var data = await _httpSource.GetAsync(uri,
-                        string.Format("list_{0}_page{1}", id, page),
-                        retry == 0 ? _cacheAgeLimitList : TimeSpan.Zero))
+                        using (var data = await _httpSource.GetAsync(
+                            uri,
+                            cacheKey,
+                            retry == 0 ? _cacheAgeLimitList : TimeSpan.Zero))
                         {
                             try
                             {
                                 var doc = XDocument.Load(data.Stream);
+                                EnsureValidFindPackagesResponse(doc);
 
                                 var result = doc.Root
                                     .Elements(_xnameEntry)
@@ -131,10 +135,14 @@ namespace Microsoft.Framework.PackageManager.Restore.NuGet
                                 uri = nextUri;
                                 page++;
                             }
+                            catch (FormatException)
+                            {
+                                await HandleInvalidFindPackagesResponse(uri, cacheKey);
+                                throw;
+                            }
                             catch (XmlException)
                             {
-                                _reports.Information.WriteLine("The XML file {0} is corrupt",
-                                    data.CacheFileName.Yellow().Bold());
+                                await HandleInvalidFindPackagesResponse(uri, cacheKey);
                                 throw;
                             }
                         }
@@ -222,8 +230,8 @@ namespace Microsoft.Framework.PackageManager.Restore.NuGet
                 return null;
             }
 
-            // Acquire the lock on a file before we open it to prevent this process
-            // from opening a file deleted by the logic in HttpSource.GetAsync() in another process
+            // Acquire the lock on a file before we open it to prevent this process from opening
+            // a file deleted by HttpSource.GetAsync()/HttpSource.InvalidateCacheFile() in another process
             return await ConcurrencyUtilities.ExecuteWithFileLocked(result.TempFileName, _ =>
             {
                 return Task.FromResult(
@@ -232,17 +240,49 @@ namespace Microsoft.Framework.PackageManager.Restore.NuGet
             });
         }
 
+        private void EnsureValidFindPackagesResponse(XDocument doc)
+        {
+            if (!string.Equals(doc.Root.GetDefaultNamespace().ToString(), _defaultNamespace,
+                StringComparison.OrdinalIgnoreCase))
+            {
+                throw new FormatException("The XML is not a valid NuGet v2 service response to FindPackagesById() request");
+            }
+        }
+
+        private async Task HandleInvalidFindPackagesResponse(string uri, string cacheKey)
+        {
+            await _httpSource.InvalidateCacheFileAsync(cacheKey);
+            _reports.Information.WriteLine(
+                "The response from {0} has invalid format. Invalidating the cached file.",
+                uri.Yellow().Bold());
+        }
+
         private async Task<NupkgEntry> OpenNupkgStreamAsyncCore(PackageInfo package)
         {
             for (int retry = 0; retry != 3; ++retry)
             {
                 try
                 {
+                    var cacheKey = "nupkg_" + package.Id + "." + package.Version;
                     using (var data = await _httpSource.GetAsync(
                         package.ContentUri,
-                        "nupkg_" + package.Id + "." + package.Version,
+                        cacheKey,
                         retry == 0 ? _cacheAgeLimitNupkg : TimeSpan.Zero))
                     {
+                        var isValidNupkg = await PackageUtilities.IsValidNupkgAsync(package.Id, data.CacheFileName);
+                        if (!isValidNupkg)
+                        {
+                            await _httpSource.InvalidateCacheFileAsync(cacheKey);
+
+                            _reports.Information.WriteLine(
+                                "The response from {0} is not a valid NuGet package. Invalidating the cached file.",
+                                package.ContentUri.Yellow().Bold());
+
+                            var message = string.Format("{0} is not a valid ZIP archive of NuGet package",
+                                data.CacheFileName);
+                            throw new InvalidDataException(message);
+                        }
+
                         return new NupkgEntry
                         {
                             TempFileName = data.CacheFileName
