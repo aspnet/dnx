@@ -1,12 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection.Metadata;
 using System.Reflection.PortableExecutable;
 using System.Runtime.Versioning;
-using System.Security.Cryptography;
 using Microsoft.Framework.Runtime.DependencyManagement;
 using NuGet;
 using NuGet.ContentModel;
@@ -15,7 +13,7 @@ namespace Microsoft.Framework.PackageManager.Utils
 {
     internal static class LockFileUtils
     {
-        public static LockFileLibrary CreateLockFileLibrary(IPackagePathResolver resolver, IPackage package, SHA512 sha512, string correctedPackageName = null)
+        public static LockFileLibrary CreateLockFileLibrary(LockFileLibrary previousLibrary, IPackagePathResolver resolver, IPackage package, string correctedPackageName = null)
         {
             var lockFileLib = new LockFileLibrary();
 
@@ -24,34 +22,38 @@ namespace Microsoft.Framework.PackageManager.Utils
             // it has the correct casing that runtime needs during dependency resolution.
             lockFileLib.Name = correctedPackageName ?? package.Id;
             lockFileLib.Version = package.Version;
+            lockFileLib.Sha512 = File.ReadAllText(resolver.GetHashPath(package.Id, package.Version));
 
-            using (var nupkgStream = package.GetStream())
+            // If the shas are equal then do nothing
+            if (previousLibrary?.Sha512 == lockFileLib.Sha512)
             {
-                lockFileLib.Sha512 = Convert.ToBase64String(sha512.ComputeHash(nupkgStream));
+                lockFileLib.Files = previousLibrary.Files;
+                lockFileLib.IsServiceable = previousLibrary.IsServiceable;
             }
-
-            lockFileLib.Files = package.GetFiles().Select(p => p.Path).ToList();
-
-            var installPath = resolver.GetInstallPath(package.Id, package.Version);
-            foreach (var filePath in lockFileLib.Files)
+            else
             {
-                if (!string.Equals(Path.GetExtension(filePath), ".dll"))
+                lockFileLib.Files = package.GetFiles().Select(p => p.Path).ToList();
+                var installPath = resolver.GetInstallPath(package.Id, package.Version);
+                foreach (var filePath in lockFileLib.Files)
                 {
-                    continue;
-                }
+                    if (!string.Equals(Path.GetExtension(filePath), ".dll"))
+                    {
+                        continue;
+                    }
 
-                var assemblyPath = Path.Combine(installPath, filePath);
-                if (IsAssemblyServiceable(assemblyPath))
-                {
-                    lockFileLib.IsServiceable = true;
-                    break;
+                    var assemblyPath = Path.Combine(installPath, filePath);
+                    if (IsAssemblyServiceable(assemblyPath))
+                    {
+                        lockFileLib.IsServiceable = true;
+                        break;
+                    }
                 }
             }
 
             return lockFileLib;
         }
 
-        public static LockFileTargetLibrary CreateLockFileTargetLibrary(IPackage package, RestoreContext context, string correctedPackageName)
+        public static LockFileTargetLibrary CreateLockFileTargetLibrary(LockFileLibrary library, IPackage package, RestoreContext context, string correctedPackageName)
         {
             var lockFileLib = new LockFileTargetLibrary();
 
@@ -63,9 +65,7 @@ namespace Microsoft.Framework.PackageManager.Utils
             // it has the correct casing that runtime needs during dependency resolution.
             lockFileLib.Name = correctedPackageName ?? package.Id;
             lockFileLib.Version = package.Version;
-
-            var files = package.GetFiles().Select(p => p.Path.Replace(Path.DirectorySeparatorChar, '/')).ToList();
-
+            var files = library.Files.Select(p => p.Replace(Path.DirectorySeparatorChar, '/'));
             var contentItems = new ContentItemCollection();
             contentItems.Load(files);
 
@@ -95,7 +95,7 @@ namespace Microsoft.Framework.PackageManager.Utils
                 AddFrameworkReferences(lockFileLib, framework, package.FrameworkAssemblies.Where(f => !f.SupportedFrameworks.Any()));
             }
 
-            var patterns = new PatternDefinitions();
+            var patterns = PatternDefinitions.DotNetPatterns;
 
             var criteriaBuilderWithTfm = new SelectionCriteriaBuilder(patterns.Properties.Definitions);
             var criteriaBuilderWithoutTfm = new SelectionCriteriaBuilder(patterns.Properties.Definitions);
@@ -443,6 +443,8 @@ namespace Microsoft.Framework.PackageManager.Utils
 
         public class PatternDefinitions
         {
+            public static PatternDefinitions DotNetPatterns = new PatternDefinitions();
+
             public PropertyDefinitions Properties { get; }
 
             public ContentPatternDefinition CompileTimeAssemblies { get; }

@@ -228,11 +228,20 @@ namespace Microsoft.Framework.PackageManager
             var localProviders = new List<IWalkProvider>();
             var remoteProviders = new List<IWalkProvider>();
             var contexts = new List<RestoreContext>();
+            var cache = new Dictionary<LibraryRange, Task<WalkProviderMatch>>();
 
             projectProviders.Add(
                 new LocalWalkProvider(
                     new ProjectReferenceDependencyProvider(
                         projectResolver)));
+
+            if (lockFile != null)
+            {
+                var lockFileProvider = new NuGetDependencyResolver(new PackageRepository(packagesDirectory));
+                lockFileProvider.ApplyLockFile(lockFile);
+                localProviders.Add(
+                    new LocalWalkProvider(lockFileProvider));
+            }
 
             localProviders.Add(
                 new LocalWalkProvider(
@@ -257,6 +266,7 @@ namespace Microsoft.Framework.PackageManager
                     ProjectLibraryProviders = projectProviders,
                     LocalLibraryProviders = localProviders,
                     RemoteLibraryProviders = remoteProviders,
+                    MatchCache = cache
                 };
 
                 contexts.Add(context);
@@ -290,6 +300,7 @@ namespace Microsoft.Framework.PackageManager
                         ProjectLibraryProviders = projectProviders,
                         LocalLibraryProviders = localProviders,
                         RemoteLibraryProviders = remoteProviders,
+                        MatchCache = cache
                     };
                     contexts.Add(context);
                 }
@@ -302,6 +313,7 @@ namespace Microsoft.Framework.PackageManager
                         ProjectLibraryProviders = projectProviders,
                         LocalLibraryProviders = localProviders,
                         RemoteLibraryProviders = remoteProviders,
+                        MatchCache = cache
                     });
                 }
 
@@ -361,7 +373,8 @@ namespace Microsoft.Framework.PackageManager
                                 LocalLibraryProviders = pair.context.LocalLibraryProviders,
                                 RemoteLibraryProviders = pair.context.RemoteLibraryProviders,
                                 RuntimeName = runtimeName,
-                                RuntimeSpecs = runtimeSpecs
+                                RuntimeSpecs = runtimeSpecs,
+                                MatchCache = cache
                             };
                             var projectLibrary = new LibraryRange
                             {
@@ -449,7 +462,9 @@ namespace Microsoft.Framework.PackageManager
                 Reports.Information.WriteLine(string.Format("Writing lock file {0}", projectLockFilePath.White().Bold()));
 
                 var repository = new PackageRepository(packagesDirectory);
-                WriteLockFile(projectLockFilePath,
+
+                WriteLockFile(lockFile,
+                              projectLockFilePath,
                               project,
                               graphItems,
                               repository,
@@ -707,40 +722,18 @@ namespace Microsoft.Framework.PackageManager
             return Task.FromResult(lockFileFormat.Read(projectLockFilePath));
         }
 
-        private void WriteLockFile(string projectLockFilePath,
+        private void WriteLockFile(LockFile previousLockFile,
+                                   string projectLockFilePath,
                                    Runtime.Project project,
                                    List<GraphItem> graphItems,
                                    PackageRepository repository,
                                    IEnumerable<TargetContext> contexts)
         {
             var resolver = new DefaultPackagePathResolver(repository.RepositoryRoot);
+            var previousLibraries = previousLockFile?.Libraries.ToDictionary(l => Tuple.Create(l.Name, l.Version));
 
             var lockFile = new LockFile();
             lockFile.Islocked = Lock;
-
-            using (var sha512 = SHA512.Create())
-            {
-                foreach (var item in graphItems.OrderBy(x => x.Match.Library, new LibraryComparer()))
-                {
-                    var library = item.Match.Library;
-                    var packageInfo = repository.FindPackagesById(library.Name)
-                        .FirstOrDefault(p => p.Version == library.Version);
-
-                    if (packageInfo == null)
-                    {
-                        continue;
-                    }
-
-                    var package = packageInfo.Package;
-                    var lockFileLib = LockFileUtils.CreateLockFileLibrary(
-                        resolver,
-                        package,
-                        sha512,
-                        correctedPackageName: library.Name);
-
-                    lockFile.Libraries.Add(lockFileLib);
-                }
-            }
 
             // Use empty string as the key of dependencies shared by all frameworks
             lockFile.ProjectFileDependencyGroups.Add(new ProjectFileDependencyGroup(
@@ -753,6 +746,34 @@ namespace Microsoft.Framework.PackageManager
                     frameworkInfo.FrameworkName.ToString(),
                     frameworkInfo.Dependencies.Select(x => x.LibraryRange.ToString())));
             }
+
+            // Record all libraries used
+            foreach (var item in graphItems.OrderBy(x => x.Match.Library, new LibraryComparer()))
+            {
+                var library = item.Match.Library;
+                var packageInfo = repository.FindPackagesById(library.Name)
+                    .FirstOrDefault(p => p.Version == library.Version);
+
+                if (packageInfo == null)
+                {
+                    continue;
+                }
+
+                var package = packageInfo.Package;
+
+                LockFileLibrary previousLibrary = null;
+                previousLibraries?.TryGetValue(Tuple.Create(library.Name, library.Version), out previousLibrary);
+
+                var lockFileLib = LockFileUtils.CreateLockFileLibrary(
+                    previousLibrary,
+                    resolver,
+                    package,
+                    correctedPackageName: library.Name);
+
+                lockFile.Libraries.Add(lockFileLib);
+            }
+
+            var libraries = lockFile.Libraries.ToDictionary(lib => Tuple.Create(lib.Name, lib.Version));
 
             // Add the contexts
             foreach (var context in contexts)
@@ -774,6 +795,7 @@ namespace Microsoft.Framework.PackageManager
                     var package = packageInfo.Package;
 
                     var targetLibrary = LockFileUtils.CreateLockFileTargetLibrary(
+                        libraries[Tuple.Create(library.Name, library.Version)],
                         package,
                         context.RestoreContext,
                         correctedPackageName: library.Name);
