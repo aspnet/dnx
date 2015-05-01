@@ -754,7 +754,7 @@ var CI_DARWIN_DROP_PATH = '${Environment.GetEnvironmentVariable("CI_DARWIN_DROP_
 
 - // ===================== TESTING ===================== 
 
-#test-package target='integration-tests'
+#test-package target='integration-test'
     - // We want to run functional tests on both CLR flavors (wrt the RUNTIME_TARGETS)
     - // We want to separate function tests from unit tests
     @{
