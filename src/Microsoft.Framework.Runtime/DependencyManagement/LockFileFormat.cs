@@ -307,7 +307,7 @@ namespace Microsoft.Framework.Runtime.DependencyManagement
 
         private JToken WriteFrameworkAssemblyReference(FrameworkAssemblyReference item)
         {
-            return JToken.FromObject(item.AssemblyName);
+            return new JValue(item.AssemblyName);
         }
 
         private PackageReferenceSet ReadPackageReferenceSet(JToken json)

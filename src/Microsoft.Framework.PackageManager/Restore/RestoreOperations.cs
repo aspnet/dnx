@@ -37,11 +37,11 @@ namespace Microsoft.Framework.PackageManager
                 if (node.LibraryRange.VersionRange != null &&
                     node.LibraryRange.VersionRange.VersionFloatBehavior != SemanticVersionFloatBehavior.None)
                 {
-                    lock (context.FindLibraryCache)
+                    lock (context.GraphItemCache)
                     {
-                        if (!context.FindLibraryCache.ContainsKey(node.LibraryRange))
+                        if (!context.GraphItemCache.ContainsKey(node.LibraryRange))
                         {
-                            context.FindLibraryCache[node.LibraryRange] = Task.FromResult(node.Item);
+                            context.GraphItemCache[node.LibraryRange] = Task.FromResult(node.Item);
                         }
                     }
                 }
@@ -110,13 +110,13 @@ namespace Microsoft.Framework.PackageManager
 
         public Task<GraphItem> FindLibraryCached(RestoreContext context, LibraryRange libraryRange)
         {
-            lock (context.FindLibraryCache)
+            lock (context.GraphItemCache)
             {
                 Task<GraphItem> task;
-                if (!context.FindLibraryCache.TryGetValue(libraryRange, out task))
+                if (!context.GraphItemCache.TryGetValue(libraryRange, out task))
                 {
                     task = FindLibraryEntry(context, libraryRange);
-                    context.FindLibraryCache[libraryRange] = task;
+                    context.GraphItemCache[libraryRange] = task;
                 }
 
                 return task;
@@ -127,7 +127,17 @@ namespace Microsoft.Framework.PackageManager
         {
             _report.WriteLine(string.Format("Attempting to resolve dependency {0} {1}", libraryRange.Name.Bold(), libraryRange.VersionRange));
 
-            var match = await FindLibraryMatch(context, libraryRange);
+            Task<WalkProviderMatch> task;
+            lock (context.MatchCache)
+            {
+                if (!context.MatchCache.TryGetValue(libraryRange, out task))
+                {
+                    task = FindLibraryMatch(context, libraryRange);
+                    context.MatchCache[libraryRange] = task;
+                }
+            }
+
+            var match = await task;
 
             if (match == null)
             {
@@ -314,7 +324,26 @@ namespace Microsoft.Framework.PackageManager
             }
 
             WalkProviderMatch bestMatch = null;
-            var matches = await Task.WhenAll(tasks);
+            var matches = new List<WalkProviderMatch>();
+
+            // Short circuit if we find an exact match
+            while (tasks.Any())
+            {
+                var task = await Task.WhenAny(tasks);
+                tasks.Remove(task);
+                var match = await task;
+
+                // If we found an exact match then use it
+                if (libraryRange.VersionRange.VersionFloatBehavior == SemanticVersionFloatBehavior.None &&
+                    match != null &&
+                    match.Library.Version.Equals(libraryRange.VersionRange.MinVersion))
+                {
+                    return match;
+                }
+
+                matches.Add(match);
+            }
+
             foreach (var match in matches)
             {
                 if (VersionUtility.ShouldUseConsidering(
