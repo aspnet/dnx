@@ -1,9 +1,8 @@
 {
     "projects": [
         "src",
-        "submodules/FileSystem/src",
-        "submodules/NuGet.Packaging/src",
-        "submodules/NuGet.Versioning/src",
-        "submodules/Logging/src"
+        "submodules/NuGet/src",
+        "submodules/Logging/src",
+        "submodules/FileSystem/src"
     ]
 }

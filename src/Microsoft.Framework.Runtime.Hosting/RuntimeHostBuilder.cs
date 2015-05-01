@@ -158,7 +158,8 @@ namespace Microsoft.Framework.Runtime
             {
                 using (var stream = File.OpenRead(file))
                 {
-                    lockFile = LockFileFormat.Read(stream);
+                    var format = new LockFileFormat();
+                    lockFile = format.Read(stream);
                 }
                 return true;
             }
