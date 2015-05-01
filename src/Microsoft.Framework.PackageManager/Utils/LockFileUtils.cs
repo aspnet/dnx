@@ -32,7 +32,7 @@ namespace Microsoft.Framework.PackageManager.Utils
             }
             else
             {
-                lockFileLib.Files = package.GetFiles().Select(p => p.Path.Replace(Path.DirectorySeparatorChar, '/')).ToList();
+                lockFileLib.Files = package.GetFiles().Select(p => p.Path).ToList();
                 var installPath = resolver.GetInstallPath(package.Id, package.Version);
                 foreach (var filePath in lockFileLib.Files)
                 {
@@ -65,9 +65,9 @@ namespace Microsoft.Framework.PackageManager.Utils
             // it has the correct casing that runtime needs during dependency resolution.
             lockFileLib.Name = correctedPackageName ?? package.Id;
             lockFileLib.Version = package.Version;
-
+            var files = library.Files.Select(p => p.Replace(Path.DirectorySeparatorChar, '/'));
             var contentItems = new ContentItemCollection();
-            contentItems.Load(library.Files);
+            contentItems.Load(files);
 
             IEnumerable<PackageDependencySet> dependencySet;
             if (VersionUtility.TryGetCompatibleItems(framework, package.DependencySets, out dependencySet))
@@ -140,7 +140,7 @@ namespace Microsoft.Framework.PackageManager.Utils
 
             // COMPAT: Support lib/contract so older packages can be consumed
             string contractPath = "lib/contract/" + package.Id + ".dll";
-            var hasContract = library.Files.Any(path => path == contractPath);
+            var hasContract = files.Any(path => path == contractPath);
             var hasLib = lockFileLib.RuntimeAssemblies.Any();
 
             if (hasContract && hasLib && !VersionUtility.IsDesktop(framework))
