@@ -36,7 +36,7 @@ namespace Microsoft.Framework.PackageManager.Utils
                 var installPath = resolver.GetInstallPath(package.Id, package.Version);
                 foreach (var filePath in lockFileLib.Files)
                 {
-                    if (!string.Equals(Path.GetExtension(filePath), ".dll"))
+                    if (!string.Equals(Path.GetExtension(filePath), ".dll", StringComparison.OrdinalIgnoreCase))
                     {
                         continue;
                     }
@@ -443,7 +443,7 @@ namespace Microsoft.Framework.PackageManager.Utils
 
         public class PatternDefinitions
         {
-            public static PatternDefinitions DotNetPatterns = new PatternDefinitions();
+            public static readonly PatternDefinitions DotNetPatterns = new PatternDefinitions();
 
             public PropertyDefinitions Properties { get; }
 
