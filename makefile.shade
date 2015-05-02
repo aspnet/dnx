@@ -1309,7 +1309,7 @@ functions @{
 
         var content = new List<string>();
 
-        content.Add(@"// Copyright (c) Microsoft Open Technologies, Inc. All rights reserved.");
+        content.Add(@"// Copyright (c) .NET Foundation. All rights reserved.");
         content.Add(@"// Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.");
         content.Add(@"");
         content.Add(@"// This file will be dynamically updated during build to generate a ");
