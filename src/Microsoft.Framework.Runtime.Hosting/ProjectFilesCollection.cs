@@ -4,7 +4,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using Microsoft.Framework.Runtime.Json;
-using Newtonsoft.Json.Linq;
 
 namespace Microsoft.Framework.Runtime
 {
@@ -30,14 +29,6 @@ namespace Microsoft.Framework.Runtime
         private readonly string _projectFilePath;
 
         private readonly IEnumerable<string> _publishExcludePatterns;
-
-        public ProjectFilesCollection(JObject project,
-                                      string projectDirectory,
-                                      string projectFilePath,
-                                      ICollection<ICompilationMessage> warnings = null)
-        {
-            throw new System.NotImplementedException();
-        }
 
         internal ProjectFilesCollection(JsonObject rawProject,
                                         string projectDirectory,
@@ -65,9 +56,8 @@ namespace Microsoft.Framework.Runtime
                     warnings.Add(new FileFormatMessage(
                         string.Format("Property \"{0}\" is deprecated. It is replaced by \"{1}\".", legacyPublishExcludePatternName, "publishExclude"),
                         projectFilePath,
-                        CompilationMessageSeverity.Warning));
-
-                    // TODO: add json object information in error message
+                        CompilationMessageSeverity.Warning,
+                        legacyPublishExcludePatternToken));
                 }
             }
             else

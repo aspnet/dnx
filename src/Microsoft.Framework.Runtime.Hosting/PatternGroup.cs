@@ -56,7 +56,8 @@ namespace Microsoft.Framework.Runtime
                     warnings.Add(new FileFormatMessage(
                         string.Format("Property \"{0}\" is deprecated. It is replaced by \"{1}\".", legacyName, name),
                         projectFilePath,
-                        CompilationMessageSeverity.Warning));
+                        CompilationMessageSeverity.Warning,
+                        rawProject.Value(legacyName)));
                 }
             }
 

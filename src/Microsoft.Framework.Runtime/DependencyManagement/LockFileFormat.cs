@@ -6,8 +6,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Runtime.Versioning;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
+using Microsoft.Framework.Runtime.Json;
 using NuGet;
 
 namespace Microsoft.Framework.Runtime.DependencyManagement
@@ -17,58 +16,68 @@ namespace Microsoft.Framework.Runtime.DependencyManagement
         public const int Version = -9997;
         public const string LockFileName = "project.lock.json";
 
+        private string _currentLockFilePath;
+
         public LockFile Read(string filePath)
         {
             using (var stream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read))
             {
-                return Read(stream);
+                _currentLockFilePath = filePath;
+
+                var result = Read(stream);
+
+                _currentLockFilePath = null;
+
+                return result;
             }
         }
 
         private LockFile Read(Stream stream)
         {
-            using (var textReader = new StreamReader(stream))
+            try
             {
-                try
+                var deserializer = new JsonDeserializer();
+                var jobject = deserializer.Deserialize(stream) as JsonObject;
+
+                if (jobject != null)
                 {
-                    using (var jsonReader = new JsonTextReader(textReader))
-                    {
-                        while (jsonReader.TokenType != JsonToken.StartObject)
-                        {
-                            if (!jsonReader.Read())
-                            {
-                                throw new InvalidDataException();
-                            }
-                        }
-                        var token = JToken.Load(jsonReader);
-                        return ReadLockFile(token as JObject);
-                    }
+                    return ReadLockFile(jobject);
                 }
-                catch
+                else
                 {
-                    // Ran into parsing errors, mark it as unlocked and out-of-date
-                    return new LockFile
-                    {
-                        Islocked = false,
-                        Version = int.MinValue
-                    };
+                    throw new InvalidDataException();
                 }
+            }
+            catch
+            {
+                // Ran into parsing errors, mark it as unlocked and out-of-date
+                return new LockFile
+                {
+                    Islocked = false,
+                    Version = int.MinValue
+                };
             }
         }
 
-        private LockFile ReadLockFile(JObject cursor)
+        private LockFile ReadLockFile(JsonObject cursor)
         {
             var lockFile = new LockFile();
             lockFile.Islocked = ReadBool(cursor, "locked", defaultValue: false);
             lockFile.Version = ReadInt(cursor, "version", defaultValue: int.MinValue);
-            lockFile.Libraries = ReadObject(cursor["libraries"] as JObject, ReadLibrary);
-            lockFile.Targets = ReadObject(cursor["targets"] as JObject, ReadTarget);
-            lockFile.ProjectFileDependencyGroups = ReadObject(cursor["projectFileDependencyGroups"] as JObject, ReadProjectFileDependencyGroup);
+            lockFile.Libraries = ReadObject(cursor.ValueAsJsonObject("libraries"), ReadLibrary);
+            lockFile.Targets = ReadObject(cursor.ValueAsJsonObject("targets"), ReadTarget);
+            lockFile.ProjectFileDependencyGroups = ReadObject(cursor.ValueAsJsonObject("projectFileDependencyGroups"), ReadProjectFileDependencyGroup);
             return lockFile;
         }
 
-        private LockFileLibrary ReadLibrary(string property, JToken json)
+        private LockFileLibrary ReadLibrary(string property, JsonValue json)
         {
+            var jobject = json as JsonObject;
+            if (jobject == null)
+            {
+                throw FileFormatException.Create("The value type is not object.", json, _currentLockFilePath);
+            }
+
             var library = new LockFileLibrary();
             var parts = property.Split(new[] { '/' }, 2);
             library.Name = parts[0];
@@ -76,14 +85,20 @@ namespace Microsoft.Framework.Runtime.DependencyManagement
             {
                 library.Version = SemanticVersion.Parse(parts[1]);
             }
-            library.IsServiceable = ReadBool(json, "serviceable", defaultValue: false);
-            library.Sha512 = ReadString(json["sha512"]);
-            library.Files = ReadPathArray(json["files"] as JArray, ReadString);
+            library.IsServiceable = ReadBool(jobject, "serviceable", defaultValue: false);
+            library.Sha512 = ReadString(jobject.Value("sha512"));
+            library.Files = ReadPathArray(jobject.Value("files"), ReadString);
             return library;
         }
 
-        private LockFileTarget ReadTarget(string property, JToken json)
+        private LockFileTarget ReadTarget(string property, JsonValue json)
         {
+            var jobject = json as JsonObject;
+            if (jobject == null)
+            {
+                throw FileFormatException.Create("The value type is not object.", json, _currentLockFilePath);
+            }
+
             var target = new LockFileTarget();
             var parts = property.Split(new[] { '/' }, 2);
             target.TargetFramework = new FrameworkName(parts[0]);
@@ -92,13 +107,19 @@ namespace Microsoft.Framework.Runtime.DependencyManagement
                 target.RuntimeIdentifier = parts[1];
             }
 
-            target.Libraries = ReadObject(json as JObject, ReadTargetLibrary);
+            target.Libraries = ReadObject(jobject, ReadTargetLibrary);
 
             return target;
         }
 
-        private LockFileTargetLibrary ReadTargetLibrary(string property, JToken json)
+        private LockFileTargetLibrary ReadTargetLibrary(string property, JsonValue json)
         {
+            var jobject = json as JsonObject;
+            if (jobject == null)
+            {
+                throw FileFormatException.Create("The value type is not object.", json, _currentLockFilePath);
+            }
+
             var library = new LockFileTargetLibrary();
 
             var parts = property.Split(new[] { '/' }, 2);
@@ -108,184 +129,105 @@ namespace Microsoft.Framework.Runtime.DependencyManagement
                 library.Version = SemanticVersion.Parse(parts[1]);
             }
 
-            library.Dependencies = ReadObject(json["dependencies"] as JObject, ReadPackageDependency);
-            library.FrameworkAssemblies = ReadArray(json["frameworkAssemblies"] as JArray, ReadFrameworkAssemblyReference);
-            library.RuntimeAssemblies = ReadPathArray(json["runtime"] as JArray, ReadString);
-            library.CompileTimeAssemblies = ReadPathArray(json["compile"] as JArray, ReadString);
-            library.NativeLibraries = ReadPathArray(json["native"] as JArray, ReadString);
+            library.Dependencies = ReadObject(jobject.ValueAsJsonObject("dependencies"), ReadPackageDependency);
+            library.FrameworkAssemblies = ReadArray(jobject.Value("frameworkAssemblies"), ReadFrameworkAssemblyReference);
+            library.RuntimeAssemblies = ReadPathArray(jobject.Value("runtime"), ReadString);
+            library.CompileTimeAssemblies = ReadPathArray(jobject.Value("compile"), ReadString);
+            library.NativeLibraries = ReadPathArray(jobject.Value("native"), ReadString);
 
             return library;
         }
 
-        private ProjectFileDependencyGroup ReadProjectFileDependencyGroup(string property, JToken json)
+        private ProjectFileDependencyGroup ReadProjectFileDependencyGroup(string property, JsonValue json)
         {
             return new ProjectFileDependencyGroup(
                 property,
-                ReadArray(json as JArray, ReadString));
+                ReadArray(json, ReadString));
         }
 
-        private IList<FrameworkAssemblyReference> ReadFrameworkAssemblies(JObject json)
+        private PackageDependency ReadPackageDependency(string property, JsonValue json)
         {
-            var frameworkSets = ReadObject(json, (property, child) => new
-            {
-                FrameworkName = property,
-                AssemblyNames = ReadArray(child as JArray, ReadString)
-            });
-
-            return frameworkSets.SelectMany(frameworkSet =>
-            {
-                if (frameworkSet.FrameworkName == "*")
-                {
-                    return frameworkSet.AssemblyNames.Select(name => new FrameworkAssemblyReference(name));
-                }
-                else
-                {
-                    var supportedFrameworks = new[] { new FrameworkName(frameworkSet.FrameworkName) };
-                    return frameworkSet.AssemblyNames.Select(name => new FrameworkAssemblyReference(name, supportedFrameworks));
-                }
-            }).ToList();
-        }
-
-        private PackageDependencySet ReadPackageDependencySet(string property, JToken json)
-        {
-            var targetFramework = string.Equals(property, "*") ? null : new FrameworkName(property);
-            return new PackageDependencySet(
-                targetFramework,
-                ReadObject(json as JObject, ReadPackageDependency));
-        }
-
-        private PackageDependency ReadPackageDependency(string property, JToken json)
-        {
-            var versionStr = json.Value<string>();
+            var versionStr = ReadString(json);
             return new PackageDependency(
                 property,
                 versionStr == null ? null : VersionUtility.ParseVersionSpec(versionStr));
         }
 
-        private FrameworkAssemblyReference ReadFrameworkAssemblyReference(JToken json)
+        private FrameworkAssemblyReference ReadFrameworkAssemblyReference(JsonValue json)
         {
-            return new FrameworkAssemblyReference(json.Value<string>());
+            return new FrameworkAssemblyReference(ReadString(json));
         }
 
-        private PackageReferenceSet ReadPackageReferenceSet(JToken json)
-        {
-            var frameworkName = json["targetFramework"].ToStringSafe();
-            return new PackageReferenceSet(
-                string.IsNullOrEmpty(frameworkName) ? null : new FrameworkName(frameworkName),
-                ReadArray(json["references"] as JArray, ReadString));
-        }
-
-        private IPackageFile ReadPackageFile(string property, JToken json)
-        {
-            var file = new LockFilePackageFile();
-            file.Path = PathUtility.GetPathWithDirectorySeparator(property);
-            return file;
-        }
-
-        private IList<TItem> ReadArray<TItem>(JArray json, Func<JToken, TItem> readItem)
+        private IList<TItem> ReadArray<TItem>(JsonValue json, Func<JsonValue, TItem> readItem)
         {
             if (json == null)
             {
                 return new List<TItem>();
             }
-            var items = new List<TItem>();
-            foreach (var child in json)
+
+            var jarray = json as JsonArray;
+            if (jarray == null)
             {
-                items.Add(readItem(child));
+                throw FileFormatException.Create("The value type is not array.", json, _currentLockFilePath);
+            }
+
+            var items = new List<TItem>();
+            for (int i = 0; i < jarray.Count; ++i)
+            {
+                items.Add(readItem(jarray[i]));
             }
             return items;
         }
 
-        private IList<string> ReadPathArray(JArray json, Func<JToken, string> readItem)
+        private IList<string> ReadPathArray(JsonValue json, Func<JsonValue, string> readItem)
         {
             return ReadArray(json, readItem).Select(f => PathUtility.GetPathWithDirectorySeparator(f)).ToList();
         }
 
-        private IList<TItem> ReadObject<TItem>(JObject json, Func<string, JToken, TItem> readItem)
+        private IList<TItem> ReadObject<TItem>(JsonObject json, Func<string, JsonValue, TItem> readItem)
         {
             if (json == null)
             {
                 return new List<TItem>();
             }
             var items = new List<TItem>();
-            foreach (var child in json)
+            foreach (var childKey in json.Keys)
             {
-                items.Add(readItem(child.Key, child.Value));
+                items.Add(readItem(childKey, json.Value(childKey)));
             }
             return items;
         }
 
-        private bool ReadBool(JToken cursor, string property, bool defaultValue)
+        private bool ReadBool(JsonObject cursor, string property, bool defaultValue)
         {
-            var valueToken = cursor[property];
+            var valueToken = cursor.Value(property) as JsonBoolean;
             if (valueToken == null)
             {
                 return defaultValue;
             }
-            return valueToken.Value<bool>();
+
+            return valueToken.Value;
         }
 
-        private int ReadInt(JToken cursor, string property, int defaultValue)
+        private int ReadInt(JsonObject cursor, string property, int defaultValue)
         {
-            var valueToken = cursor[property];
+            var valueToken = cursor.Value(property) as JsonInteger;
             if (valueToken == null)
             {
                 return defaultValue;
             }
-            return valueToken.Value<int>();
+            return valueToken.Value;
         }
 
-        private string ReadString(JToken json)
+        private string ReadString(JsonValue json)
         {
-            return json.Value<string>();
-        }
-
-        private SemanticVersion ReadSemanticVersion(JToken json, string property)
-        {
-            var valueToken = json[property];
-            if (valueToken == null)
+            if (json is JsonString)
             {
-                throw new Exception(string.Format("TODO: lock file missing required property {0}", property));
+                return (json as JsonString).Value;
             }
-            return SemanticVersion.Parse(valueToken.Value<string>());
-        }
-
-        private FrameworkName ReadFrameworkName(JToken json)
-        {
-            return json == null ? null : new FrameworkName(json.Value<string>());
-        }
-
-        class LockFilePackageFile : IPackageFile
-        {
-            public string EffectivePath
+            else
             {
-                get
-                {
-                    throw new NotImplementedException();
-                }
-            }
-
-            public string Path { get; set; }
-
-            public IEnumerable<FrameworkName> SupportedFrameworks
-            {
-                get
-                {
-                    throw new NotImplementedException();
-                }
-            }
-
-            public FrameworkName TargetFramework
-            {
-                get
-                {
-                    throw new NotImplementedException();
-                }
-            }
-
-            public Stream GetStream()
-            {
-                throw new NotImplementedException();
+                throw FileFormatException.Create("The value type is not string.", json, _currentLockFilePath);
             }
         }
     }
