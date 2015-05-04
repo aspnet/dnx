@@ -5,6 +5,8 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Threading;
+using System.Threading.Tasks;
+using Microsoft.Framework.Runtime.Internal;
 using NuGet;
 
 namespace Microsoft.Framework.Runtime.Servicing
@@ -18,7 +20,10 @@ namespace Microsoft.Framework.Runtime.Servicing
 
         private readonly bool _isEnabled;
         private readonly string _breadcrumbsFolder;
-        private readonly List<BreadcrumbInfo> _breadcrumbsToWrite = new List<BreadcrumbInfo>();
+        private readonly List<string> _breadcrumbsToWrite = new List<string>();
+        private readonly object _addLock = new object();
+
+        private bool _writeWasCalled;
 
         public static Breadcrumbs Instance { get; private set; } = new Breadcrumbs();
 
@@ -72,12 +77,20 @@ namespace Microsoft.Framework.Runtime.Servicing
             {
                 return;
             }
-
-            _breadcrumbsToWrite.Add(new BreadcrumbInfo()
+            
+            lock (_addLock)
             {
-                PackageId = packageId,
-                PackageVersion = packageVersion
-            });
+                if (_writeWasCalled)
+                {
+                    // No more breadcrumbs can be added
+                    return;
+                }
+
+                var fullBreadcrumbName = packageId + "." + packageVersion;
+
+                _breadcrumbsToWrite.Add(packageId);
+                _breadcrumbsToWrite.Add(fullBreadcrumbName);
+            }
         }
 
         public void WriteAllBreadcrumbs(bool background = false)
@@ -85,6 +98,12 @@ namespace Microsoft.Framework.Runtime.Servicing
             if (!_isEnabled)
             {
                 return;
+            }
+
+            // The lock ensures that no add is happening while or after we set the flag
+            lock (_addLock)
+            {
+                _writeWasCalled = true;
             }
 
             if (background)
@@ -104,22 +123,10 @@ namespace Microsoft.Framework.Runtime.Servicing
         {
             foreach (var breadcrumb in _breadcrumbsToWrite)
             {
-                CreateBreadcrumb(breadcrumb.PackageId, breadcrumb.PackageVersion);
+                CreateBreadcrumbFile(breadcrumb);
             }
 
             _breadcrumbsToWrite.Clear();
-        }
-
-        /// <summary>
-        /// Writes a breadcrumb on the disk 
-        /// </summary>
-        /// <param name="packageId">The ID of the package</param>
-        /// <param name="packageVersion">The version of the the package</param>
-        private void CreateBreadcrumb(string packageId, SemanticVersion packageVersion)
-        {
-            // Create both files for now until we get clear instructions about the format of the name
-            CreateBreadcrumbFile(packageId);
-            CreateBreadcrumbFile(packageId + "." + packageVersion);
         }
 
         private static string ResolveBreadcrumbsFolder()
@@ -142,25 +149,32 @@ namespace Microsoft.Framework.Runtime.Servicing
         {
             string fullFilePath = Path.Combine(_breadcrumbsFolder, fileName);
 
-            try
+            // Execute with file locked because multiple processes can run at the same time
+            ConcurrencyUtilities.ExecuteWithFileLocked(fullFilePath, _ =>
             {
-                if (!File.Exists(fullFilePath))
+                try
                 {
-                    File.Create(fullFilePath).Dispose();
-                    Logger.TraceInformation(
-                        "[{0}] Wrote servicing breadcrumb for {1}",
-                        _logType,
-                        fileName);
+                    if (!File.Exists(fullFilePath))
+                    {
+                        File.Create(fullFilePath).Dispose();
+
+                        Logger.TraceInformation(
+                            "[{0}] Wrote servicing breadcrumb for {1}",
+                            _logType,
+                            fileName);
+                    }
                 }
-            }
-            catch (UnauthorizedAccessException exception)
-            {
-                LogBreadcrumbsCreationFailure(fileName, exception);
-            }
-            catch (DirectoryNotFoundException exception)
-            {
-                LogBreadcrumbsCreationFailure(fileName, exception);
-            }
+                catch (UnauthorizedAccessException exception)
+                {
+                    LogBreadcrumbsCreationFailure(fileName, exception);
+                }
+                catch (DirectoryNotFoundException exception)
+                {
+                    LogBreadcrumbsCreationFailure(fileName, exception);
+                }
+
+                return Task.FromResult(1);
+            }).GetAwaiter().GetResult();
         }
 
         private static void LogBreadcrumbsCreationFailure(string fileName, Exception exception)
@@ -170,12 +184,6 @@ namespace Microsoft.Framework.Runtime.Servicing
                 _logType,
                 fileName,
                 exception);
-        }
-
-        private class BreadcrumbInfo
-        {
-            public string PackageId { get; set; }
-            public SemanticVersion PackageVersion { get; set; }
         }
     }
 }

@@ -6,9 +6,9 @@ using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Microsoft.Framework.PackageManager
+namespace Microsoft.Framework.Runtime.Internal
 {
-    internal static class ConcurrencyUtilities
+    public static class ConcurrencyUtilities
     {
         internal static string FilePathToLockName(string filePath)
         {
@@ -19,7 +19,7 @@ namespace Microsoft.Framework.PackageManager
             return filePath.Replace(Path.DirectorySeparatorChar, '_');
         }
 
-        internal async static Task<T> ExecuteWithFileLocked<T>(string filePath, Func<bool, Task<T>> action)
+        public async static Task<T> ExecuteWithFileLocked<T>(string filePath, Func<bool, Task<T>> action)
         {
             var createdNew = false;
             var fileLock = new Semaphore(initialCount: 0, maximumCount: 1, name: FilePathToLockName(filePath),

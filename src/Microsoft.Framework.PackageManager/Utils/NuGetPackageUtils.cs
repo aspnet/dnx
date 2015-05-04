@@ -9,6 +9,7 @@ using System.Security.Cryptography;
 using System.Threading.Tasks;
 using Microsoft.Framework.PackageManager.Publish;
 using Microsoft.Framework.Runtime;
+using Microsoft.Framework.Runtime.Internal;
 using NuGet;
 
 namespace Microsoft.Framework.PackageManager

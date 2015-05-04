@@ -11,6 +11,7 @@ using System.Net.Http.Headers;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
+using Microsoft.Framework.Runtime.Internal;
 
 namespace Microsoft.Framework.PackageManager.Restore.NuGet
 {
