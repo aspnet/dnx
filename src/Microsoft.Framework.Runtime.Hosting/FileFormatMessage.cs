@@ -2,8 +2,7 @@
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 using System;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
+using Microsoft.Framework.Runtime.Json;
 
 namespace Microsoft.Framework.Runtime
 {
@@ -20,20 +19,18 @@ namespace Microsoft.Framework.Runtime
             Severity = severity;
         }
 
-        public FileFormatMessage(string message,
+        internal FileFormatMessage(string message,
                                  string projectFilePath,
                                  CompilationMessageSeverity severity,
-                                 JToken token)
+                                 JsonValue jsonValue)
         {
             Message = message;
             SourceFilePath = projectFilePath;
             Severity = severity;
 
-            var lineInfo = (IJsonLineInfo)token;
-
-            StartColumn = lineInfo.LinePosition;
+            StartColumn = jsonValue.Position.Column;
             EndColumn = StartColumn;
-            StartLine = lineInfo.LineNumber;
+            StartLine = jsonValue.Position.Line;
             EndLine = StartLine;
         }
 
