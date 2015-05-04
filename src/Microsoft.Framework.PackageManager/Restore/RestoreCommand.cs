@@ -235,7 +235,7 @@ namespace Microsoft.Framework.PackageManager
                     new ProjectReferenceDependencyProvider(
                         projectResolver)));
 
-            if (lockFile != null)
+            if (useLockFile)
             {
                 var lockFileProvider = new NuGetDependencyResolver(new PackageRepository(packagesDirectory));
                 lockFileProvider.ApplyLockFile(lockFile);
