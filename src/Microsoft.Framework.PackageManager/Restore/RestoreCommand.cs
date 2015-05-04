@@ -13,6 +13,7 @@ using System.Security.Cryptography;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Framework.PackageManager.Publish;
+using Microsoft.Framework.PackageManager.Restore;
 using Microsoft.Framework.PackageManager.Restore.RuntimeModel;
 using Microsoft.Framework.PackageManager.Utils;
 using Microsoft.Framework.Runtime;
@@ -806,8 +807,8 @@ namespace Microsoft.Framework.PackageManager
                 lockFile.Targets.Add(target);
             }
 
-            var lockFileFormat = new LockFileFormat();
-            lockFileFormat.Write(projectLockFilePath, lockFile);
+            var lockFileWriter = new LockFileWriter();
+            lockFileWriter.Write(projectLockFilePath, lockFile);
         }
 
 
