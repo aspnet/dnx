@@ -4,12 +4,14 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Text;
 
 namespace Microsoft.Framework.Runtime.Json
 {
     /// <summary>
-    /// JsonContent represents a json file and its content 
+    /// JsonBuffer represents a piece of loaded json content.
+    /// 
+    /// The JsonBuffer is used in JsonDeserializer only. It is not inteneded to be
+    /// used for data exchange.
     /// </summary>
     internal class JsonContent
     {
@@ -41,21 +43,6 @@ namespace Microsoft.Framework.Runtime.Json
             }
 
             return new JsonContent(content);
-        }
-
-        /// <summary>
-        /// Create a JsonContent instance from a string.
-        /// 
-        /// The string will be feed to a memory string and split into lines.
-        /// </summary>
-        /// <param name="input"></param>
-        /// <returns>Newly created JsonContent instance</returns>
-        public static JsonContent CreateFromString(string input)
-        {
-            using (var mem = new MemoryStream(Encoding.UTF8.GetBytes(input)))
-            {
-                return CreateFromStream(mem);
-            }
         }
 
         private JsonContent(List<string> content)

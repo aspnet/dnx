@@ -14,7 +14,6 @@ namespace Microsoft.Framework.Runtime.Json
         // maximum number of entries a Json deserialized dictionary is allowed to have
         private const int _maxJsonDeserializerMembers = Int32.MaxValue;
         private const int _maxDeserializeDepth = 100;
-        private const int _maxInputLength = 2097152;
 
         private JsonContent _input;
 
@@ -26,23 +25,6 @@ namespace Microsoft.Framework.Runtime.Json
             }
 
             _input = JsonContent.CreateFromStream(stream);
-
-            return Deserialize();
-        }
-
-        public JsonValue Deserialize(string input)
-        {
-            if (input == null)
-            {
-                throw new ArgumentNullException(nameof(input));
-            }
-
-            if (input.Length > _maxInputLength)
-            {
-                throw new ArgumentException(JsonDeserializerResource.JSON_MaxJsonLengthExceeded, nameof(input));
-            }
-
-            _input = JsonContent.CreateFromString(input);
 
             return Deserialize();
         }

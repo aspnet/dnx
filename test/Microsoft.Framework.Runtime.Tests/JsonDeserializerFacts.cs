@@ -2,6 +2,7 @@
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 using System.IO;
+using System.Text;
 using Microsoft.Framework.Runtime.Json;
 using Xunit;
 
@@ -26,80 +27,80 @@ namespace Microsoft.Framework.Runtime.Tests
         {
             var target = new JsonDeserializer();
 
-            var result = target.Deserialize(string.Empty);
-
-            Assert.Null(result);
+            using (var stream = GetStream(string.Empty))
+            {
+                var result = target.Deserialize(stream);
+                Assert.Null(result);
+            }
         }
 
         [Fact]
         public void DeserialzeIntegerArray()
         {
-            var target = new JsonDeserializer();
-
-            var raw = target.Deserialize("[1,2,3]");
-            Assert.NotNull(raw);
-
-            var list = raw as JsonArray;
-            Assert.NotNull(list);
-            Assert.Equal(3, list.Count);
-
-            for (int i = 0; i < 3; ++i)
+            using (var stream = GetStream("[1,2,3]"))
             {
-                var integer = list[i] as JsonInteger;
-                Assert.NotNull(integer);
-                Assert.NotNull(list[i].Position);
-                Assert.Equal(0, list[i].Position.Line);
-                Assert.Equal(1 + 2 * i, list[i].Position.Column);
-                Assert.Equal(i + 1, integer.Value);
-                Assert.Equal(i + 1, integer); // impliict conversion
-            }
+                var target = new JsonDeserializer();
 
-            // test list cast
-            var values = list.Cast<JsonInteger>();
-            Assert.Equal(1, values[0]);
-            Assert.Equal(2, values[1]);
-            Assert.Equal(3, values[2]);
+                var raw = target.Deserialize(stream);
+                Assert.NotNull(raw);
+
+                var list = raw as JsonArray;
+                Assert.NotNull(list);
+                Assert.Equal(3, list.Count);
+
+                for (int i = 0; i < 3; ++i)
+                {
+                    var integer = list[i] as JsonInteger;
+                    Assert.NotNull(integer);
+                    Assert.NotNull(list[i].Position);
+                    Assert.Equal(0, list[i].Position.Line);
+                    Assert.Equal(1 + 2 * i, list[i].Position.Column);
+                    Assert.Equal(i + 1, integer.Value);
+                    Assert.Equal(i + 1, integer); // impliict conversion
+                }
+            }
         }
 
         [Fact]
         public void DeserializeStringArray()
         {
-            var target = new JsonDeserializer();
-
-            var raw = target.Deserialize(@"[""a"", ""b"", ""c"" ]");
-            Assert.NotNull(raw);
-
-            var list = raw as JsonArray;
-
-            Assert.NotNull(list);
-            Assert.Equal(3, list.Count);
-            Assert.NotNull(list.Position);
-            Assert.Equal(0, list.Position.Line);
-            Assert.Equal(0, list.Position.Column);
-
-            for (int i = 0; i < 3; ++i)
+            using (var stream = GetStream(@"[""a"", ""b"", ""c"" ]"))
             {
-                Assert.NotNull(list[i].Position);
-                Assert.Equal(0, list[i].Position.Line);
-                Assert.Equal(1 + 5 * i, list[i].Position.Column);
+                var target = new JsonDeserializer();
 
-                var jstring = list[i] as JsonString;
-                Assert.NotNull(jstring);
+                var raw = target.Deserialize(stream);
+                Assert.NotNull(raw);
+
+                var list = raw as JsonArray;
+
+                Assert.NotNull(list);
+                Assert.Equal(3, list.Count);
+                Assert.NotNull(list.Position);
+                Assert.Equal(0, list.Position.Line);
+                Assert.Equal(0, list.Position.Column);
+
+                for (int i = 0; i < 3; ++i)
+                {
+                    Assert.NotNull(list[i].Position);
+                    Assert.Equal(0, list[i].Position.Line);
+                    Assert.Equal(1 + 5 * i, list[i].Position.Column);
+
+                    var jstring = list[i] as JsonString;
+                    Assert.NotNull(jstring);
+                }
+
+                Assert.Equal("a", list[0].ToString());
+                Assert.Equal("b", list[1].ToString());
+                Assert.Equal("c", list[2].ToString());
             }
-
-            Assert.Equal("a", list[0].ToString());
-            Assert.Equal("b", list[1].ToString());
-            Assert.Equal("c", list[2].ToString());
         }
 
         [Fact]
         public void DeserializeSimpleObject()
         {
-            var target = new JsonDeserializer();
-
             // Do not format the following 12 lines. The position of every charactor position in the
             // json sample is referenced in following test.
-            var raw = target.Deserialize(@"
+            var content = @"
             {
                 ""key1"": ""value1"",
                 ""key2"": 99,
@@ -110,48 +111,55 @@ namespace Microsoft.Framework.Runtime.Tests
                     ""subkey2"": [1, 2]
                 },
                 ""key6"": null
-            }");
+            }";
 
-            Assert.NotNull(raw);
+            using (var stream = GetStream(content))
+            {
+                var target = new JsonDeserializer();
 
-            var jobject = raw as JsonObject;
-            Assert.NotNull(jobject);
-            Assert.Equal("value1", jobject.ValueAsString("key1"));
-            Assert.Equal(99, (JsonInteger)jobject.Value("key2"));
-            Assert.Equal(true, jobject.ValueAsBoolean("key3"));
-            Assert.NotNull(jobject.Position);
-            Assert.Equal(1, jobject.Position.Line);
-            Assert.Equal(12, jobject.Position.Column);
+                var raw = target.Deserialize(stream);
 
-            var list = jobject.ValueAsStringArray("key4");
-            Assert.NotNull(list);
-            Assert.Equal(3, list.Length);
-            Assert.Equal("str1", list[0]);
-            Assert.Equal("str2", list[1]);
-            Assert.Equal("str3", list[2]);
+                Assert.NotNull(raw);
 
-            var rawList = jobject.Value("key4") as JsonArray;
-            Assert.NotNull(rawList);
-            Assert.NotNull(rawList.Position);
-            Assert.Equal(5, rawList.Position.Line);
-            Assert.Equal(24, rawList.Position.Column);
+                var jobject = raw as JsonObject;
+                Assert.NotNull(jobject);
+                Assert.Equal("value1", jobject.ValueAsString("key1"));
+                Assert.Equal(99, (JsonInteger)jobject.Value("key2"));
+                Assert.Equal(true, jobject.ValueAsBoolean("key3"));
+                Assert.NotNull(jobject.Position);
+                Assert.Equal(1, jobject.Position.Line);
+                Assert.Equal(12, jobject.Position.Column);
 
-            var subObject = jobject.ValueAsJsonObject("key5");
-            Assert.NotNull(subObject);
-            Assert.Equal("subvalue1", subObject.ValueAsString("subkey1"));
+                var list = jobject.ValueAsStringArray("key4");
+                Assert.NotNull(list);
+                Assert.Equal(3, list.Length);
+                Assert.Equal("str1", list[0]);
+                Assert.Equal("str2", list[1]);
+                Assert.Equal("str3", list[2]);
 
-            var subArray = subObject.ValueAsJsonArray("subkey2");
-            Assert.NotNull(subArray);
-            Assert.Equal(2, subArray.Count);
-            Assert.Equal(1, (JsonInteger)subArray[0]);
-            Assert.Equal(2, (JsonInteger)subArray[1]);
-            Assert.NotNull(subArray.Position);
-            Assert.Equal(8, subArray.Position.Line);
-            Assert.Equal(31, subArray.Position.Column);
+                var rawList = jobject.Value("key4") as JsonArray;
+                Assert.NotNull(rawList);
+                Assert.NotNull(rawList.Position);
+                Assert.Equal(5, rawList.Position.Line);
+                Assert.Equal(24, rawList.Position.Column);
 
-            var nullValue = jobject.Value("key6");
-            Assert.NotNull(nullValue);
-            Assert.True(nullValue is JsonNull);
+                var subObject = jobject.ValueAsJsonObject("key5");
+                Assert.NotNull(subObject);
+                Assert.Equal("subvalue1", subObject.ValueAsString("subkey1"));
+
+                var subArray = subObject.Value("subkey2") as JsonArray;
+                Assert.NotNull(subArray);
+                Assert.Equal(2, subArray.Count);
+                Assert.Equal(1, (JsonInteger)subArray[0]);
+                Assert.Equal(2, (JsonInteger)subArray[1]);
+                Assert.NotNull(subArray.Position);
+                Assert.Equal(8, subArray.Position.Line);
+                Assert.Equal(31, subArray.Position.Column);
+
+                var nullValue = jobject.Value("key6");
+                Assert.NotNull(nullValue);
+                Assert.True(nullValue is JsonNull);
+            }
         }
 
         [Fact]
@@ -165,6 +173,11 @@ namespace Microsoft.Framework.Runtime.Tests
                 Assert.NotNull(raw);
                 Assert.True(raw is JsonObject);
             }
+        }
+
+        private MemoryStream GetStream(string content)
+        {
+            return new MemoryStream(Encoding.UTF8.GetBytes(content));
         }
     }
 }

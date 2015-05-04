@@ -83,11 +83,6 @@ namespace Microsoft.Framework.Runtime.Json
             });
         }
 
-        public JsonArray ValueAsJsonArray(string key)
-        {
-            return ValueAs(key, value => value as JsonArray);
-        }
-
         public string[] ValueAsStringArray(string key)
         {
             return ValueAs(key, value =>

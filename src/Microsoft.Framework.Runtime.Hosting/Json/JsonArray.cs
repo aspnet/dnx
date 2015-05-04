@@ -2,7 +2,6 @@
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 using System;
-using System.Linq;
 
 namespace Microsoft.Framework.Runtime.Json
 {
@@ -29,11 +28,6 @@ namespace Microsoft.Framework.Runtime.Json
         public JsonValue this[int index]
         {
             get { return _array[index]; }
-        }
-
-        public T[] Cast<T>() where T : JsonValue
-        {
-            return _array.Select(element => element as T).ToArray();
         }
     }
 }
