@@ -14,7 +14,7 @@ namespace Microsoft.Framework.Runtime
 {
     public class NuGetDependencyResolver : IDependencyProvider, ILibraryExportProvider
     {
-        private IDictionary<Tuple<string, FrameworkName, string, SemanticVersion>, LockFileTargetLibrary> _lookup;
+        private IDictionary<Tuple<string, FrameworkName, string>, LockFileTargetLibrary> _lookup;
         private readonly PackageRepository _repository;
 
         // Assembly name and path lifted from the appropriate lib folder
@@ -41,13 +41,14 @@ namespace Microsoft.Framework.Runtime
 
         public void ApplyLockFile(LockFile lockFile)
         {
-            _lookup = new Dictionary<Tuple<string, FrameworkName, string, SemanticVersion>, LockFileTargetLibrary>();
+            _lookup = new Dictionary<Tuple<string, FrameworkName, string>, LockFileTargetLibrary>();
 
             foreach (var t in lockFile.Targets)
             {
                 foreach (var library in t.Libraries)
                 {
-                    _lookup[Tuple.Create(t.RuntimeIdentifier, t.TargetFramework, library.Name, library.Version)] = library;
+                    // Each target has a single package version per id
+                    _lookup[Tuple.Create(t.RuntimeIdentifier, t.TargetFramework, library.Name)] = library;
                 }
             }
 
@@ -69,7 +70,25 @@ namespace Microsoft.Framework.Runtime
                 return null;
             }
 
-            var package = FindCandidate(libraryRange.Name, libraryRange.VersionRange);
+            LockFileTargetLibrary targetLibrary = null;
+            var versionRange = libraryRange.VersionRange;
+
+            // REVIEW: This is a little messy because we have the lock file logic and non lock file logic in the same class
+            // The runtime rewrite separates the 2 things.
+            if (_lookup != null)
+            {
+                // This means we have a lock file and the target should have
+                var lookupKey = Tuple.Create((string)null, targetFramework, libraryRange.Name);
+
+                if (_lookup.TryGetValue(lookupKey, out targetLibrary))
+                {
+                    // Adjust the target version so we find the right one when looking at the 
+                    // lock file libraries
+                    versionRange = new SemanticVersionRange(targetLibrary.Version);
+                }
+            }
+
+            var package = FindCandidate(libraryRange.Name, versionRange);
 
             if (package != null)
             {
@@ -77,10 +96,7 @@ namespace Microsoft.Framework.Runtime
                 bool resolved = true;
                 if (package.LockFileLibrary != null)
                 {
-                    var lookupKey = Tuple.Create((string)null, targetFramework, package.LockFileLibrary.Name, package.LockFileLibrary.Version);
-
-                    LockFileTargetLibrary targetLibrary;
-                    if (_lookup.TryGetValue(lookupKey, out targetLibrary))
+                    if (targetLibrary?.Version == package.LockFileLibrary.Version)
                     {
                         dependencies = GetDependencies(package, targetFramework, targetLibrary);
                     }
@@ -245,7 +261,7 @@ namespace Microsoft.Framework.Runtime
                     Servicing.Breadcrumbs.Instance.AddBreadcrumb(packageInfo.Id, packageInfo.Version);
                 }
 
-                var lookupKey = Tuple.Create(runtimeIdentifier, targetFramework, packageInfo.LockFileLibrary.Name, packageInfo.LockFileLibrary.Version);
+                var lookupKey = Tuple.Create(runtimeIdentifier, targetFramework, packageInfo.LockFileLibrary.Name);
 
                 if (_lookup == null)
                 {
@@ -363,7 +379,7 @@ namespace Microsoft.Framework.Runtime
                 return false;
             }
 
-            var lookupKey = Tuple.Create((string)null, targetFramework, description.Package.LockFileLibrary.Name, description.Package.LockFileLibrary.Version);
+            var lookupKey = Tuple.Create((string)null, targetFramework, description.Package.LockFileLibrary.Name);
 
             LockFileTargetLibrary targetLibrary;
             if (!_lookup.TryGetValue(lookupKey, out targetLibrary))
