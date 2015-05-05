@@ -27,18 +27,33 @@ namespace Microsoft.Framework.PackageManager
             var targetPath = packagePathResolver.GetInstallPath(library.Name, library.Version);
             var targetNuspec = packagePathResolver.GetManifestFilePath(library.Name, library.Version);
             var targetNupkg = packagePathResolver.GetPackageFilePath(library.Name, library.Version);
-            var hashPath = packagePathResolver.GetHashPath(library.Name, library.Version);
+            var targetHashPath = packagePathResolver.GetHashPath(library.Name, library.Version);
 
             // Acquire the lock on a nukpg before we extract it to prevent the race condition when multiple
             // processes are extracting to the same destination simultaneously
-            await ConcurrencyUtilities.ExecuteWithFileLocked(targetNupkg, async createdNewLock =>
+            await ConcurrencyUtilities.ExecuteWithFileLocked(targetNupkg, async _ =>
             {
-                // If this is the first process trying to install the target nupkg, go ahead
-                // After this process successfully installs the package, all other processes
-                // waiting on this lock don't need to install it again.
-                if (createdNewLock && !File.Exists(targetNupkg))
+                string packageHash;
+                using (var sha512 = SHA512.Create())
                 {
-                    information.WriteLine($"Installing {library.Name.Bold()} {library.Version}");
+                    packageHash = Convert.ToBase64String(sha512.ComputeHash(stream));
+                }
+
+                var actionName = "Installing";
+                var installedPackageHash = string.Empty;
+                if (File.Exists(targetHashPath))
+                {
+                    installedPackageHash = File.ReadAllText(targetHashPath);
+                    actionName = "Overwriting";
+                }
+
+                if (string.Equals(packageHash, installedPackageHash, StringComparison.Ordinal))
+                {
+                    information.WriteLine($"{library.Name}.{library.Version} already exists");
+                }
+                else
+                {
+                    information.WriteLine($"{actionName} {library.Name}.{library.Version}");
 
                     Directory.CreateDirectory(targetPath);
                     using (var nupkgStream = new FileStream(
@@ -49,6 +64,7 @@ namespace Microsoft.Framework.PackageManager
                         bufferSize: 4096,
                         useAsync: true))
                     {
+                        stream.Seek(0, SeekOrigin.Begin);
                         await stream.CopyToAsync(nupkgStream);
                         nupkgStream.Seek(0, SeekOrigin.Begin);
 
@@ -77,16 +93,9 @@ namespace Microsoft.Framework.PackageManager
                         }
                     }
 
-                    stream.Seek(0, SeekOrigin.Begin);
-                    string packageHash;
-                    using (var sha512 = SHA512.Create())
-                    {
-                        packageHash = Convert.ToBase64String(sha512.ComputeHash(stream));
-                    }
-
                     // Note: PackageRepository relies on the hash file being written out as the final operation as part of a package install
                     // to assume a package was fully installed.
-                    File.WriteAllText(hashPath, packageHash);
+                    File.WriteAllText(targetHashPath, packageHash);
                 }
 
                 return 0;
