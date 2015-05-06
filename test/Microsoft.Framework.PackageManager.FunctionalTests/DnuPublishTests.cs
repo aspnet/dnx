@@ -1171,12 +1171,12 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
           ""System.Core"",
           ""Microsoft.CSharp""
         ],
-        ""compile"": [
-          ""lib/dnx451/NoDependencies.dll""
-        ],
-        ""runtime"": [
-          ""lib/dnx451/NoDependencies.dll""
-        ]
+        ""compile"": {
+          ""lib/dnx451/NoDependencies.dll"": {}
+        },
+        ""runtime"": {
+          ""lib/dnx451/NoDependencies.dll"": {}
+        }
       }
     }
   },
@@ -1274,12 +1274,12 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
           ""System.Core"",
           ""Microsoft.CSharp""
         ],
-        ""compile"": [
-          ""lib/dnx451/NoDependencies.dll""
-        ],
-        ""runtime"": [
-          ""lib/dnx451/NoDependencies.dll""
-        ]
+        ""compile"": {
+          ""lib/dnx451/NoDependencies.dll"": {}
+        },
+        ""runtime"": {
+          ""lib/dnx451/NoDependencies.dll"": {}
+        }
       }
     }
   },
