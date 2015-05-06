@@ -84,7 +84,7 @@ namespace Microsoft.Framework.PackageManager.Restore.NuGet
 
                 try
                 {
-                    var uri = _baseUri + "FindPackagesById()?Id='" + id + "'";
+                    var uri = _baseUri + "FindPackagesById()?id='" + id + "'";
                     var results = new List<PackageInfo>();
                     var page = 1;
                     while (true)
