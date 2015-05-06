@@ -260,6 +260,8 @@ namespace Microsoft.Framework.PackageManager
             builder.Summary = project.Summary;
             builder.Copyright = project.Copyright;
             builder.RequireLicenseAcceptance = project.RequireLicenseAcceptance;
+            builder.ReleaseNotes = project.ReleaseNotes;
+            builder.Language = project.Language;
             builder.Tags.AddRange(project.Tags);
 
             if (!string.IsNullOrEmpty(project.IconUrl))

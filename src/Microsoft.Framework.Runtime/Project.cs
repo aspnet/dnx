@@ -58,6 +58,10 @@ namespace Microsoft.Framework.Runtime
 
         public string Summary { get; set; }
 
+        public string Language { get; set; }
+
+        public string ReleaseNotes { get; set; }
+
         public string[] Authors { get; private set; }
 
         public string[] Owners { get; private set; }
@@ -233,6 +237,8 @@ namespace Microsoft.Framework.Runtime
             project.IconUrl = rawProject.GetValue<string>("iconUrl");
             project.RequireLicenseAcceptance = rawProject.GetValue<bool?>("requireLicenseAcceptance") ?? false;
             project.Tags = tags == null ? new string[] { } : tags.ValueAsArray<string>();
+            project.Language = rawProject.GetValue<string>("language");
+            project.ReleaseNotes = rawProject.GetValue<string>("releaseNotes");
             project.IsLoadable = rawProject.GetValue<bool?>("loadable") ?? true;
 
             // TODO: Move this to the dependencies node
