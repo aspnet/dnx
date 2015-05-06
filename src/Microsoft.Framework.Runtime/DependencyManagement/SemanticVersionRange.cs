@@ -31,6 +31,12 @@ namespace Microsoft.Framework.Runtime
 
         public override string ToString()
         {
+            if (MinVersion == MaxVersion && 
+                VersionFloatBehavior == SemanticVersionFloatBehavior.None)
+            {
+                return MinVersion.ToString();
+            }
+
             var sb = new StringBuilder();
             sb.Append(">= ");
             switch (VersionFloatBehavior)
@@ -65,7 +71,7 @@ namespace Microsoft.Framework.Runtime
 
             if (MaxVersion != null)
             {
-                sb.Append(IsMaxInclusive ? "<= " : "< ");
+                sb.Append(IsMaxInclusive ? " <= " : " < ");
                 sb.Append(MaxVersion);
             }
 
