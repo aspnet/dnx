@@ -120,27 +120,22 @@ namespace Microsoft.Framework.PackageManager.Utils
             var criteria = criteriaBuilderWithTfm.Criteria;
 
             var compileGroup = contentItems.FindBestItemGroup(criteria, patterns.CompileTimeAssemblies, patterns.ManagedAssemblies);
+
             if (compileGroup != null)
             {
-                lockFileLib.CompileTimeAssemblies = compileGroup.Items.Select(t => (LockFileItem)t.Path).ToList();
+                lockFileLib.CompileTimeAssemblies = compileGroup.Items.Select(t => t.Path).ToList();
             }
 
             var runtimeGroup = contentItems.FindBestItemGroup(criteria, patterns.ManagedAssemblies);
             if (runtimeGroup != null)
             {
-                lockFileLib.RuntimeAssemblies = runtimeGroup.Items.Select(p => (LockFileItem)p.Path).ToList();
-            }
-
-            var resourceGroup = contentItems.FindBestItemGroup(criteria, patterns.ResourceAssemblies);
-            if (resourceGroup != null)
-            {
-                lockFileLib.ResourceAssemblies = resourceGroup.Items.Select(ToResourceLockFileItem).ToList();
+                lockFileLib.RuntimeAssemblies = runtimeGroup.Items.Select(p => p.Path).ToList();
             }
 
             var nativeGroup = contentItems.FindBestItemGroup(criteriaBuilderWithoutTfm.Criteria, patterns.NativeLibraries);
             if (nativeGroup != null)
             {
-                lockFileLib.NativeLibraries = nativeGroup.Items.Select(p => (LockFileItem)p.Path).ToList();
+                lockFileLib.NativeLibraries = nativeGroup.Items.Select(p => p.Path).ToList();
             }
 
             // COMPAT: Support lib/contract so older packages can be consumed
@@ -164,24 +159,12 @@ namespace Microsoft.Framework.PackageManager.Utils
                 if (referenceSet != null)
                 {
                     // Remove all assemblies of which names do not appear in the References list
-                    lockFileLib.RuntimeAssemblies.RemoveAll(path => path.Path.StartsWith("lib/") && !referenceSet.References.Contains(Path.GetFileName(path), StringComparer.OrdinalIgnoreCase));
-                    lockFileLib.CompileTimeAssemblies.RemoveAll(path => path.Path.StartsWith("lib/") && !referenceSet.References.Contains(Path.GetFileName(path), StringComparer.OrdinalIgnoreCase));
+                    lockFileLib.RuntimeAssemblies.RemoveAll(path => path.StartsWith("lib/") && !referenceSet.References.Contains(Path.GetFileName(path), StringComparer.OrdinalIgnoreCase));
+                    lockFileLib.CompileTimeAssemblies.RemoveAll(path => path.StartsWith("lib/") && !referenceSet.References.Contains(Path.GetFileName(path), StringComparer.OrdinalIgnoreCase));
                 }
             }
 
             return lockFileLib;
-        }
-
-        private static LockFileItem ToResourceLockFileItem(ContentItem item)
-        {
-            return new LockFileItem
-            {
-                Path = item.Path,
-                Properties =
-                {
-                    { "locale", item.Properties["locale"].ToString()}
-                }
-            };
         }
 
         private static void AddFrameworkReferences(LockFileTargetLibrary lockFileLib, FrameworkName framework, IEnumerable<FrameworkAssemblyReference> frameworkAssemblies)
@@ -466,7 +449,6 @@ namespace Microsoft.Framework.PackageManager.Utils
 
             public ContentPatternDefinition CompileTimeAssemblies { get; }
             public ContentPatternDefinition ManagedAssemblies { get; }
-            public ContentPatternDefinition ResourceAssemblies { get; }
             public ContentPatternDefinition NativeLibraries { get; }
 
             public PatternDefinitions()
@@ -518,39 +500,6 @@ namespace Microsoft.Framework.PackageManager.Utils
                     },
                     PropertyDefinitions = Properties.Definitions,
                 };
-
-                ResourceAssemblies = new ContentPatternDefinition
-                {
-                    GroupPatterns =
-                    {
-                        "runtimes/{rid}/lib/{tfm}/{locale?}/{any?}",
-                        "lib/{tfm}/{locale?}/{any?}"
-                    },
-                    PathPatterns =
-                    {
-                        "runtimes/{rid}/lib/{tfm}/{locale}/{resources}",
-                        "lib/{tfm}/{locale}/{resources}"
-                    },
-                    PropertyDefinitions = Properties.Definitions
-                };
-
-                ResourceAssemblies.GroupPatterns.Add(new PatternDefinition
-                {
-                    Pattern = "lib/{locale}/{resources?}",
-                    Defaults = new Dictionary<string, object>
-                    {
-                        {  "tfm", VersionUtility.ParseFrameworkName("net") }
-                    }
-                });
-
-                ResourceAssemblies.PathPatterns.Add(new PatternDefinition
-                {
-                    Pattern = "lib/{locale}/{resources}",
-                    Defaults = new Dictionary<string, object>
-                    {
-                        {  "tfm", VersionUtility.ParseFrameworkName("net") }
-                    }
-                });
 
                 NativeLibraries = new ContentPatternDefinition
                 {
