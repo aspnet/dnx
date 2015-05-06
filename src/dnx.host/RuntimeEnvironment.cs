@@ -3,13 +3,14 @@
 
 using System;
 using System.Reflection;
-using System.Runtime.Versioning;
 
 namespace Microsoft.Framework.Runtime
 {
     public class RuntimeEnvironment : IRuntimeEnvironment
     {
         private string _osVersion;
+
+        private string _osName;
 
         private string _runtimeVersion;
 
@@ -22,12 +23,21 @@ namespace Microsoft.Framework.Runtime
             RuntimeType = Type.GetType("Mono.Runtime") == null ? "CLR" : "Mono";
             RuntimeArchitecture = Environment.Is64BitProcess ? "x64" : "x86";
 #endif
-
-            string uname = NativeMethods.Uname();
-            OperatingSystem = string.IsNullOrEmpty(uname) ? "Windows" : uname;
         }
 
-        public string OperatingSystem { get; private set; }
+        public string OperatingSystem
+        {
+            get
+            {
+                if (_osName == null)
+                {
+                    string uname = NativeMethods.Uname();
+                    _osName = string.IsNullOrEmpty(uname) ? "Windows" : uname;
+                }
+
+                return _osName;
+            }
+        }
 
         public string OperatingSystemVersion
         {
