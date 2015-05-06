@@ -172,9 +172,7 @@ namespace Microsoft.Framework.Runtime.Servicing
                 {
                     LogBreadcrumbsCreationFailure(fileName, exception);
                 }
-
-                return Task.FromResult(1);
-            }).GetAwaiter().GetResult();
+            });
         }
 
         private static void LogBreadcrumbsCreationFailure(string fileName, Exception exception)

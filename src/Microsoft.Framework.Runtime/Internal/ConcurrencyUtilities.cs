@@ -19,6 +19,16 @@ namespace Microsoft.Framework.Runtime.Internal
             return filePath.Replace(Path.DirectorySeparatorChar, '_');
         }
 
+        public static void ExecuteWithFileLocked(string filePath, Action<bool> action)
+        {
+            ExecuteWithFileLocked(filePath, createdNew =>
+            {
+                action(createdNew);
+                return Task.FromResult(1);
+            })
+            .GetAwaiter().GetResult();
+        }
+
         public async static Task<T> ExecuteWithFileLocked<T>(string filePath, Func<bool, Task<T>> action)
         {
             var createdNew = false;
