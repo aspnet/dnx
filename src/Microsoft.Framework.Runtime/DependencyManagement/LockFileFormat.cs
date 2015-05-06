@@ -14,7 +14,7 @@ namespace Microsoft.Framework.Runtime.DependencyManagement
 {
     public class LockFileFormat
     {
-        public const int Version = -9996;
+        public const int Version = -9997;
         public const string LockFileName = "project.lock.json";
 
         public LockFile Read(string filePath)
@@ -166,10 +166,9 @@ namespace Microsoft.Framework.Runtime.DependencyManagement
 
             library.Dependencies = ReadObject(json["dependencies"] as JObject, ReadPackageDependency);
             library.FrameworkAssemblies = ReadArray(json["frameworkAssemblies"] as JArray, ReadFrameworkAssemblyReference);
-            library.RuntimeAssemblies = ReadObject(json["runtime"] as JObject, ReadFileItem);
-            library.CompileTimeAssemblies = ReadObject(json["compile"] as JObject, ReadFileItem);
-            library.ResourceAssemblies = ReadObject(json["resource"] as JObject, ReadFileItem);
-            library.NativeLibraries = ReadObject(json["native"] as JObject, ReadFileItem);
+            library.RuntimeAssemblies = ReadPathArray(json["runtime"] as JArray, ReadString);
+            library.CompileTimeAssemblies = ReadPathArray(json["compile"] as JArray, ReadString);
+            library.NativeLibraries = ReadPathArray(json["native"] as JArray, ReadString);
 
             return library;
         }
@@ -190,22 +189,17 @@ namespace Microsoft.Framework.Runtime.DependencyManagement
 
             if (library.CompileTimeAssemblies.Count > 0)
             {
-                json["compile"] = WriteObject(library.CompileTimeAssemblies, WriteFileItem);
+                json["compile"] = WritePathArray(library.CompileTimeAssemblies, WriteString);
             }
 
             if (library.RuntimeAssemblies.Count > 0)
             {
-                json["runtime"] = WriteObject(library.RuntimeAssemblies, WriteFileItem);
-            }
-
-            if (library.ResourceAssemblies.Count > 0)
-            {
-                json["resource"] = WriteObject(library.ResourceAssemblies, WriteFileItem);
+                json["runtime"] = WritePathArray(library.RuntimeAssemblies, WriteString);
             }
 
             if (library.NativeLibraries.Count > 0)
             {
-                json["native"] = WriteObject(library.NativeLibraries, WriteFileItem);
+                json["native"] = WritePathArray(library.NativeLibraries, WriteString);
             }
 
             return new JProperty(library.Name + "/" + library.Version, json);
@@ -304,23 +298,6 @@ namespace Microsoft.Framework.Runtime.DependencyManagement
             return new JProperty(
                 item.Id,
                 WriteString(item.VersionSpec.ToStringSafe()));
-        }
-
-        private LockFileItem ReadFileItem(string property, JToken json)
-        {
-            var item = new LockFileItem { Path = property };
-            foreach (var subProperty in json.OfType<JProperty>())
-            {
-                item.Properties[subProperty.Name] = subProperty.Value.Value<string>();
-            }
-            return item;
-        }
-
-        private JProperty WriteFileItem(LockFileItem item)
-        {
-            return new JProperty(
-                item.Path,
-                new JObject(item.Properties.Select(x => new JProperty(x.Key, x.Value))));
         }
 
         private FrameworkAssemblyReference ReadFrameworkAssemblyReference(JToken json)
