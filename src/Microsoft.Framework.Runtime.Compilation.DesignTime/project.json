@@ -2,8 +2,8 @@
     "version": "1.0.0-*",
     "dependencies": {
         "Newtonsoft.Json": "6.0.6",
-        "Microsoft.Framework.Runtime.Common": { "version": "1.0.0-*", "type": "build" },
-        "Microsoft.Framework.Runtime.Compilation.Common": { "version": "1.0.0-*", "type": "build" },
+        "Microsoft.Framework.Runtime.Sources": { "version": "1.0.0-*", "type": "build" },
+        "Microsoft.Framework.Runtime.Compilation.Sources": { "version": "1.0.0-*", "type": "build" },
         "Microsoft.Framework.Runtime.Abstractions": "1.0.0-*"
     },
     "compile": [ "../Microsoft.Framework.Runtime.Hosting/JTokenExtensions.cs" ],

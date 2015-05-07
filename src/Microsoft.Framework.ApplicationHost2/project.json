@@ -2,8 +2,8 @@
     "version": "1.0.0-*",
     "compilationOptions": { "define": [ "TRACE" ], "warningsAsErrors": true },
     "dependencies": {
-        "Microsoft.Framework.CommandLineUtils": { "version": "1.0.0-*", "type": "build" },
-        "Microsoft.Framework.Runtime.Common": { "version": "1.0.0-*", "type": "build" },
+        "Microsoft.Framework.CommandLineUtils.Sources": { "version": "1.0.0-*", "type": "build" },
+        "Microsoft.Framework.Runtime.Sources": { "version": "1.0.0-*", "type": "build" },
         "Newtonsoft.Json": "6.0.6",
         "Microsoft.Framework.Runtime.Roslyn.Abstractions": "1.0.0-*",
         "Microsoft.Framework.Runtime.Abstractions": "1.0.0-*",
@@ -12,7 +12,7 @@
     "compile": [
         "../Microsoft.Framework.Runtime.Hosting/**/*.cs",
         "../Microsoft.Framework.Runtime.Compilation/**/*.cs",
-        "../Microsoft.Framework.Runtime.Compilation.Common/**/*.cs",
+        "../Microsoft.Framework.Runtime.Compilation.Sources/**/*.cs",
         "../../submodules/FileSystem/src/Microsoft.Framework.FileSystemGlobbing/**/*.cs",
         "../../submodules/NuGet.Versioning/src/NuGet.Versioning/**/*.cs",
         "../../submodules/NuGet.Packaging/src/NuGet.Frameworks/**/*.cs",

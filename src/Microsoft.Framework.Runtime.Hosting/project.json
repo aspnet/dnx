@@ -7,7 +7,7 @@
         "NuGet.DependencyResolver.Core": "3.0.0-*",
         "Microsoft.Framework.FileSystemGlobbing": "1.0.0-*",
         "Microsoft.Framework.Runtime.Abstractions": "1.0.0-*",
-        "Microsoft.Framework.Runtime.Common": { "version": "1.0.0-*", "type": "build" },
+        "Microsoft.Framework.Runtime.Sources": { "version": "1.0.0-*", "type": "build" },
         "Microsoft.Framework.Logging.Interfaces": "1.0.0-*"
     },
     "compile": [

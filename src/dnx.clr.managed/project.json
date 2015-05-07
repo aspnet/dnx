@@ -3,7 +3,7 @@
     "compilationOptions": { "define": [ "TRACE" ], "allowUnsafe": true, "warningsAsErrors": true },
     "dependencies": {
         "dnx.host": "1.0.0-*",
-        "Microsoft.Framework.Runtime.Common": { "version": "1.0.0-*", "type": "build" }
+        "Microsoft.Framework.Runtime.Sources": { "version": "1.0.0-*", "type": "build" }
     },
     "frameworks": {
         "dnx451": { }

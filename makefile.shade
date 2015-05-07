@@ -64,7 +64,7 @@ var MANAGED_PROJECTS = '${FindAllProjects(
     BOOTSTRAPPER_HOST_NAME,
     BOOTSTRAPPER_CORECLR_MANAGED_NAME,
     "Microsoft.Framework.ApplicationHost",
-    "Microsoft.Framework.CommandLineUtils",
+    "Microsoft.Framework.CommandLineUtils.Sources",
     "Microsoft.Framework.DesignTimeHost",
     "Microsoft.Framework.DesignTimeHost.Abstractions",
     "Microsoft.Framework.PackageManager",
@@ -73,7 +73,7 @@ var MANAGED_PROJECTS = '${FindAllProjects(
     "Microsoft.Framework.Runtime.Caching",
     "Microsoft.Framework.Runtime.Abstractions",
     "Microsoft.Framework.Runtime.Compilation.DesignTime",
-    "Microsoft.Framework.Runtime.Common",
+    "Microsoft.Framework.Runtime.Sources",
     "Microsoft.Framework.Runtime.Loader",
     "Microsoft.Framework.Runtime.Roslyn",
     "Microsoft.Framework.Runtime.Roslyn.Abstractions",
@@ -171,12 +171,12 @@ var RUNTIME_TARGETS='${new List<RuntimeTarget>()}'
         var sourceFiles = new string[] 
         {
             Path.Combine("src", BOOTSTRAPPER_MONO_MANAGED_NAME, "EntryPoint.cs"),
-            Path.Combine("src", "Microsoft.Framework.CommandLineUtils", "CommandLine", "CommandArgument.cs"),
-            Path.Combine("src", "Microsoft.Framework.CommandLineUtils", "CommandLine", "CommandLineApplication.cs"), 
-            Path.Combine("src", "Microsoft.Framework.CommandLineUtils", "CommandLine", "CommandOption.cs"), 
-            Path.Combine("src", "Microsoft.Framework.CommandLineUtils", "CommandLine", "CommandOptionType.cs"),
-            Path.Combine("src", "Microsoft.Framework.Runtime.Common", "Impl", "EnvironmentNames.cs"),
-            Path.Combine("src", "Microsoft.Framework.Runtime.Common", "Impl", "Constants.cs")
+            Path.Combine("src", "Microsoft.Framework.CommandLineUtils.Sources", "CommandLine", "CommandArgument.cs"),
+            Path.Combine("src", "Microsoft.Framework.CommandLineUtils.Sources", "CommandLine", "CommandLineApplication.cs"), 
+            Path.Combine("src", "Microsoft.Framework.CommandLineUtils.Sources", "CommandLine", "CommandOption.cs"), 
+            Path.Combine("src", "Microsoft.Framework.CommandLineUtils.Sources", "CommandLine", "CommandOptionType.cs"),
+            Path.Combine("src", "Microsoft.Framework.Runtime.Sources", "Impl", "EnvironmentNames.cs"),
+            Path.Combine("src", "Microsoft.Framework.Runtime.Sources", "Impl", "Constants.cs")
         };
 
         var arguments = string.Format(
@@ -596,8 +596,8 @@ var RUNTIME_TARGETS='${new List<RuntimeTarget>()}'
                                   "Microsoft.Framework.DesignTimeHost" };
 
         var sharedSourceAssemblies = new [] { 
-            Path.Combine(BUILD_DIR2, "Microsoft.Framework.CommandLineUtils/**/*.*"), 
-            Path.Combine(BUILD_DIR2, "Microsoft.Framework.Runtime.Common/**/*.*"),
+            Path.Combine(BUILD_DIR2, "Microsoft.Framework.CommandLineUtils.Sources/**/*.*"), 
+            Path.Combine(BUILD_DIR2, "Microsoft.Framework.Runtime.Sources/**/*.*"),
         };
         
         foreach (var file in Files.Include(dnxCore50Pattern).Exclude(sharedSourceAssemblies))

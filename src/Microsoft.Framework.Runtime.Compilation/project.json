@@ -3,8 +3,8 @@
     "description": "Contains components for loading .NET assemblies from source by compiling on-demand",
     "dependencies": {
         "Microsoft.Framework.Runtime.Hosting": "1.0.0-*",
-        "Microsoft.Framework.Runtime.Compilation.Common": { "version": "1.0.0-*", "type": "build" },
-        "Microsoft.Framework.Runtime.Common": { "version": "1.0.0-*", "type": "build" }
+        "Microsoft.Framework.Runtime.Compilation.Sources": { "version": "1.0.0-*", "type": "build" },
+        "Microsoft.Framework.Runtime.Sources": { "version": "1.0.0-*", "type": "build" }
     },
 
     "frameworks": {
