@@ -9,11 +9,21 @@ using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
 using Microsoft.Framework.Runtime;
+using Microsoft.Framework.Runtime.Infrastructure;
 
 namespace Microsoft.Framework.CommonTestUtils
 {
     public static class TestUtils
     {
+        public static IRuntimeEnvironment CurrentRuntimeEnvironment
+        {
+            get
+            {
+                return CallContextServiceLocator.Locator.ServiceProvider
+                    .GetService(typeof(IRuntimeEnvironment)) as IRuntimeEnvironment;
+            }
+        }
+
         public static DisposableDir CreateTempDir()
         {
             var tempDirPath = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
@@ -302,19 +312,6 @@ namespace Microsoft.Framework.CommonTestUtils
             {
                 var sha512Bytes = SHA512.Create().ComputeHash(sourceStream);
                 return Convert.ToBase64String(sha512Bytes);
-            }
-        }
-
-        public static string GetCurrentRuntimeArchitecture()
-        {
-            switch (IntPtr.Size)
-            {
-                case 4:
-                    return "x86";
-                case 8:
-                    return "x64";
-                default:
-                    return "Unknown";
             }
         }
 

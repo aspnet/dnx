@@ -161,7 +161,7 @@ namespace Microsoft.Framework.ApplicationHost
 
 Current runtime Target Framework: '{runtimeTargetFramework} ({runtimeTargetFrameworkShortName})'
   Type: {runtimeType}
-  Architecture: {architecture ?? TestUtils.GetCurrentRuntimeArchitecture()}
+  Architecture: {architecture ?? TestUtils.CurrentRuntimeEnvironment.RuntimeArchitecture}
   Version: {TestUtils.GetRuntimeVersion()}
 
 Please make sure the runtime matches a framework specified in {Project.ProjectFileName}";
