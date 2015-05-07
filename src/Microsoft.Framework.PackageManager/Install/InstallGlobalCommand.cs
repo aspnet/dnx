@@ -62,7 +62,7 @@ namespace Microsoft.Framework.PackageManager
 
             if (string.IsNullOrEmpty(FeedOptions.TargetPackagesFolder))
             {
-                FeedOptions.Sources.Add(_commandsRepository.PackagesRoot.Root);
+                FeedOptions.TargetPackagesFolder = _commandsRepository.PackagesRoot.Root;
             }
 
             var temporaryProjectFileFullPath = CreateTemporaryProject(FeedOptions.TargetPackagesFolder, packageId, packageVersion);

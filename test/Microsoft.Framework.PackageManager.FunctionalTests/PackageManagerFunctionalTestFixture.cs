@@ -19,9 +19,27 @@ namespace Microsoft.Framework.PackageManager.FunctionalTests
             Directory.CreateDirectory(PackageSource);
 
             CreateNewPackage("alpha", "0.1.0");
+
+            PackPackage(Path.Combine(TestUtils.GetMiscProjectsFolder(), "XreTestApps/CommandsProject"), PackageSource);
         }
 
         public string PackageSource { get; }
+
+        private void PackPackage(string app, string outpath)
+        {
+            var runtimeForPacking = TestUtils.GetClrRuntimeComponents().FirstOrDefault();
+            if (runtimeForPacking == null)
+            {
+                throw new InvalidOperationException("Can't find a CLR runtime to pack test packages.");
+            }
+
+            var runtimeHomePath = base.GetRuntimeHomeDir((string)runtimeForPacking[0],
+                                                         (string)runtimeForPacking[1],
+                                                         (string)runtimeForPacking[2]);
+
+            DnuTestUtils.ExecDnu(runtimeHomePath, "restore", "", environment: null, workingDir: app);
+            DnuTestUtils.ExecDnu(runtimeHomePath, "pack", $"--out {outpath}", environment: null, workingDir: app);
+        }
 
         private void CreateNewPackage(string name, string version)
         {

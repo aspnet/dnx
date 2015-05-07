@@ -112,6 +112,12 @@ namespace Microsoft.Framework.CommonTestUtils
             return process.ExitCode;
         }
 
+        public static string GetMiscProjectsFolder()
+        {
+            var dnxRuntimeRoot = ProjectResolver.ResolveRootDirectory(Directory.GetCurrentDirectory());
+            return Path.Combine(dnxRuntimeRoot, "misc");
+        }
+
         public static string GetBuildArtifactsFolder()
         {
             var kRuntimeRoot = ProjectResolver.ResolveRootDirectory(Directory.GetCurrentDirectory());

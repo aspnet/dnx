@@ -1,5 +1,6 @@
 {
     "dependencies": {
+        "Microsoft.AspNet.Testing": "1.0.0-*",
         "Microsoft.Framework.CommonTestUtils": "1.0.0-*",
         "Microsoft.Framework.Runtime.Sources": "1.0.0-*",
         "Microsoft.Framework.PackageManager": "1.0.0-*",
