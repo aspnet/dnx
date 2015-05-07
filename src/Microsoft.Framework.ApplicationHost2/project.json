@@ -7,7 +7,7 @@
         "Newtonsoft.Json": "6.0.6",
         "Microsoft.Framework.Runtime.Roslyn.Abstractions": "1.0.0-*",
         "Microsoft.Framework.Runtime.Abstractions": "1.0.0-*",
-        "Microsoft.Framework.NotNullAttribute.Internal": { "type": "build", "version": "1.0.0-*" }
+        "Microsoft.Framework.NotNullAttribute.Sources": { "type": "build", "version": "1.0.0-*" }
     },
     "compile": [
         "../Microsoft.Framework.Runtime.Hosting/**/*.cs",
