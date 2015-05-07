@@ -182,26 +182,35 @@ namespace Microsoft.Framework.PackageManager.Restore.NuGet
             return result;
         }
 
+        internal async Task InvalidateCacheFileAsync(string cacheKey)
+        {
+            var cacheFile = GetCacheFilePath(cacheKey);
+
+            // Acquire the lock on a file before we delete it to prevent this process
+            // from deleting a file that just passed existence check in some other processes
+            await ConcurrencyUtilities.ExecuteWithFileLocked(cacheFile, async _ =>
+            {
+                if (File.Exists(cacheFile))
+                {
+                    await Task.Factory.StartNew(() => File.Delete(cacheFile));
+                }
+
+                return 0;
+            });
+        }
+
         private async Task<HttpSourceResult> TryCache(string uri, string cacheKey, TimeSpan cacheAgeLimit)
         {
-            var baseFolderName = RemoveInvalidFileNameChars(ComputeHash(_baseUri));
-            var baseFileName = RemoveInvalidFileNameChars(cacheKey) + ".dat";
-
-#if DNX451
-            var localAppDataFolder = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
-#else
-            var localAppDataFolder = Environment.GetEnvironmentVariable("LocalAppData");
-#endif
-            var cacheFolder = Path.Combine(localAppDataFolder, "dnu", "cache", baseFolderName);
-            var cacheFile = Path.Combine(cacheFolder, baseFileName);
+            var cacheFile = GetCacheFilePath(cacheKey);
+            var cacheFolder = Path.GetDirectoryName(cacheFile);
 
             if (!Directory.Exists(cacheFolder) && !cacheAgeLimit.Equals(TimeSpan.Zero))
             {
                 Directory.CreateDirectory(cacheFolder);
             }
 
-            // Acquire the lock on a file before we open it to prevent this process
-            // from opening a file deleted by the logic in HttpSource.GetAsync() in another process
+            // Acquire the lock on a file before we open it to prevent this process from opening
+            // a file deleted by HttpSource.GetAsync()/HttpSource.InvalidateCacheFile() in another process
             return await ConcurrencyUtilities.ExecuteWithFileLocked(cacheFile, _ =>
             {
                 if (File.Exists(cacheFile))
@@ -275,6 +284,19 @@ namespace Microsoft.Framework.PackageManager.Restore.NuGet
             }
 
             return false;
+        }
+
+        private string GetCacheFilePath(string cacheKey)
+        {
+            var baseFolderName = RemoveInvalidFileNameChars(ComputeHash(_baseUri));
+            var baseFileName = RemoveInvalidFileNameChars(cacheKey) + ".dat";
+
+#if DNX451
+            var localAppDataFolder = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+#else
+            var localAppDataFolder = Environment.GetEnvironmentVariable("LocalAppData");
+#endif
+            return Path.Combine(localAppDataFolder, "dnu", "cache", baseFolderName, baseFileName);
         }
 
         private static FileStream CreateAsyncFileStream(string path, FileMode mode, FileAccess access, FileShare share)

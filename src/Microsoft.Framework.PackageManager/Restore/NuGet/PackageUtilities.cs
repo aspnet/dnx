@@ -103,5 +103,33 @@ namespace Microsoft.Framework.PackageManager
                 }
             }
         }
+
+        internal static async Task<bool> IsValidNupkgAsync(string packageId, string path)
+        {
+            // Acquire the lock on a file before we open it to prevent this process from opening
+            // a file deleted by HttpSource.GetAsync()/HttpSource.InvalidateCacheFile() in another process
+            return await ConcurrencyUtilities.ExecuteWithFileLocked(path, _ =>
+            {
+                if (!File.Exists(path))
+                {
+                    return Task.FromResult(false);
+                }
+
+                using (var stream = File.OpenRead(path))
+                {
+                    try {
+                        using (var archive = new ZipArchive(stream, ZipArchiveMode.Read, leaveOpen: false))
+                        {
+                            var entry = archive.GetEntryOrdinalIgnoreCase(packageId + ".nuspec");
+                            return Task.FromResult(entry != null);
+                        }
+                    }
+                    catch (InvalidDataException)
+                    {
+                        return Task.FromResult(false);
+                    }
+                }
+            });
+        }
     }
 }
