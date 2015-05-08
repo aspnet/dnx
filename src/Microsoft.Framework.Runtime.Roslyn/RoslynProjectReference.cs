@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -11,6 +12,7 @@ using System.Runtime.InteropServices;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Emit;
 using Microsoft.Framework.Runtime.Compilation;
+using Microsoft.CodeAnalysis.CSharp;
 
 namespace Microsoft.Framework.Runtime.Roslyn
 {
@@ -66,44 +68,154 @@ namespace Microsoft.Framework.Runtime.Roslyn
                                      .ToList();
         }
 
+        private IEnumerable<ResourceDescriptor> GetResourcesForCulture(string cultureName)
+        {
+            var resourcesByCultureName = CompilationContext.Resources
+                .GroupBy(GetResourceCultureName, StringComparer.OrdinalIgnoreCase);
+
+            return resourcesByCultureName
+                .SingleOrDefault(grouping => string.Equals(grouping.Key, cultureName, StringComparison.OrdinalIgnoreCase));
+        }
+
+        private string GetResourceCultureName(ResourceDescriptor res)
+        {
+            var resourceBaseName = Path.GetFileNameWithoutExtension(res.FileName);
+            var cultureName = Path.GetExtension(resourceBaseName);
+            if (string.IsNullOrEmpty(cultureName) || cultureName.Length < 3)
+            {
+                return string.Empty;
+            }
+            bool previousCharWasDash = false;
+            for (var index = 1; index != cultureName.Length; ++index)
+            {
+                var ch = cultureName[index];
+                var isDash = ch == '-';
+                var isAlpha = !isDash && ((ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z'));
+                var isDigit = !isDash && !isAlpha && (ch >= '0' && ch <= '9');
+
+                if (isDash && previousCharWasDash)
+                {
+                    // two '-' in a row is not valid
+                    return string.Empty;
+                }
+
+                if (index < 3)
+                {
+                    if (!isAlpha)
+                    {
+                        // first characters at [1] and [2] must be alpha
+                        return string.Empty;
+                    }
+                }
+                else
+                {
+                    if (!isAlpha && !isDigit && !isDash)
+                    {
+                        // not an allowed character
+                        return string.Empty;
+                    }
+                }
+
+                previousCharWasDash = isDash;
+            }
+            if (previousCharWasDash)
+            {
+                // trailing '-' is not valid
+                return string.Empty;
+            }
+            return cultureName.Substring(1);
+        }
+
+        EmitResult EmitResourceAssembly(
+            AssemblyName assemblyName, 
+            IEnumerable<ResourceDescriptor> resourceDescriptors, 
+            AfterCompileContext afterCompileContext)
+        {
+            var resources = resourceDescriptors
+                .Select(res => new ResourceDescription(res.Name, res.StreamFactory, isPublic: true));
+
+            var mainCompilation = afterCompileContext.Compilation;
+            afterCompileContext.Compilation = CSharpCompilation.Create(
+                assemblyName.Name, 
+                options: mainCompilation.Options);
+
+            Logger.TraceInformation("[{0}]: Emitting assembly for {1}", GetType().Name, Name);
+
+            var sw = Stopwatch.StartNew();
+
+            var emitResult = afterCompileContext.Compilation.Emit(
+                    afterCompileContext.AssemblyStream, 
+                    manifestResources: resources);
+
+            sw.Stop();
+
+            Logger.TraceInformation("[{0}]: Emitted {1} in {2}ms", GetType().Name, Name, sw.ElapsedMilliseconds);
+
+            afterCompileContext.Diagnostics = CompilationContext.Diagnostics
+                .Concat(emitResult.Diagnostics)
+                .ToList();
+
+            return emitResult;
+        }
+
         public Assembly Load(AssemblyName assemblyName, IAssemblyLoadContext loadContext)
         {
             using (var pdbStream = new MemoryStream())
             using (var assemblyStream = new MemoryStream())
             {
-                IList<ResourceDescription> resources = CompilationContext.Resources;
-
-                Logger.TraceInformation("[{0}]: Emitting assembly for {1}", GetType().Name, Name);
-
-                var sw = Stopwatch.StartNew();
-
-                EmitResult emitResult = null;
-
-                if (_supportsPdbGeneration.Value)
-                {
-                    emitResult = CompilationContext.Compilation.Emit(assemblyStream, pdbStream: pdbStream, manifestResources: resources);
-                }
-                else
-                {
-                    Logger.TraceWarning("PDB generation is not supported on this platform");
-                    emitResult = CompilationContext.Compilation.Emit(assemblyStream, manifestResources: resources);
-                }
-
-                sw.Stop();
-
-                Logger.TraceInformation("[{0}]: Emitted {1} in {2}ms", GetType().Name, Name, sw.ElapsedMilliseconds);
-
-                var diagnostics = CompilationContext.Diagnostics.Concat(
-                    emitResult.Diagnostics);
-
                 var afterCompileContext = new AfterCompileContext
                 {
                     ProjectContext = CompilationContext.ProjectContext,
                     Compilation = CompilationContext.Compilation,
                     AssemblyStream = assemblyStream,
-                    SymbolStream = pdbStream,
-                    Diagnostics = new List<Diagnostic>(diagnostics)
+                    SymbolStream = pdbStream
                 };
+
+                EmitResult emitResult = null;
+
+                if (assemblyName.CultureName != null)
+                {
+                    var resourcesForCulture = GetResourcesForCulture(assemblyName.CultureName ?? string.Empty);
+                    if (resourcesForCulture == null)
+                    {
+                        return null;
+                    }
+                    afterCompileContext.SymbolStream = null;
+                    emitResult = EmitResourceAssembly(assemblyName, resourcesForCulture, afterCompileContext);
+                }
+                else
+                {
+                    var resourcesForCulture = GetResourcesForCulture(assemblyName.CultureName ?? string.Empty);
+                    if (resourcesForCulture == null)
+                    {
+                        // No resources is fine for a main assembly
+                        resourcesForCulture = Enumerable.Empty<ResourceDescriptor>();
+                    }
+                    var resources = resourcesForCulture
+                        .Select(res => new ResourceDescription(res.Name, res.StreamFactory, isPublic: true));
+
+                    Logger.TraceInformation("[{0}]: Emitting assembly for {1}", GetType().Name, Name);
+
+                    var sw = Stopwatch.StartNew();
+
+                    if (_supportsPdbGeneration.Value)
+                    {
+                        emitResult = CompilationContext.Compilation.Emit(assemblyStream, pdbStream: pdbStream, manifestResources: resources);
+                    }
+                    else
+                    {
+                        Logger.TraceWarning("PDB generation is not supported on this platform");
+                        emitResult = CompilationContext.Compilation.Emit(assemblyStream, manifestResources: resources);
+                    }
+
+                    afterCompileContext.Diagnostics = CompilationContext.Diagnostics
+                        .Concat(emitResult.Diagnostics)
+                        .ToList();
+
+                    sw.Stop();
+
+                    Logger.TraceInformation("[{0}]: Emitted {1} in {2}ms", GetType().Name, Name, sw.ElapsedMilliseconds);
+                }
 
                 foreach (var m in CompilationContext.Modules)
                 {
@@ -149,7 +261,9 @@ namespace Microsoft.Framework.Runtime.Roslyn
 
         public IDiagnosticResult EmitAssembly(string outputPath)
         {
-            IList<ResourceDescription> resources = CompilationContext.Resources;
+            IList<ResourceDescription> resources = CompilationContext.Resources
+                .Select(res => new ResourceDescription(res.Name, res.StreamFactory, isPublic: true))
+                .ToList();
 
             var assemblyPath = Path.Combine(outputPath, Name + ".dll");
             var pdbPath = Path.Combine(outputPath, Name + ".pdb");

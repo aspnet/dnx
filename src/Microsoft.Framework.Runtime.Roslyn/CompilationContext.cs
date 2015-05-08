@@ -15,7 +15,7 @@ namespace Microsoft.Framework.Runtime.Roslyn
     public class CompilationContext
     {
         private readonly BeforeCompileContext _beforeCompileContext;
-        private readonly Func<IList<ResourceDescription>> _resourcesResolver;
+        private readonly Func<IList<ResourceDescriptor>> _resourcesResolver;
 
         public IList<IMetadataReference> References { get; set; }
 
@@ -24,7 +24,7 @@ namespace Microsoft.Framework.Runtime.Roslyn
                                   FrameworkName targetFramework,
                                   string configuration,
                                   IEnumerable<IMetadataReference> incomingReferences,
-                                  Func<IList<ResourceDescription>> resourcesResolver)
+                                  Func<IList<ResourceDescriptor>> resourcesResolver)
         {
             Project = project;
             Modules = new List<ICompileModule>();
@@ -41,14 +41,13 @@ namespace Microsoft.Framework.Runtime.Roslyn
                 Configuration = configuration
             };
 
-            _beforeCompileContext = new BeforeCompileContext
-            {
-                Compilation = compilation,
-                ProjectContext = projectContext,
-                Resources = new LazyList<ResourceDescription>(ResolveResources),
-                Diagnostics = new List<Diagnostic>(),
-                MetadataReferences = new List<IMetadataReference>(incomingReferences)
-            };
+            _beforeCompileContext = new BeforeCompileContext(
+                compilation,
+                projectContext,
+                ResolveResources,
+                () => new List<Diagnostic>(),
+                () => new List<IMetadataReference>(incomingReferences)
+            );
         }
 
         public ICompilationProject Project { get; }
@@ -66,7 +65,7 @@ namespace Microsoft.Framework.Runtime.Roslyn
             get { return _beforeCompileContext.Diagnostics; }
         }
 
-        public IList<ResourceDescription> Resources
+        public IList<ResourceDescriptor> Resources
         {
             get { return _beforeCompileContext.Resources; }
         }
@@ -81,7 +80,7 @@ namespace Microsoft.Framework.Runtime.Roslyn
             get { return _beforeCompileContext; }
         }
 
-        private IList<ResourceDescription> ResolveResources()
+        private IList<ResourceDescriptor> ResolveResources()
         {
             var sw = Stopwatch.StartNew();
             Logger.TraceInformation("[{0}]: Generating resources for {1}", nameof(CompilationContext), Project.Name);

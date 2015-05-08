@@ -130,12 +130,7 @@ namespace Microsoft.Framework.Runtime.Roslyn
                 target.TargetFramework,
                 target.Configuration,
                 incomingReferences,
-                () => resourcesResolver()
-                    .Select(res => new ResourceDescription(
-                        res.Name,
-                        res.StreamFactory,
-                        isPublic: true))
-                    .ToList());
+                resourcesResolver);
 
             // Apply strong-name settings
             ApplyStrongNameSettings(compilationContext);
