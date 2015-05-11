@@ -341,22 +341,22 @@ namespace Microsoft.Framework.PackageManager.Publish
 
                         foreach (var path in library.RuntimeAssemblies)
                         {
-                            keep.Add(Path.Combine(packagesDir, path));
+                            keep.Add(CombinePath(packagesDir, path));
                         }
 
                         foreach (var path in library.CompileTimeAssemblies)
                         {
-                            keep.Add(Path.Combine(packagesDir, path));
+                            keep.Add(CombinePath(packagesDir, path));
                         }
 
                         foreach (var path in library.NativeLibraries)
                         {
-                            keep.Add(Path.Combine(packagesDir, path));
+                            keep.Add(CombinePath(packagesDir, path));
                         }
 
                         foreach (var specialFolder in specialFolders)
                         {
-                            var specialFolderPath = Path.Combine(packagesDir, specialFolder);
+                            var specialFolderPath = CombinePath(packagesDir, specialFolder);
 
                             if (!Directory.Exists(specialFolderPath))
                             {
@@ -388,6 +388,11 @@ namespace Microsoft.Framework.PackageManager.Publish
             return true;
         }
 
+        private static string CombinePath(string path1, string path2)
+        {
+            return Path.Combine(path1, path2.Replace(Path.AltDirectorySeparatorChar, Path.DirectorySeparatorChar));
+        }
+
         private bool UpdateLockFile(PublishRoot root)
         {
             var appEnv = (IApplicationEnvironment)root.HostServices.GetService(typeof(IApplicationEnvironment));
@@ -408,6 +413,7 @@ namespace Microsoft.Framework.PackageManager.Publish
                     restoreCommand.TargetFrameworks.Add(runtime.Framework);
                 }
 
+                restoreCommand.SkipRestoreEvents = true;
                 restoreCommand.SkipInstall = true;
                 restoreCommand.CheckHashFile = false;
                 restoreCommand.RestoreDirectory = project.IsPackage ? Path.Combine(project.TargetPath, "root") : project.TargetPath;
