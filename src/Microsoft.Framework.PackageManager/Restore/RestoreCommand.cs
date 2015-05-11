@@ -67,6 +67,7 @@ namespace Microsoft.Framework.PackageManager
         public Reports Reports { get; set; }
         public bool CheckHashFile { get; set; } = true;
         public bool SkipInstall { get; set; }
+        public bool SkipRestoreEvents { get; set; }
 
         private Dictionary<string, List<string>> ErrorMessages { get; set; }
 
@@ -210,11 +211,14 @@ namespace Microsoft.Framework.PackageManager
                 return null;
             };
 
-            if (!ScriptExecutor.Execute(project, "prerestore", getVariable))
+            if (!SkipRestoreEvents)
             {
-                ErrorMessages.GetOrAdd("prerestore", _ => new List<string>()).Add(ScriptExecutor.ErrorMessage);
-                Reports.Error.WriteLine(ScriptExecutor.ErrorMessage);
-                return false;
+                if (!ScriptExecutor.Execute(project, "prerestore", getVariable))
+                {
+                    ErrorMessages.GetOrAdd("prerestore", _ => new List<string>()).Add(ScriptExecutor.ErrorMessage);
+                    Reports.Error.WriteLine(ScriptExecutor.ErrorMessage);
+                    return false;
+                }
             }
 
             var projectDirectory = project.ProjectDirectory;
@@ -471,18 +475,21 @@ namespace Microsoft.Framework.PackageManager
                               targetContexts);
             }
 
-            if (!ScriptExecutor.Execute(project, "postrestore", getVariable))
+            if (!SkipRestoreEvents)
             {
-                ErrorMessages.GetOrAdd("postrestore", _ => new List<string>()).Add(ScriptExecutor.ErrorMessage);
-                Reports.Error.WriteLine(ScriptExecutor.ErrorMessage);
-                return false;
-            }
+                if (!ScriptExecutor.Execute(project, "postrestore", getVariable))
+                {
+                    ErrorMessages.GetOrAdd("postrestore", _ => new List<string>()).Add(ScriptExecutor.ErrorMessage);
+                    Reports.Error.WriteLine(ScriptExecutor.ErrorMessage);
+                    return false;
+                }
 
-            if (!ScriptExecutor.Execute(project, "prepare", getVariable))
-            {
-                ErrorMessages.GetOrAdd("prepare", _ => new List<string>()).Add(ScriptExecutor.ErrorMessage);
-                Reports.Error.WriteLine(ScriptExecutor.ErrorMessage);
-                return false;
+                if (!ScriptExecutor.Execute(project, "prepare", getVariable))
+                {
+                    ErrorMessages.GetOrAdd("prepare", _ => new List<string>()).Add(ScriptExecutor.ErrorMessage);
+                    Reports.Error.WriteLine(ScriptExecutor.ErrorMessage);
+                    return false;
+                }
             }
 
             Reports.Information.WriteLine(string.Format("{0}, {1}ms elapsed", "Restore complete".Green().Bold(), sw.ElapsedMilliseconds));
