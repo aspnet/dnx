@@ -29,6 +29,14 @@ namespace Microsoft.Framework.PackageManager
 #if DNX451
             Thread.GetDomain().SetData(".appDomain", this);
             ServicePointManager.DefaultConnectionLimit = 1024;
+
+            // Work around a Mono issue that makes restore unbearably slow,
+            // due to some form of contention when requests are processed
+            // concurrently. Restoring sequentially is *much* faster in this case.
+            if (PlatformHelper.IsMono)
+            {
+                ServicePointManager.DefaultConnectionLimit = 1;
+            }
 #endif
         }
 
