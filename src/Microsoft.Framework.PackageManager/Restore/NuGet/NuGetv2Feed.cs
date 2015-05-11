@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.IO.Compression;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Xml;
@@ -15,10 +16,11 @@ namespace Microsoft.Framework.PackageManager.Restore.NuGet
 {
     public class NuGetv2Feed : IPackageFeed
     {
-        private static readonly XName _xnameEntry = XName.Get("entry", "http://www.w3.org/2005/Atom");
-        private static readonly XName _xnameTitle = XName.Get("title", "http://www.w3.org/2005/Atom");
-        private static readonly XName _xnameContent = XName.Get("content", "http://www.w3.org/2005/Atom");
-        private static readonly XName _xnameLink = XName.Get("link", "http://www.w3.org/2005/Atom");
+        private static readonly XNamespace _defaultNamespace = XNamespace.Get("http://www.w3.org/2005/Atom");
+        private static readonly XName _xnameEntry = XName.Get("entry", _defaultNamespace.NamespaceName);
+        private static readonly XName _xnameTitle = XName.Get("title", _defaultNamespace.NamespaceName);
+        private static readonly XName _xnameContent = XName.Get("content", _defaultNamespace.NamespaceName);
+        private static readonly XName _xnameLink = XName.Get("link", _defaultNamespace.NamespaceName);
         private static readonly XName _xnameProperties = XName.Get("properties", "http://schemas.microsoft.com/ado/2007/08/dataservices/metadata");
         private static readonly XName _xnameId = XName.Get("Id", "http://schemas.microsoft.com/ado/2007/08/dataservices");
         private static readonly XName _xnameVersion = XName.Get("Version", "http://schemas.microsoft.com/ado/2007/08/dataservices");
@@ -85,7 +87,7 @@ namespace Microsoft.Framework.PackageManager.Restore.NuGet
 
                 try
                 {
-                    var uri = _baseUri + "FindPackagesById()?id='" + id + "'";
+                    var uri = $"{_baseUri}FindPackagesById()?id='{id}'";
                     var results = new List<PackageInfo>();
                     var page = 1;
                     while (true)
@@ -96,8 +98,9 @@ namespace Microsoft.Framework.PackageManager.Restore.NuGet
                         // (2) cache for pages is valid for only 30 min.
                         // So we decide to leave current logic and observe.
                         using (var data = await _httpSource.GetAsync(uri,
-                        string.Format("list_{0}_page{1}", id, page),
-                        retry == 0 ? _cacheAgeLimitList : TimeSpan.Zero))
+                        cacheKey: $"list_{id}_page{page}",
+                        cacheAgeLimit: retry == 0 ? _cacheAgeLimitList : TimeSpan.Zero,
+                        ensureValidContents: stream => EnsureValidFindPackagesResponse(stream, uri)))
                         {
                             try
                             {
@@ -129,8 +132,8 @@ namespace Microsoft.Framework.PackageManager.Restore.NuGet
                             }
                             catch (XmlException)
                             {
-                                _reports.Information.WriteLine("The XML file {0} is corrupt",
-                                    data.CacheFileName.Yellow().Bold());
+                                _reports.Information.WriteLine(
+                                    $"XML file {data.CacheFileName} is corrupt".Yellow().Bold());
                                 throw;
                             }
                         }
@@ -147,18 +150,18 @@ namespace Microsoft.Framework.PackageManager.Restore.NuGet
                         {
                             _ignored = true;
                             _reports.Information.WriteLine(
-                                string.Format("Failed to retrieve information from remote source '{0}'",
-                                    _baseUri).Yellow().Bold());
+                                $"Failed to retrieve information from remote source '{_baseUri}'".Yellow().Bold());
                             return new List<PackageInfo>();
                         }
 
-                        _reports.Error.WriteLine(string.Format("Error: FindPackagesById: {1}\r\n  {0}",
-                            ex.Message, id).Red().Bold());
+                        _reports.Error.WriteLine(
+                            $"Error: FindPackagesById: {id}{Environment.NewLine}  {ex.Message}".Red().Bold());
                         throw;
                     }
                     else
                     {
-                        _reports.Information.WriteLine(string.Format("Warning: FindPackagesById: {1}\r\n  {0}", ex.Message, id).Yellow().Bold());
+                        _reports.Information.WriteLine(
+                            $"Warning: FindPackagesById: {id}{Environment.NewLine}  {ex.Message}".Yellow().Bold());
                     }
                 }
             }
@@ -226,8 +229,9 @@ namespace Microsoft.Framework.PackageManager.Restore.NuGet
                 {
                     using (var data = await _httpSource.GetAsync(
                         package.ContentUri,
-                        "nupkg_" + package.Id + "." + package.Version,
-                        retry == 0 ? _cacheAgeLimitNupkg : TimeSpan.Zero))
+                        cacheKey: $"nupkg_{package.Id}.{package.Version}",
+                        cacheAgeLimit: retry == 0 ? _cacheAgeLimitNupkg : TimeSpan.Zero,
+                        ensureValidContents: stream => EnsureValidPackageDownloadResponse(stream, package)))
                     {
                         return new NupkgEntry
                         {
@@ -239,15 +243,57 @@ namespace Microsoft.Framework.PackageManager.Restore.NuGet
                 {
                     if (retry == 2)
                     {
-                        _reports.Error.WriteLine(string.Format("Error: DownloadPackageAsync: {1}\r\n  {0}", ex.Message, package.ContentUri.Red().Bold()));
+                        _reports.Error.WriteLine(
+                            $"Error: DownloadPackageAsync: {package.ContentUri}{Environment.NewLine}  {ex.Message}".Red().Bold());
+                        throw;
                     }
                     else
                     {
-                        _reports.Information.WriteLine(string.Format("Warning: DownloadPackageAsync: {1}\r\n  {0}".Yellow().Bold(), ex.Message, package.ContentUri.Yellow().Bold()));
+                        _reports.Information.WriteLine(
+                            $"Warning: DownloadPackageAsync: {package.ContentUri}{Environment.NewLine}  {ex.Message}".Yellow().Bold());
                     }
                 }
             }
             return null;
+        }
+
+        private static void EnsureValidFindPackagesResponse(Stream stream, string uri)
+        {
+            var message = $"Response from {uri} is not a valid NuGet v2 service response.";
+            try
+            {
+                var xDoc = XDocument.Load(stream);
+                if (!_defaultNamespace.Equals(xDoc.Root.Name.Namespace))
+                {
+                    throw new InvalidDataException(
+                        $"{message} Namespace of root element is not {_defaultNamespace.NamespaceName}.");
+                }
+            }
+            catch (XmlException e)
+            {
+                throw new InvalidDataException(message, innerException: e);
+            }
+        }
+
+        private static void EnsureValidPackageDownloadResponse(Stream stream, PackageInfo package)
+        {
+            var message = $"Response from {package.ContentUri} is not a valid NuGet package.";
+            try
+            {
+                using (var archive = new ZipArchive(stream, ZipArchiveMode.Read, leaveOpen: true))
+                {
+                    var entryName = $"{package.Id}.nuspec";
+                    var entry = archive.GetEntryOrdinalIgnoreCase(entryName);
+                    if (entry == null)
+                    {
+                        throw new InvalidDataException($"{message} Cannot find required entry {entryName}.");
+                    }
+                }
+            }
+            catch (InvalidDataException e)
+            {
+                throw new InvalidDataException(message, innerException: e);
+            }
         }
 
         private class NupkgEntry

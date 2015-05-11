@@ -88,7 +88,8 @@ namespace Microsoft.Framework.PackageManager.Restore.NuGet
             }
         }
 
-        internal async Task<HttpSourceResult> GetAsync(string uri, string cacheKey, TimeSpan cacheAgeLimit)
+        internal async Task<HttpSourceResult> GetAsync(string uri, string cacheKey, TimeSpan cacheAgeLimit,
+            Action<Stream> ensureValidContents)
         {
             Stopwatch sw = new Stopwatch();
             sw.Start();
@@ -120,6 +121,9 @@ namespace Microsoft.Framework.PackageManager.Restore.NuGet
             var response = await _client.SendAsync(request);
             response.EnsureSuccessStatusCode();
 
+            var responseStream = await response.Content.ReadAsStreamAsync();
+            ensureValidContents(responseStream);
+
             var newFile = result.CacheFileName + "-new";
 
             // Zero value of TTL means we always download the latest package
@@ -141,7 +145,8 @@ namespace Microsoft.Framework.PackageManager.Restore.NuGet
                     FileAccess.ReadWrite,
                     FileShare.ReadWrite | FileShare.Delete))
                 {
-                    await response.Content.CopyToAsync(stream);
+                    responseStream.Seek(0, SeekOrigin.Begin);
+                    await responseStream.CopyToAsync(stream);
                     await stream.FlushAsync();
                 }
 
