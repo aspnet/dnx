@@ -85,6 +85,10 @@ namespace Microsoft.Framework.PackageManager
                 appScriptProjectFile,
                 overwrite: true);
 
+            // If the source file is readonly, the destination will be readonly too
+            // so remove the readonly attribute
+            FileOperationUtils.MakeWritable(appScriptProjectFile);
+
             Runtime.Project appProject;
             Runtime.Project.TryGetProject(appScriptProjectFile, out appProject);
 
