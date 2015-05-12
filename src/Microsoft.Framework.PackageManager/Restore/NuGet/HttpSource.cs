@@ -118,71 +118,87 @@ namespace Microsoft.Framework.PackageManager.Restore.NuGet
             }
 #endif
 
-            var response = await _client.SendAsync(request);
-            response.EnsureSuccessStatusCode();
-
-            var responseStream = await response.Content.ReadAsStreamAsync();
-            ensureValidContents(responseStream);
-
-            var newFile = result.CacheFileName + "-new";
-
-            // Zero value of TTL means we always download the latest package
-            // So we write to a temp file instead of cache
-            if (cacheAgeLimit.Equals(TimeSpan.Zero))
+            // Write the response to a file and use the file stream to avoid memory explosion
+            using (var responseStream = new FileStream(
+                Path.GetTempFileName(),
+                FileMode.Create,
+                FileAccess.ReadWrite,
+                FileShare.None,
+                bufferSize: 8192,
+                options: FileOptions.Asynchronous | FileOptions.DeleteOnClose))
             {
-                result.CacheFileName = Path.GetTempFileName();
-                newFile = Path.GetTempFileName();
-            }
+                HttpStatusCode statusCode;
 
-            // The update of a cached file is divided into two steps:
-            // 1) Delete the old file. 2) Create a new file with the same name.
-            // To prevent race condition among multiple processes, here we use a lock to make the update atomic.
-            await ConcurrencyUtilities.ExecuteWithFileLocked(result.CacheFileName, async _ =>
-            {
-                using (var stream = CreateAsyncFileStream(
-                    newFile,
-                    FileMode.Create,
-                    FileAccess.ReadWrite,
-                    FileShare.ReadWrite | FileShare.Delete))
+                using (var response = await _client.SendAsync(request))
                 {
-                    responseStream.Seek(0, SeekOrigin.Begin);
-                    await responseStream.CopyToAsync(stream);
-                    await stream.FlushAsync();
+                    response.EnsureSuccessStatusCode();
+                    statusCode = response.StatusCode;
+                    await response.Content.CopyToAsync(responseStream);
                 }
 
-                if (File.Exists(result.CacheFileName))
+                responseStream.Seek(0, SeekOrigin.Begin);
+                ensureValidContents(responseStream);
+
+                var newFile = result.CacheFileName + "-new";
+
+                // Zero value of TTL means we always download the latest package
+                // So we write to a temp file instead of cache
+                if (cacheAgeLimit.Equals(TimeSpan.Zero))
                 {
-                    // Process B can perform deletion on an opened file if the file is opened by process A
-                    // with FileShare.Delete flag. However, the file won't be actually deleted until A close it.
-                    // This special feature can cause race condition, so we never delete an opened file.
-                    if (!IsFileAlreadyOpen(result.CacheFileName))
-                    {
-                        File.Delete(result.CacheFileName);
-                    }
+                    result.CacheFileName = Path.GetTempFileName();
+                    newFile = Path.GetTempFileName();
                 }
 
-                // If the destination file doesn't exist, we can safely perform moving operation.
-                // Otherwise, moving operation will fail.
-                if (!File.Exists(result.CacheFileName))
+                // The update of a cached file is divided into two steps:
+                // 1) Delete the old file. 2) Create a new file with the same name.
+                // To prevent race condition among multiple processes, here we use a lock to make the update atomic.
+                await ConcurrencyUtilities.ExecuteWithFileLocked(result.CacheFileName, async _ =>
                 {
-                    File.Move(
+                    using (var stream = CreateAsyncFileStream(
                         newFile,
-                        result.CacheFileName);
-                }
+                        FileMode.Create,
+                        FileAccess.ReadWrite,
+                        FileShare.ReadWrite | FileShare.Delete))
+                    {
+                        responseStream.Seek(0, SeekOrigin.Begin);
+                        await responseStream.CopyToAsync(stream);
+                        await stream.FlushAsync();
+                    }
 
-                // Even the file deletion operation above succeeds but the file is not actually deleted,
-                // we can still safely read it because it means that some other process just updated it
-                // and we don't need to update it with the same content again.
-                result.Stream = CreateAsyncFileStream(
-                    result.CacheFileName,
-                    FileMode.Open,
-                    FileAccess.Read,
-                    FileShare.Read | FileShare.Delete);
+                    if (File.Exists(result.CacheFileName))
+                    {
+                        // Process B can perform deletion on an opened file if the file is opened by process A
+                        // with FileShare.Delete flag. However, the file won't be actually deleted until A close it.
+                        // This special feature can cause race condition, so we never delete an opened file.
+                        if (!IsFileAlreadyOpen(result.CacheFileName))
+                        {
+                            File.Delete(result.CacheFileName);
+                        }
+                    }
 
-                return 0;
-            });
+                    // If the destination file doesn't exist, we can safely perform moving operation.
+                    // Otherwise, moving operation will fail.
+                    if (!File.Exists(result.CacheFileName))
+                    {
+                        File.Move(
+                            newFile,
+                            result.CacheFileName);
+                    }
 
-            _reports.Quiet.WriteLine(string.Format("  {1} {0} {2}ms", uri, response.StatusCode.ToString().Green(), sw.ElapsedMilliseconds.ToString().Bold()));
+                    // Even the file deletion operation above succeeds but the file is not actually deleted,
+                    // we can still safely read it because it means that some other process just updated it
+                    // and we don't need to update it with the same content again.
+                    result.Stream = CreateAsyncFileStream(
+                        result.CacheFileName,
+                        FileMode.Open,
+                        FileAccess.Read,
+                        FileShare.Read | FileShare.Delete);
+
+                    return 0;
+                });
+
+                _reports.Quiet.WriteLine(string.Format("  {1} {0} {2}ms", uri, statusCode.ToString().Green(), sw.ElapsedMilliseconds.ToString().Bold()));
+            }
 
             return result;
         }
