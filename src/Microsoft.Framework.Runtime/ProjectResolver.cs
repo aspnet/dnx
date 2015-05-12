@@ -1,10 +1,8 @@
 // Copyright (c) .NET Foundation. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
-using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Threading;
 
 namespace Microsoft.Framework.Runtime
@@ -17,12 +15,14 @@ namespace Microsoft.Framework.Runtime
         public ProjectResolver(string projectPath)
         {
             var rootPath = ResolveRootDirectory(projectPath);
-            Initialize(projectPath, rootPath);
+            GlobalSettings global;
+            GlobalSettings.TryGetGlobalSettings(rootPath, out global);
+            Initialize(projectPath, global);
         }
 
-        public ProjectResolver(string projectPath, string rootPath)
+        public ProjectResolver(string projectPath, GlobalSettings global)
         {
-            Initialize(projectPath, rootPath);
+            Initialize(projectPath, global);
         }
 
         public IEnumerable<string> SearchPaths
@@ -47,17 +47,15 @@ namespace Microsoft.Framework.Runtime
             return false;
         }
 
-        private void Initialize(string projectPath, string rootPath)
+        private void Initialize(string projectPath, GlobalSettings global)
         {
             _searchPaths.Add(new DirectoryInfo(projectPath).Parent.FullName);
 
-            GlobalSettings global;
-
-            if (GlobalSettings.TryGetGlobalSettings(rootPath, out global))
+            if (global != null)
             {
                 foreach (var sourcePath in global.ProjectSearchPaths)
                 {
-                    _searchPaths.Add(Path.Combine(rootPath, sourcePath));
+                    _searchPaths.Add(Path.Combine(global.Directory, sourcePath));
                 }
             }
 
