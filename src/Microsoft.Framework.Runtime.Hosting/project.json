@@ -1,14 +1,14 @@
 {
-    "version": "1.0.0-*",
+    "version": "1.0.0-beta4",
     "description": "Core hosting APIs for launching the cross-platform runtime",
     "dependencies": {
         "Newtonsoft.Json": "6.0.6",
-        "NuGet.ProjectModel": "3.0.0-*",
-        "NuGet.DependencyResolver.Core": "3.0.0-*",
-        "Microsoft.Framework.FileSystemGlobbing": "1.0.0-*",
-        "Microsoft.Framework.Runtime.Interfaces": "1.0.0-*",
-        "Microsoft.Framework.Runtime.Common": { "version": "1.0.0-*", "type": "build" },
-        "Microsoft.Framework.Logging.Interfaces": "1.0.0-*"
+        "NuGet.ProjectModel": "3.0.0-beta4",
+        "NuGet.DependencyResolver.Core": "3.0.0-beta4",
+        "Microsoft.Framework.FileSystemGlobbing": "1.0.0-beta4",
+        "Microsoft.Framework.Runtime.Interfaces": "1.0.0-beta4",
+        "Microsoft.Framework.Runtime.Common": { "version": "1.0.0-beta4", "type": "build" },
+        "Microsoft.Framework.Logging.Interfaces": "1.0.0-beta4"
     },
     "code": [
         "**/*.cs",
@@ -23,8 +23,8 @@
         },
         "dnxcore50": {
             "dependencies": {
-                "System.Xml.XDocument": "4.0.10-beta-*",
-                "System.Runtime.Loader": "4.0.0-beta-*"
+                "System.Xml.XDocument": "4.0.10-beta-22816",
+                "System.Runtime.Loader": "4.0.0-beta-22816"
             }
         }
     }

@@ -1,9 +1,9 @@
-﻿{
-    "version": "1.0.0-*",
+{
+    "version": "1.0.0-beta4",
     "description": "Contains components for loading .NET assemblies from source by compiling on-demand",
     "dependencies": {
-        "Microsoft.Framework.Runtime.Hosting": "1.0.0-*",
-        "Microsoft.Framework.Runtime.Common": { "version": "1.0.0-*", "type": "build" }
+        "Microsoft.Framework.Runtime.Hosting": "1.0.0-beta4",
+        "Microsoft.Framework.Runtime.Common": { "version": "1.0.0-beta4", "type": "build" }
     },
 
     "frameworks" : {

@@ -1,9 +1,9 @@
 {
     "dependencies": {
-        "Microsoft.Framework.Runtime": "1.0.0-*",
-        "Microsoft.Framework.Runtime.Interfaces": "1.0.0-*",
+        "Microsoft.Framework.Runtime": "1.0.0-beta4",
+        "Microsoft.Framework.Runtime.Interfaces": "1.0.0-beta4",
         "Shouldly": "1.1.1.1",
-        "xunit.runner.aspnet": "2.0.0-aspnet-*"
+        "xunit.runner.aspnet": "2.0.0-aspnet-beta4"
     },
     "frameworks": {
         "dnx451": { }

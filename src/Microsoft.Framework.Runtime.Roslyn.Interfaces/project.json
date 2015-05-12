@@ -1,7 +1,7 @@
 {
-    "version": "1.0.0-*",
+    "version": "1.0.0-beta4",
     "dependencies": {
-        "Microsoft.Framework.Runtime.Interfaces": "1.0.0-*",
+        "Microsoft.Framework.Runtime.Interfaces": "1.0.0-beta4",
         "Microsoft.CodeAnalysis.CSharp": "1.0.0-rc2-*"
     },
 
@@ -12,7 +12,7 @@
         },
         "dnxcore50": {
             "dependencies": {
-                "System.Runtime": "4.0.20-beta-*"
+                "System.Runtime": "4.0.20-beta-22816"
             }
         }
     },

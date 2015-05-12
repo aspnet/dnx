@@ -1,8 +1,8 @@
 {
-    "version": "1.0.0-*",
+    "version": "1.0.0-beta4",
     "compilationOptions": { "define": [ "TRACE" ], "allowUnsafe": true, "warningsAsErrors": true },
     "dependencies": {
-        "dnx.host": "1.0.0-*"
+        "dnx.host": "1.0.0-beta4"
     },
     "frameworks": {
         "dnxcore50": { }

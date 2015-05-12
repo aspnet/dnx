@@ -1,9 +1,9 @@
 {
-    "version": "0.1-beta-*",
+    "version": "0.1-beta-beta4",
     "exclude": "more/*.cs",
     "dependencies": {
-        "HelloShared": { "version": "0.1-beta-*", "type": "build" },
-        "Microsoft.Framework.Runtime.Roslyn.Interfaces": "1.0.0-*"
+        "HelloShared": { "version": "0.1-beta-beta4", "type": "build" },
+        "Microsoft.Framework.Runtime.Roslyn.Interfaces": "1.0.0-beta4"
     },
     "commands": {
         "hi": "HelloWorld --mode amazing",
@@ -23,13 +23,13 @@
         },
         "dnxcore50": {
             "dependencies": {
-                "System.IO": "4.0.10-beta-*",
-                "System.Console": "4.0.0-beta-*",
-                "System.Linq": "4.0.0-beta-*",
-                "System.Reflection": "4.0.10-beta-*",
-                "System.Runtime": "4.0.20-beta-*",
-                "System.Threading.Tasks": "4.0.10-beta-*",
-                "System.ComponentModel": "4.0.0-beta-*"
+                "System.IO": "4.0.10-beta-22816",
+                "System.Console": "4.0.0-beta-22816",
+                "System.Linq": "4.0.0-beta-22816",
+                "System.Reflection": "4.0.10-beta-22816",
+                "System.Runtime": "4.0.20-beta-22816",
+                "System.Threading.Tasks": "4.0.10-beta-22816",
+                "System.ComponentModel": "4.0.0-beta-22816"
             }
         }
     }

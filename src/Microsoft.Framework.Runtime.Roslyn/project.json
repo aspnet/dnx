@@ -1,13 +1,13 @@
 {
-    "version": "1.0.0-*",
+    "version": "1.0.0-beta4",
     "description": "ASP.NET 5 Roslyn compiler implementation.",
     "compilationOptions": { "define": [ "TRACE" ], "allowUnsafe": true, "warningsAsErrors": true },
     "dependencies": {
-        "Microsoft.Framework.Runtime": "1.0.0-*",
-        "Microsoft.Framework.Runtime.Common": { "version": "1.0.0-*", "type": "build" },
-        "Microsoft.Framework.Runtime.Interfaces": "1.0.0-*",
-        "Microsoft.Framework.Runtime.Roslyn.Common": { "version": "1.0.0-*", "type": "build" },
-        "Microsoft.Framework.Runtime.Roslyn.Interfaces": "1.0.0-*"
+        "Microsoft.Framework.Runtime": "1.0.0-beta4",
+        "Microsoft.Framework.Runtime.Common": { "version": "1.0.0-beta4", "type": "build" },
+        "Microsoft.Framework.Runtime.Interfaces": "1.0.0-beta4",
+        "Microsoft.Framework.Runtime.Roslyn.Common": { "version": "1.0.0-beta4", "type": "build" },
+        "Microsoft.Framework.Runtime.Roslyn.Interfaces": "1.0.0-beta4"
     },
     "frameworks": {
         "dnx451": {
@@ -21,9 +21,9 @@
         },
         "dnxcore50": {
             "dependencies": {
-                "System.Collections.Concurrent": "4.0.10-beta-*",
-                "System.Resources.ResourceWriter": "4.0.0-beta-*",
-                "System.Runtime.InteropServices": "4.0.20-beta-*"
+                "System.Collections.Concurrent": "4.0.10-beta-22816",
+                "System.Resources.ResourceWriter": "4.0.0-beta-22816",
+                "System.Runtime.InteropServices": "4.0.20-beta-22816"
             }
         }
     },

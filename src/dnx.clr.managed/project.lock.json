@@ -1,0 +1,218 @@
+{
+  "locked": true,
+  "version": -9998,
+  "projectFileDependencyGroups": {
+    "": [
+      "dnx.host >= 1.0.0-beta4",
+      "Microsoft.Framework.Runtime.Common >= 1.0.0-beta4"
+    ],
+    "DNX,Version=v4.5.1": []
+  },
+  "libraries": {
+    "Microsoft.Framework.CommandLineUtils/1.0.0-beta4": {
+      "serviceable": false,
+      "sha": "sWFw8wo77BRWAzoS50mgDUzBVXkRAZySYSaIFfpk3W5oJYmjcFt0SHpGJoVbIO3ZcKMORYvrxgnwNXx1p0ZCxQ==",
+      "frameworks": {
+        "DNX,Version=v4.5.1": {
+          "dependencies": {},
+          "frameworkAssemblies": [
+            "mscorlib",
+            "System",
+            "System.Core",
+            "Microsoft.CSharp"
+          ],
+          "runtimeAssemblies": [
+            "lib/dnx451/Microsoft.Framework.CommandLineUtils.dll"
+          ],
+          "compileAssemblies": [
+            "lib/dnx451/Microsoft.Framework.CommandLineUtils.dll"
+          ]
+        },
+        "DNXCore,Version=v5.0": {
+          "dependencies": {
+            "System.Collections": "4.0.10-beta-22816",
+            "System.Runtime": "4.0.20-beta-22816"
+          },
+          "frameworkAssemblies": [],
+          "runtimeAssemblies": [
+            "lib/dnxcore50/Microsoft.Framework.CommandLineUtils.dll"
+          ],
+          "compileAssemblies": [
+            "lib/dnxcore50/Microsoft.Framework.CommandLineUtils.dll"
+          ]
+        }
+      },
+      "files": [
+        "Microsoft.Framework.CommandLineUtils.1.0.0-beta4.nupkg",
+        "Microsoft.Framework.CommandLineUtils.1.0.0-beta4.nupkg.sha512",
+        "Microsoft.Framework.CommandLineUtils.nuspec",
+        "lib/dnx451/Microsoft.Framework.CommandLineUtils.dll",
+        "lib/dnx451/Microsoft.Framework.CommandLineUtils.xml",
+        "lib/dnxcore50/Microsoft.Framework.CommandLineUtils.dll",
+        "lib/dnxcore50/Microsoft.Framework.CommandLineUtils.xml",
+        "shared/AnsiConsole.cs",
+        "shared/CommandArgument.cs",
+        "shared/CommandLineApplication.cs",
+        "shared/CommandOption.cs",
+        "shared/CommandOptionType.cs"
+      ]
+    },
+    "Microsoft.Framework.Runtime.Common/1.0.0-beta4": {
+      "serviceable": false,
+      "sha": "i0UlT2yKYEE9GtHda3v/zYMfA00vGqp95vvrly5l0EimBroNCEvgtS6u1jn/ny3iPswi65SfoV/Rg4BqjzqTTA==",
+      "frameworks": {
+        "DNX,Version=v4.5.1": {
+          "dependencies": {},
+          "frameworkAssemblies": [
+            "mscorlib",
+            "System",
+            "System.Core",
+            "Microsoft.CSharp"
+          ],
+          "runtimeAssemblies": [
+            "lib/dnx451/Microsoft.Framework.Runtime.Common.dll"
+          ],
+          "compileAssemblies": [
+            "lib/dnx451/Microsoft.Framework.Runtime.Common.dll"
+          ]
+        },
+        "DNXCore,Version=v5.0": {
+          "dependencies": {
+            "System.Collections": "4.0.10-beta-22816",
+            "System.ComponentModel": "4.0.0-beta-22816",
+            "System.Console": "4.0.0-beta-22816",
+            "System.Diagnostics.Debug": "4.0.10-beta-22816",
+            "System.Linq": "4.0.0-beta-22816",
+            "System.Reflection": "4.0.10-beta-22816",
+            "System.Runtime": "4.0.20-beta-22816",
+            "System.Runtime.Extensions": "4.0.10-beta-22816",
+            "System.Threading": "4.0.10-beta-22816",
+            "System.Threading.Tasks": "4.0.10-beta-22816"
+          },
+          "frameworkAssemblies": [],
+          "runtimeAssemblies": [
+            "lib/dnxcore50/Microsoft.Framework.Runtime.Common.dll"
+          ],
+          "compileAssemblies": [
+            "lib/dnxcore50/Microsoft.Framework.Runtime.Common.dll"
+          ]
+        }
+      },
+      "files": [
+        "Microsoft.Framework.Runtime.Common.1.0.0-beta4.nupkg",
+        "Microsoft.Framework.Runtime.Common.1.0.0-beta4.nupkg.sha512",
+        "Microsoft.Framework.Runtime.Common.nuspec",
+        "lib/dnx451/Microsoft.Framework.Runtime.Common.dll",
+        "lib/dnx451/Microsoft.Framework.Runtime.Common.xml",
+        "lib/dnxcore50/Microsoft.Framework.Runtime.Common.dll",
+        "lib/dnxcore50/Microsoft.Framework.Runtime.Common.xml",
+        "shared/ActivatorUtilities.cs",
+        "shared/Constants.cs",
+        "shared/DictionaryExtensions.cs",
+        "shared/EntryPointExecutor.cs",
+        "shared/EnvironmentNames.cs",
+        "shared/FrameworkNames.cs",
+        "shared/Logger.cs",
+        "shared/PlatformHelper.cs",
+        "shared/ServiceProvider.cs"
+      ]
+    },
+    "Microsoft.Framework.Runtime.Interfaces/1.0.0-beta4": {
+      "serviceable": true,
+      "sha": "RrZdqvUm8QbgxnZQuafYGo6NezoKx7VqAfAtHVzoKBm3GSV8xlPh90u1fsGhNCv37xJNk5PuRCa4Mq27ko7pLw==",
+      "frameworks": {
+        "DNX,Version=v4.5.1": {
+          "dependencies": {},
+          "frameworkAssemblies": [
+            "mscorlib",
+            "System",
+            "System.Core",
+            "Microsoft.CSharp"
+          ],
+          "runtimeAssemblies": [
+            "lib/dnx451/Microsoft.Framework.Runtime.Interfaces.dll"
+          ],
+          "compileAssemblies": [
+            "lib/dnx451/Microsoft.Framework.Runtime.Interfaces.dll"
+          ]
+        },
+        "DNXCore,Version=v5.0": {
+          "dependencies": {
+            "System.IO": "4.0.10-beta-22816",
+            "System.Reflection": "4.0.10-beta-22816",
+            "System.Runtime": "4.0.20-beta-22816",
+            "System.Runtime.Extensions": "4.0.10-beta-22816",
+            "System.Threading.Tasks": "4.0.10-beta-22816",
+            "System.ComponentModel": "4.0.0-beta-22816"
+          },
+          "frameworkAssemblies": [],
+          "runtimeAssemblies": [
+            "lib/dnxcore50/Microsoft.Framework.Runtime.Interfaces.dll"
+          ],
+          "compileAssemblies": [
+            "lib/dnxcore50/Microsoft.Framework.Runtime.Interfaces.dll"
+          ]
+        }
+      },
+      "files": [
+        "Microsoft.Framework.Runtime.Interfaces.1.0.0-beta4.nupkg",
+        "Microsoft.Framework.Runtime.Interfaces.1.0.0-beta4.nupkg.sha512",
+        "Microsoft.Framework.Runtime.Interfaces.nuspec",
+        "lib/dnx451/Microsoft.Framework.Runtime.Interfaces.dll",
+        "lib/dnx451/Microsoft.Framework.Runtime.Interfaces.xml",
+        "lib/dnxcore50/Microsoft.Framework.Runtime.Interfaces.dll",
+        "lib/dnxcore50/Microsoft.Framework.Runtime.Interfaces.xml"
+      ]
+    },
+    "Microsoft.Framework.Runtime.Loader/1.0.0-beta4": {
+      "serviceable": true,
+      "sha": "XpLguvjD4bfhE2fu1SWaOXjUkVcKTRW8x1mZjPpxns250pcTg1v/sG70fmZKtoiaXHYZFzTai2SRtqfBB20hOA==",
+      "frameworks": {
+        "DNX,Version=v4.5.1": {
+          "dependencies": {
+            "Microsoft.Framework.Runtime.Interfaces": "1.0.0-beta4"
+          },
+          "frameworkAssemblies": [
+            "mscorlib",
+            "System",
+            "System.Core",
+            "Microsoft.CSharp"
+          ],
+          "runtimeAssemblies": [
+            "lib/dnx451/Microsoft.Framework.Runtime.Loader.dll"
+          ],
+          "compileAssemblies": [
+            "lib/dnx451/Microsoft.Framework.Runtime.Loader.dll"
+          ]
+        },
+        "DNXCore,Version=v5.0": {
+          "dependencies": {
+            "Microsoft.Framework.Runtime.Interfaces": "1.0.0-beta4",
+            "System.Collections": "4.0.10-beta-22816",
+            "System.Collections.Concurrent": "4.0.10-beta-22816",
+            "System.Runtime.Loader": "4.0.0-beta-22816",
+            "System.IO.FileSystem": "4.0.0-beta-22816",
+            "System.AppContext": "4.0.0-beta-22816",
+            "System.Threading": "4.0.10-beta-22816"
+          },
+          "frameworkAssemblies": [],
+          "runtimeAssemblies": [
+            "lib/dnxcore50/Microsoft.Framework.Runtime.Loader.dll"
+          ],
+          "compileAssemblies": [
+            "lib/dnxcore50/Microsoft.Framework.Runtime.Loader.dll"
+          ]
+        }
+      },
+      "files": [
+        "Microsoft.Framework.Runtime.Loader.1.0.0-beta4.nupkg",
+        "Microsoft.Framework.Runtime.Loader.1.0.0-beta4.nupkg.sha512",
+        "Microsoft.Framework.Runtime.Loader.nuspec",
+        "lib/dnx451/Microsoft.Framework.Runtime.Loader.dll",
+        "lib/dnx451/Microsoft.Framework.Runtime.Loader.xml",
+        "lib/dnxcore50/Microsoft.Framework.Runtime.Loader.dll",
+        "lib/dnxcore50/Microsoft.Framework.Runtime.Loader.xml"
+      ]
+    }
+  }
+}

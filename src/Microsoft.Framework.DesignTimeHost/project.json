@@ -1,12 +1,12 @@
 {
-    "version": "1.0.0-*",
+    "version": "1.0.0-beta4",
     "dependencies": {
-        "Microsoft.Framework.DesignTimeHost.Interfaces": "1.0.0-*",
-        "Microsoft.Framework.NotNullAttribute.Internal": { "version": "1.0.0-*", "type": "build" },
-        "Microsoft.Framework.Runtime": "1.0.0-*",
-        "Microsoft.Framework.Runtime.Common": { "version": "1.0.0-*", "type": "build" },
-        "Microsoft.Framework.Runtime.Interfaces": "1.0.0-*",
-        "Microsoft.Framework.Runtime.Roslyn": "1.0.0-*",
+        "Microsoft.Framework.DesignTimeHost.Interfaces": "1.0.0-beta4",
+        "Microsoft.Framework.NotNullAttribute.Internal": { "version": "1.0.0-beta4", "type": "build" },
+        "Microsoft.Framework.Runtime": "1.0.0-beta4",
+        "Microsoft.Framework.Runtime.Common": { "version": "1.0.0-beta4", "type": "build" },
+        "Microsoft.Framework.Runtime.Interfaces": "1.0.0-beta4",
+        "Microsoft.Framework.Runtime.Roslyn": "1.0.0-beta4",
         "Newtonsoft.Json": "6.0.6"
     },
     "compilationOptions": { "define": [ "TRACE" ], "warningsAsErrors": true },
@@ -18,9 +18,9 @@
         },
         "dnxcore50": {
             "dependencies": {
-                "System.Diagnostics.Process": "4.0.0-beta-*",
-                "System.Net.Primitives": "4.0.10-beta-*",
-                "System.Threading.ThreadPool": "4.0.10-beta-*"
+                "System.Diagnostics.Process": "4.0.0-beta-22816",
+                "System.Net.Primitives": "4.0.10-beta-22816",
+                "System.Threading.ThreadPool": "4.0.10-beta-22816"
             }
         }
     },

@@ -1,8 +1,8 @@
 {
-    "version": "1.0.0-*",
+    "version": "1.0.0-beta4",
     "description": "ASP.NET 5 runtime infrastructure for assembly load contexts.",
     "dependencies": {
-        "Microsoft.Framework.Runtime.Interfaces": "1.0.0-*"
+        "Microsoft.Framework.Runtime.Interfaces": "1.0.0-beta4"
     },
 
     "frameworks": {
@@ -12,12 +12,12 @@
         },
         "dnxcore50": {
             "dependencies": {
-                "System.Collections": "4.0.10-beta-*",
-                "System.Collections.Concurrent": "4.0.10-beta-*",
-                "System.Runtime.Loader": "4.0.0-beta-*",
-                "System.IO.FileSystem": "4.0.0-beta-*",
-                "System.AppContext": "4.0.0-beta-*",
-                "System.Threading": "4.0.10-beta-*"
+                "System.Collections": "4.0.10-beta-22816",
+                "System.Collections.Concurrent": "4.0.10-beta-22816",
+                "System.Runtime.Loader": "4.0.0-beta-22816",
+                "System.IO.FileSystem": "4.0.0-beta-22816",
+                "System.AppContext": "4.0.0-beta-22816",
+                "System.Threading": "4.0.10-beta-22816"
             }
         }
     },
