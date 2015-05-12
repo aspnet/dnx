@@ -457,6 +457,11 @@ namespace Microsoft.Framework.Runtime
 
             var runtimePackages = Environment.GetEnvironmentVariable(EnvironmentNames.Packages);
 
+            if(string.IsNullOrEmpty(runtimePackages))
+            {
+                runtimePackages = Environment.GetEnvironmentVariable(EnvironmentNames.DnxPackages);
+            }
+
             if (!string.IsNullOrEmpty(runtimePackages))
             {
                 return runtimePackages;
