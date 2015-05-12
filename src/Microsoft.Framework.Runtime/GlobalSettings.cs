@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.IO;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using NuGet;
 
 namespace Microsoft.Framework.Runtime
 {
@@ -15,6 +16,8 @@ namespace Microsoft.Framework.Runtime
         public IList<string> ProjectSearchPaths { get; private set; }
         public string PackagesPath { get; private set; }
         public string FilePath { get; private set; }
+        public string Directory { get; private set; }
+        public SemanticVersion SdkVersion { get; private set; }
 
         public static bool TryGetGlobalSettings(string path, out GlobalSettings globalSettings)
         {
@@ -51,12 +54,21 @@ namespace Microsoft.Framework.Runtime
 
             // TODO: Remove sources
             var projectSearchPaths = settings["projects"] ?? settings["sources"];
+            var sdkValue = settings["sdk"]?["version"]?.Value<string>();
 
             globalSettings.ProjectSearchPaths = projectSearchPaths == null ?
                 new string[] { } :
                 projectSearchPaths.ValueAsArray<string>();
             globalSettings.PackagesPath = settings.Value<string>("packages");
             globalSettings.FilePath = globalJsonPath;
+            globalSettings.Directory = Path.GetDirectoryName(globalJsonPath);
+
+            // If there's an exact version specified, parse it
+            SemanticVersion sdkVersion;
+            if (SemanticVersion.TryParse(sdkValue, out sdkVersion))
+            {
+                globalSettings.SdkVersion = sdkVersion;
+            }
 
             return true;
         }

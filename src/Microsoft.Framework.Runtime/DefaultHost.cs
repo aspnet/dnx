@@ -137,6 +137,7 @@ Please make sure the runtime matches a framework specified in {Project.ProjectFi
             var cacheContextAccessor = new CacheContextAccessor();
             var cache = new Cache(cacheContextAccessor);
             var namedCacheDependencyProvider = new NamedCacheDependencyProvider();
+            var runtimeEnvironment = (IRuntimeEnvironment)hostServices.GetService(typeof(IRuntimeEnvironment));
 
             _applicationHostContext = new ApplicationHostContext(
                 hostServices,
@@ -151,6 +152,18 @@ Please make sure the runtime matches a framework specified in {Project.ProjectFi
             Logger.TraceInformation("[{0}]: Project path: {1}", GetType().Name, _projectDirectory);
             Logger.TraceInformation("[{0}]: Project root: {1}", GetType().Name, _applicationHostContext.RootDirectory);
             Logger.TraceInformation("[{0}]: Packages path: {1}", GetType().Name, _applicationHostContext.PackagesDirectory);
+            
+            if (_applicationHostContext.GlobalSettings?.SdkVersion != null)
+            {
+                Logger.TraceInformation("[{0}]: Required SDK version {1}", GetType().Name, _applicationHostContext.GlobalSettings.SdkVersion);
+
+                var runtimeVersion = SemanticVersion.Parse(runtimeEnvironment.RuntimeVersion);
+                
+                if (runtimeVersion != _applicationHostContext.GlobalSettings.SdkVersion)
+                {
+                    throw new InvalidOperationException($@"The runtime version specified by '{_applicationHostContext.GlobalSettings.FilePath}' is {_applicationHostContext.GlobalSettings.SdkVersion} but the current runtime version is {runtimeVersion}.");
+                }
+            }
 
             _project = _applicationHostContext.Project;
 

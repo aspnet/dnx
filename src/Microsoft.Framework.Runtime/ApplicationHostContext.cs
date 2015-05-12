@@ -32,11 +32,16 @@ namespace Microsoft.Framework.Runtime
             ProjectDirectory = projectDirectory;
             Configuration = configuration;
             RootDirectory = Runtime.ProjectResolver.ResolveRootDirectory(ProjectDirectory);
-            ProjectResolver = new ProjectResolver(ProjectDirectory, RootDirectory);
+
+            GlobalSettings globalSettings;
+            GlobalSettings.TryGetGlobalSettings(RootDirectory, out globalSettings);
+            GlobalSettings = globalSettings;
+
+            ProjectResolver = new ProjectResolver(ProjectDirectory, globalSettings);
             FrameworkReferenceResolver = new FrameworkReferenceResolver();
             _serviceProvider = new ServiceProvider(serviceProvider);
 
-            PackagesDirectory = packagesDirectory ?? NuGetDependencyResolver.ResolveRepositoryPath(RootDirectory);
+            PackagesDirectory = packagesDirectory ?? NuGetDependencyResolver.ResolveRepositoryPath(globalSettings);
 
             var referenceAssemblyDependencyResolver = new ReferenceAssemblyDependencyResolver(FrameworkReferenceResolver);
             NuGetDependencyProvider = new NuGetDependencyResolver(new PackageRepository(PackagesDirectory));
@@ -165,6 +170,8 @@ namespace Microsoft.Framework.Runtime
         public DependencyWalker DependencyWalker { get; private set; }
 
         public FrameworkReferenceResolver FrameworkReferenceResolver { get; private set; }
+        
+        public GlobalSettings GlobalSettings { get; private set; }
 
         public string Configuration { get; private set; }
 

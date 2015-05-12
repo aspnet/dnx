@@ -449,6 +449,13 @@ namespace Microsoft.Framework.Runtime
 
         public static string ResolveRepositoryPath(string rootDirectory)
         {
+            GlobalSettings globalSettings;
+            GlobalSettings.TryGetGlobalSettings(rootDirectory, out globalSettings);
+            return ResolveRepositoryPath(globalSettings);
+        }
+
+        internal static string ResolveRepositoryPath(GlobalSettings globalSettings)
+        {
             // Order
             // 1. EnvironmentNames.Packages environment variable
             // 2. global.json { "packages": "..." }
@@ -462,11 +469,9 @@ namespace Microsoft.Framework.Runtime
                 return runtimePackages;
             }
 
-            GlobalSettings settings;
-            if (GlobalSettings.TryGetGlobalSettings(rootDirectory, out settings) &&
-                !string.IsNullOrEmpty(settings.PackagesPath))
+            if (!string.IsNullOrEmpty(globalSettings?.PackagesPath))
             {
-                return Path.Combine(rootDirectory, settings.PackagesPath);
+                return Path.Combine(globalSettings.Directory, globalSettings.PackagesPath);
             }
 
             var profileDirectory = Environment.GetEnvironmentVariable("USERPROFILE");
