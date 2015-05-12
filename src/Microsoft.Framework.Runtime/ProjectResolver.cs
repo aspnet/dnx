@@ -12,7 +12,7 @@ namespace Microsoft.Framework.Runtime
     public class ProjectResolver : IProjectResolver
     {
         private readonly HashSet<string> _searchPaths = new HashSet<string>();
-        private readonly Dictionary<string, ProjectInformation> _projects = new Dictionary<string, ProjectInformation>();
+        private ILookup<string, ProjectInformation> _projects;
 
         public ProjectResolver(string projectPath)
         {
@@ -37,14 +37,23 @@ namespace Microsoft.Framework.Runtime
         {
             project = null;
 
-            ProjectInformation projectInfo;
-            if (_projects.TryGetValue(name, out projectInfo))
+            if (!_projects.Contains(name))
             {
-                project = projectInfo.Project;
-                return project != null;
+                return false;
             }
 
-            return false;
+            // ProjectInformation.Project is lazily evaluated only once and
+            // it returns null when ProjectInformation.FullPath doesn't contain project.json
+            var candidates = _projects[name].Where(p => p.Project != null);
+            if (candidates.Count() > 1)
+            {
+                var allCandidatePaths = string.Join(Environment.NewLine, candidates.Select(x => x.FullPath).OrderBy(x => x));
+                throw new InvalidOperationException(
+                    $"The project name '{name}' is ambiguous between the following projects:{Environment.NewLine}{allCandidatePaths}");
+            }
+
+            project = candidates.SingleOrDefault()?.Project;
+            return project != null;
         }
 
         private void Initialize(string projectPath, string rootPath)
@@ -61,26 +70,20 @@ namespace Microsoft.Framework.Runtime
                 }
             }
 
-            // Resolve all of the potential projects
-            foreach (var searchPath in _searchPaths)
+            Func<DirectoryInfo, ProjectInformation> dirInfoToProjectInfo = d => new ProjectInformation
             {
-                var directory = new DirectoryInfo(searchPath);
+                // The name of the folder is the project
+                Name = d.Name,
+                FullPath = d.FullName
+            };
 
-                if (!directory.Exists)
-                {
-                    continue;
-                }
-
-                foreach (var projectDirectory in directory.EnumerateDirectories())
-                {
-                    // The name of the folder is the project
-                    _projects[projectDirectory.Name] = new ProjectInformation
-                    {
-                        Name = projectDirectory.Name,
-                        FullPath = projectDirectory.FullName
-                    };
-                }
-            }
+            // Resolve all of the potential projects
+            _projects = _searchPaths.Select(path => new DirectoryInfo(path))
+                .Distinct(new DirectoryInfoFullPathComparator())
+                .Where(d => d.Exists)
+                .SelectMany(d => d.EnumerateDirectories())
+                .Select(dirInfoToProjectInfo)
+                .ToLookup(d => d.Name);
         }
 
         public static string ResolveRootDirectory(string projectPath)
@@ -124,6 +127,19 @@ namespace Microsoft.Framework.Runtime
                         return project;
                     });
                 }
+            }
+        }
+
+        private class DirectoryInfoFullPathComparator : IEqualityComparer<DirectoryInfo>
+        {
+            public bool Equals(DirectoryInfo x, DirectoryInfo y)
+            {
+                return string.Equals(x.FullName, y.FullName);
+            }
+
+            public int GetHashCode(DirectoryInfo obj)
+            {
+                return obj.FullName.GetHashCode();
             }
         }
     }
