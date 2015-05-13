@@ -9,33 +9,18 @@ namespace Microsoft.Framework.Runtime.Common.CommandLine
 {
     internal class AnsiConsole
     {
-        private AnsiConsole(TextWriter writer, bool useConsoleColor)
+        private AnsiConsole(TextWriter writer)
         {
             Writer = writer;
-
-            _useConsoleColor = useConsoleColor;
-            if (_useConsoleColor)
-            {
-                OriginalForegroundColor = Console.ForegroundColor;
-            }
         }
 
         private int _boldRecursion;
-        private bool _useConsoleColor;
 
-        public static AnsiConsole GetOutput(bool useConsoleColor)
-        {
-            return new AnsiConsole(Console.Out, useConsoleColor);
-        }
+        public static AnsiConsole Output { get { return new AnsiConsole(Console.Out); } }
 
-        public static AnsiConsole GetError(bool useConsoleColor)
-        {
-            return new AnsiConsole(Console.Error, useConsoleColor);
-        }
+        public static AnsiConsole Error { get { return new AnsiConsole(Console.Error); } }
 
         public TextWriter Writer { get; }
-
-        public ConsoleColor OriginalForegroundColor { get; }
 
         private void SetColor(ConsoleColor color)
         {
@@ -55,12 +40,6 @@ namespace Microsoft.Framework.Runtime.Common.CommandLine
 
         public void WriteLine(string message)
         {
-            if (!_useConsoleColor)
-            {
-                Writer.WriteLine(message);
-                return;
-            }
-
             var sb = new StringBuilder();
             var escapeScan = 0;
             for (; ;)
@@ -131,7 +110,7 @@ namespace Microsoft.Framework.Runtime.Common.CommandLine
                                         SetColor(ConsoleColor.Gray);
                                         break;
                                     case 39:
-                                        SetColor(OriginalForegroundColor);
+                                        Console.ResetColor();
                                         break;
                                 }
                             }
