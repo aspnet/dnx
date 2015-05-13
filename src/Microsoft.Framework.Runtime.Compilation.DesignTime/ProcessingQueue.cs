@@ -1,10 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Threading;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
+using Microsoft.Framework.Runtime.Json;
 
 namespace Microsoft.Framework.Runtime
 {
@@ -35,12 +33,8 @@ namespace Microsoft.Framework.Runtime
         {
             lock (_writer)
             {
-                var obj = new JObject();
-                obj["ContextId"] = message.ContextId;
-                obj["HostId"] = message.HostId;
-                obj["MessageType"] = message.MessageType;
-                obj["Payload"] = message.Payload;
-                _writer.Write(obj.ToString(Formatting.None));
+                var json = message.ToJsonString();
+                _writer.Write(json);
             }
         }
 
@@ -51,9 +45,9 @@ namespace Microsoft.Framework.Runtime
                 while (true)
                 {
                     var metadata = _reader.ReadString();
-                    var obj = JObject.Parse(metadata);
+                    var obj = JsonDeserializer.Deserialize(new StringReader(metadata)) as JsonObject;
 
-                    var messageType = obj.Value<string>("MessageType");
+                    var messageType = obj.ValueAsString("MessageType");
                     switch (messageType)
                     {
                         case "Assembly":
@@ -68,10 +62,10 @@ namespace Microsoft.Framework.Runtime
                             // Blob 1
                             // Blob 2
                             var compileResponse = new CompileResponse();
-                            compileResponse.AssemblyPath = obj.Value<string>(nameof(CompileResponse.AssemblyPath));
+                            compileResponse.AssemblyPath = obj.ValueAsString(nameof(CompileResponse.AssemblyPath));
                             compileResponse.Diagnostics = ValueAsCompilationMessages(obj, (nameof(CompileResponse.Diagnostics)));
-                            int contextId = obj.Value<int>("ContextId");
-                            int blobs = obj.Value<int>("Blobs");
+                            int contextId = obj.ValueAsInt("ContextId");
+                            int blobs = obj.ValueAsInt("Blobs");
 
                             var embeddedReferencesCount = _reader.ReadInt32();
                             compileResponse.EmbeddedReferences = new Dictionary<string, byte[]>();
@@ -103,7 +97,7 @@ namespace Microsoft.Framework.Runtime
                             //    "MessageType": "Sources",
                             //    "Files": [],
                             //}
-                            var files = obj.ValueAsArray<string>("Files");
+                            var files = obj.ValueAsStringArray("Files");
                             ProjectSources(files);
                             break;
                         case "ProjectContexts":
@@ -111,11 +105,11 @@ namespace Microsoft.Framework.Runtime
                             //    "MessageType": "ProjectContexts",
                             //    "Projects": { "path": id },
                             //}
-                            var projects = obj["Projects"] as JObject;
+                            var projects = obj.ValueAsJsonObject("Projects");
                             var projectContexts = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
-                            foreach (var entry in projects)
+                            foreach (var key in projects.Keys)
                             {
-                                projectContexts[entry.Key] = entry.Value.Value<int>();
+                                projectContexts[key] = projects.ValueAsInt(key);
                             }
 
                             ProjectsInitialized(projectContexts);
@@ -126,7 +120,7 @@ namespace Microsoft.Framework.Runtime
                                 //    "MessageType": "ProjectChanged",
                                 //    "ContextId": id,
                                 //}
-                                int id = obj.Value<int>("ContextId");
+                                int id = obj.ValueAsInt("ContextId");
                                 ProjectChanged(id);
                             }
                             break;
@@ -142,8 +136,9 @@ namespace Microsoft.Framework.Runtime
                             //    }
                             //}
                             {
-                                var id = obj["ContextId"]?.Value<int>();
-                                var message = obj["Payload"].Value<string>("Message");
+                                var id = obj.ValueAsInt("ContextId");
+                                var message = obj.ValueAsJsonObject("Payload").
+                                                  ValueAsString("Message");
 
                                 Error(id, message);
                             }
@@ -161,20 +156,31 @@ namespace Microsoft.Framework.Runtime
             }
         }
 
-        private static List<CompilationMessage> ValueAsCompilationMessages(JObject obj, string key)
+        private static List<CompilationMessage> ValueAsCompilationMessages(JsonObject obj, string key)
         {
-            var arrayValue = obj.Value<JArray>(key);
-            return arrayValue.Select(item => new CompilationMessage
+            var messages = new List<CompilationMessage>();
+
+            var arrayValue = obj.Value(key) as JsonArray;
+            for (int i = 0; i < arrayValue.Length; i++)
             {
-                Message = item.Value<string>(nameof(ICompilationMessage.Message)),
-                FormattedMessage = item.Value<string>(nameof(ICompilationMessage.FormattedMessage)),
-                SourceFilePath = item.Value<string>(nameof(ICompilationMessage.SourceFilePath)),
-                Severity = (CompilationMessageSeverity)item.Value<int>(nameof(ICompilationMessage.Severity)),
-                StartColumn = item.Value<int>(nameof(ICompilationMessage.StartColumn)),
-                StartLine = item.Value<int>(nameof(ICompilationMessage.StartLine)),
-                EndColumn = item.Value<int>(nameof(ICompilationMessage.EndColumn)),
-                EndLine = item.Value<int>(nameof(ICompilationMessage.EndLine)),
-            }).ToList();
+                var item = arrayValue[i] as JsonObject;
+
+                var message = new CompilationMessage
+                {
+                    Message = item.ValueAsString(nameof(ICompilationMessage.Message)),
+                    FormattedMessage = item.ValueAsString(nameof(ICompilationMessage.FormattedMessage)),
+                    SourceFilePath = item.ValueAsString(nameof(ICompilationMessage.SourceFilePath)),
+                    Severity = (CompilationMessageSeverity)item.ValueAsInt(nameof(ICompilationMessage.Severity)),
+                    StartColumn = item.ValueAsInt(nameof(ICompilationMessage.StartColumn)),
+                    StartLine = item.ValueAsInt(nameof(ICompilationMessage.StartLine)),
+                    EndColumn = item.ValueAsInt(nameof(ICompilationMessage.EndColumn)),
+                    EndLine = item.ValueAsInt(nameof(ICompilationMessage.EndLine)),
+                };
+
+                messages.Add(message);
+            }
+
+            return messages;
         }
     }
 }

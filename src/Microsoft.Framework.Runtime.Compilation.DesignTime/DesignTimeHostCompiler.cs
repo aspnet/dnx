@@ -4,7 +4,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
 using Microsoft.Framework.Runtime.Compilation;
-using Newtonsoft.Json.Linq;
 
 namespace Microsoft.Framework.Runtime
 {
@@ -34,15 +33,7 @@ namespace Microsoft.Framework.Runtime
             _queue.Closed += OnClosed;
             _queue.Start();
 
-            var obj = new JObject();
-            obj["Version"] = 1;
-
-            _queue.Send(new DesignTimeMessage
-            {
-                HostId = "Application",
-                MessageType = "EnumerateProjectContexts",
-                Payload = obj
-            });
+            _queue.Send(new EnumerateProjectContextsMessage());
         }
 
         private void OnError(int? contextId, string error)
@@ -87,18 +78,12 @@ namespace Microsoft.Framework.Runtime
                 throw new InvalidOperationException();
             }
 
-            var obj = new JObject();
-            obj["Name"] = library.Name;
-            obj["Configuration"] = library.Configuration;
-            obj["TargetFramework"] = library.TargetFramework.ToString();
-            obj["Aspect"] = library.Aspect;
-            obj["Version"] = 1;
-
-            _queue.Send(new DesignTimeMessage
+            _queue.Send(new GetCompiledAssemblyMessage
             {
-                HostId = "Application",
-                MessageType = "GetCompiledAssembly",
-                Payload = obj,
+                Name = library.Name,
+                Configuration = library.Configuration,
+                TargetFramework = library.TargetFramework,
+                Aspect = library.Aspect,
                 ContextId = contextId
             });
 

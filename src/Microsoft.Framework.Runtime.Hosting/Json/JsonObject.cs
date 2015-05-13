@@ -47,6 +47,16 @@ namespace Microsoft.Framework.Runtime.Json
             return Value(key) as JsonString;
         }
 
+        public int ValueAsInt(string key)
+        {
+            var number = Value(key) as JsonNumber;
+            if (number == null)
+            {
+                throw new FormatException();
+            }
+            return Convert.ToInt32(number.Raw);
+        }
+
         public bool ValueAsBoolean(string key, bool defaultValue = false)
         {
             var boolVal = Value(key) as JsonBoolean;
