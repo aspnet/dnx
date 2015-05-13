@@ -54,13 +54,16 @@ namespace Microsoft.Framework.PackageManager.FunctionalTests
                 Assert.True(string.IsNullOrEmpty(stdErr));
                 Assert.True(File.Exists(commandFilePath));
 
+                environment = new Dictionary<string, string>();
+                environment.Add("DNX_PACKAGES", null);
+
                 if (!isWindows)
                 {
-                    exitCode = TestUtils.Exec("bash", commandFilePath, out stdOut, out stdErr);
+                    exitCode = TestUtils.Exec("bash", commandFilePath, out stdOut, out stdErr, environment);
                 }
                 else
                 {
-                    exitCode = TestUtils.Exec("cmd", $"/C {commandFilePath}", out stdOut, out stdErr);
+                    exitCode = TestUtils.Exec("cmd", $"/C {commandFilePath}", out stdOut, out stdErr, environment);
                 }
                 Assert.Equal(0, exitCode);
                 Assert.True(string.IsNullOrEmpty(stdErr));
