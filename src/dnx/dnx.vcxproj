@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <Import Project="$(MSBuildThisFileDirectory)..\..\Build\Config.Definitions.props" />
   <PropertyGroup Label="Globals">
@@ -6,11 +6,11 @@
     <Platform Condition="'$(Platform)'==''">Win32</Platform>
     <Configuration Condition="'$(Configuration)'==''">Debug</Configuration>
     <PlatformToolset>v140</PlatformToolset>
-    <CharacterSet>Unicode</CharacterSet>          
+    <CharacterSet>Unicode</CharacterSet>
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>dnx</RootNamespace>
-    <ProjectName>dnx</ProjectName>
-    <ConfigurationType>Application</ConfigurationType>
+    <ProjectName>dnx.bootstrapper</ProjectName>
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
     <Defines Condition="$(RuntimeType) == 'CORECLR_WIN'">CORECLR_WIN</Defines>
     <OutDir>bin\$(Platform)\$(Configuration)\$(TargetFramework)\</OutDir>
     <IntDir>bin\$(Platform)\$(Configuration)\$(TargetFramework)\</IntDir>
@@ -21,6 +21,7 @@
   <ItemDefinitionGroup>
     <Link>
       <Subsystem>Console</Subsystem>
+      <ModuleDefinitionFile>dnx.def</ModuleDefinitionFile>
     </Link>
   </ItemDefinitionGroup>
   <ImportGroup Label="ExtensionSettings">
@@ -30,9 +31,6 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <ItemGroup>
-    <Text Include="ReadMe.txt" />
-  </ItemGroup>
-  <ItemGroup>
     <ClInclude Include="dnx.h" />
     <ClInclude Include="pal.h" />
     <ClInclude Include="resource.h" />
@@ -40,6 +38,7 @@
     <ClInclude Include="targetver.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="dllmain.cpp" />
     <ClCompile Include="dnx.cpp" />
     <ClCompile Include="pal.win32.cpp" />
     <ClCompile Include="stdafx.cpp">
@@ -48,6 +47,9 @@
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Resource.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="dnx.def" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <PropertyGroup>

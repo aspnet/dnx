@@ -49,6 +49,7 @@ var ALL_TARGETS = '${RUNTIME_CLR_TARGETS.Concat(RUNTIME_CORECLR_TARGETS)}'
 
 var RUNTIME_COMMON_NAME = 'DNX'
 var BOOTSTRAPPER_EXE_NAME = 'dnx'
+var BOOTSTRAPPER_DLL_NAME = 'dnx.bootstrapper'
 var BOOTSTRAPPER_CLR_NAME = 'dnx.clr'
 var BOOTSTRAPPER_CORECLR_NAME = 'dnx.coreclr'
 var BOOTSTRAPPER_CLR_MANAGED_NAME = '${BOOTSTRAPPER_CLR_NAME + ".managed"}'
@@ -82,7 +83,7 @@ var MANAGED_PROJECTS = '${FindAllProjects(
 var WIN_MANAGED_PROJECTS = '${FindAllProjects(
     BOOTSTRAPPER_CLR_MANAGED_NAME)}'
 
-var RC_FILES = '${FindAllFiles("Resource.rc", BOOTSTRAPPER_EXE_NAME, BOOTSTRAPPER_CLR_NAME, BOOTSTRAPPER_CORECLR_NAME)}'
+var RC_FILES = '${FindAllFiles("Resource.rc", BOOTSTRAPPER_DLL_NAME, BOOTSTRAPPER_CLR_NAME, BOOTSTRAPPER_CORECLR_NAME)}'
 
 var RUNTIME_TARGETS='${new List<RuntimeTarget>()}'
 
@@ -206,8 +207,30 @@ var RUNTIME_TARGETS='${new List<RuntimeTarget>()}'
         }
     }
 
-#build-dnx-win .ensure-msbuild .update-rc-files target='build-windows'
-    var bootstrapperProj = '${Path.Combine(ROOT, "src", BOOTSTRAPPER_EXE_NAME, BOOTSTRAPPER_EXE_NAME + ".vcxproj")}'
+#build-dnx-win-exe .ensure-msbuild .update-rc-files target='build-windows'
+    var bootstrapperProj = '${Path.Combine(ROOT, @"src\dnx.windows\dnx.windows.vcxproj")}'
+    @{   
+        var environmentRuntimeTargetOS = Environment.GetEnvironmentVariable("RUNTIME_TARGET_OS");
+        var configRuntimeTargetOS = "";
+        
+        Exec(MSBUILD, bootstrapperProj + " /p:Configuration=" + Configuration2 + ";Platform=Win32;TargetFramework=dnx451;RuntimeType=CLR");
+        Exec(MSBUILD, bootstrapperProj + " /p:Configuration=" + Configuration2 + ";Platform=x64;TargetFramework=dnx451;RuntimeType=CLR");
+
+        if (environmentRuntimeTargetOS == "WIN7_PLUS_CORESYSTEM")
+        {
+            configRuntimeTargetOS = ";RuntimeTargetOS=WIN7_PLUS_CORESYSTEM";
+        }
+            
+        Exec(MSBUILD, bootstrapperProj + " /p:Configuration=" + Configuration2 + ";Platform=Win32;TargetFramework=dnxcore50;RuntimeType=CORECLR_WIN" + configRuntimeTargetOS);
+        Exec(MSBUILD, bootstrapperProj + " /p:Configuration=" + Configuration2 + ";Platform=x64;TargetFramework=dnxcore50;RuntimeType=CORECLR_WIN" + configRuntimeTargetOS);
+    }
+
+    directory delete='${Path.Combine(BUILD_DIR2, "dnx.windows")}'
+    copy sourceDir='${Path.Combine(ROOT, @"src\dnx.windows")}' include='bin/**/' outputDir='${Path.Combine(BUILD_DIR2, "dnx.windows")}' overwrite='${true}'
+
+
+#build-dnx-win-dll .ensure-msbuild .update-rc-files target='build-windows'
+    var bootstrapperProj = '${Path.Combine(ROOT, @"src\dnx\dnx.vcxproj")}'
     @{
         var environmentRuntimeTargetOS = Environment.GetEnvironmentVariable("RUNTIME_TARGET_OS");
         var configRuntimeTargetOS = "";
@@ -225,7 +248,7 @@ var RUNTIME_TARGETS='${new List<RuntimeTarget>()}'
     }
 
     directory delete='${Path.Combine(BUILD_DIR2, BOOTSTRAPPER_EXE_NAME)}'
-    copy sourceDir='${Path.Combine(ROOT, "src", BOOTSTRAPPER_EXE_NAME)}' include='bin/**/' outputDir='${Path.Combine(BUILD_DIR2, BOOTSTRAPPER_EXE_NAME)}' overwrite='${true}'
+    copy sourceDir='${Path.Combine(ROOT, @"src\dnx")}' include='bin/**/' outputDir='${Path.Combine(BUILD_DIR2, "dnx")}' overwrite='${true}'
 
 #build-dnx-coreclr-win-bootstrapper .ensure-msbuild .update-tpa .update-rc-files target='build-windows'
     var bootstrapperCoreClrProj = '${Path.Combine(ROOT, "src", BOOTSTRAPPER_CORECLR_NAME, BOOTSTRAPPER_CORECLR_NAME + ".vcxproj")}'
@@ -662,24 +685,28 @@ var RUNTIME_TARGETS='${new List<RuntimeTarget>()}'
 
 #copy-windows-bits target='package-windows'
     -// Runtime for clr-win-x86
-    copy sourceDir='${Path.Combine(BUILD_DIR2, BOOTSTRAPPER_EXE_NAME, "bin", "Win32", Configuration2, "dnx451")}' outputDir='${RUNTIME_CLR_WIN_x86_BIN}' include='*.exe' overwrite='${true}'
+    copy sourceDir='${Path.Combine(BUILD_DIR2, "dnx", "bin", "Win32", Configuration2, "dnx451")}' outputDir='${RUNTIME_CLR_WIN_x86_BIN}' include='*.dll' overwrite='${true}'
+    copy sourceDir='${Path.Combine(BUILD_DIR2, "dnx.windows", "bin", "Win32", Configuration2, "dnx451")}' outputDir='${RUNTIME_CLR_WIN_x86_BIN}' include='*.exe' overwrite='${true}'
     copy sourceDir='${Path.Combine(BUILD_DIR2, BOOTSTRAPPER_CLR_NAME, "bin", "Win32", Configuration2)}' outputDir='${RUNTIME_CLR_WIN_x86_BIN}' include='*.dll' overwrite='${true}'
     copy sourceDir='${Path.Combine(BUILD_DIR2, BOOTSTRAPPER_CLR_NAME, "bin", "Win32", Configuration2)}' outputDir='${RUNTIME_CLR_WIN_x86_BIN}' include='*.pdb' overwrite='${true}'
     copy sourceDir='${Path.Combine(ROOT, "src", BOOTSTRAPPER_CLR_MANAGED_NAME)}' outputDir='${RUNTIME_CLR_WIN_x86_BIN}' include='*.config' overwrite='${true}'
 
     -// Runtime for clr-win-x64
-    copy sourceDir='${Path.Combine(BUILD_DIR2, BOOTSTRAPPER_EXE_NAME, "bin", "x64", Configuration2, "dnx451")}' outputDir='${RUNTIME_CLR_WIN_x64_BIN}' include='*.exe' overwrite='${true}'
+    copy sourceDir='${Path.Combine(BUILD_DIR2, "dnx", "bin", "x64", Configuration2, "dnx451")}' outputDir='${RUNTIME_CLR_WIN_x64_BIN}' include='*.dll' overwrite='${true}'
+    copy sourceDir='${Path.Combine(BUILD_DIR2, "dnx.windows", "bin", "x64", Configuration2, "dnx451")}' outputDir='${RUNTIME_CLR_WIN_x64_BIN}' include='*.exe' overwrite='${true}'
     copy sourceDir='${Path.Combine(BUILD_DIR2, BOOTSTRAPPER_CLR_NAME, "bin", "x64", Configuration2)}' outputDir='${RUNTIME_CLR_WIN_x64_BIN}' include='*.dll' overwrite='${true}'
     copy sourceDir='${Path.Combine(BUILD_DIR2, BOOTSTRAPPER_CLR_NAME, "bin", "x64", Configuration2)}' outputDir='${RUNTIME_CLR_WIN_x64_BIN}' include='*.pdb' overwrite='${true}'
     copy sourceDir='${Path.Combine(ROOT, "src", BOOTSTRAPPER_CLR_MANAGED_NAME)}' outputDir='${RUNTIME_CLR_WIN_x64_BIN}' include='*.config' overwrite='${true}'
 
     -// Runtime for coreclr-win-x86
-    copy sourceDir='${Path.Combine(BUILD_DIR2, BOOTSTRAPPER_EXE_NAME, "bin", "Win32", Configuration2, "dnxcore50")}' outputDir='${RUNTIME_CORECLR_WIN_x86_BIN}' include='*.exe' overwrite='${true}'
+    copy sourceDir='${Path.Combine(BUILD_DIR2, "dnx", "bin", "Win32", Configuration2, "dnxcore50")}' outputDir='${RUNTIME_CORECLR_WIN_x86_BIN}' include='*.dll' overwrite='${true}'
+    copy sourceDir='${Path.Combine(BUILD_DIR2, "dnx.windows", "bin", "Win32", Configuration2, "dnxcore50")}' outputDir='${RUNTIME_CORECLR_WIN_x86_BIN}' include='*.exe' overwrite='${true}'
     copy sourceDir='${Path.Combine(BUILD_DIR2, BOOTSTRAPPER_CORECLR_NAME, "bin", "Win32", Configuration2)}' outputDir='${RUNTIME_CORECLR_WIN_x86_BIN}' include='*.dll' overwrite='${true}'
     copy sourceDir='${Path.Combine(BUILD_DIR2, BOOTSTRAPPER_CORECLR_NAME, "bin", "Win32", Configuration2)}' outputDir='${RUNTIME_CORECLR_WIN_x86_BIN}' include='*.pdb' overwrite='${true}'
 
     -// Runtime for coreclr-win-x64
-    copy sourceDir='${Path.Combine(BUILD_DIR2, BOOTSTRAPPER_EXE_NAME, "bin", "x64", Configuration2, "dnxcore50")}' outputDir='${RUNTIME_CORECLR_WIN_x64_BIN}' include='*.exe' overwrite='${true}'
+    copy sourceDir='${Path.Combine(BUILD_DIR2, "dnx", "bin", "x64", Configuration2, "dnxcore50")}' outputDir='${RUNTIME_CORECLR_WIN_x64_BIN}' include='*.dll' overwrite='${true}'
+    copy sourceDir='${Path.Combine(BUILD_DIR2, "dnx.windows", "bin", "x64", Configuration2, "dnxcore50")}' outputDir='${RUNTIME_CORECLR_WIN_x64_BIN}' include='*.exe' overwrite='${true}'
     copy sourceDir='${Path.Combine(BUILD_DIR2, BOOTSTRAPPER_CORECLR_NAME, "bin", "x64", Configuration2)}' outputDir='${RUNTIME_CORECLR_WIN_x64_BIN}' include='*.dll' overwrite='${true}'
     copy sourceDir='${Path.Combine(BUILD_DIR2, BOOTSTRAPPER_CORECLR_NAME, "bin", "x64", Configuration2)}' outputDir='${RUNTIME_CORECLR_WIN_x64_BIN}' include='*.pdb' overwrite='${true}'
 

@@ -375,7 +375,7 @@ Finished:
 #if PLATFORM_UNIX
 int main(int argc, char* argv[])
 #else
-int wmain(int argc, wchar_t* argv[])
+extern "C" int __stdcall DnxMain(int argc, wchar_t* argv[])
 #endif
 {
     // Check for the debug flag before doing anything else
