@@ -39,7 +39,7 @@ namespace dnx.host
                 var programArgs = new string[args.Count - 1];
                 args.CopyTo(1, programArgs, 0, programArgs.Length);
 
-                var assembly = Assembly.Load(new AssemblyName(name));
+                var assembly = accessor.Default.Load(name);
 
                 if (assembly == null)
                 {

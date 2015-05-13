@@ -10,7 +10,6 @@ using System.Reflection;
 using System.Runtime.Versioning;
 using Microsoft.Framework.Runtime.Caching;
 using Microsoft.Framework.Runtime.Common.DependencyInjection;
-using Microsoft.Framework.Runtime.Common.Impl;
 using Microsoft.Framework.Runtime.Compilation;
 using Microsoft.Framework.Runtime.FileSystem;
 using Microsoft.Framework.Runtime.Infrastructure;
@@ -91,7 +90,9 @@ Please make sure the runtime matches a framework specified in {Project.ProjectFi
                 throw new InvalidOperationException(exceptionMsg);
             }
 
-            return Assembly.Load(new AssemblyName(applicationName));
+            var accessor = (IAssemblyLoadContextAccessor)ServiceProvider.GetService(typeof(IAssemblyLoadContextAccessor));
+
+            return accessor.Default.Load(applicationName);
         }
 
         public void Initialize()
