@@ -510,7 +510,8 @@ var RUNTIME_TARGETS='${new List<RuntimeTarget>()}'
                 {
                     "System.Private.DataContractSerialization.dll",
                     "System.Private.Networking.dll",
-                    "System.Private.ServiceModel.dll"
+                    "System.Private.ServiceModel.dll",
+                    "System.Runtime.Serialization.Primitives.dll"
                 };
 
                 if (target.OS != "win")
