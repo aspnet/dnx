@@ -39,8 +39,9 @@ namespace Microsoft.Framework.PackageManager.FunctionalTests
                 environment.Add("USERPROFILE", testEnv.RootDir);
 
                 string stdOut, stdErr;
-                var exitCode = DnuTestUtils.ExecDnu(runtimeHomeDir, "commands", $"install {_fixture.PackageSource}/Debug/CommandsProject.1.0.0.nupkg",
-                                                    out stdOut, out stdErr, environment, workingDir: testEnv.RootDir);
+                var exitCode = DnuTestUtils.ExecDnu(runtimeHomeDir, "commands",
+                    $"install {_fixture.PackageSource}/Debug/CommandsProject.1.0.0.nupkg --source https://nuget.org/api/v2/",
+                    out stdOut, out stdErr, environment, workingDir: testEnv.RootDir);
 
                 var commandFilePath = "hello.cmd";
                 bool isWindows = TestUtils.CurrentRuntimeEnvironment.OperatingSystem == "Windows";
