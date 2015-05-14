@@ -13,10 +13,9 @@ int _tmain(int argc, _TCHAR* argv[])
     GetVersionEx(&version_info);
 #pragma warning(default:4996)
 
-    bool is_oneCore = version_info.dwMajorVersion >= 6 && version_info.dwMinorVersion >= 2;
+    bool is_oneCore = version_info.dwMajorVersion >= 10;
 
-    // TODO: temporarily using the same name until we have necessary versions of the bootstrapper dll
-    auto dnx_dll_name = is_oneCore ? L"dnx.bootstrapper.dll" : L"dnx.bootstrapper.dll";
+    auto dnx_dll_name = is_oneCore ? L"dnx.onecore.dll" : L"dnx.win32.dll";
 
     auto dnx_dll = LoadLibraryEx(dnx_dll_name, NULL, LOAD_LIBRARY_SEARCH_DEFAULT_DIRS);
     if (!dnx_dll)
@@ -30,6 +29,7 @@ int _tmain(int argc, _TCHAR* argv[])
     if (!entry_point)
     {
         _tprintf(L"Getting entry point failed\n");
+        return -1;
     }
 
     return entry_point(argc, argv);

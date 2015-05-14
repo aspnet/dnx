@@ -64,7 +64,7 @@ Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Microsoft.Framework.Runtime
 EndProject
 Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Microsoft.Framework.Runtime.FunctionalTests", "test\Microsoft.Framework.Runtime.FunctionalTests\Microsoft.Framework.Runtime.FunctionalTests.xproj", "{5DCA7A59-3B5E-4751-A563-B78201F97AE3}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "dnx", "src\dnx\dnx.vcxproj", "{D0E2FB09-0FEA-478A-9068-D6AA420C6DED}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "dnx.win32", "src\dnx\dnx.vcxproj", "{D0E2FB09-0FEA-478A-9068-D6AA420C6DED}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "dnx.clr", "src\dnx.clr\dnx.clr.vcxproj", "{0E4CB542-5E58-4D24-9CAE-DAC83D932DBE}"
 EndProject
@@ -99,6 +99,8 @@ EndProject
 Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Microsoft.Framework.Runtime.Compilation.DesignTime", "src\Microsoft.Framework.Runtime.Compilation.DesignTime\Microsoft.Framework.Runtime.Compilation.DesignTime.xproj", "{19D39312-A4A4-449D-B53F-653F951A11F8}"
 EndProject
 Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "dnx.host.Tests", "test\dnx.host.Tests\dnx.host.Tests.xproj", "{6F59A0B7-745D-4ADA-A913-6A1AD1AB49C2}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "dnx.windows", "src\dnx.windows\dnx.windows.vcxproj", "{893A7304-50DB-4053-B864-E10BA3FFAC53}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -726,6 +728,24 @@ Global
 		{6F59A0B7-745D-4ADA-A913-6A1AD1AB49C2}.Release|x64.Build.0 = Release|Any CPU
 		{6F59A0B7-745D-4ADA-A913-6A1AD1AB49C2}.Release|x86.ActiveCfg = Release|Any CPU
 		{6F59A0B7-745D-4ADA-A913-6A1AD1AB49C2}.Release|x86.Build.0 = Release|Any CPU
+		{893A7304-50DB-4053-B864-E10BA3FFAC53}.Debug|Any CPU.ActiveCfg = Debug|Win32
+		{893A7304-50DB-4053-B864-E10BA3FFAC53}.Debug|Mixed Platforms.ActiveCfg = Debug|Win32
+		{893A7304-50DB-4053-B864-E10BA3FFAC53}.Debug|Mixed Platforms.Build.0 = Debug|Win32
+		{893A7304-50DB-4053-B864-E10BA3FFAC53}.Debug|Win32.ActiveCfg = Debug|Win32
+		{893A7304-50DB-4053-B864-E10BA3FFAC53}.Debug|Win32.Build.0 = Debug|Win32
+		{893A7304-50DB-4053-B864-E10BA3FFAC53}.Debug|x64.ActiveCfg = Debug|x64
+		{893A7304-50DB-4053-B864-E10BA3FFAC53}.Debug|x64.Build.0 = Debug|x64
+		{893A7304-50DB-4053-B864-E10BA3FFAC53}.Debug|x86.ActiveCfg = Debug|Win32
+		{893A7304-50DB-4053-B864-E10BA3FFAC53}.Debug|x86.Build.0 = Debug|Win32
+		{893A7304-50DB-4053-B864-E10BA3FFAC53}.Release|Any CPU.ActiveCfg = Release|Win32
+		{893A7304-50DB-4053-B864-E10BA3FFAC53}.Release|Mixed Platforms.ActiveCfg = Release|Win32
+		{893A7304-50DB-4053-B864-E10BA3FFAC53}.Release|Mixed Platforms.Build.0 = Release|Win32
+		{893A7304-50DB-4053-B864-E10BA3FFAC53}.Release|Win32.ActiveCfg = Release|Win32
+		{893A7304-50DB-4053-B864-E10BA3FFAC53}.Release|Win32.Build.0 = Release|Win32
+		{893A7304-50DB-4053-B864-E10BA3FFAC53}.Release|x64.ActiveCfg = Release|x64
+		{893A7304-50DB-4053-B864-E10BA3FFAC53}.Release|x64.Build.0 = Release|x64
+		{893A7304-50DB-4053-B864-E10BA3FFAC53}.Release|x86.ActiveCfg = Release|Win32
+		{893A7304-50DB-4053-B864-E10BA3FFAC53}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -770,5 +790,6 @@ Global
 		{333205C2-BE8B-4258-BEA4-4C68D9340986} = {AF391791-F4B7-41AC-8F08-9485DAC543C5}
 		{19D39312-A4A4-449D-B53F-653F951A11F8} = {AF391791-F4B7-41AC-8F08-9485DAC543C5}
 		{6F59A0B7-745D-4ADA-A913-6A1AD1AB49C2} = {C43EE429-DE10-4906-BB09-54E6A080948A}
+		{893A7304-50DB-4053-B864-E10BA3FFAC53} = {13ED5001-B871-4BC3-8499-29607F596C7C}
 	EndGlobalSection
 EndGlobal

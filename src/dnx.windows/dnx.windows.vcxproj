@@ -15,10 +15,42 @@
     <Defines Condition="$(RuntimeType) == 'CORECLR_WIN'">CORECLR_WIN</Defines>
     <OutDir>bin\$(Platform)\$(Configuration)\$(TargetFramework)\</OutDir>
     <IntDir>bin\$(Platform)\$(Configuration)\$(TargetFramework)\</IntDir>
+    <BuildForOneCore>False</BuildForOneCore>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Platform)' == 'Win32'">
+    <SDKSubFolder>i386</SDKSubFolder>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Platform)' == 'x64'">
+    <SDKSubFolder>amd64</SDKSubFolder>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <Import Project="$(MSBuildThisFileDirectory)..\..\Build\Dnx.Native.Settings" />
+  <PropertyGroup>
+    <IncludePath Condition="'$(RuntimeTargetOS)' == 'WIN7_PLUS_CORESYSTEM'">$(ProgramFiles)\Windows Kits\Win8CoreSystem\inc\crt;$(IncludePath)</IncludePath>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(RuntimeTargetOS)'=='WIN7_PLUS_CORESYSTEM'">
+    <ClCompile>
+      <BasicRuntimeChecks>Default</BasicRuntimeChecks>
+    </ClCompile>
+    <Link>
+      <IgnoreAllDefaultLibraries>true</IgnoreAllDefaultLibraries>
+      <AdditionalDependencies>$(ProgramFiles)\Windows Kits\Win8CoreSystem\sdk\lib\mincore\$(SDKSubFolder)\mincore_fw.lib;$(ProgramFiles)\Windows Kits\Win8CoreSystem\sdk\lib\mincore\$(SDKSubFolder)\msvcrt.lib</AdditionalDependencies>   
+    </Link>
+  </ItemDefinitionGroup>
+
+  <ItemDefinitionGroup Condition="'$(Configuration)'=='Debug'">
+    <ClCompile>
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+    </ClCompile>
+  </ItemDefinitionGroup>
+
+  <ItemDefinitionGroup Condition="'$(Configuration)'=='Release'">
+    <ClCompile>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+    </ClCompile>
+  </ItemDefinitionGroup>
+
   <ItemDefinitionGroup>
     <Link>
       <Subsystem>Console</Subsystem>

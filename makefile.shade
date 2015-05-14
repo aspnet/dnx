@@ -48,8 +48,9 @@ var RUNTIME_CORECLR_TARGETS = '${new [] {RUNTIME_CORECLR_WIN_x86_BIN, RUNTIME_CO
 var ALL_TARGETS = '${RUNTIME_CLR_TARGETS.Concat(RUNTIME_CORECLR_TARGETS)}'
 
 var RUNTIME_COMMON_NAME = 'DNX'
+var BOOTSTRAPPER_FOLDER_NAME = 'dnx'
 var BOOTSTRAPPER_EXE_NAME = 'dnx'
-var BOOTSTRAPPER_DLL_NAME = 'dnx.bootstrapper'
+var BOOTSTRAPPER_WINDOWS_FOLDER_NAME="dnx.windows"
 var BOOTSTRAPPER_CLR_NAME = 'dnx.clr'
 var BOOTSTRAPPER_CORECLR_NAME = 'dnx.coreclr'
 var BOOTSTRAPPER_CLR_MANAGED_NAME = '${BOOTSTRAPPER_CLR_NAME + ".managed"}'
@@ -59,6 +60,8 @@ var BOOTSTRAPPER_HOST_NAME = 'dnx.host'
 
 var PROGRAM_FILES_X86 = '${Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86)}'
 var MSBUILD = '${Path.Combine(PROGRAM_FILES_X86, "MSBuild", "14.0", "Bin", "MSBuild.exe")}'
+var VS_REDIST_ROOT = '${Path.Combine(PROGRAM_FILES_X86, @"Microsoft Visual Studio 14.0\VC\redist")}'
+var WIN10_SDK = '${Path.Combine(PROGRAM_FILES_X86, @"Windows Kits\10")}'
 var CLANG = '${SearchForClang()}'
 
 var MANAGED_PROJECTS = '${FindAllProjects(
@@ -83,7 +86,7 @@ var MANAGED_PROJECTS = '${FindAllProjects(
 var WIN_MANAGED_PROJECTS = '${FindAllProjects(
     BOOTSTRAPPER_CLR_MANAGED_NAME)}'
 
-var RC_FILES = '${FindAllFiles("Resource.rc", BOOTSTRAPPER_DLL_NAME, BOOTSTRAPPER_CLR_NAME, BOOTSTRAPPER_CORECLR_NAME)}'
+var RC_FILES = '${FindAllFiles("Resource.rc", BOOTSTRAPPER_FOLDER_NAME, BOOTSTRAPPER_CLR_NAME, BOOTSTRAPPER_CORECLR_NAME)}'
 
 var RUNTIME_TARGETS='${new List<RuntimeTarget>()}'
 
@@ -208,29 +211,7 @@ var RUNTIME_TARGETS='${new List<RuntimeTarget>()}'
     }
 
 #build-dnx-win-exe .ensure-msbuild .update-rc-files target='build-windows'
-    var bootstrapperProj = '${Path.Combine(ROOT, @"src\dnx.windows\dnx.windows.vcxproj")}'
-    @{   
-        var environmentRuntimeTargetOS = Environment.GetEnvironmentVariable("RUNTIME_TARGET_OS");
-        var configRuntimeTargetOS = "";
-        
-        Exec(MSBUILD, bootstrapperProj + " /p:Configuration=" + Configuration2 + ";Platform=Win32;TargetFramework=dnx451;RuntimeType=CLR");
-        Exec(MSBUILD, bootstrapperProj + " /p:Configuration=" + Configuration2 + ";Platform=x64;TargetFramework=dnx451;RuntimeType=CLR");
-
-        if (environmentRuntimeTargetOS == "WIN7_PLUS_CORESYSTEM")
-        {
-            configRuntimeTargetOS = ";RuntimeTargetOS=WIN7_PLUS_CORESYSTEM";
-        }
-            
-        Exec(MSBUILD, bootstrapperProj + " /p:Configuration=" + Configuration2 + ";Platform=Win32;TargetFramework=dnxcore50;RuntimeType=CORECLR_WIN" + configRuntimeTargetOS);
-        Exec(MSBUILD, bootstrapperProj + " /p:Configuration=" + Configuration2 + ";Platform=x64;TargetFramework=dnxcore50;RuntimeType=CORECLR_WIN" + configRuntimeTargetOS);
-    }
-
-    directory delete='${Path.Combine(BUILD_DIR2, "dnx.windows")}'
-    copy sourceDir='${Path.Combine(ROOT, @"src\dnx.windows")}' include='bin/**/' outputDir='${Path.Combine(BUILD_DIR2, "dnx.windows")}' overwrite='${true}'
-
-
-#build-dnx-win-dll .ensure-msbuild .update-rc-files target='build-windows'
-    var bootstrapperProj = '${Path.Combine(ROOT, @"src\dnx\dnx.vcxproj")}'
+    var bootstrapperProj = '${Path.Combine(ROOT, "src", BOOTSTRAPPER_WINDOWS_FOLDER_NAME, "dnx.windows.vcxproj")}'
     @{
         var environmentRuntimeTargetOS = Environment.GetEnvironmentVariable("RUNTIME_TARGET_OS");
         var configRuntimeTargetOS = "";
@@ -247,8 +228,32 @@ var RUNTIME_TARGETS='${new List<RuntimeTarget>()}'
         Exec(MSBUILD, bootstrapperProj + " /p:Configuration=" + Configuration2 + ";Platform=x64;TargetFramework=dnxcore50;RuntimeType=CORECLR_WIN" + configRuntimeTargetOS);
     }
 
-    directory delete='${Path.Combine(BUILD_DIR2, BOOTSTRAPPER_EXE_NAME)}'
-    copy sourceDir='${Path.Combine(ROOT, @"src\dnx")}' include='bin/**/' outputDir='${Path.Combine(BUILD_DIR2, "dnx")}' overwrite='${true}'
+    directory delete='${Path.Combine(BUILD_DIR2, BOOTSTRAPPER_WINDOWS_FOLDER_NAME)}'
+    copy sourceDir='${Path.Combine(ROOT, "src", BOOTSTRAPPER_WINDOWS_FOLDER_NAME)}' include='bin/**/' outputDir='${Path.Combine(BUILD_DIR2, BOOTSTRAPPER_WINDOWS_FOLDER_NAME)}' overwrite='${true}'
+
+#build-dnx-win-dll .ensure-msbuild .update-rc-files target='build-windows'
+    var bootstrapperProj = '${Path.Combine(ROOT, "src", BOOTSTRAPPER_FOLDER_NAME, "dnx.vcxproj")}'
+    @{
+        Exec(MSBUILD, bootstrapperProj + " /p:Configuration=" + Configuration2 + ";Platform=Win32;TargetFramework=dnx451;RuntimeType=CLR;BuildForOneCore=False");
+        Exec(MSBUILD, bootstrapperProj + " /p:Configuration=" + Configuration2 + ";Platform=x64;TargetFramework=dnx451;RuntimeType=CLR;BuildForOneCore=False");
+        Exec(MSBUILD, bootstrapperProj + " /p:Configuration=" + Configuration2 + ";Platform=Win32;TargetFramework=dnxcore50;RuntimeType=CORECLR_WIN;BuildForOneCore=False");
+        Exec(MSBUILD, bootstrapperProj + " /p:Configuration=" + Configuration2 + ";Platform=x64;TargetFramework=dnxcore50;RuntimeType=CORECLR_WIN;BuildForOneCore=False");
+
+        if(Directory.GetFiles(Path.Combine(WIN10_SDK, "Lib"), "onecore.lib", SearchOption.AllDirectories).Any())
+        {
+            Exec(MSBUILD, bootstrapperProj + " /p:Configuration=" + Configuration2 + ";Platform=Win32;TargetFramework=dnx451;RuntimeType=CLR;BuildForOneCore=True");
+            Exec(MSBUILD, bootstrapperProj + " /p:Configuration=" + Configuration2 + ";Platform=x64;TargetFramework=dnx451;RuntimeType=CLR;BuildForOneCore=True");
+            Exec(MSBUILD, bootstrapperProj + " /p:Configuration=" + Configuration2 + ";Platform=Win32;TargetFramework=dnxcore50;RuntimeType=CORECLR_WIN;BuildForOneCore=True");
+            Exec(MSBUILD, bootstrapperProj + " /p:Configuration=" + Configuration2 + ";Platform=x64;TargetFramework=dnxcore50;RuntimeType=CORECLR_WIN;BuildForOneCore=True");
+        }
+        else
+        {
+            Log.Warn("Windows 10 SDK not installed. Building for One Core skipped.");
+        }
+    }
+
+    directory delete='${Path.Combine(BUILD_DIR2, BOOTSTRAPPER_FOLDER_NAME)}'
+    copy sourceDir='${Path.Combine(ROOT, "src", BOOTSTRAPPER_FOLDER_NAME)}' include='bin/**/' outputDir='${Path.Combine(BUILD_DIR2, BOOTSTRAPPER_FOLDER_NAME)}' overwrite='${true}'
 
 #build-dnx-coreclr-win-bootstrapper .ensure-msbuild .update-tpa .update-rc-files target='build-windows'
     var bootstrapperCoreClrProj = '${Path.Combine(ROOT, "src", BOOTSTRAPPER_CORECLR_NAME, BOOTSTRAPPER_CORECLR_NAME + ".vcxproj")}'
@@ -323,15 +328,15 @@ var RUNTIME_TARGETS='${new List<RuntimeTarget>()}'
     copy sourceDir='${soOutputDir}' include='*.so' outputDir='${Path.Combine(BUILD_DIR2, BOOTSTRAPPER_CORECLR_NAME + ".unix")}' overwrite='${true}'
 
 #build-dnx-linux-bootstrapper .ensure-clang target='build-linux'
-    var soOutputDir = '${Path.Combine(ROOT, "src", BOOTSTRAPPER_EXE_NAME, "bin", "x64")}'
+    var soOutputDir = '${Path.Combine(ROOT, "src", BOOTSTRAPPER_FOLDER_NAME, "bin", "x64")}'
     var soOutputPath = '${Path.Combine(soOutputDir, BOOTSTRAPPER_EXE_NAME)}'
     @{
         var sourceFiles = new string[] 
         {
-            Path.Combine("src", BOOTSTRAPPER_EXE_NAME, BOOTSTRAPPER_EXE_NAME + ".cpp"),
-            Path.Combine("src", BOOTSTRAPPER_EXE_NAME, "pal.unix.cpp"),
-            Path.Combine("src", BOOTSTRAPPER_EXE_NAME, "pal.linux.cpp"),
-            Path.Combine("src", BOOTSTRAPPER_EXE_NAME, "tchar.cpp"),
+            Path.Combine("src", BOOTSTRAPPER_FOLDER_NAME, BOOTSTRAPPER_EXE_NAME + ".cpp"),
+            Path.Combine("src", BOOTSTRAPPER_FOLDER_NAME, "pal.unix.cpp"),
+            Path.Combine("src", BOOTSTRAPPER_FOLDER_NAME, "pal.linux.cpp"),
+            Path.Combine("src", BOOTSTRAPPER_FOLDER_NAME, "tchar.cpp"),
         };
 
         Directory.CreateDirectory(soOutputDir);
@@ -339,7 +344,7 @@ var RUNTIME_TARGETS='${new List<RuntimeTarget>()}'
         Exec(CLANG, string.Format("{0} -g -o {1} -DCORECLR_LINUX -DPLATFORM_UNIX -std=c++11 -ldl", string.Join(" ", sourceFiles), soOutputPath));
     }
 
-    copy sourceDir='${soOutputDir}' include='*' outputDir='${Path.Combine(BUILD_DIR2, BOOTSTRAPPER_EXE_NAME, "bin", "linux", "x64")}' overwrite='${true}'
+    copy sourceDir='${soOutputDir}' include='*' outputDir='${Path.Combine(BUILD_DIR2, BOOTSTRAPPER_FOLDER_NAME, "bin", "linux", "x64")}' overwrite='${true}'
 
 
 - // ===================== DARWIN (OSX) ===================== 
@@ -362,15 +367,15 @@ var RUNTIME_TARGETS='${new List<RuntimeTarget>()}'
     copy sourceDir='${soOutputDir}' include='*.dylib' outputDir='${Path.Combine(BUILD_DIR2, BOOTSTRAPPER_CORECLR_NAME + ".unix")}' overwrite='${true}'
 
 #build-dnx-darwin-bootstrapper .ensure-clang target='build-darwin'
-    var soOutputDir = '${Path.Combine(ROOT, "src", BOOTSTRAPPER_EXE_NAME, "bin", "x64")}'
+    var soOutputDir = '${Path.Combine(ROOT, "src", BOOTSTRAPPER_FOLDER_NAME, "bin", "x64")}'
     var soOutputPath = '${Path.Combine(soOutputDir, BOOTSTRAPPER_EXE_NAME)}'
     @{
         var sourceFiles = new string[]
         {
-            Path.Combine("src", BOOTSTRAPPER_EXE_NAME, BOOTSTRAPPER_EXE_NAME + ".cpp"),
-            Path.Combine("src", BOOTSTRAPPER_EXE_NAME, "pal.unix.cpp"),
-            Path.Combine("src", BOOTSTRAPPER_EXE_NAME, "pal.darwin.cpp"),
-            Path.Combine("src", BOOTSTRAPPER_EXE_NAME, "tchar.cpp"),
+            Path.Combine("src", BOOTSTRAPPER_FOLDER_NAME, BOOTSTRAPPER_EXE_NAME + ".cpp"),
+            Path.Combine("src", BOOTSTRAPPER_FOLDER_NAME, "pal.unix.cpp"),
+            Path.Combine("src", BOOTSTRAPPER_FOLDER_NAME, "pal.darwin.cpp"),
+            Path.Combine("src", BOOTSTRAPPER_FOLDER_NAME, "tchar.cpp"),
         };
 
         Directory.CreateDirectory(soOutputDir);
@@ -378,7 +383,7 @@ var RUNTIME_TARGETS='${new List<RuntimeTarget>()}'
         Exec(CLANG, string.Format("{0} -g -o {1} -DCORECLR_DARWIN -DPLATFORM_UNIX -std=c++11 -ldl", string.Join(" ", sourceFiles), soOutputPath));
     }
 
-    copy sourceDir='${soOutputDir}' include='*' outputDir='${Path.Combine(BUILD_DIR2, BOOTSTRAPPER_EXE_NAME, "bin", "darwin", "x64")}' overwrite='${true}'
+    copy sourceDir='${soOutputDir}' include='*' outputDir='${Path.Combine(BUILD_DIR2, BOOTSTRAPPER_FOLDER_NAME, "bin", "darwin", "x64")}' overwrite='${true}'
 
 - // ===================== PACKAGE ===================== 
 
@@ -683,32 +688,36 @@ var RUNTIME_TARGETS='${new List<RuntimeTarget>()}'
         }
     }
 
-#copy-windows-bits target='package-windows'
+#copy-windows-bits .ensure-vs-redist target='package-windows'
     -// Runtime for clr-win-x86
-    copy sourceDir='${Path.Combine(BUILD_DIR2, "dnx", "bin", "Win32", Configuration2, "dnx451")}' outputDir='${RUNTIME_CLR_WIN_x86_BIN}' include='*.dll' overwrite='${true}'
-    copy sourceDir='${Path.Combine(BUILD_DIR2, "dnx.windows", "bin", "Win32", Configuration2, "dnx451")}' outputDir='${RUNTIME_CLR_WIN_x86_BIN}' include='*.exe' overwrite='${true}'
+    copy sourceDir='${Path.Combine(BUILD_DIR2, BOOTSTRAPPER_FOLDER_NAME, "bin", "Win32", Configuration2, "dnx451")}' outputDir='${RUNTIME_CLR_WIN_x86_BIN}' include='*.dll' overwrite='${true}'
+    copy sourceDir='${Path.Combine(BUILD_DIR2, BOOTSTRAPPER_WINDOWS_FOLDER_NAME, "bin", "Win32", Configuration2, "dnx451")}' outputDir='${RUNTIME_CLR_WIN_x86_BIN}' include='*.exe' overwrite='${true}'
     copy sourceDir='${Path.Combine(BUILD_DIR2, BOOTSTRAPPER_CLR_NAME, "bin", "Win32", Configuration2)}' outputDir='${RUNTIME_CLR_WIN_x86_BIN}' include='*.dll' overwrite='${true}'
     copy sourceDir='${Path.Combine(BUILD_DIR2, BOOTSTRAPPER_CLR_NAME, "bin", "Win32", Configuration2)}' outputDir='${RUNTIME_CLR_WIN_x86_BIN}' include='*.pdb' overwrite='${true}'
     copy sourceDir='${Path.Combine(ROOT, "src", BOOTSTRAPPER_CLR_MANAGED_NAME)}' outputDir='${RUNTIME_CLR_WIN_x86_BIN}' include='*.config' overwrite='${true}'
 
     -// Runtime for clr-win-x64
-    copy sourceDir='${Path.Combine(BUILD_DIR2, "dnx", "bin", "x64", Configuration2, "dnx451")}' outputDir='${RUNTIME_CLR_WIN_x64_BIN}' include='*.dll' overwrite='${true}'
-    copy sourceDir='${Path.Combine(BUILD_DIR2, "dnx.windows", "bin", "x64", Configuration2, "dnx451")}' outputDir='${RUNTIME_CLR_WIN_x64_BIN}' include='*.exe' overwrite='${true}'
+    copy sourceDir='${Path.Combine(BUILD_DIR2, BOOTSTRAPPER_FOLDER_NAME, "bin", "x64", Configuration2, "dnx451")}' outputDir='${RUNTIME_CLR_WIN_x64_BIN}' include='*.dll' overwrite='${true}'
+    copy sourceDir='${Path.Combine(BUILD_DIR2, BOOTSTRAPPER_WINDOWS_FOLDER_NAME, "bin", "x64", Configuration2, "dnx451")}' outputDir='${RUNTIME_CLR_WIN_x64_BIN}' include='*.exe' overwrite='${true}'
     copy sourceDir='${Path.Combine(BUILD_DIR2, BOOTSTRAPPER_CLR_NAME, "bin", "x64", Configuration2)}' outputDir='${RUNTIME_CLR_WIN_x64_BIN}' include='*.dll' overwrite='${true}'
     copy sourceDir='${Path.Combine(BUILD_DIR2, BOOTSTRAPPER_CLR_NAME, "bin", "x64", Configuration2)}' outputDir='${RUNTIME_CLR_WIN_x64_BIN}' include='*.pdb' overwrite='${true}'
     copy sourceDir='${Path.Combine(ROOT, "src", BOOTSTRAPPER_CLR_MANAGED_NAME)}' outputDir='${RUNTIME_CLR_WIN_x64_BIN}' include='*.config' overwrite='${true}'
 
     -// Runtime for coreclr-win-x86
-    copy sourceDir='${Path.Combine(BUILD_DIR2, "dnx", "bin", "Win32", Configuration2, "dnxcore50")}' outputDir='${RUNTIME_CORECLR_WIN_x86_BIN}' include='*.dll' overwrite='${true}'
-    copy sourceDir='${Path.Combine(BUILD_DIR2, "dnx.windows", "bin", "Win32", Configuration2, "dnxcore50")}' outputDir='${RUNTIME_CORECLR_WIN_x86_BIN}' include='*.exe' overwrite='${true}'
+    copy sourceDir='${Path.Combine(BUILD_DIR2, BOOTSTRAPPER_FOLDER_NAME, "bin", "Win32", Configuration2, "dnxcore50")}' outputDir='${RUNTIME_CORECLR_WIN_x86_BIN}' include='*.dll' overwrite='${true}'
+    copy sourceDir='${Path.Combine(BUILD_DIR2, BOOTSTRAPPER_WINDOWS_FOLDER_NAME, "bin", "Win32", Configuration2, "dnxcore50")}' outputDir='${RUNTIME_CORECLR_WIN_x86_BIN}' include='*.exe' overwrite='${true}'
     copy sourceDir='${Path.Combine(BUILD_DIR2, BOOTSTRAPPER_CORECLR_NAME, "bin", "Win32", Configuration2)}' outputDir='${RUNTIME_CORECLR_WIN_x86_BIN}' include='*.dll' overwrite='${true}'
     copy sourceDir='${Path.Combine(BUILD_DIR2, BOOTSTRAPPER_CORECLR_NAME, "bin", "Win32", Configuration2)}' outputDir='${RUNTIME_CORECLR_WIN_x86_BIN}' include='*.pdb' overwrite='${true}'
+    -// Since we can't build debug versions of some native binaries for CoreClr/OneCore we only copy ret version of vcruntime dll
+    copy sourceDir='${Path.Combine(VS_REDIST_ROOT, @"onecore\x86\Microsoft.VC140.CRT")}' outputDir='${RUNTIME_CLR_WIN_x86_BIN}' include='vcruntime140.dll' overwrite='${true}' if='Configuration2 == "Release"'
 
     -// Runtime for coreclr-win-x64
-    copy sourceDir='${Path.Combine(BUILD_DIR2, "dnx", "bin", "x64", Configuration2, "dnxcore50")}' outputDir='${RUNTIME_CORECLR_WIN_x64_BIN}' include='*.dll' overwrite='${true}'
-    copy sourceDir='${Path.Combine(BUILD_DIR2, "dnx.windows", "bin", "x64", Configuration2, "dnxcore50")}' outputDir='${RUNTIME_CORECLR_WIN_x64_BIN}' include='*.exe' overwrite='${true}'
+    copy sourceDir='${Path.Combine(BUILD_DIR2, BOOTSTRAPPER_FOLDER_NAME, "bin", "x64", Configuration2, "dnxcore50")}' outputDir='${RUNTIME_CORECLR_WIN_x64_BIN}' include='*.dll' overwrite='${true}'
+    copy sourceDir='${Path.Combine(BUILD_DIR2, BOOTSTRAPPER_WINDOWS_FOLDER_NAME, "bin", "x64", Configuration2, "dnxcore50")}' outputDir='${RUNTIME_CORECLR_WIN_x64_BIN}' include='*.exe' overwrite='${true}'
     copy sourceDir='${Path.Combine(BUILD_DIR2, BOOTSTRAPPER_CORECLR_NAME, "bin", "x64", Configuration2)}' outputDir='${RUNTIME_CORECLR_WIN_x64_BIN}' include='*.dll' overwrite='${true}'
     copy sourceDir='${Path.Combine(BUILD_DIR2, BOOTSTRAPPER_CORECLR_NAME, "bin", "x64", Configuration2)}' outputDir='${RUNTIME_CORECLR_WIN_x64_BIN}' include='*.pdb' overwrite='${true}'
+    -// Since we can't build debug versions of some native binaries for CoreClr/OneCore we only copy ret version of vcruntime dll
+    copy sourceDir='${Path.Combine(VS_REDIST_ROOT, @"onecore\x64\Microsoft.VC140.CRT")}' outputDir='${RUNTIME_CORECLR_WIN_x64_BIN}' include='vcruntime140.dll' overwrite='${true}' if='Configuration2 == "Release"'
 
     -// Copy cmd files
     copy sourceDir='${SCRIPTS_DIR}' include='*.cmd' exclude='k-crossgen.cmd' overwrite='${true}' each='var outputDir in new[]{ RUNTIME_CLR_WIN_x86_BIN, RUNTIME_CLR_WIN_x64_BIN}'
@@ -716,7 +725,7 @@ var RUNTIME_TARGETS='${new List<RuntimeTarget>()}'
 
 #copy-linux-bits target='package-linux'
     copy sourceDir='${Path.Combine(BUILD_DIR2, BOOTSTRAPPER_CORECLR_NAME + ".unix")}' include='*.so' outputDir='${RUNTIME_CORECLR_LINUX_x64_BIN}' overwrite='${true}'
-    copy sourceDir='${Path.Combine(BUILD_DIR2, BOOTSTRAPPER_EXE_NAME, "bin", "linux", "x64")}' include='dnx' outputDir='${RUNTIME_CORECLR_LINUX_x64_BIN}' overwrite='${true}'
+    copy sourceDir='${Path.Combine(BUILD_DIR2, BOOTSTRAPPER_FOLDER_NAME, "bin", "linux", "x64")}' include='dnx' outputDir='${RUNTIME_CORECLR_LINUX_x64_BIN}' overwrite='${true}'
     copy sourceDir='${SCRIPTS_DIR}' include='dnu.sh' outputDir='${RUNTIME_CORECLR_LINUX_x64_BIN}' overwrite='${true}'
     @{
         FixShFiles(RUNTIME_CORECLR_LINUX_x64_BIN);
@@ -746,7 +755,7 @@ var CI_LINUX_DROP_PATH = '${Environment.GetEnvironmentVariable("CI_LINUX_DROP_PA
 
 #copy-darwin-bits target='package-darwin'
     copy sourceDir='${Path.Combine(BUILD_DIR2, BOOTSTRAPPER_CORECLR_NAME + ".unix")}' include='*.dylib' outputDir='${RUNTIME_CORECLR_DARWIN_x64_BIN}' overwrite='${true}'
-    copy sourceDir='${Path.Combine(BUILD_DIR2, BOOTSTRAPPER_EXE_NAME, "bin", "darwin", "x64")}' include='dnx' outputDir='${RUNTIME_CORECLR_DARWIN_x64_BIN}' overwrite='${true}'
+    copy sourceDir='${Path.Combine(BUILD_DIR2, BOOTSTRAPPER_FOLDER_NAME, "bin", "darwin", "x64")}' include='dnx' outputDir='${RUNTIME_CORECLR_DARWIN_x64_BIN}' overwrite='${true}'
     copy sourceDir='${SCRIPTS_DIR}' include='dnu.sh' outputDir='${RUNTIME_CORECLR_DARWIN_x64_BIN}' overwrite='${true}'
     @{
         FixShFiles(RUNTIME_CORECLR_DARWIN_x64_BIN);
@@ -995,6 +1004,15 @@ macro name='DoRestore'
         if (!File.Exists(MSBUILD))
         {
             Log.Warn("msbuild version 14 not found. Please ensure you have the VS 2015 C++ SDK installed.");
+            Environment.Exit(1);
+        }
+    }
+
+#ensure-vs-redist
+    @{
+        if (!Directory.Exists(VS_REDIST_ROOT))
+        {
+            Log.Warn("Visual Studio C++ Redistributable not found. Please ensure you have the VS 2015 C++ SDK installed.");
             Environment.Exit(1);
         }
     }
