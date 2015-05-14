@@ -69,7 +69,9 @@ namespace Microsoft.Framework.Runtime.Json
                 return new JsonNumber(next);
             }
 
-            throw new JsonDeserializerException(JsonDeserializerResource.Format_UnexpectedToken(next.Value, next.Type), next);
+            throw new JsonDeserializerException(JsonDeserializerResource.Format_InvalidTokenExpectation(
+                next.Value, "'{', '[', true, false, null, JSON string, JSON number, or the end of the file"), 
+                next);
         }
 
         private static JsonArray DeserializeArray(JsonToken head, JsonBuffer buffer)

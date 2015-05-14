@@ -43,7 +43,7 @@ namespace Microsoft.Framework.Runtime.Json
                 }
             }
 
-            _token.Value = null;
+            _token.Value = ((char)first).ToString();
             _token.Line = _line;
             _token.Column = _column;
 

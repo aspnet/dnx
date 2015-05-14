@@ -173,7 +173,7 @@ namespace Microsoft.Framework.Runtime
             if (rawProject == null)
             {
                 throw FileFormatException.Create(
-                    "The JSON file can't be deserialized to a Json object.",
+                    "The JSON file can't be deserialized to a JSON object.",
                     projectPath);
             }
 

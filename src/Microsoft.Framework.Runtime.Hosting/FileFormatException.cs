@@ -21,6 +21,11 @@ namespace Microsoft.Framework.Runtime
         public string Path { get; private set; }
         public int Line { get; private set; }
         public int Column { get; private set; }
+        
+        public override string ToString()
+        {            
+            return $"{Path}({Line},{Column}): Error: {base.ToString()}";
+        }
 
         internal static FileFormatException Create(Exception exception, string filePath)
         {
@@ -68,7 +73,6 @@ namespace Microsoft.Framework.Runtime
 
             return result;
         }
-
 
         internal static FileFormatException Create(string message, JsonValue jsonValue)
         {
