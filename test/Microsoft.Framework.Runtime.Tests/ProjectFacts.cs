@@ -251,19 +251,21 @@ namespace Microsoft.Framework.Runtime.Tests
         ""B"": ""1.0-alpha-*"",
         ""C"": ""1.0.0"",
         ""D"": { ""version"": ""2.0.0"" },
-        ""E"": ""[1.0.0, 1.1.0)""
+        ""E"": ""[1.0.0, 1.1.0)"",
+        ""F"": { ""type"": ""build"" },
     }
 }",
 "foo",
 @"c:\foo\project.json");
 
             Assert.NotNull(project.Dependencies);
-            Assert.Equal(5, project.Dependencies.Count);
+            Assert.Equal(6, project.Dependencies.Count);
             var d1 = project.Dependencies[0];
             var d2 = project.Dependencies[1];
             var d3 = project.Dependencies[2];
             var d4 = project.Dependencies[3];
             var d5 = project.Dependencies[4];
+            var d6 = project.Dependencies[5];
             Assert.Equal("A", d1.Name);
             Assert.Null(d1.LibraryRange.VersionRange);
             Assert.Equal("B", d2.Name);
@@ -279,6 +281,8 @@ namespace Microsoft.Framework.Runtime.Tests
             Assert.Equal(SemanticVersion.Parse("1.0.0"), d5.LibraryRange.VersionRange.MinVersion);
             Assert.Equal(SemanticVersion.Parse("1.1.0"), d5.LibraryRange.VersionRange.MaxVersion);
             Assert.False(d5.LibraryRange.VersionRange.IsMaxInclusive);
+            Assert.Equal("F", d6.Name);
+            Assert.Null(d6.LibraryRange.VersionRange);
         }
 
         [Fact]

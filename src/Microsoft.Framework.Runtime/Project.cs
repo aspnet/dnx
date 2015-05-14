@@ -379,7 +379,7 @@ namespace Microsoft.Framework.Runtime
                     }
 
                     SemanticVersionRange dependencyVersionRange = null;
-                    if (!string.IsNullOrEmpty(dependencyVersionAsString.Value))
+                    if (!string.IsNullOrEmpty(dependencyVersionAsString?.Value))
                     {
                         try
                         {
