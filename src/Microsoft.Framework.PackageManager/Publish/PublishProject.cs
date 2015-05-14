@@ -413,13 +413,14 @@ namespace Microsoft.Framework.PackageManager.Publish
                     restoreCommand.TargetFrameworks.Add(runtime.Framework);
                 }
 
+                var restoreDirectory = project.IsPackage ? Path.Combine(project.TargetPath, "root") : project.TargetPath;
                 restoreCommand.SkipRestoreEvents = true;
                 restoreCommand.SkipInstall = true;
                 restoreCommand.CheckHashFile = false;
-                restoreCommand.RestoreDirectory = project.IsPackage ? Path.Combine(project.TargetPath, "root") : project.TargetPath;
+                restoreCommand.RestoreDirectories.Add(restoreDirectory);
                 restoreCommand.FeedOptions = feedOptions;
                 restoreCommand.Reports = root.Reports;
-                tasks[i] = restoreCommand.ExecuteCommand();
+                tasks[i] = restoreCommand.Execute();
             }
 
             Task.WaitAll(tasks);

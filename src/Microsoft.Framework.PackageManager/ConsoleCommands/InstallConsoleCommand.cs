@@ -39,7 +39,7 @@ namespace Microsoft.Framework.PackageManager
                     restoreCmd.Reports = reports;
                     restoreCmd.FeedOptions = feedOptions;
 
-                    restoreCmd.RestoreDirectory = argProject.Value;
+                    restoreCmd.RestoreDirectories.Add(argProject.Value);
 
                     if (!string.IsNullOrEmpty(feedOptions.Proxy))
                     {

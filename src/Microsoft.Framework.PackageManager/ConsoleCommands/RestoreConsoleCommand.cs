@@ -15,7 +15,9 @@ namespace Microsoft.Framework.PackageManager
             {
                 c.Description = "Restore packages";
 
-                var argRoot = c.Argument("[root]", "Root of all projects to restore. It can be a directory, a project.json, or a global.json.");
+                var argRoot = c.Argument("[root]",
+                    "List of projects and project folders to restore. Each value can be: a path to a project.json or global.json file, or a folder to recursively search for project.json files.",
+                    multipleValues: true);
                 var feedCommandLineOptions = FeedCommandLineOptions.Add(c);
                 var optLock = c.Option("--lock",
                     "Creates dependencies file with locked property set to true. Overwrites file if it exists.",
@@ -31,7 +33,7 @@ namespace Microsoft.Framework.PackageManager
                     var feedOptions = feedCommandLineOptions.GetOptions();
                     var command = new RestoreCommand(applicationEnvironment);
                     command.Reports = reportsFactory.CreateReports(feedOptions.Quiet);
-                    command.RestoreDirectory = argRoot.Value;
+                    command.RestoreDirectories.AddRange(argRoot.Values);
                     command.FeedOptions = feedOptions;
                     command.Lock = optLock.HasValue();
                     command.Unlock = optUnlock.HasValue();
@@ -41,7 +43,7 @@ namespace Microsoft.Framework.PackageManager
                         Environment.SetEnvironmentVariable("http_proxy", feedOptions.Proxy);
                     }
 
-                    var success = await command.ExecuteCommand();
+                    var success = await command.Execute();
 
                     return success ? 0 : 1;
                 });

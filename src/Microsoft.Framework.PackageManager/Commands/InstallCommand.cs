@@ -91,7 +91,7 @@ namespace Microsoft.Framework.PackageManager
                 _addCommand.Version = result.Version.ToString();
             }
 
-            return _addCommand.ExecuteCommand() && (await _restoreCommand.ExecuteCommand());
+            return _addCommand.ExecuteCommand() && (await _restoreCommand.Execute());
         }
     }
 }

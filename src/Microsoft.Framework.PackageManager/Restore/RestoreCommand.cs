@@ -54,7 +54,7 @@ namespace Microsoft.Framework.PackageManager
 
         public FeedOptions FeedOptions { get; set; }
 
-        public string RestoreDirectory { get; set; }
+        public List<string> RestoreDirectories { get; } = new List<string>();
         public string NuGetConfigFile { get; set; }
         public bool Lock { get; set; }
         public bool Unlock { get; set; }
@@ -75,26 +75,67 @@ namespace Microsoft.Framework.PackageManager
         protected internal ISettings Settings { get; set; }
         protected internal IPackageSourceProvider SourceProvider { get; set; }
 
-        public async Task<bool> ExecuteCommand()
+        public async Task<bool> Execute()
+        {
+            if (!RestoreDirectories.Any())
+            {
+                RestoreDirectories.Add(Directory.GetCurrentDirectory());
+            }
+
+            bool success = true;
+            foreach (var dir in RestoreDirectories.Select(Path.GetFullPath).Distinct())
+            {
+                success &= await Execute(dir);
+            }
+
+            foreach (var category in ErrorMessages)
+            {
+                Reports.Error.WriteLine("Errors in {0}".Red().Bold(), category.Key);
+                foreach (var message in category.Value)
+                {
+                    Reports.Error.WriteLine("    {0}", message);
+                }
+            }
+
+            return success;
+        }
+
+        private async Task<bool> Execute(string restoreDirectory)
         {
             try
             {
                 var sw = Stopwatch.StartNew();
 
-                // If the root argument is a project.json file
+                var projectJsonFiles = new List<string>();
+
                 if (string.Equals(
                     Runtime.Project.ProjectFileName,
-                    Path.GetFileName(RestoreDirectory),
-                    StringComparison.OrdinalIgnoreCase))
+                    Path.GetFileName(restoreDirectory),
+                    StringComparison.OrdinalIgnoreCase) && File.Exists(restoreDirectory))
                 {
-                    RestoreDirectory = Path.GetDirectoryName(Path.GetFullPath(RestoreDirectory));
+                    // If the path is a project.json file we don't do recursive search in subfolders
+                    projectJsonFiles.Add(restoreDirectory);
                 }
-                else if (!Directory.Exists(RestoreDirectory) && !string.IsNullOrEmpty(RestoreDirectory))
+                else if (Directory.Exists(restoreDirectory))
                 {
-                    throw new InvalidOperationException("The given root is invalid.");
+                    var projectJsonFile = Path.Combine(restoreDirectory, Runtime.Project.ProjectFileName);
+                    if (File.Exists(projectJsonFile))
+                    {
+                        // If the path contains a project.json file we don't do recursive search in subfolders
+                        projectJsonFiles.Add(projectJsonFile);
+                    }
+                    else
+                    {
+                        projectJsonFiles.AddRange(Directory.EnumerateFiles(
+                            restoreDirectory,
+                            Runtime.Project.ProjectFileName,
+                            SearchOption.AllDirectories));
+                    }
                 }
-
-                var restoreDirectory = RestoreDirectory ?? Directory.GetCurrentDirectory();
+                else
+                {
+                    throw new InvalidOperationException($"The given root {restoreDirectory} is invalid.");
+                }
 
                 var rootDirectory = ProjectResolver.ResolveRootDirectory(restoreDirectory);
                 ReadSettings(rootDirectory);
@@ -112,10 +153,6 @@ namespace Microsoft.Framework.PackageManager
                 int restoreCount = 0;
                 int successCount = 0;
 
-                var projectJsonFiles = Directory.EnumerateFiles(
-                    restoreDirectory,
-                    Runtime.Project.ProjectFileName,
-                    SearchOption.AllDirectories);
                 Func<string, Task> restorePackage = async projectJsonPath =>
                 {
                     Interlocked.Increment(ref restoreCount);
@@ -145,15 +182,6 @@ namespace Microsoft.Framework.PackageManager
                 if (restoreCount > 1)
                 {
                     Reports.Information.WriteLine(string.Format("Total time {0}ms", sw.ElapsedMilliseconds));
-                }
-
-                foreach (var category in ErrorMessages)
-                {
-                    Reports.Error.WriteLine("Errors in {0}".Red().Bold(), category.Key);
-                    foreach (var message in category.Value)
-                    {
-                        Reports.Error.WriteLine("    {0}", message);
-                    }
                 }
 
                 return restoreCount == successCount;

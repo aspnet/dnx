@@ -69,8 +69,8 @@ namespace Microsoft.Framework.PackageManager
 
             try
             {
-                RestoreCommand.RestoreDirectory = temporaryProjectFileFullPath;
-                if (!await RestoreCommand.ExecuteCommand())
+                RestoreCommand.RestoreDirectories.Add(temporaryProjectFileFullPath);
+                if (!await RestoreCommand.Execute())
                 {
                     return false;
                 }
@@ -96,8 +96,9 @@ namespace Microsoft.Framework.PackageManager
                 InstallBuilder.CommandsFolderName);
 
             // 2. Now, that we have a valid app package, we can resolve its dependecies
-            RestoreCommand.RestoreDirectory = packageAppFolder;
-            if (!await RestoreCommand.ExecuteCommand())
+            RestoreCommand.RestoreDirectories.Clear();
+            RestoreCommand.RestoreDirectories.Add(packageAppFolder);
+            if (!await RestoreCommand.Execute())
             {
                 return false;
             }

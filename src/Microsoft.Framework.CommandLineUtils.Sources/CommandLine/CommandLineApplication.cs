@@ -2,6 +2,7 @@
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -88,14 +89,22 @@ namespace Microsoft.Framework.Runtime.Common.CommandLine
             return option;
         }
 
-        public CommandArgument Argument(string name, string description)
+        public CommandArgument Argument(string name, string description, bool multipleValues = false)
         {
-            return Argument(name, description, _ => { });
+            return Argument(name, description, _ => { }, multipleValues);
         }
 
-        public CommandArgument Argument(string name, string description, Action<CommandArgument> configuration)
+        public CommandArgument Argument(string name, string description, Action<CommandArgument> configuration, bool multipleValues = false)
         {
-            var argument = new CommandArgument { Name = name, Description = description };
+            var lastArg = Arguments.LastOrDefault();
+            if (lastArg != null && lastArg.MultipleValues)
+            {
+                var message = string.Format("The last argument '{0}' accepts multiple values. No more argument can be added.",
+                    lastArg.Name);
+                throw new InvalidOperationException(message);
+            }
+
+            var argument = new CommandArgument { Name = name, Description = description, MultipleValues = multipleValues };
             Arguments.Add(argument);
             configuration(argument);
             return argument;
@@ -254,12 +263,12 @@ namespace Microsoft.Framework.Runtime.Common.CommandLine
                 {
                     if (arguments == null)
                     {
-                        arguments = command.Arguments.GetEnumerator();
+                        arguments = new CommandArgumentEnumerator(command.Arguments.GetEnumerator());
                     }
                     if (arguments.MoveNext())
                     {
                         processed = true;
-                        arguments.Current.Value = arg;
+                        arguments.Current.Values.Add(arg);
                     }
                 }
                 if (!processed)
@@ -470,6 +479,54 @@ namespace Microsoft.Framework.Runtime.Common.CommandLine
             {
                 // All remaining arguments are stored for further use
                 command.RemainingArguments.AddRange(new ArraySegment<string>(args, index, args.Length - index));
+            }
+        }
+
+        private class CommandArgumentEnumerator : IEnumerator<CommandArgument>
+        {
+            private readonly IEnumerator<CommandArgument> _enumerator;
+
+            public CommandArgumentEnumerator(IEnumerator<CommandArgument> enumerator)
+            {
+                _enumerator = enumerator;
+            }
+
+            public CommandArgument Current
+            {
+                get
+                {
+                    return _enumerator.Current;
+                }
+            }
+
+            object IEnumerator.Current
+            {
+                get
+                {
+                    return Current;
+                }
+            }
+
+            public void Dispose()
+            {
+                _enumerator.Dispose();
+            }
+
+            public bool MoveNext()
+            {
+                if (Current == null || !Current.MultipleValues)
+                {
+                    return _enumerator.MoveNext();
+                }
+
+                // If current argument allows multiple values, we don't move forward and
+                // all later values will be added to current CommandArgument.Values
+                return true;
+            }
+
+            public void Reset()
+            {
+                _enumerator.Reset();
             }
         }
     }

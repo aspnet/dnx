@@ -88,6 +88,59 @@ namespace Microsoft.Framework.Runtime.Common.CommandLine
         }
 
         [Fact]
+        public void MultipleValuesArgumentConsumesAllArgumentValues()
+        {
+            CommandArgument argument = null;
+
+            var app = new CommandLineApplication();
+
+            app.Command("test", c =>
+            {
+                argument = c.Argument("arg", "Argument that allows multiple values", multipleValues: true);
+                c.OnExecute(() => 0);
+            });
+
+            app.Execute("test", "one", "two", "three", "four", "five");
+
+            Assert.Equal(new[] { "one", "two", "three", "four", "five" }, argument.Values);
+        }
+
+        [Fact]
+        public void MultipleValuesArgumentConsumesAllRemainingArgumentValues()
+        {
+            CommandArgument first = null;
+            CommandArgument second = null;
+            CommandArgument third = null;
+
+            var app = new CommandLineApplication();
+
+            app.Command("test", c =>
+            {
+                first = c.Argument("first", "First argument");
+                second = c.Argument("second", "Second argument");
+                third = c.Argument("third", "Third argument that allows multiple values", multipleValues: true);
+                c.OnExecute(() => 0);
+            });
+
+            app.Execute("test", "one", "two", "three", "four", "five");
+
+            Assert.Equal("one", first.Value);
+            Assert.Equal("two", second.Value);
+            Assert.Equal(new[] { "three", "four", "five" }, third.Values);
+        }
+
+        [Fact]
+        public void MultipleValuesArgumentMustBeTheLastArgument()
+        {
+            var app = new CommandLineApplication();
+            app.Argument("first", "First argument", multipleValues: true);
+            var ex = Assert.Throws<InvalidOperationException>(() => app.Argument("second", "Second argument"));
+
+            Assert.Contains($"The last argument 'first' accepts multiple values. No more argument can be added.",
+                ex.Message);
+        }
+
+        [Fact]
         public void OptionSwitchMayBeProvided()
         {
             CommandOption first = null;

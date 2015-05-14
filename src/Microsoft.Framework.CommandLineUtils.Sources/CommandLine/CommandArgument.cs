@@ -2,13 +2,28 @@
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 using System;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace Microsoft.Framework.Runtime.Common.CommandLine
 {
     internal class CommandArgument
     {
+        public CommandArgument()
+        {
+            Values = new List<string>();
+        }
+
         public string Name { get; set; }
         public string Description { get; set; }
-        public string Value { get; set; }
+        public List<string> Values { get; private set; }
+        public bool MultipleValues { get; set; }
+        public string Value
+        {
+            get
+            {
+                return Values.FirstOrDefault();
+            }
+        }
     }
 }
