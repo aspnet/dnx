@@ -35,6 +35,7 @@
                 "System.Linq.Parallel": "4.0.0-beta-*",
                 "System.Reflection.TypeExtensions": "4.0.0-beta-*",
                 "System.Runtime.Serialization.Primitives": "4.0.10-beta-*",
+                "System.Security.Cryptography.Hashing": "4.0.0-beta-*",
                 "System.Security.Cryptography.Hashing.Algorithms": "4.0.0-beta-*",
                 "System.Text.RegularExpressions": "4.0.10-beta-*"
             }
