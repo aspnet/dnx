@@ -1051,7 +1051,7 @@ functions @{
 
         foreach(var dir in Environment.GetEnvironmentVariable("PATH").Split(new string[] { ";" }, StringSplitOptions.None))
         {
-				    try {
+            try {
                 if (File.Exists(Path.Combine(dir, "clang++")))
                 {
                     return Path.Combine(dir, "clang++");
@@ -1060,8 +1060,8 @@ functions @{
                 {
                     return Path.Combine(dir, "clang++-3.5");
                 }
-				    }
-				    catch (Exception ex) { }
+            }
+            catch (Exception ex) { }
         }
 
         return null;
