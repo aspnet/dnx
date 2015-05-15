@@ -69,9 +69,6 @@ namespace Microsoft.Framework.PackageManager
                 var optUnlock = c.Option("--unlock",
                     "Creates dependencies file with locked property set to false. Overwrites file if it exists.",
                     CommandOptionType.NoValue);
-                var optSkipRestoreEvents = c.Option("--skip-restore-events",
-                    "Suppress the execution of scripts defined in project.json",
-                    CommandOptionType.NoValue);
 
                 c.HelpOption("-?|-h|--help");
 
@@ -84,7 +81,6 @@ namespace Microsoft.Framework.PackageManager
                     command.FeedOptions = feedOptions;
                     command.Lock = optLock.HasValue();
                     command.Unlock = optUnlock.HasValue();
-                    command.SkipRestoreEvents = optSkipRestoreEvents.HasValue();
 
                     if (!string.IsNullOrEmpty(feedOptions.Proxy))
                     {
