@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Reflection;
 using Microsoft.Framework.Runtime.Common.DependencyInjection;
 
 namespace Microsoft.Framework.Runtime
@@ -17,7 +18,7 @@ namespace Microsoft.Framework.Runtime
 
         public static T CreateService<T>(IServiceProvider sp, IAssemblyLoadContext loadContext, TypeInformation typeInfo)
         {
-            var assembly = loadContext.Load(typeInfo.AssemblyName);
+            var assembly = loadContext.Load(new AssemblyName(typeInfo.AssemblyName));
 
             var type = assembly.GetType(typeInfo.TypeName);
 

@@ -130,12 +130,7 @@ namespace Microsoft.Framework.Runtime.Roslyn
                 target.TargetFramework,
                 target.Configuration,
                 incomingReferences,
-                () => resourcesResolver()
-                    .Select(res => new ResourceDescription(
-                        res.Name,
-                        res.StreamFactory,
-                        isPublic: true))
-                    .ToList());
+                resourcesResolver);
 
             // Apply strong-name settings
             ApplyStrongNameSettings(compilationContext);
@@ -233,7 +228,7 @@ namespace Microsoft.Framework.Runtime.Roslyn
 
                 var childContext = _loadContextFactory.Create();
 
-                var preprocessAssembly = childContext.Load(target.Name + "!preprocess");
+                var preprocessAssembly = childContext.Load(new AssemblyName(target.Name + "!preprocess"));
 
                 foreach (var preprocessType in preprocessAssembly.ExportedTypes)
                 {

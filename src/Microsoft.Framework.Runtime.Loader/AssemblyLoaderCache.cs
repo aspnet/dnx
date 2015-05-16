@@ -1,15 +1,16 @@
 ﻿using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Reflection;
 
 namespace Microsoft.Framework.Runtime.Loader
 {
     internal class AssemblyLoaderCache
     {
-        private readonly ConcurrentDictionary<string, object> _assemblyLoadLocks = new ConcurrentDictionary<string, object>(StringComparer.Ordinal);
-        private readonly ConcurrentDictionary<string, Assembly> _assemblyCache = new ConcurrentDictionary<string, Assembly>(StringComparer.Ordinal);
+        private readonly ConcurrentDictionary<AssemblyName, object> _assemblyLoadLocks = new ConcurrentDictionary<AssemblyName, object>(AssemblyNameComparer.Ordinal);
+        private readonly ConcurrentDictionary<AssemblyName, Assembly> _assemblyCache = new ConcurrentDictionary<AssemblyName, Assembly>(AssemblyNameComparer.Ordinal);
 
-        public Assembly GetOrAdd(string name, Func<string, Assembly> factory)
+        public Assembly GetOrAdd(AssemblyName name, Func<AssemblyName, Assembly> factory)
         {
             // If the assembly was already loaded use it
             Assembly assembly;
@@ -47,6 +48,26 @@ namespace Microsoft.Framework.Runtime.Loader
             }
 
             return assembly;
+        }
+
+        private class AssemblyNameComparer : IEqualityComparer<AssemblyName>
+        {
+            public static IEqualityComparer<AssemblyName> Ordinal = new AssemblyNameComparer();
+
+            public bool Equals(AssemblyName x, AssemblyName y)
+            {
+                return 
+                    string.Equals(x.Name, y.Name, StringComparison.Ordinal) &&
+                    string.Equals(x.CultureName, y.CultureName, StringComparison.Ordinal);
+            }
+
+            public int GetHashCode(AssemblyName obj)
+            {
+                var hashCode = 0;
+                if (obj.Name != null) hashCode ^= obj.Name.GetHashCode();
+                if (obj.CultureName != null) hashCode ^= obj.CultureName.GetHashCode();
+                return hashCode;
+            }
         }
     }
 }

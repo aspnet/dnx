@@ -46,13 +46,24 @@ namespace Microsoft.Framework.Runtime.Compilation
 
         public Assembly Load(string name)
         {
-            return Load(name, _loadContextAccessor.Default);
+            return Load(new AssemblyName(name), _loadContextAccessor.Default);
         }
 
-        private Assembly Load(string name, IAssemblyLoadContext loadContext)
+        public Assembly Load(AssemblyName assemblyName)
         {
+            return Load(assemblyName, _loadContextAccessor.Default);
+        }
+
+        private Assembly Load(AssemblyName assemblyName, IAssemblyLoadContext loadContext)
+        {
+            if (!string.IsNullOrEmpty(assemblyName.CultureName))
+            {
+                // LOUDO: create culture assemblies from source project
+                return null;
+            }
+
             Library library;
-            if(!_dependencies.TryGetLibrary(name, out library) || !string.Equals(library.Identity.Type, LibraryTypes.Project, StringComparison.Ordinal))
+            if(!_dependencies.TryGetLibrary(assemblyName.Name, out library) || !string.Equals(library.Identity.Type, LibraryTypes.Project, StringComparison.Ordinal))
             {
                 return null;
             }
@@ -62,13 +73,13 @@ namespace Microsoft.Framework.Runtime.Compilation
 
             foreach(var metadataReference in projectExport.MetadataReferences.OfType<IMetadataProjectReference>())
             {
-                if (string.Equals(metadataReference.Name, name, StringComparison.OrdinalIgnoreCase))
+                if (string.Equals(metadataReference.Name, assemblyName.Name, StringComparison.OrdinalIgnoreCase))
                 {
                     Log.LogDebug($" Loading {metadataReference.Name}");
-                    return metadataReference.Load(loadContext);
+                    return metadataReference.Load(assemblyName, loadContext);
                 }
             }
-            Log.LogWarning($"Project {name} did not produce a loadable output.");
+            Log.LogWarning($"Project {assemblyName} did not produce a loadable output.");
             return null;
         }
     }

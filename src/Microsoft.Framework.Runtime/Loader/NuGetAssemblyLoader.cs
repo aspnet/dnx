@@ -23,10 +23,20 @@ namespace Microsoft.Framework.Runtime.Loader
             return Load(name, _loadContextAccessor.Default);
         }
 
+        public Assembly Load(AssemblyName assemblyName)
+        {
+            return Load(assemblyName, _loadContextAccessor.Default);
+        }
+
         public Assembly Load(string name, IAssemblyLoadContext loadContext)
         {
+            return Load(new AssemblyName(name));
+        }
+
+        public Assembly Load(AssemblyName assemblyName, IAssemblyLoadContext loadContext)
+        {
             PackageAssembly assemblyInfo;
-            if (_dependencyResolver.PackageAssemblyLookup.TryGetValue(name, out assemblyInfo))
+            if (_dependencyResolver.PackageAssemblyLookup.TryGetValue(assemblyName, out assemblyInfo))
             {
                 return loadContext.LoadFile(assemblyInfo.Path);
             }

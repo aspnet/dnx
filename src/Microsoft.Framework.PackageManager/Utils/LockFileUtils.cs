@@ -245,6 +245,32 @@ namespace Microsoft.Framework.PackageManager.Utils
             return results;
         }
 
+        private static List<string> GetPackageResources(IPackage package, FrameworkName targetFramework)
+        {
+            var results = new List<string>();
+
+            IEnumerable<IPackageAssemblyReference> compatibleReferences;
+            if (VersionUtility.TryGetCompatibleItems(targetFramework, package.ResourceReferences, out compatibleReferences))
+            {
+                // Get the list of references for this target framework
+                var references = compatibleReferences.ToList();
+
+                foreach (var reference in references)
+                {
+                    // Skip anything that isn't a dll. Unfortunately some packages put random stuff
+                    // in the lib folder and they surface as assembly references
+                    if (!reference.Path.EndsWith(".resources.dll", StringComparison.OrdinalIgnoreCase))
+                    {
+                        continue;
+                    }
+
+                    results.Add(reference.Path);
+                }
+            }
+
+            return results;
+        }
+
         internal static bool IsAssemblyServiceable(string assemblyPath)
         {
             if (!File.Exists(assemblyPath))

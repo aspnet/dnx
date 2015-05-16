@@ -27,6 +27,11 @@ namespace Microsoft.Framework.DesignTimeHost
             return _assemblyNameLookups[name];
         }
 
+        public virtual Assembly Load(AssemblyName assemblyName)
+        {
+            return Load(assemblyName.Name);
+        }
+
         public Assembly LoadFile(string path)
         {
             throw new NotImplementedException();

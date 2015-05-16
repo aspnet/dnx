@@ -9,6 +9,9 @@ namespace Microsoft.Framework.Runtime.Compilation
     public class ResourceDescriptor
     {
         public string Name { get; set; }
+
+        public string FileName { get; set; }
+
         public Func<Stream> StreamFactory { get; set; }
     }
 }

@@ -37,6 +37,11 @@ namespace Microsoft.Framework.DesignTimeHost
             throw new NotSupportedException();
         }
 
+        public Assembly Load(AssemblyName assemblyName)
+        {
+            throw new NotSupportedException();
+        }
+
         public void Dispose()
         {
 

@@ -73,5 +73,10 @@ namespace Microsoft.Framework.Runtime.Dependencies
                 LibraryTypes.Reference,
                 StringComparison.Ordinal);
         }
+
+        public IEnumerable<string> GetAttemptedPaths(NuGetFramework targetFramework)
+        {
+            throw new NotImplementedException();
+        }
     }
 }
