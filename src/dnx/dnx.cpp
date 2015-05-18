@@ -273,15 +273,15 @@ int CallApplicationProcessMain(int argc, dnx::char_t* argv[], TraceWriter traceW
     try
     {
         const dnx::char_t* hostModuleName =
-#if CORECLR_WIN
-#if ONECORE
+#if defined(CORECLR_WIN)
+#if defined(ONECORE) || defined(ARM)
         _X("dnx.onecore.coreclr.dll");
 #else
         _X("dnx.win32.coreclr.dll");
 #endif
-#elif CORECLR_DARWIN
+#elif defined(CORECLR_DARWIN)
         _X("dnx.coreclr.dylib");
-#elif CORECLR_LINUX
+#elif defined(CORECLR_LINUX)
         _X("dnx.coreclr.so");
 #else
         _X("dnx.clr.dll");
@@ -297,7 +297,9 @@ int CallApplicationProcessMain(int argc, dnx::char_t* argv[], TraceWriter traceW
     }
 }
 
-#if PLATFORM_UNIX
+#if defined(ARM)
+int wmain(int argc, wchar_t* argv[])
+#elif defined(PLATFORM_UNIX)
 int main(int argc, char* argv[])
 #else
 extern "C" int __stdcall DnxMain(int argc, wchar_t* argv[])
