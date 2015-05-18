@@ -12,7 +12,7 @@
     <BuildForOneCore Condition="'$(BuildForOneCore)' == ''">False</BuildForOneCore>
     <RootNamespace>KSys</RootNamespace>
     <ProjectName>dnx.win32.coreclr</ProjectName>
-    <ProjectName Condition="'$(BuildForOneCore)' == 'True'">dnx.onecore.coreclr</ProjectName>
+    <ProjectName Condition="'$(BuildForOneCore)' == 'True' Or '$(Platform)' == 'ARM'">dnx.onecore.coreclr</ProjectName>
     <ConfigurationType>DynamicLibrary</ConfigurationType>
     <OutDir>bin\$(Platform)\$(Configuration)\$(TargetFramework)\</OutDir>
     <IntDir>bin\$(ProjectName)\$(Platform)\$(Configuration)\$(TargetFramework)\</IntDir>

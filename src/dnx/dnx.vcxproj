@@ -15,6 +15,12 @@
     <ProjectName Condition="'$(BuildForOneCore)' == 'True'">dnx.onecore</ProjectName>
     <ConfigurationType>DynamicLibrary</ConfigurationType>
     <Defines Condition="$(RuntimeType) == 'CORECLR_WIN'">CORECLR_WIN</Defines>
+  </PropertyGroup>
+  <PropertyGroup Label="Globals" Condition="'$(Platform)' == 'ARM'">
+    <ProjectName>dnx</ProjectName>
+    <ConfigurationType>Application</ConfigurationType>
+  </PropertyGroup>
+  <PropertyGroup>
     <OutDir>bin\$(Platform)\$(Configuration)\$(TargetFramework)\</OutDir>
     <IntDir>bin\$(ProjectName)\$(Platform)\$(Configuration)\$(TargetFramework)\</IntDir>
   </PropertyGroup>
@@ -24,10 +30,11 @@
   <ItemDefinitionGroup>
     <ClCompile>
       <PreprocessorDefinitions Condition="'$(BuildForOneCore)' == 'True'">ONECORE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions Condition="'$(Platform)' == 'ARM'">_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <Subsystem>Console</Subsystem>
-      <ModuleDefinitionFile>dnx.def</ModuleDefinitionFile>
+      <ModuleDefinitionFile Condition="'$(Platform)' != 'ARM'">dnx.def</ModuleDefinitionFile>
     </Link>
   </ItemDefinitionGroup>
   <ImportGroup Label="ExtensionSettings">
@@ -48,7 +55,7 @@
     <ClInclude Include="version.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="dllmain.cpp" />
+    <ClCompile Condition="'$(Platform)' != 'ARM'" Include="dllmain.cpp" />
     <ClCompile Include="dnx.cpp" />
     <ClCompile Include="pal.win32.cpp" />
     <ClCompile Include="stdafx.cpp">
@@ -59,7 +66,7 @@
   <ItemGroup>
     <ResourceCompile Include="Resource.rc" />
   </ItemGroup>
-  <ItemGroup>
+  <ItemGroup Condition="'$(Platform)' != 'ARM'">
     <None Include="dnx.def" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

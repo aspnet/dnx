@@ -380,8 +380,11 @@ extern "C" HRESULT __stdcall CallApplicationMain(PCALL_APPLICATION_MAIN_DATA dat
 
     STARTUP_FLAGS dwStartupFlags = (STARTUP_FLAGS)(
         STARTUP_FLAGS::STARTUP_LOADER_OPTIMIZATION_SINGLE_DOMAIN |
-        STARTUP_FLAGS::STARTUP_SINGLE_APPDOMAIN |
-        STARTUP_FLAGS::STARTUP_SERVER_GC
+        STARTUP_FLAGS::STARTUP_SINGLE_APPDOMAIN
+// STARTUP_SERVER_GC flag is not supported by CoreCLR for ARM
+#ifndef ARM
+        | STARTUP_FLAGS::STARTUP_SERVER_GC
+#endif
         );
 
     pCLRRuntimeHost->SetStartupFlags(dwStartupFlags);
