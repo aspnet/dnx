@@ -332,6 +332,10 @@ namespace Microsoft.Framework.Runtime.Common.CommandLine
             else
             {
                 target = Commands.SingleOrDefault(cmd => string.Equals(cmd.Name, commandName, StringComparison.OrdinalIgnoreCase));
+                if (target == null)
+                {
+                    throw new InvalidOperationException(string.Format("'{0}' is not a command", commandName));
+                }
                 headerBuilder.AppendFormat(" {0}", commandName);
             }
 
