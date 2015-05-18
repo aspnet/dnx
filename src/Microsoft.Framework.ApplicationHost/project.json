@@ -4,6 +4,7 @@
     "dependencies": {
         "Microsoft.Framework.CommandLineUtils.Sources": { "version": "1.0.0-*", "type": "build" },
         "Microsoft.Framework.Runtime": "1.0.0-*",
+        "Microsoft.Framework.Runtime.Internals": { "version": "1.0.0-*", "type": "build" },
         "Microsoft.Framework.Runtime.Sources": { "version": "1.0.0-*", "type": "build" },
         "Microsoft.Framework.Runtime.Abstractions": "1.0.0-*"
     },

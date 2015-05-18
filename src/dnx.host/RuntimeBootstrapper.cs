@@ -70,8 +70,12 @@ namespace dnx.host
             var optionDebug = app.Option("--debug", "Waits for the debugger to attach before beginning execution.",
                 CommandOptionType.NoValue);
 
+            var env = new RuntimeEnvironment();
+
             app.HelpOption("-?|-h|--help");
-            app.VersionOption("--version", GetVersion);
+            app.VersionOption("--version",
+                              () => env.GetShortVersion(),
+                              () => env.GetFullVersion());
 
             // Options below are only for help info display
             // They will be forwarded to Microsoft.Framework.ApplicationHost
@@ -136,7 +140,7 @@ namespace dnx.host
             IEnumerable<string> searchPaths = ResolveSearchPaths(optionLib.Values, app.RemainingArguments);
 
             var bootstrapper = new Bootstrapper(searchPaths);
-            return bootstrapper.RunAsync(app.RemainingArguments);
+            return bootstrapper.RunAsync(app.RemainingArguments, env);
         }
 
         private static IEnumerable<string> ResolveSearchPaths(List<string> libPaths, List<string> remainingArgs)
@@ -192,17 +196,6 @@ namespace dnx.host
             {
                 searchPaths.Add(libPath);
             }
-        }
-
-        private static string GetVersion()
-        {
-            var assembly = typeof(RuntimeBootstrapper).GetTypeInfo().Assembly;
-            var assemblyInformationalVersionAttribute = assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>();
-            if (assemblyInformationalVersionAttribute == null)
-            {
-                return assembly.GetName().Version.ToString();
-            }
-            return assemblyInformationalVersionAttribute.InformationalVersion;
         }
     }
 }

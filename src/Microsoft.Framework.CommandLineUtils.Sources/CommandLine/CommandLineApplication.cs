@@ -39,8 +39,8 @@ namespace Microsoft.Framework.Runtime.Common.CommandLine
         public List<string> RemainingArguments { get; private set; }
         public bool IsShowingInformation { get; protected set; }  // Is showing help or version?
         public Func<int> Invoke { get; set; }
-        public Func<string> VersionGetter { get; set; }
-
+        public Func<string> LongVersionGetter { get; set; }
+        public Func<string> ShortVersionGetter { get; set; }
         public List<CommandLineApplication> Commands { get; private set; }
 
         public CommandLineApplication Command(string name, Action<CommandLineApplication> configuration,
@@ -297,18 +297,30 @@ namespace Microsoft.Framework.Runtime.Common.CommandLine
             return OptionHelp;
         }
 
-        public CommandOption VersionOption(string template, string version)
+        public CommandOption VersionOption(string template,
+                                           string shortFormVersion,
+                                           string longFormVersion = null)
         {
-            return VersionOption(template, () => version);
+            if (longFormVersion == null)
+            {
+                return VersionOption(template, () => shortFormVersion);
+            }
+            else
+            {
+                return VersionOption(template, () => shortFormVersion, () => longFormVersion);
+            }
         }
 
         // Helper method that adds a version option
-        public CommandOption VersionOption(string template, Func<string> versionGetter)
+        public CommandOption VersionOption(string template,
+                                           Func<string> shortFormVersionGetter,
+                                           Func<string> longFormVersionGetter = null)
         {
             // Version option is special because we stop parsing once we see it
             // So we store it separately for further use
             OptionVersion = Option(template, "Show version information", CommandOptionType.NoValue);
-            VersionGetter = versionGetter;
+            ShortVersionGetter = shortFormVersionGetter;
+            LongVersionGetter = longFormVersionGetter ?? shortFormVersionGetter;
 
             return OptionVersion;
         }
@@ -425,12 +437,13 @@ namespace Microsoft.Framework.Runtime.Common.CommandLine
                 cmd.IsShowingInformation = true;
             }
 
-            Console.WriteLine(VersionGetter());
+            Console.WriteLine(FullName);
+            Console.WriteLine(LongVersionGetter());
         }
 
         public string GetFullNameAndVersion()
         {
-            return VersionGetter == null ? FullName : string.Format("{0} v{1}", FullName, VersionGetter());
+            return ShortVersionGetter == null ? FullName : string.Format("{0} {1}", FullName, ShortVersionGetter());
         }
 
         public void ShowRootCommandFullNameAndVersion()

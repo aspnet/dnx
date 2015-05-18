@@ -25,7 +25,7 @@ namespace dnx.host
             _searchPaths = searchPaths;
         }
 
-        public Task<int> RunAsync(List<string> args)
+        public Task<int> RunAsync(List<string> args, IRuntimeEnvironment env)
         {
             var accessor = LoadContextAccessor.Instance;
             var container = new LoaderContainer();
@@ -73,7 +73,7 @@ namespace dnx.host
                 serviceProvider.Add(typeof(IAssemblyLoaderContainer), container);
                 serviceProvider.Add(typeof(IAssemblyLoadContextAccessor), accessor);
                 serviceProvider.Add(typeof(IApplicationEnvironment), applicationEnvironment);
-                serviceProvider.Add(typeof(IRuntimeEnvironment), new RuntimeEnvironment());
+                serviceProvider.Add(typeof(IRuntimeEnvironment), env);
 
                 CallContextServiceLocator.Locator.ServiceProvider = serviceProvider;
 

@@ -3,7 +3,6 @@
 
 using System;
 using System.Net;
-using System.Reflection;
 using System.Threading;
 using Microsoft.Framework.Runtime;
 using Microsoft.Framework.Runtime.Common.CommandLine;
@@ -44,7 +43,7 @@ namespace Microsoft.Framework.PackageManager
 
             var optionVerbose = app.Option("-v|--verbose", "Show verbose output", CommandOptionType.NoValue);
             app.HelpOption("-?|-h|--help");
-            app.VersionOption("--version", GetVersion);
+            app.VersionOption("--version", () => _runtimeEnv.GetShortVersion(), () => _runtimeEnv.GetFullVersion());
 
             // Show help information if no subcommand/option was specified
             app.OnExecute(() =>
@@ -66,13 +65,6 @@ namespace Microsoft.Framework.PackageManager
             WrapConsoleCommand.Register(app, reportsFactory);
 
             return app.Execute(args);
-        }
-
-        private static string GetVersion()
-        {
-            var assembly = typeof(Program).GetTypeInfo().Assembly;
-            var assemblyInformationalVersionAttribute = assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>();
-            return assemblyInformationalVersionAttribute.InformationalVersion;
         }
     }
 }

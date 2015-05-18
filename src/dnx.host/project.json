@@ -3,6 +3,7 @@
     "compilationOptions": { "define": [ "TRACE" ], "allowUnsafe": true, "warningsAsErrors": true },
     "dependencies": {
         "Microsoft.Framework.CommandLineUtils.Sources": { "version": "1.0.0-*", "type": "build" },
+        "Microsoft.Framework.Runtime.Internals": { "version": "1.0.0-*", "type": "build" },
         "Microsoft.Framework.Runtime.Sources": { "version": "1.0.0-*", "type": "build" },
         "Microsoft.Framework.Runtime.Loader": "1.0.0-*"
     },

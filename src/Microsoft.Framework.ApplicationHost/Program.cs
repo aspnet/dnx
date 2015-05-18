@@ -123,7 +123,9 @@ namespace Microsoft.Framework.ApplicationHost
             var optionCompilationServer = app.Option("--port <PORT>", "The port to the compilation server", CommandOptionType.SingleValue);
             var runCmdExecuted = false;
             app.HelpOption("-?|-h|--help");
-            app.VersionOption("--version", GetVersion);
+
+            var env = (IRuntimeEnvironment)_serviceProvider.GetService(typeof(IRuntimeEnvironment));
+            app.VersionOption("--version", () => env.GetShortVersion(), () => env.GetFullVersion());
             var runCmd = app.Command("run", c =>
             {
                 // We don't actually execute "run" command here
@@ -245,13 +247,6 @@ namespace Microsoft.Framework.ApplicationHost
             throw new InvalidOperationException(
                     string.Format("Unable to load application or execute command '{0}'.",
                     applicationName), innerException);
-        }
-
-        private static string GetVersion()
-        {
-            var assembly = typeof(Program).GetTypeInfo().Assembly;
-            var assemblyInformationalVersionAttribute = assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>();
-            return assemblyInformationalVersionAttribute.InformationalVersion;
         }
     }
 }
