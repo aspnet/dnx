@@ -58,13 +58,13 @@ namespace Microsoft.Framework.PackageManager
 
             var result = builder.Build(_project.Name, _outputPath);
 
+            var errors = _applicationHostContext.DependencyWalker.GetDependencyDiagnostics(_project.ProjectFilePath);
+            diagnostics.AddRange(errors);
+
             if (result.Diagnostics != null)
             {
                 diagnostics.AddRange(result.Diagnostics);
             }
-
-            var errors = _applicationHostContext.DependencyWalker.GetDependencyDiagnostics(_project.ProjectFilePath);
-            diagnostics.AddRange(errors);
 
             return result.Success && !diagnostics.HasErrors();
         }

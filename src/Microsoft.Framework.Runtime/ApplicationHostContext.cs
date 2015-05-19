@@ -2,7 +2,9 @@
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Runtime.Versioning;
 using Microsoft.Framework.Runtime.Caching;
 using Microsoft.Framework.Runtime.Common.DependencyInjection;
@@ -17,6 +19,7 @@ namespace Microsoft.Framework.Runtime
     public class ApplicationHostContext
     {
         private readonly ServiceProvider _serviceProvider;
+        private const string _lockFileHint = "Please run \"dnu restore\" to generate a new lock file";
 
         public ApplicationHostContext(IServiceProvider serviceProvider,
                                       string projectDirectory,
@@ -44,6 +47,14 @@ namespace Microsoft.Framework.Runtime
             ProjectDepencyProvider = new ProjectReferenceDependencyProvider(ProjectResolver);
             var unresolvedDependencyProvider = new UnresolvedDependencyProvider();
 
+            var dependencyProviders = new List<IDependencyProvider> {
+                ProjectDepencyProvider,
+                NuGetDependencyProvider,
+                referenceAssemblyDependencyResolver,
+                gacDependencyResolver,
+                unresolvedDependencyProvider
+            };
+
             var projectName = PathUtility.GetDirectoryName(ProjectDirectory);
 
             Project project;
@@ -60,38 +71,39 @@ namespace Microsoft.Framework.Runtime
             var projectLockJsonPath = Path.Combine(ProjectDirectory, LockFileReader.LockFileName);
             var lockFileExists = File.Exists(projectLockJsonPath);
             var validLockFile = false;
+            ICompilationMessage lockFileDiagnostic = null;
 
             if (lockFileExists)
             {
                 var lockFileReader = new LockFileReader();
                 var lockFile = lockFileReader.Read(projectLockJsonPath);
-                validLockFile = lockFile.IsValidForProject(Project);
 
-                if (validLockFile || skipLockFileValidation)
+                string message;
+                validLockFile = lockFile.IsValidForProject(Project, out message);
+
+                if (skipLockFileValidation || validLockFile)
                 {
                     NuGetDependencyProvider.ApplyLockFile(lockFile);
-
-                    DependencyWalker = new DependencyWalker(new IDependencyProvider[] {
-                        ProjectDepencyProvider,
-                        NuGetDependencyProvider,
-                        referenceAssemblyDependencyResolver,
-                        gacDependencyResolver,
-                        unresolvedDependencyProvider
-                    });
+                }
+                else
+                {
+                    // We don't add NuGetDependencyProvider to DependencyWalker
+                    // It will leave all NuGet packages unresolved and give error message asking users to run "dnu restore"
+                    dependencyProviders.Remove(NuGetDependencyProvider);
+                    lockFileDiagnostic = new FileFormatMessage($"{message}. {_lockFileHint}.", projectLockJsonPath,
+                        CompilationMessageSeverity.Error);
                 }
             }
-
-            if ((!validLockFile && !skipLockFileValidation) || !lockFileExists)
+            else
             {
                 // We don't add NuGetDependencyProvider to DependencyWalker
                 // It will leave all NuGet packages unresolved and give error message asking users to run "dnu restore"
-                DependencyWalker = new DependencyWalker(new IDependencyProvider[] {
-                    ProjectDepencyProvider,
-                    referenceAssemblyDependencyResolver,
-                    gacDependencyResolver,
-                    unresolvedDependencyProvider
-                });
+                dependencyProviders.Remove(NuGetDependencyProvider);
+                lockFileDiagnostic = new FileFormatMessage($"The expected lock file doesn't exist. {_lockFileHint}.",
+                    projectLockJsonPath, CompilationMessageSeverity.Error);
             }
+
+            DependencyWalker = new DependencyWalker(dependencyProviders, lockFileDiagnostic);
 
             LibraryExportProvider = new CompositeLibraryExportProvider(new ILibraryExportProvider[] {
                 new ProjectLibraryExportProvider(ProjectResolver, ServiceProvider),
