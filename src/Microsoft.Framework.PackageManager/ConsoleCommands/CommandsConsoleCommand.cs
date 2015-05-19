@@ -59,6 +59,12 @@ namespace Microsoft.Framework.PackageManager
                         Environment.SetEnvironmentVariable("http_proxy", feedOptions.Proxy);
                     }
 
+                    if (argPackage.Value == null)
+                    {
+                        c.ShowHelp();
+                        return 2;
+                    }
+
                     var success = await command.Execute(argPackage.Value, argVersion.Value);
                     return success ? 0 : 1;
                 });
