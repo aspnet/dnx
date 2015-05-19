@@ -9,6 +9,7 @@ namespace Microsoft.Framework.Runtime
         public const string BootstrapperFullName = "Microsoft .NET Execution environment";
         public const string DefaultLocalRuntimeHomeDir = ".dnx";
         public const string RuntimeShortName = "dnx";
+        public const string RuntimeLongName = "Microsoft DNX";
         public const string RuntimeNamePrefix = RuntimeShortName + "-";
         public const string WebConfigRuntimeVersion = RuntimeNamePrefix + "version";
         public const string WebConfigRuntimeFlavor = RuntimeNamePrefix + "clr";

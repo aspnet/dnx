@@ -45,7 +45,7 @@ namespace Microsoft.Framework.Runtime.Servicing
 
                     runtimeServicing = Path.Combine(
                         servicingRoot,
-                        Constants.RuntimeShortName.ToUpper(),
+                        Constants.RuntimeLongName,
                         "Servicing");
                 }
 

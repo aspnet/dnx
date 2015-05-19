@@ -14,7 +14,7 @@ namespace Microsoft.Framework.Runtime.Servicing
     public class Breadcrumbs
     {
         // It is recommended that you disable breadcrumbs only for perf runs
-        private const string NoBreadcrumbsEnvironmentVariableName = "DNX_NO_BREADCRUMBS";
+        private static readonly string NoBreadcrumbsEnvironmentVariableName = Constants.RuntimeShortName.ToUpper() + "_NO_BREADCRUMBS";
 
         private static readonly string _logType = typeof(Breadcrumbs).Name;
 
@@ -73,11 +73,16 @@ namespace Microsoft.Framework.Runtime.Servicing
 
         public void AddBreadcrumb(string packageId, SemanticVersion packageVersion)
         {
+            AddBreadcrumb(packageId + "." + packageVersion);
+        }
+
+        public void AddBreadcrumb(string breadcrumbName)
+        {
             if (!_isEnabled)
             {
                 return;
             }
-            
+
             lock (_addLock)
             {
                 if (_writeWasCalled)
@@ -86,10 +91,7 @@ namespace Microsoft.Framework.Runtime.Servicing
                     return;
                 }
 
-                var fullBreadcrumbName = packageId + "." + packageVersion;
-
-                _breadcrumbsToWrite.Add(packageId);
-                _breadcrumbsToWrite.Add(fullBreadcrumbName);
+                _breadcrumbsToWrite.Add(breadcrumbName);
             }
         }
 
@@ -139,7 +141,7 @@ namespace Microsoft.Framework.Runtime.Servicing
 
             string breadcrumbsFolder = Path.Combine(
                 programDataFolder,
-                "Microsoft DNX",
+                Constants.RuntimeLongName,
                 "BreadcrumbStore");
 
             return breadcrumbsFolder;

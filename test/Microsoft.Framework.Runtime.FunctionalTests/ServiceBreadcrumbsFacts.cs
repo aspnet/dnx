@@ -31,7 +31,6 @@ namespace Microsoft.Framework.Runtime.Tests
             breadcrumbs.AddBreadcrumb("Test", new NuGet.SemanticVersion("1.0.0"));
             breadcrumbs.WriteAllBreadcrumbs();
 
-            Assert.True(File.Exists(Path.Combine(TempFolderPath, "Test")));
             Assert.True(File.Exists(Path.Combine(TempFolderPath, "Test.1.0.0")));
         }
 
@@ -77,7 +76,6 @@ namespace Microsoft.Framework.Runtime.Tests
             var breadcrumbs = new Servicing.Breadcrumbs(TempFolderPath);
             breadcrumbs.AddBreadcrumb("Test", new NuGet.SemanticVersion("1.0.0"));
 
-            Assert.False(File.Exists(Path.Combine(TempFolderPath, "Test")));
             Assert.False(File.Exists(Path.Combine(TempFolderPath, "Test.1.0.0")));
         }
     }

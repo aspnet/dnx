@@ -192,22 +192,9 @@ Please make sure the runtime matches a framework specified in {Project.ProjectFi
 
         private void AddRuntimeServiceBreadcrumb()
         {
-#if DNX451
-            var runtimeAssembly = typeof(Servicing.Breadcrumbs).Assembly;
-#else
-            var runtimeAssembly = typeof(Servicing.Breadcrumbs).GetTypeInfo().Assembly;
-#endif
-
-            var version = runtimeAssembly
-                ?.GetCustomAttribute<AssemblyInformationalVersionAttribute>()
-                ?.InformationalVersion;
-
-            if (!string.IsNullOrWhiteSpace(version))
-            {
-                var semanticVersion = new NuGet.SemanticVersion(version);
-                Servicing.Breadcrumbs.Instance.AddBreadcrumb(runtimeAssembly.GetName().Name, semanticVersion);
-            }
+            var env = (IRuntimeEnvironment)ServiceProvider.GetService(typeof(IRuntimeEnvironment));
+            var frameworkBreadcrumbName = $"{Constants.RuntimeShortName}-{env.RuntimeType}-{env.RuntimeArchitecture}-{env.RuntimeVersion}";
+            Servicing.Breadcrumbs.Instance.AddBreadcrumb(frameworkBreadcrumbName);
         }
-
     }
 }
