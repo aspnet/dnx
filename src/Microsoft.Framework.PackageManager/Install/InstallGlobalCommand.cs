@@ -47,7 +47,7 @@ namespace Microsoft.Framework.PackageManager
 
             if (packageIdAndVersion == null)
             {
-                WriteError("The name of the package to be installed was not specified.");
+                WriteError($"Failed to install {packageId}");
                 return false;
             }
 
