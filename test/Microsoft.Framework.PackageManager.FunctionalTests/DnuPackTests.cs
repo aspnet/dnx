@@ -32,12 +32,7 @@ namespace Microsoft.Framework.PackageManager
     Source: {1}/project.json".Replace('/', Path.DirectorySeparatorChar);
             string expectedNupkg =
             @"{0} -> {1}/bin/Debug/{0}.1.0.0.nupkg
-{0} -> {1}/bin/Debug/{0}.1.0.0.symbols.nupkg
-
-Build succeeded.
-    0 Warnings(s)
-    0 Error(s)
-".Replace('/', Path.DirectorySeparatorChar);
+{0} -> {1}/bin/Debug/{0}.1.0.0.symbols.nupkg".Replace('/', Path.DirectorySeparatorChar);
             string stdOut;
             string stdError;
             var runtimeHomeDir = TestUtils.GetRuntimeHomeDir(flavor, os, architecture);
@@ -79,12 +74,7 @@ Build succeeded.
     Source: {1}/project.json".Replace('/', Path.DirectorySeparatorChar);
             string expectedNupkg =
             @"{0} -> {1}/bin/Debug/{0}.1.0.0.nupkg
-{0} -> {1}/bin/Debug/{0}.1.0.0.symbols.nupkg
-
-Build succeeded.
-    0 Warnings(s)
-    0 Error(s)
-".Replace('/', Path.DirectorySeparatorChar);
+{0} -> {1}/bin/Debug/{0}.1.0.0.symbols.nupkg".Replace('/', Path.DirectorySeparatorChar);
             string stdOut;
             string stdError;
             var runtimeHomeDir = TestUtils.GetRuntimeHomeDir(flavor, os, architecture);
@@ -122,12 +112,7 @@ Build succeeded.
         {
             string expectedNupkg =
             @"{0} -> {1}/CustomOutput/Debug/{0}.1.0.0.nupkg
-{0} -> {1}/CustomOutput/Debug/{0}.1.0.0.symbols.nupkg
-
-Build succeeded.
-    0 Warnings(s)
-    0 Error(s)
-";
+{0} -> {1}/CustomOutput/Debug/{0}.1.0.0.symbols.nupkg".Replace('/', Path.DirectorySeparatorChar);
             string stdOut;
             string stdError;
             var runtimeHomeDir = TestUtils.GetRuntimeHomeDir(flavor, os, architecture);
