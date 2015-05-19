@@ -27,6 +27,15 @@ namespace Microsoft.Framework.PackageManager.List
 
         public bool Execute()
         {
+            var dependencyDiagnostics = _hostContext.DependencyWalker.GetDependencyDiagnostics(
+                _options.Project.ProjectFilePath);
+            if (dependencyDiagnostics.HasErrors())
+            {
+                var warning = _hostContext.DependencyWalker.GetMissingDependenciesWarning(_framework);
+                _options.Reports.Information.WriteLine(warning.Red().Bold());
+            }
+
+
             // 1. Walk the graph of library dependencies
             var root = LibraryDependencyFinder.Build(_hostContext.DependencyWalker.Libraries, _options.Project);
 

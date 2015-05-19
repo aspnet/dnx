@@ -15,18 +15,24 @@ namespace Microsoft.Framework.Runtime.DependencyManagement
         public IList<LockFileLibrary> Libraries { get; set; } = new List<LockFileLibrary>();
         public IList<LockFileTarget> Targets { get; set; } = new List<LockFileTarget>();
 
-        public bool IsValidForProject(Project project)
+        public bool IsValidForProject(Project project, out string message)
         {
+            message = null;
+
             if (Version != LockFileReader.Version)
             {
+                message = $"The expected lock file version ({LockFileReader.Version}) does not match the actual version ({Version}).";
                 return false;
             }
 
             var actualTargetFrameworks = project.GetTargetFrameworks();
 
             // The lock file should contain dependencies for each framework plus dependencies shared by all frameworks
-            if (ProjectFileDependencyGroups.Count != actualTargetFrameworks.Count() + 1)
+            var frameworkNumDiff = ProjectFileDependencyGroups.Count - (actualTargetFrameworks.Count() + 1);
+            if (frameworkNumDiff != 0)
             {
+                var action = frameworkNumDiff < 0 ? "added to" : "removed from";
+                message = $"One or more frameworks were {action} {Project.ProjectFileName}";
                 return false;
             }
 
@@ -47,6 +53,7 @@ namespace Microsoft.Framework.Runtime.DependencyManagement
                             string.Equals(f.FrameworkName.ToString(), group.FrameworkName, StringComparison.Ordinal));
                     if (framework == null)
                     {
+                        message = $"The framework '{group.FrameworkName}' was removed from {Project.ProjectFileName}";
                         return false;
                     }
 
@@ -55,6 +62,15 @@ namespace Microsoft.Framework.Runtime.DependencyManagement
 
                 if (!actualDependencies.SequenceEqual(expectedDependencies))
                 {
+                    if (string.IsNullOrEmpty(group.FrameworkName))
+                    {
+                        message = $"Shared dependencies in {Project.ProjectFileName} were modified";
+                    }
+                    else
+                    {
+                        message = $"Dependencies of framework '{group.FrameworkName}' in {Project.ProjectFileName} were modified";
+                    }
+
                     return false;
                 }
             }

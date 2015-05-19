@@ -198,9 +198,11 @@ namespace Microsoft.Framework.PackageManager
                 useLockFile = true;
             }
 
-            if (useLockFile && !lockFile.IsValidForProject(project))
+            string message;
+            if (useLockFile && !lockFile.IsValidForProject(project, out message))
             {
                 // Exhibit the same behavior as if it has been run with "dnu restore --lock"
+                Reports.Information.WriteLine(message.Yellow().Bold());
                 Reports.Information.WriteLine("Updating the invalid lock file with {0}",
                     "dnu restore --lock".Yellow().Bold());
                 useLockFile = false;

@@ -15,10 +15,13 @@ namespace Microsoft.Framework.Runtime
     {
         private readonly IEnumerable<IDependencyProvider> _dependencyProviders;
         private readonly List<LibraryDescription> _libraries = new List<LibraryDescription>();
+        private readonly ICompilationMessage _lockFileDiagnostic;
 
-        public DependencyWalker(IEnumerable<IDependencyProvider> dependencyProviders)
+        public DependencyWalker(IEnumerable<IDependencyProvider> dependencyProviders,
+            ICompilationMessage lockFileDiagnostic = null)
         {
             _dependencyProviders = dependencyProviders;
+            _lockFileDiagnostic = lockFileDiagnostic;
         }
 
         public IList<LibraryDescription> Libraries
@@ -61,12 +64,16 @@ namespace Microsoft.Framework.Runtime
         public IList<ICompilationMessage> GetDependencyDiagnostics(string projectFilePath)
         {
             var messages = new List<ICompilationMessage>();
+            bool anyUnresolved = false;
+
             foreach (var library in Libraries)
             {
                 string projectPath = library.LibraryRange.FileName ?? projectFilePath;
 
                 if (!library.Resolved)
                 {
+                    anyUnresolved = true;
+
                     var message = string.Format("Dependency {0} could not be resolved", library.LibraryRange);
 
                     messages.Add(new FileFormatMessage(message, projectPath, CompilationMessageSeverity.Error)
@@ -108,6 +115,13 @@ namespace Microsoft.Framework.Runtime
                 }
             }
 
+            // A simple app that doesn't have any NuGet dependency should be able to run without a lock file
+            // So we only show lock file error when there is at least one unresolved dependency
+            if (anyUnresolved && _lockFileDiagnostic != null)
+            {
+                messages.Insert(0, _lockFileDiagnostic);
+            }
+
             return messages;
         }
 
@@ -116,6 +130,12 @@ namespace Microsoft.Framework.Runtime
             var sb = new StringBuilder();
 
             // TODO: Localize messages
+
+            if (_lockFileDiagnostic != null)
+            {
+                sb.AppendLine(_lockFileDiagnostic.FormattedMessage);
+                sb.AppendLine();
+            }
 
             sb.AppendFormat("Failed to resolve the following dependencies for target framework '{0}':", targetFramework.ToString());
             sb.AppendLine();
