@@ -7,6 +7,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Runtime.Versioning;
 using System.Text;
+using Microsoft.Framework.Runtime.Infrastructure;
 using NuGet;
 
 namespace Microsoft.Framework.Runtime
@@ -61,6 +62,9 @@ namespace Microsoft.Framework.Runtime
         public IList<ICompilationMessage> GetDependencyDiagnostics(string projectFilePath)
         {
             var messages = new List<ICompilationMessage>();
+
+            messages.AddRange(DependencyProviders.SelectMany(x => x.GetDiagnostics()));
+
             foreach (var library in Libraries)
             {
                 string projectPath = library.LibraryRange.FileName ?? projectFilePath;
@@ -125,16 +129,22 @@ namespace Microsoft.Framework.Runtime
                 sb.AppendLine("   " + d.Identity.ToString());
             }
 
-            sb.AppendLine();
-            sb.AppendLine("Searched Locations:");
-
-            foreach (var path in GetAttemptedPaths(targetFramework))
+            foreach (var diagnostic in DependencyProviders.SelectMany(x => x.GetDiagnostics()))
             {
-                sb.AppendLine("  " + path);
+                sb.AppendLine();
+                sb.AppendLine(diagnostic.Message);
             }
 
             sb.AppendLine();
-            sb.AppendLine("Try running 'dnu restore'.");
+
+            // TODO: make this RuntimeEnvironmentHelper.GetPrettyPrintRuntimeInfo() after https://github.com/aspnet/dnx/pull/1692 is checked in
+            var runtimeEnv = CallContextServiceLocator.Locator.ServiceProvider.GetService(typeof(IRuntimeEnvironment)) as IRuntimeEnvironment;
+            var shortName = VersionUtility.GetShortFrameworkName(targetFramework);
+            var runtimeInfo = $@"Current runtime Target Framework: '{targetFramework} ({shortName})'
+  Type: {runtimeEnv.RuntimeType}
+  Architecture: {runtimeEnv.RuntimeArchitecture}
+  Version: {runtimeEnv.RuntimeVersion}";
+            sb.AppendLine(runtimeInfo);
 
             return sb.ToString();
         }

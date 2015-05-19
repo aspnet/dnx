@@ -3,6 +3,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 
 namespace Microsoft.Framework.Runtime.DependencyManagement
@@ -11,16 +12,38 @@ namespace Microsoft.Framework.Runtime.DependencyManagement
     {
         public bool Islocked { get; set; }
         public int Version { get; set; }
+        public string Path { get; set; }
         public IList<ProjectFileDependencyGroup> ProjectFileDependencyGroups { get; set; } = new List<ProjectFileDependencyGroup>();
         public IList<LockFileLibrary> Libraries { get; set; } = new List<LockFileLibrary>();
         public IList<LockFileTarget> Targets { get; set; } = new List<LockFileTarget>();
+        public IList<string> Diagnostics { get; private set; } = new List<string>();
 
-        public bool IsValidForProject(Project project)
+        public void Validate(Project project)
+        {
+            Diagnostics.Clear();
+
+            string message;
+            if (!File.Exists(Path))
+            {
+                message = $"The expected lock file doesn't exist";
+            }
+            else if (IsValidForProject(project, out message))
+            {
+                return;
+            }
+
+            Diagnostics.Add(message);
+        }
+
+        private bool IsValidForProject(Project project, out string message)
         {
             if (Version != LockFileReader.Version)
             {
+                message = $"The expected lock file version does not match the actual version";
                 return false;
             }
+
+            message = $"Dependencies in {Project.ProjectFileName} were modified";
 
             var actualTargetFrameworks = project.GetTargetFrameworks();
 
@@ -59,6 +82,7 @@ namespace Microsoft.Framework.Runtime.DependencyManagement
                 }
             }
 
+            message = null;
             return true;
         }
     }

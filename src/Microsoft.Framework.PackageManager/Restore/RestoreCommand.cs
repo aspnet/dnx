@@ -232,13 +232,18 @@ namespace Microsoft.Framework.PackageManager
                 useLockFile = true;
             }
 
-            if (useLockFile && !lockFile.IsValidForProject(project))
+            if (useLockFile)
             {
-                // Exhibit the same behavior as if it has been run with "dnu restore --lock"
-                Reports.Information.WriteLine("Updating the invalid lock file with {0}",
-                    "dnu restore --lock".Yellow().Bold());
-                useLockFile = false;
-                Lock = true;
+                lockFile.Validate(project);
+                if (lockFile.Diagnostics.Any())
+                {
+                    // Exhibit the same behavior as if it has been run with "dnu restore --lock"
+                    Reports.Information.WriteLine(lockFile.Diagnostics.First().Yellow().Bold());
+                    Reports.Information.WriteLine("Updating the invalid lock file with {0}",
+                        "dnu restore --lock".Yellow().Bold());
+                    useLockFile = false;
+                    Lock = true;
+                }
             }
 
             Func<string, string> getVariable = key =>
@@ -276,8 +281,7 @@ namespace Microsoft.Framework.PackageManager
 
             if (useLockFile)
             {
-                var lockFileProvider = new NuGetDependencyResolver(new PackageRepository(packagesDirectory));
-                lockFileProvider.ApplyLockFile(lockFile);
+                var lockFileProvider = new NuGetDependencyResolver(new PackageRepository(packagesDirectory), lockFile);
                 localProviders.Add(
                     new LocalWalkProvider(lockFileProvider));
             }

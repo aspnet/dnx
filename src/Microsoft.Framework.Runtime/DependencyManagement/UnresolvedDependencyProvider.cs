@@ -29,6 +29,11 @@ namespace Microsoft.Framework.Runtime
         {
         }
 
+        public IEnumerable<ICompilationMessage> GetDiagnostics()
+        {
+            return Enumerable.Empty<ICompilationMessage>();
+        }
+
         public IEnumerable<string> GetAttemptedPaths(FrameworkName targetFramework)
         {
             return Enumerable.Empty<string>();

@@ -15,6 +15,7 @@ namespace Microsoft.Framework.Runtime
 {
     public class NuGetDependencyResolver : IDependencyProvider, ILibraryExportProvider
     {
+        private const string _lockFileHint = "Please run \"dnu restore\" to generate a new lock file";
         private IDictionary<Tuple<string, FrameworkName, string>, LockFileTargetLibrary> _lookup;
         private readonly PackageRepository _repository;
 
@@ -24,10 +25,19 @@ namespace Microsoft.Framework.Runtime
         // All the information required by this package
         private readonly Dictionary<string, PackageDescription> _packageDescriptions = new Dictionary<string, PackageDescription>(StringComparer.OrdinalIgnoreCase);
 
-        public NuGetDependencyResolver(PackageRepository repository)
+        private bool _invalidLockFileApplied = false;
+
+        private List<ICompilationMessage> _diagnostics = new List<ICompilationMessage>();
+
+        public NuGetDependencyResolver(PackageRepository repository, LockFile lockFile = null)
         {
             _repository = repository;
             Dependencies = Enumerable.Empty<LibraryDescription>();
+
+            if (lockFile != null)
+            {
+                ApplyLockFile(lockFile);
+            }
         }
 
         public IDictionary<AssemblyName, PackageAssembly> PackageAssemblyLookup
@@ -40,8 +50,16 @@ namespace Microsoft.Framework.Runtime
 
         public IEnumerable<LibraryDescription> Dependencies { get; private set; }
 
-        public void ApplyLockFile(LockFile lockFile)
+        private void ApplyLockFile(LockFile lockFile)
         {
+            if (lockFile.Diagnostics.Any())
+            {
+                _invalidLockFileApplied = true;
+                _diagnostics.AddRange(
+                    lockFile.Diagnostics.Select(message => MakeLockFileDiagnostic(message, lockFile.Path)));
+                return;
+            }
+
             _lookup = new Dictionary<Tuple<string, FrameworkName, string>, LockFileTargetLibrary>();
 
             foreach (var t in lockFile.Targets)
@@ -56,6 +74,12 @@ namespace Microsoft.Framework.Runtime
             _repository.ApplyLockFile(lockFile);
         }
 
+        private static ICompilationMessage MakeLockFileDiagnostic(string message, string lockFilePath)
+        {
+            return new FileFormatMessage($"{message}. {_lockFileHint}.", lockFilePath,
+                CompilationMessageSeverity.Error);
+        }
+
         public IEnumerable<string> GetAttemptedPaths(FrameworkName targetFramework)
         {
             return new[]
@@ -64,8 +88,18 @@ namespace Microsoft.Framework.Runtime
             };
         }
 
+        public IEnumerable<ICompilationMessage> GetDiagnostics()
+        {
+            return _diagnostics;
+        }
+
         public LibraryDescription GetDescription(LibraryRange libraryRange, FrameworkName targetFramework)
         {
+            if (_invalidLockFileApplied)
+            {
+                return null;
+            }
+
             if (libraryRange.IsGacOrFrameworkReference)
             {
                 return null;
@@ -223,6 +257,11 @@ namespace Microsoft.Framework.Runtime
 
         public void Initialize(IEnumerable<LibraryDescription> packages, FrameworkName targetFramework, string runtimeIdentifier)
         {
+            if (_invalidLockFileApplied)
+            {
+                return;
+            }
+
             Dependencies = packages;
 
             var cacheResolvers = GetCacheResolvers();
@@ -352,6 +391,11 @@ namespace Microsoft.Framework.Runtime
 
         public ILibraryExport GetLibraryExport(ILibraryKey target)
         {
+            if (_invalidLockFileApplied)
+            {
+                return null;
+            }
+
             PackageDescription description;
             if (!_packageDescriptions.TryGetValue(target.Name, out description))
             {
