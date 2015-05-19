@@ -61,7 +61,7 @@ var BOOTSTRAPPER_HOST_NAME = 'dnx.host'
 var PROGRAM_FILES_X86 = '${Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86)}'
 var MSBUILD = '${Path.Combine(PROGRAM_FILES_X86, "MSBuild", "14.0", "Bin", "MSBuild.exe")}'
 var VS_REDIST_ROOT = '${Path.Combine(PROGRAM_FILES_X86, @"Microsoft Visual Studio 14.0\VC\redist")}'
-var WIN10_SDK = '${Path.Combine(PROGRAM_FILES_X86, @"Windows Kits\10")}'
+var WIN10_SDK_LIB = '${Path.Combine(PROGRAM_FILES_X86, @"Windows Kits\10\Lib")}'
 var CLANG = '${SearchForClang()}'
 
 var MANAGED_PROJECTS = '${FindAllProjects(
@@ -89,6 +89,8 @@ var WIN_MANAGED_PROJECTS = '${FindAllProjects(
 var RC_FILES = '${FindAllFiles("Resource.rc", BOOTSTRAPPER_FOLDER_NAME, BOOTSTRAPPER_CLR_NAME, BOOTSTRAPPER_CORECLR_NAME)}'
 
 var RUNTIME_TARGETS='${new List<RuntimeTarget>()}'
+
+var CAN_BUILD_ONECORE = '${Directory.Exists(WIN10_SDK_LIB) && Directory.GetFiles(WIN10_SDK_LIB, "onecore.lib", SearchOption.AllDirectories).Any()}'
 
 @{
     // Always build mono
@@ -239,7 +241,7 @@ var RUNTIME_TARGETS='${new List<RuntimeTarget>()}'
         Exec(MSBUILD, bootstrapperProj + " /p:Configuration=" + Configuration2 + ";Platform=Win32;TargetFramework=dnxcore50;RuntimeType=CORECLR_WIN;BuildForOneCore=False");
         Exec(MSBUILD, bootstrapperProj + " /p:Configuration=" + Configuration2 + ";Platform=x64;TargetFramework=dnxcore50;RuntimeType=CORECLR_WIN;BuildForOneCore=False");
 
-        if(Directory.GetFiles(Path.Combine(WIN10_SDK, "Lib"), "onecore.lib", SearchOption.AllDirectories).Any())
+        if(CAN_BUILD_ONECORE)
         {
             Exec(MSBUILD, bootstrapperProj + " /p:Configuration=" + Configuration2 + ";Platform=Win32;TargetFramework=dnx451;RuntimeType=CLR;BuildForOneCore=True");
             Exec(MSBUILD, bootstrapperProj + " /p:Configuration=" + Configuration2 + ";Platform=x64;TargetFramework=dnx451;RuntimeType=CLR;BuildForOneCore=True");
@@ -259,16 +261,18 @@ var RUNTIME_TARGETS='${new List<RuntimeTarget>()}'
     var bootstrapperCoreClrProj = '${Path.Combine(ROOT, "src", BOOTSTRAPPER_CORECLR_NAME, BOOTSTRAPPER_CORECLR_NAME + ".vcxproj")}'
 
     @{
-        var environmentRuntimeTargetOS = Environment.GetEnvironmentVariable("RUNTIME_TARGET_OS");
-        var configRuntimeTargetOS = "";
-        
-        if (environmentRuntimeTargetOS == "WIN7_PLUS_CORESYSTEM")
-        {
-            configRuntimeTargetOS = ";RuntimeTargetOS=WIN7_PLUS_CORESYSTEM";
-        }
+        Exec(MSBUILD, bootstrapperCoreClrProj + " /p:Configuration=" + Configuration2 + ";Platform=Win32;BuildForOneCore=False");
+        Exec(MSBUILD, bootstrapperCoreClrProj + " /p:Configuration=" + Configuration2 + ";Platform=x64;BuildForOneCore=False");
 
-        Exec(MSBUILD, bootstrapperCoreClrProj + " /p:Configuration=" + Configuration2 + ";Platform=Win32" + configRuntimeTargetOS);
-        Exec(MSBUILD, bootstrapperCoreClrProj + " /p:Configuration=" + Configuration2 + ";Platform=x64" + configRuntimeTargetOS);
+        if(CAN_BUILD_ONECORE)
+        {
+            Exec(MSBUILD, bootstrapperCoreClrProj + " /p:Configuration=" + Configuration2 + ";Platform=Win32;BuildForOneCore=True");
+            Exec(MSBUILD, bootstrapperCoreClrProj + " /p:Configuration=" + Configuration2 + ";Platform=x64;BuildForOneCore=True");
+        }
+        else
+        {
+            Log.Warn("Windows 10 SDK not installed. Building for One Core skipped.");
+        }
     }
 
     directory delete='${Path.Combine(BUILD_DIR2, BOOTSTRAPPER_CORECLR_NAME)}'

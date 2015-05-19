@@ -235,7 +235,11 @@ int CallApplicationProcessMain(int argc, LPTSTR argv[])
     bool fSuccess = true;
     HMODULE m_hHostModule = nullptr;
 #if CORECLR_WIN
-    LPCTSTR pwzHostModuleName = _T("dnx.coreclr.dll");
+#if ONECORE
+        LPCTSTR pwzHostModuleName = _T("dnx.onecore.coreclr.dll");
+#else
+        LPCTSTR pwzHostModuleName = _T("dnx.win32.coreclr.dll");
+#endif
 #elif CORECLR_DARWIN
     LPCTSTR pwzHostModuleName = _T("dnx.coreclr.dylib");
 #elif CORECLR_LINUX

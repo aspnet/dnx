@@ -21,6 +21,9 @@
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <Import Project="$(MSBuildThisFileDirectory)..\..\Build\Dnx.Native.Settings" />
   <ItemDefinitionGroup>
+    <ClCompile>
+      <PreprocessorDefinitions Condition="'$(BuildForOneCore)' == 'True'">ONECORE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ClCompile>
     <Link>
       <Subsystem>Console</Subsystem>
       <ModuleDefinitionFile>dnx.def</ModuleDefinitionFile>

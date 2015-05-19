@@ -260,7 +260,6 @@ bool Win32KDisable()
     bool fSuccess = true;
     TCHAR szWin32KDisable[2] = {};
     LPWSTR lpwszModuleFileName = L"api-ms-win-core-processthreads-l1-1-1.dll";
-    DWORD dwModuleFileName = 0;
     HMODULE hProcessThreadsModule = nullptr;
     // Note: Need to keep as ASCII as GetProcAddress function takes ASCII params
     LPCSTR pszSetProcessMitigationPolicy = "SetProcessMitigationPolicy";
@@ -322,7 +321,7 @@ Finished:
     return fSuccess;
 }
 
-extern "C" __declspec(dllexport) HRESULT __stdcall CallApplicationMain(PCALL_APPLICATION_MAIN_DATA data)
+extern "C" HRESULT __stdcall CallApplicationMain(PCALL_APPLICATION_MAIN_DATA data)
 {
     HRESULT hr = S_OK;
     errno_t errno = 0;
