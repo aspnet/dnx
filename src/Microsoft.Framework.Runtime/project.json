@@ -3,16 +3,7 @@
     "description": "ASP.NET 5 runtime infrastructure for loading NuGet packages and projects.",
     "compilationOptions": { "define": [ "LOADER", "TRACE" ], "allowUnsafe": true, "warningsAsErrors": true },
     "compile": [
-        "../../submodules/FileSystem/src/Microsoft.Framework.FileSystemGlobbing/**/*.cs",
-        "../Microsoft.Framework.Runtime.Hosting/ProjectFilesCollection.cs",
-        "../Microsoft.Framework.Runtime.Hosting/PatternsCollectionHelper.cs",
-        "../Microsoft.Framework.Runtime.Hosting/NamedResourceReader.cs",
-        "../Microsoft.Framework.Runtime.Hosting/PatternGroup.cs",
-        "../Microsoft.Framework.Runtime.Hosting/FileFormatException.cs",
-        "../Microsoft.Framework.Runtime.Hosting/FileFormatMessage.cs",
-        "../Microsoft.Framework.Runtime.Hosting/Dependencies/FrameworkDefinitions.cs",
-        "../Microsoft.Framework.Runtime.Hosting/Dependencies/FrameworkInformation.cs",
-        "../Microsoft.Framework.Runtime.Hosting/Json/*.cs"
+        "../../submodules/FileSystem/src/Microsoft.Framework.FileSystemGlobbing/**/*.cs"
     ],
     "preprocess": [
         "../../ext/compiler/preprocess/Internalization.cs"

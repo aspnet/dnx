@@ -1,12 +1,3 @@
 [submodule "submodules/FileSystem"]
 	path = submodules/FileSystem
 	url = https://github.com/aspnet/FileSystem.git
-[submodule "submodules/NuGet.Versioning"]
-	path = submodules/NuGet.Versioning
-	url = https://github.com/NuGet/NuGet.Versioning
-[submodule "submodules/NuGet.Packaging"]
-	path = submodules/NuGet.Packaging
-	url = https://github.com/NuGet/NuGet.Packaging
-[submodule "submodules/Logging"]
-	path = submodules/Logging
-	url = https://github.com/aspnet/Logging

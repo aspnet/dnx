@@ -6,7 +6,7 @@
     "Microsoft.Framework.Runtime.Abstractions": "1.0.0-*"
   },
   "compile": [
-    "../Microsoft.Framework.Runtime.Hosting/Json/*.cs"
+    "../Microsoft.Framework.Runtime/Json/*.cs"
   ],
   "frameworks": {
     "dnx451": {
