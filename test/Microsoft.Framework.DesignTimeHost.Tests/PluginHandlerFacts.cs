@@ -810,9 +810,11 @@ namespace Microsoft.Framework.DesignTimeHost
 
             public int Protocol { get; set; } = 1;
 
-            public void ProcessMessage(JObject data, IAssemblyLoadContext assemblyLoadContext)
+            public bool ProcessMessage(JObject data, IAssemblyLoadContext assemblyLoadContext)
             {
                 _messageBroker.SendMessage(data["Data"].ToString() + "!");
+
+                return true;
             }
         }
 
@@ -820,8 +822,9 @@ namespace Microsoft.Framework.DesignTimeHost
         {
             public int Protocol { get; set; } = 3;
 
-            public virtual void ProcessMessage(JObject data, IAssemblyLoadContext assemblyLoadContext)
+            public virtual bool ProcessMessage(JObject data, IAssemblyLoadContext assemblyLoadContext)
             {
+                return true;
             }
         }
 
@@ -838,7 +841,7 @@ namespace Microsoft.Framework.DesignTimeHost
 
             public int Protocol { get; set; } = 1;
 
-            public virtual void ProcessMessage(JObject data, IAssemblyLoadContext assemblyLoadContext)
+            public virtual bool ProcessMessage(JObject data, IAssemblyLoadContext assemblyLoadContext)
             {
                 throw new InvalidOperationException("Cannot process messages.");
             }
@@ -856,9 +859,11 @@ namespace Microsoft.Framework.DesignTimeHost
                 _messageBroker = messageBroker;
             }
 
-            public override void ProcessMessage(JObject data, IAssemblyLoadContext assemblyLoadContext)
+            public override bool ProcessMessage(JObject data, IAssemblyLoadContext assemblyLoadContext)
             {
                 _messageBroker.SendMessage("Created");
+
+                return true;
             }
         }
 
@@ -872,9 +877,11 @@ namespace Microsoft.Framework.DesignTimeHost
                 _messageBroker = messageBroker;
             }
 
-            public override void ProcessMessage(JObject data, IAssemblyLoadContext assemblyLoadContext)
+            public override bool ProcessMessage(JObject data, IAssemblyLoadContext assemblyLoadContext)
             {
                 _messageBroker.SendMessage(assemblyLoadContext);
+
+                return true;
             }
         }
 

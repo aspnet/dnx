@@ -8,6 +8,7 @@ namespace Microsoft.Framework.DesignTimeHost.Models.IncomingMessages
     public class PluginMessage
     {
         public string PluginId { get; set; }
+        public string MessageId { get; set; }
         public string MessageName { get; set; }
         public JObject Data { get; set; }
     }
