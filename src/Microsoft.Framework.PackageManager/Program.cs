@@ -529,14 +529,12 @@ namespace Microsoft.Framework.PackageManager
 
         private Reports CreateReports(bool verbose, bool quiet)
         {
-            var useConsoleColor = _runtimeEnv.OperatingSystem == "Windows";
-
-            IReport output = new Report(AnsiConsole.GetOutput(useConsoleColor));
+            IReport output = new Report(AnsiConsole.Output);
             var reports = new Reports()
             {
                 Information = output,
                 Verbose = verbose ? output : new NullReport(),
-                Error = new Report(AnsiConsole.GetError(useConsoleColor)),
+                Error = new Report(AnsiConsole.Error),
             };
 
             // If "--verbose" and "--quiet" are specified together, "--verbose" wins
