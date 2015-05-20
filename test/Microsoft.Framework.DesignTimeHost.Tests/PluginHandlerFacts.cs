@@ -59,7 +59,8 @@ namespace Microsoft.Framework.DesignTimeHost
 
             var messageBrokerData = Assert.IsType<PluginMessageBroker.PluginMessageWrapperData>(rawMessageBrokerData);
             Assert.Equal(RandomGuidId, messageBrokerData.PluginId);
-            var responseMessage = Assert.IsType<PluginResponseMessage>(messageBrokerData.Data);
+            PluginResponseMessage responseMessage =
+                Assert.IsType<RegisterPluginResponseMessage>(messageBrokerData.Data);
             Assert.False(responseMessage.Success);
             Assert.Equal("RegisterPlugin", responseMessage.MessageName, StringComparer.Ordinal);
             Assert.NotEmpty(responseMessage.Error);
@@ -115,7 +116,7 @@ namespace Microsoft.Framework.DesignTimeHost
 
             var messageBrokerData = Assert.IsType<PluginMessageBroker.PluginMessageWrapperData>(rawMessageBrokerData);
             Assert.Equal(RandomGuidId, messageBrokerData.PluginId);
-            var responseMessage = Assert.IsType<PluginResponseMessage>(messageBrokerData.Data);
+            var responseMessage = Assert.IsType<RegisterPluginResponseMessage>(messageBrokerData.Data);
             Assert.False(responseMessage.Success);
             Assert.Equal("RegisterPlugin", responseMessage.MessageName, StringComparer.Ordinal);
             Assert.NotEmpty(responseMessage.Error);
@@ -125,9 +126,10 @@ namespace Microsoft.Framework.DesignTimeHost
 
             messageBrokerData = Assert.IsType<PluginMessageBroker.PluginMessageWrapperData>(rawMessageBrokerData);
             Assert.Equal(RandomGuidId, messageBrokerData.PluginId);
-            responseMessage = Assert.IsType<PluginResponseMessage>(messageBrokerData.Data);
+            responseMessage = Assert.IsType<RegisterPluginResponseMessage>(messageBrokerData.Data);
             Assert.True(responseMessage.Success);
             Assert.Equal("RegisterPlugin", responseMessage.MessageName, StringComparer.Ordinal);
+            Assert.Equal(1, responseMessage.Protocol);
             Assert.Null(responseMessage.Error);
             Assert.True(creationChecker.Created);
         }
@@ -286,9 +288,10 @@ namespace Microsoft.Framework.DesignTimeHost
             Assert.NotNull(rawMessageBrokerData);
             var messageBrokerData = Assert.IsType<PluginMessageBroker.PluginMessageWrapperData>(rawMessageBrokerData);
             Assert.Equal(RandomGuidId, messageBrokerData.PluginId);
-            var responseMessage = Assert.IsType<PluginResponseMessage>(messageBrokerData.Data);
+            var responseMessage = Assert.IsType<RegisterPluginResponseMessage>(messageBrokerData.Data);
             Assert.True(responseMessage.Success);
             Assert.Equal("RegisterPlugin", responseMessage.MessageName, StringComparer.Ordinal);
+            Assert.Equal(1, responseMessage.Protocol);
             Assert.Null(responseMessage.Error);
         }
 
@@ -376,6 +379,70 @@ namespace Microsoft.Framework.DesignTimeHost
             Assert.Same(assemblyLoadContext, wrappedData.Data);
         }
 
+        [Theory]
+        [InlineData(1, 1)]
+        [InlineData(2, 2)]
+        [InlineData(3, 3)]
+        [InlineData(4, 3)]
+        [InlineData(5, 3)]
+        public void ProcessMessages_RegisterPlugin_SendsCorrectProtocol(int clientProtocol, int expectedProtocol)
+        {
+            var assemblyLoadContext = CreateTestAssemblyLoadContext<TestPlugin>();
+            var serviceProvider = new TestServiceProvider();
+            object rawWrappedData = null;
+            var pluginHandler = new PluginHandler(serviceProvider, (data) => rawWrappedData = data);
+            var pluginMessage = new PluginMessage
+            {
+                Data = new JObject
+                {
+                    { "AssemblyName", "CustomAssembly" },
+                    { "TypeName", typeof(TestPlugin).FullName },
+                    { "Protocol", clientProtocol }
+                },
+                MessageName = "RegisterPlugin",
+                PluginId = RandomGuidId
+            };
+
+            pluginHandler.OnReceive(pluginMessage);
+            pluginHandler.ProcessMessages(assemblyLoadContext);
+
+            var messageBrokerData = Assert.IsType<PluginMessageBroker.PluginMessageWrapperData>(rawWrappedData);
+            Assert.Equal(RandomGuidId, messageBrokerData.PluginId);
+            var responseMessage = Assert.IsType<RegisterPluginResponseMessage>(messageBrokerData.Data);
+            Assert.True(responseMessage.Success);
+            Assert.Equal("RegisterPlugin", responseMessage.MessageName, StringComparer.Ordinal);
+            Assert.Equal(expectedProtocol, responseMessage.Protocol);
+        }
+
+        [Fact]
+        public void ProcessMessages_RegisterPlugin_SendsPluginsProtocolWhenClientProtocolNotProvided()
+        {
+            var assemblyLoadContext = CreateTestAssemblyLoadContext<TestPlugin>();
+            var serviceProvider = new TestServiceProvider();
+            object rawWrappedData = null;
+            var pluginHandler = new PluginHandler(serviceProvider, (data) => rawWrappedData = data);
+            var pluginMessage = new PluginMessage
+            {
+                Data = new JObject
+                {
+                    { "AssemblyName", "CustomAssembly" },
+                    { "TypeName", typeof(TestPlugin).FullName },
+                },
+                MessageName = "RegisterPlugin",
+                PluginId = RandomGuidId
+            };
+
+            pluginHandler.OnReceive(pluginMessage);
+            pluginHandler.ProcessMessages(assemblyLoadContext);
+
+            var messageBrokerData = Assert.IsType<PluginMessageBroker.PluginMessageWrapperData>(rawWrappedData);
+            Assert.Equal(RandomGuidId, messageBrokerData.PluginId);
+            var responseMessage = Assert.IsType<RegisterPluginResponseMessage>(messageBrokerData.Data);
+            Assert.True(responseMessage.Success);
+            Assert.Equal("RegisterPlugin", responseMessage.MessageName, StringComparer.Ordinal);
+            Assert.Equal(3, responseMessage.Protocol);
+        }
+
         [Fact]
         public void ProcessMessages_RegisterPlugin_SendsErrorWhenUnableToLocatePluginType()
         {
@@ -402,7 +469,7 @@ namespace Microsoft.Framework.DesignTimeHost
 
             var messageBrokerData = Assert.IsType<PluginMessageBroker.PluginMessageWrapperData>(rawWrappedData);
             Assert.Equal(RandomGuidId, messageBrokerData.PluginId);
-            var responseMessage = Assert.IsType<PluginResponseMessage>(messageBrokerData.Data);
+            var responseMessage = Assert.IsType<RegisterPluginResponseMessage>(messageBrokerData.Data);
             Assert.False(responseMessage.Success);
             Assert.Equal("RegisterPlugin", responseMessage.MessageName, StringComparer.Ordinal);
             Assert.Equal(expectedErrorMessage, responseMessage.Error, StringComparer.Ordinal);
@@ -435,7 +502,7 @@ namespace Microsoft.Framework.DesignTimeHost
 
             var messageBrokerData = Assert.IsType<PluginMessageBroker.PluginMessageWrapperData>(rawWrappedData);
             Assert.Equal(RandomGuidId, messageBrokerData.PluginId);
-            var responseMessage = Assert.IsType<PluginResponseMessage>(messageBrokerData.Data);
+            var responseMessage = Assert.IsType<RegisterPluginResponseMessage>(messageBrokerData.Data);
             Assert.False(responseMessage.Success);
             Assert.Equal("RegisterPlugin", responseMessage.MessageName, StringComparer.Ordinal);
             Assert.Equal(expectedErrorMessage, responseMessage.Error, StringComparer.Ordinal);
@@ -741,6 +808,8 @@ namespace Microsoft.Framework.DesignTimeHost
                 _messageBroker = messageBroker;
             }
 
+            public int Protocol { get; set; } = 1;
+
             public void ProcessMessage(JObject data, IAssemblyLoadContext assemblyLoadContext)
             {
                 _messageBroker.SendMessage(data["Data"].ToString() + "!");
@@ -749,6 +818,8 @@ namespace Microsoft.Framework.DesignTimeHost
 
         private class TestPlugin : IPlugin
         {
+            public int Protocol { get; set; } = 3;
+
             public virtual void ProcessMessage(JObject data, IAssemblyLoadContext assemblyLoadContext)
             {
             }
@@ -764,6 +835,8 @@ namespace Microsoft.Framework.DesignTimeHost
             {
                 creationChecker.Created = true;
             }
+
+            public int Protocol { get; set; } = 1;
 
             public virtual void ProcessMessage(JObject data, IAssemblyLoadContext assemblyLoadContext)
             {

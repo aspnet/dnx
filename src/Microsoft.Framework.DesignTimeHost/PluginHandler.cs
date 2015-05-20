@@ -178,7 +178,7 @@ namespace Microsoft.Framework.DesignTimeHost
             IAssemblyLoadContext assemblyLoadContext)
         {
             var registerData = message.Data.ToObject<PluginRegisterData>();
-            var response = new PluginResponseMessage
+            var response = new RegisterPluginResponseMessage
             {
                 MessageName = RegisterPluginMessageName
             };
@@ -219,7 +219,7 @@ namespace Microsoft.Framework.DesignTimeHost
             }
             else
             {
-                // We build out a custom plugin service provider to add a PluginMessageBroker and 
+                // We build out a custom plugin service provider to add a PluginMessageBroker and
                 // IAssemblyLoadContext to the potential services that can be used to construct an IPlugin.
                 var pluginServiceProvider = new PluginServiceProvider(
                     _hostServices,
@@ -240,8 +240,26 @@ namespace Microsoft.Framework.DesignTimeHost
 
             Debug.Assert(plugin != null);
 
+            int resolvedProtocol;
+
+            if (!registerData.Protocol.HasValue)
+            {
+                // Protocol wasn't provided, use the plugin's protocol.
+                resolvedProtocol = plugin.Protocol;
+            }
+            else
+            {
+                // Client and plugin protocols are max values; meaning support is <= value. The goal in this method is
+                // to return the maximum protocol supported by both parties (client and plugin).
+                resolvedProtocol = Math.Min(registerData.Protocol.Value, plugin.Protocol);
+
+                // Update the plugins protocol to be the resolved protocol.
+                plugin.Protocol = resolvedProtocol;
+            }
+
             _registeredPlugins[pluginId] = plugin;
 
+            response.Protocol = resolvedProtocol;
             response.Success = true;
 
             return response;
@@ -302,6 +320,7 @@ namespace Microsoft.Framework.DesignTimeHost
         {
             public string AssemblyName { get; set; }
             public string TypeName { get; set; }
+            public int? Protocol { get; set; }
 
             public string GetFullTypeCacheKey()
             {
