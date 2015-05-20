@@ -3,9 +3,7 @@
 
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using Microsoft.Framework.PackageManager;
 
 namespace NuGet
 {
@@ -15,14 +13,11 @@ namespace NuGet
 
         public CommandLineMachineWideSettings()
         {
-#if DNX451
-            var baseDirectory = Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData);
-#else
-            var baseDirectory = Environment.GetEnvironmentVariable("ProgramData");
-#endif
+            string machineWideConfigDir = DnuEnvironment.GetFolderPath(DnuFolderPath.MachineWideConfigDirectory);
+
             _settings = new Lazy<IEnumerable<NuGet.Settings>>(
                 () => NuGet.Settings.LoadMachineWideSettings(
-                    new PhysicalFileSystem(baseDirectory)));
+                    new PhysicalFileSystem(machineWideConfigDir)));
         }
 
         public IEnumerable<Settings> Settings
