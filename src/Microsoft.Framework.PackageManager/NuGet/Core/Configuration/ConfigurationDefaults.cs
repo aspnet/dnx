@@ -5,7 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Xml.Linq;
+using Microsoft.Framework.PackageManager;
 
 namespace NuGet
 {
@@ -21,13 +21,8 @@ namespace NuGet
 
         private static ConfigurationDefaults InitializeInstance()
         {
-#if DNX451
-            var commonAppData = Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData);
-#else
-            var commonAppData = Environment.GetEnvironmentVariable("ProgramData");
-#endif
-            var baseDirectory = Path.Combine(commonAppData, "NuGet");
-            PhysicalFileSystem fileSystem = new PhysicalFileSystem(baseDirectory);
+            var machineWideSettingsDir = DnuEnvironment.GetFolderPath(DnuFolderPath.MachineWideSettingsBaseDirectory);
+            PhysicalFileSystem fileSystem = new PhysicalFileSystem(machineWideSettingsDir);
             return new ConfigurationDefaults(fileSystem, ConfigurationDefaultsFile);
         }
 

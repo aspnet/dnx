@@ -223,13 +223,8 @@ namespace Microsoft.Framework.PackageManager.Restore.NuGet
             var baseFolderName = RemoveInvalidFileNameChars(ComputeHash(_baseUri));
             var baseFileName = RemoveInvalidFileNameChars(cacheKey) + ".dat";
 
-#if DNX451
-            var localAppDataFolder = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
-#else
-            var localAppDataFolder = Environment.GetEnvironmentVariable("LocalAppData");
-#endif
-            var cacheFolder = Path.Combine(localAppDataFolder, "dnu", "cache", baseFolderName);
-            var cacheFile = Path.Combine(cacheFolder, baseFileName);
+            var cacheFolder = DnuEnvironment.GetFolderPath(DnuFolderPath.HttpCacheDirectory);
+            var cacheFile = Path.Combine(cacheFolder, baseFolderName, baseFileName);
 
             if (!Directory.Exists(cacheFolder) && !cacheAgeLimit.Equals(TimeSpan.Zero))
             {
