@@ -50,7 +50,7 @@ namespace Microsoft.Framework.PackageManager.Publish
 
         public bool Emit()
         {
-            Reports.Quiet.WriteLine("Copying to output path {0}", OutputPath);
+            Reports.Information.WriteLine("Copying to output path {0}", OutputPath);
 
             var mainProject = Projects.Single(project => project.Name == _project.Name);
 

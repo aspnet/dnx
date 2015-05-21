@@ -118,8 +118,12 @@ namespace Microsoft.Framework.PackageManager.Publish
             buildOptions.ProjectDir = project.ProjectDirectory;
             buildOptions.OutputDir = Path.Combine(project.ProjectDirectory, "bin");
             buildOptions.Configurations.Add(root.Configuration);
-            buildOptions.Reports = root.Reports;
             buildOptions.GeneratePackages = true;
+            buildOptions.Reports = root.Reports.ShallowCopy();
+
+            // Mute "dnu pack" completely if it is invoked by "dnu publish --quiet"
+            buildOptions.Reports.Information = root.Reports.Quiet;
+
             var buildManager = new BuildManager(root.HostServices, buildOptions);
             if (!buildManager.Build())
             {
@@ -419,7 +423,11 @@ namespace Microsoft.Framework.PackageManager.Publish
                 restoreCommand.CheckHashFile = false;
                 restoreCommand.RestoreDirectories.Add(restoreDirectory);
                 restoreCommand.FeedOptions = feedOptions;
-                restoreCommand.Reports = root.Reports;
+                restoreCommand.Reports = root.Reports.ShallowCopy();
+
+                // Mute "dnu restore" completely if it is invoked by "dnu publish --quiet"
+                restoreCommand.Reports.Information = root.Reports.Quiet;
+
                 tasks[i] = restoreCommand.Execute();
             }
 

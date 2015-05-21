@@ -9,5 +9,10 @@ namespace Microsoft.Framework.PackageManager
         public IReport Verbose { get; set; }
         public IReport Quiet { get; set; }
         public IReport Error { get; set; }
+
+        public Reports ShallowCopy()
+        {
+            return MemberwiseClone() as Reports;
+        }
     }
 }

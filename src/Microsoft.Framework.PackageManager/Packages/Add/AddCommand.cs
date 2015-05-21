@@ -23,7 +23,7 @@ namespace Microsoft.Framework.PackageManager.Packages
             LocalPackages = Options.SourcePackages ??
                 NuGetDependencyResolver.ResolveRepositoryPath(Directory.GetCurrentDirectory());
 
-            Options.Reports.Information.WriteLine(string.Format("Adding NuGet package {0} to {1}",
+            Options.Reports.Quiet.WriteLine(string.Format("Adding NuGet package {0} to {1}",
                 Options.NuGetPackage.Bold(), LocalPackages.Bold()));
 
             var sw = new Stopwatch();
@@ -33,10 +33,10 @@ namespace Microsoft.Framework.PackageManager.Packages
 
             using (var stream = File.OpenRead(Options.NuGetPackage))
             {
-                await NuGetPackageUtils.InstallFromStream(stream, library, LocalPackages, Reports.Information);
+                await NuGetPackageUtils.InstallFromStream(stream, library, LocalPackages, Reports.Quiet);
             }
 
-            Reports.Information.WriteLine(
+            Reports.Quiet.WriteLine(
                 "{0}, {1}ms elapsed",
                 "Add complete".Green().Bold(),
                 sw.ElapsedMilliseconds);
