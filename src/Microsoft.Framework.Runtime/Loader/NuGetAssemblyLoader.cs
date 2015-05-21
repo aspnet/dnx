@@ -11,7 +11,7 @@ namespace Microsoft.Framework.Runtime.Loader
         private readonly NuGetDependencyResolver _dependencyResolver;
         private readonly IAssemblyLoadContextAccessor _loadContextAccessor;
 
-        public NuGetAssemblyLoader(IAssemblyLoadContextAccessor loadContextAccessor, 
+        public NuGetAssemblyLoader(IAssemblyLoadContextAccessor loadContextAccessor,
                                    NuGetDependencyResolver dependencyResolver)
         {
             _dependencyResolver = dependencyResolver;
@@ -25,8 +25,9 @@ namespace Microsoft.Framework.Runtime.Loader
 
         public Assembly Load(AssemblyName assemblyName, IAssemblyLoadContext loadContext)
         {
+            // TODO: preserve name and culture info (we don't need to look at any other information)
             PackageAssembly assemblyInfo;
-            if (_dependencyResolver.PackageAssemblyLookup.TryGetValue(assemblyName, out assemblyInfo))
+            if (_dependencyResolver.PackageAssemblyLookup.TryGetValue(new AssemblyName(assemblyName.Name), out assemblyInfo))
             {
                 return loadContext.LoadFile(assemblyInfo.Path);
             }
