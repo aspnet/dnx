@@ -172,7 +172,7 @@ namespace Microsoft.Framework.PackageManager
             }
 
             library.Dependencies = ReadObject(json["dependencies"] as JObject, ReadPackageDependency);
-            library.FrameworkAssemblies = ReadArray(json["frameworkAssemblies"] as JArray, ReadFrameworkAssemblyReference);
+            library.FrameworkAssemblies = new HashSet<string>(ReadArray(json["frameworkAssemblies"] as JArray, ReadFrameworkAssemblyReference), StringComparer.OrdinalIgnoreCase);
             library.RuntimeAssemblies = ReadObject(json["runtime"] as JObject, ReadFileItem);
             library.CompileTimeAssemblies = ReadObject(json["compile"] as JObject, ReadFileItem);
             library.ResourceAssemblies = ReadObject(json["resource"] as JObject, ReadFileItem);
@@ -230,56 +230,6 @@ namespace Microsoft.Framework.PackageManager
             return new JProperty(
                 frameworkInfo.FrameworkName,
                 WriteArray(frameworkInfo.Dependencies, WriteString));
-        }
-
-        private IList<FrameworkAssemblyReference> ReadFrameworkAssemblies(JObject json)
-        {
-            var frameworkSets = ReadObject(json, (property, child) => new
-            {
-                FrameworkName = property,
-                AssemblyNames = ReadArray(child as JArray, ReadString)
-            });
-
-            return frameworkSets.SelectMany(frameworkSet =>
-            {
-                if (frameworkSet.FrameworkName == "*")
-                {
-                    return frameworkSet.AssemblyNames.Select(name => new FrameworkAssemblyReference(name));
-                }
-                else
-                {
-                    var supportedFrameworks = new[] { new FrameworkName(frameworkSet.FrameworkName) };
-                    return frameworkSet.AssemblyNames.Select(name => new FrameworkAssemblyReference(name, supportedFrameworks));
-                }
-            }).ToList();
-        }
-
-        private void WriteFrameworkAssemblies(JToken json, string property, IList<FrameworkAssemblyReference> frameworkAssemblies)
-        {
-            if (frameworkAssemblies.Any())
-            {
-                json[property] = WriteFrameworkAssemblies(frameworkAssemblies);
-            }
-        }
-
-        private JToken WriteFrameworkAssemblies(IList<FrameworkAssemblyReference> frameworkAssemblies)
-        {
-            var groups = frameworkAssemblies.SelectMany(x =>
-            {
-                if (x.SupportedFrameworks.Any())
-                {
-                    return x.SupportedFrameworks.Select(xx => new { x.AssemblyName, FrameworkName = xx });
-                }
-                else
-                {
-                    return new[] { new { x.AssemblyName, FrameworkName = default(FrameworkName) } };
-                }
-            }).GroupBy(x => x.FrameworkName);
-
-            return WriteObject(groups, group =>
-            {
-                return new JProperty(group.Key?.ToString() ?? "*", group.Select(x => new JValue(x.AssemblyName)));
-            });
         }
 
         private PackageDependencySet ReadPackageDependencySet(string property, JToken json)

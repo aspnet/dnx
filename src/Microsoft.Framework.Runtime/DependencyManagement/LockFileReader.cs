@@ -133,7 +133,7 @@ namespace Microsoft.Framework.Runtime.DependencyManagement
             }
 
             library.Dependencies = ReadObject(jobject.ValueAsJsonObject("dependencies"), ReadPackageDependency);
-            library.FrameworkAssemblies = ReadArray(jobject.Value("frameworkAssemblies"), ReadFrameworkAssemblyReference);
+            library.FrameworkAssemblies = new HashSet<string>(ReadArray(jobject.Value("frameworkAssemblies"), ReadFrameworkAssemblyReference), StringComparer.OrdinalIgnoreCase);
             library.RuntimeAssemblies = ReadObject(jobject.ValueAsJsonObject("runtime"), ReadFileItem);
             library.CompileTimeAssemblies = ReadObject(jobject.ValueAsJsonObject("compile"), ReadFileItem);
             library.ResourceAssemblies = ReadObject(jobject.ValueAsJsonObject("resource"), ReadFileItem);
