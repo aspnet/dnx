@@ -55,9 +55,9 @@
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
     <Target Name="CopyManagedForDebuggingLocally" AfterTargets="Build" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-        <Copy SourceFiles="$(SolutionDir)\bin\$(Platform)\$(Configuration)\$(ProjectName).dll"
+        <Copy SourceFiles="bin\$(Platform)\$(Configuration)\$(ProjectName).dll"
               DestinationFolder="$(SolutionDir)\artifacts\build\dnx-coreclr-win-x86\bin" />
-        <Copy SourceFiles="$(SolutionDir)\bin\$(Platform)\$(Configuration)\$(ProjectName).pdb"
+        <Copy SourceFiles="bin\$(Platform)\$(Configuration)\$(ProjectName).pdb"
               DestinationFolder="$(SolutionDir)\artifacts\build\dnx-coreclr-win-x86\bin" />
     </Target>
 </Project>
