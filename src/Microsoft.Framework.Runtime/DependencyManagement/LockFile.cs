@@ -17,29 +17,19 @@ namespace Microsoft.Framework.Runtime.DependencyManagement
 
         public bool IsValidForProject(Project project, out string message)
         {
-            message = null;
-
             if (Version != LockFileReader.Version)
             {
-                message = $"The expected lock file version ({LockFileReader.Version}) does not match the actual version ({Version}).";
+                message = $"The expected lock file version does not match the actual version";
                 return false;
             }
+
+            message = $"Dependencies in {Project.ProjectFileName} were modified";
 
             var actualTargetFrameworks = project.GetTargetFrameworks();
 
             // The lock file should contain dependencies for each framework plus dependencies shared by all frameworks
-            var frameworkNumDiff = ProjectFileDependencyGroups.Count - (actualTargetFrameworks.Count() + 1);
-            if (frameworkNumDiff != 0)
+            if (ProjectFileDependencyGroups.Count != actualTargetFrameworks.Count() + 1)
             {
-                if (frameworkNumDiff < 0)
-                {
-                    message = $"One or more frameworks were added to {Project.ProjectFileName}";
-                }
-                else
-                {
-                    message = $"One or more frameworks were removed from {Project.ProjectFileName}";
-                }
-
                 return false;
             }
 
@@ -60,7 +50,6 @@ namespace Microsoft.Framework.Runtime.DependencyManagement
                             string.Equals(f.FrameworkName.ToString(), group.FrameworkName, StringComparison.Ordinal));
                     if (framework == null)
                     {
-                        message = $"The framework '{group.FrameworkName}' was removed from {Project.ProjectFileName}";
                         return false;
                     }
 
@@ -69,19 +58,11 @@ namespace Microsoft.Framework.Runtime.DependencyManagement
 
                 if (!actualDependencies.SequenceEqual(expectedDependencies))
                 {
-                    if (string.IsNullOrEmpty(group.FrameworkName))
-                    {
-                        message = $"Shared dependencies in {Project.ProjectFileName} were modified";
-                    }
-                    else
-                    {
-                        message = $"Dependencies of framework '{group.FrameworkName}' in {Project.ProjectFileName} were modified";
-                    }
-
                     return false;
                 }
             }
 
+            message = null;
             return true;
         }
     }
