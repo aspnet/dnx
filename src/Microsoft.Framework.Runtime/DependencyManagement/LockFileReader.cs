@@ -172,9 +172,9 @@ namespace Microsoft.Framework.Runtime.DependencyManagement
             return item;
         }
 
-        private FrameworkAssemblyReference ReadFrameworkAssemblyReference(JsonValue json)
+        private string ReadFrameworkAssemblyReference(JsonValue json)
         {
-            return new FrameworkAssemblyReference(ReadString(json));
+            return ReadString(json);
         }
 
         private IList<TItem> ReadArray<TItem>(JsonValue json, Func<JsonValue, TItem> readItem)

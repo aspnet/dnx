@@ -201,7 +201,10 @@ namespace Microsoft.Framework.PackageManager.Utils
                     continue;
                 }
 
-                lockFileLib.FrameworkAssemblies.Add(assemblyReference);
+                if (!lockFileLib.FrameworkAssemblies.Contains(assemblyReference.AssemblyName))
+                {
+                    lockFileLib.FrameworkAssemblies.Add(assemblyReference.AssemblyName);
+                }
             }
         }
 

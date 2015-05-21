@@ -38,7 +38,7 @@ namespace Microsoft.Framework.Runtime.DependencyManagement
 
         public IList<PackageDependency> Dependencies { get; set; } = new List<PackageDependency>();
 
-        public IList<FrameworkAssemblyReference> FrameworkAssemblies { get; set; } = new List<FrameworkAssemblyReference>();
+        public IList<string> FrameworkAssemblies { get; set; } = new List<string>();
 
         public IList<LockFileItem> RuntimeAssemblies { get; set; } = new List<LockFileItem>();
 

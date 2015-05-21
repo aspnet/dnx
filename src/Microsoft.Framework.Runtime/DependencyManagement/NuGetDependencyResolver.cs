@@ -145,13 +145,13 @@ namespace Microsoft.Framework.Runtime
                     };
                 }
 
-                foreach (var fa in targetLibrary.FrameworkAssemblies)
+                foreach (var frameworkAssembly in targetLibrary.FrameworkAssemblies)
                 {
                     yield return new LibraryDependency
                     {
                         LibraryRange = new LibraryRange
                         {
-                            Name = fa.AssemblyName,
+                            Name = frameworkAssembly,
                             IsGacOrFrameworkReference = true
                         }
                     };

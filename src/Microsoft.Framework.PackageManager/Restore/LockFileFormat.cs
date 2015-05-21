@@ -330,14 +330,14 @@ namespace Microsoft.Framework.PackageManager
                 new JObject(item.Properties.Select(x => new JProperty(x.Key, x.Value))));
         }
 
-        private FrameworkAssemblyReference ReadFrameworkAssemblyReference(JToken json)
+        private string ReadFrameworkAssemblyReference(JToken json)
         {
-            return new FrameworkAssemblyReference(json.Value<string>());
+            return json.Value<string>();
         }
 
-        private JToken WriteFrameworkAssemblyReference(FrameworkAssemblyReference item)
+        private JToken WriteFrameworkAssemblyReference(string item)
         {
-            return new JValue(item.AssemblyName);
+            return new JValue(item);
         }
 
         private PackageReferenceSet ReadPackageReferenceSet(JToken json)
