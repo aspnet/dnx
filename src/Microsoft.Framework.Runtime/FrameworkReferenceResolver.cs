@@ -24,6 +24,10 @@ namespace Microsoft.Framework.Runtime
             { new FrameworkName(VersionUtility.DnxFrameworkIdentifier, new Version(4, 5, 1)), new List<FrameworkName> {
                     new FrameworkName(VersionUtility.NetFrameworkIdentifier, new Version(4, 5, 1))
                 }
+            },
+            { new FrameworkName(VersionUtility.DnxFrameworkIdentifier, new Version(4, 6)), new List<FrameworkName> {
+                    new FrameworkName(VersionUtility.NetFrameworkIdentifier, new Version(4, 6))
+                }
             }
         };
 
@@ -95,6 +99,10 @@ namespace Microsoft.Framework.Runtime
             {
                 return "DNX " + targetFramework.Version.ToString();
             }
+            else if (string.Equals(targetFramework.Identifier, VersionUtility.PortableFrameworkIdentifier, StringComparison.OrdinalIgnoreCase) && targetFramework.Version >= new Version(5, 0))
+            {
+                return ".NET Portable " + targetFramework.Version.ToString();
+            }
 
             var information = _cache.GetOrAdd(targetFramework, GetFrameworkInformation);
 
@@ -132,7 +140,7 @@ namespace Microsoft.Framework.Runtime
 
         public static string GetReferenceAssembliesPath()
         {
-#if DNX451            
+#if DNX451
             if (PlatformHelper.IsMono)
             {
                 var mscorlibLocationOnThisRunningMonoInstance = typeof(object).GetTypeInfo().Assembly.Location;
@@ -141,7 +149,7 @@ namespace Microsoft.Framework.Runtime
 
                 return Path.Combine(libPath, "xbuild-frameworks");
             }
-#endif 
+#endif
 
             // References assemblies are in %ProgramFiles(x86)% on
             // 64 bit machines
@@ -163,7 +171,7 @@ namespace Microsoft.Framework.Runtime
                     programFiles,
                     "Reference Assemblies", "Microsoft", "Framework");
         }
-        
+
         private static FrameworkInformation GetFrameworkInformation(FrameworkName targetFramework)
         {
             string referenceAssembliesPath = GetReferenceAssembliesPath();

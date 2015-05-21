@@ -1,6 +1,6 @@
 {
     "frameworks": {
-        "dnx451": {
+        "dnx46": {
             "frameworkAssemblies": {
                 "System.IO": ""
             }

@@ -22,15 +22,16 @@ namespace NuGet
     {
         public static readonly string AspNetCoreFrameworkIdentifier = "Asp.NetCore";
         public static readonly string DnxCoreFrameworkIdentifier = "DNXCore";
-        public static readonly string CoreFrameworkIdentifier = "Core";
+        public static readonly string PortableFrameworkIdentifier = ".NETPortable";
 
         internal const string NetFrameworkIdentifier = ".NETFramework";
         private const string NetCoreFrameworkIdentifier = ".NETCore";
-        private const string PortableFrameworkIdentifier = ".NETPortable";
         internal const string AspNetFrameworkIdentifier = "Asp.Net";
         internal const string DnxFrameworkIdentifier = "DNX";
         internal const string DnxFrameworkShortName = "dnx";
         internal const string DnxCoreFrameworkShortName = "dnxcore";
+        internal const string NetPortableName = "netportable";
+        internal const string NetPortable50Name = NetPortableName + "50";
 
         private const string LessThanOrEqualTo = "\u2264";
         private const string GreaterThanOrEqualTo = "\u2265";
@@ -103,16 +104,19 @@ namespace NuGet
 
         private static readonly Version MaxVersion = new Version(Int32.MaxValue, Int32.MaxValue, Int32.MaxValue, Int32.MaxValue);
 
-        private static readonly Dictionary<string, FrameworkName> _equivalentProjectFrameworks = new Dictionary<string, FrameworkName>()
+        private static readonly Dictionary<string, Tuple<Version, FrameworkName>> _equivalentProjectFrameworks = new Dictionary<string, Tuple<Version, FrameworkName>>()
         {
-            // Allow an aspnetcore package to be installed in a dnxcore project 
-            { DnxCoreFrameworkIdentifier, new FrameworkName(AspNetCoreFrameworkIdentifier, MaxVersion) },
+            // Allow aspnetcore50 and core50 packages to be installed in a dnxcore project
+            { DnxCoreFrameworkIdentifier, Tuple.Create(_emptyVersion, new FrameworkName(AspNetCoreFrameworkIdentifier, MaxVersion)) },
+            { AspNetCoreFrameworkIdentifier, Tuple.Create(_emptyVersion, new FrameworkName(PortableFrameworkIdentifier, new Version(5, 0))) },
 
             // Allow an aspnet package to be installed in a dnx project
-            { DnxFrameworkIdentifier, new FrameworkName(AspNetFrameworkIdentifier, MaxVersion) },
+            { DnxFrameworkIdentifier, Tuple.Create(_emptyVersion, new FrameworkName(AspNetFrameworkIdentifier, MaxVersion)) },
 
             // Allow a net package to be installed in an aspnet (or dnx, transitively by above) project
-            { AspNetFrameworkIdentifier, new FrameworkName(NetFrameworkIdentifier, MaxVersion) }
+            { AspNetFrameworkIdentifier, Tuple.Create(_emptyVersion, new FrameworkName(NetFrameworkIdentifier, MaxVersion)) },
+
+            { NetFrameworkIdentifier, Tuple.Create(new Version(4, 6), new FrameworkName(PortableFrameworkIdentifier, new Version(5, 0))) }
         };
 
         public static Version DefaultTargetFrameworkVersion
@@ -146,10 +150,17 @@ namespace NuGet
         /// something a framework name that the package manager understands.
         /// </summary>
         public static FrameworkName ParseFrameworkName(string frameworkName)
+
         {
             if (frameworkName == null)
             {
                 throw new ArgumentNullException("frameworkName");
+            }
+
+            // It's a little gross, but for now let's special case netportable50
+            if (String.Equals(NetPortable50Name, frameworkName, StringComparison.OrdinalIgnoreCase))
+            {
+                return new FrameworkName(PortableFrameworkIdentifier, new Version(5, 0));
             }
 
             // {Identifier}{Version}-{Profile}
@@ -556,6 +567,11 @@ namespace NuGet
                 name = frameworkName.Identifier;
             }
 
+            if (frameworkName.Identifier.Equals(PortableFrameworkIdentifier) && frameworkName.Version >= new Version(5, 0))
+            {
+                name = NetPortableName;
+            }
+
             // for Portable framework name, the short name has the form "portable-sl4+wp7+net45"
             string profile;
             if (name.Equals("portable", StringComparison.OrdinalIgnoreCase))
@@ -648,7 +664,7 @@ namespace NuGet
         /// <returns></returns>
         public static FrameworkName ParseFrameworkFolderName(string path, bool strictParsing, out string effectivePath)
         {
-            // The path for a reference might look like this for assembly foo.dll:            
+            // The path for a reference might look like this for assembly foo.dll:
             // foo.dll
             // sub\foo.dll
             // {FrameworkName}{Version}\foo.dll
@@ -798,9 +814,7 @@ namespace NuGet
             targetFrameworkName = NormalizeFrameworkName(targetFrameworkName);
             frameworkName = NormalizeFrameworkName(frameworkName);
 
-        check:
-
-            if (!frameworkName.Identifier.Equals(targetFrameworkName.Identifier, StringComparison.OrdinalIgnoreCase))
+            while (!frameworkName.Identifier.Equals(targetFrameworkName.Identifier, StringComparison.OrdinalIgnoreCase))
             {
                 // Try to convert the project framework into an equivalent target framework
                 // If the identifiers didn't match, we need to see if this framework has an equivalent framework that DOES match.
@@ -810,10 +824,10 @@ namespace NuGet
                 //  so since the identifiers don't match, we need to "translate" the project target framework to .NETFramework
                 //  however, we still want direct ASP.Net == ASP.Net matches, so we do this ONLY if the identifiers don't already match
 
-                if (_equivalentProjectFrameworks.TryGetValue(frameworkName.Identifier, out frameworkName))
+                Tuple<Version, FrameworkName> entry;
+                if (_equivalentProjectFrameworks.TryGetValue(frameworkName.Identifier, out entry) && frameworkName.Version >= entry.Item1)
                 {
-                    // Goto might be evil but it's so nice to use here
-                    goto check;
+                    frameworkName = entry.Item2;
                 }
                 else
                 {
@@ -888,7 +902,8 @@ namespace NuGet
                     // TODO: Remove this logic when out dependencies have moved to ASP.NET Core 5.0
                     // as this logic is super fuzzy and terrible
                     if (string.Equals(frameworkName.Identifier, AspNetCoreFrameworkIdentifier, StringComparison.OrdinalIgnoreCase) ||
-                        string.Equals(frameworkName.Identifier, DnxCoreFrameworkIdentifier, StringComparison.OrdinalIgnoreCase))
+                        string.Equals(frameworkName.Identifier, DnxCoreFrameworkIdentifier, StringComparison.OrdinalIgnoreCase) ||
+                        (string.Equals(frameworkName.Identifier, PortableFrameworkIdentifier, StringComparison.OrdinalIgnoreCase) && frameworkName.Version >= new Version(5, 0)))
                     {
                         var frameworkIdentifierLookup = targetFrameworkPortableProfile.SupportedFrameworks
                                                                                       .Select(NormalizeFrameworkName)
@@ -952,7 +967,7 @@ namespace NuGet
                 // The package is installed into a net45 project. We want to pick the 'net40' folder, even though
                 // the 'net45' in portable folder has a matching version with the project's framework.
                 //
-                // So, in order to achieve that, here we give the folder that has matching identifer with the project's 
+                // So, in order to achieve that, here we give the folder that has matching identifer with the project's
                 // framework identifier a compatibility score of 10, to make sure it weighs more than the compatibility of matching version.
 
                 compatibility += 10 * (1L << 32);
@@ -1006,24 +1021,24 @@ namespace NuGet
         /// </remarks>
         internal static int GetCompatibilityBetweenPortableLibraryAndPortableLibrary(FrameworkName frameworkName, FrameworkName targetFrameworkName)
         {
-            // Algorithms: Give a score from 0 to N indicating how close *in version* each package platform is the projectâ€™s platforms 
+            // Algorithms: Give a score from 0 to N indicating how close *in version* each package platform is the project's platforms
             // and then choose the folder with the lowest score. If the score matches, choose the one with the least platforms.
-            // 
+            //
             // For example:
-            // 
+            //
             // Project targeting: .NET 4.5 + SL5 + WP71
-            // 
+            //
             // Package targeting:
             // .NET 4.5 (0) + SL5 (0) + WP71 (0)                            == 0
             // .NET 4.5 (0) + SL5 (0) + WP71 (0) + Win8 (0)                 == 0
             // .NET 4.5 (0) + SL4 (1) + WP71 (0) + Win8 (0)                 == 1
             // .NET 4.0 (1) + SL4 (1) + WP71 (0) + Win8 (0)                 == 2
             // .NET 4.0 (1) + SL4 (1) + WP70 (1) + Win8 (0)                 == 3
-            // 
+            //
             // Above, thereâ€™s two matches with the same result, choose the one with the least amount of platforms.
-            // 
+            //
             // There will be situations, however, where there is still undefined behavior, such as:
-            // 
+            //
             // .NET 4.5 (0) + SL4 (1) + WP71 (0)                            == 1
             // .NET 4.0 (1) + SL5 (0) + WP71 (0)                            == 1
 
@@ -1047,8 +1062,8 @@ namespace NuGet
             // we pick the one that has less number of supported platforms.
             score = score * 50 + targetFrameworkProfile.SupportedFrameworks.Count;
 
-            // Our algorithm returns lowest score for the most compatible framework. 
-            // However, the caller of this method expects it to have the highest score. 
+            // Our algorithm returns lowest score for the most compatible framework.
+            // However, the caller of this method expects it to have the highest score.
             // Hence, we return the negative value of score here.
             return -score;
         }
@@ -1098,10 +1113,16 @@ namespace NuGet
 
         public static bool IsPortableFramework(this FrameworkName framework)
         {
-            // The profile part has been verified in the ParseFrameworkName() method. 
+            // .NETPortable 5.0+ is dramatically different from previous versions of .NETPortable,
+            // so we return false here if the framework is .NETPortable 5.0+ since the new versions
+            // of portable behave more like normal frameworks than portable profiles.
+
+            // The profile part has been verified in the ParseFrameworkName() method.
             // By the time it is called here, it's guaranteed to be valid.
             // Thus we can ignore the profile part here
-            return framework != null && PortableFrameworkIdentifier.Equals(framework.Identifier, StringComparison.OrdinalIgnoreCase);
+            return framework != null &&
+                PortableFrameworkIdentifier.Equals(framework.Identifier, StringComparison.OrdinalIgnoreCase) &&
+                framework.Version.Major < 5;
         }
 
         public static bool ShouldUseConsidering(
@@ -1177,9 +1198,9 @@ namespace NuGet
                 { "asp.net", AspNetFrameworkIdentifier },
                 { "aspnetcore", AspNetCoreFrameworkIdentifier },
                 { "asp.netcore", AspNetCoreFrameworkIdentifier },
-                { "core", CoreFrameworkIdentifier },
 
                 { "NET", NetFrameworkIdentifier },
+
                 { ".NET", NetFrameworkIdentifier },
                 { "NETFramework", NetFrameworkIdentifier },
                 { ".NETFramework", NetFrameworkIdentifier },
