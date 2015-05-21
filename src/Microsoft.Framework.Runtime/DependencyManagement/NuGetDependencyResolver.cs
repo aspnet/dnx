@@ -512,14 +512,18 @@ namespace Microsoft.Framework.Runtime
             {
                 return
                     string.Equals(x.Name, y.Name, StringComparison.OrdinalIgnoreCase) &&
-                    string.Equals(x.CultureName, y.CultureName, StringComparison.OrdinalIgnoreCase);
+                    string.Equals(x.CultureName ?? "", y.CultureName ?? "", StringComparison.OrdinalIgnoreCase);
             }
 
             public int GetHashCode(AssemblyName obj)
             {
                 var hashCode = 0;
-                if (obj.Name != null) hashCode ^= obj.Name.ToUpperInvariant().GetHashCode();
-                if (obj.CultureName != null) hashCode ^= obj.CultureName.ToUpperInvariant().GetHashCode();
+                if (obj.Name != null)
+                {
+                    hashCode ^= obj.Name.ToUpperInvariant().GetHashCode();
+                }
+
+                hashCode ^= (obj.CultureName?.ToUpperInvariant() ?? "").GetHashCode();
                 return hashCode;
             }
         }

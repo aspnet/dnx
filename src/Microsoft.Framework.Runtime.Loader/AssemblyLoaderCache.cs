@@ -58,14 +58,18 @@ namespace Microsoft.Framework.Runtime.Loader
             {
                 return
                     string.Equals(x.Name, y.Name, StringComparison.Ordinal) &&
-                    string.Equals(x.CultureName, y.CultureName, StringComparison.Ordinal);
+                    string.Equals(x.CultureName ?? "", y.CultureName ?? "", StringComparison.Ordinal);
             }
 
             public int GetHashCode(AssemblyName obj)
             {
                 var hashCode = 0;
-                if (obj.Name != null) hashCode ^= obj.Name.GetHashCode();
-                if (obj.CultureName != null) hashCode ^= obj.CultureName.GetHashCode();
+                if (obj.Name != null)
+                {
+                    hashCode ^= obj.Name.GetHashCode();
+                }
+
+                hashCode ^= (obj.CultureName ?? "").GetHashCode();
                 return hashCode;
             }
         }
