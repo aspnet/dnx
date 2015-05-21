@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Runtime.Versioning;
 using Microsoft.Framework.Runtime.Compilation;
 using Microsoft.Framework.Runtime.DependencyManagement;
@@ -18,7 +19,7 @@ namespace Microsoft.Framework.Runtime
         private readonly PackageRepository _repository;
 
         // Assembly name and path lifted from the appropriate lib folder
-        private readonly Dictionary<string, PackageAssembly> _packageAssemblyLookup = new Dictionary<string, PackageAssembly>(StringComparer.OrdinalIgnoreCase);
+        private readonly Dictionary<AssemblyName, PackageAssembly> _packageAssemblyLookup = new Dictionary<AssemblyName, PackageAssembly>(AssemblyNameComparer.OrdinalIgnoreCase);
 
         // All the information required by this package
         private readonly Dictionary<string, PackageDescription> _packageDescriptions = new Dictionary<string, PackageDescription>(StringComparer.OrdinalIgnoreCase);
@@ -29,7 +30,7 @@ namespace Microsoft.Framework.Runtime
             Dependencies = Enumerable.Empty<LibraryDescription>();
         }
 
-        public IDictionary<string, PackageAssembly> PackageAssemblyLookup
+        public IDictionary<AssemblyName, PackageAssembly> PackageAssemblyLookup
         {
             get
             {
@@ -280,6 +281,7 @@ namespace Microsoft.Framework.Runtime
                 {
                     var name = Path.GetFileNameWithoutExtension(assemblyPath);
                     var path = Path.Combine(dependency.Path, assemblyPath);
+                    var assemblyName = new AssemblyName(name);
 
                     string replacementPath;
                     if (Servicing.ServicingTable.TryGetReplacement(
@@ -288,7 +290,7 @@ namespace Microsoft.Framework.Runtime
                         assemblyPath,
                         out replacementPath))
                     {
-                        _packageAssemblyLookup[name] = new PackageAssembly()
+                        _packageAssemblyLookup[assemblyName] = new PackageAssembly()
                         {
                             Path = replacementPath,
                             RelativePath = assemblyPath,
@@ -297,7 +299,7 @@ namespace Microsoft.Framework.Runtime
                     }
                     else
                     {
-                        _packageAssemblyLookup[name] = new PackageAssembly()
+                        _packageAssemblyLookup[assemblyName] = new PackageAssembly()
                         {
                             Path = path,
                             RelativePath = assemblyPath,
@@ -457,7 +459,7 @@ namespace Microsoft.Framework.Runtime
 
             var runtimePackages = Environment.GetEnvironmentVariable(EnvironmentNames.Packages);
 
-            if(string.IsNullOrEmpty(runtimePackages))
+            if (string.IsNullOrEmpty(runtimePackages))
             {
                 runtimePackages = Environment.GetEnvironmentVariable(EnvironmentNames.DnxPackages);
             }
@@ -500,6 +502,26 @@ namespace Microsoft.Framework.Runtime
             public string Path { get; set; }
 
             public string RelativePath { get; set; }
+        }
+
+        private class AssemblyNameComparer : IEqualityComparer<AssemblyName>
+        {
+            public static IEqualityComparer<AssemblyName> OrdinalIgnoreCase = new AssemblyNameComparer();
+
+            public bool Equals(AssemblyName x, AssemblyName y)
+            {
+                return
+                    string.Equals(x.Name, y.Name, StringComparison.OrdinalIgnoreCase) &&
+                    string.Equals(x.CultureName, y.CultureName, StringComparison.OrdinalIgnoreCase);
+            }
+
+            public int GetHashCode(AssemblyName obj)
+            {
+                var hashCode = 0;
+                if (obj.Name != null) hashCode ^= obj.Name.ToUpperInvariant().GetHashCode();
+                if (obj.CultureName != null) hashCode ^= obj.CultureName.ToUpperInvariant().GetHashCode();
+                return hashCode;
+            }
         }
     }
 }

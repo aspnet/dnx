@@ -32,7 +32,7 @@ namespace Microsoft.Framework.DesignTimeHost
             return null;
         }
 
-        public Assembly Load(string name)
+        public Assembly Load(AssemblyName assemblyName)
         {
             throw new NotSupportedException();
         }

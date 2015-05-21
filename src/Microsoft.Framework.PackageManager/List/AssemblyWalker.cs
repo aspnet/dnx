@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Runtime.Versioning;
 using Microsoft.Framework.PackageManager.Algorithms;
 using Microsoft.Framework.Runtime;
@@ -152,7 +153,7 @@ namespace Microsoft.Framework.PackageManager.List
 
             // Look into the NuGets then.
             PackageAssembly assembly;
-            if (_hostContext.NuGetDependencyProvider.PackageAssemblyLookup.TryGetValue(assemblyName, out assembly))
+            if (_hostContext.NuGetDependencyProvider.PackageAssemblyLookup.TryGetValue(new AssemblyName(assemblyName), out assembly))
             {
                 return assembly.Path;
             }

@@ -23,12 +23,12 @@ namespace Microsoft.Framework.Runtime.Loader
             _libraryManager = libraryManager;
         }
 
-        public Assembly Load(string name)
+        public Assembly Load(AssemblyName assemblyName)
         {
-            return Load(name, _loadContextAccessor.Default);
+            return Load(assemblyName, _loadContextAccessor.Default);
         }
 
-        public Assembly Load(string name, IAssemblyLoadContext loadContext)
+        public Assembly Load(AssemblyName assemblyName, IAssemblyLoadContext loadContext)
         {
             // An assembly name like "MyLibrary!alternate!more-text"
             // is parsed into:
@@ -37,6 +37,7 @@ namespace Microsoft.Framework.Runtime.Loader
             // and the more-text may be used to force a recompilation of an aspect that would
             // otherwise have been cached by some layer within Assembly.Load
 
+            var name = assemblyName.Name;
             string aspect = null;
             var parts = name.Split(new[] { '!' }, 3);
             if (parts.Length != 1)

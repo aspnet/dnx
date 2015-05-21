@@ -17,17 +17,15 @@ namespace Microsoft.Framework.Runtime.Loader
 
         protected override Assembly Load(AssemblyName assemblyName)
         {
-            var name = assemblyName.Name;
-
-            return _cache.GetOrAdd(name, LoadAssembly);
+            return _cache.GetOrAdd(assemblyName, LoadAssembly);
         }
 
-        public Assembly Load(string name)
+        Assembly IAssemblyLoadContext.Load(AssemblyName assemblyName)
         {
-            return LoadFromAssemblyName(new AssemblyName(name));
+            return LoadFromAssemblyName(assemblyName);
         }
 
-        public abstract Assembly LoadAssembly(string name);
+        public abstract Assembly LoadAssembly(AssemblyName assemblyName);
 
         public Assembly LoadFile(string path)
         {
@@ -128,22 +126,25 @@ namespace Microsoft.Framework.Runtime.Loader
             _contextId = null;
         }
 
-        public Assembly Load(string name)
+        public Assembly Load(AssemblyName assemblyName)
         {
             if (string.IsNullOrEmpty(_contextId))
             {
-                return Assembly.Load(name);
+                return Assembly.Load(assemblyName);
             }
 
-            return Assembly.Load(_contextId + "$" + name);
+            var contextIdAssemblyName = (AssemblyName)assemblyName.Clone();
+            contextIdAssemblyName.Name = _contextId + "$" + assemblyName.Name;
+
+            return Assembly.Load(contextIdAssemblyName);
         }
 
-        private Assembly LoadAssemblyImpl(string name)
+        private Assembly LoadAssemblyImpl(AssemblyName assemblyName)
         {
-            return _cache.GetOrAdd(name, LoadAssembly);
+            return _cache.GetOrAdd(assemblyName, LoadAssembly);
         }
 
-        public abstract Assembly LoadAssembly(string name);
+        public abstract Assembly LoadAssembly(AssemblyName assemblyName);
 
         public Assembly LoadFile(string assemblyPath)
         {
@@ -204,7 +205,9 @@ namespace Microsoft.Framework.Runtime.Loader
                 LoadContext context;
                 if (_contexts.TryGetValue(contextId, out context))
                 {
-                    var assembly = context.LoadAssemblyImpl(shortName);
+                    var shortAssemblyName = (AssemblyName)assemblyName.Clone();
+                    shortAssemblyName.Name = shortName;
+                    var assembly = context.LoadAssemblyImpl(shortAssemblyName);
 
                     if (assembly != null)
                     {
@@ -230,13 +233,13 @@ namespace Microsoft.Framework.Runtime.Loader
                 var loadContext = LoadContextAccessor.Instance.GetLoadContext(args.RequestingAssembly);
                 if (loadContext != null)
                 {
-                    return loadContext.Load(assemblyName.Name);
+                    return loadContext.Load(assemblyName);
                 }
             }
             else
             {
                 // Nothing worked, use the default load context
-                return Default.LoadAssemblyImpl(assemblyName.Name);
+                return Default.LoadAssemblyImpl(assemblyName);
             }
 
             return null;

@@ -819,7 +819,7 @@ namespace Microsoft.Framework.DesignTimeHost
             {
             }
 
-            public override Assembly Load(string name)
+            public override Assembly Load(AssemblyName assemblyName)
             {
                 if (!_firstLoad)
                 {
@@ -828,7 +828,7 @@ namespace Microsoft.Framework.DesignTimeHost
                     throw new InvalidOperationException();
                 }
 
-                return base.Load(name);
+                return base.Load(assemblyName);
             }
         }
     }

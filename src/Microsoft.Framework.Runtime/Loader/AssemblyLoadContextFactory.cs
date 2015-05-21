@@ -40,16 +40,16 @@ namespace Microsoft.Framework.Runtime.Loader
                 _defaultContext = defaultContext;
             }
 
-            public override Assembly LoadAssembly(string name)
+            public override Assembly LoadAssembly(AssemblyName assemblyName)
             {
                 try
                 {
-                    return _defaultContext.Load(name);
+                    return _defaultContext.Load(assemblyName);
                 }
                 catch (FileNotFoundException)
                 {
-                    return _projectAssemblyLoader.Load(name, this) ??
-                           _nugetAssemblyLoader.Load(name, this);
+                    return _projectAssemblyLoader.Load(assemblyName, this) ??
+                           _nugetAssemblyLoader.Load(assemblyName, this);
                 }
             }
         }

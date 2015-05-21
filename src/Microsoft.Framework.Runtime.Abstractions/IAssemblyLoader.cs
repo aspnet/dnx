@@ -13,8 +13,8 @@ namespace Microsoft.Framework.Runtime
         /// <summary>
         /// Load an assembly by name.
         /// </summary>
-        /// <param name="name">The name of the assembly.</param>
+        /// <param name="assemblyName">The name of the assembly.</param>
         /// <returns>The loaded assembly.</returns>
-        Assembly Load(string name);
+        Assembly Load(AssemblyName assemblyName);
     }
 }

@@ -22,9 +22,9 @@ namespace Microsoft.Framework.DesignTimeHost
         {
         }
 
-        public virtual Assembly Load(string name)
+        public virtual Assembly Load(AssemblyName assemblyName)
         {
-            return _assemblyNameLookups[name];
+            return _assemblyNameLookups[assemblyName.Name];
         }
 
         public Assembly LoadFile(string path)

@@ -18,15 +18,15 @@ namespace Microsoft.Framework.Runtime.Loader
             _loadContextAccessor = loadContextAccessor;
         }
 
-        public Assembly Load(string name)
+        public Assembly Load(AssemblyName assemblyName)
         {
-            return Load(name, _loadContextAccessor.Default);
+            return Load(assemblyName, _loadContextAccessor.Default);
         }
 
-        public Assembly Load(string name, IAssemblyLoadContext loadContext)
+        public Assembly Load(AssemblyName assemblyName, IAssemblyLoadContext loadContext)
         {
             PackageAssembly assemblyInfo;
-            if (_dependencyResolver.PackageAssemblyLookup.TryGetValue(name, out assemblyInfo))
+            if (_dependencyResolver.PackageAssemblyLookup.TryGetValue(assemblyName, out assemblyInfo))
             {
                 return loadContext.LoadFile(assemblyInfo.Path);
             }
