@@ -332,7 +332,17 @@ namespace Microsoft.Framework.Runtime.Common.CommandLine
             else
             {
                 target = Commands.SingleOrDefault(cmd => string.Equals(cmd.Name, commandName, StringComparison.OrdinalIgnoreCase));
-                headerBuilder.AppendFormat(" {0}", commandName);
+
+                if (target != null)
+                {
+                    headerBuilder.AppendFormat(" {0}", commandName);
+                }
+                else
+                {
+                    // The command name is invalid so don't try to show help for something that doesn't exist
+                    target = this;
+                }
+
             }
 
             var optionsBuilder = new StringBuilder();
