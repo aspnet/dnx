@@ -86,8 +86,6 @@ var MANAGED_PROJECTS = '${FindAllProjects(
 var WIN_MANAGED_PROJECTS = '${FindAllProjects(
     BOOTSTRAPPER_CLR_MANAGED_NAME)}'
 
-var RC_FILES = '${FindAllFiles("Resource.rc", BOOTSTRAPPER_FOLDER_NAME, BOOTSTRAPPER_CLR_NAME, BOOTSTRAPPER_CORECLR_NAME)}'
-
 var RUNTIME_TARGETS='${new List<RuntimeTarget>()}'
 
 var CAN_BUILD_ONECORE = '${Directory.Exists(WIN10_SDK_LIB) && Directory.GetFiles(WIN10_SDK_LIB, "onecore.lib", SearchOption.AllDirectories).Any()}'
@@ -212,41 +210,54 @@ var CAN_BUILD_ONECORE = '${Directory.Exists(WIN10_SDK_LIB) && Directory.GetFiles
         }
     }
 
-#build-dnx-win-exe .ensure-msbuild .update-rc-files target='build-windows'
+#build-dnx-win-exe .ensure-msbuild target='build-windows'
     var bootstrapperProj = '${Path.Combine(ROOT, "src", BOOTSTRAPPER_WINDOWS_FOLDER_NAME, "dnx.windows.vcxproj")}'
+
     @{
+        var commonParameters =
+            " /p:Configuration=" + Configuration2 +
+            " /p:ProductVersion=" + PRODUCT_VERSION +
+            " /p:FileRevision=" + E("DNX_ASSEMBLY_FILE_VERSION") +
+            " /p:BuildVersion=" + E("DNX_BUILD_VERSION");
+
         var environmentRuntimeTargetOS = Environment.GetEnvironmentVariable("RUNTIME_TARGET_OS");
         var configRuntimeTargetOS = "";
         
-        Exec(MSBUILD, bootstrapperProj + " /p:Configuration=" + Configuration2 + ";Platform=Win32;TargetFramework=dnx451;RuntimeType=CLR");
-        Exec(MSBUILD, bootstrapperProj + " /p:Configuration=" + Configuration2 + ";Platform=x64;TargetFramework=dnx451;RuntimeType=CLR");
+        Exec(MSBUILD, bootstrapperProj + commonParameters + ";Platform=Win32;TargetFramework=dnx451;RuntimeType=CLR");
+        Exec(MSBUILD, bootstrapperProj + commonParameters + ";Platform=x64;TargetFramework=dnx451;RuntimeType=CLR");
 
         if (environmentRuntimeTargetOS == "WIN7_PLUS_CORESYSTEM")
         {
             configRuntimeTargetOS = ";RuntimeTargetOS=WIN7_PLUS_CORESYSTEM";
         }
             
-        Exec(MSBUILD, bootstrapperProj + " /p:Configuration=" + Configuration2 + ";Platform=Win32;TargetFramework=dnxcore50;RuntimeType=CORECLR_WIN" + configRuntimeTargetOS);
-        Exec(MSBUILD, bootstrapperProj + " /p:Configuration=" + Configuration2 + ";Platform=x64;TargetFramework=dnxcore50;RuntimeType=CORECLR_WIN" + configRuntimeTargetOS);
+        Exec(MSBUILD, bootstrapperProj + commonParameters + ";Platform=Win32;TargetFramework=dnxcore50;RuntimeType=CORECLR_WIN" + configRuntimeTargetOS);
+        Exec(MSBUILD, bootstrapperProj + commonParameters + ";Platform=x64;TargetFramework=dnxcore50;RuntimeType=CORECLR_WIN" + configRuntimeTargetOS);
     }
 
     directory delete='${Path.Combine(BUILD_DIR2, BOOTSTRAPPER_WINDOWS_FOLDER_NAME)}'
     copy sourceDir='${Path.Combine(ROOT, "src", BOOTSTRAPPER_WINDOWS_FOLDER_NAME)}' include='bin/**/' outputDir='${Path.Combine(BUILD_DIR2, BOOTSTRAPPER_WINDOWS_FOLDER_NAME)}' overwrite='${true}'
 
-#build-dnx-win-dll .ensure-msbuild .update-rc-files target='build-windows'
+#build-dnx-win-dll .ensure-msbuild target='build-windows'
     var bootstrapperProj = '${Path.Combine(ROOT, "src", BOOTSTRAPPER_FOLDER_NAME, "dnx.vcxproj")}'
     @{
-        Exec(MSBUILD, bootstrapperProj + " /p:Configuration=" + Configuration2 + ";Platform=Win32;TargetFramework=dnx451;RuntimeType=CLR;BuildForOneCore=False");
-        Exec(MSBUILD, bootstrapperProj + " /p:Configuration=" + Configuration2 + ";Platform=x64;TargetFramework=dnx451;RuntimeType=CLR;BuildForOneCore=False");
-        Exec(MSBUILD, bootstrapperProj + " /p:Configuration=" + Configuration2 + ";Platform=Win32;TargetFramework=dnxcore50;RuntimeType=CORECLR_WIN;BuildForOneCore=False");
-        Exec(MSBUILD, bootstrapperProj + " /p:Configuration=" + Configuration2 + ";Platform=x64;TargetFramework=dnxcore50;RuntimeType=CORECLR_WIN;BuildForOneCore=False");
+        var commonParameters =
+            " /p:Configuration=" + Configuration2 +
+            " /p:ProductVersion=" + PRODUCT_VERSION +
+            " /p:FileRevision=" + E("DNX_ASSEMBLY_FILE_VERSION") +
+            " /p:BuildVersion=" + E("DNX_BUILD_VERSION");
+            
+        Exec(MSBUILD, bootstrapperProj + commonParameters + ";Platform=Win32;TargetFramework=dnx451;RuntimeType=CLR;BuildForOneCore=False");
+        Exec(MSBUILD, bootstrapperProj + commonParameters + ";Platform=x64;TargetFramework=dnx451;RuntimeType=CLR;BuildForOneCore=False");
+        Exec(MSBUILD, bootstrapperProj + commonParameters + ";Platform=Win32;TargetFramework=dnxcore50;RuntimeType=CORECLR_WIN;BuildForOneCore=False");
+        Exec(MSBUILD, bootstrapperProj + commonParameters + ";Platform=x64;TargetFramework=dnxcore50;RuntimeType=CORECLR_WIN;BuildForOneCore=False");
 
         if(CAN_BUILD_ONECORE)
         {
-            Exec(MSBUILD, bootstrapperProj + " /p:Configuration=" + Configuration2 + ";Platform=Win32;TargetFramework=dnx451;RuntimeType=CLR;BuildForOneCore=True");
-            Exec(MSBUILD, bootstrapperProj + " /p:Configuration=" + Configuration2 + ";Platform=x64;TargetFramework=dnx451;RuntimeType=CLR;BuildForOneCore=True");
-            Exec(MSBUILD, bootstrapperProj + " /p:Configuration=" + Configuration2 + ";Platform=Win32;TargetFramework=dnxcore50;RuntimeType=CORECLR_WIN;BuildForOneCore=True");
-            Exec(MSBUILD, bootstrapperProj + " /p:Configuration=" + Configuration2 + ";Platform=x64;TargetFramework=dnxcore50;RuntimeType=CORECLR_WIN;BuildForOneCore=True");
+            Exec(MSBUILD, bootstrapperProj + commonParameters + ";Platform=Win32;TargetFramework=dnx451;RuntimeType=CLR;BuildForOneCore=True");
+            Exec(MSBUILD, bootstrapperProj + commonParameters + ";Platform=x64;TargetFramework=dnx451;RuntimeType=CLR;BuildForOneCore=True");
+            Exec(MSBUILD, bootstrapperProj + commonParameters + ";Platform=Win32;TargetFramework=dnxcore50;RuntimeType=CORECLR_WIN;BuildForOneCore=True");
+            Exec(MSBUILD, bootstrapperProj + commonParameters + ";Platform=x64;TargetFramework=dnxcore50;RuntimeType=CORECLR_WIN;BuildForOneCore=True");
         }
         else
         {
@@ -257,17 +268,22 @@ var CAN_BUILD_ONECORE = '${Directory.Exists(WIN10_SDK_LIB) && Directory.GetFiles
     directory delete='${Path.Combine(BUILD_DIR2, BOOTSTRAPPER_FOLDER_NAME)}'
     copy sourceDir='${Path.Combine(ROOT, "src", BOOTSTRAPPER_FOLDER_NAME)}' include='bin/**/' outputDir='${Path.Combine(BUILD_DIR2, BOOTSTRAPPER_FOLDER_NAME)}' overwrite='${true}'
 
-#build-dnx-coreclr-win-bootstrapper .ensure-msbuild .update-tpa .update-rc-files target='build-windows'
+#build-dnx-coreclr-win-bootstrapper .ensure-msbuild .update-tpa target='build-windows'
     var bootstrapperCoreClrProj = '${Path.Combine(ROOT, "src", BOOTSTRAPPER_CORECLR_NAME, BOOTSTRAPPER_CORECLR_NAME + ".vcxproj")}'
-
     @{
-        Exec(MSBUILD, bootstrapperCoreClrProj + " /p:Configuration=" + Configuration2 + ";Platform=Win32;BuildForOneCore=False");
-        Exec(MSBUILD, bootstrapperCoreClrProj + " /p:Configuration=" + Configuration2 + ";Platform=x64;BuildForOneCore=False");
+        var commonParameters =
+            " /p:Configuration=" + Configuration2 +
+            " /p:ProductVersion=" + PRODUCT_VERSION +
+            " /p:FileRevision=" + E("DNX_ASSEMBLY_FILE_VERSION") +
+            " /p:BuildVersion=" + E("DNX_BUILD_VERSION");
+
+        Exec(MSBUILD, bootstrapperCoreClrProj + commonParameters + ";Platform=Win32;BuildForOneCore=False");
+        Exec(MSBUILD, bootstrapperCoreClrProj + commonParameters + ";Platform=x64;BuildForOneCore=False");
 
         if(CAN_BUILD_ONECORE)
         {
-            Exec(MSBUILD, bootstrapperCoreClrProj + " /p:Configuration=" + Configuration2 + ";Platform=Win32;BuildForOneCore=True");
-            Exec(MSBUILD, bootstrapperCoreClrProj + " /p:Configuration=" + Configuration2 + ";Platform=x64;BuildForOneCore=True");
+            Exec(MSBUILD, bootstrapperCoreClrProj + commonParameters + ";Platform=Win32;BuildForOneCore=True");
+            Exec(MSBUILD, bootstrapperCoreClrProj + commonParameters + ";Platform=x64;BuildForOneCore=True");
         }
         else
         {
@@ -278,39 +294,21 @@ var CAN_BUILD_ONECORE = '${Directory.Exists(WIN10_SDK_LIB) && Directory.GetFiles
     directory delete='${Path.Combine(BUILD_DIR2, BOOTSTRAPPER_CORECLR_NAME)}'
     copy sourceDir='${Path.Combine(ROOT, "src", BOOTSTRAPPER_CORECLR_NAME)}' include='bin/**/' outputDir='${Path.Combine(BUILD_DIR2, BOOTSTRAPPER_CORECLR_NAME)}' overwrite='${true}'
 
-#build-dnx-clr-win-bootstrapper .ensure-msbuild .update-rc-files target='build-windows'
+#build-dnx-clr-win-bootstrapper .ensure-msbuild target='build-windows'
     var bootstrapperClrProj ='${Path.Combine(ROOT, "src", BOOTSTRAPPER_CLR_NAME, BOOTSTRAPPER_CLR_NAME + ".vcxproj")}'
-
     @{
-        Exec(MSBUILD, bootstrapperClrProj + " /p:Configuration=" + Configuration2 + ";Platform=Win32");
-        Exec(MSBUILD, bootstrapperClrProj + " /p:Configuration=" + Configuration2 + ";Platform=x64");
+        var commonParameters =
+            " /p:Configuration=" + Configuration2 +
+            " /p:ProductVersion=" + PRODUCT_VERSION +
+            " /p:FileRevision=" + E("DNX_ASSEMBLY_FILE_VERSION") +
+            " /p:BuildVersion=" + E("DNX_BUILD_VERSION");
+            
+        Exec(MSBUILD, bootstrapperClrProj + commonParameters + ";Platform=Win32");
+        Exec(MSBUILD, bootstrapperClrProj + commonParameters + ";Platform=x64");
     }
 
     directory delete='${Path.Combine(BUILD_DIR2, BOOTSTRAPPER_CLR_NAME)}'
     copy sourceDir='${Path.Combine(ROOT, "src", BOOTSTRAPPER_CLR_NAME)}' include='bin/**/' outputDir='${Path.Combine(BUILD_DIR2, BOOTSTRAPPER_CLR_NAME)}' overwrite='${true}' 
-
-#update-rc-files if='!IsMono'
-    if condition='IsTeamCity'
-        for each='var rcfile in RC_FILES'
-            @{
-                var digitVer = PRODUCT_VERSION.Replace(".", ",") + ",0";
-
-                var productVersionStructMatcher = @"PRODUCTVERSION \d+,\d+,\d+,\d+";
-                var productVersionValueMatcher = @"VALUE ""ProductVersion"", ""[^""]+""";
-                var productVersionStruct = "PRODUCTVERSION " + digitVer;
-                var productVersionValue = "VALUE \"ProductVersion\", \"" + FULL_VERSION + "\"";
-
-                var fileVersionStructMatcher = @"FILEVERSION \d+,\d+,\d+,\d+";
-                var fileVersionValueMatcher = @"VALUE ""FileVersion"", ""[^""]+""";
-                var fileVersionStruct = "FILEVERSION " + digitVer;
-                var fileVersionValue = "VALUE \"FileVersion\", \"" + FULL_VERSION + "\"";
-            }
-            update-file updateFile="${rcfile}" @{
-                updateText = RegexReplace(updateText, productVersionStructMatcher, productVersionStruct);
-                updateText = RegexReplace(updateText, productVersionValueMatcher, productVersionValue);
-                updateText = RegexReplace(updateText, fileVersionStructMatcher, fileVersionStruct);
-                updateText = RegexReplace(updateText, fileVersionValueMatcher, fileVersionValue);
-            }
 
 - // ===================== LINUX ===================== 
 

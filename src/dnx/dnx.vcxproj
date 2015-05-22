@@ -1,6 +1,7 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <Import Project="$(MSBuildThisFileDirectory)..\..\Build\Config.Definitions.props" />
+  <Import Project="$(MSBuildThisFileDirectory)..\..\Build\Dnx.Common.Targets" />
   <PropertyGroup Label="Globals">
     <ProjectGuid>{D0E2FB09-0FEA-478A-9068-D6AA420C6DED}</ProjectGuid>
     <Platform Condition="'$(Platform)'==''">Win32</Platform>
@@ -44,6 +45,7 @@
     <ClInclude Include="TraceWriter.h" />
     <ClInclude Include="utils.h" />
     <ClInclude Include="xplat.h" />
+    <ClInclude Include="version.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.cpp" />

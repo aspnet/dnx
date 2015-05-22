@@ -1,6 +1,7 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <Import Project="$(MSBuildThisFileDirectory)..\..\Build\Config.Definitions.props" />
+  <Import Project="$(MSBuildThisFileDirectory)..\..\Build\Dnx.Common.Targets" />
   <PropertyGroup Label="Globals">
     <ProjectGuid>{893A7304-50DB-4053-B864-E10BA3FFAC53}</ProjectGuid>
     <Platform Condition="'$(Platform)'==''">Win32</Platform>
@@ -35,22 +36,19 @@
     </ClCompile>
     <Link>
       <IgnoreAllDefaultLibraries>true</IgnoreAllDefaultLibraries>
-      <AdditionalDependencies>$(ProgramFiles)\Windows Kits\Win8CoreSystem\sdk\lib\mincore\$(SDKSubFolder)\mincore_fw.lib;$(ProgramFiles)\Windows Kits\Win8CoreSystem\sdk\lib\mincore\$(SDKSubFolder)\msvcrt.lib</AdditionalDependencies>   
+      <AdditionalDependencies>$(ProgramFiles)\Windows Kits\Win8CoreSystem\sdk\lib\mincore\$(SDKSubFolder)\mincore_fw.lib;$(ProgramFiles)\Windows Kits\Win8CoreSystem\sdk\lib\mincore\$(SDKSubFolder)\msvcrt.lib</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
-
   <ItemDefinitionGroup Condition="'$(Configuration)'=='Debug'">
     <ClCompile>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
     </ClCompile>
   </ItemDefinitionGroup>
-
   <ItemDefinitionGroup Condition="'$(Configuration)'=='Release'">
     <ClCompile>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
     </ClCompile>
   </ItemDefinitionGroup>
-
   <ItemDefinitionGroup>
     <Link>
       <Subsystem>Console</Subsystem>
@@ -65,14 +63,19 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <ItemGroup>
+    <ClInclude Include="resource.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="targetver.h" />
+    <ClInclude Include="version.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="dnx.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader>Create</PrecompiledHeader>
     </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="Resource.rc" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

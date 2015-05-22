@@ -1,6 +1,7 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <Import Project="$(MSBuildThisFileDirectory)..\..\Build\Config.Definitions.props" />
+  <Import Project="$(MSBuildThisFileDirectory)..\..\Build\Dnx.Common.Targets" />
   <PropertyGroup Label="Globals">
     <ProjectGuid>{1F31D08E-DE21-48F6-ADE3-315EA6268DD1}</ProjectGuid>
     <Platform Condition="'$(Platform)'==''">Win32</Platform>
@@ -36,6 +37,7 @@
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="targetver.h" />
     <ClInclude Include="tpa.h" />
+    <ClInclude Include="version.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="dnx.coreclr.cpp" />

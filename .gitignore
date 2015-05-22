@@ -28,6 +28,7 @@ nuget.exe
 *.metaproj*
 debugSettings.json
 project.lock.json
+version.h
 
 # Profiler result files, just in case they are left lying around :)
 /.vs/
