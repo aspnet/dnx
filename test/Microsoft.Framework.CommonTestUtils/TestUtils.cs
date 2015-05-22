@@ -89,7 +89,7 @@ namespace Microsoft.Framework.CommonTestUtils
                 if (args.Data != null)
                 {
                     Console.WriteLine(args.Data);
-                    stdoutBuilder.AppendLine(args.Data);
+                    stdoutBuilder.AppendLine(RemoveAnsiColorCodes(args.Data));
                 }
             };
 
@@ -98,7 +98,7 @@ namespace Microsoft.Framework.CommonTestUtils
                 if (args.Data != null)
                 {
                     Console.WriteLine(args.Data);
-                    stderrBuilder.AppendLine(args.Data);
+                    stderrBuilder.AppendLine(RemoveAnsiColorCodes(args.Data));
                 }
             };
 
@@ -385,6 +385,31 @@ namespace Microsoft.Framework.CommonTestUtils
 #else
             return PlatformHelper.IsWindows;
 #endif
+        }
+
+        private static string RemoveAnsiColorCodes(string text)
+        {
+            int escapeIndex = 0;
+            for (; ;)
+            {
+                escapeIndex = text.IndexOf("\x1b[", escapeIndex);
+                if (escapeIndex != -1)
+                {
+                    int endIndex = escapeIndex + 3;
+                    while (endIndex != text.Length && text[endIndex] != 'm')
+                    {
+                        ++endIndex;
+                    }
+
+                    text = text.Remove(escapeIndex, endIndex - escapeIndex);
+                }
+                else
+                {
+                    break;
+                }
+            }
+
+            return text;
         }
     }
 }
