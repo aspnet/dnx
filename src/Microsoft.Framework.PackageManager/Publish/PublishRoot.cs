@@ -3,7 +3,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using Microsoft.Framework.Runtime;
@@ -27,12 +26,14 @@ namespace Microsoft.Framework.PackageManager.Publish
             OutputPath = outputPath;
             HostServices = hostServices;
             TargetPackagesPath = Path.Combine(outputPath, AppRootName, "packages");
+            TargetRuntimesPath = Path.Combine(outputPath, AppRootName, "runtimes");
             Operations = new PublishOperations();
             LibraryDependencyContexts = new Dictionary<Library, IList<DependencyContext>>();
         }
 
         public string OutputPath { get; private set; }
         public string TargetPackagesPath { get; private set; }
+        public string TargetRuntimesPath { get; private set; }
         public string SourcePackagesPath { get; set; }
         
         public bool NoSource { get; set; }
@@ -112,7 +113,7 @@ namespace Microsoft.Framework.PackageManager.Publish
                 var runtimeFolder = string.Empty;
                 if (Runtimes.Any())
                 {
-                    runtimeFolder = string.Format(@"%~dp0{0}\packages\{1}\bin\", AppRootName, Runtimes.First().Name);
+                    runtimeFolder = string.Format(@"%~dp0{0}\runtimes\{1}\bin\", AppRootName, Runtimes.First().Name);
                 }
 
                 File.WriteAllText(
@@ -153,7 +154,7 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
                 var runtimeFolder = string.Empty;
                 if (Runtimes.Any())
                 {
-                    runtimeFolder = string.Format(@"$DIR/{0}/packages/{1}/bin/",
+                    runtimeFolder = string.Format(@"$DIR/{0}/runtimes/{1}/bin/",
                         AppRootName, Runtimes.First().Name);
                 }
 

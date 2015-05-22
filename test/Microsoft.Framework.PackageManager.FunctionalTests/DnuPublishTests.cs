@@ -125,7 +125,7 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
 <configuration>
   <appSettings>
     <add key=""{0}"" value="""" />
-    <add key=""{1}"" value=""..\approot\packages"" />
+    <add key=""{1}"" value=""..\approot\runtimes"" />
     <add key=""{2}"" value="""" />
     <add key=""{3}"" value="""" />
     <add key=""{4}"" value=""..\approot\src\{{0}}"" />
@@ -236,7 +236,7 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
 <configuration>
   <appSettings>
     <add key=""{0}"" value="""" />
-    <add key=""{1}"" value=""..\approot\packages"" />
+    <add key=""{1}"" value=""..\approot\runtimes"" />
     <add key=""{2}"" value="""" />
     <add key=""{3}"" value="""" />
     <add key=""{4}"" value=""..\approot\src\{{0}}"" />
@@ -788,7 +788,7 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
   </nonRelatedElement>
   <appSettings>
     <add key=""{0}"" value="""" />
-    <add key=""{1}"" value=""..\approot\packages"" />
+    <add key=""{1}"" value=""..\approot\runtimes"" />
     <add key=""{2}"" value="""" />
     <add key=""{3}"" value="""" />
     <add key=""{4}"" value=""..\approot\src\{{0}}"" />
@@ -890,7 +890,7 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
   <appSettings>
     <add key=""non-related-key"" value=""OLD_VALUE"" />
     <add key=""{0}"" value="""" />
-    <add key=""{1}"" value=""..\approot\packages"" />
+    <add key=""{1}"" value=""..\approot\runtimes"" />
     <add key=""{2}"" value="""" />
     <add key=""{3}"" value="""" />
     <add key=""{4}"" value=""..\approot\src\{{0}}"" />
@@ -1059,7 +1059,8 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
         '.': ['project.json', 'project.lock.json']
       }
     },
-    'packages': {
+    'packages': {},
+    'runtimes': {
       'RUNTIME_PACKAGE_NAME': {}
     }
   }
@@ -1100,8 +1101,8 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
                     .RemoveFile(Path.Combine("bin", "lib", "Microsoft.Framework.PackageManager",
                         "bin", "profile", "startup.prof"));
 
-                var batchFileBinPath = string.Format(@"%~dp0approot\packages\{0}\bin\", runtimeName);
-                var bashScriptBinPath = string.Format("$DIR/approot/packages/{0}/bin/", runtimeName);
+                var batchFileBinPath = string.Format(@"%~dp0approot\runtimes\{0}\bin\", runtimeName);
+                var bashScriptBinPath = string.Format("$DIR/approot/runtimes/{0}/bin/", runtimeName);
 
                 var expectedOutputDir = DirTree.CreateFromJson(expectedOutputStructure)
                     .WithFileContents(Path.Combine("approot", "src", testEnv.ProjectName, "project.json"), @"{
@@ -1137,7 +1138,7 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
                         BashScriptTemplate, EnvironmentNames.AppBase, testEnv.ProjectName, bashScriptBinPath, Constants.BootstrapperExeName, "run")
                     .WithFileContents("kestrel",
                         BashScriptTemplate, EnvironmentNames.AppBase, testEnv.ProjectName, bashScriptBinPath, Constants.BootstrapperExeName, "kestrel")
-                    .WithSubDir(Path.Combine("approot", "packages", runtimeName), runtimeSubDir);
+                    .WithSubDir(Path.Combine("approot", "runtimes", runtimeName), runtimeSubDir);
 
                 Assert.True(expectedOutputDir.MatchDirectoryOnDisk(testEnv.PublishOutputDirPath,
                     compareFileContents: true));

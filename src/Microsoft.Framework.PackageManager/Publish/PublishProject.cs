@@ -3,17 +3,12 @@
 
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
-using System.IO.Compression;
 using System.Linq;
-using System.Security.Cryptography;
 using System.Threading.Tasks;
 using System.Xml;
 using System.Xml.Linq;
-using Microsoft.Framework.PackageManager.Utils;
 using Microsoft.Framework.Runtime;
-using Microsoft.Framework.Runtime.DependencyManagement;
 using Newtonsoft.Json.Linq;
 using NuGet;
 
@@ -466,7 +461,7 @@ namespace Microsoft.Framework.PackageManager.Publish
             var appSettingsElement = GetOrAddElement(parent: xDoc.Root, name: "appSettings");
 
             // Always generate \ since web.config is a IIS thing only
-            var relativePackagesPath = PathUtility.GetRelativePath(wwwRootOutWebConfigFilePath, root.TargetPackagesPath)
+            var relativeRuntimesPath = PathUtility.GetRelativePath(wwwRootOutWebConfigFilePath, root.TargetRuntimesPath)
                                                   .Replace(Path.DirectorySeparatorChar, '\\');
 
             var defaultRuntime = root.Runtimes.FirstOrDefault();
@@ -475,7 +470,7 @@ namespace Microsoft.Framework.PackageManager.Publish
             var keyValuePairs = new Dictionary<string, string>()
             {
                 { Runtime.Constants.WebConfigBootstrapperVersion, GetBootstrapperVersion(root) },
-                { Runtime.Constants.WebConfigRuntimePath, relativePackagesPath },
+                { Runtime.Constants.WebConfigRuntimePath, relativeRuntimesPath },
                 { Runtime.Constants.WebConfigRuntimeVersion, GetRuntimeVersion(defaultRuntime) },
                 { Runtime.Constants.WebConfigRuntimeFlavor, GetRuntimeFlavor(defaultRuntime) },
                 { Runtime.Constants.WebConfigRuntimeAppBase, appBase },

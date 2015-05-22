@@ -17,7 +17,7 @@ namespace Microsoft.Framework.PackageManager.Publish
             _frameworkName = frameworkName;
             _runtimePath = runtimePath;
             Name = new DirectoryInfo(_runtimePath).Name;
-            TargetPath = Path.Combine(root.TargetPackagesPath, Name);
+            TargetPath = Path.Combine(root.TargetRuntimesPath, Name);
         }
 
         public string Name { get; private set; }
