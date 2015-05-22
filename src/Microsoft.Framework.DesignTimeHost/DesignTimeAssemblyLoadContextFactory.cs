@@ -14,36 +14,33 @@ namespace Microsoft.Framework.DesignTimeHost
         private readonly IApplicationEnvironment _appEnv;
         private readonly ICache _cache;
         private readonly ICacheContextAccessor _cacheContextAccessor;
-        private readonly IServiceProvider _hostServices;
         private readonly INamedCacheDependencyProvider _namedDependencyProvider;
 
         public DesignTimeAssemblyLoadContextFactory(Project project,
                                                     IApplicationEnvironment appEnv,
-                                                    IServiceProvider hostServices,
                                                     ICache cache,
                                                     ICacheContextAccessor cacheContextAccessor,
                                                     INamedCacheDependencyProvider namedDependencyProvider)
         {
             _project = project;
             _appEnv = appEnv;
-            _hostServices = hostServices;
             _cache = cache;
             _cacheContextAccessor = cacheContextAccessor;
             _namedDependencyProvider = namedDependencyProvider;
         }
 
-        public IAssemblyLoadContext Create()
+        public IAssemblyLoadContext Create(IServiceProvider serviceProvider)
         {
-            return GetRuntimeFactory().Create();
+            return GetRuntimeFactory(serviceProvider).Create(serviceProvider);
         }
 
-        private IAssemblyLoadContextFactory GetRuntimeFactory()
+        private IAssemblyLoadContextFactory GetRuntimeFactory(IServiceProvider serviceProvider)
         {
             var cacheKey = Tuple.Create("RuntimeLoadContextFactory", _project.Name, _appEnv.Configuration, _appEnv.RuntimeFramework);
 
             return _cache.Get<IAssemblyLoadContextFactory>(cacheKey, ctx =>
             {
-                var applicationHostContext = new ApplicationHostContext(_hostServices,
+                var applicationHostContext = new ApplicationHostContext(serviceProvider,
                                                                     _project.ProjectDirectory,
                                                                     packagesDirectory: null,
                                                                     configuration: _appEnv.Configuration,

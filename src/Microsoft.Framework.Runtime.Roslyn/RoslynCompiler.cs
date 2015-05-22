@@ -231,7 +231,7 @@ namespace Microsoft.Framework.Runtime.Roslyn
             {
                 var modules = new List<ICompileModule>();
 
-                var childContext = _loadContextFactory.Create();
+                var childContext = _loadContextFactory.Create(_services);
 
                 var preprocessAssembly = childContext.Load(target.Name + "!preprocess");
 

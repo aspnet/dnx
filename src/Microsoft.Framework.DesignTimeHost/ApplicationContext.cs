@@ -549,7 +549,7 @@ namespace Microsoft.Framework.DesignTimeHost
 
             var loadContextFactory = GetRuntimeLoadContextFactory(project);
 
-            var assemblyLoadContext = loadContextFactory.Create();
+            var assemblyLoadContext = loadContextFactory.Create(_hostServices);
 
             return assemblyLoadContext;
         }
@@ -1100,7 +1100,6 @@ namespace Microsoft.Framework.DesignTimeHost
             return new DesignTimeAssemblyLoadContextFactory(
                 project,
                 _appEnv,
-                _hostServices,
                 _cache,
                 _cacheContextAccessor,
                 _namedDependencyProvider);

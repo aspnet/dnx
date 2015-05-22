@@ -11,7 +11,7 @@ namespace Microsoft.Framework.Runtime.Loader
             _accessor = (IAssemblyLoadContextAccessor)serviceProvider.GetService(typeof(IAssemblyLoadContextAccessor));
         }
 
-        public IAssemblyLoadContext Create()
+        public IAssemblyLoadContext Create(IServiceProvider serviceProvider)
         {
             return _accessor.Default;
         }

@@ -24,10 +24,10 @@ namespace Microsoft.Framework.Runtime
 
             // REVIEW: In the future we should be able to throw this away
             _projectLoadContext = new Lazy<IAssemblyLoadContext>(() =>
-             {
-                 var factory = (IAssemblyLoadContextFactory)_serviceProvider.GetService(typeof(IAssemblyLoadContextFactory));
-                 return factory.Create();
-             });
+            {
+                var factory = (IAssemblyLoadContextFactory)_serviceProvider.GetService(typeof(IAssemblyLoadContextFactory));
+                return factory.Create(_serviceProvider);
+            });
         }
 
         public ILibraryExport GetLibraryExport(ILibraryKey target)

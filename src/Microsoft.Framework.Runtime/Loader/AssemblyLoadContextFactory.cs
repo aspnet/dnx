@@ -8,19 +8,17 @@ namespace Microsoft.Framework.Runtime.Loader
     public class AssemblyLoadContextFactory : IAssemblyLoadContextFactory
     {
         private readonly IAssemblyLoadContext _defaultContext;
-        private readonly IServiceProvider _serviceProvider;
 
         public AssemblyLoadContextFactory(IServiceProvider serviceProvider)
         {
             var accessor = serviceProvider.GetService(typeof(IAssemblyLoadContextAccessor)) as IAssemblyLoadContextAccessor;
-            _serviceProvider = serviceProvider;
             _defaultContext = accessor.Default;
         }
 
-        public IAssemblyLoadContext Create()
+        public IAssemblyLoadContext Create(IServiceProvider serviceProvider)
         {
-            var projectAssemblyLoader = (ProjectAssemblyLoader)ActivatorUtilities.CreateInstance(_serviceProvider, typeof(ProjectAssemblyLoader));
-            var nugetAsseblyLoader = (NuGetAssemblyLoader)ActivatorUtilities.CreateInstance(_serviceProvider, typeof(NuGetAssemblyLoader));
+            var projectAssemblyLoader = (ProjectAssemblyLoader)ActivatorUtilities.CreateInstance(serviceProvider, typeof(ProjectAssemblyLoader));
+            var nugetAsseblyLoader = (NuGetAssemblyLoader)ActivatorUtilities.CreateInstance(serviceProvider, typeof(NuGetAssemblyLoader));
 
             return new LibraryAssemblyLoadContext(projectAssemblyLoader, nugetAsseblyLoader, _defaultContext);
         }
