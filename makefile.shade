@@ -737,7 +737,7 @@ var CAN_BUILD_ONECORE = '${Directory.Exists(WIN10_SDK_LIB) && Directory.GetFiles
     copy sourceDir='${Path.Combine(VS_REDIST_ROOT, @"onecore\x64\Microsoft.VC140.CRT")}' outputDir='${RUNTIME_CORECLR_WIN_x64_BIN}' include='vcruntime140.dll' overwrite='${true}' if='Configuration2 == "Release"'
 
     -// Copy cmd files
-    copy sourceDir='${SCRIPTS_DIR}' include='*.cmd' exclude='k-crossgen.cmd' overwrite='${true}' each='var outputDir in new[]{ RUNTIME_CLR_WIN_x86_BIN, RUNTIME_CLR_WIN_x64_BIN}'
+    copy sourceDir='${SCRIPTS_DIR}' include='*.cmd' exclude='dnx-crossgen.cmd' overwrite='${true}' each='var outputDir in new[]{ RUNTIME_CLR_WIN_x86_BIN, RUNTIME_CLR_WIN_x64_BIN}'
     copy sourceDir='${SCRIPTS_DIR}' include='*.cmd' overwrite='${true}' each='var outputDir in new[]{ RUNTIME_CORECLR_WIN_x86_BIN, RUNTIME_CORECLR_WIN_x64_BIN }'
 
 #copy-linux-bits target='package-linux'
