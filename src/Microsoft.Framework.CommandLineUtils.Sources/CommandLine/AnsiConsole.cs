@@ -61,7 +61,6 @@ namespace Microsoft.Framework.Runtime.Common.CommandLine
                 return;
             }
 
-            var sb = new StringBuilder();
             var escapeScan = 0;
             for (; ;)
             {
@@ -69,7 +68,6 @@ namespace Microsoft.Framework.Runtime.Common.CommandLine
                 if (escapeIndex == -1)
                 {
                     var text = message.Substring(escapeScan);
-                    sb.Append(text);
                     Writer.Write(text);
                     break;
                 }
@@ -85,7 +83,6 @@ namespace Microsoft.Framework.Runtime.Common.CommandLine
                     }
 
                     var text = message.Substring(escapeScan, escapeIndex - escapeScan);
-                    sb.Append(text);
                     Writer.Write(text);
                     if (endIndex == message.Length)
                     {
