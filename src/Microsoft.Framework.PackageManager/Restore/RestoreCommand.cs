@@ -134,7 +134,10 @@ namespace Microsoft.Framework.PackageManager
                 }
                 else
                 {
-                    throw new InvalidOperationException($"The given root {restoreDirectory} is invalid.");
+                    var errorMessage = $"The given root {restoreDirectory.Red().Bold()} is invalid.";
+                    ErrorMessages.GetOrAdd(restoreDirectory, _ => new List<string>()).Add(errorMessage);
+                    Reports.Error.WriteLine(errorMessage);
+                    return false;
                 }
 
                 var rootDirectory = ProjectResolver.ResolveRootDirectory(restoreDirectory);
