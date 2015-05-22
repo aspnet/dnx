@@ -31,6 +31,8 @@ namespace Microsoft.Framework.PackageManager
 
                 c.OnExecute(() =>
                 {
+                    c.ShowRootCommandFullNameAndVersion();
+
                     var reports = reportsFactory.CreateReports(quiet: false);
 
                     var command = new WrapCommand();

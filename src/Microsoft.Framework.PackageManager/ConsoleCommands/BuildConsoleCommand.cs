@@ -25,6 +25,8 @@ namespace Microsoft.Framework.PackageManager
 
                 c.OnExecute(() =>
                 {
+                    c.ShowRootCommandFullNameAndVersion();
+
                     var buildOptions = new BuildOptions();
                     buildOptions.OutputDir = optionOut.Value();
                     buildOptions.ProjectDir = argProjectDir.Value ?? Directory.GetCurrentDirectory();

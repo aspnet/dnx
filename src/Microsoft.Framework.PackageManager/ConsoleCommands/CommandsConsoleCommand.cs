@@ -43,6 +43,8 @@ namespace Microsoft.Framework.PackageManager
 
                 c.OnExecute(async () =>
                 {
+                    c.ShowRootCommandFullNameAndVersion();
+
                     var feedOptions = feedCommandLineOptions.GetOptions();
                     var command = new InstallGlobalCommand(
                             appEnvironment,
@@ -85,6 +87,8 @@ namespace Microsoft.Framework.PackageManager
 
                 c.OnExecute(() =>
                 {
+                    c.ShowRootCommandFullNameAndVersion();
+
                     var command = new UninstallCommand(
                         AppCommandsFolderRepository.CreateDefault(),
                         reports: reportsFactory.CreateReports(quiet: false));

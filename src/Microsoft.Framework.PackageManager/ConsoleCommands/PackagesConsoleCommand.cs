@@ -43,6 +43,8 @@ namespace Microsoft.Framework.PackageManager
 
                 c.OnExecute(async () =>
                 {
+                    c.ShowRootCommandFullNameAndVersion();
+
                     var options = new AddOptions
                     {
                         Reports = reportsFactory.CreateReports(quiet: false),
@@ -68,6 +70,8 @@ namespace Microsoft.Framework.PackageManager
 
                 c.OnExecute(() =>
                 {
+                    c.ShowRootCommandFullNameAndVersion();
+
                     var reports = reportsFactory.CreateReports(quiet: false);
 
                     // Implicitly commit changes before push
@@ -108,6 +112,8 @@ namespace Microsoft.Framework.PackageManager
 
                 c.OnExecute(() =>
                 {
+                    c.ShowRootCommandFullNameAndVersion();
+
                     var reports = reportsFactory.CreateReports(quiet: false);
 
                     bool success;

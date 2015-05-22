@@ -26,6 +26,8 @@ namespace Microsoft.Framework.PackageManager
 
                 c.OnExecute(async () =>
                 {
+                    c.ShowRootCommandFullNameAndVersion();
+
                     var feedOptions = feedCommandLineOptions.GetOptions();
                     var reports = reportsFactory.CreateReports(feedOptions.Quiet);
 

@@ -34,6 +34,8 @@ namespace Microsoft.Framework.PackageManager
 
                 c.OnExecute(() =>
                 {
+                    c.ShowRootCommandFullNameAndVersion();
+
                     var options = new DependencyListOptions(reportsFactory.CreateReports(verbose: true, quiet: false), argProject)
                     {
                         TargetFrameworks = frameworks.Values,

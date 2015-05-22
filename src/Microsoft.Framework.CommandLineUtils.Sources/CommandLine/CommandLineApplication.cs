@@ -411,15 +411,11 @@ namespace Microsoft.Framework.Runtime.Common.CommandLine
             }
             headerBuilder.AppendLine();
 
-            var versionAndName = new StringBuilder(FullName);
-            if (VersionGetter != null)
-            {
-                versionAndName.Append(string.Format(" v{0}", VersionGetter()));
-                versionAndName.AppendLine();
-            }
-            versionAndName.AppendLine();
+            var nameAndVersion = new StringBuilder();
+            nameAndVersion.AppendLine(GetFullNameAndVersion());
+            nameAndVersion.AppendLine();
 
-            Console.Write("{0}{1}{2}{3}{4}", versionAndName, headerBuilder, argumentsBuilder, optionsBuilder, commandsBuilder);
+            Console.Write("{0}{1}{2}{3}{4}", nameAndVersion, headerBuilder, argumentsBuilder, optionsBuilder, commandsBuilder);
         }
 
         public void ShowVersion()
@@ -430,6 +426,23 @@ namespace Microsoft.Framework.Runtime.Common.CommandLine
             }
 
             Console.WriteLine(VersionGetter());
+        }
+
+        public string GetFullNameAndVersion()
+        {
+            return VersionGetter == null ? FullName : string.Format("{0} v{1}", FullName, VersionGetter());
+        }
+
+        public void ShowRootCommandFullNameAndVersion()
+        {
+            var rootCmd = this;
+            while (rootCmd.Parent != null)
+            {
+                rootCmd = rootCmd.Parent;
+            }
+
+            Console.WriteLine(rootCmd.GetFullNameAndVersion());
+            Console.WriteLine();
         }
 
         private bool HasHelpCommand()

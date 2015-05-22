@@ -30,6 +30,8 @@ namespace Microsoft.Framework.PackageManager
 
                 c.OnExecute(async () =>
                 {
+                    c.ShowRootCommandFullNameAndVersion();
+
                     var feedOptions = feedCommandLineOptions.GetOptions();
                     var command = new RestoreCommand(applicationEnvironment);
                     command.Reports = reportsFactory.CreateReports(feedOptions.Quiet);

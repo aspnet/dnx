@@ -37,6 +37,8 @@ namespace Microsoft.Framework.PackageManager
 
                 c.OnExecute(() =>
                 {
+                    c.ShowRootCommandFullNameAndVersion();
+
                     var options = new PublishOptions
                     {
                         OutputDir = optionOut.Value(),
