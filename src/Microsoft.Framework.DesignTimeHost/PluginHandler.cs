@@ -98,6 +98,13 @@ namespace Microsoft.Framework.DesignTimeHost
                     case PluginMessageMessageName:
                         PluginMessage(message, assemblyLoadContext);
                         break;
+                    default:
+                        OnNoop(
+                            message,
+                            Resources.FormatPlugin_PluginHandlerCouldNotHandleMessage(
+                                message.MessageName,
+                                message.PluginId));
+                        break;
                 }
             }
         }
@@ -124,8 +131,7 @@ namespace Microsoft.Framework.DesignTimeHost
                 if (faultedRegistrationIndex == -1)
                 {
                     OnError(
-                        message.PluginId,
-                        UnregisterPluginMessageName,
+                        message,
                         errorMessage: Resources.FormatPlugin_UnregisteredPluginIdCannotUnregister(message.PluginId));
 
                     return;
@@ -141,7 +147,6 @@ namespace Microsoft.Framework.DesignTimeHost
                 new PluginResponseMessage
                 {
                     MessageName = UnregisterPluginMessageName,
-                    Success = true
                 });
         }
 
@@ -152,13 +157,19 @@ namespace Microsoft.Framework.DesignTimeHost
             {
                 try
                 {
-                    plugin.ProcessMessage(message.Data, assemblyLoadContext);
+                    if (!plugin.ProcessMessage(message.Data, assemblyLoadContext))
+                    {
+                        // Plugin didn't handle the message. Notify the client that we no-oped so it can respond
+                        // accordingly.
+                        OnNoop(
+                            message,
+                            Resources.FormatPlugin_PluginCouldNotHandleMessage(message.PluginId, message.MessageName));
+                    }
                 }
                 catch (Exception exception)
                 {
                     OnError(
-                        message.PluginId,
-                        PluginMessageMessageName,
+                        message,
                         errorMessage: Resources.FormatPlugin_EncounteredExceptionWhenProcessingPluginMessage(
                             message.PluginId,
                             exception.Message));
@@ -167,8 +178,7 @@ namespace Microsoft.Framework.DesignTimeHost
             else
             {
                 OnError(
-                    message.PluginId,
-                    PluginMessageMessageName,
+                    message,
                     errorMessage: Resources.FormatPlugin_UnregisteredPluginIdCannotReceiveMessages(message.PluginId));
             }
         }
@@ -260,7 +270,6 @@ namespace Microsoft.Framework.DesignTimeHost
             _registeredPlugins[pluginId] = plugin;
 
             response.Protocol = resolvedProtocol;
-            response.Success = true;
 
             return response;
         }
@@ -272,15 +281,31 @@ namespace Microsoft.Framework.DesignTimeHost
             messageBroker.SendMessage(message);
         }
 
-        private void OnError(string pluginId, string messageName, string errorMessage)
+        private void OnNoop(PluginMessage requestMessage, string errorMessage)
+        {
+            // We only want to send a no-op message if there's an associated message id on the request message.
+            if (requestMessage.MessageId != null)
+            {
+                SendMessage(
+                    requestMessage.PluginId,
+                    message: new NoopPluginResponseMessage
+                    {
+                        MessageId = requestMessage.MessageId,
+                        MessageName = requestMessage.MessageName,
+                        Error = errorMessage
+                    });
+            }
+        }
+
+        private void OnError(PluginMessage requestMessage, string errorMessage)
         {
             SendMessage(
-                pluginId,
+                requestMessage.PluginId,
                 message: new PluginResponseMessage
                 {
-                    MessageName = messageName,
+                    MessageId = requestMessage.MessageId,
+                    MessageName = requestMessage.MessageName,
                     Error = errorMessage,
-                    Success = false
                 });
         }
 

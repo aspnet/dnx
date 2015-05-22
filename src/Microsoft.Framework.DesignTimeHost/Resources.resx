@@ -123,6 +123,12 @@
   <data name="Plugin_EncounteredExceptionWhenProcessingPluginMessage" xml:space="preserve">
     <value>Plugin '{0}' encountered an exception when processing a message. Exception message: '{1}'</value>
   </data>
+  <data name="Plugin_PluginCouldNotHandleMessage" xml:space="preserve">
+    <value>Plugin '{0}' could not handle message '{1}'.</value>
+  </data>
+  <data name="Plugin_PluginHandlerCouldNotHandleMessage" xml:space="preserve">
+    <value>Plugin handler could not handle message '{0}' for plugin '{1}'.</value>
+  </data>
   <data name="Plugin_TypeCouldNotBeLocatedInAssembly" xml:space="preserve">
     <value>Could not locate plugin id '{0}' of type '{1}' in assembly '{2}'.</value>
   </data>

@@ -43,6 +43,38 @@ namespace Microsoft.Framework.DesignTimeHost
         }
 
         /// <summary>
+        /// Plugin '{0}' could not handle message '{1}'.
+        /// </summary>
+        internal static string Plugin_PluginCouldNotHandleMessage
+        {
+            get { return GetString("Plugin_PluginCouldNotHandleMessage"); }
+        }
+
+        /// <summary>
+        /// Plugin '{0}' could not handle message '{1}'.
+        /// </summary>
+        internal static string FormatPlugin_PluginCouldNotHandleMessage(object p0, object p1)
+        {
+            return string.Format(CultureInfo.CurrentCulture, GetString("Plugin_PluginCouldNotHandleMessage"), p0, p1);
+        }
+
+        /// <summary>
+        /// Plugin handler could not handle message '{0}' for plugin '{1}'.
+        /// </summary>
+        internal static string Plugin_PluginHandlerCouldNotHandleMessage
+        {
+            get { return GetString("Plugin_PluginHandlerCouldNotHandleMessage"); }
+        }
+
+        /// <summary>
+        /// Plugin handler could not handle message '{0}' for plugin '{1}'.
+        /// </summary>
+        internal static string FormatPlugin_PluginHandlerCouldNotHandleMessage(object p0, object p1)
+        {
+            return string.Format(CultureInfo.CurrentCulture, GetString("Plugin_PluginHandlerCouldNotHandleMessage"), p0, p1);
+        }
+
+        /// <summary>
         /// Could not locate plugin id '{0}' of type '{1}' in assembly '{2}'.
         /// </summary>
         internal static string Plugin_TypeCouldNotBeLocatedInAssembly

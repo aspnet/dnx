@@ -8,7 +8,7 @@ namespace Microsoft.Framework.DesignTimeHost
 {
     public interface IPlugin
     {
-        void ProcessMessage(JObject data, IAssemblyLoadContext assemblyLoadContext);
+        bool ProcessMessage(JObject data, IAssemblyLoadContext assemblyLoadContext);
 
         int Protocol { get; set; }
     }
