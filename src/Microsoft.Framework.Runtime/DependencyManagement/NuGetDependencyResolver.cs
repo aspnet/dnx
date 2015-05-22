@@ -277,8 +277,10 @@ namespace Microsoft.Framework.Runtime
 
                 var assemblies = new List<string>();
 
-                foreach (var assemblyPath in targetLibrary.RuntimeAssemblies)
+                foreach (var runtimeAssemblyPath in targetLibrary.RuntimeAssemblies)
                 {
+                    // Fix up the slashes to match the platform
+                    var assemblyPath = runtimeAssemblyPath.Path.Replace('/', Path.DirectorySeparatorChar);
                     var name = Path.GetFileNameWithoutExtension(assemblyPath);
                     var path = Path.Combine(dependency.Path, assemblyPath);
                     var assemblyName = new AssemblyName(name);
