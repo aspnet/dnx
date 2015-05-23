@@ -52,8 +52,9 @@ namespace Microsoft.Framework.PackageManager
                         }
                     }
                   }");
+                var environment = new Dictionary<string, string> { { "DNX_TRACE", "0" } };
                 DnuTestUtils.ExecDnu(runtimeHomeDir, "restore", "", out stdOut, out stdError, environment: null, workingDir: testEnv.RootDir);
-                exitCode = DnuTestUtils.ExecDnu(runtimeHomeDir, "pack", "", out stdOut, out stdError, environment: null, workingDir: testEnv.RootDir);
+                exitCode = DnuTestUtils.ExecDnu(runtimeHomeDir, "pack", "", out stdOut, out stdError, environment, testEnv.RootDir);
 
                 Assert.Empty(stdError);
                 Assert.Contains(string.Format(expectedDNX, Path.GetFileName(testEnv.RootDir), testEnv.RootDir), stdOut);
@@ -94,8 +95,9 @@ namespace Microsoft.Framework.PackageManager
                         }
                     }
                   }");
+                var environment = new Dictionary<string, string> { { "DNX_TRACE", "0" } };
                 DnuTestUtils.ExecDnu(runtimeHomeDir, "restore", "", out stdOut, out stdError, environment: null, workingDir: testEnv.RootDir);
-                exitCode = DnuTestUtils.ExecDnu(runtimeHomeDir, "pack", "--framework dnx451", out stdOut, out stdError, environment: null, workingDir: testEnv.RootDir);
+                exitCode = DnuTestUtils.ExecDnu(runtimeHomeDir, "pack", "--framework dnx451", out stdOut, out stdError, environment, testEnv.RootDir);
 
                 Assert.Empty(stdError);
                 Assert.Contains(string.Format(expectedDNX, Path.GetFileName(testEnv.RootDir), testEnv.RootDir), stdOut);

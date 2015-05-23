@@ -401,7 +401,7 @@ namespace Microsoft.Framework.CommonTestUtils
                         ++endIndex;
                     }
 
-                    text = text.Remove(escapeIndex, endIndex - escapeIndex);
+                    text = text.Remove(escapeIndex, endIndex - (escapeIndex + 1));
                 }
                 else
                 {
