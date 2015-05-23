@@ -41,20 +41,6 @@ namespace Microsoft.Framework.Runtime
 
             PackagesDirectory = packagesDirectory ?? NuGetDependencyResolver.ResolveRepositoryPath(RootDirectory);
 
-            var referenceAssemblyDependencyResolver = new ReferenceAssemblyDependencyResolver(FrameworkReferenceResolver);
-            NuGetDependencyProvider = new NuGetDependencyResolver(new PackageRepository(PackagesDirectory));
-            var gacDependencyResolver = new GacDependencyResolver();
-            ProjectDepencyProvider = new ProjectReferenceDependencyProvider(ProjectResolver);
-            var unresolvedDependencyProvider = new UnresolvedDependencyProvider();
-
-            var dependencyProviders = new List<IDependencyProvider> {
-                ProjectDepencyProvider,
-                NuGetDependencyProvider,
-                referenceAssemblyDependencyResolver,
-                gacDependencyResolver,
-                unresolvedDependencyProvider
-            };
-
             var projectName = PathUtility.GetDirectoryName(ProjectDirectory);
 
             Project project;
@@ -68,42 +54,21 @@ namespace Microsoft.Framework.Runtime
                     string.Format("Unable to resolve project '{0}' from {1}", projectName, ProjectDirectory));
             }
 
-            var projectLockJsonPath = Path.Combine(ProjectDirectory, LockFileReader.LockFileName);
-            var lockFileExists = File.Exists(projectLockJsonPath);
-            var validLockFile = false;
-            ICompilationMessage lockFileDiagnostic = null;
+            var referenceAssemblyDependencyResolver = new ReferenceAssemblyDependencyResolver(FrameworkReferenceResolver);
+            NuGetDependencyProvider = new NuGetDependencyResolver(new PackageRepository(PackagesDirectory), project, skipLockFileValidation);
+            var gacDependencyResolver = new GacDependencyResolver();
+            ProjectDepencyProvider = new ProjectReferenceDependencyProvider(ProjectResolver);
+            var unresolvedDependencyProvider = new UnresolvedDependencyProvider();
 
-            if (lockFileExists)
-            {
-                var lockFileReader = new LockFileReader();
-                var lockFile = lockFileReader.Read(projectLockJsonPath);
+            var dependencyProviders = new List<IDependencyProvider> {
+                ProjectDepencyProvider,
+                NuGetDependencyProvider,
+                referenceAssemblyDependencyResolver,
+                gacDependencyResolver,
+                unresolvedDependencyProvider
+            };
 
-                string message;
-                validLockFile = lockFile.IsValidForProject(Project, out message);
-
-                if (skipLockFileValidation || validLockFile)
-                {
-                    NuGetDependencyProvider.ApplyLockFile(lockFile);
-                }
-                else
-                {
-                    // We don't add NuGetDependencyProvider to DependencyWalker
-                    // It will leave all NuGet packages unresolved and give error message asking users to run "dnu restore"
-                    dependencyProviders.Remove(NuGetDependencyProvider);
-                    lockFileDiagnostic = new FileFormatMessage($"{message}. {_lockFileHint}.", projectLockJsonPath,
-                        CompilationMessageSeverity.Error);
-                }
-            }
-            else
-            {
-                // We don't add NuGetDependencyProvider to DependencyWalker
-                // It will leave all NuGet packages unresolved and give error message asking users to run "dnu restore"
-                dependencyProviders.Remove(NuGetDependencyProvider);
-                lockFileDiagnostic = new FileFormatMessage($"The expected lock file doesn't exist. {_lockFileHint}.",
-                    projectLockJsonPath, CompilationMessageSeverity.Error);
-            }
-
-            DependencyWalker = new DependencyWalker(dependencyProviders, lockFileDiagnostic);
+            DependencyWalker = new DependencyWalker(dependencyProviders);
 
             LibraryExportProvider = new CompositeLibraryExportProvider(new ILibraryExportProvider[] {
                 new ProjectLibraryExportProvider(ProjectResolver, ServiceProvider),

@@ -22,7 +22,9 @@ namespace Microsoft.Framework.Runtime.DependencyManagement
             {
                 try
                 {
-                    return Read(stream);
+                    var lockFile = Read(stream);
+                    lockFile.Path = filePath;
+                    return lockFile;
                 }
                 catch (FileFormatException ex)
                 {

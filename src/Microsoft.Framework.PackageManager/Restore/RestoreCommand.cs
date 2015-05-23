@@ -277,8 +277,7 @@ namespace Microsoft.Framework.PackageManager
 
             if (useLockFile)
             {
-                var lockFileProvider = new NuGetDependencyResolver(new PackageRepository(packagesDirectory));
-                lockFileProvider.ApplyLockFile(lockFile);
+                var lockFileProvider = new NuGetDependencyResolver(new PackageRepository(packagesDirectory), project);
                 localProviders.Add(
                     new LocalWalkProvider(lockFileProvider));
             }

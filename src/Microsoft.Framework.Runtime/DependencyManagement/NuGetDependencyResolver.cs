@@ -24,10 +24,21 @@ namespace Microsoft.Framework.Runtime
         // All the information required by this package
         private readonly Dictionary<string, PackageDescription> _packageDescriptions = new Dictionary<string, PackageDescription>(StringComparer.OrdinalIgnoreCase);
 
-        public NuGetDependencyResolver(PackageRepository repository)
+        private List<ICompilationMessage> _diagnostics = new List<ICompilationMessage>();
+
+        private const string _lockFileHint = "Please run \"dnu restore\" to generate a new lock file";
+
+        private bool _isInvalidState = false;
+
+        public NuGetDependencyResolver(PackageRepository repository, Project project = null, bool skipLockFileValidation = false)
         {
             _repository = repository;
             Dependencies = Enumerable.Empty<LibraryDescription>();
+
+            if (project != null)
+            {
+                ApplyLockFileOfProject(project, skipLockFileValidation);
+            }
         }
 
         public IDictionary<AssemblyName, PackageAssembly> PackageAssemblyLookup
@@ -40,7 +51,40 @@ namespace Microsoft.Framework.Runtime
 
         public IEnumerable<LibraryDescription> Dependencies { get; private set; }
 
-        public void ApplyLockFile(LockFile lockFile)
+        private void ApplyLockFileOfProject(Project project, bool skipLockFileValidation)
+        {
+            var projectLockJsonPath = Path.Combine(project.ProjectDirectory, LockFileReader.LockFileName);
+            var lockFileExists = File.Exists(projectLockJsonPath);
+            var validLockFile = false;
+
+            if (lockFileExists)
+            {
+                var lockFileReader = new LockFileReader();
+                var lockFile = lockFileReader.Read(projectLockJsonPath);
+
+                string message;
+                validLockFile = lockFile.IsValidForProject(project, out message);
+
+                if (skipLockFileValidation || validLockFile)
+                {
+                    ApplyLockFile(lockFile);
+                }
+                else
+                {
+                    _isInvalidState = true;
+                    _diagnostics.Add(new FileFormatMessage($"{message}. {_lockFileHint}.", projectLockJsonPath,
+                        CompilationMessageSeverity.Error));
+                }
+            }
+            else
+            {
+                _isInvalidState = true;
+                _diagnostics.Add(new FileFormatMessage($"The expected lock file doesn't exist. {_lockFileHint}.",
+                    projectLockJsonPath, CompilationMessageSeverity.Error));
+            }
+        }
+
+        private void ApplyLockFile(LockFile lockFile)
         {
             _lookup = new Dictionary<Tuple<string, FrameworkName, string>, LockFileTargetLibrary>();
 
@@ -66,6 +110,11 @@ namespace Microsoft.Framework.Runtime
 
         public LibraryDescription GetDescription(LibraryRange libraryRange, FrameworkName targetFramework)
         {
+            if (_isInvalidState)
+            {
+                return null;
+            }
+
             if (libraryRange.IsGacOrFrameworkReference)
             {
                 return null;
@@ -223,6 +272,11 @@ namespace Microsoft.Framework.Runtime
 
         public void Initialize(IEnumerable<LibraryDescription> packages, FrameworkName targetFramework, string runtimeIdentifier)
         {
+            if (_isInvalidState)
+            {
+                return;
+            }
+
             Dependencies = packages;
 
             var cacheResolvers = GetCacheResolvers();
@@ -352,6 +406,11 @@ namespace Microsoft.Framework.Runtime
 
         public ILibraryExport GetLibraryExport(ILibraryKey target)
         {
+            if (_isInvalidState)
+            {
+                return null;
+            }
+
             PackageDescription description;
             if (!_packageDescriptions.TryGetValue(target.Name, out description))
             {
