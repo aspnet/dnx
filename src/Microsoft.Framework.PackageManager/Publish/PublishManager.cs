@@ -24,7 +24,7 @@ namespace Microsoft.Framework.PackageManager.Publish
 
             var outputDir = _options.OutputDir ?? Path.Combine(_options.ProjectDir, "bin", "output");
             _options.OutputDir = Normalize(outputDir);
-            ScriptExecutor = new ScriptExecutor();
+            ScriptExecutor = new ScriptExecutor(_options.Reports.Information);
         }
 
         public ScriptExecutor ScriptExecutor { get; private set; }

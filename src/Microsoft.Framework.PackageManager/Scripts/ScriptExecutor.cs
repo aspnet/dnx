@@ -15,6 +15,13 @@ namespace Microsoft.Framework.PackageManager
     {
         private static readonly string ErrorMessageTemplate = "The '{0}' script failed with status code {1}.";
 
+        public ScriptExecutor(IReport report = null)
+        {
+            Report = report;
+        }
+
+        public IReport Report { get; set; }
+
         public bool Execute(Runtime.Project project, string scriptName, Func<string, string> getVariable)
         {
             IEnumerable<string> scriptCommandLines;
@@ -22,6 +29,8 @@ namespace Microsoft.Framework.PackageManager
             {
                 return true;
             }
+
+            Report?.WriteLine($"Executing script '{scriptName}' in {Runtime.Project.ProjectFileName}");
 
             foreach (var scriptCommandLine in scriptCommandLines)
             {
