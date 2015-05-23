@@ -113,8 +113,9 @@ namespace Microsoft.Framework.PackageManager
         public void DnuPack_OutPathSpecified(string flavor, string os, string architecture)
         {
             string expectedNupkg =
-            @"{0} -> {1}/CustomOutput/Debug/{0}.1.0.0.nupkg
-{0} -> {1}/CustomOutput/Debug/{0}.1.0.0.symbols.nupkg".Replace('/', Path.DirectorySeparatorChar);
+            @"{0} -> {1}/CustomOutput/Debug/{0}.1.0.0.nupkg".Replace('/', Path.DirectorySeparatorChar);
+            string expectedSymbol =
+            @"{0} -> {1}/CustomOutput/Debug/{0}.1.0.0.symbols.nupkg".Replace('/', Path.DirectorySeparatorChar);
             string stdOut;
             string stdError;
             var runtimeHomeDir = TestUtils.GetRuntimeHomeDir(flavor, os, architecture);
@@ -139,6 +140,7 @@ namespace Microsoft.Framework.PackageManager
 
                 Assert.Empty(stdError);
                 Assert.Contains(string.Format(expectedNupkg, Path.GetFileName(testEnv.RootDir), testEnv.RootDir), stdOut);
+                Assert.Contains(string.Format(expectedSymbol, Path.GetFileName(testEnv.RootDir), testEnv.RootDir), stdOut);
                 Assert.Equal(0, exitCode);
                 Assert.True(Directory.Exists($"{testEnv.RootDir}/CustomOutput"));
             }
