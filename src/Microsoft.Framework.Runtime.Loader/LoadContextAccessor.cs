@@ -39,7 +39,7 @@ namespace Microsoft.Framework.Runtime.Loader
     {
         private static readonly LoadContextAccessor _instance = new LoadContextAccessor();
 
-        private Dictionary<Assembly, IAssemblyLoadContext> _cache = new Dictionary<Assembly, IAssemblyLoadContext>();
+        private Dictionary<Assembly, LoadContext> _cache = new Dictionary<Assembly, LoadContext>();
 
         private readonly object _lockObj = new object();
 
@@ -59,11 +59,16 @@ namespace Microsoft.Framework.Runtime.Loader
             }
         }
 
-        public IAssemblyLoadContext GetLoadContext(Assembly assembly)
+        IAssemblyLoadContext IAssemblyLoadContextAccessor.GetLoadContext(Assembly assembly)
+        {
+            return GetLoadContext(assembly);
+        }
+
+        public LoadContext GetLoadContext(Assembly assembly)
         {
             lock (_lockObj)
             {
-                IAssemblyLoadContext context;
+                LoadContext context;
                 if (_cache.TryGetValue(assembly, out context))
                 {
                     return context;
@@ -73,7 +78,7 @@ namespace Microsoft.Framework.Runtime.Loader
             return LoadContext.Default;
         }
 
-        public void SetLoadContext(Assembly assembly, IAssemblyLoadContext loadContext)
+        public void SetLoadContext(Assembly assembly, LoadContext loadContext)
         {
             lock (_lockObj)
             {
