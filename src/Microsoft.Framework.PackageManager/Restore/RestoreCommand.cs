@@ -69,6 +69,7 @@ namespace Microsoft.Framework.PackageManager
         public bool CheckHashFile { get; set; } = true;
         public bool SkipInstall { get; set; }
         public bool SkipRestoreEvents { get; set; }
+        public bool IgnoreMissingDependencies { get; set; }
 
         private Dictionary<string, List<string>> ErrorMessages { get; set; }
 
@@ -451,16 +452,21 @@ namespace Microsoft.Framework.PackageManager
 
                     if (node.Item == null || node.Item.Match == null)
                     {
-                        if (!node.LibraryRange.IsGacOrFrameworkReference &&
-                             node.LibraryRange.VersionRange != null &&
-                             missingItems.Add(node.LibraryRange))
+                        // This is a workaround for #1322. Since we use restore to generate the lock file
+                        // after publish, it's possible to fail restore after copying the closure
+                        if (!IgnoreMissingDependencies)
                         {
-                            var errorMessage = string.Format("Unable to locate {0} {1}",
-                                node.LibraryRange.Name.Red().Bold(),
-                                node.LibraryRange.VersionRange);
-                            ErrorMessages.GetOrAdd(projectJsonPath, _ => new List<string>()).Add(errorMessage);
-                            Reports.Error.WriteLine(errorMessage);
-                            success = false;
+                            if (!node.LibraryRange.IsGacOrFrameworkReference &&
+                                 node.LibraryRange.VersionRange != null &&
+                                 missingItems.Add(node.LibraryRange))
+                            {
+                                var errorMessage = string.Format("Unable to locate {0} {1}",
+                                    node.LibraryRange.Name.Red().Bold(),
+                                    node.LibraryRange.VersionRange);
+                                ErrorMessages.GetOrAdd(projectJsonPath, _ => new List<string>()).Add(errorMessage);
+                                Reports.Error.WriteLine(errorMessage);
+                                success = false;
+                            }
                         }
 
                         return;

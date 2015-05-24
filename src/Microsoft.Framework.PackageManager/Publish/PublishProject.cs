@@ -415,6 +415,11 @@ namespace Microsoft.Framework.PackageManager.Publish
                 var restoreDirectory = project.IsPackage ? Path.Combine(project.TargetPath, "root") : project.TargetPath;
                 restoreCommand.SkipRestoreEvents = true;
                 restoreCommand.SkipInstall = true;
+                // This is a workaround for #1322. Since we use restore to generate the lock file
+                // after publish, it's possible to fail restore after copying the closure
+                // if framework assemblies and packages have the same name. This is more likely now
+                // since dependencies may exist in the top level
+                restoreCommand.IgnoreMissingDependencies = true;
                 restoreCommand.CheckHashFile = false;
                 restoreCommand.RestoreDirectories.Add(restoreDirectory);
                 restoreCommand.FeedOptions = feedOptions;
