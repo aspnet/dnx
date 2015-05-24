@@ -394,7 +394,7 @@ namespace Microsoft.Framework.PackageManager.Utils
 
             ContentPropertyDefinition _assembly = new ContentPropertyDefinition
             {
-                FileExtensions = { ".dll" }
+                FileExtensions = { ".dll", ".exe", ".winmd" }
             };
 
             ContentPropertyDefinition _dynamicLibrary = new ContentPropertyDefinition
