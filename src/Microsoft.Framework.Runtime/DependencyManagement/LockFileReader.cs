@@ -35,7 +35,7 @@ namespace Microsoft.Framework.Runtime.DependencyManagement
             }
         }
 
-        private LockFile Read(Stream stream)
+        internal LockFile Read(Stream stream)
         {
             try
             {
@@ -253,6 +253,10 @@ namespace Microsoft.Framework.Runtime.DependencyManagement
             if (json is JsonString)
             {
                 return (json as JsonString).Value;
+            }
+            else if(json is JsonNull)
+            {
+                return null;
             }
             else
             {
