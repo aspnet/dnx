@@ -218,14 +218,6 @@ namespace Microsoft.Framework.Runtime.Loader
                 }
             }
 
-            // We don't have a context id so we need to do some magic
-
-            // TODO: Remove this
-            if (assemblyName.Name.EndsWith(".resources"))
-            {
-                return null;
-            }
-
             // If we have a requesting assembly then try to infer the load context from it
             if (args.RequestingAssembly != null)
             {
