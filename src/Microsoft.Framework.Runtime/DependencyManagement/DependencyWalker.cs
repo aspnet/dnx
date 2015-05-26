@@ -62,9 +62,10 @@ namespace Microsoft.Framework.Runtime
         public IList<ICompilationMessage> GetDependencyDiagnostics(string projectFilePath)
         {
             var messages = new List<ICompilationMessage>();
-
             messages.AddRange(DependencyProviders.SelectMany(x => x.GetDiagnostics()));
+            var lockFileNotFoundMessage = messages.SingleOrDefault(IsLockFileNotFoundMessage);
 
+            var anyUnresolved = false;
             foreach (var library in Libraries)
             {
                 string projectPath = library.LibraryRange.FileName ?? projectFilePath;
@@ -78,6 +79,8 @@ namespace Microsoft.Framework.Runtime
                         StartLine = library.LibraryRange.Line,
                         StartColumn = library.LibraryRange.Column
                     });
+
+                    anyUnresolved = true;
                 }
                 else
                 {
@@ -112,7 +115,19 @@ namespace Microsoft.Framework.Runtime
                 }
             }
 
+            // Only report "lock file was not found" when there is any unresolved NuGet dependency
+            // So if an app is simple enough and it doesn't require any NuGet dependency, a lock file is not mandatory
+            if (!anyUnresolved)
+            {
+                messages.Remove(lockFileNotFoundMessage);
+            }
+
             return messages;
+        }
+
+        private static bool IsLockFileNotFoundMessage(ICompilationMessage message)
+        {
+            return string.IsNullOrEmpty(message.SourceFilePath);
         }
 
         public string GetMissingDependenciesWarning(FrameworkName targetFramework)
