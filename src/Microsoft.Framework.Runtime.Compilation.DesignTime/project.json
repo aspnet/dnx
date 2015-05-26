@@ -17,10 +17,11 @@
       "dependencies": {
         "System.Collections.Concurrent": "4.0.10-beta-*",
         "System.Dynamic.Runtime": "4.0.10-beta-*",
+        "System.Globalization": "4.0.10-beta-*",
         "System.IO.FileSystem": "4.0.0-beta-*",
+        "System.Net.Primitives": "4.0.10-beta-*",
         "System.Net.Sockets": "4.0.10-beta-*",
-        "System.Threading.Thread": "4.0.0-beta-*",
-        "System.Globalization": "4.0.10-beta-*"
+        "System.Threading.Thread": "4.0.0-beta-*"
       }
     }
   },
