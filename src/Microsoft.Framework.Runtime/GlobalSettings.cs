@@ -53,7 +53,7 @@ namespace Microsoft.Framework.Runtime
                                              jobject.ValueAsStringArray("sources") ??
                                              new string[] { };
 
-                    globalSettings.ProjectSearchPaths = projectSearchPaths;
+                    globalSettings.ProjectSearchPaths = new List<string>(projectSearchPaths);
                     globalSettings.PackagesPath = jobject.ValueAsString("packages");
                     globalSettings.FilePath = globalJsonPath;
                 }
@@ -64,6 +64,11 @@ namespace Microsoft.Framework.Runtime
             }
 
             return true;
+        }
+
+        public static string GetGlobalFilePath(string folder)
+        {
+            return Path.Combine(folder, GlobalFileName);
         }
 
         public static bool HasGlobalFile(string path)

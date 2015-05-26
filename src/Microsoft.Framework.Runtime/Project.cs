@@ -63,6 +63,8 @@ namespace Microsoft.Framework.Runtime
 
         public string[] Owners { get; private set; }
 
+        public IDictionary<string, string> Repository { get; private set; }
+
         public bool EmbedInteropTypes { get; set; }
 
         public SemanticVersion Version { get; private set; }
@@ -298,6 +300,16 @@ namespace Microsoft.Framework.Runtime
                         scripts.Value(key),
                         project.ProjectFilePath);
                 }
+            }
+
+            var repository = rawProject.Value("repository") as JsonObject;
+            if (repository != null)
+            {
+                project.Repository = repository
+                    .Keys
+                    .ToDictionary(
+                        key => key, 
+                        key => repository.ValueAsString(key).Value);
             }
 
             project.BuildTargetFrameworksAndConfigurations(rawProject);

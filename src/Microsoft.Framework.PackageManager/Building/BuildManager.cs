@@ -8,6 +8,7 @@ using System.IO;
 using System.Linq;
 using Microsoft.Framework.FileSystemGlobbing;
 using Microsoft.Framework.FileSystemGlobbing.Abstractions;
+using Microsoft.Framework.PackageManager.SourceControl;
 using Microsoft.Framework.PackageManager.Utils;
 using Microsoft.Framework.Runtime;
 using Microsoft.Framework.Runtime.Caching;
@@ -140,6 +141,7 @@ namespace Microsoft.Framework.PackageManager
             PackageBuilder packageBuilder = null;
             PackageBuilder symbolPackageBuilder = null;
             InstallBuilder installBuilder = null;
+            SourceBuilder sourceBuilder = null;
 
             // Build all specified configurations
             foreach (var configuration in configurations)
@@ -151,8 +153,8 @@ namespace Microsoft.Framework.PackageManager
                     symbolPackageBuilder = new PackageBuilder();
                     InitializeBuilder(_currentProject, packageBuilder);
                     InitializeBuilder(_currentProject, symbolPackageBuilder);
-
                     installBuilder = new InstallBuilder(_currentProject, packageBuilder, _buildOptions.Reports);
+                    sourceBuilder = new SourceBuilder(_currentProject, packageBuilder, _buildOptions.Reports);
                 }
 
                 var configurationSuccess = true;
@@ -211,6 +213,12 @@ namespace Microsoft.Framework.PackageManager
                     {
                         // Generates the application package only if this is an application packages
                         configurationSuccess = installBuilder.Build(outputPath);
+                        success = success && configurationSuccess;
+                    }
+
+                    if (configurationSuccess)
+                    {
+                        configurationSuccess = sourceBuilder.Build(outputPath);
                         success = success && configurationSuccess;
                     }
 

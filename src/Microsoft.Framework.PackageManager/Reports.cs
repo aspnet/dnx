@@ -10,6 +10,26 @@ namespace Microsoft.Framework.PackageManager
         public IReport Quiet { get; set; }
         public IReport Error { get; set; }
 
+        public void WriteInformation(string message)
+        {
+            Information.WriteLine(message);
+        }
+
+        public void WriteVerbose(string message)
+        {
+            Verbose.WriteLine(message);
+        }
+
+        public void WriteError(string message)
+        {
+            Error.WriteLine(message.Red());
+        }
+
+        public void WriteWarning(string message)
+        {
+            Information.WriteLine(message.Yellow());
+        }
+
         public Reports ShallowCopy()
         {
             return MemberwiseClone() as Reports;

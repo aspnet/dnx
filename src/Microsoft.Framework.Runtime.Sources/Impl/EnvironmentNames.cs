@@ -21,5 +21,6 @@ namespace Microsoft.Framework.Runtime
         public static readonly string DefaultLib = CommonPrefix + "DEFAULT_LIB";
         public static readonly string BuildKeyFile = CommonPrefix + "BUILD_KEY_FILE";
         public static readonly string BuildDelaySign = CommonPrefix + "BUILD_DELAY_SIGN";
+        public static readonly string Sources = CommonPrefix + "SOURCES";
     }
 }

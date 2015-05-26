@@ -299,7 +299,7 @@ namespace Microsoft.Framework.CommonTestUtils
             {
                 try
                 {
-                    Directory.Delete(path, recursive: true);
+                    DeleteFolderInternal(path);
                     return;
                 }
                 catch (Exception)
@@ -310,6 +310,26 @@ namespace Microsoft.Framework.CommonTestUtils
                     }
                 }
             }
+        }
+
+        private static void DeleteFolderInternal(string folder)
+        {
+            foreach (var subfolder in Directory.GetDirectories(folder))
+            {
+                DeleteFolderInternal(subfolder);
+            }
+
+            foreach (var fileName in Directory.GetFiles(folder))
+            {
+                var fullFilePath = Path.Combine(folder, fileName);
+
+                // Make sure the files are not readonly.
+                // Otherwise, Directory.Delete cannot delete them
+                File.SetAttributes(fullFilePath, FileAttributes.Normal);
+                File.Delete(fullFilePath);
+            }
+
+            Directory.Delete(folder, recursive: false);
         }
 
         public static string ResolveMSBuildPath()
