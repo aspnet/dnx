@@ -50,7 +50,7 @@ namespace Microsoft.Framework.DesignTimeHost
         private readonly Dictionary<FrameworkName, ProjectCompilation> _compilations = new Dictionary<FrameworkName, ProjectCompilation>();
         private readonly PluginHandler _pluginHandler;
 
-        private int _protocolVersion;
+        private ProtocolManager _protocolManager;
 
         public ApplicationContext(IServiceProvider services,
                                   ICache cache,
@@ -64,39 +64,14 @@ namespace Microsoft.Framework.DesignTimeHost
             _cacheContextAccessor = cacheContextAccessor;
             _namedDependencyProvider = namedDependencyProvider;
             _pluginHandler = new PluginHandler(services, SendPluginMessage);
+            _protocolManager = new ProtocolManager();
 
             Id = id;
-
-            ProtocolVersion = 1;
         }
 
         public int Id { get; private set; }
 
         public string ApplicationPath { get { return _appPath.Value; } }
-
-        public int ProtocolVersion
-        {
-            get
-            {
-                return _protocolVersion;
-            }
-            set
-            {
-                // protocol
-                var strProtocol = Environment.GetEnvironmentVariable("DTH_PROTOCOL");
-                int intProtocol;
-                if (!string.IsNullOrEmpty(strProtocol) && Int32.TryParse(strProtocol, out intProtocol))
-                {
-                    Logger.TraceInformation("[{0}]: Set DTH protocol version to {1}. Source is environment variable DTH_PROTOCOL.", GetType().Name, intProtocol);
-                    _protocolVersion = intProtocol;
-                }
-                else
-                {
-                    Logger.TraceInformation("[{0}]: Set DTH protocol version to {1}.", GetType().Name, value);
-                    _protocolVersion = value;
-                }
-            }
-        }
 
         public void OnReceive(Message message)
         {
@@ -259,13 +234,16 @@ namespace Microsoft.Framework.DesignTimeHost
 
                             _appPath.Value = data.ProjectFolder;
                             _configuration.Value = data.Configuration ?? "Debug";
-                            ProtocolVersion = data.Version;
+                            _protocolManager.Negotiate(message);
                         }
                         else
                         {
                             Logger.TraceInformation("[ApplicationContext]: Received Initialize message more than once for {0}", _appPath.Value);
                         }
                     }
+                    break;
+                case ProtocolManager.NegotiationMessageTypeName:
+                    _protocolManager.Negotiate(message);
                     break;
                 case "Teardown":
                     {
@@ -593,6 +571,11 @@ namespace Microsoft.Framework.DesignTimeHost
 
         private void SendOutgoingMessages()
         {
+            if (_protocolManager.NeedToRespond)
+            {
+                _protocolManager.Respond(_initializedContext);
+            }
+
             if (IsDifferent(_local.ProjectInformation, _remote.ProjectInformation))
             {
                 Logger.TraceInformation("[ApplicationContext]: OnTransmit(ProjectInformation)");
@@ -620,7 +603,7 @@ namespace Microsoft.Framework.DesignTimeHost
                 {
                     ContextId = Id,
                     MessageType = "Diagnostics",
-                    Payload = _local.ProjectDiagnostics.ConvertToJson(ProtocolVersion)
+                    Payload = _local.ProjectDiagnostics.ConvertToJson(_protocolManager.CurrentVersion)
                 });
 
                 _remote.ProjectDiagnostics = _local.ProjectDiagnostics;
@@ -659,7 +642,7 @@ namespace Microsoft.Framework.DesignTimeHost
                     {
                         ContextId = Id,
                         MessageType = "DependencyDiagnostics",
-                        Payload = localProject.DependencyDiagnostics.ConvertToJson(ProtocolVersion)
+                        Payload = localProject.DependencyDiagnostics.ConvertToJson(_protocolManager.CurrentVersion)
                     });
 
                     remoteProject.DependencyDiagnostics = localProject.DependencyDiagnostics;
@@ -750,7 +733,7 @@ namespace Microsoft.Framework.DesignTimeHost
                 messages.Add(new DiagnosticsMessage(messageGroup, g.Key));
             }
 
-            var payload = JToken.FromObject(messages.Select(d => d.ConvertToJson(ProtocolVersion)));
+            var payload = JToken.FromObject(messages.Select(d => d.ConvertToJson(_protocolManager.CurrentVersion)));
 
             // Send all diagnostics back
             foreach (var connection in _waitingForDiagnostics)
