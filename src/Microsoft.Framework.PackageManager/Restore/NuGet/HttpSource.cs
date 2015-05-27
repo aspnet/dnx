@@ -129,7 +129,7 @@ namespace Microsoft.Framework.PackageManager.Restore.NuGet
             {
                 HttpStatusCode statusCode;
 
-                using (var response = await _client.SendAsync(request))
+                using (var response = await _client.SendAsync(request, HttpCompletionOption.ResponseHeadersRead))
                 {
                     response.EnsureSuccessStatusCode();
                     statusCode = response.StatusCode;
