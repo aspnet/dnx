@@ -6,7 +6,6 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using System.Xml.Serialization;
 
 namespace NuGet
 {
@@ -14,24 +13,46 @@ namespace NuGet
     {
         public const int DefaultVersion = 1;
         public const int SemverVersion = 3;
-
         public const int TargetFrameworkSupportForDependencyContentsAndToolsVersion = 4;
         public const int TargetFrameworkSupportForReferencesVersion = 5;
         public const int XdtTransformationVersion = 6;
-
-        private static readonly Type[] _xmlAttributes = new[] { typeof(XmlElementAttribute), typeof(XmlAttributeAttribute), typeof(XmlArrayAttribute) };
+        private static ISet<string> _metadataPropertyNames;
 
         public static int GetManifestVersion(ManifestMetadata metadata)
         {
-            return Math.Max(VisitObject(metadata), GetMaxVersionFromMetadata(metadata));
+            return Math.Max(GetVersionFromObject(metadata), GetMaxVersionFromMetadata(metadata));
+        }
+
+        private static ISet<string> MetadataPropertyNames
+        {
+            get
+            {
+                if (_metadataPropertyNames == null)
+                {
+                    _metadataPropertyNames = new HashSet<string>();
+
+                    _metadataPropertyNames.AddRange(
+                        typeof(IPackageMetadata).GetRuntimeProperties()
+                                                .Where(prop => prop.GetMethod != null)
+                                                .Select(prop => prop.Name));
+
+
+                    _metadataPropertyNames.AddRange(
+                        typeof(IPackageName).GetRuntimeProperties()
+                                            .Where(prop => prop.GetMethod != null)
+                                            .Select(prop => prop.Name));
+                }
+
+                return _metadataPropertyNames;
+            }
         }
 
         private static int GetMaxVersionFromMetadata(ManifestMetadata metadata)
         {
             // Important: check for version 5 before version 4
             bool referencesHasTargetFramework =
-              metadata.ReferenceSets != null &&
-              metadata.ReferenceSets.Any(r => r.TargetFramework != null);
+              metadata.PackageAssemblyReferences != null &&
+              metadata.PackageAssemblyReferences.Any(r => r.TargetFramework != null);
 
             if (referencesHasTargetFramework)
             {
@@ -41,13 +62,13 @@ namespace NuGet
             bool dependencyHasTargetFramework =
                 metadata.DependencySets != null &&
                 metadata.DependencySets.Any(d => d.TargetFramework != null);
+
             if (dependencyHasTargetFramework)
             {
                 return TargetFrameworkSupportForDependencyContentsAndToolsVersion;
             }
 
-            SemanticVersion semanticVersion;
-            if (SemanticVersion.TryParse(metadata.Version, out semanticVersion) && !String.IsNullOrEmpty(semanticVersion.SpecialVersion))
+            if (!string.IsNullOrEmpty(metadata.Version?.SpecialVersion))
             {
                 return SemverVersion;
             }
@@ -55,21 +76,20 @@ namespace NuGet
             return DefaultVersion;
         }
 
-        private static int VisitObject(object obj)
+        private static int GetVersionFromObject(object obj)
         {
-            if (obj == null)
-            {
-                return DefaultVersion;
-            }
-            var properties = obj.GetType().GetRuntimeProperties();
-            return (from property in properties
-                    where property.GetMethod != null && property.GetMethod.IsPublic && !property.GetMethod.IsStatic
-                    select VisitProperty(obj, property)).Max();
+            // all public, gettable, non-static properties
+            return obj?.GetType()
+                       .GetRuntimeProperties()
+                       .Where(prop => prop.GetMethod != null && prop.GetMethod.IsPublic && !prop.GetMethod.IsStatic)
+                       .Select(prop => GetVersionFromPropertyInfo(obj, prop))
+                       .Max()
+                      ?? DefaultVersion;
         }
 
-        private static int VisitProperty(object obj, PropertyInfo property)
+        private static int GetVersionFromPropertyInfo(object obj, PropertyInfo property)
         {
-            if (!IsManifestMetadata(property))
+            if (!MetadataPropertyNames.Contains(property.Name))
             {
                 return DefaultVersion;
             }
@@ -80,53 +100,43 @@ namespace NuGet
                 return DefaultVersion;
             }
 
-            int version = GetPropertyVersion(property);
-
-            var list = value as IList;
-            if (list != null)
+            int? version = GetPropertyVersion(property);
+            if (!version.HasValue)
             {
-                if (list.Count > 0)
-                {
-                    return Math.Max(version, VisitList(list));
-                }
-                return version;
+                return DefaultVersion;
             }
 
-            var stringValue = value as String;
+            var stringValue = value as string;
             if (stringValue != null)
             {
-                if (!String.IsNullOrEmpty(stringValue))
+                if (!string.IsNullOrEmpty(stringValue))
                 {
-                    return version;
+                    return version.Value;
                 }
+
                 return DefaultVersion;
             }
 
             // For all other object types a null check would suffice.
-            return version;
+            return version.Value;
         }
 
-        private static int VisitList(IList list)
+        private static int VisitList(IEnumerable list)
         {
             int version = DefaultVersion;
 
             foreach (var item in list)
             {
-                version = Math.Max(version, VisitObject(item));
+                version = Math.Max(version, GetVersionFromObject(item));
             }
 
             return version;
         }
 
-        private static int GetPropertyVersion(PropertyInfo property)
+        private static int? GetPropertyVersion(PropertyInfo property)
         {
             var attribute = property.GetCustomAttribute<ManifestVersionAttribute>();
-            return attribute != null ? attribute.Version : DefaultVersion;
-        }
-
-        private static bool IsManifestMetadata(PropertyInfo property)
-        {
-            return _xmlAttributes.Any(attr => property.GetCustomAttribute(attr) != null);
+            return attribute?.Version;
         }
     }
 }

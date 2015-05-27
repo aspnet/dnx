@@ -6,34 +6,42 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
-using System.Xml;
 using System.Xml.Linq;
 using System.Xml.Schema;
-using System.Xml.Serialization;
 using NuGet.Resources;
+using NuGet.Xml;
 
 namespace NuGet
 {
-    [XmlType("package")]
     public class Manifest
     {
         private const string SchemaVersionAttributeName = "schemaVersion";
 
-        public Manifest()
+        public Manifest(ManifestMetadata metadata)
+            : this(metadata, null)
         {
-            Metadata = new ManifestMetadata();
         }
 
-        [XmlElement("metadata", IsNullable = false)]
-        public ManifestMetadata Metadata { get; set; }
-
-        [XmlArray("files")]
-        public List<ManifestFile> Files
+        public Manifest(ManifestMetadata metadata, IEnumerable<ManifestFile> files)
         {
-            get;
-            set;
+            if (metadata == null)
+            {
+                throw new ArgumentNullException(nameof(metadata));
+            }
+
+            Metadata = metadata;
+
+            Files = files?.ToList() ?? new List<ManifestFile>();
         }
 
+        public ManifestMetadata Metadata { get; }
+
+        public List<ManifestFile> Files { get; }
+
+        /// <summary>
+        /// Saves the current manifest to the specified stream.
+        /// </summary>
+        /// <param name="stream">The target stream.</param>
         public void Save(Stream stream)
         {
             Save(stream, validate: true, minimumManifestVersion: 1);
@@ -57,15 +65,17 @@ namespace NuGet
         public void Save(Stream stream, bool validate, int minimumManifestVersion)
         {
             int version = Math.Max(minimumManifestVersion, ManifestVersionUtility.GetManifestVersion(Metadata));
-            string schemaNamespace = ManifestSchemaUtility.GetSchemaNamespace(version);
+            var schemaNamespace = (XNamespace)ManifestSchemaUtility.GetSchemaNamespace(version);
 
-            // Define the namespaces to use when serializing
-            var ns = new XmlSerializerNamespaces();
-            ns.Add("", schemaNamespace);
-
-            // Need to force the namespace here again as the default in order to get the XML output clean
-            var serializer = new XmlSerializer(typeof(Manifest), schemaNamespace);
-            serializer.Serialize(stream, this, ns);
+            new XDocument(
+                new XElement(schemaNamespace + "package",
+                    Metadata.ToXElement(schemaNamespace),
+                    Files.Any() ?
+                        new XElement(schemaNamespace + "files",
+                            Files.Select(file => new XElement(schemaNamespace + "file",
+                                new XAttribute("src", file.Source),
+                                new XAttribute("target", file.Target),
+                                new XAttribute("exclude", file.Exclude)))) : null)).Save(stream);
         }
 
         public static Manifest ReadFrom(Stream stream, bool validateSchema)
@@ -103,129 +113,17 @@ namespace NuGet
         {
             string schemaNamespace = ManifestSchemaUtility.SchemaVersionV1;
             var rootNameSpace = document.Root.Name.Namespace;
-            if (rootNameSpace != null && !String.IsNullOrEmpty(rootNameSpace.NamespaceName))
+            if (rootNameSpace != null && !string.IsNullOrEmpty(rootNameSpace.NamespaceName))
             {
                 schemaNamespace = rootNameSpace.NamespaceName;
             }
+
             return schemaNamespace;
         }
 
         public static Manifest Create(IPackageMetadata metadata)
         {
-            return new Manifest
-            {
-                Metadata = new ManifestMetadata
-                {
-                    Id = metadata.Id.SafeTrim(),
-                    Version = metadata.Version.ToStringSafe(),
-                    Title = metadata.Title.SafeTrim(),
-                    Authors = GetCommaSeparatedString(metadata.Authors),
-                    Owners = GetCommaSeparatedString(metadata.Owners) ?? GetCommaSeparatedString(metadata.Authors),
-                    Tags = String.IsNullOrEmpty(metadata.Tags) ? null : metadata.Tags.SafeTrim(),
-                    LicenseUrl = ConvertUrlToStringSafe(metadata.LicenseUrl),
-                    ProjectUrl = ConvertUrlToStringSafe(metadata.ProjectUrl),
-                    IconUrl = ConvertUrlToStringSafe(metadata.IconUrl),
-                    RequireLicenseAcceptance = metadata.RequireLicenseAcceptance,
-                    // DevelopmentDependency = metadata.DevelopmentDependency,
-                    Description = metadata.Description.SafeTrim(),
-                    Copyright = metadata.Copyright.SafeTrim(),
-                    Summary = metadata.Summary.SafeTrim(),
-                    ReleaseNotes = metadata.ReleaseNotes.SafeTrim(),
-                    Language = metadata.Language.SafeTrim(),
-                    DependencySets = CreateDependencySets(metadata),
-                    FrameworkAssemblies = CreateFrameworkAssemblies(metadata),
-                    ReferenceSets = CreateReferenceSets(metadata),
-                    MinClientVersionString = metadata.MinClientVersion.ToStringSafe()
-                },
-            };
-        }
-
-        private static string ConvertUrlToStringSafe(Uri url)
-        {
-            if (url != null)
-            {
-                string originalString = url.OriginalString.SafeTrim();
-                if (!String.IsNullOrEmpty(originalString))
-                {
-                    return originalString;
-                }
-            }
-
-            return null;
-        }
-
-        private static List<ManifestReferenceSet> CreateReferenceSets(IPackageMetadata metadata)
-        {
-            return (from referenceSet in metadata.PackageAssemblyReferences
-                    select new ManifestReferenceSet
-                    {
-                        TargetFramework = referenceSet.TargetFramework != null ? VersionUtility.GetFrameworkString(referenceSet.TargetFramework) : null,
-                        References = CreateReferences(referenceSet)
-                    }).ToList();
-        }
-
-        private static List<ManifestReference> CreateReferences(PackageReferenceSet referenceSet)
-        {
-            if (referenceSet.References == null)
-            {
-                return new List<ManifestReference>();
-            }
-
-            return (from reference in referenceSet.References
-                    select new ManifestReference { File = reference.SafeTrim() }).ToList();
-        }
-
-        private static List<ManifestDependencySet> CreateDependencySets(IPackageMetadata metadata)
-        {
-            if (metadata.DependencySets.IsEmpty())
-            {
-                return null;
-            }
-
-            return (from dependencySet in metadata.DependencySets
-                    select new ManifestDependencySet
-                    {
-                        TargetFramework = dependencySet.TargetFramework != null ? VersionUtility.GetFrameworkString(dependencySet.TargetFramework) : null,
-                        Dependencies = CreateDependencies(dependencySet.Dependencies)
-                    }).ToList();
-        }
-
-        private static List<ManifestDependency> CreateDependencies(ICollection<PackageDependency> dependencies)
-        {
-            if (dependencies == null)
-            {
-                return new List<ManifestDependency>(0);
-            }
-
-            return (from dependency in dependencies
-                    select new ManifestDependency
-                    {
-                        Id = dependency.Id.SafeTrim(),
-                        Version = dependency.VersionSpec.ToStringSafe()
-                    }).ToList();
-        }
-
-        private static List<ManifestFrameworkAssembly> CreateFrameworkAssemblies(IPackageMetadata metadata)
-        {
-            if (metadata.FrameworkAssemblies.IsEmpty())
-            {
-                return null;
-            }
-            return (from reference in metadata.FrameworkAssemblies
-                    select new ManifestFrameworkAssembly
-                    {
-                        AssemblyName = reference.AssemblyName,
-                        TargetFramework = String.Join(", ", reference.SupportedFrameworks.Select(VersionUtility.GetFrameworkString))
-                    }).ToList();
-        }
-
-        private static string GetCommaSeparatedString(IEnumerable<string> values)
-        {
-            if (values == null || !values.Any())
-            {
-                return null;
-            }
-            return String.Join(",", values);
+            return new Manifest(new ManifestMetadata(metadata));
         }
 
         private static void ValidateManifestSchema(XDocument document, string schemaNamespace)

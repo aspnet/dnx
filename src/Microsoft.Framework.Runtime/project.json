@@ -50,8 +50,7 @@
                 "System.Threading.Thread": "4.0.0-beta-*",
                 "System.Threading.ThreadPool": "4.0.10-beta-*",
                 "System.Xml.ReaderWriter": "4.0.10-beta-*",
-                "System.Xml.XDocument": "4.0.10-beta-*",
-                "System.Xml.XmlSerializer": "4.0.10-beta-*"
+                "System.Xml.XDocument": "4.0.10-beta-*"
             }
         }
     },

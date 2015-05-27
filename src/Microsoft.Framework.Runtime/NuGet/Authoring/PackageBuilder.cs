@@ -10,7 +10,6 @@ using System.IO;
 using System.IO.Compression;
 using System.Linq;
 using System.Reflection;
-using Microsoft.Framework.Runtime;
 using NuGet.Resources;
 
 namespace NuGet
@@ -404,7 +403,6 @@ namespace NuGet
             LicenseUrl = metadata.LicenseUrl;
             ProjectUrl = metadata.ProjectUrl;
             RequireLicenseAcceptance = metadata.RequireLicenseAcceptance;
-            // DevelopmentDependency = metadata.DevelopmentDependency;
             Description = metadata.Description;
             Summary = metadata.Summary;
             ReleaseNotes = metadata.ReleaseNotes;
@@ -420,9 +418,9 @@ namespace NuGet
             DependencySets.AddRange(metadata.DependencySets);
             FrameworkReferences.AddRange(metadata.FrameworkAssemblies);
 
-            if (manifestMetadata.ReferenceSets != null)
+            if (manifestMetadata.PackageAssemblyReferences != null)
             {
-                PackageAssemblyReferences.AddRange(manifestMetadata.ReferenceSets.Select(r => new PackageReferenceSet(r)));
+                PackageAssemblyReferences.AddRange(manifestMetadata.PackageAssemblyReferences);
             }
         }
 
@@ -468,7 +466,7 @@ namespace NuGet
                         if (!string.IsNullOrEmpty(fileExtension))
                         {
                             extensions.Add(fileExtension.Substring(1));
-                        }                        
+                        }
                     }
                     catch
                     {

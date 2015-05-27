@@ -11,8 +11,8 @@ namespace NuGet
         public ManifestVersionAttribute(int version)
         {
             Version = version;
-
         }
+
         public int Version { get; private set; }
     }
 }

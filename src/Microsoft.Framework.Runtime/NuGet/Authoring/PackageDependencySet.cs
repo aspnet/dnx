@@ -11,8 +11,15 @@ namespace NuGet
 {
     public class PackageDependencySet : IFrameworkTargetable
     {
-        private readonly FrameworkName _targetFramework;
-        private readonly ReadOnlyCollection<PackageDependency> _dependencies;
+        public PackageDependencySet(IEnumerable<PackageDependency> dependencies)
+            : this((FrameworkName)null, dependencies)
+        {
+        }
+
+        public PackageDependencySet(string targetFramework, IEnumerable<PackageDependency> dependencies)
+            : this(targetFramework != null ? VersionUtility.ParseFrameworkName(targetFramework) : null, dependencies)
+        {
+        }
 
         public PackageDependencySet(FrameworkName targetFramework, IEnumerable<PackageDependency> dependencies)
         {
@@ -21,29 +28,17 @@ namespace NuGet
                 throw new ArgumentNullException(nameof(dependencies));
             }
 
-            _targetFramework = targetFramework;
-            _dependencies = new ReadOnlyCollection<PackageDependency>(dependencies.ToList());
+            TargetFramework = targetFramework;
+            Dependencies = new ReadOnlyCollection<PackageDependency>(dependencies.ToList());
         }
 
-        public FrameworkName TargetFramework
-        {
-            get
-            {
-                return _targetFramework;
-            }
-        }
+        public FrameworkName TargetFramework { get; }
 
-        public ICollection<PackageDependency> Dependencies
-        {
-            get
-            {
-                return _dependencies;
-            }
-        }
+        public ICollection<PackageDependency> Dependencies { get; }
 
         public IEnumerable<FrameworkName> SupportedFrameworks
         {
-            get 
+            get
             {
                 if (TargetFramework == null)
                 {

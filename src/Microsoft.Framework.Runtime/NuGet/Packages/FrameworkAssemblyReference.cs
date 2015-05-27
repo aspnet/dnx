@@ -3,23 +3,17 @@
 
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Runtime.Versioning;
 
 namespace NuGet
 {
     public class FrameworkAssemblyReference : IFrameworkTargetable
     {
-        public FrameworkAssemblyReference(string assemblyName)
-            : this(assemblyName, Enumerable.Empty<FrameworkName>())
-        {
-        }
-
         public FrameworkAssemblyReference(string assemblyName, IEnumerable<FrameworkName> supportedFrameworks)
         {
-            if (String.IsNullOrEmpty(assemblyName))
+            if (string.IsNullOrEmpty(assemblyName))
             {
-                throw new ArgumentNullException(nameof(assemblyName));
+                throw new ArgumentException(nameof(assemblyName));
             }
 
             if (supportedFrameworks == null)
@@ -32,6 +26,7 @@ namespace NuGet
         }
 
         public string AssemblyName { get; private set; }
+
         public IEnumerable<FrameworkName> SupportedFrameworks { get; private set; }
     }
 }

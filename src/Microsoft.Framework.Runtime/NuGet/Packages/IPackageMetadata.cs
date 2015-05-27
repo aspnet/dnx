@@ -15,7 +15,6 @@ namespace NuGet
         Uri LicenseUrl { get; }
         Uri ProjectUrl { get; }
         bool RequireLicenseAcceptance { get; }
-        // bool DevelopmentDependency { get; }
         string Description { get; }
         string Summary { get; }
         string ReleaseNotes { get; }

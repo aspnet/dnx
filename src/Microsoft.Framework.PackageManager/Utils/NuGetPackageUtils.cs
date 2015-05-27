@@ -120,7 +120,7 @@ namespace Microsoft.Framework.PackageManager
                         return new Library()
                         {
                             Name = manifest.Metadata.Id,
-                            Version = SemanticVersion.Parse(manifest.Metadata.Version)
+                            Version = manifest.Metadata.Version
                         };
                     }
                 }

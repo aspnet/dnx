@@ -13,14 +13,12 @@ namespace NuGet
     /// </summary>
     public sealed class SemanticVersion : IComparable, IComparable<SemanticVersion>, IEquatable<SemanticVersion>
     {
-        private readonly string _originalString;
-
         public SemanticVersion(string version)
             : this(Parse(version))
         {
             // The constructor normalizes the version string so that it we do not need to normalize it every time we need to operate on it. 
             // The original string represents the original form in which the version is represented to be used when printing.
-            _originalString = version;
+            OriginalString = version;
         }
 
         public SemanticVersion(int major, int minor, int build, int revision)
@@ -34,7 +32,7 @@ namespace NuGet
         }
 
         public SemanticVersion(Version version)
-            : this(version, String.Empty)
+            : this(version, string.Empty)
         {
         }
 
@@ -50,13 +48,13 @@ namespace NuGet
                 throw new ArgumentNullException(nameof(version));
             }
             Version = NormalizeVersionValue(version);
-            SpecialVersion = specialVersion ?? String.Empty;
-            _originalString = String.IsNullOrEmpty(originalString) ? version.ToString() + (!String.IsNullOrEmpty(specialVersion) ? '-' + specialVersion : null) : originalString;
+            SpecialVersion = specialVersion ?? string.Empty;
+            OriginalString = string.IsNullOrEmpty(originalString) ? version.ToString() + (!string.IsNullOrEmpty(specialVersion) ? '-' + specialVersion : null) : originalString;
         }
 
         internal SemanticVersion(SemanticVersion semVer)
         {
-            _originalString = semVer.ToString();
+            OriginalString = semVer.ToString();
             Version = semVer.Version;
             SpecialVersion = semVer.SpecialVersion;
         }
@@ -79,22 +77,24 @@ namespace NuGet
             private set;
         }
 
+        public string OriginalString { get; }
+
         public string[] GetOriginalVersionComponents()
         {
-            if (!String.IsNullOrEmpty(_originalString))
+            if (!string.IsNullOrEmpty(OriginalString))
             {
                 string original;
 
                 // search the start of the SpecialVersion part, if any
-                int dashIndex = _originalString.IndexOf('-');
+                int dashIndex = OriginalString.IndexOf('-');
                 if (dashIndex != -1)
                 {
                     // remove the SpecialVersion part
-                    original = _originalString.Substring(0, dashIndex);
+                    original = OriginalString.Substring(0, dashIndex);
                 }
                 else
                 {
-                    original = _originalString;
+                    original = OriginalString;
                 }
 
                 return SplitAndPadVersionString(original);
@@ -127,7 +127,7 @@ namespace NuGet
         /// </summary>
         public static SemanticVersion Parse(string version)
         {
-            if (String.IsNullOrEmpty(version))
+            if (string.IsNullOrEmpty(version))
             {
                 throw new ArgumentNullException(nameof(version));
             }
@@ -135,7 +135,7 @@ namespace NuGet
             SemanticVersion semVer;
             if (!TryParse(version, out semVer))
             {
-                throw new ArgumentException(String.Format(CultureInfo.CurrentCulture, NuGetResources.InvalidVersionString, version), nameof(version));
+                throw new ArgumentException(string.Format(CultureInfo.CurrentCulture, NuGetResources.InvalidVersionString, version), nameof(version));
             }
             return semVer;
         }
@@ -249,8 +249,8 @@ namespace NuGet
                 return result;
             }
 
-            bool empty = String.IsNullOrEmpty(SpecialVersion);
-            bool otherEmpty = String.IsNullOrEmpty(other.SpecialVersion);
+            bool empty = string.IsNullOrEmpty(SpecialVersion);
+            bool otherEmpty = string.IsNullOrEmpty(other.SpecialVersion);
             if (empty && otherEmpty)
             {
                 return 0;
@@ -310,7 +310,7 @@ namespace NuGet
 
         public override string ToString()
         {
-            return _originalString;
+            return OriginalString;
         }
 
         public bool Equals(SemanticVersion other)
