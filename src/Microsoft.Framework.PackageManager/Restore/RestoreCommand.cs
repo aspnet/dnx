@@ -26,6 +26,8 @@ namespace Microsoft.Framework.PackageManager
     {
         private static readonly int MaxDegreesOfConcurrency = Environment.ProcessorCount;
 
+        private int _installCount;
+
         public RestoreCommand() :
             this(fallbackFramework: null)
         {
@@ -43,6 +45,7 @@ namespace Microsoft.Framework.PackageManager
             MachineWideSettings = new CommandLineMachineWideSettings();
             ScriptExecutor = new ScriptExecutor();
             ErrorMessages = new Dictionary<string, List<string>>(StringComparer.Ordinal);
+            InformationMessages = new Dictionary<string, List<string>>(StringComparer.Ordinal);
             Reports = new Reports
             {
                 Information = new NullReport(),
@@ -72,6 +75,7 @@ namespace Microsoft.Framework.PackageManager
         public bool IgnoreMissingDependencies { get; set; }
 
         private Dictionary<string, List<string>> ErrorMessages { get; set; }
+        private Dictionary<string, List<string>> InformationMessages { get; set; }
 
         protected internal ISettings Settings { get; set; }
         protected internal IPackageSourceProvider SourceProvider { get; set; }
@@ -93,10 +97,31 @@ namespace Microsoft.Framework.PackageManager
 
             foreach (var category in ErrorMessages)
             {
-                Reports.Error.WriteLine("Errors in {0}".Red().Bold(), category.Key);
+                Reports.Error.WriteLine($"{Environment.NewLine}Errors in {category.Key}".Red().Bold());
                 foreach (var message in category.Value)
                 {
-                    Reports.Error.WriteLine("    {0}", message);
+                    Reports.Error.WriteLine($"    {message}");
+                }
+            }
+
+            var settings = Settings as Settings;
+            if (settings != null)
+            {
+                var configFiles = settings.GetConfigFiles();
+
+                Reports.Quiet.WriteLine($"{Environment.NewLine}NuGet Config files used:");
+                foreach (var file in configFiles)
+                {
+                    Reports.Quiet.WriteLine($"    {file}");
+                }
+            }
+
+            foreach (var category in InformationMessages)
+            {
+                Reports.Quiet.WriteLine($"{Environment.NewLine}{category.Key}");
+                foreach(var message in category.Value)
+                {
+                    Reports.Quiet.WriteLine($"    {message}");
                 }
             }
 
@@ -188,6 +213,12 @@ namespace Microsoft.Framework.PackageManager
                 if (restoreCount > 1)
                 {
                     Reports.Information.WriteLine(string.Format("Total time {0}ms", sw.ElapsedMilliseconds));
+                }
+
+                if (_installCount > 0)
+                {
+                    InformationMessages.GetOrAdd("Installed:", _ => new List<string>()).Add($"{_installCount} package(s) to {packagesDirectory}");
+                    _installCount = 0;
                 }
 
                 return restoreCount == successCount;
@@ -745,6 +776,7 @@ namespace Microsoft.Framework.PackageManager
 
                 memoryStream.Seek(0, SeekOrigin.Begin);
                 await NuGetPackageUtils.InstallFromStream(memoryStream, match.Library, packagesDirectory, Reports.Information);
+                Interlocked.Increment(ref _installCount);
             }
         }
 
@@ -859,6 +891,11 @@ namespace Microsoft.Framework.PackageManager
                 if (feed != null)
                 {
                     remoteProviders.Add(new RemoteWalkProvider(feed));
+                    var list = InformationMessages.GetOrAdd("Feeds used:", _ => new List<string>());
+                    if (!list.Contains(feed.Source))
+                    {
+                        list.Add(feed.Source);
+                    }
                 }
             }
         }
