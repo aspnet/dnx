@@ -49,13 +49,14 @@ namespace Microsoft.Framework.DesignTimeHost
         private readonly Dictionary<FrameworkName, Trigger<Void>> _requiresAssemblies = new Dictionary<FrameworkName, Trigger<Void>>();
         private readonly Dictionary<FrameworkName, ProjectCompilation> _compilations = new Dictionary<FrameworkName, ProjectCompilation>();
         private readonly PluginHandler _pluginHandler;
-
-        private int _protocolVersion;
+        private readonly ProtocolManager _protocolManager;
+        private int? _contextProtocolVersion;
 
         public ApplicationContext(IServiceProvider services,
                                   ICache cache,
                                   ICacheContextAccessor cacheContextAccessor,
                                   INamedCacheDependencyProvider namedDependencyProvider,
+                                  ProtocolManager protocolManager,
                                   int id)
         {
             _hostServices = services;
@@ -64,10 +65,9 @@ namespace Microsoft.Framework.DesignTimeHost
             _cacheContextAccessor = cacheContextAccessor;
             _namedDependencyProvider = namedDependencyProvider;
             _pluginHandler = new PluginHandler(services, SendPluginMessage);
+            _protocolManager = protocolManager;
 
             Id = id;
-
-            ProtocolVersion = 1;
         }
 
         public int Id { get; private set; }
@@ -78,22 +78,13 @@ namespace Microsoft.Framework.DesignTimeHost
         {
             get
             {
-                return _protocolVersion;
-            }
-            set
-            {
-                // protocol
-                var strProtocol = Environment.GetEnvironmentVariable("DTH_PROTOCOL");
-                int intProtocol;
-                if (!string.IsNullOrEmpty(strProtocol) && Int32.TryParse(strProtocol, out intProtocol))
+                if (_contextProtocolVersion.HasValue)
                 {
-                    Logger.TraceInformation("[{0}]: Set DTH protocol version to {1}. Source is environment variable DTH_PROTOCOL.", GetType().Name, intProtocol);
-                    _protocolVersion = intProtocol;
+                    return _contextProtocolVersion.Value;
                 }
                 else
                 {
-                    Logger.TraceInformation("[{0}]: Set DTH protocol version to {1}.", GetType().Name, value);
-                    _protocolVersion = value;
+                    return _protocolManager.CurrentVersion;
                 }
             }
         }
@@ -267,7 +258,14 @@ namespace Microsoft.Framework.DesignTimeHost
 
                             _appPath.Value = data.ProjectFolder;
                             _configuration.Value = data.Configuration ?? "Debug";
-                            ProtocolVersion = data.Version;
+
+                            // Therefore context protocol version is set only when the version is not 0 (meaning 'Version'
+                            // protocol is not missing) and protocol version is not overridden by environment variable.
+                            if (data.Version != 0 && !_protocolManager.EnvironmentOverridden)
+                            {
+                                _contextProtocolVersion = Math.Min(data.Version, _protocolManager.MaxVersion);
+                                Logger.TraceInformation($"[{nameof(ApplicationContext)}]: Set context protocol version to {_contextProtocolVersion.Value}");
+                            }
                         }
                         else
                         {

@@ -62,6 +62,7 @@ namespace Microsoft.Framework.DesignTimeHost
             var namedDependencyProvider = new NamedCacheDependencyProvider();
             var contexts = new Dictionary<int, ApplicationContext>();
             var services = new ServiceProvider(_services);
+            var protocolManager = new ProtocolManager(maxVersion: 2);
 
             // This fixes the mono incompatibility but ties it to ipv4 connections
             var listenSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
@@ -85,6 +86,7 @@ namespace Microsoft.Framework.DesignTimeHost
                     cacheContextAccessor,
                     namedDependencyProvider,
                     queue,
+                    protocolManager,
                     hostId);
 
                 queue.OnReceive += message =>

@@ -17,6 +17,7 @@ namespace Microsoft.Framework.DesignTimeHost
         private readonly ICache _cache;
         private readonly ICacheContextAccessor _cacheContextAccessor;
         private readonly INamedCacheDependencyProvider _namedDependencyProvider;
+        private readonly ProtocolManager _protocolManager;
         private ProcessingQueue _queue;
         private string _hostId;
 
@@ -26,6 +27,7 @@ namespace Microsoft.Framework.DesignTimeHost
                                  ICacheContextAccessor cacheContextAccessor,
                                  INamedCacheDependencyProvider namedDependencyProvider,
                                  ProcessingQueue queue,
+                                 ProtocolManager protocolManager,
                                  string hostId)
         {
             _contexts = contexts;
@@ -35,6 +37,7 @@ namespace Microsoft.Framework.DesignTimeHost
             _namedDependencyProvider = namedDependencyProvider;
             _queue = queue;
             _hostId = hostId;
+            _protocolManager = protocolManager;
         }
 
         public bool Transmit(Message message)
@@ -54,21 +57,29 @@ namespace Microsoft.Framework.DesignTimeHost
             // Mark the sender on the incoming message
             message.Sender = this;
 
-            ApplicationContext applicationContext;
-            if (!_contexts.TryGetValue(message.ContextId, out applicationContext))
+            if (_protocolManager.IsProtocolNegotiation(message))
             {
-                Logger.TraceInformation("[ConnectionContext]: Creating new application context for {0}", message.ContextId);
-
-                applicationContext = new ApplicationContext(_services,
-                                                            _cache,
-                                                            _cacheContextAccessor,
-                                                            _namedDependencyProvider,
-                                                            message.ContextId);
-
-                _contexts.Add(message.ContextId, applicationContext);
+                _protocolManager.Negotiate(message);
             }
+            else
+            {
+                ApplicationContext applicationContext;
+                if (!_contexts.TryGetValue(message.ContextId, out applicationContext))
+                {
+                    Logger.TraceInformation("[ConnectionContext]: Creating new application context for {0}", message.ContextId);
 
-            applicationContext.OnReceive(message);
+                    applicationContext = new ApplicationContext(_services,
+                                                                _cache,
+                                                                _cacheContextAccessor,
+                                                                _namedDependencyProvider,
+                                                                _protocolManager,
+                                                                message.ContextId);
+
+                    _contexts.Add(message.ContextId, applicationContext);
+                }
+
+                applicationContext.OnReceive(message);
+            }
         }
     }
 }
