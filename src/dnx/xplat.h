@@ -16,12 +16,16 @@ typedef std::wstring xstring_t;
 #define xout std::wcout
 #define _X(s) L ## s
 
+#define PATH_SEPARATOR L"\\"
+
 #else // PLATFORM_UNIX
 
 typedef char char_t;
 typedef std::string xstring_t;
 #define xout std::cout
 #define _X(s) s
+
+#define PATH_SEPARATOR "/"
 
 #endif
 }

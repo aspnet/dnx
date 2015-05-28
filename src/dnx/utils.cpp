@@ -52,5 +52,27 @@ namespace dnx
             return to_xstring_t(s);
         }
 #endif
+
+        xstring_t path_combine(const xstring_t& path1, const xstring_t& path2)
+        {
+            if (path1.length() == 0)
+            {
+                return path2;
+            }
+
+            if (path2.length() == 0)
+            {
+                return path1;
+            }
+
+            xstring_t path{ path1 };
+
+            if (path[path.length() - 1] == _X('\\') || path[path.length() - 1] == _X('/'))
+            {
+                path.resize(path.length() - 1);
+            }
+
+            return path + PATH_SEPARATOR + (path2[0] == _X('\\') || path2[0] == _X('/') ? path2.substr(1) : path2);
+        }
     }
 }

@@ -6,7 +6,9 @@
 #include "xplat.h"
 #include "TraceWriter.h"
 #include "utils.h"
+#include "servicing.h"
 #include <sstream>
+#include <vector>
 
 std::wstring GetNativeBootstrapperDirectory()
 {
@@ -81,19 +83,56 @@ BOOL GetFullPath(LPCTSTR szPath, LPTSTR pszNormalizedPath)
     return TRUE;
 }
 
+namespace
+{
+    std::wstring get_runtime_path(TraceWriter& trace_writer)
+    {
+        wchar_t program_files_path_buffer[MAX_PATH];
+        wchar_t* program_files_paths[] =
+        {
+            L"ProgramFiles(x86)",
+#if !defined(_M_IX86)   // in case of 32-bit processes both ProgramFiles and ProgramFiles(x86) point to ProgramFiles(x86)
+            L"ProgramFiles"
+#endif
+        };
+
+        for (auto i = 0; i < sizeof(program_files_paths)/sizeof(wchar_t*); i++)
+        {
+            if (GetEnvironmentVariable(program_files_paths[i], program_files_path_buffer, MAX_PATH) != 0)
+            {
+                auto runtime_path = dnx::servicing::get_runtime_path(program_files_path_buffer, trace_writer);
+                if (runtime_path.length() > 0)
+                {
+                    return dnx::utils::path_combine(runtime_path, L"bin\\");
+                }
+            }
+        }
+
+        return std::wstring{};
+    }
+}
+
 int CallApplicationMain(const wchar_t* moduleName, const char* functionName, CALL_APPLICATION_MAIN_DATA* data, TraceWriter traceWriter)
 {
-    HMODULE hostModule;
+    HMODULE hostModule = nullptr;
     try
     {
-        hostModule = LoadLibraryEx(moduleName, NULL, LOAD_LIBRARY_SEARCH_DEFAULT_DIRS);
+        auto runtime_path = get_runtime_path(traceWriter);
+        if (runtime_path.length() > 0)
+        {
+            traceWriter.Write(std::wstring(L"Redirecting runtime to: ").append(runtime_path), true);
+            SetEnvironmentVariable(_T("DNX_DEFAULT_LIB"), runtime_path.c_str());
+        }
+
+        auto module_path = dnx::utils::path_combine(runtime_path, moduleName);
+        hostModule = LoadLibraryEx(module_path.c_str(), NULL, LOAD_LIBRARY_SEARCH_DEFAULT_DIRS);
         if (!hostModule)
         {
             throw std::runtime_error(std::string("Failed to load: ")
                 .append(dnx::utils::to_string(moduleName)));
         }
 
-        traceWriter.Write(std::wstring(L"Loaded module: ").append(moduleName), true);
+        traceWriter.Write(std::wstring(L"Loaded module: ").append(module_path), true);
 
         auto pfnCallApplicationMain = reinterpret_cast<FnCallApplicationMain>(GetProcAddress(hostModule, functionName));
         if (!pfnCallApplicationMain)

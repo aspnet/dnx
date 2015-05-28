@@ -15,5 +15,7 @@ namespace dnx
         dnx::xstring_t to_xstring_t(const std::string& s);
         dnx::xstring_t to_xstring_t(const std::wstring& s);
         std::wstring to_wstring(const std::string& s);
+
+        dnx::xstring_t path_combine(const dnx::xstring_t& path1, const dnx::xstring_t& path2);
     }
 }
