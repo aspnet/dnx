@@ -8,6 +8,9 @@
 #include "CriticalSection.h"
 #include "ComObject.h"
 #include "FileStream.h"
+#include "HostAssemblyManager.h"
+
+extern const wchar_t* AppDomainManagerAssemblyName;
 
 struct ApplicationMainInfo
 {
@@ -41,6 +44,8 @@ class KatanaManager :
     ICLRMetaHostPolicyPtr _MetaHostPolicy;
     ICLRRuntimeHostPtr _RuntimeHost;
 
+    IHostAssemblyManager* m_pHostAssemblyManager;
+
     _bstr_t _clrVersion;
     _bstr_t _appPoolName;
     _bstr_t _appHostFileName;
@@ -51,10 +56,18 @@ class KatanaManager :
     ApplicationMainInfo _applicationMainInfo;
 
 public:
+
     KatanaManager()
     {
         _calledInitializeRuntime = false;
         _hrInitializeRuntime = E_PENDING;
+        m_pHostAssemblyManager = new HostAssemblyManager();
+        m_pHostAssemblyManager->AddRef();
+    }
+
+    ~KatanaManager()
+    {
+        m_pHostAssemblyManager->Release();
     }
 
     IUnknown* CastInterface(REFIID riid)
@@ -63,6 +76,9 @@ public:
             return static_cast<IKatanaManager*>(this);
         if (riid == __uuidof(IHostControl))
             return static_cast<IHostControl*>(this);
+        if (riid == __uuidof(IHostAssemblyManager))
+            return m_pHostAssemblyManager;
+
         return NULL;
     }
 
@@ -105,9 +121,7 @@ public:
 
         ICLRControl *pCLRControl = NULL;
         _HR(runtimeHost->GetCLRControl(&pCLRControl));
-        _HR(pCLRControl->SetAppDomainManagerType(
-            L"dnx.clr.managed, Version=1.0.0.0, PublicKeyToken=adb9793829ddae60, Culture=neutral, ProcessorArchitecture=MSIL",
-            L"DomainManager"));
+        _HR(pCLRControl->SetAppDomainManagerType(AppDomainManagerAssemblyName, L"DomainManager"));
 
         _HR(runtimeHost->Start());
 
