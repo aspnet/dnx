@@ -46,7 +46,7 @@ namespace Bootstrapper.FunctionalTests
         }
 
         [Theory]
-        [MemberData("RuntimeComponents")]
+        [MemberData(nameof(RuntimeComponents))]
         public void BootstrapperReturnsNonZeroExitCodeWhenNoArgumentWasGiven(string flavor, string os, string architecture)
         {
             var runtimeHomeDir = _fixture.GetRuntimeHomeDir(flavor, os, architecture);
@@ -62,7 +62,7 @@ namespace Bootstrapper.FunctionalTests
         }
 
         [Theory]
-        [MemberData("RuntimeComponents")]
+        [MemberData(nameof(RuntimeComponents))]
         public void BootstrapperReturnsZeroExitCodeWhenHelpOptionWasGiven(string flavor, string os, string architecture)
         {
             var runtimeHomeDir = _fixture.GetRuntimeHomeDir(flavor, os, architecture);
@@ -78,7 +78,7 @@ namespace Bootstrapper.FunctionalTests
         }
 
         [Theory]
-        [MemberData("RuntimeComponents")]
+        [MemberData(nameof(RuntimeComponents))]
         public void BootstrapperShowsVersionAndReturnsZeroExitCodeWhenVersionOptionWasGiven(string flavor, string os, string architecture)
         {
             var runtimeHomeDir = _fixture.GetRuntimeHomeDir(flavor, os, architecture);
@@ -96,7 +96,7 @@ namespace Bootstrapper.FunctionalTests
         }
 
         [Theory]
-        [MemberData("RuntimeComponents")]
+        [MemberData(nameof(RuntimeComponents))]
         public void BootstrapperInvokesApplicationHostWithInferredAppBase_ProjectDirAsArgument(string flavor, string os, string architecture)
         {
             var runtimeHomeDir = _fixture.GetRuntimeHomeDir(flavor, os, architecture);
@@ -127,7 +127,7 @@ command
         }
 
         [Theory]
-        [MemberData("RuntimeComponents")]
+        [MemberData(nameof(RuntimeComponents))]
         public void BootstrapperInvokesApplicationHostWithInferredAppBase_ProjectFileAsArgument(string flavor, string os, string architecture)
         {
             var runtimeHomeDir = _fixture.GetRuntimeHomeDir(flavor, os, architecture);
@@ -159,7 +159,7 @@ command
         }
 
         [Theory]
-        [MemberData("RuntimeComponents")]
+        [MemberData(nameof(RuntimeComponents))]
         public void BootstrapperInvokesAssemblyWithInferredAppBaseAndLibPathOnClr(string flavor, string os, string architecture)
         {
             var outputFolder = flavor == "coreclr" ? "dnxcore50" : "dnx451";

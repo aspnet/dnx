@@ -34,7 +34,7 @@ namespace Microsoft.Framework.PackageManager.FunctionalTests
         }
 
         [Theory]
-        [MemberData("RuntimeComponents")]
+        [MemberData(nameof(RuntimeComponents))]
         public void DnuList_EmptyProject_Default(string flavor, string os, string architecture)
         {
             string stdOut, stdErr;
@@ -55,7 +55,7 @@ namespace Microsoft.Framework.PackageManager.FunctionalTests
         }
 
         [Theory]
-        [MemberData("RuntimeComponents")]
+        [MemberData(nameof(RuntimeComponents))]
         public void DnuList_EmptyProject_Details(string flavor, string os, string architecture)
         {
             string stdOut, stdErr;
@@ -76,7 +76,7 @@ namespace Microsoft.Framework.PackageManager.FunctionalTests
         }
 
         [Theory]
-        [MemberData("RuntimeComponents")]
+        [MemberData(nameof(RuntimeComponents))]
         public void DnuList_SingleDependencyProject(string flavor, string os, string architecture)
         {
             string stdOut, stdErr;
@@ -108,7 +108,7 @@ namespace Microsoft.Framework.PackageManager.FunctionalTests
         }
 
         [Theory]
-        [MemberData("RuntimeComponents")]
+        [MemberData(nameof(RuntimeComponents))]
         public void DnuList_SingleDependencyProject_Detailed(string flavor, string os, string architecture)
         {
             string stdOut, stdErr;
@@ -151,7 +151,7 @@ namespace Microsoft.Framework.PackageManager.FunctionalTests
         }
 
         [Theory]
-        [MemberData("RuntimeComponents")]
+        [MemberData(nameof(RuntimeComponents))]
         public void DnuList_Unresolved(string flavor, string os, string architecture)
         {
             string stdOut, stdErr;

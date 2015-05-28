@@ -22,7 +22,7 @@ namespace Microsoft.Framework.Runtime.Roslyn
             var diagnostic = diagnostics.FirstOrDefault();
             if (diagnostic == null)
             {
-                throw new ArgumentException("At least one diagnostic must be present.");
+                throw new ArgumentException("At least one diagnostic must be present.", nameof(diagnostic));
             }
 
             SourceFilePath = diagnostic.Location.GetMappedLineSpan().Path;

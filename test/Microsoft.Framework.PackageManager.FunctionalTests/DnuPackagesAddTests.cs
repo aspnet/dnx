@@ -29,7 +29,7 @@ namespace Microsoft.Framework.PackageManager
         }
 
         [Theory]
-        [MemberData("RuntimeComponents")]
+        [MemberData(nameof(RuntimeComponents))]
         public void DnuPackagesAddSkipsInstalledPackageWhenShasMatch(string flavor, string os, string architecture)
         {
             var runtimeHomeDir = TestUtils.GetRuntimeHomeDir(flavor, os, architecture);
@@ -57,7 +57,7 @@ namespace Microsoft.Framework.PackageManager
         }
 
         [Theory]
-        [MemberData("RuntimeComponents")]
+        [MemberData(nameof(RuntimeComponents))]
         public void DnuPackagesAddOverwritesInstalledPackageWhenShasDoNotMatch(string flavor, string os, string architecture)
         {
             var runtimeHomeDir = TestUtils.GetRuntimeHomeDir(flavor, os, architecture);
