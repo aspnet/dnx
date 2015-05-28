@@ -33,7 +33,7 @@ namespace Microsoft.Framework.ApplicationHost
         }
 
         [Theory]
-        [MemberData("RuntimeComponents")]
+        [MemberData(nameof(RuntimeComponents))]
         public void AppHostReturnsNonZeroExitCodeWhenNoSubCommandWasGiven(string flavor, string os, string architecture)
         {
             var runtimeHomeDir = _fixture.GetRuntimeHomeDir(flavor, os, architecture);
@@ -49,7 +49,7 @@ namespace Microsoft.Framework.ApplicationHost
         }
 
         [Theory]
-        [MemberData("RuntimeComponents")]
+        [MemberData(nameof(RuntimeComponents))]
         public void AppHostReturnsZeroExitCodeWhenHelpOptionWasGiven(string flavor, string os, string architecture)
         {
             var runtimeHomeDir = _fixture.GetRuntimeHomeDir(flavor, os, architecture);
@@ -65,7 +65,7 @@ namespace Microsoft.Framework.ApplicationHost
         }
 
         [Theory]
-        [MemberData("RuntimeComponents")]
+        [MemberData(nameof(RuntimeComponents))]
         public void AppHostShowsVersionAndReturnsZeroExitCodeWhenVersionOptionWasGiven(string flavor, string os, string architecture)
         {
             var runtimeHomeDir = _fixture.GetRuntimeHomeDir(flavor, os, architecture);
@@ -82,7 +82,7 @@ namespace Microsoft.Framework.ApplicationHost
         }
 
         [Theory]
-        [MemberData("RuntimeComponents")]
+        [MemberData(nameof(RuntimeComponents))]
         public void AppHostShowsErrorWhenNoProjectJsonWasFound(string flavor, string os, string architecture)
         {
             var runtimeHomeDir = _fixture.GetRuntimeHomeDir(flavor, os, architecture);
@@ -102,7 +102,7 @@ namespace Microsoft.Framework.ApplicationHost
         }
 
         [Theory]
-        [MemberData("RuntimeComponents")]
+        [MemberData(nameof(RuntimeComponents))]
         public void AppHostShowsErrorWhenGivenSubcommandWasNotFoundInProjectJson(string flavor, string os, string architecture)
         {
             var runtimeHomeDir = _fixture.GetRuntimeHomeDir(flavor, os, architecture);
@@ -128,7 +128,7 @@ namespace Microsoft.Framework.ApplicationHost
         }
 
         [Theory]
-        [MemberData("RuntimeComponents")]
+        [MemberData(nameof(RuntimeComponents))]
         public void AppHostShowsErrorWhenCurrentTargetFrameworkWasNotFoundInProjectJson(string flavor, string os, string architecture)
         {
             var runtimeTargetFrameworkString = flavor == "coreclr" ? FrameworkNames.LongNames.DnxCore50 : FrameworkNames.LongNames.Dnx451;

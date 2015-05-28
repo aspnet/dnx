@@ -31,7 +31,7 @@ namespace Microsoft.Framework.PackageManager.FunctionalTests
         }
 
         [Theory]
-        [MemberData("RuntimeComponents")]
+        [MemberData(nameof(RuntimeComponents))]
         public void DnuWrapUpdatesExistingProjectJson(string flavor, string os, string architecture)
         {
             var runtimeHomeDir = _fixture.GetRuntimeHomeDir(flavor, os, architecture);
@@ -107,7 +107,7 @@ namespace Microsoft.Framework.PackageManager.FunctionalTests
         }
 
         [Theory]
-        [MemberData("RuntimeComponents")]
+        [MemberData(nameof(RuntimeComponents))]
         public void DnuWrapMaintainsAllKindsOfReferences(string flavor, string os, string architecture)
         {
             var runtimeHomeDir = _fixture.GetRuntimeHomeDir(flavor, os, architecture);
@@ -188,7 +188,7 @@ namespace Microsoft.Framework.PackageManager.FunctionalTests
         }
         
         [Theory]
-        [MemberData("RuntimeComponents")]
+        [MemberData(nameof(RuntimeComponents))]
         public void DnuWrapInPlaceCreateCsprojWrappersInPlace(string flavor, string os, string architecture)
         {
             var runtimeHomeDir = _fixture.GetRuntimeHomeDir(flavor, os, architecture);
@@ -271,7 +271,7 @@ namespace Microsoft.Framework.PackageManager.FunctionalTests
         }
 
         [Theory]
-        [MemberData("RuntimeComponents")]
+        [MemberData(nameof(RuntimeComponents))]
         public void DnuWrapCreatesGlobalJsonIfSolutionRootDoesNotHaveOne(string flavor, string os, string architecture)
         {
             var runtimeHomeDir = TestUtils.GetRuntimeHomeDir(flavor, os, architecture);

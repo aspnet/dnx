@@ -19,7 +19,7 @@ namespace Microsoft.Framework.PackageManager
         }
 
         [Theory]
-        [MemberData("RuntimeComponents")]
+        [MemberData(nameof(RuntimeComponents))]
         public void DnuPack_NoArgs(string flavor, string os, string architecture)
         {
             string expectedDNX =
@@ -66,7 +66,7 @@ namespace Microsoft.Framework.PackageManager
         }
 
         [Theory]
-        [MemberData("RuntimeComponents")]
+        [MemberData(nameof(RuntimeComponents))]
         public void DnuPack_FrameworkSpecified(string flavor, string os, string architecture)
         {
             string expectedDNX =
@@ -109,7 +109,7 @@ namespace Microsoft.Framework.PackageManager
         }
 
         [Theory]
-        [MemberData("RuntimeComponents")]
+        [MemberData(nameof(RuntimeComponents))]
         public void DnuPack_OutPathSpecified(string flavor, string os, string architecture)
         {
             string expectedNupkg =
