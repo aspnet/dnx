@@ -158,6 +158,8 @@
     <ClInclude Include="ComObject.h" />
     <ClInclude Include="CriticalSection.h" />
     <ClInclude Include="FileStream.h" />
+    <ClInclude Include="HostAssemblyManager.h" />
+    <ClInclude Include="HostAssemblyStore.h" />
     <ClInclude Include="KatanaManager.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="targetver.h" />
@@ -179,6 +181,8 @@
       </PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="dnx.clr.cpp" />
+    <ClCompile Include="HostAssemblyManager.cpp" />
+    <ClCompile Include="HostAssemblyStore.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
@@ -195,8 +199,7 @@
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
-    <Target Name="CopyManagedForDebuggingLocally" AfterTargets="Build" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-        <Copy SourceFiles="$(SolutionDir)\bin\$(Platform)\$(Configuration)\dnx.clr.dll"
-              DestinationFolder="$(SolutionDir)\artifacts\build\dnx-clr-win-x86\bin" />
-    </Target>
+  <Target Name="CopyManagedForDebuggingLocally" AfterTargets="Build" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Copy SourceFiles="$(SolutionDir)\bin\$(Platform)\$(Configuration)\dnx.clr.dll" DestinationFolder="$(SolutionDir)\artifacts\build\dnx-clr-win-x86\bin" />
+  </Target>
 </Project>
