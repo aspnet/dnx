@@ -4,7 +4,6 @@
 using System;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
-using dnx.host;
 
 namespace dnx.clr.managed
 {
