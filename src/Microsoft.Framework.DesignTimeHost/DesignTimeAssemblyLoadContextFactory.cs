@@ -31,23 +31,18 @@ namespace Microsoft.Framework.DesignTimeHost
 
         public IAssemblyLoadContext Create(IServiceProvider serviceProvider)
         {
-            return GetRuntimeFactory(serviceProvider).Create(serviceProvider);
-        }
-
-        private IAssemblyLoadContextFactory GetRuntimeFactory(IServiceProvider serviceProvider)
-        {
-            var cacheKey = Tuple.Create("RuntimeLoadContextFactory", _project.Name, _appEnv.Configuration, _appEnv.RuntimeFramework);
-
-            return _cache.Get<IAssemblyLoadContextFactory>(cacheKey, ctx =>
+            var hostContextKey = Tuple.Create("RuntimeLoadContext", _project.Name, _appEnv.Configuration, _appEnv.RuntimeFramework);
+            
+            var appHostContext = _cache.Get<ApplicationHostContext>(hostContextKey, ctx => 
             {
                 var applicationHostContext = new ApplicationHostContext(serviceProvider,
-                                                                    _project.ProjectDirectory,
-                                                                    packagesDirectory: null,
-                                                                    configuration: _appEnv.Configuration,
-                                                                    targetFramework: _appEnv.RuntimeFramework,
-                                                                    cache: _cache,
-                                                                    cacheContextAccessor: _cacheContextAccessor,
-                                                                    namedCacheDependencyProvider: _namedDependencyProvider);
+                                                                        _project.ProjectDirectory,
+                                                                        packagesDirectory: null,
+                                                                        configuration: _appEnv.Configuration,
+                                                                        targetFramework: _appEnv.RuntimeFramework,
+                                                                        cache: _cache,
+                                                                        cacheContextAccessor: _cacheContextAccessor,
+                                                                        namedCacheDependencyProvider: _namedDependencyProvider);
 
                 applicationHostContext.DependencyWalker.Walk(_project.Name, _project.Version, _appEnv.RuntimeFramework);
 
@@ -62,9 +57,12 @@ namespace Microsoft.Framework.DesignTimeHost
 
                 // Add a cache dependency on restore complete to reevaluate dependencies
                 ctx.Monitor(_namedDependencyProvider.GetNamedDependency(_project.Name + "_Dependencies"));
-
-                return new AssemblyLoadContextFactory(applicationHostContext.ServiceProvider);
+                
+                return applicationHostContext;
             });
+
+            var factory = new AssemblyLoadContextFactory(appHostContext.ServiceProvider);
+            return factory.Create(appHostContext.ServiceProvider);
         }
     }
 }
