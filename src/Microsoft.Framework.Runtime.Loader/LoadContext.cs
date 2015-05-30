@@ -207,12 +207,10 @@ namespace Microsoft.Framework.Runtime.Loader
                 {
                     var shortAssemblyName = (AssemblyName)assemblyName.Clone();
                     shortAssemblyName.Name = shortName;
-                    var assembly = context.LoadAssemblyImpl(shortAssemblyName);
 
-                    if (assembly != null)
+                    Assembly assembly;
+                    if (TryLoadAssembly(context, shortAssemblyName, out assembly))
                     {
-                        LoadContextAccessor.Instance.SetLoadContext(assembly, context);
-
                         return assembly;
                     }
                 }
@@ -225,7 +223,11 @@ namespace Microsoft.Framework.Runtime.Loader
                 var loadContext = LoadContextAccessor.Instance.GetLoadContext(args.RequestingAssembly);
                 if (loadContext != null)
                 {
-                    return loadContext.LoadAssemblyImpl(assemblyName);
+                    Assembly assembly;
+                    if (TryLoadAssembly(loadContext, assemblyName, out assembly))
+                    {
+                        return assembly;
+                    }
                 }
             }
             else
@@ -235,6 +237,20 @@ namespace Microsoft.Framework.Runtime.Loader
             }
 
             return null;
+        }
+
+        private static bool TryLoadAssembly(LoadContext context, AssemblyName assemblyName, out Assembly assembly)
+        {
+            assembly = context.LoadAssemblyImpl(assemblyName);
+
+            if (assembly != null)
+            {
+                LoadContextAccessor.Instance.SetLoadContext(assembly, context);
+
+                return true;
+            }
+
+            return false;
         }
     }
 #endif
