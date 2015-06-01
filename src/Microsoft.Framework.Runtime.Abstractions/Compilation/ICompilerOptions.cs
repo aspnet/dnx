@@ -22,5 +22,9 @@ namespace Microsoft.Framework.Runtime
         bool? WarningsAsErrors { get; }
 
         bool? Optimize { get; }
+
+        string KeyFile { get; }
+
+        bool? DelaySign { get; }
     }
 }
