@@ -20,6 +20,10 @@ namespace Microsoft.Framework.Runtime
 
         public bool? Optimize { get; set; }
 
+        public string StrongNameKeyFile { get; set; }
+
+        public bool? DelaySign { get; set; }
+
         public static CompilerOptions Combine(params CompilerOptions[] options)
         {
             var result = new CompilerOptions();
@@ -61,6 +65,16 @@ namespace Microsoft.Framework.Runtime
                 if (option.Optimize != null)
                 {
                     result.Optimize = option.Optimize;
+                }
+
+                if (option.StrongNameKeyFile != null)
+                {
+                    result.StrongNameKeyFile = option.StrongNameKeyFile;
+                }
+
+                if (option.DelaySign != null)
+                {
+                    result.DelaySign = option.DelaySign;
                 }
             }
 

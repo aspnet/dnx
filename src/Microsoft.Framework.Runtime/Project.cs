@@ -660,6 +660,8 @@ namespace Microsoft.Framework.Runtime
                 Platform = rawOptions.ValueAsString("platform"),
                 WarningsAsErrors = rawOptions.ValueAsNullableBoolean("warningsAsErrors"),
                 Optimize = rawOptions.ValueAsNullableBoolean("optimize"),
+                StrongNameKeyFile = rawOptions.ValueAsString("strongNameKeyFile"),
+                DelaySign = rawOptions.ValueAsNullableBoolean("delaySign")
             };
         }
     }

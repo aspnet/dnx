@@ -71,19 +71,17 @@ namespace Microsoft.Framework.Runtime.Roslyn
             bool warningsAsErrors = compilerOptions.WarningsAsErrors ?? false;
 
             Platform platform;
-            if (!Enum.TryParse<Platform>(value: platformValue,
-                                         ignoreCase: true,
-                                         result: out platform))
+            if (!Enum.TryParse(value: platformValue, ignoreCase: true, result: out platform))
             {
                 platform = Platform.AnyCpu;
             }
 
-            ReportDiagnostic warningOption = warningsAsErrors ? ReportDiagnostic.Error : ReportDiagnostic.Default;
-
             return options.WithAllowUnsafe(allowUnsafe)
                           .WithPlatform(platform)
-                          .WithGeneralDiagnosticOption(warningOption)
-                          .WithOptimizationLevel(optimize ? OptimizationLevel.Release : OptimizationLevel.Debug);
+                          .WithGeneralDiagnosticOption(warningsAsErrors ? ReportDiagnostic.Error : ReportDiagnostic.Default)
+                          .WithOptimizationLevel(optimize ? OptimizationLevel.Release : OptimizationLevel.Debug)
+                          .WithCryptoKeyFile(compilerOptions.StrongNameKeyFile)
+                          .WithDelaySign(compilerOptions.DelaySign);
         }
 
         private static bool IsDesktop(FrameworkName frameworkName)

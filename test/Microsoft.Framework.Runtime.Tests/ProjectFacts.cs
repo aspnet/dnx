@@ -373,7 +373,7 @@ namespace Microsoft.Framework.Runtime.Tests
         {
             var project = Project.GetProject(@"
 {
-    ""compilationOptions"": { ""allowUnsafe"": true, ""define"": [""X"", ""y""], ""platform"": ""x86"", ""warningsAsErrors"": true, ""optimize"": true }
+    ""compilationOptions"": { ""allowUnsafe"": true, ""define"": [""X"", ""y""], ""platform"": ""x86"", ""warningsAsErrors"": true, ""optimize"": true, ""strongNameKeyFile"" : ""c:\\keyfile.snk"", ""delaySign"" : true }
 }",
 "foo",
 @"c:\foo\project.json");
@@ -385,6 +385,8 @@ namespace Microsoft.Framework.Runtime.Tests
             Assert.True(compilerOptions.WarningsAsErrors.Value);
             Assert.Equal("x86", compilerOptions.Platform);
             Assert.True(compilerOptions.Optimize.Value);
+            Assert.Equal(compilerOptions.StrongNameKeyFile, @"c:\keyfile.snk");
+            Assert.True(compilerOptions.DelaySign);
         }
 
         [Fact]
@@ -410,7 +412,6 @@ namespace Microsoft.Framework.Runtime.Tests
             ""compilationOptions"": { ""allowUnsafe"": true, ""define"": [""X"", ""y""], ""platform"": ""x86"", ""warningsAsErrors"": true }
         },
         ""dnx451"": {
-            
         },
         ""dnxcore50"": {
             ""compilationOptions"": { ""define"": [""X""], ""warningsAsErrors"": true }
