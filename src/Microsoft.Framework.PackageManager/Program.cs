@@ -2,6 +2,7 @@
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 using System;
+using System.Diagnostics;
 using System.Net;
 using System.Threading;
 using Microsoft.Framework.Runtime;
@@ -37,6 +38,8 @@ namespace Microsoft.Framework.PackageManager
 
         public int Main(string[] args)
         {
+            WaitForOrLaunchDebuggerIfRequested(ref args);
+
             var app = new CommandLineApplication();
             app.Name = "dnu";
             app.FullName = "Microsoft .NET Development Utility";
@@ -65,6 +68,46 @@ namespace Microsoft.Framework.PackageManager
             WrapConsoleCommand.Register(app, reportsFactory);
 
             return app.Execute(args);
+        }
+
+        [Conditional("DEBUG")]
+        // TODO(anurse): This seems like a broadly useful helper
+        private static void WaitForOrLaunchDebuggerIfRequested(ref string[] args)
+        {
+            if (args.Length > 0 && args[0].Equals("--debug", StringComparison.OrdinalIgnoreCase))
+            {
+                Console.WriteLine("Waiting for Debugger to attach.");
+#if DNX451
+                Console.WriteLine("Attach a debugger or press ENTER to continue. Or, press L to trigger the just-in-time debugger.");
+#endif
+                Console.WriteLine($"Process ID: {Process.GetCurrentProcess().Id}");
+
+                while (true)
+                {
+                    if (Debugger.IsAttached)
+                    {
+                        break;
+                    }
+#if DNX451
+                    else if (Console.KeyAvailable)
+                    {
+                        var key = Console.ReadKey().Key;
+                        if (key == ConsoleKey.Enter)
+                        {
+                            break;
+                        }
+                        else if (key == ConsoleKey.L)
+                        {
+                            Debugger.Launch();
+                            break;
+                        }
+                    }
+#endif
+                }
+                var newargs = new string[args.Length - 1];
+                Array.Copy(args, 1, newargs, 0, newargs.Length);
+                args = newargs;
+            }
         }
     }
 }
