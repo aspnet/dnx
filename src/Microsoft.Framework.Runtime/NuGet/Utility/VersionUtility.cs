@@ -810,6 +810,11 @@ namespace NuGet
             {
                 return IsPortableLibraryCompatible(frameworkName, targetFrameworkName);
             }
+            else if (frameworkName.IsPortableFramework() && targetFrameworkName.Identifier.Equals(PortableFrameworkIdentifier, StringComparison.Ordinal) && targetFrameworkName.Version >= new Version(5, 0))
+            {
+                // TEMPORARY to unblock EF build until packages are fixed up.
+                return true;
+            }
 
             targetFrameworkName = NormalizeFrameworkName(targetFrameworkName);
             frameworkName = NormalizeFrameworkName(frameworkName);
