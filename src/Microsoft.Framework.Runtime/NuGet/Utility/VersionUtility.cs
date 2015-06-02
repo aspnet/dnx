@@ -259,7 +259,7 @@ namespace NuGet
             }
 
             // if this is a .NET Portable framework name, validate the profile part to ensure it is valid
-            if (identifierPart.Equals(PortableFrameworkIdentifier, StringComparison.OrdinalIgnoreCase))
+            if (version.Major < 5 && identifierPart.Equals(PortableFrameworkIdentifier, StringComparison.OrdinalIgnoreCase))
             {
                 ValidatePortableFrameworkProfilePart(profilePart);
             }

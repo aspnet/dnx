@@ -104,5 +104,22 @@ namespace Microsoft.Framework.Runtime.Tests
             var fx = new FrameworkName(longName, Version.Parse(version), profile);
             Assert.Equal(shortName, VersionUtility.GetShortFrameworkName(fx));
         }
+        
+        [Theory]
+        [InlineData(".NETPortable1.0", true)]
+        [InlineData(".NETPortable4.9", true)]
+        [InlineData(".NETPortable5.0", false)]
+        public void SkipPortablePartValidationWhenVersionIsHigherThanFive(string frameworkName, bool throwException)
+        {
+            if (throwException)
+            {
+                Assert.Throws<ArgumentException>(() => VersionUtility.ParseFrameworkName(frameworkName));
+            }
+            else
+            {
+                var framework = VersionUtility.ParseFrameworkName(frameworkName);
+                Assert.Equal(".NETPortable", framework.Identifier);
+            }
+        }
     }
 }
