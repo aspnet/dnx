@@ -116,7 +116,8 @@ namespace NuGet
             // Allow a net package to be installed in an aspnet (or dnx, transitively by above) project
             { AspNetFrameworkIdentifier, Tuple.Create(_emptyVersion, new FrameworkName(NetFrameworkIdentifier, MaxVersion)) },
 
-            { NetFrameworkIdentifier, Tuple.Create(new Version(4, 6), new FrameworkName(PortableFrameworkIdentifier, new Version(5, 0))) }
+            { NetFrameworkIdentifier, Tuple.Create(new Version(4, 6), new FrameworkName(PortableFrameworkIdentifier, new Version(5, 0))) },
+            { NetCoreFrameworkIdentifier, Tuple.Create(new Version(5, 0), new FrameworkName(PortableFrameworkIdentifier, new Version(5, 0))) }
         };
 
         public static Version DefaultTargetFrameworkVersion
