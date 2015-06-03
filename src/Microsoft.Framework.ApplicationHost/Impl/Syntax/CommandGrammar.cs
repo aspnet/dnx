@@ -9,12 +9,12 @@ namespace Microsoft.Framework.ApplicationHost.Impl.Syntax
 {
     internal class CommandGrammar : Grammar
     {
-        public CommandGrammar(Func<string, string> variable)
+        private CommandGrammar(Func<string, string> variable, bool preserveSurroundingQuotes)
         {
             var environmentVariablePiece = Ch('%').And(Rep(Ch().Not(Ch('%')))).And(Ch('%')).Left().Down().Str()
                 .Build(key => variable(key) ?? "%" + key + "%");
 
-            var escapeSequencePiece = 
+            var escapeSequencePiece =
                 Ch('%').And(Ch('%')).Build(_=>"%")
                     .Or(Ch('^').And(Ch('^')).Build(_ => "^"))
                     .Or(Ch('\\').And(Ch('\\')).Build(_ => "\\"))
@@ -30,6 +30,12 @@ namespace Microsoft.Framework.ApplicationHost.Impl.Syntax
             var unquotedTerm = Rep1(unquotedPiece.Or(specialPiece)).Str();
 
             var quotedTerm = Ch('\"').And(Rep(quotedPiece.Or(specialPiece)).Str()).And(Ch('\"')).Left().Down();
+            if (preserveSurroundingQuotes)
+            {
+                // Str() value assigned to quotedTerm does not include quotation marks surrounding the quoted or
+                // special piece. Add those quotes back if requested.
+                quotedTerm = quotedTerm.Build(str => "\"" + str + "\"");
+            }
 
             var whitespace = Rep(Ch(' '));
 
@@ -40,9 +46,9 @@ namespace Microsoft.Framework.ApplicationHost.Impl.Syntax
 
         public readonly Parser<IList<string>> Parse;
 
-        public static string[] Process(string text, Func<string, string> variables)
+        public static string[] Process(string text, Func<string, string> variables, bool preserveSurroundingQuotes)
         {
-            var grammer = new CommandGrammar(variables);
+            var grammer = new CommandGrammar(variables, preserveSurroundingQuotes);
             var cursor = new Cursor(text, 0, text.Length);
 
             var result = grammer.Parse(cursor);

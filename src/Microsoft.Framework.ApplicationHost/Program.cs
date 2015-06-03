@@ -50,9 +50,11 @@ namespace Microsoft.Framework.ApplicationHost
             string replacementCommand;
             if (host.Project.Commands.TryGetValue(lookupCommand, out replacementCommand))
             {
-                var replacementArgs = CommandGrammar.Process(
-                    replacementCommand,
-                    GetVariable).ToArray();
+                // preserveSurroundingQuotes: false to imitate a shell. Shells remove quotation marks before calling
+                // Main methods. Here however we are invoking Main() without involving a shell.
+                var replacementArgs = CommandGrammar
+                    .Process(replacementCommand, GetVariable, preserveSurroundingQuotes: false)
+                    .ToArray();
                 options.ApplicationName = replacementArgs.First();
                 programArgs = replacementArgs.Skip(1).Concat(programArgs).ToArray();
             }

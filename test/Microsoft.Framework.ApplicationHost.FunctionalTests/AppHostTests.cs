@@ -1,12 +1,12 @@
 // Copyright (c) .NET Foundation. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
-using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Runtime.Versioning;
 using Bootstrapper.FunctionalTests;
 using Microsoft.Framework.CommonTestUtils;
+using Microsoft.Framework.PackageManager;
 using Microsoft.Framework.Runtime;
 using Microsoft.Framework.Runtime.Common.Impl;
 using NuGet;
@@ -168,6 +168,137 @@ Please make sure the runtime matches a framework specified in {Project.ProjectFi
 
                 Assert.NotEqual(0, exitCode);
                 Assert.Contains(expectedErrorMsg, stdErr);
+            }
+        }
+
+        public static IEnumerable<object[]> ClrRuntimeComponentsAndCommandsSet
+        {
+            get
+            {
+                // command name -> expected output
+                var commands = new Dictionary<string, string>
+                {
+                    {
+                        "one",
+@"0: 'one'
+1: 'two'
+2: 'extra'
+"
+                    },
+                    {
+                        "two",
+@"0: '^>three'
+1: '&&>>^""'
+2: 'extra'
+"
+                    },
+                    {
+                        "three",
+@"0: 'four'
+1: 'argument five'
+2: 'extra'
+"
+                    },
+                    {
+                        "run",
+@"0: 'extra'
+"
+                    },
+                };
+
+                var data = new TheoryData<object, object, object, string, string>();
+                foreach (var component in TestUtils.GetClrRuntimeComponents())
+                {
+                    foreach (var command in commands)
+                    {
+                        data.Add(component[0], component[1], component[2], command.Key, command.Value);
+                    }
+                }
+
+                return data;
+            }
+        }
+
+        [Theory]
+        [MemberData(nameof(ClrRuntimeComponentsAndCommandsSet))]
+        public void AppHost_ExecutesCommands(
+            string flavor,
+            string os,
+            string architecture,
+            string command,
+            string expectedOutput)
+        {
+            var environment = new Dictionary<string, string>
+            {
+                { "DNX_TRACE", "0" },
+            };
+
+            var projectName = "Project Name";
+            var projectStructure =
+$@"{{
+  '.': ['Program.cs', '{ Project.ProjectFileName }']
+}}";
+            var programContents =
+@"using System;
+
+namespace Project_Name
+{
+    public class Program
+    {
+        public void Main(string[] arguments)
+        {
+            for (var i = 0; i < arguments.Length; i++)
+            {
+                var argument = arguments[i];
+                if (!string.IsNullOrWhiteSpace(argument))
+                {
+                    Console.WriteLine($""{ i }: '{ argument }'"");
+                }
+            }
+        }
+    }
+}";
+            var projectJsonContents =
+$@"{{
+  ""commands"": {{
+    ""one"": ""\""{ projectName }\"" one two"",
+    ""two"": ""\""{ projectName }\"" ^>three &&>>^\"""",
+    ""three"": ""\""{ projectName }\"" four \""argument five\""""
+  }},
+  ""frameworks"" : {{
+    ""dnx451"": {{ }}
+  }}
+}}";
+
+            using (var applicationRoot = TestUtils.CreateTempDir())
+            {
+                var projectPath = Path.Combine(applicationRoot, projectName);
+                DirTree.CreateFromJson(projectStructure)
+                    .WithFileContents("Program.cs", programContents)
+                    .WithFileContents(Project.ProjectFileName, projectJsonContents)
+                    .WriteTo(projectPath);
+                var runtimeHomePath = _fixture.GetRuntimeHomeDir(flavor, os, architecture);
+
+                var exitCode = DnuTestUtils.ExecDnu(
+                    runtimeHomePath,
+                    subcommand: "restore",
+                    arguments: null,
+                    environment: environment,
+                    workingDir: projectPath);
+                Assert.Equal(0, exitCode); // Guard
+
+                string output;
+                string error;
+                exitCode = BootstrapperTestUtils.ExecBootstrapper(
+                    runtimeHomePath,
+                    arguments: $@"""{ projectPath }"" { command } extra",
+                    stdOut: out output,
+                    stdErr: out error,
+                    environment: environment);
+
+                Assert.Equal(0, exitCode);
+                Assert.Empty(error);
+                Assert.Equal(expectedOutput, output);
             }
         }
     }
