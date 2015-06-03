@@ -24,6 +24,8 @@ namespace Microsoft.Framework.Runtime
 
         public bool? DelaySign { get; set; }
 
+        public bool? StrongName { get; set; }
+
         public static CompilerOptions Combine(params CompilerOptions[] options)
         {
             var result = new CompilerOptions();
@@ -75,6 +77,11 @@ namespace Microsoft.Framework.Runtime
                 if (option.DelaySign != null)
                 {
                     result.DelaySign = option.DelaySign;
+                }
+
+                if (option.StrongName != null)
+                {
+                    result.StrongName = option.StrongName;
                 }
             }
 

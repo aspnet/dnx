@@ -221,6 +221,14 @@ namespace Microsoft.Framework.Runtime.Roslyn
                 compilationContext.Diagnostics.Add(diag);
 #endif
             }
+
+            // If both CryptoPublicKey and CryptoKeyFile compilation will fail so we don't need a check
+            if (compilationContext.Compilation.Options.CryptoPublicKey != null)
+            {
+                var options = compilationContext.Compilation.Options
+                    .WithCryptoPublicKey(compilationContext.Compilation.Options.CryptoPublicKey);
+                compilationContext.Compilation = compilationContext.Compilation.WithOptions(options);
+            }
         }
 
         private CompilationModules GetCompileModules(ILibraryKey target)

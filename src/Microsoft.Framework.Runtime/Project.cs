@@ -661,7 +661,8 @@ namespace Microsoft.Framework.Runtime
                 WarningsAsErrors = rawOptions.ValueAsNullableBoolean("warningsAsErrors"),
                 Optimize = rawOptions.ValueAsNullableBoolean("optimize"),
                 KeyFile = rawOptions.ValueAsString("keyFile"),
-                DelaySign = rawOptions.ValueAsNullableBoolean("delaySign")
+                DelaySign = rawOptions.ValueAsNullableBoolean("delaySign"),
+                StrongName = rawOptions.ValueAsNullableBoolean("strongName")
             };
         }
     }

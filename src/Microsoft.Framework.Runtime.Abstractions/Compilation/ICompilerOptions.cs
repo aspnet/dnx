@@ -26,5 +26,7 @@ namespace Microsoft.Framework.Runtime
         string KeyFile { get; }
 
         bool? DelaySign { get; }
+
+        bool? StrongName { get; }
     }
 }

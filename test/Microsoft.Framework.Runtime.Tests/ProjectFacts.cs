@@ -373,7 +373,7 @@ namespace Microsoft.Framework.Runtime.Tests
         {
             var project = Project.GetProject(@"
 {
-    ""compilationOptions"": { ""allowUnsafe"": true, ""define"": [""X"", ""y""], ""platform"": ""x86"", ""warningsAsErrors"": true, ""optimize"": true, ""keyFile"" : ""c:\\keyfile.snk"", ""delaySign"" : true }
+    ""compilationOptions"": { ""allowUnsafe"": true, ""define"": [""X"", ""y""], ""platform"": ""x86"", ""warningsAsErrors"": true, ""optimize"": true, ""keyFile"" : ""c:\\keyfile.snk"", ""delaySign"" : true, ""strongName"" : true }
 }",
 "foo",
 @"c:\foo\project.json");
@@ -387,6 +387,7 @@ namespace Microsoft.Framework.Runtime.Tests
             Assert.True(compilerOptions.Optimize.Value);
             Assert.Equal(compilerOptions.KeyFile, @"c:\keyfile.snk");
             Assert.True(compilerOptions.DelaySign);
+            Assert.True(compilerOptions.StrongName);
         }
 
         [Fact]
