@@ -52,7 +52,7 @@ namespace Microsoft.Framework.CommonTestUtils
 
             if (Directory.Exists(DirPath))
             {
-                //TestUtils.DeleteFolder(DirPath);
+                TestUtils.DeleteFolder(DirPath);
             }
         }
 
