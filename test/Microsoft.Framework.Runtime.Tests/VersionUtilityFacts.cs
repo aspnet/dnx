@@ -59,30 +59,30 @@ namespace Microsoft.Framework.Runtime.Tests
         [InlineData("dnxcore50", "portable-net451+win81", true)]
         [InlineData("dnxcore50", "portable-net40+sl5+win8", false)]
 
-        // NetPortable50
-        [InlineData("netportable50", "netportable50", true)]
-        [InlineData("dnxcore50", "netportable50", true)]
-        [InlineData("aspnetcore50", "netportable50", true)]
-        [InlineData("dnx451", "netportable50", true)]
-        [InlineData("dnx46", "netportable50", true)]
-        [InlineData("net451", "netportable50", false)]
-        [InlineData("net40", "netportable50", false)]
-        [InlineData("net46", "netportable50", true)]
-        [InlineData("sl20", "netportable50", false)]
-        [InlineData("netportable50", "portable-net40+sl5+win8", false)]
-        [InlineData("netportable50", "portable-net45+win8", true)]
-        [InlineData("netportable50", "portable-net451+win81", true)]
-        [InlineData("netportable50", "portable-net451+win8+core50", true)]
-        [InlineData("netportable50", "portable-net451+win8+dnxcore50", true)]
-        [InlineData("netportable50", "portable-net451+win8+aspnetcore50", true)]
+        // dotnet
+        [InlineData("dotnet", "dotnet", true)]
+        [InlineData("dnxcore50", "dotnet", true)]
+        [InlineData("aspnetcore50", "dotnet", true)]
+        [InlineData("dnx451", "dotnet", true)]
+        [InlineData("dnx46", "dotnet", true)]
+        [InlineData("net451", "dotnet", false)]
+        [InlineData("net40", "dotnet", false)]
+        [InlineData("net46", "dotnet", true)]
+        [InlineData("sl20", "dotnet", false)]
+        [InlineData("dotnet", "portable-net40+sl5+win8", false)]
+        [InlineData("dotnet", "portable-net45+win8", true)]
+        [InlineData("dotnet", "portable-net451+win81", true)]
+        [InlineData("dotnet", "portable-net451+win8+core50", true)]
+        [InlineData("dotnet", "portable-net451+win8+dnxcore50", true)]
+        [InlineData("dotnet", "portable-net451+win8+aspnetcore50", true)]
 
-        // Old-world Portable doesn't support netportable50
-        [InlineData("portable-net40+sl5+win8", "netportable50", false)]
-        [InlineData("portable-net45+win8", "netportable50", false)]
-        [InlineData("portable-net451+win81", "netportable50", false)]
-        [InlineData("portable-net451+win8+core50", "netportable50", false)]
-        [InlineData("portable-net451+win8+dnxcore50", "netportable50", false)]
-        [InlineData("portable-net451+win8+aspnetcore50", "netportable50", false)]
+        // Old-world Portable doesn't support dotnet
+        [InlineData("portable-net40+sl5+win8", "dotnet", false)]
+        [InlineData("portable-net45+win8", "dotnet", false)]
+        [InlineData("portable-net451+win81", "dotnet", false)]
+        [InlineData("portable-net451+win8+core50", "dotnet", false)]
+        [InlineData("portable-net451+win8+dnxcore50", "dotnet", false)]
+        [InlineData("portable-net451+win8+aspnetcore50", "dotnet", false)]
         public void FrameworksAreCompatible(string project, string package, bool compatible)
         {
             var frameworkName1 = VersionUtility.ParseFrameworkName(project);
@@ -94,32 +94,23 @@ namespace Microsoft.Framework.Runtime.Tests
         }
 
         [Theory]
-        [InlineData(".NETPortable", "0.0", "net45+win8", "portable-net45+win80")]
-        [InlineData(".NETPortable", "4.2", "net45", "portable-net45")] // Portable version numbers < 5.0 didn't matter
-        [InlineData(".NETPortable", "5.0", null, "netportable50")]
-        [InlineData(".NETPortable", "5.1", null, "netportable51")]
-        [InlineData(".NETPortable", "6.0", null, "netportable60")]
-        public void ShortFrameworkNamesAreCorrect(string longName, string version, string profile, string shortName)
+        [InlineData("dotnet", ".NETPlatform", "5.0")]
+        [InlineData("dotnet10", ".NETPlatform", "1.0")]
+        [InlineData("dotnet50", ".NETPlatform", "5.0")]
+        [InlineData("dotnet60", ".NETPlatform", "6.0")]
+        public void CanParseShortFrameworkNames(string shortName, string longName, string version)
         {
-            var fx = new FrameworkName(longName, Version.Parse(version), profile);
-            Assert.Equal(shortName, VersionUtility.GetShortFrameworkName(fx));
+            var fx = VersionUtility.ParseFrameworkName(shortName);
+            Assert.Equal(new FrameworkName(longName, Version.Parse(version)), fx);
         }
-        
+
         [Theory]
-        [InlineData(".NETPortable1.0", true)]
-        [InlineData(".NETPortable4.9", true)]
-        [InlineData(".NETPortable5.0", false)]
-        public void SkipPortablePartValidationWhenVersionIsHigherThanFive(string frameworkName, bool throwException)
+        [InlineData(".NETPlatform", "5.0", "dotnet")]
+        [InlineData(".NETPlatform", "5.1", "dotnet51")]
+        public void ShortFrameworkNamesAreCorrect(string longName, string version, string shortName)
         {
-            if (throwException)
-            {
-                Assert.Throws<ArgumentException>(() => VersionUtility.ParseFrameworkName(frameworkName));
-            }
-            else
-            {
-                var framework = VersionUtility.ParseFrameworkName(frameworkName);
-                Assert.Equal(".NETPortable", framework.Identifier);
-            }
+            var fx = new FrameworkName(longName, Version.Parse(version));
+            Assert.Equal(shortName, VersionUtility.GetShortFrameworkName(fx));
         }
     }
 }

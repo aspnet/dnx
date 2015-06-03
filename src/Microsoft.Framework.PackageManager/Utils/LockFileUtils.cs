@@ -379,7 +379,7 @@ namespace Microsoft.Framework.PackageManager.Utils
             {
                 Table =
                 {
-                    { "any", new FrameworkName(VersionUtility.PortableFrameworkIdentifier, new Version(5, 0)) }
+                    { "any", new FrameworkName(VersionUtility.NetPlatformFrameworkIdentifier, new Version(5, 0)) }
                 },
                 Parser = TargetFrameworkName_Parser,
                 OnIsCriteriaSatisfied = TargetFrameworkName_IsCriteriaSatisfied
