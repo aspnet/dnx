@@ -557,8 +557,8 @@ namespace NuGet
                 }
             }
 
-            // Normalize version 5.0 to 0.0 for display purposes
-            if (frameworkName.Version == new Version(5, 0))
+            // Normalize version 5.0 to 0.0 for display purposes FOR NetPlatform
+            if (frameworkName.Identifier.Equals(NetPlatformFrameworkIdentifier) && frameworkName.Version == new Version(5, 0))
             {
                 frameworkName = new FrameworkName(frameworkName.Identifier, _emptyVersion, frameworkName.Profile);
             }

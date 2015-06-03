@@ -64,6 +64,8 @@ namespace Microsoft.Framework.CommonTestUtils
                 RedirectStandardError = true
             };
 
+            Console.WriteLine($">> \"{processStartInfo.FileName}\" \"{processStartInfo.Arguments}\"");
+
             if (environment != null)
             {
                 foreach (var pair in environment)
