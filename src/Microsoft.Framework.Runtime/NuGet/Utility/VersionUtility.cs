@@ -23,6 +23,7 @@ namespace NuGet
         public static readonly string AspNetCoreFrameworkIdentifier = "Asp.NetCore";
         public static readonly string DnxCoreFrameworkIdentifier = "DNXCore";
         public static readonly string PortableFrameworkIdentifier = ".NETPortable";
+        public static readonly string NetPlatformFrameworkIdentifier = ".NETPlatform";
 
         internal const string NetFrameworkIdentifier = ".NETFramework";
         private const string NetCoreFrameworkIdentifier = ".NETCore";
@@ -30,8 +31,7 @@ namespace NuGet
         internal const string DnxFrameworkIdentifier = "DNX";
         internal const string DnxFrameworkShortName = "dnx";
         internal const string DnxCoreFrameworkShortName = "dnxcore";
-        internal const string NetPortableName = "netportable";
-        internal const string NetPortable50Name = NetPortableName + "50";
+        internal const string NetPlatformFrameworkShortName = "dotnet";
 
         private const string LessThanOrEqualTo = "\u2264";
         private const string GreaterThanOrEqualTo = "\u2265";
@@ -58,6 +58,7 @@ namespace NuGet
             { DnxCoreFrameworkIdentifier, DnxCoreFrameworkShortName },
             { AspNetFrameworkIdentifier, "aspnet" },
             { AspNetCoreFrameworkIdentifier, "aspnetcore" },
+            { NetPlatformFrameworkIdentifier, NetPlatformFrameworkShortName },
 
             { "Silverlight", "sl" },
             { ".NETCore", "win"},
@@ -108,7 +109,7 @@ namespace NuGet
         {
             // Allow aspnetcore50 and core50 packages to be installed in a dnxcore project
             { DnxCoreFrameworkIdentifier, Tuple.Create(_emptyVersion, new FrameworkName(AspNetCoreFrameworkIdentifier, MaxVersion)) },
-            { AspNetCoreFrameworkIdentifier, Tuple.Create(_emptyVersion, new FrameworkName(PortableFrameworkIdentifier, new Version(5, 0))) },
+            { AspNetCoreFrameworkIdentifier, Tuple.Create(_emptyVersion, new FrameworkName(NetPlatformFrameworkIdentifier, new Version(5, 0))) },
 
             // Allow an aspnet package to be installed in a dnx project
             { DnxFrameworkIdentifier, Tuple.Create(_emptyVersion, new FrameworkName(AspNetFrameworkIdentifier, MaxVersion)) },
@@ -116,8 +117,8 @@ namespace NuGet
             // Allow a net package to be installed in an aspnet (or dnx, transitively by above) project
             { AspNetFrameworkIdentifier, Tuple.Create(_emptyVersion, new FrameworkName(NetFrameworkIdentifier, MaxVersion)) },
 
-            { NetFrameworkIdentifier, Tuple.Create(new Version(4, 6), new FrameworkName(PortableFrameworkIdentifier, new Version(5, 0))) },
-            { NetCoreFrameworkIdentifier, Tuple.Create(new Version(5, 0), new FrameworkName(PortableFrameworkIdentifier, new Version(5, 0))) }
+            { NetFrameworkIdentifier, Tuple.Create(new Version(4, 6), new FrameworkName(NetPlatformFrameworkIdentifier, new Version(5, 0))) },
+            { NetCoreFrameworkIdentifier, Tuple.Create(new Version(5, 0), new FrameworkName(NetPlatformFrameworkIdentifier, new Version(5, 0))) }
         };
 
         public static Version DefaultTargetFrameworkVersion
@@ -156,12 +157,6 @@ namespace NuGet
             if (frameworkName == null)
             {
                 throw new ArgumentNullException("frameworkName");
-            }
-
-            // It's a little gross, but for now let's special case netportable50
-            if (String.Equals(NetPortable50Name, frameworkName, StringComparison.OrdinalIgnoreCase))
-            {
-                return new FrameworkName(PortableFrameworkIdentifier, new Version(5, 0));
             }
 
             // {Identifier}{Version}-{Profile}
@@ -251,7 +246,7 @@ namespace NuGet
                     return UnsupportedFrameworkName;
                 }
 
-                version = _emptyVersion;
+                version = identifierPart.Equals(NetPlatformFrameworkIdentifier) ? new Version(5, 0) : _emptyVersion;
             }
 
             if (String.IsNullOrEmpty(identifierPart))
@@ -260,7 +255,7 @@ namespace NuGet
             }
 
             // if this is a .NET Portable framework name, validate the profile part to ensure it is valid
-            if (version.Major < 5 && identifierPart.Equals(PortableFrameworkIdentifier, StringComparison.OrdinalIgnoreCase))
+            if (identifierPart.Equals(PortableFrameworkIdentifier, StringComparison.OrdinalIgnoreCase))
             {
                 ValidatePortableFrameworkProfilePart(profilePart);
             }
@@ -566,11 +561,6 @@ namespace NuGet
             if (!_identifierToFrameworkFolder.TryGetValue(frameworkName.Identifier, out name))
             {
                 name = frameworkName.Identifier;
-            }
-
-            if (frameworkName.Identifier.Equals(PortableFrameworkIdentifier) && frameworkName.Version >= new Version(5, 0))
-            {
-                name = NetPortableName;
             }
 
             // for Portable framework name, the short name has the form "portable-sl4+wp7+net45"
@@ -904,7 +894,7 @@ namespace NuGet
                     // as this logic is super fuzzy and terrible
                     if (string.Equals(frameworkName.Identifier, AspNetCoreFrameworkIdentifier, StringComparison.OrdinalIgnoreCase) ||
                         string.Equals(frameworkName.Identifier, DnxCoreFrameworkIdentifier, StringComparison.OrdinalIgnoreCase) ||
-                        (string.Equals(frameworkName.Identifier, PortableFrameworkIdentifier, StringComparison.OrdinalIgnoreCase) && frameworkName.Version >= new Version(5, 0)))
+                        (string.Equals(frameworkName.Identifier, NetPlatformFrameworkIdentifier, StringComparison.OrdinalIgnoreCase)))
                     {
                         var frameworkIdentifierLookup = targetFrameworkPortableProfile.SupportedFrameworks
                                                                                       .Select(NormalizeFrameworkName)
@@ -1122,8 +1112,7 @@ namespace NuGet
             // By the time it is called here, it's guaranteed to be valid.
             // Thus we can ignore the profile part here
             return framework != null &&
-                PortableFrameworkIdentifier.Equals(framework.Identifier, StringComparison.OrdinalIgnoreCase) &&
-                framework.Version.Major < 5;
+                PortableFrameworkIdentifier.Equals(framework.Identifier, StringComparison.OrdinalIgnoreCase);
         }
 
         public static bool ShouldUseConsidering(
@@ -1199,6 +1188,7 @@ namespace NuGet
                 { "asp.net", AspNetFrameworkIdentifier },
                 { "aspnetcore", AspNetCoreFrameworkIdentifier },
                 { "asp.netcore", AspNetCoreFrameworkIdentifier },
+                { NetPlatformFrameworkShortName, NetPlatformFrameworkIdentifier },
 
                 { "NET", NetFrameworkIdentifier },
 

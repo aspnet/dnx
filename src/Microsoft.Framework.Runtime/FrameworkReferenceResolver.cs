@@ -99,9 +99,9 @@ namespace Microsoft.Framework.Runtime
             {
                 return "DNX " + targetFramework.Version.ToString();
             }
-            else if (string.Equals(targetFramework.Identifier, VersionUtility.PortableFrameworkIdentifier, StringComparison.OrdinalIgnoreCase) && targetFramework.Version >= new Version(5, 0))
+            else if (string.Equals(targetFramework.Identifier, VersionUtility.NetPlatformFrameworkIdentifier, StringComparison.OrdinalIgnoreCase))
             {
-                return ".NET Portable " + targetFramework.Version.ToString();
+                return ".NET Platform " + targetFramework.Version.ToString();
             }
 
             var information = _cache.GetOrAdd(targetFramework, GetFrameworkInformation);
