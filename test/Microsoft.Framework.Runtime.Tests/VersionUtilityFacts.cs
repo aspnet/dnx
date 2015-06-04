@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Runtime.Versioning;
 using NuGet;
 using Xunit;
@@ -63,7 +65,7 @@ namespace Microsoft.Framework.Runtime.Tests
         [InlineData("dotnet", "dotnet", true)]
         [InlineData("dnxcore50", "dotnet", true)]
         [InlineData("aspnetcore50", "dotnet", true)]
-        [InlineData("dnx451", "dotnet", true)]
+        [InlineData("dnx451", "dotnet", false)]
         [InlineData("dnx46", "dotnet", true)]
         [InlineData("net451", "dotnet", false)]
         [InlineData("net40", "dotnet", false)]
@@ -111,6 +113,22 @@ namespace Microsoft.Framework.Runtime.Tests
         {
             var fx = new FrameworkName(longName, Version.Parse(version));
             Assert.Equal(shortName, VersionUtility.GetShortFrameworkName(fx));
+        }
+
+        [Theory]
+        [InlineData("dnx46", "dotnet,dnx46", "dnx46")]
+        public void GetNearestPicksMostCompatibleItem(string input, string frameworks, string expected)
+        {
+            var inputFx = VersionUtility.ParseFrameworkName(input);
+            var fxs = frameworks.Split(',').Select(VersionUtility.ParseFrameworkName).ToArray();
+            var expectedFx = VersionUtility.ParseFrameworkName(expected);
+
+            var items = fxs.Select(fx => new PackageDependencySet(fx, Enumerable.Empty<PackageDependency>()));
+            IEnumerable<PackageDependencySet> selectedItems;
+            Assert.True(VersionUtility.TryGetCompatibleItems(inputFx, items, out selectedItems));
+            var selectedItem = selectedItems.SingleOrDefault();
+            Assert.NotNull(selectedItem);
+            Assert.Equal(expectedFx, selectedItem.TargetFramework);
         }
     }
 }
