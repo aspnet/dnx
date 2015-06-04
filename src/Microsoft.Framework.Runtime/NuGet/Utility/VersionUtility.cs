@@ -105,22 +105,6 @@ namespace NuGet
 
         private static readonly Version MaxVersion = new Version(Int32.MaxValue, Int32.MaxValue, Int32.MaxValue, Int32.MaxValue);
 
-        private static readonly Dictionary<string, Tuple<Version, FrameworkName>> _equivalentProjectFrameworks = new Dictionary<string, Tuple<Version, FrameworkName>>()
-        {
-            // Allow aspnetcore50 and core50 packages to be installed in a dnxcore project
-            { DnxCoreFrameworkIdentifier, Tuple.Create(_emptyVersion, new FrameworkName(AspNetCoreFrameworkIdentifier, MaxVersion)) },
-            { AspNetCoreFrameworkIdentifier, Tuple.Create(_emptyVersion, new FrameworkName(NetPlatformFrameworkIdentifier, new Version(5, 0))) },
-
-            // Allow an aspnet package to be installed in a dnx project
-            { DnxFrameworkIdentifier, Tuple.Create(_emptyVersion, new FrameworkName(AspNetFrameworkIdentifier, MaxVersion)) },
-
-            // Allow a net package to be installed in an aspnet (or dnx, transitively by above) project
-            { AspNetFrameworkIdentifier, Tuple.Create(_emptyVersion, new FrameworkName(NetFrameworkIdentifier, MaxVersion)) },
-
-            { NetFrameworkIdentifier, Tuple.Create(new Version(4, 6), new FrameworkName(NetPlatformFrameworkIdentifier, new Version(5, 0))) },
-            { NetCoreFrameworkIdentifier, Tuple.Create(new Version(5, 0), new FrameworkName(NetPlatformFrameworkIdentifier, new Version(5, 0))) }
-        };
-
         public static Version DefaultTargetFrameworkVersion
         {
             get
@@ -689,7 +673,22 @@ namespace NuGet
             return null;
         }
 
-        internal static bool GetNearest<T>(FrameworkName projectFramework, IEnumerable<T> items, out IEnumerable<T> compatibleItems) where T : IFrameworkTargetable
+        public static FrameworkName GetNearest(FrameworkName projectFramework, IEnumerable<FrameworkName> items)
+        {
+            IEnumerable<FrameworkName> names;
+            if(GetNearestCore(projectFramework, items, i => new[] { i }, out names))
+            {
+                return names.FirstOrDefault();
+            }
+            return null;
+        }
+
+        public static bool GetNearest<T>(FrameworkName projectFramework, IEnumerable<T> items, out IEnumerable<T> compatibleItems) where T : IFrameworkTargetable
+        {
+            return GetNearestCore(projectFramework, items, i => i.SupportedFrameworks, out compatibleItems);
+        }
+
+        private static bool GetNearestCore<T>(FrameworkName projectFramework, IEnumerable<T> items, Func<T, IEnumerable<FrameworkName>> fxExtractor, out IEnumerable<T> compatibleItems)
         {
             if (!items.Any())
             {
@@ -704,7 +703,8 @@ namespace NuGet
             // item -> [Framework1, Framework2, Framework3] into
             // [{item, Framework1}, {item, Framework2}, {item, Framework3}]
             var normalizedItems = from item in items
-                                  let frameworks = (item.SupportedFrameworks != null && item.SupportedFrameworks.Any()) ? item.SupportedFrameworks : new FrameworkName[] { null }
+                                  let supported = fxExtractor(item)
+                                  let frameworks = (supported != null && supported.Any()) ? supported : new FrameworkName[] { null }
                                   from framework in frameworks
                                   select new
                                   {
@@ -715,21 +715,22 @@ namespace NuGet
             // Group references by target framework (if there is no target framework we assume it is the default)
             var frameworkGroups = normalizedItems.GroupBy(g => g.TargetFramework, g => g.Item).ToList();
 
-            // Find exact matching items
-            var activeFramework = internalProjectFramework;
-            while (activeFramework != null)
+            // Find exact matching items in expansion order.
+            foreach (var activeFramework in Expand(internalProjectFramework))
             {
                 var matchingGroups = frameworkGroups.Where(g => g.Key.Identifier.Equals(internalProjectFramework.Identifier)).ToList();
-                if (matchingGroups.Any())
+                var bestGroup = matchingGroups
+                    .OrderByDescending(f => f.Key.Version)
+                    .FirstOrDefault(g => g.Key.Version <= activeFramework.Version);
+                if (bestGroup != null)
                 {
-                    Search groups for matching things.
-                }
-                else
-                {
-                    // Try to expand our search
-                    activeFramework = TryExpand(activeFramework);
+                    compatibleItems = bestGroup;
+                    return true;
                 }
             }
+
+            // Try the old way
+            return TryGetCompatibleItemsCore(out compatibleItems, internalProjectFramework, frameworkGroups);
         }
 
         public static bool TryGetCompatibleItems<T>(FrameworkName projectFramework, IEnumerable<T> items, out IEnumerable<T> compatibleItems) where T : IFrameworkTargetable
@@ -787,11 +788,6 @@ namespace NuGet
             return hasItems;
         }
 
-        private static long GetFrameworkCompatibility(FrameworkName internalProjectFramework, FrameworkName key)
-        {
-            int compatibility = Int32.MaxValue
-        }
-
         internal static Version NormalizeVersion(Version verison)
         {
             return new Version(verison.Major,
@@ -843,27 +839,6 @@ namespace NuGet
             return true;
         }
 
-        internal static FrameworkName TryExpand(FrameworkName input)
-        {
-            // Try to convert the project framework into an equivalent target framework
-            // If the identifiers didn't match, we need to see if this framework has an equivalent framework that DOES match.
-            // If it does, we use that from here on.
-            // Example:
-            //  If the Project Targets ASP.Net, Version=5.0. It can accept Packages targetting .NETFramework, Version=4.5.1
-            //  so since the identifiers don't match, we need to "translate" the project target framework to .NETFramework
-            //  however, we still want direct ASP.Net == ASP.Net matches, so we do this ONLY if the identifiers don't already match
-
-            Tuple<Version, FrameworkName> entry;
-            if (_equivalentProjectFrameworks.TryGetValue(input.Identifier, out entry) && input.Version >= entry.Item1)
-            {
-                return entry.Item2;
-            }
-            else
-            {
-                return null;
-            }
-        }
-
         /// <summary>
         /// Determines if a package's target framework can be installed into a project's framework.
         /// </summary>
@@ -885,13 +860,11 @@ namespace NuGet
             targetFrameworkName = NormalizeFrameworkName(targetFrameworkName);
             frameworkName = NormalizeFrameworkName(frameworkName);
 
-            while (!frameworkName.Identifier.Equals(targetFrameworkName.Identifier, StringComparison.OrdinalIgnoreCase))
+            frameworkName = Expand(frameworkName)
+                .FirstOrDefault(fx => String.Equals(fx.Identifier, targetFrameworkName.Identifier, StringComparison.OrdinalIgnoreCase));
+            if (frameworkName == null)
             {
-                frameworkName = TryExpand(frameworkName);
-                if(frameworkName == null)
-                {
-                    return false;
-                }
+                return false;
             }
 
             if (NormalizeVersion(frameworkName.Version) <
@@ -920,6 +893,58 @@ namespace NuGet
             }
 
             return false;
+        }
+
+        private static IEnumerable<FrameworkName> Expand(FrameworkName input)
+        {
+            // Try to convert the project framework into an equivalent target framework
+            // If the identifiers didn't match, we need to see if this framework has an equivalent framework that DOES match.
+            // If it does, we use that from here on.
+            // Example:
+            //  If the Project Targets ASP.Net, Version=5.0. It can accept Packages targetting .NETFramework, Version=4.5.1
+            //  so since the identifiers don't match, we need to "translate" the project target framework to .NETFramework
+            //  however, we still want direct ASP.Net == ASP.Net matches, so we do this ONLY if the identifiers don't already match
+
+            yield return input;
+
+            // dnxcoreN -> aspnetcoreN -> dotnetN
+            if (input.Identifier.Equals(DnxCoreFrameworkIdentifier))
+            {
+                yield return new FrameworkName(AspNetCoreFrameworkIdentifier, input.Version);
+                yield return new FrameworkName(NetPlatformFrameworkIdentifier, input.Version);
+            }
+            // aspnetcoreN -> dotnetN
+            else if (input.Identifier.Equals(AspNetCoreFrameworkIdentifier))
+            {
+                yield return new FrameworkName(NetPlatformFrameworkIdentifier, input.Version);
+            }
+            // dnxN -> aspnet50 -> netN
+            else if (input.Identifier.Equals(DnxFrameworkIdentifier))
+            {
+                yield return new FrameworkName(AspNetFrameworkIdentifier, new Version(5, 0));
+                yield return new FrameworkName(NetFrameworkIdentifier, input.Version);
+
+                if (input.Version >= new Version(4, 6))
+                {
+                    yield return new FrameworkName(NetPlatformFrameworkIdentifier, new Version(5, 0));
+                }
+            }
+            // aspnet50 -> net46 (project framework; this is DEPRECATED, so setting a max version is OK)
+            else if (input.Identifier.Equals(AspNetFrameworkIdentifier))
+            {
+                yield return new FrameworkName(NetFrameworkIdentifier, new Version(4, 6));
+                yield return new FrameworkName(NetPlatformFrameworkIdentifier, new Version(5, 0));
+            }
+            // netcore50 (universal windows apps) -> dotnet50
+            else if (input.Identifier.Equals(NetCoreFrameworkIdentifier) && input.Version.Major == 5 && input.Version.Minor == 0)
+            {
+                yield return new FrameworkName(NetPlatformFrameworkIdentifier, new Version(5, 0));
+            }
+            // net45 -> dotnet
+            else if (input.Identifier.Equals(NetFrameworkIdentifier) && input.Version >= new Version(4, 6))
+            {
+                yield return new FrameworkName(NetPlatformFrameworkIdentifier, new Version(5, 0));
+            }
         }
 
         private static bool IsPortableLibraryCompatible(FrameworkName frameworkName, FrameworkName targetFrameworkName)

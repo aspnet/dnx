@@ -165,7 +165,7 @@ namespace Microsoft.Framework.Runtime
             var package = packageInfo.Package;
 
             IEnumerable<PackageDependencySet> dependencySet;
-            if (VersionUtility.TryGetCompatibleItems(targetFramework, package.DependencySets, out dependencySet))
+            if (VersionUtility.GetNearest(targetFramework, package.DependencySets, out dependencySet))
             {
                 foreach (var set in dependencySet)
                 {
@@ -192,7 +192,7 @@ namespace Microsoft.Framework.Runtime
             }
 
             IEnumerable<FrameworkAssemblyReference> frameworkAssemblies;
-            if (VersionUtility.TryGetCompatibleItems(targetFramework, package.FrameworkAssemblies, out frameworkAssemblies))
+            if (VersionUtility.GetNearest(targetFramework, package.FrameworkAssemblies, out frameworkAssemblies))
             {
                 foreach (var assemblyReference in frameworkAssemblies)
                 {
