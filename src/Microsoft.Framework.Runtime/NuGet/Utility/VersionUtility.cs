@@ -689,6 +689,49 @@ namespace NuGet
             return null;
         }
 
+        internal static bool GetNearest<T>(FrameworkName projectFramework, IEnumerable<T> items, out IEnumerable<T> compatibleItems) where T : IFrameworkTargetable
+        {
+            if (!items.Any())
+            {
+                compatibleItems = Enumerable.Empty<T>();
+                return true;
+            }
+
+            // Not all projects have a framework, we need to consider those projects.
+            var internalProjectFramework = projectFramework ?? EmptyFramework;
+
+            // Turn something that looks like this:
+            // item -> [Framework1, Framework2, Framework3] into
+            // [{item, Framework1}, {item, Framework2}, {item, Framework3}]
+            var normalizedItems = from item in items
+                                  let frameworks = (item.SupportedFrameworks != null && item.SupportedFrameworks.Any()) ? item.SupportedFrameworks : new FrameworkName[] { null }
+                                  from framework in frameworks
+                                  select new
+                                  {
+                                      Item = item,
+                                      TargetFramework = framework
+                                  };
+
+            // Group references by target framework (if there is no target framework we assume it is the default)
+            var frameworkGroups = normalizedItems.GroupBy(g => g.TargetFramework, g => g.Item).ToList();
+
+            // Find exact matching items
+            var activeFramework = internalProjectFramework;
+            while (activeFramework != null)
+            {
+                var matchingGroups = frameworkGroups.Where(g => g.Key.Identifier.Equals(internalProjectFramework.Identifier)).ToList();
+                if (matchingGroups.Any())
+                {
+                    Search groups for matching things.
+                }
+                else
+                {
+                    // Try to expand our search
+                    activeFramework = TryExpand(activeFramework);
+                }
+            }
+        }
+
         public static bool TryGetCompatibleItems<T>(FrameworkName projectFramework, IEnumerable<T> items, out IEnumerable<T> compatibleItems) where T : IFrameworkTargetable
         {
             if (!items.Any())
@@ -715,6 +758,11 @@ namespace NuGet
             // Group references by target framework (if there is no target framework we assume it is the default)
             var frameworkGroups = normalizedItems.GroupBy(g => g.TargetFramework, g => g.Item).ToList();
 
+            return TryGetCompatibleItemsCore(out compatibleItems, internalProjectFramework, frameworkGroups);
+        }
+
+        private static bool TryGetCompatibleItemsCore<T>(out IEnumerable<T> compatibleItems, FrameworkName internalProjectFramework, List<IGrouping<FrameworkName, T>> frameworkGroups) where T : IFrameworkTargetable
+        {
             // Try to find the best match
             // Not all projects have a framework, we need to consider those projects.
             compatibleItems = (from g in frameworkGroups
@@ -737,6 +785,11 @@ namespace NuGet
             }
 
             return hasItems;
+        }
+
+        private static long GetFrameworkCompatibility(FrameworkName internalProjectFramework, FrameworkName key)
+        {
+            int compatibility = Int32.MaxValue
         }
 
         internal static Version NormalizeVersion(Version verison)
@@ -790,6 +843,27 @@ namespace NuGet
             return true;
         }
 
+        internal static FrameworkName TryExpand(FrameworkName input)
+        {
+            // Try to convert the project framework into an equivalent target framework
+            // If the identifiers didn't match, we need to see if this framework has an equivalent framework that DOES match.
+            // If it does, we use that from here on.
+            // Example:
+            //  If the Project Targets ASP.Net, Version=5.0. It can accept Packages targetting .NETFramework, Version=4.5.1
+            //  so since the identifiers don't match, we need to "translate" the project target framework to .NETFramework
+            //  however, we still want direct ASP.Net == ASP.Net matches, so we do this ONLY if the identifiers don't already match
+
+            Tuple<Version, FrameworkName> entry;
+            if (_equivalentProjectFrameworks.TryGetValue(input.Identifier, out entry) && input.Version >= entry.Item1)
+            {
+                return entry.Item2;
+            }
+            else
+            {
+                return null;
+            }
+        }
+
         /// <summary>
         /// Determines if a package's target framework can be installed into a project's framework.
         /// </summary>
@@ -813,20 +887,8 @@ namespace NuGet
 
             while (!frameworkName.Identifier.Equals(targetFrameworkName.Identifier, StringComparison.OrdinalIgnoreCase))
             {
-                // Try to convert the project framework into an equivalent target framework
-                // If the identifiers didn't match, we need to see if this framework has an equivalent framework that DOES match.
-                // If it does, we use that from here on.
-                // Example:
-                //  If the Project Targets ASP.Net, Version=5.0. It can accept Packages targetting .NETFramework, Version=4.5.1
-                //  so since the identifiers don't match, we need to "translate" the project target framework to .NETFramework
-                //  however, we still want direct ASP.Net == ASP.Net matches, so we do this ONLY if the identifiers don't already match
-
-                Tuple<Version, FrameworkName> entry;
-                if (_equivalentProjectFrameworks.TryGetValue(frameworkName.Identifier, out entry) && frameworkName.Version >= entry.Item1)
-                {
-                    frameworkName = entry.Item2;
-                }
-                else
+                frameworkName = TryExpand(frameworkName);
+                if(frameworkName == null)
                 {
                     return false;
                 }
