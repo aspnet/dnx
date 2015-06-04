@@ -152,7 +152,6 @@ namespace NuGet
         /// something a framework name that the package manager understands.
         /// </summary>
         public static FrameworkName ParseFrameworkName(string frameworkName)
-
         {
             if (frameworkName == null)
             {
@@ -1195,6 +1194,7 @@ namespace NuGet
                 { "aspnetcore", AspNetCoreFrameworkIdentifier },
                 { "asp.netcore", AspNetCoreFrameworkIdentifier },
                 { NetPlatformFrameworkShortName, NetPlatformFrameworkIdentifier },
+                { NetPlatformFrameworkIdentifier, NetPlatformFrameworkIdentifier },
 
                 { "NET", NetFrameworkIdentifier },
 
