@@ -9,7 +9,7 @@
 
 BOOL CreateTpaBase(LPCTSTR** ppNames, size_t* pcNames, bool bNative)
 {
-    const size_t count = 33;
+    const size_t count = 32;
     LPCTSTR* pArray = new LPCTSTR[count];
 
     if (bNative)
@@ -46,7 +46,6 @@ BOOL CreateTpaBase(LPCTSTR** ppNames, size_t* pcNames, bool bNative)
         pArray[29] = _T("System.Threading.ni.dll");
         pArray[30] = _T("System.Threading.Overlapped.ni.dll");
         pArray[31] = _T("System.Threading.Tasks.ni.dll");
-        pArray[32] = _T("System.Threading.ThreadPool.ni.dll");
     }
     else
     {
@@ -82,7 +81,6 @@ BOOL CreateTpaBase(LPCTSTR** ppNames, size_t* pcNames, bool bNative)
         pArray[29] = _T("System.Threading.dll");
         pArray[30] = _T("System.Threading.Overlapped.dll");
         pArray[31] = _T("System.Threading.Tasks.dll");
-        pArray[32] = _T("System.Threading.ThreadPool.dll");
     }
 
     *ppNames = pArray;
