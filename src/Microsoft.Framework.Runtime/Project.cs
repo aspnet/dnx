@@ -485,7 +485,7 @@ namespace Microsoft.Framework.Runtime
             }
 
             IEnumerable<TargetFrameworkInformation> compatibleConfigurations;
-            if (VersionUtility.TryGetCompatibleItems(targetFramework, GetTargetFrameworks(), out compatibleConfigurations) &&
+            if (VersionUtility.GetNearest(targetFramework, GetTargetFrameworks(), out compatibleConfigurations) &&
                 compatibleConfigurations.Any())
             {
                 targetFrameworkInfo = compatibleConfigurations.FirstOrDefault();

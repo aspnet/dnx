@@ -70,7 +70,7 @@ namespace Microsoft.Framework.PackageManager
             {
                 var metadata = (IPackageMetadata)Manifest.ReadFrom(stream, validateSchema: false).Metadata;
                 IEnumerable<PackageDependencySet> dependencySet;
-                if (VersionUtility.TryGetCompatibleItems(targetFramework, metadata.DependencySets, out dependencySet))
+                if (VersionUtility.GetNearest(targetFramework, metadata.DependencySets, out dependencySet))
                 {
                     return dependencySet
                         .SelectMany(ds => ds.Dependencies)
