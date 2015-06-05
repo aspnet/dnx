@@ -38,7 +38,6 @@ class KatanaManager :
     bool _calledInitializeRuntime;
     HRESULT _hrInitializeRuntime;
 
-    ICLRMetaHostPtr _MetaHost;
     ICLRMetaHostPolicyPtr _MetaHostPolicy;
     ICLRRuntimeHostPtr _RuntimeHost;
 
@@ -46,7 +45,6 @@ class KatanaManager :
     _bstr_t _appPoolName;
     _bstr_t _appHostFileName;
     _bstr_t _rootWebConfigFileName;
-    _bstr_t _clrConfigFilePath;
 
     _bstr_t _applicationBase;
 
@@ -55,35 +53,8 @@ class KatanaManager :
 public:
     KatanaManager()
     {
-        LPWSTR configFileName = L"dnx.clr.config";
-        TCHAR szPath[MAX_PATH];
-        DWORD length = GetModuleFileName(NULL, szPath, MAX_PATH);
-
         _calledInitializeRuntime = false;
         _hrInitializeRuntime = E_PENDING;
-
-        // TODO: Replace this with proper string functions
-        int lastSlash = length - 1;
-        while (lastSlash >= 0)
-        {
-            if (szPath[lastSlash] == '\\')
-            {
-                lastSlash++;
-                break;
-            }
-
-            lastSlash--;
-        }
-
-        // Yoda conditions
-        while (NULL != *configFileName && lastSlash < MAX_PATH)
-        {
-            // Overwrite the file name
-            szPath[lastSlash++] = *(configFileName++);
-        }
-        szPath[lastSlash] = NULL;
-
-        _clrConfigFilePath = szPath;
     }
 
     IUnknown* CastInterface(REFIID riid)
@@ -105,13 +76,9 @@ public:
 
         _applicationBase = applicationBase;
 
-        _HR(CLRCreateInstance(CLSID_CLRMetaHost, PPV(&_MetaHost)));
         _HR(CLRCreateInstance(CLSID_CLRMetaHostPolicy, PPV(&_MetaHostPolicy)));
 
-        IStreamPtr cfgStream = new ComObject<FileStream>();
-        _HR(static_cast<FileStream*>(cfgStream.GetInterfacePtr())->Open(_clrConfigFilePath));
-
-        WCHAR wzVersion[130] = { 0 };
+        WCHAR wzVersion[130] = L"v4.0.30319";
         DWORD cchVersion = 129;
         DWORD dwConfigFlags = 0;
 
@@ -119,7 +86,7 @@ public:
         _HR(_MetaHostPolicy->GetRequestedRuntime(
             METAHOST_POLICY_APPLY_UPGRADE_POLICY,
             NULL,
-            cfgStream,
+            NULL,
             wzVersion,
             &cchVersion,
             NULL,//wzImageVersion,
@@ -127,22 +94,22 @@ public:
             &dwConfigFlags,
             PPV(&runtimeInfo)));
 
-        cfgStream = NULL;
-
         _HR(runtimeInfo->SetDefaultStartupFlags(
-            STARTUP_LOADER_OPTIMIZATION_MULTI_DOMAIN_HOST |
-            STARTUP_SERVER_GC,
-            _clrConfigFilePath));
+            STARTUP_LOADER_OPTIMIZATION_MULTI_DOMAIN_HOST | STARTUP_SERVER_GC,
+            NULL));
 
         ICLRRuntimeHostPtr runtimeHost;
         _HR(runtimeInfo->GetInterface(CLSID_CLRRuntimeHost, PPV(&runtimeHost)));
 
         _HR(runtimeHost->SetHostControl(this));
 
-        _HR(runtimeHost->Start());
+        ICLRControl *pCLRControl = NULL;
+        _HR(runtimeHost->GetCLRControl(&pCLRControl));
+        _HR(pCLRControl->SetAppDomainManagerType(
+            L"dnx.clr.managed, Version=1.0.0.0, PublicKeyToken=adb9793829ddae60, Culture=neutral, ProcessorArchitecture=MSIL",
+            L"DomainManager"));
 
-        DWORD dwAppDomainId = 0;
-        _HR(runtimeHost->GetCurrentAppDomainId(&dwAppDomainId));
+        _HR(runtimeHost->Start());
 
         _RuntimeHost = runtimeHost;
 
