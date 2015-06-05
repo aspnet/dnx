@@ -108,6 +108,13 @@ namespace Microsoft.Framework.PackageManager.Publish
                 root.Operations.Delete(TargetPath);
             }
 
+            // If this is a wrapper project, we need to copy all its NuGet dependencies from
+            // solution local packages folder to DNX packages folder before building it
+            if (IsWrappingAssembly())
+            {
+                EmitCsprojNuGetDependencies(root, project);
+            }
+
             // Generate nupkg from this project dependency
             var buildOptions = new BuildOptions();
             buildOptions.ProjectDir = project.ProjectDirectory;
@@ -175,6 +182,35 @@ namespace Microsoft.Framework.PackageManager.Publish
             File.Delete(srcNupkgPath);
 
             return true;
+        }
+
+        private void EmitCsprojNuGetDependencies(PublishRoot root, Runtime.Project project)
+        {
+            var rootDirectory = ProjectResolver.ResolveRootDirectory(project.ProjectDirectory);
+            var solutionLocalPackagesDir = Path.Combine(rootDirectory, "packages");
+
+            var restoreCommand = new RestoreCommand();
+
+            var feedOptions = new FeedOptions();
+            feedOptions.IgnoreFailedSources = false;
+            feedOptions.Sources.Add(solutionLocalPackagesDir);
+            feedOptions.TargetPackagesFolder = root.SourcePackagesPath;
+
+            restoreCommand.SkipRestoreEvents = true;
+            restoreCommand.RestoreDirectories.Add(project.ProjectFilePath);
+            restoreCommand.FeedOptions = feedOptions;
+            restoreCommand.Reports = root.Reports.ShallowCopy();
+
+            // Mute "dnu restore" completely if it is invoked by "dnu publish --quiet"
+            restoreCommand.Reports.Information = root.Reports.Quiet;
+
+            // First install all NuGet dependencies to DNX packages folder for successful dnu pack later
+            restoreCommand.Execute().Wait();
+
+            // Then install all NuGet dependencies to target packages folder
+            // to make sure the generated bundle is complete
+            feedOptions.TargetPackagesFolder = root.TargetPackagesPath;
+            restoreCommand.Execute().Wait();
         }
 
         private void CopyRelativeSources(Runtime.Project project)
