@@ -16,12 +16,12 @@ namespace Microsoft.Framework.Runtime.Internal
             // the ctor of semaphore looks for the file and throws an IOException
             // when the file doesn't exist. So we need a conversion from a file path
             // to a unique lock name.
-            return filePath.Replace(Path.DirectorySeparatorChar, '_');
+            return $"DNU_RESTORE_{filePath.Replace(Path.DirectorySeparatorChar, '_')}";
         }
 
-        public static void ExecuteWithFileLocked(string filePath, Action<bool> action)
+        public static void ExecuteWithFileLocked(string filePath, TimeSpan timeout, Action<bool> action)
         {
-            ExecuteWithFileLocked(filePath, createdNew =>
+            ExecuteWithFileLocked(filePath, timeout, createdNew =>
             {
                 action(createdNew);
                 return Task.FromResult(1);
@@ -29,25 +29,35 @@ namespace Microsoft.Framework.Runtime.Internal
             .GetAwaiter().GetResult();
         }
 
-        public async static Task<T> ExecuteWithFileLocked<T>(string filePath, Func<bool, Task<T>> action)
+        public async static Task<T> ExecuteWithFileLocked<T>(string filePath, TimeSpan timeout, Func<bool, Task<T>> action)
         {
-            var createdNew = false;
-            var fileLock = new Semaphore(initialCount: 0, maximumCount: 1, name: FilePathToLockName(filePath),
-                createdNew: out createdNew);
-            try
+            for (var i = 0; i < 3; ++i)
             {
-                // If this lock is already acquired by another process, wait until we can acquire it
-                if (!createdNew)
+                var createdNew = false;
+                var fileLock = new Semaphore(initialCount: 0, maximumCount: 1, name: FilePathToLockName(filePath),
+                    createdNew: out createdNew);
+                try
                 {
-                    fileLock.WaitOne();
-                }
+                    // If this lock is already acquired by another process, wait until we can acquire it
+                    if (!createdNew)
+                    {
+                        var signaled = fileLock.WaitOne(timeout);
+                        if (!signaled)
+                        {
+                            // Timeout and retry
+                            continue;
+                        }
+                    }
 
-                return await action(createdNew);
+                    return await action(createdNew);
+                }
+                finally
+                {
+                    fileLock.Release();
+                }
             }
-            finally
-            {
-                fileLock.Release();
-            }
+
+            throw new TaskCanceledException($"Failed to acquire semaphore for file: {filePath}");
         }
     }
 }

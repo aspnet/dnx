@@ -31,7 +31,7 @@ namespace Microsoft.Framework.PackageManager
 
             // Acquire the lock on a nukpg before we extract it to prevent the race condition when multiple
             // processes are extracting to the same destination simultaneously
-            await ConcurrencyUtilities.ExecuteWithFileLocked(targetNupkg, async _ =>
+            await ConcurrencyUtilities.ExecuteWithFileLocked(targetNupkg, timeout: TimeSpan.FromSeconds(20), action: async _ =>
             {
                 string packageHash;
                 using (var sha512 = SHA512.Create())
