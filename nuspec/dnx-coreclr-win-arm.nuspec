@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<package>
+    <metadata>
+        <id>$RuntimeNamePrefix$coreclr-win-arm</id>
+        <version>0.0.1-pre</version>
+        <authors>Microsoft</authors>
+        <requireLicenseAcceptance>false</requireLicenseAcceptance>
+        <description>Microsoft .NET Execution environment for CoreCLR on Windows arm</description>
+    </metadata>
+    <files>
+        <file src="$RuntimeNamePrefix$coreclr-win-arm\bin\**" exclude="**\*.pdb;**\*.xml" target="bin" />
+    </files>
+</package>
