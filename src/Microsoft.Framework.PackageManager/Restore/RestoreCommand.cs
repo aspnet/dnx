@@ -571,23 +571,23 @@ namespace Microsoft.Framework.PackageManager
                     }
                     effectiveRuntimeSpecs.Add(runtimeSpec);
                 }
-                if (imports != null)
+            }
+            if (imports != null)
+            {
+                foreach (var import in imports)
                 {
-                    foreach (var import in imports)
+                    if (circularImport(import))
                     {
-                        if (circularImport(import))
+                        if (imports != null)
                         {
-                            if (imports != null)
-                            {
-                                throw new Exception(string.Format("Circular import for {0}", runtimeName));
-                            }
+                            throw new Exception(string.Format("Circular import for {0}", runtimeName));
                         }
-                        FindRuntimeSpecs(
-                            import,
-                            runtimeFiles,
-                            effectiveRuntimeSpecs,
-                            name => string.Equals(name, runtimeName, StringComparison.Ordinal) || circularImport(name));
                     }
+                    FindRuntimeSpecs(
+                        import,
+                        runtimeFiles,
+                        effectiveRuntimeSpecs,
+                        name => string.Equals(name, runtimeName, StringComparison.Ordinal) || circularImport(name));
                 }
             }
         }
