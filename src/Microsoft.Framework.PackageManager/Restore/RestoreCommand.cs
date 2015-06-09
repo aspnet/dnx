@@ -555,9 +555,9 @@ namespace Microsoft.Framework.PackageManager
         {
             effectiveRuntimeSpecs.RemoveAll(spec => spec.Name == runtimeName);
 
-            IEnumerable<string> imports = null;
             foreach (var runtimeFile in runtimeFiles)
             {
+                IEnumerable<string> imports = null;
                 RuntimeSpec runtimeSpec;
                 if (runtimeFile.Runtimes.TryGetValue(runtimeName, out runtimeSpec))
                 {
