@@ -7,8 +7,8 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
-using Microsoft.Framework.ApplicationHost.Impl.Syntax;
 using Microsoft.Framework.Runtime;
+using Microsoft.Framework.Runtime.CommandParsing;
 using Microsoft.Framework.Runtime.Common;
 using Microsoft.Framework.Runtime.Common.CommandLine;
 

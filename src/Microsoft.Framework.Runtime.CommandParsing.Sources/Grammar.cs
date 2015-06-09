@@ -4,7 +4,7 @@
 using System.Collections.Generic;
 using System.Linq;
 
-namespace Microsoft.Framework.ApplicationHost.Impl.Syntax
+namespace Microsoft.Framework.Runtime.CommandParsing
 {
     internal class Grammar
     {
