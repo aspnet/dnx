@@ -190,15 +190,19 @@ namespace Microsoft.Framework.DesignTimeHost
             {
                 DrainInbox();
 
+                var allDiagnostics = new List<DiagnosticsMessage>();
+
                 if (ResolveDependencies())
                 {
-                    SendOutgoingMessages();
+                    SendOutgoingMessages(allDiagnostics);
                 }
 
                 if (PerformCompilation())
                 {
-                    SendOutgoingMessages();
+                    SendOutgoingMessages(allDiagnostics);
                 }
+
+                SendDiagnostics(allDiagnostics);
 
                 PerformPluginWork();
 
@@ -215,8 +219,12 @@ namespace Microsoft.Framework.DesignTimeHost
 
         private void DrainInbox()
         {
+            Logger.TraceInformation($"[{nameof(ApplicationContext)}]: Begin draining inbox.");
+
             // Process all of the messages in the inbox
             while (ProcessMessage()) { }
+
+            Logger.TraceInformation($"[{nameof(ApplicationContext)}]: Finish draining inbox.");
         }
 
         private bool ProcessMessage()
@@ -591,7 +599,7 @@ namespace Microsoft.Framework.DesignTimeHost
             return false;
         }
 
-        private void SendOutgoingMessages()
+        private void SendOutgoingMessages(List<DiagnosticsMessage> diagnostics)
         {
             if (IsDifferent(_local.ProjectInformation, _remote.ProjectInformation))
             {
@@ -607,11 +615,9 @@ namespace Microsoft.Framework.DesignTimeHost
                 _remote.ProjectInformation = _local.ProjectInformation;
             }
 
-            var allDiagnostics = new List<DiagnosticsMessage>();
-
             if (_local.ProjectDiagnostics != null)
             {
-                allDiagnostics.Add(_local.ProjectDiagnostics);
+                diagnostics.Add(_local.ProjectDiagnostics);
             }
 
             if (IsDifferent(_local.ProjectDiagnostics, _remote.ProjectDiagnostics))
@@ -641,12 +647,12 @@ namespace Microsoft.Framework.DesignTimeHost
 
                 if (localProject.DependencyDiagnostics != null)
                 {
-                    allDiagnostics.Add(localProject.DependencyDiagnostics);
+                    diagnostics.Add(localProject.DependencyDiagnostics);
                 }
 
                 if (localProject.CompilationDiagnostics != null)
                 {
-                    allDiagnostics.Add(localProject.CompilationDiagnostics);
+                    diagnostics.Add(localProject.CompilationDiagnostics);
                 }
 
                 unprocessedFrameworks.Remove(pair.Key);
@@ -724,8 +730,6 @@ namespace Microsoft.Framework.DesignTimeHost
                 SendCompiledAssemblies(localProject);
             }
 
-            SendDiagnostics(allDiagnostics);
-
             // Remove all processed frameworks from the remote view
             foreach (var framework in unprocessedFrameworks)
             {
@@ -733,9 +737,11 @@ namespace Microsoft.Framework.DesignTimeHost
             }
         }
 
-        private void SendDiagnostics(IList<DiagnosticsMessage> diagnostics)
+        private void SendDiagnostics(IEnumerable<DiagnosticsMessage> allDiagnostics)
         {
-            if (diagnostics.Count == 0)
+            Logger.TraceInformation($"[{nameof(ApplicationContext)}]: SendDiagnostics, {allDiagnostics.Count()} diagnostics, {_waitingForDiagnostics.Count()} waiting for diagnostics.");
+
+            if (allDiagnostics.IsEmpty())
             {
                 return;
             }
@@ -744,7 +750,7 @@ namespace Microsoft.Framework.DesignTimeHost
 
             var messages = new List<DiagnosticsMessage>();
 
-            foreach (var g in diagnostics.GroupBy(g => g.Framework))
+            foreach (var g in allDiagnostics.GroupBy(g => g.Framework))
             {
                 var messageGroup = g.SelectMany(d => d.Diagnostics).ToList();
                 messages.Add(new DiagnosticsMessage(messageGroup, g.Key));
