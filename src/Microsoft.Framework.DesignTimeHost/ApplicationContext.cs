@@ -46,6 +46,7 @@ namespace Microsoft.Framework.DesignTimeHost
         private ConnectionContext _initializedContext;
         private readonly Dictionary<FrameworkName, List<CompiledAssemblyState>> _waitingForCompiledAssemblies = new Dictionary<FrameworkName, List<CompiledAssemblyState>>();
         private readonly List<ConnectionContext> _waitingForDiagnostics = new List<ConnectionContext>();
+        private readonly List<DiagnosticsMessage> _allDiagnostics = new List<DiagnosticsMessage>();
         private readonly Dictionary<FrameworkName, Trigger<Void>> _requiresAssemblies = new Dictionary<FrameworkName, Trigger<Void>>();
         private readonly Dictionary<FrameworkName, ProjectCompilation> _compilations = new Dictionary<FrameworkName, ProjectCompilation>();
         private readonly PluginHandler _pluginHandler;
@@ -200,6 +201,8 @@ namespace Microsoft.Framework.DesignTimeHost
                     SendOutgoingMessages();
                 }
 
+                SendDiagnostics();
+
                 PerformPluginWork();
 
                 lock (_inbox)
@@ -215,8 +218,12 @@ namespace Microsoft.Framework.DesignTimeHost
 
         private void DrainInbox()
         {
+            Logger.TraceInformation($"[{nameof(ApplicationContext)}]: Begin draining inbox.");
+
             // Process all of the messages in the inbox
             while (ProcessMessage()) { }
+
+            Logger.TraceInformation($"[{nameof(ApplicationContext)}]: Finish draining inbox.");
         }
 
         private bool ProcessMessage()
@@ -607,11 +614,9 @@ namespace Microsoft.Framework.DesignTimeHost
                 _remote.ProjectInformation = _local.ProjectInformation;
             }
 
-            var allDiagnostics = new List<DiagnosticsMessage>();
-
             if (_local.ProjectDiagnostics != null)
             {
-                allDiagnostics.Add(_local.ProjectDiagnostics);
+                _allDiagnostics.Add(_local.ProjectDiagnostics);
             }
 
             if (IsDifferent(_local.ProjectDiagnostics, _remote.ProjectDiagnostics))
@@ -641,12 +646,12 @@ namespace Microsoft.Framework.DesignTimeHost
 
                 if (localProject.DependencyDiagnostics != null)
                 {
-                    allDiagnostics.Add(localProject.DependencyDiagnostics);
+                    _allDiagnostics.Add(localProject.DependencyDiagnostics);
                 }
 
                 if (localProject.CompilationDiagnostics != null)
                 {
-                    allDiagnostics.Add(localProject.CompilationDiagnostics);
+                    _allDiagnostics.Add(localProject.CompilationDiagnostics);
                 }
 
                 unprocessedFrameworks.Remove(pair.Key);
@@ -724,8 +729,6 @@ namespace Microsoft.Framework.DesignTimeHost
                 SendCompiledAssemblies(localProject);
             }
 
-            SendDiagnostics(allDiagnostics);
-
             // Remove all processed frameworks from the remote view
             foreach (var framework in unprocessedFrameworks)
             {
@@ -733,9 +736,11 @@ namespace Microsoft.Framework.DesignTimeHost
             }
         }
 
-        private void SendDiagnostics(IList<DiagnosticsMessage> diagnostics)
+        private void SendDiagnostics()
         {
-            if (diagnostics.Count == 0)
+            Logger.TraceInformation($"[{nameof(ApplicationContext)}]: SendDiagnostics, {_allDiagnostics.Count} diagnostics, {_waitingForDiagnostics.Count()} waiting for diagnostics.");
+
+            if (_allDiagnostics.Count == 0)
             {
                 return;
             }
@@ -744,7 +749,7 @@ namespace Microsoft.Framework.DesignTimeHost
 
             var messages = new List<DiagnosticsMessage>();
 
-            foreach (var g in diagnostics.GroupBy(g => g.Framework))
+            foreach (var g in _allDiagnostics.GroupBy(g => g.Framework))
             {
                 var messageGroup = g.SelectMany(d => d.Diagnostics).ToList();
                 messages.Add(new DiagnosticsMessage(messageGroup, g.Key));
@@ -764,6 +769,7 @@ namespace Microsoft.Framework.DesignTimeHost
             }
 
             _waitingForDiagnostics.Clear();
+            _allDiagnostics.Clear();
         }
 
         public void SendPluginMessage(object data)
