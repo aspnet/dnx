@@ -152,7 +152,7 @@ namespace Microsoft.Framework.PackageManager.Restore.NuGet
                 // The update of a cached file is divided into two steps:
                 // 1) Delete the old file. 2) Create a new file with the same name.
                 // To prevent race condition among multiple processes, here we use a lock to make the update atomic.
-                await ConcurrencyUtilities.ExecuteWithFileLocked(result.CacheFileName, async _ =>
+                await ConcurrencyUtilities.ExecuteWithFileLocked(result.CacheFileName, timeout: new TimeSpan(0, 0, 20), action: async _ =>
                 {
                     using (var stream = CreateAsyncFileStream(
                         newFile,
@@ -223,7 +223,7 @@ namespace Microsoft.Framework.PackageManager.Restore.NuGet
 
             // Acquire the lock on a file before we open it to prevent this process
             // from opening a file deleted by the logic in HttpSource.GetAsync() in another process
-            return await ConcurrencyUtilities.ExecuteWithFileLocked(cacheFile, _ =>
+            return await ConcurrencyUtilities.ExecuteWithFileLocked(cacheFile, timeout: new TimeSpan(0, 0, 20), action: _ =>
             {
                 if (File.Exists(cacheFile))
                 {

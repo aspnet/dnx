@@ -213,7 +213,7 @@ namespace Microsoft.Framework.PackageManager.Restore.NuGet
 
             // Acquire the lock on a file before we open it to prevent this process
             // from opening a file deleted by the logic in HttpSource.GetAsync() in another process
-            return await ConcurrencyUtilities.ExecuteWithFileLocked(result.TempFileName, _ =>
+            return await ConcurrencyUtilities.ExecuteWithFileLocked(result.TempFileName, timeout: new TimeSpan(0, 0, 20), action: _ =>
             {
                 return Task.FromResult(
                     new FileStream(result.TempFileName, FileMode.Open, FileAccess.Read,

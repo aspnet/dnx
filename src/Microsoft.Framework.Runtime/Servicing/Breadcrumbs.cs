@@ -152,7 +152,7 @@ namespace Microsoft.Framework.Runtime.Servicing
             string fullFilePath = Path.Combine(_breadcrumbsFolder, fileName);
 
             // Execute with file locked because multiple processes can run at the same time
-            ConcurrencyUtilities.ExecuteWithFileLocked(fullFilePath, _ =>
+            ConcurrencyUtilities.ExecuteWithFileLocked(fullFilePath, timeout: new TimeSpan(0, 0, 20), action: _ =>
             {
                 try
                 {
