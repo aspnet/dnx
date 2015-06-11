@@ -34,7 +34,7 @@ namespace Microsoft.Framework.DesignTimeHost
             }
             else
             {
-                CurrentVersion = maxVersion;
+                CurrentVersion = 1;
             }
         }
 
