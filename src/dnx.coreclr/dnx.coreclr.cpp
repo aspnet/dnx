@@ -506,7 +506,7 @@ extern "C" HRESULT __stdcall CallApplicationMain(PCALL_APPLICATION_MAIN_DATA dat
 
     if (FAILED(hr))
     {
-        wprintf_s(L"TPA      %d %s\n", wcslen(pwszTrustedPlatformAssemblies), pwszTrustedPlatformAssemblies);
+        wprintf_s(L"TPA      %Iu %s\n", wcslen(pwszTrustedPlatformAssemblies), pwszTrustedPlatformAssemblies);
         wprintf_s(L"AppPaths %s\n", wszAppPaths);
         printf_s("Failed to create app domain (%x).\n", hr);
         return hr;
