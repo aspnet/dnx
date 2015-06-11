@@ -42,27 +42,27 @@ namespace NuGet
         {
             if (String.IsNullOrEmpty(frameworkDirectory))
             {
-                throw new ArgumentNullException( "version");
+                throw new ArgumentNullException(nameof(frameworkDirectory));
             }
             if (String.IsNullOrEmpty(name))
             {
-                throw new ArgumentNullException( "name");
+                throw new ArgumentNullException(nameof(name));
             }
 
             if (supportedFrameworks == null)
             {
-                throw new ArgumentNullException("supportedFrameworks");
+                throw new ArgumentNullException(nameof(supportedFrameworks));
             }
 
             var frameworks = supportedFrameworks.ToList();
             if (frameworks.Any(f => f == null))
             {
-                throw new ArgumentException(NuGetResources.SupportedFrameworkIsNull, "supportedFrameworks");
+                throw new ArgumentException(NuGetResources.SupportedFrameworkIsNull, nameof(supportedFrameworks));
             }
 
             if (frameworks.Count == 0)
             {
-                throw new ArgumentOutOfRangeException("supportedFrameworks");
+                throw new ArgumentOutOfRangeException(nameof(supportedFrameworks));
             }
 
             Name = name;
@@ -124,7 +124,7 @@ namespace NuGet
         {
             if (other == null)
             {
-                throw new ArgumentNullException("other");
+                throw new ArgumentNullException(nameof(other));
             }
 
             return other.SupportedFrameworks.All(
@@ -136,7 +136,7 @@ namespace NuGet
         {
             if (framework == null)
             {
-                throw new ArgumentNullException("framework");
+                throw new ArgumentNullException(nameof(framework));
             }
 
             return SupportedFrameworks.Any(f => VersionUtility.IsCompatible(framework, f));
@@ -150,7 +150,7 @@ namespace NuGet
         {
             if (String.IsNullOrEmpty(profileValue))
             {
-                throw new ArgumentNullException( "profileValue");
+                throw new ArgumentNullException(nameof(profileValue));
             }
 
             // Previously, only the full "ProfileXXX" long .NET name could be used for this method.

@@ -23,12 +23,12 @@ namespace NuGet
         {
             if (String.IsNullOrEmpty(section))
             {
-                throw new ArgumentException(CommonResources.Argument_Cannot_Be_Null_Or_Empty, "section");
+                throw new ArgumentException(CommonResources.Argument_Cannot_Be_Null_Or_Empty, nameof(section));
             }
 
             if (String.IsNullOrEmpty(key))
             {
-                throw new ArgumentException(CommonResources.Argument_Cannot_Be_Null_Or_Empty, "key");
+                throw new ArgumentException(CommonResources.Argument_Cannot_Be_Null_Or_Empty, nameof(key));
             }
 
             var encryptedString = settings.GetValue(section, key, isPath);
@@ -47,15 +47,15 @@ namespace NuGet
         {
             if (String.IsNullOrEmpty(section))
             {
-                throw new ArgumentException(CommonResources.Argument_Cannot_Be_Null_Or_Empty, "section");
+                throw new ArgumentException(CommonResources.Argument_Cannot_Be_Null_Or_Empty, nameof(section));
             }
             if (String.IsNullOrEmpty(key))
             {
-                throw new ArgumentException(CommonResources.Argument_Cannot_Be_Null_Or_Empty, "key");
+                throw new ArgumentException(CommonResources.Argument_Cannot_Be_Null_Or_Empty, nameof(key));
             }
             if (value == null)
             {
-                throw new ArgumentNullException("value");
+                throw new ArgumentNullException(nameof(value));
             }
 
             if (String.IsNullOrEmpty(value))

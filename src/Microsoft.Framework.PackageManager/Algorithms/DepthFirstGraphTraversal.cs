@@ -16,12 +16,12 @@ namespace Microsoft.Framework.PackageManager.Algorithms
         {
             if (visitNode == null)
             {
-                throw new ArgumentNullException("visitNode");
+                throw new ArgumentNullException(nameof(visitNode));
             }
 
             if (getChildren == null)
             {
-                throw new ArgumentNullException("getChildren");
+                throw new ArgumentNullException(nameof(getChildren));
             }
 
             PreOrderWalk(root, new Stack<TNode>(), visitNode, getChildren);

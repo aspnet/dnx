@@ -53,7 +53,7 @@ namespace NuGet
         {
             if (settingsManager == null)
             {
-                throw new ArgumentNullException("settingsManager");
+                throw new ArgumentNullException(nameof(settingsManager));
             }
             _settingsManager = settingsManager;
             _providerDefaultSources = providerDefaultSources ?? Enumerable.Empty<PackageSource>();
@@ -309,7 +309,7 @@ namespace NuGet
         {
             if (source == null)
             {
-                throw new ArgumentNullException("source");
+                throw new ArgumentNullException(nameof(source));
             }
 
             _settingsManager.SetValue(DisabledPackageSourcesSectionName, source.Name, "true");
@@ -319,7 +319,7 @@ namespace NuGet
         {
             if (source == null)
             {
-                throw new ArgumentNullException("source");
+                throw new ArgumentNullException(nameof(source));
             }
 
             string value = _settingsManager.GetValue(DisabledPackageSourcesSectionName, source.Name);

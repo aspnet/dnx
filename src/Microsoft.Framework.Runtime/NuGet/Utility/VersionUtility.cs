@@ -139,7 +139,7 @@ namespace NuGet
         {
             if (frameworkName == null)
             {
-                throw new ArgumentNullException("frameworkName");
+                throw new ArgumentNullException(nameof(frameworkName));
             }
 
             // {Identifier}{Version}-{Profile}
@@ -152,7 +152,7 @@ namespace NuGet
 
             if (parts.Length > 2)
             {
-                throw new ArgumentException(NuGetResources.InvalidFrameworkNameFormat, "frameworkName");
+                throw new ArgumentException(NuGetResources.InvalidFrameworkNameFormat, nameof(frameworkName));
             }
 
             string frameworkNameAndVersion = parts.Length > 0 ? parts[0].Trim() : null;
@@ -160,7 +160,7 @@ namespace NuGet
 
             if (String.IsNullOrEmpty(frameworkNameAndVersion))
             {
-                throw new ArgumentException(NuGetResources.MissingFrameworkName, "frameworkName");
+                throw new ArgumentException(NuGetResources.MissingFrameworkName, nameof(frameworkName));
             }
 
             // If we find a version then we try to split the framework name into 2 parts
@@ -250,23 +250,23 @@ namespace NuGet
         {
             if (String.IsNullOrEmpty(profilePart))
             {
-                throw new ArgumentException(NuGetResources.PortableFrameworkProfileEmpty, "profilePart");
+                throw new ArgumentException(NuGetResources.PortableFrameworkProfileEmpty, nameof(profilePart));
             }
 
             if (profilePart.Contains('-'))
             {
-                throw new ArgumentException(NuGetResources.PortableFrameworkProfileHasDash, "profilePart");
+                throw new ArgumentException(NuGetResources.PortableFrameworkProfileHasDash, nameof(profilePart));
             }
 
             if (profilePart.Contains(' '))
             {
-                throw new ArgumentException(NuGetResources.PortableFrameworkProfileHasSpace, "profilePart");
+                throw new ArgumentException(NuGetResources.PortableFrameworkProfileHasSpace, nameof(profilePart));
             }
 
             string[] parts = profilePart.Split('+');
             if (parts.Any(p => String.IsNullOrEmpty(p)))
             {
-                throw new ArgumentException(NuGetResources.PortableFrameworkProfileComponentIsEmpty, "profilePart");
+                throw new ArgumentException(NuGetResources.PortableFrameworkProfileComponentIsEmpty, nameof(profilePart));
             }
 
             // Prevent portable framework inside a portable framework - Inception
@@ -274,7 +274,7 @@ namespace NuGet
                 parts.Any(p => p.StartsWith("NETPortable", StringComparison.OrdinalIgnoreCase)) ||
                 parts.Any(p => p.StartsWith(".NETPortable", StringComparison.OrdinalIgnoreCase)))
             {
-                throw new ArgumentException(NuGetResources.PortableFrameworkProfileComponentIsPortable, "profilePart");
+                throw new ArgumentException(NuGetResources.PortableFrameworkProfileComponentIsPortable, nameof(profilePart));
             }
         }
 
@@ -285,7 +285,7 @@ namespace NuGet
         {
             if (version == null)
             {
-                throw new ArgumentNullException("version");
+                throw new ArgumentNullException(nameof(version));
             }
 
             if (version.Build == 0 && version.Revision == 0)
@@ -347,7 +347,7 @@ namespace NuGet
         {
             if (value == null)
             {
-                throw new ArgumentNullException("value");
+                throw new ArgumentNullException(nameof(value));
             }
 
             value = value.Trim();

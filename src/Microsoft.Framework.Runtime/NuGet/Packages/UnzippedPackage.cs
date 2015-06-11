@@ -24,12 +24,12 @@ namespace NuGet
         {
             if (fileSystem == null)
             {
-                throw new ArgumentNullException("fileSystem");
+                throw new ArgumentNullException(nameof(fileSystem));
             }
 
             if (String.IsNullOrEmpty(manifestPath))
             {
-                throw new ArgumentNullException("manifestPath");
+                throw new ArgumentNullException(nameof(manifestPath));
             }
 
             string manifestFullPath = fileSystem.GetFullPath(manifestPath);

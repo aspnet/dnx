@@ -20,7 +20,7 @@ namespace NuGet
         {
             if (String.IsNullOrEmpty(profileName))
             {
-                throw new ArgumentNullException("profileName");
+                throw new ArgumentNullException(nameof(profileName));
             }
 
             // Original behavior fully preserved, as we first try the original behavior.

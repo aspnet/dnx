@@ -47,7 +47,7 @@ namespace NuGet
         {
             if (version == null)
             {
-                throw new ArgumentNullException("version");
+                throw new ArgumentNullException(nameof(version));
             }
             Version = NormalizeVersionValue(version);
             SpecialVersion = specialVersion ?? String.Empty;
@@ -129,13 +129,13 @@ namespace NuGet
         {
             if (String.IsNullOrEmpty(version))
             {
-                throw new ArgumentNullException("version");
+                throw new ArgumentNullException(nameof(version));
             }
 
             SemanticVersion semVer;
             if (!TryParse(version, out semVer))
             {
-                throw new ArgumentException(String.Format(CultureInfo.CurrentCulture, NuGetResources.InvalidVersionString, version), "version");
+                throw new ArgumentException(String.Format(CultureInfo.CurrentCulture, NuGetResources.InvalidVersionString, version), nameof(version));
             }
             return semVer;
         }
@@ -230,7 +230,7 @@ namespace NuGet
             SemanticVersion other = obj as SemanticVersion;
             if (other == null)
             {
-                throw new ArgumentException(NuGetResources.TypeMustBeASemanticVersion, "obj");
+                throw new ArgumentException(NuGetResources.TypeMustBeASemanticVersion, nameof(obj));
             }
             return CompareTo(other);
         }
@@ -284,7 +284,7 @@ namespace NuGet
         {
             if (version1 == null)
             {
-                throw new ArgumentNullException("version1");
+                throw new ArgumentNullException(nameof(version1));
             }
             return version1.CompareTo(version2) < 0;
         }
@@ -298,7 +298,7 @@ namespace NuGet
         {
             if (version1 == null)
             {
-                throw new ArgumentNullException("version1");
+                throw new ArgumentNullException(nameof(version1));
             }
             return version2 < version1;
         }

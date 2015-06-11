@@ -40,11 +40,11 @@ namespace NuGet
         {
             if (fileSystem == null)
             {
-                throw new ArgumentNullException("fileSystem");
+                throw new ArgumentNullException(nameof(fileSystem));
             }
             if (String.IsNullOrEmpty(fileName))
             {
-                throw new ArgumentException(CommonResources.Argument_Cannot_Be_Null_Or_Empty, "fileName");
+                throw new ArgumentException(CommonResources.Argument_Cannot_Be_Null_Or_Empty, nameof(fileName));
             }
             _fileSystem = fileSystem;
             _fileName = fileName;
@@ -264,12 +264,12 @@ namespace NuGet
         {
             if (String.IsNullOrEmpty(section))
             {
-                throw new ArgumentException("TODO: CommonResources.Argument_Cannot_Be_Null_Or_Empty", "section");
+                throw new ArgumentException("TODO: CommonResources.Argument_Cannot_Be_Null_Or_Empty", nameof(section));
             }
 
             if (String.IsNullOrEmpty(key))
             {
-                throw new ArgumentException("TODO: CommonResources.Argument_Cannot_Be_Null_Or_Empty", "key");
+                throw new ArgumentException("TODO: CommonResources.Argument_Cannot_Be_Null_Or_Empty", nameof(key));
             }
 
             XElement element = null;
@@ -348,7 +348,7 @@ namespace NuGet
         {
             if (String.IsNullOrEmpty(section))
             {
-                throw new ArgumentException(CommonResources.Argument_Cannot_Be_Null_Or_Empty, "section");
+                throw new ArgumentException(CommonResources.Argument_Cannot_Be_Null_Or_Empty, nameof(section));
             }
 
             var settingValues = new List<SettingValue>();
@@ -388,12 +388,12 @@ namespace NuGet
         {
             if (String.IsNullOrEmpty(section))
             {
-                throw new ArgumentException(CommonResources.Argument_Cannot_Be_Null_Or_Empty, "section");
+                throw new ArgumentException(CommonResources.Argument_Cannot_Be_Null_Or_Empty, nameof(section));
             }
 
             if (String.IsNullOrEmpty(key))
             {
-                throw new ArgumentException(CommonResources.Argument_Cannot_Be_Null_Or_Empty, "key");
+                throw new ArgumentException(CommonResources.Argument_Cannot_Be_Null_Or_Empty, nameof(key));
             }
 
             var values = new List<SettingValue>();
@@ -438,7 +438,7 @@ namespace NuGet
 
             if (String.IsNullOrEmpty(section))
             {
-                throw new ArgumentException(CommonResources.Argument_Cannot_Be_Null_Or_Empty, "section");
+                throw new ArgumentException(CommonResources.Argument_Cannot_Be_Null_Or_Empty, nameof(section));
             }
             var sectionElement = GetOrCreateSection(_config.Root, section);
             SetValueInternal(sectionElement, key, value);
@@ -461,11 +461,11 @@ namespace NuGet
 
             if (String.IsNullOrEmpty(section))
             {
-                throw new ArgumentException(CommonResources.Argument_Cannot_Be_Null_Or_Empty, "section");
+                throw new ArgumentException(CommonResources.Argument_Cannot_Be_Null_Or_Empty, nameof(section));
             }
             if (values == null)
             {
-                throw new ArgumentNullException("values");
+                throw new ArgumentNullException(nameof(values));
             }
 
             var sectionElement = GetOrCreateSection(_config.Root, section);
@@ -492,11 +492,11 @@ namespace NuGet
 
             if (String.IsNullOrEmpty(section))
             {
-                throw new ArgumentException(CommonResources.Argument_Cannot_Be_Null_Or_Empty, "section");
+                throw new ArgumentException(CommonResources.Argument_Cannot_Be_Null_Or_Empty, nameof(section));
             }
             if (values == null)
             {
-                throw new ArgumentNullException("values");
+                throw new ArgumentNullException(nameof(values));
             }
 
             var sectionElement = GetOrCreateSection(_config.Root, section);
@@ -513,11 +513,11 @@ namespace NuGet
         {
             if (String.IsNullOrEmpty(key))
             {
-                throw new ArgumentException(CommonResources.Argument_Cannot_Be_Null_Or_Empty, "key");
+                throw new ArgumentException(CommonResources.Argument_Cannot_Be_Null_Or_Empty, nameof(key));
             }
             if (value == null)
             {
-                throw new ArgumentNullException("value");
+                throw new ArgumentNullException(nameof(value));
             }
 
             var element = FindElementByKey(sectionElement, key, null);
@@ -549,11 +549,11 @@ namespace NuGet
 
             if (String.IsNullOrEmpty(section))
             {
-                throw new ArgumentException(CommonResources.Argument_Cannot_Be_Null_Or_Empty, "section");
+                throw new ArgumentException(CommonResources.Argument_Cannot_Be_Null_Or_Empty, nameof(section));
             }
             if (String.IsNullOrEmpty(key))
             {
-                throw new ArgumentException(CommonResources.Argument_Cannot_Be_Null_Or_Empty, "key");
+                throw new ArgumentException(CommonResources.Argument_Cannot_Be_Null_Or_Empty, nameof(key));
             }
 
             var sectionElement = GetSection(_config.Root, section);
@@ -587,7 +587,7 @@ namespace NuGet
 
             if (String.IsNullOrEmpty(section))
             {
-                throw new ArgumentException(CommonResources.Argument_Cannot_Be_Null_Or_Empty, "section");
+                throw new ArgumentException(CommonResources.Argument_Cannot_Be_Null_Or_Empty, nameof(section));
             }
 
             var sectionElement = GetSection(_config.Root, section);

@@ -14,7 +14,7 @@ namespace NuGet
         {
             if (versionInfo == null)
             {
-                throw new ArgumentNullException("versionInfo");
+                throw new ArgumentNullException(nameof(versionInfo));
             }
             return versionInfo.ToDelegate<IPackage>(p => p.Version);
         }
@@ -23,11 +23,11 @@ namespace NuGet
         {
             if (versionInfo == null)
             {
-                throw new ArgumentNullException("versionInfo");
+                throw new ArgumentNullException(nameof(versionInfo));
             }
             if (extractor == null)
             {
-                throw new ArgumentNullException("extractor");
+                throw new ArgumentNullException(nameof(extractor));
             }
 
             return p =>

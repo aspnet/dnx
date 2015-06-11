@@ -66,7 +66,7 @@ namespace Microsoft.Framework.Runtime.Common.DependencyInjection
         {
             if (type == null)
             {
-                throw new ArgumentNullException("type");
+                throw new ArgumentNullException(nameof(type));
             }
 
             ConstructorInfo[] constructors = type.GetTypeInfo()
