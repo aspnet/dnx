@@ -46,14 +46,14 @@ namespace NuGet
         {
             if (String.IsNullOrEmpty(fullPackagePath))
             {
-                throw new ArgumentNullException("fullPackagePath");
+                throw new ArgumentNullException(nameof(fullPackagePath));
             }
 
             if (!File.Exists(fullPackagePath))
             {
                 throw new ArgumentException(
                     String.Format(CultureInfo.CurrentCulture, NuGetResources.FileDoesNotExit, fullPackagePath),
-                    "fullPackagePath");
+                    nameof(fullPackagePath));
             }
 
             string directory = Path.GetDirectoryName(fullPackagePath);
@@ -73,12 +73,12 @@ namespace NuGet
         {
             if (fileSystem == null)
             {
-                throw new ArgumentNullException("fileSystem");
+                throw new ArgumentNullException(nameof(fileSystem));
             }
 
             if (String.IsNullOrEmpty(packagePath))
             {
-                throw new ArgumentNullException("packagePath");
+                throw new ArgumentNullException(nameof(packagePath));
             }
 
             _fileSystem = fileSystem;
@@ -100,17 +100,17 @@ namespace NuGet
         {
             if (fileSystem == null)
             {
-                throw new ArgumentNullException("fileSystem");
+                throw new ArgumentNullException(nameof(fileSystem));
             }
 
             if (expandedFileSystem == null)
             {
-                throw new ArgumentNullException("expandedFileSystem");
+                throw new ArgumentNullException(nameof(expandedFileSystem));
             }
 
             if (String.IsNullOrEmpty(packagePath))
             {
-                throw new ArgumentNullException("packagePath");
+                throw new ArgumentNullException(nameof(packagePath));
             }
 
             _fileSystem = fileSystem;

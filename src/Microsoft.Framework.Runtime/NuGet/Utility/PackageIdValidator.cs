@@ -15,7 +15,7 @@ namespace NuGet
         {
             if (string.IsNullOrWhiteSpace(packageId))
             {
-                throw new ArgumentException("packageId");
+                throw new ArgumentException(nameof(packageId));
             }
 
             // Rules: 

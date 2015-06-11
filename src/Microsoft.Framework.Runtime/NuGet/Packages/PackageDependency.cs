@@ -16,7 +16,7 @@ namespace NuGet
         {
             if (String.IsNullOrEmpty(id))
             {
-                throw new ArgumentNullException("id");
+                throw new ArgumentNullException(nameof(id));
             }
             Id = id;
             VersionSpec = versionSpec;

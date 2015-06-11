@@ -19,12 +19,12 @@ namespace NuGet
         {
             if (String.IsNullOrEmpty(assemblyName))
             {
-                throw new ArgumentNullException("assemblyName");
+                throw new ArgumentNullException(nameof(assemblyName));
             }
 
             if (supportedFrameworks == null)
             {
-                throw new ArgumentNullException("supportedFrameworks");
+                throw new ArgumentNullException(nameof(supportedFrameworks));
             }
 
             AssemblyName = assemblyName;

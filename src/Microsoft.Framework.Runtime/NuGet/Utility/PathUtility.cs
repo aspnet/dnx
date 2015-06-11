@@ -12,11 +12,11 @@ namespace NuGet
         {
             if (dir == null)
             {
-                throw new ArgumentNullException("dir");
+                throw new ArgumentNullException(nameof(dir));
             }
             if (candidate == null)
             {
-                throw new ArgumentNullException("candidate");
+                throw new ArgumentNullException(nameof(candidate));
             }
             dir = Path.GetFullPath(dir);
             dir = EnsureTrailingSlash(dir);
@@ -38,7 +38,7 @@ namespace NuGet
         {
             if (path == null)
             {
-                throw new ArgumentNullException("path");
+                throw new ArgumentNullException(nameof(path));
             }
 
             // if the path is empty, we want to return the original string instead of a single trailing character.
@@ -82,12 +82,12 @@ namespace NuGet
         {
             if (path1 == null)
             {
-                throw new ArgumentNullException("path1");
+                throw new ArgumentNullException(nameof(path1));
             }
 
             if (path2 == null)
             {
-                throw new ArgumentNullException("path2");
+                throw new ArgumentNullException(nameof(path2));
             }
 
             Uri source = new Uri(path1);
@@ -100,12 +100,12 @@ namespace NuGet
         {
             if (basePath == null)
             {
-                throw new ArgumentNullException("basePath");
+                throw new ArgumentNullException(nameof(basePath));
             }
 
             if (relativePath == null)
             {
-                throw new ArgumentNullException("relativePath");
+                throw new ArgumentNullException(nameof(relativePath));
             }
 
             Uri resultUri = new Uri(new Uri(basePath), new Uri(relativePath, UriKind.Relative));

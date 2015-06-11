@@ -18,7 +18,7 @@ namespace NuGet
         {
             if (String.IsNullOrEmpty(root))
             {
-                throw new ArgumentNullException("root");
+                throw new ArgumentNullException(nameof(root));
             }
             _root = root;
         }
@@ -56,7 +56,7 @@ namespace NuGet
         {
             if (stream == null)
             {
-                throw new ArgumentNullException("stream");
+                throw new ArgumentNullException(nameof(stream));
             }
 
             AddFileCore(path, targetStream => stream.CopyTo(targetStream));
@@ -66,7 +66,7 @@ namespace NuGet
         {
             if (writeToStream == null)
             {
-                throw new ArgumentNullException("writeToStream");
+                throw new ArgumentNullException(nameof(writeToStream));
             }
 
             AddFileCore(path, writeToStream);
@@ -317,11 +317,11 @@ namespace NuGet
         {
             if (source == null)
             {
-                throw new ArgumentNullException("source");
+                throw new ArgumentNullException(nameof(source));
             }
             if (destination == null)
             {
-                throw new ArgumentNullException("destination");
+                throw new ArgumentNullException(nameof(destination));
             }
             string srcFull = GetFullPath(source);
             string destFull = GetFullPath(destination);

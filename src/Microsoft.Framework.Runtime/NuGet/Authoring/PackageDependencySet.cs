@@ -18,7 +18,7 @@ namespace NuGet
         {
             if (dependencies == null)
             {
-                throw new ArgumentNullException("dependencies");
+                throw new ArgumentNullException(nameof(dependencies));
             }
 
             _targetFramework = targetFramework;

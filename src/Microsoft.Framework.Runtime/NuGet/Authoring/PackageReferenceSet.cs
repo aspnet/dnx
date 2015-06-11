@@ -18,7 +18,7 @@ namespace NuGet
         {
             if (references == null)
             {
-                throw new ArgumentNullException("references");
+                throw new ArgumentNullException(nameof(references));
             }
 
             _targetFramework = targetFramework;
@@ -29,7 +29,7 @@ namespace NuGet
         {
             if (manifestReferenceSet == null) 
             {
-                throw new ArgumentNullException("manifestReferenceSet");
+                throw new ArgumentNullException(nameof(manifestReferenceSet));
             }
 
             if (!String.IsNullOrEmpty(manifestReferenceSet.TargetFramework))

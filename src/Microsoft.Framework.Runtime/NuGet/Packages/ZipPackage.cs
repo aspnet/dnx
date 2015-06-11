@@ -37,7 +37,7 @@ namespace NuGet
         {
             if (stream == null)
             {
-                throw new ArgumentNullException("stream");
+                throw new ArgumentNullException(nameof(stream));
             }
             _enableCaching = false;
             _streamFactory = stream.ToStreamFactory();
@@ -48,7 +48,7 @@ namespace NuGet
         {
             if (String.IsNullOrEmpty(filePath))
             {
-                throw new ArgumentNullException("filePath");
+                throw new ArgumentNullException(nameof(filePath));
             }
             _enableCaching = enableCaching;
             _streamFactory = () => File.OpenRead(filePath);
@@ -59,7 +59,7 @@ namespace NuGet
         {
             if (streamFactory == null)
             {
-                throw new ArgumentNullException("streamFactory");
+                throw new ArgumentNullException(nameof(streamFactory));
             }
             _enableCaching = enableCaching;
             _streamFactory = streamFactory;

@@ -63,7 +63,7 @@ namespace NuGet
         {
             if (string.IsNullOrEmpty(packageId))
             {
-                throw new ArgumentNullException("packageId");
+                throw new ArgumentNullException(nameof(packageId));
             }
 
             // packages\{packageId}\{version}\{packageId}.nuspec
