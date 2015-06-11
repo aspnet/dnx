@@ -18,7 +18,7 @@ namespace Microsoft.Framework.DesignTimeHost.Tests
 
             Assert.NotNull(mgr);
             Assert.Equal(version, mgr.MaxVersion);
-            Assert.Equal(version, mgr.CurrentVersion);
+            Assert.Equal(1, mgr.CurrentVersion);
             Assert.False(mgr.EnvironmentOverridden);
         }
 
@@ -56,7 +56,7 @@ namespace Microsoft.Framework.DesignTimeHost.Tests
                 MessageType = ProtocolManager.NegotiationMessageTypeName
             };
 
-            Assert.Equal(5, mgr.CurrentVersion);
+            Assert.Equal(1, mgr.CurrentVersion);
         }
 
         [Fact]
@@ -69,7 +69,7 @@ namespace Microsoft.Framework.DesignTimeHost.Tests
                 Payload = JToken.FromObject(new { Version = 0 })
             };
 
-            Assert.Equal(5, mgr.CurrentVersion);
+            Assert.Equal(1, mgr.CurrentVersion);
         }
 
         [Fact]
