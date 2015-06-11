@@ -44,7 +44,7 @@ namespace Microsoft.Framework.Runtime
                 return null;
             }
 
-            var name = libraryRange.Name;
+            var name = libraryRange.GetReferenceAssemblyName();
             var version = libraryRange.VersionRange?.MinVersion;
 
             string path;
@@ -57,14 +57,14 @@ namespace Microsoft.Framework.Runtime
 
             if (version == null || version.Version == assemblyVersion)
             {
-                _resolvedPaths[name] = path;
+                _resolvedPaths[libraryRange.Name] = path;
 
                 return new LibraryDescription
                 {
                     LibraryRange = libraryRange,
                     Identity = new Library
                     {
-                        Name = name,
+                        Name = libraryRange.Name,
                         Version = new SemanticVersion(assemblyVersion),
                         IsGacOrFrameworkReference = true
                     },
@@ -101,9 +101,10 @@ namespace Microsoft.Framework.Runtime
             string path;
             Version version;
 
-            if (FrameworkResolver.TryGetAssembly(target.Name, target.TargetFramework, out path, out version))
+            var asmName = LibraryRange.GetAssemblyName(target.Name);
+            if (FrameworkResolver.TryGetAssembly(asmName, target.TargetFramework, out path, out version))
             {
-                return new LibraryExport(new MetadataFileReference(target.Name, path));
+                return new LibraryExport(new MetadataFileReference(asmName, path));
             }
 
             return null;

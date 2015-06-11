@@ -343,37 +343,7 @@ namespace Microsoft.Framework.PackageManager
 
             AddToGlobalJsonSources(rootDir, Path.GetDirectoryName(targetProjectJson));
 
-            // NuGet dependencies of a csproj is installed in <RootDir>/packages,
-            // we need to move them to DNX packages folder
-            InstallCsprojNuGetDependencies(targetProjectJson, rootDir);
-
             Reports.Information.WriteLine();
-        }
-
-        private void InstallCsprojNuGetDependencies(string wrapperProjectFilePath, string rootDir)
-        {
-            var projectDir = Path.GetDirectoryName(wrapperProjectFilePath);
-            var projectName = new DirectoryInfo(projectDir).Name;
-            var solutionLocalPackagesDir = Path.Combine(rootDir, "packages");
-
-            var restoreCommand = new RestoreCommand();
-
-            var feedOptions = new FeedOptions();
-            feedOptions.IgnoreFailedSources = true;
-            feedOptions.Sources.Add(solutionLocalPackagesDir);
-
-            restoreCommand.SkipRestoreEvents = true;
-            restoreCommand.RestoreDirectories.Add(wrapperProjectFilePath);
-            restoreCommand.FeedOptions = feedOptions;
-            restoreCommand.Reports = Reports;
-
-            // Install all NuGet dependencies to DNX packages folder
-            var success = restoreCommand.Execute().GetAwaiter().GetResult();
-            if (!success)
-            {
-                Reports.Error.WriteLine(
-                    $"Unable to find one or more dependencies of project '{projectName}' in {solutionLocalPackagesDir}".Red().Bold());
-            }
         }
 
         private static void AddToGlobalJsonSources(string rootDir, string projectDir)

@@ -1231,9 +1231,10 @@ namespace Microsoft.Framework.DesignTimeHost
 
         private static DependencyDescription CreateDependencyDescription(LibraryDescription library)
         {
+            var name = LibraryRange.GetAssemblyName(library.Identity.Name);
             return new DependencyDescription
             {
-                Name = library.Identity.Name,
+                Name = name,
                 Version = library.Identity.Version?.ToString(),
                 Type = library.Resolved ? library.Type : "Unresolved",
                 Path = library.Path,

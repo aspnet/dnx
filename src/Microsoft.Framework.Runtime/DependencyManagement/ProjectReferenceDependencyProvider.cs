@@ -51,38 +51,22 @@ namespace Microsoft.Framework.Runtime
             {
                 targetFrameworkDependencies.Add(new LibraryDependency
                 {
-                    LibraryRange = new LibraryRange
-                    {
-                        Name = "mscorlib",
-                        IsGacOrFrameworkReference = true
-                    }
+                    LibraryRange = new LibraryRange("mscorlib", frameworkReference: true)
                 });
 
                 targetFrameworkDependencies.Add(new LibraryDependency
                 {
-                    LibraryRange = new LibraryRange
-                    {
-                        Name = "System",
-                        IsGacOrFrameworkReference = true
-                    }
+                    LibraryRange = new LibraryRange("System", frameworkReference: true)
                 });
 
                 targetFrameworkDependencies.Add(new LibraryDependency
                 {
-                    LibraryRange = new LibraryRange
-                    {
-                        Name = "System.Core",
-                        IsGacOrFrameworkReference = true
-                    }
+                    LibraryRange = new LibraryRange("System.Core", frameworkReference: true)
                 });
 
                 targetFrameworkDependencies.Add(new LibraryDependency
                 {
-                    LibraryRange = new LibraryRange
-                    {
-                        Name = "Microsoft.CSharp",
-                        IsGacOrFrameworkReference = true
-                    }
+                    LibraryRange = new LibraryRange("Microsoft.CSharp", frameworkReference: true)
                 });
             }
 
