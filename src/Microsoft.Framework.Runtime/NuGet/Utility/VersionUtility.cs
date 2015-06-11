@@ -940,7 +940,7 @@ namespace NuGet
                 yield return new FrameworkName(NetPlatformFrameworkIdentifier, new Version(5, 0));
             }
             // net45 -> dotnet
-            else if (input.Identifier.Equals(NetFrameworkIdentifier) && input.Version >= new Version(4, 6))
+            else if (input.Identifier.Equals(NetFrameworkIdentifier) && input.Version >= new Version(4, 5))
             {
                 yield return new FrameworkName(NetPlatformFrameworkIdentifier, new Version(5, 0));
             }
