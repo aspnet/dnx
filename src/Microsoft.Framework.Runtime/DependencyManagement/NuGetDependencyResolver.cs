@@ -137,9 +137,8 @@ namespace Microsoft.Framework.Runtime
                 {
                     yield return new LibraryDependency
                     {
-                        LibraryRange = new LibraryRange
+                        LibraryRange = new LibraryRange(d.Id, frameworkReference: false)
                         {
-                            Name = d.Id,
                             VersionRange = d.VersionSpec == null ? null : new SemanticVersionRange(d.VersionSpec)
                         }
                     };
@@ -149,11 +148,7 @@ namespace Microsoft.Framework.Runtime
                 {
                     yield return new LibraryDependency
                     {
-                        LibraryRange = new LibraryRange
-                        {
-                            Name = frameworkAssembly,
-                            IsGacOrFrameworkReference = true
-                        }
+                        LibraryRange = new LibraryRange(frameworkAssembly, frameworkReference: true)
                     };
                 }
 
@@ -173,11 +168,10 @@ namespace Microsoft.Framework.Runtime
                     {
                         yield return new LibraryDependency
                         {
-                            LibraryRange = new LibraryRange
+                            LibraryRange = new LibraryRange(d.Id, frameworkReference: false)
                             {
-                                Name = d.Id,
                                 VersionRange = d.VersionSpec == null ? null : new SemanticVersionRange(d.VersionSpec)
-                            }
+                            },
                         };
                     }
                 }
@@ -211,11 +205,7 @@ namespace Microsoft.Framework.Runtime
 
                     yield return new LibraryDependency
                     {
-                        LibraryRange = new LibraryRange
-                        {
-                            Name = assemblyReference.AssemblyName,
-                            IsGacOrFrameworkReference = true
-                        }
+                        LibraryRange = new LibraryRange(assemblyReference.AssemblyName, frameworkReference: true)
                     };
                 }
             }

@@ -396,11 +396,9 @@ namespace Microsoft.Framework.Runtime
 
                     results.Add(new LibraryDependency
                     {
-                        LibraryRange = new LibraryRange
+                        LibraryRange = new LibraryRange(dependencyKey, isGacOrFrameworkReference)
                         {
-                            Name = dependencyKey,
                             VersionRange = dependencyVersionRange,
-                            IsGacOrFrameworkReference = isGacOrFrameworkReference,
                             FileName = projectPath,
                             Line = dependencyValue.Line,
                             Column = dependencyValue.Column

@@ -22,9 +22,8 @@ namespace Microsoft.Framework.Runtime
         {
             var root = new Node
             {
-                Key = new LibraryRange
+                Key = new LibraryRange(name, frameworkReference: false)
                 {
-                    Name = name,
                     VersionRange = new SemanticVersionRange(version)
                 }
             };

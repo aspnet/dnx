@@ -218,10 +218,8 @@ namespace Loader.Tests
         {
             return new LibraryDependency
             {
-                LibraryRange = new LibraryRange
+                LibraryRange = new LibraryRange(libraryDescription.Identity.Name, libraryDescription.Identity.IsGacOrFrameworkReference)
                 {
-                    Name = libraryDescription.Identity.Name,
-                    IsGacOrFrameworkReference = libraryDescription.Identity.IsGacOrFrameworkReference,
                     VersionRange = new SemanticVersionRange(libraryDescription.Identity.Version)
                 }
             };
@@ -262,9 +260,8 @@ namespace Loader.Tests
             {
                 Dependencies.Add(new LibraryDependency
                 {
-                    LibraryRange = new LibraryRange
+                    LibraryRange = new LibraryRange(name, frameworkReference: false)
                     {
-                        Name = name,
                         VersionRange = new SemanticVersionRange(new SemanticVersion(version))
                     }
                 });

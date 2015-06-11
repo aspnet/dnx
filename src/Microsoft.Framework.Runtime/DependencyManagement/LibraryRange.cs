@@ -1,14 +1,19 @@
 ﻿using System;
+using System.Diagnostics;
 
 namespace Microsoft.Framework.Runtime
 {
     public class LibraryRange : IEquatable<LibraryRange>
     {
-        public string Name { get; set; }
+        private string _frameworkAssemblyName;
+
+        public static readonly string FrameworkReferencePrefix = "fx/";
+
+        public string Name { get; }
 
         public SemanticVersionRange VersionRange { get; set; }
 
-        public bool IsGacOrFrameworkReference { get; set; }
+        public bool IsGacOrFrameworkReference { get; }
 
         // Information for the editor
         public string FileName { get; set; }
@@ -17,10 +22,20 @@ namespace Microsoft.Framework.Runtime
 
         public int Column { get; set; }
 
+        public LibraryRange(string name, bool frameworkReference)
+        {
+            Name = name;
+            if (frameworkReference)
+            {
+                _frameworkAssemblyName = Name;
+                Name = FrameworkReferencePrefix + Name;
+            }
+            IsGacOrFrameworkReference = frameworkReference;
+        }
+
         public override string ToString()
         {
-            var name = IsGacOrFrameworkReference ? "framework/" + Name : Name;
-            return name + " " + (VersionRange?.ToString());
+            return Name + " " + (VersionRange?.ToString());
         }
 
         public bool Equals(LibraryRange other)
@@ -50,6 +65,15 @@ namespace Microsoft.Framework.Runtime
             }
         }
 
+        public string GetReferenceAssemblyName()
+        {
+            // Assert some things that should NEVER be false.
+            Debug.Assert(
+                IsGacOrFrameworkReference && Name.StartsWith(FrameworkReferencePrefix) && _frameworkAssemblyName != null,
+                "This should only be called on Gac/Framework references");
+            return _frameworkAssemblyName;
+        }
+
         public static bool operator ==(LibraryRange left, LibraryRange right)
         {
             return Equals(left, right);
@@ -58,6 +82,15 @@ namespace Microsoft.Framework.Runtime
         public static bool operator !=(LibraryRange left, LibraryRange right)
         {
             return !Equals(left, right);
+        }
+
+        public static string GetAssemblyName(string libraryName)
+        {
+            if (libraryName.StartsWith(FrameworkReferencePrefix))
+            {
+                return libraryName.Substring(FrameworkReferencePrefix.Length);
+            }
+            return libraryName;
         }
     }
 }

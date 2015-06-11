@@ -99,7 +99,7 @@ namespace Microsoft.Framework.PackageManager
 
                 if (dependency.LibraryRange.IsGacOrFrameworkReference)
                 {
-                    packageBuilder.FrameworkReferences.Add(new FrameworkAssemblyReference(dependency.Name, new[] { _targetFramework }));
+                    packageBuilder.FrameworkReferences.Add(new FrameworkAssemblyReference(dependency.LibraryRange.GetReferenceAssemblyName(), new[] { _targetFramework }));
                 }
                 else
                 {

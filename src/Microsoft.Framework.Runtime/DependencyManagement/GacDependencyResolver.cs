@@ -51,7 +51,7 @@ namespace Microsoft.Framework.Runtime
             var version = libraryRange.VersionRange?.MinVersion;
 
             string path;
-            if (!TryResolvePartialName(name, version, out path))
+            if (!TryResolvePartialName(libraryRange.GetReferenceAssemblyName(), version, out path))
             {
                 return null;
             }

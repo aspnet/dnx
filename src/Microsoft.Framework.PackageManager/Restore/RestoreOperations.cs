@@ -65,9 +65,8 @@ namespace Microsoft.Framework.PackageManager
                                     {
                                         tasks.Add(CreateGraphNode(
                                             context,
-                                            new LibraryRange
+                                            new LibraryRange(dependencyImplementation.Name, frameworkReference: false)
                                             {
-                                                Name = dependencyImplementation.Name,
                                                 VersionRange = VersionUtility.ParseVersionRange(dependencyImplementation.Version)
                                             },
                                             ChainPredicate(predicate, node.Item, dependency)));
@@ -263,10 +262,7 @@ namespace Microsoft.Framework.PackageManager
 
         private async Task<WalkProviderMatch> FindProjectMatch(RestoreContext context, string name)
         {
-            var libraryRange = new LibraryRange
-            {
-                Name = name
-            };
+            var libraryRange = new LibraryRange(name, frameworkReference: false);
 
             foreach (var provider in context.ProjectLibraryProviders)
             {

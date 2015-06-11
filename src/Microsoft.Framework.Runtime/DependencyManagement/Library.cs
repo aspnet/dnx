@@ -59,10 +59,8 @@ namespace Microsoft.Framework.Runtime
 
         public static implicit operator LibraryRange(Library library)
         {
-            return new LibraryRange
+            return new LibraryRange(library.Name, library.IsGacOrFrameworkReference)
             {
-                Name = library.Name,
-                IsGacOrFrameworkReference = library.IsGacOrFrameworkReference,
                 VersionRange = library.Version == null ? null : new SemanticVersionRange
                 {
                     MinVersion = library.Version,

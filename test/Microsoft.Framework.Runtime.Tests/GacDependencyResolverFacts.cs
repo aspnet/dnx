@@ -18,11 +18,9 @@ namespace Microsoft.Framework.Runtime.Tests
         [InlineData("mscorlib", "4.0.0.0", "dnxcore50", false)]
         public void GetDescriptionReturnsCorrectResults(string name, string version, string framework, bool found)
         {
-            var libraryRange = new LibraryRange()
+            var libraryRange = new LibraryRange(name, frameworkReference: true)
             {
-                Name = name,
-                VersionRange = VersionUtility.ParseVersionRange(version),
-                IsGacOrFrameworkReference = true
+                VersionRange = VersionUtility.ParseVersionRange(version)
             };
 
             var frameworkName = FrameworkNameHelper.ParseFrameworkName(framework);

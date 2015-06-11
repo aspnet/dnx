@@ -312,9 +312,8 @@ namespace Microsoft.Framework.PackageManager
 
                 foreach (var lockFileLibrary in lockFile.Libraries)
                 {
-                    var projectLibrary = new LibraryRange
+                    var projectLibrary = new LibraryRange(lockFileLibrary.Name, frameworkReference: false)
                     {
-                        Name = lockFileLibrary.Name,
                         VersionRange = new SemanticVersionRange
                         {
                             MinVersion = lockFileLibrary.Version,
@@ -358,9 +357,8 @@ namespace Microsoft.Framework.PackageManager
 
                 foreach (var context in contexts)
                 {
-                    var projectLibrary = new LibraryRange
+                    var projectLibrary = new LibraryRange(project.Name, frameworkReference: false)
                     {
-                        Name = project.Name,
                         VersionRange = new SemanticVersionRange(project.Version)
                     };
 
@@ -415,9 +413,8 @@ namespace Microsoft.Framework.PackageManager
                                 RuntimeSpecs = runtimeSpecs,
                                 MatchCache = cache
                             };
-                            var projectLibrary = new LibraryRange
+                            var projectLibrary = new LibraryRange(project.Name, frameworkReference: false)
                             {
-                                Name = project.Name,
                                 VersionRange = new SemanticVersionRange(project.Version)
                             };
                             Reports.Information.WriteLine(string.Format("Graph for {0} on {1}", runtimeContext.FrameworkName, runtimeContext.RuntimeName));

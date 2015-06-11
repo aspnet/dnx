@@ -76,9 +76,8 @@ namespace Microsoft.Framework.PackageManager
                         .SelectMany(ds => ds.Dependencies)
                         .Select(d => new LibraryDependency
                         {
-                            LibraryRange = new LibraryRange
+                            LibraryRange = new LibraryRange(d.Id, frameworkReference: false)
                             {
-                                Name = d.Id,
                                 VersionRange = d.VersionSpec == null ? null : new SemanticVersionRange(d.VersionSpec)
                             }
                         })
