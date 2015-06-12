@@ -42,10 +42,17 @@ namespace Microsoft.Framework.PackageManager.Utils
                     }
 
                     var assemblyPath = Path.Combine(installPath, filePath);
-                    if (IsAssemblyServiceable(assemblyPath))
+                    try
                     {
-                        lockFileLib.IsServiceable = true;
-                        break;
+                        if (IsAssemblyServiceable(assemblyPath))
+                        {
+                            lockFileLib.IsServiceable = true;
+                            break;
+                        }
+                    }
+                    catch
+                    {
+                        // Just move on to the next file
                     }
                 }
             }
@@ -81,9 +88,8 @@ namespace Microsoft.Framework.PackageManager.Utils
             }
 
             // TODO: Remove this when we do #596
-            // ASP.NET Core isn't compatible with generic PCL profiles
-            if (!string.Equals(framework.Identifier, VersionUtility.AspNetCoreFrameworkIdentifier, StringComparison.OrdinalIgnoreCase) &&
-                !string.Equals(framework.Identifier, VersionUtility.DnxCoreFrameworkIdentifier, StringComparison.OrdinalIgnoreCase))
+            // ASP.NET Core and .NET Core 5.0 don't have framework reference assemblies
+            if (!VersionUtility.IsPackageBased(framework))
             {
                 IEnumerable<FrameworkAssemblyReference> frameworkAssemblies;
                 if (VersionUtility.GetNearest(framework, package.FrameworkAssemblies, out frameworkAssemblies))

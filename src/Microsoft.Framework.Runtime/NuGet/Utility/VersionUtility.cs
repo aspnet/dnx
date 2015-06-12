@@ -24,9 +24,9 @@ namespace NuGet
         public static readonly string DnxCoreFrameworkIdentifier = "DNXCore";
         public static readonly string PortableFrameworkIdentifier = ".NETPortable";
         public static readonly string NetPlatformFrameworkIdentifier = ".NETPlatform";
+        public static readonly string NetCoreFrameworkIdentifier = ".NETCore";
 
         internal const string NetFrameworkIdentifier = ".NETFramework";
-        private const string NetCoreFrameworkIdentifier = ".NETCore";
         internal const string AspNetFrameworkIdentifier = "Asp.Net";
         internal const string DnxFrameworkIdentifier = "DNX";
         internal const string DnxFrameworkShortName = "dnx";
@@ -40,6 +40,7 @@ namespace NuGet
         public static readonly FrameworkName UnsupportedFrameworkName = new FrameworkName("Unsupported", new Version(0, 0));
 
         private static readonly Version _emptyVersion = new Version(0, 0);
+        private static readonly Version _version5 = new Version(5, 0);
 
         private static readonly IDictionary<string, string> _knownIdentifiers = PopulateKnownFrameworks();
 
@@ -89,6 +90,15 @@ namespace NuGet
                 }
             }
         };
+
+        public static bool IsPackageBased(FrameworkName framework)
+        {
+            return
+                string.Equals(framework.Identifier, DnxCoreFrameworkIdentifier, StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(framework.Identifier, AspNetCoreFrameworkIdentifier, StringComparison.OrdinalIgnoreCase) ||
+                (string.Equals(framework.Identifier, NetCoreFrameworkIdentifier, StringComparison.OrdinalIgnoreCase) && framework.Version >= _version5);
+        }
+
 
         // These aliases allow us to accept 'wp', 'wp70', 'wp71', 'windows', 'windows8' as valid target farmework folders.
         private static readonly Dictionary<FrameworkName, FrameworkName> _frameworkNameAlias = new Dictionary<FrameworkName, FrameworkName>(FrameworkNameEqualityComparer.Default)
@@ -940,7 +950,7 @@ namespace NuGet
                 yield return new FrameworkName(NetPlatformFrameworkIdentifier, new Version(5, 0));
             }
             // net45 -> dotnet
-            else if (input.Identifier.Equals(NetFrameworkIdentifier) && input.Version >= new Version(4, 6))
+            else if (input.Identifier.Equals(NetFrameworkIdentifier) && input.Version >= new Version(4, 5))
             {
                 yield return new FrameworkName(NetPlatformFrameworkIdentifier, new Version(5, 0));
             }
