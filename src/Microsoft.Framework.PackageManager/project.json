@@ -12,7 +12,13 @@
         "Microsoft.Framework.Runtime.Abstractions": "1.0.0-*",
         "Newtonsoft.Json": "6.0.6"
     },
-    "compile": "..\\Microsoft.Framework.ApplicationHost\\Impl\\**\\*.cs",
+    "compile": [
+        "../Microsoft.Framework.ApplicationHost/Impl/**/*.cs",
+        "../../submodules/FileSystem/src/Microsoft.Framework.FileSystemGlobbing/**/*.cs"
+    ],
+    "preprocess": [
+        "../../ext/compiler/preprocess/Internalization.cs"
+    ],
 
     "frameworks": {
         "dnx451": {

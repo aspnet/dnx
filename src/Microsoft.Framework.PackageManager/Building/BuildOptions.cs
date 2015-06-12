@@ -10,7 +10,7 @@ namespace Microsoft.Framework.PackageManager
     {
         public string OutputDir { get; set; }
 
-        public string ProjectDir { get; set; }
+        public IList<string> ProjectPatterns { get; set; }
 
         public IList<string> Configurations { get; set; }
 
@@ -24,6 +24,7 @@ namespace Microsoft.Framework.PackageManager
         {
             Configurations = new List<string>();
             TargetFrameworks = new List<string>();
+            ProjectPatterns = new List<string>();
         }
     }
 }

@@ -6,6 +6,8 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using Microsoft.Framework.FileSystemGlobbing;
+using Microsoft.Framework.FileSystemGlobbing.Abstractions;
 using Microsoft.Framework.PackageManager.Utils;
 using Microsoft.Framework.Runtime;
 using Microsoft.Framework.Runtime.Caching;
@@ -19,11 +21,16 @@ namespace Microsoft.Framework.PackageManager
         private readonly IApplicationEnvironment _applicationEnvironment;
         private readonly BuildOptions _buildOptions;
 
+        // These are shared by all projects that will be built by this class
+        private CacheContextAccessor _cacheContextAccessor;
+        private Cache _cache;
+
+        private Runtime.Project _currentProject;
+
         public BuildManager(IServiceProvider hostServices, BuildOptions buildOptions)
         {
             _hostServices = hostServices;
             _buildOptions = buildOptions;
-            _buildOptions.ProjectDir = Normalize(buildOptions.ProjectDir);
 
             _applicationEnvironment = (IApplicationEnvironment)hostServices.GetService(typeof(IApplicationEnvironment));
 
@@ -34,9 +41,62 @@ namespace Microsoft.Framework.PackageManager
 
         public bool Build()
         {
+            var projectFilesFinder = new Matcher();
+
+            // Resolve all the project names
+            var projectFilesToBuild = new List<string>();
+            foreach(var pattern in _buildOptions.ProjectPatterns)
+            {
+                if (pattern.Contains("*"))
+                {
+                    // Requires globbing
+                    projectFilesFinder.AddInclude(NormalizeGlobbingPattern(pattern));
+                }
+                else
+                {
+                    projectFilesToBuild.Add(pattern);
+                }
+            }
+
+            var rootDirectory = Directory.GetCurrentDirectory();
+            var patternSearchFolder = new DirectoryInfoWrapper(new DirectoryInfo(rootDirectory));
+            var globbingProjects = projectFilesFinder.Execute(patternSearchFolder).Files.Select(file =>
+                Path.Combine(rootDirectory, file));
+            projectFilesToBuild.AddRange(globbingProjects);
+
+            var sw = Stopwatch.StartNew();
+
+            _cacheContextAccessor = new CacheContextAccessor();
+            _cache = new Cache(_cacheContextAccessor);
+
+            var globalSucess = true;
+            foreach (var project in projectFilesToBuild)
+            {
+                var buildSuccess = BuildInternal(project);
+                globalSucess &= buildSuccess;
+            }
+
+            _buildOptions.Reports.Information.WriteLine($"Total build time elapsed: { sw.Elapsed }");
+            _buildOptions.Reports.Information.WriteLine($"Total projects built: { projectFilesToBuild.Count }");
+
+            return globalSucess;
+        }
+
+        private static string NormalizeGlobbingPattern(string pattern)
+        {
+            if (!string.Equals(Path.GetFileName(pattern), Runtime.Project.ProjectFileName, StringComparison.OrdinalIgnoreCase))
+            {
+                return pattern + "/" + Runtime.Project.ProjectFileName;
+            }
+
+            return pattern;
+        }
+
+        private bool BuildInternal(string projectPath)
+        {
             var projectDiagnostics = new List<ICompilationMessage>();
-            Runtime.Project project;
-            if (!Runtime.Project.TryGetProject(_buildOptions.ProjectDir, out project, projectDiagnostics))
+
+            if (!Runtime.Project.TryGetProject(projectPath, out _currentProject, projectDiagnostics))
             {
                 LogError(string.Format("Unable to locate {0}.", Runtime.Project.ProjectFileName));
                 return false;
@@ -44,11 +104,11 @@ namespace Microsoft.Framework.PackageManager
 
             var sw = Stopwatch.StartNew();
 
-            var baseOutputPath = GetBuildOutputDir(_buildOptions);
+            var baseOutputPath = GetBuildOutputDir(_currentProject);
             var configurations = _buildOptions.Configurations.DefaultIfEmpty("Debug");
 
             string frameworkSelectionError;
-            var frameworks = FrameworkSelectionHelper.SelectFrameworks(project,
+            var frameworks = FrameworkSelectionHelper.SelectFrameworks(_currentProject,
                                                                        _buildOptions.TargetFrameworks,
                                                                        _applicationEnvironment.RuntimeFramework,
                                                                        out frameworkSelectionError);
@@ -60,13 +120,13 @@ namespace Microsoft.Framework.PackageManager
             }
 
             if (_buildOptions.GeneratePackages &&
-                !ScriptExecutor.Execute(project, "prepack", GetScriptVariable))
+                !ScriptExecutor.Execute(_currentProject, "prepack", GetScriptVariable))
             {
                 LogError(ScriptExecutor.ErrorMessage);
                 return false;
             }
 
-            if (!ScriptExecutor.Execute(project, "prebuild", GetScriptVariable))
+            if (!ScriptExecutor.Execute(_currentProject, "prebuild", GetScriptVariable))
             {
                 LogError(ScriptExecutor.ErrorMessage);
                 return false;
@@ -75,8 +135,7 @@ namespace Microsoft.Framework.PackageManager
             var success = true;
 
             var allDiagnostics = new List<ICompilationMessage>();
-            var cacheContextAccessor = new CacheContextAccessor();
-            var cache = new Cache(cacheContextAccessor);
+
 
             PackageBuilder packageBuilder = null;
             PackageBuilder symbolPackageBuilder = null;
@@ -90,10 +149,10 @@ namespace Microsoft.Framework.PackageManager
                     // Create a new builder per configuration
                     packageBuilder = new PackageBuilder();
                     symbolPackageBuilder = new PackageBuilder();
-                    InitializeBuilder(project, packageBuilder);
-                    InitializeBuilder(project, symbolPackageBuilder);
+                    InitializeBuilder(_currentProject, packageBuilder);
+                    InitializeBuilder(_currentProject, symbolPackageBuilder);
 
-                    installBuilder = new InstallBuilder(project, packageBuilder, _buildOptions.Reports);
+                    installBuilder = new InstallBuilder(_currentProject, packageBuilder, _buildOptions.Reports);
                 }
 
                 var configurationSuccess = true;
@@ -105,15 +164,15 @@ namespace Microsoft.Framework.PackageManager
                 {
                     _buildOptions.Reports.Information.WriteLine();
                     _buildOptions.Reports.Information.WriteLine("Building {0} for {1}",
-                        project.Name, targetFramework.ToString().Yellow().Bold());
+                        _currentProject.Name, targetFramework.ToString().Yellow().Bold());
 
                     var diagnostics = new List<ICompilationMessage>();
 
                     var context = new BuildContext(_hostServices,
                                                    _applicationEnvironment,
-                                                   cache,
-                                                   cacheContextAccessor,
-                                                   project,
+                                                   _cache,
+                                                   _cacheContextAccessor,
+                                                   _currentProject,
                                                    targetFramework,
                                                    configuration,
                                                    outputPath);
@@ -145,8 +204,8 @@ namespace Microsoft.Framework.PackageManager
                 if (_buildOptions.GeneratePackages)
                 {
                     // Create a package per configuration
-                    string nupkg = GetPackagePath(project, outputPath);
-                    string symbolsNupkg = GetPackagePath(project, outputPath, symbols: true);
+                    string nupkg = GetPackagePath(_currentProject, outputPath);
+                    string symbolsNupkg = GetPackagePath(_currentProject, outputPath, symbols: true);
 
                     if (configurationSuccess)
                     {
@@ -157,7 +216,7 @@ namespace Microsoft.Framework.PackageManager
 
                     if (configurationSuccess)
                     {
-                        foreach (var sharedFile in project.Files.SharedFiles)
+                        foreach (var sharedFile in _currentProject.Files.SharedFiles)
                         {
                             var file = new PhysicalPackageFile();
                             file.SourcePath = sharedFile;
@@ -165,9 +224,9 @@ namespace Microsoft.Framework.PackageManager
                             packageBuilder.Files.Add(file);
                         }
 
-                        var root = project.ProjectDirectory;
+                        var root = _currentProject.ProjectDirectory;
 
-                        foreach (var path in project.Files.SourceFiles)
+                        foreach (var path in _currentProject.Files.SourceFiles)
                         {
                             var srcFile = new PhysicalPackageFile();
                             srcFile.SourcePath = path;
@@ -178,7 +237,7 @@ namespace Microsoft.Framework.PackageManager
                         using (var fs = File.Create(nupkg))
                         {
                             packageBuilder.Save(fs);
-                            _buildOptions.Reports.Quiet.WriteLine("{0} -> {1}", project.Name, Path.GetFullPath(nupkg));
+                            _buildOptions.Reports.Quiet.WriteLine("{0} -> {1}", _currentProject.Name, Path.GetFullPath(nupkg));
                         }
 
                         if (symbolPackageBuilder.Files.Any())
@@ -186,21 +245,21 @@ namespace Microsoft.Framework.PackageManager
                             using (var fs = File.Create(symbolsNupkg))
                             {
                                 symbolPackageBuilder.Save(fs);
-                                _buildOptions.Reports.Quiet.WriteLine("{0} -> {1}", project.Name, Path.GetFullPath(symbolsNupkg));
+                                _buildOptions.Reports.Quiet.WriteLine("{0} -> {1}", _currentProject.Name, Path.GetFullPath(symbolsNupkg));
                             }
                         }
                     }
                 }
             }
 
-            if (!ScriptExecutor.Execute(project, "postbuild", GetScriptVariable))
+            if (!ScriptExecutor.Execute(_currentProject, "postbuild", GetScriptVariable))
             {
                 LogError(ScriptExecutor.ErrorMessage);
                 return false;
             }
 
             if (_buildOptions.GeneratePackages &&
-                !ScriptExecutor.Execute(project, "postpack", GetScriptVariable))
+                !ScriptExecutor.Execute(_currentProject, "postpack", GetScriptVariable))
             {
                 LogError(ScriptExecutor.ErrorMessage);
                 return false;
@@ -227,7 +286,7 @@ namespace Microsoft.Framework.PackageManager
         {
             if (string.Equals("project:BuildOutputDir", key, StringComparison.OrdinalIgnoreCase))
             {
-                return GetBuildOutputDir(_buildOptions);
+                return GetBuildOutputDir(_currentProject);
             }
 
             return null;
@@ -344,9 +403,10 @@ namespace Microsoft.Framework.PackageManager
             return Path.Combine(outputPath, fileName);
         }
 
-        private static string GetBuildOutputDir(BuildOptions buildOptions)
+        private string GetBuildOutputDir(Runtime.Project project)
         {
-            return buildOptions.OutputDir ?? Path.Combine(buildOptions.ProjectDir, "bin");
+            var projectPath = Normalize(project.ProjectDirectory);
+            return _buildOptions.OutputDir ?? Path.Combine(projectPath, "bin");
         }
     }
 }

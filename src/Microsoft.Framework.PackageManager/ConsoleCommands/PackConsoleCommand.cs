@@ -22,7 +22,10 @@ namespace Microsoft.Framework.PackageManager
                 var optionDependencies = c.Option("--dependencies", "Copy dependencies", CommandOptionType.NoValue);
                 var optionQuiet = c.Option("--quiet", "Do not show output such as source/destination of nupkgs",
                     CommandOptionType.NoValue);
-                var argProjectDir = c.Argument("[project]", "Project to pack, default is current directory");
+                var argProjectDir = c.Argument(
+                    "[projects]", 
+                    "One or more projects to pack, default is current directory",
+                    multipleValues: true);
                 c.HelpOption("-?|-h|--help");
 
                 c.OnExecute(() =>
@@ -31,7 +34,11 @@ namespace Microsoft.Framework.PackageManager
 
                     var buildOptions = new BuildOptions();
                     buildOptions.OutputDir = optionOut.Value();
-                    buildOptions.ProjectDir = argProjectDir.Value ?? Directory.GetCurrentDirectory();
+                    buildOptions.ProjectPatterns = argProjectDir.Values;
+                    if (buildOptions.ProjectPatterns.Count == 0)
+                    {
+                        buildOptions.ProjectPatterns.Add(Path.Combine(Directory.GetCurrentDirectory(), "project.json"));
+                    }
                     buildOptions.Configurations = optionConfiguration.Values;
                     buildOptions.TargetFrameworks = optionFramework.Values;
                     buildOptions.GeneratePackages = true;

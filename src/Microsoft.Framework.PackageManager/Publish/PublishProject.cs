@@ -110,7 +110,7 @@ namespace Microsoft.Framework.PackageManager.Publish
 
             // Generate nupkg from this project dependency
             var buildOptions = new BuildOptions();
-            buildOptions.ProjectDir = project.ProjectDirectory;
+            buildOptions.ProjectPatterns.Add(project.ProjectDirectory);
             buildOptions.OutputDir = Path.Combine(project.ProjectDirectory, "bin");
             buildOptions.Configurations.Add(root.Configuration);
             buildOptions.GeneratePackages = true;

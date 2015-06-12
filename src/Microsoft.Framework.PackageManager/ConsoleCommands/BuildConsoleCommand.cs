@@ -20,7 +20,10 @@ namespace Microsoft.Framework.PackageManager
                 var optionOut = c.Option("--out <OUTPUT_DIR>", "Output directory", CommandOptionType.SingleValue);
                 var optionQuiet = c.Option("--quiet", "Do not show output such as dependencies in use",
                     CommandOptionType.NoValue);
-                var argProjectDir = c.Argument("[project]", "Project to build, default is current directory");
+                var argProjectDir = c.Argument(
+                    "[projects]", 
+                    "One or more projects build. If not specified, the project in the current directory will be used.",
+                    multipleValues: true);
                 c.HelpOption("-?|-h|--help");
 
                 c.OnExecute(() =>
@@ -29,7 +32,11 @@ namespace Microsoft.Framework.PackageManager
 
                     var buildOptions = new BuildOptions();
                     buildOptions.OutputDir = optionOut.Value();
-                    buildOptions.ProjectDir = argProjectDir.Value ?? Directory.GetCurrentDirectory();
+                    buildOptions.ProjectPatterns = argProjectDir.Values;
+                    if (buildOptions.ProjectPatterns.Count == 0)
+                    {
+                        buildOptions.ProjectPatterns.Add(Path.Combine(Directory.GetCurrentDirectory(), "project.json"));
+                    }
                     buildOptions.Configurations = optionConfiguration.Values;
                     buildOptions.TargetFrameworks = optionFramework.Values;
                     buildOptions.GeneratePackages = false;
