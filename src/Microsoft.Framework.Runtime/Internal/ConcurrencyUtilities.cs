@@ -19,9 +19,9 @@ namespace Microsoft.Framework.Runtime.Internal
             return $"DNU_RESTORE_{filePath.Replace(Path.DirectorySeparatorChar, '_')}";
         }
 
-        public static void ExecuteWithFileLocked(string filePath, TimeSpan timeout, Action<bool> action)
+        public static void ExecuteWithFileLocked(string filePath, Action<bool> action)
         {
-            ExecuteWithFileLocked(filePath, timeout, createdNew =>
+            ExecuteWithFileLocked(filePath, createdNew =>
             {
                 action(createdNew);
                 return Task.FromResult(1);
@@ -29,9 +29,10 @@ namespace Microsoft.Framework.Runtime.Internal
             .GetAwaiter().GetResult();
         }
 
-        public async static Task<T> ExecuteWithFileLocked<T>(string filePath, TimeSpan timeout, Func<bool, Task<T>> action)
+        public async static Task<T> ExecuteWithFileLocked<T>(string filePath, Func<bool, Task<T>> action)
         {
-            for (var i = 0; i < 3; ++i)
+            bool completed = false;
+            while (!completed)
             {
                 var createdNew = false;
                 var fileLock = new Semaphore(initialCount: 0, maximumCount: 1, name: FilePathToLockName(filePath),
@@ -41,7 +42,7 @@ namespace Microsoft.Framework.Runtime.Internal
                     // If this lock is already acquired by another process, wait until we can acquire it
                     if (!createdNew)
                     {
-                        var signaled = fileLock.WaitOne(timeout);
+                        var signaled = fileLock.WaitOne(TimeSpan.FromSeconds(5));
                         if (!signaled)
                         {
                             // Timeout and retry
@@ -49,14 +50,19 @@ namespace Microsoft.Framework.Runtime.Internal
                         }
                     }
 
+                    completed = true;
                     return await action(createdNew);
                 }
                 finally
                 {
-                    fileLock.Release();
+                    if (completed)
+                    {
+                        fileLock.Release();
+                    }
                 }
             }
 
+            // should never get here
             throw new TaskCanceledException($"Failed to acquire semaphore for file: {filePath}");
         }
     }
