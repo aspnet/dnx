@@ -52,8 +52,7 @@ namespace Microsoft.Framework.PackageManager.Utils
                     }
                     catch
                     {
-                        lockFileLib.IsServiceable = false;
-                        break;
+                        // Just move on to the next file
                     }
                 }
             }
