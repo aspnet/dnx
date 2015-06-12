@@ -103,5 +103,27 @@ namespace Microsoft.Framework.PackageManager
                 }
             }
         }
+
+        internal static void EnsureValidPackageContents(Stream stream, PackageInfo package)
+        {
+            var message = $"Response from {package.ContentUri} is not a valid NuGet package.";
+            try
+            {
+                using (var archive = new ZipArchive(stream, ZipArchiveMode.Read, leaveOpen: true))
+                {
+                    var entryName = $"{package.Id}.nuspec";
+                    var entry = archive.GetEntryOrdinalIgnoreCase(entryName);
+                    if (entry == null)
+                    {
+                        throw new InvalidDataException($"{message} Cannot find required entry {entryName}.");
+                    }
+                }
+            }
+            catch (InvalidDataException e)
+            {
+                throw new InvalidDataException(message, innerException: e);
+            }
+        }
+
     }
 }
