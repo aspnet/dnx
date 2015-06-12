@@ -34,7 +34,7 @@ namespace Microsoft.Framework.PackageManager.Restore.NuGet
             string password,
             Reports reports)
         {
-            _baseUri = baseUri + (baseUri.EndsWith("/") ? "" : "/");
+            _baseUri = baseUri + ((baseUri.EndsWith("/") || baseUri.EndsWith("index.json")) ? "" : "/");
             _userName = userName;
             _password = password;
             _reports = reports;
@@ -88,8 +88,16 @@ namespace Microsoft.Framework.PackageManager.Restore.NuGet
             }
         }
 
+        public string BaseUri
+        {
+            get
+            {
+                return _baseUri;
+            }
+        }
+
         internal async Task<HttpSourceResult> GetAsync(string uri, string cacheKey, TimeSpan cacheAgeLimit,
-            Action<Stream> ensureValidContents)
+            Action<Stream> ensureValidContents = null, bool throwNotFound = true)
         {
             Stopwatch sw = new Stopwatch();
             sw.Start();
@@ -101,7 +109,7 @@ namespace Microsoft.Framework.PackageManager.Restore.NuGet
                 return result;
             }
 
-            _reports.Quiet.WriteLine(string.Format("  {0} {1}.", "GET".Yellow(), uri));
+            _reports.Quiet.WriteLine(string.Format("  {0} {1}", "GET".Yellow(), uri));
 
             var request = new HttpRequestMessage(HttpMethod.Get, uri);
             if (_userName != null)
@@ -131,13 +139,20 @@ namespace Microsoft.Framework.PackageManager.Restore.NuGet
 
                 using (var response = await _client.SendAsync(request, HttpCompletionOption.ResponseHeadersRead))
                 {
+                    if (!throwNotFound && response.StatusCode == HttpStatusCode.NotFound)
+                    {
+                        _reports.Quiet.WriteLine(
+                            $"  {response.StatusCode.ToString().Green()} {uri} {sw.ElapsedMilliseconds.ToString().Bold()}ms");
+                        return new HttpSourceResult();
+                    }
+
                     response.EnsureSuccessStatusCode();
                     statusCode = response.StatusCode;
                     await response.Content.CopyToAsync(responseStream);
                 }
 
                 responseStream.Seek(0, SeekOrigin.Begin);
-                ensureValidContents(responseStream);
+                ensureValidContents?.Invoke(responseStream);
 
                 var newFile = result.CacheFileName + "-new";
 
