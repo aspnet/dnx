@@ -22,7 +22,7 @@ namespace Microsoft.Framework.PackageManager.FunctionalTests
 @""{0}{1}.exe"" --appbase ""%~dp0approot\src\{2}"" Microsoft.Framework.ApplicationHost {3} %*
 ";
 
-        private static readonly string BashScriptTemplate = @"#!/bin/bash
+        private static readonly string BashScriptTemplate = @"#!/usr/bin/env bash
 
 SOURCE=""${{BASH_SOURCE[0]}}""
 while [ -h ""$SOURCE"" ]; do # resolve $SOURCE until the file is no longer a symlink

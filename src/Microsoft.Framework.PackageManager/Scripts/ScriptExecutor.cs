@@ -97,9 +97,9 @@ namespace Microsoft.Framework.PackageManager
                         scriptArguments[0] = $"{ quote }{ prefix }{ scriptCandidate }{ quote }";
                     }
 
-                    // Always use /bin/bash -c in order to support redirection and so on; similar to Windows case.
+                    // Always use /usr/bin/env bash -c in order to support redirection and so on; similar to Windows case.
                     // Unlike Windows, must escape quotation marks within the newly-quoted string.
-                    scriptArguments = new[] { "/bin/bash", "-c", "\"" }
+                    scriptArguments = new[] { "/usr/bin/env", "bash", "-c", "\"" }
                         .Concat(scriptArguments.Select(argument => argument.Replace("\"", "\\\"")))
                         .Concat(new[] { "\"" })
                         .ToArray();

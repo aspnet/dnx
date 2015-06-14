@@ -1,4 +1,4 @@
-#/bin/bash
+#!/usr/bin/env bash
 
 echo "Copy From: $1"
 echo "       To: $2"
