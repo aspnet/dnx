@@ -101,7 +101,7 @@ goto argumentStart
   }
 }";
                 scriptContent =
-@"#!/bin/bash --restricted
+@"#!/usr/bin/env bash
 set -o errexit
 
 for arg in ""$@""; do

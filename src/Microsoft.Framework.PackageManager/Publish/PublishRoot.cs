@@ -135,7 +135,7 @@ namespace Microsoft.Framework.PackageManager.Publish
                 relativeAppBase = string.Format("{0}/{1}/{2}", AppRootName, "src", _project.Name);
             }
 
-            const string template = @"#!/bin/bash
+            const string template = @"#!/usr/bin/env bash
 
 SOURCE=""${{BASH_SOURCE[0]}}""
 while [ -h ""$SOURCE"" ]; do # resolve $SOURCE until the file is no longer a symlink
