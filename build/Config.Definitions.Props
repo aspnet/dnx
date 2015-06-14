@@ -26,4 +26,7 @@
       <Platform>ARM</Platform>
     </ProjectConfiguration>
   </ItemGroup>
+  <PropertyGroup>
+    <WindowsTargetPlatformVersion Condition="'$(BuildForOneCore)' == 'True'">$([MSBuild]::GetRegistryValueFromView('HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Microsoft SDKs\Windows\v10.0', 'ProductVersion', null, RegistryView.Registry64, RegistryView.Registry32)).0</WindowsTargetPlatformVersion>
+  </PropertyGroup>
 </Project>
