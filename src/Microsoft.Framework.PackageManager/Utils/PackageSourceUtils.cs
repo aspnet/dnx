@@ -47,7 +47,7 @@ namespace Microsoft.Framework.PackageManager
                 {
                     if (packageBaseAddress == null)
                     {
-                        reports.Error.WriteLine(
+                        reports.Information.WriteLine(
                             $"Ignoring NuGet v3 feed {source.Source.Yellow().Bold()}, which doesn't provide PackageBaseAddress resource.");
                         return null;
                     }

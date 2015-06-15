@@ -205,7 +205,8 @@ namespace Microsoft.Framework.PackageManager.Restore.NuGet
             {
                 if (!_nupkgCache.TryGetValue(package.ContentUri, out task))
                 {
-                    task = _nupkgCache[package.ContentUri] = OpenNupkgStreamAsyncCore(package);
+                    task = _nupkgCache[package.ContentUri] = PackageUtilities.OpenNupkgStreamAsync(
+                        _httpSource, package, _cacheAgeLimitNupkg, _reports);
                 }
             }
             var result = await task;
@@ -224,42 +225,6 @@ namespace Microsoft.Framework.PackageManager.Restore.NuGet
             });
         }
 
-        private async Task<NupkgEntry> OpenNupkgStreamAsyncCore(PackageInfo package)
-        {
-            for (int retry = 0; retry != 3; ++retry)
-            {
-                try
-                {
-                    using (var data = await _httpSource.GetAsync(
-                        package.ContentUri,
-                        cacheKey: $"nupkg_{package.Id}.{package.Version}",
-                        cacheAgeLimit: retry == 0 ? _cacheAgeLimitNupkg : TimeSpan.Zero,
-                        ensureValidContents: stream => PackageUtilities.EnsureValidPackageContents(stream, package)))
-                    {
-                        return new NupkgEntry
-                        {
-                            TempFileName = data.CacheFileName
-                        };
-                    }
-                }
-                catch (Exception ex)
-                {
-                    if (retry == 2)
-                    {
-                        _reports.Error.WriteLine(
-                            $"Error: DownloadPackageAsync: {package.ContentUri}{Environment.NewLine}  {ex.Message}".Red().Bold());
-                        throw;
-                    }
-                    else
-                    {
-                        _reports.Information.WriteLine(
-                            $"Warning: DownloadPackageAsync: {package.ContentUri}{Environment.NewLine}  {ex.Message}".Yellow().Bold());
-                    }
-                }
-            }
-            return null;
-        }
-
         private static void EnsureValidFindPackagesResponse(Stream stream, string uri)
         {
             var message = $"Response from {uri} is not a valid NuGet v2 service response.";
@@ -276,11 +241,6 @@ namespace Microsoft.Framework.PackageManager.Restore.NuGet
             {
                 throw new InvalidDataException(message, innerException: e);
             }
-        }
-
-        private class NupkgEntry
-        {
-            public string TempFileName { get; set; }
         }
     }
 }
