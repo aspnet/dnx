@@ -4,27 +4,17 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.IO.Compression;
 using System.Linq;
 using System.Threading.Tasks;
-using System.Xml;
-using System.Xml.Linq;
-using Microsoft.Framework.Runtime.Internal;
 using NuGet;
+using Newtonsoft.Json.Linq;
+using Newtonsoft.Json;
+using Microsoft.Framework.Runtime.Internal;
 
 namespace Microsoft.Framework.PackageManager.Restore.NuGet
 {
-    public class NuGetv2Feed : IPackageFeed
+    internal class NuGetv3Feed : IPackageFeed
     {
-        private static readonly XNamespace _defaultNamespace = XNamespace.Get("http://www.w3.org/2005/Atom");
-        private static readonly XName _xnameEntry = XName.Get("entry", _defaultNamespace.NamespaceName);
-        private static readonly XName _xnameTitle = XName.Get("title", _defaultNamespace.NamespaceName);
-        private static readonly XName _xnameContent = XName.Get("content", _defaultNamespace.NamespaceName);
-        private static readonly XName _xnameLink = XName.Get("link", _defaultNamespace.NamespaceName);
-        private static readonly XName _xnameProperties = XName.Get("properties", "http://schemas.microsoft.com/ado/2007/08/dataservices/metadata");
-        private static readonly XName _xnameId = XName.Get("Id", "http://schemas.microsoft.com/ado/2007/08/dataservices");
-        private static readonly XName _xnameVersion = XName.Get("Version", "http://schemas.microsoft.com/ado/2007/08/dataservices");
-
         private readonly string _baseUri;
         private readonly Reports _reports;
         private readonly HttpSource _httpSource;
@@ -44,13 +34,14 @@ namespace Microsoft.Framework.PackageManager.Restore.NuGet
             }
         }
 
-        internal NuGetv2Feed(
+        internal NuGetv3Feed(
             HttpSource httpSource,
             bool noCache,
             Reports reports,
             bool ignoreFailure)
         {
-            _baseUri = httpSource.BaseUri;
+            var baseUri = httpSource.BaseUri;
+            _baseUri = baseUri.EndsWith("/index.json") ? baseUri.Substring(0, baseUri.Length - "index.json".Length) : baseUri;
             _reports = reports;
             _httpSource = httpSource;
             _ignoreFailure = ignoreFailure;
@@ -63,6 +54,44 @@ namespace Microsoft.Framework.PackageManager.Restore.NuGet
             {
                 _cacheAgeLimitList = TimeSpan.FromMinutes(30);
                 _cacheAgeLimitNupkg = TimeSpan.FromHours(24);
+            }
+        }
+
+        internal static bool DetectNuGetV3(HttpSource httpSource, out Uri packageBaseAddress)
+        {
+            try
+            {
+                var result = httpSource.GetAsync(httpSource.BaseUri, "index_json", TimeSpan.FromHours(6)).Result;
+                using (var reader = new JsonTextReader(new StreamReader(result.Stream)))
+                {
+                    var indexJson = JObject.Load(reader);
+                    foreach (var resource in indexJson["resources"])
+                    {
+                        var type = resource.Value<string>("@type");
+                        var id = resource.Value<string>("@id");
+
+                        if (id != null && string.Equals(type, "PackageBaseAddress/3.0.0"))
+                        {
+                            try
+                            {
+                                packageBaseAddress = new Uri(id);
+                                return true;
+                            }
+                            catch (UriFormatException)
+                            {
+                                packageBaseAddress = new Uri(new Uri(httpSource.BaseUri), id);
+                                return true;
+                            }
+                        }
+                    }
+                }
+                packageBaseAddress = null;
+                return true;
+            }
+            catch
+            {
+                packageBaseAddress = null;
+                return false;
             }
         }
 
@@ -90,55 +119,38 @@ namespace Microsoft.Framework.PackageManager.Restore.NuGet
 
                 try
                 {
-                    var uri = $"{_baseUri}FindPackagesById()?id='{id}'";
+                    var uri = _baseUri + id.ToLowerInvariant() + "/index.json";
                     var results = new List<PackageInfo>();
-                    var page = 1;
-                    while (true)
+                    using (var data = await _httpSource.GetAsync(uri,
+                        string.Format("list_{0}", id),
+                        retry == 0 ? _cacheAgeLimitList : TimeSpan.Zero,
+                        ensureValidContents: stream => EnsureValidFindPackagesResponse(stream, uri),
+                        throwNotFound: false))
                     {
-                        // TODO: Pages for a package Id are cached separately.
-                        // So we will get inaccurate data when a page shrinks.
-                        // However, (1) In most cases the pages grow rather than shrink;
-                        // (2) cache for pages is valid for only 30 min.
-                        // So we decide to leave current logic and observe.
-                        using (var data = await _httpSource.GetAsync(uri,
-                        cacheKey: $"list_{id}_page{page}",
-                        cacheAgeLimit: retry == 0 ? _cacheAgeLimitList : TimeSpan.Zero,
-                        ensureValidContents: stream => EnsureValidFindPackagesResponse(stream, uri)))
+                        if (data.Stream == null)
                         {
-                            try
+                            return Enumerable.Empty<PackageInfo>();
+                        }
+
+                        try
+                        {
+                            JObject doc;
+                            using (var reader = new StreamReader(data.Stream))
                             {
-                                var doc = XDocument.Load(data.Stream);
-
-                                var result = doc.Root
-                                    .Elements(_xnameEntry)
-                                    .Select(x => BuildModel(id, x));
-
-                                results.AddRange(result);
-
-                                // Example of what this looks like in the odata feed:
-                                // <link rel="next" href="{nextLink}" />
-                                var nextUri = (from e in doc.Root.Elements(_xnameLink)
-                                               let attr = e.Attribute("rel")
-                                               where attr != null && string.Equals(attr.Value, "next", StringComparison.OrdinalIgnoreCase)
-                                               select e.Attribute("href") into nextLink
-                                               where nextLink != null
-                                               select nextLink.Value).FirstOrDefault();
-
-                                // Stop if there's nothing else to GET
-                                if (string.IsNullOrEmpty(nextUri))
-                                {
-                                    break;
-                                }
-
-                                uri = nextUri;
-                                page++;
+                                doc = JObject.Load(new JsonTextReader(reader));
                             }
-                            catch (XmlException)
-                            {
-                                _reports.Information.WriteLine(
-                                    $"XML file {data.CacheFileName} is corrupt".Yellow().Bold());
-                                throw;
-                            }
+
+                            var result = doc["versions"]
+                                .Select(x => BuildModel(id, x.ToString()))
+                                .Where(x => x != null);
+
+                            results.AddRange(result);
+                        }
+                        catch
+                        {
+                            _reports.Information.WriteLine("The file {0} is corrupt",
+                                data.CacheFileName.Yellow().Bold());
+                            throw;
                         }
                     }
 
@@ -153,38 +165,36 @@ namespace Microsoft.Framework.PackageManager.Restore.NuGet
                         {
                             _ignored = true;
                             _reports.Information.WriteLine(
-                                $"Failed to retrieve information from remote source '{_baseUri}'".Yellow().Bold());
+                                string.Format("Failed to retrieve information from remote source '{0}'",
+                                    _baseUri).Yellow().Bold());
                             return new List<PackageInfo>();
                         }
 
-                        _reports.Error.WriteLine(
-                            $"Error: FindPackagesById: {id}{Environment.NewLine}  {ex.Message}".Red().Bold());
+                        _reports.Error.WriteLine(string.Format("Error: FindPackagesById: {1}\r\n  {0}",
+                            ex.Message, id).Red().Bold());
                         throw;
                     }
                     else
                     {
-                        _reports.Information.WriteLine(
-                            $"Warning: FindPackagesById: {id}{Environment.NewLine}  {ex.Message}".Yellow().Bold());
+                        _reports.Information.WriteLine(string.Format("Warning: FindPackagesById: {1}\r\n  {0}", ex.Message, id).Yellow().Bold());
                     }
                 }
             }
             return null;
         }
 
-        public PackageInfo BuildModel(string id, XElement element)
+        public PackageInfo BuildModel(string id, string version)
         {
-            var properties = element.Element(_xnameProperties);
-            var idElement = properties.Element(_xnameId);
-            var titleElement = element.Element(_xnameTitle);
-
+            var lowerInvariantId = id.ToLowerInvariant();
+            var lowerInvariantVersion = version.ToLowerInvariant();
             return new PackageInfo
             {
                 // If 'Id' element exist, use its value as accurate package Id
                 // Otherwise, use the value of 'title' if it exist
                 // Use the given Id as final fallback if all elements above don't exist
-                Id = idElement?.Value ?? titleElement?.Value ?? id,
-                Version = SemanticVersion.Parse(properties.Element(_xnameVersion).Value),
-                ContentUri = element.Element(_xnameContent).Attribute("src").Value,
+                Id = id,
+                Version = SemanticVersion.Parse(version),
+                ContentUri = $"{_baseUri}{lowerInvariantId}/{lowerInvariantVersion}/{lowerInvariantId}.{lowerInvariantVersion}{Constants.PackageExtension}",
             };
         }
 
@@ -216,7 +226,7 @@ namespace Microsoft.Framework.PackageManager.Restore.NuGet
 
             // Acquire the lock on a file before we open it to prevent this process
             // from opening a file deleted by the logic in HttpSource.GetAsync() in another process
-            return await ConcurrencyUtilities.ExecuteWithFileLocked(result.TempFileName, action: _ =>
+            return await ConcurrencyUtilities.ExecuteWithFileLocked(result.TempFileName, _ =>
             {
                 return Task.FromResult(
                     new FileStream(result.TempFileName, FileMode.Open, FileAccess.Read,
@@ -232,8 +242,8 @@ namespace Microsoft.Framework.PackageManager.Restore.NuGet
                 {
                     using (var data = await _httpSource.GetAsync(
                         package.ContentUri,
-                        cacheKey: $"nupkg_{package.Id}.{package.Version}",
-                        cacheAgeLimit: retry == 0 ? _cacheAgeLimitNupkg : TimeSpan.Zero,
+                        "nupkg_" + package.Id + "." + package.Version,
+                        retry == 0 ? _cacheAgeLimitNupkg : TimeSpan.Zero,
                         ensureValidContents: stream => PackageUtilities.EnsureValidPackageContents(stream, package)))
                     {
                         return new NupkgEntry
@@ -246,14 +256,11 @@ namespace Microsoft.Framework.PackageManager.Restore.NuGet
                 {
                     if (retry == 2)
                     {
-                        _reports.Error.WriteLine(
-                            $"Error: DownloadPackageAsync: {package.ContentUri}{Environment.NewLine}  {ex.Message}".Red().Bold());
-                        throw;
+                        _reports.Error.WriteLine(string.Format("Error: DownloadPackageAsync: {1}\r\n  {0}", ex.Message, package.ContentUri.Red().Bold()));
                     }
                     else
                     {
-                        _reports.Information.WriteLine(
-                            $"Warning: DownloadPackageAsync: {package.ContentUri}{Environment.NewLine}  {ex.Message}".Yellow().Bold());
+                        _reports.Information.WriteLine(string.Format("Warning: DownloadPackageAsync: {1}\r\n  {0}".Yellow().Bold(), ex.Message, package.ContentUri.Yellow().Bold()));
                     }
                 }
             }
@@ -262,17 +269,23 @@ namespace Microsoft.Framework.PackageManager.Restore.NuGet
 
         private static void EnsureValidFindPackagesResponse(Stream stream, string uri)
         {
-            var message = $"Response from {uri} is not a valid NuGet v2 service response.";
+            var message = $"Response from {uri} is not a valid NuGet v3 service response.";
             try
             {
-                var xDoc = XDocument.Load(stream);
-                if (!_defaultNamespace.Equals(xDoc.Root.Name.Namespace))
+                var json = JObject.Load(new JsonTextReader(new StreamReader(stream)));
+                if (json["versions"] == null)
                 {
                     throw new InvalidDataException(
-                        $"{message} Namespace of root element is not {_defaultNamespace.NamespaceName}.");
+                        $"{message} The response doesn't contain 'versions' property.");
+                }
+
+                if (!(json["versions"] is JArray))
+                {
+                    throw new InvalidDataException(
+                        $"{message} The value of 'versions' property is not an array.");
                 }
             }
-            catch (XmlException e)
+            catch (JsonException e)
             {
                 throw new InvalidDataException(message, innerException: e);
             }

@@ -2,6 +2,8 @@
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 using System;
+using System.Diagnostics;
+using System.Linq;
 using System.Net;
 using System.Threading;
 using Microsoft.Framework.Runtime;
@@ -37,6 +39,19 @@ namespace Microsoft.Framework.PackageManager
 
         public int Main(string[] args)
         {
+#if DEBUG
+            // Add our own debug helper because DNU is usually run from a wrapper script,
+            // making it too late to use the DNX one. Technically it's possible to use
+            // the DNX_OPTIONS environment variable, but that's difficult to do per-command
+            // on Windows
+            if (args.Any(a => string.Equals(a, "--debug", StringComparison.OrdinalIgnoreCase)))
+            {
+                args = args.Where(a => !string.Equals(a, "--debug", StringComparison.OrdinalIgnoreCase)).ToArray();
+                Console.WriteLine($"Process Id: {Process.GetCurrentProcess().Id}");
+                Console.WriteLine("Waiting for Debugger to attach...");
+                SpinWait.SpinUntil(() => Debugger.IsAttached);
+            }
+#endif
             var app = new CommandLineApplication();
             app.Name = "dnu";
             app.FullName = "Microsoft .NET Development Utility";

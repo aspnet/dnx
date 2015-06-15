@@ -69,7 +69,7 @@ namespace Microsoft.Framework.Runtime
 
         public async Task<CompileResponse> Compile(string projectPath, ILibraryKey library)
         {
-            var contexts = await _projectContexts.Task;
+            var contexts = await _projectContexts.Task.ConfigureAwait(false);
 
             int contextId;
             if (!contexts.TryGetValue(projectPath, out contextId))
@@ -87,7 +87,8 @@ namespace Microsoft.Framework.Runtime
                 ContextId = contextId
             });
 
-            return await _compileResponses.GetOrAdd(contextId, _ => new TaskCompletionSource<CompileResponse>()).Task;
+            var task = _compileResponses.GetOrAdd(contextId, _ => new TaskCompletionSource<CompileResponse>()).Task;
+            return await task.ConfigureAwait(false);
         }
 
         private void OnClosed()

@@ -36,16 +36,37 @@ namespace Microsoft.Framework.PackageManager
             }
             else
             {
-                // TODO: temporarily ignore NuGet v3 feeds
-                if (source.Source.EndsWith(".json"))
-                {
-                    return null;
-                }
-
-                return new NuGetv2Feed(
+                var httpSource = new HttpSource(
                     source.Source,
                     source.UserName,
                     source.Password,
+                    reports);
+
+                Uri packageBaseAddress;
+                if (NuGetv3Feed.DetectNuGetV3(httpSource, out packageBaseAddress))
+                {
+                    if (packageBaseAddress == null)
+                    {
+                        reports.Error.WriteLine(
+                            $"Ignoring NuGet v3 feed {source.Source.Yellow().Bold()}, which doesn't provide PackageBaseAddress resource.");
+                        return null;
+                    }
+
+                    httpSource = new HttpSource(
+                        packageBaseAddress.AbsoluteUri,
+                        source.UserName,
+                        source.Password,
+                        reports);
+
+                    return new NuGetv3Feed(
+                        httpSource,
+                        noCache,
+                        reports,
+                        ignoreFailedSources);
+                }
+
+                return new NuGetv2Feed(
+                    httpSource,
                     noCache,
                     reports,
                     ignoreFailedSources);

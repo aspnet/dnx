@@ -727,7 +727,7 @@ namespace NuGet
             // Find exact matching items in expansion order.
             foreach (var activeFramework in Expand(internalProjectFramework))
             {
-                var matchingGroups = frameworkGroups.Where(g => string.Equals(g.Key?.Identifier, internalProjectFramework.Identifier, StringComparison.OrdinalIgnoreCase)).ToList();
+                var matchingGroups = frameworkGroups.Where(g => string.Equals(g.Key?.Identifier, activeFramework.Identifier, StringComparison.OrdinalIgnoreCase)).ToList();
                 var bestGroup = matchingGroups
                     .OrderByDescending(f => f.Key.Version)
                     .FirstOrDefault(g => g.Key.Version <= activeFramework.Version);
@@ -932,11 +932,7 @@ namespace NuGet
             {
                 yield return new FrameworkName(AspNetFrameworkIdentifier, new Version(5, 0));
                 yield return new FrameworkName(NetFrameworkIdentifier, input.Version);
-
-                if (input.Version >= new Version(4, 6))
-                {
-                    yield return new FrameworkName(NetPlatformFrameworkIdentifier, new Version(5, 0));
-                }
+                yield return new FrameworkName(NetPlatformFrameworkIdentifier, new Version(5, 0));
             }
             // aspnet50 -> net46 (project framework; this is DEPRECATED, so setting a max version is OK)
             else if (input.Identifier.Equals(AspNetFrameworkIdentifier))

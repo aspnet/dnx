@@ -65,7 +65,7 @@ namespace Microsoft.Framework.Runtime.Tests
         [InlineData("dotnet", "dotnet", true)]
         [InlineData("dnxcore50", "dotnet", true)]
         [InlineData("aspnetcore50", "dotnet", true)]
-        [InlineData("dnx451", "dotnet", false)]
+        [InlineData("dnx451", "dotnet", true)]
         [InlineData("dnx46", "dotnet", true)]
         [InlineData("net451", "dotnet", true)]
         [InlineData("net45", "dotnet", true)]

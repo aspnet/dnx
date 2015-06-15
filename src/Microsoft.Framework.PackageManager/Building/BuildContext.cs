@@ -139,10 +139,7 @@ namespace Microsoft.Framework.PackageManager
                 }
             }
 
-            if (dependencies.Count > 0)
-            {
-                packageBuilder.DependencySets.Add(new PackageDependencySet(_targetFramework, dependencies));
-            }
+            packageBuilder.DependencySets.Add(new PackageDependencySet(_targetFramework, dependencies));
         }
 
         public void AddLibs(PackageBuilder packageBuilder, string pattern)
