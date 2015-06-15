@@ -40,8 +40,7 @@ namespace Microsoft.Framework.PackageManager.Restore.NuGet
             Reports reports,
             bool ignoreFailure)
         {
-            var baseUri = httpSource.BaseUri;
-            _baseUri = baseUri.EndsWith("/index.json") ? baseUri.Substring(0, baseUri.Length - "index.json".Length) : baseUri;
+            _baseUri = httpSource.BaseUri;
             _reports = reports;
             _httpSource = httpSource;
             _ignoreFailure = ignoreFailure;
@@ -215,7 +214,8 @@ namespace Microsoft.Framework.PackageManager.Restore.NuGet
             {
                 if (!_nupkgCache.TryGetValue(package.ContentUri, out task))
                 {
-                    task = _nupkgCache[package.ContentUri] = OpenNupkgStreamAsyncCore(package);
+                    task = _nupkgCache[package.ContentUri] = PackageUtilities.OpenNupkgStreamAsync(
+                        _httpSource, package, _cacheAgeLimitNupkg, _reports);
                 }
             }
             var result = await task;
@@ -232,39 +232,6 @@ namespace Microsoft.Framework.PackageManager.Restore.NuGet
                     new FileStream(result.TempFileName, FileMode.Open, FileAccess.Read,
                     FileShare.ReadWrite | FileShare.Delete));
             });
-        }
-
-        private async Task<NupkgEntry> OpenNupkgStreamAsyncCore(PackageInfo package)
-        {
-            for (int retry = 0; retry != 3; ++retry)
-            {
-                try
-                {
-                    using (var data = await _httpSource.GetAsync(
-                        package.ContentUri,
-                        "nupkg_" + package.Id + "." + package.Version,
-                        retry == 0 ? _cacheAgeLimitNupkg : TimeSpan.Zero,
-                        ensureValidContents: stream => PackageUtilities.EnsureValidPackageContents(stream, package)))
-                    {
-                        return new NupkgEntry
-                        {
-                            TempFileName = data.CacheFileName
-                        };
-                    }
-                }
-                catch (Exception ex)
-                {
-                    if (retry == 2)
-                    {
-                        _reports.Error.WriteLine(string.Format("Error: DownloadPackageAsync: {1}\r\n  {0}", ex.Message, package.ContentUri.Red().Bold()));
-                    }
-                    else
-                    {
-                        _reports.Information.WriteLine(string.Format("Warning: DownloadPackageAsync: {1}\r\n  {0}".Yellow().Bold(), ex.Message, package.ContentUri.Yellow().Bold()));
-                    }
-                }
-            }
-            return null;
         }
 
         private static void EnsureValidFindPackagesResponse(Stream stream, string uri)
@@ -289,11 +256,6 @@ namespace Microsoft.Framework.PackageManager.Restore.NuGet
             {
                 throw new InvalidDataException(message, innerException: e);
             }
-        }
-
-        private class NupkgEntry
-        {
-            public string TempFileName { get; set; }
         }
     }
 }

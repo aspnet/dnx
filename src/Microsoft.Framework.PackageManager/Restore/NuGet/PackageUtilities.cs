@@ -6,7 +6,7 @@ using System.IO;
 using System.IO.Compression;
 using System.Threading.Tasks;
 
-namespace Microsoft.Framework.PackageManager
+namespace Microsoft.Framework.PackageManager.Restore.NuGet
 {
     internal static class PackageUtilities
     {
@@ -20,6 +20,46 @@ namespace Microsoft.Framework.PackageManager
                 }
             }
 
+            return null;
+        }
+
+        public static async Task<NupkgEntry> OpenNupkgStreamAsync(
+            HttpSource httpSource,
+            PackageInfo package,
+            TimeSpan cacheAgeLimit,
+            Reports reports)
+        {
+            for (int retry = 0; retry != 3; ++retry)
+            {
+                try
+                {
+                    using (var data = await httpSource.GetAsync(
+                        package.ContentUri,
+                        cacheKey: $"nupkg_{package.Id}.{package.Version}",
+                        cacheAgeLimit: retry == 0 ? cacheAgeLimit : TimeSpan.Zero,
+                        ensureValidContents: stream => EnsureValidPackageContents(stream, package)))
+                    {
+                        return new NupkgEntry
+                        {
+                            TempFileName = data.CacheFileName
+                        };
+                    }
+                }
+                catch (Exception ex)
+                {
+                    if (retry == 2)
+                    {
+                        reports.Error.WriteLine(
+                            $"Error: DownloadPackageAsync: {package.ContentUri}{Environment.NewLine}  {ex.Message}".Red().Bold());
+                        throw;
+                    }
+                    else
+                    {
+                        reports.Information.WriteLine(
+                            $"Warning: DownloadPackageAsync: {package.ContentUri}{Environment.NewLine}  {ex.Message}".Yellow().Bold());
+                    }
+                }
+            }
             return null;
         }
 
