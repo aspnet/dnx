@@ -163,9 +163,19 @@ var CAN_BUILD_ONECORE = '${Directory.Exists(WIN10_SDK_LIB) && Directory.GetFiles
 - // ===================== COMMON ===================== 
 
 #build-managed-projects target='build-common'
-    @{ var BUILD_DIR = BUILD_DIR2; }
-    kpm-pack each='var projectFile in MANAGED_PROJECTS' configuration='${Configuration2}' kpmPackOutputDir='${BUILD_DIR}'
     @{
+        var BUILD_DIR = BUILD_DIR2;
+        if (IsBuildV2) 
+        {
+              DnuPack("src/**", BUILD_DIR, Configuration2);
+        }
+        else
+        {
+            foreach(var projectFile in MANAGED_PROJECTS) 
+            {
+                DnuPack(projectFile, BUILD_DIR, Configuration2);
+            }
+        }
         foreach (var nupkg in Files.Include(Path.Combine(BUILD_DIR, "*/*.nupkg"))) 
         {
             File.Copy(nupkg, Path.Combine(BUILD_DIR, Path.GetFileName(nupkg)), true);
