@@ -56,11 +56,12 @@ namespace Microsoft.Framework.PackageManager.Restore.NuGet
             }
         }
 
-        internal static bool DetectNuGetV3(HttpSource httpSource, out Uri packageBaseAddress)
+        internal static bool DetectNuGetV3(HttpSource httpSource, bool noCache, out Uri packageBaseAddress)
         {
+            var cacheAgeLimit = noCache ? TimeSpan.Zero : TimeSpan.FromDays(7);
             try
             {
-                var result = httpSource.GetAsync(httpSource.BaseUri, "index_json", TimeSpan.FromHours(6)).Result;
+                var result = httpSource.GetAsync(httpSource.BaseUri, "index_json", cacheAgeLimit).Result;
                 using (var reader = new JsonTextReader(new StreamReader(result.Stream)))
                 {
                     var indexJson = JObject.Load(reader);

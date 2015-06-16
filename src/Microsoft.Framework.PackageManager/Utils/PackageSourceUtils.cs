@@ -43,7 +43,7 @@ namespace Microsoft.Framework.PackageManager
                     reports);
 
                 Uri packageBaseAddress;
-                if (NuGetv3Feed.DetectNuGetV3(httpSource, out packageBaseAddress))
+                if (NuGetv3Feed.DetectNuGetV3(httpSource, noCache, out packageBaseAddress))
                 {
                     if (packageBaseAddress == null)
                     {
