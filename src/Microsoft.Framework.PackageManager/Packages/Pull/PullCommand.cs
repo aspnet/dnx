@@ -1,4 +1,4 @@
-// Copyright (c) .NET Foundation. All rights reserved.
+﻿// Copyright (c) .NET Foundation. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 using System.Diagnostics;
@@ -19,11 +19,14 @@ namespace Microsoft.Framework.PackageManager.Packages
 
         public string RemotePackages { get; private set; }
 
+        public string RemoteKey { get; private set; }
+
         public bool Execute()
         {
             Reports = Options.Reports;
             LocalPackages = Options.SourcePackages ?? Directory.GetCurrentDirectory();
             RemotePackages = Options.RemotePackages;
+            RemoteKey = Options.RemoteKey;
 
             Options.Reports.Information.WriteLine(
                 "Pulling artifacts");
@@ -39,11 +42,13 @@ namespace Microsoft.Framework.PackageManager.Packages
 
             IRepositoryPublisher local = RepositoryPublishers.Create(
                 LocalPackages,
+                accessKey: null,
                 reports: Reports);
 
             IRepositoryPublisher remote = RepositoryPublishers.Create(
                 RemotePackages,
-                Reports);
+                accessKey: RemoteKey,
+                reports: Reports);
 
             // Recall what index to start pulling from remote
             var transmitRecord = FillOut(local.GetRepositoryTransmitRecord());
@@ -82,8 +87,6 @@ namespace Microsoft.Framework.PackageManager.Packages
 
                 // Apply the file changes to local
                 local.ApplyFileChanges(changeRecord, remote);
-
-                // Correct /{id}/{version}/$index.json files based on file changes
 
                 // Commit new change record to remote
                 local.StoreRepositoryChangeRecord(0, localZeroRecord);

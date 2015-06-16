@@ -1,4 +1,4 @@
-// Copyright (c) .NET Foundation. All rights reserved.
+﻿// Copyright (c) .NET Foundation. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 using System;
@@ -7,6 +7,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 namespace Microsoft.Framework.PackageManager.Packages.Workers
 {
@@ -44,6 +45,22 @@ namespace Microsoft.Framework.PackageManager.Packages.Workers
                 using (var writer = new StreamWriter(stream, Encoding.UTF8, 4096, leaveOpen: true))
                 {
                     writer.Write(text);
+                }
+                stream.Position = 0;
+                WriteArtifactStream(filePath, stream, createNew);
+            }
+        }
+
+        protected virtual void StoreFile(string filePath, JObject content, bool createNew)
+        {
+            using (var stream = new MemoryStream())
+            {
+                using (var writer = new StreamWriter(stream, Encoding.UTF8, 4096, leaveOpen: true))
+                {
+                    using (var jsonWriter = new JsonTextWriter(writer))
+                    {
+                        content.WriteTo(new JsonTextWriter(writer));
+                    }
                 }
                 stream.Position = 0;
                 WriteArtifactStream(filePath, stream, createNew);
@@ -103,11 +120,12 @@ namespace Microsoft.Framework.PackageManager.Packages.Workers
                             .Distinct()
                             .ToLookup(FirstPart);
 
+            var addIds = new List<string>();
+            var removeIds = new List<string>();
+
             foreach (var firstPart in alterations)
             {
                 Reports.Information.WriteLine("Working with {0}", firstPart.Key.Bold());
-
-                var nameIndexPath = firstPart + "/$index.json";
 
                 var addVersions = new List<string>();
                 var removeVersions = new List<string>();
@@ -122,10 +140,10 @@ namespace Microsoft.Framework.PackageManager.Packages.Workers
                     bool addedAllAssets;
                     bool removedAllAssets;
                     ChangeContents(
-                        firstTwoParts + "/$index.json", 
-                        addAssets, 
-                        removeAssets, 
-                        out addedAllAssets, 
+                        firstTwoParts + "/$content.json",
+                        addAssets,
+                        removeAssets,
+                        out addedAllAssets,
                         out removedAllAssets);
 
                     if (addedAllAssets)
@@ -138,21 +156,69 @@ namespace Microsoft.Framework.PackageManager.Packages.Workers
                     }
                 }
 
-                bool addedAllVersions;
-                bool removedAllVersions;
+                if (addVersions.Any() || removeVersions.Any())
+                {
+                    bool addedAllVersions;
+                    bool removedAllVersions;
+                    var versionsRecord = ChangeContents(
+                        firstPart.Key + "/$content.json",
+                        addVersions,
+                        removeVersions,
+                        out addedAllVersions,
+                        out removedAllVersions);
+
+                    StoreFile(
+                        firstPart.Key + "/index.json",
+                        new JObject(
+                            new JProperty(
+                                "versions",
+                                new JArray(versionsRecord.Contents.Select(x => new JValue(x))))
+                            ),
+                        false);
+
+                    if (addedAllVersions)
+                    {
+                        addIds.Add(firstPart.Key);
+                    }
+                    else if (removedAllVersions)
+                    {
+                        removeIds.Add(firstPart.Key);
+                    }
+                }
+            }
+
+            if (addIds.Any() || removeIds.Any())
+            {
+                bool addedAllIds;
+                bool removedAllIds;
                 ChangeContents(
-                    firstPart.Key + "/$index.json",
-                    addVersions,
-                    removeVersions,
-                    out addedAllVersions,
-                    out removedAllVersions);
+                    "$content.json",
+                    addIds,
+                    removeIds,
+                    out addedAllIds,
+                    out removedAllIds);
+
+                if (addedAllIds)
+                {
+                    StoreFile(
+                        "index.json",
+                        new JObject(
+                            new JProperty("version", "3.0.0-beta.1"),
+                            new JProperty(
+                                "resources",
+                                new JArray(
+                                    new JObject(
+                                        new JProperty("@id", "."),
+                                        new JProperty("@type", "PackageBaseAddress/3.0.0"))))),
+                        true);
+                }
             }
         }
 
-        private void ChangeContents(
-            string nameVersionIndexPath, 
-            IEnumerable<string> addItems, 
-            IEnumerable<string> removeItems, 
+        private RepositoryContentsRecord ChangeContents(
+            string nameVersionIndexPath,
+            IEnumerable<string> addItems,
+            IEnumerable<string> removeItems,
             out bool addedAll,
             out bool removedAll)
         {
@@ -176,22 +242,25 @@ namespace Microsoft.Framework.PackageManager.Packages.Workers
             {
                 StoreFile(nameVersionIndexPath, record, createNew: false);
             }
+
+            return record;
         }
 
         public virtual void ApplyFileChanges(RepositoryChangeRecord changeRecord, IRepositoryPublisher source)
         {
-            ApplyFileChanges(changeRecord);
-
-            foreach (var removeFile in changeRecord.Remove)
-            {
-                RemoveArtifact(removeFile);
-            }
             foreach (var addFile in changeRecord.Add)
             {
                 using (var inputStream = source.ReadArtifactStream(addFile))
                 {
                     WriteArtifactStream(addFile, inputStream, createNew: false);
                 }
+            }
+
+            ApplyFileChanges(changeRecord);
+
+            foreach (var removeFile in changeRecord.Remove)
+            {
+                RemoveArtifact(removeFile);
             }
         }
 
