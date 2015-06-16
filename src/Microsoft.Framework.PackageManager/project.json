@@ -6,6 +6,7 @@
         "Microsoft.Framework.NotNullAttribute.Sources": { "version": "1.0.0-*", "type": "build" },
         "Microsoft.Framework.Project": "1.0.0-*",
         "Microsoft.Framework.Runtime": "1.0.0-*",
+        "Microsoft.Framework.Runtime.CommandParsing.Sources": { "version": "1.0.0-*", "type": "build" },
         "Microsoft.Framework.Runtime.Compilation.Sources": { "version": "1.0.0-*", "type": "build" },
         "Microsoft.Framework.Runtime.Internals": { "version": "1.0.0-*", "type": "build" },
         "Microsoft.Framework.Runtime.Sources": { "version": "1.0.0-*", "type": "build" },
@@ -13,7 +14,6 @@
         "Newtonsoft.Json": "6.0.6"
     },
     "compile": [
-        "../Microsoft.Framework.ApplicationHost/Impl/**/*.cs",
         "../../submodules/FileSystem/src/Microsoft.Framework.FileSystemGlobbing/**/*.cs"
     ],
     "preprocess": [

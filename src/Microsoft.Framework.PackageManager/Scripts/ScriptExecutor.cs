@@ -6,7 +6,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using Microsoft.Framework.ApplicationHost.Impl.Syntax;
+using Microsoft.Framework.Runtime.CommandParsing;
 using Microsoft.Framework.Runtime;
 
 namespace Microsoft.Framework.PackageManager
