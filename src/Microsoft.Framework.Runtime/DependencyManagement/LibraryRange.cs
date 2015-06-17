@@ -25,11 +25,20 @@ namespace Microsoft.Framework.Runtime
         public LibraryRange(string name, bool frameworkReference)
         {
             Name = name;
+
             if (frameworkReference)
             {
-                _frameworkAssemblyName = Name;
-                Name = FrameworkReferencePrefix + Name;
+                if (Name.IndexOf(FrameworkReferencePrefix) == 0)
+                {
+                    _frameworkAssemblyName = Name.Substring(FrameworkReferencePrefix.Length);
+                }
+                else
+                {
+                    _frameworkAssemblyName = Name;
+                    Name = FrameworkReferencePrefix + Name;
+                }
             }
+
             IsGacOrFrameworkReference = frameworkReference;
         }
 
