@@ -79,6 +79,7 @@ var MANAGED_PROJECTS = '${FindAllProjects(
     "Microsoft.Framework.Runtime.Caching",
     "Microsoft.Framework.Runtime.Abstractions",
     "Microsoft.Framework.Runtime.Compilation.DesignTime",
+    "Microsoft.Framework.Runtime.CommandParsing.Sources",
     "Microsoft.Framework.Runtime.Sources",
     "Microsoft.Framework.Runtime.Loader",
     "Microsoft.Framework.Runtime.Roslyn",
@@ -661,7 +662,8 @@ var CAN_BUILD_ONECORE = '${Directory.Exists(WIN10_SDK_LIB) && Directory.GetFiles
                                   "Microsoft.Framework.DesignTimeHost" };
 
         var sharedSourceAssemblies = new [] { 
-            Path.Combine(BUILD_DIR2, "Microsoft.Framework.CommandLineUtils.Sources/**/*.*"), 
+            Path.Combine(BUILD_DIR2, "Microsoft.Framework.CommandLineUtils.Sources/**/*.*"),
+            Path.Combine(BUILD_DIR2, "Microsoft.Framework.Runtime.CommandParsing.Sources/**/*.*"), 
             Path.Combine(BUILD_DIR2, "Microsoft.Framework.Runtime.Sources/**/*.*"),
         };
         
