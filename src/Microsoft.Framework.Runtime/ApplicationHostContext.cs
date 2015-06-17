@@ -2,7 +2,9 @@
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Runtime.Versioning;
 using Microsoft.Framework.Runtime.Caching;
 using Microsoft.Framework.Runtime.Common.DependencyInjection;
@@ -38,12 +40,6 @@ namespace Microsoft.Framework.Runtime
 
             PackagesDirectory = packagesDirectory ?? NuGetDependencyResolver.ResolveRepositoryPath(RootDirectory);
 
-            var referenceAssemblyDependencyResolver = new ReferenceAssemblyDependencyResolver(FrameworkReferenceResolver);
-            NuGetDependencyProvider = new NuGetDependencyResolver(new PackageRepository(PackagesDirectory));
-            var gacDependencyResolver = new GacDependencyResolver();
-            ProjectDepencyProvider = new ProjectReferenceDependencyProvider(ProjectResolver);
-            var unresolvedDependencyProvider = new UnresolvedDependencyProvider();
-
             var projectName = PathUtility.GetDirectoryName(ProjectDirectory);
 
             Project project;
@@ -58,40 +54,27 @@ namespace Microsoft.Framework.Runtime
             }
 
             var projectLockJsonPath = Path.Combine(ProjectDirectory, LockFileReader.LockFileName);
-            var lockFileExists = File.Exists(projectLockJsonPath);
-            var validLockFile = false;
+            var lockFileReader = new LockFileReader();
+            var lockFile = lockFileReader.Read(projectLockJsonPath);
 
-            if (lockFileExists)
+            if (!skipLockFileValidation)
             {
-                var lockFileReader = new LockFileReader();
-                var lockFile = lockFileReader.Read(projectLockJsonPath);
-                validLockFile = lockFile.IsValidForProject(Project);
-
-                if (validLockFile || skipLockFileValidation)
-                {
-                    NuGetDependencyProvider.ApplyLockFile(lockFile);
-
-                    DependencyWalker = new DependencyWalker(new IDependencyProvider[] {
-                        ProjectDepencyProvider,
-                        NuGetDependencyProvider,
-                        referenceAssemblyDependencyResolver,
-                        gacDependencyResolver,
-                        unresolvedDependencyProvider
-                    });
-                }
+                lockFile.Validate(project);
             }
 
-            if ((!validLockFile && !skipLockFileValidation) || !lockFileExists)
-            {
-                // We don't add NuGetDependencyProvider to DependencyWalker
-                // It will leave all NuGet packages unresolved and give error message asking users to run "dnu restore"
-                DependencyWalker = new DependencyWalker(new IDependencyProvider[] {
-                    ProjectDepencyProvider,
-                    referenceAssemblyDependencyResolver,
-                    gacDependencyResolver,
-                    unresolvedDependencyProvider
-                });
-            }
+            NuGetDependencyProvider = new NuGetDependencyResolver(new PackageRepository(PackagesDirectory), lockFile);
+            var referenceAssemblyDependencyResolver = new ReferenceAssemblyDependencyResolver(FrameworkReferenceResolver);
+            var gacDependencyResolver = new GacDependencyResolver();
+            ProjectDepencyProvider = new ProjectReferenceDependencyProvider(ProjectResolver);
+            var unresolvedDependencyProvider = new UnresolvedDependencyProvider();
+
+            DependencyWalker = new DependencyWalker(new IDependencyProvider[] {
+                ProjectDepencyProvider,
+                NuGetDependencyProvider,
+                referenceAssemblyDependencyResolver,
+                gacDependencyResolver,
+                unresolvedDependencyProvider
+            });
 
             LibraryExportProvider = new CompositeLibraryExportProvider(new ILibraryExportProvider[] {
                 new ProjectLibraryExportProvider(ProjectResolver, ServiceProvider),

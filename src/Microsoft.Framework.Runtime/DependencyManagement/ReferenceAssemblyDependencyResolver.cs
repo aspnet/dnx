@@ -85,6 +85,11 @@ namespace Microsoft.Framework.Runtime
             }
         }
 
+        public IEnumerable<ICompilationMessage> GetDiagnostics()
+        {
+            return Enumerable.Empty<ICompilationMessage>();
+        }
+
         public ILibraryExport GetLibraryExport(ILibraryKey target)
         {
             // Did we even resolve this name, if not then do nothing

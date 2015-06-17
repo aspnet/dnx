@@ -22,7 +22,9 @@ namespace Microsoft.Framework.PackageManager
         {
             using (var stream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read))
             {
-                return Read(stream);
+                var lockFile = Read(stream);
+                lockFile.Path = filePath;
+                return lockFile;
             }
         }
 

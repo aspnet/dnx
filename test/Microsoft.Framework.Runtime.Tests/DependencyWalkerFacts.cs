@@ -214,6 +214,11 @@ namespace Loader.Tests
             FrameworkName = frameworkName;
         }
 
+        public IEnumerable<ICompilationMessage> GetDiagnostics()
+        {
+            return Enumerable.Empty<ICompilationMessage>();
+        }
+
         private static LibraryDependency CreateDependency(LibraryDescription libraryDescription)
         {
             return new LibraryDependency

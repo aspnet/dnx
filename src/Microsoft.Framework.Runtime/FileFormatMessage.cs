@@ -63,8 +63,8 @@ namespace Microsoft.Framework.Runtime
             return other != null &&
                 StartLine == other.StartLine &&
                 StartColumn == other.StartColumn &&
-                Message.Equals(other.Message, StringComparison.Ordinal) &&
-                SourceFilePath.Equals(other.SourceFilePath, StringComparison.OrdinalIgnoreCase);
+                string.Equals(Message, other.Message, StringComparison.Ordinal) &&
+                string.Equals(SourceFilePath, other.SourceFilePath, StringComparison.OrdinalIgnoreCase);
         }
 
         public override int GetHashCode()

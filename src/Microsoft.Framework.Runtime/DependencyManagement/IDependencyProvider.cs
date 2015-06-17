@@ -13,5 +13,7 @@ namespace Microsoft.Framework.Runtime
         void Initialize(IEnumerable<LibraryDescription> dependencies, FrameworkName targetFramework, string runtimeIdentifier);
 
         IEnumerable<string> GetAttemptedPaths(FrameworkName targetFramework);
+
+        IEnumerable<ICompilationMessage> GetDiagnostics();
     }
 }

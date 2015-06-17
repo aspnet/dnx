@@ -18,11 +18,18 @@ namespace Microsoft.Framework.Runtime.DependencyManagement
 
         public LockFile Read(string filePath)
         {
+            if (!File.Exists(filePath))
+            {
+                return new LockFile();
+            }
+
             using (var stream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read))
             {
                 try
                 {
-                    return Read(stream);
+                    var lockFile = Read(stream);
+                    lockFile.Path = filePath;
+                    return lockFile;
                 }
                 catch (FileFormatException ex)
                 {
