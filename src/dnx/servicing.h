@@ -9,6 +9,6 @@ namespace dnx
 {
     namespace servicing
     {
-        std::wstring get_runtime_path(const std::wstring& servicing_root, TraceWriter& trace_writer);
+        std::wstring get_runtime_path(const std::wstring& servicing_root, bool append_servicing_folder, TraceWriter& trace_writer);
     }
 }

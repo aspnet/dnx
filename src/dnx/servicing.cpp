@@ -31,11 +31,12 @@ namespace
     {
         const std::string runtime_qualifier = std::string{ "dnx|" } + runtime_moniker + "|" + ProductVersionStr + "=";
 
+        std::wstring runtime_replacement;
         for (std::string line; std::getline(input, line); )
         {
             if (line.compare(0, runtime_qualifier.length(), runtime_qualifier) == 0)
             {
-                return dnx::utils::to_wstring(line.substr(runtime_qualifier.length()));
+                runtime_replacement = dnx::utils::to_wstring(line.substr(runtime_qualifier.length()));
             }
         }
 
@@ -44,7 +45,7 @@ namespace
             trace_writer.Write(L"Error occured while reading contents of servicing index file.", false);
         }
 
-        return L"";
+        return runtime_replacement;
     }
 
     std::wstring get_full_replacement_path(const std::wstring& servicing_root, const std::wstring& runtime_replacement_path)
@@ -59,10 +60,13 @@ namespace dnx
 {
     namespace servicing
     {
-        std::wstring get_runtime_path(const std::wstring& servicing_root_parent, TraceWriter& trace_writer)
+        std::wstring get_runtime_path(const std::wstring& servicing_root_parent, bool append_servicing_folder, TraceWriter& trace_writer)
         {
-            auto servicing_root = utils::path_combine(servicing_root_parent, std::wstring(L"Microsoft DNX"));
-            auto servicing_manifest_path = utils::path_combine(servicing_root, std::wstring(L"Servicing\\index.txt"));
+            auto servicing_root = append_servicing_folder
+                ? utils::path_combine(servicing_root_parent, std::wstring(L"Microsoft DNX\\Servicing"))
+                : servicing_root_parent;
+
+            auto servicing_manifest_path = utils::path_combine(servicing_root, std::wstring(L"index.txt"));
 
             // index.txt is ASCII
             std::ifstream servicing_manifest;

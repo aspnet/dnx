@@ -87,20 +87,29 @@ namespace
 {
     std::wstring get_runtime_path(TraceWriter& trace_writer)
     {
-        wchar_t program_files_path_buffer[MAX_PATH];
-        wchar_t* program_files_paths[] =
+        std::vector<wchar_t*> servicing_locations =
         {
-            L"ProgramFiles(x86)",
-#if !defined(_M_IX86)   // in case of 32-bit processes both ProgramFiles and ProgramFiles(x86) point to ProgramFiles(x86)
-            L"ProgramFiles"
-#endif
+            L"DNX_SERVICING",
+            L"ProgramFiles(x86)"
         };
 
-        for (auto i = 0; i < sizeof(program_files_paths)/sizeof(wchar_t*); i++)
+        wchar_t servicing_location_buffer[MAX_PATH];
+        // The servicing index should be always under %ProgramFiles(x86)% however
+        // on 32-bit OSes there is only %ProgramFiles%
+        if (GetEnvironmentVariable(L"ProgramFiles(x86)", servicing_location_buffer, MAX_PATH) == 0)
         {
-            if (GetEnvironmentVariable(program_files_paths[i], program_files_path_buffer, MAX_PATH) != 0)
+            servicing_locations.push_back(L"ProgramFiles");
+        }
+
+        for (auto servicing_location : servicing_locations)
+        {
+            if (GetEnvironmentVariable(servicing_location, servicing_location_buffer, MAX_PATH) != 0)
             {
-                auto runtime_path = dnx::servicing::get_runtime_path(program_files_path_buffer, trace_writer);
+                // %DNX_SERVICING% should point directly to servicing folder. For program files we need to append the
+                // actual servicing folder location to %ProgramFilesXXX%
+                auto append_servicing_folder = servicing_location != servicing_locations.front();
+                auto runtime_path = dnx::servicing::get_runtime_path(servicing_location_buffer, append_servicing_folder, trace_writer);
+
                 if (runtime_path.length() > 0)
                 {
                     return dnx::utils::path_combine(runtime_path, L"bin\\");
