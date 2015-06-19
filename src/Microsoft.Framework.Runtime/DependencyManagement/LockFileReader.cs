@@ -6,11 +6,12 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Runtime.Versioning;
+using System.Threading;
 using Microsoft.Framework.Runtime.Json;
 using NuGet;
 
 namespace Microsoft.Framework.Runtime.DependencyManagement
-{    
+{
     internal class LockFileReader
     {
         public const int Version = -9996;
@@ -18,7 +19,7 @@ namespace Microsoft.Framework.Runtime.DependencyManagement
 
         public LockFile Read(string filePath)
         {
-            using (var stream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read))
+            using (var stream = OpenFileStream(filePath))
             {
                 try
                 {
@@ -33,6 +34,34 @@ namespace Microsoft.Framework.Runtime.DependencyManagement
                     throw FileFormatException.Create(ex, filePath);
                 }
             }
+        }
+        
+        private static FileStream OpenFileStream(string filePath)
+        {
+            // Retry 3 times before re-throw the exception.
+            // It mitigates the race condition when DTH read lock file while VS is restoring projects.
+
+            int retry = 3;
+            while (true)
+            {
+                try
+                {
+                    return new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read);
+                }
+                catch (Exception)
+                {
+                    if (retry > 0)
+                    {
+                        retry--;
+                        Thread.Sleep(100);
+                    }
+                    else
+                    {
+                        throw;
+                    }
+                }
+            }
+
         }
 
         internal LockFile Read(Stream stream)
@@ -254,7 +283,7 @@ namespace Microsoft.Framework.Runtime.DependencyManagement
             {
                 return (json as JsonString).Value;
             }
-            else if(json is JsonNull)
+            else if (json is JsonNull)
             {
                 return null;
             }
