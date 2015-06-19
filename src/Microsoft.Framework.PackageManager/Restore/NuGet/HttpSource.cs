@@ -12,6 +12,8 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.Framework.Runtime.Internal;
+using System.Threading;
+using Microsoft.Framework.Runtime;
 
 namespace Microsoft.Framework.PackageManager.Restore.NuGet
 {
@@ -27,6 +29,11 @@ namespace Microsoft.Framework.PackageManager.Restore.NuGet
         private string _proxyUserName;
         private string _proxyPassword;
 #endif
+
+        // Prevent HttpSource instances from making simultaneous requests.
+        // HttpClient.SendAsync starts lagging and throwing TaskCanceledExceptions on Mono
+        // if there are too many simultaneous requests.
+        private readonly SemaphoreSlim _requestSemaphore = new SemaphoreSlim(1, 1);
 
         public HttpSource(
             string baseUri,
@@ -99,9 +106,6 @@ namespace Microsoft.Framework.PackageManager.Restore.NuGet
         internal async Task<HttpSourceResult> GetAsync(string uri, string cacheKey, TimeSpan cacheAgeLimit,
             Action<Stream> ensureValidContents = null, bool throwNotFound = true)
         {
-            Stopwatch sw = new Stopwatch();
-            sw.Start();
-
             var result = await TryCache(uri, cacheKey, cacheAgeLimit);
             if (result.Stream != null)
             {
@@ -109,110 +113,129 @@ namespace Microsoft.Framework.PackageManager.Restore.NuGet
                 return result;
             }
 
-            _reports.Quiet.WriteLine(string.Format("  {0} {1}", "GET".Yellow(), uri));
 
-            var request = new HttpRequestMessage(HttpMethod.Get, uri);
-            if (_userName != null)
+            if (PlatformHelper.IsMono)
             {
-                var token = Convert.ToBase64String(Encoding.ASCII.GetBytes(_userName + ":" + _password));
-                request.Headers.Authorization = new AuthenticationHeaderValue("Basic", token);
-            };
+                await _requestSemaphore.WaitAsync();
+            }
+
+            try
+            {
+                _reports.Quiet.WriteLine(string.Format("  {0} {1}", "GET".Yellow(), uri));
+
+                var request = new HttpRequestMessage(HttpMethod.Get, uri);
+                if (_userName != null)
+                {
+                    var token = Convert.ToBase64String(Encoding.ASCII.GetBytes(_userName + ":" + _password));
+                    request.Headers.Authorization = new AuthenticationHeaderValue("Basic", token);
+                };
 
 #if DNXCORE50
-            if (_proxyUserName != null)
-            {
-                var proxyToken = Convert.ToBase64String(Encoding.ASCII.GetBytes(_proxyUserName + ":" + _proxyPassword));
-                request.Headers.ProxyAuthorization = new AuthenticationHeaderValue("Basic", proxyToken);
-            }
+                if (_proxyUserName != null)
+                {
+                    var proxyToken = Convert.ToBase64String(Encoding.ASCII.GetBytes(_proxyUserName + ":" + _proxyPassword));
+                    request.Headers.ProxyAuthorization = new AuthenticationHeaderValue("Basic", proxyToken);
+                }
 #endif
 
-            // Write the response to a file and use the file stream to avoid memory explosion
-            using (var responseStream = new FileStream(
-                Path.GetTempFileName(),
-                FileMode.Create,
-                FileAccess.ReadWrite,
-                FileShare.None,
-                bufferSize: 8192,
-                options: FileOptions.Asynchronous | FileOptions.DeleteOnClose))
-            {
-                HttpStatusCode statusCode;
+                Stopwatch sw = new Stopwatch();
+                sw.Start();
 
-                using (var response = await _client.SendAsync(request, HttpCompletionOption.ResponseHeadersRead))
+                // Write the response to a file and use the file stream to avoid memory explosion
+                using (var responseStream = new FileStream(
+                    Path.GetTempFileName(),
+                    FileMode.Create,
+                    FileAccess.ReadWrite,
+                    FileShare.None,
+                    bufferSize: 8192,
+                    options: FileOptions.Asynchronous | FileOptions.DeleteOnClose))
                 {
-                    if (!throwNotFound && response.StatusCode == HttpStatusCode.NotFound)
+                    HttpStatusCode statusCode;
+
+                    using (var response = await _client.SendAsync(request, HttpCompletionOption.ResponseHeadersRead))
                     {
-                        _reports.Quiet.WriteLine(
-                            $"  {response.StatusCode.ToString().Green()} {uri} {sw.ElapsedMilliseconds.ToString().Bold()}ms");
-                        return new HttpSourceResult();
-                    }
-
-                    response.EnsureSuccessStatusCode();
-                    statusCode = response.StatusCode;
-                    await response.Content.CopyToAsync(responseStream);
-                }
-
-                responseStream.Seek(0, SeekOrigin.Begin);
-                ensureValidContents?.Invoke(responseStream);
-
-                var newFile = result.CacheFileName + "-new";
-
-                // Zero value of TTL means we always download the latest package
-                // So we write to a temp file instead of cache
-                if (cacheAgeLimit.Equals(TimeSpan.Zero))
-                {
-                    result.CacheFileName = Path.GetTempFileName();
-                    newFile = Path.GetTempFileName();
-                }
-
-                // The update of a cached file is divided into two steps:
-                // 1) Delete the old file. 2) Create a new file with the same name.
-                // To prevent race condition among multiple processes, here we use a lock to make the update atomic.
-                await ConcurrencyUtilities.ExecuteWithFileLocked(result.CacheFileName, action: async _ =>
-                {
-                    using (var stream = CreateAsyncFileStream(
-                        newFile,
-                        FileMode.Create,
-                        FileAccess.ReadWrite,
-                        FileShare.ReadWrite | FileShare.Delete))
-                    {
-                        responseStream.Seek(0, SeekOrigin.Begin);
-                        await responseStream.CopyToAsync(stream);
-                        await stream.FlushAsync();
-                    }
-
-                    if (File.Exists(result.CacheFileName))
-                    {
-                        // Process B can perform deletion on an opened file if the file is opened by process A
-                        // with FileShare.Delete flag. However, the file won't be actually deleted until A close it.
-                        // This special feature can cause race condition, so we never delete an opened file.
-                        if (!IsFileAlreadyOpen(result.CacheFileName))
+                        if (!throwNotFound && response.StatusCode == HttpStatusCode.NotFound)
                         {
-                            File.Delete(result.CacheFileName);
+                            _reports.Quiet.WriteLine(
+                                $"  {response.StatusCode.ToString().Green()} {uri} {sw.ElapsedMilliseconds.ToString().Bold()}ms");
+                            return new HttpSourceResult();
                         }
+
+                        response.EnsureSuccessStatusCode();
+                        statusCode = response.StatusCode;
+                        await response.Content.CopyToAsync(responseStream);
                     }
 
-                    // If the destination file doesn't exist, we can safely perform moving operation.
-                    // Otherwise, moving operation will fail.
-                    if (!File.Exists(result.CacheFileName))
+                    responseStream.Seek(0, SeekOrigin.Begin);
+                    ensureValidContents?.Invoke(responseStream);
+
+                    var newFile = result.CacheFileName + "-new";
+
+                    // Zero value of TTL means we always download the latest package
+                    // So we write to a temp file instead of cache
+                    if (cacheAgeLimit.Equals(TimeSpan.Zero))
                     {
-                        File.Move(
-                            newFile,
-                            result.CacheFileName);
+                        result.CacheFileName = Path.GetTempFileName();
+                        newFile = Path.GetTempFileName();
                     }
 
-                    // Even the file deletion operation above succeeds but the file is not actually deleted,
-                    // we can still safely read it because it means that some other process just updated it
-                    // and we don't need to update it with the same content again.
-                    result.Stream = CreateAsyncFileStream(
-                        result.CacheFileName,
-                        FileMode.Open,
-                        FileAccess.Read,
-                        FileShare.Read | FileShare.Delete);
+                    // The update of a cached file is divided into two steps:
+                    // 1) Delete the old file. 2) Create a new file with the same name.
+                    // To prevent race condition among multiple processes, here we use a lock to make the update atomic.
+                    await ConcurrencyUtilities.ExecuteWithFileLocked(result.CacheFileName, action: async _ =>
+                    {
+                        using (var stream = CreateAsyncFileStream(
+                            newFile,
+                            FileMode.Create,
+                            FileAccess.ReadWrite,
+                            FileShare.ReadWrite | FileShare.Delete))
+                        {
+                            responseStream.Seek(0, SeekOrigin.Begin);
+                            await responseStream.CopyToAsync(stream);
+                            await stream.FlushAsync();
+                        }
 
-                    return 0;
-                });
+                        if (File.Exists(result.CacheFileName))
+                        {
+                            // Process B can perform deletion on an opened file if the file is opened by process A
+                            // with FileShare.Delete flag. However, the file won't be actually deleted until A close it.
+                            // This special feature can cause race condition, so we never delete an opened file.
+                            if (!IsFileAlreadyOpen(result.CacheFileName))
+                            {
+                                File.Delete(result.CacheFileName);
+                            }
+                        }
 
-                _reports.Quiet.WriteLine(string.Format("  {1} {0} {2}ms", uri, statusCode.ToString().Green(), sw.ElapsedMilliseconds.ToString().Bold()));
+                        // If the destination file doesn't exist, we can safely perform moving operation.
+                        // Otherwise, moving operation will fail.
+                        if (!File.Exists(result.CacheFileName))
+                        {
+                            File.Move(
+                                newFile,
+                                result.CacheFileName);
+                        }
+
+                        // Even the file deletion operation above succeeds but the file is not actually deleted,
+                        // we can still safely read it because it means that some other process just updated it
+                        // and we don't need to update it with the same content again.
+                        result.Stream = CreateAsyncFileStream(
+                            result.CacheFileName,
+                            FileMode.Open,
+                            FileAccess.Read,
+                            FileShare.Read | FileShare.Delete);
+
+                        return 0;
+                    });
+
+                    _reports.Quiet.WriteLine(string.Format("  {1} {0} {2}ms", uri, statusCode.ToString().Green(), sw.ElapsedMilliseconds.ToString().Bold()));
+                }
+            }
+            finally
+            {
+                if (PlatformHelper.IsMono)
+                {
+                    _requestSemaphore.Release();
+                }
             }
 
             return result;
