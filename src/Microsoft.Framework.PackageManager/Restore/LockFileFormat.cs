@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Runtime.Versioning;
+using System.Threading;
 using Microsoft.Framework.Runtime.DependencyManagement;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -20,10 +21,38 @@ namespace Microsoft.Framework.PackageManager
 
         public LockFile Read(string filePath)
         {
-            using (var stream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read))
+            using (var stream = OpenFileStream(filePath))
             {
                 return Read(stream);
             }
+        }
+
+        private static FileStream OpenFileStream(string filePath)
+        {
+            // Retry 3 times before re-throw the exception.
+            // It mitigates the race condition when DTH read lock file while VS is restoring projects.
+
+            int retry = 3;
+            while (true)
+            {
+                try
+                {
+                    return new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read);
+                }
+                catch (Exception)
+                {
+                    if (retry > 0)
+                    {
+                        retry--;
+                        Thread.Sleep(100);
+                    }
+                    else
+                    {
+                        throw;
+                    }
+                }
+            }
+
         }
 
         public LockFile Read(Stream stream)
