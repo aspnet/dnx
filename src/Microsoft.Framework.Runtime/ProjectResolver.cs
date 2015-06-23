@@ -79,9 +79,9 @@ namespace Microsoft.Framework.Runtime
 
             // Resolve all of the potential projects
             _projects = _searchPaths.Select(path => new DirectoryInfo(path))
-                .Distinct(new DirectoryInfoFullPathComparator())
                 .Where(d => d.Exists)
-                .SelectMany(d => d.EnumerateDirectories())
+                .SelectMany(d => new[] { d }.Concat(d.EnumerateDirectories()))
+                .Distinct(new DirectoryInfoFullPathComparator())
                 .Select(dirInfoToProjectInfo)
                 .ToLookup(d => d.Name);
         }

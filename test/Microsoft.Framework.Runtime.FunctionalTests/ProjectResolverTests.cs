@@ -194,5 +194,36 @@ namespace Microsoft.Framework.Runtime.FunctionalTests
                 Assert.NotNull(project);
             }
         }
+
+        [Fact]
+        public void CanSpecifyProjectDirectoryInGlobalJson()
+        {
+            var solutionStructure = @"{
+  'global.json': '',
+  'src': {
+    'ProjectA': {
+      'project.json': '{}'
+    }
+  },
+  'ProjectB': {
+    'project.json': '{}'
+  }
+}";
+
+            using (var solutionPath = new DisposableDir())
+            {
+                DirTree.CreateFromJson(solutionStructure)
+                    .WithFileContents("global.json", @"{
+  ""projects"": [""src"", ""ProjectB""]
+}")
+                    .WriteTo(solutionPath);
+
+                var resolutionRoot = Path.Combine(solutionPath, "src", "ProjectA");
+
+                Project project;
+                Assert.True(new ProjectResolver(resolutionRoot).TryResolveProject("ProjectB", out project));
+                Assert.NotNull(project);
+            }
+        }
     }
 }
