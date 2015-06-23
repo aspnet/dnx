@@ -26,6 +26,7 @@
       <PreprocessorDefinitions>_CONSOLE;%(PreprocessorDefinitions);$(Defines)</PreprocessorDefinitions>
       <TreatWarningAsError Condition="'$(TreatWarningsAsErrors)' == ''">true</TreatWarningAsError>
       <SDLCheck>true</SDLCheck>
+      <AdditionalIncludeDirectories>$(MsBuildThisFileDirectory)..\src\dnx.common\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>

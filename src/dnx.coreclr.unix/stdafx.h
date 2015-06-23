@@ -13,7 +13,4 @@
 #include <libproc.h>
 #endif
 
-typedef int BOOL;
 typedef const char* LPCTSTR;
-
-#define _T(str) str

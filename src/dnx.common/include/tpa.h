@@ -3,5 +3,7 @@
 
 #pragma once
 
-BOOL CreateTpaBase(LPCTSTR** ppNames, size_t* pcNames, bool bNative);
-BOOL FreeTpaBase(const LPCTSTR* values);
+#include <vector>
+#include "xplat.h"
+
+const std::vector<const dnx::char_t *> CreateTpaBase(bool bNative);

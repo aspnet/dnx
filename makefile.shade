@@ -346,7 +346,7 @@ var CAN_BUILD_ONECORE = '${Directory.Exists(WIN10_SDK_LIB) && Directory.GetFiles
 
         Directory.CreateDirectory(soOutputDir);
 
-        Exec(CLANG, string.Format("-fPIC -shared {0} -g -o {1} -DPLATFORM_LINUX --std=c++11 -ldl", string.Join(" ", sourceFiles), soOutputPath));
+        Exec(CLANG, string.Format("-fPIC -shared {0} -g -o {1} -DPLATFORM_LINUX --std=c++11 -ldl -Isrc/dnx.common/include", string.Join(" ", sourceFiles), soOutputPath));
     }
 
     copy sourceDir='${soOutputDir}' include='*.so' outputDir='${Path.Combine(BUILD_DIR2, BOOTSTRAPPER_CORECLR_NAME + ".unix")}' overwrite='${true}'
@@ -366,7 +366,7 @@ var CAN_BUILD_ONECORE = '${Directory.Exists(WIN10_SDK_LIB) && Directory.GetFiles
 
         Directory.CreateDirectory(soOutputDir);
 
-        Exec(CLANG, string.Format("{0} -g -o {1} -DCORECLR_LINUX -DPLATFORM_UNIX -std=c++11 -ldl", string.Join(" ", sourceFiles), soOutputPath));
+        Exec(CLANG, string.Format("{0} -g -o {1} -DCORECLR_LINUX -DPLATFORM_UNIX -std=c++11 -ldl -Isrc/dnx.common/include", string.Join(" ", sourceFiles), soOutputPath));
     }
 
     copy sourceDir='${soOutputDir}' include='*' outputDir='${Path.Combine(BUILD_DIR2, BOOTSTRAPPER_FOLDER_NAME, "bin", "linux", "x64")}' overwrite='${true}'
@@ -386,7 +386,7 @@ var CAN_BUILD_ONECORE = '${Directory.Exists(WIN10_SDK_LIB) && Directory.GetFiles
 
         Directory.CreateDirectory(soOutputDir);
 
-        Exec(CLANG, string.Format("-fPIC -shared {0} -g -o {1} -DPLATFORM_DARWIN --std=c++11 -ldl", string.Join(" ", sourceFiles), soOutputPath));
+        Exec(CLANG, string.Format("-fPIC -shared {0} -g -o {1} -DPLATFORM_DARWIN --std=c++11 -ldl -Isrc/dnx.common/include", string.Join(" ", sourceFiles), soOutputPath));
     }
 
     copy sourceDir='${soOutputDir}' include='*.dylib' outputDir='${Path.Combine(BUILD_DIR2, BOOTSTRAPPER_CORECLR_NAME + ".unix")}' overwrite='${true}'
@@ -406,7 +406,7 @@ var CAN_BUILD_ONECORE = '${Directory.Exists(WIN10_SDK_LIB) && Directory.GetFiles
 
         Directory.CreateDirectory(soOutputDir);
 
-        Exec(CLANG, string.Format("{0} -g -o {1} -DCORECLR_DARWIN -DPLATFORM_UNIX -std=c++11 -ldl", string.Join(" ", sourceFiles), soOutputPath));
+        Exec(CLANG, string.Format("{0} -g -o {1} -DCORECLR_DARWIN -DPLATFORM_UNIX -std=c++11 -ldl -Isrc/dnx.common/include", string.Join(" ", sourceFiles), soOutputPath));
     }
 
     copy sourceDir='${soOutputDir}' include='*' outputDir='${Path.Combine(BUILD_DIR2, BOOTSTRAPPER_FOLDER_NAME, "bin", "darwin", "x64")}' overwrite='${true}'
@@ -1403,47 +1403,32 @@ functions @{
         content.Add(@"// Copyright (c) .NET Foundation. All rights reserved.");
         content.Add(@"// Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.");
         content.Add(@"");
-        content.Add(@"// This file will be dynamically updated during build to generate a ");
+        content.Add(@"// This file will be dynamically updated during build to generate a");
         content.Add(@"// minimal trusted platform assemblies list");
         content.Add(string.Empty);
         content.Add("#include \"stdafx.h\"");
-        content.Add("#include \"tpa.h\"");
+        content.Add("#include <vector>");
+        content.Add("#include <string>");
+        content.Add("#include \"xplat.h\"");
         content.Add(string.Empty);
-        content.Add("BOOL CreateTpaBase(LPCTSTR** ppNames, size_t* pcNames, bool bNative)");
+        content.Add("const std::vector<const dnx::char_t*> CreateTpaBase(bool native_images)");
         content.Add("{");
-        content.Add("    const size_t count = " + tpa.Length + ";");
-        content.Add("    LPCTSTR* pArray = new LPCTSTR[count];");
-        content.Add(string.Empty);
-        content.Add("    if (bNative)");
-        content.Add("    {");
-
+        content.Add("    return native_images");
+        content.Add("        ? std::vector<const dnx::char_t*>");
+        content.Add("        {");
         for (int i = 0; i < tpa.Length; ++i)
         {
-            content.Add(string.Format("        pArray[{0}] = _T(\"{1}{2}\");", i, tpa[i], ".ni.dll"));
+            content.Add(string.Format("            _X(\"{1}{2}\"),", i, tpa[i], ".ni.dll"));
         }
-
-        content.Add("    }");
-        content.Add("    else");
-        content.Add("    {");
-
+        content.Add("        }");
+        content.Add("        : std::vector<const dnx::char_t*>");
+        content.Add("        {");
         for (int i = 0; i < tpa.Length; ++i)
         {
-            content.Add(string.Format("        pArray[{0}] = _T(\"{1}{2}\");", i, tpa[i], ".dll"));
+            content.Add(string.Format("            _X(\"{1}{2}\"),", i, tpa[i], ".dll"));
         }
 
-        content.Add("    }");
-        content.Add(string.Empty);
-        content.Add("    *ppNames = pArray;");
-        content.Add("    *pcNames = count;");
-        content.Add(string.Empty);
-        content.Add("    return true;");
-        content.Add("}");
-        content.Add(string.Empty);
-        content.Add("BOOL FreeTpaBase(const LPCTSTR* values)");
-        content.Add("{");
-        content.Add("    delete[] values;");
-        content.Add(string.Empty);
-        content.Add("    return true;");
+        content.Add("        };");
         content.Add("}");
 
         File.WriteAllLines(output, content);

@@ -69,30 +69,18 @@ std::string GetPathToBootstrapper()
 
 bool GetTrustedPlatformAssembliesList(const std::string& tpaDirectory, bool isNative, std::string& trustedPlatformAssemblies)
 {
-    size_t cTpaAssemblyNames = 0;
-    LPCTSTR* ppszTpaAssemblyNames = nullptr;
-
-    CreateTpaBase(&ppszTpaAssemblyNames, &cTpaAssemblyNames, isNative);
-
-    assert(ppszTpaAssemblyNames != nullptr || cTpaAssemblyNames == 0);
-
-    //TODO: The Windows version of this actaully ensures the files are present.  We just fail for native and assume MSIL is present
+    //TODO: The Windows version of this actually ensures the files are present.  We just fail for native and assume MSIL is present
     if (isNative)
     {
         return false;
     }
 
-    for (size_t i = 0; i < cTpaAssemblyNames; i++)
+    for (auto assembly_name : CreateTpaBase(isNative))
     {
         trustedPlatformAssemblies.append(tpaDirectory);
         trustedPlatformAssemblies.append("/");
-        trustedPlatformAssemblies.append(ppszTpaAssemblyNames[i]);
+        trustedPlatformAssemblies.append(assembly_name);
         trustedPlatformAssemblies.append(":");
-    }
-
-    if (ppszTpaAssemblyNames)
-    {
-        FreeTpaBase(ppszTpaAssemblyNames);
     }
 
     return true;

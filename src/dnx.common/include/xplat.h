@@ -9,7 +9,7 @@
 namespace dnx
 {
 
-#ifndef PLATFORM_UNIX
+#if !defined(PLATFORM_UNIX) && !defined(PLATFORM_LINUX) && !defined(PLATFORM_DARWIN)
 
 typedef wchar_t char_t;
 typedef std::wstring xstring_t;

@@ -52,7 +52,6 @@
     <ClInclude Include="targetver.h" />
     <ClInclude Include="TraceWriter.h" />
     <ClInclude Include="utils.h" />
-    <ClInclude Include="xplat.h" />
     <ClInclude Include="version.h" />
   </ItemGroup>
   <ItemGroup>

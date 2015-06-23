@@ -36,7 +36,6 @@
     <ClInclude Include="resource.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="targetver.h" />
-    <ClInclude Include="tpa.h" />
     <ClInclude Include="version.h" />
   </ItemGroup>
   <ItemGroup>
@@ -56,10 +55,8 @@
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
-    <Target Name="CopyManagedForDebuggingLocally" AfterTargets="Build" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-        <Copy SourceFiles="bin\$(Platform)\$(Configuration)\$(ProjectName).dll"
-              DestinationFolder="$(SolutionDir)\artifacts\build\dnx-coreclr-win-x86\bin" />
-        <Copy SourceFiles="bin\$(Platform)\$(Configuration)\$(ProjectName).pdb"
-              DestinationFolder="$(SolutionDir)\artifacts\build\dnx-coreclr-win-x86\bin" />
-    </Target>
+  <Target Name="CopyManagedForDebuggingLocally" AfterTargets="Build" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Copy SourceFiles="bin\$(Platform)\$(Configuration)\$(ProjectName).dll" DestinationFolder="$(SolutionDir)\artifacts\build\dnx-coreclr-win-x86\bin" />
+    <Copy SourceFiles="bin\$(Platform)\$(Configuration)\$(ProjectName).pdb" DestinationFolder="$(SolutionDir)\artifacts\build\dnx-coreclr-win-x86\bin" />
+  </Target>
 </Project>

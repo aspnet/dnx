@@ -26,60 +26,28 @@ void GetModuleDirectory(HMODULE module, LPWSTR szPath)
 }
 
 // Generate a list of trusted platform assemblies.
-bool GetTrustedPlatformAssembliesList(WCHAR* szDirectory, bool bNative, LPWSTR pszTrustedPlatformAssemblies, size_t cchTrustedPlatformAssemblies)
+bool GetTrustedPlatformAssembliesList(const wchar_t* szDirectory, bool bNative, wchar_t* pszTrustedPlatformAssemblies, size_t cchTrustedPlatformAssemblies)
 {
-    bool ret = true;
-    errno_t errno = 0;
-    WIN32_FIND_DATA ffd = {};
-    size_t cTpaAssemblyNames = 0;
-    LPCTSTR* ppszTpaAssemblyNames = nullptr;
-
     // Build the list of the tpa assemblies
-    CreateTpaBase(&ppszTpaAssemblyNames, &cTpaAssemblyNames, bNative);
+    auto tpas = CreateTpaBase(bNative);
 
     // Scan the directory to see if all the files in TPA list exist
-    for (size_t i = 0; i < cTpaAssemblyNames; ++i)
+    for (auto assembly_name : tpas)
     {
-        WCHAR wszPattern[MAX_PATH];
-        wszPattern[0] = L'\0';
-
-        errno = wcscpy_s(wszPattern, _countof(wszPattern), szDirectory);
-        CHECK_RETURN_VALUE_FAIL_EXIT_VIA_FINISHED_SETSTATE(errno, ret = false);
-
-        errno = wcscat_s(wszPattern, _countof(wszPattern), ppszTpaAssemblyNames[i]);
-        CHECK_RETURN_VALUE_FAIL_EXIT_VIA_FINISHED_SETSTATE(errno, ret = false);
-
-        HANDLE findHandle = FindFirstFile(wszPattern, &ffd);
-
-        if ((findHandle == INVALID_HANDLE_VALUE) ||
-            (ffd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY))
+        auto attributes = GetFileAttributes(std::wstring(szDirectory).append(assembly_name).c_str());
+        if (attributes == INVALID_FILE_ATTRIBUTES || (attributes & FILE_ATTRIBUTE_DIRECTORY))
         {
-            // if file is missing or a directory is found, breaks the loop and
-            // set the missing flag to true
-            ret = false;
-            goto Finished;
+            return false;
         }
     }
 
-    for (size_t i = 0; i < cTpaAssemblyNames; ++i)
+    std::wstring tpa_paths;
+    for (auto assembly_name : tpas)
     {
-        errno = wcscat_s(pszTrustedPlatformAssemblies, cchTrustedPlatformAssemblies, szDirectory);
-        CHECK_RETURN_VALUE_FAIL_EXIT_VIA_FINISHED_SETSTATE(errno, ret = false);
-
-        errno = wcscat_s(pszTrustedPlatformAssemblies, cchTrustedPlatformAssemblies, ppszTpaAssemblyNames[i]);
-        CHECK_RETURN_VALUE_FAIL_EXIT_VIA_FINISHED_SETSTATE(errno, ret = false);
-
-        errno = wcscat_s(pszTrustedPlatformAssemblies, cchTrustedPlatformAssemblies, L";");
-        CHECK_RETURN_VALUE_FAIL_EXIT_VIA_FINISHED_SETSTATE(errno, ret = false);
+        tpa_paths.append(szDirectory).append(assembly_name).append(L";");
     }
 
-Finished:
-    if (ppszTpaAssemblyNames != nullptr)
-    {
-        FreeTpaBase(ppszTpaAssemblyNames);
-    }
-
-    return ret;
+    return wcscat_s(pszTrustedPlatformAssemblies, cchTrustedPlatformAssemblies, tpa_paths.c_str()) == 0;
 }
 
 bool KlrLoadLibraryExWAndGetProcAddress(
