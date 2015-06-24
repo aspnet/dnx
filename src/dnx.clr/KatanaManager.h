@@ -157,10 +157,9 @@ public:
     }
 
     STDMETHODIMP SetAppDomainManager(
-        /* [in] */ DWORD dwAppDomainID,
-        /* [in] */ IUnknown *pUnkAppDomainManager)
+        /* [in] */ DWORD /*dwAppDomainID*/,
+        /* [in] */ IUnknown* /*pUnkAppDomainManager*/)
     {
-        HRESULT hr = S_OK;
-        return hr;
+        return S_OK;
     }
 };

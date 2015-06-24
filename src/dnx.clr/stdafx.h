@@ -30,7 +30,7 @@ inline void _HR_DEBUG(HRESULT hr)
 {
         if (FAILED(hr))
         {
-                int x = 5;
+            return;
         }
 }
 

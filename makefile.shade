@@ -59,6 +59,7 @@ var BOOTSTRAPPER_CLR_MANAGED_NAME = '${BOOTSTRAPPER_CLR_NAME + ".managed"}'
 var BOOTSTRAPPER_CORECLR_MANAGED_NAME = '${BOOTSTRAPPER_CORECLR_NAME + ".managed"}'
 var BOOTSTRAPPER_MONO_MANAGED_NAME = 'dnx.mono.managed'
 var BOOTSTRAPPER_HOST_NAME = 'dnx.host'
+var BOOTSTRAPPER_COMMON_FOLDER_NAME = 'dnx.common'
 
 var PROGRAM_FILES_X86 = '${Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86)}'
 var MSBUILD = '${Path.Combine(PROGRAM_FILES_X86, "MSBuild", "14.0", "Bin", "MSBuild.exe")}'
@@ -340,13 +341,13 @@ var CAN_BUILD_ONECORE = '${Directory.Exists(WIN10_SDK_LIB) && Directory.GetFiles
     @{
         var sourceFiles = new string[] 
         {
-            Path.Combine("src", BOOTSTRAPPER_CORECLR_NAME + ".unix", "tpa.cpp"),
+            Path.Combine("src", BOOTSTRAPPER_COMMON_FOLDER_NAME, "tpa.cpp"),
             Path.Combine("src", BOOTSTRAPPER_CORECLR_NAME + ".unix", BOOTSTRAPPER_CORECLR_NAME + ".cpp")
         };
 
         Directory.CreateDirectory(soOutputDir);
 
-        Exec(CLANG, string.Format("-fPIC -shared {0} -g -o {1} -DPLATFORM_LINUX --std=c++11 -ldl -Isrc/dnx.common/include", string.Join(" ", sourceFiles), soOutputPath));
+        Exec(CLANG, string.Format("-fPIC -shared {0} -g -o {1} -DPLATFORM_LINUX --std=c++11 -ldl -Isrc/{2}/include", string.Join(" ", sourceFiles), soOutputPath, BOOTSTRAPPER_COMMON_FOLDER_NAME));
     }
 
     copy sourceDir='${soOutputDir}' include='*.so' outputDir='${Path.Combine(BUILD_DIR2, BOOTSTRAPPER_CORECLR_NAME + ".unix")}' overwrite='${true}'
@@ -360,13 +361,13 @@ var CAN_BUILD_ONECORE = '${Directory.Exists(WIN10_SDK_LIB) && Directory.GetFiles
             Path.Combine("src", BOOTSTRAPPER_FOLDER_NAME, BOOTSTRAPPER_EXE_NAME + ".cpp"),
             Path.Combine("src", BOOTSTRAPPER_FOLDER_NAME, "pal.unix.cpp"),
             Path.Combine("src", BOOTSTRAPPER_FOLDER_NAME, "pal.linux.cpp"),
-            Path.Combine("src", BOOTSTRAPPER_FOLDER_NAME, "utils.cpp"),
+            Path.Combine("src", BOOTSTRAPPER_COMMON_FOLDER_NAME, "utils.cpp"),
             Path.Combine("src", BOOTSTRAPPER_FOLDER_NAME, "tchar.cpp"),
         };
 
         Directory.CreateDirectory(soOutputDir);
 
-        Exec(CLANG, string.Format("{0} -g -o {1} -DCORECLR_LINUX -DPLATFORM_UNIX -std=c++11 -ldl -Isrc/dnx.common/include", string.Join(" ", sourceFiles), soOutputPath));
+        Exec(CLANG, string.Format("{0} -g -o {1} -DCORECLR_LINUX -DPLATFORM_UNIX -std=c++11 -ldl -Isrc/{2}/include", string.Join(" ", sourceFiles), soOutputPath, BOOTSTRAPPER_COMMON_FOLDER_NAME));
     }
 
     copy sourceDir='${soOutputDir}' include='*' outputDir='${Path.Combine(BUILD_DIR2, BOOTSTRAPPER_FOLDER_NAME, "bin", "linux", "x64")}' overwrite='${true}'
@@ -380,13 +381,13 @@ var CAN_BUILD_ONECORE = '${Directory.Exists(WIN10_SDK_LIB) && Directory.GetFiles
     @{
         var sourceFiles = new string[]
         {
-            Path.Combine("src", BOOTSTRAPPER_CORECLR_NAME + ".unix", "tpa.cpp"),
+            Path.Combine("src", BOOTSTRAPPER_COMMON_FOLDER_NAME, "tpa.cpp"),
             Path.Combine("src", BOOTSTRAPPER_CORECLR_NAME + ".unix", BOOTSTRAPPER_CORECLR_NAME + ".cpp")
         };
 
         Directory.CreateDirectory(soOutputDir);
 
-        Exec(CLANG, string.Format("-fPIC -shared {0} -g -o {1} -DPLATFORM_DARWIN --std=c++11 -ldl -Isrc/dnx.common/include", string.Join(" ", sourceFiles), soOutputPath));
+        Exec(CLANG, string.Format("-fPIC -shared {0} -g -o {1} -DPLATFORM_DARWIN --std=c++11 -ldl -Isrc/{2}/include", string.Join(" ", sourceFiles), soOutputPath, BOOTSTRAPPER_COMMON_FOLDER_NAME));
     }
 
     copy sourceDir='${soOutputDir}' include='*.dylib' outputDir='${Path.Combine(BUILD_DIR2, BOOTSTRAPPER_CORECLR_NAME + ".unix")}' overwrite='${true}'
@@ -400,13 +401,13 @@ var CAN_BUILD_ONECORE = '${Directory.Exists(WIN10_SDK_LIB) && Directory.GetFiles
             Path.Combine("src", BOOTSTRAPPER_FOLDER_NAME, BOOTSTRAPPER_EXE_NAME + ".cpp"),
             Path.Combine("src", BOOTSTRAPPER_FOLDER_NAME, "pal.unix.cpp"),
             Path.Combine("src", BOOTSTRAPPER_FOLDER_NAME, "pal.darwin.cpp"),
-            Path.Combine("src", BOOTSTRAPPER_FOLDER_NAME, "utils.cpp"),            
+            Path.Combine("src", BOOTSTRAPPER_COMMON_FOLDER_NAME, "utils.cpp"),
             Path.Combine("src", BOOTSTRAPPER_FOLDER_NAME, "tchar.cpp"),
         };
 
         Directory.CreateDirectory(soOutputDir);
 
-        Exec(CLANG, string.Format("{0} -g -o {1} -DCORECLR_DARWIN -DPLATFORM_UNIX -std=c++11 -ldl -Isrc/dnx.common/include", string.Join(" ", sourceFiles), soOutputPath));
+        Exec(CLANG, string.Format("{0} -g -o {1} -DCORECLR_DARWIN -DPLATFORM_UNIX -std=c++11 -ldl -Isrc/{2}/include", string.Join(" ", sourceFiles), soOutputPath, BOOTSTRAPPER_COMMON_FOLDER_NAME));
     }
 
     copy sourceDir='${soOutputDir}' include='*' outputDir='${Path.Combine(BUILD_DIR2, BOOTSTRAPPER_FOLDER_NAME, "bin", "darwin", "x64")}' overwrite='${true}'
@@ -995,8 +996,6 @@ macro name='DoRestore'
         try
         {
             var dotnetcoreclrDepFile = Path.Combine(BUILD_DIR2, "dotnetcoreclr-dependencies.txt");
-            var tpacppFile = Path.Combine(ROOT, "src", BOOTSTRAPPER_CORECLR_NAME, "tpa.cpp");
-            var tpacppFileUnix = Path.Combine(ROOT, "src", BOOTSTRAPPER_CORECLR_NAME + ".unix", "tpa.cpp");
             var runtimeCandidates = new[] {
                 Path.Combine(CORECLR_TARGET_PATH, "Runtime", "win", "x86"),
             };
@@ -1026,8 +1025,7 @@ macro name='DoRestore'
                 "Microsoft.Framework.Runtime.Loader"
             };
 
-            UpdateTpa(dotnetcoreclrDepFile, tpaProjects, tpacppFile);
-            UpdateTpa(dotnetcoreclrDepFile, tpaProjects, tpacppFileUnix);
+            UpdateTpa(dotnetcoreclrDepFile, tpaProjects, Path.Combine(ROOT, "src", BOOTSTRAPPER_COMMON_FOLDER_NAME, "tpa.cpp"));
         }
         finally
         {

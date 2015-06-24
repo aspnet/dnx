@@ -8,7 +8,7 @@
 
 // <codecvt> not supported in libstdc++ (gcc, Clang) but conversions from wstring are only
 // meant to be used on Windows
-#ifndef PLATFORM_UNIX
+#if defined(_WIN32)
 
 #include <locale>
 #include <codecvt>
@@ -28,7 +28,7 @@ namespace dnx
         // used only to convert strings containing ASCII characters
         dnx::xstring_t to_xstring_t(const std::string& s)
         {
-#ifndef PLATFORM_UNIX
+#if defined(_WIN32)
             return std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>>{}.from_bytes(s);
 #else
             return s;
@@ -36,7 +36,7 @@ namespace dnx
         }
 
         // conversions from wstring are only meant to be use on Windows
-#ifndef PLATFORM_UNIX
+#if defined(_WIN32)
         std::string to_string(const std::wstring& s)
         {
             return std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>>{}.to_bytes(s);
@@ -74,5 +74,14 @@ namespace dnx
 
             return path + PATH_SEPARATOR + (path2[0] == _X('\\') || path2[0] == _X('/') ? path2.substr(1) : path2);
         }
+
+#if defined (_WIN32)
+        bool file_exists(const xstring_t& path)
+        {
+            auto attributes = GetFileAttributes(path.c_str());
+
+            return attributes != INVALID_FILE_ATTRIBUTES && ((attributes & FILE_ATTRIBUTE_DIRECTORY) == 0);
+        }
+#endif
     }
 }

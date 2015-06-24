@@ -8,6 +8,7 @@
 #include "..\dnx\dnx.h"
 #include "dnx.coreclr.h"
 #include "tpa.h"
+#include "utils.h"
 
 #define TRUSTED_PLATFORM_ASSEMBLIES_STRING_BUFFER_SIZE_CCH (63 * 1024) //32K WCHARs
 #define CHECK_RETURN_VALUE_FAIL_EXIT_VIA_FINISHED(errno) { if (errno) { goto Finished;}}
@@ -34,8 +35,7 @@ bool GetTrustedPlatformAssembliesList(const wchar_t* szDirectory, bool bNative, 
     // Scan the directory to see if all the files in TPA list exist
     for (auto assembly_name : tpas)
     {
-        auto attributes = GetFileAttributes(std::wstring(szDirectory).append(assembly_name).c_str());
-        if (attributes == INVALID_FILE_ATTRIBUTES || (attributes & FILE_ATTRIBUTE_DIRECTORY))
+        if (!dnx::utils::file_exists(std::wstring(szDirectory).append(assembly_name)))
         {
             return false;
         }

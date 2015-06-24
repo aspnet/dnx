@@ -3,21 +3,12 @@
 #include "FileStream.h"
 #include "ComObject.h"
 #include <string>
+#include "utils.h"
 
 const wchar_t* AppDomainManagerAssemblyName = L"dnx.clr.managed, Version=1.0.0.0, Culture=neutral, PublicKeyToken=adb9793829ddae60, ProcessorArchitecture=MSIL";
 
-namespace
-{
-    bool FileExists(const std::wstring& path)
-    {
-        auto attributes = GetFileAttributes(path.c_str());
-
-        return attributes != INVALID_FILE_ATTRIBUTES && ((attributes & FILE_ATTRIBUTE_DIRECTORY) == 0);
-    }
-}
-
 // IHostAssemblyStore
-HRESULT STDMETHODCALLTYPE HostAssemblyStore::ProvideAssembly(AssemblyBindInfo *pBindInfo, UINT64 *pAssemblyId, UINT64 *pContext,
+HRESULT STDMETHODCALLTYPE HostAssemblyStore::ProvideAssembly(AssemblyBindInfo *pBindInfo, UINT64* /*pAssemblyId*/, UINT64* /*pContext*/,
     IStream **ppStmAssemblyImage, IStream **ppStmPDB)
 {
     if (_wcsicmp(AppDomainManagerAssemblyName, pBindInfo->lpReferencedIdentity) == 0)
@@ -35,7 +26,7 @@ HRESULT STDMETHODCALLTYPE HostAssemblyStore::ProvideAssembly(AssemblyBindInfo *p
         }
         path.append(L"dnx.clr.managed.dll");
 
-        if (path.length() > MAX_PATH || !FileExists(path))
+        if (path.length() > MAX_PATH || !dnx::utils::file_exists(path))
         {
             return HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND);
         }
@@ -51,7 +42,7 @@ HRESULT STDMETHODCALLTYPE HostAssemblyStore::ProvideAssembly(AssemblyBindInfo *p
         }
 
         path.replace(path.length() - 3, 3, L"pdb");
-        if (FileExists(path.c_str()))
+        if (dnx::utils::file_exists(path))
         {
             auto pdb_stream = new ComObject<FileStream>();
             if (FAILED(pdb_stream->QueryInterface(IID_PPV_ARGS(ppStmPDB))) ||
@@ -68,14 +59,14 @@ HRESULT STDMETHODCALLTYPE HostAssemblyStore::ProvideAssembly(AssemblyBindInfo *p
     return HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND);
 }
 
-HRESULT STDMETHODCALLTYPE HostAssemblyStore::ProvideModule(ModuleBindInfo *pBindInfo, DWORD *pdwModuleId, IStream **ppStmModuleImage,
-    IStream **ppStmPDB)
+HRESULT STDMETHODCALLTYPE HostAssemblyStore::ProvideModule(ModuleBindInfo* /*pBindInfo*/, DWORD* /*pdwModuleId*/, IStream** /*ppStmModuleImage*/,
+    IStream** /*ppStmPDB*/)
 {
     return HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND);
 }
 
 // IUnknown
-HRESULT STDMETHODCALLTYPE HostAssemblyStore::QueryInterface(const IID &iid, void **ppv)
+HRESULT STDMETHODCALLTYPE HostAssemblyStore::QueryInterface(const IID &/*iid*/, void **ppv)
 {
     if (!ppv)
     {

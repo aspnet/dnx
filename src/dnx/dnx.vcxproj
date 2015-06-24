@@ -51,7 +51,6 @@
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="targetver.h" />
     <ClInclude Include="TraceWriter.h" />
-    <ClInclude Include="utils.h" />
     <ClInclude Include="version.h" />
   </ItemGroup>
   <ItemGroup>
@@ -62,13 +61,17 @@
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader>Create</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="utils.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Resource.rc" />
   </ItemGroup>
   <ItemGroup Condition="'$(Platform)' != 'ARM'">
     <None Include="dnx.def" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\dnx.common\dnx.common.vcxproj">
+      <Project>{1fe82655-09ee-456d-82b5-4625857ff53d}</Project>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <PropertyGroup>

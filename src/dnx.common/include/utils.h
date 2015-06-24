@@ -17,5 +17,6 @@ namespace dnx
         std::wstring to_wstring(const std::string& s);
 
         dnx::xstring_t path_combine(const dnx::xstring_t& path1, const dnx::xstring_t& path2);
+        bool file_exists(const dnx::xstring_t& path);
     }
 }

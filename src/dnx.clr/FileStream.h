@@ -6,6 +6,9 @@
 #include <fileapi.h>
 #include <winerror.h>
 
+#pragma warning(push)
+#pragma warning(disable: 4100)
+
 class FileStream : public IStream
 {
     HANDLE _handle;
@@ -148,3 +151,5 @@ public:
             /* [out] */ __RPC__deref_out_opt IStream **ppstm) { return E_NOTIMPL; }
 
 };
+
+#pragma warning(pop)

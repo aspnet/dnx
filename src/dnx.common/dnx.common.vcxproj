@@ -3,17 +3,14 @@
   <Import Project="$(MSBuildThisFileDirectory)..\..\Build\Config.Definitions.props" />
   <Import Project="$(MSBuildThisFileDirectory)..\..\Build\Dnx.Common.Targets" />
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{1F31D08E-DE21-48F6-ADE3-315EA6268DD1}</ProjectGuid>
+    <ProjectGuid>{1FE82655-09EE-456D-82B5-4625857FF53D}</ProjectGuid>
     <Platform Condition="'$(Platform)'==''">Win32</Platform>
     <Configuration Condition="'$(Configuration)'==''">Debug</Configuration>
     <PlatformToolset>v140</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
     <Keyword>Win32Proj</Keyword>
     <BuildForOneCore Condition="'$(BuildForOneCore)' == ''">False</BuildForOneCore>
-    <RootNamespace>KSys</RootNamespace>
-    <ProjectName>dnx.win32.coreclr</ProjectName>
-    <ProjectName Condition="'$(BuildForOneCore)' == 'True' Or '$(Platform)' == 'ARM'">dnx.onecore.coreclr</ProjectName>
-    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <ConfigurationType>StaticLibrary</ConfigurationType>
     <OutDir>bin\$(Platform)\$(Configuration)\$(TargetFramework)\</OutDir>
     <IntDir>bin\$(ProjectName)\$(Platform)\$(Configuration)\$(TargetFramework)\</IntDir>
   </PropertyGroup>
@@ -22,45 +19,30 @@
   <Import Project="$(MSBuildThisFileDirectory)..\..\Build\Dnx.Native.Settings" />
   <ImportGroup Label="ExtensionSettings">
   </ImportGroup>
+  <ImportGroup Label="Shared">
+  </ImportGroup>
   <PropertyGroup Label="UserMacros" />
+  <PropertyGroup />
   <ItemDefinitionGroup>
     <ClCompile>
-      <PreprocessorDefinitions>_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
-    <Link>
-      <Subsystem>Windows</Subsystem>
-      <ModuleDefinitionFile>exports.def</ModuleDefinitionFile>
-    </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="resource.h" />
+    <ClInclude Include="include\tpa.h" />
+    <ClInclude Include="include\utils.h" />
+    <ClInclude Include="include\xplat.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="targetver.h" />
-    <ClInclude Include="version.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="dnx.coreclr.cpp" />
-    <ClCompile Include="dllmain.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader>Create</PrecompiledHeader>
     </ClCompile>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="exports.def" />
-  </ItemGroup>
-  <ItemGroup>
-    <ResourceCompile Include="Resource.rc" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\dnx.common\dnx.common.vcxproj">
-      <Project>{1fe82655-09ee-456d-82b5-4625857ff53d}</Project>
-    </ProjectReference>
+    <ClCompile Include="tpa.cpp" />
+    <ClCompile Include="utils.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
-  <Target Name="CopyManagedForDebuggingLocally" AfterTargets="Build" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <Copy SourceFiles="bin\$(Platform)\$(Configuration)\$(ProjectName).dll" DestinationFolder="$(SolutionDir)\artifacts\build\dnx-coreclr-win-x86\bin" />
-    <Copy SourceFiles="bin\$(Platform)\$(Configuration)\$(ProjectName).pdb" DestinationFolder="$(SolutionDir)\artifacts\build\dnx-coreclr-win-x86\bin" />
-  </Target>
 </Project>

@@ -3,7 +3,6 @@
   <ItemGroup>
     <ClCompile Include="dllmain.cpp" />
     <ClCompile Include="stdafx.cpp" />
-    <ClCompile Include="tpa.cpp" />
     <ClCompile Include="dnx.coreclr.cpp" />
   </ItemGroup>
   <ItemGroup>

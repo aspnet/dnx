@@ -28,7 +28,7 @@ HRESULT STDMETHODCALLTYPE HostAssemblyManager::GetAssemblyStore(IHostAssemblySto
     return S_OK;
 }
 
-HRESULT STDMETHODCALLTYPE HostAssemblyManager::GetHostApplicationPolicy(DWORD dwPolicy, DWORD dwAppDomainId, DWORD *pcbBufferSize, BYTE *pbBuffer)
+HRESULT STDMETHODCALLTYPE HostAssemblyManager::GetHostApplicationPolicy(DWORD /*dwPolicy*/, DWORD /*dwAppDomainId*/, DWORD *pcbBufferSize, BYTE* /*pbBuffer*/)
 {
     *pcbBufferSize = 0;
     return S_OK;
@@ -36,7 +36,7 @@ HRESULT STDMETHODCALLTYPE HostAssemblyManager::GetHostApplicationPolicy(DWORD dw
 
 // IUnknown
 
-HRESULT STDMETHODCALLTYPE HostAssemblyManager::QueryInterface(const IID &iid, void **ppv)
+HRESULT STDMETHODCALLTYPE HostAssemblyManager::QueryInterface(const IID &/*iid*/, void **ppv)
 {
     if (!ppv)
     {

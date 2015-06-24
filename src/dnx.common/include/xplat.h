@@ -9,7 +9,7 @@
 namespace dnx
 {
 
-#if !defined(PLATFORM_UNIX) && !defined(PLATFORM_LINUX) && !defined(PLATFORM_DARWIN)
+#if defined(_WIN32)
 
 typedef wchar_t char_t;
 typedef std::wstring xstring_t;
@@ -18,7 +18,7 @@ typedef std::wstring xstring_t;
 
 #define PATH_SEPARATOR L"\\"
 
-#else // PLATFORM_UNIX
+#else // non-windows
 
 typedef char char_t;
 typedef std::string xstring_t;
