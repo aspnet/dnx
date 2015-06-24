@@ -78,6 +78,7 @@ namespace Microsoft.Framework.PackageManager
             PublishConsoleCommand.Register(app, reportsFactory, _environment, _hostServices);
             RestoreConsoleCommand.Register(app, reportsFactory, _environment);
             WrapConsoleCommand.Register(app, reportsFactory);
+            FeedsConsoleCommand.Register(app, reportsFactory);
 
             return app.Execute(args);
         }

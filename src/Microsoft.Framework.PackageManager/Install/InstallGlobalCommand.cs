@@ -142,18 +142,12 @@ namespace Microsoft.Framework.PackageManager
             if (string.IsNullOrEmpty(packageVersion))
             {
                 var rootDirectory = ProjectResolver.ResolveRootDirectory(_commandsRepository.Root.Root);
-                var settings = SettingsUtils.ReadSettings(
-                    rootDirectory,
-                    RestoreCommand.NuGetConfigFile,
-                    RestoreCommand.FileSystem,
-                    RestoreCommand.MachineWideSettings);
-
-                var sourceProvier = PackageSourceBuilder.CreateSourceProvider(settings);
+                var config = NuGetConfig.ForSolution(rootDirectory, RestoreCommand.FileSystem);
 
                 var packageFeeds = new List<IPackageFeed>();
 
                 var effectiveSources = PackageSourceUtils.GetEffectivePackageSources(
-                    sourceProvier,
+                    config.Sources,
                     FeedOptions.Sources,
                     FeedOptions.FallbackSources);
 

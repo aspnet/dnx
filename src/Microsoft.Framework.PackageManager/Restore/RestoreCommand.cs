@@ -42,7 +42,6 @@ namespace Microsoft.Framework.PackageManager
         {
             FallbackFramework = fallbackFramework;
             FileSystem = new PhysicalFileSystem(Directory.GetCurrentDirectory());
-            MachineWideSettings = new CommandLineMachineWideSettings();
             ScriptExecutor = new ScriptExecutor();
             ErrorMessages = new Dictionary<string, List<string>>(StringComparer.Ordinal);
             InformationMessages = new Dictionary<string, List<string>>(StringComparer.Ordinal);
@@ -58,7 +57,6 @@ namespace Microsoft.Framework.PackageManager
         public FeedOptions FeedOptions { get; set; }
 
         public List<string> RestoreDirectories { get; } = new List<string>();
-        public string NuGetConfigFile { get; set; }
         public bool Lock { get; set; }
         public bool Unlock { get; set; }
 
@@ -66,7 +64,6 @@ namespace Microsoft.Framework.PackageManager
 
         public List<FrameworkName> TargetFrameworks { get; set; } = new List<FrameworkName>();
         public FrameworkName FallbackFramework { get; set; }
-        public IMachineWideSettings MachineWideSettings { get; set; }
         public IFileSystem FileSystem { get; set; }
         public Reports Reports { get; set; }
         public bool CheckHashFile { get; set; } = true;
@@ -77,8 +74,7 @@ namespace Microsoft.Framework.PackageManager
         private Dictionary<string, List<string>> ErrorMessages { get; set; }
         private Dictionary<string, List<string>> InformationMessages { get; set; }
 
-        protected internal ISettings Settings { get; set; }
-        protected internal IPackageSourceProvider SourceProvider { get; set; }
+        protected internal NuGetConfig Config { get; set; }
 
         public async Task<bool> Execute()
         {
@@ -104,7 +100,7 @@ namespace Microsoft.Framework.PackageManager
                 }
             }
 
-            var settings = Settings as Settings;
+            var settings = Config.Settings as Settings;
             if (settings != null)
             {
                 var configFiles = settings.GetConfigFiles();
@@ -310,7 +306,7 @@ namespace Microsoft.Framework.PackageManager
                     new NuGetDependencyResolver(packageRepository)));
 
             var effectiveSources = PackageSourceUtils.GetEffectivePackageSources(
-                SourceProvider,
+                Config.Sources,
                 FeedOptions.Sources,
                 FeedOptions.FallbackSources);
 
@@ -955,12 +951,7 @@ namespace Microsoft.Framework.PackageManager
 
         private void ReadSettings(string solutionDirectory)
         {
-            Settings = SettingsUtils.ReadSettings(solutionDirectory, NuGetConfigFile, FileSystem, MachineWideSettings);
-
-            // Recreate the source provider and credential provider
-            SourceProvider = PackageSourceBuilder.CreateSourceProvider(Settings);
-            //HttpClient.DefaultCredentialProvider = new SettingsCredentialProvider(new ConsoleCredentialProvider(Console), SourceProvider, Console);
-
+            Config = NuGetConfig.ForSolution(solutionDirectory, FileSystem);
         }
 
         private IFileSystem CreateFileSystem(string path)
