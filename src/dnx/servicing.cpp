@@ -11,7 +11,7 @@
 
 namespace
 {
-    const std::string runtime_moniker =
+    const char* runtime_moniker =
 #if defined(CORECLR_WIN)
         "coreclr"
 #else
@@ -30,6 +30,10 @@ namespace
     std::wstring find_runtime_replacement(std::ifstream& input, dnx::trace_writer& trace_writer)
     {
         const std::string runtime_qualifier = std::string{ "dnx|" } + runtime_moniker + "|" + ProductVersionStr + "=";
+
+        trace_writer.write(
+            std::wstring(L"Looking for redirections for runtime ")
+                .append(dnx::utils::to_wstring(runtime_qualifier).substr(0, runtime_qualifier.length() - 1)), true);
 
         std::wstring runtime_replacement;
         for (std::string line; std::getline(input, line); )

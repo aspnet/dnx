@@ -118,14 +118,19 @@ int CallApplicationMain(const wchar_t* moduleName, const char* functionName, CAL
     HMODULE hostModule = nullptr;
     try
     {
-        auto runtime_path = get_runtime_path(trace_writer);
-        if (runtime_path.length() > 0)
+        const auto runtime_new_path = get_runtime_path(trace_writer);
+        if (runtime_new_path.length() > 0)
         {
-            trace_writer.write(std::wstring(L"Redirecting runtime to: ").append(runtime_path), true);
-            SetEnvironmentVariable(_T("DNX_DEFAULT_LIB"), runtime_path.c_str());
+            trace_writer.write(std::wstring(L"Redirecting runtime to: ").append(runtime_new_path), true);
+            SetEnvironmentVariable(_T("DNX_DEFAULT_LIB"), runtime_new_path.c_str());
+
+            #if defined(CORECLR_WIN)
+                SetEnvironmentVariable(_T("CORECLR_DIR"), runtime_new_path.c_str());
+                data->runtimeDirectory = runtime_new_path.c_str();
+            #endif
         }
 
-        auto module_path = dnx::utils::path_combine(runtime_path, moduleName);
+        auto module_path = dnx::utils::path_combine(runtime_new_path, moduleName);
         hostModule = LoadLibraryEx(module_path.c_str(), NULL, LOAD_LIBRARY_SEARCH_DEFAULT_DIRS);
         if (!hostModule)
         {
