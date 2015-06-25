@@ -47,16 +47,23 @@ namespace Microsoft.Framework.PackageManager.Restore.NuGet
                 }
                 catch (Exception ex)
                 {
-                    if (retry == 2)
+                    var isFinalAttempt = (retry == 2);
+                    var message = ex.Message;
+                    if (ex is TaskCanceledException)
+                    {
+                        message = ErrorMessageUtils.GetFriendlyTimeoutErrorMessage(ex as TaskCanceledException, isFinalAttempt, ignoreFailure: false);
+                    }
+
+                    if (isFinalAttempt)
                     {
                         reports.Error.WriteLine(
-                            $"Error: DownloadPackageAsync: {package.ContentUri}{Environment.NewLine}  {ex.Message}".Red().Bold());
+                            $"Error: DownloadPackageAsync: {package.ContentUri}{Environment.NewLine}  {message}".Red().Bold());
                         throw;
                     }
                     else
                     {
                         reports.Information.WriteLine(
-                            $"Warning: DownloadPackageAsync: {package.ContentUri}{Environment.NewLine}  {ex.Message}".Yellow().Bold());
+                            $"Warning: DownloadPackageAsync: {package.ContentUri}{Environment.NewLine}  {message}".Yellow().Bold());
                     }
                 }
             }

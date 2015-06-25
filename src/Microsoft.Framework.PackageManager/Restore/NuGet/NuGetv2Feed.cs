@@ -146,25 +146,35 @@ namespace Microsoft.Framework.PackageManager.Restore.NuGet
                 }
                 catch (Exception ex)
                 {
-                    if (retry == 2)
+                    var isFinalAttempt = (retry == 2);
+                    var message = ex.Message;
+                    if (ex is TaskCanceledException)
+                    {
+                        message = ErrorMessageUtils.GetFriendlyTimeoutErrorMessage(
+                            ex as TaskCanceledException,
+                            isFinalAttempt,
+                            _ignoreFailure);
+                    }
+
+                    if (isFinalAttempt)
                     {
                         // Fail silently by returning empty result list
                         if (_ignoreFailure)
                         {
                             _ignored = true;
                             _reports.Information.WriteLine(
-                                $"Failed to retrieve information from remote source '{_baseUri}'".Yellow().Bold());
+                                $"Warning: FindPackagesById: {id}{Environment.NewLine}  {message}".Yellow().Bold());
                             return new List<PackageInfo>();
                         }
 
                         _reports.Error.WriteLine(
-                            $"Error: FindPackagesById: {id}{Environment.NewLine}  {ex.Message}".Red().Bold());
+                            $"Error: FindPackagesById: {id}{Environment.NewLine}  {message}".Red().Bold());
                         throw;
                     }
                     else
                     {
                         _reports.Information.WriteLine(
-                            $"Warning: FindPackagesById: {id}{Environment.NewLine}  {ex.Message}".Yellow().Bold());
+                            $"Warning: FindPackagesById: {id}{Environment.NewLine}  {message}".Yellow().Bold());
                     }
                 }
             }
