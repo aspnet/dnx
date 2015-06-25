@@ -53,6 +53,18 @@ namespace dnx
         }
 #endif
 
+        bool ends_with_slash(const xstring_t& path)
+        {
+            if (path.length() > 0)
+            {
+                auto last = path.back();
+
+                return last == _X('\\') || last == _X('/');
+            }
+
+            return false;
+        }
+
         xstring_t path_combine(const xstring_t& path1, const xstring_t& path2)
         {
             if (path1.length() == 0)
@@ -67,7 +79,7 @@ namespace dnx
 
             xstring_t path{ path1 };
 
-            if (path[path.length() - 1] == _X('\\') || path[path.length() - 1] == _X('/'))
+            if (ends_with_slash(path))
             {
                 path.resize(path.length() - 1);
             }
@@ -83,5 +95,19 @@ namespace dnx
             return attributes != INVALID_FILE_ATTRIBUTES && ((attributes & FILE_ATTRIBUTE_DIRECTORY) == 0);
         }
 #endif
+
+        xstring_t remove_file_from_path(const xstring_t& path)
+        {
+            if (ends_with_slash(path))
+            {
+                return path;
+            }
+
+            auto last_separator = path.find_last_of(_X("/\\"));
+
+            return last_separator != xstring_t::npos
+                ? path.substr(0, last_separator)
+                : path;
+        }
     }
 }

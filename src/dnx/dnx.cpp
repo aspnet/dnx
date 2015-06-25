@@ -248,7 +248,7 @@ bool GetApplicationBase(const dnx::xstring_t& currentDirectory, int argc, dnx::c
     return GetFullPath(appBase, fullAppBasePath) != 0;
 }
 
-int CallApplicationProcessMain(int argc, dnx::char_t* argv[], TraceWriter traceWriter)
+int CallApplicationProcessMain(int argc, dnx::char_t* argv[], dnx::trace_writer& trace_writer)
 {
     // Set the DNX_CONOSLE_HOST flag which will print exceptions to stderr instead of throwing
     SetConsoleHost();
@@ -288,7 +288,7 @@ int CallApplicationProcessMain(int argc, dnx::char_t* argv[], TraceWriter traceW
 #endif
 
         // Note: need to keep as ASCII as GetProcAddress function takes ASCII params
-        return CallApplicationMain(hostModuleName, "CallApplicationMain", &data, traceWriter);
+        return CallApplicationMain(hostModuleName, "CallApplicationMain", &data, trace_writer);
     }
     catch (const std::exception& ex)
     {
@@ -330,13 +330,13 @@ extern "C" int __stdcall DnxMain(int argc, wchar_t* argv[])
     LPTSTR* ppszExpandedArgv = nullptr;
     auto expanded = ExpandCommandLineArguments(argc - 1, &(argv[1]), nExpandedArgc, ppszExpandedArgv);
 
-    auto traceWriter = TraceWriter{ IsTracingEnabled() };
+    auto trace_writer = dnx::trace_writer{ IsTracingEnabled() };
     if (!expanded)
     {
-        return CallApplicationProcessMain(argc - 1, &argv[1], traceWriter);
+        return CallApplicationProcessMain(argc - 1, &argv[1], trace_writer);
     }
 
-    auto exitCode = CallApplicationProcessMain(nExpandedArgc, ppszExpandedArgv, traceWriter);
+    auto exitCode = CallApplicationProcessMain(nExpandedArgc, ppszExpandedArgv, trace_writer);
     FreeExpandedCommandLineArguments(nExpandedArgc, ppszExpandedArgv);
     return exitCode;
 }

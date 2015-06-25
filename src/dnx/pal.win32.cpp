@@ -4,7 +4,7 @@
 #include "stdafx.h"
 #include "dnx.h"
 #include "xplat.h"
-#include "TraceWriter.h"
+#include "trace_writer.h"
 #include "utils.h"
 #include "servicing.h"
 #include <sstream>
@@ -38,16 +38,8 @@ void WaitForDebuggerToAttach()
 
 bool IsTracingEnabled()
 {
-    TCHAR szTrace[2];
-    DWORD nEnvTraceSize = GetEnvironmentVariable(_T("DNX_TRACE"), szTrace, 2);
-    bool m_fVerboseTrace = (nEnvTraceSize == 1);
-    if (m_fVerboseTrace)
-    {
-        szTrace[1] = _T('\0');
-        return _tcsnicmp(szTrace, _T("1"), 1) == 0;
-    }
-
-    return false;
+    wchar_t buff[2];
+    return GetEnvironmentVariable(L"DNX_TRACE", buff, 2) == 1 && buff[0] == L'1';
 }
 
 void SetConsoleHost()
@@ -85,7 +77,7 @@ BOOL GetFullPath(LPCTSTR szPath, LPTSTR pszNormalizedPath)
 
 namespace
 {
-    std::wstring get_runtime_path(TraceWriter& trace_writer)
+    std::wstring get_runtime_path(dnx::trace_writer& trace_writer)
     {
         std::vector<wchar_t*> servicing_locations =
         {
@@ -121,15 +113,15 @@ namespace
     }
 }
 
-int CallApplicationMain(const wchar_t* moduleName, const char* functionName, CALL_APPLICATION_MAIN_DATA* data, TraceWriter traceWriter)
+int CallApplicationMain(const wchar_t* moduleName, const char* functionName, CALL_APPLICATION_MAIN_DATA* data, dnx::trace_writer& trace_writer)
 {
     HMODULE hostModule = nullptr;
     try
     {
-        auto runtime_path = get_runtime_path(traceWriter);
+        auto runtime_path = get_runtime_path(trace_writer);
         if (runtime_path.length() > 0)
         {
-            traceWriter.Write(std::wstring(L"Redirecting runtime to: ").append(runtime_path), true);
+            trace_writer.write(std::wstring(L"Redirecting runtime to: ").append(runtime_path), true);
             SetEnvironmentVariable(_T("DNX_DEFAULT_LIB"), runtime_path.c_str());
         }
 
@@ -141,7 +133,7 @@ int CallApplicationMain(const wchar_t* moduleName, const char* functionName, CAL
                 .append(dnx::utils::to_string(moduleName)));
         }
 
-        traceWriter.Write(std::wstring(L"Loaded module: ").append(module_path), true);
+        trace_writer.write(std::wstring(L"Loaded module: ").append(module_path), true);
 
         auto pfnCallApplicationMain = reinterpret_cast<FnCallApplicationMain>(GetProcAddress(hostModule, functionName));
         if (!pfnCallApplicationMain)
@@ -151,7 +143,7 @@ int CallApplicationMain(const wchar_t* moduleName, const char* functionName, CAL
             throw std::runtime_error(oss.str());
         }
 
-        traceWriter.Write(std::wstring(L"Found export: ").append(dnx::utils::to_wstring(functionName)), true);
+        trace_writer.write(std::wstring(L"Found export: ").append(dnx::utils::to_wstring(functionName)), true);
 
         HRESULT hr = pfnCallApplicationMain(data);
         FreeLibrary(hostModule);

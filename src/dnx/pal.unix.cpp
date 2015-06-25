@@ -8,7 +8,7 @@
 #include <assert.h>
 #include <dlfcn.h>
 #include "dnx.h"
-#include "TraceWriter.h"
+#include "trace_writer.h"
 
 std::string GetNativeBootstrapperDirectory();
 
@@ -52,7 +52,7 @@ BOOL GetFullPath(LPCTSTR szPath, LPTSTR szNormalizedPath)
     return TRUE;
 }
 
-int CallApplicationMain(const char* moduleName, const char* functionName, CALL_APPLICATION_MAIN_DATA* data, TraceWriter traceWriter)
+int CallApplicationMain(const char* moduleName, const char* functionName, CALL_APPLICATION_MAIN_DATA* data, dnx::trace_writer& trace_writer)
 {
     auto localPath = GetNativeBootstrapperDirectory().append("/").append(moduleName);
 
@@ -65,7 +65,7 @@ int CallApplicationMain(const char* moduleName, const char* functionName, CALL_A
             throw std::runtime_error(std::string("Failed to load: ").append(moduleName));
         }
 
-        traceWriter.Write(std::string("Loaded module: ").append(moduleName), true);
+        trace_writer.write(std::string("Loaded module: ").append(moduleName), true);
 
         auto pfnCallApplicationMain = reinterpret_cast<FnCallApplicationMain>(dlsym(host, functionName));
         if (!pfnCallApplicationMain)
@@ -75,7 +75,7 @@ int CallApplicationMain(const char* moduleName, const char* functionName, CALL_A
             throw std::runtime_error(oss.str());
         }
 
-        traceWriter.Write(std::string("Found export: ").append(functionName), true);
+        trace_writer.write(std::string("Found export: ").append(functionName), true);
 
         auto result = pfnCallApplicationMain(data);
         dlclose(host);

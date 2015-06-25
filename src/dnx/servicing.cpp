@@ -7,7 +7,7 @@
 #include <string>
 #include <fstream>
 #include <algorithm>
-#include "TraceWriter.h"
+#include "trace_writer.h"
 
 namespace
 {
@@ -27,7 +27,7 @@ namespace
 #endif
         ;
 
-    std::wstring find_runtime_replacement(std::ifstream& input, TraceWriter& trace_writer)
+    std::wstring find_runtime_replacement(std::ifstream& input, dnx::trace_writer& trace_writer)
     {
         const std::string runtime_qualifier = std::string{ "dnx|" } + runtime_moniker + "|" + ProductVersionStr + "=";
 
@@ -42,7 +42,7 @@ namespace
 
         if (!input.eof())
         {
-            trace_writer.Write(L"Error occured while reading contents of servicing index file.", false);
+            trace_writer.write(L"Error occured while reading contents of servicing index file.", false);
         }
 
         return runtime_replacement;
@@ -60,7 +60,7 @@ namespace dnx
 {
     namespace servicing
     {
-        std::wstring get_runtime_path(const std::wstring& servicing_root_parent, bool append_servicing_folder, TraceWriter& trace_writer)
+        std::wstring get_runtime_path(const std::wstring& servicing_root_parent, bool append_servicing_folder, dnx::trace_writer& trace_writer)
         {
             auto servicing_root = append_servicing_folder
                 ? utils::path_combine(servicing_root_parent, std::wstring(L"Microsoft DNX\\Servicing"))
@@ -73,7 +73,7 @@ namespace dnx
             servicing_manifest.open(servicing_manifest_path, std::ifstream::in);
             if (servicing_manifest.is_open())
             {
-                trace_writer.Write(std::wstring(L"Found servicing index file at: ").append(servicing_manifest_path), true);
+                trace_writer.write(std::wstring(L"Found servicing index file at: ").append(servicing_manifest_path), true);
 
                 auto runtime_replacement_path = find_runtime_replacement(servicing_manifest, trace_writer);
                 if (runtime_replacement_path.length() > 0)
@@ -81,11 +81,11 @@ namespace dnx
                     return get_full_replacement_path(servicing_root, runtime_replacement_path);
                 }
 
-                trace_writer.Write(L"No runtime redirections found.", true);
+                trace_writer.write(L"No runtime redirections found.", true);
             }
             else
             {
-                trace_writer.Write(
+                trace_writer.write(
                     std::wstring(L"The servicing index file at: ")
                     .append(servicing_manifest_path)
                     .append(L" does not exist or could not be opened."),
