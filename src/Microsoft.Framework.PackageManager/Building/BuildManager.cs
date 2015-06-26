@@ -252,6 +252,11 @@ namespace Microsoft.Framework.PackageManager
                 }
             }
 
+            if (!success)
+            {
+                return false;
+            }
+
             if (!ScriptExecutor.Execute(_currentProject, "postbuild", GetScriptVariable))
             {
                 LogError(ScriptExecutor.ErrorMessage);

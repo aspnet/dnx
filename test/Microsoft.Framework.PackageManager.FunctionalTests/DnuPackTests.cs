@@ -145,5 +145,40 @@ namespace Microsoft.Framework.PackageManager
                 Assert.True(Directory.Exists($"{testEnv.RootDir}/CustomOutput"));
             }
         }
+
+        [Theory]
+        [MemberData(nameof(RuntimeComponents))]
+        public void DnuPack_DoesNotExecutePostBuildScriptWhenBuildFails(string flavor, string os, string architecture)
+        {
+            var runtimeHomeDir = TestUtils.GetRuntimeHomeDir(flavor, os, architecture);
+            var projectJson = @"{
+  ""scripts"": {
+    ""postbuild"": ""echo POST_BUILD_SCRIPT_OUTPUT"",
+    ""postpack"": ""echo POST_PACK_SCRIPT_OUTPUT""
+  },
+}";
+            var sourceFileContents = @"Invalid source code that makes build fail";
+
+            using (var tempDir = new DisposableDir())
+            {
+                var projectJsonPath = Path.Combine(tempDir, Runtime.Project.ProjectFileName);
+                var sourceFilePath = Path.Combine(tempDir, "Program.cs");
+                File.WriteAllText(projectJsonPath, projectJson);
+                File.WriteAllText(sourceFilePath, sourceFileContents);
+
+                string stdOut, stdErr;
+                var exitCode = DnuTestUtils.ExecDnu(
+                    runtimeHomeDir,
+                    "pack",
+                    projectJsonPath,
+                    out stdOut,
+                    out stdErr);
+
+                Assert.NotEqual(0, exitCode);
+                Assert.NotEmpty(stdErr);
+                Assert.DoesNotContain("POST_BUILD_SCRIPT_OUTPUT", stdOut);
+                Assert.DoesNotContain("POST_PACK_SCRIPT_OUTPUT", stdOut);
+            }
+        }
     }
 }
