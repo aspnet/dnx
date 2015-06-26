@@ -44,35 +44,11 @@ namespace Microsoft.Framework.Runtime.Common.CommandLine
         public List<CommandLineApplication> Commands { get; private set; }
 
         public CommandLineApplication Command(string name, Action<CommandLineApplication> configuration,
-            bool addHelpCommand = true, bool throwOnUnexpectedArg = true)
+            bool throwOnUnexpectedArg = true)
         {
             var command = new CommandLineApplication(throwOnUnexpectedArg) { Name = name, Parent = this };
             Commands.Add(command);
             configuration(command);
-
-            if (addHelpCommand)
-            {
-                if (HasHelpCommand())
-                {
-                    // Already added before
-                    return this;
-                }
-
-                Command("help", c =>
-                {
-                    c.Description = "Show help information";
-
-                    var argCommand = c.Argument("[command]", "Command that help information explains");
-
-                    c.OnExecute(() =>
-                    {
-                        ShowHelp(argCommand.Value);
-                        return 0;
-                    });
-                },
-                addHelpCommand: false);
-            }
-
             return command;
         }
 
@@ -414,13 +390,14 @@ namespace Microsoft.Framework.Runtime.Common.CommandLine
                     commandsBuilder.AppendLine();
                 }
 
-                if (HasHelpCommand())
+                if (OptionHelp != null)
                 {
                     commandsBuilder.AppendLine();
-                    commandsBuilder.AppendFormat("Use \"{0} help [command]\" for more information about a command.", Name);
+                    commandsBuilder.AppendFormat("Use \"{0} [command] --help\" for more information about a command.", Name);
                     commandsBuilder.AppendLine();
                 }
             }
+
             headerBuilder.AppendLine();
 
             var nameAndVersion = new StringBuilder();
@@ -456,12 +433,6 @@ namespace Microsoft.Framework.Runtime.Common.CommandLine
 
             Console.WriteLine(rootCmd.GetFullNameAndVersion());
             Console.WriteLine();
-        }
-
-        private bool HasHelpCommand()
-        {
-            var helpCmd = Commands.SingleOrDefault(cmd => string.Equals("help", cmd.Name, StringComparison.OrdinalIgnoreCase));
-            return helpCmd != null;
         }
 
         private int MaxOptionTemplateLength(IEnumerable<CommandOption> options)

@@ -247,7 +247,6 @@ namespace Microsoft.Framework.Runtime.Common.CommandLine
             {
                 c.OnExecute(() => 0);
             },
-            addHelpCommand: false,
             throwOnUnexpectedArg: false);
 
             // (does not throw)
@@ -282,7 +281,6 @@ namespace Microsoft.Framework.Runtime.Common.CommandLine
             {
                 c.OnExecute(() => 0);
             },
-            addHelpCommand: false,
             throwOnUnexpectedArg: false);
 
             // (does not throw)
@@ -317,7 +315,6 @@ namespace Microsoft.Framework.Runtime.Common.CommandLine
             {
                 c.OnExecute(() => 0);
             },
-            addHelpCommand: false,
             throwOnUnexpectedArg: false);
 
             // (does not throw)
@@ -352,7 +349,6 @@ namespace Microsoft.Framework.Runtime.Common.CommandLine
             {
                 c.OnExecute(() => 0);
             },
-            addHelpCommand: false,
             throwOnUnexpectedArg: false);
 
             // (does not throw)
@@ -388,7 +384,7 @@ namespace Microsoft.Framework.Runtime.Common.CommandLine
 
             var testCmd = app.Command("k", c =>
             {
-                subCmd = c.Command("run", _ => { }, addHelpCommand: false, throwOnUnexpectedArg: false);
+                subCmd = c.Command("run", _ => { }, throwOnUnexpectedArg: false);
                 c.OnExecute(() => 0);
             });
 

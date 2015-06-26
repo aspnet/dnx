@@ -139,7 +139,6 @@ namespace Microsoft.Framework.ApplicationHost
                     return 0;
                 });
             },
-            addHelpCommand: false,
             throwOnUnexpectedArg: false);
             app.Execute(args);
 
