@@ -463,9 +463,7 @@ namespace Microsoft.Framework.PackageManager
             {
                 ForEach(context.Root, node =>
                 {
-                    if (node == null ||
-                    node.LibraryRange == null ||
-                    node.Disposition == GraphNode.DispositionType.Rejected)
+                    if (node == null || node.LibraryRange == null)
                     {
                         return;
                     }
@@ -503,16 +501,24 @@ namespace Microsoft.Framework.PackageManager
 
                     if (!isInstallItem && isRemote)
                     {
+                        // It's ok to download rejected nodes so we avoid downloading them in the future
+                        // The trade off is that subsequent restores avoid going to any remotes
                         installItems.Add(node.Item);
                     }
 
-                    var isGraphItem = graphItems.Any(item => item.Match.Library == node.Item.Match.Library);
-                    if (!isGraphItem)
+                    // Don't add rejected nodes since we only want to write reduced nodes
+                    // to the lock file
+                    if (node.Disposition != GraphNode.DispositionType.Rejected)
                     {
-                        graphItems.Add(node.Item);
-                    }
+                        var isGraphItem = graphItems.Any(item => item.Match.Library == node.Item.Match.Library);
 
-                    context.Libraries.Add(node.Item.Match.Library);
+                        if (!isGraphItem)
+                        {
+                            graphItems.Add(node.Item);
+                        }
+
+                        context.Libraries.Add(node.Item.Match.Library);
+                    }
                 });
             }
 
