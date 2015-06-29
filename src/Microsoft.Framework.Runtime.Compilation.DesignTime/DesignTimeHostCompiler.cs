@@ -13,10 +13,12 @@ namespace Microsoft.Framework.Runtime
         private readonly IApplicationShutdown _shutdown;
         private readonly ConcurrentDictionary<int, TaskCompletionSource<CompileResponse>> _compileResponses = new ConcurrentDictionary<int, TaskCompletionSource<CompileResponse>>();
         private readonly TaskCompletionSource<Dictionary<string, int>> _projectContexts = new TaskCompletionSource<Dictionary<string, int>>();
+        private readonly IFileWatcher _watcher;
 
         public DesignTimeHostCompiler(IApplicationShutdown shutdown, IFileWatcher watcher, Stream stream)
         {
             _shutdown = shutdown;
+            _watcher = watcher;
             _queue = new ProcessingQueue(stream);
             _queue.ProjectCompiled += OnProjectCompiled;
             _queue.ProjectsInitialized += ProjectContextsInitialized;
@@ -86,6 +88,8 @@ namespace Microsoft.Framework.Runtime
                 Aspect = library.Aspect,
                 ContextId = contextId
             });
+
+            _watcher.WatchProject(projectPath);
 
             var task = _compileResponses.GetOrAdd(contextId, _ => new TaskCompletionSource<CompileResponse>()).Task;
             return await task.ConfigureAwait(false);

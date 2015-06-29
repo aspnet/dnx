@@ -39,6 +39,22 @@ namespace Microsoft.Framework.Runtime.Common.DependencyInjection
             };
         }
 
+        public bool TryAdd(Type type, object instance)
+        {
+            return TryAdd(type, instance, includeInManifest: true);
+        }
+
+        public bool TryAdd(Type type, object instance, bool includeInManifest)
+        {
+            if (GetService(type) == null)
+            {
+                Add(type, instance, includeInManifest);
+                return true;
+            }
+
+            return false;
+        }
+
         public object GetService(Type serviceType)
         {
             ServiceEntry entry;
