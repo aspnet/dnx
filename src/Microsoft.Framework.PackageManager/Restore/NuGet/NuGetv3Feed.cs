@@ -205,6 +205,9 @@ namespace Microsoft.Framework.PackageManager.Restore.NuGet
                 Id = id,
                 Version = SemanticVersion.Parse(version),
                 ContentUri = $"{_baseUri}{lowerInvariantId}/{lowerInvariantVersion}/{lowerInvariantId}.{lowerInvariantVersion}{Constants.PackageExtension}",
+
+                // v3 feed doesn't indicate if listed?
+                Listed = true
             };
         }
 
