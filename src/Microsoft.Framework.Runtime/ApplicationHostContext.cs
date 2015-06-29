@@ -108,8 +108,11 @@ namespace Microsoft.Framework.Runtime
 
             // Default services
             _serviceProvider.Add(typeof(IApplicationEnvironment), new ApplicationEnvironment(Project, targetFramework, configuration));
-            _serviceProvider.Add(typeof(IFileWatcher), NoopWatcher.Instance);
             _serviceProvider.Add(typeof(ILibraryManager), LibraryManager);
+            if (_serviceProvider.GetService(typeof(IFileWatcher)) == null)
+            {
+                _serviceProvider.Add(typeof(IFileWatcher), NoopWatcher.Instance);
+            }
 
             // Not exposed to the application layer
             _serviceProvider.Add(typeof(ILibraryExportProvider), LibraryExportProvider, includeInManifest: false);

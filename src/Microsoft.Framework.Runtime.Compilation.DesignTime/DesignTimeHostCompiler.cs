@@ -26,6 +26,7 @@ namespace Microsoft.Framework.Runtime
                 foreach (var file in files)
                 {
                     watcher.WatchFile(file);
+                    watcher.WatchProject(file);
                 }
             };
             _queue.Error += OnError;
