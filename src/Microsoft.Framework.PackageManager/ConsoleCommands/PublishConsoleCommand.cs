@@ -26,6 +26,8 @@ namespace Microsoft.Framework.PackageManager
                     CommandOptionType.MultipleValue);
                 var optionNative = c.Option("--native", "Build and include native images. User must provide targeted CoreCLR runtime versions along with this option.",
                     CommandOptionType.NoValue);
+                var optionIncludeSymbols = c.Option("--include-symbols", "Include symbols in output bundle",
+                    CommandOptionType.NoValue);
                 var optionWwwRoot = c.Option("--wwwroot <NAME>", "Name of public folder in the project directory",
                     CommandOptionType.SingleValue);
                 var optionWwwRootOut = c.Option("--wwwroot-out <NAME>",
@@ -53,6 +55,7 @@ namespace Microsoft.Framework.PackageManager
                                 Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries) :
                             new string[0],
                         Native = optionNative.HasValue(),
+                        IncludeSymbols = optionIncludeSymbols.HasValue(),
                         Reports = reportsFactory.CreateReports(optionQuiet.HasValue())
                     };
 

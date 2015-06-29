@@ -127,10 +127,11 @@ namespace Microsoft.Framework.PackageManager.Publish
 
             // Extract the generated nupkg to target path
             var srcNupkgPath = Path.Combine(buildOptions.OutputDir, root.Configuration, targetNupkg);
+            var srcSymbolsNupkgPath = Path.ChangeExtension(srcNupkgPath, "symbols.nupkg");
 
             var options = new Microsoft.Framework.PackageManager.Packages.AddOptions
             {
-                NuGetPackage = srcNupkgPath,
+                NuGetPackage = root.IncludeSymbols ? srcSymbolsNupkgPath : srcNupkgPath,
                 SourcePackages = root.TargetPackagesPath,
                 Reports = root.Reports
             };
@@ -170,9 +171,8 @@ namespace Microsoft.Framework.PackageManager.Publish
             root.Reports.Quiet.WriteLine("Removing {0}", srcNupkgPath);
             File.Delete(srcNupkgPath);
 
-            srcNupkgPath = Path.ChangeExtension(srcNupkgPath, "symbols.nupkg");
-            root.Reports.Quiet.WriteLine("Removing {0}", srcNupkgPath);
-            File.Delete(srcNupkgPath);
+            root.Reports.Quiet.WriteLine("Removing {0}", srcSymbolsNupkgPath);
+            File.Delete(srcSymbolsNupkgPath);
 
             return true;
         }
