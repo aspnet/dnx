@@ -37,6 +37,7 @@ namespace Microsoft.Framework.PackageManager.Publish
         public string SourcePackagesPath { get; set; }
         
         public bool NoSource { get; set; }
+        public bool IncludeSymbols { get; set; }
         public string Configuration { get; set; }
 
         public IList<PublishRuntime> Runtimes { get; set; }

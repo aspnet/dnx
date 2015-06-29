@@ -26,6 +26,8 @@ namespace Microsoft.Framework.PackageManager.Publish
 
         public bool Native { get; set; }
 
+        public bool IncludeSymbols { get; set; }
+
         public Reports Reports { get; set; }
     }
 }

@@ -92,7 +92,8 @@ namespace Microsoft.Framework.PackageManager.Publish
             var root = new PublishRoot(project, outputPath, _hostServices, _options.Reports)
             {
                 Configuration = _options.Configuration,
-                NoSource = _options.NoSource
+                NoSource = _options.NoSource,
+                IncludeSymbols = _options.IncludeSymbols
             };
 
             Func<string, string> getVariable = key =>
