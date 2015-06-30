@@ -4,6 +4,7 @@
 using System.IO;
 using System.Collections.Generic;
 using System.Linq;
+using Microsoft.AspNet.Testing.xunit;
 using Microsoft.Framework.CommonTestUtils;
 using Microsoft.Framework.Runtime;
 using Microsoft.Framework.Runtime.DependencyManagement;
@@ -1359,6 +1360,60 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
             }
         }
 
+        [ConditionalTheory]
+        [FrameworkSkipCondition(RuntimeFrameworks.Mono)]
+        [MemberData(nameof(RuntimeComponents))]
+        public void PublishWithIncludeSymbolsOptionIncludesSymbolsAndSourceCode(string flavor, string os, string architecture)
+        {
+            const string testApp = "NoDependencies";
+            string expectedOutputStructure = @"{
+  '.': ['hello', 'hello.cmd'],
+  'approot': {
+    'global.json': '',
+    'packages': {
+      'NoDependencies': {
+        '1.0.0': {
+          '.': ['NoDependencies.1.0.0.nupkg', 'NoDependencies.1.0.0.nupkg.sha512', 'NoDependencies.nuspec'],
+          'root': ['project.json', 'LOCKFILE_NAME'],
+          'src': {
+            'NoDependencies': [ 'Program.cs' ]
+          },
+          'lib': {
+            'dnx451': ['NoDependencies.dll', 'NoDependencies.pdb', 'NoDependencies.xml']
+          }
+        }
+      }
+    }
+  }
+}".Replace("LOCKFILE_NAME", LockFileFormat.LockFileName);
+
+            var runtimeHomeDir = _fixture.GetRuntimeHomeDir(flavor, os, architecture);
+
+            using (var tempDir = TestUtils.CreateTempDir())
+            {
+                var publishOutputPath = Path.Combine(tempDir, "output");
+                var appPath = Path.Combine(tempDir, testApp);
+                TestUtils.CopyFolder(TestUtils.GetXreTestAppPath(testApp), appPath);
+
+                var lockFilePath = Path.Combine(appPath, LockFileFormat.LockFileName);
+                if (File.Exists(lockFilePath))
+                {
+                    File.Delete(lockFilePath);
+                }
+
+                var exitCode = DnuTestUtils.ExecDnu(
+                    runtimeHomeDir,
+                    subcommand: "publish",
+                    arguments: $"--no-source --include-symbols --out {publishOutputPath}",
+                    environment: null,
+                    workingDir: appPath);
+
+                Assert.Equal(0, exitCode);
+
+                Assert.True(DirTree.CreateFromJson(expectedOutputStructure)
+                    .MatchDirectoryOnDisk(publishOutputPath, compareFileContents: false));
+            }
+        }
 
         [Theory(Skip = "Creating long path file failed on Windows Server 2012 R2")]
         [MemberData(nameof(RuntimeComponents))]
