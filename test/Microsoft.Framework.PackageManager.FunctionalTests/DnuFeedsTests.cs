@@ -29,58 +29,6 @@ namespace Microsoft.Framework.PackageManager
 
         [Theory]
         [MemberData(nameof(RuntimeComponents))]
-        public void DnuFeeds_NoSources(string flavor, string os, string architecture)
-        {
-            var environment = new Dictionary<string, string>
-            {
-                { "DNX_TRACE", "0" },
-            };
-
-            var rootConfig =
-@"<?xml version=""1.0"" encoding=""utf-8""?>
-<configuration>
-  <packageSources>
-    <clear /> <!-- Remove the effects of any machine-level config -->
-  </packageSources>
-</configuration>";
-
-            var projectStructure =
-@"{
-    'root': {
-        'NuGet.Config': """",
-    }
-}";
-
-            var expectedContent = @"Registered Sources:
-1.  https://www.nuget.org/api/v2/ https://www.nuget.org/api/v2/
-";
-            var runtimeHomePath = _fixture.GetRuntimeHomeDir(flavor, os, architecture);
-            using (var testEnv = new DnuTestEnvironment(runtimeHomePath, projectName: "Project Name"))
-            {
-                var projectPath = testEnv.ProjectPath;
-                DirTree.CreateFromJson(projectStructure)
-                    .WithFileContents("root/NuGet.Config", rootConfig)
-                    .WriteTo(projectPath);
-
-                string output;
-                string error;
-                var exitCode = DnuTestUtils.ExecDnu(
-                    runtimeHomePath,
-                    subcommand: "feeds",
-                    arguments: "list root",
-                    stdOut: out output,
-                    stdErr: out error,
-                    environment: environment,
-                    workingDir: projectPath);
-
-                Assert.Equal(0, exitCode);
-                Assert.Empty(error);
-                Assert.Equal(expectedContent, output);
-            }
-        }
-
-        [Theory]
-        [MemberData(nameof(RuntimeComponents))]
         public void DnuFeeds_ListsAllSources(string flavor, string os, string architecture)
         {
             var environment = new Dictionary<string, string>
@@ -119,12 +67,6 @@ namespace Microsoft.Framework.PackageManager
     }
 }";
 
-            var expectedContent = @"Registered Sources:
-1.  Source1 https://source1 [Disabled]
-2.  Source2 https://source2
-3.  Source3 https://source3
-4.  https://www.nuget.org/api/v2/ https://www.nuget.org/api/v2/ [Disabled]
-";
             var runtimeHomePath = _fixture.GetRuntimeHomeDir(flavor, os, architecture);
             using (var testEnv = new DnuTestEnvironment(runtimeHomePath, projectName: "Project Name"))
             {
@@ -147,7 +89,12 @@ namespace Microsoft.Framework.PackageManager
 
                 Assert.Equal(0, exitCode);
                 Assert.Empty(error);
-                Assert.Equal(expectedContent, output);
+
+                // CI Machines and such have different sources in the user-global config
+                // So we can't actually assert the exact content of the output.
+                Assert.Contains("Source1 https://source1 [Disabled]", output);
+                Assert.Contains("Source2 https://source2", output);
+                Assert.Contains("Source3 https://source3", output);
             }
         }
     }
