@@ -14,6 +14,8 @@ namespace Microsoft.Framework.Runtime.Json
         public const string ValueTrue = "true";
         public const string ValueFalse = "false";
 
+        private readonly StringBuilder _buffer = new StringBuilder();
+        private readonly StringBuilder _codePointBuffer = new StringBuilder(4);
         private readonly TextReader _reader;
         private JsonToken _token;
         private int _line;
@@ -143,8 +145,8 @@ namespace Microsoft.Framework.Runtime.Json
 
         private string ReadNumber(int firstRead)
         {
-            var buf = new StringBuilder();
-            buf.Append((char)firstRead);
+            _buffer.Clear();
+            _buffer.Append((char)firstRead);
 
             while (true)
             {
@@ -155,7 +157,7 @@ namespace Microsoft.Framework.Runtime.Json
                     next == 'e' ||
                     next == 'E')
                 {
-                    buf.Append((char)ReadNextChar());
+                    _buffer.Append((char)ReadNextChar());
                 }
                 else
                 {
@@ -163,7 +165,7 @@ namespace Microsoft.Framework.Runtime.Json
                 }
             }
 
-            return buf.ToString();
+            return _buffer.ToString();
         }
 
         private void ReadLiteral(string literal)
@@ -199,7 +201,7 @@ namespace Microsoft.Framework.Runtime.Json
 
         private string ReadString()
         {
-            var buf = new StringBuilder();
+            _buffer.Clear();
             var escaped = false;
 
             while (true)
@@ -216,32 +218,32 @@ namespace Microsoft.Framework.Runtime.Json
                 {
                     if ((next == '"') || (next == '\\') || (next == '/'))
                     {
-                        buf.Append((char)next);
+                        _buffer.Append((char)next);
                     }
                     else if (next == 'b')
                     {
                         // '\b' backspace
-                        buf.Append('\b');
+                        _buffer.Append('\b');
                     }
                     else if (next == 'f')
                     {
                         // '\f' form feed
-                        buf.Append('\f');
+                        _buffer.Append('\f');
                     }
                     else if (next == 'n')
                     {
                         // '\n' line feed
-                        buf.Append('\n');
+                        _buffer.Append('\n');
                     }
                     else if (next == 'r')
                     {
                         // '\r' carriage return
-                        buf.Append('\r');
+                        _buffer.Append('\r');
                     }
                     else if (next == 't')
                     {
                         // '\t' tab
-                        buf.Append('\t');
+                        _buffer.Append('\t');
                     }
                     else if (next == 'u')
                     {
@@ -249,7 +251,7 @@ namespace Microsoft.Framework.Runtime.Json
                         var unicodeLine = _line;
                         var unicodeColumn = _column;
 
-                        var unicodesBuf = new StringBuilder(4);
+                        _codePointBuffer.Clear();
                         for (int i = 0; i < 4; ++i)
                         {
                             next = ReadNextChar();
@@ -262,19 +264,19 @@ namespace Microsoft.Framework.Runtime.Json
                             }
                             else
                             {
-                                unicodesBuf[i] = (char)next;
+                                _codePointBuffer[i] = (char)next;
                             }
                         }
 
                         try
                         {
-                            var unicodeValue = int.Parse(unicodesBuf.ToString(), NumberStyles.HexNumber, CultureInfo.InvariantCulture);
-                            buf.Append((char)unicodeValue);
+                            var unicodeValue = int.Parse(_codePointBuffer.ToString(), NumberStyles.HexNumber, CultureInfo.InvariantCulture);
+                            _buffer.Append((char)unicodeValue);
                         }
                         catch (FormatException ex)
                         {
                             throw new JsonDeserializerException(
-                                JsonDeserializerResource.Format_InvalidUnicode(unicodesBuf.ToString()),
+                                JsonDeserializerResource.Format_InvalidUnicode(_codePointBuffer.ToString()),
                                 ex,
                                 unicodeLine,
                                 unicodeColumn);
@@ -300,11 +302,11 @@ namespace Microsoft.Framework.Runtime.Json
                 }
                 else
                 {
-                    buf.Append((char)next);
+                    _buffer.Append((char)next);
                 }
             }
 
-            return buf.ToString();
+            return _buffer.ToString();
         }
 
         private static bool IsWhitespace(int value)
