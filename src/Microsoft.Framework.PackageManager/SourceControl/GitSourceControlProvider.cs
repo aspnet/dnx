@@ -141,6 +141,11 @@ namespace Microsoft.Framework.PackageManager.SourceControl
 
             _buildReports.WriteInformation($"Cloning from: {repoUrl}");
 
+            if (!Directory.Exists(destinationFolder))
+            {
+                Directory.CreateDirectory(destinationFolder);
+            }
+
             // First clone
             if (!ProcessUtilities.Execute(
                 Git,
@@ -152,7 +157,7 @@ namespace Microsoft.Framework.PackageManager.SourceControl
                 return false;
             }
 
-            _buildReports.WriteVerbose($"Resetting to commit hash: {repoUrl}");
+            _buildReports.WriteInformation($"Resetting to commit hash: {repoUrl}");
 
             // Then sync to that particular commit
             if (!ProcessUtilities.Execute(
