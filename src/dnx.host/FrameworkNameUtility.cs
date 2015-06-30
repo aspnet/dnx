@@ -7,24 +7,44 @@ using Microsoft.Framework.Runtime.Common.Impl;
 
 namespace dnx.host
 {
+    /// <summary>
+    /// Parses framework names expected by the DNX _runtime_.
+    /// </summary>
+    /// <remarks>
+    /// Note: This does not need to be complete because there are a fixed set of frameworks
+    /// understood by the runtimes.
+    /// </remarks>
     internal class FrameworkNameUtility
     {
-        internal static FrameworkName ParseFrameworkName(string frameworkName)
+        internal static bool TryParseFrameworkName(string frameworkName, out FrameworkName parsed)
         {
+            parsed = null;
             if (frameworkName == FrameworkNames.ShortNames.Dnx451)
             {
-                return new FrameworkName(FrameworkNames.LongNames.Dnx, new Version(4, 5, 1));
+                parsed = new FrameworkName(FrameworkNames.LongNames.Dnx, new Version(4, 5, 1));
+                return true;
             }
             else if (frameworkName == FrameworkNames.ShortNames.Dnx46)
             {
-                return new FrameworkName(FrameworkNames.LongNames.Dnx, new Version(4, 6));
+                parsed = new FrameworkName(FrameworkNames.LongNames.Dnx, new Version(4, 6));
+                return true;
             }
             else if (frameworkName == FrameworkNames.ShortNames.DnxCore50)
             {
-                return new FrameworkName(FrameworkNames.LongNames.DnxCore, new Version(5, 0));
+                parsed = new FrameworkName(FrameworkNames.LongNames.DnxCore, new Version(5, 0));
+                return true;
             }
+            return false;
+        }
 
-            throw new NotSupportedException();
+        internal static FrameworkName ParseFrameworkName(string frameworkName)
+        {
+            FrameworkName fx;
+            if (!TryParseFrameworkName(frameworkName, out fx))
+            {
+                throw new NotSupportedException();
+            }
+            return fx;
         }
     }
 }

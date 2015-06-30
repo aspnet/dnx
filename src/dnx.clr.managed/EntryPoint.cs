@@ -3,7 +3,9 @@
 
 using System;
 using System.Runtime.InteropServices;
+using System.Runtime.Versioning;
 using System.Threading.Tasks;
+using Microsoft.Framework.Runtime.Common.Impl;
 
 namespace dnx.clr.managed
 {
@@ -55,7 +57,19 @@ namespace dnx.clr.managed
                 }
             }
 
-            return new Awaiter(RuntimeBootstrapper.ExecuteAsync(args));
+            // Helios boots the DNX through this entry point. It has already
+            // set up the AppDomain though, so we just need to sniff the target framework based
+            // on the value provided by during AppDomain setup
+            var fxName = AppDomain.CurrentDomain.SetupInformation.TargetFrameworkName;
+            var version = new Version(4, 5, 1);
+            if (!string.IsNullOrEmpty(fxName))
+            {
+                version = new FrameworkName(fxName).Version;
+            }
+
+            return new Awaiter(RuntimeBootstrapper.ExecuteAsync(
+                args,
+                new FrameworkName(FrameworkNames.LongNames.Dnx, version)));
         }
 
         private sealed class Awaiter : IAwaiter

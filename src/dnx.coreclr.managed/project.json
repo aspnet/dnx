@@ -7,6 +7,12 @@
     "frameworks": {
         "dnxcore50": { }
     },
+    "compile": [
+        "../Microsoft.Framework.Runtime.Sources/Impl/EnvironmentNames.cs",
+        "../Microsoft.Framework.Runtime.Sources/Impl/FrameworkNames.cs",
+        "../Microsoft.Framework.Runtime.Sources/Impl/Constants.cs",
+        "../Microsoft.Framework.Runtime.Sources/Impl/Logger.cs"
+    ],
 
     "scripts": {
         "postbuild": [
@@ -14,4 +20,3 @@
         ]
     }
 }
-

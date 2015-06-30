@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using System.Xml;
 using System.Xml.Linq;
 using Microsoft.Framework.Runtime;
+using Microsoft.Framework.Runtime.Common.Impl;
 using Newtonsoft.Json.Linq;
 using NuGet;
 
@@ -494,6 +495,19 @@ namespace Microsoft.Framework.PackageManager.Publish
                 }
 
                 addElement.SetAttributeValue("value", pair.Value);
+            }
+
+            // Generate target framework information
+            var bestDnxVersion = project.GetTargetFrameworks()
+                .Where(f => f.FrameworkName.Identifier.Equals(FrameworkNames.LongNames.Dnx))
+                .OrderByDescending(f => f.FrameworkName.Version)
+                .Select(f => f.FrameworkName.Version)
+                .FirstOrDefault();
+            if(bestDnxVersion != null)
+            {
+                var sysWebElement = GetOrAddElement(parent: xDoc.Root, name: "system.web");
+                var httpRuntimeElement = GetOrAddElement(parent: sysWebElement, name: "httpRuntime");
+                httpRuntimeElement.SetAttributeValue("targetFramework", bestDnxVersion.ToString());
             }
 
             var xmlWriterSettings = new XmlWriterSettings

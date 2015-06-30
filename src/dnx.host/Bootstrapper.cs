@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
+using System.Runtime.Versioning;
 using System.Threading.Tasks;
 using Microsoft.Framework.Runtime;
 using Microsoft.Framework.Runtime.Common;
@@ -25,7 +26,7 @@ namespace dnx.host
             _searchPaths = searchPaths;
         }
 
-        public Task<int> RunAsync(List<string> args, IRuntimeEnvironment env)
+        public Task<int> RunAsync(List<string> args, IRuntimeEnvironment env, FrameworkName targetFramework)
         {
             var accessor = LoadContextAccessor.Instance;
             var container = new LoaderContainer();
@@ -57,10 +58,8 @@ namespace dnx.host
                 string applicationBaseDirectory = AppContext.BaseDirectory;
 #endif
 
-                var framework = Environment.GetEnvironmentVariable("TARGET_FRAMEWORK") ?? Environment.GetEnvironmentVariable(EnvironmentNames.Framework);
                 var configuration = Environment.GetEnvironmentVariable("TARGET_CONFIGURATION") ?? Environment.GetEnvironmentVariable(EnvironmentNames.Configuration) ?? "Debug";
-
-                var targetFramework = FrameworkNameUtility.ParseFrameworkName(framework ?? FrameworkNames.ShortNames.Dnx451);
+                Logger.TraceInformation($"[{nameof(Bootstrapper)}] Runtime Framework: {targetFramework}");
 
                 var applicationEnvironment = new ApplicationEnvironment(applicationBaseDirectory,
                                                                         targetFramework,

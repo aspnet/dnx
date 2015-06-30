@@ -7,6 +7,7 @@ using System.IO;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.Versioning;
 using System.Threading;
 using dnx.host;
 using Microsoft.Framework.Runtime;
@@ -68,7 +69,9 @@ public class EntryPoint
             Environment.SetEnvironmentVariable(EnvironmentNames.AppBase, arguments[appbaseIndex + 1]);
         }
 
-        return RuntimeBootstrapper.Execute(arguments);
+        return RuntimeBootstrapper.Execute(arguments, 
+            // NOTE(anurse): Mono is always "dnx451" (for now).
+            new FrameworkName("DNX", new Version(4, 5, 1)));
     }
 
     private static string[] ExpandCommandLineArguments(string[] arguments)

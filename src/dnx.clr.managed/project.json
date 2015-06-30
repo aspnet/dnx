@@ -6,9 +6,13 @@
     "frameworks": {
         "dnx451": { }
     },
-    "compileFiles": [
-      "../Microsoft.Framework.Runtime.Sources/Impl/EnvironmentNames.cs",
-      "../Microsoft.Framework.Runtime.Sources/Impl/Constants.cs"
+    "compile": [
+        "../Microsoft.Framework.Runtime.Sources/Impl/EnvironmentNames.cs",
+        "../Microsoft.Framework.Runtime.Sources/Impl/Logger.cs",
+        "../Microsoft.Framework.Runtime.Sources/Impl/Constants.cs",
+        "../Microsoft.Framework.Runtime.Sources/Impl/FrameworkNames.cs",
+        "../dnx.host/FrameworkNameUtility.cs",
+        "../Microsoft.Framework.Runtime/Json/**/*.cs"
     ],
     "scripts": {
         "postbuild": [
@@ -16,4 +20,3 @@
         ]
     }
 }
-

@@ -19,6 +19,8 @@ namespace Microsoft.Framework.Runtime
         public const string BootstrapperHostName = RuntimeShortName + ".host";
         public const string BootstrapperClrName = RuntimeShortName + ".clr";
         public const string BootstrapperCoreclrManagedName = RuntimeShortName + ".coreclr.managed";
+        public const string ProjectJsonAppDomainDataKey = ".dnx.clr.DomainManager.projectJson";
+        public const string ProjectJsonPathAppDomainDataKey = ".dnx.clr.DomainManager.projectJsonPath";
 
         public const int LockFileVersion = 1;
     }

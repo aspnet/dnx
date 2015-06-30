@@ -22,7 +22,16 @@ namespace Bootstrapper.FunctionalTests
             IDictionary<string, string> environment = null,
             string workingDir = null)
         {
-            var runtimeRoot = Directory.EnumerateDirectories(Path.Combine(runtimeHomePath, "runtimes"), Constants.RuntimeNamePrefix + "*").First();
+            string runtimeRoot;
+            if (string.Equals(Environment.GetEnvironmentVariable("DNX_DEV"), "1"))
+            {
+                // If DNX_DEV is set, then the path provided is to the root of a package.
+                runtimeRoot = runtimeHomePath;
+            }
+            else
+            {
+                runtimeRoot = Directory.EnumerateDirectories(Path.Combine(runtimeHomePath, "runtimes"), Constants.RuntimeNamePrefix + "*").First();
+            }
             var program = Path.Combine(runtimeRoot, "bin", Constants.BootstrapperExeName);
 
             string stdOutStr, stdErrStr;

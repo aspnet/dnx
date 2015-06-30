@@ -2,16 +2,23 @@
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 using System;
+using System.IO;
 using System.Net.Sockets;
 using System.Runtime.InteropServices;
+using System.Runtime.Versioning;
 using System.Threading;
 using dnx.clr.managed;
 using Microsoft.Framework.Runtime;
+using Microsoft.Framework.Runtime.Common.Impl;
+using Microsoft.Framework.Runtime.Json;
 
 public class DomainManager : AppDomainManager
 {
+    private static readonly Version DefaultVersion = new Version(4, 5, 1);
+
     private ApplicationMainInfo _info;
     private HostExecutionContextManager _hostExecutionContextManager;
+    private FrameworkName _dnxTfm;
 
     public override void InitializeNewDomain(AppDomainSetup appDomainInfo)
     {
@@ -29,8 +36,12 @@ public class DomainManager : AppDomainManager
             Environment.SetEnvironmentVariable(EnvironmentNames.AppBase, _info.ApplicationBase);
         }
 
+        var version = DetermineDnxVersion(_info.ApplicationBase);
+        _dnxTfm = new FrameworkName(FrameworkNames.LongNames.Dnx, version);
+        Logger.TraceInformation($"[{nameof(DomainManager)}] Using Desktop CLR v{version}");
+
         appDomainInfo.ApplicationBase = Environment.GetEnvironmentVariable(EnvironmentNames.DefaultLib);
-        appDomainInfo.TargetFrameworkName = ".NETFramework,Version=v4.5.1";
+        appDomainInfo.TargetFrameworkName = FrameworkNames.LongNames.NetFramework + ", Version=v" + version.ToString();
     }
 
     public override HostExecutionContextManager HostExecutionContextManager
@@ -57,7 +68,56 @@ public class DomainManager : AppDomainManager
         },
         null);
 
-        return RuntimeBootstrapper.Execute(argv);
+        return RuntimeBootstrapper.Execute(argv, _dnxTfm);
+    }
+
+    private Version DetermineDnxVersion(string applicationBase)
+    {
+        var projectPath = Path.Combine(applicationBase, "project.json");
+        try
+        {
+            // Parse the project
+            JsonObject json;
+            var jsonText = File.ReadAllText(projectPath);
+            using (var reader = new StringReader(jsonText))
+            {
+                json = JsonDeserializer.Deserialize(reader) as JsonObject;
+                if (json == null)
+                {
+                    Logger.TraceError($"[{nameof(DomainManager)}] project.json did not contain a JSON object at the root.");
+                    return DefaultVersion;
+                }
+            }
+
+            // Find the highest DNX desktop version, if any and map it to .NET version
+            Version version = null;
+            var frameworks = json.ValueAsJsonObject("frameworks")?.Keys;
+            if (frameworks != null)
+            {
+                foreach (var key in frameworks)
+                {
+                    FrameworkName fx;
+                    if (dnx.host.FrameworkNameUtility.TryParseFrameworkName(key, out fx) &&
+                        fx.Identifier.Equals(FrameworkNames.LongNames.Dnx, StringComparison.Ordinal))
+                    {
+                        if (version == null || version < fx.Version)
+                        {
+                            version = fx.Version;
+                        }
+                    }
+                }
+            }
+
+            // Return what we found, or just the default framework if we didn't find anything.
+            return version ?? DefaultVersion;
+        }
+        catch (Exception ex)
+        {
+            // If we fail to read the project file, just log and continue
+            // We'll have more detailed failures later in the process
+            Logger.TraceError($"[{nameof(DomainManager)}] Error reading project.json {ex}");
+            return DefaultVersion;
+        }
     }
 
     [DllImport(Constants.BootstrapperClrName + ".dll")]

@@ -20,6 +20,7 @@ namespace Microsoft.Framework.Runtime.Common.Impl
             private const string VersionPrefix = ", Version=v";
             public const string Dnx = "DNX";
             public const string DnxCore = "DNXCore";
+            public const string NetFramework = ".NETFramework";
             public const string Dnx451 = Dnx + VersionPrefix + "4.5.1";
             public const string Dnx46 = Dnx + VersionPrefix + "4.6";
             public const string DnxCore50 = DnxCore + VersionPrefix + "5.0";

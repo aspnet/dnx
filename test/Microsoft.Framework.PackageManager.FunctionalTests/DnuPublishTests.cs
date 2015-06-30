@@ -131,6 +131,9 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
     <add key=""{3}"" value="""" />
     <add key=""{4}"" value=""..\approot\src\{{0}}"" />
   </appSettings>
+  <system.web>
+    <httpRuntime targetFramework=""4.5.1"" />
+  </system.web>
 </configuration>", Constants.WebConfigBootstrapperVersion,
                 Constants.WebConfigRuntimePath,
                 Constants.WebConfigRuntimeVersion,
@@ -242,6 +245,9 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
     <add key=""{3}"" value="""" />
     <add key=""{4}"" value=""..\approot\src\{{0}}"" />
   </appSettings>
+  <system.web>
+    <httpRuntime targetFramework=""4.5.1"" />
+  </system.web>
 </configuration>", Constants.WebConfigBootstrapperVersion,
                 Constants.WebConfigRuntimePath,
                 Constants.WebConfigRuntimeVersion,
@@ -794,6 +800,9 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
     <add key=""{3}"" value="""" />
     <add key=""{4}"" value=""..\approot\src\{{0}}"" />
   </appSettings>
+  <system.web>
+    <httpRuntime targetFramework=""4.5.1"" />
+  </system.web>
 </configuration>", Constants.WebConfigBootstrapperVersion,
                 Constants.WebConfigRuntimePath,
                 Constants.WebConfigRuntimeVersion,
@@ -896,6 +905,9 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
     <add key=""{3}"" value="""" />
     <add key=""{4}"" value=""..\approot\src\{{0}}"" />
   </appSettings>
+  <system.web>
+    <httpRuntime targetFramework=""4.5.1"" />
+  </system.web>
 </configuration>", Constants.WebConfigBootstrapperVersion,
                 Constants.WebConfigRuntimePath,
                 Constants.WebConfigRuntimeVersion,
