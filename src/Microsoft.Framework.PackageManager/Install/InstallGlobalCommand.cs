@@ -67,6 +67,20 @@ namespace Microsoft.Framework.PackageManager
 
             var temporaryProjectFileFullPath = CreateTemporaryProject(FeedOptions.TargetPackagesFolder, packageId, packageVersion);
 
+            var packageFullPath = Path.Combine(
+                _commandsRepository.PackagesRoot.Root,
+                _commandsRepository.PathResolver.GetPackageDirectory(packageId, new SemanticVersion(packageVersion)));
+
+            if (OverwriteCommands)
+            {
+                if (Directory.Exists(packageFullPath))
+                {
+                    WriteInfo($"Deleting {packageFullPath}");
+                    FileOperationUtils.DeleteFolder(packageFullPath);
+                    Directory.Delete(packageFullPath);
+                }
+            }
+
             try
             {
                 RestoreCommand.RestoreDirectories.Add(temporaryProjectFileFullPath);
@@ -81,10 +95,6 @@ namespace Microsoft.Framework.PackageManager
                 FileOperationUtils.DeleteFolder(folderToDelete);
                 Directory.Delete(folderToDelete);
             }
-
-            var packageFullPath = Path.Combine(
-                _commandsRepository.PackagesRoot.Root,
-                _commandsRepository.PathResolver.GetPackageDirectory(packageId, new SemanticVersion(packageVersion)));
 
             if (!ValidateApplicationPackage(packageFullPath))
             {

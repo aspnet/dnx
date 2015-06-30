@@ -35,7 +35,7 @@ namespace Microsoft.Framework.PackageManager
                 var argPackage = c.Argument("[package]", "The name of the application package");
                 var argVersion = c.Argument("[version]", "The version of the application package");
 
-                var optOverwrite = c.Option("-o|--overwrite", "Overwrites conflicting commands", CommandOptionType.NoValue);
+                var optOverwrite = c.Option("-o|--overwrite", "Overwrites package and conflicting commands", CommandOptionType.NoValue);
 
                 var feedCommandLineOptions = FeedCommandLineOptions.Add(c);
 
