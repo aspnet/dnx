@@ -188,6 +188,8 @@ namespace Microsoft.Framework.PackageManager
                             context.PopulateDependencies(packageBuilder);
                             context.AddLibs(packageBuilder, "*.dll");
                             context.AddLibs(packageBuilder, "*.xml");
+
+                            context.PopulateDependencies(symbolPackageBuilder);
                             context.AddLibs(symbolPackageBuilder, "*.*");
                         }
                     }
