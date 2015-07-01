@@ -14,6 +14,7 @@ namespace Microsoft.Framework.Runtime.DependencyManagement
 {
     internal class LockFileReader
     {
+        public const int Version = -9996;
         public const string LockFileName = "project.lock.json";
 
         public LockFile Read(string filePath)
