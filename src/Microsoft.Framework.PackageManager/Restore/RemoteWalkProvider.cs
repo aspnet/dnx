@@ -27,15 +27,10 @@ namespace Microsoft.Framework.PackageManager
 
         public bool IsHttp { get; private set; }
 
-        public async Task<WalkProviderMatch> FindLibrary(LibraryRange libraryRange, FrameworkName targetFramework, bool includeUnlisted)
+        public async Task<WalkProviderMatch> FindLibrary(LibraryRange libraryRange, FrameworkName targetFramework)
         {
             var results = await _source.FindPackagesByIdAsync(libraryRange.Name);
             PackageInfo bestResult = null;
-            if(!includeUnlisted)
-            {
-                results = results.Where(p => p.Listed);
-            }
-
             foreach (var result in results)
             {
                 if (VersionUtility.ShouldUseConsidering(

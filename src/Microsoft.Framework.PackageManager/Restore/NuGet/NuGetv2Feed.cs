@@ -16,20 +16,14 @@ namespace Microsoft.Framework.PackageManager.Restore.NuGet
 {
     public class NuGetv2Feed : IPackageFeed
     {
-        private static readonly XNamespace _defaultNamespace = "http://www.w3.org/2005/Atom";
-        private static readonly XNamespace _odataMetadataNamespace = "http://schemas.microsoft.com/ado/2007/08/dataservices/metadata";
-        private static readonly XNamespace _odataNamespace = "http://schemas.microsoft.com/ado/2007/08/dataservices";
-        private static readonly XName _xnameEntry = _defaultNamespace + "entry";
-        private static readonly XName _xnameTitle = _defaultNamespace + "title";
-        private static readonly XName _xnameContent = _defaultNamespace + "content";
-        private static readonly XName _xnameLink = _defaultNamespace + "link";
-        private static readonly XName _xnameProperties = _odataMetadataNamespace + "properties";
-        private static readonly XName _xnameId = _odataNamespace + "Id";
-        private static readonly XName _xnameVersion = _odataNamespace + "Version";
-        private static readonly XName _xnamePublish = _odataNamespace + "Published";
-
-        // An unlisted package's publish time must be 1900-01-01T00:00:00.
-        private static readonly DateTime _unlistedPublishedTime = new DateTime(1900, 1, 1, 0, 0, 0);
+        private static readonly XNamespace _defaultNamespace = XNamespace.Get("http://www.w3.org/2005/Atom");
+        private static readonly XName _xnameEntry = XName.Get("entry", _defaultNamespace.NamespaceName);
+        private static readonly XName _xnameTitle = XName.Get("title", _defaultNamespace.NamespaceName);
+        private static readonly XName _xnameContent = XName.Get("content", _defaultNamespace.NamespaceName);
+        private static readonly XName _xnameLink = XName.Get("link", _defaultNamespace.NamespaceName);
+        private static readonly XName _xnameProperties = XName.Get("properties", "http://schemas.microsoft.com/ado/2007/08/dataservices/metadata");
+        private static readonly XName _xnameId = XName.Get("Id", "http://schemas.microsoft.com/ado/2007/08/dataservices");
+        private static readonly XName _xnameVersion = XName.Get("Version", "http://schemas.microsoft.com/ado/2007/08/dataservices");
 
         private readonly string _baseUri;
         private readonly Reports _reports;
@@ -192,18 +186,6 @@ namespace Microsoft.Framework.PackageManager.Restore.NuGet
             var properties = element.Element(_xnameProperties);
             var idElement = properties.Element(_xnameId);
             var titleElement = element.Element(_xnameTitle);
-            var publishElement = properties.Element(_xnamePublish);
-
-            var listed = true;
-            if (publishElement != null)
-            {
-                DateTime publishDate;
-                if (DateTime.TryParse(publishElement.Value, out publishDate) && (publishDate == _unlistedPublishedTime))
-                {
-                    listed = false;
-                }
-            }
-
 
             return new PackageInfo
             {
@@ -213,7 +195,6 @@ namespace Microsoft.Framework.PackageManager.Restore.NuGet
                 Id = idElement?.Value ?? titleElement?.Value ?? id,
                 Version = SemanticVersion.Parse(properties.Element(_xnameVersion).Value),
                 ContentUri = element.Element(_xnameContent).Attribute("src").Value,
-                Listed = listed
             };
         }
 
