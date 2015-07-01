@@ -312,7 +312,7 @@ namespace Microsoft.Framework.Runtime
                         key => repository.ValueAsString(key).Value);
             }
 
-            project.BuildTargetFrameworksAndConfigurations(rawProject);
+            project.BuildTargetFrameworksAndConfigurations(rawProject, diagnostics);
 
             PopulateDependencies(
                 project.ProjectFilePath,
@@ -504,7 +504,8 @@ namespace Microsoft.Framework.Runtime
             return targetFrameworkInfo ?? _defaultTargetFrameworkConfiguration;
         }
 
-        private void BuildTargetFrameworksAndConfigurations(JsonObject projectJsonObject)
+        private void BuildTargetFrameworksAndConfigurations(JsonObject projectJsonObject,
+            ICollection<ICompilationMessage> diagnostics)
         {
             // Get the shared compilationOptions
             _defaultCompilerOptions = GetCompilationOptions(projectJsonObject) ?? new CompilerOptions();
@@ -570,7 +571,17 @@ namespace Microsoft.Framework.Runtime
                 {
                     try
                     {
-                        BuildTargetFrameworkNode(frameworkKey, frameworks.ValueAsJsonObject(frameworkKey));
+                        var frameworkToken = frameworks.ValueAsJsonObject(frameworkKey);
+                        var success = BuildTargetFrameworkNode(frameworkKey, frameworkToken);
+                        if (!success)
+                        {
+                            diagnostics?.Add(
+                                new FileFormatMessage(
+                                    $"\"{frameworkKey}\" is an unsupported framework",
+                                    ProjectFilePath,
+                                    CompilationMessageSeverity.Error,
+                                    frameworkToken));
+                        }
                     }
                     catch (Exception ex)
                     {

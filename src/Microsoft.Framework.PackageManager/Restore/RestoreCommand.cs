@@ -243,9 +243,18 @@ namespace Microsoft.Framework.PackageManager
             var projectLockFilePath = Path.Combine(projectFolder, LockFileFormat.LockFileName);
 
             Runtime.Project project;
-            if (!Runtime.Project.TryGetProject(projectJsonPath, out project))
+            var diagnostics = new List<ICompilationMessage>();
+            if (!Runtime.Project.TryGetProject(projectJsonPath, out project, diagnostics))
             {
                 throw new Exception("TODO: project.json parse error");
+            }
+
+            if (diagnostics.HasErrors())
+            {
+                var errorMessages = diagnostics
+                    .Where(x => x.Severity == CompilationMessageSeverity.Error)
+                    .Select(x => x.Message);
+                ErrorMessages.GetOrAdd(projectJsonPath, _ => new List<string>()).AddRange(errorMessages);
             }
 
             var lockFile = await ReadLockFile(projectLockFilePath);
