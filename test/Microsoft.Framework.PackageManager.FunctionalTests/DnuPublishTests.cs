@@ -48,7 +48,7 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
     """": [],
     ""DNX,Version=v4.5.1"": []
   }
-}".Replace("LOCKFILEFORMAT_VERSION", LockFileFormat.Version.ToString());
+}".Replace("LOCKFILEFORMAT_VERSION", Constants.LockFileVersion.ToString());
 
         public DnuPublishTests(PackageManagerFunctionalTestFixture fixture)
         {
@@ -1021,7 +1021,7 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
     ""DNX,Version=v4.5.1"": [],
     ""DNXCore,Version=v5.0"": []
   }
-}".Replace("LOCKFILEFORMAT_VERSION", LockFileFormat.Version.ToString()))
+}".Replace("LOCKFILEFORMAT_VERSION", Constants.LockFileVersion.ToString()))
                     .WithFileContents(Path.Combine("approot", "global.json"), @"{
   ""packages"": ""packages""
 }")
@@ -1128,7 +1128,7 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
     ""DNX,Version=v4.5.1"": [],
     ""DNXCore,Version=v5.0"": []
   }
-}".Replace("LOCKFILEFORMAT_VERSION", LockFileFormat.Version.ToString())
+}".Replace("LOCKFILEFORMAT_VERSION", Constants.LockFileVersion.ToString())
   .Replace("RUNTIME_TARGET", flavor == "coreclr" ? "DNXCore,Version=v5.0" : "DNX,Version=v4.5.1"))
                     .WithFileContents(Path.Combine("approot", "global.json"), @"{
   ""packages"": ""packages""
@@ -1212,7 +1212,7 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
     ],
     ""DNX,Version=v4.5.1"": []
   }
-}".Replace("LOCKFILEFORMAT_VERSION", LockFileFormat.Version.ToString());
+}".Replace("LOCKFILEFORMAT_VERSION", Constants.LockFileVersion.ToString());
 
             var runtimeHomeDir = _fixture.GetRuntimeHomeDir(flavor, os, architecture);
 
@@ -1317,7 +1317,7 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
     ],
     ""DNX,Version=v4.5.1"": []
   }
-}".Replace("LOCKFILEFORMAT_VERSION", LockFileFormat.Version.ToString())
+}".Replace("LOCKFILEFORMAT_VERSION", Constants.LockFileVersion.ToString())
 .Replace("LOCKFILE_NAME", LockFileFormat.LockFileName);
 
             var runtimeHomeDir = _fixture.GetRuntimeHomeDir(flavor, os, architecture);

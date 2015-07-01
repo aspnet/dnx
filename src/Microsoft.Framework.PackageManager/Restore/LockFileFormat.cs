@@ -16,7 +16,6 @@ namespace Microsoft.Framework.PackageManager
 {
     public class LockFileFormat
     {
-        public const int Version = -9996;
         public const string LockFileName = "project.lock.json";
 
         public LockFile Read(string filePath)
@@ -129,7 +128,7 @@ namespace Microsoft.Framework.PackageManager
         {
             var json = new JObject();
             json["locked"] = new JValue(lockFile.Islocked);
-            json["version"] = new JValue(Version);
+            json["version"] = new JValue(Runtime.Constants.LockFileVersion);
             json["targets"] = WriteObject(lockFile.Targets, WriteTarget);
             json["libraries"] = WriteObject(lockFile.Libraries, WriteLibrary);
             json["projectFileDependencyGroups"] = WriteObject(lockFile.ProjectFileDependencyGroups, WriteProjectFileDependencyGroup);

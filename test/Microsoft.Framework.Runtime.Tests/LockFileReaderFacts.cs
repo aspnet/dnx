@@ -17,7 +17,7 @@ namespace Microsoft.Framework.Runtime.Tests
         {
             var lockFileData = @"{
   ""locked"": false,
-  ""version"": -9996,
+  ""version"": 1,
   ""targets"": {
                 "".NETFramework,Version=v4.5"": {
                     ""WindowsAzure.ServiceBus/2.6.7"": {
