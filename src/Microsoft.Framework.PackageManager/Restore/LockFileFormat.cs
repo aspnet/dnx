@@ -159,7 +159,7 @@ namespace Microsoft.Framework.PackageManager
                 WriteBool(json, "serviceable", library.IsServiceable);
             }
             json["sha512"] = WriteString(library.Sha512);
-            WritePathArray(json, "files", library.Files, WriteString);
+            WritePathArray(json, "files", library.Files.OrderBy(f => f), WriteString);
             return new JProperty(
                 library.Name + "/" + library.Version.ToString(),
                 json);
@@ -216,12 +216,12 @@ namespace Microsoft.Framework.PackageManager
 
             if (library.Dependencies.Count > 0)
             {
-                json["dependencies"] = WriteObject(library.Dependencies, WritePackageDependency);
+                json["dependencies"] = WriteObject(library.Dependencies.OrderBy(p => p.Id), WritePackageDependency);
             }
 
             if (library.FrameworkAssemblies.Count > 0)
             {
-                json["frameworkAssemblies"] = WriteArray(library.FrameworkAssemblies, WriteFrameworkAssemblyReference);
+                json["frameworkAssemblies"] = WriteArray(library.FrameworkAssemblies.OrderBy(f => f), WriteFrameworkAssemblyReference);
             }
 
             if (library.CompileTimeAssemblies.Count > 0)

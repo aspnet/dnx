@@ -1176,10 +1176,10 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
     ""DNX,Version=v4.5.1"": {
       ""NoDependencies/1.0.0"": {
         ""frameworkAssemblies"": [
+          ""Microsoft.CSharp"",
           ""mscorlib"",
           ""System"",
-          ""System.Core"",
-          ""Microsoft.CSharp""
+          ""System.Core""
         ],
         ""compile"": {
           ""lib/dnx451/NoDependencies.dll"": {}
@@ -1194,14 +1194,14 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
     ""NoDependencies/1.0.0"": {
       ""sha512"": ""NUPKG_SHA_VALUE"",
       ""files"": [
-        ""NoDependencies.1.0.0.nupkg"",
-        ""NoDependencies.1.0.0.nupkg.sha512"",
-        ""NoDependencies.nuspec"",
         ""app/hello"",
         ""app/hello.cmd"",
         ""app/project.json"",
         ""lib/dnx451/NoDependencies.dll"",
         ""lib/dnx451/NoDependencies.xml"",
+        ""NoDependencies.1.0.0.nupkg"",
+        ""NoDependencies.1.0.0.nupkg.sha512"",
+        ""NoDependencies.nuspec"",
         ""root/project.json""
       ]
     }
@@ -1280,10 +1280,10 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
     ""DNX,Version=v4.5.1"": {
       ""NoDependencies/1.0.0"": {
         ""frameworkAssemblies"": [
+          ""Microsoft.CSharp"",
           ""mscorlib"",
           ""System"",
-          ""System.Core"",
-          ""Microsoft.CSharp""
+          ""System.Core""
         ],
         ""compile"": {
           ""lib/dnx451/NoDependencies.dll"": {}
@@ -1298,14 +1298,14 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
     ""NoDependencies/1.0.0"": {
       ""sha512"": ""NUPKG_SHA_VALUE"",
       ""files"": [
-        ""NoDependencies.1.0.0.nupkg"",
-        ""NoDependencies.1.0.0.nupkg.sha512"",
-        ""NoDependencies.nuspec"",
         ""app/hello"",
         ""app/hello.cmd"",
         ""app/project.json"",
         ""lib/dnx451/NoDependencies.dll"",
         ""lib/dnx451/NoDependencies.xml"",
+        ""NoDependencies.1.0.0.nupkg"",
+        ""NoDependencies.1.0.0.nupkg.sha512"",
+        ""NoDependencies.nuspec"",
         ""root/project.json"",
         ""root/project.lock.json""
       ]
