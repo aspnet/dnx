@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Runtime.Versioning;
 using System.Text;
@@ -67,7 +68,17 @@ namespace Microsoft.Framework.Runtime
 
                 if (!library.Resolved)
                 {
-                    var message = string.Format("Dependency {0} could not be resolved", library.LibraryRange);
+                    string message;
+                    if (library.Compatible)
+                    {
+                        message = $"The dependency {library.LibraryRange} could not be resolved.";
+                    }
+                    else
+                    {
+                        var projectName = Directory.GetParent(projectFilePath).Name;
+                        message =
+                            $"The dependency {library.Identity} in project {projectName} does not support framework {library.Framework}.";
+                    }
 
                     messages.Add(new FileFormatMessage(message, projectPath, CompilationMessageSeverity.Error)
                     {

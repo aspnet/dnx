@@ -94,7 +94,8 @@ namespace Microsoft.Framework.Runtime
             if (package != null)
             {
                 IEnumerable<LibraryDependency> dependencies;
-                bool resolved = true;
+                var resolved = true;
+                var compatible = true;
                 if (package.LockFileLibrary != null)
                 {
                     if (targetLibrary?.Version == package.LockFileLibrary.Version)
@@ -105,6 +106,20 @@ namespace Microsoft.Framework.Runtime
                     {
                         resolved = false;
                         dependencies = Enumerable.Empty<LibraryDependency>();
+                    }
+
+                    // If a NuGet dependency is supposed to provide assemblies but there is no assembly compatible with
+                    // current target framework, we should mark this dependency as unresolved
+                    if (targetLibrary != null)
+                    {
+                        var containsAssembly = package.LockFileLibrary.Files
+                            .Any(x => x.StartsWith($"ref{Path.DirectorySeparatorChar}") ||
+                                x.StartsWith($"lib{Path.DirectorySeparatorChar}"));
+                        compatible = targetLibrary.FrameworkAssemblies.Any() ||
+                            targetLibrary.CompileTimeAssemblies.Any() ||
+                            targetLibrary.RuntimeAssemblies.Any() ||
+                            !containsAssembly;
+                        resolved = compatible;
                     }
                 }
                 else
@@ -122,7 +137,8 @@ namespace Microsoft.Framework.Runtime
                     },
                     Type = "Package",
                     Dependencies = dependencies,
-                    Resolved = resolved
+                    Resolved = resolved,
+                    Compatible = compatible
                 };
             }
 
@@ -269,6 +285,11 @@ namespace Microsoft.Framework.Runtime
 
                 foreach (var runtimeAssemblyPath in targetLibrary.RuntimeAssemblies)
                 {
+                    if (IsPlaceholderFile(runtimeAssemblyPath))
+                    {
+                        continue;
+                    }
+
                     // Fix up the slashes to match the platform
                     var assemblyPath = runtimeAssemblyPath.Path.Replace('/', Path.DirectorySeparatorChar);
                     var name = Path.GetFileNameWithoutExtension(assemblyPath);
@@ -383,6 +404,11 @@ namespace Microsoft.Framework.Runtime
 
             foreach (var assemblyPath in targetLibrary.CompileTimeAssemblies)
             {
+                if (IsPlaceholderFile(assemblyPath))
+                {
+                    continue;
+                }
+
                 var name = Path.GetFileNameWithoutExtension(assemblyPath);
                 var path = Path.Combine(description.Library.Path, assemblyPath);
                 paths[name] = new MetadataFileReference(name, path);
@@ -439,6 +465,11 @@ namespace Microsoft.Framework.Runtime
             }
 
             return bestMatch;
+        }
+
+        private static bool IsPlaceholderFile(string path)
+        {
+            return string.Equals(Path.GetFileName(path), "_._", StringComparison.Ordinal);
         }
 
         public static string ResolveRepositoryPath(string rootDirectory)

@@ -13,6 +13,7 @@ namespace Microsoft.Framework.Runtime
         public IEnumerable<LibraryDependency> Dependencies { get; set; }
 
         public bool Resolved { get; set; } = true;
+        public bool Compatible { get; set; } = true;
 
         public string Path { get; set; }
         public string Type { get; set; }

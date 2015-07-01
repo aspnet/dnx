@@ -13,6 +13,9 @@ namespace Microsoft.Framework.PackageManager.Utils
 {
     internal static class LockFileUtils
     {
+        private static readonly Func<string, object> PlaceholderFileParser =
+            s => string.Equals(s, "_._", StringComparison.Ordinal) ? s : null;
+
         public static LockFileLibrary CreateLockFileLibrary(LockFileLibrary previousLibrary, IPackagePathResolver resolver, IPackage package, string correctedPackageName = null)
         {
             var lockFileLib = new LockFileLibrary();
@@ -399,11 +402,13 @@ namespace Microsoft.Framework.PackageManager.Utils
 
             ContentPropertyDefinition _assembly = new ContentPropertyDefinition
             {
+                Parser = PlaceholderFileParser,
                 FileExtensions = { ".dll", ".exe", ".winmd" }
             };
 
             ContentPropertyDefinition _dynamicLibrary = new ContentPropertyDefinition
             {
+                Parser = PlaceholderFileParser,
                 FileExtensions = { ".dll", ".dylib", ".so" }
             };
 

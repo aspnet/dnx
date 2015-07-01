@@ -224,7 +224,8 @@ namespace Microsoft.Framework.Runtime
                         Framework = entry.Value.Description.Framework ?? frameworkName,
                         Dependencies = entry.Value.Dependencies.SelectMany(CorrectDependencyVersion).ToList(),
                         LoadableAssemblies = entry.Value.Description.LoadableAssemblies ?? Enumerable.Empty<string>(),
-                        Resolved = entry.Value.Description.Resolved
+                        Resolved = entry.Value.Description.Resolved,
+                        Compatible = entry.Value.Description.Compatible
                     };
                 }).ToList();
 

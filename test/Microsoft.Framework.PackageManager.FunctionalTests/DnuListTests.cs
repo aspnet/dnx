@@ -102,9 +102,12 @@ namespace Microsoft.Framework.PackageManager.FunctionalTests
             Assert.Equal(0, DnuTestUtils.ExecDnu(runtimeHomePath, "list", "", out stdOut, out stdErr, environment: null, workingDir: _workingDir.DirPath));
 
             // there should be 2 and only 2 dependencies of alpha
-            var hits = stdOut.Split('\n').Where(line => line.Contains("* alpha 0.1.0"))
+            var resolvedHits = stdOut.Split('\n').Where(line => line.Contains("* alpha 0.1.0"))
                                          .Where(line => !line.Contains("Unresolved"));
-            Assert.Equal(2, hits.Count());
+            var unresolvedHits = stdOut.Split('\n').Where(line => line.Contains("* alpha 0.1.0"))
+                                         .Where(line => line.Contains("Unresolved"));
+            Assert.Equal(1, resolvedHits.Count());
+            Assert.Equal(1, unresolvedHits.Count());
         }
 
         [Theory]
@@ -123,8 +126,7 @@ namespace Microsoft.Framework.PackageManager.FunctionalTests
                 },
                 frameworks = new
                 {
-                    dnx451 = new { },
-                    dnxcore50 = new { }
+                    dnx451 = new { }
                 }
             });
 
