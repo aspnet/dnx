@@ -285,7 +285,8 @@ namespace Microsoft.Framework.PackageManager
             }
 
             // Try the non http sources first
-            var nonHttpMatch = await FindLibrary(libraryRange, providers.Where(p => !p.IsHttp), provider => provider.FindLibrary(libraryRange, context.FrameworkName, includeUnlisted: false));
+            // non-http sources don't support list/unlist so set includeUnlisted to true
+            var nonHttpMatch = await FindLibrary(libraryRange, providers.Where(p => !p.IsHttp), provider => provider.FindLibrary(libraryRange, context.FrameworkName, includeUnlisted: true));
 
             // If we found an exact match then use it
             if (nonHttpMatch != null && nonHttpMatch.Library.Version.Equals(libraryRange.VersionRange.MinVersion))

@@ -24,6 +24,7 @@ namespace Microsoft.Framework.CommonTestUtils
         public DisposableDir(string dirPath)
         {
             DirPath = dirPath;
+            _deleteOnDispose = !string.Equals(Environment.GetEnvironmentVariable("DNX_KEEP_TEST_DIRS"), "1", StringComparison.Ordinal);
         }
 
         public string DirPath { get; private set; }
