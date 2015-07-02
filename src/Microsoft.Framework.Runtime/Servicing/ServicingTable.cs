@@ -2,6 +2,7 @@
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Threading;
 using NuGet;
@@ -10,7 +11,7 @@ namespace Microsoft.Framework.Runtime.Servicing
 {
     public static class ServicingTable
     {
-        private static ServicingIndex _index;
+        private static List<ServicingIndex> _index;
         private static bool _indexInitialized;
         private static object _indexSync;
 
@@ -20,39 +21,62 @@ namespace Microsoft.Framework.Runtime.Servicing
             string assetPath,
             out string replacementPath)
         {
-            return LoadIndex().TryGetReplacement(packageId, packageVersion, assetPath, out replacementPath);
+            var compositeIndex = LoadIndex();
+
+            foreach (var index in compositeIndex)
+            {
+                if (index.TryGetReplacement(packageId, packageVersion, assetPath, out replacementPath))
+                {
+                    return true;
+                }
+            }
+
+            replacementPath = null;
+            return false;
         }
 
-        private static ServicingIndex LoadIndex()
+        private static List<ServicingIndex> LoadIndex()
         {
             return LazyInitializer.EnsureInitialized(ref _index, ref _indexInitialized, ref _indexSync, () =>
             {
-                var index = new ServicingIndex();
-                var runtimeServicing = Environment.GetEnvironmentVariable(EnvironmentNames.Servicing);
-                if (string.IsNullOrEmpty(runtimeServicing))
+                var compositeIndex = new List<ServicingIndex>();
+
+                foreach (var servicingRoot in GetServicingRoots())
                 {
-                    var servicingRoot = Environment.GetEnvironmentVariable("PROGRAMFILES(X86)");
-                    if (string.IsNullOrEmpty(servicingRoot))
+                    var index = new ServicingIndex();
+                    if (servicingRoot != null && servicingRoot.IndexOfAny(Path.GetInvalidPathChars()) == -1)
                     {
-                        Environment.GetEnvironmentVariable("PROGRAMFILES");
+                        index.Initialize(servicingRoot);
                     }
 
-                    if (string.IsNullOrEmpty(servicingRoot))
-                    {
-                        // Nothing to do, we don't have Program Files. Just return the uninitialized index.
-                        return index;
-                    }
-
-                    runtimeServicing = Path.Combine(
-                        servicingRoot,
-                        Constants.RuntimeLongName,
-                        "Servicing");
+                    compositeIndex.Add(index);
                 }
 
-                index.Initialize(runtimeServicing);
-                return index;
+                return compositeIndex;
             });
         }
 
+        private static IEnumerable<string> GetServicingRoots()
+        {
+            var servicingRoot = Environment.GetEnvironmentVariable(EnvironmentNames.Servicing);
+
+            if (servicingRoot != null)
+            {
+                yield return servicingRoot;
+            }
+
+            yield return GetDefaultServicingRoot();
+        }
+
+        private static string GetDefaultServicingRoot()
+        {
+            var programFiles =
+                Environment.GetEnvironmentVariable("PROGRAMFILES(X86)")
+                    ?? Environment.GetEnvironmentVariable("PROGRAMFILES");
+
+            return programFiles != null
+                ? Path.Combine(programFiles, Constants.RuntimeLongName, "Servicing")
+                : null;
+        }
     }
 }
