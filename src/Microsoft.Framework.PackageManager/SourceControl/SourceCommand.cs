@@ -76,7 +76,6 @@ namespace Microsoft.Framework.PackageManager.SourceControl
             packageFolder = Path.Combine(packagesFolder, packageFolder);
 
             var snapshotInfo = ReadRepositoryInfo(packageFolder);
-            Console.WriteLine(JsonConvert.SerializeObject(snapshotInfo));
             if (snapshotInfo == null)
             {
                 return false;
