@@ -7,6 +7,8 @@
       <FileRevision Condition="'$(FileRevision)' == ''">0</FileRevision>
       <FullFileVersion>$(ProductVersion).$(FileRevision)</FullFileVersion>
       <BuildVersionSuffix Condition="'$(BuildVersion)' != ''">-$(BuildVersion)</BuildVersionSuffix>
+      <OutputFileName Condition="'$(ConfigurationType)' == 'DynamicLibrary'">$(ProjectName).dll</OutputFileName>
+      <OutputFileName Condition="'$(ConfigurationType)' == 'Application'">$(ProjectName).exe</OutputFileName>
     </PropertyGroup>
    <ItemGroup>
       <VersionHeaderContents Include="// This file is auto-generated" />
@@ -15,6 +17,7 @@
       <VersionHeaderContents Include="#define FileVersionStr &quot;$(FullFileVersion)\0&quot;" />
       <VersionHeaderContents Include="#define ProductVersion $(ProductVersion.Replace('.', ',')),0" />
       <VersionHeaderContents Include="#define ProductVersionStr &quot;$(ProductVersion)$(BuildVersionSuffix)\0&quot;" />
+      <VersionHeaderContents Include="#define FileName &quot;$(OutputFileName)&quot;" />
     </ItemGroup>
     <WriteLinesToFile File="version.h" Lines="@(VersionHeaderContents)" OverWrite="true" />
   </Target>
