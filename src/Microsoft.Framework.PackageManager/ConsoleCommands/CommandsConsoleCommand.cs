@@ -13,7 +13,7 @@ namespace Microsoft.Framework.PackageManager
         {
             cmdApp.Command("commands", cmd =>
             {
-                cmd.Description = "Commands related to managing application commands (add, remove)";
+                cmd.Description = "Commands related to managing application commands (install, uninstall)";
                 cmd.HelpOption("-?|-h|--help");
                 cmd.OnExecute(() =>
                 {
