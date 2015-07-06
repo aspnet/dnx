@@ -301,6 +301,60 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
 
         [Theory]
         [MemberData(nameof(RuntimeComponents))]
+        public void DnuPublishWebApp_NonexistentFolderAsPublicFolder(string flavor, string os, string architecture)
+        {
+            var runtimeHomeDir = _fixture.GetRuntimeHomeDir(flavor, os, architecture);
+
+            var projectStructure = @"{
+  '.': ['project.json'],
+}";
+            var expectedOutputStructure = @"{
+  'wwwroot': {
+    'web.config': ''
+  },
+  'approot': {
+    'global.json': '',
+    'src': {
+      'PROJECT_NAME': {
+        '.': ['project.json', 'project.lock.json'],
+      }
+    }
+  }
+}".Replace("PROJECT_NAME", _projectName);
+
+            using (var testEnv = new DnuTestEnvironment(runtimeHomeDir, _projectName, _outputDirName))
+            {
+                DirTree.CreateFromJson(projectStructure)
+                    .WithFileContents("project.json", @"{
+  ""webroot"": ""wwwroot"",
+  ""frameworks"": {
+    ""dnx451"": {}
+  }
+}")
+                    .WriteTo(testEnv.ProjectPath);
+
+                var environment = new Dictionary<string, string>()
+                {
+                    { EnvironmentNames.Packages, Path.Combine(testEnv.ProjectPath, "packages") }
+                };
+
+                var exitCode = DnuTestUtils.ExecDnu(
+                    runtimeHomeDir,
+                    subcommand: "publish",
+                    arguments: $"--out {testEnv.PublishOutputDirPath}",
+                    environment: environment,
+                    workingDir: testEnv.ProjectPath);
+                Assert.Equal(0, exitCode);
+
+                var expectedOutputDir = DirTree.CreateFromJson(expectedOutputStructure);
+
+                Assert.True(expectedOutputDir.MatchDirectoryOnDisk(testEnv.PublishOutputDirPath,
+                    compareFileContents: false));
+            }
+        }
+
+        [Theory]
+        [MemberData(nameof(RuntimeComponents))]
         public void DnuPublishConsoleApp(string flavor, string os, string architecture)
         {
             var runtimeHomeDir = _fixture.GetRuntimeHomeDir(flavor, os, architecture);

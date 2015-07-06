@@ -637,7 +637,10 @@ namespace Microsoft.Framework.PackageManager.Publish
             root.Reports.Quiet.WriteLine("  Source {0}", contentSourcePath);
             root.Reports.Quiet.WriteLine("  Target {0}", targetFolderPath);
 
-            root.Operations.Copy(contentSourcePath, targetFolderPath);
+            if (Directory.Exists(contentSourcePath))
+            {
+                root.Operations.Copy(contentSourcePath, targetFolderPath);
+            }
         }
 
         private static string GetWwwRootSourcePath(string projectDirectory, string wwwRoot)

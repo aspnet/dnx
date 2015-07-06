@@ -65,14 +65,6 @@ namespace Microsoft.Framework.PackageManager.Publish
                 return false;
             }
 
-            if (!string.IsNullOrEmpty(_options.WwwRoot) &&
-                !Directory.Exists(Path.Combine(project.ProjectDirectory, _options.WwwRoot)))
-            {
-                _options.Reports.Error.WriteLine(
-                    "The specified wwwroot folder '{0}' doesn't exist in the project directory.".Red(), _options.WwwRoot);
-                return false;
-            }
-
             if (string.Equals(_options.WwwRootOut, PublishRoot.AppRootName, StringComparison.OrdinalIgnoreCase))
             {
                 _options.Reports.Error.WriteLine(
