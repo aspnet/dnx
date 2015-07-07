@@ -95,6 +95,12 @@ namespace Microsoft.Framework.PackageManager.SourceControl
                 return false;
             }
 
+            if (!provider.IsInstalled)
+            {
+                _reports.WriteError($"The '{repoType}' client application is not installed.");
+                return false;
+            }
+
             var sourcesFolder = ResolveSourcesFolder();
 
             var sourceFolderName = provider.CreateShortFolderName(snapshotInfo);
