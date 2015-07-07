@@ -62,7 +62,7 @@ HMODULE LoadLoaderModule(dnx::trace_writer& trace_writer)
     return nullptr;
 }
 
-HMODULE LoadCoreClr(const std::wstring& coreclr_dir, dnx::trace_writer& trace_writer)
+HMODULE LoadCoreClrFromPath(const std::wstring& coreclr_dir, dnx::trace_writer& trace_writer)
 {
     auto loader_module = LoadLoaderModule(trace_writer);
     if (!loader_module)
@@ -104,18 +104,18 @@ bool PinModule(HMODULE module, dnx::trace_writer& trace_writer)
     return true;
 }
 
-HMODULE LoadCoreClr(dnx::trace_writer& trace_writer)
+HMODULE LoadCoreClr(const std::wstring& runtime_directory, dnx::trace_writer& trace_writer)
 {
     HMODULE coreclr_module;
 
     wchar_t coreclr_dir_buffer[MAX_PATH];
     if (GetEnvironmentVariableW(L"CORECLR_DIR", coreclr_dir_buffer, MAX_PATH))
     {
-        coreclr_module = LoadCoreClr(coreclr_dir_buffer, trace_writer);
+        coreclr_module = LoadCoreClrFromPath(coreclr_dir_buffer, trace_writer);
     }
     else
     {
-        coreclr_module = LoadLibraryExW(L"coreclr.dll", NULL, 0);
+        coreclr_module = LoadLibraryExW(dnx::utils::path_combine(runtime_directory, L"coreclr.dll").c_str(), NULL, 0);
     }
 
     if (coreclr_module)
@@ -205,8 +205,8 @@ HRESULT StopClrHost(ICLRRuntimeHost2* pCLRRuntimeHost)
     return pCLRRuntimeHost->Stop();
 }
 
-HRESULT ExecuteMain(ICLRRuntimeHost2* pCLRRuntimeHost, PCALL_APPLICATION_MAIN_DATA data, const std::wstring& core_clr_directory,
-    dnx::trace_writer& trace_writer)
+HRESULT ExecuteMain(ICLRRuntimeHost2* pCLRRuntimeHost, PCALL_APPLICATION_MAIN_DATA data, const std::wstring& runtime_directory,
+    const std::wstring& core_clr_directory, dnx::trace_writer& trace_writer)
 {
     const wchar_t* property_keys[] =
     {
@@ -247,13 +247,11 @@ HRESULT ExecuteMain(ICLRRuntimeHost2* pCLRRuntimeHost, PCALL_APPLICATION_MAIN_DA
         }
     }
 
-    auto current_directory = data->runtimeDirectory ? data->runtimeDirectory : GetModuleDirectory(NULL);
-
     // Add the assembly containing the app domain manager to the trusted list
-    trusted_platform_assemblies.append(dnx::utils::path_combine(current_directory, L"dnx.coreclr.managed.dll"));
+    trusted_platform_assemblies.append(dnx::utils::path_combine(runtime_directory, L"dnx.coreclr.managed.dll"));
 
     std::wstring app_paths;
-    app_paths.append(current_directory).append(L";");
+    app_paths.append(runtime_directory).append(L";");
     app_paths.append(core_clr_directory).append(L";");
 
     const wchar_t* property_values[] = {
@@ -318,7 +316,9 @@ extern "C" HRESULT __stdcall CallApplicationMain(PCALL_APPLICATION_MAIN_DATA dat
 
     Win32KDisable(trace_writer);
 
-    auto coreclr_module = LoadCoreClr(trace_writer);
+    auto runtime_directory = data->runtimeDirectory ? data->runtimeDirectory : GetModuleDirectory(nullptr);
+
+    auto coreclr_module = LoadCoreClr(runtime_directory, trace_writer);
     if (!coreclr_module)
     {
         trace_writer.write(L"Failed to locate or load coreclr.dll", false);
@@ -341,7 +341,7 @@ extern "C" HRESULT __stdcall CallApplicationMain(PCALL_APPLICATION_MAIN_DATA dat
         return hr;
     }
 
-    hr = ExecuteMain(pCLRRuntimeHost, data, GetModuleDirectory(coreclr_module), trace_writer);
+    hr = ExecuteMain(pCLRRuntimeHost, data, runtime_directory, GetModuleDirectory(coreclr_module), trace_writer);
     if (FAILED(hr))
     {
         trace_writer.write(L"Failed to start CLR host", false);
