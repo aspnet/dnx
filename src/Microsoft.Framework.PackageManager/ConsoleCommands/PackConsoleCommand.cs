@@ -19,11 +19,10 @@ namespace Microsoft.Framework.PackageManager
                 var optionFramework = c.Option("--framework <TARGET_FRAMEWORK>", "A list of target frameworks to build.", CommandOptionType.MultipleValue);
                 var optionConfiguration = c.Option("--configuration <CONFIGURATION>", "A list of configurations to build.", CommandOptionType.MultipleValue);
                 var optionOut = c.Option("--out <OUTPUT_DIR>", "Output directory", CommandOptionType.SingleValue);
-                var optionDependencies = c.Option("--dependencies", "Copy dependencies", CommandOptionType.NoValue);
                 var optionQuiet = c.Option("--quiet", "Do not show output such as source/destination of nupkgs",
                     CommandOptionType.NoValue);
                 var argProjectDir = c.Argument(
-                    "[projects]", 
+                    "[projects]",
                     "One or more projects to pack, default is current directory",
                     multipleValues: true);
                 c.HelpOption("-?|-h|--help");
