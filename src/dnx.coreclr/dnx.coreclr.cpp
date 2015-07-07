@@ -109,7 +109,14 @@ HMODULE LoadCoreClr(const std::wstring& runtime_directory, dnx::trace_writer& tr
     HMODULE coreclr_module;
 
     wchar_t coreclr_dir_buffer[MAX_PATH];
-    if (GetEnvironmentVariableW(L"CORECLR_DIR", coreclr_dir_buffer, MAX_PATH))
+    auto result = GetEnvironmentVariableW(L"CORECLR_DIR", coreclr_dir_buffer, MAX_PATH);
+    if (result > MAX_PATH)
+    {
+        trace_writer.write(L"The value of the 'CORECLR_DIR' variable is invalid. Aborting loading coreclr.dll.", true);
+        return nullptr;
+    }
+
+    if (result)
     {
         coreclr_module = LoadCoreClrFromPath(coreclr_dir_buffer, trace_writer);
     }
@@ -137,9 +144,9 @@ HMODULE LoadCoreClr(const std::wstring& runtime_directory, dnx::trace_writer& tr
 */
 void Win32KDisable(dnx::trace_writer& trace_writer)
 {
-    wchar_t szWin32KDisable[2] = { 0 , 0 };
+    wchar_t buff[2] = { 0 , 0 };
 
-    if (GetEnvironmentVariable(L"DNX_WIN32K_DISABLE", szWin32KDisable, _countof(szWin32KDisable)) == 0 || wcscmp(szWin32KDisable, L"1") != 0)
+    if (GetEnvironmentVariable(L"DNX_WIN32K_DISABLE", buff, 2) != 1 || buff[0] != L'1')
     {
         return;
     }

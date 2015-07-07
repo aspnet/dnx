@@ -95,7 +95,15 @@ namespace
 
         for (auto servicing_location : servicing_locations)
         {
-            if (GetEnvironmentVariable(servicing_location, servicing_location_buffer, MAX_PATH) != 0)
+            auto result = GetEnvironmentVariable(servicing_location, servicing_location_buffer, MAX_PATH);
+            if (result > MAX_PATH)
+            {
+                trace_writer.write(std::wstring(L"The value of the '")
+                    .append(servicing_location).append(L"' environment variable is invalid and the location will be skipped."), true);
+                continue;
+            }
+
+            if (result != 0)
             {
                 // %DNX_SERVICING% should point directly to servicing folder. For program files we need to append the
                 // actual servicing folder location to %ProgramFilesXXX%
