@@ -237,7 +237,7 @@ Hello, code!
 }";
             const string lockFile = @"{
   ""locked"": false,
-  ""version"": -9996,
+  ""version"": 1,
   ""targets"": {
     ""DNX,Version=v4.5.1"": {}
   },
@@ -275,6 +275,64 @@ Hello, code!
         [MemberData(nameof(ClrRuntimeComponents))]
         [FrameworkSkipCondition(RuntimeFrameworks.Mono)]
         [OSSkipCondition(OperatingSystems.MacOSX | OperatingSystems.Linux)]
+        public void BootstrapperLaunches452ClrIfDnx452IsHighestVersionInProject(string flavor, string os, string architecture)
+        {
+            const string projectStructure = @"{
+    ""project.json"": {},
+    ""project.lock.json"": {},
+    ""Program.cs"": {}
+}";
+
+            const string projectJson = @"{
+    ""dependencies"": {
+    },
+    ""frameworks"": {
+        ""dnx452"": {},
+        ""dnx451"": {}
+    }
+}";
+            const string lockFile = @"{
+  ""locked"": false,
+  ""version"": 1,
+  ""targets"": {
+    ""DNX,Version=v4.5.1"": {}
+    ""DNX,Version=v4.5.2"": {}
+  },
+  ""libraries"": {},
+  ""projectFileDependencyGroups"": {
+    """": [],
+    ""DNX,Version=v4.5.1"": []
+    ""DNX,Version=v4.5.2"": []
+  }
+}";
+
+            var runtimeHomeDir = _fixture.GetRuntimeHomeDir(flavor, os, architecture);
+            using (var tempDir = TestUtils.CreateTempDir())
+            {
+                DirTree.CreateFromJson(projectStructure)
+                    .WithFileContents("project.json", projectJson)
+                    .WithFileContents("project.lock.json", lockFile)
+                    .WithFileContents("Program.cs", ClrVersionTestProgram)
+                    .WriteTo(tempDir);
+
+                string stdOut;
+                string stdErr;
+                var exitCode = BootstrapperTestUtils.ExecBootstrapper(
+                    runtimeHomeDir,
+                    arguments: ". run",
+                    stdOut: out stdOut,
+                    stdErr: out stdErr,
+                    environment: new Dictionary<string, string> { { EnvironmentNames.Trace, null } },
+                    workingDir: tempDir);
+                Assert.Equal(0, exitCode);
+                Assert.Equal("40502", stdOut.Trim());
+            }
+        }
+
+        [ConditionalTheory]
+        [MemberData(nameof(ClrRuntimeComponents))]
+        [FrameworkSkipCondition(RuntimeFrameworks.Mono)]
+        [OSSkipCondition(OperatingSystems.MacOSX | OperatingSystems.Linux)]
         public void BootstrapperLaunches46ClrIfDnx46IsHighestVersionInProject(string flavor, string os, string architecture)
         {
             const string projectStructure = @"{
@@ -295,7 +353,7 @@ Hello, code!
 }";
             const string lockFile = @"{
   ""locked"": false,
-  ""version"": -9996,
+  ""version"": 1,
   ""targets"": {
     ""DNX,Version=v4.6"": {}
     ""DNX,Version=v4.5.1"": {}

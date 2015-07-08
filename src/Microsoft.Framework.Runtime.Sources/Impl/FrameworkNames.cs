@@ -13,6 +13,7 @@ namespace Microsoft.Framework.Runtime.Common.Impl
             public const string Dnx451 = Dnx + "451";
             public const string Dnx46 = Dnx + "46";
             public const string DnxCore50 = DnxCore + "50";
+            public const string Dnx452 = Dnx + "452";
         }
 
         public static class LongNames

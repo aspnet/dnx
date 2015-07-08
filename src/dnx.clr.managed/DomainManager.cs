@@ -14,7 +14,7 @@ using Microsoft.Framework.Runtime.Json;
 
 public class DomainManager : AppDomainManager
 {
-    private static readonly Version DefaultVersion = new Version(4, 5, 1);
+    private static readonly Version DefaultFrameworkVersion = new Version(4, 5, 1);
 
     private ApplicationMainInfo _info;
     private HostExecutionContextManager _hostExecutionContextManager;
@@ -74,6 +74,11 @@ public class DomainManager : AppDomainManager
     private Version DetermineDnxVersion(string applicationBase)
     {
         var projectPath = Path.Combine(applicationBase, "project.json");
+        if (!File.Exists(projectPath))
+        {
+            return DefaultFrameworkVersion;
+        }
+
         try
         {
             // Parse the project
@@ -85,7 +90,7 @@ public class DomainManager : AppDomainManager
                 if (json == null)
                 {
                     Logger.TraceError($"[{nameof(DomainManager)}] project.json did not contain a JSON object at the root.");
-                    return DefaultVersion;
+                    return DefaultFrameworkVersion;
                 }
             }
 
@@ -109,14 +114,14 @@ public class DomainManager : AppDomainManager
             }
 
             // Return what we found, or just the default framework if we didn't find anything.
-            return version ?? DefaultVersion;
+            return version ?? DefaultFrameworkVersion;
         }
         catch (Exception ex)
         {
             // If we fail to read the project file, just log and continue
             // We'll have more detailed failures later in the process
             Logger.TraceError($"[{nameof(DomainManager)}] Error reading project.json {ex}");
-            return DefaultVersion;
+            return DefaultFrameworkVersion;
         }
     }
 
