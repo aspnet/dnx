@@ -19,8 +19,7 @@ namespace NuGet
 
         public static Manifest ReadManifest(XDocument document)
         {
-            var schemaNamespace = document.Root.GetDefaultNamespace();
-            var metadataElement = document.Root.Elements(schemaNamespace + "metadata").FirstOrDefault();
+            var metadataElement = document.Root.ElementsNoNamespace("metadata").FirstOrDefault();
             if (metadataElement == null)
             {
                 throw new InvalidDataException(
@@ -29,7 +28,7 @@ namespace NuGet
 
             return new Manifest(
                 ReadMetadata(metadataElement),
-                ReadFilesList(document.Root.Elements(schemaNamespace + "files").FirstOrDefault()));
+                ReadFilesList(document.Root.ElementsNoNamespace("files").FirstOrDefault()));
         }
 
         private static ManifestMetadata ReadMetadata(XElement xElement)
@@ -167,7 +166,7 @@ namespace NuGet
 
         public static List<string> ReadReference(XElement referenceElement, bool throwIfEmpty)
         {
-            var references = referenceElement.Elements(referenceElement.GetDefaultNamespace() + "reference")
+            var references = referenceElement.ElementsNoNamespace("reference")
                                              .Select(element => ((string)element.Attribute("file"))?.Trim())
                                              .Where(file => file != null)
                                              .ToList();
@@ -187,7 +186,7 @@ namespace NuGet
                 return new List<FrameworkAssemblyReference>(0);
             }
 
-            return frameworkElement.Elements(frameworkElement.GetDefaultNamespace() + "frameworkAssembly")
+            return frameworkElement.ElementsNoNamespace("frameworkAssembly")
                                    .Where(element => element.Attribute("assemblyName") != null)
                                    .Select(element =>
                                    {
