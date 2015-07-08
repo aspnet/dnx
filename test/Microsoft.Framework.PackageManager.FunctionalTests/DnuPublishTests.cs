@@ -888,7 +888,8 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
     <add key=""non-related-key"" value=""non-related-value"" />
   </nonRelatedElement>
   <system.web>
-    <httpRuntime targetFramework=""4.7.3"" /> <!-- Bogus framework name :) -->
+    <httpRuntime targetFramework=""4.7.3"" />
+    <!-- Bogus framework name :) -->
   </system.web>
   <appSettings>
     <add key=""{0}"" value="""" />
