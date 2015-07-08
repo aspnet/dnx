@@ -574,13 +574,7 @@ var CAN_BUILD_ONECORE = '${Directory.Exists(WIN10_SDK_LIB) && Directory.GetFiles
             // Copy required CoreCLR assemblies
             if (target.Flavor == "coreclr")
             {
-                var extraBinaries = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
-                {
-                    "System.Private.DataContractSerialization.dll",
-                    "System.Private.Networking.dll",
-                    "System.Private.ServiceModel.dll",
-                    "System.Runtime.Serialization.Primitives.dll"
-                };
+                var extraBinaries = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
                 if (target.OS != "win")
                 {
