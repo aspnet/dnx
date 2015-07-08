@@ -498,17 +498,7 @@ namespace Microsoft.Framework.PackageManager.Publish
             }
 
             // Generate target framework information
-            var bestDnxVersion = project.GetTargetFrameworks()
-                .Where(f => f.FrameworkName.Identifier.Equals(FrameworkNames.LongNames.Dnx))
-                .OrderByDescending(f => f.FrameworkName.Version)
-                .Select(f => f.FrameworkName.Version)
-                .FirstOrDefault();
-            if(bestDnxVersion != null)
-            {
-                var sysWebElement = GetOrAddElement(parent: xDoc.Root, name: "system.web");
-                var httpRuntimeElement = GetOrAddElement(parent: sysWebElement, name: "httpRuntime");
-                httpRuntimeElement.SetAttributeValue("targetFramework", bestDnxVersion.ToString());
-            }
+            ApplyTargetFramework(xDoc, project);
 
             var xmlWriterSettings = new XmlWriterSettings
             {
@@ -519,6 +509,38 @@ namespace Microsoft.Framework.PackageManager.Publish
             using (var xmlWriter = XmlWriter.Create(File.Create(wwwRootOutWebConfigFilePath), xmlWriterSettings))
             {
                 xDoc.WriteTo(xmlWriter);
+            }
+        }
+
+        private void ApplyTargetFramework(XDocument xDoc, Runtime.Project project)
+        {
+            // Get the system.web element
+            var systemWeb = GetOrAddElement(xDoc.Root, "system.web");
+
+            var httpRuntime = systemWeb.Element("httpRuntime");
+
+            // No httpRuntime element, so create it
+            if (httpRuntime == null)
+            {
+                httpRuntime = new XElement("httpRuntime");
+                systemWeb.Add(httpRuntime);
+            }
+            // There is an httpRuntime element. The user may have already set this attribute...
+            else if (httpRuntime.Attribute("targetFramework") != null)
+            {
+                // User already had a target framework, leave it alone
+                return;
+            }
+            // Ok, now we have an httpRuntime element and we know we need to set thet targetFramework on it.
+
+            var bestDnxVersion = project.GetTargetFrameworks()
+                .Where(f => f.FrameworkName.Identifier.Equals(FrameworkNames.LongNames.Dnx))
+                .OrderByDescending(f => f.FrameworkName.Version)
+                .Select(f => f.FrameworkName.Version)
+                .FirstOrDefault();
+            if (bestDnxVersion != null)
+            {
+                httpRuntime.SetAttributeValue("targetFramework", bestDnxVersion.ToString());
             }
         }
 

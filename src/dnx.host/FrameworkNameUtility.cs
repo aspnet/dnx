@@ -19,9 +19,15 @@ namespace dnx.host
         internal static bool TryParseFrameworkName(string frameworkName, out FrameworkName parsed)
         {
             parsed = null;
+            
             if (frameworkName == FrameworkNames.ShortNames.Dnx451)
             {
                 parsed = new FrameworkName(FrameworkNames.LongNames.Dnx, new Version(4, 5, 1));
+                return true;
+            }
+            else if (frameworkName == FrameworkNames.ShortNames.Dnx452)
+            {
+                parsed = new FrameworkName(FrameworkNames.LongNames.Dnx, new Version(4, 5, 2));
                 return true;
             }
             else if (frameworkName == FrameworkNames.ShortNames.Dnx46)

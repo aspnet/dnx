@@ -855,6 +855,100 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
 
         [Theory]
         [MemberData(nameof(RuntimeComponents))]
+        public void DnuPublishWebApp_PreserveExistingFrameworkRequest(string flavor, string os, string architecture)
+        {
+            var runtimeHomeDir = _fixture.GetRuntimeHomeDir(flavor, os, architecture);
+
+            var projectStructure = @"{
+  '.': ['project.json'],
+  'public': ['index.html', 'web.config'],
+  'packages': {}
+}";
+            var expectedOutputStructure = @"{
+  'wwwroot': ['web.config', 'index.html'],
+  'approot': {
+    'global.json': '',
+    'src': {
+      'PROJECT_NAME': ['project.json', 'project.lock.json']
+    }
+  }
+}".Replace("PROJECT_NAME", _projectName);
+            var originalWebConfigContents = @"<?xml version=""1.0"" encoding=""utf-8""?>
+<configuration>
+  <nonRelatedElement>
+    <add key=""non-related-key"" value=""non-related-value"" />
+  </nonRelatedElement>
+  <system.web>
+    <httpRuntime targetFramework=""4.7.3"" /> <!-- Bogus framework name :) -->
+  </system.web>
+</configuration>";
+            var outputWebConfigTemplate = string.Format(@"<?xml version=""1.0"" encoding=""utf-8""?>
+<configuration>
+  <nonRelatedElement>
+    <add key=""non-related-key"" value=""non-related-value"" />
+  </nonRelatedElement>
+  <system.web>
+    <httpRuntime targetFramework=""4.7.3"" /> <!-- Bogus framework name :) -->
+  </system.web>
+  <appSettings>
+    <add key=""{0}"" value="""" />
+    <add key=""{1}"" value=""..\approot\runtimes"" />
+    <add key=""{2}"" value="""" />
+    <add key=""{3}"" value="""" />
+    <add key=""{4}"" value=""..\approot\src\{{0}}"" />
+  </appSettings>
+</configuration>", Constants.WebConfigBootstrapperVersion,
+                Constants.WebConfigRuntimePath,
+                Constants.WebConfigRuntimeVersion,
+                Constants.WebConfigRuntimeFlavor,
+                Constants.WebConfigRuntimeAppBase);
+
+            using (var testEnv = new DnuTestEnvironment(runtimeHomeDir, _projectName, _outputDirName))
+            {
+                DirTree.CreateFromJson(projectStructure)
+                    .WithFileContents("project.json", @"{
+  ""webroot"": ""public"",
+  ""frameworks"": {
+    ""dnx451"": {}
+  }
+}")
+                    .WithFileContents(Path.Combine("public", "web.config"), originalWebConfigContents)
+                    .WriteTo(testEnv.ProjectPath);
+
+                var environment = new Dictionary<string, string>()
+                {
+                    { EnvironmentNames.Packages, Path.Combine(testEnv.ProjectPath, "packages") }
+                };
+
+                var exitCode = DnuTestUtils.ExecDnu(
+                    runtimeHomeDir,
+                    subcommand: "publish",
+                    arguments: string.Format("--out {0} --wwwroot public --wwwroot-out wwwroot",
+                        testEnv.PublishOutputDirPath),
+                    environment: environment,
+                    workingDir: testEnv.ProjectPath);
+                Assert.Equal(0, exitCode);
+
+                var expectedOutputDir = DirTree.CreateFromJson(expectedOutputStructure)
+                    .WithFileContents(Path.Combine("approot", "src", testEnv.ProjectName, "project.json"), @"{
+  ""webroot"": ""../../../wwwroot"",
+  ""frameworks"": {
+    ""dnx451"": {}
+  }
+}")
+                    .WithFileContents(Path.Combine("approot", "src", testEnv.ProjectName, "project.lock.json"),
+                        BasicLockFile)
+                    .WithFileContents(Path.Combine("approot", "global.json"), @"{
+  ""packages"": ""packages""
+}")
+                    .WithFileContents(Path.Combine("wwwroot", "web.config"), outputWebConfigTemplate, testEnv.ProjectName);
+                Assert.True(expectedOutputDir.MatchDirectoryOnDisk(testEnv.PublishOutputDirPath,
+                    compareFileContents: true));
+            }
+        }
+
+        [Theory]
+        [MemberData(nameof(RuntimeComponents))]
         public void DnuPublishWebApp_UpdateExistingWebConfig(string flavor, string os, string architecture)
         {
             var runtimeHomeDir = _fixture.GetRuntimeHomeDir(flavor, os, architecture);
