@@ -23,8 +23,15 @@ sealed class DomainManager
             arguments[i] = new string(argv[i]);
         }
 
-        return RuntimeBootstrapper.Execute(
-            arguments,
-            new FrameworkName(FrameworkNames.LongNames.DnxCore, new Version(5, 0)));
+        try
+        {
+            return RuntimeBootstrapper.Execute(
+                arguments,
+                new FrameworkName(FrameworkNames.LongNames.DnxCore, new Version(5, 0)));
+        }
+        catch (Exception ex)
+        {
+            return ex.HResult != 0 ? ex.HResult : 1;
+        }
     }
 }

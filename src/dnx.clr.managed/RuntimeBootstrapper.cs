@@ -14,6 +14,7 @@ namespace dnx.clr.managed
             return (int)executeMethodInfo.Invoke(null, new object[] { argv, targetFramework });
         }
 
+        // This method is only called by Helios
         public static Task<int> ExecuteAsync(string[] argv, FrameworkName targetFramework)
         {
             var executeMethodInfo = GetBootstrapperType()
