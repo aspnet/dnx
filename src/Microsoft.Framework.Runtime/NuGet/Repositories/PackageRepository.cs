@@ -108,6 +108,14 @@ namespace NuGet
                         continue;
                     }
 
+                    var manifestFilePath = _repositoryRoot.GetFiles(versionDir, "*" + Constants.ManifestExtension)
+                        .FirstOrDefault();
+                    if (string.IsNullOrEmpty(manifestFilePath))
+                    {
+                        // This is a corrupted packages because {id}.nupsec is missing
+                        continue;
+                    }
+
                     if (CheckHashFile && !_repositoryRoot.GetFiles(versionDir, "*" + Constants.HashFileExtension).Any())
                     {
                         // Writing the marker file is the last operation performed by NuGetPackageUtils.InstallFromStream. We'll use the
@@ -120,13 +128,7 @@ namespace NuGet
                     // Otherwise we just use the passed in package id for efficiency
                     if (_checkPackageIdCase)
                     {
-                        var manifestFileName = Path.GetFileName(
-                            _repositoryRoot.GetFiles(versionDir, "*" + Constants.ManifestExtension).FirstOrDefault());
-                        if (string.IsNullOrEmpty(manifestFileName))
-                        {
-                            continue;
-                        }
-                        id = Path.GetFileNameWithoutExtension(manifestFileName);
+                        id = Path.GetFileNameWithoutExtension(manifestFilePath);
                     }
 
                     packages.Add(new PackageInfo(_repositoryRoot, id, version, versionDir));

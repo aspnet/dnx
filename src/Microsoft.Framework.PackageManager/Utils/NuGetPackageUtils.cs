@@ -41,7 +41,7 @@ namespace Microsoft.Framework.PackageManager
 
                 var actionName = "Installing";
                 var installedPackageHash = string.Empty;
-                if (File.Exists(targetHashPath))
+                if (File.Exists(targetHashPath) && File.Exists(targetNuspec))
                 {
                     installedPackageHash = File.ReadAllText(targetHashPath);
                     actionName = "Overwriting";
