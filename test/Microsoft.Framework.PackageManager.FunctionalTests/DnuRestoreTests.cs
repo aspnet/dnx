@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.IO;
 using Microsoft.Framework.CommonTestUtils;
 using Microsoft.Framework.PackageManager.FunctionalTests;
+using NuGet;
 using Xunit;
 
 namespace Microsoft.Framework.PackageManager
@@ -144,6 +145,48 @@ $@"{{
                 Assert.Equal(expectedPreContent, preContent);
                 var postContent = File.ReadAllText(Path.Combine(projectPath, "post"));
                 Assert.Equal(expectedPostContent, postContent);
+            }
+        }
+
+        [Theory]
+        [MemberData(nameof(RuntimeComponents))]
+        public void DnuRestore_ReinstallsCorruptedPackage(string flavor, string os, string architecture)
+        {
+            var runtimeHomePath = _fixture.GetRuntimeHomeDir(flavor, os, architecture);
+            using (var tempDir = new DisposableDir())
+            {
+                var projectDir = Path.Combine(tempDir, "project");
+                var packagesDir = Path.Combine(tempDir, "packages");
+                var projectJson = Path.Combine(projectDir, Runtime.Project.ProjectFileName);
+
+                Directory.CreateDirectory(projectDir);
+                File.WriteAllText(projectJson, @"
+{
+  ""dependencies"": {
+    ""alpha"": ""0.1.0""
+  }
+}");
+                DnuTestUtils.ExecDnu(
+                    runtimeHomePath,
+                    subcommand: "restore",
+                    arguments: $"{projectDir} -s {_fixture.PackageSource} --packages {packagesDir}");
+
+                // Corrupt the package by deleting nuspec from it
+                var nuspecPath = Path.Combine(packagesDir, "alpha", "0.1.0", $"alpha{Constants.ManifestExtension}");
+                File.Delete(nuspecPath);
+
+                string stdOut, stdErr;
+                var exitCode = DnuTestUtils.ExecDnu(
+                    runtimeHomePath,
+                    subcommand: "restore",
+                    arguments: $"{projectDir} -s {_fixture.PackageSource} --packages {packagesDir}",
+                    stdOut: out stdOut,
+                    stdErr: out stdErr);
+
+                Assert.Equal(0, exitCode);
+                Assert.Empty(stdErr);
+                Assert.Contains($"Installing alpha.0.1.0", stdOut);
+                Assert.True(File.Exists(nuspecPath));
             }
         }
     }
