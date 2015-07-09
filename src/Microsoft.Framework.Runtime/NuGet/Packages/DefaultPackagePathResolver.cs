@@ -56,7 +56,7 @@ namespace NuGet
         public string GetHashPath(string packageId, SemanticVersion version)
         {
             return Path.Combine(GetInstallPath(packageId, version),
-                                $"{packageId}.{version}{Constants.HashFileExtension}");
+                                $"{packageId}.{version.GetNormalizedVersionString()}{Constants.HashFileExtension}");
         }
 
         public virtual string GetPackageDirectory(string packageId, SemanticVersion version)
@@ -64,7 +64,7 @@ namespace NuGet
             string directory = packageId;
             if (_useSideBySidePaths)
             {
-                directory = Path.Combine(directory, version.ToString());
+                directory = Path.Combine(directory, version.GetNormalizedVersionString());
             }
             return directory;
         }
@@ -74,7 +74,7 @@ namespace NuGet
             string fileNameBase = packageId;
             if (_useSideBySidePaths)
             {
-                fileNameBase += "." + version;
+                fileNameBase += "." + version.GetNormalizedVersionString();
             }
             return fileNameBase + Constants.PackageExtension;
         }

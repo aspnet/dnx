@@ -79,6 +79,15 @@ namespace NuGet
 
         public string OriginalString { get; }
 
+        public string GetNormalizedVersionString()
+        {
+            var revision = Version.Revision > 0 ? ("." + Version.Revision.ToString(CultureInfo.InvariantCulture)) : string.Empty;
+            var specialVer = !string.IsNullOrEmpty(SpecialVersion) ? ("-" + SpecialVersion) : string.Empty;
+
+            // SemanticVersion normalizes the missing components to 0.
+            return $"{Version.Major}.{Version.Minor}.{Version.Build}{revision}{specialVer}";
+        }
+
         public string[] GetOriginalVersionComponents()
         {
             if (!string.IsNullOrEmpty(OriginalString))
