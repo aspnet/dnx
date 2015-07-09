@@ -724,17 +724,22 @@ namespace NuGet
             // Group references by target framework (if there is no target framework we assume it is the default)
             var frameworkGroups = normalizedItems.GroupBy(g => g.TargetFramework, g => g.Item).ToList();
 
-            // Find exact matching items in expansion order.
-            foreach (var activeFramework in Expand(internalProjectFramework))
+            if (!projectFramework.IsPortableFramework())
             {
-                var matchingGroups = frameworkGroups.Where(g => string.Equals(g.Key?.Identifier, activeFramework.Identifier, StringComparison.OrdinalIgnoreCase)).ToList();
-                var bestGroup = matchingGroups
-                    .OrderByDescending(f => f.Key.Version)
-                    .FirstOrDefault(g => g.Key.Version <= activeFramework.Version);
-                if (bestGroup != null)
+                // Find exact matching items in expansion order.
+                foreach (var activeFramework in Expand(internalProjectFramework))
                 {
-                    compatibleItems = bestGroup;
-                    return true;
+                    var matchingGroups = frameworkGroups.Where(g => 
+                        string.Equals(g.Key?.Identifier, activeFramework.Identifier, StringComparison.OrdinalIgnoreCase) &&
+                        string.Equals(g.Key?.Profile, activeFramework.Profile, StringComparison.OrdinalIgnoreCase)).ToList();
+                    var bestGroup = matchingGroups
+                        .OrderByDescending(f => f.Key.Version)
+                        .FirstOrDefault(g => g.Key.Version <= activeFramework.Version);
+                    if (bestGroup != null)
+                    {
+                        compatibleItems = bestGroup;
+                        return true;
+                    }
                 }
             }
 

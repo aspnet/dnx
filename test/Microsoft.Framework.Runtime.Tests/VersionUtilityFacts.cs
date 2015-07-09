@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.Versioning;
+using Microsoft.Framework.Runtime.Helpers;
 using NuGet;
 using Xunit;
 
@@ -118,18 +119,20 @@ namespace Microsoft.Framework.Runtime.Tests
 
         [Theory]
         [InlineData("dnx46", "dotnet,dnx46", "dnx46")]
+
+        // Portable frameworks should use the old matching system based on scoring to ensure the best PCL is chosen
+        [InlineData(".NETPortable,Version=v4.0,Profile=Profile6", "portable-net40+sl4+win8,portable-net40+win8", "portable-net40+win8")]
+
+        // Profile restrictions should be honored (yes, I know net46 client doesn't exist, just for testing :))
+        [InlineData("net46-client", "net46,net45-client,net40", "net45-client")]
         public void GetNearestPicksMostCompatibleItem(string input, string frameworks, string expected)
         {
-            var inputFx = VersionUtility.ParseFrameworkName(input);
+            var inputFx = FrameworkNameHelper.ParseFrameworkName(input);
             var fxs = frameworks.Split(',').Select(VersionUtility.ParseFrameworkName).ToArray();
             var expectedFx = VersionUtility.ParseFrameworkName(expected);
 
-            var items = fxs.Select(fx => new PackageDependencySet(fx, Enumerable.Empty<PackageDependency>()));
-            IEnumerable<PackageDependencySet> selectedItems;
-            Assert.True(VersionUtility.TryGetCompatibleItems(inputFx, items, out selectedItems));
-            var selectedItem = selectedItems.SingleOrDefault();
-            Assert.NotNull(selectedItem);
-            Assert.Equal(expectedFx, selectedItem.TargetFramework);
+            var actual = VersionUtility.GetNearest(inputFx, fxs);
+            Assert.Equal(expectedFx, actual);
         }
     }
 }
