@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.IO;
 using Microsoft.Framework.CommonTestUtils;
 using Microsoft.Framework.Runtime.DependencyManagement;
+using NuGet;
 using Xunit;
 
 namespace Microsoft.Framework.PackageManager.FunctionalTests
@@ -103,7 +104,7 @@ namespace Microsoft.Framework.PackageManager.FunctionalTests
             {
                 var directory = Path.Combine(testEnv.RootDir, Runtime.Constants.DefaultLocalRuntimeHomeDir, "bin");
                 InstallFakeApp(directory, "pack1", "0.0.0");
-                Directory.CreateDirectory($"{directory}/packages/pack2/0.0.0/");
+                InstallFakePackage(directory, "pack2", "0.0.0");
                 WriteLockFile($"{directory}/packages/pack1/0.0.0/app", "pack1", "0.0.0");
 
                 var environment = new Dictionary<string, string> { { "USERPROFILE", testEnv.RootDir } };
@@ -140,9 +141,16 @@ namespace Microsoft.Framework.PackageManager.FunctionalTests
 
         private void InstallFakeApp(string directory, string name, string version)
         {
+            InstallFakePackage(directory, name, version);
             Directory.CreateDirectory($"{directory}/packages/{name}/{version}/app");
             File.WriteAllText($"{directory}/packages/{name}/{version}/app/{name}.cmd", "");
             File.WriteAllText($"{directory}/{name}.cmd", $"~dp0/packages/{name}/{version}/app/{name}.cmd".Replace('/', Path.DirectorySeparatorChar));
+        }
+
+        private void InstallFakePackage(string directory, string name, string version)
+        {
+            Directory.CreateDirectory($"{directory}/packages/{name}/{version}");
+            File.WriteAllText($"{directory}/packages/{name}/{version}/{name}{Constants.ManifestExtension}", "");
             File.WriteAllText($"{directory}/packages/{name}/{version}/{name}.{version}.nupkg.sha512", "TestSha");
         }
 
