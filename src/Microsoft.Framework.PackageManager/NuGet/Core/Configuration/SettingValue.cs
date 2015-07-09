@@ -11,16 +11,19 @@ namespace NuGet
 {
     public class SettingValue
     {
-        public SettingValue(string key, string value, bool isMachineWide)
+        public SettingValue(string key, string value, bool isMachineWide, ISettings origin)
         {
             Key = key;
             Value = value;
             IsMachineWide = isMachineWide;
+            Origin = origin;
         }
 
         public string Key { get; private set; }
 
         public string Value { get; set; }
+
+        public ISettings Origin { get; set; }
 
         public bool IsMachineWide { get; private set; }
 

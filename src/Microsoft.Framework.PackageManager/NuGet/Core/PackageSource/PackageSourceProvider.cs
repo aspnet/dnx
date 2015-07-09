@@ -119,7 +119,7 @@ namespace NuGet
                                                string src = p.Value;
                                                PackageSourceCredential creds = ReadCredential(name);
 
-                                               return new PackageSource(src, name, isEnabled: !disabledSources.Contains(name))
+                                               return new PackageSource(src, name, isEnabled: !disabledSources.Contains(name), isOfficial: false, origin: p.Origin)
                                                {
                                                    UserName = creds != null ? creds.Username : null,
                                                    Password = creds != null ? creds.Password : null,

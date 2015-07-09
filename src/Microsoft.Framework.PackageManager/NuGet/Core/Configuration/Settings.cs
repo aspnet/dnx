@@ -629,7 +629,7 @@ namespace NuGet
                 if (elementName.Equals("add", StringComparison.OrdinalIgnoreCase))
                 {
                     var v = ReadValue(element, isPath);
-                    values.Add(new SettingValue(v.Key, v.Value, _isMachineWideSettings));
+                    values.Add(new SettingValue(v.Key, v.Value, _isMachineWideSettings, this));
                 }
                 else if (elementName.Equals("remove", StringComparison.OrdinalIgnoreCase))
                 {
@@ -645,6 +645,7 @@ namespace NuGet
                     var v = ReadValue(element, isPath);
                     foreach (var updateItem in values.Where(f => f.Key.Equals(v.Key, StringComparison.OrdinalIgnoreCase)))
                     {
+                        updateItem.Origin = this;
                         updateItem.Value = v.Value;
                     }
                 }

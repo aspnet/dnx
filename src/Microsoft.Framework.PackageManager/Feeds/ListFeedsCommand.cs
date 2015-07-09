@@ -1,16 +1,18 @@
 ﻿// Copyright (c) .NET Foundation. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
+using System;
 using System.Linq;
+using NuGet;
 
 namespace Microsoft.Framework.PackageManager
 {
-    internal class ListSourcesCommand
+    internal class ListFeedsCommand
     {
         public Reports Reports { get; }
         public string TargetDirectory { get; }
 
-        public ListSourcesCommand(Reports reports, string targetDirectory)
+        public ListFeedsCommand(Reports reports, string targetDirectory)
         {
             Reports = reports;
             TargetDirectory = targetDirectory;
@@ -29,17 +31,38 @@ namespace Microsoft.Framework.PackageManager
             }
             else
             {
-                Reports.Information.WriteLine("Registered Sources:");
+                Reports.Information.WriteLine("Feeds in use:");
 
                 // Iterate over the sources and report them
-                int index = 1; // This is an index for display so it should be 1-based
                 foreach (var source in sources)
                 {
                     var enabledString = source.IsEnabled ? "" : " [Disabled]";
-                    var line = $"{index.ToString("0\\.").PadRight(3)} {source.Name} {source.Source}{enabledString.Yellow().Bold()}";
+
+                    var line = $"    {source.Source}{enabledString.Yellow().Bold()}";
                     Reports.Information.WriteLine(line);
 
-                    index++;
+                    var origin = source.Origin as Settings;
+                    if (origin != null)
+                    {
+                        Reports.Information.WriteLine($"      Origin: {origin.ConfigFilePath}");
+                    }
+                    else if (source.IsOfficial)
+                    {
+                        Reports.Information.WriteLine($"      Offical NuGet Source, enabled by default");
+                    }
+                }
+            }
+
+            // Display config files in use
+            var settings = config.Settings as Settings;
+            if (settings != null)
+            {
+                var configFiles = settings.GetConfigFiles();
+
+                Reports.Quiet.WriteLine($"{Environment.NewLine}NuGet Config files in use:");
+                foreach (var file in configFiles)
+                {
+                    Reports.Quiet.WriteLine($"    {file}");
                 }
             }
             return 0;

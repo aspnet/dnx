@@ -17,6 +17,8 @@ namespace NuGet
         [DataMember]
         public string Source { get; private set; }
 
+        public ISettings Origin { get; private set; }
+
         /// <summary>
         /// This does not represent just the NuGet Official Feed alone
         /// It may also represent a Default Package Source set by Configuration Defaults
@@ -49,6 +51,11 @@ namespace NuGet
         }
 
         public PackageSource(string source, string name, bool isEnabled, bool isOfficial)
+            : this(source, name, isEnabled, isOfficial, origin: null)
+        {
+        }
+
+        public PackageSource(string source, string name, bool isEnabled, bool isOfficial, ISettings origin)
         {
             if (source == null)
             {
@@ -64,6 +71,7 @@ namespace NuGet
             Source = Environment.ExpandEnvironmentVariables(source);
             IsEnabled = isEnabled;
             IsOfficial = isOfficial;
+            Origin = origin;
             _hashCode = Name.ToUpperInvariant().GetHashCode() * 3137 + Source.ToUpperInvariant().GetHashCode();
         }
 
@@ -100,7 +108,7 @@ namespace NuGet
 
         public PackageSource Clone()
         {
-            return new PackageSource(Source, Name, IsEnabled, IsOfficial) { UserName = UserName, Password = Password, IsPasswordClearText = IsPasswordClearText, IsMachineWide = IsMachineWide };
+            return new PackageSource(Source, Name, IsEnabled, IsOfficial, Origin) { UserName = UserName, Password = Password, IsPasswordClearText = IsPasswordClearText, IsMachineWide = IsMachineWide };
         }
     }
 }

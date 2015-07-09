@@ -33,7 +33,7 @@ namespace Microsoft.Framework.PackageManager
 
                 c.OnExecute(() =>
                 {
-                    var command = new ListSourcesCommand(
+                    var command = new ListFeedsCommand(
                         reportsFactory.CreateReports(quiet: false),
                         string.IsNullOrEmpty(argRoot.Value) ? "." : argRoot.Value);
 

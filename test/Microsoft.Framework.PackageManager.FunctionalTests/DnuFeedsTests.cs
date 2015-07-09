@@ -1,6 +1,7 @@
 ﻿// Copyright (c) .NET Foundation. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
+using System;
 using System.Collections.Generic;
 using System.IO;
 using Microsoft.Framework.CommonTestUtils;
@@ -92,9 +93,9 @@ namespace Microsoft.Framework.PackageManager
 
                 // CI Machines and such have different sources in the user-global config
                 // So we can't actually assert the exact content of the output.
-                Assert.Contains("Source1 https://source1 [Disabled]", output);
-                Assert.Contains("Source2 https://source2", output);
-                Assert.Contains("Source3 https://source3", output);
+                Assert.Contains($"https://source1 [Disabled]{Environment.NewLine}      Origin: {Path.Combine(projectPath, "root", "NuGet.Config")}", output);
+                Assert.Contains($"https://source2{Environment.NewLine}      Origin: {Path.Combine(projectPath, "root", "NuGet.Config")}", output);
+                Assert.Contains($"https://source3{Environment.NewLine}      Origin: {Path.Combine(projectPath, "root", "sub", "NuGet.Config")}", output);
             }
         }
     }
