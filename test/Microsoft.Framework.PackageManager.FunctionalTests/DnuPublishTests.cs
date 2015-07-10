@@ -9,6 +9,8 @@ using Microsoft.Framework.CommonTestUtils;
 using Microsoft.Framework.Runtime;
 using Microsoft.Framework.Runtime.DependencyManagement;
 using Xunit;
+using System;
+using Microsoft.Framework.Runtime.Common.Impl;
 
 namespace Microsoft.Framework.PackageManager.FunctionalTests
 {
@@ -37,18 +39,21 @@ export SET {0}=""$DIR/approot/src/{1}""
 
 exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@""".Replace("\r\n", "\n");
 
-        private static readonly string BasicLockFile = @"{
+        private static readonly string BasicLockFileTemplate = @"{
   ""locked"": false,
   ""version"": LOCKFILEFORMAT_VERSION,
   ""targets"": {
-    ""DNX,Version=v4.5.1"": {}
+    ""FRAMEWORK_NAME"": {}
   },
   ""libraries"": {},
   ""projectFileDependencyGroups"": {
     """": [],
-    ""DNX,Version=v4.5.1"": []
+    ""FRAMEWORK_NAME"": []
   }
 }".Replace("LOCKFILEFORMAT_VERSION", Constants.LockFileVersion.ToString());
+
+        private static readonly string BasicLockFile = BasicLockFileTemplate
+            .Replace("FRAMEWORK_NAME", "DNX,Version=v4.5.1");
 
         public DnuPublishTests(PackageManagerFunctionalTestFixture fixture)
         {
@@ -811,6 +816,187 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
                     .WithFileContents(Path.Combine("approot", "global.json"), @"{
   ""packages"": ""packages""
 }");
+                Assert.True(expectedOutputDir.MatchDirectoryOnDisk(testEnv.PublishOutputDirPath,
+                    compareFileContents: true));
+            }
+        }
+
+        [Theory]
+        [MemberData(nameof(RuntimeComponents))]
+        public void ProjectWithNoFrameworks(string flavor, string os, string architecture)
+        {
+            var runtimeHomeDir = _fixture.GetRuntimeHomeDir(flavor, os, architecture);
+            var projectStructure = @"{
+  '.': ['project.json']
+}";
+            using (var testEnv = new DnuTestEnvironment(runtimeHomeDir, _projectName, _outputDirName))
+            {
+                DirTree.CreateFromJson(projectStructure)
+                    .WithFileContents("project.json", @"{
+  ""frameworks"": {}
+}")
+                    .WriteTo(testEnv.ProjectPath);
+
+                var environment = new Dictionary<string, string>()
+                {
+                    { EnvironmentNames.Packages, Path.Combine(testEnv.ProjectPath, "packages") }
+                };
+
+                string stdOut;
+                string stdErr;
+                var exitCode = DnuTestUtils.ExecDnu(
+                    runtimeHomeDir,
+                    subcommand: "publish",
+                    arguments: string.Format("--out {0}",
+                        testEnv.PublishOutputDirPath),
+                    stdOut: out stdOut,
+                    stdErr: out stdErr,
+                    environment: environment,
+                    workingDir: testEnv.ProjectPath);
+                Assert.NotEqual(0, exitCode);
+                Assert.Contains("The project being published has no frameworks listed in the 'frameworks' section.", stdErr);
+            }
+        }
+
+        [Theory]
+        [MemberData(nameof(RuntimeComponents))]
+        public void ProjectWithIncompatibleFrameworks(string flavor, string os, string architecture)
+        {
+            // Because we're testing cases where the framework in the project is INcompatible with the runtime,
+            // this looks backwards. When we're testing against coreclr, we want to write dnx451 into the project and vice versa
+            string frameworkInProject = flavor == "coreclr" ? "dnx451" : "dnxcore50";
+
+            var runtimeHomeDir = _fixture.GetRuntimeHomeDir(flavor, os, architecture);
+            var projectStructure = @"{
+  '.': ['project.json']
+}";
+            using (var testEnv = new DnuTestEnvironment(runtimeHomeDir, _projectName, _outputDirName))
+            {
+                DirTree.CreateFromJson(projectStructure)
+                    .WithFileContents("project.json", @"{
+  ""frameworks"": {""" + frameworkInProject + @""":{}}
+}")
+                    .WriteTo(testEnv.ProjectPath);
+
+                var environment = new Dictionary<string, string>()
+                {
+                    { EnvironmentNames.Packages, Path.Combine(testEnv.ProjectPath, "packages") }
+                };
+
+                string stdOut;
+                string stdErr;
+                var exitCode = DnuTestUtils.ExecDnu(
+                    runtimeHomeDir,
+                    subcommand: "publish",
+                    arguments: string.Format("--out {0} --runtime {1}",
+                        testEnv.PublishOutputDirPath,
+                        runtimeHomeDir),
+                    stdOut: out stdOut,
+                    stdErr: out stdErr,
+                    environment: environment,
+                    workingDir: testEnv.ProjectPath);
+                Assert.NotEqual(0, exitCode);
+                Assert.Contains($"The project being published does not support the runtime '{runtimeHomeDir}'", stdErr);
+            }
+        }
+
+        // DNX on Mono does not yet support 4.6
+        [ConditionalTheory]
+        [OSSkipCondition(OperatingSystems.Linux | OperatingSystems.MacOSX)]
+        [MemberData(nameof(ClrRuntimeComponents))]
+        public void DnuPublishWebApp_Dnx46(string flavor, string os, string architecture)
+        {
+            DnuPublishWebApp_SpecificFramework(flavor, os, architecture, "dnx46");
+        }
+
+        // DNX on Mono does not yet support 4.5.2
+        [ConditionalTheory]
+        [OSSkipCondition(OperatingSystems.Linux | OperatingSystems.MacOSX)]
+        [MemberData(nameof(ClrRuntimeComponents))]
+        public void DnuPublishWebApp_Dnx452(string flavor, string os, string architecture)
+        {
+            DnuPublishWebApp_SpecificFramework(flavor, os, architecture, "dnx452");
+        }
+
+        [Theory]
+        [MemberData(nameof(ClrRuntimeComponents))]
+        public void DnuPublishWebApp_Dnx451(string flavor, string os, string architecture)
+        {
+            DnuPublishWebApp_SpecificFramework(flavor, os, architecture, "dnx451");
+        }
+
+        private void DnuPublishWebApp_SpecificFramework(string flavor, string os, string architecture, string framework)
+        {
+            var fx = NuGet.VersionUtility.ParseFrameworkName(framework);
+            var runtimeHomeDir = _fixture.GetRuntimeHomeDir(flavor, os, architecture);
+
+            var projectStructure = @"{
+  '.': ['project.json', 'Program.cs'],
+  'public': ['index.html'],
+}";
+            var expectedOutputStructure = @"{
+  'wwwroot': ['web.config', 'index.html'],
+  'approot': {
+    'global.json': '',
+    'src': {
+      'PROJECT_NAME': {
+        '.': ['project.json', 'project.lock.json', 'Program.cs']
+      }
+    }
+  }
+}".Replace("PROJECT_NAME", _projectName);
+            var outputWebConfigTemplate = $@"<?xml version=""1.0"" encoding=""utf-8""?>
+<configuration>
+  <appSettings>
+    <add key=""{Constants.WebConfigBootstrapperVersion}"" value="""" />
+    <add key=""{Constants.WebConfigRuntimePath}"" value=""..\approot\runtimes"" />
+    <add key=""{Constants.WebConfigRuntimeVersion}"" value="""" />
+    <add key=""{Constants.WebConfigRuntimeFlavor}"" value="""" />
+    <add key=""{Constants.WebConfigRuntimeAppBase}"" value=""..\approot\src\{{0}}"" />
+  </appSettings>
+  <system.web>
+    <httpRuntime targetFramework=""{fx.Version}"" />
+  </system.web>
+</configuration>";
+
+            using (var testEnv = new DnuTestEnvironment(runtimeHomeDir, _projectName, _outputDirName))
+            {
+                DirTree.CreateFromJson(projectStructure)
+                    .WithFileContents("project.json", @"{
+  ""webroot"": ""public"",
+  ""frameworks"": {
+    """ + framework + @""": {}
+  }
+}")
+                    .WriteTo(testEnv.ProjectPath);
+
+                var environment = new Dictionary<string, string>()
+                {
+                    { EnvironmentNames.Packages, Path.Combine(testEnv.ProjectPath, "packages") }
+                };
+
+                var exitCode = DnuTestUtils.ExecDnu(
+                    runtimeHomeDir,
+                    subcommand: "publish",
+                    arguments: string.Format("--out {0} --wwwroot-out wwwroot",
+                        testEnv.PublishOutputDirPath),
+                    environment: environment,
+                    workingDir: testEnv.ProjectPath);
+                Assert.Equal(0, exitCode);
+
+                var expectedOutputDir = DirTree.CreateFromJson(expectedOutputStructure)
+                    .WithFileContents(Path.Combine("approot", "src", testEnv.ProjectName, "project.json"), @"{
+  ""webroot"": ""../../../wwwroot"",
+  ""frameworks"": {
+    """ + framework + @""": {}
+  }
+}")
+                    .WithFileContents(Path.Combine("approot", "src", testEnv.ProjectName, "project.lock.json"),
+                        BasicLockFileTemplate.Replace("FRAMEWORK_NAME", fx.ToString()))
+                    .WithFileContents(Path.Combine("approot", "global.json"), @"{
+  ""packages"": ""packages""
+}")
+                    .WithFileContents(Path.Combine("wwwroot", "web.config"), outputWebConfigTemplate, testEnv.ProjectName);
                 Assert.True(expectedOutputDir.MatchDirectoryOnDisk(testEnv.PublishOutputDirPath,
                     compareFileContents: true));
             }

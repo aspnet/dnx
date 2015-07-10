@@ -8,6 +8,7 @@ using System.IO;
 using System.Linq;
 using System.Runtime.Versioning;
 using Microsoft.Framework.Runtime;
+using Microsoft.Framework.Runtime.Common.Impl;
 
 namespace Microsoft.Framework.PackageManager.Publish
 {
@@ -112,7 +113,23 @@ namespace Microsoft.Framework.PackageManager.Publish
 
             foreach (var runtime in _options.Runtimes)
             {
-                var frameworkName = DependencyContext.GetFrameworkNameForRuntime(Path.GetFileName(runtime));
+                // Calculate the runtime name by taking the last path segment (since it could be a path),
+                // but first strip off any trailing '\' or '/' in case the path provided was something like
+                //  "C:\Foo\Bar\dnx-clr-win-x64...\"
+                var runtimeName = new DirectoryInfo(runtime).Name;
+                var frameworkName = DependencyContext.SelectFrameworkNameForRuntime(
+                    project.GetTargetFrameworks().Select(x => x.FrameworkName),
+                    runtimeName);
+
+                if (frameworkName == null)
+                {
+                    _options.Reports.Error.WriteLine(
+                        "The project being published does not support the runtime '{0}'",
+                        runtime.ToString().Red().Bold());
+                    return false;
+                }
+
+
                 var runtimeLocated = TryAddRuntime(root, frameworkName, runtime);
                 List<string> runtimeProbePaths = null;
 
@@ -159,14 +176,6 @@ namespace Microsoft.Framework.PackageManager.Publish
                     return false;
                 }
 
-                if (!project.GetTargetFrameworks().Any(x => x.FrameworkName == frameworkName))
-                {
-                    _options.Reports.Error.WriteLine(
-                        string.Format("'{0}' is not a target framework of the project being published",
-                        frameworkName.ToString().Red().Bold()));
-                    return false;
-                }
-
                 if (!frameworkContexts.ContainsKey(frameworkName))
                 {
                     frameworkContexts[frameworkName] = CreateDependencyContext(project, frameworkName);
@@ -189,8 +198,9 @@ namespace Microsoft.Framework.PackageManager.Publish
 
             if (!frameworkContexts.Any())
             {
-                var frameworkName = DependencyContext.GetFrameworkNameForRuntime(Constants.RuntimeNamePrefix + "clr-win-x86.*");
-                frameworkContexts[frameworkName] = CreateDependencyContext(project, frameworkName);
+                // We can only get here if the project has no frameworks section, which we don't actually support any more
+                _options.Reports.Error.WriteLine("The project being published has no frameworks listed in the 'frameworks' section.");
+                return false;
             }
 
             root.SourcePackagesPath = frameworkContexts.First().Value.PackagesDirectory;

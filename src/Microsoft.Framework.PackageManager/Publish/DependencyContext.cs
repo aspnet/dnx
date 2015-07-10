@@ -1,10 +1,13 @@
 // Copyright (c) .NET Foundation. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
+using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.Versioning;
 using Microsoft.Framework.Runtime;
 using Microsoft.Framework.Runtime.Caching;
+using Microsoft.Framework.Runtime.Common.Impl;
 using NuGet;
 
 namespace Microsoft.Framework.PackageManager.Publish
@@ -48,7 +51,7 @@ namespace Microsoft.Framework.PackageManager.Publish
             PackageAssemblies = NuGetDependencyResolver.PackageAssemblyLookup.Values.ToLookup(a => a.Library.Identity.Name);
         }
 
-        public static FrameworkName GetFrameworkNameForRuntime(string runtime)
+        public static FrameworkName SelectFrameworkNameForRuntime(IEnumerable<FrameworkName> availableFrameworks, string runtime)
         {
             var parts = runtime.Split(new[] { '.' }, 2);
             if (parts.Length != 2)
@@ -68,9 +71,13 @@ namespace Microsoft.Framework.PackageManager.Publish
             {
                 case "mono":
                 case "clr":
-                    return VersionUtility.ParseFrameworkName("dnx451");
+                    // CLR currently supports anything <= dnx46
+                    return availableFrameworks
+                        .Where(fx => fx.Identifier.Equals(FrameworkNames.LongNames.Dnx, StringComparison.Ordinal) && fx.Version <= new Version(4, 6))
+                        .OrderByDescending(fx => fx.Version)
+                        .FirstOrDefault();
                 case "coreclr":
-                    return VersionUtility.ParseFrameworkName("dnxcore50");
+                    return availableFrameworks.FirstOrDefault(fx => fx.Equals(VersionUtility.ParseFrameworkName("dnxcore50")));
             }
             return null;
         }
