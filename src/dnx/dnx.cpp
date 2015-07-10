@@ -123,6 +123,12 @@ dnx::char_t* GetAppBaseParameterValue(int argc, dnx::char_t* argv[])
 {
     for (auto i = 0; i < argc - 1; ++i)
     {
+        // not starting with '-' means that this and any following parameter is not a bootstrapper
+        if (*argv[i] != _X('-'))
+        {
+            break;
+        }
+
         if (dnx::utils::strings_equal_ignore_case(argv[i], _X("--appbase")))
         {
             return argv[i + 1];
