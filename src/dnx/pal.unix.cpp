@@ -28,28 +28,28 @@ void SetConsoleHost()
     }
 }
 
-BOOL GetAppBasePathFromEnvironment(LPTSTR szPath)
+bool GetAppBasePathFromEnvironment(char* szPath)
 {
     char* appBaseEnv = getenv("DNX_APPBASE");
 
     if (appBaseEnv != NULL && strlen(appBaseEnv) < PATH_MAX)
     {
         strcpy(szPath, appBaseEnv);
-        return TRUE;
+        return true;
     }
 
-    return FALSE;
+    return false;
 }
 
-BOOL GetFullPath(LPCTSTR szPath, LPTSTR szNormalizedPath)
+bool GetFullPath(const char* szPath, char* szNormalizedPath)
 {
     if (realpath(szPath, szNormalizedPath) == nullptr)
     {
         printf("Failed to get full path of application base: %s\r\n", szPath);
-        return FALSE;
+        return false;
     }
 
-    return TRUE;
+    return true;
 }
 
 int CallApplicationMain(const char* moduleName, const char* functionName, CALL_APPLICATION_MAIN_DATA* data, dnx::trace_writer& trace_writer)
@@ -92,7 +92,7 @@ int CallApplicationMain(const char* moduleName, const char* functionName, CALL_A
     }
 }
 
-BOOL SetEnvironmentVariable(LPCTSTR lpName, LPCTSTR lpValue)
+bool SetEnvironmentVariable(const char* lpName, const char* lpValue)
 {
     int ret;
 

@@ -92,9 +92,10 @@ namespace Microsoft.Framework.ApplicationHost
                 string stdOut, stdErr;
                 var exitCode = BootstrapperTestUtils.ExecBootstrapper(
                     runtimeHomeDir,
-                    arguments: $"{emptyFolder} run",
+                    arguments: "run",
                     stdOut: out stdOut,
-                    stdErr: out stdErr);
+                    stdErr: out stdErr,
+                    workingDir: emptyFolder);
 
                 Assert.NotEqual(0, exitCode);
                 Assert.Contains("Unable to resolve project", stdErr);
@@ -117,10 +118,11 @@ namespace Microsoft.Framework.ApplicationHost
                 string stdOut, stdErr;
                 var exitCode = BootstrapperTestUtils.ExecBootstrapper(
                     runtimeHomeDir,
-                    arguments: $"{projectPath} invalid",
+                    arguments: "invalid",
                     stdOut: out stdOut,
                     stdErr: out stdErr,
-                    environment: new Dictionary<string, string> { { EnvironmentNames.AppBase, projectPath } });
+                    environment: new Dictionary<string, string> { { EnvironmentNames.AppBase, projectPath } },
+                    workingDir: projectPath);
 
                 Assert.NotEqual(0, exitCode);
                 Assert.Contains("Unable to load application or execute command 'invalid'.", stdErr);
@@ -153,9 +155,10 @@ namespace Microsoft.Framework.ApplicationHost
                 string stdOut, stdErr;
                 var exitCode = BootstrapperTestUtils.ExecBootstrapper(
                     runtimeHomeDir,
-                    arguments: $"{projectPath} run",
+                    arguments: $"run",
                     stdOut: out stdOut,
-                    stdErr: out stdErr);
+                    stdErr: out stdErr,
+                    workingDir: projectPath);
 
                 var expectedErrorMsg =$@"The current runtime target framework is not compatible with '{projectName}'.
 
@@ -291,10 +294,11 @@ $@"{{
                 string error;
                 exitCode = BootstrapperTestUtils.ExecBootstrapper(
                     runtimeHomePath,
-                    arguments: $@"""{ projectPath }"" { command } extra",
+                    arguments: $@" { command } extra",
                     stdOut: out output,
                     stdErr: out error,
-                    environment: environment);
+                    environment: environment,
+                    workingDir: projectPath);
 
                 Assert.Equal(0, exitCode);
                 Assert.Empty(error);
