@@ -2,7 +2,7 @@
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 #include "stdafx.h"
-#include "dnx.h"
+#include "app_main.h"
 #include "xplat.h"
 #include "trace_writer.h"
 #include "utils.h"

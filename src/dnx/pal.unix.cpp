@@ -7,7 +7,7 @@
 #include <stdexcept>
 #include <assert.h>
 #include <dlfcn.h>
-#include "dnx.h"
+#include "app_main.h"
 #include "trace_writer.h"
 
 std::string GetNativeBootstrapperDirectory();

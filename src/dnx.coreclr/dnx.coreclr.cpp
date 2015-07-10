@@ -3,11 +3,11 @@
 
 #include "stdafx.h"
 
-#include "..\dnx\dnx.h"
 #include "dnx.coreclr.h"
 #include "tpa.h"
 #include "utils.h"
 #include "trace_writer.h"
+#include "app_main.h"
 
 typedef int (STDMETHODCALLTYPE *HostMain)(const int argc, const wchar_t** argv);
 

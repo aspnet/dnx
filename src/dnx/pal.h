@@ -5,6 +5,7 @@
 
 #include "xplat.h"
 #include "trace_writer.h"
+#include "app_main.h"
 
 dnx::xstring_t GetNativeBootstrapperDirectory();
 void WaitForDebuggerToAttach();
