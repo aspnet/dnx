@@ -9,7 +9,6 @@ typedef const char* LPCSTR;
 #define _T(x) x
 
 #define _tcsnicmp strncasecmp
-#define _tcsicmp strcasecmp
 #define _tcsnlen strnlen
 #define _tprintf_s printf_s
 

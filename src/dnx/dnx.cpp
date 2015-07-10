@@ -2,9 +2,9 @@
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 #include "stdafx.h"
-#include "dnx.h"
 #include "pal.h"
 #include "utils.h"
+#include "app_main.h"
 
 bool LastIndexOfCharInPath(LPCTSTR pszStr, TCHAR c, size_t* pIndex)
 {
@@ -19,11 +19,6 @@ bool LastIndexOfCharInPath(LPCTSTR pszStr, TCHAR c, size_t* pIndex)
 
     *pIndex = nIndex;
     return pszStr[nIndex] == c;
-}
-
-bool StringsEqual(LPCTSTR pszStrA, LPCTSTR pszStrB)
-{
-    return ::_tcsicmp(pszStrA, pszStrB) == 0;
 }
 
 bool PathEndsWith(LPCTSTR pszStr, LPCTSTR pszSuffix)
@@ -92,20 +87,21 @@ void GetFileName(LPCTSTR pszPath, LPTSTR pszFileName)
 
 int BootstrapperOptionValueNum(LPCTSTR pszCandidate)
 {
-    if (StringsEqual(pszCandidate, _T("--appbase")) ||
-        StringsEqual(pszCandidate, _T("--lib")) ||
-        StringsEqual(pszCandidate, _T("--packages")) ||
-        StringsEqual(pszCandidate, _T("--configuration")) ||
-        StringsEqual(pszCandidate, _T("--port")))
+    if (dnx::utils::strings_equal_ignore_case(pszCandidate, _T("--appbase")) ||
+        dnx::utils::strings_equal_ignore_case(pszCandidate, _T("--lib")) ||
+        dnx::utils::strings_equal_ignore_case(pszCandidate, _T("--packages")) ||
+        dnx::utils::strings_equal_ignore_case(pszCandidate, _T("--configuration")) ||
+        dnx::utils::strings_equal_ignore_case(pszCandidate, _T("--port")))
     {
         return 1;
     }
-    else if (StringsEqual(pszCandidate, _T("--watch")) ||
-        StringsEqual(pszCandidate, _T("--debug")) ||
-        StringsEqual(pszCandidate, _T("--help")) ||
-        StringsEqual(pszCandidate, _T("-h")) ||
-        StringsEqual(pszCandidate, _T("-?")) ||
-        StringsEqual(pszCandidate, _T("--version")))
+
+    if (dnx::utils::strings_equal_ignore_case(pszCandidate, _T("--watch")) ||
+        dnx::utils::strings_equal_ignore_case(pszCandidate, _T("--debug")) ||
+        dnx::utils::strings_equal_ignore_case(pszCandidate, _T("--help")) ||
+        dnx::utils::strings_equal_ignore_case(pszCandidate, _T("-h")) ||
+        dnx::utils::strings_equal_ignore_case(pszCandidate, _T("-?")) ||
+        dnx::utils::strings_equal_ignore_case(pszCandidate, _T("--version")))
     {
         return 0;
     }
@@ -114,7 +110,7 @@ int BootstrapperOptionValueNum(LPCTSTR pszCandidate)
     return -1;
 }
 
-void FreeExpandedCommandLineArguments(int nArgc, LPTSTR* ppszArgv)
+void FreeExpandedCommandLineArguments(int nArgc, dnx::char_t** ppszArgv)
 {
     for (int i = 0; i < nArgc; ++i)
     {
@@ -127,7 +123,7 @@ dnx::char_t* GetAppBaseParameterValue(int argc, dnx::char_t* argv[])
 {
     for (auto i = 0; i < argc - 1; ++i)
     {
-        if (StringsEqual(argv[i], _X("--appbase")))
+        if (dnx::utils::strings_equal_ignore_case(argv[i], _X("--appbase")))
         {
             return argv[i + 1];
         }
@@ -136,7 +132,7 @@ dnx::char_t* GetAppBaseParameterValue(int argc, dnx::char_t* argv[])
     return nullptr;
 }
 
-bool ExpandCommandLineArguments(int nArgc, LPTSTR* ppszArgv, int& nExpandedArgc, LPTSTR*& ppszExpandedArgv)
+bool ExpandCommandLineArguments(int nArgc, dnx::char_t** ppszArgv, int& nExpandedArgc, dnx::char_t**& ppszExpandedArgv)
 {
     // If no args or '--appbase' is already given and it has a value
     if (nArgc == 0 || GetAppBaseParameterValue(nArgc, ppszArgv))
@@ -210,7 +206,7 @@ bool ExpandCommandLineArguments(int nArgc, LPTSTR* ppszArgv, int& nExpandedArgc,
     // "dnx /path/ run" --> "dnx --appbase /path/ Microsoft.Framework.ApplicationHost run"
     TCHAR szFileName[MAX_PATH];
     GetFileName(pszPathArg, szFileName);
-    if (StringsEqual(szFileName, _T("project.json")))
+    if (dnx::utils::strings_equal_ignore_case(szFileName, _T("project.json")))
     {
         GetParentDir(pszPathArg, szParentDir);
     }
@@ -295,48 +291,4 @@ int CallApplicationProcessMain(int argc, dnx::char_t* argv[], dnx::trace_writer&
         xout << dnx::utils::to_xstring_t(ex.what()) << std::endl;
         return 1;
     }
-}
-
-#if defined(ARM)
-int wmain(int argc, wchar_t* argv[])
-#elif defined(PLATFORM_UNIX)
-int main(int argc, char* argv[])
-#else
-extern "C" int __stdcall DnxMain(int argc, wchar_t* argv[])
-#endif
-{
-    // Check for the debug flag before doing anything else
-    for (int i = 1; i < argc; ++i)
-    {
-        //anything without - or -- is appbase or non-dnx command
-        if (argv[i][0] != _X('-'))
-        {
-            break;
-        }
-        if (StringsEqual(argv[i], _X("--appbase")))
-        {
-            //skip path argument
-            ++i;
-            continue;
-        }
-        if (StringsEqual(argv[i], _X("--debug")))
-        {
-            WaitForDebuggerToAttach();
-            break;
-        }
-    }
-
-    int nExpandedArgc = -1;
-    LPTSTR* ppszExpandedArgv = nullptr;
-    auto expanded = ExpandCommandLineArguments(argc - 1, &(argv[1]), nExpandedArgc, ppszExpandedArgv);
-
-    auto trace_writer = dnx::trace_writer{ IsTracingEnabled() };
-    if (!expanded)
-    {
-        return CallApplicationProcessMain(argc - 1, &argv[1], trace_writer);
-    }
-
-    auto exitCode = CallApplicationProcessMain(nExpandedArgc, ppszExpandedArgv, trace_writer);
-    FreeExpandedCommandLineArguments(nExpandedArgc, ppszExpandedArgv);
-    return exitCode;
 }

@@ -33,7 +33,6 @@ typedef void* HANDLE;
 
 #define SUCCEEDED(hr) (((HRESULT)(hr)) >= 0)
 
-#define STDAPICALLTYPE
 #define MAX_PATH PATH_MAX
 #define S_OK 0
 #define TRUE 1

@@ -6,7 +6,7 @@
 #include "stdafx.h"
 
 #include "KatanaManager.h"
-#include "..\dnx\dnx.h"
+#include "app_main.h"
 
 IKatanaManagerPtr g_katanaManager;
 

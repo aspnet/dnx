@@ -358,6 +358,7 @@ var CAN_BUILD_ONECORE = '${Directory.Exists(WIN10_SDK_LIB) && Directory.GetFiles
     @{
         var sourceFiles = new string[] 
         {
+            Path.Combine("src", BOOTSTRAPPER_FOLDER_NAME, "main.cpp"),
             Path.Combine("src", BOOTSTRAPPER_FOLDER_NAME, BOOTSTRAPPER_EXE_NAME + ".cpp"),
             Path.Combine("src", BOOTSTRAPPER_FOLDER_NAME, "pal.unix.cpp"),
             Path.Combine("src", BOOTSTRAPPER_FOLDER_NAME, "pal.linux.cpp"),
@@ -398,6 +399,7 @@ var CAN_BUILD_ONECORE = '${Directory.Exists(WIN10_SDK_LIB) && Directory.GetFiles
     @{
         var sourceFiles = new string[]
         {
+            Path.Combine("src", BOOTSTRAPPER_FOLDER_NAME, "main.cpp"),
             Path.Combine("src", BOOTSTRAPPER_FOLDER_NAME, BOOTSTRAPPER_EXE_NAME + ".cpp"),
             Path.Combine("src", BOOTSTRAPPER_FOLDER_NAME, "pal.unix.cpp"),
             Path.Combine("src", BOOTSTRAPPER_FOLDER_NAME, "pal.darwin.cpp"),

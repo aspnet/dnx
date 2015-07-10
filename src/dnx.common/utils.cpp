@@ -9,10 +9,10 @@
 // <codecvt> not supported in libstdc++ (gcc, Clang) but conversions from wstring are only
 // meant to be used on Windows
 #if defined(_WIN32)
-
 #include <locale>
 #include <codecvt>
-
+#else
+#include <string.h>
 #endif
 
 namespace dnx
@@ -52,6 +52,15 @@ namespace dnx
             return to_xstring_t(s);
         }
 #endif
+
+        bool strings_equal_ignore_case(const char_t* s1, const char_t* s2)
+        {
+#if defined(_WIN32)
+            return _wcsicmp(s1, s2) == 0;
+#else
+            return strcasecmp(s1, s2) == 0;
+#endif
+        }
 
         bool ends_with_slash(const xstring_t& path)
         {

@@ -3,7 +3,10 @@
 
 #pragma once
 
-#include <stdio.h>
 #include <tchar.h>
+#include <strsafe.h>
+
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
 
 #include "gtest/gtest.h"

@@ -29,6 +29,7 @@
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="include\app_main.h" />
     <ClInclude Include="include\tpa.h" />
     <ClInclude Include="include\utils.h" />
     <ClInclude Include="include\xplat.h" />

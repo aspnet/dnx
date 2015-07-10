@@ -44,7 +44,6 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <ItemGroup>
-    <ClInclude Include="dnx.h" />
     <ClInclude Include="pal.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="servicing.h" />
@@ -55,6 +54,7 @@
   <ItemGroup>
     <ClCompile Condition="'$(Platform)' != 'ARM'" Include="dllmain.cpp" />
     <ClCompile Include="dnx.cpp" />
+    <ClCompile Include="main.cpp" />
     <ClCompile Include="pal.win32.cpp" />
     <ClCompile Include="servicing.cpp" />
     <ClCompile Include="stdafx.cpp">
