@@ -1,15 +1,15 @@
 {
-    "version": "1.0.0-*",
+    "version": "1.0.0-beta5",
     "compilationOptions": { "warningsAsErrors": true },
     "dependencies": {
-        "Microsoft.Framework.CommandLineUtils.Sources": { "version": "1.0.0-*", "type": "build" },
-        "Microsoft.Framework.NotNullAttribute.Sources": { "version": "1.0.0-*", "type": "build" },
-        "Microsoft.Framework.Project": "1.0.0-*",
-        "Microsoft.Framework.Runtime": "1.0.0-*",
-        "Microsoft.Framework.Runtime.Compilation.Sources": { "version": "1.0.0-*", "type": "build" },
-        "Microsoft.Framework.Runtime.Internals": { "version": "1.0.0-*", "type": "build" },
-        "Microsoft.Framework.Runtime.Sources": { "version": "1.0.0-*", "type": "build" },
-        "Microsoft.Framework.Runtime.Abstractions": "1.0.0-*",
+        "Microsoft.Framework.CommandLineUtils.Sources": { "version": "1.0.0-beta5", "type": "build" },
+        "Microsoft.Framework.NotNullAttribute.Sources": { "version": "1.0.0-beta5", "type": "build" },
+        "Microsoft.Framework.Project": "1.0.0-beta5",
+        "Microsoft.Framework.Runtime": "1.0.0-beta5",
+        "Microsoft.Framework.Runtime.Compilation.Sources": { "version": "1.0.0-beta5", "type": "build" },
+        "Microsoft.Framework.Runtime.Internals": { "version": "1.0.0-beta5", "type": "build" },
+        "Microsoft.Framework.Runtime.Sources": { "version": "1.0.0-beta5", "type": "build" },
+        "Microsoft.Framework.Runtime.Abstractions": "1.0.0-beta5",
         "Newtonsoft.Json": "6.0.6"
     },
     "compile": "..\\Microsoft.Framework.ApplicationHost\\Impl\\**\\*.cs",
@@ -30,14 +30,14 @@
         },
         "dnxcore50": {
             "dependencies": {
-                "Microsoft.Net.Http.Client": "1.0.0-*",
-                "System.ObjectModel": "4.0.10-beta-*",
-                "System.IO.FileSystem.Primitives": "4.0.0-beta-*",
-                "System.Linq.Parallel": "4.0.0-beta-*",
-                "System.Reflection.TypeExtensions": "4.0.0-beta-*",
-                "System.Runtime.Serialization.Primitives": "4.0.10-beta-*",
-                "System.Security.Cryptography.Hashing.Algorithms": "4.0.0-beta-*",
-                "System.Text.RegularExpressions": "4.0.10-beta-*"
+                "Microsoft.Net.Http.Client": "1.0.0-beta3",
+                "System.ObjectModel": "4.0.10-beta-23019",
+                "System.IO.FileSystem.Primitives": "4.0.0-beta-23019",
+                "System.Linq.Parallel": "4.0.0-beta-23019",
+                "System.Reflection.TypeExtensions": "4.0.0-beta-23019",
+                "System.Runtime.Serialization.Primitives": "4.0.10-beta-23019",
+                "System.Security.Cryptography.Hashing.Algorithms": "4.0.0-beta-23019",
+                "System.Text.RegularExpressions": "4.0.10-beta-23019"
             }
         }
     },

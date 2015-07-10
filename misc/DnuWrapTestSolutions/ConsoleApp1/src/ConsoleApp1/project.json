@@ -1,7 +1,7 @@
 {
-    "version": "1.0.0-*",
+    "version": "1.0.0-beta5",
     "dependencies": {
-        "LibraryAlpha": "1.0.0-*"
+        "LibraryAlpha": "1.0.0-beta5"
     },
     "commands": { 
         "run" : "run"

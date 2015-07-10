@@ -1,9 +1,9 @@
 {
-    "version": "1.0.0-*",
+    "version": "1.0.0-beta5",
     "compilationOptions": { "define": [ "TRACE" ], "allowUnsafe": true, "warningsAsErrors": true },
     "dependencies": {
-        "dnx.host": "1.0.0-*",
-        "Microsoft.Framework.Runtime.Sources": { "version": "1.0.0-*", "type": "build" }
+        "dnx.host": "1.0.0-beta5",
+        "Microsoft.Framework.Runtime.Sources": { "version": "1.0.0-beta5", "type": "build" }
     },
     "frameworks": {
         "dnx451": { }

@@ -1,11 +1,11 @@
 {
-    "version": "1.0.0-*",
+    "version": "1.0.0-beta5",
     "compilationOptions": { "define": [ "TRACE" ], "allowUnsafe": true, "warningsAsErrors": true },
     "dependencies": {
-        "Microsoft.Framework.CommandLineUtils.Sources": { "version": "1.0.0-*", "type": "build" },
-        "Microsoft.Framework.Runtime.Internals": { "version": "1.0.0-*", "type": "build" },
-        "Microsoft.Framework.Runtime.Sources": { "version": "1.0.0-*", "type": "build" },
-        "Microsoft.Framework.Runtime.Loader": "1.0.0-*"
+        "Microsoft.Framework.CommandLineUtils.Sources": { "version": "1.0.0-beta5", "type": "build" },
+        "Microsoft.Framework.Runtime.Internals": { "version": "1.0.0-beta5", "type": "build" },
+        "Microsoft.Framework.Runtime.Sources": { "version": "1.0.0-beta5", "type": "build" },
+        "Microsoft.Framework.Runtime.Loader": "1.0.0-beta5"
     },
     "frameworks": {
         "dnx451": {
@@ -15,18 +15,18 @@
         },
         "dnxcore50": {
             "dependencies": {
-                "System.AppContext": "4.0.0-beta-*",
-                "System.Collections": "4.0.10-beta-*",
-                "System.ComponentModel": "4.0.0-beta-*",
-                "System.Console": "4.0.0-beta-*",
-                "System.Diagnostics.Debug": "4.0.10-beta-*",
-                "System.Reflection": "4.0.10-beta-*",
-                "System.Reflection.Extensions": "4.0.0-beta-*",
-                "System.Runtime": "4.0.20-beta-*",
-                "System.Runtime.Extensions": "4.0.10-beta-*",
-                "System.Runtime.InteropServices": "4.0.20-beta-*",
-                "System.Threading": "4.0.10-beta-*",
-                "System.Threading.Tasks": "4.0.10-beta-*"
+                "System.AppContext": "4.0.0-beta-23019",
+                "System.Collections": "4.0.10-beta-23019",
+                "System.ComponentModel": "4.0.0-beta-23019",
+                "System.Console": "4.0.0-beta-23019",
+                "System.Diagnostics.Debug": "4.0.10-beta-23019",
+                "System.Reflection": "4.0.10-beta-23019",
+                "System.Reflection.Extensions": "4.0.0-beta-23019",
+                "System.Runtime": "4.0.20-beta-23019",
+                "System.Runtime.Extensions": "4.0.10-beta-23019",
+                "System.Runtime.InteropServices": "4.0.20-beta-23019",
+                "System.Threading": "4.0.10-beta-23019",
+                "System.Threading.Tasks": "4.0.10-beta-23019"
             }
         }
     },

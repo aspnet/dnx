@@ -1,0 +1,447 @@
+{
+  "locked": true,
+  "version": 1,
+  "targets": {
+    "DNX,Version=v4.5.1": {
+      "Microsoft.CodeAnalysis.Analyzers/1.0.0-rc3-20150529-04": {
+        "frameworkAssemblies": [
+          "System"
+        ]
+      },
+      "Microsoft.CodeAnalysis.Common/1.0.0-rc3-20150529-04": {
+        "dependencies": {
+          "Microsoft.CodeAnalysis.Analyzers": "[1.0.0-rc3-20150529-04]",
+          "System.Collections.Immutable": "1.1.36",
+          "System.Reflection.Metadata": "1.0.21"
+        },
+        "compile": {
+          "lib/net45/Microsoft.CodeAnalysis.dll": {}
+        },
+        "runtime": {
+          "lib/net45/Microsoft.CodeAnalysis.dll": {}
+        }
+      },
+      "Microsoft.CodeAnalysis.CSharp/1.0.0-rc3-20150529-04": {
+        "dependencies": {
+          "Microsoft.CodeAnalysis.Common": "[1.0.0-rc3-20150529-04]"
+        },
+        "compile": {
+          "lib/net45/Microsoft.CodeAnalysis.CSharp.dll": {}
+        },
+        "runtime": {
+          "lib/net45/Microsoft.CodeAnalysis.CSharp.dll": {}
+        }
+      },
+      "Microsoft.Framework.Runtime.Abstractions/1.0.0-beta5": {
+        "frameworkAssemblies": [
+          "Microsoft.CSharp",
+          "mscorlib",
+          "System",
+          "System.Core"
+        ],
+        "compile": {
+          "lib/dnx451/Microsoft.Framework.Runtime.Abstractions.dll": {}
+        },
+        "runtime": {
+          "lib/dnx451/Microsoft.Framework.Runtime.Abstractions.dll": {}
+        }
+      },
+      "System.Collections.Immutable/1.1.36": {
+        "compile": {
+          "lib/portable-net45+win8+wp8+wpa81/System.Collections.Immutable.dll": {}
+        },
+        "runtime": {
+          "lib/portable-net45+win8+wp8+wpa81/System.Collections.Immutable.dll": {}
+        }
+      },
+      "System.Reflection.Metadata/1.0.21": {
+        "dependencies": {
+          "System.Collections.Immutable": "1.1.36"
+        },
+        "compile": {
+          "lib/portable-net45+win8/System.Reflection.Metadata.dll": {}
+        },
+        "runtime": {
+          "lib/portable-net45+win8/System.Reflection.Metadata.dll": {}
+        }
+      }
+    },
+    "DNXCore,Version=v5.0": {
+      "Microsoft.CodeAnalysis.Analyzers/1.0.0-rc3-20150529-04": {},
+      "Microsoft.CodeAnalysis.Common/1.0.0-rc3-20150529-04": {
+        "dependencies": {
+          "Microsoft.CodeAnalysis.Analyzers": "[1.0.0-rc3-20150529-04]",
+          "System.Collections.Immutable": "1.1.36",
+          "System.Reflection.Metadata": "1.0.21"
+        },
+        "compile": {
+          "lib/portable-net45+win8/Microsoft.CodeAnalysis.dll": {}
+        },
+        "runtime": {
+          "lib/portable-net45+win8/Microsoft.CodeAnalysis.dll": {}
+        }
+      },
+      "Microsoft.CodeAnalysis.CSharp/1.0.0-rc3-20150529-04": {
+        "dependencies": {
+          "Microsoft.CodeAnalysis.Common": "[1.0.0-rc3-20150529-04]"
+        },
+        "compile": {
+          "lib/portable-net45+win8/Microsoft.CodeAnalysis.CSharp.dll": {}
+        },
+        "runtime": {
+          "lib/portable-net45+win8/Microsoft.CodeAnalysis.CSharp.dll": {}
+        }
+      },
+      "Microsoft.Framework.Runtime.Abstractions/1.0.0-beta5": {
+        "dependencies": {
+          "System.ComponentModel": "4.0.0-beta-23019",
+          "System.IO": "4.0.10-beta-23019",
+          "System.Reflection": "4.0.10-beta-23019",
+          "System.Runtime": "4.0.20-beta-23019",
+          "System.Runtime.Extensions": "4.0.10-beta-23019",
+          "System.Threading.Tasks": "4.0.10-beta-23019"
+        },
+        "compile": {
+          "lib/dnxcore50/Microsoft.Framework.Runtime.Abstractions.dll": {}
+        },
+        "runtime": {
+          "lib/dnxcore50/Microsoft.Framework.Runtime.Abstractions.dll": {}
+        }
+      },
+      "System.Collections.Immutable/1.1.36": {
+        "compile": {
+          "lib/portable-net45+win8+wp8+wpa81/System.Collections.Immutable.dll": {}
+        },
+        "runtime": {
+          "lib/portable-net45+win8+wp8+wpa81/System.Collections.Immutable.dll": {}
+        }
+      },
+      "System.ComponentModel/4.0.0-beta-23019": {
+        "dependencies": {
+          "System.Runtime": "4.0.20-beta-23019"
+        },
+        "compile": {
+          "ref/dotnet/System.ComponentModel.dll": {}
+        },
+        "runtime": {
+          "lib/dotnet/System.ComponentModel.dll": {}
+        }
+      },
+      "System.IO/4.0.10-beta-23019": {
+        "dependencies": {
+          "System.Runtime": "4.0.20-beta-23019",
+          "System.Text.Encoding": "4.0.0-beta-23019",
+          "System.Threading.Tasks": "4.0.0-beta-23019"
+        },
+        "compile": {
+          "ref/dotnet/System.IO.dll": {}
+        },
+        "runtime": {
+          "lib/DNXCore50/System.IO.dll": {}
+        }
+      },
+      "System.Private.Uri/4.0.0-beta-23019": {
+        "runtime": {
+          "lib/DNXCore50/System.Private.Uri.dll": {}
+        }
+      },
+      "System.Reflection/4.0.10-beta-23019": {
+        "dependencies": {
+          "System.IO": "4.0.0-beta-23019",
+          "System.Reflection.Primitives": "4.0.0-beta-23019",
+          "System.Runtime": "4.0.20-beta-23019"
+        },
+        "compile": {
+          "ref/dotnet/System.Reflection.dll": {}
+        },
+        "runtime": {
+          "lib/DNXCore50/System.Reflection.dll": {}
+        }
+      },
+      "System.Reflection.Metadata/1.0.21": {
+        "dependencies": {
+          "System.Collections.Immutable": "1.1.36"
+        },
+        "compile": {
+          "lib/portable-net45+win8/System.Reflection.Metadata.dll": {}
+        },
+        "runtime": {
+          "lib/portable-net45+win8/System.Reflection.Metadata.dll": {}
+        }
+      },
+      "System.Reflection.Primitives/4.0.0-beta-23019": {
+        "dependencies": {
+          "System.Runtime": "4.0.0-beta-23019"
+        },
+        "compile": {
+          "ref/dotnet/System.Reflection.Primitives.dll": {}
+        },
+        "runtime": {
+          "lib/DNXCore50/System.Reflection.Primitives.dll": {}
+        }
+      },
+      "System.Runtime/4.0.20-beta-23019": {
+        "dependencies": {
+          "System.Private.Uri": "4.0.0-beta-23019"
+        },
+        "compile": {
+          "ref/dotnet/System.Runtime.dll": {}
+        },
+        "runtime": {
+          "lib/DNXCore50/System.Runtime.dll": {}
+        }
+      },
+      "System.Runtime.Extensions/4.0.10-beta-23019": {
+        "dependencies": {
+          "System.Runtime": "4.0.20-beta-23019"
+        },
+        "compile": {
+          "ref/dotnet/System.Runtime.Extensions.dll": {}
+        },
+        "runtime": {
+          "lib/DNXCore50/System.Runtime.Extensions.dll": {}
+        }
+      },
+      "System.Text.Encoding/4.0.0-beta-23019": {
+        "dependencies": {
+          "System.Runtime": "4.0.0-beta-23019"
+        },
+        "compile": {
+          "ref/dotnet/System.Text.Encoding.dll": {}
+        }
+      },
+      "System.Threading.Tasks/4.0.10-beta-23019": {
+        "dependencies": {
+          "System.Runtime": "4.0.0-beta-23019"
+        },
+        "compile": {
+          "ref/dotnet/System.Threading.Tasks.dll": {}
+        },
+        "runtime": {
+          "lib/DNXCore50/System.Threading.Tasks.dll": {}
+        }
+      }
+    }
+  },
+  "libraries": {
+    "Microsoft.CodeAnalysis.Analyzers/1.0.0-rc3-20150529-04": {
+      "sha512": "3OKYZSMwSsgHA7uyx3U3BqAzdJLHKhR6Y95mhuOFRgg2Piw3vKEPmxmG/IQiD0qeCL0pbkcCQzpa60Yo1Jn0yg==",
+      "files": [
+        "analyzers/portable50/cs/Microsoft.CodeAnalysis.Analyzers.dll",
+        "analyzers/portable50/cs/Microsoft.CodeAnalysis.CSharp.Analyzers.dll",
+        "analyzers/portable50/vb/Microsoft.CodeAnalysis.Analyzers.dll",
+        "analyzers/portable50/vb/Microsoft.CodeAnalysis.VisualBasic.Analyzers.dll",
+        "Microsoft.CodeAnalysis.Analyzers.1.0.0-rc3-20150529-04.nupkg",
+        "Microsoft.CodeAnalysis.Analyzers.1.0.0-rc3-20150529-04.nupkg.sha512",
+        "Microsoft.CodeAnalysis.Analyzers.nuspec",
+        "ThirdPartyNotices.rtf",
+        "tools/install.ps1",
+        "tools/uninstall.ps1"
+      ]
+    },
+    "Microsoft.CodeAnalysis.Common/1.0.0-rc3-20150529-04": {
+      "sha512": "B5aFOpPSQeEG5pafehkWJvJgTzI7dN9jLWqX6rk8u4RSQHiAldwRgniGo+jcKJGbdsxFUQISjZsvaNY+k9kXvg==",
+      "files": [
+        "lib/net45/Microsoft.CodeAnalysis.dll",
+        "lib/net45/Microsoft.CodeAnalysis.xml",
+        "lib/portable-net45+win8/Microsoft.CodeAnalysis.dll",
+        "lib/portable-net45+win8/Microsoft.CodeAnalysis.xml",
+        "Microsoft.CodeAnalysis.Common.1.0.0-rc3-20150529-04.nupkg",
+        "Microsoft.CodeAnalysis.Common.1.0.0-rc3-20150529-04.nupkg.sha512",
+        "Microsoft.CodeAnalysis.Common.nuspec",
+        "ThirdPartyNotices.rtf"
+      ]
+    },
+    "Microsoft.CodeAnalysis.CSharp/1.0.0-rc3-20150529-04": {
+      "sha512": "iS92guFlOKM4GNXwuWkQDgMwZDWxEny9LsilhAGyc8gfdX1rmbOrQTLR6ti8CQA3Jk0s9UB7O1MZmI8lKvcTMw==",
+      "files": [
+        "lib/net45/Microsoft.CodeAnalysis.CSharp.dll",
+        "lib/net45/Microsoft.CodeAnalysis.CSharp.xml",
+        "lib/portable-net45+win8/Microsoft.CodeAnalysis.CSharp.dll",
+        "lib/portable-net45+win8/Microsoft.CodeAnalysis.CSharp.xml",
+        "Microsoft.CodeAnalysis.CSharp.1.0.0-rc3-20150529-04.nupkg",
+        "Microsoft.CodeAnalysis.CSharp.1.0.0-rc3-20150529-04.nupkg.sha512",
+        "Microsoft.CodeAnalysis.CSharp.nuspec",
+        "ThirdPartyNotices.rtf"
+      ]
+    },
+    "Microsoft.Framework.Runtime.Abstractions/1.0.0-beta5": {
+      "serviceable": true,
+      "sha512": "w8FtN1i6dcKxCEF3fX2CYNA9LfkQ+vpGqmGAzRJn1Xg3N+73rywlIl7ijZLgCHS8MH0XO8KqpUCVR05UtVvJPg==",
+      "files": [
+        "lib/dnx451/Microsoft.Framework.Runtime.Abstractions.dll",
+        "lib/dnx451/Microsoft.Framework.Runtime.Abstractions.xml",
+        "lib/dnxcore50/Microsoft.Framework.Runtime.Abstractions.dll",
+        "lib/dnxcore50/Microsoft.Framework.Runtime.Abstractions.xml",
+        "Microsoft.Framework.Runtime.Abstractions.1.0.0-beta5.nupkg",
+        "Microsoft.Framework.Runtime.Abstractions.1.0.0-beta5.nupkg.sha512",
+        "Microsoft.Framework.Runtime.Abstractions.nuspec"
+      ]
+    },
+    "System.Collections.Immutable/1.1.36": {
+      "serviceable": true,
+      "sha512": "MOlivTIeAIQPPMUPWIIoMCvZczjFRLYUWSYwqi1szu8QPyeIbsaPeI+hpXe1DzTxNwnRnmfYaoToi6kXIfSPNg==",
+      "files": [
+        "lib/portable-net45+win8+wp8+wpa81/System.Collections.Immutable.dll",
+        "lib/portable-net45+win8+wp8+wpa81/System.Collections.Immutable.xml",
+        "License-Stable.rtf",
+        "System.Collections.Immutable.1.1.36.nupkg",
+        "System.Collections.Immutable.1.1.36.nupkg.sha512",
+        "System.Collections.Immutable.nuspec"
+      ]
+    },
+    "System.ComponentModel/4.0.0-beta-23019": {
+      "sha512": "ut79bWM/pYNWBhmazpg4noy6FizukKFIYwJ5LHLaT0oER281vIzCb8uJFF/yZC72g0zmB9sYexaWZSun1TfGPQ==",
+      "files": [
+        "lib/dotnet/System.ComponentModel.dll",
+        "lib/net45/_._",
+        "lib/netcore50/System.ComponentModel.dll",
+        "lib/win8/_._",
+        "ref/dotnet/System.ComponentModel.dll",
+        "ref/net45/_._",
+        "ref/netcore50/System.ComponentModel.dll",
+        "ref/win8/_._",
+        "System.ComponentModel.4.0.0-beta-23019.nupkg",
+        "System.ComponentModel.4.0.0-beta-23019.nupkg.sha512",
+        "System.ComponentModel.nuspec"
+      ]
+    },
+    "System.IO/4.0.10-beta-23019": {
+      "sha512": "/FgcleTGRMbI9XXlZCNNyNCLb+DzLXdyw2KqF1U0Su+Z8ztLBgpXGI9Vv1adnqRXXolBPNSlnHBMNEGqZzMYvA==",
+      "files": [
+        "lib/DNXCore50/System.IO.dll",
+        "lib/net46/_._",
+        "lib/netcore50/System.IO.dll",
+        "ref/dotnet/System.IO.dll",
+        "ref/net46/_._",
+        "runtimes/win8-aot/lib/netcore50/System.IO.dll",
+        "System.IO.4.0.10-beta-23019.nupkg",
+        "System.IO.4.0.10-beta-23019.nupkg.sha512",
+        "System.IO.nuspec"
+      ]
+    },
+    "System.Private.Uri/4.0.0-beta-23019": {
+      "sha512": "LV9WVCQ8W3ivP/hvQlaHH0lZKZyoYcUYiRGVw7xw/q8yfo2ZvwIrleXcLemxQkCSrXy80c5QmT9ErvrlFQK+Nw==",
+      "files": [
+        "lib/DNXCore50/System.Private.Uri.dll",
+        "lib/netcore50/System.Private.Uri.dll",
+        "ref/dnxcore50/_._",
+        "ref/netcore50/_._",
+        "runtimes/win8-aot/lib/netcore50/System.Private.Uri.dll",
+        "System.Private.Uri.4.0.0-beta-23019.nupkg",
+        "System.Private.Uri.4.0.0-beta-23019.nupkg.sha512",
+        "System.Private.Uri.nuspec"
+      ]
+    },
+    "System.Reflection/4.0.10-beta-23019": {
+      "sha512": "74fA068GDGipNfZxV3cQJe38djfHNrHPbKRrojOCLoecymaXlTGU917/nVxBuRwFehOsYwhMJ/B30m4YVEF/CA==",
+      "files": [
+        "lib/DNXCore50/System.Reflection.dll",
+        "lib/net46/_._",
+        "lib/netcore50/System.Reflection.dll",
+        "ref/dotnet/System.Reflection.dll",
+        "ref/net46/_._",
+        "runtimes/win8-aot/lib/netcore50/System.Reflection.dll",
+        "System.Reflection.4.0.10-beta-23019.nupkg",
+        "System.Reflection.4.0.10-beta-23019.nupkg.sha512",
+        "System.Reflection.nuspec"
+      ]
+    },
+    "System.Reflection.Metadata/1.0.21": {
+      "serviceable": true,
+      "sha512": "CAhcY0EJFLXfxo5YRV/ytkTOeTBho8zKjLu+9LvEI5NIVmanp1yMUzYQdjvXpHbyV0Qt1KuLXcTCc9t9FVH3Wg==",
+      "files": [
+        "lib/portable-net45+win8/System.Reflection.Metadata.dll",
+        "lib/portable-net45+win8/System.Reflection.Metadata.xml",
+        "License-Stable.rtf",
+        "System.Reflection.Metadata.1.0.21.nupkg",
+        "System.Reflection.Metadata.1.0.21.nupkg.sha512",
+        "System.Reflection.Metadata.nuspec"
+      ]
+    },
+    "System.Reflection.Primitives/4.0.0-beta-23019": {
+      "sha512": "t9KyeV51eRgTby/D9Ri6cIKeA9KUOGH5+EEXBdfaSbkCO/lrJ/7b8BclFu+HKEXJd3/ZpD0lOdw4k8kwIeL3ww==",
+      "files": [
+        "lib/DNXCore50/System.Reflection.Primitives.dll",
+        "lib/net45/_._",
+        "lib/netcore50/System.Reflection.Primitives.dll",
+        "lib/win8/_._",
+        "ref/dotnet/System.Reflection.Primitives.dll",
+        "ref/net45/_._",
+        "ref/netcore50/System.Reflection.Primitives.dll",
+        "ref/win8/_._",
+        "runtimes/win8-aot/lib/netcore50/System.Reflection.Primitives.dll",
+        "System.Reflection.Primitives.4.0.0-beta-23019.nupkg",
+        "System.Reflection.Primitives.4.0.0-beta-23019.nupkg.sha512",
+        "System.Reflection.Primitives.nuspec"
+      ]
+    },
+    "System.Runtime/4.0.20-beta-23019": {
+      "sha512": "74Ba0KeqUX4ziLuALD5zSDWbYFg2Hw8IloKILkm8UHe5vkFCzHIb9tARXLClDjTxXQ/G/hyXgV8N0YlKHX7dAA==",
+      "files": [
+        "lib/DNXCore50/System.Runtime.dll",
+        "lib/net46/_._",
+        "lib/netcore50/System.Runtime.dll",
+        "ref/dotnet/System.Runtime.dll",
+        "ref/net46/_._",
+        "runtimes/win8-aot/lib/netcore50/System.Runtime.dll",
+        "System.Runtime.4.0.20-beta-23019.nupkg",
+        "System.Runtime.4.0.20-beta-23019.nupkg.sha512",
+        "System.Runtime.nuspec"
+      ]
+    },
+    "System.Runtime.Extensions/4.0.10-beta-23019": {
+      "sha512": "G1DElWXwzoQgAWMZX63gwgSMckcLnxA70xTwZTx/VmQQG2+kqDuUoFVywdBeC9yaba0xK2h7Q01+H4/FGDClSg==",
+      "files": [
+        "lib/DNXCore50/System.Runtime.Extensions.dll",
+        "lib/net46/_._",
+        "lib/netcore50/System.Runtime.Extensions.dll",
+        "ref/dotnet/System.Runtime.Extensions.dll",
+        "ref/net46/_._",
+        "runtimes/win8-aot/lib/netcore50/System.Runtime.Extensions.dll",
+        "System.Runtime.Extensions.4.0.10-beta-23019.nupkg",
+        "System.Runtime.Extensions.4.0.10-beta-23019.nupkg.sha512",
+        "System.Runtime.Extensions.nuspec"
+      ]
+    },
+    "System.Text.Encoding/4.0.0-beta-23019": {
+      "sha512": "3AKmu2GxeVRk3wrBLoZXN3EhMeToZpV9KB/fjOCJu3TXZGwT3x/GwXMK9S3giYFLppHABDuVSBM1X7/71ujf4Q==",
+      "files": [
+        "lib/net45/_._",
+        "lib/win8/_._",
+        "License.rtf",
+        "ref/dotnet/System.Text.Encoding.dll",
+        "ref/net45/_._",
+        "ref/netcore50/System.Text.Encoding.dll",
+        "ref/win8/_._",
+        "System.Text.Encoding.4.0.0-beta-23019.nupkg",
+        "System.Text.Encoding.4.0.0-beta-23019.nupkg.sha512",
+        "System.Text.Encoding.nuspec"
+      ]
+    },
+    "System.Threading.Tasks/4.0.10-beta-23019": {
+      "sha512": "drgS00Han7hhU1Wpw8aVCrVrZxaSlHddAsHZTomgZqDioG3IFblN09RMeNtaL4m5DLHt+cuzyvNFKUMdjxiklg==",
+      "files": [
+        "lib/DNXCore50/System.Threading.Tasks.dll",
+        "lib/net46/_._",
+        "lib/netcore50/System.Threading.Tasks.dll",
+        "ref/dotnet/System.Threading.Tasks.dll",
+        "ref/net46/_._",
+        "runtimes/win8-aot/lib/netcore50/System.Threading.Tasks.dll",
+        "System.Threading.Tasks.4.0.10-beta-23019.nupkg",
+        "System.Threading.Tasks.4.0.10-beta-23019.nupkg.sha512",
+        "System.Threading.Tasks.nuspec"
+      ]
+    }
+  },
+  "projectFileDependencyGroups": {
+    "": [
+      "Microsoft.Framework.Runtime.Abstractions >= 1.0.0-beta5",
+      "Microsoft.CodeAnalysis.CSharp >= 1.0.0-*"
+    ],
+    "DNX,Version=v4.5.1": [],
+    "DNXCore,Version=v5.0": [
+      "System.Runtime >= 4.0.20-beta-23019"
+    ]
+  }
+}

@@ -1,9 +1,9 @@
-﻿{
-    "version": "1.0.0-*",
+{
+    "version": "1.0.0-beta5",
     "description": "(Temporary) Central place for common classes used in compilation. These will live in Microsoft.Framework.Runtime.Compilation",
     "shared": "**/*.cs",
     "dependencies": {
-        "Microsoft.Framework.Runtime.Abstractions": "1.0.0-*"
+        "Microsoft.Framework.Runtime.Abstractions": "1.0.0-beta5"
     },
 
     "frameworks": {
@@ -13,7 +13,7 @@
         },
         "dnxcore50": {
             "dependencies": {
-                "System.Runtime": "4.0.20-beta-*"
+                "System.Runtime": "4.0.20-beta-23019"
             }
         }
     }

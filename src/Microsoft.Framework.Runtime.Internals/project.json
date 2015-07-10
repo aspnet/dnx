@@ -1,5 +1,5 @@
 {
-    "version": "1.0.0-*",
+    "version": "1.0.0-beta5",
     "compilationOptions": { "define": [ "TRACE" ], "warningsAsErrors": true },
     "shared": "**/*.cs",
     "dependencies": {
@@ -9,7 +9,7 @@
         "dnx451": { },
         "dnxcore50": {
             "dependencies": {
-                "System.Runtime": "4.0.20-beta-*"
+                "System.Runtime": "4.0.20-beta-23019"
             }
         }
     }

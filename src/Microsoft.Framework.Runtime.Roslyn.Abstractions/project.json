@@ -1,7 +1,7 @@
 {
-    "version": "1.0.0-*",
+    "version": "1.0.0-beta5",
     "dependencies": {
-        "Microsoft.Framework.Runtime.Abstractions": "1.0.0-*",
+        "Microsoft.Framework.Runtime.Abstractions": "1.0.0-beta5",
         "Microsoft.CodeAnalysis.CSharp": "1.0.0-*"
     },
 
@@ -12,7 +12,7 @@
         },
         "dnxcore50": {
             "dependencies": {
-                "System.Runtime": "4.0.20-beta-*"
+                "System.Runtime": "4.0.20-beta-23019"
             }
         }
     },

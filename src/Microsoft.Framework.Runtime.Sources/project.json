@@ -1,5 +1,5 @@
 {
-    "version": "1.0.0-*",
+    "version": "1.0.0-beta5",
     "compilationOptions": { "define": [ "TRACE" ], "warningsAsErrors": true },
     "shared": "**/*.cs",
     "dependencies": {
@@ -8,16 +8,16 @@
         "dnx451": { },
         "dnxcore50": {
             "dependencies": {
-                "System.Collections": "4.0.10-beta-*",
-                "System.ComponentModel": "4.0.0-beta-*",
-                "System.Console": "4.0.0-beta-*",
-                "System.Diagnostics.Debug": "4.0.10-beta-*",
-                "System.Linq": "4.0.0-beta-*",
-                "System.Reflection": "4.0.10-beta-*",
-                "System.Runtime": "4.0.20-beta-*",
-                "System.Runtime.Extensions": "4.0.10-beta-*",
-                "System.Threading": "4.0.10-beta-*",
-                "System.Threading.Tasks": "4.0.10-beta-*"
+                "System.Collections": "4.0.10-beta-23019",
+                "System.ComponentModel": "4.0.0-beta-23019",
+                "System.Console": "4.0.0-beta-23019",
+                "System.Diagnostics.Debug": "4.0.10-beta-23019",
+                "System.Linq": "4.0.0-beta-23019",
+                "System.Reflection": "4.0.10-beta-23019",
+                "System.Runtime": "4.0.20-beta-23019",
+                "System.Runtime.Extensions": "4.0.10-beta-23019",
+                "System.Threading": "4.0.10-beta-23019",
+                "System.Threading.Tasks": "4.0.10-beta-23019"
             }
         }
     }

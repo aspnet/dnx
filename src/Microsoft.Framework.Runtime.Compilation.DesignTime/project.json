@@ -1,9 +1,9 @@
-﻿{
-  "version": "1.0.0-*",
+{
+  "version": "1.0.0-beta5",
   "dependencies": {
-    "Microsoft.Framework.Runtime.Sources": { "version": "1.0.0-*", "type": "build" },
-    "Microsoft.Framework.Runtime.Compilation.Sources": { "version": "1.0.0-*", "type": "build" },
-    "Microsoft.Framework.Runtime.Abstractions": "1.0.0-*"
+    "Microsoft.Framework.Runtime.Sources": { "version": "1.0.0-beta5", "type": "build" },
+    "Microsoft.Framework.Runtime.Compilation.Sources": { "version": "1.0.0-beta5", "type": "build" },
+    "Microsoft.Framework.Runtime.Abstractions": "1.0.0-beta5"
   },
   "compile": [
     "../Microsoft.Framework.Runtime/Json/*.cs"
@@ -15,13 +15,13 @@
     },
     "dnxcore50": {
       "dependencies": {
-        "System.Collections.Concurrent": "4.0.10-beta-*",
-        "System.Dynamic.Runtime": "4.0.10-beta-*",
-        "System.Globalization": "4.0.10-beta-*",
-        "System.IO.FileSystem": "4.0.0-beta-*",
-        "System.Net.Primitives": "4.0.10-beta-*",
-        "System.Net.Sockets": "4.0.10-beta-*",
-        "System.Threading.Thread": "4.0.0-beta-*"
+        "System.Collections.Concurrent": "4.0.10-beta-23019",
+        "System.Dynamic.Runtime": "4.0.10-beta-23019",
+        "System.Globalization": "4.0.10-beta-23019",
+        "System.IO.FileSystem": "4.0.0-beta-23019",
+        "System.Net.Primitives": "4.0.10-beta-23019",
+        "System.Net.Sockets": "4.0.10-beta-23019",
+        "System.Threading.Thread": "4.0.0-beta-23019"
       }
     }
   },

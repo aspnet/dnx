@@ -1,7 +1,7 @@
 {
     "dependencies": {
-        "Microsoft.Framework.CommandLineUtils.Sources": "1.0.0-*",
-        "xunit.runner.aspnet": "2.0.0-aspnet-*"
+        "Microsoft.Framework.CommandLineUtils.Sources": "1.0.0-beta5",
+        "xunit.runner.aspnet": "2.0.0-aspnet-beta5"
     },
 
     "frameworks": {
