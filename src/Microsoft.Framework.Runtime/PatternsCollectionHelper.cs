@@ -13,7 +13,12 @@ namespace Microsoft.Framework.Runtime
     {
         private static readonly char[] PatternSeparator = new[] { ';' };
 
-        public static IEnumerable<string> GetPatternsCollection(JsonObject rawProject, string projectDirectory, string projectFilePath, string propertyName, IEnumerable<string> defaultPatterns = null)
+        public static IEnumerable<string> GetPatternsCollection(JsonObject rawProject,
+                                                                string projectDirectory,
+                                                                string projectFilePath,
+                                                                string propertyName,
+                                                                IEnumerable<string> defaultPatterns = null,
+                                                                bool literalPath = false)
         {
             defaultPatterns = defaultPatterns ?? Enumerable.Empty<string>();
 
@@ -21,19 +26,19 @@ namespace Microsoft.Framework.Runtime
             {
                 if (!rawProject.Keys.Contains(propertyName))
                 {
-                    return CreateCollection(projectDirectory, defaultPatterns.ToArray());
+                    return CreateCollection(projectDirectory, propertyName, defaultPatterns, literalPath);
                 }
 
                 var valueInString = rawProject.ValueAsString(propertyName);
                 if (valueInString != null)
                 {
-                    return CreateCollection(projectDirectory, valueInString);
+                    return CreateCollection(projectDirectory, propertyName, new string[] { valueInString }, literalPath);
                 }
 
                 var valuesInArray = rawProject.ValueAsStringArray(propertyName);
                 if (valuesInArray != null)
                 {
-                    return CreateCollection(projectDirectory, valuesInArray.Select(s => s.ToString()).ToArray());
+                    return CreateCollection(projectDirectory, propertyName, valuesInArray.Select(s => s.ToString()), literalPath);
                 }
             }
             catch (Exception ex)
@@ -44,7 +49,7 @@ namespace Microsoft.Framework.Runtime
             throw FileFormatException.Create("Value must be either string or array.", rawProject.Value(propertyName), projectFilePath);
         }
 
-        private static IEnumerable<string> CreateCollection(string projectDirectory, params string[] patternsStrings)
+        private static IEnumerable<string> CreateCollection(string projectDirectory, string propertyName, IEnumerable<string> patternsStrings, bool literalPath)
         {
             var patterns = patternsStrings.SelectMany(patternsString => GetSourcesSplit(patternsString))
                                           .Select(patternString => patternString.Replace('/', Path.DirectorySeparatorChar).Replace('\\', Path.DirectorySeparatorChar));
@@ -53,7 +58,12 @@ namespace Microsoft.Framework.Runtime
             {
                 if (Path.IsPathRooted(pattern))
                 {
-                    throw new InvalidOperationException(string.Format("Patten {0} is a rooted path, which is not supported.", pattern));
+                    throw new InvalidOperationException($"The '{propertyName}' property cannot be a rooted path.");
+                }
+
+                if (literalPath && pattern.Contains('*'))
+                {
+                    throw new InvalidOperationException($"The '{propertyName}' property cannot contain wildcard characters.");
                 }
             }
 

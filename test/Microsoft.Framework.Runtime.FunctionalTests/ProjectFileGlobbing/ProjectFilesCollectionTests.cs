@@ -396,7 +396,7 @@ namespace Microsoft.Framework.Runtime.FunctionalTests.ProjectFileGlobbing
                 CreateFilesCollection(projectJsonContent, @"src\project");
             });
 
-            Assert.True(exception.Message.Contains(absolutePath));
+            Assert.Equal(exception.Message, "The 'compile' property cannot be a rooted path.");
         }
 
         [Fact]

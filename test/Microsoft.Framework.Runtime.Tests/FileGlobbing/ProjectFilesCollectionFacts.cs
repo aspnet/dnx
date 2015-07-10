@@ -69,7 +69,7 @@ namespace Microsoft.Framework.Runtime.Tests.FileGlobbing
              ""compileFiles"": ""signle.cs"",
              ""shared"": ""shared/**/*.cs"",
              ""sharedExclude"": ""excludeShared*.cs"",
-             ""sharedFiles"": ""**/*.cs"",
+             ""sharedFiles"": ""shared.cs"",
              ""contentBuiltIn"": """",
              ""content"": ""**/*.content"",
              ""contentExclude"": ""excludecontent"",
@@ -109,6 +109,22 @@ namespace Microsoft.Framework.Runtime.Tests.FileGlobbing
 
             var target = new ProjectFilesCollection(rawProject, string.Empty, string.Empty);
             Assert.Equal(NormalizePatterns("*.cs", "../*.cs", "**/*.cpp", "**/*.h"), target.CompilePatternsGroup.IncludePatterns);
+        }
+
+
+        [Fact]
+        public void ExceptionThrowWhenWildcardPresentsInLiteralPath()
+        {
+            var rawProject = Deserialize(@"{""compileFiles"": ""*.cs""}");
+
+            var exception = Assert.Throws<FileFormatException>(() =>
+            {
+                var target = new ProjectFilesCollection(rawProject, string.Empty, string.Empty);
+            });
+
+            Assert.Equal(
+                "The 'compileFiles' property cannot contain wildcard characters.",
+                exception.InnerException.Message);
         }
 
         private JsonObject Deserialize(string content)

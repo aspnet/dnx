@@ -78,7 +78,7 @@ namespace Microsoft.Framework.Runtime
                                                           .Concat(additionalExcluding)
                                                           .Distinct();
 
-            var includeLiterals = PatternsCollectionHelper.GetPatternsCollection(rawProject, projectDirectory, projectFilePath, propertyName: name + "Files")
+            var includeLiterals = PatternsCollectionHelper.GetPatternsCollection(rawProject, projectDirectory, projectFilePath, propertyName: name + "Files", literalPath: true)
                                                           .Distinct();
 
             return new PatternGroup(includePatterns, excludePatterns, includeLiterals);
