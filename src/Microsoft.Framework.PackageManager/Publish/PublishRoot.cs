@@ -28,7 +28,7 @@ namespace Microsoft.Framework.PackageManager.Publish
             TargetPackagesPath = Path.Combine(outputPath, AppRootName, "packages");
             TargetRuntimesPath = Path.Combine(outputPath, AppRootName, "runtimes");
             Operations = new PublishOperations();
-            LibraryDependencyContexts = new Dictionary<Library, IList<DependencyContext>>();
+            LibraryDependencyContexts = new Dictionary<LibraryIdentity, IList<DependencyContext>>();
         }
 
         public string OutputPath { get; private set; }
@@ -43,7 +43,7 @@ namespace Microsoft.Framework.PackageManager.Publish
         public IList<PublishRuntime> Runtimes { get; set; }
         public IList<PublishProject> Projects { get; private set; }
         public IList<PublishPackage> Packages { get; private set; }
-        public IDictionary<Library, IList<DependencyContext>> LibraryDependencyContexts { get; private set; }
+        public IDictionary<LibraryIdentity, IList<DependencyContext>> LibraryDependencyContexts { get; private set; }
 
         public Reports Reports { get; private set; }
         public PublishOperations Operations { get; private set; }

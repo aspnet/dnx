@@ -18,7 +18,7 @@ namespace Microsoft.Framework.Runtime
         /// <summary>
         /// Gets the version of the application, as specified in the project.json file.
         /// </summary>
-        string Version { get; }
+        string ApplicationVersion { get; }
 
         /// <summary>
         /// Gets the base directory of the application, defined as the path to the directory containing the project.json file.

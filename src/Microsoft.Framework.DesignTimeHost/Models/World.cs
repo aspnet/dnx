@@ -12,7 +12,7 @@ namespace Microsoft.Framework.DesignTimeHost.Models
     {
         public ProjectMessage ProjectInformation { get; set; }
 
-        public DiagnosticsMessage ProjectDiagnostics { get; set; }
+        public DiagnosticsListMessage ProjectDiagnostics { get; set; }
 
         public Dictionary<FrameworkName, ProjectWorld> Projects { get; set; }
 
@@ -32,8 +32,8 @@ namespace Microsoft.Framework.DesignTimeHost.Models
         public SourcesMessage Sources { get; set; }
         public ReferencesMessage References { get; set; }
         public DependenciesMessage Dependencies { get; set; }
-        public DiagnosticsMessage DependencyDiagnostics { get; set; }
-        public DiagnosticsMessage CompilationDiagnostics { get; set; }
+        public DiagnosticsListMessage DependencyDiagnostics { get; set; }
+        public DiagnosticsListMessage CompilationDiagnostics { get; set; }
         public OutputsMessage Outputs { get; set; }
     }
 }

@@ -130,7 +130,7 @@ namespace Microsoft.Framework.Runtime
                 return new LibraryDescription
                 {
                     LibraryRange = libraryRange,
-                    Identity = new Library
+                    Identity = new LibraryIdentity
                     {
                         Name = package.Id,
                         Version = package.Version
@@ -361,7 +361,7 @@ namespace Microsoft.Framework.Runtime
                                         .Select(path => new DefaultPackagePathResolver(path));
         }
 
-        public ILibraryExport GetLibraryExport(ILibraryKey target)
+        public LibraryExport GetLibraryExport(CompilationTarget target)
         {
             PackageDescription description;
             if (!_packageDescriptions.TryGetValue(target.Name, out description))

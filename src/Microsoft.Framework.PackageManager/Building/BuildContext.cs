@@ -6,6 +6,7 @@ using System.Runtime.Versioning;
 using Microsoft.Framework.Runtime;
 using Microsoft.Framework.Runtime.Caching;
 using Microsoft.Framework.Runtime.Compilation;
+using Microsoft.Framework.Runtime.Infrastructure;
 using Microsoft.Framework.Runtime.Loader;
 using NuGet;
 
@@ -52,7 +53,7 @@ namespace Microsoft.Framework.PackageManager
             ShowDependencyInformation(report);
         }
 
-        public bool Build(List<ICompilationMessage> diagnostics)
+        public bool Build(List<DiagnosticMessage> diagnostics)
         {
             var builder = _applicationHostContext.CreateInstance<ProjectBuilder>();
 
@@ -158,7 +159,7 @@ namespace Microsoft.Framework.PackageManager
         private void ShowDependencyInformation(IReport report)
         {
             // Make lookup for actual package dependency assemblies
-            var projectExport = _applicationHostContext.LibraryManager.GetAllExports(_project.Name);
+            var projectExport = _applicationHostContext.LibraryExporter.GetAllExports(_project.Name);
             if (projectExport == null)
             {
                 return;

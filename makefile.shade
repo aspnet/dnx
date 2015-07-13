@@ -79,6 +79,7 @@ var MANAGED_PROJECTS = '${FindAllProjects(
     "Microsoft.Framework.Runtime",
     "Microsoft.Framework.Runtime.Caching",
     "Microsoft.Framework.Runtime.Abstractions",
+    "Microsoft.Framework.Runtime.Compilation.Abstractions",
     "Microsoft.Framework.Runtime.Compilation.DesignTime",
     "Microsoft.Framework.Runtime.CommandParsing.Sources",
     "Microsoft.Framework.Runtime.Sources",

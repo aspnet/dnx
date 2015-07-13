@@ -59,9 +59,9 @@ namespace Microsoft.Framework.Runtime
             Logger.TraceInformation("[{0}]: Resolved dependencies for {1} in {2}ms", GetType().Name, name, sw.ElapsedMilliseconds);
         }
 
-        public IList<ICompilationMessage> GetDependencyDiagnostics(string projectFilePath)
+        public IList<DiagnosticMessage> GetDependencyDiagnostics(string projectFilePath)
         {
-            var messages = new List<ICompilationMessage>();
+            var messages = new List<DiagnosticMessage>();
             foreach (var library in Libraries)
             {
                 string projectPath = library.LibraryRange.FileName ?? projectFilePath;
@@ -80,11 +80,13 @@ namespace Microsoft.Framework.Runtime
                             $"The dependency {library.Identity} in project {projectName} does not support framework {library.Framework}.";
                     }
 
-                    messages.Add(new FileFormatMessage(message, projectPath, CompilationMessageSeverity.Error)
-                    {
-                        StartLine = library.LibraryRange.Line,
-                        StartColumn = library.LibraryRange.Column
-                    });
+                    messages.Add(
+                        new DiagnosticMessage(
+                            message, 
+                            projectPath, 
+                            DiagnosticMessageSeverity.Error, 
+                            library.LibraryRange.Line, 
+                            library.LibraryRange.Column));
                 }
                 else
                 {
@@ -110,11 +112,13 @@ namespace Microsoft.Framework.Runtime
                          !library.LibraryRange.VersionRange.EqualsFloating(library.Identity.Version)))
                     {
                         var message = string.Format("Dependency specified was {0} but ended up with {1}.", library.LibraryRange, library.Identity);
-                        messages.Add(new FileFormatMessage(message, projectPath, CompilationMessageSeverity.Warning)
-                        {
-                            StartLine = library.LibraryRange.Line,
-                            StartColumn = library.LibraryRange.Column
-                        });
+                        messages.Add(
+                            new DiagnosticMessage(
+                                message, 
+                                projectPath, 
+                                DiagnosticMessageSeverity.Warning, 
+                                library.LibraryRange.Line, 
+                                library.LibraryRange.Column));
                     }
                 }
             }

@@ -44,7 +44,7 @@ namespace Microsoft.Framework.Runtime
             }
         }
 
-        public string Version
+        public string ApplicationVersion
         {
             get { return _project.Version.ToString(); }
         }

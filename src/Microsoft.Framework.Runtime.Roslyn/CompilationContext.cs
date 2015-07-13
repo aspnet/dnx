@@ -20,25 +20,23 @@ namespace Microsoft.Framework.Runtime.Roslyn
         public IList<IMetadataReference> References { get; set; }
 
         public CompilationContext(CSharpCompilation compilation,
-                                  ICompilationProject project,
-                                  FrameworkName targetFramework,
-                                  string configuration,
+                                  CompilationProjectContext compilationContext,
                                   IEnumerable<IMetadataReference> incomingReferences,
                                   Func<IList<ResourceDescription>> resourcesResolver)
         {
-            Project = project;
+            Project = compilationContext;
             Modules = new List<ICompileModule>();
 
             _resourcesResolver = resourcesResolver;
 
             var projectContext = new ProjectContext
             {
-                Name = project.Name,
-                ProjectDirectory = project.ProjectDirectory,
-                ProjectFilePath = project.ProjectFilePath,
-                TargetFramework = targetFramework,
-                Version = project.Version?.ToString(),
-                Configuration = configuration
+                Name = compilationContext.Target.Name,
+                ProjectDirectory = compilationContext.ProjectDirectory,
+                ProjectFilePath = compilationContext.ProjectFilePath,
+                TargetFramework = compilationContext.Target.TargetFramework,
+                Version = compilationContext.Version?.ToString(),
+                Configuration = compilationContext.Target.Configuration
             };
 
             _beforeCompileContext = new BeforeCompileContext
@@ -51,7 +49,7 @@ namespace Microsoft.Framework.Runtime.Roslyn
             };
         }
 
-        public ICompilationProject Project { get; }
+        public CompilationProjectContext Project { get; }
 
         public IList<ICompileModule> Modules { get; }
 
@@ -84,13 +82,13 @@ namespace Microsoft.Framework.Runtime.Roslyn
         private IList<ResourceDescription> ResolveResources()
         {
             var sw = Stopwatch.StartNew();
-            Logger.TraceInformation("[{0}]: Generating resources for {1}", nameof(CompilationContext), Project.Name);
+            Logger.TraceInformation("[{0}]: Generating resources for {1}", nameof(CompilationContext), Project.Target.Name);
 
             var resources = _resourcesResolver();
 
             sw.Stop();
             Logger.TraceInformation("[{0}]: Generated resources for {1} in {2}ms", nameof(CompilationContext),
-                                                                                   Project.Name,
+                                                                                   Project.Target.Name,
                                                                                    sw.ElapsedMilliseconds);
 
             return resources;

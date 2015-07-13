@@ -205,7 +205,7 @@ namespace Microsoft.Framework.Runtime.FileSystem
         }
     }
 
-    public sealed class NoopWatcher : IFileWatcher, IFileMonitor
+    public sealed class NoopWatcher : IFileWatcher
     {
         public static readonly NoopWatcher Instance = new NoopWatcher();
 

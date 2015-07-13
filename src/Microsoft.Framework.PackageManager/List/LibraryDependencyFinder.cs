@@ -18,7 +18,7 @@ namespace Microsoft.Framework.PackageManager.List
             var libDictionary = libraries.ToDictionary(desc => desc.Identity);
 
             LibraryDescription root;
-            if (!libDictionary.TryGetValue(new Library { Name = project.Name, Version = project.Version }, out root))
+            if (!libDictionary.TryGetValue(new LibraryIdentity { Name = project.Name, Version = project.Version }, out root))
             {
                 throw new InvalidOperationException(string.Format("Failed to retrieve {0} of project {1} - {2}", typeof(LibraryDependency).Name, project.Name, project.Version));
             }

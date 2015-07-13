@@ -18,7 +18,7 @@ namespace Microsoft.Framework.PackageManager
     {
         internal static async Task InstallFromStream(
             Stream stream,
-            Library library,
+            LibraryIdentity library,
             string packagesDirectory,
             IReport information)
         {
@@ -102,7 +102,7 @@ namespace Microsoft.Framework.PackageManager
             });
         }
 
-        internal static Library CreateLibraryFromNupkg(string nupkgPath)
+        internal static LibraryIdentity CreateLibraryFromNupkg(string nupkgPath)
         {
             using (var fileStream = File.OpenRead(nupkgPath))
             using (var archive = new ZipArchive(fileStream))
@@ -117,7 +117,7 @@ namespace Microsoft.Framework.PackageManager
                     using (var entryStream = entry.Open())
                     {
                         var manifest = Manifest.ReadFrom(entryStream, validateSchema: false);
-                        return new Library()
+                        return new LibraryIdentity()
                         {
                             Name = manifest.Metadata.Id,
                             Version = manifest.Metadata.Version

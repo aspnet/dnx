@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.IO;
 using Microsoft.Framework.Runtime.Caching;
 using Microsoft.Framework.Runtime.Compilation;
+using Microsoft.Framework.Runtime.Infrastructure;
 
 namespace Microsoft.Framework.Runtime
 {
@@ -30,7 +31,7 @@ namespace Microsoft.Framework.Runtime
             });
         }
 
-        public ILibraryExport GetLibraryExport(ILibraryKey target)
+        public LibraryExport GetLibraryExport(CompilationTarget target)
         {
             Project project;
             // Can't find a project file with the name so bail
@@ -61,7 +62,7 @@ namespace Microsoft.Framework.Runtime
             var namedCacheDependencyProvider = (INamedCacheDependencyProvider)_serviceProvider.GetService(typeof(INamedCacheDependencyProvider));
             var loadContextFactory = (IAssemblyLoadContextFactory)_serviceProvider.GetService(typeof(IAssemblyLoadContextFactory));
 
-            return cache.Get<ILibraryExport>(key, ctx =>
+            return cache.Get<LibraryExport>(key, ctx =>
             {
                 var metadataReferences = new List<IMetadataReference>();
                 var sourceReferences = new List<ISourceReference>();
@@ -71,7 +72,7 @@ namespace Microsoft.Framework.Runtime
                     var assemblyPath = ResolvePath(project, target.Configuration, targetFrameworkInformation.AssemblyPath);
                     var pdbPath = ResolvePath(project, target.Configuration, targetFrameworkInformation.PdbPath);
 
-                    metadataReferences.Add(new CompiledProjectMetadataReference(project, assemblyPath, pdbPath));
+                    metadataReferences.Add(new CompiledProjectMetadataReference(project.ToCompilationContext(target), assemblyPath, pdbPath));
                 }
                 else
                 {
@@ -86,7 +87,7 @@ namespace Microsoft.Framework.Runtime
                     Logger.TraceInformation("[{0}]: GetProjectReference({1}, {2}, {3}, {4})", provider.TypeName, target.Name, target.TargetFramework, target.Configuration, target.Aspect);
 
                     // Get the exports for the project dependencies
-                    var projectExport = new Lazy<ILibraryExport>(() =>
+                    var projectExport = new Lazy<LibraryExport>(() =>
                     {
                         // TODO: Cache?
                         var context = new ApplicationHostContext(_serviceProvider,
@@ -111,8 +112,7 @@ namespace Microsoft.Framework.Runtime
 
                     // Resolve the project export
                     IMetadataProjectReference projectReference = projectCompiler.CompileProject(
-                        project,
-                        target,
+                        project.ToCompilationContext(target),
                         () => projectExport.Value,
                         () => CompositeResourceProvider.Default.GetResources(project));
 

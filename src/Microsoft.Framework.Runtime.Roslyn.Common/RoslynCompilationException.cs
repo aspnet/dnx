@@ -6,6 +6,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.Versioning;
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp;
+using Microsoft.Framework.Runtime.Compilation;
 
 namespace Microsoft.Framework.Runtime.Roslyn
 {
@@ -14,7 +16,7 @@ namespace Microsoft.Framework.Runtime.Roslyn
     /// </summary>
     public class RoslynCompilationException : Exception, ICompilationException
     {
-        private IEnumerable<ICompilationFailure> _compilationFailure;
+        private IEnumerable<CompilationFailure> _compilationFailure;
 
         /// <summary>
         /// Initializes a new instance of <see cref="RoslynCompilationException"/>.
@@ -26,6 +28,7 @@ namespace Microsoft.Framework.Runtime.Roslyn
             : base(GetErrorMessage(diagnostics, targetFramework))
         {
             Diagnostics = diagnostics;
+            TargetFramework = targetFramework;
         }
 
         /// <summary>
@@ -33,15 +36,21 @@ namespace Microsoft.Framework.Runtime.Roslyn
         /// </summary>
         public IEnumerable<Diagnostic> Diagnostics { get; }
 
+        /// <summary>
+        /// Gets the <see cref="FrameworkName"/> representing the framework targeted by the compilation
+        /// </summary>
+        public FrameworkName TargetFramework { get; }
+
         /// <inheritdoc />
-        public IEnumerable<ICompilationFailure> CompilationFailures
+        public IEnumerable<CompilationFailure> CompilationFailures
         {
             get
             {
                 if (_compilationFailure == null)
                 {
-                    _compilationFailure = Diagnostics.GroupBy(d => d.Location.GetMappedLineSpan().Path, StringComparer.OrdinalIgnoreCase)
-                                                     .Select(d => new RoslynCompilationFailure(d));
+                    _compilationFailure = Diagnostics
+                        .GroupBy(d => d.Location.GetMappedLineSpan().Path, StringComparer.OrdinalIgnoreCase)
+                        .Select(d => d.ToCompilationFailure(TargetFramework));
                 }
 
                 return _compilationFailure;

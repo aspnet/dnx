@@ -1,7 +1,7 @@
 {
     "version": "1.0.0-*",
     "dependencies": {
-        "Microsoft.Framework.Runtime.Abstractions": "1.0.0-*",
+        "Microsoft.Framework.Runtime.Compilation.Abstractions": "1.0.0-*",
         "Microsoft.CodeAnalysis.CSharp": "1.0.0-*"
     },
 

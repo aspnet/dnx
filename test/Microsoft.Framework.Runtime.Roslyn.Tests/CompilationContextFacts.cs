@@ -16,17 +16,13 @@ namespace Microsoft.Framework.Runtime.Roslyn.Tests
         public void DefaultConstructorInitializeCorrectly()
         {
             var compilation = CSharpCompilation.Create("fakecompilation");
-            var fakeProject = new MockCompilationProject();
-            var fakeFramework = new FrameworkName(".NET Framework, Version=8.0");
-            var fakeConfiguration = "fakeConfiguration";
+            var fakeProject = CreateMockProject();
 
             var resourceResolverInvoked = false;
 
             var context = new CompilationContext(
                 compilation,
                 fakeProject,
-                fakeFramework,
-                fakeConfiguration,
                 new List<IMetadataReference>(),
                 () =>
                 {
@@ -39,8 +35,8 @@ namespace Microsoft.Framework.Runtime.Roslyn.Tests
             Assert.Equal(compilation, context.Compilation);
             Assert.Equal(compilation, context.BeforeCompileContext.Compilation);
             Assert.Equal(fakeProject, context.Project);
-            Assert.Equal(fakeFramework, context.ProjectContext.TargetFramework);
-            Assert.Equal(fakeConfiguration, context.ProjectContext.Configuration);
+            Assert.Equal(fakeProject.Target.TargetFramework, context.ProjectContext.TargetFramework);
+            Assert.Equal(fakeProject.Target.Configuration, context.ProjectContext.Configuration);
 
             Assert.False(resourceResolverInvoked, "Resource resolver should not be invoked");
             Assert.Equal(0, context.Resources.Count);
@@ -55,48 +51,17 @@ namespace Microsoft.Framework.Runtime.Roslyn.Tests
             Assert.Equal(newCompilation, context.BeforeCompileContext.Compilation);
         }
 
-        private class MockCompilationProject : ICompilationProject
+        private static CompilationProjectContext CreateMockProject()
         {
-            public string AssemblyFileVersion
-            {
-                get { throw new NotImplementedException(); }
-            }
-
-            public bool EmbedInteropTypes
-            {
-                get { throw new NotImplementedException(); }
-                set { throw new NotImplementedException(); }
-            }
-
-            public IProjectFilesCollection Files
-            {
-                get { throw new NotImplementedException(); }
-            }
-
-            public string Name
-            {
-                get { return "MockProject"; }
-            }
-
-            public string ProjectDirectory
-            {
-                get { return "c:\\wonderland"; }
-            }
-
-            public string ProjectFilePath
-            {
-                get { return "c:\\wonderland\\project.json"; }
-            }
-
-            public string Version
-            {
-                get { return "0.0.1-rc-fake"; }
-            }
-
-            public ICompilerOptions GetCompilerOptions(FrameworkName targetFramework, string configuration)
-            {
-                throw new NotImplementedException();
-            }
+            return new CompilationProjectContext(
+                new CompilationTarget("MockProject", new FrameworkName(".NETFramework, Version=8.0"), "fakeConfiguration", null),
+                "c:\\wonderland",
+                "c:\\wonderland\\project.json",
+                "0.0.1-rc-fake",
+                new Version(0, 0, 1),
+                embedInteropTypes: false,
+                files: null,
+                compilerOptions: null);
         }
     }
 }

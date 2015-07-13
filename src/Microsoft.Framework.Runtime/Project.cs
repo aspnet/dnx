@@ -3,6 +3,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Runtime.Versioning;
@@ -14,7 +15,7 @@ using NuGet;
 
 namespace Microsoft.Framework.Runtime
 {
-    public class Project : ICompilationProject
+    public class Project
     {
         public const string ProjectFileName = "project.json";
 
@@ -69,10 +70,6 @@ namespace Microsoft.Framework.Runtime
 
         public SemanticVersion Version { get; private set; }
 
-        // Temporary while old and new runtime are separate
-        string ICompilationProject.Version { get { return Version?.ToString(); } }
-        string ICompilationProject.AssemblyFileVersion { get { return AssemblyFileVersion?.ToString(); } }
-
         public Version AssemblyFileVersion { get; private set; }
 
         public IList<LibraryDependency> Dependencies { get; private set; }
@@ -95,7 +92,7 @@ namespace Microsoft.Framework.Runtime
 
         public bool IsLoadable { get; set; }
 
-        public IProjectFilesCollection Files { get; private set; }
+        public ProjectFilesCollection Files { get; private set; }
 
         public IDictionary<string, string> Commands { get; } = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
@@ -118,7 +115,7 @@ namespace Microsoft.Framework.Runtime
             return File.Exists(projectPath);
         }
 
-        public static bool TryGetProject(string path, out Project project, ICollection<ICompilationMessage> diagnostics = null)
+        public static bool TryGetProject(string path, out Project project, ICollection<DiagnosticMessage> diagnostics = null)
         {
             project = null;
 
@@ -157,7 +154,7 @@ namespace Microsoft.Framework.Runtime
             return true;
         }
 
-        public static Project GetProject(string json, string projectName, string projectPath, ICollection<ICompilationMessage> diagnostics = null)
+        public static Project GetProject(string json, string projectName, string projectPath, ICollection<DiagnosticMessage> diagnostics = null)
         {
             var ms = new MemoryStream(Encoding.UTF8.GetBytes(json));
 
@@ -166,7 +163,7 @@ namespace Microsoft.Framework.Runtime
             return project;
         }
 
-        internal static Project GetProjectFromStream(Stream stream, string projectName, string projectPath, ICollection<ICompilationMessage> diagnostics = null)
+        internal static Project GetProjectFromStream(Stream stream, string projectName, string projectPath, ICollection<DiagnosticMessage> diagnostics = null)
         {
             var project = new Project();
 
@@ -322,6 +319,20 @@ namespace Microsoft.Framework.Runtime
                 isGacOrFrameworkReference: false);
 
             return project;
+        }
+
+        internal CompilationProjectContext ToCompilationContext(CompilationTarget target)
+        {
+            Debug.Assert(string.Equals(target.Name, Name, StringComparison.Ordinal), "The provided target should be for the current project!");
+            return new CompilationProjectContext(
+                target,
+                ProjectDirectory,
+                ProjectFilePath,
+                Version.GetNormalizedVersionString(),
+                AssemblyFileVersion,
+                EmbedInteropTypes,
+                Files.GetCompilationFiles(),
+                GetCompilerOptions(target.TargetFramework, target.Configuration));
         }
 
         private static SemanticVersion SpecifySnapshot(string version, string snapshotValue)
@@ -505,7 +516,7 @@ namespace Microsoft.Framework.Runtime
         }
 
         private void BuildTargetFrameworksAndConfigurations(JsonObject projectJsonObject,
-            ICollection<ICompilationMessage> diagnostics)
+            ICollection<DiagnosticMessage> diagnostics)
         {
             // Get the shared compilationOptions
             _defaultCompilerOptions = GetCompilationOptions(projectJsonObject) ?? new CompilerOptions();
@@ -576,11 +587,12 @@ namespace Microsoft.Framework.Runtime
                         if (!success)
                         {
                             diagnostics?.Add(
-                                new FileFormatMessage(
+                                new DiagnosticMessage(
                                     $"\"{frameworkKey}\" is an unsupported framework",
                                     ProjectFilePath,
-                                    CompilationMessageSeverity.Error,
-                                    frameworkToken));
+                                    DiagnosticMessageSeverity.Error,
+                                    frameworkToken.Line,
+                                    frameworkToken.Column));
                         }
                     }
                     catch (Exception ex)

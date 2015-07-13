@@ -12,7 +12,7 @@ namespace Microsoft.Framework.Runtime
 
         public LibraryDependencyType Type { get; set; } = LibraryDependencyType.Default;
 
-        public Library Library { get; set; }
+        public LibraryIdentity Library { get; set; }
 
         public string Name
         {

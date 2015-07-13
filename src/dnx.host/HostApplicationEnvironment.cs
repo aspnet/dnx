@@ -36,7 +36,7 @@ namespace dnx.host
             private set;
         }
 
-        public string Version => AssemblyName.Version.ToString();
+        public string ApplicationVersion => AssemblyName.Version.ToString();
 
         public string ApplicationBasePath
         {

@@ -31,7 +31,7 @@ namespace Microsoft.Framework.Runtime.FunctionalTests.ProjectFileGlobbing
 
         protected abstract void CreateContext();
 
-        protected abstract IProjectFilesCollection CreateFilesCollection(string jsonContent, string projectDir);
+        protected abstract ProjectFilesCollection CreateFilesCollection(string jsonContent, string projectDir);
 
         protected void VerifyFilePathsCollection(IEnumerable<string> actualFiles, params string[] expectFiles)
         {

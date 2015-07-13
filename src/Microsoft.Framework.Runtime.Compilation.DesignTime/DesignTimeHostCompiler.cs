@@ -5,7 +5,7 @@ using System.IO;
 using System.Threading.Tasks;
 using Microsoft.Framework.Runtime.Compilation;
 
-namespace Microsoft.Framework.Runtime
+namespace Microsoft.Framework.Runtime.Compilation.DesignTime
 {
     public class DesignTimeHostCompiler : IDesignTimeHostCompiler
     {
@@ -69,7 +69,7 @@ namespace Microsoft.Framework.Runtime
             }
         }
 
-        public async Task<CompileResponse> Compile(string projectPath, ILibraryKey library)
+        public async Task<CompileResponse> Compile(string projectPath, CompilationTarget library)
         {
             var contexts = await _projectContexts.Task.ConfigureAwait(false);
 

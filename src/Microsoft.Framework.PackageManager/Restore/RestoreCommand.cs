@@ -17,6 +17,7 @@ using Microsoft.Framework.PackageManager.Restore;
 using Microsoft.Framework.PackageManager.Restore.RuntimeModel;
 using Microsoft.Framework.PackageManager.Utils;
 using Microsoft.Framework.Runtime;
+using Microsoft.Framework.Runtime.Compilation;
 using Microsoft.Framework.Runtime.DependencyManagement;
 using NuGet;
 
@@ -245,7 +246,7 @@ namespace Microsoft.Framework.PackageManager
             var projectLockFilePath = Path.Combine(projectFolder, LockFileFormat.LockFileName);
 
             Runtime.Project project;
-            var diagnostics = new List<ICompilationMessage>();
+            var diagnostics = new List<DiagnosticMessage>();
             if (!Runtime.Project.TryGetProject(projectJsonPath, out project, diagnostics))
             {
                 throw new Exception("TODO: project.json parse error");
@@ -254,7 +255,7 @@ namespace Microsoft.Framework.PackageManager
             if (diagnostics.HasErrors())
             {
                 var errorMessages = diagnostics
-                    .Where(x => x.Severity == CompilationMessageSeverity.Error)
+                    .Where(x => x.Severity == DiagnosticMessageSeverity.Error)
                     .Select(x => x.Message);
                 ErrorMessages.GetOrAdd(projectJsonPath, _ => new List<string>()).AddRange(errorMessages);
             }
@@ -998,9 +999,9 @@ namespace Microsoft.Framework.PackageManager
             return Task.WhenAll(tasks);
         }
 
-        class LibraryComparer : IComparer<Library>
+        class LibraryComparer : IComparer<LibraryIdentity>
         {
-            public int Compare(Library x, Library y)
+            public int Compare(LibraryIdentity x, LibraryIdentity y)
             {
                 int compare = string.Compare(x.Name, y.Name);
                 if (compare == 0)
@@ -1030,7 +1031,7 @@ namespace Microsoft.Framework.PackageManager
         {
             public RestoreContext RestoreContext { get; set; }
 
-            public HashSet<Library> Libraries { get; set; } = new HashSet<Library>();
+            public HashSet<LibraryIdentity> Libraries { get; set; } = new HashSet<LibraryIdentity>();
 
             public GraphNode Root { get; set; }
         }

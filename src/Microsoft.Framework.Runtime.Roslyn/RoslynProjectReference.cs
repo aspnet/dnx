@@ -23,7 +23,7 @@ namespace Microsoft.Framework.Runtime.Roslyn
         {
             CompilationContext = compilationContext;
             MetadataReference = compilationContext.Compilation.ToMetadataReference(embedInteropTypes: compilationContext.Project.EmbedInteropTypes);
-            Name = compilationContext.Project.Name;
+            Name = compilationContext.Project.Target.Name;
         }
 
         public CompilationContext CompilationContext { get; private set; }
@@ -48,7 +48,7 @@ namespace Microsoft.Framework.Runtime.Roslyn
             }
         }
 
-        public IDiagnosticResult GetDiagnostics()
+        public DiagnosticResult GetDiagnostics()
         {
             var diagnostics = CompilationContext.Diagnostics
                 .Concat(CompilationContext.Compilation.GetDiagnostics());
@@ -148,7 +148,7 @@ namespace Microsoft.Framework.Runtime.Roslyn
             CompilationContext.Compilation.Emit(stream, options: emitOptions);
         }
 
-        public IDiagnosticResult EmitAssembly(string outputPath)
+        public DiagnosticResult EmitAssembly(string outputPath)
         {
             IList<ResourceDescription> resources = CompilationContext.Resources;
 
@@ -263,13 +263,13 @@ namespace Microsoft.Framework.Runtime.Roslyn
             }
         }
 
-        private static IDiagnosticResult CreateDiagnosticResult(
+        private static DiagnosticResult CreateDiagnosticResult(
             bool success,
             IEnumerable<Diagnostic> diagnostics,
             FrameworkName targetFramework)
         {
             var issues = diagnostics.Where(d => d.Severity == DiagnosticSeverity.Warning || d.Severity == DiagnosticSeverity.Error);
-            return new DiagnosticResult(success, issues.Select(d => new RoslynCompilationMessage(d, targetFramework)));
+            return new DiagnosticResult(success, issues.Select(d => d.ToDiagnosticMessage(targetFramework)));
         }
 
         private static bool SupportsPdbGeneration()

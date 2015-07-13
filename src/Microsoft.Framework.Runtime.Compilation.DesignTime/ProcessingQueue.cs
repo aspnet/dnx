@@ -4,7 +4,7 @@ using System.IO;
 using System.Threading;
 using Microsoft.Framework.Runtime.Json;
 
-namespace Microsoft.Framework.Runtime
+namespace Microsoft.Framework.Runtime.Compilation.DesignTime
 {
     internal class ProcessingQueue
     {
@@ -156,26 +156,24 @@ namespace Microsoft.Framework.Runtime
             }
         }
 
-        private static List<CompilationMessage> ValueAsCompilationMessages(JsonObject obj, string key)
+        private static List<DiagnosticMessage> ValueAsCompilationMessages(JsonObject obj, string key)
         {
-            var messages = new List<CompilationMessage>();
+            var messages = new List<DiagnosticMessage>();
 
             var arrayValue = obj.Value(key) as JsonArray;
             for (int i = 0; i < arrayValue.Length; i++)
             {
                 var item = arrayValue[i] as JsonObject;
 
-                var message = new CompilationMessage
-                {
-                    Message = item.ValueAsString(nameof(ICompilationMessage.Message)),
-                    FormattedMessage = item.ValueAsString(nameof(ICompilationMessage.FormattedMessage)),
-                    SourceFilePath = item.ValueAsString(nameof(ICompilationMessage.SourceFilePath)),
-                    Severity = (CompilationMessageSeverity)item.ValueAsInt(nameof(ICompilationMessage.Severity)),
-                    StartColumn = item.ValueAsInt(nameof(ICompilationMessage.StartColumn)),
-                    StartLine = item.ValueAsInt(nameof(ICompilationMessage.StartLine)),
-                    EndColumn = item.ValueAsInt(nameof(ICompilationMessage.EndColumn)),
-                    EndLine = item.ValueAsInt(nameof(ICompilationMessage.EndLine)),
-                };
+                var message = new DiagnosticMessage(
+                    item.ValueAsString(nameof(DiagnosticMessage.Message)),
+                    item.ValueAsString(nameof(DiagnosticMessage.FormattedMessage)),
+                    item.ValueAsString(nameof(DiagnosticMessage.SourceFilePath)),
+                    (DiagnosticMessageSeverity)item.ValueAsInt(nameof(DiagnosticMessage.Severity)),
+                    item.ValueAsInt(nameof(DiagnosticMessage.StartColumn)),
+                    item.ValueAsInt(nameof(DiagnosticMessage.StartLine)),
+                    item.ValueAsInt(nameof(DiagnosticMessage.EndColumn)),
+                    item.ValueAsInt(nameof(DiagnosticMessage.EndLine)));
 
                 messages.Add(message);
             }

@@ -24,7 +24,7 @@ namespace Microsoft.Framework.Runtime
             _providers = providers;
         }
 
-        public IList<ResourceDescriptor> GetResources(ICompilationProject project)
+        public IList<ResourceDescriptor> GetResources(Project project)
         {
             return _providers
                 .SelectMany(provider => provider.GetResources(project))

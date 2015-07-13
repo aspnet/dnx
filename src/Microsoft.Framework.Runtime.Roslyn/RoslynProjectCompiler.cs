@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using Microsoft.Framework.Runtime.Caching;
 using Microsoft.Framework.Runtime.Compilation;
+using Microsoft.Framework.Runtime.Infrastructure;
 
 namespace Microsoft.Framework.Runtime.Roslyn
 {
@@ -30,9 +31,8 @@ namespace Microsoft.Framework.Runtime.Roslyn
         }
 
         public IMetadataProjectReference CompileProject(
-            ICompilationProject project,
-            ILibraryKey target,
-            Func<ILibraryExport> referenceResolver,
+            CompilationProjectContext projectContext,
+            Func<LibraryExport> referenceResolver,
             Func<IList<ResourceDescriptor>> resourcesResolver)
         {
             var export = referenceResolver();
@@ -45,8 +45,7 @@ namespace Microsoft.Framework.Runtime.Roslyn
             var incomingSourceReferences = export.SourceReferences;
 
             var compliationContext = _compiler.CompileProject(
-                project,
-                target,
+                projectContext,
                 incomingReferences,
                 incomingSourceReferences,
                 resourcesResolver);

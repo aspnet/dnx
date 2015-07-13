@@ -11,6 +11,7 @@ using Microsoft.Framework.Runtime;
 using Microsoft.Framework.Runtime.CommandParsing;
 using Microsoft.Framework.Runtime.Common;
 using Microsoft.Framework.Runtime.Common.CommandLine;
+using Microsoft.Framework.Runtime.Compilation;
 
 namespace Microsoft.Framework.ApplicationHost
 {
@@ -29,7 +30,7 @@ namespace Microsoft.Framework.ApplicationHost
 
         public Task<int> Main(string[] args)
         {
-            DefaultHostOptions options;
+            RuntimeOptions options;
             string[] programArgs;
             int exitCode;
 
@@ -103,7 +104,7 @@ namespace Microsoft.Framework.ApplicationHost
             }
             if (string.Equals(key, "env:Version", StringComparison.OrdinalIgnoreCase))
             {
-                return _environment.Version;
+                return _environment.ApplicationVersion;
             }
             if (string.Equals(key, "env:TargetFramework", StringComparison.OrdinalIgnoreCase))
             {
@@ -113,7 +114,7 @@ namespace Microsoft.Framework.ApplicationHost
         }
 
 
-        private bool ParseArgs(string[] args, out DefaultHostOptions defaultHostOptions, out string[] outArgs, out int exitCode)
+        private bool ParseArgs(string[] args, out RuntimeOptions defaultHostOptions, out string[] outArgs, out int exitCode)
         {
             var app = new CommandLineApplication(throwOnUnexpectedArg: false);
             app.Name = "Microsoft.Framework.ApplicationHost";
@@ -160,7 +161,7 @@ namespace Microsoft.Framework.ApplicationHost
                 return true;
             }
 
-            defaultHostOptions = new DefaultHostOptions();
+            defaultHostOptions = new RuntimeOptions();
             defaultHostOptions.WatchFiles = optionWatch.HasValue();
             defaultHostOptions.PackageDirectory = optionPackages.Value();
 

@@ -12,7 +12,7 @@
         "Microsoft.Framework.Runtime.Loader": "1.0.0-*",
         "Microsoft.Framework.Runtime.Caching": "1.0.0-*",
         "Microsoft.Framework.Runtime.Abstractions": "1.0.0-*",
-        "Microsoft.Framework.Runtime.Compilation.Sources": { "version": "1.0.0-*", "type": "build" },
+        "Microsoft.Framework.Runtime.Compilation.Abstractions": "1.0.0-*",
         "Microsoft.Framework.Runtime.Sources": { "version": "1.0.0-*", "type": "build" },
         "Microsoft.CodeAnalysis.CSharp": { "version": "1.0.0-*", "type": "build" },
         "Microsoft.Framework.Runtime.Roslyn.Abstractions": { "version": "1.0.0-*", "type": "build" }

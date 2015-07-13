@@ -9,6 +9,7 @@ using Microsoft.Framework.Runtime.Common.DependencyInjection;
 using Microsoft.Framework.Runtime.Compilation;
 using Microsoft.Framework.Runtime.DependencyManagement;
 using Microsoft.Framework.Runtime.FileSystem;
+using Microsoft.Framework.Runtime.Infrastructure;
 using Microsoft.Framework.Runtime.Loader;
 using NuGet;
 
@@ -100,8 +101,11 @@ namespace Microsoft.Framework.Runtime
                 NuGetDependencyProvider
             });
 
-            LibraryManager = new LibraryManager(targetFramework, configuration, DependencyWalker,
+            // TODO(anurse): #2226 - Split LibraryManager implementation
+            var libraryManager = new LibraryManager(targetFramework, configuration, DependencyWalker,
                 LibraryExportProvider, cache);
+            LibraryManager = libraryManager;
+            LibraryExporter = libraryManager;
 
             AssemblyLoadContextFactory = loadContextFactory ?? new RuntimeLoadContextFactory(ServiceProvider);
             namedCacheDependencyProvider = namedCacheDependencyProvider ?? NamedCacheDependencyProvider.Empty;
@@ -120,6 +124,7 @@ namespace Microsoft.Framework.Runtime
             // Default services
             _serviceProvider.Add(typeof(IApplicationEnvironment), appEnvironment);
             _serviceProvider.Add(typeof(ILibraryManager), LibraryManager);
+            _serviceProvider.Add(typeof(ILibraryExporter), LibraryExporter);
             _serviceProvider.TryAdd(typeof(IFileWatcher), NoopWatcher.Instance);
 
             // Not exposed to the application layer
@@ -172,6 +177,7 @@ namespace Microsoft.Framework.Runtime
         public ILibraryExportProvider LibraryExportProvider { get; private set; }
 
         public ILibraryManager LibraryManager { get; private set; }
+        public ILibraryExporter LibraryExporter { get; private set; }
 
         public DependencyWalker DependencyWalker { get; private set; }
 

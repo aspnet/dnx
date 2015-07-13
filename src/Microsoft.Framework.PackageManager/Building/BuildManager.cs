@@ -95,7 +95,7 @@ namespace Microsoft.Framework.PackageManager
 
         private bool BuildInternal(string projectPath)
         {
-            var projectDiagnostics = new List<ICompilationMessage>();
+            var projectDiagnostics = new List<DiagnosticMessage>();
 
             if (!Runtime.Project.TryGetProject(projectPath, out _currentProject, projectDiagnostics))
             {
@@ -135,7 +135,7 @@ namespace Microsoft.Framework.PackageManager
 
             var success = true;
 
-            var allDiagnostics = new List<ICompilationMessage>();
+            var allDiagnostics = new List<DiagnosticMessage>();
 
 
             PackageBuilder packageBuilder = null;
@@ -168,7 +168,7 @@ namespace Microsoft.Framework.PackageManager
                     _buildOptions.Reports.Information.WriteLine("Building {0} for {1}",
                         _currentProject.Name, targetFramework.ToString().Yellow().Bold());
 
-                    var diagnostics = new List<ICompilationMessage>();
+                    var diagnostics = new List<DiagnosticMessage>();
 
                     var context = new BuildContext(_hostServices,
                                                    _applicationEnvironment,
@@ -353,12 +353,12 @@ namespace Microsoft.Framework.PackageManager
             }
         }
 
-        private void WriteSummary(List<ICompilationMessage> diagnostics)
+        private void WriteSummary(List<DiagnosticMessage> diagnostics)
         {
             _buildOptions.Reports.Information.WriteLine();
 
-            var errorCount = diagnostics.Count(d => d.Severity == CompilationMessageSeverity.Error);
-            var warningCount = diagnostics.Count(d => d.Severity == CompilationMessageSeverity.Warning);
+            var errorCount = diagnostics.Count(d => d.Severity == DiagnosticMessageSeverity.Error);
+            var warningCount = diagnostics.Count(d => d.Severity == DiagnosticMessageSeverity.Warning);
             if (errorCount > 0)
             {
                 LogError("Build failed.");
@@ -374,16 +374,16 @@ namespace Microsoft.Framework.PackageManager
             _buildOptions.Reports.Information.WriteLine();
         }
 
-        private void WriteDiagnostics(List<ICompilationMessage> diagnostics)
+        private void WriteDiagnostics(List<DiagnosticMessage> diagnostics)
         {
-            var errors = diagnostics.Where(d => d.Severity == CompilationMessageSeverity.Error)
+            var errors = diagnostics.Where(d => d.Severity == DiagnosticMessageSeverity.Error)
                                     .Select(d => d.FormattedMessage);
             foreach (var error in errors)
             {
                 LogError(error);
             }
 
-            var warnings = diagnostics.Where(d => d.Severity == CompilationMessageSeverity.Warning)
+            var warnings = diagnostics.Where(d => d.Severity == DiagnosticMessageSeverity.Warning)
                                       .Select(d => d.FormattedMessage);
 
             foreach (var warning in warnings)

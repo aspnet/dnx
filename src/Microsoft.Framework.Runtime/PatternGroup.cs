@@ -42,7 +42,7 @@ namespace Microsoft.Framework.Runtime
                                            IEnumerable<string> additionalIncluding = null,
                                            IEnumerable<string> additionalExcluding = null,
                                            bool includePatternsOnly = false,
-                                           ICollection<ICompilationMessage> warnings = null)
+                                           ICollection<DiagnosticMessage> warnings = null)
         {
             string includePropertyName = name;
 
@@ -53,11 +53,13 @@ namespace Microsoft.Framework.Runtime
                 includePropertyName = legacyName;
                 if (warnings != null)
                 {
-                    warnings.Add(new FileFormatMessage(
-                        string.Format("Property \"{0}\" is deprecated. It is replaced by \"{1}\".", legacyName, name),
+                    var legacyToken = rawProject.Value(legacyName);
+                    warnings.Add(new DiagnosticMessage(
+                        $"Property \"{legacyName}\" is deprecated. It is replaced by \"{name}\".",
                         projectFilePath,
-                        CompilationMessageSeverity.Warning,
-                        rawProject.Value(legacyName)));
+                        DiagnosticMessageSeverity.Warning,
+                        legacyToken.Line,
+                        legacyToken.Column));
                 }
             }
 

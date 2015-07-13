@@ -4,6 +4,7 @@
 using System;
 using Microsoft.Framework.Runtime;
 using Microsoft.Framework.Runtime.Caching;
+using Microsoft.Framework.Runtime.Infrastructure;
 using Microsoft.Framework.Runtime.Loader;
 
 namespace Microsoft.Framework.DesignTimeHost

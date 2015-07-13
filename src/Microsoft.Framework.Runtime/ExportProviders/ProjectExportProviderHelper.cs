@@ -12,11 +12,11 @@ namespace Microsoft.Framework.Runtime
 {
     public static class ProjectExportProviderHelper
     {
-        public static ILibraryExport GetExportsRecursive(
+        public static LibraryExport GetExportsRecursive(
             ICache cache,
             ILibraryManager manager,
             ILibraryExportProvider libraryExportProvider,
-            ILibraryKey target,
+            CompilationTarget target,
             bool dependenciesOnly)
         {
             return GetExportsRecursive(cache, manager, libraryExportProvider, target, libraryInformation =>
@@ -30,12 +30,12 @@ namespace Microsoft.Framework.Runtime
             });
         }
 
-        public static ILibraryExport GetExportsRecursive(
+        public static LibraryExport GetExportsRecursive(
             ICache cache,
             ILibraryManager manager,
             ILibraryExportProvider libraryExportProvider,
-            ILibraryKey target,
-            Func<ILibraryInformation, bool> include)
+            CompilationTarget target,
+            Func<Library, bool> include)
         {
             var dependencyStopWatch = Stopwatch.StartNew();
             Logger.TraceInformation("[{0}]: Resolving references for '{1}' {2}", typeof(ProjectExportProviderHelper).Name, target.Name, target.Aspect);
@@ -49,7 +49,7 @@ namespace Microsoft.Framework.Runtime
 
             var rootNode = new Node
             {
-                Library = manager.GetLibraryInformation(target.Name, target.Aspect)
+                Library = manager.GetLibraryInformation(target.Name)
             };
 
             queue.Enqueue(rootNode);
@@ -89,7 +89,7 @@ namespace Microsoft.Framework.Runtime
                 {
                     var childNode = new Node
                     {
-                        Library = manager.GetLibraryInformation(dependency, null),
+                        Library = manager.GetLibraryInformation(dependency),
                         Parent = node
                     };
 
@@ -110,7 +110,7 @@ namespace Microsoft.Framework.Runtime
         }
 
         private static void ProcessExport(ICache cache,
-                                          ILibraryExport export,
+                                          LibraryExport export,
                                           IDictionary<string, IMetadataReference> metadataReferences,
                                           IDictionary<string, ISourceReference> sourceReferences)
         {
@@ -132,7 +132,7 @@ namespace Microsoft.Framework.Runtime
 
         private class Node
         {
-            public ILibraryInformation Library { get; set; }
+            public Library Library { get; set; }
 
             public Node Parent { get; set; }
         }
