@@ -18,7 +18,7 @@ namespace Microsoft.Framework.Runtime
     {
         private readonly ServiceProvider _serviceProvider;
 
-        public ApplicationHostContext(IServiceProvider serviceProvider,
+        public ApplicationHostContext(IServiceProvider hostServices,
                                       string projectDirectory,
                                       string packagesDirectory,
                                       string configuration,
@@ -34,7 +34,7 @@ namespace Microsoft.Framework.Runtime
             RootDirectory = Runtime.ProjectResolver.ResolveRootDirectory(ProjectDirectory);
             ProjectResolver = new ProjectResolver(ProjectDirectory, RootDirectory);
             FrameworkReferenceResolver = new FrameworkReferenceResolver();
-            _serviceProvider = new ServiceProvider(serviceProvider);
+            _serviceProvider = new ServiceProvider(hostServices);
 
             PackagesDirectory = packagesDirectory ?? NuGetDependencyResolver.ResolveRepositoryPath(RootDirectory);
 
@@ -106,8 +106,15 @@ namespace Microsoft.Framework.Runtime
             AssemblyLoadContextFactory = loadContextFactory ?? new RuntimeLoadContextFactory(ServiceProvider);
             namedCacheDependencyProvider = namedCacheDependencyProvider ?? NamedCacheDependencyProvider.Empty;
 
+            // Create a new Application Environment for running the app. It needs a reference to the Host's application environment
+            // (if any), which we can get from the service provider we were given.
+            // If this is null (i.e. there is no Host Application Environment), that's OK, the Application Environment we are creating
+            // will just have it's own independent set of global data.
+            var hostEnvironment = (IApplicationEnvironment)hostServices.GetService(typeof(IApplicationEnvironment));
+            var appEnvironment = new ApplicationEnvironment(Project, targetFramework, configuration, hostEnvironment);
+
             // Default services
-            _serviceProvider.Add(typeof(IApplicationEnvironment), new ApplicationEnvironment(Project, targetFramework, configuration));
+            _serviceProvider.Add(typeof(IApplicationEnvironment), appEnvironment);
             _serviceProvider.Add(typeof(ILibraryManager), LibraryManager);
             _serviceProvider.TryAdd(typeof(IFileWatcher), NoopWatcher.Instance);
 
