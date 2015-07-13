@@ -201,7 +201,7 @@ namespace Microsoft.Framework.PackageManager
 
             return _cache.Get<ApplicationHostContext>(cacheKey, ctx =>
             {
-                var applicationHostContext = new ApplicationHostContext(serviceProvider: _hostServices,
+                var applicationHostContext = new ApplicationHostContext(hostServices: _hostServices,
                                                                         projectDirectory: project.ProjectDirectory,
                                                                         packagesDirectory: null,
                                                                         configuration: configuration,
