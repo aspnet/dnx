@@ -80,13 +80,15 @@ namespace Microsoft.Framework.PackageManager
         {
             ScriptExecutor.Report = Reports.Information;
 
-            if (!RestoreDirectories.Any())
+            var effectiveRestoreDirs = RestoreDirectories.Where(x => !string.IsNullOrEmpty(x));
+
+            if (!effectiveRestoreDirs.Any())
             {
-                RestoreDirectories.Add(Directory.GetCurrentDirectory());
+                effectiveRestoreDirs = new[] { Directory.GetCurrentDirectory() };
             }
 
             bool success = true;
-            foreach (var dir in RestoreDirectories.Select(Path.GetFullPath).Distinct())
+            foreach (var dir in effectiveRestoreDirs.Select(Path.GetFullPath).Distinct())
             {
                 success &= await Execute(dir);
             }
