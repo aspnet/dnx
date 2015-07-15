@@ -4,8 +4,8 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.Versioning;
 using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.CSharp;
 
 namespace Microsoft.Framework.Runtime.Roslyn
 {
@@ -21,8 +21,9 @@ namespace Microsoft.Framework.Runtime.Roslyn
         /// </summary>
         /// <param name="assemblyName">The assembly that produced the compilation exception.</param>
         /// <param name="diagnostics">Diagnostics from Roslyn compilation.</param>
-        public RoslynCompilationException(IEnumerable<Diagnostic> diagnostics)
-            : base(GetErrorMessage(diagnostics))
+        /// <param name="targetFramework">Target framework the compilation exection is thrown from.</param>
+        public RoslynCompilationException(IEnumerable<Diagnostic> diagnostics, FrameworkName targetFramework)
+            : base(GetErrorMessage(diagnostics, targetFramework))
         {
             Diagnostics = diagnostics;
         }
@@ -47,10 +48,10 @@ namespace Microsoft.Framework.Runtime.Roslyn
             }
         }
 
-        private static string GetErrorMessage(IEnumerable<Diagnostic> diagnostics)
+        private static string GetErrorMessage(IEnumerable<Diagnostic> diagnostics, FrameworkName targetFramework)
         {
             return string.Join(Environment.NewLine,
-                               diagnostics.Select(d => CSharpDiagnosticFormatter.Instance.Format(d)));
+                               diagnostics.Select(diagnostic => RoslynDiagnosticFormatter.Format(diagnostic, targetFramework)));
         }
     }
 }
