@@ -1,6 +1,7 @@
 // Copyright (c) .NET Foundation. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
+using System.Runtime.Versioning;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 
@@ -14,6 +15,7 @@ namespace Microsoft.Framework.Runtime.Roslyn
     {
         private readonly Diagnostic _diagnostic;
         private readonly FileLinePositionSpan _mappedLineSpan;
+        private readonly FrameworkName _targetFramework;
 
         /// <summary>
         /// Initializes a new instance of <see cref="RoslynCompilationMessage"/>.
@@ -21,7 +23,20 @@ namespace Microsoft.Framework.Runtime.Roslyn
         /// <param name="diagnostic">The <see cref="Diagnostic"/> instance to read
         /// diagnostic details from.</param>
         public RoslynCompilationMessage(Diagnostic diagnostic)
+            : this(diagnostic, null)
         {
+        }
+
+        /// <summary>
+        /// Initializes a new instance of <see cref="RoslynCompilationMessage"/>.
+        /// </summary>
+        /// <param name="diagnostic">The <see cref="Diagnostic"/> instance to read
+        /// diagnostic details from.</param>
+        /// <param name="targetFramework">The <see cref="FrameworkName"> in which this 
+        /// diagnostic is generated.</param>
+        public RoslynCompilationMessage(Diagnostic diagnostic, FrameworkName targetFramework)
+        {
+            _targetFramework = targetFramework;
             _diagnostic = diagnostic;
             _mappedLineSpan = _diagnostic.Location.GetMappedLineSpan();
 
@@ -55,7 +70,7 @@ namespace Microsoft.Framework.Runtime.Roslyn
         public string Message => _diagnostic.GetMessage();
 
         /// <inheritdoc />
-        public string FormattedMessage => CSharpDiagnosticFormatter.Instance.Format(_diagnostic);
+        public string FormattedMessage => RoslynDiagnosticFormatter.Instance.Format(_diagnostic, _targetFramework);
 
         /// <inheritdoc />
         public int StartColumn => _mappedLineSpan.StartLinePosition.Character + 1;

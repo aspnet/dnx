@@ -11,6 +11,7 @@ using System.Runtime.InteropServices;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Emit;
 using Microsoft.Framework.Runtime.Compilation;
+using System.Runtime.Versioning;
 
 namespace Microsoft.Framework.Runtime.Roslyn
 {
@@ -52,7 +53,7 @@ namespace Microsoft.Framework.Runtime.Roslyn
             var diagnostics = CompilationContext.Diagnostics
                 .Concat(CompilationContext.Compilation.GetDiagnostics());
 
-            return CreateDiagnosticResult(success: true, diagnostics: diagnostics);
+            return CreateDiagnosticResult(success: true, diagnostics: diagnostics, targetFramework: CompilationContext.ProjectContext.TargetFramework);
         }
 
         public IList<ISourceReference> GetSources()
@@ -113,7 +114,7 @@ namespace Microsoft.Framework.Runtime.Roslyn
                 if (!emitResult.Success ||
                     afterCompileContext.Diagnostics.Any(RoslynDiagnosticUtilities.IsError))
                 {
-                    throw new RoslynCompilationException(afterCompileContext.Diagnostics);
+                    throw new RoslynCompilationException(afterCompileContext.Diagnostics, CompilationContext.ProjectContext.TargetFramework);
                 }
 
                 Assembly assembly = null;
@@ -218,7 +219,8 @@ namespace Microsoft.Framework.Runtime.Roslyn
                 if (!emitResult.Success ||
                     afterCompileContext.Diagnostics.Any(RoslynDiagnosticUtilities.IsError))
                 {
-                    return CreateDiagnosticResult(emitResult.Success, afterCompileContext.Diagnostics);
+                    return CreateDiagnosticResult(emitResult.Success, afterCompileContext.Diagnostics,
+                        CompilationContext.ProjectContext.TargetFramework);
                 }
 
                 // Ensure there's an output directory
@@ -256,14 +258,18 @@ namespace Microsoft.Framework.Runtime.Roslyn
                     }
                 }
 
-                return CreateDiagnosticResult(emitResult.Success, afterCompileContext.Diagnostics);
+                return CreateDiagnosticResult(emitResult.Success, afterCompileContext.Diagnostics,
+                        CompilationContext.ProjectContext.TargetFramework);
             }
         }
 
-        private static IDiagnosticResult CreateDiagnosticResult(bool success, IEnumerable<Diagnostic> diagnostics)
+        private static IDiagnosticResult CreateDiagnosticResult(
+            bool success,
+            IEnumerable<Diagnostic> diagnostics,
+            FrameworkName targetFramework)
         {
             var issues = diagnostics.Where(d => d.Severity == DiagnosticSeverity.Warning || d.Severity == DiagnosticSeverity.Error);
-            return new DiagnosticResult(success, issues.Select(d => new RoslynCompilationMessage(d)));
+            return new DiagnosticResult(success, issues.Select(d => new RoslynCompilationMessage(d, targetFramework)));
         }
 
         private static bool SupportsPdbGeneration()
