@@ -110,7 +110,11 @@ namespace Microsoft.Framework.Runtime
             // (if any), which we can get from the service provider we were given.
             // If this is null (i.e. there is no Host Application Environment), that's OK, the Application Environment we are creating
             // will just have it's own independent set of global data.
-            var hostEnvironment = (IApplicationEnvironment)hostServices.GetService(typeof(IApplicationEnvironment));
+            IApplicationEnvironment hostEnvironment = null;
+            if (hostServices != null)
+            {
+                hostEnvironment = (IApplicationEnvironment)hostServices.GetService(typeof(IApplicationEnvironment));
+            }
             var appEnvironment = new ApplicationEnvironment(Project, targetFramework, configuration, hostEnvironment);
 
             // Default services
