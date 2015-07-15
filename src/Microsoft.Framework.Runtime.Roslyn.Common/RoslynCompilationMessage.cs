@@ -70,7 +70,7 @@ namespace Microsoft.Framework.Runtime.Roslyn
         public string Message => _diagnostic.GetMessage();
 
         /// <inheritdoc />
-        public string FormattedMessage => RoslynDiagnosticFormatter.Instance.Format(_diagnostic, _targetFramework);
+        public string FormattedMessage => RoslynDiagnosticFormatter.Format(_diagnostic, _targetFramework);
 
         /// <inheritdoc />
         public int StartColumn => _mappedLineSpan.StartLinePosition.Character + 1;

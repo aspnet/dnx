@@ -51,7 +51,7 @@ namespace Microsoft.Framework.Runtime.Roslyn
         private static string GetErrorMessage(IEnumerable<Diagnostic> diagnostics, FrameworkName targetFramework)
         {
             return string.Join(Environment.NewLine,
-                               diagnostics.Select(diagnostic => RoslynDiagnosticFormatter.Instance.Format(diagnostic, targetFramework)));
+                               diagnostics.Select(diagnostic => RoslynDiagnosticFormatter.Format(diagnostic, targetFramework)));
         }
     }
 }

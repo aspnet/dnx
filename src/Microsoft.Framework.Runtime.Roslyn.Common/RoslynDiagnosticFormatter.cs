@@ -11,18 +11,7 @@ namespace Microsoft.Framework.Runtime.Roslyn
 {
     public class RoslynDiagnosticFormatter
     {
-        protected RoslynDiagnosticFormatter()
-        {
-        }
-
-        public static RoslynDiagnosticFormatter Instance { get; } = new RoslynDiagnosticFormatter();
-
-        public string Format(Diagnostic diagnostic, IFormatProvider formatter = null)
-        {
-            return Format(diagnostic, targetFramework: null, formatter: formatter);
-        }
-
-        public string Format(Diagnostic diagnostic, FrameworkName targetFramework, IFormatProvider formatter = null)
+        public static string Format(Diagnostic diagnostic, FrameworkName targetFramework, IFormatProvider formatter = null)
         {
             if (diagnostic == null)
             {
@@ -64,7 +53,7 @@ namespace Microsoft.Framework.Runtime.Roslyn
             }
         }
 
-        internal string GetMessagePrefix(Diagnostic diagnostic)
+        private static string GetMessagePrefix(Diagnostic diagnostic)
         {
             string prefix;
             switch (diagnostic.Severity)
