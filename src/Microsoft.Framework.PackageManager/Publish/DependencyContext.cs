@@ -51,6 +51,14 @@ namespace Microsoft.Framework.PackageManager.Publish
             PackageAssemblies = NuGetDependencyResolver.PackageAssemblyLookup.Values.ToLookup(a => a.Library.Identity.Name);
         }
 
+        public static FrameworkName SelectFrameworkNameForRuntime(IEnumerable<FrameworkName> availableFrameworks, FrameworkName currentFramework, string runtime)
+        {
+            // Filter out frameworks incompatible with the current framework before selecting
+            return SelectFrameworkNameForRuntime(
+                availableFrameworks.Where(f => VersionUtility.IsCompatible(currentFramework, f)), 
+                runtime);
+        }
+
         public static FrameworkName SelectFrameworkNameForRuntime(IEnumerable<FrameworkName> availableFrameworks, string runtime)
         {
             var parts = runtime.Split(new[] { '.' }, 2);

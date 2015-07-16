@@ -1,6 +1,7 @@
 // Copyright (c) .NET Foundation. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
+using System.Collections.Generic;
 using System.IO;
 using System.Runtime.Versioning;
 using Microsoft.Framework.Runtime;
@@ -23,6 +24,11 @@ namespace Microsoft.Framework.PackageManager.Publish
         public string Name { get; private set; }
         public string TargetPath { get; private set; }
         public FrameworkName Framework { get { return _frameworkName; } }
+
+        public FrameworkName SelectBestFramework(IEnumerable<FrameworkName> frameworks)
+        {
+            return DependencyContext.SelectFrameworkNameForRuntime(frameworks, Framework, Name);
+        }
 
         public bool Emit(PublishRoot root)
         {

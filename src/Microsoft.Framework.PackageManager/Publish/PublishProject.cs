@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Runtime.Versioning;
 using System.Threading.Tasks;
 using System.Xml;
 using System.Xml.Linq;
@@ -263,6 +264,12 @@ namespace Microsoft.Framework.PackageManager.Publish
             root.Operations.Copy(sourceFiles, project.ProjectDirectory, targetPath);
         }
 
+        public FrameworkName SelectFrameworkForRuntime(PublishRuntime runtime)
+        {
+            return runtime.SelectBestFramework(
+                GetCurrentProject().GetTargetFrameworks().Select(f => f.FrameworkName));
+        }
+
         public bool PostProcess(PublishRoot root)
         {
             // At this point, all nupkgs generated from dependency projects are available in packages folder
@@ -410,7 +417,7 @@ namespace Microsoft.Framework.PackageManager.Publish
 
                 foreach (var runtime in root.Runtimes)
                 {
-                    restoreCommand.TargetFrameworks.Add(runtime.Framework);
+                    restoreCommand.TargetFrameworks.Add(project.SelectFrameworkForRuntime(runtime));
                 }
 
                 var restoreDirectory = project.IsPackage ? Path.Combine(project.TargetPath, "root") : project.TargetPath;
@@ -597,20 +604,27 @@ namespace Microsoft.Framework.PackageManager.Publish
             // Tool dlls including AspNet.Loader.dll go to bin folder under public app folder
             var wwwRootOutBinPath = Path.Combine(wwwRootOutPath, "bin");
 
-            // Copy Microsoft.AspNet.Loader.IIS.Interop/tools/*.dll into bin to support AspNet.Loader.dll
-            var package = root.Packages.SingleOrDefault(
-                x => string.Equals(x.Library.Name, "Microsoft.AspNet.Loader.IIS.Interop"));
-            if (package == null)
+            // Check for an environment variable which can be used (generally in tests)
+            // to override where AspNet.Loader.dll is located.
+            var loaderPath = Environment.GetEnvironmentVariable(EnvironmentNames.AspNetLoaderPath);
+            if (string.IsNullOrEmpty(loaderPath))
             {
-                return;
+                // Copy Microsoft.AspNet.Loader.IIS.Interop/tools/*.dll into bin to support AspNet.Loader.dll
+                var package = root.Packages.SingleOrDefault(
+                    x => string.Equals(x.Library.Name, "Microsoft.AspNet.Loader.IIS.Interop"));
+                if (package == null)
+                {
+                    return;
+                }
+
+                var resolver = new DefaultPackagePathResolver(root.SourcePackagesPath);
+                var packagePath = resolver.GetInstallPath(package.Library.Name, package.Library.Version);
+                loaderPath = Path.Combine(packagePath, "tools");
             }
 
-            var resolver = new DefaultPackagePathResolver(root.SourcePackagesPath);
-            var packagePath = resolver.GetInstallPath(package.Library.Name, package.Library.Version);
-            var packageToolsPath = Path.Combine(packagePath, "tools");
-            if (Directory.Exists(packageToolsPath))
+            if (!string.IsNullOrEmpty(loaderPath) && Directory.Exists(loaderPath))
             {
-                foreach (var packageToolFile in Directory.EnumerateFiles(packageToolsPath, "*.dll").Select(Path.GetFileName))
+                foreach (var packageToolFile in Directory.EnumerateFiles(loaderPath, "*.dll").Select(Path.GetFileName))
                 {
                     // Create the bin folder only when we need to put something inside it
                     if (!Directory.Exists(wwwRootOutBinPath))
@@ -620,7 +634,7 @@ namespace Microsoft.Framework.PackageManager.Publish
 
                     // Copy to bin folder under public app folder
                     File.Copy(
-                        Path.Combine(packageToolsPath, packageToolFile),
+                        Path.Combine(loaderPath, packageToolFile),
                         Path.Combine(wwwRootOutBinPath, packageToolFile),
                         overwrite: true);
                 }

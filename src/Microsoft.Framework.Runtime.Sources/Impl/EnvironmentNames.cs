@@ -22,5 +22,6 @@ namespace Microsoft.Framework.Runtime
         public const string BuildDelaySign = "DNX_BUILD_DELAY_SIGN";
         public const string Sources = "DNX_SOURCES";
         public const string DnxIsWindows = "DNX_IS_WINDOWS";
+        public const string AspNetLoaderPath = "DNX_ASPNET_LOADER_PATH";
     }
 }
