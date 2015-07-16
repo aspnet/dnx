@@ -37,21 +37,10 @@ namespace Microsoft.Framework.PackageManager
             var runtimeHome = Environment.GetEnvironmentVariable(EnvironmentNames.Home);
             if (string.IsNullOrEmpty(runtimeHome))
             {
-                var runtimeGlobalPath = Environment.GetEnvironmentVariable(EnvironmentNames.GlobalPath);
+                var runtimeGlobalPath = DnuEnvironment.GetFolderPath(DnuFolderPath.DnxGlobalPath);
+                var userRuntimeFolder = DnuEnvironment.GetFolderPath(DnuFolderPath.DefaultDnxHome);
 
-                var userProfileFolder = Environment.GetEnvironmentVariable("USERPROFILE");
-                if (string.IsNullOrEmpty(userProfileFolder))
-                {
-                    userProfileFolder = Environment.GetEnvironmentVariable("HOME");
-                }
-
-                string userRuntimeFolder = null;
-                if (!string.IsNullOrEmpty(userProfileFolder))
-                {
-                    userRuntimeFolder = Path.Combine(userProfileFolder, Runtime.Constants.DefaultLocalRuntimeHomeDir);
-                }
-
-                runtimeHome = userRuntimeFolder + runtimeGlobalPath;
+                runtimeHome = $"{userRuntimeFolder};{runtimeGlobalPath}";
             }
 
             foreach (var probePath in runtimeHome.Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries))

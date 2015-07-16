@@ -10,6 +10,7 @@ using System.Threading;
 using System.Xml;
 using System.Xml.Linq;
 using NuGet.Resources;
+using Microsoft.Framework.PackageManager;
 
 namespace NuGet
 {
@@ -104,13 +105,8 @@ namespace NuGet
         {
             // Walk up the tree to find a config file; also look in .nuget subdirectories
             var validSettingFiles = new List<Settings>();
-#if DNX451
-            var appData = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
-#else
-            var appData = Environment.GetEnvironmentVariable("APPDATA");
-#endif
-            var redirectSettingsPath = Path.Combine(appData,
-                                                    "nuget",
+            var userSettingsDir = DnuEnvironment.GetFolderPath(DnuFolderPath.UserSettingsDirectory);
+            var redirectSettingsPath = Path.Combine(userSettingsDir,
                                                     "nuget.redirect.config");
 
             Settings redirectSettings = null;
@@ -172,17 +168,9 @@ namespace NuGet
             if (configFileName == null)
             {
                 // load %AppData%\NuGet\NuGet.config
-#if DNX451
-                var appDataPath = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
-#else
-                var appDataPath = Environment.GetEnvironmentVariable("APPDATA");
-#endif
-                if (!String.IsNullOrEmpty(appDataPath))
-                {
-                    var defaultSettingsPath = Path.Combine(appDataPath, "NuGet");
-                    appDataSettings = ReadSettings(new PhysicalFileSystem(defaultSettingsPath),
-                        Constants.SettingsFileName);
-                }
+                var userSettingsDir = DnuEnvironment.GetFolderPath(DnuFolderPath.UserSettingsDirectory);
+                appDataSettings = ReadSettings(new PhysicalFileSystem(userSettingsDir),
+                    Constants.SettingsFileName);
             }
             else
             {
@@ -222,15 +210,12 @@ namespace NuGet
             params string[] paths)
         {
             List<Settings> settingFiles = new List<Settings>();
-            string basePath = @"NuGet\Config";
             string combinedPath = Path.Combine(paths);
 
             while (true)
             {
-                string directory = Path.Combine(basePath, combinedPath);
-
                 // load setting files in directory
-                foreach (var file in fileSystem.GetFiles(directory, "*.config", recursive: false))
+                foreach (var file in fileSystem.GetFiles(combinedPath, "*.config", recursive: false))
                 {
                     var settings = ReadSettings(fileSystem, file, true);
                     if (settings != null)
