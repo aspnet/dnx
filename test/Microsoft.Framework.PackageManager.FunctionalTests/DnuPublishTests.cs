@@ -1651,7 +1651,8 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost --configu
         ""NoDependencies.1.0.0.nupkg"",
         ""NoDependencies.1.0.0.nupkg.sha512"",
         ""NoDependencies.nuspec"",
-        ""root/project.json""
+        ""root/project.json"",
+        ""root/project.lock.json""
       ]
     }
   },
@@ -1671,13 +1672,10 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost --configu
                 var appPath = Path.Combine(tempDir, testApp);
                 TestUtils.CopyFolder(TestUtils.GetXreTestAppPath(testApp), appPath);
 
-                var lockFilePath = Path.Combine(appPath, LockFileFormat.LockFileName);
-                if (File.Exists(lockFilePath))
-                {
-                    File.Delete(lockFilePath);
-                }
+                var exitCode = DnuTestUtils.ExecDnu(runtimeHomeDir, "restore", appPath);
+                Assert.Equal(0, exitCode);
 
-                var exitCode = DnuTestUtils.ExecDnu(
+                exitCode = DnuTestUtils.ExecDnu(
                     runtimeHomeDir,
                     subcommand: "publish",
                     arguments: string.Format("--no-source --out {0}", publishOutputPath),
@@ -1850,7 +1848,10 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost --configu
                     File.Delete(lockFilePath);
                 }
 
-                var exitCode = DnuTestUtils.ExecDnu(
+                var exitCode = DnuTestUtils.ExecDnu(runtimeHomeDir, "restore", appPath);
+                Assert.Equal(0, exitCode);
+
+                exitCode = DnuTestUtils.ExecDnu(
                     runtimeHomeDir,
                     subcommand: "publish",
                     arguments: $"--no-source --include-symbols --out {publishOutputPath}",

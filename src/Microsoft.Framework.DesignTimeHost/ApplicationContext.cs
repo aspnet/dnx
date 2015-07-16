@@ -1042,7 +1042,7 @@ namespace Microsoft.Framework.DesignTimeHost
                     CompilationSettings = project.GetCompilerOptions(frameworkName, configuration)
                                                  .ToCompilationSettings(frameworkName),
                     SourceFiles = dependencySources,
-                    Diagnostics = dependencyInfo.HostContext.DependencyWalker.GetDependencyDiagnostics(project.ProjectFilePath),
+                    Diagnostics = dependencyInfo.HostContext.GetAllDiagnostics().ToList(),
                     DependencyInfo = dependencyInfo
                 };
 

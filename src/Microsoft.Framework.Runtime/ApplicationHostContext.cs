@@ -2,7 +2,9 @@
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Runtime.Versioning;
 using Microsoft.Framework.Runtime.Caching;
 using Microsoft.Framework.Runtime.Common.DependencyInjection;
@@ -18,6 +20,9 @@ namespace Microsoft.Framework.Runtime
     public class ApplicationHostContext
     {
         private readonly ServiceProvider _serviceProvider;
+        private readonly LockFile _lockFile;
+        private readonly Lazy<List<DiagnosticMessage>> _lockFileDiagnostics =
+            new Lazy<List<DiagnosticMessage>>();
 
         public ApplicationHostContext(IServiceProvider hostServices,
                                       string projectDirectory,
@@ -65,12 +70,17 @@ namespace Microsoft.Framework.Runtime
             if (lockFileExists)
             {
                 var lockFileReader = new LockFileReader();
-                var lockFile = lockFileReader.Read(projectLockJsonPath);
-                validLockFile = lockFile.IsValidForProject(Project);
+                _lockFile = lockFileReader.Read(projectLockJsonPath);
+                validLockFile = _lockFile.IsValidForProject(project);
+
+                // When the only invalid part of a lock file is version number,
+                // we shouldn't skip lock file validation because we want to leave all dependencies unresolved, so that
+                // VS can be aware of this version mismatch error and automatically do restore
+                skipLockFileValidation = skipLockFileValidation && (_lockFile.Version == Constants.LockFileVersion);
 
                 if (validLockFile || skipLockFileValidation)
                 {
-                    NuGetDependencyProvider.ApplyLockFile(lockFile);
+                    NuGetDependencyProvider.ApplyLockFile(_lockFile);
 
                     DependencyWalker = new DependencyWalker(new IDependencyProvider[] {
                         ProjectDepencyProvider,
@@ -190,5 +200,32 @@ namespace Microsoft.Framework.Runtime
         public string ProjectDirectory { get; private set; }
 
         public string PackagesDirectory { get; private set; }
+
+        public IEnumerable<DiagnosticMessage> GetLockFileDiagnostics()
+        {
+            if (_lockFileDiagnostics.IsValueCreated)
+            {
+                return _lockFileDiagnostics.Value;
+            }
+
+            if (_lockFile == null)
+            {
+                _lockFileDiagnostics.Value.Add(new DiagnosticMessage(
+                    $"The expected lock file doesn't exist. Please run \"dnu restore\" to generate a new lock file.",
+                    Path.Combine(Project.ProjectDirectory, LockFileReader.LockFileName),
+                    DiagnosticMessageSeverity.Error));
+            }
+            else
+            {
+                _lockFileDiagnostics.Value.AddRange(_lockFile.GetDiagnostics(Project));
+            }
+            return _lockFileDiagnostics.Value;
+        }
+
+        public IEnumerable<DiagnosticMessage> GetAllDiagnostics()
+        {
+            return GetLockFileDiagnostics()
+                .Concat(DependencyWalker.GetDependencyDiagnostics(Project.ProjectFilePath));
+        }
     }
 }

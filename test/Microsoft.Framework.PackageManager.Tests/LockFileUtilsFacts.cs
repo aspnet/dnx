@@ -19,7 +19,7 @@ namespace Microsoft.Framework.PackageManager.Tests
         public void BuildPackageAndCheckServiceability(string projectName, bool expectedServiceability)
         {
             var rootDir = ProjectResolver.ResolveRootDirectory(Directory.GetCurrentDirectory());
-            var projectDir = Path.Combine(rootDir, "misc", "ServicingTestProjects", projectName);
+            var projectSrcDir = Path.Combine(rootDir, "misc", "ServicingTestProjects", projectName);
             const string configuration = "Debug";
 
             var components = TestUtils.GetRuntimeComponentsCombinations().First();
@@ -30,9 +30,14 @@ namespace Microsoft.Framework.PackageManager.Tests
             using (var runtimeHomeDir = TestUtils.GetRuntimeHomeDir(flavor, os, architecture))
             using (var tempDir = new DisposableDir())
             {
+                var projectDir = Path.Combine(tempDir, projectName);
                 var buildOutpuDir = Path.Combine(tempDir, "output");
+                TestUtils.CopyFolder(projectSrcDir, projectDir);
 
-                int exitCode = DnuTestUtils.ExecDnu(
+                var exitCode = DnuTestUtils.ExecDnu(runtimeHomeDir, "restore", projectDir);
+                Assert.Equal(0, exitCode);
+
+                exitCode = DnuTestUtils.ExecDnu(
                     runtimeHomeDir,
                     "pack",
                     $"{projectDir} --out {buildOutpuDir} --configuration {configuration}");
