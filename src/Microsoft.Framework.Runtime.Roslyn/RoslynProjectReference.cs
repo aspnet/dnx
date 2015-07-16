@@ -8,10 +8,10 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices;
+using System.Runtime.Versioning;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Emit;
 using Microsoft.Framework.Runtime.Compilation;
-using System.Runtime.Versioning;
 
 namespace Microsoft.Framework.Runtime.Roslyn
 {

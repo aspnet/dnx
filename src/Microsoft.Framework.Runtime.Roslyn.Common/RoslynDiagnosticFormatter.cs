@@ -3,8 +3,8 @@
 
 using System;
 using System.Globalization;
-using Microsoft.CodeAnalysis;
 using System.Runtime.Versioning;
+using Microsoft.CodeAnalysis;
 
 namespace Microsoft.Framework.Runtime.Roslyn
 {
