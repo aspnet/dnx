@@ -5,7 +5,6 @@ using System;
 using System.Globalization;
 using Microsoft.CodeAnalysis;
 using System.Runtime.Versioning;
-using NuGet;
 
 namespace Microsoft.Framework.Runtime.Roslyn
 {
@@ -45,7 +44,7 @@ namespace Microsoft.Framework.Runtime.Roslyn
                     }
 
                     var start = mappedSpan.Span.Start;
-                    var framework = targetFramework == null ? string.Empty : $" {VersionUtility.GetFrameworkString(targetFramework)}";
+                    var framework = targetFramework == null ? string.Empty : $" {targetFramework.Identifier}";
                     return $"{path}({start.Line + 1},{start.Character + 1}):{framework} {GetMessagePrefix(diagnostic)}: {diagnostic.GetMessage(culture)}";
 
                 default:
