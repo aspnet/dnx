@@ -21,5 +21,6 @@ namespace Microsoft.Framework.Runtime
         public const string BuildKeyFile = "DNX_BUILD_KEY_FILE";
         public const string BuildDelaySign = "DNX_BUILD_DELAY_SIGN";
         public const string Sources = "DNX_SOURCES";
+        public const string DnxIsWindows = "DNX_IS_WINDOWS";
     }
 }
