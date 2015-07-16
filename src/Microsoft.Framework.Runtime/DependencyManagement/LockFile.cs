@@ -3,6 +3,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 
 namespace Microsoft.Framework.Runtime.DependencyManagement
@@ -15,12 +16,33 @@ namespace Microsoft.Framework.Runtime.DependencyManagement
         public IList<LockFileLibrary> Libraries { get; set; } = new List<LockFileLibrary>();
         public IList<LockFileTarget> Targets { get; set; } = new List<LockFileTarget>();
 
+        public IEnumerable<ICompilationMessage> GetDiagnostics(Project project)
+        {
+            string message;
+            if (!IsValidForProject(project, out message))
+            {
+                yield return new FileFormatMessage(
+                    $"{message}. Please run \"dnu restore\" to generate a new lock file.",
+                    Path.Combine(project.ProjectDirectory, LockFileReader.LockFileName),
+                    CompilationMessageSeverity.Error);
+            }
+        }
+
         public bool IsValidForProject(Project project)
+        {
+            string message;
+            return IsValidForProject(project, out message);
+        }
+
+        private bool IsValidForProject(Project project, out string message)
         {
             if (Version != Constants.LockFileVersion)
             {
+                message = $"The expected lock file version does not match the actual version";
                 return false;
             }
+
+            message = $"Dependencies in {Project.ProjectFileName} were modified";
 
             var actualTargetFrameworks = project.GetTargetFrameworks();
 
@@ -59,6 +81,7 @@ namespace Microsoft.Framework.Runtime.DependencyManagement
                 }
             }
 
+            message = null;
             return true;
         }
     }

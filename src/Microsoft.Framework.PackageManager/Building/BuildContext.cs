@@ -58,6 +58,8 @@ namespace Microsoft.Framework.PackageManager
 
             var result = builder.Build(_project.Name, _outputPath);
 
+            diagnostics.AddRange(_applicationHostContext.AllDiagnostics);
+
             if (result.Diagnostics != null)
             {
                 diagnostics.AddRange(result.Diagnostics);

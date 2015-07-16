@@ -64,27 +64,27 @@ namespace Microsoft.Framework.Runtime
             // If there's any unresolved dependencies then complain
             if (unresolvedLibs.Any())
             {
+                var targetFrameworkShortName = VersionUtility.GetShortFrameworkName(_targetFramework);
+                var runtimeEnv = ServiceProvider.GetService(typeof(IRuntimeEnvironment)) as IRuntimeEnvironment;
+                var runtimeFrameworkInfo = $@"Current runtime target framework: '{_targetFramework} ({targetFrameworkShortName})'
+{runtimeEnv.GetFullVersion()}";
                 string exceptionMsg;
 
                 // If the main project cannot be resolved, it means the app doesn't support current target framework
                 // (i.e. project.json doesn't contain a framework that is compatible with target framework of current runtime)
                 if (unresolvedLibs.Any(l => string.Equals(l.Identity.Name, Project.Name)))
                 {
-                    var runtimeEnv = ServiceProvider.GetService(typeof(IRuntimeEnvironment)) as IRuntimeEnvironment;
-                    var shortName = VersionUtility.GetShortFrameworkName(_targetFramework);
                     exceptionMsg = $@"The current runtime target framework is not compatible with '{Project.Name}'.
 
-Current runtime Target Framework: '{_targetFramework} ({shortName})'
-  Type: {runtimeEnv.RuntimeType}
-  Architecture: {runtimeEnv.RuntimeArchitecture}
-  Version: {runtimeEnv.RuntimeVersion}
-
+{runtimeFrameworkInfo}
 Please make sure the runtime matches a framework specified in {Project.ProjectFileName}";
                 }
                 else
                 {
-                    exceptionMsg = _applicationHostContext.DependencyWalker.GetMissingDependenciesWarning(
-                        _targetFramework);
+                    var lockFileErrorMessage = string.Join(string.Empty,
+                        _applicationHostContext.LockFileDiagnostics.Select(x => $"{Environment.NewLine}{x.FormattedMessage}"));
+                    exceptionMsg = $@"{_applicationHostContext.DependencyWalker.GetMissingDependenciesWarning(_targetFramework)}{lockFileErrorMessage}
+{runtimeFrameworkInfo}";
                 }
 
                 throw new InvalidOperationException(exceptionMsg);

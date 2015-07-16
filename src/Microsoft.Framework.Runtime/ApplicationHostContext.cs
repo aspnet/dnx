@@ -2,7 +2,9 @@
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Runtime.Versioning;
 using Microsoft.Framework.Runtime.Caching;
 using Microsoft.Framework.Runtime.Common.DependencyInjection;
@@ -64,12 +66,12 @@ namespace Microsoft.Framework.Runtime
             if (lockFileExists)
             {
                 var lockFileReader = new LockFileReader();
-                var lockFile = lockFileReader.Read(projectLockJsonPath);
-                validLockFile = lockFile.IsValidForProject(Project);
+                LockFile = lockFileReader.Read(projectLockJsonPath);
+                validLockFile = LockFile.IsValidForProject(project);
 
                 if (validLockFile || skipLockFileValidation)
                 {
-                    NuGetDependencyProvider.ApplyLockFile(lockFile);
+                    NuGetDependencyProvider.ApplyLockFile(LockFile);
 
                     DependencyWalker = new DependencyWalker(new IDependencyProvider[] {
                         ProjectDepencyProvider,
@@ -173,5 +175,36 @@ namespace Microsoft.Framework.Runtime
         public string ProjectDirectory { get; private set; }
 
         public string PackagesDirectory { get; private set; }
+
+        public LockFile LockFile { get; private set; }
+
+
+        public IEnumerable<ICompilationMessage> LockFileDiagnostics
+        {
+            get
+            {
+                var diagnostics = new List<ICompilationMessage>();
+                if (LockFile == null)
+                {
+                    diagnostics.Add(new FileFormatMessage(
+                        $"The expected lock file doesn't exist. Please run \"dnu restore\" to generate a new lock file.",
+                        Path.Combine(Project.ProjectDirectory, LockFileReader.LockFileName),
+                        CompilationMessageSeverity.Error));
+                }
+                else
+                {
+                    diagnostics.AddRange(LockFile.GetDiagnostics(Project));
+                }
+                return diagnostics;
+            }
+        }
+
+        public IEnumerable<ICompilationMessage> AllDiagnostics
+        {
+            get
+            {
+                return LockFileDiagnostics.Concat(DependencyWalker.GetDependencyDiagnostics(Project.ProjectFilePath));
+            }
+        }
     }
 }

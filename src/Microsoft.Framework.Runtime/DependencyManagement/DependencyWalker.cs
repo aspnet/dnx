@@ -136,17 +136,6 @@ namespace Microsoft.Framework.Runtime
                 sb.AppendLine("   " + d.Identity.ToString());
             }
 
-            sb.AppendLine();
-            sb.AppendLine("Searched Locations:");
-
-            foreach (var path in GetAttemptedPaths(targetFramework))
-            {
-                sb.AppendLine("  " + path);
-            }
-
-            sb.AppendLine();
-            sb.AppendLine("Try running 'dnu restore'.");
-
             return sb.ToString();
         }
 
