@@ -157,14 +157,8 @@ namespace Microsoft.Framework.ApplicationHost
                     stdOut: out stdOut,
                     stdErr: out stdErr);
 
-                var expectedErrorMsg =$@"The current runtime target framework is not compatible with '{projectName}'.
-
-Current runtime Target Framework: '{runtimeTargetFramework} ({runtimeTargetFrameworkShortName})'
-  Type: {runtimeType}
-  Architecture: {architecture ?? TestUtils.CurrentRuntimeEnvironment.RuntimeArchitecture}
-  Version: {TestUtils.GetRuntimeVersion()}
-
-Please make sure the runtime matches a framework specified in {Project.ProjectFileName}";
+                // TODO: add complete error message check when OS version information is consistent on CoreCLR and CLR
+                var expectedErrorMsg = $@"The current runtime target framework is not compatible with '{projectName}'.";
 
                 Assert.NotEqual(0, exitCode);
                 Assert.Contains(expectedErrorMsg, stdErr);
