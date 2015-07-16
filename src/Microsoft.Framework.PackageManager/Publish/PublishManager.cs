@@ -140,13 +140,9 @@ namespace Microsoft.Framework.PackageManager.Publish
                     var runtimeHome = Environment.GetEnvironmentVariable(EnvironmentNames.Home);
                     if (string.IsNullOrEmpty(runtimeHome))
                     {
-                        var runtimeGlobalPath = Environment.GetEnvironmentVariable(EnvironmentNames.GlobalPath);
-#if DNXCORE50
-                        runtimeHome = @"%USERPROFILE%\" + Constants.DefaultLocalRuntimeHomeDir + ";" + runtimeGlobalPath;
-#else
-                        var userProfile = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
-                        runtimeHome = Path.Combine(userProfile, Constants.DefaultLocalRuntimeHomeDir) + ";" + runtimeGlobalPath;
-#endif
+                        var runtimeGlobalPath = DnuEnvironment.GetFolderPath(DnuFolderPath.DnxGlobalPath);
+                        var defaultRuntimeHome = DnuEnvironment.GetFolderPath(DnuFolderPath.DefaultDnxHome);
+                        runtimeHome = $"{defaultRuntimeHome};{runtimeGlobalPath}";
                     }
 
                     foreach (var portion in runtimeHome.Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries))

@@ -71,7 +71,8 @@ namespace Microsoft.Framework.PackageManager
                 Configuration = "debug";
             }
 
-            MsBuildPath = string.IsNullOrEmpty(MsBuildPath) ? GetDefaultMSBuildPath() : MsBuildPath;
+            MsBuildPath = string.IsNullOrEmpty(MsBuildPath) ?
+                DnuEnvironment.GetFolderPath(DnuFolderPath.DefaultMsBuildPath) : MsBuildPath;
 
             XDocument resolutionResults;
             string errorMessage;
@@ -210,26 +211,6 @@ namespace Microsoft.Framework.PackageManager
             }
 
             return true;
-        }
-
-        private string GetDefaultMSBuildPath()
-        {
-#if DNX451
-            var programFilesPath = Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86);
-#else
-            var programFilesPath = Environment.GetEnvironmentVariable("PROGRAMFILES(X86)");
-#endif
-            // On 32-bit Windows
-            if (string.IsNullOrEmpty(programFilesPath))
-            {
-#if DNX451
-                programFilesPath = Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles);
-#else
-                programFilesPath = Environment.GetEnvironmentVariable("PROGRAMFILES");
-#endif
-            }
-
-            return Path.Combine(programFilesPath, "MSBuild", "14.0", "Bin", "MSBuild.exe");
         }
 
         private static void AddWrapFolderToGlobalJson(string rootDir)
