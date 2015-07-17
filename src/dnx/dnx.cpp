@@ -281,6 +281,7 @@ int CallApplicationProcessMain(int argc, dnx::char_t* argv[], dnx::trace_writer&
         _X("dnx.coreclr.so");
 #else
         _X("dnx.clr.dll");
+        SetEnvironmentVariable(_X("DNX_IS_WINDOWS"), _X("1"));
 #endif
 
         // Note: need to keep as ASCII as GetProcAddress function takes ASCII params

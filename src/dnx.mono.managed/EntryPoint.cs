@@ -58,6 +58,12 @@ public class EntryPoint
         // Set the default lib path to be next to the entry point location
         Environment.SetEnvironmentVariable(EnvironmentNames.DefaultLib, Path.GetDirectoryName(typeof(EntryPoint).Assembly.Location));
         Environment.SetEnvironmentVariable(EnvironmentNames.ConsoleHost, "1");
+        
+        var p = Environment.OSVersion.Platform;
+        if (p != PlatformID.MacOSX && p != PlatformID.Unix)
+        {
+            Environment.SetEnvironmentVariable(EnvironmentNames.DnxIsWindows, "1");
+        }
 
         arguments = ExpandCommandLineArguments(arguments);
 

@@ -23,6 +23,12 @@ namespace Microsoft.Framework.Runtime
             RuntimeType = Type.GetType("Mono.Runtime") == null ? "CLR" : "Mono";
             RuntimeArchitecture = Environment.Is64BitProcess ? "x64" : "x86";
 #endif
+
+            // This is a temporary workaround until we pass a struct with OS information from native code
+            if (Environment.GetEnvironmentVariable(EnvironmentNames.DnxIsWindows) == "1")
+            {
+                _osName = "Windows";
+            }
         }
 
         public string OperatingSystem
