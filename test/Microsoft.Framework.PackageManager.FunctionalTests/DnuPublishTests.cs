@@ -428,6 +428,71 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
             }
         }
 
+        [ConditionalTheory]
+        [OSSkipCondition(OperatingSystems.Linux | OperatingSystems.MacOSX)] // Mono DNX still only supports one framework (dnx451) at the moment.
+        [MemberData(nameof(ClrRuntimeComponents))]
+        public void PublishMultipleProjectsWithDifferentTargetFrameworks(string flavor, string os, string architecture)
+        {
+            string projectStructure = @"{
+    'App': [ 'project.json' ],
+    'Lib': [ 'project.json' ],
+    '.': [ 'global.json' ]
+}";
+            string expectedAppLockFile = @"{
+  ""locked"": false,
+  ""version"": LOCKFILEFORMAT_VERSION,
+  ""targets"": {
+    ""DNX,Version=v4.6"": {}
+  },
+  ""libraries"": {},
+  ""projectFileDependencyGroups"": {
+    """": [
+      ""Lib ""
+    ],
+    ""DNX,Version=v4.6"": []
+  }
+}".Replace("LOCKFILEFORMAT_VERSION", Constants.LockFileVersion.ToString());
+            string expectedLibLockFile = BasicLockFileTemplate.Replace("FRAMEWORK_NAME", "DNX,Version=v4.5.1");
+
+            var runtimeHomeDir = _fixture.GetRuntimeHomeDir(flavor, os, architecture);
+
+            using (var testEnv = new DnuTestEnvironment(runtimeHomeDir, _projectName, _outputDirName))
+            {
+                DirTree.CreateFromJson(projectStructure)
+                    .WithFileContents("global.json", @"{ ""projects"": [ ""."" ] }")
+                    .WithFileContents("App/project.json", @"{
+  ""dependencies"": { ""Lib"": """" },
+  ""frameworks"": {
+    ""dnx46"": {}
+  }
+}")
+                    .WithFileContents("Lib/project.json", @"{
+  ""frameworks"": {
+    ""dnx451"": {}
+  }
+}")
+                    .WriteTo(testEnv.ProjectPath);
+
+                var environment = new Dictionary<string, string>()
+                {
+                    { EnvironmentNames.Packages, Path.Combine(testEnv.ProjectPath, "packages") }
+                };
+
+                var exitCode = DnuTestUtils.ExecDnu(
+                    runtimeHomeDir,
+                    subcommand: "publish",
+                    arguments: string.Format("--out {0}",
+                        testEnv.PublishOutputDirPath),
+                    environment: environment,
+                    workingDir: Path.Combine(testEnv.ProjectPath, "App"));
+                Assert.Equal(0, exitCode);
+
+                // Check the lock files
+                Assert.Equal(expectedAppLockFile, File.ReadAllText(Path.Combine(testEnv.PublishOutputDirPath, "approot", "src", "App", "project.lock.json")));
+                Assert.Equal(expectedLibLockFile, File.ReadAllText(Path.Combine(testEnv.PublishOutputDirPath, "approot", "src", "Lib", "project.lock.json")));
+            }
+        }
+
         [Theory]
         [MemberData(nameof(RuntimeComponents))]
         public void FoldersAsFilePatternsAutoGlob(string flavor, string os, string architecture)
