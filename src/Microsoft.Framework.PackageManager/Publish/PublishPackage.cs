@@ -1,8 +1,6 @@
 // Copyright (c) .NET Foundation. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
-using System.Collections.Generic;
-using System.IO;
 using Microsoft.Framework.Runtime;
 using NuGet;
 
@@ -25,7 +23,8 @@ namespace Microsoft.Framework.PackageManager.Publish
         {
             root.Reports.Quiet.WriteLine("Using {0} dependency {1}", _libraryDescription.Type, Library);
 
-            var srcNupkgPath = Path.Combine(_libraryDescription.Path, Library.Name + "." + Library.Version + ".nupkg");
+            var packagePathResolver = new DefaultPackagePathResolver(root.SourcePackagesPath);
+            var srcNupkgPath = packagePathResolver.GetPackageFilePath(_libraryDescription.Identity.Name, _libraryDescription.Identity.Version);
 
             var options = new Microsoft.Framework.PackageManager.Packages.AddOptions
             {
