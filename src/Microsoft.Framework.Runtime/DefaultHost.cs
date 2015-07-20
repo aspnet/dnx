@@ -151,6 +151,7 @@ Please make sure the runtime matches a framework specified in {Project.ProjectFi
 
             Logger.TraceInformation("[{0}]: Project path: {1}", GetType().Name, _projectDirectory);
             Logger.TraceInformation("[{0}]: Project root: {1}", GetType().Name, _applicationHostContext.RootDirectory);
+            Logger.TraceInformation("[{0}]: Project configuration: {1}", GetType().Name, _applicationHostContext.Configuration);
             Logger.TraceInformation("[{0}]: Packages path: {1}", GetType().Name, _applicationHostContext.PackagesDirectory);
 
             _project = _applicationHostContext.Project;
