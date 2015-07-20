@@ -117,7 +117,7 @@ namespace Microsoft.Framework.Runtime.Tests
             Assert.Equal(shortName, VersionUtility.GetShortFrameworkName(fx));
         }
 
-        [Theory(Skip = "Skip temporarily")]
+        [Theory]
         [InlineData("dnx46", "dotnet,dnx46", "dnx46")]
 
         // Portable frameworks should use the old matching system based on scoring to ensure the best PCL is chosen
