@@ -5,6 +5,8 @@ using System.Runtime.Versioning;
 using Microsoft.Framework.Runtime.Helpers;
 using NuGet;
 using Xunit;
+using Microsoft.AspNet.Testing;
+using Microsoft.AspNet.Testing.xunit;
 
 namespace Microsoft.Framework.Runtime.Tests
 {
@@ -119,13 +121,23 @@ namespace Microsoft.Framework.Runtime.Tests
 
         [Theory]
         [InlineData("dnx46", "dotnet,dnx46", "dnx46")]
-
-        // Portable frameworks should use the old matching system based on scoring to ensure the best PCL is chosen
-        [InlineData(".NETPortable,Version=v4.0,Profile=Profile6", "portable-net40+sl4+win8,portable-net40+win8", "portable-net40+win8")]
-
         // Profile restrictions should be honored (yes, I know net46 client doesn't exist, just for testing :))
         [InlineData("net46-client", "net46,net45-client,net40", "net45-client")]
         public void GetNearestPicksMostCompatibleItem(string input, string frameworks, string expected)
+        {
+            TestGetNearestPicksMostCompatibleItem(input, frameworks, expected);
+        }
+
+        [ConditionalTheory]
+        [FrameworkSkipCondition(RuntimeFrameworks.Mono)]
+        // Portable frameworks should use the old matching system based on scoring to ensure the best PCL is chosen
+        [InlineData(".NETPortable,Version=v4.0,Profile=Profile6", "portable-net40+sl4+win8,portable-net40+win8", "portable-net40+win8")]
+        public void GetNearestPicksMostCompatibleItemOnNoneMono(string input, string frameworks, string expected)
+        {
+            TestGetNearestPicksMostCompatibleItem(input, frameworks, expected);
+        }
+
+        private void TestGetNearestPicksMostCompatibleItem(string input, string frameworks, string expected)
         {
             var inputFx = FrameworkNameHelper.ParseFrameworkName(input);
             var fxs = frameworks.Split(',').Select(VersionUtility.ParseFrameworkName).ToArray();
