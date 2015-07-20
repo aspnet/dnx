@@ -106,7 +106,7 @@ namespace Microsoft.Framework.PackageManager.Publish
             }
 
             const string template = @"
-@""{0}{1}.exe"" --appbase ""%~dp0{2}"" Microsoft.Framework.ApplicationHost {3} %*
+@""{0}{1}.exe"" --appbase ""%~dp0{2}"" Microsoft.Framework.ApplicationHost --configuration {3} {4} %*
 ";
 
             foreach (var commandName in _project.Commands.Keys)
@@ -119,7 +119,12 @@ namespace Microsoft.Framework.PackageManager.Publish
 
                 File.WriteAllText(
                     Path.Combine(OutputPath, commandName + ".cmd"),
-                    string.Format(template, runtimeFolder, Runtime.Constants.BootstrapperExeName, relativeAppBase, commandName));
+                    string.Format(template, 
+                                  runtimeFolder,
+                                  Runtime.Constants.BootstrapperExeName,
+                                  relativeAppBase,
+                                  Configuration,
+                                  commandName));
             }
         }
 
@@ -148,7 +153,7 @@ DIR=""$( cd -P ""$( dirname ""$SOURCE"" )"" && pwd )""
 
 export SET {0}=""$DIR/{1}""
 
-exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@""";
+exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost --configuration {4} {5} ""$@""";
 
             foreach (var commandName in _project.Commands.Keys)
             {
@@ -161,7 +166,13 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
 
                 var scriptPath = Path.Combine(OutputPath, commandName);
                 File.WriteAllText(scriptPath,
-                    string.Format(template, EnvironmentNames.AppBase, relativeAppBase, runtimeFolder, Runtime.Constants.BootstrapperExeName, commandName).Replace("\r\n", "\n"));
+                    string.Format(template, 
+                                  EnvironmentNames.AppBase,
+                                  relativeAppBase,
+                                  runtimeFolder,
+                                  Runtime.Constants.BootstrapperExeName, 
+                                  Configuration,
+                                  commandName).Replace("\r\n", "\n"));
 
                 if (!RuntimeEnvironmentHelper.IsWindows)
                 {
