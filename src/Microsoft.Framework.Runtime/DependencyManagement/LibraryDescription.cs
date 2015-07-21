@@ -27,7 +27,7 @@ namespace Microsoft.Framework.Runtime
         {
             return new Library(
                 Identity.Name,
-                Identity.Version.GetNormalizedVersionString(),
+                Identity.Version?.GetNormalizedVersionString(),
                 Path,
                 Type,
                 Dependencies.Select(d => d.Name),
