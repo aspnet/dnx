@@ -208,6 +208,9 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Dnx.ApplicationHost --configuration
   }
 }")
                     .WithFileContents(Path.Combine("approot", "global.json"), @"{
+  ""projects"": [
+    ""src""
+  ],
   ""packages"": ""packages""
 }")
                     .WithFileContents(Path.Combine("wwwroot", "web.config"), outputWebConfigTemplate, testEnv.ProjectName);
@@ -313,6 +316,9 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Dnx.ApplicationHost --configuration
                     .WithFileContents(Path.Combine("approot", "src", testEnv.ProjectName, "project.lock.json"),
                         BasicLockFile)
                     .WithFileContents(Path.Combine("approot", "global.json"), @"{
+  ""projects"": [
+    ""src""
+  ],
   ""packages"": ""packages""
 }")
                     .WithFileContents(Path.Combine("wwwroot", "web.config"), outputWebConfigTemplate, testEnv.ProjectName);
@@ -438,10 +444,94 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Dnx.ApplicationHost --configuration
                     .WithFileContents(Path.Combine("approot", "src", testEnv.ProjectName, "project.lock.json"),
                         BasicLockFile)
                     .WithFileContents(Path.Combine("approot", "global.json"), @"{
+  ""projects"": [
+    ""src""
+  ],
   ""packages"": ""packages""
 }");
                 Assert.True(expectedOutputDir.MatchDirectoryOnDisk(testEnv.PublishOutputDirPath,
                     compareFileContents: true));
+            }
+        }
+
+        [Theory]
+        [MemberData(nameof(RuntimeComponents))]
+        public void DnuPublishCopiesAllProjectsToOneSrcFolder(string flavor, string os, string architecture)
+        {
+            var runtimeHomeDir = _fixture.GetRuntimeHomeDir(flavor, os, architecture);
+            var solutionStructure = @"{
+  'global.json': '',
+  'source1': {
+    'ProjectA': ['project.json', 'Program.cs']
+  },
+  'source2': {
+    'ProjectB': ['project.json', 'Program.cs']
+  },
+  'source3': {
+    'ProjectC': ['project.json', 'Program.cs']
+  }
+}";
+            var expectedOutputStructure = @"{
+  'approot': {
+    'global.json': '',
+    'src': {
+      'ProjectA': ['project.json', 'project.lock.json', 'Program.cs'],
+      'ProjectB': ['project.json', 'project.lock.json', 'Program.cs'],
+      'ProjectC': ['project.json', 'project.lock.json', 'Program.cs']
+      }
+    }
+  }";
+
+            using (var tempDir = new DisposableDir())
+            {
+                var solutionDir = Path.Combine(tempDir, "solution");
+                var outputDir = Path.Combine(tempDir, "output");
+
+                DirTree.CreateFromJson(solutionStructure)
+                    .WithFileContents("global.json", @"{
+  ""projects"": [""source1"", ""source2"", ""source3""]
+}")
+                    .WithFileContents(Path.Combine("source1", "ProjectA", "project.json"), @"{
+  ""version"": ""1.0.0"",
+  ""dependencies"": {
+    ""ProjectB"": ""1.0.0""
+  },
+  ""frameworks"": {
+    ""dnx451"": { }
+  }
+}")
+                    .WithFileContents(Path.Combine("source2", "ProjectB", "project.json"), @"{
+  ""version"": ""1.0.0"",
+  ""dependencies"": {
+    ""ProjectC"": ""1.0.0""
+  },
+  ""frameworks"": {
+    ""dnx451"": { }
+  }
+}")
+                    .WithFileContents(Path.Combine("source3", "ProjectC", "project.json"), @"{
+  ""version"": ""1.0.0"",
+  ""frameworks"": {
+    ""dnx451"": { }
+  }
+}")
+                    .WriteTo(solutionDir);
+
+                var exitCode = DnuTestUtils.ExecDnu(
+                    runtimeHomeDir,
+                    subcommand: "publish",
+                    arguments: $"{Path.Combine(solutionDir, "source1", "ProjectA")} --out {outputDir}");
+                Assert.Equal(0, exitCode);
+
+                var expectedOutputDir = DirTree.CreateFromJson(expectedOutputStructure);
+
+                Assert.True(expectedOutputDir.MatchDirectoryOnDisk(outputDir, compareFileContents: false));
+                Assert.Equal(@"{
+  ""projects"": [
+    ""src""
+  ],
+  ""packages"": ""packages""
+}", File.ReadAllText(Path.Combine(outputDir, "approot", "global.json")));
             }
         }
 
@@ -622,6 +712,9 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Dnx.ApplicationHost --configuration
                     .WithFileContents(Path.Combine("approot", "src", testEnv.ProjectName, "project.lock.json"),
                         BasicLockFile)
                     .WithFileContents(Path.Combine("approot", "global.json"), @"{
+  ""projects"": [
+    ""src""
+  ],
   ""packages"": ""packages""
 }");
                 Assert.True(expectedOutputDir.MatchDirectoryOnDisk(testEnv.PublishOutputDirPath,
@@ -721,6 +814,9 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Dnx.ApplicationHost --configuration
                     .WithFileContents(Path.Combine("approot", "src", testEnv.ProjectName, "project.lock.json"),
                         BasicLockFile)
                     .WithFileContents(Path.Combine("approot", "global.json"), @"{
+  ""projects"": [
+    ""src""
+  ],
   ""packages"": ""packages""
 }");
                 Assert.True(expectedOutputDir.MatchDirectoryOnDisk(testEnv.PublishOutputDirPath,
@@ -820,6 +916,9 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Dnx.ApplicationHost --configuration
                     .WithFileContents(Path.Combine("approot", "src", testEnv.ProjectName, "project.lock.json"),
                         BasicLockFile)
                     .WithFileContents(Path.Combine("approot", "global.json"), @"{
+  ""projects"": [
+    ""src""
+  ],
   ""packages"": ""packages""
 }");
                 Assert.True(expectedOutputDir.MatchDirectoryOnDisk(testEnv.PublishOutputDirPath,
@@ -896,6 +995,9 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Dnx.ApplicationHost --configuration
                     .WithFileContents(Path.Combine("approot", "src", testEnv.ProjectName, "project.lock.json"),
                         BasicLockFile)
                     .WithFileContents(Path.Combine("approot", "global.json"), @"{
+  ""projects"": [
+    ""src""
+  ],
   ""packages"": ""packages""
 }");
                 Assert.True(expectedOutputDir.MatchDirectoryOnDisk(testEnv.PublishOutputDirPath,
@@ -1076,6 +1178,9 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Dnx.ApplicationHost --configuration
                     .WithFileContents(Path.Combine("approot", "src", testEnv.ProjectName, "project.lock.json"),
                         BasicLockFileTemplate.Replace("FRAMEWORK_NAME", fx.ToString()))
                     .WithFileContents(Path.Combine("approot", "global.json"), @"{
+  ""projects"": [
+    ""src""
+  ],
   ""packages"": ""packages""
 }")
                     .WithFileContents(Path.Combine("wwwroot", "web.config"), outputWebConfigTemplate, testEnv.ProjectName);
@@ -1167,6 +1272,9 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Dnx.ApplicationHost --configuration
                     .WithFileContents(Path.Combine("approot", "src", testEnv.ProjectName, "project.lock.json"),
                         BasicLockFile)
                     .WithFileContents(Path.Combine("approot", "global.json"), @"{
+  ""projects"": [
+    ""src""
+  ],
   ""packages"": ""packages""
 }")
                     .WithFileContents(Path.Combine("wwwroot", "web.config"), outputWebConfigTemplate, testEnv.ProjectName);
@@ -1262,6 +1370,9 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Dnx.ApplicationHost --configuration
                     .WithFileContents(Path.Combine("approot", "src", testEnv.ProjectName, "project.lock.json"),
                         BasicLockFile)
                     .WithFileContents(Path.Combine("approot", "global.json"), @"{
+  ""projects"": [
+    ""src""
+  ],
   ""packages"": ""packages""
 }")
                     .WithFileContents(Path.Combine("wwwroot", "web.config"), outputWebConfigTemplate, testEnv.ProjectName);
@@ -1367,6 +1478,9 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Dnx.ApplicationHost --configuration
                     .WithFileContents(Path.Combine("approot", "src", testEnv.ProjectName, "project.lock.json"),
                         BasicLockFile)
                     .WithFileContents(Path.Combine("approot", "global.json"), @"{
+  ""projects"": [
+    ""src""
+  ],
   ""packages"": ""packages""
 }")
                     .WithFileContents(Path.Combine("wwwroot", "web.config"), outputWebConfigContents, testEnv.ProjectName);
@@ -1462,6 +1576,9 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Dnx.ApplicationHost --configuration
   }
 }".Replace("LOCKFILEFORMAT_VERSION", Constants.LockFileVersion.ToString()))
                     .WithFileContents(Path.Combine("approot", "global.json"), @"{
+  ""projects"": [
+    ""src""
+  ],
   ""packages"": ""packages""
 }")
                     .WithFileContents("run.cmd", BatchFileTemplate, string.Empty, Constants.BootstrapperExeName, testEnv.ProjectName, configuration, "run")
@@ -1580,6 +1697,9 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Dnx.ApplicationHost --configuration
 }".Replace("LOCKFILEFORMAT_VERSION", Constants.LockFileVersion.ToString())
   .Replace("RUNTIME_TARGET", flavor == "coreclr" ? "DNXCore,Version=v5.0" : "DNX,Version=v4.5.1"))
                     .WithFileContents(Path.Combine("approot", "global.json"), @"{
+  ""projects"": [
+    ""src""
+  ],
   ""packages"": ""packages""
 }")
                     .WithFileContents("run.cmd", BatchFileTemplate, batchFileBinPath, Constants.BootstrapperExeName, testEnv.ProjectName, configuration, "run")
@@ -1926,6 +2046,9 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Dnx.ApplicationHost --configuration
                     .WithFileContents(Path.Combine("approot", "src", testEnv.ProjectName, "project.lock.json"),
                         BasicLockFile)
                     .WithFileContents(Path.Combine("approot", "global.json"), @"{
+  ""projects"": [
+    ""src""
+  ],
   ""packages"": ""packages""
 }");
                 Assert.True(expectedOutputDir.MatchDirectoryOnDisk(testEnv.PublishOutputDirPath,

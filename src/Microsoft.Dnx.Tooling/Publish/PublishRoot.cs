@@ -15,6 +15,7 @@ namespace Microsoft.Dnx.Tooling.Publish
     {
         private readonly Runtime.Project _project;
         public static readonly string AppRootName = "approot";
+        public static readonly string SourceFolderName = "src";
 
         public PublishRoot(Runtime.Project project, string outputPath, IServiceProvider hostServices, Reports reports)
         {
@@ -202,6 +203,9 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Dnx.ApplicationHost --configuration
 
             var applicationRoot = Path.Combine(OutputPath, PublishRoot.AppRootName);
 
+            // All dependency projects go to approot/src folder
+            // so we remove all other useless entries that might bring in ambiguity
+            rootObject["projects"] = new JArray(SourceFolderName);
             rootObject["packages"] = PathUtility.GetRelativePath(
                 PathUtility.EnsureTrailingForwardSlash(applicationRoot),
                 TargetPackagesPath, separator: '/');

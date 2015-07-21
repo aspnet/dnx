@@ -68,7 +68,11 @@ namespace Microsoft.Dnx.Tooling.Publish
 
             var project = GetCurrentProject();
             var targetName = project.Name;
-            TargetPath = Path.Combine(root.OutputPath, PublishRoot.AppRootName, "src", targetName);
+            TargetPath = Path.Combine(
+                root.OutputPath,
+                PublishRoot.AppRootName,
+                PublishRoot.SourceFolderName,
+                targetName);
 
             // If root.OutputPath is specified by --out option, it might not be a full path
             TargetPath = Path.GetFullPath(TargetPath);
