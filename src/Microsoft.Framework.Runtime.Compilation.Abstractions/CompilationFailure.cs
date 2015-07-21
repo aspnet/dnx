@@ -36,8 +36,20 @@ namespace Microsoft.Framework.Runtime.Compilation
         public IEnumerable<DiagnosticMessage> Messages { get; }
 
         public CompilationFailure(string sourceFilePath, IEnumerable<DiagnosticMessage> messages)
+            : this(sourceFilePath, sourceFileContent: string.Empty, compiledContent: string.Empty, messages: messages)
+        {
+        }
+
+        public CompilationFailure(string sourceFilePath, string sourceFileContent, IEnumerable<DiagnosticMessage> messages)
+            : this(sourceFilePath, sourceFileContent, compiledContent: string.Empty, messages: messages)
+        {
+        }
+
+        public CompilationFailure(string sourceFilePath, string sourceFileContent, string compiledContent, IEnumerable<DiagnosticMessage> messages)
         {
             SourceFilePath = sourceFilePath;
+            SourceFileContent = sourceFileContent;
+            CompiledContent = compiledContent;
             Messages = messages;
         }
     }
