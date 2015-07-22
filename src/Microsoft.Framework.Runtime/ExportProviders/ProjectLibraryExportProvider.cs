@@ -103,7 +103,6 @@ namespace Microsoft.Framework.Runtime
                         context.DependencyWalker.Walk(project.Name, project.Version, target.TargetFramework);
 
                         return ProjectExportProviderHelper.GetExportsRecursive(
-                          cache,
                           context.LibraryManager,
                           context.LibraryExportProvider,
                           target,

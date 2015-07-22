@@ -5,7 +5,6 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using Microsoft.Framework.Runtime.Caching;
 using Microsoft.Framework.Runtime.Compilation;
 
 namespace Microsoft.Framework.Runtime
@@ -13,13 +12,12 @@ namespace Microsoft.Framework.Runtime
     public static class ProjectExportProviderHelper
     {
         public static LibraryExport GetExportsRecursive(
-            ICache cache,
             ILibraryManager manager,
             ILibraryExportProvider libraryExportProvider,
             CompilationTarget target,
             bool dependenciesOnly)
         {
-            return GetExportsRecursive(cache, manager, libraryExportProvider, target, libraryInformation =>
+            return GetExportsRecursive(manager, libraryExportProvider, target, libraryInformation =>
             {
                 if (dependenciesOnly)
                 {
@@ -31,7 +29,6 @@ namespace Microsoft.Framework.Runtime
         }
 
         public static LibraryExport GetExportsRecursive(
-            ICache cache,
             ILibraryManager manager,
             ILibraryExportProvider libraryExportProvider,
             CompilationTarget target,
@@ -75,12 +72,12 @@ namespace Microsoft.Framework.Runtime
                         if (node.Parent == rootNode)
                         {
                             // Only export sources from first level dependencies
-                            ProcessExport(cache, libraryExport, references, sourceReferences);
+                            ProcessExport(libraryExport, references, sourceReferences);
                         }
                         else
                         {
                             // Skip source exports from anything else
-                            ProcessExport(cache, libraryExport, references, sourceReferences: null);
+                            ProcessExport(libraryExport, references, sourceReferences: null);
                         }
                     }
                 }
@@ -109,8 +106,7 @@ namespace Microsoft.Framework.Runtime
                 sourceReferences.Values.ToList());
         }
 
-        private static void ProcessExport(ICache cache,
-                                          LibraryExport export,
+        private static void ProcessExport(LibraryExport export,
                                           IDictionary<string, IMetadataReference> metadataReferences,
                                           IDictionary<string, ISourceReference> sourceReferences)
         {

@@ -1191,7 +1191,6 @@ namespace Microsoft.Framework.DesignTimeHost
                 }
 
                 var exportWithoutProjects = ProjectExportProviderHelper.GetExportsRecursive(
-                    _cache,
                     applicationHostContext.LibraryManager,
                     applicationHostContext.LibraryExportProvider,
                     new CompilationTarget(project.Name, frameworkName, configuration, aspect: null),

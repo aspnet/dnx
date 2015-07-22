@@ -121,7 +121,6 @@ namespace Microsoft.Framework.Runtime
 
             return _cache.Get<LibraryExport>(key, ctx =>
                 ProjectExportProviderHelper.GetExportsRecursive(
-                    _cache,
                     this,
                     _libraryExportProvider,
                     new CompilationTarget(name, _targetFramework, _configuration, aspect),
