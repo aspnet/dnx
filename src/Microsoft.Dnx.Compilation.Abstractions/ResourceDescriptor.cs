@@ -8,6 +8,7 @@ namespace Microsoft.Dnx.Compilation
 {
     public class ResourceDescriptor
     {
+        public string FileName { get; set; }
         public string Name { get; set; }
         public Func<Stream> StreamFactory { get; set; }
     }
