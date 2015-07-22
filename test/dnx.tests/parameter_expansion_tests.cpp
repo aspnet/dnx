@@ -42,7 +42,7 @@ TEST(parameter_expansion, ExpandCommandLineArguments_should_expand_dot)
     dnx::char_t* args[]
     { _X("."), _X("run") };
     std::vector<const dnx::char_t*> expected_expanded_args(
-    { _X("--appbase"), _X("."), _X("Microsoft.Framework.ApplicationHost"), _X("run") });
+    { _X("--appbase"), _X("."), _X("Microsoft.Dnx.ApplicationHost"), _X("run") });
 
     test_ExpandCommandLineArguments(args, true, expected_expanded_args);
 }
@@ -52,7 +52,7 @@ TEST(parameter_expansion, ExpandCommandLineArguments_should_ignore_appbase_after
     dnx::char_t* args[]
         { _X("."), _X("run"), _X("--appbase"), _X("C:\\temp") };
     std::vector<const dnx::char_t*> expected_expanded_args(
-        { _X("--appbase"), _X("."), _X("Microsoft.Framework.ApplicationHost"), _X("run"), _X("--appbase"), _X("C:\\temp") });
+        { _X("--appbase"), _X("."), _X("Microsoft.Dnx.ApplicationHost"), _X("run"), _X("--appbase"), _X("C:\\temp") });
 
     test_ExpandCommandLineArguments(args, true, expected_expanded_args);
 }
@@ -112,7 +112,7 @@ TEST(parameter_expansion, ExpandCommandLineArguments_should_expand_params_and_ad
     dnx::char_t* args[]
     { _X("project.json"), _X("run") };
     std::vector<const dnx::char_t*> expected_expanded_args(
-    { _X("--appbase"), _X("."), _X("Microsoft.Framework.ApplicationHost"), _X("run") });
+    { _X("--appbase"), _X("."), _X("Microsoft.Dnx.ApplicationHost"), _X("run") });
 
     test_ExpandCommandLineArguments(args, true, expected_expanded_args);
 }
@@ -122,7 +122,7 @@ TEST(parameter_expansion, ExpandCommandLineArguments_should_expand_params_and_ad
     dnx::char_t* args[]
     { _X("C:\\MyApp\\project.json"), _X("run") };
     std::vector<const dnx::char_t*> expected_expanded_args(
-    { _X("--appbase"), _X("C:\\MyApp\\"), _X("Microsoft.Framework.ApplicationHost"), _X("run"), });
+    { _X("--appbase"), _X("C:\\MyApp\\"), _X("Microsoft.Dnx.ApplicationHost"), _X("run"), });
 
     test_ExpandCommandLineArguments(args, true, expected_expanded_args);
 }
@@ -132,7 +132,7 @@ TEST(parameter_expansion, ExpandCommandLineArguments_should_expand_implicit_appb
     dnx::char_t* args[]
     { _X("run") };
     std::vector<const dnx::char_t*> expected_expanded_args(
-    { _X("--appbase"), _X("."), _X("Microsoft.Framework.ApplicationHost"), _X("run") });
+    { _X("--appbase"), _X("."), _X("Microsoft.Dnx.ApplicationHost"), _X("run") });
 
     test_ExpandCommandLineArguments(args, true, expected_expanded_args);
 }
@@ -142,7 +142,7 @@ TEST(parameter_expansion, ExpandCommandLineArguments_should_expand_implicit_appb
     dnx::char_t* args[]
     { _X("--port"), _X("1234"), _X("run") };
     std::vector<const dnx::char_t*> expected_expanded_args(
-    { _X("--port"), _X("1234"), _X("--appbase"), _X("."), _X("Microsoft.Framework.ApplicationHost"), _X("run") });
+    { _X("--port"), _X("1234"), _X("--appbase"), _X("."), _X("Microsoft.Dnx.ApplicationHost"), _X("run") });
 
     test_ExpandCommandLineArguments(args, true, expected_expanded_args);
 }

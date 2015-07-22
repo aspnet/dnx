@@ -9,4 +9,4 @@ done
 DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
 
 
-exec "$DIR/dnx" "$DIR/lib/Microsoft.Framework.PackageManager/Microsoft.Framework.PackageManager.dll" "$@"
+exec "$DIR/dnx" "$DIR/lib/Microsoft.Dnx.Tooling/Microsoft.Dnx.Tooling.dll" "$@"

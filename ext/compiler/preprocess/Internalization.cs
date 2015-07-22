@@ -8,7 +8,7 @@ using System.Linq;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
-using Microsoft.Framework.Runtime.Roslyn;
+using Microsoft.Dnx.Compilation.CSharp;
 
 namespace Runtime.Ext.Compiler.Preprocess
 {

@@ -1,0 +1,69 @@
+{
+    "version": "1.0.0-*",
+    "description": "ASP.NET 5 runtime infrastructure for loading NuGet packages and projects.",
+    "compilationOptions": {
+        "define": [ "LOADER", "TRACE" ],
+        "allowUnsafe": true,
+        "warningsAsErrors": true
+    },
+    "compile": [
+        "../../submodules/FileSystem/src/Microsoft.Framework.FileSystemGlobbing/**/*.cs"
+    ],
+    "preprocess": [
+        "../../ext/compiler/preprocess/Internalization.cs"
+    ],
+    "dependencies": {
+        "Microsoft.Dnx.Compilation.CSharp.Abstractions": { "version": "1.0.0-*", "type": "build" },
+        "Microsoft.Dnx.Compilation.Caching": "1.0.0-*",
+        "Microsoft.Dnx.Compilation.Abstractions": "1.0.0-*",
+        "Microsoft.Dnx.Loader": "1.0.0-*",
+        "Microsoft.Dnx.Runtime.Abstractions": "1.0.0-*",
+        "Microsoft.Dnx.Runtime.Internals": { "version": "1.0.0-*", "type": "build" },
+        "Microsoft.Dnx.Runtime.Sources": { "version": "1.0.0-*", "type": "build" },
+        "Microsoft.CodeAnalysis.CSharp": { "version": "1.0.0-*", "type": "build" }
+    },
+    "frameworks": {
+        "dnx451": {
+            "frameworkAssemblies": {
+                "System.Collections": "",
+                "System.Text.Encoding": "",
+                "System.Threading.Tasks": "",
+                "System.IO": "",
+                "System.IO.Compression": "",
+                "System.IO.Compression.FileSystem": "",
+                "System.Runtime": "",
+                "System.Xml": "",
+                "System.Xml.Linq": ""
+            }
+        },
+        "dnxcore50": {
+            "dependencies": {
+                "System.Collections.Concurrent": "4.0.10-beta-*",
+                "System.Diagnostics.Tools": "4.0.0-beta-*",
+                "System.Dynamic.Runtime": "4.0.10-beta-*",
+                "System.Globalization": "4.0.10-beta-*",
+                "System.IO.Compression": "4.0.0-beta-*",
+                "System.IO.FileSystem.Watcher": "4.0.0-beta-*",
+                "System.Linq": "4.0.0-beta-*",
+                "System.Reflection.Extensions": "4.0.0-beta-*",
+                "System.Resources.ResourceManager": "4.0.0-beta-*",
+                "System.Resources.ReaderWriter": "4.0.0-beta-*",
+                "System.Text.Encoding": "4.0.10-beta-*",
+                "System.Text.RegularExpressions": "4.0.10-beta-*",
+                "System.Threading.Timer": "4.0.0-beta-*",
+                "System.Threading.Tasks": "4.0.10-beta-*",
+                "System.Threading.Thread": "4.0.0-beta-*",
+                "System.Threading.ThreadPool": "4.0.10-beta-*",
+                "System.Xml.ReaderWriter": "4.0.10-beta-*",
+                "System.Xml.XDocument": "4.0.10-beta-*"
+            }
+        }
+    },
+    "scripts": {
+        "postbuild": [
+            "%project:Directory%/../../build/batchcopy \"%project:BuildOutputDir%/Debug/dnx451/*.*\" %project:Directory%/../../artifacts/build/dnx-clr-win-x86/bin",
+            "%project:Directory%/../../build/batchcopy \"%project:BuildOutputDir%/Debug/dnx451/*.*\" %project:Directory%/../../artifacts/build/dnx-mono/bin",
+            "%project:Directory%/../../build/batchcopy \"%project:BuildOutputDir%/Debug/dnxcore50/*.*\" %project:Directory%/../../artifacts/build/dnx-coreclr-win-x86/bin"
+        ]
+    }
+}

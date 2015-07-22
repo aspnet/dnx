@@ -5,7 +5,7 @@ using System;
 using System.Threading.Tasks;
 using Xunit;
 
-namespace Microsoft.Framework.Runtime.Common.CommandLine
+namespace Microsoft.Dnx.Runtime.Common.CommandLine
 {
     public class CommandLineApplicationTests
     {

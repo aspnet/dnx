@@ -5,7 +5,7 @@
 #include <string>
 #include "utils.h"
 
-const wchar_t* AppDomainManagerAssemblyName = L"dnx.clr.managed, Version=1.0.0.0, Culture=neutral, PublicKeyToken=adb9793829ddae60, ProcessorArchitecture=MSIL";
+const wchar_t* AppDomainManagerAssemblyName = L"Microsoft.Dnx.Host.Clr, Version=1.0.0.0, Culture=neutral, PublicKeyToken=adb9793829ddae60, ProcessorArchitecture=MSIL";
 
 // IHostAssemblyStore
 HRESULT STDMETHODCALLTYPE HostAssemblyStore::ProvideAssembly(AssemblyBindInfo *pBindInfo, UINT64* /*pAssemblyId*/, UINT64* /*pContext*/,
@@ -25,7 +25,7 @@ HRESULT STDMETHODCALLTYPE HostAssemblyStore::ProvideAssembly(AssemblyBindInfo *p
         {
             path.append(L"\\");
         }
-        path.append(L"dnx.clr.managed.dll");
+        path.append(L"Microsoft.Dnx.Host.Clr.dll");
 
         if (path.length() > MAX_PATH || !dnx::utils::file_exists(path))
         {

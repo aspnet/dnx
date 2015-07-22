@@ -5,9 +5,9 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using Microsoft.AspNet.Testing.xunit;
-using Microsoft.Framework.CommonTestUtils;
-using Microsoft.Framework.PackageManager;
-using Microsoft.Framework.Runtime;
+using Microsoft.Dnx.CommonTestUtils;
+using Microsoft.Dnx.Tooling;
+using Microsoft.Dnx.Runtime;
 using Xunit;
 
 namespace Bootstrapper.FunctionalTests
@@ -125,7 +125,7 @@ class Program
                 string stdOut, stdErr;
                 var exitCode = BootstrapperTestUtils.ExecBootstrapper(
                     runtimeHomeDir,
-                    arguments: $"--appbase {testAppPath} Microsoft.Framework.ApplicationHost run",
+                    arguments: $"--appbase {testAppPath} Microsoft.Dnx.ApplicationHost run",
                     stdOut: out stdOut,
                     stdErr: out stdErr,
                     environment: new Dictionary<string, string> { { EnvironmentNames.Trace, null } });

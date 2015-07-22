@@ -5,7 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace Microsoft.Framework.Runtime.Common.CommandLine
+namespace Microsoft.Dnx.Runtime.Common.CommandLine
 {
     internal class CommandOption
     {

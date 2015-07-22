@@ -5,9 +5,9 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using Microsoft.Framework.CommonTestUtils;
-using Microsoft.Framework.PackageManager;
-using Microsoft.Framework.Runtime;
+using Microsoft.Dnx.CommonTestUtils;
+using Microsoft.Dnx.Tooling;
+using Microsoft.Dnx.Runtime;
 using Newtonsoft.Json.Linq;
 
 namespace Bootstrapper.FunctionalTests

@@ -1,0 +1,33 @@
+{
+    "version": "1.0.0-*",
+    "description": "ASP.NET 5 runtime infrastructure for assembly load contexts.",
+    "dependencies": {
+        "Microsoft.Dnx.Runtime.Abstractions": "1.0.0-*"
+    },
+
+    "frameworks": {
+        "dnx451": {
+            "dependencies": {
+            }
+        },
+        "dnxcore50": {
+            "dependencies": {
+                "System.Collections": "4.0.10-beta-*",
+                "System.Collections.Concurrent": "4.0.10-beta-*",
+                "System.Runtime.Loader": "4.0.0-beta-*",
+                "System.IO.FileSystem": "4.0.0-beta-*",
+                "System.AppContext": "4.0.0-beta-*",
+                "System.Threading": "4.0.10-beta-*"
+            }
+        }
+    },
+
+    "scripts": {
+        "postbuild": [
+            "%project:Directory%/../../build/batchcopy \"%project:BuildOutputDir%/Debug/dnx451/*.*\" %project:Directory%/../../artifacts/build/dnx-clr-win-x86/bin",
+            "%project:Directory%/../../build/batchcopy \"%project:BuildOutputDir%/Debug/dnx451/*.*\" %project:Directory%/../../artifacts/build/dnx-mono/bin",
+            "%project:Directory%/../../build/batchcopy \"%project:BuildOutputDir%/Debug/dnxcore50/*.*\" %project:Directory%/../../artifacts/build/dnx-coreclr-win-x86/bin"
+        ]
+    }
+}
+

@@ -8,7 +8,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Microsoft.Framework.Runtime.Common.CommandLine
+namespace Microsoft.Dnx.Runtime.Common.CommandLine
 {
     internal class CommandLineApplication
     {

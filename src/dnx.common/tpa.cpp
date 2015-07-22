@@ -14,10 +14,10 @@ const std::vector<const dnx::char_t*> CreateTpaBase(bool native_images)
     return native_images
         ? std::vector<const dnx::char_t*>
         {
-            _X("dnx.coreclr.managed.ni.dll"),
-            _X("dnx.host.ni.dll"),
-            _X("Microsoft.Framework.Runtime.Abstractions.ni.dll"),
-            _X("Microsoft.Framework.Runtime.Loader.ni.dll"),
+            _X("Microsoft.Dnx.Host.ni.dll"),
+            _X("Microsoft.Dnx.Host.CoreClr.ni.dll"),
+            _X("Microsoft.Dnx.Loader.ni.dll"),
+            _X("Microsoft.Dnx.Runtime.Abstractions.ni.dll"),
             _X("mscorlib.ni.dll"),
             _X("System.AppContext.ni.dll"),
             _X("System.Collections.ni.dll"),
@@ -49,10 +49,10 @@ const std::vector<const dnx::char_t*> CreateTpaBase(bool native_images)
         }
         : std::vector<const dnx::char_t*>
         {
-            _X("dnx.coreclr.managed.dll"),
-            _X("dnx.host.dll"),
-            _X("Microsoft.Framework.Runtime.Abstractions.dll"),
-            _X("Microsoft.Framework.Runtime.Loader.dll"),
+            _X("Microsoft.Dnx.Host.dll"),
+            _X("Microsoft.Dnx.Host.CoreClr.dll"),
+            _X("Microsoft.Dnx.Loader.dll"),
+            _X("Microsoft.Dnx.Runtime.Abstractions.dll"),
             _X("mscorlib.dll"),
             _X("System.AppContext.dll"),
             _X("System.Collections.dll"),

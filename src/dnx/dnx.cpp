@@ -150,10 +150,10 @@ void ExpandArgument(const dnx::char_t* value, std::vector<const dnx::char_t*>& e
 
     if (strings_equal_ignore_case(value, _X(".")))
     {
-        // "dnx . run" --> "dnx --appbase . Microsoft.Framework.ApplicationHost run"
+        // "dnx . run" --> "dnx --appbase . Microsoft.Dnx.ApplicationHost run"
         expanded_args.push_back(allocate_and_copy(_X("--appbase")));
         expanded_args.push_back(allocate_and_copy(value));
-        expanded_args.push_back(allocate_and_copy(_X("Microsoft.Framework.ApplicationHost")));
+        expanded_args.push_back(allocate_and_copy(_X("Microsoft.Dnx.ApplicationHost")));
 
         return;
     }
@@ -161,16 +161,16 @@ void ExpandArgument(const dnx::char_t* value, std::vector<const dnx::char_t*>& e
     auto split_idx = split_path(value);
     if (string_ends_with_ignore_case(value + (split_idx < 0 ? 0 : split_idx), _X("project.json")))
     {
-        // "dnx /path/project.json run" --> "dnx --appbase /path/ Microsoft.Framework.ApplicationHost run"
+        // "dnx /path/project.json run" --> "dnx --appbase /path/ Microsoft.Dnx.ApplicationHost run"
         AppendAppbaseFromFile(value, expanded_args);
-        expanded_args.push_back(allocate_and_copy(_X("Microsoft.Framework.ApplicationHost")));
+        expanded_args.push_back(allocate_and_copy(_X("Microsoft.Dnx.ApplicationHost")));
         return;
     }
 
-    // "dnx run" --> "dnx --appbase . Microsoft.Framework.ApplicationHost run"
+    // "dnx run" --> "dnx --appbase . Microsoft.Dnx.ApplicationHost run"
     expanded_args.push_back(allocate_and_copy(_X("--appbase")));
     expanded_args.push_back(allocate_and_copy(_X(".")));
-    expanded_args.push_back(allocate_and_copy(_X("Microsoft.Framework.ApplicationHost")));
+    expanded_args.push_back(allocate_and_copy(_X("Microsoft.Dnx.ApplicationHost")));
     expanded_args.push_back(allocate_and_copy(value));
 }
 

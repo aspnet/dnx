@@ -255,7 +255,7 @@ HRESULT ExecuteMain(ICLRRuntimeHost2* pCLRRuntimeHost, PCALL_APPLICATION_MAIN_DA
     }
 
     // Add the assembly containing the app domain manager to the trusted list
-    trusted_platform_assemblies.append(dnx::utils::path_combine(runtime_directory, L"dnx.coreclr.managed.dll"));
+    trusted_platform_assemblies.append(dnx::utils::path_combine(runtime_directory, L"Microsoft.Dnx.Host.CoreClr.dll"));
 
     std::wstring app_paths;
     app_paths.append(runtime_directory).append(L";");
@@ -275,7 +275,7 @@ HRESULT ExecuteMain(ICLRRuntimeHost2* pCLRRuntimeHost, PCALL_APPLICATION_MAIN_DA
     DWORD domainId;
 
     HRESULT hr = pCLRRuntimeHost->CreateAppDomainWithManager(
-        L"dnx.coreclr.managed",
+        L"Microsoft.Dnx.Host.CoreClr",
         APPDOMAIN_ENABLE_PLATFORM_SPECIFIC_APPS | APPDOMAIN_ENABLE_PINVOKE_AND_CLASSIC_COMINTEROP | APPDOMAIN_DISABLE_TRANSPARENCY_ENFORCEMENT,
         NULL,
         NULL,
@@ -294,7 +294,7 @@ HRESULT ExecuteMain(ICLRRuntimeHost2* pCLRRuntimeHost, PCALL_APPLICATION_MAIN_DA
 
     HostMain main_function;
     // looks like the Version in the assembly is mandatory but the value does not matter
-    hr = pCLRRuntimeHost->CreateDelegate(domainId, L"dnx.coreclr.managed, Version=0.0.0.0", L"DomainManager", L"Execute", (INT_PTR*)&main_function);
+    hr = pCLRRuntimeHost->CreateDelegate(domainId, L"Microsoft.Dnx.Host.CoreClr, Version=0.0.0.0", L"DomainManager", L"Execute", (INT_PTR*)&main_function);
     if (FAILED(hr))
     {
         trace_writer.write(L"Failed to create main delegate", false);

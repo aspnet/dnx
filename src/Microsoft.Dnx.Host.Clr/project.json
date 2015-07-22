@@ -1,0 +1,22 @@
+{
+    "version": "1.0.0-*",
+    "compilationOptions": { "define": [ "TRACE" ], "allowUnsafe": true, "warningsAsErrors": true, "keyFile": "KeyFile.snk" },
+    "dependencies": {
+    },
+    "frameworks": {
+        "dnx451": { }
+    },
+    "compile": [
+        "../Microsoft.Dnx.Runtime.Sources/Impl/EnvironmentNames.cs",
+        "../Microsoft.Dnx.Runtime.Sources/Impl/Logger.cs",
+        "../Microsoft.Dnx.Runtime.Sources/Impl/Constants.cs",
+        "../Microsoft.Dnx.Runtime.Sources/Impl/FrameworkNames.cs",
+        "../Microsoft.Dnx.Host/FrameworkNameUtility.cs",
+        "../Microsoft.Dnx.Runtime/Json/**/*.cs"
+    ],
+    "scripts": {
+        "postbuild": [
+            "%project:Directory%/../../build/batchcopy \"%project:BuildOutputDir%/Debug/dnx451/*.*\" %project:Directory%/../../artifacts/build/dnx-clr-win-x86/bin"
+        ]
+    }
+}

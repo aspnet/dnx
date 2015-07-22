@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 14
-VisualStudioVersion = 14.0.23027.0
+VisualStudioVersion = 14.0.23107.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "scripts", "scripts", "{189961D1-DFF4-406A-9D42-39B61221A73A}"
 	ProjectSection(SolutionItems) = preProject
@@ -16,31 +16,31 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{AF391791-F4B
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "samples", "samples", "{3F68EE40-3C6A-4FD1-B057-0427A9BF88BE}"
 EndProject
-Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Microsoft.Framework.Runtime.Tests", "test\Microsoft.Framework.Runtime.Tests\Microsoft.Framework.Runtime.Tests.xproj", "{CCC1F7F8-8D3B-49C3-BAD4-17C784499AF1}"
+Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Microsoft.Dnx.Runtime.Tests", "test\Microsoft.Dnx.Runtime.Tests\Microsoft.Dnx.Runtime.Tests.xproj", "{CCC1F7F8-8D3B-49C3-BAD4-17C784499AF1}"
 EndProject
-Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Microsoft.Framework.Runtime.Abstractions", "src\Microsoft.Framework.Runtime.Abstractions\Microsoft.Framework.Runtime.Abstractions.xproj", "{34E6FF7E-EACA-4542-A569-812738A83EB8}"
+Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Microsoft.Dnx.Runtime.Abstractions", "src\Microsoft.Dnx.Runtime.Abstractions\Microsoft.Dnx.Runtime.Abstractions.xproj", "{34E6FF7E-EACA-4542-A569-812738A83EB8}"
 EndProject
-Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Microsoft.Framework.Runtime", "src\Microsoft.Framework.Runtime\Microsoft.Framework.Runtime.xproj", "{D346515A-D457-49AC-B74D-1A343D870449}"
+Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Microsoft.Dnx.Runtime", "src\Microsoft.Dnx.Runtime\Microsoft.Dnx.Runtime.xproj", "{D346515A-D457-49AC-B74D-1A343D870449}"
 EndProject
-Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Microsoft.Framework.Runtime.Sources", "src\Microsoft.Framework.Runtime.Sources\Microsoft.Framework.Runtime.Sources.xproj", "{FFA613E0-5AA7-4385-AD3D-B1B4ABD959FA}"
+Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Microsoft.Dnx.Runtime.Sources", "src\Microsoft.Dnx.Runtime.Sources\Microsoft.Dnx.Runtime.Sources.xproj", "{FFA613E0-5AA7-4385-AD3D-B1B4ABD959FA}"
 EndProject
-Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Microsoft.Framework.Runtime.Roslyn.Tests", "test\Microsoft.Framework.Runtime.Roslyn.Tests\Microsoft.Framework.Runtime.Roslyn.Tests.xproj", "{E2C080E8-EA5B-4F49-AFD8-2534C8F5CA78}"
+Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Microsoft.Dnx.Compilation.CSharp.Tests", "test\Microsoft.Dnx.Compilation.CSharp.Tests\Microsoft.Dnx.Compilation.CSharp.Tests.xproj", "{E2C080E8-EA5B-4F49-AFD8-2534C8F5CA78}"
 EndProject
-Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Microsoft.Framework.Runtime.Roslyn", "src\Microsoft.Framework.Runtime.Roslyn\Microsoft.Framework.Runtime.Roslyn.xproj", "{8B24A782-7A34-4258-B397-733C6728952C}"
+Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Microsoft.Dnx.Compilation.CSharp", "src\Microsoft.Dnx.Compilation.CSharp\Microsoft.Dnx.Compilation.CSharp.xproj", "{8B24A782-7A34-4258-B397-733C6728952C}"
 EndProject
-Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Microsoft.Framework.ApplicationHost", "src\Microsoft.Framework.ApplicationHost\Microsoft.Framework.ApplicationHost.xproj", "{7829F696-AFC4-4011-B9DE-6F1C24846D67}"
+Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Microsoft.Dnx.ApplicationHost", "src\Microsoft.Dnx.ApplicationHost\Microsoft.Dnx.ApplicationHost.xproj", "{7829F696-AFC4-4011-B9DE-6F1C24846D67}"
 EndProject
 Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Microsoft.Framework.CommandLineUtils.Sources", "src\Microsoft.Framework.CommandLineUtils.Sources\Microsoft.Framework.CommandLineUtils.Sources.xproj", "{C46A8C00-CD50-4478-8639-6A6CF8CDD05B}"
 EndProject
-Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Microsoft.Framework.DesignTimeHost", "src\Microsoft.Framework.DesignTimeHost\Microsoft.Framework.DesignTimeHost.xproj", "{B8208D93-75C4-44BF-80BC-DEB9678FA05E}"
+Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Microsoft.Dnx.DesignTimeHost", "src\Microsoft.Dnx.DesignTimeHost\Microsoft.Dnx.DesignTimeHost.xproj", "{B8208D93-75C4-44BF-80BC-DEB9678FA05E}"
 EndProject
-Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Microsoft.Framework.Project", "src\Microsoft.Framework.Project\Microsoft.Framework.Project.xproj", "{AE99F965-68E2-4E7A-947A-0D2C61992792}"
+Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Microsoft.Dnx.Project", "src\Microsoft.Dnx.Project\Microsoft.Dnx.Project.xproj", "{AE99F965-68E2-4E7A-947A-0D2C61992792}"
 EndProject
 Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "HelloWorld", "samples\HelloWorld\HelloWorld.xproj", "{BF98054D-21EB-46B2-994B-007B145D32A1}"
 EndProject
 Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "HelloShared", "samples\HelloShared\HelloShared.xproj", "{87F66056-D3D9-47E0-8F9B-DF385CCF03AD}"
 EndProject
-Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Microsoft.Framework.PackageManager", "src\Microsoft.Framework.PackageManager\Microsoft.Framework.PackageManager.xproj", "{0D752D1C-3985-4E27-92C4-0BEE72B1F58D}"
+Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Microsoft.Dnx.Tooling", "src\Microsoft.Dnx.Tooling\Microsoft.Dnx.Tooling.xproj", "{0D752D1C-3985-4E27-92C4-0BEE72B1F58D}"
 EndProject
 Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Microsoft.Framework.CommandLineUtils.Sources.Tests", "test\Microsoft.Framework.CommandLineUtils.Sources.Tests\Microsoft.Framework.CommandLineUtils.Sources.Tests.xproj", "{7E6564C3-04E3-418C-B96A-463FE2906F09}"
 EndProject
@@ -49,39 +49,39 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		global.json = global.json
 	EndProjectSection
 EndProject
-Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Microsoft.Framework.PackageManager.FunctionalTests", "test\Microsoft.Framework.PackageManager.FunctionalTests\Microsoft.Framework.PackageManager.FunctionalTests.xproj", "{C8404BE7-504E-477C-BC29-41A49B1BCBD9}"
+Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Microsoft.Dnx.Tooling.FunctionalTests", "test\Microsoft.Dnx.Tooling.FunctionalTests\Microsoft.Dnx.Tooling.FunctionalTests.xproj", "{C8404BE7-504E-477C-BC29-41A49B1BCBD9}"
 EndProject
-Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Microsoft.Framework.PackageManager.Tests", "test\Microsoft.Framework.PackageManager.Tests\Microsoft.Framework.PackageManager.Tests.xproj", "{C5E5BC63-37C2-44F1-B2CF-906CABE4B614}"
+Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Microsoft.Dnx.Tooling.Tests", "test\Microsoft.Dnx.Tooling.Tests\Microsoft.Dnx.Tooling.Tests.xproj", "{C5E5BC63-37C2-44F1-B2CF-906CABE4B614}"
 EndProject
-Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Microsoft.Framework.Runtime.Loader", "src\Microsoft.Framework.Runtime.Loader\Microsoft.Framework.Runtime.Loader.xproj", "{462B03CA-FF32-4DBE-AA73-9204F6AAAF66}"
+Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Microsoft.Dnx.Loader", "src\Microsoft.Dnx.Loader\Microsoft.Dnx.Loader.xproj", "{462B03CA-FF32-4DBE-AA73-9204F6AAAF66}"
 EndProject
-Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Microsoft.Framework.CommonTestUtils", "test\Microsoft.Framework.CommonTestUtils\Microsoft.Framework.CommonTestUtils.xproj", "{51E18677-FBF2-4CF1-AA6F-06C79DE619C2}"
+Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Microsoft.Dnx.CommonTestUtils", "test\Microsoft.Dnx.CommonTestUtils\Microsoft.Dnx.CommonTestUtils.xproj", "{51E18677-FBF2-4CF1-AA6F-06C79DE619C2}"
 EndProject
-Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Microsoft.Framework.ApplicationHost.FunctionalTests", "test\Microsoft.Framework.ApplicationHost.FunctionalTests\Microsoft.Framework.ApplicationHost.FunctionalTests.xproj", "{A296F9FC-B5BE-4C01-ACC1-8F3DD1549B72}"
+Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Microsoft.Dnx.ApplicationHost.FunctionalTests", "test\Microsoft.Dnx.ApplicationHost.FunctionalTests\Microsoft.Dnx.ApplicationHost.FunctionalTests.xproj", "{A296F9FC-B5BE-4C01-ACC1-8F3DD1549B72}"
 EndProject
-Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Microsoft.Framework.Runtime.Roslyn.Common", "src\Microsoft.Framework.Runtime.Roslyn.Common\Microsoft.Framework.Runtime.Roslyn.Common.xproj", "{AEC44752-F844-4396-A02A-160E66D1A78F}"
+Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Microsoft.Dnx.Compilation.CSharp.Common", "src\Microsoft.Dnx.Compilation.CSharp.Common\Microsoft.Dnx.Compilation.CSharp.Common.xproj", "{AEC44752-F844-4396-A02A-160E66D1A78F}"
 EndProject
-Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Microsoft.Framework.Runtime.FunctionalTests", "test\Microsoft.Framework.Runtime.FunctionalTests\Microsoft.Framework.Runtime.FunctionalTests.xproj", "{5DCA7A59-3B5E-4751-A563-B78201F97AE3}"
+Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Microsoft.Dnx.Runtime.FunctionalTests", "test\Microsoft.Dnx.Runtime.FunctionalTests\Microsoft.Dnx.Runtime.FunctionalTests.xproj", "{5DCA7A59-3B5E-4751-A563-B78201F97AE3}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "dnx.win32", "src\dnx\dnx.vcxproj", "{D0E2FB09-0FEA-478A-9068-D6AA420C6DED}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "dnx.clr", "src\dnx.clr\dnx.clr.vcxproj", "{0E4CB542-5E58-4D24-9CAE-DAC83D932DBE}"
 EndProject
-Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "dnx.clr.managed", "src\dnx.clr.managed\dnx.clr.managed.xproj", "{2D50D502-E10A-4B1C-8A49-DBC52B5CE9CB}"
+Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Microsoft.Dnx.Host.Clr", "src\Microsoft.Dnx.Host.Clr\Microsoft.Dnx.Host.Clr.xproj", "{2D50D502-E10A-4B1C-8A49-DBC52B5CE9CB}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "dnx.win32.coreclr", "src\dnx.coreclr\dnx.coreclr.vcxproj", "{1F31D08E-DE21-48F6-ADE3-315EA6268DD1}"
 EndProject
-Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "dnx.coreclr.managed", "src\dnx.coreclr.managed\dnx.coreclr.managed.xproj", "{1DEBD970-0B84-41F7-B247-D4E853432432}"
+Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Microsoft.Dnx.Host.CoreClr", "src\Microsoft.Dnx.Host.CoreClr\Microsoft.Dnx.Host.CoreClr.xproj", "{1DEBD970-0B84-41F7-B247-D4E853432432}"
 EndProject
-Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "dnx.host", "src\dnx.host\dnx.host.xproj", "{68048350-2996-4B4A-90BE-3405F088BD5A}"
+Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Microsoft.Dnx.Host", "src\Microsoft.Dnx.Host\Microsoft.Dnx.Host.xproj", "{68048350-2996-4B4A-90BE-3405F088BD5A}"
 EndProject
 Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Bootstrapper.FunctionalTests", "test\Bootstrapper.FunctionalTests\Bootstrapper.FunctionalTests.xproj", "{3F59A0B7-745D-4ADA-A913-6A1AD1A149C2}"
 EndProject
-Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Microsoft.Framework.DesignTimeHost.Abstractions", "src\Microsoft.Framework.DesignTimeHost.Abstractions\Microsoft.Framework.DesignTimeHost.Abstractions.xproj", "{88772B8E-1D5D-47D5-BDEB-1FDADA481845}"
+Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Microsoft.Dnx.DesignTimeHost.Abstractions", "src\Microsoft.Dnx.DesignTimeHost.Abstractions\Microsoft.Dnx.DesignTimeHost.Abstractions.xproj", "{88772B8E-1D5D-47D5-BDEB-1FDADA481845}"
 EndProject
-Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Microsoft.Framework.Runtime.Roslyn.Abstractions", "src\Microsoft.Framework.Runtime.Roslyn.Abstractions\Microsoft.Framework.Runtime.Roslyn.Abstractions.xproj", "{F8DC9AE8-54E1-443C-BF04-60AB0D169E3A}"
+Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Microsoft.Dnx.Compilation.Abstractions", "src\Microsoft.Dnx.Compilation.Abstractions\Microsoft.Dnx.Compilation.Abstractions.xproj", "{F8DC9AE8-54E1-443C-BF04-60AB0D169E3A}"
 EndProject
-Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Microsoft.Framework.DesignTimeHost.Tests", "test\Microsoft.Framework.DesignTimeHost.Tests\Microsoft.Framework.DesignTimeHost.Tests.xproj", "{D2B06998-051A-4BCA-B005-F9F03FA83AD6}"
+Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Microsoft.Dnx.DesignTimeHost.Tests", "test\Microsoft.Dnx.DesignTimeHost.Tests\Microsoft.Dnx.DesignTimeHost.Tests.xproj", "{D2B06998-051A-4BCA-B005-F9F03FA83AD6}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "submodules", "submodules", "{D825D676-CEB4-4D32-8049-A6383AD1929B}"
 EndProject
@@ -91,17 +91,17 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "FileSystem", "FileSystem", 
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{0661BDE0-6471-49A4-B902-F826D92EB96D}"
 EndProject
-Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Microsoft.Framework.Runtime.Compilation", "src\Microsoft.Framework.Runtime.Caching\Microsoft.Framework.Runtime.Compilation.xproj", "{7004FC14-677B-491F-A98B-E44C61733B46}"
+Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Microsoft.Dnx.Compilation.Caching", "src\Microsoft.Dnx.Compilation.Caching\Microsoft.Dnx.Compilation.Caching.xproj", "{7004FC14-677B-491F-A98B-E44C61733B46}"
 EndProject
-Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Microsoft.Framework.Runtime.Compilation.DesignTime", "src\Microsoft.Framework.Runtime.Compilation.DesignTime\Microsoft.Framework.Runtime.Compilation.DesignTime.xproj", "{19D39312-A4A4-449D-B53F-653F951A11F8}"
+Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Microsoft.Dnx.Compilation.DesignTime", "src\Microsoft.Dnx.Compilation.DesignTime\Microsoft.Dnx.Compilation.DesignTime.xproj", "{19D39312-A4A4-449D-B53F-653F951A11F8}"
 EndProject
-Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "dnx.host.Tests", "test\dnx.host.Tests\dnx.host.Tests.xproj", "{6F59A0B7-745D-4ADA-A913-6A1AD1AB49C2}"
+Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Microsoft.Dnx.Host.Tests", "test\Microsoft.Dnx.Host.Tests\Microsoft.Dnx.Host.Tests.xproj", "{6F59A0B7-745D-4ADA-A913-6A1AD1AB49C2}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "dnx.windows", "src\dnx.windows\dnx.windows.vcxproj", "{893A7304-50DB-4053-B864-E10BA3FFAC53}"
 EndProject
-Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Microsoft.Framework.Runtime.Internals", "src\Microsoft.Framework.Runtime.Internals\Microsoft.Framework.Runtime.Internals.xproj", "{C01597D9-7FA1-428B-B071-D0154F5003B9}"
+Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Microsoft.Dnx.Runtime.Internals", "src\Microsoft.Dnx.Runtime.Internals\Microsoft.Dnx.Runtime.Internals.xproj", "{C01597D9-7FA1-428B-B071-D0154F5003B9}"
 EndProject
-Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Microsoft.Framework.Runtime.CommandParsing.Sources", "src\Microsoft.Framework.Runtime.CommandParsing.Sources\Microsoft.Framework.Runtime.CommandParsing.Sources.xproj", "{069FE8A2-F99F-43AA-83A7-FD7C0143CEAA}"
+Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Microsoft.Dnx.Runtime.CommandParsing.Sources", "src\Microsoft.Dnx.Runtime.CommandParsing.Sources\Microsoft.Dnx.Runtime.CommandParsing.Sources.xproj", "{069FE8A2-F99F-43AA-83A7-FD7C0143CEAA}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "dnx.common", "src\dnx.common\dnx.common.vcxproj", "{1FE82655-09EE-456D-82B5-4625857FF53D}"
 EndProject
@@ -109,7 +109,7 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "gtest", "test\gtest-1.7.0\m
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "dnx.tests", "test\dnx.tests\dnx.tests.vcxproj", "{9387033F-B955-4794-A6FD-DAD700CBB6A5}"
 EndProject
-Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Microsoft.Framework.Runtime.Compilation.Abstractions", "src\Microsoft.Framework.Runtime.Compilation.Abstractions\Microsoft.Framework.Runtime.Compilation.Abstractions.xproj", "{EF257BFD-5517-48F5-B16D-407DF86F5A6D}"
+Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Microsoft.Dnx.Compilation.CSharp.Abstractions", "src\Microsoft.Dnx.Compilation.CSharp.Abstractions\Microsoft.Dnx.Compilation.CSharp.Abstractions.xproj", "{EF257BFD-5517-48F5-B16D-407DF86F5A6D}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

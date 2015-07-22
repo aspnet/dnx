@@ -3,7 +3,7 @@
     "exclude": "more/*.cs",
     "dependencies": {
         "HelloShared": { "version": "0.1-beta-*", "type": "build" },
-        "Microsoft.Framework.Runtime.Roslyn.Abstractions": "1.0.0-*"
+        "Microsoft.Dnx.Compilation.Abstractions": "1.0.0-*"
     },
     "commands": {
         "hi": "HelloWorld --mode amazing",

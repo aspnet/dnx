@@ -9,7 +9,7 @@ done
 DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
 
 if [ -f "$DIR/mono" ]; then
-  exec "$DIR/mono" $MONO_OPTIONS "$DIR/dnx.mono.managed.dll" "$@"
+  exec "$DIR/mono" $MONO_OPTIONS "$DIR/Microsoft.Dnx.Host.Mono.dll" "$@"
 else
-  exec mono $MONO_OPTIONS "$DIR/dnx.mono.managed.dll" "$@"
+  exec mono $MONO_OPTIONS "$DIR/Microsoft.Dnx.Host.Mono.dll" "$@"
 fi
