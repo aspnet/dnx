@@ -10,16 +10,16 @@ using Microsoft.Framework.Runtime.Compilation;
 
 namespace Microsoft.Framework.Runtime
 {
-    public class LibraryManager : ILibraryManager
+    public class LibraryManager : ILibraryManager, ILibraryExporter
     {
         private readonly FrameworkName _targetFramework;
         private readonly string _configuration;
         private readonly ILibraryExportProvider _libraryExportProvider;
         private readonly ICache _cache;
-        private readonly Func<IEnumerable<ILibraryInformation>> _libraryInfoThunk;
+        private readonly Func<IEnumerable<Library>> _libraryInfoThunk;
         private readonly object _initializeLock = new object();
-        private Dictionary<string, IEnumerable<ILibraryInformation>> _inverse;
-        private Dictionary<string, ILibraryInformation> _graph;
+        private Dictionary<string, IEnumerable<Library>> _inverse;
+        private Dictionary<string, Library> _graph;
         private bool _initialized;
 
         public LibraryManager(FrameworkName targetFramework,
@@ -37,7 +37,7 @@ namespace Microsoft.Framework.Runtime
 
         public LibraryManager(FrameworkName targetFramework,
                               string configuration,
-                              Func<IEnumerable<ILibraryInformation>> libraryInfoThunk,
+                              Func<IEnumerable<Library>> libraryInfoThunk,
                               ILibraryExportProvider libraryExportProvider,
                               ICache cache)
         {
@@ -48,7 +48,7 @@ namespace Microsoft.Framework.Runtime
             _cache = cache;
         }
 
-        private Dictionary<string, ILibraryInformation> LibraryLookup
+        private Dictionary<string, Library> LibraryLookup
         {
             get
             {
@@ -57,7 +57,7 @@ namespace Microsoft.Framework.Runtime
             }
         }
 
-        private Dictionary<string, IEnumerable<ILibraryInformation>> InverseGraph
+        private Dictionary<string, IEnumerable<Library>> InverseGraph
         {
             get
             {
@@ -66,34 +66,30 @@ namespace Microsoft.Framework.Runtime
             }
         }
 
-        public ILibraryExport GetLibraryExport(string name)
+        public LibraryExport GetLibraryExport(string name)
         {
             return GetLibraryExport(name, aspect: null);
         }
 
-        public ILibraryExport GetAllExports(string name)
+        public LibraryExport GetAllExports(string name)
         {
             return GetAllExports(name, aspect: null);
         }
 
-        public IEnumerable<ILibraryInformation> GetReferencingLibraries(string name)
+        public IEnumerable<Library> GetReferencingLibraries(string name)
         {
-            return GetReferencingLibraries(name, aspect: null);
+            IEnumerable<Library> libraries;
+            if (InverseGraph.TryGetValue(name, out libraries))
+            {
+                return libraries;
+            }
+
+            return Enumerable.Empty<Library>();
         }
 
-        public ILibraryInformation GetLibraryInformation(string name)
+        public Library GetLibraryInformation(string name)
         {
-            return GetLibraryInformation(name, aspect: null);
-        }
-
-        public IEnumerable<ILibraryInformation> GetLibraries()
-        {
-            return GetLibraries(aspect: null);
-        }
-
-        public ILibraryInformation GetLibraryInformation(string name, string aspect)
-        {
-            ILibraryInformation information;
+            Library information;
             if (LibraryLookup.TryGetValue(name, out information))
             {
                 return information;
@@ -102,29 +98,18 @@ namespace Microsoft.Framework.Runtime
             return null;
         }
 
-        public IEnumerable<ILibraryInformation> GetReferencingLibraries(string name, string aspect)
+        public IEnumerable<Library> GetLibraries()
         {
-            IEnumerable<ILibraryInformation> libraries;
-            if (InverseGraph.TryGetValue(name, out libraries))
-            {
-                return libraries;
-            }
-
-            return Enumerable.Empty<ILibraryInformation>();
+            EnsureInitialized();
+            return _graph.Values;
         }
 
-        public ILibraryExport GetLibraryExport(string name, string aspect)
+        public LibraryExport GetLibraryExport(string name, string aspect)
         {
-            return _libraryExportProvider.GetLibraryExport(new LibraryKey
-            {
-                Name = name,
-                TargetFramework = _targetFramework,
-                Configuration = _configuration,
-                Aspect = aspect,
-            });
+            return _libraryExportProvider.GetLibraryExport(new CompilationTarget(name, _targetFramework, _configuration, aspect));
         }
 
-        public ILibraryExport GetAllExports(string name, string aspect)
+        public LibraryExport GetAllExports(string name, string aspect)
         {
             var key = Tuple.Create(
                 nameof(LibraryManager),
@@ -134,26 +119,12 @@ namespace Microsoft.Framework.Runtime
                 _configuration,
                 aspect);
 
-            return _cache.Get<ILibraryExport>(key, ctx =>
-            ProjectExportProviderHelper.GetExportsRecursive(
-                _cache,
-                this,
-                _libraryExportProvider,
-                new LibraryKey
-                {
-                    Name = name,
-                    TargetFramework = _targetFramework,
-                    Configuration = _configuration,
-                    Aspect = aspect,
-                },
-                dependenciesOnly: false)
-            );
-        }
-
-        public IEnumerable<ILibraryInformation> GetLibraries(string aspect)
-        {
-            EnsureInitialized();
-            return _graph.Values;
+            return _cache.Get<LibraryExport>(key, ctx =>
+                ProjectExportProviderHelper.GetExportsRecursive(
+                    this,
+                    _libraryExportProvider,
+                    new CompilationTarget(name, _targetFramework, _configuration, aspect),
+                    dependenciesOnly: false));
         }
 
         private void EnsureInitialized()
@@ -173,14 +144,14 @@ namespace Microsoft.Framework.Runtime
 
         public void BuildInverseGraph()
         {
-            var firstLevelLookups = new Dictionary<string, List<ILibraryInformation>>(StringComparer.OrdinalIgnoreCase);
+            var firstLevelLookups = new Dictionary<string, List<Library>>(StringComparer.OrdinalIgnoreCase);
             var visited = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             foreach (var item in _graph.Values)
             {
                 Visit(item, firstLevelLookups, visited);
             }
 
-            _inverse = new Dictionary<string, IEnumerable<ILibraryInformation>>(StringComparer.OrdinalIgnoreCase);
+            _inverse = new Dictionary<string, IEnumerable<Library>>(StringComparer.OrdinalIgnoreCase);
 
             // Flatten the graph
             foreach (var item in _graph.Values)
@@ -189,8 +160,8 @@ namespace Microsoft.Framework.Runtime
             }
         }
 
-        private void Visit(ILibraryInformation item,
-                          Dictionary<string, List<ILibraryInformation>> inverse,
+        private void Visit(Library item,
+                          Dictionary<string, List<Library>> inverse,
                           HashSet<string> visited)
         {
             if (!visited.Add(item.Name))
@@ -200,10 +171,10 @@ namespace Microsoft.Framework.Runtime
 
             foreach (var dependency in item.Dependencies)
             {
-                List<ILibraryInformation> dependents;
+                List<Library> dependents;
                 if (!inverse.TryGetValue(dependency, out dependents))
                 {
-                    dependents = new List<ILibraryInformation>();
+                    dependents = new List<Library>();
                     inverse[dependency] = dependents;
                 }
 
@@ -212,17 +183,17 @@ namespace Microsoft.Framework.Runtime
             }
         }
 
-        private void Flatten(ILibraryInformation info,
-                             Dictionary<string, List<ILibraryInformation>> firstLevelLookups,
-                             HashSet<ILibraryInformation> parentDependents = null)
+        private void Flatten(Library info,
+                             Dictionary<string, List<Library>> firstLevelLookups,
+                             HashSet<Library> parentDependents = null)
         {
-            IEnumerable<ILibraryInformation> libraryDependents;
+            IEnumerable<Library> libraryDependents;
             if (!_inverse.TryGetValue(info.Name, out libraryDependents))
             {
-                List<ILibraryInformation> firstLevelDependents;
+                List<Library> firstLevelDependents;
                 if (firstLevelLookups.TryGetValue(info.Name, out firstLevelDependents))
                 {
-                    var allDependents = new HashSet<ILibraryInformation>();
+                    var allDependents = new HashSet<Library>();
                     foreach (var dependent in firstLevelDependents)
                     {
                         allDependents.Add(dependent);
@@ -232,20 +203,20 @@ namespace Microsoft.Framework.Runtime
                 }
                 else
                 {
-                    libraryDependents = Enumerable.Empty<ILibraryInformation>();
+                    libraryDependents = Enumerable.Empty<Library>();
                 }
                 _inverse[info.Name] = libraryDependents;
             }
             AddRange(parentDependents, libraryDependents);
         }
 
-        private static Func<IEnumerable<ILibraryInformation>> GetLibraryInfoThunk(DependencyWalker dependencyWalker)
+        private static Func<IEnumerable<Library>> GetLibraryInfoThunk(DependencyWalker dependencyWalker)
         {
             return () => dependencyWalker.Libraries
-                                         .Select(library => new LibraryInformation(library));
+                                         .Select(libraryDescription => libraryDescription.ToLibrary());
         }
 
-        private static void AddRange(HashSet<ILibraryInformation> source, IEnumerable<ILibraryInformation> values)
+        private static void AddRange(HashSet<Library> source, IEnumerable<Library> values)
         {
             if (source != null)
             {

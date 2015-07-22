@@ -15,7 +15,7 @@ namespace Microsoft.Framework.PackageManager.Publish
             _libraryDescription = libraryDescription;
         }
 
-        public Library Library { get { return _libraryDescription.Identity; } }
+        public LibraryIdentity Library { get { return _libraryDescription.Identity; } }
 
         public string TargetPath { get; private set; }
 

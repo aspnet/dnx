@@ -5,21 +5,19 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using Microsoft.Framework.Runtime.Caching;
 using Microsoft.Framework.Runtime.Compilation;
 
 namespace Microsoft.Framework.Runtime
 {
     public static class ProjectExportProviderHelper
     {
-        public static ILibraryExport GetExportsRecursive(
-            ICache cache,
+        public static LibraryExport GetExportsRecursive(
             ILibraryManager manager,
             ILibraryExportProvider libraryExportProvider,
-            ILibraryKey target,
+            CompilationTarget target,
             bool dependenciesOnly)
         {
-            return GetExportsRecursive(cache, manager, libraryExportProvider, target, libraryInformation =>
+            return GetExportsRecursive(manager, libraryExportProvider, target, libraryInformation =>
             {
                 if (dependenciesOnly)
                 {
@@ -30,12 +28,11 @@ namespace Microsoft.Framework.Runtime
             });
         }
 
-        public static ILibraryExport GetExportsRecursive(
-            ICache cache,
+        public static LibraryExport GetExportsRecursive(
             ILibraryManager manager,
             ILibraryExportProvider libraryExportProvider,
-            ILibraryKey target,
-            Func<ILibraryInformation, bool> include)
+            CompilationTarget target,
+            Func<Library, bool> include)
         {
             var dependencyStopWatch = Stopwatch.StartNew();
             Logger.TraceInformation("[{0}]: Resolving references for '{1}' {2}", typeof(ProjectExportProviderHelper).Name, target.Name, target.Aspect);
@@ -49,7 +46,7 @@ namespace Microsoft.Framework.Runtime
 
             var rootNode = new Node
             {
-                Library = manager.GetLibraryInformation(target.Name, target.Aspect)
+                Library = manager.GetLibraryInformation(target.Name)
             };
 
             queue.Enqueue(rootNode);
@@ -75,12 +72,12 @@ namespace Microsoft.Framework.Runtime
                         if (node.Parent == rootNode)
                         {
                             // Only export sources from first level dependencies
-                            ProcessExport(cache, libraryExport, references, sourceReferences);
+                            ProcessExport(libraryExport, references, sourceReferences);
                         }
                         else
                         {
                             // Skip source exports from anything else
-                            ProcessExport(cache, libraryExport, references, sourceReferences: null);
+                            ProcessExport(libraryExport, references, sourceReferences: null);
                         }
                     }
                 }
@@ -89,7 +86,7 @@ namespace Microsoft.Framework.Runtime
                 {
                     var childNode = new Node
                     {
-                        Library = manager.GetLibraryInformation(dependency, null),
+                        Library = manager.GetLibraryInformation(dependency),
                         Parent = node
                     };
 
@@ -109,8 +106,7 @@ namespace Microsoft.Framework.Runtime
                 sourceReferences.Values.ToList());
         }
 
-        private static void ProcessExport(ICache cache,
-                                          ILibraryExport export,
+        private static void ProcessExport(LibraryExport export,
                                           IDictionary<string, IMetadataReference> metadataReferences,
                                           IDictionary<string, ISourceReference> sourceReferences)
         {
@@ -132,7 +128,7 @@ namespace Microsoft.Framework.Runtime
 
         private class Node
         {
-            public ILibraryInformation Library { get; set; }
+            public Library Library { get; set; }
 
             public Node Parent { get; set; }
         }

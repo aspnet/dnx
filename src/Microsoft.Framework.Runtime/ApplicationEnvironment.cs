@@ -6,19 +6,26 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.Versioning;
 using System.Text;
+using Microsoft.Framework.Runtime.Sources.Impl;
 
 namespace Microsoft.Framework.Runtime
 {
+    /// <summary>
+    /// Application environment built by the application host.
+    /// </summary>
     public class ApplicationEnvironment : IApplicationEnvironment
     {
         private readonly Project _project;
         private readonly FrameworkName _targetFramework;
+        private readonly ApplicationGlobalData _globalData;
 
-        public ApplicationEnvironment(Project project, FrameworkName targetFramework, string configuration)
+        public ApplicationEnvironment(Project project, FrameworkName targetFramework, string configuration, IApplicationEnvironment hostEnvironment)
         {
             _project = project;
             _targetFramework = targetFramework;
             Configuration = configuration;
+
+            _globalData = new ApplicationGlobalData(hostEnvironment);
         }
 
         public string ApplicationName
@@ -37,7 +44,7 @@ namespace Microsoft.Framework.Runtime
             }
         }
 
-        public string Version
+        public string ApplicationVersion
         {
             get { return _project.Version.ToString(); }
         }
@@ -48,6 +55,16 @@ namespace Microsoft.Framework.Runtime
         public FrameworkName RuntimeFramework
         {
             get { return _targetFramework; }
+        }
+
+        public object GetData(string name)
+        {
+            return _globalData.GetData(name);
+        }
+
+        public void SetData(string name, object value)
+        {
+            _globalData.SetData(name, value);
         }
     }
 }

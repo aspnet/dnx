@@ -61,7 +61,7 @@ namespace dnx.host
                 var configuration = Environment.GetEnvironmentVariable("TARGET_CONFIGURATION") ?? Environment.GetEnvironmentVariable(EnvironmentNames.Configuration) ?? "Debug";
                 Logger.TraceInformation($"[{nameof(Bootstrapper)}] Runtime Framework: {targetFramework}");
 
-                var applicationEnvironment = new ApplicationEnvironment(applicationBaseDirectory,
+                var applicationEnvironment = new HostApplicationEnvironment(applicationBaseDirectory,
                                                                         targetFramework,
                                                                         configuration,
                                                                         assembly);

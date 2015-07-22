@@ -7,20 +7,20 @@ using System.IO;
 using System.Reflection;
 using Microsoft.Framework.Runtime.Compilation;
 
-namespace Microsoft.Framework.Runtime
+namespace Microsoft.Framework.Runtime.Compilation.DesignTime
 {
     internal class DesignTimeProjectReference : IMetadataProjectReference
     {
-        private readonly ICompilationProject _project;
+        private readonly CompilationProjectContext _project;
         private readonly CompileResponse _response;
 
-        public DesignTimeProjectReference(ICompilationProject project, CompileResponse response)
+        public DesignTimeProjectReference(CompilationProjectContext project, CompileResponse response)
         {
             _project = project;
             _response = response;
         }
 
-        public string Name { get { return _project.Name; } }
+        public string Name { get { return _project.Target.Name; } }
 
         public string ProjectPath
         {
@@ -30,7 +30,7 @@ namespace Microsoft.Framework.Runtime
             }
         }
 
-        public IDiagnosticResult GetDiagnostics()
+        public DiagnosticResult GetDiagnostics()
         {
             bool hasErrors = _response.Diagnostics.HasErrors();
             return new DiagnosticResult(hasErrors, _response.Diagnostics);
@@ -77,7 +77,7 @@ namespace Microsoft.Framework.Runtime
             }
         }
 
-        public IDiagnosticResult EmitAssembly(string outputPath)
+        public DiagnosticResult EmitAssembly(string outputPath)
         {
             throw new NotSupportedException();
         }

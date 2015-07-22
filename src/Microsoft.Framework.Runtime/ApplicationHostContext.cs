@@ -2,13 +2,16 @@
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Runtime.Versioning;
 using Microsoft.Framework.Runtime.Caching;
 using Microsoft.Framework.Runtime.Common.DependencyInjection;
 using Microsoft.Framework.Runtime.Compilation;
 using Microsoft.Framework.Runtime.DependencyManagement;
 using Microsoft.Framework.Runtime.FileSystem;
+using Microsoft.Framework.Runtime.Infrastructure;
 using Microsoft.Framework.Runtime.Loader;
 using NuGet;
 
@@ -17,8 +20,11 @@ namespace Microsoft.Framework.Runtime
     public class ApplicationHostContext
     {
         private readonly ServiceProvider _serviceProvider;
+        private readonly LockFile _lockFile;
+        private readonly Lazy<List<DiagnosticMessage>> _lockFileDiagnostics =
+            new Lazy<List<DiagnosticMessage>>();
 
-        public ApplicationHostContext(IServiceProvider serviceProvider,
+        public ApplicationHostContext(IServiceProvider hostServices,
                                       string projectDirectory,
                                       string packagesDirectory,
                                       string configuration,
@@ -34,7 +40,7 @@ namespace Microsoft.Framework.Runtime
             RootDirectory = Runtime.ProjectResolver.ResolveRootDirectory(ProjectDirectory);
             ProjectResolver = new ProjectResolver(ProjectDirectory, RootDirectory);
             FrameworkReferenceResolver = new FrameworkReferenceResolver();
-            _serviceProvider = new ServiceProvider(serviceProvider);
+            _serviceProvider = new ServiceProvider(hostServices);
 
             PackagesDirectory = packagesDirectory ?? NuGetDependencyResolver.ResolveRepositoryPath(RootDirectory);
 
@@ -64,12 +70,17 @@ namespace Microsoft.Framework.Runtime
             if (lockFileExists)
             {
                 var lockFileReader = new LockFileReader();
-                var lockFile = lockFileReader.Read(projectLockJsonPath);
-                validLockFile = lockFile.IsValidForProject(Project);
+                _lockFile = lockFileReader.Read(projectLockJsonPath);
+                validLockFile = _lockFile.IsValidForProject(project);
+
+                // When the only invalid part of a lock file is version number,
+                // we shouldn't skip lock file validation because we want to leave all dependencies unresolved, so that
+                // VS can be aware of this version mismatch error and automatically do restore
+                skipLockFileValidation = skipLockFileValidation && (_lockFile.Version == Constants.LockFileVersion);
 
                 if (validLockFile || skipLockFileValidation)
                 {
-                    NuGetDependencyProvider.ApplyLockFile(lockFile);
+                    NuGetDependencyProvider.ApplyLockFile(_lockFile);
 
                     DependencyWalker = new DependencyWalker(new IDependencyProvider[] {
                         ProjectDepencyProvider,
@@ -100,15 +111,30 @@ namespace Microsoft.Framework.Runtime
                 NuGetDependencyProvider
             });
 
-            LibraryManager = new LibraryManager(targetFramework, configuration, DependencyWalker,
+            // TODO(anurse): #2226 - Split LibraryManager implementation
+            var libraryManager = new LibraryManager(targetFramework, configuration, DependencyWalker,
                 LibraryExportProvider, cache);
+            LibraryManager = libraryManager;
+            LibraryExporter = libraryManager;
 
             AssemblyLoadContextFactory = loadContextFactory ?? new RuntimeLoadContextFactory(ServiceProvider);
             namedCacheDependencyProvider = namedCacheDependencyProvider ?? NamedCacheDependencyProvider.Empty;
 
+            // Create a new Application Environment for running the app. It needs a reference to the Host's application environment
+            // (if any), which we can get from the service provider we were given.
+            // If this is null (i.e. there is no Host Application Environment), that's OK, the Application Environment we are creating
+            // will just have it's own independent set of global data.
+            IApplicationEnvironment hostEnvironment = null;
+            if (hostServices != null)
+            {
+                hostEnvironment = (IApplicationEnvironment)hostServices.GetService(typeof(IApplicationEnvironment));
+            }
+            var appEnvironment = new ApplicationEnvironment(Project, targetFramework, configuration, hostEnvironment);
+
             // Default services
-            _serviceProvider.Add(typeof(IApplicationEnvironment), new ApplicationEnvironment(Project, targetFramework, configuration));
+            _serviceProvider.Add(typeof(IApplicationEnvironment), appEnvironment);
             _serviceProvider.Add(typeof(ILibraryManager), LibraryManager);
+            _serviceProvider.Add(typeof(ILibraryExporter), LibraryExporter);
             _serviceProvider.TryAdd(typeof(IFileWatcher), NoopWatcher.Instance);
 
             // Not exposed to the application layer
@@ -161,6 +187,7 @@ namespace Microsoft.Framework.Runtime
         public ILibraryExportProvider LibraryExportProvider { get; private set; }
 
         public ILibraryManager LibraryManager { get; private set; }
+        public ILibraryExporter LibraryExporter { get; private set; }
 
         public DependencyWalker DependencyWalker { get; private set; }
 
@@ -173,5 +200,32 @@ namespace Microsoft.Framework.Runtime
         public string ProjectDirectory { get; private set; }
 
         public string PackagesDirectory { get; private set; }
+
+        public IEnumerable<DiagnosticMessage> GetLockFileDiagnostics()
+        {
+            if (_lockFileDiagnostics.IsValueCreated)
+            {
+                return _lockFileDiagnostics.Value;
+            }
+
+            if (_lockFile == null)
+            {
+                _lockFileDiagnostics.Value.Add(new DiagnosticMessage(
+                    $"The expected lock file doesn't exist. Please run \"dnu restore\" to generate a new lock file.",
+                    Path.Combine(Project.ProjectDirectory, LockFileReader.LockFileName),
+                    DiagnosticMessageSeverity.Error));
+            }
+            else
+            {
+                _lockFileDiagnostics.Value.AddRange(_lockFile.GetDiagnostics(Project));
+            }
+            return _lockFileDiagnostics.Value;
+        }
+
+        public IEnumerable<DiagnosticMessage> GetAllDiagnostics()
+        {
+            return GetLockFileDiagnostics()
+                .Concat(DependencyWalker.GetDependencyDiagnostics(Project.ProjectFilePath));
+        }
     }
 }

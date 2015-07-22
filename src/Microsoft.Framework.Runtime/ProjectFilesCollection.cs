@@ -3,11 +3,12 @@
 
 using System.Collections.Generic;
 using System.Linq;
+using Microsoft.Framework.Runtime.Compilation;
 using Microsoft.Framework.Runtime.Json;
 
 namespace Microsoft.Framework.Runtime
 {
-    public class ProjectFilesCollection : IProjectFilesCollection
+    public class ProjectFilesCollection
     {
         public static readonly string[] DefaultCompileBuiltInPatterns = new[] { @"**/*.cs" };
         public static readonly string[] DefaultPublishExcludePatterns = new[] { @"obj/**/*.*", @"bin/**/*.*", @"**/.*/**" };
@@ -33,7 +34,7 @@ namespace Microsoft.Framework.Runtime
         internal ProjectFilesCollection(JsonObject rawProject,
                                         string projectDirectory,
                                         string projectFilePath,
-                                        ICollection<ICompilationMessage> warnings = null)
+                                        ICollection<DiagnosticMessage> warnings = null)
         {
             _projectDirectory = projectDirectory;
             _projectFilePath = projectFilePath;
@@ -53,11 +54,12 @@ namespace Microsoft.Framework.Runtime
                 _publishExcludePatterns = PatternsCollectionHelper.GetPatternsCollection(rawProject, projectDirectory, projectFilePath, legacyPublishExcludePatternName, DefaultPublishExcludePatterns);
                 if (warnings != null)
                 {
-                    warnings.Add(new FileFormatMessage(
+                    warnings.Add(new DiagnosticMessage(
                         string.Format("Property \"{0}\" is deprecated. It is replaced by \"{1}\".", legacyPublishExcludePatternName, "publishExclude"),
                         projectFilePath,
-                        CompilationMessageSeverity.Warning,
-                        legacyPublishExcludePatternToken));
+                        DiagnosticMessageSeverity.Warning,
+                        legacyPublishExcludePatternToken.Line,
+                        legacyPublishExcludePatternToken.Column));
                 }
             }
             else
@@ -142,5 +144,12 @@ namespace Microsoft.Framework.Runtime
         internal PatternGroup PreprocessPatternsGroup { get { return _preprocessPatternsGroup; } }
 
         internal PatternGroup ContentPatternsGroup { get { return _contentPatternsGroup; } }
+
+        internal CompilationFiles GetCompilationFiles()
+        {
+            return new CompilationFiles(
+                PreprocessSourceFiles,
+                SourceFiles);
+        }
     }
 }

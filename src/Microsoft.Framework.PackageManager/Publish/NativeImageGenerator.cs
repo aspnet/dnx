@@ -66,7 +66,7 @@ namespace Microsoft.Framework.PackageManager.Publish
                 );
 
             var result = new HashSet<string>();
-            var libraryNotInOutput = new List<Library>();
+            var libraryNotInOutput = new List<LibraryIdentity>();
             var missingOutputFolder = new List<string>();
 
             foreach (var dependency in resolver.PackageAssemblyLookup.Values)

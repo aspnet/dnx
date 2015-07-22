@@ -29,7 +29,7 @@ namespace Microsoft.Framework.Runtime
 
         private Project _project;
 
-        public DefaultHost(DefaultHostOptions options,
+        public DefaultHost(RuntimeOptions options,
                            IServiceProvider hostServices)
         {
             _projectDirectory = Path.GetFullPath(options.ApplicationBaseDirectory);
@@ -64,27 +64,27 @@ namespace Microsoft.Framework.Runtime
             // If there's any unresolved dependencies then complain
             if (unresolvedLibs.Any())
             {
+                var targetFrameworkShortName = VersionUtility.GetShortFrameworkName(_targetFramework);
+                var runtimeEnv = ServiceProvider.GetService(typeof(IRuntimeEnvironment)) as IRuntimeEnvironment;
+                var runtimeFrameworkInfo = $@"Current runtime target framework: '{_targetFramework} ({targetFrameworkShortName})'
+{runtimeEnv.GetFullVersion()}";
                 string exceptionMsg;
 
                 // If the main project cannot be resolved, it means the app doesn't support current target framework
                 // (i.e. project.json doesn't contain a framework that is compatible with target framework of current runtime)
                 if (unresolvedLibs.Any(l => string.Equals(l.Identity.Name, Project.Name)))
                 {
-                    var runtimeEnv = ServiceProvider.GetService(typeof(IRuntimeEnvironment)) as IRuntimeEnvironment;
-                    var shortName = VersionUtility.GetShortFrameworkName(_targetFramework);
                     exceptionMsg = $@"The current runtime target framework is not compatible with '{Project.Name}'.
 
-Current runtime Target Framework: '{_targetFramework} ({shortName})'
-  Type: {runtimeEnv.RuntimeType}
-  Architecture: {runtimeEnv.RuntimeArchitecture}
-  Version: {runtimeEnv.RuntimeVersion}
-
+{runtimeFrameworkInfo}
 Please make sure the runtime matches a framework specified in {Project.ProjectFileName}";
                 }
                 else
                 {
-                    exceptionMsg = _applicationHostContext.DependencyWalker.GetMissingDependenciesWarning(
-                        _targetFramework);
+                    var lockFileErrorMessage = string.Join(string.Empty,
+                        _applicationHostContext.GetLockFileDiagnostics().Select(x => $"{Environment.NewLine}{x.FormattedMessage}"));
+                    exceptionMsg = $@"{_applicationHostContext.DependencyWalker.GetMissingDependenciesWarning(_targetFramework)}{lockFileErrorMessage}
+{runtimeFrameworkInfo}";
                 }
 
                 throw new InvalidOperationException(exceptionMsg);
@@ -133,7 +133,7 @@ Please make sure the runtime matches a framework specified in {Project.ProjectFi
             _watcher.Dispose();
         }
 
-        private void Initialize(DefaultHostOptions options, IServiceProvider hostServices)
+        private void Initialize(RuntimeOptions options, IServiceProvider hostServices)
         {
             var cacheContextAccessor = new CacheContextAccessor();
             var cache = new Cache(cacheContextAccessor);
@@ -151,6 +151,7 @@ Please make sure the runtime matches a framework specified in {Project.ProjectFi
 
             Logger.TraceInformation("[{0}]: Project path: {1}", GetType().Name, _projectDirectory);
             Logger.TraceInformation("[{0}]: Project root: {1}", GetType().Name, _applicationHostContext.RootDirectory);
+            Logger.TraceInformation("[{0}]: Project configuration: {1}", GetType().Name, _applicationHostContext.Configuration);
             Logger.TraceInformation("[{0}]: Packages path: {1}", GetType().Name, _applicationHostContext.PackagesDirectory);
 
             _project = _applicationHostContext.Project;
@@ -175,10 +176,7 @@ Please make sure the runtime matches a framework specified in {Project.ProjectFi
             }
 
             _applicationHostContext.AddService(typeof(IApplicationShutdown), _shutdown);
-            _applicationHostContext.AddService(typeof(IRuntimeOptions), options);
-
-            // TODO: Get rid of this and just use the IFileWatcher
-            _applicationHostContext.AddService(typeof(IFileMonitor), _watcher);
+            _applicationHostContext.AddService(typeof(RuntimeOptions), options);
             _applicationHostContext.AddService(typeof(IFileWatcher), _watcher);
 
             if (options.CompilationServerPort.HasValue)

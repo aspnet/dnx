@@ -5,22 +5,18 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace Microsoft.Framework.Runtime
+namespace Microsoft.Framework.Runtime.Compilation.DesignTime
 {
     internal class DesignTimeCompilationException : Exception, ICompilationException
     {
-        public DesignTimeCompilationException(IList<CompilationMessage> compileResponseErrors)
+        public DesignTimeCompilationException(IList<DiagnosticMessage> compileResponseErrors)
             : base(string.Join(Environment.NewLine, compileResponseErrors.Select(e => e.FormattedMessage)))
         {
             CompilationFailures = compileResponseErrors.GroupBy(g => g.SourceFilePath, StringComparer.OrdinalIgnoreCase)
-                                                       .Select(g => new CompilationFailure
-                                                       {
-                                                           SourceFilePath = g.Key,
-                                                           Messages = g
-                                                       })
+                                                       .Select(g => new CompilationFailure(g.Key, g))
                                                        .ToArray();
         }
 
-        public IEnumerable<ICompilationFailure> CompilationFailures { get; }
+        public IEnumerable<CompilationFailure> CompilationFailures { get; }
     }
 }

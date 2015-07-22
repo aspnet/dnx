@@ -52,27 +52,27 @@ void SetConsoleHost()
     }
 }
 
-BOOL GetAppBasePathFromEnvironment(LPTSTR pszAppBase)
+bool GetAppBasePathFromEnvironment(LPTSTR pszAppBase)
 {
     DWORD dwAppBase = GetEnvironmentVariable(_T("DNX_APPBASE"), pszAppBase, MAX_PATH);
     return dwAppBase != 0 && dwAppBase < MAX_PATH;
 }
 
-BOOL GetFullPath(LPCTSTR szPath, LPTSTR pszNormalizedPath)
+bool GetFullPath(LPCTSTR szPath, LPTSTR pszNormalizedPath)
 {
     DWORD dwFullAppBase = GetFullPathName(szPath, MAX_PATH, pszNormalizedPath, nullptr);
     if (!dwFullAppBase)
     {
         ::_tprintf_s(_T("Failed to get full path of application base: %s\r\n"), szPath);
-        return FALSE;
+        return false;
     }
     else if (dwFullAppBase > MAX_PATH)
     {
         ::_tprintf_s(_T("Full path of application base is too long\r\n"));
-        return FALSE;
+        return false;
     }
 
-    return TRUE;
+    return true;
 }
 
 namespace

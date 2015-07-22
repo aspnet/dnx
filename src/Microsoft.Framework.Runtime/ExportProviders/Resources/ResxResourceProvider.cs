@@ -14,7 +14,7 @@ namespace Microsoft.Framework.Runtime
 {
     public class ResxResourceProvider : IResourceProvider
     {
-        public IList<ResourceDescriptor> GetResources(ICompilationProject project)
+        public IList<ResourceDescriptor> GetResources(Project project)
         {
             string root = PathUtility.EnsureTrailingSlash(project.ProjectDirectory);
             return project

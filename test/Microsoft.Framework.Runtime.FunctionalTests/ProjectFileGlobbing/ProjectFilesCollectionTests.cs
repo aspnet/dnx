@@ -517,7 +517,7 @@ namespace Microsoft.Framework.Runtime.FunctionalTests.ProjectFileGlobbing
                     ".hidden/sub/file2.hid");
         }
 
-        protected override IProjectFilesCollection CreateFilesCollection(string jsonContent, string projectDir)
+        protected override ProjectFilesCollection CreateFilesCollection(string jsonContent, string projectDir)
         {
             using (var reader = new StringReader(jsonContent))
             {

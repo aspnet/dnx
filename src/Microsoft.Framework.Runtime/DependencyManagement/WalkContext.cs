@@ -269,7 +269,7 @@ namespace Microsoft.Framework.Runtime
         private class Item
         {
             public LibraryDescription Description { get; set; }
-            public Library Key { get; set; }
+            public LibraryIdentity Key { get; set; }
             public IDependencyProvider Resolver { get; set; }
             public IEnumerable<LibraryDependency> Dependencies { get; set; }
         }

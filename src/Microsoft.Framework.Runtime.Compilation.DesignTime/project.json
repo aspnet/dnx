@@ -2,8 +2,7 @@
   "version": "1.0.0-*",
   "dependencies": {
     "Microsoft.Framework.Runtime.Sources": { "version": "1.0.0-*", "type": "build" },
-    "Microsoft.Framework.Runtime.Compilation.Sources": { "version": "1.0.0-*", "type": "build" },
-    "Microsoft.Framework.Runtime.Abstractions": "1.0.0-*"
+    "Microsoft.Framework.Runtime.Compilation.Abstractions": "1.0.0-*"
   },
   "compile": [
     "../Microsoft.Framework.Runtime/Json/*.cs"

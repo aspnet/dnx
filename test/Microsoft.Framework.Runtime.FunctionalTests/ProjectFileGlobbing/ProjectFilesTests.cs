@@ -8,7 +8,7 @@ namespace Microsoft.Framework.Runtime.FunctionalTests.ProjectFileGlobbing
 {
     public class ProjectFilesTests : ProjectFilesCollectionTests
     {
-        protected override IProjectFilesCollection CreateFilesCollection(string jsonContent, string projectDir)
+        protected override ProjectFilesCollection CreateFilesCollection(string jsonContent, string projectDir)
         {
             var project = Project.GetProject(
                 jsonContent,

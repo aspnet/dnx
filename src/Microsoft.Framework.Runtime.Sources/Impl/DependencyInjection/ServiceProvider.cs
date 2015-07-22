@@ -16,7 +16,7 @@ namespace Microsoft.Framework.Runtime.Common.DependencyInjection
         public ServiceProvider()
         {
             Add(typeof(IServiceProvider), this, includeInManifest: false);
-            Add(typeof(IServiceManifest), new ServiceManifest(this), includeInManifest: false);
+            Add(typeof(IRuntimeServices), new ServiceManifest(this), includeInManifest: false);
         }
 
         public ServiceProvider(IServiceProvider fallbackServiceProvider)
@@ -108,7 +108,7 @@ namespace Microsoft.Framework.Runtime.Common.DependencyInjection
             var services = _entries.Where(p => p.Value.IncludeInManifest)
                                    .Select(p => p.Key);
 
-            var fallbackManifest = _fallbackServiceProvider?.GetService(typeof(IServiceManifest)) as IServiceManifest;
+            var fallbackManifest = _fallbackServiceProvider?.GetService(typeof(IRuntimeServices)) as IRuntimeServices;
 
             if (fallbackManifest != null)
             {
@@ -124,7 +124,7 @@ namespace Microsoft.Framework.Runtime.Common.DependencyInjection
             public bool IncludeInManifest { get; set; }
         }
 
-        private class ServiceManifest : IServiceManifest
+        private class ServiceManifest : IRuntimeServices
         {
             private readonly ServiceProvider _serviceProvider;
 

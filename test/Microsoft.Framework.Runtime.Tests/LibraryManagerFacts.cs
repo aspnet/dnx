@@ -42,21 +42,21 @@ namespace Microsoft.Framework.Runtime.Tests
             Assert.Equal(expectedReferences, referencingLibraries.Select(y => y.Name).OrderBy(y => y));
         }
 
-        private static LibraryManager CreateManager(IEnumerable<ILibraryInformation> libraryInfo = null)
+        private static LibraryManager CreateManager(IEnumerable<Library> libraryInfo = null)
         {
             var frameworkName = new FrameworkName("Net45", new Version(4, 5, 1));
             libraryInfo = libraryInfo ?? new[]
             {
-                new LibraryInformation("Mvc.RenderingExtensions", new[] { "Mvc.Rendering" }),
-                new LibraryInformation("Mvc.Rendering", new[] { "DI", "Mvc.Core", "HttpAbstractions" }),
-                new LibraryInformation("DI", new[] { "Config" }),
-                new LibraryInformation("Mvc", new[] { "DI", "Mvc.Core", "HttpAbstractions", "Mvc.RenderingExtensions", "Mvc.ModelBinding" }),
-                new LibraryInformation("Mvc.Core", new[] { "DI", "HttpAbstractions", "Mvc.ModelBinding" }),
-                new LibraryInformation("Mvc.ModelBinding", new[] { "DI", "HttpAbstractions" }),
-                new LibraryInformation("HttpAbstractions", Enumerable.Empty<String>()),
-                new LibraryInformation("Hosting", new[] { "DI"}),
-                new LibraryInformation("Config", Enumerable.Empty<String>()),
-                new LibraryInformation("MyApp", new[] { "DI", "Hosting", "Mvc", "HttpAbstractions" })
+                new Library("Mvc.RenderingExtensions", new[] { "Mvc.Rendering" }),
+                new Library("Mvc.Rendering", new[] { "DI", "Mvc.Core", "HttpAbstractions" }),
+                new Library("DI", new[] { "Config" }),
+                new Library("Mvc", new[] { "DI", "Mvc.Core", "HttpAbstractions", "Mvc.RenderingExtensions", "Mvc.ModelBinding" }),
+                new Library("Mvc.Core", new[] { "DI", "HttpAbstractions", "Mvc.ModelBinding" }),
+                new Library("Mvc.ModelBinding", new[] { "DI", "HttpAbstractions" }),
+                new Library("HttpAbstractions", Enumerable.Empty<String>()),
+                new Library("Hosting", new[] { "DI"}),
+                new Library("Config", Enumerable.Empty<String>()),
+                new Library("MyApp", new[] { "DI", "Hosting", "Mvc", "HttpAbstractions" })
             };
             return new LibraryManager(frameworkName,
                                       "Debug",

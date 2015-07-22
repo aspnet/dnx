@@ -7,13 +7,13 @@ using System.Net;
 using System.Net.Sockets;
 using Microsoft.Framework.Runtime.Compilation;
 
-namespace Microsoft.Framework.Runtime
+namespace Microsoft.Framework.Runtime.Compilation.DesignTime
 {
     public class DesignTimeHostProjectCompiler : IProjectCompiler
     {
         private readonly IDesignTimeHostCompiler _compiler;
 
-        public DesignTimeHostProjectCompiler(IApplicationShutdown shutdown, IFileWatcher watcher, IRuntimeOptions runtimeOptions)
+        public DesignTimeHostProjectCompiler(IApplicationShutdown shutdown, IFileWatcher watcher, RuntimeOptions runtimeOptions)
         {
             // Using this ctor because it works on mono, this is hard coded to ipv4
             // right now. Mono will eventually have the dualmode overload
@@ -26,16 +26,15 @@ namespace Microsoft.Framework.Runtime
         }
 
         public IMetadataProjectReference CompileProject(
-            ICompilationProject project,
-            ILibraryKey target,
-            Func<ILibraryExport> referenceResolver,
+            CompilationProjectContext projectContext,
+            Func<LibraryExport> referenceResolver,
             Func<IList<ResourceDescriptor>> resourcesResolver)
         {
             // The target framework and configuration are assumed to be correct
             // in the design time process
-            var task = _compiler.Compile(project.ProjectDirectory, target);
+            var task = _compiler.Compile(projectContext.ProjectDirectory, projectContext.Target);
 
-            return new DesignTimeProjectReference(project, task.Result);
+            return new DesignTimeProjectReference(projectContext, task.Result);
         }
     }
 }

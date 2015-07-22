@@ -5,10 +5,10 @@
 #include "pal.h"
 #include "utils.h"
 
-
-int CallApplicationProcessMain(int argc, dnx::char_t* argv[], dnx::trace_writer& trace_writer);
-void FreeExpandedCommandLineArguments(int argc, dnx::char_t** ppszArgv);
-bool ExpandCommandLineArguments(int argc, dnx::char_t** ppszArgv, int& expanded_argc, dnx::char_t**& ppszExpandedArgv);
+int CallApplicationProcessMain(size_t argc, dnx::char_t* argv[], dnx::trace_writer& trace_writer);
+void FreeExpandedCommandLineArguments(size_t argc, dnx::char_t** ppszArgv);
+bool ExpandCommandLineArguments(size_t argc, dnx::char_t** ppszArgv, size_t& expanded_argc, dnx::char_t**& ppszExpandedArgv);
+bool strings_equal_ignore_case(const dnx::char_t* s1, const dnx::char_t* s2);
 
 #if defined(ARM)
 int wmain(int argc, wchar_t* argv[])
@@ -26,21 +26,21 @@ extern "C" int __stdcall DnxMain(int argc, wchar_t* argv[])
         {
             break;
         }
-        if (dnx::utils::strings_equal_ignore_case(argv[i], _X("--appbase")))
+        if (strings_equal_ignore_case(argv[i], _X("--appbase")))
         {
             //skip path argument
             ++i;
             continue;
         }
-        if (dnx::utils::strings_equal_ignore_case(argv[i], _X("--debug")))
+        if (strings_equal_ignore_case(argv[i], _X("--debug")))
         {
             WaitForDebuggerToAttach();
             break;
         }
     }
 
-    int nExpandedArgc = -1;
-    LPTSTR* ppszExpandedArgv = nullptr;
+    size_t nExpandedArgc = 0;
+    dnx::char_t** ppszExpandedArgv = nullptr;
     auto expanded = ExpandCommandLineArguments(argc - 1, &(argv[1]), nExpandedArgc, ppszExpandedArgv);
 
     auto trace_writer = dnx::trace_writer{ IsTracingEnabled() };

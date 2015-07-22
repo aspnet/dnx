@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using Microsoft.Framework.Runtime.Compilation;
 
 namespace Microsoft.Framework.Runtime.Caching
 {

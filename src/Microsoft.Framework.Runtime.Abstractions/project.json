@@ -3,15 +3,18 @@
     "description": "ASP.NET 5 interfaces to take advantage of capabilities exposed by the runtime.",
     "compilationOptions": { "warningsAsErrors": true },
     "frameworks": {
-        "dnx451": { },
+        "dnx451": {
+        },
         "dnxcore50": {
             "dependencies": {
+                "System.Collections": "4.0.10-beta-*",
+                "System.ComponentModel": "4.0.0-beta-*",
                 "System.IO": "4.0.10-beta-*",
+                "System.Linq": "4.0.0-beta-*",
                 "System.Reflection": "4.0.10-beta-*",
                 "System.Runtime": "4.0.20-beta-*",
                 "System.Runtime.Extensions": "4.0.10-beta-*",
-                "System.Threading.Tasks": "4.0.10-beta-*",
-                "System.ComponentModel": "4.0.0-beta-*"
+                "System.Threading.Tasks": "4.0.10-beta-*"
             }
         }
     },

@@ -15,6 +15,8 @@ using Microsoft.Framework.Runtime;
 using Microsoft.Framework.Runtime.Caching;
 using Microsoft.Framework.Runtime.Common.Impl;
 using Microsoft.Framework.Runtime.Compilation;
+using Microsoft.Framework.Runtime.Compilation.DesignTime;
+using Microsoft.Framework.Runtime.Infrastructure;
 using Microsoft.Framework.Runtime.Roslyn;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -181,7 +183,7 @@ namespace Microsoft.Framework.DesignTimeHost
             {
                 DrainInbox();
 
-                var allDiagnostics = new List<DiagnosticsMessage>();
+                var allDiagnostics = new List<DiagnosticsListMessage>();
 
                 if (ResolveDependencies())
                 {
@@ -412,7 +414,7 @@ namespace Microsoft.Framework.DesignTimeHost
                 GlobalJsonPath = state.GlobalJsonPath
             };
 
-            _local.ProjectDiagnostics = new DiagnosticsMessage(state.Diagnostics);
+            _local.ProjectDiagnostics = new DiagnosticsListMessage(state.Diagnostics);
 
             foreach (var project in state.Projects)
             {
@@ -445,7 +447,7 @@ namespace Microsoft.Framework.DesignTimeHost
                         FileReferences = project.DependencyInfo.References,
                         RawReferences = project.DependencyInfo.RawReferences
                     },
-                    DependencyDiagnostics = new DiagnosticsMessage(project.Diagnostics, frameworkData)
+                    DependencyDiagnostics = new DiagnosticsListMessage(project.Diagnostics, frameworkData)
                 };
 
                 _local.Projects[project.FrameworkName] = projectWorld;
@@ -480,7 +482,7 @@ namespace Microsoft.Framework.DesignTimeHost
                 {
                     projectCompilationChanged = UpdateProjectCompilation(project, out compilation);
 
-                    project.CompilationDiagnostics = new DiagnosticsMessage(
+                    project.CompilationDiagnostics = new DiagnosticsListMessage(
                         compilation.Diagnostics,
                         project.Sources.Framework);
                 }
@@ -522,7 +524,7 @@ namespace Microsoft.Framework.DesignTimeHost
 
                     if (project.CompilationDiagnostics == null)
                     {
-                        project.CompilationDiagnostics = new DiagnosticsMessage(
+                        project.CompilationDiagnostics = new DiagnosticsListMessage(
                             compilation.Diagnostics,
                             project.Sources.Framework);
                     }
@@ -562,7 +564,7 @@ namespace Microsoft.Framework.DesignTimeHost
 
         private bool UpdateProjectCompilation(ProjectWorld project, out ProjectCompilation compilation)
         {
-            var export = project.ApplicationHostContext.LibraryManager.GetLibraryExport(_local.ProjectInformation.Name);
+            var export = project.ApplicationHostContext.LibraryExporter.GetLibraryExport(_local.ProjectInformation.Name);
 
             ProjectCompilation oldCompilation;
             if (!_compilations.TryGetValue(project.TargetFramework, out oldCompilation) ||
@@ -597,7 +599,7 @@ namespace Microsoft.Framework.DesignTimeHost
             return false;
         }
 
-        private void SendOutgoingMessages(List<DiagnosticsMessage> diagnostics)
+        private void SendOutgoingMessages(List<DiagnosticsListMessage> diagnostics)
         {
             if (IsDifferent(_local.ProjectInformation, _remote.ProjectInformation))
             {
@@ -735,7 +737,7 @@ namespace Microsoft.Framework.DesignTimeHost
             }
         }
 
-        private void SendDiagnostics(IEnumerable<DiagnosticsMessage> allDiagnostics)
+        private void SendDiagnostics(IEnumerable<DiagnosticsListMessage> allDiagnostics)
         {
             Logger.TraceInformation($"[{nameof(ApplicationContext)}]: SendDiagnostics, {allDiagnostics.Count()} diagnostics, {_waitingForDiagnostics.Count()} waiting for diagnostics.");
 
@@ -746,12 +748,12 @@ namespace Microsoft.Framework.DesignTimeHost
 
             // Group all of the diagnostics into group by target framework
 
-            var messages = new List<DiagnosticsMessage>();
+            var messages = new List<DiagnosticsListMessage>();
 
             foreach (var g in allDiagnostics.GroupBy(g => g.Framework))
             {
                 var messageGroup = g.SelectMany(d => d.Diagnostics).ToList();
-                messages.Add(new DiagnosticsMessage(messageGroup, g.Key));
+                messages.Add(new DiagnosticsListMessage(messageGroup, g.Key));
             }
 
             var payload = JToken.FromObject(messages.Select(d => d.ConvertToJson(ProtocolVersion)));
@@ -910,18 +912,18 @@ namespace Microsoft.Framework.DesignTimeHost
             }
         }
 
-        private static JArray ConvertToJArray(IList<ICompilationMessage> diagnostics)
+        private static JArray ConvertToJArray(IList<DiagnosticMessage> diagnostics)
         {
             var values = diagnostics.Select(diagnostic => new JObject
             {
-                [nameof(ICompilationMessage.SourceFilePath)] = diagnostic.SourceFilePath,
-                [nameof(ICompilationMessage.Message)] = diagnostic.Message,
-                [nameof(ICompilationMessage.FormattedMessage)] = diagnostic.FormattedMessage,
-                [nameof(ICompilationMessage.Severity)] = (int)diagnostic.Severity,
-                [nameof(ICompilationMessage.StartColumn)] = diagnostic.StartColumn,
-                [nameof(ICompilationMessage.StartLine)] = diagnostic.StartLine,
-                [nameof(ICompilationMessage.EndColumn)] = diagnostic.EndColumn,
-                [nameof(ICompilationMessage.EndLine)] = diagnostic.EndLine,
+                [nameof(DiagnosticMessage.SourceFilePath)] = diagnostic.SourceFilePath,
+                [nameof(DiagnosticMessage.Message)] = diagnostic.Message,
+                [nameof(DiagnosticMessage.FormattedMessage)] = diagnostic.FormattedMessage,
+                [nameof(DiagnosticMessage.Severity)] = (int)diagnostic.Severity,
+                [nameof(DiagnosticMessage.StartColumn)] = diagnostic.StartColumn,
+                [nameof(DiagnosticMessage.StartLine)] = diagnostic.StartLine,
+                [nameof(DiagnosticMessage.EndColumn)] = diagnostic.EndColumn,
+                [nameof(DiagnosticMessage.EndLine)] = diagnostic.EndLine,
             });
 
             return new JArray(values);
@@ -959,7 +961,7 @@ namespace Microsoft.Framework.DesignTimeHost
             {
                 Frameworks = new List<FrameworkData>(),
                 Projects = new List<ProjectInfo>(),
-                Diagnostics = new List<ICompilationMessage>()
+                Diagnostics = new List<DiagnosticMessage>()
             };
 
             Project project;
@@ -1040,7 +1042,7 @@ namespace Microsoft.Framework.DesignTimeHost
                     CompilationSettings = project.GetCompilerOptions(frameworkName, configuration)
                                                  .ToCompilationSettings(frameworkName),
                     SourceFiles = dependencySources,
-                    Diagnostics = dependencyInfo.HostContext.DependencyWalker.GetDependencyDiagnostics(project.ProjectFilePath),
+                    Diagnostics = dependencyInfo.HostContext.GetAllDiagnostics().ToList(),
                     DependencyInfo = dependencyInfo
                 };
 
@@ -1189,16 +1191,10 @@ namespace Microsoft.Framework.DesignTimeHost
                 }
 
                 var exportWithoutProjects = ProjectExportProviderHelper.GetExportsRecursive(
-                     _cache,
-                     applicationHostContext.LibraryManager,
-                     applicationHostContext.LibraryExportProvider,
-                     new LibraryKey
-                     {
-                         Configuration = configuration,
-                         TargetFramework = frameworkName,
-                         Name = project.Name
-                     },
-                     library => library.Type != "Project");
+                    applicationHostContext.LibraryManager,
+                    applicationHostContext.LibraryExportProvider,
+                    new CompilationTarget(project.Name, frameworkName, configuration, aspect: null),
+                    library => library.Type != "Project");
 
                 foreach (var reference in exportWithoutProjects.MetadataReferences)
                 {
@@ -1299,7 +1295,7 @@ namespace Microsoft.Framework.DesignTimeHost
 
             public IList<ProjectInfo> Projects { get; set; }
 
-            public IList<ICompilationMessage> Diagnostics { get; set; }
+            public IList<DiagnosticMessage> Diagnostics { get; set; }
         }
 
         // Represents a project that should be used for intellisense
@@ -1317,7 +1313,7 @@ namespace Microsoft.Framework.DesignTimeHost
 
             public IList<string> SourceFiles { get; set; }
 
-            public IList<ICompilationMessage> Diagnostics { get; set; }
+            public IList<DiagnosticMessage> Diagnostics { get; set; }
 
             public DependencyInfo DependencyInfo { get; set; }
         }
@@ -1339,13 +1335,13 @@ namespace Microsoft.Framework.DesignTimeHost
 
         private class ProjectCompilation
         {
-            public ILibraryExport Export { get; set; }
+            public LibraryExport Export { get; set; }
 
             public IMetadataProjectReference ProjectReference { get; set; }
 
             public IDictionary<string, byte[]> EmbeddedReferences { get; set; }
 
-            public IList<ICompilationMessage> Diagnostics { get; set; }
+            public IList<DiagnosticMessage> Diagnostics { get; set; }
 
             public bool HasOutputs
             {
@@ -1378,17 +1374,6 @@ namespace Microsoft.Framework.DesignTimeHost
             public string Name { get; set; }
 
             public string TargetFramework { get; set; }
-
-            public string Configuration { get; set; }
-
-            public string Aspect { get; set; }
-        }
-
-        private class LibraryKey : ILibraryKey
-        {
-            public string Name { get; set; }
-
-            public FrameworkName TargetFramework { get; set; }
 
             public string Configuration { get; set; }
 

@@ -42,7 +42,7 @@ namespace Microsoft.Framework.PackageManager.Publish
 
         public bool Publish()
         {
-            var warnings = new List<ICompilationMessage>();
+            var warnings = new List<DiagnosticMessage>();
             Runtime.Project project;
             if (!Runtime.Project.TryGetProject(_options.ProjectDir, out project, warnings))
             {

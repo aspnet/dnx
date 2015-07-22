@@ -61,7 +61,7 @@ namespace Microsoft.Framework.Runtime
             return new LibraryDescription
             {
                 LibraryRange = libraryRange,
-                Identity = new Library
+                Identity = new LibraryIdentity
                 {
                     Name = name,
                     Version = version,
@@ -81,7 +81,7 @@ namespace Microsoft.Framework.Runtime
             }
         }
 
-        public ILibraryExport GetLibraryExport(ILibraryKey target)
+        public LibraryExport GetLibraryExport(CompilationTarget target)
         {
             string assemblyPath;
             if (_resolvedPaths.TryGetValue(target.Name, out assemblyPath))

@@ -1,4 +1,5 @@
 ﻿using System;
+using Microsoft.Framework.Runtime.Infrastructure;
 
 namespace Microsoft.Framework.Runtime.Loader
 {

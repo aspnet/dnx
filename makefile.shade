@@ -79,6 +79,7 @@ var MANAGED_PROJECTS = '${FindAllProjects(
     "Microsoft.Framework.Runtime",
     "Microsoft.Framework.Runtime.Caching",
     "Microsoft.Framework.Runtime.Abstractions",
+    "Microsoft.Framework.Runtime.Compilation.Abstractions",
     "Microsoft.Framework.Runtime.Compilation.DesignTime",
     "Microsoft.Framework.Runtime.CommandParsing.Sources",
     "Microsoft.Framework.Runtime.Sources",
@@ -363,7 +364,6 @@ var CAN_BUILD_ONECORE = '${Directory.Exists(WIN10_SDK_LIB) && Directory.GetFiles
             Path.Combine("src", BOOTSTRAPPER_FOLDER_NAME, "pal.unix.cpp"),
             Path.Combine("src", BOOTSTRAPPER_FOLDER_NAME, "pal.linux.cpp"),
             Path.Combine("src", BOOTSTRAPPER_COMMON_FOLDER_NAME, "utils.cpp"),
-            Path.Combine("src", BOOTSTRAPPER_FOLDER_NAME, "tchar.cpp"),
         };
 
         Directory.CreateDirectory(soOutputDir);
@@ -404,7 +404,6 @@ var CAN_BUILD_ONECORE = '${Directory.Exists(WIN10_SDK_LIB) && Directory.GetFiles
             Path.Combine("src", BOOTSTRAPPER_FOLDER_NAME, "pal.unix.cpp"),
             Path.Combine("src", BOOTSTRAPPER_FOLDER_NAME, "pal.darwin.cpp"),
             Path.Combine("src", BOOTSTRAPPER_COMMON_FOLDER_NAME, "utils.cpp"),
-            Path.Combine("src", BOOTSTRAPPER_FOLDER_NAME, "tchar.cpp"),
         };
 
         Directory.CreateDirectory(soOutputDir);

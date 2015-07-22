@@ -114,7 +114,7 @@ class Program
 
         [Theory]
         [MemberData(nameof(RuntimeComponents))]
-        public void BootstrapperInvokesApplicationHostWithInferredAppBase_ProjectDirAsArgument(string flavor, string os, string architecture)
+        public void BootstrapperInvokesApplicationHostWithExplicitAppBase(string flavor, string os, string architecture)
         {
             var runtimeHomeDir = _fixture.GetRuntimeHomeDir(flavor, os, architecture);
 
@@ -125,7 +125,7 @@ class Program
                 string stdOut, stdErr;
                 var exitCode = BootstrapperTestUtils.ExecBootstrapper(
                     runtimeHomeDir,
-                    arguments: string.Format("{0} run", testAppPath),
+                    arguments: $"--appbase {testAppPath} Microsoft.Framework.ApplicationHost run",
                     stdOut: out stdOut,
                     stdErr: out stdErr,
                     environment: new Dictionary<string, string> { { EnvironmentNames.Trace, null } });
@@ -142,6 +142,39 @@ command
 ", stdOut);
             }
         }
+
+        [Theory]
+        [MemberData(nameof(RuntimeComponents))]
+        public void BootstrapperInvokesApplicationHostWithNoAppbase(string flavor, string os, string architecture)
+        {
+            var runtimeHomeDir = _fixture.GetRuntimeHomeDir(flavor, os, architecture);
+
+            using (var tempSamplesDir = TestUtils.PrepareTemporarySamplesFolder(runtimeHomeDir))
+            {
+                var testAppPath = Path.Combine(tempSamplesDir, "HelloWorld");
+
+                string stdOut, stdErr;
+                var exitCode = BootstrapperTestUtils.ExecBootstrapper(
+                    runtimeHomeDir,
+                    arguments: "run",
+                    stdOut: out stdOut,
+                    stdErr: out stdErr,
+                    environment: new Dictionary<string, string> { { EnvironmentNames.Trace, null } },
+                    workingDir: testAppPath);
+
+                Assert.Equal(0, exitCode);
+                Assert.Equal(@"Hello World!
+Hello, code!
+I
+can
+customize
+the
+default
+command
+", stdOut);
+            }
+        }
+
 
         [Theory]
         [MemberData(nameof(RuntimeComponents))]

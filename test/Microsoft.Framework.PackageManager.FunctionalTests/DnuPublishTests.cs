@@ -21,8 +21,11 @@ namespace Microsoft.Framework.PackageManager.FunctionalTests
         private readonly string _outputDirName = "PublishOutput";
         private readonly PackageManagerFunctionalTestFixture _fixture;
 
+        // null is an option which represents the situation when configuration option is omit from command line
+        private static readonly string[] ConfigurationOptions = new string[] { "Debug", "Release", null };
+
         private static readonly string BatchFileTemplate = @"
-@""{0}{1}.exe"" --appbase ""%~dp0approot\src\{2}"" Microsoft.Framework.ApplicationHost {3} %*
+@""{0}{1}.exe"" --appbase ""%~dp0approot\src\{2}"" Microsoft.Framework.ApplicationHost --configuration {3} {4} %*
 ";
 
         private static readonly string BashScriptTemplate = @"#!/usr/bin/env bash
@@ -37,7 +40,7 @@ DIR=""$( cd -P ""$( dirname ""$SOURCE"" )"" && pwd )""
 
 export SET {0}=""$DIR/approot/src/{1}""
 
-exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@""".Replace("\r\n", "\n");
+exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost --configuration {4} {5} ""$@""".Replace("\r\n", "\n");
 
         private static readonly string BasicLockFileTemplate = @"{
   ""locked"": false,
@@ -65,6 +68,20 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
             get
             {
                 return TestUtils.GetRuntimeComponentsCombinations();
+            }
+        }
+
+        public static IEnumerable<object[]> RuntimeComponentsWithConfigurationOptions
+        {
+            get
+            {
+                foreach (var combination in RuntimeComponents)
+                {
+                    foreach (var configuration in ConfigurationOptions)
+                    {
+                        yield return combination.Concat(new object[] { configuration }).ToArray();
+                    }
+                }
             }
         }
 
@@ -1359,8 +1376,8 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
         }
 
         [Theory]
-        [MemberData(nameof(RuntimeComponents))]
-        public void GenerateBatchFilesAndBashScriptsWithoutPublishedRuntime(string flavor, string os, string architecture)
+        [MemberData(nameof(RuntimeComponentsWithConfigurationOptions))]
+        public void GenerateBatchFilesAndBashScriptsWithoutPublishedRuntime(string flavor, string os, string architecture, string configuration)
         {
             var runtimeHomeDir = _fixture.GetRuntimeHomeDir(flavor, os, architecture);
 
@@ -1400,11 +1417,21 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
                     { EnvironmentNames.Packages, Path.Combine(testEnv.ProjectPath, "packages") }
                 };
 
+                var arguments = $"--out {testEnv.PublishOutputDirPath}";
+                if (configuration != null)
+                {
+                    arguments += $" --configuration {configuration}";
+                }
+                else
+                {
+                    // default value "Debug" is always set. this variable is used in verification later.
+                    configuration = "Debug";
+                }
+
                 var exitCode = DnuTestUtils.ExecDnu(
                     runtimeHomeDir,
                     subcommand: "publish",
-                    arguments: string.Format("--out {0}",
-                        testEnv.PublishOutputDirPath),
+                    arguments: arguments,
                     environment: environment,
                     workingDir: testEnv.ProjectPath);
                 Assert.Equal(0, exitCode);
@@ -1437,12 +1464,12 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
                     .WithFileContents(Path.Combine("approot", "global.json"), @"{
   ""packages"": ""packages""
 }")
-                    .WithFileContents("run.cmd", BatchFileTemplate, string.Empty, Constants.BootstrapperExeName, testEnv.ProjectName, "run")
-                    .WithFileContents("kestrel.cmd", BatchFileTemplate, string.Empty, Constants.BootstrapperExeName, testEnv.ProjectName, "kestrel")
+                    .WithFileContents("run.cmd", BatchFileTemplate, string.Empty, Constants.BootstrapperExeName, testEnv.ProjectName, configuration, "run")
+                    .WithFileContents("kestrel.cmd", BatchFileTemplate, string.Empty, Constants.BootstrapperExeName, testEnv.ProjectName, configuration, "kestrel")
                     .WithFileContents("run",
-                        BashScriptTemplate, EnvironmentNames.AppBase, testEnv.ProjectName, string.Empty, Constants.BootstrapperExeName, "run")
+                        BashScriptTemplate, EnvironmentNames.AppBase, testEnv.ProjectName, string.Empty, Constants.BootstrapperExeName, configuration, "run")
                     .WithFileContents("kestrel",
-                        BashScriptTemplate, EnvironmentNames.AppBase, testEnv.ProjectName, string.Empty, Constants.BootstrapperExeName, "kestrel");
+                        BashScriptTemplate, EnvironmentNames.AppBase, testEnv.ProjectName, string.Empty, Constants.BootstrapperExeName, configuration, "kestrel");
 
                 Assert.True(expectedOutputDir.MatchDirectoryOnDisk(testEnv.PublishOutputDirPath,
                     compareFileContents: true));
@@ -1450,8 +1477,8 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
         }
 
         [Theory]
-        [MemberData(nameof(RuntimeComponents))]
-        public void GenerateBatchFilesAndBashScriptsWithPublishedRuntime(string flavor, string os, string architecture)
+        [MemberData(nameof(RuntimeComponentsWithConfigurationOptions))]
+        public void GenerateBatchFilesAndBashScriptsWithPublishedRuntime(string flavor, string os, string architecture, string configuration)
         {
             var runtimeHomeDir = _fixture.GetRuntimeHomeDir(flavor, os, architecture);
 
@@ -1501,11 +1528,21 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
                     { EnvironmentNames.Trace, "1" }
                 };
 
+                var arguments = $"--out {testEnv.PublishOutputDirPath} --runtime {runtimeName}";
+                if (configuration != null)
+                {
+                    arguments += $" --configuration {configuration}";
+                }
+                else
+                {
+                    // default value "Debug" is always set. this variable is used in verification later.
+                    configuration = "Debug";
+                }
+
                 var exitCode = DnuTestUtils.ExecDnu(
                     runtimeHomeDir,
                     subcommand: "publish",
-                    arguments: string.Format("--out {0} --runtime {1}",
-                        testEnv.PublishOutputDirPath, runtimeName),
+                    arguments: arguments,
                     environment: environment,
                     workingDir: testEnv.ProjectPath);
                 Assert.Equal(0, exitCode);
@@ -1545,12 +1582,12 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
                     .WithFileContents(Path.Combine("approot", "global.json"), @"{
   ""packages"": ""packages""
 }")
-                    .WithFileContents("run.cmd", BatchFileTemplate, batchFileBinPath, Constants.BootstrapperExeName, testEnv.ProjectName, "run")
-                    .WithFileContents("kestrel.cmd", BatchFileTemplate, batchFileBinPath, Constants.BootstrapperExeName, testEnv.ProjectName, "kestrel")
+                    .WithFileContents("run.cmd", BatchFileTemplate, batchFileBinPath, Constants.BootstrapperExeName, testEnv.ProjectName, configuration, "run")
+                    .WithFileContents("kestrel.cmd", BatchFileTemplate, batchFileBinPath, Constants.BootstrapperExeName, testEnv.ProjectName, configuration, "kestrel")
                     .WithFileContents("run",
-                        BashScriptTemplate, EnvironmentNames.AppBase, testEnv.ProjectName, bashScriptBinPath, Constants.BootstrapperExeName, "run")
+                        BashScriptTemplate, EnvironmentNames.AppBase, testEnv.ProjectName, bashScriptBinPath, Constants.BootstrapperExeName, configuration, "run")
                     .WithFileContents("kestrel",
-                        BashScriptTemplate, EnvironmentNames.AppBase, testEnv.ProjectName, bashScriptBinPath, Constants.BootstrapperExeName, "kestrel")
+                        BashScriptTemplate, EnvironmentNames.AppBase, testEnv.ProjectName, bashScriptBinPath, Constants.BootstrapperExeName, configuration, "kestrel")
                     .WithSubDir(Path.Combine("approot", "runtimes", runtimeName), runtimeSubDir);
 
                 Assert.True(expectedOutputDir.MatchDirectoryOnDisk(testEnv.PublishOutputDirPath,
@@ -1614,7 +1651,8 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
         ""NoDependencies.1.0.0.nupkg"",
         ""NoDependencies.1.0.0.nupkg.sha512"",
         ""NoDependencies.nuspec"",
-        ""root/project.json""
+        ""root/project.json"",
+        ""root/project.lock.json""
       ]
     }
   },
@@ -1634,13 +1672,10 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
                 var appPath = Path.Combine(tempDir, testApp);
                 TestUtils.CopyFolder(TestUtils.GetXreTestAppPath(testApp), appPath);
 
-                var lockFilePath = Path.Combine(appPath, LockFileFormat.LockFileName);
-                if (File.Exists(lockFilePath))
-                {
-                    File.Delete(lockFilePath);
-                }
+                var exitCode = DnuTestUtils.ExecDnu(runtimeHomeDir, "restore", appPath);
+                Assert.Equal(0, exitCode);
 
-                var exitCode = DnuTestUtils.ExecDnu(
+                exitCode = DnuTestUtils.ExecDnu(
                     runtimeHomeDir,
                     subcommand: "publish",
                     arguments: string.Format("--no-source --out {0}", publishOutputPath),
@@ -1813,7 +1848,10 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Framework.ApplicationHost {4} ""$@"
                     File.Delete(lockFilePath);
                 }
 
-                var exitCode = DnuTestUtils.ExecDnu(
+                var exitCode = DnuTestUtils.ExecDnu(runtimeHomeDir, "restore", appPath);
+                Assert.Equal(0, exitCode);
+
+                exitCode = DnuTestUtils.ExecDnu(
                     runtimeHomeDir,
                     subcommand: "publish",
                     arguments: $"--no-source --include-symbols --out {publishOutputPath}",

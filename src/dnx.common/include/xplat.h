@@ -18,6 +18,8 @@ typedef std::wstring xstring_t;
 
 #define PATH_SEPARATOR L"\\"
 
+#define x_strlen wcslen
+
 #else // non-windows
 
 typedef char char_t;
@@ -26,6 +28,8 @@ typedef std::string xstring_t;
 #define _X(s) s
 
 #define PATH_SEPARATOR "/"
+
+#define x_strlen strlen
 
 #endif
 }

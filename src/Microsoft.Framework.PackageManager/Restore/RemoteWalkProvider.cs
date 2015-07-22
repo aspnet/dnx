@@ -54,7 +54,7 @@ namespace Microsoft.Framework.PackageManager
 
             return new WalkProviderMatch
             {
-                Library = new Library
+                Library = new LibraryIdentity
                 {
                     Name = bestResult.Id,
                     Version = bestResult.Version

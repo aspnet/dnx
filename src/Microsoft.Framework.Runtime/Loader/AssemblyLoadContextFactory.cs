@@ -2,6 +2,7 @@
 using System.IO;
 using System.Reflection;
 using Microsoft.Framework.Runtime.Common.DependencyInjection;
+using Microsoft.Framework.Runtime.Infrastructure;
 
 namespace Microsoft.Framework.Runtime.Loader
 {

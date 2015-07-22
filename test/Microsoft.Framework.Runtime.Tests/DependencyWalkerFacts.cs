@@ -199,7 +199,7 @@ namespace Loader.Tests
 
             return new LibraryDescription
             {
-                Identity = new Library { Name = libraryRange.Name, Version = libraryRange.VersionRange.MinVersion },
+                Identity = new LibraryIdentity { Name = libraryRange.Name, Version = libraryRange.VersionRange.MinVersion },
                 Dependencies = entry.Dependencies
             };
         }
@@ -234,7 +234,7 @@ namespace Loader.Tests
         {
             var entry = new Entry
             {
-                Key = new Library
+                Key = new LibraryIdentity
                 {
                     Name = name,
                     Version = version == null ? null : new SemanticVersion(version)
@@ -253,7 +253,7 @@ namespace Loader.Tests
                 Dependencies = new List<LibraryDependency>();
             }
 
-            public Library Key { get; set; }
+            public LibraryIdentity Key { get; set; }
             public IList<LibraryDependency> Dependencies { get; private set; }
 
             public Entry Needs(string name, string version)

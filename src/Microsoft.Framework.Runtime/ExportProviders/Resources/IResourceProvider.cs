@@ -9,6 +9,6 @@ namespace Microsoft.Framework.Runtime
 {
     public interface IResourceProvider
     { 
-        IList<ResourceDescriptor> GetResources(ICompilationProject project);
+        IList<ResourceDescriptor> GetResources(Project project);
     }
 }

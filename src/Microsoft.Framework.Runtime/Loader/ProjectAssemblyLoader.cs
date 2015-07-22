@@ -11,16 +11,16 @@ namespace Microsoft.Framework.Runtime.Loader
     internal class ProjectAssemblyLoader : IAssemblyLoader
     {
         private readonly IProjectResolver _projectResolver;
-        private readonly ILibraryManager _libraryManager;
+        private readonly ILibraryExporter _libraryExporter;
         private readonly IAssemblyLoadContextAccessor _loadContextAccessor;
 
         public ProjectAssemblyLoader(IProjectResolver projectResovler,
                                      IAssemblyLoadContextAccessor loadContextAccessor,
-                                     ILibraryManager libraryManager)
+                                     ILibraryExporter libraryExporter)
         {
             _projectResolver = projectResovler;
             _loadContextAccessor = loadContextAccessor;
-            _libraryManager = libraryManager;
+            _libraryExporter = libraryExporter;
         }
 
         public Assembly Load(AssemblyName assemblyName)
@@ -52,7 +52,7 @@ namespace Microsoft.Framework.Runtime.Loader
                 return null;
             }
 
-            var export = _libraryManager.GetLibraryExport(name, aspect);
+            var export = _libraryExporter.GetLibraryExport(name, aspect);
 
             if (export == null)
             {

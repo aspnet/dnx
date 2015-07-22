@@ -6,7 +6,6 @@ using System.Diagnostics;
 using System.IO;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
 using System.Runtime.Versioning;
 using System.Threading;
 using dnx.host;
@@ -75,82 +74,92 @@ public class EntryPoint
             Environment.SetEnvironmentVariable(EnvironmentNames.AppBase, arguments[appbaseIndex + 1]);
         }
 
-        return RuntimeBootstrapper.Execute(arguments, 
+        return RuntimeBootstrapper.Execute(arguments,
             // NOTE(anurse): Mono is always "dnx451" (for now).
             new FrameworkName("DNX", new Version(4, 5, 1)));
     }
 
     private static string[] ExpandCommandLineArguments(string[] arguments)
     {
-        // If '--appbase' is already given and it has a value, don't need to expand
-        var appbaseIndex = arguments.ToList().FindIndex(arg =>
-            string.Equals(arg, "--appbase", StringComparison.OrdinalIgnoreCase));
-        if (appbaseIndex >= 0 && (appbaseIndex < arguments.Length - 1))
+        var parameterIdx = FindAppBaseOrNonHostOption(arguments);
+
+        // no non-bootstrapper parameters found or --appbase was found
+        if (parameterIdx < 0 || string.Equals(arguments[parameterIdx], "--appbase", StringComparison.OrdinalIgnoreCase))
         {
             return arguments;
         }
 
         var expandedArgs = new List<string>();
-
-        // Copy all arguments (options & values) as is before the project.json/assembly path
-        var pathArgIndex = -1;
-        while (++pathArgIndex < arguments.Length)
+        for (var i = 0; i < arguments.Count(); i++)
         {
-            var optionValNum = BootstrapperOptionValueNum(arguments[pathArgIndex]);
-
-            // It isn't a bootstrapper option, we treat it as the project.json/assembly path
-            if (optionValNum < 0)
+            if (i == parameterIdx)
             {
-                break;
-            }
-
-            // Copy the option
-            expandedArgs.Add(arguments[pathArgIndex]);
-
-            // Copy the value if the option has one
-            if (optionValNum > 0 && (++pathArgIndex < arguments.Length))
-            {
-                expandedArgs.Add(arguments[pathArgIndex]);
-            }
-        }
-
-        // No path argument was found, no expansion is needed
-        if (pathArgIndex >= arguments.Length)
-        {
-            return arguments;
-        }
-
-        // Start to expand appbase option from path
-        expandedArgs.Add("--appbase");
-
-        var pathArg = arguments[pathArgIndex];
-        if (pathArg.EndsWith(".exe", StringComparison.OrdinalIgnoreCase) ||
-            pathArg.EndsWith(".dll", StringComparison.OrdinalIgnoreCase))
-        {
-            // "dnx /path/App.dll arg1" --> "dnx --appbase /path/ /path/App.dll arg1"
-            // "dnx /path/App.exe arg1" --> "dnx --appbase /path/ /path/App.exe arg1"
-            expandedArgs.Add(Path.GetDirectoryName(Path.GetFullPath(pathArg)));
-            expandedArgs.AddRange(arguments.Skip(pathArgIndex));
-        }
-        else
-        {
-            var fileName = Path.GetFileName(pathArg);
-            if (string.Equals(fileName, "project.json", StringComparison.OrdinalIgnoreCase))
-            {
-                // "dnx /path/project.json run" --> "dnx --appbase /path/ Microsoft.Framework.ApplicationHost run"
-                expandedArgs.Add(Path.GetDirectoryName(Path.GetFullPath(pathArg)));
+                ExpandArgument(arguments[i], expandedArgs);
             }
             else
             {
-                // "dnx /path/ run" --> "dnx --appbase /path/ Microsoft.Framework.ApplicationHost run"
-                expandedArgs.Add(pathArg);
+                expandedArgs.Add(arguments[i]);
             }
-
-            expandedArgs.Add("Microsoft.Framework.ApplicationHost");
-            expandedArgs.AddRange(arguments.Skip(pathArgIndex + 1));
         }
 
         return expandedArgs.ToArray();
+    }
+
+    private static void ExpandArgument(string argument, List<string> expandedArgs)
+    {
+        expandedArgs.Add("--appbase");
+
+        if (argument.EndsWith(".dll", StringComparison.OrdinalIgnoreCase) ||
+            argument.EndsWith(".exe", StringComparison.OrdinalIgnoreCase))
+        {
+            // "dnx /path/App.dll arg1" --> "dnx --appbase /path/ /path/App.dll arg1"
+            // "dnx /path/App.exe arg1" --> "dnx --appbase /path/ /path/App.exe arg1"
+            expandedArgs.Add(Path.GetDirectoryName(Path.GetFullPath(argument)));
+            expandedArgs.Add(argument);
+
+            return;
+        }
+
+        if (argument.Equals(".", StringComparison.Ordinal))
+        {
+            // "dnx . run" --> "dnx --appbase . Microsoft.Framework.ApplicationHost run"
+            expandedArgs.Add(argument);
+            expandedArgs.Add("Microsoft.Framework.ApplicationHost");
+            return;
+        }
+
+        if (string.Equals(Path.GetFileName(argument), "project.json", StringComparison.OrdinalIgnoreCase))
+        {
+            expandedArgs.Add(Path.GetDirectoryName(Path.GetFullPath(argument)));
+            expandedArgs.Add("Microsoft.Framework.ApplicationHost");
+            return;
+        }
+
+        // "dnx run" --> "dnx --appbase . Microsoft.Framework.ApplicationHost run"
+        expandedArgs.Add(".");
+        expandedArgs.Add("Microsoft.Framework.ApplicationHost");
+        expandedArgs.Add(argument);
+    }
+
+    private static int FindAppBaseOrNonHostOption(string[] arguments)
+    {
+        for (var i = 0; i < arguments.Length; i++)
+        {
+            if (string.Equals(arguments[i], "--appbase", StringComparison.OrdinalIgnoreCase))
+            {
+                return i;
+            }
+
+            var option_arg_count = BootstrapperOptionValueNum(arguments[i]);
+            if (option_arg_count < 0)
+            {
+                return i;
+            }
+
+            i += option_arg_count;
+        }
+
+        return -1;
     }
 
     private static int BootstrapperOptionValueNum(string candidate)

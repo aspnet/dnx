@@ -72,7 +72,7 @@ namespace Microsoft.Framework.PackageManager.List
             var cache = new Cache(accessor);
 
             var hostContext = new ApplicationHostContext(
-                serviceProvider: null,
+                hostServices: null,
                 projectDirectory: _options.Project.ProjectDirectory,
                 packagesDirectory: null,
                 configuration: Configuration,

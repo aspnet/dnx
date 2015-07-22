@@ -87,7 +87,7 @@ namespace Microsoft.Framework.Runtime
             return new LibraryDescription
             {
                 LibraryRange = libraryRange,
-                Identity = new Library
+                Identity = new LibraryIdentity
                 {
                     Name = project.Name,
                     Version = project.Version
@@ -97,6 +97,7 @@ namespace Microsoft.Framework.Runtime
                 Framework = targetFrameworkInfo.FrameworkName,
                 Dependencies = dependencies,
                 LoadableAssemblies = loadableAssemblies,
+                Compatible = !unresolved,
                 Resolved = !unresolved
             };
         }

@@ -20,7 +20,7 @@ namespace Microsoft.Framework.PackageManager.Publish
             var cache = new Cache(cacheContextAccessor);
 
             var applicationHostContext = new ApplicationHostContext(
-                serviceProvider: null,
+                hostServices: null,
                 projectDirectory: projectDirectory,
                 packagesDirectory: null,
                 configuration: configuration,
