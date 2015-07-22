@@ -23,8 +23,19 @@ namespace Microsoft.Dnx.Host
 
         public Assembly Load(AssemblyName assemblyName)
         {
-            foreach (var path in _searchPaths)
+            // searchPaths could be in the following patterns
+            // C:\HelloWorld\bin\HelloWorld.dll or 
+            // C:\HelloWorld\bin\HelloWorld.exe 
+            // C:\HelloWorld\bin\fr-FR\HelloWorld.resources.dll
+            // C:\HelloWorld\bin\fr-FR\HelloWorld.resources.exe
+            foreach (var searchPath in _searchPaths)
             {
+                var path = searchPath;
+                if (!ResourcesHelper.IsResourceNeutralCulture(assemblyName))
+                {
+                    path = Path.Combine(path, assemblyName.CultureName);
+                }
+
                 foreach (var extension in _extensions)
                 {
                     var filePath = Path.Combine(path, assemblyName.Name + extension);

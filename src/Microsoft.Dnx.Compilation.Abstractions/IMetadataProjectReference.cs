@@ -16,7 +16,7 @@ namespace Microsoft.Dnx.Compilation
 
         IList<ISourceReference> GetSources();
 
-        Assembly Load(IAssemblyLoadContext loadContext);
+        Assembly Load(AssemblyName assemblyName, IAssemblyLoadContext loadContext);
 
         void EmitReferenceAssembly(Stream stream);
 

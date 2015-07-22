@@ -14,14 +14,14 @@ namespace Microsoft.Dnx.Compilation.CSharp
     public class CompilationContext
     {
         private readonly BeforeCompileContext _beforeCompileContext;
-        private readonly Func<IList<ResourceDescription>> _resourcesResolver;
+        private readonly Func<IList<ResourceDescriptor>> _resourcesResolver;
 
         public IList<IMetadataReference> References { get; set; }
 
         public CompilationContext(CSharpCompilation compilation,
                                   CompilationProjectContext compilationContext,
                                   IEnumerable<IMetadataReference> incomingReferences,
-                                  Func<IList<ResourceDescription>> resourcesResolver)
+                                  Func<IList<ResourceDescriptor>> resourcesResolver)
         {
             Project = compilationContext;
             Modules = new List<ICompileModule>();
@@ -38,14 +38,13 @@ namespace Microsoft.Dnx.Compilation.CSharp
                 Configuration = compilationContext.Target.Configuration
             };
 
-            _beforeCompileContext = new BeforeCompileContext
-            {
-                Compilation = compilation,
-                ProjectContext = projectContext,
-                Resources = new LazyList<ResourceDescription>(ResolveResources),
-                Diagnostics = new List<Diagnostic>(),
-                MetadataReferences = new List<IMetadataReference>(incomingReferences)
-            };
+            _beforeCompileContext = new BeforeCompileContext(
+                compilation,
+                projectContext,
+                ResolveResources,
+                () => new List<Diagnostic>(),
+                () => new List<IMetadataReference>(incomingReferences)
+             );
         }
 
         public CompilationProjectContext Project { get; }
@@ -63,7 +62,7 @@ namespace Microsoft.Dnx.Compilation.CSharp
             get { return _beforeCompileContext.Diagnostics; }
         }
 
-        public IList<ResourceDescription> Resources
+        public IList<ResourceDescriptor> Resources
         {
             get { return _beforeCompileContext.Resources; }
         }
@@ -78,7 +77,7 @@ namespace Microsoft.Dnx.Compilation.CSharp
             get { return _beforeCompileContext; }
         }
 
-        private IList<ResourceDescription> ResolveResources()
+        private IList<ResourceDescriptor> ResolveResources()
         {
             var sw = Stopwatch.StartNew();
             Logger.TraceInformation("[{0}]: Generating resources for {1}", nameof(CompilationContext), Project.Target.Name);
@@ -91,82 +90,6 @@ namespace Microsoft.Dnx.Compilation.CSharp
                                                                                    sw.ElapsedMilliseconds);
 
             return resources;
-        }
-
-        private class LazyList<T> : IList<T>
-        {
-            private Lazy<IList<T>> _list;
-
-            public LazyList(Func<IList<T>> initializer)
-            {
-                _list = new Lazy<IList<T>>(initializer);
-            }
-
-            public T this[int index]
-            {
-                get { return _list.Value[index]; }
-                set { _list.Value[index] = value; }
-            }
-
-            public int Count
-            {
-                get { return _list.Value.Count; }
-            }
-
-            public bool IsReadOnly
-            {
-                get { return _list.Value.IsReadOnly; }
-            }
-
-            public void Add(T item)
-            {
-                _list.Value.Add(item);
-            }
-
-            public void Clear()
-            {
-                _list.Value.Clear();
-            }
-
-            public bool Contains(T item)
-            {
-                return _list.Value.Contains(item);
-            }
-
-            public void CopyTo(T[] array, int arrayIndex)
-            {
-                _list.Value.CopyTo(array, arrayIndex);
-            }
-
-            public IEnumerator<T> GetEnumerator()
-            {
-                return _list.Value.GetEnumerator();
-            }
-
-            public int IndexOf(T item)
-            {
-                return _list.Value.IndexOf(item);
-            }
-
-            public void Insert(int index, T item)
-            {
-                _list.Value.Insert(index, item);
-            }
-
-            public bool Remove(T item)
-            {
-                return _list.Value.Remove(item);
-            }
-
-            public void RemoveAt(int index)
-            {
-                _list.Value.RemoveAt(index);
-            }
-
-            IEnumerator IEnumerable.GetEnumerator()
-            {
-                return _list.Value.GetEnumerator();
-            }
         }
     }
 }

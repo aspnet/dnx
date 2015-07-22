@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -131,6 +132,39 @@ namespace Microsoft.Dnx.Runtime
                         var name = Path.GetFileNameWithoutExtension(assemblyPath);
                         var path = Path.Combine(library.Path, assemblyPath);
                         var assemblyName = new AssemblyName(name);
+
+                        string replacementPath;
+                        if (ServicingTable.TryGetReplacement(
+                            library.Identity.Name,
+                            library.Identity.Version,
+                            assemblyPath,
+                            out replacementPath))
+                        {
+                            onResolveAssembly(packageDescription, assemblyName, replacementPath);
+                        }
+                        else
+                        {
+                            onResolveAssembly(packageDescription, assemblyName, path);
+                        }
+                    }
+
+                    foreach (var runtimeAssemblyPath in packageDescription.Target.ResourceAssemblies)
+                    {
+                        var assemblyPath = runtimeAssemblyPath.Path;
+                        var name = Path.GetFileNameWithoutExtension(assemblyPath);
+                        var path = Path.Combine(library.Path, assemblyPath);
+                        var assemblyName = new AssemblyName(name);
+                        string locale;
+                        if (runtimeAssemblyPath.Properties.TryGetValue("locale", out locale))
+                        {
+#if DNXCORE50
+                            assemblyName.CultureName = locale;
+#elif DNX451
+                            assemblyName.CultureInfo = new CultureInfo(locale);
+#else
+#error Unhandled target framework
+#endif
+                        }
 
                         string replacementPath;
                         if (ServicingTable.TryGetReplacement(

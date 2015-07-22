@@ -134,12 +134,7 @@ namespace Microsoft.Dnx.Compilation.CSharp
                 compilation,
                 projectContext,
                 incomingReferences,
-                () => resourcesResolver()
-                    .Select(res => new ResourceDescription(
-                        res.Name,
-                        res.StreamFactory,
-                        isPublic: true))
-                    .ToList());
+                resourcesResolver);
 
             // Apply strong-name settings
             ApplyStrongNameSettings(compilationContext);
@@ -239,7 +234,7 @@ namespace Microsoft.Dnx.Compilation.CSharp
             {
                 var modules = new List<ICompileModule>();
 
-                var preprocessAssembly = _loadContext.Load(target.Name + "!preprocess");
+                var preprocessAssembly = _loadContext.Load(new AssemblyName(target.Name + "!preprocess"));
 
                 foreach (var preprocessType in preprocessAssembly.ExportedTypes)
                 {

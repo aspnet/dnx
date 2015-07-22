@@ -137,13 +137,32 @@ namespace Microsoft.Dnx.Tooling
 
         public void AddLibs(PackageBuilder packageBuilder, string pattern)
         {
-            // Add everything in the output folder to the lib path
-            foreach (var path in Directory.EnumerateFiles(_outputPath, pattern))
+            AddLibs(packageBuilder, pattern, recursiveSearch: false);
+        }
+
+        public void AddLibs(PackageBuilder packageBuilder, string pattern, bool recursiveSearch)
+        {
+            // Look for .dll,.xml files in top directory
+            var searchOption = SearchOption.TopDirectoryOnly;
+            if (recursiveSearch)
             {
+                //for .resources.dll, search all directories
+                searchOption = SearchOption.AllDirectories;
+            }
+            // Add everything in the output folder to the lib path
+            foreach (var path in Directory.EnumerateFiles(_outputPath, pattern, searchOption))
+            {
+                var targetPath = Path.Combine("lib", _targetFrameworkFolder, Path.GetFileName(path));
+                if (!Path.GetDirectoryName(path).Equals(_outputPath))
+                {
+                    string folderName = PathUtility.GetDirectoryName(Path.GetDirectoryName(path));
+                    targetPath = Path.Combine("lib", _targetFrameworkFolder, folderName, Path.GetFileName(path));
+                }
+
                 packageBuilder.Files.Add(new PhysicalPackageFile
                 {
                     SourcePath = path,
-                    TargetPath = Path.Combine("lib", _targetFrameworkFolder, Path.GetFileName(path))
+                    TargetPath = targetPath
                 });
             }
         }

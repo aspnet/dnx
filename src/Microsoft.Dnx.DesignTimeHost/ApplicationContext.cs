@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Runtime.Versioning;
 using System.Threading;
 using Microsoft.Dnx.Compilation;
@@ -505,7 +506,7 @@ namespace Microsoft.Dnx.DesignTimeHost
                     {
                         var engine = new NonLoadingLoadContext();
 
-                        compilation.ProjectReference.Load(engine);
+                        compilation.ProjectReference.Load(new AssemblyName(_local.ProjectInformation.Name), engine);
 
                         compilation.AssemblyBytes = engine.AssemblyBytes ?? new byte[0];
                         compilation.PdbBytes = engine.PdbBytes ?? new byte[0];

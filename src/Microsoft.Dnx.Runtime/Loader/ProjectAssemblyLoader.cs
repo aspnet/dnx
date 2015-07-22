@@ -1,7 +1,9 @@
 // Copyright (c) .NET Foundation. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
+using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Reflection;
 using Microsoft.Dnx.Runtime.Compilation;
 
@@ -35,7 +37,6 @@ namespace Microsoft.Dnx.Runtime.Loader
             // aspect == "alternate"
             // and the more-text may be used to force a recompilation of an aspect that would
             // otherwise have been cached by some layer within Assembly.Load
-
             var name = assemblyName.Name;
             string aspect = null;
             var parts = name.Split(new[] { '!' }, 3);
@@ -43,6 +44,12 @@ namespace Microsoft.Dnx.Runtime.Loader
             {
                 name = parts[0];
                 aspect = parts[1];
+            }
+
+            if (!string.IsNullOrEmpty(assemblyName.CultureName) &&
+                Path.GetExtension(name).Equals(".resources", StringComparison.OrdinalIgnoreCase))
+            {
+                name = Path.GetFileNameWithoutExtension(name);
             }
 
             ProjectDescription project;
@@ -54,7 +61,8 @@ namespace Microsoft.Dnx.Runtime.Loader
             return _compilationEngine.LoadProject(
                 project.Project,
                 aspect,
-                loadContext);
+                loadContext,
+                assemblyName);
         }
     }
 }

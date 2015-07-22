@@ -367,6 +367,11 @@ namespace Microsoft.Dnx.Tooling.Publish
                         keep.Add(CombinePath(packagesDir, path));
                     }
 
+                    foreach (var path in library.ResourceAssemblies)
+                    {
+                        keep.Add(CombinePath(packagesDir, path));
+                    }
+
                     foreach (var specialFolder in specialFolders)
                     {
                         var specialFolderPath = CombinePath(packagesDir, specialFolder);
