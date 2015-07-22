@@ -28,7 +28,7 @@ namespace Microsoft.Dnx.Compilation.CSharp.Tests
                 () =>
                 {
                     resourceResolverInvoked = true;
-                    return new List<CodeAnalysis.ResourceDescription>();
+                    return new List<ResourceDescriptor>();
                 });
 
             Assert.NotNull(context.Modules);
