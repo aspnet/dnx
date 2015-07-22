@@ -20,7 +20,7 @@ namespace Microsoft.Framework.Runtime
         public const string ProjectFileName = "project.json";
 
         internal static readonly TypeInformation DefaultRuntimeCompiler = new TypeInformation("Microsoft.Framework.Runtime.Roslyn", "Microsoft.Framework.Runtime.Roslyn.RoslynProjectCompiler");
-        internal static readonly TypeInformation DefaultDesignTimeCompiler = new TypeInformation("Microsoft.Framework.Runtime.Compilation.DesignTime", "Microsoft.Framework.Runtime.DesignTimeHostProjectCompiler");
+        internal static readonly TypeInformation DefaultDesignTimeCompiler = new TypeInformation("Microsoft.Framework.Runtime.Compilation.DesignTime", "Microsoft.Framework.Runtime.Compilation.DesignTime.DesignTimeHostProjectCompiler");
 
         internal static TypeInformation DefaultCompiler = DefaultRuntimeCompiler;
 
