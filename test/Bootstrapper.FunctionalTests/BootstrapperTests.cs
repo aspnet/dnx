@@ -190,7 +190,7 @@ command
                 string stdOut, stdErr;
                 var exitCode = BootstrapperTestUtils.ExecBootstrapper(
                     runtimeHomeDir,
-                    arguments: string.Format("{0} run", testAppProjectFile),
+                    arguments: $"-p {testAppProjectFile} run",
                     stdOut: out stdOut,
                     stdErr: out stdErr,
                     environment: new Dictionary<string, string> { { EnvironmentNames.Trace, null } });
@@ -294,7 +294,7 @@ Hello, code!
                 string stdErr;
                 var exitCode = BootstrapperTestUtils.ExecBootstrapper(
                     runtimeHomeDir,
-                    arguments: ". run",
+                    arguments: "-p . run",
                     stdOut: out stdOut,
                     stdErr: out stdErr,
                     environment: new Dictionary<string, string> { { EnvironmentNames.Trace, null } },
@@ -352,7 +352,7 @@ Hello, code!
                 string stdErr;
                 var exitCode = BootstrapperTestUtils.ExecBootstrapper(
                     runtimeHomeDir,
-                    arguments: ". run",
+                    arguments: "--project . run",
                     stdOut: out stdOut,
                     stdErr: out stdErr,
                     environment: new Dictionary<string, string> { { EnvironmentNames.Trace, null } },
@@ -412,7 +412,7 @@ Hello, code!
                 string stdErr;
                 var exitCode = BootstrapperTestUtils.ExecBootstrapper(
                     runtimeHomeDir,
-                    arguments: ". run",
+                    arguments: "-p . run",
                     stdOut: out stdOut,
                     stdErr: out stdErr,
                     environment: new Dictionary<string, string> { { EnvironmentNames.Trace, null } },

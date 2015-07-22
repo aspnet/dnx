@@ -37,12 +37,12 @@ TEST(parameter_expansion, ExpandCommandLineArguments_should_not_expand_when_no_p
     ASSERT_EQ(nullptr, expanded_args);
 }
 
-TEST(parameter_expansion, ExpandCommandLineArguments_should_expand_dot)
+TEST(parameter_expansion, ExpandCommandLineArguments_should_no_specialcase_dot)
 {
     dnx::char_t* args[]
     { _X("."), _X("run") };
     std::vector<const dnx::char_t*> expected_expanded_args(
-    { _X("--appbase"), _X("."), _X("Microsoft.Dnx.ApplicationHost"), _X("run") });
+    { _X("--appbase"), _X("."), _X("Microsoft.Dnx.ApplicationHost"), _X("."), _X("run") });
 
     test_ExpandCommandLineArguments(args, true, expected_expanded_args);
 }
@@ -50,7 +50,7 @@ TEST(parameter_expansion, ExpandCommandLineArguments_should_expand_dot)
 TEST(parameter_expansion, ExpandCommandLineArguments_should_ignore_appbase_after_bootstrapper_commands)
 {
     dnx::char_t* args[]
-        { _X("."), _X("run"), _X("--appbase"), _X("C:\\temp") };
+        { _X("run"), _X("--appbase"), _X("C:\\temp") };
     std::vector<const dnx::char_t*> expected_expanded_args(
         { _X("--appbase"), _X("."), _X("Microsoft.Dnx.ApplicationHost"), _X("run"), _X("--appbase"), _X("C:\\temp") });
 
@@ -107,23 +107,23 @@ TEST(parameter_expansion, ExpandCommandLineArguments_should_expand_params_and_co
     test_ExpandCommandLineArguments(args, true, expected_expanded_args);
 }
 
-TEST(parameter_expansion, ExpandCommandLineArguments_should_expand_params_and_add_implicit_appbase_for_project_json)
+TEST(parameter_expansion, ExpandCommandLineArguments_should_not_specialcase_project_json)
 {
     dnx::char_t* args[]
     { _X("project.json"), _X("run") };
     std::vector<const dnx::char_t*> expected_expanded_args(
-    { _X("--appbase"), _X("."), _X("Microsoft.Dnx.ApplicationHost"), _X("run") });
+    { _X("--appbase"), _X("."), _X("Microsoft.Dnx.ApplicationHost"), _X("project.json"), _X("run") });
 
     test_ExpandCommandLineArguments(args, true, expected_expanded_args);
 }
 
-TEST(parameter_expansion, ExpandCommandLineArguments_should_expand_params_and_add_appbase_for_project_json_path)
+TEST(parameter_expansion, ExpandCommandLineArguments_should_not_specialcase_path_to_project_json)
 {
     dnx::char_t* args[]
     { _X("C:\\MyApp\\project.json"), _X("run") };
     std::vector<const dnx::char_t*> expected_expanded_args(
-    { _X("--appbase"), _X("C:\\MyApp\\"), _X("Microsoft.Dnx.ApplicationHost"), _X("run"), });
-
+    { _X("--appbase"), _X("."), _X("Microsoft.Dnx.ApplicationHost"), _X("C:\\MyApp\\project.json"), _X("run")});
+    
     test_ExpandCommandLineArguments(args, true, expected_expanded_args);
 }
 
@@ -149,10 +149,116 @@ TEST(parameter_expansion, ExpandCommandLineArguments_should_expand_implicit_appb
 
 TEST(parameter_expansion, ExpandCommandLineArguments_should_not_expand_if_appbase_parameter_value_missing)
 {
-    dnx::char_t* args[]
-    { _X("--port"), _X("1234"), _X("--appbase") };
+    dnx::char_t* args[] { _X("--port"), _X("1234"), _X("--appbase") };
     size_t expanded_arg_count;
     dnx::char_t** expanded_args = nullptr;
     ASSERT_FALSE(ExpandCommandLineArguments(3u, args, expanded_arg_count, expanded_args));
+    ASSERT_EQ(nullptr, expanded_args);
+}
+
+TEST(parameter_expansion, ExpandCommandLineArguments_should_expand_project_to_appbase_and_host)
+{
+    dnx::char_t* args[]
+    { _X("--project"), _X("MyFolder"), _X("cmd") };
+    std::vector<const dnx::char_t*> expected_expanded_args(
+    { _X("--appbase"), _X("MyFolder"), _X("Microsoft.Dnx.ApplicationHost"), _X("cmd") });
+
+    test_ExpandCommandLineArguments(args, true, expected_expanded_args);
+}
+
+TEST(parameter_expansion, ExpandCommandLineArguments_should_expand_p_to_appbase_and_host)
+{
+    dnx::char_t* args[]
+    { _X("-p"), _X("MyFolder"), _X("cmd") };
+    std::vector<const dnx::char_t*> expected_expanded_args(
+    { _X("--appbase"), _X("MyFolder"), _X("Microsoft.Dnx.ApplicationHost"), _X("cmd") });
+
+    test_ExpandCommandLineArguments(args, true, expected_expanded_args);
+}
+
+TEST(parameter_expansion, ExpandCommandLineArguments_should_expand_project_to_appbase_and_host_for_project_json)
+{
+    dnx::char_t* args[]
+    { _X("--project"), _X("project.json"), _X("cmd") };
+    std::vector<const dnx::char_t*> expected_expanded_args(
+    { _X("--appbase"), _X("."), _X("Microsoft.Dnx.ApplicationHost"), _X("cmd") });
+
+    test_ExpandCommandLineArguments(args, true, expected_expanded_args);
+}
+
+TEST(parameter_expansion, ExpandCommandLineArguments_should_expand_project_to_appbase_and_host_for_project_json_path)
+{
+    dnx::char_t* args[]
+    { _X("-p"), _X("C:\\MyApp\\project.json"), _X("cmd") };
+    std::vector<const dnx::char_t*> expected_expanded_args(
+    { _X("--appbase"), _X("C:\\MyApp\\"), _X("Microsoft.Dnx.ApplicationHost"), _X("cmd") });
+
+    test_ExpandCommandLineArguments(args, true, expected_expanded_args);
+}
+
+TEST(parameter_expansion, ExpandCommandLineArguments_expand_project_should_check_exact_project_json_name)
+{
+    dnx::char_t* args[]
+    { _X("-p"), _X("my_project.json"), _X("cmd") };
+    std::vector<const dnx::char_t*> expected_expanded_args(
+    { _X("--appbase"), _X("my_project.json"), _X("Microsoft.Dnx.ApplicationHost"), _X("cmd") });
+
+    test_ExpandCommandLineArguments(args, true, expected_expanded_args);
+}
+
+TEST(parameter_expansion, ExpandCommandLineArguments_expand_project_should_check_exact_project_json_name_in_path)
+{
+    dnx::char_t* args[]
+    { _X("-p"), _X("C:\\MyApp\\my_project.json"), _X("cmd") };
+    std::vector<const dnx::char_t*> expected_expanded_args(
+    { _X("--appbase"), _X("C:\\MyApp\\my_project.json"), _X("Microsoft.Dnx.ApplicationHost"), _X("cmd") });
+
+    test_ExpandCommandLineArguments(args, true, expected_expanded_args);
+}
+
+TEST(parameter_expansion, ExpandCommandLineArguments_should_ignore_project_after_bootstrapper_commands)
+{
+    dnx::char_t* args[]
+    { _X("run"), _X("--project"), _X("C:\\temp") };
+    std::vector<const dnx::char_t*> expected_expanded_args(
+    { _X("--appbase"), _X("."), _X("Microsoft.Dnx.ApplicationHost"), _X("run"), _X("--project"), _X("C:\\temp") });
+
+    test_ExpandCommandLineArguments(args, true, expected_expanded_args);
+}
+
+TEST(parameter_expansion, ExpandCommandLineArguments_should_ignore_p_after_bootstrapper_commands)
+{
+    dnx::char_t* args[]
+    { _X("run"), _X("-p"), _X("C:\\temp") };
+    std::vector<const dnx::char_t*> expected_expanded_args(
+    { _X("--appbase"), _X("."), _X("Microsoft.Dnx.ApplicationHost"), _X("run"), _X("-p"), _X("C:\\temp") });
+
+    test_ExpandCommandLineArguments(args, true, expected_expanded_args);
+}
+
+TEST(parameter_expansion, ExpandCommandLineArguments_should_not_expand_project_without_argument_value)
+{
+    dnx::char_t* args[] { _X("--project") };
+    size_t expanded_arg_count;
+    dnx::char_t** expanded_args = nullptr;
+    ASSERT_FALSE(ExpandCommandLineArguments(1u, args, expanded_arg_count, expanded_args));
+    ASSERT_EQ(nullptr, expanded_args);
+}
+
+TEST(parameter_expansion, ExpandCommandLineArguments_should_not_expand_p_without_argument_value)
+{
+    dnx::char_t* args[]{ _X("-p") };
+    size_t expanded_arg_count;
+    dnx::char_t** expanded_args = nullptr;
+    ASSERT_FALSE(ExpandCommandLineArguments(1u, args, expanded_arg_count, expanded_args));
+    ASSERT_EQ(nullptr, expanded_args);
+}
+
+TEST(parameter_expansion, ExpandCommandLineArguments_should_not_expand_if_both_p_and_appbase_present)
+{
+    dnx::char_t* args[]{ _X("-p"), _X("MyFolder"), _X("--appbase"), _X("App"), _X("--Microsoft.Dnx.ApplicationHost"), _X("cmd") };
+    size_t expanded_arg_count;
+    dnx::char_t** expanded_args = nullptr;
+    ASSERT_FALSE(ExpandCommandLineArguments(6u, args, expanded_arg_count, expanded_args));
     ASSERT_EQ(nullptr, expanded_args);
 }

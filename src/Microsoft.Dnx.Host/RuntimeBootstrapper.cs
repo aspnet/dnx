@@ -64,6 +64,8 @@ namespace Microsoft.Dnx.Host
 
             // These options were handled in the native code, but got passed through here.
             // We just need to capture them and clean them up.
+            var optionProject = app.Option("--project|-p <PATH>", "Path to the project.json file or the application folder. Defaults to the current folder if not provided.",
+                CommandOptionType.SingleValue);
             var optionAppbase = app.Option("--appbase <PATH>", "Application base directory path",
                 CommandOptionType.SingleValue);
             var optionLib = app.Option("--lib <LIB_PATHS>", "Paths used for library look-up",

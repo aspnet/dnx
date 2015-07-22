@@ -67,7 +67,9 @@ int BootstrapperOptionValueNum(const dnx::char_t* pszCandidate)
         strings_equal_ignore_case(pszCandidate, _X("--packages")) ||
         strings_equal_ignore_case(pszCandidate, _X("--configuration")) ||
         strings_equal_ignore_case(pszCandidate, _X("--framework")) ||
-        strings_equal_ignore_case(pszCandidate, _X("--port")))
+        strings_equal_ignore_case(pszCandidate, _X("--port")) ||
+        strings_equal_ignore_case(pszCandidate, _X("--project")) ||
+        strings_equal_ignore_case(pszCandidate, _X("-p")))
     {
         return 1;
     }
@@ -111,7 +113,7 @@ dnx::char_t* GetOptionValue(size_t argc, dnx::char_t* argv[], const dnx::char_t*
 {
     auto index = FindOption(argc, argv, optionName);
 
-    // no parameters or '--appbase' is the last value in the array or `--appbase` not found
+    // no parameters or '--{optionName}' is the last value in the array or `--{optionName}` not found
     if (argc == 0 || index >= argc - 1 || argv[index][0] != _X('-'))
     {
         return nullptr;
@@ -136,7 +138,26 @@ void AppendAppbaseFromFile(const dnx::char_t* path, std::vector<const dnx::char_
     }
 }
 
-void ExpandArgument(const dnx::char_t* value, std::vector<const dnx::char_t*>& expanded_args)
+void ExpandProject(const dnx::char_t* project_path, std::vector<const dnx::char_t*>& expanded_args)
+{
+    auto split_idx = split_path(project_path);
+
+    // note that we split the path first and check the file name to handle paths like c:\MyApp\my_project.json
+    // (`split_idx + 1` works fine since `split_path` returns -1 if it does not find `\` or '/')
+    if (strings_equal_ignore_case(project_path + split_idx + 1, _X("project.json")))
+    {
+        // "dnx /path/project.json run" --> "dnx --appbase /path/ Microsoft.Dnx.ApplicationHost run"
+        AppendAppbaseFromFile(project_path, expanded_args);
+        expanded_args.push_back(allocate_and_copy(_X("Microsoft.Dnx.ApplicationHost")));
+        return;
+    }
+
+    expanded_args.push_back(allocate_and_copy(_X("--appbase")));
+    expanded_args.push_back(allocate_and_copy(project_path));
+    expanded_args.push_back(allocate_and_copy(_X("Microsoft.Dnx.ApplicationHost")));
+}
+
+void ExpandNonHostArgument(const dnx::char_t* value, std::vector<const dnx::char_t*>& expanded_args)
 {
     if (string_ends_with_ignore_case(value, _X(".dll")) || string_ends_with_ignore_case(value, _X(".exe")))
     {
@@ -145,26 +166,6 @@ void ExpandArgument(const dnx::char_t* value, std::vector<const dnx::char_t*>& e
         // "dnx App.exe arg1" --> "dnx --appbase . App.exe arg1"
         AppendAppbaseFromFile(value, expanded_args);
         expanded_args.push_back(allocate_and_copy(value));
-
-        return;
-    }
-
-    if (strings_equal_ignore_case(value, _X(".")))
-    {
-        // "dnx . run" --> "dnx --appbase . Microsoft.Dnx.ApplicationHost run"
-        expanded_args.push_back(allocate_and_copy(_X("--appbase")));
-        expanded_args.push_back(allocate_and_copy(value));
-        expanded_args.push_back(allocate_and_copy(_X("Microsoft.Dnx.ApplicationHost")));
-
-        return;
-    }
-
-    auto split_idx = split_path(value);
-    if (string_ends_with_ignore_case(value + (split_idx < 0 ? 0 : split_idx), _X("project.json")))
-    {
-        // "dnx /path/project.json run" --> "dnx --appbase /path/ Microsoft.Dnx.ApplicationHost run"
-        AppendAppbaseFromFile(value, expanded_args);
-        expanded_args.push_back(allocate_and_copy(_X("Microsoft.Dnx.ApplicationHost")));
         return;
     }
 
@@ -177,20 +178,36 @@ void ExpandArgument(const dnx::char_t* value, std::vector<const dnx::char_t*>& e
 
 bool ExpandCommandLineArguments(size_t nArgc, dnx::char_t** ppszArgv, size_t& nExpandedArgc, dnx::char_t**& ppszExpandedArgv)
 {
-    auto pivot_parameter_idx = FindOption(nArgc, ppszArgv, _X("--appbase"));
+    auto param_idx = FindOption(nArgc, ppszArgv, _X("--appbase"));
 
     // either no non-bootstrapper option found or --appbase was found - in either case expansion is not needed
-    if (pivot_parameter_idx >= nArgc || ppszArgv[pivot_parameter_idx][0] == _X('-'))
+    if (param_idx >= nArgc || ppszArgv[param_idx][0] == _X('-'))
     {
         return false;
     }
 
+    bool arg_expanded = false;
     std::vector<const dnx::char_t*> expanded_args_temp;
     for (size_t source_idx = 0; source_idx < nArgc; source_idx++)
     {
-        if (source_idx == pivot_parameter_idx)
+        if (!arg_expanded)
         {
-            ExpandArgument(ppszArgv[source_idx], expanded_args_temp);
+            if (strings_equal_ignore_case(_X("-p"), ppszArgv[source_idx]) || (strings_equal_ignore_case(_X("--project"), ppszArgv[source_idx])))
+            {
+                // Note that ++source_idx is safe here since if we had a trailing -p/--project we would have exited
+                // before entering the loop because we wouldn't have found any non host option
+                ExpandProject(ppszArgv[++source_idx], expanded_args_temp);
+                arg_expanded = true;
+            }
+            else if (source_idx == param_idx)
+            {
+                ExpandNonHostArgument(ppszArgv[source_idx], expanded_args_temp);
+                arg_expanded = true;
+            }
+            else
+            {
+                expanded_args_temp.push_back(allocate_and_copy(ppszArgv[source_idx]));
+            }
         }
         else
         {

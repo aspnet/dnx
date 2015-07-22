@@ -41,7 +41,7 @@ namespace Microsoft.Dnx.ApplicationHost
             string stdOut, stdErr;
             var exitCode = BootstrapperTestUtils.ExecBootstrapper(
                 runtimeHomeDir,
-                arguments: ".",
+                arguments: string.Empty,
                 stdOut: out stdOut,
                 stdErr: out stdErr);
 
@@ -57,7 +57,7 @@ namespace Microsoft.Dnx.ApplicationHost
             string stdOut, stdErr;
             var exitCode = BootstrapperTestUtils.ExecBootstrapper(
                 runtimeHomeDir,
-                arguments: ". --help",
+                arguments: "--help",
                 stdOut: out stdOut,
                 stdErr: out stdErr);
 
@@ -73,7 +73,7 @@ namespace Microsoft.Dnx.ApplicationHost
             string stdOut, stdErr;
             var exitCode = BootstrapperTestUtils.ExecBootstrapper(
                 runtimeHomeDir,
-                arguments: ". --version",
+                arguments: "--version",
                 stdOut: out stdOut,
                 stdErr: out stdErr);
 
