@@ -97,6 +97,7 @@ namespace Microsoft.Framework.Runtime
                 Framework = targetFrameworkInfo.FrameworkName,
                 Dependencies = dependencies,
                 LoadableAssemblies = loadableAssemblies,
+                Compatible = !unresolved,
                 Resolved = !unresolved
             };
         }
