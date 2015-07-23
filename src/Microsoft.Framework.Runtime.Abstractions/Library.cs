@@ -33,7 +33,7 @@ namespace Microsoft.Framework.Runtime
         public string Type { get; }
 
         /// <summary>
-        /// Gets a list of dependencies for the library. The dependencies are names are other <see cref="ILibrary"/> objects.
+        /// Gets a list of dependencies for the library. The dependencies are names of other <see cref="Library"/> objects.
         /// </summary>
         public IEnumerable<string> Dependencies { get; }
 
