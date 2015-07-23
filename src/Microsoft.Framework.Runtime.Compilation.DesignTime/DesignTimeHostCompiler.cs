@@ -76,8 +76,7 @@ namespace Microsoft.Framework.Runtime.Compilation.DesignTime
             int contextId;
             if (!contexts.TryGetValue(projectPath, out contextId))
             {
-                // This should never happen
-                throw new InvalidOperationException();
+                throw new InvalidOperationException($"The context of the project at {projectPath} could not be determined. It could be caused by multiple global.json files specifying different versions of the SDK for the same project.");
             }
 
             _queue.Send(new GetCompiledAssemblyMessage
