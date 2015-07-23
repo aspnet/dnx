@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Microsoft.Framework.PackageManager.Restore.NuGet;
 using Microsoft.Framework.Runtime;
@@ -13,6 +14,15 @@ namespace Microsoft.Framework.PackageManager
 {
     public static class PackageSourceUtils
     {
+        // Fragment of regex from https://tools.ietf.org/html/rfc3986#page-50
+        public static bool IsLocalFileSystem(this PackageSource source)
+        {
+            Uri url;
+
+            // It's a file system path if: The URI creation fails, or the URI is a file URI
+            return !Uri.TryCreate(source.Source, UriKind.Absolute, out url) || url.IsFile;
+        }
+
         public static List<PackageSource> GetEffectivePackageSources(IPackageSourceProvider sourceProvider,
             IEnumerable<string> sources, IEnumerable<string> fallbackSources)
         {
@@ -30,7 +40,8 @@ namespace Microsoft.Framework.PackageManager
         public static IPackageFeed CreatePackageFeed(PackageSource source, bool noCache, bool ignoreFailedSources,
             Reports reports)
         {
-            if (new Uri(source.Source).IsFile)
+            // Check if the feed is a URL
+            if (source.IsLocalFileSystem())
             {
                 return PackageFolderFactory.CreatePackageFolderFromPath(source.Source, ignoreFailedSources, reports);
             }
