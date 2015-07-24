@@ -45,7 +45,7 @@ namespace Microsoft.Framework.PackageManager.FunctionalTests
   ""version"": ""1.0.0-*"",
   ""dependencies"": {},
   ""frameworks"": {
-    ""net45+win+wpa81+wp80"": {
+    ""net45+win"": {
       ""wrappedProject"": ""../../LibraryBeta.PCL/LibraryBeta.PCL.csproj"",
       ""bin"": {
         ""assembly"": ""../../LibraryBeta.PCL/obj/{configuration}/LibraryBeta.dll"",
@@ -57,13 +57,6 @@ namespace Microsoft.Framework.PackageManager.FunctionalTests
       ""bin"": {
         ""assembly"": ""../../LibraryBeta.PCL.Desktop/obj/{configuration}/LibraryBeta.dll"",
         ""pdb"": ""../../LibraryBeta.PCL.Desktop/obj/{configuration}/LibraryBeta.pdb""
-      }
-    },
-    ""wpa81"": {
-      ""wrappedProject"": ""../../LibraryBeta.PCL.Phone/LibraryBeta.PCL.Phone.csproj"",
-      ""bin"": {
-        ""assembly"": ""../../LibraryBeta.PCL.Phone/obj/{configuration}/LibraryBeta.dll"",
-        ""pdb"": ""../../LibraryBeta.PCL.Phone/obj/{configuration}/LibraryBeta.pdb""
       }
     }
   }
@@ -77,8 +70,6 @@ namespace Microsoft.Framework.PackageManager.FunctionalTests
                 var libBetaPclCsprojPath = Path.Combine(testSolutionDir, "LibraryBeta.PCL", "LibraryBeta.PCL.csproj");
                 var libBetaPclDesktopCsprojPath = Path.Combine(
                     testSolutionDir, "LibraryBeta.PCL.Desktop", "LibraryBeta.PCL.Desktop.csproj");
-                var libBetaPclPhoneCsprojPath = Path.Combine(
-                    testSolutionDir, "LibraryBeta.PCL.Phone", "LibraryBeta.PCL.Phone.csproj");
                 var libBetaJsonPath = Path.Combine(testSolutionDir, "src", "LibraryBeta", "project.json");
                 var globalJsonPath = Path.Combine(testSolutionDir, "global.json");
 
@@ -92,14 +83,8 @@ namespace Microsoft.Framework.PackageManager.FunctionalTests
                     subcommand: "wrap",
                     arguments: string.Format("\"{0}\" --msbuild \"{1}\"", libBetaPclDesktopCsprojPath, _msbuildPath));
 
-                var betaPhoneExitCode = DnuTestUtils.ExecDnu(
-                    runtimeHomeDir,
-                    subcommand: "wrap",
-                    arguments: string.Format("\"{0}\" --msbuild \"{1}\"", libBetaPclPhoneCsprojPath, _msbuildPath));
-
                 Assert.Equal(0, betaPclExitCode);
                 Assert.Equal(0, betaDesktopExitCode);
-                Assert.Equal(0, betaPhoneExitCode);
                 Assert.Equal(expectedGlobalJson, File.ReadAllText(globalJsonPath));
                 Assert.False(Directory.Exists(Path.Combine(testSolutionDir, "wrap")));
                 Assert.Equal(expectedProjectJson, File.ReadAllText(libBetaJsonPath));
