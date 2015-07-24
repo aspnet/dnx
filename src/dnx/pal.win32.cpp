@@ -79,42 +79,44 @@ namespace
 {
     std::wstring get_runtime_path(dnx::trace_writer& trace_writer)
     {
+        wchar_t servicing_location_buffer[MAX_PATH];
+
         std::vector<wchar_t*> servicing_locations =
         {
             L"DNX_SERVICING",
-            L"ProgramFiles(x86)"
+            L"ProgramFiles(x86)",
+            // The servicing index should be always under %ProgramFiles(x86)% however
+            // on 32-bit OSes there is only %ProgramFiles%
+            L"ProgramFiles"
         };
 
-        wchar_t servicing_location_buffer[MAX_PATH];
-        // The servicing index should be always under %ProgramFiles(x86)% however
-        // on 32-bit OSes there is only %ProgramFiles%
-        if (GetEnvironmentVariable(L"ProgramFiles(x86)", servicing_location_buffer, MAX_PATH) == 0)
+        int result = 0;
+        size_t index = 0;
+        for (; index < servicing_locations.size(); index++)
         {
-            servicing_locations.push_back(L"ProgramFiles");
+            if ((result = GetEnvironmentVariable(servicing_locations[index], servicing_location_buffer, MAX_PATH)) != 0)
+            {
+                break;
+            }
         }
 
-        for (auto servicing_location : servicing_locations)
+        _ASSERTE(index < servicing_locations.size());
+
+        if (result > MAX_PATH)
         {
-            auto result = GetEnvironmentVariable(servicing_location, servicing_location_buffer, MAX_PATH);
-            if (result > MAX_PATH)
-            {
-                trace_writer.write(std::wstring(L"The value of the '")
-                    .append(servicing_location).append(L"' environment variable is invalid and the location will be skipped."), true);
-                continue;
-            }
+            throw std::runtime_error(std::string("The value of the '")
+                .append(dnx::utils::to_string(servicing_locations.at(index)))
+                .append("' environment variable is invalid. The application will exit."));
+        }
 
-            if (result != 0)
-            {
-                // %DNX_SERVICING% should point directly to servicing folder. For program files we need to append the
-                // actual servicing folder location to %ProgramFilesXXX%
-                auto append_servicing_folder = servicing_location != servicing_locations.front();
-                auto runtime_path = dnx::servicing::get_runtime_path(servicing_location_buffer, append_servicing_folder, trace_writer);
+        // %DNX_SERVICING% should point directly to servicing folder. For program files we need to append the
+        // actual servicing folder location to %ProgramFilesXXX%
+        auto is_default_servicing_location = index != 0;
+        auto runtime_path = dnx::servicing::get_runtime_path(servicing_location_buffer, is_default_servicing_location, trace_writer);
 
-                if (runtime_path.length() > 0)
-                {
-                    return dnx::utils::path_combine(runtime_path, L"bin\\");
-                }
-            }
+        if (runtime_path.length() > 0)
+        {
+            return dnx::utils::path_combine(runtime_path, L"bin\\");
         }
 
         return std::wstring{};
