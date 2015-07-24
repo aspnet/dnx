@@ -3,6 +3,7 @@
 
 using System.Collections.Generic;
 using System.Linq;
+using Microsoft.Dnx.Runtime.Internal;
 using Xunit;
 
 namespace Microsoft.Dnx.Tooling.Tests
@@ -12,7 +13,7 @@ namespace Microsoft.Dnx.Tooling.Tests
         [Fact]
         public void NoCommandsIsNonApplicationPackage()
         {
-            var project = Runtime.Project.GetProject(@"{ }", @"foo", @"c:\foo\project.json");
+            var project = ProjectUtilities.GetProject(@"{ }", @"foo", @"c:\foo\project.json");
             var builder = new InstallBuilder(project, null, null);
             Assert.False(builder.IsApplicationPackage);
         }
@@ -20,7 +21,7 @@ namespace Microsoft.Dnx.Tooling.Tests
         [Fact]
         public void ProjectWithCommandsIsApplicationPackage()
         {
-            var project = Runtime.Project.GetProject(@"{ ""commands"" : { ""demo"":""demo"" } }", @"foo", @"c:\foo\project.json");
+            var project = ProjectUtilities.GetProject(@"{ ""commands"" : { ""demo"":""demo"" } }", @"foo", @"c:\foo\project.json");
             var builder = new InstallBuilder(project, null, null);
             Assert.True(builder.IsApplicationPackage);
         }
@@ -28,7 +29,7 @@ namespace Microsoft.Dnx.Tooling.Tests
         [Fact]
         public void BuildSucceedsForNonApplicationPackage()
         {
-            var project = Runtime.Project.GetProject(@"{ }", @"foo", @"c:\foo\project.json");
+            var project = ProjectUtilities.GetProject(@"{ }", @"foo", @"c:\foo\project.json");
             var builder = new InstallBuilder(project, null, null);
             Assert.True(builder.Build(@"c:\foo"));
         }
@@ -36,7 +37,7 @@ namespace Microsoft.Dnx.Tooling.Tests
         [Fact]
         public void NotAllowedCommandNamesAreReportedAndTheBuildFails()
         {
-            var project = Runtime.Project.GetProject(@"{ ""commands"" : { ""dnx"":""demo"" } }", @"foo", @"c:\foo\project.json");
+            var project = ProjectUtilities.GetProject(@"{ ""commands"" : { ""dnx"":""demo"" } }", @"foo", @"c:\foo\project.json");
 
             var errorReport = new MockReport();
             var builder = new InstallBuilder(

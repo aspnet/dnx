@@ -6,6 +6,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using Microsoft.Dnx.Runtime.Helpers;
+using Microsoft.Dnx.Runtime.Internal;
 using NuGet;
 using Xunit;
 
@@ -24,7 +25,7 @@ namespace Microsoft.Dnx.Runtime.Tests
         [Fact]
         public void VersionIsSet()
         {
-            var project = Project.GetProject(@"{ ""version"": ""1.2.3"" }", @"foo", @"C:\Foo\Project.json");
+            var project = ProjectUtilities.GetProject(@"{ ""version"": ""1.2.3"" }", @"foo", @"C:\Foo\Project.json");
 
             Assert.Equal(new SemanticVersion("1.2.3"), project.Version);
         }
@@ -32,7 +33,7 @@ namespace Microsoft.Dnx.Runtime.Tests
         [Fact]
         public void AuthorsAreSet()
         {
-            var project = Project.GetProject(@"{ ""authors"": [""Bob"", ""Dean""] }", @"foo", @"C:\Foo\Project.json");
+            var project = ProjectUtilities.GetProject(@"{ ""authors"": [""Bob"", ""Dean""] }", @"foo", @"C:\Foo\Project.json");
 
             Assert.Equal("Bob", project.Authors[0]);
             Assert.Equal("Dean", project.Authors[1]);
@@ -41,7 +42,7 @@ namespace Microsoft.Dnx.Runtime.Tests
         [Fact]
         public void OwnersAreSet()
         {
-            var project = Project.GetProject(@"{ ""owners"": [""Alice"", ""Chi""] }", @"foo", @"C:\Foo\Project.json");
+            var project = ProjectUtilities.GetProject(@"{ ""owners"": [""Alice"", ""Chi""] }", @"foo", @"C:\Foo\Project.json");
 
             Assert.Equal("Alice", project.Owners[0]);
             Assert.Equal("Chi", project.Owners[1]);
@@ -64,7 +65,7 @@ namespace Microsoft.Dnx.Runtime.Tests
 
             var expectValue = string.Format("this is a fake {0} at {1}", jsonPropertyName, DateTime.Now.Ticks);
             var projectContent = string.Format("{{ \"{0}\": \"{1}\" }}", jsonPropertyName, expectValue);
-            var project = Project.GetProject(projectContent, @"foo", @"C:\Foo\Project.json");
+            var project = ProjectUtilities.GetProject(projectContent, @"foo", @"C:\Foo\Project.json");
 
             var propertyValue = (string)propertyInfo.GetValue(project);
             Assert.Equal(expectValue, propertyValue);
@@ -98,7 +99,7 @@ namespace Microsoft.Dnx.Runtime.Tests
                 projectContent = @"{}";
             }
 
-            var project = Project.GetProject(projectContent, @"foo", @"C:\Foo\Project.json");
+            var project = ProjectUtilities.GetProject(projectContent, @"foo", @"C:\Foo\Project.json");
 
             var propertyValue = (bool)propertyInfo.GetValue(project);
             Assert.Equal(expectResult, propertyValue);
@@ -108,7 +109,7 @@ namespace Microsoft.Dnx.Runtime.Tests
         public void CompilerServicesIsNullByDefault()
         {
             var projectContent = @"{}";
-            var project = Project.GetProject(projectContent, @"foo", @"C:\Foo\Project.json");
+            var project = ProjectUtilities.GetProject(projectContent, @"foo", @"C:\Foo\Project.json");
             Assert.Null(project.CompilerServices);
         }
 
@@ -116,7 +117,7 @@ namespace Microsoft.Dnx.Runtime.Tests
         public void CompilerServicesDefaultValues()
         {
             var projectContent = @"{""compiler"": {} }";
-            var project = Project.GetProject(projectContent, @"foo", @"C:\Foo\Project.json");
+            var project = ProjectUtilities.GetProject(projectContent, @"foo", @"C:\Foo\Project.json");
 
             Assert.NotNull(project.CompilerServices);
             Assert.Equal("C#", project.CompilerServices.Name);
@@ -135,7 +136,7 @@ namespace Microsoft.Dnx.Runtime.Tests
         ""compilerType"": ""Zulu.Compilation.Compiler""
     }
 }";
-            var project = Project.GetProject(projectContent, @"foo", @"C:\Foo\Project.json");
+            var project = ProjectUtilities.GetProject(projectContent, @"foo", @"C:\Foo\Project.json");
 
             Assert.NotNull(project.CompilerServices);
             Assert.Equal("Zulu#", project.CompilerServices.Name);
@@ -147,7 +148,7 @@ namespace Microsoft.Dnx.Runtime.Tests
         public void CommandsSetIsEmptyByDefault()
         {
             var projectContent = @"{}";
-            var project = Project.GetProject(projectContent, @"foo", @"C:\Foo\Project.json");
+            var project = ProjectUtilities.GetProject(projectContent, @"foo", @"C:\Foo\Project.json");
             Assert.NotNull(project.Commands);
             Assert.Equal(0, project.Commands.Count);
         }
@@ -163,7 +164,7 @@ namespace Microsoft.Dnx.Runtime.Tests
         ""cmd3"": ""cmd3value""
     }
 }";
-            var project = Project.GetProject(projectContent, @"foo", @"C:\Foo\Project.json");
+            var project = ProjectUtilities.GetProject(projectContent, @"foo", @"C:\Foo\Project.json");
             Assert.NotNull(project.Commands);
             Assert.Equal(3, project.Commands.Count);
         }
@@ -172,7 +173,7 @@ namespace Microsoft.Dnx.Runtime.Tests
         public void ScriptsSetIsEmptyByDefault()
         {
             var projectContent = @"{}";
-            var project = Project.GetProject(projectContent, @"foo", @"C:\Foo\Project.json");
+            var project = ProjectUtilities.GetProject(projectContent, @"foo", @"C:\Foo\Project.json");
             Assert.NotNull(project.Scripts);
             Assert.Equal(0, project.Scripts.Count);
         }
@@ -191,7 +192,7 @@ namespace Microsoft.Dnx.Runtime.Tests
         ]
     }
 }";
-            var project = Project.GetProject(projectContent, @"foo", @"C:\Foo\Project.json");
+            var project = ProjectUtilities.GetProject(projectContent, @"foo", @"C:\Foo\Project.json");
 
             Assert.NotNull(project.Scripts);
             Assert.Equal(2, project.Scripts.Count);
@@ -211,7 +212,7 @@ namespace Microsoft.Dnx.Runtime.Tests
         public void NameIsIgnoredIsSpecified()
         {
             // Arrange & Act
-            var project = Project.GetProject(@"{ ""name"": ""hello"" }", @"foo", @"c:\foo\project.json");
+            var project = ProjectUtilities.GetProject(@"{ ""name"": ""hello"" }", @"foo", @"c:\foo\project.json");
 
             // Assert
             Assert.Equal("foo", project.Name);
@@ -220,7 +221,7 @@ namespace Microsoft.Dnx.Runtime.Tests
         [Fact]
         public void GetProjectNormalizesPaths()
         {
-            var project = Project.GetProject(@"{}", "name", "../../foo");
+            var project = ProjectUtilities.GetProject(@"{}", "name", "../../foo");
 
             Assert.True(Path.IsPathRooted(project.ProjectFilePath));
         }
@@ -228,7 +229,7 @@ namespace Microsoft.Dnx.Runtime.Tests
         [Fact]
         public void CommandsAreSet()
         {
-            var project = Project.GetProject(@"
+            var project = ProjectUtilities.GetProject(@"
 {
     ""commands"": { ""web"": ""Microsoft.AspNet.Hosting something"" }
 }",
@@ -244,7 +245,7 @@ namespace Microsoft.Dnx.Runtime.Tests
         [Fact]
         public void DependenciesAreSet()
         {
-            var project = Project.GetProject(@"
+            var project = ProjectUtilities.GetProject(@"
 {
     ""dependencies"": {  
         ""A"": """",
@@ -288,7 +289,7 @@ namespace Microsoft.Dnx.Runtime.Tests
         [Fact]
         public void DependenciesAreSetPerTargetFramework()
         {
-            var project = Project.GetProject(@"
+            var project = ProjectUtilities.GetProject(@"
 {
     ""frameworks"": {
         ""net45"": {
@@ -328,7 +329,7 @@ namespace Microsoft.Dnx.Runtime.Tests
         [Fact]
         public void FrameworkAssembliesAreSet()
         {
-            var project = Project.GetProject(@"
+            var project = ProjectUtilities.GetProject(@"
 {
     ""frameworks"": {
         ""net45"": {
@@ -371,7 +372,7 @@ namespace Microsoft.Dnx.Runtime.Tests
         [Fact]
         public void CompilerOptionsAreSet()
         {
-            var project = Project.GetProject(@"
+            var project = ProjectUtilities.GetProject(@"
 {
     ""compilationOptions"": { ""allowUnsafe"": true, ""define"": [""X"", ""y""], ""platform"": ""x86"", ""warningsAsErrors"": true, ""optimize"": true, ""keyFile"" : ""c:\\keyfile.snk"", ""delaySign"" : true, ""strongName"" : true }
 }",
@@ -393,7 +394,7 @@ namespace Microsoft.Dnx.Runtime.Tests
         [Fact]
         public void CompilerOptionsAreNotNullIfNotSpecified()
         {
-            var project = Project.GetProject(@"
+            var project = ProjectUtilities.GetProject(@"
 {}",
 "foo",
 @"c:\foo\project.json");
@@ -406,7 +407,7 @@ namespace Microsoft.Dnx.Runtime.Tests
         [Fact]
         public void CompilerOptionsAreSetPerConfiguration()
         {
-            var project = Project.GetProject(@"
+            var project = ProjectUtilities.GetProject(@"
 {
     ""frameworks"" : {
         ""net45"":  {
@@ -455,7 +456,7 @@ namespace Microsoft.Dnx.Runtime.Tests
         [Fact]
         public void ProjectUrlIsSet()
         {
-            var project = Project.GetProject(@"
+            var project = ProjectUtilities.GetProject(@"
 {
     ""projectUrl"": ""https://github.com/aspnet/KRuntime""
 }",
@@ -468,7 +469,7 @@ namespace Microsoft.Dnx.Runtime.Tests
         [Fact]
         public void TagsAreSet()
         {
-            var project = Project.GetProject(@"
+            var project = ProjectUtilities.GetProject(@"
 {
     ""tags"": [""awesome"", ""fantastic"", ""aspnet""]
 }",
@@ -485,7 +486,7 @@ namespace Microsoft.Dnx.Runtime.Tests
         [Fact]
         public void EmptyTagsListWhenNotSpecified()
         {
-            var project = Project.GetProject(@" { }", "foo", @"c:\foo\project.json");
+            var project = ProjectUtilities.GetProject(@" { }", "foo", @"c:\foo\project.json");
 
             Assert.NotNull(project.Tags);
             Assert.Equal(0, project.Tags.Count());

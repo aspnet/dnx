@@ -2,6 +2,7 @@
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 using Microsoft.Dnx.Runtime.Helpers;
+using Microsoft.Dnx.Runtime.Internal;
 using Xunit;
 
 namespace Microsoft.Dnx.Runtime.Tests
@@ -28,7 +29,7 @@ namespace Microsoft.Dnx.Runtime.Tests
         public void GetCompilerOptionsIgnoresTargetFrameworkAndConfigurationIfNull()
         {
             // Arrange
-            var project = Project.GetProject(_projectContent, "TestProj", "project.json");
+            var project = ProjectUtilities.GetProject(_projectContent, "TestProj", "project.json");
 
             // Act
             var options = project.GetCompilerOptions(targetFramework: null, configurationName: null);
@@ -44,7 +45,7 @@ namespace Microsoft.Dnx.Runtime.Tests
         public void GetCompilerOptionsCombinesTargetFrameworkIfNotNull()
         {
             // Arrange
-            var project = Project.GetProject(_projectContent, "TestProj", "project.json");
+            var project = ProjectUtilities.GetProject(_projectContent, "TestProj", "project.json");
             var targetFramework = FrameworkNameHelper.ParseFrameworkName("dnx451");
 
             // Act
@@ -61,7 +62,7 @@ namespace Microsoft.Dnx.Runtime.Tests
         public void GetCompilerOptionsCombinesConfigurationAndTargetFrameworkfNotNull()
         {
             // Arrange
-            var project = Project.GetProject(_projectContent, "TestProj", "project.json");
+            var project = ProjectUtilities.GetProject(_projectContent, "TestProj", "project.json");
             var targetFramework = FrameworkNameHelper.ParseFrameworkName("dnxcore50");
 
             // Act

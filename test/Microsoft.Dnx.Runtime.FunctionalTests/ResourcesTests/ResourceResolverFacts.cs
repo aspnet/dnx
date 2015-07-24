@@ -4,6 +4,7 @@
 using System;
 using System.IO;
 using System.Linq;
+using Microsoft.Dnx.Runtime.Internal;
 using Xunit;
 
 namespace Microsoft.Dnx.Runtime.FunctionalTests.ResourcesTests
@@ -56,20 +57,20 @@ namespace Microsoft.Dnx.Runtime.FunctionalTests.ResourcesTests
             var rootDir = ProjectResolver.ResolveRootDirectory(Directory.GetCurrentDirectory());
             var testProjectFolder = Path.Combine(rootDir, "misc", "ResourcesTestProjects", "testproject");
 
-            Project project = Project.GetProject(@"
+            Project project = ProjectUtilities.GetProject(@"
 {
     ""namedResource"": {
         ""renamedResource"": ""subfolder/nestedresource.resx""
     }
-}", 
-                "testproject", 
+}",
+                "testproject",
                 Path.Combine(testProjectFolder, "project.json"));
 
             var resolver = new ResxResourceProvider();
             var embeddedResource = resolver.GetResources(project);
 
             Assert.Equal("testproject.OwnResources.resources", embeddedResource[0].Name);
-            
+
             // This resource should get a new name instead of "testproject.subfolder.nestedresource.resources"
             Assert.Equal("renamedResource.resources", embeddedResource[1].Name);
         }
@@ -86,7 +87,7 @@ namespace Microsoft.Dnx.Runtime.FunctionalTests.ResourcesTests
             var rootDir = ProjectResolver.ResolveRootDirectory(Directory.GetCurrentDirectory());
             var testProjectFolder = Path.Combine(rootDir, "misc", "ResourcesTestProjects", "testproject");
 
-            Project project = Project.GetProject(@"
+            Project project = ProjectUtilities.GetProject(@"
 {
     ""namedResource"": {
         ""thisIs.New.Resource"": ""../someresources/OtherResources.resx""

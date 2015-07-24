@@ -6,6 +6,7 @@ using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.Dnx.Runtime;
 using Microsoft.Dnx.Runtime.Helpers;
+using Microsoft.Dnx.Runtime.Internal;
 using Xunit;
 
 namespace Microsoft.Dnx.Compilation.CSharp.Tests
@@ -15,7 +16,7 @@ namespace Microsoft.Dnx.Compilation.CSharp.Tests
         [Fact]
         public void DefaultDesktopCompilationSettings()
         {
-            var project = Project.GetProject(
+            var project = ProjectUtilities.GetProject(
 @"{
 
 }",
@@ -39,7 +40,7 @@ namespace Microsoft.Dnx.Compilation.CSharp.Tests
         [Fact]
         public void ChangingLanguageVersionIsEffective()
         {
-            var project = Project.GetProject(
+            var project = ProjectUtilities.GetProject(
 @"{
     ""compilationOptions"": { ""languageVersion"" : ""CSharp3"" }
 }",
@@ -56,7 +57,7 @@ namespace Microsoft.Dnx.Compilation.CSharp.Tests
         [InlineData("k10", "DEBUG,TRACE")]
         public void DefaultDefines(string shortName, string define)
         {
-            var project = Project.GetProject(
+            var project = ProjectUtilities.GetProject(
 @"{
 
 }",
@@ -74,7 +75,7 @@ namespace Microsoft.Dnx.Compilation.CSharp.Tests
         [Fact]
         public void DefinesFromTopLevelAreCombinedWithFrameworkSpecific()
         {
-            var project = Project.GetProject(
+            var project = ProjectUtilities.GetProject(
 @"{
     ""compilationOptions"": { ""define"": [""X""] },
     ""frameworks"": {
@@ -95,7 +96,7 @@ namespace Microsoft.Dnx.Compilation.CSharp.Tests
         [Fact]
         public void CompilerOptionsAreSetPerConfiguration()
         {
-            var project = Project.GetProject(@"
+            var project = ProjectUtilities.GetProject(@"
 {
     ""frameworks"" : {
         ""net45"":  {
@@ -125,7 +126,7 @@ namespace Microsoft.Dnx.Compilation.CSharp.Tests
         [Fact]
         public void CompilerOptionsForNonExistantConfigurationReturnsDefaults()
         {
-            var project = Project.GetProject(@"
+            var project = ProjectUtilities.GetProject(@"
 {
     ""frameworks"" : {
         ""net45"":  {
@@ -150,7 +151,7 @@ namespace Microsoft.Dnx.Compilation.CSharp.Tests
         [Fact]
         public void CompilerOptionsForExistantConfigurationReturnsTopLevelIfNotSpecified()
         {
-            var project = Project.GetProject(@"
+            var project = ProjectUtilities.GetProject(@"
 {
     ""compilationOptions"": { ""allowUnsafe"": true },
     ""frameworks"" : {
