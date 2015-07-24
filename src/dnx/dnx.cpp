@@ -66,6 +66,7 @@ int BootstrapperOptionValueNum(const dnx::char_t* pszCandidate)
         strings_equal_ignore_case(pszCandidate, _X("--lib")) ||
         strings_equal_ignore_case(pszCandidate, _X("--packages")) ||
         strings_equal_ignore_case(pszCandidate, _X("--configuration")) ||
+        strings_equal_ignore_case(pszCandidate, _X("--framework")) ||
         strings_equal_ignore_case(pszCandidate, _X("--port")))
     {
         return 1;
@@ -85,11 +86,11 @@ int BootstrapperOptionValueNum(const dnx::char_t* pszCandidate)
     return -1;
 }
 
-size_t FindAppBaseOrNonHostOption(size_t argc, dnx::char_t**argv)
+size_t FindOption(size_t argc, dnx::char_t**argv, const dnx::char_t* optionName)
 {
     for (size_t i = 0; i < argc; i++)
     {
-        if (strings_equal_ignore_case(argv[i], _X("--appbase")))
+        if (strings_equal_ignore_case(argv[i], optionName))
         {
             return i;
         }
@@ -106,9 +107,9 @@ size_t FindAppBaseOrNonHostOption(size_t argc, dnx::char_t**argv)
     return argc;
 }
 
-dnx::char_t* GetAppBaseParameterValue(size_t argc, dnx::char_t* argv[])
+dnx::char_t* GetOptionValue(size_t argc, dnx::char_t* argv[], const dnx::char_t* optionName)
 {
-    auto index = FindAppBaseOrNonHostOption(argc, argv);
+    auto index = FindOption(argc, argv, optionName);
 
     // no parameters or '--appbase' is the last value in the array or `--appbase` not found
     if (argc == 0 || index >= argc - 1 || argv[index][0] != _X('-'))
@@ -176,7 +177,7 @@ void ExpandArgument(const dnx::char_t* value, std::vector<const dnx::char_t*>& e
 
 bool ExpandCommandLineArguments(size_t nArgc, dnx::char_t** ppszArgv, size_t& nExpandedArgc, dnx::char_t**& ppszExpandedArgv)
 {
-    size_t pivot_parameter_idx = FindAppBaseOrNonHostOption(nArgc, ppszArgv);
+    auto pivot_parameter_idx = FindOption(nArgc, ppszArgv, _X("--appbase"));
 
     // either no non-bootstrapper option found or --appbase was found - in either case expansion is not needed
     if (pivot_parameter_idx >= nArgc || ppszArgv[pivot_parameter_idx][0] == _X('-'))
@@ -220,7 +221,7 @@ void FreeExpandedCommandLineArguments(size_t nArgc, dnx::char_t** ppszArgv)
 bool GetApplicationBase(const dnx::xstring_t& currentDirectory, size_t argc, dnx::char_t* argv[], /*out*/ dnx::char_t* fullAppBasePath)
 {
     dnx::char_t buffer[MAX_PATH];
-    const dnx::char_t* appBase = GetAppBaseParameterValue(argc, argv);
+    const dnx::char_t* appBase = GetOptionValue(argc, argv, _X("--appbase"));
 
     // Note: We use application base from DNX_APPBASE environment variable only if --appbase
     // did not exist. if neither --appBase nor DNX_APPBASE existed we use current directory
@@ -243,6 +244,14 @@ int CallApplicationProcessMain(size_t argc, dnx::char_t* argv[], dnx::trace_writ
     // Set the DEFAULT_LIB environment variable to be the same directory as the exe
     SetEnvironmentVariable(_X("DNX_DEFAULT_LIB"), currentDirectory.c_str());
 
+    // Set the FRAMEWORK environment variable to the value provided on the command line
+    //  (it needs to be available BEFORE the application main is called)
+    auto frameworkName = GetOptionValue(argc, argv, _X("--framework"));
+    if (frameworkName)
+    {
+        SetEnvironmentVariable(_X("DNX_FRAMEWORK"), frameworkName);
+    }
+
     CALL_APPLICATION_MAIN_DATA data = { 0 };
     data.argc = static_cast<int>(argc);
     data.argv = const_cast<const dnx::char_t**>(argv);
@@ -261,16 +270,16 @@ int CallApplicationProcessMain(size_t argc, dnx::char_t* argv[], dnx::trace_writ
         const dnx::char_t* hostModuleName =
 #if defined(CORECLR_WIN)
 #if defined(ONECORE) || defined(ARM)
-        _X("dnx.onecore.coreclr.dll");
+            _X("dnx.onecore.coreclr.dll");
 #else
-        _X("dnx.win32.coreclr.dll");
+            _X("dnx.win32.coreclr.dll");
 #endif
 #elif defined(CORECLR_DARWIN)
-        _X("dnx.coreclr.dylib");
+            _X("dnx.coreclr.dylib");
 #elif defined(CORECLR_LINUX)
-        _X("dnx.coreclr.so");
+            _X("dnx.coreclr.so");
 #else
-        _X("dnx.clr.dll");
+            _X("dnx.clr.dll");
         SetEnvironmentVariable(_X("DNX_IS_WINDOWS"), _X("1"));
 #endif
 

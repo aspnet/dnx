@@ -124,6 +124,7 @@ namespace Microsoft.Dnx.ApplicationHost
                 CommandOptionType.SingleValue);
             var optionConfiguration = app.Option("--configuration <CONFIGURATION>", "The configuration to run under", CommandOptionType.SingleValue);
             var optionCompilationServer = app.Option("--port <PORT>", "The port to the compilation server", CommandOptionType.SingleValue);
+
             var runCmdExecuted = false;
             app.HelpOption("-?|-h|--help");
 

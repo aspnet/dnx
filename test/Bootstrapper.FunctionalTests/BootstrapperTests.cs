@@ -422,5 +422,90 @@ Hello, code!
                 Assert.Equal("40600", stdOut.Trim());
             }
         }
+
+        [ConditionalTheory]
+        [MemberData(nameof(ClrRuntimeComponents))]
+        [FrameworkSkipCondition(RuntimeFrameworks.Mono)]
+        [OSSkipCondition(OperatingSystems.MacOSX | OperatingSystems.Linux)]
+        public void BootstrapperLaunchesRequestedFramworkVersionIfOptionProvided_Dnx451(string flavor, string os, string architecture)
+        {
+            BootstrapperLaunchesRequestedFramworkVersionIfOptionProvided(flavor, os, architecture, "dnx451", "40501");
+        }
+        
+        [ConditionalTheory]
+        [MemberData(nameof(ClrRuntimeComponents))]
+        [FrameworkSkipCondition(RuntimeFrameworks.Mono)]
+        [OSSkipCondition(OperatingSystems.MacOSX | OperatingSystems.Linux)]
+        public void BootstrapperLaunchesRequestedFramworkVersionIfOptionProvided_Dnx452(string flavor, string os, string architecture)
+        {
+            BootstrapperLaunchesRequestedFramworkVersionIfOptionProvided(flavor, os, architecture, "dnx452", "40502");
+        }
+        
+        [ConditionalTheory]
+        [MemberData(nameof(ClrRuntimeComponents))]
+        [FrameworkSkipCondition(RuntimeFrameworks.Mono)]
+        [OSSkipCondition(OperatingSystems.MacOSX | OperatingSystems.Linux)]
+        public void BootstrapperLaunchesRequestedFramworkVersionIfOptionProvided_Dnx46(string flavor, string os, string architecture)
+        {
+            BootstrapperLaunchesRequestedFramworkVersionIfOptionProvided(flavor, os, architecture, "dnx46", "40600");
+        }
+        
+        public void BootstrapperLaunchesRequestedFramworkVersionIfOptionProvided(string flavor, string os, string architecture, string requestedFramework, string expectedOutput)
+        {
+            const string projectStructure = @"{
+    ""project.json"": {},
+    ""project.lock.json"": {},
+    ""Program.cs"": {}
+}";
+
+            const string projectJson = @"{
+    ""dependencies"": {
+    },
+    ""frameworks"": {
+        ""dnx46"": {},
+        ""dnx452"": {},
+        ""dnx451"": {}
+    }
+}";
+            const string lockFile = @"{
+  ""locked"": false,
+  ""version"": 1,
+  ""targets"": {
+    ""DNX,Version=v4.5.1"": {}
+    ""DNX,Version=v4.5.2"": {}
+    ""DNX,Version=v4.6"": {}
+  },
+  ""libraries"": {},
+  ""projectFileDependencyGroups"": {
+    """": [],
+    ""DNX,Version=v4.5.1"": []
+    ""DNX,Version=v4.5.2"": []
+    ""DNX,Version=v4.6"": []
+  }
+}";
+
+            var runtimeHomeDir = _fixture.GetRuntimeHomeDir(flavor, os, architecture);
+            using (var tempDir = TestUtils.CreateTempDir())
+            {
+                DirTree.CreateFromJson(projectStructure)
+                    .WithFileContents("project.json", projectJson)
+                    .WithFileContents("project.lock.json", lockFile)
+                    .WithFileContents("Program.cs", ClrVersionTestProgram)
+                    .WriteTo(tempDir);
+
+                string stdOut;
+                string stdErr;
+                var exitCode = BootstrapperTestUtils.ExecBootstrapper(
+                    runtimeHomeDir,
+                    arguments: $"--framework {requestedFramework} run",
+                    stdOut: out stdOut,
+                    stdErr: out stdErr,
+                    environment: new Dictionary<string, string> { { EnvironmentNames.Trace, null } },
+                    workingDir: tempDir);
+                Assert.Equal(0, exitCode);
+                Assert.Equal(expectedOutput, stdOut.Trim());
+            }
+        }
+
     }
 }
