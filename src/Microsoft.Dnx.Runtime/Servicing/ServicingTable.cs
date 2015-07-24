@@ -11,7 +11,7 @@ namespace Microsoft.Dnx.Runtime.Servicing
 {
     public static class ServicingTable
     {
-        private static List<ServicingIndex> _index;
+        private static ServicingIndex _index;
         private static bool _indexInitialized;
         private static object _indexSync;
 
@@ -21,51 +21,28 @@ namespace Microsoft.Dnx.Runtime.Servicing
             string assetPath,
             out string replacementPath)
         {
-            var compositeIndex = LoadIndex();
-
-            foreach (var index in compositeIndex)
-            {
-                if (index.TryGetReplacement(packageId, packageVersion, assetPath, out replacementPath))
-                {
-                    return true;
-                }
-            }
-
-            replacementPath = null;
-            return false;
+            return LoadIndex().TryGetReplacement(packageId, packageVersion, assetPath, out replacementPath);
         }
 
-        private static List<ServicingIndex> LoadIndex()
+        private static ServicingIndex LoadIndex()
         {
             return LazyInitializer.EnsureInitialized(ref _index, ref _indexInitialized, ref _indexSync, () =>
             {
-                var compositeIndex = new List<ServicingIndex>();
-
-                foreach (var servicingRoot in GetServicingRoots())
+                var index = new ServicingIndex();
+                var servicingRoot = GetServicingRoot();
+                if (servicingRoot != null && servicingRoot.IndexOfAny(Path.GetInvalidPathChars()) == -1)
                 {
-                    var index = new ServicingIndex();
-                    if (servicingRoot != null && servicingRoot.IndexOfAny(Path.GetInvalidPathChars()) == -1)
-                    {
-                        index.Initialize(servicingRoot);
-                    }
-
-                    compositeIndex.Add(index);
+                    index.Initialize(servicingRoot);
                 }
 
-                return compositeIndex;
+                return index;
             });
         }
 
-        private static IEnumerable<string> GetServicingRoots()
+        private static string GetServicingRoot()
         {
-            var servicingRoot = Environment.GetEnvironmentVariable(EnvironmentNames.Servicing);
-
-            if (servicingRoot != null)
-            {
-                yield return servicingRoot;
-            }
-
-            yield return GetDefaultServicingRoot();
+            return Environment.GetEnvironmentVariable(EnvironmentNames.Servicing)
+                ?? GetDefaultServicingRoot();
         }
 
         private static string GetDefaultServicingRoot()

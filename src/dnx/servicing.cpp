@@ -64,9 +64,9 @@ namespace dnx
 {
     namespace servicing
     {
-        std::wstring get_runtime_path(const std::wstring& servicing_root_parent, bool append_servicing_folder, dnx::trace_writer& trace_writer)
+        std::wstring get_runtime_path(const std::wstring& servicing_root_parent, bool is_default_servicing_location, dnx::trace_writer& trace_writer)
         {
-            auto servicing_root = append_servicing_folder
+            auto servicing_root = is_default_servicing_location
                 ? utils::path_combine(servicing_root_parent, std::wstring(L"Microsoft DNX\\Servicing"))
                 : servicing_root_parent;
 
