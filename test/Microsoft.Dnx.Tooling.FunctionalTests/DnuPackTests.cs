@@ -1,8 +1,10 @@
 ﻿// Copyright (c) .NET Foundation. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
+using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using Microsoft.Dnx.CommonTestUtils;
 using Xunit;
 
@@ -178,6 +180,56 @@ namespace Microsoft.Dnx.Tooling
                 Assert.NotEmpty(stdErr);
                 Assert.DoesNotContain("POST_BUILD_SCRIPT_OUTPUT", stdOut);
                 Assert.DoesNotContain("POST_PACK_SCRIPT_OUTPUT", stdOut);
+            }
+        }
+
+        [Theory]
+        [MemberData(nameof(RuntimeComponents))]
+        public void DnuPack_ShowUnresolvedDependencyWhenBuildFails(string flavor, string os, string architecture)
+        {
+            var runtimeHomeDir = TestUtils.GetRuntimeHomeDir(flavor, os, architecture);
+            var projectJson = @"{
+  ""frameworks"": {
+    ""dnx451"": {
+      ""dependencies"": {
+      ""NonexistentPackage"": ""1.0.0""
+      }
+    }
+  }
+}";
+
+            using (var tempDir = new DisposableDir())
+            {
+                var projectPath = Path.Combine(tempDir, "Project");
+                var emptyLocalFeed = Path.Combine(tempDir, "EmptyLocalFeed");
+                Directory.CreateDirectory(projectPath);
+                Directory.CreateDirectory(emptyLocalFeed);
+                var projectJsonPath = Path.Combine(projectPath, Runtime.Project.ProjectFileName);
+                File.WriteAllText(projectJsonPath, projectJson);
+
+                string stdOut, stdErr;
+                var exitCode = DnuTestUtils.ExecDnu(
+                    runtimeHomeDir,
+                    "restore",
+                    $"{projectJsonPath} -s {emptyLocalFeed}",
+                    out stdOut,
+                    out stdErr);
+                Assert.NotEqual(0, exitCode);
+
+                exitCode = DnuTestUtils.ExecDnu(
+                    runtimeHomeDir,
+                    "pack",
+                    projectJsonPath,
+                    out stdOut,
+                    out stdErr);
+
+                Assert.NotEqual(0, exitCode);
+                Assert.NotEmpty(stdErr);
+                var unresolvedDependencyErrorCount = stdErr
+                    .Split(new[] { Environment.NewLine }, StringSplitOptions.RemoveEmptyEntries)
+                    .Select(line => line.Contains("The dependency NonexistentPackages >= 1.0.0 could not be resolved"))
+                    .Count();
+                Assert.Equal(1, unresolvedDependencyErrorCount);
             }
         }
     }
