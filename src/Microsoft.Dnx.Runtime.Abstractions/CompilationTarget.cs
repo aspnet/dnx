@@ -4,7 +4,7 @@
 using System;
 using System.Collections.Generic;
 using System.Runtime.Versioning;
-using Microsoft.Dnx.Runtime.Infrastructure;
+using Microsoft.Framework.Internal;
 
 namespace Microsoft.Dnx.Runtime
 {
@@ -40,8 +40,7 @@ namespace Microsoft.Dnx.Runtime
                 .Add(Name)
                 .Add(TargetFramework)
                 .Add(Configuration)
-                .Add(Aspect)
-                .CombinedHash;
+                .Add(Aspect);
         }
     }
 }
