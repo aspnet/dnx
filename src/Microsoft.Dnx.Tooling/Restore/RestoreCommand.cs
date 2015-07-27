@@ -64,34 +64,6 @@ namespace Microsoft.Dnx.Tooling
         public bool SkipRestoreEvents { get; set; }
         public bool IgnoreMissingDependencies { get; set; }
 
-        private class SummaryContext
-        {
-            public Dictionary<string, List<string>> ErrorMessages = new Dictionary<string, List<string>>();
-            public Dictionary<string, List<string>> InformationMessages = new Dictionary<string, List<string>>();
-            public int InstallCount;
-
-            public void DisplaySummary(Reports reports)
-            {
-                foreach (var category in ErrorMessages)
-                {
-                    reports.Error.WriteLine($"{Environment.NewLine}Errors in {category.Key}".Red().Bold());
-                    foreach (var message in category.Value)
-                    {
-                        reports.Error.WriteLine($"    {message}");
-                    }
-                }
-
-                foreach (var category in InformationMessages)
-                {
-                    reports.Quiet.WriteLine($"{Environment.NewLine}{category.Key}");
-                    foreach (var message in category.Value)
-                    {
-                        reports.Quiet.WriteLine($"    {message}");
-                    }
-                }
-            }
-        };
-
         protected internal NuGetConfig Config { get; set; }
 
         public async Task<bool> Execute()
@@ -218,7 +190,6 @@ namespace Microsoft.Dnx.Tooling
                 if (summary.InstallCount > 0)
                 {
                     summary.InformationMessages.GetOrAdd("Installed:", _ => new List<string>()).Add($"{summary.InstallCount} package(s) to {packagesDirectory}");
-                    summary.InstallCount = 0;
                 }
 
                 return restoreCount == successCount;
@@ -258,7 +229,7 @@ namespace Microsoft.Dnx.Tooling
                 var errorMessages = diagnostics
                     .Where(x => x.Severity == DiagnosticMessageSeverity.Error)
                     .Select(x => x.Message);
-                ErrorMessages.GetOrAdd(projectJsonPath, _ => new List<string>()).AddRange(errorMessages);
+                summary.ErrorMessages.GetOrAdd(projectJsonPath, _ => new List<string>()).AddRange(errorMessages);
             }
 
             var lockFile = await ReadLockFile(projectLockFilePath);
@@ -1066,6 +1037,34 @@ namespace Microsoft.Dnx.Tooling
             public HashSet<LibraryIdentity> Libraries { get; set; } = new HashSet<LibraryIdentity>();
 
             public GraphNode Root { get; set; }
+        }
+
+        private class SummaryContext
+        {
+            public Dictionary<string, List<string>> ErrorMessages = new Dictionary<string, List<string>>();
+            public Dictionary<string, List<string>> InformationMessages = new Dictionary<string, List<string>>();
+            public int InstallCount;
+
+            public void DisplaySummary(Reports reports)
+            {
+                foreach (var category in ErrorMessages)
+                {
+                    reports.Error.WriteLine($"{Environment.NewLine}Errors in {category.Key}".Red().Bold());
+                    foreach (var message in category.Value)
+                    {
+                        reports.Error.WriteLine($"    {message}");
+                    }
+                }
+
+                foreach (var category in InformationMessages)
+                {
+                    reports.Quiet.WriteLine($"{Environment.NewLine}{category.Key}");
+                    foreach (var message in category.Value)
+                    {
+                        reports.Quiet.WriteLine($"    {message}");
+                    }
+                }
+            }
         }
     }
 }
