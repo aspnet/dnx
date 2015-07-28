@@ -1,10 +1,16 @@
 {
-    "version": "1.0.0-*",
-    "compilationOptions": { "define": [ "TRACE" ], "allowUnsafe": true, "warningsAsErrors": true, "keyFile": "KeyFile.snk" },
-    "dependencies": {
+    "version": "1.0.0-beta6",
+    "compilationOptions": {
+        "define": [
+            "TRACE"
+        ],
+        "allowUnsafe": true,
+        "warningsAsErrors": true,
+        "keyFile": "KeyFile.snk"
     },
+    "dependencies": {},
     "frameworks": {
-        "dnx451": { }
+        "dnx451": {}
     },
     "compile": [
         "../Microsoft.Framework.Runtime.Sources/Impl/EnvironmentNames.cs",

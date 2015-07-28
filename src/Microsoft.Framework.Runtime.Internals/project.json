@@ -1,15 +1,20 @@
 {
     "version": "1.0.0-*",
-    "compilationOptions": { "define": [ "TRACE" ], "warningsAsErrors": true },
+    "compilationOptions": {
+        "define": [
+            "TRACE"
+        ],
+        "warningsAsErrors": true
+    },
     "shared": "**/*.cs",
     "dependencies": {
-        "Microsoft.Framework.Runtime.Abstractions": ""
+        "Microsoft.Framework.Runtime.Abstractions": "1.0.0-beta6"
     },
     "frameworks": {
-        "dnx451": { },
+        "dnx451": {},
         "dnxcore50": {
             "dependencies": {
-                "System.Runtime": "4.0.20-beta-*"
+                "System.Runtime": "4.0.20-beta-23109"
             }
         }
     }

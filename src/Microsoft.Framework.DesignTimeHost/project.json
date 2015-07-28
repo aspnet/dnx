@@ -1,17 +1,31 @@
 {
-    "version": "1.0.0-*",
+    "version": "1.0.0-beta6",
     "dependencies": {
-        "Microsoft.Framework.DesignTimeHost.Abstractions": "1.0.0-*",
-        "Microsoft.Framework.NotNullAttribute.Sources": { "version": "1.0.0-*", "type": "build" },
-        "Microsoft.Framework.Runtime": "1.0.0-*",
-        "Microsoft.Framework.Runtime.Compilation.DesignTime": "1.0.0-*",
-        "Microsoft.Framework.Runtime.Compilation.Sources": { "version": "1.0.0-*", "type": "build" },
-        "Microsoft.Framework.Runtime.Sources": { "version": "1.0.0-*", "type": "build" },
-        "Microsoft.Framework.Runtime.Abstractions": "1.0.0-*",
-        "Microsoft.Framework.Runtime.Roslyn": "1.0.0-*",
+        "Microsoft.Framework.DesignTimeHost.Abstractions": "1.0.0-beta6",
+        "Microsoft.Framework.NotNullAttribute.Sources": {
+            "version": "1.0.0-beta6",
+            "type": "build"
+        },
+        "Microsoft.Framework.Runtime": "1.0.0-beta6",
+        "Microsoft.Framework.Runtime.Compilation.DesignTime": "1.0.0-beta6",
+        "Microsoft.Framework.Runtime.Compilation.Sources": {
+            "version": "1.0.0-*",
+            "type": "build"
+        },
+        "Microsoft.Framework.Runtime.Sources": {
+            "version": "1.0.0-beta6",
+            "type": "build"
+        },
+        "Microsoft.Framework.Runtime.Abstractions": "1.0.0-beta6",
+        "Microsoft.Framework.Runtime.Roslyn": "1.0.0-beta6",
         "Newtonsoft.Json": "6.0.6"
     },
-    "compilationOptions": { "define": [ "TRACE" ], "warningsAsErrors": true },
+    "compilationOptions": {
+        "define": [
+            "TRACE"
+        ],
+        "warningsAsErrors": true
+    },
     "frameworks": {
         "dnx451": {
             "frameworkAssemblies": {
@@ -20,9 +34,9 @@
         },
         "dnxcore50": {
             "dependencies": {
-                "System.Diagnostics.Process": "4.0.0-beta-*",
-                "System.Net.Primitives": "4.0.10-beta-*",
-                "System.Threading.ThreadPool": "4.0.10-beta-*"
+                "System.Diagnostics.Process": "4.0.0-beta-23109",
+                "System.Net.Primitives": "4.0.10-beta-23109",
+                "System.Threading.ThreadPool": "4.0.10-beta-23109"
             }
         }
     },
@@ -34,4 +48,3 @@
         ]
     }
 }
-

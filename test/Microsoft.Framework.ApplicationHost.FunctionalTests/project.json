@@ -2,14 +2,12 @@
     "dependencies": {
         "Bootstrapper.FunctionalTests": "1.0.0-*",
         "Microsoft.Framework.CommonTestUtils": "1.0.0-*",
-        "Microsoft.Framework.Runtime.Sources": "1.0.0-*",
-        "xunit.runner.aspnet": "2.0.0-aspnet-*"
+        "Microsoft.Framework.Runtime.Sources": "1.0.0-beta6",
+        "xunit.runner.aspnet": "2.0.0-aspnet-beta6"
     },
-
     "frameworks": {
-        "dnx451": { }
+        "dnx451": {}
     },
-
     "commands": {
         "test": "xunit.runner.aspnet"
     }

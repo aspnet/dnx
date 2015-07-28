@@ -1,39 +1,50 @@
 {
-    "version": "1.0.0-*",
-    "compilationOptions" : { "define" : ["TRACE"], "warningsAsErrors": true },
-    "dependencies": {
-        "Microsoft.Framework.CommandLineUtils.Sources" : { "version": "1.0.0-*", "type": "build" },
-        "Microsoft.Framework.Runtime" : "1.0.0-*",
-        "Microsoft.Framework.Runtime.Sources" : { "version": "1.0.0-*", "type": "build" },
-        "Microsoft.Framework.Runtime.Abstractions" : "1.0.0-*"
+    "version": "1.0.0-beta6",
+    "compilationOptions": {
+        "define": [
+            "TRACE"
+        ],
+        "warningsAsErrors": true
     },
-    "frameworks" : {
-        "dnx451" : {
+    "dependencies": {
+        "Microsoft.Framework.CommandLineUtils.Sources": {
+            "version": "1.0.0-beta6",
+            "type": "build"
+        },
+        "Microsoft.Framework.Runtime": "1.0.0-beta6",
+        "Microsoft.Framework.Runtime.Sources": {
+            "version": "1.0.0-beta6",
+            "type": "build"
+        },
+        "Microsoft.Framework.Runtime.Abstractions": "1.0.0-beta6"
+    },
+    "frameworks": {
+        "dnx451": {
             "frameworkAssemblies": {
-                "System.Collections" : "",
-                "System.IO" :  "",
-                "System.IO.Compression" : "",
-                "System.Runtime" : "",
+                "System.Collections": "",
+                "System.IO": "",
+                "System.IO.Compression": "",
+                "System.Runtime": "",
                 "System.Xml": "",
                 "System.Xml.Linq": ""
             }
         },
-        "dnxcore50" : { 
+        "dnxcore50": {
             "dependencies": {
-                "System.Collections": "4.0.10-beta-*",
-                "System.ComponentModel": "4.0.0-beta-*",
-                "System.Console": "4.0.0-beta-*",
-                "System.Diagnostics.Debug": "4.0.10-beta-*",
-                "System.Diagnostics.Process": "4.0.0-beta-*",
-                "System.IO": "4.0.10-beta-*",
-                "System.IO.Compression": "4.0.0-beta-*",
-                "System.IO.FileSystem": "4.0.0-beta-*",
-                "System.Linq": "4.0.0-beta-*",
-                "System.Reflection": "4.0.10-beta-*",
-                "System.Runtime": "4.0.20-beta-*",
-                "System.Runtime.Extensions": "4.0.10-beta-*",
-                "System.Runtime.InteropServices": "4.0.20-beta-*",
-                "System.Threading.Tasks": "4.0.10-beta-*"
+                "System.Collections": "4.0.10-beta-23109",
+                "System.ComponentModel": "4.0.0-beta-23109",
+                "System.Console": "4.0.0-beta-23109",
+                "System.Diagnostics.Debug": "4.0.10-beta-23109",
+                "System.Diagnostics.Process": "4.0.0-beta-23109",
+                "System.IO": "4.0.10-beta-23109",
+                "System.IO.Compression": "4.0.0-beta-23109",
+                "System.IO.FileSystem": "4.0.0-beta-23109",
+                "System.Linq": "4.0.0-beta-23109",
+                "System.Reflection": "4.0.10-beta-23109",
+                "System.Runtime": "4.0.20-beta-23109",
+                "System.Runtime.Extensions": "4.0.10-beta-23109",
+                "System.Runtime.InteropServices": "4.0.20-beta-23109",
+                "System.Threading.Tasks": "4.0.10-beta-23109"
             }
         }
     }

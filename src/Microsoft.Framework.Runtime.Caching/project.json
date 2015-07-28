@@ -1,20 +1,18 @@
-﻿{
-    "version": "1.0.0-*",
+{
+    "version": "1.0.0-beta6",
     "dependencies": {
-        "Microsoft.Framework.Runtime.Abstractions": "1.0.0-*"
+        "Microsoft.Framework.Runtime.Abstractions": "1.0.0-beta6"
     },
-
     "frameworks": {
         "dnx451": {
-            "dependencies": {
-            }
+            "dependencies": {}
         },
         "dnxcore50": {
             "dependencies": {
-                "System.Runtime": "4.0.20-beta-*",
-                "System.IO.FileSystem": "4.0.0-beta-*",
-                "System.Linq": "4.0.0-beta-*",
-                "System.Collections.Concurrent": "4.0.10-beta-*"
+                "System.Runtime": "4.0.20-beta-23109",
+                "System.IO.FileSystem": "4.0.0-beta-23109",
+                "System.Linq": "4.0.0-beta-23109",
+                "System.Collections.Concurrent": "4.0.10-beta-23109"
             }
         }
     }

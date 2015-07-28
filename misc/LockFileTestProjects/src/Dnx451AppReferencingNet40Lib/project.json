@@ -1,4 +1,4 @@
-﻿{
+{
     "version": "1.0.0-*",
     "dependencies": {
         "Net40Lib": ""
@@ -6,7 +6,7 @@
     "commands": {
         "run": "run"
     },
-    "frameworks" : {
-        "dnx451" : { }
+    "frameworks": {
+        "dnx451": {}
     }
 }

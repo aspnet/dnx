@@ -1,11 +1,26 @@
 {
-    "version": "1.0.0-*",
-    "compilationOptions": { "define": [ "TRACE" ], "allowUnsafe": true, "warningsAsErrors": true },
+    "version": "1.0.0-beta6",
+    "compilationOptions": {
+        "define": [
+            "TRACE"
+        ],
+        "allowUnsafe": true,
+        "warningsAsErrors": true
+    },
     "dependencies": {
-        "Microsoft.Framework.CommandLineUtils.Sources": { "version": "1.0.0-*", "type": "build" },
-        "Microsoft.Framework.Runtime.Internals": { "version": "1.0.0-*", "type": "build" },
-        "Microsoft.Framework.Runtime.Sources": { "version": "1.0.0-*", "type": "build" },
-        "Microsoft.Framework.Runtime.Loader": "1.0.0-*"
+        "Microsoft.Framework.CommandLineUtils.Sources": {
+            "version": "1.0.0-beta6",
+            "type": "build"
+        },
+        "Microsoft.Framework.Runtime.Internals": {
+            "version": "1.0.0-*",
+            "type": "build"
+        },
+        "Microsoft.Framework.Runtime.Sources": {
+            "version": "1.0.0-beta6",
+            "type": "build"
+        },
+        "Microsoft.Framework.Runtime.Loader": "1.0.0-beta6"
     },
     "frameworks": {
         "dnx451": {
@@ -15,22 +30,21 @@
         },
         "dnxcore50": {
             "dependencies": {
-                "System.AppContext": "4.0.0-beta-*",
-                "System.Collections": "4.0.10-beta-*",
-                "System.ComponentModel": "4.0.0-beta-*",
-                "System.Console": "4.0.0-beta-*",
-                "System.Diagnostics.Debug": "4.0.10-beta-*",
-                "System.Reflection": "4.0.10-beta-*",
-                "System.Reflection.Extensions": "4.0.0-beta-*",
-                "System.Runtime": "4.0.20-beta-*",
-                "System.Runtime.Extensions": "4.0.10-beta-*",
-                "System.Runtime.InteropServices": "4.0.20-beta-*",
-                "System.Threading": "4.0.10-beta-*",
-                "System.Threading.Tasks": "4.0.10-beta-*"
+                "System.AppContext": "4.0.0-beta-23109",
+                "System.Collections": "4.0.10-beta-23109",
+                "System.ComponentModel": "4.0.0-beta-23109",
+                "System.Console": "4.0.0-beta-23109",
+                "System.Diagnostics.Debug": "4.0.10-beta-23109",
+                "System.Reflection": "4.0.10-beta-23109",
+                "System.Reflection.Extensions": "4.0.0-beta-23109",
+                "System.Runtime": "4.0.20-beta-23109",
+                "System.Runtime.Extensions": "4.0.10-beta-23109",
+                "System.Runtime.InteropServices": "4.0.20-beta-23109",
+                "System.Threading": "4.0.10-beta-23109",
+                "System.Threading.Tasks": "4.0.10-beta-23109"
             }
         }
     },
-
     "scripts": {
         "postbuild": [
             "%project:Directory%/../../build/batchcopy \"%project:BuildOutputDir%/Debug/dnx451/*.*\" %project:Directory%/../../artifacts/build/dnx-clr-win-x86/bin",
