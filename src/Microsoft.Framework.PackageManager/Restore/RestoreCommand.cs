@@ -27,8 +27,6 @@ namespace Microsoft.Framework.PackageManager
     {
         private static readonly int MaxDegreesOfConcurrency = Environment.ProcessorCount;
 
-        private int _installCount;
-
         public RestoreCommand() :
             this(fallbackFramework: null)
         {
@@ -44,8 +42,6 @@ namespace Microsoft.Framework.PackageManager
             FallbackFramework = fallbackFramework;
             FileSystem = new PhysicalFileSystem(Directory.GetCurrentDirectory());
             ScriptExecutor = new ScriptExecutor();
-            ErrorMessages = new Dictionary<string, List<string>>(StringComparer.Ordinal);
-            InformationMessages = new Dictionary<string, List<string>>(StringComparer.Ordinal);
             Reports = new Reports
             {
                 Information = new NullReport(),
@@ -72,9 +68,6 @@ namespace Microsoft.Framework.PackageManager
         public bool SkipRestoreEvents { get; set; }
         public bool IgnoreMissingDependencies { get; set; }
 
-        private Dictionary<string, List<string>> ErrorMessages { get; set; }
-        private Dictionary<string, List<string>> InformationMessages { get; set; }
-
         protected internal NuGetConfig Config { get; set; }
 
         public async Task<bool> Execute()
@@ -88,46 +81,20 @@ namespace Microsoft.Framework.PackageManager
                 effectiveRestoreDirs = new[] { Directory.GetCurrentDirectory() };
             }
 
+            var summary = new SummaryContext();
+
             bool success = true;
             foreach (var dir in effectiveRestoreDirs.Select(Path.GetFullPath).Distinct())
             {
-                success &= await Execute(dir);
+                success &= await Execute(dir, summary);
             }
 
-            foreach (var category in ErrorMessages)
-            {
-                Reports.Error.WriteLine($"{Environment.NewLine}Errors in {category.Key}".Red().Bold());
-                foreach (var message in category.Value)
-                {
-                    Reports.Error.WriteLine($"    {message}");
-                }
-            }
-
-            var settings = Config.Settings as Settings;
-            if (settings != null)
-            {
-                var configFiles = settings.GetConfigFiles();
-
-                Reports.Quiet.WriteLine($"{Environment.NewLine}NuGet Config files used:");
-                foreach (var file in configFiles)
-                {
-                    Reports.Quiet.WriteLine($"    {file}");
-                }
-            }
-
-            foreach (var category in InformationMessages)
-            {
-                Reports.Quiet.WriteLine($"{Environment.NewLine}{category.Key}");
-                foreach(var message in category.Value)
-                {
-                    Reports.Quiet.WriteLine($"    {message}");
-                }
-            }
+            summary.DisplaySummary(Reports);
 
             return success;
         }
 
-        private async Task<bool> Execute(string restoreDirectory)
+        private async Task<bool> Execute(string restoreDirectory, SummaryContext summary)
         {
             try
             {
@@ -162,13 +129,23 @@ namespace Microsoft.Framework.PackageManager
                 else
                 {
                     var errorMessage = $"The given root {restoreDirectory.Red().Bold()} is invalid.";
-                    ErrorMessages.GetOrAdd(restoreDirectory, _ => new List<string>()).Add(errorMessage);
+                    summary.ErrorMessages.GetOrAdd(restoreDirectory, _ => new List<string>()).Add(errorMessage);
                     Reports.Error.WriteLine(errorMessage);
                     return false;
                 }
 
                 var rootDirectory = ProjectResolver.ResolveRootDirectory(restoreDirectory);
                 ReadSettings(rootDirectory);
+
+                var settings = Config.Settings as Settings;
+                if (settings != null)
+                {
+                    var configFiles = settings.GetConfigFiles();
+                    foreach (var file in configFiles)
+                    {
+                        summary.InformationMessages.GetOrAdd("NuGet Config files used:", _ => new List<string>()).Add(file);
+                    }
+                }
 
                 string packagesDirectory = FeedOptions.TargetPackagesFolder;
 
@@ -186,7 +163,7 @@ namespace Microsoft.Framework.PackageManager
                 Func<string, Task> restorePackage = async projectJsonPath =>
                 {
                     Interlocked.Increment(ref restoreCount);
-                    var success = await RestoreForProject(projectJsonPath, rootDirectory, packagesDirectory);
+                    var success = await RestoreForProject(projectJsonPath, rootDirectory, packagesDirectory, summary);
                     if (success)
                     {
                         Interlocked.Increment(ref successCount);
@@ -214,10 +191,9 @@ namespace Microsoft.Framework.PackageManager
                     Reports.Information.WriteLine(string.Format("Total time {0}ms", sw.ElapsedMilliseconds));
                 }
 
-                if (_installCount > 0)
+                if (summary.InstallCount > 0)
                 {
-                    InformationMessages.GetOrAdd("Installed:", _ => new List<string>()).Add($"{_installCount} package(s) to {packagesDirectory}");
-                    _installCount = 0;
+                    summary.InformationMessages.GetOrAdd("Installed:", _ => new List<string>()).Add($"{summary.InstallCount} package(s) to {packagesDirectory}");
                 }
 
                 return restoreCount == successCount;
@@ -233,7 +209,7 @@ namespace Microsoft.Framework.PackageManager
             }
         }
 
-        private async Task<bool> RestoreForProject(string projectJsonPath, string rootDirectory, string packagesDirectory)
+        private async Task<bool> RestoreForProject(string projectJsonPath, string rootDirectory, string packagesDirectory, SummaryContext summary)
         {
             var success = true;
 
@@ -257,7 +233,7 @@ namespace Microsoft.Framework.PackageManager
                 var errorMessages = diagnostics
                     .Where(x => x.Severity == DiagnosticMessageSeverity.Error)
                     .Select(x => x.Message);
-                ErrorMessages.GetOrAdd(projectJsonPath, _ => new List<string>()).AddRange(errorMessages);
+                summary.ErrorMessages.GetOrAdd(projectJsonPath, _ => new List<string>()).AddRange(errorMessages);
             }
 
             var lockFile = await ReadLockFile(projectLockFilePath);
@@ -289,7 +265,7 @@ namespace Microsoft.Framework.PackageManager
             {
                 if (!ScriptExecutor.Execute(project, "prerestore", getVariable))
                 {
-                    ErrorMessages.GetOrAdd("prerestore", _ => new List<string>()).Add(ScriptExecutor.ErrorMessage);
+                    summary.ErrorMessages.GetOrAdd("prerestore", _ => new List<string>()).Add(ScriptExecutor.ErrorMessage);
                     Reports.Error.WriteLine(ScriptExecutor.ErrorMessage);
                     return false;
                 }
@@ -322,7 +298,7 @@ namespace Microsoft.Framework.PackageManager
                 FeedOptions.Sources,
                 FeedOptions.FallbackSources);
 
-            AddRemoteProvidersFromSources(remoteProviders, effectiveSources);
+            AddRemoteProvidersFromSources(remoteProviders, effectiveSources, summary);
 
             var tasks = new List<Task<TargetContext>>();
 
@@ -489,7 +465,7 @@ namespace Microsoft.Framework.PackageManager
                                 var errorMessage = string.Format("Unable to locate {0} {1}",
                                     node.LibraryRange.Name.Red().Bold(),
                                     node.LibraryRange.VersionRange);
-                                ErrorMessages.GetOrAdd(projectJsonPath, _ => new List<string>()).Add(errorMessage);
+                                summary.ErrorMessages.GetOrAdd(projectJsonPath, _ => new List<string>()).Add(errorMessage);
                                 Reports.Error.WriteLine(errorMessage);
                                 success = false;
                             }
@@ -533,6 +509,7 @@ namespace Microsoft.Framework.PackageManager
             if (!SkipInstall)
             {
                 await InstallPackages(installItems, packagesDirectory);
+                summary.InstallCount += installItems.Count();
             }
 
             if (!useLockFile)
@@ -553,14 +530,14 @@ namespace Microsoft.Framework.PackageManager
             {
                 if (!ScriptExecutor.Execute(project, "postrestore", getVariable))
                 {
-                    ErrorMessages.GetOrAdd("postrestore", _ => new List<string>()).Add(ScriptExecutor.ErrorMessage);
+                    summary.ErrorMessages.GetOrAdd("postrestore", _ => new List<string>()).Add(ScriptExecutor.ErrorMessage);
                     Reports.Error.WriteLine(ScriptExecutor.ErrorMessage);
                     return false;
                 }
 
                 if (!ScriptExecutor.Execute(project, "prepare", getVariable))
                 {
-                    ErrorMessages.GetOrAdd("prepare", _ => new List<string>()).Add(ScriptExecutor.ErrorMessage);
+                    summary.ErrorMessages.GetOrAdd("prepare", _ => new List<string>()).Add(ScriptExecutor.ErrorMessage);
                     Reports.Error.WriteLine(ScriptExecutor.ErrorMessage);
                     return false;
                 }
@@ -790,7 +767,6 @@ namespace Microsoft.Framework.PackageManager
 
                 memoryStream.Seek(0, SeekOrigin.Begin);
                 await NuGetPackageUtils.InstallFromStream(memoryStream, match.Library, packagesDirectory, Reports.Information);
-                Interlocked.Increment(ref _installCount);
             }
         }
 
@@ -893,7 +869,7 @@ namespace Microsoft.Framework.PackageManager
         }
 
 
-        private void AddRemoteProvidersFromSources(List<IWalkProvider> remoteProviders, List<PackageSource> effectiveSources)
+        private void AddRemoteProvidersFromSources(List<IWalkProvider> remoteProviders, List<PackageSource> effectiveSources, SummaryContext summary)
         {
             foreach (var source in effectiveSources)
             {
@@ -905,7 +881,7 @@ namespace Microsoft.Framework.PackageManager
                 if (feed != null)
                 {
                     remoteProviders.Add(new RemoteWalkProvider(feed));
-                    var list = InformationMessages.GetOrAdd("Feeds used:", _ => new List<string>());
+                    var list = summary.InformationMessages.GetOrAdd("Feeds used:", _ => new List<string>());
                     if (!list.Contains(feed.Source))
                     {
                         list.Add(feed.Source);
@@ -1034,6 +1010,34 @@ namespace Microsoft.Framework.PackageManager
             public HashSet<LibraryIdentity> Libraries { get; set; } = new HashSet<LibraryIdentity>();
 
             public GraphNode Root { get; set; }
+        }
+
+        private class SummaryContext
+        {
+            public Dictionary<string, List<string>> ErrorMessages = new Dictionary<string, List<string>>();
+            public Dictionary<string, List<string>> InformationMessages = new Dictionary<string, List<string>>();
+            public int InstallCount;
+
+            public void DisplaySummary(Reports reports)
+            {
+                foreach (var category in ErrorMessages)
+                {
+                    reports.Error.WriteLine($"{Environment.NewLine}Errors in {category.Key}".Red().Bold());
+                    foreach (var message in category.Value)
+                    {
+                        reports.Error.WriteLine($"    {message}");
+                    }
+                }
+
+                foreach (var category in InformationMessages)
+                {
+                    reports.Quiet.WriteLine($"{Environment.NewLine}{category.Key}");
+                    foreach (var message in category.Value)
+                    {
+                        reports.Quiet.WriteLine($"    {message}");
+                    }
+                }
+            }
         }
     }
 }
