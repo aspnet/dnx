@@ -14,7 +14,7 @@
     ],
     "dependencies": {
         "Microsoft.Dnx.Compilation.CSharp.Abstractions": { "version": "1.0.0-*", "type": "build" },
-        "Microsoft.Dnx.Compilation.Caching": "1.0.0-*",
+        "Microsoft.Dnx.Compilation": "1.0.0-*",
         "Microsoft.Dnx.Compilation.Abstractions": "1.0.0-*",
         "Microsoft.Dnx.Loader": "1.0.0-*",
         "Microsoft.Dnx.Runtime.Abstractions": "1.0.0-*",

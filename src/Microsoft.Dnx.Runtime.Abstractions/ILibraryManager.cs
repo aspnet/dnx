@@ -12,7 +12,7 @@ namespace Microsoft.Dnx.Runtime
     {
         IEnumerable<Library> GetReferencingLibraries(string name);
 
-        Library GetLibraryInformation(string name);
+        Library GetLibrary(string name);
 
         IEnumerable<Library> GetLibraries();
     }

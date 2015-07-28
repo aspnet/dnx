@@ -4,9 +4,9 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using Microsoft.Dnx.Compilation.Caching;
 using Microsoft.Dnx.DesignTimeHost.Models;
 using Microsoft.Dnx.Runtime;
-using Microsoft.Dnx.Runtime.Caching;
 
 namespace Microsoft.Dnx.DesignTimeHost
 {

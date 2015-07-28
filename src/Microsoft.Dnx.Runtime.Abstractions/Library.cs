@@ -10,8 +10,28 @@ namespace Microsoft.Dnx.Runtime
     /// <summary>
     /// Exposes information about a library which can be an assembly, project, or a package.
     /// </summary>
-    public sealed class Library
+    public class Library
     {
+        public Library(string name)
+            : this(name, string.Empty, string.Empty, string.Empty, Enumerable.Empty<string>(), Enumerable.Empty<AssemblyName>())
+        {
+        }
+
+        public Library(string name, IEnumerable<string> dependencies)
+            : this(name, string.Empty, string.Empty, string.Empty, dependencies, Enumerable.Empty<AssemblyName>())
+        {
+        }
+
+        public Library(string name, string version, string path, string type, IEnumerable<string> dependencies, IEnumerable<AssemblyName> assemblies)
+        {
+            Name = name;
+            Version = version;
+            Path = path;
+            Type = type;
+            Dependencies = dependencies;
+            Assemblies = assemblies;
+        }
+
         /// <summary>
         /// Gets the name of the library.
         /// </summary>
@@ -41,25 +61,5 @@ namespace Microsoft.Dnx.Runtime
         /// Gets a list of assembly names from the library that can be loaded. Packages can contain multiple assemblies.
         /// </summary>
         public IEnumerable<AssemblyName> Assemblies { get; }
-
-        public Library(string name)
-            : this(name, string.Empty, string.Empty, string.Empty, Enumerable.Empty<string>(), Enumerable.Empty<AssemblyName>())
-        {
-        }
-
-        public Library(string name, IEnumerable<string> dependencies)
-            : this(name, string.Empty, string.Empty, string.Empty, dependencies, Enumerable.Empty<AssemblyName>())
-        {
-        }
-
-        public Library(string name, string version, string path, string type, IEnumerable<string> dependencies, IEnumerable<AssemblyName> assemblies)
-        {
-            Name = name;
-            Version = version;
-            Path = path;
-            Type = type;
-            Dependencies = dependencies;
-            Assemblies = assemblies;
-        }
     }
 }

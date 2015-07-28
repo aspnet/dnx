@@ -6,9 +6,9 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Runtime.Versioning;
-using Microsoft.Dnx.Runtime.Caching;
-using Microsoft.Dnx.Runtime.Common.DependencyInjection;
 using Microsoft.Dnx.Compilation;
+using Microsoft.Dnx.Compilation.Caching;
+using Microsoft.Dnx.Runtime.Common.DependencyInjection;
 using Microsoft.Dnx.Runtime.DependencyManagement;
 using Microsoft.Dnx.Runtime.FileSystem;
 using Microsoft.Dnx.Runtime.Infrastructure;
@@ -112,10 +112,8 @@ namespace Microsoft.Dnx.Runtime
             });
 
             // TODO(anurse): #2226 - Split LibraryManager implementation
-            var libraryManager = new LibraryManager(targetFramework, configuration, DependencyWalker,
-                LibraryExportProvider, cache);
-            LibraryManager = libraryManager;
-            LibraryExporter = libraryManager;
+            LibraryManager = new LibraryManager(DependencyWalker);
+            LibraryExporter = new LibraryExporter(targetFramework, configuration, LibraryManager, LibraryExportProvider, cache);
 
             AssemblyLoadContextFactory = loadContextFactory ?? new RuntimeLoadContextFactory(ServiceProvider);
             namedCacheDependencyProvider = namedCacheDependencyProvider ?? NamedCacheDependencyProvider.Empty;

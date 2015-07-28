@@ -4,8 +4,8 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using Microsoft.Dnx.Runtime.Caching;
 using Microsoft.Dnx.Compilation;
+using Microsoft.Dnx.Compilation.Caching;
 using Microsoft.Dnx.Runtime.Infrastructure;
 
 namespace Microsoft.Dnx.Runtime

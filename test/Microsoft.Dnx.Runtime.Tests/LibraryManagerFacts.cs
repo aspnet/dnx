@@ -5,8 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.Versioning;
-using Microsoft.Dnx.Runtime.Caching;
-using Microsoft.Dnx.Compilation;
+using Microsoft.Dnx.Compilation.Caching;
 using Xunit;
 
 namespace Microsoft.Dnx.Runtime.Tests
@@ -58,11 +57,7 @@ namespace Microsoft.Dnx.Runtime.Tests
                 new Library("Config", Enumerable.Empty<String>()),
                 new Library("MyApp", new[] { "DI", "Hosting", "Mvc", "HttpAbstractions" })
             };
-            return new LibraryManager(frameworkName,
-                                      "Debug",
-                                      () => libraryInfo,
-                                      new CompositeLibraryExportProvider(Enumerable.Empty<ILibraryExportProvider>()),
-                                      new EmptyCache());
+            return new LibraryManager(() => libraryInfo);
         }
 
         private class EmptyCache : ICache

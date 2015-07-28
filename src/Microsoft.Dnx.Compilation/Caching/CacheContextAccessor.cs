@@ -1,7 +1,6 @@
 ﻿using System;
-using Microsoft.Dnx.Compilation;
 
-namespace Microsoft.Dnx.Runtime.Caching
+namespace Microsoft.Dnx.Compilation.Caching
 {
     public class CacheContextAccessor : ICacheContextAccessor
     {

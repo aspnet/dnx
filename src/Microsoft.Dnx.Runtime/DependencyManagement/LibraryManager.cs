@@ -4,48 +4,25 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.Versioning;
-using Microsoft.Dnx.Runtime.Caching;
-using Microsoft.Dnx.Compilation;
 
 namespace Microsoft.Dnx.Runtime
 {
-    public class LibraryManager : ILibraryManager, ILibraryExporter
+    public class LibraryManager : ILibraryManager
     {
-        private readonly FrameworkName _targetFramework;
-        private readonly string _configuration;
-        private readonly ILibraryExportProvider _libraryExportProvider;
-        private readonly ICache _cache;
         private readonly Func<IEnumerable<Library>> _libraryInfoThunk;
         private readonly object _initializeLock = new object();
         private Dictionary<string, IEnumerable<Library>> _inverse;
         private Dictionary<string, Library> _graph;
         private bool _initialized;
 
-        public LibraryManager(FrameworkName targetFramework,
-                              string configuration,
-                              DependencyWalker dependencyWalker,
-                              ILibraryExportProvider libraryExportProvider,
-                              ICache cache)
-            : this(targetFramework,
-                   configuration,
-                   GetLibraryInfoThunk(dependencyWalker),
-                   libraryExportProvider,
-                   cache)
+        public LibraryManager(DependencyWalker dependencyWalker)
+            : this(GetLibraryInfoThunk(dependencyWalker))
         {
         }
 
-        public LibraryManager(FrameworkName targetFramework,
-                              string configuration,
-                              Func<IEnumerable<Library>> libraryInfoThunk,
-                              ILibraryExportProvider libraryExportProvider,
-                              ICache cache)
+        public LibraryManager(Func<IEnumerable<Library>> libraryInfoThunk)
         {
-            _targetFramework = targetFramework;
-            _configuration = configuration;
             _libraryInfoThunk = libraryInfoThunk;
-            _libraryExportProvider = libraryExportProvider;
-            _cache = cache;
         }
 
         private Dictionary<string, Library> LibraryLookup
@@ -66,16 +43,6 @@ namespace Microsoft.Dnx.Runtime
             }
         }
 
-        public LibraryExport GetLibraryExport(string name)
-        {
-            return GetLibraryExport(name, aspect: null);
-        }
-
-        public LibraryExport GetAllExports(string name)
-        {
-            return GetAllExports(name, aspect: null);
-        }
-
         public IEnumerable<Library> GetReferencingLibraries(string name)
         {
             IEnumerable<Library> libraries;
@@ -87,7 +54,7 @@ namespace Microsoft.Dnx.Runtime
             return Enumerable.Empty<Library>();
         }
 
-        public Library GetLibraryInformation(string name)
+        public Library GetLibrary(string name)
         {
             Library information;
             if (LibraryLookup.TryGetValue(name, out information))
@@ -102,29 +69,6 @@ namespace Microsoft.Dnx.Runtime
         {
             EnsureInitialized();
             return _graph.Values;
-        }
-
-        public LibraryExport GetLibraryExport(string name, string aspect)
-        {
-            return _libraryExportProvider.GetLibraryExport(new CompilationTarget(name, _targetFramework, _configuration, aspect));
-        }
-
-        public LibraryExport GetAllExports(string name, string aspect)
-        {
-            var key = Tuple.Create(
-                nameof(LibraryManager),
-                nameof(GetAllExports),
-                name,
-                _targetFramework,
-                _configuration,
-                aspect);
-
-            return _cache.Get<LibraryExport>(key, ctx =>
-                ProjectExportProviderHelper.GetExportsRecursive(
-                    this,
-                    _libraryExportProvider,
-                    new CompilationTarget(name, _targetFramework, _configuration, aspect),
-                    dependenciesOnly: false));
         }
 
         private void EnsureInitialized()

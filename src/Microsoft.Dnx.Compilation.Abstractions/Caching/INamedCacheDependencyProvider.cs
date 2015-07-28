@@ -1,4 +1,4 @@
-﻿namespace Microsoft.Dnx.Runtime.Caching
+﻿namespace Microsoft.Dnx.Compilation.Caching
 {
     public interface INamedCacheDependencyProvider
     {

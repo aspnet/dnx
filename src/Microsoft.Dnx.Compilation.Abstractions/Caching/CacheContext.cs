@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Microsoft.Dnx.Runtime.Caching
+namespace Microsoft.Dnx.Compilation.Caching
 {
     public class CacheContext
     {

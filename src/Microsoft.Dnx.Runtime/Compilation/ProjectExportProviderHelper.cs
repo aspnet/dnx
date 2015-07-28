@@ -46,7 +46,7 @@ namespace Microsoft.Dnx.Runtime
 
             var rootNode = new Node
             {
-                Library = manager.GetLibraryInformation(target.Name)
+                Library = manager.GetLibrary(target.Name)
             };
 
             queue.Enqueue(rootNode);
@@ -86,7 +86,7 @@ namespace Microsoft.Dnx.Runtime
                 {
                     var childNode = new Node
                     {
-                        Library = manager.GetLibraryInformation(dependency),
+                        Library = manager.GetLibrary(dependency),
                         Parent = node
                     };
 

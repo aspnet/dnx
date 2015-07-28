@@ -2,6 +2,7 @@
     "version": "1.0.0-*",
     "compilationOptions": { "warningsAsErrors": true },
     "dependencies": {
+        "Microsoft.Dnx.Compilation": "1.0.0-*",
         "Microsoft.Dnx.Project": "1.0.0-*",
         "Microsoft.Dnx.Runtime": "1.0.0-*",
         "Microsoft.Dnx.Runtime.CommandParsing.Sources": { "version": "1.0.0-*", "type": "build" },

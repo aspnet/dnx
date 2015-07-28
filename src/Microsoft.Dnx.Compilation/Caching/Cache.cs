@@ -2,9 +2,8 @@
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
-using Microsoft.Dnx.Compilation;
 
-namespace Microsoft.Dnx.Runtime.Caching
+namespace Microsoft.Dnx.Compilation.Caching
 {
     public class Cache : ICache
     {

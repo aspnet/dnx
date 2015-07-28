@@ -6,12 +6,12 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using Microsoft.Framework.FileSystemGlobbing;
-using Microsoft.Framework.FileSystemGlobbing.Abstractions;
+using Microsoft.Dnx.Compilation.Caching;
+using Microsoft.Dnx.Runtime;
 using Microsoft.Dnx.Tooling.SourceControl;
 using Microsoft.Dnx.Tooling.Utils;
-using Microsoft.Dnx.Runtime;
-using Microsoft.Dnx.Runtime.Caching;
+using Microsoft.Framework.FileSystemGlobbing;
+using Microsoft.Framework.FileSystemGlobbing.Abstractions;
 using NuGet;
 
 namespace Microsoft.Dnx.Tooling
