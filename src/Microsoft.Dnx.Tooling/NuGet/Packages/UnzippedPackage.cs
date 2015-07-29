@@ -80,7 +80,16 @@ namespace NuGet
                    select (IPackageAssemblyReference)new PhysicalPackageAssemblyReference(file);
         }
 
-        private void EnsurePackageFiles()
+        protected override IEnumerable<IPackageAssemblyReference> GetResourceReferencesCore()
+        {
+            EnsurePackageFiles();
+
+            return from file in _files.Values
+                   where IsResourcesReference(file.Path)
+                   select(IPackageAssemblyReference)new PhysicalPackageAssemblyReference(file);
+        }
+
+    private void EnsurePackageFiles()
         {
             if (_files != null)
             {

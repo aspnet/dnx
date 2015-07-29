@@ -23,8 +23,14 @@ namespace Microsoft.Dnx.Host
 
         public Assembly Load(AssemblyName assemblyName)
         {
-            foreach (var path in _searchPaths)
+            foreach (var searchPath in _searchPaths)
             {
+                var path = searchPath;
+                if (!string.IsNullOrEmpty(assemblyName.CultureName))
+                {
+                    path = Path.Combine(path, assemblyName.CultureName);
+                }
+
                 foreach (var extension in _extensions)
                 {
                     var filePath = Path.Combine(path, assemblyName.Name + extension);

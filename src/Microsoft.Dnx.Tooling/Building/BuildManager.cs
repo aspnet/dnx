@@ -190,6 +190,8 @@ namespace Microsoft.Dnx.Tooling
 
                             context.PopulateDependencies(symbolPackageBuilder);
                             context.AddLibs(symbolPackageBuilder, "*.*");
+
+                            context.AddLibs(packageBuilder, "*.resources.dll", recursiveSearch: true);
                         }
                     }
                     else

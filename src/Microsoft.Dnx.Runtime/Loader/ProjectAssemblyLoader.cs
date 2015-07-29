@@ -1,7 +1,8 @@
 // Copyright (c) .NET Foundation. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
-using System.Collections.Generic;using System.Reflection;
+using System.Collections.Generic;
+using System.Reflection;
 using Microsoft.Dnx.Runtime.Compilation;
 
 namespace Microsoft.Dnx.Runtime.Loader
@@ -62,7 +63,8 @@ namespace Microsoft.Dnx.Runtime.Loader
             return _compilationEngine.LoadProject(
                 project.Project,
                 aspect,
-                loadContext);
+                loadContext,
+                assemblyName);
         }
     }
 }

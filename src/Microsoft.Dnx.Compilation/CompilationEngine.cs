@@ -24,7 +24,7 @@ namespace Microsoft.Dnx.Compilation
 
         public CompilationCache CompilationCache { get; }
 
-        public Assembly LoadProject(Project project, string aspect, IAssemblyLoadContext loadContext)
+        public Assembly LoadProject(Project project, string aspect, IAssemblyLoadContext loadContext, AssemblyName assemblyName)
         {
             var exporter = CreateProjectExporter(project, _context.ApplicationEnvironment.RuntimeFramework, _context.ApplicationEnvironment.Configuration);
 
@@ -41,7 +41,7 @@ namespace Microsoft.Dnx.Compilation
             {
                 if (string.Equals(projectReference.Name, project.Name, StringComparison.OrdinalIgnoreCase))
                 {
-                    return projectReference.Load(loadContext);
+                    return projectReference.Load(assemblyName, loadContext);
                 }
             }
 
