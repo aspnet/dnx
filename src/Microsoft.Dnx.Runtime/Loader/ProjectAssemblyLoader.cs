@@ -66,7 +66,8 @@ namespace Microsoft.Dnx.Runtime.Loader
             return _compilationEngine.LoadProject(
                 library.Project, 
                 aspect, 
-                loadContext);
+                loadContext,
+                assemblyName);
         }
     }
 }

@@ -1,14 +1,8 @@
 {
-    "version": "0.1-beta-*",
-    "exclude": "more/*.cs",
+    "version": "1.0.0-*",
     "dependencies": {
-        "HelloShared": { "version": "0.1-beta-*", "type": "build" },
         "Microsoft.Dnx.Compilation.Abstractions": "1.0.0-*",
         "Microsoft.Data.Edm": "5.6.3"
-    },
-    "commands": {
-        "hi": "HelloWorld --mode amazing",
-        "run": "HelloWorld I can customize the default command"
     },
     "frameworks": {
         "dnx451": {

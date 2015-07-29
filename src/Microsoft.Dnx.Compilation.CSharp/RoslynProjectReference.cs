@@ -174,7 +174,7 @@ namespace Microsoft.Dnx.Compilation.CSharp
 
                 EmitResult emitResult = null;
 
-                if (assemblyName.CultureName != null)
+                if (!string.IsNullOrEmpty(assemblyName.CultureName))
                 {
                     var resourcesForCulture = GetResourcesForCulture(assemblyName.CultureName ?? string.Empty);
                     if (resourcesForCulture == null)

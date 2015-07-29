@@ -171,7 +171,16 @@ namespace NuGet
                    select (IPackageAssemblyReference)new PhysicalPackageAssemblyReference(file);
         }
 
-        public override IEnumerable<FrameworkName> GetSupportedFrameworks()
+        protected override IEnumerable<IPackageAssemblyReference> GetResourceReferencesCore()
+        {
+            EnsurePackageFiles();
+
+            return from file in _files.Values
+                   where IsResourcesReference(file.Path)
+                   select(IPackageAssemblyReference)new PhysicalPackageAssemblyReference(file);
+        }
+
+    public override IEnumerable<FrameworkName> GetSupportedFrameworks()
         {
             EnsurePackageFiles();
 

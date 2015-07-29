@@ -98,7 +98,14 @@ namespace NuGet
             return GetAssembliesNoCache();
         }
 
-        protected override IEnumerable<IPackageFile> GetFilesBase()
+        protected override IEnumerable<IPackageAssemblyReference> GetResourceReferencesCore()
+        {
+            return (from file in GetFiles()
+                    where IsResourcesReference(file.Path)
+                    select(IPackageAssemblyReference)new ZipPackageAssemblyReference(file)).ToList();
+        }
+
+    protected override IEnumerable<IPackageFile> GetFilesBase()
         {
             return GetFilesNoCache();
         }

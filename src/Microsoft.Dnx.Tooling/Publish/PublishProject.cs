@@ -366,6 +366,11 @@ namespace Microsoft.Dnx.Tooling.Publish
                         }
 
                         keep.AddRange(Directory.EnumerateFiles(specialFolderPath, "*.*", SearchOption.AllDirectories));
+
+                        foreach(var path in library.ResourceAssemblies)
+                        {
+                            keep.Add(CombinePath(packagesDir, path));
+                        }
                     }
                 }
             }
