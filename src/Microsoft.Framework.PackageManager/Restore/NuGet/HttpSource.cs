@@ -58,10 +58,18 @@ namespace Microsoft.Framework.PackageManager.Restore.NuGet
                     webProxy.Credentials = credentials;
                 }
 
+#if DNXCORE50
+                var handler = new WinHttpHandler
+#else
                 var handler = new HttpClientHandler
+#endif
                 {
                     Proxy = webProxy,
+#if DNXCORE50
+                    WindowsProxyUsePolicy = WindowsProxyUsePolicy.UseCustomProxy
+#else
                     UseProxy = true
+#endif
                 };
                 _client = new HttpClient(handler);
             }
