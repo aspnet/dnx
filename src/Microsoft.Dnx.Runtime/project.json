@@ -45,6 +45,7 @@
                 "System.IO.Compression": "4.0.0-beta-*",
                 "System.IO.FileSystem.Watcher": "4.0.0-beta-*",
                 "System.Linq": "4.0.0-beta-*",
+                "System.ObjectModel": "4.0.10-beta-*",
                 "System.Reflection.Extensions": "4.0.0-beta-*",
                 "System.Resources.ResourceManager": "4.0.0-beta-*",
                 "System.Resources.ReaderWriter": "4.0.0-beta-*",

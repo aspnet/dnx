@@ -18,6 +18,7 @@
                 "System.Console": "4.0.0-beta-*",
                 "System.Diagnostics.Debug": "4.0.10-beta-*",
                 "System.Linq": "4.0.0-beta-*",
+                "System.ObjectModel": "4.0.10-beta-*",
                 "System.Reflection": "4.0.10-beta-*",
                 "System.Runtime": "4.0.20-beta-*",
                 "System.Runtime.Extensions": "4.0.10-beta-*",

@@ -6,8 +6,13 @@
         "dnx451": { },
         "dnxcore50": {
             "dependencies": {
+                "System.Globalization": "4.0.10-beta-*",
+                "System.IO": "4.0.10-beta-*",
                 "System.Linq": "4.0.0-beta-*",
-                "System.Runtime": "4.0.20-beta-*"
+                "System.Reflection": "4.0.10-beta-*",
+                "System.Runtime": "4.0.20-beta-*",
+                "System.Text.Encoding": "4.0.10-beta-*",
+                "System.Threading.Tasks": "4.0.10-beta-*"
             }
         }
     }

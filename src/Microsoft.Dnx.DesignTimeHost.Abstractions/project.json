@@ -10,7 +10,9 @@
         "dnx451": { },
         "dnxcore50": {
             "dependencies": {
-                "System.Runtime": "4.0.20-beta-*"
+                "System.Runtime": "4.0.20-beta-*",
+                "System.Globalization": "4.0.10-beta-*",
+                "System.Text.Encoding": "4.0.10-beta-*"
             }
         }
     }
