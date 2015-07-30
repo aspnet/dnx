@@ -49,7 +49,6 @@ var RUNTIME_CLR_TARGETS = '${new [] {RUNTIME_MONO_BIN, RUNTIME_CLR_WIN_x86_BIN, 
 var RUNTIME_CORECLR_TARGETS = '${new [] {RUNTIME_CORECLR_WIN_x86_BIN, RUNTIME_CORECLR_WIN_x64_BIN, RUNTIME_CORECLR_WIN_arm_BIN, RUNTIME_CORECLR_DARWIN_x64_BIN, RUNTIME_CORECLR_LINUX_x64_BIN }}'
 var ALL_TARGETS = '${RUNTIME_CLR_TARGETS.Concat(RUNTIME_CORECLR_TARGETS)}'
 
-var RUNTIME_COMMON_NAME = 'DNX'
 var BOOTSTRAPPER_FOLDER_NAME = 'dnx'
 var BOOTSTRAPPER_EXE_NAME = 'dnx'
 var BOOTSTRAPPER_WINDOWS_FOLDER_NAME="dnx.windows"
@@ -1064,6 +1063,10 @@ macro name='DoRestore'
     }
 
 functions @{
+    private static readonly string[] TPA_IGNORED_ASSEMBLIES = new [] {
+        "Microsoft.Framework.HashCodeCombiner.Sources"
+    };
+
     private static readonly string _defaultLocalRuntimeHomeDir = ".dnx";
     private static readonly string _runtimesSubDir = "runtimes";
 
@@ -1388,6 +1391,7 @@ functions @{
                       .Where(l => File.Exists(l))
                       .Select(l => Path.GetFileNameWithoutExtension(l))
                       .Concat(assemblies)
+                      .Except(TPA_IGNORED_ASSEMBLIES)
                       .OrderBy(s => s)
                       .ToArray();
 
