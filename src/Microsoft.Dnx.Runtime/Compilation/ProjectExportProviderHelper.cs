@@ -39,6 +39,7 @@ namespace Microsoft.Dnx.Runtime
 
             var references = new Dictionary<string, IMetadataReference>(StringComparer.OrdinalIgnoreCase);
             var sourceReferences = new Dictionary<string, ISourceReference>(StringComparer.OrdinalIgnoreCase);
+            var analyzers = new Dictionary<string, IAnalyzerReference>(StringComparer.OrdinalIgnoreCase);
 
             // Walk the dependency tree and resolve the library export for all references to this project
             var queue = new Queue<Node>();
@@ -72,12 +73,12 @@ namespace Microsoft.Dnx.Runtime
                         if (node.Parent == rootNode)
                         {
                             // Only export sources from first level dependencies
-                            ProcessExport(libraryExport, references, sourceReferences);
+                            ProcessExport(libraryExport, references, sourceReferences, analyzers);
                         }
                         else
                         {
                             // Skip source exports from anything else
-                            ProcessExport(libraryExport, references, sourceReferences: null);
+                            ProcessExport(libraryExport, references, sourceReferences: null, analyzerReferences: analyzers);
                         }
                     }
                 }
@@ -103,18 +104,25 @@ namespace Microsoft.Dnx.Runtime
 
             return new LibraryExport(
                 references.Values.ToList(),
-                sourceReferences.Values.ToList());
+                sourceReferences.Values.ToList(),
+                analyzers.Values.ToList());
         }
 
         private static void ProcessExport(LibraryExport export,
                                           IDictionary<string, IMetadataReference> metadataReferences,
-                                          IDictionary<string, ISourceReference> sourceReferences)
+                                          IDictionary<string, ISourceReference> sourceReferences,
+                                          IDictionary<string, IAnalyzerReference> analyzerReferences)
         {
             var references = new List<IMetadataReference>(export.MetadataReferences);
 
             foreach (var reference in references)
             {
                 metadataReferences[reference.Name] = reference;
+            }
+
+            foreach (var analyzer in export.AnalyzerReferences)
+            {
+                analyzerReferences[analyzer.Name] = analyzer;
             }
 
             if (sourceReferences != null)

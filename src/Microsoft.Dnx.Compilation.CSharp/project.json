@@ -14,14 +14,16 @@
                 "System.Collections": "",
                 "System.IO": "",
                 "System.Threading.Tasks": "",
-                "System.Text.Encoding": ""
+                "System.Text.Encoding": "",
+                "System.Reflection": ""
             }
         },
         "dnxcore50": {
             "dependencies": {
                 "System.Collections.Concurrent": "4.0.10-beta-*",
                 "System.Runtime.InteropServices": "4.0.20-beta-*",
-                "System.IO.FileSystem": "4.0.0-beta-*"
+                "System.IO.FileSystem": "4.0.0-beta-*",
+                "System.Reflection": "4.0.10-beta-*"
             }
         }
     },

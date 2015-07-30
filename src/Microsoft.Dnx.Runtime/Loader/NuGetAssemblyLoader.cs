@@ -1,7 +1,6 @@
 // Copyright (c) .NET Foundation. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
-using System;
 using System.Reflection;
 
 namespace Microsoft.Dnx.Runtime.Loader
@@ -25,6 +24,12 @@ namespace Microsoft.Dnx.Runtime.Loader
 
         public Assembly Load(AssemblyName assemblyName, IAssemblyLoadContext loadContext)
         {
+            string analyzerFullpath;
+            if (_dependencyResolver.AnalyzerAssemblyLookup.TryGetValue(new AssemblyName(assemblyName.Name), out analyzerFullpath))
+            {
+                return loadContext.LoadFile(analyzerFullpath);
+            }
+
             // TODO: preserve name and culture info (we don't need to look at any other information)
             PackageAssembly assemblyInfo;
             if (_dependencyResolver.PackageAssemblyLookup.TryGetValue(new AssemblyName(assemblyName.Name), out assemblyInfo))

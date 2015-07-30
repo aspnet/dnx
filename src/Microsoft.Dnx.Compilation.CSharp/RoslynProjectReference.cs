@@ -10,9 +10,9 @@ using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Runtime.Versioning;
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.Diagnostics;
 using Microsoft.CodeAnalysis.Emit;
 using Microsoft.Dnx.Runtime;
-using Microsoft.Dnx.Compilation;
 
 namespace Microsoft.Dnx.Compilation.CSharp
 {
@@ -51,10 +51,19 @@ namespace Microsoft.Dnx.Compilation.CSharp
 
         public DiagnosticResult GetDiagnostics()
         {
-            var diagnostics = CompilationContext.Diagnostics
-                .Concat(CompilationContext.Compilation.GetDiagnostics());
+            // Only caller of this method so far (7/30/2015) is the ApplicationContext (of DTH)
+            // So this code path dedicate to DTH scenarios
 
-            return CreateDiagnosticResult(success: true, diagnostics: diagnostics, targetFramework: CompilationContext.ProjectContext.TargetFramework);
+            var diagnostics = CompilationContext.Diagnostics.Concat(CompilationContext.Compilation.GetDiagnostics());
+            var analyzeDiagnostics = CompilationContext.GetAnalyzerDiagnsoticsAsnyc().Result;
+            if (analyzeDiagnostics.Length > 0)
+            {
+                diagnostics = diagnostics.Concat(analyzeDiagnostics);
+            }
+
+            return CreateDiagnosticResult(success: true,
+                                          diagnostics: diagnostics,
+                                          targetFramework: CompilationContext.ProjectContext.TargetFramework);
         }
 
         public IList<ISourceReference> GetSources()
@@ -202,11 +211,29 @@ namespace Microsoft.Dnx.Compilation.CSharp
 
                 Logger.TraceInformation("[{0}]: Emitted {1} in {2}ms", GetType().Name, Name, sw.ElapsedMilliseconds);
 
+                var diagnostics = new List<Diagnostic>(emitResult.Diagnostics);
+
+                if (CompilationContext.DiagnosticAnalyzers != null && CompilationContext.DiagnosticAnalyzers.Length > 0)
+                {
+                    sw.Start();
+
+                    var analyzerDiagnostics = CompilationContext.Compilation
+                        .WithAnalyzers(CompilationContext.DiagnosticAnalyzers)
+                        .GetAllDiagnosticsAsync()
+                        .Result     // TODO: make the caller an async method?
+                        .ToArray();
+
+                    sw.Stop();
+                    Logger.TraceInformation($"[{nameof(RoslynProjectReference)}]: Analyzed {Name} in {sw.ElapsedMilliseconds}ms");
+
+                    diagnostics.AddRange(analyzerDiagnostics);
+                }
+
                 var afterCompileContext = new AfterCompileContext
                 {
                     ProjectContext = CompilationContext.ProjectContext,
                     Compilation = CompilationContext.Compilation,
-                    Diagnostics = new List<Diagnostic>(emitResult.Diagnostics),
+                    Diagnostics = diagnostics,
                     AssemblyStream = assemblyStream,
                     SymbolStream = pdbStream,
                     XmlDocStream = xmlDocStream
