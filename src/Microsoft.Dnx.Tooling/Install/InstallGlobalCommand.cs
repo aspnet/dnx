@@ -61,10 +61,7 @@ namespace Microsoft.Dnx.Tooling
             // 1. Get the package without dependencies. We cannot resolve them now because
             // we don't know the target frameworks that the package supports
 
-            if (string.IsNullOrEmpty(FeedOptions.TargetPackagesFolder))
-            {
-                FeedOptions.TargetPackagesFolder = _commandsRepository.PackagesRoot.Root;
-            }
+            FeedOptions.TargetPackagesFolder = _commandsRepository.PackagesRoot.Root;
 
             var temporaryProjectFileFullPath = CreateTemporaryProject(FeedOptions.TargetPackagesFolder, packageId, packageVersion);
 
