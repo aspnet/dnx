@@ -4,9 +4,12 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Diagnostics;
+using System.Threading.Tasks;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
+using Microsoft.CodeAnalysis.Diagnostics;
 using Microsoft.Dnx.Runtime;
 
 namespace Microsoft.Dnx.Compilation.CSharp
@@ -52,6 +55,8 @@ namespace Microsoft.Dnx.Compilation.CSharp
 
         public IList<ICompileModule> Modules { get; }
 
+        public ImmutableArray<DiagnosticAnalyzer> DiagnosticAnalyzers { get; set; }
+
         public CSharpCompilation Compilation
         {
             get { return _beforeCompileContext.Compilation; }
@@ -76,6 +81,21 @@ namespace Microsoft.Dnx.Compilation.CSharp
         public BeforeCompileContext BeforeCompileContext
         {
             get { return _beforeCompileContext; }
+        }
+
+        public async Task<ImmutableArray<Diagnostic>> GetAnalyzerDiagnsoticsAsnyc()
+        {
+            if (DiagnosticAnalyzers != null && DiagnosticAnalyzers.Length > 0)
+            {
+                var diagnostics = await Compilation.WithAnalyzers(DiagnosticAnalyzers)
+                                                   .GetAllDiagnosticsAsync();
+
+                return diagnostics;
+            }
+            else
+            {
+                return ImmutableArray<Diagnostic>.Empty;
+            }
         }
 
         private IList<ResourceDescription> ResolveResources()

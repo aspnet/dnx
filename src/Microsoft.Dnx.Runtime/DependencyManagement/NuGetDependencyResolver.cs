@@ -9,6 +9,7 @@ using System.Reflection;
 using System.Runtime.Versioning;
 using Microsoft.Dnx.Compilation;
 using Microsoft.Dnx.Runtime.DependencyManagement;
+using Microsoft.Dnx.Runtime.Helpers;
 using NuGet;
 
 namespace Microsoft.Dnx.Runtime
@@ -17,25 +18,31 @@ namespace Microsoft.Dnx.Runtime
     {
         private IDictionary<Tuple<string, FrameworkName, string>, LockFileTargetLibrary> _lookup;
         private readonly PackageRepository _repository;
+        private readonly FrameworkName _runtimeFramework;
 
         // Assembly name and path lifted from the appropriate lib folder
         private readonly Dictionary<AssemblyName, PackageAssembly> _packageAssemblyLookup = new Dictionary<AssemblyName, PackageAssembly>(AssemblyNameComparer.OrdinalIgnoreCase);
 
+        private readonly Dictionary<AssemblyName, string> _analyzerAssemblyLookup = new Dictionary<AssemblyName, string>(AssemblyNameComparer.OrdinalIgnoreCase);
+
         // All the information required by this package
         private readonly Dictionary<string, PackageDescription> _packageDescriptions = new Dictionary<string, PackageDescription>(StringComparer.OrdinalIgnoreCase);
 
-        public NuGetDependencyResolver(PackageRepository repository)
+        public NuGetDependencyResolver(PackageRepository repository, FrameworkName runtimeFramework)
         {
             _repository = repository;
+            _runtimeFramework = runtimeFramework;
             Dependencies = Enumerable.Empty<LibraryDescription>();
         }
 
         public IDictionary<AssemblyName, PackageAssembly> PackageAssemblyLookup
         {
-            get
-            {
-                return _packageAssemblyLookup;
-            }
+            get { return _packageAssemblyLookup; }
+        }
+
+        public IDictionary<AssemblyName, string> AnalyzerAssemblyLookup
+        {
+            get { return _analyzerAssemblyLookup; }
         }
 
         public IEnumerable<LibraryDescription> Dependencies { get; private set; }
@@ -172,7 +179,6 @@ namespace Microsoft.Dnx.Runtime
             }
 
             // If we weren't given a lockFileGroup, there isn't a lock file, so resolve the NuGet way.
-
             var package = packageInfo.Package;
 
             IEnumerable<PackageDependencySet> dependencySet;
@@ -324,6 +330,15 @@ namespace Microsoft.Dnx.Runtime
                 }
 
                 dependency.LoadableAssemblies = assemblies;
+
+                var analyzerReferences = AnalyzerHelper.GetAnalyerReferences(packageInfo, packagePath, _runtimeFramework);
+                foreach (var analyzerAssembly in analyzerReferences?.SelectMany(reference => reference.Files) ?? Enumerable.Empty<string>())
+                {
+                    var assemblyPath = Path.Combine(packagePath, analyzerAssembly).Replace('/', Path.DirectorySeparatorChar);
+                    var assemblyName = new AssemblyName(Path.GetFileNameWithoutExtension(assemblyPath));
+
+                    _analyzerAssemblyLookup[assemblyName] = assemblyPath;
+                }
             }
         }
 
@@ -384,7 +399,9 @@ namespace Microsoft.Dnx.Runtime
                 sourceReferences.Add(new SourceFileReference(sharedSource));
             }
 
-            return new LibraryExport(references.Values.ToList(), sourceReferences);
+            var analyerReferences = AnalyzerHelper.GetAnalyerReferences(description.Package, description.Library.Path, _runtimeFramework);
+
+            return new LibraryExport(references.Values.ToList(), sourceReferences, analyerReferences.ToList());
         }
 
         private bool TryPopulateMetadataReferences(PackageDescription description, FrameworkName targetFramework, IDictionary<string, IMetadataReference> paths)

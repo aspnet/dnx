@@ -42,11 +42,13 @@ namespace Microsoft.Dnx.Compilation.CSharp
 
             var incomingReferences = export.MetadataReferences;
             var incomingSourceReferences = export.SourceReferences;
+            var analyzerReferences = export.AnalyzerReferences;
 
             var compliationContext = _compiler.CompileProject(
                 projectContext,
                 incomingReferences,
                 incomingSourceReferences,
+                analyzerReferences,
                 resourcesResolver);
 
             if (compliationContext == null)

@@ -51,6 +51,7 @@ namespace Microsoft.Dnx.Compilation.CSharp
             CompilationProjectContext projectContext,
             IEnumerable<IMetadataReference> incomingReferences,
             IEnumerable<ISourceReference> incomingSourceReferences,
+            IEnumerable<IAnalyzerReference> analyzerReferences,
             Func<IList<ResourceDescriptor>> resourcesResolver)
         {
             var path = projectContext.ProjectDirectory;
@@ -86,6 +87,7 @@ namespace Microsoft.Dnx.Compilation.CSharp
             var exportedReferences = incomingReferences.Select(ConvertMetadataReference);
 
             Logger.TraceInformation("[{0}]: Compiling '{1}'", GetType().Name, name);
+
             var sw = Stopwatch.StartNew();
 
             var compilationSettings = projectContext.CompilerOptions.ToCompilationSettings(
@@ -171,6 +173,26 @@ namespace Microsoft.Dnx.Compilation.CSharp
                 }
             }
 
+            if (isMainAspect && analyzerReferences.Any())
+            {
+                try
+                {
+                    var analyzerSet = GetAnalyzerSet(projectContext.Target, analyzerReferences);
+                    if (analyzerSet?.DiagnosticAnalyzers.Any() ?? false)
+                    {
+                        compilationContext.DiagnosticAnalyzers = analyzerSet.DiagnosticAnalyzers;
+                        foreach (var analyzer in analyzerSet.DiagnosticAnalyzers)
+                        {
+                            Logger.TraceInformation($"[{nameof(RoslynCompiler)}]: Found diagnostic analyzer {analyzer}");
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Logger.TraceError($"[{nameof(RoslynCompiler)}]: Failed to load analyzer assembly. Exception: {ex.Message}.");
+                }
+            }
+
             if (compilationContext.Modules.Count > 0)
             {
                 var precompSw = Stopwatch.StartNew();
@@ -195,7 +217,7 @@ namespace Microsoft.Dnx.Compilation.CSharp
                 Environment.GetEnvironmentVariable(EnvironmentNames.BuildKeyFile) ??
                 compilationContext.Compilation.Options.CryptoKeyFile;
 
-            if(!string.IsNullOrEmpty(keyFile) && !RuntimeEnvironmentHelper.IsMono)
+            if (!string.IsNullOrEmpty(keyFile) && !RuntimeEnvironmentHelper.IsMono)
             {
 #if DNX451
                 var delaySignString = Environment.GetEnvironmentVariable(EnvironmentNames.BuildDelaySign);
@@ -263,6 +285,27 @@ namespace Microsoft.Dnx.Compilation.CSharp
                     LoadContext = childContext,
                     Modules = modules,
                 };
+            });
+        }
+
+        private AnalyzerSet GetAnalyzerSet(CompilationTarget target, IEnumerable<IAnalyzerReference> references)
+        {
+            Logger.TraceInformation($"[{nameof(RoslynCompiler)}] Load analyzers.");
+
+            var key = Tuple.Create(
+                target.Name,
+                _environment.RuntimeFramework,
+                _environment.Configuration,
+                "analyzerset");
+
+            return _cache.Get<AnalyzerSet>(key, _ =>
+            {
+                var childContext = _loadContextFactory.Create(_services);
+
+                var analyzerSet = new AnalyzerSet(childContext, references, _environment.RuntimeFramework);
+                analyzerSet.Load();
+
+                return analyzerSet;
             });
         }
 

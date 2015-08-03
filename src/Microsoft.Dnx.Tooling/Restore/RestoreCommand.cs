@@ -118,7 +118,7 @@ namespace Microsoft.Dnx.Tooling
             foreach (var category in InformationMessages)
             {
                 Reports.Quiet.WriteLine($"{Environment.NewLine}{category.Key}");
-                foreach(var message in category.Value)
+                foreach (var message in category.Value)
                 {
                     Reports.Quiet.WriteLine($"    {message}");
                 }
@@ -313,9 +313,10 @@ namespace Microsoft.Dnx.Tooling
                     new ProjectReferenceDependencyProvider(
                         projectResolver)));
 
+            // FallbackFramework is the application enviroment framework
             localProviders.Add(
                 new LocalWalkProvider(
-                    new NuGetDependencyResolver(packageRepository)));
+                    new NuGetDependencyResolver(packageRepository, FallbackFramework)));
 
             var effectiveSources = PackageSourceUtils.GetEffectivePackageSources(
                 Config.Sources,

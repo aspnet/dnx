@@ -45,7 +45,7 @@ namespace Microsoft.Dnx.Runtime
             PackagesDirectory = packagesDirectory ?? NuGetDependencyResolver.ResolveRepositoryPath(RootDirectory);
 
             var referenceAssemblyDependencyResolver = new ReferenceAssemblyDependencyResolver(FrameworkReferenceResolver);
-            NuGetDependencyProvider = new NuGetDependencyResolver(new PackageRepository(PackagesDirectory));
+            NuGetDependencyProvider = new NuGetDependencyResolver(new PackageRepository(PackagesDirectory), targetFramework);
             var gacDependencyResolver = new GacDependencyResolver();
             ProjectDepencyProvider = new ProjectReferenceDependencyProvider(ProjectResolver);
             var unresolvedDependencyProvider = new UnresolvedDependencyProvider();

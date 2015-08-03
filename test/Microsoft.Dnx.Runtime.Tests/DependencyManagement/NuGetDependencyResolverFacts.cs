@@ -24,7 +24,7 @@ namespace Microsoft.Dnx.Runtime.Tests
         public void LibrariesAreResolvedCorrectly(string packageName, string framework, bool resolved)
         {
             var repo = new PackageRepository("path/to/packages");
-            var resolver = new NuGetDependencyResolver(repo);
+            var resolver = new NuGetDependencyResolver(repo, runtimeFramework: null);
 
             var net45Target = new LockFileTarget
             {
