@@ -26,7 +26,7 @@ extern "C" __declspec(dllexport) HRESULT __stdcall CallApplicationMain(PCALL_APP
     }
     else
     {
-        printf_s("Failed to initalize runtime (%x)", hr);
+        printf_s("Failed to initialize runtime (%x)", hr);
         data->exitcode = hr;
     }
 

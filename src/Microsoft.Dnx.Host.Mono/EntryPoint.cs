@@ -89,12 +89,29 @@ public class EntryPoint
             return arguments;
         }
 
+        var argExpanded = false;
         var expandedArgs = new List<string>();
         for (var i = 0; i < arguments.Count(); i++)
         {
-            if (i == parameterIdx)
+            if (!argExpanded)
             {
-                ExpandArgument(arguments[i], expandedArgs);
+                if (string.Equals(arguments[i], "-p", StringComparison.OrdinalIgnoreCase) ||
+                    string.Equals(arguments[i], "--project", StringComparison.OrdinalIgnoreCase))
+                {
+                    // Note that ++i is safe here since if we had a trailing -p/--project we would have exited
+                    // before entering the loop because we wouldn't have found any non-host option
+                    ExpandProject(arguments[++i], expandedArgs);
+                    argExpanded = true;
+                }
+                else if (i == parameterIdx)
+                {
+                    ExpandNonHostArgument(arguments[i], expandedArgs);
+                    argExpanded = true;
+                }
+                else
+                {
+                    expandedArgs.Add(arguments[i]);
+                }
             }
             else
             {
@@ -105,7 +122,22 @@ public class EntryPoint
         return expandedArgs.ToArray();
     }
 
-    private static void ExpandArgument(string argument, List<string> expandedArgs)
+    private static void ExpandProject(string projectPath, List<string> expandedArgs)
+    {
+        expandedArgs.Add("--appbase");
+        if (string.Equals(Path.GetFileName(projectPath), "project.json", StringComparison.OrdinalIgnoreCase))
+        {
+            expandedArgs.Add(Path.GetDirectoryName(Path.GetFullPath(projectPath)));
+        }
+        else
+        {
+            expandedArgs.Add(Path.GetFullPath(projectPath));
+        }
+
+        expandedArgs.Add("Microsoft.Dnx.ApplicationHost");
+    }
+
+    private static void ExpandNonHostArgument(string argument, List<string> expandedArgs)
     {
         expandedArgs.Add("--appbase");
 
@@ -117,21 +149,6 @@ public class EntryPoint
             expandedArgs.Add(Path.GetDirectoryName(Path.GetFullPath(argument)));
             expandedArgs.Add(argument);
 
-            return;
-        }
-
-        if (argument.Equals(".", StringComparison.Ordinal))
-        {
-            // "dnx . run" --> "dnx --appbase . Microsoft.Dnx.ApplicationHost run"
-            expandedArgs.Add(argument);
-            expandedArgs.Add("Microsoft.Dnx.ApplicationHost");
-            return;
-        }
-
-        if (string.Equals(Path.GetFileName(argument), "project.json", StringComparison.OrdinalIgnoreCase))
-        {
-            expandedArgs.Add(Path.GetDirectoryName(Path.GetFullPath(argument)));
-            expandedArgs.Add("Microsoft.Dnx.ApplicationHost");
             return;
         }
 
@@ -168,7 +185,9 @@ public class EntryPoint
             string.Equals(candidate, "--lib", StringComparison.OrdinalIgnoreCase) ||
             string.Equals(candidate, "--packages", StringComparison.OrdinalIgnoreCase) ||
             string.Equals(candidate, "--configuration", StringComparison.OrdinalIgnoreCase) ||
-            string.Equals(candidate, "--port", StringComparison.OrdinalIgnoreCase))
+            string.Equals(candidate, "--port", StringComparison.OrdinalIgnoreCase) ||
+            string.Equals(candidate, "--project", StringComparison.OrdinalIgnoreCase) ||
+            string.Equals(candidate, "-p", StringComparison.OrdinalIgnoreCase))
         {
             return 1;
         }
