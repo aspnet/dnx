@@ -224,7 +224,7 @@ extern "C" HRESULT CallApplicationMain(PCALL_APPLICATION_MAIN_DATA data)
 
     // Add the assembly containing the app domain manager to the trusted list
     trustedPlatformAssemblies.append(runtimeDirectory);
-    trustedPlatformAssemblies.append("dnx.coreclr.managed.dll");
+    trustedPlatformAssemblies.append("Microsoft.Dnx.Host.CoreClr.dll");
 
     std::string appPaths(runtimeDirectory);
 
@@ -261,14 +261,14 @@ extern "C" HRESULT CallApplicationMain(PCALL_APPLICATION_MAIN_DATA data)
 
     hr = executeAssembly(pathToBootstrapper.c_str(),
                          coreClrDllPath.c_str(),
-                         "dnx.coreclr.managed",
+                         "Microsoft.Dnx.Host.CoreClr",
                          sizeof(property_keys) / sizeof(property_keys[0]),
                          property_keys,
                          property_values,
                          data->argc,
                          (const char**)data->argv,
                          nullptr,
-                         "dnx.coreclr.managed, Version=0.1.0.0",
+                         "Microsoft.Dnx.Host.CoreClr, Version=0.0.0.0",
                          "DomainManager",
                          "Execute",
                          (DWORD*)&(data->exitcode));
