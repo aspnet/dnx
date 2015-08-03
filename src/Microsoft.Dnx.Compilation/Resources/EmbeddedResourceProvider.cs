@@ -4,10 +4,10 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using Microsoft.Dnx.Compilation;
+using Microsoft.Dnx.Runtime;
 using NuGet;
 
-namespace Microsoft.Dnx.Runtime
+namespace Microsoft.Dnx.Compilation
 {
     public class EmbeddedResourceProvider : IResourceProvider
     {

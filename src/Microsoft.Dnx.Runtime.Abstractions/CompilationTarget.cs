@@ -13,6 +13,7 @@ namespace Microsoft.Dnx.Runtime
     /// </summary>
     public struct CompilationTarget : IEquatable<CompilationTarget>
     {
+        // TODO(anurse): This can probably be reduced to remove the name field since we always seem to have the name already ;)
         public CompilationTarget(string name, FrameworkName targetFramework, string configuration, string aspect)
         {
             Name = name;
@@ -41,6 +42,12 @@ namespace Microsoft.Dnx.Runtime
                 .Add(TargetFramework)
                 .Add(Configuration)
                 .Add(Aspect);
+        }
+
+        public override string ToString()
+        {
+            string aspectString = string.IsNullOrEmpty(Aspect) ? string.Empty : $"!{Aspect}";
+            return $"{Name}{aspectString} ({TargetFramework}, {Configuration})";
         }
     }
 }

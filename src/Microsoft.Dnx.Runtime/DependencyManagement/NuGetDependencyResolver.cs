@@ -7,13 +7,11 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.Versioning;
-using Microsoft.Dnx.Compilation;
-using Microsoft.Dnx.Runtime.DependencyManagement;
 using NuGet;
 
 namespace Microsoft.Dnx.Runtime
 {
-    public class NuGetDependencyResolver : IDependencyProvider, ILibraryExportProvider
+    public class NuGetDependencyResolver : IDependencyProvider
     {
         private IDictionary<Tuple<string, FrameworkName, string>, LockFileTargetLibrary> _lookup;
         private readonly PackageRepository _repository;
@@ -22,7 +20,7 @@ namespace Microsoft.Dnx.Runtime
         private readonly Dictionary<AssemblyName, PackageAssembly> _packageAssemblyLookup = new Dictionary<AssemblyName, PackageAssembly>(AssemblyNameComparer.OrdinalIgnoreCase);
 
         // All the information required by this package
-        private readonly Dictionary<string, PackageDescription> _packageDescriptions = new Dictionary<string, PackageDescription>(StringComparer.OrdinalIgnoreCase);
+        private readonly Dictionary<string, PackageMetadata> _packageDescriptions = new Dictionary<string, PackageMetadata>(StringComparer.OrdinalIgnoreCase);
 
         public NuGetDependencyResolver(PackageRepository repository)
         {
@@ -127,19 +125,13 @@ namespace Microsoft.Dnx.Runtime
                     dependencies = GetDependencies(package, targetFramework, targetLibrary: null);
                 }
 
-                return new LibraryDescription
-                {
-                    LibraryRange = libraryRange,
-                    Identity = new LibraryIdentity
-                    {
-                        Name = package.Id,
-                        Version = package.Version
-                    },
-                    Type = "Package",
-                    Dependencies = dependencies,
-                    Resolved = resolved,
-                    Compatible = compatible
-                };
+                return new PackageDescription(
+                    libraryRange,
+                    package,
+                    targetLibrary,
+                    dependencies,
+                    resolved,
+                    compatible);
             }
 
             return null;
@@ -255,7 +247,7 @@ namespace Microsoft.Dnx.Runtime
 
                 dependency.Path = packagePath;
 
-                var packageDescription = new PackageDescription
+                var packageDescription = new PackageMetadata
                 {
                     Library = dependency,
                     Package = packageInfo
@@ -323,7 +315,7 @@ namespace Microsoft.Dnx.Runtime
                     assemblies.Add(name);
                 }
 
-                dependency.LoadableAssemblies = assemblies;
+                dependency.Assemblies = assemblies;
             }
         }
 
@@ -359,70 +351,6 @@ namespace Microsoft.Dnx.Runtime
 
             return packageCachePathValue.Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries)
                                         .Select(path => new DefaultPackagePathResolver(path));
-        }
-
-        public LibraryExport GetLibraryExport(CompilationTarget target)
-        {
-            PackageDescription description;
-            if (!_packageDescriptions.TryGetValue(target.Name, out description))
-            {
-                return null;
-            }
-
-            var references = new Dictionary<string, IMetadataReference>(StringComparer.OrdinalIgnoreCase);
-
-            if (!TryPopulateMetadataReferences(description, target.TargetFramework, references))
-            {
-                return null;
-            }
-
-            // REVIEW: This requires more design
-            var sourceReferences = new List<ISourceReference>();
-
-            foreach (var sharedSource in GetSharedSources(description, target.TargetFramework))
-            {
-                sourceReferences.Add(new SourceFileReference(sharedSource));
-            }
-
-            return new LibraryExport(references.Values.ToList(), sourceReferences);
-        }
-
-        private bool TryPopulateMetadataReferences(PackageDescription description, FrameworkName targetFramework, IDictionary<string, IMetadataReference> paths)
-        {
-            if (_lookup == null)
-            {
-                return false;
-            }
-
-            var lookupKey = Tuple.Create((string)null, targetFramework, description.Package.LockFileLibrary.Name);
-
-            LockFileTargetLibrary targetLibrary;
-            if (!_lookup.TryGetValue(lookupKey, out targetLibrary))
-            {
-                return false;
-            }
-
-            foreach (var assemblyPath in targetLibrary.CompileTimeAssemblies)
-            {
-                if (IsPlaceholderFile(assemblyPath))
-                {
-                    continue;
-                }
-
-                var name = Path.GetFileNameWithoutExtension(assemblyPath);
-                var path = Path.Combine(description.Library.Path, assemblyPath);
-                paths[name] = new MetadataFileReference(name, path);
-            }
-
-            return true;
-        }
-
-        private IEnumerable<string> GetSharedSources(PackageDescription description, FrameworkName targetFramework)
-        {
-            var directory = Path.Combine(description.Library.Path, "shared");
-
-            return description.Package.LockFileLibrary.Files.Where(path => path.StartsWith("shared" + Path.DirectorySeparatorChar))
-                                                            .Select(path => Path.Combine(description.Library.Path, path));
         }
 
         private IPackage FindCandidate(string name, SemanticVersion version)
@@ -467,7 +395,7 @@ namespace Microsoft.Dnx.Runtime
             return bestMatch;
         }
 
-        private static bool IsPlaceholderFile(string path)
+        public static bool IsPlaceholderFile(string path)
         {
             return string.Equals(Path.GetFileName(path), "_._", StringComparison.Ordinal);
         }
@@ -509,7 +437,7 @@ namespace Microsoft.Dnx.Runtime
             return Path.Combine(profileDirectory, Constants.DefaultLocalRuntimeHomeDir, "packages");
         }
 
-        private class PackageDescription
+        private class PackageMetadata
         {
             public PackageInfo Package { get; set; }
 

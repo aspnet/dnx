@@ -3,8 +3,6 @@
 
 using System.IO;
 using System.Linq;
-using Microsoft.Dnx.Runtime;
-using Microsoft.Dnx.Runtime.DependencyManagement;
 using NuGet;
 
 namespace Microsoft.Dnx.Tooling

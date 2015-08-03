@@ -8,6 +8,7 @@ using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading.Tasks;
+using Microsoft.Dnx.Compilation;
 using Microsoft.Dnx.Compilation.Caching;
 using Microsoft.Dnx.DesignTimeHost.Models;
 using Microsoft.Dnx.Runtime;
@@ -57,9 +58,6 @@ namespace Microsoft.Dnx.DesignTimeHost
 
         private async Task OpenChannel(int port, string hostId)
         {
-            var cacheContextAccessor = new CacheContextAccessor();
-            var cache = new Cache(cacheContextAccessor);
-            var namedDependencyProvider = new NamedCacheDependencyProvider();
             var contexts = new Dictionary<int, ApplicationContext>();
             var services = new ServiceProvider(_services);
             var protocolManager = new ProtocolManager(maxVersion: 2);
@@ -69,6 +67,7 @@ namespace Microsoft.Dnx.DesignTimeHost
             listenSocket.Bind(new IPEndPoint(IPAddress.Loopback, port));
             listenSocket.Listen(10);
 
+            Console.WriteLine($"Process ID {Process.GetCurrentProcess().Id}");
             Console.WriteLine("Listening on port {0}", port);
 
             for (; ;)
@@ -82,9 +81,6 @@ namespace Microsoft.Dnx.DesignTimeHost
                 var connection = new ConnectionContext(
                     contexts,
                     services,
-                    cache,
-                    cacheContextAccessor,
-                    namedDependencyProvider,
                     queue,
                     protocolManager,
                     hostId);

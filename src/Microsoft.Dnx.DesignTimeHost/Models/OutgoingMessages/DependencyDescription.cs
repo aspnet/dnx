@@ -9,6 +9,8 @@ namespace Microsoft.Dnx.DesignTimeHost.Models.OutgoingMessages
     public class DependencyDescription
     {
         public string Name { get; set; }
+        
+        public string DisplayName { get; set; }
 
         public string Version { get; set; }
 

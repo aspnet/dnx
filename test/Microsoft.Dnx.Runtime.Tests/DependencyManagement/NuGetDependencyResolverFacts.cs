@@ -4,9 +4,8 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Runtime.Versioning;
-using Microsoft.Dnx.Runtime.DependencyManagement;
-using Xunit;
 using NuGet;
+using Xunit;
 
 namespace Microsoft.Dnx.Runtime.Tests
 {

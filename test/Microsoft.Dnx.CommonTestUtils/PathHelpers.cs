@@ -3,8 +3,9 @@
 
 using System.IO;
 using System.Linq;
+using Microsoft.Dnx.Runtime;
 
-namespace Microsoft.Dnx.Runtime.Tests
+namespace Microsoft.Dnx.CommonTestUtils
 {
     public static class PathHelpers
     {

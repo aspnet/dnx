@@ -3,7 +3,7 @@
 
 using System.IO;
 
-namespace Microsoft.Dnx.Runtime.FileSystem
+namespace Microsoft.Dnx.Compilation.FileSystem
 {
     internal class FileSystemWatcherRoot : IWatcherRoot
     {

@@ -7,25 +7,27 @@ using System.Linq;
 
 namespace Microsoft.Dnx.Runtime
 {
+    // REVIEW(anurse): This is now a fairly simple wrapper around a collection of libraries. Rename to LibrarySet or LibraryCollection?
+    // REVIEW(anurse): This could also be much more lazy. Some consumers only use the RuntimeLibrary graph, some need the Library graph.
     public class LibraryManager : ILibraryManager
     {
-        private readonly Func<IEnumerable<Library>> _libraryInfoThunk;
+        private readonly Func<IEnumerable<LibraryDescription>> _librariesThunk;
         private readonly object _initializeLock = new object();
         private Dictionary<string, IEnumerable<Library>> _inverse;
-        private Dictionary<string, Library> _graph;
+        private Dictionary<string, Tuple<Library, LibraryDescription>> _graph;
         private bool _initialized;
 
-        public LibraryManager(DependencyWalker dependencyWalker)
-            : this(GetLibraryInfoThunk(dependencyWalker))
+        public LibraryManager(IEnumerable<LibraryDescription> libraries)
+            : this(() => libraries)
         {
         }
 
-        public LibraryManager(Func<IEnumerable<Library>> libraryInfoThunk)
+        public LibraryManager(Func<IEnumerable<LibraryDescription>> librariesThunk)
         {
-            _libraryInfoThunk = libraryInfoThunk;
+            _librariesThunk = librariesThunk;
         }
 
-        private Dictionary<string, Library> LibraryLookup
+        private Dictionary<string, Tuple<Library, LibraryDescription>> Graph
         {
             get
             {
@@ -56,10 +58,21 @@ namespace Microsoft.Dnx.Runtime
 
         public Library GetLibrary(string name)
         {
-            Library information;
-            if (LibraryLookup.TryGetValue(name, out information))
+            Tuple<Library, LibraryDescription> library;
+            if (Graph.TryGetValue(name, out library))
             {
-                return information;
+                return library.Item1;
+            }
+
+            return null;
+        }
+
+        public LibraryDescription GetLibraryDescription(string name)
+        {
+            Tuple<Library, LibraryDescription> library;
+            if (Graph.TryGetValue(name, out library))
+            {
+                return library.Item2;
             }
 
             return null;
@@ -68,7 +81,7 @@ namespace Microsoft.Dnx.Runtime
         public IEnumerable<Library> GetLibraries()
         {
             EnsureInitialized();
-            return _graph.Values;
+            return _graph.Values.Select(l => l.Item1);
         }
 
         private void EnsureInitialized()
@@ -78,8 +91,8 @@ namespace Microsoft.Dnx.Runtime
                 if (!_initialized)
                 {
                     _initialized = true;
-                    _graph = _libraryInfoThunk().ToDictionary(ld => ld.Name,
-                                                              StringComparer.Ordinal);
+                    var libraries = _librariesThunk();
+                    _graph = libraries.ToDictionary(l => l.Identity.Name, l => Tuple.Create(l.ToLibrary(), l), StringComparer.Ordinal);
 
                     BuildInverseGraph();
                 }
@@ -92,7 +105,7 @@ namespace Microsoft.Dnx.Runtime
             var visited = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             foreach (var item in _graph.Values)
             {
-                Visit(item, firstLevelLookups, visited);
+                Visit(item.Item1, firstLevelLookups, visited);
             }
 
             _inverse = new Dictionary<string, IEnumerable<Library>>(StringComparer.OrdinalIgnoreCase);
@@ -100,7 +113,7 @@ namespace Microsoft.Dnx.Runtime
             // Flatten the graph
             foreach (var item in _graph.Values)
             {
-                Flatten(item, firstLevelLookups: firstLevelLookups);
+                Flatten(item.Item1, firstLevelLookups: firstLevelLookups);
             }
         }
 
@@ -123,7 +136,7 @@ namespace Microsoft.Dnx.Runtime
                 }
 
                 dependents.Add(item);
-                Visit(_graph[dependency], inverse, visited);
+                Visit(_graph[dependency].Item1, inverse, visited);
             }
         }
 
@@ -154,10 +167,9 @@ namespace Microsoft.Dnx.Runtime
             AddRange(parentDependents, libraryDependents);
         }
 
-        private static Func<IEnumerable<Library>> GetLibraryInfoThunk(DependencyWalker dependencyWalker)
+        private static Func<IEnumerable<Library>> GetLibraryInfoThunk(IEnumerable<LibraryDescription> libraries)
         {
-            return () => dependencyWalker.Libraries
-                                         .Select(libraryDescription => libraryDescription.ToLibrary());
+            return () => libraries.Select(runtimeLibrary => runtimeLibrary.ToLibrary());
         }
 
         private static void AddRange(HashSet<Library> source, IEnumerable<Library> values)

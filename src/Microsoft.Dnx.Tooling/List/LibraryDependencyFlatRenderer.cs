@@ -55,7 +55,7 @@ namespace Microsoft.Dnx.Tooling.List
             var result = new Dictionary<LibraryDescription, ISet<LibraryDescription>>();
 
             root.DepthFirstPreOrderWalk(
-                visitNode: (node, ancestors) =>
+                (node, ancestors) =>
                 {
                     ISet<LibraryDescription> slot;
                     if (!result.TryGetValue(node.Item, out slot))

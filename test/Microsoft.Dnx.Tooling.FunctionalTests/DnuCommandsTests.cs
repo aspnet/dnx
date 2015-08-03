@@ -4,7 +4,7 @@
 using System.Collections.Generic;
 using System.IO;
 using Microsoft.Dnx.CommonTestUtils;
-using Microsoft.Dnx.Runtime.DependencyManagement;
+using Microsoft.Dnx.Runtime;
 using NuGet;
 using Xunit;
 
@@ -150,7 +150,7 @@ namespace Microsoft.Dnx.Tooling.FunctionalTests
         private void InstallFakePackage(string directory, string name, string version)
         {
             Directory.CreateDirectory($"{directory}/packages/{name}/{version}");
-            File.WriteAllText($"{directory}/packages/{name}/{version}/{name}{Constants.ManifestExtension}", "");
+            File.WriteAllText($"{directory}/packages/{name}/{version}/{name}{NuGet.Constants.ManifestExtension}", "");
             File.WriteAllText($"{directory}/packages/{name}/{version}/{name}.{version}.nupkg.sha512", "TestSha");
         }
 

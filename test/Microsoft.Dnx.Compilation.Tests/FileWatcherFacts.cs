@@ -3,8 +3,8 @@
 
 using System.Collections.Generic;
 using System.IO;
-using Microsoft.Dnx.Runtime.FileSystem;
-using Microsoft.Dnx.Runtime.Tests;
+using Microsoft.Dnx.CommonTestUtils;
+using Microsoft.Dnx.Compilation.FileSystem;
 using Xunit;
 
 namespace Loader.Tests

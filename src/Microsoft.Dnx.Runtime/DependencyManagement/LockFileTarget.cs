@@ -4,7 +4,7 @@
 using System.Collections.Generic;
 using System.Runtime.Versioning;
 
-namespace Microsoft.Dnx.Runtime.DependencyManagement
+namespace Microsoft.Dnx.Runtime
 {
     public class LockFileTarget
     {

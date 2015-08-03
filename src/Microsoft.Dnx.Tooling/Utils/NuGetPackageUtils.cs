@@ -117,11 +117,7 @@ namespace Microsoft.Dnx.Tooling
                     using (var entryStream = entry.Open())
                     {
                         var manifest = Manifest.ReadFrom(entryStream, validateSchema: false);
-                        return new LibraryIdentity()
-                        {
-                            Name = manifest.Metadata.Id,
-                            Version = manifest.Metadata.Version
-                        };
+                        return new LibraryIdentity(manifest.Metadata.Id, manifest.Metadata.Version, isGacOrFrameworkReference: false);
                     }
                 }
 

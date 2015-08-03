@@ -7,11 +7,10 @@ using System.IO;
 using System.Linq;
 using System.Runtime.Versioning;
 using System.Threading.Tasks;
-using Microsoft.Dnx.Tooling.Restore.NuGet;
 using Microsoft.Dnx.Runtime;
-using Microsoft.Dnx.Runtime.DependencyManagement;
-using NuGet;
+using Microsoft.Dnx.Tooling.Restore.NuGet;
 using Microsoft.Dnx.Tooling.Restore.RuntimeModel;
+using NuGet;
 
 namespace Microsoft.Dnx.Tooling
 {
@@ -54,11 +53,7 @@ namespace Microsoft.Dnx.Tooling
 
             return new WalkProviderMatch
             {
-                Library = new LibraryIdentity
-                {
-                    Name = bestResult.Id,
-                    Version = bestResult.Version
-                },
+                Library = new LibraryIdentity(bestResult.Id, bestResult.Version, isGacOrFrameworkReference: false),
                 Path = bestResult.ContentUri,
                 Provider = this,
             };

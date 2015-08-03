@@ -3,7 +3,6 @@
 
 using System.Collections.Generic;
 using System.Linq;
-using Microsoft.Dnx.Compilation;
 using Microsoft.Dnx.Runtime.Json;
 
 namespace Microsoft.Dnx.Runtime
@@ -144,12 +143,5 @@ namespace Microsoft.Dnx.Runtime
         internal PatternGroup PreprocessPatternsGroup { get { return _preprocessPatternsGroup; } }
 
         internal PatternGroup ContentPatternsGroup { get { return _contentPatternsGroup; } }
-
-        internal CompilationFiles GetCompilationFiles()
-        {
-            return new CompilationFiles(
-                PreprocessSourceFiles,
-                SourceFiles);
-        }
     }
 }

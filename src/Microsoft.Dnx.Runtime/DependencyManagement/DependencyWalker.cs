@@ -64,14 +64,14 @@ namespace Microsoft.Dnx.Runtime
             var messages = new List<DiagnosticMessage>();
             foreach (var library in Libraries)
             {
-                string projectPath = library.LibraryRange.FileName ?? projectFilePath;
+                string projectPath = library.RequestedRange.FileName ?? projectFilePath;
 
                 if (!library.Resolved)
                 {
                     string message;
                     if (library.Compatible)
                     {
-                        message = $"The dependency {library.LibraryRange} could not be resolved.";
+                        message = $"The dependency {library.RequestedRange} could not be resolved.";
                     }
                     else
                     {
@@ -85,18 +85,18 @@ namespace Microsoft.Dnx.Runtime
                             message, 
                             projectPath, 
                             DiagnosticMessageSeverity.Error, 
-                            library.LibraryRange.Line, 
-                            library.LibraryRange.Column));
+                            library.RequestedRange.Line, 
+                            library.RequestedRange.Column));
                 }
                 else
                 {
                     // Skip libraries that aren't specified in a project.json
-                    if (string.IsNullOrEmpty(library.LibraryRange.FileName))
+                    if (string.IsNullOrEmpty(library.RequestedRange.FileName))
                     {
                         continue;
                     }
 
-                    if (library.LibraryRange.VersionRange == null)
+                    if (library.RequestedRange.VersionRange == null)
                     {
                         // TODO: Show errors/warnings for things without versions
                         continue;
@@ -106,19 +106,19 @@ namespace Microsoft.Dnx.Runtime
                     // then report a warning
                     // Case 1: Non floating version and the minimum doesn't match what was specified
                     // Case 2: Floating version that fell outside of the range
-                    if ((library.LibraryRange.VersionRange.VersionFloatBehavior == SemanticVersionFloatBehavior.None &&
-                         library.LibraryRange.VersionRange.MinVersion != library.Identity.Version) ||
-                        (library.LibraryRange.VersionRange.VersionFloatBehavior != SemanticVersionFloatBehavior.None &&
-                         !library.LibraryRange.VersionRange.EqualsFloating(library.Identity.Version)))
+                    if ((library.RequestedRange.VersionRange.VersionFloatBehavior == SemanticVersionFloatBehavior.None &&
+                         library.RequestedRange.VersionRange.MinVersion != library.Identity.Version) ||
+                        (library.RequestedRange.VersionRange.VersionFloatBehavior != SemanticVersionFloatBehavior.None &&
+                         !library.RequestedRange.VersionRange.EqualsFloating(library.Identity.Version)))
                     {
-                        var message = string.Format("Dependency specified was {0} but ended up with {1}.", library.LibraryRange, library.Identity);
+                        var message = string.Format("Dependency specified was {0} but ended up with {1}.", library.RequestedRange, library.Identity);
                         messages.Add(
                             new DiagnosticMessage(
                                 message, 
                                 projectPath, 
                                 DiagnosticMessageSeverity.Warning, 
-                                library.LibraryRange.Line, 
-                                library.LibraryRange.Column));
+                                library.RequestedRange.Line, 
+                                library.RequestedRange.Column));
                     }
                 }
             }

@@ -84,22 +84,13 @@ namespace Microsoft.Dnx.Runtime
             bool unresolved = targetFrameworkInfo.FrameworkName == null &&
                               project.GetTargetFrameworks().Any();
 
-            return new LibraryDescription
-            {
-                LibraryRange = libraryRange,
-                Identity = new LibraryIdentity
-                {
-                    Name = project.Name,
-                    Version = project.Version
-                },
-                Type = "Project",
-                Path = project.ProjectFilePath,
-                Framework = targetFrameworkInfo.FrameworkName,
-                Dependencies = dependencies,
-                LoadableAssemblies = loadableAssemblies,
-                Compatible = !unresolved,
-                Resolved = !unresolved
-            };
+            return new ProjectDescription(
+                libraryRange,
+                project,
+                dependencies,
+                loadableAssemblies,
+                targetFrameworkInfo.FrameworkName,
+                !unresolved);
         }
 
         public virtual void Initialize(IEnumerable<LibraryDescription> dependencies, FrameworkName targetFramework, string runtimeIdentifier)

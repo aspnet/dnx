@@ -8,9 +8,9 @@ namespace Microsoft.Dnx.Compilation
     /// </summary>
     public interface ILibraryExporter
     {
-        LibraryExport GetLibraryExport(string name);
+        LibraryExport GetExport(string name);
 
-        LibraryExport GetLibraryExport(string name, string aspect);
+        LibraryExport GetExport(string name, string aspect);
 
         LibraryExport GetAllExports(string name);
 

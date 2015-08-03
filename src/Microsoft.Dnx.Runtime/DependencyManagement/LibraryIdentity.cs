@@ -8,11 +8,18 @@ namespace Microsoft.Dnx.Runtime
 {
     public class LibraryIdentity : IEquatable<LibraryIdentity>
     {
-        public string Name { get; set; }
+        public LibraryIdentity(string name, SemanticVersion version, bool isGacOrFrameworkReference)
+        {
+            Name = name;
+            Version = version;
+            IsGacOrFrameworkReference = isGacOrFrameworkReference;
+        }
 
-        public SemanticVersion Version { get; set; }
+        public string Name { get; }
 
-        public bool IsGacOrFrameworkReference { get; set; }
+        public SemanticVersion Version { get; }
+
+        public bool IsGacOrFrameworkReference { get; }
 
         public override string ToString()
         {
@@ -67,6 +74,11 @@ namespace Microsoft.Dnx.Runtime
                     VersionFloatBehavior = SemanticVersionFloatBehavior.None
                 }
             };
+        }
+
+        public LibraryIdentity ChangeName(string name)
+        {
+            return new LibraryIdentity(name, Version, IsGacOrFrameworkReference);
         }
     }
 }

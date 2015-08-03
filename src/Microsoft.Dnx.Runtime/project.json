@@ -13,15 +13,13 @@
         "../../ext/compiler/preprocess/Internalization.cs"
     ],
     "dependencies": {
-        "Microsoft.Dnx.Compilation.CSharp.Abstractions": { "version": "1.0.0-*", "type": "build" },
-        "Microsoft.Dnx.Compilation": "1.0.0-*",
-        "Microsoft.Dnx.Compilation.Abstractions": "1.0.0-*",
         "Microsoft.Dnx.Loader": "1.0.0-*",
         "Microsoft.Dnx.Runtime.Abstractions": "1.0.0-*",
         "Microsoft.Dnx.Runtime.Internals": { "version": "1.0.0-*", "type": "build" },
         "Microsoft.Dnx.Runtime.Sources": { "version": "1.0.0-*", "type": "build" },
-        "Microsoft.CodeAnalysis.CSharp": { "version": "1.1.0-beta1-*", "type": "build" },
-        "System.Reflection.Metadata": { "version": "1.1.0-alpha-*", "type": "build"}
+        "Microsoft.Dnx.Compilation.CSharp.Abstractions": { "version": "1.0.0-*", "type": "build" },
+        "Microsoft.CodeAnalysis.CSharp": "1.1.0-beta1-*",
+        "System.Reflection.Metadata": "1.1.0-alpha-00008"
     },
     "frameworks": {
         "dnx451": {

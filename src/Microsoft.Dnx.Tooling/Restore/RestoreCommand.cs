@@ -12,7 +12,6 @@ using System.Runtime.Versioning;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Dnx.Runtime;
-using Microsoft.Dnx.Runtime.DependencyManagement;
 using Microsoft.Dnx.Tooling.Publish;
 using Microsoft.Dnx.Tooling.Restore.RuntimeModel;
 using Microsoft.Dnx.Tooling.Utils;
@@ -498,7 +497,7 @@ namespace Microsoft.Dnx.Tooling
                     if (!string.Equals(node.Item.Match.Library.Name, node.LibraryRange.Name, StringComparison.Ordinal))
                     {
                         // Fix casing of the library name to be installed
-                        node.Item.Match.Library.Name = node.LibraryRange.Name;
+                        node.Item.Match.Library = node.Item.Match.Library.ChangeName(node.LibraryRange.Name);
                     }
 
                     var isRemote = remoteProviders.Contains(node.Item.Match.Provider);

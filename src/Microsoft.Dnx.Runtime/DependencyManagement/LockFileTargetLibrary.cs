@@ -5,7 +5,7 @@ using System;
 using System.Collections.Generic;
 using NuGet;
 
-namespace Microsoft.Dnx.Runtime.DependencyManagement
+namespace Microsoft.Dnx.Runtime
 {
     public class LockFileTargetLibrary
     {

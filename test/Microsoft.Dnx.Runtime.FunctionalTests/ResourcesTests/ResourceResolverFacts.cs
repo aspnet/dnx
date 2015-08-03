@@ -4,6 +4,7 @@
 using System;
 using System.IO;
 using System.Linq;
+using Microsoft.Dnx.Compilation;
 using Microsoft.Dnx.Runtime.Internal;
 using Xunit;
 

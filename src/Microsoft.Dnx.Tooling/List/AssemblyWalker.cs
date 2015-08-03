@@ -81,7 +81,7 @@ namespace Microsoft.Dnx.Tooling.List
         {
             if (visitedLibraries.Add(node.Item))
             {
-                foreach (var loadableAssembly in node.Item.LoadableAssemblies)
+                foreach (var loadableAssembly in node.Item.Assemblies)
                 {
                     AddDependencySource(_dependencyPackageSources, loadableAssembly, node.Item.Identity.Name);
 

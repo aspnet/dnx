@@ -7,11 +7,13 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
+using Microsoft.Dnx.Compilation;
+using Microsoft.Dnx.Compilation.Caching;
+using Microsoft.Dnx.Compilation.FileSystem;
 using Microsoft.Dnx.Runtime;
 using Microsoft.Dnx.Runtime.CommandParsing;
 using Microsoft.Dnx.Runtime.Common;
 using Microsoft.Dnx.Runtime.Common.CommandLine;
-using Microsoft.Dnx.Compilation;
 
 namespace Microsoft.Dnx.ApplicationHost
 {
@@ -20,12 +22,14 @@ namespace Microsoft.Dnx.ApplicationHost
         private readonly IAssemblyLoaderContainer _container;
         private readonly IApplicationEnvironment _environment;
         private readonly IServiceProvider _serviceProvider;
+        private readonly IAssemblyLoadContextAccessor _loadContextAccessor;
 
-        public Program(IAssemblyLoaderContainer container, IApplicationEnvironment environment, IServiceProvider serviceProvider)
+        public Program(IAssemblyLoaderContainer container, IApplicationEnvironment environment, IAssemblyLoadContextAccessor loadContextAcessor, IServiceProvider serviceProvider)
         {
             _container = container;
             _environment = environment;
             _serviceProvider = serviceProvider;
+            _loadContextAccessor = loadContextAcessor;
         }
 
         public Task<int> Main(string[] args)
@@ -40,7 +44,17 @@ namespace Microsoft.Dnx.ApplicationHost
                 return Task.FromResult(exitCode);
             }
 
-            var host = new DefaultHost(options, _serviceProvider);
+            IFileWatcher watcher;
+            if (options.WatchFiles)
+            {
+                watcher = new FileWatcher(Runtime.ProjectResolver.ResolveRootDirectory(Path.GetFullPath(options.ApplicationBaseDirectory)));
+            }
+            else
+            {
+                watcher = NoopWatcher.Instance;
+            }
+
+            var host = new DefaultHost(options, _serviceProvider, _loadContextAccessor, new CompilationEngineFactory(watcher, new CompilationCache()));
 
             if (host.Project == null)
             {

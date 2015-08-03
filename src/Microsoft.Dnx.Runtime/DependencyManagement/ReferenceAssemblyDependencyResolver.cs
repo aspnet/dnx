@@ -6,12 +6,11 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Runtime.Versioning;
-using Microsoft.Dnx.Compilation;
 using NuGet;
 
 namespace Microsoft.Dnx.Runtime
 {
-    public class ReferenceAssemblyDependencyResolver : IDependencyProvider, ILibraryExportProvider
+    public class ReferenceAssemblyDependencyResolver : IDependencyProvider
     {
         private readonly Dictionary<string, string> _resolvedPaths = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
@@ -59,18 +58,14 @@ namespace Microsoft.Dnx.Runtime
             {
                 _resolvedPaths[libraryRange.Name] = path;
 
-                return new LibraryDescription
-                {
-                    LibraryRange = libraryRange,
-                    Identity = new LibraryIdentity
-                    {
-                        Name = libraryRange.Name,
-                        Version = new SemanticVersion(assemblyVersion),
-                        IsGacOrFrameworkReference = true
-                    },
-                    LoadableAssemblies = new[] { name },
-                    Dependencies = Enumerable.Empty<LibraryDependency>()
-                };
+                return new LibraryDescription(
+                    libraryRange,
+                    new LibraryIdentity(libraryRange.Name, new SemanticVersion(assemblyVersion), isGacOrFrameworkReference: true),
+                    path,
+                    LibraryTypes.ReferenceAssembly,
+                    Enumerable.Empty<LibraryDependency>(),
+                    new[] { name },
+                    framework: null);
             }
 
             return null;
@@ -78,36 +73,6 @@ namespace Microsoft.Dnx.Runtime
 
         public void Initialize(IEnumerable<LibraryDescription> dependencies, FrameworkName targetFramework, string runtimeIdentifier)
         {
-            foreach (var d in dependencies)
-            {
-                d.Path = _resolvedPaths[d.Identity.Name];
-                d.Type = "Assembly";
-            }
-        }
-
-        public LibraryExport GetLibraryExport(CompilationTarget target)
-        {
-            // Did we even resolve this name, if not then do nothing
-            if (!_resolvedPaths.ContainsKey(target.Name))
-            {
-                return null;
-            }
-
-            // We can't use resolved paths since it might be different to the target framework
-            // being passed in here. After we know this resolver is handling the
-            // requested name, we can call back into the FrameworkResolver to figure out
-            //  the specific path for the target framework
-
-            string path;
-            Version version;
-
-            var asmName = LibraryRange.GetAssemblyName(target.Name);
-            if (FrameworkResolver.TryGetAssembly(asmName, target.TargetFramework, out path, out version))
-            {
-                return new LibraryExport(new MetadataFileReference(asmName, path));
-            }
-
-            return null;
         }
     }
 }

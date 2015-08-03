@@ -4,7 +4,7 @@
 using System.IO;
 using NuGet;
 
-namespace Microsoft.Dnx.Runtime
+namespace Microsoft.Dnx.Compilation
 {
     internal static class ResourcePathUtility
     {

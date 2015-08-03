@@ -9,9 +9,8 @@ using System.Linq;
 using System.Reflection;
 using System.Runtime.Versioning;
 using Microsoft.Dnx.Compilation;
-using Microsoft.Dnx.Compilation.Caching;
 using Microsoft.Dnx.Runtime.Common.DependencyInjection;
-using Microsoft.Dnx.Runtime.FileSystem;
+using Microsoft.Dnx.Runtime.Compilation;
 using Microsoft.Dnx.Runtime.Infrastructure;
 using Microsoft.Dnx.Runtime.Loader;
 using NuGet;
@@ -22,20 +21,25 @@ namespace Microsoft.Dnx.Runtime
     {
         private ApplicationHostContext _applicationHostContext;
 
-        private IFileWatcher _watcher;
         private readonly string _projectDirectory;
         private readonly FrameworkName _targetFramework;
         private readonly ApplicationShutdown _shutdown = new ApplicationShutdown();
+        private readonly IList<IAssemblyLoader> _loaders = new List<IAssemblyLoader>();
+        private readonly ICompilationEngineFactory _compilationEngineFactory;
+        private ICompilationEngine _compilationEngine;
 
         private Project _project;
 
         public DefaultHost(RuntimeOptions options,
-                           IServiceProvider hostServices)
+                           IServiceProvider hostServices,
+                           IAssemblyLoadContextAccessor loadContextAccessor,
+                           ICompilationEngineFactory compilationEngineFactory)
         {
             _projectDirectory = Path.GetFullPath(options.ApplicationBaseDirectory);
             _targetFramework = options.TargetFramework;
+            _compilationEngineFactory = compilationEngineFactory;
 
-            Initialize(options, hostServices);
+            Initialize(options, hostServices, loadContextAccessor);
         }
 
         public IServiceProvider ServiceProvider
@@ -106,16 +110,9 @@ Please make sure the runtime matches a framework specified in {Project.ProjectFi
 
         public IDisposable AddLoaders(IAssemblyLoaderContainer container)
         {
-            var loaders = new[]
-            {
-                typeof(ProjectAssemblyLoader),
-                typeof(NuGetAssemblyLoader),
-            };
-
             var disposables = new List<IDisposable>();
-            foreach (var loaderType in loaders)
+            foreach (var loader in _loaders)
             {
-                var loader = (IAssemblyLoader)ActivatorUtilities.CreateInstance(ServiceProvider, loaderType);
                 disposables.Add(container.AddLoader(loader));
             }
 
@@ -130,24 +127,28 @@ Please make sure the runtime matches a framework specified in {Project.ProjectFi
 
         public void Dispose()
         {
-            _watcher.Dispose();
+            _compilationEngine?.Dispose();
         }
 
-        private void Initialize(RuntimeOptions options, IServiceProvider hostServices)
+        private void Initialize(RuntimeOptions options, IServiceProvider hostServices, IAssemblyLoadContextAccessor loadContextAccessor)
         {
-            var cacheContextAccessor = new CacheContextAccessor();
-            var cache = new Cache(cacheContextAccessor);
-            var namedCacheDependencyProvider = new NamedCacheDependencyProvider();
-
             _applicationHostContext = new ApplicationHostContext(
                 hostServices,
                 _projectDirectory,
                 options.PackageDirectory,
                 options.Configuration,
-                _targetFramework,
-                cache,
-                cacheContextAccessor,
-                namedCacheDependencyProvider);
+                _targetFramework);
+
+            _compilationEngine = _compilationEngineFactory.CreateEngine(
+                new CompilationEngineContext(
+                    _applicationHostContext.LibraryManager,
+                    _applicationHostContext.ProjectGraphProvider,
+                    _applicationHostContext.ServiceProvider,
+                    _targetFramework,
+                    options.Configuration));
+
+            // Make the root project's library exports available for apps to read.
+            _applicationHostContext.AddService(typeof(ILibraryExporter), _compilationEngine.RootLibraryExporter);
 
             Logger.TraceInformation("[{0}]: Project path: {1}", GetType().Name, _projectDirectory);
             Logger.TraceInformation("[{0}]: Project root: {1}", GetType().Name, _applicationHostContext.RootDirectory);
@@ -163,21 +164,14 @@ Please make sure the runtime matches a framework specified in {Project.ProjectFi
 
             if (options.WatchFiles)
             {
-                var watcher = new FileWatcher(_applicationHostContext.RootDirectory);
-                _watcher = watcher;
-                watcher.OnChanged += _ =>
+                _compilationEngine.OnInputFileChanged += _ =>
                 {
                     _shutdown.RequestShutdownWaitForDebugger();
                 };
             }
-            else
-            {
-                _watcher = NoopWatcher.Instance;
-            }
 
             _applicationHostContext.AddService(typeof(IApplicationShutdown), _shutdown);
             _applicationHostContext.AddService(typeof(RuntimeOptions), options);
-            _applicationHostContext.AddService(typeof(IFileWatcher), _watcher);
 
             if (options.CompilationServerPort.HasValue)
             {
@@ -186,6 +180,15 @@ Please make sure the runtime matches a framework specified in {Project.ProjectFi
             }
 
             CallContextServiceLocator.Locator.ServiceProvider = ServiceProvider;
+
+            // Configure Assembly loaders
+            _loaders.Add(new ProjectAssemblyLoader(
+                _targetFramework,
+                options.Configuration,
+                loadContextAccessor,
+                _applicationHostContext.ProjectResolver,
+                _compilationEngine));
+            _loaders.Add(new NuGetAssemblyLoader(loadContextAccessor, _applicationHostContext.NuGetDependencyProvider));
         }
 
         private void AddRuntimeServiceBreadcrumb()

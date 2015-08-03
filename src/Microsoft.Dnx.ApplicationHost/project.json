@@ -3,6 +3,7 @@
     "compilationOptions": { "define": [ "TRACE" ], "warningsAsErrors": true },
     "dependencies": {
         "Microsoft.Dnx.Runtime": "1.0.0-*",
+        "Microsoft.Dnx.Compilation": "1.0.0-*",
         "Microsoft.Dnx.Runtime.Abstractions": "1.0.0-*",
         "Microsoft.Dnx.Runtime.CommandParsing.Sources": { "version": "1.0.0-*", "type": "build" },
         "Microsoft.Dnx.Runtime.Internals": { "version": "1.0.0-*", "type": "build" },

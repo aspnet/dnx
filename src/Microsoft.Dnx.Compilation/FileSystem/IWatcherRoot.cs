@@ -4,7 +4,7 @@
 
 using System;
 
-namespace Microsoft.Dnx.Runtime.FileSystem
+namespace Microsoft.Dnx.Compilation.FileSystem
 {
     // For testiblilty
     internal interface IWatcherRoot : IDisposable

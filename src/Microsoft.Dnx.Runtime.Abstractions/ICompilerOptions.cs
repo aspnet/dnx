@@ -3,7 +3,7 @@
 
 using System.Collections.Generic;
 
-namespace Microsoft.Dnx.Compilation
+namespace Microsoft.Dnx.Runtime
 {
     /// <summary>
     /// Provides an interface to well-known Compiler Options like "defines" and "optimize", as well as a

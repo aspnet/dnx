@@ -7,7 +7,7 @@ using System.IO;
 using System.Linq;
 using System.Runtime.Versioning;
 using System.Threading;
-using Microsoft.Dnx.Runtime.DependencyManagement;
+using Microsoft.Dnx.Runtime;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using NuGet;

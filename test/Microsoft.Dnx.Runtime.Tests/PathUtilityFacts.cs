@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using Microsoft.Dnx.CommonTestUtils;
 using NuGet;
 using Xunit;
 

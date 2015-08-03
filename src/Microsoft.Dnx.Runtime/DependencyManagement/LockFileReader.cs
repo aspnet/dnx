@@ -10,7 +10,7 @@ using System.Threading;
 using Microsoft.Dnx.Runtime.Json;
 using NuGet;
 
-namespace Microsoft.Dnx.Runtime.DependencyManagement
+namespace Microsoft.Dnx.Runtime
 {
     internal class LockFileReader
     {

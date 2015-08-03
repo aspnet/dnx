@@ -3,7 +3,7 @@
 
 using NuGet;
 
-namespace Microsoft.Dnx.Runtime.DependencyManagement
+namespace Microsoft.Dnx.Runtime
 {
     public class LockFileProjectLibrary
     {

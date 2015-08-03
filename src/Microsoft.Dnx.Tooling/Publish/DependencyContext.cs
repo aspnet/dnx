@@ -24,14 +24,11 @@ namespace Microsoft.Dnx.Tooling.Publish
                 projectDirectory: projectDirectory,
                 packagesDirectory: null,
                 configuration: configuration,
-                targetFramework: targetFramework,
-                cache: cache,
-                cacheContextAccessor: cacheContextAccessor,
-                namedCacheDependencyProvider: new NamedCacheDependencyProvider());
+                targetFramework: targetFramework);
 
             ProjectResolver = applicationHostContext.ProjectResolver;
             NuGetDependencyResolver = applicationHostContext.NuGetDependencyProvider;
-            ProjectReferenceDependencyProvider = applicationHostContext.ProjectDepencyProvider;
+            ProjectReferenceDependencyProvider = applicationHostContext.ProjectDependencyProvider;
             DependencyWalker = applicationHostContext.DependencyWalker;
             FrameworkName = targetFramework;
             PackagesDirectory = applicationHostContext.PackagesDirectory;

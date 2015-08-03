@@ -197,11 +197,14 @@ namespace Loader.Tests
             var d = entry.Dependencies as LibraryDependency[] ?? entry.Dependencies.ToArray();
             Logger.TraceInformation("StubAssemblyLoader.GetDependencies {0} {1}", d.Aggregate("", (a, b) => a + " " + b), frameworkName);
 
-            return new LibraryDescription
-            {
-                Identity = new LibraryIdentity { Name = libraryRange.Name, Version = libraryRange.VersionRange.MinVersion },
-                Dependencies = entry.Dependencies
-            };
+            return new LibraryDescription(
+                libraryRange,
+                new LibraryIdentity(libraryRange.Name, libraryRange.VersionRange.MinVersion, isGacOrFrameworkReference: false),
+                path: "Test",
+                type: "Test",
+                dependencies: entry.Dependencies,
+                assemblies: Enumerable.Empty<string>(),
+                framework: null);
         }
 
         public void Initialize(IEnumerable<LibraryDescription> packages, FrameworkName frameworkName, string runtimeIdentifier)
@@ -234,11 +237,7 @@ namespace Loader.Tests
         {
             var entry = new Entry
             {
-                Key = new LibraryIdentity
-                {
-                    Name = name,
-                    Version = version == null ? null : new SemanticVersion(version)
-                }
+                Key = new LibraryIdentity(name, version == null ? null : new SemanticVersion(version), isGacOrFrameworkReference: false)
             };
 
             _entries[entry.Key] = entry;

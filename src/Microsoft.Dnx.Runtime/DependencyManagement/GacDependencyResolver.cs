@@ -6,12 +6,11 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Runtime.Versioning;
-using Microsoft.Dnx.Compilation;
 using NuGet;
 
 namespace Microsoft.Dnx.Runtime
 {
-    public class GacDependencyResolver : IDependencyProvider, ILibraryExportProvider
+    public class GacDependencyResolver : IDependencyProvider
     {
         private readonly Dictionary<string, string> _resolvedPaths = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
@@ -58,38 +57,18 @@ namespace Microsoft.Dnx.Runtime
 
             _resolvedPaths[name] = path;
 
-            return new LibraryDescription
-            {
-                LibraryRange = libraryRange,
-                Identity = new LibraryIdentity
-                {
-                    Name = name,
-                    Version = version,
-                    IsGacOrFrameworkReference = true
-                },
-                LoadableAssemblies = new[] { libraryRange.GetReferenceAssemblyName() },
-                Dependencies = Enumerable.Empty<LibraryDependency>()
-            };
+            return new LibraryDescription(
+                libraryRange,
+                new LibraryIdentity(name, version, isGacOrFrameworkReference: true),
+                path,
+                LibraryTypes.GlobalAssemblyCache,
+                Enumerable.Empty<LibraryDependency>(),
+                new[] { libraryRange.GetReferenceAssemblyName() },
+                framework: null);
         }
 
         public void Initialize(IEnumerable<LibraryDescription> dependencies, FrameworkName targetFramework, string runtimeIdentifier)
         {
-            foreach (var d in dependencies)
-            {
-                d.Path = _resolvedPaths[d.Identity.Name];
-                d.Type = "Assembly";
-            }
-        }
-
-        public LibraryExport GetLibraryExport(CompilationTarget target)
-        {
-            string assemblyPath;
-            if (_resolvedPaths.TryGetValue(target.Name, out assemblyPath))
-            {
-                return new LibraryExport(new MetadataFileReference(target.Name, assemblyPath));
-            }
-
-            return null;
         }
 
         private bool TryResolvePartialName(string name, SemanticVersion version, out string assemblyLocation)

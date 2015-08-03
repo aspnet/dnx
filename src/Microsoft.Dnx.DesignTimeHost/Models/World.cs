@@ -3,6 +3,7 @@
 
 using System.Collections.Generic;
 using System.Runtime.Versioning;
+using Microsoft.Dnx.Compilation;
 using Microsoft.Dnx.DesignTimeHost.Models.OutgoingMessages;
 using Microsoft.Dnx.Runtime;
 
@@ -25,6 +26,7 @@ namespace Microsoft.Dnx.DesignTimeHost.Models
     public class ProjectWorld
     {
         public ApplicationHostContext ApplicationHostContext { get; set; }
+        public LibraryExporter LibraryExporter { get; set; }
 
         // State
         public FrameworkName TargetFramework { get; set; }

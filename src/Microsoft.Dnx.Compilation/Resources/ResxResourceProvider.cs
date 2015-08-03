@@ -7,10 +7,10 @@ using System.IO;
 using System.Linq;
 using System.Resources;
 using System.Xml.Linq;
-using Microsoft.Dnx.Compilation;
+using Microsoft.Dnx.Runtime;
 using NuGet;
 
-namespace Microsoft.Dnx.Runtime
+namespace Microsoft.Dnx.Compilation
 {
     public class ResxResourceProvider : IResourceProvider
     {

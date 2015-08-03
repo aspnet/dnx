@@ -76,10 +76,7 @@ namespace Microsoft.Dnx.Tooling.List
                 projectDirectory: _options.Project.ProjectDirectory,
                 packagesDirectory: null,
                 configuration: Configuration,
-                targetFramework: _framework,
-                cache: cache,
-                cacheContextAccessor: accessor,
-                namedCacheDependencyProvider: null);
+                targetFramework: _framework);
 
             hostContext.DependencyWalker.Walk(hostContext.Project.Name, hostContext.Project.Version, _framework);
 

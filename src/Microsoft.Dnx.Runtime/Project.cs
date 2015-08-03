@@ -8,7 +8,6 @@ using System.IO;
 using System.Linq;
 using System.Runtime.Versioning;
 using System.Text;
-using Microsoft.Dnx.Compilation;
 using Microsoft.Dnx.Runtime.Helpers;
 using Microsoft.Dnx.Runtime.Json;
 using NuGet;
@@ -22,7 +21,7 @@ namespace Microsoft.Dnx.Runtime
         internal static readonly TypeInformation DefaultRuntimeCompiler = new TypeInformation("Microsoft.Dnx.Compilation.CSharp", "Microsoft.Dnx.Compilation.CSharp.RoslynProjectCompiler");
         internal static readonly TypeInformation DefaultDesignTimeCompiler = new TypeInformation("Microsoft.Dnx.Compilation.DesignTime", "Microsoft.Dnx.Compilation.DesignTime.DesignTimeHostProjectCompiler");
 
-        internal static TypeInformation DefaultCompiler = DefaultRuntimeCompiler;
+        public static TypeInformation DefaultCompiler = DefaultRuntimeCompiler;
 
         private readonly Dictionary<FrameworkName, TargetFrameworkInformation> _targetFrameworks = new Dictionary<FrameworkName, TargetFrameworkInformation>();
         private readonly Dictionary<FrameworkName, CompilerOptions> _compilationOptions = new Dictionary<FrameworkName, CompilerOptions>();
@@ -310,20 +309,6 @@ namespace Microsoft.Dnx.Runtime
                 isGacOrFrameworkReference: false);
 
             return project;
-        }
-
-        internal CompilationProjectContext ToCompilationContext(CompilationTarget target)
-        {
-            Debug.Assert(string.Equals(target.Name, Name, StringComparison.Ordinal), "The provided target should be for the current project!");
-            return new CompilationProjectContext(
-                target,
-                ProjectDirectory,
-                ProjectFilePath,
-                Version.GetNormalizedVersionString(),
-                AssemblyFileVersion,
-                EmbedInteropTypes,
-                Files.GetCompilationFiles(),
-                GetCompilerOptions(target.TargetFramework, target.Configuration));
         }
 
         private static SemanticVersion SpecifySnapshot(string version, string snapshotValue)

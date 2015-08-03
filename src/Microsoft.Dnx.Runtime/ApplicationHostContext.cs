@@ -6,11 +6,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Runtime.Versioning;
-using Microsoft.Dnx.Compilation;
-using Microsoft.Dnx.Compilation.Caching;
 using Microsoft.Dnx.Runtime.Common.DependencyInjection;
-using Microsoft.Dnx.Runtime.DependencyManagement;
-using Microsoft.Dnx.Runtime.FileSystem;
 using Microsoft.Dnx.Runtime.Infrastructure;
 using Microsoft.Dnx.Runtime.Loader;
 using NuGet;
@@ -29,9 +25,6 @@ namespace Microsoft.Dnx.Runtime
                                       string packagesDirectory,
                                       string configuration,
                                       FrameworkName targetFramework,
-                                      ICache cache,
-                                      ICacheContextAccessor cacheContextAccessor,
-                                      INamedCacheDependencyProvider namedCacheDependencyProvider,
                                       IAssemblyLoadContextFactory loadContextFactory = null,
                                       bool skipLockFileValidation = false)
         {
@@ -40,6 +33,7 @@ namespace Microsoft.Dnx.Runtime
             RootDirectory = Runtime.ProjectResolver.ResolveRootDirectory(ProjectDirectory);
             ProjectResolver = new ProjectResolver(ProjectDirectory, RootDirectory);
             FrameworkReferenceResolver = new FrameworkReferenceResolver();
+            ProjectGraphProvider = new ProjectGraphProvider(hostServices);
             _serviceProvider = new ServiceProvider(hostServices);
 
             PackagesDirectory = packagesDirectory ?? NuGetDependencyResolver.ResolveRepositoryPath(RootDirectory);
@@ -47,7 +41,7 @@ namespace Microsoft.Dnx.Runtime
             var referenceAssemblyDependencyResolver = new ReferenceAssemblyDependencyResolver(FrameworkReferenceResolver);
             NuGetDependencyProvider = new NuGetDependencyResolver(new PackageRepository(PackagesDirectory));
             var gacDependencyResolver = new GacDependencyResolver();
-            ProjectDepencyProvider = new ProjectReferenceDependencyProvider(ProjectResolver);
+            ProjectDependencyProvider = new ProjectReferenceDependencyProvider(ProjectResolver);
             var unresolvedDependencyProvider = new UnresolvedDependencyProvider();
 
             var projectName = PathUtility.GetDirectoryName(ProjectDirectory);
@@ -83,7 +77,7 @@ namespace Microsoft.Dnx.Runtime
                     NuGetDependencyProvider.ApplyLockFile(_lockFile);
 
                     DependencyWalker = new DependencyWalker(new IDependencyProvider[] {
-                        ProjectDepencyProvider,
+                        ProjectDependencyProvider,
                         NuGetDependencyProvider,
                         referenceAssemblyDependencyResolver,
                         gacDependencyResolver,
@@ -97,26 +91,16 @@ namespace Microsoft.Dnx.Runtime
                 // We don't add NuGetDependencyProvider to DependencyWalker
                 // It will leave all NuGet packages unresolved and give error message asking users to run "dnu restore"
                 DependencyWalker = new DependencyWalker(new IDependencyProvider[] {
-                    ProjectDepencyProvider,
+                    ProjectDependencyProvider,
                     referenceAssemblyDependencyResolver,
                     gacDependencyResolver,
                     unresolvedDependencyProvider
                 });
             }
 
-            LibraryExportProvider = new CompositeLibraryExportProvider(new ILibraryExportProvider[] {
-                new ProjectLibraryExportProvider(ProjectResolver, ServiceProvider),
-                referenceAssemblyDependencyResolver,
-                gacDependencyResolver,
-                NuGetDependencyProvider
-            });
-
-            // TODO(anurse): #2226 - Split LibraryManager implementation
-            LibraryManager = new LibraryManager(DependencyWalker);
-            LibraryExporter = new LibraryExporter(targetFramework, configuration, LibraryManager, LibraryExportProvider, cache);
+            LibraryManager = new LibraryManager(() => DependencyWalker.Libraries);
 
             AssemblyLoadContextFactory = loadContextFactory ?? new RuntimeLoadContextFactory(ServiceProvider);
-            namedCacheDependencyProvider = namedCacheDependencyProvider ?? NamedCacheDependencyProvider.Empty;
 
             // Create a new Application Environment for running the app. It needs a reference to the Host's application environment
             // (if any), which we can get from the service provider we were given.
@@ -127,26 +111,17 @@ namespace Microsoft.Dnx.Runtime
             {
                 hostEnvironment = (IApplicationEnvironment)hostServices.GetService(typeof(IApplicationEnvironment));
             }
-            var appEnvironment = new ApplicationEnvironment(Project, targetFramework, configuration, hostEnvironment);
+            ApplicationEnvironment = new ApplicationEnvironment(Project, targetFramework, configuration, hostEnvironment);
 
             // Default services
-            _serviceProvider.Add(typeof(IApplicationEnvironment), appEnvironment);
+            _serviceProvider.Add(typeof(IApplicationEnvironment), ApplicationEnvironment);
             _serviceProvider.Add(typeof(ILibraryManager), LibraryManager);
-            _serviceProvider.Add(typeof(ILibraryExporter), LibraryExporter);
-            _serviceProvider.TryAdd(typeof(IFileWatcher), NoopWatcher.Instance);
 
             // Not exposed to the application layer
-            _serviceProvider.Add(typeof(ILibraryExportProvider), LibraryExportProvider, includeInManifest: false);
             _serviceProvider.Add(typeof(IProjectResolver), ProjectResolver, includeInManifest: false);
             _serviceProvider.Add(typeof(NuGetDependencyResolver), NuGetDependencyProvider, includeInManifest: false);
-            _serviceProvider.Add(typeof(ProjectReferenceDependencyProvider), ProjectDepencyProvider, includeInManifest: false);
-            _serviceProvider.Add(typeof(ICache), cache, includeInManifest: false);
-            _serviceProvider.Add(typeof(ICacheContextAccessor), cacheContextAccessor, includeInManifest: false);
-            _serviceProvider.Add(typeof(INamedCacheDependencyProvider), namedCacheDependencyProvider, includeInManifest: false);
+            _serviceProvider.Add(typeof(ProjectReferenceDependencyProvider), ProjectDependencyProvider, includeInManifest: false);
             _serviceProvider.Add(typeof(IAssemblyLoadContextFactory), AssemblyLoadContextFactory, includeInManifest: false);
-
-            var compilerOptionsProvider = new CompilerOptionsProvider(ProjectResolver);
-            _serviceProvider.Add(typeof(ICompilerOptionsProvider), compilerOptionsProvider);
         }
 
         public void AddService(Type type, object instance, bool includeInManifest)
@@ -178,18 +153,17 @@ namespace Microsoft.Dnx.Runtime
 
         public NuGetDependencyResolver NuGetDependencyProvider { get; private set; }
 
-        public ProjectReferenceDependencyProvider ProjectDepencyProvider { get; private set; }
+        public ProjectReferenceDependencyProvider ProjectDependencyProvider { get; private set; }
 
         public IProjectResolver ProjectResolver { get; private set; }
 
-        public ILibraryExportProvider LibraryExportProvider { get; private set; }
-
-        public ILibraryManager LibraryManager { get; private set; }
-        public ILibraryExporter LibraryExporter { get; private set; }
+        public LibraryManager LibraryManager { get; private set; }
 
         public DependencyWalker DependencyWalker { get; private set; }
 
         public FrameworkReferenceResolver FrameworkReferenceResolver { get; private set; }
+
+        public IProjectGraphProvider ProjectGraphProvider { get; }
 
         public string Configuration { get; private set; }
 
@@ -198,6 +172,7 @@ namespace Microsoft.Dnx.Runtime
         public string ProjectDirectory { get; private set; }
 
         public string PackagesDirectory { get; private set; }
+        public IApplicationEnvironment ApplicationEnvironment { get; private set; }
 
         public IEnumerable<DiagnosticMessage> GetLockFileDiagnostics()
         {

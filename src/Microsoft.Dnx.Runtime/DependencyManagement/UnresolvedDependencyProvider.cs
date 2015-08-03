@@ -11,16 +11,15 @@ namespace Microsoft.Dnx.Runtime
     {
         public LibraryDescription GetDescription(LibraryRange libraryRange, FrameworkName targetFramework)
         {
-            return new LibraryDescription
+            return new LibraryDescription(
+                libraryRange,
+                new LibraryIdentity(libraryRange.Name, libraryRange.VersionRange?.MinVersion, libraryRange.IsGacOrFrameworkReference),
+                path: null,
+                type: LibraryTypes.Unresolved,
+                dependencies: Enumerable.Empty<LibraryDependency>(),
+                assemblies: Enumerable.Empty<string>(),
+                framework: null)
             {
-                LibraryRange = libraryRange,
-                Identity = new LibraryIdentity
-                {
-                    Name = libraryRange.Name,
-                    IsGacOrFrameworkReference = libraryRange.IsGacOrFrameworkReference,
-                    Version = libraryRange.VersionRange?.MinVersion
-                },
-                Dependencies = Enumerable.Empty<LibraryDependency>(),
                 Resolved = false
             };
         }

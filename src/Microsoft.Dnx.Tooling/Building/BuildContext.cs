@@ -6,6 +6,7 @@ using System.Runtime.Versioning;
 using Microsoft.Dnx.Compilation;
 using Microsoft.Dnx.Compilation.Caching;
 using Microsoft.Dnx.Runtime;
+using Microsoft.Dnx.Runtime.Compilation;
 using Microsoft.Dnx.Runtime.Infrastructure;
 using Microsoft.Dnx.Runtime.Loader;
 using NuGet;
@@ -22,14 +23,12 @@ namespace Microsoft.Dnx.Tooling
         private readonly ApplicationHostContext _applicationHostContext;
 
         private readonly IServiceProvider _hostServices;
-        private readonly ICache _cache;
-        private readonly ICacheContextAccessor _cacheContextAccessor;
         private readonly IApplicationEnvironment _appEnv;
+        private readonly LibraryExporter _libraryExporter;
 
         public BuildContext(IServiceProvider hostServices,
                             IApplicationEnvironment appEnv,
-                            ICache cache,
-                            ICacheContextAccessor cacheContextAccessor,
+                            CompilationEngineFactory compilationFactory,
                             Runtime.Project project,
                             FrameworkName targetFramework,
                             string configuration,
@@ -41,11 +40,18 @@ namespace Microsoft.Dnx.Tooling
             _targetFrameworkFolder = VersionUtility.GetShortFrameworkName(_targetFramework);
             _outputPath = Path.Combine(outputPath, _targetFrameworkFolder);
             _hostServices = hostServices;
-            _cache = cache;
-            _cacheContextAccessor = cacheContextAccessor;
             _appEnv = appEnv;
 
-            _applicationHostContext = GetApplicationHostContext(project, targetFramework, configuration);
+            _applicationHostContext = GetApplicationHostContext(project, targetFramework, configuration, compilationFactory.CompilationCache);
+            var compilationEngine = compilationFactory.CreateEngine(
+                new CompilationEngineContext(
+                    _applicationHostContext.LibraryManager,
+                    _applicationHostContext.ProjectGraphProvider,
+                    _applicationHostContext.ServiceProvider,
+                    _targetFramework,
+                    _configuration));
+            _libraryExporter = compilationEngine.CreateProjectExporter(
+                _project, _targetFramework, _configuration);
         }
 
         public void Initialize(IReport report)
@@ -55,9 +61,22 @@ namespace Microsoft.Dnx.Tooling
 
         public bool Build(List<DiagnosticMessage> diagnostics)
         {
-            var builder = _applicationHostContext.CreateInstance<ProjectBuilder>();
+            var export = _libraryExporter.GetExport(_project.Name);
+            if (export == null)
+            {
+                return false;
+            }
 
-            var result = builder.Build(_project.Name, _outputPath);
+            var metadataReference = export.MetadataReferences
+                .OfType<IMetadataProjectReference>()
+                .FirstOrDefault(r => string.Equals(r.Name, _project.Name, StringComparison.OrdinalIgnoreCase));
+
+            if(metadataReference == null)
+            {
+                return false;
+            }
+
+            var result = metadataReference.EmitAssembly(_outputPath);
 
             diagnostics.AddRange(_applicationHostContext.GetAllDiagnostics());
 
@@ -72,7 +91,7 @@ namespace Microsoft.Dnx.Tooling
         public void PopulateDependencies(PackageBuilder packageBuilder)
         {
             var dependencies = new List<PackageDependency>();
-            var projectReferenceByName = _applicationHostContext.ProjectDepencyProvider
+            var projectReferenceByName = _applicationHostContext.ProjectDependencyProvider
                                                                 .Dependencies
                                                                 .ToDictionary(r => r.Identity.Name);
 
@@ -158,7 +177,7 @@ namespace Microsoft.Dnx.Tooling
         private void ShowDependencyInformation(IReport report)
         {
             // Make lookup for actual package dependency assemblies
-            var projectExport = _applicationHostContext.LibraryExporter.GetAllExports(_project.Name);
+            var projectExport = _libraryExporter.GetAllExports(_project.Name);
             if (projectExport == null)
             {
                 return;
@@ -195,20 +214,17 @@ namespace Microsoft.Dnx.Tooling
             }
         }
 
-        private ApplicationHostContext GetApplicationHostContext(Runtime.Project project, FrameworkName targetFramework, string configuration)
+        private ApplicationHostContext GetApplicationHostContext(Runtime.Project project, FrameworkName targetFramework, string configuration, CompilationCache cache)
         {
             var cacheKey = Tuple.Create("ApplicationContext", project.Name, configuration, targetFramework);
 
-            return _cache.Get<ApplicationHostContext>(cacheKey, ctx =>
+            return cache.Cache.Get<ApplicationHostContext>(cacheKey, ctx =>
             {
                 var applicationHostContext = new ApplicationHostContext(hostServices: _hostServices,
                                                                         projectDirectory: project.ProjectDirectory,
                                                                         packagesDirectory: null,
                                                                         configuration: configuration,
                                                                         targetFramework: targetFramework,
-                                                                        cache: _cache,
-                                                                        cacheContextAccessor: _cacheContextAccessor,
-                                                                        namedCacheDependencyProvider: null,
                                                                         loadContextFactory: GetRuntimeLoadContextFactory(project));
 
                 applicationHostContext.DependencyWalker.Walk(project.Name, project.Version, targetFramework);
@@ -224,9 +240,6 @@ namespace Microsoft.Dnx.Tooling
                                                                     packagesDirectory: null,
                                                                     configuration: _appEnv.Configuration,
                                                                     targetFramework: _appEnv.RuntimeFramework,
-                                                                    cache: _cache,
-                                                                    cacheContextAccessor: _cacheContextAccessor,
-                                                                    namedCacheDependencyProvider: null,
                                                                     loadContextFactory: null);
 
             applicationHostContext.DependencyWalker.Walk(project.Name, project.Version, _appEnv.RuntimeFramework);
