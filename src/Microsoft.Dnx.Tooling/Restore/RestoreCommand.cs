@@ -94,7 +94,7 @@ namespace Microsoft.Dnx.Tooling
                 success &= await Execute(dir);
             }
 
-            foreach (var category in ErrorMessages)
+            foreach (var category in ErrorMessages.Where(x => x.Value.Any()))
             {
                 Reports.Error.WriteLine($"{Environment.NewLine}Errors in {category.Key}".Red().Bold());
                 foreach (var message in category.Value)
@@ -541,12 +541,25 @@ namespace Microsoft.Dnx.Tooling
 
                 var repository = new PackageRepository(packagesDirectory);
 
-                WriteLockFile(lockFile,
+                lockFile = WriteLockFile(lockFile,
                               projectLockFilePath,
                               project,
                               graphItems,
                               repository,
                               targetContexts);
+
+                var compatibilityDiagnostics = CompatiblityChecker.Check(lockFile);
+                if (compatibilityDiagnostics.Any())
+                {
+                    success = false;
+                }
+
+                var errorMessageList = ErrorMessages.GetOrAdd(projectJsonPath, _ => new List<string>());
+                foreach (var message in compatibilityDiagnostics)
+                {
+                    errorMessageList.Add(message);
+                    Reports.Error.WriteLine(message);
+                }
             }
 
             if (!SkipRestoreEvents)
@@ -804,7 +817,7 @@ namespace Microsoft.Dnx.Tooling
             return Task.FromResult(lockFileFormat.Read(projectLockFilePath));
         }
 
-        private void WriteLockFile(LockFile previousLockFile,
+        private LockFile WriteLockFile(LockFile previousLockFile,
                                    string projectLockFilePath,
                                    Runtime.Project project,
                                    List<GraphItem> graphItems,
@@ -890,6 +903,8 @@ namespace Microsoft.Dnx.Tooling
 
             var lockFileFormat = new LockFileFormat();
             lockFileFormat.Write(projectLockFilePath, lockFile);
+
+            return lockFile;
         }
 
 

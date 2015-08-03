@@ -9,7 +9,8 @@
         "dnx451": { },
         "dnxcore50": {
             "dependencies": {
-                "System.IO.FileSystem": "4.0.0-beta-*"
+                "System.IO.FileSystem": "4.0.0-beta-*",
+                "System.Globalization": "4.0.10-beta-*"
             }
         }
     },
