@@ -92,6 +92,13 @@ namespace dnx
 
             return attributes != INVALID_FILE_ATTRIBUTES && ((attributes & FILE_ATTRIBUTE_DIRECTORY) == 0);
         }
+
+        bool directory_exists(const xstring_t& path)
+        {
+            auto attributes = GetFileAttributes(path.c_str());
+
+            return attributes != INVALID_FILE_ATTRIBUTES && ((attributes & FILE_ATTRIBUTE_DIRECTORY) != 0);
+        }
 #endif
 
         xstring_t remove_file_from_path(const xstring_t& path)

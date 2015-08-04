@@ -70,7 +70,20 @@ namespace dnx
                 ? utils::path_combine(servicing_root_parent, std::wstring(L"Microsoft DNX\\Servicing"))
                 : servicing_root_parent;
 
+            if (is_default_servicing_location && !utils::directory_exists(servicing_root))
+            {
+                trace_writer.write(L"The default servicing root does not exist.", true);
+                return std::wstring{};
+            }
+
             auto servicing_manifest_path = utils::path_combine(servicing_root, std::wstring(L"index.txt"));
+
+            if (!utils::file_exists(servicing_manifest_path))
+            {
+                throw std::runtime_error(std::string("The servicing index file at: ")
+                    .append(dnx::utils::to_string(servicing_manifest_path))
+                    .append(" does not exist or is not accessible."));
+            }
 
             // index.txt is ASCII
             std::ifstream servicing_manifest;
@@ -80,23 +93,22 @@ namespace dnx
                 trace_writer.write(std::wstring(L"Found servicing index file at: ").append(servicing_manifest_path), true);
 
                 auto runtime_replacement_path = find_runtime_replacement(servicing_manifest, trace_writer);
+
+                servicing_manifest.close();
+
                 if (runtime_replacement_path.length() > 0)
                 {
                     return get_full_replacement_path(servicing_root, runtime_replacement_path);
                 }
 
                 trace_writer.write(L"No runtime redirections found.", true);
-            }
-            else
-            {
-                trace_writer.write(
-                    std::wstring(L"The servicing index file at: ")
-                    .append(servicing_manifest_path)
-                    .append(L" does not exist or could not be opened."),
-                    true);
+
+                return std::wstring{};
             }
 
-            return std::wstring{};
+            throw std::runtime_error(std::string("The servicing index file at: ")
+                .append(dnx::utils::to_string(servicing_manifest_path))
+                .append(" could not be opened."));
         }
     }
 }

@@ -18,6 +18,7 @@ namespace dnx
 
         dnx::xstring_t path_combine(const dnx::xstring_t& path1, const dnx::xstring_t& path2);
         bool file_exists(const dnx::xstring_t& path);
+        bool directory_exists(const dnx::xstring_t& path);
         dnx::xstring_t remove_file_from_path(const dnx::xstring_t& path);
     }
 }
