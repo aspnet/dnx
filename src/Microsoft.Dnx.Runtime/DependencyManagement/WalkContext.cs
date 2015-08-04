@@ -225,7 +225,7 @@ namespace Microsoft.Dnx.Runtime
                         Dependencies = entry.Value.Dependencies.SelectMany(CorrectDependencyVersion).ToList(),
                         LoadableAssemblies = entry.Value.Description.LoadableAssemblies ?? Enumerable.Empty<string>(),
                         Resolved = entry.Value.Description.Resolved,
-                        Compatible = entry.Value.Description.Compatible
+                        CompatibilityIssue = entry.Value.Description.CompatibilityIssue
                     };
                 }).ToList();
 

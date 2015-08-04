@@ -97,7 +97,6 @@ namespace Microsoft.Dnx.Runtime
                 Framework = targetFrameworkInfo.FrameworkName,
                 Dependencies = dependencies,
                 LoadableAssemblies = loadableAssemblies,
-                Compatible = !unresolved,
                 Resolved = !unresolved
             };
         }

@@ -94,7 +94,7 @@ namespace Microsoft.Dnx.Tooling
                 success &= await Execute(dir);
             }
 
-            foreach (var category in ErrorMessages)
+            foreach (var category in ErrorMessages.Where(x => x.Value.Any()))
             {
                 Reports.Error.WriteLine($"{Environment.NewLine}Errors in {category.Key}".Red().Bold());
                 foreach (var message in category.Value)
@@ -541,12 +541,26 @@ namespace Microsoft.Dnx.Tooling
 
                 var repository = new PackageRepository(packagesDirectory);
 
-                WriteLockFile(lockFile,
+                lockFile = WriteLockFile(lockFile,
                               projectLockFilePath,
                               project,
                               graphItems,
                               repository,
                               targetContexts);
+
+                var compatibilityChecker = new CompatibilityChecker(lockFile);
+                var compatibilityIssues = compatibilityChecker.GetAllCompatibilityIssues();
+                if (compatibilityIssues.Any())
+                {
+                    success = false;
+                }
+
+                var compatibilityMessages = ErrorMessages.GetOrAdd(projectJsonPath, _ => new List<string>());
+                foreach (var issue in compatibilityIssues)
+                {
+                    compatibilityMessages.Add(issue.ToString());
+                    Reports.Error.WriteLine(issue.ToString());
+                }
             }
 
             if (!SkipRestoreEvents)
@@ -804,7 +818,7 @@ namespace Microsoft.Dnx.Tooling
             return Task.FromResult(lockFileFormat.Read(projectLockFilePath));
         }
 
-        private void WriteLockFile(LockFile previousLockFile,
+        private LockFile WriteLockFile(LockFile previousLockFile,
                                    string projectLockFilePath,
                                    Runtime.Project project,
                                    List<GraphItem> graphItems,
@@ -890,6 +904,7 @@ namespace Microsoft.Dnx.Tooling
 
             var lockFileFormat = new LockFileFormat();
             lockFileFormat.Write(projectLockFilePath, lockFile);
+            return lockFile;
         }
 
 
