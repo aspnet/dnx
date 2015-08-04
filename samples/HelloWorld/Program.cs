@@ -1,10 +1,15 @@
+using System;
+using System.Globalization;
 using System.Reflection;
+using System.Resources;
 
 public class Program
 {
     public int Main(string[] args)
     {
-        System.Console.WriteLine("Hello World!");
+        var resources = new ResourceManager("HelloWorld.Program", Assembly.Load(new AssemblyName("HelloWorld")));
+        Console.WriteLine(resources.GetString("HelloWorld"));
+        Console.WriteLine(resources.GetString("HelloWorld", new CultureInfo("fr-FR")));
 
         var resourceStream = typeof(Program).GetTypeInfo().Assembly.GetManifestResourceStream("HelloWorld.compiler.resources.HTMLPage1.html");
 
