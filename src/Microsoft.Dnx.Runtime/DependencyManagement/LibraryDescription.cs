@@ -16,7 +16,14 @@ namespace Microsoft.Dnx.Runtime
         public IEnumerable<LibraryDependency> Dependencies { get; set; }
 
         public bool Resolved { get; set; } = true;
-        public bool Compatible { get; set; } = true;
+        public CompatibilityIssueType CompatibilityIssue { get; set; } = CompatibilityIssueType.None;
+        public bool Compatible
+        {
+            get
+            {
+                return CompatibilityIssue == CompatibilityIssueType.None;
+            }
+        }
 
         public string Path { get; set; }
         public string Type { get; set; }
@@ -32,6 +39,13 @@ namespace Microsoft.Dnx.Runtime
                 Type,
                 Dependencies.Select(d => d.Name),
                 LoadableAssemblies.Select(a => new AssemblyName(a)));
+        }
+
+        public enum CompatibilityIssueType
+        {
+            None,
+            UnsupportedFramework,
+            MissingRuntimeAssembly
         }
     }
 }

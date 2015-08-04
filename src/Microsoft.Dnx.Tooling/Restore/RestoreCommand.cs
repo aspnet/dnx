@@ -548,7 +548,7 @@ namespace Microsoft.Dnx.Tooling
                               repository,
                               targetContexts);
 
-                var compatibilityDiagnostics = CompatibilityChecker.Check(lockFile);
+                var compatibilityDiagnostics = CompatibilityChecker.CheckLockFile(lockFile);
                 if (compatibilityDiagnostics.Any())
                 {
                     success = false;

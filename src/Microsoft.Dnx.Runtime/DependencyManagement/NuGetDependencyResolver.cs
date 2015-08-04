@@ -95,7 +95,7 @@ namespace Microsoft.Dnx.Runtime
             {
                 IEnumerable<LibraryDependency> dependencies;
                 var resolved = true;
-                var compatible = true;
+                var compatibilityIssue = CompatibilityIssue.None;
                 if (package.LockFileLibrary != null)
                 {
                     if (targetLibrary?.Version == package.LockFileLibrary.Version)
@@ -112,14 +112,7 @@ namespace Microsoft.Dnx.Runtime
                     // current target framework, we should mark this dependency as unresolved
                     if (targetLibrary != null)
                     {
-                        var containsAssembly = package.LockFileLibrary.Files
-                            .Any(x => x.StartsWith($"ref{Path.DirectorySeparatorChar}") ||
-                                x.StartsWith($"lib{Path.DirectorySeparatorChar}"));
-                        compatible = targetLibrary.FrameworkAssemblies.Any() ||
-                            targetLibrary.CompileTimeAssemblies.Any() ||
-                            targetLibrary.RuntimeAssemblies.Any() ||
-                            !containsAssembly;
-                        resolved = compatible;
+                        compatibilityIssue = CompatibilityChecker.CheckLibrary(lockFileLibrary, targetLibrary);
                     }
                 }
                 else
@@ -138,7 +131,7 @@ namespace Microsoft.Dnx.Runtime
                     Type = "Package",
                     Dependencies = dependencies,
                     Resolved = resolved,
-                    Compatible = compatible
+                    CompatibilityIssue = compatibilityIssue
                 };
             }
 

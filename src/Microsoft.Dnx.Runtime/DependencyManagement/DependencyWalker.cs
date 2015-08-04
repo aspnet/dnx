@@ -71,21 +71,44 @@ namespace Microsoft.Dnx.Runtime
                     string message;
                     if (library.Compatible)
                     {
-                        message = $"The dependency {library.LibraryRange} could not be resolved.";
+                        message = ;
                     }
                     else
                     {
-                        var projectName = Directory.GetParent(projectFilePath).Name;
-                        message =
-                            $"The dependency {library.Identity} in project {projectName} does not support framework {library.Framework}.";
                     }
 
                     messages.Add(
                         new DiagnosticMessage(
-                            message, 
-                            projectPath, 
-                            DiagnosticMessageSeverity.Error, 
-                            library.LibraryRange.Line, 
+                            $"The dependency {library.LibraryRange} could not be resolved.",
+                            projectPath,
+                            DiagnosticMessageSeverity.Error,
+                            library.LibraryRange.Line,
+                            library.LibraryRange.Column));
+                }
+                else if (!library.Compatible)
+                {
+                    string message;
+                    switch (library.CompatibilityIssue)
+                    {
+                        case LibraryDescription.CompatibilityIssueType.UnsupportedFramework:
+                            var projectName = Directory.GetParent(projectFilePath).Name;
+                            message =
+                                $"The dependency {library.Identity} in project {projectName} does not support framework {library.Framework}.";
+                            break;
+                        case LibraryDescription.CompatibilityIssueType.MissingRuntimeAssembly:
+                            message = "";
+                            break;
+                        default:
+                            message = "Unknown compatibility issue";
+                            break;
+                    }
+
+                    messages.Add(
+                        new DiagnosticMessage(
+                            message,
+                            projectPath,
+                            DiagnosticMessageSeverity.Error,
+                            library.LibraryRange.Line,
                             library.LibraryRange.Column));
                 }
                 else

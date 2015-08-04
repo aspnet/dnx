@@ -7,16 +7,26 @@ using System.IO;
 using System.Linq;
 using Microsoft.Dnx.Runtime.DependencyManagement;
 
-namespace Microsoft.Dnx.Tooling
+namespace Microsoft.Dnx.Runtime
 {
     public static class CompatibilityChecker
     {
         private const string _errorTemplate =
             "{0} {1} provides a compile-time reference assembly for {2} on {3}, but there is no compatible run-time assembly.";
 
-        public static IEnumerable<string> CheckLockFile(LockFile lockFile)
+        public static LibraryDescription.CompatibilityIssueType CheckLibrary(
+            LockFileLibrary lockFileLib, LockFileTargetLibrary targetLib)
         {
-            return lockFile.Targets.SelectMany(t => CheckTarget(t));
+            var containsAssembly = lockFileLib.Files
+                .Any(x => x.StartsWith($"ref{Path.DirectorySeparatorChar}") ||
+                    x.StartsWith($"lib{Path.DirectorySeparatorChar}"));
+            if (containsAssembly&&
+                !targetLib.FrameworkAssemblies.Any() &&
+                !targetLib.CompileTimeAssemblies.Any() &&
+                !targetLib.RuntimeAssemblies.Any())
+            {
+                return LibraryDescription.CompatibilityIssueType.UnsupportedFramework;
+            }
         }
 
         private static IEnumerable<string> CheckTarget(LockFileTarget target)
