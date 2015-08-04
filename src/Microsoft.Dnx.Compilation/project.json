@@ -1,4 +1,4 @@
-﻿{
+{
     "version": "1.0.0-*",
     "dependencies": {
         "Microsoft.Dnx.Compilation.Abstractions": "1.0.0-*"
@@ -11,10 +11,10 @@
         },
         "dnxcore50": {
             "dependencies": {
-                "System.Runtime": "4.0.20-beta-*",
-                "System.IO.FileSystem": "4.0.0-beta-*",
-                "System.Linq": "4.0.0-beta-*",
-                "System.Collections.Concurrent": "4.0.10-beta-*"
+                "System.Runtime": "4.0.21-beta-*",
+                "System.IO.FileSystem": "4.0.1-beta-*",
+                "System.Linq": "4.0.1-beta-*",
+                "System.Collections.Concurrent": "4.0.11-beta-*"
             }
         }
     }
