@@ -9,7 +9,7 @@ using Microsoft.Dnx.Runtime.DependencyManagement;
 
 namespace Microsoft.Dnx.Tooling
 {
-    public static class CompatiblityChecker
+    public static class CompatibilityChecker
     {
         private const string _errorTemplate =
             "{0} {1} provides a compile-time reference assembly for {2} on {3}, but there is no compatible run-time assembly.";
