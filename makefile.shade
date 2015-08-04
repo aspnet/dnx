@@ -21,7 +21,7 @@ var NUSPEC_ROOT = '${Path.Combine(ROOT, "nuspec")}'
 var TEST_RESULTS = '${Path.Combine(ROOT, "artifacts", "TestResults")}'
 var SAMPLES_DIR = '${Path.Combine(ROOT, "samples")}'
 var FULL_VERSION = '${PRODUCT_VERSION + "-" + E("DNX_BUILD_VERSION")}'
-var CORECLR_TARGET_PATH = '${Path.Combine(BUILD_DIR2, "CoreCLR")}'
+var CORECLR_TARGET_PATH = '${Path.Combine(BUILD_DIR2, "DnxCoreCLR")}'
 var RUNTIME_NAME_PREFIX = 'dnx-'
 
 - // Runtime names
@@ -451,7 +451,7 @@ var CAN_BUILD_ONECORE = '${Directory.Exists(WIN10_SDK_LIB) && Directory.GetFiles
         }
     }
 
-    nuget-install package='CoreCLR' outputDir='packages' extra='${extras}' once='CoreCLR' nugetPath='.nuget/nuget.exe' if='!Directory.Exists(CORECLR_TARGET_PATH)'
+    nuget-install package='DnxCoreCLR' outputDir='packages' extra='${extras}' once='DnxCoreCLR' nugetPath='.nuget/nuget.exe' if='!Directory.Exists(CORECLR_TARGET_PATH)'
 
     var CoreCLR_DIR='${""}'
     @{
@@ -486,7 +486,7 @@ var CAN_BUILD_ONECORE = '${Directory.Exists(WIN10_SDK_LIB) && Directory.GetFiles
         };
 
         string packagesDir = Path.Combine(Directory.GetCurrentDirectory(), "packages");
-        CoreCLR_DIR = Directory.EnumerateDirectories(packagesDir, "CoreCLR*")
+        CoreCLR_DIR = Directory.EnumerateDirectories(packagesDir, "DnxCoreCLR*")
                                 .OrderByDescending(getVersion)
                                 .First();
                                       
