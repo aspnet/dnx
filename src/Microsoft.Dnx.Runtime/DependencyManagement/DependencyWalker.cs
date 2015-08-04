@@ -68,21 +68,19 @@ namespace Microsoft.Dnx.Runtime
 
                 if (!library.Resolved)
                 {
-                    string message;
-                    if (library.Compatible)
-                    {
-                        message = $"The dependency {library.LibraryRange} could not be resolved.";
-                    }
-                    else
-                    {
-                        var projectName = Directory.GetParent(projectFilePath).Name;
-                        message =
-                            $"The dependency {library.Identity} in project {projectName} does not support framework {library.Framework}.";
-                    }
-
                     messages.Add(
                         new DiagnosticMessage(
-                            message, 
+                            $"The dependency {library.LibraryRange} could not be resolved.", 
+                            projectPath, 
+                            DiagnosticMessageSeverity.Error, 
+                            library.LibraryRange.Line, 
+                            library.LibraryRange.Column));
+                }
+                else if (!library.Compatible)
+                {
+                    messages.Add(
+                        new DiagnosticMessage(
+                            library.CompatibilityIssue.ToString(),
                             projectPath, 
                             DiagnosticMessageSeverity.Error, 
                             library.LibraryRange.Line, 

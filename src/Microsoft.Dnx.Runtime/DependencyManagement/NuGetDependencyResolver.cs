@@ -15,6 +15,7 @@ namespace Microsoft.Dnx.Runtime
 {
     public class NuGetDependencyResolver : IDependencyProvider, ILibraryExportProvider
     {
+        private CompatibilityChecker _compatibilityChecker;
         private IDictionary<Tuple<string, FrameworkName, string>, LockFileTargetLibrary> _lookup;
         private readonly PackageRepository _repository;
 
@@ -42,6 +43,7 @@ namespace Microsoft.Dnx.Runtime
 
         public void ApplyLockFile(LockFile lockFile)
         {
+            _compatibilityChecker = new CompatibilityChecker(lockFile);
             _lookup = new Dictionary<Tuple<string, FrameworkName, string>, LockFileTargetLibrary>();
 
             foreach (var t in lockFile.Targets)
@@ -95,7 +97,7 @@ namespace Microsoft.Dnx.Runtime
             {
                 IEnumerable<LibraryDependency> dependencies;
                 var resolved = true;
-                var compatible = true;
+                CompatibilityIssue compatibilityIssue = null;
                 if (package.LockFileLibrary != null)
                 {
                     if (targetLibrary?.Version == package.LockFileLibrary.Version)
@@ -112,14 +114,7 @@ namespace Microsoft.Dnx.Runtime
                     // current target framework, we should mark this dependency as unresolved
                     if (targetLibrary != null)
                     {
-                        var containsAssembly = package.LockFileLibrary.Files
-                            .Any(x => x.StartsWith($"ref{Path.DirectorySeparatorChar}") ||
-                                x.StartsWith($"lib{Path.DirectorySeparatorChar}"));
-                        compatible = targetLibrary.FrameworkAssemblies.Any() ||
-                            targetLibrary.CompileTimeAssemblies.Any() ||
-                            targetLibrary.RuntimeAssemblies.Any() ||
-                            !containsAssembly;
-                        resolved = compatible;
+                        compatibilityIssue = _compatibilityChecker.CheckTargetLibrary(targetLibrary, targetFramework);
                     }
                 }
                 else
@@ -138,7 +133,7 @@ namespace Microsoft.Dnx.Runtime
                     Type = "Package",
                     Dependencies = dependencies,
                     Resolved = resolved,
-                    Compatible = compatible
+                    CompatibilityIssue = compatibilityIssue
                 };
             }
 
