@@ -21,7 +21,7 @@ namespace Microsoft.Dnx.Runtime.Tests
         [InlineData("Net451RefPackage", "DNX,Version=v4.5.1", true)]
         [InlineData("AssemblyPlaceholderPackage", ".NETFramework,Version=v4.5", true)]
         [InlineData("AssemblyPlaceholderPackage", "DNX,Version=v4.5.1", false)]
-        public void LibrariesAreResolvedCorrectly(string packageName, string framework, bool resolved)
+        public void CheckLibraryCompatibility(string packageName, string framework, bool compatible)
         {
             var repo = new PackageRepository("path/to/packages");
             var resolver = new NuGetDependencyResolver(repo);
@@ -140,7 +140,7 @@ namespace Microsoft.Dnx.Runtime.Tests
             resolver.ApplyLockFile(lockFile);
 
             var libToLookup = new LibraryRange(packageName, frameworkReference: false);
-            Assert.Equal(resolved, resolver.GetDescription(libToLookup, new FrameworkName(framework)).Resolved);
+            Assert.Equal(compatible, resolver.GetDescription(libToLookup, new FrameworkName(framework)).Compatible);
         }
     }
 }
