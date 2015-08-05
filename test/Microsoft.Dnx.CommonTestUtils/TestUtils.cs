@@ -381,6 +381,13 @@ namespace Microsoft.Dnx.CommonTestUtils
             }
         }
 
+        public static string CreateFolderPath(params string[] pathComponents)
+        {
+            var path = Path.Combine(pathComponents);
+            Directory.CreateDirectory(path);
+            return path;
+        }
+
         private static string GetRuntimeName(string flavor, string os, string architecture)
         {
             // Mono ignores os and architecture

@@ -2,9 +2,11 @@
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Microsoft.Dnx.CommonTestUtils;
+using Microsoft.Dnx.Runtime;
 
 namespace Microsoft.Dnx.Tooling.FunctionalTests
 {
@@ -20,12 +22,12 @@ namespace Microsoft.Dnx.Tooling.FunctionalTests
 
             CreateNewPackage("alpha", "0.1.0");
 
-            PackPackage(Path.Combine(TestUtils.GetMiscProjectsFolder(), "XreTestApps/CommandsProject"), PackageSource);
+            PackAndInstallPackage(Path.Combine(TestUtils.GetMiscProjectsFolder(), "XreTestApps", "CommandsProject"), PackageSource);
         }
 
         public string PackageSource { get; }
 
-        private void PackPackage(string app, string outpath)
+        private void PackAndInstallPackage(string app, string packagesDir)
         {
             var runtimeForPacking = TestUtils.GetClrRuntimeComponents().FirstOrDefault();
             if (runtimeForPacking == null)
@@ -36,13 +38,37 @@ namespace Microsoft.Dnx.Tooling.FunctionalTests
             var runtimeHomePath = base.GetRuntimeHomeDir((string)runtimeForPacking[0],
                                                          (string)runtimeForPacking[1],
                                                          (string)runtimeForPacking[2]);
+            var env = new Dictionary<string, string>
+            {
+                { EnvironmentNames.Packages, PackageSource }
+            };
 
-            DnuTestUtils.ExecDnu(runtimeHomePath, "restore", "", environment: null, workingDir: app);
-            DnuTestUtils.ExecDnu(runtimeHomePath, "pack", $"--out {outpath}", environment: null, workingDir: app);
+            using (var tempDir = new DisposableDir())
+            {
+                DnuTestUtils.ExecDnu(runtimeHomePath, "restore", app, env);
+                DnuTestUtils.ExecDnu(runtimeHomePath, "pack", $"{app} --out {tempDir} --configuration Debug", env);
+                var nupkgPath = Directory.EnumerateFiles(Path.Combine(tempDir, "Debug"))
+                    .Where(f => f.EndsWith(".nupkg", StringComparison.OrdinalIgnoreCase) &&
+                        !f.EndsWith(".symbols.nupkg", StringComparison.OrdinalIgnoreCase))
+                    .First();
+                DnuTestUtils.ExecDnu(runtimeHomePath, "packages add", $"{nupkgPath}", env);
+            }
         }
 
         private void CreateNewPackage(string name, string version)
         {
+            var projectJson = $@"{{
+  ""version"": ""{version}"",
+  ""frameworks"": {{
+    ""dnx451"": {{ }},
+    ""dnxcore50"": {{
+      ""dependencies"": {{
+          ""System.Runtime"": ""4.0.20-beta-*""
+      }}
+    }}
+  }}
+}}";
+
             var runtimeForPacking = TestUtils.GetClrRuntimeComponents().FirstOrDefault();
             if (runtimeForPacking == null)
             {
@@ -58,16 +84,20 @@ namespace Microsoft.Dnx.Tooling.FunctionalTests
                 var dir = new DirectoryInfo(tempdir);
                 var projectDir = dir.CreateSubdirectory(name);
                 var outputDir = dir.CreateSubdirectory("output");
-                var projectJson = Path.Combine(projectDir.FullName, "project.json");
+                var projectJsonPath = Path.Combine(projectDir.FullName, "project.json");
+                File.WriteAllText(projectJsonPath, projectJson);
+                var env = new Dictionary<string, string>
+                {
+                    { EnvironmentNames.Packages, PackageSource }
+                };
 
-                File.WriteAllText(projectJson, "{\"version\": \"" + version + "\"}");
-                DnuTestUtils.ExecDnu(runtimeHomePath, "restore", projectJson);
-                DnuTestUtils.ExecDnu(runtimeHomePath, "pack", projectJson + " --out " + outputDir.FullName, environment: null, workingDir: null);
+                DnuTestUtils.ExecDnu(runtimeHomePath, $"restore", $"{projectJsonPath} -s {PackageFeeds.AspNetvNextv2Feed}", env);
+                DnuTestUtils.ExecDnu(runtimeHomePath, "pack", projectJsonPath + " --out " + outputDir.FullName, env);
 
                 var packageName = string.Format("{0}.{1}.nupkg", name, version);
                 var packageFile = Path.Combine(outputDir.FullName, "Debug", packageName);
 
-                File.Copy(packageFile, Path.Combine(PackageSource, packageName), overwrite: true);
+                DnuTestUtils.ExecDnu(runtimeHomePath, "packages add", packageFile, env);
             }
         }
 

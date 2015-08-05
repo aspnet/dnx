@@ -4,6 +4,7 @@
 using System.Collections.Generic;
 using System.IO;
 using Microsoft.Dnx.CommonTestUtils;
+using Microsoft.Dnx.Runtime;
 using Microsoft.Dnx.Runtime.DependencyManagement;
 using NuGet;
 using Xunit;
@@ -36,13 +37,21 @@ namespace Microsoft.Dnx.Tooling.FunctionalTests
 
             using (var testEnv = new DnuTestEnvironment(runtimeHomeDir))
             {
-                var environment = new Dictionary<string, string>();
-                environment.Add("USERPROFILE", testEnv.RootDir);
+                var environment = new Dictionary<string, string>
+                {
+                    { "USERPROFILE", testEnv.RootDir },
+                };
 
+                var nupkgPath = Path.Combine(_fixture.PackageSource, "CommandsProject", "1.0.0", "CommandsProject.1.0.0.nupkg");
                 string stdOut, stdErr;
-                var exitCode = DnuTestUtils.ExecDnu(runtimeHomeDir, "commands",
-                    $"install {_fixture.PackageSource}/Debug/CommandsProject.1.0.0.nupkg --source https://nuget.org/api/v2/",
-                    out stdOut, out stdErr, environment, workingDir: testEnv.RootDir);
+                var exitCode = DnuTestUtils.ExecDnu(
+                    runtimeHomeDir,
+                    "commands install",
+                    $"{nupkgPath} -s {PackageFeeds.NuGetv2Feed}",
+                    out stdOut,
+                    out stdErr,
+                    environment,
+                    workingDir: testEnv.RootDir);
 
                 var commandFilePath = "hello.cmd";
                 bool isWindows = TestUtils.CurrentRuntimeEnvironment.OperatingSystem == "Windows";
@@ -50,14 +59,16 @@ namespace Microsoft.Dnx.Tooling.FunctionalTests
                 {
                     commandFilePath = "hello";
                 }
-                commandFilePath = Path.Combine(testEnv.RootDir, ".dnx/bin", commandFilePath);
+                commandFilePath = Path.Combine(testEnv.RootDir, ".dnx", "bin", commandFilePath);
 
                 Assert.Equal(0, exitCode);
                 Assert.True(string.IsNullOrEmpty(stdErr));
                 Assert.True(File.Exists(commandFilePath));
 
-                environment = new Dictionary<string, string>();
-                environment.Add("DNX_PACKAGES", null);
+                environment = new Dictionary<string, string>
+                {
+                    { EnvironmentNames.DnxPackages, null }
+                };
 
                 if (!isWindows)
                 {
@@ -150,7 +161,7 @@ namespace Microsoft.Dnx.Tooling.FunctionalTests
         private void InstallFakePackage(string directory, string name, string version)
         {
             Directory.CreateDirectory($"{directory}/packages/{name}/{version}");
-            File.WriteAllText($"{directory}/packages/{name}/{version}/{name}{Constants.ManifestExtension}", "");
+            File.WriteAllText($"{directory}/packages/{name}/{version}/{name}{NuGet.Constants.ManifestExtension}", "");
             File.WriteAllText($"{directory}/packages/{name}/{version}/{name}.{version}.nupkg.sha512", "TestSha");
         }
 

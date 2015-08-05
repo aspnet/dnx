@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Microsoft.Dnx.CommonTestUtils;
+using Microsoft.Dnx.Runtime;
 using Xunit;
 
 namespace Microsoft.Dnx.Tooling
@@ -158,23 +159,45 @@ namespace Microsoft.Dnx.Tooling
     ""postbuild"": ""echo POST_BUILD_SCRIPT_OUTPUT"",
     ""postpack"": ""echo POST_PACK_SCRIPT_OUTPUT""
   },
+  ""frameworks"": {
+    ""dnx451"": {},
+    ""dnxcore50"": {
+      ""dependencies"": {
+        ""System.Runtime"": ""4.0.20-beta-*""
+      }
+    }
+  }
 }";
             var sourceFileContents = @"Invalid source code that makes build fail";
 
             using (var tempDir = new DisposableDir())
             {
-                var projectJsonPath = Path.Combine(tempDir, Runtime.Project.ProjectFileName);
-                var sourceFilePath = Path.Combine(tempDir, "Program.cs");
+                var projectDir = TestUtils.CreateFolderPath(tempDir, "project");
+                var packagesDir = TestUtils.CreateFolderPath(tempDir, "packages");
+                var projectJsonPath = Path.Combine(projectDir, Runtime.Project.ProjectFileName);
+                var sourceFilePath = Path.Combine(projectDir, "Program.cs");
                 File.WriteAllText(projectJsonPath, projectJson);
                 File.WriteAllText(sourceFilePath, sourceFileContents);
+                var env = new Dictionary<string, string>
+                {
+                    { EnvironmentNames.Packages, packagesDir }
+                };
 
                 string stdOut, stdErr;
                 var exitCode = DnuTestUtils.ExecDnu(
                     runtimeHomeDir,
+                    "restore",
+                    $"{projectDir} -s {PackageFeeds.AspNetvNextv2Feed}",
+                    env);
+                Assert.Equal(0, exitCode);
+
+                exitCode = DnuTestUtils.ExecDnu(
+                    runtimeHomeDir,
                     "pack",
                     projectJsonPath,
                     out stdOut,
-                    out stdErr);
+                    out stdErr,
+                    env);
 
                 Assert.NotEqual(0, exitCode);
                 Assert.NotEmpty(stdErr);
