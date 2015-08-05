@@ -187,7 +187,7 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Dnx.ApplicationHost --configuration
 
         private void WriteGlobalJson()
         {
-            var rootDirectory = ProjectResolver.ResolveRootDirectory(_project.ProjectDirectory);
+            var rootDirectory = PathSearchBasedProjectResolver.ResolveRootDirectory(_project.ProjectDirectory);
 
             var rootObject = default(JObject);
             if (GlobalSettings.HasGlobalFile(rootDirectory))

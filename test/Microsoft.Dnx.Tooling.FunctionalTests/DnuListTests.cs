@@ -46,6 +46,9 @@ namespace Microsoft.Dnx.Tooling.FunctionalTests
 
             CreateProjectJson(@"{}");
 
+            // run dnu restore first
+            Assert.Equal(0, DnuTestUtils.ExecDnu(runtimeHomePath, "restore", _workingDir.DirPath));
+
             // run dnu list
             Assert.Equal(0, DnuTestUtils.ExecDnu(runtimeHomePath, "list", "", out stdOut, out stdErr, environment: null, workingDir: _workingDir.DirPath));
 
@@ -66,6 +69,9 @@ namespace Microsoft.Dnx.Tooling.FunctionalTests
                 Path.Combine(_workingDir, "project.json"));
 
             CreateProjectJson(@"{}");
+
+            // run dnu restore first
+            Assert.Equal(0, DnuTestUtils.ExecDnu(runtimeHomePath, "restore", _workingDir.DirPath));
 
             // run dnu list
             Assert.Equal(0, DnuTestUtils.ExecDnu(runtimeHomePath, "list", "--details", out stdOut, out stdErr, environment: null, workingDir: _workingDir.DirPath));

@@ -163,7 +163,7 @@ namespace Microsoft.Dnx.Tooling
                     return false;
                 }
 
-                var rootDirectory = ProjectResolver.ResolveRootDirectory(restoreDirectory);
+                var rootDirectory = PathSearchBasedProjectResolver.ResolveRootDirectory(restoreDirectory);
                 ReadSettings(rootDirectory);
 
                 string packagesDirectory = FeedOptions.TargetPackagesFolder;
@@ -292,7 +292,7 @@ namespace Microsoft.Dnx.Tooling
             }
 
             var projectDirectory = project.ProjectDirectory;
-            var projectResolver = new ProjectResolver(projectDirectory, rootDirectory);
+            var projectResolver = new PathSearchBasedProjectResolver(projectDirectory, rootDirectory);
             var packageRepository = new PackageRepository(packagesDirectory)
             {
                 CheckHashFile = CheckHashFile

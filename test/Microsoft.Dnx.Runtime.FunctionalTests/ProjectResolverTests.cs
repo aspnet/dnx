@@ -43,12 +43,12 @@ namespace Microsoft.Dnx.Runtime.FunctionalTests
 {src2ProjectPath}";
 
                 Project project = null;
-                var resolver1 = new ProjectResolver(src1ProjectPath);
+                var resolver1 = new PathSearchBasedProjectResolver(src1ProjectPath);
                 var exception = Assert.Throws<InvalidOperationException>(() => resolver1.TryResolveProject(ambiguousName, out project));
                 Assert.Contains(expectedMessage, exception.Message);
                 Assert.Null(project);
 
-                var resolver2 = new ProjectResolver(src2ProjectPath);
+                var resolver2 = new PathSearchBasedProjectResolver(src2ProjectPath);
                 exception = Assert.Throws<InvalidOperationException>(() => resolver2.TryResolveProject(ambiguousName, out project));
                 Assert.Contains(expectedMessage, exception.Message);
                 Assert.Null(project);
@@ -84,7 +84,7 @@ namespace Microsoft.Dnx.Runtime.FunctionalTests
                 var projectPath = Path.Combine(solutionPath, "src1", projectName);
 
                 Project project;
-                Assert.True(new ProjectResolver(projectPath).TryResolveProject(projectName, out project));
+                Assert.True(new PathSearchBasedProjectResolver(projectPath).TryResolveProject(projectName, out project));
                 Assert.NotNull(project);
             }
         }
@@ -123,11 +123,11 @@ namespace Microsoft.Dnx.Runtime.FunctionalTests
                 var unambiguousProjectPath = Path.Combine(solutionPath, "src1", unambiguousName);
 
                 Project project;
-                Assert.True(new ProjectResolver(ambiguousProjectPath).TryResolveProject(unambiguousName, out project));
+                Assert.True(new PathSearchBasedProjectResolver(ambiguousProjectPath).TryResolveProject(unambiguousName, out project));
                 Assert.NotNull(project);
 
                 project = null;
-                Assert.True(new ProjectResolver(unambiguousProjectPath).TryResolveProject(unambiguousName, out project));
+                Assert.True(new PathSearchBasedProjectResolver(unambiguousProjectPath).TryResolveProject(unambiguousName, out project));
                 Assert.NotNull(project);
             }
         }
@@ -161,7 +161,7 @@ namespace Microsoft.Dnx.Runtime.FunctionalTests
                 var projectPath = Path.Combine(solutionPath, "src1", projectName);
 
                 Project project;
-                Assert.False(new ProjectResolver(projectPath).TryResolveProject(projectName, out project));
+                Assert.False(new PathSearchBasedProjectResolver(projectPath).TryResolveProject(projectName, out project));
                 Assert.Null(project);
             }
         }
@@ -190,7 +190,7 @@ namespace Microsoft.Dnx.Runtime.FunctionalTests
                 var unambiguousProjectPath = Path.Combine(solutionPath, "src", unambiguousName);
 
                 Project project;
-                Assert.True(new ProjectResolver(unambiguousProjectPath).TryResolveProject(unambiguousName, out project));
+                Assert.True(new PathSearchBasedProjectResolver(unambiguousProjectPath).TryResolveProject(unambiguousName, out project));
                 Assert.NotNull(project);
             }
         }
@@ -219,9 +219,12 @@ namespace Microsoft.Dnx.Runtime.FunctionalTests
                     .WriteTo(solutionPath);
 
                 var resolutionRoot = Path.Combine(solutionPath, "src", "ProjectA");
+                var resolver = new PathSearchBasedProjectResolver(resolutionRoot);
 
                 Project project;
-                Assert.True(new ProjectResolver(resolutionRoot).TryResolveProject("ProjectB", out project));
+                var result = resolver.TryResolveProject("ProjectB", out project);
+
+                Assert.True(result);
                 Assert.NotNull(project);
             }
         }

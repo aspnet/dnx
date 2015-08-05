@@ -153,7 +153,10 @@ namespace Microsoft.Dnx.Runtime
             return true;
         }
 
-        internal static Project GetProjectFromStream(Stream stream, string projectName, string projectPath, ICollection<DiagnosticMessage> diagnostics = null)
+        internal static Project GetProjectFromStream(Stream stream,
+                                                     string suggestName,
+                                                     string projectPath,
+                                                     ICollection<DiagnosticMessage> diagnostics = null)
         {
             var project = new Project();
 
@@ -167,7 +170,7 @@ namespace Microsoft.Dnx.Runtime
             }
 
             // Meta-data properties
-            project.Name = projectName;
+            project.Name = rawProject.ValueAsString("id") ?? suggestName;
             project.ProjectFilePath = Path.GetFullPath(projectPath);
 
             var version = rawProject.Value("version") as JsonString;

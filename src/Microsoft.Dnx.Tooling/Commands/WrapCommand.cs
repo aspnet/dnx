@@ -246,7 +246,7 @@ namespace Microsoft.Dnx.Tooling
             }
             else
             {
-                var projectResolver = new ProjectResolver(projectDir, rootDir);
+                var projectResolver = new PathSearchBasedProjectResolver(projectDir, rootDir);
                 targetProjectJson = LocateExistingProject(projectResolver, projectName);
                 if (string.IsNullOrEmpty(targetProjectJson))
                 {

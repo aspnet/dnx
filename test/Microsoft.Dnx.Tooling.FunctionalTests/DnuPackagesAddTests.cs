@@ -33,13 +33,14 @@ namespace Microsoft.Dnx.Tooling
         public void DnuPackagesAddSkipsInstalledPackageWhenShasMatch(string flavor, string os, string architecture)
         {
             var runtimeHomeDir = TestUtils.GetRuntimeHomeDir(flavor, os, architecture);
-            using (var tempSamplesDir = TestUtils.PrepareTemporarySamplesFolder(runtimeHomeDir))
+            using (var tempSamplesDir = TestUtils.PrepareTemporarySamplesFolder(runtimeHomeDir, globalJson: false))
             {
                 var projectFilePath = Path.Combine(tempSamplesDir, ProjectName, Runtime.Project.ProjectFileName);
                 var packagesDir = Path.Combine(tempSamplesDir, PackagesDirName);
                 var packagePathResolver = new DefaultPackagePathResolver(packagesDir);
                 var nuspecPath = packagePathResolver.GetManifestFilePath(ProjectName, ProjectVersion);
 
+                Assert.Equal(0, DnuRestore(tempSamplesDir, runtimeHomeDir));
                 BuildPackage(tempSamplesDir, runtimeHomeDir);
 
                 string stdOut;
@@ -61,7 +62,7 @@ namespace Microsoft.Dnx.Tooling
         public void DnuPackagesAddOverwritesInstalledPackageWhenShasDoNotMatch(string flavor, string os, string architecture)
         {
             var runtimeHomeDir = TestUtils.GetRuntimeHomeDir(flavor, os, architecture);
-            using (var tempSamplesDir = TestUtils.PrepareTemporarySamplesFolder(runtimeHomeDir))
+            using (var tempSamplesDir = TestUtils.PrepareTemporarySamplesFolder(runtimeHomeDir, globalJson: false))
             {
                 var projectFilePath = Path.Combine(tempSamplesDir, ProjectName, Runtime.Project.ProjectFileName);
                 var packagesDir = Path.Combine(tempSamplesDir, PackagesDirName);
@@ -69,7 +70,10 @@ namespace Microsoft.Dnx.Tooling
                 var nuspecPath = packagePathResolver.GetManifestFilePath(ProjectName, ProjectVersion);
 
                 SetProjectDescription(projectFilePath, "Old");
+                Assert.Equal(0, DnuRestore(tempSamplesDir, runtimeHomeDir));
+
                 BuildPackage(tempSamplesDir, runtimeHomeDir);
+
 
                 string stdOut;
                 var exitCode = DnuPackagesAddOutputPackage(tempSamplesDir, runtimeHomeDir, out stdOut);
@@ -127,6 +131,14 @@ namespace Microsoft.Dnx.Tooling
                 out stdErr);
 
             return exitCode;
+        }
+
+        private static int DnuRestore(string sampleDir, string runtimeHomeDir)
+        {
+            return DnuTestUtils.ExecDnu(
+                runtimeHomeDir,
+                "restore",
+                sampleDir);
         }
     }
 }
