@@ -9,16 +9,13 @@ using System.IO;
 using System.IO.Compression;
 using System.Linq;
 using System.Runtime.Versioning;
-using System.Security.Cryptography;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Dnx.Runtime;
+using Microsoft.Dnx.Runtime.DependencyManagement;
 using Microsoft.Dnx.Tooling.Publish;
-using Microsoft.Dnx.Tooling.Restore;
 using Microsoft.Dnx.Tooling.Restore.RuntimeModel;
 using Microsoft.Dnx.Tooling.Utils;
-using Microsoft.Dnx.Runtime;
-using Microsoft.Dnx.Compilation;
-using Microsoft.Dnx.Runtime.DependencyManagement;
 using NuGet;
 
 namespace Microsoft.Dnx.Tooling
@@ -118,7 +115,7 @@ namespace Microsoft.Dnx.Tooling
             foreach (var category in InformationMessages)
             {
                 Reports.Quiet.WriteLine($"{Environment.NewLine}{category.Key}");
-                foreach(var message in category.Value)
+                foreach (var message in category.Value)
                 {
                     Reports.Quiet.WriteLine($"    {message}");
                 }
@@ -341,7 +338,7 @@ namespace Microsoft.Dnx.Tooling
 
                 contexts.Add(context);
 
-                foreach (var lockFileLibrary in lockFile.Libraries)
+                foreach (var lockFileLibrary in lockFile.PackageLibraries)
                 {
                     var projectLibrary = new LibraryRange(lockFileLibrary.Name, frameworkReference: false)
                     {
@@ -546,6 +543,7 @@ namespace Microsoft.Dnx.Tooling
                               project,
                               graphItems,
                               repository,
+                              projectResolver,
                               targetContexts);
             }
 
@@ -809,10 +807,12 @@ namespace Microsoft.Dnx.Tooling
                                    Runtime.Project project,
                                    List<GraphItem> graphItems,
                                    PackageRepository repository,
+                                   IProjectResolver projectResolver,
                                    IEnumerable<TargetContext> contexts)
         {
             var resolver = new DefaultPackagePathResolver(repository.RepositoryRoot);
-            var previousLibraries = previousLockFile?.Libraries.ToDictionary(l => Tuple.Create(l.Name, l.Version));
+            var previousProjectLibraries = previousLockFile?.ProjectLibraries.ToDictionary(l => Tuple.Create(l.Name, l.Version));
+            var previousPackageLibraries = previousLockFile?.PackageLibraries.ToDictionary(l => Tuple.Create(l.Name, l.Version));
 
             var lockFile = new LockFile();
             lockFile.Islocked = Lock;
@@ -833,29 +833,48 @@ namespace Microsoft.Dnx.Tooling
             foreach (var item in graphItems.OrderBy(x => x.Match.Library, new LibraryComparer()))
             {
                 var library = item.Match.Library;
-                var packageInfo = repository.FindPackagesById(library.Name)
-                    .FirstOrDefault(p => p.Version == library.Version);
-
-                if (packageInfo == null)
+                if (library.Name == project.Name)
                 {
                     continue;
                 }
 
-                var package = packageInfo.Package;
+                var packageInfo = repository.FindPackagesById(library.Name)
+                                            .FirstOrDefault(p => p.Version == library.Version);
 
-                LockFileLibrary previousLibrary = null;
-                previousLibraries?.TryGetValue(Tuple.Create(library.Name, library.Version), out previousLibrary);
+                var projectInfo = projectResolver.FindProject(library.Name);
 
-                var lockFileLib = LockFileUtils.CreateLockFileLibrary(
-                    previousLibrary,
-                    resolver,
-                    package,
-                    correctedPackageName: library.Name);
+                if (projectInfo != null)
+                {
+                    LockFileProjectLibrary previousLibrary = null;
+                    previousProjectLibraries?.TryGetValue(Tuple.Create(library.Name, library.Version), out previousLibrary);
 
-                lockFile.Libraries.Add(lockFileLib);
+                    lockFile.ProjectLibraries.Add(LockFileUtils.CreateLockFileProjectLibrary(
+                        previousLibrary,
+                        project: project,
+                        library: projectInfo));
+                }
+                else if (packageInfo != null)
+                {
+                    LockFilePackageLibrary previousLibrary = null;
+                    previousPackageLibraries?.TryGetValue(Tuple.Create(library.Name, library.Version), out previousLibrary);
+
+                    var package = packageInfo.Package;
+
+                    // The previousLibrary can't be a project, otherwise exception has been thrown.
+                    lockFile.PackageLibraries.Add(LockFileUtils.CreateLockFilePackageLibrary(
+                        previousLibrary,
+                        resolver,
+                        package,
+                        correctedPackageName: library.Name));
+                }
+                else
+                {
+                    throw new InvalidOperationException($"Unresolved library: {library.Name}");
+                }
             }
 
-            var libraries = lockFile.Libraries.ToDictionary(lib => Tuple.Create(lib.Name, lib.Version));
+            var packageLibraries = lockFile.PackageLibraries.ToDictionary(lib => Tuple.Create(lib.Name, lib.Version));
+            var projectLibraries = lockFile.ProjectLibraries.ToDictionary(lib => Tuple.Create(lib.Name, lib.Version));
 
             // Add the contexts
             foreach (var context in contexts)
@@ -866,23 +885,33 @@ namespace Microsoft.Dnx.Tooling
 
                 foreach (var library in context.Libraries.OrderBy(x => x, new LibraryComparer()))
                 {
-                    var packageInfo = repository.FindPackagesById(library.Name)
-                        .FirstOrDefault(p => p.Version == library.Version);
-
-                    if (packageInfo == null)
+                    if (library.Name == project.Name)
                     {
                         continue;
                     }
 
-                    var package = packageInfo.Package;
+                    var packageInfo = repository.FindPackagesById(library.Name)
+                                                .FirstOrDefault(p => p.Version == library.Version);
 
-                    var targetLibrary = LockFileUtils.CreateLockFileTargetLibrary(
-                        libraries[Tuple.Create(library.Name, library.Version)],
-                        package,
-                        context.RestoreContext,
-                        correctedPackageName: library.Name);
+                    var projectInfo = projectResolver.FindProject(library.Name);
 
-                    target.Libraries.Add(targetLibrary);
+                    if (projectInfo != null)
+                    {
+                        target.Libraries.Add(LockFileUtils.CreateLockFileTargetLibrary(
+                            projectLibraries[Tuple.Create(library.Name, library.Version)],
+                            projectInfo,
+                            context.RestoreContext));
+                    }
+                    else if (packageInfo != null)
+                    {
+                        var package = packageInfo.Package;
+
+                        target.Libraries.Add(LockFileUtils.CreateLockFileTargetLibrary(
+                            packageLibraries[Tuple.Create(library.Name, library.Version)],
+                            package,
+                            context.RestoreContext,
+                            correctedPackageName: library.Name));
+                    }
                 }
 
                 lockFile.Targets.Add(target);
@@ -891,7 +920,6 @@ namespace Microsoft.Dnx.Tooling
             var lockFileFormat = new LockFileFormat();
             lockFileFormat.Write(projectLockFilePath, lockFile);
         }
-
 
         private void AddRemoteProvidersFromSources(List<IWalkProvider> remoteProviders, List<PackageSource> effectiveSources)
         {

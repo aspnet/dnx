@@ -2,6 +2,7 @@
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 using System;
+using Microsoft.Dnx.Runtime;
 
 namespace NuGet
 {
@@ -10,6 +11,25 @@ namespace NuGet
         public PackageDependency(string id, string version)
             : this(id, string.IsNullOrEmpty(version) ? null : VersionUtility.ParseVersionSpec(version))
         {
+        }
+
+        public PackageDependency(string id, SemanticVersionRange versionRange)
+        {
+            if (string.IsNullOrEmpty(id))
+            {
+                throw new ArgumentException(nameof(id));
+            }
+
+            Id = id;
+            VersionSpec = versionRange != null ?
+                new VersionSpec
+                {
+                    IsMinInclusive = true,
+                    IsMaxInclusive = versionRange.IsMaxInclusive,
+                    MinVersion = versionRange.MinVersion,
+                    MaxVersion = versionRange.MaxVersion
+                } :
+                null;
         }
 
         public PackageDependency(string id, IVersionSpec versionSpec)

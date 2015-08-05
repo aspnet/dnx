@@ -118,9 +118,9 @@ namespace Microsoft.Dnx.Tooling
             var lockFile = new LockFile();
             lockFile.Islocked = ReadBool(cursor, "locked", defaultValue: false);
             lockFile.Version = ReadInt(cursor, "version", defaultValue: int.MinValue);
-            lockFile.Libraries = ReadObject(cursor["libraries"] as JObject, ReadLibrary);
             lockFile.Targets = ReadObject(cursor["targets"] as JObject, ReadTarget);
             lockFile.ProjectFileDependencyGroups = ReadObject(cursor["projectFileDependencyGroups"] as JObject, ReadProjectFileDependencyGroup);
+            ReadLibrary(cursor["libraries"] as JObject, lockFile);
             return lockFile;
         }
 
@@ -130,38 +130,85 @@ namespace Microsoft.Dnx.Tooling
             json["locked"] = new JValue(lockFile.Islocked);
             json["version"] = new JValue(Runtime.Constants.LockFileVersion);
             json["targets"] = WriteObject(lockFile.Targets, WriteTarget);
-            json["libraries"] = WriteObject(lockFile.Libraries, WriteLibrary);
+            json["libraries"] = WriteLibraries(lockFile);
             json["projectFileDependencyGroups"] = WriteObject(lockFile.ProjectFileDependencyGroups, WriteProjectFileDependencyGroup);
             return json;
         }
 
-        private LockFileLibrary ReadLibrary(string property, JToken json)
+        private void ReadLibrary(JObject json, LockFile lockFile)
         {
-            var library = new LockFileLibrary();
-            var parts = property.Split(new[] { '/' }, 2);
-            library.Name = parts[0];
-            if (parts.Length == 2)
+            if (json == null)
             {
-                library.Version = SemanticVersion.Parse(parts[1]);
+                return;
             }
-            library.IsServiceable = ReadBool(json, "serviceable", defaultValue: false);
-            library.Sha512 = ReadString(json["sha512"]);
-            library.Files = ReadPathArray(json["files"] as JArray, ReadString);
-            return library;
+
+            foreach (var property in json)
+            {
+                var value = property.Value as JObject;
+                if (value == null)
+                {
+                    continue;
+                }
+
+                var parts = property.Key.Split(new[] { '/' }, 2);
+                var name = parts[0];
+                var version = parts.Length == 2 ? SemanticVersion.Parse(parts[1]) : null;
+
+                var type = value["type"]?.Value<string>();
+
+                if (type == null || type == "package")
+                {
+                    lockFile.PackageLibraries.Add(new LockFilePackageLibrary
+                    {
+                        Name = name,
+                        Version = version,
+                        IsServiceable = ReadBool(value, "serviceable", defaultValue: false),
+                        Sha512 = ReadString(value["sha512"]),
+                        Files = ReadPathArray(value["files"] as JArray, ReadString)
+                    });
+                }
+                else if (type == "project")
+                {
+                    lockFile.ProjectLibraries.Add(new LockFileProjectLibrary
+                    {
+                        Name = name,
+                        Version = version,
+                        Path = ReadString(value["path"])
+                    });
+                }
+            }
         }
 
-        private JProperty WriteLibrary(LockFileLibrary library)
+        private JObject WriteLibraries(LockFile lockFile)
         {
-            var json = new JObject();
-            if (library.IsServiceable)
+            var result = new JObject();
+
+            foreach (var library in lockFile.ProjectLibraries)
             {
-                WriteBool(json, "serviceable", library.IsServiceable);
+                var value = new JObject();
+                value["type"] = WriteString("project");
+                value["path"] = WriteString(library.Path);
+
+                result[$"{library.Name}/{library.Version.ToString()}"] = value;
             }
-            json["sha512"] = WriteString(library.Sha512);
-            WritePathArray(json, "files", library.Files.OrderBy(f => f), WriteString);
-            return new JProperty(
-                library.Name + "/" + library.Version.ToString(),
-                json);
+
+            foreach (var library in lockFile.PackageLibraries)
+            {
+                var value = new JObject();
+                value["type"] = WriteString("package");
+
+                if (library.IsServiceable)
+                {
+                    WriteBool(value, "serviceable", library.IsServiceable);
+                }
+
+                value["sha512"] = WriteString(library.Sha512);
+                WritePathArray(value, "files", library.Files.OrderBy(f => f), WriteString);
+
+                result[$"{library.Name}/{library.Version.ToString()}"] = value;
+            }
+
+            return result;
         }
 
         private JProperty WriteTarget(LockFileTarget target)
@@ -199,6 +246,12 @@ namespace Microsoft.Dnx.Tooling
                 library.Version = SemanticVersion.Parse(parts[1]);
             }
 
+            var type = json["type"];
+            if (type != null)
+            {
+                library.Type = ReadString(type);
+            }
+
             library.Dependencies = ReadObject(json["dependencies"] as JObject, ReadPackageDependency);
             library.FrameworkAssemblies = new HashSet<string>(ReadArray(json["frameworkAssemblies"] as JArray, ReadFrameworkAssemblyReference), StringComparer.OrdinalIgnoreCase);
             library.RuntimeAssemblies = ReadObject(json["runtime"] as JObject, ReadFileItem);
@@ -212,6 +265,8 @@ namespace Microsoft.Dnx.Tooling
         private JProperty WriteTargetLibrary(LockFileTargetLibrary library)
         {
             var json = new JObject();
+
+            json["type"] = WriteString(library.Type);
 
             if (library.Dependencies.Count > 0)
             {

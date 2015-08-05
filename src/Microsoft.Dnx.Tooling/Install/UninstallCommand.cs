@@ -90,7 +90,7 @@ namespace Microsoft.Dnx.Tooling
                 }
 
                 var lockFile = lockFileFormat.Read(appLockFileFullPath);
-                foreach(var dependency in lockFile.Libraries)
+                foreach(var dependency in lockFile.PackageLibraries)
                 {
                     var dependencyPackage = new NuGet.PackageInfo(
                         _commandsRepo.PackagesRoot,

@@ -159,15 +159,15 @@ namespace Microsoft.Dnx.Tooling.FunctionalTests
             var lockFile = new LockFile
             {
                 Islocked = false,
-                Libraries = new List<LockFileLibrary>
-                            {
-                                new LockFileLibrary
-                                {
-                                    Name = libName,
-                                    Version = new NuGet.SemanticVersion(version),
-                                    Sha512 = "TestSha"
-                                }
-                            }
+                PackageLibraries = new List<LockFilePackageLibrary>
+                {
+                    new LockFilePackageLibrary
+                    {
+                        Name = libName,
+                        Version = new SemanticVersion(version),
+                        Sha512 = "TestSha"
+                    }
+                }
             };
             var lockFormat = new LockFileFormat();
             lockFormat.Write($"{dir}/project.lock.json", lockFile);

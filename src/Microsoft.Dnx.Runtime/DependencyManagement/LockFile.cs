@@ -13,7 +13,8 @@ namespace Microsoft.Dnx.Runtime.DependencyManagement
         public bool Islocked { get; set; }
         public int Version { get; set; }
         public IList<ProjectFileDependencyGroup> ProjectFileDependencyGroups { get; set; } = new List<ProjectFileDependencyGroup>();
-        public IList<LockFileLibrary> Libraries { get; set; } = new List<LockFileLibrary>();
+        public IList<LockFilePackageLibrary> PackageLibraries { get; set; } = new List<LockFilePackageLibrary>();
+        public IList<LockFileProjectLibrary> ProjectLibraries { get; set; } = new List<LockFileProjectLibrary>();
         public IList<LockFileTarget> Targets { get; set; } = new List<LockFileTarget>();
 
         public IEnumerable<DiagnosticMessage> GetDiagnostics(Project project)

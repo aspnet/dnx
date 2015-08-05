@@ -34,7 +34,7 @@ namespace Microsoft.Dnx.Runtime.DependencyManagement
                 }
             }
         }
-        
+
         private static FileStream OpenFileStream(string filePath)
         {
             // Retry 3 times before re-throw the exception.
@@ -95,31 +95,55 @@ namespace Microsoft.Dnx.Runtime.DependencyManagement
             var lockFile = new LockFile();
             lockFile.Islocked = ReadBool(cursor, "locked", defaultValue: false);
             lockFile.Version = ReadInt(cursor, "version", defaultValue: int.MinValue);
-            lockFile.Libraries = ReadObject(cursor.ValueAsJsonObject("libraries"), ReadLibrary);
             lockFile.Targets = ReadObject(cursor.ValueAsJsonObject("targets"), ReadTarget);
             lockFile.ProjectFileDependencyGroups = ReadObject(cursor.ValueAsJsonObject("projectFileDependencyGroups"), ReadProjectFileDependencyGroup);
+            ReadLibrary(cursor.ValueAsJsonObject("libraries"), lockFile);
+
             return lockFile;
         }
 
-        private LockFileLibrary ReadLibrary(string property, JsonValue json)
+        private void ReadLibrary(JsonObject json, LockFile lockFile)
         {
-            var jobject = json as JsonObject;
-            if (jobject == null)
+            if (json == null)
             {
-                throw FileFormatException.Create("The value type is not object.", json);
+                return;
             }
 
-            var library = new LockFileLibrary();
-            var parts = property.Split(new[] { '/' }, 2);
-            library.Name = parts[0];
-            if (parts.Length == 2)
+            foreach (var key in json.Keys)
             {
-                library.Version = SemanticVersion.Parse(parts[1]);
+                var value = json.ValueAsJsonObject(key);
+                if (value == null)
+                {
+                    throw FileFormatException.Create("The value type is not object.", json.Value(key));
+                }
+
+                var parts = key.Split(new[] { '/' }, 2);
+                var name = parts[0];
+                var version = parts.Length == 2 ? SemanticVersion.Parse(parts[1]) : null;
+
+                var type = value.ValueAsString("type")?.Value;
+
+                if (type == null || type == "package")
+                {
+                    lockFile.PackageLibraries.Add(new LockFilePackageLibrary
+                    {
+                        Name = name,
+                        Version = version,
+                        IsServiceable = ReadBool(value, "serviceable", defaultValue: false),
+                        Sha512 = ReadString(value.Value("sha512")),
+                        Files = ReadPathArray(value.Value("files"), ReadString)
+                    });
+                }
+                else if (type == "project")
+                {
+                    lockFile.ProjectLibraries.Add(new LockFileProjectLibrary
+                    {
+                        Name = name,
+                        Version = version,
+                        Path = ReadString(value.Value("path"))
+                    });
+                }
             }
-            library.IsServiceable = ReadBool(jobject, "serviceable", defaultValue: false);
-            library.Sha512 = ReadString(jobject.Value("sha512"));
-            library.Files = ReadPathArray(jobject.Value("files"), ReadString);
-            return library;
         }
 
         private LockFileTarget ReadTarget(string property, JsonValue json)
@@ -160,6 +184,7 @@ namespace Microsoft.Dnx.Runtime.DependencyManagement
                 library.Version = SemanticVersion.Parse(parts[1]);
             }
 
+            library.Type = jobject.ValueAsString("type");
             library.Dependencies = ReadObject(jobject.ValueAsJsonObject("dependencies"), ReadPackageDependency);
             library.FrameworkAssemblies = new HashSet<string>(ReadArray(jobject.Value("frameworkAssemblies"), ReadFrameworkAssemblyReference), StringComparer.OrdinalIgnoreCase);
             library.RuntimeAssemblies = ReadObject(jobject.ValueAsJsonObject("runtime"), ReadFileItem);

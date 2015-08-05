@@ -1,6 +1,8 @@
-﻿using Microsoft.Dnx.Runtime.DependencyManagement;
-using System;
+﻿// Copyright (c) .NET Foundation. All rights reserved.
+// Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
+
 using System.IO;
+using Microsoft.Dnx.Runtime.DependencyManagement;
 
 namespace NuGet
 {
@@ -15,7 +17,7 @@ namespace NuGet
             string packageId, 
             SemanticVersion version, 
             string versionDir,
-            LockFileLibrary lockFileLibrary = null)
+            LockFilePackageLibrary lockFileLibrary = null)
         {
             _repositoryRoot = repositoryRoot;
             Id = packageId;
@@ -28,7 +30,7 @@ namespace NuGet
 
         public SemanticVersion Version { get; private set; }
 
-        public LockFileLibrary LockFileLibrary { get; private set; }
+        public LockFilePackageLibrary LockFileLibrary { get; private set; }
 
         public IPackage Package
         {

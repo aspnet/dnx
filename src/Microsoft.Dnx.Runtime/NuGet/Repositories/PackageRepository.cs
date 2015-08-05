@@ -14,7 +14,7 @@ namespace NuGet
         private readonly Dictionary<string, IEnumerable<PackageInfo>> _cache;
         private readonly IFileSystem _repositoryRoot;
         private readonly bool _checkPackageIdCase;
-        private ILookup<string, LockFileLibrary> _lockFileLibraries;
+        private ILookup<string, LockFilePackageLibrary> _lockFileLibraries;
 
         public PackageRepository(string path, bool caseSensitivePackagesName = false)
             : this(new PhysicalFileSystem(path), caseSensitivePackagesName)
@@ -56,7 +56,8 @@ namespace NuGet
         public void ApplyLockFile(LockFile lockFile)
         {
             var stringComparer = _checkPackageIdCase ? StringComparer.Ordinal : StringComparer.OrdinalIgnoreCase;
-            _lockFileLibraries = lockFile.Libraries.ToLookup(l => l.Name, stringComparer);
+            _lockFileLibraries = lockFile.PackageLibraries
+                                         .ToLookup(l => l.Name, stringComparer);
         }
 
         public IEnumerable<PackageInfo> FindPackagesById(string packageId)

@@ -87,13 +87,13 @@ namespace Microsoft.Dnx.Runtime.Tests
                 }
             };
 
-            var metaPackageLibrary = new LockFileLibrary
+            var metaPackageLibrary = new LockFilePackageLibrary
             {
                 Name = "MetaPackage",
                 Version = SemanticVersion.Parse("1.0.0")
             };
 
-            var net451LibPackageLibrary = new LockFileLibrary
+            var net451LibPackageLibrary = new LockFilePackageLibrary
             {
                 Name = "Net451LibPackage",
                 Version = SemanticVersion.Parse("1.0.0"),
@@ -104,7 +104,7 @@ namespace Microsoft.Dnx.Runtime.Tests
                 }
             };
 
-            var net451RefPackageLibrary = new LockFileLibrary
+            var net451RefPackageLibrary = new LockFilePackageLibrary
             {
                 Name = "Net451RefPackage",
                 Version = SemanticVersion.Parse("1.0.0"),
@@ -114,7 +114,7 @@ namespace Microsoft.Dnx.Runtime.Tests
                 }
             };
 
-            var assemblyPlaceholderPackageLibrary = new LockFileLibrary
+            var assemblyPlaceholderPackageLibrary = new LockFilePackageLibrary
             {
                 Name = "AssemblyPlaceholderPackage",
                 Version = SemanticVersion.Parse("1.0.0"),
@@ -128,7 +128,7 @@ namespace Microsoft.Dnx.Runtime.Tests
             var lockFile = new LockFile()
             {
                 Targets = new List<LockFileTarget> { net45Target, dnx451Target },
-                Libraries = new List<LockFileLibrary>
+                PackageLibraries = new List<LockFilePackageLibrary>
                 {
                     metaPackageLibrary,
                     net451LibPackageLibrary,

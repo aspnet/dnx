@@ -211,7 +211,7 @@ namespace Microsoft.Dnx.Tooling.SourceControl
             var lockFile = lockFileReader.Read(projectLockFile);
 
             var librariesForPackage = lockFile
-                ?.Libraries
+                ?.PackageLibraries
                 .Where(lib => string.Equals(_packageId, lib.Name, StringComparison.OrdinalIgnoreCase));
 
             // Projects can reference multiple versions of the same library

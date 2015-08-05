@@ -545,13 +545,23 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Dnx.ApplicationHost --configuration
     'Lib': [ 'project.json' ],
     '.': [ 'global.json' ]
 }";
-            string expectedAppLockFile = @"{
+
+string expectedAppLockFile = @"{
   ""locked"": false,
   ""version"": LOCKFILEFORMAT_VERSION,
   ""targets"": {
-    ""DNX,Version=v4.6"": {}
+    ""DNX,Version=v4.6"": {
+      ""Lib/1.0.0"": {
+        ""type"": ""project""
+      }
+    }
   },
-  ""libraries"": {},
+  ""libraries"": {
+    ""Lib/1.0.0"": {
+      ""type"": ""project"",
+      ""path"": ""../Lib/project.json""
+    }
+  },
   ""projectFileDependencyGroups"": {
     """": [
       ""Lib ""
@@ -1744,6 +1754,7 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Dnx.ApplicationHost --configuration
   ""targets"": {
     ""DNX,Version=v4.5.1"": {
       ""NoDependencies/1.0.0"": {
+        ""type"": ""package"",
         ""frameworkAssemblies"": [
           ""Microsoft.CSharp"",
           ""mscorlib"",
@@ -1761,6 +1772,7 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Dnx.ApplicationHost --configuration
   },
   ""libraries"": {
     ""NoDependencies/1.0.0"": {
+      ""type"": ""package"",
       ""sha512"": ""NUPKG_SHA_VALUE"",
       ""files"": [
         ""app/hello"",
@@ -1846,6 +1858,7 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Dnx.ApplicationHost --configuration
   ""targets"": {
     ""DNX,Version=v4.5.1"": {
       ""NoDependencies/1.0.0"": {
+        ""type"": ""package"",
         ""frameworkAssemblies"": [
           ""Microsoft.CSharp"",
           ""mscorlib"",
@@ -1863,6 +1876,7 @@ exec ""{2}{3}"" --appbase ""${0}"" Microsoft.Dnx.ApplicationHost --configuration
   },
   ""libraries"": {
     ""NoDependencies/1.0.0"": {
+      ""type"": ""package"",
       ""sha512"": ""NUPKG_SHA_VALUE"",
       ""files"": [
         ""app/hello"",
