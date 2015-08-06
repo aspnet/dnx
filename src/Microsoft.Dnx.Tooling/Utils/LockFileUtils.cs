@@ -170,8 +170,7 @@ namespace Microsoft.Dnx.Tooling.Utils
 
                 if (referenceSet != null)
                 {
-                    // Remove all assemblies of which names do not appear in the References list
-                    lockFileLib.RuntimeAssemblies.RemoveAll(path => path.Path.StartsWith("lib/") && !referenceSet.References.Contains(Path.GetFileName(path), StringComparer.OrdinalIgnoreCase));
+                    // Remove all compile-time assemblies of which names do not appear in the References list
                     lockFileLib.CompileTimeAssemblies.RemoveAll(path => path.Path.StartsWith("lib/") && !referenceSet.References.Contains(Path.GetFileName(path), StringComparer.OrdinalIgnoreCase));
                 }
             }
