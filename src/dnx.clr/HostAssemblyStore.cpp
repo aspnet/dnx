@@ -8,7 +8,7 @@
 const wchar_t* AppDomainManagerAssemblyName = L"Microsoft.Dnx.Host.Clr, Version=1.0.0.0, Culture=neutral, PublicKeyToken=adb9793829ddae60, ProcessorArchitecture=MSIL";
 
 // IHostAssemblyStore
-HRESULT STDMETHODCALLTYPE HostAssemblyStore::ProvideAssembly(AssemblyBindInfo *pBindInfo, UINT64* /*pAssemblyId*/, UINT64* /*pContext*/,
+HRESULT STDMETHODCALLTYPE HostAssemblyStore::ProvideAssembly(AssemblyBindInfo *pBindInfo, UINT64* pAssemblyId, UINT64* pContext,
     IStream **ppStmAssemblyImage, IStream **ppStmPDB)
 {
     if (_wcsicmp(AppDomainManagerAssemblyName, pBindInfo->lpReferencedIdentity) == 0)
@@ -53,6 +53,11 @@ HRESULT STDMETHODCALLTYPE HostAssemblyStore::ProvideAssembly(AssemblyBindInfo *p
                 delete pdb_stream;
             }
         }
+
+        // This is an arbitrary id for the assembly loaded from a stream.
+        *pAssemblyId = 42;
+
+        *pContext = 0;
 
         return S_OK;
     }
