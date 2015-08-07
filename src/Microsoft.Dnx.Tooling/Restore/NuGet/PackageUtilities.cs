@@ -4,7 +4,10 @@
 using System;
 using System.IO;
 using System.IO.Compression;
+using System.Linq;
 using System.Threading.Tasks;
+using System.Xml.Linq;
+using NuGet;
 
 namespace Microsoft.Dnx.Tooling.Restore.NuGet
 {
@@ -29,7 +32,7 @@ namespace Microsoft.Dnx.Tooling.Restore.NuGet
             TimeSpan cacheAgeLimit,
             Reports reports)
         {
-            for (int retry = 0; retry != 3; ++retry)
+            for (var retry = 0; retry != 3; ++retry)
             {
                 try
                 {
@@ -167,6 +170,19 @@ namespace Microsoft.Dnx.Tooling.Restore.NuGet
                 }
             }
             catch (InvalidDataException e)
+            {
+                throw new InvalidDataException(message, innerException: e);
+            }
+        }
+
+        internal static void EnsureValidManifestContents(Stream stream, PackageInfo package)
+        {
+            var message = $"Response from {package.ManifestUri} is not a valid NuGet manifest.";
+            try
+            {
+                Manifest.ReadFrom(stream, validateSchema: false);
+            }
+            catch (Exception e)
             {
                 throw new InvalidDataException(message, innerException: e);
             }

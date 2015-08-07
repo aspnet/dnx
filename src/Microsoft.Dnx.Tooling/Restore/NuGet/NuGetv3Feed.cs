@@ -205,6 +205,7 @@ namespace Microsoft.Dnx.Tooling.Restore.NuGet
                 Id = id,
                 Version = SemanticVersion.Parse(version),
                 ContentUri = $"{_baseUri}{lowerInvariantId}/{lowerInvariantVersion}/{lowerInvariantId}.{lowerInvariantVersion}{Constants.PackageExtension}",
+                ManifestUri = $"{_baseUri}{lowerInvariantId}/{lowerInvariantVersion}/{lowerInvariantId}{Constants.ManifestExtension}",
 
                 // v3 feed doesn't indicate if listed?
                 Listed = true
@@ -213,7 +214,41 @@ namespace Microsoft.Dnx.Tooling.Restore.NuGet
 
         public async Task<Stream> OpenNuspecStreamAsync(PackageInfo package)
         {
-            return await PackageUtilities.OpenNuspecStreamFromNupkgAsync(package, OpenNupkgStreamAsync, _reports.Information);
+            for (int retry = 0; retry != 3; ++retry)
+            {
+                try
+                {
+                    var data = await _httpSource.GetAsync(
+                        package.ManifestUri,
+                        cacheKey: $"nuspec_{package.Id}.{package.Version}",
+                        cacheAgeLimit: retry == 0 ? _cacheAgeLimitNupkg : TimeSpan.Zero,
+                        ensureValidContents: stream => PackageUtilities.EnsureValidManifestContents(stream, package));
+                    return data.Stream;
+                }
+                catch (Exception ex)
+                {
+                    var isFinalAttempt = (retry == 2);
+                    var message = ex.Message;
+                    if (ex is TaskCanceledException)
+                    {
+                        message = ErrorMessageUtils.GetFriendlyTimeoutErrorMessage(ex as TaskCanceledException, isFinalAttempt, ignoreFailure: false);
+                    }
+
+                    if (isFinalAttempt)
+                    {
+                        _reports.Error.WriteLine(
+                            $"Error occurred when downloading manifest: {package.ManifestUri}{Environment.NewLine}  {message}".Red().Bold());
+                        throw;
+                    }
+                    else
+                    {
+                        _reports.Information.WriteLine(
+                            $"Warning occurred when downloading manifest: {package.ManifestUri}{Environment.NewLine}  {message}".Yellow().Bold());
+                    }
+                }
+            }
+
+            return null;
         }
 
         public async Task<Stream> OpenRuntimeStreamAsync(PackageInfo package)

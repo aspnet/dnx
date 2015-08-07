@@ -60,6 +60,7 @@ namespace Microsoft.Dnx.Tooling
                     Version = bestResult.Version
                 },
                 Path = bestResult.ContentUri,
+                ManifestPath = bestResult.ManifestUri,
                 Provider = this,
             };
         }
@@ -70,7 +71,8 @@ namespace Microsoft.Dnx.Tooling
             {
                 Id = match.Library.Name,
                 Version = match.Library.Version,
-                ContentUri = match.Path
+                ContentUri = match.Path,
+                ManifestUri = match.ManifestPath
             }))
             {
                 var metadata = (IPackageMetadata)Manifest.ReadFrom(stream, validateSchema: false).Metadata;

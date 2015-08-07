@@ -10,6 +10,7 @@ namespace Microsoft.Dnx.Tooling
         public string Id { get; set; }
         public SemanticVersion Version { get; set; }
         public string ContentUri { get; set; }
+        public string ManifestUri { get; set; }
         public bool Listed { get; set; } = true;
     }
 }
