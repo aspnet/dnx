@@ -82,6 +82,7 @@ var MANAGED_PROJECTS = '${FindAllProjects(
     "Microsoft.Dnx.Runtime",
     "Microsoft.Dnx.Runtime.Abstractions",
     "Microsoft.Dnx.Runtime.CommandParsing.Sources",
+    "Microsoft.Dnx.Runtime.Json.Sources",
     "Microsoft.Dnx.Runtime.Sources",
     "Microsoft.Dnx.Project",
     "Microsoft.Dnx.Tooling",
@@ -184,7 +185,7 @@ var CAN_BUILD_ONECORE = '${Directory.Exists(WIN10_SDK_LIB) && Directory.GetFiles
         }
     }
 
--// This target's build-cmmon since mono is built on all platforms
+-// This target's build-common since mono is built on all platforms
 #build-dnx-mono-bootstrapper target='build-common'
     var monoManagedOutpath='${Path.Combine(BUILD_DIR2, BOOTSTRAPPER_MONO_MANAGED_NAME)}'
     directory create='${monoManagedOutpath}'
@@ -654,6 +655,7 @@ var CAN_BUILD_ONECORE = '${Directory.Exists(WIN10_SDK_LIB) && Directory.GetFiles
         var sharedSourceAssemblies = new [] { 
             Path.Combine(BUILD_DIR2, "Microsoft.Dnx.Runtime.Sources/**/*.*"),
             Path.Combine(BUILD_DIR2, "Microsoft.Dnx.Runtime.CommandParsing.Sources/**/*.*"), 
+            Path.Combine(BUILD_DIR2, "Microsoft.Dnx.Runtime.Json.Sources/**/*.*"), 
             Path.Combine(BUILD_DIR2, "Microsoft.Framework.CommandLineUtils.Sources/**/*.*"),
         };
         
