@@ -43,10 +43,15 @@ namespace Microsoft.Dnx.Runtime
 
         public void ApplyLockFile(LockFile lockFile)
         {
-            _compatibilityChecker = new CompatibilityChecker(lockFile);
+            ApplyOptimizedLockFile(new OptimizedLockFile(lockFile));
+        }
+
+        public void ApplyOptimizedLockFile(OptimizedLockFile optimizedLockFile)
+        {
+            _compatibilityChecker = new CompatibilityChecker(optimizedLockFile);
             _lookup = new Dictionary<Tuple<string, FrameworkName, string>, LockFileTargetLibrary>();
 
-            foreach (var t in lockFile.Targets)
+            foreach (var t in optimizedLockFile.LockFile.Targets)
             {
                 foreach (var library in t.Libraries)
                 {
@@ -55,7 +60,7 @@ namespace Microsoft.Dnx.Runtime
                 }
             }
 
-            _repository.ApplyLockFile(lockFile);
+            _repository.ApplyOptimizedLockFile(optimizedLockFile);
         }
 
         public IEnumerable<string> GetAttemptedPaths(FrameworkName targetFramework)

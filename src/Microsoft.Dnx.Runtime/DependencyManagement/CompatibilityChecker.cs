@@ -13,14 +13,19 @@ namespace Microsoft.Dnx.Runtime
     public class CompatibilityChecker
     {
         private readonly LockFile _lockFile;
-        private readonly Dictionary<string, LockFileLibrary> _lockFileLibraries;
+        private readonly ILookup<string, LockFileLibrary> _lockFileLibraries;
         private readonly Dictionary<FrameworkName, HashSet<string>> _frameworkRuntimeAssemblies;
 
         public CompatibilityChecker(LockFile lockFile)
+            : this(new OptimizedLockFile(lockFile))
         {
-            _lockFile = lockFile;
-            _lockFileLibraries = _lockFile.Libraries.ToDictionary(l => l.Name);
-            _frameworkRuntimeAssemblies = lockFile.Targets.ToDictionary(
+        }
+
+        public CompatibilityChecker(OptimizedLockFile optimizedLockFile)
+        {
+            _lockFile = optimizedLockFile.LockFile;
+            _lockFileLibraries = optimizedLockFile.LockFileLibraryLookup;
+            _frameworkRuntimeAssemblies = _lockFile.Targets.ToDictionary(
                 keySelector: t => t.TargetFramework,
                 elementSelector: GetRuntimeAssemblySet);
         }
@@ -42,7 +47,7 @@ namespace Microsoft.Dnx.Runtime
 
         public CompatibilityIssue CheckTargetLibrary(LockFileTargetLibrary targetLibrary, FrameworkName framework)
         {
-            var lockFileLibrary = _lockFileLibraries[targetLibrary.Name];
+            var lockFileLibrary = _lockFileLibraries[targetLibrary.Name].First(l => l.Version == targetLibrary.Version);
             var containsAssembly = lockFileLibrary.Files
                 .Any(x => x.StartsWith($"ref{Path.DirectorySeparatorChar}") ||
                     x.StartsWith($"lib{Path.DirectorySeparatorChar}"));
