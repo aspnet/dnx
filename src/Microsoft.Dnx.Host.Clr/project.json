@@ -1,8 +1,14 @@
 {
-    "version": "1.0.0-*",
-    "compilationOptions": { "define": [ "TRACE" ], "allowUnsafe": true, "warningsAsErrors": true, "keyFile": "KeyFile.snk" },
-    "dependencies": {
-    },
+  "version": "1.0.0-*",
+  "compilationOptions": {
+    "define": [ "TRACE" ],
+    "allowUnsafe": true,
+    "warningsAsErrors": true,
+    "keyFile": "KeyFile.snk"
+  },
+  "dependencies": {
+    "Microsoft.Dnx.Runtime.Json.Sources": { "version": "1.0.0-*", "type": "build" }
+  },
     "frameworks": {
         "dnx451": { }
     },
@@ -11,8 +17,7 @@
         "../Microsoft.Dnx.Runtime.Sources/Impl/Logger.cs",
         "../Microsoft.Dnx.Runtime.Sources/Impl/Constants.cs",
         "../Microsoft.Dnx.Runtime.Sources/Impl/FrameworkNames.cs",
-        "../Microsoft.Dnx.Host/FrameworkNameUtility.cs",
-        "../Microsoft.Dnx.Runtime/Json/**/*.cs"
+        "../Microsoft.Dnx.Host/FrameworkNameUtility.cs"
     ],
     "scripts": {
         "postbuild": [
