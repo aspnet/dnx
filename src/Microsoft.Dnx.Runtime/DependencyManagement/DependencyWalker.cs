@@ -137,7 +137,12 @@ namespace Microsoft.Dnx.Runtime
 
             foreach (var d in Libraries.Where(d => !d.Resolved).OrderBy(d => d.Identity.Name))
             {
-                sb.AppendLine("   " + d.Identity.ToString());
+                sb.Append("   " + d.Identity);
+                if (!d.Compatible)
+                {
+                    sb.Append(" (incompatible)");
+                }
+                sb.AppendLine();
             }
 
             return sb.ToString();
