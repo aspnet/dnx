@@ -573,6 +573,7 @@ var CAN_BUILD_ONECORE = '${Directory.Exists(WIN10_SDK_LIB) && Directory.GetFiles
             if (target.Flavor == "coreclr")
             {
                 var extraBinaries = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                var nativeExtension = target.OS == "linux" ? ".so" : ".dylib";
 
                 if (target.OS != "win")
                 {
@@ -604,13 +605,10 @@ var CAN_BUILD_ONECORE = '${Directory.Exists(WIN10_SDK_LIB) && Directory.GetFiles
                     extraBinaries.Add("System.Security.SecureString.dll");
                     extraBinaries.Add("System.Text.Encoding.CodePages.dll");
                     extraBinaries.Add("System.Threading.dll");
-
-                    var nativeExtension = target.OS == "linux" ? ".so" : ".dylib";
-
-                    extraBinaries.Add("System.Security.Cryptography.Native" + nativeExtension);
                 }
 
-                foreach (var file in Directory.GetFiles(coreclrFolder).Where(f => extraBinaries.Contains(Path.GetFileName(f)) || !Path.GetFileName(f).StartsWith("System")))
+                foreach (var file in Directory.GetFiles(coreclrFolder).Where(f => extraBinaries.Contains(Path.GetFileName(f)) || !Path.GetFileName(f).StartsWith("System")
+                         || (Path.GetFileName(f).StartsWith("System") && Path.GetFileName(f).EndsWith(nativeExtension))))
                 {
                     var targetFilePath = Path.Combine(target.TargetFolder, Path.GetFileName(file));
                     Log.Info("Copying " + file + " to " + targetFilePath);
