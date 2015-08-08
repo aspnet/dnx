@@ -36,10 +36,10 @@
         },
         "dnxcore50": {
             "dependencies": {
-                "Microsoft.Net.Http.Client": "1.0.0-*",
-                "System.ObjectModel": "4.0.11-beta-*",
                 "System.IO.FileSystem.Primitives": "4.0.1-beta-*",
                 "System.Linq.Parallel": "4.0.1-beta-*",
+                "System.Net.Http": "4.0.1-beta-*",
+                "System.ObjectModel": "4.0.11-beta-*",
                 "System.Reflection.TypeExtensions": "4.0.1-beta-*",
                 "System.Runtime.Serialization.Primitives": "4.0.11-beta-*",
                 "System.Security.Cryptography.Hashing.Algorithms": "4.0.0-beta-*",

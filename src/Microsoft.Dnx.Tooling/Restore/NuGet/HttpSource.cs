@@ -17,16 +17,12 @@ namespace Microsoft.Dnx.Tooling.Restore.NuGet
 {
     internal class HttpSource
     {
-        private HttpClient _client;
+        private readonly HttpClient _client;
 
-        private string _baseUri;
-        private string _userName;
-        private string _password;
-        private Reports _reports;
-#if DNXCORE50
-        private string _proxyUserName;
-        private string _proxyPassword;
-#endif
+        private readonly string _baseUri;
+        private readonly string _userName;
+        private readonly string _password;
+        private readonly Reports _reports;
 
         public HttpSource(
             string baseUri,
@@ -42,18 +38,13 @@ namespace Microsoft.Dnx.Tooling.Restore.NuGet
             var proxy = Environment.GetEnvironmentVariable("http_proxy");
             if (string.IsNullOrEmpty(proxy))
             {
-#if DNX451
                 _client = new HttpClient();
-#else
-                _client = new HttpClient(new Microsoft.Net.Http.Client.ManagedHandler());
-#endif
             }
             else
             {
                 // To use an authenticated proxy, the proxy address should be in the form of
                 // "http://user:password@proxyaddress.com:8888"
                 var proxyUriBuilder = new UriBuilder(proxy);
-#if DNX451
                 var webProxy = new WebProxy(proxy);
                 if (string.IsNullOrEmpty(proxyUriBuilder.UserName))
                 {
@@ -73,18 +64,6 @@ namespace Microsoft.Dnx.Tooling.Restore.NuGet
                     UseProxy = true
                 };
                 _client = new HttpClient(handler);
-#else
-                if (!string.IsNullOrEmpty(proxyUriBuilder.UserName))
-                {
-                    _proxyUserName = proxyUriBuilder.UserName;
-                    _proxyPassword = proxyUriBuilder.Password;
-                }
-
-                _client = new HttpClient(new Microsoft.Net.Http.Client.ManagedHandler()
-                {
-                    ProxyAddress = new Uri(proxy)
-                });
-#endif
             }
         }
 
@@ -117,14 +96,6 @@ namespace Microsoft.Dnx.Tooling.Restore.NuGet
                 var token = Convert.ToBase64String(Encoding.ASCII.GetBytes(_userName + ":" + _password));
                 request.Headers.Authorization = new AuthenticationHeaderValue("Basic", token);
             };
-
-#if DNXCORE50
-            if (_proxyUserName != null)
-            {
-                var proxyToken = Convert.ToBase64String(Encoding.ASCII.GetBytes(_proxyUserName + ":" + _proxyPassword));
-                request.Headers.ProxyAuthorization = new AuthenticationHeaderValue("Basic", proxyToken);
-            }
-#endif
 
             // Write the response to a file and use the file stream to avoid memory explosion
             using (var responseStream = new FileStream(
@@ -318,5 +289,29 @@ namespace Microsoft.Dnx.Tooling.Restore.NuGet
             return new FileStream(path, mode, access, share);
 #endif
         }
+
+#if DNXCORE50
+        private class WebProxy : IWebProxy
+        {
+            private readonly Uri _uri;
+
+            public WebProxy(string uri)
+            {
+                _uri = new Uri(uri);
+            }
+
+            public ICredentials Credentials { get; set; }
+
+            public Uri GetProxy(Uri destination)
+            {
+                return _uri;
+            }
+
+            public bool IsBypassed(Uri host)
+            {
+                return host.IsLoopback;
+            }
+        }
+#endif
     }
 }
