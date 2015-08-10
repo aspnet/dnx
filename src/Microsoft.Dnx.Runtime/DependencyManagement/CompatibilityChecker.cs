@@ -7,6 +7,7 @@ using System.IO;
 using System.Linq;
 using System.Runtime.Versioning;
 using Microsoft.Dnx.Runtime.DependencyManagement;
+using NuGet;
 
 namespace Microsoft.Dnx.Runtime
 {
@@ -63,6 +64,12 @@ namespace Microsoft.Dnx.Runtime
                     Framework = framework,
                     Type = CompatibilityIssue.IssueType.UnsupportedFramework
                 };
+            }
+
+            if (string.Equals(framework.Identifier, VersionUtility.NetPlatformFrameworkIdentifier, StringComparison.OrdinalIgnoreCase))
+            {
+                // If target framework is dotnet, we skip the ref-lib matching check
+                return null;
             }
 
             // Get run-time assemblies provided by current library
