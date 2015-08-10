@@ -997,7 +997,7 @@ namespace Microsoft.Dnx.DesignTimeHost
 
             foreach (var frameworkName in frameworks)
             {
-                var dependencyInfo = ResolveProjectDepencies(project, configuration, frameworkName);
+                var dependencyInfo = ResolveProjectDependencies(project, configuration, frameworkName);
                 var dependencySources = new List<string>(sourcesProjectWideSources);
 
                 var frameworkResolver = dependencyInfo.HostContext.FrameworkReferenceResolver;
@@ -1110,7 +1110,7 @@ namespace Microsoft.Dnx.DesignTimeHost
                 _namedDependencyProvider);
         }
 
-        private DependencyInfo ResolveProjectDepencies(Project project, string configuration, FrameworkName frameworkName)
+        private DependencyInfo ResolveProjectDependencies(Project project, string configuration, FrameworkName frameworkName)
         {
             var cacheKey = Tuple.Create("DependencyInfo", project.Name, configuration, frameworkName);
 
