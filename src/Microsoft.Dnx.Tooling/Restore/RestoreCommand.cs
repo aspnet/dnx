@@ -94,7 +94,7 @@ namespace Microsoft.Dnx.Tooling
                 success &= await Execute(dir);
             }
 
-            foreach (var category in ErrorMessages.Where(x => x.Value.Any()))
+            foreach (var category in ErrorMessages)
             {
                 Reports.Error.WriteLine($"{Environment.NewLine}Errors in {category.Key}".Red().Bold());
                 foreach (var message in category.Value)
