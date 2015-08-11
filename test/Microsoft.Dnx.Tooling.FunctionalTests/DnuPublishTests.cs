@@ -1527,7 +1527,7 @@ string expectedAppLockFile = @"{
                     .WithFileContents("project.json", @"{
   ""commands"": {
     ""run"": ""run server.urls=http://localhost:5003"",
-    ""kestrel"": ""Microsoft.AspNet.Hosting --server Kestrel --server.urls http://localhost:5004""
+    ""kestrel"": ""Microsoft.AspNet.Hosting --server Microsoft.AspNet.Server.Kestrel --server.urls http://localhost:5004""
   },
   ""frameworks"": {
     ""dnx451"": { },
@@ -1564,7 +1564,7 @@ string expectedAppLockFile = @"{
                     .WithFileContents(Path.Combine("approot", "src", testEnv.ProjectName, "project.json"), @"{
   ""commands"": {
     ""run"": ""run server.urls=http://localhost:5003"",
-    ""kestrel"": ""Microsoft.AspNet.Hosting --server Kestrel --server.urls http://localhost:5004""
+    ""kestrel"": ""Microsoft.AspNet.Hosting --server Microsoft.AspNet.Server.Kestrel --server.urls http://localhost:5004""
   },
   ""frameworks"": {
     ""dnx451"": { },
@@ -1639,7 +1639,7 @@ string expectedAppLockFile = @"{
                     .WithFileContents("project.json", @"{
   ""commands"": {
     ""run"": ""run server.urls=http://localhost:5003"",
-    ""kestrel"": ""Microsoft.AspNet.Hosting --server Kestrel --server.urls http://localhost:5004""
+    ""kestrel"": ""Microsoft.AspNet.Hosting --server Microsoft.AspNet.Server.Kestrel --server.urls http://localhost:5004""
   },
   ""frameworks"": {
     ""dnx451"": { },
@@ -1685,7 +1685,7 @@ string expectedAppLockFile = @"{
                     .WithFileContents(Path.Combine("approot", "src", testEnv.ProjectName, "project.json"), @"{
   ""commands"": {
     ""run"": ""run server.urls=http://localhost:5003"",
-    ""kestrel"": ""Microsoft.AspNet.Hosting --server Kestrel --server.urls http://localhost:5004""
+    ""kestrel"": ""Microsoft.AspNet.Hosting --server Microsoft.AspNet.Server.Kestrel --server.urls http://localhost:5004""
   },
   ""frameworks"": {
     ""dnx451"": { },
