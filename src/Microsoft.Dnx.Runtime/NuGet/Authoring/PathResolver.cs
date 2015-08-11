@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
+using Microsoft.Dnx.Runtime;
 
 namespace NuGet
 {
@@ -76,7 +77,10 @@ namespace NuGet
                     .Replace(@"\?", "."); // ? translates to a single any character
             }
 
-            return new Regex('^' + pattern + '$', RegexOptions.IgnoreCase | RegexOptions.ExplicitCapture);
+            return new Regex(
+                '^' + pattern + '$',
+                RegexOptions.IgnoreCase | RegexOptions.ExplicitCapture,
+                Microsoft.Dnx.Runtime.Constants.RegexMatchTimeout);
         }
 
         internal static IEnumerable<PhysicalPackageFile> ResolveSearchPattern(string basePath, string searchPath, string targetPath, bool includeEmptyDirectories)

@@ -1,6 +1,8 @@
 // Copyright (c) .NET Foundation. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
+using System;
+
 namespace Microsoft.Dnx.Runtime
 {
     internal static class Constants
@@ -22,5 +24,7 @@ namespace Microsoft.Dnx.Runtime
         public const string ProjectJsonPathAppDomainDataKey = ".dnx.clr.DomainManager.projectJsonPath";
 
         public const int LockFileVersion = 1;
+
+        public static readonly TimeSpan RegexMatchTimeout = TimeSpan.FromSeconds(10);
     }
 }

@@ -85,7 +85,10 @@ namespace Microsoft.Dnx.Tooling.List
         {
             if (!string.IsNullOrEmpty(_filterPattern))
             {
-                var regex = new Regex("^" + Regex.Escape(_filterPattern).Replace(@"\*", ".*").Replace(@"\?", ".") + "$", RegexOptions.IgnoreCase);
+                var regex = new Regex(
+                    "^" + Regex.Escape(_filterPattern).Replace(@"\*", ".*").Replace(@"\?", ".") + "$",
+                    RegexOptions.IgnoreCase,
+                    Constants.RegexMatchTimeout);
                 descriptions = descriptions.Where(library => regex.IsMatch(library.Identity.Name));
             }
 
