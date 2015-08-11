@@ -80,7 +80,7 @@ namespace Microsoft.Dnx.Runtime
                 {
                     messages.Add(
                         new DiagnosticMessage(
-                            library.CompatibilityIssue.ToString(),
+                            library.CompatibilityIssue.Message,
                             projectPath, 
                             DiagnosticMessageSeverity.Error, 
                             library.LibraryRange.Line, 

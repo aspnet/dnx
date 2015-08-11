@@ -13,24 +13,27 @@ namespace Microsoft.Dnx.Runtime
         public FrameworkName Framework{ get; set; }
         public IssueType Type { get; set; }
 
+        public string Message
+        {
+            get
+            {
+                switch (Type)
+                {
+                    case IssueType.UnsupportedFramework:
+                        return $"{LibraryName} {LibraryVersion} doesn't support {Framework}.";
+                    case IssueType.MissingRuntimeAssembly:
+                        return $"{LibraryName} {LibraryVersion} provides a compile-time reference assembly for {Framework}, but there is no compatible run-time assembly.";
+                    default:
+                        return $"Unknown compatibility issue was found with {LibraryName} {LibraryVersion} for {Framework}.";
+                }
+            }
+        }
+
         public enum IssueType
         {
             Unknown = 0,
             UnsupportedFramework,
             MissingRuntimeAssembly
-        }
-
-        public override string ToString()
-        {
-            switch (Type)
-            {
-                case IssueType.UnsupportedFramework:
-                    return $"{LibraryName} {LibraryVersion} doesn't support {Framework}.";
-                case IssueType.MissingRuntimeAssembly:
-                    return $"{LibraryName} {LibraryVersion} provides a compile-time reference assembly for {Framework}, but there is no compatible run-time assembly.";
-                default:
-                    return $"Unknown compatibility issue was found with {LibraryName} {LibraryVersion} for {Framework}.";
-            }
         }
     }
 }
