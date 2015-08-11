@@ -3,6 +3,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Runtime.Versioning;
@@ -43,6 +44,13 @@ namespace Microsoft.Dnx.Runtime
 
         public CompatibilityIssue CheckTargetLibrary(LockFileTargetLibrary targetLibrary, FrameworkName framework)
         {
+            // Get run-time assemblies provided by current library
+            HashSet<string> runtimeAssemblies;
+            var isFrameworkPresent = _frameworkRuntimeAssemblies.TryGetValue(framework, out runtimeAssemblies);
+
+            // You should always check against a framework present in project.json of current project
+            Debug.Assert(isFrameworkPresent, $"The framework '{framework}' to check against is not present in {Project.ProjectFileName}");
+
             var lockFileLibrary = _lockFileLibraries[targetLibrary.Name].First(l => l.Version == targetLibrary.Version);
             var containsAssembly = lockFileLibrary.Files
                 .Any(x => x.StartsWith($"ref{Path.DirectorySeparatorChar}") ||
@@ -66,9 +74,6 @@ namespace Microsoft.Dnx.Runtime
                 // If target framework is dotnet, we skip the ref-lib matching check
                 return null;
             }
-
-            // Get run-time assemblies provided by current library
-            var runtimeAssemblies = _frameworkRuntimeAssemblies[framework];
 
             // Get compile-time assembies provided by current library
             var compileAssemblies = targetLibrary.CompileTimeAssemblies
