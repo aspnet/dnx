@@ -394,12 +394,12 @@ namespace Microsoft.Dnx.Tooling
 
         private void LogError(string message)
         {
-            _buildOptions.Reports.Error.WriteLine(message.Red());
+            _buildOptions.Reports.Error.WriteLine(message.Red().Bold());
         }
 
         private void LogWarning(string message)
         {
-            _buildOptions.Reports.Information.WriteLine(message.Yellow());
+            _buildOptions.Reports.Information.WriteLine(message.Yellow().Bold());
         }
 
         private static string Normalize(string projectDir)
