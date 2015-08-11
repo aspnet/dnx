@@ -597,11 +597,8 @@ var CAN_BUILD_ONECORE = '${Directory.Exists(WIN10_SDK_LIB) && Directory.GetFiles
                     extraBinaries.Add("System.Net.Security.dll");
                     extraBinaries.Add("System.Runtime.Extensions.dll");
                     extraBinaries.Add("System.Security.Cryptography.Encoding.dll");
-                    extraBinaries.Add("System.Security.Cryptography.Encryption.dll");
-                    extraBinaries.Add("System.Security.Cryptography.Encryption.Aes.dll");
-                    extraBinaries.Add("System.Security.Cryptography.Hashing.dll");
-                    extraBinaries.Add("System.Security.Cryptography.Hashing.Algorithms.dll");
-                    extraBinaries.Add("System.Security.Cryptography.RandomNumberGenerator.dll");
+                    extraBinaries.Add("System.Security.Cryptography.Primitives.dll");
+                    extraBinaries.Add("System.Security.Cryptography.Algorithms.dll");
                     extraBinaries.Add("System.Security.SecureString.dll");
                     extraBinaries.Add("System.Text.Encoding.CodePages.dll");
                     extraBinaries.Add("System.Threading.dll");
