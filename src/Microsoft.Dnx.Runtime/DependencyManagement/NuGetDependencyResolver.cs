@@ -229,6 +229,9 @@ namespace Microsoft.Dnx.Runtime
 
         public void Initialize(IEnumerable<LibraryDescription> packages, FrameworkName targetFramework, string runtimeIdentifier)
         {
+            // Free this to save memory
+            _compatibilityChecker = null;
+
             Dependencies = packages;
 
             var cacheResolvers = GetCacheResolvers();

@@ -17,11 +17,6 @@ namespace Microsoft.Dnx.Runtime
         private readonly ILookup<string, LockFileLibrary> _lockFileLibraries;
         private readonly Dictionary<FrameworkName, HashSet<string>> _frameworkRuntimeAssemblies;
 
-        public CompatibilityChecker(LockFile lockFile)
-            : this(new OptimizedLockFile(lockFile))
-        {
-        }
-
         public CompatibilityChecker(OptimizedLockFile optimizedLockFile)
         {
             _lockFile = optimizedLockFile.LockFile;
