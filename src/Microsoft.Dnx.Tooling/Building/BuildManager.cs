@@ -326,7 +326,7 @@ namespace Microsoft.Dnx.Tooling
             }
 
             builder.Description = project.Description ?? project.Name;
-            builder.Id = project.Name;
+            builder.Id = project.Id ?? project.Name;
             builder.Version = project.Version;
             builder.Title = project.Title;
             builder.Summary = project.Summary;
