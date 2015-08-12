@@ -17,14 +17,18 @@ namespace Microsoft.Dnx.Runtime
         {
             get
             {
+                var frameworkShortName = VersionUtility.GetShortFrameworkName(Framework);
+                var frameworkFullName = $"{Framework} ({frameworkShortName})";
+                var libraryFullName = $"{LibraryName} {LibraryVersion}";
+
                 switch (Type)
                 {
                     case IssueType.UnsupportedFramework:
-                        return $"{LibraryName} {LibraryVersion} doesn't support {Framework}.";
+                        return $"{libraryFullName} doesn't support {frameworkFullName}.";
                     case IssueType.MissingRuntimeAssembly:
-                        return $"{LibraryName} {LibraryVersion} provides a compile-time reference assembly for {Framework}, but there is no compatible run-time assembly.";
+                        return $"{libraryFullName} is incompatible with {frameworkFullName}. It provides a compile-time reference assembly but there is no compatible run-time assembly.";
                     default:
-                        return $"Unknown compatibility issue was found with {LibraryName} {LibraryVersion} for {Framework}.";
+                        return $"Unknown compatibility issue was found with {libraryFullName} for {frameworkFullName}.";
                 }
             }
         }
