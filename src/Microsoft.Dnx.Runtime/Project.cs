@@ -50,6 +50,8 @@ namespace Microsoft.Dnx.Runtime
 
         public string Title { get; set; }
 
+        public string Id { get; private set; }
+
         public string Description { get; private set; }
 
         public string Copyright { get; set; }
@@ -210,6 +212,7 @@ namespace Microsoft.Dnx.Runtime
                 }
             }
 
+            project.Id = rawProject.ValueAsString("id");
             project.Description = rawProject.ValueAsString("description");
             project.Summary = rawProject.ValueAsString("summary");
             project.Copyright = rawProject.ValueAsString("copyright");
