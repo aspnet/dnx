@@ -29,6 +29,14 @@ namespace Microsoft.Dnx.Runtime
             return environment;
         }
 
+        public static IRuntimeEnvironment RuntimeEnvironment
+        {
+            get
+            {
+                return _runtimeEnv.Value;
+            }
+        }
+
         public static bool IsWindows
         {
             get { return _isWindows.Value; }
