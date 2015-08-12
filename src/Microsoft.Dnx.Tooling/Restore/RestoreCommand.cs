@@ -541,12 +541,19 @@ namespace Microsoft.Dnx.Tooling
 
                 var repository = new PackageRepository(packagesDirectory);
 
-                WriteLockFile(lockFile,
+                lockFile = WriteLockFile(lockFile,
                               projectLockFilePath,
                               project,
                               graphItems,
                               repository,
                               targetContexts);
+
+                var compatibilityChecker = new CompatibilityChecker(new OptimizedLockFile(lockFile));
+                var issues = compatibilityChecker.GetAllCompatibilityIssues();
+                if (issues.Any())
+                {
+                    ErrorMessages.GetOrAdd(projectJsonPath, _ => new List<string>()).AddRange(issues.Select(i => i.Message));
+                }
             }
 
             if (!SkipRestoreEvents)
@@ -804,7 +811,7 @@ namespace Microsoft.Dnx.Tooling
             return Task.FromResult(lockFileFormat.Read(projectLockFilePath));
         }
 
-        private void WriteLockFile(LockFile previousLockFile,
+        private LockFile WriteLockFile(LockFile previousLockFile,
                                    string projectLockFilePath,
                                    Runtime.Project project,
                                    List<GraphItem> graphItems,
@@ -890,6 +897,8 @@ namespace Microsoft.Dnx.Tooling
 
             var lockFileFormat = new LockFileFormat();
             lockFileFormat.Write(projectLockFilePath, lockFile);
+
+            return lockFile;
         }
 
 
