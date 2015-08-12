@@ -52,7 +52,7 @@ namespace Microsoft.Dnx.Compilation
 
         public IFileWatcher FileWatcher { get; }
 
-        public LibraryExporter RootLibraryExporter { get; }
+        public ILibraryExporter RootLibraryExporter { get; }
 
         public event Action<string> OnInputFileChanged;
 
