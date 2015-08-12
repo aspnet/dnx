@@ -11,6 +11,6 @@ namespace Microsoft.Dnx.Runtime.Compilation
 
         ILibraryExporter RootLibraryExporter { get; }
 
-        Assembly LoadProject(Project project, FrameworkName targetFramework, string configuration, string aspect, IAssemblyLoadContext loadContext);
+        Assembly LoadProject(Project project, string aspect, IAssemblyLoadContext loadContext);
     }
 }

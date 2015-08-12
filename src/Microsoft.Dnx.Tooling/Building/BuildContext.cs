@@ -52,6 +52,8 @@ namespace Microsoft.Dnx.Tooling
                     _configuration));
             _libraryExporter = compilationEngine.CreateProjectExporter(
                 _project, _targetFramework, _configuration);
+            _applicationHostContext.AddService(typeof(ILibraryExporter), _libraryExporter);
+            _applicationHostContext.AddService(typeof(ICompilationEngine), compilationEngine);
         }
 
         public void Initialize(IReport report)

@@ -61,10 +61,10 @@ namespace Microsoft.Dnx.Compilation
             throw new NotImplementedException();
         }
         
-        public Assembly LoadProject(Project project, FrameworkName targetFramework, string configuration, string aspect, IAssemblyLoadContext loadContext)
+        public Assembly LoadProject(Project project, string aspect, IAssemblyLoadContext loadContext)
         {
             // Export the project
-            var export = ProjectExporter.ExportProject(project, this, aspect, targetFramework, configuration);
+            var export = ProjectExporter.ExportProject(project, this, aspect, _context.TargetFramework, _context.Configuration);
 
             // Load the metadata reference
             foreach (var projectReference in export.MetadataReferences.OfType<IMetadataProjectReference>())

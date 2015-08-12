@@ -149,6 +149,7 @@ Please make sure the runtime matches a framework specified in {Project.ProjectFi
 
             // Make the root project's library exports available for apps to read.
             _applicationHostContext.AddService(typeof(ILibraryExporter), _compilationEngine.RootLibraryExporter);
+            _applicationHostContext.AddService(typeof(ICompilationEngine), _compilationEngine);
 
             Logger.TraceInformation("[{0}]: Project path: {1}", GetType().Name, _projectDirectory);
             Logger.TraceInformation("[{0}]: Project root: {1}", GetType().Name, _applicationHostContext.RootDirectory);
@@ -183,8 +184,6 @@ Please make sure the runtime matches a framework specified in {Project.ProjectFi
 
             // Configure Assembly loaders
             _loaders.Add(new ProjectAssemblyLoader(
-                _targetFramework,
-                options.Configuration,
                 loadContextAccessor,
                 _applicationHostContext.ProjectResolver,
                 _compilationEngine));

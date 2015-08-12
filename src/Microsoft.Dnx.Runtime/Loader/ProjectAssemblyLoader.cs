@@ -12,21 +12,14 @@ namespace Microsoft.Dnx.Runtime.Loader
         private readonly IAssemblyLoadContextAccessor _loadContextAccessor;
         private readonly ICompilationEngine _compilationEngine;
         private readonly IProjectResolver _projectResolver;
-        private readonly FrameworkName _framework;
-        private readonly string _configuration;
 
-        public ProjectAssemblyLoader(FrameworkName framework,
-                                     string configuration,
-                                     IAssemblyLoadContextAccessor loadContextAccessor,
+        public ProjectAssemblyLoader(IAssemblyLoadContextAccessor loadContextAccessor,
                                      IProjectResolver projectResolver,
                                      ICompilationEngine compilationEngine)
         {
             _loadContextAccessor = loadContextAccessor;
             _compilationEngine = compilationEngine;
             _projectResolver = projectResolver;
-
-            _framework = framework;
-            _configuration = configuration;
         }
 
         public Assembly Load(AssemblyName assemblyName)
@@ -60,8 +53,6 @@ namespace Microsoft.Dnx.Runtime.Loader
 
             return _compilationEngine.LoadProject(
                 project, 
-                _framework,
-                _configuration,
                 aspect, 
                 loadContext);
         }

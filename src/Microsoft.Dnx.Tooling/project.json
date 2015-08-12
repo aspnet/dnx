@@ -20,7 +20,6 @@
     "preprocess": [ 
         "../../ext/compiler/preprocess/Internalization.cs" 
     ], 
-
     "frameworks": {
         "dnx451": {
             "frameworkAssemblies": {
