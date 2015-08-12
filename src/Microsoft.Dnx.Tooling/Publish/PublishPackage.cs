@@ -1,6 +1,7 @@
 // Copyright (c) .NET Foundation. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
+using System.Threading.Tasks;
 using Microsoft.Dnx.Runtime;
 using NuGet;
 
@@ -19,7 +20,7 @@ namespace Microsoft.Dnx.Tooling.Publish
 
         public string TargetPath { get; private set; }
 
-        public void Emit(PublishRoot root)
+        public async Task Emit(PublishRoot root)
         {
             root.Reports.Quiet.WriteLine("Using {0} dependency {1}", _libraryDescription.Type, Library);
 
@@ -30,11 +31,13 @@ namespace Microsoft.Dnx.Tooling.Publish
             {
                 NuGetPackage = srcNupkgPath,
                 SourcePackages = root.TargetPackagesPath,
-                Reports = root.Reports
             };
 
+            // Mute "packages add" subcommand
+            options.Reports = Reports.Constants.NullReports;
+
             var packagesAddCommand = new Packages.AddCommand(options);
-            packagesAddCommand.Execute().GetAwaiter().GetResult();
+            await packagesAddCommand.Execute();
         }
     }
 }
