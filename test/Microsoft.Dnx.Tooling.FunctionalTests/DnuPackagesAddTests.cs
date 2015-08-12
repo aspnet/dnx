@@ -45,6 +45,7 @@ namespace Microsoft.Dnx.Tooling
                 string stdOut;
                 var exitCode = DnuPackagesAddOutputPackage(tempSamplesDir, runtimeHomeDir, out stdOut);
                 Assert.Equal(0, exitCode);
+                // possible target for PR
                 Assert.Contains($"Installing {ProjectName}.{ProjectVersion}", stdOut);
 
                 var lastInstallTime = new FileInfo(nuspecPath).LastWriteTimeUtc;
@@ -74,6 +75,7 @@ namespace Microsoft.Dnx.Tooling
                 string stdOut;
                 var exitCode = DnuPackagesAddOutputPackage(tempSamplesDir, runtimeHomeDir, out stdOut);
                 Assert.Equal(0, exitCode);
+                // possible target for PR
                 Assert.Contains($"Installing {ProjectName}.{ProjectVersion}", stdOut);
 
                 var lastInstallTime = new FileInfo(nuspecPath).LastWriteTimeUtc;

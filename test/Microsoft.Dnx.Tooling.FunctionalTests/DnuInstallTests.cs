@@ -132,6 +132,7 @@ namespace Microsoft.Dnx.Tooling
 
             Assert.Equal(0, exitCode);
             Assert.Empty(stdErr);
+            // possible target for PR
             Assert.Contains($"Installing {packageName}.{packageVersion}", stdOut);
             Assert.Equal(expectedProjectJson, File.ReadAllText(projectJsonPath));
             Assert.True(Directory.Exists(Path.Combine(packagesDir, packageName, packageVersion)));

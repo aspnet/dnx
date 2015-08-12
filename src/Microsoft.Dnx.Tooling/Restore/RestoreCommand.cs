@@ -104,6 +104,7 @@ namespace Microsoft.Dnx.Tooling
             {
                 var configFiles = settings.GetConfigFiles();
 
+                // target for PR
                 Reports.Quiet.WriteLine($"{Environment.NewLine}NuGet Config files used:");
                 foreach (var file in configFiles)
                 {
@@ -932,6 +933,7 @@ namespace Microsoft.Dnx.Tooling
                 if (feed != null)
                 {
                     remoteProviders.Add(new RemoteWalkProvider(feed));
+                    // target for PR
                     var list = InformationMessages.GetOrAdd("Feeds used:", _ => new List<string>());
                     if (!list.Contains(feed.Source))
                     {
