@@ -59,6 +59,11 @@ namespace NuGet
             _lockFileLibraries = lockFile.Libraries.ToLookup(l => l.Name, stringComparer);
         }
 
+        public void ApplyOptimizedLockFile(OptimizedLockFile optimizedLockFile)
+        {
+            _lockFileLibraries = optimizedLockFile.LockFileLibraryLookup;
+        }
+
         public IEnumerable<PackageInfo> FindPackagesById(string packageId)
         {
             if (string.IsNullOrEmpty(packageId))

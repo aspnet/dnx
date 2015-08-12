@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Microsoft.Dnx.CommonTestUtils;
+using Microsoft.Dnx.Runtime;
 using Newtonsoft.Json;
 using Xunit;
 
@@ -81,6 +82,10 @@ namespace Microsoft.Dnx.Tooling.FunctionalTests
         {
             string stdOut, stdErr;
             var runtimeHomePath = _fixture.GetRuntimeHomeDir(flavor, os, architecture);
+            var env = new Dictionary<string, string>
+            {
+                { EnvironmentNames.Packages, _fixture.PackageSource }
+            };
 
             CreateProjectJson(new
             {
@@ -96,18 +101,15 @@ namespace Microsoft.Dnx.Tooling.FunctionalTests
             });
 
             // restore the packages
-            Assert.Equal(0, DnuTestUtils.ExecDnu(runtimeHomePath, "restore", "--source " + _fixture.PackageSource, workingDir: _workingDir.DirPath));
+            Assert.Equal(0, DnuTestUtils.ExecDnu(runtimeHomePath, "restore", _workingDir.DirPath, env));
 
             // run dnu list
-            Assert.Equal(0, DnuTestUtils.ExecDnu(runtimeHomePath, "list", "", out stdOut, out stdErr, environment: null, workingDir: _workingDir.DirPath));
+            Assert.Equal(0, DnuTestUtils.ExecDnu(runtimeHomePath, "list", _workingDir.DirPath, out stdOut, out stdErr, env));
 
             // there should be 2 and only 2 dependencies of alpha
             var resolvedHits = stdOut.Split('\n').Where(line => line.Contains("* alpha 0.1.0"))
                                          .Where(line => !line.Contains("Unresolved"));
-            var unresolvedHits = stdOut.Split('\n').Where(line => line.Contains("* alpha 0.1.0"))
-                                         .Where(line => line.Contains("Unresolved"));
-            Assert.Equal(1, resolvedHits.Count());
-            Assert.Equal(1, unresolvedHits.Count());
+            Assert.Equal(2, resolvedHits.Count());
         }
 
         [Theory]
@@ -117,6 +119,10 @@ namespace Microsoft.Dnx.Tooling.FunctionalTests
             string stdOut, stdErr;
             var runtimeHomePath = _fixture.GetRuntimeHomeDir(flavor, os, architecture);
             var projectName = Path.GetFileName(_workingDir.DirPath);
+            var env = new Dictionary<string, string>
+            {
+                { EnvironmentNames.Packages, _fixture.PackageSource }
+            };
 
             CreateProjectJson(new
             {
@@ -131,10 +137,10 @@ namespace Microsoft.Dnx.Tooling.FunctionalTests
             });
 
             // restore the packages
-            Assert.Equal(0, DnuTestUtils.ExecDnu(runtimeHomePath, "restore", "--source " + _fixture.PackageSource, workingDir: _workingDir.DirPath));
+            Assert.Equal(0, DnuTestUtils.ExecDnu(runtimeHomePath, "restore", _workingDir.DirPath, env));
 
             // run dnu list
-            Assert.Equal(0, DnuTestUtils.ExecDnu(runtimeHomePath, "list", "--details", out stdOut, out stdErr, environment: null, workingDir: _workingDir.DirPath));
+            Assert.Equal(0, DnuTestUtils.ExecDnu(runtimeHomePath, "list", $"{_workingDir.DirPath} --details", out stdOut, out stdErr, env));
 
             // assert - in the output of the dnu list, alpha 0.1.0 is listed as resolved, its source is listed on the second line.
             string[] outputLines = stdOut.Split(Environment.NewLine[0]);
@@ -159,6 +165,10 @@ namespace Microsoft.Dnx.Tooling.FunctionalTests
             string stdOut, stdErr;
             var runtimeHomePath = _fixture.GetRuntimeHomeDir(flavor, os, architecture);
             var projectName = Path.GetFileName(_workingDir.DirPath);
+            var env = new Dictionary<string, string>
+            {
+                { EnvironmentNames.Packages, _fixture.PackageSource }
+            };
 
             CreateProjectJson(new
             {
@@ -175,10 +185,10 @@ namespace Microsoft.Dnx.Tooling.FunctionalTests
             });
 
             // restore the packages, it should fail because missing package beta
-            Assert.Equal(1, DnuTestUtils.ExecDnu(runtimeHomePath, "restore", "--source " + _fixture.PackageSource, workingDir: _workingDir.DirPath));
+            Assert.Equal(1, DnuTestUtils.ExecDnu(runtimeHomePath, "restore", _workingDir.DirPath, env));
 
             // run dnu list
-            Assert.Equal(0, DnuTestUtils.ExecDnu(runtimeHomePath, "list", "", out stdOut, out stdErr, environment: null, workingDir: _workingDir.DirPath));
+            Assert.Equal(0, DnuTestUtils.ExecDnu(runtimeHomePath, "list", _workingDir.DirPath, out stdOut, out stdErr, env));
 
             // the beta package is not resolved
             var hits = SplitLines(stdOut).Where(line => line.Contains("* beta 0.2.0 - Unresolved"));

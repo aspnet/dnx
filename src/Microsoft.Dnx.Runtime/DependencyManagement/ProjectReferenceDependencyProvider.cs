@@ -84,6 +84,18 @@ namespace Microsoft.Dnx.Runtime
             bool unresolved = targetFrameworkInfo.FrameworkName == null &&
                               project.GetTargetFrameworks().Any();
 
+            CompatibilityIssue compatibilityIssue = null;
+            if (unresolved)
+            {
+                compatibilityIssue = new CompatibilityIssue
+                {
+                    LibraryName = project.Name,
+                    LibraryVersion = project.Version,
+                    Framework = targetFramework,
+                    Type = CompatibilityIssue.IssueType.UnsupportedFramework
+                };
+            }
+
             return new LibraryDescription
             {
                 LibraryRange = libraryRange,
@@ -97,8 +109,8 @@ namespace Microsoft.Dnx.Runtime
                 Framework = targetFrameworkInfo.FrameworkName,
                 Dependencies = dependencies,
                 LoadableAssemblies = loadableAssemblies,
-                Compatible = !unresolved,
-                Resolved = !unresolved
+                Resolved = !unresolved,
+                CompatibilityIssue = compatibilityIssue
             };
         }
 

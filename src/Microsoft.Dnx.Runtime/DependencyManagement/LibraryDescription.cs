@@ -16,7 +16,14 @@ namespace Microsoft.Dnx.Runtime
         public IEnumerable<LibraryDependency> Dependencies { get; set; }
 
         public bool Resolved { get; set; } = true;
-        public bool Compatible { get; set; } = true;
+        public CompatibilityIssue CompatibilityIssue { get; set; }
+        public bool Compatible
+        {
+            get
+            {
+                return CompatibilityIssue == null;
+            }
+        }
 
         public string Path { get; set; }
         public string Type { get; set; }
