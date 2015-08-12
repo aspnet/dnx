@@ -6,7 +6,9 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Runtime.Versioning;
+using Microsoft.Dnx.Compilation;
 using Microsoft.Dnx.Runtime.Common.DependencyInjection;
+using Microsoft.Dnx.Runtime.Compilation;
 using Microsoft.Dnx.Runtime.Infrastructure;
 using Microsoft.Dnx.Runtime.Loader;
 using NuGet;
@@ -116,6 +118,7 @@ namespace Microsoft.Dnx.Runtime
             // Default services
             _serviceProvider.Add(typeof(IApplicationEnvironment), ApplicationEnvironment);
             _serviceProvider.Add(typeof(ILibraryManager), LibraryManager);
+            _serviceProvider.Add(typeof(ICompilerOptionsProvider), new CompilerOptionsProvider(ProjectResolver));
 
             // Not exposed to the application layer
             _serviceProvider.Add(typeof(IProjectResolver), ProjectResolver, includeInManifest: false);

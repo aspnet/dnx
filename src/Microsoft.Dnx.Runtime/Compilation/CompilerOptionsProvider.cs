@@ -4,7 +4,7 @@
 using System.Runtime.Versioning;
 using Microsoft.Dnx.Compilation;
 
-namespace Microsoft.Dnx.Runtime
+namespace Microsoft.Dnx.Runtime.Compilation
 {
     /// <summary>
     /// Default implementation for <see cref="ICompilerOptionsProvider"/>.
