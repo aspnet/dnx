@@ -3,8 +3,7 @@
     "description": "ASP.NET 5 Roslyn implementation code shared with libraries performing runtime compilation.",
     "compilationOptions": { "define": [ "TRACE" ], "allowUnsafe": true, "warningsAsErrors": true },
     "dependencies": {
-        "System.Reflection.Metadata": "1.1.0-alpha-00008",
-        "Microsoft.CodeAnalysis.CSharp": "2.0.0-beta1-*",
+        "Microsoft.CodeAnalysis.CSharp": "1.1.0-beta1-*",
         "Microsoft.Dnx.Compilation.CSharp.Abstractions": "1.0.0-*",
         "Microsoft.Dnx.Runtime.Sources": { "version": "1.0.0-*", "type": "build" }
     },

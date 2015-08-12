@@ -20,7 +20,7 @@
         "Microsoft.Dnx.Runtime.Abstractions": "1.0.0-*",
         "Microsoft.Dnx.Runtime.Internals": { "version": "1.0.0-*", "type": "build" },
         "Microsoft.Dnx.Runtime.Sources": { "version": "1.0.0-*", "type": "build" },
-        "Microsoft.CodeAnalysis.CSharp": { "version": "2.0.0-beta1-*", "type": "build" },
+        "Microsoft.CodeAnalysis.CSharp": { "version": "1.1.0-beta1-*", "type": "build" },
         "System.Reflection.Metadata": { "version": "1.1.0-alpha-*", "type": "build"}
     },
     "frameworks": {
