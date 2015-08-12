@@ -11,6 +11,7 @@ using System.Net.Http.Headers;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
+using Microsoft.Dnx.Runtime;
 using Microsoft.Dnx.Runtime.Internal;
 
 namespace Microsoft.Dnx.Tooling.Restore.NuGet
@@ -23,6 +24,8 @@ namespace Microsoft.Dnx.Tooling.Restore.NuGet
         private readonly string _userName;
         private readonly string _password;
         private readonly Reports _reports;
+
+        private const string UserAgentName = "Microsoft_.NET_Development_Utility";
 
         public HttpSource(
             string baseUri,
@@ -65,6 +68,10 @@ namespace Microsoft.Dnx.Tooling.Restore.NuGet
                 };
                 _client = new HttpClient(handler);
             }
+
+            var env = RuntimeEnvironmentHelper.RuntimeEnvironment;
+            var userAgentHeader = $"{UserAgentName}/{env.RuntimeVersion} ({env.OperatingSystem} {env.OperatingSystemVersion})";
+            _client.DefaultRequestHeaders.UserAgent.ParseAdd(userAgentHeader);
         }
 
         public string BaseUri
