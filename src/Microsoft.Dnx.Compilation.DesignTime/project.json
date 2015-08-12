@@ -1,12 +1,10 @@
 {
   "version": "1.0.0-*",
   "dependencies": {
-    "Microsoft.Dnx.Runtime.Sources": { "version": "1.0.0-*", "type": "build" },
-    "Microsoft.Dnx.Compilation.Abstractions": "1.0.0-*"
+    "Microsoft.Dnx.Compilation.Abstractions": "1.0.0-*",
+    "Microsoft.Dnx.Runtime.Json.Sources": { "version": "1.0.0-*", "type": "build" },
+    "Microsoft.Dnx.Runtime.Sources": { "version": "1.0.0-*", "type": "build" }
   },
-  "compile": [
-    "../Microsoft.Dnx.Runtime/Json/*.cs"
-  ],
   "frameworks": {
     "dnx451": {
       "dependencies": {
