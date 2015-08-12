@@ -10,6 +10,18 @@ namespace Microsoft.Dnx.Tooling
         public IReport Quiet { get; set; }
         public IReport Error { get; set; }
 
+        public static class Constants
+        {
+            public static readonly IReport NullReport = new NullReport();
+            public static readonly Reports NullReports = new Reports
+            {
+                Information = NullReport,
+                Verbose = NullReport,
+                Quiet = NullReport,
+                Error = NullReport
+            };
+        }
+
         public void WriteInformation(string message)
         {
             Information.WriteLine(message);
@@ -33,6 +45,15 @@ namespace Microsoft.Dnx.Tooling
         public Reports ShallowCopy()
         {
             return MemberwiseClone() as Reports;
+        }
+
+        private class NullReport : IReport
+        {
+            public void WriteLine(string message)
+            {
+                // Consume the write operation and do nothing
+                // Used when verbose option is not specified
+            }
         }
     }
 }

@@ -42,13 +42,7 @@ namespace Microsoft.Dnx.Tooling
             ScriptExecutor = new ScriptExecutor();
             ErrorMessages = new Dictionary<string, List<string>>(StringComparer.Ordinal);
             InformationMessages = new Dictionary<string, List<string>>(StringComparer.Ordinal);
-            Reports = new Reports
-            {
-                Information = new NullReport(),
-                Error = new NullReport(),
-                Quiet = new NullReport(),
-                Verbose = new NullReport()
-            };
+            Reports = Reports.Constants.NullReports;
         }
 
         public FeedOptions FeedOptions { get; set; }

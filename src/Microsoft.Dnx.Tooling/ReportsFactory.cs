@@ -30,8 +30,8 @@ namespace Microsoft.Dnx.Tooling
             var reports = new Reports()
             {
                 Information = output,
-                Verbose = verbose ? output : new NullReport(),
-                Error = new Report(AnsiConsole.GetError(useConsoleColor)),
+                Verbose = verbose ? output : Reports.Constants.NullReport,
+                Error = new Report(AnsiConsole.GetError(useConsoleColor))
             };
 
             // If "--verbose" and "--quiet" are specified together, "--verbose" wins

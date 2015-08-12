@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
 using Microsoft.Dnx.Runtime;
 using Newtonsoft.Json.Linq;
 using NuGet;
@@ -57,10 +58,8 @@ namespace Microsoft.Dnx.Tooling.Publish
 
             var mainProject = Projects.Single(project => project.Name == _project.Name);
 
-            foreach (var deploymentPackage in Packages)
-            {
-                deploymentPackage.Emit(this);
-            }
+            // Emit all package dependencies in parallel
+            Task.WaitAll(Packages.Select(p => p.Emit(this)).ToArray());
 
             var success = true;
 

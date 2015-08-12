@@ -435,10 +435,9 @@ namespace Microsoft.Dnx.Tooling.Publish
                 restoreCommand.CheckHashFile = false;
                 restoreCommand.RestoreDirectories.Add(restoreDirectory);
                 restoreCommand.FeedOptions = feedOptions;
-                restoreCommand.Reports = root.Reports.ShallowCopy();
 
-                // Mute "dnu restore" completely if it is invoked by "dnu publish --quiet"
-                restoreCommand.Reports.Information = root.Reports.Quiet;
+                // Mute "dnu restore" subcommand
+                restoreCommand.Reports = Reports.Constants.NullReports;
 
                 tasks[i] = restoreCommand.Execute();
             }
