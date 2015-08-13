@@ -18,8 +18,7 @@
         "Microsoft.Dnx.Runtime.Internals": { "version": "1.0.0-*", "type": "build" },
         "Microsoft.Dnx.Runtime.Sources": { "version": "1.0.0-*", "type": "build" },
         "Microsoft.Dnx.Compilation.CSharp.Abstractions": { "version": "1.0.0-*", "type": "build" },
-        "Microsoft.CodeAnalysis.CSharp": "1.1.0-beta1-*",
-        "System.Reflection.Metadata": "1.1.0-alpha-00008"
+        "Microsoft.CodeAnalysis.CSharp": "1.1.0-beta1-*"
     },
     "frameworks": {
         "dnx451": {
