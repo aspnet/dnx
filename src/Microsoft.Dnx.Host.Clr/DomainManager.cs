@@ -39,6 +39,7 @@ public class DomainManager : AppDomainManager
 
         appDomainInfo.ApplicationBase = Environment.GetEnvironmentVariable(EnvironmentNames.DefaultLib);
         appDomainInfo.TargetFrameworkName = DetermineAppDomainTargetFramework();
+        appDomainInfo.ConfigurationFile = Path.Combine(_info.ApplicationBase, Constants.AppConfigurationFileName);
     }
 
     private string DetermineAppDomainTargetFramework()

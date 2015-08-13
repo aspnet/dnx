@@ -33,6 +33,20 @@ class Program
     }
 }";
 
+        private const string AppSettingTestProgram = @"using System;
+using System.Configuration;
+
+namespace ConfigTest
+{
+    public class Program
+    {
+        public void Main(string[] args)
+        {
+            Console.WriteLine($""TheSetting={ConfigurationManager.AppSettings[""TheSetting""]}"");
+        }
+    }
+}";
+
         public BootstrapperTests(DnxRuntimeFixture fixture)
         {
             _fixture = fixture;
@@ -431,7 +445,7 @@ Hello, code!
         {
             BootstrapperLaunchesRequestedFramworkVersionIfOptionProvided(flavor, os, architecture, "dnx451", "40501");
         }
-        
+
         [ConditionalTheory]
         [MemberData(nameof(ClrRuntimeComponents))]
         [FrameworkSkipCondition(RuntimeFrameworks.Mono)]
@@ -440,7 +454,7 @@ Hello, code!
         {
             BootstrapperLaunchesRequestedFramworkVersionIfOptionProvided(flavor, os, architecture, "dnx452", "40502");
         }
-        
+
         [ConditionalTheory]
         [MemberData(nameof(ClrRuntimeComponents))]
         [FrameworkSkipCondition(RuntimeFrameworks.Mono)]
@@ -449,7 +463,7 @@ Hello, code!
         {
             BootstrapperLaunchesRequestedFramworkVersionIfOptionProvided(flavor, os, architecture, "dnx46", "40600");
         }
-        
+
         public void BootstrapperLaunchesRequestedFramworkVersionIfOptionProvided(string flavor, string os, string architecture, string requestedFramework, string expectedOutput)
         {
             const string projectStructure = @"{
@@ -507,5 +521,55 @@ Hello, code!
             }
         }
 
+        [ConditionalTheory]
+        [MemberData(nameof(ClrRuntimeComponents))]
+        [FrameworkSkipCondition(RuntimeFrameworks.Mono)]
+        [OSSkipCondition(OperatingSystems.MacOSX | OperatingSystems.Linux)]
+        public void BootstrapperConfiguresAppConfigFile(string flavor, string os, string architecture)
+        {
+            const string projectStructure = @"{
+    ""project.json"": {},
+    ""project.lock.json"": {},
+    ""app.config"": {},
+    ""Program.cs"": {}
+}";
+
+            const string projectJson = @" {
+    ""frameworks"": {
+        ""dnx451"": {
+            ""frameworkAssemblies"": {
+                ""System.Configuration"": """"
+            }
+        }
+    }
+}";
+            const string appConfig = @"<configuration>
+  <appSettings>
+    <add key=""TheSetting"" value=""TheValue"" />
+  </appSettings>
+</configuration>";
+
+            var runtimeHomeDir = _fixture.GetRuntimeHomeDir(flavor, os, architecture);
+            using (var tempDir = TestUtils.CreateTempDir())
+            {
+                DirTree.CreateFromJson(projectStructure)
+                    .WithFileContents("project.json", projectJson)
+                    .WithFileContents("app.config", appConfig)
+                    .WithFileContents("Program.cs", AppSettingTestProgram)
+                    .WriteTo(tempDir);
+
+                string stdOut;
+                string stdErr;
+                var exitCode = BootstrapperTestUtils.ExecBootstrapper(
+                    runtimeHomeDir,
+                    arguments: $"run",
+                    stdOut: out stdOut,
+                    stdErr: out stdErr,
+                    environment: new Dictionary<string, string> { { EnvironmentNames.Trace, null } },
+                    workingDir: tempDir);
+                Assert.Equal(0, exitCode);
+                Assert.Equal("TheSetting=TheValue", stdOut.Trim());
+            }
+        }
     }
 }

@@ -20,11 +20,10 @@ namespace Microsoft.Dnx.Runtime
         public const string WebConfigRuntimePath = "runtime-path";
         public const string BootstrapperHostName = RuntimeShortName + ".host";
         public const string BootstrapperClrName = RuntimeShortName + ".clr";
-        public const string ProjectJsonAppDomainDataKey = ".dnx.clr.DomainManager.projectJson";
-        public const string ProjectJsonPathAppDomainDataKey = ".dnx.clr.DomainManager.projectJsonPath";
 
         public const int LockFileVersion = 1;
 
         public static readonly TimeSpan RegexMatchTimeout = TimeSpan.FromSeconds(10);
+        public static readonly string AppConfigurationFileName = "app.config";
     }
 }
