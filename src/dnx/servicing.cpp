@@ -64,16 +64,42 @@ namespace dnx
 {
     namespace servicing
     {
+        bool get_require_servicing() {
+            wchar_t require_servicing_buffer[2] = { 0 , 0 };
+            auto require_servicing_buffer_length = GetEnvironmentVariable(L"DNX_REQUIRE_SERVICING", require_servicing_buffer, 2);
+
+            if (require_servicing_buffer_length > 1 ||
+                (require_servicing_buffer_length == 1 && (require_servicing_buffer[0] != L'1' && require_servicing_buffer[0] != L'0')))
+            {
+                throw std::runtime_error("The value of the DNX_REQUIRE_SERVICING environment variable is invalid. Accepted values: '0' or '1'. The application will now exit.");
+            }
+
+            return require_servicing_buffer_length != 0 && require_servicing_buffer[0] == L'1';
+        }
+
         std::wstring get_runtime_path(const std::wstring& servicing_root_parent, bool is_default_servicing_location, dnx::trace_writer& trace_writer)
         {
             auto servicing_root = is_default_servicing_location
                 ? utils::path_combine(servicing_root_parent, std::wstring(L"Microsoft DNX\\Servicing"))
                 : servicing_root_parent;
 
-            if (is_default_servicing_location && !utils::directory_exists(servicing_root))
+            auto servicing_root_exists = utils::directory_exists(servicing_root);
+            auto require_servicing = get_require_servicing();
+
+            if (!servicing_root_exists)
             {
-                trace_writer.write(L"The default servicing root does not exist.", true);
-                return std::wstring{};
+                if (require_servicing)
+                {
+                    throw std::runtime_error(std::string("Servicing is required for the application to run but the servicing folder '")
+                        .append(dnx::utils::to_string(servicing_root))
+                        .append("' does not exist. The application will now exit."));
+                }
+
+                if (is_default_servicing_location)
+                {
+                    trace_writer.write(L"The default servicing root does not exist.", true);
+                    return std::wstring{};
+                }
             }
 
             auto servicing_manifest_path = utils::path_combine(servicing_root, std::wstring(L"index.txt"));
