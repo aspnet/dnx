@@ -140,6 +140,7 @@ namespace Microsoft.Dnx.DesignTimeHost
                 };
 
                 _initializedContext.Transmit(message);
+                _remote.GlobalErrorMessage = error;
 
                 // Notify anyone waiting for diagnostics
                 foreach (var connection in _waitingForDiagnostics)
@@ -752,6 +753,24 @@ namespace Microsoft.Dnx.DesignTimeHost
             }
 
             var payload = JToken.FromObject(messages.Select(d => d.ConvertToJson(ProtocolVersion)));
+
+            if (IsDifferent(_local.GlobalErrorMessage, _remote.GlobalErrorMessage))
+            {
+                var message = new Message
+                {
+                    ContextId = Id,
+                    MessageType = "Error",
+                    Payload = JToken.FromObject(_local.GlobalErrorMessage)
+                };
+
+                _initializedContext.Transmit(message);
+                foreach (var connection in _waitingForDiagnostics)
+                {
+                    connection.Transmit(message);
+                }
+
+                _remote.GlobalErrorMessage = _local.GlobalErrorMessage;
+            }
 
             // Send all diagnostics back
             foreach (var connection in _waitingForDiagnostics)
