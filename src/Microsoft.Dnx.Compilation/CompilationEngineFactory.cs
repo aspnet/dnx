@@ -7,13 +7,11 @@ namespace Microsoft.Dnx.Compilation
 {
     public class CompilationEngineFactory: ICompilationEngineFactory
     {
-        public CompilationEngineFactory(IFileWatcher fileWatcher, CompilationCache cache)
+        public CompilationEngineFactory(CompilationCache cache)
         {
             CompilationCache = cache;
-            FileWatcher = fileWatcher;
         }
 
-        public IFileWatcher FileWatcher { get; }
         public CompilationCache CompilationCache { get; }
 
         public CompilationEngine CreateEngine(CompilationEngineContext context)
@@ -32,7 +30,6 @@ namespace Microsoft.Dnx.Compilation
         {
             return new CompilationEngine(
                 CompilationCache,
-                FileWatcher,
                 context);
         }
     }

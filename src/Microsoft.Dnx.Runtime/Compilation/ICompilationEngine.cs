@@ -5,10 +5,8 @@ using Microsoft.Dnx.Compilation;
 
 namespace Microsoft.Dnx.Runtime.Compilation
 {
-    public interface ICompilationEngine : IDisposable
+    public interface ICompilationEngine
     {
-        event Action<string> OnInputFileChanged;
-
         ILibraryExporter RootLibraryExporter { get; }
 
         Assembly LoadProject(Project project, string aspect, IAssemblyLoadContext loadContext);

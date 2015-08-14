@@ -17,7 +17,7 @@ using NuGet;
 
 namespace Microsoft.Dnx.Runtime
 {
-    public class DefaultHost : IDisposable
+    public class DefaultHost
     {
         private ApplicationHostContext _applicationHostContext;
 
@@ -33,13 +33,14 @@ namespace Microsoft.Dnx.Runtime
         public DefaultHost(RuntimeOptions options,
                            IServiceProvider hostServices,
                            IAssemblyLoadContextAccessor loadContextAccessor,
+                           IFileWatcher fileWatcher,
                            ICompilationEngineFactory compilationEngineFactory)
         {
             _projectDirectory = Path.GetFullPath(options.ApplicationBaseDirectory);
             _targetFramework = options.TargetFramework;
             _compilationEngineFactory = compilationEngineFactory;
 
-            Initialize(options, hostServices, loadContextAccessor);
+            Initialize(options, hostServices, loadContextAccessor, fileWatcher);
         }
 
         public IServiceProvider ServiceProvider
@@ -125,12 +126,7 @@ Please make sure the runtime matches a framework specified in {Project.ProjectFi
             });
         }
 
-        public void Dispose()
-        {
-            _compilationEngine?.Dispose();
-        }
-
-        private void Initialize(RuntimeOptions options, IServiceProvider hostServices, IAssemblyLoadContextAccessor loadContextAccessor)
+        private void Initialize(RuntimeOptions options, IServiceProvider hostServices, IAssemblyLoadContextAccessor loadContextAccessor, IFileWatcher fileWatcher)
         {
             _applicationHostContext = new ApplicationHostContext(
                 hostServices,
@@ -143,6 +139,7 @@ Please make sure the runtime matches a framework specified in {Project.ProjectFi
                 new CompilationEngineContext(
                     _applicationHostContext.LibraryManager,
                     _applicationHostContext.ProjectGraphProvider,
+                    fileWatcher,
                     _applicationHostContext.ServiceProvider,
                     _targetFramework,
                     options.Configuration));
@@ -165,7 +162,7 @@ Please make sure the runtime matches a framework specified in {Project.ProjectFi
 
             if (options.WatchFiles)
             {
-                _compilationEngine.OnInputFileChanged += _ =>
+                fileWatcher.OnChanged += _ =>
                 {
                     _shutdown.RequestShutdownWaitForDebugger();
                 };

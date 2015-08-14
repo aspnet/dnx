@@ -54,7 +54,7 @@ namespace Microsoft.Dnx.ApplicationHost
                 watcher = NoopWatcher.Instance;
             }
 
-            var host = new DefaultHost(options, _serviceProvider, _loadContextAccessor, new CompilationEngineFactory(watcher, new CompilationCache()));
+            var host = new DefaultHost(options, _serviceProvider, _loadContextAccessor, watcher, new CompilationEngineFactory(new CompilationCache()));
 
             if (host.Project == null)
             {

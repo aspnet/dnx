@@ -17,6 +17,7 @@ namespace Microsoft.Dnx.DesignTimeHost
         private readonly IDictionary<int, ApplicationContext> _contexts;
         private readonly IServiceProvider _services;
         private readonly ProtocolManager _protocolManager;
+        private readonly CompilationCache _cache;
         private ProcessingQueue _queue;
         private string _hostId;
 
@@ -31,6 +32,7 @@ namespace Microsoft.Dnx.DesignTimeHost
             _queue = queue;
             _hostId = hostId;
             _protocolManager = protocolManager;
+            _cache = new CompilationCache();
         }
 
         public bool Transmit(Message message)
@@ -63,7 +65,7 @@ namespace Microsoft.Dnx.DesignTimeHost
 
                     applicationContext = new ApplicationContext(_services,
                                                                 _protocolManager,
-                                                                new CompilationEngineFactory(NoopWatcher.Instance, new CompilationCache()),
+                                                                new CompilationEngineFactory(_cache),
                                                                 message.ContextId);
 
                     _contexts.Add(message.ContextId, applicationContext);

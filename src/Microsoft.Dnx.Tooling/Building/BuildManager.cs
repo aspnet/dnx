@@ -68,7 +68,7 @@ namespace Microsoft.Dnx.Tooling
 
             var sw = Stopwatch.StartNew();
 
-            _compilationEngine = new CompilationEngineFactory(NoopWatcher.Instance, new CompilationCache());
+            _compilationEngine = new CompilationEngineFactory(new CompilationCache());
 
             var globalSucess = true;
             foreach (var project in projectFilesToBuild)

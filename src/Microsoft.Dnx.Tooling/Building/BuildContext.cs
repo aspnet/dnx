@@ -47,6 +47,7 @@ namespace Microsoft.Dnx.Tooling
                 new CompilationEngineContext(
                     _applicationHostContext.LibraryManager,
                     _applicationHostContext.ProjectGraphProvider,
+                    NoopWatcher.Instance,
                     _applicationHostContext.ServiceProvider,
                     _targetFramework,
                     _configuration));

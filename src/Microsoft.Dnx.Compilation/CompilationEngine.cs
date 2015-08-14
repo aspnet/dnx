@@ -20,7 +20,6 @@ namespace Microsoft.Dnx.Compilation
 
         public CompilationEngine(
             CompilationCache compilationCache, 
-            IFileWatcher fileWatcher,
             CompilationEngineContext context)
         {
             _context = context;
@@ -32,35 +31,21 @@ namespace Microsoft.Dnx.Compilation
             });
 
             CompilationCache = compilationCache;
-            FileWatcher = fileWatcher;
-
-            // Hook up file watcher
-            fileWatcher.OnChanged += s => {
-                var handler = OnInputFileChanged;
-                handler?.Invoke(s);
-            };
 
             // Register compiler services
             // TODO(anurse): Switch to project factory model to avoid needing to do this.
             _context.AddService(typeof(ICache), CompilationCache.Cache);
             _context.AddService(typeof(ICacheContextAccessor), CompilationCache.CacheContextAccessor);
             _context.AddService(typeof(INamedCacheDependencyProvider), CompilationCache.NamedCacheDependencyProvider);
-            _context.AddService(typeof(IFileWatcher), fileWatcher);
+            _context.AddService(typeof(IFileWatcher), context.FileWatcher);
         }
 
         public CompilationCache CompilationCache { get; }
-
-        public IFileWatcher FileWatcher { get; }
 
         public ILibraryExporter RootLibraryExporter { get; }
 
         public event Action<string> OnInputFileChanged;
 
-        public void Dispose()
-        {
-            throw new NotImplementedException();
-        }
-        
         public Assembly LoadProject(Project project, string aspect, IAssemblyLoadContext loadContext)
         {
             // Export the project

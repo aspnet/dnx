@@ -1127,9 +1127,10 @@ namespace Microsoft.Dnx.DesignTimeHost
             return _compilationEngineFactory.CompilationCache.Cache.Get<DependencyInfo>(cacheKey, ctx =>
             {
                 var applicationHostContext = GetApplicationHostContext(project, configuration, frameworkName);
-                var compilationEngine = (CompilationEngine)_compilationEngineFactory.CreateEngine(new CompilationEngineContext(
+                var compilationEngine = _compilationEngineFactory.CreateEngine(new CompilationEngineContext(
                     applicationHostContext.LibraryManager,
                     applicationHostContext.ProjectGraphProvider,
+                    NoopWatcher.Instance,
                     applicationHostContext.ServiceProvider,
                     frameworkName,
                     configuration));
