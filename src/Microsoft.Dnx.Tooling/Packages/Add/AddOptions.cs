@@ -9,5 +9,6 @@ namespace Microsoft.Dnx.Tooling.Packages
     public class AddOptions : PackagesOptions
     {
         public string NuGetPackage { get; set; }
+        public string PackageHashFilePath { get; set; }
     }
 }

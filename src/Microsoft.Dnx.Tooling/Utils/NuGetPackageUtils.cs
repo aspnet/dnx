@@ -20,7 +20,8 @@ namespace Microsoft.Dnx.Tooling
             Stream stream,
             LibraryIdentity library,
             string packagesDirectory,
-            IReport information)
+            IReport information,
+            string packageHash = null)
         {
             var packagePathResolver = new DefaultPackagePathResolver(packagesDirectory);
 
@@ -33,10 +34,12 @@ namespace Microsoft.Dnx.Tooling
             // processes are extracting to the same destination simultaneously
             await ConcurrencyUtilities.ExecuteWithFileLocked(targetNupkg, action: async _ =>
             {
-                string packageHash;
-                using (var sha512 = SHA512.Create())
+                if (string.IsNullOrEmpty(packageHash))
                 {
-                    packageHash = Convert.ToBase64String(sha512.ComputeHash(stream));
+                    using (var sha512 = SHA512.Create())
+                    {
+                        packageHash = Convert.ToBase64String(sha512.ComputeHash(stream));
+                    }
                 }
 
                 var actionName = "Installing";
